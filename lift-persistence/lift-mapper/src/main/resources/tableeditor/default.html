@@ -1,0 +1,39 @@
+<lift:children>
+	<head>
+	<title><table:title /></title>
+	</head>
+	<h3><table:title /></h3>
+	<table>
+		<thead>
+			<tr>
+				<header:fields>
+					<th><field:name /></th>
+				</header:fields>
+				<td><table:insertBtn /></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td colspan="5">
+				<hr />
+				</td>
+			</tr>
+		</thead>
+		<tbody>
+			<table:items>
+				<tr>
+					<item:fields>
+						<td style="vertical-align: top"><field:form /></td>
+					</item:fields>
+					<td style="vertical-align: top"><item:removeBtn /></td>
+					<td><item:msg /></td>
+				</tr>
+				<tr>
+					<td colspan="5">
+					<hr />
+					</td>
+				</tr>
+			</table:items>
+		</tbody>
+	</table>
+	<table:saveBtn />
+</lift:children>

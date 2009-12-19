@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<document xmlns="http://maven.apache.org/changes/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/changes/1.0.0
+                             http://maven.apache.org/xsd/changes-1.0.0.xsd">
+
+  <properties>
+    <title>Changes in Lift Web Framework</title>
+    <author>The Lift Team</author>
+  </properties>
+
+  <body>
+    <!-- mini guide
+    <action
+        dev     = "Id of developer who committed the change - must be same as the one in POM"
+        type    = "add|fix|remove|update"
+        issue   = "(optional) Id of the issue related to this change"
+        system  = "(optional) Set this to 'github' if this action has an issue id"
+        due-to  = "(optional) Name of the person 'non-committer' to be credited for this change">
+      Short description of the change
+    </action>
+   see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
+   -->
+    <release version="1.1-SNAPSHOT" date="" description="Lift 1.1 Snapshot">
+      <action dev="dchenbecker" type="fix" issue="232" system="github">
+        Added logging of bad prepared statements to help diagnose things.
+      </action>
+      <action dev="dchenbecker" type="fix" issue="231" system="github">
+        Fixed Mapper to properly deal with generated values
+      </action>
+    </release>
+
+    <release version="1.1-M8" date="2009-12-10" description="Lift 1.1 Milestone 8">
+      <action dev="boisvert" type="add" issue="" system="">
+        Added new built-in &lt;lift:html5&gt; snippet that sets HTML5 DOCTYPE on the XHTML response
+      </action>
+      <action dev="boisvert" type="fix" issue="218" system="github">
+        JqJsCmds.ModalDialog now takes JsObj argument to work with BlockUI v2.x
+      </action>
+      <action dev="boisvert" type="fix" issue="" system="github">
+        Fixed typo in DerbyDriver.integerIndexColumnType: IDENITY -> IDENTITY
+      </action>
+      <action dev="dchenbecker" type="fix" issue="211" system="github">
+        Fixed Mapper to use DriverType.columnTypeMap everywhere
+      </action>
+      <action dev="dchenbecker" type="fix" issue="210" system="github">
+        Fixed Mapper logging to properly log inserts, updates and deletes
+      </action>
+      <action dev="Kris Nuttycombe" type="fix" issue="139" system="github">
+        Breaking Changes:
+
+        1) LocParam
+
+        LocParam has been made a sealed trait to facilitate pattern matching within the Lift codebase and has had a contravariant type parameter added to its type to facilitate typesafe interactions with Loc[T]. The new trait is hence LocParam[-T]. As LocParam is now a sealed trait, I have added an extension point for user-specified LocParam subtypes as UserLocParam[-T] extends LocParam[T]. Since the new type parameter is contravariant, LocParam subclasses that are applicable for any Loc[T] have the type LocParam[Any], and a type alias AnyLocParam has been added for this type.
+
+        The Loc.checkProtected method now enforces type consistency between the evaluated Link[T] and the list of LocParam[T] which are used to evaluate whether the link is accessible given the specified parameters.
+
+        2) Renames
+
+        Previously, the "Param" suffix was used for two unrelated purposes within Loc: first, to refer to the type parameter of the Loc, and secondly for the LocParam configuration. This overloading made the code and the API somewhat difficult to read, so the first usage has been removed resulting in the following renames:
+
+        ParamType => T
+        NullLocParams => //removed, Unit is sufficient!
+        Loc.defaultParams => Loc.defaultValue
+        Loc.forceParam => Loc.overrideValue
+        Loc.foundParam => Loc.requestValue
+        Loc.additionalKidParams => Loc.childValues
+
+        After this change, all instances of the "param" name within Loc should refer to something having to do with LocParam instances.
+
+        Non-Breaking Additions:
+
+        case class IfValue[T](test: Box[T] => Boolean, failMsg: FailMsg) extends LocParam[T]
+        case class UnlessValue[T](test: Box[T] => Boolean, failMsg: FailMsg) extends LocParam[T]
+        case class TestValueAccess[T](func: Box[T] => Box[LiftResponse]) extends LocParam[T]
+
+        If you are using a non-Unit typed Loc, you can use these LocParam instances to enforce access rules at the value level.
+
+        case class ValueTemplate[T](template: Box[T] => NodeSeq) extends LocParam[T] //per-value template selection
+
+        DataLoc[T] subclass of Loc was added to facilitate the use of the new more typeful LocParam subtypes.
+
+        A few changes to Link:
+
+        Since Link.createLink creates a Box[Text] (and not a clickable link) a couple of methods were added to create the intermediate, unboxed
+        values in order that subclasses can more easily manipulate the resulting path:
+
+        Link.pathList(value: T): List[String] // added to facilitate creation of value-aware paths by subclasses.
+        Link.createPath(value: T): String //creates the String representation of the path that is subsequently turned into XML and boxed by Link.createLink
+      </action>
+
+      <action dev="marius.danciu" type="fix" issue="56" system="github">
+        Allowing page fragments wrapped by &lt;lift:lazy-load&gt; node to be processed and loaded asynchronously.
+      </action>
+
+      <action dev="boisvert" type="fix" issue="153" system="github">
+        Updated documentation for Msgs
+      </action>
+
+      <action dev="boisvert" type="fix" issue="177" system="github">
+        XmlResponse(...) now accepts optional HTTP status code, mime type and cookies.
+      </action>
+
+      <action dev="boisvert" type="fix" issue="14" system="github">
+        SQL Server Alter Table Fails
+      </action>
+
+      <action dev="boisvert" type="fix" issue="170" system="github">
+        Typo in Req.scala
+      </action>
+
+      <action dev="hseeberger" type="fix" issue="166" system="github">
+        Snapshot jars contains several Box.class files
+      </action>
+
+      <action dev="indrajitr" type="update" issue="156" system="github" due-to="econoplas">
+        Update hibernate-entitymanager to 3.4.0.GA.
+      </action>
+
+      <action dev="indrajitr" type="update" issue="168" system="github" due-to="awhitford">
+        Adjust javax.mail version range to avoid issues when Sun's repo is used and
+        honor javax.activation being transitively pulled up my javax.mail.
+      </action>
+
+      <action dev="indrajitr" type="fix" issue="180" system="github">
+        Fix scala:doc and vscaladoc configuration along with provision for module specific configuration for packageLinkDefs.
+      </action>
+
+      <action dev="indrajitr" type="update" issue="203" system="github">
+        Enforce Maven version 2.1.0 or higher, but lower than 3.0.
+      </action>
+
+      <action dev="indrajitr" type="fix" issue="161" system="github">
+        Upgrade Lift archetypes to use the new archetype metadata format. Enhance/fix archetype integration tests during build.
+      </action>
+
+      <action dev="indrajitr" type="fix" issue="227" system="github">
+        Enhance archetype metadata not to depend on ext.vm and allow one to set Lift version (-DliftVersion) or Scala version (-DscalaVersion) during archetype:generate.
+      </action>
+
+      <action dev="dchenbecker" type="add" issue="148" system="github">
+        Add ability to call JS code after AJAX form submit
+      </action>
+
+      <action dev="dchenbecker" type="add" issue="181" system="github">
+        Add AJAX editable field generator to SHtml, add AjaxEditableField to Mapper.
+      </action>
+
+      <action dev="dchenbecker" type="fix" issue="16" system="github">
+        Fixed SQL Server drivers to use version-appropriate unicode columns for text.
+      </action>
+
+    </release>
+
+    <release version="1.1-M7" date="2009-11-07" description="Lift 1.1 Milestone 7">
+      <action dev="alex.boisvert" type="update" issue="57" system="github">
+        Improve error message if database is not supported
+      </action>
+      <action dev="alex.boisvert" type="update" issue="77" system="github">
+        Change net.liftweb.mapper.ByList to take a Seq[T] instead of a List[T]
+      </action>
+      <action dev="timperrett" type="update" issue="88" system="github">
+        Boxed payment status so that IPN cancelations appear as
+        Empty. Breaking API change for implementors.
+      </action>
+      <action dev="dpp" type="fix" issue="94" system="github" due-to="vdichev">
+        Textile parser outputs non-valid output. Changed some null to Null.
+      </action>
+      <action dev="dpp" type="add" system="github">
+        Enhanced the documentation for an type signatures for Actors
+      </action>
+      <action dev="dpp" type="add" system="github">
+        Revised Lift to use LiftActors and be compatible with Akka Actors
+      </action>
+      <action dev="dpp" type="fix" issue="126" system="github">
+        S.deleteCookie broken in M6
+      </action>
+      <action dev="dpp" type="add" issue="125" system="github">
+        DB.runQuery isn't ConnectionIdentifier-aware
+      </action>
+      <action dev="dpp" type="fix" issue="119" system="github">
+        Misspelling in field name in ProtoExtendedSession
+      </action>
+
+      <action dev="dpp" type="fix" issue="120" system="github">
+        net.liftweb.widgets.autocomplete in version 1.1-M6
+        changed return type from NodeSeq to Elem
+      </action>
+
+      <action dev="dpp" type="fix" issue="122" system="github">
+        StatefulSnippets generate invalid markup
+      </action>
+
+      <action dev="dpp" type="update" issue="142" system="github">
+        Updated Lift to use Scala 2.7.7
+      </action>
+
+      <action dev="dpp" type="fix" issue="143" system="github">
+        Stacked URL Rewriting correctly deals with params
+      </action>
+
+      <action dev="dpp" type="fix" issue="141" system="github">
+        Simplified Factory signatures in LiftRules
+      </action>
+
+      <action dev="indrajitr" type="update" issue="127" system="github">
+        Restructured Lift codebase (now categorized into lift-base, lift-persistence, lift-modules, lift-archetypes and lift-examples).
+      </action>
+
+    </release>
+
+    <release version="1.1-M6" date="2009-10-09" description="Lift 1.1 Milestone 6">
+      <action dev="indrajitr" type="update" issue="128" system="github">
+        Project build models are more enriched and streamlined.
+      </action>
+
+      <action dev="joni" type="add">JSON diff and merge</action>
+      <action dev="joni" type="update">Generalized JSON serialization</action>
+      <action dev="joni" type="fix">Use paranamer to find out case class constructor argument names</action>
+
+      <action dev="heiko.seeberger" type="fix" issue="84" system="github">Enhance CRUDify i18n</action>
+      <action dev="heiko.seeberger" type="add" issue="82" system="github">Add parameterized ?? to S</action>
+      <action dev="heiko.seeberger" type="fix" issue="87" system="github">Inaccurate ranges for previous and next (page) in CRUDify
+      </action>
+      <action dev="heiko.seeberger" type="fix" issue="81" system="github">No i18n for "Sign Up" in MetaMegaProtoUser.signupXhtm</action>
+      <action dev="heiko.seeberger" type="fix" issue="111" system="github">Lost password submit button is not rendered correctly
+      </action>
+      <action dev="heiko.seeberger" type="fix" issue="113" system="github">Signup mail body not i18ned</action>
+      <action dev="heiko.seeberger" type="fix" issue="114" system="github">Misspelled Key "pasword.changed" in ProtoUser.scala</action>
+      <action dev="heiko.seeberger" type="fix" issue="123" system="github">Enhance Msgs snippet to optionally show all messages</action>
+      <action dev="heiko.seeberger" type="fix" issue="157" system="github">MappedPassword contains misspelled key for unset password
+      </action>
+    </release>
+
+    <release version="1.1-M5" date="2009-09-08" description="Lift 1.1 Milestone 5"/>
+
+    <release version="1.1-M4" date="2009-08-04" description="Lift 1.1 Milestone 4">
+      <action dev="Marius Danciu" type="add">Added HTTP abstraction for making Lift container agnostic.</action>
+    </release>
+
+    <release version="1.1-M3" date="2009-07-02" description="Lift 1.1 Milestone 3">
+      <action dev="Marius Danciu" type="add">Added &lt;lift:tail&gt; builtin snippet for merging content at the end of
+        body tag
+      </action>
+    </release>
+
+    <release version="1.1-M1" date="2009-05-01" description="Lift 1.1 Milestone 1">
+      <action dev="Marius Danciu" type="add">Fixed Bug #34 - lift processing directives should be implemented as
+        snippets
+      </action>
+      <action dev="Marius Danciu" type="add">Added support for templates caching</action>
+    </release>
+
+    <release version="1.0" date="2009-02-26" description="First Major">
+      <action dev="Marius Danciu" type="add">Added support for multiple resource bundles</action>
+    </release>
+
+    <release version="0.10" date="2009-01-14" description="api refactor">
+      <action dev="Marius Danciu" type="update">Consolidate LiftRules</action>
+      <action dev="Marius Danciu" type="update">Added HTTP authentication support</action>
+      <action dev="Jorge Ortiz" type="update">Upgrade to Scala 2.7.3</action>
+      <action dev="Jorge Ortiz" type="update">Upgrade to Scalacheck 1.5</action>
+      <action dev="Jorge Ortiz" type="update">Upgrade to Specs 1.4.0</action>
+      <action dev="Marius Danciu" type="update">Added Record/Field generic support</action>
+      <action dev="David Pollak" type="update">Changed Can to Box</action>
+      <action dev="David Pollak" type="update">Changed RequestState to Req</action>
+      <action dev="David Pollak" type="update">Updated LiftView to be more syntactically pleasing</action>
+      <action dev="David Pollak" type="update">Fixed a bug with how RequestVars and traits work</action>
+      <action dev="David Pollak" type="update">Enhanced the DateTime inputs</action>
+      <action dev="David Pollak" type="update">First pass at complete PayPal ITN and PDT stuff</action>
+      <action dev="David Pollak" type="update">Refactoring of the PayPal stuff</action>
+      <action dev="David Pollak" type="add">A Currency class</action>
+      <action dev="David Pollak" type="add">Added a nifty mechanism for stateful form management (Hoot)</action>
+      <action dev="Marius Danciu" type="add">Added fix CSS support</action>
+      <action dev="Marius Danciu" type="add">Added support for other JS libraries</action>
+      <action dev="Marius Danciu" type="add">Added JSON forms support</action>
+      <action dev="Jorge Ortiz" type="update">Updated to jQuery 1.2.6</action>
+      <action dev="timperrett" type="add">Added PayPal Integration module</action>
+      <action dev="timperrett" type="update">Redesigned Gavatar widget</action>
+    </release>
+
+    <release version="0.9" date="2008-06-15" description="">
+      <action dev="Marius Danciu" type="add">Added URL rewriting support</action>
+      <action dev="Marius Danciu" type="add">Added CalendarDayView widget</action>
+      <action dev="Marius Danciu" type="add">Added CalendarWeekView widget</action>
+      <action dev="David Pollak" type="update">Switch from svn (code.google.com) to git (github) has scm to manage
+        source
+      </action>
+    </release>
+
+    <release version="0.8" date="2008-05-09" description="">
+      <action dev="David Bernard" type="update">Use vscaladoc to generate API</action>
+      <action dev="Jorge Ortiz" type="update">Compiled the project with Scala-2.7.1</action>
+      <action dev="David Pollak" type="add">Start the lift-openid module</action>
+      <action dev="David Pollak" type="add">Start the lift-oauth module</action>
+      <action dev="Marius Danciu" type="add">Added CalendarMonthView widget</action>
+      <action dev="Marius Danciu" type="add">Start the lift-widgets module</action>
+      <action dev="Marius Danciu" type="add">Added ActorPing#scheduleAtFixedRate</action>
+      <action dev="Marius Danciu" type="add">Added notices support for Comet actors</action>
+      <action dev="Marius Danciu" type="add">Added JavaScript statements as JsCmd</action>
+    </release>
+
+    <release version="0.7" date="2008-04-03" description="">
+      <action dev="Steve Jenson" type="add">
+        Gave AMQPDispatcher users the ability to auto-reconnect to the amqp server if it restarts.
+      </action>
+      <action dev="Marius Danciu" type="update">
+        - Separating html functions from S object to SHtml object
+        - Putting LiftRules in its own file
+        - Adding support for associating messages with ID's to allow form fields validation messages.
+        - ValidationIssue renamed into FieldError and lives in http package
+        - ErrorReport built in snippet was renamed to Msgs
+        - Added Msg built in snippet used for form field messages (Renders only messages associated with this tag id)
+      </action>
+      <action dev="Eric Torreborre" type="add">
+        Extracted from the Helpers class, documented and tested ClassHelpers, ControlHelpers and TimeHelpers Traits
+      </action>
+      <action dev="Steve Jenson" type="add">
+        Adding unload hooks so a user's lift app can make sure that certain methods are called when
+        the war is unloaded by the servlet container.
+      </action>
+      <action dev="Steve Jenson" type="add">
+        Adding a bunch of Responses to help make building RESTful Web Services easier in lift.
+      </action>
+      <action dev="Marius Danciu" type="add">
+        Added extensible support for specifying the behavior for invalid URI's (with or without site map)
+      </action>
+      <action dev="Marius Danciu" type="update">
+        Changes LiftServlet object name to LiftRules
+      </action>
+      <action dev="Marius Danciu" type="update">
+        Changed Loc behavior to use ResponseIt
+      </action>
+      <action dev="Marius Danciu" type="add">
+        Added RedirectWithState
+      </action>
+      <action dev="Steve Jenson" type="add">
+        Added a KeyedCache for model objects built on top of the LRU class.
+      </action>
+      <action dev="David Bernard" type="updates">
+        Split lift-core into several modules : lift-webkit, lift-amqp, lift-facebook, lift-testkit, lift-textile,
+        lift-xmpp
+      </action>
+    </release>
+
+    <release version="0.6" date="2008-03-10" description="">
+      <action dev="Eric Torreborre" type="update">
+        Compiled the project with Scala-2.7.0
+      </action>
+      <action dev="Marius Danciu" type="add">
+        Added RedirectResponse class
+      </action>
+      <action dev="Marius Danciu" type="add">
+        Added lift core localization support.
+      </action>
+      <action dev="Steve Jenson" type="add">
+        Added Cookie support.
+      </action>
+      <action dev="Steve Jenson" type="update">
+        Updating our version of jQuery to 1.2.3.
+      </action>
+      <action dev="Steve Jenson" type="add">
+        Added a new method to MetaMapper that lets you find models by PreparedStatement. findByPreparedStatement
+      </action>
+    </release>
+
+    <release version="0.5" date="2008-02-05" description="">
+      <action dev="Steve Jenson" type="add">Added a new QueryParam, ByList which lets you query on Model objects with a
+        List[T].
+      </action>
+      <action dev="David Pollak" type="update">Revised the example site to use Blueprint CSS for style</action>
+      <action dev="David Pollak" type="add">jlift JavaScript utilities and associated binder helpers.</action>
+      <action dev="David Pollak" type="add">Blueprint CSS built in (version 0.6) so it can be served via /classpath
+      </action>
+      <action dev="David Pollak" type="add">XML -> JavaScript bindings so that JSON -> XHTML rendering can be defined
+        using Scala XML literals, but the resulting JavaScript code can be sent to the browser to do mass rendering of
+        JSON objects.
+      </action>
+      <action dev="David Pollak" type="add">Added JSON support including: - S.buildJSONFunc - JSONHandler class - Lots
+        of
+        fancy JavaScript expression building
+      </action>
+      <action dev="David Pollak" type="update">When lift is running in test mode, the default form generators will
+        insert
+        lift:field_name attribute into the form fields to aid in testing
+      </action>
+      <action dev="David Pollak" type="update">
+        Added json2.js (and minified version)
+        Enhanced the resource serving stuff so that:
+        - The path is defined in LiftServlet and changable (defaults to "classpath")
+        - Moved the resource location from the root to "toserve" (can be changed) to avoid any possible way of serving
+        up
+        classes
+        - The white list is a Partial Function for more flexibility
+        - The white list by default contains jquery.js and json.js
+        - There's a re-writer to re-write the request into an actual file (so jquery.js gets re-written to
+        jquery-1.2.2-min.js)
+      </action>
+      <action dev="David Pollak" type="add">Parser Combinator Helper routines</action>
+      <action dev="David Pollak" type="update">MappedField.toForm now returns a Can[NodeSeq] so a field can be omitted
+        from a form
+      </action>
+      <action dev="David Pollak" type="add">Added the "record" and "record_mgt" packages with half-baked record and
+        field
+        stuff in them
+      </action>
+      <action dev="David Pollak" type="update">Added LocInfo and LocInfoVal to SiteMap for storing CSS and other tidbits
+        about each menu item
+      </action>
+      <action dev="David Pollak" type="update">Fixed the 'Welcome to the your project' type-o</action>
+      <action dev="David Pollak" type="update">Further abstracted the whole logging thing. There's a default log4j setup
+        that can be overriden. The LiftLogger trait is made concrete in Log4JLogger, but the generic LiftLogger creation
+        is done by function that can be modified in LogBoot: var loggerByName: String => LiftLogger = _logger; var
+        loggerByClass: Class => LiftLogger = _loggerCls; One can insert a new logging system into lift by replacing the
+        loggerByName and loggerByClass functions with appropriate functions that return a LiftLogger.
+      </action>
+      <action dev="David Pollak" type="add">MappedText and MapperFakeClob classes</action>
+      <action dev="David Pollak" type="update">Extensive updates to the &lt;lift:xxx /&gt; tag mechanism that uses tag
+        labels as snippets and support for adding arbitrary tag handling to lift.
+      </action>
+    </release>
+
+    <release version="0.4" date="2008-01-07" description="">
+      <action dev="Steve Jenson" type="add">Added XMPP support for lift applications. see the package net.liftweb.xmpp
+      </action>
+      <action dev="Steve Jenson" type="add">Added support for switching XHTML MIME type serving off. See
+        LiftServet.useXhtmlMimeType
+      </action>
+      <action dev="David Pollak" type="update">Upgrade to scala-2.6.1</action>
+      <action dev="David Pollak" type="update">Support for PosgreSQL 8.1 and some tests</action>
+      <action dev="Maciek Starzyk" type="add">Adding support to H2 to lift-ORM</action>
+      <action dev="Maciek Starzyk" type="add">Adding support to PostgreSQL to lift-ORM</action>
+      <action dev="David Bernard" type="add">/html/body//head are merged into /html/head, to allow html fragment inlined
+        into body to contribute to /html/head
+      </action>
+      <action dev="Steve Jenson" type="add">Adding a new lift archetype, lift-archetype-basic that will generate a lift
+        template with basic database and users functionality.
+      </action>
+      <action dev="Steve Jenson" type="add">Adding LiftConsole to archetype to play with lift-based application in
+        console
+        mode
+      </action>
+      <action dev="Steve Jenson" type="add">Adding mock for HTTPRequest and Co</action>
+      <action dev="David Bernard" type="add">Adding first Specs test to test lift-core</action>
+      <action dev="David Bernard" type="update">The look of the maven site generated (for lift itself and for
+        archetypes)
+      </action>
+      <action dev="David Bernard" type="remove">Removing deprecated new_proj (replaced by archetypes)</action>
+      <action dev="David Bernard" type="remove">Removing lift-archetype-hellolift (replaced by lift-archetype-basic (and
+        the sample application hellolift))
+      </action>
+    </release>
+
+    <release version="0.3.0" date="2007-12-07" description="champagne">
+      <action dev="David Pollak" type="add">Support for Ajax including integration of jQuery</action>
+      <action dev="David Pollak" type="add">Radically improved Comet support</action>
+      <action dev="Jorge Eugenio Ortiz Hinojosa" type="add">Facebook API support</action>
+      <action dev="Steve Jenson" type="add">AMQP (RabbitMQ) support</action>
+      <action dev="David Pollak" type="add">Radically improved Comet support</action>
+      <action dev="David Pollak" type="add">Built in Traits for Users (including user management) and Tags</action>
+      <action dev="David Pollak" type="add">Support for a variety of new Mapped types (Country, Locale, Postal Code,
+        etc.)
+      </action>
+      <action dev="David Pollak" type="add">New examples including a real-time blog</action>
+      <action dev="David Bernard" type="update">Project builder using Maven and significantly improved Maven support
+      </action>
+      <action dev="David Pollak" type="add">Localization</action>
+      <action dev="David Pollak" type="add">Improved XHTML support including proper headers based on browser type
+      </action>
+      <action dev="Team" type="update">Improved documentation</action>
+      <action dev="Team" type="update">Radically improved samples and "getting started" pieces</action>
+      <action dev="David Pollak" type="add">support for multiple database instances</action>
+      <action dev="David Pollak" type="add">improved regex support including some Regex -> object creation support for
+        parsing
+      </action>
+      <action dev="David Pollak" type="add">a new and improved textile parser</action>
+    </release>
+
+    <release version="0.2.0" date="2007-06-06">
+      <action dev="David Pollak" type="add">"new_proj" script to create a new project</action>
+      <action dev="David Pollak" type="add">HTTP test framework for writing tests</action>
+      <action dev="David Pollak" type="add">Skittr code example -- a Twitter clone in lift and Scala</action>
+      <action dev="David Pollak" type="add">SiteMap -- define site navigation and access control rules in a Domain
+        Specific Language
+      </action>
+      <action dev="David Pollak" type="add">each model can live in a different database (multi database support)
+      </action>
+      <action dev="David Pollak" type="add">support for Jetty continuations on AJAX calls (automatic, not application
+        code
+        required)
+      </action>
+      <action dev="David Pollak" type="update">improvements to query building</action>
+      <action dev="David Pollak" type="add">Shared session variable across Snippets and Controllers</action>
+      <action dev="David Pollak" type="add">"recursive snippets" to re-write the page</action>
+      <action dev="David Pollak" type="add">ability to pass attributes to Snippets and Controllers</action>
+      <action dev="David Pollak" type="add">built in support for blowfish encryption</action>
+      <action dev="David Pollak" type="add">logging via log4j</action>
+      <action dev="David Pollak" type="add">MappedListEnum to persist List[Enumeration] easily</action>
+      <action dev="David Pollak" type="add">lots of HTML form elements (select, multiselect, etc.)</action>
+      <action dev="David Pollak" type="update">enhanced SQL queries</action>
+      <action dev="David Pollak" type="add">filterMap support for queries as the rows come back from the database
+      </action>
+      <action dev="David Pollak" type="add">comparison operators for MappedField</action>
+      <action dev="David Pollak" type="add">run modes (Production, Test, Development, etc.)</action>
+      <action dev="David Pollak" type="add">properties that are based on user, machine, and run mode</action>
+      <action dev="David Pollak" type="add">filters for fields such that input (and comparison and queries) can
+        automatically be made upper case, lower case, trim, etc.
+      </action>
+    </release>
+
+    <release version="0.1.0" date="2007-02-26" description="first public release"></release>
+
+  </body>
+</document>

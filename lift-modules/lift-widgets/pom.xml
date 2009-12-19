@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright 2006-2009 WorldWide Conferencing, LLC
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!--
+    ~ The Basics
+  -->
+  <parent>
+    <groupId>net.liftweb</groupId>
+    <artifactId>lift-modules</artifactId>
+    <version>1.1-SNAPSHOT</version>
+  </parent>
+  <artifactId>lift-widgets</artifactId>
+
+  <!-- <properties/> -->
+
+  <!--
+    ~ More Project Information
+  -->
+  <name>Lift Widgets</name>
+  <description>A Set of Widgets to use in a lift's webapp</description>
+
+  <!--
+    ~ Dependency Settings
+  -->
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>lift-webkit</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
+  <!--
+    ~ Build Settings
+  -->
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>net.sf.alchim</groupId>
+        <artifactId>yuicompressor-maven-plugin</artifactId>
+        <configuration>
+           <excludes>
+              <exclude>**/sparklines*.js</exclude>
+           </excludes>
+         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>maven-jetty-plugin</artifactId>
+        <configuration>
+          <webAppSourceDirectory>${basedir}/src/test/webapp</webAppSourceDirectory>
+          <webXml>${basedir}/src/test/webapp/WEB-INF/web.xml</webXml>
+          <webAppConfig>
+            <contextPath>/</contextPath>
+            <extraClasspath>${basedir}/src/main/resources/;${basedir}/target/classes/;${basedir}/target/test-classes</extraClasspath>
+          </webAppConfig>
+          <scanIntervalSeconds>1</scanIntervalSeconds>
+          <scanTargets>
+            <scanTarget>${basedir}/src/main/resources/</scanTarget>
+            <scanTarget>${basedir}/target/classes/</scanTarget>
+            <scanTarget>${basedir}/target/test-classes</scanTarget>
+            <scanTarget>${basedir}/src/test/webapp</scanTarget>
+          </scanTargets>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <!--
+    ~ Reporting Settings
+  -->
+  <!-- <reporting/> -->
+
+</project>
