@@ -244,10 +244,6 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.apache.rat</groupId>
-            <artifactId>apache-rat-plugin</artifactId>
-          </plugin>
-          <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
             <configuration>
               <descriptorRefs>
