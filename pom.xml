@@ -26,11 +26,6 @@
   Shared project model for Lift Framework. Define the settings common to all projects
   in Lift Framework.
 
-  This includes a standard release profile that all projects can use.
-  If the profile is not appropriate for your project, define your own release profile
-  and change the release plugin configuration parameter <arguments> </arguments> to
-  activate your profile instead of the "release" profile.
-
   Dependencies and plugins are also pre-configured with standard settings,
   these may be overridden by individual projects as well.
   -->
@@ -86,7 +81,7 @@
   <!--<dependencies />-->
 
   <!--
-    ~ Modules Setting
+    ~ Module Settings
   -->
   <modules>
     <module>lift-base</module>
@@ -276,17 +271,6 @@
     <profile>
       <id>hudson</id>
       <distributionManagement>
-        <!--
-        <repository>
-          <id>nexus.scala-tools.org</id>
-          <url>http://nexus.scala-tools.org/content/repositories/releases</url>
-        </repository>
-        <snapshotRepository>
-          <id>nexus.scala-tools.org</id>
-          <url>http://nexus.scala-tools.org/content/repositories/snapshots</url>
-          <uniqueVersion>false</uniqueVersion>
-        </snapshotRepository>
-        -->
         <site>
           <id>nexus.scala-tools.org</id>
           <url>file:///home/scala-tools.org/www/mvnsites-snapshots/liftweb</url>
