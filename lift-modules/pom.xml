@@ -42,9 +42,9 @@
   <!--
     ~ More Project Information
   -->
-  <name>Lift Modules</name>
+  <name>Lift Addon Modules</name>
   <description>
-    Modules for Lift Web Framework.
+    Addon Modules for Lift Web Framework.
   </description>
 
   <!--

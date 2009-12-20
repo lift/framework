@@ -16,13 +16,15 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
   <!--
-  Shared parent. Define the settings common to all projects at Lift Framework.
+  Shared project model for Lift Framework. Define the settings common to all projects
+  in Lift Framework.
 
   This includes a standard release profile that all projects can use.
   If the profile is not appropriate for your project, define your own release profile
@@ -60,162 +62,26 @@
   -->
   <ciManagement>
     <system>hudson</system>
-    <url>http://hudson.scala-tools.org/job/Lift/</url>
+    <url>http://hudson.scala-tools.org/job/LiftFramework/</url>
     <notifiers>
       <!-- TODO: Configure-->
       <notifier/>
     </notifiers>
   </ciManagement>
+  <properties>
+    <!-- vscaladoc settings -->
+    <maven.scaladoc.vscaladocVersion>1.2-SNAPSHOT</maven.scaladoc.vscaladocVersion>
+    <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites-snapshots/liftweb</vscaladoc.links.liftweb.baseurl>
+
+    <!-- TODO: for lift_build_date.
+         http://maven.apache.org/guides/introduction/introduction-to-the-pom.html#Available_Variables -->
+    <!--<maven.build.timestamp.format/>-->
+  </properties>
 
   <!--
     ~ Dependency Settings
   -->
-  <dependencyManagement>
-    <dependencies>
-      <!--
-      Compile scope: available in all classpath, transitive
-      -->
-      <dependency>
-        <groupId>org.scala-lang</groupId>
-        <artifactId>scala-library</artifactId>
-        <version>${scala.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.scala-libs</groupId>
-        <artifactId>scalajpa</artifactId>
-        <version>1.1</version>
-      </dependency>
-      <dependency>
-        <groupId>javax.mail</groupId>
-        <artifactId>mail</artifactId>
-        <version>[1.4,1.4.3)</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-codec</groupId>
-        <artifactId>commons-codec</artifactId>
-        <!--<version>[1.3,1.4]</version>-->
-        <version>1.3</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-collections</groupId>
-        <artifactId>commons-collections</artifactId>
-        <version>3.2.1</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-fileupload</groupId>
-        <artifactId>commons-fileupload</artifactId>
-        <version>1.2.1</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-httpclient</groupId>
-        <artifactId>commons-httpclient</artifactId>
-        <version>3.1</version>
-      </dependency>
-      <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>log4j</artifactId>
-        <!--<version>[1.2.14,1.2.15]</version>-->
-        <version>1.2.14</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
-        <!--<optional>true</optional>-->
-      </dependency>
-      <!--
-      Provided scope: provided by container, available only in compile and test classpath, non-transitive
-      -->
-      <dependency>
-        <groupId>javax.servlet</groupId>
-        <artifactId>servlet-api</artifactId>
-        <version>2.5</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>javax.persistence</groupId>
-        <artifactId>persistence-api</artifactId>
-        <version>1.0</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>org.osgi.compendium</artifactId>
-        <version>1.2.0</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.scalamodules</groupId>
-        <artifactId>scalamodules-core</artifactId>
-        <version>1.1-SNAPSHOT</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.ops4j.pax.web</groupId>
-        <artifactId>pax-web-bundle</artifactId>
-        <version>0.6.0</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.ops4j.pax.swissbox</groupId>
-        <artifactId>pax-swissbox-extender</artifactId>
-        <version>0.2.0</version>
-        <scope>provided</scope>
-      </dependency>
-      <!--
-      Runtime scope: provided in runtime, available only in runtime and test classpath, not compile classpath
-      -->
-      <!--<dependency/>-->
-      <!--
-      Test scope: available only in test classpath
-      -->
-      <dependency>
-        <groupId>org.scala-tools.testing</groupId>
-        <artifactId>specs</artifactId>
-        <!--<version>[1.4.4,1.6.0]</version>-->
-        <version>1.6.1</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.scala-tools.testing</groupId>
-        <artifactId>scalacheck</artifactId>
-        <version>1.6</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <!--TODO: push version to 4.7-->
-        <version>4.5</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-simple</artifactId>
-        <version>${slf4j.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mortbay.jetty</groupId>
-        <artifactId>jetty</artifactId>
-        <version>[6.1.6,7.0)</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>net.sourceforge.jwebunit</groupId>
-        <artifactId>jwebunit-htmlunit-plugin</artifactId>
-        <version>2.2</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
+  <!--<dependencyManagement />-->
   <!-- Dependencies omitted, each project must provide their own -->
   <!--<dependencies />-->
 
@@ -370,25 +236,6 @@
   -->
   <profiles>
     <profile>
-      <id>detail</id>
-      <build>
-        <pluginManagement>
-          <plugins>
-            <plugin>
-              <groupId>org.scala-tools</groupId>
-              <artifactId>maven-scala-plugin</artifactId>
-              <configuration>
-                <args>
-                  <arg>-unchecked</arg>
-                  <arg>-deprecation</arg>
-                </args>
-              </configuration>
-            </plugin>
-          </plugins>
-        </pluginManagement>
-      </build>
-    </profile>
-    <profile>
       <id>release</id>
       <properties>
         <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites/liftweb</vscaladoc.links.liftweb.baseurl>
@@ -422,11 +269,6 @@
       </build>
       -->
       <distributionManagement>
-        <repository>
-          <id>nexus.scala-tools.org</id>
-          <name>Scala-Tools Release Distribution Repository</name>
-          <url>http://nexus.scala-tools.org/content/repositories/releases</url>
-        </repository>
         <site>
           <id>scala-tools.dist.site</id>
           <!-- dav protocol isn't optimized for site-deploy (very long for api) -->
@@ -443,12 +285,12 @@
           <id>nexus.scala-tools.org</id>
           <url>http://nexus.scala-tools.org/content/repositories/releases</url>
         </repository>
-        -->
         <snapshotRepository>
           <id>nexus.scala-tools.org</id>
           <url>http://nexus.scala-tools.org/content/repositories/snapshots</url>
           <uniqueVersion>false</uniqueVersion>
         </snapshotRepository>
+        -->
         <site>
           <id>nexus.scala-tools.org</id>
           <url>file:///home/scala-tools.org/www/mvnsites-snapshots/liftweb</url>
