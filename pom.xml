@@ -68,7 +68,8 @@
   <properties>
     <!-- vscaladoc settings -->
     <maven.scaladoc.vscaladocVersion>1.2-SNAPSHOT</maven.scaladoc.vscaladocVersion>
-    <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites-snapshots/liftweb</vscaladoc.links.liftweb.baseurl>
+    <vscaladoc.links.liftweb.baseurl>${project.basedir}/../..</vscaladoc.links.liftweb.baseurl>
+    <vscaladoc.links.liftweb.pathsufix>target/site/scaladocs/</vscaladoc.links.liftweb.pathsufix>
 
     <!-- TODO: for lift_build_date.
          http://maven.apache.org/guides/introduction/introduction-to-the-pom.html#Available_Variables -->
@@ -102,6 +103,19 @@
       <plugins>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <configuration>
+            <archive>
+              <manifestEntries>
+                <!-- TODO: Deprecate and use Default Implementation Entries (Implementation-Version) -->
+                <lift_version>${pom.version}</lift_version>
+                <lift_build_date>${maven.build.timestamp}</lift_build_date>
+              </manifestEntries>
+            </archive>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
           <executions>
             <execution>
@@ -123,6 +137,17 @@
                   </resource>
                 </resources>
               </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>maven-bundle-plugin</artifactId>
+          <executions>
+            <execution>
+              <goals>
+                <goal>bundle</goal>
+              </goals>
             </execution>
           </executions>
         </plugin>
@@ -293,6 +318,7 @@
       <id>release</id>
       <properties>
         <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites/liftweb</vscaladoc.links.liftweb.baseurl>
+        <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
       </properties>
       <!--
       <build>
@@ -329,6 +355,10 @@
     </profile>
     <profile>
       <id>hudson</id>
+      <properties>
+        <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites-snapshots/liftweb</vscaladoc.links.liftweb.baseurl>
+        <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
+      </properties>
       <distributionManagement>
         <site>
           <id>nexus.scala-tools.org</id>
