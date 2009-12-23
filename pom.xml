@@ -157,7 +157,7 @@
           <configuration>
             <excludes>
               <exclude>*.log</exclude>
-              <exclude>packageLinkDefs.properties</exclude>
+              <exclude>**/packageLinkDefs.properties</exclude>
             </excludes>
           </configuration>
           <executions>
@@ -283,6 +283,7 @@
         <version>2.3</version>
         <inherited>false</inherited>
         <configuration>
+          <filteringChanges>true</filteringChanges>
           <issueLinkTemplatePerSystem>
             <github>%URL%/%ISSUE%/find</github>
           </issueLinkTemplatePerSystem>
