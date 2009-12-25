@@ -174,6 +174,24 @@ A regular example.
       )
     }
 
+     "3 bullets after a line" in {
+      val it = toHtml(
+        """
+I Like Yaks
+* Hello moo
+* Dude
+* Dog
+""")
+
+      it must ==/(
+        <p>I Like Yaks<br/><ul><li> Hello moo</li>
+        <li> Dude</li>
+        <li> Dog</li>
+        </ul>
+        </p>
+      )
+    }
+
     "a link http://yahoo.com not inside" in {
       toHtml("a link http://yahoo.com not inside", true).toString.trim must_== "<p>a link http://yahoo.com not inside</p>"
     }

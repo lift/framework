@@ -276,25 +276,51 @@ object DB {
     f(st.executeQuery(query))
   }
 
-
   private def asString(pos: Int, rs: ResultSet, md: ResultSetMetaData): String = {
     import _root_.java.sql.Types._
     md.getColumnType(pos) match {
       case ARRAY | BINARY | BLOB | DATALINK | DISTINCT | JAVA_OBJECT | LONGVARBINARY | NULL | OTHER | REF | STRUCT | VARBINARY => rs.getObject(pos) match {
-          case null => null
-          case s => s.toString
-        }
+        case null => null
+        case s => s.toString
+      }
+
       case DECIMAL | NUMERIC =>
-        rs.getBigDecimal(pos).toString
+        rs.getBigDecimal(pos) match {
+          case null => null
+          case x => x.toString
+        }
 
       case BIGINT | INTEGER | /* DECIMAL | NUMERIC | */ SMALLINT | TINYINT => rs.getLong(pos).toString
+
       case BIT | BOOLEAN => rs.getBoolean(pos).toString
 
       case VARCHAR | CHAR | CLOB | LONGVARCHAR => rs.getString(pos)
 
-      case DATE | TIME | TIMESTAMP => rs.getTimestamp(pos).toString
+      case DATE | TIME | TIMESTAMP => rs.getTimestamp(pos) match {
+        case null => null
+        case x => x.toString
+      }
 
       case DOUBLE | FLOAT | REAL => rs.getDouble(pos).toString
+    }
+  }
+
+  private def asAny(pos: Int, rs: ResultSet, md: ResultSetMetaData): Any = {
+    import _root_.java.sql.Types._
+    md.getColumnType(pos) match {
+      case ARRAY | BINARY | BLOB | DATALINK | DISTINCT | JAVA_OBJECT | LONGVARBINARY | NULL | OTHER | REF | STRUCT | VARBINARY => rs.getObject(pos)
+
+      case DECIMAL | NUMERIC => rs.getBigDecimal(pos)
+
+      case BIGINT | INTEGER | /* DECIMAL | NUMERIC | */ SMALLINT | TINYINT => rs.getLong(pos)
+
+      case BIT | BOOLEAN => rs.getBoolean(pos)
+
+      case VARCHAR | CHAR | CLOB | LONGVARCHAR => rs.getString(pos)
+
+      case DATE | TIME | TIMESTAMP => rs.getTimestamp(pos)
+
+      case DOUBLE | FLOAT | REAL => rs.getDouble(pos)
     }
   }
 
@@ -308,6 +334,21 @@ object DB {
 
     while (rs.next) {
       lb += cntList.map(i => asString(i, rs, md))
+    }
+
+    (colNames, lb.toList)
+  }
+
+  def resultSetToAny(rs: ResultSet): (List[String], List[List[Any]]) = {
+    val md = rs.getMetaData
+    val cnt = md.getColumnCount
+    val cntList = (1 to cnt).toList
+    val colNames = cntList.map(i => md.getColumnName(i))
+
+    val lb = new ListBuffer[List[Any]]()
+
+    while (rs.next) {
+      lb += cntList.map(i => asAny(i, rs, md))
     }
 
     (colNames, lb.toList)
@@ -354,11 +395,55 @@ object DB {
       })
   }
 
-  def runQuery(query: String): (List[String], List[List[String]]) = {
+  /**
+   * Executes the given parameterized query string with the given parameters.
+   * Parameters are substituted in order. For Date/Time types, passing a java.util.Date will result in a
+   * Timestamp parameter. If you want a specific SQL Date/Time type, use the corresponding
+   * java.sql.Date, java.sql.Time, or java.sql.Timestamp classes.
+   */
+  def performQuery(query: String, params: List[Any]): (List[String], List[List[Any]]) =
+  performQuery(query, params, DefaultConnectionIdentifier)
 
+  /**
+   * Executes the given parameterized query string with the given parameters.
+   * Parameters are substituted in order. For Date/Time types, passing a java.util.Date will result in a
+   * Timestamp parameter. If you want a specific SQL Date/Time type, use the corresponding
+   * java.sql.Date, java.sql.Time, or java.sql.Timestamp classes.
+   */
+  def performQuery(query: String, params: List[Any], connectionIdentifier: ConnectionIdentifier): (List[String], List[List[Any]]) = {
+    use(connectionIdentifier)(conn => prepareStatement(query, conn) {
+        ps =>
+        params.zipWithIndex.foreach {
+          case (null, idx) => ps.setNull(idx + 1, Types.VARCHAR)
+          case (i: Int, idx) => ps.setInt(idx + 1, i)
+          case (l: Long, idx) => ps.setLong(idx + 1, l)
+          case (d: Double, idx) => ps.setDouble(idx + 1, d)
+          case (f: Float, idx) => ps.setFloat(idx + 1, f)
+            // Allow the user to specify how they want the Date handled based on the input type
+          case (t: _root_.java.sql.Timestamp, idx) => ps.setTimestamp(idx + 1, t)
+          case (d: _root_.java.sql.Date, idx) => ps.setDate(idx + 1, d)
+          case (t: _root_.java.sql.Time, idx) => ps.setTime(idx + 1, t)
+            /* java.util.Date has to go last, since the java.sql date/time classes subclass it. By default we
+             * assume a Timestamp value */
+          case (d: _root_.java.util.Date, idx) => ps.setTimestamp(idx + 1, new _root_.java.sql.Timestamp(d.getTime))
+          case (b: Boolean, idx) => ps.setBoolean(idx + 1, b)
+          case (s: String, idx) => ps.setString(idx + 1, s)
+          case (bn: _root_.java.math.BigDecimal, idx) => ps.setBigDecimal(idx + 1, bn)
+          case (obj, idx) => ps.setObject(idx + 1, obj)
+        }
 
-    use(DefaultConnectionIdentifier)(conn => exec(conn, query)(resultSetTo))
+        resultSetToAny(ps.executeQuery)
+      })
   }
+
+
+  def runQuery(query: String): (List[String], List[List[String]]) =
+    use(DefaultConnectionIdentifier)(conn => exec(conn, query)(resultSetTo))
+
+
+  def performQuery(query: String): (List[String], List[List[Any]]) =
+    use(DefaultConnectionIdentifier)(conn => exec(conn, query)(resultSetToAny))
+
 
   def rollback(name: ConnectionIdentifier) = use(name)(conn => conn.rollback)
 

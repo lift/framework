@@ -54,14 +54,17 @@ abstract class MappedTime[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
 
   def dbFieldClass = classOf[Date]
 
-
   def toLong: Long = is match {
     case null => 0L
     case d: Date => d.getTime / 1000L
   }
 
   def asJsExp = JE.Num(toLong)
-  def asJsonValue: JsonAST.JValue = JsonAST.JInt(toLong)
+
+  def asJsonValue: JsonAST.JValue = is match {
+    case null => JsonAST.JNull
+    case x => JsonAST.JInt(x.getTime)
+  }
 
   /**
    * Get the JDBC SQL Type for this field
@@ -93,7 +96,8 @@ abstract class MappedTime[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
   }
 
   override def setFromAny(f : Any): Date = f match {
-    case JsonAST.JInt(v) => this.set(new Date(v.longValue))    
+    case JsonAST.JNull => this.set(null)
+    case JsonAST.JInt(v) => this.set(new Date(v.longValue))
     case f => toDate(f).map(d => this.set(d)).openOr(this.is)
   }
 

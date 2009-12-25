@@ -262,7 +262,23 @@ trait BindHelpers {
   }
 
   /**
-   * transforms a Box into a Text node
+   * Remove all the <head> tags, just leaving the child tags
+   */
+  def stripHead(in: NodeSeq): NodeSeq = {
+    import scala.xml.transform._
+
+    val rewrite = new RewriteRule {
+      override def transform(in: Node): Seq[Node] = in match {
+        case e: Elem if e.label == "head" && (e.namespace eq null) => this.transform(e.child)
+        case x => x
+      }
+    }
+
+    (new RuleTransformer(rewrite)).transform(in)
+  }
+
+  /**
+   *  transforms a Box into a Text node
    */
   object BindParamAssoc {
     implicit def canStrBoxNodeSeq(in: Box[Any]): Box[NodeSeq] = in.map(_ match {
@@ -608,9 +624,9 @@ trait BindHelpers {
   private def bindByNameType(b: String) = b == "input" || b == "select" || b == "button" || b == "a"
 
   // allow bind by name eg - <input name="namespace:tag"/>
-  private def bindByNameTag(namespace: String, elem: Elem) = 
+  private def bindByNameTag(namespace: String, elem: Elem) =
   attrStr(elem, "name").replaceAll(namespace+":","")
-  
+
 
   // mixin what comes from xhtml with what is programatically added
   private def bindByNameMixIn(bindParam: BindParam, s: Elem): NodeSeq = {

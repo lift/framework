@@ -74,15 +74,23 @@ object Flot
 
     // 27/06/2009 add style tag )See http://groups.google.com/group/liftweb/browse_thread/thread/5e0335583e2a248b?hl=en&pli=1)
 
+
+    renderHead() ++ Script(_renderJs(idPlaceholder, datas, options, script, caps :_*))
+  }
+
+    def renderHead(): NodeSeq = {
+    val ieExcanvasPackJs = Unparsed("<!--[if IE]><script language=\"javascript\" type=\"text/javascript\" src=\"" +
+                                    net.liftweb.http.S.contextPath + "/" +
+                                    LiftRules.resourceServerPath + "/flot/excanvas.pack.js\"></script><![endif]-->")
+
+    // 27/06/2009 add style tag )See http://groups.google.com/group/liftweb/browse_thread/thread/5e0335583e2a248b?hl=en&pli=1)
+
+
     <head>
       <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/flot/jquery.flot.js"}></script>
-      {ieExcanvasPackJs}
-      {
-        Script(_renderJs(idPlaceholder, datas, options, script, caps :_*))
-      }
+    {ieExcanvasPackJs}
       <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath + "/flot/jquery.flot.css"} type="text/css"/>
     </head>
-
   }
 
 
@@ -149,6 +157,8 @@ object Flot
 
   // generate Javascript inside "document ready" event
 
+  def callPlotFunction(idPlaceholder: String): JsCmd = JsRaw("flot_plot_"+idPlaceholder+"();")
+
   private def _renderJs (
     idPlaceholder : String,
       datas : List [FlotSerie],
@@ -156,12 +166,12 @@ object Flot
       script: JsCmd,
       caps : FlotCapability*): JsCmd = {
     renderVars (idPlaceholder, datas, options) &
-    OnLoad(
-      (datas match {
+    Function("flot_plot_"+idPlaceholder, Nil, (datas match {
           case Nil => renderFlotHide(idPlaceholder, caps : _*)
           case _ => renderFlotShow(idPlaceholder, datas, options, script,
                                    caps : _*)
-        }))
+        })) &
+    OnLoad(callPlotFunction(idPlaceholder))
 
 
   }

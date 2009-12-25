@@ -181,5 +181,19 @@ object BindHelpersSpec extends Specification with BindHelpers {
                      <input type="checkbox" name="F893599644556MN4" value="true"/>) ) must ==/(<t><input></input><input name="F893599644556MN4" type="checkbox" value="true" id="acceptTerms"></input></t>)
     }
   }
+
+  "head removal" should {
+    "remove <head>" in {
+      Helpers.stripHead(<head><i>hello</i></head>) must ==/(<i>hello</i>)
+    }
+
+    "ignore non-head" in {
+      Helpers.stripHead(<head3><i>hello</i></head3>) must ==/(<head3><i>hello</i></head3>)
+    }
+
+    "String subhead" in {
+      Helpers.stripHead(<head3><i><head>hello</head></i></head3>) must ==/(<head3><i>hello</i></head3>)
+    }
+  }
 }
 class BindHelpersTest extends JUnit4(BindHelpersSpec)

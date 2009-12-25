@@ -101,7 +101,10 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
   protected def i_is_! = data.get
   protected def i_was_! = orgData.get
 
-   def asJsonValue: JsonAST.JValue = JsonAST.JString(is)
+  def asJsonValue: JsonAST.JValue = is match {
+    case null => JsonAST.JNull
+    case str => JsonAST.JString(str)
+  }
 
   /**
    * Called after the field is saved to the database
@@ -131,6 +134,7 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
 
   override def setFromAny(in: Any): String = {
     in match {
+      case JsonAST.JNull => this.set(null) 
       case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny)(0)
       case (s: String) :: _ => this.set(s)
       case s :: _ => this.setFromAny(s)
@@ -203,7 +207,7 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
     case Nil => Nil
     case x :: _ => List(FieldError(this, Text(msg))) // issue 179
   }
-  
+
 
   /**
    * Make sure the field matches a regular expression

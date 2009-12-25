@@ -101,14 +101,14 @@ object TextileParser {
       Some(it)
     } getOrElse None
   }
-  
+
   import _root_.scala.util.parsing.input._
   import collection.mutable.ArrayBuffer
 
   private class MyReader(source: Array[Char], offset: Int, index: Array[Int]) extends CharArrayReader(source, offset) {
 
-    // private def calcIndex(source: Array[Char]): Array[Int] = 
-      
+    // private def calcIndex(source: Array[Char]): Array[Int] =
+
 
     def this(source: Array[Char], offset: Int) =
     this(source, offset, {
@@ -125,11 +125,11 @@ object TextileParser {
     override def rest: CharSequenceReader =
     if (offset < source.length) new MyReader(source, offset + 1, index)
     else this
-    
+
     /** The position of the first element in the reader
      */
     override lazy val pos: Position = new MyOffsetPosition(source, offset, index)
-	
+
     /** Returns an abstract reader consisting of all elements except the first
      *  <code>n</code> elements.
      */
@@ -138,7 +138,7 @@ object TextileParser {
 
   }
 
-  
+
   /** <p>
    *    <code>OffsetPosition</code> is a standard class for positions
    *    represented as offsets into a source ``document''.
@@ -159,10 +159,10 @@ object TextileParser {
       }
       lo + 1
     }
-    
+
     /** The column number referred to by the position; column numbers start at 1 */
     lazy val column: Int = offset - index(line - 1) + 1
-    
+
     /** The contents of the line numbered `lnum' (must not contain a new-line character).
      *
      * @param lnum a 1-based integer index into the `document'
@@ -170,10 +170,10 @@ object TextileParser {
      */
     def lineContents: String =
     source.subSequence(index(line - 1), index(line)).toString
-    
+
     /** Returns a string representation of the `Position', of the form `line.column' */
     override def toString = line+"."+column
-    
+
     /** Compare this position to another, by first comparing their line numbers,
      * and then -- if necessary -- using the columns to break a tie.
      *
@@ -582,7 +582,7 @@ object TextileParser {
                                                       reduceCharBlocks(ln))
         val t2 = new ~(t1, attrs)
         new ~(t2, Nil)
-        
+
     }
 
 
@@ -675,9 +675,9 @@ object TextileParser {
               case _ => false
             }
             ret += CharBlock(sb.toString)
-	    
+
             rcb(rest)
-	    
+
           case x :: xs =>
             ret += x; rcb(xs)
         }
@@ -710,8 +710,9 @@ object TextileParser {
 
     lazy val first_paraAttrs : Parser[TableDef] = beginlS ~> 'p' ~> rep(para_attribute) <~ '.' ^^ TableDef
 
-    lazy val normPara : Parser[Textile] = opt(first_paraAttrs) ~ rep1(not_blank_line) ~ blankLine ^^ {
-      case td ~ fp ~ _ => Paragraph(reduceCharBlocks(fp), td.map(_.attrs) getOrElse(Nil))}
+    lazy val normPara : Parser[Textile] = opt(first_paraAttrs) ~ rep1(bullet(0, false) | bullet(0, true) | not_blank_line) ~ blankLine ^^ {
+      case td ~ fp ~ _ => Paragraph(reduceCharBlocks(fp), td.map(_.attrs) getOrElse(Nil))
+    }
 
     lazy val table_attribute = para_attribute | row_span | col_span
 
