@@ -23,33 +23,36 @@
 
   <bannerLeft>
     <name>${project.name}</name>
-    <href>http://liftweb.net/</href>
-    <src>http://liftweb.net/liftlogo.png</src>
+    <href>${project.organization.url}</href>
+    <!--<src>http://liftweb.net/liftlogo.png</src>-->
   </bannerLeft>
-  <bannerRight>
-    <name>Scala-lang</name>
-    <href>http://www.scala-lang.org/</href>
-    <src>http://www.scala-lang.org/images/scala_logo.png</src>
-  </bannerRight>
-  <publishDate position="left" format="yyyy-MM-dd HH:mm" />
-  <version position="left" />
-  <poweredBy>
-    <logo name="Build with Maven 2" href="http://maven.apache.org" img="images/logos/maven-feather.png" />
-    <logo name="Scala-lang" href="http://www.scala-lang.org" img="images/logos/scala-lang.png" />
-  </poweredBy>
+  <!--<bannerRight>-->
+    <!--<name>Scala-lang</name>-->
+    <!--<href>http://www.scala-lang.org/</href>-->
+    <!--<src>http://www.scala-lang.org/images/scala_logo.png</src>-->
+  <!--</bannerRight>-->
+  <publishDate format="yyyy-MM-dd HH:mm" position="right" />
+  <version position="right" />
+  <!--<poweredBy>-->
+    <!--<logo name="Built by Maven" href="http://maven.apache.org" img="images/logos/build-by-maven-white.png" />-->
+    <!--<logo name="Scala-lang" href="http://www.scala-lang.org" img="images/logos/scala-lang.png" />-->
+  <!--</poweredBy>-->
   <skin>
-    <!--<groupId>net.liftweb</groupId>-->
-    <!--<artifactId>lift-site-skin</artifactId>-->
-    <!--<version>2.0-SNAPSHOT</version>-->
-    <groupId>org.scala-tools.skins</groupId>
-    <artifactId>scala-skin-simple</artifactId>
-    <version>1.0</version>
+    <groupId>net.liftweb</groupId>
+    <artifactId>lift-site-skin</artifactId>
+    <version>2.0-SNAPSHOT</version>
   </skin>
 
   <body>
-    <menu ref="parent" />
-    <menu ref="modules" />
-    <menu ref="reports" />
+    <!--<head/>-->
+
+    <breadcrumbs>
+      <item name="${project.name}" href="${project.url}" />
+    </breadcrumbs>
+
+    <!--<menu ref="parent" inherit="top" />-->
+    <menu ref="modules" inherit="top" />
+    <menu ref="reports" inherit="bottom" />
   </body>
 
 </project>
