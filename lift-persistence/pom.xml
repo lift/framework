@@ -18,8 +18,8 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
 
   <!--
@@ -98,6 +98,32 @@
   <!--
     ~ Reporting Settings
   -->
-  <!-- <reporting/> -->
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <!--<report>cim</report>-->
+              <report>dependencies</report>
+              <report>dependency-convergence</report>
+              <!--<report>dependency-management</report>-->
+              <report>index</report>
+              <!--<report>issue-tracking</report>-->
+              <!--<report>license</report>-->
+              <!--<report>mailing-list</report>-->
+              <!--<report>plugin-management</report>-->
+              <report>plugins</report>
+              <!--<report>project-team</report>-->
+              <!--<report>scm</report>-->
+              <report>summary</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+    </plugins>
+  </reporting>
 
 </project>

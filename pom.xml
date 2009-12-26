@@ -225,43 +225,22 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-project-info-reports-plugin</artifactId>
-        <version>2.1.2</version>
+        <artifactId>maven-changes-plugin</artifactId>
+        <version>2.3</version>
+        <inherited>false</inherited>
+        <configuration>
+          <filteringChanges>true</filteringChanges>
+          <issueLinkTemplatePerSystem>
+            <github>%URL%/%ISSUE%/find</github>
+          </issueLinkTemplatePerSystem>
+        </configuration>
         <reportSets>
           <reportSet>
             <reports>
-              <report>cim</report>
-              <report>dependencies</report>
-              <report>dependency-convergence</report>
-              <!--<report>dependency-management</report>-->
-              <report>index</report>
-              <report>issue-tracking</report>
-              <report>license</report>
-              <report>mailing-list</report>
-              <!--<report>plugin-management</report>-->
-              <report>plugins</report>
-              <report>project-team</report>
-              <report>scm</report>
-              <report>summary</report>
+              <report>changes-report</report>
             </reports>
           </reportSet>
         </reportSets>
-      </plugin>
-      <plugin>
-        <groupId>org.scala-tools</groupId>
-        <artifactId>maven-scala-plugin</artifactId>
-        <version>2.12.2</version>
-        <configuration>
-          <charset>${project.build.sourceEncoding}</charset>
-          <!--<bottom>Copyright &#169; {inceptionYear}-{currentYear} {organizationName}. All Rights Reserved.</bottom>-->
-          <jvmArgs>
-            <jvmArg>-Xmx1024m</jvmArg>
-            <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
-          </jvmArgs>
-          <args>
-            <arg>-Xno-varargs-conversion</arg>
-          </args>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -292,19 +271,25 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-changes-plugin</artifactId>
-        <version>2.3</version>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>2.1.2</version>
         <inherited>false</inherited>
-        <configuration>
-          <filteringChanges>true</filteringChanges>
-          <issueLinkTemplatePerSystem>
-            <github>%URL%/%ISSUE%/find</github>
-          </issueLinkTemplatePerSystem>
-        </configuration>
         <reportSets>
           <reportSet>
             <reports>
-              <report>changes-report</report>
+              <report>cim</report>
+              <report>dependencies</report>
+              <report>dependency-convergence</report>
+              <!--<report>dependency-management</report>-->
+              <report>index</report>
+              <report>issue-tracking</report>
+              <report>license</report>
+              <report>mailing-list</report>
+              <!--<report>plugin-management</report>-->
+              <report>plugins</report>
+              <report>project-team</report>
+              <report>scm</report>
+              <report>summary</report>
             </reports>
           </reportSet>
         </reportSets>
@@ -320,6 +305,22 @@
             </reports>
           </reportSet>
         </reportSets>
+      </plugin>
+      <plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+        <version>2.13.1</version>
+        <configuration>
+          <charset>${project.build.sourceEncoding}</charset>
+          <!--<bottom>Copyright &#169; {inceptionYear}-{currentYear} {organizationName}. All Rights Reserved.</bottom>-->
+          <jvmArgs>
+            <jvmArg>-Xmx1024m</jvmArg>
+            <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
+          </jvmArgs>
+          <args>
+            <arg>-Xno-varargs-conversion</arg>
+          </args>
+        </configuration>
       </plugin>
     </plugins>
   </reporting>
