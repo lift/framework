@@ -18,8 +18,8 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
 
   <!--
@@ -32,13 +32,16 @@
   </parent>
   <artifactId>lift-widgets</artifactId>
 
-  <!-- <properties/> -->
-
   <!--
     ~ More Project Information
   -->
   <name>Lift Widgets</name>
   <description>A Set of Widgets to use in a lift's webapp</description>
+
+  <!--
+    ~ Environment Settings
+  -->
+  <!-- <properties/> -->
 
   <!--
     ~ Dependency Settings

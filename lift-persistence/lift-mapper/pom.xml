@@ -18,8 +18,8 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
 
   <!--
@@ -32,8 +32,6 @@
   </parent>
   <artifactId>lift-mapper</artifactId>
 
-  <!-- <properties/> -->
-
   <!--
     ~ More Project Information
   -->
@@ -43,17 +41,20 @@
   </description>
 
   <!--
+    ~ Environment Settings
+  -->
+  <!-- <properties/> -->
+
+  <!--
     ~ Dependency Settings
   -->
   <dependencies>
     <dependency>
-      <!-- need net.liftweb.util net.liftweb.http-->
       <groupId>${project.groupId}</groupId>
       <artifactId>lift-webkit</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <!-- need net.liftweb.util net.liftweb.http-->
       <groupId>${project.groupId}</groupId>
       <artifactId>lift-json</artifactId>
       <version>${project.version}</version>
@@ -129,10 +130,7 @@
   <!--
     ~ Build Settings
   -->
-  <build>
-    <plugins>
-    </plugins>
-  </build>
+  <!-- <build/> -->
 
   <!--
     ~ Reporting Settings

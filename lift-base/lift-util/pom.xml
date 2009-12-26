@@ -18,8 +18,8 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
 
   <!--
@@ -32,8 +32,6 @@
   </parent>
   <artifactId>lift-util</artifactId>
 
-  <!-- <properties/> -->
-
   <!--
     ~ More Project Information
   -->
@@ -41,6 +39,11 @@
   <description>
     Basic Utilities that underly the Lift Web Framework
   </description>
+
+  <!--
+    ~ Environment Settings
+  -->
+  <!-- <properties/> -->
 
   <!--
     ~ Dependency Settings
@@ -71,14 +74,12 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
-      <!-- <version>1.4.2</version> -->
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
       <version>${slf4j.version}</version>
-      <!-- <version>1.4.2</version> -->
       <scope>test</scope>
     </dependency>
   </dependencies>

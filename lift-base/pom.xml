@@ -37,8 +37,6 @@
   <artifactId>lift-base</artifactId>
   <packaging>pom</packaging>
 
-  <!-- <properties/> -->
-
   <!--
     ~ More Project Information
   -->
@@ -50,7 +48,7 @@
   <!--
     ~ Environment Settings
   -->
-  <!-- <scm/> -->
+  <!-- <properties/> -->
 
   <!--
     ~ Dependency Settings
@@ -71,7 +69,6 @@
       <artifactId>scalacheck</artifactId>
       <scope>test</scope>
     </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
