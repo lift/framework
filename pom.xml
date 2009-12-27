@@ -59,12 +59,20 @@
   -->
   <ciManagement>
     <system>hudson</system>
-    <url>http://hudson.scala-tools.org/job/LiftFramework/</url>
+    <url>http://hudson.scala-tools.org/job/lift-framework/</url>
     <notifiers>
       <!-- TODO: Configure-->
       <notifier/>
     </notifiers>
   </ciManagement>
+  <distributionManagement>
+    <site>
+      <id>scala-tools.dist.site</id>
+      <!-- dav protocol isn't optimized for site-deploy (very long for api) -->
+      <!--url>dav:http://dav.scala-tools.org/mvnsites/liftweb</url-->
+      <url>file://${user.home}/.m2/mvnsites/liftweb/framework</url>
+    </site>
+  </distributionManagement>
   <properties>
     <!-- vscaladoc settings -->
     <maven.scaladoc.vscaladocVersion>1.2-SNAPSHOT</maven.scaladoc.vscaladocVersion>
@@ -341,7 +349,20 @@
       </build>
     </profile>
     <profile>
-      <id>release</id>
+      <id>lift-hudson</id>
+      <properties>
+        <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites-snapshots/liftweb</vscaladoc.links.liftweb.baseurl>
+        <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
+      </properties>
+      <distributionManagement>
+        <site>
+          <id>nexus.scala-tools.org</id>
+          <url>file:///home/scala-tools.org/www/mvnsites-snapshots/liftweb</url>
+        </site>
+      </distributionManagement>
+    </profile>
+    <profile>
+      <id>lift-release</id>
       <properties>
         <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites/liftweb</vscaladoc.links.liftweb.baseurl>
         <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
@@ -370,27 +391,6 @@
         </plugins>
       </build>
       -->
-      <distributionManagement>
-        <site>
-          <id>scala-tools.dist.site</id>
-          <!-- dav protocol isn't optimized for site-deploy (very long for api) -->
-          <!--url>dav:http://dav.scala-tools.org/mvnsites/liftweb</url-->
-          <url>file://${user.home}/.m2/mvnsites/liftweb</url>
-        </site>
-      </distributionManagement>
-    </profile>
-    <profile>
-      <id>hudson</id>
-      <properties>
-        <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites-snapshots/liftweb</vscaladoc.links.liftweb.baseurl>
-        <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
-      </properties>
-      <distributionManagement>
-        <site>
-          <id>nexus.scala-tools.org</id>
-          <url>file:///home/scala-tools.org/www/mvnsites-snapshots/liftweb</url>
-        </site>
-      </distributionManagement>
     </profile>
   </profiles>
 
