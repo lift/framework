@@ -46,6 +46,15 @@
   </description>
 
   <!--
+    ~ Modules Setting
+  -->
+  <modules>
+    <module>lift-mapper</module>
+    <module>lift-jpa</module>
+    <module>lift-record</module>
+  </modules>
+
+  <!--
     ~ Environment Settings
   -->
   <!-- <properties/> -->
@@ -75,15 +84,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <!--
-    ~ Modules Setting
-  -->
-  <modules>
-    <module>lift-mapper</module>
-    <module>lift-jpa</module>
-    <module>lift-record</module>
-  </modules>
 
   <!--
     ~ Build Settings

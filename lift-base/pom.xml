@@ -46,6 +46,17 @@
   </description>
 
   <!--
+    ~ Modules Setting
+  -->
+  <modules>
+    <module>lift-common</module>
+    <module>lift-actor</module>
+    <module>lift-json</module>
+    <module>lift-util</module>
+    <module>lift-webkit</module>
+  </modules>
+
+  <!--
     ~ Environment Settings
   -->
   <!-- <properties/> -->
@@ -75,17 +86,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <!--
-    ~ Modules Setting
-  -->
-  <modules>
-    <module>lift-common</module>
-    <module>lift-actor</module>
-    <module>lift-json</module>
-    <module>lift-util</module>
-    <module>lift-webkit</module>
-  </modules>
 
   <!--
     ~ Build Settings

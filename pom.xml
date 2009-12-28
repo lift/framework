@@ -55,6 +55,18 @@
   </description>
 
   <!--
+    ~ Module Settings
+  -->
+  <modules>
+    <module>lift-base</module>
+    <module>lift-persistence</module>
+    <module>lift-modules</module>
+
+    <!-- the 'meta' module -->
+    <module>lift-core</module>
+  </modules>
+
+  <!--
     ~ Environment Settings
   -->
   <ciManagement>
@@ -90,18 +102,6 @@
   <!--<dependencyManagement />-->
   <!-- Dependencies omitted, each project must provide their own -->
   <!--<dependencies />-->
-
-  <!--
-    ~ Module Settings
-  -->
-  <modules>
-    <module>lift-base</module>
-    <module>lift-persistence</module>
-    <module>lift-modules</module>
-
-    <!-- the 'meta' module -->
-    <module>lift-core</module>
-  </modules>
 
   <!--
     ~ Build Settings

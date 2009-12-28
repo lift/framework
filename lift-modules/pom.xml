@@ -46,6 +46,25 @@
   </description>
 
   <!--
+    ~ Modules Setting
+  -->
+  <modules>
+    <module>lift-testkit</module>
+    <module>lift-osgi</module>
+    <module>lift-wizard</module>
+    <module>lift-widgets</module>
+    <module>lift-machine</module>
+    <module>lift-textile</module>
+    <module>lift-facebook</module>
+    <module>lift-amqp</module>
+    <module>lift-xmpp</module>
+    <module>lift-openid</module>
+    <module>lift-oauth</module>
+    <module>lift-paypal</module>
+    <module>lift-jta</module>
+  </modules>
+
+  <!--
     ~ Environment Settings
   -->
   <!-- <properties/> -->
@@ -75,25 +94,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <!--
-    ~ Modules Setting
-  -->
-  <modules>
-    <module>lift-testkit</module>
-    <module>lift-osgi</module>
-    <module>lift-wizard</module>
-    <module>lift-widgets</module>
-    <module>lift-machine</module>
-    <module>lift-textile</module>
-    <module>lift-facebook</module>
-    <module>lift-amqp</module>
-    <module>lift-xmpp</module>
-    <module>lift-openid</module>
-    <module>lift-oauth</module>
-    <module>lift-paypal</module>
-    <module>lift-jta</module>
-  </modules>
 
   <!--
     ~ Build Settings
