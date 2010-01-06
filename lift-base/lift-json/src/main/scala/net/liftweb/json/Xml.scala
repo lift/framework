@@ -16,10 +16,66 @@ package net.liftweb.json
  * and limitations under the License.
  */
 
+/** Functions to convert between JSON and XML.
+ */
 object Xml {
   import JsonAST._
   import scala.xml._
 
+  /** Convert given XML to JSON.
+   * <p>
+   * Following rules are used in conversion.
+   * <ul>
+   *   <li>XML leaf element is converted to JSON string</li>
+   *   <li>XML parent element is converted to JSON object and its children to JSON fields</li>
+   *   <li>XML elements with same name at same level are converted to JSON array</li>
+   *   <li>XML attributes are converted to JSON fields</li>
+   * </ul>
+   * <p>
+   * Example:<pre>
+   * scala> val xml =
+   *     &lt;users&gt;
+   *       &lt;user&gt;
+   *         &lt;id&gt;1&lt;/id&gt;
+   *         &lt;name&gt;Harry&lt;/name&gt;
+   *       &lt;/user&gt;
+   *       &lt;user&gt;
+   *         &lt;id&gt;2&lt;/id&gt;
+   *         &lt;name&gt;David&lt;/name&gt;
+   *       &lt;/user&gt;
+   *     &lt;/users&gt;   
+   *
+   * scala> val json = toJson(xml)
+   * scala> pretty(render(json))
+   * 
+   * {
+   *   "users":{
+   *     "user":[{
+   *       "id":"1",
+   *       "name":"Harry"
+   *     },{
+   *       "id":"2",
+   *       "name":"David"
+   *     }]
+   *   }
+   * }
+   * </pre>
+   *
+   * Now, the above example has two problems. First, the id is converted to String while
+   * we might want it as an Int. This is easy to fix by mapping JString(s) to JInt(s.toInt).
+   * The second problem is more subtle. The conversion function decides to use JSON array
+   * because there's more than one user-element in XML. Therefore a structurally equivalent
+   * XML document which happens to have just one user-element will generate a JSON document
+   * without JSON array. This is rarely a desired outcome. These both problems can be fixed
+   * by following map function.
+   * <pre>
+   * json map {
+   *   case JField("id", JString(s)) => JField("id", JInt(s.toInt))
+   *   case JField("user", x: JObject) => JField("user", JArray(x :: Nil))
+   *   case x => x 
+   * }
+   * </pre>
+   */
   def toJson(xml: NodeSeq): JValue = {
     def empty_?(node: Node) = node.child.isEmpty
 
@@ -72,6 +128,25 @@ object Xml {
     }
   }
 
+  /** Convert given JSON to XML.
+   * <p>
+   * Following rules are used in conversion.
+   * <ul>
+   *   <li>JSON primitives are converted to XML leaf elements</li>
+   *   <li>JSON objects are converted to XML elements</li>
+   *   <li>JSON arrays are recursively converted to XML elements</li>
+   * </ul>
+   * <p>
+   * Use <code>map</code> function to preprocess JSON before conversion to adjust
+   * the end result. For instance a common conversion is to encode arrays as comma
+   * separated Strings since XML does not have array type.
+   * <p><pre>
+   * toXml(json map {
+   *   case JField("nums",JArray(ns)) => JField("nums",JString(ns.map(_.values).mkString(",")))
+   *   case x => x
+   * })
+   * </pre>
+   */
   def toXml(json: JValue): NodeSeq = {
     def toXml(name: String, json: JValue): NodeSeq = json match {
       case JObject(fields) => new XmlNode(name, fields flatMap { f => toXml(f.name, f.value) })

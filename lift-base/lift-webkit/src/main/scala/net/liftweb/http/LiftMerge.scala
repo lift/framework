@@ -80,7 +80,7 @@ private[http] trait LiftMerge {
     val rewrite = URLRewriter.rewriteFunc
     val fixHref = Req.fixHref
 
-    val contextPath: String = this.contextPath
+    val contextPath: String = S.contextPath
 
     def fixAttrs(original: MetaData, toFix: String, attrs: MetaData, fixURL: Boolean): MetaData = attrs match {
       case Null => Null

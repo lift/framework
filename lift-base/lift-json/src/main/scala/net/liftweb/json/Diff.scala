@@ -18,6 +18,11 @@ package net.liftweb.json
 
 import JsonAST._
 
+/** A difference between two JSONs (j1 diff j2). 
+ * @param changed what has changed from j1 to j2
+ * @param added what has been added to j2
+ * @param deleted what has been deleted from j1
+ */
 case class Diff(changed: JValue, added: JValue, deleted: JValue) {
   def map(f: JValue => JValue): Diff = {
     def applyTo(x: JValue) = x match {
@@ -28,7 +33,18 @@ case class Diff(changed: JValue, added: JValue, deleted: JValue) {
   }
 }
 
+/** Computes a diff between two JSONs.
+ */
 object Diff {
+  /** Return a diff.
+   * <p>
+   * Example:<pre>
+   * val Diff(c, a, d) = ("name", "joe") ~ ("age", 10) diff ("fname", "joe") ~ ("age", 11)
+   * c = JObject(JField("age",JInt(11)) :: Nil)
+   * a = JObject(JField("fname",JString("joe")) :: Nil)
+   * d = JObject(JField("name",JString("joe")) :: Nil)
+   * </pre>
+   */
   def diff(val1: JValue, val2: JValue): Diff = (val1, val2) match {
     case (x, y) if x == y => Diff(JNothing, JNothing, JNothing)
     case (JObject(xs), JObject(ys)) => diffFields(xs, ys)
@@ -76,6 +92,9 @@ object Diff {
   }
 
   private[json] trait Diffable { this: JValue =>
+    /** Return a diff.
+     * @see net.liftweb.json.Diff#diff
+     */
     def diff(other: JValue) = Diff.diff(this, other)
   }
 }

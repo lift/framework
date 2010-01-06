@@ -16,9 +16,18 @@ package net.liftweb.json
  * and limitations under the License.
  */
 
+/** Function to merge two JSONs.
+ */
 object Merge {
   import JsonAST._
-
+  
+  /** Return merged JSON.
+   * <p>
+   * Example:<pre>
+   * val m = ("name", "joe") ~ ("age", 10) merge ("name", "joe") ~ ("iq", 105)
+   * m: JObject(List(JField(name,JString(joe)), JField(age,JInt(10)), JField(iq,JInt(105))))
+   * </pre>
+   */
   def merge(val1: JValue, val2: JValue): JValue = (val1, val2) match {
     case (JObject(xs), JObject(ys)) => JObject(mergeFields(xs, ys))
     case (JArray(xs), JArray(ys)) => JArray(mergeVals(xs, ys))
@@ -54,6 +63,9 @@ object Merge {
   }
 
   private[json] trait Mergeable { this: JValue =>
+    /** Return merged JSON.
+     * @see net.liftweb.json.Merge#merge
+     */
     def merge(other: JValue): JValue = Merge.merge(this, other)
   }
 }

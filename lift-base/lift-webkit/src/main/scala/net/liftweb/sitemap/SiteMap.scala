@@ -97,6 +97,13 @@ object SiteMap {
   def buildLink(name: String): NodeSeq = buildLink(name, Nil)
 
   def apply(kids: Menu *) = new SiteMap(Nil, kids :_*)
+
+  /**
+   * Should the top level /index path be rendered as /  By default this value is false.
+   * You may set it to true, but this may confuse some application servers when the application
+   * is not running in the root context.
+   */
+  @volatile var rawIndex_? = false
 }
 
 trait HasKids {

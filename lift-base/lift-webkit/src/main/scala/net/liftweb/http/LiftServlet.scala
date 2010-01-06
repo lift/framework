@@ -68,7 +68,11 @@ class LiftServlet {
   def service(req: Req, resp: HTTPResponse): Boolean = {
     try {
       def doIt: Boolean = {
-        logTime("Service request (" + req.request.method + ") " + req.request.uri) {
+        if (LiftRules.logServiceRequestTiming) {
+          logTime("Service request (" + req.request.method + ") " + req.request.uri) {
+            doService(req, resp)
+          }
+        } else {
           doService(req, resp)
         }
       }

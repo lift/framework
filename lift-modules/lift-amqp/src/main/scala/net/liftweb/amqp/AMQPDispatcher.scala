@@ -55,43 +55,41 @@ abstract class AMQPDispatcher[T](cf: ConnectionFactory, host: String, port: Int)
    * Override this to configure the Channel and Consumer.
    */
   def configure(channel: Channel)
-
+  
   private val reconnectTimer = new Timer("AMQPReconnectTimer")
-
+  
   protected def messageHandler = {
     case AMQPAddListener(a) => as ::= a
-
     case msg@AMQPMessage(t) => as.foreach(_ ! msg)
-
     case AMQPReconnect(delay: Long) => 
       try {
-	val details = connect()
-	conn = details._1
-	channel = details._2
-	println("AMQPDispatcher: Successfully reconnected to AMQP Server")
+        val details = connect()
+        conn = details._1
+        channel = details._2
+        println("AMQPDispatcher: Successfully reconnected to AMQP Server")
       } catch {
-	// Attempts to reconnect again using geometric back-off.
-	case e: Exception => {
-	  val amqp = this
-	  println("AMQPDispatcher: Will attempt reconnect again in " + (delay * 2) + "ms.")
-	  reconnectTimer.schedule(new TimerTask() {
-	    override def run = {
-	      amqp ! AMQPReconnect(delay * 2)
-	    }}, delay)
-	}
+        // Attempts to reconnect again using geometric back-off.
+        case e: Exception => {
+          val amqp = this
+          println("AMQPDispatcher: Will attempt reconnect again in " + (delay * 2) + "ms.")
+          reconnectTimer.schedule(new TimerTask(){
+            override def run = {
+              amqp ! AMQPReconnect(delay * 2)
+            }
+          }, delay)
+        }
       }
-
       case _ => 
   }
 }
 
 /**
- *
+ * Example consumer on an AMQP channel.
  */
 class SerializedConsumer[T](channel: Channel, a: LiftActor) extends DefaultConsumer(channel) {
   override def handleDelivery(tag: String, env: Envelope, props: AMQP.BasicProperties, body: Array[Byte]) {
     val routingKey = env.getRoutingKey
-    val contentType = props.contentType
+    val contentType = props.getContentType
     val deliveryTag = env.getDeliveryTag
     val in = new ObjectInputStream(new ByteArrayInputStream(body))
     val t = in.readObject.asInstanceOf[T];
@@ -109,14 +107,12 @@ class SerializedConsumer[T](channel: Channel, a: LiftActor) extends DefaultConsu
 class ExampleSerializedAMQPDispatcher[T](factory: ConnectionFactory, host: String, port: Int)
     extends AMQPDispatcher[T](factory, host, port) {
   override def configure(channel: Channel) {
-    // Get the ticket.
-    val ticket = channel.accessRequest("/data")
     // Set up the exchange and queue
-    channel.exchangeDeclare(ticket, "mult", "direct")
-    channel.queueDeclare(ticket, "mult_queue")
-    channel.queueBind(ticket, "mult_queue", "mult", "routeroute")
+    channel.exchangeDeclare("mult", "direct")
+    channel.queueDeclare("mult_queue")
+    channel.queueBind("mult_queue", "mult", "routeroute")
     // Use the short version of the basicConsume method for convenience.
-    channel.basicConsume(ticket, "mult_queue", false, new SerializedConsumer(channel, this))
+    channel.basicConsume("mult_queue", false, new SerializedConsumer(channel, this))
   }
 }
 

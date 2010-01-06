@@ -103,7 +103,7 @@ trait Loc[T] {
     }
 
     val singles = (
-      allParams.flatMap{ case v: Loc.Snippet => Some(v);     case _ => None }.toList.map(buildPF) ::: 
+      allParams.flatMap{ case v: Loc.Snippet => Some(v);     case _ => None }.toList.map(buildPF) :::
       allParams.flatMap{ case v: Loc.LocSnippets => Some(v); case _ => None }.toList
     )
 
@@ -190,15 +190,15 @@ trait Loc[T] {
    * The first Loc.Template or Loc.ValueTemplate in the param list.
    */
   def paramTemplate: Box[NodeSeq] =
-    allParams.flatMap { 
-      case Loc.Template(f) => Some(f()); 
-      case Loc.ValueTemplate(f) => Some(f(currentValue)); 
-      case _ => None 
+    allParams.flatMap {
+      case Loc.Template(f) => Some(f());
+      case Loc.ValueTemplate(f) => Some(f(currentValue));
+      case _ => None
     }.firstOption
 
   /**
-   * The template assocaited with this Loc, if any. Any Loc.Template 
-   * or Loc.ValueTemplate parameter will take precedence over a value returned 
+   * The template assocaited with this Loc, if any. Any Loc.Template
+   * or Loc.ValueTemplate parameter will take precedence over a value returned
    * by the calcTemplate method.
    */
   def template: Box[NodeSeq] = paramTemplate or calcTemplate
@@ -206,10 +206,10 @@ trait Loc[T] {
   /**
    * The first Loc.Title in the param list.
    */
-  lazy val paramTitle: Box[T => NodeSeq] = 
-    allParams.flatMap { 
-      case Loc.Title(f) => Some(f); 
-      case _ => None 
+  lazy val paramTitle: Box[T => NodeSeq] =
+    allParams.flatMap {
+      case Loc.Title(f) => Some(f);
+      case _ => None
     }.firstOption
 
   /**
@@ -217,7 +217,7 @@ trait Loc[T] {
    * Any Loc.Title parameter will take precedence over the
    * value returned by the linkText method.
    */
-  def title(in: T): NodeSeq = paramTitle.map(_.apply(in)) openOr linkText(in) 
+  def title(in: T): NodeSeq = paramTitle.map(_.apply(in)) openOr linkText(in)
 
   /**
    * The title of the location given the current value associated with this Loc.
@@ -268,11 +268,11 @@ trait Loc[T] {
     kids.toList.flatMap(_.loc.buildItem(Nil, false, false)) ::: supplimentalKidMenuItems
   }
 
-  def supplimentalKidMenuItems: List[MenuItem] = 
-    for (p <- childValues; l <- link.createLink(p)) 
+  def supplimentalKidMenuItems: List[MenuItem] =
+    for (p <- childValues; l <- link.createLink(p))
       yield MenuItem(
-        text.text(p), 
-        l, Nil, false, false,  
+        text.text(p),
+        l, Nil, false, false,
         allParams.flatMap {
           case v: Loc.LocInfo[_] => List(v())
           case _ => Nil
@@ -283,7 +283,7 @@ trait Loc[T] {
     CompleteMenu(_menu.buildUpperLines(_menu, _menu, buildKidMenuItems(_menu.kids)))
   }
 
-  private[liftweb] def buildItem(kids: List[MenuItem], current: Boolean, path: Boolean): Box[MenuItem] = 
+  private[liftweb] def buildItem(kids: List[MenuItem], current: Boolean, path: Boolean): Box[MenuItem] =
     (calcHidden(kids), testAccess) match {
       case (false, Left(true)) => {
           for {p <- (overrideValue or requestValue.is or defaultValue)
@@ -294,7 +294,7 @@ trait Loc[T] {
             allParams.flatMap {
               case v: Loc.LocInfo[_] => List(v())
               case _ => Nil
-            }, 
+            },
             placeHolder_?
           )
         }
@@ -308,7 +308,7 @@ trait Loc[T] {
 
   def hidden = _hidden
 
-  private lazy val groupSet: Set[String] = 
+  private lazy val groupSet: Set[String] =
     Set(allParams.flatMap{case s: Loc.LocGroup => s.group case _ => Nil} :_*)
 
   def inGroup_?(group: String): Boolean = groupSet.contains(group)
@@ -316,7 +316,7 @@ trait Loc[T] {
   def init() {
     params.foreach(_ onCreate(this))
   }
-  
+
 }
 
 
@@ -339,7 +339,7 @@ object Loc {
   def apply(name: String, link: Link[Unit], text: LinkText[Unit], params: List[LocParam[Unit]]): Loc[Unit] = UnitLoc(name, link, text, params)
 
   private case class UnitLoc(
-    override val name: String, 
+    override val name: String,
     override val link: Link[Unit],
     override val text: LinkText[Unit],
     override val params: List[LocParam[Unit]]
@@ -357,7 +357,7 @@ object Loc {
     xparams: LocParam[T]*
   ) extends Loc[T] {
     override val params = xparams.toList
- 
+
     init()
   }
 
@@ -365,7 +365,7 @@ object Loc {
   /**
    * Algebraic data type for parameters that modify handling of a Loc
    * in a SiteMap
-   */ 
+   */
   sealed trait LocParam[-T] {
     def onCreate(loc: Loc[_]){
     }
@@ -373,7 +373,7 @@ object Loc {
 
   /**
    * A type alias for LocParam instances that are applicable to any Loc
-   */ 
+   */
   type AnyLocParam = LocParam[Any]
 
   /**
@@ -382,7 +382,7 @@ object Loc {
    * can access it.
    */
   case class HttpAuthProtected(role: () => Box[Role]) extends AnyLocParam {
-    
+
     override def onCreate(loc: Loc[_]) {
       LiftRules.httpAuthProtectedResource.append(
         new LiftRules.HttpAuthProtectedResourcePF() {
@@ -492,10 +492,10 @@ object Loc {
    * children (implies HideIfNoKids)
    */
   case object PlaceHolder extends AnyLocParam
-  
+
   /**
    * Extension point for user-defined LocParam instances.
-   */ 
+   */
   trait UserLocParam[-T] extends LocParam[T]
 
   /**
@@ -551,11 +551,13 @@ object Loc {
      * Creates a string representation of the path to the Loc.
      */
     def createPath(value: T): String = {
-      val path = pathList(value)
+      val path: List[String] = pathList(value)
 
       if (matchHead_?) {
         path.mkString("/", "/", "/")
-      } else if (path.last == "index" && path.length > 1) {
+      } else if (SiteMap.rawIndex_? && path == List("index")) {
+        "/"
+      } else if (path.length > 1 && path.last == "index") {
         path.dropRight(1).mkString("/", "/", "/")
       } else {
         path.mkString("/", "/", "")

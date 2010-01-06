@@ -89,17 +89,21 @@ object Menu extends DispatchSnippet {
     val innerTag: String = S.attr("inner_tag") openOr "li"
     val expandAll = S.attr("expandAll").isDefined
 
-    val toRender : Seq[MenuItem] = (S.attr("item"), S.attr("group")) match {
-      case (Full(item),_) =>
-        for {
+    val expandAny: Boolean = (for (e <- S.attr("expand")) yield Helpers.toBoolean(e)) openOr false
+
+    val level: Box[Int] = for (lvs <- S.attr("level"); i <- Helpers.asInt(lvs)) yield i
+
+    val toRender: Seq[MenuItem] = (S.attr("item"), S.attr("group")) match {
+      case (Full(item), _) =>
+        for{
           sm <- LiftRules.siteMap.toList
           req <- S.request.toList
           loc <- sm.findLoc(item).toList
           item <- buildItemMenu(loc, req.location, expandAll)
         } yield item
 
-      case (_,Full(group)) =>
-        for {
+      case (_, Full(group)) =>
+        for{
           sm <- LiftRules.siteMap.toList
           loc <- sm.locForGroup(group)
           req <- S.request.toList
@@ -107,6 +111,8 @@ object Menu extends DispatchSnippet {
         } yield item
       case _ => renderWhat(expandAll)
     }
+
+    def ifExpand(f: => NodeSeq): NodeSeq = if (expandAny) f else NodeSeq.Empty
 
     toRender.toList match {
       case Nil if S.attr("group").isDefined => NodeSeq.Empty
@@ -117,44 +123,58 @@ object Menu extends DispatchSnippet {
 
         def buildANavItem(i: MenuItem) = {
           i match {
-            case m @ MenuItem(text, uri, kids, _, _, _) if m.placeholder_?  =>
+            case m@MenuItem(text, uri, kids, _, _, _) if m.placeholder_? =>
               Elem(null, innerTag, Null, TopScope,
-                   <xml:group><span>{text}</span>{buildUlLine(kids)}</xml:group>) %
-              (if (m.path) S.prefixedAttrsToMetaData("li_path", liMap) else Null) %
-              (if (m.current) S.prefixedAttrsToMetaData("li_item", liMap) else Null)
+                <xml:group> <span>{text}</span>{ifExpand(buildUlLine(kids))}</xml:group>) %
+                  (if (m.path) S.prefixedAttrsToMetaData("li_path", liMap) else Null) %
+                  (if (m.current) S.prefixedAttrsToMetaData("li_item", liMap) else Null)
 
             case MenuItem(text, uri, kids, true, _, _) if expandAll =>
               Elem(null, innerTag, Null, TopScope,
-                   <xml:group><a href={uri}>{text}</a>{buildUlLine(kids)}</xml:group>) %
-              S.prefixedAttrsToMetaData("li_item", liMap)
+                <xml:group> <a href={uri}>{text}</a>{ifExpand(buildUlLine(kids))}</xml:group>) %
+                  S.prefixedAttrsToMetaData("li_item", liMap)
 
             case MenuItem(text, uri, kids, true, _, _) =>
               Elem(null, innerTag, Null, TopScope,
-                   <xml:group><span>{text}</span>{buildUlLine(kids)}</xml:group>) %
-              S.prefixedAttrsToMetaData("li_item", liMap)
+                <xml:group> <span>{text}</span>{ifExpand(buildUlLine(kids))}</xml:group>) %
+                  S.prefixedAttrsToMetaData("li_item", liMap)
 
-            case MenuItem(text, uri, kids,  _, true, _) =>
+            case MenuItem(text, uri, kids, _, true, _) =>
               Elem(null, innerTag, Null, TopScope,
-                   <xml:group><a href={uri}>{text}</a>{buildUlLine(kids)}</xml:group>) %
-              S.prefixedAttrsToMetaData("li_path", liMap)
+                <xml:group> <a href={uri}>{text}</a>{ifExpand(buildUlLine(kids))}</xml:group>) %
+                  S.prefixedAttrsToMetaData("li_path", liMap)
 
             case MenuItem(text, uri, kids, _, _, _) =>
               Elem(null, innerTag, Null, TopScope,
-                   <xml:group><a href={uri}>{text}</a>{buildUlLine(kids)}</xml:group>) % li 
+                <xml:group> <a href={uri}>{text}</a>{ifExpand(buildUlLine(kids))}</xml:group>) % li
           }
         }
 
-        def buildUlLine(in: Seq[MenuItem]) : NodeSeq =
-        if (in.isEmpty) {
-          Text("")
-        } else {
-          Elem(null, outerTag, Null, TopScope,
-               <xml:group>{in.flatMap(buildANavItem)}</xml:group>) %
-          S.prefixedAttrsToMetaData("ul")
+        def buildUlLine(in: Seq[MenuItem]): NodeSeq =
+          if (in.isEmpty) {
+            NodeSeq.Empty
+          } else {
+            if (outerTag.length > 0) {
+              Elem(null, outerTag, Null, TopScope,
+                <xml:group>{in.flatMap(buildANavItem)}</xml:group>) %
+                  S.prefixedAttrsToMetaData("ul")
+            } else {
+              in.flatMap(buildANavItem)
+            }
+          }
+
+        val realMenuItems = level match {
+          case Full(lvl) if lvl > 0 =>
+          def findKids(cur: Seq[MenuItem], depth: Int): Seq[MenuItem] = if (depth == 0) cur
+          else findKids(cur.flatMap(mi => mi.kids), depth - 1)
+
+          findKids(xs, lvl)
+
+          case _ => xs
         }
 
-        buildUlLine(xs) match {
-          case top : Elem => top % S.prefixedAttrsToMetaData("top")
+        buildUlLine(realMenuItems) match {
+          case top: Elem => top % S.prefixedAttrsToMetaData("top")
           case other => other
         }
     }
@@ -323,5 +343,4 @@ object Menu extends DispatchSnippet {
       Text("")
     }
   }
-
 }

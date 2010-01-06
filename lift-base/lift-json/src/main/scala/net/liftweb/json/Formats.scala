@@ -19,19 +19,52 @@ package net.liftweb.json
 import java.util.{Date, TimeZone}
 import JsonAST.JObject
 
+/** Formats to use when converting JSON.
+ * Formats are usually configured by using an implicit parameter:
+ * <pre>
+ * implicit val formats = net.liftweb.json.DefaultFormats
+ * </pre>
+ */
 trait Formats {
   val dateFormat: DateFormat
   val typeHints: TypeHints = NoTypeHints
 }
 
+/** Conversions between String and Date.
+ */
 trait DateFormat {
   def parse(s: String): Option[Date]
   def format(d: Date): String
 }
 
-trait TypeHints {
+/** Type hints can be used to alter the default conversion rules when converting
+ * Scala instances into JSON and vice versa. Type hints must be used when converting
+ * class which is not supported by default (for instance when class is not a case class).
+ * <p>
+ * Example:<pre>
+ * class DateTime(val time: Long)
+ *
+ * val hints = new ShortTypeHints(classOf[DateTime] :: Nil) {
+ *   override def serialize: PartialFunction[Any, JObject] = {
+ *     case t: DateTime => JObject(JField("t", JInt(t.time)) :: Nil)
+ *   }
+ *
+ *   override def deserialize: PartialFunction[(String, JObject), Any] = {
+ *     case ("DateTime", JObject(JField("t", JInt(t)) :: Nil)) => new DateTime(t.longValue)
+ *   }
+ * }
+ * implicit val formats = DefaultFormats.withHints(hints)
+ * </pre>
+ */
+trait TypeHints {  
   val hints: List[Class[_]]
+  
+  /** Return hint for given type.
+   */
   def hintFor(clazz: Class[_]): String
+
+  /** Return type for given hint.
+   */
   def classFor(hint: String): Option[Class[_]]
 
   def containsHint_?(clazz: Class[_]) = hints exists (_ isAssignableFrom clazz)
@@ -39,17 +72,23 @@ trait TypeHints {
   def serialize: PartialFunction[Any, JObject] = Map()
 }
 
+/** Do not use any type hints.
+ */
 case object NoTypeHints extends TypeHints {
   val hints = Nil
   def hintFor(clazz: Class[_]) = error("NoTypeHints does not provide any type hints.")
   def classFor(hint: String) = None
 }
 
+/** Use short class name as a type hint.
+ */
 case class ShortTypeHints(hints: List[Class[_]]) extends TypeHints {
   def hintFor(clazz: Class[_]) = clazz.getName.substring(clazz.getName.lastIndexOf(".")+1)
   def classFor(hint: String) = hints find (hintFor(_) == hint)
 }
 
+/** Use full class name as a type hint.
+ */
 case class FullTypeHints(hints: List[Class[_]]) extends TypeHints {
   def hintFor(clazz: Class[_]) = clazz.getName
   def classFor(hint: String) = Some(Thread.currentThread.getContextClassLoader.loadClass(hint))
@@ -79,7 +118,15 @@ trait DefaultFormats extends Formats {
 
   protected def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
+  /** Lossless date format includes milliseconds too.
+   */
   def lossless = new DefaultFormats {
     override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+  }
+
+  /** Default formats with given <code>TypeHint</code>s.
+   */
+  def withHints(hints: TypeHints) = new DefaultFormats {
+    override val typeHints = hints
   }
 }

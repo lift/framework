@@ -23,14 +23,15 @@ import JsonAST._
 
 /** Function to extract values from JSON AST using case classes.
  *
- *  FIXME: Add support to extract List of values too.
- *
  *  See: ExtractionExamples.scala
  */
 object Extraction {
   import Meta._
   import Meta.Reflection._
 
+  /** Extract a case class from JSON.
+   * @see net.liftweb.json.JsonAST.JValue#extract
+   */
   def extract[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): A = 
     try {
       extract0(json, formats, mf)
@@ -39,6 +40,14 @@ object Extraction {
       case e: Exception => throw new MappingException("unknown error", e)
     }
 
+  /** Decompose a case class into JSON.
+   * <p>
+   * Example:<pre>
+   * case class Person(name: String, age: Int)
+   * implicit val formats = net.liftweb.json.DefaultFormats
+   * Extraction.decompose(Person("joe", 25)) == JObject(JField("age",JInt(25)) :: JField("name",JString("joe")) :: Nil)
+   * </pre>
+   */
   def decompose(a: Any)(implicit formats: Formats): JValue = {
     def prependTypeHint(clazz: Class[_], o: JObject) = 
       JField("jsonClass", JString(formats.typeHints.hintFor(clazz))) ++ o

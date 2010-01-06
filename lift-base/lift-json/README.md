@@ -1,5 +1,66 @@
 Parsing and formatting utilities for JSON.
 
+A central concept in lift-json library is Json AST which models the structure of
+a JSON document as a syntax tree. 
+
+    sealed abstract class JValue
+    case object JNothing extends JValue // 'zero' for JValue
+    case object JNull extends JValue
+    case class JString(s: String) extends JValue
+    case class JDouble(num: Double) extends JValue
+    case class JInt(num: BigInt) extends JValue
+    case class JBool(value: Boolean) extends JValue
+    case class JField(name: String, value: JValue) extends JValue
+    case class JObject(obj: List[JField]) extends JValue 
+    case class JArray(arr: List[JValue]) extends JValue
+
+All features are implemented in terms of above AST. Functions are used to transform
+the AST itself, or to transform the AST between different formats. Common transformations
+are summarized in a following picture.
+
+![Json AST](http://github.com/dpp/liftweb/raw/joni_json_docs/lift-base/lift-json/json.png "Json AST")
+
+Summary of the features:
+
+* Fast JSON parser
+* LINQ style queries
+* Case classes can be used to extract values from parsed JSON
+* Diff & merge
+* DSL to produce valid JSON
+* XPath like expressions and HOFs to manipulate JSON
+* Pretty and compact printing
+* XML conversions
+* Serialization
+
+Installation
+============
+
+It comes with Lift, but non-Lift users can add lift-json as a dependency in following ways.
+
+### SBT users
+
+Add dependency to your project description:
+
+    val lift-json = "net.liftweb" % "lift-json" % "1.1-M8"
+
+### Maven users
+
+Add dependency to your pom:
+
+    <dependency>
+      <groupId>net.liftweb</groupId>
+      <artifactId>lift-json</artifactId>
+      <version>1.1-M8</version>
+    </dependency>
+
+### Others
+
+Download following jars:
+
+* http://scala-tools.org/repo-releases/net/liftweb/lift-json/1.1-M8/lift-json-1.1-M8.jar
+* http://mirrors.ibiblio.org/pub/mirrors/maven2/com/thoughtworks/paranamer/paranamer/2.1/paranamer-2.1.jar
+
+
 Parsing JSON
 ============
 
@@ -347,11 +408,11 @@ By default the constructor parameter names must match json field names. However,
 field names contain characters which are not allowed characters in Scala identifiers. There's two 
 solutions for this (see src/test/scala/net/liftweb/json/LottoExample.scala for bigger example).
 
-1. Use back ticks.
+Use back ticks.
 
     scala> case class Person(\`first-name\`: String)
 
-2. Use map function to postprocess AST.
+Use map function to postprocess AST.
 
     scala> case class Person(firstname: String)
     scala> json map {
@@ -421,7 +482,7 @@ It is possible to plug in custom serializer + deserializer functions for any typ
 Now, if we have a non case class DateTime (thus, not supported by default), we can still serialize it
 by providing following functions.
 
-    scala> class DateTime(time: Long)
+    scala> class DateTime(val time: Long)
 
     scala> val hints = new ShortTypeHints(classOf[DateTime] :: Nil) {
              override def serialize: PartialFunction[Any, JObject] = {

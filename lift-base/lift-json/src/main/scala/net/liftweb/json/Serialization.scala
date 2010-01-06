@@ -21,24 +21,41 @@ import JsonAST._
 import JsonParser.parse
 
 /** Functions to serialize and deserialize a case class.
- *
- *  FIXME: add Map support
+ * Custom serializer can be inserted if a class is not a case class.
+ * <p>
+ * Example:<pre>
+ * val hints = new ShortTypeHints( ... )
+ * implicit val formats = Serialization.formats(hints)
+ * </pre>
  * 
- *  See: SerializationExamples.scala
+ * @see net.liftweb.json.TypeHints
  */
 object Serialization {
   import java.io.{StringWriter, Writer}
   import Meta.Reflection._
 
+  /** Serialize to String.
+   */
   def write[A <: AnyRef](a: A)(implicit formats: Formats): String = 
     (write(a, new StringWriter)(formats)).toString
 
+  /** Serialize to Writer.
+   */
   def write[A <: AnyRef, W <: Writer](a: A, out: W)(implicit formats: Formats): W = 
     Printer.compact(render(Extraction.decompose(a)(formats)), out)
 
+  /** Deserialize from a String.
+   */
   def read[A](json: String)(implicit formats: Formats, mf: Manifest[A]): A = 
     parse(json).extract(formats, mf)
 
+  /** Create Serialization formats with given type hints.
+   * <p>
+   * Example:<pre>
+   * val hints = new ShortTypeHints( ... )
+   * implicit val formats = Serialization.formats(hints)
+   * </pre>
+   */
   def formats(hints: TypeHints) = new Formats {
     val dateFormat = DefaultFormats.lossless.dateFormat
     override val typeHints = hints

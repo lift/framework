@@ -232,6 +232,11 @@ object LiftRules extends Factory with FormVendor {
   @volatile var localizationLookupFailureNotice: Box[(String, Locale) => Unit] = Empty
 
   /**
+   * Set to false if you want to have 404's handled the same way in dev and production mode
+   */
+  @volatile var displayHelpfulSiteMapMessages_? = true
+
+  /**
    * The default location to send people if SiteMap access control fails. The path is
    * expressed a a List[String]
    */
@@ -609,22 +614,16 @@ object LiftRules extends Factory with FormVendor {
             Str(S.session.map(s => S.encodeURL("/" + s.uniqueId)) openOr "")
   }
 
-  /**
-   * The default way of calculating the context path
-   */
-  def defaultCalcContextPath(request: HTTPRequest): Box[String] = {
-    request.header("X-Lift-ContextPath").map {
-      case s if s.trim == "/" => ""
-      case s => s.trim
-    }
-  }
 
   /**
    * If there is an alternative way of calculating the context path
-   * (by default inspecting the X-Lift-ContextPath header)
+   * (by default returning Empty)
+   *
+   * If this function returns an Empty, the contextPath provided by the container will be used. 
+   * 
    */
-  @volatile var calculateContextPath: HTTPRequest => Box[String] =
-  defaultCalcContextPath _
+  @volatile var calculateContextPath: () => Box[String] = () => Empty
+
 
   @volatile private var _context: HTTPContext = _
 
@@ -684,25 +683,28 @@ object LiftRules extends Factory with FormVendor {
   /**
    * Obtain the resource InputStream by name
    */
-  def getResourceAsStream(name: String): Box[InputStream] =
-    getResource(name).map(_.openStream)
+  def getResourceAsStream(name: String): Box[Applier[InputStream]] =
+    getResource(name).map(url => wrapInputStream(url.openStream))
 
   /**
    * Obtain the resource as an array of bytes by name
    */
   def loadResource(name: String): Box[Array[Byte]] = getResourceAsStream(name).map {
-    stream =>
-            val buffer = new Array[Byte](2048)
-            val out = new ByteArrayOutputStream
-            def reader {
-              val len = stream.read(buffer)
-              if (len < 0) return
-              else if (len > 0) out.write(buffer, 0, len)
-              reader
-            }
-            reader
-            stream.close
-            out.toByteArray
+    app => app {
+      stream => {
+        val buffer = new Array[Byte](2048)
+        val out = new ByteArrayOutputStream
+        def reader {
+          val len = stream.read(buffer)
+          if (len < 0) return
+          else if (len > 0) out.write(buffer, 0, len)
+          reader
+        }
+        reader
+        // stream.close
+        out.toByteArray
+      }
+    }
   }
 
   /**
@@ -721,11 +723,22 @@ object LiftRules extends Factory with FormVendor {
   /**
    * Looks up a resource by name and returns an Empty Box if the resource was not found.
    */
-  def finder(name: String): Box[InputStream] =
+  def finder(name: String): Box[Applier[InputStream]] =
     (for{
       ctx <- Box !! LiftRules.context
       res <- Box !! ctx.resourceAsStream(name)
-    } yield res) or getResourceAsStream(name)
+    } yield wrapInputStream(res)) or getResourceAsStream(name)
+
+
+  private def wrapInputStream(is: InputStream): Applier[InputStream] =
+  new Applier[InputStream] {
+    def apply[T](f: InputStream => T): T =
+    try {
+      f(is)
+    } finally {
+      is.close
+    }
+  }
 
   /**
    * Get the partial function that defines if a request should be handled by
@@ -814,11 +827,6 @@ object LiftRules extends Factory with FormVendor {
    */
   val responseTransformers = RulesSeq[LiftResponse => LiftResponse]
 
-  /**
-   * Calculate the context path for a given session if it should be something different than
-   * the normal context path
-   */
-  val calcContextPath: LiftSession => Box[String] = _ => Empty
 
   /**
    * convertResponse is a PartialFunction that reduces a given Tuple4 into a
@@ -1188,6 +1196,9 @@ object LiftRules extends Factory with FormVendor {
    * @see RequestVar#logUnreadVal
    */
   @volatile var logUnreadRequestVars = true
+
+  /** Controls whether or not the service handling timing messages (Service request (GET) ... took ... Milliseconds) are logged. Defaults to true. */
+  @volatile var logServiceRequestTiming = true
 
   private def ctor() {
     appendGlobalFormBuilder(FormBuilderLocator[String]((value, setter) => SHtml.text(value, setter)))

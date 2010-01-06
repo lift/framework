@@ -333,7 +333,7 @@ object SHtml {
    */
   def a(func: () => JsCmd, body: NodeSeq, attrs: (String, String)*): Elem = {
     val key = formFuncName
-    addFunctionMap(key, (a: List[String]) => func())
+    addFunctionMap(key, contextFuncBuilder((a: List[String]) => func()))
     attrs.foldLeft(<lift:a key={key}>{body}</lift:a>)(_ % _)
   }
 

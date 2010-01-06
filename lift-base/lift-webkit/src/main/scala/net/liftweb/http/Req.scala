@@ -118,10 +118,9 @@ object Req {
 
   def apply(request: HTTPRequest, rewrite: List[LiftRules.RewritePF], nanoStart: Long): Req = {
     val reqType = RequestType(request)
-    val turi = request.uri.substring(request.contextPath.length)
+    val contextPath = LiftRules.calculateContextPath() openOr request.contextPath
+    val turi = if (request.uri.length >= contextPath.length) request.uri.substring(contextPath.length) else ""
     val tmpUri = if (turi.length > 0) turi else "/"
-    val contextPath = LiftRules.calculateContextPath(request) openOr
-    request.contextPath
 
     val tmpPath = parsePath(tmpUri)
 
@@ -399,12 +398,15 @@ class Req(val path: ParsePath,
   lazy val uri: String = request match {
     case null => "Outside HTTP Request (e.g., on Actor)"
     case request =>
-      val ret = for (uri <- Box.legacyNullTest(request.uri);
-                     val cp = Box.legacyNullTest(request.contextPath) openOr "") yield
-      uri.substring(cp.length)
-      match {
-        case "" => "/"
-        case x => Req.fixURI(x)
+      val ret = for {uri <- Box.legacyNullTest(request.uri)
+                     cp <- Box.legacyNullTest(contextPath)
+                     part <- (request.uri.length >= cp.length) match {
+                              case true => Full(request.uri.substring(cp.length))
+                              case _ => Empty}} yield {
+           part match {
+            case "" => "/"
+            case x => Req.fixURI(x)
+          }
       }
       ret openOr "/"
   }

@@ -14,11 +14,11 @@ import _root_.java.io.ObjectOutputStream
 abstract class AMQPSender[T](cf: ConnectionFactory, host: String, port: Int, exchange: String, routingKey: String) extends LiftActor {
   val conn = cf.newConnection(host, port)
   val channel = conn.createChannel()
-  val ticket = configure(channel)
+  
   /**
    * Override this to use your own AMQP queue/exchange with the given channel.
    */
-  def configure(channel: Channel): Int
+  def configure(channel: Channel): AnyRef
 
   def send(msg: T) {
     // Now write an object to a byte array and shove it across the wire.
@@ -26,7 +26,7 @@ abstract class AMQPSender[T](cf: ConnectionFactory, host: String, port: Int, exc
     val store = new ObjectOutputStream(bytes)
     store.writeObject(msg)
     store.close
-    channel.basicPublish(ticket, exchange, routingKey, null, bytes.toByteArray)
+    channel.basicPublish(exchange, routingKey, null, bytes.toByteArray)
   }
 
   protected def messageHandler = {
@@ -45,12 +45,12 @@ abstract class AMQPSender[T](cf: ConnectionFactory, host: String, port: Int, exc
  * If you are planning to send lots of messages to lots of different exchange/queues,
  * consider creating Actor-based Senders, that will help your application to scale.
  */
-class StringAMQPSender(cf: ConnectionFactory, host: String, port: Int, exchange: String, routingKey: String) extends AMQPSender[String](cf, host, port, exchange, routingKey) {
+class StringAMQPSender(cf: ConnectionFactory, host: String, port: Int, exchange: String, routingKey: String) 
+    extends AMQPSender[String](cf, host, port, exchange, routingKey){
   override def configure(channel: Channel) = {
     val conn = cf.newConnection(host, port)
     val channel = conn.createChannel()
-    val ticket = channel.accessRequest("/data")
-    ticket
+    channel
   }
 }
 
@@ -90,13 +90,12 @@ object ExampleDirectAMQPSender {
     val factory = new ConnectionFactory(params)
     val conn = factory.newConnection(host, port)
     val channel = conn.createChannel()
-    val ticket = channel.accessRequest("/data")
     // Now write an object to a byte array and shove it across the wire.
     val bytes = new ByteArrayOutputStream
     val store = new ObjectOutputStream(bytes)
     store.writeObject(msg)
     store.close
-    channel.basicPublish(ticket, "mult", "routeroute", null, bytes.toByteArray)
+    channel.basicPublish("mult", "routeroute", null, bytes.toByteArray)
   }
 }
 

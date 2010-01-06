@@ -44,11 +44,12 @@ object ActorPing {
    * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
    * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
    */
-  def schedule[T](to: SimpleActor[T], msg: T, delay: TimeSpan): ScheduledFuture[Unit] = {
+  def schedule[T](to: SimpleActor[T], msg: T, delay: TimeSpan): ScheduledFuture[Unit] = synchronized {
     val r = new _root_.java.util.concurrent.Callable[Unit] {
       def call: Unit = { Helpers.tryo( to ! msg ) }
     }
     try {
+      this.restart
       service.schedule(r, delay.millis, TimeUnit.MILLISECONDS)
     } catch {
       case e: RejectedExecutionException => throw ActorPingException(msg + " could not be scheduled on " + to, e)

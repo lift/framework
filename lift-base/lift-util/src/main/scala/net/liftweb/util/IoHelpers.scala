@@ -36,6 +36,8 @@ trait IoHelpers {
             line = br.readLine
             if (line != null) lines += line
           }
+          br.close
+          in.close
           done(lines.mkString("\n"))
         }
       }
@@ -95,6 +97,8 @@ trait IoHelpers {
     }
 
     readOnce
+
+    in.close
 
     bos.toByteArray
   }

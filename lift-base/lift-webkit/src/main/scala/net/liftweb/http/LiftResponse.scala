@@ -21,6 +21,7 @@ import _root_.net.liftweb.util._
 import _root_.net.liftweb.http.provider._
 import js._
 import _root_.net.liftweb.util.Helpers._
+import _root_.net.liftweb.json.{JsonAST, Printer}
 
 /**
  * 200 response but without body.
@@ -255,6 +256,13 @@ trait LiftResponse {
 
 object JsonResponse extends HeaderStuff {
   def apply(json: JsExp): LiftResponse = JsonResponse(json, headers, cookies, 200)
+
+  def apply(json: JsonAST.JValue): LiftResponse = this.apply(json, headers, cookies, 200)
+
+  def apply(_json: JsonAST.JValue, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int): LiftResponse =
+  new JsonResponse(new JsExp {
+    lazy val toJsCmd = Printer.pretty(JsonAST.render((_json)))
+  }, headers, cookies, 200)
 }
 
 case class JsonResponse(json: JsExp, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends LiftResponse {

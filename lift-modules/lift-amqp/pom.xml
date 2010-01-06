@@ -58,11 +58,19 @@
     </dependency>
     <dependency>
       <groupId>com.rabbitmq</groupId>
-      <artifactId>rabbitmq-client</artifactId>
-      <version>1.3.0</version>
+      <artifactId>amqp-client</artifactId>
+      <version>1.7.0</version>
     </dependency>
   </dependencies>
-
+  
+  <repositories> 
+    <repository> 
+      <id>nexus.griddynamics.net</id> 
+      <name>Nexus Maven2 Repository</name> 
+      <url>https://nexus.griddynamics.net/nexus/content/groups/public</url>
+    </repository> 
+  </repositories>
+  
   <!--
     ~ Build Settings
   -->

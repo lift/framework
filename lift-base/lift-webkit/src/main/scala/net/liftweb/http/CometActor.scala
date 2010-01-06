@@ -427,10 +427,8 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       }
 
     case ActionMessageSet(msgs, req) =>
-      S.init(req, theSession) {
-        S.functionLifespan(true) {
-          reply(msgs.map(_()))
-        }
+      S.functionLifespan(true) {
+        reply(msgs.map(_()))
       }
 
     case AskQuestion(what, who, otherlisteners) =>
@@ -442,20 +440,18 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
 
     case AnswerQuestion(what, otherListeners) =>
-      S.initIfUninitted(theSession) {
-        S.functionLifespan(true) {
-          askingWho.foreach {
-            ah =>
-                    reply("A null message to release the actor from its send and await reply... do not delete this message")
-                    // askingWho.unlink(self)
-                    ah ! ShutDown
-                    this.listeners = this.listeners ::: otherListeners
-                    this.askingWho = Empty
-                    val aw = answerWith
-                    answerWith = Empty
-                    aw.foreach(_(what))
-                    performReRender(true)
-          }
+      S.functionLifespan(true) {
+        askingWho.foreach {
+          ah =>
+                  reply("A null message to release the actor from its send and await reply... do not delete this message")
+                  // askingWho.unlink(self)
+                  ah ! ShutDown
+                  this.listeners = this.listeners ::: otherListeners
+                  this.askingWho = Empty
+                  val aw = answerWith
+                  answerWith = Empty
+                  aw.foreach(_(what))
+                  performReRender(true)
         }
       }
 

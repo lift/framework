@@ -514,11 +514,6 @@ object S extends HasParams {
   def addSessionRewriter(name: String, rw: LiftRules.RewritePF) =
     session map (_.sessionRewriter += (name -> rw))
 
-  private object _curRequestContextPath extends RequestVar[Box[String]](Empty)
-  def curRequestContextPath: Box[String] = _curRequestContextPath.is
-
-  def curRequestContextPath_=(str: Box[String]) {_curRequestContextPath.set(str)}
-
   /**
    * Removes the given per-session rewriter. See addSessionRewriter for an
    * example of usage.
@@ -1661,7 +1656,7 @@ for {
   /**
    * The current context path for the deployment.
    */
-  def contextPath: String = session.map(_.contextPath) openOr ""
+  def contextPath: String = (request.map(_.contextPath) or session.map(_.contextPath)) openOr ""
 
   /**
    * Finds a snippet function by name.
