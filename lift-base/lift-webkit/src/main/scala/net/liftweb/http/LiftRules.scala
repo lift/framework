@@ -40,7 +40,7 @@ object LiftRules extends Factory with FormVendor {
   type RewritePF = PartialFunction[RewriteRequest, RewriteResponse]
   type SnippetPF = PartialFunction[List[String], NodeSeq => NodeSeq]
   type LiftTagPF = PartialFunction[(String, Elem, MetaData, NodeSeq, String), NodeSeq]
-  type URINotFoundPF = PartialFunction[(Req, Box[Failure]), LiftResponse]
+  type URINotFoundPF = PartialFunction[(Req, Box[Failure]), NotFound]
   type URLDecoratorPF = PartialFunction[String, String]
   type SnippetDispatchPF = PartialFunction[String, DispatchSnippet]
   type ViewDispatchPF = PartialFunction[List[String], Either[() => Box[NodeSeq], LiftView]]
@@ -474,7 +474,7 @@ object LiftRules extends Factory with FormVendor {
   @volatile var resourceBundleFactories = RulesSeq[ResourceBundleFactoryPF]
 
   /**
-   * User for Comet handling to resume a continuation
+   * Used for Comet handling to resume a continuation
    */
   def resumeRequest(what: AnyRef, req: HTTPRequest) = req resume what
 
@@ -769,15 +769,15 @@ object LiftRules extends Factory with FormVendor {
   /**
    * Takes a Node, headers, cookies, and a session and turns it into an XhtmlResponse.
    */
-  private def cvt(ns: Node, headers: List[(String, String)], cookies: List[HTTPCookie], session: Req) =
+  private def cvt(ns: Node, headers: List[(String, String)], cookies: List[HTTPCookie], req: Req, code:Int) =
     convertResponse({
       val ret = XhtmlResponse(ns,
-        ResponseInfo.docType(session),
-        headers, cookies, 200,
+        ResponseInfo.docType(req),
+        headers, cookies, code,
         S.ieMode)
       ret._includeXmlVersion = !S.skipDocType
       ret
-    }, headers, cookies, session)
+    }, headers, cookies, req)
 
   @volatile var defaultHeaders: PartialFunction[(NodeSeq, Req), List[(String, String)]] = {
     case _ => List("Expires" -> Helpers.nowAsInternetDate,
@@ -808,15 +808,16 @@ object LiftRules extends Factory with FormVendor {
    */
   var convertResponse: PartialFunction[(Any, List[(String, String)], List[HTTPCookie], Req), LiftResponse] = {
     case (r: LiftResponse, _, _, _) => r
-    case (ns: Group, headers, cookies, session) => cvt(ns, headers, cookies, session)
-    case (ns: Node, headers, cookies, session) => cvt(ns, headers, cookies, session)
-    case (ns: NodeSeq, headers, cookies, session) => cvt(Group(ns), headers, cookies, session)
-    case (SafeNodeSeq(n), headers, cookies, session) => cvt(Group(n), headers, cookies, session)
+    case (ns: Group, headers, cookies, req) => cvt(ns, headers, cookies, req, 200)
+    case (ns: Node, headers, cookies, req) => cvt(ns, headers, cookies, req, 200)
+    case (ns: NodeSeq, headers, cookies, req) => cvt(Group(ns), headers, cookies, req, 200)
+    case ((ns: NodeSeq, code: Int), headers, cookies, req) => cvt(Group(ns), headers, cookies, req, code)
+    case (SafeNodeSeq(n), headers, cookies, req) => cvt(Group(n), headers, cookies, req, 200)
 
-    case (Full(o), headers, cookies, session) => convertResponse((o, headers, cookies, session))
+    case (Full(o), headers, cookies, req) => convertResponse((o, headers, cookies, req))
 
-    case (Some(o), headers, cookies, session) => convertResponse((o, headers, cookies, session))
-    case (bad, _, _, session) => session.createNotFound
+    case (Some(o), headers, cookies, req) => convertResponse((o, headers, cookies, req))
+    case (bad, _, _, req) => req.createNotFound
   }
 
   /**
@@ -871,7 +872,7 @@ object LiftRules extends Factory with FormVendor {
    *
    */
   val uriNotFound = RulesSeq[URINotFoundPF].prepend(NamedPF("default") {
-    case (r, _) => Req.defaultCreateNotFound(r)
+    case (r, _) => DefaultNotFound
   })
 
   /**
@@ -1180,6 +1181,17 @@ object LiftRules extends Factory with FormVendor {
   }
   ctor()
 }
+
+trait NotFound
+
+case object DefaultNotFound extends NotFound
+
+case class NotFoundAsResponse(response: LiftResponse) extends NotFound
+
+case class NotFoundAsTemplate(path: ParsePath) extends NotFound
+
+case class NotFoundAsNode(node: NodeSeq) extends NotFound
+
 
 case object BreakOut
 

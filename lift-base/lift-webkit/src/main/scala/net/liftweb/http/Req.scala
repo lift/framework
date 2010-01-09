@@ -377,16 +377,38 @@ class Req(val path: ParsePath,
   lazy val buildMenu: CompleteMenu = location.map(_.buildMenu) openOr
   CompleteMenu(Nil)
 
+  def createNotFound: LiftResponse = 
+    NamedPF((this, Empty), LiftRules.uriNotFound.toList) match {
+      case DefaultNotFound => Req.defaultCreateNotFound(this)
+      case NotFoundAsResponse(resp) => resp
+      case NotFoundAsNode(node) => LiftRules.convertResponse((node, 404),
+        S.getHeaders(LiftRules.defaultHeaders((node, this))),
+        S.responseCookies,
+        this)
+    }
 
-  def createNotFound = {
-    NamedPF((this, Empty), LiftRules.uriNotFound.toList)
-  }
+  def createNotFound(f: Failure): LiftResponse = 
+    NamedPF((this, Full(f)), LiftRules.uriNotFound.toList) match {
+      case DefaultNotFound => Req.defaultCreateNotFound(this)
+      case NotFoundAsResponse(resp) => resp
+      case NotFoundAsNode(node) => LiftRules.convertResponse((node, 404),
+        S.getHeaders(LiftRules.defaultHeaders((node, this))),
+        S.responseCookies,
+        this)
+    }
 
-  def createNotFound(failure: Failure) = {
-    NamedPF((this, Full(failure)), LiftRules.uriNotFound.toList)
-  }
 
-
+  private[http] def createNotFound(f: (ParsePath) => Box[LiftResponse]): Box[LiftResponse] = 
+    NamedPF((this, Empty), LiftRules.uriNotFound.toList) match {
+      case DefaultNotFound => Full(Req.defaultCreateNotFound(this))
+      case NotFoundAsResponse(resp) => Full(resp)
+      case NotFoundAsTemplate(path) => f(path)
+      case NotFoundAsNode(node) => Full(LiftRules.convertResponse((node, 404),
+        S.getHeaders(LiftRules.defaultHeaders((node, this))),
+        S.responseCookies,
+        this))
+    }
+  
   def post_? = requestType.post_?
 
   def get_? = requestType.get_?

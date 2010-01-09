@@ -467,6 +467,28 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   def contextPath = LiftRules.calculateContextPath() openOr _contextPath
 
   private[http] def processRequest(request: Req): Box[LiftResponse] = {
+
+    def processTemplate(loc: Box[NodeSeq], path: ParsePath, code: Int): Box[LiftResponse] =       
+      (loc or findVisibleTemplate(path, request)).map { xhtml => 
+        // Phase 1: snippets & templates processing
+        val rawXml: NodeSeq = processSurroundAndInclude(PageName get, xhtml)
+
+        // Make sure that functions have the right owner. It is important for this to
+        // happen before the merge phase so that in merge to have a correct view of
+        // mapped functions and their owners.
+        updateFunctionMap(S.functionMap, RenderVersion get, millis)
+
+        // Phase 2: Head & Tail merge, add additional elements to body & head
+        val xml = merge(rawXml, request)
+
+        notices = Nil
+        // Phase 3: Response conversion including fixHtml
+        LiftRules.convertResponse((xml, code),
+             S.getHeaders(LiftRules.defaultHeaders((xml, request))),
+             S.responseCookies,
+             request)
+    }
+
     ieMode.is // make sure this is primed
     S.oldNotices(notices)
     LiftSession.onBeginServicing.foreach(f => tryo(f(this, request)))
@@ -500,38 +522,17 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
               PageName(request.uri + " -> " + request.path)
               LiftRules.allowParallelSnippets.doWith(() => !Props.inGAE) {
-                (request.location.flatMap(_.earlyResponse) or
-                        LiftRules.earlyResponse.firstFull(request)) or {
-                  ((locTemplate or findVisibleTemplate(request.path, request)).
-                          // Phase 1: snippets & templates processing
-                          map(xml => processSurroundAndInclude(PageName get, xml)) match {
-                    case Full(rawXml: NodeSeq) => {
-
-                      // Make sure that functions have the right owner. It is important for this to
-                      // happen before the merge phase so that in merge to have a correct view of
-                      // mapped functions and their owners.
-                      updateFunctionMap(S.functionMap, RenderVersion get, millis)
-
-                      // Phase 2: Head & Tail merge, add additional elements to body & head
-                      val xml = merge(rawXml, request)
-
-                      notices = Nil
-                      // Phase 3: Response conversion including fixHtml
-                      Full(LiftRules.convertResponse(xml,
-                        S.getHeaders(LiftRules.defaultHeaders((xml, request))),
-                        S.responseCookies,
-                        request))
-                    }
-                    case _ => if (LiftRules.passNotFoundToChain) Empty else Full(request.createNotFound)
-                  })
-                }
+               (request.location.flatMap(_.earlyResponse) or LiftRules.earlyResponse.firstFull(request)) or
+                 (processTemplate(locTemplate, request.path, 200) or 
+                    request.createNotFound{processTemplate(Empty, _, 404)})
               }
 
             case Right(Full(resp)) => Full(resp)
             case _ if (LiftRules.passNotFoundToChain) => Empty
-            case _ if Props.mode == Props.RunModes.Development && LiftRules.displayHelpfulSiteMapMessages_? =>
+            case _ if Props.mode == Props.RunModes.Development =>
+              request.createNotFound{processTemplate(Empty, _, 404)} or 
               Full(ForbiddenResponse("The requested page was not defined in your SiteMap, so access was blocked.  (This message is displayed in development mode only)"))
-            case _ => Full(request.createNotFound)
+            case _ => request.createNotFound{processTemplate(Empty, _, 404)}
           })
 
           // Before returning the response check for redirect and set the appropriate state.
