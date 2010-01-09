@@ -381,13 +381,13 @@ object Loc {
    * and only a user assigned to this role or to a role that is child-of this role
    * can access it.
    */
-  case class HttpAuthProtected(role: () => Box[Role]) extends AnyLocParam {
+  case class HttpAuthProtected(role: (Req) => Box[Role]) extends AnyLocParam {
 
     override def onCreate(loc: Loc[_]) {
       LiftRules.httpAuthProtectedResource.append(
         new LiftRules.HttpAuthProtectedResourcePF() {
-          def isDefinedAt(in: ParsePath) = in.partPath == loc.link.uriList
-          def apply(in: ParsePath): Box[Role] = role()
+          def isDefinedAt(in: Req) = in.path.partPath == loc.link.uriList
+          def apply(in: Req): Box[Role] = role(in)
         }
       )
     }

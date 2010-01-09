@@ -103,7 +103,7 @@ class LiftServlet {
       case (resRole, roles) => (false /: roles)((l, r) => l || resRole.isChildOf(r.name))
     }
 
-    val role = NamedPF.applyBox(req.path, LiftRules.httpAuthProtectedResource.toList)
+    val role = NamedPF.applyBox(req, LiftRules.httpAuthProtectedResource.toList)
     role.map(_ match {
       case Full(r) =>
         LiftRules.authentication.verified_?(req) match {

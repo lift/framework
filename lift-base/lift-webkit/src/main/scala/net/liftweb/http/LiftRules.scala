@@ -44,7 +44,7 @@ object LiftRules extends Factory with FormVendor {
   type URLDecoratorPF = PartialFunction[String, String]
   type SnippetDispatchPF = PartialFunction[String, DispatchSnippet]
   type ViewDispatchPF = PartialFunction[List[String], Either[() => Box[NodeSeq], LiftView]]
-  type HttpAuthProtectedResourcePF = PartialFunction[ParsePath, Box[Role]]
+  type HttpAuthProtectedResourcePF = PartialFunction[Req, Box[Role]]
   type ExceptionHandlerPF = PartialFunction[(Props.RunModes.Value, Req, Throwable), LiftResponse]
   type ResourceBundleFactoryPF = PartialFunction[(String, Locale), ResourceBundle]
   type SplitSuffixPF = PartialFunction[List[String], (List[String], String)]
