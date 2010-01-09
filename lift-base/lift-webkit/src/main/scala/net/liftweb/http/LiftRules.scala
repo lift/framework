@@ -619,8 +619,8 @@ object LiftRules extends Factory with FormVendor {
    * If there is an alternative way of calculating the context path
    * (by default returning Empty)
    *
-   * If this function returns an Empty, the contextPath provided by the container will be used. 
-   * 
+   * If this function returns an Empty, the contextPath provided by the container will be used.
+   *
    */
   @volatile var calculateContextPath: () => Box[String] = () => Empty
 
@@ -678,33 +678,27 @@ object LiftRules extends Factory with FormVendor {
     for{
       rf <- (Box !! resourceFinder(name)) or (Box !! defaultFinder(name))
     } yield rf
-  // resourceFinder(name) match {case null => defaultFinder(name) match {case null => Empty; case s => Full(s)} ; case s => Full(s)}
 
   /**
-   * Obtain the resource InputStream by name
+   * Open a resource by name and process its contents using the supplied function.
    */
-  def getResourceAsStream(name: String): Box[Applier[InputStream]] =
-    getResource(name).map(url => wrapInputStream(url.openStream))
+  def doWithResource[T](name: String)(f: InputStream => T): Box[T] =
+    getResource(name) map { _.openStream } map { is => try { f(is) } finally { is.close } }
 
   /**
    * Obtain the resource as an array of bytes by name
    */
-  def loadResource(name: String): Box[Array[Byte]] = getResourceAsStream(name).map {
-    app => app {
-      stream => {
-        val buffer = new Array[Byte](2048)
-        val out = new ByteArrayOutputStream
-        def reader {
-          val len = stream.read(buffer)
-          if (len < 0) return
-          else if (len > 0) out.write(buffer, 0, len)
-          reader
-        }
-        reader
-        // stream.close
-        out.toByteArray
-      }
+  def loadResource(name: String): Box[Array[Byte]] = doWithResource(name) { stream =>
+    val buffer = new Array[Byte](2048)
+    val out = new ByteArrayOutputStream
+    def reader {
+      val len = stream.read(buffer)
+      if (len < 0) return
+      else if (len > 0) out.write(buffer, 0, len)
+      reader
     }
+    reader
+    out.toByteArray
   }
 
   /**
@@ -719,26 +713,6 @@ object LiftRules extends Factory with FormVendor {
    * Obtain the resource as a String by name
    */
   def loadResourceAsString(name: String): Box[String] = loadResource(name).map(s => new String(s, "UTF-8"))
-
-  /**
-   * Looks up a resource by name and returns an Empty Box if the resource was not found.
-   */
-  def finder(name: String): Box[Applier[InputStream]] =
-    (for{
-      ctx <- Box !! LiftRules.context
-      res <- Box !! ctx.resourceAsStream(name)
-    } yield wrapInputStream(res)) or getResourceAsStream(name)
-
-
-  private def wrapInputStream(is: InputStream): Applier[InputStream] =
-  new Applier[InputStream] {
-    def apply[T](f: InputStream => T): T =
-    try {
-      f(is)
-    } finally {
-      is.close
-    }
-  }
 
   /**
    * Get the partial function that defines if a request should be handled by

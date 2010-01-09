@@ -1314,41 +1314,40 @@ object TemplateFinder {
               while (!found && le.hasNext) {
                 val p = le.next
                 val name = pls + p + (if (s.length > 0) "." + s else "")
-                val rb:Box[Applier[InputStream]] = LiftRules.finder(name)
-                if (rb.isDefined) {
-                  import scala.xml.dtd.ValidationException
-                  val xmlb = try {
-                    val f = rb.open_!
-                    f(is => PCDataXmlParser(is))
-                  } catch {
-                    case e: ValidationException if Props.devMode =>
-                      return (Full(
-                        <div style="border: 1px red solid">Error locating template {name}.<br/>
-                        Message:{e.getMessage}<br/>
-                        {
-                        <pre>{e.toString}{e.getStackTrace.map(_.toString).mkString("\n")}</pre>
-                        }
-                        This message is displayed because you are in Development mode.
-                      </div>))
-
-                    case e: ValidationException => Empty
+                import scala.xml.dtd.ValidationException
+                val xmlb = try {
+                  LiftRules.doWithResource(name) { PCDataXmlParser(_) } match {
+                    case Full(seq) => seq
+                    case _ => Empty
                   }
-                  if (xmlb.isDefined) {
-                    found = true
-                    ret = (cache(key) = xmlb.open_!)
-                  } else if (xmlb.isInstanceOf[Failure] && Props.devMode) {
-                    val msg = xmlb.asInstanceOf[Failure].msg
-                    val e = xmlb.asInstanceOf[Failure].exception
-                    return (Full(<div style="border: 1px red solid">Error locating template{name}.<br/>Message:{msg}<br/>{
-                    {
-                      e match {
-                        case Full(e) =>
-                          <pre>{e.toString}{e.getStackTrace.map(_.toString).mkString("\n")}</pre>
-                        case _ => NodeSeq.Empty
+                } catch {
+                  case e: ValidationException if Props.devMode =>
+                    return (Full(
+                      <div style="border: 1px red solid">Error locating template {name}.<br/>
+                      Message:{e.getMessage}<br/>
+                      {
+                      <pre>{e.toString}{e.getStackTrace.map(_.toString).mkString("\n")}</pre>
                       }
-                    }}This message is displayed because you are in Development mode.
+                      This message is displayed because you are in Development mode.
                     </div>))
-                  }
+
+                  case e: ValidationException => Empty
+                }
+                if (xmlb.isDefined) {
+                  found = true
+                  ret = (cache(key) = xmlb.open_!)
+                } else if (xmlb.isInstanceOf[Failure] && Props.devMode) {
+                  val msg = xmlb.asInstanceOf[Failure].msg
+                  val e = xmlb.asInstanceOf[Failure].exception
+                  return (Full(<div style="border: 1px red solid">Error locating template{name}.<br/>Message:{msg}<br/>{
+                  {
+                    e match {
+                      case Full(e) =>
+                        <pre>{e.toString}{e.getStackTrace.map(_.toString).mkString("\n")}</pre>
+                      case _ => NodeSeq.Empty
+                    }
+                  }}This message is displayed because you are in Development mode.
+                  </div>))
                 }
               }
             }

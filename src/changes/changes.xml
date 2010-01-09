@@ -38,6 +38,10 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+      <action dev="boisvert" type="fix" issue="273" system="github">
+       Changed LiftRules.getResourceAsStream() to doWithResource() to ensure InputStream is always closed
+       Removed duplicate LiftRules.finder()
+      </action>
       <action dev="dchenbecker" type="fix" issue="232" system="github">
         Added logging of bad prepared statements to help diagnose things.
       </action>
