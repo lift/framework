@@ -13,7 +13,7 @@ object Jsonbench extends Benchmark {
   def main(args: Array[String]) = {
     benchmark("Scala std") { JSON.parse(json) }
     val mapper = new ObjectMapper
-    benchmark("Jackson") { mapper.readValue(json, classOf[java.util.HashMap[_, _]]) }
+    benchmark("Jackson") { mapper.readValue(json, classOf[JsonNode]) }
     benchmark("lift-json") { JsonParser.parse(json) }
   }
 

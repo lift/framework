@@ -20,6 +20,7 @@ package net.liftweb.json
  */
 object JsonParser {
   import JsonAST._
+  import java.io._
 
   class ParseException(message: String, cause: Exception) extends Exception(message, cause)
 
@@ -36,47 +37,6 @@ object JsonParser {
   private[json] case object OpenArr extends Token
   private[json] case object CloseArr extends Token
 
-  private[json] sealed trait MValue {
-    def toJValue: JValue
-  }
-
-  private[json] case class MField(name: String, var value: MValue) extends MValue {
-    def toJValue = JField(name, value.toJValue)
-  }
-
-  private[json] case object MNull extends MValue {
-    def toJValue = JNull
-  }
-
-  private[json] case class MString(value: String) extends MValue {
-    def toJValue = JString(value)
-  }
-
-  private[json] case class MInt(value: BigInt) extends MValue {
-    def toJValue = JInt(value)
-  }
-
-  private[json] case class MDouble(value: Double) extends MValue {
-    def toJValue = JDouble(value)
-  }
-
-  private[json] case class MBool(value: Boolean) extends MValue {
-    def toJValue = JBool(value)
-  }
-
-  private[json] trait MBlock[A <: MValue] {
-    protected var elems = List[A]()
-    def +=(f: A) = elems = f :: elems
-  }
-
-  private[json] case class MObject() extends MValue with MBlock[MField] {
-    def toJValue = JObject(elems.map(_.toJValue).reverse)
-  }
-
-  private[json] case class MArray() extends MValue with MBlock[MValue] {
-    def toJValue = JArray(elems.map(_.toJValue).reverse)
-  }
-  
   /** Return parsed JSON.
    * @throws ParseException is thrown if parsing fails
    */
@@ -89,35 +49,45 @@ object JsonParser {
     }
 
   private def parse0(s: String): JValue = {
-    val p = new Parser(s)
+    val buf = new Buffer(new StringReader(s))
+    val p = new Parser(buf)
     val vals = new ValStack(p)
     var token: Token = null
     var root: Option[JValue] = None
 
-    def closeBlock(v: MValue) {
+    // This is a slightly faster way to correct order of fields and arrays than using 'map'.
+    def reverse(v: JValue): JValue = v match {
+      case JObject(l) => JObject(l.map(reverse).asInstanceOf[List[JField]].reverse)
+      case JArray(l) => JArray(l.map(reverse).reverse)
+      case JField(name, value) => JField(name, reverse(value))
+      case x => x
+    }
+    
+    def closeBlock(v: JValue) {
       vals.peekOption match {
-        case Some(f: MField) => 
-          f.value = v
-          val field = vals.pop(classOf[MField])
-          vals.peek(classOf[MObject]) += field
-        case Some(o: MObject) => v match {
-          case x: MField => o += x
+        case Some(f: JField) => 
+          val field = vals.pop(classOf[JField])
+          val newField = JField(field.name, v)
+          val obj = vals.peek(classOf[JObject])
+          vals.replace(JObject(newField :: obj.obj))
+        case Some(o: JObject) => v match {
+          case x: JField => vals.replace(JObject(x :: o.obj))
           case _ => p.fail("expected field but got " + v)
         }
-        case Some(a: MArray) => a += v
+        case Some(a: JArray) => vals.replace(JArray(v :: a.arr))
         case Some(x) => p.fail("expected field, array or object but got " + x)
-        case None => root = Some(v.toJValue)
+        case None => root = Some(reverse(v))
       }
     }
 
-    def newValue(v: MValue) {
-      vals.peek(classOf[MValue]) match {
-        case f: MField =>
-          vals.pop(classOf[MField])
-          f.value = v
-          vals.peek(classOf[MObject]) += f
-        case a: MArray =>
-          a += v
+    def newValue(v: JValue) {
+      vals.peek(classOf[JValue]) match {
+        case f: JField =>
+          vals.pop(classOf[JField])
+          val newField = JField(f.name, v)
+          val obj = vals.peek(classOf[JObject])
+          vals.replace(JObject(newField :: obj.obj))
+        case a: JArray => vals.replace(JArray(v :: a.arr))
         case _ => p.fail("expected field or array")
       }
     }
@@ -125,32 +95,35 @@ object JsonParser {
     do {
       token = p.nextToken
       token match {
-        case OpenObj          => vals.push(MObject())
-        case FieldStart(name) => vals.push(MField(name, null))
-        case StringVal(x)     => newValue(MString(x))
-        case IntVal(x)        => newValue(MInt(x))
-        case DoubleVal(x)     => newValue(MDouble(x))
-        case BoolVal(x)       => newValue(MBool(x))
-        case NullVal          => newValue(MNull)
-        case CloseObj         => closeBlock(vals.pop(classOf[MValue]))
-        case OpenArr          => vals.push(MArray())
-        case CloseArr         => closeBlock(vals.pop(classOf[MArray]))
+        case OpenObj          => vals.push(JObject(Nil))
+        case FieldStart(name) => vals.push(JField(name, null))
+        case StringVal(x)     => newValue(JString(x))
+        case IntVal(x)        => newValue(JInt(x))
+        case DoubleVal(x)     => newValue(JDouble(x))
+        case BoolVal(x)       => newValue(JBool(x))
+        case NullVal          => newValue(JNull)
+        case CloseObj         => closeBlock(vals.pop(classOf[JValue]))
+        case OpenArr          => vals.push(JArray(Nil))
+        case CloseArr         => closeBlock(vals.pop(classOf[JArray]))
         case End              =>
       }
     } while (token != End)
+
+    buf.reset // FIXME in finally block
 
     root.get
   }
 
   private class ValStack(parser: Parser) {
     import java.util.LinkedList
-    private[this] val stack = new LinkedList[MValue]()
+    private[this] val stack = new LinkedList[JValue]()
 
-    def pop[A <: MValue](expectedType: Class[A]) = convert(stack.poll, expectedType)
-    def push(v: MValue) = stack.addFirst(v)
-    def peek[A <: MValue](expectedType: Class[A]) = convert(stack.peek, expectedType)
+    def pop[A <: JValue](expectedType: Class[A]) = convert(stack.poll, expectedType)
+    def push(v: JValue) = stack.addFirst(v)
+    def peek[A <: JValue](expectedType: Class[A]) = convert(stack.peek, expectedType)
+    def replace[A <: JValue](newTop: JValue) = stack.set(0, newTop)
 
-    private def convert[A <: MValue](x: MValue, expectedType: Class[A]): A = {
+    private def convert[A <: JValue](x: JValue, expectedType: Class[A]): A = {
       if (x == null) parser.fail("expected object or array")
       try { x.asInstanceOf[A] } catch { case _: ClassCastException => parser.fail("unexpected " + x) }
     }
@@ -158,100 +131,94 @@ object JsonParser {
     def peekOption = if (stack isEmpty) None else Some(stack.peek)
   }
 
-  private class Parser(buf: String) {
+  private class Parser(buf: Buffer) {
     import java.util.LinkedList
 
     private[this] val blocks = new LinkedList[BlockMode]()
     private[this] var fieldNameMode = true
-    private[this] var cur = 0 // Pointer which points current parsing location
 
-    def fail(msg: String) = throw new ParseException(
-      msg + "\nNear: " + buf.substring((cur-20) max 0, (cur+20) min (buf.length-1)), null)
+    def fail(msg: String) = throw new ParseException(msg, null)
+      //FIXME: msg + "\nNear: " + buf.substring((cur-20) max 0, (cur+20) min (buf.length-1)), null)
 
     def nextToken: Token = {
       def isDelimiter(c: Char) = c == ' ' || c == '\n' || c == ',' || c == '\r' || c == '\t' || c == '}' || c == ']'
 
       def parseFieldName: String = {
-        cur = cur+1
-        val start = cur
-        while (true) {
-          val c = buf.charAt(cur)
-          if (c == '"') {
-            cur = cur+1
-            return buf.substring(start, cur-1)
-          }
-          cur = cur+1
+        buf.mark
+        var c = buf.next
+        while (c != '"') {
+          c = buf.next
         }
-        error("can't happen")
+        buf.substring
       }
 
       def parseString: String = {
-        cur = cur+1
-        val s = new java.lang.StringBuilder
-        
-        def append(c: Char) = s.append(c)
-        
+        buf.mark
+        var c = 'x'
+        do {
+          c = buf.next
+          if (c == '\\') return parseEscapedString(buf.substring)
+        } while (c != '"')
+        buf.substring
+      }
+
+      def parseEscapedString(base: String): String = {
+        val s = new java.lang.StringBuilder(base)
+        var c = '\\'
         while (true) {
-          val c = buf.charAt(cur)
           if (c == '"') {
-            cur = cur+1
             return s.toString
           }
 
           if (c == '\\') {
-            cur = cur+1
-            buf.charAt(cur) match {
-              case '"'  => append('"')
-              case '\\' => append('\\')
-              case '/'  => append('/')
-              case 'b'  => append('\b')
-              case 'f'  => append('\f')
-              case 'n'  => append('\n')
-              case 'r'  => append('\r')
-              case 't'  => append('\t')
+            buf.next match {
+              case '"'  => s.append('"')
+              case '\\' => s.append('\\')
+              case '/'  => s.append('/')
+              case 'b'  => s.append('\b')
+              case 'f'  => s.append('\f')
+              case 'n'  => s.append('\n')
+              case 'r'  => s.append('\r')
+              case 't'  => s.append('\t')
               case 'u' => 
-                val codePoint = Integer.parseInt(buf.substring(cur+1, cur+5), 16)
-                cur = cur+4
+                val chars = Array(buf.next, buf.next, buf.next, buf.next)
+                val codePoint = Integer.parseInt(new String(chars), 16)
                 s.appendCodePoint(codePoint)
-              case _ => append('\\')
+              case _ => s.append('\\')
             }
-          } else append(c)
-          cur = cur+1
+          } else s.append(c)
+          c = buf.next
         }
-        error("can't happen")
+        error("can't happen")        
       }
 
-      def parseValue = {
-        var i = cur+1
+      def parseValue(first: Char) = {
         var wasInt = true
         var doubleVal = false
+        val s = new StringBuilder
+        s.append(first) 
         while (wasInt) {
-          val c = buf.charAt(i)
+          val c = buf.next
           if (c == '.' || c == 'e' || c == 'E') {
             doubleVal = true
-            i = i+1
+            s.append(c)
           } else if (!(Character.isDigit(c) || c == '.' || c == 'e' || c == 'E' || c == '-')) {
             wasInt = false
-          } else {
-            i = i+1
-          }
+            buf.back
+          } else s.append(c)
         }
-        val value = buf.substring(cur, i)
-        cur = i
+        val value = s.toString
         if (doubleVal) DoubleVal(value.toDouble) else IntVal(BigInt(value))
       }
 
-      val len = buf.length
-      while (cur < len) {
-        buf.charAt(cur) match {
+      while (buf.hasNext) {
+        buf.next match {
           case '{' =>
             blocks.addFirst(OBJECT)
-            cur = cur+1
             fieldNameMode = true
             return OpenObj
           case '}' =>
             blocks.poll
-            cur = cur+1
             return CloseObj
           case '"' =>
             if (fieldNameMode && blocks.peek == OBJECT) return FieldStart(parseFieldName)
@@ -261,41 +228,35 @@ object JsonParser {
             }
           case 't' =>
             fieldNameMode = true
-            if (buf.charAt(cur+1) == 'r' && buf.charAt(cur+2) == 'u' && buf.charAt(cur+3) == 'e' && isDelimiter(buf.charAt(cur+4))) {
-              cur = cur+4
+            if (buf.next == 'r' && buf.next == 'u' && buf.next == 'e') {
               return BoolVal(true)
             }
             fail("expected boolean")
           case 'f' =>
             fieldNameMode = true
-            if (buf.charAt(cur+1) == 'a' && buf.charAt(cur+2) == 'l' && buf.charAt(cur+3) == 's' && buf.charAt(cur+4) == 'e' && isDelimiter(buf.charAt(cur+5))) {
-              cur = cur+5
+            if (buf.next == 'a' && buf.next == 'l' && buf.next == 's' && buf.next == 'e') {
               return BoolVal(false)
             }
             fail("expected boolean")
           case 'n' =>
             fieldNameMode = true
-            if (buf.charAt(cur+1) == 'u' && buf.charAt(cur+2) == 'l' && buf.charAt(cur+3) == 'l' && isDelimiter(buf.charAt(cur+4))) {
-              cur = cur+4
+            if (buf.next == 'u' && buf.next == 'l' && buf.next == 'l') {
               return NullVal
             }
             fail("expected null")
           case ':' =>
             fieldNameMode = false
-            cur = cur+1
           case '[' =>
             blocks.addFirst(ARRAY)
-            cur = cur+1
             return OpenArr
           case ']' =>
             fieldNameMode = true
             blocks.poll
-            cur = cur+1
             return CloseArr
           case c if Character.isDigit(c) || c == '-' =>
             fieldNameMode = true
-            return parseValue
-          case c if isDelimiter(c) => cur = cur+1
+            return parseValue(c)
+          case c if isDelimiter(c) => 
           case c => fail("unknown token " + c)
         }
       }
@@ -305,5 +266,97 @@ object JsonParser {
     sealed abstract class BlockMode
     case object ARRAY extends BlockMode
     case object OBJECT extends BlockMode
+  }
+
+  // FIXME rename
+  private type B = Array[Char]
+
+  class Buffer(in: Reader) {
+    var length = -1
+    var curMark = -1
+    var curMarkBuf = -1
+    private[this] var bufs: List[B] = Nil
+    private[this] var buf: B = _
+    private[this] var cur = 0 // Pointer which points current parsing location
+    private[this] var curBufIdx = 0 // Pointer which points current buffer
+    read
+
+    def mark = { curMark = cur; curMarkBuf = curBufIdx }
+    def back = cur = cur-1  // FIXME remove or fix
+
+    def next = {
+      val c = buf(cur)
+      cur = cur+1
+      if (cur == buf.length) read
+      c
+    }
+    def hasNext = cur < length
+
+    def substring = {
+      if (curBufIdx == curMarkBuf) new String(buf, curMark, cur-curMark-1)
+      else { // slower path for case when string is in two or more buffers
+        var parts: List[(Int, Int, B)] = Nil
+        var i = curBufIdx
+//      println("c: " + (cur, curBufIdx))
+//      println("m: " + curMark)
+        while (i >= curMarkBuf) {
+          val b = bufs(i)
+          val start = if (i == curMarkBuf) curMark else 0
+          val end = if (curMarkBuf == curBufIdx || (i == curMarkBuf && cur > start)) cur else b.length
+          parts = (start, end, b) :: parts
+          i = i-1
+        }
+        val len = parts.map(p => p._2 - p._1).foldLeft(0)(_ + _)
+        val chars = new Array[Char](len)
+        i = 0
+        var pos = 0
+
+//      println("P: " + parts)
+        while (i < parts.size) {
+          val (start, end, b) = parts(i)
+          val l = end-start-1
+//        println("copying: '" + new String(b, start, l) + "'")
+          System.arraycopy(b, start, chars, pos, l)
+          pos = pos + l
+          i = i+1
+        }
+        new String(chars)
+      }
+    }
+
+    def reset = bufs.foreach(Buf.reset)
+
+    private[this] def read = {
+      try {
+        val newBuf = Buf()
+        length = in.read(newBuf)
+        buf = newBuf
+        bufs = bufs ::: List(newBuf)
+        cur = 0
+        curBufIdx = bufs.length-1
+      } finally {
+        // FIXME close when all read
+//        in.close
+      }
+    }
+  }
+
+  // FIXME rename
+  object Buf {
+    import scala.collection.mutable._
+
+    private[this] val bufs = new ListBuffer[B]()
+
+    def apply() = {
+      synchronized {
+        if (bufs.size == 0) {
+          mkBuf // FIXME limit max number of buffers
+        } else bufs.remove(0)
+      }
+    }
+
+    def reset(buf: B) = synchronized { bufs += buf }
+
+    def mkBuf = new Array[Char](512) // FIXME figure out proper size
   }
 }
