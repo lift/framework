@@ -23,10 +23,10 @@ import _root_.scala.xml.{Elem, Node, NodeSeq}
 import _root_.net.liftweb.http.{S}
 import S._
 import _root_.net.liftweb.http.js._
-import _root_.net.liftweb.util.{FieldError}
+import _root_.net.liftweb.util.{FieldError, FieldContainer, BaseField}
 import _root_.net.liftweb.common.{Box, Empty, Full, Failure}
 
-trait BaseMapper {
+trait BaseMapper extends FieldContainer {
   type MapperType <: Mapper[MapperType]
 
   def save: Boolean
@@ -131,6 +131,8 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
    */
   def formFields: List[MappedField[_, A]] =
   getSingleton.formFields(this)
+
+   def allFields: Seq[BaseField] = formFields
 
   /**
    * map the fields titles and forms to generate a list
@@ -299,7 +301,7 @@ trait BaseKeyedMapper extends BaseMapper {
   /**
    * Delete the model from the RDBMS
    */
-  def delete_! : Boolean 
+  def delete_! : Boolean
 }
 
 trait BaseLongKeyedMapper extends BaseKeyedMapper {

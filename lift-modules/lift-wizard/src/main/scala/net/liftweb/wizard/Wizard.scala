@@ -63,7 +63,7 @@ object WizardRules extends Factory with FormVendor {
   }
 }
 
-case class WizardFieldInfo(field: FieldIdentifier, text: NodeSeq, help: Box[NodeSeq], input: NodeSeq)
+case class WizardFieldInfo(field: FieldIdentifier, text: NodeSeq, help: Box[NodeSeq], input: Box[NodeSeq])
 
 trait Wizard extends DispatchSnippet with Factory {
   def dispatch = {
@@ -73,7 +73,7 @@ trait Wizard extends DispatchSnippet with Factory {
   implicit def elemInABox(in: Elem): Box[Elem] = Full(in)
 
   @volatile private[this] var _screenList: List[Screen] = Nil
-  private object ScreenVars extends RequestVar[Map[String, (WizardVar[_], Any)]](Map())
+  private object ScreenVars extends RequestVar[Map[String, (NonCleanAnyVar[_], Any)]](Map())
   protected object CurrentScreen extends RequestVar[Box[Screen]](calcFirstScreen)
   private object PrevSnapshot extends RequestVar[Box[WizardSnapshot]](Empty)
   private object Referer extends WizardVar[String](S.referer openOr "/")
@@ -116,7 +116,7 @@ trait Wizard extends DispatchSnippet with Factory {
     val url = S.uri
 
     renderAll(wizardTop, theScreen.screenTop,
-      theScreen.screenFields.map(f => WizardFieldInfo(f, f.titleAsHtml, f.helpAsHtml, f.toForm)),
+      theScreen.screenFields.map(f => WizardFieldInfo(f, f.displayHtml, f.helpAsHtml, f.toForm)),
       prevButton, Full(cancelButton),
       nextButton,
       finishButton, theScreen.screenBottom, wizardBottom, nextId, prevId, cancelId, theScreen)
@@ -225,7 +225,7 @@ trait Wizard extends DispatchSnippet with Factory {
 
   protected def wizardBottom: Box[Elem] = None
 
-  class WizardSnapshot(private[wizard] val screenVars: Map[String, (WizardVar[_], Any)],
+  class WizardSnapshot(private[wizard] val screenVars: Map[String, (NonCleanAnyVar[_], Any)],
                        val currentScreen: Box[Screen],
                        private[wizard] val snapshot: Box[WizardSnapshot],
                        private val firstScreen: Boolean) {
@@ -338,60 +338,25 @@ trait Wizard extends DispatchSnippet with Factory {
   /**
    * Define a screen within this wizard
    */
-  trait Screen {
-    override def toString = screenName
-
-    /**
-     * any additional parameters that need to be put in the on the form (e.g., mime type)
-     */
-    def additionalAttributes: MetaData =
-      if (hasUploadField) new UnprefixedAttribute("enctype", Text("multipart/form-data"), Null) else Null
-
-    @volatile private[this] var _fieldList: List[Field] = Nil
-
-    private def _register(field: Field) {
-      _fieldList = _fieldList ::: List(field)
-    }
-
-    protected def hasUploadField: Boolean = screenFields.foldLeft(false)(_ | _.uploadField_?)
-
-    /**
-     *  A list of fields in this screen
-     */
-    def screenFields = _fieldList
-
+  trait Screen extends AbstractScreen {
     val myScreenNum = screens.length
-
-    def screenTop: Box[Elem] = Empty
-
-    def screenBottom: Box[Elem] = Empty
 
     /**
      * The name of the screen.  Override this to change the screen name
      */
-    def screenName: String = "Screen " + (myScreenNum + 1)
-
-    def screenNameAsHtml: NodeSeq = Text(screenName)
-
-    def screenTitle: NodeSeq = screenNameAsHtml
-
-    def screenTopText: Box[String] = Empty
-
-    def screenTopTextAsHtml: Box[NodeSeq] = screenTopText.map(Text.apply)
+    override def screenName: String = "Screen " + (myScreenNum + 1)
 
     def nextButton: Elem = Wizard.this.nextButton
 
     def prevButton: Elem = Wizard.this.prevButton
 
-    def cancelButton: Elem = Wizard.this.cancelButton
+    override def cancelButton: Elem = Wizard.this.cancelButton
 
-    def finishButton: Elem = Wizard.this.finishButton
+    override def finishButton: Elem = Wizard.this.finishButton
 
     def nextScreen: Box[Screen] = calcScreenAfter(this)
 
     def isLastScreen = nextScreen.isEmpty
-
-    implicit def boxOfScreen(in: Screen): Box[Screen] = Box !! in
 
     /**
      * By default, are all the fields on this screen on the confirm screen?
@@ -399,88 +364,40 @@ trait Wizard extends DispatchSnippet with Factory {
     def onConfirm_? = Wizard.this.onConfirm_?
 
 
-    def validate: List[FieldError] = screenFields.flatMap(_.validate)
-
     /**
      * Is this screen a confirm screen?
      */
     def confirmScreen_? = false
 
-
-    protected def vendForm[T](implicit man: Manifest[T]): Box[(T, T => Unit) => NodeSeq] = Empty
-
     /**
      * Define a field within the screen
      */
-    trait Field extends FieldIdentifier with SettableValueHolder {
-      type ValueType
-      Screen.this._register(this)
-
-      object currentValue extends WizardVar[ValueType](default) {
-        override protected def __nameSalt = randomString(20)
-      }
-
-      def default: ValueType
-
-      def is = currentValue.is
-
-      /**
-       * Set to true if this field is part of a multi-part mime upload
-       */
-      def uploadField_? = false
-
-      def get = is
-
-      def set(v: ValueType) = currentValue.set(v)
-
-      implicit def manifest: Manifest[ValueType]
-
-      protected def buildIt[T](implicit man: Manifest[T]): Manifest[T] = man
-
-      def title: String
-
-      def titleAsHtml: NodeSeq = Text(title)
-
-      def help: Box[String] = Empty
-
-      def helpAsHtml: Box[NodeSeq] = help.map(Text.apply)
-
-      /**
-       *  Is the field editable
-       */
-      def editable_? = true
-
-      def toForm: NodeSeq = {
-        val func: Box[(ValueType, ValueType => Unit) => NodeSeq] =
-        Screen.this.vendForm(manifest) or Wizard.this.vendForm(manifest) or WizardRules.vendForm(manifest) or
-            LiftRules.vendForm(manifest)
-
-        func.map(f => f(is, set _)) openOr NodeSeq.Empty
-      }
-
+    trait Field extends super.Field {
       /**
        * Is this field on the confirm screen
        */
       def onConfirm_? = Screen.this.onConfirm_?
 
-      def validate: List[FieldError] = validation.flatMap(_.apply(is))
-
-      def validation: List[ValueType => List[FieldError]] = Nil
-
-      override lazy val uniqueFieldId: Box[String] = Full(Helpers.hash(this.getClass.getName))
-
-      override def toString = is.toString
+      override protected def otherFuncVendors(what: Manifest[ValueType]):
+      Box[(ValueType, ValueType => Unit) => NodeSeq] =
+        Wizard.this.vendForm(manifest) or WizardRules.vendForm(manifest)
     }
 
     Wizard.this._register(this)
+
+    protected def vendAVar[T](dflt: => T): NonCleanAnyVar[T] = Wizard.this.vendAVar[T](dflt)
+  }
+
+  protected def vendAVar[T](dflt: => T): NonCleanAnyVar[T] = new WizardVar[T](dflt) {
+    override protected def __nameSalt = randomString(20)
   }
 
   /**
    * Keep request-local information around without the nastiness of naming session variables
    * or the type-unsafety of casting the results.
    * RequestVars share their value through the scope of the current HTTP
-   * request.  They have no value at the beginning of request servicing
-   * and their value is discarded at the end of request processing.  They
+   * request. They have no value at the beginning of request servicing
+   * and their value is discarded at the end of request processing. They
    * are helpful to share values across many snippets.
    *
    * @param dflt - the default value of the session variable
@@ -505,7 +422,7 @@ trait Wizard extends DispatchSnippet with Factory {
     }
 
     /**
-     * Different Vars require different mechanisms for synchronization.  This method implements
+     * Different Vars require different mechanisms for synchronization. This method implements
      * the Var specific synchronization mechanism
      */
     def doSync[F](f: => F): F = f // no sync necessary for RequestVars... always on the same thread
@@ -523,34 +440,4 @@ trait Wizard extends DispatchSnippet with Factory {
     def clear(name: String): Unit =
       ScreenVars.set(ScreenVars.is - name)
   }
-}
-
-trait IntField extends FieldIdentifier {
-  self: Wizard#Screen#Field =>
-  type ValueType = Int
-
-  def default = 0
-
-  lazy val manifest = buildIt[Int]
-
-  def minVal(len: Int, msg: => String): Int => List[FieldError] = s =>
-      if (s < len) List(FieldError(this, Text(msg))) else Nil
-
-  def maxVal(len: Int, msg: => String): Int => List[FieldError] = s =>
-      if (s > len) List(FieldError(this, Text(msg))) else Nil
-}
-
-trait StringField extends FieldIdentifier {
-  self: Wizard#Screen#Field =>
-  type ValueType = String
-
-  def default = ""
-
-  lazy val manifest = buildIt[String]
-
-  def minLen(len: Int, msg: => String): String => List[FieldError] = s =>
-      if (s.length < len) List(FieldError(this, Text(msg))) else Nil
-
-  def maxLen(len: Int, msg: => String): String => List[FieldError] = s =>
-      if (s.length > len) List(FieldError(this, Text(msg))) else Nil
 }
