@@ -4,7 +4,7 @@ import _root_.java.util.{TimeZone, Calendar, Date, Locale}
 import common._
 
 /*
- * Copyright 2006-2009 WorldWide Conferencing, LLC
+ * Copyright 2006-2010 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
