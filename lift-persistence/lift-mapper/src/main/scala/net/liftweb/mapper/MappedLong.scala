@@ -123,6 +123,9 @@ abstract class MappedLongIndex[T<:Mapper[T]](theOwner: T) extends MappedLong[T](
 }
 
 abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, val enum: ENUM) extends MappedField[Seq[ENUM#Value], T] {
+  type MyElem = ENUM#Value
+  type MyType = Seq[MyElem]
+
   private var data: Seq[ENUM#Value] = defaultValue
   private var orgData: Seq[ENUM#Value] = defaultValue
 

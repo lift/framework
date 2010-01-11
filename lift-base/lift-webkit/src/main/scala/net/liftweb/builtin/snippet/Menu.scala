@@ -89,7 +89,7 @@ object Menu extends DispatchSnippet {
     val innerTag: String = S.attr("inner_tag") openOr "li"
     val expandAll = S.attr("expandAll").isDefined
 
-    val expandAny: Boolean = (for (e <- S.attr("expand")) yield Helpers.toBoolean(e)) openOr false
+    val expandAny: Boolean = (for (e <- S.attr("expand")) yield Helpers.toBoolean(e)) openOr true
 
     val level: Box[Int] = for (lvs <- S.attr("level"); i <- Helpers.asInt(lvs)) yield i
 
