@@ -98,32 +98,32 @@
   <!--
     ~ Reporting Settings
   -->
-   <reporting>
-     <plugins>
-       <plugin>
-         <groupId>org.apache.maven.plugins</groupId>
-         <artifactId>maven-project-info-reports-plugin</artifactId>
-         <reportSets>
-           <reportSet>
-             <reports>
-               <!--<report>cim</report>-->
-               <report>dependencies</report>
-               <report>dependency-convergence</report>
-               <!--<report>dependency-management</report>-->
-               <report>index</report>
-               <!--<report>issue-tracking</report>-->
-               <!--<report>license</report>-->
-               <!--<report>mailing-list</report>-->
-               <!--<report>plugin-management</report>-->
-               <report>plugins</report>
-               <!--<report>project-team</report>-->
-               <!--<report>scm</report>-->
-               <report>summary</report>
-             </reports>
-           </reportSet>
-         </reportSets>
-       </plugin>
-     </plugins>
-   </reporting>
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <!--<report>cim</report>-->
+              <report>dependencies</report>
+              <report>dependency-convergence</report>
+              <!--<report>dependency-management</report>-->
+              <report>index</report>
+              <!--<report>issue-tracking</report>-->
+              <!--<report>license</report>-->
+              <!--<report>mailing-list</report>-->
+              <!--<report>plugin-management</report>-->
+              <report>plugins</report>
+              <!--<report>project-team</report>-->
+              <!--<report>scm</report>-->
+              <report>summary</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+    </plugins>
+  </reporting>
 
 </project>
