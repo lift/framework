@@ -18,7 +18,8 @@ package net.liftweb.http
 import _root_.net.liftweb.common.{Box, Full, Empty}
 import _root_.net.liftweb.util._
 import Helpers._
-import _root_.java.net.{URLConnection, JarURLConnection}
+import java.net.{URL, URLConnection, JarURLConnection}
+import java.util.concurrent.{ConcurrentHashMap => CHash}
 
 object ResourceServer {
   var allowedPaths: PartialFunction[List[String], Boolean] = {
@@ -46,15 +47,30 @@ object ResourceServer {
    */
   var baseResourceLocation = "toserve"
 
-  def calcLastModified(in: URLConnection): Long = in.getLastModified match {
-    case 0L => in match {
-      case jc: JarURLConnection => jc.getJarEntry() match {
-        case null => 0L
-        case e => e.getTime()
-      }
-      case _ => 0L
+  private val lastModCache: CHash[String, Long] = new CHash()
+
+  def calcLastModified(in: URL): Long = {
+    val str = in.toString
+    if (lastModCache.containsKey(str)) lastModCache.get(str)
+    else {
+      val ret: Long =
+      (for{
+        uc <- tryo(in.openConnection)
+      } yield {
+          uc.getLastModified match {
+            case 0L => uc match {
+              case jc: JarURLConnection => jc.getJarEntry() match {
+                case null => 0L
+                case e => e.getTime()
+              }
+              case _ => 0L
+            }
+            case x => x
+          }
+        }) openOr 0L
+      lastModCache.put(str, ret)
+      ret
     }
-    case x => x
   }
 
 
@@ -64,11 +80,11 @@ object ResourceServer {
       rw = baseResourceLocation :: pathRewriter(auri)
       path = rw.mkString("/", "/", "")
       url <- LiftRules.getResource(path)
-      uc <- tryo(url.openConnection)
-      lastModified = calcLastModified(uc)
+      lastModified = calcLastModified(url)
     } yield
       request.testFor304(lastModified, "Expires" -> toInternetDate(millis + 30.days)) openOr {
         val stream = url.openStream
+        val uc = url.openConnection
         StreamingResponse(stream, () => stream.close, uc.getContentLength,
           (if (lastModified == 0L) Nil else
             List(("Last-Modified", toInternetDate(lastModified)))) :::
