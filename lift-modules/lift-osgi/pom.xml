@@ -61,18 +61,22 @@
     <dependency>
       <groupId>org.scalamodules</groupId>
       <artifactId>scalamodules-core</artifactId>
+      <version>1.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.apache.felix</groupId>
       <artifactId>org.osgi.compendium</artifactId>
+      <version>1.2.0</version>
     </dependency>
     <dependency>
       <groupId>org.ops4j.pax.web</groupId>
       <artifactId>pax-web-bundle</artifactId>
+      <version>0.6.0</version>
     </dependency>
     <dependency>
       <groupId>org.ops4j.pax.swissbox</groupId>
       <artifactId>pax-swissbox-extender</artifactId>
+      <version>0.2.0</version>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
