@@ -673,6 +673,19 @@ object SHtml {
     }
   }
 
+  def ajaxSubmit(value: String, func: () => Any, attrs: (String, String)*): Elem = {
+   def doit =  fmapFunc(func)(funcName =>
+     attrs.foldLeft(<input type="submit" name={funcName}/>)(_ % _) % 
+       new UnprefixedAttribute("value", Text(value), Null) %
+       ("onclick" -> ("liftAjax.lift_uriSuffix = '"+funcName+"=_'; return true;")))
+
+    _formGroup.is match {
+      case Empty => formGroup(1)(doit)
+      case _ => doit
+    }
+
+  }
+
   /**
    * Generates a form submission button with a default label.
    *

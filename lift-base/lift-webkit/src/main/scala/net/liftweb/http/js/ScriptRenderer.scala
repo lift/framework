@@ -49,6 +49,8 @@ object ScriptRenderer {
 
     },
 
+    lift_uriSuffix: undefined,
+
     lift_ajaxQueueSort: function() {
       liftAjax.lift_ajaxQueue.sort(function (a, b) {return a.when - b.when;});
     },
@@ -144,7 +146,12 @@ object ScriptRenderer {
                  aboutToSend.responseType.toLowerCase() === "json") {
                liftAjax.lift_actualJSONCall(aboutToSend.theData, successFunc, failureFunc);
              } else {
-               liftAjax.lift_actualAjaxCall(aboutToSend.theData, successFunc, failureFunc);
+               var theData = aboutToSend.theData;
+               if (liftAjax.lift_uriSuffix) {
+                 theData += '&' + liftAjax.lift_uriSuffix;
+                 liftAjax.lift_uriSuffix = undefined;
+               }
+               liftAjax.lift_actualAjaxCall(theData, successFunc, failureFunc);
              }
             }
          }
