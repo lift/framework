@@ -48,6 +48,64 @@
       <action dev="dchenbecker" type="fix" issue="231" system="github">
         Fixed Mapper to properly deal with generated values
       </action>
+      <action dev="dpp" type="enhancement" issue="268" system="github">
+        Misc sitemap enhancements
+      </action>
+      <action dev="dpp" type="fix" issue="267" system="github">
+	Lift explicitly closed streams rather than waiting for garbage collection
+      </action>
+      <action dev="dpp" type="fix" issue="266" system="github">
+        Jetty restarts do not cause exceptions to be thrown
+      </action>
+      <action dev="dpp" type="enhancement" issue="262" system="github">
+        lift-json's Jsvalue may be used with JsonResponse
+      </action>
+      <action dev="dpp" type="fix" issue="248" system="github">
+        Fixed NPE problems in Mapper to Json
+      </action>
+      <action dev="dpp" type="enhancement" issue="247" system="github">
+        Better handling of flot widget in Comet
+      </action>
+      <action dev="dpp" type="fix" issue="244" system="github">
+	Fixed misc Textile bugs
+      </action>
+      <action dev="dpp" type="enhancement" issue="243" system="github">
+        Enhanced stateful rewrite
+      </action>
+      <action dev="dpp" type="enhancement" issue="242" system="github">
+        Added post-commit hook to DB
+      </action>
+      <action dev="dpp" type="enhancement" issue="241" system="github">
+        Wizard supports file upload forms
+      </action>
+      <action dev="dpp" type="enhancement" issue="240" system="github">
+        Enhanced TestCond widget
+      </action>
+      <action dev="dpp" type="fix" issue="239" system="github">
+        304 responses no longer contain content type
+      </action>
+      <action dev="dpp" type="enhancement" issue="236" system="github">
+        Enhanced connection pool logic
+      </action>
+      <action dev="dpp" type="fix" issue="234" system="github">
+        Fixed some null exceptions with DB queries
+      </action>
+      <action dev="dpp" type="fix" issue="223" system="github">
+        Fixed problems with the JNDI context
+      </action>
+      <action dev="dpp" type="fix" issue="222" system="github">
+        Fixed synchronization issues with Vars
+      </action>
+      <action dev="dpp" type="enhancement" issue="276" system="github">
+        OAuth support (thanks to the FourSquare guys)
+      </action>
+      <action dev="dpp" type="fix" issue="275" system="github">
+	File handles released correctly in Jetty
+      </action>
+      <action dev="dpp" type="enhancement" issue="250" system="github">
+        Extracted "Screen" code from Wizard for stand-alone
+	declarative input screens
+      </action>
     </release>
 
     <release version="1.1-M8" date="2009-12-10" description="Lift 1.1 Milestone 8">
