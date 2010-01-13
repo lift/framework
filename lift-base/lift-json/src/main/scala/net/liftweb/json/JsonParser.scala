@@ -113,6 +113,8 @@ object JsonParser {
 
     root.get
   }
+  
+  private val EOF = (-1).asInstanceOf[Char]
 
   private class ValStack(parser: Parser) {
     import java.util.LinkedList
@@ -211,8 +213,9 @@ object JsonParser {
         if (doubleVal) DoubleVal(value.toDouble) else IntVal(BigInt(value))
       }
 
-      while (buf.hasNext) {
+      while (true) {
         buf.next match {
+          case c if EOF == c => return End //doParse = false
           case '{' =>
             blocks.addFirst(OBJECT)
             fieldNameMode = true
@@ -284,25 +287,31 @@ object JsonParser {
     def mark = { curMark = cur; curMarkBuf = curBufIdx }
     def back = cur = cur-1  // FIXME remove or fix
 
-    def next = {
-      val c = buf(cur)
-      cur = cur+1
-      if (cur == buf.length) read
-      c
+    def next: Char = {
+      try {
+        val c = buf(cur)
+        if (cur >= length) return EOF
+        cur = cur+1
+        c
+      } catch {
+        // suprisingly catching IndexOutOfBounds is faster than: if (cur == buf.length) 
+        case e => 
+          read
+          if (length == -1) EOF else next
+      }
     }
-    def hasNext = cur < length
 
     def substring = {
       if (curBufIdx == curMarkBuf) new String(buf, curMark, cur-curMark-1)
       else { // slower path for case when string is in two or more buffers
         var parts: List[(Int, Int, B)] = Nil
         var i = curBufIdx
-//      println("c: " + (cur, curBufIdx))
-//      println("m: " + curMark)
+//        println("c: " + (cur, curBufIdx))
+//        println("m: " + curMark)
         while (i >= curMarkBuf) {
           val b = bufs(i)
           val start = if (i == curMarkBuf) curMark else 0
-          val end = if (curMarkBuf == curBufIdx || (i == curMarkBuf && cur > start)) cur else b.length
+          val end = if (i == curBufIdx) cur else b.length+1
           parts = (start, end, b) :: parts
           i = i-1
         }
@@ -311,13 +320,14 @@ object JsonParser {
         i = 0
         var pos = 0
 
-//      println("P: " + parts)
+//        println("P: " + parts)
+//        parts.map(p => p._3).foreach(p => { println(p); p.foreach(print) })
         while (i < parts.size) {
           val (start, end, b) = parts(i)
-          val l = end-start-1
-//        println("copying: '" + new String(b, start, l) + "'")
-          System.arraycopy(b, start, chars, pos, l)
-          pos = pos + l
+          val partLen = end-start-1
+//          println("copying: '" + new String(b, start, partLen) + "'")
+          System.arraycopy(b, start, chars, pos, partLen)
+          pos = pos + partLen
           i = i+1
         }
         new String(chars)
@@ -330,10 +340,13 @@ object JsonParser {
       try {
         val newBuf = Buf()
         length = in.read(newBuf)
+//        println("READ " + length)
         buf = newBuf
         bufs = bufs ::: List(newBuf)
         cur = 0
         curBufIdx = bufs.length-1
+
+//        println("new buf: " + length)
       } finally {
         // FIXME close when all read
 //        in.close
