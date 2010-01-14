@@ -358,7 +358,9 @@ object JsonParser {
   object Buf {
     import scala.collection.mutable._
 
+    private[json] var bufSize = 512 // FIXME figure out proper size
     private[this] val bufs = new ListBuffer[B]()
+    private[json] def clear = bufs.clear
 
     def apply() = {
       synchronized {
@@ -370,6 +372,6 @@ object JsonParser {
 
     def reset(buf: B) = synchronized { bufs += buf }
 
-    def mkBuf = new Array[Char](512) // FIXME figure out proper size
+    def mkBuf = new Array[Char](bufSize) 
   }
 }
