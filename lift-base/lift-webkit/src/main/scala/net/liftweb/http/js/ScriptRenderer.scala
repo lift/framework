@@ -240,6 +240,7 @@ object ScriptRenderer {
       lift_cometEntry: function() {
         var isEmpty = function(){for (var i in lift_toWatch) {return false} return true}();
         if (!isEmpty) {
+          liftAjax.lift_uriSuffix = undefined;
         """ +
           LiftRules.jsArtifacts.comet(AjaxInfo(JE.JsRaw("lift_toWatch"),
             "GET",

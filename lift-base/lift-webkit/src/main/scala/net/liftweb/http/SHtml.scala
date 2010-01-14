@@ -602,6 +602,12 @@ object SHtml {
     fmapFunc(func)(funcName =>
             attrs.foldLeft(<input type={name} name={funcName}/>)(_ % _))
 
+  private def makeFormElementWithName(name: String, func: AFuncHolder,
+                              attrs: (String, String)*)(f: (String, Elem) => Elem): Elem =
+    fmapFunc(func){funcName =>
+      f(funcName, attrs.foldLeft(<input type={name} name={funcName}/>)(_ % _))
+    }
+
   def text_*(value: String, func: AFuncHolder, attrs: (String, String)*): Elem =
     text_*(value, func, Empty, attrs: _*)
 
@@ -674,10 +680,13 @@ object SHtml {
   }
 
   def ajaxSubmit(value: String, func: () => Any, attrs: (String, String)*): Elem = {
-   def doit =  fmapFunc(func)(funcName =>
-     attrs.foldLeft(<input type="submit" name={funcName}/>)(_ % _) % 
+    def doit = makeFormElementWithName("submit", NFuncHolder(func), attrs: _*){
+      case (funcName, elem) => 
+       elem % 
        new UnprefixedAttribute("value", Text(value), Null) %
-       ("onclick" -> ("liftAjax.lift_uriSuffix = '"+funcName+"=_'; return true;")))
+       ("onclick" -> ("liftAjax.lift_uriSuffix = '"+funcName+"=_'; return true;"))
+    }
+
 
     _formGroup.is match {
       case Empty => formGroup(1)(doit)
