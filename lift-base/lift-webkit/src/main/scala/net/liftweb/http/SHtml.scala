@@ -679,6 +679,15 @@ object SHtml {
     }
   }
 
+  /**
+   * Constructs an Ajax submit button that can be used inside ajax forms.
+   * Multiple buttons can be used in the same form.
+   * 
+   * @param value - the button text
+   * @param func - the ajax function to be called
+   * @param attrs - button attributes
+   *
+   */
   def ajaxSubmit(value: String, func: () => Any, attrs: (String, String)*): Elem = {
     def doit = makeFormElementWithName("submit", NFuncHolder(func), attrs: _*){
       case (funcName, elem) => 
