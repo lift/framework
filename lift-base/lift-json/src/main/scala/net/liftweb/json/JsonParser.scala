@@ -274,6 +274,7 @@ object JsonParser {
   // FIXME rename
   private type B = Array[Char]
 
+  // parse("""["foobarfoobarhello""")  infinite loop
   class Buffer(in: Reader) {
     var length = -1
     var curMark = -1
@@ -306,8 +307,6 @@ object JsonParser {
       else { // slower path for case when string is in two or more buffers
         var parts: List[(Int, Int, B)] = Nil
         var i = curBufIdx
-//        println("c: " + (cur, curBufIdx))
-//        println("m: " + curMark)
         while (i >= curMarkBuf) {
           val b = bufs(i)
           val start = if (i == curMarkBuf) curMark else 0
@@ -315,17 +314,14 @@ object JsonParser {
           parts = (start, end, b) :: parts
           i = i-1
         }
-        val len = parts.map(p => p._2 - p._1).foldLeft(0)(_ + _)
+        val len = parts.map(p => p._2 - p._1 - 1).foldLeft(0)(_ + _)
         val chars = new Array[Char](len)
         i = 0
         var pos = 0
 
-//        println("P: " + parts)
-//        parts.map(p => p._3).foreach(p => { println(p); p.foreach(print) })
         while (i < parts.size) {
           val (start, end, b) = parts(i)
           val partLen = end-start-1
-//          println("copying: '" + new String(b, start, partLen) + "'")
           System.arraycopy(b, start, chars, pos, partLen)
           pos = pos + partLen
           i = i+1
@@ -340,13 +336,10 @@ object JsonParser {
       try {
         val newBuf = Buf()
         length = in.read(newBuf)
-//        println("READ " + length)
         buf = newBuf
         bufs = bufs ::: List(newBuf)
         cur = 0
         curBufIdx = bufs.length-1
-
-//        println("new buf: " + length)
       } finally {
         // FIXME close when all read
 //        in.close

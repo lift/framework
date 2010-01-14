@@ -18,10 +18,9 @@ object ParserSpec extends Specification with JValueGen with ScalaCheck {
   }
 
   "Buffer size does not change parsing result" in {
-    val parsing = (json: JValue, s1: Int, s2: Int) => { 
-      (s1 > 1 && s2 > 1) ==> (parseWithNewBuf(json, s1) == parseWithNewBuf(json, s2))
-    }
-    forAll(parsing) must pass
+    val bufSize = Gen.choose(2, 64)
+    val parsing = (x: JValue, s1: Int, s2: Int) => { parseVal(x, s1) == parseVal(x, s2) }
+    forAll(genObject, bufSize, bufSize)(parsing) must pass
   }
 
   "All valid string escape characters can be parsed" in {
@@ -30,14 +29,12 @@ object ParserSpec extends Specification with JValueGen with ScalaCheck {
 
   implicit def arbJValue: Arbitrary[JValue] = Arbitrary(genObject)
 
-  private def parseWithNewBuf(json: JValue, bufSize: Int) = {
-    println(json)
-    println(bufSize)
+  private def parseVal(json: JValue, bufSize: Int) = {
     val existingSize = JsonParser.Buf.bufSize
     try {
       JsonParser.Buf.bufSize = bufSize
       JsonParser.Buf.clear
-      parse(compact(render(json)))
+      JsonParser.parse(compact(render(json)))
     } finally {
       JsonParser.Buf.bufSize = existingSize
     }
