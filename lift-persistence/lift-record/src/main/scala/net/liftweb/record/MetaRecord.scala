@@ -139,7 +139,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   def mutable_? = true
 
   /**
-   * Creates a mew record
+   * Creates a new record
    */
   def createRecord: BaseRecord = {
     val rec: BaseRecord = rootClass.newInstance.asInstanceOf[BaseRecord]
@@ -150,7 +150,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   }
 
   /**
-   * Creates a mew record from a JSON construct
+   * Creates a new record from a JSON construct
    *
    * @param json - the stringified JSON stucture
    */
