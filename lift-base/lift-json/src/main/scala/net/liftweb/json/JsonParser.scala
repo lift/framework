@@ -353,22 +353,25 @@ object JsonParser {
   }
 
   private[json] object Buffer {
-    import scala.collection.mutable._
+    import java.util.concurrent.ArrayBlockingQueue
 
-    private[json] var bufSize = 512 // FIXME figure out proper size
-    private[this] val bufs = new ListBuffer[Buf]()
+    private[json] var bufSize = 1000
+    private[this] val maxNumOfBufs = 10000
+    private[this] var bufCount = 0
+    private[this] val bufs = new ArrayBlockingQueue[Buf](maxNumOfBufs)
     private[json] def clear = bufs.clear
 
     def apply() = {
+      def mkBuf = new Buf(bufSize) 
+
       synchronized {
-        if (bufs.size == 0) {
-          mkBuf // FIXME limit max number of buffers
-        } else bufs.remove(0)
+        if (bufs.size == 0 && bufCount < maxNumOfBufs) {
+          bufCount = bufCount+1
+          mkBuf
+        } else bufs.take
       }
     }
 
-    def release(buf: Buf) = synchronized { bufs += buf }
-
-    def mkBuf = new Buf(bufSize) 
+    def release(buf: Buf) = bufs.offer(buf)
   }
 }
