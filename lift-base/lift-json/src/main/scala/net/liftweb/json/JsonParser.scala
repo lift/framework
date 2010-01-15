@@ -139,8 +139,7 @@ object JsonParser {
     private[this] val blocks = new LinkedList[BlockMode]()
     private[this] var fieldNameMode = true
 
-    def fail(msg: String) = throw new ParseException(msg, null)
-      //FIXME: msg + "\nNear: " + buf.substring((cur-20) max 0, (cur+20) min (buf.length-1)), null)
+    def fail(msg: String) = throw new ParseException(msg + "\nNear: " + buf.near, null)
 
     def nextToken: Token = {
       def isDelimiter(c: Char) = c == ' ' || c == '\n' || c == ',' || c == '\r' || c == '\t' || c == '}' || c == ']'
@@ -329,6 +328,8 @@ object JsonParser {
         new String(chars)
       }
     }
+
+    def near = new String(buf, (cur-20) max 0, (cur+20) min length)
 
     def reset = bufs.foreach(Buffer.reset)
 
