@@ -30,13 +30,13 @@ object ParserSpec extends Specification with JValueGen with ScalaCheck {
   implicit def arbJValue: Arbitrary[JValue] = Arbitrary(genObject)
 
   private def parseVal(json: JValue, bufSize: Int) = {
-    val existingSize = JsonParser.Buf.bufSize
+    val existingSize = JsonParser.Buffer.bufSize
     try {
-      JsonParser.Buf.bufSize = bufSize
-      JsonParser.Buf.clear
+      JsonParser.Buffer.bufSize = bufSize
+      JsonParser.Buffer.clear
       JsonParser.parse(compact(render(json)))
     } finally {
-      JsonParser.Buf.bufSize = existingSize
+      JsonParser.Buffer.bufSize = existingSize
     }
   }
 }

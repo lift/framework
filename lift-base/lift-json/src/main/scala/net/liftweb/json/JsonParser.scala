@@ -271,22 +271,21 @@ object JsonParser {
     case object OBJECT extends BlockMode
   }
 
-  // FIXME rename
-  private type B = Array[Char]
+  private type Buf = Array[Char]
 
   // parse("""["foobarfoobarhello""")  infinite loop
-  class Buffer(in: Reader) {
+  private[json] class Buffer(in: Reader) {
     var length = -1
     var curMark = -1
     var curMarkBuf = -1
-    private[this] var bufs: List[B] = Nil
-    private[this] var buf: B = _
+    private[this] var bufs: List[Buf] = Nil
+    private[this] var buf: Buf = _
     private[this] var cur = 0 // Pointer which points current parsing location
     private[this] var curBufIdx = 0 // Pointer which points current buffer
     read
 
     def mark = { curMark = cur; curMarkBuf = curBufIdx }
-    def back = cur = cur-1  // FIXME remove or fix
+    def back = cur = cur-1
 
     def next: Char = {
       try {
@@ -305,7 +304,7 @@ object JsonParser {
     def substring = {
       if (curBufIdx == curMarkBuf) new String(buf, curMark, cur-curMark-1)
       else { // slower path for case when string is in two or more buffers
-        var parts: List[(Int, Int, B)] = Nil
+        var parts: List[(Int, Int, Buf)] = Nil
         var i = curBufIdx
         while (i >= curMarkBuf) {
           val b = bufs(i)
@@ -330,11 +329,11 @@ object JsonParser {
       }
     }
 
-    def reset = bufs.foreach(Buf.reset)
+    def reset = bufs.foreach(Buffer.reset)
 
     private[this] def read = {
       try {
-        val newBuf = Buf()
+        val newBuf = Buffer()
         length = in.read(newBuf)
         buf = newBuf
         bufs = bufs ::: List(newBuf)
@@ -347,12 +346,11 @@ object JsonParser {
     }
   }
 
-  // FIXME rename
-  object Buf {
+  private[json] object Buffer {
     import scala.collection.mutable._
 
     private[json] var bufSize = 512 // FIXME figure out proper size
-    private[this] val bufs = new ListBuffer[B]()
+    private[this] val bufs = new ListBuffer[Buf]()
     private[json] def clear = bufs.clear
 
     def apply() = {
@@ -363,8 +361,8 @@ object JsonParser {
       }
     }
 
-    def reset(buf: B) = synchronized { bufs += buf }
+    def reset(buf: Buf) = synchronized { bufs += buf }
 
-    def mkBuf = new Array[Char](bufSize) 
+    def mkBuf = new Buf(bufSize) 
   }
 }
