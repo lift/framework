@@ -63,6 +63,7 @@
     <module>lift-oauth-mapper</module>
     <module>lift-paypal</module>
     <module>lift-jta</module>
+    <module>lift-imaging</module>
   </modules>
 
   <!--
