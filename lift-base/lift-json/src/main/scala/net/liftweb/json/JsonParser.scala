@@ -50,6 +50,12 @@ object JsonParser {
 
   private def parse0(s: String): JValue = {
     val buf = new Buffer(new StringReader(s))
+    try {
+      parse0(buf)
+    } finally { buf.release }
+  }
+
+  private def parse0(buf: Buffer): JValue = {
     val p = new Parser(buf)
     val vals = new ValStack(p)
     var token: Token = null
@@ -108,8 +114,6 @@ object JsonParser {
         case End              =>
       }
     } while (token != End)
-
-    buf.reset // FIXME in finally block
 
     root.get
   }
@@ -331,7 +335,7 @@ object JsonParser {
 
     def near = new String(buf, (cur-20) max 0, (cur+20) min length)
 
-    def reset = bufs.foreach(Buffer.reset)
+    def release = bufs.foreach(Buffer.release)
 
     private[this] def read = {
       try {
@@ -363,7 +367,7 @@ object JsonParser {
       }
     }
 
-    def reset(buf: Buf) = synchronized { bufs += buf }
+    def release(buf: Buf) = synchronized { bufs += buf }
 
     def mkBuf = new Buf(bufSize) 
   }
