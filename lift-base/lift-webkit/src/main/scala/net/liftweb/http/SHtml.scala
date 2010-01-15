@@ -689,7 +689,7 @@ object SHtml {
    *
    */
   def ajaxSubmit(value: String, func: () => Any, attrs: (String, String)*): Elem = {
-    def doit = makeFormElementWithName("submit", NFuncHolder(func), attrs: _*){
+    def doit = makeFormElementWithName("submit", contextFuncBuilder(func), attrs: _*){
       case (funcName, elem) => 
        elem % 
        new UnprefixedAttribute("value", Text(value), Null) %
