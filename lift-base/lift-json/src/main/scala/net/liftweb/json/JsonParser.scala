@@ -148,26 +148,28 @@ object JsonParser {
       def parseFieldName: String = {
         buf.mark
         var c = buf.next
-        while (c != '"') {
+        while (c != EOF) {
+          if (c == '"') return buf.substring
           c = buf.next
         }
-        buf.substring
+        fail("expected string end")        
       }
 
       def parseString: String = {
         buf.mark
-        var c = 'x'
-        do {
-          c = buf.next
+        var c = buf.next
+        while (c != EOF) {
+          if (c == '"') return buf.substring
           if (c == '\\') return parseEscapedString(buf.substring)
-        } while (c != '"')
-        buf.substring
+          c = buf.next
+        }
+        fail("expected string end")        
       }
 
       def parseEscapedString(base: String): String = {
         val s = new java.lang.StringBuilder(base)
         var c = '\\'
-        while (true) {
+        while (c != EOF) {
           if (c == '"') {
             return s.toString
           }
@@ -191,7 +193,7 @@ object JsonParser {
           } else s.append(c)
           c = buf.next
         }
-        error("can't happen")        
+        fail("expected string end")        
       }
 
       def parseValue(first: Char) = {
@@ -215,7 +217,7 @@ object JsonParser {
 
       while (true) {
         buf.next match {
-          case c if EOF == c => return End //doParse = false
+          case c if EOF == c => return End
           case '{' =>
             blocks.addFirst(OBJECT)
             fieldNameMode = true
@@ -273,7 +275,6 @@ object JsonParser {
 
   private type Buf = Array[Char]
 
-  // parse("""["foobarfoobarhello""")  infinite loop
   private[json] class Buffer(in: Reader) {
     var length = -1
     var curMark = -1
