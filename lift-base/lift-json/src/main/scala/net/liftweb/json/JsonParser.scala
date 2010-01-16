@@ -40,18 +40,27 @@ object JsonParser {
   /** Return parsed JSON.
    * @throws ParseException is thrown if parsing fails
    */
-  def parse(s: String): JValue = 
+  def parse(s: String): JValue = parse(new Buffer(new StringReader(s)))
+
+  /** Return parsed JSON.
+   * @throws ParseException is thrown if parsing fails
+   */
+  def parse(s: Reader): JValue = parse(new Buffer(s))
+
+  /** Return parsed JSON.
+   */
+  def parseOpt(s: String): Option[JValue] = try { Some(parse(s)) } catch { case e => None }
+
+  /** Return parsed JSON.
+   */
+  def parseOpt(s: Reader): Option[JValue] = try { Some(parse(s)) } catch { case e => None }
+
+  private def parse(buf: Buffer): JValue = {
     try {
-      parse0(s)
+      parse0(buf)
     } catch {
       case e: ParseException => throw e
       case e: Exception => throw new ParseException("parsing failed", e)
-    }
-
-  private def parse0(s: String): JValue = {
-    val buf = new Buffer(new StringReader(s))
-    try {
-      parse0(buf)
     } finally { buf.release }
   }
 
