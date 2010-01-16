@@ -24,18 +24,18 @@ object JsonParser {
 
   class ParseException(message: String, cause: Exception) extends Exception(message, cause)
 
-  private[json] sealed abstract class Token
-  private[json] case object OpenObj extends Token
-  private[json] case object CloseObj extends Token
-  private[json] case class FieldStart(name: String) extends Token
-  private[json] case object End extends Token
-  private[json] case class StringVal(value: String) extends Token
-  private[json] case class IntVal(value: BigInt) extends Token
-  private[json] case class DoubleVal(value: Double) extends Token
-  private[json] case class BoolVal(value: Boolean) extends Token
-  private[json] case object NullVal extends Token
-  private[json] case object OpenArr extends Token
-  private[json] case object CloseArr extends Token
+  sealed abstract class Token
+  case object OpenObj extends Token
+  case object CloseObj extends Token
+  case class FieldStart(name: String) extends Token
+  case object End extends Token
+  case class StringVal(value: String) extends Token
+  case class IntVal(value: BigInt) extends Token
+  case class DoubleVal(value: Double) extends Token
+  case class BoolVal(value: Boolean) extends Token
+  case object NullVal extends Token
+  case object OpenArr extends Token
+  case object CloseArr extends Token
 
   /** Return parsed JSON.
    * @throws ParseException is thrown if parsing fails
@@ -55,17 +55,24 @@ object JsonParser {
    */
   def parseOpt(s: Reader): Option[JValue] = try { Some(parse(s)) } catch { case e => None }
 
+  /** Parse in pull parsing style.
+   */
+  def parse[A](s: String, p: Parser => A): A = parse(new StringReader(s), p)
+
+  /** Parse in pull parsing style.
+   */
+  def parse[A](s: Reader, p: Parser => A): A = p(new Parser(new Buffer(s)))
+
   private def parse(buf: Buffer): JValue = {
     try {
-      parse0(buf)
+      astParser(new Parser(buf))
     } catch {
       case e: ParseException => throw e
       case e: Exception => throw new ParseException("parsing failed", e)
     } finally { buf.release }
   }
 
-  private def parse0(buf: Buffer): JValue = {
-    val p = new Parser(buf)
+  private def astParser = (p: Parser) => {
     val vals = new ValStack(p)
     var token: Token = null
     var root: Option[JValue] = None
@@ -146,7 +153,7 @@ object JsonParser {
     def peekOption = if (stack isEmpty) None else Some(stack.peek)
   }
 
-  private class Parser(buf: Buffer) {
+  class Parser(buf: Buffer) {
     import java.util.LinkedList
 
     private[this] val blocks = new LinkedList[BlockMode]()
@@ -154,6 +161,8 @@ object JsonParser {
 
     def fail(msg: String) = throw new ParseException(msg + "\nNear: " + buf.near, null)
 
+    /** Parse next Token from stream.
+     */
     def nextToken: Token = {
       def isDelimiter(c: Char) = c == ' ' || c == '\n' || c == ',' || c == '\r' || c == '\t' || c == '}' || c == ']'
 

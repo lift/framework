@@ -41,7 +41,7 @@ It comes with Lift, but non-Lift users can add lift-json as a dependency in foll
 
 Add dependency to your project description:
 
-    val lift-json = "net.liftweb" % "lift-json" % "1.1-M8"
+    val lift_json = "net.liftweb" % "lift-json" % "1.1-M8"
 
 ### Maven users
 
