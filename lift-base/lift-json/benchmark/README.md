@@ -23,7 +23,7 @@ Parsing 50 000 json documents:
 Summary:
 
 * Jackson was fastest.
-* Lift Json was about 350 times faster than standard Scala parser.
+* lift-json was about 350 times faster than standard Scala parser.
 
 Serialization benchmark, Java serialization and lift-json
 ---------------------------------------------------------

@@ -276,29 +276,32 @@ object JsonParser {
     case object OBJECT extends BlockMode
   }
 
-  private type Buf = Array[Char]
+  private type Segment = Array[Char]
 
+  /* Buffer used to parse JSON.
+   * Buffer is divided to one or more segments (preallocated in Segments pool).
+   */
   private[json] class Buffer(in: Reader) {
     var length = -1
     var curMark = -1
-    var curMarkBuf = -1
-    private[this] var bufs: List[Buf] = Nil
-    private[this] var buf: Buf = _
+    var curMarkSegment = -1
+    private[this] var segments: List[Segment] = Nil
+    private[this] var segment: Segment = _
     private[this] var cur = 0 // Pointer which points current parsing location
-    private[this] var curBufIdx = 0 // Pointer which points current buffer
+    private[this] var curSegmentIdx = 0 // Pointer which points current segment
     read
 
-    def mark = { curMark = cur; curMarkBuf = curBufIdx }
+    def mark = { curMark = cur; curMarkSegment = curSegmentIdx }
     def back = cur = cur-1
 
     def next: Char = {
       try {
-        val c = buf(cur)
+        val c = segment(cur)
         if (cur >= length) return EOF
         cur = cur+1
         c
       } catch {
-        // suprisingly catching IndexOutOfBounds is faster than: if (cur == buf.length) 
+        // suprisingly catching IndexOutOfBounds is faster than: if (cur == segment.length) 
         case e => 
           read
           if (length == -1) EOF else next
@@ -306,15 +309,15 @@ object JsonParser {
     }
 
     def substring = {
-      if (curBufIdx == curMarkBuf) new String(buf, curMark, cur-curMark-1)
-      else { // slower path for case when string is in two or more buffers
-        var parts: List[(Int, Int, Buf)] = Nil
-        var i = curBufIdx
-        while (i >= curMarkBuf) {
-          val b = bufs(i)
-          val start = if (i == curMarkBuf) curMark else 0
-          val end = if (i == curBufIdx) cur else b.length+1
-          parts = (start, end, b) :: parts
+      if (curSegmentIdx == curMarkSegment) new String(segment, curMark, cur-curMark-1)
+      else { // slower path for case when string is in two or more segments
+        var parts: List[(Int, Int, Segment)] = Nil
+        var i = curSegmentIdx
+        while (i >= curMarkSegment) {
+          val s = segments(i)
+          val start = if (i == curMarkSegment) curMark else 0
+          val end = if (i == curSegmentIdx) cur else s.length+1
+          parts = (start, end, s) :: parts
           i = i-1
         }
         val len = parts.map(p => p._2 - p._1 - 1).foldLeft(0)(_ + _)
@@ -333,44 +336,44 @@ object JsonParser {
       }
     }
 
-    def near = new String(buf, (cur-20) max 0, (cur+20) min length)
+    def near = new String(segment, (cur-20) max 0, (cur+20) min length)
 
-    def release = bufs.foreach(Buffer.release)
+    def release = segments.foreach(Segments.release)
 
     private[this] def read = {
       try {
-        val newBuf = Buffer()
-        length = in.read(newBuf)
-        buf = newBuf
-        bufs = bufs ::: List(newBuf)
+        val newSegment = Segments.apply()
+        length = in.read(newSegment)
+        segment = newSegment
+        segments = segments ::: List(newSegment)
         cur = 0
-        curBufIdx = bufs.length-1
+        curSegmentIdx = segments.length-1
       } finally {
-        if (length < buf.length) in.close
+        if (length < segment.length) in.close
       }
     }
   }
 
-  private[json] object Buffer {
+  /* A pool of preallocated char arrays.
+   */
+  private[json] object Segments {
     import java.util.concurrent.ArrayBlockingQueue
 
-    private[json] var bufSize = 1000
-    private[this] val maxNumOfBufs = 10000
-    private[this] var bufCount = 0
-    private[this] val bufs = new ArrayBlockingQueue[Buf](maxNumOfBufs)
-    private[json] def clear = bufs.clear
+    private[json] var segmentSize = 1000
+    private[this] val maxNumOfSegments = 10000
+    private[this] var segmentCount = 0
+    private[this] val segments = new ArrayBlockingQueue[Segment](maxNumOfSegments)
+    private[json] def clear = segments.clear
 
     def apply() = {
-      def mkBuf = new Buf(bufSize) 
-
       synchronized {
-        if (bufs.size == 0 && bufCount < maxNumOfBufs) {
-          bufCount = bufCount+1
-          mkBuf
-        } else bufs.take
+        if (segments.size == 0 && segmentCount < maxNumOfSegments) {
+          segmentCount = segmentCount+1
+          new Segment(segmentSize) 
+        } else segments.take
       }
     }
 
-    def release(buf: Buf) = bufs.offer(buf)
+    def release(s: Segment) = segments.offer(s)
   }
 }
