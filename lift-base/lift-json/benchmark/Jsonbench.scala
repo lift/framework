@@ -1,7 +1,7 @@
 /**
  * Following libs are required to compile and run the benchmark:
- * - jackson-core-asl-1.0.0.jar
- * - jackson-mapper-asl-1.0.0.jar
+ * - jackson-core-asl-1.4.1.jar
+ * - jackson-mapper-asl-1.4.1.jar
  * - lift-json-???.jar
  */
 object Jsonbench extends Benchmark {

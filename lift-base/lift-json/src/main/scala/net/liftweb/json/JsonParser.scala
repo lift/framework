@@ -115,7 +115,7 @@ object JsonParser {
       }
     } while (token != End)
 
-    root.get
+    root.getOrElse(throw new ParseException("expected object or array", null))
   }
   
   private val EOF = (-1).asInstanceOf[Char]
@@ -346,8 +346,7 @@ object JsonParser {
         cur = 0
         curBufIdx = bufs.length-1
       } finally {
-        // FIXME close when all read
-//        in.close
+        if (length < buf.length) in.close
       }
     }
   }
