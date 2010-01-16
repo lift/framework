@@ -24,6 +24,8 @@ object JsonParser {
 
   class ParseException(message: String, cause: Exception) extends Exception(message, cause)
 
+  /** Parsed tokens from low level pull parser.
+   */
   sealed abstract class Token
   case object OpenObj extends Token
   case object CloseObj extends Token
@@ -56,10 +58,14 @@ object JsonParser {
   def parseOpt(s: Reader): Option[JValue] = try { Some(parse(s)) } catch { case e => None }
 
   /** Parse in pull parsing style.
+   * Use <code>p.nextToken</code> to parse tokens one by one from a string.
+   * @see net.liftweb.json.JsonParser.Token
    */
   def parse[A](s: String, p: Parser => A): A = parse(new StringReader(s), p)
 
   /** Parse in pull parsing style.
+   * Use <code>p.nextToken</code> to parse tokens one by one from a stream.
+   * @see net.liftweb.json.JsonParser.Token
    */
   def parse[A](s: Reader, p: Parser => A): A = p(new Parser(new Buffer(s)))
 
@@ -72,7 +78,7 @@ object JsonParser {
     } finally { buf.release }
   }
 
-  private def astParser = (p: Parser) => {
+  private val astParser = (p: Parser) => {
     val vals = new ValStack(p)
     var token: Token = null
     var root: Option[JValue] = None
