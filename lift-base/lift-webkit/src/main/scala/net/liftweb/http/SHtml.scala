@@ -787,6 +787,17 @@ object SHtml {
    */
   def submitAjaxForm(formId: String):JsCmd = SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(formId))
 
+  /** 
+   * Submits a form denominated by a formId and execute the func function
+   * after form fields functions are executed.
+   */ 
+  def submitAjaxForm(formId: String, func: () => Any): JsCmd = {
+    fmapFunc(contextFuncBuilder(func))(name => 
+     makeAjaxCall(JsRaw(
+       LiftRules.jsArtifacts.serialize(formId).toJsCmd + " + " + 
+       Str("&" + name + "=true").toJsCmd)))
+  }
+
   /**
    * Having a regular form, this method can be used to send the serialized content of the form.
    *
