@@ -1,7 +1,7 @@
 package net.liftweb.paypal
 
 /*
- * Copyright 2007-2008 WorldWide Conferencing, LLC
+ * Copyright 2007-2010 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -525,16 +525,16 @@ trait PaypalIPN extends BasePaypalTrait {
   val MaxRetry = 6
 
   protected object requestQueue extends LiftActor {
-    protected def messageHandler = 
+    protected def messageHandler =
       {
         case PingMe => ActorPing.schedule(this, PingMe, 10 seconds)
-	
+
         case IPNRequest(r, cnt, _) if cnt > MaxRetry => // discard the transaction
-	  
+
           case IPNRequest(r, cnt, when) if when <= millis =>
             tryo {
               val resp = PaypalIPN(r, mode, connection)
-	      
+
               for (info <-  buildInfo(resp, r)) yield {
                 actions((info.paymentStatus, info, r))
 //              for (info <-  buildInfo(resp, r);

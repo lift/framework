@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 WorldWide Conferencing, LLC
+ * Copyright 2007-2010 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -320,7 +320,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    * Prepend a DispatchPF function to LiftRules.dispatch. If the partial function id defined for a give Req
    * it will construct a new Record based on the HTTP query string parameters
    * and will pass this Record to the function returned by func parameter.
-   * 
+   *
    * @param func - a PartialFunction for associating a request with a user provided function and the proper Record
    */
   def prependDispatch(func: PartialFunction[Req, BaseRecord => Box[LiftResponse]])= {
@@ -331,7 +331,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    * Append a DispatchPF function to LiftRules.dispatch. If the partial function id defined for a give Req
    * it will construct a new Record based on the HTTP query string parameters
    * and will pass this Record to the function returned by func parameter.
-   * 
+   *
    * @param func - a PartialFunction for associating a request with a user provided function and the proper Record
    */
   def appendDispatch(func: PartialFunction[Req, BaseRecord => Box[LiftResponse]])= {
@@ -342,7 +342,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   private def makeFunc(func: PartialFunction[Req, BaseRecord => Box[LiftResponse]]) = new PartialFunction[Req, () => Box[LiftResponse]] {
 
       def isDefinedAt(r: Req): Boolean = func.isDefinedAt(r)
-      
+
       def apply(r: Req): () => Box[LiftResponse] = {
         val rec = fromReq(r)
         () => func(r)(rec)
@@ -365,28 +365,28 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    * @return a List of Field
    */
   def fieldOrder: List[OwnedField[BaseRecord]] = Nil
-  
+
   /**
    * Renamed from fields() due to a clash with fields() in Record. Use this method
-   * to obtain a list of fields defined in the meta companion objects. Possibly a 
+   * to obtain a list of fields defined in the meta companion objects. Possibly a
    * breaking change? (added 14th August 2009, Tim Perrett)
-   * 
+   *
    * @see Record
    */
   def metaFields() : List[OwnedField[BaseRecord]] = fieldList.map(fh => fh.field)
-  
+
   /**
    * Obtain the fields for a particlar Record or subclass instance by passing
    * the instance itself.
    * (added 14th August 2009, Tim Perrett)
    */
-  def fields(rec: BaseRecord) : List[OwnedField[BaseRecord]] = 
+  def fields(rec: BaseRecord) : List[OwnedField[BaseRecord]] =
     for(fieldHolder <- fieldList;
       field <- rec.fieldByName(fieldHolder.name)
     ) yield {
       field
     }
-    
+
   case class FieldHolder(name: String, method: Method, field: OwnedField[BaseRecord])
 }
 
