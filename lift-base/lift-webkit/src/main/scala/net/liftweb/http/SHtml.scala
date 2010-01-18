@@ -602,12 +602,6 @@ object SHtml {
     fmapFunc(func)(funcName =>
             attrs.foldLeft(<input type={name} name={funcName}/>)(_ % _))
 
-  private def makeFormElementWithName(name: String, func: AFuncHolder,
-                              attrs: (String, String)*)(f: (String, Elem) => Elem): Elem =
-    fmapFunc(func){funcName =>
-      f(funcName, attrs.foldLeft(<input type={name} name={funcName}/>)(_ % _))
-    }
-
   def text_*(value: String, func: AFuncHolder, attrs: (String, String)*): Elem =
     text_*(value, func, Empty, attrs: _*)
 
@@ -689,19 +683,13 @@ object SHtml {
    *
    */
   def ajaxSubmit(value: String, func: () => Any, attrs: (String, String)*): Elem = {
-    def doit = makeFormElementWithName("submit", NFuncHolder(func), attrs: _*){
-      case (funcName, elem) => 
-       elem % 
-       new UnprefixedAttribute("value", Text(value), Null) %
-       ("onclick" -> ("liftAjax.lift_uriSuffix = '"+funcName+"=_'; return true;"))
-    }
+    val funcName = "Z" + Helpers.nextFuncName
+    addFunctionMap(funcName, contextFuncBuilder(func))
 
-
-    _formGroup.is match {
-      case Empty => formGroup(1)(doit)
-      case _ => doit
-    }
-
+    (attrs.foldLeft(<input type="submit" name={funcName}/>)(_ % _)) %
+      new UnprefixedAttribute("value", Text(value), Null) %
+      ("onclick" -> ("liftAjax.lift_uriSuffix = '"+funcName+"=_'; return true;"))
+    
   }
 
   /**
@@ -786,6 +774,19 @@ object SHtml {
    * @oaram formId - the id of the form
    */
   def submitAjaxForm(formId: String):JsCmd = SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(formId))
+
+  /** 
+   * Submits a form denominated by a formId and execute the func function
+   * after form fields functions are executed.
+   */ 
+  def submitAjaxForm(formId: String, func: () => Any): JsCmd = {
+    val funcName = "Z" + Helpers.nextFuncName
+    addFunctionMap(funcName, contextFuncBuilder(func))
+
+    makeAjaxCall(JsRaw(
+       LiftRules.jsArtifacts.serialize(formId).toJsCmd + " + " + 
+       Str("&" + funcName + "=true").toJsCmd))
+  }
 
   /**
    * Having a regular form, this method can be used to send the serialized content of the form.

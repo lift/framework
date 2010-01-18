@@ -27,7 +27,7 @@ import _root_.org.ops4j.pax.web.service.WebContainer
 import _root_.org.osgi.framework.{Bundle, BundleActivator, BundleContext}
 import _root_.org.osgi.service.http.HttpContext
 import _root_.org.scalamodules.core.{Adding, Modified, Removed}
-import _root_.org.scalamodules.core.RichBundleContext.toRichBundleContext
+import _root_.org.scalamodules.core.Preamble._
 
 /**
  * <p>This activator enables OSGi support for Lift.</p>
