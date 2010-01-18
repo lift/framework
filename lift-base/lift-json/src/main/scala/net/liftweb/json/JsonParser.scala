@@ -300,7 +300,7 @@ object JsonParser {
     case object OBJECT extends BlockMode
   }
 
-  private type Segment = Array[Char]
+//  private type Segment = Array[Char]
 
   /* Buffer used to parse JSON.
    * Buffer is divided to one or more segments (preallocated in Segments pool).
@@ -310,7 +310,7 @@ object JsonParser {
     var curMark = -1
     var curMarkSegment = -1
     private[this] var segments: List[Segment] = Nil
-    private[this] var segment: Segment = _
+    private[this] var segment: Array[Char] = _
     private[this] var cur = 0 // Pointer which points current parsing location
     private[this] var curSegmentIdx = 0 // Pointer which points current segment
     read
@@ -335,10 +335,10 @@ object JsonParser {
     def substring = {
       if (curSegmentIdx == curMarkSegment) new String(segment, curMark, cur-curMark-1)
       else { // slower path for case when string is in two or more segments
-        var parts: List[(Int, Int, Segment)] = Nil
+        var parts: List[(Int, Int, Array[Char])] = Nil
         var i = curSegmentIdx
         while (i >= curMarkSegment) {
-          val s = segments(i)
+          val s = segments(i).seg
           val start = if (i == curMarkSegment) curMark else 0
           val end = if (i == curSegmentIdx) cur else s.length+1
           parts = (start, end, s) :: parts
@@ -367,8 +367,8 @@ object JsonParser {
     private[this] def read = {
       try {
         val newSegment = Segments.apply()
-        length = in.read(newSegment)
-        segment = newSegment
+        length = in.read(newSegment.seg)
+        segment = newSegment.seg
         segments = segments ::: List(newSegment)
         cur = 0
         curSegmentIdx = segments.length-1
@@ -389,15 +389,31 @@ object JsonParser {
     private[this] val segments = new ArrayBlockingQueue[Segment](maxNumOfSegments)
     private[json] def clear = segments.clear
 
-    def apply() = {
+    def apply(): Segment = {
+      val s = acquire
+      // Give back a disposable segment if pool is exhausted.
+      if (s != null) s else DisposableSegment(new Array(segmentSize))
+    }
+
+    private[this] def acquire: Segment = {
       synchronized {
         if (segments.size == 0 && segmentCount < maxNumOfSegments) {
           segmentCount = segmentCount+1
-          new Segment(segmentSize) 
-        } else segments.take
+          return RecycledSegment(new Array(segmentSize))
+        }
       }
+      segments.poll
     }
 
-    def release(s: Segment) = segments.offer(s)
+    def release(s: Segment) = s match {
+      case _: RecycledSegment => segments.offer(s)
+      case _ =>
+    }
   }
+
+  sealed trait Segment {
+    val seg: Array[Char]
+  }
+  case class RecycledSegment(seg: Array[Char]) extends Segment
+  case class DisposableSegment(seg: Array[Char]) extends Segment
 }

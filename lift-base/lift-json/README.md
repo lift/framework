@@ -37,12 +37,13 @@ Installation
 ============
 
 It comes with Lift, but non-Lift users can add lift-json as a dependency in following ways.
+Note, replace XX with correct Lift version (for instance M1).
 
 ### SBT users
 
 Add dependency to your project description:
 
-    val lift_json = "net.liftweb" % "lift-json" % "1.1-M8"
+    val lift_json = "net.liftweb" % "lift-json" % "2.0-XX"
 
 ### Maven users
 
@@ -51,14 +52,14 @@ Add dependency to your pom:
     <dependency>
       <groupId>net.liftweb</groupId>
       <artifactId>lift-json</artifactId>
-      <version>1.1-M8</version>
+      <version>2.0-XX</version>
     </dependency>
 
 ### Others
 
 Download following jars:
 
-* http://scala-tools.org/repo-releases/net/liftweb/lift-json/1.1-M8/lift-json-1.1-M8.jar
+* http://scala-tools.org/repo-releases/net/liftweb/lift-json/2.0-XX/lift-json-2.0-XX.jar
 * http://mirrors.ibiblio.org/pub/mirrors/maven2/com/thoughtworks/paranamer/paranamer/2.1/paranamer-2.1.jar
 
 
@@ -575,7 +576,7 @@ Consider following example which shows how to parse one field value from a big J
           { "type": "fax", "number": "646 555-4567" }
         ],
         ...
-    }"""
+      }"""
 
     scala> val parser = (p: Parser) => {
              def parse: BigInt = p.nextToken match {
