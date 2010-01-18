@@ -300,8 +300,6 @@ object JsonParser {
     case object OBJECT extends BlockMode
   }
 
-//  private type Segment = Array[Char]
-
   /* Buffer used to parse JSON.
    * Buffer is divided to one or more segments (preallocated in Segments pool).
    */
