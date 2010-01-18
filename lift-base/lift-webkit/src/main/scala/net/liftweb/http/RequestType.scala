@@ -28,30 +28,37 @@ abstract class RequestType {
   def put_? : Boolean = false
 
   def delete_? : Boolean = false
+
+  def method: String
 }
 
 @serializable
 case object GetRequest extends RequestType {
   override def get_? = true
+  def method = "GET"
 }
 @serializable
 case object PostRequest extends RequestType {
   override def post_? = true
+  def method = "POST"
 }
 @serializable
 case object HeadRequest extends RequestType {
   override def head_? = true
+  def method = "HEAD"
 }
 @serializable
 case object PutRequest extends RequestType {
   override def put_? = true
+  def method = "PUT"
 }
 @serializable
 case object DeleteRequest extends RequestType {
   override def delete_? = true
+  def method = "DELETE"
 }
 @serializable
-case class UnknownRequest(method: String) extends RequestType
+case class UnknownRequest(val method: String) extends RequestType
 
 object RequestType {
   def apply(req: HTTPRequest): RequestType = {

@@ -1,7 +1,7 @@
 package net.liftweb.mapper
 
 /*
- * Copyright 2006-2009 WorldWide Conferencing, LLC
+ * Copyright 2006-2010 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,7 @@ import Helpers._
  * This is the supertrait of all traits that can be mixed into a MappedField.
  * All methods should be abstract.  They will be made concrete in implementations.
  */
-trait MixableMappedField {
-  /**
-   * Will be set to the type of the field
-   */
-  type TheFieldType
-
+trait MixableMappedField extends BaseField {
   /**
    * Will be set to the type of the owner of the field
    */
@@ -65,17 +60,7 @@ trait MixableMappedField {
    */
   def dbForeignKey_? : Boolean
 
-  def validations: List[TheFieldType => List[FieldError]]
-
   def asHtml: NodeSeq
-
-
-  /**
-   * A list of functions that transform the value before it is set.  The transformations
-   * are also applied before the value is used in a query.  Typical applications
-   * of this are trimming and/or toLowerCase-ing strings
-   */
-  protected def setFilter: List[TheFieldType => TheFieldType]
 }
 
 /**
@@ -95,7 +80,7 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
 
 
   /**
-   * Get a JDBC friendly representation of the named field (this is used for MappedFields that correspond to more than
+   *  Get a JDBC friendly representation of the named field (this is used for MappedFields that correspond to more than
    * 1 column in the database.)
    * @param field -- the name of the field being mapped to
    */
@@ -117,10 +102,6 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
    */
   def targetSQLType: Int
 
-  /**
-   * Validate this field and return a list of Validation Issues
-   */
-  def validate: List[FieldError]
 
   /**
    * Given the driver type, return the string required to create the column in the database
@@ -132,10 +113,6 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
    */
   def fieldCreatorString(dbType: DriverType): List[String]
 
-  /**
-   * The human name of this field
-   */
-  def name: String
 
   /**
    * Convert the field to its name/value pair (e.g., name=David)
@@ -202,26 +179,6 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
    */
   def dbAddedIndex: Box[() => Unit]
 
-  /**
-   * Create an input field for the item
-   */
-  def toForm: Box[NodeSeq]
-
-  /**
-   * A unique 'id' for the field for form generation
-   */
-  def fieldId: Option[NodeSeq] = None
-
-  def displayNameHtml: Box[NodeSeq] = Empty
-
-  def displayHtml: NodeSeq = displayNameHtml openOr Text(displayName)
-
-  /**
-   * This is where the instance creates its "toForm" stuff.
-   * The actual toForm method wraps the information based on
-   * mode.
-   */
-  def _toForm: Box[NodeSeq]
 
   def asHtml: NodeSeq
 
@@ -230,16 +187,18 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
    */
   protected[mapper] def doneWithSave()
 
-  /**
-   * The display name of this field (e.g., "First Name")
-   */
-  def displayName: String
-
   def asJsExp: JsExp
 
   def asJs: List[(String, JsExp)] = List((name, asJsExp))
 
   def renderJs_? = true
+
+      /**
+     * This is where the instance creates its "toForm" stuff.
+     * The actual toForm method wraps the information based on
+     * mode.
+     */
+    def _toForm: Box[NodeSeq]
 }
 
 /**
@@ -351,7 +310,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
   /**
    * Will be set to the type of the field
    */
-  type TheFieldType = FieldType
+  override type ValueType = FieldType
 
   /**
    * Will be set to the type of the owner of the field

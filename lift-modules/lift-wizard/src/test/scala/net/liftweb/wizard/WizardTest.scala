@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 WorldWide Conferencing, LLC
+ * Copyright 2009-2010 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,17 +41,17 @@ object WizardSpec extends Specification {
 
     val nameAndAge = new Screen {
       val name = new Field with StringField {
-        def title = S ?? "First Name"
+        def name = S ? "First Name"
 
-        override def validation = minLen(2, S ?? "Name Too Short") ::
-        maxLen(40, S ?? "Name Too Long") :: super.validation
+        override def validations = minLen(2, S ?? "Name Too Short") ::
+        maxLen(40, S ?? "Name Too Long") :: super.validations
       }
 
       val age = new Field with IntField {
-        def title = S ?? "Age"
+        def name = S ? "Age"
 
-        override def validation = minVal(5, S ?? "Too young") ::
-        maxVal(120, S ?? "You should be dead") :: super.validation
+        override def validations = minVal(5, S ?? "Too young") ::
+        maxVal(120, S ?? "You should be dead") :: super.validations
       }
 
       override def nextScreen = if (age.is < 18) parentName else favoritePet
@@ -59,19 +59,19 @@ object WizardSpec extends Specification {
 
     val parentName = new Screen {
       val parentName = new Field with StringField {
-        def title = S ?? "Mom or Dad's name"
+        def name = S ? "Mom or Dad's name"
 
-        override def validation = minLen(2, S ?? "Name Too Short") ::
-        maxLen(40, S ?? "Name Too Long") :: super.validation
+        override def validations = minLen(2, S ?? "Name Too Short") ::
+        maxLen(40, S ?? "Name Too Long") :: super.validations
       }
     }
 
     val favoritePet = new Screen {
       val petName = new Field with StringField {
-        def title = S ?? "Pet's name"
+        def name = S ? "Pet's name"
 
-        override def validation = minLen(2, S ?? "Name Too Short") ::
-        maxLen(40, S ?? "Name Too Long") :: super.validation
+        override def validations = minLen(2, S ?? "Name Too Short") ::
+        maxLen(40, S ?? "Name Too Long") :: super.validations
       }
     }
   }

@@ -18,7 +18,7 @@ All features are implemented in terms of above AST. Functions are used to transf
 the AST itself, or to transform the AST between different formats. Common transformations
 are summarized in a following picture.
 
-![Json AST](http://github.com/dpp/liftweb/raw/joni_json_docs/lift-base/lift-json/json.png "Json AST")
+![Json AST](http://github.com/dpp/liftweb/raw/master/framework/lift-base/lift-json/json.png "Json AST")
 
 Summary of the features:
 

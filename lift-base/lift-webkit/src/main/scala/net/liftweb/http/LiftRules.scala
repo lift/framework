@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 WorldWide Conferencing, LLC
+ * Copyright 2007-2010 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1178,6 +1178,7 @@ object LiftRules extends Factory with FormVendor {
   private def ctor() {
     appendGlobalFormBuilder(FormBuilderLocator[String]((value, setter) => SHtml.text(value, setter)))
     appendGlobalFormBuilder(FormBuilderLocator[Int]((value, setter) => SHtml.text(value.toString, s => Helpers.asInt(s).foreach((setter)))))
+    appendGlobalFormBuilder(FormBuilderLocator[Boolean]((value, setter) => SHtml.checkbox(value, s => setter(s))))
   }
   ctor()
 }
