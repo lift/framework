@@ -149,17 +149,17 @@ class PCDataXmlParser(val input: Source) extends ConstructingHandler with PCData
    * report a syntax error
    */
   override def reportSyntaxError(pos: Int, msg: String) {
-    
+
     //error("MarkupParser::synerr") // DEBUG
     import scala.io._
-    
-    
+
+
     val line = Position.line(pos)
     val col = Position.column(pos)
     val report = curInput.descr + ":" + line + ":" + col + ": " + msg
     System.err.println(report)
     try {
-	    System.err.println(curInput.getLine(line))
+      System.err.println(curInput.getLine(line))
     } catch {
       case e: Exception => // ignore
     }

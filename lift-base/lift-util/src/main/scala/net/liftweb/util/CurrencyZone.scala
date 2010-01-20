@@ -85,7 +85,7 @@ abstract class CurrencyZone {
     abstract class AbstractCurrency(val designation: String) extends Ordered[Currency] {
 
         val _locale: Locale = locale
-        val amount: BigDecimal
+        def amount: BigDecimal
         def floatValue = amount.floatValue
         def doubleValue = amount.doubleValue
         val currencySymbol: String
@@ -105,7 +105,7 @@ abstract class CurrencyZone {
         make(new BigDecimal(this.amount.bigDecimal.divide(that.amount.bigDecimal, scale, _root_.java.math.BigDecimal.ROUND_HALF_UP)) )
         def /(that: Int): Currency = this / make(that)
 
-        def compare(that: Currency) = this.amount compareTo that.amount
+        def compare(that: Currency) = this.amount compare that.amount
 
         override def equals(that: Any) = that match {
             case that: AbstractCurrency => this.designation+this.format("", scale) == that.designation+that.format("", scale)

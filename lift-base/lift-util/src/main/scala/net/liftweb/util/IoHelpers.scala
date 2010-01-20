@@ -49,9 +49,9 @@ trait IoHelpers {
       var stdOut = ""
       var stdErr = ""
       val proc = Runtime.getRuntime.exec(cmds.toArray)
-      val t1 = new Thread(new ReadItAll(proc.getInputStream, stdOut = _))
+      val t1 = new Thread(new ReadItAll(proc.getInputStream, x => stdOut = x))
       t1.start
-      val t2 = new Thread(new ReadItAll(proc.getErrorStream, stdErr = _))
+      val t2 = new Thread(new ReadItAll(proc.getErrorStream, x => stdErr = x))
       val res = proc.waitFor
       t1.join
       t2.join
