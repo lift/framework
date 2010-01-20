@@ -32,7 +32,7 @@ import Helpers._
 
 /**
  * Buitin snippet for rendering page fragments asynchronously
- * 
+ *
  */
 object LazyLoad extends DispatchSnippet {
 
@@ -44,11 +44,11 @@ object LazyLoad extends DispatchSnippet {
 
   def render(xhtml: NodeSeq): NodeSeq = {
     val id = "lazy_"+ Helpers.nextFuncName;
-    
+
     lazyLoadCount(lazyLoadCount.get + 1);
 
     val session = S.session
-    val attrs = S.attrs   
+    val attrs = S.attrs
     val req = (S.request openOr Req.nil) snapshot
 
     val func = contextFuncBuilder(() => {
@@ -60,21 +60,21 @@ object LazyLoad extends DispatchSnippet {
              comet ! Ready(Replace(id, xhtml))
            }
          }
-        
+
        }
 
     })
 
     AsyncRenderer ! Start(func)
-    
+
 
     <div id={id}></div> ++ (
       if (lazyLoadCount.get == 1) {
         // Add the comet only once per page
-        session.map(_.addAndInitCometActor(new AsyncRenderComet(), 
-                                           Full("AsyncRenderComet"), 
-                                           Full(id), 
-                                           NodeSeq.Empty, Map.empty)) 
+        session.map(_.addAndInitCometActor(new AsyncRenderComet(),
+                                           Full("AsyncRenderComet"),
+                                           Full(id),
+                                           NodeSeq.Empty, Map.empty))
 
         <tail><lift:comet type="AsyncRenderComet" name={id}></lift:comet></tail>
       } else {
@@ -82,30 +82,30 @@ object LazyLoad extends DispatchSnippet {
       }
     )
   }
-  
+
 }
 
 
 private case class Start(snapshot: AFuncHolder)
 private case class Ready(js: JsCmd)
-private case class StopClient
+private case class StopClient()
 
 
 /**
  * The actor that renders the page fragment asynchronously
- * 
+ *
  */
 object AsyncRenderer extends LiftActor {
-  
+
   override def messageHandler = {
     case Start(snapshot) => snapshot("run" :: Nil)
-    case AddAListener(comet) => 
+    case AddAListener(comet) =>
   }
 }
 
 /**
  * The Comet Actor for sending down the computed page fragments
- * 
+ *
  */
 class AsyncRenderComet extends CometActor {
 

@@ -1334,7 +1334,7 @@ trait FormVendor {
     first match {
       case Some(x :: _) => Full(x.func.asInstanceOf[(T, T => Unit) => NodeSeq])
       case _ => if (globalForms.containsKey(name)) {
-        globalForms.get(name).headOption.map(_.func.asInstanceOf[(T, T => Unit) => NodeSeq])
+        globalForms.get(name).firstOption.map(_.func.asInstanceOf[(T, T => Unit) => NodeSeq])
       } else Empty
     }
   }
