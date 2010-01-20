@@ -1,4 +1,22 @@
-package net.liftweb.util
+/*
+ * Copyright 2006-2010 WorldWide Conferencing, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package net.liftweb {
+package util {
+
 import _root_.org.specs._
 import _root_.org.specs.specification._
 
@@ -73,3 +91,6 @@ object HttpHelpersSpec extends Specification with HttpHelpers with ListHelpers w
  // currentSus is no longer part of Specification in 1.6  def provide(e: =>Example) = { currentSus.verb += " provide"; e }
 }
 class HttpHelpersSpecTest extends _root_.org.specs.runner.JUnit4(HttpHelpersSpec)
+
+}
+}
