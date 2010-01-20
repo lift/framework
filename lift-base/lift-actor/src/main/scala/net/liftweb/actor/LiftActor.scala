@@ -61,9 +61,8 @@ object LAScheduler {
 }
 
 trait SpecializedLiftActor[T] extends SimpleActor[T]  {
-  @volatile
-  private[this] var processing = false
-  @volatile  private[this] val baseMailbox: MailboxItem = new SpecialMailbox
+  @volatile private[this] var processing = false
+  private[this] val baseMailbox: MailboxItem = new SpecialMailbox
   @volatile private[this] var msgList: List[T] = Nil
   @volatile private[this] var startCnt = 0
 
