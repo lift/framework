@@ -854,7 +854,7 @@ for {
    * @see # addAnalyzer
    * @see net.liftweb.mapper.DB.addLogFun ( ( String, Long ) => Any)
    */
-  def logQuery(query: String, time: Long) = p_queryLog.is += (query, time)
+  def logQuery(query: String, time: Long) = p_queryLog.is += ((query, time))
 
   /**
    * Given a snippet class name, return the cached or predefined stateful snippet for
@@ -2086,12 +2086,12 @@ for {
   /**
    * Sets an ERROR notice as an XML sequence
    */
-  def error(n: NodeSeq) {p_notice.is += (NoticeType.Error, n, Empty)}
+  def error(n: NodeSeq) {p_notice.is += ((NoticeType.Error, n, Empty))}
 
   /**
    * Sets an ERROR notice as an XML sequence and associates it with an id
    */
-  def error(id: String, n: NodeSeq) {p_notice.is += (NoticeType.Error, n, Full(id))}
+  def error(id: String, n: NodeSeq) {p_notice.is += ((NoticeType.Error, n, Full(id)))}
 
   /**
    * Sets an ERROR notice as plain text and associates it with an id
@@ -2106,12 +2106,12 @@ for {
   /**
    * Sets an NOTICE notice as an XML sequence
    */
-  def notice(n: NodeSeq) {p_notice.is += (NoticeType.Notice, n, Empty)}
+  def notice(n: NodeSeq) {p_notice.is += ((NoticeType.Notice, n, Empty))}
 
   /**
    * Sets an NOTICE notice as and XML sequence and associates it with an id
    */
-  def notice(id: String, n: NodeSeq) {p_notice.is += (NoticeType.Notice, n, Full(id))}
+  def notice(id: String, n: NodeSeq) {p_notice.is += ((NoticeType.Notice, n, Full(id)))}
 
   /**
    * Sets an NOTICE notice as plai text and associates it with an id
@@ -2126,12 +2126,12 @@ for {
   /**
    * Sets an WARNING notice as an XML sequence
    */
-  def warning(n: NodeSeq) {p_notice += (NoticeType.Warning, n, Empty)}
+  def warning(n: NodeSeq) {p_notice += ((NoticeType.Warning, n, Empty))}
 
   /**
    * Sets an WARNING notice as an XML sequence and associates it with an id
    */
-  def warning(id: String, n: NodeSeq) {p_notice += (NoticeType.Warning, n, Full(id))}
+  def warning(id: String, n: NodeSeq) {p_notice += ((NoticeType.Warning, n, Full(id)))}
 
   /**
    * Sets an WARNING notice as plain text and associates it with an id
@@ -2146,7 +2146,7 @@ for {
 
   private[http] def message(msg: String, notice: NoticeType.Value) {message(Text(msg), notice)}
 
-  private[http] def message(msg: NodeSeq, notice: NoticeType.Value) {p_notice += (notice, msg, Empty)}
+  private[http] def message(msg: NodeSeq, notice: NoticeType.Value) {p_notice += ((notice, msg, Empty))}
 
   private[http] def messagesFromList(list: List[(NoticeType.Value, NodeSeq, Box[String])]) {list foreach (p_notice += _)}
 
