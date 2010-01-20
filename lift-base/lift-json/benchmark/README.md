@@ -18,12 +18,12 @@ Parsing 50 000 json documents:
 
     Scala std	  167127 ms
     Jackson       370 ms
-    lift-json	  549 ms
+    lift-json	  465 ms
 
 Summary:
 
 * Jackson was fastest.
-* Lift Json was about 300 times faster than standard Scala parser.
+* lift-json was about 350 times faster than standard Scala parser.
 
 Serialization benchmark, Java serialization and lift-json
 ---------------------------------------------------------
