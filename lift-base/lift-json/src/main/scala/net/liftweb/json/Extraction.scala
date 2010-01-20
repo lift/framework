@@ -117,12 +117,13 @@ object Extraction {
           case None => root
         }
         newInstance(targetType, args.flatMap(build(newRoot, _, argStack)), newRoot) :: Nil
-      case ListConstructor(path, targetType, args) => 
+      case Lst(Constructor(Some(path), targetType, args)) => 
         val arr = asArray(safeFieldValue(root, path).getOrElse(JArray(Nil)), path)
         arr.arr.map(elem => newInstance(targetType, args.flatMap(build(elem, _, argStack)), elem)) :: argStack
-      case ListOfPrimitives(path, elementType) =>
+      case Lst(Value(path, elementType)) =>
         val arr = asArray(fieldValue(root, path), path)
         arr.arr.map(elem => newPrimitive(elementType, elem)) :: argStack
+      case Lst(x) => fail("Do not know how to handle list of " + x)
       case Optional(m) =>
         // FIXME Remove this try-catch.
         try { 

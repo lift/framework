@@ -36,15 +36,14 @@ private[json] object Meta {
    *  will produce following Mapping:
    *
    *  Constructor(None, "xx.Person", List(
-   *    Value("name"),
+   *    Value("name", classOf[String]),
    *    Constructor(Some("address"), "xx.Address", List(Value("street"), Value("city"))),
-   *    ListConstructor("children", "xx.Child", List(Value("name"), Value("age")))))
+   *    Lst(Constructor("children", "xx.Child", List(Value("name"), Value("age"))))))
    */
   sealed abstract class Mapping
   case class Value(path: String, targetType: Class[_]) extends Mapping
   case class Constructor(path: Option[String], targetType: Class[_], args: List[Mapping]) extends Mapping
-  case class ListConstructor(path: String, targetType: Class[_], args: List[Mapping]) extends Mapping
-  case class ListOfPrimitives(path: String, elementType: Class[_]) extends Mapping
+  case class Lst(mapping: Mapping) extends Mapping
   case class Optional(mapping: Mapping) extends Mapping
 
   private val mappings = new Memo[Class[_], Mapping]
@@ -56,8 +55,8 @@ private[json] object Meta {
 
     def makeMapping(path: Option[String], clazz: Class[_], isList: Boolean): Mapping = isList match {
       case false => Constructor(path, clazz, constructorArgs(clazz))
-      case true if primitive_?(clazz) => ListOfPrimitives(path.get, clazz)
-      case true => ListConstructor(path.get, clazz, constructorArgs(clazz))
+      case true if primitive_?(clazz) => Lst(Value(path.get, clazz))
+      case true => Lst(Constructor(path, clazz, constructorArgs(clazz)))
     }
 
     def constructorArgs(clazz: Class[_]) = orderedConstructorArgs(clazz).map { f =>

@@ -62,6 +62,13 @@ object ExtractionExamples extends Specification {
     parse(missingChildren).extract[Person] mustEqual Person("joe", Address("Bulevard", "Helsinki"), Nil)
   }
 
+/*
+  "Multidimensional array extraction example" in {
+    parse(multiDimensionalArrays).extract[MultiDim] mustEqual MultiDim(
+      List(List(List(1, 2), List(3)), List(List(4), List(5, 6))), 
+      List(List(Name("joe"), Name("mary")), List(Name("mazy"))))
+  }
+*/
   /* Does not work yet.
   "List extraction example" in {
     val json = parse(testJson)
@@ -121,6 +128,14 @@ object ExtractionExamples extends Specification {
 }
 """
 
+  val multiDimensionalArrays =
+"""
+{
+  "ints": [[[1, 2], [3]], [[4], [5, 6]]],
+  "names": [[{"name": "joe"}, {"name": "mary"}], [[{"name": "mazy"}]]]
+}
+"""
+
   def date(s: String) = DefaultFormats.dateFormat.parse(s).get
 }
 
@@ -140,3 +155,5 @@ case class Parent(name: String)
 case class OList(elems: Option[List[Int]])
 
 case class Event(name: String, timestamp: Date)
+
+case class MultiDim(ints: List[List[List[Int]]], names: List[List[Name]])
