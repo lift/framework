@@ -53,11 +53,8 @@ private[json] object Meta {
   private[json] def mappingOf(clazz: Class[_]) = {
     import Reflection._
 
-    def makeMapping(path: Option[String], clazz: Class[_], isList: Boolean): Mapping = isList match {
-      case false => Constructor(path, clazz, constructorArgs(clazz))
-      case true if primitive_?(clazz) => Lst(Value(path.get, clazz))
-      case true => Lst(Constructor(path, clazz, constructorArgs(clazz)))
-    }
+    def makeMapping(path: Option[String], clazz: Class[_]) = 
+      Constructor(path, clazz, constructorArgs(clazz))
 
     def constructorArgs(clazz: Class[_]) = orderedConstructorArgs(clazz).map { f =>
       fieldMapping(unmangleName(f), f.getType, f.getGenericType)
@@ -75,15 +72,15 @@ private[json] object Meta {
 
     def fieldMapping(name: String, fieldType: Class[_], genericType: Type): Mapping = 
       if (primitive_?(fieldType)) Value(name, fieldType)
-      else if (fieldType == classOf[List[_]]) makeMapping(Some(name), typeParameter(genericType), true)
+      else if (fieldType == classOf[List[_]]) Lst(fieldMapping(name, typeParameter(genericType), genericType))
       else if (classOf[Option[_]].isAssignableFrom(fieldType))
         if (container_?(genericType)) {
           val types = containerTypes(genericType)
           Optional(fieldMapping(name, types._1, types._2))
         } else Optional(fieldMapping(name, typeParameter(genericType), null))
-      else makeMapping(Some(name), fieldType, false)
+      else makeMapping(Some(name), fieldType)
 
-    mappings.memoize(clazz, makeMapping(None, _, false))
+    mappings.memoize(clazz, makeMapping(None, _))
   }
 
   private[json] def unmangleName(f: Field) = 
@@ -91,10 +88,11 @@ private[json] object Meta {
 
   private[json] def fail(msg: String) = throw new MappingException(msg)
 
-  private val operators = Map("$eq" -> "=", "$greater" -> ">", "$less" -> "<", "$plus" -> "+", "$minus" -> "-",
-                      "$times" -> "*", "$div" -> "/", "$bang" -> "!", "$at" -> "@", "$hash" -> "#",
-                      "$percent" -> "%", "$up" -> "^", "$amp" -> "&", "$tilde" -> "~", "$qmark" -> "?",
-                      "$bar" -> "|", "$bslash" -> "\\")
+  private val operators = Map(
+    "$eq" -> "=", "$greater" -> ">", "$less" -> "<", "$plus" -> "+", "$minus" -> "-",
+    "$times" -> "*", "$div" -> "/", "$bang" -> "!", "$at" -> "@", "$hash" -> "#",
+    "$percent" -> "%", "$up" -> "^", "$amp" -> "&", "$tilde" -> "~", "$qmark" -> "?",
+    "$bar" -> "|", "$bslash" -> "\\")
 
   private class Memo[A, R] {
     private var cache = Map[A, R]()
@@ -111,12 +109,13 @@ private[json] object Meta {
   object Reflection {
     import java.lang.reflect._
 
-    val primitives = Set[Class[_]](classOf[String], classOf[Int], classOf[Long], classOf[Double], 
-                                   classOf[Float], classOf[Byte], classOf[BigInt], classOf[Boolean], 
-                                   classOf[Short], classOf[java.lang.Integer], classOf[java.lang.Long], 
-                                   classOf[java.lang.Double], classOf[java.lang.Float], 
-                                   classOf[java.lang.Byte], classOf[java.lang.Boolean], 
-                                   classOf[java.lang.Short], classOf[Date], classOf[Symbol])
+    val primitives = Set[Class[_]](
+      classOf[String], classOf[Int], classOf[Long], classOf[Double], 
+      classOf[Float], classOf[Byte], classOf[BigInt], classOf[Boolean], 
+      classOf[Short], classOf[java.lang.Integer], classOf[java.lang.Long], 
+      classOf[java.lang.Double], classOf[java.lang.Float], 
+      classOf[java.lang.Byte], classOf[java.lang.Boolean], 
+      classOf[java.lang.Short], classOf[Date], classOf[Symbol])
 
     def safePrimaryConstructorOf[A](cl: Class[A]): Option[JConstructor[A]] = 
       cl.getDeclaredConstructors.toList.asInstanceOf[List[JConstructor[A]]] match {
