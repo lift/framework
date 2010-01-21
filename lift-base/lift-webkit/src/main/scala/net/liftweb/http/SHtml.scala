@@ -682,7 +682,7 @@ object SHtml {
    * @param attrs - button attributes
    *
    */
-  def ajaxSubmit(value: String, func: () => JsCmd, attrs: (String, String)*): Elem = {
+  def ajaxSubmit(value: String, func: () => Any, attrs: (String, String)*): Elem = {
     val funcName = "Z" + Helpers.nextFuncName
     addFunctionMap(funcName, contextFuncBuilder(func))
 
@@ -779,7 +779,7 @@ object SHtml {
    * Submits a form denominated by a formId and execute the func function
    * after form fields functions are executed.
    */ 
-  def submitAjaxForm(formId: String, func: () => JsCmd): JsCmd = {
+  def submitAjaxForm(formId: String, func: () => Any): JsCmd = {
     val funcName = "Z" + Helpers.nextFuncName
     addFunctionMap(funcName, contextFuncBuilder(func))
 
