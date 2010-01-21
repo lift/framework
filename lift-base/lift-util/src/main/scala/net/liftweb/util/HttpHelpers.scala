@@ -18,9 +18,8 @@ package net.liftweb {
 package util {
 
 import _root_.java.net.{URLDecoder, URLEncoder}
-import _root_.scala.collection.mutable.{HashSet, ListBuffer}
-import _root_.scala.reflect.Manifest
-import _root_.scala.xml.{NodeSeq, Elem, Node, Text, Group, UnprefixedAttribute, Null, Unparsed, MetaData, PrefixedAttribute}
+import _root_.scala.collection.mutable.ListBuffer
+import _root_.scala.xml._
 import _root_.scala.collection.{Map}
 import _root_.scala.collection.mutable.HashMap
 import _root_.java.util.concurrent.atomic.AtomicLong
@@ -30,9 +29,9 @@ object HttpHelpers extends ListHelpers with StringHelpers
 
 trait HttpHelpers { self: ListHelpers with StringHelpers  =>
 
-  /** 
+  /**
    * The list of known suffixes used to split the URI into path parts and suffixes.
-   */ 
+   */
   val knownSuffixes: Set[String] = Set("json","rss","atom","do","3dm",
     "3dmf","a","aab","aam","aas","abc","acgi","afl","ai","aif","aifc","aiff",
     "aim","aip","ani","aos","aps","arc","arj","art","asf","asm","asp","asx","au","avi","avs",

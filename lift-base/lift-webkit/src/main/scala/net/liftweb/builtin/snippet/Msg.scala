@@ -22,7 +22,7 @@ import _root_.net.liftweb.http._
 import _root_.net.liftweb.http.S._
 import _root_.scala.xml._
 import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.common.{Box, Full}
+import _root_.net.liftweb.common.Full
 import _root_.scala.collection.mutable.HashMap
 
 

@@ -24,7 +24,6 @@ import _root_.net.liftweb.actor._
 import _root_.net.liftweb.http.js._
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
-import SHtml._
 import JsCmds._
 import JE._
 import S._

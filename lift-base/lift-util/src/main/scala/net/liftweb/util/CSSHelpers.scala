@@ -18,8 +18,6 @@ package net.liftweb {
 package util {
 
 import _root_.scala.util.parsing.combinator._
-import _root_.scala.util.parsing.combinator.syntactical._
-import _root_.scala.util.parsing.combinator.lexical._
 import common._
 import _root_.java.io._
 

@@ -20,7 +20,6 @@ package snippet {
 
 import _root_.scala.xml._
 import _root_.net.liftweb.http._
-import _root_.net.liftweb.common._
 
 object Tail extends DispatchSnippet {
 

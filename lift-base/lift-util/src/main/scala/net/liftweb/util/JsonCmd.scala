@@ -18,7 +18,7 @@ package net.liftweb {
 package util {
 
 import common._
-import xml.{Elem, NodeSeq}
+import xml.NodeSeq
 
 trait HasParams {
   def param(name: String): Box[String]

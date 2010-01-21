@@ -33,7 +33,6 @@ import JsonParser.parse
  */
 object Serialization {
   import java.io.{StringWriter, Writer}
-  import Meta.Reflection._
 
   /** Serialize to String.
    */

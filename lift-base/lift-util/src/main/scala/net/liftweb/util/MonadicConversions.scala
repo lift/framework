@@ -17,8 +17,6 @@
 package net.liftweb {
 package util {
 
-import common._
-
 /**
  * Holds the implicit conversions from/to MonadicCondition
  */

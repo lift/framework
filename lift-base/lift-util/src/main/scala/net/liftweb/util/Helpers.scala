@@ -18,7 +18,6 @@ package net.liftweb {
 package util {
 
 import _root_.scala.xml._
-import common._
 
 /**
  * The Helpers object provides a lot of utility functions:<ul>

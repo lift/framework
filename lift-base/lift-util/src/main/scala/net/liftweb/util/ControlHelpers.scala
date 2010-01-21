@@ -19,7 +19,6 @@ package util {
 
 import common._
 
-
 object ControlHelpers extends ControlHelpers with ClassHelpers
 
 /**

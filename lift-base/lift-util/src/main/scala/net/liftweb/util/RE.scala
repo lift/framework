@@ -17,7 +17,7 @@
 package net.liftweb {
 package util {
 
-import _root_.java.util.regex.{Pattern, Matcher}
+import _root_.java.util.regex.Pattern
 import _root_.scala.collection.mutable.ListBuffer
 import common._
 

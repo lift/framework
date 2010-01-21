@@ -19,7 +19,7 @@ package util {
 
 import _root_.scala.xml.parsing.{MarkupParser, MarkupHandler, FatalError, ConstructingHandler, ExternalSources}
 import _root_.scala.xml.dtd._
-import _root_.scala.xml.{Unparsed, NodeSeq, Atom, Elem, Comment, Group, NamespaceBinding, Node, SpecialNode, Text, TopScope, EntityRef}
+import _root_.scala.xml._
 import _root_.scala.io.{Source}
 import _root_.java.io.{InputStream}
 import common._

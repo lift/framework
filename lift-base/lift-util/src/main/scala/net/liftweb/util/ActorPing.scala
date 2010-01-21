@@ -19,7 +19,6 @@ package util {
 
 import _root_.java.util.concurrent._
 import Helpers.TimeSpan
-import _root_.net.liftweb.common._
 import common._
 
 /**

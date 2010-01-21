@@ -17,8 +17,6 @@
 package net.liftweb {
 package util {
 
-import common._
-
 /*
  A wrapper arround a Scala Enumeration Value that has a name, description for each object
  */
@@ -48,13 +46,13 @@ abstract class EnumWithDescription  {
         _values = _values ::: List(value)  // build in order
         value
     }
-    
+
     def Value(name: String): Value = Value(name, name)
 
     def valueOf(name: String) = values find (_.name == name)
 
     def nameDescriptionList = values map(x => (x.name, x.description) )
-    
+
 }
 
 }
