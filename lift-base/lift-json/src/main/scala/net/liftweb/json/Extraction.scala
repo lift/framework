@@ -157,6 +157,8 @@ object Extraction {
   private def convert(value: JValue, targetType: Class[_], formats: Formats): Any = value match {
     case JInt(x) if (targetType == classOf[Int]) => x.intValue
     case JInt(x) if (targetType == classOf[Long]) => x.longValue
+    case JInt(x) if (targetType == classOf[Double]) => x.doubleValue
+    case JInt(x) if (targetType == classOf[Float]) => x.floatValue
     case JInt(x) if (targetType == classOf[Short]) => x.shortValue
     case JInt(x) if (targetType == classOf[Byte]) => x.byteValue
     case JInt(x) if (targetType == classOf[String]) => x.toString
