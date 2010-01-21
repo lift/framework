@@ -17,12 +17,11 @@
 package net.liftweb {
 package mapper {
 
-import _root_.net.liftweb.mapper._
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.util._
 import Helpers._
 import _root_.net.liftweb.http.{S, SHtml}
-import _root_.scala.xml.{Elem, NodeSeq}
+import _root_.scala.xml.NodeSeq
 import _root_.net.liftweb.http.js._
 
 abstract class MappedUniqueId[T<:Mapper[T]](override val fieldOwner: T, override val maxLen: Int) extends MappedString[T](fieldOwner, maxLen) {

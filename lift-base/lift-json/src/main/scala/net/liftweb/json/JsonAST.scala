@@ -27,7 +27,7 @@ object JsonAST {
    * concat(JInt(1), JInt(2)) == JArray(List(JInt(1), JInt(2)))
    * </pre>
    */
-  def concat(xs: JValue*) = xs.foldLeft(JNothing: JValue)(_ ++ _)  
+  def concat(xs: JValue*) = xs.foldLeft(JNothing: JValue)(_ ++ _)
 
   /**
    * Data type for Json AST.
@@ -91,7 +91,7 @@ object JsonAST {
      * json \ classOf[JInt]
      * </pre>
      */
-    def \[A <: JValue](clazz: Class[A]): List[A#Values] = 
+    def \[A <: JValue](clazz: Class[A]): List[A#Values] =
       findDirect(children, typePredicate(clazz) _).asInstanceOf[List[A]] map { _.values }
 
     /** XPath-like expression to query JSON fields by type. Returns all matching fields.
@@ -100,7 +100,7 @@ object JsonAST {
      * json \\ classOf[JInt]
      * </pre>
      */
-    def \\[A <: JValue](clazz: Class[A]): List[A#Values] = 
+    def \\[A <: JValue](clazz: Class[A]): List[A#Values] =
       (this filter typePredicate(clazz) _).asInstanceOf[List[A]] map { _.values }
 
     private def typePredicate[A <: JValue](clazz: Class[A])(json: JValue) = json match {
@@ -199,7 +199,7 @@ object JsonAST {
      * JArray(JInt(1) :: JInt(2) :: Nil) filter { case JInt(x) => x > 1; case _ => false }
      * </pre>
      */
-    def filter(p: JValue => Boolean): List[JValue] = 
+    def filter(p: JValue => Boolean): List[JValue] =
       fold(List[JValue]())((acc, e) => if (p(e)) e :: acc else acc).reverse
 
     /** Concatenate with another JSON.
@@ -244,7 +244,7 @@ object JsonAST {
      * JObject(JField("name", JString("joe")) :: Nil).extract[Foo] == Person("joe")
      * </pre>
      */
-    def extract[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]) = 
+    def extract[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]) =
       Extraction.extract(this)(formats, mf)
   }
 
@@ -303,7 +303,7 @@ object JsonAST {
     case JString(s)    => text("\"" + quote(s) + "\"")
     case JArray(arr)   => text("[") :: series(trimArr(arr).map(render(_))) :: text("]")
     case JField(n, v)  => text("\"" + n + "\":") :: render(v)
-    case JObject(obj)  => 
+    case JObject(obj)  =>
       val nested = break :: fields(trimObj(obj).map(f => text("\"" + f.name + "\":") :: render(f.value)))
       text("{") :: nest(2, nested) :: break :: text("}")
   }
@@ -319,7 +319,7 @@ object JsonAST {
     case d :: ds => (d :: p) :: punctuate(p, ds)
   }
 
-  private def quote(s: String) = (s.map { 
+  private def quote(s: String) = (s.map {
       case '"'  => "\\\""
       case '\\' => "\\\\"
       case '\b' => "\\b"
@@ -397,7 +397,7 @@ object JsonDSL extends Implicits with Printer {
  * Example:<pre>
  * pretty(render(json))
  * </pre>
- * 
+ *
  * @see net.liftweb.json.JsonAST#render
  */
 object Printer extends Printer
@@ -413,12 +413,12 @@ trait Printer {
    */
   def compact[A <: Writer](d: Document, out: A): A = {
     def layout(doc: Document): Unit = doc match {
-      case DocText(s)      => out.write(s) 
+      case DocText(s)      => out.write(s)
       case DocCons(d1, d2) => layout(d1); layout(d2)
-      case DocBreak        => 
+      case DocBreak        =>
       case DocNest(_, d)   => layout(d)
       case DocGroup(d)     => layout(d)
-      case DocNil          => 
+      case DocNil          =>
     }
     layout(d)
     out.flush

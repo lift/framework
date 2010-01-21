@@ -21,7 +21,7 @@ package json {
  */
 object Merge {
   import JsonAST._
-  
+
   /** Return merged JSON.
    * <p>
    * Example:<pre>

@@ -17,8 +17,8 @@
 package net.liftweb {
 package util {
 
-import _root_.java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, File, FileInputStream, BufferedReader, InputStreamReader}
-import _root_.scala.collection.mutable.{HashSet, ListBuffer}
+import _root_.java.io._
+import _root_.scala.collection.mutable.ListBuffer
 import ControlHelpers._
 import common._
 

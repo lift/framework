@@ -18,7 +18,6 @@ package net.liftweb {
 package mapper {
 
 import _root_.java.sql.{Connection,PreparedStatement,ResultSet,Statement}
-import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
 
 /**

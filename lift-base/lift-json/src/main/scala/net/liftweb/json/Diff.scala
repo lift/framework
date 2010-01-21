@@ -19,7 +19,7 @@ package json {
 
 import JsonAST._
 
-/** A difference between two JSONs (j1 diff j2). 
+/** A difference between two JSONs (j1 diff j2).
  * @param changed what has changed from j1 to j2
  * @param added what has been added to j2
  * @param deleted what has been deleted from j1
@@ -63,14 +63,14 @@ object Diff {
     def diffRec(xleft: List[JField], yleft: List[JField]): Diff = xleft match {
       case Nil => Diff(JNothing, if (yleft.isEmpty) JNothing else JObject(yleft), JNothing)
       case x :: xs => yleft find (_.name == x.name) match {
-        case Some(y) => 
+        case Some(y) =>
           val Diff(c1, a1, d1) = diff(x, y)
           val Diff(c2, a2, d2) = diffRec(xs, yleft-y)
-          Diff(c1 ++ c2, a1 ++ a2, d1 ++ d2) map { 
+          Diff(c1 ++ c2, a1 ++ a2, d1 ++ d2) map {
             case f: JField => JObject(f :: Nil)
             case x => x
           }
-        case None => 
+        case None =>
           val Diff(c, a, d) = diffRec(xs, yleft)
           Diff(c, a, JObject(x :: Nil) merge d)
       }

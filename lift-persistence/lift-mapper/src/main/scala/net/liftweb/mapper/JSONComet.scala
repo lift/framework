@@ -17,7 +17,6 @@
 package net.liftweb {
 package mapper {
 
-import _root_.java.util.Date
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.util._
 import Helpers._

@@ -18,14 +18,7 @@ package net.liftweb {
 package record {
 package field {
 
-import _root_.scala.xml._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.mapper.{Safe}
-import _root_.net.liftweb.http.{S}
-import _root_.java.util.regex._
-import Helpers._
-import S._
+import _root_.net.liftweb.http.S
 
 
 object Countries extends Enumeration(1) {

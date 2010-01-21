@@ -18,14 +18,11 @@ package net.liftweb {
 package mapper {
 
 import _root_.scala.collection.mutable._
-import _root_.java.lang.reflect.Method
-import _root_.java.sql.{ResultSet, Types}
-import _root_.scala.xml.{Elem, Node, NodeSeq}
-import _root_.net.liftweb.http.{S}
-import S._
+import _root_.scala.xml.{Elem, NodeSeq}
+import _root_.net.liftweb.http.S
 import _root_.net.liftweb.http.js._
 import _root_.net.liftweb.util.{FieldError, FieldContainer, BaseField}
-import _root_.net.liftweb.common.{Box, Empty, Full, Failure}
+import _root_.net.liftweb.common.{Box, Empty, Full}
 
 trait BaseMapper extends FieldContainer {
   type MapperType <: Mapper[MapperType]

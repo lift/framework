@@ -19,6 +19,7 @@ package util {
 
 import _root_.java.util.regex._
 import _root_.java.lang.Character._
+import _root_.java.lang.{StringBuilder => GoodSB}
 import _root_.scala.xml.NodeSeq
 import common._
 
@@ -87,7 +88,7 @@ trait StringHelpers {
       case "" => "n/a"
       case s => s
     }).toLowerCase
-    val sb = new StringBuilder
+    val sb = new GoodSB
     capify(tmp, 0, 250, false, false, sb)
     sb.toString
   }
@@ -97,7 +98,7 @@ trait StringHelpers {
    * @param msg string where replacements should be done
    * @param subst map of [regular expression with groups, replacement]
    */
-  private def capify(in: String, pos: Int, max: Int, lastLetter: Boolean, lastSymbol: Boolean, out: StringBuilder): Unit = {
+  private def capify(in: String, pos: Int, max: Int, lastLetter: Boolean, lastSymbol: Boolean, out: GoodSB): Unit = {
     if (pos >= max || pos >= in.length) return
     else {
       in.charAt(pos) match {
@@ -121,7 +122,7 @@ trait StringHelpers {
    * @return the generated string
    */
   def randomString(size: Int): String = {
-    def addChar(pos: Int, lastRand: Int, sb: StringBuilder): StringBuilder = {
+    def addChar(pos: Int, lastRand: Int, sb: GoodSB): GoodSB = {
       if (pos >= size) sb
       else {
         val randNum = if ((pos % 6) == 0) random.nextInt else lastRand
@@ -132,7 +133,7 @@ trait StringHelpers {
         addChar(pos + 1, randNum >> 5, sb)
       }
     }
-    addChar(0, 0, new StringBuilder(size)).toString
+    addChar(0, 0, new GoodSB(size)).toString
   }
 
   /**
@@ -223,7 +224,7 @@ trait StringHelpers {
       if (what eq null) "null"
       else {
         val len = what.length
-        val sb = new StringBuilder(len * 2)
+        val sb = new GoodSB(len * 2)
         sb.append('"')
         var pos = 0
         while (pos < len) {

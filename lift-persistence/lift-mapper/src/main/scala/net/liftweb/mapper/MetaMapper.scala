@@ -19,7 +19,7 @@ package mapper {
 
 import _root_.scala.collection.mutable.{ListBuffer, HashMap}
 import _root_.java.lang.reflect.Method
-import _root_.java.sql.{ResultSet, Types, PreparedStatement, Statement}
+import _root_.java.sql.{ResultSet, Types, PreparedStatement}
 import _root_.scala.xml._
 import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.common.{Box, Empty, Full, Failure}
@@ -566,7 +566,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    */
   protected def encodeAsJSON_! (toEncode: A): JsonAST.JObject = {
     toEncode.runSafe {
-      JsonAST.JObject(JsonAST.JField("$persisted", 
+      JsonAST.JObject(JsonAST.JField("$persisted",
 				     JsonAST.JBool(toEncode.persisted_?)) ::
 		      this.mappedFieldList.
 		      map(fh => ??(fh.method, toEncode).asJsonField))
@@ -582,7 +582,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 	field <- json.obj
 	JField("$persisted", JBool(per)) <- field
       } ret.persisted_? = per
-      
+
       for {
 	field <- json.obj
 	meth <- _mappedFields.get(field.name)

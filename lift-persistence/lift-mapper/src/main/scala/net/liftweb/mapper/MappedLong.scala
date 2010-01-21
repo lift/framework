@@ -17,17 +17,16 @@
 package net.liftweb {
 package mapper {
 
-import _root_.java.sql.{ResultSet, Types}
+import _root_.java.sql.Types
 import _root_.java.lang.reflect.Method
 import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
 import _root_.java.util.Date
-import _root_.scala.xml.{NodeSeq, Text, Unparsed}
+import _root_.scala.xml.NodeSeq
 import _root_.net.liftweb.http.{S, SHtml}
 import _root_.net.liftweb.http.js._
 import _root_.net.liftweb.json._
-import S._
 
 abstract class MappedLongForeignKey[T<:Mapper[T],O<:KeyedMapper[Long, O]](theOwner: T, foreign: => KeyedMetaMapper[Long, O])
 extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeignKey {

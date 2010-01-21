@@ -17,11 +17,10 @@
 package net.liftweb {
 package mapper {
 
-import _root_.scala.xml.{NodeSeq, Text, Elem}
+import _root_.scala.xml.{Text, Elem}
 import _root_.net.liftweb.http.{S, SHtml}
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.util._
-import Helpers._
 import _root_.java.util.{Locale, TimeZone}
 
 object Countries extends Enumeration(1) {
@@ -128,21 +127,21 @@ abstract class MappedPostalCode[T <: Mapper[T]](owner: T, country: MappedCountry
     case Countries.USA =>  valRegex(REPat.compile("[0-9]{5}(\\-[0-9]{4})?"),
                                     S.??("invalid.zip.code")) _ :: super.validations
 
-    case Countries.Sweden => valRegex(REPat.compile("[0-9]{3}[ ]?[0-9]{2}"), 
+    case Countries.Sweden => valRegex(REPat.compile("[0-9]{3}[ ]?[0-9]{2}"),
                                       S.??("invalid.postal.code")) _ :: super.validations
 
-    case Countries.Australia => valRegex(REPat.compile("(0?|[1-9])[0-9]{3}"), 
+    case Countries.Australia => valRegex(REPat.compile("(0?|[1-9])[0-9]{3}"),
                                          S.??("invalid.postal.code")) _ :: super.validations
 
-    case Countries.Canada => valRegex(REPat.compile("[A-Z][0-9][A-Z][ ][0-9][A-Z][0-9]"), 
+    case Countries.Canada => valRegex(REPat.compile("[A-Z][0-9][A-Z][ ][0-9][A-Z][0-9]"),
                                       S.??("invalid.postal.code")) _ :: super.validations
 
-    case Countries.Germany => valRegex(REPat.compile("[0-9]{5}"), 
+    case Countries.Germany => valRegex(REPat.compile("[0-9]{5}"),
                                        S.??("invalid.postal.code")) _ :: super.validations
 
     case Countries.UK =>  valRegex(REPat.compile("[A-Z]{1,2}[0-9R][0-9A-Z]?[0-9][ABD-HJLNP-UW-Z]{2}"),
                                      S.??("invalid.postal.code")) _ :: super.validations
-      
+
     case _ => genericCheck _ :: super.validations
   }
 }

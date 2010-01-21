@@ -21,9 +21,9 @@ import net.liftweb._
 import util._
 import common._
 import scala.xml._
-import net.liftweb.http.js.{JsExp, JE}
+import net.liftweb.http.js.JsExp
 import net.liftweb.http.{SHtml}
-import net.liftweb.mapper.{Safe, KeyObfuscator}
+import net.liftweb.mapper.Safe
 import field._
 
 trait Record[MyType <: Record[MyType]] {

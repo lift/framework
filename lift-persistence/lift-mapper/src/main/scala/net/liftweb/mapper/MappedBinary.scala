@@ -17,7 +17,7 @@
 package net.liftweb {
 package mapper {
 
-import _root_.java.sql.{ResultSet, Types}
+import _root_.java.sql.Types
 import _root_.java.lang.reflect.Method
 import _root_.java.util.Date
 import _root_.net.liftweb.util._
@@ -131,7 +131,7 @@ abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[S
   def asJsExp: JsExp = JE.Str(is)
 
   def asJsonValue: JsonAST.JValue = is match {
-    case null => JsonAST.JNull 
+    case null => JsonAST.JNull
     case str => JsonAST.JString(str)
   }
 
@@ -225,7 +225,7 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
   def asJsExp: JsExp = JE.Str(is)
 
   def asJsonValue: JsonAST.JValue = is match {
-    case null => JsonAST.JNull 
+    case null => JsonAST.JNull
     case str => JsonAST.JString(str)
   }
 

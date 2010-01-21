@@ -19,7 +19,6 @@ package mapper {
 
 import _root_.scala.collection.mutable._
 import _root_.java.lang.reflect.Method
-import _root_.java.sql.{ResultSet, Types}
 import _root_.scala.xml._
 import _root_.java.util.Date
 import _root_.net.liftweb.http.{S, SHtml}
@@ -28,7 +27,6 @@ import _root_.net.liftweb.http.js._
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.json._
 import _root_.net.liftweb.util._
-import Helpers._
 
 
 /**

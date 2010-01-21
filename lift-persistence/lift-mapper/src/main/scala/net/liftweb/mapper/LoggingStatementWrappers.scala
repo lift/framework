@@ -18,10 +18,7 @@ package net.liftweb {
 package mapper {
 
 import _root_.java.lang.reflect.{InvocationHandler,Method,Proxy}
-import _root_.java.io.{InputStream,Reader}
-import _root_.java.net.URL
 import _root_.java.sql.{Array => SqlArray, _}
-import _root_.java.util.Calendar
 
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.common.{Box}
@@ -333,6 +330,7 @@ object DBLog {
       m.invoke(underlying, args : _*)
     } catch {
       case nsme : NoSuchMethodException => Log.fatal("Could not locate method %s for %s : %s".format(method.getName, underlyingClassname, nsme.getMessage))
+      throw nsme
     }
 
     override def toString = executedStatements.reverse.mkString("\n")

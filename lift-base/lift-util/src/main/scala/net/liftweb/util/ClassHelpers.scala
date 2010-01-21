@@ -17,7 +17,7 @@
 package net.liftweb {
 package util {
 
-import _root_.java.lang.reflect.{Method, Modifier, InvocationTargetException}
+import _root_.java.lang.reflect.{Method, InvocationTargetException}
 import _root_.java.lang.reflect.Modifier._
 import _root_.scala.reflect.Manifest
 import common._
@@ -170,7 +170,7 @@ trait ClassHelpers { self: ControlHelpers =>
     if (name == null)
     ""
     else
-    List.toString(loop('_' :: name.toList))
+    loop('_' :: name.toList).mkString
   }
 
   /**
@@ -203,7 +203,7 @@ trait ClassHelpers { self: ControlHelpers =>
     if (name.isEmpty)
     ""
     else
-    List.toString(Character.toLowerCase(name.charAt(0)) :: loop(name.substring(1).toList))
+    (Character.toLowerCase(name.charAt(0)) :: loop(name.substring(1).toList)).mkString
   }
 
   /**
@@ -430,7 +430,7 @@ trait ClassHelpers { self: ControlHelpers =>
       ret += sc
       c = sc
     }
-    
+
     ret.toList
   }
 }

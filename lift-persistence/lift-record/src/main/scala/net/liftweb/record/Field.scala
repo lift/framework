@@ -19,7 +19,6 @@ package record {
 
 import net.liftweb.common._
 import net.liftweb.util._
-import net.liftweb.http.{S}
 import net.liftweb.http.js.{JsExp}
 import scala.xml._
 
