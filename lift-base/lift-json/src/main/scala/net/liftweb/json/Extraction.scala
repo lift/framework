@@ -80,6 +80,8 @@ object Extraction {
   private def extract0[A](json: JValue, formats: Formats, mf: Manifest[A]): A = {
     val mapping = mappingOf(mf.erasure)
 
+    println(mapping)
+
     def newInstance(targetType: Class[_], args: => List[Any], json: JValue) = {
       def instantiate(constructor: JConstructor[_], args: List[Any]) = 
         try {

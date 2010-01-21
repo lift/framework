@@ -70,9 +70,14 @@ private[json] object Meta {
       }
     }
 
+    // FIXME cleanup duplication
     def fieldMapping(name: String, fieldType: Class[_], genericType: Type): Mapping = 
       if (primitive_?(fieldType)) Value(name, fieldType)
-      else if (fieldType == classOf[List[_]]) Lst(fieldMapping(name, typeParameter(genericType), genericType))
+      else if (fieldType == classOf[List[_]]) 
+        if (container_?(genericType)) {
+          val types = containerTypes(genericType)
+          Lst(fieldMapping(name, types._1, types._2))
+        } else Lst(fieldMapping(name, typeParameter(genericType), null))
       else if (classOf[Option[_]].isAssignableFrom(fieldType))
         if (container_?(genericType)) {
           val types = containerTypes(genericType)
