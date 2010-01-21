@@ -130,10 +130,10 @@ object ExtractionExamples extends Specification {
   val multiDimensionalArrays =
 """
 {
-  "ints": [[[1, 2], [3]], [[4], [5, 6]]]
+  "ints": [[[1, 2], [3]], [[4], [5, 6]]],
+  "names": [[{"name": "joe"}, {"name": "mary"}], [[{"name": "mazy"}]]]
 }
 """
-//  "names": [[{"name": "joe"}, {"name": "mary"}], [[{"name": "mazy"}]]]
 
   def date(s: String) = DefaultFormats.dateFormat.parse(s).get
 }
@@ -155,4 +155,4 @@ case class OList(elems: Option[List[Int]])
 
 case class Event(name: String, timestamp: Date)
 
-case class MultiDim(ints: List[List[List[Int]]] /*, names: List[List[Name]]*/)
+case class MultiDim(ints: List[List[List[Int]]], names: List[List[Name]])

@@ -96,7 +96,7 @@ object Extraction {
         val deserializer = formats.typeHints.deserialize
         if (!deserializer.isDefinedAt(typeHint, obj)) {
           val concreteClass = formats.typeHints.classFor(typeHint) getOrElse fail("Do not know how to deserialize '" + typeHint + "'")
-          build(obj, mappingOf(concreteClass), Nil)(0)
+          build(obj, mappingOf(concreteClass))(0)
         } else deserializer(typeHint, obj)
       }
 
@@ -109,31 +109,31 @@ object Extraction {
 
     def newPrimitive(elementType: Class[_], elem: JValue) = convert(elem, elementType, formats)
 
-    def build(root: JValue, mapping: Mapping, argStack: List[Any]): List[Any] = mapping match {
-      case Value(path, targetType) => convert(fieldValue(root, path), targetType, formats) :: argStack
+    def build(root: JValue, mapping: Mapping): List[Any] = mapping match {
+      case Value(path, targetType) => convert(fieldValue(root, path), targetType, formats) :: Nil
       case Constructor(path, targetType, args) => 
         val newRoot = path match {
           case Some(p) => root \ p
           case None => root
         }
-        newInstance(targetType, args.flatMap(build(newRoot, _, argStack)), newRoot) :: Nil
+        newInstance(targetType, args.flatMap(build(newRoot, _)), newRoot) :: Nil
       case Lst(Constructor(Some(path), targetType, args)) => 
         val arr = asArray(safeFieldValue(root, path).getOrElse(JArray(Nil)), path)
-        arr.arr.map(elem => newInstance(targetType, args.flatMap(build(elem, _, argStack)), elem)) :: argStack
+        arr.arr.map(elem => newInstance(targetType, args.flatMap(build(elem, _)), elem)) :: Nil
       case Lst(Value(path, elementType)) =>
         val arr = asArray(fieldValue(root, path), path)
-        arr.arr.map(elem => newPrimitive(elementType, elem)) :: argStack
-      case Lst(m) => List(build(root, m, argStack).head)
+        arr.arr.map(elem => newPrimitive(elementType, elem)) :: Nil
+      case Lst(m) => List(build(root, m).head)
       case Optional(m) =>
         // FIXME Remove this try-catch.
         try { 
-          val opt = build(root, m, argStack) 
+          val opt = build(root, m) 
           (opt(0) match {
             case null => None
             case x => Some(x)
-          }) :: argStack
+          }) :: Nil
         } catch {
-          case e: MappingException => None :: argStack
+          case e: MappingException => None :: Nil
         }
     }
 
@@ -152,7 +152,7 @@ object Extraction {
       fail("Expected JField but got " + (json \ path) + ", json='" + json + "', path='" + path + "'")
     }
 
-    build(json, mapping, Nil).head.asInstanceOf[A]
+    build(json, mapping).head.asInstanceOf[A]
   }
 
   private def convert(value: JValue, targetType: Class[_], formats: Formats): Any = value match {
