@@ -80,8 +80,6 @@ object Extraction {
   private def extract0[A](json: JValue, formats: Formats, mf: Manifest[A]): A = {
     val mapping = mappingOf(mf.erasure)
 
-    println(mapping)
-
     def newInstance(targetType: Class[_], args: => List[Any], json: JValue) = {
       def instantiate(constructor: JConstructor[_], args: List[Any]) = 
         try {
@@ -125,7 +123,7 @@ object Extraction {
       case Lst(Value(path, elementType)) =>
         val arr = asArray(fieldValue(root, path), path)
         arr.arr.map(elem => newPrimitive(elementType, elem)) :: argStack
-      case Lst(x) => fail("Do not know how to handle list of " + x)
+      case Lst(m) => List(build(root, m, argStack).head)
       case Optional(m) =>
         // FIXME Remove this try-catch.
         try { 
