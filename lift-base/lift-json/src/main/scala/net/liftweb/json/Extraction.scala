@@ -91,7 +91,7 @@ object Extraction {
                  "\nconstructor=" + constructor)
         }
 
-      def instantiateUsingTypeHint(typeHint: String, fields: List[JField]) = {
+      def mkWithTypeHint(typeHint: String, fields: List[JField]) = {
         val obj = JObject(fields)
         val deserializer = formats.typeHints.deserialize
         if (!deserializer.isDefinedAt(typeHint, obj)) {
@@ -101,8 +101,8 @@ object Extraction {
       }
 
       json match {
-        case JObject(JField("jsonClass", JString(t)) :: xs) => instantiateUsingTypeHint(t, xs)
-        case JField(_, JObject(JField("jsonClass", JString(t)) :: xs)) => instantiateUsingTypeHint(t, xs)
+        case JObject(JField("jsonClass", JString(t)) :: xs) => mkWithTypeHint(t, xs)
+        case JField(_, JObject(JField("jsonClass", JString(t)) :: xs)) => mkWithTypeHint(t, xs)
         case _ => instantiate(primaryConstructorOf(targetType), args)
       }
     }
