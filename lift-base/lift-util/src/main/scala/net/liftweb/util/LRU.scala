@@ -24,7 +24,7 @@ import common._
  * @param size the maximum number of Elements allowed in the LRU map
  * @param loadFactor the Load Factor to construct our LRU with.
  */
-class LRU[KeyType, ValueType](size: Int, loadFactor: Box[Float]) extends net.liftweb.common.LRU(size, loadFactor) {
+class LRU[KeyType, ValueType](size: Int, loadFactor: Box[Float]) extends net.liftweb.common.LRUMap[KeyType, ValueType](size, loadFactor) {
   // Alternate constructor that gives you no load factor.
   def this(size: Int) = this(size, Empty)
 
