@@ -21,6 +21,7 @@ import _root_.scala.xml.{Text, Elem}
 import _root_.net.liftweb.http.{S, SHtml}
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.util._
+import Helpers._
 import _root_.java.util.{Locale, TimeZone}
 
 object Countries extends Enumeration(1) {

@@ -20,6 +20,7 @@ package mapper {
 import _root_.scala.collection.mutable._
 import _root_.scala.xml.{Elem, NodeSeq}
 import _root_.net.liftweb.http.S
+import S._
 import _root_.net.liftweb.http.js._
 import _root_.net.liftweb.util.{FieldError, FieldContainer, BaseField}
 import _root_.net.liftweb.common.{Box, Empty, Full}
