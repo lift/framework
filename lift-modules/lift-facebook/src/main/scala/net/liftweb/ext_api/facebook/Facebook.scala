@@ -1,4 +1,22 @@
-package net.liftweb.ext_api.facebook;
+/*
+ * Copyright 2007-2010 WorldWide Conferencing, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package net.liftweb {
+package ext_api {
+package facebook {
 
 import _root_.net.liftweb.http.{S, SessionVar}
 import _root_.net.liftweb.util.Helpers._
@@ -44,4 +62,8 @@ object Facebook {
     def expiration: Option[Long] = S.param("fb_sig_expires").map[Long](_.toLong)
     def uid: Option[String] = S.param("fb_sig_user")
   }
+}
+
+}
+}
 }

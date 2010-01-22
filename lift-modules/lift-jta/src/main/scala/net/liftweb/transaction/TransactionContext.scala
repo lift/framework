@@ -5,16 +5,17 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an "AS IS" BASIS,
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-package net.liftweb.transaction
+package net.liftweb {
+package transaction {
 
 import _root_.javax.persistence.{EntityManager, EntityManagerFactory}
 import _root_.javax.transaction.{Transaction, Status, TransactionManager}
@@ -28,7 +29,7 @@ import _root_.org.scala_libs.jpa.{ScalaEntityManager, ScalaEMFactory}
 trait TransactionMonad {
 
   // -----------------------------
-  // Monadic definitions  
+  // Monadic definitions
   // -----------------------------
 
   def map[T](f: TransactionMonad => T): T
@@ -91,7 +92,7 @@ trait TransactionMonad {
 /**
  * Manages a thread-local stack of TransactionContexts.
  * <p/>
- * Choose TransactionService implementation by implicit definition of the implementation of choice, 
+ * Choose TransactionService implementation by implicit definition of the implementation of choice,
  * e.g. <code>implicit val txService = TransactionServices.AtomikosTransactionService</code>.
  * <p/>
  * Example usage 1:
@@ -123,9 +124,9 @@ trait TransactionMonad {
 object TransactionContext extends TransactionProtocol {
   // FIXME: make configurable
   private implicit val defaultTransactionService = atomikos.AtomikosTransactionService
-  
+
   private[TransactionContext] val stack = new scala.util.DynamicVariable(new TransactionContext)
-  
+
   object Required extends TransactionMonad {
     def map[T](f: TransactionMonad => T): T =        withTxRequired { f(this) }
     def flatMap[T](f: TransactionMonad => T): T =    withTxRequired { f(this) }
@@ -137,24 +138,24 @@ object TransactionContext extends TransactionProtocol {
     def flatMap[T](f: TransactionMonad => T): T =    withTxRequiresNew { f(this) }
     def foreach(f: TransactionMonad => Unit): Unit = withTxRequiresNew { f(this) }
   }
-  
+
   object Supports extends TransactionMonad {
     def map[T](f: TransactionMonad => T): T =        withTxSupports { f(this) }
     def flatMap[T](f: TransactionMonad => T): T =    withTxSupports { f(this) }
     def foreach(f: TransactionMonad => Unit): Unit = withTxSupports { f(this) }
   }
-  
+
   object Mandatory extends TransactionMonad {
     def map[T](f: TransactionMonad => T): T =        withTxMandatory { f(this) }
     def flatMap[T](f: TransactionMonad => T): T =    withTxMandatory { f(this) }
     def foreach(f: TransactionMonad => Unit): Unit = withTxMandatory { f(this) }
   }
- 
+
   object Never extends TransactionMonad {
     def map[T](f: TransactionMonad => T): T =        withTxNever { f(this) }
     def flatMap[T](f: TransactionMonad => T): T =    withTxNever { f(this) }
     def foreach(f: TransactionMonad => Unit): Unit = withTxNever { f(this) }
-  }  
+  }
 
   object NoOpTransactionMonad extends TransactionMonad {
     def map[T](f: TransactionMonad => T): T =        f(this)
@@ -164,9 +165,9 @@ object TransactionContext extends TransactionProtocol {
   }
 
   private[transaction] def setRollbackOnly = current.setRollbackOnly
-  
+
   private[transaction] def isRollbackOnly = current.isRollbackOnly
-  
+
   private[transaction] def getTransactionManager: TransactionManager = current.getTransactionManager
 
   private[transaction] def getTransaction: Transaction = current.getTransactionManager.getTransaction
@@ -204,7 +205,7 @@ object TransactionContext extends TransactionProtocol {
  * @author <a href="http://jonasboner.com">Jonas Bon&#233;r</a>
  */
 class TransactionContext(private implicit val transactionService: TransactionService)
-    extends ScalaEntityManager with ScalaEMFactory { 
+    extends ScalaEntityManager with ScalaEMFactory {
 
   val em: EntityManager = transactionService.entityManagerFactory.createEntityManager
   val tm: TransactionManager = transactionService.transactionManager
@@ -226,4 +227,5 @@ class TransactionContext(private implicit val transactionService: TransactionSer
   def closeEM(e: javax.persistence.EntityManager) = closeEntityManager
 }
 
-
+}
+}
