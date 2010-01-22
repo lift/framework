@@ -1,7 +1,7 @@
 /**
  * Following libs are required to compile and run the benchmark:
- * - jackson-core-asl-1.0.0.jar
- * - jackson-mapper-asl-1.0.0.jar
+ * - jackson-core-asl-1.4.1.jar
+ * - jackson-mapper-asl-1.4.1.jar
  * - lift-json-???.jar
  */
 object Jsonbench extends Benchmark {
@@ -13,7 +13,7 @@ object Jsonbench extends Benchmark {
   def main(args: Array[String]) = {
     benchmark("Scala std") { JSON.parse(json) }
     val mapper = new ObjectMapper
-    benchmark("Jackson") { mapper.readValue(json, classOf[java.util.HashMap[_, _]]) }
+    benchmark("Jackson") { mapper.readValue(json, classOf[JsonNode]) }
     benchmark("lift-json") { JsonParser.parse(json) }
   }
 

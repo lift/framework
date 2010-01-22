@@ -307,10 +307,10 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   }
 
   private def distinct(in: Seq[QueryParam[A]]): String =
-  in.filter{case Distinct() => true case _ => false} match {
-    case Nil => ""
-    case _ => " DISTINCT "
-  }
+    in.find {case Distinct() => true case _ => false}.isDefined match {
+      case false => ""
+      case true => " DISTINCT "
+    }
 
   def findMap[T](by: QueryParam[A]*)(f: A => Box[T]) =
   findMapDb(dbDefaultConnectionIdentifier, by :_*)(f)
@@ -1330,10 +1330,10 @@ sealed abstract class InThing[OuterType <: Mapper[OuterType]] extends QueryParam
   def queryParams: List[QueryParam[InnerType]]
 
   def distinct: String =
-  queryParams.filter{case Distinct() => true case _ => false} match {
-    case Nil => ""
-    case _ => " DISTINCT "
-  }
+    queryParams.find {case Distinct() => true case _ => false}.isDefined match {
+      case false => ""
+      case true => " DISTINCT "
+    }
 }
 
 /**

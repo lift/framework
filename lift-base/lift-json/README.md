@@ -31,17 +31,19 @@ Summary of the features:
 * Pretty and compact printing
 * XML conversions
 * Serialization
+* Low level pull parser API
 
 Installation
 ============
 
 It comes with Lift, but non-Lift users can add lift-json as a dependency in following ways.
+Note, replace XX with correct Lift version (for instance M1).
 
 ### SBT users
 
 Add dependency to your project description:
 
-    val lift-json = "net.liftweb" % "lift-json" % "1.1-M8"
+    val lift_json = "net.liftweb" % "lift-json" % "2.0-XX"
 
 ### Maven users
 
@@ -50,14 +52,14 @@ Add dependency to your pom:
     <dependency>
       <groupId>net.liftweb</groupId>
       <artifactId>lift-json</artifactId>
-      <version>1.1-M8</version>
+      <version>2.0-XX</version>
     </dependency>
 
 ### Others
 
 Download following jars:
 
-* http://scala-tools.org/repo-releases/net/liftweb/lift-json/1.1-M8/lift-json-1.1-M8.jar
+* http://scala-tools.org/repo-releases/net/liftweb/lift-json/2.0-XX/lift-json-2.0-XX.jar
 * http://mirrors.ibiblio.org/pub/mirrors/maven2/com/thoughtworks/paranamer/paranamer/2.1/paranamer-2.1.jar
 
 
@@ -547,6 +549,55 @@ Other direction is supported too. Converting JSON to XML:
 
      scala> toXml(json)
      res5: scala.xml.NodeSeq = <users><user><id>1</id><name>Harry</name></user><user><id>2</id><name>David</name></user></users>
+
+Low level pull parser API
+=========================
+
+Pull parser API is provided for cases requiring extreme performance. It improves parsing
+performance by two ways. First, no intermediate AST is generated. Second, you can stop
+parsing at any time, skipping rest of the stream. Note, this parsing style is recommended
+only as an optimization. Above mentioned functional APIs are easier to use.
+
+Consider following example which shows how to parse one field value from a big JSON.
+
+    scala> val json = """
+      {
+        ...
+        "firstName": "John",
+        "lastName": "Smith",
+        "address": {
+          "streetAddress": "21 2nd Street",
+          "city": "New York",
+          "state": "NY",
+          "postalCode": 10021
+        },
+        "phoneNumbers": [
+          { "type": "home", "number": "212 555-1234" },
+          { "type": "fax", "number": "646 555-4567" }
+        ],
+        ...
+      }"""
+
+    scala> val parser = (p: Parser) => {
+             def parse: BigInt = p.nextToken match {
+               case FieldStart("postalCode") => p.nextToken match {
+                 case IntVal(code) => code
+                 case _ => p.fail("expected int")
+               }
+               case End => p.fail("no field named 'postalCode'")
+               case _ => parse
+             }
+
+             parse
+           }
+
+    scala> val postalCode = parse(json, parser)
+    postalCode: BigInt = 10021
+
+Pull parser is a function `Parser => A`, in this example it is concretely `Parser => BigInt`.
+Constructed parser recursively reads tokens until it finds `FieldStart("postalCode")`
+token. After that the next token must be `IntVal`, otherwise parsing fails. It returns parsed
+integer and stops parsing immediately.
 
 
 Kudos

@@ -52,6 +52,15 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
   def asSafeJs(obs: Box[KeyObfuscator]): JsExp =
   obs.map(o => JE.Str(o.obscure(dbKeyToTable, is))).openOr(JE.Num(is))
 
+  override def asJsonValue: JsonAST.JValue = if (defined_?) super.asJsonValue else JsonAST.JNull
+
+  override def setFromAny(in: Any): Long =
+  in match {
+    case JsonAST.JNull => this.set(0L)
+    case JsonAST.JInt(bigint) => this.set(bigint.longValue)
+    case o => super.setFromAny(o)
+  }
+
   /**
    * Called when Schemifier adds a foreign key.  Return a function that will be called when Schemifier
    * is done with the schemification.
@@ -59,11 +68,6 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
   def dbAddedForeignKey: Box[() => Unit] = Empty
 
   override def toString = if (defined_?) super.toString else "NULL"
-
-  /*
-   def :=(v : Box[O]) : Long = this.:=(v.map(_.primaryKeyField.is) openOr 0L)
-   def :=(v : O) : Long = this.:=(v.primaryKeyField.is)
-   */
 
   def apply(v: Box[O]): T = this(v.map(_.primaryKeyField.is) openOr 0L)
   def apply(v: O): T = this(v.primaryKeyField.is)
@@ -352,7 +356,7 @@ abstract class MappedLong[T<:Mapper[T]](val fieldOwner: T) extends MappedField[L
 
   def asJsExp = JE.Num(is)
 
-       def asJsonValue: JsonAST.JValue = JsonAST.JInt(is)
+  def asJsonValue: JsonAST.JValue = JsonAST.JInt(is)
 
   override def readPermission_? = true
   override def writePermission_? = true
