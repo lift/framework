@@ -455,7 +455,6 @@ It does not support:
 
 * Java serialization (classes marked with @serializable annotation etc.)
 * Maps, Sets or other collection types, just Lists and Options for now
-* Multidimensional Lists
 
 Serializing polymorphic Lists
 -----------------------------
