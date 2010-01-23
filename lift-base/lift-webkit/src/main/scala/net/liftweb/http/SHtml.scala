@@ -392,7 +392,7 @@ object SHtml {
     attrs.foldLeft(<span onclick={cmd.toJsCmd}>{body}</span>)(_ % _)
 
 
-  def toggleKids(head: Elem, visible: Boolean, func: () => Any, kids: Elem): NodeSeq = {
+  def toggleKids(head: Elem, visible: Boolean, func: () => JsCmd, kids: Elem): NodeSeq = {
     fmapFunc(contextFuncBuilder(func)) {
       funcName =>
 
@@ -637,10 +637,10 @@ object SHtml {
   def text(value: String, func: String => Any, attrs: (String, String)*): Elem =
     text_*(value, SFuncHolder(func), attrs: _*)
 
-  def textAjaxTest(value: String, func: String => Any, ajaxTest: String => JsCmd, attrs: (String, String)*): Elem =
+  def textAjaxTest(value: String, func: String => JsCmd, ajaxTest: String => JsCmd, attrs: (String, String)*): Elem =
     text_*(value, SFuncHolder(func), ajaxTest, attrs: _*)
 
-  def textAjaxTest(value: String, func: String => Any, ajaxTest: Box[String => JsCmd], attrs: (String, String)*): Elem =
+  def textAjaxTest(value: String, func: String => JsCmd, ajaxTest: Box[String => JsCmd], attrs: (String, String)*): Elem =
     text_*(value, SFuncHolder(func), ajaxTest, attrs: _*)
 
 
@@ -682,7 +682,7 @@ object SHtml {
    * @param attrs - button attributes
    *
    */
-  def ajaxSubmit(value: String, func: () => Any, attrs: (String, String)*): Elem = {
+  def ajaxSubmit(value: String, func: () => JsCmd, attrs: (String, String)*): Elem = {
     val funcName = "Z" + Helpers.nextFuncName
     addFunctionMap(funcName, contextFuncBuilder(func))
 
@@ -779,7 +779,7 @@ object SHtml {
    * Submits a form denominated by a formId and execute the func function
    * after form fields functions are executed.
    */ 
-  def submitAjaxForm(formId: String, func: () => Any): JsCmd = {
+  def submitAjaxForm(formId: String, func: () => JsCmd): JsCmd = {
     val funcName = "Z" + Helpers.nextFuncName
     addFunctionMap(funcName, contextFuncBuilder(func))
 
