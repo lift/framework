@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-package bootstrap {
-package liftweb {
+package bootstrap.liftweb
 
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
@@ -42,7 +41,4 @@ class Boot {
       Nil
     LiftRules.setSiteMap(SiteMap(entries:_*))
   }
-}
-
-}
 }
