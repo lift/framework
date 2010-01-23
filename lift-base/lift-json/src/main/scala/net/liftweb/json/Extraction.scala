@@ -66,7 +66,7 @@ object Extraction {
         case x: List[_] => JArray(x map decompose)
         case x: Option[_] => decompose(x getOrElse JNothing)
         case x => 
-          x.getClass.getDeclaredFields.filter(!static_?(_)).toList.map { f => 
+          x.getClass.getDeclaredFields.toList.remove(static_?).map { f => 
             f.setAccessible(true)
             JField(unmangleName(f), decompose(f get x))
           } match {
