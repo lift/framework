@@ -1,5 +1,3 @@
-package net.liftweb.mapper
-
 /*
  * Copyright 2006-2010 WorldWide Conferencing, LLC
  *
@@ -7,18 +5,21 @@ package net.liftweb.mapper
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an "AS IS" BASIS,
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+package net.liftweb {
+package mapper {
 
 import _root_.scala.collection.mutable.{ListBuffer, HashMap}
 import _root_.java.lang.reflect.Method
-import _root_.java.sql.{ResultSet, Types, PreparedStatement, Statement}
+import _root_.java.sql.{ResultSet, Types, PreparedStatement}
 import _root_.scala.xml._
 import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.common.{Box, Empty, Full, Failure}
@@ -306,10 +307,10 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   }
 
   private def distinct(in: Seq[QueryParam[A]]): String =
-  in.find{case Distinct() => true case _ => false}.isDefined match {
-    case false => ""
-    case true => " DISTINCT "
-  }
+    in.find {case Distinct() => true case _ => false}.isDefined match {
+      case false => ""
+      case true => " DISTINCT "
+    }
 
   def findMap[T](by: QueryParam[A]*)(f: A => Box[T]) =
   findMapDb(dbDefaultConnectionIdentifier, by :_*)(f)
@@ -565,7 +566,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    */
   protected def encodeAsJSON_! (toEncode: A): JsonAST.JObject = {
     toEncode.runSafe {
-      JsonAST.JObject(JsonAST.JField("$persisted", 
+      JsonAST.JObject(JsonAST.JField("$persisted",
 				     JsonAST.JBool(toEncode.persisted_?)) ::
 		      this.mappedFieldList.
 		      map(fh => ??(fh.method, toEncode).asJsonField))
@@ -581,7 +582,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 	field <- json.obj
 	JField("$persisted", JBool(per)) <- field
       } ret.persisted_? = per
-      
+
       for {
 	field <- json.obj
 	meth <- _mappedFields.get(field.name)
@@ -1329,10 +1330,10 @@ sealed abstract class InThing[OuterType <: Mapper[OuterType]] extends QueryParam
   def queryParams: List[QueryParam[InnerType]]
 
   def distinct: String =
-  queryParams.find{case Distinct() => true case _ => false}.isDefined match {
-    case false => ""
-    case true => " DISTINCT "
-  }
+    queryParams.find {case Distinct() => true case _ => false}.isDefined match {
+      case false => ""
+      case true => " DISTINCT "
+    }
 }
 
 /**
@@ -1806,3 +1807,6 @@ trait SelectableField {
 }
 
 class MapperException(msg: String) extends Exception(msg)
+
+}
+}

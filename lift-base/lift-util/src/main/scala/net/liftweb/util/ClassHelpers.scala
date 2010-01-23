@@ -1,11 +1,12 @@
-package net.liftweb.util
-
 /*
- * Copyright 2006-2008 WorldWide Conferencing, LLC
+ * Copyright 2006-2010 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,8 +14,10 @@ package net.liftweb.util
  * limitations under the License.
  */
 
+package net.liftweb {
+package util {
 
-import _root_.java.lang.reflect.{Method, Modifier, InvocationTargetException}
+import _root_.java.lang.reflect.{Method, InvocationTargetException}
 import _root_.java.lang.reflect.Modifier._
 import _root_.scala.reflect.Manifest
 import common._
@@ -167,7 +170,7 @@ trait ClassHelpers { self: ControlHelpers =>
     if (name == null)
     ""
     else
-    List.toString(loop('_' :: name.toList))
+    loop('_' :: name.toList).mkString
   }
 
   /**
@@ -200,7 +203,7 @@ trait ClassHelpers { self: ControlHelpers =>
     if (name.isEmpty)
     ""
     else
-    List.toString(Character.toLowerCase(name.charAt(0)) :: loop(name.substring(1).toList))
+    (Character.toLowerCase(name.charAt(0)) :: loop(name.substring(1).toList)).mkString
   }
 
   /**
@@ -427,7 +430,10 @@ trait ClassHelpers { self: ControlHelpers =>
       ret += sc
       c = sc
     }
-    
+
     ret.toList
   }
+}
+
+}
 }

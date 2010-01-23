@@ -5,16 +5,18 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an "AS IS" BASIS,
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-package net.liftweb.actor
+package net.liftweb {
+package actor {
+
 import common._
 
 trait ILAExecute {
@@ -59,9 +61,8 @@ object LAScheduler {
 }
 
 trait SpecializedLiftActor[T] extends SimpleActor[T]  {
-  @volatile
-  private[this] var processing = false
-  @volatile  private[this] val baseMailbox: MailboxItem = new SpecialMailbox
+  @volatile private[this] var processing = false
+  private[this] val baseMailbox: MailboxItem = new SpecialMailbox
   @volatile private[this] var msgList: List[T] = Nil
   @volatile private[this] var startCnt = 0
 
@@ -148,7 +149,7 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
             } catch {
               case e: Exception => if (eh.isDefinedAt(e)) eh(e)
             }
-          case _ => 
+          case _ =>
             baseMailbox.synchronized {
               if (msgList.isEmpty) {
                 processing = false
@@ -187,8 +188,8 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
 
 private final case class MsgWithResp(msg: Any, future: LAFuture[Any])
 
-trait LiftActor extends SpecializedLiftActor[Any] 
-with GenericActor[Any] 
+trait LiftActor extends SpecializedLiftActor[Any]
+with GenericActor[Any]
 with ForwardableActor[Any, Any] {
   @volatile
   private[this] var responseFuture: LAFuture[Any] = null
@@ -198,9 +199,9 @@ with ForwardableActor[Any, Any] {
   protected final def forwardMessageTo(msg: Any, forwardTo: TypedActor[Any, Any]) {
     if (null ne responseFuture) {
       forwardTo match {
-	case la: LiftActor => la ! MsgWithResp(msg, responseFuture)
-	case other =>
-	  reply(other !? msg)
+        case la: LiftActor => la ! MsgWithResp(msg, responseFuture)
+        case other =>
+          reply(other !? msg)
       }
     } else forwardTo ! msg
   }
@@ -220,8 +221,8 @@ with ForwardableActor[Any, Any] {
   /**
    * Compatible with Scala Actors' !? method
    */
-  def !?(timeout: Long, message: Any): Box[Any] = 
-  this !! (message, timeout)
+  def !?(timeout: Long, message: Any): Box[Any] =
+    this !! (message, timeout)
 
 
   def !!(msg: Any, timeout: Long): Box[Any] = {
@@ -258,4 +259,7 @@ with ForwardableActor[Any, Any] {
       responseFuture.satisfy(v)
     }
   }
+}
+
+}
 }

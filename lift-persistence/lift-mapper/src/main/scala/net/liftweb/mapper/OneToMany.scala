@@ -1,5 +1,21 @@
-package net.liftweb.mapper
+/*
+ * Copyright 2006-2010 WorldWide Conferencing, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+package net.liftweb {
+package mapper {
 
 /**
  * Add this trait to a Mapper for managed one-to-many support
@@ -18,7 +34,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       oneToManyFields.forall(_.save)
     ret
   }
-  
+
   /**
    * An override for delete_! to propagate the deletion
    * to all children of one-to-many fields implementing Cascade.
@@ -26,20 +42,20 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
    * If they are all successful returns true.
    */
   override def delete_! = {
-    super.delete_! && 
+    super.delete_! &&
       oneToManyFields.forall( _ match {
         case f: Cascade[_] => f.delete_!
         case _ => true
       } )
   }
-    
+
 
   /**
    * This implicit allows a MappedForeignKey to be used as foreignKey function.
    * Returns a function that takes a Mapper and looks up the actualField of field on the Mapper.
    */
   implicit def foreignKey[K, O<:Mapper[O], T<:KeyedMapper[K,T]](field: MappedForeignKey[K,O,T]): O=>MappedForeignKey[K,O,T] =
-    field.actualField(_).asInstanceOf[MappedForeignKey[K,O,T]] 
+    field.actualField(_).asInstanceOf[MappedForeignKey[K,O,T]]
 
   /**
    * Simple OneToMany support for children from the same table
@@ -55,7 +71,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       },
       foreign
     )
-  
+
   /**
    * This is the base class to use for fields that represent one-to-many or parent-child relationships.
    * Maintains a list of children, tracking pending additions and deletions, and
@@ -82,9 +98,9 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       _delegate
     }
     protected def delegate_=(d: List[O]) = _delegate = d
-    
+
     oneToManyFields = this :: oneToManyFields
-    
+
     /**
      * Takes ownership of e. Sets e's foreign key to our primary key
      */
@@ -113,7 +129,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
      */
     def all = delegate
 
-    
+
     def +=(elem: O) {
       delegate = delegate ++ List(own(elem))
     }
@@ -154,7 +170,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       while(delegate.length>0)
         remove(0)
     }
-    
+
     /**
      * Reloads the children from storage.
      * NOTE: This may leave children in an inconsistent state.
@@ -167,14 +183,13 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       else
         unlinked = _delegate
     }
-    
+
     /**
      * Saves this "field," i.e., all the children it represents.
      * Returns false as soon as save on a child returns false.
      * Returns true if all children were saved successfully.
      */
     def save = {
-      import net.liftweb.common.{Full, Empty}
       unlinked foreach {u =>
         val f = foreign(u)
         if(f.obj.map(_ eq OneToMany.this) openOr true) // obj is Empty or this
@@ -187,14 +202,14 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       }
       delegate.forall(_.save)
     }
-    
+
     override def toString = {
       val c = getClass.getSimpleName
       val l = c.lastIndexOf("$")
       c.substring(c.lastIndexOf("$",l-1)+1, l) + delegate.mkString("[",", ","]")
     }
   }
-  
+
   /**
    * Adds behavior to delete orphaned fields before save.
    */
@@ -217,7 +232,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       super.save
     }
   }
-  
+
   /**
    * Trait that indicates that the children represented
    * by this field should be deleted when the parent is deleted.
@@ -245,8 +260,8 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
  */
 class LongMappedMapper[T<:Mapper[T], O<:KeyedMapper[Long,O]](theOwner: T, foreign: => KeyedMetaMapper[Long, O])
   extends MappedLongForeignKey[T,O](theOwner, foreign) with LongMappedForeignMapper[T,O]
-  
-  
+
+
 /**
  * A subtype of MappedLongForeignKey whose value can be
  * get and set as the target parent mapper instead of as its primary key.
@@ -261,7 +276,7 @@ trait LongMappedForeignMapper[T<:Mapper[T],O<:KeyedMapper[Long,O]]
   //private var inited = false
   //private var _foreign: Box[O] = Empty
   def foreign = obj //_foreign
-  
+
   override def apply(f: O) = {
     //inited = true
     //_foreign = Full(f)
@@ -284,20 +299,20 @@ trait LongMappedForeignMapper[T<:Mapper[T],O<:KeyedMapper[Long,O]]
       _foreign = Empty
       super.apply(defaultValue);
   }*/
-  
+
   override def set(v: Long) = {
     val ret = super.set(v)
     primeObj(if(defined_?) dbKeyToTable.find(i_is_!) else Empty)
     ret
   }
-  
+
   override def beforeSave {
     if(!defined_?)
       for(o <- obj)
         set(o.primaryKeyField.is)
     super.beforeSave
   }
-  
+
   import net.liftweb.util.FieldError
   val valHasObj = (value: Long) =>
     if (obj eq Empty) List(FieldError(this, scala.xml.Text("Required field: " + name)))
@@ -309,5 +324,8 @@ trait LongMappedForeignMapper[T<:Mapper[T],O<:KeyedMapper[Long,O]]
     }
     super.i_is_!
   }*/
-  
+
+}
+
+}
 }

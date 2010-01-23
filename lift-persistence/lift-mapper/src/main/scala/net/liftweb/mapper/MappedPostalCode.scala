@@ -1,5 +1,3 @@
-package net.liftweb.mapper
-
 /*
  * Copyright 2006-2010 WorldWide Conferencing, LLC
  *
@@ -7,16 +5,19 @@ package net.liftweb.mapper
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an "AS IS" BASIS,
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-import _root_.scala.xml.{NodeSeq, Text, Elem}
+package net.liftweb {
+package mapper {
+
+import _root_.scala.xml.{Text, Elem}
 import _root_.net.liftweb.http.{S, SHtml}
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.util._
@@ -127,21 +128,24 @@ abstract class MappedPostalCode[T <: Mapper[T]](owner: T, country: MappedCountry
     case Countries.USA =>  valRegex(REPat.compile("[0-9]{5}(\\-[0-9]{4})?"),
                                     S.??("invalid.zip.code")) _ :: super.validations
 
-    case Countries.Sweden => valRegex(REPat.compile("[0-9]{3}[ ]?[0-9]{2}"), 
+    case Countries.Sweden => valRegex(REPat.compile("[0-9]{3}[ ]?[0-9]{2}"),
                                       S.??("invalid.postal.code")) _ :: super.validations
 
-    case Countries.Australia => valRegex(REPat.compile("(0?|[1-9])[0-9]{3}"), 
+    case Countries.Australia => valRegex(REPat.compile("(0?|[1-9])[0-9]{3}"),
                                          S.??("invalid.postal.code")) _ :: super.validations
 
-    case Countries.Canada => valRegex(REPat.compile("[A-Z][0-9][A-Z][ ][0-9][A-Z][0-9]"), 
+    case Countries.Canada => valRegex(REPat.compile("[A-Z][0-9][A-Z][ ][0-9][A-Z][0-9]"),
                                       S.??("invalid.postal.code")) _ :: super.validations
 
-    case Countries.Germany => valRegex(REPat.compile("[0-9]{5}"), 
+    case Countries.Germany => valRegex(REPat.compile("[0-9]{5}"),
                                        S.??("invalid.postal.code")) _ :: super.validations
 
     case Countries.UK =>  valRegex(REPat.compile("[A-Z]{1,2}[0-9R][0-9A-Z]?[0-9][ABD-HJLNP-UW-Z]{2}"),
                                      S.??("invalid.postal.code")) _ :: super.validations
-      
+
     case _ => genericCheck _ :: super.validations
   }
+}
+
+}
 }

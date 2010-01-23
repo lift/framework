@@ -1,4 +1,22 @@
-package net.liftweb.ext_api.facebook;
+/*
+ * Copyright 2007-2010 WorldWide Conferencing, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package net.liftweb {
+package ext_api {
+package facebook {
 
 import _root_.java.net.{HttpURLConnection, URL, URLEncoder}
 import _root_.java.io.DataOutputStream
@@ -359,3 +377,7 @@ case class FourthImage(imageUrl: String) extends FacebookParam("image_4", imageU
 case class FourthImageLink(imageUrl: String) extends FacebookParam("image_4_link", imageUrl) with PublishStoryParam with PublishActionParam
 case class Priority(priority: String) extends FacebookParam("priority", priority) with PublishStoryParam
 case class Caption(caption: String) extends FacebookParam("caption", caption) with UploadPhotoParam
+
+}
+}
+}

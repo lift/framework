@@ -1,11 +1,12 @@
-package net.liftweb.util
-
 /*
  * Copyright 2006-2010 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,8 +14,11 @@ package net.liftweb.util
  * limitations under the License.
  */
 
-import _root_.java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, File, FileInputStream, BufferedReader, InputStreamReader}
-import _root_.scala.collection.mutable.{HashSet, ListBuffer}
+package net.liftweb {
+package util {
+
+import _root_.java.io._
+import _root_.scala.collection.mutable.ListBuffer
 import ControlHelpers._
 import common._
 
@@ -45,9 +49,9 @@ trait IoHelpers {
       var stdOut = ""
       var stdErr = ""
       val proc = Runtime.getRuntime.exec(cmds.toArray)
-      val t1 = new Thread(new ReadItAll(proc.getInputStream, stdOut = _))
+      val t1 = new Thread(new ReadItAll(proc.getInputStream, x => stdOut = x))
       t1.start
-      val t2 = new Thread(new ReadItAll(proc.getErrorStream, stdErr = _))
+      val t2 = new Thread(new ReadItAll(proc.getErrorStream, x => stdErr = x))
       val res = proc.waitFor
       t1.join
       t2.join
@@ -113,4 +117,7 @@ trait IoHelpers {
       is.foreach(stream => tryo{ stream.close })
     }
   }
+}
+
+}
 }

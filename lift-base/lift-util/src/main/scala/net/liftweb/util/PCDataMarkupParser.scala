@@ -1,11 +1,12 @@
-package net.liftweb.util
-
 /*
  * Copyright 2006-2010 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,10 +14,12 @@ package net.liftweb.util
  * limitations under the License.
  */
 
+package net.liftweb {
+package util {
 
 import _root_.scala.xml.parsing.{MarkupParser, MarkupHandler, FatalError, ConstructingHandler, ExternalSources}
 import _root_.scala.xml.dtd._
-import _root_.scala.xml.{Unparsed, NodeSeq, Atom, Elem, Comment, Group, NamespaceBinding, Node, SpecialNode, Text, TopScope, EntityRef}
+import _root_.scala.xml._
 import _root_.scala.io.{Source}
 import _root_.java.io.{InputStream}
 import common._
@@ -146,17 +149,17 @@ class PCDataXmlParser(val input: Source) extends ConstructingHandler with PCData
    * report a syntax error
    */
   override def reportSyntaxError(pos: Int, msg: String) {
-    
+
     //error("MarkupParser::synerr") // DEBUG
     import scala.io._
-    
-    
+
+
     val line = Position.line(pos)
     val col = Position.column(pos)
     val report = curInput.descr + ":" + line + ":" + col + ": " + msg
     System.err.println(report)
     try {
-	    System.err.println(curInput.getLine(line))
+      System.err.println(curInput.getLine(line))
     } catch {
       case e: Exception => // ignore
     }
@@ -372,4 +375,7 @@ object AltXML {
     }
   }
 
+}
+
+}
 }

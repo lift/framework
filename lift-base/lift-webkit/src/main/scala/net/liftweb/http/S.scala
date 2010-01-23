@@ -5,15 +5,17 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an "AS IS" BASIS,
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-package net.liftweb.http
+
+package net.liftweb {
+package http {
 
 import _root_.scala.collection.mutable.{HashMap, ListBuffer}
 import _root_.scala.xml._
@@ -852,7 +854,7 @@ for {
    * @see # addAnalyzer
    * @see net.liftweb.mapper.DB.addLogFun ( ( String, Long ) => Any)
    */
-  def logQuery(query: String, time: Long) = p_queryLog.is += (query, time)
+  def logQuery(query: String, time: Long) = p_queryLog.is += ((query, time))
 
   /**
    * Given a snippet class name, return the cached or predefined stateful snippet for
@@ -2084,12 +2086,12 @@ for {
   /**
    * Sets an ERROR notice as an XML sequence
    */
-  def error(n: NodeSeq) {p_notice.is += (NoticeType.Error, n, Empty)}
+  def error(n: NodeSeq) {p_notice.is += ((NoticeType.Error, n, Empty))}
 
   /**
    * Sets an ERROR notice as an XML sequence and associates it with an id
    */
-  def error(id: String, n: NodeSeq) {p_notice.is += (NoticeType.Error, n, Full(id))}
+  def error(id: String, n: NodeSeq) {p_notice.is += ((NoticeType.Error, n, Full(id)))}
 
   /**
    * Sets an ERROR notice as plain text and associates it with an id
@@ -2104,12 +2106,12 @@ for {
   /**
    * Sets an NOTICE notice as an XML sequence
    */
-  def notice(n: NodeSeq) {p_notice.is += (NoticeType.Notice, n, Empty)}
+  def notice(n: NodeSeq) {p_notice.is += ((NoticeType.Notice, n, Empty))}
 
   /**
    * Sets an NOTICE notice as and XML sequence and associates it with an id
    */
-  def notice(id: String, n: NodeSeq) {p_notice.is += (NoticeType.Notice, n, Full(id))}
+  def notice(id: String, n: NodeSeq) {p_notice.is += ((NoticeType.Notice, n, Full(id)))}
 
   /**
    * Sets an NOTICE notice as plai text and associates it with an id
@@ -2124,12 +2126,12 @@ for {
   /**
    * Sets an WARNING notice as an XML sequence
    */
-  def warning(n: NodeSeq) {p_notice += (NoticeType.Warning, n, Empty)}
+  def warning(n: NodeSeq) {p_notice += ((NoticeType.Warning, n, Empty))}
 
   /**
    * Sets an WARNING notice as an XML sequence and associates it with an id
    */
-  def warning(id: String, n: NodeSeq) {p_notice += (NoticeType.Warning, n, Full(id))}
+  def warning(id: String, n: NodeSeq) {p_notice += ((NoticeType.Warning, n, Full(id)))}
 
   /**
    * Sets an WARNING notice as plain text and associates it with an id
@@ -2144,7 +2146,7 @@ for {
 
   private[http] def message(msg: String, notice: NoticeType.Value) {message(Text(msg), notice)}
 
-  private[http] def message(msg: NodeSeq, notice: NoticeType.Value) {p_notice += (notice, msg, Empty)}
+  private[http] def message(msg: NodeSeq, notice: NoticeType.Value) {p_notice += ((notice, msg, Empty))}
 
   private[http] def messagesFromList(list: List[(NoticeType.Value, NodeSeq, Box[String])]) {list foreach (p_notice += _)}
 
@@ -2251,3 +2253,5 @@ abstract class JsonHandler {
   def apply(in: Any): JsCmd
 }
 
+}
+}

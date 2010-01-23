@@ -1,5 +1,3 @@
-package net.liftweb.json
-
 /*
  * Copyright 2009-2010 WorldWide Conferencing, LLC
  *
@@ -7,14 +5,17 @@ package net.liftweb.json
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an "AS IS" BASIS,
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+package net.liftweb {
+package json {
 
 /** Fast imperative parser.
  */
@@ -90,10 +91,10 @@ object JsonParser {
       case JField(name, value) => JField(name, reverse(value))
       case x => x
     }
-    
+
     def closeBlock(v: JValue) {
       vals.peekOption match {
-        case Some(f: JField) => 
+        case Some(f: JField) =>
           val field = vals.pop(classOf[JField])
           val newField = JField(field.name, v)
           val obj = vals.peek(classOf[JObject])
@@ -139,7 +140,7 @@ object JsonParser {
 
     root.getOrElse(throw new ParseException("expected object or array", null))
   }
-  
+
   private val EOF = (-1).asInstanceOf[Char]
 
   private class ValStack(parser: Parser) {
@@ -179,7 +180,7 @@ object JsonParser {
           if (c == '"') return buf.substring
           c = buf.next
         }
-        fail("expected string end")        
+        fail("expected string end")
       }
 
       def parseString: String = {
@@ -190,7 +191,7 @@ object JsonParser {
           if (c == '\\') return parseEscapedString(buf.substring)
           c = buf.next
         }
-        fail("expected string end")        
+        fail("expected string end")
       }
 
       def parseEscapedString(base: String): String = {
@@ -211,7 +212,7 @@ object JsonParser {
               case 'n'  => s.append('\n')
               case 'r'  => s.append('\r')
               case 't'  => s.append('\t')
-              case 'u' => 
+              case 'u' =>
                 val chars = Array(buf.next, buf.next, buf.next, buf.next)
                 val codePoint = Integer.parseInt(new String(chars), 16)
                 s.appendCodePoint(codePoint)
@@ -220,14 +221,14 @@ object JsonParser {
           } else s.append(c)
           c = buf.next
         }
-        fail("expected string end")        
+        fail("expected string end")
       }
 
       def parseValue(first: Char) = {
         var wasInt = true
         var doubleVal = false
         val s = new StringBuilder
-        s.append(first) 
+        s.append(first)
         while (wasInt) {
           val c = buf.next
           if (c == '.' || c == 'e' || c == 'E') {
@@ -288,7 +289,7 @@ object JsonParser {
           case c if Character.isDigit(c) || c == '-' =>
             fieldNameMode = true
             return parseValue(c)
-          case c if isDelimiter(c) => 
+          case c if isDelimiter(c) =>
           case c => fail("unknown token " + c)
         }
       }
@@ -323,8 +324,8 @@ object JsonParser {
         cur = cur+1
         c
       } catch {
-        // suprisingly catching IndexOutOfBounds is faster than: if (cur == segment.length) 
-        case e => 
+        // suprisingly catching IndexOutOfBounds is faster than: if (cur == segment.length)
+        case e =>
           read
           if (length == -1) EOF else next
       }
@@ -414,4 +415,7 @@ object JsonParser {
   }
   case class RecycledSegment(seg: Array[Char]) extends Segment
   case class DisposableSegment(seg: Array[Char]) extends Segment
+}
+
+}
 }

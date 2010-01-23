@@ -5,16 +5,17 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an "AS IS" BASIS,
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-package net.liftweb.http
+package net.liftweb {
+package http {
 
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.actor._
@@ -462,11 +463,11 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
     case ReRender(all) => performReRender(all)
 
-    case Error(id, node) => notices += (NoticeType.Error, node, id)
+    case Error(id, node) => notices += ((NoticeType.Error, node, id))
 
-    case Warning(id, node) => notices += (NoticeType.Warning, node, id)
+    case Warning(id, node) => notices += ((NoticeType.Warning, node, id))
 
-    case Notice(id, node) => notices += (NoticeType.Notice, node, id)
+    case Notice(id, node) => notices += ((NoticeType.Notice, node, id))
 
     case ClearNotices => clearNotices
 
@@ -599,12 +600,12 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   /**
    * Similar with S.error
    */
-  def error(n: NodeSeq) {notices += (NoticeType.Error, n, Empty)}
+  def error(n: NodeSeq) {notices += ((NoticeType.Error, n, Empty))}
 
   /**
    * Similar with S.error
    */
-  def error(id: String, n: NodeSeq) {notices += (NoticeType.Error, n, Full(id))}
+  def error(id: String, n: NodeSeq) {notices += ((NoticeType.Error, n, Full(id)))}
 
   /**
    * Similar with S.error
@@ -619,12 +620,12 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   /**
    * Similar with S.notice
    */
-  def notice(n: NodeSeq) {notices += (NoticeType.Notice, n, Empty)}
+  def notice(n: NodeSeq) {notices += ((NoticeType.Notice, n, Empty))}
 
   /**
    * Similar with S.notice
    */
-  def notice(id: String, n: NodeSeq) {notices += (NoticeType.Notice, n, Full(id))}
+  def notice(id: String, n: NodeSeq) {notices += ((NoticeType.Notice, n, Full(id)))}
 
   /**
    * Similar with S.notice
@@ -639,12 +640,12 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   /**
    * Similar with S.warning
    */
-  def warning(n: NodeSeq) {notices += (NoticeType.Warning, n, Empty)}
+  def warning(n: NodeSeq) {notices += ((NoticeType.Warning, n, Empty))}
 
   /**
    * Similar with S.warning
    */
-  def warning(id: String, n: NodeSeq) {notices += (NoticeType.Warning, n, Full(id))}
+  def warning(id: String, n: NodeSeq) {notices += ((NoticeType.Warning, n, Full(id)))}
 
   /**
    * Similar with S.warning
@@ -776,3 +777,6 @@ case class RenderOut(xhtml: Box[NodeSeq], fixedXhtml: Box[NodeSeq], script: Box[
 
 @serializable
 private[http] object Never
+
+}
+}

@@ -1,5 +1,3 @@
-package net.liftweb.util
-
 /*
  * Copyright 2007-2010 WorldWide Conferencing, LLC
  *
@@ -7,16 +5,17 @@ package net.liftweb.util
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an "AS IS" BASIS,
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-import common._
+package net.liftweb {
+package util {
 
 /*
  A wrapper arround a Scala Enumeration Value that has a name, description for each object
@@ -47,11 +46,14 @@ abstract class EnumWithDescription  {
         _values = _values ::: List(value)  // build in order
         value
     }
-    
+
     def Value(name: String): Value = Value(name, name)
 
     def valueOf(name: String) = values find (_.name == name)
 
     def nameDescriptionList = values map(x => (x.name, x.description) )
-    
+
+}
+
+}
 }

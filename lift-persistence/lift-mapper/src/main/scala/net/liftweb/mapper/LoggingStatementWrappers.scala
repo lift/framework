@@ -1,17 +1,24 @@
 /*
- * LoggingStatementWrappers.scala
+ * Copyright 2006-2010 WorldWide Conferencing, LLC
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-package net.liftweb.mapper
+package net.liftweb {
+package mapper {
 
 import _root_.java.lang.reflect.{InvocationHandler,Method,Proxy}
-import _root_.java.io.{InputStream,Reader}
-import _root_.java.net.URL
 import _root_.java.sql.{Array => SqlArray, _}
-import _root_.java.util.Calendar
 
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.common.{Box}
@@ -323,6 +330,7 @@ object DBLog {
       m.invoke(underlying, args : _*)
     } catch {
       case nsme : NoSuchMethodException => Log.fatal("Could not locate method %s for %s : %s".format(method.getName, underlyingClassname, nsme.getMessage))
+      throw nsme
     }
 
     override def toString = executedStatements.reverse.mkString("\n")
@@ -585,4 +593,7 @@ object StatementConstantDescriptions {
         case ResultSet.TYPE_SCROLL_SENSITIVE => "TYPE_SCROLL_SENSITIVE"
         case x => "Invalid ResultSet type constant: " + x
     }
+}
+
+}
 }

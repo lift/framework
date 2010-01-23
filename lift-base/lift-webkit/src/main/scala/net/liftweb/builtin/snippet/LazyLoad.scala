@@ -5,16 +5,18 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an "AS IS" BASIS,
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-package net.liftweb.builtin.snippet
+package net.liftweb {
+package builtin {
+package snippet {
 
 import _root_.scala.xml._
 import _root_.net.liftweb.http._
@@ -22,7 +24,6 @@ import _root_.net.liftweb.actor._
 import _root_.net.liftweb.http.js._
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
-import SHtml._
 import JsCmds._
 import JE._
 import S._
@@ -30,7 +31,7 @@ import Helpers._
 
 /**
  * Buitin snippet for rendering page fragments asynchronously
- * 
+ *
  */
 object LazyLoad extends DispatchSnippet {
 
@@ -42,11 +43,11 @@ object LazyLoad extends DispatchSnippet {
 
   def render(xhtml: NodeSeq): NodeSeq = {
     val id = "lazy_"+ Helpers.nextFuncName;
-    
+
     lazyLoadCount(lazyLoadCount.get + 1);
 
     val session = S.session
-    val attrs = S.attrs   
+    val attrs = S.attrs
     val req = (S.request openOr Req.nil) snapshot
 
     val func = contextFuncBuilder(() => {
@@ -58,21 +59,21 @@ object LazyLoad extends DispatchSnippet {
              comet ! Ready(Replace(id, xhtml))
            }
          }
-        
+
        }
 
     })
 
     AsyncRenderer ! Start(func)
-    
+
 
     <div id={id}></div> ++ (
       if (lazyLoadCount.get == 1) {
         // Add the comet only once per page
-        session.map(_.addAndInitCometActor(new AsyncRenderComet(), 
-                                           Full("AsyncRenderComet"), 
-                                           Full(id), 
-                                           NodeSeq.Empty, Map.empty)) 
+        session.map(_.addAndInitCometActor(new AsyncRenderComet(),
+                                           Full("AsyncRenderComet"),
+                                           Full(id),
+                                           NodeSeq.Empty, Map.empty))
 
         <tail><lift:comet type="AsyncRenderComet" name={id}></lift:comet></tail>
       } else {
@@ -80,30 +81,30 @@ object LazyLoad extends DispatchSnippet {
       }
     )
   }
-  
+
 }
 
 
 private case class Start(snapshot: AFuncHolder)
 private case class Ready(js: JsCmd)
-private case class StopClient
+private case class StopClient()
 
 
 /**
  * The actor that renders the page fragment asynchronously
- * 
+ *
  */
 object AsyncRenderer extends LiftActor {
-  
+
   override def messageHandler = {
     case Start(snapshot) => snapshot("run" :: Nil)
-    case AddAListener(comet) => 
+    case AddAListener(comet) =>
   }
 }
 
 /**
  * The Comet Actor for sending down the computed page fragments
- * 
+ *
  */
 class AsyncRenderComet extends CometActor {
 
@@ -126,4 +127,8 @@ class AsyncRenderComet extends CometActor {
     case Ready(js) => partialUpdate(js)
     case StopClient => unWatch
   }
+}
+
+}
+}
 }

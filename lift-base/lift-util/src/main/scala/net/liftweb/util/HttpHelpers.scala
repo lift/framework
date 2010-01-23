@@ -1,11 +1,12 @@
-package net.liftweb.util
-
 /*
  * Copyright 2006-2010 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,10 +14,12 @@ package net.liftweb.util
  * limitations under the License.
  */
 
+package net.liftweb {
+package util {
+
 import _root_.java.net.{URLDecoder, URLEncoder}
-import _root_.scala.collection.mutable.{HashSet, ListBuffer}
-import _root_.scala.reflect.Manifest
-import _root_.scala.xml.{NodeSeq, Elem, Node, Text, Group, UnprefixedAttribute, Null, Unparsed, MetaData, PrefixedAttribute}
+import _root_.scala.collection.mutable.ListBuffer
+import _root_.scala.xml._
 import _root_.scala.collection.{Map}
 import _root_.scala.collection.mutable.HashMap
 import _root_.java.util.concurrent.atomic.AtomicLong
@@ -26,9 +29,9 @@ object HttpHelpers extends ListHelpers with StringHelpers
 
 trait HttpHelpers { self: ListHelpers with StringHelpers  =>
 
-  /** 
+  /**
    * The list of known suffixes used to split the URI into path parts and suffixes.
-   */ 
+   */
   val knownSuffixes: Set[String] = Set("json","rss","atom","do","3dm",
     "3dmf","a","aab","aam","aas","abc","acgi","afl","ai","aif","aifc","aiff",
     "aim","aip","ani","aos","aps","arc","arj","art","asf","asm","asp","asx","au","avi","avs",
@@ -304,4 +307,7 @@ object CheckNodeSeq {
       Some(ns)
     case _ => None
   }
+}
+
+}
 }

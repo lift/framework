@@ -1,5 +1,3 @@
-package net.liftweb.util
-
 /*
  * Copyright 2007-2010 WorldWide Conferencing, LLC
  *
@@ -7,18 +5,20 @@ package net.liftweb.util
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an "AS IS" BASIS,
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+package net.liftweb {
+package util {
 
 import _root_.java.util.Locale
 import _root_.java.text.{NumberFormat, DecimalFormat}
-import common._
 
 trait TwoFractionDigits {
     val numberOfFractionDigits = 2
@@ -84,7 +84,7 @@ abstract class CurrencyZone {
     abstract class AbstractCurrency(val designation: String) extends Ordered[Currency] {
 
         val _locale: Locale = locale
-        val amount: BigDecimal
+        def amount: BigDecimal
         def floatValue = amount.floatValue
         def doubleValue = amount.doubleValue
         val currencySymbol: String
@@ -104,7 +104,7 @@ abstract class CurrencyZone {
         make(new BigDecimal(this.amount.bigDecimal.divide(that.amount.bigDecimal, scale, _root_.java.math.BigDecimal.ROUND_HALF_UP)) )
         def /(that: Int): Currency = this / make(that)
 
-        def compare(that: Currency) = this.amount compareTo that.amount
+        def compare(that: Currency) = this.amount compare that.amount
 
         override def equals(that: Any) = that match {
             case that: AbstractCurrency => this.designation+this.format("", scale) == that.designation+that.format("", scale)
@@ -147,4 +147,7 @@ abstract class CurrencyZone {
 
     }
 
+}
+
+}
 }
