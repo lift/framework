@@ -70,6 +70,8 @@ private[json] object Meta {
 
     // FIXME cleanup duplication
     def toArg(name: String, fieldType: Class[_], genericType: Type): Arg = {
+//      def mkContainer(m: Mapping, c: Mapping => Mapping) = c(m)
+
       def fieldMapping(fieldType: Class[_], genericType: Type): Mapping = 
         if (primitive_?(fieldType)) Value(fieldType)
         else if (fieldType == classOf[List[_]]) 

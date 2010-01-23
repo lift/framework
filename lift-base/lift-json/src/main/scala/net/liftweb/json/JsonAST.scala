@@ -243,8 +243,18 @@ object JsonAST {
      * JObject(JField("name", JString("joe")) :: Nil).extract[Foo] == Person("joe")
      * </pre>
      */
-    def extract[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]) = 
+    def extract[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): A = 
       Extraction.extract(this)(formats, mf)
+
+    /** Extract a case class from a JSON.
+     * <p>
+     * Example:<pre>
+     * case class Person(name: String)
+     * JObject(JField("name", JString("joe")) :: Nil).extractOpt[Foo] == Some(Person("joe"))
+     * </pre>
+     */
+    def extractOpt[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): Option[A] = 
+      Extraction.extractOpt(this)(formats, mf)
   }
 
   case object JNothing extends JValue {

@@ -31,6 +31,7 @@ object Extraction {
 
   /** Extract a case class from JSON.
    * @see net.liftweb.json.JsonAST.JValue#extract
+   * @throws MappingException is thrown if extraction fails
    */
   def extract[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): A = 
     try {
@@ -39,6 +40,12 @@ object Extraction {
       case e: MappingException => throw e
       case e: Exception => throw new MappingException("unknown error", e)
     }
+
+  /** Extract a case class from JSON.
+   * @see net.liftweb.json.JsonAST.JValue#extract
+   */
+  def extractOpt[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): Option[A] = 
+    try { Some(extract(json)(formats, mf)) } catch { case _: MappingException => None }
 
   /** Decompose a case class into JSON.
    * <p>
@@ -113,7 +120,7 @@ object Extraction {
       case Value(targetType) => convert(root, targetType, formats)
       case Constructor(targetType, args) => 
         newInstance(targetType, args.map(a => build(root \ a.path, a)), root)
-      case Arg(path, m) => build(fieldValue(root), m)
+      case Arg(_, m) => build(fieldValue(root), m)
       case Lst(m) => root match {
         case JArray(arr) => arr.map(build(_, m))
         case JNothing | JNull => Nil
