@@ -35,15 +35,15 @@ private[json] object Meta {
    *
    *  will produce following Mapping:
    *
-   *  Root("xx.Person", List(
-   *    Value("name", classOf[String]),
-   *    Constructor("address", "xx.Address", List(Value("street"), Value("city"))),
-   *    Lst(Constructor("children", "xx.Child", List(Value("name"), Value("age"))))))
+   *  Constructor("xx.Person", List(
+   *    Arg("name", Value(classOf[String])),
+   *    Arg("address", Constructor("xx.Address", List(Value("street"), Value("city")))),
+   *    Arg("children", Lst(Constructor("xx.Child", List(Value("name"), Value("age")))))))
    */
   sealed abstract class Mapping
-  case class Root(targetType: Class[_], args: List[Mapping]) extends Mapping
-  case class Value(path: String, targetType: Class[_]) extends Mapping
-  case class Constructor(path: String, targetType: Class[_], args: List[Mapping]) extends Mapping
+  case class Arg(path: String, mapping: Mapping) extends Mapping
+  case class Value(targetType: Class[_]) extends Mapping
+  case class Constructor(targetType: Class[_], args: List[Arg]) extends Mapping
   case class Lst(mapping: Mapping) extends Mapping
   case class Optional(mapping: Mapping) extends Mapping
 
@@ -55,7 +55,7 @@ private[json] object Meta {
     import Reflection._
 
     def constructorArgs(clazz: Class[_]) = orderedConstructorArgs(clazz).map { f =>
-      fieldMapping(unmangleName(f), f.getType, f.getGenericType)
+      toArg(unmangleName(f), f.getType, f.getGenericType)
     }.toList
 
     def orderedConstructorArgs(clazz: Class[_]): Iterable[Field] = {
@@ -69,21 +69,25 @@ private[json] object Meta {
     }
 
     // FIXME cleanup duplication
-    def fieldMapping(name: String, fieldType: Class[_], genericType: Type): Mapping = 
-      if (primitive_?(fieldType)) Value(name, fieldType)
-      else if (fieldType == classOf[List[_]]) 
-        if (container_?(genericType)) {
-          val types = containerTypes(genericType)
-          Lst(fieldMapping(name, types._1, types._2))
-        } else Lst(fieldMapping(name, typeParameter(genericType), null))
-      else if (classOf[Option[_]].isAssignableFrom(fieldType))
-        if (container_?(genericType)) {
-          val types = containerTypes(genericType)
-          Optional(fieldMapping(name, types._1, types._2))
-        } else Optional(fieldMapping(name, typeParameter(genericType), null))
-      else Constructor(name, fieldType, constructorArgs(fieldType))
+    def toArg(name: String, fieldType: Class[_], genericType: Type): Arg = {
+      def fieldMapping(fieldType: Class[_], genericType: Type): Mapping = 
+        if (primitive_?(fieldType)) Value(fieldType)
+        else if (fieldType == classOf[List[_]]) 
+          if (container_?(genericType)) {
+            val types = containerTypes(genericType)
+            Lst(fieldMapping(types._1, types._2))
+          } else Lst(fieldMapping(typeParameter(genericType), null))
+        else if (classOf[Option[_]].isAssignableFrom(fieldType))
+          if (container_?(genericType)) {
+            val types = containerTypes(genericType)
+            Optional(fieldMapping(types._1, types._2))
+          } else Optional(fieldMapping(typeParameter(genericType), null))
+        else Constructor(fieldType, constructorArgs(fieldType))
+     
+        Arg(name, fieldMapping(fieldType, genericType))
+    }
 
-    mappings.memoize(clazz, c => Root(c, constructorArgs(c)))
+    mappings.memoize(clazz, c => Constructor(c, constructorArgs(c)))
   }
 
   private[json] def unmangleName(f: Field) = 

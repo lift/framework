@@ -110,18 +110,15 @@ object Extraction {
     def newPrimitive(elementType: Class[_], elem: JValue) = convert(elem, elementType, formats)
 
     def build(root: JValue, mapping: Mapping): Any = mapping match {
-      case Value(path, targetType) => convert(fieldValue(root, path), targetType, formats)
-      case Root(targetType, args) => newInstance(targetType, args.map(build(root, _)), root)
-      case Constructor(path, targetType, args) => 
-        val newRoot = root \ path
-        newInstance(targetType, args.map(build(newRoot, _)), newRoot)
-      case Lst(Constructor(path, targetType, args)) => 
-        val arr = asArray(safeFieldValue(root, path).getOrElse(JArray(Nil)), path)
-        arr.arr.map(elem => newInstance(targetType, args.map(build(elem, _)), elem))
-      case Lst(Value(path, elementType)) =>
-        val arr = asArray(fieldValue(root, path), path)
-        arr.arr.map(elem => newPrimitive(elementType, elem))
-      case Lst(m) => List(build(root, m))
+      case Value(targetType) => convert(root, targetType, formats)
+      case Constructor(targetType, args) => 
+        newInstance(targetType, args.map(a => build(root \ a.path, a)), root)
+      case Arg(path, m) => build(fieldValue(root), m)
+      case Lst(m) => root match {
+        case JArray(arr) => arr.map(build(_, m))
+        case JNothing | JNull => Nil
+        case x => fail("Expected array but got " + x)
+      }
       case Optional(m) =>
         // FIXME Remove this try-catch.
         try { 
@@ -134,19 +131,10 @@ object Extraction {
         }
     }
 
-    def asArray(json: JValue, path: String) = json match {
-      case a: JArray => a
-      case _ => fail("Expected JArray but got " + json + "', path='" + path + "'")
-    }
-
-
-    def safeFieldValue(json: JValue, path: String) = (json \ path) match {
-      case JField(_, value) => Some(value)
-      case x => None
-    }
-
-    def fieldValue(json: JValue, path: String) = safeFieldValue(json, path).getOrElse {
-      fail("Expected JField but got " + (json \ path) + ", json='" + json + "', path='" + path + "'")
+    def fieldValue(json: JValue): JValue = json match {
+      case JField(_, value) => value
+      case JNothing => JNothing
+      case x => fail("Expected JField but got " + x)
     }
 
     build(json, mapping).asInstanceOf[A]
