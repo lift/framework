@@ -68,25 +68,20 @@ private[json] object Meta {
       }
     }
 
-    // FIXME cleanup duplication
     def toArg(name: String, fieldType: Class[_], genericType: Type): Arg = {
-//      def mkContainer(m: Mapping, c: Mapping => Mapping) = c(m)
-
-      def fieldMapping(fieldType: Class[_], genericType: Type): Mapping = 
-        if (primitive_?(fieldType)) Value(fieldType)
-        else if (fieldType == classOf[List[_]]) 
-          if (container_?(genericType)) {
-            val types = containerTypes(genericType)
-            Lst(fieldMapping(types._1, types._2))
-          } else Lst(fieldMapping(typeParameter(genericType), null))
-        else if (classOf[Option[_]].isAssignableFrom(fieldType))
-          if (container_?(genericType)) {
-            val types = containerTypes(genericType)
-            Optional(fieldMapping(types._1, types._2))
-          } else Optional(fieldMapping(typeParameter(genericType), null))
-        else Constructor(fieldType, constructorArgs(fieldType))
+      def mkContainer(genType: Type, factory: Mapping => Mapping) = 
+        if (container_?(genType)) {
+          val types = containerTypes(genType)
+          factory(fieldMapping(types._1, types._2))
+        } else factory(fieldMapping(typeParameter(genType), null))
+        
+      def fieldMapping(fType: Class[_], genType: Type): Mapping = 
+        if (primitive_?(fType)) Value(fType)
+        else if (classOf[List[_]].isAssignableFrom(fType)) mkContainer(genType, Lst.apply _)
+        else if (classOf[Option[_]].isAssignableFrom(fType)) mkContainer(genType, Optional.apply _)
+        else Constructor(fType, constructorArgs(fType))
      
-        Arg(name, fieldMapping(fieldType, genericType))
+      Arg(name, fieldMapping(fieldType, genericType))
     }
 
     mappings.memoize(clazz, c => Constructor(c, constructorArgs(c)))
