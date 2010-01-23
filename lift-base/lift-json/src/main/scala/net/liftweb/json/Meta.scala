@@ -35,14 +35,15 @@ private[json] object Meta {
    *
    *  will produce following Mapping:
    *
-   *  Constructor(None, "xx.Person", List(
+   *  Root("xx.Person", List(
    *    Value("name", classOf[String]),
-   *    Constructor(Some("address"), "xx.Address", List(Value("street"), Value("city"))),
+   *    Constructor("address", "xx.Address", List(Value("street"), Value("city"))),
    *    Lst(Constructor("children", "xx.Child", List(Value("name"), Value("age"))))))
    */
   sealed abstract class Mapping
+  case class Root(targetType: Class[_], args: List[Mapping]) extends Mapping
   case class Value(path: String, targetType: Class[_]) extends Mapping
-  case class Constructor(path: Option[String], targetType: Class[_], args: List[Mapping]) extends Mapping
+  case class Constructor(path: String, targetType: Class[_], args: List[Mapping]) extends Mapping
   case class Lst(mapping: Mapping) extends Mapping
   case class Optional(mapping: Mapping) extends Mapping
 
@@ -52,9 +53,6 @@ private[json] object Meta {
 
   private[json] def mappingOf(clazz: Class[_]) = {
     import Reflection._
-
-    def makeMapping(path: Option[String], clazz: Class[_]) = 
-      Constructor(path, clazz, constructorArgs(clazz))
 
     def constructorArgs(clazz: Class[_]) = orderedConstructorArgs(clazz).map { f =>
       fieldMapping(unmangleName(f), f.getType, f.getGenericType)
@@ -83,9 +81,9 @@ private[json] object Meta {
           val types = containerTypes(genericType)
           Optional(fieldMapping(name, types._1, types._2))
         } else Optional(fieldMapping(name, typeParameter(genericType), null))
-      else makeMapping(Some(name), fieldType)
+      else Constructor(name, fieldType, constructorArgs(fieldType))
 
-    mappings.memoize(clazz, makeMapping(None, _))
+    mappings.memoize(clazz, c => Root(c, constructorArgs(c)))
   }
 
   private[json] def unmangleName(f: Field) = 

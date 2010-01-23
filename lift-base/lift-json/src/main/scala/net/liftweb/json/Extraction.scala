@@ -111,13 +111,11 @@ object Extraction {
 
     def build(root: JValue, mapping: Mapping): Any = mapping match {
       case Value(path, targetType) => convert(fieldValue(root, path), targetType, formats)
+      case Root(targetType, args) => newInstance(targetType, args.map(build(root, _)), root)
       case Constructor(path, targetType, args) => 
-        val newRoot = path match {
-          case Some(p) => root \ p
-          case None => root
-        }
+        val newRoot = root \ path
         newInstance(targetType, args.map(build(newRoot, _)), newRoot)
-      case Lst(Constructor(Some(path), targetType, args)) => 
+      case Lst(Constructor(path, targetType, args)) => 
         val arr = asArray(safeFieldValue(root, path).getOrElse(JArray(Nil)), path)
         arr.arr.map(elem => newInstance(targetType, args.map(build(elem, _)), elem))
       case Lst(Value(path, elementType)) =>
