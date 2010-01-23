@@ -70,13 +70,14 @@ object ExtractionExamples extends Specification {
     json.extract[OChild] mustEqual OChild(None, 5, Some(Parent("Marilyn")), None)
   }
 
-  "Optional List extraction example" in {
-    parse("""{ "foo": 5 }""").extract[OList] mustEqual OList(None)
-    parse("""{ "elems": [1,2,3] }""").extract[OList] mustEqual OList(Some(List(1,2,3)))
-  }
-
   "Missing JSON array can be extracted as an empty List" in {
     parse(missingChildren).extract[Person] mustEqual Person("joe", Address("Bulevard", "Helsinki"), Nil)
+  }
+
+  "Multidimensional array extraction example" in {
+    parse(multiDimensionalArrays).extract[MultiDim] mustEqual MultiDim(
+      List(List(List(1, 2), List(3)), List(List(4), List(5, 6))), 
+      List(List(Name("joe"), Name("mary")), List(Name("mazy"))))
   }
 
   /* Does not work yet.
@@ -138,6 +139,14 @@ object ExtractionExamples extends Specification {
 }
 """
 
+  val multiDimensionalArrays =
+"""
+{
+  "ints": [[[1, 2], [3]], [[4], [5, 6]]],
+  "names": [[{"name": "joe"}, {"name": "mary"}], [[{"name": "mazy"}]]]
+}
+"""
+
   def date(s: String) = DefaultFormats.dateFormat.parse(s).get
 }
 
@@ -154,9 +163,8 @@ case class Primitives(i: Int, l: Long, d: Double, f: Float, s: String, sym: Symb
 case class OChild(name: Option[String], age: Int, mother: Option[Parent], father: Option[Parent])
 case class Parent(name: String)
 
-case class OList(elems: Option[List[Int]])
-
 case class Event(name: String, timestamp: Date)
 
+case class MultiDim(ints: List[List[List[Int]]], names: List[List[Name]])
 }
 }

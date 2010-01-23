@@ -32,6 +32,7 @@ object Extraction {
 
   /** Extract a case class from JSON.
    * @see net.liftweb.json.JsonAST.JValue#extract
+   * @throws MappingException is thrown if extraction fails
    */
   def extract[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): A = 
     try {
@@ -40,6 +41,12 @@ object Extraction {
       case e: MappingException => throw e
       case e: Exception => throw new MappingException("unknown error", e)
     }
+
+  /** Extract a case class from JSON.
+   * @see net.liftweb.json.JsonAST.JValue#extract
+   */
+  def extractOpt[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): Option[A] = 
+    try { Some(extract(json)(formats, mf)) } catch { case _: MappingException => None }
 
   /** Decompose a case class into JSON.
    * <p>
@@ -67,7 +74,7 @@ object Extraction {
         case x: List[_] => JArray(x map decompose)
         case x: Option[_] => decompose(x getOrElse JNothing)
         case x => 
-          x.getClass.getDeclaredFields.filter(!static_?(_)).toList.map { f => 
+          x.getClass.getDeclaredFields.toList.remove(static_?).map { f => 
             f.setAccessible(true)
             JField(unmangleName(f), decompose(f get x))
           } match {
@@ -92,72 +99,60 @@ object Extraction {
                  "\nconstructor=" + constructor)
         }
 
-      def instantiateUsingTypeHint(typeHint: String, fields: List[JField]) = {
+      def mkWithTypeHint(typeHint: String, fields: List[JField]) = {
         val obj = JObject(fields)
         val deserializer = formats.typeHints.deserialize
         if (!deserializer.isDefinedAt(typeHint, obj)) {
           val concreteClass = formats.typeHints.classFor(typeHint) getOrElse fail("Do not know how to deserialize '" + typeHint + "'")
-          build(obj, mappingOf(concreteClass), Nil)(0)
+          build(obj, mappingOf(concreteClass))
         } else deserializer(typeHint, obj)
       }
 
       json match {
-        case JObject(JField("jsonClass", JString(t)) :: xs) => instantiateUsingTypeHint(t, xs)
-        case JField(_, JObject(JField("jsonClass", JString(t)) :: xs)) => instantiateUsingTypeHint(t, xs)
+        case JObject(JField("jsonClass", JString(t)) :: xs) => mkWithTypeHint(t, xs)
+        case JField(_, JObject(JField("jsonClass", JString(t)) :: xs)) => mkWithTypeHint(t, xs)
         case _ => instantiate(primaryConstructorOf(targetType), args)
       }
     }
 
     def newPrimitive(elementType: Class[_], elem: JValue) = convert(elem, elementType, formats)
 
-    def build(root: JValue, mapping: Mapping, argStack: List[Any]): List[Any] = mapping match {
-      case Value(path, targetType) => convert(fieldValue(root, path), targetType, formats) :: argStack
-      case Constructor(path, targetType, args) => 
-        val newRoot = path match {
-          case Some(p) => root \ p
-          case None => root
-        }
-        newInstance(targetType, args.flatMap(build(newRoot, _, argStack)), newRoot) :: Nil
-      case ListConstructor(path, targetType, args) => 
-        val arr = asArray(safeFieldValue(root, path).getOrElse(JArray(Nil)), path)
-        arr.arr.map(elem => newInstance(targetType, args.flatMap(build(elem, _, argStack)), elem)) :: argStack
-      case ListOfPrimitives(path, elementType) =>
-        val arr = asArray(fieldValue(root, path), path)
-        arr.arr.map(elem => newPrimitive(elementType, elem)) :: argStack
+    def build(root: JValue, mapping: Mapping): Any = mapping match {
+      case Value(targetType) => convert(root, targetType, formats)
+      case Constructor(targetType, args) => 
+        newInstance(targetType, args.map(a => build(root \ a.path, a)), root)
+      case Arg(_, m) => build(fieldValue(root), m)
+      case Lst(m) => root match {
+        case JArray(arr) => arr.map(build(_, m))
+        case JNothing | JNull => Nil
+        case x => fail("Expected array but got " + x)
+      }
       case Optional(m) =>
         // FIXME Remove this try-catch.
         try { 
-          val opt = build(root, m, argStack) 
-          (opt(0) match {
+          build(root, m) match {
             case null => None
             case x => Some(x)
-          }) :: argStack
+          }
         } catch {
-          case e: MappingException => None :: argStack
+          case e: MappingException => None
         }
     }
 
-    def asArray(json: JValue, path: String) = json match {
-      case a: JArray => a
-      case _ => fail("Expected JArray but got " + json + "', path='" + path + "'")
+    def fieldValue(json: JValue): JValue = json match {
+      case JField(_, value) => value
+      case JNothing => JNothing
+      case x => fail("Expected JField but got " + x)
     }
 
-
-    def safeFieldValue(json: JValue, path: String) = (json \ path) match {
-      case JField(_, value) => Some(value)
-      case x => None
-    }
-
-    def fieldValue(json: JValue, path: String) = safeFieldValue(json, path).getOrElse {
-      fail("Expected JField but got " + (json \ path) + ", json='" + json + "', path='" + path + "'")
-    }
-
-    build(json, mapping, Nil).head.asInstanceOf[A]
+    build(json, mapping).asInstanceOf[A]
   }
 
   private def convert(value: JValue, targetType: Class[_], formats: Formats): Any = value match {
     case JInt(x) if (targetType == classOf[Int]) => x.intValue
     case JInt(x) if (targetType == classOf[Long]) => x.longValue
+    case JInt(x) if (targetType == classOf[Double]) => x.doubleValue
+    case JInt(x) if (targetType == classOf[Float]) => x.floatValue
     case JInt(x) if (targetType == classOf[Short]) => x.shortValue
     case JInt(x) if (targetType == classOf[Byte]) => x.byteValue
     case JInt(x) if (targetType == classOf[String]) => x.toString

@@ -60,6 +60,14 @@ object SerializationExamples extends Specification {
     val ser = swrite(primitives)
     read[Primitives](ser) mustEqual primitives
   }
+
+  "Multidimensional list example" in {
+    val ints = Ints(List(List(1, 2), List(3), List(4, 5)))
+    val ser = swrite(ints)
+    read[Ints](ser) mustEqual ints
+  }
+
+  case class Ints(x: List[List[Int]])
 }
 
 object ShortTypeHintExamples extends TypeHintExamples {
