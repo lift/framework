@@ -114,13 +114,13 @@ private[json] object Meta {
   object Reflection {
     import java.lang.reflect._
 
-    val primitives = Set[Class[_]](
+    val primitives = Map[Class[_], Unit]() ++ (List[Class[_]](
       classOf[String], classOf[Int], classOf[Long], classOf[Double], 
       classOf[Float], classOf[Byte], classOf[BigInt], classOf[Boolean], 
       classOf[Short], classOf[java.lang.Integer], classOf[java.lang.Long], 
       classOf[java.lang.Double], classOf[java.lang.Float], 
       classOf[java.lang.Byte], classOf[java.lang.Boolean], 
-      classOf[java.lang.Short], classOf[Date], classOf[Symbol])
+      classOf[java.lang.Short], classOf[Date], classOf[Symbol]).map((_, ())))
 
     def safePrimaryConstructorOf[A](cl: Class[A]): Option[JConstructor[A]] = 
       cl.getDeclaredConstructors.toList.asInstanceOf[List[JConstructor[A]]] match {

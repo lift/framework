@@ -32,7 +32,7 @@ import JsonParser.parse
  * @see net.liftweb.json.TypeHints
  */
 object Serialization {
-  import java.io.{StringWriter, Writer}
+  import java.io.{Reader, StringWriter, Writer}
 
   /** Serialize to String.
    */
@@ -48,6 +48,11 @@ object Serialization {
    */
   def read[A](json: String)(implicit formats: Formats, mf: Manifest[A]): A =
     parse(json).extract(formats, mf)
+
+  /** Deserialize from a Reader.
+   */
+  def read[A, R <: Reader](in: Reader)(implicit formats: Formats, mf: Manifest[A]): A =
+    parse(in).extract(formats, mf)
 
   /** Create Serialization formats with given type hints.
    * <p>
