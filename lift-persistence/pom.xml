@@ -70,12 +70,12 @@
     </dependency>
     <dependency>
       <groupId>org.scala-tools.testing</groupId>
-      <artifactId>specs</artifactId>
+      <artifactId>specs_2.8.0.Beta1-RC8</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.scala-tools.testing</groupId>
-      <artifactId>scalacheck</artifactId>
+      <artifactId>scalacheck_2.8.0.Beta1-RC5</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
