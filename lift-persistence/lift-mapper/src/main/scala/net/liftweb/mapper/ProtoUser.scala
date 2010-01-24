@@ -17,11 +17,10 @@
 package net.liftweb {
 package mapper {
 
-import _root_.net.liftweb.mapper._
 import _root_.net.liftweb.http._
 import js._
 import JsCmds._
-import _root_.scala.xml.{NodeSeq, Node, Group, Text, Elem}
+import _root_.scala.xml.{NodeSeq, Node, Text, Elem}
 import _root_.scala.xml.transform._
 import _root_.net.liftweb.sitemap._
 import _root_.net.liftweb.sitemap.Loc._
@@ -584,8 +583,8 @@ def menus: List[Menu] = sitemap // issue 182
     }
 
     bind("user", changePasswordXhtml,
-         "old_pwd" -> SHtml.password("", oldPassword = _),
-         "new_pwd" -> SHtml.password_*("", LFuncHolder(newPassword = _)),
+         "old_pwd" -> SHtml.password("", s => oldPassword = s),
+         "new_pwd" -> SHtml.password_*("", LFuncHolder(s => newPassword = s)),
          "submit" -> SHtml.submit(S.??("change"), testAndSet _))
   }
 
