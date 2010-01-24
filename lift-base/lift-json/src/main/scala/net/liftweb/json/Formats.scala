@@ -99,6 +99,7 @@ case class FullTypeHints(hints: List[Class[_]]) extends TypeHints {
  */
 object DefaultFormats extends DefaultFormats {
   val losslessDate = new ThreadLocal(new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
+  val UTC = TimeZone.getTimeZone("UTC")
 }
 
 trait DefaultFormats extends Formats {
@@ -115,7 +116,7 @@ trait DefaultFormats extends Formats {
 
     private def formatter = {
       val f = dateFormatter
-      f.setTimeZone(TimeZone.getTimeZone("UTC"))
+      f.setTimeZone(DefaultFormats.UTC)
       f
     }
   }

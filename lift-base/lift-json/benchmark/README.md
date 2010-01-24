@@ -43,16 +43,16 @@ Facts:
 Serializing 20 000 instances (No type hints):
 
     Java serialization (full)     1889 ms
-    lift-json (full)              1573 ms
+    lift-json (full)              1542 ms
     Java serialization (ser)       373 ms
-    lift-json (ser)                850 ms
+    lift-json (ser)                833 ms
     Java serialization (deser)    1396 ms
-    lift-json (deser)	           645 ms
+    lift-json (deser)	           615 ms
 
 Serializing 20 000 instances (Using type hints, both short and full gives similar results):
 
     Java serialization (full)     1912 ms
-    lift-json (full)              2378 ms
+    lift-json (full)              2268 ms
 
 Summary:
 
