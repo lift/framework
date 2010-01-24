@@ -91,7 +91,7 @@ object PaypalTransactionStatus extends Enumeration {
 
   def find(name: String): Box[Value] = {
     val n = name.trim.toLowerCase
-    this.elements.filter(v => v.toString.toLowerCase == n).toList.firstOption
+    this.iterator.filter(v => v.toString.toLowerCase == n).toList.firstOption
   }
 }
 

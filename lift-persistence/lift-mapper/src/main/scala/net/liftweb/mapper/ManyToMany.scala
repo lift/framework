@@ -20,6 +20,8 @@ package mapper {
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
 
+/* FIXME: 280
+
 /**
  * Add this trait to a Mapper to add support for many-to-many relationships
  * @author nafg
@@ -31,7 +33,7 @@ trait ManyToMany extends BaseKeyedMapper {
   type T = KeyedMapperType
 
   private var manyToManyFields: List[MappedManyToMany[_,_,_]] = Nil
-  
+
   /**
    * An override for save to propagate the save to all children
    * of this parent.
@@ -42,7 +44,7 @@ trait ManyToMany extends BaseKeyedMapper {
     super.save &&
       manyToManyFields.forall(_.save)
   }
-  
+
   /**
    * An override for delete_! to propogate the deletion to all children
    * of this parent.
@@ -50,11 +52,11 @@ trait ManyToMany extends BaseKeyedMapper {
    * If they are all successful returns true.
    */
   abstract override def delete_! = {
-    super.delete_! && 
+    super.delete_! &&
       manyToManyFields.forall( _.delete_!)
   }
 
-  
+
   /**
    * This is the base class to use for fields that track many-to-many relationships.
    * @param joinMeta The singleton of the join table
@@ -71,26 +73,26 @@ trait ManyToMany extends BaseKeyedMapper {
     val otherField: MappedForeignKey[K2, O, T2],
     val otherMeta: MetaMapper[T2],
     val qp: QueryParam[O]*) extends scala.collection.mutable.Buffer[T2] {
-    
+
     def field(join: O): MappedForeignKey[K,O, _ <: KeyedMapper[K,T]] =
       thisField.actualField(join).asInstanceOf[MappedForeignKey[K,O, _<:KeyedMapper[K,T]]]
-    
+
     protected def children: List[T2] = {
       joins.flatMap {
         otherField.actualField(_).asInstanceOf[MappedForeignKey[K2,O,T2]].obj
       }
     }
-    
+
     protected var _joins: List[O] = _
     def joins = _joins // read only to the public
     protected var removedJoins: List[O] = Nil
     refresh
     manyToManyFields = this :: manyToManyFields
-    
+
     protected def isJoinForChild(e: T2)(join: O) = otherField.actualField(join).is == e.primaryKeyField.is
     protected def joinForChild(e: T2): Option[O] =
       joins.find(isJoinForChild(e))
-    
+
     protected def own(e: T2) = {
       joinForChild(e) match {
         case None =>
@@ -147,7 +149,7 @@ trait ManyToMany extends BaseKeyedMapper {
       val n2 = joins.findIndexOf(isJoinForChild(children(n)))
       val before = joins.take(n2)
       val after = joins.drop(n2)
-      
+
       _joins = before ++ ownedJoins ++ after
     }
 
@@ -176,14 +178,14 @@ trait ManyToMany extends BaseKeyedMapper {
       children foreach unown
       _joins = Nil
     }
-    
+
     def refresh = {
       val by = new Cmp[O, TheKeyType](thisField, OprEnum.Eql, Full(primaryKeyField.is), Empty, Empty)
 
       _joins = joinMeta.findAll( (by :: qp.toList): _*)
       all
     }
-    
+
     def save = {
       _joins = joins.filter { join =>
           field(join).is ==
@@ -198,13 +200,14 @@ trait ManyToMany extends BaseKeyedMapper {
           joins.forall(_.save)
       )
     }
-    
+
     def delete_! = {
       removedJoins.forall(_.delete_!) &
         joins.forall(_.delete_!)
     }
   }
 }
+*/
 
 }
 }

@@ -263,6 +263,9 @@ trait MappedForeignKey[KeyType, MyOwner <: Mapper[MyOwner], Other <: KeyedMapper
     _obj
   }
 
+  private[mapper] def _primeObj(obj: Box[Any]) =
+    primeObj(obj.asInstanceOf[Box[Other]])
+
   /**
    * Prime the reference of this FK reference
    */

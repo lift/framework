@@ -812,7 +812,13 @@ object LiftRules extends Factory with FormVendor {
     case (ns: Group, headers, cookies, req) => cvt(ns, headers, cookies, req, 200)
     case (ns: Node, headers, cookies, req) => cvt(ns, headers, cookies, req, 200)
     case (ns: NodeSeq, headers, cookies, req) => cvt(Group(ns), headers, cookies, req, 200)
-    case ((ns: NodeSeq, code: Int), headers, cookies, req) => cvt(Group(ns), headers, cookies, req, code)
+    // FIXME: 280 the follow case selector causes lot of ripple
+    // 1. scala-compiler throws this exception (instead of compilation error)
+    // scala.tools.nsc.symtab.Types$TypeError: too many arguments for method body%5: (val headers: List[(java.lang.String, java.lang.String)],val cookies: List[net.liftweb.http.provider.HTTPCookie],val req: net.liftweb.http.Req)net.liftweb.http.LiftResponse
+    // 2. maven-scala-plugin silently fails with an invocation target exception
+
+    // case ((ns: NodeSeq, code: Int), headers, cookies, req) => cvt(Group(ns), headers, cookies, req, code)
+
     case (SafeNodeSeq(n), headers, cookies, req) => cvt(Group(n), headers, cookies, req, 200)
 
     case (Full(o), headers, cookies, req) => convertResponse((o, headers, cookies, req))

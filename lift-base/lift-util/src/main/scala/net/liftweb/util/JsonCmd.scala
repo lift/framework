@@ -69,7 +69,7 @@ object FieldError {
 }
 
 trait FieldContainer {
-  def allFields: Seq[BaseField]
+  def allFields: scala.collection.Seq[BaseField]
 }
 
 trait BaseField extends FieldIdentifier with SettableValueHolder with FieldContainer {

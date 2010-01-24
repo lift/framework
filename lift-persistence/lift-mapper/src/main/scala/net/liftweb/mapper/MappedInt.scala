@@ -33,7 +33,7 @@ import js._
 abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, val enum: ENUM) extends MappedField[ENUM#Value, T] {
   private var data: ENUM#Value = defaultValue
   private var orgData: ENUM#Value = defaultValue
-  def defaultValue: ENUM#Value = enum.elements.next
+  def defaultValue: ENUM#Value = enum.values.toList.head
   def dbFieldClass = classOf[ENUM#Value]
 
   /**
@@ -132,7 +132,7 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
     * Build a list for the select.  Return a tuple of (String, String) where the first string
     * is the id.string of the Value and the second string is the Text name of the Value.
     */
-  def buildDisplayList: List[(Int, String)] = enum.elements.toList.map(a => (a.id, a.toString))
+  def buildDisplayList: List[(Int, String)] = enum.values.toList.map(a => (a.id, a.toString))
 
   /**
    * Create an input field for the item

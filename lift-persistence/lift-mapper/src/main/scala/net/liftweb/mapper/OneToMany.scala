@@ -17,6 +17,8 @@
 package net.liftweb {
 package mapper {
 
+/* FIXME: 280
+
 /**
  * Add this trait to a Mapper for managed one-to-many support
  * @author nafg
@@ -326,6 +328,7 @@ trait LongMappedForeignMapper[T<:Mapper[T],O<:KeyedMapper[Long,O]]
   }*/
 
 }
+*/
 
 }
 }

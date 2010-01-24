@@ -163,13 +163,13 @@ object StringHelpersSpec extends Specification with StringHelpers {
   }
   "The SuperString class splitAt method" should {
     "split a string according to a separator and return a List containing a pair with the 2 parts" in {
-      "hello".splitAt("ll") must_== List(("he", "o"))
+      stringToSuper("hello").splitAt("ll") must_== List(("he", "o"))
     }
     "split a string according to a separator and return an empty List if no separator is found" in {
-      "hello".splitAt("tt") must_== Nil
+      stringToSuper("hello").splitAt("tt") must_== Nil
     }
     "split a string according to a separator and return an empty List if the string is null" in {
-      (null: String).splitAt("tt") must_== Nil
+      stringToSuper(null: String).splitAt("tt") must_== Nil
     }
   }
   "The SuperString class encJs method" should {

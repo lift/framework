@@ -95,8 +95,8 @@ trait JsExp extends SpecialNode with HtmlFixer with JxBase with ToJsCmd {
 
   // def label: String = "#JS"
 
-  override def toString(sb: StringBuilder) = {
-    (new Text(toJsCmd)).toString(sb)
+  override def buildString(sb: StringBuilder) = {
+    (new Text(toJsCmd)).buildString(sb)
   }
 
   def appendToParent(parentName: String): JsCmd = {
