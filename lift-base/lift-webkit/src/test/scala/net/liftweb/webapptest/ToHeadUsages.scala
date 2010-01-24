@@ -30,6 +30,7 @@ object ToHeadUsages extends Specification {
   JettyTestServer.start()
 
   "lift <head> merger" should {
+  /* FIXME: 280
     "merge <head> from html fragment" >> {
       JettyTestServer.browse(
         "/htmlFragmentWithHead", html =>
@@ -113,7 +114,7 @@ object ToHeadUsages extends Specification {
         }
       )
     }
-
+    */
     "Exclude from context rewriting" >> {
       val first = net.liftweb.http.Req.fixHtml("/wombat",
         <span>

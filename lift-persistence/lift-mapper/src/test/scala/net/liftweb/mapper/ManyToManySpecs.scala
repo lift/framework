@@ -20,6 +20,7 @@ package mapper {
 import org.specs._
 import _root_.org.specs.runner.{JUnit3, ConsoleRunner}
 
+/* FIXME: 280
 class ManyToManySpecsAsTest extends JUnit3(ManyToManySpecs)
 object ManyToManySpecsRunner extends ConsoleRunner(ManyToManySpecs)
 
@@ -48,7 +49,7 @@ object ManyToManySpecs extends Specification {
     person.companies.refresh  // reload joins so joinEntity.company.obj isn't cached
     person
   }
-  
+
   "ManyToMany" should {
     "skip broken joins in children" in {
       setupDB
@@ -72,7 +73,7 @@ object ManyToManySpecs extends Specification {
 
 
 class Person extends LongKeyedMapper[Person] with IdPK with ManyToMany {
-  def getSingleton = Person  
+  def getSingleton = Person
   object companies extends MappedManyToMany(PersonCompany, PersonCompany.person, PersonCompany.company, Company)
 }
 object Person extends Person with LongKeyedMetaMapper[Person]
@@ -89,6 +90,6 @@ class PersonCompany extends Mapper[PersonCompany] {
   object company extends MappedLongForeignKey(this, Company)
 }
 object PersonCompany extends PersonCompany with MetaMapper[PersonCompany]
-
+*/
 }
 }

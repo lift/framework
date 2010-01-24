@@ -47,12 +47,12 @@ object MapperSpecs extends Specification {
    */
 
   def dbSetup() {
-    Schemifier.destroyTables_!!(ignoreLogger _, SampleModel, SampleTag, 
+    Schemifier.destroyTables_!!(ignoreLogger _, SampleModel, SampleTag,
                                 Dog, User, Mixer, Dog2)
     Schemifier.schemify(true, ignoreLogger _, SampleModel, SampleTag,
                         User, Dog, Mixer, Dog2)
   }
-
+  /* FIXME: 280
   providers.foreach(provider => {
 
       def cleanup() {
@@ -238,7 +238,7 @@ object MapperSpecs extends Specification {
         "work with Mixed case update and delete" in {
           cleanup()
 
-          
+
           val elwood = Mixer.find(By(Mixer.name, "Elwood")).open_!
 
 
@@ -257,7 +257,7 @@ object MapperSpecs extends Specification {
           Mixer.find(By(Mixer.weight, 966)).isDefined must_== false
           Mixer.find(By(Mixer.name, "FruitBar")).isDefined must_== false
           Mixer.find(By(Mixer.name, "Elwood")).isDefined must_== false
-         
+
         }
 
         "work with Mixed case update and delete for Dog2" in {
@@ -274,7 +274,7 @@ object MapperSpecs extends Specification {
           fb.name.is must_== "FruitBar"
 
           fb.actualAge.is must_== 966
-         
+
           fb.delete_!
 
           Dog2.find(By(Dog2.actualAge, 966)).isDefined must_== false
@@ -362,7 +362,7 @@ object MapperSpecs extends Specification {
 
       }
     })
-
+    */
   private def ignoreLogger(f: => AnyRef): Unit = ()
 }
 
@@ -433,7 +433,7 @@ object User extends User with MetaMegaProtoUser[User] {
   // comment this line out to require email validations
   override def skipEmailValidation = true
 }
- 
+
 /**
  * An O-R mapped "User" class that includes first name, last name, password and we add a "Personal Essay" to it
  */
