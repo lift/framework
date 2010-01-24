@@ -226,9 +226,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                       by: QueryParam[A]*):
   List[A] = findMapFieldDb(dbId, fields, by :_*)(v => Full(v))
 
-  private def dealWithPrecache(ret: List[A], by: Seq[QueryParam[A]]): List[A] = ret
-  /* FIXME: 280
-  {
+  private def dealWithPrecache(ret: List[A], by: Seq[QueryParam[A]]): List[A] = {
 
     val precache: List[PreCache[A, _, _]] = by.toList.flatMap{case j: PreCache[A, _, _] => List[PreCache[A, _, _]](j) case _ => Nil}
     for (j <- precache) {
@@ -269,13 +267,16 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       Map(ol.map(v => (v.primaryKeyField.is, v)) :_*)
 
       for (i <- ret) {
-
         val field: MappedForeignKey[FT, A, _] =
         getActualField(i, j.field).asInstanceOf[MappedForeignKey[FT, A, _]]
 
         map.get(field.is) match {
+          /* FIXME: 280  scala-compiler throws: scala.tools.nsc.symtab.Types$TypeError: type mismatch
           case Some(v) => field._primeObj(Full(v))
-          case _ => field.primeObj(Empty)
+          case _ => field._primeObj(Empty)
+          */
+          // Temporary fix meanwhile
+          case v => field._primeObj(Box(v))
         }
         //field.primeObj(Box(map.get(field.is).map(_.asInstanceOf[QQ])))
       }
@@ -283,7 +284,6 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
     ret
   }
-  */
 
   def findAll(by: QueryParam[A]*): List[A] =
   dealWithPrecache(findMapDb(dbDefaultConnectionIdentifier, by :_*)
