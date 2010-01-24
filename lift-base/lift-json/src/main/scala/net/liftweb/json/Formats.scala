@@ -97,7 +97,10 @@ case class FullTypeHints(hints: List[Class[_]]) extends TypeHints {
 
 /** Default date format is UTC time.
  */
-object DefaultFormats extends DefaultFormats
+object DefaultFormats extends DefaultFormats {
+  val losslessDate = new ThreadLocal(new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
+}
+
 trait DefaultFormats extends Formats {
   import java.text.{ParseException, SimpleDateFormat}
 
@@ -122,7 +125,7 @@ trait DefaultFormats extends Formats {
   /** Lossless date format includes milliseconds too.
    */
   def lossless = new DefaultFormats {
-    override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+    override def dateFormatter = DefaultFormats.losslessDate()
   }
 
   /** Default formats with given <code>TypeHint</code>s.
@@ -130,6 +133,11 @@ trait DefaultFormats extends Formats {
   def withHints(hints: TypeHints) = new DefaultFormats {
     override val typeHints = hints
   }
+}
+
+private[json] class ThreadLocal[A](init: => A) extends java.lang.ThreadLocal[A] with (() => A) {
+  override def initialValue = init
+  def apply = get
 }
 
 }
