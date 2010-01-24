@@ -88,7 +88,7 @@ class Paginator[T <: Mapper[T]](val meta: MetaMapper[T], val snippet: ModelSnipp
    * Returns the items on the current page. Use this in
    * the list snippet to get the items to display
    */
-  def page = meta.findAll(constantParams ++ Seq(sort, MaxRows(num), StartAt(first)): _*)
+  def page = meta.findAll(constantParams ++ List(sort, MaxRows[T](num), StartAt[T](first)): _*)
   /**
    * Sets the sort-by field. If the specified field is already
    * the sort field, it is sorted descending; otherwise ascending.

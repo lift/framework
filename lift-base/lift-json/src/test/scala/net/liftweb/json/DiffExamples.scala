@@ -72,8 +72,8 @@ object DiffExamples extends Specification {
     json1 diff json2 mustEqual Diff(expectedChanges, expectedAdditions, expectedDeletions)
   }
 
-  private def read(resource: String) = 
-    parse(scala.io.Source.fromInputStream(classOf[DiffExamplesTest].getResourceAsStream(resource)).getLines.mkString)
+  private def read(resource: String) =
+    parse(scala.io.Source.fromInputStream(classOf[DiffExamplesTest].getResourceAsStream(resource)).getLines().mkString)
 }
 
 }

@@ -202,7 +202,7 @@ trait JsonComet {
       case _ => Empty
     }
 
-    def values: List[Enum#Value] = enum.elements.toList
+    def values: List[Enum#Value] = enum.values.toList
   }
 
 }

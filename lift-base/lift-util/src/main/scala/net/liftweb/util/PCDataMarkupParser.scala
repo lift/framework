@@ -210,7 +210,7 @@ case class PCData(_data: String) extends Atom[String](_data) {
    *  @param  sb ...
    *  @return ...
    */
-  override def toString(sb: StringBuilder) = {
+  override def buildString(sb: StringBuilder) = {
     sb.append("<![CDATA[")
     sb.append(data)
     sb.append("]]>")
@@ -248,16 +248,16 @@ object AltXML {
             stripComment: Boolean, convertAmp: Boolean): Unit =
   x match {
     case c: Comment if !stripComment =>
-      c.toString(sb)
+      c.buildString(sb)
 
     case er: EntityRef if convertAmp =>
       HtmlEntities.entMap.get(er.entityName) match {
         case Some(chr) if chr.toInt >= 128 => sb.append(chr)
-        case _ => er.toString(sb)
+        case _ => er.buildString(sb)
       }
 
     case x: SpecialNode =>
-      x.toString(sb)
+      x.buildString(sb)
 
     case g: Group =>
       for (c <- g.nodes)
@@ -266,16 +266,16 @@ object AltXML {
     case e: Elem if ((e.child eq null) || e.child.isEmpty) =>
       sb.append('<')
       e.nameToString(sb)
-      if (e.attributes ne null) e.attributes.toString(sb)
-      e.scope.toString(sb, pscope)
+      if (e.attributes ne null) e.attributes.buildString(sb)
+      e.scope.buildString(sb, pscope)
       sb.append(" />")
 
     case e: Elem =>
       // print tag with namespace declarations
       sb.append('<')
       e.nameToString(sb)
-      if (e.attributes ne null) e.attributes.toString(sb)
-      e.scope.toString(sb, pscope)
+      if (e.attributes ne null) e.attributes.buildString(sb)
+      e.scope.buildString(sb, pscope)
       sb.append('>')
       sequenceToXML(e.child, e.scope, sb, stripComment, convertAmp)
       sb.append("</")
@@ -298,16 +298,16 @@ object AltXML {
             ieMode: Boolean): Unit =
   x match {
     case c: Comment if !stripComment =>
-      c.toString(sb)
+      c.buildString(sb)
 
     case er: EntityRef if convertAmp =>
       HtmlEntities.entMap.get(er.entityName) match {
         case Some(chr) if chr.toInt >= 128 => sb.append(chr)
-        case _ => er.toString(sb)
+        case _ => er.buildString(sb)
       }
 
     case x: SpecialNode =>
-      x.toString(sb)
+      x.buildString(sb)
 
     case g: Group =>
       for (c <- g.nodes)
@@ -317,24 +317,24 @@ object AltXML {
       && inlineTags.contains(e.label) =>
       sb.append('<')
       e.nameToString(sb)
-      if (e.attributes ne null) e.attributes.toString(sb)
-      e.scope.toString(sb, pscope)
+      if (e.attributes ne null) e.attributes.buildString(sb)
+      e.scope.buildString(sb, pscope)
       sb.append(" />")
 
     case e: Elem if ieMode && ((e.child eq null) || e.child.isEmpty) &&
       ieBadTags.contains(e.label) =>
       sb.append('<')
       e.nameToString(sb)
-      if (e.attributes ne null) e.attributes.toString(sb)
-      e.scope.toString(sb, pscope)
+      if (e.attributes ne null) e.attributes.buildString(sb)
+      e.scope.buildString(sb, pscope)
       sb.append("/>")
 
     case e: Elem =>
       // print tag with namespace declarations
       sb.append('<')
       e.nameToString(sb)
-      if (e.attributes ne null) e.attributes.toString(sb)
-      e.scope.toString(sb, pscope)
+      if (e.attributes ne null) e.attributes.buildString(sb)
+      e.scope.buildString(sb, pscope)
       sb.append('>')
       sequenceToXML(e.child, e.scope, sb, stripComment, convertAmp, ieMode)
       sb.append("</")

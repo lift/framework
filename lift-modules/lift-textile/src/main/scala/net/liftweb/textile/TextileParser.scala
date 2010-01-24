@@ -243,7 +243,7 @@ object TextileParser {
     private def chrExcept(cs: Char*): Parser[Char] = elem("", {c => ('\032' :: cs.toList) forall (_ != c)}) //{x =>  !cs.contains(x)})
     private def mkString(cs: List[Any]) = cs.mkString("")
 
-    implicit def str2chars(s: String): List[Char] = stringWrapper(s).toList
+    implicit def str2chars(s: String): List[Char] = (new scala.collection.immutable.StringOps(s)).toList
 
     lazy val num = rep1(elem("digit", Character.isDigit)) ^^ mkString
 

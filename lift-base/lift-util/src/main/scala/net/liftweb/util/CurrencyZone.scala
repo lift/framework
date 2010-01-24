@@ -124,7 +124,7 @@ abstract class CurrencyZone {
         def format(currencySymbol: String, numberOfFractionDigits: Int): String = {
             val moneyValue = amount match {
                 case null => 0
-                case _ => amount.setScale(numberOfFractionDigits, BigDecimal.RoundingMode.ROUND_HALF_UP).doubleValue;
+                case _ => amount.setScale(numberOfFractionDigits, BigDecimal.RoundingMode.HALF_UP).doubleValue;
             }
 
             val numberFormat = NumberFormat.getCurrencyInstance(_locale);
