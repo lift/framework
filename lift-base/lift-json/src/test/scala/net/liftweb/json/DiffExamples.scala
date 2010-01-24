@@ -34,25 +34,25 @@ object DiffExamples extends Specification {
   }
 
   val expectedChanges = parse("""
-    { 
+    {
       "tags": ["static-typing","fp"],
-      "features": { 
-        "key2":"newval2" 
-      } 
+      "features": {
+        "key2":"newval2"
+      }
     }""")
 
   val expectedAdditions = parse("""
-    { 
-      "features": { 
-        "key3":"val3" 
+    {
+      "features": {
+        "key3":"val3"
       },
-      "compiled": true 
+      "compiled": true
     }""")
 
   val expectedDeletions = parse("""
-    { 
-      "year":2006, 
-      "features":{ "key1":"val1" } 
+    {
+      "year":2006,
+      "features":{ "key1":"val1" }
     }""")
 
   "Lotto example" in {
