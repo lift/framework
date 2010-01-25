@@ -82,9 +82,12 @@ trait ItemsList[T <: Mapper[T]] {
     removed = i :: removed
   }
   def reload {
-    current = metaMapper.findAll
+    refresh
     added = Nil
     removed = Nil
+  }
+  def refresh {
+    current = metaMapper.findAll
   }
   def save {
     val toSave = (added++current) filter {i=>removed.forall(i.ne)}
@@ -96,7 +99,7 @@ trait ItemsList[T <: Mapper[T]] {
 //    val (deleted, notdeleted) = toRemove.partition(_.delete_!)
     val deleted = toRemove filter (_.delete_!)
     
-    removed --= deleted
+    removed --= deleted ++ removed.filter{!_.saved_?}
     added --= saved
     current = current ++ saved removeDuplicates
     
@@ -193,6 +196,8 @@ trait ItemsListEditor[T<:Mapper[T]] {
   
   val fieldFilter: MappedField[_,T]=>Boolean = (f: MappedField[_,T])=>true
   
+  def customBind(item: T): NodeSeq=>NodeSeq = (ns: NodeSeq) => ns
+  
   def edit(xhtml: NodeSeq) = {
     xhtml.bind("header",
          "fields" -> eachField[T](
@@ -205,22 +210,34 @@ trait ItemsListEditor[T<:Mapper[T]] {
     ).bind("table",
          "title" -> title,
          "insertBtn" -> SHtml.submit(?("Insert"), onInsert _),
-         "items" -> ((ns:NodeSeq)=>NodeSeq.fromSeq(items.items.flatMap {i =>
-           bind("item",
-                ns,
-                "fields" -> eachField(
-                  i,
-                  (f: MappedField[_,T]) => Seq("form" -> f.toForm),
-                  fieldFilter
-                ),
-                "removeBtn" -> SHtml.submit(?("Remove"), ()=>onRemove(i)),
-                "msg" -> (i.validate match {
-                  case Nil =>
-                    if(!i.saved_?) Text(?("New")) else if(i.dirty_?) Text(?("Unsaved")) else NodeSeq.Empty
-                  case errors => (<ul>{errors.flatMap(e => <li>{e.msg}</li>)}</ul>)
-                })
-           )
-         })),
+         "items" -> {ns:NodeSeq =>
+           items.items.flatMap {i =>
+             bind("item",
+                  customBind(i)(ns),
+                  "fields" -> eachField(
+                    i,
+                    (f: MappedField[_,T]) => Seq("form" -> f.toForm),
+                    fieldFilter
+                  ),
+                  "removeBtn" -> SHtml.submit(?("Remove"), ()=>onRemove(i)),
+                  "msg" -> (i.validate match {
+                    case Nil =>
+                      if(!i.saved_?) Text(?("New")) else if(i.dirty_?) Text(?("Unsaved")) else NodeSeq.Empty
+                    case errors => (<ul>{errors.flatMap(e => <li>{e.msg}</li>)}</ul>)
+                  })
+             )
+           } ++ items.removed.flatMap { i =>
+             bind("item", customBind(i)(ns),
+                  "fields" -> eachField(
+                    i,
+                    {f: MappedField[_,T] => Seq("form" -> <strike>{f.asHtml}</strike>)},
+                    fieldFilter
+                  ),
+                  "removeBtn" -> NodeSeq.Empty,
+                  "msg" -> Text(?("Deleted"))
+             )
+           }: NodeSeq
+         },
          "saveBtn" -> SHtml.submit(?("Save"), onSubmit _)
     )
   }
