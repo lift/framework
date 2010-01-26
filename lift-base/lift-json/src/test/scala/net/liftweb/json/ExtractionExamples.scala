@@ -43,6 +43,19 @@ object ExtractionExamples extends Specification {
     json.extract[SimplePerson] mustEqual SimplePerson("joe", Address("Bulevard", "Helsinki"))
   }
 
+  "Map with primitive values extraction example" in {
+    val json = parse(testJson)
+    json.extract[PersonWithMap] mustEqual 
+      PersonWithMap("joe", Map("street" -> "Bulevard", "city" -> "Helsinki"))
+  }
+
+  "Map with object values extraction example" in {
+    val json = parse(twoAddresses)
+    json.extract[PersonWithAddresses] mustEqual 
+      PersonWithAddresses("joe", Map("address1" -> Address("Bulevard", "Helsinki"),
+                                     "address2" -> Address("Soho", "London")))
+  }
+
   "Simple value extraction example" in {
     val json = parse(testJson)
     json.extract[Name] mustEqual Name("joe")
@@ -124,6 +137,23 @@ object ExtractionExamples extends Specification {
 }
 """
 
+  val twoAddresses =
+"""
+{
+  "name": "joe",
+  "addresses": {
+    "address1": {
+      "street": "Bulevard",
+      "city": "Helsinki"
+    },
+    "address2": {
+      "street": "Soho",
+      "city": "London"
+    }
+  }
+}
+"""
+
   val primitives = 
 """
 {
@@ -155,6 +185,9 @@ case class Address(street: String, city: String)
 case class Child(name: String, age: Int, birthdate: Option[java.util.Date])
 
 case class SimplePerson(name: String, address: Address)
+
+case class PersonWithMap(name: String, address: Map[String, String])
+case class PersonWithAddresses(name: String, addresses: Map[String, Address])
 
 case class Name(name: String)
 
