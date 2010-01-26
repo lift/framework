@@ -73,6 +73,7 @@ object Extraction {
         case x if primitive_?(x.getClass) => primitive2jvalue(x)(formats)
         case x: List[_] => JArray(x map decompose)
         case x: Option[_] => decompose(x getOrElse JNothing)
+        case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
         case x => 
           x.getClass.getDeclaredFields.toList.remove(static_?).map { f => 
             f.setAccessible(true)
@@ -86,16 +87,19 @@ object Extraction {
   }
 
   private def extract0[A](json: JValue, formats: Formats, mf: Manifest[A]): A = {
+    if (mf.erasure == classOf[List[_]] || mf.erasure == classOf[Map[_, _]])
+      fail("Root object can't yet be List or Map (needs a feature from Scala 2.8)")
     val mapping = mappingOf(mf.erasure)
 
-    def newInstance(targetType: Class[_], args: => List[Any], json: JValue) = {
+    def newInstance(targetType: Class[_], args: List[Arg], json: JValue) = {
       def instantiate(constructor: JConstructor[_], args: List[Any]) = 
         try {
           constructor.newInstance(args.map(_.asInstanceOf[AnyRef]).toArray: _*)
         } catch {
-          case e @ (_:IllegalArgumentException | _:InstantiationException) => 
-            fail("Parsed JSON values do not match with class constructor\nargs=" + args.mkString(",") + 
-                 "\narg types=" + args.map(arg => if (arg != null) arg.asInstanceOf[AnyRef].getClass.getName else "null").mkString(",") + 
+          case e @ (_:IllegalArgumentException | _:InstantiationException) =>             
+            fail("Parsed JSON values do not match with class constructor\nargs=" + 
+                 args.mkString(",") + "\narg types=" + args.map(a => if (a != null) 
+                   a.asInstanceOf[AnyRef].getClass.getName else "null").mkString(",") + 
                  "\nconstructor=" + constructor)
         }
 
@@ -111,7 +115,7 @@ object Extraction {
       json match {
         case JObject(JField("jsonClass", JString(t)) :: xs) => mkWithTypeHint(t, xs)
         case JField(_, JObject(JField("jsonClass", JString(t)) :: xs)) => mkWithTypeHint(t, xs)
-        case _ => instantiate(primaryConstructorOf(targetType), args)
+        case _ => instantiate(primaryConstructorOf(targetType), args.map(a => build(json \ a.path, a)))
       }
     }
 
@@ -119,13 +123,17 @@ object Extraction {
 
     def build(root: JValue, mapping: Mapping): Any = mapping match {
       case Value(targetType) => convert(root, targetType, formats)
-      case Constructor(targetType, args) => 
-        newInstance(targetType, args.map(a => build(root \ a.path, a)), root)
+      case Constructor(targetType, args) => newInstance(targetType, args, root)
+      case Cycle(targetType) => mappingOf(targetType)
       case Arg(_, m) => build(fieldValue(root), m)
       case Lst(m) => root match {
         case JArray(arr) => arr.map(build(_, m))
         case JNothing | JNull => Nil
         case x => fail("Expected array but got " + x)
+      }
+      case Dict(m) => root match {
+        case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)
+        case x => fail("Expected object but got " + x)
       }
       case Optional(m) =>
         // FIXME Remove this try-catch.
@@ -148,7 +156,7 @@ object Extraction {
     build(json, mapping).asInstanceOf[A]
   }
 
-  private def convert(value: JValue, targetType: Class[_], formats: Formats): Any = value match {
+  private def convert(json: JValue, targetType: Class[_], formats: Formats): Any = json match {
     case JInt(x) if (targetType == classOf[Int]) => x.intValue
     case JInt(x) if (targetType == classOf[Long]) => x.longValue
     case JInt(x) if (targetType == classOf[Double]) => x.doubleValue
@@ -162,7 +170,7 @@ object Extraction {
     case JString(s) if (targetType == classOf[Date]) => formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'"))
     case JNull => null
     case JNothing => fail("Did not find value which can be converted into " + targetType.getName)
-    case _ => value.values
+    case _ => json.values
   }
 }
 
