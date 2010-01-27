@@ -181,6 +181,8 @@ class LiftServlet {
     tryo {LiftRules.onEndServicing.toList.foreach(_(req, resp))}
 
     resp match {
+      case Full(EmptyResponse) => 
+        true
       case Full(cresp) =>
         val resp = cresp.toResponse
 
@@ -362,7 +364,7 @@ class LiftServlet {
 
   private lazy val cometTimeout: Long = (LiftRules.cometRequestTimeout openOr 120) * 1000L
 
-  private def setupContinuation(request: Req, session: LiftSession, actors: List[(LiftCometActor, Long)]): Nothing = {
+  private def setupContinuation(request: Req, session: LiftSession, actors: List[(LiftCometActor, Long)]): Any = {
     val cont = new ContinuationActor(request, session, actors,
       answers => LiftRules.resumeRequest(
         (request, S.init(request, session)
@@ -391,7 +393,7 @@ class LiftServlet {
     else LiftRules.checkContinuations(requestState.request) match {
       case Some(null) =>
         setupContinuation(requestState, sessionActor, actors)
-
+        Full(EmptyResponse)
       case _ =>
         handleNonContinuationComet(requestState, sessionActor, actors)
     }
@@ -496,6 +498,7 @@ class LiftServlet {
 
     try {
       resp match {
+        case EmptyResponse => 
         case InMemoryResponse(bytes, _, _, _) =>
           response.outputStream.write(bytes)
           response.outputStream.flush()

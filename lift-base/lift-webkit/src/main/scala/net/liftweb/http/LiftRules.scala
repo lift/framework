@@ -483,12 +483,12 @@ object LiftRules extends Factory with FormVendor {
    * Execute a continuation. For Jetty the Jetty specific exception will be thrown
    * and the container will manage it.
    */
-  def doContinuation(req: HTTPRequest, timeout: Long): Nothing = req suspend timeout
+  def doContinuation(req: HTTPRequest, timeout: Long) = req suspend timeout
 
   /**
    * Check to see if continuations are supported
    */
-  def checkContinuations(req: HTTPRequest): Option[Any] = req hasSuspendResumeSupport_?
+  def checkContinuations(req: HTTPRequest): Option[Any] = req resumeInfo
 
   private var _sitemap: Box[SiteMap] = Empty
 
@@ -1175,6 +1175,15 @@ object LiftRules extends Factory with FormVendor {
 
   /** Controls whether or not the service handling timing messages (Service request (GET) ... took ... Milliseconds) are logged. Defaults to true. */
   @volatile var logServiceRequestTiming = true
+
+  import provider.servlet._
+  import containers._
+
+  /**
+   * Provides the async provider instance responsible for suspending/resuming requests
+   */
+  @volatile var servletAsyncProvider: (HTTPRequest) => ServletAsyncProvider = (req) => new Jetty6AsyncProvider(req)
+
 
   private def ctor() {
     appendGlobalFormBuilder(FormBuilderLocator[String]((value, setter) => SHtml.text(value, setter)))

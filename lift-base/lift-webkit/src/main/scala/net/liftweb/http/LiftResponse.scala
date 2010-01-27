@@ -284,6 +284,18 @@ sealed trait BasicResponse extends LiftResponse {
   def size: Long
 }
 
+private[http] case object EmptyResponse extends BasicResponse {
+  def headers = Nil
+
+  def cookies = Nil
+
+  def code = 200
+
+  def size = 0
+
+  def toResponse = this
+}
+
 final case class InMemoryResponse(data: Array[Byte], headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends BasicResponse {
   def toResponse = this
 

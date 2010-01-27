@@ -158,14 +158,16 @@ trait HTTPRequest {
   def method: String
 
   /**
-   * @return - Some[Any] if the implementation supports suspending&resuming requests.
+   * @return - Some[Any] if the implementation supports suspending&resuming requests and if this is a
+   *           resumed request, return the state associated with it.
+   *           
    */
-  def hasSuspendResumeSupport_? : Option[Any]
+  def resumeInfo : Option[Any]
 
   /**
    * Suspend the curent request and resume it after a given timeout
    */
-  def suspend(timeout: Long): Nothing
+  def suspend(timeout: Long): Any
 
   /**
    * Resume this request
