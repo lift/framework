@@ -37,7 +37,6 @@
     <groupId>net.liftweb</groupId>
     <artifactId>lift-parent</artifactId>
     <version>2.0-scala280-SNAPSHOT</version>
-    <!-- TODO: Interim usage, remove once lift-parent matures to stable version -->
     <relativePath>../resources/lift-parent/pom.xml</relativePath>
   </parent>
   <artifactId>framework</artifactId>
@@ -72,10 +71,7 @@
   <ciManagement>
     <system>hudson</system>
     <url>http://hudson.scala-tools.org/job/lift-framework/</url>
-    <notifiers>
-      <!-- TODO: Configure-->
-      <notifier/>
-    </notifiers>
+    <!-- <notifiers/> -->
   </ciManagement>
   <distributionManagement>
     <site>

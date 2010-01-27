@@ -54,31 +54,6 @@
       <artifactId>lift-mapper</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <!--TODO: Normalize the DB driver settings-->
-    <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-      <version>5.1.6</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.derby</groupId>
-      <artifactId>derby</artifactId>
-      <version>10.4.2.0</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <version>1.2.121</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>8.3-603.jdbc3</version>
-      <optional>true</optional>
-    </dependency>
   </dependencies>
 
   <!--

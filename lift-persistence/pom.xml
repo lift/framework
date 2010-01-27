@@ -70,6 +70,16 @@
       <artifactId>scala-library</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.derby</groupId>
+      <artifactId>derby</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
       <groupId>org.scala-tools.testing</groupId>
       <artifactId>specs_2.8.0.Beta1-RC8</artifactId>
       <scope>test</scope>
