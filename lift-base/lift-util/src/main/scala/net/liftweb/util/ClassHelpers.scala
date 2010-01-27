@@ -29,7 +29,7 @@ object ClassHelpers extends ClassHelpers with ControlHelpers
  */
 trait ClassHelpers { self: ControlHelpers =>
 
-  private val nameModifiers = List[String => String](camelCase _, n => n)
+  private val nameModifiers = List[String => String](StringHelpers.camelify _, n => n)
 
   /**
    * This operator transforms its arguments into a List
@@ -151,61 +151,10 @@ trait ClassHelpers { self: ControlHelpers =>
   def findClass(where: List[(String, List[String])]): Box[Class[AnyRef]] =
   findType[AnyRef](where)
 
-  /**
-   * Turns a string of format "foo_bar" into camel case "FooBar"
-   *
-   * Functional code courtesy of Jamie Webb (j@jmawebb.cjb.net) 2006/11/28
-   * @param name the String to CamelCase
-   *
-   * @return the CamelCased string
-   */
-  def camelCase(name : String): String = {
-    def loop(x : List[Char]): List[Char] = (x: @unchecked) match {
-      case '_' :: '_' :: rest => loop('_' :: rest)
-      case '_' :: c :: rest => Character.toUpperCase(c) :: loop(rest)
-      case '_' :: Nil => Nil
-      case c :: rest => c :: loop(rest)
-      case Nil => Nil
-    }
-    if (name == null)
-    ""
-    else
-    loop('_' :: name.toList).mkString
-  }
-
-  /**
-   * Turn a string of format "foo_bar" into camel case with the first letter in lower case: "fooBar"
-   * This function is especially used to camelCase method names.
-   *
-   * @param name the String to CamelCase
-   *
-   * @return the CamelCased string
-   */
-  def camelCaseMethod(name: String): String = {
-    val tmp: String = camelCase(name)
-    if (tmp.length == 0)
-    ""
-    else
-    tmp.substring(0,1).toLowerCase + tmp.substring(1)
-  }
-
-  /**
-   * Turn a string of format "FooBar" into camel case "foo_bar"
-   *
-   * @return the underscored string
-   */
-  def unCamelCase(name : String) = {
-    def loop(x : List[Char]) : List[Char] = x match {
-      case c :: rest if (Character.isUpperCase(c)) => '_' :: Character.toLowerCase(c) :: loop(rest)
-      case c :: rest => c :: loop(rest)
-      case Nil => Nil
-    }
-    if (name.isEmpty)
-    ""
-    else
-    (Character.toLowerCase(name.charAt(0)) :: loop(name.substring(1).toList)).mkString
-  }
-
+  @deprecated def camelCase(name : String): String = StringHelpers.camelify(name)
+  @deprecated def camelCaseMethod(name: String): String = StringHelpers.camelifyMethod(name)
+  @deprecated def unCamelCase(name : String) = StringHelpers.snakify(name)
+  
   /**
    * @return true if the method is public and has no parameters
    */
@@ -287,8 +236,8 @@ trait ClassHelpers { self: ControlHelpers =>
    */
   def invokeMethod[C](clz: Class[C], inst: AnyRef, meth: String, params: Array[AnyRef]): Box[Any] = {
     _invokeMethod(clz, inst, meth, params, Empty) or
-    _invokeMethod(clz, inst, camelCase(meth), params, Empty) or
-    _invokeMethod(clz, inst, camelCaseMethod(meth), params, Empty)
+    _invokeMethod(clz, inst, StringHelpers.camelify(meth), params, Empty) or
+    _invokeMethod(clz, inst, StringHelpers.camelifyMethod(meth), params, Empty)
   }
 
   /**
@@ -306,8 +255,8 @@ trait ClassHelpers { self: ControlHelpers =>
    */
   def invokeMethod[C](clz: Class[C], inst: AnyRef, meth: String, params: Array[AnyRef], ptypes: Array[Class[_]]): Box[Any] = {
     _invokeMethod(clz, inst, meth, params, Full(ptypes)) or
-    _invokeMethod(clz, inst, camelCase(meth), params, Full(ptypes)) or
-    _invokeMethod(clz, inst, camelCaseMethod(meth), params, Full(ptypes))
+    _invokeMethod(clz, inst, StringHelpers.camelify(meth), params, Full(ptypes)) or
+    _invokeMethod(clz, inst, StringHelpers.camelifyMethod(meth), params, Full(ptypes))
   }
 
 

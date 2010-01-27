@@ -30,6 +30,9 @@ object DBProviders {
   def asList = PostgreSqlProvider :: MySqlProvider :: DerbyProvider :: H2Provider :: H2MemoryProvider :: Nil
 
 
+  case object SnakeConnectionIdentifier extends ConnectionIdentifier {
+    var jndiName = "snake"
+  }
 
   trait Provider {
     def name: String
@@ -56,6 +59,7 @@ object DBProviders {
       // deleteIt(f)
 
       DB.defineConnectionManager(DefaultConnectionIdentifier, vendor)
+      DB.defineConnectionManager(SnakeConnectionIdentifier, vendor)
     }
   }
 
@@ -64,6 +68,7 @@ object DBProviders {
 
     def setupDB {
       DB.defineConnectionManager(DefaultConnectionIdentifier, vendor)
+      DB.defineConnectionManager(SnakeConnectionIdentifier, vendor)
 
       def deleteAllTables {
         DB.use(DefaultConnectionIdentifier) {
