@@ -469,7 +469,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   def contextPath = LiftRules.calculateContextPath() openOr _contextPath
 
   private[http] def processRequest(request: Req): Box[LiftResponse] = {
-
     def processTemplate(loc: Box[NodeSeq], path: ParsePath, code: Int): Box[LiftResponse] =       
       (loc or findVisibleTemplate(path, request)).map { xhtml => 
         // Phase 1: snippets & templates processing
