@@ -818,13 +818,6 @@ object LiftRules extends Factory with FormVendor {
    * LiftResponse that can then be sent to the browser.
    */
   var convertResponse: PartialFunction[(Any, List[(String, String)], List[HTTPCookie], Req), LiftResponse] = {
-    // FIXME: 280 the follow case selector causes lot of ripple
-    // 1. scala-compiler throws this exception (instead of compilation error)
-    // scala.tools.nsc.symtab.Types$TypeError: too many arguments for method body%5: (val headers: List[(java.lang.String, java.lang.String)],val cookies: List[net.liftweb.http.provider.HTTPCookie],val req: net.liftweb.http.Req)net.liftweb.http.LiftResponse
-    // 2. maven-scala-plugin silently fails with an invocation target exception
-//    case tuple @ (Pair(ns: NodeSeq, code: Int), _, _, _) /*headers, cookies, req)*/ => // this.cvt(/*Group(ns)*/ Text(""), headers, cookies, req, code)
-  //    null
-
     case NestedTupleUnapply(node, code, headers, cookies, req) =>
       cvt(node, headers, cookies, req, code)
       
@@ -832,7 +825,6 @@ object LiftRules extends Factory with FormVendor {
     case (ns: Group, headers, cookies, req) => cvt(ns, headers, cookies, req, 200)
     case (ns: Node, headers, cookies, req) => cvt(ns, headers, cookies, req, 200)
     case (ns: NodeSeq, headers, cookies, req) => cvt(Group(ns), headers, cookies, req, 200)
-
 
     case (SafeNodeSeq(n), headers, cookies, req) => cvt(Group(n), headers, cookies, req, 200)
 
