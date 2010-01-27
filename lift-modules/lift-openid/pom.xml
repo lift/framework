@@ -49,11 +49,6 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>lift-webkit</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
       <artifactId>lift-mapper</artifactId>
       <version>${project.version}</version>
     </dependency>

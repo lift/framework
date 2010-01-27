@@ -48,7 +48,6 @@
   -->
   <dependencies>
     <dependency>
-      <!-- need net.liftweb.util net.liftweb.http-->
       <groupId>${project.groupId}</groupId>
       <artifactId>lift-webkit</artifactId>
       <version>${project.version}</version>
