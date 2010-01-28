@@ -170,8 +170,8 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
 
   private def toLong: Long = is.foldLeft(0L)((a,b) => a + rot(b.id))
 
-  def fromLong(in: Long): Seq[ENUM#Value] = 
-    enum.values.toList.filter(v => (in & rot(v.id)) != 0)
+  def fromLong(in: Long): Seq[ENUM#Value] =
+    enum.iterator.toList.filter(v => (in & rot(v.id)) != 0)
 
   def jdbcFriendly(field: String) = new _root_.java.lang.Long(toLong)
   override def jdbcFriendly = new _root_.java.lang.Long(toLong)
@@ -225,7 +225,7 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
    * Create an input field for the item
    */
   override def _toForm: Box[NodeSeq] =
-  Full(SHtml.checkbox[ENUM#Value](enum.values.toList, is,this(_)).toForm)
+  Full(SHtml.checkbox[ENUM#Value](enum.iterator.toList, is,this(_)).toForm)
 }
 
 /**

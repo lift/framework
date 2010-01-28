@@ -47,8 +47,7 @@ class StringField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int
 
   def setFromAny(in: Any): Box[String] = {
     in match {
-      // FIXME: 280
-      // case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny)(0)
+      case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny).apply(0)
       case (s: String) :: _ => Full(set(s))
       case null => Full(set(null))
       case s: String => Full(set(s))

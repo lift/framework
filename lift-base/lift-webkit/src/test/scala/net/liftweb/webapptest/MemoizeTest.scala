@@ -67,15 +67,15 @@ object MemoizeSpec extends Specification {
         sessionMemo.get(3) must_== Empty
       }
     }
-    /* FIXME: 280
+
     "Request memo should work in the same request" >> {
       S.initIfUninitted(session1) {
         requestMemo(3) must_== Empty
-        requestMemo(3, 44) must_== 44
-        requestMemo(3) must_== 44
+        requestMemo(3, 44) must_== Full(44)
+        requestMemo(3) must_== Full(44)
       }
     }
-    */
+
     "Request memo should not span requests" >> {
       S.initIfUninitted(session1) {
         requestMemo(3) must_== Empty

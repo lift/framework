@@ -52,7 +52,7 @@ object MapperSpecs extends Specification {
     Schemifier.schemify(true, ignoreLogger _, SampleModel, SampleTag,
                         User, Dog, Mixer, Dog2)
   }
-  /* FIXME: 280
+
   providers.foreach(provider => {
 
       def cleanup() {
@@ -362,7 +362,7 @@ object MapperSpecs extends Specification {
 
       }
     })
-    */
+
   private def ignoreLogger(f: => AnyRef): Unit = ()
 }
 

@@ -67,7 +67,7 @@ class EnumField[OwnerType <: Record[OwnerType], ENUM <: Enumeration](rec: OwnerT
    * Build a list for v => this.set(fromInt(v)the select.  Return a tuple of (String, String) where the first string
    * is the id.string of the Value and the second string is the Text name of the Value.
    */
-  def buildDisplayList: List[(Int, String)] = enum.values.toList.map(a => (a.id, a.toString))
+  def buildDisplayList: List[(Int, String)] = enum.map(a => (a.id, a.toString)).toList
 
   private def elem = SHtml.selectObj[Int](buildDisplayList, Full(toInt), this.setFromAny(_)) % ("tabindex" -> tabIndex.toString)
 

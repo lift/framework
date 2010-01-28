@@ -272,11 +272,6 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
         getActualField(i, j.field).asInstanceOf[MappedForeignKey[FT, A, _]]
 
         map.get(field.is) match {
-          /* FIXME: 280  scala-compiler throws: scala.tools.nsc.symtab.Types$TypeError: type mismatch
-          case Some(v) => field._primeObj(Full(v))
-          case _ => field._primeObj(Empty)
-          */
-          // Temporary fix meanwhile
           case v => field._primeObj(Box(v))
         }
         //field.primeObj(Box(map.get(field.is).map(_.asInstanceOf[QQ])))
