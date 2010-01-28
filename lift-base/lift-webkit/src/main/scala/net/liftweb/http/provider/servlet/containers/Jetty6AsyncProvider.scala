@@ -5,13 +5,13 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an "AS IS" BASIS,
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package net.liftweb {
@@ -28,22 +28,22 @@ import _root_.net.liftweb.http.provider.servlet._
 import _root_.net.liftweb.util._
 import Helpers._
 
-/** 
+/**
  * Jetty6AsyncProvider
  *
  * Implemented by using Jetty 6 Continuation API
- *   
+ *
  */
 class Jetty6AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
-  
+
   private val servletReq = (req.asInstanceOf[HTTPRequestServlet]).req
 
-  private val (hasContinuations_?, 
-               contSupport, 
-               getContinuation, 
-               getObject, 
-               setObject, 
-               suspend, 
+  private val (hasContinuations_?,
+               contSupport,
+               getContinuation,
+               getObject,
+               setObject,
+               suspend,
                resume) = {
     try {
       val cc = Class.forName("org.mortbay.util.ajax.ContinuationSupport")
@@ -60,7 +60,7 @@ class Jetty6AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
   }
 
   def suspendResumeSupport_? : Boolean = hasContinuations_?
- 
+
   def resumeInfo: Option[Any] =
     if (!hasContinuations_?) None
     else if (Props.inGAE) None
