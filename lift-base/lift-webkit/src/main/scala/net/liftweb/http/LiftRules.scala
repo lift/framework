@@ -134,6 +134,12 @@ object LiftRules extends Factory with FormVendor {
    * Holds the JS library specific UI artifacts. By efault it uses JQuery's artifacts
    */
   @volatile var jsArtifacts: JSArtifacts = JQueryArtifacts
+  
+  object JQueryVersions extends Enumeration("1.3.2", "1.4.1") {
+    val v132, v141 = Value
+  }
+  
+  @volatile var jQueryVersion: JQueryVersions.Value = JQueryVersions.v141
 
   /**
    * Use this PartialFunction to to automatically add static URL parameters
