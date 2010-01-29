@@ -141,7 +141,7 @@ abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[S
     in match {
       case JsonAST.JNull => this.set(null)
       case JsonAST.JString(str) => this.set(str)
-      case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny)(0)
+      case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny).apply(0)
       case (s: String) :: _ => this.set(s)
       case s :: _ => this.setFromAny(s)
       case null => this.set(null)
@@ -234,7 +234,7 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
     in match {
       case JsonAST.JNull => this.set(null)
       case JsonAST.JString(str) => this.set(str)
-      case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny)(0)
+      case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny).apply(0)
       case (s: String) :: _ => this.set(s)
       case s :: _ => this.setFromAny(s)
       case null => this.set(null)

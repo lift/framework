@@ -71,8 +71,8 @@ object MemoizeSpec extends Specification {
     "Request memo should work in the same request" >> {
       S.initIfUninitted(session1) {
         requestMemo(3) must_== Empty
-        requestMemo(3, 44) must_== 44
-        requestMemo(3) must_== 44
+        requestMemo(3, 44) must_== Full(44)
+        requestMemo(3) must_== Full(44)
       }
     }
 

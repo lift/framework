@@ -112,7 +112,7 @@ A regular example.
 
     "deal with a very long line of text" in {
       val sb = new StringBuilder()
-      (1 to 100000).foreach(i => sb.append(i.toString+" "))
+      (1 to 10000).foreach(i => sb.append(i.toString+" "))
       toHtml(sb.toString)
     }
 
