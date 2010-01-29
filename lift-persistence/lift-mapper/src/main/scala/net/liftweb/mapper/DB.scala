@@ -58,10 +58,21 @@ object DB {
   }
 
   // var connectionManager: Box[ConnectionManager] = Empty
-  private val connectionManagers = new HashMap[ConnectionIdentifier, ConnectionManager];
+  private val connectionManagers = new HashMap[ConnectionIdentifier, ConnectionManager]
+
+  private val threadLocalConnectionManagers = new ThreadGlobal[Map[ConnectionIdentifier, ConnectionManager]]
 
   def defineConnectionManager(name: ConnectionIdentifier, mgr: ConnectionManager) {
     connectionManagers(name) = mgr
+  }
+
+  /**
+  * Allows you to override the connection manager associated with particular connection identifiers for the duration
+  * of the call.
+  */
+  def doWithConnectionManagers[T](mgrs: (ConnectionIdentifier, ConnectionManager)*)(f: => T): T = {
+    val newMap = mgrs.foldLeft(threadLocalConnectionManagers.box openOr Map())(_ + _)
+    threadLocalConnectionManagers.doWith(newMap)(f)
   }
 
   case class ConnectionHolder(conn: SuperConnection, cnt: Int, postCommit: List[() => Unit])
@@ -111,7 +122,7 @@ object DB {
   }
 
   private def newConnection(name: ConnectionIdentifier): SuperConnection = {
-    val ret = (Box(connectionManagers.get(name)).flatMap(cm => cm.newSuperConnection(name) or cm.newConnection(name).map(c => new SuperConnection(c, () => cm.releaseConnection(c))))) openOr {
+    val ret = ((threadLocalConnectionManagers.box.flatMap(_.get(name)) or Box(connectionManagers.get(name))).flatMap(cm => cm.newSuperConnection(name) or cm.newConnection(name).map(c => new SuperConnection(c, () => cm.releaseConnection(c))))) openOr {
       Helpers.tryo {
         val uniqueId = if (Log.isDebugEnabled) Helpers.nextNum.toString else ""
         Log.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " opened")
