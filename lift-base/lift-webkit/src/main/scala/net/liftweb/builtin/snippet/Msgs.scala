@@ -52,7 +52,10 @@ object Msgs extends DispatchSnippet {
   }
 
   def render(styles: NodeSeq): NodeSeq = {
-    val f = if (toBoolean(attr("showAll"))) messages _
+    val showAll = toBoolean(attr("showAll"))
+    ShowAll(showAll)
+
+    val f = if (showAll) messages _
             else noIdMessages _
 
     val makeTitle: (String) => String = {text =>
@@ -100,6 +103,7 @@ object Msgs extends DispatchSnippet {
 object MsgsNoticeMeta extends SessionVar[Box[AjaxMessageMeta]](Empty)
 object MsgsWarningMeta extends SessionVar[Box[AjaxMessageMeta]](Empty)
 object MsgsErrorMeta extends SessionVar[Box[AjaxMessageMeta]](Empty)
+object ShowAll extends SessionVar[Boolean](false)
 
 case class AjaxMessageMeta(title: Box[String], cssClass: Box[String])
 
