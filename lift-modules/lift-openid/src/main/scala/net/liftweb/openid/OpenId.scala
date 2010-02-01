@@ -43,17 +43,17 @@ trait OpenIdVendor {
   type ConsumerType <: OpenIdConsumer[UserType]
 
   private object RedirectBackTo extends SessionVar[Box[String]](Empty)
-  val PathRoot = "openid"
+  lazy val PathRoot = "openid"
 
-  val LoginPath = "login"
+  lazy val LoginPath = "login"
 
-  val LogOutPath = "logout"
+  lazy val LogOutPath = "logout"
 
-  val ResponsePath = "response"
+  lazy val ResponsePath = "response"
 
-  val PostParamName = "openIdUrl"
+  def PostParamName = "openid_identifier" // "openIdUrl"
 
-  val SnippetPrefix = "openId"
+  lazy val SnippetPrefix = "openId"
 
   def postLogin(id: Box[Identifier],res: VerificationResult): Unit
 
