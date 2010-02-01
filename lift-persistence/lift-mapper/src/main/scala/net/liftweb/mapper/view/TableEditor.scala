@@ -90,17 +90,16 @@ trait ItemsList[T <: Mapper[T]] {
     current = metaMapper.findAll
   }
   def save {
-    val toSave = (added++current) filter {i=>removed.forall(i.ne)}
+    val (toKeep, toDiscard) = added partition {i=>removed.forall(i.ne)}
+    val toSave = current.filter(i=>removed.forall(i.ne)) ++ toKeep
+//    val toDiscard = added filter {i=>removed.exists(i.eq)}
     val toRemove = removed filter {_.saved_?}
     
-//    val (valid, invalid) = toSave.partition(_.validate eq Nil)
-//    val (saved, unsaved) = valid.partition(_.save)
     val saved = toSave filter {_.validate eq Nil} filter (_.save)
-//    val (deleted, notdeleted) = toRemove.partition(_.delete_!)
     val deleted = toRemove filter (_.delete_!)
     
     removed --= deleted ++ removed.filter{!_.saved_?}
-    added --= saved
+    added --= saved ++ toDiscard
     current = current ++ saved removeDuplicates
     
   }
