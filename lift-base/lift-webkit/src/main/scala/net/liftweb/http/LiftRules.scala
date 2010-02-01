@@ -300,7 +300,11 @@ object LiftRules extends Factory with FormVendor {
       case list => <div>{title}<ul>{list}</ul> </div> % attr
     }
 
-    val f = S.noIdMessages _
+    val f = if (ShowAll.get)
+      S.messages _
+    else
+      S.noIdMessages _
+
     val xml = List((MsgsErrorMeta.get, f(S.errors), S.??("msg.error")),
       (MsgsWarningMeta.get, f(S.warnings), S.??("msg.warning")),
       (MsgsNoticeMeta.get, f(S.notices), S.??("msg.notice"))) flatMap {

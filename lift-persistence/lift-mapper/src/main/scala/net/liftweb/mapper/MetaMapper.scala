@@ -267,7 +267,6 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       Map(ol.map(v => (v.primaryKeyField.is, v)) :_*)
 
       for (i <- ret) {
-
         val field: MappedForeignKey[FT, A, _] =
         getActualField(i, j.field).asInstanceOf[MappedForeignKey[FT, A, _]]
 
