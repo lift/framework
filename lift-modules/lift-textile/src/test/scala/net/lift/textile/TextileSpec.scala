@@ -65,6 +65,10 @@ object TextileSpec extends Specification {
       toHtml("Dude this is **Hello World** kind of stuff") must ==/(<p>Dude this is <b>Hello World</b> kind of stuff</p>)
     }
 
+    "I am <i>Italic</i> <u>under</u> <strong>strong</strong>" in {
+      toHtml("I am <i>Italic</i> <u>under</u> <strong>strong</strong>") must ==/(<p>I am <i>Italic</i> <u>under</u> <strong>strong</strong></p>)
+    }
+
     "I am <em>very</em> serious" in {
       toHtml("I am <em>very</em> serious") must ==/(<p>I am <em>very</em> serious</p>)
     }

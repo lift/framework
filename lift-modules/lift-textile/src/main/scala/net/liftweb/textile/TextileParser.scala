@@ -536,7 +536,7 @@ object TextileParser {
     /**
      * is it a valid HTML tag?  This list should be expanded
      */
-    def isValidTag(in : String) = in == "b" || in == "em" || in == "code" || in == "div" || in == "span"
+    def isValidTag(in : String) = in == "b" || in == "em" || in == "code" || in == "div" || in == "span" || in == "i" || in == "u" || in == "strong"
 
 
     /**
