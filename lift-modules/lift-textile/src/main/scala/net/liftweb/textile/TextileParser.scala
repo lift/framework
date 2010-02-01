@@ -502,8 +502,11 @@ object TextileParser {
      */
     lazy val multi_html: Parser[Textile] = ('<' ~> validTag) >> { tag =>
       rep(tag_attr) ~
-      ('>' ~> rep(not(closingTag(tag)) ~> (lineElem | paragraph)) <~ closingTag(tag)) ^^ {
-        case attrs ~ body => HTML(tag, reduceCharBlocks(body), attrs)}}
+      ('>' ~> rep(not(closingTag(tag)) ~> (lineElem | paragraph )) <~ closingTag(tag)) ^^ {
+        case attrs ~ body => 
+	  
+	  HTML(tag, reduceCharBlocks(body.filter{case EOL => false 
+						 case _ => true}), attrs)}}
 
     /**
      * A stand-alone tag
