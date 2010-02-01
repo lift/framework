@@ -31,7 +31,10 @@ abstract class MappedTextarea[T<:Mapper[T]](owner : T, maxLen: Int) extends Mapp
     S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
     Full(<textarea name={funcName}
 	 rows={textareaRows.toString}
-	 cols={textareaCols.toString} id={fieldId}>{is.toString}</textarea>)}
+	 cols={textareaCols.toString} id={fieldId}>{
+	   is match {
+	     case null => ""
+	     case s => s}}</textarea>)}
   }
 
   override def toString = {
