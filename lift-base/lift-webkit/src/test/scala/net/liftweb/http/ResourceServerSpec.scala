@@ -24,8 +24,8 @@ import _root_.org.specs.Sugar._
 class ResourceServerSpecTest extends Runner(ResourceServerSpec) with JUnit with Console
 object ResourceServerSpec extends Specification {
   "ResourceServer.pathRewriter" should {
-    "default jquery.js to jquery-1.4.1" in {
-      ResourceServer.pathRewriter("jquery.js"::Nil) must_== List("jquery-1.4.1-min.js")
+    "default jquery.js to jquery-1.3.2" in {
+      ResourceServer.pathRewriter("jquery.js"::Nil) must_== List("jquery-1.3.2-min.js")
     }
   }
 }
