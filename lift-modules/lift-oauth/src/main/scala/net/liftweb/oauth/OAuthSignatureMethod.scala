@@ -44,7 +44,7 @@ abstract class OAuthSignatureMethod(accessor: OAuthAccessor) {
   OAuthUtil.percentEncode(normalizeParameters(message.parameters))
 
 
-  private def normalizeUrl(url: String) = {
+  private[oauth] def normalizeUrl(url: String) = {
     val uri = new URI(url);
     val scheme = uri.getScheme().toLowerCase()
     var authority = uri.getAuthority().toLowerCase()
