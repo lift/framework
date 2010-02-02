@@ -1163,6 +1163,16 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                             flatMap(fo => func(field.displayHtml,
                                                field.fieldId, fo)))
 
+/**
+   * flat map the fields titles and forms to generate a list
+   * @param func called with displayHtml, fieldId, form
+   */
+  def flatMapFieldTitleForm2[T](toMap: A,
+                               func: (NodeSeq, MappedField[_, A], NodeSeq) => Seq[T]): List[T] =
+  formFields(toMap).flatMap(field => field.toForm.toList.
+                            flatMap(fo => func(field.displayHtml,
+                                               field, fo)))
+
 
   /**
    * Given the prototype field (the field on the Singleton), get the field from the instance
