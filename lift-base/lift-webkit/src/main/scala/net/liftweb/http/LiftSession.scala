@@ -470,7 +470,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   private[http] def processRequest(request: Req): Box[LiftResponse] = {
     def processTemplate(loc: Box[NodeSeq], path: ParsePath, code: Int): Box[LiftResponse] =       
-      (loc or findVisibleTemplate(path, request)).map { xhtml => 
+      (loc or findVisibleTemplate(path, request)).map { xhtml =>
         // Phase 1: snippets & templates processing
         val rawXml: NodeSeq = processSurroundAndInclude(PageName get, xhtml)
 
@@ -524,14 +524,14 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
               PageName(request.uri + " -> " + request.path)
               LiftRules.allowParallelSnippets.doWith(() => !Props.inGAE) {
                (request.location.flatMap(_.earlyResponse) or LiftRules.earlyResponse.firstFull(request)) or
-                 (processTemplate(locTemplate, request.path, 200) or 
+                 (processTemplate(locTemplate, request.path, 200) or
                     request.createNotFound{processTemplate(Empty, _, 404)})
               }
 
             case Right(Full(resp)) => Full(resp)
             case _ if (LiftRules.passNotFoundToChain) => Empty
             case _ if Props.mode == Props.RunModes.Development =>
-              request.createNotFound{processTemplate(Empty, _, 404)} or 
+              request.createNotFound{processTemplate(Empty, _, 404)} or
               Full(ForbiddenResponse("The requested page was not defined in your SiteMap, so access was blocked.  (This message is displayed in development mode only)"))
             case _ => request.createNotFound{processTemplate(Empty, _, 404)}
           })
