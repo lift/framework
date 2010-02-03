@@ -51,6 +51,8 @@ object ItemsListSpecs extends Specification {
       
       il.add
       il.add
+      il.add
+      il.remove(il.added(1))
       il.remove(il.added(0))
       il.save
       SampleItem.count must_== 4
@@ -61,12 +63,12 @@ object ItemsListSpecs extends Specification {
   
 }
 
-class SampleItem extends Mapper[SampleItem] {
+class SampleItem extends LongKeyedMapper[SampleItem] with IdPK {
   def getSingleton = SampleItem
   object field extends MappedInt(this)
 }
 
-object SampleItem extends SampleItem with MetaMapper[SampleItem] {
+object SampleItem extends SampleItem with LongKeyedMetaMapper[SampleItem] {
   var counter = 0
   override def create = {
     val x: SampleItem = super.create

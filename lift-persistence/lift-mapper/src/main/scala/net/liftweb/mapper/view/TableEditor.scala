@@ -49,13 +49,39 @@ trait ItemsList[T <: Mapper[T]] {
    * Must itself be a T (the mapper type it represents)
    */
   def metaMapper: T with MetaMapper[T]
+  /**
+   * Whether the sorting algorithm should put null first or last
+   */
   var sortNullFirst = true
+  /**
+   * The list of items that correspond to items in the database
+   */
   var current: List[T] = Nil
+  /**
+   * The list of items pending to be added to the database
+   */
   var added: List[T] = Nil
+  /**
+   * The list of items to be deleted from current
+   */
   var removed: List[T] = Nil
-  import scala.util.Sorting._
+  /**
+   * The field to sort by, if any
+   */
+  var sortField: Option[MappedField[_, T]] = None
+  /**
+   * The sort direction
+   */
+  var ascending = true
+  
+  /**
+   * Returns the items (current + added - removed), sorted.
+   * Sorting sorts strings case-insensitive, as well as Ordered and java.lang.Comparable.
+   * Anything else where both values are nonnull are sorted via their toString method (case sensitive)
+   */
   def items: Seq[T] = {
-    val unsorted: List[T] = current ++ added filter {i => removed.forall(i.ne)}
+    import scala.util.Sorting._  
+    val unsorted: List[T] = current -- removed ++ added
     sortField match {
       case None =>
         unsorted
@@ -75,37 +101,54 @@ trait ItemsList[T <: Mapper[T]] {
         }
     }
   }
+  /**
+   * Adds a new, unsaved item
+   */
   def add {
-    added = metaMapper.create :: added
+    added ::= metaMapper.create
   }
+  /**
+   * Marks an item pending for removal
+   */
   def remove(i: T) {
-    removed = i :: removed
+    if(added.exists(i.eq))
+      added = added.filter(i.ne)
+    else if(current.contains(i))
+      removed ::= i
   }
+  /**
+   * Reset the ItemsList from the database: calls refresh, and 'added' and 'removed' are cleared.
+   */
   def reload {
     refresh
     added = Nil
     removed = Nil
   }
+  /**
+   * Reloads the contents of 'current' from the database
+   */
   def refresh {
     current = metaMapper.findAll
   }
+  /**
+   * Sends to the database:
+   *  added is saved
+   *  removed is deleted
+   *  (current - removed) is saved
+   */
   def save {
-    val (toKeep, toDiscard) = added partition {i=>removed.forall(i.ne)}
-    val toSave = current.filter(i=>removed.forall(i.ne)) ++ toKeep
-//    val toDiscard = added filter {i=>removed.exists(i.eq)}
-    val toRemove = removed filter {_.saved_?}
+    val (successAdd, failAdd) = added.partition(_.save)
+    added = failAdd
     
-    val saved = toSave filter {_.validate eq Nil} filter (_.save)
-    val deleted = toRemove filter (_.delete_!)
+    val (successRemove, failRemove) = removed.partition(_.delete_!)
+    current --= successRemove
+    removed = failRemove
     
-    removed --= deleted ++ removed.filter{!_.saved_?}
-    added --= saved ++ toDiscard
-    current = current ++ saved removeDuplicates
+    for(c <- current if c.validate.isEmpty) c.save
     
+    current ++= successAdd
   }
   
-  var sortField: Option[MappedField[_, T]] = None
-  var ascending = true
   
   def sortBy(field: MappedField[_, T]) = (sortField, ascending) match {
     case (Some(f), true) if f eq field =>
@@ -190,15 +233,40 @@ trait ItemsListEditor[T<:Mapper[T]] {
   
   def onInsert: Unit = items.add
   def onRemove(item: T): Unit = items.remove(item)
-  def onSubmit: Unit = items.save
+  def onSubmit: Unit = try {
+    items.save
+  } catch {
+    case e: java.sql.SQLException =>
+      S.error("Not all items could be saved!")
+  }
   def sortFn(f: MappedField[_, T]): ()=>Unit = items.sortFn(f)
   
   val fieldFilter: MappedField[_,T]=>Boolean = (f: MappedField[_,T])=>true
   
   def customBind(item: T): NodeSeq=>NodeSeq = (ns: NodeSeq) => ns
   
-  def edit(xhtml: NodeSeq) = {
-    xhtml.bind("header",
+  def edit(xhtml: NodeSeq): NodeSeq = {
+    def unsavedScript = (<head><script type="text/javascript">
+                           var safeToContinue = false
+                           window.onbeforeunload = function(evt) {{  // thanks Tim!
+                             if(!safeToContinue) {{
+                               var reply = "You have unsaved changes!";
+                               if(typeof evt == 'undefined') evt = window.event;
+                               if(evt) evt.returnValue = reply;
+                               return reply;
+                             }}
+                           }}
+    </script></head>)
+    val noPrompt = "onclick" -> "safeToContinue=true"
+    val optScript = if(
+      (items.added.length + items.removed.length == 0) &&
+        items.current.forall(!_.dirty_?)
+    ) {
+      NodeSeq.Empty
+    } else {
+      unsavedScript
+    }
+    optScript ++ xhtml.bind("header",
          "fields" -> eachField[T](
              items.metaMapper,
              (f: MappedField[_,T]) => Seq(
@@ -208,7 +276,7 @@ trait ItemsListEditor[T<:Mapper[T]] {
          )
     ).bind("table",
          "title" -> title,
-         "insertBtn" -> SHtml.submit(?("Insert"), onInsert _),
+         "insertBtn" -> SHtml.submit(?("Insert"), onInsert _, noPrompt),
          "items" -> {ns:NodeSeq =>
            items.items.flatMap {i =>
              bind("item",
@@ -218,12 +286,12 @@ trait ItemsListEditor[T<:Mapper[T]] {
                     (f: MappedField[_,T]) => Seq("form" -> f.toForm),
                     fieldFilter
                   ),
-                  "removeBtn" -> SHtml.submit(?("Remove"), ()=>onRemove(i)),
-                  "msg" -> (i.validate match {
+                  "removeBtn" -> SHtml.submit(?("Remove"), ()=>onRemove(i), noPrompt),
+                  "msg" -> ((i.validate match {
                     case Nil =>
                       if(!i.saved_?) Text(?("New")) else if(i.dirty_?) Text(?("Unsaved")) else NodeSeq.Empty
                     case errors => (<ul>{errors.flatMap(e => <li>{e.msg}</li>)}</ul>)
-                  })
+                  }))
              )
            } ++ items.removed.flatMap { i =>
              bind("item", customBind(i)(ns),
@@ -237,7 +305,7 @@ trait ItemsListEditor[T<:Mapper[T]] {
              )
            }: NodeSeq
          },
-         "saveBtn" -> SHtml.submit(?("Save"), onSubmit _)
+         "saveBtn" -> SHtml.submit(?("Save"), onSubmit _, noPrompt)
     )
   }
   
