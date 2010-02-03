@@ -247,6 +247,22 @@ object AltXML {
   def toXML(x: Node, pscope: NamespaceBinding, sb: StringBuilder,
             stripComment: Boolean, convertAmp: Boolean): Unit =
   x match {
+    case Text(str) =>
+      val len = str.length
+      var pos = 0
+      while (pos < len) {
+        str.charAt(pos) match {
+        case '<' => sb.append("&lt;")
+	      case '>' => sb.append("&gt;")
+	      case '&' => sb.append("&amp;")
+	      case '"' => sb.append("&quot;")
+          case c if c < ' ' && c != '\n' && c != '\r' && c != '\t' =>
+	      case c   => sb.append(c)
+        }
+
+        pos += 1
+      }
+
     case c: Comment if !stripComment =>
       c.toString(sb)
 
@@ -297,6 +313,22 @@ object AltXML {
             stripComment: Boolean, convertAmp: Boolean,
             ieMode: Boolean): Unit =
   x match {
+    case Text(str) =>
+      val len = str.length
+      var pos = 0
+      while (pos < len) {
+        str.charAt(pos) match {
+        case '<' => sb.append("&lt;")
+	      case '>' => sb.append("&gt;")
+	      case '&' => sb.append("&amp;")
+	      case '"' => sb.append("&quot;")
+          case c if c < ' ' && c != '\n' && c != '\r' && c != '\t' =>
+	      case c   => sb.append(c)
+        }
+
+        pos += 1
+      }
+      
     case c: Comment if !stripComment =>
       c.toString(sb)
 
