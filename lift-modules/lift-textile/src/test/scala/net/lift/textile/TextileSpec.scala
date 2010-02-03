@@ -38,6 +38,26 @@ object TextileSpec extends Specification {
       toHtml("foo __bar__") must ==/(<p>foo <i>bar</i></p> )
     }
 
+    "multi-line div" in {
+      val div =
+"""<div class="vcard">
+   <div class="fn">Joe Doe</div>
+   <div class="org">The Example Company</div>
+   <div class="tel">604-555-1234</div>
+   http://example.com/
+ </div>"""
+
+      val res = toHtml(div)
+
+      res must ==/(<p><div>
+   <div>Joe Doe</div>
+   <div>The Example Company</div>
+   <div>604-555-1234</div>
+   <a href="http://example.com/">http://example.com/</a>
+ </div></p>)
+    }
+
+
 
     "deal with bold and italic foo dog" in {
       toHtml("*foo* dog __bar__") must ==/(<p><strong>foo</strong> dog <i>bar</i></p> )
@@ -63,6 +83,10 @@ object TextileSpec extends Specification {
 
     "Make other things bold" in {
       toHtml("Dude this is **Hello World** kind of stuff") must ==/(<p>Dude this is <b>Hello World</b> kind of stuff</p>)
+    }
+
+    "I am <i>Italic</i> <u>under</u> <strong>strong</strong>" in {
+      toHtml("I am <i>Italic</i> <u>under</u> <strong>strong</strong>") must ==/(<p>I am <i>Italic</i> <u>under</u> <strong>strong</strong></p>)
     }
 
     "I am <em>very</em> serious" in {

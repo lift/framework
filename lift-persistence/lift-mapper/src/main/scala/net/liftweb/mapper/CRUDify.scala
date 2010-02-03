@@ -61,6 +61,12 @@ trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] {
 
   def displayHtml: NodeSeq = Text(calcPrefix.head)
 
+  /**
+  * The fields displayed on the list page.  By default all the fields, but this list
+  * can be shortened.
+  */
+  def fieldsForList: List[MappedField[_, CrudType]] = mappedFieldsForModel
+
   def pageWrapper(body: NodeSeq): NodeSeq =
   <lift:surround with="default" at="content">
     {
@@ -209,6 +215,7 @@ trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] {
 
   def editId = "edit_page"
   def editClass = "edit_class"
+  def editErrorClass = "edit_error_class"
 
   def _editTemplate =
   <lift:crud.edit form="post">
@@ -482,7 +489,7 @@ trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] {
       def doRows(in: NodeSeq): NodeSeq =
       list.take(20).flatMap{
         c =>
-        def doRowItem(in: NodeSeq): NodeSeq = c.formFields.flatMap(
+        def doRowItem(in: NodeSeq): NodeSeq = fieldsForList.map(ffl => getActualField(c, ffl)).flatMap(
           f => bind("crud", in, "value" -> f.asHtml))
 
         bind("crud", in , "row_item" -> doRowItem _,
@@ -518,8 +525,17 @@ trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] {
 
     def loop(html:NodeSeq): NodeSeq = {
       def doFields(html: NodeSeq): NodeSeq =
-      item.flatMapFieldTitleForm((title, _, form) =>
-        bind("crud", html, "name" -> title, "form" -> form))
+      item.flatMapFieldTitleForm2((title, field, form) => {
+	def error: NodeSeq = field.uniqueFieldId match {
+	  case fid @ Full(id) => S.getNotices.filter(_._3 == fid).flatMap(err =>
+	    List(Text(" "), <span class={editErrorClass}>{err._2}</span>) )
+
+	  case _ => NodeSeq.Empty
+	}
+	  
+	
+        bind("crud", html, "name" -> (title ++ error), "form" -> form)
+      })
 
       def doSubmit() = item.validate match {
         case Nil =>

@@ -95,6 +95,8 @@ object MapperRules {
 trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   self: A =>
 
+   case class FieldHolder(name: String, method: Method, field: MappedField[_, A])
+
   type RealType = A
 
   def beforeValidation: List[A => Unit] = Nil
@@ -910,7 +912,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
   private val _mappedFields  = new HashMap[String, Method];
 
-  private[mapper] var mappedFieldList: List[FieldHolder[A]] = Nil; // new Array[Triple[String, Method, MappedField[Any,Any]]]();
+  private[mapper] var mappedFieldList: List[FieldHolder] = Nil; // new Array[Triple[String, Method, MappedField[Any,Any]]]();
 
   private var mappedCallbacks: List[(String, Method)] = Nil
 
@@ -923,7 +925,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   private var indexMap: Box[String] = Empty
 
   this.runSafe {
-    val tArray = new ListBuffer[FieldHolder[A]]
+    val tArray = new ListBuffer[FieldHolder]
 
     def isMagicObject(m: Method) = m.getReturnType.getName.endsWith("$"+m.getName+"$") && m.getParameterTypes.length == 0
     def isMappedField(m: Method) = classOf[MappedField[Nothing, A]].isAssignableFrom(m.getReturnType)
@@ -1031,7 +1033,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       }
     }
 
-    val resArray = new ListBuffer[FieldHolder[A]];
+    val resArray = new ListBuffer[FieldHolder];
 
     fieldOrder.foreach(f => findPos(f).foreach(pos => resArray += tArray.remove(pos)))
 
@@ -1070,7 +1072,15 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   mappedFieldList.filter(_.field.dbDisplay_?).
   flatMap(mft => displayNameToHeaderElement(mft.field.displayName))
 
-  def mappedFields: Seq[BaseMappedField] = mappedFieldList.map(f => f.field)
+  /**
+  * The mapped fields
+  */
+  lazy val mappedFields: Seq[BaseMappedField] = mappedFieldList.map(f => f.field)
+
+  /**
+   * the mapped fields as MappedField rather than BaseMappedField
+   */
+  lazy val mappedFieldsForModel: List[MappedField[_, A]] = mappedFieldList.map(_.field)
 
   /**
    * This function converts an element into the appropriate
@@ -1151,6 +1161,16 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   formFields(toMap).flatMap(field => field.toForm.toList.
                             flatMap(fo => func(field.displayHtml,
                                                field.fieldId, fo)))
+
+/**
+   * flat map the fields titles and forms to generate a list
+   * @param func called with displayHtml, fieldId, form
+   */
+  def flatMapFieldTitleForm2[T](toMap: A,
+                               func: (NodeSeq, MappedField[_, A], NodeSeq) => Seq[T]): List[T] =
+  formFields(toMap).flatMap(field => field.toForm.toList.
+                            flatMap(fo => func(field.displayHtml,
+                                               field, fo)))
 
 
   /**
@@ -1763,7 +1783,6 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
   def addSnippetCallback(obj: A) { obj.save }
 }
 
-case class FieldHolder[T <: Mapper[T]](name: String, method: Method, field: MappedField[_, T])
 
 class KeyObfuscator {
   private var to: Map[String, Map[Any, String]] = Map.empty
