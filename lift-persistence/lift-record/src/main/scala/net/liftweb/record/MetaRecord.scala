@@ -172,17 +172,17 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    */
   def createWithMutableField[FieldType](original: BaseRecord,
                                         field: Field[FieldType, BaseRecord],
-                                        newValue: FieldType): BaseRecord = {
+                                        newValue: Box[FieldType]): BaseRecord = {
     val rec = createRecord
 
     for (f <- fieldList) {
       if (f.name == field.name)
-      fieldByName(f.name, rec).map(recField => recField.set(newValue.asInstanceOf[recField.MyType]) )
+        fieldByName(f.name, rec).map(recField => recField.asInstanceOf[Field[FieldType, BaseRecord]].setBox(newValue))
       else
         fieldByName(f.name, rec).map(recField =>
-            fieldByName(f.name, original).map(m => recField.setFromAny(m.value))
+            fieldByName(f.name, original).map(m => recField.setFromAny(m.valueBox))
           )
-      }
+    }
 
     rec
   }
@@ -207,12 +207,8 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     foreachCallback(inst, _.beforeValidation)
     try{
 	    fieldList.flatMap(holder => inst.fieldByName(holder.name) match {
-          case Full(field) => if (!field.valueCouldNotBeSet) {
-              field.validators.flatMap(_(field.value).map(FieldError(field, _)))
-            } else {
-              FieldError(field, Text(field.noValueErrorMessage)) :: Nil
-            }
-          case _ => Nil
+          case Full(field) => field.validators.flatMap(_(field.valueBox).map(FieldError(field, _))).removeDuplicates
+          case _           => Nil
         })
     } finally {
       foreachCallback(inst, _.afterValidation)

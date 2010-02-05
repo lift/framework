@@ -38,33 +38,38 @@ class StringField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int
     set(value)
   }
 
+  def this(rec: OwnerType, maxLength: Int, value: Box[String]) = {
+    this(rec, maxLength)
+    setBox(value)
+  }
+
   def this(rec: OwnerType, value: String) = {
     this(rec, 100)
     set(value)
   }
 
-  def owner = rec
-
-  def setFromAny(in: Any): Box[String] = {
-    in match {
-      case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny).apply(0)
-      case (s: String) :: _ => Full(set(s))
-      case null => Full(set(null))
-      case s: String => Full(set(s))
-      case Some(s: String) => Full(set(s))
-      case Full(s: String) => Full(set(s))
-      case None | Empty | Failure(_, _, _) => Full(set(null))
-      case o => Full(this.set(o.toString))
-    }
+  def this(rec: OwnerType, value: Box[String]) = {
+    this(rec, 100)
+    setBox(value)
   }
 
-  def setFromString(s: String): Box[String] = Full(set(s))
+  def owner = rec
+
+  def setFromAny(in: Any): Box[String] = in match {
+    case seq: Seq[_] if !seq.isEmpty => setFromAny(seq.first)
+    case _ => genericSetFromAny(in)
+  }
+
+  def setFromString(s: String): Box[String] = s match {
+    case "" if optional_? => setBox(Empty)
+    case _                => setBox(Full(s))
+  }
 
   private def elem = S.fmapFunc(SFuncHolder(this.setFromAny(_))) {
     funcName =>
     <input type="text" maxlength={maxLength.toString}
       name={funcName}
-      value={value match {case null => "" case s => s.toString}}
+      value={valueBox openOr ""}
       tabindex={tabIndex toString}/>
   }
 
@@ -92,27 +97,21 @@ class StringField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int
   /**
    * Make sure the field matches a regular expression
    */
-  def valRegex(pat: Pattern, msg: => String)(value: String): Box[Node] = pat.matcher(value).matches match {
-    case true => Empty
-    case false => Full(Text(msg))
-  }
+  def valRegex(pat: Pattern, msg: => String)(valueBox: Box[String]): Box[Node] =
+    valueBox flatMap {
+      s => pat.matcher(s).matches match {
+        case true => Empty
+        case false => Full(Text(msg))
+      }
+    }
 
-  final def toUpper(in: String): String = in match {
-    case null => null
-    case s => s.toUpperCase
-  }
+  final def toUpper(in: Box[String]): Box[String] = in.map(_.toUpperCase)
 
-  final def trim(in: String): String = in match {
-    case null => null
-    case s => s.trim
-  }
+  final def trim(in: Box[String]): Box[String] = in.map(_.trim)
 
-  final def notNull(in: String): String = in match {
-    case null => ""
-    case s => s
-  }
+  final def notNull(in: Box[String]): Box[String] = in or Full("")
 
-  def asJs = Str(value)
+  def asJs = valueBox.map(Str) openOr JsNull
 
 }
 

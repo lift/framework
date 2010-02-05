@@ -27,47 +27,21 @@ import S._
 
 class DoubleField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends NumericField[Double, OwnerType] {
 
+  def this(rec: OwnerType, value: Double) = {
+    this(rec)
+    set(value)
+  }
+
+  def this(rec: OwnerType, value: Box[Double]) = {
+    this(rec)
+    setBox(value)
+  }
+
   def owner = rec
 
-  private def toDouble(in: Any): Double = {
-    in match {
-      case null => 0.0
-      case i: Int => i
-      case n: Long => n
-      case n : Number => n.doubleValue
-      case (n: Number) :: _ => n.doubleValue
-      case Some(n) => toDouble(n)
-      case None => 0.0
-      case s: String => s.toDouble
-      case x :: xs => toDouble(x)
-      case o => toDouble(o.toString)
-	}
-  }
+  def setFromAny(in: Any): Box[Double] = setNumericFromAny(in, _.doubleValue)
 
-  /**
-   * Sets the field value from an Any
-   */
-  def setFromAny(in: Any): Box[Double] = {
-    in match {
-      case n: Double => Full(this.set(n))
-      case n: Number => Full(this.set(n.doubleValue))
-      case (n: Number) :: _ => Full(this.set(n.doubleValue))
-      case Some(n: Number) => Full(this.set(n.doubleValue))
-      case None => Full(this.set(0.0))
-      case (s: String) :: _ => setFromString(s)
-      case null => Full(this.set(0L))
-      case s: String => setFromString(s)
-      case o => setFromString(o.toString)
-    }
-  }
-
-  def setFromString(s: String): Box[Double] = {
-    try{
-      Full(set(java.lang.Double.parseDouble(s)));
-    } catch {
-      case e: Exception => valueCouldNotBeSet = true; Empty
-    }
-  }
+  def setFromString(s: String): Box[Double] = setBox(tryo(java.lang.Double.parseDouble(s)))
 
   def defaultValue = 0.0
 

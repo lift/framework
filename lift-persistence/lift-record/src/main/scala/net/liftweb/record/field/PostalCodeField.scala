@@ -24,6 +24,7 @@ import _root_.net.liftweb.common._
 import _root_.net.liftweb.mapper.{Safe}
 import _root_.net.liftweb.http.{S}
 import _root_.java.util.regex._
+import _root_.java.util.regex.{Pattern => RegexPattern}
 import Helpers._
 import S._
 
@@ -31,20 +32,20 @@ class PostalCodeField[OwnerType <: Record[OwnerType]](rec: OwnerType, country: C
 
   override def setFilter = notNull _ :: toUpper _ :: trim _ :: super.setFilter
 
-  private def genericCheck(zip: String): Box[Node] = {
-    zip match {
+  private def genericCheck(zip: Box[String]): Box[Node] = {
+    zip flatMap {
       case null => Full(Text(S.??("invalid.postal.code")))
       case s if s.length < 3 => Full(Text(S.??("invalid.postal.code")))
       case _ => Empty
     }
   }
 
-  def validate(in : String) = country.value match {
-    case Countries.USA => valRegex(_root_.java.util.regex.Pattern.compile("[0-9]{5}(\\-[0-9]{4})?"), S.??("invalid.zip.code"))(value)
-    case Countries.Sweden => valRegex(_root_.java.util.regex.Pattern.compile("[0-9]{3}[ ]?[0-9]{2}"), S.??("invalid.postal.code"))(value)
-    case Countries.Australia => valRegex(_root_.java.util.regex.Pattern.compile("(0?|[1-9])[0-9]{3}"), S.??("invalid.postal.code"))(value)
-    case Countries.Canada => valRegex(_root_.java.util.regex.Pattern.compile("[A-Z][0-9][A-Z][ ][0-9][A-Z][0-9]"), S.??("invalid.postal.code"))(value)
-    case _ => genericCheck(country.value.toString)
+  def validate(in : Box[String]) = country.value match {
+    case Countries.USA       => valRegex(RegexPattern.compile("[0-9]{5}(\\-[0-9]{4})?"), S.??("invalid.zip.code"))(in)
+    case Countries.Sweden    => valRegex(RegexPattern.compile("[0-9]{3}[ ]?[0-9]{2}"), S.??("invalid.postal.code"))(in)
+    case Countries.Australia => valRegex(RegexPattern.compile("(0?|[1-9])[0-9]{3}"), S.??("invalid.postal.code"))(in)
+    case Countries.Canada    => valRegex(RegexPattern.compile("[A-Z][0-9][A-Z][ ][0-9][A-Z][0-9]"), S.??("invalid.postal.code"))(in)
+    case _ => genericCheck(in)
   }
 
   override def validators = validate _ :: Nil
