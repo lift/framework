@@ -22,16 +22,35 @@ import _root_.net.liftweb.http._
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.widgets.autocomplete._
+import _root_.net.liftweb.util.Helpers._
+import _root_.net.liftweb.http.{S, RequestVar}
 
 object posted extends RequestVar[Box[String]](Empty)
 
 class AutoCompleteDemo {
 
-  def render(xhtml: NodeSeq) :NodeSeq = {
-    AutoComplete("", (current, limit) => {
+  def display(xhtml: NodeSeq) :NodeSeq = {
+    
+    object value1 extends RequestVar("")
+    object value2 extends RequestVar("")
+    
+    def autoCompleteData(current: String, limit: Int) :Seq[String] = {
       println("current = " + current)
       (1 to limit).map(v => "Value_" + v)
-    }, s =>  posted(Full(s))) ++ (posted.map(t => <p>{"Submitted " + t}</p>) openOr Text(""))
+    }
+    
+    def autocompleteSubmit(in: String): Unit = {
+      value2(in)
+    }
+    
+    val myOptions :List[(String,String)] = ("'width'","300") :: Nil
+    bind("autocomplete",xhtml,
+         "1" -> AutoComplete("", autoCompleteData(_,_), in => value1(in)), 
+         "2" -> AutoComplete("", autoCompleteData(_,_), autocompleteSubmit(_), myOptions),
+         "val1" -> Text(value1.is),
+         "val2" -> Text(value2.is))
+    
+    
   }
 
 }

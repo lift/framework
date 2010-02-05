@@ -35,10 +35,21 @@ object AutoComplete {
             options: (String, Int) => Seq[String],
             onSubmit: String => Unit, 
             attrs: (String, String)*) = new AutoComplete().render(start, options, onSubmit, attrs:_*)
+  
+  def apply(start: String, 
+            options: (String, Int) => Seq[String],
+            onSubmit: String => Unit, 
+            jsonOptions: List[(String,String)],
+            attrs: (String, String)*) = new AutoComplete().render(start, options, onSubmit, jsonOptions ,attrs:_*)
 
   def autocompleteObj[T](options: Seq[(T, String)], 
                          default: Box[T],
                          onSubmit: T => Unit): Elem = new AutoComplete().autocompleteObj(options, default, onSubmit)
+
+  def autocompleteObj[T](options: Seq[(T, String)], 
+                          default: Box[T],
+                          jsonOptions: List[(String,String)],
+                          onSubmit: T => Unit): Elem = new AutoComplete().autocompleteObj(options, default, jsonOptions, onSubmit)
 
     
     
@@ -63,14 +74,25 @@ class AutoComplete {
   def autocompleteObj[T](options: Seq[(T, String)], 
                          default: Box[T],
                          onSubmit: T => Unit): Elem = {
+     val jsonOptions :List[(String,String)] = List()
+     autocompleteObj(options, default, jsonOptions, onSubmit)
+  }
+  
+  /**
+   * Create an autocomplete form based on a sequence.
+   */
+   def autocompleteObj[T](options: Seq[(T, String)], 
+                          default: Box[T],
+                          jsonOptions: List[(String,String)],
+                          onSubmit: T => Unit): Elem = {
     val (nonces, defaultNonce, secureOnSubmit) = secureOptions(options, default, onSubmit)
     val defaultString = default.flatMap(d => options.find(_._1 == d).map(_._2))
 
-    autocomplete_*(nonces, defaultString, defaultNonce, secureOnSubmit)
+    autocomplete_*(nonces, defaultString, defaultNonce, secureOnSubmit, jsonOptions)
   }
 
   private def autocomplete_*(options: Seq[(String, String)], default: Box[String],
-                     defaultNonce: Box[String], onSubmit: AFuncHolder): Elem = {
+                     defaultNonce: Box[String], onSubmit: AFuncHolder, jsonOptions: List[(String,String)]): Elem = {
     val id = Helpers.nextFuncName
 
     fmapFunc(onSubmit){hidden =>
@@ -79,11 +101,23 @@ class AutoComplete {
         case (nonce, name) => JsObj("name" -> name, "nonce" -> nonce)
       } :_*)
       
-      val autocompleteOptions = JsRaw("""{
-      minChars: 0,
-      matchContains: true,
-      formatItem: function(row, i, max) { return row.name; },
-    }""")
+    /* merge the options that the user wants */
+      val jqOptions =  ("minChars","0") ::
+                       ("matchContains","true") ::
+                       ("formatItem","function(row, i, max) { return row.name; }") ::
+                       Nil ::: jsonOptions
+      /* jsonify to options */
+      var counter = 0
+      var isLast = false
+      var json = "{"
+      jqOptions.foreach{ pair: Pair[String,String] =>
+          counter += 1
+          isLast = (counter == jqOptions.size)
+          json += pair._1 + ": " + pair._2
+          if (!isLast) json += "," }
+      json += "}"
+
+      val autocompleteOptions = JsRaw(json)
 
       val onLoad = JsRaw("""
       jQuery(document).ready(function(){
@@ -114,6 +148,7 @@ class AutoComplete {
     (nonces, defaultNonce, SFuncHolder(process))
   }
   
+  
   /**
    * Render a text field with Ajax autocomplete support
    * 
@@ -121,8 +156,29 @@ class AutoComplete {
    * @param option - the function to be called when user is typing text. The text and th options limit is provided to this functions
    * @param attrs - the attributes that can be added to the input text field 
    */
-  def render(start: String, options: (String, Int) => Seq[String],
-             onSubmit: String => Unit, attrs: (String, String)*): Elem = {
+  def render(start: String, 
+             options: (String, Int) => Seq[String], 
+             onSubmit: String => Unit, 
+             attrs: (String, String)*): Elem = {
+    
+    val jsonOptions :List[(String,String)] = List()
+    render(start, options, onSubmit, jsonOptions, attrs:_*)
+    
+  }
+  
+  /**
+   * Render a text field with Ajax autocomplete support
+   * 
+   * @param start - the initial input string
+   * @param option - the function to be called when user is typing text. The text and th options limit is provided to this functions
+   * @param attrs - the attributes that can be added to the input text field 
+   * @param jsonOptions - a list of pairs that will be send along to the jQuery().AutoComplete call (for customization purposes)
+   */
+   def render(start: String, 
+              options: (String, Int) => Seq[String], 
+              onSubmit: String => Unit, 
+              jsonOptions: List[(String,String)], 
+              attrs: (String, String)*): Elem = {
     
     val f = (ignore: String) => {
       val q = S.param("q").openOr("")
@@ -137,10 +193,22 @@ class AutoComplete {
       val id = Helpers.nextFuncName
       fmapFunc(SFuncHolder(onSubmit)){hidden =>
 
-      val autocompleteOptions = JsRaw("""{
-        minChars: 0,
-        matchContains: true
-      }""")
+     /* merge the options that the user wants */
+      val jqOptions =  ("minChars","0") ::
+                       ("matchContains","true") ::
+                       Nil ::: jsonOptions
+      /* jsonify to options */
+      var counter = 0
+      var isLast = false
+      var json = "{"
+      jqOptions.foreach{ pair: Pair[String,String] =>
+          counter += 1
+          isLast = (counter == jqOptions.size)
+          json += pair._1 + ": " + pair._2
+          if (!isLast) json += "," }
+      json += "}"
+
+      val autocompleteOptions = JsRaw(json)
     
       val onLoad = JsRaw("""
       jQuery(document).ready(function(){
