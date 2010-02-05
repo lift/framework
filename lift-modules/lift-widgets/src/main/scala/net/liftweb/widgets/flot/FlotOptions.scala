@@ -173,6 +173,7 @@ trait FlotOptions extends BaseFlotOptions {
   def modeSelection: Box[String] = Empty
   def shadowSize: Box[Int] = Empty
   def grid: Box[FlotGridOptions] = Empty
+  def series: Box[Map[String, JsExp]] = Empty
 
   def buildOptions =
   List(
@@ -183,7 +184,8 @@ trait FlotOptions extends BaseFlotOptions {
     yaxis.map(v => ("yaxis", v.asJsObj)),
     modeSelection.map(v => ("selection", JsObj("mode" -> v))),
     c("shadowSize", shadowSize),
-    c("grid", grid)
+    c("grid", grid),
+    series.map(v => ("series", JsObj(v.toSeq: _*)))
   )
 
 }
