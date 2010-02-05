@@ -165,13 +165,13 @@ trait FlotGridOptions extends BaseFlotOptions {
  */
 
 trait FlotOptions extends BaseFlotOptions {
-  def lines: Box[FlotLinesOptions] = Empty
-  def points: Box[FlotPointsOptions] = Empty
+  @deprecated def lines: Box[FlotLinesOptions] = Empty
+  @deprecated def points: Box[FlotPointsOptions] = Empty
   def legend: Box[FlotLegendOptions] = Empty
   def xaxis: Box[FlotAxisOptions] = Empty
   def yaxis: Box[FlotAxisOptions] = Empty
   def modeSelection: Box[String] = Empty
-  def shadowSize: Box[Int] = Empty
+  @deprecated def shadowSize: Box[Int] = Empty
   def grid: Box[FlotGridOptions] = Empty
   def series: Box[Map[String, JsExp]] = Empty
 
