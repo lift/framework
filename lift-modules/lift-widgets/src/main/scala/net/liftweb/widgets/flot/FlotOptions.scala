@@ -140,6 +140,7 @@ trait FlotGridOptions extends BaseFlotOptions {
   def coloredAreasColor: Box[String] = Empty
   def borderWidth: Box[Int] = Empty
   def clickable: Box[Boolean] = Empty
+  def hoverable: Box[Boolean] = Empty
   def coloredAreas: Box[String] = Empty // only (fn: plot area -> array of areas)
 
   def buildOptions =
@@ -150,6 +151,7 @@ trait FlotGridOptions extends BaseFlotOptions {
        coloredAreasColor.map(v => ("coloredAreasColor", v)),
        borderWidth.map(v => ("borderWidth", v)),
        clickable.map(v => ("clickable", v)),
+       hoverable.map(v => ("hoverable", v)),
        coloredAreas.map(v => ("coloredAreas", v))
   )
 
