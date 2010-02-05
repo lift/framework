@@ -49,19 +49,6 @@ import S._
 class DecimalField[OwnerType <: Record[OwnerType]](rec: OwnerType, val context : MathContext, val scale : Int) extends NumericField[BigDecimal, OwnerType] {
 
   /**
-   * Constructs a DecimalField with the specified initial value and context.
-   * The scale is taken from the initial value.
-   *
-   * @param rec The Record that owns this field
-   * @param value The initial value
-   * @param context The MathContext that controls precision and rounding
-   */
-  def this(rec : OwnerType, value : BigDecimal, context : MathContext) = {
-    this(rec, context, value.scale)
-    setFromAny(value)
-  }
-
-  /**
    * Constructs a DecimalField with the specified initial value. The context
    * is set to MathContext.UNLIMITED (see note above about default precision).
    * The scale is taken from the initial value.
@@ -71,7 +58,48 @@ class DecimalField[OwnerType <: Record[OwnerType]](rec: OwnerType, val context :
    */
   def this(rec : OwnerType, value : BigDecimal) = {
     this(rec, MathContext.UNLIMITED, value.scale)
-    setFromAny(value)
+    set(value)
+  }
+
+  /**
+   * Constructs a DecimalField with the specified initial value. The context
+   * is set to MathContext.UNLIMITED (see note above about default precision).
+   * The scale is taken from the initial value.
+   *
+   * @param rec The Record that owns this field
+   * @param value The initial value
+   * @param scale the scale of the decimal field, since there might be no value
+   */
+  def this(rec : OwnerType, value : Box[BigDecimal], scale : Int) = {
+    this(rec, MathContext.UNLIMITED, scale)
+    setBox(value)
+  }
+
+  /**
+   * Constructs a DecimalField with the specified initial value and context.
+   * The scale is taken from the initial value.
+   *
+   * @param rec The Record that owns this field
+   * @param value The initial value
+   * @param context The MathContext that controls precision and rounding
+   */
+  def this(rec : OwnerType, value : BigDecimal, context : MathContext) = {
+    this(rec, context, value.scale)
+    set(value)
+  }
+
+  /**
+   * Constructs a DecimalField with the specified initial value and context.
+   * The scale is taken from the initial value.
+   *
+   * @param rec The Record that owns this field
+   * @param value The initial value
+   * @param scale the scale of the decimal field, since there might be no value
+   * @param context The MathContext that controls precision and rounding
+   */
+  def this(rec : OwnerType, value : Box[BigDecimal], scale : Int, context : MathContext) = {
+    this(rec, context, scale)
+    setBox(value)
   }
 
   private val zero = BigDecimal("0")
@@ -80,25 +108,11 @@ class DecimalField[OwnerType <: Record[OwnerType]](rec: OwnerType, val context :
 
   def owner = rec
 
-  def setFromAny (in : Any) : Box[BigDecimal] =
-    in match {
-      case n :: _ => setFromString(n.toString)
-      case Some(n) => setFromString(n.toString)
-      case Full(n) => setFromString(n.toString)
-      case None | Empty | Failure(_, _, _) | null => setFromString("0")
-      case n => setFromString(n.toString)
-    }
+  def setFromAny(in : Any): Box[BigDecimal] = setNumericFromAny(in, n => BigDecimal(n.toString))
 
-  def setFromString (s : String) : Box[BigDecimal] = {
-    try {
-      Full(this.setAll(BigDecimal(s)))
-    } catch {
-      case e: Exception => valueCouldNotBeSet = true; Empty
-    }
-  }
+  def setFromString (s : String) : Box[BigDecimal] = setBox(tryo(BigDecimal(s)))
 
-  /** Set the value along with proper scale, precision, and rounding */
-  protected def setAll (in : BigDecimal) = this.set(new BigDecimal(in.bigDecimal.setScale(scale, context.getRoundingMode)))
+  def set_!(in: BigDecimal): BigDecimal = new BigDecimal(in.bigDecimal.setScale(scale, context.getRoundingMode))
 }
 
 import _root_.java.sql.{ResultSet, Types}

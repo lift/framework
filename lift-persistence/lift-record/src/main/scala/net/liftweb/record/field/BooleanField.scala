@@ -35,34 +35,18 @@ class BooleanField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field
     set(value)
   }
 
-  /**
-   * Sets the field value from an Any
-   */
-  def setFromAny(in: Any): Box[Boolean] = {
-    in match {
-      case b: Boolean => Full(this.set(b))
-      case (b: Boolean) :: _ => Full(this.set(b))
-      case Some(b: Boolean) => Full(this.set(b))
-      case Full(b: Boolean) => Full(this.set(b))
-      case Empty | Failure(_, _, _) | None => Full(this.set(false))
-      case (s: String) :: _ => Full(this.set(toBoolean(s)))
-      case null => Full(this.set(false))
-      case s: String => Full(this.set(toBoolean(s)))
-      case o => Full(this.set(toBoolean(o)))
-    }
+  def this(rec: OwnerType, value: Box[Boolean]) = {
+    this(rec)
+    setBox(value)
   }
 
-  def setFromString(s: String): Box[Boolean] = {
-    try{
-      Full(set(java.lang.Boolean.parseBoolean(s)));
-    } catch {
-      case e: Exception => Empty
-    }
-  }
+  def setFromAny(in: Any): Box[Boolean] = genericSetFromAny(in)
+  def setFromString(s: String): Box[Boolean] = setBox(tryo(toBoolean(s)))
 
   private def elem = SHtml.checkbox(value, this.set _, "tabIndex" -> tabIndex.toString)
 
   def toForm = {
+    // FIXME? no support for optional_?
     //var el = elem
     uniqueFieldId match {
       case Full(id) =>
@@ -86,7 +70,7 @@ class BooleanField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field
 
   def defaultValue = false
 
-  def asJs: JsExp = value
+  def asJs: JsExp = valueBox.map(boolToJsExp) openOr JsNull
 
 }
 
