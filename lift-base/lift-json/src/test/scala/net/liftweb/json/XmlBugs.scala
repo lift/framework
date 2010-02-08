@@ -36,6 +36,17 @@ object XmlBugs extends Specification {
     val json = toJson(<tips><group type="Nearby"><tip><id>10</id></tip></group></tips>)
     Printer.compact(render(json)) mustEqual """{"tips":{"group":{"type":"Nearby","tip":{"id":"10"}}}}"""
   }
+
+  "Jono's XML with attributes parses correctly" in {
+    val example1 = <word term="example" self="http://localhost:8080/word/example" available="true">content</word>
+    val expected1 = """{"word":"content","self":"http://localhost:8080/word/example","term":"example","available":"true"}"""
+
+    val example2 = <word term="example" self="http://localhost:8080/word/example" available="true"></word>
+    val expected2 = """{"word":null,"self":"http://localhost:8080/word/example","term":"example","available":"true"}"""
+
+    Printer.compact(render(toJson(example1))) mustEqual expected1
+    Printer.compact(render(toJson(example2))) mustEqual expected2
+  }
 }
 
 }

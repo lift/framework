@@ -574,20 +574,27 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     }
   }
 
-  protected def decodeFromJSON_!(json: JsonAST.JObject): A = {
+  /**
+   * Decode the fields from a JSON Object.  Should the fields be marked as dirty?
+   */
+  protected def decodeFromJSON_!(json: JsonAST.JObject, markFieldsAsDirty: Boolean): A = {
     val ret: A = createInstance
     import JsonAST._
 
     ret.runSafe {
       for {
-	field <- json.obj
-	JField("$persisted", JBool(per)) <- field
+        field <- json.obj
+        JField("$persisted", JBool(per)) <- field
       } ret.persisted_? = per
 
       for {
-	field <- json.obj
-	meth <- _mappedFields.get(field.name)
-      } ??(meth, ret).setFromAny(field.value)
+        field <- json.obj
+        meth <- _mappedFields.get(field.name)
+      } {
+        val f = ??(meth, ret)
+        f.setFromAny(field.value)
+        if (!markFieldsAsDirty) f.resetDirty
+      }
     }
 
     ret

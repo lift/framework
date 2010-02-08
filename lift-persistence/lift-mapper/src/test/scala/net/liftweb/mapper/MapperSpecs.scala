@@ -388,7 +388,7 @@ object SampleModel extends SampleModel with KeyedMetaMapper[Long, SampleModel] {
   override def dbAddTable = Full(populate _)
 
   def encodeAsJson(in: SampleModel): JsonAST.JObject = encodeAsJSON_!(in)
-  def buildFromJson(json: JsonAST.JObject): SampleModel = decodeFromJSON_!(json)
+  def buildFromJson(json: JsonAST.JObject): SampleModel = decodeFromJSON_!(json, false)
 
   private def populate {
     create.firstName("Elwood").save

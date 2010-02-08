@@ -123,7 +123,7 @@ object Xml {
         } else nodes.toList.flatMap(n => build(n, Some(nameOf(n)), buildAttrs(n)))
     }
     
-    (xml map { n => makeObj(nameOf(n), build(n, None, Nil)) }).toList match {
+    (xml map { n => makeObj(nameOf(n), build(n, None, buildAttrs(n))) }).toList match {
       case List(x) => x
       case x => JArray(x)
     }

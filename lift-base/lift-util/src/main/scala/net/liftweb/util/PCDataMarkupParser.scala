@@ -247,6 +247,8 @@ object AltXML {
   def toXML(x: Node, pscope: NamespaceBinding, sb: StringBuilder,
             stripComment: Boolean, convertAmp: Boolean): Unit =
   x match {
+    case Text(str) => escape(str, sb)
+
     case c: Comment if !stripComment =>
       c.buildString(sb)
 
@@ -285,6 +287,25 @@ object AltXML {
     case _ => // dunno what it is, but ignore it
   }
 
+  private def escape(str: String, sb: StringBuilder) {
+    val len = str.length
+    var pos = 0
+    while (pos < len) {
+      str.charAt(pos) match {
+        case '<' => sb.append("&lt;")
+        case '>' => sb.append("&gt;")
+        case '&' => sb.append("&amp;")
+        case '"' => sb.append("&quot;")
+        case '\n' => sb.append('\n')
+        case '\r' => sb.append('\r')
+        case '\t' => sb.append('\t')
+        case c   => if (c >= ' ' && c != '\u0085' && !(c >= '\u007f' && c <= '\u0095')) sb.append(c)
+      }
+
+      pos += 1
+    }
+  }
+
   /**
    * Appends a tree to the given stringbuffer within given namespace scope.
    *
@@ -297,6 +318,8 @@ object AltXML {
             stripComment: Boolean, convertAmp: Boolean,
             ieMode: Boolean): Unit =
   x match {
+    case Text(str) => escape(str, sb)
+      
     case c: Comment if !stripComment =>
       c.buildString(sb)
 
