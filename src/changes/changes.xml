@@ -38,18 +38,22 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
-      <action dev="jonifreeman" type="enhancement" issue="303" system="github">
-       JSON object can be extracted into scala.Map (and scala.Map can be serialized as JSON object). Recursive types can be serialized.
+      <action dev="jonifreeman" type="update" issue="303" system="github">
+        JSON object can be extracted into scala.Map (and scala.Map can be serialized as JSON object). Recursive types
+        can be serialized.
       </action>
       <action dev="jonifreeman" type="fix" issue="279" system="github">
-       Multidimensional arrays supported in JSON serialization and extraction
+        Multidimensional arrays supported in JSON serialization and extraction
       </action>
-      <action dev="jonifreeman" type="enhancement" issue="" system="github">
-       JSON pull parser API
+      <action dev="jonifreeman" type="update" issue="" system="github">
+        JSON pull parser API
       </action>
+    </release>
+
+    <release version="2.0-M1" date="2010-01-13" description="Lift 2.0 Milestone 1">
       <action dev="boisvert" type="fix" issue="273" system="github">
-       Changed LiftRules.getResourceAsStream() to doWithResource() to ensure InputStream is always closed
-       Removed duplicate LiftRules.finder()
+        Changed LiftRules.getResourceAsStream() to doWithResource() to ensure InputStream is always closed
+        Removed duplicate LiftRules.finder()
       </action>
       <action dev="dchenbecker" type="fix" issue="232" system="github">
         Added logging of bad prepared statements to help diagnose things.
@@ -57,43 +61,43 @@
       <action dev="dchenbecker" type="fix" issue="231" system="github">
         Fixed Mapper to properly deal with generated values
       </action>
-      <action dev="dpp" type="enhancement" issue="268" system="github">
+      <action dev="dpp" type="update" issue="268" system="github">
         Misc sitemap enhancements
       </action>
       <action dev="dpp" type="fix" issue="267" system="github">
-	Lift explicitly closed streams rather than waiting for garbage collection
+        Lift explicitly closed streams rather than waiting for garbage collection
       </action>
       <action dev="dpp" type="fix" issue="266" system="github">
         Jetty restarts do not cause exceptions to be thrown
       </action>
-      <action dev="dpp" type="enhancement" issue="262" system="github">
+      <action dev="dpp" type="update" issue="262" system="github">
         lift-json's Jsvalue may be used with JsonResponse
       </action>
       <action dev="dpp" type="fix" issue="248" system="github">
         Fixed NPE problems in Mapper to Json
       </action>
-      <action dev="dpp" type="enhancement" issue="247" system="github">
+      <action dev="dpp" type="update" issue="247" system="github">
         Better handling of flot widget in Comet
       </action>
       <action dev="dpp" type="fix" issue="244" system="github">
-	Fixed misc Textile bugs
+        Fixed misc Textile bugs
       </action>
-      <action dev="dpp" type="enhancement" issue="243" system="github">
+      <action dev="dpp" type="update" issue="243" system="github">
         Enhanced stateful rewrite
       </action>
-      <action dev="dpp" type="enhancement" issue="242" system="github">
+      <action dev="dpp" type="update" issue="242" system="github">
         Added post-commit hook to DB
       </action>
-      <action dev="dpp" type="enhancement" issue="241" system="github">
+      <action dev="dpp" type="update" issue="241" system="github">
         Wizard supports file upload forms
       </action>
-      <action dev="dpp" type="enhancement" issue="240" system="github">
+      <action dev="dpp" type="update" issue="240" system="github">
         Enhanced TestCond widget
       </action>
       <action dev="dpp" type="fix" issue="239" system="github">
         304 responses no longer contain content type
       </action>
-      <action dev="dpp" type="enhancement" issue="236" system="github">
+      <action dev="dpp" type="update" issue="236" system="github">
         Enhanced connection pool logic
       </action>
       <action dev="dpp" type="fix" issue="234" system="github">
@@ -105,15 +109,17 @@
       <action dev="dpp" type="fix" issue="222" system="github">
         Fixed synchronization issues with Vars
       </action>
-      <action dev="dpp" type="enhancement" issue="276" system="github">
+      <action dev="dpp" type="update" issue="276" system="github">
         OAuth support (thanks to the FourSquare guys)
       </action>
       <action dev="dpp" type="fix" issue="275" system="github">
-	File handles released correctly in Jetty
+        File handles released correctly in Jetty
       </action>
-      <action dev="dpp" type="enhancement" issue="250" system="github">
-        Extracted "Screen" code from Wizard for stand-alone
-	declarative input screens
+      <action dev="dpp" type="update" issue="250" system="github">
+        Extracted "Screen" code from Wizard for stand-alone declarative input screens
+      </action>
+      <action dev="indrajitr" type="update">
+        Restructure project (segregated into three logical projects: framework, archetypes, examples)
       </action>
     </release>
 
