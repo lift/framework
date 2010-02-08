@@ -29,6 +29,51 @@ import JsonAST.JObject
 trait Formats {
   val dateFormat: DateFormat
   val typeHints: TypeHints = NoTypeHints
+  
+  def components: List[Formats] = List(this)
+  
+  def + (formats: Formats): Formats = CompositeFormats(formats :: components)
+  
+  def + (typeHints: TypeHints): Formats = CompositeFormats((new DefaultFormats{}.withHints(typeHints)) :: components)
+  
+  private[Formats] case class CompositeFormats(override val components: List[Formats]) extends Formats {
+    lazy val dateFormat = components.head.dateFormat
+
+    override val typeHints: TypeHints = CompositeTypeHints(components.map(_.typeHints))
+  }
+
+  private[Formats] case class CompositeTypeHints(components: List[TypeHints]) extends TypeHints {
+    val hints: List[Class[_]] = components.flatMap(_.hints)
+
+    /**
+     * Chooses most specific class.
+     */
+    def hintFor(clazz: Class[_]): String = components.filter(_.containsHint_?(clazz)).
+      map(th => (th.hintFor(clazz), th.classFor(th.hintFor(clazz)).getOrElse(error("hintFor/classFor not invertible for " + th)))).sort((x, y) => delta(x._2, clazz) - delta(y._2, clazz) < 0).head._1
+
+    def classFor(hint: String): Option[Class[_]] = hints find (hintFor(_) == hint)
+
+    override def deserialize: PartialFunction[(String, JObject), Any] = components.foldLeft[PartialFunction[(String, JObject),Any]](Map()) {
+      (result, cur) => result.orElse(cur.deserialize)
+    }
+
+    override def serialize: PartialFunction[Any, JObject] = components.foldLeft[PartialFunction[Any, JObject]](Map()) {
+      (result, cur) => result.orElse(cur.serialize)
+    }
+    
+    private def delta(class1: Class[_], class2: Class[_]): Int = {
+      if (class1 == class2) 0
+      else if (class1.getInterfaces.contains(class2)) 0
+      else if (class2.getInterfaces.contains(class1)) 0
+      else if (class1.isAssignableFrom(class2)) {
+        1 + delta(class1, class2.getSuperclass)
+      }
+      else if (class2.isAssignableFrom(class1)) {
+        1 + delta(class1.getSuperclass, class2)
+      }
+      else error("Don't call delta unless one class is assignable from the other")
+    }
+  }
 }
 
 /** Conversions between String and Date.
