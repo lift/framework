@@ -20,6 +20,7 @@ package facebook {
 
 import _root_.java.net.{HttpURLConnection, URL, URLEncoder}
 import _root_.java.io.DataOutputStream
+import _root_.java.io.InputStream
 import _root_.java.util.Date
 
 import _root_.scala.xml.{Node, XML, NodeSeq}
@@ -60,7 +61,7 @@ object FacebookClient {
     md.digest((theStr).getBytes).map(byteToHex(_)).mkString("")
   }
 
-  private[facebook] def call(params: List[(String, Any)]): Node = {
+  private[facebook] def call[T](params: List[(String, Any)], parser:InputStream => T): T = {
     val theParams = params.map{case (name, value) => urlEncode(name)+"="+urlEncode(value.toString)}.mkString("&")
 
     SERVER_URL.openConnection match {
@@ -70,10 +71,13 @@ object FacebookClient {
         conn.connect
         conn.getOutputStream.write(theParams.getBytes())
 
-        XML.load(conn.getInputStream())
+        parser(conn.getInputStream())
       }
     }
   }
+  private[facebook] def call(params: List[(String, Any)]): Node = call(params, xmlParser)
+  
+  def xmlParser(is:InputStream):Node = XML.load(is)
 
   private[facebook] def buildParams(methodName: String, params: FacebookParam*): List[(String, Any)] = {
     val allParams: List[(String, Any)] =
@@ -94,11 +98,11 @@ object FacebookClient {
   def !?(meth: SessionlessFacebookMethod): Node =
     callMethod(meth)
 
-  def fromSession(session: FacebookSession) : FacebookClient = {
-    new FacebookClient(session)
+  def fromSession(session: FacebookSession) : FacebookClient[Node] = {
+    new FacebookClient(session, xmlParser)
   }
 
-  def fromAuthToken(authToken: String) : Option[FacebookClient] = {
+  def fromAuthToken(authToken: String) : Option[FacebookClient[Node]] = {
     FacebookSession.fromAuthToken(authToken).map(fromSession)
   }
 
@@ -108,7 +112,7 @@ object FacebookClient {
     def uid: Option[String]
   }
 
-  def fromState(implicit state: State) : Option[FacebookClient] = {
+  def fromState(implicit state: State) : Option[FacebookClient[Node]] = {
     for (
       key <- state.sessionKey;
       exp <- state.expiration;
@@ -117,13 +121,19 @@ object FacebookClient {
   }
 }
 
-class FacebookClient(val apiKey: String, val secret: String, val session: FacebookSession) {
+object FacebookFormat extends Enumeration("XML", "JSON"){
+  val xml, json = Value
+}
+
+class FacebookClient[T](val apiKey: String, val secret: String, val session: FacebookSession, parser: InputStream=>T, format: FacebookFormat.Value) {
   import FacebookRestApi._
   import FacebookClient._
 
-  def this(session: FacebookSession) = this(FacebookRestApi.apiKey, FacebookRestApi.secret, session)
+  def this(session: FacebookSession, parser:InputStream => T) = this(FacebookRestApi.apiKey, FacebookRestApi.secret, session, parser, FacebookFormat.xml)
+  
+  def this(apiKey:String, secret: String, session: FacebookSession, parser: InputStream => T) = this(apiKey, secret, session, parser, FacebookFormat.xml)
 
-  def callMethod(meth: FacebookMethod, fileName: String, mimeType: String, file: Array[Byte], params: FacebookParam* ): Node = {
+  def callMethod(meth: FacebookMethod, fileName: String, mimeType: String, file: Array[Byte], params: FacebookParam* ): T = {
     val boundary = System.currentTimeMillis.toString
     SERVER_URL.openConnection match {
       case conn: HttpURLConnection => {
@@ -154,25 +164,25 @@ class FacebookClient(val apiKey: String, val secret: String, val session: Facebo
         out.flush()
         out.close()
 
-        XML.load(conn.getInputStream)
+        parser(conn.getInputStream)
       }
     }
   }
 
-  def callMethod(meth: FacebookMethod): Node =
-    call(buildParams(meth, meth.params: _*))
+  def callMethod(meth: FacebookMethod): T =
+    call(buildParams(meth, meth.params: _*), parser)
 
-  def callMethod(meth: FacebookMethod, otherParams: FacebookParam*): Node =
-    call(buildParams(meth, (meth.params.toList ::: otherParams.toList): _*))
+  def callMethod(meth: FacebookMethod, otherParams: FacebookParam*): T =
+    call(buildParams(meth, (meth.params.toList ::: otherParams.toList): _*), parser)
 
-  def !?(meth: FacebookMethod): Node = callMethod(meth)
+  def !?(meth: FacebookMethod): T = callMethod(meth)
 
   def !?(meth: FacebookMethod, otherParams: UniversalParam*) = callMethod(meth, otherParams: _*)
 
-  def !?(meth: UploadPhoto): Node = callMethod(meth, meth.fileName, meth.mimeType, meth.fileData)
+  def !?(meth: UploadPhoto): T = callMethod(meth, meth.fileName, meth.mimeType, meth.fileData)
 
   private def buildParams(meth: FacebookMethod, params: FacebookParam*): List[(String, Any)] = {
-    val allParams: List[FacebookParam] =
+    val allParams: List[FacebookParam] = FacebookParam("format" -> format.toString)::
       (if (meth.requiresSession)
         List(FacebookParam("call_id" -> System.currentTimeMillis), FacebookParam("session_key" -> session.key))
       else
@@ -182,7 +192,7 @@ class FacebookClient(val apiKey: String, val secret: String, val session: Facebo
     FacebookClient.buildParams(meth.name, allParams: _*)
   }
 
-  def getInfo(users: Collection[Long], fields: FacebookField*): Node = {
+  def getInfo(users: Collection[Long], fields: FacebookField*): T = {
     callMethod(GetInfo(users, fields: _*))
   }
 }
@@ -217,11 +227,15 @@ class SessionlessFacebookMethod(override val name: String, override val params: 
   override def requiresSession = false
 }
 
+
 case object AuthCreateToken extends SessionlessFacebookMethod("facebook.auth.createToken")
 case class AuthGetSession(authToken: String) extends SessionlessFacebookMethod("facebook.auth.getSession", AuthToken(authToken))
 case class GetFriends(optionalParams: GetFriendsParam*) extends FacebookMethod("facebook.friends.get", optionalParams: _*)
 case object GetFriendLists extends FacebookMethod("facebook.friends.getLists")
 case class FqlQuery(query: String) extends FacebookMethod("facebook.fql.query", Query(query))
+case class FqlMultiQuery(queries: Map[String,String]) extends FacebookMethod("facebook.fql.multiquery", FacebookParam("queries", {
+    queries.map(p => "\""+p._1+"\":\""+p._2+"\"").mkString("{",",","}")
+}))
 case class GetEvents(filters: GetEventsParam*) extends FacebookMethod("facebook.events.get", filters: _*)
 case class GetEventsMembers(eventId: Long) extends FacebookMethod("facebook.events.getMembers", EventId(eventId))
 case object GetAppUsers extends FacebookMethod("facebook.friends.getAppUsers")
@@ -245,8 +259,8 @@ case class GetFBML(optionalParams: GetFbmlParam*) extends FacebookMethod("facebo
 case class RefreshImage(imageUrl: String) extends FacebookMethod("facebook.fbml.refreshImgSrc", Url(imageUrl))
 case class RefreshRefURL(refUrl: String) extends FacebookMethod("facebook.fbml.refreshRefUrl", Url(refUrl))
 case class SetRefHandle(handle: String, markup: NodeSeq) extends FacebookMethod("facebook.fbml.setRefHandle", RefHandle(handle), FBML(markup))
-case class PublishStory(title: NodeSeq, publishParams: PublishStoryParam*) extends FacebookMethod("facebook.feed.publishStoryToUser", (Title(title) :: publishParams.toList): _*)
-case class PublishAction(title: NodeSeq, publishParams: PublishActionParam*) extends FacebookMethod("facebook.feed.publishActionOfUser", (Title(title) :: publishParams.toList): _*)
+
+case class StreamPublish(publishParams: StreamPublishParam*) extends FacebookMethod("facebook.stream.publish", (publishParams.toList): _*)
 
 class FacebookField(val name: String)
 
@@ -289,6 +303,8 @@ case object Timezone extends FacebookField("timezone")
 case object TV extends FacebookField("tv")
 case object WallCount extends FacebookField("wall_count")
 case object WorkHistory extends FacebookField("work_history")
+case object Email extends FacebookField("email")
+case object Username extends FacebookField("username")
 
 sealed abstract class PhotoTag(x: Double, y: Double){ def toJSON: String }
 case class TagById(userId: Long, x: Double, y: Double) extends PhotoTag(x, y){
@@ -322,12 +338,9 @@ trait GetFbmlParam extends FacebookParam
 trait RefreshImageParam extends FacebookParam
 trait RefreshRefParam extends FacebookParam
 trait SetRefHandleParam extends FacebookParam
-trait PublishStoryParam extends FacebookParam
-trait PublishActionParam extends FacebookParam
+trait StreamPublishParam extends FacebookParam
 trait UploadPhotoParam extends FacebookParam
 
-case object XMLFormat extends FacebookParam("format", "XML") with UniversalParam
-case object JSONFormat extends FacebookParam("format", "JSON") with UniversalParam
 case class Callback(functionName: String) extends FacebookParam("callback", functionName) with UniversalParam
 
 case class AuthToken(token: String) extends FacebookParam("auth_token", token)
@@ -365,18 +378,12 @@ case class MobileProfileMarkup(markup: NodeSeq) extends FacebookParam("mobile_pr
 case class Url(url: String) extends FacebookParam("url", url) with RefreshImageParam with RefreshRefParam
 case class RefHandle(handle: String) extends FacebookParam("handle", handle) with SetRefHandleParam
 case class FBML(markup: NodeSeq) extends FacebookParam("fbml", markup) with SetRefHandleParam
-case class Title(markup: NodeSeq) extends FacebookParam("title", markup) with PublishStoryParam with PublishActionParam
-case class Body(markup: NodeSeq) extends FacebookParam("body", markup) with PublishStoryParam with PublishActionParam
-case class FirstImage(imageUrl: String) extends FacebookParam("image_1", imageUrl) with PublishStoryParam with PublishActionParam
-case class FirstImageLink(imageUrl: String) extends FacebookParam("image_1_link", imageUrl) with PublishStoryParam with PublishActionParam
-case class SecondImage(imageUrl: String) extends FacebookParam("image_2", imageUrl) with PublishStoryParam with PublishActionParam
-case class SecondImageLink(imageUrl: String) extends FacebookParam("image_2_link", imageUrl) with PublishStoryParam with PublishActionParam
-case class ThirdImage(imageUrl: String) extends FacebookParam("image_3", imageUrl) with PublishStoryParam with PublishActionParam
-case class ThirdImageLink(imageUrl: String) extends FacebookParam("image_3_link", imageUrl) with PublishStoryParam with PublishActionParam
-case class FourthImage(imageUrl: String) extends FacebookParam("image_4", imageUrl) with PublishStoryParam with PublishActionParam
-case class FourthImageLink(imageUrl: String) extends FacebookParam("image_4_link", imageUrl) with PublishStoryParam with PublishActionParam
-case class Priority(priority: String) extends FacebookParam("priority", priority) with PublishStoryParam
 case class Caption(caption: String) extends FacebookParam("caption", caption) with UploadPhotoParam
+
+case class TargetId(id:String) extends FacebookParam("target_id", id) with StreamPublishParam
+case class StreamMessage(data: String) extends FacebookParam("message", data) with StreamPublishParam
+case class StreamAttachment(data: String) extends FacebookParam("attachment", data) with StreamPublishParam
+case class StreamLinks(data: String) extends FacebookParam("action_links", data) with StreamPublishParam
 
 }
 }
