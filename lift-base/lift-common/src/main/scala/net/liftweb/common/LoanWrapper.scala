@@ -15,14 +15,32 @@
  */
 
 package net.liftweb {
-package util {
+package common {
 
 /**
  * This trait defines the principle contract for function objects that
  * wrap the processing of HTTP requests by Lift while utilizing the preestablished
  * request-local scope.
  */
-trait LoanWrapper extends net.liftweb.common.CommonLoanWrapper
+trait CommonLoanWrapper {
+  /**
+   * Implementations of this method may either call f to continue processing
+   * the wrapped call as normal, or may ignore f to entirely replace the
+   * wrapped call with a custom implementation
+   * @param f the delegate which provides processing by the underlying framework
+   */
+  def apply[T](f: => T): T
+}
+
+object CommonLoanWrapper {
+  /**
+  * If you have a List of LoanWrappers, apply them and then the functions
+  */
+  def apply[T, LWT <: CommonLoanWrapper](lst: List[LWT])(f: => T): T = lst match {
+    case Nil => f
+    case x :: xs => x.apply(this.apply(xs)(f))
+  }
+}
 
 }
 }

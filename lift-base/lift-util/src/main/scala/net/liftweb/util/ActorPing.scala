@@ -47,52 +47,26 @@ object ActorPing {
    * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
    * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
    */
-  def schedule[T](to: SimpleActor[T], msg: T, delay: TimeSpan): ScheduledFuture[Unit] = synchronized {
+  def schedule[T](to: SimpleActor[T], msg: T, delay: TimeSpan): ScheduledFuture[Unit] =
+  this.schedule(() => Helpers.tryo( to ! msg ), delay)
+
+   /**
+   * Schedules the sending of a message to occur after the specified delay.
+   *
+   * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
+   * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
+   */
+  def schedule(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = synchronized {
     val r = new _root_.java.util.concurrent.Callable[Unit] {
-      def call: Unit = { Helpers.tryo( to ! msg ) }
+      def call: Unit = f.apply()
     }
     try {
       this.restart
       service.schedule(r, delay.millis, TimeUnit.MILLISECONDS)
     } catch {
-      case e: RejectedExecutionException => throw ActorPingException(msg + " could not be scheduled on " + to, e)
+      case e: RejectedExecutionException => throw ActorPingException("ping could not be scheduled", e)
     }
   }
-
-  /*
-  /**
-   * Schedules the sending of the message <code>msg</code> to the <code>to<code> Actor,
-   * after <code>initialDelay</code> and then subsequently every <code>delay</code> TimeSpan.
-   */
-  def scheduleAtFixedRate(to: Actor, msg: Any, initialDelay: TimeSpan, delay: TimeSpan) {
-    try {
-      val future = service.scheduleAtFixedRate(new _root_.java.lang.Runnable {
-          def run = {
-            Helpers.tryo {
-              to ! msg
-            }
-          }
-        }, initialDelay.millis, delay.millis, TimeUnit.MILLISECONDS)
-      actor {
-        self.link(to)
-        self.trapExit = true
-        to ! Scheduled
-        loop {
-          react {
-            case UnSchedule | Exit(_, _) =>
-              Helpers.tryo {
-                future cancel(true)
-              }
-              self.unlink(to)
-              exit
-          }
-        }
-      }
-    }
-    catch { case e => throw ActorPingException(msg + " could not be scheduled on " + to, e)}
-  }
-  */
-
 }
 
 /**

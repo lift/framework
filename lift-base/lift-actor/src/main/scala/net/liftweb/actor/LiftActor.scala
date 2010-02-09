@@ -123,6 +123,26 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
   }
 
   private def processMailbox(ignoreProcessing: Boolean) {
+    around {
+      proc2(ignoreProcessing)
+    }
+  }
+
+/**
+ * A list of LoanWrappers that will be executed around the evaluation of mailboxes
+ */
+protected def aroundLoans: List[CommonLoanWrapper] = Nil
+
+/**
+ * You can wrap calls around the evaluation of the mailbox.  This allows you to set up
+ * the environment
+ */
+protected def around[R](f: => R): R = aroundLoans match {
+  case Nil => f
+  case xs => CommonLoanWrapper(xs)(f)
+}
+
+  private def proc2(ignoreProcessing: Boolean) {
     var clearProcessing = true
     baseMailbox.synchronized {
       if (!ignoreProcessing && processing) return
