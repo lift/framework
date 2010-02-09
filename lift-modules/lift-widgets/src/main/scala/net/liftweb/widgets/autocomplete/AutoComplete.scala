@@ -106,17 +106,7 @@ class AutoComplete {
                        ("matchContains","true") ::
                        ("formatItem","function(row, i, max) { return row.name; }") ::
                        Nil ::: jsonOptions
-      /* jsonify to options */
-      var counter = 0
-      var isLast = false
-      var json = "{"
-      jqOptions.foreach{ pair: Pair[String,String] =>
-          counter += 1
-          isLast = (counter == jqOptions.size)
-          json += pair._1 + ": " + pair._2
-          if (!isLast) json += "," }
-      json += "}"
-
+	  val json = jqOptions.map(t => t._1 + ":" + t._2).mkString("{", ",", "}")
       val autocompleteOptions = JsRaw(json)
 
       val onLoad = JsRaw("""
@@ -197,17 +187,7 @@ class AutoComplete {
       val jqOptions =  ("minChars","0") ::
                        ("matchContains","true") ::
                        Nil ::: jsonOptions
-      /* jsonify to options */
-      var counter = 0
-      var isLast = false
-      var json = "{"
-      jqOptions.foreach{ pair: Pair[String,String] =>
-          counter += 1
-          isLast = (counter == jqOptions.size)
-          json += pair._1 + ": " + pair._2
-          if (!isLast) json += "," }
-      json += "}"
-
+      val json = jqOptions.map(t => t._1 + ":" + t._2).mkString("{", ",", "}")
       val autocompleteOptions = JsRaw(json)
     
       val onLoad = JsRaw("""
