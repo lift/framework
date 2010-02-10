@@ -64,6 +64,7 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
   @volatile private[this] var processing = false
   private[this] val baseMailbox: MailboxItem = new SpecialMailbox
   @volatile private[this] var msgList: List[T] = Nil
+  @volatile private[this] var priorityMsgList: List[T] = Nil
   @volatile private[this] var startCnt = 0
 
   private class MailboxItem(val item: T) {
@@ -122,6 +123,31 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
     toDo()
   }
 
+  /**
+   * This method inserts the message at the head of the mailbox
+   * It's protected because this functionality may or may not want
+   * to be exposed'
+   */
+  protected def insertMsgAtHeadOfQueue_!(msg: T): Unit = {
+     val toDo: () => Unit = baseMailbox.synchronized {
+      this.priorityMsgList ::= msg
+      if (!processing) {
+        if (LAScheduler.onSameThread) {
+          processing = true
+          () => processMailbox(true)
+        } else {
+          if (startCnt == 0) {
+            startCnt += 1
+            () => LAScheduler.execute(() => processMailbox(false))
+          } else
+          () => {}
+        }
+      }
+      else () => {}
+    }
+    toDo()
+  }
+
   private def processMailbox(ignoreProcessing: Boolean) {
     around {
       proc2(ignoreProcessing)
@@ -153,14 +179,52 @@ protected def around[R](f: => R): R = aroundLoans match {
     val eh = exceptionHandler
 
     def putListIntoMB(): Unit = {
+      if (!priorityMsgList.isEmpty) {
+      priorityMsgList.foldRight(baseMailbox)((msg, mb) => mb.insertAfter(new MailboxItem(msg)))
+      priorityMsgList = Nil
+      }
+
+      if (!msgList.isEmpty) {
       msgList.foldLeft(baseMailbox)((mb, msg) => mb.insertBefore(new MailboxItem(msg)))
       msgList = Nil
+      }
     }
 
     try {
       while (true) {
-        val pf = messageHandler
-        baseMailbox.synchronized {putListIntoMB()}
+        baseMailbox.synchronized {
+          putListIntoMB()
+        }
+
+            var keepOnDoingHighPriory = true
+
+            while (keepOnDoingHighPriory) {
+              val hiPriPfBox = highPriorityReceive
+              if (hiPriPfBox.isDefined) {
+                val hiPriPf = hiPriPfBox.open_!
+                baseMailbox.next.find(mb => testTranslate(hiPriPf.isDefinedAt)(mb.item)) match {
+                  case Full(mb) =>
+                    mb.remove()
+                    try {
+                      execTranslate(hiPriPf)(mb.item)
+                    } catch {
+                      case e: Exception => if (eh.isDefinedAt(e)) eh(e)
+                    }
+                  case _ =>
+                    baseMailbox.synchronized {
+                      if (msgList.isEmpty) {
+                        keepOnDoingHighPriory = false
+                      }
+                      else {
+                        putListIntoMB()
+                      }
+                    }
+                } }
+              else {keepOnDoingHighPriory = false}
+            }
+
+            val pf = messageHandler
+
         baseMailbox.next.find(mb => testTranslate(pf.isDefinedAt)(mb.item)) match {
           case Full(mb) =>
             mb.remove()
@@ -200,6 +264,8 @@ protected def around[R](f: => R): R = aroundLoans match {
   protected def execTranslate[R](f: T => R)(v: T): R = f(v)
 
   protected def messageHandler: PartialFunction[T, Unit]
+
+  protected def highPriorityReceive: Box[PartialFunction[T, Unit]] = Empty
 
   protected def exceptionHandler: PartialFunction[Throwable, Unit] = {
     case e => // FIXME logging Log.error("Error processing Actor "+this, e)
