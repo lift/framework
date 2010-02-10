@@ -86,7 +86,7 @@
     </dependency>
     <dependency>
       <groupId>org.scala-tools.testing</groupId>
-      <artifactId>scalacheck_2.8.0.Beta1-RC5</artifactId>
+      <artifactId>scalacheck_2.8.0.Beta1</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
