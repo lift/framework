@@ -93,7 +93,27 @@ object ShortTypeHintExamples extends TypeHintExamples {
 }
 
 object FullTypeHintExamples extends TypeHintExamples {
-  implicit val formats = Serialization.formats(FullTypeHints(classOf[Animal] :: Nil))
+  import Serialization.{read, write => swrite}
+  
+  implicit val formats = Serialization.formats(FullTypeHints(List[Class[_]](classOf[Animal], classOf[True], classOf[False])))
+  
+  "Ambiguous field decomposition example" in {
+    val a = Ambiguous(False())
+    
+    val ser = swrite(a)
+    
+    read[Ambiguous](ser) mustEqual a
+  }
+  
+  "Option of ambiguous field decomposition example" in {
+    val o = OptionOfAmbiguous(Some(True()))
+    
+    val ser = swrite(o)
+    
+    println(ser)
+    
+    read[OptionOfAmbiguous](ser) mustEqual o
+  }
 }
 
 trait TypeHintExamples extends Specification {
@@ -165,6 +185,14 @@ case class Meeting(place: String, time: DateTime)
 class DateTime(val time: Long)
 
 case class Times(times: List[DateTime])
+
+
+sealed abstract class Bool
+case class True() extends Bool
+case class False() extends Bool
+case class Ambiguous(child: Bool)
+
+case class OptionOfAmbiguous(opt: Option[Bool])
 
 }
 }

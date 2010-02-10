@@ -72,14 +72,28 @@ object Extraction {
         case null => JNull
         case x if primitive_?(x.getClass) => primitive2jvalue(x)(formats)
         case x: List[_] => JArray(x map decompose)
-        case x: Option[_] => decompose(x getOrElse JNothing)
+        case x: Option[_] => x.flatMap[JValue](y => Some(decompose(y))).getOrElse(JNothing)
         case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
         case x => 
           x.getClass.getDeclaredFields.toList.remove(static_?).map { f => 
             f.setAccessible(true)
-            JField(unmangleName(f), decompose(f get x))
+            
+            val ambiguous = packageSubTypesOf(f.getType).size > 1
+            val value     = f get x
+            val decomp    = decompose(value)
+            
+            //println("type = " + f.getType.getName + ", value = " + value + ", decomp = " + decomp + ", ambiguous = " + ambiguous);
+            
+            JField(
+              unmangleName(f), 
+              decomp match {
+                // Embed type hint if there is more than one package-level class 
+                // the field could be.
+                case obj: JObject if (ambiguous) => prependTypeHint(value.getClass, obj)
+                case other @ _    => other
+              }
+            )
           } match {
-            case Nil => JNothing
             case fields => mkObject(x.getClass, fields)
           }
       }

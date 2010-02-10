@@ -123,6 +123,10 @@ private[json] object Meta {
 
   object Reflection {
     import java.lang.reflect._
+    import org.reflections.Reflections
+    import scala.collection.jcl.Conversions._ // Not compatible with Scala 2.8
+    
+    private var subTypeCache = new Memo[Class[_], Set[Class[_]]]
 
     sealed abstract class Kind
     case object `* -> *` extends Kind
@@ -173,6 +177,13 @@ private[json] object Meta {
         case `* -> *`     => List(types(0))
         case `(*,*) -> *` => List(types(0), types(1))
       }
+    }
+    
+    def packageSubTypesOf[T](c: Class[T]): Set[Class[_ <: T]] = {
+      subTypeCache.memoize(c,
+        c => if (c.getPackage == null || c.getPackage.getName.startsWith("scala") || c.getPackage.getName.startsWith("java")) Set[Class[_]]()
+             else Set[Class[_]]() ++ convertSet(new Reflections(c.getPackage.getName).getSubTypesOf(c))
+      ).asInstanceOf[Set[Class[_ <: T]]]
     }
 
     def primitive_?(clazz: Class[_]) = primitives contains clazz
