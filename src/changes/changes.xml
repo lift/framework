@@ -38,6 +38,12 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+      <action dev="jonifreeman" type="fix" issue="323" system="assembla">
+        lift-Json doesn't appear to be correctly handling attributes
+      </action>
+      <action dev="jonifreeman" type="fix" issue="279" system="assembla">
+        net.liftweb.json.JsonParser.extract fails with List[List[Int]]
+      </action>
       <action dev="jonifreeman" type="update" issue="303" system="assembla">
         JSON object can be extracted into scala.Map (and scala.Map can be serialized as JSON object). Recursive types
         can be serialized.
@@ -45,7 +51,7 @@
       <action dev="jonifreeman" type="fix" issue="279" system="assembla">
         Multidimensional arrays supported in JSON serialization and extraction
       </action>
-      <action dev="jonifreeman" type="update" issue="" system="assembla">
+      <action dev="jonifreeman" type="update" issue="333" system="assembla">
         JSON pull parser API
       </action>
     </release>
