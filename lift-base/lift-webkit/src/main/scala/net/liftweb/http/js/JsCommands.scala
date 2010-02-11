@@ -428,7 +428,7 @@ object JE {
     def toJsCmd = left.toJsCmd + " == " + right.toJsCmd
   }
 
-  case class JsNotEQ(left: JsExp, right: JsExp) extends JsExp {
+  case class JsNotEq(left: JsExp, right: JsExp) extends JsExp {
     def toJsCmd = left.toJsCmd + " != " + right.toJsCmd
   }
 
@@ -439,6 +439,19 @@ object JE {
   case class JsGtEq(left: JsExp, right: JsExp) extends JsExp {
     def toJsCmd = left.toJsCmd + " >= " + right.toJsCmd
   }
+
+  case class JsOr(left: JsExp, right: JsExp) extends JsExp {
+    def toJsCmd = left.toJsCmd + " || " + right.toJsCmd
+  }
+
+  case class JsAnd(left: JsExp, right: JsExp) extends JsExp {
+    def toJsCmd = left.toJsCmd + " && " + right.toJsCmd
+  }
+
+  case class JsNot(exp: JsExp) extends JsExp {
+    def toJsCmd = "!" + exp.toJsCmd
+  }
+
 
 }
 
