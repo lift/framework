@@ -57,11 +57,10 @@ object Extraction {
    * </pre>
    */
   def decompose(a: Any)(implicit formats: Formats): JValue = {
-    def prependTypeHint(clazz: Class[_], o: JObject) = 
-      JField("jsonClass", JString(formats.typeHints.hintFor(clazz))) ++ o
+    def prependTypeHint(clazz: Class[_], o: JObject) = JField("jsonClass", JString(formats.typeHints.hintFor(clazz))) ++ o
 
     def mkObject(clazz: Class[_], fields: List[JField]) = formats.typeHints.containsHint_?(clazz) match {
-      case true => prependTypeHint(clazz, JObject(fields))
+      case true  => prependTypeHint(clazz, JObject(fields))
       case false => JObject(fields)
     }
  
@@ -72,30 +71,16 @@ object Extraction {
         case null => JNull
         case x if primitive_?(x.getClass) => primitive2jvalue(x)(formats)
         case x: List[_] => JArray(x map decompose)
-        case x: Option[_] => x.flatMap[JValue](y => Some(decompose(y))).getOrElse(JNothing)
+        case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
         case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
         case x => 
-          x.getClass.getDeclaredFields.toList.remove(static_?).map { f => 
-            f.setAccessible(true)
+          mkObject(x.getClass, 
+            x.getClass.getDeclaredFields.toList.remove(static_?).map { f => 
+              f.setAccessible(true)
             
-            val ambiguous = packageSubTypesOf(f.getType).size > 1
-            val value     = f get x
-            val decomp    = decompose(value)
-            
-            //println("type = " + f.getType.getName + ", value = " + value + ", decomp = " + decomp + ", ambiguous = " + ambiguous);
-            
-            JField(
-              unmangleName(f), 
-              decomp match {
-                // Embed type hint if there is more than one package-level class 
-                // the field could be.
-                case obj: JObject if (ambiguous) => prependTypeHint(value.getClass, obj)
-                case other @ _    => other
-              }
-            )
-          } match {
-            case fields => mkObject(x.getClass, fields)
-          }
+              JField(unmangleName(f), decompose(f get x))
+            }
+          )
       }
     } else prependTypeHint(any.getClass, serializer(any))
   }

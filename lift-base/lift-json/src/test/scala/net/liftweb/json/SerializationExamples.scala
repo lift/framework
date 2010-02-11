@@ -95,7 +95,7 @@ object ShortTypeHintExamples extends TypeHintExamples {
 object FullTypeHintExamples extends TypeHintExamples {
   import Serialization.{read, write => swrite}
   
-  implicit val formats = Serialization.formats(FullTypeHints(List[Class[_]](classOf[Animal], classOf[True], classOf[False])))
+  implicit val formats = Serialization.formats(FullTypeHints(List[Class[_]](classOf[Animal], classOf[True], classOf[False], classOf[Falcon], classOf[Chicken])))
   
   "Ambiguous field decomposition example" in {
     val a = Ambiguous(False())
@@ -105,14 +105,32 @@ object FullTypeHintExamples extends TypeHintExamples {
     read[Ambiguous](ser) mustEqual a
   }
   
-  "Option of ambiguous field decomposition example" in {
-    val o = OptionOfAmbiguous(Some(True()))
+  "Ambiguous parameterized field decomposition example" in {
+    val o = AmbiguousP(Chicken(23))
     
     val ser = swrite(o)
     
     println(ser)
     
+    read[AmbiguousP](ser) mustEqual o
+  }
+  
+  "Option of ambiguous field decomposition example" in {
+    val o = OptionOfAmbiguous(Some(True()))
+    
+    val ser = swrite(o)
+    
     read[OptionOfAmbiguous](ser) mustEqual o
+  }
+  
+  "Option of ambiguous parameterized field decomposition example" in {
+    val o = OptionOfAmbiguousP(Some(Falcon(200.0)))
+    
+    val ser = swrite(o)
+    
+    println(ser)
+    
+    read[OptionOfAmbiguousP](ser) mustEqual o
   }
 }
 
@@ -192,7 +210,15 @@ case class True() extends Bool
 case class False() extends Bool
 case class Ambiguous(child: Bool)
 
+trait Bird
+case class Falcon(weight: Double) extends Bird
+case class Chicken(eggs: Int) extends Bird
+
+case class AmbiguousP(bird: Bird)
+
 case class OptionOfAmbiguous(opt: Option[Bool])
+
+case class OptionOfAmbiguousP(opt: Option[Bird])
 
 }
 }
