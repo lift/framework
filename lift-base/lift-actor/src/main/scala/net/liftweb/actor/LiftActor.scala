@@ -259,9 +259,9 @@ protected def around[R](f: => R): R = aroundLoans match {
     }
   }
 
-  protected def testTranslate[R](f: T => R)(v: T): R = f(v)
+  protected def testTranslate(f: T => Boolean)(v: T): Boolean = f(v)
 
-  protected def execTranslate[R](f: T => R)(v: T): R = f(v)
+  protected def execTranslate(f: T => Unit)(v: T): Unit = f(v)
 
   protected def messageHandler: PartialFunction[T, Unit]
 
@@ -323,12 +323,12 @@ with ForwardableActor[Any, Any] {
     Full(future.get)
   }
 
-  override protected def testTranslate[R](f: Any => R)(v: Any) = v match {
+  override protected def testTranslate(f: Any => Boolean)(v: Any) = v match {
     case MsgWithResp(msg, _) => f(msg)
     case v => f(v)
   }
 
-  override protected def execTranslate[R](f: Any => R)(v: Any) = v match {
+  override protected def execTranslate(f: Any => Unit)(v: Any) = v match {
     case MsgWithResp(msg, future) =>
       responseFuture = future
       try {
