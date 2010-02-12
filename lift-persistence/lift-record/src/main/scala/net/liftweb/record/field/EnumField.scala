@@ -18,6 +18,7 @@ package net.liftweb {
 package record {
 package field {
 
+import scala.reflect.Manifest
 import scala.xml._
 import net.liftweb.util._
 import net.liftweb.common._
@@ -28,48 +29,53 @@ import Helpers._
 import JE._
 
 
-class EnumField[OwnerType <: Record[OwnerType], ENUM <: Enumeration](rec: OwnerType, enum: ENUM) extends Field[ENUM#Value, OwnerType] {
+class EnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](rec: OwnerType, enum: EnumType)(implicit m: Manifest[EnumType#Value])
+  extends Field[EnumType#Value, OwnerType]
+{
+  def this(rec: OwnerType, enum: EnumType, value: EnumType#Value)(implicit m: Manifest[EnumType#Value]) = {
+    this(rec, enum)
+    set(value)
+  }
+
+  def this(rec: OwnerType, enum: EnumType, value: Box[EnumType#Value])(implicit m: Manifest[EnumType#Value]) = {
+    this(rec, enum)
+    setBox(value)
+  }
 
   def owner = rec
 
-  def toInt = value.id
+  def toInt: Box[Int] = valueBox.map(_.id)
 
-  def fromInt(in: Int): ENUM#Value = enum(in)
+  def fromInt(in: Int): Box[EnumType#Value] = tryo(enum(in))
 
-  override protected def set_!(value: ENUM#Value): ENUM#Value = {
-    if (value != data) {
-      data = value
-      dirty_?(true)
-    }
-    data
+  def setFromAny(in: Any): Box[EnumType#Value] = in match {
+    case     (value: Int)    => setBox(fromInt(value))
+    case Some(value: Int)    => setBox(fromInt(value))
+    case Full(value: Int)    => setBox(fromInt(value))
+    case (value: Int)::_     => setBox(fromInt(value))
+    case     (value: Number) => setBox(fromInt(value.intValue))
+    case Some(value: Number) => setBox(fromInt(value.intValue))
+    case Full(value: Number) => setBox(fromInt(value.intValue))
+    case (value: Number)::_  => setBox(fromInt(value.intValue))
+    case _                   => genericSetFromAny(in)
   }
 
-  def setFromAny(in: Any): Box[ENUM#Value] = {
-    in match {
-      case n: Int => Full(set(fromInt(n)))
-      case n: Long => Full(set(fromInt(n.toInt)))
-      case n: Number => Full(set(fromInt(n.intValue)))
-      case (n: Number) :: _ => Full(set(fromInt(n.intValue)))
-      case Some(n: Number) => Full(set(fromInt(n.intValue)))
-      case Full(n: Number) => Full(set(fromInt(n.intValue)))
-      case None | Empty | Failure(_, _, _) => Full(set(defaultValue))
-      case (s: String) :: _ => Full(set(fromInt(Helpers.toInt(s))))
-      case vs: ENUM#Value => Full(set(vs))
-      case null => Full(set(defaultValue))
-      case s: String => Full(set(fromInt(Helpers.toInt(s))))
-      case o => Full(set(fromInt(Helpers.toInt(o))))
-    }
-  }
+  def setFromString(s: String): Box[EnumType#Value] = setBox(asInt(s).flatMap(fromInt))
 
-  def setFromString(s: String): Box[ENUM#Value] = setFromAny(s)
+  /** Label for the selection item representing Empty, show when this field is optional. Defaults to the empty string. */
+  def emptyOptionLabel: String = ""
 
   /**
-   * Build a list for v => this.set(fromInt(v)the select.  Return a tuple of (String, String) where the first string
-   * is the id.string of the Value and the second string is the Text name of the Value.
+   * Build a list of (value, label) options for a select list.  Return a tuple of (Box[String], String) where the first string
+   * is the value of the field and the second string is the Text name of the Value.
    */
-  def buildDisplayList: List[(Int, String)] = enum.map(a => (a.id, a.toString)).toList
+  def buildDisplayList: List[(Box[EnumType#Value], String)] = {
+    val options = enum.map(a => (Full(a), a.toString)).toList
+    if (optional_?) (Empty, emptyOptionLabel)::options else options
+  }
+          
 
-  private def elem = SHtml.selectObj[Int](buildDisplayList, Full(toInt), this.setFromAny(_)) % ("tabindex" -> tabIndex.toString)
+  private def elem = SHtml.selectObj[Box[EnumType#Value]](buildDisplayList, Full(valueBox), setBox(_)) % ("tabindex" -> tabIndex.toString)
 
   def toForm = {
     var el = elem
@@ -91,9 +97,9 @@ class EnumField[OwnerType <: Record[OwnerType], ENUM <: Enumeration](rec: OwnerT
     }
   }
 
- def defaultValue: ENUM#Value = enum.iterator.next
+ def defaultValue: EnumType#Value = enum.iterator.next
 
- def asJs = Str(toString)
+ def asJs = valueBox.map(_ => Str(toString)) openOr JsNull
 
 }
 
@@ -103,9 +109,9 @@ import _root_.net.liftweb.mapper.{DriverType}
 /**
  * An enum field holding DB related logic
  */
-abstract class DBEnumField[OwnerType <: DBRecord[OwnerType], ENUM <: Enumeration](rec: OwnerType, enum: ENUM) extends
-  EnumField(rec, enum) with JDBCFieldFlavor[Integer] {
-
+abstract class DBEnumField[OwnerType <: DBRecord[OwnerType], EnumType <: Enumeration](rec: OwnerType, enum: EnumType)(implicit m: Manifest[EnumType#Value])
+  extends EnumField[OwnerType, EnumType](rec, enum) with JDBCFieldFlavor[Integer]
+{
   def targetSQLType = Types.VARCHAR
 
   /**
@@ -113,7 +119,7 @@ abstract class DBEnumField[OwnerType <: DBRecord[OwnerType], ENUM <: Enumeration
    */
   def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.enumColumnType
 
-  def jdbcFriendly(field: String) = new _root_.java.lang.Integer(toInt)
+  def jdbcFriendly(field: String) = new _root_.java.lang.Integer(this.toInt openOr defaultValue.id)
 
 }
 

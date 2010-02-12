@@ -36,10 +36,22 @@ class LocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends String
     case x :: xs => x
   }
 
-  private def elem = SHtml.select(Locale.getAvailableLocales.
-	  toList.sort(_.getDisplayName < _.getDisplayName).
-	  map(lo => (lo.toString, lo.getDisplayName)),
-	  Full(value), set) % ("tabindex" -> tabIndex.toString)
+  /** Label for the selection item representing Empty, show when this field is optional. Defaults to the empty string. */
+  def emptyOptionLabel: String = ""
+
+  /** Build a list of string pairs for a select list. */
+  def buildDisplayList: List[(String, String)] = {
+      val options = Locale
+          .getAvailableLocales
+          .toList
+          .sort(_.getDisplayName < _.getDisplayName)
+          .map(lo => (lo.toString, lo.getDisplayName))
+
+      if (optional_?) ("", emptyOptionLabel)::options else options
+  }
+
+
+  private def elem = SHtml.select(buildDisplayList, Full(valueBox.map(_.toString) openOr ""), set) % ("tabindex" -> tabIndex.toString)
 
 
   override def toForm = {

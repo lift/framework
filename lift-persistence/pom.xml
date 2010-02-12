@@ -53,6 +53,7 @@
     <!--FIXME: 280-->
     <!--<module>lift-jpa</module>-->
     <module>lift-record</module>
+    <module>lift-couchdb</module>
   </modules>
 
   <!--
