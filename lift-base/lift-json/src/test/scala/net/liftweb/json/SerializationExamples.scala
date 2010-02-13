@@ -82,6 +82,16 @@ object SerializationExamples extends Specification {
     val ser = swrite(r3)
     read[Rec](ser) mustEqual r3
   }
+  
+  "Set serialization example" in {
+    val s = SetContainer(Set("foo", "bar"))
+    
+    val ser = swrite(s)
+    
+    println(ser)
+    
+    read[SetContainer](ser) mustEqual s
+  }
 
   case class Ints(x: List[List[Int]])
 
@@ -219,6 +229,8 @@ case class AmbiguousP(bird: Bird)
 case class OptionOfAmbiguous(opt: Option[Bool])
 
 case class OptionOfAmbiguousP(opt: Option[Bird])
+
+case class SetContainer(set: Set[String])
 
 }
 }

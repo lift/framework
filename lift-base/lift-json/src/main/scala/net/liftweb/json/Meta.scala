@@ -39,7 +39,7 @@ private[json] object Meta {
    *  Constructor("xx.Person", List(
    *    Arg("name", Value(classOf[String])),
    *    Arg("address", Constructor("xx.Address", List(Value("street"), Value("city")))),
-   *    Arg("children", Lst(Constructor("xx.Child", List(Value("name"), Value("age")))))))
+   *    Arg("children", Lst(classOf[List[_]], Constructor("xx.Child", List(Value("name"), Value("age")))))))
    */
   sealed abstract class Mapping
   case class Arg(path: String, mapping: Mapping) extends Mapping
@@ -47,7 +47,7 @@ private[json] object Meta {
   case class Constructor(targetType: Class[_], args: List[Arg]) extends Mapping
   case class Cycle(targetType: Class[_]) extends Mapping
   case class Dict(mapping: Mapping) extends Mapping
-  case class Lst(mapping: Mapping) extends Mapping
+  case class Lst(targetType: Class[_], mapping: Mapping) extends Mapping
   case class Optional(mapping: Mapping) extends Mapping
 
   private val mappings = new Memo[Class[_], Mapping]
@@ -79,10 +79,12 @@ private[json] object Meta {
           factory(fieldMapping(types._1, types._2))
         } else factory(fieldMapping(typeParameters(t, k)(valueTypeIndex), null))
         
-      def fieldMapping(fType: Class[_], genType: Type): Mapping = 
+      def fieldMapping(fType: Class[_], genType: Type): Mapping = {
         if (primitive_?(fType)) Value(fType)
         else if (classOf[List[_]].isAssignableFrom(fType)) 
-          mkContainer(genType, `* -> *`, 0, Lst.apply _)
+          mkContainer(genType, `* -> *`, 0, Lst.apply(classOf[List[_]], _))
+        else if (classOf[Set[_]].isAssignableFrom(fType)) 
+          mkContainer(genType, `* -> *`, 0, Lst.apply(classOf[Set[_]], _))
         else if (classOf[Option[_]].isAssignableFrom(fType)) 
           mkContainer(genType, `* -> *`, 0, Optional.apply _)
         else if (classOf[Map[_, _]].isAssignableFrom(fType)) 
@@ -91,6 +93,7 @@ private[json] object Meta {
           if (visited.contains(fType)) Cycle(fType)
           else Constructor(fType, constructorArgs(fType, visited + fType))
         }
+      }
      
       Arg(name, fieldMapping(fieldType, genericType))
     }

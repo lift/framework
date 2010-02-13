@@ -70,7 +70,8 @@ object Extraction {
       any match {
         case null => JNull
         case x if primitive_?(x.getClass) => primitive2jvalue(x)(formats)
-        case x: List[_] => JArray(x map decompose)
+        case x: List[_]   => JArray(x map decompose)
+        case x: Set[_]    => JArray(x.toList map decompose)
         case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
         case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
         case x => 
@@ -125,10 +126,22 @@ object Extraction {
       case Constructor(targetType, args) => newInstance(targetType, args, root)
       case Cycle(targetType) => mappingOf(targetType)
       case Arg(_, m) => build(fieldValue(root), m)
-      case Lst(m) => root match {
-        case JArray(arr) => arr.map(build(_, m))
-        case JNothing | JNull => Nil
-        case x => fail("Expected array but got " + x)
+      case Lst(c, m) => {
+        if (c == classOf[List[_]]) {
+          root match {
+            case JArray(arr) => arr.map(build(_, m))
+            case JNothing | JNull => Nil
+            case x => fail("Expected array but got " + x)
+          }
+        }
+        else if (c == classOf[Set[_]]) {
+          root match {
+            case JArray(arr) => Set(arr.map(build(_, m)).toArray: _*)
+            case JNothing | JNull => Set()
+            case x => fail("Expected set but got " + x)
+          }
+        }
+        else fail("Expected array or set but got " + m + " for class " + c)
       }
       case Dict(m) => root match {
         case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)
