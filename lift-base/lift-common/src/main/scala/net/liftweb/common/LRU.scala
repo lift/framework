@@ -51,11 +51,23 @@ private[common] trait LinkedListElem[T1, T2] {
 /**
  *
  */
-class LRUMap[K, V](val maxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V) => Unit)*) extends LinkedListElem[K, V] {
+class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V) => Unit)*) extends LinkedListElem[K, V] {
   import java.util.HashMap
 
   def this(size: Int) = this(size, Empty)
 
+  private var _maxSize = initMaxSize
+
+  def maxSize = _maxSize
+
+  def updateMaxSize(newMaxSize: Int) {
+    val oldMaxSize = _maxSize
+    _maxSize = newMaxSize
+
+    if (newMaxSize < oldMaxSize) {
+      doRemoveIfTooMany()
+    }
+  }
 
   _prev = this
   _next = this
@@ -95,18 +107,40 @@ class LRUMap[K, V](val maxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
       what.value2 = value
       addAtHead(what)
       localMap.put(key, what)
-      while (localMap.size > maxSize) {
-        val toRemove = _prev
-        toRemove.remove
-        localMap.remove(toRemove.value1)
-        expired(toRemove.value1, toRemove.value2)
-        expiredFunc.foreach(_(toRemove.value1, toRemove.value2))
-      }
+
+      doRemoveIfTooMany()
 
       case v =>
         v.remove
       addAtHead(v)
       v.value2 = value
+    }
+  }
+
+  /**
+   * Override this method to implement a test to see if a particular
+   * element can be expired from the cache
+   */
+  protected def canExpire(k: K, v: V): Boolean = {
+    true
+  }
+
+  /**
+   * A mechanism for expiring elements from cache.  This method
+   * can devolve into O(n ^ 2) if lots of elements can't be
+   * expired
+   */
+  private def doRemoveIfTooMany() {
+    while (localMap.size > maxSize) {
+      var toRemove = _prev
+      while (!canExpire(toRemove.value1, toRemove.value2)) {
+        toRemove = toRemove._prev
+        if (toRemove eq this) return
+      }
+      toRemove.remove
+      localMap.remove(toRemove.value1)
+      expired(toRemove.value1, toRemove.value2)
+      expiredFunc.foreach(_(toRemove.value1, toRemove.value2))
     }
   }
 
