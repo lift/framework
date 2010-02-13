@@ -38,82 +38,145 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
-      <action dev="jonifreeman" type="enhancement" issue="303" system="github">
-       JSON object can be extracted into scala.Map (and scala.Map can be serialized as JSON object). Recursive types can be serialized.
+      <action dev="jonifreeman" type="fix" issue="323" system="assembla">
+        lift-Json doesn't appear to be correctly handling attributes
       </action>
-      <action dev="jonifreeman" type="fix" issue="279" system="github">
-       Multidimensional arrays supported in JSON serialization and extraction
+      <action dev="jonifreeman" type="fix" issue="279" system="assembla">
+        net.liftweb.json.JsonParser.extract fails with List[List[Int]]
       </action>
-      <action dev="jonifreeman" type="enhancement" issue="" system="github">
-       JSON pull parser API
+      <action dev="jonifreeman" type="add" issue="279" system="assembla">
+        Multidimensional arrays supported in JSON serialization and extraction
       </action>
-      <action dev="boisvert" type="fix" issue="273" system="github">
-       Changed LiftRules.getResourceAsStream() to doWithResource() to ensure InputStream is always closed
-       Removed duplicate LiftRules.finder()
+      <action dev="jonifreeman" type="update" issue="303" system="assembla">
+        JSON object can be extracted into scala.Map (and scala.Map can be serialized as JSON object). Recursive types
+        can be serialized.
       </action>
-      <action dev="dchenbecker" type="fix" issue="232" system="github">
+      <action dev="jonifreeman" type="update" issue="333" system="assembla">
+        JSON pull parser API
+      </action>
+      <action dev="indrajitr" type="update" issue="292" system="assembla">
+        Make Lfit both Scala 2.7 and 2.8 friendly
+      </action>
+      <action dev="indrajitr" type="fix" issue="307" system="assembla">
+        Streamline JDBC library dependencies
+      </action>
+      <action dev="mads" type="fix" issue="46" system="assembla">
+        autocomplete widget - make options settable
+      </action>
+      <action dev="hoffrocket" type="update" issue="304" system="assembla">
+        Upgrade jQuery to 1.4.1
+      </action>
+      <action dev="hoffrocket" type="add" issue="311" system="assembla">
+        Enable jQuery version switching in LiftRules
+      </action>
+      <action dev="marius.danciu" type="fix" issue="280" system="assembla">
+        Ajax form submission with multiple submit buttons
+      </action>
+      <action dev="marius.danciu" type="new" issue="286" system="assembla">
+        Submitting a form by ID and provide a Scala function
+      </action>
+      <action dev="marius.danciu" type="fix" issue="295" system="assembla">
+        Ajax change from () => Any to () => JsCmd
+      </action>
+      <action dev="dpp" type="fix" issue="254" system="assembla">
+        Add field-by-field error notifications to CRUDified fields
+      </action>
+      <action dev="dpp" type="fix" issue="282" system="assembla">
+        MappedLongForeignKey::asJsonValue should generate JNull
+      </action>
+      <action dev="dpp" type="fix" issue="284" system="assembla">
+        Additional tag support for TextileParser
+      </action>
+      <action dev="dpp" type="fix" issue="290" system="assembla">
+        TextileParser molests divs
+      </action>
+      <action dev="dpp" type="add" issue="293" system="assembla">
+        New LRU Map that works better than Apache LRU map
+      </action>
+      <action dev="dpp" type="fix" issue="308" system="assembla">
+        The order of fields is random in Mapper
+      </action>
+      <action dev="dpp" type="add" issue="314" system="assembla">
+        Allow thread-local Connection Identerifer resolution
+      </action>
+      <action dev="dpp" type="fix" issue="315" system="assembla">
+        How overriding of _showAllTemplate to show a limited number of columns
+      </action>
+      <action dev="dpp" type="fix" issue="319" system="assembla">
+        Control characters in input can lead to Denial of Service attacks
+      </action>
+    </release>
+
+    <release version="2.0-M1" date="2010-01-13" description="Lift 2.0 Milestone 1">
+      <action dev="boisvert" type="fix" issue="273" system="assembla">
+        Changed LiftRules.getResourceAsStream() to doWithResource() to ensure InputStream is always closed
+        Removed duplicate LiftRules.finder()
+      </action>
+      <action dev="dchenbecker" type="fix" issue="232" system="assembla">
         Added logging of bad prepared statements to help diagnose things.
       </action>
-      <action dev="dchenbecker" type="fix" issue="231" system="github">
+      <action dev="dchenbecker" type="fix" issue="231" system="assembla">
         Fixed Mapper to properly deal with generated values
       </action>
-      <action dev="dpp" type="enhancement" issue="268" system="github">
+      <action dev="dpp" type="update" issue="268" system="assembla">
         Misc sitemap enhancements
       </action>
-      <action dev="dpp" type="fix" issue="267" system="github">
-	Lift explicitly closed streams rather than waiting for garbage collection
+      <action dev="dpp" type="fix" issue="267" system="assembla">
+        Lift explicitly closed streams rather than waiting for garbage collection
       </action>
-      <action dev="dpp" type="fix" issue="266" system="github">
+      <action dev="dpp" type="fix" issue="266" system="assembla">
         Jetty restarts do not cause exceptions to be thrown
       </action>
-      <action dev="dpp" type="enhancement" issue="262" system="github">
+      <action dev="dpp" type="update" issue="262" system="assembla">
         lift-json's Jsvalue may be used with JsonResponse
       </action>
-      <action dev="dpp" type="fix" issue="248" system="github">
+      <action dev="dpp" type="fix" issue="248" system="assembla">
         Fixed NPE problems in Mapper to Json
       </action>
-      <action dev="dpp" type="enhancement" issue="247" system="github">
+      <action dev="dpp" type="update" issue="247" system="assembla">
         Better handling of flot widget in Comet
       </action>
-      <action dev="dpp" type="fix" issue="244" system="github">
-	Fixed misc Textile bugs
+      <action dev="dpp" type="fix" issue="244" system="assembla">
+        Fixed misc Textile bugs
       </action>
-      <action dev="dpp" type="enhancement" issue="243" system="github">
+      <action dev="dpp" type="update" issue="243" system="assembla">
         Enhanced stateful rewrite
       </action>
-      <action dev="dpp" type="enhancement" issue="242" system="github">
+      <action dev="dpp" type="update" issue="242" system="assembla">
         Added post-commit hook to DB
       </action>
-      <action dev="dpp" type="enhancement" issue="241" system="github">
+      <action dev="dpp" type="update" issue="241" system="assembla">
         Wizard supports file upload forms
       </action>
-      <action dev="dpp" type="enhancement" issue="240" system="github">
+      <action dev="dpp" type="update" issue="240" system="assembla">
         Enhanced TestCond widget
       </action>
-      <action dev="dpp" type="fix" issue="239" system="github">
+      <action dev="dpp" type="fix" issue="239" system="assembla">
         304 responses no longer contain content type
       </action>
-      <action dev="dpp" type="enhancement" issue="236" system="github">
+      <action dev="dpp" type="update" issue="236" system="assembla">
         Enhanced connection pool logic
       </action>
-      <action dev="dpp" type="fix" issue="234" system="github">
+      <action dev="dpp" type="fix" issue="234" system="assembla">
         Fixed some null exceptions with DB queries
       </action>
-      <action dev="dpp" type="fix" issue="223" system="github">
+      <action dev="dpp" type="fix" issue="223" system="assembla">
         Fixed problems with the JNDI context
       </action>
-      <action dev="dpp" type="fix" issue="222" system="github">
+      <action dev="dpp" type="fix" issue="222" system="assembla">
         Fixed synchronization issues with Vars
       </action>
-      <action dev="dpp" type="enhancement" issue="276" system="github">
+      <action dev="dpp" type="update" issue="276" system="assembla">
         OAuth support (thanks to the FourSquare guys)
       </action>
-      <action dev="dpp" type="fix" issue="275" system="github">
-	File handles released correctly in Jetty
+      <action dev="dpp" type="fix" issue="275" system="assembla">
+        File handles released correctly in Jetty
       </action>
-      <action dev="dpp" type="enhancement" issue="250" system="github">
-        Extracted "Screen" code from Wizard for stand-alone
-	declarative input screens
+      <action dev="dpp" type="update" issue="250" system="assembla">
+        Extracted "Screen" code from Wizard for stand-alone declarative input screens
+      </action>
+      <action dev="indrajitr" type="update">
+        Restructure project (segregated into three logical projects: framework, archetypes, examples)
       </action>
     </release>
 
@@ -121,19 +184,19 @@
       <action dev="boisvert" type="add" issue="" system="">
         Added new built-in &lt;lift:html5&gt; snippet that sets HTML5 DOCTYPE on the XHTML response
       </action>
-      <action dev="boisvert" type="fix" issue="218" system="github">
+      <action dev="boisvert" type="fix" issue="218" system="assembla">
         JqJsCmds.ModalDialog now takes JsObj argument to work with BlockUI v2.x
       </action>
-      <action dev="boisvert" type="fix" issue="" system="github">
+      <action dev="boisvert" type="fix" issue="" system="assembla">
         Fixed typo in DerbyDriver.integerIndexColumnType: IDENITY -> IDENTITY
       </action>
-      <action dev="dchenbecker" type="fix" issue="211" system="github">
+      <action dev="dchenbecker" type="fix" issue="211" system="assembla">
         Fixed Mapper to use DriverType.columnTypeMap everywhere
       </action>
-      <action dev="dchenbecker" type="fix" issue="210" system="github">
+      <action dev="dchenbecker" type="fix" issue="210" system="assembla">
         Fixed Mapper logging to properly log inserts, updates and deletes
       </action>
-      <action dev="Kris Nuttycombe" type="fix" issue="139" system="github">
+      <action dev="Kris Nuttycombe" type="fix" issue="139" system="assembla">
         Breaking Changes:
 
         1) LocParam
@@ -176,128 +239,128 @@
         Link.createPath(value: T): String //creates the String representation of the path that is subsequently turned into XML and boxed by Link.createLink
       </action>
 
-      <action dev="marius.danciu" type="fix" issue="56" system="github">
+      <action dev="marius.danciu" type="fix" issue="56" system="assembla">
         Allowing page fragments wrapped by &lt;lift:lazy-load&gt; node to be processed and loaded asynchronously.
       </action>
 
-      <action dev="boisvert" type="fix" issue="153" system="github">
+      <action dev="boisvert" type="fix" issue="153" system="assembla">
         Updated documentation for Msgs
       </action>
 
-      <action dev="boisvert" type="fix" issue="177" system="github">
+      <action dev="boisvert" type="fix" issue="177" system="assembla">
         XmlResponse(...) now accepts optional HTTP status code, mime type and cookies.
       </action>
 
-      <action dev="boisvert" type="fix" issue="14" system="github">
+      <action dev="boisvert" type="fix" issue="14" system="assembla">
         SQL Server Alter Table Fails
       </action>
 
-      <action dev="boisvert" type="fix" issue="170" system="github">
+      <action dev="boisvert" type="fix" issue="170" system="assembla">
         Typo in Req.scala
       </action>
 
-      <action dev="hseeberger" type="fix" issue="166" system="github">
+      <action dev="hseeberger" type="fix" issue="166" system="assembla">
         Snapshot jars contains several Box.class files
       </action>
 
-      <action dev="indrajitr" type="update" issue="156" system="github" due-to="econoplas">
+      <action dev="indrajitr" type="update" issue="156" system="assembla" due-to="econoplas">
         Update hibernate-entitymanager to 3.4.0.GA.
       </action>
 
-      <action dev="indrajitr" type="update" issue="168" system="github" due-to="awhitford">
+      <action dev="indrajitr" type="update" issue="168" system="assembla" due-to="awhitford">
         Adjust javax.mail version range to avoid issues when Sun's repo is used and
         honor javax.activation being transitively pulled up my javax.mail.
       </action>
 
-      <action dev="indrajitr" type="fix" issue="180" system="github">
+      <action dev="indrajitr" type="fix" issue="180" system="assembla">
         Fix scala:doc and vscaladoc configuration along with provision for module specific configuration for packageLinkDefs.
       </action>
 
-      <action dev="indrajitr" type="update" issue="203" system="github">
+      <action dev="indrajitr" type="update" issue="203" system="assembla">
         Enforce Maven version 2.1.0 or higher, but lower than 3.0.
       </action>
 
-      <action dev="indrajitr" type="fix" issue="161" system="github">
+      <action dev="indrajitr" type="fix" issue="161" system="assembla">
         Upgrade Lift archetypes to use the new archetype metadata format. Enhance/fix archetype integration tests during build.
       </action>
 
-      <action dev="indrajitr" type="fix" issue="227" system="github">
+      <action dev="indrajitr" type="fix" issue="227" system="assembla">
         Enhance archetype metadata not to depend on ext.vm and allow one to set Lift version (-DliftVersion) or Scala version (-DscalaVersion) during archetype:generate.
       </action>
 
-      <action dev="dchenbecker" type="add" issue="148" system="github">
+      <action dev="dchenbecker" type="add" issue="148" system="assembla">
         Add ability to call JS code after AJAX form submit
       </action>
 
-      <action dev="dchenbecker" type="add" issue="181" system="github">
+      <action dev="dchenbecker" type="add" issue="181" system="assembla">
         Add AJAX editable field generator to SHtml, add AjaxEditableField to Mapper.
       </action>
 
-      <action dev="dchenbecker" type="fix" issue="16" system="github">
+      <action dev="dchenbecker" type="fix" issue="16" system="assembla">
         Fixed SQL Server drivers to use version-appropriate unicode columns for text.
       </action>
 
     </release>
 
     <release version="1.1-M7" date="2009-11-07" description="Lift 1.1 Milestone 7">
-      <action dev="alex.boisvert" type="update" issue="57" system="github">
+      <action dev="alex.boisvert" type="update" issue="57" system="assembla">
         Improve error message if database is not supported
       </action>
-      <action dev="alex.boisvert" type="update" issue="77" system="github">
+      <action dev="alex.boisvert" type="update" issue="77" system="assembla">
         Change net.liftweb.mapper.ByList to take a Seq[T] instead of a List[T]
       </action>
-      <action dev="timperrett" type="update" issue="88" system="github">
+      <action dev="timperrett" type="update" issue="88" system="assembla">
         Boxed payment status so that IPN cancelations appear as
         Empty. Breaking API change for implementors.
       </action>
-      <action dev="dpp" type="fix" issue="94" system="github" due-to="vdichev">
+      <action dev="dpp" type="fix" issue="94" system="assembla" due-to="vdichev">
         Textile parser outputs non-valid output. Changed some null to Null.
       </action>
-      <action dev="dpp" type="add" system="github">
+      <action dev="dpp" type="add" system="assembla">
         Enhanced the documentation for an type signatures for Actors
       </action>
-      <action dev="dpp" type="add" system="github">
+      <action dev="dpp" type="add" system="assembla">
         Revised Lift to use LiftActors and be compatible with Akka Actors
       </action>
-      <action dev="dpp" type="fix" issue="126" system="github">
+      <action dev="dpp" type="fix" issue="126" system="assembla">
         S.deleteCookie broken in M6
       </action>
-      <action dev="dpp" type="add" issue="125" system="github">
+      <action dev="dpp" type="add" issue="125" system="assembla">
         DB.runQuery isn't ConnectionIdentifier-aware
       </action>
-      <action dev="dpp" type="fix" issue="119" system="github">
+      <action dev="dpp" type="fix" issue="119" system="assembla">
         Misspelling in field name in ProtoExtendedSession
       </action>
 
-      <action dev="dpp" type="fix" issue="120" system="github">
+      <action dev="dpp" type="fix" issue="120" system="assembla">
         net.liftweb.widgets.autocomplete in version 1.1-M6
         changed return type from NodeSeq to Elem
       </action>
 
-      <action dev="dpp" type="fix" issue="122" system="github">
+      <action dev="dpp" type="fix" issue="122" system="assembla">
         StatefulSnippets generate invalid markup
       </action>
 
-      <action dev="dpp" type="update" issue="142" system="github">
+      <action dev="dpp" type="update" issue="142" system="assembla">
         Updated Lift to use Scala 2.7.7
       </action>
 
-      <action dev="dpp" type="fix" issue="143" system="github">
+      <action dev="dpp" type="fix" issue="143" system="assembla">
         Stacked URL Rewriting correctly deals with params
       </action>
 
-      <action dev="dpp" type="fix" issue="141" system="github">
+      <action dev="dpp" type="fix" issue="141" system="assembla">
         Simplified Factory signatures in LiftRules
       </action>
 
-      <action dev="indrajitr" type="update" issue="127" system="github">
+      <action dev="indrajitr" type="update" issue="127" system="assembla">
         Restructured Lift codebase (now categorized into lift-base, lift-persistence, lift-modules, lift-archetypes and lift-examples).
       </action>
 
     </release>
 
     <release version="1.1-M6" date="2009-10-09" description="Lift 1.1 Milestone 6">
-      <action dev="indrajitr" type="update" issue="128" system="github">
+      <action dev="indrajitr" type="update" issue="128" system="assembla">
         Project build models are more enriched and streamlined.
       </action>
 
@@ -305,17 +368,17 @@
       <action dev="joni" type="update">Generalized JSON serialization</action>
       <action dev="joni" type="fix">Use paranamer to find out case class constructor argument names</action>
 
-      <action dev="heiko.seeberger" type="fix" issue="84" system="github">Enhance CRUDify i18n</action>
-      <action dev="heiko.seeberger" type="add" issue="82" system="github">Add parameterized ?? to S</action>
-      <action dev="heiko.seeberger" type="fix" issue="87" system="github">Inaccurate ranges for previous and next (page) in CRUDify
+      <action dev="heiko.seeberger" type="fix" issue="84" system="assembla">Enhance CRUDify i18n</action>
+      <action dev="heiko.seeberger" type="add" issue="82" system="assembla">Add parameterized ?? to S</action>
+      <action dev="heiko.seeberger" type="fix" issue="87" system="assembla">Inaccurate ranges for previous and next (page) in CRUDify
       </action>
-      <action dev="heiko.seeberger" type="fix" issue="81" system="github">No i18n for "Sign Up" in MetaMegaProtoUser.signupXhtm</action>
-      <action dev="heiko.seeberger" type="fix" issue="111" system="github">Lost password submit button is not rendered correctly
+      <action dev="heiko.seeberger" type="fix" issue="81" system="assembla">No i18n for "Sign Up" in MetaMegaProtoUser.signupXhtm</action>
+      <action dev="heiko.seeberger" type="fix" issue="111" system="assembla">Lost password submit button is not rendered correctly
       </action>
-      <action dev="heiko.seeberger" type="fix" issue="113" system="github">Signup mail body not i18ned</action>
-      <action dev="heiko.seeberger" type="fix" issue="114" system="github">Misspelled Key "pasword.changed" in ProtoUser.scala</action>
-      <action dev="heiko.seeberger" type="fix" issue="123" system="github">Enhance Msgs snippet to optionally show all messages</action>
-      <action dev="heiko.seeberger" type="fix" issue="157" system="github">MappedPassword contains misspelled key for unset password
+      <action dev="heiko.seeberger" type="fix" issue="113" system="assembla">Signup mail body not i18ned</action>
+      <action dev="heiko.seeberger" type="fix" issue="114" system="assembla">Misspelled Key "pasword.changed" in ProtoUser.scala</action>
+      <action dev="heiko.seeberger" type="fix" issue="123" system="assembla">Enhance Msgs snippet to optionally show all messages</action>
+      <action dev="heiko.seeberger" type="fix" issue="157" system="assembla">MappedPassword contains misspelled key for unset password
       </action>
     </release>
 

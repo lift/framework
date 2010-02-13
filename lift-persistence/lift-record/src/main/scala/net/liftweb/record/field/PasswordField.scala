@@ -36,6 +36,16 @@ object PasswordField {
 
 class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[String, OwnerType] {
 
+  def this(rec: OwnerType, value: String) = {
+    this(rec)
+    set(value)
+  }
+
+  def this(rec: OwnerType, value: Box[String]) = {
+    this(rec)
+    setBox(value)
+  }
+
   private val salt_i = FatLazy(Safe.randomString(16))
   private var invalidMsg : String = ""
 
@@ -43,23 +53,26 @@ class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
 
   def salt = this.salt_i
 
-  override def set_!(in: String) = hash("{"+in+"} salt={"+salt_i.get+"}")
+  override def set_!(in: Box[String]): Box[String] =
+    in.map(s => hash("{"+s+"} salt={"+salt_i.get+"}"))
 
   def setFromAny(in: Any): Box[String] = {
     in match {
-      case a : Array[String] if (a.length == 2 && a(0) == a(1)) => Full(this.set(a(0)))
-      case l : List[String] if (l.length == 2 && l.head == l(1)) => Full(this.set(l.head))
-      case s : String  => Full(this.set(s))
-      case o @ _ => Full(this.set(o.toString))
+      case (a: Array[String]) if (a.length == 2 && a(0)   == a(1)) => setBox(Full(a(0)))
+      case (l: List[String])  if (l.length == 2 && l.head == l(1)) => setBox(Full(l.head))
+      case _ => genericSetFromAny(in)
     }
   }
 
-  def setFromString(s: String): Box[String] = Full(set(s))
+  def setFromString(s: String): Box[String] = s match {
+    case "" if optional_? => setBox(Empty)
+    case _                => setBox(Full(s))
+  }
 
   private def elem = S.fmapFunc(SFuncHolder(this.setFromAny(_))){
     funcName => <input type="pasword"
       name={funcName}
-      value={value match {case null => "" case s => s.toString}}
+      value={valueBox openOr ""}
       tabindex={tabIndex toString}/>}
 
   def toForm = {
@@ -80,17 +93,17 @@ class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
     }
   }
 
-  private def validatePassword(pwd: String): Box[Node] = pwd match {
+  private def validatePassword(pwdBox: Box[String]): Box[Node] = pwdBox.flatMap(pwd => pwd match {
     case "*" | PasswordField.blankPw if (pwd.length < 3) => Full(Text(S.??("password.too.short")))
     case "" | null => Full(Text(S.??("password.must.be.set")))
     case _ => Empty
-  }
+  })
 
   override def validators = validatePassword _ :: Nil
 
   def defaultValue = ""
 
-  def asJs = Str(value)
+  def asJs = valueBox.map(Str) openOr JsNull
 
 }
 

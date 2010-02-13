@@ -23,7 +23,7 @@ import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.http.{S}
 import _root_.net.liftweb.http.js._
-import _root_.java.util.Calendar
+import _root_.java.util.{Calendar, Date}
 import Helpers._
 import S._
 import JE._
@@ -33,37 +33,34 @@ class DateTimeField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
 
   def this(rec: OwnerType, value: Calendar) = {
     this(rec)
-    set(value)
+    setBox(Full(value))
   }
 
-  /**
-   * Sets the field value from an Any
-   */
-  def setFromAny(f : Any): Box[Calendar] = toDate(f).map(d => {
+  def this(rec: OwnerType, value: Box[Calendar]) = {
+    this(rec)
+    setBox(value)
+  }
+
+  private final def dateToCal(d: Date): Calendar = {
     val cal = Calendar.getInstance()
     cal.setTime(d)
-    this.set(cal)
-  })
+    cal
+  }
 
+  def setFromAny(in : Any): Box[Calendar] = toDate(in).flatMap(d => setBox(Full(dateToCal(d)))) or genericSetFromAny(in)
 
-  def setFromString(s: String): Box[Calendar] = {
-   try{
-    val cal = Calendar.getInstance()
-    cal.setTime(parseInternetDate(s))
-
-     Full(set(cal));
-   } catch {
-     case e: Exception => Empty
-   }
+  def setFromString(s: String): Box[Calendar] = s match {
+    case "" if optional_? => setBox(Empty)
+    case other            => setBox(tryo(dateToCal(parseInternetDate(s))))
   }
 
   private def elem =
-  S.fmapFunc(SFuncHolder(this.setFromAny(_))){funcName =>
-    <input type="text"
-      name={funcName}
-      value={value match {case null => "" case s: Calendar => toInternetDate(s.getTime)}}
-      tabindex={tabIndex toString}/>
-  }
+    S.fmapFunc(SFuncHolder(this.setFromAny(_))){funcName =>
+      <input type="text"
+        name={funcName}
+        value={valueBox.map(s => toInternetDate(s.getTime)) openOr ""}
+        tabindex={tabIndex toString}/>
+    }
 
   def toForm = {
     uniqueFieldId match {
@@ -84,7 +81,7 @@ class DateTimeField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
 
   def defaultValue = Calendar.getInstance
 
-  def asJs = Str(toInternetDate(value.getTime))
+  def asJs = valueBox.map(v => Str(toInternetDate(v.getTime))) openOr JsNull
 
 }
 

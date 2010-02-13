@@ -22,6 +22,7 @@ import net.liftweb.http.{S}
 import net.liftweb.http.js._
 import net.liftweb.util._
 import net.liftweb.common._
+import scala.reflect.Manifest
 import scala.xml._
 import S._
 import Helpers._
@@ -29,12 +30,19 @@ import JE._
 
 trait NumericField[MyType, OwnerType <: Record[OwnerType]] extends Field[MyType, OwnerType] {
 
-  private def elem = S.fmapFunc{s: List[String] => {
-      this.setFromAny(s) match {
-        case Empty => valueCouldNotBeSet = true
-        case _ =>
-      }}}{funcName => <input type="text" name={funcName} value={value.toString}
-      tabindex={tabIndex toString}/>}
+  /** Augments genericSetFromAny with support for values of type Number (optionally wrapped in any of the usual suspects) */
+  protected final def setNumericFromAny(in: Any, f: Number => MyType)(implicit m: Manifest[MyType]): Box[MyType] =
+    in match {
+      case     (n: Number) => setBox(Full(f(n)))
+      case Some(n: Number) => setBox(Full(f(n)))
+      case Full(n: Number) => setBox(Full(f(n)))
+      case (n: Number)::_  => setBox(Full(f(n)))
+      case _ => genericSetFromAny(in)
+    }
+
+  private def elem = S.fmapFunc((s: List[String]) => setFromAny(s)) {
+      funcName => <input type="text" name={funcName} value={valueBox.map(_.toString) openOr ""} tabindex={tabIndex toString}/>
+  }
 
   /**
    * Returns form input of this field
@@ -59,7 +67,7 @@ trait NumericField[MyType, OwnerType <: Record[OwnerType]] extends Field[MyType,
 
   override def noValueErrorMessage = S.??("number.required")
 
-  def asJs = JsRaw(String.valueOf(value))
+  def asJs = valueBox.map(v => JsRaw(String.valueOf(v))) openOr JsNull
 
 }
 

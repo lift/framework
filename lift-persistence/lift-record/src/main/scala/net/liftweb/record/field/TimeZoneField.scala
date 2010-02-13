@@ -22,12 +22,12 @@ import scala.xml._
 import net.liftweb.util._
 import net.liftweb.common._
 import net.liftweb.http.{S, SHtml}
-import _root_.java.util._
+import _root_.java.util.TimeZone
 import S._
 import Helpers._
 
 object TimeZoneField {
-  lazy val timeZoneList = TimeZone.getAvailableIDs.toList.
+  lazy val timeZoneList: List[(String, String)] = TimeZone.getAvailableIDs.toList.
     filter(!_.startsWith("SystemV/")).
     filter(!_.startsWith("Etc/")).filter(_.length > 3).
     sort(_ < _).map(tz => (tz, tz))
@@ -42,7 +42,13 @@ class TimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Stri
     case x => x
   }
 
-  private def elem = SHtml.select(TimeZoneField.timeZoneList, Full(value), set) % ("tabindex" -> tabIndex.toString)
+  /** Label for the selection item representing Empty, show when this field is optional. Defaults to the empty string. */
+  def emptyOptionLabel: String = ""
+
+  def buildDisplayList: List[(String, String)] =
+      if (optional_?) ("", emptyOptionLabel)::TimeZoneField.timeZoneList else TimeZoneField.timeZoneList
+
+  private def elem = SHtml.select(buildDisplayList, Full(valueBox openOr ""), set) % ("tabindex" -> tabIndex.toString)
 
   override def toForm = {
     var el = elem

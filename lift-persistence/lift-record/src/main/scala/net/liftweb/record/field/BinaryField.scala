@@ -36,22 +36,16 @@ class BinaryField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[
     set(value)
   }
 
-  /**
-   * Sets the field value from an Any
-   */
-  def setFromAny(f: Any): Box[Array[Byte]] = Full(this.set(
-    f match {
-      case null => Array()
-      case arr : Array[Byte] => f.asInstanceOf[Array[Byte]];
-      case _ => f.toString.getBytes("UTF-8")
-    }))
+  def this(rec: OwnerType, value: Box[Array[Byte]]) = {
+    this(rec)
+    setBox(value)
+  }
 
-  def setFromString(s: String): Box[Array[Byte]] = {
-    try{
-      Full(set(s.getBytes("UTF-8")));
-    } catch {
-      case e: Exception => Empty
-    }
+  def setFromAny(in: Any): Box[Array[Byte]] = genericSetFromAny(in)
+
+  def setFromString(s: String): Box[Array[Byte]] = s match {
+    case "" if optional_? => setBox(Empty)
+    case _                => setBox(tryo(s.getBytes("UTF-8")))
   }
 
   def toForm = NodeSeq.Empty
@@ -60,7 +54,7 @@ class BinaryField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[
 
   def defaultValue = Array(0)
 
-  def asJs = Str(hexEncode(value))
+  def asJs = valueBox.map(v => Str(hexEncode(v))) openOr JsNull
 
 }
 
