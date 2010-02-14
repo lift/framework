@@ -88,9 +88,16 @@ object SerializationExamples extends Specification {
     
     val ser = swrite(s)
     
-    println(ser)
-    
     read[SetContainer](ser) mustEqual s
+  }
+  
+  "None Option of tuple serialization example" in {
+    // This is a regression test case, failed in lift json
+    val s = OptionOfTupleOfDouble(None)
+    
+    val ser = swrite(s)
+    
+    read[OptionOfTupleOfDouble](ser) mustEqual s
   }
 
   case class Ints(x: List[List[Int]])
@@ -231,6 +238,8 @@ case class OptionOfAmbiguous(opt: Option[Bool])
 case class OptionOfAmbiguousP(opt: Option[Bird])
 
 case class SetContainer(set: Set[String])
+
+case class OptionOfTupleOfDouble(position: Option[Tuple2[Double, Double]])
 
 }
 }

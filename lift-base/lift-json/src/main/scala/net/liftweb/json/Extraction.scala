@@ -94,6 +94,8 @@ object Extraction {
     def newInstance(targetType: Class[_], args: List[Arg], json: JValue) = {
       def instantiate(constructor: JConstructor[_], args: List[Any]) = 
         try {
+          if (constructor.getDeclaringClass == classOf[java.lang.Object]) fail("No information known about type")
+          
           constructor.newInstance(args.map(_.asInstanceOf[AnyRef]).toArray: _*)
         } catch {
           case e @ (_:IllegalArgumentException | _:InstantiationException) =>             
@@ -152,7 +154,7 @@ object Extraction {
         try { 
           build(root, m) match {
             case null => None
-            case x => Some(x)
+            case x => println(m); Some(x)
           }
         } catch {
           case e: MappingException => None
