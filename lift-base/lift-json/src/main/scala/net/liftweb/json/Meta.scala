@@ -85,6 +85,8 @@ private[json] object Meta {
           mkContainer(genType, `* -> *`, 0, Lst.apply(classOf[List[_]], _))
         else if (classOf[Set[_]].isAssignableFrom(fType)) 
           mkContainer(genType, `* -> *`, 0, Lst.apply(classOf[Set[_]], _))
+        else if (fType.isArray)
+            mkContainer(genType, `* -> *`, 0, Lst.apply(fType, _))
         else if (classOf[Option[_]].isAssignableFrom(fType)) 
           mkContainer(genType, `* -> *`, 0, Optional.apply _)
         else if (classOf[Map[_, _]].isAssignableFrom(fType)) 
@@ -150,11 +152,17 @@ private[json] object Meta {
 
     def typeParameters(t: Type, k: Kind): List[Class[_]] = {
       def term(i: Int) = {
-        val ptype = t.asInstanceOf[ParameterizedType]
-        ptype.getActualTypeArguments()(i) match {
-          case c: Class[_] => c
-          case p: ParameterizedType => p.getRawType.asInstanceOf[Class[_]]
-          case x => fail("do not know how to get type parameter from " + x)
+        t match {
+          case ptype: ParameterizedType => ptype.getActualTypeArguments()(i) match {
+              case c: Class[_] => c
+              case p: ParameterizedType => p.getRawType.asInstanceOf[Class[_]]
+              case x => fail("do not know how to get type parameter from " + x)
+          }
+          case clazz: Class[_] if (clazz.isArray) => i match {
+            case 0 => clazz.getComponentType.asInstanceOf[Class[_]]
+            case _ => fail("Arrays only have one type parameter")
+          }
+          case _ => fail("Unsupported Type: " + t)
         }
       }
 

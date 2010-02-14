@@ -70,10 +70,12 @@ object Extraction {
       any match {
         case null => JNull
         case x if primitive_?(x.getClass) => primitive2jvalue(x)(formats)
-        case x: List[_]   => JArray(x map decompose)
-        case x: Set[_]    => JArray(x.toList map decompose)
-        case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
         case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
+        case x: Collection[_] => JArray(x.toList map decompose)
+        case x if (x.getClass.isArray) => JArray(x.asInstanceOf[Array[_]].toList map decompose)
+        case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
+        
+        
         case x => 
           mkObject(x.getClass, 
             x.getClass.getDeclaredFields.toList.remove(static_?).map { f => 
@@ -122,6 +124,16 @@ object Extraction {
     }
 
     def newPrimitive(elementType: Class[_], elem: JValue) = convert(elem, elementType, formats)
+    
+    def newCollection(root: JValue, m: Mapping, constructor: Array[_] => Any) = {
+      val array: Array[_] = root match {
+        case JArray(arr)      => arr.map(build(_, m)).toArray
+        case JNothing | JNull => Array[AnyRef]()
+        case x                => fail("Expected collection but got " + x + " for root " + root + " and mapping " + m)
+      }
+      
+      constructor(array)
+    }
 
     def build(root: JValue, mapping: Mapping): Any = mapping match {
       case Value(targetType) => convert(root, targetType, formats)
@@ -130,20 +142,24 @@ object Extraction {
       case Arg(_, m) => build(fieldValue(root), m)
       case Lst(c, m) => {
         if (c == classOf[List[_]]) {
-          root match {
-            case JArray(arr) => arr.map(build(_, m))
-            case JNothing | JNull => Nil
-            case x => fail("Expected array but got " + x)
-          }
+          newCollection(root, m, a => List(a: _*))
         }
         else if (c == classOf[Set[_]]) {
-          root match {
-            case JArray(arr) => Set(arr.map(build(_, m)).toArray: _*)
-            case JNothing | JNull => Set()
-            case x => fail("Expected set but got " + x)
-          }
+          newCollection(root, m, a => Set(a: _*))
         }
-        else fail("Expected array or set but got " + m + " for class " + c)
+        else if (c.isArray) {
+          newCollection(root, m, a => {
+              val typedArray = java.lang.reflect.Array.newInstance(c.getComponentType, a.length)
+              
+              var index = 0
+              
+              a.foreach { e => java.lang.reflect.Array.set(typedArray, index, e); index = index + 1 }
+              
+              typedArray
+            }
+          )
+        }
+        else fail("Expected collection but got " + m + " for class " + c)
       }
       case Dict(m) => root match {
         case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)
@@ -154,7 +170,7 @@ object Extraction {
         try { 
           build(root, m) match {
             case null => None
-            case x => println(m); Some(x)
+            case x => Some(x)
           }
         } catch {
           case e: MappingException => None

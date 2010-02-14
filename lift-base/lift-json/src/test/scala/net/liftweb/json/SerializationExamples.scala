@@ -87,8 +87,17 @@ object SerializationExamples extends Specification {
     val s = SetContainer(Set("foo", "bar"))
     
     val ser = swrite(s)
-    
     read[SetContainer](ser) mustEqual s
+  }
+  
+  "Array serialization example" in {
+    val s = ArrayContainer(Array("foo", "bar"))
+    
+    val ser = swrite(s);
+    
+    val unser = read[ArrayContainer](ser)
+    
+    s.array.toList mustEqual unser.array.toList
   }
   
   "None Option of tuple serialization example" in {
@@ -238,6 +247,8 @@ case class OptionOfAmbiguous(opt: Option[Bool])
 case class OptionOfAmbiguousP(opt: Option[Bird])
 
 case class SetContainer(set: Set[String])
+
+case class ArrayContainer(array: Array[String])
 
 case class OptionOfTupleOfDouble(position: Option[Tuple2[Double, Double]])
 
