@@ -74,6 +74,7 @@ object Extraction {
         case x: List[_] => JArray(x map decompose)
         case x: Option[_] => decompose(x getOrElse JNothing)
         case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
+        case x: Seq[_] => JArray((x map decompose).toList)
         case x => 
           x.getClass.getDeclaredFields.toList.remove(static_?).map { f => 
             f.setAccessible(true)
@@ -94,7 +95,13 @@ object Extraction {
     def newInstance(targetType: Class[_], args: List[Arg], json: JValue) = {
       def instantiate(constructor: JConstructor[_], args: List[Any]) = 
         try {
-          constructor.newInstance(args.map(_.asInstanceOf[AnyRef]).toArray: _*)
+          constructor.newInstance(args.map { a => a match {
+            case x if array_?(x) => 
+              // FIXME Scala 2.8: Simplify array handling.
+              val i = args.findIndexOf(_.asInstanceOf[AnyRef] eq x.asInstanceOf[AnyRef])
+              mkJavaArray(x, constructor.getParameterTypes()(i).getComponentType)
+            case x => x.asInstanceOf[AnyRef] 
+          }}.toArray: _*)
         } catch {
           case e @ (_:IllegalArgumentException | _:InstantiationException) =>             
             fail("Parsed JSON values do not match with class constructor\nargs=" + 
@@ -126,11 +133,8 @@ object Extraction {
       case Constructor(targetType, args) => newInstance(targetType, args, root)
       case Cycle(targetType) => build(root, mappingOf(targetType))
       case Arg(_, m) => build(fieldValue(root), m)
-      case Lst(m) => root match {
-        case JArray(arr) => arr.map(build(_, m))
-        case JNothing | JNull => Nil
-        case x => fail("Expected array but got " + x)
-      }
+      case Lst(m) => mkList(root, m)
+      case Arr(m) => mkList(root, m).toArray
       case Dict(m) => root match {
         case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)
         case x => fail("Expected object but got " + x)
@@ -145,6 +149,12 @@ object Extraction {
         } catch {
           case e: MappingException => None
         }
+    }
+
+    def mkList(root: JValue, m: Mapping) = root match {
+      case JArray(arr) => arr.map(build(_, m))
+      case JNothing | JNull => Nil
+      case x => fail("Expected array but got " + x)
     }
 
     def fieldValue(json: JValue): JValue = json match {
@@ -164,8 +174,10 @@ object Extraction {
     case JInt(x) if (targetType == classOf[Short]) => x.shortValue
     case JInt(x) if (targetType == classOf[Byte]) => x.byteValue
     case JInt(x) if (targetType == classOf[String]) => x.toString
+    case JInt(x) if (targetType == classOf[Number]) => x.longValue
     case JDouble(x) if (targetType == classOf[Float]) => x.floatValue
     case JDouble(x) if (targetType == classOf[String]) => x.toString
+    case JDouble(x) if (targetType == classOf[Number]) => x
     case JString(s) if (targetType == classOf[Symbol]) => Symbol(s)
     case JString(s) if (targetType == classOf[Date]) => formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'"))
     case JNull => null
