@@ -329,7 +329,7 @@ object JsonAST {
     case d :: ds => (d :: p) :: punctuate(p, ds)
   }
 
-  private def quote(s: String) = {
+  private[json] def quote(s: String): String = {
     val buf = new StringBuilder
     for (i <- 0 until s.length) {
       val c = s.charAt(i)

@@ -87,6 +87,31 @@ object Extraction {
       }
     } else prependTypeHint(any.getClass, serializer(any))
   }
+  
+  /** Flattens the JSON to a key/value map.
+   */
+  def flatten(json: JValue): Map[String, String] = {
+    def escapePath(str: String) = str
+
+    def flatten0(path: String, json: JValue): Map[String, String] = {
+      json match {
+        case JNothing | JNull           => Map()
+        case JString(s: String)         => Map(path -> ("\"" + quote(s) + "\""))
+        case JDouble(num: Double)       => Map(path -> num.toString)
+        case JInt(num: BigInt)          => Map(path -> num.toString)
+        case JBool(value: Boolean)      => Map(path -> value.toString)
+        case JField(name: String, 
+                    value: JValue)      => flatten0(path + escapePath(name), value)
+        case JObject(obj: List[JField]) => obj.foldLeft(Map[String, String]()) { (map, field) => map ++ flatten0(path + ".", field) }
+        case JArray(arr: List[JValue])  => arr.foldLeft((Map[String, String](), 0)) { 
+          (tuple, value) => (tuple._1 ++ flatten0(path + "[" + tuple._2 + "]", value),
+                             tuple._2 + 1) 
+        }._1
+      }
+    }
+
+    flatten0("", json)
+  }
 
   private def extract0[A](json: JValue, formats: Formats, mf: Manifest[A]): A = {
     if (mf.erasure == classOf[List[_]] || mf.erasure == classOf[Map[_, _]])

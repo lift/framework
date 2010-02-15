@@ -92,6 +92,13 @@ object ExtractionExamples extends Specification {
       List(List(List(1, 2), List(3)), List(List(4), List(5, 6))), 
       List(List(Name("joe"), Name("mary")), List(Name("mazy"))))
   }
+  
+  "Flatten example with simple case class" in {
+    val f = Extraction.flatten(Extraction.decompose(SimplePerson("joe", Address("Bulevard", "Helsinki"))))
+    val e = Map(".name" -> "\"joe\"", ".address.street" -> "\"Bulevard\"", ".address.city"   -> "\"Helsinki\"")
+    
+    f mustEqual e
+  }
 
   /* Does not work yet.
   "List extraction example" in {
