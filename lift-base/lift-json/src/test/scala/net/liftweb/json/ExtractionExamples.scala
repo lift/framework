@@ -99,6 +99,36 @@ object ExtractionExamples extends Specification {
     
     f mustEqual e
   }
+  
+  "Unflatten example with top level string and int" in {
+    val m = Map(".name" -> "\"joe\"", ".age" -> "32")
+    
+    Extraction.unflatten(m) mustEqual JObject(List(JField("name",JString("joe")), JField("age",JInt(32))))
+  }
+  
+  "Unflatten example with top level string and double" in {
+    val m = Map(".name" -> "\"joe\"", ".age" -> "32.2")
+  
+    Extraction.unflatten(m) mustEqual JObject(List(JField("name",JString("joe")), JField("age",JDouble(32.2))))
+  }
+  
+  "Unflatten example with two-level string properties" in {
+    val m = Map(".name" -> "\"joe\"", ".address.street" -> "\"Bulevard\"", ".address.city"   -> "\"Helsinki\"")
+    
+    Extraction.unflatten(m) mustEqual JObject(List(JField("name", JString("joe")), JField("address", JObject(List(JField("street", JString("Bulevard")), JField("city", JString("Helsinki")))))))
+  }
+  
+  "Unflatten example with top level array" in {
+    val m = Map(".foo[2]" -> "2", ".foo[0]" -> "0", ".foo[1]" -> "1")
+    
+    Extraction.unflatten(m) mustEqual JObject(List(JField("foo", JArray(List(JInt(0), JInt(1), JInt(2))))))
+  }
+  
+  "Flatten and unflatten are symmetric" in {
+    val parsed = parse(testJson)
+    
+    Extraction.unflatten(Extraction.flatten(parsed)) mustEqual parsed
+  }
 
   /* Does not work yet.
   "List extraction example" in {

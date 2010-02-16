@@ -290,11 +290,21 @@ object JsonAST {
   case class JObject(obj: List[JField]) extends JValue {
     type Values = Map[String, Any]
     def values = Map() ++ obj.map(_.values : (String, Any))
+    
+    override def equals(that: Any): Boolean = that match {
+      case o: JObject => Set(obj.toArray: _*) == Set(o.obj.toArray: _*)
+      case _ => false
+    }
   }
   case class JArray(arr: List[JValue]) extends JValue {
     type Values = List[Any]
     def values = arr.map(_.values)
     override def apply(i: Int): JValue = arr(i)
+    
+    override def equals(that: Any): Boolean = that match {
+      case a: JArray => Set(arr.toArray: _*) == Set(a.arr.toArray: _*)
+      case _ => false
+    }
   }
 
   /** Renders JSON.

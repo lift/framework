@@ -113,6 +113,58 @@ object Extraction {
     flatten0("", json)
   }
 
+  /** Unflattens a key/value map to a JSON object.
+   */
+  def unflatten(map: Map[String, String]): JValue = {
+    import scala.util.matching.Regex
+    
+    def extractValue(value: String): JValue = {
+      value.toLowerCase match {
+        case ""      => JNothing
+        case "null"  => JNull
+        case "true"  => JBool(true)
+        case "false" => JBool(false)
+        case x @ _   => 
+          if (value.charAt(0).isDigit) {
+            if (value.indexOf('.') == -1) JInt(value.toInt) else JDouble(value.toDouble)
+          }
+          else JString(JsonParser.unquote(value.substring(1)))
+      }
+    }
+  
+    def submap(prefix: String): Map[String, String] = {
+      Map(
+        map.filter(t => t._1.startsWith(prefix)).map(
+          t => (t._1.substring(prefix.length), t._2)
+        ).toList.toArray: _*
+      )
+    }
+  
+    val ArrayProp = new Regex("""^(\.([^\.\[]+))\[(\d+)\].*$""")
+    val ArrayElem = new Regex("""^(\[(\d+)\]).*$""")
+    val OtherProp = new Regex("""^(\.([^\.\[]+)).*$""")
+  
+    val uniquePaths = map.keys.foldLeft[Set[String]](Set()) { 
+      (set, key) =>
+        key match {
+          case ArrayProp(p, f, i) => set + p
+          case OtherProp(p, f)    => set + p    
+          case ArrayElem(p, i)    => set + p        
+          case x @ _              => set + x
+        }
+    }.toList.sort(_ < _) // Sort is necessary to get array order right
+    
+    uniquePaths.foldLeft[JValue](JNothing) {
+      (jvalue, key) => 
+        jvalue.merge(key match {
+          case ArrayProp(p, f, i) => JObject(List(JField(f, unflatten(submap(key)))))
+          case ArrayElem(p, i)    => JArray(List(unflatten(submap(key))))
+          case OtherProp(p, f)    => JObject(List(JField(f, unflatten(submap(key)))))
+          case ""                 => extractValue(map(key))
+        })
+    }
+  }
+
   private def extract0[A](json: JValue, formats: Formats, mf: Manifest[A]): A = {
     if (mf.erasure == classOf[List[_]] || mf.erasure == classOf[Map[_, _]])
       fail("Root object can't yet be List or Map (needs a feature from Scala 2.8)")

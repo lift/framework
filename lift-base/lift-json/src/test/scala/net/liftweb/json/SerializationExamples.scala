@@ -126,36 +126,28 @@ object FullTypeHintExamples extends TypeHintExamples {
   "Ambiguous field decomposition example" in {
     val a = Ambiguous(False())
     
-    val ser = swrite(a)
-    
+    val ser = swrite(a)    
     read[Ambiguous](ser) mustEqual a
   }
   
   "Ambiguous parameterized field decomposition example" in {
     val o = AmbiguousP(Chicken(23))
     
-    val ser = swrite(o)
-    
-    println(ser)
-    
+    val ser = swrite(o)    
     read[AmbiguousP](ser) mustEqual o
   }
   
   "Option of ambiguous field decomposition example" in {
     val o = OptionOfAmbiguous(Some(True()))
     
-    val ser = swrite(o)
-    
+    val ser = swrite(o)    
     read[OptionOfAmbiguous](ser) mustEqual o
   }
   
   "Option of ambiguous parameterized field decomposition example" in {
     val o = OptionOfAmbiguousP(Some(Falcon(200.0)))
     
-    val ser = swrite(o)
-    
-    println(ser)
-    
+    val ser = swrite(o)    
     read[OptionOfAmbiguousP](ser) mustEqual o
   }
 }
