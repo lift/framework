@@ -214,25 +214,10 @@ object Extraction {
       case Constructor(targetType, args) => newInstance(targetType, args, root)
       case Cycle(targetType) => build(root, mappingOf(targetType))
       case Arg(_, m) => build(fieldValue(root), m)
-      case Lst(c, m) => {
-        if (c == classOf[List[_]]) {
-          newCollection(root, m, a => List(a: _*))
-        }
-        else if (c == classOf[Set[_]]) {
-          newCollection(root, m, a => Set(a: _*))
-        }
-        else if (c.isArray) {
-          newCollection(root, m, a => {
-              val typedArray = java.lang.reflect.Array.newInstance(c.getComponentType, a.length)
-              
-              var index = 0
-              
-              a.foreach { e => java.lang.reflect.Array.set(typedArray, index, e); index = index + 1 }
-              
-              typedArray
-            }
-          )
-        }
+      case Col(c, m) => {
+        if (c == classOf[List[_]]) newCollection(root, m, a => List(a: _*))
+        else if (c == classOf[Set[_]]) newCollection(root, m, a => Set(a: _*))
+        else if (c.isArray) newCollection(root, m, mkTypedArray(c))
         else fail("Expected collection but got " + m + " for class " + c)
       }
       case Dict(m) => root match {
@@ -249,6 +234,14 @@ object Extraction {
         } catch {
           case e: MappingException => None
         }
+    }
+    
+    def mkTypedArray(c: Class[_])(a: Array[_]) = {
+      import java.lang.reflect.Array.{newInstance => newArray}
+      
+      a.foldLeft((newArray(c.getComponentType, a.length), 0)) { (tuple, e) => {
+        java.lang.reflect.Array.set(tuple._1, tuple._2, e); (tuple._1, tuple._2 + 1)
+      }}._1
     }
 
     def mkList(root: JValue, m: Mapping) = root match {
