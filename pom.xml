@@ -248,7 +248,7 @@
         <configuration>
           <filteringChanges>true</filteringChanges>
           <issueLinkTemplatePerSystem>
-            <github>%URL%/%ISSUE%/find</github>
+            <assembla>%URL%/%ISSUE%</assembla>
           </issueLinkTemplatePerSystem>
         </configuration>
         <reportSets>

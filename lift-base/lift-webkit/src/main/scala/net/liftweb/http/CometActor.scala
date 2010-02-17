@@ -141,7 +141,10 @@ object CurrentCometActor extends ThreadGlobal[Box[LiftCometActor]] {
   this.set(Empty)
 }
 
-case class AddAListener(who: SimpleActor[Any])
+object AddAListener {
+  def apply(who: SimpleActor[Any]) = new AddAListener(who, { case _ => true } )
+}
+case class AddAListener(who: SimpleActor[Any], shouldUpdate: PartialFunction[Any, Boolean])
 case class RemoveAListener(who: SimpleActor[Any])
 
 /**
@@ -153,7 +156,7 @@ case class RemoveAListener(who: SimpleActor[Any])
  */
 trait ListenerManager {
   self: SimpleActor[Any] =>
-  private var listeners: List[SimpleActor[Any]] = Nil
+  private var listeners: List[(SimpleActor[Any], PartialFunction[Any, Boolean])] = Nil
 
   protected def messageHandler: PartialFunction[Any, Unit] =
     highPriority orElse mediumPriority orElse
@@ -161,16 +164,20 @@ trait ListenerManager {
 
   protected def listenerService: PartialFunction[Any, Unit] =
     {
-      case AddAListener(who) => listeners ::= who
-      who ! createUpdate
+      case AddAListener(who, shouldUpdate) => listeners ::= (who, shouldUpdate)
+      eventuallyUpdate(createUpdate, (who, shouldUpdate))
 
       case RemoveAListener(who) =>
-        listeners = listeners.filter(_ ne who)
+        listeners = listeners.filter(_._1 ne who)
     }
 
   protected def updateListeners() {
     val update = createUpdate
-    listeners.foreach(_ ! update)
+    listeners foreach { eventuallyUpdate(createUpdate, _) }
+  }
+
+  private def eventuallyUpdate(update: Any, listener: (SimpleActor[Any], PartialFunction[Any, Boolean])) {
+    if (listener._2.isDefinedAt(update) && listener._2(update)) listener._1 ! update
   }
 
   /**
@@ -191,8 +198,13 @@ trait CometListener extends CometListenee
 trait CometListenee extends CometActor {
   protected def registerWith: SimpleActor[Any]
 
+  /**
+   * Override this in order to selectively update listeners based on the given message.
+   */
+  protected def shouldUpdate: PartialFunction[Any, Boolean] = { case _ => true}
+
   override protected def localSetup() {
-    registerWith ! AddAListener(this)
+    registerWith ! AddAListener(this, shouldUpdate)
     super.localSetup()
   }
 

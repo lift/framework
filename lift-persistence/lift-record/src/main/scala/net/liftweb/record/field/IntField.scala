@@ -34,30 +34,16 @@ class IntField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends NumericFi
     set(value)
   }
 
-  /**
-   * Sets the field value from an Any
-   */
-  def setFromAny(in: Any): Box[Int] = {
-    in match {
-      case n: Int => Full(this.set(n))
-      case n: Number => Full(this.set(n.intValue))
-      case (n: Number) :: _ => Full(this.set(n.intValue))
-      case Some(n: Number) => Full(this.set(n.intValue))
-      case Full(n: Number) => Full(this.set(n.intValue))
-      case None | Empty | Failure(_, _, _) => Full(this.set(0))
-      case (s: String) :: _ => setFromString(s)
-      case null => Full( this.set(0))
-      case s: String => setFromString(s)
-      case o => setFromString(o.toString)
-    }
+  def this(rec: OwnerType, value: Box[Int]) = {
+    this(rec)
+    setBox(value)
   }
 
-  def setFromString(s: String): Box[Int] = {
-    try{
-      Full(set(java.lang.Integer.parseInt(s)));
-    } catch {
-      case e: Exception => valueCouldNotBeSet = true; Empty
-    }
+  def setFromAny(in: Any): Box[Int] = setNumericFromAny(in, _.intValue)
+
+  def setFromString(s: String): Box[Int] = s match {
+    case "" if optional_? => setBox(Empty)
+    case _                => setBox(tryo(java.lang.Integer.parseInt(s)))
   }
 
   def defaultValue = 0

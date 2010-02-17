@@ -109,9 +109,21 @@ object SerializationExamples extends Specification {
     read[OptionOfTupleOfDouble](ser) mustEqual s
   }
 
+  "Case class with internal state example" in {
+    val m = Members("s", 1)
+    val ser = swrite(m)
+    ser mustEqual """{"x":"s","y":1}"""
+    read[Members](ser) mustEqual m
+  }
+
   case class Ints(x: List[List[Int]])
 
   case class Rec(n: Int, xs: List[Rec])
+
+  case class Members(x: String, y: Int) {
+    val foo1 = "foo"
+    lazy val foo2 = "foo"
+  }
 }
 
 object ShortTypeHintExamples extends TypeHintExamples {

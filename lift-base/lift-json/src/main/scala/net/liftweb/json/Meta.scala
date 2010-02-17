@@ -60,24 +60,7 @@ private[json] object Meta {
     def constructorArgs(clazz: Class[_], visited: Set[Class[_]]) = 
       orderedConstructorArgs(clazz).map { f =>
         toArg(unmangleName(f), f.getType, f.getGenericType, visited)
-      }.toList
-
-    def orderedConstructorArgs(clazz: Class[_]): Iterable[Field] = {
-      def fieldsForParanamer(x: JConstructor[_]) = {
-        val Name = """^((?:[^$]|[$][^0-9]+)+)([$][0-9]+)?$"""r
-        def clean(name: String) = name match {
-          case Name(text, junk) => text
-        }
-        val names = paranamer.lookupParameterNames(x).map(clean)
-        val fields = Map() ++ clazz.getDeclaredFields.filter(!static_?(_)).map(f => (f.getName, f))
-        for { n <- names } yield fields(n)
       }
-      
-      safePrimaryConstructorOf(clazz) match {
-        case Some(x) => fieldsForParanamer(x)
-        case None    => Nil
-      }
-    }
 
     def toArg(name: String, fieldType: Class[_], genericType: Type, visited: Set[Class[_]]): Arg = {
       def mkContainer(t: Type, k: Kind, valueTypeIndex: Int, factory: Mapping => Mapping) = 
@@ -93,7 +76,7 @@ private[json] object Meta {
         else if (classOf[Set[_]].isAssignableFrom(fType)) 
           mkContainer(genType, `* -> *`, 0, Lst.apply(classOf[Set[_]], _))
         else if (fType.isArray)
-            mkContainer(genType, `* -> *`, 0, Lst.apply(fType, _))
+          mkContainer(genType, `* -> *`, 0, Lst.apply(fType, _))
         else if (classOf[Option[_]].isAssignableFrom(fType)) 
           mkContainer(genType, `* -> *`, 0, Optional.apply _)
         else if (classOf[Map[_, _]].isAssignableFrom(fType)) 
@@ -136,6 +119,8 @@ private[json] object Meta {
   object Reflection {
     import java.lang.reflect._
 
+    private val primaryConstructorArgs = new Memo[Class[_], List[Field]]
+
     sealed abstract class Kind
     case object `* -> *` extends Kind
     case object `(*,*) -> *` extends Kind
@@ -145,8 +130,30 @@ private[json] object Meta {
       classOf[Float], classOf[Byte], classOf[BigInt], classOf[Boolean], 
       classOf[Short], classOf[java.lang.Integer], classOf[java.lang.Long], 
       classOf[java.lang.Double], classOf[java.lang.Float], 
-      classOf[java.lang.Byte], classOf[java.lang.Boolean], 
+      classOf[java.lang.Byte], classOf[java.lang.Boolean], classOf[Number],
       classOf[java.lang.Short], classOf[Date], classOf[Symbol]).map((_, ())))
+
+    def orderedConstructorArgs(clazz: Class[_]): List[Field] = {
+      def queryArgs(clazz: Class[_]): List[Field] = {
+        // Paranamer implementation:
+        def fieldsForParanamer(x: JConstructor[_]) = {
+          val Name = """^((?:[^$]|[$][^0-9]+)+)([$][0-9]+)?$"""r
+          def clean(name: String) = name match {
+            case Name(text, junk) => text
+          }
+          val names = paranamer.lookupParameterNames(x).map(clean)
+          val fields = Map() ++ clazz.getDeclaredFields.filter(!static_?(_)).map(f => (f.getName, f))
+          for { n <- names } yield fields(n)
+        }
+        
+        val args = safePrimaryConstructorOf(clazz) match {
+          case Some(x) => fieldsForParanamer(x)
+          case None    => Nil
+        }
+        args.toList
+      }
+      primaryConstructorArgs.memoize(clazz, queryArgs(_))
+    }
 
     def safePrimaryConstructorOf[A](cl: Class[A]): Option[JConstructor[A]] = 
       cl.getDeclaredConstructors.toList.asInstanceOf[List[JConstructor[A]]] match {
@@ -199,6 +206,19 @@ private[json] object Meta {
       case p: ParameterizedType => 
         p.getActualTypeArguments.exists(_.isInstanceOf[ParameterizedType])
       case _ => false
+    }
+
+    def array_?(x: Any) = x != null && classOf[scala.Array[_]].isAssignableFrom(x.asInstanceOf[AnyRef].getClass)
+
+    def mkJavaArray(x: Any, componentType: Class[_]) = {
+      val arr = x.asInstanceOf[scala.Array[_]]
+      val a = java.lang.reflect.Array.newInstance(componentType, arr.size)
+      var i = 0
+      while (i < arr.size) {
+        java.lang.reflect.Array.set(a, i, arr(i))
+        i += 1
+      }
+      a
     }
 
     def primitive2jvalue(a: Any)(implicit formats: Formats) = a match {

@@ -74,16 +74,13 @@ object Extraction {
         case x: Collection[_] => JArray(x.toList map decompose)
         case x if (x.getClass.isArray) => JArray(x.asInstanceOf[Array[_]].toList map decompose)
         case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
-        
-        
         case x => 
-          mkObject(x.getClass, 
-            x.getClass.getDeclaredFields.toList.remove(static_?).map { f => 
-              f.setAccessible(true)
-            
-              JField(unmangleName(f), decompose(f get x))
-            }
-          )
+          orderedConstructorArgs(x.getClass).map { f =>
+            f.setAccessible(true)
+            JField(unmangleName(f), decompose(f get x))
+          } match {
+            case fields => mkObject(x.getClass, fields)
+          }
       }
     } else prependTypeHint(any.getClass, serializer(any))
   }
@@ -215,7 +212,7 @@ object Extraction {
     def build(root: JValue, mapping: Mapping): Any = mapping match {
       case Value(targetType) => convert(root, targetType, formats)
       case Constructor(targetType, args) => newInstance(targetType, args, root)
-      case Cycle(targetType) => mappingOf(targetType)
+      case Cycle(targetType) => build(root, mappingOf(targetType))
       case Arg(_, m) => build(fieldValue(root), m)
       case Lst(c, m) => {
         if (c == classOf[List[_]]) {
@@ -254,6 +251,12 @@ object Extraction {
         }
     }
 
+    def mkList(root: JValue, m: Mapping) = root match {
+      case JArray(arr) => arr.map(build(_, m))
+      case JNothing | JNull => Nil
+      case x => fail("Expected array but got " + x)
+    }
+
     def fieldValue(json: JValue): JValue = json match {
       case JField(_, value) => value
       case JNothing => JNothing
@@ -271,8 +274,10 @@ object Extraction {
     case JInt(x) if (targetType == classOf[Short]) => x.shortValue
     case JInt(x) if (targetType == classOf[Byte]) => x.byteValue
     case JInt(x) if (targetType == classOf[String]) => x.toString
+    case JInt(x) if (targetType == classOf[Number]) => x.longValue
     case JDouble(x) if (targetType == classOf[Float]) => x.floatValue
     case JDouble(x) if (targetType == classOf[String]) => x.toString
+    case JDouble(x) if (targetType == classOf[Number]) => x
     case JString(s) if (targetType == classOf[Symbol]) => Symbol(s)
     case JString(s) if (targetType == classOf[Date]) => formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'"))
     case JNull => null

@@ -98,7 +98,7 @@ object AsyncRenderer extends LiftActor {
 
   override def messageHandler = {
     case Start(snapshot) => snapshot("run" :: Nil)
-    case AddAListener(comet) =>
+    case AddAListener(comet, _) =>
   }
 }
 
