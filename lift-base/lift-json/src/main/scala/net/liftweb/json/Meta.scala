@@ -22,6 +22,8 @@ import java.util.Date
 import JsonAST._
 
 private[json] object Meta {
+  import com.thoughtworks.paranamer._
+
   /** Intermediate metadata format for case classes.
    *  This ADT is constructed (and then memoized) from given case class using reflection.
    *
@@ -50,16 +52,10 @@ private[json] object Meta {
 
   private val mappings = new Memo[Class[_], Mapping]
   private val unmangledNames = new Memo[String, String]
+  private val paranamer = new CachingParanamer(new BytecodeReadingParanamer)
 
   private[json] def mappingOf(clazz: Class[_]) = {
     import Reflection._
-    
-    def lookupProductElementFields(clazz: Class[_]): List[Field] = {
-      val methods = clazz.getDeclaredMethods.toList
-      val fields  = clazz.getDeclaredFields.toList
-      
-      fields.toList.reverse.filter { f => methods.exists(m => f.getName == m.getName && m.getReturnType == f.getType) }
-    }
 
     def constructorArgs(clazz: Class[_], visited: Set[Class[_]]) = 
       orderedConstructorArgs(clazz).map { f =>
@@ -67,9 +63,19 @@ private[json] object Meta {
       }.toList
 
     def orderedConstructorArgs(clazz: Class[_]): Iterable[Field] = {
+      def fieldsForParanamer(x: JConstructor[_]) = {
+        val Name = """^((?:[^$]|[$][^0-9]+)+)([$][0-9]+)?$"""r
+        def clean(name: String) = name match {
+          case Name(text, junk) => text
+        }
+        val names = paranamer.lookupParameterNames(x).map(clean)
+        val fields = Map() ++ clazz.getDeclaredFields.filter(!static_?(_)).map(f => (f.getName, f))
+        for { n <- names } yield fields(n)
+      }
+      
       safePrimaryConstructorOf(clazz) match {
-        case Some(x) => lookupProductElementFields(clazz)
-        case None => Nil
+        case Some(x) => fieldsForParanamer(x)
+        case None    => Nil
       }
     }
 
