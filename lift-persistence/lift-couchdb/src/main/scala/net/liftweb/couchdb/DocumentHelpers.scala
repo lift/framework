@@ -16,7 +16,6 @@ package couchdb {
 
 import _root_.scala.reflect.Manifest
 import _root_.dispatch.{Http, StatusCode}
-import _root_.dispatch.liftjson.Js.Request2JsonRequest
 import _root_.net.liftweb.common.{Box, Failure, Full}
 import Box.option2Box
 import _root_.net.liftweb.json.Implicits.string2jvalue
