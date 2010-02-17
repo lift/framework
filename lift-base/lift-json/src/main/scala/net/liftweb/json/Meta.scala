@@ -61,17 +61,7 @@ private[json] object Meta {
     def constructorArgs(clazz: Class[_], visited: Set[Class[_]]) = 
       orderedConstructorArgs(clazz).map { f =>
         toArg(unmangleName(f), f.getType, f.getGenericType, visited)
-      }.toList
-
-    def orderedConstructorArgs(clazz: Class[_]): Iterable[Field] = {
-      safePrimaryConstructorOf(clazz) match {
-        case Some(x) => 
-          val names = paranamer.lookupParameterNames(x)
-          val fields = Map() ++ clazz.getDeclaredFields.filter(!static_?(_)).map(f => (f.getName, f))
-          for { n <- names } yield fields(n)
-        case None => Nil
       }
-    }
 
     def toArg(name: String, fieldType: Class[_], genericType: Type, visited: Set[Class[_]]): Arg = {
       def mkContainer(t: Type, k: Kind, valueTypeIndex: Int, factory: Mapping => Mapping) = 
@@ -127,6 +117,8 @@ private[json] object Meta {
   object Reflection {
     import java.lang.reflect._
 
+    private val primaryConstructorArgs = new Memo[Class[_], List[Field]]
+
     sealed abstract class Kind
     case object `* -> *` extends Kind
     case object `(*,*) -> *` extends Kind
@@ -138,6 +130,20 @@ private[json] object Meta {
       classOf[java.lang.Double], classOf[java.lang.Float], 
       classOf[java.lang.Byte], classOf[java.lang.Boolean], classOf[Number],
       classOf[java.lang.Short], classOf[Date], classOf[Symbol]).map((_, ())))
+
+    def orderedConstructorArgs(clazz: Class[_]): List[Field] = {
+      def queryArgs(clazz: Class[_]): List[Field] = {
+        val args = safePrimaryConstructorOf(clazz) match {
+          case Some(x) => 
+            val names = paranamer.lookupParameterNames(x)
+            val fields = Map() ++ clazz.getDeclaredFields.filter(!static_?(_)).map(f => (f.getName, f))
+            for { n <- names } yield fields(n)
+          case None => Nil
+        }
+        args.toList
+      }
+      primaryConstructorArgs.memoize(clazz, queryArgs(_))
+    }
 
     def safePrimaryConstructorOf[A](cl: Class[A]): Option[JConstructor[A]] = 
       cl.getDeclaredConstructors.toList.asInstanceOf[List[JConstructor[A]]] match {

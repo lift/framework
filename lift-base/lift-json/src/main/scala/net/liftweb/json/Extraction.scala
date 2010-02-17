@@ -76,7 +76,7 @@ object Extraction {
         case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
         case x: Seq[_] => JArray((x map decompose).toList)
         case x => 
-          x.getClass.getDeclaredFields.toList.remove(static_?).map { f => 
+          orderedConstructorArgs(x.getClass).map { f =>
             f.setAccessible(true)
             JField(unmangleName(f), decompose(f get x))
           } match {
