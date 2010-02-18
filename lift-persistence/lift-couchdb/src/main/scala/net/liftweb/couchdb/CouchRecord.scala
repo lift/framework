@@ -183,7 +183,8 @@ trait CouchMetaRecord[BaseRecord <: CouchRecord[BaseRecord]] extends JSONMetaRec
       yield result.rows.flatMap { row => row.doc.flatMap(createFromJValue) }
 
   /** Query using a view in the default database. */
-  def queryView(design: String, view: String): Box[Seq[BaseRecord]] = queryView(design, view, identity)
+  def queryView(design: String, view: String): Box[Seq[BaseRecord]] =
+    queryViewFrom(defaultDatabase, design, view, identity)
 
   /** Query using a view in the default database. Filter refines the query (e.g. by key), see Queryable. */
   def queryView(design: String, view: String, filter: View => View): Box[Seq[BaseRecord]] =
@@ -191,8 +192,56 @@ trait CouchMetaRecord[BaseRecord <: CouchRecord[BaseRecord]] extends JSONMetaRec
 
   /** Query using a view in the given database. Filter refines the query (e.g. by key), see Queryable. */
   def queryViewFrom(database: Database, design: String, view: String, filter: View => View): Box[Seq[BaseRecord]] =
+    queryViewProjectionFrom(database, design, view, filter, _.value)
+
+  /**
+   * Query using a view in the default database, returning records created from the documents returned with the view.
+   * If used against a reduce view, make sure to use dontReduce in the filter, otherwise CouchDB will signal an error.
+   * includeDocs are always on for this type of query.
+   */
+  def queryViewDocs(design: String, view: String): Box[Seq[BaseRecord]] =
+    queryViewDocsFrom(defaultDatabase, design, view, identity)
+
+  /**
+   * Query using a view in the default database, returning records created from the documents returned with the view.
+   * If used against a reduce view, make sure to use dontReduce in the filter, otherwise CouchDB will signal an error.
+   * Filter refines the query (e.g. by key), see Queryable.
+   * includeDocs are always on for this type of query.
+   */
+  def queryViewDocs(design: String, view: String, filter: View => View): Box[Seq[BaseRecord]] =
+    queryViewDocsFrom(defaultDatabase, design, view, filter)
+
+  /**
+   * Query using a view in the given database, returning records created from the documents returned with the view.
+   * If used against a reduce view, make sure to use dontReduce in the filter, otherwise CouchDB will signal an error.
+   * Filter refines the query (e.g. by key), see Queryable.
+   * includeDocs are always on for this type of query.
+   */
+  def queryViewDocsFrom(database: Database, design: String, view: String, filter: View => View): Box[Seq[BaseRecord]] =
+    queryViewProjectionFrom(database, design, view, v => filter(v.includeDocs), _.doc)
+
+  /**
+   * Query using a view in the default database, using some projection function that converts each QueryRow into a JSON document to read
+   * as the record.
+   */
+  def queryViewProjection(design: String, view: String, project: QueryRow => Box[JValue]): Box[Seq[BaseRecord]] =
+    queryViewProjectionFrom(defaultDatabase, design, view, identity, project)
+
+  /**
+   * Query using a view in the default database, using some projection function that converts each QueryRow into a JSON document to read
+   * as the record. Filter refines the query (e.g. by key), see Queryable.
+   */
+  def queryViewProjection(design: String, view: String, filter: View => View, project: QueryRow => Box[JValue]): Box[Seq[BaseRecord]] =
+    queryViewProjectionFrom(defaultDatabase, design, view, filter, project)
+
+  /**
+   * Query using a view in the given database, using some projection function that converts each QueryRow into a JSON document to read
+   * as the record.
+   */
+  def queryViewProjectionFrom(database: Database, design: String, view: String, 
+                              filter: View => View, project: QueryRow => Box[JValue]): Box[Seq[BaseRecord]] =
     for (resultBox <- tryo(http(filter(database.design(design).view(view)) query)); result <- resultBox)
-      yield result.rows.flatMap(_.value.flatMap(createFromJValue))
+      yield result.rows.flatMap(row => project(row).flatMap(createFromJValue))
 
   /** Perform the given action with loose parsing turned on */
   def looseParsing[A](f: => A): A = 

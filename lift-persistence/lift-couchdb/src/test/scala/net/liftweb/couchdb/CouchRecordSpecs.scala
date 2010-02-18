@@ -49,7 +49,9 @@ object CouchRecordTestSpecs extends Specification {
 
   val design: JObject = 
     ("language" -> "javascript") ~
-    ("views" -> ("people_by_age" -> ("map" -> "function(doc) { if (doc.type == 'Person') { emit(doc.age, doc); } }")))
+    ("views" -> (("people_by_age" ->  ("map" -> "function(doc) { if (doc.type == 'Person') { emit(doc.age, doc); } }")) ~
+                 ("oldest"        -> (("map" -> "function(doc) { if (doc.type == 'Person') { emit(doc.name, doc.age); } }") ~
+                                      ("reduce" -> "function(keys, values) { return Math.max.apply(null, values); }")))))
 
   def setup = {
     val database = new Database("test")
@@ -82,7 +84,7 @@ object CouchRecordTestSpecs extends Specification {
 
     "give emtpy box on get when nonexistant" in {
       setup must_== ()
-
+ 
       Person.fetch("testdoc") must verify (!_.isDefined)
     }
 
@@ -170,6 +172,42 @@ object CouchRecordTestSpecs extends Specification {
       }
     }
 
+    "support queries returning documents" in {
+      setup
+
+      val newRec1 = testRec1
+      val newRec2 = testRec2
+      newRec1.save
+      newRec2.save
+
+      newRec1.saved_? must_== true
+      newRec2.saved_? must_== true
+
+      val expectedRows = newRec1::newRec2::Nil
+
+      Person.queryViewDocs("test", "oldest", _.dontReduce) must beLike {
+        case Full(foundRows) => assertEqualRows(foundRows, expectedRows); true
+      }
+    }
+
+    "support queries returning documents for a non-reducing view" in {
+      setup
+
+      val newRec1 = testRec1
+      val newRec2 = testRec2
+      newRec1.save
+      newRec2.save
+
+      newRec1.saved_? must_== true
+      newRec2.saved_? must_== true
+
+      val expectedRows = newRec1::newRec2::Nil
+
+      Person.queryViewDocs("test", "people_by_age", identity) must beLike {
+        case Full(foundRows) => assertEqualRows(foundRows, expectedRows); true
+      }
+    }
+
     "support multiple databases for fetching" in {
       setup
       val database2 = new Database("test2")
@@ -219,7 +257,7 @@ object CouchRecordTestSpecs extends Specification {
       Person.fetchMany(newRec1.id.valueBox.open_!, newRec3.id.valueBox.open_!) must beLike { case Full(seq) if seq.isEmpty => true }
     }
 
-    "support multiple databses for queries" in {
+    "support multiple databases for queries" in {
       setup
       val database2 = new Database("test2")
       (try { Http(database2 delete) } catch { case StatusCode(_, _) => () }) must not(throwAnException[ConnectException]).orSkipExample
@@ -246,6 +284,32 @@ object CouchRecordTestSpecs extends Specification {
       }
 
       Person.queryView("test", "people_by_age", _.key(JInt(30))) must beLike { case Full(seq) if seq.isEmpty => true }
+    }
+
+    "support multiple databases for queries returning documents" in {
+      setup
+      val database2 = new Database("test2")
+      (try { Http(database2 delete) } catch { case StatusCode(_, _) => () }) must not(throwAnException[ConnectException]).orSkipExample
+      Http(database2 create)
+      Http(database2.design("test") put design)
+
+      val newRec1 = testRec1
+      val newRec2 = testRec2
+      newRec1.database = database2
+      newRec2.database = database2
+      newRec1.save
+      newRec2.save
+
+      newRec1.saved_? must_== true
+      newRec2.saved_? must_== true
+
+      val expectedRows = newRec1::newRec2::Nil
+
+      Person.queryViewDocsFrom(database2, "test", "oldest", _.dontReduce) must beLike {
+        case Full(foundRows) => assertEqualRows(foundRows, expectedRows); true
+      }
+
+      Person.queryViewDocs("test", "oldest", _.dontReduce) must beLike { case Full(seq) if seq.isEmpty => true }
     }
   }
 }
