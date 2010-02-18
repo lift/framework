@@ -129,6 +129,18 @@ object ExtractionExamples extends Specification {
     
     Extraction.unflatten(Extraction.flatten(parsed)) mustEqual parsed
   }
+  
+  "Flatten preserves empty sets" in {
+    val s = SetWrapper(Set())
+    
+    Extraction.flatten(Extraction.decompose(s)).get(".set") mustEqual Some("[]")
+  }
+  
+  "Flatten and unflatten are symmetric with empty sets" in {
+    val s = SetWrapper(Set())
+    
+    Extraction.unflatten(Extraction.flatten(Extraction.decompose(s))).extract[SetWrapper] mustEqual s
+  }
 
   /* Does not work yet.
   "List extraction example" in {
@@ -216,6 +228,8 @@ object ExtractionExamples extends Specification {
 
   def date(s: String) = DefaultFormats.dateFormat.parse(s).get
 }
+
+case class SetWrapper(set: Set[String])
 
 case class Person(name: String, address: Address, children: List[Child])
 case class Address(street: String, city: String)

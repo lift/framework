@@ -100,10 +100,12 @@ object Extraction {
         case JField(name: String, 
                     value: JValue)      => flatten0(path + escapePath(name), value)
         case JObject(obj: List[JField]) => obj.foldLeft(Map[String, String]()) { (map, field) => map ++ flatten0(path + ".", field) }
-        case JArray(arr: List[JValue])  => arr.foldLeft((Map[String, String](), 0)) { 
-          (tuple, value) => (tuple._1 ++ flatten0(path + "[" + tuple._2 + "]", value),
-                             tuple._2 + 1) 
-        }._1
+        case JArray(arr: List[JValue])  => arr.length match {
+          case 0 => Map(path -> "[]")
+          case _ => arr.foldLeft((Map[String, String](), 0)) { 
+                      (tuple, value) => (tuple._1 ++ flatten0(path + "[" + tuple._2 + "]", value), tuple._2 + 1) 
+                    }._1
+        }
       }
     }
 
@@ -121,6 +123,7 @@ object Extraction {
         case "null"  => JNull
         case "true"  => JBool(true)
         case "false" => JBool(false)
+        case "[]"    => JArray(Nil)
         case x @ _   => 
           if (value.charAt(0).isDigit) {
             if (value.indexOf('.') == -1) JInt(BigInt(value)) else JDouble(value.toDouble)
