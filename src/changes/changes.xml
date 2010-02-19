@@ -38,15 +38,75 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+      <action dev="hseeberger" type="add" issue="326" system="assembla">
+        Extend Comet (ListenerManager) to selectively update subscribers
+      </action>
+      <action dev="jonifreeman" type="fix" issue="323" system="assembla">
+        lift-Json doesn't appear to be correctly handling attributes
+      </action>
+      <action dev="jonifreeman" type="fix" issue="279" system="assembla">
+        net.liftweb.json.JsonParser.extract fails with List[List[Int]]
+      </action>
+      <action dev="jonifreeman" type="add" issue="279" system="assembla">
+        Multidimensional arrays supported in JSON serialization and extraction
+      </action>
       <action dev="jonifreeman" type="update" issue="303" system="assembla">
         JSON object can be extracted into scala.Map (and scala.Map can be serialized as JSON object). Recursive types
         can be serialized.
       </action>
-      <action dev="jonifreeman" type="fix" issue="279" system="assembla">
-        Multidimensional arrays supported in JSON serialization and extraction
-      </action>
-      <action dev="jonifreeman" type="update" issue="" system="assembla">
+      <action dev="jonifreeman" type="update" issue="333" system="assembla">
         JSON pull parser API
+      </action>
+      <action dev="indrajitr" type="update" issue="292" system="assembla">
+        Make Lfit both Scala 2.7 and 2.8 friendly
+      </action>
+      <action dev="indrajitr" type="fix" issue="307" system="assembla">
+        Streamline JDBC library dependencies
+      </action>
+      <action dev="mads" type="fix" issue="46" system="assembla">
+        autocomplete widget - make options settable
+      </action>
+      <action dev="hoffrocket" type="update" issue="304" system="assembla">
+        Upgrade jQuery to 1.4.1
+      </action>
+      <action dev="hoffrocket" type="add" issue="311" system="assembla">
+        Enable jQuery version switching in LiftRules
+      </action>
+      <action dev="marius.danciu" type="fix" issue="280" system="assembla">
+        Ajax form submission with multiple submit buttons
+      </action>
+      <action dev="marius.danciu" type="new" issue="286" system="assembla">
+        Submitting a form by ID and provide a Scala function
+      </action>
+      <action dev="marius.danciu" type="fix" issue="295" system="assembla">
+        Ajax change from () => Any to () => JsCmd
+      </action>
+      <action dev="dpp" type="fix" issue="254" system="assembla">
+        Add field-by-field error notifications to CRUDified fields
+      </action>
+      <action dev="dpp" type="fix" issue="282" system="assembla">
+        MappedLongForeignKey::asJsonValue should generate JNull
+      </action>
+      <action dev="dpp" type="fix" issue="284" system="assembla">
+        Additional tag support for TextileParser
+      </action>
+      <action dev="dpp" type="fix" issue="290" system="assembla">
+        TextileParser molests divs
+      </action>
+      <action dev="dpp" type="add" issue="293" system="assembla">
+        New LRU Map that works better than Apache LRU map
+      </action>
+      <action dev="dpp" type="fix" issue="308" system="assembla">
+        The order of fields is random in Mapper
+      </action>
+      <action dev="dpp" type="add" issue="314" system="assembla">
+        Allow thread-local Connection Identerifer resolution
+      </action>
+      <action dev="dpp" type="fix" issue="315" system="assembla">
+        How overriding of _showAllTemplate to show a limited number of columns
+      </action>
+      <action dev="dpp" type="fix" issue="319" system="assembla">
+        Control characters in input can lead to Denial of Service attacks
       </action>
     </release>
 

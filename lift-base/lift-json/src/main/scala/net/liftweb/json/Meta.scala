@@ -48,6 +48,7 @@ private[json] object Meta {
   case class Cycle(targetType: Class[_]) extends Mapping
   case class Dict(mapping: Mapping) extends Mapping
   case class Lst(mapping: Mapping) extends Mapping
+  case class Arr(mapping: Mapping) extends Mapping
   case class Optional(mapping: Mapping) extends Mapping
 
   private val mappings = new Memo[Class[_], Mapping]
@@ -79,10 +80,12 @@ private[json] object Meta {
           factory(fieldMapping(types._1, types._2))
         } else factory(fieldMapping(typeParameters(t, k)(valueTypeIndex), null))
         
-      def fieldMapping(fType: Class[_], genType: Type): Mapping = 
+      def fieldMapping(fType: Class[_], genType: Type): Mapping = {
         if (primitive_?(fType)) Value(fType)
         else if (classOf[List[_]].isAssignableFrom(fType)) 
           mkContainer(genType, `* -> *`, 0, Lst.apply _)
+        else if (fType.isArray) 
+          Arr(fieldMapping(fType.getComponentType, fType.getComponentType))
         else if (classOf[Option[_]].isAssignableFrom(fType)) 
           mkContainer(genType, `* -> *`, 0, Optional.apply _)
         else if (classOf[Map[_, _]].isAssignableFrom(fType)) 
@@ -90,7 +93,7 @@ private[json] object Meta {
         else {
           if (visited.contains(fType)) Cycle(fType)
           else Constructor(fType, constructorArgs(fType, visited + fType))
-        }
+        }}
      
       Arg(name, fieldMapping(fieldType, genericType))
     }
@@ -133,7 +136,7 @@ private[json] object Meta {
       classOf[Float], classOf[Byte], classOf[BigInt], classOf[Boolean], 
       classOf[Short], classOf[java.lang.Integer], classOf[java.lang.Long], 
       classOf[java.lang.Double], classOf[java.lang.Float], 
-      classOf[java.lang.Byte], classOf[java.lang.Boolean], 
+      classOf[java.lang.Byte], classOf[java.lang.Boolean], classOf[Number],
       classOf[java.lang.Short], classOf[Date], classOf[Symbol]).map((_, ())))
 
     def safePrimaryConstructorOf[A](cl: Class[A]): Option[JConstructor[A]] = 
@@ -181,6 +184,19 @@ private[json] object Meta {
       case p: ParameterizedType => 
         p.getActualTypeArguments.exists(_.isInstanceOf[ParameterizedType])
       case _ => false
+    }
+
+    def array_?(x: Any) = x != null && classOf[scala.Array[_]].isAssignableFrom(x.asInstanceOf[AnyRef].getClass)
+
+    def mkJavaArray(x: Any, componentType: Class[_]) = {
+      val arr = x.asInstanceOf[scala.Array[_]]
+      val a = java.lang.reflect.Array.newInstance(componentType, arr.size)
+      var i = 0
+      while (i < arr.size) {
+        java.lang.reflect.Array.set(a, i, arr(i))
+        i += 1
+      }
+      a
     }
 
     def primitive2jvalue(a: Any)(implicit formats: Formats) = a match {
