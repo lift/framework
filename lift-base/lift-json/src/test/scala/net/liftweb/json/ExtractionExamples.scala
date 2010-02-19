@@ -92,6 +92,55 @@ object ExtractionExamples extends Specification {
       List(List(List(1, 2), List(3)), List(List(4), List(5, 6))), 
       List(List(Name("joe"), Name("mary")), List(Name("mazy"))))
   }
+  
+  "Flatten example with simple case class" in {
+    val f = Extraction.flatten(Extraction.decompose(SimplePerson("joe", Address("Bulevard", "Helsinki"))))
+    val e = Map(".name" -> "\"joe\"", ".address.street" -> "\"Bulevard\"", ".address.city"   -> "\"Helsinki\"")
+    
+    f mustEqual e
+  }
+  
+  "Unflatten example with top level string and int" in {
+    val m = Map(".name" -> "\"joe\"", ".age" -> "32")
+    
+    Extraction.unflatten(m) mustEqual JObject(List(JField("name",JString("joe")), JField("age",JInt(32))))
+  }
+  
+  "Unflatten example with top level string and double" in {
+    val m = Map(".name" -> "\"joe\"", ".age" -> "32.2")
+  
+    Extraction.unflatten(m) mustEqual JObject(List(JField("name",JString("joe")), JField("age",JDouble(32.2))))
+  }
+  
+  "Unflatten example with two-level string properties" in {
+    val m = Map(".name" -> "\"joe\"", ".address.street" -> "\"Bulevard\"", ".address.city"   -> "\"Helsinki\"")
+    
+    Extraction.unflatten(m) mustEqual JObject(List(JField("name", JString("joe")), JField("address", JObject(List(JField("street", JString("Bulevard")), JField("city", JString("Helsinki")))))))
+  }
+  
+  "Unflatten example with top level array" in {
+    val m = Map(".foo[2]" -> "2", ".foo[0]" -> "0", ".foo[1]" -> "1")
+    
+    Extraction.unflatten(m) mustEqual JObject(List(JField("foo", JArray(List(JInt(0), JInt(1), JInt(2))))))
+  }
+  
+  "Flatten and unflatten are symmetric" in {
+    val parsed = parse(testJson)
+    
+    Extraction.unflatten(Extraction.flatten(parsed)) mustEqual parsed
+  }
+  
+  "Flatten preserves empty sets" in {
+    val s = SetWrapper(Set())
+    
+    Extraction.flatten(Extraction.decompose(s)).get(".set") mustEqual Some("[]")
+  }
+  
+  "Flatten and unflatten are symmetric with empty sets" in {
+    val s = SetWrapper(Set())
+    
+    Extraction.unflatten(Extraction.flatten(Extraction.decompose(s))).extract[SetWrapper] mustEqual s
+  }
 
   /* Does not work yet.
   "List extraction example" in {
@@ -180,6 +229,8 @@ object ExtractionExamples extends Specification {
   def date(s: String) = DefaultFormats.dateFormat.parse(s).get
 }
 
+case class SetWrapper(set: Set[String])
+
 case class Person(name: String, address: Address, children: List[Child])
 case class Address(street: String, city: String)
 case class Child(name: String, age: Int, birthdate: Option[java.util.Date])
@@ -199,5 +250,6 @@ case class Parent(name: String)
 case class Event(name: String, timestamp: Date)
 
 case class MultiDim(ints: List[List[List[Int]]], names: List[List[Name]])
+
 }
 }

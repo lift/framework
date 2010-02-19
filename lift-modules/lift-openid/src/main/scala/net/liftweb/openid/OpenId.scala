@@ -192,7 +192,12 @@ trait OpenIdConsumer[UserType]
   val manager = new ConsumerManager
 
   var onComplete: Box[(Box[Identifier], Box[VerificationResult], Box[Exception]) => LiftResponse] = Empty
-
+  
+  /**
+   * Set this to a function that can modify (eg add extensions) to the auth request before send
+   */
+  var beforeAuth: Box[(DiscoveryInformation,AuthRequest) => Unit] = Empty
+  
   // --- placing the authentication request ---
   def authRequest(userSuppliedString: String, targetUrl: String): LiftResponse =
   {
@@ -214,17 +219,8 @@ trait OpenIdConsumer[UserType]
     // obtain a AuthRequest message to be sent to the OpenID provider
     val authReq = manager.authenticate(discovered, returnToUrl)
 
-    // Attribute Exchange example: fetching the 'email' attribute
-    val fetch = FetchRequest.createFetchRequest()
-    fetch.addAttribute("email",
-                       // attribute alias
-                       "http://schema.openid.net/contact/email",   // type URI
-                       true);                                      // required
-
-    // attach the extension to the authentication request
-    authReq.addExtension(fetch);
-
-
+    beforeAuth foreach {f => f(discovered, authReq)}
+    
     if (! discovered.isVersion2() )
     {
       // Option 1: GET HTTP-redirect to the OpenID Provider endpoint

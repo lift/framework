@@ -19,7 +19,6 @@ import _root_.scala.collection.immutable.Map
 import _root_.scala.collection.mutable.ArrayBuffer
 import _root_.scala.reflect.Manifest
 import _root_.dispatch.{:/, Handler, Http, Request, StatusCode}
-import _root_.dispatch.liftjson.Js.Request2JsonRequest
 import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
 import _root_.net.liftweb.json.{DefaultFormats, Formats}
 import _root_.net.liftweb.json.Extraction.{decompose, extract}
@@ -29,7 +28,7 @@ import _root_.net.liftweb.json.JsonDSL.pair2jvalue
 import _root_.net.liftweb.json.Printer.compact
 import _root_.net.liftweb.util.ControlHelpers.tryo
 import DocumentHelpers.{jobjectToJObjectExtension, updateIdAndRev}
-import SendJSON.requestToJSONSendingRequest
+import DispatchJSON.requestToJSONRequest
 
 /** Helper functions */
 private[couchdb] object DatabaseHelpers {
@@ -86,7 +85,7 @@ trait Document extends Request with FetchableAsJObject {
   def @@ (doc: JObject): DocumentRevision = at(doc)
 
   /** Store a new version of the document, returning the document with _id and _rev updated */
-  def put(doc: JObject): Handler[Box[JObject]] = JSONSendingRequest(this) <<<# doc ># handleUpdateResult(doc) _
+  def put(doc: JObject): Handler[Box[JObject]] = JSONRequest(this) <<<# doc ># handleUpdateResult(doc) _
   
   /** Alias for put */
   def <<<# (doc: JObject): Handler[Box[JObject]] = put(doc)
@@ -218,7 +217,7 @@ class Database(couch: Request, database: String) extends Request(couch / databas
   def design(name: String): Design = new Request(this / "_design" / name) with Design { }
 
   /** Store a document in the database, generating a new unique ID for it and returning the document with _id and _rev updated */
-  def post(doc: JObject): Handler[Box[JObject]] = JSONSendingRequest(this) <<# doc ># handleUpdateResult(doc) _
+  def post(doc: JObject): Handler[Box[JObject]] = JSONRequest(this) <<# doc ># handleUpdateResult(doc) _
 
   /** Alias for post */
   def <<# (doc: JObject): Handler[Box[JObject]] = post(doc)

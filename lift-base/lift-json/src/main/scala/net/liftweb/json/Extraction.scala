@@ -57,11 +57,10 @@ object Extraction {
    * </pre>
    */
   def decompose(a: Any)(implicit formats: Formats): JValue = {
-    def prependTypeHint(clazz: Class[_], o: JObject) = 
-      JField("jsonClass", JString(formats.typeHints.hintFor(clazz))) ++ o
+    def prependTypeHint(clazz: Class[_], o: JObject) = JField("jsonClass", JString(formats.typeHints.hintFor(clazz))) ++ o
 
     def mkObject(clazz: Class[_], fields: List[JField]) = formats.typeHints.containsHint_?(clazz) match {
-      case true => prependTypeHint(clazz, JObject(fields))
+      case true  => prependTypeHint(clazz, JObject(fields))
       case false => JObject(fields)
     }
  
@@ -71,20 +70,99 @@ object Extraction {
       any match {
         case null => JNull
         case x if primitive_?(x.getClass) => primitive2jvalue(x)(formats)
-        case x: List[_] => JArray(x map decompose)
-        case x: Option[_] => decompose(x getOrElse JNothing)
         case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
-        case x: Seq[_] => JArray((x map decompose).toList)
+        case x: Collection[_] => JArray(x.toList map decompose)
+        case x if (x.getClass.isArray) => JArray(x.asInstanceOf[Array[_]].toList map decompose)
+        case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
         case x => 
-          x.getClass.getDeclaredFields.toList.remove(static_?).map { f => 
+          orderedConstructorArgs(x.getClass).map { f =>
             f.setAccessible(true)
             JField(unmangleName(f), decompose(f get x))
           } match {
-            case Nil => JNothing
             case fields => mkObject(x.getClass, fields)
           }
       }
     } else prependTypeHint(any.getClass, serializer(any))
+  }
+  
+  /** Flattens the JSON to a key/value map.
+   */
+  def flatten(json: JValue): Map[String, String] = {
+    def escapePath(str: String) = str
+
+    def flatten0(path: String, json: JValue): Map[String, String] = {
+      json match {
+        case JNothing | JNull           => Map()
+        case JString(s: String)         => Map(path -> ("\"" + quote(s) + "\""))
+        case JDouble(num: Double)       => Map(path -> num.toString)
+        case JInt(num: BigInt)          => Map(path -> num.toString)
+        case JBool(value: Boolean)      => Map(path -> value.toString)
+        case JField(name: String, 
+                    value: JValue)      => flatten0(path + escapePath(name), value)
+        case JObject(obj: List[JField]) => obj.foldLeft(Map[String, String]()) { (map, field) => map ++ flatten0(path + ".", field) }
+        case JArray(arr: List[JValue])  => arr.length match {
+          case 0 => Map(path -> "[]")
+          case _ => arr.foldLeft((Map[String, String](), 0)) { 
+                      (tuple, value) => (tuple._1 ++ flatten0(path + "[" + tuple._2 + "]", value), tuple._2 + 1) 
+                    }._1
+        }
+      }
+    }
+
+    flatten0("", json)
+  }
+
+  /** Unflattens a key/value map to a JSON object.
+   */
+  def unflatten(map: Map[String, String]): JValue = {
+    import scala.util.matching.Regex
+    
+    def extractValue(value: String): JValue = {
+      value.toLowerCase match {
+        case ""      => JNothing
+        case "null"  => JNull
+        case "true"  => JBool(true)
+        case "false" => JBool(false)
+        case "[]"    => JArray(Nil)
+        case x @ _   => 
+          if (value.charAt(0).isDigit) {
+            if (value.indexOf('.') == -1) JInt(BigInt(value)) else JDouble(value.toDouble)
+          }
+          else JString(JsonParser.unquote(value.substring(1)))
+      }
+    }
+  
+    def submap(prefix: String): Map[String, String] = {
+      Map(
+        map.filter(t => t._1.startsWith(prefix)).map(
+          t => (t._1.substring(prefix.length), t._2)
+        ).toList.toArray: _*
+      )
+    }
+  
+    val ArrayProp = new Regex("""^(\.([^\.\[]+))\[(\d+)\].*$""")
+    val ArrayElem = new Regex("""^(\[(\d+)\]).*$""")
+    val OtherProp = new Regex("""^(\.([^\.\[]+)).*$""")
+  
+    val uniquePaths = map.keys.foldLeft[Set[String]](Set()) { 
+      (set, key) =>
+        key match {
+          case ArrayProp(p, f, i) => set + p
+          case OtherProp(p, f)    => set + p    
+          case ArrayElem(p, i)    => set + p        
+          case x @ _              => set + x
+        }
+    }.toList.sort(_ < _) // Sort is necessary to get array order right
+    
+    uniquePaths.foldLeft[JValue](JNothing) {
+      (jvalue, key) => 
+        jvalue.merge(key match {
+          case ArrayProp(p, f, i) => JObject(List(JField(f, unflatten(submap(key)))))
+          case ArrayElem(p, i)    => JArray(List(unflatten(submap(key))))
+          case OtherProp(p, f)    => JObject(List(JField(f, unflatten(submap(key)))))
+          case ""                 => extractValue(map(key))
+        })
+    }
   }
 
   private def extract0[A](json: JValue, formats: Formats, mf: Manifest[A]): A = {
@@ -95,13 +173,9 @@ object Extraction {
     def newInstance(targetType: Class[_], args: List[Arg], json: JValue) = {
       def instantiate(constructor: JConstructor[_], args: List[Any]) = 
         try {
-          constructor.newInstance(args.map { a => a match {
-            case x if array_?(x) => 
-              // FIXME Scala 2.8: Simplify array handling.
-              val i = args.findIndexOf(_.asInstanceOf[AnyRef] eq x.asInstanceOf[AnyRef])
-              mkJavaArray(x, constructor.getParameterTypes()(i).getComponentType)
-            case x => x.asInstanceOf[AnyRef] 
-          }}.toArray: _*)
+          if (constructor.getDeclaringClass == classOf[java.lang.Object]) fail("No information known about type")
+          
+          constructor.newInstance(args.map(_.asInstanceOf[AnyRef]).toArray: _*)
         } catch {
           case e @ (_:IllegalArgumentException | _:InstantiationException) =>             
             fail("Parsed JSON values do not match with class constructor\nargs=" + 
@@ -127,14 +201,28 @@ object Extraction {
     }
 
     def newPrimitive(elementType: Class[_], elem: JValue) = convert(elem, elementType, formats)
+    
+    def newCollection(root: JValue, m: Mapping, constructor: Array[_] => Any) = {
+      val array: Array[_] = root match {
+        case JArray(arr)      => arr.map(build(_, m)).toArray
+        case JNothing | JNull => Array[AnyRef]()
+        case x                => fail("Expected collection but got " + x + " for root " + root + " and mapping " + m)
+      }
+      
+      constructor(array)
+    }
 
     def build(root: JValue, mapping: Mapping): Any = mapping match {
       case Value(targetType) => convert(root, targetType, formats)
       case Constructor(targetType, args) => newInstance(targetType, args, root)
       case Cycle(targetType) => build(root, mappingOf(targetType))
       case Arg(_, m) => build(fieldValue(root), m)
-      case Lst(m) => mkList(root, m)
-      case Arr(m) => mkList(root, m).toArray
+      case Col(c, m) => {
+        if (c == classOf[List[_]]) newCollection(root, m, a => List(a: _*))
+        else if (c == classOf[Set[_]]) newCollection(root, m, a => Set(a: _*))
+        else if (c.isArray) newCollection(root, m, mkTypedArray(c))
+        else fail("Expected collection but got " + m + " for class " + c)
+      }
       case Dict(m) => root match {
         case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)
         case x => fail("Expected object but got " + x)
@@ -149,6 +237,14 @@ object Extraction {
         } catch {
           case e: MappingException => None
         }
+    }
+    
+    def mkTypedArray(c: Class[_])(a: Array[_]) = {
+      import java.lang.reflect.Array.{newInstance => newArray}
+      
+      a.foldLeft((newArray(c.getComponentType, a.length), 0)) { (tuple, e) => {
+        java.lang.reflect.Array.set(tuple._1, tuple._2, e); (tuple._1, tuple._2 + 1)
+      }}._1
     }
 
     def mkList(root: JValue, m: Mapping) = root match {

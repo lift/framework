@@ -141,26 +141,14 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   /**
    * Creates a new record
    */
-  def createRecord: BaseRecord = {
-    val rec: BaseRecord = rootClass.newInstance.asInstanceOf[BaseRecord]
-    rec.runSafe {
-      introspect(rec, rec.getClass.getMethods) {case (v, mf) =>}
-    }
-    rec
-  }
+  def createRecord: BaseRecord = rootClass.newInstance.asInstanceOf[BaseRecord]
 
   /**
    * Creates a new record from a JSON construct
    *
    * @param json - the stringified JSON stucture
    */
-  def createRecord(json: String): Box[BaseRecord] = {
-    val rec: BaseRecord = rootClass.newInstance.asInstanceOf[BaseRecord]
-    rec.runSafe {
-      introspect(rec, rec.getClass.getMethods) {case (v, mf) =>}
-    }
-    rec.fromJSON(json)
-  }
+  def createRecord(json: String): Box[BaseRecord] = rootClass.newInstance.asInstanceOf[BaseRecord].fromJSON(json)
 
   /**
    * Creates a new record setting the value of the fields from the original object but
