@@ -141,26 +141,14 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   /**
    * Creates a new record
    */
-  def createRecord: BaseRecord = {
-    val rec: BaseRecord = rootClass.newInstance.asInstanceOf[BaseRecord]
-    rec.runSafe {
-      introspect(rec, rec.getClass.getMethods) {case (v, mf) =>}
-    }
-    rec
-  }
+  def createRecord: BaseRecord = rootClass.newInstance.asInstanceOf[BaseRecord]
 
   /**
    * Creates a new record from a JSON construct
    *
    * @param json - the stringified JSON stucture
    */
-  def createRecord(json: String): Box[BaseRecord] = {
-    val rec: BaseRecord = rootClass.newInstance.asInstanceOf[BaseRecord]
-    rec.runSafe {
-      introspect(rec, rec.getClass.getMethods) {case (v, mf) =>}
-    }
-    rec.fromJSON(json)
-  }
+  def createRecord(json: String): Box[BaseRecord] = rootClass.newInstance.asInstanceOf[BaseRecord].fromJSON(json)
 
   /**
    * Creates a new record setting the value of the fields from the original object but
@@ -172,17 +160,17 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    */
   def createWithMutableField[FieldType](original: BaseRecord,
                                         field: Field[FieldType, BaseRecord],
-                                        newValue: FieldType): BaseRecord = {
+                                        newValue: Box[FieldType]): BaseRecord = {
     val rec = createRecord
 
     for (f <- fieldList) {
       if (f.name == field.name)
-      fieldByName(f.name, rec).map(recField => recField.set(newValue.asInstanceOf[recField.MyType]) )
+        fieldByName(f.name, rec).map(recField => recField.asInstanceOf[Field[FieldType, BaseRecord]].setBox(newValue))
       else
         fieldByName(f.name, rec).map(recField =>
-            fieldByName(f.name, original).map(m => recField.setFromAny(m.value))
+            fieldByName(f.name, original).map(m => recField.setFromAny(m.valueBox))
           )
-      }
+    }
 
     rec
   }
@@ -207,12 +195,8 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     foreachCallback(inst, _.beforeValidation)
     try{
 	    fieldList.flatMap(holder => inst.fieldByName(holder.name) match {
-          case Full(field) => if (!field.valueCouldNotBeSet) {
-              field.validators.flatMap(_(field.value).map(FieldError(field, _)))
-            } else {
-              FieldError(field, Text(field.noValueErrorMessage)) :: Nil
-            }
-          case _ => Nil
+          case Full(field) => field.validators.flatMap(_(field.valueBox).map(FieldError(field, _))).removeDuplicates
+          case _           => Nil
         })
     } finally {
       foreachCallback(inst, _.afterValidation)

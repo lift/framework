@@ -81,7 +81,7 @@ class LiftServlet {
       LiftRules.checkContinuations(req request) match {
         case None => doIt
         case r if r eq null => doIt
-        case Some((or: Req, r: LiftResponse)) if (req.path == or.path) => sendResponse(r.toResponse, resp, Empty); true
+        case Some((or: Req, r: LiftResponse)) if (req.path == or.path) => sendResponse(r, resp, Empty); true
         case _ => doIt
       }
     } catch {
@@ -184,11 +184,7 @@ class LiftServlet {
       case Full(EmptyResponse) => 
         true
       case Full(cresp) =>
-        val resp = cresp.toResponse
-
-        logIfDump(req, resp)
-
-        sendResponse(resp, response, Full(req))
+        sendResponse(cresp, response, Full(req))
         true
 
       case _ => false
@@ -461,7 +457,7 @@ class LiftServlet {
    * Sends the  { @code HTTPResponse } to the browser using data from the
    * { @link Response } and  { @link Req }.
    */
-  def sendResponse(resp: BasicResponse, response: HTTPResponse, request: Box[Req]) {
+  def sendResponse(liftResp: LiftResponse, response: HTTPResponse, request: Box[Req]) {
     def fixHeaders(headers: List[(String, String)]) = headers map ((v) => v match {
       case ("Location", uri) => (v._1, (
               (for (u <- request;
@@ -479,6 +475,10 @@ class LiftServlet {
       (in, acceptHeader)
     }
 
+    val resp = liftResp.toResponse
+
+    request.map(r => logIfDump(r, resp))
+
 
     val len = resp.size
     // insure that certain header fields are set
@@ -494,7 +494,10 @@ class LiftServlet {
     response.addHeaders(header.map {case (name, value) => HTTPParam(name, value)})
     LiftRules.supplimentalHeaders(response)
 
-    response setStatus resp.code
+    liftResp match {
+      case ResponseWithReason(_, reason) => response setStatusWithReason (resp.code, reason)
+      case _ => response setStatus resp.code
+    }
 
     try {
       resp match {

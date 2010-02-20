@@ -78,6 +78,53 @@ object JsonParser {
       case e: Exception => throw new ParseException("parsing failed", e)
     } finally { buf.release }
   }
+  
+  private[json] def unquote(string: String): String = unquote(new JsonParser.Buffer(new java.io.StringReader(string)))
+  
+  private[json] def unquote(buf: JsonParser.Buffer): String = {
+    val EOF = (-1).asInstanceOf[Char]
+    
+    def unquote0(buf: JsonParser.Buffer, base: String): String = {
+      val s = new java.lang.StringBuilder(base)
+      var c = '\\'
+      while (c != EOF) {
+        if (c == '"') {
+          return s.toString
+        }
+
+        if (c == '\\') {
+          buf.next match {
+            case '"'  => s.append('"')
+            case '\\' => s.append('\\')
+            case '/'  => s.append('/')
+            case 'b'  => s.append('\b')
+            case 'f'  => s.append('\f')
+            case 'n'  => s.append('\n')
+            case 'r'  => s.append('\r')
+            case 't'  => s.append('\t')
+            case 'u' =>
+              val chars = Array(buf.next, buf.next, buf.next, buf.next)
+              val codePoint = Integer.parseInt(new String(chars), 16)
+              s.appendCodePoint(codePoint)
+            case _ => s.append('\\')
+          }
+        } else s.append(c)
+        c = buf.next
+      }
+      error("expected string end")
+    }
+    
+    buf.mark
+    var c = buf.next
+    while (c != EOF) {
+      if (c == '"') return buf.substring
+      if (c == '\\') {
+        return unquote0(buf, buf.substring)
+      }
+      c = buf.next
+    }
+    error("expected string end")
+  }
 
   private val astParser = (p: Parser) => {
     val vals = new ValStack(p)
@@ -184,44 +231,12 @@ object JsonParser {
       }
 
       def parseString: String = {
-        buf.mark
-        var c = buf.next
-        while (c != EOF) {
-          if (c == '"') return buf.substring
-          if (c == '\\') return parseEscapedString(buf.substring)
-          c = buf.next
+        try {
+          unquote(buf)
         }
-        fail("expected string end")
-      }
-
-      def parseEscapedString(base: String): String = {
-        val s = new java.lang.StringBuilder(base)
-        var c = '\\'
-        while (c != EOF) {
-          if (c == '"') {
-            return s.toString
-          }
-
-          if (c == '\\') {
-            buf.next match {
-              case '"'  => s.append('"')
-              case '\\' => s.append('\\')
-              case '/'  => s.append('/')
-              case 'b'  => s.append('\b')
-              case 'f'  => s.append('\f')
-              case 'n'  => s.append('\n')
-              case 'r'  => s.append('\r')
-              case 't'  => s.append('\t')
-              case 'u' =>
-                val chars = Array(buf.next, buf.next, buf.next, buf.next)
-                val codePoint = Integer.parseInt(new String(chars), 16)
-                s.appendCodePoint(codePoint)
-              case _ => s.append('\\')
-            }
-          } else s.append(c)
-          c = buf.next
+        catch {
+          case _ => fail("unexpected string end")
         }
-        fail("expected string end")
       }
 
       def parseValue(first: Char) = {

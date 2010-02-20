@@ -31,7 +31,7 @@ class TextareaField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: I
     funcName => <textarea name={funcName}
       rows={textareaRows.toString}
       cols={textareaCols.toString}
-      tabindex={tabIndex toString}>{value match {case null => "" case s => s.toString}}</textarea>
+      tabindex={tabIndex toString}>{valueBox openOr ""}</textarea>
   }
 
   override def toForm = {
@@ -55,9 +55,9 @@ class TextareaField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: I
   }
 
 
-  override def toString = {
-    if (value == null || value.length < 100) super.toString
-    else value.substring(0,40) + " ... " + value.substring(value.length - 40)
+  override def toString = valueBox match {
+    case Full(s) if s.length >= 100 => s.substring(0,40) + " ... " + s.substring(s.length - 40)
+    case _ => super.toString
   }
 
   def textareaRows  = 8

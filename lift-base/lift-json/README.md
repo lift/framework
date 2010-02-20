@@ -422,6 +422,14 @@ Use map function to postprocess AST.
              case x => x
            }
 
+Primitive values can be extracted from JSON primitives or fields.
+
+    scala> (json \ "name").extract[String]
+    res0: String = "joe"
+
+    scala> ((json \ "children")(0) \ "birthdate").extract[Date]
+    res1: java.util.Date = Sat Sep 04 21:06:22 EEST 2004
+
 DateFormat can be changed by overriding 'DefaultFormats' (or by implmenting trait 'Formats').
 
     scala> implicit val formats = new DefaultFormats {
@@ -451,6 +459,7 @@ in result Map.
     res0: PersonWithAddresses("joe", Map("address1" -> Address("Bulevard", "Helsinki"),
                                          "address2" -> Address("Soho", "London")))
 
+
 Serialization
 =============
 
@@ -468,7 +477,7 @@ Serialization supports:
 
 * Arbitrarily deep case class graphs
 * All primitive types, including BigInt and Symbol
-* List and Map (note, keys of the Map must be strings: Map[String, _])
+* List, Array, Set and Map (note, keys of the Map must be strings: Map[String, _])
 * scala.Option
 * java.util.Date
 * Polymorphic Lists (see below)
@@ -478,7 +487,6 @@ Serialization supports:
 It does not support:
 
 * Java serialization (classes marked with @serializable annotation etc.)
-* Sets or other collection types, just List, Map and Option for now
 
 Serializing polymorphic Lists
 -----------------------------

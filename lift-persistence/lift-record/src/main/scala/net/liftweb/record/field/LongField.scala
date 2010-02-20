@@ -27,33 +27,21 @@ import S._
 
 class LongField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends NumericField[Long, OwnerType] {
 
+  def this(rec: OwnerType, value: Long) = {
+    this(rec)
+    set(value)
+  }
+
+  def this(rec: OwnerType, value: Box[Long]) = {
+    this(rec)
+    setBox(value)
+  }
+
   def owner = rec
 
-  /**
-   * Sets the field value from an Any
-   */
-  def setFromAny(in: Any): Box[Long] = {
-    in match {
-      case n: Int => Full(this.set(n))
-      case n: Number => Full(this.set(n.longValue))
-      case (n: Number) :: _ => Full(this.set(n.longValue))
-      case Some(n: Number) => Full(this.set(n.longValue))
-      case Full(n: Number) => Full(this.set(n.longValue))
-      case None | Empty | Failure(_, _, _) => Full(this.set(0))
-      case (s: String) :: _ => setFromString(s)
-      case null => Full(this.set(0))
-      case s: String => setFromString(s)
-      case o => setFromString(o.toString)
-    }
-  }
+  def setFromAny(in: Any): Box[Long] = setNumericFromAny(in, _.longValue)
 
-  def setFromString(s: String): Box[Long] = {
-    try{
-      Full(set(java.lang.Long.parseLong(s)));
-    } catch {
-      case e: Exception => valueCouldNotBeSet = true; Empty
-    }
-  }
+  def setFromString(s: String): Box[Long] = setBox(asLong(s))
 
   def defaultValue = 0L
 
