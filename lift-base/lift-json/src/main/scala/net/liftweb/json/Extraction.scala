@@ -18,6 +18,7 @@ package net.liftweb {
 package json {
 
 import java.lang.reflect.{Constructor => JConstructor, Type}
+import java.lang.{Integer => JavaInteger, Long => JavaLong, Short => JavaShort, Byte => JavaByte, Boolean => JavaBoolean, Double => JavaDouble, Float => JavaFloat}
 import java.util.Date
 import scala.reflect.Manifest
 import JsonAST._
@@ -168,6 +169,7 @@ object Extraction {
   private def extract0[A](json: JValue, formats: Formats, mf: Manifest[A]): A = {
     if (mf.erasure == classOf[List[_]] || mf.erasure == classOf[Map[_, _]])
       fail("Root object can't yet be List or Map (needs a feature from Scala 2.8)")
+
     val mapping = mappingOf(mf.erasure)
 
     def newInstance(targetType: Class[_], args: List[Arg], json: JValue) = {
@@ -267,21 +269,35 @@ object Extraction {
 
   private def convert(json: JValue, targetType: Class[_], formats: Formats): Any = json match {
     case JInt(x) if (targetType == classOf[Int]) => x.intValue
+    case JInt(x) if (targetType == classOf[JavaInteger]) => new JavaInteger(x.intValue)
+    case JInt(x) if (targetType == classOf[BigInt]) => x
     case JInt(x) if (targetType == classOf[Long]) => x.longValue
+    case JInt(x) if (targetType == classOf[JavaLong]) => new JavaLong(x.longValue)
     case JInt(x) if (targetType == classOf[Double]) => x.doubleValue
+    case JInt(x) if (targetType == classOf[JavaDouble]) => new JavaDouble(x.doubleValue)
     case JInt(x) if (targetType == classOf[Float]) => x.floatValue
+    case JInt(x) if (targetType == classOf[JavaFloat]) => new JavaFloat(x.floatValue)
     case JInt(x) if (targetType == classOf[Short]) => x.shortValue
+    case JInt(x) if (targetType == classOf[JavaShort]) => new JavaShort(x.shortValue)
     case JInt(x) if (targetType == classOf[Byte]) => x.byteValue
+    case JInt(x) if (targetType == classOf[JavaByte]) => new JavaByte(x.byteValue)
     case JInt(x) if (targetType == classOf[String]) => x.toString
     case JInt(x) if (targetType == classOf[Number]) => x.longValue
+    case JDouble(x) if (targetType == classOf[Double]) => x
+    case JDouble(x) if (targetType == classOf[JavaDouble]) => new JavaDouble(x)
     case JDouble(x) if (targetType == classOf[Float]) => x.floatValue
+    case JDouble(x) if (targetType == classOf[JavaFloat]) => new JavaFloat(x.floatValue)
     case JDouble(x) if (targetType == classOf[String]) => x.toString
     case JDouble(x) if (targetType == classOf[Number]) => x
+    case JString(s) if (targetType == classOf[String]) => s
     case JString(s) if (targetType == classOf[Symbol]) => Symbol(s)
     case JString(s) if (targetType == classOf[Date]) => formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'"))
+    case JBool(x) if (targetType == classOf[Boolean]) => x
+    case JBool(x) if (targetType == classOf[JavaBoolean]) => new JavaBoolean(x)
     case JNull => null
     case JNothing => fail("Did not find value which can be converted into " + targetType.getName)
-    case _ => json.values
+    case JField(_, x) => convert(x, targetType, formats)
+    case _ => fail("Do not know how to convert " + json + " into " + targetType)
   }
 }
 
