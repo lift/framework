@@ -40,7 +40,7 @@ class FacebookConnect(apiKey:String, apiSecret:String) {
 
   def session:Box[FacebookSession] = for (p <- verifyCookiesSig; s <- toSession(p)) yield s
   
-  def client:Box[FacebookClient[Node]] = session.map(session => new FacebookClient(apiKey, apiSecret, session, FacebookClient.xmlParser))
+  def client:Box[FacebookClient[Node]] = session.map(session => new FacebookClient(apiKey, apiSecret, session, FacebookClient.xmlParser, FacebookFormat.xml))
   
   def verifyParams(params: List[(String,String)], sig: String):Box[List[(String,String)]] = {
     val actualSig = FacebookClient.genSignature(params, apiSecret)

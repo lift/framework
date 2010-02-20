@@ -78,7 +78,7 @@ object FacebookClient {
   private[facebook] def call(params: List[(String, Any)]): Node = call(params, xmlParser)
   
   def xmlParser(is:InputStream):Node = XML.load(is)
-
+  
   private[facebook] def buildParams(methodName: String, params: FacebookParam*): List[(String, Any)] = {
     val allParams: List[(String, Any)] =
       ("method", methodName) ::
@@ -99,7 +99,7 @@ object FacebookClient {
     callMethod(meth)
 
   def fromSession(session: FacebookSession) : FacebookClient[Node] = {
-    new FacebookClient(session, xmlParser)
+    new FacebookClient(session, xmlParser,FacebookFormat.xml)
   }
 
   def fromAuthToken(authToken: String) : Option[FacebookClient[Node]] = {
@@ -129,9 +129,7 @@ class FacebookClient[T](val apiKey: String, val secret: String, val session: Fac
   import FacebookRestApi._
   import FacebookClient._
 
-  def this(session: FacebookSession, parser:InputStream => T) = this(FacebookRestApi.apiKey, FacebookRestApi.secret, session, parser, FacebookFormat.xml)
-  
-  def this(apiKey:String, secret: String, session: FacebookSession, parser: InputStream => T) = this(apiKey, secret, session, parser, FacebookFormat.xml)
+  def this(session: FacebookSession, parser:InputStream => T, format:FacebookFormat.Value) = this(FacebookRestApi.apiKey, FacebookRestApi.secret, session, parser, format)
 
   def callMethod(meth: FacebookMethod, fileName: String, mimeType: String, file: Array[Byte], params: FacebookParam* ): T = {
     val boundary = System.currentTimeMillis.toString
