@@ -121,10 +121,10 @@ trait JSONMetaRecord[BaseRecord <: JSONRecord[BaseRecord]] extends MetaRecord[Ba
   /** Whether or not extra fields in a JObject to decode is an error (false) or not (true). The default is true */
   def ignoreExtraJSONFields: Boolean = true
 
-  /** Whether or not missing fields in a JObject to decode is an error (false) or not (true). The default is false */
+  /** Whether or not missing fields in a JObject to decode is an error (false) or not (true). The default is true */
   def needAllJSONFields: Boolean = true
 
-  override def asJSON(inst: BaseRecord): JsObj = asJValue.asInstanceOf[JsObj]
+  override def asJSON(inst: BaseRecord): JsObj = jvalueToJsExp(asJValue).asInstanceOf[JsObj]
   override def fromJSON(inst: BaseRecord, json: String): Box[BaseRecord] = fromJValue(inst, JsonParser.parse(json))
 
   /** Encode a record instance into a JValue */
@@ -141,7 +141,8 @@ trait JSONMetaRecord[BaseRecord <: JSONRecord[BaseRecord]] extends MetaRecord[Ba
       val flds = fields(rec)
       lazy val recordFieldNames = TreeSet(flds.map(jsonName): _*)
       lazy val jsonFieldNames = TreeSet(jfields.map(_.name): _*)
-      lazy val recordFieldsNotInJson = recordFieldNames -- jsonFieldNames
+      lazy val optionalFieldNames = TreeSet(flds.filter(_.optional_?).map(jsonName): _*)
+      lazy val recordFieldsNotInJson = recordFieldNames -- jsonFieldNames -- optionalFieldNames
       lazy val jsonFieldsNotInRecord = jsonFieldNames -- recordFieldNames
       
       // If this record type has been configured to be stricter about fields, check those first

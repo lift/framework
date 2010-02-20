@@ -113,28 +113,6 @@ object CouchRecordTestSpecs extends Specification {
       compact(render(stripIdAndRev(foundDoc))) must_== compact(render(testDoc1))
     }
 
-    "preserve extra fields from JSON" in {
-      setup
-
-      val docBox = Http(defaultDatabase store testDoc2)
-      docBox must verify(_.isDefined)
-      val Full(doc) = docBox
-
-      val foundRecBox = Person.fetch(doc._id.open_!)
-      foundRecBox must verify(_.isDefined)
-      val Full(foundRec) = foundRecBox
-      
-      foundRec.additionalJFields must_== List(JField("extra1", JString("value1")), 
-                          JField("extra2", JString("value2")),
-                          JField("type", JString("Person")))
-
-      foundRec.age.set(1)
-      foundRec.save
-
-      val foundDoc = Http(defaultDatabase(doc) fetch)
-      compact(render(stripIdAndRev(foundDoc))) must_== compact(render(("age" -> 1) ~ testDoc2.remove("age")))
-    }
-
     "be deletable" in {
       setup
       val newRec = testRec1
