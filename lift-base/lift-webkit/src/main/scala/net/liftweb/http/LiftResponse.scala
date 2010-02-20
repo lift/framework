@@ -284,6 +284,19 @@ sealed trait BasicResponse extends LiftResponse {
   def size: Long
 }
 
+/**
+ * Wraps a LiftResponse along with a HTTP reason-phrase. The
+ * reason-phrase will be set in the HTTP status line after 
+ * the status code as per HTTP specifications. 
+ *
+ * @param response - the response to be wrapped
+ * @param reason - the reason-phrase
+ */
+case class ResponseWithReason(response: LiftResponse, reason: String) extends LiftResponse {
+
+  def toResponse = response.toResponse
+}
+
 private[http] case object EmptyResponse extends BasicResponse {
   def headers = Nil
 
