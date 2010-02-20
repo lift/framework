@@ -63,6 +63,18 @@ object ExtractionExamples extends Specification {
     (json \ "children")(1).extract[Name] mustEqual Name("Mazy")
   }
 
+  "Primitive value extraction example" in {
+    val json = parse(testJson)
+    (json \ "name").extract[String] mustEqual "joe"
+    (json \ "name").extractOpt[String] mustEqual Some("joe")
+    (json \ "name").extractOpt[Int] mustEqual None
+    ((json \ "children")(0) \ "birthdate").extract[Date] mustEqual date("2004-09-04T18:06:22Z")
+
+    JInt(1).extract[Int] mustEqual 1
+    JInt(1).extract[String] mustEqual "1"
+    JField("foo", JInt(1)).extract[Int] mustEqual 1
+  }
+
   "Primitive extraction example" in {
     val json = parse(primitives)
     json.extract[Primitives] mustEqual Primitives(124, 123L, 126.5, 127.5.floatValue, "128", 'symb, 125, 129.byteValue, true)

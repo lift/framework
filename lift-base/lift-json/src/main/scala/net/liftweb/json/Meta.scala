@@ -90,7 +90,8 @@ private[json] object Meta {
       Arg(name, fieldMapping(fieldType, genericType))
     }
 
-    mappings.memoize(clazz, c => Constructor(c, constructorArgs(c, Set())))
+    if (primitive_?(clazz)) Value(clazz)    
+    else mappings.memoize(clazz, c => Constructor(c, constructorArgs(c, Set())))
   }
 
   private[json] def unmangleName(f: Field) = 
@@ -143,14 +144,13 @@ private[json] object Meta {
           }
           val names = paranamer.lookupParameterNames(x).map(clean)
           val fields = Map() ++ clazz.getDeclaredFields.filter(!static_?(_)).map(f => (f.getName, f))
-          for { n <- names } yield fields(n)
+          (for { n <- names } yield fields(n)).toList
         }
         
-        val args = safePrimaryConstructorOf(clazz) match {
+        safePrimaryConstructorOf(clazz) match {
           case Some(x) => fieldsForParanamer(x)
           case None    => Nil
         }
-        args.toList
       }
       primaryConstructorArgs.memoize(clazz, queryArgs(_))
     }
