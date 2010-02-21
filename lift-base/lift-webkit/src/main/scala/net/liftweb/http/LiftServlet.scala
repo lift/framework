@@ -112,7 +112,7 @@ class LiftServlet {
           case true => checkRoles(r, userRoles.get)
           case _ => false
         }
-      case _ => true
+      case _ => LiftRules.authentication.verified_?(req)
     }) openOr true
   }
 

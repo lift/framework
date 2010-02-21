@@ -70,8 +70,8 @@ object LiftRules extends Factory with FormVendor {
 
   /**
    * Defines the resources that are protected by authentication and authorization. If this function
-   * is notdefined for the input data, the resource is considered unprotected ergo no authentication
-   * is performed. If this function is defined and returns a Full can, it means that this resource
+   * is not defined for the input data, the resource is considered unprotected ergo no authentication
+   * is performed. If this function is defined and returns a Full box, it means that this resource
    * is protected by authentication,and authenticated subjed must be assigned to the role returned by
    * this function or to a role that is child-of this role. If this function returns Empty it means that
    * this resource is protected by authentication but no authorization is performed meaning that roles are
