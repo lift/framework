@@ -20,7 +20,7 @@ package mapper {
 import org.specs._
 import _root_.org.specs.runner.{JUnit3, ConsoleRunner}
 
-/* FIXME: 280
+
 class ManyToManySpecsAsTest extends JUnit3(ManyToManySpecs)
 object ManyToManySpecsRunner extends ConsoleRunner(ManyToManySpecs)
 
@@ -64,7 +64,7 @@ object ManyToManySpecs extends Specification {
       c.name ()= "new"
       c.save
       person.companies.insertAll(7, Seq(c))
-      person.companies(7).name must_== "new"
+      person.companies(7).name.is must_== "new"
     }
   }
 
@@ -90,6 +90,6 @@ class PersonCompany extends Mapper[PersonCompany] {
   object company extends MappedLongForeignKey(this, Company)
 }
 object PersonCompany extends PersonCompany with MetaMapper[PersonCompany]
-*/
+
 }
 }

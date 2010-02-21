@@ -20,7 +20,6 @@ package mapper {
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
 
-/* FIXME: 280
 
 /**
  * Add this trait to a Mapper to add support for many-to-many relationships
@@ -69,13 +68,13 @@ trait ManyToMany extends BaseKeyedMapper {
    */
   class MappedManyToMany[O<:Mapper[O], K2, T2 <: KeyedMapper[K2,T2]](
     val joinMeta: MetaMapper[O],
-    thisField: MappedForeignKey[K,O,_ <: KeyedMapper[K,T]],
+    thisField: MappedForeignKey[K,O,_ <: KeyedMapper[_,_]],
     val otherField: MappedForeignKey[K2, O, T2],
     val otherMeta: MetaMapper[T2],
     val qp: QueryParam[O]*) extends scala.collection.mutable.Buffer[T2] {
 
-    def field(join: O): MappedForeignKey[K,O, _ <: KeyedMapper[K,T]] =
-      thisField.actualField(join).asInstanceOf[MappedForeignKey[K,O, _<:KeyedMapper[K,T]]]
+    def field(join: O): MappedForeignKey[K,O, _ <: KeyedMapper[_,_]] =
+      thisField.actualField(join).asInstanceOf[MappedForeignKey[K,O, _<:KeyedMapper[_,_]]]
 
     protected def children: List[T2] = {
       joins.flatMap {
@@ -92,8 +91,8 @@ trait ManyToMany extends BaseKeyedMapper {
     protected def isJoinForChild(e: T2)(join: O) = otherField.actualField(join).is == e.primaryKeyField.is
     protected def joinForChild(e: T2): Option[O] =
       joins.find(isJoinForChild(e))
-
-    protected def own(e: T2) = {
+    
+    protected def own(e: T2): O = {
       joinForChild(e) match {
         case None =>
           removedJoins.find { // first check if we can recycle a removed join
@@ -105,7 +104,7 @@ trait ManyToMany extends BaseKeyedMapper {
             case None =>
               val newJoin = joinMeta.create
               field(newJoin).set(ManyToMany.this.primaryKeyField.is)
-              otherField.actualField(newJoin).set(e.primaryKeyField)
+              otherField.actualField(newJoin).set(e.primaryKeyField.is)
               newJoin
           }
         case Some(join) =>
@@ -125,27 +124,28 @@ trait ManyToMany extends BaseKeyedMapper {
           None
       }
     }
+    
     def all = children
 
-    def readOnly = all
+    // 2.7
+    //def readOnly = all
+    
     def length = children.length
-    def elements = children.elements
+    // 2.7
+    //def elements = children.elements
+    // 2.8
+    def iterator = children.iterator
+    
     protected def childAt(n: Int) = children(n)
     def apply(n: Int) = childAt(n)
     def indexOf(e: T2) =
       children.findIndexOf(e eq)
 
-
-    def +=(elem: T2) {
-      _joins ++= List(own(elem))
-    }
-    def +:(elem: T2) = {
-      _joins ::= own(elem)
-      this
-    }
-
-    def insertAll(n: Int, iter: Iterable[T2]) {
-      val ownedJoins = iter map own
+    // 2.7
+    // def insertAll(n: Int, iter: Iterable[T2]) {
+    // 2.8
+    def insertAll(n: Int, traversable: Traversable[T2]) {
+      val ownedJoins = traversable map own
       val n2 = joins.findIndexOf(isJoinForChild(children(n)))
       val before = joins.take(n2)
       val after = joins.drop(n2)
@@ -153,6 +153,18 @@ trait ManyToMany extends BaseKeyedMapper {
       _joins = before ++ ownedJoins ++ after
     }
 
+    // 2.7    
+    // def +:(elem: T2) = {
+    // 2.8
+    def +=:(elem: T2) = {
+      _joins ::= own(elem)
+      this
+    }
+
+    def +=(elem: T2) = {
+      _joins ++= List(own(elem))
+      this
+    }
     def update(n: Int, newelem: T2) {
       unown(childAt(n)) match {
         case Some(join) =>
@@ -162,18 +174,18 @@ trait ManyToMany extends BaseKeyedMapper {
         case None =>
       }
     }
-
+    
     def remove(n: Int) = {
       val child = childAt(n)
       unown(child) match {
         case Some(join) =>
-          _joins = joins remove join.eq
+          _joins = joins filterNot join.eq
         case None =>
       }
       child
     }
 
-
+    
     def clear() {
       children foreach unown
       _joins = Nil
@@ -207,7 +219,6 @@ trait ManyToMany extends BaseKeyedMapper {
     }
   }
 }
-*/
 
 }
 }
