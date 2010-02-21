@@ -56,6 +56,14 @@ trait HTTPResponse {
   def setStatus(status: Int)
 
   /**
+   * Sets the HTTP response status
+   *
+   * @param status - the HTTP status
+   * @param reason - the HTTP reason phrase
+   */
+  def setStatusWithReason(status: Int, reason: String)
+
+  /**
    * @return - the OutputStream that can be used to send down o the client the response body.
    */
   def outputStream: OutputStream

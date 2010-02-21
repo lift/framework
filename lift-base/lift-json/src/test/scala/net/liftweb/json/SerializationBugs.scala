@@ -56,7 +56,16 @@ object SerializationBugs extends Specification {
     rightOp.inParams.toList mustEqual List(0, 1, 2)
     rightOp.subOperand mustEqual None
   }
+
+  "null serialization bug" in {
+    val x = new X(null) 
+    val ser = swrite(x)
+    read[X](ser) mustEqual x
+  }
 }
+
+case class X(yy: Y)
+case class Y(ss: String)
 
 package plan1 {
   case class Plan(plan: Option[Action])
