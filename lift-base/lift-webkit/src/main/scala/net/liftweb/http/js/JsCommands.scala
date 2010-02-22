@@ -644,7 +644,7 @@ object JsCmds {
         "y=document.createElement('option'); " +
         "y.text = " + text.encJs + "; " +
         "y.value = " + value.encJs + "; " +
-        (if (value == dflt) "y.selected = true; " else "") +
+        (if (Full(value) == dflt) "y.selected = true; " else "") +
         " try {x.add(y, null);} catch(e) {if (typeof(e) == 'object' && typeof(e.number) == 'number' && (e.number & 0xFFFF) == 5){ x.add(y,x.options.length); } } "
     }.mkString("\n")
   }
