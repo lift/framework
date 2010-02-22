@@ -111,7 +111,7 @@ object LiftRules extends Factory with FormVendor {
    * 
    */
   @volatile var attachResourceId: (String) => String = (name) => {
-    name + "?" + pageResourceId + "=_"
+    name + (if (name contains ("?")) "&" else "?") + pageResourceId + "=_"
   }
 
   /**
