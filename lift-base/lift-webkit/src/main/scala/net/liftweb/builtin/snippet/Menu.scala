@@ -66,6 +66,7 @@ object Menu extends DispatchSnippet {
    *   <li>inner_tag - the tag for the inner XML element (li by default)</li>
    *   <li>li_path - Adds the specified attribute to the current page’s breadcrumb path. The
    *       breadcrumb path is the set of menu items leading to this one.</li>
+   *   <li>linkToSelf - false by default, but available as 'true' to should a link to the current page</li>
    * </ul>
    *
    * <p>For a simple, default menu, simply add</p>
@@ -91,6 +92,8 @@ object Menu extends DispatchSnippet {
     val outerTag: String = S.attr("outer_tag") openOr "ul"
     val innerTag: String = S.attr("inner_tag") openOr "li"
     val expandAll = S.attr("expandAll").isDefined
+    val linkToSelf: Boolean = S.attr("linkToSelf").map(Helpers.toBoolean) openOr false
+
 
     val expandAny: Boolean = (for (e <- S.attr("expand")) yield Helpers.toBoolean(e)) openOr true
 
@@ -132,7 +135,7 @@ object Menu extends DispatchSnippet {
                   (if (m.path) S.prefixedAttrsToMetaData("li_path", liMap) else Null) %
                   (if (m.current) S.prefixedAttrsToMetaData("li_item", liMap) else Null)
 
-            case MenuItem(text, uri, kids, true, _, _) if expandAll =>
+            case MenuItem(text, uri, kids, true, _, _) if expandAll || linkToSelf =>
               Elem(null, innerTag, Null, TopScope,
                 <xml:group> <a href={uri}>{text}</a>{ifExpand(buildUlLine(kids))}</xml:group>) %
                   S.prefixedAttrsToMetaData("li_item", liMap)
