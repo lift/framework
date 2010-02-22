@@ -387,7 +387,9 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
               // For vals, add "AND $fieldname = ? [OR $fieldname = ?]*" to the query. The number
               // of fields you add onto the query is equal to vals.length
-            case ByList(field, vals) =>
+            case ByList(field, orgVals) =>
+              val vals = Set(orgVals :_*).toList // faster than list.removeDuplicates
+              
               if (vals.isEmpty) updatedWhat = updatedWhat + whereOrAnd + " 0 = 1 "
               else updatedWhat = updatedWhat +
               vals.map(v => MapperRules.quoteColumnName(field._dbColumnNameLC)+ " = ?").mkString(whereOrAnd+" (", " OR ", ")")
@@ -426,7 +428,8 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
         st.setObject(curPos, field.convertToJDBCFriendly(value), conn.driverType.columnTypeMap(field.targetSQLType))
         setStatementFields(st, xs, curPos + 1, conn)
 
-      case ByList(field, vals) :: xs => {
+      case ByList(field, orgVals) :: xs => {
+           val vals = Set(orgVals :_*).toList
           var newPos = curPos
           vals.foreach(v => {
               st.setObject(newPos,
@@ -434,6 +437,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                            conn.driverType.columnTypeMap(field.targetSQLType))
               newPos = newPos + 1
             })
+
           setStatementFields(st, xs, newPos, conn)
         }
 
