@@ -112,7 +112,7 @@ class LiftServlet {
           case true => checkRoles(r, userRoles.get)
           case _ => false
         }
-      case _ => true
+      case _ => LiftRules.authentication.verified_?(req)
     }) openOr true
   }
 
@@ -482,9 +482,13 @@ class LiftServlet {
 
     val len = resp.size
     // insure that certain header fields are set
-    val header = insureField(fixHeaders(resp.headers), List(("Content-Type",
-            LiftRules.determineContentType(pairFromRequest(request))),
-      ("Content-Length", len.toString)))
+    val header = if (resp.code == 304) {
+    fixHeaders(resp.headers)
+  } else {
+    insureField(fixHeaders(resp.headers), List(("Content-Type",
+                                                LiftRules.determineContentType(pairFromRequest(request))),
+                                               ("Content-Length", len.toString)))
+  }
 
     LiftRules.beforeSend.toList.foreach(f => tryo(f(resp, response, header, request)))
     // set the cookies
