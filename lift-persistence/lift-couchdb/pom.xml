@@ -41,18 +41,6 @@
   </description>
 
   <!--
-    ~ Repository Settings
-  -->
-  <repositories>
-    <repository>
-      <id>databinder.net</id>
-      <name>Databinder repo</name>
-      <url>http://databinder.net/repo</url>
-      <snapshots/>
-    </repository>
-  </repositories>
-
-  <!--
     ~ Dependency Settings
   -->
   <dependencies>
@@ -65,7 +53,7 @@
     <dependency>
       <groupId>net.databinder</groupId>
       <artifactId>dispatch-http_${scala.version}</artifactId>
-      <version>0.6.3</version>
+      <version>0.7.1</version>
     </dependency>
 
     <dependency>
