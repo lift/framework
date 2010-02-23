@@ -47,17 +47,7 @@ import DatabaseHelpers._
 /** Single element Map implementation */
 object SingleElementMap {
   /** Implicitly convert a pair to a single element map */
-  implicit def pairToSingleElementMap[A, B](pair: (A, B)): MapTrait[A, B] = this(pair)
-
-  /** Convert a pair to a single element map */
-  def apply[A, B](pair: (A, B)): MapTrait[A, B] = new MapTrait[A, B] {
-    private val (key, value) = pair
-
-    def size = 1
-    def get(k: A) = if (k == key) Full(value) else Empty
-    override def contains(k: A) = k == key
-    def elements = (pair::Nil) elements
-  }
+  implicit def pairToSingleElementMap[A, B](pair: (A, B)): MapTrait[A, B] = Map(pair)
 }
 
 import SingleElementMap.pairToSingleElementMap
