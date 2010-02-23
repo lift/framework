@@ -64,6 +64,7 @@
     <module>lift-paypal</module>
     <module>lift-jta</module>
     <module>lift-imaging</module>
+    <module>lift-ldap</module>
   </modules>
 
   <!--
