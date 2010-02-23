@@ -46,7 +46,7 @@ private[couchdb] object JSONRecordHelpers {
       case JInt(i)     => Num(i)
       case JNothing    => error("cannot convert JNothing")
       case JNull       => JsNull
-      case JObject(fs) => JsObj(fs.map(f => (f.name, f.value)): _*)
+      case JObject(fs) => JsObj(fs.map(f => (f.name, jvalueToJsExp(f.value))): _*)
       case JString(s)  => Str(s)
     }
   }
