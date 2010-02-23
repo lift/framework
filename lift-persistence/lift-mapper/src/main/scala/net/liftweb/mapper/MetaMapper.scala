@@ -1149,6 +1149,20 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   )
 
   /**
+   * Present the model as a HTML using the same formatting as toForm
+   *
+   * @param toMap the instance to generate the HTML for
+   *
+   * @return the html view of the model
+   */
+  def toHtml(toMap: A): NodeSeq =
+  mappedFieldList.map(e => ??(e.method, toMap)).
+  filter(f => f.dbDisplay_? && f.dbIncludeInForm_?).flatMap (
+    field =>
+    formatFormLine(Text(field.displayName), field.asHtml)
+  )
+
+  /**
    * Get the fields (in order) for displaying a form
    */
   def formFields(toMap: A): List[MappedField[_, A]] =
