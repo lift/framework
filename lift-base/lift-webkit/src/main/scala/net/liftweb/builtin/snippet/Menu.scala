@@ -66,7 +66,7 @@ object Menu extends DispatchSnippet {
    *   <li>inner_tag - the tag for the inner XML element (li by default)</li>
    *   <li>li_path - Adds the specified attribute to the current page’s breadcrumb path. The
    *       breadcrumb path is the set of menu items leading to this one.</li>
-   *   <li>linkToSelf - false by default, but available as 'true' to should a link to the current page</li>
+   *   <li>linkToSelf - false by default, but available as 'true' to generate link to the current page</li>
    * </ul>
    *
    * <p>For a simple, default menu, simply add</p>
