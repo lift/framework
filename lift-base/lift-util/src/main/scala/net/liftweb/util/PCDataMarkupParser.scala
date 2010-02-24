@@ -247,9 +247,7 @@ object AltXML {
   def toXML(x: Node, pscope: NamespaceBinding, sb: StringBuilder,
             stripComment: Boolean, convertAmp: Boolean): Unit =
   x match {
-    case v @ Text(str) => escape(str, sb)
-
-    case a: Atom[_] => escape(a.data.toString, sb)
+    case Text(str) => escape(str, sb)
 
     case c: Comment if !stripComment =>
       c.toString(sb)
@@ -320,10 +318,8 @@ object AltXML {
             stripComment: Boolean, convertAmp: Boolean,
             ieMode: Boolean): Unit =
   x match {
-    case v @ Text(str) => escape(str, sb)
-
-    case a: Atom[_] => escape(a.data.toString, sb)
-
+    case Text(str) => escape(str, sb)
+      
     case c: Comment if !stripComment =>
       c.toString(sb)
 
