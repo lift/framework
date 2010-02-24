@@ -37,8 +37,13 @@ object ResourceServer {
     case "jquery-autocomplete" :: "indicator.gif" :: Nil => true
   }
 
-  var pathRewriter: PartialFunction[List[String], List[String]] = {
-    case "jquery.js" :: Nil => List("jquery-" + LiftRules.jQueryVersion.toString + "-min.js")
+  private def rewriter = new PartialFunction[List[String], List[String]]{
+    def isDefinedAt(in: List[String]) = LiftRules.jsArtifacts.pathRewriter.isDefinedAt(in)
+
+    def apply(in: List[String]): List[String] = LiftRules.jsArtifacts.pathRewriter(in)
+  }
+
+  var pathRewriter: PartialFunction[List[String], List[String]] = rewriter orElse {
     case "json.js" :: Nil => List("json2-min.js")
     case "json2.js" :: Nil => List("json2-min.js")
     case xs => xs

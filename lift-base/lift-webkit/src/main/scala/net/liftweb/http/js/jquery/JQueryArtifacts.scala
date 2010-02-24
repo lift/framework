@@ -28,7 +28,7 @@ import JE._
 import JqJE._
 import util.Helpers._
 
-object JQueryArtifacts extends JSArtifacts {
+trait JQueryArtifacts extends JSArtifacts {
   def toggle(id: String) = JqId(id) ~> new JsMethod {
     def toJsCmd = "toggle()"
   }
@@ -81,6 +81,20 @@ object JQueryArtifacts extends JSArtifacts {
             info.successFunc.map("success : " + _).toList ++
             info.failFunc.map("error : " + _).toList mkString ("{ ", ", ", " }")
 }
+
+case object JQuery13Artifacts extends JQueryArtifacts {
+  override def pathRewriter: PartialFunction[List[String], List[String]] = {
+    case "jquery.js" :: Nil => List("jquery-1.3.2-min.js")
+  }
+}
+
+
+case object JQuery14Artifacts extends JQueryArtifacts {
+  override def pathRewriter: PartialFunction[List[String], List[String]] = {
+    case "jquery.js" :: Nil => List("jquery-1.4.2.min.js")
+  }
+}
+
 
 }
 }

@@ -546,7 +546,6 @@ object JsCmds {
 
   object OnLoad {
     def apply(what: JsCmd): JsCmd = LiftRules.jsArtifacts.onLoad(what)
-
   }
 
   case class SetValById(id: String, right: JsExp) extends JsCmd {
