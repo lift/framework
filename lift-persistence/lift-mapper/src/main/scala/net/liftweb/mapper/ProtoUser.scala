@@ -169,73 +169,124 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
   /**
    * The menu item for login (make this "Empty" to disable)
    */
-  def loginMenuLoc: Box[Menu] = {
-    Full(Menu(Loc("Login", loginPath, S.??("login"),
-                  If(notLoggedIn_? _, S.??("already.logged.in")),
-                  Template(() => wrapIt(login)))))
-  }
+  def loginMenuLoc: Box[Menu] =
+    Full(Menu(Loc("Login", loginPath, S.??("login"), loginMenuLocParams)))
+
+  /**
+   * The LocParams for the menu item for login.
+   * Overwrite in order to add custom LocParams. Attention: Not calling super will change the default behavior!
+   */
+  protected def loginMenuLocParams: List[LocParam[Unit]] =
+    If(notLoggedIn_? _, S.??("already.logged.in")) ::
+    Template(() => wrapIt(login)) ::
+    Nil
 
   /**
    * The menu item for logout (make this "Empty" to disable)
    */
   def logoutMenuLoc: Box[Menu] =
-  Full(Menu(Loc("Logout", logoutPath, S.??("logout"),
-                Template(() => wrapIt(logout)),
-                testLogginIn)))
+    Full(Menu(Loc("Logout", logoutPath, S.??("logout"), logoutMenuLocParams)))
+
+  /**
+   * The LocParams for the menu item for logout.
+   * Overwrite in order to add custom LocParams. Attention: Not calling super will change the default behavior!
+   */
+  protected def logoutMenuLocParams: List[LocParam[Unit]] =
+    Template(() => wrapIt(logout)) ::
+    testLogginIn ::
+    Nil
 
   /**
    * The menu item for creating the user/sign up (make this "Empty" to disable)
    */
   def createUserMenuLoc: Box[Menu] =
-  Full(Menu(Loc("CreateUser", signUpPath,
-                S.??("sign.up"),
-                Template(() => wrapIt(signupFunc.map(_()) openOr signup)),
-                If(notLoggedIn_? _, S.??("logout.first")))))
+    Full(Menu(Loc("CreateUser", signUpPath, S.??("sign.up"), createUserMenuLocParams)))
+
+  /**
+   * The LocParams for the menu item for creating the user/sign up.
+   * Overwrite in order to add custom LocParams. Attention: Not calling super will change the default behavior!
+   */
+  protected def createUserMenuLocParams: List[LocParam[Unit]] =
+    Template(() => wrapIt(signupFunc.map(_()) openOr signup)) ::
+    If(notLoggedIn_? _, S.??("logout.first")) ::
+    Nil
 
   /**
    * The menu item for lost password (make this "Empty" to disable)
    */
   def lostPasswordMenuLoc: Box[Menu] =
-  Full(Menu(Loc("LostPassword", lostPasswordPath,
-                S.??("lost.password"),
-                Template(() => wrapIt(lostPassword)),
-                If(notLoggedIn_? _, S.??("logout.first"))))) // not logged in
+    Full(Menu(Loc("LostPassword", lostPasswordPath, S.??("lost.password"), lostPasswordMenuLocParams))) // not logged in
+
+  /**
+   * The LocParams for the menu item for lost password.
+   * Overwrite in order to add custom LocParams. Attention: Not calling super will change the default behavior!
+   */
+  protected def lostPasswordMenuLocParams: List[LocParam[Unit]] =
+    Template(() => wrapIt(lostPassword)) ::
+    If(notLoggedIn_? _, S.??("logout.first")) ::
+    Nil
 
   /**
    * The menu item for resetting the password (make this "Empty" to disable)
    */
   def resetPasswordMenuLoc: Box[Menu] =
-  Full(Menu(Loc("ResetPassword", (passwordResetPath, true),
-                S.??("reset.password"), Hidden,
-                Template(() => wrapIt(passwordReset(snarfLastItem))),
-                If(notLoggedIn_? _,
-                   S.??("logout.first"))))) //not Logged in
+    Full(Menu(Loc("ResetPassword", (passwordResetPath, true), S.??("reset.password"), resetPasswordMenuLocParams))) //not Logged in
+
+  /**
+   * The LocParams for the menu item for resetting the password.
+   * Overwrite in order to add custom LocParams. Attention: Not calling super will change the default behavior!
+   */
+  protected def resetPasswordMenuLocParams: List[LocParam[Unit]] =
+    Hidden ::
+    Template(() => wrapIt(passwordReset(snarfLastItem))) ::
+    If(notLoggedIn_? _, S.??("logout.first")) ::
+    Nil
 
   /**
    * The menu item for editing the user (make this "Empty" to disable)
    */
   def editUserMenuLoc: Box[Menu] =
-  Full(Menu(Loc("EditUser", editPath, S.??("edit.user"),
-                Template(() => wrapIt(editFunc.map(_()) openOr edit)),
-                testLogginIn)))
+    Full(Menu(Loc("EditUser", editPath, S.??("edit.user"), editUserMenuLocParams)))
+
+  /**
+   * The LocParams for the menu item for editing the user.
+   * Overwrite in order to add custom LocParams. Attention: Not calling super will change the default behavior!
+   */
+  protected def editUserMenuLocParams: List[LocParam[Unit]] =
+    Template(() => wrapIt(editFunc.map(_()) openOr edit)) ::
+    testLogginIn ::
+    Nil
 
   /**
    * The menu item for changing password (make this "Empty" to disable)
    */
   def changePasswordMenuLoc: Box[Menu] =
-  Full(Menu(Loc("ChangePassword", changePasswordPath,
-                S.??("change.password"),
-                Template(() => wrapIt(changePassword)),
-                testLogginIn)))
+    Full(Menu(Loc("ChangePassword", changePasswordPath, S.??("change.password"), changePasswordMenuLocParams)))
+
+  /**
+   * The LocParams for the menu item for changing password.
+   * Overwrite in order to add custom LocParams. Attention: Not calling super will change the default behavior!
+   */
+  protected def changePasswordMenuLocParams: List[LocParam[Unit]] =
+    Template(() => wrapIt(changePassword)) ::
+    testLogginIn ::
+    Nil
 
   /**
    * The menu item for validating a user (make this "Empty" to disable)
    */
   def validateUserMenuLoc: Box[Menu] =
-  Full(Menu(Loc("ValidateUser", (validateUserPath, true),
-                S.??("validate.user"), Hidden,
-                Template(() => wrapIt(validateUser(snarfLastItem))),
-                If(notLoggedIn_? _, S.??("logout.first")))))
+    Full(Menu(Loc("ValidateUser", (validateUserPath, true), S.??("validate.user"), validateUserMenuLocParams)))
+
+  /**
+   * The LocParams for the menu item for validating a user.
+   * Overwrite in order to add custom LocParams. Attention: Not calling super will change the default behavior!
+   */
+  protected def validateUserMenuLocParams: List[LocParam[Unit]] =
+    Hidden ::
+    Template(() => wrapIt(validateUser(snarfLastItem))) ::
+    If(notLoggedIn_? _, S.??("logout.first")) ::
+    Nil
 
 /**
 * An alias for the sitemap property
