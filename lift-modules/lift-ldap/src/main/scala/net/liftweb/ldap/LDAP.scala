@@ -1,4 +1,7 @@
-package net.liftweb.ldap
+package net.liftweb {
+package ldap {
+
+import util.{Log, Props}
 
 import java.io.{InputStream, FileInputStream}
 import java.util.{Hashtable, Properties}
@@ -7,9 +10,8 @@ import javax.naming.Context
 import javax.naming.directory.{BasicAttributes, SearchControls}
 import javax.naming.ldap.{LdapName, InitialLdapContext}
 
-import scala.collection.jcl.{Hashtable => ScalaHashtable, MapWrapper}
-
-import _root_.net.liftweb.util.{Log, Props}
+import scala.collection.JavaConversions._
+//import scala.collection.jcl.{Hashtable => ScalaHashtable, MapWrapper}
 
 /**
  * Extends SimpleLDAPVendor trait,
@@ -37,8 +39,7 @@ object SimpleLDAPVendor extends SimpleLDAPVendor {
     def parametersFromStream(stream: InputStream) : StringMap = {
         val p = new Properties()
         p.load(stream)
-
-        return convertToStringMap(p.asInstanceOf[Hashtable[String, String]])
+        Map.empty ++ p.asInstanceOf[Hashtable[String, String]]
     }
 
     def setupFromBoot = {
@@ -51,12 +52,6 @@ object SimpleLDAPVendor extends SimpleLDAPVendor {
                     "ldap.userName" -> Props.get("ldap.userName").openOr(DEFAULT_USER),
                     "ldap.password" -> Props.get("ldap.password").openOr(DEFAULT_PASSWORD))
             }
-        }
-    }
-
-    private def convertToStringMap(javaMap: Hashtable[String, String]) = {
-        Map.empty ++ new MapWrapper[String, String]() {
-            def underlying = javaMap
         }
     }
 }
@@ -142,4 +137,7 @@ class LDAPVendor {
                                                                         DEFAULT_INITIAL_CONTEXT_FACTORY))
         return Some(new InitialLdapContext(env, null))
     }
+}
+
+}
 }

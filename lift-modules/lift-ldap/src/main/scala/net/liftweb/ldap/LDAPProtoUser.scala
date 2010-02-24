@@ -5,21 +5,20 @@
  *  - Redirected to the homepage after login
  *
  */
-package net.liftweb.ldap
+package net.liftweb {
+package ldap {
+
+import http.{LiftResponse, RedirectResponse, S, SessionVar}
+import http.js.{JsCmds}
+import mapper.{BaseOwnedMappedField, MappedString, MetaMegaProtoUser, MegaProtoUser}
+import sitemap.{Menu}
+import util.{Helpers}
+import common.{Box, Empty, Full}
+
+import Helpers._
 
 import scala.util.matching.{Regex}
 import scala.xml.{Elem, NodeSeq}
-import net.liftweb.http.{LiftResponse, RedirectResponse, S, SessionVar}
-import net.liftweb.http.js.{JsCmds}
-import net.liftweb.mapper.{BaseOwnedMappedField,
-                           MappedString,
-                           MetaMegaProtoUser,
-                           MegaProtoUser}
-import net.liftweb.sitemap.{Menu}
-import net.liftweb.util.{Helpers}
-import net.liftweb.common.{Box, Empty, Full}
-
-import Helpers._
 
 trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaProtoUser[ModelType] {
     self: ModelType =>
@@ -151,7 +150,7 @@ trait LDAPProtoUser[T <: LDAPProtoUser[T]] extends MegaProtoUser[T] {
         return ldapRoles.get
     }
 
-    def setRoles(userDn: String, ldapVendor: LDAPVendor): AnyRef = {
+    def setRoles(userDn: String, ldapVendor: LDAPVendor) {
         def getGroupNameFromDn(dn: String): String = {
             val regex = new Regex(rolesNameRegex)
 
@@ -163,8 +162,9 @@ trait LDAPProtoUser[T <: LDAPProtoUser[T]] extends MegaProtoUser[T] {
         val filter = rolesSearchFilter.format(userDn)
 
         val groups = ldapVendor.search(filter)
-        groups.foreach(g => {
-            ldapRoles.set(ldapRoles.get + getGroupNameFromDn(g))
-        })
+        groups foreach { g => ldapRoles.set(ldapRoles.get :+ getGroupNameFromDn(g)) }
     }
+}
+
+}
 }
