@@ -412,17 +412,33 @@ object SHtml {
    * This function is called by the overloaded version of jsonText.
    *
    * @param value - the initial value of the text field
+   * @param ignoreBlur - ignore the onblur event and only do the event if the enter key is pressed
    * @param json - takes a JsExp which describes how to recover the
    * value of the text field and returns a JsExp containing the thing
    * to execute on blur/return
    *
    * @return a text field
    */
-  def jsonText(value: String, json: JsExp => JsCmd, attrs: (String, String)*): Elem = {
-    (attrs.foldLeft(<input type="text" value={value}/>)(_ % _)) %
-            ("onkeypress" -> """liftUtils.lift_blurIfReturn(event)""") %
-            ("onblur" -> (json(JE.JsRaw("this.value"))))
-  }
+  def jsonText(value: String, ignoreBlur: Boolean, json: JsExp => JsCmd, attrs: (String, String)*): Elem = 
+  (attrs.foldLeft(<input type="text" value={value}/>)(_ % _)) %
+  ("onkeypress" -> """liftUtils.lift_blurIfReturn(event)""") %
+  (if (ignoreBlur) Null else ("onblur" -> (json(JE.JsRaw("this.value")))))
+  
+
+
+  /**
+   * This function does not really submit a JSON request to server instead json is a function
+   * that allows you to build a more complex JsCmd based on the JsExp <i>JE.JsRaw("this.value")</i>.
+   * This function is called by the overloaded version of jsonText.
+   *
+   * @param value - the initial value of the text field
+   * @param json - takes a JsExp which describes how to recover the
+   * value of the text field and returns a JsExp containing the thing
+   * to execute on blur/return
+   *
+   * @return a text field
+   */
+  def jsonText(value: String, json: JsExp => JsCmd, attrs: (String, String)*): Elem = jsonText(value, false, json, attrs :_*)
 
   /**
    * Create a JSON text widget that makes a JSON call on blur or "return".
@@ -434,25 +450,34 @@ object SHtml {
    * @return a text field
    */
   def jsonText(value: String, cmd: String, json: JsonCall, attrs: (String, String)*): Elem =
-    jsonText(value, exp => json(cmd, exp), attrs: _*)
+  jsonText(value, exp => json(cmd, exp), attrs: _*)
 
-  def ajaxText(value: String, func: String => JsCmd, attrs: (String, String)*): Elem = ajaxText_*(value, Empty, SFuncHolder(func), attrs: _*)
+  def ajaxText(value: String, func: String => JsCmd, attrs: (String, String)*): Elem = 
+  ajaxText_*(value, false, Empty, SFuncHolder(func), attrs: _*)
 
-  def ajaxText(value: String, jsFunc: Call, func: String => JsCmd, attrs: (String, String)*): Elem = ajaxText_*(value, Full(jsFunc), SFuncHolder(func), attrs: _*)
+  def ajaxText(value: String, jsFunc: Call, func: String => JsCmd, attrs: (String, String)*): Elem = 
+  ajaxText_*(value, false, Full(jsFunc), SFuncHolder(func), attrs: _*)
 
-  private def ajaxText_*(value: String, jsFunc: Box[Call], func: AFuncHolder, attrs: (String, String)*): Elem = {
+  def ajaxText(value: String, ignoreBlur: Boolean, func: String => JsCmd, attrs: (String, String)*): Elem =
+  ajaxText_*(value, ignoreBlur, Empty, SFuncHolder(func), attrs: _*)
+
+  def ajaxText(value: String, ignoreBlur: Boolean, jsFunc: Call, func: String => JsCmd, attrs: (String, String)*): Elem =
+  ajaxText_*(value, ignoreBlur, Full(jsFunc), SFuncHolder(func), attrs: _*)
+
+  private def ajaxText_*(value: String, ignoreBlur: Boolean, jsFunc: Box[Call], func: AFuncHolder, attrs: (String, String)*): Elem = {
     val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + encodeURIComponent(" + value + ".value)")
     val key = formFuncName
 
     fmapFunc(contextFuncBuilder(func)) {
       funcName =>
-              (attrs.foldLeft(<input type="text" value={value}/>)(_ % _)) %
-                      ("onkeypress" -> """liftUtils.lift_blurIfReturn(event)""") %
-                      ("onblur" -> (jsFunc match {
-                        case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
-                        case _ => makeAjaxCall(raw(funcName, "this"))
-                      })
-                              )
+      (attrs.foldLeft(<input type="text" value={value}/>)(_ % _)) %
+      ("onkeypress" -> """liftUtils.lift_blurIfReturn(event)""") %
+      (if (ignoreBlur) Null else
+       ("onblur" -> (jsFunc match {
+              case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
+              case _ => makeAjaxCall(raw(funcName, "this"))
+            })
+        ))
     }
   }
 
@@ -671,13 +696,18 @@ object SHtml {
 
   private def buildOnBlur(bf: Box[String => JsCmd]): MetaData = bf match {
     case Full(func) =>
-      new UnprefixedAttribute("onblur", Text(ajaxCall(JsRaw("this.value"), func)._2.toJsCmd), Null) // HERE
+      new UnprefixedAttribute("onblur", Text(ajaxCall(JsRaw("this.value"), func)._2.toJsCmd), Null)
 
     case _ => Null
   }
 
+
+  def text_*(value: String, ignoreBlur: Boolean, func: AFuncHolder, ajaxTest: Box[String => JsCmd], attrs: (String, String)*): Elem =
+    makeFormElement("text", func, attrs: _*) % new UnprefixedAttribute("value", Text(value), Null) % (
+      if (ignoreBlur) Null else buildOnBlur(ajaxTest))
+
   def text_*(value: String, func: AFuncHolder, ajaxTest: Box[String => JsCmd], attrs: (String, String)*): Elem =
-    makeFormElement("text", func, attrs: _*) % new UnprefixedAttribute("value", Text(value), Null) % buildOnBlur(ajaxTest)
+    text_*(value, false, func, ajaxTest, attrs :_*)
 
   def password_*(value: String, func: AFuncHolder, attrs: (String, String)*): Elem =
     makeFormElement("password", func, attrs: _*) % ("value" -> value)
