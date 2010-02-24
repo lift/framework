@@ -97,6 +97,11 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
   def targetSQLType(field: String): Int
 
   /**
+   * Do we ignore the targetSQLType for setObject
+   */
+  def dbIgnoreSQLType_? : Boolean = false
+
+  /**
    * Get the JDBC SQL Type for this field
    */
   def targetSQLType: Int

@@ -44,7 +44,11 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
 	st =>
 	  owner.getSingleton.indexedField(owner).map {
 	    indVal =>
-	      st.setObject(1, indVal.jdbcFriendly, indVal.targetSQLType)
+	      if (indVal.dbIgnoreSQLType_?)
+		st.setObject(1, indVal.jdbcFriendly)
+	      else
+		st.setObject(1, indVal.jdbcFriendly, indVal.targetSQLType)
+
 	    DB.exec(st) {
 	      rs =>
 		otherSingleton.createInstances(owner.connectionIdentifier, rs, Empty, Empty)

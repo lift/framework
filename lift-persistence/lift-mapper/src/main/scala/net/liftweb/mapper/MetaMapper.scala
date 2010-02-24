@@ -466,16 +466,25 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     by match {
       case Nil => curPos
       case Cmp(field, _, Full(value), _, _) :: xs =>
-        st.setObject(curPos, field.convertToJDBCFriendly(value), conn.driverType.columnTypeMap(field.targetSQLType))
+	if (field.dbIgnoreSQLType_?)
+	  st.setObject(curPos, field.convertToJDBCFriendly(value))
+	else
+          st.setObject(curPos, field.convertToJDBCFriendly(value), conn.driverType.columnTypeMap(field.targetSQLType))
+
         setStatementFields(st, xs, curPos + 1, conn)
 
       case ByList(field, orgVals) :: xs => {
            val vals = Set(orgVals :_*).toList
           var newPos = curPos
           vals.foreach(v => {
-              st.setObject(newPos,
+	    if (field.dbIgnoreSQLType_?)
+	      st.setObject(newPos,
+                           field.convertToJDBCFriendly(v))
+	    else
+	      st.setObject(newPos,
                            field.convertToJDBCFriendly(v),
                            conn.driverType.columnTypeMap(field.targetSQLType))
+	    
               newPos = newPos + 1
             })
 
@@ -513,7 +522,12 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
             case List(d: Date) =>
               st.setTimestamp(curPos, new _root_.java.sql.Timestamp(d.getTime))
               setStatementFields(st, xs, curPos + 1, conn)
-            case List(field: BaseMappedField) => st.setObject(curPos, field.jdbcFriendly, conn.driverType.columnTypeMap(field.targetSQLType))
+            case List(field: BaseMappedField) => 
+	      if (field.dbIgnoreSQLType_?)
+		st.setObject(curPos, field.jdbcFriendly)
+	      else
+	      	st.setObject(curPos, field.jdbcFriendly, conn.driverType.columnTypeMap(field.targetSQLType))
+	    
               setStatementFields(st, xs, curPos + 1, conn)
 
             case p :: ps =>
@@ -568,7 +582,10 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
             st =>
             val indVal = indexedField(toDelete)
             indVal.map{indVal =>
-              st.setObject(1, indVal.jdbcFriendly(im), conn.driverType.columnTypeMap(indVal.targetSQLType(im)))
+	      if (indVal.dbIgnoreSQLType_?)
+		st.setObject(1, indVal.jdbcFriendly(im))
+	      else
+		st.setObject(1, indVal.jdbcFriendly(im), conn.driverType.columnTypeMap(indVal.targetSQLType(im)))
 
               st.executeUpdate == 1
             } openOr false
@@ -772,14 +789,29 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                       colVal.targetSQLType(col._1) match {
                         case Types.VARCHAR => st.setString(colNum, colVal.jdbcFriendly(col._1).asInstanceOf[String])
 
-                        case _ => st.setObject(colNum, colVal.jdbcFriendly(col._1), conn.driverType.columnTypeMap(colVal.targetSQLType(col._1)))
+                        case _ => 
+			  if (colVal.dbIgnoreSQLType_?)
+			    st.setObject(colNum, colVal.jdbcFriendly(col._1))
+			  else
+			    st.setObject(colNum, colVal.jdbcFriendly(col._1), 
+					 conn.driverType.
+					 columnTypeMap(colVal.
+						       targetSQLType(col._1)))
                       }
                       colNum = colNum + 1
                     }
                   }
 
-                  indexedField(toSave).foreach(indVal =>  st.setObject(colNum, indVal.jdbcFriendly(indexMap.open_!),
-                                                                       conn.driverType.columnTypeMap(indVal.targetSQLType(indexMap.open_!))))
+                  indexedField(toSave).foreach(indVal =>  
+		    if (indVal.dbIgnoreSQLType_?)
+		      st.setObject(colNum, indVal.jdbcFriendly(indexMap.
+							       open_!))
+		    else
+		      st.setObject(colNum, indVal.jdbcFriendly(indexMap.open_!),
+                                   conn.driverType.
+				   columnTypeMap(indVal.
+						 targetSQLType(indexMap.
+							       open_!))))
                   st.executeUpdate
                   true
                 }
@@ -802,7 +834,15 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                       case Types.VARCHAR =>
                         st.setString(colNum, colVal.jdbcFriendly(col._1).asInstanceOf[String])
 
-                      case _ => st.setObject(colNum, colVal.jdbcFriendly(col._1), conn.driverType.columnTypeMap(colVal.targetSQLType(col._1)))
+                      case _ => 
+			if (colVal.dbIgnoreSQLType_?)
+			  st.setObject(colNum, colVal.jdbcFriendly(col._1))
+			else
+			  st.setObject(colNum, colVal.jdbcFriendly(col._1),
+				       conn.driverType.
+				       columnTypeMap(colVal.
+						     targetSQLType(col._1)))
+
                     }
                     colNum = colNum + 1
                   }
@@ -1749,7 +1789,13 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
                         mkString(", ")+
                         " FROM "+MapperRules.quoteTableName(_dbTableNameLC)+" WHERE "+MapperRules.quoteColumnName(field._dbColumnNameLC)+" = ?", conn) {
       st =>
-      st.setObject(1, field.makeKeyJDBCFriendly(key), conn.driverType.columnTypeMap(field.targetSQLType(field._dbColumnNameLC)))
+	if (field.dbIgnoreSQLType_?)
+	  st.setObject(1, field.makeKeyJDBCFriendly(key))
+	else
+	  st.setObject(1, field.makeKeyJDBCFriendly(key), 
+		       conn.driverType.
+		       columnTypeMap(field.
+				     targetSQLType(field._dbColumnNameLC)))
       DB.exec(st) {
         rs =>
         val mi = buildMapper(rs)
