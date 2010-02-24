@@ -70,7 +70,7 @@ class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
   }
 
   private def elem = S.fmapFunc(SFuncHolder(this.setFromAny(_))){
-    funcName => <input type="pasword"
+    funcName => <input type="password"
       name={funcName}
       value={valueBox openOr ""}
       tabindex={tabIndex toString}/>}
