@@ -85,6 +85,19 @@ trait JSArtifacts {
    * Converts a form denominated by formId into a JSON object
    */
   def formToJSON(formId: String): JsExp
+
+  /**
+   * Rewrites the incomming path with the actual script path
+   *
+   */
+  def pathRewriter: PartialFunction[List[String], List[String]] = 
+    new PartialFunction[List[String], List[String]] {
+    
+      def isDefinedAt(in: List[String]): Boolean = false
+
+      def apply(in: List[String]): List[String] = Nil 
+ 
+    }
 }
 
 /**

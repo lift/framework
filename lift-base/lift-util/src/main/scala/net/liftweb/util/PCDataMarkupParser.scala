@@ -17,12 +17,13 @@
 package net.liftweb {
 package util {
 
-import _root_.scala.xml.parsing.{MarkupParser, MarkupHandler, FatalError, ConstructingHandler, ExternalSources}
+import common._
+
+import _root_.scala.xml.parsing.{ MarkupParser, MarkupHandler, FatalError, ConstructingHandler, ExternalSources }
 import _root_.scala.xml.dtd._
 import _root_.scala.xml._
-import _root_.scala.io.{Source}
-import _root_.java.io.{InputStream}
-import common._
+import _root_.java.io.InputStream
+import scala.io.{ Codec, Source }
 
 /**
  * Utilities for simplifying use of named HTML symbols.
@@ -179,7 +180,7 @@ object PCDataXmlParser {
 
   def apply(in: InputStream): Box[NodeSeq] = {
     for {
-      source <- (tryo{Source.fromInputStream(in)} match {case Full(x) => Full(x) case _ => Empty})
+      source <- (tryo{Source.fromInputStream(in)(Codec.UTF8)} match {case Full(x) => Full(x) case _ => Empty})
       p <- tryo{new PCDataXmlParser(source)}
       val _ = while (p.ch != '<' && p.curInput.hasNext) p.nextch
       bd <- tryo(p.document)

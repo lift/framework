@@ -36,7 +36,7 @@ trait JxBase {
 
   def appendToParent(parentName: String): JsCmd
 
-  def label = "jx" // throw new UnsupportedOperationException("Xml2Js does not have a label")
+  def label = "jx" 
 
   def addAttrs(varName: String, attrs: List[MetaData]): JsCmd = attrs.map {
     m =>
