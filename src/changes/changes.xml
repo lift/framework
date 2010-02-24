@@ -38,6 +38,12 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+      <action dev="hseeberger" type="fix" issue="112" system="assembla">
+	Fixed misspelled keys for resource bundles: *pasword* and reset.password.confirmarion
+      </action>
+      <action dev="hseeberger" type="add" issue="251" system="assembla">
+	xxxMenuLoc methods now delegate to protected xxxMenuLocParams methods in order to get their LocParams.
+      </action>
       <action dev="dpp" type="add" issue="353" system="assembla">
 	Added NOT IN to Mapper query builder
       </action>
