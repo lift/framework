@@ -262,6 +262,8 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
             val innerField: MappedField[JoinType, A] = j.field.asInstanceOf[MappedField[JoinType, A]]
             val innerMeta: MetaMapper[A] = j.field.fieldOwner.getSingleton
 
+          def notIn = false
+
             val queryParams: List[QueryParam[A]] = by.toList
           }.asInstanceOf[QueryParam[A]] ).asInstanceOf[List[MT]]
       }
@@ -386,7 +388,9 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
               // For vals, add "AND $fieldname = ? [OR $fieldname = ?]*" to the query. The number
               // of fields you add onto the query is equal to vals.length
-            case ByList(field, vals) =>
+            case ByList(field, orgVals) =>
+              val vals = Set(orgVals :_*).toList // faster than list.removeDuplicates
+              
               if (vals.isEmpty) updatedWhat = updatedWhat + whereOrAnd + " 0 = 1 "
               else updatedWhat = updatedWhat +
               vals.map(v => MapperRules.quoteColumnName(field._dbColumnNameLC)+ " = ?").mkString(whereOrAnd+" (", " OR ", ")")
@@ -399,8 +403,8 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
             case (in: InThing[A]) =>
               updatedWhat = updatedWhat + whereOrAnd +
-              MapperRules.quoteColumnName(in.outerField._dbColumnNameLC)+
-              " IN ("+in.innerMeta.addEndStuffs(in.innerMeta.addFields("SELECT "+
+              MapperRules.quoteColumnName(in.outerField._dbColumnNameLC)+in.inKeyword+
+              "("+in.innerMeta.addEndStuffs(in.innerMeta.addFields("SELECT "+
                                                                        in.distinct+
                                                                        MapperRules.quoteColumnName(in.innerField._dbColumnNameLC)+
                                                                        " FROM "+
@@ -425,7 +429,8 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
         st.setObject(curPos, field.convertToJDBCFriendly(value), conn.driverType.columnTypeMap(field.targetSQLType))
         setStatementFields(st, xs, curPos + 1, conn)
 
-      case ByList(field, vals) :: xs => {
+      case ByList(field, orgVals) :: xs => {
+           val vals = Set(orgVals :_*).toList
           var newPos = curPos
           vals.foreach(v => {
               st.setObject(newPos,
@@ -433,6 +438,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                            conn.driverType.columnTypeMap(field.targetSQLType))
               newPos = newPos + 1
             })
+
           setStatementFields(st, xs, newPos, conn)
         }
 
@@ -1369,6 +1375,10 @@ sealed abstract class InThing[OuterType <: Mapper[OuterType]] extends QueryParam
   def innerMeta: MetaMapper[InnerType]
   def queryParams: List[QueryParam[InnerType]]
 
+  def notIn: Boolean
+
+  def inKeyword = if (notIn) " NOT IN " else " IN "
+
   def distinct: String =
     queryParams.find {case Distinct() => true case _ => false}.isDefined match {
       case false => ""
@@ -1398,7 +1408,7 @@ final case class InRaw[TheType <:
                                            checkedBy: IHaveValidatedThisSQL)
 extends QueryParam[TheType]
 
-object In {
+object NotIn {
   def fk[InnerMapper <: Mapper[InnerMapper], JoinTypeA,
          Zoom <% QueryParam[InnerMapper],
          OuterMapper <:KeyedMapper[JoinTypeA, OuterMapper]]
@@ -1412,6 +1422,8 @@ object In {
       val outerField: MappedField[JoinType, OuterMapper] = fielda.dbKeyToTable.primaryKeyField
       val innerField: MappedField[JoinType, InnerMapper] = fielda
       val innerMeta: MetaMapper[InnerMapper] = fielda.fieldOwner.getSingleton
+
+      def notIn: Boolean = true
 
       val queryParams: List[QueryParam[InnerMapper]] =
       qp.map{v => val r: QueryParam[InnerMapper] = v; r}.toList
@@ -1433,13 +1445,59 @@ object In {
       val innerField: MappedField[JoinType, InnerMapper] = _innerField
       val innerMeta: MetaMapper[InnerMapper] = innerField.fieldOwner.getSingleton
 
+      def notIn: Boolean = true
+
       val queryParams: List[QueryParam[InnerMapper]] = {
         qp.map{v => val r: QueryParam[InnerMapper] = v; r}.toList
       }
     }
   }
+}
 
+object In {
+  def fk[InnerMapper <: Mapper[InnerMapper], JoinTypeA,
+         Zoom <% QueryParam[InnerMapper],
+         OuterMapper <:KeyedMapper[JoinTypeA, OuterMapper]]
+  (fielda: MappedForeignKey[JoinTypeA, InnerMapper, OuterMapper],
+   qp: Zoom*): InThing[OuterMapper]
+  = {
+    new InThing[OuterMapper] {
+      type JoinType = JoinTypeA
+      type InnerType = InnerMapper
 
+      val outerField: MappedField[JoinType, OuterMapper] = fielda.dbKeyToTable.primaryKeyField
+      val innerField: MappedField[JoinType, InnerMapper] = fielda
+      val innerMeta: MetaMapper[InnerMapper] = fielda.fieldOwner.getSingleton
+
+      def notIn: Boolean = false
+
+      val queryParams: List[QueryParam[InnerMapper]] =
+      qp.map{v => val r: QueryParam[InnerMapper] = v; r}.toList
+    }
+  }
+
+  def apply[InnerMapper <: Mapper[InnerMapper], JoinTypeA,
+            Zoom <% QueryParam[InnerMapper],
+            OuterMapper <: Mapper[OuterMapper]]
+  (_outerField: MappedField[JoinTypeA, OuterMapper],
+   _innerField: MappedField[JoinTypeA, InnerMapper],
+   qp: Zoom*): InThing[OuterMapper]
+  = {
+    new InThing[OuterMapper] {
+      type JoinType = JoinTypeA
+      type InnerType = InnerMapper
+
+      val outerField: MappedField[JoinType, OuterMapper] = _outerField
+      val innerField: MappedField[JoinType, InnerMapper] = _innerField
+      val innerMeta: MetaMapper[InnerMapper] = innerField.fieldOwner.getSingleton
+
+      def notIn: Boolean = false
+
+      val queryParams: List[QueryParam[InnerMapper]] = {
+        qp.map{v => val r: QueryParam[InnerMapper] = v; r}.toList
+      }
+    }
+  }
 }
 
 object Like {

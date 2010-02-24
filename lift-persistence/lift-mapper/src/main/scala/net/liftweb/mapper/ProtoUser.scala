@@ -46,7 +46,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
     override val fieldId = Some(Text("txtFirstName"))
   }
 
-  def firstNameDisplayName = ??("First Name")
+  def firstNameDisplayName = ??("first.name")
 
   // Last Name
   object lastName extends MappedString(this, 32) {
@@ -54,7 +54,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
     override val fieldId = Some(Text("txtLastName"))
   }
 
-  def lastNameDisplayName = ??("Last Name")
+  def lastNameDisplayName = ??("last.name")
 
   // Email
   object email extends MappedEmail(this, 48) {
@@ -64,13 +64,13 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
     override val fieldId = Some(Text("txtEmail"))
   }
 
-  def emailDisplayName = ??("Email")
+  def emailDisplayName = ??("email.address")
   // Password
   object password extends MappedPassword[T](this) {
     override def displayName = fieldOwner.passwordDisplayName
   }
 
-  def passwordDisplayName = ??("Password")
+  def passwordDisplayName = ??("password")
 
   object superUser extends MappedBoolean(this) {
     override def defaultValue = false
@@ -320,7 +320,7 @@ def menus: List[Menu] = sitemap // issue 182
 
   def signupXhtml(user: ModelType) = {
     (<form method="post" action={S.uri}><table><tr><td
-              colspan="2">{ S.??("Sign Up") }</td></tr>
+              colspan="2">{ S.??("sign.up") }</td></tr>
           {localForm(user, false)}
           <tr><td>&nbsp;</td><td><user:submit/></td></tr>
                                         </table></form>)
@@ -625,7 +625,7 @@ def menus: List[Menu] = sitemap // issue 182
     S.redirectTo(homePage)
   }
 
-  private def localForm(user: ModelType, ignorePassword: Boolean): NodeSeq = {
+  protected def localForm(user: ModelType, ignorePassword: Boolean): NodeSeq = {
     signupFields.
     map(fi => getSingleton.getActualBaseField(user, fi)).
     filter(f => !ignorePassword || (f match {
@@ -668,9 +668,9 @@ trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
     override val fieldId = Some(Text("txtTimeZone"))
   }
 
-  def timezoneDisplayName = ??("Time Zone")
+  def timezoneDisplayName = ??("time.zone")
 
-  def localeDisplayName = ??("Locale")
+  def localeDisplayName = ??("locale")
 
 }
 

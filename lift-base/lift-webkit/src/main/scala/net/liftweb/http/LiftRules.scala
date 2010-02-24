@@ -36,6 +36,7 @@ import _root_.scala.reflect.Manifest
 
 object LiftRules extends Factory with FormVendor {
   val noticesContainerId = "lift__noticesContainer__"
+  private val pageResourceId = Helpers.nextFuncName
 
   type DispatchPF = PartialFunction[Req, () => Box[LiftResponse]];
   type RewritePF = PartialFunction[RewriteRequest, RewriteResponse]
@@ -70,8 +71,8 @@ object LiftRules extends Factory with FormVendor {
 
   /**
    * Defines the resources that are protected by authentication and authorization. If this function
-   * is notdefined for the input data, the resource is considered unprotected ergo no authentication
-   * is performed. If this function is defined and returns a Full can, it means that this resource
+   * is not defined for the input data, the resource is considered unprotected ergo no authentication
+   * is performed. If this function is defined and returns a Full box, it means that this resource
    * is protected by authentication,and authenticated subjed must be assigned to the role returned by
    * this function or to a role that is child-of this role. If this function returns Empty it means that
    * this resource is protected by authentication but no authorization is performed meaning that roles are
@@ -96,6 +97,22 @@ object LiftRules extends Factory with FormVendor {
   @volatile var enableContainerSessions = true
 
   @volatile var getLiftSession: (Req) => LiftSession = (req) => _getLiftSession(req)
+
+  /**
+   * Attached an ID entity for resource URI specified in 
+   * link or script tags. This allows controlling browser
+   * resource caching. By default this just adds a query string
+   * parameter unique per application lifetime. More complex
+   * implementation could user per resource MD5 sequences thus
+   * "forcing" browsers to refresh the resource only when the resource
+   * file changes. Users can define other rules as well. Inside user's 
+   * function it is safe to use S context as attachResourceId is called 
+   * from inside the &lt;lift:with-resource-id> snippet
+   * 
+   */
+  @volatile var attachResourceId: (String) => String = (name) => {
+    name + (if (name contains ("?")) "&" else "?") + pageResourceId + "=_"
+  }
 
   /**
    * Returns a LiftSession instance.
@@ -391,7 +408,8 @@ object LiftRules extends Factory with FormVendor {
         "XmlGroup" -> XmlGroup,
         "lazy-load" -> LazyLoad,
         "html5" -> HTML5,
-        "HTML5" -> HTML5
+        "HTML5" -> HTML5,
+        "with-resource-id" -> WithResourceId
         ))
   }
   setupSnippetDispatch()
