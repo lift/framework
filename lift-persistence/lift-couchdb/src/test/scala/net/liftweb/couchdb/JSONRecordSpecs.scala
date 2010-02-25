@@ -28,7 +28,7 @@ import DocumentHelpers.jobjectToJObjectExtension
 
 class JSONRecordTestSpecsAsTest extends JUnit4(JSONRecordTestSpecs)
 
-object JSONRecordTestSpecs extends Specification {
+package jsontestrecords {
   class Person extends JSONRecord[Person] {
     def meta = Person
 
@@ -41,7 +41,13 @@ object JSONRecordTestSpecs extends Specification {
     }
   }
 
-  object Person extends Person with JSONMetaRecord[Person] { }
+  object Person extends Person with JSONMetaRecord[Person] {
+    def createRecord = new Person
+  }
+}
+
+object JSONRecordTestSpecs extends Specification {
+  import jsontestrecords._
 
   def assertEqualPerson(a: Person, b: Person) = {
     a.name.valueBox must_== b.name.valueBox
@@ -62,14 +68,14 @@ object JSONRecordTestSpecs extends Specification {
     }
 
     "decode basic records correctly" in {
-      val recBox = Person.createRecord.fromJValue(testDoc1)
+      val recBox = Person.fromJValue(testDoc1)
       recBox must verify (_.isDefined)
       val Full(rec) = recBox
       assertEqualPerson(rec, testRec1)
     }
 
     "preserve extra fields from JSON" in {
-      val recBox = Person.createRecord.fromJValue(testDoc2)
+      val recBox = Person.fromJValue(testDoc2)
       recBox must verify (_.isDefined)
       val Full(rec) = recBox
       rec.additionalJFields must_== List(JField("extra1", JString("value1")), 
@@ -80,7 +86,7 @@ object JSONRecordTestSpecs extends Specification {
     }
 
     "support unset optional fields" in {
-      val recBox = Person.createRecord.fromJValue(testDoc1)
+      val recBox = Person.fromJValue(testDoc1)
       recBox must verify (_.isDefined)
       val Full(rec) = recBox
 
@@ -88,7 +94,7 @@ object JSONRecordTestSpecs extends Specification {
     }
 
     "support set optional fields" in {
-      val recBox = Person.createRecord.fromJValue(testDoc2)
+      val recBox = Person.fromJValue(testDoc2)
       recBox must verify (_.isDefined)
       val Full(rec) = recBox
 
@@ -98,27 +104,27 @@ object JSONRecordTestSpecs extends Specification {
     "not set missing fields" in {
       val rec = Person.createRecord
       rec.age.set(123)
-      JSONMetaRecord.overrideNeedAllJSONFields.doWith(false) { rec.fromJValue(testDoc3) } must verify (_.isDefined)
+      JSONMetaRecord.overrideNeedAllJSONFields.doWith(false) { rec.setFieldsFromJValue(testDoc3) } must_== Full(())
       rec.age.value must_== 123
     }
 
     "honor overrideIgnoreExtraJSONFields == true" in {
-      val recBox = JSONMetaRecord.overrideIgnoreExtraJSONFields.doWith(true) { Person.createRecord.fromJValue(testDoc2) }
+      val recBox = JSONMetaRecord.overrideIgnoreExtraJSONFields.doWith(true) { Person.fromJValue(testDoc2) }
       recBox must verify (_.isDefined)
     }
 
     "honor overrideIgnoreExtraJSONFields == false" in {
-      val recBox = JSONMetaRecord.overrideIgnoreExtraJSONFields.doWith(false) { Person.createRecord.fromJValue(testDoc2) }
+      val recBox = JSONMetaRecord.overrideIgnoreExtraJSONFields.doWith(false) { Person.fromJValue(testDoc2) }
       recBox must not (verify (_.isDefined))
     }
 
     "honor overrideNeedAllJSONFields == true" in {
-      val recBox = JSONMetaRecord.overrideNeedAllJSONFields.doWith(true) { Person.createRecord.fromJValue(testDoc3) }
+      val recBox = JSONMetaRecord.overrideNeedAllJSONFields.doWith(true) { Person.fromJValue(testDoc3) }
       recBox must not (verify (_.isDefined))
     }
 
     "honor overrideNeedAllJSONFields == false" in {
-      val recBox = JSONMetaRecord.overrideNeedAllJSONFields.doWith(false) { Person.createRecord.fromJValue(testDoc3) }
+      val recBox = JSONMetaRecord.overrideNeedAllJSONFields.doWith(false) { Person.fromJValue(testDoc3) }
       recBox must verify (_.isDefined)
     }
   }

@@ -27,26 +27,33 @@ import DocumentHelpers.{jobjectToJObjectExtension, stripIdAndRev}
 
 class CouchRecordTestSpecsAsTest extends JUnit4(CouchRecordTestSpecs)
 
-class Person extends CouchRecord[Person] {
-  def meta = Person
-
-  object name extends JSONStringField(this, 200)
-  object age extends JSONIntField(this)
+package couchtestrecords {
+  class Person extends CouchRecord[Person] {
+    def meta = Person
+  
+    object name extends JSONStringField(this, 200)
+    object age extends JSONIntField(this)
+  }
+  
+  object Person extends Person with CouchMetaRecord[Person] {
+    def createRecord = new Person
+  }
+  
+  class Company extends CouchRecord[Company] {
+    def meta = Company
+  
+    object name extends JSONStringField(this, 200)
+  }    
+  
+  object Company extends Company with CouchMetaRecord[Company] {
+    def createRecord = new Company
+  }
 }
-
-object Person extends Person with CouchMetaRecord[Person] { }
-
-class Company extends CouchRecord[Company] {
-  def meta = Company
-
-  object name extends JSONStringField(this, 200)
-}    
-
-object Company extends Company with CouchMetaRecord[Company] { }
 
 object CouchRecordTestSpecs extends Specification {
   import CouchDB.defaultDatabase
-
+  import couchtestrecords._
+  
   val design: JObject = 
     ("language" -> "javascript") ~
     ("views" -> (("people_by_age" ->  ("map" -> "function(doc) { if (doc.type == 'Person') { emit(doc.age, doc); } }")) ~

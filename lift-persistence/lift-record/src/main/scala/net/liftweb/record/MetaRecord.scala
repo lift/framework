@@ -141,14 +141,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   /**
    * Creates a new record
    */
-  def createRecord: BaseRecord = rootClass.newInstance.asInstanceOf[BaseRecord]
-
-  /**
-   * Creates a new record from a JSON construct
-   *
-   * @param json - the stringified JSON stucture
-   */
-  def createRecord(json: String): Box[BaseRecord] = rootClass.newInstance.asInstanceOf[BaseRecord].fromJSON(json)
+  def createRecord: BaseRecord
 
   /**
    * Creates a new record setting the value of the fields from the original object but
@@ -215,21 +208,32 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   }
 
   /**
-   * Populate the inst's fields with the values from the JSON construct
+   * Create a record with fields populated with values from the JSON construct
    *
-   * @param inst - the record that will be populated
    * @param json - The stringified JSON object
    * @return Box[BaseRecord]
    */
-  def fromJSON(inst: BaseRecord, json: String): Box[BaseRecord] = {
-    JSONParser.parse(json) match {
-        case Full(nvp : Map[_, _]) =>
-          for ((k, v) <- nvp;
-               field <- inst.fieldByName(k.toString)) yield field.setFromAny(v)
-          Full(inst)
-        case _ => Empty
-      }
+  def fromJSON(json: String): Box[BaseRecord] = {
+    val inst = createRecord
+    setFieldsFromJSON(inst, json) map (_ => inst)
   }
+
+  /**
+   * Populate the fields of the record instance with values from the JSON construct
+   *
+   * @param inst - The record to populate
+   * @param json - The stringified JSON object
+   * @return - Full(()) on success, other on failure
+   */
+  def setFieldsFromJSON(inst: BaseRecord, json: String): Box[Unit] =
+    JSONParser.parse(json) match {
+      case Full(nvp : Map[_, _]) =>
+        for ((k, v) <- nvp;
+             field <- inst.fieldByName(k.toString)) yield field.setFromAny(v)
+        Full(inst)
+      case Full(_) => Empty
+      case failure => failure.asA[Unit]
+    }
 
   protected def foreachCallback(inst: BaseRecord, f: LifecycleCallbacks => Any) {
     lifecycleCallbacks.foreach(m => f(m._2.invoke(inst).asInstanceOf[LifecycleCallbacks]))
@@ -337,14 +341,30 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
       }
     }
 
+  /**
+   * Create a record with fields populated with values from the request
+   *
+   * @param req - The Req to read from
+   * @return the created record
+   */
   def fromReq(r: Req): BaseRecord = {
-    val rec = createRecord
+    val inst = createRecord
+    setFieldsFromReq(inst, r)
+    inst
+  }
+
+  /**
+   * Populate the fields of the record with values from the request
+   *
+   * @param inst - The record to populate
+   * @param req - The Req to read from
+   */
+  def setFieldsFromReq(inst: BaseRecord, req: Req): Unit = {
     for(fieldHolder <- fieldList;
-        field <- rec.fieldByName(fieldHolder.name)
+        field <- inst.fieldByName(fieldHolder.name)
     ) yield {
-      field.setFromAny(r.param(field.name))
+      field.setFromAny(req.param(field.name))
     }
-    rec
   }
 
   /**
