@@ -22,7 +22,7 @@ import util._
 import common._
 import scala.xml._
 import net.liftweb.http.js.JsExp
-import net.liftweb.http.{SHtml}
+import net.liftweb.http.{Req, SHtml}
 import net.liftweb.mapper.Safe
 import field._
 
@@ -81,13 +81,14 @@ trait Record[MyType <: Record[MyType]] {
   def asJSON: JsExp = meta.asJSON(this)
 
   /**
-   * Populate this record's fields with the values from the JSON construct
-   *
-   * @param json - The stringified JSON object
+   * Sets the fields of this Record from the given JSON.
    */
-  def fromJSON(json: String): Box[MyType] = {
-    meta.fromJSON(this, json)
-  }
+  def setFieldsFromJSON(json: String): Box[Unit] = meta.setFieldsFromJSON(this, json)
+
+  /**
+   * Sets the fields of this Record from the given Req.
+   */
+  def setFieldsFromReq(req: Req): Box[Unit] = meta.setFieldsFromReq(this, req)
 
   /**
    * Present the model as a form and execute the function on submission of the form
