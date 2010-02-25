@@ -329,6 +329,7 @@ object DBLog {
 
       m.invoke(underlying, args : _*)
     } catch {
+      case ite: java.lang.reflect.InvocationTargetException => throw ite.getCause
       case nsme : NoSuchMethodException => Log.fatal("Could not locate method %s for %s : %s".format(method.getName, underlyingClassname, nsme.getMessage))
       throw nsme
     }
