@@ -477,9 +477,42 @@ object SHtml {
     def coords: String = polyCoords.map{ case (x, y) => ""+x+", "+y}.mkString(", ")
   }
 
+  /**
+   * Generate an Area tag
+   *
+   * @param shape - the shape of the area (RectShape, CircleShape, CirclePercentShape, PolyShape)
+   * @param alt - the contents of the alt attribute
+   * @param attrs - the balance of the attributes for the tag
+   */
+  def area(shape: AreaShape, alt: String, attrs: (String, String)*): Elem =
+  attrs.foldLeft(<area alt={alt} shape={shape.shape} coords={shape.coords} />)(_ % _)
 
-def area(shape: AreaShape, alt: String, attrs: (String, String)*): Elem =
- attrs.foldLeft(<area alt={alt} shape={shape.shape} coords={shape.coords} />)(_ % _)
+  /**
+   * Generate an Area tag
+   *
+   * @param shape - the shape of the area (RectShape, CircleShape, CirclePercentShape, PolyShape)
+   * @param jsCmd - the JavaScript to execute on the client when the area is clicked
+   * @param alt - the contents of the alt attribute
+   * @param attrs - the balance of the attributes for the tag
+   */
+  def area(shape: AreaShape, jsCmd: JsCmd, alt: String, attrs: (String, String)*): Elem =
+  area(shape, alt, ("onclick" -> jsCmd.toJsCmd) :: attrs.toList :_*)
+
+  /**
+   * Generate an Area tag
+   *
+   * @param shape - the shape of the area (RectShape, CircleShape, CirclePercentShape, PolyShape)
+   * @param func - The server side function to execute when the area is clicked on.
+   * @param alt - the contents of the alt attribute
+   * @param attrs - the balance of the attributes for the tag
+   */
+  def area(shape: AreaShape, func: () => JsCmd, alt: String, attrs: (String, String)*): Elem = {
+    fmapFunc(contextFuncBuilder(func)) {
+      funcName =>
+      area(shape, alt, ("onclick" -> (makeAjaxCall(Str(funcName + "=true")).toJsCmd +
+                                      "; return false;")) :: attrs.toList :_*)
+    }
+  }
 
 
   def ajaxCheckbox(value: Boolean, func: Boolean => JsCmd, attrs: (String, String)*): Elem =
