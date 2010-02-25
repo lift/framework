@@ -69,23 +69,21 @@ object InMemoryCache {
  */
 class InMemoryCache(templatesCount: Int) extends
 TemplateCache[(Locale, List[String]), NodeSeq] {
-
   private val cache : LRU[(Locale, List[String]), NodeSeq] = new LRU(templatesCount)
-  private val cacheLock = new ConcurrentLock
 
   def get(key: T): Box[NodeSeq] = {
-    cacheLock.read {
-     cache.get(key)
+    cache.synchronized {
+      cache.get(key)
     }
   }
 
-  def set(key: T, node: NodeSeq): NodeSeq = cacheLock.write {
+  def set(key: T, node: NodeSeq): NodeSeq = cache.synchronized {
     cache(key) = node
     node
   }
 
   override def delete(key: T) {
-    cacheLock.write(cache.remove(key))
+    cache.synchronized(cache.remove(key))
   }
 
 }
