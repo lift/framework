@@ -249,6 +249,15 @@ object AltXML {
   x match {
     case Text(str) => escape(str, sb)
 
+    case c: PCData => c.toString(sb)
+
+    case c: scala.xml.PCData => c.toString(sb)
+
+    case up: Unparsed => up.toString(sb)
+
+    case a: Atom[_] if a.getClass eq classOf[Atom[_]] =>
+      escape(a.data.toString, sb)
+
     case c: Comment if !stripComment =>
       c.toString(sb)
 
@@ -319,6 +328,15 @@ object AltXML {
             ieMode: Boolean): Unit =
   x match {
     case Text(str) => escape(str, sb)
+
+    case c: PCData => c.toString(sb)
+
+    case c: scala.xml.PCData => c.toString(sb)
+
+    case up: Unparsed => up.toString(sb)
+
+    case a: Atom[_] if a.getClass eq classOf[Atom[_]] =>
+      escape(a.data.toString, sb)
       
     case c: Comment if !stripComment =>
       c.toString(sb)
