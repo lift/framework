@@ -456,6 +456,65 @@ object SHtml {
     }
   }
 
+  trait AreaShape {
+    def shape: String
+    def coords: String
+  }
+  case class RectShape(left: Int, top: Int, right: Int, bottom: Int) extends AreaShape {
+    def shape: String = "rect"
+    def coords: String = ""+left+", "+top+", "+right+", "+bottom
+  }
+  case class CircleShape(centerX: Int, centerY: Int, radius: Int) extends AreaShape  {
+    def shape: String = "circle"
+    def coords: String = ""+centerX+", "+centerY+", "+radius
+  }
+  case class CirclePercentShape(centerX: Int, centerY: Int, radiusPercent: Int) extends AreaShape  {
+    def shape: String = "circle"
+    def coords: String = ""+centerX+", "+centerY+", "+radiusPercent+"%"
+  }
+  case class PolyShape(polyCoords: (Int, Int)*) extends AreaShape {
+    def shape: String = "poly"
+    def coords: String = polyCoords.map{ case (x, y) => ""+x+", "+y}.mkString(", ")
+  }
+
+  /**
+   * Generate an Area tag
+   *
+   * @param shape - the shape of the area (RectShape, CircleShape, CirclePercentShape, PolyShape)
+   * @param alt - the contents of the alt attribute
+   * @param attrs - the balance of the attributes for the tag
+   */
+  def area(shape: AreaShape, alt: String, attrs: (String, String)*): Elem =
+  attrs.foldLeft(<area alt={alt} shape={shape.shape} coords={shape.coords} />)(_ % _)
+
+  /**
+   * Generate an Area tag
+   *
+   * @param shape - the shape of the area (RectShape, CircleShape, CirclePercentShape, PolyShape)
+   * @param jsCmd - the JavaScript to execute on the client when the area is clicked
+   * @param alt - the contents of the alt attribute
+   * @param attrs - the balance of the attributes for the tag
+   */
+  def area(shape: AreaShape, jsCmd: JsCmd, alt: String, attrs: (String, String)*): Elem =
+  area(shape, alt, ("onclick" -> jsCmd.toJsCmd) :: attrs.toList :_*)
+
+  /**
+   * Generate an Area tag
+   *
+   * @param shape - the shape of the area (RectShape, CircleShape, CirclePercentShape, PolyShape)
+   * @param func - The server side function to execute when the area is clicked on.
+   * @param alt - the contents of the alt attribute
+   * @param attrs - the balance of the attributes for the tag
+   */
+  def area(shape: AreaShape, func: () => JsCmd, alt: String, attrs: (String, String)*): Elem = {
+    fmapFunc(contextFuncBuilder(func)) {
+      funcName =>
+      area(shape, alt, ("onclick" -> (makeAjaxCall(Str(funcName + "=true")).toJsCmd +
+                                      "; return false;")) :: attrs.toList :_*)
+    }
+  }
+
+
   def ajaxCheckbox(value: Boolean, func: Boolean => JsCmd, attrs: (String, String)*): Elem =
     ajaxCheckbox_*(value, Empty, LFuncHolder(in => func(in.exists(toBoolean(_)))), attrs: _*)
 
