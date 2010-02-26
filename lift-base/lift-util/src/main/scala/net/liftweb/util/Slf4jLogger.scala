@@ -56,7 +56,7 @@ import _root_.org.slf4j.{Logger, LoggerFactory}
  * </pre>
  *
  */
-object Slf4jLogBoot {
+@deprecated object Slf4jLogBoot {
   private def _loggerByClass(clz: Class[AnyRef]): LiftLogger = new Slf4jLogger(LoggerFactory.getLogger(clz))
   private def _loggerByName(name: String): LiftLogger = new Slf4jLogger(LoggerFactory.getLogger(name))
 
@@ -73,7 +73,7 @@ object Slf4jLogBoot {
  * Adapter use internaly by lift as Logger, if Slf4jLogBoot is enabled.
  * @see Slf4jLogBoot
  */
-class Slf4jLogger(val logger: Logger) extends LiftLogger {
+@deprecated class Slf4jLogger(val logger: Logger) extends LiftLogger {
   override def isTraceEnabled = logger.isTraceEnabled
   override def trace(msg: => AnyRef) = if (isTraceEnabled) logger.trace(String.valueOf(msg))
   override def trace(msg: => AnyRef, t: => Throwable) = if (isTraceEnabled) logger.trace(String.valueOf(msg), t)

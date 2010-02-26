@@ -779,6 +779,23 @@ object LiftRules extends Factory with FormVendor {
     ret
   })
 
+  private var _configureLogging: () => Unit = _
+    
+  /**
+   * Holds the function that configures logging. Must be set before any loggers are created
+   */
+  def configureLogging: () => Unit = _configureLogging
+
+  /**
+   * Holds the function that configures logging. Must be set before any loggers are created
+   */
+  def configureLogging_=(newConfigurer: () => Unit): Unit = {
+    _configureLogging = newConfigurer
+    Logger.setup = Full(newConfigurer)
+  }
+
+  configureLogging = net.liftweb.util.LoggingAutoConfigurer()
+  
   /**
    * Holds the CometLogger that will be used to log comet activity
    */

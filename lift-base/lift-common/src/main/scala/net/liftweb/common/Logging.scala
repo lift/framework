@@ -20,6 +20,27 @@ package common {
 import _root_.org.slf4j.{MDC => SLF4JMDC, Marker, Logger => SLF4JLogger, LoggerFactory}
 
 object Logger {
+  private lazy val checkConfig: Boolean = {
+    setup.foreach {_()}; 
+    true
+  }
+  
+  /**
+   * This function, if set, will be called before any loggers are created
+   * 
+   * Useful for initializing the logging backend with a non-default configuration
+   * 
+   * Helpers exists for log4j & logback:
+   * 
+   *   Logger.setup = Full(Log4j.withFile(url)
+   * 
+   * or
+   * 
+   *   Logger.setup = Full(Logback.withFile(url))
+   * 
+   */
+  var setup: Box[() => Unit] = Empty
+  
   def loggerNameFor(cls: Class[_]) = {
     val className = cls.getName
     if (className endsWith "$") 
@@ -28,8 +49,8 @@ object Logger {
       className
   }
 
-  def apply(cls: Class[_]) = new WrappedLogger(LoggerFactory.getLogger(loggerNameFor(cls)))
-  def apply(name: String) = new WrappedLogger(LoggerFactory.getLogger(name))
+  def apply(cls: Class[_]) = if (checkConfig) new WrappedLogger(LoggerFactory.getLogger(loggerNameFor(cls))) else null
+  def apply(name: String) = if (checkConfig) new WrappedLogger(LoggerFactory.getLogger(name)) else null
   
  /**
    * Set the Mapped Diagnostic Context for the thread and execute
@@ -148,6 +169,74 @@ class WrappedLogger(l: SLF4JLogger) extends Logger {
  */
 trait Loggable {
   @transient val logger = Logger(this.getClass)
+}
+
+/**
+ * Configuration helpers for the log4j logging backend
+ */
+object Log4j {
+  import org.apache.log4j.{LogManager,PropertyConfigurator}
+  import org.apache.log4j.xml.DOMConfigurator
+  
+  val defaultProps =
+    """<?xml version="1.0" encoding="UTF-8" ?>
+    <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+    <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+    <appender name="appender" class="org.apache.log4j.ConsoleAppender">
+    <layout class="org.apache.log4j.SimpleLayout"/>
+    </appender>
+    <root>
+    <priority value ="INFO"/>
+    <appender-ref ref="appender"/>
+    </root>
+    </log4j:configuration>
+    """
+  
+  /**
+   * Configure with contents of the specified filed (either .xml or .properties)
+   */
+  def withFile(url: java.net.URL)() = {
+    if (url.getPath.endsWith(".xml")) {
+      val domConf = new DOMConfigurator
+      domConf.doConfigure(url, LogManager.getLoggerRepository())
+    } else 
+      PropertyConfigurator.configure(url)
+  }
+  /**
+   * Configure with the specified configuration. config must contain a valid XML document
+   */
+  def withConfig(config: String)() = {
+    val domConf = new DOMConfigurator
+    val is = new java.io.ByteArrayInputStream(config.getBytes("UTF-8"))
+    domConf.doConfigure(is, LogManager.getLoggerRepository())
+  }
+  
+  /**
+   * Configure with simple defaults
+   */
+  def withDefault() = withConfig(defaultProps)
+}
+
+/**
+ * Configuration helpers for the Logback logging backend
+ */
+object Logback  {
+  import ch.qos.logback.classic.LoggerContext;
+  import ch.qos.logback.core.util.StatusPrinter;
+  import ch.qos.logback.classic.joran.JoranConfigurator;
+
+  /**
+   * Configure with contents of the specified XML filed 
+   */
+  def withFile(url: java.net.URL)() = {
+    val lc = LoggerFactory.getILoggerFactory().asInstanceOf[LoggerContext];
+    val configurator = new JoranConfigurator();
+    configurator.setContext(lc);
+    // the context was probably already configured by default configuration rules
+    lc.reset(); 
+    configurator.doConfigure(url);
+    StatusPrinter.printInCaseOfErrorsOrWarnings(lc);
+  }
 }
 
 }

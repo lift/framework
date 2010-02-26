@@ -29,7 +29,6 @@ import _root_.org.scalacheck.Arbitrary._
 import _root_.org.scalacheck.Prop.{forAll}
 
 class LoggingTest extends Runner(LoggingUnit) with JUnit
-class LoggingUnitTest extends JUnit4(LoggingUnit) 
 
 class MyTopClass extends Logger {
   val x=1
@@ -41,32 +40,11 @@ object MyTopObj extends Logger {
   debug("Top level object logging")
 }
 
+/**
+ * Test relies on logback being on the classpath, so no configuration necessary
+ */
 object LoggingUnit extends Specification {
   "Logging" can {
-    doFirst {
-      import _root_.org.apache.log4j._
-      import _root_.org.apache.log4j.xml._
-      val  defaultProps =
-        """<?xml version="1.0" encoding="UTF-8" ?>
-        <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
-        <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
-        <appender name="appender" class="org.apache.log4j.ConsoleAppender">
-        <layout class="org.apache.log4j.PatternLayout">
-          <param name="ConversionPattern" value="%-5p %c M1:%X{mdc1} M2:%X{mdc2}- %m%n"/>
-        </layout>
-        </appender>
-        <root>
-        <priority value ="trace"/>
-        <appender-ref ref="appender"/>
-        </root>
-        </log4j:configuration>
-        """
-      val domConf = new DOMConfigurator
-      val defPropBytes = defaultProps.toString.getBytes("UTF-8")
-      val is = new _root_.java.io.ByteArrayInputStream(defPropBytes)
-      domConf.doConfigure(is, LogManager.getLoggerRepository())
-    }
-    
     "be mixed directly into object" in {
       object MyObj extends Logger {
         info("direct Hello")
