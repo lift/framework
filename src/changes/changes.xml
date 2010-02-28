@@ -41,6 +41,9 @@
       <action dev="dpp" type="add" issue="117" system="assembla">
 	A flag for disabling the onblur stuff for ajax calls
       </action>
+      <action dev="pr1001" type="update" issue="322" system="assembla">
+	lift-flot has been updated to Flot 0.6
+      </action>
       <action dev="dpp" type="fix" issue="369" system="assembla">
 	Better support for exceptions in DB Logging
       </action>
