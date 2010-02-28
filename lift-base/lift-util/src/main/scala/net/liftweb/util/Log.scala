@@ -24,9 +24,64 @@ import _root_.org.apache.log4j.xml._
 import common.{Logger => _, _}
 
 /**
+ * Function object that can be used in Logger.setup
+ * 
+ * Tries to determine which logging backend is available and configures it
+ * by using either defaults or a mode-dependent configuration file.
+ * 
+ * To provide your own configuration, add either a log4j.props file or log4j.xml
+ * file to your classpath. If using logback, name it logback.xml
+ *
+ * If you want to provide a configuration file for a subset of your application
+ * or for a specific environment, Lift expects configuration files to be named
+ * in a manner relating to the context in which they are being used. The standard
+ * name format is:
+ *
+ * <pre>
+ *   modeName.hostName.userName.filename.extension
+ * </pre>
+ *
+ * with hostName and userName being optional, and modeName being one of
+ * 'test', 'staging', 'production', 'pilot', 'profile', or 'default.
+ * Thus, if you name your log4j config file 'default.log4j.xml' or
+ * 'default.log4j.props' it will be picked up correctly.
+ * 
+ */
+object LoggingAutoConfigurer {
+  import ClassHelpers._
+  
+  private def findTheFile(files: String*): Box[(_root_.java.net.URL)] = {
+    val namesToTry = Props.toTry.flatMap(f => files.toList.map(file => f()+file))
+    first(namesToTry) (name => tryo(getClass.getResource(name)).filter(_ ne null).map(s => s))
+  }
+
+  def apply(): () => Unit = () => {
+    // Try to configure log4j only if we find the SLF4J Log4j bindings
+    val log4J = findClass("Log4jLoggerAdapter",List("org.slf4j.impl")) map {_ =>
+      // Avoid double init
+      if (!LogBoot.log4JInited) {
+        LogBoot.log4JInited = true
+        findTheFile("log4j.xml", "log4j.props") match {
+          case Full(url) => _root_.net.liftweb.common.Log4j.withFile(url)()
+          case _ => _root_.net.liftweb.common.Log4j.withConfig(LogBoot.defaultProps)()
+        }
+      }
+    }
+    
+    // If that fails, try to configure logback
+    val logback = log4J or (findClass("Logger",List("ch.qos.logback.classic")) map {_ =>
+      findTheFile("logback.xml") map {url => Logback.withFile(url)()}
+    })
+    
+    // Everything failed, no config to be done
+    logback openOr ()
+  }
+}
+
+/**
  * A thin wrapper around log4j.
  */
-object Log extends LiftLogger {
+@deprecated object Log extends LiftLogger {
   lazy val rootLogger: LiftLogger = LogBoot.loggerByName("lift")
 
   override def trace(msg: => AnyRef) = rootLogger.trace(msg)
@@ -94,9 +149,12 @@ object Log extends LiftLogger {
  * Thus, if you name your log4j config file 'default.log4j.xml' or
  * 'default.log4j.props' it will be picked up correctly.
  */
-object LogBoot {
+@deprecated object LogBoot {
   lazy val checkConfig: Boolean = loggerSetup()
 
+  // Prevent double initialization of log4j by new/old logging code
+  private[util] var log4JInited = false
+  
   var loggerSetup: () => Boolean = _log4JSetup _
 
   var defaultProps =
@@ -115,29 +173,34 @@ object LogBoot {
 
   def _log4JSetup() =
   {
-    def log4jIsConfigured = LogManager.getLoggerRepository.getCurrentLoggers.hasMoreElements
-    def findTheFile: Box[(_root_.java.net.URL, String)] = (first(Props.toTry.flatMap(f => List(f()+"log4j.props", f()+"log4j.xml")))
-    (name =>tryo(getClass.getResource(name)).filter(_ ne null).map(s => (s, name))))
+    if (log4JInited) {
+      true
+    } else {
+      log4JInited = true
+      def log4jIsConfigured = LogManager.getLoggerRepository.getCurrentLoggers.hasMoreElements
+      def findTheFile: Box[(_root_.java.net.URL, String)] = (first(Props.toTry.flatMap(f => List(f()+"log4j.props", f()+"log4j.xml")))
+      (name =>tryo(getClass.getResource(name)).filter(_ ne null).map(s => (s, name))))
 
-    val (log4jUrl, fileName) = findTheFile match {
-      case Full((url, name)) => (Full(url), Full(name))
-      case _ => (Empty, Empty)
-    }
+      val (log4jUrl, fileName) = findTheFile match {
+        case Full((url, name)) => (Full(url), Full(name))
+        case _ => (Empty, Empty)
+      }
 
-    for (url <- log4jUrl; name <- fileName) {
-      if (name.endsWith(".xml")) {
+      for (url <- log4jUrl; name <- fileName) {
+        if (name.endsWith(".xml")) {
+          val domConf = new DOMConfigurator
+          domConf.doConfigure(url, LogManager.getLoggerRepository())
+        } else PropertyConfigurator.configure(url)
+      }
+
+      if (!log4jUrl.isDefined && !log4jIsConfigured) {
         val domConf = new DOMConfigurator
-        domConf.doConfigure(url, LogManager.getLoggerRepository())
-      } else PropertyConfigurator.configure(url)
+        val defPropBytes = defaultProps.toString.getBytes("UTF-8")
+        val is = new _root_.java.io.ByteArrayInputStream(defPropBytes)
+        domConf.doConfigure(is, LogManager.getLoggerRepository())
+      }
+      true
     }
-
-    if (!log4jUrl.isDefined && !log4jIsConfigured) {
-      val domConf = new DOMConfigurator
-      val defPropBytes = defaultProps.toString.getBytes("UTF-8")
-      val is = new _root_.java.io.ByteArrayInputStream(defPropBytes)
-      domConf.doConfigure(is, LogManager.getLoggerRepository())
-    }
-    true
   }
 
   private def _loggerCls(clz: Class[AnyRef]): LiftLogger = if (checkConfig) new Log4JLogger(Logger.getLogger(clz)) else NullLogger
@@ -147,11 +210,11 @@ object LogBoot {
   var loggerByClass: Class[AnyRef] => LiftLogger = _loggerCls _
 }
 
-object NullLogger extends LiftLogger {
+@deprecated object NullLogger extends LiftLogger {
 
 }
 
-trait LiftLogger {
+@deprecated trait LiftLogger {
   def isTraceEnabled: Boolean = false
   def trace(msg: => AnyRef): Unit = ()
   def trace(msg: => AnyRef, t: => Throwable): Unit = ()
@@ -185,7 +248,7 @@ trait LiftLogger {
   def warn(msg: => AnyRef, t: => Throwable): Unit = ()
 }
 
-object LiftLogLevels extends Enumeration {
+@deprecated object LiftLogLevels extends Enumeration {
   val All = Value(1, "All")
   val Trace = Value(3, "Trace")
   val Debug = Value(5, "Debug")
@@ -196,7 +259,7 @@ object LiftLogLevels extends Enumeration {
   val Off = Value(15, "Off")
 }
 
-class Log4JLogger(val logger: Logger) extends LiftLogger {
+@deprecated class Log4JLogger(val logger: Logger) extends LiftLogger {
   override def isTraceEnabled = logger.isTraceEnabled
   override def trace(msg: => AnyRef) = if (isTraceEnabled) logger.trace(msg)
   override def trace(msg: => AnyRef, t: => Throwable) = if (isTraceEnabled) logger.trace(msg, t)

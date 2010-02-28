@@ -41,6 +41,9 @@ object MyTopObj extends Logger {
   debug("Top level object logging")
 }
 
+/**
+ * Test relies on logback being on the classpath, so no configuration necessary
+ */
 object LoggingUnit extends Specification {
   "Logging" can {
     doFirst {

@@ -266,6 +266,8 @@ object PostgreSqlDriver extends BasePostgreSQLDriver {
         setter(stmt)
         handler(Left(stmt.executeQuery))
     }
+
+  override def supportsForeignKeys_? : Boolean = true
 }
 
 /**

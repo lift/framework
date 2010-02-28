@@ -131,8 +131,7 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
   /**
    * The forced lower case column names
    */
-  final def _dbColumnNameLC =
-  {
+  final def _dbColumnNameLC = {
     val name = dbColumnName
 
     val conn = DB.currentConnection
@@ -141,7 +140,7 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
       if (rc.metaData.storesMixedCaseIdentifiers) name
       else name.toLowerCase
     } else name
-  } // .toLowerCase
+  }
 
   /**
    *  Should the field be indexed?
@@ -463,7 +462,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
    * Set the name of this field
    */
   private[mapper] final def setName_!(newName : String) : String = {
-    if(safe_?) _name = newName.toLowerCase
+    if(safe_?) _name = newName
     _name
   }
 
@@ -599,9 +598,12 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
 
   def dbColumnNames(in : String) = if (dbColumnCount == 1) List(_dbColumnNameLC) else List(in.toLowerCase)
 
-  def dbColumnName = name.toLowerCase match {
-    case name if DB.reservedWords.contains(name) => name+"_c"
-    case name => name
+  def dbColumnName = {
+    val columnName = MapperRules.columnName(fieldOwner.connectionIdentifier, name)
+    if(DB.reservedWords.contains(columnName.toLowerCase))
+       columnName+"_c"
+    else
+       columnName
   }
 
   def dbSelectString = fieldOwner.getSingleton._dbTableNameLC + "." + _dbColumnNameLC

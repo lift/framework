@@ -25,13 +25,15 @@ import _root_.net.liftweb.util._
 import Helpers._
 import _root_.net.liftweb.json._
 import _root_.java.sql.{Connection, DriverManager}
-
 //import _root_.net.liftweb.mapper.DBVendors.{MySqlRunner, DerbyRunner}
 
 class MapperSpecsAsTest extends JUnit3(MapperSpecs)
 object MapperSpecsRunner extends ConsoleRunner(MapperSpecs)
 
 object MapperSpecs extends Specification {
+
+  val doLog = false
+  //def providers = DBProviders.H2MemoryProvider :: Nil
   def providers = DBProviders.asList
 
   /*
@@ -53,19 +55,32 @@ object MapperSpecs extends Specification {
                         User, Dog, Mixer, Dog2)
   }
 
-  providers.foreach(provider => {
+  def snakify(connid: ConnectionIdentifier, name: String): String = {
+    if (connid.jndiName == "snake")
+      StringHelpers.snakify(name)
+    else
+      name.toLowerCase
+  }
 
+  if (!DB.loggingEnabled_? && doLog)
+    DB.addLogFunc(logDBStuff)
+
+  MapperRules.columnName = snakify
+  MapperRules.tableName = snakify
+
+  providers.foreach(provider => {
       def cleanup() {
         try { provider.setupDB } catch { case e if !provider.required_? => skip("Provider %s not available: %s".format(provider, e)) }
-
-        Schemifier.destroyTables_!!(ignoreLogger _, SampleModel, SampleTag, User, Dog, Mixer, Dog2)
-        Schemifier.schemify(true, ignoreLogger _, SampleModel, SampleTag, User, Dog, Mixer, Dog2)
+        Schemifier.destroyTables_!!(DefaultConnectionIdentifier, if (doLog) Log.infoF _ else ignoreLogger _,  SampleModel, SampleTag, User, Dog, Mixer, Dog2)
+        Schemifier.destroyTables_!!(DBProviders.SnakeConnectionIdentifier, if (doLog) Log.infoF _ else ignoreLogger _,  SampleModelSnake)
+        Schemifier.schemify(true, if (doLog) Log.infoF _ else ignoreLogger _, DefaultConnectionIdentifier, SampleModel, SampleTag, User, Dog, Mixer, Dog2)
+        Schemifier.schemify(true, if (doLog) Log.infoF _ else ignoreLogger _, DBProviders.SnakeConnectionIdentifier, SampleModelSnake)
       }
 
       ("Mapper for " + provider.name) should {
         "schemify" in {
           cleanup()
-
+          
           val elwood = SampleModel.find(By(SampleModel.firstName, "Elwood")).open_!
           val madeline = SampleModel.find(By(SampleModel.firstName, "Madeline")).open_!
           val archer = SampleModel.find(By(SampleModel.firstName, "Archer")).open_!
@@ -85,23 +100,50 @@ object MapperSpecs extends Specification {
           elwood.id.is must be_<(madeline.id.is)
         }
 
-	"basic JSON encoding/decoding works" in {
-	  cleanup()
-	  val m = SampleModel.findAll().head
-	  val json = m.encodeAsJson()
-	  val rebuilt = SampleModel.buildFromJson(json)
-	  m must_== rebuilt
-	}
+        "non-snake connection should lower case default table & column names" in {
+          SampleModel.firstName.name must_== "firstName"
+          SampleModel.firstName.dbColumnName must_== "firstname"
+          SampleModel.dbTableName must_== "samplemodel"
+        }
 
-	"Can JSON decode and write back" in {
-	  cleanup()
-	  val m = SampleModel.find(2).open_!
-	  val json = m.encodeAsJson()
-	  val rebuilt = SampleModel.buildFromJson(json)
-	  rebuilt.firstName("yak").save
-	  val recalled = SampleModel.find(2).open_!
-	  recalled.firstName.is must_== "yak"
-	}
+        "snake connection should snakeify default table & column names" in {
+          SampleModelSnake.firstName.name must_== "firstName"
+          SampleModelSnake.firstName.dbColumnName must_== "first_name"
+          SampleModelSnake.dbTableName must_== "sample_model_snake"
+        }
+
+        "user defined names are not changed" in {
+          SampleTag.extraColumn.name must_== "extraColumn"
+          SampleTag.extraColumn.dbColumnName must_== "AnExtraColumn"
+          Mixer.dbTableName must_== "MIXME_UP"
+        }
+        
+        "basic JSON encoding/decoding works" in {
+          cleanup()
+          val m = SampleModel.findAll().head
+          val json = m.encodeAsJson()
+          val rebuilt = SampleModel.buildFromJson(json)
+          m must_== rebuilt
+        }
+
+        "basic JSON encoding/decoding works with snake_case" in {
+          cleanup()
+          val m = SampleModelSnake.findAll().head
+          val json = m.encodeAsJson()
+          val rebuilt = SampleModelSnake.buildFromJson(json)
+          m must_== rebuilt
+        }
+
+
+        "Can JSON decode and write back" in {
+          cleanup()
+          val m = SampleModel.find(2).open_!
+          val json = m.encodeAsJson()
+          val rebuilt = SampleModel.buildFromJson(json)
+          rebuilt.firstName("yak").save
+          val recalled = SampleModel.find(2).open_!
+          recalled.firstName.is must_== "yak"
+        }
 
 
         "Like works" in {
@@ -359,13 +401,12 @@ object MapperSpecs extends Specification {
           val result = SampleModel.findAll(ByList(SampleModel.firstName, seq))
           result.length must_== 2
         }
-
       }
     })
 
   private def ignoreLogger(f: => AnyRef): Unit = ()
 }
-
+  
 object SampleTag extends SampleTag with LongKeyedMetaMapper[SampleTag] {
   override def dbAddTable = Full(populate _)
   private def populate {
@@ -381,7 +422,13 @@ class SampleTag extends LongKeyedMapper[SampleTag] with IdPK {
   def getSingleton = SampleTag // what's the "meta" server
 
   object tag extends MappedString(this, 32)
+  
   object model extends MappedLongForeignKey(this, SampleModel)
+  
+  object extraColumn extends MappedString(this, 32) {
+    override def dbColumnName = "AnExtraColumn"
+  }
+
 }
 
 object SampleModel extends SampleModel with KeyedMetaMapper[Long, SampleModel] {
@@ -410,6 +457,36 @@ class SampleModel extends KeyedMapper[Long, SampleModel] {
   }
 
   def encodeAsJson(): JsonAST.JObject = SampleModel.encodeAsJson(this)
+}
+
+object SampleModelSnake extends SampleModelSnake with KeyedMetaMapper[Long, SampleModelSnake] {
+  override def dbAddTable = Full(populate _)
+
+  def encodeAsJson(in: SampleModelSnake): JsonAST.JObject = encodeAsJSON_!(in)
+  def buildFromJson(json: JsonAST.JObject): SampleModelSnake = decodeFromJSON_!(json, false)
+
+  private def populate {
+    create.firstName("Elwood").save
+    create.firstName("Madeline").save
+    create.firstName("Archer").save
+    create.firstName("NotNull").moose(Full(99L)).save
+  }
+
+  override def dbDefaultConnectionIdentifier = DBProviders.SnakeConnectionIdentifier
+}
+
+class SampleModelSnake extends KeyedMapper[Long, SampleModelSnake] {
+  def getSingleton = SampleModelSnake // what's the "meta" server
+  def primaryKeyField = id
+
+  object id extends MappedLongIndex(this)
+  object firstName extends MappedString(this, 32)
+  object moose extends MappedNullableLong(this)
+  object notNull extends MappedString(this, 32) {
+    override def dbNotNull_? = true
+  }
+
+  def encodeAsJson(): JsonAST.JObject = SampleModelSnake.encodeAsJson(this)
 }
 
 /**
@@ -540,6 +617,5 @@ object Dog2 extends Dog2 with LongKeyedMetaMapper[Dog2] {
     new _root_.java.util.Date(1257089309453L)
   }
 }
-
 }
 }

@@ -17,12 +17,60 @@
 package net.liftweb {
 package util {
 
-import _root_.org.specs._
 import _root_.org.specs.runner._
-import _root_.org.specs.Sugar._
+import _root_.org.specs._
+import _root_.java.lang.reflect.{Method}
+import _root_.org.scalacheck.Arbitrary
+import _root_.org.scalacheck.{Prop, Gen}
+import Gen._
+import _root_.org.specs.ScalaCheck
 import common._
 
-object StringHelpersSpec extends Specification with StringHelpers {
+object StringHelpersSpec extends Specification with StringHelpers with StringGenerators with ScalaCheck {
+  "The unCamelCase function" should {
+    "Uncamel a name, replacing upper cases with underscores" in {
+      forAllProp(camelCasedStrings)((name: String) => camelify(snakify(name)) == name) must pass
+    }
+  }
+  "The camelify function" should {
+    "CamelCase a name which is underscored, removing each underscore and capitalizing the next letter" in {
+      def previousCharacterIsUnderscore(name: String, i: Int) = i > 1 && name.charAt(i - 1) == '_'
+      def underscoresNumber(name: String, i: Int) = if (i == 0) 0 else name.substring(0, i).toList.count(_ == '_')
+      def correspondingIndexInCamelCase(name: String, i: Int) = i - underscoresNumber(name, i)
+      def correspondingCharInCamelCase(name: String, i: Int): Char = camelify(name).charAt(correspondingIndexInCamelCase(name, i))
+
+      val doesntContainUnderscores = forAllProp(underscoredStrings)((name: String) => !camelify(name).contains("_"))
+      val isCamelCased = forAllProp(underscoredStrings) ((name: String) => {
+        name.forall(_ == '_') && camelify(name).isEmpty ||
+        name.toList.zipWithIndex.forall { case (c, i) =>
+          c == '_' ||
+          correspondingIndexInCamelCase(name, i) == 0 && correspondingCharInCamelCase(name, i) == c.toUpperCase ||
+          !previousCharacterIsUnderscore(name, i) && correspondingCharInCamelCase(name, i) == c ||
+          previousCharacterIsUnderscore(name, i) && correspondingCharInCamelCase(name, i) == c.toUpperCase
+       }
+      })
+      doesntContainUnderscores && isCamelCased must pass
+    }
+    "return an empty string if given null" in {
+      camelify(null) must_== ""
+    }
+    "leave a CamelCased name untouched" in {
+      val camelCasedNameDoesntChange = forAllProp(camelCasedStrings){ (name: String) => camelify(name) == name }
+      camelCasedNameDoesntChange must pass
+    }
+  }
+  
+  "The camelifyMethod function" should {
+    "camelCase a name with the first letter being lower cased" in {
+      val camelCasedMethodIsCamelCaseWithLowerCase = forAllProp(underscoredStrings){
+        (name: String) =>
+        camelify(name).isEmpty && camelifyMethod(name).isEmpty ||
+        camelifyMethod(name).toList.head.isLowerCase && camelify(name) == camelifyMethod(name).capitalize
+      }
+      camelCasedMethodIsCamelCaseWithLowerCase must pass
+    }
+  }
+  
   "The StringHelpers processString function" should {
     "replace groups found in a string surrounded by <%= ... %> by their corresponding value in a map" in {
       processString("<%=hello%>", Map("hello" -> "bonjour")) must_== "bonjour"
@@ -37,6 +85,7 @@ object StringHelpersSpec extends Specification with StringHelpers {
       processString("<%=hello%>", Map("hallo" -> "bonjour")) must throwA[Exception]
     }
   }
+  
   "The StringHelpers capify function" should {
     "capitalize a word" in {
       capify("hello") must_== "Hello"
@@ -202,6 +251,16 @@ object StringHelpersSpec extends Specification with StringHelpers {
   }
 }
 class StringHelpersSpecTest extends JUnit4(StringHelpersSpec)
+trait StringGenerators {
+  val underscoredStrings = for {length <- choose(0, 4)
+                                s <- listOfN(length, frequency((3, alphaChar), (1, Gen.oneOf('_'))))
+                                } yield List.toString(s)
+
+  val camelCasedStrings = for {length <- choose(0, 4)
+         firstLetter <- alphaNumChar.map(_.toUpperCase)
+         string <- listOfN(length, frequency((3, alphaNumChar.map(_.toLowerCase)), (1, alphaNumChar.map(_.toUpperCase))))
+        } yield List.toString(firstLetter :: string)
+}
 
 }
 }

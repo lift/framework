@@ -74,7 +74,62 @@ trait StringHelpers {
     m.appendTail(ret)
     ret.toString
   }
+  
+ /**
+   * Turn a string of format "FooBar" into snake case "foo_bar"
+   *
+   * @return the underscored string
+   */
+  def snakify(name : String) = {
+    def loop(x : List[Char]) : List[Char] = x match {
+      case c :: rest if (Character.isUpperCase(c)) => '_' :: Character.toLowerCase(c) :: loop(rest)
+      case c :: rest => c :: loop(rest)
+      case Nil => Nil
+    }
+    if (name.isEmpty)
+    ""
+    else
+    (Character.toLowerCase(name.charAt(0)) :: loop(name.substring(1).toList)).mkString
+  }
 
+  
+  /**
+   * Turns a string of format "foo_bar" into camel case "FooBar"
+   *
+   * Functional code courtesy of Jamie Webb (j@jmawebb.cjb.net) 2006/11/28
+   * @param name the String to CamelCase
+   *
+   * @return the CamelCased string
+   */
+  def camelify(name : String): String = {
+    def loop(x : List[Char]): List[Char] = (x: @unchecked) match {
+      case '_' :: '_' :: rest => loop('_' :: rest)
+      case '_' :: c :: rest => Character.toUpperCase(c) :: loop(rest)
+      case '_' :: Nil => Nil
+      case c :: rest => c :: loop(rest)
+      case Nil => Nil
+    }
+    if (name == null)
+    ""
+    else
+    loop('_' :: name.toList).mkString
+  }
+
+  /**
+   * Turn a string of format "foo_bar" into camel case with the first letter in lower case: "fooBar"
+   * This function is especially used to camelCase method names.
+   *
+   * @param name the String to CamelCase
+   *
+   * @return the CamelCased string
+   */
+  def camelifyMethod(name: String): String = {
+    val tmp: String = camelify(name)
+    if (tmp.length == 0)
+    ""
+    else
+    tmp.substring(0,1).toLowerCase + tmp.substring(1)
+  }
   /**
    * Capitalize every "word" in the string. A word is either separated by spaces or underscores.
    * @param in string to capify
