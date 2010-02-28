@@ -140,6 +140,7 @@ trait FlotGridOptions extends BaseFlotOptions {
   def coloredAreasColor: Box[String] = Empty
   def borderWidth: Box[Int] = Empty
   def clickable: Box[Boolean] = Empty
+  def hoverable: Box[Boolean] = Empty
   def coloredAreas: Box[String] = Empty // only (fn: plot area -> array of areas)
 
   def buildOptions =
@@ -150,6 +151,7 @@ trait FlotGridOptions extends BaseFlotOptions {
        coloredAreasColor.map(v => ("coloredAreasColor", v)),
        borderWidth.map(v => ("borderWidth", v)),
        clickable.map(v => ("clickable", v)),
+       hoverable.map(v => ("hoverable", v)),
        coloredAreas.map(v => ("coloredAreas", v))
   )
 
@@ -163,14 +165,15 @@ trait FlotGridOptions extends BaseFlotOptions {
  */
 
 trait FlotOptions extends BaseFlotOptions {
-  def lines: Box[FlotLinesOptions] = Empty
-  def points: Box[FlotPointsOptions] = Empty
+  @deprecated def lines: Box[FlotLinesOptions] = Empty
+  @deprecated def points: Box[FlotPointsOptions] = Empty
   def legend: Box[FlotLegendOptions] = Empty
   def xaxis: Box[FlotAxisOptions] = Empty
   def yaxis: Box[FlotAxisOptions] = Empty
   def modeSelection: Box[String] = Empty
-  def shadowSize: Box[Int] = Empty
+  @deprecated def shadowSize: Box[Int] = Empty
   def grid: Box[FlotGridOptions] = Empty
+  def series: Box[Map[String, JsExp]] = Empty
 
   def buildOptions =
   List(
@@ -181,7 +184,8 @@ trait FlotOptions extends BaseFlotOptions {
     yaxis.map(v => ("yaxis", v.asJsObj)),
     modeSelection.map(v => ("selection", JsObj("mode" -> v))),
     c("shadowSize", shadowSize),
-    c("grid", grid)
+    c("grid", grid),
+    series.map(v => ("series", JsObj(v.toSeq: _*)))
   )
 
 }
