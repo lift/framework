@@ -62,8 +62,10 @@ object MapperSpecs extends Specification {
       name.toLowerCase
   }
 
+  /*
   if (!DB.loggingEnabled_? && doLog)
     DB.addLogFunc(logDBStuff)
+*/
 
   MapperRules.columnName = snakify
   MapperRules.tableName = snakify
