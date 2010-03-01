@@ -1130,12 +1130,18 @@ for {
       _attrs.doWith(Nil) {
           _resBundle.doWith(Nil) {
             inS.doWith(true) {
-              _request.doWith(doStatefulRewrite(request)) {
+              withReq(doStatefulRewrite(request)) {
                 _nest2InnerInit(f)
               }
           }
         }
       }
+    }
+  }
+
+  private[http] def withReq[T](req: Req)(f: => T): T = {
+    _request.doWith(req) {
+       f
     }
   }
 
