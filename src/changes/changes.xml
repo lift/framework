@@ -39,72 +39,165 @@
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
       <action dev="dpp" type="fix" issue="393" system="assembla">
-	Fixed a stack overflow on non-tail recursive method
+        Fixed a stack overflow on non-tail recursive method
       </action>
       <action dev="dpp" type="fix" issue="387" system="assembla">
-	Allow Foreign Key support to be optional in PostgreSQL driver
+        Allow Foreign Key support to be optional in PostgreSQL driver
       </action>
       <action dev="dpp" type="fix" issue="373" system="assembla">
-	Scope attributes duplicated in certain cases.  Fixed those cases.
+        Scope attributes duplicated in certain cases. Fixed those cases.
       </action>
       <action dev="dpp" type="update" issue="224" system="assembla">
-	Support for enhancing foreign key references in PostgreSQL 8.3+
+        Support for enhancing foreign key references in PostgreSQL 8.3+
       </action>
       <action dev="dpp" type="add" issue="117" system="assembla">
-	A flag for disabling the onblur stuff for ajax calls
-      </action>
-      <action dev="pr1001" type="update" issue="322" system="assembla">
-	lift-flot has been updated to Flot 0.6
+        A flag for disabling the onblur stuff for ajax calls
       </action>
       <action dev="dpp" type="fix" issue="369" system="assembla">
-	Better support for exceptions in DB Logging
+        Better support for exceptions in DB Logging
       </action>
       <action dev="dpp" type="fix" issue="319" system="assembla">
-	Further work to make sure control characters don't show
-	up in XML output.
+        Further work to make sure control characters don't show
+        up in XML output.
       </action>
       <action dev="dpp" type="fix" issue="342" system="assembla">
-	Fix runtime errors in a couple of example programs
+        Fix runtime errors in a couple of example programs
       </action>
       <action dev="dpp" type="add" issue="350" system="assembla">
-	Added toHtml method to Mapper/MetaMapper
+        Added toHtml method to Mapper/MetaMapper
       </action>
       <action dev="dpp" type="fix" issue="367" system="assembla">
-	Issues with template cache updating incorrectly
+        Issues with template cache updating incorrectly
       </action>
       <action dev="dpp" type="add" issue="70" system="assembla">
-	Added support for area tags
-      </action>
-      <action dev="hseeberger" type="fix" issue="112" system="assembla">
-	Fixed misspelled keys for resource bundles: *pasword* and reset.password.confirmarion
-      </action>
-      <action dev="hseeberger" type="add" issue="251" system="assembla">
-	xxxMenuLoc methods now delegate to protected xxxMenuLocParams methods in order to get their LocParams.
+        Added support for area tags
       </action>
       <action dev="dpp" type="add" issue="353" system="assembla">
-	Added NOT IN to Mapper query builder
+        Added NOT IN to Mapper query builder
       </action>
       <action dev="dpp" type="add" issue="335" system="assembla">
-	Enhancements to LiftActors and LRU to support Goat Rodeo
+        Enhancements to LiftActors and LRU to support Goat Rodeo
       </action>
       <action dev="dpp" type="fix" issue="296" system="assembla">
-	Fixed a comparison bug in ReplaceOption (wishing for type-safety in ==)
+        Fixed a comparison bug in ReplaceOption (wishing for type-safety in ==)
       </action>
       <action dev="dpp" type="add" issue="298" system="assembla">
-	ByList is uniqued before the query is built
+        ByList is uniqued before the query is built
       </action>
       <action dev="dpp" type="add" issue="343" system="assembla">
-	Added linkToSelf option to Menu.build snippet
+        Added linkToSelf option to Menu.build snippet
       </action>
       <action dev="dpp" type="fix" issue="357" system="assembla">
-	Support for Scala 2.8 deltas in the way Nodes are compared
+        Support for Scala 2.8 deltas in the way Nodes are compared
       </action>
       <action dev="dpp" type="fix" issue="239" system="assembla">
-	304 responses should not include Content-Type headers
+        304 responses should not include Content-Type headers
+      </action>
+      <action dev="hseeberger" type="fix" issue="112" system="assembla">
+        Fixed misspelled keys for resource bundles: *pasword* and reset.password.confirmarion
+      </action>
+      <action dev="hseeberger" type="add" issue="251" system="assembla">
+        xxxMenuLoc methods now delegate to protected xxxMenuLocParams methods in order to get their LocParams.
       </action>
       <action dev="hseeberger" type="add" issue="326" system="assembla">
         Extend Comet (ListenerManager) to selectively update subscribers
       </action>
+      <action dev="indrajitr" type="update" issue="238" system="assembla">
+        Have minimal support for archetype:create telling user to use archetype:generate instead
+      </action>
+      <action dev="indrajitr" type="update" issue="320" system="assembla" due-to="Adam Warski">
+        Internationalizing missing strings in ProtoUser
+      </action>
+      <action dev="indrajitr" type="update" issue="344" system="assembla">
+        Enforce Maven version 2.2.1 or higher, but lower than 3.0.
+      </action>
+      <action dev="pr1001" type="update" issue="322" system="assembla">
+        lift-flot has been updated to Flot 0.6
+      </action>
+      <action dev="jeppenejsum" type="update" issue="329" system="assembla">
+        Make OpenID support more extensible
+      </action>
+      <action dev="jeppenejsum" type="update" issue="155" system="assembla">
+        Lift Mapper (Record) camelCase to snake_case for case insensitive databases
+      </action>
+      <action dev="jeppenejsum" type="update" issue="309" system="assembla">
+        Improved logging facilities
+      </action>
+      <action dev="jeppenejsum" type="update" issue="374" system="assembla">
+        Deprecate old logging code
+      </action>
+      <action dev="hoffrocket" type="update" issue="336" system="assembla">
+        Enhance Facebook Connect utilities and example code
+      </action>
+      <action dev="nuttycombe" type="add" issue="212" system="assembla">
+        Add DataBinding types and traits to lift-webkit
+      </action>
+      <action dev="dridus" type="update" issue="356" system="assembla">
+        Add ability to use doc result of query, not just value
+      </action>
+      <action dev="dridus" type="update" issue="305" system="assembla">
+        Add Optional variants of the basic record fields
+      </action>
+      <action dev="dridus" type="add" issue="306" system="assembla">
+        Add CouchDB support (lift-couchdb)
+      </action>
+      <action dev="dridus" type="update" issue="351" system="assembla">
+        Update lift-couchdb to use dispatch 0.7.1 once released
+      </action>
+      <action dev="dridus" type="fix" issue="359" system="assembla">
+        Optional fields in JSONRecord do not work without setting needAllJSONFields to false
+      </action>
+      <action dev="timperrett" type="add" issue="285" system="assembla">
+        Integrate Image manipulation code to lift
+      </action>
+      <action dev="jonifreeman" type="fix" issue="358" system="assembla">
+        JSON deserialization fails for null value
+      </action>
+      <action dev="jonifreeman" type="fix" issue="341" system="assembla">
+        Type hints are needed in JSON serializization for non-polymorphic Map
+      </action>
+      <action dev="jonifreeman" type="fix" issue="352" system="assembla">
+        Do not serialize the internal state of a case class (JSON)
+      </action>
+      <action dev="jonifreeman" type="add" issue="360" system="assembla">
+        Add support to extract primitve values from JSON
+      </action>
+      <action dev="marius.danciu" type="fix" issue="337" system="assembla">
+        Forcing Authentication not working
+      </action>
+      <action dev="marius.danciu" type="fix" issue="27" system="assembla">
+        Autocomplete never submit value
+      </action>
+      <action dev="marius.danciu" type="fix" issue="287" system="assembla">
+        Javascript DSL inconsistencies
+      </action>
+      <action dev="marius.danciu" type="fix" issue="346" system="assembla">
+        Solve CSS/JS unwanted caching
+      </action>
+      <action dev="marius.danciu" type="update" issue="363" system="assembla">
+        LiftRules.jQueryVersion should not be there.
+      </action>
+      <action dev="nafg" type="fix" issue="339" system="assembla">
+        ItemsListEditor (and thus TableEditor) should warn when leaving page with unsaved changes
+      </action>
+      <action dev="nafg" type="fix" issue="302" system="assembla">
+        ItemsListEditor should display items pending removal, albeit in strikeout font
+      </action>
+      <action dev="nafg" type="fix" issue="300" system="assembla">
+        ItemsList.save unremoves removed unsaved items
+      </action>
+      <action dev="nafg" type="fix" issue="299" system="assembla">
+        ItemsList should be have refresh method to clear added/removed without requerying database
+      </action>
+      <action dev="nafg" type="fix" issue="301" system="assembla">
+        ItemsListEditor should allow custom columns
+      </action>
+      <action dev="nafg" type="fix" issue="340" system="assembla">
+        ItemsListEditor should catch SQLException in ItemsList.save
+      </action>
+    </release>
+
+    <release version="2.0-M2" date="2010-02-10" description="Lift 2.0 Milestone 2">
       <action dev="jonifreeman" type="fix" issue="323" system="assembla">
         lift-Json doesn't appear to be correctly handling attributes
       </action>
