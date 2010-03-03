@@ -21,6 +21,7 @@ import _root_.net.liftweb.util.Helpers
 import Helpers._
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.util._
+import _root_.net.liftweb.json._
 import _root_.net.liftweb.http.provider._
 import _root_.net.liftweb.util.Helpers
 import _root_.java.io.{InputStream, ByteArrayInputStream, File, FileInputStream,
@@ -170,7 +171,13 @@ object Req {
       }
 
       if ((reqType.post_? ||
-           reqType.put_?) && contentType.dmap(false)(_.startsWith("text/xml"))) {
+           reqType.put_?) && contentType.dmap(false){
+	_.toLowerCase match {
+	  case x => 
+	    x.startsWith("text/xml") || 
+	  x.startsWith("text/json") ||
+	  x.startsWith("application/json")
+	}}) {
         ParamCalcInfo(queryStringParam._1, queryStringParam._2 ++ localParams, Nil, tryo(readWholeStream(request.inputStream)))
       } else if (request multipartContent_?) {
         val allInfo = request extractFiles
@@ -299,6 +306,14 @@ class Req(val path: ParsePath,
    */
   def xml_? = contentType != null && contentType.dmap(false)(_.toLowerCase.startsWith("text/xml"))
 
+  def json_? = contentType != null && contentType.dmap(false){
+    _.toLowerCase match {
+      case x if x.startsWith("text/json") => true
+      case x if x.startsWith("application/json") => true
+      case _ => false
+    }
+  }
+
   def snapshot = {
     val paramCalc = paramCalculator()
     new Req(path,
@@ -353,14 +368,24 @@ class Req(val path: ParsePath,
     case ca => ca.toList
   }
 
-  lazy val xml: Box[Elem] = if (!xml_?) Empty
-  else {
-    try {
-      body.map(b => XML.load(new _root_.java.io.ByteArrayInputStream(b)))
+  lazy val json: Box[JsonAST.JValue] = 
+    if (!json_?) Empty
+    else try {
+      import _root_.java.io._
+      body.map(b => JsonParser.parse(new InputStreamReader(new ByteArrayInputStream(b))))
     } catch {
-      case e => Failure(e.getMessage, Full(e), Empty)
+      case e: Exception => Failure(e.getMessage, Full(e), Empty)
     }
-  }
+
+
+  lazy val xml: Box[Elem] = if (!xml_?) Empty
+  else 
+    try {
+      import _root_.java.io._
+      body.map(b => XML.load(new ByteArrayInputStream(b)))
+    } catch {
+      case e: Exception => Failure(e.getMessage, Full(e), Empty)
+    }
 
   lazy val location: Box[Loc[_]] = LiftRules.siteMap.flatMap(_.findLoc(this))
 
