@@ -52,11 +52,11 @@ object JsonParser {
 
   /** Return parsed JSON.
    */
-  def parseOpt(s: String): Option[JValue] = try { Some(parse(s)) } catch { case e => None }
+  def parseOpt(s: String): Option[JValue] = try { Some(parse(s)) } catch { case e: Exception => None }
 
   /** Return parsed JSON.
    */
-  def parseOpt(s: Reader): Option[JValue] = try { Some(parse(s)) } catch { case e => None }
+  def parseOpt(s: Reader): Option[JValue] = try { Some(parse(s)) } catch { case e: Exception => None }
 
   /** Parse in pull parsing style.
    * Use <code>p.nextToken</code> to parse tokens one by one from a string.
