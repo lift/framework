@@ -353,7 +353,7 @@ object DBLog {
       val sb = new StringBuilder(500)
       def substitute (in : String, index : Int): Unit = in.indexOf('?') match {
         case -1 => 
-	  ()
+	  sb.append(in)
 
         case j => 
 	  sb.append(in.substring(0,j))
