@@ -434,10 +434,22 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
  * allow an application to store other information related to the failure.
  */
 @serializable
-final case class ParamFailure[T](override val msg: String,
-				 override val exception: Box[Throwable],
-				 override val chain: Box[Failure], param: T) extends
+final class ParamFailure[T](override val msg: String,
+		            override val exception: Box[Throwable],
+		            override val chain: Box[Failure], val param: T) extends
   Failure(msg, exception, chain)
+
+object ParamFailure {
+  def apply[T](msg: String, exception: Box[Throwable], chain: Box[Failure], param: T) =
+    new ParamFailure(msg, exception, chain, param)
+
+  def apply[T](msg: String, param: T) = new ParamFailure(msg, Empty, Empty, param)
+
+  def unapply(in: Box[_]): Option[(String, Box[Throwable], Box[Failure], Any)] = in match {
+    case pf: ParamFailure[_] => Some((pf.msg, pf.exception, pf.chain, pf.param))
+    case _ => None
+  }
+}
 
 }
 }
