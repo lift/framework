@@ -404,7 +404,19 @@ class Req(val path: ParsePath,
     NamedPF((this, Empty), LiftRules.uriNotFound.toList) match {
       case DefaultNotFound => Full(Req.defaultCreateNotFound(this))
       case NotFoundAsResponse(resp) => Full(resp)
-      case NotFoundAsTemplate(path) => f(path)
+      case NotFoundAsTemplate(path) => 
+         val newReq = new Req(path, 
+                              this.contextPath, 
+                              this.requestType, 
+                              this.contentType, 
+                              this.request,
+                              this.nanoStart, 
+                              this.nanoEnd, 
+                              this.paramCalculator, 
+                              this.addlParams)
+         S.withReq(newReq) {
+          f(path)
+         }
       case NotFoundAsNode(node) => Full(LiftRules.convertResponse((node, 404),
         S.getHeaders(LiftRules.defaultHeaders((node, this))),
         S.responseCookies,
