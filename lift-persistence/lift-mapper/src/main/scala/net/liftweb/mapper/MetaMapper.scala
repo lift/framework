@@ -585,6 +585,29 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   }
 
   /**
+   * This method will update the instance from JSON.  It allows for
+   * attacks from untrusted JSON as it bypasses normal security.  By
+   * default, the method is protected.  You can write a proxy method
+   * to expose the functionality.
+   */
+  protected def updateFromJSON_!(toUpdate: A, json: JsonAST.JObject): A = {
+    import JsonAST._
+
+    toUpdate.runSafe {
+
+      for {
+        field <- json.obj
+        meth <- _mappedFields.get(field.name)
+      } {
+        val f = ??(meth, toUpdate)
+        f.setFromAny(field.value)
+      }
+    }
+
+    toUpdate
+  }
+
+  /**
    * This method will encode the instance as JSON.  It may reveal
    * data in fields that might otherwise be proprietary.  It should
    * be used with caution and only exposed as a public method
