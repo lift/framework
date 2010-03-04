@@ -45,6 +45,18 @@ abstract class MappedTime[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
   private val data = FatLazy(defaultValue)
   private val orgData = FatLazy(defaultValue)
 
+  /**
+   * This method defines the string parsing semantics of this field. Used in setFromAny.
+   * By default uses LiftRules.dateTimeConverter's parseTime; override for field-specific behavior
+   */
+  def parse(s: String): Box[Date] = LiftRules.dateTimeConverter().parseTime(s)
+  /**
+   * This method defines the string parsing semantics of this field. Used in toString, _toForm.
+   * By default uses LiftRules.dateTimeConverter's formatTime; override for field-specific behavior
+   */
+  def format(d: Date): String = LiftRules.dateTimeConverter().formatTime(d)
+  
+
   protected def real_i_set_!(value: Date): Date = {
     if (value != data.get) {
       data() = value
@@ -93,12 +105,15 @@ abstract class MappedTime[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
   S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
   Full(<input type='text' id={fieldId}
       name={funcName}
-      value={is match {case null => "" case s => toInternetDate(s)}}/>)
+      value={is match {case null => "" case s => format(s)}}/>)
   }
 
   override def setFromAny(f : Any): Date = f match {
     case JsonAST.JNull => this.set(null)
     case JsonAST.JInt(v) => this.set(new Date(v.longValue))
+    case "" | null => this.set(null)
+    case s: String => parse(s).map(s => this.set(s)).openOr(this.is)
+    case x :: _ => setFromAny(x)
     case f => toDate(f).map(d => this.set(d)).openOr(this.is)
   }
 
@@ -134,6 +149,9 @@ abstract class MappedTime[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
    * Given the driver type, return the string required to create the column in the database
    */
   def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.timeColumnType + notNullAppender()
+  
+  
+  override def toString = if(is==null) "NULL" else format(is)
 }
 
 }
