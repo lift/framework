@@ -38,6 +38,9 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+    </release>
+
+    <release version="2.0-M3" date="2010-03-03" description="Lift 2.0 Milestone 3">
       <action dev="dpp" type="fix" issue="393" system="assembla">
         Fixed a stack overflow on non-tail recursive method
       </action>
@@ -57,8 +60,7 @@
         Better support for exceptions in DB Logging
       </action>
       <action dev="dpp" type="fix" issue="319" system="assembla">
-        Further work to make sure control characters don't show
-        up in XML output.
+        Further work to make sure control characters don't show up in XML output.
       </action>
       <action dev="dpp" type="fix" issue="342" system="assembla">
         Fix runtime errors in a couple of example programs
@@ -154,13 +156,13 @@
         JSON deserialization fails for null value
       </action>
       <action dev="jonifreeman" type="fix" issue="341" system="assembla">
-        Type hints are needed in JSON serializization for non-polymorphic Map
+        Type hints are needed in JSON serialization for non-polymorphic Map
       </action>
       <action dev="jonifreeman" type="fix" issue="352" system="assembla">
         Do not serialize the internal state of a case class (JSON)
       </action>
       <action dev="jonifreeman" type="add" issue="360" system="assembla">
-        Add support to extract primitve values from JSON
+        Add support to extract primitive values from JSON
       </action>
       <action dev="marius.danciu" type="fix" issue="337" system="assembla">
         Forcing Authentication not working
@@ -177,22 +179,22 @@
       <action dev="marius.danciu" type="update" issue="363" system="assembla">
         LiftRules.jQueryVersion should not be there.
       </action>
-      <action dev="nafg" type="fix" issue="339" system="assembla">
+      <action dev="nafg" type="add" issue="339" system="assembla">
         ItemsListEditor (and thus TableEditor) should warn when leaving page with unsaved changes
       </action>
-      <action dev="nafg" type="fix" issue="302" system="assembla">
+      <action dev="nafg" type="add" issue="302" system="assembla">
         ItemsListEditor should display items pending removal, albeit in strikeout font
       </action>
-      <action dev="nafg" type="fix" issue="300" system="assembla">
+      <action dev="nafg" type="add" issue="300" system="assembla">
         ItemsList.save unremoves removed unsaved items
       </action>
-      <action dev="nafg" type="fix" issue="299" system="assembla">
+      <action dev="nafg" type="add" issue="299" system="assembla">
         ItemsList should be have refresh method to clear added/removed without requerying database
       </action>
-      <action dev="nafg" type="fix" issue="301" system="assembla">
+      <action dev="nafg" type="add" issue="301" system="assembla">
         ItemsListEditor should allow custom columns
       </action>
-      <action dev="nafg" type="fix" issue="340" system="assembla">
+      <action dev="nafg" type="add" issue="340" system="assembla">
         ItemsListEditor should catch SQLException in ItemsList.save
       </action>
     </release>
