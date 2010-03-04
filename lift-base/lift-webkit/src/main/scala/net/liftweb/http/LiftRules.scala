@@ -1205,16 +1205,20 @@ object LiftRules extends Factory with FormVendor {
 
   /**
    * A function to format a Date... can be replaced by a function that is user-specific
+   Replaced by dateTimeConverter
    */
-  @volatile var formatDate: Date => String = date => date match {case null => LiftRules.formatDate(new Date(0L)) case s => toInternetDate(s)}
+  @deprecated @volatile var formatDate: Date => String = date => date match {case null => LiftRules.formatDate(new Date(0L)) case s => toInternetDate(s)}
 
   /**
    * A function that parses a String into a Date... can be replaced by something that's user-specific
+   Replaced by dateTimeConverter
    */
-  @volatile var parseDate: String => Box[Date] = str => str match {
+  @deprecated @volatile var parseDate: String => Box[Date] = str => str match {
     case null => Empty
     case s => Helpers.toDate(s)
   }
+  
+  val dateTimeConverter: FactoryMaker[DateTimeConverter] = new FactoryMaker[DateTimeConverter]( () => DefaultDateTimeConverter ) {}
 
   /**
    * This variable controls whether RequestVars that have been set but not subsequently
