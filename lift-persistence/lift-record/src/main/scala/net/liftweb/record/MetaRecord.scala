@@ -359,12 +359,13 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    * @param inst - The record to populate
    * @param req - The Req to read from
    */
-  def setFieldsFromReq(inst: BaseRecord, req: Req): Unit = {
+  def setFieldsFromReq(inst: BaseRecord, req: Req): Box[Unit] = {
     for(fieldHolder <- fieldList;
         field <- inst.fieldByName(fieldHolder.name)
     ) yield {
       field.setFromAny(req.param(field.name))
     }
+    Full(inst)
   }
 
   /**

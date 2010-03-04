@@ -22,7 +22,7 @@ import util._
 import common._
 import scala.xml._
 import net.liftweb.http.js.JsExp
-import net.liftweb.http.{SHtml}
+import net.liftweb.http.{Req, SHtml}
 import net.liftweb.mapper.Safe
 import field._
 
