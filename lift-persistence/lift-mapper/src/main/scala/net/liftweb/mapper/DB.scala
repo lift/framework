@@ -609,7 +609,7 @@ object DB {
        "begin",
        "between",
        "binary_integer",
-			 "blob",
+       "blob",
        "block",
        "body",
        "boolean",
