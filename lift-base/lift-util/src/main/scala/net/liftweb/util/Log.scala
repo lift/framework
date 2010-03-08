@@ -84,49 +84,49 @@ object LoggingAutoConfigurer {
 @deprecated object Log extends LiftLogger {
   lazy val rootLogger: LiftLogger = LogBoot.loggerByName("lift")
 
-  override def trace(msg: => AnyRef) = rootLogger.trace(msg)
-  override def trace(msg: => AnyRef, t: => Throwable) = rootLogger.trace(msg, t)
+  @deprecated override def trace(msg: => AnyRef) = rootLogger.trace(msg)
+  @deprecated override def trace(msg: => AnyRef, t: => Throwable) = rootLogger.trace(msg, t)
 
-  override def assertLog(assertion: Boolean, msg: => String) = rootLogger.assertLog(assertion, msg)
+  @deprecated override def assertLog(assertion: Boolean, msg: => String) = rootLogger.assertLog(assertion, msg)
 
-  override def isEnabledFor(level: LiftLogLevels.Value) = rootLogger.isEnabledFor(level)
-  override def isDebugEnabled = rootLogger.isDebugEnabled
-  override def debug(msg: => AnyRef) = rootLogger.debug(msg)
+  @deprecated override def isEnabledFor(level: LiftLogLevels.Value) = rootLogger.isEnabledFor(level)
+  @deprecated override def isDebugEnabled = rootLogger.isDebugEnabled
+  @deprecated override def debug(msg: => AnyRef) = rootLogger.debug(msg)
   // override def debugF(msg: => AnyRef) = debug(msg)
-  override def debug(msg: => AnyRef, t: => Throwable) = rootLogger.debug(msg, t)
+  @deprecated override def debug(msg: => AnyRef, t: => Throwable) = rootLogger.debug(msg, t)
 
-  override def isErrorEnabled = rootLogger.isEnabledFor(LiftLogLevels.Error)
-  override def error(msg: => AnyRef) = rootLogger.error(msg)
+  @deprecated override def isErrorEnabled = rootLogger.isEnabledFor(LiftLogLevels.Error)
+  @deprecated override def error(msg: => AnyRef) = rootLogger.error(msg)
   // override def errorF(msg: => AnyRef) = error(msg)
-  override def error(msg: => AnyRef, t: => Throwable) = rootLogger.error(msg, t)
+  @deprecated override def error(msg: => AnyRef, t: => Throwable) = rootLogger.error(msg, t)
 
-  override def fatal(msg: AnyRef) = rootLogger.fatal(msg)
+  @deprecated override def fatal(msg: AnyRef) = rootLogger.fatal(msg)
   // override def fatalF(msg: AnyRef) = fatal(msg)
-  override def fatal(msg: AnyRef, t: Throwable) = rootLogger.fatal(msg, t)
+  @deprecated override def fatal(msg: AnyRef, t: Throwable) = rootLogger.fatal(msg, t)
 
-  override def level = rootLogger.level
-  override def level_=(level: LiftLogLevels.Value) = rootLogger.level = level
-  override def name = rootLogger.name
+  @deprecated override def level = rootLogger.level
+  @deprecated override def level_=(level: LiftLogLevels.Value) = rootLogger.level = level
+  @deprecated override def name = rootLogger.name
   // def parent = rootLogger.parent
 
-  override def isInfoEnabled = rootLogger.isInfoEnabled
-  override def info(msg: => AnyRef) = rootLogger.info(msg)
-  def infoF(msg: => AnyRef) = info(msg)
-  override def info(msg: => AnyRef, t: => Throwable) = rootLogger.info(msg, t)
+  @deprecated override def isInfoEnabled = rootLogger.isInfoEnabled
+  @deprecated override def info(msg: => AnyRef) = rootLogger.info(msg)
+  @deprecated def infoF(msg: => AnyRef) = info(msg)
+  @deprecated override def info(msg: => AnyRef, t: => Throwable) = rootLogger.info(msg, t)
 
 
   // def isEnabledFor(level: Priority) = rootLogger.isEnabledFor(level)
 
-  override def isWarnEnabled = rootLogger.isWarnEnabled
-  override def warn(msg: => AnyRef) = rootLogger.warn(msg)
+  @deprecated override def isWarnEnabled = rootLogger.isWarnEnabled
+  @deprecated override def warn(msg: => AnyRef) = rootLogger.warn(msg)
   // def warnF(msg: => AnyRef) = warn(msg)
-  override def warn(msg: => AnyRef, t: => Throwable) = rootLogger.warn(msg, t)
+  @deprecated override def warn(msg: => AnyRef, t: => Throwable) = rootLogger.warn(msg, t)
 
-  def never(msg: => AnyRef) {}
-  def neverF(msg: => AnyRef) {}
-  def never(msg: => AnyRef, t: => Throwable) {}
+  @deprecated def never(msg: => AnyRef) {}
+  @deprecated def neverF(msg: => AnyRef) {}
+  @deprecated def never(msg: => AnyRef, t: => Throwable) {}
 
-  override def isTraceEnabled = rootLogger.isTraceEnabled
+  @deprecated override def isTraceEnabled = rootLogger.isTraceEnabled
 }
 
 /**
@@ -150,14 +150,14 @@ object LoggingAutoConfigurer {
  * 'default.log4j.props' it will be picked up correctly.
  */
 @deprecated object LogBoot {
-  lazy val checkConfig: Boolean = loggerSetup()
+  @deprecated lazy val checkConfig: Boolean = loggerSetup()
 
   // Prevent double initialization of log4j by new/old logging code
   private[util] var log4JInited = false
   
-  var loggerSetup: () => Boolean = _log4JSetup _
+  @deprecated var loggerSetup: () => Boolean = _log4JSetup _
 
-  var defaultProps =
+  @deprecated var defaultProps =
     """<?xml version="1.0" encoding="UTF-8" ?>
     <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
     <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
@@ -171,7 +171,7 @@ object LoggingAutoConfigurer {
     </log4j:configuration>
     """
 
-  def _log4JSetup() =
+  @deprecated def _log4JSetup() =
   {
     if (log4JInited) {
       true
@@ -206,8 +206,8 @@ object LoggingAutoConfigurer {
   private def _loggerCls(clz: Class[AnyRef]): LiftLogger = if (checkConfig) new Log4JLogger(Logger.getLogger(clz)) else NullLogger
   private def _logger(name: String): LiftLogger = if (checkConfig) new Log4JLogger(Logger.getLogger(name)) else NullLogger
 
-  var loggerByName: String => LiftLogger = _logger
-  var loggerByClass: Class[AnyRef] => LiftLogger = _loggerCls _
+  @deprecated var loggerByName: String => LiftLogger = _logger
+  @deprecated var loggerByClass: Class[AnyRef] => LiftLogger = _loggerCls _
 }
 
 @deprecated object NullLogger extends LiftLogger {
@@ -249,14 +249,14 @@ object LoggingAutoConfigurer {
 }
 
 @deprecated object LiftLogLevels extends Enumeration {
-  val All = Value(1, "All")
-  val Trace = Value(3, "Trace")
-  val Debug = Value(5, "Debug")
-  val Warn = Value(7, "Warn")
-  val Error = Value(9, "Error")
-  val Fatal = Value(11, "Fatal")
-  val Info = Value(13, "Info")
-  val Off = Value(15, "Off")
+  @deprecated val All = Value(1, "All")
+  @deprecated val Trace = Value(3, "Trace")
+  @deprecated val Debug = Value(5, "Debug")
+  @deprecated val Warn = Value(7, "Warn")
+  @deprecated val Error = Value(9, "Error")
+  @deprecated val Fatal = Value(11, "Fatal")
+  @deprecated val Info = Value(13, "Info")
+  @deprecated val Off = Value(15, "Off")
 }
 
 @deprecated class Log4JLogger(val logger: Logger) extends LiftLogger {
