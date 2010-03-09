@@ -153,7 +153,7 @@ class CalendarMonthView(val when: Calendar, val meta: MonthViewMeta) {
       val today = Calendar getInstance (meta locale)
       (0 to 5) map (row => <tr><td wk={cal get(WEEK_OF_YEAR) toString}
                                    class="cellWeek"
-                                   onclick={JsFunc("weekClick", JsRaw("this"), Jq(JsRaw("this")) >> JqGetAttr("wk")).toJsCmd}>
+                                   onclick={JsFunc("weekClick", JsRaw("this"), Jq(JsRaw("this")) ~> JqGetAttr("wk")).toJsCmd}>
         {cal get(WEEK_OF_YEAR)}</td>{(0 to 6) map (col =>
         try{
          <td>{
@@ -166,7 +166,7 @@ class CalendarMonthView(val when: Calendar, val meta: MonthViewMeta) {
                    <span>{timeFormatter format(c.start.getTime)} {c.subject openOr "..."}</span>
                 }</a></div> %
                   ("id" -> c.id) %
-                  ("onclick" -> JsFunc("itemClick", JsRaw("this"), Jq(JsRaw("this")) >> JqGetAttr("id")).toJsCmd)
+                  ("onclick" -> JsFunc("itemClick", JsRaw("this"), Jq(JsRaw("this")) ~> JqGetAttr("id")).toJsCmd)
 
                 c.description map (desc => r % (("title" -> desc))) openOr r
               }
@@ -183,7 +183,7 @@ class CalendarMonthView(val when: Calendar, val meta: MonthViewMeta) {
               ("class" -> head) ::
               div % ("class" -> cell) :: Nil)
           }</td> % ("date" -> (dateFormatter format(cal getTime))) %
-            ("onclick" -> JsFunc("dayClick", JsRaw("this"), (Jq(JsRaw("this")) >> JqGetAttr("date"))).toJsCmd)
+            ("onclick" -> JsFunc("dayClick", JsRaw("this"), (Jq(JsRaw("this")) ~> JqGetAttr("date"))).toJsCmd)
         } finally {
           cal add(DAY_OF_MONTH, 1)
         }

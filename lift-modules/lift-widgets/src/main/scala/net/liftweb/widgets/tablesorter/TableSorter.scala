@@ -25,7 +25,7 @@ import _root_.net.liftweb.http.js._
 import JsCmds._
 import JE._
 import jquery.JqJE._
-import jquery.JQueryRight
+
 
 object TableSorter {
 
@@ -58,7 +58,7 @@ object TableSorter {
   /**
    * Transforms a regular table into a tablesorter
    */
-  def jsRender(selector: String) : JsExp = JqId(selector) >> new JsRaw("tablesorter({sortList:[[0,0]], widgets:['zebra']})") with JQueryRight
+  def jsRender(selector: String) : JsExp = JqId(selector) ~> new JsRaw("tablesorter({sortList:[[0,0]], widgets:['zebra']})") with JsMember
 
 }
 

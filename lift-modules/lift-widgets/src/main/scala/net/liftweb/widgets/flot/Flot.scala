@@ -97,7 +97,7 @@ object Flot
 
 
   def renderCss (idPlaceholder : String) = {
-      JqId(idPlaceholder) >> new JsExp with JQueryRight {
+      JqId(idPlaceholder) ~> new JsExp with JsMember {
            def toJsCmd = "addClass(\"flot_lww\")"
          }
   }

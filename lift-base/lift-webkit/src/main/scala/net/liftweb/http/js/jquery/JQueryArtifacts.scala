@@ -29,23 +29,23 @@ import JqJE._
 import util.Helpers._
 
 trait JQueryArtifacts extends JSArtifacts {
-  def toggle(id: String) = JqId(id) ~> new JsMethod {
+  def toggle(id: String) = JqId(id) ~> new JsMember {
     def toJsCmd = "toggle()"
   }
 
-  def hide(id: String) = JqId(id) ~> new JsMethod {
+  def hide(id: String) = JqId(id) ~> new JsMember {
     def toJsCmd = "hide()"
   }
 
-  def show(id: String) = JqId(id) ~> new JsMethod {
+  def show(id: String) = JqId(id) ~> new JsMember {
     def toJsCmd = "show()"
   }
 
-  def showAndFocus(id: String) = JqId(id) ~> new JsMethod {
+  def showAndFocus(id: String) = JqId(id) ~> new JsMember {
     def toJsCmd = "show().each(function(i) {var t = this; setTimeout(function() { t.focus(); }, 200);})"
   }
 
-  def serialize(id: String) = JqId(id) ~> new JsMethod {
+  def serialize(id: String) = JqId(id) ~> new JsMember {
     def toJsCmd = "serialize()"
   }
 
