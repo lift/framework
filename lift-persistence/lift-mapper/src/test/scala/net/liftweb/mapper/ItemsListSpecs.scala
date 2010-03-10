@@ -38,6 +38,7 @@ object ItemsListSpecs extends Specification {
   
   def init = {
     provider.setupDB
+    Schemifier.destroyTables_!!(DefaultConnectionIdentifier, Log.neverF _,  SampleItem)
     Schemifier.schemify(true, Log.neverF _, SampleItem)
     new ItemsList[SampleItem] {
       val metaMapper = SampleItem
