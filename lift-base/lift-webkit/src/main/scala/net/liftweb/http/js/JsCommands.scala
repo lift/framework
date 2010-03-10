@@ -117,6 +117,7 @@ trait JsExp extends SpecialNode with HtmlFixer with JxBase with ToJsCmd {
    * This exists for backward compatibility reasons for JQueryLeft and JQueryRight
    * which are now deprecated. Use ~> whenever possible as this will be removed soon.
    */
+  @deprecated
   def >>(right: JsMember): JsExp = ~>(right)
 
 
