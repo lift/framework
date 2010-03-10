@@ -309,8 +309,9 @@ object JqJsCmds {
   }
 
   /**
-   * @deprecated use SetValueAndFocus from JsCmds
+   * Use SetValueAndFocus from JsCmds
    */
+  @deprecated
   case class SetValueAndFocus(id: String, value: String) extends JsCmd {
     def toJsCmd = "document.getElementById(" + id.encJs + ").value = " +
             value.encJs +
