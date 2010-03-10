@@ -27,11 +27,34 @@ import _root_.org.specs.ScalaCheck
 import common._
 
 object StringHelpersSpec extends Specification with StringHelpers with StringGenerators with ScalaCheck {
-  "The unCamelCase function" should {
-    "Uncamel a name, replacing upper cases with underscores" in {
-      forAllProp(camelCasedStrings)((name: String) => camelify(snakify(name)) == name) must pass
+  "The snakify function" should {
+    "replace upper case with underscore" in {
+      snakify("MyCamelCase") must_== "my_camel_case"
+      snakify("CamelCase") must_== "camel_case"
+      snakify("Camel") must_== "camel"
+      snakify("MyCamel12Case") must_== "my_camel12_case"
+      snakify("CamelCase12") must_== "camel_case12"
+      snakify("Camel12") must_== "camel12"
+    }
+
+    "not modify existing snake case strings" in {
+      snakify("my_snake_case") must_== "my_snake_case"
+      snakify("snake") must_== "snake"
+    }
+    
+    "handle abbeviations" in {
+      snakify("HTML") must_== "html"
+      snakify("HTMLEditor") must_== "html_editor"
+      snakify("EditorTOC") must_== "editor_toc"
+      snakify("HTMLEditorTOC") must_== "html_editor_toc"
+     
+      snakify("HTML5") must_== "html5"
+      snakify("HTML5Editor") must_== "html5_editor"
+      snakify("Editor2TOC") must_== "editor2_toc"
+      snakify("HTML5Editor2TOC") must_== "html5_editor2_toc"
     }
   }
+  
   "The camelify function" should {
     "CamelCase a name which is underscored, removing each underscore and capitalizing the next letter" in {
       def previousCharacterIsUnderscore(name: String, i: Int) = i > 1 && name.charAt(i - 1) == '_'
