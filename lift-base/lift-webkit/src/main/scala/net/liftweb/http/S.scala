@@ -1155,8 +1155,9 @@ for {
 
 
   private[liftweb] def lightInit[B](request: Req,
-                                 session: LiftSession,
-                                 attrs: List[(Either[String, (String, String)], String)])(f: => B): B =
+    session: LiftSession,
+    attrs: List[(Either[String, (String, String)], String)])(f: => B): B =
+    
     this._request.doWith(request) {
       _sessionInfo.doWith(session) {
         _lifeTime.doWith(false) {
