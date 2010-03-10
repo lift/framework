@@ -533,6 +533,27 @@ object JsCmds {
     }
   }
 
+  /**
+   * Sets the value of an element and sets the focus
+   */
+  case class SetValueAndFocus(id: String, value: String) extends JsCmd {
+    def toJsCmd = "document.getElementById(" + id.encJs + ").value = " +
+            value.encJs +
+            "; document.getElementById(" + id.encJs + ").focus();"
+  }
+
+  /**
+   * Sets the focus on the element denominated by the id
+   */ 
+  case class Focus(id: String) extends JsCmd {
+    def toJsCmd = "document.getElementById(" + id.encJs + ").focus();"
+  }
+
+
+  /**
+   * Creates a JavaScript function with a name, a parameters list and
+   * a function body
+   */
   object Function {
     def apply(name: String, params: List[String], body: JsCmd): JsCmd =
     new JsCmd {
@@ -544,23 +565,42 @@ object JsCmds {
     }
   }
 
+  /**
+   * Execute the 'what' code when the page is ready for use
+   */
   object OnLoad {
     def apply(what: JsCmd): JsCmd = LiftRules.jsArtifacts.onLoad(what)
   }
 
+  /**
+   * Sets the value to the element having the 'id' attribute with
+   * the result of the 'right' expression
+   */
   case class SetValById(id: String, right: JsExp) extends JsCmd {
     def toJsCmd = "document.getElementById(" + id.encJs + ").value = " +
     right.toJsCmd + ";"
   }
 
+  /**
+   * Assigns the value computed by the 'right' expression to the
+   * 'left' expression.
+   */
   case class SetExp(left: JsExp, right: JsExp) extends JsCmd {
     def toJsCmd = left.toJsCmd + " = " + right.toJsCmd + ";"
   }
 
+  /**
+   * Creates a JavaScript var named by 'name' and assigns it the
+   * value of 'right' expression.
+   */
   case class JsCrVar(name: String, right: JsExp) extends JsCmd {
     def toJsCmd = "var " + name + " = " + right.toJsCmd + ";"
   }
 
+  /**
+   * Assigns the value of 'right' to the members of the element
+   * having this 'id', chained by 'then' sequences 
+   */
   case class SetElemById(id: String, right: JsExp, then: String*) extends JsCmd {
     def toJsCmd = "document.getElementById(" + id.encJs + ")" + (
       if (then.isEmpty) "" else then.mkString(".", ".", "")
