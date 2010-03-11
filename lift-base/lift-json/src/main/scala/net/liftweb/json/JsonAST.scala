@@ -18,7 +18,7 @@ package net.liftweb {
 package json {
 
 object JsonAST {
-  import scala.text.Document
+  import scala.text.{Document, DocText}
   import scala.text.Document._
 
   /** Concatenates a sequence of <code>JValue</code>s.
@@ -330,13 +330,26 @@ object JsonAST {
 
   private def trimArr(xs: List[JValue]) = xs.filter(_ != JNothing)
   private def trimObj(xs: List[JField]) = xs.filter(_.value != JNothing)
-  private def fold(docs: List[Document]) = docs.foldLeft[Document](empty)(_ :: _)
   private def series(docs: List[Document]) = fold(punctuate(text(","), docs))
   private def fields(docs: List[Document]) = fold(punctuate(text(",") :: break, docs))
-  private def punctuate(p: Document, docs: List[Document]): List[Document] = docs match {
-    case Nil => Nil
-    case List(d) => List(d)
-    case d :: ds => (d :: p) :: punctuate(p, ds)
+  private def fold(docs: List[Document]) = docs.foldLeft[Document](empty)(_ :: _)
+
+  private def punctuate(p: => Document, docs: List[Document]): List[Document] = {
+    def prepend(d: DocText, ds: List[Document]) = ds match {
+      case DocText(h) :: t => DocText(h + d.txt) :: t
+      case _ => d :: ds
+    }
+
+    def punctuate0(docs: List[Document], acc: List[Document]): List[Document] = docs match {
+      case Nil => acc.reverse
+      case List(d) => punctuate0(Nil, d :: acc)
+      case DocText(d) :: ds => p match {
+        case DocText(punct) => punctuate0(ds, prepend(DocText(d + punct), acc))
+        case _ => punctuate0(ds, (d :: p) :: acc)
+      }
+      case d :: ds => punctuate0(ds, (d :: p) :: acc)
+    }
+    punctuate0(docs, Nil)
   }
 
   private[json] def quote(s: String): String = {
@@ -430,7 +443,10 @@ object JsonDSL extends Implicits with Printer {
 object Printer extends Printer
 trait Printer {
   import java.io._
+  import java.util.IdentityHashMap
   import scala.text._
+  import scala.collection.immutable.Stack
+  import scala.collection.jcl.Conversions._
 
   /** Compact printing (no whitespace etc.)
    */
@@ -439,15 +455,28 @@ trait Printer {
   /** Compact printing (no whitespace etc.)
    */
   def compact[A <: Writer](d: Document, out: A): A = {
-    def layout(doc: Document): Unit = doc match {
-      case DocText(s)      => out.write(s)
-      case DocCons(d1, d2) => layout(d1); layout(d2)
-      case DocBreak        =>
-      case DocNest(_, d)   => layout(d)
-      case DocGroup(d)     => layout(d)
-      case DocNil          =>
+    // Non-recursive implementation to support serialization of big structures.
+    var nodes = Stack.Empty.push(d)
+    val visited = new IdentityHashMap[Document, Unit]()
+    while (!nodes.isEmpty) {
+      val cur = nodes.top
+      nodes = nodes.pop
+      cur match {
+        case DocText(s)      => out.write(s)
+        case DocCons(d1, d2) => 
+          if (!visited.containsKey(cur)) {
+            visited.put(cur, ())
+            nodes = nodes.push(cur)
+            nodes = nodes.push(d1)
+          } else {
+            nodes = nodes.push(d2)
+          }
+        case DocBreak        =>
+        case DocNest(_, d)   => nodes = nodes.push(d)
+        case DocGroup(d)     => nodes = nodes.push(d)
+        case DocNil          =>
+      }
     }
-    layout(d)
     out.flush
     out
   }

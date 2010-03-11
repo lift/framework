@@ -62,7 +62,16 @@ object SerializationBugs extends Specification {
     val ser = swrite(x)
     read[X](ser) mustEqual x
   }
+
+  "StackOverflowError with large Lists" in {
+    val xs = LongList(List.make(5000, 0).map(Num))
+    val ser = swrite(xs)
+    read[LongList](ser).xs.length mustEqual 5000
+  }
 }
+
+case class LongList(xs: List[Num])
+case class Num(x: Int)
 
 case class X(yy: Y)
 case class Y(ss: String)
