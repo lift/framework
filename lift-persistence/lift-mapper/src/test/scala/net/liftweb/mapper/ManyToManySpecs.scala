@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2010 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ class ManyToManySpecsAsTest extends JUnit3(ManyToManySpecs)
 object ManyToManySpecsRunner extends ConsoleRunner(ManyToManySpecs)
 
 object ManyToManySpecs extends Specification {
+
   val provider = DBProviders.H2MemoryProvider
+  
   private def ignoreLogger(f: => AnyRef): Unit = ()
   def setupDB {
     provider.setupDB
