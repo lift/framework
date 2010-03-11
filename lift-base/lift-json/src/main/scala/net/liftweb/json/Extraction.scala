@@ -145,7 +145,7 @@ object Extraction {
     val ArrayElem = new Regex("""^(\[(\d+)\]).*$""")
     val OtherProp = new Regex("""^(\.([^\.\[]+)).*$""")
   
-    val uniquePaths = map.keys.foldLeft[Set[String]](Set()) { 
+    val uniquePaths = map.keysIterator.foldLeft[Set[String]](Set()) { 
       (set, key) =>
         key match {
           case ArrayProp(p, f, i) => set + p
@@ -153,7 +153,7 @@ object Extraction {
           case ArrayElem(p, i)    => set + p        
           case x @ _              => set + x
         }
-    }.toList.sort(_ < _) // Sort is necessary to get array order right
+    }.toList.sortWith(_ < _) // Sort is necessary to get array order right
     
     uniquePaths.foldLeft[JValue](JNothing) {
       (jvalue, key) => 
