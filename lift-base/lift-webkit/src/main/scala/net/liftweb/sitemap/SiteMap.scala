@@ -93,7 +93,7 @@ object SiteMap {
         <a href={link}>{linkText}</a>
     }
 
-    options.firstOption getOrElse NodeSeq.Empty
+    options.headOption getOrElse NodeSeq.Empty
   }
 
   def buildLink(name: String): NodeSeq = buildLink(name, Nil)

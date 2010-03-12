@@ -73,7 +73,7 @@ trait IoHelpers {
     def readOnce {
       val len = in.read(ba)
       if (len < 0) return
-      if (len > 0) bos.append(ba, 0, len)
+      if (len > 0) bos.appendAll(ba, 0, len)
       readOnce
     }
 

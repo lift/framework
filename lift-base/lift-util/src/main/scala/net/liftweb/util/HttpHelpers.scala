@@ -133,7 +133,7 @@ trait HttpHelpers { self: ListHelpers with StringHelpers  =>
    */
   def toHashMap[A,B](in : Map[A,B]) : HashMap[A,B] = {
     val ret = new HashMap[A,B];
-    in.keys.foreach { k => ret += Pair(k, in(k)) }
+    in.keysIterator.foreach { k => ret += Pair(k, in(k)) }
     ret
   }
 
@@ -276,7 +276,7 @@ trait HttpHelpers { self: ListHelpers with StringHelpers  =>
     def doIt(in: NodeSeq) {
       in.foreach {
         case e: Elem if e.prefix == prefix && e.label == label =>
-          e.child.foreach(ret.+)
+          e.child.foreach(ret.+=)
         case g: Group => doIt(g.nodes)
         case n => doIt(n.child)
       }

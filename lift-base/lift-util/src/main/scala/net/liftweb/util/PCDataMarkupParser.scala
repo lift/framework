@@ -396,7 +396,7 @@ object AltXML {
   def sequenceToXML(children: Seq[Node], pscope: NamespaceBinding,
                     sb: StringBuilder, stripComment: Boolean,
                     convertAmp: Boolean, ieMode: Boolean): Unit = {
-    val it = children.elements
+    val it = children.iterator
     while (it.hasNext) {
       toXML(it.next, pscope, sb, stripComment, convertAmp, ieMode)
     }
@@ -411,7 +411,7 @@ object AltXML {
   def sequenceToXML(children: Seq[Node], pscope: NamespaceBinding,
                     sb: StringBuilder, stripComment: Boolean,
                     convertAmp: Boolean): Unit = {
-    val it = children.elements
+    val it = children.iterator
     while (it.hasNext) {
       toXML(it.next, pscope, sb, stripComment, convertAmp)
     }

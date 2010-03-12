@@ -72,7 +72,7 @@ case class CSSParser(prefix: String) extends Parsers  {
       val rest = walk(in) {
         case c =>
           content append c
-          c.toLowerCase match {
+          c.toLower match {
             case 'u' if (seqDone == 0) => seqDone = 1;
             case 'r' if (seqDone == 1) => seqDone = 2;
             case 'l' if (seqDone == 2) => seqDone = 3;

@@ -1824,7 +1824,7 @@ for {
       }
 
       def jsonCallback(in: List[String]): JsCmd = {
-        in.firstOption.toList.flatMap {
+        in.headOption.toList.flatMap {
           s =>
                   val parsed = JSONParser.parse(s.trim).toList
                   val cmds = parsed.map(checkCmd)
@@ -1963,7 +1963,7 @@ for {
   private final class SFuncHolder(val func: String => Any, val owner: Box[String]) extends AFuncHolder {
     def this(func: String => Any) = this (func, Empty)
 
-    def apply(in: List[String]): Any = in.firstOption.toList.map(func(_))
+    def apply(in: List[String]): Any = in.headOption.toList.map(func(_))
   }
 
   object LFuncHolder {
@@ -1993,7 +1993,7 @@ for {
    */
   @serializable
   private final class NFuncHolder(val func: () => Any, val owner: Box[String]) extends AFuncHolder {
-    def apply(in: List[String]): Any = in.firstOption.toList.map(s => func())
+    def apply(in: List[String]): Any = in.headOption.toList.map(s => func())
   }
 
   /**

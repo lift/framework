@@ -705,7 +705,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       in.toList.flatMap {
         case e: Elem => Some(e)
         case _ => None
-      } firstOption
+      } headOption
 
     for{
       template <- findAnyTemplate(name, S.locale) ?~ ("Template " + name + " not found")

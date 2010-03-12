@@ -125,7 +125,7 @@ private[http] trait LiftMerge {
                   // if it's a deferred node, grab it from the deferred list
                   case e: Elem if e.label == "node" && e.prefix == "lift_deferred" =>
                     for{
-                      attr <- e.attributes("id").firstOption.map(_.text).toList
+                      attr <- e.attributes("id").headOption.map(_.text).toList
                       nodes <- processedSnippets.get(attr).toList
                       node <- _fixHtml(nodes, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
                     } yield node

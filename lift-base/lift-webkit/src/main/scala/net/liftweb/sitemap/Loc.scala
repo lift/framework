@@ -196,7 +196,7 @@ trait Loc[T] {
       case Loc.Template(f) => Some(f());
       case Loc.ValueTemplate(f) => Some(f(currentValue));
       case _ => None
-    }.firstOption
+    }.headOption
 
   /**
    * The template assocaited with this Loc, if any. Any Loc.Template
@@ -212,7 +212,7 @@ trait Loc[T] {
     allParams.flatMap {
       case Loc.Title(f) => Some(f);
       case _ => None
-    }.firstOption
+    }.headOption
 
   /**
    * The title to be displayed for the value associated with this Loc.

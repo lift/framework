@@ -130,7 +130,7 @@ trait BindHelpers {
    * @return 'out' element with attributes from 'in'
    */
   def mixinAttributes(out: Elem)(in: NodeSeq): NodeSeq = {
-    val attributes = in.firstOption.map(_.attributes).getOrElse(Null)
+    val attributes = in.headOption.map(_.attributes).getOrElse(Null)
     out % attributes
   }
 
@@ -195,73 +195,177 @@ trait BindHelpers {
   /**
    * Constant BindParam always returning the same value
    */
-  final case class TheBindParam(name: String, value: NodeSeq) extends Tuple2(name, value) with BindParam {
+  final class TheBindParam(val name: String,
+			   val value: NodeSeq) extends
+  Tuple2(name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(value)
+  }
+
+  object TheBindParam {
+    def apply(name: String, value: NodeSeq) = new TheBindParam(name, value)
   }
 
   /**
    * Constant BindParam always returning the same value
    */
-  final case class TheStrBindParam(name: String, value: String) extends Tuple2(name, value) with BindParam {
+  final class TheStrBindParam(val name: String,
+			      val value: String) extends 
+  Tuple2(name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(Text(value))
   }
+
+  object TheStrBindParam {
+    def apply(name: String, value: String) = new TheStrBindParam(name, value)
+  }
+
 
   /**
    * BindParam taking its value from an attribute
    */
-  final case class AttrBindParam(name: String, myValue: NodeSeq,
-                                 newAttr: String) extends BindParam with BindWithAttr {
+  final class AttrBindParam(val name: String,
+			    myValue: => NodeSeq,
+                            val newAttr: String) extends
+  BindParam with BindWithAttr {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(myValue)
   }
 
-  /**
-   * BindParam using a function to calculate its value
-   */
-  final case class FuncBindParam(name: String, value: NodeSeq => NodeSeq) extends Tuple2(name, value) with BindParam {
-    def calcValue(in: NodeSeq): Option[NodeSeq] = Some(value(in))
+  object AttrBindParam {
+    def apply(name: String,
+	      myValue: => NodeSeq,
+              newAttr: String) = new AttrBindParam(name, myValue, newAttr)
   }
 
   /**
    * BindParam using a function to calculate its value
    */
-  final case class FuncAttrBindParam(name: String, value: NodeSeq => NodeSeq, newAttr: String) extends BindParam with BindWithAttr {
+  final class FuncBindParam(val name: String,
+			    val value: NodeSeq => NodeSeq) extends
+  Tuple2(name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(value(in))
   }
 
-  final case class OptionBindParam(name: String, value: Option[NodeSeq]) extends Tuple2(name, value) with BindParam {
+  object FuncBindParam {
+    def apply(name: String,
+	      value: NodeSeq => NodeSeq) = new FuncBindParam(name, value)
+  }
+
+  /**
+   * BindParam using a function to calculate its value
+   */
+  final class FuncAttrBindParam(val name: String,
+				value: => NodeSeq => NodeSeq,
+				val newAttr: String) extends
+  BindParam with BindWithAttr {
+    def calcValue(in: NodeSeq): Option[NodeSeq] = Some(value(in))
+  }
+
+  object FuncAttrBindParam {
+    def apply(name: String,
+	      value: => NodeSeq => NodeSeq,
+	      newAttr: String) = new FuncAttrBindParam(name,
+						       value,
+						       newAttr)
+  }
+
+  object OptionBindParam {
+    def apply(name: String, value: Option[NodeSeq]) =
+      new OptionBindParam(name, value)
+  }
+
+  final class OptionBindParam(val name: String,
+			      val value: Option[NodeSeq]) extends
+  Tuple2(name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = value
   }
 
-  final case class BoxBindParam(name: String, value: Box[NodeSeq]) extends Tuple2(name, value) with BindParam {
+  object BoxBindParam {
+    def apply(name: String, value: Box[NodeSeq]) =
+      new BoxBindParam(name, value)
+  }
+
+  final class BoxBindParam(val name: String,
+			   val value: Box[NodeSeq]) extends
+  Tuple2(name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = value
   }
 
-  final case class FuncAttrOptionBindParam(name: String, func: NodeSeq => Option[NodeSeq], newAttr: String) extends BindParam with BindWithAttr {
+  object FuncAttrOptionBindParam {
+    def apply(name: String, 
+	      func: => NodeSeq => Option[NodeSeq],
+	      newAttr: String) = 
+		new FuncAttrOptionBindParam(name, func, newAttr)
+  }
+
+  final class FuncAttrOptionBindParam(val name: String,
+				      func: => NodeSeq => Option[NodeSeq],
+				      val newAttr: String) 
+	extends BindParam with BindWithAttr {
     def calcValue(in: NodeSeq): Option[NodeSeq] = func(in)
   }
 
-  final case class FuncAttrBoxBindParam(name: String, func: NodeSeq => Box[NodeSeq], newAttr: String) extends BindParam with BindWithAttr {
+  object FuncAttrBoxBindParam {
+    def apply(name: String,
+	      func: => NodeSeq => Box[NodeSeq], 
+	      newAttr: String) = 
+		new FuncAttrBoxBindParam(name, func, newAttr)
+  }
+
+  final class FuncAttrBoxBindParam(val name: String,
+				   func: => NodeSeq => Box[NodeSeq], 
+				   val newAttr: String) extends
+  BindParam with BindWithAttr {
     def calcValue(in: NodeSeq): Option[NodeSeq] = func(in)
   }
 
+  object SymbolBindParam {
+    def apply(name: String, value: Symbol) =
+      new SymbolBindParam(name, value)
+  }
 
-  final case class SymbolBindParam(name: String, value: Symbol) extends Tuple2(name, value) with BindParam {
+  final class SymbolBindParam(val name: String, 
+			      value: Symbol) extends 
+  Tuple2(name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(Text(value.name))
   }
 
-  final case class IntBindParam(name: String, value: Int) extends Tuple2[String, Int](name, value) with BindParam {
+  object IntBindParam {
+    def apply(name: String, value: Int) =
+      new IntBindParam(name, value)
+  }
+
+  final class IntBindParam(val name: String, 
+			   value: Int) extends
+  Tuple2[String, Int](name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(Text(value.toString))
   }
 
-  final case class LongBindParam(name: String, value: Long) extends Tuple2[String, Long](name, value) with BindParam {
+  object LongBindParam {
+    def apply(name: String, value: Long) = 
+      new LongBindParam(name, value)
+  }
+
+  final class LongBindParam(val name: String, value: Long) extends 
+  Tuple2[String, Long](name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(Text(value.toString))
   }
 
-  final case class BooleanBindParam(name: String, value: Boolean) extends Tuple2[String, Boolean](name, value) with BindParam {
+  object BooleanBindParam {
+    def apply(name: String, value: Boolean) =
+      new BooleanBindParam(name, value)
+  }
+  
+  final class BooleanBindParam(val name: String, value: Boolean) extends
+  Tuple2[String, Boolean](name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(Text(value.toString))
   }
 
-  final case class TheBindableBindParam[T <: Bindable](name: String, value: T) extends Tuple2[String, T](name, value) with BindParam {
+  object TheBindableBindParam {
+    def apply[T <: Bindable](name: String, value: T) =
+      new TheBindableBindParam(name, value)
+  }
+
+  final class TheBindableBindParam[T <: Bindable](val name: String, value: T)
+	extends Tuple2[String, T](name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(value.asHtml)
   }
 

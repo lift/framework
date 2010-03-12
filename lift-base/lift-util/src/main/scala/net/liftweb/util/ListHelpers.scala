@@ -53,7 +53,7 @@ trait ListHelpers {
    */
   def first[B,C](in: Seq[B])(_f : B => Box[C]): Box[C] = {
     val f: B => Iterable[C] = _f andThen Box.box2Iterable[C]
-    Box(in.projection.flatMap(f).firstOption)
+    Box(in.view.flatMap(f).headOption)
   }
 
   /**
@@ -102,7 +102,7 @@ trait ListHelpers {
   /**
    * Return the first element of a List or a default value if the list is empty
    */
-  def head[T](l: Seq[T], deft: => T) = l.firstOption.getOrElse(deft)
+  def head[T](l: Seq[T], deft: => T) = l.headOption.getOrElse(deft)
 
   /**
    * Return a list containing the element f if the expression is true
@@ -152,7 +152,7 @@ trait ListHelpers {
       val ret = rot.flatMap(z => (z: @unchecked) match {case x :: xs => permuteList(xs).map(x :: _)})
       ret ::: rot.map(z => (z: @unchecked) match {case x :: xs => xs}).flatMap(internal(_))
     }
-    internal(in.toList).removeDuplicates.sort(_.length > _.length)
+    internal(in.toList).removeDuplicates.sortWith(_.length > _.length)
   }
 
   /** Add utility methods to Lists */
