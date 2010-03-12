@@ -206,6 +206,17 @@ trait DBIndexed extends BaseMappedField {
   override def dbIndexed_? = true
 }
 
+object MappedForeignKey {
+  implicit def getObj[KeyType, 
+		      MyOwner <: Mapper[MyOwner], 
+		      Other <: KeyedMapper[KeyType, 
+					   Other]](in:
+						   MappedForeignKey[KeyType, 
+								    MyOwner,
+								    Other]):
+  Box[Other] = in.obj
+}
+
 /**
  * The Trait that defines a field that is mapped to a foreign key
  */
