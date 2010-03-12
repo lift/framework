@@ -123,15 +123,44 @@ trait BasicTypesHelpers { self: StringHelpers with ControlHelpers =>
     }
   }
 
+/**
+* A helpful Boolean extractor
+*/
+object AsBoolean {
+  def unapply(in: String): Option[Boolean] =
+  if (null eq in) None else
+  in.toLowerCase match {
+    case "t" | "true" | "yes" | "1" => Full(true)
+    case "f" | "false" | "no" | "0" => Full(false)
+    case _ => None
+  }
+}
+
   /**
    * Safely convert the specified String to an Int.
    */
   def asInt(in: String): Box[Int] = tryo{in.toInt}
 
+/**
+* A helpful Int extractor
+*/
+object AsInt {
+  def unapply(in: String): Option[Int] = asInt(in)
+}
+
   /**
    * Safely convert the specified String to a Long.
    */
   def asLong(in: String): Box[Long] = tryo(in.toLong)
+
+
+/**
+* A helpful Long extractor
+*/
+object AsLong {
+  def unapply(in: String): Option[Long] = asLong(in)
+}
+
 
 /**
    * Convert any object to an "equivalent" Long depending on its value
