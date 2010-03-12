@@ -184,8 +184,8 @@ object JsonAST {
       def find(json: JValue): Option[JValue] = {
         if (p(json)) return Some(json)
         json match {
-          case JObject(l) => l.flatMap(find _).headOption
-          case JArray(l) => l.flatMap(find _).headOption
+          case JObject(l) => l.flatMap(find _).firstOption
+          case JArray(l) => l.flatMap(find _).firstOption
           case JField(_, value) => find(value)
           case _ => None
         }

@@ -335,7 +335,7 @@ final case class Full[+A](value: A) extends Box[A] {
 
   override def flatMap[B](f: A => Box[B]): Box[B] = f(value)
 
-  override def elements: Iterator[A] = Iterator(value)
+  override def elements: Iterator[A] = Iterator.fromValues(value)
 
   override def toList: List[A] = List(value)
 

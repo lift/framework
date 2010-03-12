@@ -97,7 +97,7 @@ trait TypeHints {
      */
     def hintFor(clazz: Class[_]): String = components.filter(_.containsHint_?(clazz)).
         map(th => (th.hintFor(clazz), th.classFor(th.hintFor(clazz)).getOrElse(error("hintFor/classFor not invertible for " + th)))).
-          sortWith((x, y) => delta(x._2, clazz) - delta(y._2, clazz) < 0).head._1
+          sort((x, y) => delta(x._2, clazz) - delta(y._2, clazz) < 0).head._1
 
     def classFor(hint: String): Option[Class[_]] = hints find (hintFor(_) == hint)
 
