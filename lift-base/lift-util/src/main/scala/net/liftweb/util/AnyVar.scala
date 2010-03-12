@@ -59,6 +59,8 @@ trait MemoizeVar[K, V]  {
     }
   }
 
+  protected def __nameSalt: String = ""
+
   def set(key: K, value: V): Unit = coreVar.doSync {
     coreVar.is.update(key, value)
   }

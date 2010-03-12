@@ -25,9 +25,9 @@ import _root_.scala.xml._
 import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.common.{Box, Empty, Full, Failure}
 import _root_.net.liftweb.json._
-import _root_.net.liftweb.util.{NamedPF, FieldError}
-import _root_.net.liftweb.http.{LiftRules, S, SHtml, Factory}
-import _root_.java.util.{Locale,Date}
+import _root_.net.liftweb.util.{NamedPF, FieldError, Helpers}
+import _root_.net.liftweb.http.{LiftRules, S, SHtml, RequestMemoize}
+import _root_.java.util.Date
 import _root_.net.liftweb.http.js._
 
 trait BaseMetaMapper {
@@ -1672,6 +1672,15 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
     case Full(n) => anyToFindString(n)
     case Some(n) => anyToFindString(n)
     case v => Full(v.toString)
+  }
+
+  private object unapplyMemo extends RequestMemoize[Any, Box[A]] {
+    override protected def __nameSalt = Helpers.randomString(20)
+  }
+
+  def unapply(key: Any): Box[A] = {
+    if (S.inStatefulScope_?) unapplyMemo(key, this.find(key))
+    else this.find(key)
   }
 
   def find(key: Any): Box[A] =
