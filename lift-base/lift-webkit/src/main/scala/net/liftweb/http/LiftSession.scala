@@ -1071,7 +1071,17 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * Finds all Comet actors by type
    */
   def findComet(theType: String): List[LiftCometActor] = synchronized {
-    asyncComponents.elements.filter {case ((Full(name), _), _) => name == theType case _ => false}.toList.map {case (_, value) => value}
+    asyncComponents.flatMap {
+      case ((Full(name), _), value) if name == theType => Full(value)
+      case _ => Empty
+    }.toList
+  }
+
+/**
+* Find the comet actor by type and name
+*/
+  def findComet(theType: String, name: Box[String]): Box[LiftCometActor] = synchronized {
+    asyncComponents.get(Full(theType) -> name)
   }
 
   /**
@@ -1159,7 +1169,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                               name: Box[String],
                               defaultXml: NodeSeq,
                               attributes: Map[String, String]): Box[LiftCometActor] = {
-    findType[LiftCometActor](contType, LiftRules.buildPackage("comet") ::: ("lift.app.comet" :: Nil)).flatMap {
+    val createInfo = CometCreationInfo(contType, name, defaultXml, attributes, this)
+
+    LiftRules.cometCreationFactory.vend.apply(createInfo).map{
+    a => a ! PerformSetupComet; a} or
+    LiftRules.cometCreation.toList.find(_.isDefinedAt(createInfo)).map(_.apply(createInfo)).map{
+    a => a ! PerformSetupComet; a} or
+    (findType[LiftCometActor](contType, LiftRules.buildPackage("comet") ::: ("lift.app.comet" :: Nil)).flatMap {
       cls =>
               tryo((e: Throwable) => e match {
                 case e: _root_.java.lang.NoSuchMethodException => ()
@@ -1178,7 +1194,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                 ret ! PerformSetupComet
                 ret.asInstanceOf[LiftCometActor]
               }
-    }
+    })
   }
 
   private def failedFind(in: Failure): NodeSeq =
@@ -1402,6 +1418,15 @@ object TemplateFinder {
     }
   }
 }
+
+/**
+* A case class that contains the information necessary to set up a CometActor
+*/
+final case class CometCreationInfo(contType: String,
+                                   name: Box[String],
+                                   defaultXml: NodeSeq,
+                                   attributes: Map[String, String],
+                                   session: LiftSession)
 
 }
 }
