@@ -272,6 +272,14 @@ object StringHelpersSpec extends Specification with StringHelpers with StringGen
       (null: String).commafy must beNull
     }
   }
+  "The emptyForNull method" should {
+    "return the empty String for a given null String" in {
+      StringHelpers.emptyForNull(null) must_== ""
+    }
+    "return the given String for a given not-null String" in {
+      StringHelpers.emptyForNull("x") must_== "x"
+    }
+  }
 }
 class StringHelpersSpecTest extends JUnit4(StringHelpersSpec)
 trait StringGenerators {
