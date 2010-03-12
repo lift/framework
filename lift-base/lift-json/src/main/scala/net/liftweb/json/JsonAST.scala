@@ -446,7 +446,6 @@ trait Printer {
   import java.util.IdentityHashMap
   import scala.text._
   import scala.collection.immutable.Stack
-  import scala.collection.jcl.Conversions._
 
   /** Compact printing (no whitespace etc.)
    */
