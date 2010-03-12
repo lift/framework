@@ -23,6 +23,10 @@ import Helpers.{tryo, internetDateFormatter=>internetDateFormat, dateFormatter=>
 import net.liftweb.common._
 import java.util.Date
 
+/**
+ * Implement this trait to specify a set of rules to parse and format dates
+ * @author nafg 
+*/
 trait DateTimeConverter {  
   /**
    * A function to format a Date as a date and time
@@ -55,6 +59,9 @@ trait DateTimeConverter {
    def parseTime(s: String): Box[Date]
 }
 
+/**
+ * A default implementation of DateTimeConverter that uses (Time)Helpers
+*/
 object DefaultDateTimeConverter extends DateTimeConverter {
   def formatDateTime(d: Date) = internetDateFormat.format(d)
   def formatDate(d: Date) = dateFormat.format(d)
