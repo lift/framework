@@ -62,7 +62,7 @@ object Schemifier {
       tables.foldLeft(Collector(Nil, Nil))((b, t) => b + ensureTable(performWrite, logFunc, t, connection, actualTableNames)) +
       tables.foldLeft(Collector(Nil, Nil))((b, t) => b + ensureColumns(performWrite, logFunc, t, connection, actualTableNames)) +
       tables.foldLeft(Collector(Nil, Nil))((b, t) => b + ensureIndexes(performWrite, logFunc, t, connection, actualTableNames)) +
-      tables.foldLeft(Collector(Nil, Nil))((b, t) => b + ensureConstraints(performWrite, logFunc, t, connection, actualTableNames))
+      tables.foldLeft(Collector(Nil, Nil))((b, t) => b + ensureConstraints(performWrite, logFunc, t, dbId, connection, actualTableNames))
 
       /*
        val toRun = tables.flatMap(t => ensureTable(performWrite, t, connection, actualTableNames) ) :::
@@ -286,9 +286,9 @@ object Schemifier {
     Collector(single, cmds.toList)
   }
 
-  private def ensureConstraints(performWrite: Boolean, logFunc: (=> AnyRef) => Unit, table: BaseMetaMapper, connection: SuperConnection, actualTableNames: HashMap[String, String]): Collector = {
+  private def ensureConstraints(performWrite: Boolean, logFunc: (=> AnyRef) => Unit, table: BaseMetaMapper, dbId: ConnectionIdentifier, connection: SuperConnection, actualTableNames: HashMap[String, String]): Collector = {
     val cmds = new ListBuffer[String]()
-    val ret = if (connection.supportsForeignKeys_?) {
+    val ret = if (connection.supportsForeignKeys_? && MapperRules.createForeignKeys_?(dbId)) {
       table.mappedFields.flatMap{f => f match {case f: BaseMappedField with BaseForeignKey => List(f); case _ => Nil}}.toList.flatMap {
         field =>
 

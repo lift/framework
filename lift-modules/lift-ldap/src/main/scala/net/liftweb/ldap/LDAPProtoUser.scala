@@ -108,8 +108,8 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
             val userDn = users(0)
             if (ldapVendor.bindUser(userDn, password)) {
                 logUserIn(this)
-                S.redirectTo(homePage)
                 setRoles(userDn + "," + ldapVendor.parameters().get("ldap.base").getOrElse(""), ldapVendor)
+                S.redirectTo(homePage)
             }
             else return false
         }
