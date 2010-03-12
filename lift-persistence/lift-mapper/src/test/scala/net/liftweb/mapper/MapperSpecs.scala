@@ -544,6 +544,8 @@ object Dog extends Dog with LongKeyedMetaMapper[Dog] {
     create.name("Archer").save
     create.name("fido").owner(User.find(By(User.firstName, "Elwood"))).save
   }
+
+  def who(in: Dog): Box[User] = in.owner
 }
 
 class Mixer extends LongKeyedMapper[Mixer] with IdPK {
