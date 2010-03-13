@@ -42,65 +42,53 @@ object LazyLoad extends DispatchSnippet {
   }
 
   def render(xhtml: NodeSeq): NodeSeq = {
-    val id = "lazy_"+ Helpers.nextFuncName;
 
-    lazyLoadCount(lazyLoadCount.get + 1);
+    (for (session <- S.session ?~ ("FIXME: Invalid session")) yield {
+      val id = "lazy_"+ Helpers.nextFuncName;
 
-    val session = S.session
-    val attrs = S.attrs
-    val req = (S.request openOr Req.nil) snapshot
+      lazyLoadCount(lazyLoadCount.get + 1);
 
-    val func = contextFuncBuilder(() => {
+      val attrs = S.attrs
+      val req = (S.request openOr Req.nil) snapshot
 
-       session map {s =>
-         S.lightInit(req, s, attrs) {
-           for {comet <- s.findComet("AsyncRenderComet")
-                name <- comet.name if (name == id)} {
-             comet ! Ready(Replace(id, xhtml))
-           }
-         }
-
-       }
-
-    })
-
-    AsyncRenderer ! Start(func)
-
-
-    <div id={id}></div> ++ (
-      if (lazyLoadCount.get == 1) {
-        // Add the comet only once per page
-        session.map(_.addAndInitCometActor(new AsyncRenderComet(),
-                                           Full("AsyncRenderComet"),
-                                           Full(id),
-                                           NodeSeq.Empty, Map.empty))
-
-        <tail><lift:comet type="AsyncRenderComet" name={id}></lift:comet></tail>
-      } else {
-        NodeSeq.Empty
+      val func: () => JsCmd = () => S.lightInit(req, session, attrs){
+        Replace(id, xhtml)
       }
-    )
+    
+      val res = <div id={id}></div> ++ (
+        if (lazyLoadCount.get == 1) {
+          // Add the comet only once per page
+          session.addAndInitCometActor(new AsyncRenderComet(),
+                                       Full("AsyncRenderComet"),
+                                       Full(id),
+                                       NodeSeq.Empty, Map.empty)
+
+          <tail><lift:comet type="AsyncRenderComet" name={id}></lift:comet></tail>
+        } else {
+          NodeSeq.Empty
+        }
+      )
+    
+      for (comet <- session.findComet("AsyncRenderComet");
+           name <- comet.name if (name == id)) {
+        comet ! Ready(func)
+      }
+
+      res
+    }) match {
+      case Full(x) => x
+      case Empty => Comment("FIX"+ "ME: session or request are invalid")
+      case Failure(msg, _, _) => Comment(msg)
+    }
+
   }
 
 }
 
 
-private case class Start(snapshot: AFuncHolder)
-private case class Ready(js: JsCmd)
+private case class Ready(js: () => JsCmd)
 private case class StopClient()
 
-
-/**
- * The actor that renders the page fragment asynchronously
- *
- */
-object AsyncRenderer extends LiftActor {
-
-  override def messageHandler = {
-    case Start(snapshot) => snapshot("run" :: Nil)
-    case AddAListener(comet, _) =>
-  }
-}
 
 /**
  * The Comet Actor for sending down the computed page fragments
@@ -124,7 +112,7 @@ class AsyncRenderComet extends CometActor {
 
 
   override def lowPriority : PartialFunction[Any, Unit] = {
-    case Ready(js) => partialUpdate(js)
+    case Ready(js) => partialUpdate(js())
     case StopClient => unWatch
   }
 }
