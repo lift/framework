@@ -20,7 +20,7 @@ package common {
 import _root_.org.slf4j.{MDC => SLF4JMDC, Marker, Logger => SLF4JLogger, LoggerFactory}
 
 object Logger {
-  private lazy val checkConfig: Boolean = {
+  private[common] lazy val checkConfig: Boolean = {
     setup.foreach {_()}; 
     true
   }
@@ -100,10 +100,6 @@ object MDC {
   def clear() = org.slf4j.MDC.clear
 }
 
-trait Logged {
-  @transient val logger: SLF4JLogger
-}
-
 /**
  * Logger is a thin wrapper on top of an SLF4J Logger
  *
@@ -122,7 +118,7 @@ trait Logged {
  */
 trait Logger  {
   @transient private val logger: SLF4JLogger = _logger
-  protected def _logger = LoggerFactory.getLogger(Logger.loggerNameFor(this.getClass))
+  protected def _logger = if (Logger.checkConfig) LoggerFactory.getLogger(Logger.loggerNameFor(this.getClass)) else null
   
   def assertLog(assertion: Boolean, msg: => String) = if (assertion) info(msg)
 
@@ -161,7 +157,7 @@ trait Logger  {
 }
 
 class WrappedLogger(l: SLF4JLogger) extends Logger {
-  override val _logger = l
+  override def _logger = l
 }
 
 /**
