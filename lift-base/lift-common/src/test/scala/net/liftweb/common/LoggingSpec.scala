@@ -29,7 +29,6 @@ import _root_.org.scalacheck.Arbitrary._
 import _root_.org.scalacheck.Prop.{forAll}
 
 class LoggingTest extends Runner(LoggingUnit) with JUnit
-class LoggingUnitTest extends JUnit4(LoggingUnit)
 
 class MyTopClass extends Logger {
   val x=1
@@ -46,30 +45,6 @@ object MyTopObj extends Logger {
  */
 object LoggingUnit extends Specification {
   "Logging" can {
-    doFirst {
-      import _root_.org.apache.log4j._
-      import _root_.org.apache.log4j.xml._
-      val  defaultProps =
-        """<?xml version="1.0" encoding="UTF-8" ?>
-        <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
-        <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
-        <appender name="appender" class="org.apache.log4j.ConsoleAppender">
-        <layout class="org.apache.log4j.PatternLayout">
-          <param name="ConversionPattern" value="%-5p %c M1:%X{mdc1} M2:%X{mdc2}- %m%n"/>
-        </layout>
-        </appender>
-        <root>
-        <priority value ="trace"/>
-        <appender-ref ref="appender"/>
-        </root>
-        </log4j:configuration>
-        """
-      val domConf = new DOMConfigurator
-      val defPropBytes = defaultProps.toString.getBytes("UTF-8")
-      val is = new _root_.java.io.ByteArrayInputStream(defPropBytes)
-      domConf.doConfigure(is, LogManager.getLoggerRepository())
-    }
-
     "be mixed directly into object" in {
       object MyObj extends Logger {
         info("direct Hello")
@@ -80,27 +55,27 @@ object LoggingUnit extends Specification {
       (new MyTopClass).x must_== 1
       MyTopObj.x must_==1
     }
-    /* FIXME: 280
+    
     "be nested in object" in {
       object MyObj extends Loggable {
         logger.info("nested Hello")
         val x = 2
       }
-
+      
       MyObj.x must_== 2
-
+      
     }
-
+    
     "create named loggers" in {
       val logger = Logger("MyLogger")
-
+      
       logger.info("Logged with my named logger")
       1 must_== 1
     }
-
+    
     "log static MDC values" in {
       val logger = Logger("StaticMDC")
-
+      
       logger.info("Logged with no MDC")
       MDC.put("mdc1" -> (1,2))
       logger.info("Logged with mdc1=(1,2)")
@@ -114,17 +89,17 @@ object LoggingUnit extends Specification {
       logger.info("Logged with no MDC")
       1 must_== 1
     }
-
+    
     "save MDC context with logWith" in {
       val logger = Logger("logWith")
-
+      
       logger.info("Logged with no MDC")
       MDC.put("mdc1" -> (1,2), "mdc2" -> "yy")
       logger.info("Logged with mdc1=(1,2), mdc2=yy")
       Logger.logWith("mdc2" -> "xx") {
         logger.info("Logged with mdc1=(1,2), mdc2=xx")
         Logger.logWith("mdc1" -> 99) {
-           logger.info("Logged with mdc1=99, mdc2=xx")
+           logger.info("Logged with mdc1=99, mdc2=xx") 
         }
         logger.info("Logged with mdc1=(1,2), mdc2=xx")
       }
@@ -148,19 +123,18 @@ object LoggingUnit extends Specification {
         First.info("In first")
       }
       object First extends Logger
-
+      
       trait Second {
         private val logger = Logger(classOf[Second])
         logger.info("In second")
       }
-
+      
       class C extends First with Second with Logger {
         info("In C")
         val x = 2
       }
       (new C).x must_== 2
     }
-    */
   }
 }
 
