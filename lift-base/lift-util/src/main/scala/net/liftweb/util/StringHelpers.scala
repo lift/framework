@@ -310,6 +310,11 @@ trait StringHelpers {
       }
     }
   }
+
+  /**
+   * Test for null and return either the given String if not null or the empty String.
+   */
+  def emptyForNull(s: String) = if (s != null) s else ""
 }
 
 }

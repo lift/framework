@@ -30,8 +30,9 @@ object ManyToManySpecs extends Specification {
   
   private def ignoreLogger(f: => AnyRef): Unit = ()
   def setupDB {
+    MapperRules.createForeignKeys_? = c => false
     provider.setupDB
-    Schemifier.destroyTables_!!(ignoreLogger _,  Person, Company, PersonCompany)
+    Schemifier.destroyTables_!!(ignoreLogger _,  PersonCompany, Company, Person)
     Schemifier.schemify(true, ignoreLogger _, Person, Company, PersonCompany)
   }
   def createPerson = {

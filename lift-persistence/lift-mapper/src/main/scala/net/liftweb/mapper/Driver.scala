@@ -216,7 +216,7 @@ object H2Driver extends DriverType("H2") {
    * AUTO_INCREMENT PRIMARY KEY and it did not allow it.
    */
   override def pkDefinedByIndexColumn_? : Boolean = false  //changed to false by nafg
-
+  override def supportsForeignKeys_? = true
   override def maxSelectLimit = "0";
   override def defaultSchemaName : Box[String] = Full("PUBLIC")
 }
@@ -267,15 +267,7 @@ object PostgreSqlDriver extends BasePostgreSQLDriver {
         handler(Left(stmt.executeQuery))
     }
 
-  @volatile private[this] var _supportsForeignKeys_? = false
-
-  /**
-  * If you want to support foreign key constraints, call this method with 'true' in Boot before
-  * calling Schemifier
-  */
-  def setSupportsForeignKeys(in: Boolean) {_supportsForeignKeys_? = in}
-
-  override def supportsForeignKeys_? : Boolean = _supportsForeignKeys_?
+  override def supportsForeignKeys_? = true
 }
 
 /**

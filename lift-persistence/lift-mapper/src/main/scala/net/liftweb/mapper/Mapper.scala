@@ -28,6 +28,7 @@ import _root_.net.liftweb.common.{Box, Empty, Full, ParamFailure}
 trait BaseMapper extends FieldContainer {
   type MapperType <: Mapper[MapperType]
 
+  def dbName: String
   def save: Boolean
 }
 
@@ -47,6 +48,8 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
     Safe.safe_?(secure_#)
   }
 
+  def dbName:String = getSingleton.dbName
+  
   implicit def thisToMappee(in: Mapper[A]): A = this.asInstanceOf[A]
 
   def runSafe[T](f : => T) : T = {

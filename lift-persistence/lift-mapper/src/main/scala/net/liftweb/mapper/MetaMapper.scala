@@ -26,8 +26,8 @@ import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.common.{Box, Empty, Full, Failure}
 import _root_.net.liftweb.json._
 import _root_.net.liftweb.util.{NamedPF, FieldError}
-import _root_.net.liftweb.http.{LiftRules, S, SHtml}
-import _root_.java.util.Date
+import _root_.net.liftweb.http.{LiftRules, S, SHtml, Factory}
+import _root_.java.util.{Locale,Date}
 import _root_.net.liftweb.http.js._
 
 trait BaseMetaMapper {
@@ -47,7 +47,7 @@ trait BaseMetaMapper {
 /**
  * Rules and functions shared by all Mappers
  */
-object MapperRules {
+object MapperRules extends Factory {
   /**
    * This function converts a header name into the appropriate
    * XHTML format for displaying across the headers of a
@@ -89,6 +89,23 @@ object MapperRules {
 
   val quoteColumnName: String => String =
   s => if (s.indexOf(' ') >= 0) '"'+s+'"' else s
+
+ /**
+  * Function that determines if foreign key constraints are
+  * created by Schemifier for the specified connection.
+  * 
+  * Note: The driver choosen must also support foreign keys for
+  * creation to happen
+  */
+  var createForeignKeys_? : ConnectionIdentifier => Boolean = c => false
+
+  
+  /**
+   * This function is used to calculate the displayName of a field. Can be
+   * used to easily localize fields based on the locale in the 
+   * current request
+   */
+  val displayNameCalculator: FactoryMaker[(BaseMapper, Locale, String) => String] = new FactoryMaker[(BaseMapper, Locale, String) => String](() => ((m,l,name) => name)) {} 
 
   /**
    * Calculate the name of a column based on the name
@@ -1273,6 +1290,11 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   def dbTableName = internal_dbTableName
 
   /**
+   * The name of the mapped object
+   */
+  override def dbName: String = internalTableName_$_$
+  
+  /**
    * The table name, to lower case... ensures that it works on all DBs
    */
   final def _dbTableNameLC = {
@@ -1287,7 +1309,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   }  // dbTableName.toLowerCase
 
   private[mapper] lazy val internal_dbTableName = fixTableName(internalTableName_$_$)
-
+  
   private def setupInstanceForPostCommit(inst: A) {
     if (!inst.addedPostCommit) {
       DB.appendPostFunc(inst.connectionIdentifier, () => afterCommit.foreach(_(inst)))

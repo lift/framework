@@ -81,7 +81,7 @@ object DBProviders {
             if (rs.getString(4).toLowerCase == "table") toDelete = tableName :: toDelete
           }
           rs.close
-
+/*
           toDelete.foreach {
             table =>
             try {
@@ -95,6 +95,7 @@ object DBProviders {
           }
 
           if (toDelete.length > 0) deleteAllTables
+          */
         }
       }
       deleteAllTables
