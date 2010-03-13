@@ -63,7 +63,7 @@ class TreeView {
       <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath + "/tree/jquery.treeview.css"} type="text/css"/>
       <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/tree/jquery.treeview.js"}/>
        <script type="text/javascript" charset="utf-8">{
-         OnLoad(JqId(id) >> new JsExp with JQueryRight {
+         OnLoad(JqId(id) ~> new JsExp with JsMember {
            def toJsCmd = "treeview(" + jsObj.toJsCmd + ")"
          }) toJsCmd
        }
@@ -119,15 +119,15 @@ class TreeView {
 
      fmapFunc(NFuncHolder(treeFunc)){key =>
 
-     val url = encodeURL(contextPath +
-			 "/"+LiftRules.ajaxPath)+"?"+key+"=_"
+       val url = encodeURL(contextPath +
+	  		 "/"+LiftRules.ajaxPath)+"?"+key+"=_"
 
-     val obj: JsObj = JsObj(("url" -> Str(url)) :: jsObj.props:_*)
+       val obj: JsObj = JsObj(("url" -> Str(url)) :: jsObj.props:_*)
 
-     (key, JqId(id) >> new JsExp with JQueryRight {
-       def toJsCmd = "treeview(" + obj.toJsCmd + ")"
-     })
-				  }
+       (key, JqId(id) ~> new JsExp with JsMember {
+         def toJsCmd = "treeview(" + obj.toJsCmd + ")"
+       })
+     }
   }
 
 }

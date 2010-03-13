@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.liftweb {
 package http {
 package js {
@@ -110,9 +109,17 @@ trait JsExp extends SpecialNode with HtmlFixer with JxBase with ToJsCmd {
   /**
    * ~> accesses a property in the current JsExp
    */
-  def ~>(right: JsMethod): JsExp = new JsExp {
+  def ~>(right: JsMember): JsExp = new JsExp {
     def toJsCmd = JsExp.this.toJsCmd + "." + right.toJsCmd
   }
+  
+  /**
+   * This exists for backward compatibility reasons for JQueryLeft and JQueryRight
+   * which are now deprecated. Use ~> whenever possible as this will be removed soon.
+   */
+  @deprecated
+  def >>(right: JsMember): JsExp = ~>(right)
+
 
   def cmd: JsCmd = JsCmds.Run(toJsCmd + ";")
 
@@ -127,7 +134,7 @@ trait JsExp extends SpecialNode with HtmlFixer with JxBase with ToJsCmd {
 
 }
 
-trait JsMethod {
+trait JsMember {
   def toJsCmd: String
 }
 
@@ -329,7 +336,7 @@ object JE {
   /**
    * A JavaScript method that takes parameters
    */
-  case class JsFunc(method: String, params: JsExp*) extends JsMethod {
+  case class JsFunc(method: String, params: JsExp*) extends JsMember {
     def toJsCmd = params.map(_.toJsCmd).mkString(method + "(", ", ", ")")
 
     def cmd: JsCmd = JsCmds.Run(toJsCmd + ";")
@@ -351,23 +358,23 @@ object JE {
   /**
    * A value that can be retrieved from an expression
    */
-  case class JsVal(valueName: String) extends JsMethod {
+  case class JsVal(valueName: String) extends JsMember {
     def toJsCmd = valueName
   }
 
-  case object Id extends JsMethod {
+  case object Id extends JsMember {
     def toJsCmd = "id"
   }
 
-  case object Parent extends JsMethod {
+  case object Parent extends JsMember {
     def toJsCmd = "parentNode"
   }
 
-  case object Style extends JsMethod {
+  case object Style extends JsMember {
     def toJsCmd = "style"
   }
 
-  case object Value extends JsMethod {
+  case object Value extends JsMember {
     def toJsCmd = "value"
   }
 
