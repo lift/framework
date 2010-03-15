@@ -37,10 +37,10 @@ import common._
 
 import _root_.scala.xml.{NodeSeq, Text}
 
-trait OpenIdVendor {
+trait OpenIDVendor {
   type UserType
 
-  type ConsumerType <: OpenIdConsumer[UserType]
+  type ConsumerType <: OpenIDConsumer[UserType]
 
   private object RedirectBackTo extends SessionVar[Box[String]](Empty)
   lazy val PathRoot = "openid"
@@ -62,7 +62,7 @@ trait OpenIdVendor {
   /**
    * A session var that keeps track of the OpenID object through the request/response
    */
-  object OpenIdObject extends SessionVar[ConsumerType](createAConsumer)
+  object OpenIDObject extends SessionVar[ConsumerType](createAConsumer)
 
   def createAConsumer: ConsumerType
 
@@ -79,7 +79,7 @@ trait OpenIdVendor {
   def logoutLink: NodeSeq = <xml:group> <a href={"/"+PathRoot+"/"+LogOutPath}>Log Out</a></xml:group>
 
   def loginForm: NodeSeq = <form method="post" action={"/"+PathRoot+"/"+LoginPath}>
-    OpenId <input class="openidfield" name={PostParamName}/> <input type='submit' value="Log In"/>
+    OpenID <input class="openidfield" name={PostParamName}/> <input type='submit' value="Log In"/>
                            </form>
 
   def showUserBox(ignore: NodeSeq): NodeSeq = <div class="openidbox">{
@@ -105,7 +105,7 @@ trait OpenIdVendor {
    * Try to log a user into the system with a given openId
    */
   def loginAndRedirect(openId: String, onComplete: (Box[Identifier], Box[VerificationResult], Box[Exception]) => LiftResponse) {
-    val oid = OpenIdObject.is
+    val oid = OpenIDObject.is
     oid.onComplete = Full(onComplete)
 
     throw ResponseShortcutException.shortcutResponse(try {
@@ -127,7 +127,7 @@ trait OpenIdVendor {
       () => {
         try {
           RedirectBackTo(S.referer)
-          Full(OpenIdObject.is.authRequest(r.param(PostParamName).get, "/"+PathRoot+"/"+ResponsePath))
+          Full(OpenIDObject.is.authRequest(r.param(PostParamName).get, "/"+PathRoot+"/"+ResponsePath))
         } catch {
           case e => S.error("OpenID Failure: "+e.getMessage)
             // FIXME -- log the name and the error
@@ -139,9 +139,9 @@ trait OpenIdVendor {
       () => {
         for (req <- S.request;
              ret <- {
-            val (id, res) = OpenIdObject.is.verifyResponse(req.request)
+            val (id, res) = OpenIDObject.is.verifyResponse(req.request)
 
-            OpenIdObject.onComplete match {
+            OpenIDObject.onComplete match {
               case Full(f) => Full(f(id, Full(res), Empty))
 
               case _ => postLogin(id, res)
@@ -155,11 +155,11 @@ trait OpenIdVendor {
   }
 }
 
-trait SimpleOpenIdVendor extends OpenIdVendor {
+trait SimpleOpenIDVendor extends OpenIDVendor {
   type UserType = Identifier
-  type ConsumerType = OpenIdConsumer[UserType]
+  type ConsumerType = OpenIDConsumer[UserType]
 
-  def currentUser = OpenIdUser.is
+  def currentUser = OpenIDUser.is
 
   def postLogin(id: Box[Identifier],res: VerificationResult): Unit = {
     id match {
@@ -168,26 +168,25 @@ trait SimpleOpenIdVendor extends OpenIdVendor {
       case _ => S.error("Failed to authenticate")
     }
 
-    OpenIdUser(id)
+    OpenIDUser(id)
   }
 
   def logUserOut() {
-    OpenIdUser.remove
+    OpenIDUser.remove
   }
 
   def displayUser(in: UserType): NodeSeq = Text("Welcome "+in)
 
-  def createAConsumer = new AnyRef with OpenIdConsumer[UserType]
+  def createAConsumer = new AnyRef with OpenIDConsumer[UserType]
 }
 
-object SimpleOpenIdVendor extends SimpleOpenIdVendor
+object SimpleOpenIDVendor extends SimpleOpenIDVendor
 
-// object SimpleOpenIdVendor extends SimpleOpenIdVendor
 
-object OpenIdUser extends SessionVar[Box[Identifier]](Empty)
+object OpenIDUser extends SessionVar[Box[Identifier]](Empty)
 
 /** * Sample Consumer (Relying Party) implementation.  */
-trait OpenIdConsumer[UserType]
+trait OpenIDConsumer[UserType]
 {
   val manager = new ConsumerManager
 

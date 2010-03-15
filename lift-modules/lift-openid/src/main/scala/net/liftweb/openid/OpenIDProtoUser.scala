@@ -92,7 +92,7 @@ trait MetaOpenIDProtoUser[ModelType <: OpenIDProtoUser[ModelType]] extends MetaM
     </table>
   </form>
 
-  def openIDVendor: OpenIdVendor
+  def openIDVendor: OpenIDVendor
 
   override def login = {
     if (S.post_?) {
