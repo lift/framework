@@ -621,8 +621,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                 })
                 funcName
               }
-              val sep = uri contains ("?") match {case true => "&" case _ => "?"}
-              uri + sep + func + "=_"
+              SHtml.appendFuncToURL(uri, func + "=_")
     } openOr uri
 
   }
