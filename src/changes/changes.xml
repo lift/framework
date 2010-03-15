@@ -38,6 +38,12 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+      <action dev="dpp" type="add" issue="397" system="assembla">
+	Added asValid and JSON helpers to Mapper
+      </action>
+      <action dev="dpp" type="add" issue="399" system="assembla">
+	Unapply on MetaMapper
+      </action>
       <action dev="dpp" type="update" issue="398" system="assembla">
 	Made ParamFailure not a case class
       </action>
