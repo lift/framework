@@ -8,12 +8,18 @@
 package net.liftweb {
 package ldap {
 
-import http.{LiftResponse, RedirectResponse, S, SessionVar}
-import http.js.{JsCmds}
-import mapper.{BaseOwnedMappedField, MappedString, MetaMegaProtoUser, MegaProtoUser}
-import sitemap.{Menu}
-import util.{Helpers}
-import common.{Box, Empty, Full}
+import javax.naming.directory.{Attributes}
+import scala.util.matching.{Regex}
+import scala.xml.{Elem, NodeSeq}
+import net.liftweb.http.{LiftResponse, RedirectResponse, S, SessionVar}
+import net.liftweb.http.js.{JsCmds}
+import net.liftweb.mapper.{BaseOwnedMappedField,
+                           MappedString,
+                           MetaMegaProtoUser,
+                           MegaProtoUser}
+import net.liftweb.sitemap.{Menu}
+import net.liftweb.util.{Helpers}
+import net.liftweb.common.{Box, Empty, Full}
 
 import Helpers._
 
@@ -101,13 +107,19 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
     }
 
     def ldapLogin(username: String, password: String): Boolean = {
+        def _getUserAttributes(dn: String) = ldapVendor.attributesFromDn(dn)
+
         val users = ldapVendor.search(ldapUserSearch.format(username))
 
         if (users.size >= 1) {
             val userDn = users(0)
             if (ldapVendor.bindUser(userDn, password)) {
+                val completeDn = userDn + "," + ldapVendor.parameters().get("ldap.base").getOrElse("")
                 logUserIn(this)
-                setRoles(userDn + "," + ldapVendor.parameters().get("ldap.base").getOrElse(""), ldapVendor)
+
+                bindAttributes(_getUserAttributes(completeDn))
+
+                setRoles(completeDn, ldapVendor)
                 S.redirectTo(homePage)
             }
             else return false
@@ -115,6 +127,17 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
         else return false
 
         return true
+    }
+
+    def bindAttributes(attrs: Attributes) = {
+        for {
+            theCn <- Box !! attrs.get("cn").get
+            theUid <- Box !! attrs.get("uid").get
+        }
+        {
+            cn(attrs.get("cn").get.toString)
+            uid(attrs.get("uid").get.toString)
+        }
     }
 }
 
