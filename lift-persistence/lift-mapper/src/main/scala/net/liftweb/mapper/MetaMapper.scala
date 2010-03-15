@@ -26,8 +26,9 @@ import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.common.{Box, Empty, Full, Failure}
 import _root_.net.liftweb.json._
 import _root_.net.liftweb.util.{NamedPF, FieldError, Helpers}
-import _root_.net.liftweb.http.{LiftRules, S, SHtml, RequestMemoize}
-import _root_.java.util.Date
+import _root_.net.liftweb.http.{LiftRules, S, SHtml, RequestMemoize,
+			      Factory}
+import _root_.java.util.{Date, Locale}
 import _root_.net.liftweb.http.js._
 
 trait BaseMetaMapper {
