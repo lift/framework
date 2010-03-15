@@ -846,7 +846,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
     while (pos < max && rs.next()) {
       if (pos >= 0L) {
-        f(createInstance(dbId, rs, bm._1, bm._2)).foreach(v => ret += v)
+        f(createInstance(dbId, rs, bm)).foreach(v => ret += v)
       }
       pos = pos + 1L
     }
@@ -858,33 +858,38 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
   private val columnNameToMappee = new HashMap[String, Box[(ResultSet, Int, A) => Unit]]
 
-  def buildMapper(rs: ResultSet): (Int, Array[(ResultSet,Int,A) => Unit]) = synchronized {
+  def buildMapper(rs: ResultSet): List[Box[(ResultSet,Int,A) => Unit]] = {
     val meta = rs.getMetaData
     val colCnt = meta.getColumnCount
-    val ar = new Array[(ResultSet, Int, A) => Unit](colCnt + 1)
-    for (pos <- 1 to colCnt) {
-      val colName = meta.getColumnName(pos).toLowerCase
-      val optFunc = columnNameToMappee.get(colName) match {
-        case None => {
-            val colType = meta.getColumnType(pos)
-            val fieldInfo = mappedColumns.get(colName)
+    // val ar = new Array[(ResultSet, Int, A) => Unit](colCnt + 1)
+    for {
+      pos <- (1 to colCnt).toList
+      colName = meta.getColumnName(pos).toLowerCase
 
-            val setTo =
-            if (fieldInfo != None) {
-              val tField = fieldInfo.get.invoke(this).asInstanceOf[MappedField[AnyRef, A]]
+    } yield
+       {
+      columnNameToMappee.synchronized {
+        columnNameToMappee.get(colName) match {
+        case None => 
+            val colType = meta.getColumnType(pos)
+
+            Box(mappedColumns.get(colName)).flatMap{
+              fieldInfo =>
+            val setTo = {
+              val tField = fieldInfo.invoke(this).asInstanceOf[MappedField[AnyRef, A]]
 
               Some(colType match {
                   case Types.INTEGER | Types.BIGINT => {
-                      val bsl = tField.buildSetLongValue(fieldInfo.get, colName)
+                      val bsl = tField.buildSetLongValue(fieldInfo, colName)
                       (rs: ResultSet, pos: Int, objInst: A) => bsl(objInst, rs.getLong(pos), rs.wasNull)}
                   case Types.VARCHAR => {
-                      val bsl = tField.buildSetStringValue(fieldInfo.get, colName)
+                      val bsl = tField.buildSetStringValue(fieldInfo, colName)
                       (rs: ResultSet, pos: Int, objInst: A) => bsl(objInst, rs.getString(pos))}
                   case Types.DATE | Types.TIME | Types.TIMESTAMP =>
-                    val bsl = tField.buildSetDateValue(fieldInfo.get, colName)
+                    val bsl = tField.buildSetDateValue(fieldInfo, colName)
                     (rs: ResultSet, pos: Int, objInst: A) => bsl(objInst, rs.getTimestamp(pos))
                   case Types.BOOLEAN | Types.BIT =>{
-                      val bsl = tField.buildSetBooleanValue(fieldInfo.get, colName)
+                      val bsl = tField.buildSetBooleanValue(fieldInfo, colName)
                       (rs: ResultSet, pos: Int, objInst: A) => bsl(objInst, rs.getBoolean(pos), rs.wasNull)}
                   case _ => {
                       (rs: ResultSet, pos: Int, objInst: A) => {
@@ -893,33 +898,32 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                       }
                     }
                 })
-            } else {
-              None
+
             }
 
             columnNameToMappee(colName) = Box(setTo)
             Box(setTo)
           }
+          
         case Some(of) => of
       }
-      ar(pos) = optFunc openOr null
+
+      //ar(pos) = optFunc openOr null
     }
-    (colCnt, ar)
+    // (colCnt, ar)
+  }
   }
 
-  def createInstance(dbId: ConnectionIdentifier, rs : ResultSet, colCnt: Int, mapFuncs: Array[(ResultSet,Int,A) => Unit]) : A = {
+  def createInstance(dbId: ConnectionIdentifier, rs : ResultSet, mapFuncs: List[Box[(ResultSet,Int,A) => Unit]]) : A = {
     val ret: A = createInstance.connectionIdentifier(dbId)
 
     ret.persisted_? = true
 
-    var pos = 1
-    while (pos <= colCnt) {
-      mapFuncs(pos) match {
-        case null =>
-        case f => f(rs, pos, ret)
-      }
-      pos = pos + 1
-    }
+    for {
+      (fb, pos) <- mapFuncs.zipWithIndex
+      f <- fb
+    } f(rs, pos + 1, ret)
+
     ret
   }
 
@@ -1752,7 +1756,7 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
       DB.exec(st) {
         rs =>
         val mi = buildMapper(rs)
-        if (rs.next) Full(createInstance(dbId, rs, mi._1, mi._2))
+        if (rs.next) Full(createInstance(dbId, rs, mi))
         else Empty
       }
     }
@@ -1781,7 +1785,7 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
         DB.exec(st) {
           rs =>
           val mi = buildMapper(rs)
-          if (rs.next) Full(createInstance(dbId, rs, mi._1, mi._2))
+          if (rs.next) Full(createInstance(dbId, rs, mi))
           else Empty
         }
 
