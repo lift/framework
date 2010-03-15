@@ -59,6 +59,38 @@ object BasicTypesHelpersSpec extends Specification with DataTables {
           toBoolean(o) must_== result
        }
     }
+
+        "have a AsBoolean extractor converting any object to a reasonable Boolean value" in {
+      "object value" | "boolean value" 	|>
+       "t"  		 ! Some(true)             |
+       ""   		 ! None            |
+       "string"		 ! None            |
+       "total" 		 ! None             |
+       "T"  		 ! Some(true)             |
+       "This"  		 ! None             |
+       "0"  		 ! Some(false)            |
+       { (o: String, result: Option[Boolean]) =>
+          AsBoolean.unapply(o) must_== result
+       }
+    }
+
+        "have an AsInt extractor converting any String to a reasonable Int value" in {
+      "object value"| "int value"	|>
+       "3"			! Some(3) 	        |
+       "n"			! None 	        |
+       { (o: String, result: Option[Int]) =>
+          AsInt.unapply(o) must_== result
+       }
+    }
+    "have an AsLong extractor converting any String to a reasonable Long value" in {
+      "object value"| "long value"	|>
+       "3"			! Some(3L) 	        |
+       "n"			! None 	        |
+       { (o: String, result: Option[Long]) =>
+          AsLong.unapply(o) must_== result
+       }
+    }
+
     "have a toInt method converting any object to a reasonable Int value" in {
       def date(t: Int) = new _root_.java.util.Date(t)
       "object value"| "int value"	|>

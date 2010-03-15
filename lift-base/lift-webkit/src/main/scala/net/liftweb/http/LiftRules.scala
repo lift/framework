@@ -50,7 +50,7 @@ object LiftRules extends Factory with FormVendor {
   type ExceptionHandlerPF = PartialFunction[(Props.RunModes.Value, Req, Throwable), LiftResponse]
   type ResourceBundleFactoryPF = PartialFunction[(String, Locale), ResourceBundle]
   type SplitSuffixPF = PartialFunction[List[String], (List[String], String)]
-
+  type CometCreationPF = PartialFunction[CometCreationInfo, LiftCometActor]
   /**
    * A partial function that allows the application to define requests that should be
    * handled by lift rather than the default handler
@@ -157,6 +157,19 @@ object LiftRules extends Factory with FormVendor {
    * to any URL reference from the markup of Ajax request.
    */
   val urlDecorate = RulesSeq[URLDecoratorPF]
+
+  /**
+  * Partial function to allow you to build a CometActor from code rather than via reflection
+  */
+  val cometCreation = RulesSeq[CometCreationPF]
+
+  private def noComet(ignore: CometCreationInfo): Box[LiftCometActor] = Empty
+
+  /**
+  * A factory that will vend comet creators
+  */
+  val cometCreationFactory: FactoryMaker[CometCreationInfo => Box[LiftCometActor]] =
+  new FactoryMaker(() => noComet _) {}
 
   /**
    * Holds user functions that are executed after the response was sent to client. The functions' result

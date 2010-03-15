@@ -57,12 +57,16 @@ trait Factory extends SimpleInjector {
     /**
      * The session-specific Maker for creating an instance
      */
-    object session extends SessionVar[Maker[T]](Empty)
+    object session extends SessionVar[Maker[T]](Empty) {
+      override protected def __nameSalt = Helpers.randomString(20)
+    }
 
     /**
      * The request specific Maker for creating an instance
      */
-    object request extends RequestVar[Maker[T]](Empty)
+    object request extends RequestVar[Maker[T]](Empty) {
+      override protected def __nameSalt = Helpers.randomString(20)
+    }
     private val _sub: List[PValueHolder[Maker[T]]] = List(request, session)
 
     /**

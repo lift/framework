@@ -167,7 +167,7 @@ object S extends HasParams {
   private object p_notice extends TransientRequestVar(new ListBuffer[(NoticeType.Value, NodeSeq, Box[String])])
 
   /**
-   * This function returns true if the S object has been initialized for our current scope. If
+   * This method returns true if the S object has been initialized for our current scope. If
    * the S object has not been initialized then functionality on S will not work.
    */
   def inStatefulScope_? : Boolean = inS.value
