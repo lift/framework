@@ -186,8 +186,7 @@ object SimpleOpenIDVendor extends SimpleOpenIDVendor
 object OpenIDUser extends SessionVar[Box[Identifier]](Empty)
 
 /** * Sample Consumer (Relying Party) implementation.  */
-trait OpenIDConsumer[UserType]
-{
+trait OpenIDConsumer[UserType] extends Logger {
   val manager = new ConsumerManager
 
   var onComplete: Box[(Box[Identifier], Box[VerificationResult], Box[Exception]) => LiftResponse] = Empty
@@ -204,7 +203,7 @@ trait OpenIDConsumer[UserType]
     // the authentication responses from the OpenID provider
     val returnToUrl = S.encodeURL(S.hostAndPath + targetUrl)
 
-    Log.info("Creating openId auth request.  returnToUrl: "+returnToUrl)
+    info("Creating openId auth request.  returnToUrl: "+returnToUrl)
 
     // perform discovery on the user-supplied identifier
     val discoveries = manager.discover(userSuppliedString)
