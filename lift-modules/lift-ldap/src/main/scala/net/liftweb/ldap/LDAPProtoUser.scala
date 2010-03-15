@@ -126,8 +126,14 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
     }
 
     def bindAttributes(attrs: Attributes) = {
-        cn(attrs.get("cn").get.toString)
-        uid(attrs.get("uid").get.toString)
+        for {
+            theCn <- Box !! attrs.get("cn").get
+            theUid <- Box !! attrs.get("uid").get
+        }
+        {
+            cn(attrs.get("cn").get.toString)
+            uid(attrs.get("uid").get.toString)
+        }
     }
 }
 
