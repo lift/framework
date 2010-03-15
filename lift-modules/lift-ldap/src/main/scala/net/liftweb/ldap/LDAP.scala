@@ -4,7 +4,7 @@ import java.io.{InputStream, FileInputStream}
 import java.util.{Hashtable, Properties}
 
 import javax.naming.Context
-import javax.naming.directory.{BasicAttributes, SearchControls}
+import javax.naming.directory.{Attributes, BasicAttributes, SearchControls}
 import javax.naming.ldap.{LdapName, InitialLdapContext}
 
 import scala.collection.jcl.{Hashtable => ScalaHashtable, MapWrapper}
@@ -77,7 +77,10 @@ class LDAPVendor {
 
     lazy val initialContext = getInitialContext(parameters())
 
-    def search(filter: String) : List[String] = {
+    def attributesFromDn(dn: String): Attributes =
+        initialContext.get.getAttributes(dn)
+
+    def search(filter: String): List[String] = {
         Log.debug("--> LDAPSearch.search: Searching for '%s'".format(filter))
 
         var list = List[String]()
