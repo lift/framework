@@ -858,23 +858,19 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
   private val columnNameToMappee = new HashMap[String, Box[(ResultSet, Int, A) => Unit]]
 
-  def buildMapper(rs: ResultSet): List[Box[(ResultSet,Int,A) => Unit]] = {
+  def buildMapper(rs: ResultSet): List[Box[(ResultSet,Int,A) => Unit]] = columnNameToMappee.synchronized {
     val meta = rs.getMetaData
     val colCnt = meta.getColumnCount
-    // val ar = new Array[(ResultSet, Int, A) => Unit](colCnt + 1)
     for {
       pos <- (1 to colCnt).toList
       colName = meta.getColumnName(pos).toLowerCase
+    } yield 
+      columnNameToMappee.get(colName) match {
+        case None =>
+          val colType = meta.getColumnType(pos)
 
-    } yield
-       {
-      columnNameToMappee.synchronized {
-        columnNameToMappee.get(colName) match {
-        case None => 
-            val colType = meta.getColumnType(pos)
-
-            Box(mappedColumns.get(colName)).flatMap{
-              fieldInfo =>
+          Box(mappedColumns.get(colName)).flatMap{
+            fieldInfo =>
             val setTo = {
               val tField = fieldInfo.invoke(this).asInstanceOf[MappedField[AnyRef, A]]
 
@@ -898,20 +894,14 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                       }
                     }
                 })
-
             }
 
             columnNameToMappee(colName) = Box(setTo)
-            Box(setTo)
+            setTo
           }
-          
+
         case Some(of) => of
       }
-
-      //ar(pos) = optFunc openOr null
-    }
-    // (colCnt, ar)
-  }
   }
 
   def createInstance(dbId: ConnectionIdentifier, rs : ResultSet, mapFuncs: List[Box[(ResultSet,Int,A) => Unit]]) : A = {
