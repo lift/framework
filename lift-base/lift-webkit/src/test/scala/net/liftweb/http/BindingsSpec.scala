@@ -23,6 +23,7 @@ import _root_.org.specs.runner._
 import _root_.org.specs.Sugar._
 import scala.xml.NodeSeq
 import scala.xml.Text
+import _root_.net.liftweb.common._
 import Bindings._
 
 class BindingsSpecTest extends Runner(BindingsSpec) with JUnit with Console
@@ -73,6 +74,21 @@ object BindingsSpec extends Specification {
       MyClass("hi", 1, MyOtherClass("bar")).bind(template) must equalIgnoreSpace(expected)
     }
   }
+
+"SHtml" should {
+  "deal with # in link" in {
+    val session = new LiftSession("hello", "", Empty)
+
+    val href = S.initIfUninitted(session) {
+      val a = SHtml.link("/foo#bar", () => true, Text("Test"))
+
+      (a \ "@href").text
+    }
+
+    href.endsWith("#bar") must_== true
+
+  }
+}
 }
 
 }}

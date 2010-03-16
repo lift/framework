@@ -671,6 +671,16 @@ object SHtml {
   }
 
 
+  private[http] def appendFuncToURL(url: String, funcStr: String): String =
+  splitAtHash(url){to => (if (to.indexOf("?") >= 0) "&" else "?") + funcStr}
+
+  private def splitAtHash(str: String)(f: String => String): String =
+  str.indexOf("#") match {
+    case idx if idx < 0 => f(str)
+    case idx => f(str.substring(0, idx)) + str.substring(idx)
+  }
+
+
   /**
    * create an anchor tag around a body
    *
@@ -680,7 +690,7 @@ object SHtml {
   def link(to: String, func: () => Any, body: NodeSeq,
            attrs: (String, String)*): Elem = {
     fmapFunc((a: List[String]) => {func(); true})(key =>
-            attrs.foldLeft(<a href={to + (if (to.indexOf("?") >= 0) "&" else "?") + key + "=_"}>{body}</a>)(_ % _))
+            attrs.foldLeft(<a href={appendFuncToURL(to, key + "=_")}>{body}</a>)(_ % _))
   }
 
   private def makeFormElement(name: String, func: AFuncHolder,

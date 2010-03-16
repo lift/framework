@@ -54,8 +54,20 @@
     </dependency>
     <dependency>
       <groupId>org.openid4java</groupId>
-      <artifactId>openid4java</artifactId>
+      <artifactId>openid4java-consumer</artifactId>
       <version>[0.9.3,0.9.5]</version>
+      <exclusions>
+      	<exclusion>
+      		<artifactId>commons-logging</artifactId>
+      		<groupId>commons-logging</groupId>
+      	</exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+    	<groupId>org.slf4j</groupId>
+    	<artifactId>jcl-over-slf4j</artifactId>
+    	<version>${slf4j.version}</version>
+    	<scope>runtime</scope>
     </dependency>
   </dependencies>
 
