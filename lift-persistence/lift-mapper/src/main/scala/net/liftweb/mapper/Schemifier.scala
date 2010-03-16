@@ -19,8 +19,8 @@ package mapper {
 
 import _root_.java.sql.{Connection, ResultSet, DatabaseMetaData}
 import _root_.scala.collection.mutable.{HashMap, ListBuffer}
-import _root_.net.liftweb.common.{Full, Box}
-import _root_.net.liftweb.util.{Helpers, Log}
+import _root_.net.liftweb.common.{Full, Box, Loggable}
+import _root_.net.liftweb.util.Helpers
 import Helpers._
 
 /**
@@ -32,9 +32,22 @@ import Helpers._
  * <li>Create the foreign keys</li>
  * </ul>
  */
-object Schemifier {
+object Schemifier extends Loggable {
   implicit def superToRegConnection(sc: SuperConnection): Connection = sc.connection
 
+  /**
+   * Convenience function to be passed to schemify. Will log executed statements at the info level
+   * using Schemifier's logger
+   * 
+   */
+  def infoF(msg: => AnyRef) = logger.info(msg)
+ 
+  /**
+   * Convenience function to be passed to schemify. Will not log any executed statements 
+   */ 
+  def neverF(msg: => AnyRef) = {}
+  
+ 
   def schemify(performWrite: Boolean, logFunc: (=> AnyRef) => Unit, stables: BaseMetaMapper*): List[String] = schemify(performWrite, logFunc, DefaultConnectionIdentifier, stables :_*)
 
   case class Collector(funcs: List[() => Any], cmds: List[String]) {
@@ -272,7 +285,7 @@ object Schemifier {
         case i: net.liftweb.mapper.Index[_] => "CREATE INDEX " + standardCreationStatement
         case i: UniqueIndex[_] => "CREATE UNIQUE INDEX " + standardCreationStatement
         case GenericIndex(createFunc, _, _) => createFunc(table._dbTableNameLC, columns.map(_.field._dbColumnNameLC))
-        case _ => Log.error("Invalid index: " + index); ""
+        case _ => logger.error("Invalid index: " + index); ""
       }
 
       val fn = columns.map(_.field._dbColumnNameLC.toLowerCase).sort(_ < _)
