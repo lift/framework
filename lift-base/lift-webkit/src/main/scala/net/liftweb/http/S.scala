@@ -598,7 +598,16 @@ object S extends HasParams {
     _resBundle.box match {
       case Full(Nil) => {
         _resBundle.set(LiftRules.resourceNames.flatMap(name => tryo{
-              if (Props.devMode) {ResourceBundle.clearCache}
+              if (Props.devMode) {
+                tryo{
+                  val clz = this.getClass.getClassLoader.loadClass("java.util.ResourceBundle")
+                  val meth = clz.getDeclaredMethods.
+                  filter{m => m.getName == "clearCache" && m.getParameterTypes.length == 0}.
+                  toList.head
+                
+                  meth.invoke(null)
+                }
+              }
           List(ResourceBundle.getBundle(name, locale))
         }.openOr(
           NamedPF.applyBox((name, locale), LiftRules.resourceBundleFactories.toList).map(List(_)) openOr Nil
