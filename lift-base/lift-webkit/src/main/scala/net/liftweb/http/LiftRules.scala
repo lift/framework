@@ -534,7 +534,7 @@ object LiftRules extends Factory with FormVendor {
   def defaultLocaleCalculator(request: Box[HTTPRequest]) =
     request.flatMap(_.locale).openOr(Locale.getDefault())
 
-  @volatile var resourceBundleFactories = RulesSeq[ResourceBundleFactoryPF]
+  val resourceBundleFactories = RulesSeq[ResourceBundleFactoryPF]
 
   /**
    * Used for Comet handling to resume a continuation

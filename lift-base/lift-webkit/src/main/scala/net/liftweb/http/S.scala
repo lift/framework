@@ -597,9 +597,10 @@ object S extends HasParams {
   def resourceBundles: List[ResourceBundle] = {
     _resBundle.box match {
       case Full(Nil) => {
-        _resBundle.set(LiftRules.resourceNames.flatMap(name => tryo(
+        _resBundle.set(LiftRules.resourceNames.flatMap(name => tryo{
+              if (Props.devMode) {ResourceBundle.clearCache}
           List(ResourceBundle.getBundle(name, locale))
-          ).openOr(
+        }.openOr(
           NamedPF.applyBox((name, locale), LiftRules.resourceBundleFactories.toList).map(List(_)) openOr Nil
           )))
         _resBundle.value
