@@ -78,7 +78,7 @@ object Xml {
    * </pre>
    */
   def toJson(xml: NodeSeq): JValue = {
-    def empty_?(node: Node) = /*node.attributes.length == 0 &&*/ node.child.isEmpty
+    def empty_?(node: Node) = node.child.isEmpty
 
     /* Checks if given node is leaf element. For instance these are considered leafs:
      * <foo>bar</foo>, <foo>{ doSomething() }</foo>, etc.
@@ -89,7 +89,7 @@ object Xml {
         case _ => n.child.toList.flatMap { x => x :: descendant(x) }
       }
 
-      /*node.attributes.length == 0 &&*/ !descendant(node).find(_.isInstanceOf[Elem]).isDefined
+      !descendant(node).find(_.isInstanceOf[Elem]).isDefined
     }
 
     def array_?(nodeNames: Seq[String]) = nodeNames.size != 1 && nodeNames.toList.removeDuplicates.size == 1
@@ -104,7 +104,7 @@ object Xml {
 
     def build(root: NodeSeq, rootName: Option[String], argStack: List[JValue]): List[JValue] = root match {
       case n: Node =>
-        if (empty_?(n)) JField(nameOf(n), JNull) :: argStack
+        if (empty_?(n)) argStack
         else if (leaf_?(n)) makeField(nameOf(n), n.text) :: argStack
         else {
           val obj = makeObj(nameOf(n), buildAttrs(n) ::: build(directChildren(n), Some(nameOf(n)), Nil))
