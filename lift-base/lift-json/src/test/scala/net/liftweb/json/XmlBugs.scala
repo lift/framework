@@ -47,6 +47,16 @@ object XmlBugs extends Specification {
     Printer.compact(render(toJson(example1))) mustEqual expected1
     Printer.compact(render(toJson(example2))) mustEqual expected2
   }
+
+  "Nodes with attributes converted to correct JSON" in {
+    val xml =
+      <root>
+        <n id="10" x="abc" />
+        <n id="11" x="bcd" />
+      </root>
+    val expected = """{"root":{"n":[{"n":null,"x":"abc","id":"10"},{"n":null,"x":"bcd","id":"11"}]}}"""
+    Printer.compact(render(toJson(xml))) mustEqual expected
+  }
 }
 
 }
