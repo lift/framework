@@ -61,6 +61,8 @@ object HtmlEntities {
 
   val entMap: Map[String, Char] = Map.empty ++ entList.map{ case (name, value) => (name, value.toChar)}
 
+  val revMap: Map[Char, String] = Map(entList.map{ case (name, value) => (value.toChar, name)} :_*)
+
   val entities = entList.map{case (name, value) => (name, new ParsedEntityDecl(name, new IntDef(value.toChar.toString)))}
 
   def apply() = entities
@@ -247,7 +249,7 @@ object AltXML {
   def toXML(x: Node, pscope: NamespaceBinding, sb: StringBuilder,
             stripComment: Boolean, convertAmp: Boolean): Unit =
   x match {
-    case Text(str) => escape(str, sb)
+    case Text(str) => escape(str, sb, !convertAmp)
 
     case c: PCData => c.toString(sb)
 
@@ -256,7 +258,7 @@ object AltXML {
     case up: Unparsed => up.toString(sb)
 
     case a: Atom[_] if a.getClass eq classOf[Atom[_]] =>
-      escape(a.data.toString, sb)
+      escape(a.data.toString, sb, !convertAmp)
 
     case c: Comment if !stripComment =>
       c.toString(sb)
@@ -296,7 +298,7 @@ object AltXML {
     case _ => // dunno what it is, but ignore it
   }
 
-  private def escape(str: String, sb: StringBuilder) {
+  private def escape(str: String, sb: StringBuilder, reverse: Boolean) {
     val len = str.length
     var pos = 0
     while (pos < len) {
@@ -308,7 +310,18 @@ object AltXML {
         case '\n' => sb.append('\n')
         case '\r' => sb.append('\r')
         case '\t' => sb.append('\t')
-        case c   => if (c >= ' ' && c != '\u0085' && !(c >= '\u007f' && c <= '\u0095')) sb.append(c)
+        case c   => 
+          if (reverse) {
+            HtmlEntities.revMap.get(c) match {
+              case Some(str) =>
+                sb.append('&')
+                sb.append(str)
+                sb.append(';')
+              case _ => 
+                if (c >= ' ' && c != '\u0085' && !(c >= '\u007f' && c <= '\u0095')) sb.append(c)
+            }
+          } else
+          if (c >= ' ' && c != '\u0085' && !(c >= '\u007f' && c <= '\u0095')) sb.append(c)
       }
 
       pos += 1
@@ -327,7 +340,7 @@ object AltXML {
             stripComment: Boolean, convertAmp: Boolean,
             ieMode: Boolean): Unit =
   x match {
-    case Text(str) => escape(str, sb)
+    case Text(str) => escape(str, sb, !convertAmp)
 
     case c: PCData => c.toString(sb)
 
@@ -336,7 +349,7 @@ object AltXML {
     case up: Unparsed => up.toString(sb)
 
     case a: Atom[_] if a.getClass eq classOf[Atom[_]] =>
-      escape(a.data.toString, sb)
+      escape(a.data.toString, sb, !convertAmp)
       
     case c: Comment if !stripComment =>
       c.toString(sb)
