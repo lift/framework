@@ -1710,7 +1710,7 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
     override protected def __nameSalt = Helpers.randomString(20)
   }
 
-  def unapply(key: Any): Box[A] = {
+  def unapply(key: Any): Option[A] = {
     if (S.inStatefulScope_?) unapplyMemo(key, this.find(key))
     else this.find(key)
   }
