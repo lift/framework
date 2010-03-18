@@ -57,9 +57,15 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
 
   def dbFieldClass = classOf[String]
 
-  final def crop(in: String): String = in.substring(0, Math.min(in.length, maxLen))
+  final def crop(in: String): String = in match {
+    case null => null
+    case s => s.substring(0, Math.min(s.length, maxLen))
+  }
 
-  final def removeRegExChars(regEx: String)(in: String): String = in.replaceAll(regEx, "")
+  final def removeRegExChars(regEx: String)(in: String): String = in match {
+    case null => null
+    case s => s.replaceAll(regEx, "")
+  }
 
   final def toLower(in: String): String = in match {
     case null => null
