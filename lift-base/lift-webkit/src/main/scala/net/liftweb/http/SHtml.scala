@@ -672,7 +672,7 @@ object SHtml {
 
 
   private[http] def appendFuncToURL(url: String, funcStr: String): String =
-  splitAtHash(url){to => (if (to.indexOf("?") >= 0) "&" else "?") + funcStr}
+  splitAtHash(url){to => to + (if (to.indexOf("?") >= 0) "&" else "?") + funcStr}
 
   private def splitAtHash(str: String)(f: String => String): String =
   str.indexOf("#") match {
