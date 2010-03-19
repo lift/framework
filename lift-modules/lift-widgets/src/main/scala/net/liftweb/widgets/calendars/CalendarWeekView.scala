@@ -100,7 +100,7 @@ class CalendarWeekView(val when: Calendar, val meta: WeekViewMeta) {
     <head>
       <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath + "/calendars/weekview/style.css"} type="text/css"/>
       <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.dimensions.js"}></script>
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/calendars/weekview/weekviewcalendars.js"}></script>
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/calendars/js/calendarviews.js"}></script>
       <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.bgiframe.js"}></script>
       <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.tooltip.js"}></script>
       <script type="text/javascript" charset="utf-8">{
