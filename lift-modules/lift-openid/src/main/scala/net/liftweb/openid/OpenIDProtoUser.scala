@@ -34,21 +34,74 @@ import _root_.org.openid4java.discovery.Identifier;
 trait MetaOpenIDProtoUser[ModelType <: OpenIDProtoUser[ModelType]] extends MetaMegaProtoUser[ModelType] {
   self: ModelType =>
 
+  private val logger = Logger(classOf[MetaOpenIDProtoUser[ModelType]])
+  import logger._
+  
   override def signupFields: List[BaseOwnedMappedField[ModelType]] = nickname ::
   firstName :: lastName :: locale :: timezone :: Nil
 
   override def fieldOrder: List[BaseOwnedMappedField[ModelType]] = nickname ::
   firstName :: lastName :: locale :: timezone :: Nil
 
-  def findOrCreate(openId: String): ModelType =
-  find(By(this.openId, openId)) match {
-    case Full(u) => u
-    case _ =>
-      self.create.openId(openId).
-      nickname("change"+Helpers.randomInt(1000000000)).firstName("Unknown").
+  /**
+   * Create a new user with the specified openId
+   * The default implementation tries to extract attributes from
+   * the VerificationReuslt, but not all providers supply this information (most notably Yahoo)
+   * 
+   * Override this method to change how a new user should be created
+   */
+  def createNewUser(openId: String, result: Box[VerificationResult]): ModelType = {
+    logger.debug("Creating new user for openId: %s".format(openId))
+  
+    val u = self.create.openId(openId)
+    
+    // Set default values
+    u.nickname("change"+Helpers.randomInt(1000000000)).firstName("Unknown").
       lastName("Unknown").password(Helpers.randomString(15)).
-      email(Helpers.randomInt(100000000)+"unknown@unknown.com").
-      saveMe
+      email(Helpers.randomInt(100000000)+"unknown@unknown.com")
+    
+    // Try to extract parameters from response
+    result foreach {res => 
+      import WellKnownAttributes._
+      
+      val attrs = WellKnownAttributes.attributeValues(res.getAuthResponse)
+      
+      attrs.get(Email) map {e => u.email(trace("Extracted email",e))}
+      
+      self.findAll(By(email, u.email.is)) map {existing =>
+        info("Cannot register new user, email %s already exists with openId ".format(existing.email.is,existing.openId.is))
+        S.error("A user with email %s already exists with a different OpenID.".format(u.email.is))
+        S.redirectTo(homePage)
+      }
+      
+      attrs.get(Nickname) map {nick => u.nickname(trace("Extracted nickname",nick))}
+      
+      // Try to construct first/last from fullname
+      val (first, last) = attrs.get(FullName) map {full => 
+        trace("Calculated first/lastname",full.trim.lastIndexOf(' ') match {
+          case -1 => (Some(full), None)
+          case n => (Some(full.substring(0,n)), Some(full.substring(n+1)))
+        })
+      } getOrElse ((None, None))
+      
+      attrs.get(FirstName) orElse first map {f => u.firstName(trace("Extracted firstName",f)) }
+      attrs.get(LastName) orElse last map {l => u.lastName(trace("Extracted lastName",l)) }
+      attrs.get(TimeZone)  map {tz => u.timezone(trace("Extracted timeZone",tz)) }
+    }
+    u
+  }
+
+  /**
+   * Called on successfull login
+   */
+  def findOrCreate(openId: String, result: Box[VerificationResult]): ModelType = find(By(this.openId, openId)) match {
+    case Full(u) =>
+      logger.debug("Found existing user for openId:%s, user:%s".format(openId,u))
+      u
+    case _ =>
+      val u = createNewUser(openId, result)
+      logger.debug("Saving new user for openId:%s, user:%s".format(openId,u))
+      u.saveMe
   }
 
   // no need for these menu items with OpenID
@@ -71,7 +124,7 @@ trait MetaOpenIDProtoUser[ModelType <: OpenIDProtoUser[ModelType]] extends MetaM
    * The menu item for changing password (make this "Empty" to disable)
    */
   override def changePasswordMenuLoc: Box[Menu] = Empty
-
+  
   /**
    * The menu item for validating a user (make this "Empty" to disable)
    */
@@ -94,39 +147,52 @@ trait MetaOpenIDProtoUser[ModelType <: OpenIDProtoUser[ModelType]] extends MetaM
 
   def openIDVendor: OpenIDVendor
 
-  override def login = {
-    if (S.post_?) {
-      S.param("username").
-      foreach(username =>
-              openIDVendor.loginAndRedirect(username, performLogUserIn)
-      )
-    }
-
-    def performLogUserIn(openid: Box[Identifier], fo: Box[VerificationResult], exp: Box[Exception]): LiftResponse = {
+  def performLogUserIn(openid: Box[Identifier], fo: Box[VerificationResult], exp: Box[Exception]): LiftResponse = {
       (openid, exp) match {
         case (Full(id), _) =>
-          val user = self.findOrCreate(id.getIdentifier)
+          val user = self.findOrCreate(id.getIdentifier, fo)
           logUserIn(user)
           S.notice(S.??("Welcome ")+user.niceName)
 
         case (_, Full(exp)) =>
+          warn("Got an exception", exp)
           S.error("Got an exception: "+exp.getMessage)
 
 
         case _ =>
+          warn("Unable to login using OpenID")
           S.error("Unable to log you in: "+fo)
       }
 
-      RedirectResponse("/")
+      val redir = loginRedirect.is match {
+        case Full(url) =>
+          loginRedirect(Empty)
+          url
+        case _ =>
+          homePage
+      }
+    
+      info("OpenID login complete, redirecting to: %s".format(redir))      
+      RedirectResponse(redir)
     }
 
+  override def login = {
+    if (S.post_?) {
+      debug("Processing OpenID login request:"+S.request)
+      S.param(openIDVendor.PostParamName).
+      foreach(username => {
+        logger.debug("Trying to do OpenID login for user:"+username)
+        openIDVendor.loginAndRedirect(username, performLogUserIn)
+      })
+    }
+
+
     Helpers.bind("user", loginXhtml,
-                 "openid" -> (FocusOnLoad(<input type="text" name="username"/>)),
+                 "openid" -> (FocusOnLoad(<input type="text" name={openIDVendor.PostParamName}/>)),
                  "submit" -> (<input type="submit" value={S.??("log.in")}/>))
   }
 
-  private[openid] def findByNickname(str: String): List[ModelType] =
-  findAll(By(nickname, str))
+  private[openid] def findByNickname(str: String): List[ModelType] = findAll(By(nickname, str))
 }
 
 object ValidNickName {
@@ -158,7 +224,6 @@ trait OpenIDProtoUser[T <: OpenIDProtoUser[T]] extends MegaProtoUser[T] {
 
     private def validateNickname(str: String): List[FieldError] = {
       val others = getSingleton.findByNickname(str).
-      // getSingleton.findAll(By(getSingleton.nickname, str)).
       filter(_.id.is != fieldOwner.id.is)
       others.map(u => FieldError(this, <xml:group>Duplicate nickname: {str}</xml:group>))
     }
