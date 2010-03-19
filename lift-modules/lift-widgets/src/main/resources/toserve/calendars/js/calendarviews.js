@@ -145,6 +145,13 @@
 		for (i = 0; i < items.length; i++) {
 			buildItem(items[i], $("#month_"+items[i].month+"_day_"+items[i].dayOfMonth));
 		}
+		
+		jQuery('.calendarItem').bind('click',function(e){
+			itemClick(this,jQuery(this).attr('id'));
+			e.stopPropagation();
+		});
+		
+		
 	};
 	calendarMonthView.buildMonthViewCalendars = function(items){ calendarMonthView.buildView(items); };
 	

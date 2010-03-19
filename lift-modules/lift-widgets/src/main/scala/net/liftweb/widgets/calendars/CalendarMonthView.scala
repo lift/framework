@@ -217,15 +217,6 @@ class CalendarMonthView(val when: Calendar, val meta: MonthViewMeta) {
               weekClick(this, jQuery(this).attr('wk'));
             });
             
-            jQuery('.calendarItem').live('click',function(e){
-              itemClick(this,jQuery(this).attr('id'));
-              e.stopPropagation();
-            });
-            jQuery('.calendarItem').tooltip({
-              track: true,
-              delay: 0,
-              showURL: false
-            });
           })
          """)))}
       </head>
