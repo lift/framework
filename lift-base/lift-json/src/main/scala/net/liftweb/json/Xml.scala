@@ -113,11 +113,14 @@ object Xml {
       case XArray(elems) => JArray(elems.map(toJValue))
     }
 
-    // FIXME cleanup cast + add comment
     def mkFields(xs: List[(String, XElem)]) = 
-      xs.flatMap { case (name, value) => value match {
-        case XLeaf(v, x :: xs) => toJValue(value).asInstanceOf[JObject].obj
-        case _ => JField(name, toJValue(value)) :: Nil }}
+      xs.flatMap { case (name, value) => (value, toJValue(value)) match {
+        // This special case is needed to flatten nested objects which resulted from
+        // XML attributes. Flattening keeps transformation more predicatable.  
+        // <a><foo id="1">x</foo></a> -> {"a":{"foo":{"foo":"x","id":"1"}}} vs
+        // <a><foo id="1">x</foo></a> -> {"a":{"foo":"x","id":"1"}}
+        case (XLeaf(v, x :: xs), o: JObject) => o.obj
+        case (_, json) => JField(name, json) :: Nil }}
 
     def buildNodes(xml: NodeSeq): List[XElem] = xml match {
       case n: Node =>
