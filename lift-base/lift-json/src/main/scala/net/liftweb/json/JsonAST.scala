@@ -386,6 +386,7 @@ trait Implicits {
   implicit def long2jvalue(x: Long) = JInt(x)
   implicit def bigint2jvalue(x: BigInt) = JInt(x)
   implicit def double2jvalue(x: Double) = JDouble(x)
+  implicit def float2jvalue(x: Float) = JDouble(x)
   implicit def bigdecimal2jvalue(x: BigDecimal) = JDouble(x.doubleValue)
   implicit def boolean2jvalue(x: Boolean) = JBool(x)
   implicit def string2jvalue(x: String) = JString(x)
