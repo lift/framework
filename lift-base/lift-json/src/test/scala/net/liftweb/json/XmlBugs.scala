@@ -42,7 +42,7 @@ object XmlBugs extends Specification {
     val expected1 = """{"word":"content","self":"http://localhost:8080/word/example","term":"example","available":"true"}"""
 
     val example2 = <word term="example" self="http://localhost:8080/word/example" available="true"></word>
-    val expected2 = """{"self":"http://localhost:8080/word/example","term":"example","available":"true"}"""
+    val expected2 = """{"word":"","self":"http://localhost:8080/word/example","term":"example","available":"true"}"""
 
     Printer.compact(render(toJson(example1))) mustEqual expected1
     Printer.compact(render(toJson(example2))) mustEqual expected2
@@ -54,7 +54,7 @@ object XmlBugs extends Specification {
         <n id="10" x="abc" />
         <n id="11" x="bcd" />
       </root>
-    val expected = """{"root":{"n":[{"x":"abc","id":"10"},{"x":"bcd","id":"11"}]}}"""
+    val expected = """{"root":{"n":[{"n":"","x":"abc","id":"10"},{"n":"","x":"bcd","id":"11"}]}}"""
     Printer.compact(render(toJson(xml))) mustEqual expected
   }
 }
