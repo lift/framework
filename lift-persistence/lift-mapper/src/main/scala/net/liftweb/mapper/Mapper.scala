@@ -321,6 +321,36 @@ trait IdPK /* extends BaseLongKeyedMapper */ {
   object id extends MappedLongIndex[MapperType](this.asInstanceOf[MapperType])
 }
 
+/**
+* Mix this trait into your Mapper instance to get createdAt and updatedAt fields.
+*/
+trait CreatedUpdated {
+  self: BaseMapper =>
+
+  import _root_.net.liftweb.util._
+
+  /**
+   * Override this method to index the createdAt field
+   */
+  protected def createdAtIndexed_? = false
+
+  /**
+   * Override this method to index the updatedAt field
+   */
+  protected def updatedAtIndexed_? = false
+
+  object createdAt extends MappedDateTime[MapperType](this.asInstanceOf[MapperType]) {
+    override def defaultValue = Helpers.now
+    override def dbIndexed_? = createdAtIndexed_?
+  }
+
+  object updatedAt extends MappedDateTime[MapperType](this.asInstanceOf[MapperType]) with LifecycleCallbacks {
+    override def beforeSave() {super.beforeSave; this.set(Helpers.now)}
+    override def defaultValue = Helpers.now
+       override def dbIndexed_? = updatedAtIndexed_?
+  }
+}
+
 trait KeyedMapper[KeyType, OwnerType<:KeyedMapper[KeyType, OwnerType]] extends Mapper[OwnerType] with BaseKeyedMapper {
   self: OwnerType =>
 
