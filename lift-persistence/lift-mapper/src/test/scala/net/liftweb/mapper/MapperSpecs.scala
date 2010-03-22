@@ -92,10 +92,10 @@ object MapperSpecs extends Specification {
   providers.foreach(provider => {
       def cleanup() {
         try { provider.setupDB } catch { case e if !provider.required_? => skip("Provider %s not available: %s".format(provider, e)) }
-        Schemifier.destroyTables_!!(DefaultConnectionIdentifier, if (doLog) Log.infoF _ else ignoreLogger _,  SampleTag, SampleModel, Dog, Mixer, Dog2, User)
-        Schemifier.destroyTables_!!(DBProviders.SnakeConnectionIdentifier, if (doLog) Log.infoF _ else ignoreLogger _, SampleTagSnake, SampleModelSnake)
-        Schemifier.schemify(true, if (doLog) Log.infoF _ else ignoreLogger _, DefaultConnectionIdentifier, SampleModel, SampleTag, User, Dog, Mixer, Dog2)
-        Schemifier.schemify(true, if (doLog) Log.infoF _ else ignoreLogger _, DBProviders.SnakeConnectionIdentifier, SampleModelSnake, SampleTagSnake)
+        Schemifier.destroyTables_!!(DefaultConnectionIdentifier, if (doLog) Schemifier.infoF _ else ignoreLogger _,  SampleTag, SampleModel, Dog, Mixer, Dog2, User)
+        Schemifier.destroyTables_!!(DBProviders.SnakeConnectionIdentifier, if (doLog) Schemifier.infoF _ else ignoreLogger _, SampleTagSnake, SampleModelSnake)
+        Schemifier.schemify(true, if (doLog) Schemifier.infoF _ else ignoreLogger _, DefaultConnectionIdentifier, SampleModel, SampleTag, User, Dog, Mixer, Dog2)
+        Schemifier.schemify(true, if (doLog) Schemifier.infoF _ else ignoreLogger _, DBProviders.SnakeConnectionIdentifier, SampleModelSnake, SampleTagSnake)
       }
 
       ("Mapper for " + provider.name) should {

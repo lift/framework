@@ -60,7 +60,9 @@ object CalendarUtils {
         ("end", c.end map(c => JsRaw(endIndex toString)) openOr JsRaw("48")) ::
         ("weekDay", Str(weekDay(c start) toString)) ::
         ("startTime", Str(timeFormatter.format(c.start getTime))) ::
-        ("subject", Str(c.subject openOr "")) :: Nil
+        ("subject", Str(c.subject openOr "")) :: 
+        ("month", JsRaw( c.start.get(MONTH) toString )) :: 
+        ("dayOfMonth", JsRaw( dayOfMonth(c start) toString )) :: Nil
 
       items = c.description map(desc => items ++ (("description", Str(desc)) :: Nil) ) openOr items
       items = c.baseCSSClassName map(name => items ++ (("cssClass", Str(name)) :: Nil) ) openOr items
@@ -71,9 +73,8 @@ object CalendarUtils {
     }):_*)))
   }
 
-  def weekDay(cal: Calendar) = {
-    cal get (DAY_OF_WEEK)
-  }
+  def dayOfMonth(cal: Calendar) = cal get (DAY_OF_MONTH)
+  def weekDay(cal: Calendar) = cal get (DAY_OF_WEEK)
 
   def sameDay(c1: Calendar, c2: Calendar) = (c1.get(DAY_OF_MONTH) == c2.get(DAY_OF_MONTH)) &&
                                              (c1.get(MONTH) == c2.get(MONTH)) &&

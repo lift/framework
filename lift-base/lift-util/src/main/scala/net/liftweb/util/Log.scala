@@ -80,6 +80,8 @@ object LoggingAutoConfigurer {
 
 /**
  * A thin wrapper around log4j.
+ * 
+ * @deprecated Use net.liftweb.common.Logger
  */
 @deprecated object Log extends LiftLogger {
   lazy val rootLogger: LiftLogger = LogBoot.loggerByName("lift")
@@ -111,6 +113,9 @@ object LoggingAutoConfigurer {
 
   @deprecated override def isInfoEnabled = rootLogger.isInfoEnabled
   @deprecated override def info(msg: => AnyRef) = rootLogger.info(msg)
+  /**
+   * @deprecated Use Schemifier.infoF
+   */
   @deprecated def infoF(msg: => AnyRef) = info(msg)
   @deprecated override def info(msg: => AnyRef, t: => Throwable) = rootLogger.info(msg, t)
 
@@ -123,6 +128,10 @@ object LoggingAutoConfigurer {
   @deprecated override def warn(msg: => AnyRef, t: => Throwable) = rootLogger.warn(msg, t)
 
   @deprecated def never(msg: => AnyRef) {}
+  
+  /**
+   * @deprecated Use Schemifier.neverF
+   */
   @deprecated def neverF(msg: => AnyRef) {}
   @deprecated def never(msg: => AnyRef, t: => Throwable) {}
 
@@ -213,7 +222,9 @@ object LoggingAutoConfigurer {
 @deprecated object NullLogger extends LiftLogger {
 
 }
-
+/**
+ * @deprecated Use net.liftweb.common.Logger
+ */
 @deprecated trait LiftLogger {
   def isTraceEnabled: Boolean = false
   def trace(msg: => AnyRef): Unit = ()
