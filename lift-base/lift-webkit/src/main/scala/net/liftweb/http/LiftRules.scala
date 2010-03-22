@@ -554,14 +554,73 @@ object LiftRules extends Factory with FormVendor {
 
   private var _sitemap: Box[SiteMap] = Empty
 
-  def setSiteMap(sm: SiteMap) {
-    _sitemap = Full(sm)
-    for (menu <- sm.menus;
-         val loc = menu.loc;
-         rewrite <- loc.rewritePF) LiftRules.statefulRewrite.append(rewrite)
+  private var sitemapFunc: Box[() => SiteMap] = Empty
+
+  private object sitemapRequestVar extends RequestVar(resolveSitemap())
+
+  /**
+  * Set the sitemap to a function that will be run to generate the sitemap.
+  *
+  * This allows for changing the SiteMap when in development mode and having
+  * the function re-run for each request.
+  */
+  def setSiteMapFunc(smf: () => SiteMap) {
+    sitemapFunc = Full(smf)
+    if (!Props.devMode) {
+      resolveSitemap()
+    }
   }
 
-  def siteMap: Box[SiteMap] = _sitemap
+  /**
+  * Define the sitemap.
+  */
+  def setSiteMap(sm: => SiteMap) {
+    this.setSiteMapFunc(() => sm)
+  }
+
+  private def runAsSafe[T](f: => T): T = synchronized {
+     val old = LiftRules.doneBoot
+     try {
+        LiftRules.doneBoot = false
+        f
+     } finally {
+        LiftRules.doneBoot = old
+     }
+  }
+
+  private case class PerRequestPF[A, B](f: PartialFunction[A, B]) extends PartialFunction[A, B] {
+    def isDefinedAt(a: A) = f.isDefinedAt(a)
+    def apply(a: A) = f(a)
+  }
+
+  private def resolveSitemap(): Box[SiteMap] = {
+    this.synchronized {
+      runAsSafe {
+        sitemapFunc.flatMap {
+          smf =>
+
+          LiftRules.statefulRewrite.remove {
+            case PerRequestPF(_) => true
+            case _ => false
+          }
+
+          val sm = smf()
+          _sitemap = Full(sm)
+          for (menu <- sm.menus;
+               val loc = menu.loc;
+               rewrite <- loc.rewritePF) LiftRules.statefulRewrite.append(PerRequestPF(rewrite))
+
+          _sitemap
+        }
+      }
+    }
+  }
+
+  def siteMap: Box[SiteMap] = if (Props.devMode) {
+    this.synchronized {
+      sitemapRequestVar.is
+    }
+  } else _sitemap
 
   /**
    * How long should we wait for all the lazy snippets to render
@@ -1321,6 +1380,12 @@ trait RulesSeq[T] {
       rules = r :: rules
     }
     this
+  }
+
+  private[http] def remove(f: T => Boolean) {
+    safe_? {
+      rules = rules.remove(f)
+    }
   }
 
   def append(r: T): RulesSeq[T] = {
