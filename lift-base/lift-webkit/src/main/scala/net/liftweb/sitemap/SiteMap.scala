@@ -31,6 +31,8 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
 
   private var locs: Map[String, Loc[_]] = Map.empty
 
+  private var locPath: Set[List[String]] = Set()
+
   kids.foreach(_._parent = Full(this))
   kids.foreach(_.init(this))
   kids.foreach(_.validate)
@@ -41,6 +43,11 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
     throw new SiteMapException("Location "+name+" defined twice "+
                                locs(name)+" and "+in)
     else locs = locs + (name -> in.asInstanceOf[Loc[_]])
+
+    if (locPath.contains(in.link.uriList)) throw new SiteMapException("Location "+name+" defines a duplicate link "+
+                                                                      in.link.uriList)
+    
+    locPath += in.link.uriList
   }
 
   def globalParams: List[Loc.AnyLocParam] = {
