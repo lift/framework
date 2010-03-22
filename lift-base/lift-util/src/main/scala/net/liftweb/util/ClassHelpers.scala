@@ -51,10 +51,10 @@ trait ClassHelpers { self: ControlHelpers =>
    */
   def findClass[C <: AnyRef](name: String, where: List[String], modifiers: List[Function1[String, String]], targetType: Class[C]): Box[Class[C]] =
   (for (
-      place <- where;
-      mod <- modifiers;
+      place <- where.view;
+      mod <- modifiers.view;
       val fullName = place + "." + mod(name);
-      val ignore = List(classOf[ClassNotFoundException], classOf[ClassCastException]);
+      val ignore = List(classOf[ClassNotFoundException], classOf[ClassCastException], classOf[NoClassDefFoundError]);
       klass <- tryo(ignore)(Class.forName(fullName).asSubclass(targetType).asInstanceOf[Class[C]])
     ) yield klass).headOption
 
