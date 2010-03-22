@@ -54,7 +54,7 @@ trait ClassHelpers { self: ControlHelpers =>
       place <- where.projection;
       mod <- modifiers.projection;
       val fullName = place + "." + mod(name);
-      val ignore = List(classOf[ClassNotFoundException], classOf[ClassCastException]);
+      val ignore = List(classOf[ClassNotFoundException], classOf[ClassCastException], classOf[NoClassDefFoundError]);
       klass <- tryo(ignore)(Class.forName(fullName).asSubclass(targetType).asInstanceOf[Class[C]])
     ) yield klass).firstOption
 
