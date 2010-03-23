@@ -48,9 +48,20 @@ class LiftServlet {
   def destroy = {
     try {
       LiftRules.ending = true
+
+      tryo{SessionMaster.shutDownAllSessions()}
+
+      val cur = millis
+
+      // wait 10 seconds or until the request count is zero
+      while (LiftRules.reqCnt.get > 0 && (millis - cur) < 10000L) {
+        Thread.sleep(20)
+      }
+
+      tryo{ActorPing.shutdown}
+      tryo{LAScheduler.shutdown()}
+
       LiftRules.runUnloadHooks()
-      ActorPing.shutdown
-      LAScheduler.shutdown
       Log.debug("Destroyed Lift handler.")
       // super.destroy
     } catch {
@@ -173,9 +184,11 @@ class LiftServlet {
       } else {
       // otherwise do a stateful response
       val liftSession = getLiftSession(req)
-      S.init(req, liftSession) {
-        dispatchStatefulRequest(S.request.open_!, liftSession)
+      val lzy = S.init(req, liftSession) {
+        dispatchStatefulRequest(S.request.open_!, liftSession, req)
       }
+
+      lzy()
     }
 
     tryo {LiftRules.onEndServicing.toList.foreach(_(req, resp))}
@@ -192,9 +205,8 @@ class LiftServlet {
   }
 
   private def dispatchStatefulRequest(req: Req,
-                                      liftSession: LiftSession):
-  Box[LiftResponse] =
-    {
+                                      liftSession: LiftSession,
+  originalRequest: Req): () => Box[LiftResponse] = {
       val toMatch = req
 
       val dispatch: (Boolean, Box[LiftResponse]) =
@@ -247,25 +259,32 @@ class LiftServlet {
 
       if (LiftRules.enableContainerSessions) req.request.session
 
-      val toTransform: Box[LiftResponse] =
-      if (dispatch._1)
-        {
-          dispatch._2
-        } else if (wp.length == 3 && wp.head == LiftRules.cometPath &&
-              wp(2) == LiftRules.cometScriptName()) {
-        LiftRules.serveCometScript(liftSession, req)
-      } else if ((wp.length >= 1) && wp.head == LiftRules.cometPath) {
-        handleComet(req, liftSession)
-      } else if (wp.length == 2 && wp.head == LiftRules.ajaxPath &&
-              wp(1) == LiftRules.ajaxScriptName()) {
-        LiftRules.serveAjaxScript(liftSession, req)
-      } else if (wp.length >= 1 && wp.head == LiftRules.ajaxPath) {
-        handleAjax(liftSession, req)
-      } else {
-        liftSession.processRequest(req)
-      }
+    implicit def respToFunc(in: Box[LiftResponse]): () => Box[LiftResponse] = {
+      val ret = in.map(LiftRules.performTransform)
+      () => ret
+    }
 
-      toTransform.map(LiftRules.performTransform)
+      val toReturn: () => Box[LiftResponse] =
+      if (dispatch._1) {
+      dispatch._2
+    } else if (wp.length == 3 && wp.head == LiftRules.cometPath &&
+               wp(2) == LiftRules.cometScriptName()) {
+      LiftRules.serveCometScript(liftSession, req)
+    } else if ((wp.length >= 1) && wp.head == LiftRules.cometPath) {
+      handleComet(req, liftSession, originalRequest) match {
+        case Left(x) => x
+        case Right(x) => x
+      }
+    } else if (wp.length == 2 && wp.head == LiftRules.ajaxPath &&
+               wp(1) == LiftRules.ajaxScriptName()) {
+      LiftRules.serveAjaxScript(liftSession, req)
+    } else if (wp.length >= 1 && wp.head == LiftRules.ajaxPath) {
+      handleAjax(liftSession, req)
+    } else {
+      liftSession.processRequest(req)
+    }
+
+      toReturn // .map(LiftRules.performTransform)
     }
 
   private def extractVersion(path: List[String]) {
@@ -378,20 +397,20 @@ class LiftServlet {
     LiftRules.doContinuation(request.request, cometTimeout + 2000L)
   }
 
-  private def handleComet(requestState: Req, sessionActor: LiftSession): Box[LiftResponse] = {
+  private def handleComet(requestState: Req, sessionActor: LiftSession, originalRequest: Req): Either[Box[LiftResponse], () => Box[LiftResponse]] = {
     val actors: List[(LiftCometActor, Long)] =
     requestState.params.toList.flatMap {
       case (name, when) =>
         sessionActor.getAsyncComponent(name).toList.map(c => (c, toLong(when)))
     }
 
-    if (actors.isEmpty) Full(new JsCommands(JsCmds.RedirectTo(LiftRules.noCometSessionPage) :: Nil).toResponse)
+    if (actors.isEmpty) Left(Full(new JsCommands(JsCmds.RedirectTo(LiftRules.noCometSessionPage) :: Nil).toResponse))
     else LiftRules.checkContinuations(requestState.request) match {
       case Some(null) =>
         setupContinuation(requestState, sessionActor, actors)
-        Full(EmptyResponse)
+        Left(Full(EmptyResponse))
       case _ =>
-        handleNonContinuationComet(requestState, sessionActor, actors)
+        Right(handleNonContinuationComet(requestState, sessionActor, actors, originalRequest))
     }
   }
 
@@ -416,7 +435,8 @@ class LiftServlet {
     (new JsCommands(JsCmds.Run(jsUpdateTime) :: jsUpdateStuff)).toResponse
   }
 
-  private def handleNonContinuationComet(request: Req, session: LiftSession, actors: List[(LiftCometActor, Long)]): Box[LiftResponse] = {
+  private def handleNonContinuationComet(request: Req, session: LiftSession, actors: List[(LiftCometActor, Long)],
+  originalRequest: Req): () => Box[LiftResponse] = () => {
     val f = new LAFuture[List[AnswerRender]]
     val cont = new ContinuationActor(request, session, actors,
       answers => f.satisfy(answers))
@@ -429,7 +449,8 @@ class LiftServlet {
       LAPinger.schedule(cont, BreakOut, TimeSpan(cometTimeout))
 
       val ret2 = f.get(cometTimeout) openOr Nil
-      Full(convertAnswersToCometResponse(session, ret2, actors))
+
+      Full(S.init(originalRequest, session) {convertAnswersToCometResponse(session, ret2, actors)})
     } finally {
       session.exitComet(cont)
     }
