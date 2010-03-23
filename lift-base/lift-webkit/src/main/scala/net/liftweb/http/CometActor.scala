@@ -346,15 +346,20 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   /**
   * Override this method to deal with JSON sent from the browser via the sendJson function.  This
   * is based on the Lift JSON package rather than the handleJson stuff based on the older util.JsonParser.  This
-  * is the prefered mechanism.
+  * is the prefered mechanism.  If you use the jsonSend call, you will get a JObject(JField("command", cmd), JField("param", params))
   */
   def receiveJson: PartialFunction[JsonAST.JValue, JsCmd] = Map()
 
   /**
-  *
+  * The JavaScript call that you use to send the data to the server. For example:
+  * &lt;button onclick={jsonSend("Hello", JsRaw("Dude".encJs))}&gt;Click&lt;/button&gt;
   */
   def jsonSend: JsonCall = _sendJson
 
+  /**
+  * The call that packages up the JSON and tosses it to the server.  If you set autoIncludeJsonCode to true,
+  * then this will be included in the stuff sent to the server.
+  */
   def jsonToIncludeInCode: JsCmd = _jsonToIncludeCode
 
   private lazy val (_sendJson, _jsonToIncludeCode) = S.createJsonFunc(Full(_defaultPrefix), onJsonError, receiveJson _)
