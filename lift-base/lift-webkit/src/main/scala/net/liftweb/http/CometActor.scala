@@ -22,6 +22,7 @@ import _root_.net.liftweb.actor._
 import _root_.scala.collection.mutable.{ListBuffer}
 import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.util._
+import _root_.net.liftweb.json._
 import _root_.scala.xml.{NodeSeq, Text, Elem, Unparsed, Node, Group, Null, PrefixedAttribute, UnprefixedAttribute}
 import _root_.scala.collection.immutable.TreeMap
 import _root_.scala.collection.mutable.{HashSet, ListBuffer}
@@ -341,6 +342,27 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   def onJsonError: Box[JsCmd] = Empty
 
   lazy val (jsonCall, jsonInCode) = S.buildJsonFunc(Full(_defaultPrefix), onJsonError, _handleJson)
+  
+  /**
+  * Override this method to deal with JSON sent from the browser via the sendJson function.  This
+  * is based on the Lift JSON package rather than the handleJson stuff based on the older util.JsonParser.  This
+  * is the prefered mechanism.
+  */
+  def receiveJson: PartialFunction[JsonAST.JValue, JsCmd] = Map()
+
+  /**
+  *
+  */
+  def jsonSend: JsonCall = _sendJson
+
+  def jsonToIncludeInCode: JsCmd = _jsonToIncludeCode
+
+  private lazy val (_sendJson, _jsonToIncludeCode) = S.createJsonFunc(Full(_defaultPrefix), onJsonError, receiveJson _)
+
+  /**
+  * Set this method to true to have the Json call code included in the Comet output
+  */
+  def autoIncludeJsonCode: Boolean = false
 
   /**
    * Creates the span element acting as the real estate for commet rendering.
@@ -595,9 +617,9 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     performReRender(false)
   }
 
-  implicit def xmlToXmlOrJsCmd(in: NodeSeq): RenderOut = new RenderOut(Full(in), fixedRender, Empty, Empty, false)
+  implicit def xmlToXmlOrJsCmd(in: NodeSeq): RenderOut = new RenderOut(Full(in), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode) else Empty, Empty, false)
 
-  implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = new RenderOut(Empty, Empty, Full(in), Empty, false)
+  implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = new RenderOut(Empty, Empty, if (autoIncludeJsonCode) Full(in & jsonToIncludeInCode) else Full(in), Empty, false)
 
   implicit def pairToPair(in: (String, Any)): (String, NodeSeq) = (in._1, Text(in._2 match {case null => "null" case s => s.toString}))
 

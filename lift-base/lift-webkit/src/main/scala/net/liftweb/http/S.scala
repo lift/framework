@@ -1787,17 +1787,6 @@ for {
     URLRewriter.rewriteFunc map (_(url)) openOr url
   }
 
-  /**
-   * Build a handler for incoming JSON commands
-   *
-   * @param f - function returning a JsCmds
-   * @return ( JsonCall, JsCmd )
-   */
-  def buildJsonFunc(f: Any => JsCmd): (JsonCall, JsCmd) = buildJsonFunc(Empty, Empty, f)
-
-  def buildJsonFunc(onError: JsCmd, f: Any => JsCmd): (JsonCall, JsCmd) =
-    buildJsonFunc(Empty, Full(onError), f)
-
   private[http] object _formGroup extends TransientRequestVar[Box[Int]](Empty)
   private object formItemNumber extends TransientRequestVar[Int](0)
 
@@ -1832,6 +1821,89 @@ for {
       _formGroup.set(x)
     }
   }
+
+  final case class PFPromoter[A, B](pff: () => PartialFunction[A, B])
+
+  object PFPromoter {
+    implicit def fromPF[A, B](pf: PartialFunction[A, B]): PFPromoter[A, B] = new PFPromoter[A, B](() => pf)
+
+    implicit def fromFunc[A, B](pff: () => PartialFunction[A, B]): PFPromoter[A, B] = new PFPromoter[A, B](pff)
+  }
+
+  import json.JsonAST._
+  /**
+   * Build a handler for incoming JSON commands based on the new Json Parser
+   *
+   * @param f - partial function against a returning a JsCmds
+   *
+   * @return ( JsonCall, JsCmd )
+   */
+  def createJsonFunc(f: PFPromoter[JValue, JsCmd]): (JsonCall, JsCmd) = createJsonFunc(Empty, Empty, f)
+
+  /**
+   * Build a handler for incoming JSON commands based on the new Json Parser
+   *
+   * @param onError -- the JavaScript to execute client-side if the request is not processed by the server
+   * @param f - partial function against a returning a JsCmds
+   *
+   * @return ( JsonCall, JsCmd )
+   */
+  def createJsonFunc(onError: JsCmd, f: PFPromoter[JValue, JsCmd]): (JsonCall, JsCmd) =
+  createJsonFunc(Empty, Full(onError), f)
+
+  /**
+   * Build a handler for incoming JSON commands based on the new Json Parser
+   *
+   * @param name -- the optional name of the command (placed in a comment for testing)
+   * @param onError -- the JavaScript to execute client-side if the request is not processed by the server
+   * @param f - partial function against a returning a JsCmds
+   *
+   * @return ( JsonCall, JsCmd )
+   */
+  def createJsonFunc(name: Box[String], onError: Box[JsCmd], pfp: PFPromoter[JValue, JsCmd]): (JsonCall, JsCmd) = {
+    functionLifespan(true) {
+      val key = formFuncName
+
+      import json._
+
+      def jsonCallback(in: List[String]): JsCmd = {
+        val f = pfp.pff()
+        for {
+          line <- in
+          parsed <- JsonParser.parseOpt(line) if f.isDefinedAt(parsed)
+        } yield f(parsed)}.foldLeft(JsCmds.Noop)(_ & _)
+
+      val onErrorFunc: String =
+      onError.map(f => JsCmds.Run("function onError_" + key + "() {" + f.toJsCmd + """
+  }
+
+   """).toJsCmd) openOr ""
+
+      val onErrorParam = onError.map(f => "onError_" + key) openOr "null"
+
+      val af: AFuncHolder = jsonCallback _
+      addFunctionMap(key, af)
+
+      (JsonCall(key), JsCmds.Run(name.map(n => onErrorFunc +
+                                          "/* JSON Func " + n + " $$ " + key + " */").openOr("") +
+                                 "function " + key + "(obj) {liftAjax.lift_ajaxHandler(" +
+                                 "'" + key + "='+ encodeURIComponent(" +
+                                 LiftRules.jsArtifacts.
+                                 jsonStringify(JE.JsRaw("obj")).
+                                 toJsCmd + "), null," + onErrorParam + ");}"))
+    }
+  }
+
+  /**
+   * Build a handler for incoming JSON commands
+   *
+   * @param f - function returning a JsCmds
+   * @return ( JsonCall, JsCmd )
+   */
+  def buildJsonFunc(f: Any => JsCmd): (JsonCall, JsCmd) = buildJsonFunc(Empty, Empty, f)
+
+  def buildJsonFunc(onError: JsCmd, f: Any => JsCmd): (JsonCall, JsCmd) =
+    buildJsonFunc(Empty, Full(onError), f)
 
   /**
    * Build a handler for incoming JSON commands
