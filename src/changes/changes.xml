@@ -41,6 +41,25 @@
       <action dev="dpp" type="add" issue="434" system="assembla">
 	Ported Testkit and LDAP to the 2.8 branch
       </action>
+      <action dev="dpp" type="add" issue="424" system="assembla">
+	Added an option to SiteMap to not flatten the sitemap when retrieving a group
+      </action>
+      <action dev="dpp" type="add" issue="432" system="assembla">
+	Added a flag to preserver XML scope.  Necessary when you're doing bind on top-level XML
+      </action>
+      <action dev="dpp" type="add" issue="391" system="assembla">
+	Don't cache resource bundles in dev mode
+      </action>
+      <action dev="dpp" type="add" issue="423" system="assembla">
+	Detect and disallow duplicate URIs in SiteMap
+      </action>
+      <action dev="dpp" type="add" issue="274" system="assembla">
+	XML entities preserved
+      </action>
+      <action dev="dpp" type="add" issue="385" system="assembla">
+	Dynamic reloading of sitemap during dev mode
+>>>>>>> origin/master
+      </action>
       <action dev="dridus" type="fix" issue="429" system="assembla">
     fix two bugs with findClass not titlecasing correctly (helloWorld to HelloWorld)
       </action>
