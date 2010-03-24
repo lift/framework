@@ -33,6 +33,7 @@ import _root_.java.util.Locale
 import _root_.java.util.Vector
 import _root_.javax.servlet._
 import _root_.javax.servlet.http._
+import scala.collection.JavaConversions._
 
 /**
  * An example of how to use these mock classes in your unit tests:
@@ -65,9 +66,9 @@ import _root_.javax.servlet.http._
  */
 class MockServletContext(var target: String) extends ServletContext {
   def getInitParameter(f: String) = null
-  def getInitParameterNames = new Vector[AnyRef]().elements
+  def getInitParameterNames: java.util.Enumeration[AnyRef] = new Vector[AnyRef]().elements
   def getAttribute(f: String) = null
-  def getAttributeNames = new Vector[AnyRef]().elements
+  def getAttributeNames: java.util.Enumeration[AnyRef] = new Vector[AnyRef]().elements
   def removeAttribute(name: String) {}
   def setAttribute(name: String, o: Object) {}
   def getContext(path: String) = this
@@ -87,12 +88,12 @@ class MockServletContext(var target: String) extends ServletContext {
     }
   }
 
-  def getResourcePaths(path: String) = null
+  def getResourcePaths(path: String): java.util.Set[Object] = null
   def getServerInfo = null
   def getServlet(name: String) = null
   def getServletContextName = null
-  def getServletNames = new Vector[AnyRef]().elements
-  def getServlets = new Vector[AnyRef]().elements
+  def getServletNames: java.util.Enumeration[_ <: AnyRef] = new Vector[AnyRef]().elements
+  def getServlets: java.util.Enumeration[_ <: AnyRef] = new Vector[AnyRef]().elements
   def log(msg: String, t: Throwable) {
     t.printStackTrace
     log(msg)
@@ -152,8 +153,8 @@ class MockServletOutputStream(os: ByteArrayOutputStream) extends ServletOutputSt
  * @author Steve Jenson (stevej@pobox.com)
  */
 class MockHttpSession extends HttpSession {
-  val values = new _root_.scala.collection.jcl.HashMap[String, Any](new _root_.java.util.HashMap)
-  val attr = new _root_.scala.collection.jcl.HashMap[String, Any](new _root_.java.util.HashMap)
+  private val values: HashMap[String, Object] = new HashMap() 
+  private val attr: HashMap[String, Object] = new HashMap()
   val sessionContext = null
   var maxii = 0
   var servletContext = null
@@ -161,19 +162,19 @@ class MockHttpSession extends HttpSession {
   def isNew = false
   def invalidate {}
   def getValue(key: String) = values.get(key) match {
-    case Some(v) => v.asInstanceOf[Object]
-    case None => Nil
+    case Some(v) => v
+    case None => null
   }
   def removeValue(key: String) = values -= key
-  def putValue(key: String, value: Any) = values += (key -> value)
+  def putValue(key: String, value: Object) = values(key) = value
   def getAttribute(key: String) = attr.get(key) match {
-      case Some(v) => v.asInstanceOf[Object]
-      case None => Nil
+      case Some(v) => v
+      case None => null
     }
   def removeAttribute(key: String) = attr -= key
-  def setAttribute(key: String, value: Any) = attr += (key -> value)
+  def setAttribute(key: String, value: Object) = attr(key) = value
   def getValueNames: Array[String] = values.keySet.toArray
-  def getAttributeNames = new Vector[AnyRef](attr.underlying.keySet).elements
+  def getAttributeNames: java.util.Enumeration[String] = attr.keySet.iterator // new Vector[String](attr.keySet.toArray).elements
   def getSessionContext = sessionContext
   def getMaxInactiveInterval = maxii
   def setMaxInactiveInterval(i: Int) = maxii = i

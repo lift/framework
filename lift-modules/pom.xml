@@ -50,7 +50,7 @@
   -->
   <modules>
     <!--FIXME: 280-->
-    <!--<module>lift-testkit</module>-->
+    <module>lift-testkit</module>
     <!--<module>lift-osgi</module>-->
     <module>lift-wizard</module>
     <module>lift-widgets</module>
@@ -65,7 +65,7 @@
     <module>lift-paypal</module>
     <!--<module>lift-jta</module>-->
     <module>lift-imaging</module>
-    <!-- <module>lift-ldap</module> -->
+    <module>lift-ldap</module>
   </modules>
 
   <!--

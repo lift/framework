@@ -34,6 +34,7 @@ import _root_.java.util.Vector
 import _root_.javax.servlet._
 import _root_.javax.servlet.http._
 import _root_.net.liftweb.util.Helpers
+import scala.collection.JavaConversions._
 
 /**
  * A Mock ServletRequest. Change it's state to to create the request you are
@@ -47,11 +48,9 @@ class MockHttpServletRequest extends HttpServletRequest {
   var contextPath = ""
   var path = ""
   var method = "GET"
-  val headers: _root_.scala.collection.jcl.HashMap[String, String] =
-    new _root_.scala.collection.jcl.HashMap[String, String](new _root_.java.util.HashMap)
-  val attr: _root_.scala.collection.jcl.HashMap[String, Any] =
-    new _root_.scala.collection.jcl.HashMap[String, Any](new _root_.java.util.HashMap)
-  var cookies: List[Cookie] = Nil
+  private val headers: HashMap[String, String] = new HashMap()
+  private val attr: HashMap[String, Object] = new HashMap()
+  private var cookies: List[Cookie] = Nil
   var authType = null
   var localPort = 0
   var localAddr = null
@@ -65,8 +64,7 @@ class MockHttpServletRequest extends HttpServletRequest {
   var serverName = null
   var scheme = "http"
   var protocol = "http 1.0"
-  var parameterMap: _root_.scala.collection.jcl.HashMap[String, String] =
-    new _root_.scala.collection.jcl.HashMap[String, String](new _root_.java.util.HashMap)
+  var parameterMap: HashMap[String, Array[String]] = new HashMap()
   val sbis = new StringBufferInputStream("")
   var inputStream: ServletInputStream = new MockServletInputStream(sbis)
   var contentType = null
@@ -96,11 +94,11 @@ class MockHttpServletRequest extends HttpServletRequest {
   def getIntHeader(h: String): Int = {
     Helpers.toInt(headers(h))
   }
-  def getHeaderNames = {
-    new Vector[AnyRef](headers.underlying.keySet).elements
+  def getHeaderNames: java.util.Enumeration[String] = {
+    new Vector[String](asCollection(headers.keySet)).elements
   }
   def getHeaders = headers
-  def getHeaders(s: String) = {
+  def getHeaders(s: String): java.util.Enumeration[Object] = {
     val v = new Vector[AnyRef]()
     v.add(headers(s))
     v.elements
@@ -113,7 +111,7 @@ class MockHttpServletRequest extends HttpServletRequest {
     Helpers.toLong(headers(h))
   }
   def setDateHeader(s: String, l: Long) {
-    headers += (s -> l.toString)
+    headers(s) = l.toString
   }
   def getCookies = cookies.toArray
   def getAuthType = authType
@@ -125,10 +123,10 @@ class MockHttpServletRequest extends HttpServletRequest {
   def getRequestDispatcher(s: String): RequestDispatcher = null
   def isSecure = false
   type ZZ = Q forSome {type Q}
-  def getLocales = new Vector[ZZ](Arrays.asList(Locale.getAvailableLocales : _*)).elements
+  def getLocales: java.util.Enumeration[Object] = new Vector[Object](Arrays.asList(Locale.getAvailableLocales : _*)).elements
   def getLocale = locale
   def removeAttribute(key: String) = attr -= key
-  def setAttribute(key: String, value: Any) = attr += (key -> value)
+  def setAttribute(key: String, value: Object) = attr(key) = value
   def getRemoteHost = remoteHost
   def getRemoteAddr = remoteAddr
   def getReader = reader
@@ -136,17 +134,21 @@ class MockHttpServletRequest extends HttpServletRequest {
   def getServerName = serverName
   def getScheme = scheme
   def getProtocol = protocol
-  def getParameterMap = parameterMap.underlying
+  def getParameterMap: java.util.Map[String, Array[String]] = parameterMap
   def getParameterValues(key: String) =
-    parameterMap.underlying.values.toArray.asInstanceOf[Array[String]]
-  def getParameterNames = new Vector[ZZ](parameterMap.underlying.keySet.asInstanceOf[_root_.java.util.Set[ZZ]]).elements
-  def getParameter(key: String) = parameterMap(key)
+    parameterMap.get(key) match {
+    case Some(v) => v
+    case _ => null
+    }   	 
+
+  def getParameterNames: java.util.Enumeration[Object] = new Vector[Object](parameterMap.keySet).elements
+  def getParameter(key: String) = parameterMap(key).apply(0)
   def getInputStream = inputStream
   def getContentType = contentType
   def getContentLength = contentLength
   def getCharacterEncoding = charEncoding
   def setCharacterEncoding(enc: String) = charEncoding = enc
-  def getAttributeNames = new Vector[ZZ](attr.underlying.keySet.asInstanceOf[_root_.java.util.Set[ZZ]]).elements
+  def getAttributeNames: java.util.Enumeration[Object] = new Vector[Object](attr.keySet).elements
   def getAttribute(key: String) = attr(key).asInstanceOf[Object]
 }
 

@@ -700,7 +700,11 @@ Response with GetPoster with GetPosterHelper
       case g: Group => unapply(g.nodes)
       case n: Text => None
       case sn: SpecialNode => None
-      case n: NodeSeq => n.flatMap(unapply).firstOption
+      case n: NodeSeq => 
+       val ns: Seq[Node] = n
+       val x: Seq[Elem] = ns.flatMap(v => unapply(v))
+       x.headOption
+      case _ => None
     }
   }
 
@@ -709,7 +713,7 @@ Response with GetPoster with GetPosterHelper
    */
   override lazy val xml: Elem = {
     PCDataXmlParser(new _root_.java.io.ByteArrayInputStream(body)) match {
-      case Full(FindElem(e)) => e
+       case Full(FindElem(e)) => e
     }
   }
 
