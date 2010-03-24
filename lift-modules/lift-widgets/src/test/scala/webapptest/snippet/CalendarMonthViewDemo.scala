@@ -76,8 +76,12 @@ class CalendarMonthViewDemo {
     val item3 = CalendarItem("4", c3, CalendarType.MEETING) optional (
         _ end(c3),
         _ subject("Other month"))
+        
+    val item4 = CalendarItem("4", c3, CalendarType.MEETING) optional (
+        _ end(c3),
+        _ subject("Other month!!!"))
 
-    item1 :: item2 :: item3 ::  Nil
+    item1 :: item2 :: item3 :: item4 ::  Nil
   }
 }
 

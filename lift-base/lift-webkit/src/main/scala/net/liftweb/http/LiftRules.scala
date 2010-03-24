@@ -421,6 +421,33 @@ object LiftRules extends Factory with FormVendor {
   }
   setupSnippetDispatch()
 
+  /**
+   * Function that generates variants on snippet names to search for, given the name from the template.
+   * The default implementation just returns name :: Nil (e.g. no change).
+   * The names are searched in order.
+   * See also searchSnippetsWithRequestPath for an implementation.
+   */
+  @volatile var snippetNamesToSearch: FactoryMaker[String => List[String]] =
+      new FactoryMaker(() => (name: String) => name :: Nil) {}
+
+  /**
+   * Implementation for snippetNamesToSearch that looks first in a package named by taking the current template path.
+   * For example, suppose the following is configured in Boot:
+   *   LiftRules.snippetNamesToSearch.default.set(() => LiftRules.searchSnippetsWithRequestPath)
+   *   LiftRules.addToPackages("com.mycompany.myapp")
+   *   LiftRules.addToPackages("com.mycompany.mylib")
+   * The tag <lift:MySnippet> in template foo/bar/baz.html would search for the snippet in the following locations:
+   *   - com.mycompany.myapp.snippet.foo.bar.MySnippet
+   *   - com.mycompany.myapp.snippet.MySnippet
+   *   - com.mycompany.mylib.snippet.foo.bar.MySnippet
+   *   - com.mycompany.mylib.snippet.MySnippet
+   *   - and then the Lift builtin snippet packages
+   */
+  def searchSnippetsWithRequestPath(name: String): List[String] =
+    S.request.map(_.path.partPath.dropRight(1)) match {
+      case Full(xs) if !xs.isEmpty => (xs.mkString(".") + "." + name) :: name :: Nil
+      case _ => name :: Nil
+    }
 
   /**
    * Change this variable to set view dispatching
@@ -507,7 +534,7 @@ object LiftRules extends Factory with FormVendor {
   def defaultLocaleCalculator(request: Box[HTTPRequest]) =
     request.flatMap(_.locale).openOr(Locale.getDefault())
 
-  @volatile var resourceBundleFactories = RulesSeq[ResourceBundleFactoryPF]
+  val resourceBundleFactories = RulesSeq[ResourceBundleFactoryPF]
 
   /**
    * Used for Comet handling to resume a continuation
@@ -527,14 +554,73 @@ object LiftRules extends Factory with FormVendor {
 
   private var _sitemap: Box[SiteMap] = Empty
 
-  def setSiteMap(sm: SiteMap) {
-    _sitemap = Full(sm)
-    for (menu <- sm.menus;
-         val loc = menu.loc;
-         rewrite <- loc.rewritePF) LiftRules.statefulRewrite.append(rewrite)
+  private var sitemapFunc: Box[() => SiteMap] = Empty
+
+  private object sitemapRequestVar extends RequestVar(resolveSitemap())
+
+  /**
+  * Set the sitemap to a function that will be run to generate the sitemap.
+  *
+  * This allows for changing the SiteMap when in development mode and having
+  * the function re-run for each request.
+  */
+  def setSiteMapFunc(smf: () => SiteMap) {
+    sitemapFunc = Full(smf)
+    if (!Props.devMode) {
+      resolveSitemap()
+    }
   }
 
-  def siteMap: Box[SiteMap] = _sitemap
+  /**
+  * Define the sitemap.
+  */
+  def setSiteMap(sm: => SiteMap) {
+    this.setSiteMapFunc(() => sm)
+  }
+
+  private def runAsSafe[T](f: => T): T = synchronized {
+     val old = LiftRules.doneBoot
+     try {
+        LiftRules.doneBoot = false
+        f
+     } finally {
+        LiftRules.doneBoot = old
+     }
+  }
+
+  private case class PerRequestPF[A, B](f: PartialFunction[A, B]) extends PartialFunction[A, B] {
+    def isDefinedAt(a: A) = f.isDefinedAt(a)
+    def apply(a: A) = f(a)
+  }
+
+  private def resolveSitemap(): Box[SiteMap] = {
+    this.synchronized {
+      runAsSafe {
+        sitemapFunc.flatMap {
+          smf =>
+
+          LiftRules.statefulRewrite.remove {
+            case PerRequestPF(_) => true
+            case _ => false
+          }
+
+          val sm = smf()
+          _sitemap = Full(sm)
+          for (menu <- sm.menus;
+               val loc = menu.loc;
+               rewrite <- loc.rewritePF) LiftRules.statefulRewrite.append(PerRequestPF(rewrite))
+
+          _sitemap
+        }
+      }
+    }
+  }
+
+  def siteMap: Box[SiteMap] = if (Props.devMode) {
+    this.synchronized {
+      sitemapRequestVar.is
+    }
+  } else _sitemap
 
   /**
    * How long should we wait for all the lazy snippets to render
@@ -1294,6 +1380,12 @@ trait RulesSeq[T] {
       rules = r :: rules
     }
     this
+  }
+
+  private[http] def remove(f: T => Boolean) {
+    safe_? {
+      rules = rules.remove(f)
+    }
   }
 
   def append(r: T): RulesSeq[T] = {

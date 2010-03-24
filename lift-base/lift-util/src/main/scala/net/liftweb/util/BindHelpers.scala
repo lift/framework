@@ -407,6 +407,7 @@ trait BindHelpers {
   def bind(namespace: String, xml: NodeSeq, params: BindParam*): NodeSeq =
   bind(namespace, Empty, Empty , xml, params :_*)
 
+
   /**
    * Bind a set of values to parameters and attributes in a block of XML
    * with defined transforms for unbound elements within the specified
@@ -433,6 +434,37 @@ trait BindHelpers {
    */
   def bind(namespace: String, nodeFailureXform: Box[NodeSeq => NodeSeq],
            paramFailureXform: Box[PrefixedAttribute => MetaData],
+           xml: NodeSeq, params: BindParam*): NodeSeq =
+  bind(namespace, nodeFailureXform, paramFailureXform, false, xml, params :_*)
+
+  /**
+   * Bind a set of values to parameters and attributes in a block of XML
+   * with defined transforms for unbound elements within the specified
+   * namespace.<p/>
+   *
+   * For example:<pre>
+   *   bind("user",
+   *        Full(xhtml: NodeSeq => Text("Default Value")),
+   *        Empty,
+   *        <user:hello>replace this</user:hello><user:dflt>replace with default</user:dflt>,
+   *        "hello" -> <h1/>)
+   * </pre>
+   * will return <pre><h1></h1>Default Value</pre>
+   *
+   * @param namespace the namespace of tags to bind
+   * @param nodeFailureXform a box containing the function to use as the default transform
+   *        for tags in the specified namespace that do not have bindings specified.
+   * @param paramFailureXform a box containing the function to use as the default transform
+   *        for unrecognized attributes in bound elements.
+   * @param preserveScope: true if the scope should be preserved, false is the normal setting
+   * @param xml the NodeSeq in which to find elements to be bound.
+   * @param params the list of BindParam bindings to be applied
+   *
+   * @return the NodeSeq that results from the specified transforms
+   */
+  def bind(namespace: String, nodeFailureXform: Box[NodeSeq => NodeSeq],
+           paramFailureXform: Box[PrefixedAttribute => MetaData],
+           preserveScope: Boolean,
            xml: NodeSeq, params: BindParam*): NodeSeq = {
     BindHelpers._bindNodes.doWith(xml :: (BindHelpers._bindNodes.box.openOr(Nil))) {
       val map: _root_.scala.collection.immutable.Map[String, BindParam] = _root_.scala.collection.immutable.HashMap.empty ++ params.map(p => (p.name, p))
@@ -461,7 +493,8 @@ trait BindHelpers {
                   ns.calcValue(s.child) getOrElse NodeSeq.Empty
               }
             }
-          case s : Elem if bindByNameType(s.label) && (attrStr(s, "name").startsWith(namespace+":")) && bindByNameTag(namespace, s) != "" => BindHelpers._currentNode.doWith(s) {
+          case s : Elem if bindByNameType(s.label) && (attrStr(s, "name").startsWith(namespace+":")) &&
+            bindByNameTag(namespace, s) != "" => BindHelpers._currentNode.doWith(s) {
               val tag = bindByNameTag(namespace, s)
               map.get(tag) match {
                 case None => nodeFailureXform.map(_(s)) openOr s
@@ -469,7 +502,8 @@ trait BindHelpers {
               }
             }
           case Group(nodes) => Group(in_bind(nodes))
-          case s : Elem => Elem(s.prefix, s.label, attrBind(s.attributes), TopScope /*s.scope */, in_bind(s.child) : _*)
+          case s : Elem => Elem(s.prefix, s.label, attrBind(s.attributes), if (preserveScope) s.scope else TopScope,
+                                in_bind(s.child) : _*)
           case n => n
         }
       }

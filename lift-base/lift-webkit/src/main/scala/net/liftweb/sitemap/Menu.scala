@@ -66,6 +66,13 @@ case class Menu(loc: Loc[_], kids: Menu*) extends HasKids {
   def makeMenuItem(path: List[Loc[_]]): Box[MenuItem] =
   loc.buildItem(loc.buildKidMenuItems(kids), _lastInPath(path), _inPath(path))
 
+  /**
+  * Make a menu item only of the current loc is in the given group
+  */
+  def makeMenuItem(path: List[Loc[_]], group: String): Box[MenuItem] =
+  if (loc.inGroup_?(group)) loc.buildItem(loc.buildKidMenuItems(kids), _lastInPath(path), _inPath(path))
+  else Empty
+
   private def _inPath(in: List[Loc[_]]): Boolean = in match {
     case Nil => false
     case x :: xs if x eq loc => true

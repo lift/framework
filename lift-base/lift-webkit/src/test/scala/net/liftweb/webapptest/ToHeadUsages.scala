@@ -21,6 +21,8 @@ import _root_.org.specs._
 import _root_.org.specs.runner.JUnit3
 import _root_.org.specs.runner.ConsoleRunner
 import _root_.net.sourceforge.jwebunit.junit.WebTester
+import _root_.net.liftweb.http._
+import _root_.net.liftweb.util._
 
 class ToHeadUsagesTest extends JUnit3(ToHeadUsages)
 object ToHeadUsagesRunner extends ConsoleRunner(ToHeadUsages)
@@ -87,6 +89,25 @@ object ToHeadUsages extends Specification {
       )
     }
 
+  }
+
+  "pages " should {
+    "Template finder should recognize entities" >> {
+      val ns = TemplateFinder.findAnyTemplate(List("index")).open_!
+      val str = AltXML.toXML(ns(0), false, false, false)
+
+      val idx = str.indexOf("&mdash;")
+      (idx >= 0) must_== true
+    }
+
+    "round trip entities" >> {
+      JettyTestServer.browse(
+        "/index",html => {
+          val idx = html.getPageSource.indexOf("&mdash;")
+          (idx >= 0) must_== true
+        }
+      )
+    }
   }
 
   "deferred snippets" should {

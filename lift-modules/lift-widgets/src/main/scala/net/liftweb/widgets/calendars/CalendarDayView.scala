@@ -76,7 +76,7 @@ class CalendarDayView(val when: Calendar, val meta: DayViewMeta) {
     <head>
       <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath + "/calendars/dayview/style.css"} type="text/css"/>
       <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.dimensions.js"}></script>
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/calendars/dayview/dayviewcalendars.js"}></script>
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/calendars/js/calendarviews.js"}></script>
       <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.bgiframe.js"}></script>
       <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.tooltip.js"}></script>
       <script type="text/javascript" charset="utf-8">{
