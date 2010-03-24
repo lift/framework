@@ -109,6 +109,7 @@ abstract class MappedDate[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
   override def setFromAny(f : Any): Date = f match {
     case JsonAST.JNull => this.set(null)
     case JsonAST.JInt(v) => this.set(new Date(v.longValue))
+    case n: Number => this.set(new Date(n.longValue))
     case "" | null => this.set(null)
     case s: String => parse(s).map(d => this.set(d)).openOr(this.is)
     case (s: String) :: _ => parse(s).map(d => this.set(d)).openOr(this.is)

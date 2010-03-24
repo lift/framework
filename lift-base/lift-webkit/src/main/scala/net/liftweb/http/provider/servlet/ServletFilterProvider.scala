@@ -27,6 +27,7 @@ import _root_.net.liftweb.util._
 import _root_.net.liftweb.http._
 import Helpers._
 
+
 trait ServletFilterProvider extends Filter with HTTPProvider {
   var ctx: HTTPContext = _
 
@@ -52,18 +53,24 @@ trait ServletFilterProvider extends Filter with HTTPProvider {
    * Executes the Lift filter component.
    */
   def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain) = {
-    TransientRequestVarHandler(Empty,
-    RequestVarHandler(Empty,
-      (req, res) match {
-        case (httpReq: HttpServletRequest, httpRes: HttpServletResponse) =>
-          val httpRequest = new HTTPRequestServlet(httpReq)
-          val httpResponse = new HTTPResponseServlet(httpRes)
+    if (LiftRules.ending) chain.doFilter(req, res)
+    else {
+      LiftRules.reqCnt.incrementAndGet()
+      try {
+        TransientRequestVarHandler(Empty,
+                                   RequestVarHandler(Empty,
+                                                     (req, res) match {
+              case (httpReq: HttpServletRequest, httpRes: HttpServletResponse) =>
+                val httpRequest = new HTTPRequestServlet(httpReq)
+                val httpResponse = new HTTPResponseServlet(httpRes)
 
-          service(httpRequest, httpResponse) {
-            chain.doFilter(req, res)
-          }
-        case _ => chain.doFilter(req, res)
-      }))
+                service(httpRequest, httpResponse) {
+                  chain.doFilter(req, res)
+                }
+              case _ => chain.doFilter(req, res)
+            }))
+      } finally {LiftRules.reqCnt.decrementAndGet()}
+    }
   }
 
 

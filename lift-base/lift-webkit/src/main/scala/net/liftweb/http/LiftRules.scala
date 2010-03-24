@@ -34,6 +34,8 @@ import auth._
 import _root_.java.util.concurrent.{ConcurrentHashMap => CHash}
 import _root_.scala.reflect.Manifest
 
+import _root_.java.util.concurrent.atomic.AtomicInteger
+
 object LiftRules extends Factory with FormVendor {
   val noticesContainerId = "lift__noticesContainer__"
   private val pageResourceId = Helpers.nextFuncName
@@ -237,7 +239,9 @@ object LiftRules extends Factory with FormVendor {
    * For each unload hook registered, run them during destroy()
    */
   private[http] def runUnloadHooks() {
-    unloadHooks.toList.foreach(_())
+    unloadHooks.toList.foreach{f =>
+      tryo{f()}
+    }
   }
 
   /**
@@ -692,6 +696,9 @@ object LiftRules extends Factory with FormVendor {
         else true
       }) {}
 
+
+
+  private[http] val reqCnt = new AtomicInteger(0)
 
   @volatile private[http] var ending = false
 

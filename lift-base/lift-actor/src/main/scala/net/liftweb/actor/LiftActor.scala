@@ -29,8 +29,8 @@ object LAScheduler {
   var onSameThread = false
 
   /**
-  * Set this variable to the number of threads to allocate in the thread pool
-  */
+   * Set this variable to the number of threads to allocate in the thread pool
+   */
   @volatile var threadPoolSize = 16 // issue 194
 
   @volatile
@@ -38,26 +38,38 @@ object LAScheduler {
     new ILAExecute {
       import _root_.java.util.concurrent.{Executors, Executor}
 
-      private val es: Executor = Executors.newFixedThreadPool(threadPoolSize)
+      private val es = Executors.newFixedThreadPool(threadPoolSize)
 
       def execute(f: () => Unit): Unit =
       es.execute(new Runnable{def run() {f()}})
 
-      def shutdown(): Unit = {}
+      def shutdown(): Unit = {
+        es.shutdown()
+      }
     }
   }
 
   @volatile
   var exec: ILAExecute = _
 
-  def execute(f: () => Unit) {touch; exec.execute(f)}
-
-  private lazy val touch = {
-    exec = createExecutor()
-    true
+  def execute(f: () => Unit) {
+    synchronized {
+      if (exec eq null) {
+        exec = createExecutor()
+      }
+      exec.execute(f)
+    }
   }
 
-  def shutdown() {}
+  def shutdown() {
+    synchronized {
+      if (exec ne null) {
+        exec.shutdown()
+      }
+      
+      exec = null
+    }
+  }
 }
 
 trait SpecializedLiftActor[T] extends SimpleActor[T]  {

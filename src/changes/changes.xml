@@ -41,6 +41,10 @@
       <action dev="dpp" type="add" issue="434" system="assembla">
 	Ported Testkit and LDAP to the 2.8 branch
       </action>
+      <action dev="dpp" type="fix" issue="436" system="assembla">
+	More precise (and correct) shutdown process.  This fixes
+	a shutdown problem while CometActors are running.
+      </action>
       <action dev="dpp" type="add" issue="424" system="assembla">
 	Added an option to SiteMap to not flatten the sitemap when retrieving a group
       </action>

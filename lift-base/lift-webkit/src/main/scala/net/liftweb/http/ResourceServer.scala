@@ -58,7 +58,7 @@ object ResourceServer {
 
   def calcLastModified(in: URL): Long = {
     val str = in.toString
-    if (lastModCache.containsKey(str)) lastModCache.get(str)
+    if (!Props.devMode && lastModCache.containsKey(str)) lastModCache.get(str)
     else {
       val ret: Long =
       (for{

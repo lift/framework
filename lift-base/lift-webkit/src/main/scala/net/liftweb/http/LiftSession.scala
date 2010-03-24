@@ -135,6 +135,19 @@ object SessionMaster extends LiftActor {
 
   protected def messageHandler = reaction
 
+  /**
+   * Shut down all sessions
+   */
+  private[http] def shutDownAllSessions() {
+    val ses = lock.read(sessions)
+    ses.keySet.foreach(k => this ! RemoveSession(k))
+    while(true) {
+      val s2 = lock.read(sessions)
+      if (s2.size == 0) return
+      Thread.sleep(50)
+    }
+  }
+
   private val reaction: PartialFunction[Any, Unit] = {
     case RemoveSession(sessionId) =>
       val ses = lock.read(sessions)
@@ -401,7 +414,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   }
 
   private[http] def doShutDown() {
-    if (running_?) this.shutDown()
+    if (running_?) {
+      this.breakOutComet()
+      Thread.sleep(100)
+      this.shutDown()
+    }
   }
 
   private[http] def cleanupUnseenFuncs(): Unit = synchronized {

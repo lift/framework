@@ -231,7 +231,7 @@ object DB {
     Log.trace("Request to release connection: " + name + " on thread " + Thread.currentThread)
     (info.get(name): @unchecked) match {
       case Some(ConnectionHolder(c, 1, post)) =>
-        if (rollback) c.rollback
+        if (rollback) tryo{c.rollback}
         else c.commit
         tryo(c.releaseFunc())
         info -= name
