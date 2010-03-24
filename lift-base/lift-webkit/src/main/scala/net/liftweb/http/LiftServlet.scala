@@ -259,29 +259,29 @@ class LiftServlet {
 
       if (LiftRules.enableContainerSessions) req.request.session
 
-    implicit def respToFunc(in: Box[LiftResponse]): () => Box[LiftResponse] = {
+    def respToFunc(in: Box[LiftResponse]): () => Box[LiftResponse] = {
       val ret = in.map(LiftRules.performTransform)
       () => ret
     }
 
       val toReturn: () => Box[LiftResponse] =
       if (dispatch._1) {
-      dispatch._2
+      respToFunc(dispatch._2)
     } else if (wp.length == 3 && wp.head == LiftRules.cometPath &&
                wp(2) == LiftRules.cometScriptName()) {
-      LiftRules.serveCometScript(liftSession, req)
+      respToFunc(LiftRules.serveCometScript(liftSession, req))
     } else if ((wp.length >= 1) && wp.head == LiftRules.cometPath) {
       handleComet(req, liftSession, originalRequest) match {
-        case Left(x) => x
+        case Left(x) => respToFunc(x)
         case Right(x) => x
       }
     } else if (wp.length == 2 && wp.head == LiftRules.ajaxPath &&
                wp(1) == LiftRules.ajaxScriptName()) {
-      LiftRules.serveAjaxScript(liftSession, req)
+      respToFunc(LiftRules.serveAjaxScript(liftSession, req))
     } else if (wp.length >= 1 && wp.head == LiftRules.ajaxPath) {
-      handleAjax(liftSession, req)
+      respToFunc(handleAjax(liftSession, req))
     } else {
-      liftSession.processRequest(req)
+      respToFunc(liftSession.processRequest(req))
     }
 
       toReturn // .map(LiftRules.performTransform)
