@@ -47,7 +47,7 @@ class Jetty6AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
                resume) = {
     try {
       val cc = Class.forName("org.mortbay.util.ajax.ContinuationSupport")
-      val meth = cc.getMethod("getContinuation", classOf[HTTPRequest], classOf[AnyRef])
+      val meth = cc.getMethod("getContinuation", classOf[HttpServletRequest], classOf[AnyRef])
       val cci = Class.forName("org.mortbay.util.ajax.Continuation")
       val getObj = cci.getMethod("getObject")
       val setObj = cci.getMethod("setObject", classOf[AnyRef])
