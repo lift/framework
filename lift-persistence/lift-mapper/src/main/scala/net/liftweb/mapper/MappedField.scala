@@ -687,7 +687,10 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
 
   protected def real_convertToJDBCFriendly(value: FieldType): Object
 
-  override def hashCode(): Int = i_is_!.hashCode
+  override def hashCode(): Int = i_is_! match {
+    case null => 0
+    case x => x.hashCode
+  }
 
 
   /**
