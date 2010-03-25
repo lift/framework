@@ -399,6 +399,32 @@ object MapperSpecs extends Specification {
           t.model.cached_? must beTrue
         }
 
+
+        "Createdat and updated at work" in {
+          val now = Helpers.now
+
+          cleanup()
+
+          val dog = Dog2.find().open_!
+
+          val oldUpdate = dog.updatedAt.is
+
+          val d1 = (now.getTime - dog.createdAt.getTime) / 100000L
+          d1 must_== 0L
+
+          val d2 = (now.getTime - dog.updatedAt.getTime) / 100000L
+          d2 must_== 0L
+
+          dog.name("ralph").save
+
+          val dog2 = Dog2.find(dog.dog2id.is).open_!
+
+          dog.createdAt.is.getTime must_== dog2.createdAt.is.getTime
+
+          oldUpdate.getTime must_!= dog2.updatedAt.is.getTime
+
+        }
+
         "Non-deterministic Precache works with OrderBy with Mixed Case" in {
           cleanup()
 
@@ -638,7 +664,7 @@ object Mixer extends Mixer with LongKeyedMetaMapper[Mixer] {
   }
 }
 
-class Dog2 extends LongKeyedMapper[Dog2] {
+class Dog2 extends LongKeyedMapper[Dog2]  with CreatedUpdated {
   def getSingleton = Dog2
 
   override def primaryKeyField = dog2id

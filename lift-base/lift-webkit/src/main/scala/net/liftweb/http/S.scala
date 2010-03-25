@@ -840,9 +840,9 @@ for {
   /**
    * Log a query for the given request.  The query log can be tested to see
    * if queries for the particular page rendering took too long. The query log
-   * starts empty for each new request. This method can be used as a log function
-   * for the net.liftweb.mapper.DB.addLogFunc method to enable logging of
-   * Mapper queries. You would set it up in your bootstrap like:
+   * starts empty for each new request. net.liftweb.mapper.DB.queryCollector is a 
+   * method that can be used as a log function for the net.liftweb.mapper.DB.addLogFunc 
+   * method to enable logging of Mapper queries. You would set it up in your bootstrap like:
    *
    * <pre name="code" class="scala" >
    * import net.liftweb.mapper.DB
@@ -850,7 +850,7 @@ for {
    * class Boot  {
    *   def boot  {
    *     ...
-   *     DB.addLogFunc(S.logQuery _)
+   *     DB.addLogFunc(DB.queryCollector)
    *     ...
    * }
    * }
@@ -858,11 +858,11 @@ for {
    *
    * Note that the query log is simply stored as a List and is not sent to any output
    * byt default. To retrieve the List of query log items, use S.queryLog. You can also
-   * provide your own analysis function that will process the query log vi S.addAnalyzer.
+   * provide your own analysis function that will process the query log via S.addAnalyzer.
    *
    * @see # queryLog
    * @see # addAnalyzer
-   * @see net.liftweb.mapper.DB.addLogFun ( ( String, Long ) => Any)
+   * @see net.liftweb.mapper.DB.addLogFunc
    */
   def logQuery(query: String, time: Long) = p_queryLog.is += ((query, time))
 

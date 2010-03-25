@@ -452,7 +452,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   /**
    * Returns true if there are functions bound for this owner
    */
-  private[http] def hasFuncsForOwner(owner: String): Boolean = !messageCallback.find(_._2.owner == owner).isEmpty
+  private[http] def hasFuncsForOwner(owner: String): Boolean = synchronized{!messageCallback.find(_._2.owner == owner).isEmpty}
 
   private def shutDown() = {
     var done: List[() => Unit] = Nil
