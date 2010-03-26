@@ -108,9 +108,8 @@ object DBLog {
    * To enable logging of DB operations, use DB.addLogFunc
    */
   sealed private[DBLog] class LoggedStatementHandler(underlying : Statement) extends InvocationHandler with DBLog {
-    val underlyingClassname = "java.sql.Statement"
-    val representative : Class[_] = Class.forName(underlyingClassname)
-
+    def underlyingClassname = "java.sql.Statement"
+    lazy val representative : Class[_] = Class.forName(underlyingClassname)
 
     def invoke (proxy : Object, method : Method, args : Array[Object]) : Object = method.getName match {
       // Handle DBLog methods first. We have to do this since the end user expects a DBLog interface
@@ -344,7 +343,7 @@ object DBLog {
    * To enable logging of DB operations, use DB.addLogFunc
    */
   sealed private[DBLog] class LoggedPreparedStatementHandler (stmt : String, underlying : PreparedStatement) extends LoggedStatementHandler(underlying) {
-    override val underlyingClassname = "java.sql.PreparedStatement"
+    override def underlyingClassname = "java.sql.PreparedStatement"
 
     private var paramMap = Map.empty[Int,Any]
 

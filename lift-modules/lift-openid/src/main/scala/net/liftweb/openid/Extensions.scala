@@ -39,10 +39,11 @@ import Implicits._
  */
 private object RawHelper {
   implicit def rawJUL2List[T](l:java.util.List[_]):List[T] = {
-    import scala.collection.jcl.Conversions._
-    val lTyped: java.util.List[T] = l.asInstanceOf[java.util.List[T]]
-    val s = convertList(lTyped)
-    s.toList
+    //import scala.collection.jcl.Conversions._
+    //val lTyped: java.util.List[T] = l.asInstanceOf[java.util.List[T]]
+    //val s = convertList(lTyped)
+    //s.toList
+    (for {i <- 0 until l.size} yield l(i).asInstanceOf[T]).toList
   }
 }
 
