@@ -117,7 +117,8 @@ object MDC {
  * 
  */
 trait Logger  {
-  @transient private val logger: SLF4JLogger = _logger
+  private lazy val logger: SLF4JLogger = _logger // removed @transient 'cause there's no reason for transient on val
+  // changed to lazy val so it only gets initialized on use rather than on instantiation
   protected def _logger = if (Logger.checkConfig) LoggerFactory.getLogger(Logger.loggerNameFor(this.getClass)) else null
   
   def assertLog(assertion: Boolean, msg: => String) = if (assertion) info(msg)
