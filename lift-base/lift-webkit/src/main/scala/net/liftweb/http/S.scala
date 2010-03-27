@@ -30,6 +30,7 @@ import _root_.net.liftweb.builtin.snippet._
 import provider._
 import _root_.scala.reflect.Manifest
 import _root_.java.util.concurrent.{ConcurrentHashMap => CHash}
+import _root_.net.liftweb.http.rest.RestContinuation
 
 /**
  * An object representing the current state of the HTTP request and response.
@@ -2236,6 +2237,22 @@ for {
   }
 
   implicit def tuple2FieldError(t: (FieldIdentifier, NodeSeq)) = FieldError(t._1, t._2)
+
+  /**
+   * Use this in DispatchPF for processing REST requests asyynchronously. Note that
+   * this must be called in a stateful context, therefore the S state must be a valid one.
+   *
+   * @param f - the user function that does the actual computation. This function
+   *            takes one parameter which is the functino that must be invoked
+   *            for returning the actual response to the client. Note that f function
+   *            is invoked asynchronously in the context of a different thread.
+   * 
+   */
+  def respondAsync(f: ((Box[LiftResponse]) => Unit) => Unit): () => Box[LiftResponse] = {
+   (for (req <- S.request) yield {
+     RestContinuation.respondAsync(req, f)
+   }) openOr (() => Full(EmptyResponse))
+  }
 }
 
 /**

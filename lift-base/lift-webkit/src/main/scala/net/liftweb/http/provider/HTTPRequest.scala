@@ -22,6 +22,11 @@ import _root_.java.io.{InputStream}
 import _root_.java.util.{Locale}
 import _root_.net.liftweb.common.{Box}
 
+
+object RetryState extends Enumeration {
+  val SUSPENDED, TIMED_OUT, RESUMED = Value
+}
+
 /**
  * The representation of a HTTP request state
  */
@@ -158,8 +163,13 @@ trait HTTPRequest {
   def method: String
 
   /**
-   * @return - Some[Any] if the implementation supports suspending&resuming requests and if this is a
-   *           resumed request, return the state associated with it.
+   * @return true if the underlying container supports suspend/resume idiom.
+   */
+  def suspendResumeSupport_? : Boolean
+
+  /**
+   * @return - Some[Any] if this is a resumed request, return the state
+   *           associated with it.
    *           
    */
   def resumeInfo : Option[Any]
@@ -167,12 +177,14 @@ trait HTTPRequest {
   /**
    * Suspend the curent request and resume it after a given timeout
    */
-  def suspend(timeout: Long): Any
+  def suspend(timeout: Long): RetryState.Value
 
   /**
    * Resume this request
+   * @return false if this continuztion cannot be resumed
+   *         as it is not in pending state.
    */
-  def resume(what: AnyRef): Unit
+  def resume(what: AnyRef): Boolean
 
   /**
    * @return - the input stream for the request body

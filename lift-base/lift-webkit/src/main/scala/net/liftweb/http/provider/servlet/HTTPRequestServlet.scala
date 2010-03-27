@@ -127,10 +127,11 @@ class HTTPRequestServlet(val req: HttpServletRequest) extends HTTPRequest {
 
   def resumeInfo : Option[Any] = LiftRules.servletAsyncProvider(this).resumeInfo
 
-  def suspend(timeout: Long): Any = LiftRules.servletAsyncProvider(this).suspend(timeout)
+  def suspend(timeout: Long): RetryState.Value = LiftRules.servletAsyncProvider(this).suspend(timeout)
 
-  def resume(what: AnyRef): Unit = LiftRules.servletAsyncProvider(this).resume(what)
+  def resume(what: AnyRef): Boolean = LiftRules.servletAsyncProvider(this).resume(what)
 
+  def suspendResumeSupport_? = LiftRules.servletAsyncProvider(this).suspendResumeSupport_?
 }
 
 private class OfflineRequestSnapshot(req: HTTPRequest) extends HTTPRequest {
@@ -188,11 +189,13 @@ private class OfflineRequestSnapshot(req: HTTPRequest) extends HTTPRequest {
 
   val resumeInfo : Option[Any] = req resumeInfo
 
-  def suspend(timeout: Long): Nothing = 
+  def suspend(timeout: Long): RetryState.Value = 
     throw new UnsupportedOperationException("Cannot suspend a snapshot")
 
-  def resume(what: AnyRef): Unit = 
+  def resume(what: AnyRef): Boolean = 
     throw new UnsupportedOperationException("Cannot resume a snapshot")
+
+  def suspendResumeSupport_? = false
 
   def inputStream: InputStream = 
     throw new UnsupportedOperationException("InputStream is not available")

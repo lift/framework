@@ -1108,9 +1108,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }.toList
   }
 
-/**
-* Find the comet actor by type and name
-*/
+  /**
+   * Find the comet actor by type and name
+   */
   def findComet(theType: String, name: Box[String]): Box[LiftCometActor] = synchronized {
     asyncComponents.get(Full(theType) -> name)
   }
