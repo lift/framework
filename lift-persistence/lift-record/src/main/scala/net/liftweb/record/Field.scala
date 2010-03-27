@@ -18,8 +18,9 @@ package net.liftweb {
 package record {
 
 import net.liftweb.common._
-import net.liftweb.util._
 import net.liftweb.http.js.{JsExp}
+import net.liftweb.json.JsonAST.{JNothing, JNull, JString, JValue}
+import net.liftweb.util._
 import scala.reflect.Manifest
 import scala.xml._
 
@@ -93,6 +94,31 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
    * Returns the field's value as a valid JavaScript expression
    */
   def asJs: JsExp
+
+  /** Encode the field value into a JValue */
+  def asJValue: JValue
+
+  /**
+   * Helper for implementing asJValue for a conversion to an encoded JString
+   *
+   * @param encode function to transform the field value into a String
+   */
+  protected def asJString(encode: MyType => String): JValue =
+      valueBox.map(v => JString(encode(v))) openOr (JNothing: JValue)
+
+  /** Decode the JValue and set the field to the decoded value. Returns Empty or Failure if the value could not be set */
+  def setFromJValue(jvalue: JValue): Box[MyType]
+
+  /**
+   * Helper for implementing setFromJValue for a conversion from an encoded JString
+   *
+   * @param decode function to try and transform a String into a field value
+   */
+  protected def setFromJString(jvalue: JValue)(decode: String => Box[MyType]): Box[MyType] = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case JString(s)                   => setBox(decode(s))
+    case other                        => setBox(FieldHelpers.expectedA("JString", other))
+  }
 
   /**
    * Are we in "safe" mode (i.e., the value of the field can be read or written without any security checks.)
@@ -300,6 +326,11 @@ trait JDBCFieldFlavor[MyType] {
 
 trait KeyField[MyType, OwnerType <: Record[OwnerType] with KeyedRecord[OwnerType, MyType]] extends Field[MyType, OwnerType] {
   def ===(other: KeyField[MyType, OwnerType]): Boolean = this.valueBox == other.valueBox
+}
+
+
+object FieldHelpers {
+  def expectedA(what: String, notA: AnyRef): Failure = Failure("Expected a " + what + ", not a " + (if (notA == null) "null" else notA.getClass.getName))
 }
 
 }

@@ -20,9 +20,10 @@ package field {
 
 import scala.xml._
 import net.liftweb.common._
+import net.liftweb.http.S
+import net.liftweb.json.JsonAST.{JInt, JNothing, JNull, JValue}
 import net.liftweb.util._
 import Helpers._
-import net.liftweb.http.{S}
 import S._
 
 class IntField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends NumericField[Int, OwnerType] {
@@ -47,6 +48,13 @@ class IntField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends NumericFi
   }
 
   def defaultValue = 0
+
+  def asJValue: JValue = valueBox.map(i => JInt(BigInt(i))) openOr (JNothing: JValue)
+  def setFromJValue(jvalue: JValue): Box[Int] = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case JInt(i)                      => setBox(Full(i.intValue))
+    case other                        => setBox(FieldHelpers.expectedA("JInt", other))
+  }
 
 }
 

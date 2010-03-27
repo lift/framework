@@ -19,10 +19,11 @@ package record {
 package field {
 
 import scala.xml._
-import net.liftweb.util._
 import net.liftweb.common._
-import net.liftweb.http.{S}
 import net.liftweb.http.js._
+import net.liftweb.http.{S}
+import net.liftweb.json.JsonAST.{JNothing, JNull, JString, JValue}
+import net.liftweb.util._
 import _root_.java.util.regex._
 import S._
 import Helpers._
@@ -112,6 +113,13 @@ class StringField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int
   final def notNull(in: Box[String]): Box[String] = in or Full("")
 
   def asJs = valueBox.map(Str) openOr JsNull
+
+  def asJValue: JValue = valueBox.map(v => JString(v)) openOr (JNothing: JValue)
+  def setFromJValue(jvalue: JValue): Box[MyType] = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case JString(s)                   => setFromString(s)
+    case other                        => setBox(FieldHelpers.expectedA("JString", other))
+  }
 
 }
 

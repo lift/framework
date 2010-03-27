@@ -19,11 +19,12 @@ package record {
 package field {
 
 import _root_.scala.xml._
-import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
-import _root_.net.liftweb.mapper.{Safe}
 import _root_.net.liftweb.http.{S}
 import _root_.net.liftweb.http.js._
+import _root_.net.liftweb.json.JsonAST.{JNothing, JNull, JString, JValue}
+import _root_.net.liftweb.mapper.{Safe}
+import _root_.net.liftweb.util._
 import _root_.java.util.regex._
 import Helpers._
 import S._
@@ -104,6 +105,13 @@ class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
   def defaultValue = ""
 
   def asJs = valueBox.map(Str) openOr JsNull
+
+  def asJValue: JValue = valueBox.map(v => JString(v)) openOr (JNothing: JValue)
+  def setFromJValue(jvalue: JValue): Box[MyType] = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case JString(s)                   => setFromString(s)
+    case other                        => setBox(FieldHelpers.expectedA("JString", other))
+  }
 
 }
 

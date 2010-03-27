@@ -18,10 +18,11 @@ package net.liftweb {
 package record {
 package field {
 
-import _root_.scala.xml._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.http.{S}
+import scala.xml._
+import net.liftweb.common._
+import net.liftweb.http.{S}
+import net.liftweb.json.JsonAST.{JDouble, JNothing, JNull, JValue}
+import net.liftweb.util._
 import Helpers._
 import S._
 
@@ -45,6 +46,12 @@ class DoubleField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Numeri
 
   def defaultValue = 0.0
 
+  def asJValue = valueBox.map(JDouble) openOr (JNothing: JValue)
+  def setFromJValue(jvalue: JValue) = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case JDouble(d)                   => setBox(Full(d))
+    case other                        => setBox(FieldHelpers.expectedA("JDouble", other))
+  }
 }
 
 import _root_.java.sql.{ResultSet, Types}

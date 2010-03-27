@@ -20,9 +20,10 @@ package field {
 
 import _root_.java.math.{BigDecimal => JBigDecimal,MathContext,RoundingMode}
 import _root_.scala.xml._
-import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.http.{S}
+import _root_.net.liftweb.json.JsonAST.JValue
+import _root_.net.liftweb.util._
 import Helpers._
 import S._
 
@@ -113,6 +114,9 @@ class DecimalField[OwnerType <: Record[OwnerType]](rec: OwnerType, val context :
   def setFromString (s : String) : Box[BigDecimal] = setBox(tryo(BigDecimal(s)))
 
   def set_!(in: BigDecimal): BigDecimal = new BigDecimal(in.bigDecimal.setScale(scale, context.getRoundingMode))
+
+  def asJValue = asJString(_.toString)
+  def setFromJValue(jvalue: JValue) = setFromJString(jvalue)(s => tryo(BigDecimal(s)))
 }
 
 import _root_.java.sql.{ResultSet, Types}

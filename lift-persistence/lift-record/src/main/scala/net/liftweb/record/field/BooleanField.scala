@@ -18,11 +18,12 @@ package net.liftweb {
 package record {
 package field {
 
-import _root_.scala.xml._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.http.{S, SHtml}
-import _root_.net.liftweb.http.js._
+import scala.xml._
+import net.liftweb.common._
+import net.liftweb.http.js._
+import net.liftweb.http.{S, SHtml}
+import net.liftweb.json.JsonAST.{JBool, JNothing, JNull, JValue}
+import net.liftweb.util._
 import Helpers._
 import S._
 import JE._
@@ -71,6 +72,14 @@ class BooleanField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field
   def defaultValue = false
 
   def asJs: JsExp = valueBox.map(boolToJsExp) openOr JsNull
+
+  def asJValue = valueBox.map(JBool) openOr (JNothing: JValue)
+  def setFromJValue(jvalue: JValue) = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case JBool(b)                     => setBox(Full(b))
+    case other                        => setBox(FieldHelpers.expectedA("JBool", other))
+  }
+
 
 }
 
