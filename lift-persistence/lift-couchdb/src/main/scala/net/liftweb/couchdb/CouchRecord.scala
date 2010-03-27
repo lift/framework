@@ -14,12 +14,13 @@
 package net.liftweb {
 package couchdb {
 
-import _root_.scala.collection.immutable.Map
-import _root_.dispatch.{Handler, Http}
-import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
+import scala.collection.immutable.Map
+import dispatch.{Handler, Http}
+import net.liftweb.common.{Box, Empty, Failure, Full}
 import Box.{box2Iterable, option2Box}
-import _root_.net.liftweb.json.JsonAST.{JField, JString, JValue}
-import _root_.net.liftweb.util.ControlHelpers.tryo
+import net.liftweb.json.JsonAST.{JField, JString, JValue}
+import net.liftweb.record.field.StringField
+import net.liftweb.util.ControlHelpers.tryo
 import DocumentHelpers.jobjectToJObjectExtension
 
 object CouchDB {
@@ -35,13 +36,13 @@ trait CouchRecord[MyType <: CouchRecord[MyType]] extends JSONRecord[MyType] {
   def meta: CouchMetaRecord[MyType]
 
   /** The mandatory _id field */
-  object id extends JSONStringField(this, 100) {
+  object id extends StringField(this, 100) with JSONField {
     override def jsonName = Full("_id")
     override def optional_? = true
   }
 
   /** The mandatory _rev field */
-  object rev extends JSONStringField(this, 100) {
+  object rev extends StringField(this, 100) with JSONField {
     override def jsonName = Full("_rev")
     override def optional_? = true
   }

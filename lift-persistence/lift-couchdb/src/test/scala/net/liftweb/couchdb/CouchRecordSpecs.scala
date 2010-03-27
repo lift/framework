@@ -21,6 +21,7 @@ import net.liftweb.json.Implicits.{int2jvalue, string2jvalue}
 import net.liftweb.json.JsonAST.{JField, JInt, JObject, JString, render}
 import net.liftweb.json.JsonDSL.{jobject2assoc, pair2Assoc, pair2jvalue}
 import net.liftweb.json.Printer.compact
+import net.liftweb.record.field.{IntField, StringField}
 import org.specs._
 import org.specs.runner.JUnit4
 import DocumentHelpers.{jobjectToJObjectExtension, stripIdAndRev}
@@ -31,8 +32,8 @@ package couchtestrecords {
   class Person extends CouchRecord[Person] {
     def meta = Person
   
-    object name extends JSONStringField(this, 200)
-    object age extends JSONIntField(this)
+    object name extends StringField(this, 200)
+    object age extends IntField(this)
   }
   
   object Person extends Person with CouchMetaRecord[Person] {
@@ -42,7 +43,7 @@ package couchtestrecords {
   class Company extends CouchRecord[Company] {
     def meta = Company
   
-    object name extends JSONStringField(this, 200)
+    object name extends StringField(this, 200)
   }    
   
   object Company extends Company with CouchMetaRecord[Company] {

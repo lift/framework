@@ -20,10 +20,12 @@ package field {
 
 import scala.reflect.Manifest
 import scala.xml._
-import net.liftweb.util._
 import net.liftweb.common._
-import net.liftweb.http.{S, SHtml}
 import net.liftweb.http.js._
+import net.liftweb.http.{S, SHtml}
+import net.liftweb.json.JsonAST.{JInt, JNothing, JNull, JString, JValue}
+import net.liftweb.util._
+import Box.option2Box
 import S._
 import Helpers._
 import JE._
@@ -97,10 +99,26 @@ class EnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](rec: Ow
     }
   }
 
- def defaultValue: EnumType#Value = enum.iterator.next
+  def defaultValue: EnumType#Value = enum.iterator.next
 
- def asJs = valueBox.map(_ => Str(toString)) openOr JsNull
+  def asJs = valueBox.map(_ => Str(toString)) openOr JsNull
 
+  def asJIntOrdinal: JValue = toInt.map(i => JInt(BigInt(i))) openOr (JNothing: JValue)
+  def setFromJIntOrdinal(jvalue: JValue): Box[EnumType#Value] = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case JInt(i)                      => setBox(fromInt(i.intValue))
+    case other                        => setBox(FieldHelpers.expectedA("JInt", other))
+  }
+
+  def asJStringName: JValue = valueBox.map(v => JString(v.toString)) openOr (JNothing: JValue)
+  def setFromJStringName(jvalue: JValue): Box[EnumType#Value] = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case JString(s)                   => setBox(enum.valueOf(s) ?~ ("Unknown value \"" + s + "\""))
+    case other                        => setBox(FieldHelpers.expectedA("JString", other))
+  }
+
+  def asJValue: JValue = asJIntOrdinal
+  def setFromJValue(jvalue: JValue): Box[EnumType#Value] = setFromJIntOrdinal(jvalue)
 }
 
 import _root_.java.sql.{ResultSet, Types}
