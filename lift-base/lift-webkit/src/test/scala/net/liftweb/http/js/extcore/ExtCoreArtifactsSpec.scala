@@ -25,36 +25,34 @@ import _root_.org.specs.Sugar._
 
 class ExtCoreArtifactsSpecTest extends Runner(ExtCoreArtifactsSpec) with JUnit with Console
 object ExtCoreArtifactsSpec extends Specification {
-
-	object MyExtCoreArtifacts extends ExtCoreArtifacts
 	
   "ExtCoreArtifacts.toggle" should {
     "return the correct javascript expression" in {
-      MyExtCoreArtifacts.toggle("id").toJsCmd must_== """Ext.fly("id").toggle()"""
+      ExtCoreArtifacts.toggle("id").toJsCmd must_== """Ext.fly("id").toggle()"""
     }
   }
   
   "ExtCoreArtifacts.hide" should {
     "return the correct javascript expression" in {
-      MyExtCoreArtifacts.hide("id").toJsCmd must_== """Ext.fly("id").hide()"""
+      ExtCoreArtifacts.hide("id").toJsCmd must_== """Ext.fly("id").hide()"""
     }
   }
   
   "ExtCoreArtifacts.show" should {
     "return the correct javascript expression" in {
-      MyExtCoreArtifacts.show("id").toJsCmd must_== """Ext.fly("id").show()"""
+      ExtCoreArtifacts.show("id").toJsCmd must_== """Ext.fly("id").show()"""
     }
   }
   
   "ExtCoreArtifacts.showAndFocus" should {
     "return the correct javascript expression" in {
-      MyExtCoreArtifacts.showAndFocus("id").toJsCmd must_== """Ext.fly("id").show().focus(200)"""
+      ExtCoreArtifacts.showAndFocus("id").toJsCmd must_== """Ext.fly("id").show().focus(200)"""
     }
   }
   
   "ExtCoreArtifacts.serialize" should {
     "return the correct javascript expression" in {
-      MyExtCoreArtifacts.serialize("id").toJsCmd must_== """Ext.Ajax.serializeForm("id")"""
+      ExtCoreArtifacts.serialize("id").toJsCmd must_== """Ext.Ajax.serializeForm("id")"""
     }
   }
 }

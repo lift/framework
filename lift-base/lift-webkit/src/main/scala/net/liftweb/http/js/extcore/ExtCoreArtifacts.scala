@@ -27,7 +27,7 @@ import _root_.net.liftweb.http.js.JsCmds
 import JE._
 import util.Helpers._
 
-trait ExtCoreArtifacts extends JSArtifacts {
+object ExtCoreArtifacts extends JSArtifacts {
   def toggle(id: String) = new JsExp {
   	def toJsCmd = "Ext.fly(" + id.encJs + ").toggle()"
   }
@@ -75,7 +75,7 @@ trait ExtCoreArtifacts extends JSArtifacts {
   }
 
   private def toJson(info: AjaxInfo, server: String, path: String => JsExp): String =
-  (("url : addPageName(" + path(server).toJsCmd + ")" ) ::
+  (("url : liftAjax.addPageName(" + path(server).toJsCmd + ")" ) ::
    "params : " + info.data.toJsCmd ::
    ("method : " + info.action.encJs) ::
    ("dataType : " + info.dataType.encJs) ::
