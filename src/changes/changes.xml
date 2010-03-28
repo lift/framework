@@ -38,6 +38,12 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+      <action dev="madshartmann" type="add" issue="402" system="assembla">
+        Added javascript interface to the CalendarMothView which resembles the ones already available for the week and day view. 
+      </action>
+      <action dev="madshartmann" type="update" issue="104" system="assembla">
+        added blob to the list of reserved sql-words
+      </action>
       <action dev="timperrett" type="enhancement" issue="443" system="assembla">
         Add response code overload to JsonResponse and rename HeaderStuff
       </action>
