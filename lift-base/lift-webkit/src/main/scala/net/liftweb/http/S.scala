@@ -2248,9 +2248,9 @@ for {
    *            is invoked asynchronously in the context of a different thread.
    * 
    */
-  def respondAsync(f: ((Box[LiftResponse]) => Unit) => Unit): () => Box[LiftResponse] = {
+  def respondAsync(f: => Box[LiftResponse]): () => Box[LiftResponse] = {
    (for (req <- S.request) yield {
-     RestContinuation.respondAsync(req, f)
+     RestContinuation.respondAsync(req)(f)
    }) openOr (() => Full(EmptyResponse))
   }
 }

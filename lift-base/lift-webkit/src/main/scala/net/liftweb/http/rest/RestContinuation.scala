@@ -39,7 +39,7 @@ object RestContinuation {
    *            is invoked asynchronously in the context of a different thread.
    * 
    */
-  def respondAsync(req: Req, f: ((Box[LiftResponse]) => Unit) => Unit): () => Box[LiftResponse] = {
+  def respondAsync(req: Req)(f: => Box[LiftResponse]): () => Box[LiftResponse] = {
     val store = ContinuationsStore.is
     val key = ContinuationKey(req.path, req.requestType)
 
@@ -62,7 +62,7 @@ object RestContinuation {
             future.satisfy(response)
           }
           
-          LAScheduler.execute(() => f(resumeFunc))
+          LAScheduler.execute(() => resumeFunc(f))
 
           def tryRespond: Box[LiftResponse] = {
             if (cachedResp != null){
@@ -107,7 +107,7 @@ object RestContinuation {
             }
           }
           
-          LAScheduler.execute(() => f(resumeFunc))
+          LAScheduler.execute(() => resumeFunc(f))
 
           def tryRespond: Box[LiftResponse] = {
             if (cachedResp != null){
