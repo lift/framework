@@ -28,6 +28,8 @@ object ResourceServer {
     case "jquery.js" :: Nil => true
     case "yui" :: _ => true
     case "liftYUI.js" :: Nil => true
+    case "extcore" :: _ => true
+    case "liftExtCore.js" :: Nil => true
     case "json2.js" :: Nil => true
     case "json.js" :: Nil => true
     case "jlift.js" :: Nil => true
