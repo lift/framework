@@ -37,6 +37,9 @@
     </action>
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
+      <action dev="hseeberger" type="add" issue="175" system="assembla">
+	German lift-core.properties
+      </action>
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
       <action dev="dpp" type="fix" issue="433" system="assembla">
 	Synchronized a variable
