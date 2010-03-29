@@ -66,9 +66,7 @@
         <artifactId>maven-bundle-plugin</artifactId>
         <configuration>
           <instructions>
-            <Export-Package>
-              net.liftweb.mapper.*;version="${project.version}"
-            </Export-Package>
+            <Export-Package>net.liftweb.mapper.*;version="${project.version}"</Export-Package>
           </instructions>
         </configuration>
       </plugin>
