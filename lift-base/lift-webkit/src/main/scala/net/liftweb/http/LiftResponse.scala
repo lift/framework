@@ -28,11 +28,11 @@ import _root_.net.liftweb.json.{JsonAST, Printer}
 /**
  * 200 response but without body.
  */
-case class OkResponse() extends LiftResponse with HeaderStuff {
+case class OkResponse() extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(Array(), headers, cookies, 200)
 }
 
-trait HeaderStuff {
+trait HeaderDefaults {
   val headers = S.getHeaders(Nil)
   val cookies = S.responseCookies
 }
@@ -58,21 +58,21 @@ case class CreatedResponse(xml: Node, mime: String) extends NodeResponse {
 /**
  * 202 response but without body.
  */
-case class AcceptedResponse() extends LiftResponse with HeaderStuff {
+case class AcceptedResponse() extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(Array(), headers, cookies, 202)
 }
 
 /**
  * 204 response but without body.
  */
-case class NoContentResponse() extends LiftResponse with HeaderStuff {
+case class NoContentResponse() extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(Array(), headers, cookies, 204)
 }
 
 /**
  * 205 response but without body.
  */
-case class ResetContentResponse() extends LiftResponse with HeaderStuff {
+case class ResetContentResponse() extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(Array(), headers, cookies, 205)
 }
 
@@ -96,7 +96,7 @@ case class TemporaryRedirectResponse(uri: String, request: Req, cookies: HTTPCoo
  * Your Request was missing an important element. Use this as a last resort if
  * the request appears incorrect.
  */
-case class BadResponse() extends LiftResponse with HeaderStuff {
+case class BadResponse() extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(Array(), headers, cookies, 400)
 }
 
@@ -134,7 +134,7 @@ object ForbiddenResponse {
  * The server understood the request, but is refusing to fulfill it.
  * Authorization will not help and the request SHOULD NOT be repeated.
  */
-case class ForbiddenResponse(message: String) extends LiftResponse with HeaderStuff {
+case class ForbiddenResponse(message: String) extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(message.getBytes("UTF-8"), "Content-Type" -> "text/plain; charset=utf-8" :: headers, cookies, 403)
 }
 
@@ -148,7 +148,7 @@ object NotFoundResponse {
  *
  * The server has not found anything matching the Request-URI.
  */
-case class NotFoundResponse(message: String) extends LiftResponse with HeaderStuff {
+case class NotFoundResponse(message: String) extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(message.getBytes("UTF-8"), "Content-Type" -> "text/plain; charset=utf-8" :: headers, cookies, 404)
 }
 
@@ -158,7 +158,7 @@ case class NotFoundResponse(message: String) extends LiftResponse with HeaderStu
  * This Resource does not allow this method. Use this when the resource can't
  * understand the method no matter the circumstances.
  */
-case class MethodNotAllowedResponse() extends LiftResponse with HeaderStuff {
+case class MethodNotAllowedResponse() extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(Array(), headers, cookies, 405)
 }
 
@@ -168,7 +168,7 @@ case class MethodNotAllowedResponse() extends LiftResponse with HeaderStuff {
  * This Resource does not allow this method. Use this when the resource can't
  * understand the method no matter the circumstances.
  */
-case class NotAcceptableResponse(msg: String) extends LiftResponse with HeaderStuff {
+case class NotAcceptableResponse(msg: String) extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(msg.getBytes("UTF-8"), headers, cookies, 406)
 }
 
@@ -181,7 +181,7 @@ object NotAcceptableResponse {
  *
  * The requested Resource used to exist but no longer does.
  */
-case class GoneResponse() extends LiftResponse with HeaderStuff {
+case class GoneResponse() extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(Array(), headers, cookies, 410)
 }
 
@@ -190,7 +190,7 @@ case class GoneResponse() extends LiftResponse with HeaderStuff {
  *
  * The requested Resource used to exist but no longer does.
  */
-case class UnsupportedMediaTypeResponse() extends LiftResponse with HeaderStuff {
+case class UnsupportedMediaTypeResponse() extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(Array(), headers, cookies, 415)
 }
 
@@ -200,7 +200,7 @@ case class UnsupportedMediaTypeResponse() extends LiftResponse with HeaderStuff 
  * The server encountered an unexpected condition which prevented
  * it from fulfilling the request.
  */
-case class InternalServerErrorResponse() extends LiftResponse with HeaderStuff {
+case class InternalServerErrorResponse() extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(Array(), headers, cookies, 500)
 }
 
@@ -212,7 +212,7 @@ case class InternalServerErrorResponse() extends LiftResponse with HeaderStuff {
  * server does not recognize the request method and is not capable
  * of supporting it for any resource.
  */
-case class NotImplementedResponse() extends LiftResponse with HeaderStuff {
+case class NotImplementedResponse() extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(Array(), headers, cookies, 501)
 }
 
@@ -223,7 +223,7 @@ case class NotImplementedResponse() extends LiftResponse with HeaderStuff {
  * response from the upstream server it accessed in attempting
  * to fulfill the request.
  */
-case class BadGatewayResponse() extends LiftResponse with HeaderStuff {
+case class BadGatewayResponse() extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(Array(), headers, cookies, 502)
 }
 
@@ -256,15 +256,14 @@ trait LiftResponse {
   def toResponse: BasicResponse
 }
 
-object JsonResponse extends HeaderStuff {
+object JsonResponse extends HeaderDefaults {
   def apply(json: JsExp): LiftResponse = JsonResponse(json, headers, cookies, 200)
-
-  def apply(json: JsonAST.JValue): LiftResponse = this.apply(json, headers, cookies, 200)
-
+  def apply(json: JsonAST.JValue): LiftResponse = apply(json, headers, cookies, 200)
+  def apply(json: JsonAST.JValue, code: Int): LiftResponse = apply(json, headers, cookies, code)
   def apply(_json: JsonAST.JValue, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int): LiftResponse =
-  new JsonResponse(new JsExp {
-    lazy val toJsCmd = Printer.pretty(JsonAST.render((_json)))
-  }, headers, cookies, 200)
+    new JsonResponse(new JsExp {
+      lazy val toJsCmd = Printer.pretty(JsonAST.render((_json)))
+    }, headers, cookies, 200)
 }
 
 case class JsonResponse(json: JsExp, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends LiftResponse {
