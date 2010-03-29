@@ -59,7 +59,21 @@
   <!--
     ~ Build Settings
   -->
-  <!-- <build/> -->
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <configuration>
+          <instructions>
+            <Export-Package>
+              net.liftweb.mapper.*;version="${project.version}"
+            </Export-Package>
+          </instructions>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
   <!--
     ~ Reporting Settings
