@@ -19,10 +19,11 @@ package record {
 package field {
 
 import _root_.scala.xml._
-import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.http.{S}
 import _root_.net.liftweb.http.js._
+import _root_.net.liftweb.json.JsonAST.JValue
+import _root_.net.liftweb.util._
 import _root_.java.util.{Calendar, Date}
 import Helpers._
 import S._
@@ -83,6 +84,14 @@ class DateTimeField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
 
   def asJs = valueBox.map(v => Str(toInternetDate(v.getTime))) openOr JsNull
 
+  def asJValue = asJString(v => toInternetDate(v.getTime))
+  def setFromJValue(jvalue: JValue) = setFromJString(jvalue) {
+    v => boxParseInternetDate(v).map(d => {
+      val cal = Calendar.getInstance
+      cal.setTime(d)
+      cal
+    })
+  }
 }
 
 import _root_.java.sql.{ResultSet, Types}

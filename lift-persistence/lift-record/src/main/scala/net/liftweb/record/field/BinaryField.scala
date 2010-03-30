@@ -19,10 +19,11 @@ package record {
 package field {
 
 import _root_.scala.xml._
-import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.http.{S}
 import _root_.net.liftweb.http.js._
+import _root_.net.liftweb.json.JsonAST.JValue
+import _root_.net.liftweb.util._
 import Helpers._
 import S._
 import JE._
@@ -56,6 +57,8 @@ class BinaryField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[
 
   def asJs = valueBox.map(v => Str(hexEncode(v))) openOr JsNull
 
+  def asJValue = asJString(base64Encode _)
+  def setFromJValue(jvalue: JValue) = setFromJString(jvalue)(s => tryo(base64Decode(s)))
 }
 
 import _root_.java.sql.{ResultSet, Types}

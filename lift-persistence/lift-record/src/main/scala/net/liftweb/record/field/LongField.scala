@@ -19,10 +19,11 @@ package record {
 package field {
 
 import scala.xml._
-import net.liftweb.util._
 import net.liftweb.common._
-import Helpers._
 import net.liftweb.http.{S}
+import net.liftweb.json.JsonAST.{JInt, JNothing, JNull, JValue}
+import net.liftweb.util._
+import Helpers._
 import S._
 
 class LongField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends NumericField[Long, OwnerType] {
@@ -44,6 +45,13 @@ class LongField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends NumericF
   def setFromString(s: String): Box[Long] = setBox(asLong(s))
 
   def defaultValue = 0L
+
+  def asJValue: JValue = valueBox.map(l => JInt(BigInt(l))) openOr (JNothing: JValue)
+  def setFromJValue(jvalue: JValue): Box[Long] = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case JInt(i)                      => setBox(Full(i.longValue))
+    case other                        => setBox(FieldHelpers.expectedA("JLong", other))
+  }
 
 }
 
