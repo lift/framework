@@ -109,7 +109,6 @@
               net.liftweb.http.*;version="${project.version}",
               net.liftweb.sitemap.*;version="${project.version}"
             </Export-Package>
-            <Import-Package>org.slf4j.*;resolution:="optional",*</Import-Package>
           </instructions>
         </configuration>
       </plugin>
