@@ -14,13 +14,13 @@
 package net.liftweb {
 package couchdb {
 
-import scala.collection.immutable.Map
-import dispatch.{Handler, Http}
-import net.liftweb.common.{Box, Empty, Failure, Full}
+import _root_.scala.collection.immutable.Map
+import _root_.dispatch.{Handler, Http}
+import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
 import Box.{box2Iterable, option2Box}
-import net.liftweb.json.JsonAST.{JField, JString, JValue}
-import net.liftweb.record.field.StringField
-import net.liftweb.util.ControlHelpers.tryo
+import _root_.net.liftweb.json.JsonAST.{JField, JString, JValue}
+import _root_.net.liftweb.record.field.StringField
+import _root_.net.liftweb.util.ControlHelpers.tryo
 import DocumentHelpers.jobjectToJObjectExtension
 
 object CouchDB {

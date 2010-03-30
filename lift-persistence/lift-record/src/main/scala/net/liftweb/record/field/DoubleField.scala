@@ -18,11 +18,11 @@ package net.liftweb {
 package record {
 package field {
 
-import scala.xml._
-import net.liftweb.common._
-import net.liftweb.http.{S}
-import net.liftweb.json.JsonAST.{JDouble, JNothing, JNull, JValue}
-import net.liftweb.util._
+import _root_.scala.xml._
+import _root_.net.liftweb.common._
+import _root_.net.liftweb.http.{S}
+import _root_.net.liftweb.json.JsonAST.{JDouble, JNothing, JNull, JValue}
+import _root_.net.liftweb.util._
 import Helpers._
 import S._
 
