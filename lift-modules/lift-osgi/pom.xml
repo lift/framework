@@ -90,9 +90,13 @@
         <artifactId>maven-bundle-plugin</artifactId>
         <configuration>
           <instructions>
+            <Export-Package>net.liftweb.osgi;version=${project.version}</Export-Package>
+            <Import-Package>
+              javax.servlet.*;version="[2.5,2.6)",
+              *
+            </Import-Package>
             <Private-Package>net.liftweb.osgi.internal.*</Private-Package>
             <Bundle-Activator>net.liftweb.osgi.internal.Activator</Bundle-Activator>
-            <Import-Package>javax.servlet.*;version="[2.5,2.6)",*</Import-Package>
           </instructions>
         </configuration>
       </plugin>
