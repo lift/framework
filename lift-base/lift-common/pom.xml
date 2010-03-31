@@ -61,6 +61,11 @@
         <configuration>
           <instructions>
             <Export-Package>net.liftweb.common.*;version="${project.version}"</Export-Package>
+            <Import-Package>
+              ch.qos.logback.*;resolution:="optional",
+              org.apache.log4j.*;resolution:="optional",
+              *
+            </Import-Package>
           </instructions>
         </configuration>
       </plugin>

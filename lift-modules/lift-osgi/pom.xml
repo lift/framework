@@ -61,27 +61,22 @@
     <dependency>
       <groupId>org.scalamodules</groupId>
       <artifactId>scalamodules-core</artifactId>
-      <version>1.5</version>
     </dependency>
     <dependency>
       <groupId>org.apache.felix</groupId>
       <artifactId>org.osgi.compendium</artifactId>
-      <version>1.2.0</version>
     </dependency>
     <dependency>
       <groupId>org.ops4j.pax.web</groupId>
-      <artifactId>pax-web-bundle</artifactId>
-      <version>0.6.0</version>
+      <artifactId>pax-web-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.ops4j.pax.swissbox</groupId>
       <artifactId>pax-swissbox-extender</artifactId>
-      <version>0.2.0</version>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>servlet-api</artifactId>
-      <scope>provided</scope>
     </dependency>
   </dependencies>
 
@@ -95,9 +90,13 @@
         <artifactId>maven-bundle-plugin</artifactId>
         <configuration>
           <instructions>
+            <Export-Package>net.liftweb.osgi;version=${project.version}</Export-Package>
+            <Import-Package>
+              javax.servlet.*;version="[2.5,2.6)",
+              *
+            </Import-Package>
             <Private-Package>net.liftweb.osgi.internal.*</Private-Package>
             <Bundle-Activator>net.liftweb.osgi.internal.Activator</Bundle-Activator>
-            <Import-Package>javax.servlet.*;version="[2.5,2.6)",*</Import-Package>
           </instructions>
         </configuration>
       </plugin>

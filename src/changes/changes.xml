@@ -41,6 +41,30 @@
       <action dev="dridus" type="enhancement" issue="440" system="assembla">
         Move JValue encoding/decoding for field values from JSONFields in lift-couchdb to base fields in lift-record.
         </action>
+      <action dev="hseeberger" type="fix" issue="448" system="assembla">
+	      Fix lift-osgi boot.
+      </action>
+      <action dev="hseeberger" type="add" issue="445" system="assembla">
+	      Make lift-mapper an OSGi bundle and fix broken OSGi configuration of other modules.
+      </action>
+      <action dev="hseeberger" type="add" issue="409" system="assembla">
+	      Updated lift-core_pl.properties for Lift 2.0
+      </action>
+      <action dev="dridus" type="enhancement" issue="440" system="assembla">
+        Move JValue encoding/decoding for field values from JSONFields in lift-couchdb to base fields in lift-record.
+        </action>
+      <action dev="hseeberger" type="add" issue="175" system="assembla">
+	German lift-core.properties
+      </action>
+      <action dev="madshartmann" type="add" issue="104" system="assembla">
+        Added javascript interface to the CalendarMothView which resembles the ones already available for the week and day view. 
+      </action>
+      <action dev="madshartmann" type="update" issue="402" system="assembla">
+        added blob to the list of reserved sql-words
+      </action>
+      <action dev="timperrett" type="enhancement" issue="443" system="assembla">
+        Add response code overload to JsonResponse and rename HeaderStuff
+      </action>
       <action dev="dpp" type="fix" issue="433" system="assembla">
 	Synchronized a variable
       </action>

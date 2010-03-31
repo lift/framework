@@ -18,18 +18,19 @@ package net.liftweb {
 package osgi {
 package internal {
 
-import _root_.java.util.{List => JList}
-import _root_.java.util.concurrent.atomic.AtomicReference
-import _root_.javax.servlet.http.{HttpServletRequest, HttpServletResponse}
-import _root_.net.liftweb.http.LiftFilter
-import _root_.net.liftweb.util.{ClassHelpers, Log, Slf4jLogBoot}
-import _root_.net.liftweb.common.{Box}
-import _root_.org.ops4j.pax.swissbox.extender._
-import _root_.org.ops4j.pax.web.service.WebContainer
-import _root_.org.osgi.framework.{Bundle, BundleActivator, BundleContext}
-import _root_.org.osgi.service.http.HttpContext
-import _root_.org.scalamodules.core.{Adding, Modified, Removed}
-import _root_.org.scalamodules.core.Preamble._
+import common.{ Box, Full, Logger }
+import http.LiftFilter
+import util.{ ClassHelpers, Slf4jLogBoot }
+
+import java.util.{List => JList}
+import java.util.concurrent.atomic.AtomicReference
+import javax.servlet.http.{ HttpServletRequest, HttpServletResponse }
+import org.ops4j.pax.swissbox.extender._
+import org.ops4j.pax.web.service.WebContainer
+import org.osgi.framework.{ Bundle, BundleActivator, BundleContext }
+import org.osgi.service.http.HttpContext
+import org.scalamodules.core.{ Adding, Modified, Removed }
+import org.scalamodules.core.Preamble._
 
 /**
  * <p>This activator enables OSGi support for Lift.</p>
@@ -39,10 +40,9 @@ import _root_.org.scalamodules.core.Preamble._
  * created delegating requests for resources to the Lift-powered bundles.
  * Finally a modified LiftFilter (no booting) is registered.</p>
  */
-class Activator extends BundleActivator {
+class Activator extends BundleActivator with Logger {
 
   override def start(context: BundleContext) {
-
     // Log4j is a bad OSGi citizen!
     Slf4jLogBoot.enable()
 
@@ -52,37 +52,37 @@ class Activator extends BundleActivator {
       new BundleManifestScanner(new RegexKeyManifestFilter("Lift-Config")),
       LiftBundleObserver)
     bundleWatcher.start()
-    Log debug "Lift extender started."
+    debug("Lift extender started.")
 
     // Register resources and LiftFilter
     context track classOf[WebContainer] on {
-      case Adding(webContainer, _) => {
+      case Adding(webContainer, _) =>
         if ((webContainerHolder getAndSet webContainer) == null) {
           val liftHttpContext = LiftHttpContext(webContainer.createDefaultHttpContext)
           webContainer.registerResources("/", "/", liftHttpContext)
           webContainer.registerFilter(OsgiLiftFilter, Array("/*"), null, null, liftHttpContext)
-          Log debug "LiftFilter and resources registered with HttpService."
+          debug("WebContainer service showed up => LiftFilter and resources registered.")
         }
-      }
-      case Removed(webContainer, _) => webContainerHolder.compareAndSet(webContainer, null)
+      case Removed(webContainer, _) =>
+        webContainerHolder.compareAndSet(webContainer, null)
+        debug("WebContainer service disappeared.")
     }
   }
 
   override def stop(context: BundleContext) {
-
     // Unregister resources and LiftFilter
     webContainerHolder.get match {
       case null         => // Nothing!
       case webContainer => {
         webContainer unregisterFilter OsgiLiftFilter
         webContainer unregister "/"
-        Log debug "LiftFilter and resources unregistered from HttpService."
+        debug("LiftFilter and resources unregistered from WebContainer.")
       }
     }
 
     // Stop Lift extender
     bundleWatcher.stop()
-    Log debug "Lift extender stopped."
+    debug("Lift extender stopped.")
   }
 
   private val webContainerHolder = new AtomicReference[WebContainer]
@@ -93,14 +93,13 @@ class Activator extends BundleActivator {
 /**
  * Observer for a Lift-powered bundle.
  */
-private object LiftBundleObserver extends BundleObserver[ManifestEntry] {
+private object LiftBundleObserver extends BundleObserver[ManifestEntry] with Logger {
 
   type LiftBundles = Map[Bundle, LiftBundleConfig]
 
   val liftBundles = new AtomicReference[LiftBundles](Map.empty)
 
   override def addingEntries(bundle: Bundle, entries: JList[ManifestEntry]) {
-
     assert(1 == entries.size, "Expecting exactly one manifest entry!")
 
     // Create config
@@ -110,20 +109,19 @@ private object LiftBundleObserver extends BundleObserver[ManifestEntry] {
     val clazz = bundle loadClass "bootstrap.liftweb.Boot"
     val invoker = ClassHelpers.createInvoker("boot", clazz.newInstance.asInstanceOf[AnyRef])
     invoker map { f => f() }
-    Log debug "Lift-powered bundle " + bundle.getSymbolicName + " booted."
+    debug("Lift-powered bundle " + bundle.getSymbolicName + " booted.")
 
     // Add config
     update { liftBundle => liftBundle + (bundle -> config) }
-    Log debug "Lift-powered bundle " + bundle.getSymbolicName + " added."
+    info("Lift-powered bundle " + bundle.getSymbolicName + " added.")
   }
 
   override def removingEntries(bundle: Bundle, entries: JList[ManifestEntry]) {
-
     assert(1 == entries.size, "Expecting exactly one manifest entry!")
 
     // Remove config
     update { liftBundle => liftBundle - bundle }
-    Log debug "Lift-powered bundle " + bundle.getSymbolicName + " removed."
+    info("Lift-powered bundle " + bundle.getSymbolicName + " removed.")
 
     // Unboot
     // TODO: Unboot!
@@ -136,17 +134,18 @@ private object LiftBundleObserver extends BundleObserver[ManifestEntry] {
 }
 
 /**
- * Special LiftFilter for OSGi space: No booting!
+ * Special LiftFilter for lift-osgi bundle: Set OsgiBootable.
  */
 private object OsgiLiftFilter extends LiftFilter {
-  override def bootLift(loader : Box[String]) { /* Nothing! */ }
+  override def bootLift(loader : Box[String]) {
+    super.bootLift(Full(classOf[OsgiBootable].getName))
+  }
 }
 
 /**
  * Configuration of a Lift-powered bundle.
  */
 private case class LiftBundleConfig(manifestEntry: ManifestEntry) {
-
   assert(manifestEntry != null, "ManifestEntry must not be null!")
 
   // TODO: Parse manifest entry and initialize webapp
@@ -157,19 +156,21 @@ private case class LiftBundleConfig(manifestEntry: ManifestEntry) {
  * Special HttpContext that delegates resource lookups to observerd
  * Lift-powered bundles and other methods to wrapped HttpContext.
  */
-private case class LiftHttpContext(context: HttpContext) extends HttpContext {
-
+private case class LiftHttpContext(context: HttpContext) extends HttpContext with Logger {
   assert(context != null, "HttpContext must not be null!")
 
   override def getMimeType(s: String) = context getMimeType s
 
   override def getResource(s: String) = {
+    debug("""Asked for resource "%s".""" format s)
     val liftBundles = LiftBundleObserver.liftBundles.get.toSeq.projection
     // TODO: The following probably could be done better!
     liftBundles flatMap {
       liftBundle => liftBundle._1 getResource (liftBundle._2 mapResource s) match {
         case null => None
-        case res  => Some(res)
+        case res  =>
+          debug("""Lift-powerer bundle "%s" answered for resource "%s".""".format(liftBundle._1.getSymbolicName, s))
+          Some(res)
       }
     } firstOption match {
       case None      => null
