@@ -24,6 +24,7 @@ import _root_.javax.servlet.http.HttpServletRequest
 
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.http._
+import _root_.net.liftweb.http.provider._
 import _root_.net.liftweb.http.provider.servlet._
 import _root_.net.liftweb.util._
 import Helpers._
@@ -45,7 +46,9 @@ class Jetty7AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
                setAttribute,
                suspend,
                setTimeout,
-               resume) = {
+               resume,
+               isExpired,
+               isResumed) = {
     try {
       val cc = Class.forName("org.eclipse.jetty.continuation.ContinuationSupport")
       val meth = cc.getMethod("getContinuation", classOf[javax.servlet.ServletRequest])
@@ -55,10 +58,12 @@ class Jetty7AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
       val suspend = cci.getMethod("suspend")
       val setTimeout = cci.getMethod("setTimeout", _root_.java.lang.Long.TYPE)
       val resume = cci.getMethod("resume")
-      (true, (cc), (meth), (getAttribute), (setAttribute), (suspend), setTimeout, resume)
+      val isExpired = cci.getMethod("isExpired")
+      val isResumed = cci.getMethod("isResumed")
+      (true, (cc), (meth), (getAttribute), (setAttribute), (suspend), setTimeout, resume, isExpired, isResumed)
     } catch {
       case e =>
-        (false, null, null, null, null, null, null, null)
+        (false, null, null, null, null, null, null, null, null, null)
     }
   }
 
@@ -79,16 +84,34 @@ class Jetty7AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
       }
    }
 
-  def suspend(timeout: Long): Any = {
+  def suspend(timeout: Long): RetryState.Value = {
     val cont = getContinuation.invoke(contSupport, servletReq)
-    setTimeout.invoke(cont, new _root_.java.lang.Long(timeout))
-    suspend.invoke(cont)
+
+    val expired = isExpired.invoke(cont).asInstanceOf[Boolean]
+    val resumed = isResumed.invoke(cont).asInstanceOf[Boolean]
+
+    if (expired)
+      RetryState.TIMED_OUT
+    else if (resumed)
+      RetryState.RESUMED
+    else {
+      setTimeout.invoke(cont, new _root_.java.lang.Long(timeout))
+      suspend.invoke(cont)
+      RetryState.SUSPENDED
+    }
+    
   }
 
-  def resume(what: AnyRef) {
+  def resume(what: AnyRef): Boolean = {
     val cont = getContinuation.invoke(contSupport, servletReq)
-    setAttribute.invoke(cont, "__liftCometState", what)
-    resume.invoke(cont)
+    try {
+      setAttribute.invoke(cont, "__liftCometState", what)
+      resume.invoke(cont)
+      true
+    } catch {
+      case e => setAttribute.invoke(cont, "__liftCometState", null)
+                false
+    }
   }
 
 

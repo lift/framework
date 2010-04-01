@@ -540,22 +540,6 @@ object LiftRules extends Factory with FormVendor {
 
   val resourceBundleFactories = RulesSeq[ResourceBundleFactoryPF]
 
-  /**
-   * Used for Comet handling to resume a continuation
-   */
-  def resumeRequest(what: AnyRef, req: HTTPRequest) = req resume what
-
-  /**
-   * Execute a continuation. For Jetty the Jetty specific exception will be thrown
-   * and the container will manage it.
-   */
-  def doContinuation(req: HTTPRequest, timeout: Long) = req suspend timeout
-
-  /**
-   * Check to see if continuations are supported
-   */
-  def checkContinuations(req: HTTPRequest): Option[Any] = req resumeInfo
-
   private var _sitemap: Box[SiteMap] = Empty
 
   private var sitemapFunc: Box[() => SiteMap] = Empty

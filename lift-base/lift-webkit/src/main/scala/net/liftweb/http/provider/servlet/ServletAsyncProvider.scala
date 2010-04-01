@@ -16,6 +16,8 @@
 
 package net.liftweb.http.provider.servlet
 
+import net.liftweb.http.provider._
+
 /**
  * Abstracts the management of asynchronous HTTP requests in order
  * to allow requests to be suspended and resumed later on.
@@ -37,14 +39,17 @@ trait ServletAsyncProvider {
    * Suspends this request for a given period of time
    * 
    * @param timeout
+   * @return a RetryState
    */
-  def suspend(timeout: Long): Any
+  def suspend(timeout: Long): RetryState.Value
   
   /**
    * Resumes this request
    *
    * @param ref - an object that will be associated with the resumed request
+   * @return false if the resume cannot occure
    */
-  def resume(ref: AnyRef): Unit
+  def resume(ref: AnyRef): Boolean
+
 
 }
