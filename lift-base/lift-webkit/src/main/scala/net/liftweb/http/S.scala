@@ -2239,11 +2239,11 @@ for {
   implicit def tuple2FieldError(t: (FieldIdentifier, NodeSeq)) = FieldError(t._1, t._2)
 
   /**
-   * Use this in DispatchPF for processing REST requests asyynchronously. Note that
+   * Use this in DispatchPF for processing REST requests asynchronously. Note that
    * this must be called in a stateful context, therefore the S state must be a valid one.
    *
    * @param f - the user function that does the actual computation. This function
-   *            takes one parameter which is the functino that must be invoked
+   *            takes one parameter which is the function that must be invoked
    *            for returning the actual response to the client. Note that f function
    *            is invoked asynchronously in the context of a different thread.
    * 

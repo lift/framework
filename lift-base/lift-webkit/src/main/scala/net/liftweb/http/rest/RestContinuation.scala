@@ -30,7 +30,7 @@ import _root_.net.liftweb.actor._
 object RestContinuation {
 
   /**
-   * Use this in DispatchPF for processing REST requests asyynchronously. Note that
+   * Use this in DispatchPF for processing REST requests asynchronously. Note that
    * this must be called in a stateful context, therefore the S state must be a valid one.
    *
    * @param f - the user function that does the actual computation. This function

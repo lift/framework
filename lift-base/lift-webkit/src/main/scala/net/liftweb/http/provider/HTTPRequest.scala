@@ -181,7 +181,7 @@ trait HTTPRequest {
 
   /**
    * Resume this request
-   * @return false if this continuztion cannot be resumed
+   * @return false if this continuation cannot be resumed
    *         as it is not in pending state.
    */
   def resume(what: AnyRef): Boolean
