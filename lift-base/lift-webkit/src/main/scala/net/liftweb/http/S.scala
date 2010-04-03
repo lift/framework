@@ -2276,6 +2276,11 @@ for {
    }) openOr (() => Full(EmptyResponse))
   }
 
+  /**
+   * If you bind functions (i.e. using SHtml helpers) inside the closure passed to callOnce,
+   * after your function is invoked, it will be automatically removed from functions cache so
+   * that it cannot be invoked again.
+   */
   def callOnce[T](f: => T): T = {
     autoCleanUp.doWith(true) {
       f
