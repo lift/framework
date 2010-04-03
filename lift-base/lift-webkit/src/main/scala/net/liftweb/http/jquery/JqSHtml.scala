@@ -45,6 +45,29 @@ object JqSHtml {
     FadeOut(LiftRules.noticesContainerId + "_notice", duration, fadeTime)
   }
 
+  /**
+  * Generate a JavaScript FadeOut command for the Errors screen real estate using
+  * the default prefade duration and fade time from JsRules
+  */
+  def fadeOutErrors(): JsCmd = {
+    FadeOut(LiftRules.noticesContainerId + "_error", JsRules.prefadeDuration, JsRules.fadeTime)
+  }
+
+  /**
+  * Generate a JavaScript FadeOut command for the Warnings screen real estate using
+  * the default prefade duration and fade time from JsRules
+  */
+  def fadeOutWarnings(): JsCmd = {
+    FadeOut(LiftRules.noticesContainerId + "_warn", JsRules.prefadeDuration, JsRules.fadeTime)
+  }
+
+  /**
+  * Generate a JavaScript FadeOut command for the Notices screen real estate using
+  * the default prefade duration and fade time from JsRules
+  */
+  def fadeOutNotices(): JsCmd = {
+    FadeOut(LiftRules.noticesContainerId + "_notice", JsRules.prefadeDuration, JsRules.fadeTime)
+  }
 
 }
 

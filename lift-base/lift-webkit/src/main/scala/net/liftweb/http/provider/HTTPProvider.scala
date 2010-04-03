@@ -29,6 +29,9 @@ import Helpers._
 trait HTTPProvider {
   private var actualServlet: LiftServlet = _
 
+  // Logger needs to be lazy to delay creation of logger until after boot. User can have changed the logging config
+  private lazy val logger = Logger(classOf[HTTPProvider])
+
   protected def context: HTTPContext
 
   /**
@@ -71,13 +74,16 @@ trait HTTPProvider {
         val b: Bootable = loader.map(b => Class.forName(b).newInstance.asInstanceOf[Bootable]) openOr DefaultBootstrap
         preBoot
         b.boot
+        
         postBoot
 
         actualServlet = new LiftServlet(context)
         actualServlet.init
 
       } catch {
-        case e => Log.error("Failed to Boot", e); None
+        case e =>
+            logger.error("Failed to Boot", e);
+            None
       }
     }
 
@@ -98,7 +104,7 @@ trait HTTPProvider {
         LiftRules.templateCache = Full(InMemoryCache(500))
       }
     } catch {
-      case _ => Log.error("LiftWeb core resource bundle for locale " + Locale.getDefault() + ", was not found ! ")
+      case _ => logger.error("LiftWeb core resource bundle for locale " + Locale.getDefault() + ", was not found ! ")
     } finally {
       LiftRules.doneBoot = true;
     }

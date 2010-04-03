@@ -35,7 +35,7 @@ import Helpers._
  * Implemented by using Jetty 6 Continuation API
  *
  */
-class Jetty6AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
+class Jetty6AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider with Loggable {
 
   private val servletReq = (req.asInstanceOf[HTTPRequestServlet]).req
 
@@ -83,7 +83,7 @@ class Jetty6AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
   def suspend(timeout: Long): RetryState.Value = {
     try {
       val cont = getContinuation.invoke(contSupport, servletReq, LiftRules)
-      Log.trace("About to suspend continuation")
+      logger.trace("About to suspend continuation")
       val b = suspend.invoke(cont, new _root_.java.lang.Long(timeout)).asInstanceOf[Boolean]
       if (!b) RetryState.TIMED_OUT else RetryState.RESUMED
     } catch {

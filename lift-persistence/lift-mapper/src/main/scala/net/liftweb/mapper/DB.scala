@@ -27,7 +27,7 @@ import Helpers._
 import java.sql.ResultSetMetaData
 import java.sql.{Statement, ResultSet, Types, PreparedStatement, Connection, DriverManager}
 
-object DB {
+object DB extends Loggable {
   private val threadStore = new ThreadLocal[HashMap[ConnectionIdentifier, ConnectionHolder]]
   private val _postCommitFuncs = new ThreadLocal[List[() => Unit]]
 
@@ -133,10 +133,10 @@ object DB {
   private def newConnection(name: ConnectionIdentifier): SuperConnection = {
     val ret = ((threadLocalConnectionManagers.box.flatMap(_.get(name)) or Box(connectionManagers.get(name))).flatMap(cm => cm.newSuperConnection(name) or cm.newConnection(name).map(c => new SuperConnection(c, () => cm.releaseConnection(c))))) openOr {
       Helpers.tryo {
-        val uniqueId = if (Log.isDebugEnabled) Helpers.nextNum.toString else ""
-        Log.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " opened")
+        val uniqueId = if (logger.isDebugEnabled) Helpers.nextNum.toString else ""
+        logger.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " opened")
         val conn = (new InitialContext).lookup("java:/comp/env").asInstanceOf[Context].lookup(name.jndiName).asInstanceOf[DataSource].getConnection
-        new SuperConnection(conn, () => {Log.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " closed"); conn.close})
+        new SuperConnection(conn, () => {logger.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " closed"); conn.close})
       } openOr {
         throw new NullPointerException("Looking for Connection Identifier " + name + " but failed to find either a JNDI data source " +
                                        "with the name " + name.jndiName + " or a lift connection manager with the correct name")
@@ -225,19 +225,19 @@ object DB {
   CurrentConnectionSet.is.map(_.use(conn)) openOr 0
 
   private def getConnection(name: ConnectionIdentifier): SuperConnection = {
-    Log.trace("Acquiring connection " + name + " On thread " + Thread.currentThread)
+    logger.trace("Acquiring connection " + name + " On thread " + Thread.currentThread)
     var ret = info.get(name) match {
       case None => ConnectionHolder(newConnection(name), calcBaseCount(name) + 1, Nil)
       case Some(ConnectionHolder(conn, cnt, post)) => ConnectionHolder(conn, cnt + 1, post)
     }
     info(name) = ret
-    Log.trace("Acquired connection " + name + " on thread " + Thread.currentThread +
+    logger.trace("Acquired connection " + name + " on thread " + Thread.currentThread +
               " count " + ret.cnt)
     ret.conn
   }
 
   private def releaseConnectionNamed(name: ConnectionIdentifier, rollback: Boolean) {
-    Log.trace("Request to release connection: " + name + " on thread " + Thread.currentThread)
+    logger.trace("Request to release connection: " + name + " on thread " + Thread.currentThread)
     (info.get(name): @unchecked) match {
       case Some(ConnectionHolder(c, 1, post)) =>
         if (rollback) tryo{c.rollback}
@@ -245,10 +245,10 @@ object DB {
         tryo(c.releaseFunc())
         info -= name
         post.reverse.foreach(f => tryo(f()))
-        Log.trace("Released connection " + name + " on thread " + Thread.currentThread)
+        logger.trace("Released connection " + name + " on thread " + Thread.currentThread)
 
       case Some(ConnectionHolder(c, n, post)) =>
-        Log.trace("Did not release connection: " + name + " on thread " + Thread.currentThread + " count " + (n - 1))
+        logger.trace("Did not release connection: " + name + " on thread " + Thread.currentThread + " count " + (n - 1))
         info(name) = ConnectionHolder(c, n - 1, post)
 
       case _ =>
@@ -1009,6 +1009,7 @@ class StandardDBVendor(driverName: String,
 }
 
 trait ProtoDBVendor extends ConnectionManager {
+  private val logger = Logger(classOf[ProtoDBVendor])
   private var pool: List[Connection] = Nil
   private var poolSize = 0
   private var tempMaxSize = maxPoolSize
@@ -1056,24 +1057,29 @@ trait ProtoDBVendor extends ConnectionManager {
           val ret = createOne
           ret.foreach(_.setAutoCommit(false))
           poolSize = poolSize + 1
+          logger.debug("Created new pool entry. name=%s, poolSize=%d".format(name, poolSize))
           ret
 
         case Nil =>
           val curSize = poolSize
+          logger.trace("No connection left in pool, waiting...")
           wait(50L)
           // if we've waited 50 ms and the pool is still empty, temporarily expand it
           if (pool.isEmpty && poolSize == curSize && canExpand_?) {
             tempMaxSize += 1
+            logger.debug("Temporarily expanding pool. name=%s, tempMaxSize=%d".format(name, tempMaxSize))
           }
           newConnection(name)
 
         case x :: xs =>
+          logger.trace("Found connection in pool, name=%s".format(name))
           pool = xs
           try {
             this.testConnection(x)
             Full(x)
           } catch {
             case e => try {
+              logger.debug("Test connection failed, removing connection from pool, name=%s".format(name))
               poolSize = poolSize - 1
               tryo(x.close)
               newConnection(name)
@@ -1092,10 +1098,12 @@ trait ProtoDBVendor extends ConnectionManager {
     } else {
       pool = conn :: pool
     }
+    logger.debug("Released connection. poolSize=%d".format(poolSize))
     notifyAll
   }
 
   def closeAllConnections_!(): Unit = synchronized {
+    logger.info("Closing all connections")
     if (poolSize == 0) ()
     else {
       pool.foreach {c => tryo(c.close); poolSize -= 1}

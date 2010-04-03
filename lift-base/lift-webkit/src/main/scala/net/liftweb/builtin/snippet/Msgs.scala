@@ -21,7 +21,6 @@ package snippet {
 import _root_.net.liftweb.http._
 import _root_.scala.xml._
 import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.util.Log
 import S._
 import _root_.net.liftweb.common.{Box, Full, Empty}
 
@@ -59,7 +58,6 @@ object Msgs extends DispatchSnippet {
             else noIdMessages _
 
     val makeTitle: (String) => String = {text =>
-      Log.debug("Msgs: Default " + text + " is not rendered as the default title is now empty string")
       ""
     }
 

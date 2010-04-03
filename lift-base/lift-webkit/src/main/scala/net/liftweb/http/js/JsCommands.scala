@@ -749,6 +749,23 @@ object JsCmds {
 
 }
 
+/**
+* A collection of defaults for JavaScript related stuff
+*/
+object JsRules {
+  /**
+  * The default duration for displaying FadeOut and FadeIn
+  * messages.
+  */
+  @volatile var prefadeDuration: Helpers.TimeSpan = 5 seconds
+
+  /**
+  * The default fade time for fading FadeOut and FadeIn
+  * messages.
+  */
+  @volatile var fadeTime: Helpers.TimeSpan = 1 second
+}
+
 }
 }
 }

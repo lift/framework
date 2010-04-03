@@ -23,7 +23,7 @@ import _root_.java.lang.reflect.Method
 import _root_.java.sql.{ResultSet, Types, PreparedStatement}
 import _root_.scala.xml._
 import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.common.{Box, Empty, Full, Failure}
+import _root_.net.liftweb.common.{Box, Empty, Full, Failure, Logger}
 import _root_.net.liftweb.json._
 import _root_.net.liftweb.util.{NamedPF, FieldError, Helpers}
 import _root_.net.liftweb.http.{LiftRules, S, SHtml, RequestMemoize,
@@ -132,7 +132,9 @@ object MapperRules extends Factory {
 trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   self: A =>
 
-   case class FieldHolder(name: String, method: Method, field: MappedField[_, A])
+  private val logger = Logger(classOf[MetaMapper[A]])
+  
+  case class FieldHolder(name: String, method: Method, field: MappedField[_, A])
 
   type RealType = A
 
@@ -464,16 +466,25 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     by match {
       case Nil => curPos
       case Cmp(field, _, Full(value), _, _) :: xs =>
-        st.setObject(curPos, field.convertToJDBCFriendly(value), conn.driverType.columnTypeMap(field.targetSQLType))
+	if (field.dbIgnoreSQLType_?)
+	  st.setObject(curPos, field.convertToJDBCFriendly(value))
+	else
+          st.setObject(curPos, field.convertToJDBCFriendly(value), conn.driverType.columnTypeMap(field.targetSQLType))
+
         setStatementFields(st, xs, curPos + 1, conn)
 
       case ByList(field, orgVals) :: xs => {
            val vals = Set(orgVals :_*).toList
           var newPos = curPos
           vals.foreach(v => {
-              st.setObject(newPos,
+	    if (field.dbIgnoreSQLType_?)
+	      st.setObject(newPos,
+                           field.convertToJDBCFriendly(v))
+	    else
+	      st.setObject(newPos,
                            field.convertToJDBCFriendly(v),
                            conn.driverType.columnTypeMap(field.targetSQLType))
+	    
               newPos = newPos + 1
             })
 
@@ -511,7 +522,12 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
             case List(d: Date) =>
               st.setTimestamp(curPos, new _root_.java.sql.Timestamp(d.getTime))
               setStatementFields(st, xs, curPos + 1, conn)
-            case List(field: BaseMappedField) => st.setObject(curPos, field.jdbcFriendly, conn.driverType.columnTypeMap(field.targetSQLType))
+            case List(field: BaseMappedField) => 
+	      if (field.dbIgnoreSQLType_?)
+		st.setObject(curPos, field.jdbcFriendly)
+	      else
+	      	st.setObject(curPos, field.jdbcFriendly, conn.driverType.columnTypeMap(field.targetSQLType))
+	    
               setStatementFields(st, xs, curPos + 1, conn)
 
             case p :: ps =>
@@ -566,7 +582,10 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
             st =>
             val indVal = indexedField(toDelete)
             indVal.map{indVal =>
-              st.setObject(1, indVal.jdbcFriendly(im), conn.driverType.columnTypeMap(indVal.targetSQLType(im)))
+	      if (indVal.dbIgnoreSQLType_?)
+		st.setObject(1, indVal.jdbcFriendly(im))
+	      else
+		st.setObject(1, indVal.jdbcFriendly(im), conn.driverType.columnTypeMap(indVal.targetSQLType(im)))
 
               st.executeUpdate == 1
             } openOr false
@@ -687,6 +706,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   }
 
   final def validate(toValidate: A): List[FieldError] = {
+    logger.debug("Validating dbName=%s, entity=%s".format(dbName, toValidate))
     val saved_? = this.saved_?(toValidate)
     _beforeValidation(toValidate)
     if (saved_?) _beforeValidationOnUpdate(toValidate) else _beforeValidationOnCreate(toValidate)
@@ -695,6 +715,8 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
     _afterValidation(toValidate)
     if (saved_?) _afterValidationOnUpdate(toValidate) else _afterValidationOnCreate(toValidate)
+
+    logger.debug("Validated dbName=%s, entity=%s, result=%s".format(dbName, toValidate, ret))
 
     ret
   }
@@ -717,6 +739,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       case x: MetaMapper[_] => throw new MapperException("Cannot save the MetaMapper singleton")
 
       case _ =>
+        logger.debug("Saving dbName=%s, entity=%s".format(dbName, toSave))
         /**
          * @return true if there was exactly one row in the result set, false if not.
          */
@@ -766,14 +789,29 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                       colVal.targetSQLType(col._1) match {
                         case Types.VARCHAR => st.setString(colNum, colVal.jdbcFriendly(col._1).asInstanceOf[String])
 
-                        case _ => st.setObject(colNum, colVal.jdbcFriendly(col._1), conn.driverType.columnTypeMap(colVal.targetSQLType(col._1)))
+                        case _ => 
+			  if (colVal.dbIgnoreSQLType_?)
+			    st.setObject(colNum, colVal.jdbcFriendly(col._1))
+			  else
+			    st.setObject(colNum, colVal.jdbcFriendly(col._1), 
+					 conn.driverType.
+					 columnTypeMap(colVal.
+						       targetSQLType(col._1)))
                       }
                       colNum = colNum + 1
                     }
                   }
 
-                  indexedField(toSave).foreach(indVal =>  st.setObject(colNum, indVal.jdbcFriendly(indexMap.open_!),
-                                                                       conn.driverType.columnTypeMap(indVal.targetSQLType(indexMap.open_!))))
+                  indexedField(toSave).foreach(indVal =>  
+		    if (indVal.dbIgnoreSQLType_?)
+		      st.setObject(colNum, indVal.jdbcFriendly(indexMap.
+							       open_!))
+		    else
+		      st.setObject(colNum, indVal.jdbcFriendly(indexMap.open_!),
+                                   conn.driverType.
+				   columnTypeMap(indVal.
+						 targetSQLType(indexMap.
+							       open_!))))
                   st.executeUpdate
                   true
                 }
@@ -796,7 +834,15 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                       case Types.VARCHAR =>
                         st.setString(colNum, colVal.jdbcFriendly(col._1).asInstanceOf[String])
 
-                      case _ => st.setObject(colNum, colVal.jdbcFriendly(col._1), conn.driverType.columnTypeMap(colVal.targetSQLType(col._1)))
+                      case _ => 
+			if (colVal.dbIgnoreSQLType_?)
+			  st.setObject(colNum, colVal.jdbcFriendly(col._1))
+			else
+			  st.setObject(colNum, colVal.jdbcFriendly(col._1),
+				       conn.driverType.
+				       columnTypeMap(colVal.
+						     targetSQLType(col._1)))
+
                     }
                     colNum = colNum + 1
                   }
@@ -992,6 +1038,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   private var indexMap: Box[String] = Empty
 
   this.runSafe {
+    logger.debug("Initializing MetaMapper for %s".format(internalTableName_$_$))
     val tArray = new ListBuffer[FieldHolder]
 
     def isMagicObject(m: Method) = m.getReturnType.getName.endsWith("$"+m.getName+"$") && m.getParameterTypes.length == 0
@@ -1004,11 +1051,10 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
      * Find the magic mapper fields on the superclass
      */
     def findMagicFields(onMagic: Mapper[A], staringClass: Class[_]): List[Method] = {
-
       // If a class name ends in $module, it's a subclass created for scala object instances
       def deMod(in: String): String =
-      if (in.endsWith("$module")) in.substring(0, in.length - 7)
-      else in
+        if (in.endsWith("$module")) in.substring(0, in.length - 7)
+        else in
 
       // find the magic fields for the given superclass
       def findForClass(clz: Class[_]): List[Method] = clz match {
@@ -1035,6 +1081,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
               // invoke the method
               meth.invoke(onMagic) match {
                 case null =>
+                  logger.debug("Not a valid mapped field: %s".format(meth.getName))
                   false
                 case inst =>
                   // do we get a MappedField of some sort back?
@@ -1051,6 +1098,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
             } catch {
               case e =>
+                logger.debug("Not a valid mapped field: %s, got exception: %s".format(meth.getName, e))
                 false
             }
           }
@@ -1066,15 +1114,14 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
           meths ::: findForClass(clz.getSuperclass)
       }
 
-      val ret = findForClass(staringClass)
+      val ret = findForClass(staringClass).removeDuplicates
 
-      ret.removeDuplicates
+      ret
     }
 
     val mapperAccessMethods = findMagicFields(this, this.getClass.getSuperclass)
 
     mappedCallbacks = mapperAccessMethods.filter(isLifecycle).map(v => (v.getName, v))
-    // for (v <- this.getClass.getSuperclass.getMethods.toList if isMagicObject(v) && isLifecycle(v)) yield (v.getName, v)
 
     for (v <- mapperAccessMethods) {
       v.invoke(this) match {
@@ -1086,7 +1133,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
             mappedColumns += colName -> v
           }
           if (mf.dbPrimaryKey_? && mf.dbAutogenerated_?) {
-            indexMap = Full(MapperRules.quoteColumnName(mf._dbColumnNameLC)) // Full(v.getName.toLowerCase)
+            indexMap = Full(MapperRules.quoteColumnName(mf._dbColumnNameLC)) 
           }
 
         case _ =>
@@ -1108,6 +1155,8 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
     mappedFieldList = resArray.toList
     mappedFieldList.foreach(ae => _mappedFields(ae.name) = ae.method)
+    
+    logger.trace("Mapped fields for %s: %s".format(dbName, mappedFieldList.map(_.name).mkString(",")))
   }
   
   val columnNamesForInsert = (mappedColumnInfo.filter(c => !(c._2.dbPrimaryKey_? && c._2.dbAutogenerated_?)).map(_._1)).toList.mkString(",")
@@ -1125,8 +1174,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       tableName
   }
 
-  private def internalTableName_$_$ =
-  getClass.getSuperclass.getName.split("\\.").toList.last;
+  private def internalTableName_$_$ = getClass.getSuperclass.getName.split("\\.").toList.last;
 
   /**
    * This function converts a header name into the appropriate
@@ -1136,8 +1184,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    * will be used for this MetaMapper unless you override the
    * htmlHeades method
    */
-  var displayNameToHeaderElement: String => NodeSeq =
-  MapperRules.displayNameToHeaderElement
+  var displayNameToHeaderElement: String => NodeSeq = MapperRules.displayNameToHeaderElement
 
   def htmlHeaders: NodeSeq =
   mappedFieldList.filter(_.field.dbDisplay_?).
@@ -1742,7 +1789,13 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
                         mkString(", ")+
                         " FROM "+MapperRules.quoteTableName(_dbTableNameLC)+" WHERE "+MapperRules.quoteColumnName(field._dbColumnNameLC)+" = ?", conn) {
       st =>
-      st.setObject(1, field.makeKeyJDBCFriendly(key), conn.driverType.columnTypeMap(field.targetSQLType(field._dbColumnNameLC)))
+	if (field.dbIgnoreSQLType_?)
+	  st.setObject(1, field.makeKeyJDBCFriendly(key))
+	else
+	  st.setObject(1, field.makeKeyJDBCFriendly(key), 
+		       conn.driverType.
+		       columnTypeMap(field.
+				     targetSQLType(field._dbColumnNameLC)))
       DB.exec(st) {
         rs =>
         val mi = buildMapper(rs)

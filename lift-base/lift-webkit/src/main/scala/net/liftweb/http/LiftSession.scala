@@ -90,7 +90,7 @@ case class SessionWatcherInfo(sessions: Map[String, LiftSession])
  * Manages LiftSessions because the servlet container is less than optimal at
  * timing sessions out.
  */
-object SessionMaster extends LiftActor {
+object SessionMaster extends LiftActor with Loggable {
   private var sessions: Map[String, LiftSession] = Map.empty
   private object CheckAndPurge
   private val lock = new ConcurrentLock
@@ -161,7 +161,7 @@ object SessionMaster extends LiftActor {
                     case e => // ignore... sometimes you can't do this and it's okay
                   }
                 } catch {
-                  case e => Log.error("Failure in remove session", e)
+                  case e => logger.warn("Failure in remove session", e)
 
                 } finally {
                   lock.write {sessions = sessions - sessionId}
@@ -174,7 +174,7 @@ object SessionMaster extends LiftActor {
       for ((id, session) <- ses.elements) {
         session.doCometActorCleanup()
         if (now - session.lastServiceTime > session.inactivityLength || session.markedForTermination) {
-          Log.info(" Session " + id + " expired")
+          logger.info(" Session " + id + " expired")
           this.sendMsg(RemoveSession(id))
         } else {
           session.cleanupUnseenFuncs()
@@ -202,7 +202,7 @@ object SessionMaster extends LiftActor {
       try {
         ActorPing schedule (this, CheckAndPurge, 10 seconds)
       } catch {
-        case e => Log.error("Couldn't start SessionMaster ping", e)
+        case e => logger.error("Couldn't start SessionMaster ping", e)
       }
     }
   }
@@ -230,7 +230,7 @@ object RenderVersion {
  */
 @serializable
 class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
-                  val httpSession: Box[HTTPSession]) extends LiftMerge {
+                  val httpSession: Box[HTTPSession]) extends LiftMerge with Loggable {
   import TemplateFinder._
 
   type AnyActor = {def !(in: Any): Unit}
@@ -364,6 +364,10 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     funcs.foreach {case (name, func) => messageCallback(name) = func.duplicate(uniqueId)}
   }
 
+  def removeFunction(name: String) = synchronized {
+   messageCallback -= name
+  }
+
   /**
    * Set your session-specific progress listener for mime uploads
    *     pBytesRead - The total number of bytes, which have been read so far.
@@ -462,7 +466,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       synchronized {
         LiftSession.onAboutToShutdownSession.foreach(_(this))
 
-        // Log.debug("Shutting down session")
         _running_? = false
 
         SessionMaster.sendMsg(RemoveSession(this.uniqueId))
@@ -626,15 +629,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
               val func: String = LiftSession.this.synchronized {
                 val funcName = Helpers.nextFuncName
                 messageCallback(funcName) = S.NFuncHolder(() => {
-                  try {
-                    fnc()
-                  } finally {
-                    /* Sometimes we need the func to stay around
-                    LiftSession.this.synchronized {
-                      messageCallback -= funcName
-                    }
-                    */
-                  }
+                   fnc()
                 })
                 funcName
               }
@@ -902,7 +897,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                             wholeTag)
                       }
                     }
-                    case Failure(_, Full(exception), _) => Log.warn("Snippet instantiation error", exception)
+                    case Failure(_, Full(exception), _) => logger.warn("Snippet instantiation error", exception)
                     reportSnippetError(page, snippetName,
                       LiftRules.SnippetFailures.InstantiationException,
                       NodeSeq.Empty,
@@ -1210,7 +1205,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       cls =>
               tryo((e: Throwable) => e match {
                 case e: _root_.java.lang.NoSuchMethodException => ()
-                case e => Log.info("Comet find by type Failed to instantiate " + cls.getName, e)
+                case e => logger.info("Comet find by type Failed to instantiate " + cls.getName, e)
               }) {
                 val constr = cls.getConstructor()
                 val ret = constr.newInstance().asInstanceOf[LiftCometActor]
@@ -1218,7 +1213,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
                 ret ! PerformSetupComet
                 ret.asInstanceOf[LiftCometActor]
-              } or tryo((e: Throwable) => Log.info("Comet find by type Failed to instantiate " + cls.getName, e)) {
+              } or tryo((e: Throwable) => logger.info("Comet find by type Failed to instantiate " + cls.getName, e)) {
                 val constr = cls.getConstructor(this.getClass, classOf[Box[String]], classOf[NodeSeq], classOf[Map[String, String]])
                 val ret = constr.newInstance(this, name, defaultXml, attributes).asInstanceOf[LiftCometActor];
 

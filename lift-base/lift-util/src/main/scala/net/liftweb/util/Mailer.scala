@@ -34,6 +34,8 @@ object Mailer extends MailerImpl
  * This trait implmenets the mail sending
  */
 protected trait MailerImpl {
+  private val logger = Logger(classOf[MailerImpl])
+  
   sealed abstract class MailTypes
   sealed abstract class MailBodyType extends MailTypes
   case class PlusImageHolder(name: String, mimeType: String, bytes: Array[Byte])
@@ -209,7 +211,7 @@ protected trait MailerImpl {
 
           MailerImpl.this.performTransportSend(message)
         } catch {
-          case e: Exception => Log.error("Couldn't send mail", e)
+          case e: Exception => logger.error("Couldn't send mail", e)
         }
     }
   }
