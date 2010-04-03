@@ -13,6 +13,9 @@ import javax.naming.ldap.{LdapName, InitialLdapContext}
 import scala.collection.JavaConversions._
 //import scala.collection.jcl.{Hashtable => ScalaHashtable, MapWrapper}
 
+import _root_.net.liftweb.util.Props
+import _root_.net.liftweb.common.Loggable
+
 /**
  * Extends SimpleLDAPVendor trait,
  * Allow us to search and bind an username from a ldap server
@@ -58,7 +61,7 @@ object SimpleLDAPVendor extends SimpleLDAPVendor {
 
 trait SimpleLDAPVendor extends LDAPVendor
 
-class LDAPVendor {
+class LDAPVendor extends Loggable {
 
     type StringMap = Map[String, String]
 
@@ -76,7 +79,7 @@ class LDAPVendor {
         initialContext.get.getAttributes(dn)
 
     def search(filter: String): List[String] = {
-        Log.debug("--> LDAPSearch.search: Searching for '%s'".format(filter))
+        logger.debug("--> LDAPSearch.search: Searching for '%s'".format(filter))
 
         var list = List[String]()
 
@@ -97,7 +100,7 @@ class LDAPVendor {
     }
 
     def bindUser(dn: String, password: String) : Boolean = {
-        Log.debug("--> LDAPSearch.bindUser: Try to bind user '%s'".format(dn))
+        logger.debug("--> LDAPSearch.bindUser: Try to bind user '%s'".format(dn))
 
         var result = false
 
@@ -112,7 +115,7 @@ class LDAPVendor {
             case e: Exception => println(e)
         }
 
-        Log.debug("--> LDAPSearch.bindUser: Bind successfull ? %s".format(result))
+        logger.debug("--> LDAPSearch.bindUser: Bind successfull ? %s".format(result))
 
         return result
     }
@@ -129,7 +132,7 @@ class LDAPVendor {
     }
 
     private def getInitialContext(props: StringMap) : Option[InitialLdapContext] = {
-        Log.debug("--> LDAPSearch.getInitialContext: Get initial context from '%s'".format(props.get("ldap.url")))
+        logger.debug("--> LDAPSearch.getInitialContext: Get initial context from '%s'".format(props.get("ldap.url")))
 
         var env = new Hashtable[String, String]()
         env.put(Context.PROVIDER_URL, props.getOrElse("ldap.url", DEFAULT_URL))

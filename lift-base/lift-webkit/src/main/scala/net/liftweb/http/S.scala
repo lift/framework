@@ -30,6 +30,7 @@ import _root_.net.liftweb.builtin.snippet._
 import provider._
 import _root_.scala.reflect.Manifest
 import _root_.java.util.concurrent.{ConcurrentHashMap => CHash}
+import _root_.net.liftweb.http.rest.RestContinuation
 
 /**
  * An object representing the current state of the HTTP request and response.
@@ -40,7 +41,7 @@ import _root_.java.util.concurrent.{ConcurrentHashMap => CHash}
  * @see LiftSession
  * @see LiftFilter
  */
-object S extends HasParams {
+object S extends HasParams with Loggable {
   /**
    * RewriteHolder holds a partial function that re-writes an incoming request. It is
    * used for per-session rewrites, as opposed to global rewrites, which are handled
@@ -161,6 +162,7 @@ object S extends HasParams {
   private val _responseHeaders = new ThreadGlobal[ResponseInfoHolder]
   private val _responseCookies = new ThreadGlobal[CookieHolder]
   private val _lifeTime = new ThreadGlobal[Boolean]
+  private val autoCleanUp = new ThreadGlobal[Boolean]
 
   private object postFuncs extends TransientRequestVar(new ListBuffer[() => Unit])
   private object p_queryLog extends TransientRequestVar(new ListBuffer[(String, Long)])
@@ -857,7 +859,7 @@ for {
    * </pre>
    *
    * Note that the query log is simply stored as a List and is not sent to any output
-   * byt default. To retrieve the List of query log items, use S.queryLog. You can also
+   * by default. To retrieve the List of query log items, use S.queryLog. You can also
    * provide your own analysis function that will process the query log via S.addAnalyzer.
    *
    * @see # queryLog
@@ -1751,7 +1753,29 @@ for {
    * Associates a name with a function impersonated by AFuncHolder. These are basically functions
    * that are executed when a request contains the 'name' request parameter.
    */
-  def addFunctionMap(name: String, value: AFuncHolder) = _functionMap.value += (name -> value)
+  def addFunctionMap(name: String, value: AFuncHolder) = {
+   autoCleanUp.box match {
+     case Full(true) =>  _functionMap.value += (name -> 
+       new S.ProxyFuncHolder(value) {
+         override def apply(in: List[String]): Any = {
+           try {
+             super.apply(in)
+           } finally {
+             S.session.map(_.removeFunction(name))
+           }
+         }
+
+         override def apply(in: FileParamHolder): Any = {
+           try {
+             super.apply(in)
+           } finally {
+             S.session.map(_.removeFunction(name))
+           }
+         }
+       })
+     case _ => _functionMap.value += (name -> value)
+   }
+  }
 
   private def booster(lst: List[String], func: String => Any): Unit = lst.foreach(v => func(v))
 
@@ -1762,17 +1786,6 @@ for {
   def encodeURL(url: String) = {
     URLRewriter.rewriteFunc map (_(url)) openOr url
   }
-
-  /**
-   * Build a handler for incoming JSON commands
-   *
-   * @param f - function returning a JsCmds
-   * @return ( JsonCall, JsCmd )
-   */
-  def buildJsonFunc(f: Any => JsCmd): (JsonCall, JsCmd) = buildJsonFunc(Empty, Empty, f)
-
-  def buildJsonFunc(onError: JsCmd, f: Any => JsCmd): (JsonCall, JsCmd) =
-    buildJsonFunc(Empty, Full(onError), f)
 
   private[http] object _formGroup extends TransientRequestVar[Box[Int]](Empty)
   private object formItemNumber extends TransientRequestVar[Int](0)
@@ -1808,6 +1821,89 @@ for {
       _formGroup.set(x)
     }
   }
+
+  final case class PFPromoter[A, B](pff: () => PartialFunction[A, B])
+
+  object PFPromoter {
+    implicit def fromPF[A, B](pf: PartialFunction[A, B]): PFPromoter[A, B] = new PFPromoter[A, B](() => pf)
+
+    implicit def fromFunc[A, B](pff: () => PartialFunction[A, B]): PFPromoter[A, B] = new PFPromoter[A, B](pff)
+  }
+
+  import json.JsonAST._
+  /**
+   * Build a handler for incoming JSON commands based on the new Json Parser
+   *
+   * @param f - partial function against a returning a JsCmds
+   *
+   * @return ( JsonCall, JsCmd )
+   */
+  def createJsonFunc(f: PFPromoter[JValue, JsCmd]): (JsonCall, JsCmd) = createJsonFunc(Empty, Empty, f)
+
+  /**
+   * Build a handler for incoming JSON commands based on the new Json Parser
+   *
+   * @param onError -- the JavaScript to execute client-side if the request is not processed by the server
+   * @param f - partial function against a returning a JsCmds
+   *
+   * @return ( JsonCall, JsCmd )
+   */
+  def createJsonFunc(onError: JsCmd, f: PFPromoter[JValue, JsCmd]): (JsonCall, JsCmd) =
+  createJsonFunc(Empty, Full(onError), f)
+
+  /**
+   * Build a handler for incoming JSON commands based on the new Json Parser
+   *
+   * @param name -- the optional name of the command (placed in a comment for testing)
+   * @param onError -- the JavaScript to execute client-side if the request is not processed by the server
+   * @param f - partial function against a returning a JsCmds
+   *
+   * @return ( JsonCall, JsCmd )
+   */
+  def createJsonFunc(name: Box[String], onError: Box[JsCmd], pfp: PFPromoter[JValue, JsCmd]): (JsonCall, JsCmd) = {
+    functionLifespan(true) {
+      val key = formFuncName
+
+      import json._
+
+      def jsonCallback(in: List[String]): JsCmd = {
+        val f = pfp.pff()
+        for {
+          line <- in
+          parsed <- JsonParser.parseOpt(line) if f.isDefinedAt(parsed)
+        } yield f(parsed)}.foldLeft(JsCmds.Noop)(_ & _)
+
+      val onErrorFunc: String =
+      onError.map(f => JsCmds.Run("function onError_" + key + "() {" + f.toJsCmd + """
+  }
+
+   """).toJsCmd) openOr ""
+
+      val onErrorParam = onError.map(f => "onError_" + key) openOr "null"
+
+      val af: AFuncHolder = jsonCallback _
+      addFunctionMap(key, af)
+
+      (JsonCall(key), JsCmds.Run(name.map(n => onErrorFunc +
+                                          "/* JSON Func " + n + " $$ " + key + " */").openOr("") +
+                                 "function " + key + "(obj) {liftAjax.lift_ajaxHandler(" +
+                                 "'" + key + "='+ encodeURIComponent(" +
+                                 LiftRules.jsArtifacts.
+                                 jsonStringify(JE.JsRaw("obj")).
+                                 toJsCmd + "), null," + onErrorParam + ");}"))
+    }
+  }
+
+  /**
+   * Build a handler for incoming JSON commands
+   *
+   * @param f - function returning a JsCmds
+   * @return ( JsonCall, JsCmd )
+   */
+  def buildJsonFunc(f: Any => JsCmd): (JsonCall, JsCmd) = buildJsonFunc(Empty, Empty, f)
+
+  def buildJsonFunc(onError: JsCmd, f: Any => JsCmd): (JsonCall, JsCmd) =
+    buildJsonFunc(Empty, Full(onError), f)
 
   /**
    * Build a handler for incoming JSON commands
@@ -1947,7 +2043,7 @@ for {
    */
   @serializable
   private final class BinFuncHolder(val func: FileParamHolder => Any, val owner: Box[String]) extends AFuncHolder {
-    def apply(in: List[String]) {Log.error("You attempted to call a 'File Upload' function with a normal parameter.  Did you forget to 'enctype' to 'multipart/form-data'?")}
+    def apply(in: List[String]) {logger.info("You attempted to call a 'File Upload' function with a normal parameter.  Did you forget to 'enctype' to 'multipart/form-data'?")}
 
     override def apply(in: FileParamHolder) = func(in)
 
@@ -2055,12 +2151,11 @@ for {
   /**
    * Maps a function with an random generated and name
    */
-  def jsonFmapFunc[T](in: Any => JsObj)(f: String => T): T = //
-    {
-      val name = formFuncName
-      addFunctionMap(name, SFuncHolder((s: String) => JSONParser.parse(s).map(in) openOr js.JE.JsObj()))
-      f(name)
-    }
+  def jsonFmapFunc[T](in: Any => JsObj)(f: String => T): T = {
+    val name = formFuncName
+    addFunctionMap(name, SFuncHolder((s: String) => JSONParser.parse(s).map(in) openOr js.JE.JsObj()))
+    f(name)
+  }
 
 
   /**
@@ -2236,6 +2331,34 @@ for {
   }
 
   implicit def tuple2FieldError(t: (FieldIdentifier, NodeSeq)) = FieldError(t._1, t._2)
+
+  /**
+   * Use this in DispatchPF for processing REST requests asynchronously. Note that
+   * this must be called in a stateful context, therefore the S state must be a valid one.
+   *
+   * @param f - the user function that does the actual computation. This function
+   *            takes one parameter which is the function that must be invoked
+   *            for returning the actual response to the client. Note that f function
+   *            is invoked asynchronously in the context of a different thread.
+   * 
+   */
+  def respondAsync(f: => Box[LiftResponse]): () => Box[LiftResponse] = {
+   (for (req <- S.request) yield {
+     RestContinuation.respondAsync(req)(f)
+   }) openOr (() => Full(EmptyResponse))
+  }
+
+  /**
+   * If you bind functions (i.e. using SHtml helpers) inside the closure passed to callOnce,
+   * after your function is invoked, it will be automatically removed from functions cache so
+   * that it cannot be invoked again.
+   */
+  def callOnce[T](f: => T): T = {
+    autoCleanUp.doWith(true) {
+      f
+    }
+  }
+
 }
 
 /**

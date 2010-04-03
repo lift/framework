@@ -22,6 +22,7 @@ import _root_.net.liftweb.actor._
 import _root_.scala.collection.mutable.{ListBuffer}
 import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.util._
+import _root_.net.liftweb.json._
 import _root_.scala.xml.{NodeSeq, Text, Elem, Unparsed, Node, Group, Null, PrefixedAttribute, UnprefixedAttribute}
 import _root_.scala.collection.immutable.TreeMap
 import _root_.scala.collection.mutable.{HashSet, ListBuffer}
@@ -35,7 +36,7 @@ import _root_.java.util.concurrent.atomic.AtomicLong
  * actor terminates,this actor captures the Exit messag, executes failureFuncs
  * and resurects the actor.
  */
-object ActorWatcher extends scala.actors.Actor {
+object ActorWatcher extends scala.actors.Actor with Loggable {
   import scala.actors.Actor._
   def act = loop {
     react {
@@ -52,7 +53,7 @@ object ActorWatcher extends scala.actors.Actor {
   }
 
   private def logActorFailure(actor: scala.actors.Actor, why: Throwable) {
-    Log.error("The ActorWatcher restarted " + actor + " because " + why, why)
+    logger.warn("The ActorWatcher restarted " + actor + " because " + why, why)
   }
 
   /**
@@ -249,6 +250,7 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
  */
 @serializable
 trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
+  private val logger = Logger(classOf[CometActor])
   val uniqueId = Helpers.nextFuncName
   private var spanId = uniqueId
   private var lastRenderTime = Helpers.nextNum
@@ -340,6 +342,32 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   def onJsonError: Box[JsCmd] = Empty
 
   lazy val (jsonCall, jsonInCode) = S.buildJsonFunc(Full(_defaultPrefix), onJsonError, _handleJson)
+  
+  /**
+  * Override this method to deal with JSON sent from the browser via the sendJson function.  This
+  * is based on the Lift JSON package rather than the handleJson stuff based on the older util.JsonParser.  This
+  * is the prefered mechanism.  If you use the jsonSend call, you will get a JObject(JField("command", cmd), JField("param", params))
+  */
+  def receiveJson: PartialFunction[JsonAST.JValue, JsCmd] = Map()
+
+  /**
+  * The JavaScript call that you use to send the data to the server. For example:
+  * &lt;button onclick={jsonSend("Hello", JsRaw("Dude".encJs))}&gt;Click&lt;/button&gt;
+  */
+  def jsonSend: JsonCall = _sendJson
+
+  /**
+  * The call that packages up the JSON and tosses it to the server.  If you set autoIncludeJsonCode to true,
+  * then this will be included in the stuff sent to the server.
+  */
+  def jsonToIncludeInCode: JsCmd = _jsonToIncludeCode
+
+  private lazy val (_sendJson, _jsonToIncludeCode) = S.createJsonFunc(Full(_defaultPrefix), onJsonError, receiveJson _)
+
+  /**
+  * Set this method to true to have the Json call code included in the Comet output
+  */
+  def autoIncludeJsonCode: Boolean = false
 
   /**
    * Creates the span element acting as the real estate for commet rendering.
@@ -391,7 +419,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   def mediumPriority: PartialFunction[Any, Unit] = Map.empty
 
   private[http] def _lowPriority: PartialFunction[Any, Unit] = {
-    case s => Log.debug("CometActor " + this + " got unexpected message " + s)
+    case s => logger.debug("CometActor " + this + " got unexpected message " + s)
   }
 
   private lazy val _mediumPriority: PartialFunction[Any, Unit] = {
@@ -484,7 +512,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     case ClearNotices => clearNotices
 
     case ShutDown =>
-      Log.info("The CometActor " + this + " Received Shutdown")
+      logger.info("The CometActor " + this + " Received Shutdown")
       askingWho.foreach(_ ! ShutDown)
       theSession.removeCometActor(this)
       _localShutdown()
@@ -594,9 +622,9 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     performReRender(false)
   }
 
-  implicit def xmlToXmlOrJsCmd(in: NodeSeq): RenderOut = new RenderOut(Full(in), fixedRender, Empty, Empty, false)
+  implicit def xmlToXmlOrJsCmd(in: NodeSeq): RenderOut = new RenderOut(Full(in), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode) else Empty, Empty, false)
 
-  implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = new RenderOut(Empty, Empty, Full(in), Empty, false)
+  implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = new RenderOut(Empty, Empty, if (autoIncludeJsonCode) Full(in & jsonToIncludeInCode) else Full(in), Empty, false)
 
   implicit def pairToPair(in: (String, Any)): (String, NodeSeq) = (in._1, Text(in._2 match {case null => "null" case s => s.toString}))
 

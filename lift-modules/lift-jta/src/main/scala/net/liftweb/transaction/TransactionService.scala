@@ -36,7 +36,7 @@ import _root_.javax.persistence.{
   NoResultException
 }
 
-import net.liftweb.util.Log
+import net.liftweb.common.{Loggable, Logger}
 import org.scala_libs.jpa.{ScalaEMFactory, ScalaEntityManager}
 
 /**
@@ -104,6 +104,7 @@ trait EntityManagerService {
  * @author <a href="http://jonasboner.com">Jonas Bon&#233;r</a>
  */
 trait TransactionProtocol {
+  private val logger = Logger(classOf[TransactionProtocol])
 
   /**
    * Wraps body in a transaction with REQUIRED semantics.
@@ -188,7 +189,7 @@ trait TransactionProtocol {
       // Do not roll back in case of NoResultException or NonUniqueResultException
       if (!e.isInstanceOf[NoResultException] &&
           !e.isInstanceOf[NonUniqueResultException]) {
-        Log.debug("Setting TX to ROLLBACK_ONLY, due to: " + e)
+        logger.debug("Setting TX to ROLLBACK_ONLY, due to: " + e)
         tm.setRollbackOnly
       }
     }
@@ -198,10 +199,10 @@ trait TransactionProtocol {
   protected def commitOrRollBack(tm: TransactionManager) = {
     if (isInExistingTransaction(tm)) {
       if (isRollbackOnly(tm)) {
-        Log.debug("Rolling back TX marked as ROLLBACK_ONLY")
+        logger.debug("Rolling back TX marked as ROLLBACK_ONLY")
         tm.rollback
       } else {
-        Log.debug("Committing TX")
+        logger.debug("Committing TX")
         tm.commit
       }
     }

@@ -34,6 +34,7 @@ trait JxYieldFunc {
 trait JxBase {
   self: Node =>
 
+  private val logger = Logger(classOf[JxBase])
   def appendToParent(parentName: String): JsCmd
 
   def label = "jx" 
@@ -89,7 +90,7 @@ trait JxBase {
     case ns: NodeSeq =>
       if (ns.length == 0) Noop
       else if (ns.length == 1) {
-        Log.error("In addToDocFrag, got a " + ns + " of type " + ns.getClass.getName)
+        logger.error("In addToDocFrag, got a " + ns + " of type " + ns.getClass.getName)
         Noop
       } else addToDocFrag(parent, ns.toList)
 

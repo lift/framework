@@ -40,7 +40,37 @@
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
       <action dev="dridus" type="enhancement" issue="440" system="assembla">
         Move JValue encoding/decoding for field values from JSONFields in lift-couchdb to base fields in lift-record.
-        </action>
+      </action>
+      <action dev="dpp" type="add" issue="235" system="assembla">
+	Added default settings for FadeIn and FadeOut
+      </action>
+      <action dev="dpp" type="add" issue="444" system="assembla">
+	Added warnings on attempt to access non-existant props file
+      </action>
+      <action dev="dpp" type="fix" issue="442" system="assembla">
+	Fixed an initization order issue in LoggingStatementWrapper
+      </action>
+      <action dev="dpp" type="add" issue="365" system="assembla">
+	Enhanced JSON support in Lift based on the new JSON library
+      </action>
+      <action dev="dpp" type="add" issue="408" system="assembla">
+	Added equals and hash methods for mapper based on primary key
+      </action>
+      <action dev="dpp" type="add" issue="233" system="assembla">
+	support setObject without an explicit SQL type
+      </action>
+      <action dev="hoffrocket" type="add" issue="297" system="assembla">
+        Added a new ImageResizer utility class to lift-imaging to provide additional resizing options which preserve aspect ratio and orientation.
+      </action>
+      <action dev="hoffrocket" type="fix" issue="411" system="assembla">
+        MappedLongForeignKey apply() methods which take reference now prime the Obj
+      </action>
+      <action dev="hoffrocket" type="fix" issue="add" system="assembla">
+        MappedDate and MappedDateTime setFromAny now handle Numbers (millis)
+      </action>
+      <action dev="hoffrocket" type="fix" issue="426" system="assembla">
+        MappedString.crop gracefully handles null
+      </action>
       <action dev="hseeberger" type="fix" issue="448" system="assembla">
 	      Fix lift-osgi boot.
       </action>

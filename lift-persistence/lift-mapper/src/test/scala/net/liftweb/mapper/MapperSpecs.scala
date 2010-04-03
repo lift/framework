@@ -176,6 +176,22 @@ object MapperSpecs extends Specification {
           recalled.firstName.is must_== "yak"
         }
 
+        "You can put stuff in a Set" in {
+          cleanup()
+          val m1 = SampleModel.find(1).open_!
+          val m2 = SampleModel.find(1).open_!
+
+          (m1 == m2) must_== true
+
+          val s1 = Set(SampleModel.findAll :_*)
+
+          s1.contains(m1) must_== true
+
+          val s2 = s1 ++ SampleModel.findAll
+
+          s1.size must_== s2.size
+        }
+
 
         "Like works" in {
           cleanup()

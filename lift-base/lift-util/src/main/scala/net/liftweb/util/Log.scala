@@ -57,7 +57,7 @@ object LoggingAutoConfigurer {
 
   def apply(): () => Unit = () => {
     // Try to configure log4j only if we find the SLF4J Log4j bindings
-    val log4J = findClass("Log4jLoggerAdapter",List("org.slf4j.impl")) map {_ =>
+    findClass("Log4jLoggerAdapter",List("org.slf4j.impl")) map {_ =>
       // Avoid double init
       if (!LogBoot.log4JInited) {
         LogBoot.log4JInited = true
@@ -68,13 +68,12 @@ object LoggingAutoConfigurer {
       }
     }
     
-    // If that fails, try to configure logback
-    val logback = log4J or (findClass("Logger",List("ch.qos.logback.classic")) map {_ =>
+    // Try to configure logback
+    findClass("Logger", List("ch.qos.logback.classic")) map {_ =>
       findTheFile("logback.xml") map {url => Logback.withFile(url)()}
-    })
+    }
     
-    // Everything failed, no config to be done
-    logback openOr ()
+    ()
   }
 }
 

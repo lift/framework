@@ -279,8 +279,28 @@ object JqJsCmds {
     def toJsCmd = (Show(where) & JqSetHtml(where, msg) & After(duration, Hide(where, fadeTime))).toJsCmd
   }
 
+  /**
+  * The companion object to FadeOut that provides an alternative factory
+  */
+  object FadeOut {
+    /**
+    * Fade Out with the default duration and fadeTime provided by JsRules
+    */
+    def apply(id: String) = new FadeOut(id, JsRules.prefadeDuration, JsRules.fadeTime)
+  }
+
   case class FadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) extends JsCmd {
     def toJsCmd = (After(duration, JqJE.JqId(id) ~> (new JsRaw("fadeOut(" + fadeTime.millis + ")") with JsMember))).toJsCmd
+  }
+
+  /**
+  * The companion object to FadeIn that provides an alternative factory
+  */
+  object FadeIn {
+    /**
+    * Fade In with the default duration and fadeTime provided by JsRules
+    */
+    def apply(id: String) = new FadeIn(id, JsRules.prefadeDuration, JsRules.fadeTime)
   }
 
   case class FadeIn(id: String, duration: TimeSpan, fadeTime: TimeSpan) extends JsCmd {

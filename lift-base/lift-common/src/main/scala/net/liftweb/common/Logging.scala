@@ -49,8 +49,8 @@ object Logger {
       className
   }
 
-  def apply(cls: Class[_]) = if (checkConfig) new WrappedLogger(LoggerFactory.getLogger(loggerNameFor(cls))) else null
-  def apply(name: String) = if (checkConfig) new WrappedLogger(LoggerFactory.getLogger(name)) else null
+  def apply(cls: Class[_]): Logger = if (checkConfig) new WrappedLogger(LoggerFactory.getLogger(loggerNameFor(cls))) else null
+  def apply(name: String): Logger = if (checkConfig) new WrappedLogger(LoggerFactory.getLogger(name)) else null
   
  /**
    * Set the Mapped Diagnostic Context for the thread and execute
@@ -117,7 +117,8 @@ object MDC {
  * 
  */
 trait Logger  {
-  @transient private val logger: SLF4JLogger = _logger
+  private lazy val logger: SLF4JLogger = _logger // removed @transient 'cause there's no reason for transient on val
+  // changed to lazy val so it only gets initialized on use rather than on instantiation
   protected def _logger = if (Logger.checkConfig) LoggerFactory.getLogger(Logger.loggerNameFor(this.getClass)) else null
   
   def assertLog(assertion: Boolean, msg: => String) = if (assertion) info(msg)
@@ -134,26 +135,32 @@ trait Logger  {
   def trace(msg: => AnyRef, t: Throwable) = if (logger.isTraceEnabled) logger.trace(String.valueOf(msg), t)
   def trace(msg: => AnyRef, marker:  Marker) = if (logger.isTraceEnabled) logger.trace(marker,String.valueOf(msg))
   def trace(msg: => AnyRef, t: Throwable, marker: => Marker) = if (logger.isTraceEnabled) logger.trace(marker,String.valueOf(msg), t)
-
+  def isTraceEnabled = logger.isTraceEnabled
+  
   def debug(msg: => AnyRef) = if (logger.isDebugEnabled) logger.debug(String.valueOf(msg))
   def debug(msg: => AnyRef, t:  Throwable) = if (logger.isDebugEnabled) logger.debug(String.valueOf(msg), t)
   def debug(msg: => AnyRef, marker: Marker) = if (logger.isDebugEnabled) logger.debug(marker, String.valueOf(msg))
   def debug(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isDebugEnabled) logger.debug(marker, String.valueOf(msg), t)
-
+  def isDebugEnabled = logger.isDebugEnabled
+  
   def info(msg: => AnyRef) = if (logger.isInfoEnabled) logger.info(String.valueOf(msg))
   def info(msg: => AnyRef, t: => Throwable) = if (logger.isInfoEnabled) logger.info(String.valueOf(msg), t)
   def info(msg: => AnyRef, marker: Marker) = if (logger.isInfoEnabled) logger.info(marker,String.valueOf(msg))
   def info(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isInfoEnabled) logger.info(marker,String.valueOf(msg), t)
-
+  def isInfoEnabled = logger.isInfoEnabled
+  
   def warn(msg: => AnyRef) = if (logger.isWarnEnabled) logger.warn(String.valueOf(msg))
   def warn(msg: => AnyRef, t: Throwable) = if (logger.isWarnEnabled) logger.warn(String.valueOf(msg), t)
   def warn(msg: => AnyRef, marker: Marker) = if (logger.isWarnEnabled) logger.warn(marker,String.valueOf(msg))
   def warn(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isWarnEnabled) logger.warn(marker,String.valueOf(msg), t)
-
+  def isWarnEnabled = logger.isWarnEnabled
+  
   def error(msg: => AnyRef) = if (logger.isErrorEnabled) logger.error(String.valueOf(msg))
   def error(msg: => AnyRef, t: Throwable) = if (logger.isErrorEnabled) logger.error(String.valueOf(msg), t)
   def error(msg: => AnyRef, marker: Marker) = if (logger.isErrorEnabled) logger.error(marker,String.valueOf(msg))
   def error(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isErrorEnabled) logger.error(marker,String.valueOf(msg), t)
+  def isErrorEnabled = logger.isErrorEnabled
+  
 }
 
 class WrappedLogger(l: SLF4JLogger) extends Logger {
@@ -165,6 +172,15 @@ class WrappedLogger(l: SLF4JLogger) extends Logger {
  */
 trait Loggable {
   @transient val logger = Logger(this.getClass)
+}
+
+/**
+ * Mixin with a nested lazy Logger
+ * 
+ * Useful for mixin to objects that are created before Lift has booted (and thus Logging is not yet configured)
+ */
+trait LazyLoggable {
+  @transient lazy val logger = Logger(this.getClass)
 }
 
 /**
@@ -231,7 +247,6 @@ object Logback  {
     // the context was probably already configured by default configuration rules
     lc.reset(); 
     configurator.doConfigure(url);
-    StatusPrinter.printInCaseOfErrorsOrWarnings(lc);
   }
 }
 

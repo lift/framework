@@ -84,7 +84,7 @@ case class HttpBasicAuthentication(realmName: String)(func: PartialFunction[(Str
 
 }
 
-case class HttpDigestAuthentication(realmName: String)(func: PartialFunction[(String, Req, (String) => Boolean), Boolean]) extends HttpAuthentication {
+case class HttpDigestAuthentication(realmName: String)(func: PartialFunction[(String, Req, (String) => Boolean), Boolean]) extends HttpAuthentication with Loggable {
   private val nonceMap = new HashMap[String, Long]
 
   private object CheckAndPurge
@@ -112,7 +112,7 @@ case class HttpDigestAuthentication(realmName: String)(func: PartialFunction[(St
       try {
         ActorPing schedule (this, CheckAndPurge, 5 seconds)
       } catch {
-        case e => Log.error("Couldn't start NonceWatcher ping", e)
+        case e => logger.error("Couldn't start NonceWatcher ping", e)
       }
     }
 

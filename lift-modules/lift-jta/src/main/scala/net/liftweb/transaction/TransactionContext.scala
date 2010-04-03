@@ -19,7 +19,7 @@ package transaction {
 
 import _root_.javax.persistence.{EntityManager, EntityManagerFactory}
 import _root_.javax.transaction.{Transaction, Status, TransactionManager}
-import _root_.net.liftweb.util.Log
+import _root_.net.liftweb.common.Loggable
 import _root_.org.scala_libs.jpa.{ScalaEntityManager, ScalaEMFactory}
 /**
  * Base monad for the transaction monad implementations.
@@ -121,7 +121,7 @@ trait TransactionMonad {
  *
  * @author <a href="http://jonasboner.com">Jonas Bon&#233;r</a>
  */
-object TransactionContext extends TransactionProtocol {
+object TransactionContext extends TransactionProtocol with Loggable {
   // FIXME: make configurable
   private implicit val defaultTransactionService = atomikos.AtomikosTransactionService
 
@@ -187,12 +187,12 @@ object TransactionContext extends TransactionProtocol {
   private[transaction] def withNewContext[T](body: => T): T = {
     val suspendedTx: Option[Transaction] =
       if (isInExistingTransaction(getTransactionManager)) {
-        Log.debug("Suspending TX")
+        logger.debug("Suspending TX")
         Some(getTransactionManager.suspend)
       } else None
     val result = stack.withValue(new TransactionContext) { body }
     if (suspendedTx.isDefined) {
-      Log.debug("Resuming TX")
+      logger.debug("Resuming TX")
       getTransactionManager.resume(suspendedTx.get)
     }
     result

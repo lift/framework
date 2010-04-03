@@ -35,7 +35,7 @@ import provider._
 import _root_.net.liftweb.actor._
 
 
-class LiftServlet {
+class LiftServlet extends Loggable {
   private var servletContext: HTTPContext = null
 
   def this(ctx: HTTPContext) = {
@@ -62,10 +62,10 @@ class LiftServlet {
       tryo{LAScheduler.shutdown()}
 
       LiftRules.runUnloadHooks()
-      Log.debug("Destroyed Lift handler.")
+      logger.debug("Destroyed Lift handler.")
       // super.destroy
     } catch {
-      case e => Log.error("Destruction failure", e)
+      case e => logger.error("Destruction failure", e)
     }
   }
 
@@ -89,7 +89,7 @@ class LiftServlet {
           doService(req, resp)
         }
       }
-      LiftRules.checkContinuations(req request) match {
+      req.request.resumeInfo match {
         case None => doIt
         case r if r eq null => doIt
         case Some((or: Req, r: LiftResponse)) if (req.path == or.path) => sendResponse(r, resp, Empty); true
@@ -97,7 +97,7 @@ class LiftServlet {
       }
     } catch {
       case e if e.getClass.getName.endsWith("RetryRequest") => throw e
-      case e => Log.warn("Request for " + req.request.uri + " failed " + e.getMessage, e); throw e
+      case e => logger.info("Request for " + req.request.uri + " failed " + e.getMessage, e); throw e
     }
   }
 
@@ -236,6 +236,7 @@ class LiftServlet {
 
               case rd: _root_.net.liftweb.http.ResponseShortcutException => (true, Full(liftSession.handleRedirect(rd, req)))
 
+              case e if (e.getClass.getName.endsWith("RetryRequest")) =>  throw e
               case e => (true, NamedPF.applyBox((Props.mode, req, e), LiftRules.exceptionHandler.toList))
 
             }
@@ -284,7 +285,7 @@ class LiftServlet {
       respToFunc(liftSession.processRequest(req))
     }
 
-      toReturn // .map(LiftRules.performTransform)
+      toReturn
     }
 
   private def extractVersion(path: List[String]) {
@@ -381,12 +382,11 @@ class LiftServlet {
 
   private def setupContinuation(request: Req, session: LiftSession, actors: List[(LiftCometActor, Long)]): Any = {
     val cont = new ContinuationActor(request, session, actors,
-      answers => LiftRules.resumeRequest(
+      answers => request.request.resume(
         (request, S.init(request, session)
                   (LiftRules.performTransform(
           convertAnswersToCometResponse(session,
-            answers.toList, actors)))),
-        request.request))
+            answers.toList, actors))))))
 
     cont ! BeginContinuation
 
@@ -394,7 +394,7 @@ class LiftServlet {
 
     LAPinger.schedule(cont, BreakOut, TimeSpan(cometTimeout))
 
-    LiftRules.doContinuation(request.request, cometTimeout + 2000L)
+    request.request.suspend(cometTimeout + 2000L)
   }
 
   private def handleComet(requestState: Req, sessionActor: LiftSession, originalRequest: Req): Either[Box[LiftResponse], () => Box[LiftResponse]] = {
@@ -405,8 +405,8 @@ class LiftServlet {
     }
 
     if (actors.isEmpty) Left(Full(new JsCommands(JsCmds.RedirectTo(LiftRules.noCometSessionPage) :: Nil).toResponse))
-    else LiftRules.checkContinuations(requestState.request) match {
-      case Some(null) =>
+    else requestState.request.suspendResumeSupport_? match {
+      case true =>
         setupContinuation(requestState, sessionActor, actors)
         Left(Full(EmptyResponse))
       case _ =>
@@ -470,7 +470,7 @@ class LiftServlet {
                       }
                       )
 
-      Log.info(toDump)
+      logger.trace(toDump)
     }
   }
 

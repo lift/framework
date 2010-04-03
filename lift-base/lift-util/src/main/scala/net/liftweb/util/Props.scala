@@ -46,7 +46,7 @@ import common._
  * "test", "staging", "production", "pilot", "profile", or "default".
  * The standard Lift properties file extension is "props".
  */
-object Props {
+object Props extends Logger {
   /**
    * Get the configuration property value for the specified key.
    * @param name key for the property to get
@@ -196,32 +196,41 @@ object Props {
    * The map of key/value pairs retrieved from the property file.
    */
   lazy val props: Map[String, String] = {
-    import _root_.java.io.{ByteArrayInputStream}
-    import _root_.java.util.InvalidPropertiesFormatException
-    import _root_.java.util.{Map => JMap}
+  import _root_.java.io.{ByteArrayInputStream}
+  import _root_.java.util.InvalidPropertiesFormatException
+  import _root_.java.util.{Map => JMap}
 
-    // find the first property file that is available
-    first(toTry){f => tryo(getClass.getResourceAsStream(f()+"props")).filter(_ ne null).
-                 map{s => val ret = new Properties;
-                     val ba = Helpers.readWholeStream(s)
-                     try {
-          ret.loadFromXML(new ByteArrayInputStream(ba))
-        } catch {
-          case _: InvalidPropertiesFormatException =>
-            ret.load(new ByteArrayInputStream(ba))
-        }
-                     ret
-      }} match {
-      // if we've got a propety file, create name/value pairs and turn them into a Map
-      case Full(prop) =>
-        Map(prop.entrySet.toArray.flatMap{
-            case s: JMap.Entry[_, _] => List((s.getKey.toString, s.getValue.toString))
-            case _ => Nil
-          } :_*)
+  var tried: List[String] = Nil
 
-      case _ => Map()
+  // find the first property file that is available
+  first(toTry){strFunc =>
+    val f = strFunc()
+    tried ::= f
+    tryo(getClass.getResourceAsStream(f+"props")).filter(_ ne null).
+    map{s =>
+      val ret = new Properties
+      val ba = Helpers.readWholeStream(s)
+      try {
+        ret.loadFromXML(new ByteArrayInputStream(ba))
+      } catch {
+        case _: InvalidPropertiesFormatException =>
+          ret.load(new ByteArrayInputStream(ba))
+      }
+      ret
     }
+  } match {
+    // if we've got a propety file, create name/value pairs and turn them into a Map
+    case Full(prop) =>
+      Map(prop.entrySet.toArray.flatMap{
+          case s: JMap.Entry[_, _] => List((s.getKey.toString, s.getValue.toString))
+          case _ => Nil
+        } :_*)
+
+    case _ =>
+      error("Failed to find a properties file (but properties were accessed).  Searched: "+tried.reverse.mkString(", "))
+      Map()
   }
+}
 }
 
 }

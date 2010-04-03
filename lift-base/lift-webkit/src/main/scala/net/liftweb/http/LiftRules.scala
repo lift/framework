@@ -36,7 +36,7 @@ import _root_.scala.reflect.Manifest
 
 import _root_.java.util.concurrent.atomic.AtomicInteger
 
-object LiftRules extends Factory with FormVendor {
+object LiftRules extends Factory with FormVendor with LazyLoggable {
   val noticesContainerId = "lift__noticesContainer__"
   private val pageResourceId = Helpers.nextFuncName
 
@@ -58,7 +58,7 @@ object LiftRules extends Factory with FormVendor {
    * handled by lift rather than the default handler
    */
   type LiftRequestPF = PartialFunction[Req, Boolean]
-
+ 
   /**
    * Holds user functions that willbe executed very early in the request processing. The functions'
    * result will be ignored.
@@ -540,22 +540,6 @@ object LiftRules extends Factory with FormVendor {
 
   val resourceBundleFactories = RulesSeq[ResourceBundleFactoryPF]
 
-  /**
-   * Used for Comet handling to resume a continuation
-   */
-  def resumeRequest(what: AnyRef, req: HTTPRequest) = req resume what
-
-  /**
-   * Execute a continuation. For Jetty the Jetty specific exception will be thrown
-   * and the container will manage it.
-   */
-  def doContinuation(req: HTTPRequest, timeout: Long) = req suspend timeout
-
-  /**
-   * Check to see if continuations are supported
-   */
-  def checkContinuations(req: HTTPRequest): Option[Any] = req resumeInfo
-
   private var _sitemap: Box[SiteMap] = Empty
 
   private var sitemapFunc: Box[() => SiteMap] = Empty
@@ -879,12 +863,6 @@ object LiftRules extends Factory with FormVendor {
    */
   val snippets = RulesSeq[SnippetPF]
 
-  private val _cometLogger: FatLazy[LiftLogger] = FatLazy({
-    val ret = LogBoot.loggerByName("comet_trace")
-    ret.level = LiftLogLevels.Off
-    ret
-  })
-
   private var _configureLogging: () => Unit = _
     
   /**
@@ -902,15 +880,20 @@ object LiftRules extends Factory with FormVendor {
 
   configureLogging = net.liftweb.util.LoggingAutoConfigurer()
   
+  private val _cometLogger: FatLazy[Logger] = FatLazy({
+    val ret = Logger("comet_trace")
+    ret
+  })
+  
   /**
    * Holds the CometLogger that will be used to log comet activity
    */
-  def cometLogger: LiftLogger = _cometLogger.get
+  def cometLogger: Logger = _cometLogger.get
 
   /**
    * Holds the CometLogger that will be used to log comet activity
    */
-  def cometLogger_=(newLogger: LiftLogger): Unit = _cometLogger.set(newLogger)
+  def cometLogger_=(newLogger: Logger): Unit = _cometLogger.set(newLogger)
 
   /**
    * Takes a Node, headers, cookies, and a session and turns it into an XhtmlResponse.
@@ -984,7 +967,7 @@ object LiftRules extends Factory with FormVendor {
    */
   val snippetFailedFunc = RulesSeq[SnippetFailure => Unit].prepend(logSnippetFailure _)
 
-  private def logSnippetFailure(sf: SnippetFailure) = Log.warn("Snippet Failure: " + sf)
+  private def logSnippetFailure(sf: SnippetFailure) = logger.info("Snippet Failure: " + sf)
 
   /**
    * Set to false if you do not want Ajax/Comet requests that are not associated with a session
@@ -1021,7 +1004,7 @@ object LiftRules extends Factory with FormVendor {
       XhtmlResponse((<html> <body>Exception occured while processing{r.uri}<pre>{showException(e)}</pre> </body> </html>), ResponseInfo.docType(r), List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.ieMode)
 
     case (_, r, e) =>
-      Log.error("Exception being returned to browser when processing " + r, e)
+      logger.info("Exception being returned to browser when processing " + r, e)
       XhtmlResponse((<html> <body>Something unexpected happened while serving the page at{r.uri}</body> </html>), ResponseInfo.docType(r), List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.ieMode)
   }
 
@@ -1103,7 +1086,7 @@ object LiftRules extends Factory with FormVendor {
             new StringReader(str)), prefix openOr (S.contextPath)) match {
             case (Full(c), _) => CSSResponse(c)
             case (_, input) => {
-              Log.warn("Fixing " + cssPath + " failed");
+              logger.info("Fixing " + cssPath + " failed");
               CSSResponse(input)
             }
           })
@@ -1458,7 +1441,7 @@ object StrictXHTML1_0Validator extends GenericValidtor {
   val ngurl = "http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd"
 }
 
-abstract class GenericValidtor extends XHtmlValidator {
+abstract class GenericValidtor extends XHtmlValidator with Loggable {
   import javax.xml.validation._
   import javax.xml._
   import XMLConstants._
@@ -1487,7 +1470,7 @@ abstract class GenericValidtor extends XHtmlValidator {
       }) match {
       case Full(x) => x
       case Failure(msg, _, _) =>
-        Log.info("XHTML Validation Failure: " + msg)
+        logger.info("XHTML Validation Failure: " + msg)
         Nil
       case _ => Nil
     }

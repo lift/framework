@@ -97,6 +97,11 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
   def targetSQLType(field: String): Int
 
   /**
+   * Do we ignore the targetSQLType for setObject
+   */
+  def dbIgnoreSQLType_? : Boolean = false
+
+  /**
    * Get the JDBC SQL Type for this field
    */
   def targetSQLType: Int
@@ -583,6 +588,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
     else i_obscure_!(i_was_!)
   }
 
+
   /**
    * The actual value of the field
    */
@@ -695,12 +701,18 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
 
   protected def real_convertToJDBCFriendly(value: FieldType): Object
 
+  override def hashCode(): Int = i_is_! match {
+    case null => 0
+    case x => x.hashCode
+  }
+
+
   /**
    * Does the "right thing" comparing mapped fields
    */
   override def equals(other: Any): Boolean = {
     other match {
-      case mapped: MappedField[_, _] => this.is == mapped.is
+      case mapped: MappedField[_, _] => this.i_is_! == mapped.i_is_!
       case ov: AnyRef if (ov ne null) && dbFieldClass.isAssignableFrom(ov.getClass) => this.is == runFilters(ov.asInstanceOf[FieldType], setFilter)
       case ov => this.is == ov
     }
