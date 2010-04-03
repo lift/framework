@@ -60,9 +60,6 @@
     <module>lift-base</module>
     <module>lift-persistence</module>
     <module>lift-modules</module>
-
-    <!-- the 'meta' module -->
-    <module>lift-core</module>
   </modules>
 
   <!--
