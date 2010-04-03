@@ -107,7 +107,7 @@ object DBLog {
    *
    * To enable logging of DB operations, use DB.addLogFunc
    */
-  sealed private[DBLog] class LoggedStatementHandler(underlying : Statement) extends InvocationHandler with DBLog {
+  sealed private[DBLog] class LoggedStatementHandler(underlying : Statement) extends InvocationHandler with DBLog with Loggable {
     def underlyingClassname = "java.sql.Statement"
     lazy val representative : Class[_] = Class.forName(underlyingClassname)
 
