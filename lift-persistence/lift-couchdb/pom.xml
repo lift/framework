@@ -49,17 +49,13 @@
       <artifactId>lift-record</artifactId>
       <version>${project.version}</version>
     </dependency>
-
     <dependency>
       <groupId>net.databinder</groupId>
       <artifactId>dispatch-http_${scala.version}</artifactId>
-      <version>0.7.1</version>
     </dependency>
-
     <dependency>
       <groupId>net.jcip</groupId>
       <artifactId>jcip-annotations</artifactId>
-      <version>1.0</version>
     </dependency>
   </dependencies>
 </project>
