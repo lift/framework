@@ -17,7 +17,7 @@
 package net.liftweb {
 package transaction {
 
-import net.liftweb.util.Log
+import net.liftweb.common.Loggable
 
 import _root_.javax.naming.{NamingException, Context, InitialContext}
 import _root_.javax.transaction.{
@@ -58,7 +58,7 @@ class EntityManagerSynchronization(
   val em: EntityManager,
   val tm: TransactionManager,
   val closeAtTxCompletion: Boolean) 
-  extends Synchronization {
+  extends Synchronization with Loggable {
 
   def beforeCompletion = {
     try {
@@ -66,7 +66,7 @@ class EntityManagerSynchronization(
       if (status != Status.STATUS_ROLLEDBACK &&
           status != Status.STATUS_ROLLING_BACK &&
           status != Status.STATUS_MARKED_ROLLBACK) {
-        Log.debug("Flushing EntityManager...") 
+        logger.debug("Flushing EntityManager...") 
         em.flush // flush EntityManager on success
       }
     } catch {

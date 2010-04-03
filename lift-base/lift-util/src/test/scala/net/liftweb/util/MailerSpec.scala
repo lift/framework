@@ -25,14 +25,17 @@ import javax.mail.Transport
 
 
 class MailerSpecTest extends Runner(MailerSpec) with JUnit
-object MailerSpec extends Specification with MailerImpl {
-  @volatile var lastMessage: Box[MimeMessage] = Empty
-
-  protected override def performTransportSend(msg: MimeMessage) = synchronized {
-    lastMessage = Full(msg)
-    this.notifyAll()
+object MailerSpec extends Specification {
+  
+  object MyMailer extends MailerImpl {
+      @volatile var lastMessage: Box[MimeMessage] = Empty
+      protected override def performTransportSend(msg: MimeMessage) = synchronized {
+        lastMessage = Full(msg)
+        this.notifyAll()
+      }
   }
-
+  import MyMailer._
+  
   private def doNewMessage(f: => Unit): MimeMessage = {
     synchronized {
       lastMessage = Empty

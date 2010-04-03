@@ -31,6 +31,7 @@ trait ProtoStateMachine[MyType <: ProtoStateMachine[MyType, StateType],
 			StateType <: Enumeration] extends KeyedMapper[Long, MyType]
 {
   self: MyType =>
+
   /**
     * Shorthand for one of the states
     */
@@ -317,7 +318,7 @@ trait MetaProtoStateMachine [MyType <: ProtoStateMachine[MyType, StateType],
     */
   def timedEventPeriodicWait = 10000L
 
-  private class TimedEventManager(val metaOwner: Meta) extends LiftActor {
+  private class TimedEventManager(val metaOwner: Meta) extends LiftActor with Loggable {
     ActorPing.schedule(this, Ping, TimeSpan(timedEventInitialWait)) // give the system 2 minutes to "warm up" then start pinging
 
     protected def messageHandler = 
@@ -336,7 +337,7 @@ trait MetaProtoStateMachine [MyType <: ProtoStateMachine[MyType, StateType],
 			      timedEventHandler ! (stateItem, event)
 			    }
         } catch {
-          case e => Log.error("State machine loop", e)
+          case e => logger.error("State machine loop", e)
         }
         ActorPing.schedule(this, Ping, TimeSpan(timedEventPeriodicWait))
       }
@@ -344,14 +345,14 @@ trait MetaProtoStateMachine [MyType <: ProtoStateMachine[MyType, StateType],
     case object Ping
   }
 			       
-    private class TimedEventHandler(val metaOwner: Meta) extends LiftActor {
+    private class TimedEventHandler(val metaOwner: Meta) extends LiftActor with Loggable {
       protected def messageHandler =
         {
           case (item: MyType, event: Event) =>
             try {
               item.processEvent(event)
             } catch {
-              case e => Log.error("Timed Event Handler"+e)
+              case e => logger.error("Timed Event Handler"+e)
             }
         }
 

@@ -31,6 +31,8 @@ object TimeHelpers extends TimeHelpers with ControlHelpers with ClassHelpers
  * or general utility functions (get the date for today, get year/month/day number,...)
  */
 trait TimeHelpers { self: ControlHelpers =>
+  // Logger must be lazy, since we cannot instantiate until after boot is complete
+  private  lazy val logger = Logger(classOf[TimeHelpers])
 
   /** private variable allowing the access to all TimeHelpers functions from inside the TimeSpan class */
   private val outer = this
@@ -254,7 +256,7 @@ trait TimeHelpers { self: ControlHelpers =>
    */
   def logTime[T](msg: String)(f: => T): T = {
     val (time, ret) = calcTime(f)
-    Log.info(msg + " took " + time + " Milliseconds")
+    logger.info(msg + " took " + time + " Milliseconds")
     ret
   }
 
@@ -322,7 +324,7 @@ trait TimeHelpers { self: ControlHelpers =>
         case o => toDate(o.toString)
       }
     } catch {
-      case e => Log.debug("Error parsing date "+in, e); Failure("Bad date: "+in, Full(e), Empty)
+      case e => logger.debug("Error parsing date "+in, e); Failure("Bad date: "+in, Full(e), Empty)
     }
   }
 }

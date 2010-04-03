@@ -41,7 +41,7 @@ import _root_.net.liftweb.http.rest.RestContinuation
  * @see LiftSession
  * @see LiftFilter
  */
-object S extends HasParams {
+object S extends HasParams with Loggable {
   /**
    * RewriteHolder holds a partial function that re-writes an incoming request. It is
    * used for per-session rewrites, as opposed to global rewrites, which are handled
@@ -859,7 +859,7 @@ for {
    * </pre>
    *
    * Note that the query log is simply stored as a List and is not sent to any output
-   * byt default. To retrieve the List of query log items, use S.queryLog. You can also
+   * by default. To retrieve the List of query log items, use S.queryLog. You can also
    * provide your own analysis function that will process the query log via S.addAnalyzer.
    *
    * @see # queryLog
@@ -1971,7 +1971,7 @@ for {
    */
   @serializable
   private final class BinFuncHolder(val func: FileParamHolder => Any, val owner: Box[String]) extends AFuncHolder {
-    def apply(in: List[String]) {Log.error("You attempted to call a 'File Upload' function with a normal parameter.  Did you forget to 'enctype' to 'multipart/form-data'?")}
+    def apply(in: List[String]) {logger.info("You attempted to call a 'File Upload' function with a normal parameter.  Did you forget to 'enctype' to 'multipart/form-data'?")}
 
     override def apply(in: FileParamHolder) = func(in)
 
