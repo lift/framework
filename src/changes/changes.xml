@@ -38,6 +38,9 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+      <action dev="dpp" type="fix" issue="442" system="assembla">
+	Fixed an initization order issue in LoggingStatementWrapper
+      </action>
       <action dev="dpp" type="add" issue="365" system="assembla">
 	Enhanced JSON support in Lift based on the new JSON library
       </action>
