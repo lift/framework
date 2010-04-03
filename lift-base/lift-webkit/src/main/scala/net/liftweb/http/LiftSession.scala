@@ -364,6 +364,10 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     funcs.foreach {case (name, func) => messageCallback(name) = func.duplicate(uniqueId)}
   }
 
+  def removeFunction(name: String) = synchronized {
+   messageCallback -= name
+  }
+
   /**
    * Set your session-specific progress listener for mime uploads
    *     pBytesRead - The total number of bytes, which have been read so far.
@@ -626,15 +630,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
               val func: String = LiftSession.this.synchronized {
                 val funcName = Helpers.nextFuncName
                 messageCallback(funcName) = S.NFuncHolder(() => {
-                  try {
-                    fnc()
-                  } finally {
-                    /* Sometimes we need the func to stay around
-                    LiftSession.this.synchronized {
-                      messageCallback -= funcName
-                    }
-                    */
-                  }
+                   fnc()
                 })
                 funcName
               }

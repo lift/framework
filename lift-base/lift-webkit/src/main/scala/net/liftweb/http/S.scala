@@ -162,6 +162,7 @@ object S extends HasParams {
   private val _responseHeaders = new ThreadGlobal[ResponseInfoHolder]
   private val _responseCookies = new ThreadGlobal[CookieHolder]
   private val _lifeTime = new ThreadGlobal[Boolean]
+  private val autoCleanUp = new ThreadGlobal[Boolean]
 
   private object postFuncs extends TransientRequestVar(new ListBuffer[() => Unit])
   private object p_queryLog extends TransientRequestVar(new ListBuffer[(String, Long)])
@@ -1752,7 +1753,29 @@ for {
    * Associates a name with a function impersonated by AFuncHolder. These are basically functions
    * that are executed when a request contains the 'name' request parameter.
    */
-  def addFunctionMap(name: String, value: AFuncHolder) = _functionMap.value += (name -> value)
+  def addFunctionMap(name: String, value: AFuncHolder) = {
+   autoCleanUp.box match {
+     case Full(true) =>  _functionMap.value += (name -> 
+       new S.ProxyFuncHolder(value) {
+         override def apply(in: List[String]): Any = {
+           try {
+             super.apply(in)
+           } finally {
+             S.session.map(_.removeFunction(name))
+           }
+         }
+
+         override def apply(in: FileParamHolder): Any = {
+           try {
+             super.apply(in)
+           } finally {
+             S.session.map(_.removeFunction(name))
+           }
+         }
+       })
+     case _ => _functionMap.value += (name -> value)
+   }
+  }
 
   private def booster(lst: List[String], func: String => Any): Unit = lst.foreach(v => func(v))
 
@@ -2056,12 +2079,11 @@ for {
   /**
    * Maps a function with an random generated and name
    */
-  def jsonFmapFunc[T](in: Any => JsObj)(f: String => T): T = //
-    {
-      val name = formFuncName
-      addFunctionMap(name, SFuncHolder((s: String) => JSONParser.parse(s).map(in) openOr js.JE.JsObj()))
-      f(name)
-    }
+  def jsonFmapFunc[T](in: Any => JsObj)(f: String => T): T = {
+    val name = formFuncName
+    addFunctionMap(name, SFuncHolder((s: String) => JSONParser.parse(s).map(in) openOr js.JE.JsObj()))
+    f(name)
+  }
 
 
   /**
@@ -2253,6 +2275,13 @@ for {
      RestContinuation.respondAsync(req)(f)
    }) openOr (() => Full(EmptyResponse))
   }
+
+  def callOnce[T](f: => T): T = {
+    autoCleanUp.doWith(true) {
+      f
+    }
+  }
+
 }
 
 /**
