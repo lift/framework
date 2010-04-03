@@ -35,7 +35,7 @@ import provider._
 import _root_.net.liftweb.actor._
 
 
-class LiftServlet {
+class LiftServlet extends Loggable {
   private var servletContext: HTTPContext = null
 
   def this(ctx: HTTPContext) = {
@@ -62,10 +62,10 @@ class LiftServlet {
       tryo{LAScheduler.shutdown()}
 
       LiftRules.runUnloadHooks()
-      Log.debug("Destroyed Lift handler.")
+      logger.debug("Destroyed Lift handler.")
       // super.destroy
     } catch {
-      case e => Log.error("Destruction failure", e)
+      case e => logger.error("Destruction failure", e)
     }
   }
 
@@ -97,7 +97,7 @@ class LiftServlet {
       }
     } catch {
       case e if e.getClass.getName.endsWith("RetryRequest") => throw e
-      case e => Log.warn("Request for " + req.request.uri + " failed " + e.getMessage, e); throw e
+      case e => logger.info("Request for " + req.request.uri + " failed " + e.getMessage, e); throw e
     }
   }
 
@@ -470,7 +470,7 @@ class LiftServlet {
                       }
                       )
 
-      Log.info(toDump)
+      logger.trace(toDump)
     }
   }
 

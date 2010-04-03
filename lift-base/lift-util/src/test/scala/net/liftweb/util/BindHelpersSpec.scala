@@ -22,7 +22,9 @@ import _root_.org.specs.runner._
 import _root_.scala.xml._
 import common._
 
-object BindHelpersSpec extends Specification with BindHelpers {
+object BindHelpersSpec extends Specification  {
+  import BindHelpers._
+  
   "the mixinAttributes function" should {
     "mixin in all the attributes" in {
       mixinAttributes(<input />)(<input id="10" class="wee" />) must ==/(<input class="wee" id="10"></input>)

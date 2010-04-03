@@ -22,7 +22,7 @@ import _root_.scala.xml.NodeSeq
 import _root_.java.security._
 import _root_.java.util._
 import _root_.java.io._
-import _root_.net.liftweb.util.Log
+import _root_.net.liftweb.common.Loggable
 
 
 /**
@@ -35,7 +35,7 @@ import _root_.net.liftweb.util.Log
  * </code></pre>
  *
  */
-object Gravatar {
+object Gravatar extends Loggable {
 
   val defaultSize: Int = 42
   val defaultRating: String = "G"
@@ -74,9 +74,9 @@ object Gravatar {
     try {
       BigInt(1,md.digest(bytes)).toString(16)
     } catch {
-      case a: NoSuchAlgorithmException => Log.error("[Gravater] No Algorithm.", a); ""
-      case x: UnsupportedEncodingException => Log.error("[Gravater] Unsupported Encoding.", x); ""
-      case _ => Log.error("[Gravater] Unknown error."); ""
+      case a: NoSuchAlgorithmException => logger.error("[Gravater] No Algorithm.", a); ""
+      case x: UnsupportedEncodingException => logger.warn("[Gravater] Unsupported Encoding.", x); ""
+      case _ => logger.warn("[Gravater] Unknown error."); ""
     }
   }
 }

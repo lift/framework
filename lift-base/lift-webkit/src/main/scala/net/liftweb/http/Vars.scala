@@ -46,12 +46,12 @@ import _root_.scala.collection.mutable.{HashMap, HashSet, ListBuffer}
  * @param dflt - the default value to be returned if none was set prior to
  * requesting a value to be returned from the container
  */
-abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) {
+abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) with LazyLoggable {
   override protected def findFunc(name: String): Box[T] = S.session match {
     case Full(s) => s.get(name)
     case _ =>
       if (showWarningWhenAccessedOutOfSessionScope_?)
-      Log.warn("Getting a SessionVar "+name+" outside session scope") // added warning per issue 188
+      logger.warn("Getting a SessionVar "+name+" outside session scope") // added warning per issue 188
 
       Empty
   }
@@ -60,7 +60,7 @@ abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) 
     case Full(s) => s.set(name, value)
     case _ =>
       if (showWarningWhenAccessedOutOfSessionScope_?)
-      Log.warn("Setting a SessionVar "+name+" to "+value+" outside session scope") // added warning per issue 188
+      logger.warn("Setting a SessionVar "+name+" to "+value+" outside session scope") // added warning per issue 188
   }
 
       /**
@@ -257,6 +257,8 @@ private[http] object TransientRequestVarHandler extends CoreRequestVarHandler {
 
 private[http] trait CoreRequestVarHandler {
   type MyType <: HasLogUnreadVal
+  
+  private val logger = Logger(classOf[CoreRequestVarHandler])
   // This maps from the RV name to (RV instance, value, set-but-not-read flag)
   private val vals: ThreadGlobal[HashMap[String, (MyType, Any, Boolean)]] = new ThreadGlobal
   private val cleanup: ThreadGlobal[ListBuffer[Box[LiftSession] => Unit]] = new ThreadGlobal
@@ -338,7 +340,7 @@ private[http] trait CoreRequestVarHandler {
                 vals.value.keys.filter(! _.startsWith(VarConstants.varPrefix+"net.liftweb"))
                 .filter(! _.endsWith(VarConstants.initedSuffix))
                 .foreach(key => vals.value(key) match {
-                    case (rv,_,true) if rv.logUnreadVal => Log.warn("RequestVar %s was set but not read".format(key.replace(VarConstants.varPrefix,"")))
+                    case (rv,_,true) if rv.logUnreadVal => logger.warn("RequestVar %s was set but not read".format(key.replace(VarConstants.varPrefix,"")))
                     case _ =>
                   })
               }

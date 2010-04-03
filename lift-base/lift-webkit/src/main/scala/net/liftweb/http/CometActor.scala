@@ -35,7 +35,7 @@ import _root_.java.util.concurrent.atomic.AtomicLong
  * actor terminates,this actor captures the Exit messag, executes failureFuncs
  * and resurects the actor.
  */
-object ActorWatcher extends scala.actors.Actor {
+object ActorWatcher extends scala.actors.Actor with Loggable {
   import scala.actors.Actor._
   def act = loop {
     react {
@@ -52,7 +52,7 @@ object ActorWatcher extends scala.actors.Actor {
   }
 
   private def logActorFailure(actor: scala.actors.Actor, why: Throwable) {
-    Log.error("The ActorWatcher restarted " + actor + " because " + why, why)
+    logger.warn("The ActorWatcher restarted " + actor + " because " + why, why)
   }
 
   /**
@@ -249,6 +249,7 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
  */
 @serializable
 trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
+  private val logger = Logger(classOf[CometActor])
   val uniqueId = Helpers.nextFuncName
   private var spanId = uniqueId
   private var lastRenderTime = Helpers.nextNum
@@ -391,7 +392,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   def mediumPriority: PartialFunction[Any, Unit] = Map.empty
 
   private[http] def _lowPriority: PartialFunction[Any, Unit] = {
-    case s => Log.debug("CometActor " + this + " got unexpected message " + s)
+    case s => logger.debug("CometActor " + this + " got unexpected message " + s)
   }
 
   private lazy val _mediumPriority: PartialFunction[Any, Unit] = {
@@ -484,7 +485,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     case ClearNotices => clearNotices
 
     case ShutDown =>
-      Log.info("The CometActor " + this + " Received Shutdown")
+      logger.info("The CometActor " + this + " Received Shutdown")
       askingWho.foreach(_ ! ShutDown)
       theSession.removeCometActor(this)
       _localShutdown()

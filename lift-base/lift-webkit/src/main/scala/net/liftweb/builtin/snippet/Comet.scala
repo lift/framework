@@ -25,8 +25,7 @@ import _root_.net.liftweb.common._
 
 import Helpers._
 
-object Comet extends DispatchSnippet {
-
+object Comet extends DispatchSnippet with LazyLoggable {
   def dispatch : DispatchIt = {
     case _ => render _
   }
@@ -64,7 +63,7 @@ object Comet extends DispatchSnippet {
                  buildSpan(Full(0), Comment("FIXME comet type "+theType+" name "+name+" timeout") ++ kids, c, c.uniqueId)
             }) openOr Comment("FIXME - comet type: "+theType+" name: "+name+" Not Found ") ++ kids
           } catch {
-            case e => Log.error("Failed to find a comet actor", e); kids
+            case e => logger.error("Failed to find a comet actor", e); kids
           }
     }) openOr Comment("FIXME: session or request are invalid")
   }

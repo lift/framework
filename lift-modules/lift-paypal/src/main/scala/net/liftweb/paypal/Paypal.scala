@@ -410,16 +410,16 @@ private[paypal] class PaypalIPNPostbackReponse(val response: List[String]) exten
   }
 }
 
-object SimplePaypal extends PaypalIPN with PaypalPDT {
+object SimplePaypal extends PaypalIPN with PaypalPDT with Loggable {
   val paypalAuthToken = "123"
   def actions = {
     case (status, info, resp) =>
-      Log.info("Got a verified PayPal IPN: "+status)
+      logger.info("Got a verified PayPal IPN: "+status)
   }
 
   def pdtResponse = {
     case (info, resp) =>
-      Log.info("Got a verified PayPal PDT: "+resp)
+      logger.info("Got a verified PayPal PDT: "+resp)
       DoRedirectResponse.apply("/")
   }
 }

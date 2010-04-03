@@ -21,7 +21,7 @@ import _root_.java.lang.reflect.{InvocationHandler,Method,Proxy}
 import _root_.java.sql.{Array => SqlArray, _}
 
 import _root_.net.liftweb.util._
-import _root_.net.liftweb.common.{Box}
+import _root_.net.liftweb.common.{Box,Loggable}
 
 trait DBLogEntry {
   def statement : String
@@ -107,7 +107,7 @@ object DBLog {
    *
    * To enable logging of DB operations, use DB.addLogFunc
    */
-  sealed private[DBLog] class LoggedStatementHandler(underlying : Statement) extends InvocationHandler with DBLog {
+  sealed private[DBLog] class LoggedStatementHandler(underlying : Statement) extends InvocationHandler with DBLog with Loggable {
     val underlyingClassname = "java.sql.Statement"
     val representative : Class[_] = Class.forName(underlyingClassname)
 
@@ -330,7 +330,7 @@ object DBLog {
       m.invoke(underlying, args : _*)
     } catch {
       case ite: java.lang.reflect.InvocationTargetException => throw ite.getCause
-      case nsme : NoSuchMethodException => Log.fatal("Could not locate method %s for %s : %s".format(method.getName, underlyingClassname, nsme.getMessage))
+      case nsme : NoSuchMethodException => logger.warn("Could not locate method %s for %s : %s".format(method.getName, underlyingClassname, nsme.getMessage))
       throw nsme
     }
 

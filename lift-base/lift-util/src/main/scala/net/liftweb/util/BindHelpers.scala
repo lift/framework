@@ -118,7 +118,8 @@ object BindHelpers extends BindHelpers {
  * Helpers assocated with bindings
  */
 trait BindHelpers {
-
+  private lazy val logger = Logger(classOf[BindHelpers])
+  
   /**
    * Takes attributes from the first node of 'in' (if any) and mixes
    * them into 'out'. Curried form can be used to produce a
@@ -551,18 +552,18 @@ trait BindHelpers {
             node.attributes.get("name") match {
               case None => {
                   if (Props.devMode) {
-                    Log.warn("<lift:bind> tag encountered without name attribute!")
+                    logger.warn("<lift:bind> tag encountered without name attribute!")
                   }
                   bind(vals, node.child)
                 }
               case Some(ns) => {
                   def warnOnUnused() =
-                  Log.warn("Unused binding values for <lift:bind>: " +
+                  logger.warn("Unused binding values for <lift:bind>: " +
                            vals.keySet.filter(key => key != ns.text).mkString(", "))
                   vals.get(ns.text) match {
                     case None => {
                         if (Props.devMode) {
-                          Log.warn("No binding values match the <lift:bind> name attribute: " + ns.text)
+                          logger.warn("No binding values match the <lift:bind> name attribute: " + ns.text)
                           warnOnUnused()
                         }
                         bind(vals, node.child)
