@@ -44,8 +44,11 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
                                locs(name)+" and "+in)
     else locs = locs + (name -> in.asInstanceOf[Loc[_]])
 
-    if (locPath.contains(in.link.uriList)) throw new SiteMapException("Location "+name+" defines a duplicate link "+
-                                                                      in.link.uriList)
+    if (SiteMap.enforceUniqueLinks &&
+	locPath.contains(in.link.uriList)) 
+      throw new SiteMapException("Location "+name+
+				 " defines a duplicate link "+
+                                 in.link.uriList)
     
     locPath += in.link.uriList
   }
@@ -93,6 +96,12 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
 }
 
 object SiteMap {
+  /**
+   * By default, Lift enforced unique links in a SiteMap.  However, you
+   * can disable this feature by setting enforceUniqueLinks to false
+   */
+  @volatile var enforceUniqueLinks = true
+
   def findLoc(name: String): Box[Loc[_]] = for (sm <- LiftRules.siteMap; loc <- sm.findLoc(name)) yield loc
 
   def findAndTestLoc(name: String): Box[Loc[_]] =
