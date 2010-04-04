@@ -166,6 +166,11 @@ object ExtractionExamples extends Specification {
     Extraction.decompose(person).extract[Person] mustEqual person
   }
 
+  "Extraction failure message example" in {
+    val json = parse("""{"city":"San Francisco"}""")
+    json.extract[Address] must throwA(MappingException("No usable value for street\nDid not find value which can be converted into java.lang.String", null))
+  }
+
   val testJson = 
 """
 { "name": "joe",
