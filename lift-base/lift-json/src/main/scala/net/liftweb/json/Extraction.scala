@@ -118,28 +118,25 @@ object Extraction {
   def unflatten(map: Map[String, String]): JValue = {
     import scala.util.matching.Regex
     
-    def extractValue(value: String): JValue = {
-      value.toLowerCase match {
-        case ""      => JNothing
-        case "null"  => JNull
-        case "true"  => JBool(true)
-        case "false" => JBool(false)
-        case "[]"    => JArray(Nil)
-        case x @ _   => 
-          if (value.charAt(0).isDigit) {
-            if (value.indexOf('.') == -1) JInt(BigInt(value)) else JDouble(value.toDouble)
-          }
-          else JString(JsonParser.unquote(value.substring(1)))
-      }
+    def extractValue(value: String): JValue = value.toLowerCase match {
+      case ""      => JNothing
+      case "null"  => JNull
+      case "true"  => JBool(true)
+      case "false" => JBool(false)
+      case "[]"    => JArray(Nil)
+      case x @ _   => 
+        if (value.charAt(0).isDigit) {
+          if (value.indexOf('.') == -1) JInt(BigInt(value)) else JDouble(value.toDouble)
+        }
+        else JString(JsonParser.unquote(value.substring(1)))
     }
   
-    def submap(prefix: String): Map[String, String] = {
+    def submap(prefix: String): Map[String, String] = 
       Map(
         map.filter(t => t._1.startsWith(prefix)).map(
           t => (t._1.substring(prefix.length), t._2)
         ).toList.toArray: _*
       )
-    }
   
     val ArrayProp = new Regex("""^(\.([^\.\[]+))\[(\d+)\].*$""")
     val ArrayElem = new Regex("""^(\[(\d+)\]).*$""")
@@ -155,14 +152,13 @@ object Extraction {
         }
     }.toList.sort(_ < _) // Sort is necessary to get array order right
     
-    uniquePaths.foldLeft[JValue](JNothing) {
-      (jvalue, key) => 
-        jvalue.merge(key match {
-          case ArrayProp(p, f, i) => JObject(List(JField(f, unflatten(submap(key)))))
-          case ArrayElem(p, i)    => JArray(List(unflatten(submap(key))))
-          case OtherProp(p, f)    => JObject(List(JField(f, unflatten(submap(key)))))
-          case ""                 => extractValue(map(key))
-        })
+    uniquePaths.foldLeft[JValue](JNothing) { (jvalue, key) => 
+      jvalue.merge(key match {
+        case ArrayProp(p, f, i) => JObject(List(JField(f, unflatten(submap(key)))))
+        case ArrayElem(p, i)    => JArray(List(unflatten(submap(key))))
+        case OtherProp(p, f)    => JObject(List(JField(f, unflatten(submap(key)))))
+        case ""                 => extractValue(map(key))
+      })
     }
   }
 
@@ -221,7 +217,7 @@ object Extraction {
         case _ => newInstance(targetType, args, root)
       }
       case Cycle(targetType) => build(root, mappingOf(targetType))
-      case Arg(_, m) => build(fieldValue(root), m)
+      case Arg(path, m) => mkValue(fieldValue(root), m, path)
       case Col(c, m) => {
         if (c == classOf[List[_]]) newCollection(root, m, a => List(a: _*))
         else if (c == classOf[Set[_]]) newCollection(root, m, a => Set(a: _*))
@@ -256,6 +252,12 @@ object Extraction {
       case JArray(arr) => arr.map(build(_, m))
       case JNothing | JNull => Nil
       case x => fail("Expected array but got " + x)
+    }
+
+    def mkValue(root: JValue, mapping: Mapping, path: String) = try {
+      build(root, mapping)
+    } catch { 
+      case MappingException(msg, _) => fail("No usable value for " + path + "\n" + msg) 
     }
 
     def fieldValue(json: JValue): JValue = json match {

@@ -41,12 +41,6 @@
   <!--
     ~ Environment Settings
   -->
-  <repositories>
-    <repository>
-      <id>opsj4-releases</id>
-      <url>http://repository.ops4j.org/maven2</url>
-    </repository>
-  </repositories>
   <!-- <properties/> -->
 
   <!--

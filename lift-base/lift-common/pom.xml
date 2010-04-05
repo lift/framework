@@ -48,7 +48,20 @@
   <!--
     ~ Dependency Settings
   -->
-  <!-- <dependencies/> -->
+  <dependencies>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+    </dependency>
+  </dependencies>
 
   <!--
     ~ Build Settings
@@ -71,22 +84,6 @@
       </plugin>
     </plugins>
   </build>
-  <dependencies>
-  	<dependency>
-  		<groupId>org.slf4j</groupId>
-  		<artifactId>slf4j-api</artifactId>
-  	</dependency>
-  	<dependency>
-  		<groupId>ch.qos.logback</groupId>
-  		<artifactId>logback-classic</artifactId>
-  		<scope>provided</scope>
-  	</dependency>
-  	<dependency>
-  		<groupId>log4j</groupId>
-  		<artifactId>log4j </artifactId>
-  		<scope>provided</scope>
-  	</dependency>
-  </dependencies>
 
   <!--
     ~ Reporting Settings
