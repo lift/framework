@@ -38,6 +38,10 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+
+    </release>
+
+    <release version="2.0-M4" date="2010-04-07" description="Lift 2.0 Milestone 4">
       <action dev="dpp" type="add" issue="452" system="assembla">
         Added a flag to disable Loc uniqeness testing
       </action>
