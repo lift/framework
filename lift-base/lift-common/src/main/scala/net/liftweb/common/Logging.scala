@@ -171,7 +171,7 @@ class WrappedLogger(l: SLF4JLogger) extends Logger {
  * Mixin with a nested Logger
  */
 trait Loggable {
-  @transient val logger = Logger(this.getClass)
+  @transient protected val logger = Logger(this.getClass)
 }
 
 /**
@@ -180,7 +180,7 @@ trait Loggable {
  * Useful for mixin to objects that are created before Lift has booted (and thus Logging is not yet configured)
  */
 trait LazyLoggable {
-  @transient lazy val logger = Logger(this.getClass)
+  @transient protected lazy val logger = Logger(this.getClass)
 }
 
 /**
