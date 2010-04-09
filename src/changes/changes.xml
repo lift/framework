@@ -38,56 +38,64 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+      <action dev="hseeberger" type="fix" issue="462" system="assembla">
+	      Made Loggable.logger protected in order to prevent from polluting the API of types mixed into.
+      </action>
+    </release>
+
+    <release version="2.0-M4" date="2010-04-07" description="Lift 2.0 Milestone 4">
       <action dev="dpp" type="add" issue="452" system="assembla">
-	Added a flag to disable Loc uniqeness testing
+        Added a flag to disable Loc uniqeness testing
       </action>
       <action dev="dpp" type="add" issue="235" system="assembla">
-	Added default settings for FadeIn and FadeOut
+        Added default settings for FadeIn and FadeOut
       </action>
       <action dev="dpp" type="add" issue="444" system="assembla">
-	Added warnings on attempt to access non-existant props file
+        Added warnings on attempt to access non-existant props file
       </action>
       <action dev="dpp" type="fix" issue="442" system="assembla">
-	Fixed an initization order issue in LoggingStatementWrapper
+        Fixed an initization order issue in LoggingStatementWrapper
       </action>
       <action dev="dpp" type="add" issue="365" system="assembla">
-	Enhanced JSON support in Lift based on the new JSON library
+        Enhanced JSON support in Lift based on the new JSON library
       </action>
       <action dev="dpp" type="add" issue="408" system="assembla">
-	Added equals and hash methods for mapper based on primary key
+        Added equals and hash methods for mapper based on primary key
       </action>
       <action dev="dpp" type="add" issue="233" system="assembla">
-	support setObject without an explicit SQL type
+        support setObject without an explicit SQL type
       </action>
       <action dev="hoffrocket" type="add" issue="297" system="assembla">
-        Added a new ImageResizer utility class to lift-imaging to provide additional resizing options which preserve aspect ratio and orientation.
+        Added a new ImageResizer utility class to lift-imaging to provide additional resizing options which preserve
+        aspect ratio and orientation.
       </action>
       <action dev="hoffrocket" type="fix" issue="411" system="assembla">
         MappedLongForeignKey apply() methods which take reference now prime the Obj
       </action>
-      <action dev="hoffrocket" type="fix" issue="add" system="assembla">
+      <action dev="hoffrocket" type="fix" issue="427" system="assembla">
         MappedDate and MappedDateTime setFromAny now handle Numbers (millis)
       </action>
       <action dev="hoffrocket" type="fix" issue="426" system="assembla">
         MappedString.crop gracefully handles null
       </action>
       <action dev="hseeberger" type="fix" issue="448" system="assembla">
-	      Fix lift-osgi boot.
+        Fix lift-osgi boot.
       </action>
       <action dev="hseeberger" type="add" issue="445" system="assembla">
-	      Make lift-mapper an OSGi bundle and fix broken OSGi configuration of other modules.
+        Make lift-mapper an OSGi bundle and fix broken OSGi configuration of other modules.
       </action>
       <action dev="hseeberger" type="add" issue="409" system="assembla">
-	      Updated lift-core_pl.properties for Lift 2.0
+        Updated lift-core_pl.properties for Lift 2.0
       </action>
       <action dev="dridus" type="enhancement" issue="440" system="assembla">
         Move JValue encoding/decoding for field values from JSONFields in lift-couchdb to base fields in lift-record.
-        </action>
+      </action>
       <action dev="hseeberger" type="add" issue="175" system="assembla">
-	German lift-core.properties
+        German lift-core.properties
       </action>
       <action dev="madshartmann" type="add" issue="104" system="assembla">
-        Added javascript interface to the CalendarMothView which resembles the ones already available for the week and day view.
+        Added javascript interface to the CalendarMothView which resembles the ones already available for the week and
+        day view.
       </action>
       <action dev="madshartmann" type="update" issue="402" system="assembla">
         added blob to the list of reserved sql-words
@@ -96,68 +104,170 @@
         Add response code overload to JsonResponse and rename HeaderStuff
       </action>
       <action dev="dpp" type="fix" issue="433" system="assembla">
-	Synchronized a variable
+        Synchronized a variable
       </action>
       <action dev="dpp" type="add" issue="390" system="assembla">
-	Added a trait with createdAt and updatedAt mapper mixins
+        Added a trait with createdAt and updatedAt mapper mixins
       </action>
       <action dev="dpp" type="fix" issue="436" system="assembla">
-	More precise (and correct) shutdown process.  This fixes
-	a shutdown problem while CometActors are running.
+        More precise (and correct) shutdown process. This fixes a shutdown problem while CometActors are running.
       </action>
       <action dev="dpp" type="add" issue="424" system="assembla">
-	Added an option to SiteMap to not flatten the sitemap when retrieving a group
+        Added an option to SiteMap to not flatten the sitemap when retrieving a group
       </action>
       <action dev="dpp" type="add" issue="434" system="assembla">
 	Ported Testkit and LDAP to the 2.8 branch
       </action>
       <action dev="dpp" type="add" issue="432" system="assembla">
-	Added a flag to preserver XML scope.  Necessary when you're doing bind on top-level XML
+        Added a flag to preserver XML scope. Necessary when you're doing bind on top-level XML
       </action>
       <action dev="dpp" type="add" issue="391" system="assembla">
-	Don't cache resource bundles in dev mode
+        Don't cache resource bundles in dev mode
       </action>
       <action dev="dpp" type="add" issue="423" system="assembla">
-	Detect and disallow duplicate URIs in SiteMap
+        Detect and disallow duplicate URIs in SiteMap
       </action>
       <action dev="dpp" type="add" issue="274" system="assembla">
-	XML entities preserved
+        XML entities preserved
       </action>
       <action dev="dpp" type="add" issue="385" system="assembla">
-	Dynamic reloading of sitemap during dev mode
+        Dynamic reloading of sitemap during dev mode
       </action>
       <action dev="dridus" type="fix" issue="429" system="assembla">
-    fix two bugs with findClass not titlecasing correctly (helloWorld to HelloWorld)
+        fix two bugs with findClass not titlecasing correctly (helloWorld to HelloWorld)
       </action>
       <action dev="dpp" type="fix" issue="382" system="assembla">
-	SHtml.link and redirectTo properly deal with hash in URL
+        SHtml.link and redirectTo properly deal with hash in URL
       </action>
       <action dev="dpp" type="fix" issue="419" system="assembla">
-	Eliminated a potential deadlock in MetaMapper
+        Eliminated a potential deadlock in MetaMapper
       </action>
       <action dev="dpp" type="fix" issue="418" system="assembla">
-	FactoryMaker request and session values no longer stomp on each other
+        FactoryMaker request and session values no longer stomp on each other
       </action>
       <action dev="dpp" type="add" issue="400" system="assembla">
-	Added helpful extractors (AsInt, AsLong, AsBoolean)
+        Added helpful extractors (AsInt, AsLong, AsBoolean)
       </action>
       <action dev="dpp" type="add" issue="395" system="assembla">
-	Adds .json method to Req
+        Adds .json method to Req
       </action>
       <action dev="dpp" type="add" issue="397" system="assembla">
-	Added asValid and JSON helpers to Mapper
+        Added asValid and JSON helpers to Mapper
       </action>
       <action dev="dpp" type="add" issue="399" system="assembla">
-	Unapply on MetaMapper
+        Unapply on MetaMapper
       </action>
       <action dev="dpp" type="update" issue="398" system="assembla">
-	Made ParamFailure not a case class
+        Made ParamFailure not a case class
       </action>
       <action dev="dpp" type="add" issue="392" system="assembla">
-	More flexible CometActor creation
+        More flexible CometActor creation
       </action>
       <action dev="hseeberger" type="add" issue="414" system="assembla">
         Converting a null String to an empty String
+      </action>
+      <action dev="dlouwers" type="add" issue="131" system="assembla">
+        Add core dutch language files
+      </action>
+      <action dev="dlouwers" type="add" issue="132" system="assembla">
+        Add Ext Core support to Lift
+      </action>
+      <action dev="nafg" type="fix" issue="257" system="assembla">
+        Date/time parsing and formatting should be divided into Date, Time, and Date-time
+      </action>
+      <action dev="nafg" type="fix" issue="258" system="assembla">
+        MappedTime, MappedDate, and MappedDateTime should use different parsers and formatters
+      </action>
+      <action dev="jeppenejsum" type="update" issue="310" system="assembla">
+        Add logging to Lift's internal code
+      </action>
+      <action dev="marius.danciu" type="add" issue="334" system="assembla">
+        Support for HTTP Reason Phrase
+      </action>
+      <action dev="jeppenejsum" type="fix" issue="338" system="assembla">
+        Cleanup lift-openid dependencies
+      </action>
+      <action dev="jeppenejsum" type="fix" issue="348" system="assembla">
+        OpenId attribute exchange support for well known providers
+      </action>
+      <action dev="dridus" type="fix" issue="355" system="assembla">
+        Deprecate createRecord and createRecordFromJSON preferring new MyRecord
+      </action>
+      <action dev="jeppenejsum" type="fix" issue="361" system="assembla">
+        Rename OpenId -> OpenID
+      </action>
+      <action dev="jeppenejsum" type="fix" issue="388" system="assembla">
+        Foreign Key rules moved to MapperRules
+      </action>
+      <action dev="jeppenejsum" type="fix" issue="389" system="assembla">
+        Add MapperRules.displayNameCalculator to allow easy localization of displayName
+      </action>
+      <action dev="dpp" type="update" issue="394" system="assembla">
+        Request for convenience conversion on MappedLongForeignKey fields
+      </action>
+      <action dev="dridus" type="add" issue="396" system="assembla">
+        Support for snippets lookup in subpackages
+      </action>
+      <action dev="marius.danciu" type="add" issue="401" system="assembla">
+        Create a generic continuation mechanism
+      </action>
+      <action dev="dridus" type="fix" issue="403" system="assembla">
+        lift-couchdb: Field types using JSONEncodedStringMixin compile but give AbstractMethodError due to type erasure
+        fumble
+      </action>
+      <action dev="dridus" type="fix" issue="404" system="assembla">
+        lift-couchdb: JSONField that encodes an enumeration by its name rather than ID
+      </action>
+      <action dev="marius.danciu" type="fix" issue="405" system="assembla">
+        SetValueAndFocus should not be in JqJsCmds
+      </action>
+      <action dev="dpp" type="fix" issue="406" system="assembla">
+        Create/Init a LiftSession from outside a Lift-handled request
+      </action>
+      <action dev="marius.danciu" type="fix" issue="407" system="assembla">
+        JsCmds/JqJsCmds API normalization
+      </action>
+      <action dev="jonifreeman" type="fix" issue="410" system="assembla">
+        StackOverflowError in JSON Serializer with large Lists
+      </action>
+      <action dev="marius.danciu" type="fix" issue="412" system="assembla">
+        lift:lazy-load doesn't work properly with ajaxSelect
+      </action>
+      <action dev="dpp" type="add" issue="420" system="assembla">
+        Stateless JSON code
+      </action>
+      <action dev="indrajitr" type="update" issue="421" system="assembla">
+        Move common dependencies from lift-base, lift-persistence, etc. into lift-parent
+      </action>
+      <action dev="jeppenejsum" type="update" issue="422" system="assembla">
+        Add logging functions to Schemifier
+      </action>
+      <action dev="marius.danciu" type="fix" issue="425" system="assembla">
+        Statefull snippets redirect is broken
+      </action>
+      <action dev="jonifreeman" type="fix" issue="428" system="assembla">
+        XML is converted to invalid JSON when array has attributes
+      </action>
+      <action dev="jeppenejsum" type="fix" issue="431" system="assembla">
+        S.logQuery has wrong signature for use with DB.addLogFunc
+      </action>
+      <action dev="jeppenejsum" type="add" issue="435" system="assembla">
+        Add support for call-once functions
+      </action>
+      <action dev="marius.danciu" type="fix" issue="439" system="assembla">
+        Jetty 6 correction for comet
+      </action>
+      <action dev="indrajitr" type="update" issue="450" system="assembla">
+        Update AMQP dependencies to use RabbitMQ 1.7.2
+      </action>
+      <action dev="indrajitr" type="remove" issue="451" system="assembla">
+        Remove the deprecated meta module lift-core
+      </action>
+      <action dev="dpp" type="fix" issue="455" system="assembla">
+        Ability to disable unique Loc check
+      </action>
+      <action dev="jonifreeman" type="fix" issue="456" system="assembla">
+        Improve JSON extraction error message
       </action>
     </release>
 
