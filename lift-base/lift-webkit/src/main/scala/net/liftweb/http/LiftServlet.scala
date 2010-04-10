@@ -388,13 +388,16 @@ class LiftServlet extends Loggable {
           convertAnswersToCometResponse(session,
             answers.toList, actors))))))
 
-    cont ! BeginContinuation
 
-    session.enterComet(cont)
+    try {
+      session.enterComet(cont)
 
-    LAPinger.schedule(cont, BreakOut, TimeSpan(cometTimeout))
+      LAPinger.schedule(cont, BreakOut, TimeSpan(cometTimeout))
 
-    request.request.suspend(cometTimeout + 2000L)
+      request.request.suspend(cometTimeout + 2000L)
+    } finally {
+      cont ! BeginContinuation
+    }
   }
 
   private def handleComet(requestState: Req, sessionActor: LiftSession, originalRequest: Req): Either[Box[LiftResponse], () => Box[LiftResponse]] = {
