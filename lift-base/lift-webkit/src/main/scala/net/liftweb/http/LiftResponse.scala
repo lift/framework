@@ -322,6 +322,21 @@ final case class StreamingResponse(data: {def read(buf: Array[Byte]): Int}, onEn
   override def toString = "StreamingResponse( steaming_data , " + headers + ", " + cookies + ", " + code + ")"
 }
 
+
+/**
+ * Use this response to write your data directly to the response pipe. Along with StreamingResponse
+ * you have an aternative to send data to the client.
+ */
+case class OutputStreamResponse(out: (java.io.OutputStream) => Unit,  
+  size: Long, 
+  headers: List[(String, String)], 
+  cookies: List[HTTPCookie], 
+  code: Int) extends BasicResponse {
+
+  def toResponse = this
+
+}
+
 case class RedirectResponse(uri: String, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
   def toResponse = InMemoryResponse(Array(0), List("Location" -> uri), cookies toList, 302)

@@ -551,6 +551,10 @@ class LiftServlet extends Loggable {
           } finally {
             endFunc()
           }
+
+        case OutputStreamResponse(out, _, _, _, _) => 
+          out(response.outputStream)
+          response.outputStream.flush()
       }
     } catch {
       case e: _root_.java.io.IOException => // ignore IO exceptions... they happen
