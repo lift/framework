@@ -55,6 +55,7 @@
     <module>lift-wizard</module>
     <module>lift-widgets</module>
     <module>lift-machine</module>
+    <module>lift-scalate</module>
     <module>lift-textile</module>
     <module>lift-facebook</module>
     <module>lift-amqp</module>
