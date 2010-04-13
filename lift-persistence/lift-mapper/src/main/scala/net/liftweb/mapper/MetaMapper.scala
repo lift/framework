@@ -106,7 +106,8 @@ object MapperRules extends Factory {
    * used to easily localize fields based on the locale in the 
    * current request
    */
-  val displayNameCalculator: FactoryMaker[(BaseMapper, Locale, String) => String] = new FactoryMaker[(BaseMapper, Locale, String) => String](() => ((m,l,name) => name)) {} 
+  val displayNameCalculator: FactoryMaker[(BaseMapper, Locale, String) => String] = 
+  new FactoryMaker[(BaseMapper, Locale, String) => String]((m: BaseMapper,l: Locale,name: String) => name) {}
 
   /**
    * Calculate the name of a column based on the name

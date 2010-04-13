@@ -34,21 +34,21 @@ trait Factory extends SimpleInjector {
    * request specific vendors and use doWith to define the vendor just for
    * the scope of the call.
    */
-  abstract class FactoryMaker[T](_default: () => T)
+  abstract class FactoryMaker[T](_default: Vendor[T])
                                 (implicit man: Manifest[T]) extends StackableMaker[T] with Vendor[T] {
     registerInjection(this)(man)
 
     /**
      * The default function for vending an instance
      */
-    object default extends PSettableValueHolder[() => T] {
+    object default extends PSettableValueHolder[Vendor[T]] {
       private var value = _default
 
       def get = value
 
       def is = get
 
-      def set(v: () => T): () => T = {
+      def set(v: Vendor[T]): Vendor[T] = {
         value = v
         v
       }
