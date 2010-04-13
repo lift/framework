@@ -95,31 +95,33 @@ object RestContinuation {
         case None => 
           val cont = new Continuation {
 
-          lazy val cometTimeout: Long = (LiftRules.cometRequestTimeout openOr 120) * 1000L
+            lazy val cometTimeout: Long = (LiftRules.cometRequestTimeout openOr 120) * 1000L
           
-          var cachedResp: Box[LiftResponse] = null
-          val resumeFunc: Box[LiftResponse] => Unit = { response => 
-            val ok = req.request.resume(response.map((req, _)) openOr (req, EmptyResponse))
-            if (!ok) {
-              cachedResp = response
-            } else {
-              store -= key
+            var cachedResp: Box[LiftResponse] = null
+            val resumeFunc: Box[LiftResponse] => Unit = { response => 
+              val ok = req.request.resume(response.map((req, _)) openOr (req, EmptyResponse))
+              if (!ok) {
+                cachedResp = response
+              } else {
+                store -= key
+              }
             }
-          }
-          
-          LAScheduler.execute(() => resumeFunc(f))
-
-          def tryRespond: Box[LiftResponse] = {
-            if (cachedResp != null){
-               val res = cachedResp
-               cachedResp = null
-               store -= key
-               res
-            } else {
-              req.request.suspend(cometTimeout)
-              Full(EmptyResponse)
+       
+            def tryRespond: Box[LiftResponse] = {
+              if (cachedResp != null){
+                val res = cachedResp
+                cachedResp = null
+                store -= key
+                res
+              } else {
+                try {
+                  req.request.suspend(cometTimeout)
+                  Full(EmptyResponse)
+                } finally {
+                  LAScheduler.execute(() => resumeFunc(f))
+                }
+              }
             }
-           }
         }
       
         store += (key -> cont)
