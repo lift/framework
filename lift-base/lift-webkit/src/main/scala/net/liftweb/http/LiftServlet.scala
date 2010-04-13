@@ -504,12 +504,12 @@ class LiftServlet extends Loggable {
     val len = resp.size
     // insure that certain header fields are set
     val header = if (resp.code == 304) {
-    fixHeaders(resp.headers)
-  } else {
-    insureField(fixHeaders(resp.headers), List(("Content-Type",
-                                                LiftRules.determineContentType(pairFromRequest(request))),
-                                               ("Content-Length", len.toString)))
-  }
+      fixHeaders(resp.headers)
+    } else {
+      insureField(fixHeaders(resp.headers), List(("Content-Type",
+        LiftRules.determineContentType(pairFromRequest(request)))) ++
+          (if (len >= 0) List(("Content-Length", len.toString)) else Nil))
+    }
 
     LiftRules.beforeSend.toList.foreach(f => tryo(f(resp, response, header, request)))
     // set the cookies

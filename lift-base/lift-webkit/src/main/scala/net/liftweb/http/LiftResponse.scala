@@ -323,6 +323,22 @@ final case class StreamingResponse(data: {def read(buf: Array[Byte]): Int}, onEn
 }
 
 
+object OutputStreamResponse {
+
+  def apply(out: (java.io.OutputStream) => Unit) = 
+    new OutputStreamResponse(out, -1, Nil, Nil, 200)
+
+  def apply(out: (java.io.OutputStream) => Unit, size: Long) = 
+    new OutputStreamResponse(out, size, Nil, Nil, 200)
+
+  def apply(out: (java.io.OutputStream) => Unit, headers: List[(String, String)]) = 
+    new OutputStreamResponse(out, -1, headers, Nil, 200)
+
+  def apply(out: (java.io.OutputStream) => Unit, size: Long, headers: List[(String, String)]) = 
+    new OutputStreamResponse(out, size, headers, Nil, 200)
+
+}
+
 /**
  * Use this response to write your data directly to the response pipe. Along with StreamingResponse
  * you have an aternative to send data to the client.
