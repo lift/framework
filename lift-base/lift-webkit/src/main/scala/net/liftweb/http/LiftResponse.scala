@@ -461,7 +461,7 @@ trait NodeResponse extends LiftResponse {
       sb.append(doc)
     }
     AltXML.toXML(out, _root_.scala.xml.TopScope,
-      sb, false, false, renderInIEMode)
+      sb, false, !LiftRules.convertToEntity.vend, renderInIEMode)
 
     sb.append("  \n  ")
 

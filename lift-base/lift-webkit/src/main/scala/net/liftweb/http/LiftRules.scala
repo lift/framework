@@ -174,6 +174,13 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   new FactoryMaker(() => noComet _) {}
 
   /**
+   * Should codes that represent entities be converted to XML
+   * entities when rendered?
+   */
+  val convertToEntity: FactoryMaker[Boolean] = new FactoryMaker(false) {}
+
+
+  /**
    * Holds user functions that are executed after the response was sent to client. The functions' result
    * will be ignored.
    */
