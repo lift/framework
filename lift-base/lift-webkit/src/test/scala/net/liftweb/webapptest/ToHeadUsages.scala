@@ -100,6 +100,15 @@ object ToHeadUsages extends Specification {
       (idx >= 0) must_== true
     }
 
+    "Template finder should not recognize entities" >> {
+      val ns = TemplateFinder.findAnyTemplate(List("index")).open_!
+      val str = AltXML.toXML(ns(0), false, true, false)
+
+      val idx = str.indexOf("&mdash;")
+      (idx >= 0) must_== false
+    }
+
+    /*
     "round trip entities" >> {
       JettyTestServer.browse(
         "/index",html => {
@@ -108,6 +117,7 @@ object ToHeadUsages extends Specification {
         }
       )
     }
+    */
   }
 
   "deferred snippets" should {

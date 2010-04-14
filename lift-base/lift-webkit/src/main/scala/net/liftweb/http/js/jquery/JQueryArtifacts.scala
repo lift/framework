@@ -27,6 +27,7 @@ import _root_.net.liftweb.http.js.JsCmds
 import JE._
 import JqJE._
 import util.Helpers._
+import util.Props
 
 trait JQueryArtifacts extends JSArtifacts {
   def toggle(id: String) = JqId(id) ~> new JsMember {
@@ -84,6 +85,7 @@ trait JQueryArtifacts extends JSArtifacts {
 
 case object JQuery13Artifacts extends JQueryArtifacts {
   override def pathRewriter: PartialFunction[List[String], List[String]] = {
+    case "jquery.js" :: Nil if Props.devMode => List("jquery-1.3.2.js")
     case "jquery.js" :: Nil => List("jquery-1.3.2-min.js")
   }
 }
@@ -91,7 +93,8 @@ case object JQuery13Artifacts extends JQueryArtifacts {
 
 case object JQuery14Artifacts extends JQueryArtifacts {
   override def pathRewriter: PartialFunction[List[String], List[String]] = {
-    case "jquery.js" :: Nil => List("jquery-1.4.2.min.js")
+    case "jquery.js" :: Nil if Props.devMode => List("jquery-1.4.2.js")
+    case "jquery.js" :: Nil => List("jquery-1.4.2-min.js")
   }
 }
 

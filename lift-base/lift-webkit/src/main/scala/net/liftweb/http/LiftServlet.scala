@@ -388,13 +388,16 @@ class LiftServlet extends Loggable {
           convertAnswersToCometResponse(session,
             answers.toList, actors))))))
 
-    cont ! BeginContinuation
 
-    session.enterComet(cont)
+    try {
+      session.enterComet(cont)
 
-    LAPinger.schedule(cont, BreakOut, TimeSpan(cometTimeout))
+      LAPinger.schedule(cont, BreakOut, TimeSpan(cometTimeout))
 
-    request.request.suspend(cometTimeout + 2000L)
+      request.request.suspend(cometTimeout + 2000L)
+    } finally {
+      cont ! BeginContinuation
+    }
   }
 
   private def handleComet(requestState: Req, sessionActor: LiftSession, originalRequest: Req): Either[Box[LiftResponse], () => Box[LiftResponse]] = {
@@ -504,12 +507,12 @@ class LiftServlet extends Loggable {
     val len = resp.size
     // insure that certain header fields are set
     val header = if (resp.code == 304) {
-    fixHeaders(resp.headers)
-  } else {
-    insureField(fixHeaders(resp.headers), List(("Content-Type",
-                                                LiftRules.determineContentType(pairFromRequest(request))),
-                                               ("Content-Length", len.toString)))
-  }
+      fixHeaders(resp.headers)
+    } else {
+      insureField(fixHeaders(resp.headers), List(("Content-Type",
+        LiftRules.determineContentType(pairFromRequest(request)))) ++
+          (if (len >= 0) List(("Content-Length", len.toString)) else Nil))
+    }
 
     LiftRules.beforeSend.toList.foreach(f => tryo(f(resp, response, header, request)))
     // set the cookies
@@ -551,6 +554,10 @@ class LiftServlet extends Loggable {
           } finally {
             endFunc()
           }
+
+        case OutputStreamResponse(out, _, _, _, _) => 
+          out(response.outputStream)
+          response.outputStream.flush()
       }
     } catch {
       case e: _root_.java.io.IOException => // ignore IO exceptions... they happen

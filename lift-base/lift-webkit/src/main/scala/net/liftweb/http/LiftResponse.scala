@@ -322,6 +322,37 @@ final case class StreamingResponse(data: {def read(buf: Array[Byte]): Int}, onEn
   override def toString = "StreamingResponse( steaming_data , " + headers + ", " + cookies + ", " + code + ")"
 }
 
+
+object OutputStreamResponse {
+
+  def apply(out: (java.io.OutputStream) => Unit) = 
+    new OutputStreamResponse(out, -1, Nil, Nil, 200)
+
+  def apply(out: (java.io.OutputStream) => Unit, size: Long) = 
+    new OutputStreamResponse(out, size, Nil, Nil, 200)
+
+  def apply(out: (java.io.OutputStream) => Unit, headers: List[(String, String)]) = 
+    new OutputStreamResponse(out, -1, headers, Nil, 200)
+
+  def apply(out: (java.io.OutputStream) => Unit, size: Long, headers: List[(String, String)]) = 
+    new OutputStreamResponse(out, size, headers, Nil, 200)
+
+}
+
+/**
+ * Use this response to write your data directly to the response pipe. Along with StreamingResponse
+ * you have an aternative to send data to the client.
+ */
+case class OutputStreamResponse(out: (java.io.OutputStream) => Unit,  
+  size: Long, 
+  headers: List[(String, String)], 
+  cookies: List[HTTPCookie], 
+  code: Int) extends BasicResponse {
+
+  def toResponse = this
+
+}
+
 case class RedirectResponse(uri: String, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
   def toResponse = InMemoryResponse(Array(0), List("Location" -> uri), cookies toList, 302)
@@ -430,7 +461,7 @@ trait NodeResponse extends LiftResponse {
       sb.append(doc)
     }
     AltXML.toXML(out, _root_.scala.xml.TopScope,
-      sb, false, false, renderInIEMode)
+      sb, false, !LiftRules.convertToEntity.vend, renderInIEMode)
 
     sb.append("  \n  ")
 

@@ -84,7 +84,7 @@ object MapperSpecs extends Specification {
     } 
     displayName
   } 
-  MapperRules.displayNameCalculator.default.set(() => displayNameCalculator)
+  MapperRules.displayNameCalculator.default.set(displayNameCalculator _)
 
   // Snake connection doesn't create FK constraints
   MapperRules.createForeignKeys_? = c => c.jndiName != "snake"
