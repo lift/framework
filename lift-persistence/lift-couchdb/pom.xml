@@ -51,7 +51,9 @@
     </dependency>
     <dependency>
       <groupId>net.databinder</groupId>
-      <artifactId>dispatch-http_${scala.version}</artifactId>
+      <!--FIXME: 280-->
+      <!--<artifactId>dispatch-http_${scala.version}</artifactId>-->
+      <artifactId>dispatch-http_2.8.0.Beta1</artifactId>
     </dependency>
     <dependency>
       <groupId>net.jcip</groupId>

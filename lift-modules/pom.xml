@@ -84,11 +84,13 @@
     </dependency>
     <dependency>
       <groupId>org.scala-tools.testing</groupId>
+      <!--FIXME: 280-->
+      <!--<artifactId>specs_${scala.version}</artifactId>-->
       <artifactId>specs_2.8.0.Beta1</artifactId>
     </dependency>
     <dependency>
       <groupId>org.scala-tools.testing</groupId>
-      <artifactId>scalacheck_2.8.0.Beta1</artifactId>
+      <artifactId>scalacheck_${scala.version}</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

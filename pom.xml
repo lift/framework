@@ -321,9 +321,6 @@
             <jvmArg>-Xmx1024m</jvmArg>
             <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
           </jvmArgs>
-          <args>
-            <arg>-Xno-varargs-conversion</arg>
-          </args>
         </configuration>
       </plugin>
     </plugins>
