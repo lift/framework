@@ -33,7 +33,7 @@ package view {
    * @author Timothy Perrett and nafg
    */ 
   trait PaginatedSnippet extends DispatchSnippet {
-    override def dispatch = super.dispatch orElse Map("paginate" -> paginator.paginate _ )
+    def dispatch = dispatch orElse Map("paginate" -> paginator.paginate _ )
     val paginator: Paginator
   }
   
