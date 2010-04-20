@@ -24,7 +24,6 @@ package view {
   import net.liftweb.util.Helpers._
   import net.liftweb.mapper.{Mapper, MetaMapper, MappedField,
            QueryParam, OrderBy, StartAt, MaxRows, Ascending, Descending}
-  import net.liftweb.mapper.view.ModelSnippet
   
   /**
    * Snippet helper for people implementing 
@@ -32,9 +31,9 @@ package view {
    * 
    * @author Timothy Perrett and nafg
    */ 
-  trait PaginatedSnippet extends DispatchSnippet {
+  trait PaginatedSnippet[T] extends DispatchSnippet {
     def dispatch = dispatch orElse Map("paginate" -> paginator.paginate _ )
-    val paginator: Paginator
+    val paginator: Paginator[T]
   }
   
   /**
@@ -65,17 +64,15 @@ package view {
    *
    * @author Timothy Perrett and nafg
    */ 
-  trait Paginator extends Loggable {
+  trait Paginator[T] extends Loggable {
     
     /**
      * The query offset of the current page
      */
+    
     var _first: Long = 0L
-    def first(): Long = _first
-    def first(x: Long): Long = {  
-      _first = x 
-      first() 
-    }
+    def first: Long = _first
+    def first_=(x: Long): Unit = _first = x
     
     /**
      * The number of items on a page
@@ -87,6 +84,8 @@ package view {
      */
     protected def count: Long
     
+    def page: Seq[T]
+    
     /**
      * Configuration points for the XML components
      */ 
@@ -95,7 +94,7 @@ package view {
     def prevXml = Text(?("<"))
     def nextXml = Text(?(">"))
     def recordsXml = Text(
-      "Displaying records "+(first()+1)+"-"+(first()+num min count)+" of "+count
+      "Displaying records "+(first+1)+"-"+(first+num min count)+" of "+count
     )
 
     def numPages = (count/num).toInt + (if(count % num > 0) 1 else 0)
@@ -114,22 +113,18 @@ package view {
 
     def linkIfOther(start: Long, ns: NodeSeq): NodeSeq = 
       if(first==start) calcPassiveLink(start,ns)
-      else {
-        // first(start)
-        calcActiveLink(start,ns)
-      }
-    
-    
+      else calcActiveLink(start,ns)
+  
     /**
      * Link calculation methods - override this in a specilization
      */
     def calcActiveLink(start: Long, xml: NodeSeq): NodeSeq 
     def calcPassiveLink(start: Long, xml: NodeSeq): NodeSeq
 
-    def curPage = (first() / num).toInt
+    def curPage = (first / num).toInt
 
-    def nextOffset = first()+num min num*(numPages-1)
-    def prevOffset = first()-num max 0
+    def nextOffset = first+num min num*(numPages-1)
+    def prevOffset = first-num max 0
     def lastOffset = num*(numPages-1)
     def firstOffset = 0
     
@@ -179,7 +174,7 @@ package view {
    */
   class MapperPaginator[T <: Mapper[T]](val meta: MetaMapper[T],
                            initialSort: MappedField[_, T],
-                           val headers: (String, MappedField[_, T])*) extends Paginator {
+                           val headers: (String, MappedField[_, T])*) extends Paginator[T] {
 
     var sort: OrderBy[T, _] = OrderBy(initialSort, Ascending)
     
@@ -188,7 +183,7 @@ package view {
      */
     def constantParams: Seq[QueryParam[T]] = Nil
 
-    override def first(): Long = S.param("offset").map(_.toLong) openOr 0L
+    override def first: Long = S.param("offset").map(_.toLong) openOr 0L
 
     override def calcActiveLink(start: Long, xml: NodeSeq): NodeSeq = 
       <a href={"?offset=" + start}>{xml}</a>
@@ -204,7 +199,7 @@ package view {
     /**
      * The current data set for this page
      */
-    def page: List[T] = meta.findAll(constantParams ++ Seq(sort, MaxRows(num), StartAt(first())): _*)
+    def page = meta.findAll(constantParams ++ Seq(sort, MaxRows(num), StartAt(first)): _*)
     
     /**
      * Sets the sort-by field. If the specified field is already
@@ -228,7 +223,7 @@ package view {
           snippet: ModelSnippet[T], initialSort: MappedField[_, T], headers: (String, MappedField[_, T])*) 
         extends MapperPaginator[T](meta,initialSort,headers: _*){
 
-    def calcLink(start: Long, xml: NodeSeq) = snippet.link(S.uri, ()=>first(start), xml)                     
+    def calcLink(start: Long, xml: NodeSeq) = snippet.link(S.uri, ()=>first=start, xml)                     
     override def calcActiveLink(start: Long, xml: NodeSeq) = calcLink(start,xml)
     override def calcPassiveLink(start: Long, xml: NodeSeq) = calcLink(start,xml)
   }
