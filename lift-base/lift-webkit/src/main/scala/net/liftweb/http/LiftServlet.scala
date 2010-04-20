@@ -406,8 +406,8 @@ class LiftServlet extends Loggable {
       case (name, when) =>
         sessionActor.getAsyncComponent(name).toList.map(c => (c, toLong(when)))
     }
-
-    if (actors.isEmpty) Left(Full(new JsCommands(JsCmds.RedirectTo(LiftRules.noCometSessionPage) :: Nil).toResponse))
+   
+    if (actors.isEmpty) Left(Full(new JsCommands(new JE.JsRaw("lift_toWatch = {}") with JsCmd :: JsCmds.RedirectTo(LiftRules.noCometSessionPage) :: Nil).toResponse))
     else requestState.request.suspendResumeSupport_? match {
       case true =>
         setupContinuation(requestState, sessionActor, actors)
