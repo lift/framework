@@ -105,9 +105,10 @@ object Xml {
 
     def toJValue(x: XElem): JValue = x match {
       case XValue(s) => JString(s)
-      case XLeaf((name, value), attrs) => attrs match {
-        case Nil => toJValue(value)
-        case xs => JObject(JField(name, toJValue(value)) :: mkFields(xs))
+      case XLeaf((name, value), attrs) => (value, attrs) match {
+        case (_, Nil) => toJValue(value)
+        case (XValue(""), xs) => JObject(mkFields(xs))
+        case (_, xs) => JObject(JField(name, toJValue(value)) :: mkFields(xs))
       }
       case XNode(xs) => JObject(mkFields(xs))
       case XArray(elems) => JArray(elems.map(toJValue))

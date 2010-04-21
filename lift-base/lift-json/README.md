@@ -37,7 +37,7 @@ Installation
 ============
 
 It comes with Lift, but non-Lift users can add lift-json as a dependency in following ways.
-Note, replace XX with correct Lift version (for instance M1).
+Note, replace XX with correct Lift version (for instance M4).
 
 ### SBT users
 
