@@ -52,6 +52,11 @@
       <artifactId>lift-webkit</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+    	<groupId>ch.qos.logback</groupId>
+    	<artifactId>logback-classic</artifactId>
+    	<scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <!--
