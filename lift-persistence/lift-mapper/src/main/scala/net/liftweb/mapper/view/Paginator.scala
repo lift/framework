@@ -17,222 +17,192 @@ package net.liftweb {
 package mapper {
 package view {
 
-  import scala.xml.{NodeSeq, Text, Elem}
-  import net.liftweb.common.Loggable
-  import net.liftweb.http.{S,DispatchSnippet}
-  import net.liftweb.http.S.?
-  import net.liftweb.util.Helpers._
-  import net.liftweb.mapper.{Mapper, MetaMapper, MappedField,
-           QueryParam, OrderBy, StartAt, MaxRows, Ascending, Descending}
+import scala.xml.{NodeSeq, Text, Elem}
+import net.liftweb.common.Loggable
+import net.liftweb.http.{S,DispatchSnippet}
+import net.liftweb.http.S.?
+import net.liftweb.util.Helpers._
+import net.liftweb.mapper.{Mapper, MetaMapper, MappedField,
+         QueryParam, OrderBy, StartAt, MaxRows, Ascending, Descending}
+ 
+/**
+ * Snippet helper for people implementing 
+ * pagination - this ensures they implement the paginator
+ * 
+ * @author nafg
+ */ 
+trait PaginatedModelSnippet[T <: Mapper[T]] extends ModelSnippet[T] {
+  abstract override def dispatch: DispatchIt = super.dispatch orElse Map("paginate" -> paginator.paginate _ )
+  val paginator: PaginatorSnippet[T]
+}
+
+
+
+trait Paginator[T] extends Loggable {
   
-  /**
-   * Snippet helper for people implementing 
-   * pagination - this ensures they implement the paginator
-   * 
-   * @author Timothy Perrett and nafg
-   */ 
-  trait PaginatedSnippet[T] extends DispatchSnippet {
-    def dispatch = dispatch orElse Map("paginate" -> paginator.paginate _ )
-    val paginator: Paginator[T]
+  def count: Long
+
+  def itemsPerPage = 20
+  
+  def first = 0L
+
+  def page: Seq[T]
+  
+  def numPages =
+    (count/itemsPerPage).toInt +
+      (if(count % itemsPerPage > 0) 1 else 0)
+
+  def curPage = (first / itemsPerPage).toInt
+  
+  def zoomedPages = (
+    List(curPage - 1020, curPage - 120, curPage - 20) ++
+    (curPage-10 to curPage+10) ++
+    List(curPage + 20, curPage + 120, curPage + 1020)
+  ) filter { n=>
+    n >= 0 && n < numPages
   }
+}
+
+/**
+ * T: The type of the elements, accessed via def page within the listing snippet
+ * F: The type of the fields, used to specify sorting
+*/
+trait SortedPaginator[T, F] extends Paginator[T] {
+  def headers: List[(String, F)]
+
+  // current sort state: (field, ascending?)
+  var _sort = (0, true)
+  def sort: (Int, Boolean) = _sort
+  def sort_=(s: (Int, Boolean)) = _sort = s
+
+  def sortedBy(field: Int): (Int, Boolean) = sort match {
+    case (`field`, true) =>  // descending is only on second click
+      (field, false)
+    case _ =>
+      (field, true)
+  }
+}
+
+
+trait PaginatorSnippet[T] extends Paginator[T] {
+  def prevXml: NodeSeq = Text(?("<"))
+  def nextXml: NodeSeq = Text(?(">"))
+  def firstXml: NodeSeq = Text(?("<<"))
+  def lastXml: NodeSeq = Text(?(">>"))
+  def currentXml: NodeSeq = Text("Displaying records "+(first+1)+"-"+(first+itemsPerPage min count)+" of "+count)
   
-  /**
-   * Base trait for anything that should exhibit paginating abilities.
-   * The key fields here are:
-   * - "num" that holds the number of items per page
-   * - "count" holds the overall item count
-   * 
-   * Then we have a bunch of methods you can override to change things:
-   * - firstXml is the Elem for the first page
-   * - lastXml is the Elem for the last page
-   * - prevXml is the Elem for the previous page
-   * - nextXml is the Elem for the next page
-   * - recordsXml is the Elem a handy message notifiying the users which records are showing
-   * - calcActiveLink is the Elem for active links
-   * - calcPassiveLink is the Elem for unclickable (current) links
-   * 
-   * View XHTML is as follows.
-   * sort prefix
-   *  - (a header name passed to the constructor) - a link that sorts by the field specified in the constructor
-   * nav prefix
-   *  - first - a link to the first page
-   *  - prev - a link to the previous page
-   *  - allpages - links to individual pages. The contents of this node are used to separate page links.
-   *  - next - a link to the next page
-   *  - last - a link to the last page
-   *  - records - a description of which records are currently being displayed
-   *
-   * @author Timothy Perrett and nafg
-   */ 
-  trait Paginator[T] extends Loggable {
+  def navPrefix = "nav"
+  def offsetParam = "offset"
+  
+  var _first = 0L
+  override def first = S.param(offsetParam).map(toLong) openOr _first
+  def first_=(f: Long) = _first = first
+  
+  def pageUrl(offset: Long): String = appendParams(S.uri, List(offsetParam -> offset.toString))
     
-    /**
-     * The query offset of the current page
-     */
-    
-    var _first: Long = 0L
-    def first: Long = _first
-    def first_=(x: Long): Unit = _first = x
-    
-    /**
-     * The number of items on a page
-     */
-    def num = 20
-    
-    /**
-     * Returns the total number of items to list
-     */
-    protected def count: Long
-    
-    def page: Seq[T]
-    
-    /**
-     * Configuration points for the XML components
-     */ 
-    def firstXml = Text(?("<<"))
-    def lastXml = Text(?(">>"))
-    def prevXml = Text(?("<"))
-    def nextXml = Text(?(">"))
-    def recordsXml = Text(
-      "Displaying records "+(first+1)+"-"+(first+num min count)+" of "+count
-    )
-
-    def numPages = (count/num).toInt + (if(count % num > 0) 1 else 0)
-
-    def pageLinks(pages: Seq[Int], sep: NodeSeq) = NodeSeq.fromSeq(
-      pages.toList map {n =>
-        linkIfOther(n*num, Text(n+1 toString))
-      } match {
-        case one :: Nil => one
-        case start :: rest => rest.foldLeft(start) {
-          case (a,b) => a ++ sep ++ b
-        }
-        case Nil => Nil
+  def pageXml(newFirst: Long, ns: NodeSeq): NodeSeq =
+    if(first==newFirst)
+      ns
+    else
+      <a href={pageUrl(newFirst)}>{ns}</a>
+  
+  
+  def pagesXml(pages: Seq[Int], sep: NodeSeq): NodeSeq =
+    pages.toList map {n =>
+      pageXml(n*itemsPerPage, Text(n+1 toString))
+    } match {
+      case one :: Nil => one
+      case first :: rest => rest.foldLeft(first) {
+        case (a,b) => a ++ sep ++ b
       }
-    )
-
-    def linkIfOther(start: Long, ns: NodeSeq): NodeSeq = 
-      if(first==start) calcPassiveLink(start,ns)
-      else calcActiveLink(start,ns)
-  
-    /**
-     * Link calculation methods - override this in a specilization
-     */
-    def calcActiveLink(start: Long, xml: NodeSeq): NodeSeq 
-    def calcPassiveLink(start: Long, xml: NodeSeq): NodeSeq
-    def headerBindParams: Seq[BindParam] = Nil
-    
-    def curPage = (first / num).toInt
-
-    def nextOffset = first+num min num*(numPages-1)
-    def prevOffset = first-num max 0
-    def lastOffset = num*(numPages-1)
-    def firstOffset = 0
-    
-    
-    /**
-     * This is the paginate snippet. It provides page
-     * navigation and column sorting links.
-     * View XHTML is as follows.
-     * sort prefix
-     *  - (a header name passed to the constructor) - a link that sorts by the field specified in the constructor
-     * nav prefix
-     *  - first - a link to the first page
-     *  - prev - a link to the previous page
-     *  - allpages - links to individual pages. The contents of this node are used to separate page links.
-     *  - next - a link to the next page
-     *  - last - a link to the last page
-     *  - records - a description of which records are currently being displayed
-     */
-    def paginate(xhtml: NodeSeq) = 
-      bind("nav", bind("sort", xhtml, headerBindParams: _*),
-        "first" -> linkIfOther(firstOffset, firstXml),
-        "last" -> linkIfOther(lastOffset, lastXml),
-        "prev" -> linkIfOther(prevOffset, prevXml),
-        "next" -> linkIfOther(nextOffset, nextXml),
-        "allpages" -> {(n:NodeSeq) => pageLinks(0 until numPages, n)},
-        "zoomedpages" -> {(ns: NodeSeq) =>
-          val pages = List(curPage - 1020, curPage - 120, curPage - 20) ++
-            (curPage-10 to curPage+10) ++
-            List(curPage + 20, curPage + 120, curPage + 1020) filter { n=>
-              n>=0 && n < numPages
-            }
-          pageLinks(pages, ns)
-        },
-        "records" -> recordsXml
-      )
-
-  }
-  
-  /**
-   * Specilized paginator that deals with Mapper instances 
-   * and knows how to automaticlly find the count from a MetaMapper
-   *
-   * @param meta The singleton to query for items
-   * @param initialSort Selection of MappedField's that will be use to sort the data set
-   * @param headers Pairs (Tuple2) of column header names as used in the view and the fields that they sort by
-   * @author Timothy Perrett and nafg
-   */
-  class MapperPaginator[T <: Mapper[T]](val meta: MetaMapper[T],
-                           initialSort: MappedField[_, T],
-                           val headers: (String, MappedField[_, T])*) extends Paginator[T] {
-    
-    var sort: OrderBy[T, _] = OrderBy(initialSort, Ascending)
-    
-    /**
-     * Override this to specify unchanging QueryParams to query the listing
-     */
-    def constantParams: Seq[QueryParam[T]] = Nil
-    
-    override def first: Long = S.param("offset").map(_.toLong) openOr 0L
-    
-    override def calcActiveLink(start: Long, xml: NodeSeq): NodeSeq = 
-      <a href={"?offset=" + start}>{xml}</a>
-    override def calcPassiveLink(start: Long, xml: NodeSeq): NodeSeq = 
-      <span>{xml}</span>
-      
-    /**
-     * Returns the total number of items to list 
-     * by calling the MetaMapper
-     */
-    def count = meta.count(constantParams: _*)
-    
-    /**
-     * The current data set for this page
-     */
-    def page = meta.findAll(constantParams ++ Seq(sort, MaxRows(num), StartAt(first)): _*)
-    
-    /**
-     * Sets the sort-by field. If the specified field is already
-     * the sort field, it is sorted descending; otherwise ascending.
-     * Called when a column header is clicked.
-     */
-    def sortBy(field: MappedField[_, T]) = sort = sort match {
-      case OrderBy(f, Ascending) if f eq field =>
-        OrderBy(field, Descending)
-      case _ | null =>
-        OrderBy(field, Ascending)
+      case Nil => Nil
     }
+    
+    
+  
+  // differences:
+  //  - Instead of snippet.link, use registerSnippetFn(). For StatefulSnippets that would be registerThisSnippet.
+  // For others, it could be an S.mapSnippet invocation etc.
+  def paginate(xhtml: NodeSeq) = {
+    bind(navPrefix, xhtml,
+      "first" -> pageXml(0, firstXml),
+      "prev" -> pageXml(first-itemsPerPage max 0, prevXml),
+      "allpages" -> {(n:NodeSeq) => pagesXml(0 until numPages, n)},
+      "zoomedpages" -> {(ns: NodeSeq) => pagesXml(zoomedPages, ns)},
+      "next" -> pageXml(first+itemsPerPage min itemsPerPage*(numPages-1), nextXml),
+      "last" -> pageXml(itemsPerPage*(numPages-1), lastXml),
+      "records" -> currentXml
+    )
+  }
+}
+
+trait SortedPaginatorSnippet[T, F] extends SortedPaginator[T, F] with PaginatorSnippet[T] {
+  def sortPrefix = "sort"
+  def sortParam = "sort"
+  def ascendingParam = "asc"
+  
+  def sortedPageUrl(offset: Long, sort: (Int, Boolean)) = sort match {
+    case (field, ascending) =>
+      appendParams(super.pageUrl(offset), List(sortParam->field.toString, ascendingParam->ascending.toString))
+  }
+  override def pageUrl(offset: Long) = sortedPageUrl(offset, sort)
+
+  override def sort = super.sort match {
+    case (field, ascending) => (
+      S.param("sort").map(toInt) openOr field,
+      S.param("asc").map(toBoolean) openOr ascending
+    )
   }
   
-  /**
-   * Further specilization for Mapper uses where if you 
-   * are using ModelView stuff submitted by nafg then you can 
-   * auto-paginate that calling into the StatefulSnippet 
-   */
-  class MapperViewPaginator[T <: Mapper[T]](meta: MetaMapper[T], 
-          snippet: ModelSnippet[T], initialSort: MappedField[_, T], headers: (String, MappedField[_, T])*) 
-        extends MapperPaginator[T](meta,initialSort,headers: _*){
-    
-    def calcLink(start: Long, xml: NodeSeq) = snippet.link(S.uri, ()=>first=start, xml)                     
-    override def calcActiveLink(start: Long, xml: NodeSeq) = calcLink(start,xml)
-    override def calcPassiveLink(start: Long, xml: NodeSeq) = calcLink(start,xml)
-    override def headerBindParams: Seq[BindParam] =
-      headers.map {
-        case (binding, field) =>
-          FuncBindParam(binding, (n:NodeSeq)=>snippet.link(S.uri, ()=>sortBy(field),n))
-        }.toSeq
+  override def paginate(xhtml: NodeSeq): NodeSeq =
+    bind(sortPrefix, super.paginate(xhtml),
+      headers.zipWithIndex.map {
+        case ((binding, _), fieldIndex) =>
+          FuncBindParam(binding, (ns:NodeSeq) => <a href={sortedPageUrl(first, sortedBy(fieldIndex))}>{ns}</a> )
+      }.toSeq : _*
+    )
+}
+
+trait StatefulSortedPaginatorSnippet[T, F] extends SortedPaginatorSnippet[T, F] {
+  def registerThisSnippet: Unit
+  override def sortedPageUrl(offset: Long, sort: (Int, Boolean)) =
+    S.fmapFunc(S.NFuncHolder(() => registerThisSnippet)){ name =>
+      appendParams(super.sortedPageUrl(offset,sort), List(name -> "_"))
   }
+}
+
+class MapperPaginator[T <: Mapper[T]](val meta: MetaMapper[T]) extends Paginator[T] {
+  var constantParams: Seq[QueryParam[T]] = Nil
+  def count = meta.count(constantParams: _*)
+  def page = meta.findAll(constantParams ++ Seq(MaxRows(itemsPerPage), StartAt(first)): _*)
+}
+
+class MapperPaginatorSnippet[T <: Mapper[T]](meta: MetaMapper[T])
+  extends MapperPaginator[T](meta) with PaginatorSnippet[T]
+
+class SortedMapperPaginator[T <: Mapper[T]](meta: MetaMapper[T],
+                                initialSort: net.liftweb.mapper.MappedField[_, T],
+                                _headers: (String, MappedField[_, T])*)
+    extends MapperPaginator[T](meta) with SortedPaginator[T, MappedField[_, T]] {
+    
+    val headers = _headers.toList
+    sort = (headers.findIndexOf{case (_,`initialSort`)=>true; case _ => false}, true)
+    
+    override def page = meta.findAll(constantParams ++ Seq(mapperSort, MaxRows(itemsPerPage), StartAt(first)): _*)
+    private def mapperSort = sort match {
+      case (fieldIndex, ascending) =>
+        OrderBy(
+          headers(fieldIndex) match {case (_,f)=>f},
+          if(ascending) Ascending else Descending
+        )
+    }
+}
+class SortedMapperPaginatorSnippet[T <: Mapper[T]](
+  meta: MetaMapper[T],
+  initialSort: net.liftweb.mapper.MappedField[_, T],
+  headers: (String, MappedField[_, T])*
+) extends SortedMapperPaginator[T](meta, initialSort, headers: _*)
+  with SortedPaginatorSnippet[T, MappedField[_, T]]
 
 }
 }
