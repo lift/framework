@@ -15,8 +15,13 @@
  */
 
 package net.liftweb {
-package util {
-
+package http {
+  
+  import scala.xml.{NodeSeq,Text,Elem}
+  import net.liftweb.common.Loggable
+  import net.liftweb.util.Helpers._
+  import S.?
+  
   trait Paginator[T] extends Loggable {
 
     def count: Long

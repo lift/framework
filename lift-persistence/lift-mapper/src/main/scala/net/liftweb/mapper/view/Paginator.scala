@@ -19,7 +19,8 @@ package view {
 
 import scala.xml.{NodeSeq, Text, Elem}
 import net.liftweb.common.Loggable
-import net.liftweb.http.{S,DispatchSnippet}
+import net.liftweb.http.{S,DispatchSnippet,Paginator,PaginatorSnippet,
+  SortedPaginator,SortedPaginatorSnippet}
 import net.liftweb.http.S.?
 import net.liftweb.util.Helpers._
 import net.liftweb.mapper.{Mapper, MetaMapper, MappedField,
