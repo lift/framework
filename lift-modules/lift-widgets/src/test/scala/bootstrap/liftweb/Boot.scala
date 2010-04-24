@@ -43,12 +43,13 @@ class Boot {
 
     // Build SiteMap
 
-    val entries = Menu(Loc("Home", List("index"), "Home"),
-           Menu(Loc("submenu1", List("submenu1"), "submenu1")),
-           Menu(Loc("submenu2", List("submenu2"), "submenu2")),
-           Menu(Loc("submenu3", List("submenu3"), "submenu3"),
-                Menu(Loc("anothermenu1", List("anothermenu1"), "anothermenu1")),
-                Menu(Loc("anothermenu2", List("anothermenu2"), "anothermenu2")))) ::
+    val entries = 
+      (Menu("Home") / "index" submenus(
+        Menu("submenu1") / "submenu1",
+        Menu("submenu2") / "submenu2",
+        Menu("submenu3") / "submenu3" submenus(
+          Menu("anothermenu1") / "anothermenu1",
+          Menu("anothermenu2") / "anothermenu2"))) ::
       Menu(Loc("calmonth", List("calmonth"), "CalendarMonthView")) ::
       Menu(Loc("calweek", List("calweek"), "CalendarWeekView")) ::
       Menu(Loc("calday", List("calday"), "CalendarDayView")) ::

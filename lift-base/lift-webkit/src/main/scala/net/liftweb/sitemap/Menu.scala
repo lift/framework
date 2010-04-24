@@ -22,7 +22,61 @@ import _root_.net.liftweb.common._
 import _root_.net.liftweb.util._
 import Helpers._
 
-case class Menu(loc: Loc[_], kids: Menu*) extends HasKids {
+/**
+ * A common trait between Menu and something that can be converted to a Menu.
+ * This makes building Lists of things that can be converted to Menu instance
+ * easier because there's a common trait.
+ */
+trait ConvertableToMenu {
+  def toMenu: Menu
+}
+
+/**
+ * A DSL for building menus.
+ */
+object Menu {
+  def apply(linkText: Loc.LinkText[Unit]): PreMenu = this.apply(Helpers.randomString(20), linkText)
+
+  def apply(name: String,linkText: Loc.LinkText[Unit]): PreMenu = new PreMenu(name, linkText)
+
+  /**
+   * An intermediate class that holds the basic stuff that's needed to make a Menu item for SiteMap.
+   * You must include at least one URI path element by calling the / method
+   */
+  class PreMenu(name: String, linkText: Loc.LinkText[Unit]) {
+
+  /**
+  * The method to add 
+  */
+    def /(pathElement: String): Menuable = new Menuable(name, linkText, pathElement :: Nil, Nil, Nil)
+  }
+
+  class Menuable(val name: String,val linkText: Loc.LinkText[Unit],
+                 val path: List[String],
+                 val params: List[Loc.LocParam[Unit]],val submenus: List[Menu]) extends ConvertableToMenu
+  {
+    def /(pathElement: String): Menuable = new Menuable(name, linkText, path ::: List(pathElement), params, submenus)
+
+    def rule(param: Loc.LocParam[Unit]): Menuable =
+    new Menuable(name, linkText, path, params ::: List(param), submenus)
+
+    def >>(param: Loc.LocParam[Unit]): Menuable =
+    new Menuable(name, linkText, path, params ::: List(param), submenus)
+    def submenus(subs: Menu*): Menuable =
+    new Menuable(name, linkText, path, params, submenus ::: subs.toList)
+
+    def toMenu = Menuable.toMenu(this)
+  }
+
+  object Menuable {
+    implicit def toMenu(able: Menuable): Menu = Menu(Loc(able.name,new Loc.Link(able.path, false),
+                                                         able.linkText, able.params), able.submenus :_*)
+  }
+
+}
+
+case class Menu(loc: Loc[_], private val convertableKids: ConvertableToMenu*) extends HasKids with ConvertableToMenu {
+  lazy val kids: Seq[Menu] = convertableKids.map(_.toMenu)
   private[sitemap] var _parent: Box[HasKids] = Empty
   private[sitemap] var siteMap: SiteMap = _
 
@@ -45,6 +99,8 @@ case class Menu(loc: Loc[_], kids: Menu*) extends HasKids {
 
   override private[sitemap] def testAccess: Either[Boolean, Box[() => LiftResponse]] = loc.testAccess
 
+  def toMenu = this
+
   def findLoc(req: Req): Box[Loc[_]] =
   if (loc.doesMatch_?(req)) Full(loc)
   else first(kids)(_.findLoc(req))
@@ -57,7 +113,9 @@ case class Menu(loc: Loc[_], kids: Menu*) extends HasKids {
   override def buildUpperLines(pathAt: HasKids, actual: Menu, populate: List[MenuItem]): List[MenuItem]
   = {
     val kids: List[MenuItem] =
-    _parent.toList.flatMap(_.kids.toList.flatMap(m => m.loc.buildItem(if (m == this) populate else Nil, m == actual, m == pathAt)))
+    _parent.toList.flatMap(_.kids.toList.flatMap(m => m.loc.buildItem(if (m == this)
+                                                                      populate else
+                                                                      Nil, m == actual, m == pathAt)))
 
     _parent.toList.flatMap(p => p.buildUpperLines(p, actual, kids))
   }
@@ -67,8 +125,8 @@ case class Menu(loc: Loc[_], kids: Menu*) extends HasKids {
   loc.buildItem(loc.buildKidMenuItems(kids), _lastInPath(path), _inPath(path))
 
   /**
-  * Make a menu item only of the current loc is in the given group
-  */
+   * Make a menu item only of the current loc is in the given group
+   */
   def makeMenuItem(path: List[Loc[_]], group: String): Box[MenuItem] =
   if (loc.inGroup_?(group)) loc.buildItem(loc.buildKidMenuItems(kids), _lastInPath(path), _inPath(path))
   else Empty

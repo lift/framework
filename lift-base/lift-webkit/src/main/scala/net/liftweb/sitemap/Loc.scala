@@ -522,10 +522,7 @@ object Loc {
   /**
    * This defines the Link to the Loc.
    *
-   * @param uri -- the relative (to parent menu item) or absolute path
-   * to match for this Loc. <br />
-   * "/foo" -- match the "foo" file <br/>
-   * "foo" -- match the foo file in the directory defined by the parent Menu
+   * @param uriList -- the URL to match
    *
    * @param matchHead_? -- false -- absolute match.  true -- match anything
    * that begins with the same path.  Useful for opening a set of directories

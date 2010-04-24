@@ -33,12 +33,11 @@ class Boot {
     LiftRules.addToPackages("net.liftweb.webapptest")
 
     // Build SiteMap
-    val entries = Menu(Loc("Home", List("index"), "Home")) ::
-      Menu(Loc("htmlFragmentWithHead", List("htmlFragmentWithHead"),
-	       "htmlFragmentWithHead")) ::
-      Menu(Loc("htmlSnippetWithHead", List("htmlSnippetWithHead"),
-	       "htmlSnippetWithHead")) ::
-      Nil
+    val entries = Menu("Home") / "index" ::
+    Menu("htmlFragmentWithHead") / "htmlFragmentWithHead" ::
+    Menu("htmlSnippetWithHead") / "htmlSnippetWithHead" ::
+    Nil
+
     LiftRules.setSiteMap(SiteMap(entries:_*))
   }
 }
