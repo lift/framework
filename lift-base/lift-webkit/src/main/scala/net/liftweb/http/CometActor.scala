@@ -731,10 +731,10 @@ private[http] class XmlOrJsCmd(val id: String,
             ((if (ignoreHtmlOnJs) Empty else xml, javaScript, displayAll) match {
               case (Full(xml), Full(js), false) => LiftRules.jsArtifacts.setHtml(id, Helpers.stripHead(xml)) & JsCmds.JsTry(js, false)
               case (Full(xml), _, false) => LiftRules.jsArtifacts.setHtml(id, Helpers.stripHead(xml))
-              case (Full(xml), Full(js), true) => LiftRules.jsArtifacts.setHtml(id + "_outer", (spanFunc(0, Helpers.stripHead(xml)) ++
-                      fixedXhtml.openOr(Text("")))) & JsCmds.JsTry(js, false)
-              case (Full(xml), _, true) => LiftRules.jsArtifacts.setHtml(id + "_outer", (spanFunc(0, Helpers.stripHead(xml)) ++
-                      fixedXhtml.openOr(Text(""))))
+              case (Full(xml), Full(js), true) => LiftRules.jsArtifacts.setHtml(id + "_outer", (fixedXhtml.openOr(Text("")) ++ 
+                spanFunc(0, Helpers.stripHead(xml)))) & JsCmds.JsTry(js, false)
+              case (Full(xml), _, true) => LiftRules.jsArtifacts.setHtml(id + "_outer", (fixedXhtml.openOr(Text("")) ++ 
+                spanFunc(0, Helpers.stripHead(xml))))
               case (_, Full(js), _) => js
               case _ => JsCmds.Noop
             }) & JsCmds.JsTry(JsCmds.Run("destroy_" + id + " = function() {" + (destroy.openOr(JsCmds.Noop).toJsCmd) + "};"), false)
