@@ -38,8 +38,8 @@ trait PaginatedModelSnippet[T <: Mapper[T]] extends ModelSnippet[T] {
 }
 
 /** 
- * Paginate mapper instances:
- * 
+ * Paginate mapper instances by supplying the model you 
+ * wish to paginate and Paginator will run your query for you etc.
  * 
  * @author nafg and Timothy Perrett
  */

@@ -22,6 +22,13 @@ package http {
   import net.liftweb.util.Helpers._
   import S.?
   
+  
+  /**
+   * Base class for things that require pagination. Implements a contract 
+   * for supplying the correct number of browsable pages etc
+   * 
+   * @author nafg and Timothy Perrett
+   */
   trait Paginator[T] extends Loggable {
 
     def count: Long
@@ -48,9 +55,14 @@ package http {
   }
 
   /**
+   * In certain situations you'll want to sort things in your paginated view. 
+   * <code>SortedPaginator</code> is a specilized paginator for doing such tasks.
+   * 
    * T: The type of the elements, accessed via def page within the listing snippet
    * F: The type of the fields, used to specify sorting
-  */
+   *
+   * @author nafg and Timothy Perrett
+   */
   trait SortedPaginator[T, F] extends Paginator[T] {
     def headers: List[(String, F)]
 
@@ -67,6 +79,22 @@ package http {
     }
   }
   
+  /**
+   * This is the paginate snippet. It provides page
+   * navigation and column sorting links.
+   * View XHTML is as follows.
+   * sort prefix
+   *  - (a header name passed to the constructor) - a link that sorts by the field specified in the constructor
+   * nav prefix
+   *  - first - a link to the first page
+   *  - prev - a link to the previous page
+   *  - allpages - links to individual pages. The contents of this node are used to separate page links.
+   *  - next - a link to the next page
+   *  - last - a link to the last page
+   *  - records - a description of which records are currently being displayed
+   *
+   * @author nafg and Timothy Perrett
+   */
   trait PaginatorSnippet[T] extends Paginator[T] {
     def prevXml: NodeSeq = Text(?("<"))
     def nextXml: NodeSeq = Text(?(">"))
@@ -100,9 +128,7 @@ package http {
         }
         case Nil => Nil
       }
-
-
-
+    
     // differences:
     //  - Instead of snippet.link, use registerSnippetFn(). For StatefulSnippets that would be registerThisSnippet.
     // For others, it could be an S.mapSnippet invocation etc.
@@ -145,7 +171,14 @@ package http {
         }.toSeq : _*
       )
   }
-
+  
+  /**
+   * Sort your paginated views by using lifts functions mapping. 
+   * The only down side with this style is that your links are session 
+   * specific and non-bookmarkable.
+   * 
+   * @author nafg and Timothy Perrett
+   */
   trait StatefulSortedPaginatorSnippet[T, F] extends SortedPaginatorSnippet[T, F] {
     def registerThisSnippet: Unit
     override def sortedPageUrl(offset: Long, sort: (Int, Boolean)) =
