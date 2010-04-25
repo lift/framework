@@ -30,6 +30,7 @@ import _root_.java.util.{Locale, TimeZone, ResourceBundle, Date}
 import _root_.java.io.{InputStream, ByteArrayOutputStream, BufferedReader, StringReader}
 import js._
 import JE._
+import JsCmds._
 import auth._
 import _root_.java.util.concurrent.{ConcurrentHashMap => CHash}
 import _root_.scala.reflect.Manifest
@@ -59,6 +60,9 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
    */
   type LiftRequestPF = PartialFunction[Req, Boolean]
  
+
+  var noticesAutoFadeOut = new FactoryMaker[(NoticeType.Value) => Box[(TimeSpan, TimeSpan)]]((notice : NoticeType.Value) => Empty){}
+
   /**
    * Holds user functions that willbe executed very early in the request processing. The functions'
    * result will be ignored.
@@ -330,6 +334,12 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   @volatile var noticesToJsCmd: () => JsCmd = () => {
     import builtin.snippet._
 
+
+    def noticesFadeOut(noticeType: NoticeType.Value, id: String): JsCmd = 
+      (LiftRules.noticesAutoFadeOut()(noticeType) map {
+        case (duration, fadeTime) => LiftRules.jsArtifacts.fadeOut(id, duration, fadeTime)
+      }) openOr Noop
+
     val func: (() => List[NodeSeq], String, MetaData) => NodeSeq = (f, title, attr) => f() map (e => <li>{e}</li>) match {
       case Nil => Nil
       case list => <div>{title}<ul>{list}</ul> </div> % attr
@@ -351,7 +361,10 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
 
     val groupMessages = xml match {
       case Nil => JsCmds.Noop
-      case _ => LiftRules.jsArtifacts.setHtml(LiftRules.noticesContainerId, xml)
+      case _ => LiftRules.jsArtifacts.setHtml(LiftRules.noticesContainerId, xml) &
+        noticesFadeOut(NoticeType.Notice, LiftRules.noticesContainerId + "_notice") &
+        noticesFadeOut(NoticeType.Warning, LiftRules.noticesContainerId + "_warn") &
+        noticesFadeOut(NoticeType.Error, LiftRules.noticesContainerId + "_error")
     }
 
     val g = S.idMessages _
