@@ -38,6 +38,9 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+      <action dev="dpp" type="add" issue="458" system="assembla">
+	Added some nice Menu DSL stuff
+      </action>
       <action dev="timperrett" type="fix" issue="483" system="assembla">
         Re-factored Paginator so that it can be used outside of the context of mapper and has a more composable API.
         This causes a breaking change in the API for existing users of the ModelView pagination.
