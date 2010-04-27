@@ -130,6 +130,12 @@ A regular example.
           A regular example.</p>)
     }
 
+    "A question mark in an URL" in {
+      val res = toHtml(""""video link":http://www.youtube.com/watch?v=FclcMfzjwug foo""")
+      
+      res must ==/(<p><a href="http://www.youtube.com/watch?v=FclcMfzjwug">video link</a> foo</p>)
+    }
+
     "a link http://yahoo.com inside" in {
       toHtml("a link http://yahoo.com inside") must ==/(<p>a link <a href="http://yahoo.com">http://yahoo.com</a> inside</p>)
     }
