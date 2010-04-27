@@ -271,7 +271,7 @@ abstract class MappedNullableLong[T<:Mapper[T]](val fieldOwner: T) extends Mappe
     data
   }
 
-  def asJsExp = is.map(v => JE.Num(v)) openOr JE.JsNull
+  def asJsExp: JsExp = is.map(v => JE.Num(v)) openOr JE.JsNull
 
   def asJsonValue: JsonAST.JValue = is.map(v => JsonAST.JInt(v)) openOr JsonAST.JNull
 
@@ -363,7 +363,7 @@ abstract class MappedLong[T<:Mapper[T]](val fieldOwner: T) extends MappedField[L
     data
   }
 
-  def asJsExp = JE.Num(is)
+  def asJsExp: JsExp = JE.Num(is)
 
   def asJsonValue: JsonAST.JValue = JsonAST.JInt(is)
 
@@ -372,7 +372,7 @@ abstract class MappedLong[T<:Mapper[T]](val fieldOwner: T) extends MappedField[L
 
   def real_convertToJDBCFriendly(value: Long): Object = new _root_.java.lang.Long(value)
 
-  // def asJsExp = JE.Num(is)
+  // def asJsExp: JsExp = JE.Num(is)
 
   def jdbcFriendly(field : String) = new _root_.java.lang.Long(i_is_!)
   override def jdbcFriendly = new _root_.java.lang.Long(i_is_!)

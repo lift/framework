@@ -67,7 +67,7 @@ abstract class MappedDateTime[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
     case d: Date => d.getTime / 1000L
   }
 
-  def asJsExp = JE.Num(toLong)
+  def asJsExp: JsExp = JE.Num(toLong)
 
   /**
    * Get the JDBC SQL Type for this field

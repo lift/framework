@@ -60,7 +60,7 @@ abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 
   override def renderJs_? = false
 
-  def asJsExp = throw new NullPointerException("No way")
+  def asJsExp: JsExp = throw new NullPointerException("No way")
 
   def asJsonValue: JsonAST.JValue = is match {
     case null => JsonAST.JNull

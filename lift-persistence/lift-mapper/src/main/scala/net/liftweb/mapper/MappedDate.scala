@@ -70,7 +70,7 @@ abstract class MappedDate[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
     case d: Date => d.getTime / 1000L
   }
 
-  def asJsExp = JE.Num(toLong)
+  def asJsExp: JsExp = JE.Num(toLong)
 
   def asJsonValue: JsonAST.JValue = is match {
     case null => JsonAST.JNull

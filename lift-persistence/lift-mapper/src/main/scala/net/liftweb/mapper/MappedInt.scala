@@ -68,7 +68,7 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
   def jdbcFriendly(field: String) = new _root_.java.lang.Integer(toInt)
   override def jdbcFriendly = new _root_.java.lang.Integer(toInt)
 
-  def asJsExp = JE.Num(is.id)
+  def asJsExp: JsExp = JE.Num(is.id)
 
   def asJsonValue: JsonAST.JValue = JsonAST.JInt(is.id)
 
@@ -219,7 +219,7 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
     orgData = data
   }
 
-  def asJsExp = JE.Num(is)
+  def asJsExp: JsExp = JE.Num(is)
 
   def asJsonValue: JsonAST.JValue = JsonAST.JInt(is)
 
