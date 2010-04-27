@@ -70,7 +70,7 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
 
   def asJsExp: JsExp = JE.Num(is.id)
 
-  def asJsonValue: JsonAST.JValue = JsonAST.JInt(is.id)
+  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(is.id))
 
 
   override def setFromAny(in: Any): ENUM#Value = {
@@ -221,7 +221,7 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
 
   def asJsExp: JsExp = JE.Num(is)
 
-  def asJsonValue: JsonAST.JValue = JsonAST.JInt(is)
+  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(is))
 
   protected def real_i_set_!(value : Int) : Int = {
     if (value != data) {

@@ -72,10 +72,10 @@ abstract class MappedDate[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
 
   def asJsExp: JsExp = JE.Num(toLong)
 
-  def asJsonValue: JsonAST.JValue = is match {
+  def asJsonValue: Box[JsonAST.JValue] = Full(is match {
     case null => JsonAST.JNull
     case v => JsonAST.JInt(v.getTime)
-  }
+  })
 
   /**
    * Get the JDBC SQL Type for this field

@@ -108,10 +108,10 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
   protected def i_is_! = data.get
   protected def i_was_! = orgData.get
 
-  def asJsonValue: JsonAST.JValue = is match {
+  def asJsonValue: Box[JsonAST.JValue] = Full(is match {
     case null => JsonAST.JNull
     case str => JsonAST.JString(str)
-  }
+  })
 
   /**
    * Called after the field is saved to the database

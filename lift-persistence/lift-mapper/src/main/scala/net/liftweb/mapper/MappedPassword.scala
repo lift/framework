@@ -47,7 +47,7 @@ extends MappedField[String, T] {
   map(cn => fieldOwner.getSingleton._dbTableNameLC + "." + cn).
   mkString(", ")
 
-   def asJsonValue: JsonAST.JValue = JsonAST.JNull
+   def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JNull)
 
   def salt = this.salt_i
 

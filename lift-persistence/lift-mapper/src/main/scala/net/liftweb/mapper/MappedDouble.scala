@@ -79,7 +79,7 @@ abstract class MappedDouble[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 
 	def asJsExp: JsExp = JE.Num(is)
 
-  def asJsonValue: JsonAST.JValue = JsonAST.JDouble(is)
+  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JDouble(is))
 
 	override def setFromAny(in: Any): Double = {
 		in match {

@@ -73,9 +73,10 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
 
   def dbIncludeInForm_? = dbDisplay_?
 
-  def asJsonField: JsonAST.JField = JsonAST.JField(name, asJsonValue)
+  def asJsonField: Box[JsonAST.JField] = 
+    asJsonValue.map(v => JsonAST.JField(name, v))
 
-  def asJsonValue: JsonAST.JValue
+  def asJsonValue: Box[JsonAST.JValue]
 
 
   /**

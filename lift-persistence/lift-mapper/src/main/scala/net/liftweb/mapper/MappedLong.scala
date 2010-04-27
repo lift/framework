@@ -52,7 +52,8 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
   def asSafeJs(obs: Box[KeyObfuscator]): JsExp =
   obs.map(o => JE.Str(o.obscure(dbKeyToTable, is))).openOr(JE.Num(is))
 
-  override def asJsonValue: JsonAST.JValue = if (defined_?) super.asJsonValue else JsonAST.JNull
+  override def asJsonValue: Box[JsonAST.JValue] = 
+    if (defined_?) super.asJsonValue else Full(JsonAST.JNull)
 
   override def setFromAny(in: Any): Long =
   in match {
@@ -171,7 +172,7 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
 
   def asJsExp: JsExp = JE.JsArray(is.map(v => JE.Num(v.id)) :_*)
 
-  def asJsonValue: JsonAST.JValue = JsonAST.JInt(toLong)
+  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(toLong))
 
   def real_convertToJDBCFriendly(value: Seq[ENUM#Value]): Object = new _root_.java.lang.Long(Helpers.toLong(value))
 
@@ -273,7 +274,8 @@ abstract class MappedNullableLong[T<:Mapper[T]](val fieldOwner: T) extends Mappe
 
   def asJsExp: JsExp = is.map(v => JE.Num(v)) openOr JE.JsNull
 
-  def asJsonValue: JsonAST.JValue = is.map(v => JsonAST.JInt(v)) openOr JsonAST.JNull
+  def asJsonValue: Box[JsonAST.JValue] = 
+    Full(is.map(v => JsonAST.JInt(v)) openOr JsonAST.JNull)
 
   override def readPermission_? = true
   override def writePermission_? = true
@@ -365,7 +367,7 @@ abstract class MappedLong[T<:Mapper[T]](val fieldOwner: T) extends MappedField[L
 
   def asJsExp: JsExp = JE.Num(is)
 
-  def asJsonValue: JsonAST.JValue = JsonAST.JInt(is)
+  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(is))
 
   override def readPermission_? = true
   override def writePermission_? = true

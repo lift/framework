@@ -53,7 +53,7 @@ abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedFiel
   override def readPermission_? = true
   override def writePermission_? = true
 
-     def asJsonValue: JsonAST.JValue = JsonAST.JBool(is)
+     def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JBool(is))
 
   def real_convertToJDBCFriendly(value: Boolean): Object = new _root_.java.lang.Integer(if (value) 1 else 0)
 

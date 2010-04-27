@@ -657,7 +657,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       JsonAST.JObject(JsonAST.JField("$persisted",
 				     JsonAST.JBool(toEncode.persisted_?)) ::
 		      this.mappedFieldList.
-		      map(fh => ??(fh.method, toEncode).asJsonField))
+		      flatMap(fh => ??(fh.method, toEncode).asJsonField))
     }
   }
 
