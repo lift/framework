@@ -148,6 +148,13 @@ object AddAListener {
 case class AddAListener(who: SimpleActor[Any], shouldUpdate: PartialFunction[Any, Boolean])
 case class RemoveAListener(who: SimpleActor[Any])
 
+
+object ListenerManager {
+  type ActorTest = (SimpleActor[Any], PartialFunction[Any, Boolean])
+}
+
+import ListenerManager._
+
 /**
  * This trait manages a set of Actors in a publish/subscribe pattern. When you extend your Actor with
  * this trait, you automatically get handling for sending messages out to all subscribed Actors. Simply
@@ -157,7 +164,7 @@ case class RemoveAListener(who: SimpleActor[Any])
  */
 trait ListenerManager {
   self: SimpleActor[Any] =>
-  private var listeners: List[(SimpleActor[Any], PartialFunction[Any, Boolean])] = Nil
+  private var listeners: List[ActorTest] = Nil
 
   protected def messageHandler: PartialFunction[Any, Unit] =
     highPriority orElse mediumPriority orElse
@@ -165,20 +172,24 @@ trait ListenerManager {
 
   protected def listenerService: PartialFunction[Any, Unit] =
     {
-      case AddAListener(who, shouldUpdate) => listeners ::= (who, shouldUpdate)
-      eventuallyUpdate(createUpdate, (who, shouldUpdate))
+      case AddAListener(who, shouldUpdate) =>
+        val pair = (who, shouldUpdate)
+        listeners ::= pair
+        updateIfPassesTest(createUpdate)(pair)
 
       case RemoveAListener(who) =>
         listeners = listeners.filter(_._1 ne who)
     }
 
   protected def updateListeners() {
-    val update = createUpdate
-    listeners foreach { eventuallyUpdate(createUpdate, _) }
+    val update = updateIfPassesTest(createUpdate) _
+    listeners foreach update
   }
 
-  private def eventuallyUpdate(update: Any, listener: (SimpleActor[Any], PartialFunction[Any, Boolean])) {
-    if (listener._2.isDefinedAt(update) && listener._2(update)) listener._1 ! update
+  protected def updateIfPassesTest(update: Any)(info: ActorTest) {
+    info match {
+      case (who, test) => if (test.isDefinedAt(update) && test(update)) who ! update
+    }
   }
 
   /**
