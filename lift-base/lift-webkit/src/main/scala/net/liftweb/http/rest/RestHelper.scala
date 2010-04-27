@@ -54,10 +54,10 @@ trait RestHelper extends LiftRules.DispatchPF {
   protected def suplimentalJsonResponse_?(in: Req): Boolean = false
   
   /**
-   * Will the request accept a JSON response?  Yes if
-   * the Accept header contains "application/json" or
+   * Will the request accept an XML response?  Yes if
+   * the Accept header contains "text/xml" or
    * the Accept header is missing or contains "star/star" and the
-   * suffix is "json".  Override this method to provide your
+   * suffix is "xml".  Override this method to provide your
    * own logic
    */
   protected def xmlResponse_?(in: Req): Boolean = {
@@ -72,7 +72,7 @@ trait RestHelper extends LiftRules.DispatchPF {
   /**
    * If there are additional custom rules (e.g., looking at query parameters)
    * you can override this method which is consulted if the other rules
-   * in jsonResponse_? fail
+   * in xmlResponse_? fail
    */
   protected def suplimentalXmlResponse_?(in: Req): Boolean = false
   
@@ -99,7 +99,7 @@ trait RestHelper extends LiftRules.DispatchPF {
   }
 
   protected trait JsonTest {
-    def testResponse_?(r: Req): Boolean = xmlResponse_?(r)
+    def testResponse_?(r: Req): Boolean = jsonResponse_?(r)
   }
 
   /**
@@ -126,7 +126,7 @@ trait RestHelper extends LiftRules.DispatchPF {
      * The path and the Req instance are extracted.
      */
     def unapply(r: Req): Option[(List[String], Req)] = 
-      if (r.get_? && jsonResponse_?(r))
+      if (r.get_? && testResponse_?(r))
         Some(r.path.partPath -> r) else None
 
 
@@ -137,13 +137,13 @@ trait RestHelper extends LiftRules.DispatchPF {
    * The stable identifier for JsonGet.  You can use it
    * as an extractor.
    */
-  protected val JsonGet = new TestGet with JsonTest
+  protected lazy val JsonGet = new TestGet with JsonTest
 
   /**
    * The stable identifier for XmlGet.  You can use it
    * as an extractor.
    */
-  protected val XmlGet = new TestGet with XmlTest
+  protected lazy val XmlGet = new TestGet with XmlTest
 
 
 
@@ -160,7 +160,7 @@ trait RestHelper extends LiftRules.DispatchPF {
      * The path and the Req instance are extracted.
      */
     def unapply(r: Req): Option[(List[String], Req)] = 
-      if (r.requestType.delete_? && jsonResponse_?(r))
+      if (r.requestType.delete_? && testResponse_?(r))
         Some(r.path.partPath -> r) else None
 
 
@@ -171,15 +171,13 @@ trait RestHelper extends LiftRules.DispatchPF {
    * The stable identifier for JsonDelete.  You can use it
    * as an extractor.
    */
-  protected val JsonDelete = new TestDelete with JsonTest
+  protected lazy val JsonDelete = new TestDelete with JsonTest
 
   /**
    * The stable identifier for XmlDelete.  You can use it
    * as an extractor.
    */
-  protected val XmlDelete = new TestDelete with XmlTest
-
-
+  protected lazy val XmlDelete = new TestDelete with XmlTest
 
   /**
    * A trait that defines the TestPost extractor.  Is
@@ -277,22 +275,6 @@ trait RestHelper extends LiftRules.DispatchPF {
   }
 
   /**
-   * This trait is part of the ADT that allows the choice between 
-   */
-  protected sealed trait JsonXmlSelect
-
-  /**
-   * The Type for JSON
-   */
-  protected final case object JsonSelect extends JsonXmlSelect
-
-  /**
-   * The type for XML
-   */
-  protected final case object XmlSelect extends JsonXmlSelect
-
-
-  /**
    * A function that chooses JSON or XML based on the request..
    * Use with serveType
    */
@@ -327,11 +309,10 @@ trait RestHelper extends LiftRules.DispatchPF {
               val selType = selection(r).open_! // Full because pass isDefinedAt
               if (cvt.isDefinedAt((selType, resp, r)))
                   Full(cvt((selType, resp, r)))
-              else ParamFailure("Unabled to convert the message", 
-                                Empty, Empty, 500)
+              else emptyToResp(ParamFailure("Unabled to convert the message", 
+                                            Empty, Empty, 500))
 
-            case x: Failure => x
-            case Empty => Empty
+            case e: EmptyBox[_] => emptyToResp(e)
           }
         }
     }
@@ -351,8 +332,11 @@ trait RestHelper extends LiftRules.DispatchPF {
    * into JSON and then Xml.toXml() to convert to XML.
    */
   protected def serveJx[T](pf: PartialFunction[Req, Box[T]])
-  (implicit cvt: PartialFunction[(JsonXmlSelect, T, Req), LiftResponse]): Unit =
+  (implicit cvt: JxCvtPF[T]): Unit =
     serveType(jxSel)(pf)(cvt)
+
+  protected type JxCvtPF[T] = 
+    PartialFunction[(JsonXmlSelect, T, Req), LiftResponse]
 
   /**
    * Serve a request returning either JSON or XML.
@@ -426,13 +410,13 @@ trait RestHelper extends LiftRules.DispatchPF {
    * The stable identifier for JsonPost.  You can use it
    * as an extractor.
    */
-  protected val JsonPost = new TestPost[JValue] with JsonTest with JsonBody
+  protected lazy val JsonPost = new TestPost[JValue] with JsonTest with JsonBody
 
   /**
    * The stable identifier for XmlPost.  You can use it
    * as an extractor.
    */
-  protected val XmlPost = new TestPost[Elem] with XmlTest with XmlBody
+  protected lazy val XmlPost = new TestPost[Elem] with XmlTest with XmlBody
 
   /**
    * A trait that defines the TestPut extractor.  Is
@@ -460,13 +444,13 @@ trait RestHelper extends LiftRules.DispatchPF {
    * The stable identifier for JsonPut.  You can use it
    * as an extractor.
    */
-  protected val JsonPut = new TestPut[JValue] with JsonTest with JsonBody
+  protected lazy val JsonPut = new TestPut[JValue] with JsonTest with JsonBody
 
   /**
    * The stable identifier for XmlPut.  You can use it
    * as an extractor.
    */
-  protected val XmlPut = new TestPut[Elem] with XmlTest with XmlBody
+  protected lazy val XmlPut = new TestPut[Elem] with XmlTest with XmlBody
 
   /**
    * Extract a Pair using the same syntax that you use to make a Pair
@@ -515,16 +499,22 @@ trait RestHelper extends LiftRules.DispatchPF {
   protected implicit def boxToResp[T](in: Box[T])
   (implicit c: T => LiftResponse): () => Box[LiftResponse] = 
     in match {
+      case Full(v) => () => Full(c(v))
+      case e: EmptyBox[_] => () => emptyToResp(e)
+    }
+
+  protected def emptyToResp(eb: EmptyBox[_]): Box[LiftResponse] =
+    eb match {
       case ParamFailure(msg, _, _, code: Int) =>
-        () => Full(InMemoryResponse(msg.getBytes("UTF-8"), 
+        Full(InMemoryResponse(msg.getBytes("UTF-8"), 
                               ("Content-Type" ->
                                "text/plain; charset=utf-8") ::
                               Nil, Nil, code))
       
       case Failure(msg, _, _) => 
-        () => Full(NotFoundResponse(msg))
-      case Full(v) => () => Full(c(v))
-      case _ => () => Empty
+        Full(NotFoundResponse(msg))
+
+      case _ => Empty
     }
 
   /**
@@ -598,6 +588,21 @@ trait RestHelper extends LiftRules.DispatchPF {
  * so that the class can be converted automatically into JSON or XML
  */
 trait JsonXmlAble
+
+/**
+ * This trait is part of the ADT that allows the choice between 
+ */
+sealed trait JsonXmlSelect
+
+/**
+ * The Type for JSON
+ */
+final case object JsonSelect extends JsonXmlSelect
+
+/**
+ * The type for XML
+ */
+final case object XmlSelect extends JsonXmlSelect
 
 }
 }
