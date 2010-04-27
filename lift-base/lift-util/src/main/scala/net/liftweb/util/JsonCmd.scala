@@ -31,6 +31,29 @@ trait HasParams {
 case class JsonCmd(command: String, target: String, params: Any,
                    all: _root_.scala.collection.Map[String, Any])
 
+import _root_.net.liftweb.json.JsonAST._
+
+/**
+* A helpful extractor to take the JValue sent from the client-side JSON stuff and
+* make some sense of it.
+*/
+object JsonCommand {
+  implicit def iterableToOption[X](in: Iterable[X]): Option[X] = in.toSeq.headOption
+
+  def unapply(in: JValue): Option[(String, Option[String], JValue)] =
+  for {
+    JField("command", JString(command)) <- in \ "command"
+    JField("params", params) <- in \ "params"
+  } yield {
+    val target = (in \ "target") match {
+      case JField("target", JString(t)) => Some(t)
+      case _ => None
+    }
+    (command, target, params)
+  }
+  // Some((in.command, in.target, in.params, in.all))
+}
+
 /**
  * Holds information about a response
  */

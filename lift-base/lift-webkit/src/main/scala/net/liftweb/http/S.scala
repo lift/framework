@@ -1858,7 +1858,8 @@ for {
   createJsonFunc(Empty, Full(onError), f)
 
   /**
-   * Build a handler for incoming JSON commands based on the new Json Parser
+   * Build a handler for incoming JSON commands based on the new Json Parser.  You
+   * can use the helpful Extractor in net.liftweb.util.JsonCommand
    *
    * @param name -- the optional name of the command (placed in a comment for testing)
    * @param onError -- the JavaScript to execute client-side if the request is not processed by the server
