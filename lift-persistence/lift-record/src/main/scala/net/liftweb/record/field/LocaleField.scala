@@ -26,6 +26,12 @@ import _root_.java.util.{Locale}
 import S._
 import Helpers._
 
+object LocaleField {
+  lazy val localeList = Locale
+    .getAvailableLocales.toList
+    .sort(_.getDisplayName < _.getDisplayName)
+    .map(lo => (lo.toString, lo.getDisplayName))
+}
 
 class LocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends StringField(rec, 16) {
 
@@ -40,19 +46,10 @@ class LocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends String
   def emptyOptionLabel: String = ""
 
   /** Build a list of string pairs for a select list. */
-  def buildDisplayList: List[(String, String)] = {
-      val options = Locale
-          .getAvailableLocales
-          .toList
-          .sort(_.getDisplayName < _.getDisplayName)
-          .map(lo => (lo.toString, lo.getDisplayName))
-
-      if (optional_?) ("", emptyOptionLabel)::options else options
-  }
-
+  def buildDisplayList: List[(String, String)] =
+    if (optional_?) ("", emptyOptionLabel)::LocaleField.localeList else LocaleField.localeList
 
   private def elem = SHtml.select(buildDisplayList, Full(valueBox.map(_.toString) openOr ""), set) % ("tabindex" -> tabIndex.toString)
-
 
   override def toForm = {
     var el = elem
