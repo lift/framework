@@ -29,17 +29,15 @@ object MailerSpec extends Specification {
   
   object MyMailer extends MailerImpl {
       @volatile var lastMessage: Box[MimeMessage] = Empty
-      protected override def performTransportSend(msg: MimeMessage) = synchronized {
-        lastMessage = Full(msg)
-        this.notifyAll()
-      }
+
+     testModeSend.default.set((msg: MimeMessage) => {
+         lastMessage = Full(msg)
+        this.notifyAll()})
   }
   import MyMailer._
   
   private def doNewMessage(f: => Unit): MimeMessage = {
-    synchronized {
       lastMessage = Empty
-    }
 
     val ignore = f
 

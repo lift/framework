@@ -33,7 +33,7 @@ object Mailer extends MailerImpl
 /**
  * This trait implmenets the mail sending
  */
-protected trait MailerImpl {
+protected trait MailerImpl extends SimpleInjector {
   private val logger = Logger(classOf[MailerImpl])
   
   sealed abstract class MailTypes
@@ -175,36 +175,36 @@ protected trait MailerImpl {
               val multiPart = new MimeMultipart("alternative")
               bodyTypes.foreach {
                 tab =>
-                    val bp = new MimeBodyPart
-                    tab match {
-                      case PlainMailBodyType(txt) => bp.setText(txt, "UTF-8")
-                      case PlainPlusBodyType(txt, charset) => bp.setText(txt, charset)
-                      case XHTMLMailBodyType(html) => bp.setContent(html.toString, "text/html; charset=" + charSet)
-                      case XHTMLPlusImages(html, img@_*) =>
-                        val html_mp = new MimeMultipart("related")
-                        val bp2 = new MimeBodyPart
-                        bp2.setContent(html.toString, "text/html; charset=" + charSet)
-                        html_mp.addBodyPart(bp2)
-                        img.foreach {
-                          i =>
-                              val rel_bpi = new MimeBodyPart
-                              rel_bpi.setFileName(i.name)
-                              rel_bpi.setContentID(i.name)
-                              rel_bpi.setDisposition("inline")
-                              rel_bpi.setDataHandler(new _root_.javax.activation.DataHandler(new _root_.javax.activation.DataSource {
-                                def getContentType = i.mimeType
+                val bp = new MimeBodyPart
+                tab match {
+                  case PlainMailBodyType(txt) => bp.setText(txt, "UTF-8")
+                  case PlainPlusBodyType(txt, charset) => bp.setText(txt, charset)
+                  case XHTMLMailBodyType(html) => bp.setContent(html.toString, "text/html; charset=" + charSet)
+                  case XHTMLPlusImages(html, img@_*) =>
+                    val html_mp = new MimeMultipart("related")
+                    val bp2 = new MimeBodyPart
+                    bp2.setContent(html.toString, "text/html; charset=" + charSet)
+                    html_mp.addBodyPart(bp2)
+                    img.foreach {
+                      i =>
+                      val rel_bpi = new MimeBodyPart
+                      rel_bpi.setFileName(i.name)
+                      rel_bpi.setContentID(i.name)
+                      rel_bpi.setDisposition("inline")
+                      rel_bpi.setDataHandler(new _root_.javax.activation.DataHandler(new _root_.javax.activation.DataSource {
+                            def getContentType = i.mimeType
 
-                                def getInputStream = new _root_.java.io.ByteArrayInputStream(i.bytes)
+                            def getInputStream = new _root_.java.io.ByteArrayInputStream(i.bytes)
 
-                                def getName = i.name
+                            def getName = i.name
 
-                                def getOutputStream = throw new _root_.java.io.IOException("Unable to write to item")
-                              }))
-                              html_mp.addBodyPart(rel_bpi)
-                        }
-                        bp.setContent(html_mp)
+                            def getOutputStream = throw new _root_.java.io.IOException("Unable to write to item")
+                          }))
+                      html_mp.addBodyPart(rel_bpi)
                     }
-                    multiPart.addBodyPart(bp)
+                    bp.setContent(html_mp)
+                }
+                multiPart.addBodyPart(bp)
               }
               message.setContent(multiPart);
           }
@@ -216,7 +216,47 @@ protected trait MailerImpl {
     }
   }
 
-  protected def performTransportSend(msg: MimeMessage) = Transport.send(msg)
+  protected def performTransportSend(msg: MimeMessage) = {
+    import Props.RunModes._
+    (Props.mode match {
+        case Development => devModeSend.vend
+        case Test => testModeSend.vend
+        case Staging => stagingModeSend.vend
+        case Production => productionModeSend.vend
+        case Pilot => pilotModeSend.vend
+        case Profile => profileModeSend.vend
+      }).apply(msg)
+  }
+
+  /**
+   * How to send a message in dev mode.  By default, use Transport.send(msg)
+   */
+  lazy val devModeSend: Inject[MimeMessage => Unit] = new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
+
+  /**
+   * How to send a message in test mode.  By default, log the message
+   */
+  lazy val testModeSend: Inject[MimeMessage => Unit] = new Inject[MimeMessage => Unit]((m: MimeMessage) => logger.info("Sending Mime Message: "+m)) {}
+
+  /**
+   * How to send a message in staging mode.  By default, use Transport.send(msg)
+   */
+  lazy val stagingModeSend: Inject[MimeMessage => Unit] = new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
+
+  /**
+   * How to send a message in production mode.  By default, use Transport.send(msg)
+   */
+  lazy val productionModeSend: Inject[MimeMessage => Unit] = new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
+
+  /**
+   * How to send a message in pilot mode.  By default, use Transport.send(msg)
+   */
+  lazy val pilotModeSend: Inject[MimeMessage => Unit] = new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
+
+  /**
+   * How to send a message in profile mode.  By default, use Transport.send(msg)
+   */
+  lazy val profileModeSend: Inject[MimeMessage => Unit] = new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
 
   protected lazy val msgSender = new MsgSender
 
