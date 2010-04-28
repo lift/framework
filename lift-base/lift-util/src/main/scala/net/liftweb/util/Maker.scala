@@ -50,6 +50,43 @@ trait SimpleInjector extends Injector {
   def registerInjection[T](f: () => T)(implicit man: Manifest[T]) {
     diHash.put(man.toString, f)
   }
+
+  /**
+   * Create an object or val that is a subclass of the FactoryMaker to
+   * generate factory for a particular class as well as define session and
+   * request specific vendors and use doWith to define the vendor just for
+   * the scope of the call.
+   */
+  abstract class Inject[T](_default: Vendor[T])
+                                (implicit man: Manifest[T]) extends StackableMaker[T] with Vendor[T] {
+    registerInjection(this)(man)
+
+    /**
+     * The default function for vending an instance
+     */
+    object default extends PSettableValueHolder[Vendor[T]] {
+      private var value = _default
+
+      def get = value
+
+      def is = get
+
+      def set(v: Vendor[T]): Vendor[T] = {
+        value = v
+        v
+      }
+    }
+
+    /**
+     * Vend an instance
+     */
+    implicit def vend: T = make openOr default.is.apply()
+
+    /**
+     * Make a Box of the instance.
+     */
+    override implicit def make: Box[T] = super.make or Full(default.is.apply())
+  }
 }
 
 /**
@@ -135,6 +172,8 @@ trait Vendor[T] extends Maker[T] with Function0[T] {
   implicit def vend: T
   def apply() = vend
 }
+
+
 
 /**
  * A companion to the Vendor trait

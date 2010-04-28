@@ -53,13 +53,13 @@ abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedFiel
   override def readPermission_? = true
   override def writePermission_? = true
 
-     def asJsonValue: JsonAST.JValue = JsonAST.JBool(is)
+     def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JBool(is))
 
   def real_convertToJDBCFriendly(value: Boolean): Object = new _root_.java.lang.Integer(if (value) 1 else 0)
 
   def jdbcFriendly(field : String) = data.map(v => new _root_.java.lang.Integer(if(v) 1 else 0)) openOr null
 
-  def asJsExp = if (is) JE.JsTrue else JE.JsFalse
+  def asJsExp: JsExp = if (is) JE.JsTrue else JE.JsFalse
 
   override def setFromAny(in: Any): Boolean = {
     in match {

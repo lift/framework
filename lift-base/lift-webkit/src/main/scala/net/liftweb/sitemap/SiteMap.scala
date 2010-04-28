@@ -26,8 +26,11 @@ import _root_.scala.xml.{NodeSeq, Text}
 
 class SiteMapException(msg: String) extends Exception(msg)
 
-case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocParam]], kids: Menu*) extends HasKids  {
+case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocParam]],
+                   private val convertablekids: ConvertableToMenu*) extends HasKids  {
   import SiteMap._
+
+  lazy val kids: Seq[Menu] = convertablekids.map(_.toMenu)
 
   private var locs: Map[String, Loc[_]] = Map.empty
 
@@ -127,7 +130,7 @@ object SiteMap {
 
   def buildLink(name: String): NodeSeq = buildLink(name, Nil)
 
-  def apply(kids: Menu *) = new SiteMap(Nil, kids :_*)
+  def apply(kids: ConvertableToMenu *) = new SiteMap(Nil, kids :_*)
 
   /**
    * Should the top level /index path be rendered as /  By default this value is false.

@@ -396,10 +396,11 @@ object JsonParser {
    */
   private[json] object Segments {
     import java.util.concurrent.ArrayBlockingQueue
+    import java.util.concurrent.atomic.AtomicInteger
 
     private[json] var segmentSize = 1000
     private[this] val maxNumOfSegments = 10000
-    private[this] var segmentCount = 0
+    private[this] var segmentCount = new AtomicInteger(0)
     private[this] val segments = new ArrayBlockingQueue[Segment](maxNumOfSegments)
     private[json] def clear = segments.clear
 
@@ -410,13 +411,13 @@ object JsonParser {
     }
 
     private[this] def acquire: Segment = {
-      synchronized {
-        if (segments.size == 0 && segmentCount < maxNumOfSegments) {
-          segmentCount = segmentCount+1
-          return RecycledSegment(new Array(segmentSize))
-        }
-      }
-      segments.poll
+      val curCount = segmentCount.get
+      val createNew = 
+        if (segments.size == 0 && curCount < maxNumOfSegments)
+          segmentCount.compareAndSet(curCount, curCount + 1)
+        else false
+
+      if (createNew) RecycledSegment(new Array(segmentSize)) else segments.poll
     }
 
     def release(s: Segment) = s match {

@@ -29,6 +29,7 @@ import _root_.net.liftweb.http.S._
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.json._
 import _root_.net.liftweb.common._
+import _root_.net.liftweb.http.js._
 
 object MappedPassword {
   val blankPw = "*******"
@@ -46,7 +47,7 @@ extends MappedField[String, T] {
   map(cn => fieldOwner.getSingleton._dbTableNameLC + "." + cn).
   mkString(", ")
 
-   def asJsonValue: JsonAST.JValue = JsonAST.JNull
+   def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JNull)
 
   def salt = this.salt_i
 
@@ -84,7 +85,7 @@ extends MappedField[String, T] {
 
   override def renderJs_? = false
 
-  def asJsExp = throw new NullPointerException("No way")
+  def asJsExp: JsExp = throw new NullPointerException("No way")
 
   def match_?(toMatch : String) = {
     hash("{"+toMatch+"} salt={"+salt_i.get+"}") == password.get

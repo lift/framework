@@ -13,64 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.liftweb {
 package mapper {
 package view {
 
-import net.liftweb.http.S
-import S.?
+/** FIXME 280 fix paginator code
+import scala.xml.{NodeSeq, Text, Elem}
+import net.liftweb.common.Loggable
+import net.liftweb.http.{S,DispatchSnippet,Paginator,PaginatorSnippet,
+  SortedPaginator,SortedPaginatorSnippet}
+import net.liftweb.http.S.?
 import net.liftweb.util.Helpers._
-
-import net.liftweb.mapper.{Mapper,
-                           MetaMapper,
-                           MappedField,
-                           QueryParam,
-                           OrderBy,
-                           StartAt,
-                           MaxRows,
-                           Ascending,
-                           Descending}
-
-import scala.xml.{NodeSeq, Text}
-
-
+import net.liftweb.mapper.{Mapper, MetaMapper, MappedField,
+         QueryParam, OrderBy, StartAt, MaxRows, Ascending, Descending}
+ 
 /**
- * Use this trait instead of ModelSnippet if you want
- * the list view to be paginated.
- * You must instantiate paginator to a Paginator.
- * @author nafg
- */
-trait PaginatedSnippet[T <: Mapper[T]] extends ModelSnippet[T] {
-  override def dispatch = super.dispatch orElse Map("paginate" -> paginator.paginate _ )
-  
-  val paginator: Paginator[T]
+ * Snippet helper for people implementing 
+ * pagination - this ensures they implement the paginator
+ * 
+ * @author nafg and Timothy Perrett
+ */ 
+trait PaginatedModelSnippet[T <: Mapper[T]] extends ModelSnippet[T] {
+  abstract override def dispatch: DispatchIt = super.dispatch orElse Map("paginate" -> paginator.paginate _ )
+  val paginator: PaginatorSnippet[T]
 }
 
-
-/**
- * This class contains the logic for sortable pagination.
- * @param meta The singleton to query for items
- * @param snippet The ModelSnippet which this Paginator is for
- * @param headers Pairs (Tuple2) of column header names as used in the view and the fields that they sort by
- * @author nafg
+/** 
+ * Paginate mapper instances by supplying the model you 
+ * wish to paginate and Paginator will run your query for you etc.
+ * 
+ * @author nafg and Timothy Perrett
  */
-class Paginator[T <: Mapper[T]](val meta: MetaMapper[T], val snippet: ModelSnippet[T],
-                                initialSort: MappedField[_, T],
-                                val headers: (String, MappedField[_, T])*) {
-  @deprecated def this(meta: MetaMapper[T],
-		snippet: ModelSnippet[T],
-		headers: (String,MappedField[_, T])) = {
-    this(meta, snippet, null, headers)
-  }
-  /**
-   * Override this to specify unchanging QueryParams to query the listing
-   */
+class MapperPaginator[T <: Mapper[T]](val meta: MetaMapper[T]) extends Paginator[T] {
   var constantParams: Seq[QueryParam[T]] = Nil
-  /**
-   * Returns the total number of items to list
-   */
   def count = meta.count(constantParams: _*)
+<<<<<<< HEAD:framework/lift-persistence/lift-mapper/src/main/scala/net/liftweb/mapper/view/Paginator.scala
   /**
    * The number of items on a page
    */
@@ -150,23 +127,40 @@ class Paginator[T <: Mapper[T]](val meta: MetaMapper[T], val snippet: ModelSnipp
       "allpages" -> {(n:NodeSeq) => pageLinks(0 until numPages, n)},
       "zoomedpages" -> {(ns: NodeSeq) =>
         val curPage = (first / num).toInt
+=======
+  def page = meta.findAll(constantParams ++ Seq(MaxRows(itemsPerPage), StartAt(first)): _*)
+}
+>>>>>>> edcb456c75d27ac5748faebe0b9002042a4442d3:framework/lift-persistence/lift-mapper/src/main/scala/net/liftweb/mapper/view/Paginator.scala
 
-        val pages = List(curPage - 1020, curPage - 120, curPage - 20) ++
-          (curPage-10 to curPage+10) ++
-          List(curPage + 20, curPage + 120, curPage + 1020) filter { n=>
-            n>=0 && n < numPages
-          }
-        pageLinks(pages, ns)
-      },
-      "next" -> linkIfOther(first+num min num*(numPages-1), nextXml),
-      "last" -> linkIfOther(num*(numPages-1), Text(?(">>"))),
-      "records" -> Text(
-        "Displaying records "+(first+1)+"-"+(first+num min count)+" of "+count
-      )
-    )
-  }
+class MapperPaginatorSnippet[T <: Mapper[T]](meta: MetaMapper[T])
+  extends MapperPaginator[T](meta) with PaginatorSnippet[T]
+
+class SortedMapperPaginator[T <: Mapper[T]](meta: MetaMapper[T],
+                                initialSort: net.liftweb.mapper.MappedField[_, T],
+                                _headers: (String, MappedField[_, T])*)
+    extends MapperPaginator[T](meta) with SortedPaginator[T, MappedField[_, T]] {
+    
+    val headers = _headers.toList
+    sort = (headers.findIndexOf{case (_,`initialSort`)=>true; case _ => false}, true)
+    
+    override def page = meta.findAll(constantParams ++ Seq(mapperSort, MaxRows(itemsPerPage), StartAt(first)): _*)
+    private def mapperSort = sort match {
+      case (fieldIndex, ascending) =>
+        OrderBy(
+          headers(fieldIndex) match {case (_,f)=>f},
+          if(ascending) Ascending else Descending
+        )
+    }
 }
 
+class SortedMapperPaginatorSnippet[T <: Mapper[T]](
+  meta: MetaMapper[T],
+  initialSort: net.liftweb.mapper.MappedField[_, T],
+  headers: (String, MappedField[_, T])*
+) extends SortedMapperPaginator[T](meta, initialSort, headers: _*)
+  with SortedPaginatorSnippet[T, MappedField[_, T]]
+
+*/
 }
 }
 }

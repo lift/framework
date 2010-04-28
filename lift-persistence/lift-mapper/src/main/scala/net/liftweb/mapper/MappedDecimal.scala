@@ -111,8 +111,8 @@ abstract class MappedDecimal[T <: Mapper[T]] (val fieldOwner : T, val context : 
     data
   }
 
-  def asJsExp = JE.Num(is)
-  def asJsonValue: JsonAST.JValue = JsonAST.JDouble(is.doubleValue)
+  def asJsExp: JsExp = JE.Num(is)
+  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JDouble(is.doubleValue))
 
   def setFromAny (in : Any) : BigDecimal =
     in match {

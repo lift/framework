@@ -585,9 +585,22 @@ object DB extends Loggable {
     }
   }
 
+  /**
+  * The SQL reserved words.  These words will be changed if they are used for column or table names.
+  */
+  def reservedWords:  _root_.scala.collection.immutable.Set[String] = userReservedWords openOr defaultReservedWords
 
-  val reservedWords = _root_.scala.collection.immutable.HashSet.empty ++
-  List("abort",
+  /**
+  *  If you need to change some of the reserved word, you can supply your own set in Boot.scala:
+  * DB.userReservedWords = Full(Set("foo", "bar"))
+  */
+  @volatile var userReservedWords: Box[ _root_.scala.collection.immutable.Set[String]] = Empty
+
+
+  /**
+  * The default reserved words.
+  */
+  lazy val defaultReservedWords:  _root_.scala.collection.immutable.Set[String] = _root_.scala.collection.immutable.HashSet("abort",
        "accept",
        "access",
        "add",

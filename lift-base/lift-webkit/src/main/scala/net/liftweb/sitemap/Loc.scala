@@ -520,12 +520,17 @@ object Loc {
   case class LinkText[-T](text: T => NodeSeq)
 
   /**
+  * The companion object to LinkText that contains some helpful implict conversion
+  */
+  object LinkText {
+    implicit def nodeSeqToLinkText[T](in: => NodeSeq): LinkText[T] = LinkText[T](T => in)
+    implicit def strToLinkText[T](in: => String): LinkText[T] = LinkText(T => Text(in))
+  }
+
+  /**
    * This defines the Link to the Loc.
    *
-   * @param uri -- the relative (to parent menu item) or absolute path
-   * to match for this Loc. <br />
-   * "/foo" -- match the "foo" file <br/>
-   * "foo" -- match the foo file in the directory defined by the parent Menu
+   * @param uriList -- the URL to match
    *
    * @param matchHead_? -- false -- absolute match.  true -- match anything
    * that begins with the same path.  Useful for opening a set of directories
@@ -579,6 +584,9 @@ object Loc {
         override def createLink(value: Unit): Box[NodeSeq] = Full(Text(url))
       }
     }
+
+    implicit def strLstToLink(in: Seq[String]): Link[Unit] = new Link[Unit](in.toList)
+    implicit def strPairToLink(in: (Seq[String], Boolean)): Link[Unit] = new Link[Unit](in._1.toList, in._2)
   }
 
   object ExtLink {
@@ -589,12 +597,6 @@ object Loc {
 
   @deprecated def alwaysTrue(a: Req) = true
   @deprecated def retString(toRet: String)(other: Seq[(String, String)]) = Full(toRet)
-
-  implicit def nodeSeqToLinkText[T](in: => NodeSeq): LinkText[T] = LinkText[T](T => in)
-  implicit def strToLinkText[T](in: => String): LinkText[T] = LinkText(T => Text(in))
-
-  implicit def strLstToLink(in: Seq[String]): Link[Unit] = new Link[Unit](in.toList)
-  implicit def strPairToLink(in: (Seq[String], Boolean)): Link[Unit] = new Link[Unit](in._1.toList, in._2)
 
   implicit def strToFailMsg(in: => String): FailMsg = () => {
     RedirectWithState(

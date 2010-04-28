@@ -441,7 +441,7 @@ object TextileParser {
      */
     def validUrlChar(c : Char) : Boolean = {
       Character.isLetterOrDigit(c) || c == '/' || c == '%' || c == '&' || c == '?' || c == '#' ||
-      c == '$' || c == '.' ||
+      c == '$' || c == '.' || c == '=' ||
       c == '-' || c == ':' || c == '_'
     }
 

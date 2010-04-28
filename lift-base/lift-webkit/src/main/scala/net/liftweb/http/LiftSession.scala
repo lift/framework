@@ -1437,7 +1437,7 @@ object TemplateFinder {
                           }
                 }
               } catch {
-                case ite: _root_.java.lang.reflect.InvocationTargetException if (ite.getCause.isInstanceOf[ResponseShortcutException]) => throw ite.getCause
+                case ite: _root_.java.lang.reflect.InvocationTargetException /* if (ite.getCause.isInstanceOf[ResponseShortcutException]) */ => throw ite.getCause
                 case re: ResponseShortcutException => throw re
                 case _ => Empty
               }

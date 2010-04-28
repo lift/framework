@@ -38,8 +38,54 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+      <action dev="dpp" type="add" issue="461" system="assembla">
+	Helpful new JsonCommand extractor for pattern matching
+	Json commands
+      </action>
+      <action dev="dpp" type="fix" issue="467" system="assembla">
+	Exceptions during view rendering are properly caught and displayed
+      </action>
+      <action dev="dpp" type="add" issue="495" system="assembla">
+	Rules for quoting column and table names are user-configurable
+      </action>
+      <action dev="dpp" type="update" issue="477" system="assembla">
+	asJsonValue now returns a Box[JValue] which allows
+	for omitting fields in generated JSON
+      </action>
+      <action dev="dpp" type="add" issue="497" system="assembla">
+	The definition of SQL reserved words can be changed
+      </action>
+      <action dev="dpp" type="fix" issue="464" system="assembla">
+	Textile correctly handles query strings in URLs
+      </action>
+      <action dev="dpp" type="fix" issue="496" system="assembla">
+	Updated/fixed the way that ListenerManager handles
+	optional updates
+      </action>
+      <action dev="dpp" type="update" issue="487" system="assembla">
+	Relax from StatefulSnippet to DispatchSnippet for certain
+	S registrations
+      </action>
+      <action dev="dpp" type="fix" issue="482" system="assembla">
+	Be explicit about the return type in asJsExp so that
+	subclasses aren't co-varied out of luck.
+      </action>
+      <action dev="dpp" type="add" issue="484" system="assembla">
+	Added flexibility for defining how mail messages are
+	transported in each run mode.
+      </action>
+      <action dev="dpp" type="add" issue="457" system="assembla">
+	Added some excellent REST helpers to Lift
+      </action>
+      <action dev="dpp" type="add" issue="458" system="assembla">
+	Added some nice Menu DSL stuff
+      </action>
+      <action dev="timperrett" type="fix" issue="483" system="assembla">
+        Re-factored Paginator so that it can be used outside of the context of mapper and has a more composable API.
+        This causes a breaking change in the API for existing users of the ModelView pagination.
+      </action>
       <action dev="hseeberger" type="fix" issue="462" system="assembla">
-	      Made Loggable.logger protected in order to prevent from polluting the API of types mixed into.
+        Made Loggable.logger protected in order to prevent from polluting the API of types mixed into.
       </action>
     </release>
 

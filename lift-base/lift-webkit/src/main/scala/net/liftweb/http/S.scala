@@ -158,7 +158,7 @@ object S extends HasParams with Loggable {
    * @see LiftRules # resourceBundleFactories
    */
   private val _resBundle = new ThreadGlobal[List[ResourceBundle]]
-  private[http] object _statefulSnip extends RequestVar[Map[String, StatefulSnippet]](Map())
+  private[http] object _statefulSnip extends RequestVar[Map[String, DispatchSnippet]](Map())
   private val _responseHeaders = new ThreadGlobal[ResponseInfoHolder]
   private val _responseCookies = new ThreadGlobal[CookieHolder]
   private val _lifeTime = new ThreadGlobal[Boolean]
@@ -872,16 +872,19 @@ for {
    * Given a snippet class name, return the cached or predefined stateful snippet for
    * that class
    */
-  def snippetForClass(cls: String): Box[StatefulSnippet] =
+  def snippetForClass(cls: String): Box[DispatchSnippet] =
     _statefulSnip.is.get(cls)
 
   /**
    * Register a stateful snippet for a given class name.  Only registers if the name
    * is not already set.
    */
-  def addSnippetForClass(cls: String, inst: StatefulSnippet): Unit = {
+  def addSnippetForClass(cls: String, inst: DispatchSnippet): Unit = {
     if (!_statefulSnip.is.contains(cls)) {
-      inst.addName(cls)  // addresses
+      inst match {
+        case si: StatefulSnippet => si.addName(cls)  // addresses
+        case _ =>
+      }
       _statefulSnip.set(_statefulSnip.is.update(cls, inst))
     }
   }
@@ -890,8 +893,11 @@ for {
    * Register a stateful snippet for a given class name.  The addSnippetForClass
    * method is preferred
    */
-  def overrideSnippetForClass(cls: String, inst: StatefulSnippet): Unit = {
-    inst.addName(cls)
+  def overrideSnippetForClass(cls: String, inst: DispatchSnippet): Unit = {
+      inst match {
+        case si: StatefulSnippet => si.addName(cls)  // addresses
+        case _ =>
+      }
     _statefulSnip.set(_statefulSnip.is.update(cls, inst))
   }
 
@@ -1852,7 +1858,8 @@ for {
   createJsonFunc(Empty, Full(onError), f)
 
   /**
-   * Build a handler for incoming JSON commands based on the new Json Parser
+   * Build a handler for incoming JSON commands based on the new Json Parser.  You
+   * can use the helpful Extractor in net.liftweb.util.JsonCommand
    *
    * @param name -- the optional name of the command (placed in a comment for testing)
    * @param onError -- the JavaScript to execute client-side if the request is not processed by the server

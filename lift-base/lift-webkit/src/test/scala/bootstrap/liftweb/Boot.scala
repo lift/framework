@@ -30,16 +30,5 @@ class Boot {
   def boot {
     // where to search snippet
     LiftRules.addToPackages("net.liftweb.webapptest")
-
-    /*
-    // Build SiteMap
-    val entries = Menu(Loc("Home", List("index"), "Home")) ::
-      Menu(Loc("htmlFragmentWithHead", List("htmlFragmentWithHead"),
-	       "htmlFragmentWithHead")) ::
-      Menu(Loc("htmlSnippetWithHead", List("htmlSnippetWithHead"),
-	       "htmlSnippetWithHead")) ::
-      Nil
-    LiftRules.setSiteMap(SiteMap(entries:_*))
-    */
   }
 }
