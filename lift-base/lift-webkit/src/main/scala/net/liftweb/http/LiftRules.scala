@@ -30,6 +30,7 @@ import _root_.java.util.{Locale, TimeZone, ResourceBundle, Date}
 import _root_.java.io.{InputStream, ByteArrayOutputStream, BufferedReader, StringReader}
 import js._
 import JE._
+import JsCmds._
 import auth._
 import _root_.java.util.concurrent.{ConcurrentHashMap => CHash}
 import _root_.scala.reflect.Manifest
@@ -59,6 +60,13 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
    */
   type LiftRequestPF = PartialFunction[Req, Boolean]
  
+  /** 
+   * Set the default fadeout mechanism for Lift notices. Thus you provide a function that take a NoticeType.Value
+   * and decide the duration after which the fade out will start and the actual fadeout time. This is applicable
+   * for notices regardless if they are set for the page rendering, ajax response or Comet response.
+   */
+  var noticesAutoFadeOut = new FactoryMaker[(NoticeType.Value) => Box[(TimeSpan, TimeSpan)]]((notice : NoticeType.Value) => Empty){}
+
   /**
    * Holds user functions that willbe executed very early in the request processing. The functions'
    * result will be ignored.
@@ -330,6 +338,12 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   @volatile var noticesToJsCmd: () => JsCmd = () => {
     import builtin.snippet._
 
+
+    def noticesFadeOut(noticeType: NoticeType.Value, id: String): JsCmd = 
+      (LiftRules.noticesAutoFadeOut()(noticeType) map {
+        case (duration, fadeTime) => LiftRules.jsArtifacts.fadeOut(id, duration, fadeTime)
+      }) openOr Noop
+
     val func: (() => List[NodeSeq], String, MetaData) => NodeSeq = (f, title, attr) => f() map (e => <li>{e}</li>) match {
       case Nil => Nil
       case list => <div>{title}<ul>{list}</ul> </div> % attr
@@ -340,18 +354,22 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
     else
       S.noIdMessages _
 
-    val xml = List((MsgsErrorMeta.get, f(S.errors), S.??("msg.error")),
-      (MsgsWarningMeta.get, f(S.warnings), S.??("msg.warning")),
-      (MsgsNoticeMeta.get, f(S.notices), S.??("msg.notice"))) flatMap {
+    val xml = List((MsgsErrorMeta.get, f(S.errors), S.??("msg.error"), LiftRules.noticesContainerId + "_error"),
+      (MsgsWarningMeta.get, f(S.warnings), S.??("msg.warning"), LiftRules.noticesContainerId + "_warn"),
+      (MsgsNoticeMeta.get, f(S.notices), S.??("msg.notice"), LiftRules.noticesContainerId + "_notice")) flatMap {
       msg => msg._1 match {
-        case Full(meta) => func(msg._2 _, meta.title openOr "", meta.cssClass.map(new UnprefixedAttribute("class", _, Null)) openOr Null)
-        case _ => func(msg._2 _, msg._3, Null)
+        case Full(meta) => <div id={msg._4}>{func(msg._2 _, meta.title openOr "", 
+           meta.cssClass.map(new UnprefixedAttribute("class", _, Null)) openOr Null)}</div>
+        case _ => <div id={msg._4}>{func(msg._2 _, msg._3, Null)}</div>
       }
     }
 
     val groupMessages = xml match {
       case Nil => JsCmds.Noop
-      case _ => LiftRules.jsArtifacts.setHtml(LiftRules.noticesContainerId, xml)
+      case _ => LiftRules.jsArtifacts.setHtml(LiftRules.noticesContainerId, xml) &
+        noticesFadeOut(NoticeType.Notice, LiftRules.noticesContainerId + "_notice") &
+        noticesFadeOut(NoticeType.Warning, LiftRules.noticesContainerId + "_warn") &
+        noticesFadeOut(NoticeType.Error, LiftRules.noticesContainerId + "_error")
     }
 
     val g = S.idMessages _

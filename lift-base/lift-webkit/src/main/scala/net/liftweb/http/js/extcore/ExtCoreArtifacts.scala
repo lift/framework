@@ -25,6 +25,7 @@ import _root_.net.liftweb.http.S
 import _root_.net.liftweb.http.js.JE
 import _root_.net.liftweb.http.js.JsCmds
 import JE._
+import JsCmds._
 import util.Helpers._
 
 object ExtCoreArtifacts extends JSArtifacts {
@@ -55,6 +56,8 @@ object ExtCoreArtifacts extends JSArtifacts {
   def onLoad(cmd: JsCmd): JsCmd = new JsCmd {
   	def toJsCmd = "Ext.onReady(function() {" + cmd.toJsCmd + "})"
 	}
+
+  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) = Noop
 
   def ajax(data: AjaxInfo): String = {
     "Ext.Ajax.request(" + toJson(data, S.contextPath,

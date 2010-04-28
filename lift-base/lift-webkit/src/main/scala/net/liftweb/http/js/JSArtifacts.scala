@@ -19,8 +19,9 @@ package http {
 package js {
 
 import _root_.net.liftweb.common.{Box, Full, Empty}
-
+import _root_.net.liftweb.http.NoticeType
 import _root_.scala.xml.{Elem, NodeSeq}
+import _root_.net.liftweb.util.Helpers._
 
 /**
  * Abstracted JavaScript artifacts used by lift core.
@@ -63,6 +64,12 @@ trait JSArtifacts {
    * for processing
    */
   def onLoad(cmd: JsCmd): JsCmd
+
+  /**
+   * Fades out the element having the provided id, by waiting
+   * for the given duration and fades out during fadeTime
+   */
+  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan): JsCmd
 
   /**
    * Makes an Ajax request using lift's Ajax path and the request
