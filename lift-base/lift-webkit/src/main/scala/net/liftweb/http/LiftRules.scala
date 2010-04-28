@@ -60,7 +60,11 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
    */
   type LiftRequestPF = PartialFunction[Req, Boolean]
  
-
+  /** 
+   * Set the default fadeout mechanism for Lift notices. Thus you provide a function that take a NoticeType.Value
+   * and decide the duration after which the fade out will start and the actual fadeout time. This is applicable
+   * for notices regardless if they are set for the page rendering, ajax response or Comet response.
+   */
   var noticesAutoFadeOut = new FactoryMaker[(NoticeType.Value) => Box[(TimeSpan, TimeSpan)]]((notice : NoticeType.Value) => Empty){}
 
   /**
@@ -350,12 +354,13 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
     else
       S.noIdMessages _
 
-    val xml = List((MsgsErrorMeta.get, f(S.errors), S.??("msg.error")),
-      (MsgsWarningMeta.get, f(S.warnings), S.??("msg.warning")),
-      (MsgsNoticeMeta.get, f(S.notices), S.??("msg.notice"))) flatMap {
+    val xml = List((MsgsErrorMeta.get, f(S.errors), S.??("msg.error"), LiftRules.noticesContainerId + "_error"),
+      (MsgsWarningMeta.get, f(S.warnings), S.??("msg.warning"), LiftRules.noticesContainerId + "_warn"),
+      (MsgsNoticeMeta.get, f(S.notices), S.??("msg.notice"), LiftRules.noticesContainerId + "_notice")) flatMap {
       msg => msg._1 match {
-        case Full(meta) => func(msg._2 _, meta.title openOr "", meta.cssClass.map(new UnprefixedAttribute("class", _, Null)) openOr Null)
-        case _ => func(msg._2 _, msg._3, Null)
+        case Full(meta) => <div id={msg._4}>{func(msg._2 _, meta.title openOr "", 
+           meta.cssClass.map(new UnprefixedAttribute("class", _, Null)) openOr Null)}</div>
+        case _ => <div id={msg._4}>{func(msg._2 _, msg._3, Null)}</div>
       }
     }
 

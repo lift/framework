@@ -96,21 +96,22 @@ object Msgs extends DispatchSnippet {
             styles.foldLeft(ret)((xml, style) => xml % new UnprefixedAttribute("class", Text(style), Null))
         }
     }
-    <div>{msgs}</div> % ("id" -> LiftRules.noticesContainerId)
-
-    noticesFadeOut(NoticeType.Notice, LiftRules.noticesContainerId + "_notice")
-    noticesFadeOut(NoticeType.Warning, LiftRules.noticesContainerId + "_warn")
+    (<div>{msgs}</div> % ("id" -> LiftRules.noticesContainerId)) ++
+    noticesFadeOut(NoticeType.Notice, LiftRules.noticesContainerId + "_notice") ++
+    noticesFadeOut(NoticeType.Warning, LiftRules.noticesContainerId + "_warn") ++
     noticesFadeOut(NoticeType.Error, LiftRules.noticesContainerId + "_error")
     
   }
 
-  def noticesFadeOut(noticeType: NoticeType.Value, id: String): NodeSeq = 
+  def noticesFadeOut(noticeType: NoticeType.Value, id: String): NodeSeq = {
+
     (LiftRules.noticesAutoFadeOut()(noticeType) map {
       case (duration, fadeTime) => 
         <lift:tail>{
           Script(LiftRules.jsArtifacts.fadeOut(id, duration, fadeTime))
         }</lift:tail>
     }) openOr NodeSeq.Empty
+  }
 
 
 }
