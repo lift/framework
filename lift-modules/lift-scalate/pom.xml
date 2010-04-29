@@ -59,7 +59,7 @@
     <dependency>
       <groupId>org.fusesource.scalate</groupId>
       <artifactId>scalate-core</artifactId>
-      <version>1.0</version>
+      <version>1.1</version>
       
       <!-- need to exclude logback to avoid a maven NPE -->
       <exclusions>
