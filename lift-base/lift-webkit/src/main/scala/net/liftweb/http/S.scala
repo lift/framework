@@ -2145,7 +2145,7 @@ for {
         case _ =>
           val ret = LiftSession(httpRequest.session, req.contextPath)
           ret.fixSessionTime()
-          SessionMaster.addSession(ret, httpRequest.userAgent, Full(httpRequest.remoteAddress))
+          SessionMaster.addSession(ret, httpRequest.userAgent, SessionMaster.getIpFromReq(req))
           ret
       }
 

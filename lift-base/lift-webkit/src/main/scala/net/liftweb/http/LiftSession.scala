@@ -98,9 +98,31 @@ case class SessionInfo(session: LiftSession, userAgent: Box[String], ipAddress: 
 object SessionMaster extends LiftActor with Loggable {
   private var sessions: Map[String, SessionInfo] = Map.empty
   private object CheckAndPurge
-  // private val lock = new ConcurrentLock
 
-  @volatile var sessionCheckFuncs: List[(Map[String, SessionInfo], SessionInfo => Unit) => Unit] = Nil
+/**
+* If you have a rule other than <pre>Box !! req.request.remoteAddress</pre>
+* for calculating the remote address, change this function
+*/
+@volatile var getIpFromReq: Req => Box[String] = req => Box !! req.request.remoteAddress
+
+/**
+* A list of functions that are run every 10 seconds.  The first param is
+* map containing the session ID and the sessions.  The second param is a function
+* to call to destroy the session.
+*/
+  @volatile var sessionCheckFuncs: List[(Map[String, SessionInfo], SessionInfo => Unit) => Unit] =
+      ((ses: Map[String, SessionInfo], destroyer: SessionInfo => Unit) => {
+        val now = millis
+
+      for ((id, info @ SessionInfo(session, _, _, _, _)) <- ses.elements) {
+        if (now - session.lastServiceTime > session.inactivityLength || session.markedForTermination) {
+          logger.info(" Session " + id + " expired")
+          destroyer(info)
+        } else {
+          session.doCometActorCleanup()
+          session.cleanupUnseenFuncs()
+        }
+      }}) :: Nil
 
   def getSession(id: String, otherId: Box[String]): Box[LiftSession] = lockAndBump {
     otherId.flatMap(sessions.get) or Box(sessions.get(id))
@@ -192,7 +214,6 @@ object SessionMaster extends LiftActor with Loggable {
       }
 
     case CheckAndPurge =>
-      val now = millis
       val ses = lockRead {sessions}
 
       for {
@@ -205,15 +226,6 @@ object SessionMaster extends LiftActor with Loggable {
         }
       }
 
-      for ((id, SessionInfo(session, _, _, _, _)) <- ses.elements) {
-        session.doCometActorCleanup()
-        if (now - session.lastServiceTime > session.inactivityLength || session.markedForTermination) {
-          logger.info(" Session " + id + " expired")
-          this.sendMsg(RemoveSession(id))
-        } else {
-          session.cleanupUnseenFuncs()
-        }
-      }
       if (!Props.inGAE) {
         sessionWatchers.foreach(_ ! SessionWatcherInfo(ses))
         doPing()

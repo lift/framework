@@ -143,7 +143,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
       case _ =>
         val ret = LiftSession(req.request.session, req.request.contextPath)
         ret.fixSessionTime()
-        SessionMaster.addSession(ret, req.request.userAgent, Full(req.request.remoteAddress))
+        SessionMaster.addSession(ret, req.request.userAgent, SessionMaster.getIpFromReq(req))
         ret
     }
 
