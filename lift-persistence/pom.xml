@@ -53,6 +53,7 @@
     <module>lift-jpa</module>
     <module>lift-record</module>
     <module>lift-couchdb</module>
+    <module>lift-mongodb</module>
   </modules>
 
   <!--
