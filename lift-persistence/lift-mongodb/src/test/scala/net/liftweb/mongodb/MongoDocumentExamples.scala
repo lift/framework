@@ -91,6 +91,18 @@ package mongotestdocs {
     // create an index on "i", descending with custom name
     ensureIndex(("i" -> -1), ("name" -> "i_ix1"))
   }
+  
+  case class SessCollection(_id: String, name: String, dbtype: String, count: Int)
+    extends MongoDocument[SessCollection] {
+
+    def meta = SessCollection
+  }
+
+  object SessCollection extends MongoDocumentMeta[SessCollection] {
+
+    // create a unique index on name
+    ensureIndex(("name" -> 1), true)
+  }
 
   /*
   * mongo-java-driver is not compatible with numbers that have an e in them
@@ -136,7 +148,12 @@ object MongoDocumentExamples extends Specification {
     // define the dbs
     MongoDB.defineDb(DefaultMongoIdentifier, MongoAddress(mongoHost, "test_document"))
     MongoDB.defineDb(TstDBa, MongoAddress(mongoHost, "test_document_a"))
-    MongoDB.defineDb(TstDBb, MongoAddress(mongoHost, "test_document_b"))
+    //MongoDB.defineDb(TstDBb, MongoAddress(mongoHost, "test_document_b"))
+  }
+  
+  def checkMongoIsRunning {
+    import com.mongodb.MongoException
+    (try { MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } ) }) must not(throwAnException[MongoException]).orSkipExample
   }
 
   import com.mongodb.util.JSON // Mongo parser/serializer
@@ -144,6 +161,8 @@ object MongoDocumentExamples extends Specification {
   val debug = false
 
   "Simple Person example" in {
+
+    checkMongoIsRunning
 
     // create a new SimplePerson
     val pid = ObjectId.get.toString
@@ -188,11 +207,19 @@ object MongoDocumentExamples extends Specification {
 
       pFromDb.isEmpty must_== true
       pFromDbViaJson.isEmpty must_== true
+      
+      SimplePerson.drop
     }
-
+    
+    // drop the database
+    MongoDB.use {
+      db => db.dropDatabase
+    }
   }
 
   "Multiple Simple Person example" in {
+
+    checkMongoIsRunning
 
     // create new SimplePersons
     val p = SimplePerson(ObjectId.get.toString, "Jill", 27)
@@ -238,10 +265,19 @@ object MongoDocumentExamples extends Specification {
       pFromDb.isEmpty must_== true
       p2FromDb.isEmpty must_== true
       p3FromDb.isEmpty must_== true
+      
+      SimplePerson.drop
+    }
+    
+    // drop the database
+    MongoDB.use {
+      db => db.dropDatabase
     }
   }
 
   "Person example" in {
+
+    checkMongoIsRunning
 
     def date(s: String) = Person.formats.dateFormat.parse(s).get
 
@@ -267,10 +303,19 @@ object MongoDocumentExamples extends Specification {
       p.delete
 
       pFromDb.isEmpty must_== true
+      
+      Person.drop
+    }
+    
+    // drop the database
+    MongoDB.use(TstDBa) {
+      db => db.dropDatabase
     }
   }
 
   "Mongo tutorial example" in {
+
+    checkMongoIsRunning
 
     // build a TstCollection
     val info = TCInfo(203, 102)
@@ -392,38 +437,44 @@ object MongoDocumentExamples extends Specification {
 
     // remove some docs by a query
     IDoc.delete(("i" -> ("$gt" -> 50)))
-
     IDoc.findAll.length must_== 50
+    
+    IDoc.drop
+    
+    // drop the database
+    MongoDB.use {
+      db => db.dropDatabase
+    }
 
   }
 
   "Mongo useSession example" in {
 
-    val info = TCInfo(203, 102)
-    val tc = TstCollection(ObjectId.get.toString, "MongoSession", "db", 1, info)
-    val tc2 = TstCollection(ObjectId.get.toString, "MongoSession", "db", 1, info)
-    val tc3 = TstCollection(ObjectId.get.toString, "MongoDB", "db", 1, info)
+    checkMongoIsRunning
+
+    val tc = SessCollection(ObjectId.get.toString, "MongoSession", "db", 1)
+    val tc2 = SessCollection(ObjectId.get.toString, "MongoSession", "db", 1)
+    val tc3 = SessCollection(ObjectId.get.toString, "MongoDB", "db", 1)
 
     // use a Mongo instance directly with a session
     MongoDB.useSession(DefaultMongoIdentifier) ( db => {
-      //val coll = db.getCollection("testCollection")
 
       // save to db
-      TstCollection.save(tc, db)
+      SessCollection.save(tc, db)
       db.getLastError.get("err") must beNull
-      TstCollection.save(tc2, db) // this should return an error
+      SessCollection.save(tc2, db) // this should return an error
       db.getLastError.get("err").toString must startWith("E11000 duplicate key error index")
-      TstCollection.save(tc3, db)
+      SessCollection.save(tc3, db)
       db.getLastError.get("err") must beNull
 
       // query for the docs by type
       val qry = ("dbtype" -> "db")
-      TstCollection.findAll(qry).size must_== 2
+      SessCollection.findAll(qry).size must_== 2
 
       // modifier operations $inc, $set, $push...
       val o2 = ("$inc" -> ("count" -> 1)) // increment count by 1
       //("$set" -> ("dbtype" -> "docdb")) // set dbtype
-      TstCollection.update(qry, o2, db)
+      SessCollection.update(qry, o2, db)
       db.getLastError.get("updatedExisting") must_== true
       /* The update method only updates one document. see:
       http://jira.mongodb.org/browse/SERVER-268
@@ -439,23 +490,32 @@ object MongoDocumentExamples extends Specification {
       */
 
       // regex query example
-      val lst = TstCollection.findAll(new BasicDBObject("name", Pattern.compile("^Mongo")))
+      val lst = SessCollection.findAll(new BasicDBObject("name", Pattern.compile("^Mongo")))
       lst.size must_== 2
 
       // use regex and another clause
-      val lst2 = TstCollection.findAll(new BasicDBObject("name", Pattern.compile("^Mongo")).append("count", 1))
+      val lst2 = SessCollection.findAll(new BasicDBObject("name", Pattern.compile("^Mongo")).append("count", 1))
       lst2.size must_== 1
 
       if (!debug) {
         // delete them
-        TstCollection.delete(qry)
-        TstCollection.findAll.size must_== 0
+        SessCollection.delete(qry)
+        SessCollection.findAll.size must_== 0
+        
+        SessCollection.drop
       }
 
     })
+    
+    // drop the database
+    MongoDB.use {
+      db => db.dropDatabase
+    }
   }
 
   "Primitives example" in {
+
+    checkMongoIsRunning
 
     def date(s: String) = Primitive.formats.dateFormat.parse(s).get
 
@@ -476,10 +536,18 @@ object MongoDocumentExamples extends Specification {
       p.delete
 
       pFromDb.isEmpty must_== true
+      Primitive.drop
+    }
+    
+    // drop the database
+    MongoDB.use {
+      db => db.dropDatabase
     }
   }
 
   "Ref example" in {
+
+    checkMongoIsRunning
 
     val ref1 = RefJDoc(ObjectId.get.toString)
     val ref2 = RefJDoc(ObjectId.get.toString)
@@ -527,32 +595,17 @@ object MongoDocumentExamples extends Specification {
     // Find all documents using a k, v query
     val mdq3 = MainJDoc.findAll("_id", new ObjectId(md1._id))
     mdq3.size must_== 1
-
+    
+    MainJDoc.drop
+    RefJDoc.drop
+    
+    // drop the database
+    MongoDB.use {
+      db => db.dropDatabase
+    }
   }
 
   doAfterSpec {
-    if (!debug) {
-      /** drop the collections */
-      SimplePerson.drop
-      Person.drop
-      TstCollection.drop
-      IDoc.drop
-      Primitive.drop
-      MainJDoc.drop
-      RefJDoc.drop
-
-      // drop the databases
-      MongoDB.use {
-        db => db.dropDatabase
-      }
-      MongoDB.use(TstDBa) {
-        db => db.dropDatabase
-      }
-      MongoDB.use(TstDBb) {
-        db => db.dropDatabase
-      }
-    }
-
     // clear the mongo instances
     MongoDB.close
   }

@@ -35,6 +35,11 @@ object MongoDirectExamples extends Specification {
     // define the db
     MongoDB.defineDb(DefaultMongoIdentifier, MongoAddress(MongoHost(), "test_direct"))
   }
+  
+  def checkMongoIsRunning {
+    import com.mongodb.MongoException
+    (try { MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } ) }) must not(throwAnException[MongoException]).orSkipExample
+  }
 
   import com.mongodb.util.JSON // Mongo parser/serializer
 
@@ -43,6 +48,8 @@ object MongoDirectExamples extends Specification {
   def date(s: String) = DefaultFormats.dateFormat.parse(s).get
 
   "Mongo tutorial example" in {
+
+    checkMongoIsRunning
 
     // build the DBObject
     val doc = new BasicDBObject
@@ -94,17 +101,22 @@ object MongoDirectExamples extends Specification {
       if (!debug) {
         // delete it
         coll.remove(new BasicDBObject("_id", doc.get("_id")))
-
         coll.find.count must_== 0
+        coll.drop
       }
 
       // server-side eval
       val six = db.eval(" function() { return 3+3; } ")
       six must_== 6
+      
+      // drop the db
+      db.dropDatabase
     })
   }
 
   "Mongo tutorial 2 example" in {
+
+    checkMongoIsRunning
 
     // use a DBCollection directly
     MongoDB.useCollection("iDoc") ( coll => {
@@ -199,13 +211,21 @@ object MongoDirectExamples extends Specification {
       if (!debug) {
         // delete the rest of the rows
         coll.remove(new BasicDBObject("i", new BasicDBObject("$lte", 50)))
-
         coll.find.count must_== 0
+        coll.drop
       }
     })
+    
+    // drop the database
+    MongoDB.use {
+      db => db.dropDatabase
+    }
   }
 
   "Mongo useSession example" in {
+
+    checkMongoIsRunning
+
     // use a Mongo instance directly with a session
     MongoDB.useSession ( db => {
       val coll = db.getCollection("testCollection")
@@ -284,26 +304,15 @@ object MongoDirectExamples extends Specification {
         coll.remove(new BasicDBObject("type", "db"))
         db.getLastError.get("n") must_== 2
         coll.find.count must_== 0
+        coll.drop
       }
+      
+      // drop the database
+      db.dropDatabase
     })
   }
 
   doAfterSpec {
-    if (!debug) {
-      /* drop the collections */
-      MongoDB.useCollection(DefaultMongoIdentifier, "testCollection") ( coll => {
-        coll.drop
-      })
-      MongoDB.useCollection("iDoc") ( coll => {
-        coll.drop
-      })
-      
-      // drop the database
-      MongoDB.use {
-        db => db.dropDatabase()
-      }
-    }
-    
     // clear the mongo instances
     MongoDB.close
   }

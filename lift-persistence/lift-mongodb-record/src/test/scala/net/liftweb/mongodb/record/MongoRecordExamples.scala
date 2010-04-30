@@ -265,8 +265,15 @@ object MongoRecordExamples extends Specification {
     // define the db
     MongoDB.defineDb(DefaultMongoIdentifier, MongoAddress(MongoHost("localhost", 27017), "test_record"))
   }
+  
+  def checkMongoIsRunning {
+    import com.mongodb.MongoException
+    (try { MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } ) }) must not(throwAnException[MongoException]).orSkipExample
+  }
 
   "TstRecord example" in {
+
+    checkMongoIsRunning
 
 //		implicit val formats = TstRecord.formats
 
@@ -320,9 +327,17 @@ object MongoRecordExamples extends Specification {
         TstRecord.formats.dateFormat.format(per.children(i).birthdate.get)
       }
     }
+    
+    TstRecord.drop
+    // drop the database
+    MongoDB.use {
+      db => db.dropDatabase()
+    }
   }
 
   "Ref example" in {
+
+    checkMongoIsRunning
 
     val ref1 = RefDoc.createRecord
     val ref2 = RefDoc.createRecord
@@ -447,9 +462,18 @@ object MongoRecordExamples extends Specification {
 
       MainDoc.findAll.size must_== 0
     }
+    
+    MainDoc.drop
+    RefDoc.drop
+    // drop the database
+    MongoDB.use {
+      db => db.dropDatabase()
+    }
   }
 
   "List example" in {
+
+    checkMongoIsRunning
 
     val ref1 = RefDoc.createRecord
     val ref2 = RefDoc.createRecord
@@ -499,19 +523,38 @@ object MongoRecordExamples extends Specification {
       l.maplist.value must_== ld1.maplist.value
       l.jsonobjlist.value(0).id must_== "1"
     }
-
+    
+    ListDoc.drop
+    
+    // drop the database
+    MongoDB.use {
+      db => db.dropDatabase()
+    }
   }
 
   "Map Example" in {
+  
+    checkMongoIsRunning
+
     val md1 = MapDoc.createRecord
     md1.stringmap.set(Map("h" -> "hola"))
 
     md1.save must_== md1
 
     md1.delete_!
+    
+    MapDoc.drop
+    
+    // drop the database
+    MongoDB.use {
+      db => db.dropDatabase()
+    }
   }
 
   "Optional Example" in {
+  
+    checkMongoIsRunning
+
     val od1 = OptionalDoc.createRecord
     od1.stringbox.valueBox must_== Empty
     od1.save must_== od1
@@ -531,22 +574,25 @@ object MongoRecordExamples extends Specification {
       od2FromDB =>
         od2FromDB.stringbox.valueBox must_== od2.stringbox.valueBox
     }
+    
+    OptionalDoc.drop
+    
+    // drop the database
+    MongoDB.use {
+      db => db.dropDatabase()
+    }
   }
 
   doAfterSpec {
     if (!debug) {
       /** drop the collections */
-      TstRecord.drop
-      MainDoc.drop
-      RefDoc.drop
-      ListDoc.drop
-      MapDoc.drop
-      OptionalDoc.drop
+      
+      
+      
+      
+      
 
-      // drop the database
-      MongoDB.use {
-        db => db.dropDatabase()
-      }
+      
     }
 
     // clear the mongo instances
