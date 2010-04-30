@@ -215,6 +215,11 @@ trait BindHelpers {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(myValue)
   }
 
+  object AttrBindParam {
+    def apply(name: String, myValue: String, newAttr: String) =
+      new AttrBindParam(name, Text(myValue), newAttr)
+  }
+
   /**
    * BindParam using a function to calculate its value
    */

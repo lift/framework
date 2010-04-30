@@ -113,6 +113,10 @@ object BindHelpersSpec extends Specification  {
       bind("user", <t user:tag="toreplace"></t>, AttrBindParam("tag", Text("world"), "hello")) must ==/(<t hello="world"></t>)
     }
 
+    "replace an attribute named 'namespace:bindparam name' in a NodeSeq with a new attribute name and value from an AttrBindParam using a String" in {
+      bind("user", <t user:tag="toreplace"></t>, AttrBindParam("tag", "world", "hello")) must ==/(<t hello="world"></t>)
+    }
+
     "replace an attribute named 'namespace:bindparam name' in a NodeSeq with a new attribute name and calculated value from an FuncAttrBindParam" in {
       bind("user", <t user:tag="dear"></t>, FuncAttrBindParam("tag", (n: NodeSeq) =>Text(n.text + " world"), "hello")) must ==/(<t hello="dear world"></t>)
     }
