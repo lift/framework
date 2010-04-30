@@ -22,19 +22,19 @@ import _root_.net.liftweb.record.{Field, Record}
 
 class JObjectField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[JObject, OwnerType] {
 
-	def asJs = Str(toString)
-	
-	def asJValue = (JNothing: JValue) // not implemented
-	
-	def setFromJValue(jvalue: JValue) = Empty // not implemented
+  def asJs = Str(toString)
+  
+  def asJValue = (JNothing: JValue) // not implemented
+  
+  def setFromJValue(jvalue: JValue) = Empty // not implemented
 
-	def asXHtml = <div></div>
+  def asXHtml = <div></div>
 
-	def defaultValue = JObject(List())
-	
-	def setFromAny(in: Any): Box[JObject] = in match {
-  	case jv: JObject => Full(set(jv))
-  	case Some(jv: JObject) => Full(set(jv))
+  def defaultValue = JObject(List())
+  
+  def setFromAny(in: Any): Box[JObject] = in match {
+    case jv: JObject => Full(set(jv))
+    case Some(jv: JObject) => Full(set(jv))
     case Full(jv: JObject) => Full(set(jv))
     case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny)(0)
     case (s: String) :: _ => setFromString(s)
@@ -44,15 +44,15 @@ class JObjectField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field
     case o => setFromString(o.toString)
   }
 
-	// assume string is json
-	def setFromString(in: String): Box[JObject] = {
-		// use lift-json to parse string into a JObject
-		Full(set(JsonParser.parse(in).asInstanceOf[JObject]))
-	}
+  // assume string is json
+  def setFromString(in: String): Box[JObject] = {
+    // use lift-json to parse string into a JObject
+    Full(set(JsonParser.parse(in).asInstanceOf[JObject]))
+  }
 
-	def toForm = <div></div>
+  def toForm = <div></div>
 
-	def owner = rec
+  def owner = rec
 }
 
 }
