@@ -27,9 +27,9 @@ import net.liftweb.json.JsonDSL._
 
 import com.mongodb.{BasicDBObject, BasicDBObjectBuilder, DBObject}
 
-class MongoDBDirectExamplesTest extends JUnit4(MongoDBDirectExamples)
+class MongoDirectExamplesTest extends JUnit4(MongoDirectExamples)
 
-object MongoDBDirectExamples extends Specification {
+object MongoDirectExamples extends Specification {
 
   doBeforeSpec { 
     // define the db
