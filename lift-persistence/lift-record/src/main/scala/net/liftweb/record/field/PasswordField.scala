@@ -54,8 +54,12 @@ class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
 
   def salt = this.salt_i
 
-  override def set_!(in: Box[String]): Box[String] =
+  private var validatedValue: Box[String] = valueBox
+
+  override def set_!(in: Box[String]): Box[String] = {
+    validatedValue = in
     in.map(s => hash("{"+s+"} salt={"+salt_i.get+"}"))
+  }
 
   def setFromAny(in: Any): Box[String] = {
     in match {
@@ -69,6 +73,8 @@ class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
     case "" if optional_? => setBox(Empty)
     case _                => setBox(Full(s))
   }
+
+  override def validateField: List[FieldError] = runValidation(validatedValue)
 
   private def elem = S.fmapFunc(SFuncHolder(this.setFromAny(_))){
     funcName => <input type="password"
