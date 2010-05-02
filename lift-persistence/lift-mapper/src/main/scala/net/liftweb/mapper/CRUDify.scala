@@ -62,10 +62,10 @@ trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] {
   def displayHtml: NodeSeq = Text(calcPrefix.head)
 
   /**
-  * The fields displayed on the list page.  By default all the fields, but this list
+  * The fields displayed on the list page.  By default all the displayed fields, but this list
   * can be shortened.
   */
-  def fieldsForList: List[MappedField[_, CrudType]] = mappedFieldsForModel
+  def fieldsForList: List[MappedField[_, CrudType]] = mappedFieldsForModel.filter(_.dbDisplay_?)
 
   def pageWrapper(body: NodeSeq): NodeSeq =
   <lift:surround with="default" at="content">
@@ -482,9 +482,9 @@ trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] {
       def next(in: NodeSeq) = if (list.length < 20) <xml:group>&nbsp;</xml:group>
       else <a href={listPathString+"?first="+(first + 20L)}>{in}</a>
 
-      def doHeaderItems(in: NodeSeq): NodeSeq =
-      mappedFieldList.filter(_.field.dbDisplay_?).
-      flatMap(f => bind("crud", in, "name" -> f.field.displayHtml))
+
+      def doHeaderItems(in: NodeSeq): NodeSeq = fieldsForList.flatMap(f => 
+        bind("crud", in, "name" -> f.displayHtml))
 
       def doRows(in: NodeSeq): NodeSeq =
       list.take(20).flatMap{

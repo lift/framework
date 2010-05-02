@@ -429,12 +429,17 @@ def menus: List[Menu] = sitemap // issue 182
     }
   }
 
+  /**
+   * Override this method to validate the user signup (eg by adding captcha verification)
+   */
+  def validateSignup(user: ModelType): List[FieldError] = user.validate
+  
   def signup = {
     val theUser: ModelType = create
     val theName = signUpPath.mkString("")
 
     def testSignup() {
-      theUser.validate match {
+      validateSignup(theUser) match {
         case Nil =>
           actionsAfterSignup(theUser)
           S.redirectTo(homePage)

@@ -66,6 +66,9 @@ object YUIArtifacts extends JSArtifacts {
     def toJsCmd = "YAHOO.util.Event.onDOMReady(function(){" + cmd.toJsCmd + "})"
   }
 
+  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) = Noop
+ 
+
   def ajax(data: AjaxInfo): String = {
     val url = S.encodeURL(S.contextPath + "/" + LiftRules.ajaxPath + "/")
 

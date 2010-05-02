@@ -41,6 +41,9 @@
       <action dev="dridus" type="update" issue="494" system="assembla">
     Fix PasswordField validation.
       </action>
+      <action dev="dpp" type="add" issue="499" system="assembla">
+	Better control over sessions
+      </action>
       <action dev="dpp" type="add" issue="461" system="assembla">
 	Helpful new JsonCommand extractor for pattern matching
 	Json commands

@@ -27,7 +27,7 @@ object Tail extends DispatchSnippet {
      case _ => render _
    }
 
-   def render(xhtml: NodeSeq) : NodeSeq = <tail>xhtml</tail>
+   def render(xhtml: NodeSeq) : NodeSeq = <tail>{xhtml}</tail>
 
 }
 

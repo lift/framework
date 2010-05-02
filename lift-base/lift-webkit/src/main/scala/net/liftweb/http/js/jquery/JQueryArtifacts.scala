@@ -26,6 +26,7 @@ import _root_.net.liftweb.http.js.JE
 import _root_.net.liftweb.http.js.JsCmds
 import JE._
 import JqJE._
+import JqJsCmds._
 import util.Helpers._
 import util.Props
 
@@ -53,6 +54,9 @@ trait JQueryArtifacts extends JSArtifacts {
   def setHtml(id: String, xml: NodeSeq): JsCmd = JqJsCmds.JqSetHtml(id, xml)
 
   def onLoad(cmd: JsCmd): JsCmd = JqJsCmds.JqOnLoad(cmd)
+
+  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) = 
+    FadeOut(id, duration, fadeTime)
 
   def ajax(data: AjaxInfo): String = {
     "jQuery.ajax(" + toJson(data, S.contextPath,

@@ -84,18 +84,47 @@ object LiftSession {
 
 private[http] case class AddSession(session: LiftSession)
 private[http] case class RemoveSession(sessionId: String)
-case class SessionWatcherInfo(sessions: Map[String, LiftSession])
+case class SessionWatcherInfo(sessions: Map[String, SessionInfo])
+
+/**
+* Information about sessions
+*/
+case class SessionInfo(session: LiftSession, userAgent: Box[String], ipAddress: Box[String], requestCnt: Int, lastAccess: Long)
 
 /**
  * Manages LiftSessions because the servlet container is less than optimal at
  * timing sessions out.
  */
 object SessionMaster extends LiftActor with Loggable {
-  private var sessions: Map[String, LiftSession] = Map.empty
+  private var sessions: Map[String, SessionInfo] = Map.empty
   private object CheckAndPurge
-  private val lock = new ConcurrentLock
 
-  def getSession(id: String, otherId: Box[String]): Box[LiftSession] = synchronized {
+/**
+* If you have a rule other than <pre>Box !! req.request.remoteAddress</pre>
+* for calculating the remote address, change this function
+*/
+@volatile var getIpFromReq: Req => Box[String] = req => Box !! req.request.remoteAddress
+
+/**
+* A list of functions that are run every 10 seconds.  The first param is
+* map containing the session ID and the sessions.  The second param is a function
+* to call to destroy the session.
+*/
+  @volatile var sessionCheckFuncs: List[(Map[String, SessionInfo], SessionInfo => Unit) => Unit] =
+      ((ses: Map[String, SessionInfo], destroyer: SessionInfo => Unit) => {
+        val now = millis
+
+      for ((id, info @ SessionInfo(session, _, _, _, _)) <- ses.elements) {
+        if (now - session.lastServiceTime > session.inactivityLength || session.markedForTermination) {
+          logger.info(" Session " + id + " expired")
+          destroyer(info)
+        } else {
+          session.doCometActorCleanup()
+          session.cleanupUnseenFuncs()
+        }
+      }}) :: Nil
+
+  def getSession(id: String, otherId: Box[String]): Box[LiftSession] = lockAndBump {
     otherId.flatMap(sessions.get) or Box(sessions.get(id))
   }
 
@@ -110,7 +139,7 @@ object SessionMaster extends LiftActor with Loggable {
    * Returns a LiftSession or Empty if not found
    */
   def getSession(httpSession: => HTTPSession, otherId: Box[String]): Box[LiftSession] =
-    lock.read {
+    lockAndBump {
       otherId.flatMap(sessions.get) or Box(sessions.get(httpSession.sessionId))
     }
 
@@ -118,16 +147,32 @@ object SessionMaster extends LiftActor with Loggable {
    * Returns a LiftSession or Empty if not found
    */
   def getSession(req: HTTPRequest, otherId: Box[String]): Box[LiftSession] =
-    lock.read {
+    lockAndBump {
       otherId.flatMap(sessions.get) or req.sessionId.flatMap(id => sessions.get(id))
     }
 
   /**
+  * Increments the count and last access time for the session
+  */
+  private def lockAndBump(f: => Box[SessionInfo]): Box[LiftSession] = this.synchronized {
+    f.map {
+      s =>
+      sessions += s.session.uniqueId -> SessionInfo(s.session, s.userAgent, s.ipAddress, s.requestCnt + 1, millis)
+
+      s.session
+    }
+  }
+
+  private def lockRead[T](f: => T): T = this.synchronized{f}
+
+  private def lockWrite[T](f: => T): T = this.synchronized{f}
+
+  /**
    * Adds a new session to SessionMaster
    */
-  def addSession(liftSession: LiftSession) {
-    lock.write {
-      sessions = sessions + (liftSession.uniqueId -> liftSession)
+  def addSession(liftSession: LiftSession, userAgent: Box[String], ipAddress: Box[String]) {
+    lockAndBump {
+      Full(SessionInfo(liftSession, userAgent, ipAddress, 0, 0L))
     }
     liftSession.startSession()
     liftSession.httpSession.foreach(_.link(liftSession))
@@ -139,10 +184,10 @@ object SessionMaster extends LiftActor with Loggable {
    * Shut down all sessions
    */
   private[http] def shutDownAllSessions() {
-    val ses = lock.read(sessions)
+    val ses = lockRead(sessions)
     ses.keySet.foreach(k => this ! RemoveSession(k))
     while(true) {
-      val s2 = lock.read(sessions)
+      val s2 = lockRead(sessions)
       if (s2.size == 0) return
       Thread.sleep(50)
     }
@@ -150,9 +195,9 @@ object SessionMaster extends LiftActor with Loggable {
 
   private val reaction: PartialFunction[Any, Unit] = {
     case RemoveSession(sessionId) =>
-      val ses = lock.read(sessions)
+      val ses = lockRead(sessions)
       ses.get(sessionId).foreach {
-        s =>
+        case SessionInfo(s, _, _, _, _) =>
                 try {
                   s.doShutDown
                   try {
@@ -164,22 +209,23 @@ object SessionMaster extends LiftActor with Loggable {
                   case e => logger.warn("Failure in remove session", e)
 
                 } finally {
-                  lock.write {sessions = sessions - sessionId}
+                  lockWrite {sessions = sessions - sessionId}
                 }
       }
 
     case CheckAndPurge =>
-      val now = millis
-      val ses = lock.read {sessions}
-      for ((id, session) <- ses.elements) {
-        session.doCometActorCleanup()
-        if (now - session.lastServiceTime > session.inactivityLength || session.markedForTermination) {
-          logger.info(" Session " + id + " expired")
-          this.sendMsg(RemoveSession(id))
+      val ses = lockRead {sessions}
+
+      for {
+        f <- sessionCheckFuncs
+      } {
+        if (Props.inGAE) {
+          f(ses, shutDown => this.sendMsg(RemoveSession(shutDown.session.uniqueId)))
         } else {
-          session.cleanupUnseenFuncs()
+          ActorPing.schedule(() => f(ses, shutDown => this ! RemoveSession(shutDown.session.uniqueId)), 0 seconds)
         }
       }
+
       if (!Props.inGAE) {
         sessionWatchers.foreach(_ ! SessionWatcherInfo(ses))
         doPing()
@@ -190,7 +236,7 @@ object SessionMaster extends LiftActor with Loggable {
   private[http] def sendMsg(in: Any): Unit =
     if (!Props.inGAE) this ! in
     else {
-      lock.write {
+      lockWrite {
         tryo {
           if (reaction.isDefinedAt(in)) reaction.apply(in)
         }

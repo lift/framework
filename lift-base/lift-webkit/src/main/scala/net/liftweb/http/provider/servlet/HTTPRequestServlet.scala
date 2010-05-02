@@ -72,6 +72,11 @@ class HTTPRequestServlet(val req: HttpServletRequest) extends HTTPRequest {
 
   def remoteAddress: String = req.getRemoteAddr
 
+  /**
+   * The User-Agent of the request
+   */
+  lazy val userAgent: Box[String] =  headers find (_.name equalsIgnoreCase "user-agent") flatMap (_.values.headOption)
+
   def remotePort: Int = req.getRemotePort
 
   def remoteHost: String = req.getRemoteHost
@@ -211,6 +216,11 @@ private class OfflineRequestSnapshot(req: HTTPRequest) extends HTTPRequest {
     throw new UnsupportedOperationException("It is unsafe to set the character encoding ")
 
   def snapshot = this
+
+  /**
+   * The User-Agent of the request
+   */
+  lazy val userAgent: Box[String] =  headers find (_.name equalsIgnoreCase "user-agent") flatMap (_.values.headOption)
 
 }
 

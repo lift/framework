@@ -220,6 +220,11 @@ trait HTTPRequest {
    * The new instance must not keep any reference to the container' instances.
    */
   def snapshot: HTTPRequest
+
+  /**
+  * The User-Agent of the request
+  */
+  def userAgent: Box[String]
 }
 
 }

@@ -169,23 +169,6 @@
           </configuration>
         </plugin>
         <plugin>
-          <groupId>org.apache.rat</groupId>
-          <artifactId>apache-rat-plugin</artifactId>
-          <configuration>
-            <excludes>
-              <exclude>*.log</exclude>
-              <exclude>**/packageLinkDefs.properties</exclude>
-            </excludes>
-          </configuration>
-          <executions>
-            <execution>
-              <goals>
-                <goal>check</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
           <groupId>org.scala-tools</groupId>
           <artifactId>maven-scala-plugin</artifactId>
           <configuration>
@@ -332,16 +315,7 @@
   <profiles>
     <profile>
       <id>lift-debug</id>
-      <build>
-        <!--
-        <plugins>
-          <plugin>
-            <groupId>org.apache.rat</groupId>
-            <artifactId>apache-rat-plugin</artifactId>
-          </plugin>
-        </plugins>
-        -->
-      </build>
+      <!-- <build/> -->
     </profile>
     <profile>
       <id>lift-hudson</id>
