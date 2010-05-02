@@ -784,7 +784,7 @@ object SHtml {
    *
    */
   def ajaxSubmit(value: String, func: () => JsCmd, attrs: (String, String)*): Elem = {
-    val funcName = "Z" + Helpers.nextFuncName
+    val funcName = "z" + Helpers.nextFuncName
     addFunctionMap(funcName, contextFuncBuilder(func))
 
     (attrs.foldLeft(<input type="submit" name={funcName}/>)(_ % _)) %
