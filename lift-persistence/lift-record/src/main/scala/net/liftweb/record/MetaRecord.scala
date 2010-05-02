@@ -188,7 +188,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     foreachCallback(inst, _.beforeValidation)
     try{
 	    fieldList.flatMap(holder => inst.fieldByName(holder.name) match {
-          case Full(field) => field.validators.flatMap(_(field.valueBox).map(FieldError(field, _))).removeDuplicates
+          case Full(field) => field.validateField
           case _           => Nil
         })
     } finally {

@@ -162,6 +162,12 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
    */
   def validators: List[ValidationFunction] = Nil
 
+  /** Validate this field's setting, returning any errors found */
+  def validateField: List[FieldError] = runValidation(valueBox)
+
+  /** Helper function that does validation of a value by using the validators specified for the field */
+  protected def runValidation(in: Box[MyType]): List[FieldError] =
+    validators.flatMap(_(in).map(FieldError(this, _))).removeDuplicates
 
 
   private[record] var data: Box[MyType] = Empty
