@@ -263,11 +263,21 @@ trait MappedForeignKey[KeyType, MyOwner <: Mapper[MyOwner], Other <: KeyedMapper
    */
   def cached_? : Boolean = synchronized{ _calcedObj}
 
-  override protected def dirty_?(b: Boolean) = { // issue 165
-    _obj = Empty
-    _calcedObj = false
+  override protected def dirty_?(b: Boolean) = synchronized { // issue 165
+    // invalidate if the primary key has changed Issue 370
+    if (_obj.isEmpty || (_calcedObj && _obj.isDefined &&
+			 _obj.open_!.primaryKeyField.is != this.i_is_!)) {
+      _obj = Empty
+      _calcedObj = false
+    }
     super.dirty_?(b)
   }
+
+  /**
+   * Some people prefer the name foreign to materialize the
+   * foreign reference.  This is a proxy to the obj method.
+   */
+  def foreign: Box[Other] = obj
 
   /**
    * Load and cache the record that this field references
