@@ -41,18 +41,11 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   */
   def delete_!(inst: BaseRecord): Boolean = {
     foreachCallback(inst, _.beforeDelete)
-    try {
-      delete("_id", inst.id)
-      true
-    }
-    catch {
-      case me: MongoException => false
-    }
-    finally {
-      foreachCallback(inst, _.afterDelete)
-    }
+    delete("_id", inst.id)
+    foreachCallback(inst, _.afterDelete)
+    true
   }
-
+  
   /**
   * Find a single row by a qry, using a DBObject.
   */
@@ -167,40 +160,27 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   def findAll(k: String, o: Any, sort: JObject, opts: FindOption*): List[BaseRecord] =
     findAll(new BasicDBObject(k, o), Some(JObjectParser.parse(sort)), opts :_*)
 
+  private def saveOp(inst: BaseRecord)(f: => Unit): Boolean = {
+    foreachCallback(inst, _.beforeSave)
+    f
+    foreachCallback(inst, _.afterSave)
+    true
+  }
+
   /**
   * Save the instance in the appropriate backing store
   */
-  def save(inst: BaseRecord): Boolean = {
-    foreachCallback(inst, _.beforeSave)
-    try {
-      MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
-        coll.save(inst.asDBObject)
-      )
-      true
-    }
-    catch {
-      case me: MongoException => false
-    }
-    finally {
-      foreachCallback(inst, _.afterSave)
-    }
+  def save(inst: BaseRecord): Boolean = saveOp(inst) {
+    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
+      coll.save(inst.asDBObject)
+    )
   }
 
   /*
   * Save a document to the db using the given Mongo instance
   */
-  def save(inst: BaseRecord, db: DB): Boolean = {
-    foreachCallback(inst, _.beforeSave)
-    try {
-      db.getCollection(collectionName).save(inst.asDBObject)
-      true
-    }
-    catch {
-      case me: MongoException => false
-    }
-    finally {
-      foreachCallback(inst, _.afterSave)
-    }
+  def save(inst: BaseRecord, db: DB): Boolean = saveOp(inst) {
+    db.getCollection(collectionName).save(inst.asDBObject)
   }
 
   /*
