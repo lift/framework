@@ -119,7 +119,7 @@ object BindHelpers extends BindHelpers {
  */
 trait BindHelpers {
   private lazy val logger = Logger(classOf[BindHelpers])
-  
+
   /**
    * Takes attributes from the first node of 'in' (if any) and mixes
    * them into 'out'. Curried form can be used to produce a
@@ -210,7 +210,7 @@ trait BindHelpers {
    * Constant BindParam always returning the same value
    */
   final class TheStrBindParam(val name: String,
-			      val value: String) extends 
+			      val value: String) extends
   Tuple2(name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(Text(value))
   }
@@ -231,9 +231,10 @@ trait BindHelpers {
   }
 
   object AttrBindParam {
-    def apply(name: String,
-	      myValue: => NodeSeq,
-              newAttr: String) = new AttrBindParam(name, myValue, newAttr)
+    def apply(name: String, myValue: => NodeSeq, newAttr: String) =
+      new AttrBindParam(name, myValue, newAttr)
+    def apply(name: String, myValue: String, newAttr: String) =
+      new AttrBindParam(name, Text(myValue), newAttr)
   }
 
   /**
@@ -291,28 +292,28 @@ trait BindHelpers {
   }
 
   object FuncAttrOptionBindParam {
-    def apply(name: String, 
+    def apply(name: String,
 	      func: => NodeSeq => Option[NodeSeq],
-	      newAttr: String) = 
+	      newAttr: String) =
 		new FuncAttrOptionBindParam(name, func, newAttr)
   }
 
   final class FuncAttrOptionBindParam(val name: String,
 				      func: => NodeSeq => Option[NodeSeq],
-				      val newAttr: String) 
+				      val newAttr: String)
 	extends BindParam with BindWithAttr {
     def calcValue(in: NodeSeq): Option[NodeSeq] = func(in)
   }
 
   object FuncAttrBoxBindParam {
     def apply(name: String,
-	      func: => NodeSeq => Box[NodeSeq], 
-	      newAttr: String) = 
+	      func: => NodeSeq => Box[NodeSeq],
+	      newAttr: String) =
 		new FuncAttrBoxBindParam(name, func, newAttr)
   }
 
   final class FuncAttrBoxBindParam(val name: String,
-				   func: => NodeSeq => Box[NodeSeq], 
+				   func: => NodeSeq => Box[NodeSeq],
 				   val newAttr: String) extends
   BindParam with BindWithAttr {
     def calcValue(in: NodeSeq): Option[NodeSeq] = func(in)
@@ -323,8 +324,8 @@ trait BindHelpers {
       new SymbolBindParam(name, value)
   }
 
-  final class SymbolBindParam(val name: String, 
-			      value: Symbol) extends 
+  final class SymbolBindParam(val name: String,
+			      value: Symbol) extends
   Tuple2(name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(Text(value.name))
   }
@@ -334,18 +335,18 @@ trait BindHelpers {
       new IntBindParam(name, value)
   }
 
-  final class IntBindParam(val name: String, 
+  final class IntBindParam(val name: String,
 			   value: Int) extends
   Tuple2[String, Int](name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(Text(value.toString))
   }
 
   object LongBindParam {
-    def apply(name: String, value: Long) = 
+    def apply(name: String, value: Long) =
       new LongBindParam(name, value)
   }
 
-  final class LongBindParam(val name: String, value: Long) extends 
+  final class LongBindParam(val name: String, value: Long) extends
   Tuple2[String, Long](name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(Text(value.toString))
   }
@@ -354,7 +355,7 @@ trait BindHelpers {
     def apply(name: String, value: Boolean) =
       new BooleanBindParam(name, value)
   }
-  
+
   final class BooleanBindParam(val name: String, value: Boolean) extends
   Tuple2[String, Boolean](name, value) with BindParam {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(Text(value.toString))
