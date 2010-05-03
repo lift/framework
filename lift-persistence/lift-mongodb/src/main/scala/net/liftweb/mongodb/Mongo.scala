@@ -14,8 +14,9 @@
 package net.liftweb {
 package mongodb {
 
+import java.util.concurrent.ConcurrentHashMap
+
 import scala.collection.immutable.HashSet
-import scala.collection.mutable.{HashMap => MutableHashMap}
 import scala.reflect.Manifest
 
 import net.liftweb.json.Formats
@@ -68,13 +69,13 @@ object MongoDB {
   /*
   * HashMap of MongoAddresses, keyed by MongoIdentifier
   */
-  private val dbs = new MutableHashMap[MongoIdentifier, MongoAddress]
+  private val dbs = new ConcurrentHashMap[MongoIdentifier, MongoAddress]
 
   /*
   * Define a Mongo db
   */
   def defineDb(name: MongoIdentifier, address: MongoAddress) {
-    dbs(name) = address
+    dbs.put(name, address)
   }
 
   /*
@@ -84,15 +85,15 @@ object MongoDB {
     if (!address.db.authenticate(username, password.toCharArray))
       throw new MongoException("Authorization failed: "+address.toString)
 
-    dbs(name) = address
+    dbs.put(name, address)
   }
 
   /*
   * Get a DB reference
   */
   private def getDb(name: MongoIdentifier): Option[DB] = dbs.get(name) match {
-    case Some(ma: MongoAddress) => Some(ma.db)
-    case _ => None
+    case null => None
+    case ma: MongoAddress => Some(ma.db)
   }
 
   /*
