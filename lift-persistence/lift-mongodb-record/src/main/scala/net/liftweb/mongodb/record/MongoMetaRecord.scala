@@ -262,27 +262,13 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   }
 
   /**
-  * Create a Record then set the fields with the given DBObject
-  *
-  * @param dbo - The DBObject
-  * @return Box[BaseRecord]
-  
-  def fromDBObject(dbo: DBObject): Box[BaseRecord] = {
-    val inst = createRecord
-    setFieldsFromDBObject(inst, dbo) map (_ => inst)
-  }
-  */
-  /**
   * Creates a new record from a then sets the fields with the given DBObject.
   *
   * @param dbo - the DBObject
   * @return Box[BaseRecord]
   */
   def fromDBObject(dbo: DBObject): Box[BaseRecord] = {
-    val inst: BaseRecord = createRecord //rootClass.newInstance.asInstanceOf[BaseRecord]
-    inst.runSafe {
-      introspect(inst, inst.getClass.getMethods) {case (v, mf) => }
-    }
+    val inst: BaseRecord = createRecord
     setFieldsFromDBObject(inst, dbo) map (_ => inst)
   }
   
