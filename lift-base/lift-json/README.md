@@ -482,10 +482,6 @@ Serialization supports:
 * Recursive types
 * Custom serializer functions for types which are not supported (see below)
 
-It does not support:
-
-* Java serialization (classes marked with @serializable annotation etc.)
-
 Serializing polymorphic Lists
 -----------------------------
 
@@ -509,25 +505,37 @@ classname. Other strategies can be implemented by extending TypeHints trait.
 Serializing non-supported types
 -------------------------------
 
-It is possible to plug in custom serializer + deserializer functions for any type which has a type hint.
-Now, if we have a non case class DateTime (thus, not supported by default), we can still serialize it
-by providing following functions.
+It is possible to plug in custom serializer + deserializer functions for any type.
+Now, if we have a non case class Interval (thus, not supported by default), we can still serialize it
+by providing following serializer.
 
-    scala> class DateTime(val time: Long)
+    scala> class Interval(start: Long, end: Long) {
+             val startTime = start
+             val endTime = end
+           }
 
-    scala> val hints = new ShortTypeHints(classOf[DateTime] :: Nil) {
-             override def serialize: PartialFunction[Any, JObject] = {
-               case t: DateTime => JObject(JField("t", JInt(t.time)) :: Nil)
+    scala> class IntervalSerializer extends Serializer[Interval] {
+             private val IntervalClass = classOf[Interval]
+
+             def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Interval] = {
+               case (TypeInfo(IntervalClass, _), json) => json match {
+                 case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) =>
+                   new Interval(s.longValue, e.longValue)
+                 case x => throw new MappingException("Can't convert " + x + " to Interval")
+               }
              }
 
-             override def deserialize: PartialFunction[(String, JObject), Any] = {
-               case ("DateTime", JObject(JField("t", JInt(t)) :: Nil)) => new DateTime(t.longValue)
+             def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
+               case x: Interval =>
+                 JObject(JField("start", JInt(BigInt(x.startTime))) :: 
+                         JField("end",   JInt(BigInt(x.endTime))) :: Nil)
              }
            }
-    scala> implicit val formats = Serialization.formats(hints)
+
+    scala> implicit val formats = Serialization.formats(NoTypeHints) + new IntervalSerializer
 
 Function 'serialize' creates a JSON object to hold serialized data. Function 'deserialize' knows how
-to construct serialized object by pattern matching against serialized type hint and data.
+to construct serialized object by pattern matching against type info and data.
 
 XML support
 ===========

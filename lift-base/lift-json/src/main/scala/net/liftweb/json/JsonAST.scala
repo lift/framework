@@ -438,7 +438,8 @@ trait Implicits {
  * ("name", "joe") ~ ("age", 15) == JObject(JField("name",JString("joe")) :: JField("age",JInt(15)) :: Nil)
  * </pre>
  */
-object JsonDSL extends Implicits with Printer {
+object JsonDSL extends JsonDSL with Printer
+trait JsonDSL extends Implicits {
   import JsonAST._
 
   implicit def seq2jvalue[A <% JValue](s: Seq[A]) = JArray(s.toList.map { a => val v: JValue = a; v })
