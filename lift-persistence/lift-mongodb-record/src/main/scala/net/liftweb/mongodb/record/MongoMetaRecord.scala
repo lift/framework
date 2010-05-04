@@ -41,18 +41,19 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   */
   def delete_!(inst: BaseRecord): Boolean = {
     foreachCallback(inst, _.beforeDelete)
-    try {
-      delete("_id", inst.id)
-      true
-    }
-    catch {
-      case me: MongoException => false
-    }
-    finally {
-      foreachCallback(inst, _.afterDelete)
-    }
+    delete("_id", inst.id)
+    foreachCallback(inst, _.afterDelete)
+    true
   }
-
+  
+  def bulkDelete_!!(qry: DBObject): Unit = {
+  	MongoDB.useCollection(mongoIdentifier, collectionName)(coll => {
+  		coll.remove(qry)
+  	})
+  }
+  
+  def bulkDelete_!!(k: String, o: Any): Unit = bulkDelete_!!(new BasicDBObject(k, o))
+  
   /**
   * Find a single row by a qry, using a DBObject.
   */
@@ -167,40 +168,27 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   def findAll(k: String, o: Any, sort: JObject, opts: FindOption*): List[BaseRecord] =
     findAll(new BasicDBObject(k, o), Some(JObjectParser.parse(sort)), opts :_*)
 
+  private def saveOp(inst: BaseRecord)(f: => Unit): Boolean = {
+    foreachCallback(inst, _.beforeSave)
+    f
+    foreachCallback(inst, _.afterSave)
+    true
+  }
+
   /**
   * Save the instance in the appropriate backing store
   */
-  def save(inst: BaseRecord): Boolean = {
-    foreachCallback(inst, _.beforeSave)
-    try {
-      MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
-        coll.save(inst.asDBObject)
-      )
-      true
-    }
-    catch {
-      case me: MongoException => false
-    }
-    finally {
-      foreachCallback(inst, _.afterSave)
-    }
+  def save(inst: BaseRecord): Boolean = saveOp(inst) {
+    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
+      coll.save(inst.asDBObject)
+    )
   }
 
   /*
   * Save a document to the db using the given Mongo instance
   */
-  def save(inst: BaseRecord, db: DB): Boolean = {
-    foreachCallback(inst, _.beforeSave)
-    try {
-      db.getCollection(collectionName).save(inst.asDBObject)
-      true
-    }
-    catch {
-      case me: MongoException => false
-    }
-    finally {
-      foreachCallback(inst, _.afterSave)
-    }
+  def save(inst: BaseRecord, db: DB): Boolean = saveOp(inst) {
+    db.getCollection(collectionName).save(inst.asDBObject)
   }
 
   /*
@@ -262,27 +250,13 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   }
 
   /**
-  * Create a Record then set the fields with the given DBObject
-  *
-  * @param dbo - The DBObject
-  * @return Box[BaseRecord]
-  
-  def fromDBObject(dbo: DBObject): Box[BaseRecord] = {
-    val inst = createRecord
-    setFieldsFromDBObject(inst, dbo) map (_ => inst)
-  }
-  */
-  /**
   * Creates a new record from a then sets the fields with the given DBObject.
   *
   * @param dbo - the DBObject
   * @return Box[BaseRecord]
   */
   def fromDBObject(dbo: DBObject): Box[BaseRecord] = {
-    val inst: BaseRecord = createRecord //rootClass.newInstance.asInstanceOf[BaseRecord]
-    inst.runSafe {
-      introspect(inst, inst.getClass.getMethods) {case (v, mf) => }
-    }
+    val inst: BaseRecord = createRecord
     setFieldsFromDBObject(inst, dbo) map (_ => inst)
   }
   

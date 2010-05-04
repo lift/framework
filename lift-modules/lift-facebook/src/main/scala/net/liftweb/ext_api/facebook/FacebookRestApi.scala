@@ -25,6 +25,8 @@ import _root_.java.util.Date
 
 import _root_.scala.xml.{Node, XML, NodeSeq}
 
+import _root_.net.liftweb.util.Helpers._
+
 object FacebookRestApi {
   def apiKey = System.getProperty("com.facebook.api_key")
   def secret = System.getProperty("com.facebook.secret")
@@ -70,7 +72,8 @@ object FacebookClient {
         conn.setDoOutput(true)
         conn.connect
         conn.getOutputStream.write(theParams.getBytes())
-
+        
+        conn.setReadTimeout(1.minute.millis.toInt)
         parser(conn.getInputStream())
       }
     }
@@ -161,7 +164,8 @@ class FacebookClient[T](val apiKey: String, val secret: String, val session: Fac
 
         out.flush()
         out.close()
-
+        
+        conn.setReadTimeout(1.minute.millis.toInt)
         parser(conn.getInputStream)
       }
     }
