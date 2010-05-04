@@ -36,7 +36,10 @@ object FacebookRestApi {
 
 object FacebookClient {
   import FacebookRestApi._
-
+  
+  var readTimeout = 10.seconds
+  var connectTimeout = 10.seconds
+  
   val TARGET_API_VERSION = "1.0"
   val FB_SERVER = "api.facebook.com/restserver.php"
   val SERVER_ADDR = "http://" + FB_SERVER
@@ -68,12 +71,14 @@ object FacebookClient {
 
     SERVER_URL.openConnection match {
       case conn: HttpURLConnection => {
+        conn.setReadTimeout(readTimeout.millis.toInt)
+        conn.setConnectTimeout(connectTimeout.millis.toInt)
+        
         conn.setRequestMethod("POST") // [ticket #27]
         conn.setDoOutput(true)
         conn.connect
         conn.getOutputStream.write(theParams.getBytes())
         
-        conn.setReadTimeout(1.minute.millis.toInt)
         parser(conn.getInputStream())
       }
     }
@@ -138,6 +143,9 @@ class FacebookClient[T](val apiKey: String, val secret: String, val session: Fac
     val boundary = System.currentTimeMillis.toString
     SERVER_URL.openConnection match {
       case conn: HttpURLConnection => {
+        conn.setReadTimeout(readTimeout.millis.toInt)
+        conn.setConnectTimeout(connectTimeout.millis.toInt)
+        
         conn.setDoInput(true)
         conn.setDoOutput(true)
         conn.setUseCaches(false)
@@ -165,7 +173,6 @@ class FacebookClient[T](val apiKey: String, val secret: String, val session: Fac
         out.flush()
         out.close()
         
-        conn.setReadTimeout(1.minute.millis.toInt)
         parser(conn.getInputStream)
       }
     }
