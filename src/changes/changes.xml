@@ -52,8 +52,7 @@
         Better control over sessions
       </action>
       <action dev="dpp" type="add" issue="461" system="assembla">
-        Helpful new JsonCommand extractor for pattern matching
-        Json commands
+        Helpful new JsonCommand extractor for pattern matching Json commands
       </action>
       <action dev="dpp" type="fix" issue="467" system="assembla">
         Exceptions during view rendering are properly caught and displayed
@@ -62,8 +61,7 @@
         Rules for quoting column and table names are user-configurable
       </action>
       <action dev="dpp" type="update" issue="477" system="assembla">
-        asJsonValue now returns a Box[JValue] which allows
-        for omitting fields in generated JSON
+        asJsonValue now returns a Box[JValue] which allows for omitting fields in generated JSON
       </action>
       <action dev="dpp" type="add" issue="497" system="assembla">
         The definition of SQL reserved words can be changed
@@ -72,20 +70,16 @@
         Textile correctly handles query strings in URLs
       </action>
       <action dev="dpp" type="fix" issue="496" system="assembla">
-        Updated/fixed the way that ListenerManager handles
-        optional updates
+        Updated/fixed the way that ListenerManager handles optional updates
       </action>
       <action dev="dpp" type="update" issue="487" system="assembla">
-        Relax from StatefulSnippet to DispatchSnippet for certain
-        S registrations
+        Relax from StatefulSnippet to DispatchSnippet for certain S registrations
       </action>
       <action dev="dpp" type="fix" issue="482" system="assembla">
-        Be explicit about the return type in asJsExp so that
-        subclasses aren't co-varied out of luck.
+        Be explicit about the return type in asJsExp so that subclasses aren't co-varied out of luck.
       </action>
       <action dev="dpp" type="add" issue="484" system="assembla">
-        Added flexibility for defining how mail messages are
-        transported in each run mode.
+        Added flexibility for defining how mail messages are transported in each run mode.
       </action>
       <action dev="dpp" type="add" issue="457" system="assembla">
         Added some excellent REST helpers to Lift
@@ -100,67 +94,89 @@
       <action dev="hseeberger" type="fix" issue="462" system="assembla">
         Made Loggable.logger protected in order to prevent from polluting the API of types mixed into.
       </action>
-      <action dev="jeppenejsum" type="fix" issue="469" system="assembla">basic archetype shows error during boot
+      <action dev="jeppenejsum" type="fix" issue="469" system="assembla">
+        basic archetype shows error during boot
       </action>
-      <action dev="dpp" type="update" issue="471" system="assembla">Make entity resurection feature optional</action>
-      <action dev="marius.danciu" type="fix" issue="505" system="assembla">Function evaluation order in test mode when
-        using ajaxSubmit
+      <action dev="dpp" type="update" issue="471" system="assembla">
+        Make entity resurection feature optional
       </action>
-      <action dev="jeppenejsum" type="add" issue="368" system="assembla">Introduce a validateSignup method</action>
-      <action dev="marius.danciu" type="fix" issue="372" system="assembla">Allow streaming a file directly using an
-        OutputStream
+      <action dev="marius.danciu" type="fix" issue="505" system="assembla">
+        Function evaluation order in test mode when using ajaxSubmit
       </action>
-      <action dev="dpp" type="add" issue="453" system="assembla">Add an SBT archetype based on the Basic Archetype
+      <action dev="jeppenejsum" type="add" issue="368" system="assembla">
+        Introduce a validateSignup method
       </action>
-      <action dev="marius.danciu" type="fix" issue="459" system="assembla">Comet updates delayed for full long-poll
-        duration
+      <action dev="marius.danciu" type="fix" issue="372" system="assembla">
+        Allow streaming a file directly using an OutputStream
       </action>
-      <action dev="jeppenejsum" type="fix" issue="460" system="assembla">CRUDify doesn't filter hidden fields</action>
-      <action dev="marius.danciu" type="fix" issue="463" system="assembla">Change order of render and fixedRender in
-        CometActor
+      <action dev="dpp" type="add" issue="453" system="assembla">
+        Add an SBT archetype based on the Basic Archetype
       </action>
-      <action dev="jeppenejsum" type="update" issue="465" system="assembla">Move asHtml to BaseField</action>
-      <action dev="jeppenejsum" type="add" issue="466" system="assembla">Add widget that allows changing of loglevels at
-        runtime
+      <action dev="marius.danciu" type="fix" issue="459" system="assembla">
+        Comet updates delayed for full long-poll duration
       </action>
-      <action dev="dpp" type="fix" issue="472" system="assembla">Make FactoryMaker take a Vendor rather than a () => T
+      <action dev="jeppenejsum" type="fix" issue="460" system="assembla">
+        CRUDify doesn't filter hidden fields
       </action>
-      <action dev="jeppenejsum" type="fix" issue="473" system="assembla">Show non-minified javascript when running in
-        dev mode
+      <action dev="marius.danciu" type="fix" issue="463" system="assembla">
+        Change order of render and fixedRender in CometActor
       </action>
-      <action dev="marius.danciu" type="fix" issue="474" system="assembla">Redirects involving window.location in
-        response to comet requests can produce a persistent request loop in Firefox
+      <action dev="jeppenejsum" type="update" issue="465" system="assembla">
+        Move asHtml to BaseField
       </action>
-      <action dev="jstrachan" type="add" issue="475" system="assembla">support Scalate as an optional new form of
-        templates in addition to Lift templates
+      <action dev="jeppenejsum" type="add" issue="466" system="assembla">
+        Add widget that allows changing of loglevels at runtime
       </action>
-      <action dev="jonifreeman" type="update" issue="481" system="assembla">Improve segment cache in JSON parser
+      <action dev="dpp" type="fix" issue="472" system="assembla">
+        Make FactoryMaker take a Vendor rather than a () => T
       </action>
-      <action dev="marius.danciu" type="add" issue="485" system="assembla">Add Global Fade Out Mechanism for Lift
-        Messages
+      <action dev="jeppenejsum" type="fix" issue="473" system="assembla">
+        Show non-minified javascript when running in dev mode
       </action>
-      <action dev="jonifreeman" type="fix" issue="486" system="assembla">Empty XML tag should not be rendered into JSON
+      <action dev="marius.danciu" type="fix" issue="474" system="assembla">
+        Redirects involving window.location in response to comet requests can produce a persistent request loop in Firefox
       </action>
-      <action dev="jeppenejsum" type="fix" issue="492" system="assembla">Lift-OpenID Is Missing Commons-Logging
-        Dependency
+      <action dev="jstrachan" type="add" issue="475" system="assembla">
+        support Scalate as an optional new form of templates in addition to Lift templates
       </action>
-      <action dev="eltimn" type="fix" issue="498" system="assembla">Companion object for LocaleField</action>
-      <action dev="eltimn" type="fix" issue="500" system="assembla">Integrate Scamongo</action>
-      <action dev="jorge.ortiz" type="fix" issue="506" system="assembla">mongodb-record swallows errors</action>
-      <action dev="jorge.ortiz" type="fix" issue="507" system="assembla">object MongoDB not thread-safe</action>
-      <action dev="jorge.ortiz" type="fix" issue="508" system="assembla">FacebookClient calls can block indefinitely
+      <action dev="jonifreeman" type="update" issue="481" system="assembla">
+        Improve segment cache in JSON parser
       </action>
-      <action dev="indrajitr" type="fix" issue="490" system="assembla">Update h2 version to newer one and have the scope
-        adjusted to runtime Indrajit Raychaudhuri Fixed
+      <action dev="marius.danciu" type="add" issue="485" system="assembla">
+        Add Global Fade Out Mechanism for Lift Messages
       </action>
-      <action dev="indrajitr" type="fix" issue="491" system="assembla">Use vscaladoc instead of scaladoc for archetype
-        templates Indrajit Raychaudhuri Fixed
+      <action dev="jonifreeman" type="fix" issue="486" system="assembla">
+        Empty XML tag should not be rendered into JSON
       </action>
-      <action dev="indrajitr" type="update" issue="503" system="assembla">Set jvmArg -Xmx1024m by default for
-        maven-scala-plugin for archetype templates Indrajit Raychaudhuri Fixed
+      <action dev="jeppenejsum" type="fix" issue="492" system="assembla">
+        Lift-OpenID Is Missing Commons-Logging Dependency
       </action>
-      <action dev="indrajitr" type="update" issue="504" system="assembla">Set charset to UTF-8 by default for
-        maven-scala-plugin for archetype templates Indrajit Raychaudhuri Fixed
+      <action dev="eltimn" type="fix" issue="498" system="assembla">
+        Companion object for LocaleField
+      </action>
+      <action dev="eltimn" type="fix" issue="500" system="assembla">
+        Integrate Scamongo
+      </action>
+      <action dev="jorge.ortiz" type="fix" issue="506" system="assembla">
+        mongodb-record swallows errors
+      </action>
+      <action dev="jorge.ortiz" type="fix" issue="507" system="assembla">
+        object MongoDB not thread-safe
+      </action>
+      <action dev="jorge.ortiz" type="fix" issue="508" system="assembla">
+        FacebookClient calls can block indefinitely
+      </action>
+      <action dev="indrajitr" type="fix" issue="490" system="assembla">
+        Update h2 version to newer one and have the scope adjusted to runtime
+      </action>
+      <action dev="indrajitr" type="fix" issue="491" system="assembla">
+        Use vscaladoc instead of scaladoc for archetype templates
+      </action>
+      <action dev="indrajitr" type="update" issue="503" system="assembla">
+        Set jvmArg -Xmx1024m by default for maven-scala-plugin for archetype templates
+      </action>
+      <action dev="indrajitr" type="update" issue="504" system="assembla">
+        Set charset to UTF-8 by default for maven-scala-plugin for archetype templates
       </action>
     </release>
 
