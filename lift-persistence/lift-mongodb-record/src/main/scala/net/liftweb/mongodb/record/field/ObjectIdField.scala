@@ -12,7 +12,9 @@
 */
 
 package net.liftweb {
-package mongodb.record.field {
+package mongodb {
+package record {
+package field {
 
 import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
 import _root_.net.liftweb.http.js.JE.{JsNull, Str}
@@ -46,7 +48,7 @@ class ObjectIdField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
     case oid: ObjectId => Full(set(oid))
     case Some(oid: ObjectId) => Full(set(oid))
     case Full(oid: ObjectId) => Full(set(oid))
-    case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny)(0)
+    case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny).apply(0)
     case (s: String) :: _ => setFromString(s)
     case null => Full(set(null))
     case s: String => setFromString(s)
@@ -66,5 +68,7 @@ class ObjectIdField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
   def owner = rec
 }
 
+}
+}
 }
 }

@@ -12,7 +12,8 @@
 */
 
 package net.liftweb {
-package mongodb.record {
+package mongodb {
+package record {
 
 import net.liftweb.common.{Box, Full}
 import net.liftweb.record.{MetaRecord, Record}
@@ -105,5 +106,6 @@ trait MongoId[OwnerType <: MongoRecord[OwnerType]] {
   }
 }
 
+}
 }
 }

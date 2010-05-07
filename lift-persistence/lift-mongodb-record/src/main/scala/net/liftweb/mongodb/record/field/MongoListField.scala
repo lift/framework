@@ -12,11 +12,14 @@
 */
 
 package net.liftweb {
-package mongodb.record.field {
+package mongodb {
+package record {
+package field {
 
 import java.util.Date
 
-import scala.collection.jcl.Conversions._
+import scala.collection.JavaConversions._
+// import scala.collection.jcl.Conversions._
 
 import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
 import _root_.net.liftweb.json.JsonAST.{JNothing, JObject, JValue}
@@ -169,5 +172,7 @@ class MongoJsonObjectListField[OwnerType <: MongoRecord[OwnerType], CaseType <: 
 }
 */
 
+}
+}
 }
 }

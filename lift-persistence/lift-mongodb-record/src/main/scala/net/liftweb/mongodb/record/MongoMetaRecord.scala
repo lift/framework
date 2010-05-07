@@ -12,12 +12,14 @@
 */
 
 package net.liftweb {
-package mongodb.record {
+package mongodb {
+package record {
 
 import java.util.Calendar
 import java.util.regex.Pattern
 
-import scala.collection.jcl.Conversions._
+import scala.collection.JavaConversions._
+// import scala.collection.jcl.Conversions._
 
 import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.json.Formats
@@ -279,5 +281,6 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
 
 }
 
+}
 }
 }

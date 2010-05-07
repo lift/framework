@@ -12,7 +12,9 @@
 */
 
 package net.liftweb {
-package mongodb.record.field {
+package mongodb {
+package record {
+package field {
 
 import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
 import _root_.net.liftweb.http.js.JE.Str
@@ -74,7 +76,8 @@ class MongoMapField[OwnerType <: MongoRecord[OwnerType], MapValueType](rec: Owne
 
   // set this field's value using a DBObject returned from Mongo.
   def setFromDBObject(dbo: DBObject): Box[Map[String, MapValueType]] = {
-    import scala.collection.jcl.Conversions._
+    import scala.collection.JavaConversions._
+    // import scala.collection.jcl.Conversions._
     //import scala.collection.mutable.{Map => MMap}
 
     var ret = Map[String, MapValueType]()
@@ -86,5 +89,7 @@ class MongoMapField[OwnerType <: MongoRecord[OwnerType], MapValueType](rec: Owne
   }
 }
 
+}
+}
 }
 }

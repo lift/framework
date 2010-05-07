@@ -14,7 +14,7 @@
 package net.liftweb {
 package mongodb { 
 
-import _root_.scala.collection.jcl.Conversions._
+import scala.collection.JavaConversions._
 
 import _root_.java.util.Date
 

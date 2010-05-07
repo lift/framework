@@ -12,7 +12,9 @@
 */
 
 package net.liftweb {
-package mongodb.record.field {
+package mongodb {
+package record {
+package field {
 
 import scala.xml.{Node, NodeSeq, Text}
 
@@ -50,5 +52,7 @@ trait MongoFieldFlavor[MyType] {
 
 }
 
+}
+}
 }
 }
