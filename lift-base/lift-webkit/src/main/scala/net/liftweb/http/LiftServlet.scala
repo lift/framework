@@ -288,17 +288,20 @@ class LiftServlet extends Loggable {
       toReturn
     }
 
-  private def extractVersion(path: List[String]) {
+  private def extractMeta(path: List[String]) {
     path match {
-      case first :: second :: _ => RenderVersion.set(second)
+      case first :: second :: third :: _ => 
+        CallId.set(Full(second))
+        RenderVersion.set(third)
+      case first :: second :: _ => 
+        CallId.set(Full(second))
       case _ =>
     }
   }
 
   private def handleAjax(liftSession: LiftSession,
-                         requestState: Req): Box[LiftResponse] =
-    {
-      extractVersion(requestState.path.partPath)
+                         requestState: Req): Box[LiftResponse] = {
+      extractMeta(requestState.path.partPath)
 
       LiftRules.cometLogger.debug("AJAX Request: " + liftSession.uniqueId + " " + requestState.params)
       tryo {LiftSession.onBeginServicing.foreach(_(liftSession, requestState))}
