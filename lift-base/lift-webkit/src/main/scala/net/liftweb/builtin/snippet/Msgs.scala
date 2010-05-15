@@ -99,20 +99,30 @@ object Msgs extends DispatchSnippet {
     (<div>{msgs}</div> % ("id" -> LiftRules.noticesContainerId)) ++
     noticesFadeOut(NoticeType.Notice, LiftRules.noticesContainerId + "_notice") ++
     noticesFadeOut(NoticeType.Warning, LiftRules.noticesContainerId + "_warn") ++
-    noticesFadeOut(NoticeType.Error, LiftRules.noticesContainerId + "_error")
+    noticesFadeOut(NoticeType.Error, LiftRules.noticesContainerId + "_error") ++
+    effects(NoticeType.Notice, LiftRules.noticesContainerId + "_notice") ++
+    effects(NoticeType.Warning, LiftRules.noticesContainerId + "_warn") ++
+    effects(NoticeType.Error, LiftRules.noticesContainerId + "_error")
     
   }
 
   def noticesFadeOut(noticeType: NoticeType.Value, id: String): NodeSeq = {
-
     (LiftRules.noticesAutoFadeOut()(noticeType) map {
       case (duration, fadeTime) => 
         <lift:tail>{
-          Script(LiftRules.jsArtifacts.fadeOut(id, duration, fadeTime))
+          Script(OnLoad(LiftRules.jsArtifacts.fadeOut(id, duration, fadeTime)))
         }</lift:tail>
     }) openOr NodeSeq.Empty
   }
 
+  def effects(noticeType: NoticeType.Value, id: String): NodeSeq = 
+    LiftRules.noticesEffects()(Full(noticeType), id) match {
+      case Full(jsCmd) => 
+        <lift:tail>{
+          Script(OnLoad(jsCmd))
+        }</lift:tail>
+      case _ =>  NodeSeq.Empty
+    }
 
 }
 
