@@ -174,6 +174,17 @@ object JsonAST {
       rec(this)
     }
 
+    /** Return a new JValue resulting from applying the given partial function <code>f</code>
+     * to each element in JSON.
+     * <p>
+     * Example:<pre>
+     * JArray(JInt(1) :: JInt(2) :: Nil) transform { case JInt(x) => JInt(x+1) }
+     * </pre>
+     */
+    def transform(f: PartialFunction[JValue, JValue]): JValue = map { x =>
+      if (f.isDefinedAt(x)) f(x) else x
+    }
+
     /** Return a new JValue resulting from replacing the value at the specified field
      * path with the replacement value provided. This has no effect if the path is empty
      * or if the value is not a JObject instance.

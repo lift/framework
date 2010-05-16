@@ -148,7 +148,6 @@ object JsonASTSpec extends Specification with JValueGen with ScalaCheck {
     forAll(anyReplacement) must pass
   }
 
-
   private def reorderFields(json: JValue) = json map {
     case JObject(xs) => JObject(xs.reverse)
     case x => x
