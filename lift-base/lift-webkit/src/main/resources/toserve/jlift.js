@@ -208,9 +208,11 @@
 
 			visible.onclick = function() {
 				jQuery(visible).hide();
-				jQuery(hidden).show();
-				jQuery(hidden).focus();
-				jQuery(hidden).children(":input").focus();
+			        jQuery(hidden).show();
+                                if (jQuery(hidden).is("input"))
+                                  jQuery(hidden).focus();
+                                else
+				  jQuery(hidden).find("input")[0].focus();
 				return false;
 			};
 
