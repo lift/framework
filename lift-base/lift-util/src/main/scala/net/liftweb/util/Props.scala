@@ -114,11 +114,13 @@ object Props extends Logger {
       case Full("pilot") => Pilot
       case Full("profile") => Profile
       case Full("development") => Development
-      case _ =>
+      case _ => {
         val exp = new Exception
         exp.fillInStackTrace
         if (exp.getStackTrace.find(st => st.getClassName.indexOf("SurefireBooter") >= 0).isDefined) Test
+        else if (exp.getStackTrace.find(st => st.getClassName.indexOf("sbt.TestRunner") >= 0).isDefined) Test
         else Development
+      }
     }
   }
 
