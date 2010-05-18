@@ -29,6 +29,8 @@ import _root_.net.liftweb.util.ActorPing
 import _root_.java.util.{Locale, ResourceBundle}
 import _root_.java.net.URL
 import js._
+import JsCmds._
+import JE._
 import auth._
 import provider._
 
@@ -288,17 +290,20 @@ class LiftServlet extends Loggable {
       toReturn
     }
 
-  private def extractVersion(path: List[String]) {
+  private def extractMeta(path: List[String]) {
     path match {
-      case first :: second :: _ => RenderVersion.set(second)
+      case first :: second :: third :: _ => 
+        CallId.set(Full(second))
+        RenderVersion.set(third)
+      case first :: second :: _ => 
+        CallId.set(Full(second))
       case _ =>
     }
   }
 
   private def handleAjax(liftSession: LiftSession,
-                         requestState: Req): Box[LiftResponse] =
-    {
-      extractVersion(requestState.path.partPath)
+                         requestState: Req): Box[LiftResponse] = {
+      extractMeta(requestState.path.partPath)
 
       LiftRules.cometLogger.debug("AJAX Request: " + liftSession.uniqueId + " " + requestState.params)
       tryo {LiftSession.onBeginServicing.foreach(_(liftSession, requestState))}
@@ -321,13 +326,15 @@ class LiftServlet extends Loggable {
               case s => Nil
             }
 
+            val callId: JsCmd = if (LiftRules.autoIncludeAjax(liftSession)) (JsVar("lift_callId") === Str(Helpers.nextFuncName)) else Noop
+
             val ret: LiftResponse = what2 match {
               case (json: JsObj) :: Nil => JsonResponse(json)
-              case (js: JsCmd) :: xs => (JsCommands(S.noticesToJsCmd :: Nil) & ((js :: xs).flatMap {case js: JsCmd => List(js) case _ => Nil}.reverse)).toResponse
+              case (js: JsCmd) :: xs => (JsCommands(S.noticesToJsCmd :: callId :: Nil) & ((js :: xs).flatMap {case js: JsCmd => List(js) case _ => Nil}.reverse)).toResponse
               case (n: Node) :: _ => XmlResponse(n)
               case (ns: NodeSeq) :: _ => XmlResponse(Group(ns))
               case (r: LiftResponse) :: _ => r
-              case _ => JsCommands(S.noticesToJsCmd :: JsCmds.Noop :: Nil).toResponse
+              case _ => JsCommands(S.noticesToJsCmd :: callId :: Noop :: Nil).toResponse
             }
 
             LiftRules.cometLogger.debug("AJAX Response: " + liftSession.uniqueId + " " + ret)

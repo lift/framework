@@ -2015,6 +2015,8 @@ for {
     def sessionLife: Boolean = _sessionLife
 
     private[this] val _sessionLife: Boolean = functionLifespan_?
+
+    private[http] var callId: Box[String] = Empty
   }
 
   /**
