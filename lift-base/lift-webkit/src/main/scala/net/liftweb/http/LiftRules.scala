@@ -63,9 +63,20 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   /** 
    * Set the default fadeout mechanism for Lift notices. Thus you provide a function that take a NoticeType.Value
    * and decide the duration after which the fade out will start and the actual fadeout time. This is applicable
-   * for notices regardless if they are set for the page rendering, ajax response or Comet response.
+   * for general notices (not associated with id-s) regardless if they are set for the page rendering, ajax
+   * response or Comet response.
    */
   var noticesAutoFadeOut = new FactoryMaker[(NoticeType.Value) => Box[(TimeSpan, TimeSpan)]]((notice : NoticeType.Value) => Empty){}
+
+  /**
+   * Use this to apply various effects to the notices. The user function receives the NoticeType
+   * and the id of the element containing the specific notice. Thus it is the function's responsability to form
+   * the javascript code for the visual effects. This is applicable for both ajax and non ajax contexts.
+   * For notices associated with ID's the user type will receive an Empty notice type. That's because the effect
+   * is applied on the real estate holding the notices for this ID. Typically this contains a single message. 
+   */
+  var noticesEffects = new FactoryMaker[(Box[NoticeType.Value], String) => Box[JsCmd]]((notice: Box[NoticeType.Value], id: String) => Empty){}
+
 
   /**
    * Holds user functions that willbe executed very early in the request processing. The functions'
@@ -344,6 +355,13 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
         case (duration, fadeTime) => LiftRules.jsArtifacts.fadeOut(id, duration, fadeTime)
       }) openOr Noop
 
+    def effects(noticeType: Box[NoticeType.Value], id: String): JsCmd = 
+      LiftRules.noticesEffects()(noticeType, id) match {
+        case Full(jsCmd) => jsCmd
+        case _ => Noop
+      }
+
+
     val func: (() => List[NodeSeq], String, MetaData) => NodeSeq = (f, title, attr) => f() map (e => <li>{e}</li>) match {
       case Nil => Nil
       case list => <div>{title}<ul>{list}</ul> </div> % attr
@@ -369,7 +387,10 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
       case _ => LiftRules.jsArtifacts.setHtml(LiftRules.noticesContainerId, xml) &
         noticesFadeOut(NoticeType.Notice, LiftRules.noticesContainerId + "_notice") &
         noticesFadeOut(NoticeType.Warning, LiftRules.noticesContainerId + "_warn") &
-        noticesFadeOut(NoticeType.Error, LiftRules.noticesContainerId + "_error")
+        noticesFadeOut(NoticeType.Error, LiftRules.noticesContainerId + "_error") &
+        effects(Full(NoticeType.Notice), LiftRules.noticesContainerId + "_notice") &
+        effects(Full(NoticeType.Warning), LiftRules.noticesContainerId + "_warn") &
+        effects(Full(NoticeType.Error), LiftRules.noticesContainerId + "_error")
     }
 
     val g = S.idMessages _
@@ -378,7 +399,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
       (MsgNoticeMeta.get, g(S.notices))).foldLeft(groupMessages)((car, cdr) => cdr match {
       case (meta, m) => m.foldLeft(car)((left, r) =>
               left & LiftRules.jsArtifacts.setHtml(r._1, <span>{r._2 flatMap (node => node)}</span> %
-                      (Box(meta.get(r._1)).map(new UnprefixedAttribute("class", _, Null)) openOr Null)))
+                      (Box(meta.get(r._1)).map(new UnprefixedAttribute("class", _, Null)) openOr Null)) & effects(Empty, r._1))
     })
   }
 
