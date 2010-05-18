@@ -207,14 +207,14 @@
 			}
 
 			visible.onclick = function() {
-				jQuery(visible).hide();
-			        jQuery(hidden).show();
-                                if (jQuery(hidden).is("input"))
-                                  jQuery(hidden).focus();
-                                else
-				  jQuery(hidden).find("input")[0].focus();
-				return false;
-			};
+                          jQuery(visible).hide();
+                          jQuery(hidden).show();
+                          if (jQuery(hidden).is("input"))
+                            jQuery(hidden).focus();
+                          else
+                            jQuery(hidden).find("input")[0].focus();
+                          return false;
+ 			};
 
 			hidden.style.display = "none";
 
@@ -247,8 +247,8 @@
                   ret[obj.name] = [cur, obj.value];
               }
             }
-			return ret;
-		}
+	    return ret;
+	   }
 	};
 
 })();
