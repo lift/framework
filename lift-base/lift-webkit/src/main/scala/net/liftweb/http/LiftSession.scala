@@ -258,7 +258,6 @@ object SessionMaster extends LiftActor with Loggable {
 
 
 object PageName extends RequestVar[String]("")
-object CallId extends RequestVar[Box[String]](Empty)
 
 /**
  * Information about the page garbage collection
@@ -377,20 +376,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       }
     }
 
-    def buildFunc(i: RunnerHolder): () => Any = 
-      if (i.func.callId == CallId.get) {
-        Log.debug("Function " + CallId.get + " was already invoked.")
-        () => {}
-      } else {
-        i.func.callId = CallId.get
-        i.func match {
-          case bfh if bfh.supportsFileParams_? =>
-            () => state.uploadedFiles.filter(_.name == i.name).map(v => bfh(v))
-          case normal =>
-            () => normal(state.params.getOrElse(i.name,
-              state.uploadedFiles.filter(_.name == i.name).map(_.fileName)))
-        }
-      }
+    def buildFunc(i: RunnerHolder): () => Any = i.func match {
+      case bfh if bfh.supportsFileParams_? =>
+        () => state.uploadedFiles.filter(_.name == i.name).map(v => bfh(v))
+      case normal =>
+        () => normal(state.params.getOrElse(i.name,
+          state.uploadedFiles.filter(_.name == i.name).map(_.fileName)))
+    }
 
     val ret = toRun.map(_.owner).removeDuplicates.flatMap {
       w =>

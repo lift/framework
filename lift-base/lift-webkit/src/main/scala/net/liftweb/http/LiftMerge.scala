@@ -177,8 +177,6 @@ private[http] trait LiftMerge {
                         "/" + LiftRules.ajaxScriptName())}
                 type="text/javascript"/>
         bodyChildren += nl
-        bodyChildren += JsCmds.Script(JsCmds.JsCrVar("lift_callId", JE.Str(Helpers.nextFuncName)))
-        bodyChildren += nl
       }
 
       val cometList = cometTimes.toList

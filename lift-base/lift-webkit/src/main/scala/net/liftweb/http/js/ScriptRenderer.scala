@@ -166,9 +166,9 @@ object ScriptRenderer {
        addPageName: function(url) {
          return """ + {
     if (LiftRules.enableLiftGC) {
-      "url.replace('" + LiftRules.ajaxPath + "', '" + LiftRules.ajaxPath + "/'+lift_callId + '/' + lift_page);"
+      "url.replace('" + LiftRules.ajaxPath + "', '" + LiftRules.ajaxPath + "/'+lift_page);"
     } else {
-      "url.replace('" + LiftRules.ajaxPath + "', '" + LiftRules.ajaxPath + "/' + lift_callId);"
+      "url;"
     }
   } + """
     },
