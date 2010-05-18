@@ -262,7 +262,7 @@ object PageName extends RequestVar[String]("")
 /**
  * Information about the page garbage collection
  */
-object RenderVersion {
+private[http] object RenderVersion {
   private object ver extends RequestVar(Helpers.nextFuncName)
   def get: String = ver.is
 
