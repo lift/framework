@@ -300,6 +300,15 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
   def lifespan: Box[TimeSpan] = Empty
 
+  private var _running = true
+
+  private var _shutDownAt = millis
+
+  /**
+   * Is the CometActor running?
+   */
+  protected def running = _running
+
   protected def initCometActor(theSession: LiftSession,
                                theType: Box[String],
                                name: Box[String],
@@ -400,13 +409,13 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
               what.apply(in)
               if (S.functionMap.size > 0) {
                 theSession.updateFunctionMap(S.functionMap,
-                  uniqueId, lastRenderTime)
+                                             uniqueId, lastRenderTime)
                 S.clearFunctionMap
               }
             }
           }
         }
-
+      
       def isDefinedAt(in: Any): Boolean =
         CurrentCometActor.doWith(Full(CometActor.this)) {
           S.initIfUninitted(theSession) {
@@ -416,10 +425,9 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
           }
         }
     }
-
+    
     myPf
   }
-
 
   def fixedRender: Box[NodeSeq] = Empty
 
@@ -599,18 +607,26 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     whosAsking = Empty
     deltas = Nil
     jsonHandlerChain = Map.empty
+    _running = false
+    _shutDownAt = millis
   }
 
   /**
    * This method will be called as part of the shut-down of the actor.  Release any resources here.
    */
-  protected def localShutdown(): Unit = {
+  protected def localShutdown(): Unit = {}
 
+  protected def composeFunction = composeFunction_i
+
+  private def composeFunction_i = {
+    // if we're no longer running don't pass messages to the other handlers
+    // just pass them to our handlers
+    if (!_running && (millis - 20000L) > _shutDownAt) 
+      _mediumPriority orElse _lowPriority
+    else 
+      highPriority orElse mediumPriority orElse 
+    _mediumPriority orElse lowPriority orElse _lowPriority
   }
-
-  def composeFunction = composeFunction_i
-
-  private def composeFunction_i = highPriority orElse mediumPriority orElse _mediumPriority orElse lowPriority orElse _lowPriority
 
   def bind(prefix: String, vals: BindParam*): NodeSeq = bind(prefix, _defaultXml, vals: _*)
 
