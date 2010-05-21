@@ -50,7 +50,6 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
       List(' ', '\t', '\r', '\n') foreach { wsc(_) must beTrue }
       wsc('a') must beFalse
     }
-    /* FIXME: 280
     "provide a whitespace parser: white. Alias: wsc" in {
       import whiteStringGen._
       val whiteParse = (s: String) => wsc(s) must beLike { case Success(_, _) => true }
@@ -64,7 +63,6 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
       }
       forAll(whiteSpaceParse) must pass
     }
-    */
     "provide an acceptCI parser to parse whatever string matching another string ignoring case" in {
       import abcdStringGen._
       val ignoreCaseStringParse: Function2[String, String, Boolean] =
