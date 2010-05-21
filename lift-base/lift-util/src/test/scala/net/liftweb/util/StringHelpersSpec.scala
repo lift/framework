@@ -41,20 +41,20 @@ object StringHelpersSpec extends Specification with StringHelpers with StringGen
       snakify("my_snake_case") must_== "my_snake_case"
       snakify("snake") must_== "snake"
     }
-    
+
     "handle abbeviations" in {
       snakify("HTML") must_== "html"
       snakify("HTMLEditor") must_== "html_editor"
       snakify("EditorTOC") must_== "editor_toc"
       snakify("HTMLEditorTOC") must_== "html_editor_toc"
-     
+
       snakify("HTML5") must_== "html5"
       snakify("HTML5Editor") must_== "html5_editor"
       snakify("Editor2TOC") must_== "editor2_toc"
       snakify("HTML5Editor2TOC") must_== "html5_editor2_toc"
     }
   }
-  
+
   "The camelify function" should {
     "CamelCase a name which is underscored, removing each underscore and capitalizing the next letter" in {
       def previousCharacterIsUnderscore(name: String, i: Int) = i > 1 && name.charAt(i - 1) == '_'
@@ -82,7 +82,7 @@ object StringHelpersSpec extends Specification with StringHelpers with StringGen
       camelCasedNameDoesntChange must pass
     }
   }
-  
+
   "The camelifyMethod function" should {
     "camelCase a name with the first letter being lower cased" in {
       val camelCasedMethodIsCamelCaseWithLowerCase = forAllProp(underscoredStrings){
@@ -93,7 +93,7 @@ object StringHelpersSpec extends Specification with StringHelpers with StringGen
       camelCasedMethodIsCamelCaseWithLowerCase must pass
     }
   }
-  
+
   "The StringHelpers processString function" should {
     "replace groups found in a string surrounded by <%= ... %> by their corresponding value in a map" in {
       processString("<%=hello%>", Map("hello" -> "bonjour")) must_== "bonjour"
@@ -108,7 +108,7 @@ object StringHelpersSpec extends Specification with StringHelpers with StringGen
       processString("<%=hello%>", Map("hallo" -> "bonjour")) must throwA[Exception]
     }
   }
-  
+
   "The StringHelpers capify function" should {
     "capitalize a word" in {
       capify("hello") must_== "Hello"
@@ -284,7 +284,7 @@ object StringHelpersSpec extends Specification with StringHelpers with StringGen
 class StringHelpersSpecTest extends JUnit4(StringHelpersSpec)
 trait StringGenerators {
   val underscoredStrings = for {length <- choose(0, 4)
-                                s <- listOfN(length, frequency((3, alphaChar), (1, Gen.oneOf('_'))))
+                                s <- listOfN(length, frequency((3, alphaChar), (1, Gen.oneOf(List('_')))))
                                 } yield List.toString(s)
 
   val camelCasedStrings = for {length <- choose(0, 4)
