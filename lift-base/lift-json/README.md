@@ -420,6 +420,16 @@ Use transform function to postprocess AST.
              case JField("first-name", x) => JField("firstname", x)
            }
 
+Extraction function tries to find the best matching constructor when case class has auxiliary
+constructors. For instance extracting from JSON {"price":350} into the following case class
+will use the auxiliary constructor instead of the primary constructor.
+
+    scala> case class Bike(make: String, price: Int) {
+             def this(price: Int) = this("Trek", price)
+           }
+    scala> parse(""" {"price":350} """).extract[Bike]
+    res0: Bike = Bike(Trek,350)
+
 Primitive values can be extracted from JSON primitives or fields.
 
     scala> (json \ "name").extract[String]
