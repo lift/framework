@@ -18,7 +18,7 @@ package net.liftweb {
 package json {
 
 import _root_.org.scalacheck._
-import _root_.org.scalacheck.Prop.forAll
+import _root_.org.scalacheck.Prop.{forAll, forAllNoShrink}
 import _root_.org.specs.Specification
 import _root_.org.specs.runner.{Runner, JUnit}
 import _root_.org.specs.ScalaCheck
@@ -95,9 +95,8 @@ object JsonASTSpec extends Specification with JValueGen with ScalaCheck {
     forAll(removeNothingProp) must pass
   }
 
-  /* FIXME: 280
   "Remove removes only matching elements (in case of a field, its value is set to JNothing)" in {
-    val removeProp = (json: JValue, x: Class[_ <: JValue]) => {
+    forAllNoShrink(genJValue, genJValueClass) { (json: JValue, x: Class[_ <: JValue]) => {
       val removed = json remove typePredicate(x)
       val Diff(c, a, d) = json diff removed
       val elemsLeft = removed filter {
@@ -105,10 +104,8 @@ object JsonASTSpec extends Specification with JValueGen with ScalaCheck {
         case _ => true
       }
       c == JNothing && a == JNothing && elemsLeft.forall(_.getClass != x)
-    }
-    forAll(removeProp) must pass
+    }} must pass
   }
-  */
 
   "Replace one" in {
     val anyReplacement = (x: JValue, replacement: JObject) => {
@@ -162,7 +159,6 @@ object JsonASTSpec extends Specification with JValueGen with ScalaCheck {
 
   implicit def arbJValue: Arbitrary[JValue] = Arbitrary(genJValue)
   implicit def arbJObject: Arbitrary[JObject] = Arbitrary(genObject)
-  implicit def arbJValueClass: Arbitrary[Class[_ <: JValue]] = Arbitrary(genJValueClass)
 }
 
 }
