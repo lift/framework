@@ -262,7 +262,7 @@ XPath + HOFs
 ------------
 
 Json AST can be queried using XPath like functions. Following REPL session shows the usage of 
-'\\', '\\\\', 'find', 'filter', 'map', 'remove' and 'values' functions. 
+'\\', '\\\\', 'find', 'filter', 'transform', 'remove' and 'values' functions. 
 
     The example json is:
 
@@ -327,9 +327,8 @@ Json AST can be queried using XPath like functions. Following REPL session shows
            }
     res7: List[net.liftweb.json.JsonAST.JValue] = List(JField(name,JString(Joe)), JField(name,JString(Marilyn)))
 
-    scala> json map {
+    scala> json transform {
              case JField("name", JString(s)) => JField("NAME", JString(s.toUpperCase))
-             case x => x
            }
     res8: net.liftweb.json.JsonAST.JValue = JObject(List(JField(person,JObject(List(
     JField(NAME,JString(JOE)), JField(age,JInt(35)), JField(spouse,JObject(List(
@@ -414,12 +413,11 @@ Use back ticks.
 
     scala> case class Person(`first-name`: String)
 
-Use map function to postprocess AST.
+Use transform function to postprocess AST.
 
     scala> case class Person(firstname: String)
-    scala> json map {
+    scala> json transform {
              case JField("first-name", x) => JField("firstname", x)
-             case x => x
            }
 
 Primitive values can be extracted from JSON primitives or fields.
@@ -484,10 +482,6 @@ Serialization supports:
 * Recursive types
 * Custom serializer functions for types which are not supported (see below)
 
-It does not support:
-
-* Java serialization (classes marked with @serializable annotation etc.)
-
 Serializing polymorphic Lists
 -----------------------------
 
@@ -511,25 +505,37 @@ classname. Other strategies can be implemented by extending TypeHints trait.
 Serializing non-supported types
 -------------------------------
 
-It is possible to plug in custom serializer + deserializer functions for any type which has a type hint.
-Now, if we have a non case class DateTime (thus, not supported by default), we can still serialize it
-by providing following functions.
+It is possible to plug in custom serializer + deserializer functions for any type.
+Now, if we have a non case class Interval (thus, not supported by default), we can still serialize it
+by providing following serializer.
 
-    scala> class DateTime(val time: Long)
+    scala> class Interval(start: Long, end: Long) {
+             val startTime = start
+             val endTime = end
+           }
 
-    scala> val hints = new ShortTypeHints(classOf[DateTime] :: Nil) {
-             override def serialize: PartialFunction[Any, JObject] = {
-               case t: DateTime => JObject(JField("t", JInt(t.time)) :: Nil)
+    scala> class IntervalSerializer extends Serializer[Interval] {
+             private val IntervalClass = classOf[Interval]
+
+             def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Interval] = {
+               case (TypeInfo(IntervalClass, _), json) => json match {
+                 case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) =>
+                   new Interval(s.longValue, e.longValue)
+                 case x => throw new MappingException("Can't convert " + x + " to Interval")
+               }
              }
 
-             override def deserialize: PartialFunction[(String, JObject), Any] = {
-               case ("DateTime", JObject(JField("t", JInt(t)) :: Nil)) => new DateTime(t.longValue)
+             def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
+               case x: Interval =>
+                 JObject(JField("start", JInt(BigInt(x.startTime))) :: 
+                         JField("end",   JInt(BigInt(x.endTime))) :: Nil)
              }
            }
-    scala> implicit val formats = Serialization.formats(hints)
+
+    scala> implicit val formats = Serialization.formats(NoTypeHints) + new IntervalSerializer
 
 Function 'serialize' creates a JSON object to hold serialized data. Function 'deserialize' knows how
-to construct serialized object by pattern matching against serialized type hint and data.
+to construct serialized object by pattern matching against type info and data.
 
 XML support
 ===========
@@ -568,12 +574,11 @@ Now, the above example has two problems. First, the id is converted to String wh
 is easy to fix by mapping JString(s) to JInt(s.toInt). The second problem is more subtle. The conversion function
 decides to use JSON array because there's more than one user-element in XML. Therefore a structurally equivalent
 XML document which happens to have just one user-element will generate a JSON document without JSON array. This
-is rarely a desired outcome. These both problems can be fixed by following map function.
+is rarely a desired outcome. These both problems can be fixed by following transformation function.
 
-    scala> json map {
+    scala> json transform {
              case JField("id", JString(s)) => JField("id", JInt(s.toInt))
              case JField("user", x: JObject) => JField("user", JArray(x :: Nil))
-             case x => x 
            }
 
 Other direction is supported too. Converting JSON to XML:
