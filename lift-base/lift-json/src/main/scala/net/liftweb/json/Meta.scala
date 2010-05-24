@@ -31,7 +31,7 @@ private[json] object Meta {
    *
    *  Example mapping.
    *
-   *  package xx 
+   *  package xx
    *  case class Person(name: String, address: Address, children: List[Child])
    *  case class Address(street: String, city: String)
    *  case class Child(name: String, age: BigInt)
@@ -59,13 +59,13 @@ private[json] object Meta {
   private[json] def mappingOf(clazz: Class[_]) = {
     import Reflection._
 
-    def constructorArgs(clazz: Class[_], visited: Set[Class[_]]) = 
+    def constructorArgs(clazz: Class[_], visited: Set[Class[_]]) =
       Reflection.constructorArgs(clazz).map { case (name, atype, genericType) =>
         toArg(unmangleName(name), atype, genericType, visited)
       }
 
     def toArg(name: String, fieldType: Class[_], genericType: Type, visited: Set[Class[_]]): Arg = {
-      def mkContainer(t: Type, k: Kind, valueTypeIndex: Int, factory: Mapping => Mapping) = 
+      def mkContainer(t: Type, k: Kind, valueTypeIndex: Int, factory: Mapping => Mapping) =
         if (typeConstructor_?(t)) {
           val types = typeConstructors(t, k)(valueTypeIndex)
           factory(fieldMapping(types._1, types._2))
@@ -75,34 +75,34 @@ private[json] object Meta {
         case x: ParameterizedType => Some(x)
         case _ => None
       }
-        
+
       def fieldMapping(fType: Class[_], genType: Type): Mapping = {
         if (primitive_?(fType)) Value(fType)
-        else if (classOf[List[_]].isAssignableFrom(fType)) 
+        else if (classOf[List[_]].isAssignableFrom(fType))
           mkContainer(genType, `* -> *`, 0, Col.apply(classOf[List[_]], _))
-        else if (classOf[Set[_]].isAssignableFrom(fType)) 
+        else if (classOf[Set[_]].isAssignableFrom(fType))
           mkContainer(genType, `* -> *`, 0, Col.apply(classOf[Set[_]], _))
         else if (fType.isArray)
           mkContainer(genType, `* -> *`, 0, Col.apply(fType, _))
-        else if (classOf[Option[_]].isAssignableFrom(fType)) 
+        else if (classOf[Option[_]].isAssignableFrom(fType))
           mkContainer(genType, `* -> *`, 0, Optional.apply _)
-        else if (classOf[Map[_, _]].isAssignableFrom(fType)) 
+        else if (classOf[Map[_, _]].isAssignableFrom(fType))
           mkContainer(genType, `(*,*) -> *`, 1, Dict.apply _)
         else {
           if (visited.contains(fType)) Cycle(fType)
-          else Constructor(TypeInfo(fType, parameterizedTypeOpt(genType)), 
+          else Constructor(TypeInfo(fType, parameterizedTypeOpt(genType)),
                            constructorArgs(fType, visited + fType))
         }
       }
-     
+
       Arg(name, fieldMapping(fieldType, genericType))
     }
 
-    if (primitive_?(clazz)) Value(clazz)    
+    if (primitive_?(clazz)) Value(clazz)
     else mappings.memoize(clazz, c => Constructor(TypeInfo(c, None), constructorArgs(c, Set())))
   }
 
-  private[json] def unmangleName(name: String) = 
+  private[json] def unmangleName(name: String) =
     unmangledNames.memoize(name, operators.foldLeft(_)((n, o) => n.replace(o._1, o._2)))
 
   private[json] def fail(msg: String) = throw new MappingException(msg)
@@ -135,17 +135,17 @@ private[json] object Meta {
     case object `(*,*) -> *` extends Kind
 
     val primitives = Map[Class[_], Unit]() ++ (List[Class[_]](
-      classOf[String], classOf[Int], classOf[Long], classOf[Double], 
-      classOf[Float], classOf[Byte], classOf[BigInt], classOf[Boolean], 
-      classOf[Short], classOf[java.lang.Integer], classOf[java.lang.Long], 
-      classOf[java.lang.Double], classOf[java.lang.Float], 
+      classOf[String], classOf[Int], classOf[Long], classOf[Double],
+      classOf[Float], classOf[Byte], classOf[BigInt], classOf[Boolean],
+      classOf[Short], classOf[java.lang.Integer], classOf[java.lang.Long],
+      classOf[java.lang.Double], classOf[java.lang.Float],
       classOf[java.lang.Byte], classOf[java.lang.Boolean], classOf[Number],
       classOf[java.lang.Short], classOf[Date], classOf[Symbol]).map((_, ())))
 
     def constructorArgs(clazz: Class[_]): List[(String, Class[_], Type)] = {
       def queryArgs(clazz: Class[_]) = {
         def argsInfo(x: JConstructor[_]) = {
-          import scala.collection.jcl.Conversions._
+          import scala.collection.JavaConversions._
 
           val Name = """^((?:[^$]|[$][^0-9]+)+)([$][0-9]+)?$"""r
           def clean(name: String) = name match {
@@ -156,7 +156,7 @@ private[json] object Meta {
           val ptypes = x.getGenericParameterTypes
           zip3(names.toList, types.toList, ptypes.toList)
         }
-        
+
         safePrimaryConstructorOf(clazz) match {
           case Some(x) => argsInfo(x)
           case None    => Nil
@@ -167,7 +167,7 @@ private[json] object Meta {
 
     // Replace this with Tuple3.zipped when moving to 2.8
     private def zip3[A, B, C](l1: List[A], l2: List[B], l3: List[C]): List[(A, B, C)] = {
-      def zip(x1: List[A], x2: List[B], x3: List[C], acc: List[(A, B, C)]): List[(A, B, C)] = 
+      def zip(x1: List[A], x2: List[B], x3: List[C], acc: List[(A, B, C)]): List[(A, B, C)] =
         x1 match {
           case Nil => acc.reverse
           case x :: xs => zip(xs, x2.tail, x3.tail, (x, x2.head, x3.head) :: acc)
@@ -176,13 +176,13 @@ private[json] object Meta {
       zip(l1, l2, l3, Nil)
     }
 
-    def safePrimaryConstructorOf[A](cl: Class[A]): Option[JConstructor[A]] = 
+    def safePrimaryConstructorOf[A](cl: Class[A]): Option[JConstructor[A]] =
       cl.getDeclaredConstructors.toList.asInstanceOf[List[JConstructor[A]]] match {
         case Nil => None
         case x :: xs => Some[JConstructor[A]](x)
       }
 
-    def primaryConstructorOf[A](cl: Class[A]): JConstructor[A] = 
+    def primaryConstructorOf[A](cl: Class[A]): JConstructor[A] =
       safePrimaryConstructorOf(cl).getOrElse(fail("Can't find primary constructor for class " + cl))
 
     def typeParameters(t: Type, k: Kind): List[Class[_]] = {
@@ -226,7 +226,7 @@ private[json] object Meta {
     def primitive_?(clazz: Class[_]) = primitives contains clazz
     def static_?(f: Field) = Modifier.isStatic(f.getModifiers)
     def typeConstructor_?(t: Type) = t match {
-      case p: ParameterizedType => 
+      case p: ParameterizedType =>
         p.getActualTypeArguments.exists(_.isInstanceOf[ParameterizedType])
       case _ => false
     }
