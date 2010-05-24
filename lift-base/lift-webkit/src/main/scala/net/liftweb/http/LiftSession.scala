@@ -172,7 +172,7 @@ object SessionMaster extends LiftActor with Loggable {
    */
   def addSession(liftSession: LiftSession, userAgent: Box[String], ipAddress: Box[String]) {
     lockAndBump {
-      Full(SessionInfo(liftSession, userAgent, ipAddress, 0, 0L))
+      Full(SessionInfo(liftSession, userAgent, ipAddress, -1, 0L)) // bumped twice during session creation.  Ticket #529 DPP
     }
     liftSession.startSession()
     liftSession.httpSession.foreach(_.link(liftSession))
@@ -262,7 +262,7 @@ object PageName extends RequestVar[String]("")
 /**
  * Information about the page garbage collection
  */
-object RenderVersion {
+private[http] object RenderVersion {
   private object ver extends RequestVar(Helpers.nextFuncName)
   def get: String = ver.is
 

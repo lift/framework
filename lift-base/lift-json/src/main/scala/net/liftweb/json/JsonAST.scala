@@ -174,6 +174,46 @@ object JsonAST {
       rec(this)
     }
 
+    /** Return a new JValue resulting from applying the given partial function <code>f</code>
+     * to each element in JSON.
+     * <p>
+     * Example:<pre>
+     * JArray(JInt(1) :: JInt(2) :: Nil) transform { case JInt(x) => JInt(x+1) }
+     * </pre>
+     */
+    def transform(f: PartialFunction[JValue, JValue]): JValue = map { x =>
+      if (f.isDefinedAt(x)) f(x) else x
+    }
+
+    /** Return a new JValue resulting from replacing the value at the specified field
+     * path with the replacement value provided. This has no effect if the path is empty
+     * or if the value is not a JObject instance.
+     * <p>
+     * Example:<pre>
+     * JObject(List(JField("foo", JObject(List(JField("bar", JInt(1))))))).replace("foo" :: "bar" :: Nil, JString("baz"))
+     * // returns JObject(List(JField("foo", JObject(List(JField("bar", JString("baz")))))))
+     * </pre>
+     */
+    def replace(l: List[String], replacement: JValue): JValue = {
+      def rep(l: List[String], in: JValue): JValue = {
+        l match {
+          case x :: xs => in match {
+            case JObject(fields) => JObject(
+                fields.map {
+                  case JField(`x`, value) => JField(x, if (xs == Nil) replacement else rep(xs, value))
+                  case field => field
+                }
+              )
+            case other => other
+          }
+
+          case Nil => in
+        }
+      }
+
+      rep(l, this)
+    }
+
     /** Return the first element from JSON which matches the given predicate.
      * <p>
      * Example:<pre>
@@ -398,7 +438,8 @@ trait Implicits {
  * ("name", "joe") ~ ("age", 15) == JObject(JField("name",JString("joe")) :: JField("age",JInt(15)) :: Nil)
  * </pre>
  */
-object JsonDSL extends Implicits with Printer {
+object JsonDSL extends JsonDSL with Printer
+trait JsonDSL extends Implicits {
   import JsonAST._
 
   implicit def seq2jvalue[A <% JValue](s: Seq[A]) = JArray(s.toList.map { a => val v: JValue = a; v })

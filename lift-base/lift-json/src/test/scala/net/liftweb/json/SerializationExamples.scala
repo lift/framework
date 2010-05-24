@@ -84,28 +84,22 @@ object SerializationExamples extends Specification {
   }
   
   "Set serialization example" in {
-    val s = SetContainer(Set("foo", "bar"))
-    
+    val s = SetContainer(Set("foo", "bar"))    
     val ser = swrite(s)
     read[SetContainer](ser) mustEqual s
   }
   
   "Array serialization example" in {
-    val s = ArrayContainer(Array("foo", "bar"))
-    
+    val s = ArrayContainer(Array("foo", "bar"))    
     val ser = swrite(s);
-    
-    val unser = read[ArrayContainer](ser)
-    
+    val unser = read[ArrayContainer](ser)    
     s.array.toList mustEqual unser.array.toList
   }
   
   "None Option of tuple serialization example" in {
     // This is a regression test case, failed in lift json
-    val s = OptionOfTupleOfDouble(None)
-    
+    val s = OptionOfTupleOfDouble(None)    
     val ser = swrite(s)
-    
     read[OptionOfTupleOfDouble](ser) mustEqual s
   }
 
@@ -197,6 +191,42 @@ case class Objs(objects: List[Obj[_]])
 case class Obj[A](a: A)
 
 object CustomClassExamples extends Specification {
+  import Serialization.{read, write => swrite}
+  import JsonAST._
+
+  class IntervalSerializer extends Serializer[Interval] {
+    private val IntervalClass = classOf[Interval]
+
+    def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Interval] = {
+      case (TypeInfo(IntervalClass, _), json) => json match {
+        case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) =>
+          new Interval(s.longValue, e.longValue)
+        case x => throw new MappingException("Can't convert " + x + " to Interval")
+      }
+    }
+
+    def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
+      case x: Interval =>
+        JObject(JField("start", JInt(BigInt(x.startTime))) :: 
+                JField("end",   JInt(BigInt(x.endTime))) :: Nil)
+    }
+  }
+
+  implicit val formats = Serialization.formats(NoTypeHints) + new IntervalSerializer
+  val i = new Interval(1, 4)
+  val ser = swrite(i)
+  ser mustEqual """{"start":1,"end":4}"""
+  val i2 = read[Interval](ser) 
+  i2.startTime mustEqual i.startTime
+  i2.endTime mustEqual i.endTime
+}
+
+class Interval(start: Long, end: Long) {
+  val startTime = start
+  val endTime = end
+}
+
+object CustomClassWithTypeHintsExamples extends Specification {
   import Serialization.{read, write => swrite}
   import JsonAST._
 

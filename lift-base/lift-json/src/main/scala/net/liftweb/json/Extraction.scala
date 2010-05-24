@@ -37,7 +37,7 @@ object Extraction {
    */
   def extract[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): A = 
     try {
-      extract0(json, formats, mf)
+      extract0(json, mf)
     } catch {
       case e: MappingException => throw e
       case e: Exception => throw new MappingException("unknown error", e)
@@ -67,7 +67,9 @@ object Extraction {
  
     val serializer = formats.typeHints.serialize
     val any = a.asInstanceOf[AnyRef]
-    if (!serializer.isDefinedAt(a)) {
+    if (formats.customSerializer(formats).isDefinedAt(a)) {
+      formats.customSerializer(formats)(a)
+    } else if (!serializer.isDefinedAt(a)) {
       any match {
         case null => JNull
         case x if primitive_?(x.getClass) => primitive2jvalue(x)(formats)
@@ -76,9 +78,10 @@ object Extraction {
         case x if (x.getClass.isArray) => JArray(x.asInstanceOf[Array[_]].toList map decompose)
         case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
         case x => 
-          orderedConstructorArgs(x.getClass).map { f =>
+          constructorArgs(x.getClass).map { case (name, _, _) =>
+            val f = x.getClass.getDeclaredField(name)
             f.setAccessible(true)
-            JField(unmangleName(f), decompose(f get x))
+            JField(unmangleName(name), decompose(f get x))
           } match {
             case fields => mkObject(x.getClass, fields)
           }
@@ -162,20 +165,24 @@ object Extraction {
     }
   }
 
-  private def extract0[A](json: JValue, formats: Formats, mf: Manifest[A]): A = {
+  private def extract0[A](json: JValue, mf: Manifest[A])(implicit formats: Formats): A = {
     if (mf.erasure == classOf[List[_]] || mf.erasure == classOf[Map[_, _]])
       fail("Root object can't yet be List or Map (needs a feature from Scala 2.8)")
 
-    val mapping = mappingOf(mf.erasure)
+    extract(json, TypeInfo(mf.erasure, None)).asInstanceOf[A]
+  }
 
-    def newInstance(targetType: Class[_], args: List[Arg], json: JValue) = {
+  def extract(json: JValue, target: TypeInfo)(implicit formats: Formats): Any = {
+    val mapping = mappingOf(target.clazz)
+
+    def newInstance(targetType: TypeInfo, args: List[Arg], json: JValue) = {
       def instantiate(constructor: JConstructor[_], args: List[Any]) = 
         try {
           if (constructor.getDeclaringClass == classOf[java.lang.Object]) fail("No information known about type")
           
           constructor.newInstance(args.map(_.asInstanceOf[AnyRef]).toArray: _*)
         } catch {
-          case e @ (_:IllegalArgumentException | _:InstantiationException) =>             
+          case e @ (_:IllegalArgumentException | _:InstantiationException) =>
             fail("Parsed JSON values do not match with class constructor\nargs=" + 
                  args.mkString(",") + "\narg types=" + args.map(a => if (a != null) 
                    a.asInstanceOf[AnyRef].getClass.getName else "null").mkString(",") + 
@@ -191,10 +198,13 @@ object Extraction {
         } else deserializer(typeHint, obj)
       }
 
-      json match {
+      val custom = formats.customDeserializer(formats)
+      if (custom.isDefinedAt(targetType, json)) custom(targetType, json)
+      else json match {
+        case JNull => null
         case JObject(JField("jsonClass", JString(t)) :: xs) => mkWithTypeHint(t, xs)
         case JField(_, JObject(JField("jsonClass", JString(t)) :: xs)) => mkWithTypeHint(t, xs)
-        case _ => instantiate(primaryConstructorOf(targetType), args.map(a => build(json \ a.path, a)))
+        case _ => instantiate(primaryConstructorOf(targetType.clazz), args.map(a => build(json \ a.path, a)))
       }
     }
 
@@ -212,18 +222,14 @@ object Extraction {
 
     def build(root: JValue, mapping: Mapping): Any = mapping match {
       case Value(targetType) => convert(root, targetType, formats)
-      case Constructor(targetType, args) => root match {
-        case JNull => null
-        case _ => newInstance(targetType, args, root)
-      }
+      case Constructor(targetType, args) => newInstance(targetType, args, root)
       case Cycle(targetType) => build(root, mappingOf(targetType))
       case Arg(path, m) => mkValue(fieldValue(root), m, path)
-      case Col(c, m) => {
+      case Col(c, m) =>
         if (c == classOf[List[_]]) newCollection(root, m, a => List(a: _*))
         else if (c == classOf[Set[_]]) newCollection(root, m, a => Set(a: _*))
         else if (c.isArray) newCollection(root, m, mkTypedArray(c))
         else fail("Expected collection but got " + m + " for class " + c)
-      }
       case Dict(m) => root match {
         case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)
         case x => fail("Expected object but got " + x)
@@ -266,7 +272,7 @@ object Extraction {
       case x => fail("Expected JField but got " + x)
     }
 
-    build(json, mapping).asInstanceOf[A]
+    build(json, mapping)
   }
 
   private def convert(json: JValue, targetType: Class[_], formats: Formats): Any = json match {

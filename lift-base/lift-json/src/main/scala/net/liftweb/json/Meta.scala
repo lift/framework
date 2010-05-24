@@ -17,9 +17,11 @@
 package net.liftweb {
 package json {
 
-import java.lang.reflect.{Constructor => JConstructor, Field, Type}
+import java.lang.reflect.{Constructor => JConstructor, Field, Type, ParameterizedType}
 import java.util.Date
 import JsonAST._
+
+case class TypeInfo(clazz: Class[_], parameterizedType: Option[ParameterizedType])
 
 private[json] object Meta {
   import com.thoughtworks.paranamer._
@@ -44,7 +46,7 @@ private[json] object Meta {
   sealed abstract class Mapping
   case class Arg(path: String, mapping: Mapping) extends Mapping
   case class Value(targetType: Class[_]) extends Mapping
-  case class Constructor(targetType: Class[_], args: List[Arg]) extends Mapping
+  case class Constructor(targetType: TypeInfo, args: List[Arg]) extends Mapping
   case class Cycle(targetType: Class[_]) extends Mapping
   case class Dict(mapping: Mapping) extends Mapping
   case class Col(targetType: Class[_], mapping: Mapping) extends Mapping
@@ -58,8 +60,8 @@ private[json] object Meta {
     import Reflection._
 
     def constructorArgs(clazz: Class[_], visited: Set[Class[_]]) = 
-      orderedConstructorArgs(clazz).map { f =>
-        toArg(unmangleName(f), f.getType, f.getGenericType, visited)
+      Reflection.constructorArgs(clazz).map { case (name, atype, genericType) =>
+        toArg(unmangleName(name), atype, genericType, visited)
       }
 
     def toArg(name: String, fieldType: Class[_], genericType: Type, visited: Set[Class[_]]): Arg = {
@@ -68,6 +70,11 @@ private[json] object Meta {
           val types = typeConstructors(t, k)(valueTypeIndex)
           factory(fieldMapping(types._1, types._2))
         } else factory(fieldMapping(typeParameters(t, k)(valueTypeIndex), null))
+
+      def parameterizedTypeOpt(t: Type) = t match {
+        case x: ParameterizedType => Some(x)
+        case _ => None
+      }
         
       def fieldMapping(fType: Class[_], genType: Type): Mapping = {
         if (primitive_?(fType)) Value(fType)
@@ -83,7 +90,8 @@ private[json] object Meta {
           mkContainer(genType, `(*,*) -> *`, 1, Dict.apply _)
         else {
           if (visited.contains(fType)) Cycle(fType)
-          else Constructor(fType, constructorArgs(fType, visited + fType))
+          else Constructor(TypeInfo(fType, parameterizedTypeOpt(genType)), 
+                           constructorArgs(fType, visited + fType))
         }
       }
      
@@ -91,11 +99,11 @@ private[json] object Meta {
     }
 
     if (primitive_?(clazz)) Value(clazz)    
-    else mappings.memoize(clazz, c => Constructor(c, constructorArgs(c, Set())))
+    else mappings.memoize(clazz, c => Constructor(TypeInfo(c, None), constructorArgs(c, Set())))
   }
 
-  private[json] def unmangleName(f: Field) = 
-    unmangledNames.memoize(f.getName, operators.foldLeft(_)((n, o) => n.replace(o._1, o._2)))
+  private[json] def unmangleName(name: String) = 
+    unmangledNames.memoize(name, operators.foldLeft(_)((n, o) => n.replace(o._1, o._2)))
 
   private[json] def fail(msg: String) = throw new MappingException(msg)
 
@@ -120,7 +128,7 @@ private[json] object Meta {
   object Reflection {
     import java.lang.reflect._
 
-    private val primaryConstructorArgs = new Memo[Class[_], List[Field]]
+    private val primaryConstructorArgs = new Memo[Class[_], List[(String, Class[_], Type)]]
 
     sealed abstract class Kind
     case object `* -> *` extends Kind
@@ -134,25 +142,38 @@ private[json] object Meta {
       classOf[java.lang.Byte], classOf[java.lang.Boolean], classOf[Number],
       classOf[java.lang.Short], classOf[Date], classOf[Symbol]).map((_, ())))
 
-    def orderedConstructorArgs(clazz: Class[_]): List[Field] = {
-      def queryArgs(clazz: Class[_]): List[Field] = {
-        // Paranamer implementation:
-        def fieldsForParanamer(x: JConstructor[_]) = {
+    def constructorArgs(clazz: Class[_]): List[(String, Class[_], Type)] = {
+      def queryArgs(clazz: Class[_]) = {
+        def argsInfo(x: JConstructor[_]) = {
+          import scala.collection.jcl.Conversions._
+
           val Name = """^((?:[^$]|[$][^0-9]+)+)([$][0-9]+)?$"""r
           def clean(name: String) = name match {
             case Name(text, junk) => text
           }
           val names = paranamer.lookupParameterNames(x).map(clean)
-          val fields = Map() ++ clazz.getDeclaredFields.filter(!static_?(_)).map(f => (f.getName, f))
-          (for { n <- names } yield fields(n)).toList
+          val types = x.getParameterTypes
+          val ptypes = x.getGenericParameterTypes
+          zip3(names.toList, types.toList, ptypes.toList)
         }
         
         safePrimaryConstructorOf(clazz) match {
-          case Some(x) => fieldsForParanamer(x)
+          case Some(x) => argsInfo(x)
           case None    => Nil
         }
       }
       primaryConstructorArgs.memoize(clazz, queryArgs(_))
+    }
+
+    // Replace this with Tuple3.zipped when moving to 2.8
+    private def zip3[A, B, C](l1: List[A], l2: List[B], l3: List[C]): List[(A, B, C)] = {
+      def zip(x1: List[A], x2: List[B], x3: List[C], acc: List[(A, B, C)]): List[(A, B, C)] = 
+        x1 match {
+          case Nil => acc.reverse
+          case x :: xs => zip(xs, x2.tail, x3.tail, (x, x2.head, x3.head) :: acc)
+        }
+
+      zip(l1, l2, l3, Nil)
     }
 
     def safePrimaryConstructorOf[A](cl: Class[A]): Option[JConstructor[A]] = 
@@ -165,19 +186,21 @@ private[json] object Meta {
       safePrimaryConstructorOf(cl).getOrElse(fail("Can't find primary constructor for class " + cl))
 
     def typeParameters(t: Type, k: Kind): List[Class[_]] = {
-      def term(i: Int) = {
-        t match {
-          case ptype: ParameterizedType => ptype.getActualTypeArguments()(i) match {
-              case c: Class[_] => c
-              case p: ParameterizedType => p.getRawType.asInstanceOf[Class[_]]
-              case x => fail("do not know how to get type parameter from " + x)
-          }
-          case clazz: Class[_] if (clazz.isArray) => i match {
-            case 0 => clazz.getComponentType.asInstanceOf[Class[_]]
-            case _ => fail("Arrays only have one type parameter")
-          }
-          case _ => fail("Unsupported Type: " + t)
+      def term(i: Int) = t match {
+        case ptype: ParameterizedType => ptype.getActualTypeArguments()(i) match {
+          case c: Class[_] => c
+          case p: ParameterizedType => p.getRawType.asInstanceOf[Class[_]]
+          case x => fail("do not know how to get type parameter from " + x)
         }
+        case clazz: Class[_] if (clazz.isArray) => i match {
+          case 0 => clazz.getComponentType.asInstanceOf[Class[_]]
+          case _ => fail("Arrays only have one type parameter")
+        }
+        case clazz: GenericArrayType => i match {
+          case 0 => clazz.getGenericComponentType.asInstanceOf[Class[_]]
+          case _ => fail("Arrays only have one type parameter")
+        }
+        case _ => fail("Unsupported Type: " + t + " (" + t.getClass + ")")
       }
 
       k match {
