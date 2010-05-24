@@ -110,6 +110,46 @@ object JsonASTSpec extends Specification with JValueGen with ScalaCheck {
   }
   */
 
+  "Replace one" in {
+    val anyReplacement = (x: JValue, replacement: JObject) => {
+      def findOnePath(jv: JValue, l: List[String]): List[String] = jv match {
+        case JField(name, value) => findOnePath(value, name :: l)
+        case JObject(fl) => fl match {
+          case field :: xs => findOnePath(field, l)
+          case Nil => l
+        }
+        case _ => l
+      }
+
+      val path = findOnePath(x, Nil).reverse
+      val result = x.replace(path, replacement)
+
+      def replaced(path: List[String], in: JValue): Boolean = {
+        path match {
+          case Nil => x == in
+
+          case name :: Nil => (in \ name) match {
+            case JField(`name`, `replacement`) => true
+            case _ => false
+          }
+
+          case name :: xs => (in \ name) match {
+            case JField(`name`, value) => replaced(xs, value)
+            case _ => false
+          }
+        }
+      }
+
+      replaced(path, result)
+    }
+
+    // ensure that we test some JObject instances
+    val fieldReplacement = (x: JObject, replacement: JObject) => anyReplacement(x, replacement)
+
+    forAll(fieldReplacement) must pass
+    forAll(anyReplacement) must pass
+  }
+
   private def reorderFields(json: JValue) = json map {
     case JObject(xs) => JObject(xs.reverse)
     case x => x

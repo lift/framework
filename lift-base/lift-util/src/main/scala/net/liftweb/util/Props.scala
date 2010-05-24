@@ -229,7 +229,7 @@ object Props extends Logger {
         } :_*)
 
     case _ =>
-      error("Failed to find a properties file (but properties were accessed).  Searched: "+tried.reverse.mkString(", "))
+      error("Failed to find a properties file (but properties were accessed).  Searched: "+tried.map(_ + "props").reverse.mkString(", "))
       Map()
   }
 }

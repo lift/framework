@@ -41,6 +41,13 @@ object Examples extends Specification {
     compact(render(json \ "person" \ "name")) mustEqual "\"name\":\"Joe\""
   }
 
+  "Transformation example" in {
+    val uppercased = parse(person).transform { case JField(n, v) => JField(n.toUpperCase, v) }
+    val rendered = compact(render(uppercased))
+    rendered mustEqual 
+      """{"PERSON":{"NAME":"Joe","AGE":35,"SPOUSE":{"PERSON":{"NAME":"Marilyn","AGE":33}}}}"""
+  }
+
   "Remove example" in {
     val json = parse(person) remove { _ == JField("name", "Marilyn") }
     compact(render(json \\ "name")) mustEqual """{"name":"Joe"}"""
