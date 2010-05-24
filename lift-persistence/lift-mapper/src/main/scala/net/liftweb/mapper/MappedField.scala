@@ -219,8 +219,20 @@ trait MappedForeignKey[KeyType, MyOwner <: Mapper[MyOwner], Other <: KeyedMapper
   type FieldType <: KeyType
   // type ForeignType <: KeyedMapper[KeyType, Other]
 
+  /**
+   * What's the MetaMapper for the foreign key
+   */
+  def foreignMeta: KeyedMetaMapper[KeyType, Other]
+
+  /**
+   * Make sure the MetaMapper for the KeyedMapper we're checking
+   * is in fact the same one as we are associated with.  Issue #532.
+   */
+  private def checkTypes(km: KeyedMapper[KeyType, _]): Boolean = 
+    km.getSingleton eq foreignMeta
+
   override def equals(other: Any) = other match {
-    case km: KeyedMapper[KeyType, Other] => this.is == km.primaryKeyField.is
+    case km: KeyedMapper[KeyType, Other] if checkTypes(km) => this.is == km.primaryKeyField.is
     case _ => super.equals(other)
   }
 

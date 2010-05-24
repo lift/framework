@@ -37,8 +37,12 @@ object MapperSpecsRunner extends ConsoleRunner(MapperSpecs)
 object MapperSpecs extends Specification {
 
   val doLog = false
-  //def providers = DBProviders.H2MemoryProvider :: Nil
-  def providers = DBProviders.asList
+
+  def providers =
+    if (false || Props.getBool("lift.fasttest", false)) 
+      (DBProviders.H2MemoryProvider :: Nil)
+    else
+      DBProviders.asList
 
   private def logDBStuff(log: DBLog, len: Long) {
     println(" in log stuff "+log.getClass.getName)
@@ -475,7 +479,7 @@ object MapperSpecs extends Specification {
 
   private def ignoreLogger(f: => AnyRef): Unit = ()
 }
-  
+
 object SampleTag extends SampleTag with LongKeyedMetaMapper[SampleTag] {
   override def dbAddTable = Full(populate _)
   private def populate {
@@ -604,7 +608,8 @@ object User extends User with MetaMegaProtoUser[User] {
   // comment this line out to require email validations
   override def skipEmailValidation = true
 }
- 
+
+
 /**
  * An O-R mapped "User" class that includes first name, last name, password and we add a "Personal Essay" to it
  */
@@ -713,3 +718,4 @@ object Dog2 extends Dog2 with LongKeyedMetaMapper[Dog2] {
 }
 }
 }
+

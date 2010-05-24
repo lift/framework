@@ -30,6 +30,24 @@ object MappedLongForeignKeySpecRunner extends ConsoleRunner(MappedLongForeignKey
 
 object MappedLongForeignKeySpec extends Specification {
   "MappedLongForeignKey" should {
+    "Not allow comparison to another FK" in {
+      val dog = Dog.create.name("Froo").saveMe
+      val user = {
+        def ret: User = {
+          val r = User.create.saveMe
+          if (r.id.is >= dog.id.is) r
+          else ret
+        }
+
+        ret
+      }
+      dog.owner(user).save
+      val d2 = Dog.find(dog.id).open_!
+      d2.id.is must_== user.id.is
+      (d2.owner == user) must_== true
+      (d2.owner == d2) must_== false
+    }
+
     "be primed after setting a reference" in {
       val dog = Dog.create
       val user = User.create
