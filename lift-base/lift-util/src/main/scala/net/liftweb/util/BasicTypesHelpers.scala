@@ -48,8 +48,8 @@ trait BasicTypesHelpers { self: StringHelpers with ControlHelpers =>
      * @returns a BooleanSome containing the specified value
      * if the decorated boolean is true, or a BooleanNone otherwise.
      */
-    def ? [A](first: A): BooleanOption[A] = {
-      if (b) BooleanSome(first)
+    def ? [A](first: => A): BooleanOption[A] = {
+      if (b) BooleanSome(() => first)
       else BooleanNone
     }
 
@@ -65,8 +65,8 @@ trait BasicTypesHelpers { self: StringHelpers with ControlHelpers =>
     /**
      * The value returned by the ternary operator if the predicate is true.
      */
-    case class BooleanSome[+A](x: A) extends BooleanOption[A] {
-      def |[B >: A](default: => B): B  = x
+    case class BooleanSome[+A](x: () => A) extends BooleanOption[A] {
+      def |[B >: A](default: => B): B = x()
     }
 
     /**
