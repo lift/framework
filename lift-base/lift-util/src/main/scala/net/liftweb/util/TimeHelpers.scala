@@ -20,6 +20,7 @@ package util {
 import _root_.java.text.SimpleDateFormat
 import _root_.java.util.{TimeZone, Calendar, Date, Locale}
 import common._
+import _root_.org.joda.time.{DateTime, Duration}
 
 /**
  * The TimeHelpers object extends the TimeHelpers. It can be imported to access all of the trait functions.
@@ -51,18 +52,19 @@ trait TimeHelpers { self: ControlHelpers =>
 
   /** class building TimeSpans given an amount (len) and a method specify the time unit  */
   case class TimeSpanBuilder(val len: Long) {
-    def seconds = TimeSpan(outer.seconds(len))
+    def seconds = new TimeSpan(Right(Duration.standardSeconds(len)))
     def second = seconds
-    def minutes = TimeSpan(outer.minutes(len))
+    def minutes = new TimeSpan(Right(Duration.standardMinutes(len)))
     def minute = minutes
-    def hours = TimeSpan(outer.hours(len))
+    def hours = new TimeSpan(Right(Duration.standardHours(len)))
     def hour = hours
-    def days = TimeSpan(outer.days(len))
+    def days = new TimeSpan(Right(Duration.standardDays(len)))
     def day = days
-    def weeks = TimeSpan(outer.weeks(len))
+    def weeks = new TimeSpan(Right(Duration.standardDays(len * 7L)))
     def week = weeks
   }
 
+  /*
   /**
    * transforms a TimeSpan to a date by converting the TimeSpan expressed as millis and creating
    * a Date lasting that number of millis from the Epoch time (see the documentation for java.util.Date)
@@ -71,40 +73,97 @@ trait TimeHelpers { self: ControlHelpers =>
 
   /** transforms a TimeSpan to its long value as millis */
   implicit def timeSpanToLong(in: TimeSpan): Long = in.millis
+  */
 
   /**
    * The TimeSpan class represents an amount of time.
    * It can be translated to a date with the date method. In that case, the number of millis seconds will be used to create a Date
    * object starting from the Epoch time (see the documentation for java.util.Date)
    */
-  class TimeSpan(val millis: Long) {
+  class TimeSpan(private val dt: Either[DateTime, Duration]) extends ConvertableToDate {
     /** @return a Date as the amount of time represented by the TimeSpan after the Epoch date */
-    def date = new Date(millis)
+
+    def this(ms: Long) = 
+      this(if (ms < 52L * 7L * 24L * 60L * 60L * 1000L) Right(new Duration(ms))
+           else Left(new DateTime(ms)))
+
+    def date: Date = dt match {
+      case Left(datetime) => new Date(datetime.getMillis())
+      case _ => new Date(millis)
+    }
+
+    /**
+     * Convert to a Date
+     */
+    def toDate: Date = date
+    
+    /**
+     * Convert to a JodaTime DateTime
+     */
+    def toDateTime = dt match {
+      case Left(datetime) => datetime
+      case _ => new DateTime(millis)
+    }
+
+    def toMillis = millis
+
+    def millis = dt match {
+      case Left(datetime) => datetime.getMillis()
+      case Right(duration) => duration.getMillis()
+    }
+    
 
     /** @return a Date as the amount of time represented by the TimeSpan after now */
-    def later = TimeSpan(millis + outer.millis).date
+    def later: TimeSpan = dt match {
+      case Right(duration) => new TimeSpan(Left(new DateTime(outer.millis).plus(duration)))
+      case _ => TimeSpan(millis + outer.millis)
+    }
 
     /** @return a Date as the amount of time represented by the TimeSpan before now */
-    def ago = TimeSpan(outer.millis - millis).date
+    def ago: TimeSpan = dt match {
+      case Right(duration) => new TimeSpan(Left(new DateTime(outer.millis).minus(duration)))
+      case _ => TimeSpan(outer.millis - millis)
+    }
+
+    def noTime: Date = new DateExtension(this).noTime
 
     /** @return a TimeSpan representing the addition of 2 TimeSpans */
-    def +(in: TimeSpan) = TimeSpan(this.millis + in.millis)
+    def +[B](in: B)(implicit f: B => TimeSpan): TimeSpan =
+      (this.dt, f(in).dt) match {
+        case (Left(date), Right(duration)) => date.plus(duration)
+        case (Right(duration), Left(date)) => date.plus(duration)
+        case _ => TimeSpan(this.millis + f(in).millis)
+      }
+
+    /** @return a TimeSpan representing the addition of 2 TimeSpans */
+    def plus[B](in: B)(implicit f: B => TimeSpan): TimeSpan = this.+(in)(f)
 
     /** @return a TimeSpan representing the substraction of 2 TimeSpans */
-    def -(in: TimeSpan) = TimeSpan(this.millis - in.millis)
+    def -[B](in: B)(implicit f: B => TimeSpan): TimeSpan =
+      (this.dt, f(in).dt) match {
+        case (Left(date), Right(duration)) => date.minus(duration)
+        case (Right(duration), Left(date)) => date.minus(duration)
+        case _ => TimeSpan(this.millis - f(in).millis)
+      }
 
     /** override the equals method so that TimeSpans can be compared to long, int and TimeSpan */
     override def equals(cmp: Any) = {
       cmp match {
         case lo: Long => lo == this.millis
         case i: Int => i == this.millis
-        case ti: TimeSpan => ti.millis == this.millis
+        case ti: TimeSpan => ti.dt == this.dt
+        case d: Date => d.getTime() == this.millis
+        case dt: DateTime => Left(dt) == this.dt
+        case dur: Duration => Right(dur) == this.dt
         case _ => false
       }
     }
 
     /** override the toString method to display a readable amount of time */
-    override def toString = TimeSpan.format(millis)
+    override def toString = dt match {
+      case Left(date) => date.toString
+      case Right(dur) => TimeSpan.format(dur.getMillis())
+    }
   }
 
   /**
@@ -132,6 +191,24 @@ trait TimeHelpers { self: ControlHelpers =>
       }
       divideInUnits(millis).filter(_._1 > 0).map(formatAmount(_)).mkString(", ")
     }
+
+    /**
+     * Convert a Date to a TimeSpan
+     */
+    implicit def dateToTS(in: Date): TimeSpan =
+      new TimeSpan(Left(new DateTime(in.getTime)))
+
+    /**
+     * Convert a DateTime to a TimeSpan
+     */
+    implicit def dateTimeToTS(in: DateTime): TimeSpan =
+      new TimeSpan(Left(in))
+
+    /**
+     * Convert a Duration to a TimeSpan
+     */
+    implicit def durationToTS(in: Duration): TimeSpan =
+      new TimeSpan(Right(in))
   }
 
   /** @return the current number of millis: System.currentTimeMillis  */
@@ -327,6 +404,19 @@ trait TimeHelpers { self: ControlHelpers =>
       case e => logger.debug("Error parsing date "+in, e); Failure("Bad date: "+in, Full(e), Empty)
     }
   }
+}
+
+trait ConvertableToDate {
+  def toDate: Date
+  def toDateTime: DateTime
+  def millis: Long
+}
+
+object ConvertableToDate {
+  implicit def toDate(in: ConvertableToDate): Date = in.toDate
+  implicit def toDateTime(in: ConvertableToDate): DateTime = in.toDateTime
+  implicit def toMillis(in: ConvertableToDate): Long = in.millis
+  
 }
 
 }
