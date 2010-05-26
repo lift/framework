@@ -157,7 +157,11 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
 
 
   def apply(ov: Box[String]): T = {
-    ov.foreach(v => this.set(v))
+    ov match {
+      case Full(s) => this.set(s)
+      case _ => this.set(null)
+    }
+
     fieldOwner
   }
 
