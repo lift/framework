@@ -367,19 +367,38 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                    by: QueryParam[A]*)(f: A => Box[T]): List[T] =
   findMapFieldDb(dbId, mappedFields, by :_*)(f)
 
+  /**
+   * Given fields, a connection and the query parameters, build a query and return the query String,
+   * and Start or MaxRows values (depending on whether the driver supports LIMIT and OFFSET)
+   * and the complete List of QueryParams based on any synthetic query parameters calculated during the
+   * query creation.
+   *
+   * @param fields -- a Seq of the fields to be selected
+   * @param conn -- the SuperConnection to be used for calculating the query
+   * @param by -- the varg of QueryParams
+   *
+   * @returns a Tuple of the Query String, Start (offset), MaxRows (limit), and the list of all query parameters
+   * including and synthetic query parameters
+   */
+  def buildSelectString(fields: Seq[SelectableField], conn: SuperConnection, by: QueryParam[A]*): 
+  (String, Box[Long], Box[Long], List[QueryParam[A]]) = {
+    val bl = by.toList ::: addlQueryParams.is
+    val selectStatement = "SELECT "+
+    distinct(by)+
+    fields.map(_.dbSelectString).
+    mkString(", ")+
+    " FROM "+MapperRules.quoteTableName.vend(_dbTableNameLC)+"  "
+    
+    val (str, start, max) = addEndStuffs(addFields(selectStatement, false, bl, conn), bl, conn)
+    (str, start, max, bl)
+  }
+
   def findMapFieldDb[T](dbId: ConnectionIdentifier, fields: Seq[SelectableField],
                         by: QueryParam[A]*)(f: A => Box[T]): List[T] = {
     DB.use(dbId) {
       conn =>
-      val bl = by.toList ::: addlQueryParams.is
-      val selectStatement = "SELECT "+
-      distinct(by)+
-      fields.map(_.dbSelectString).
-      mkString(", ")+
-      " FROM "+MapperRules.quoteTableName.vend(_dbTableNameLC)+
-      "  "
 
-      val (query, start, max) = addEndStuffs(addFields(selectStatement, false, bl, conn), bl, conn)
+      val (query, start, max, bl) = buildSelectString(fields, conn, by :_*)
       DB.prepareStatement(query, conn) {
         st =>
         setStatementFields(st, bl, 1, conn)
@@ -558,7 +577,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     }
   }
 
-  def addEndStuffs(in: String, params: List[QueryParam[A]], conn: SuperConnection): (String, Box[Long], Box[Long]) = {
+  protected def addEndStuffs(in: String, params: List[QueryParam[A]], conn: SuperConnection): (String, Box[Long], Box[Long]) = {
     val tmp = _addOrdering(in, params)
     val max = params.foldRight(Empty.asInstanceOf[Box[Long]]){(a,b) => a match {case MaxRows(n) => Full(n); case _ => b}}
     val start = params.foldRight(Empty.asInstanceOf[Box[Long]]){(a,b) => a match {case StartAt(n) => Full(n); case _ => b}}
@@ -1835,13 +1854,8 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
              by: QueryParam[A]*): Box[A] = {
     DB.use(dbId) {
       conn =>
-      val bl = by.toList  ::: addlQueryParams.is
-      val selectStatement = "SELECT "+
-      fields.map(_.dbSelectString).
-      mkString(", ")+
-      " FROM "+MapperRules.quoteTableName.vend(_dbTableNameLC)+" "
 
-      val (query, start, max) = addEndStuffs(addFields(selectStatement,false,  bl, conn), bl, conn)
+      val (query, start, max, bl) = buildSelectString(fields, conn, by :_*)
       DB.prepareStatement(query, conn) {
         st =>
         setStatementFields(st, bl, 1, conn)
