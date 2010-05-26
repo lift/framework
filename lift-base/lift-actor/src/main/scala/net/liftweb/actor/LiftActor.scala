@@ -280,8 +280,11 @@ protected def around[R](f: => R): R = aroundLoans match {
   protected def highPriorityReceive: Box[PartialFunction[T, Unit]] = Empty
 
   protected def exceptionHandler: PartialFunction[Throwable, Unit] = {
-    case e => // FIXME logging Log.error("Error processing Actor "+this, e)
+    case e => ActorLogger.error("Actor threw an exception", e)
   }
+}
+
+object ActorLogger extends Logger {
 }
 
 private final case class MsgWithResp(msg: Any, future: LAFuture[Any])
