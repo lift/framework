@@ -109,7 +109,7 @@ object Req {
     def processRewrite(path: ParsePath, params: Map[String, String]): RewriteResponse =
     NamedPF.applyBox(RewriteRequest(path, original.requestType, original.request), rewrite) match {
       case Full(resp@RewriteResponse(_, _, true)) => resp
-      case _: EmptyBox[_] => RewriteResponse(path, params)
+      case _: EmptyBox => RewriteResponse(path, params)
       case Full(resp) => processRewrite(resp.path, params ++ resp.params)
     }
 
@@ -130,7 +130,7 @@ object Req {
     def processRewrite(path: ParsePath, params: Map[String, String]): RewriteResponse =
     NamedPF.applyBox(RewriteRequest(path, reqType, request), rewrite) match {
       case Full(resp@RewriteResponse(_, _, true)) => resp
-      case _: EmptyBox[_] => RewriteResponse(path, params)
+      case _: EmptyBox => RewriteResponse(path, params)
       case Full(resp) => processRewrite(resp.path, params ++ resp.params)
     }
 

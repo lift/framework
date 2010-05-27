@@ -55,7 +55,7 @@ abstract class MappedDouble[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 			case n : Number => n.doubleValue
 			case (n: Number) :: _ => n.doubleValue
             case Full(n) => toDouble(n) // fixes issue 185
-            case x: EmptyBox[_] => 0.0
+            case x: EmptyBox => 0.0
 			case Some(n) => toDouble(n)
 			case None => 0.0
 			case s: String => s.toDouble
