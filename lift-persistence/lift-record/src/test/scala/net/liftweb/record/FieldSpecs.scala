@@ -34,7 +34,8 @@ package fieldspecs {
     def meta = PasswordTestRecord
 
     object password extends PasswordField(this) {
-      override def validators = PasswordTestRecord.validateNonEmptyPassword _ :: super.validators
+      override def validators = PasswordTestRecord.validateNonEmptyPassword _ ::
+      super.validators
     }
   }
   

@@ -113,5 +113,85 @@ trait BaseField extends SettableField with FieldContainer {
   def allFields: Seq[BaseField] = List(this)
 }
 
+trait StringValidators {
+  self: FieldIdentifier =>
+
+  import scala.xml.Text
+  import java.util.regex.Pattern
+    
+  type ValueType
+
+  protected def valueTypeToBoxString(in: ValueType): Box[String]
+  protected def boxStrToValType(in: Box[String]): ValueType
+
+  def maxLen: Int
+
+  def crop(in: ValueType): ValueType = 
+    boxStrToValType(valueTypeToBoxString(in).map{
+      case null => null
+      case s => s.substring(0, Math.min(s.length, maxLen))
+    })
+
+  def removeRegExChars(regEx: String)(in: ValueType): ValueType= 
+    boxStrToValType(valueTypeToBoxString(in).map{
+      case null => null
+      case s => s.replaceAll(regEx, "")
+    })
+
+  def toLower(in: ValueType): ValueType = 
+    boxStrToValType(valueTypeToBoxString(in).map{
+      case null => null
+      case s => s.toLowerCase
+    })
+
+  def toUpper(in: ValueType): ValueType = 
+    boxStrToValType(valueTypeToBoxString(in).map{
+      case null => null
+      case s => s.toUpperCase
+    })
+
+  def trim(in: ValueType): ValueType = 
+    boxStrToValType(valueTypeToBoxString(in).map{
+      case null => null
+      case s => s.trim
+    })
+
+  def notNull(in: ValueType): ValueType = 
+    boxStrToValType(valueTypeToBoxString(in) match {
+      case Full(str) if null ne str => Full(str)
+      case _ => Full("")
+    })
+
+  /**
+   * A validation helper.  Make sure the string is at least a particular
+   * length and generate a validation issue if not
+   */
+  def valMinLen(len: Int, msg: => String)(value: ValueType): List[FieldError] = 
+    valueTypeToBoxString(value) match {
+      case Full(str) if (null ne str) && str.length >= len => Nil
+      case _ => List(FieldError(this, Text(msg)))
+    }
+
+
+  /**
+   * A validation helper.  Make sure the string is no more than a particular
+   * length and generate a validation issue if not
+   */
+  def valMaxLen(len: Int, msg: => String)(value: ValueType): List[FieldError] =
+    valueTypeToBoxString(value) match {
+      case Full(str) if (null ne str) && str.length <= len => Nil
+      case _ =>  List(FieldError(this, Text(msg)))
+    }
+
+  /**
+   * Make sure the field matches a regular expression
+   */
+  def valRegex(pat: Pattern, msg: => String)(value: ValueType): List[FieldError] =
+    valueTypeToBoxString(value).flatMap{str => if (pat.matcher(str).matches) Full(true) else Empty} match {
+      case Full(true) => Nil
+      case _ => List(FieldError(this, Text(msg)))
+    }
+}
+
 }
 }

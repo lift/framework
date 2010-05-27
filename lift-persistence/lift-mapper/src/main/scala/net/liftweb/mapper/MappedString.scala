@@ -51,41 +51,15 @@ trait ValidateLength extends MixableMappedField {
 
 }
 
-abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) extends MappedField[String, T] {
+abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) extends MappedField[String, T] with net.liftweb.util.StringValidators {
   private val data: FatLazy[String] =  FatLazy(defaultValue) // defaultValue
   private val orgData: FatLazy[String] =  FatLazy(defaultValue) // defaultValue
 
   def dbFieldClass = classOf[String]
 
-  final def crop(in: String): String = in match {
-    case null => null
-    case s => s.substring(0, Math.min(s.length, maxLen))
-  }
-
-  final def removeRegExChars(regEx: String)(in: String): String = in match {
-    case null => null
-    case s => s.replaceAll(regEx, "")
-  }
-
-  final def toLower(in: String): String = in match {
-    case null => null
-    case s => s.toLowerCase
-  }
-  final def toUpper(in: String): String = in match {
-    case null => null
-    case s => s.toUpperCase
-  }
-
-  final def trim(in: String): String = in match {
-    case null => null
-    case s => s.trim
-  }
-
-  final def notNull(in: String): String = in match {
-    case null => ""
-    case s => s
-  }
-
+  protected def valueTypeToBoxString(in: String): Box[String] = Full(in)
+  protected def boxStrToValType(in: Box[String]): String = in openOr ""
+  
 
   protected def real_i_set_!(value : String) : String = {
     if (!data.defined_? || value != data.get) {
@@ -193,21 +167,7 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
   def buildSetBooleanValue(accessor: Method, columnName: String): (T, Boolean, Boolean) => Unit =
   (inst, v, isNull) => doField(inst, accessor, {case f: MappedString[T] => f.wholeSet(if (isNull) null else v.toString)})
 
-  /**
-   * A validation helper.  Make sure the string is at least a particular
-   * length and generate a validation issue if not
-   */
-  def valMinLen(len: Int, msg: => String)(value: String): List[FieldError] =
-  if ((value eq null) || value.length < len) List(FieldError(this, Text(msg)))
-  else Nil
 
-  /**
-   * A validation helper.  Make sure the string is no more than a particular
-   * length and generate a validation issue if not
-   */
-  def valMaxLen(len: Int, msg: => String)(value: String): List[FieldError] =
-  if ((value ne null) && value.length > len) List(FieldError(this, Text(msg)))
-  else Nil
 
   /**
    * Make sure that the field is unique in the database
@@ -219,14 +179,6 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
     case x :: _ => List(FieldError(this, Text(msg))) // issue 179
   }
 
-
-  /**
-   * Make sure the field matches a regular expression
-   */
-  def valRegex(pat: Pattern, msg: => String)(value: String): List[FieldError] = pat.matcher(value).matches match {
-    case true => Nil
-    case false => List(FieldError(this, Text(msg)))
-  }
 
   /**
    * Given the driver type, return the string required to create the column in the database

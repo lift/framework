@@ -34,11 +34,11 @@ object EmailField {
 
 class EmailField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int) extends StringField[OwnerType](rec, maxLength) {
 
-  private def validateEmail(emailBox: Box[String]): Box[Node] =
-    emailBox.flatMap(email => EmailField.validEmailAddr_?(email) match {
-      case false => Full(Text(S.??("invalid.email.address")))
-      case _ => Empty
-    })
+  private def validateEmail(emailBox: Box[String]): List[FieldError] =
+    emailBox match {
+      case Full(email) if EmailField.validEmailAddr_?(email) => Nil
+      case _ => Text(S.??("invalid.email.address"))
+    }
 
   override def validators = validateEmail _ :: Nil
 
