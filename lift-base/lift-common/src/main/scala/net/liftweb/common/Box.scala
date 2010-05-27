@@ -361,23 +361,23 @@ final case class Full[+A](value: A) extends Box[A] {
  * Singleton object representing an Empty Box
  */
 @serializable
-case object Empty extends EmptyBox[Nothing]
+case object Empty extends EmptyBox
 
 /**
  * The EmptyBox is a Box containing no value.
  */
 @serializable
-sealed abstract class EmptyBox[+A] extends Box[A] {
+sealed abstract class EmptyBox extends Box[Nothing] {
 
   def isEmpty: Boolean = true
 
   def open_!  = throw new NullPointerException("Trying to open an empty Box")
 
-  override def openOr[B >: A](default: => B): B = default
+  override def openOr[B >: Nothing](default: => B): B = default
 
-  override def or[B >: A](alternative: => Box[B]): Box[B] = alternative
+  override def or[B >: Nothing](alternative: => Box[B]): Box[B] = alternative
 
-  override def filter(p: A => Boolean): Box[A] = this
+  override def filter(p: Nothing => Boolean): Box[Nothing] = this
 
   override def ?~(msg: String) = Failure(msg, Empty, Empty)
 }
@@ -394,7 +394,7 @@ object Failure {
  * It can also optionally provide an exception or a chain of causes represented as a list of other Failure objects
  */
 @serializable
-sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Failure]) extends EmptyBox[Nothing] {
+sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Failure]) extends EmptyBox {
   type A = Nothing
 
   override def open_! = throw new NullPointerException("Trying to open a Failure Box: " + msg) {

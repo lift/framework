@@ -312,7 +312,7 @@ trait RestHelper extends LiftRules.DispatchPF {
               else emptyToResp(ParamFailure("Unabled to convert the message", 
                                             Empty, Empty, 500))
 
-            case e: EmptyBox[_] => emptyToResp(e)
+            case e: EmptyBox => emptyToResp(e)
           }
         }
     }
@@ -500,10 +500,10 @@ trait RestHelper extends LiftRules.DispatchPF {
   (implicit c: T => LiftResponse): () => Box[LiftResponse] = 
     in match {
       case Full(v) => () => Full(c(v))
-      case e: EmptyBox[_] => () => emptyToResp(e)
+      case e: EmptyBox => () => emptyToResp(e)
     }
 
-  protected def emptyToResp(eb: EmptyBox[_]): Box[LiftResponse] =
+  protected def emptyToResp(eb: EmptyBox): Box[LiftResponse] =
     eb match {
       case ParamFailure(msg, _, _, code: Int) =>
         Full(InMemoryResponse(msg.getBytes("UTF-8"), 
