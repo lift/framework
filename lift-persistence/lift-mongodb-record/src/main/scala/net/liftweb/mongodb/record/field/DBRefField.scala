@@ -19,8 +19,9 @@ import _root_.net.liftweb.http.js.JE.Str
 import _root_.net.liftweb.json.JsonAST.{JNothing, JObject, JValue}
 import _root_.net.liftweb.record.{Field, Record}
 
-import com.mongodb.{BasicDBObject, BasicDBObjectBuilder, DBObject, DBRef, ObjectId}
+import com.mongodb.{BasicDBObject, BasicDBObjectBuilder, DBObject, DBRef}
 import com.mongodb.util.JSON
+import org.bson.types.ObjectId
 
 /*
 * Field for storing a DBRef

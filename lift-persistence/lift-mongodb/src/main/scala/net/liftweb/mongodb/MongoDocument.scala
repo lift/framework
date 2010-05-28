@@ -17,6 +17,7 @@ package mongodb {
 import net.liftweb.json.JsonAST.JObject
 
 import com.mongodb._
+import org.bson.types.ObjectId
 
 /*
 * extend case class with this trait

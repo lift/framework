@@ -20,7 +20,8 @@ import _root_.net.liftweb.json.JsonAST.{JNothing, JNull, JString, JValue}
 import _root_.net.liftweb.record.{Field, Record}
 import _root_.net.liftweb.record.FieldHelpers
 
-import com.mongodb.{ObjectId, DBRef}
+import com.mongodb.{DBRef}
+import org.bson.types.ObjectId
 
 /*
 * Field for storing an ObjectId

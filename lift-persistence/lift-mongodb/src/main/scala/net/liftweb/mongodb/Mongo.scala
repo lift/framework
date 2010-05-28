@@ -23,6 +23,7 @@ import net.liftweb.json.Formats
 import net.liftweb.json.JsonAST.JObject
 
 import com.mongodb._
+import org.bson.types.ObjectId
 
 /*
 * The default MongoIdentifier

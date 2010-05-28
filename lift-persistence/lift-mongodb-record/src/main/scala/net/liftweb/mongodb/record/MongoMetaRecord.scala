@@ -28,6 +28,7 @@ import net.liftweb.record.field._
 
 import com.mongodb._
 import com.mongodb.util.JSON
+import org.bson.types.ObjectId
 
 trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   extends MetaRecord[BaseRecord] with MongoMeta[BaseRecord] {
@@ -189,6 +190,17 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   */
   def save(inst: BaseRecord, db: DB): Boolean = saveOp(inst) {
     db.getCollection(collectionName).save(inst.asDBObject)
+  }
+
+  /**
+   * Insert multiple records
+   */
+  def insertAll(insts: List[BaseRecord]): Unit = {
+    insts.foreach(inst => foreachCallback(inst, _.beforeSave))
+    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
+      coll.insert(insts.map(_.asDBObject).toArray)
+    )
+    insts.foreach(inst => foreachCallback(inst, _.afterSave))
   }
 
   /*
