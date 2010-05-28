@@ -27,7 +27,8 @@ private[mongodb] object Meta {
     import net.liftweb.json.Formats
     import net.liftweb.json.JsonAST._
 
-    import com.mongodb.{BasicDBObject, DBRef, ObjectId}
+    import com.mongodb.{BasicDBObject, DBRef}
+    import org.bson.types.ObjectId
 
     /*
     * These don't require a conversion and can be put directly into a DBObject
