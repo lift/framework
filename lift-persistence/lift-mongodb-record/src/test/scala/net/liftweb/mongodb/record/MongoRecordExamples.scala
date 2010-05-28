@@ -28,6 +28,7 @@ import org.specs.runner.JUnit4
 
 import com.mongodb._
 import com.mongodb.util.JSON
+import org.bson.types.ObjectId
 
 import field._
 

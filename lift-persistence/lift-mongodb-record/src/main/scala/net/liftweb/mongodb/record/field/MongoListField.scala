@@ -25,6 +25,7 @@ import _root_.net.liftweb.record.{Field, Record}
 
 import com.mongodb._
 import com.mongodb.util.JSON
+import org.bson.types.ObjectId
 
 /**
 * List field.
