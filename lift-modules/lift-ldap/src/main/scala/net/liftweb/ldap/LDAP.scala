@@ -42,7 +42,7 @@ object SimpleLDAPVendor extends SimpleLDAPVendor {
     def parametersFromStream(stream: InputStream) : StringMap = {
         val p = new Properties()
         p.load(stream)
-        Map.empty ++ p.asInstanceOf[Hashtable[String, String]]
+        Map.empty ++ p // .asInstanceOf[Hashtable[String, String]]
     }
 
     def setupFromBoot = {
