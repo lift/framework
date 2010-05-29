@@ -750,7 +750,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       if (ite.getCause.isInstanceOf[ResponseShortcutException]) => throw ite.getCause.asInstanceOf[ResponseShortcutException]
   }, c.newInstance)
 
-  private def findAttributeSnippet(attrValue: String, rest: MetaData): MetaData = {
+  private def findAttributeSnippet(attrValue: String, rest: MetaData, params: AnyRef*): MetaData = {
     S.doSnippet(attrValue) {
       val (cls, method) = splitColonPair(attrValue, null, "render")
 
@@ -758,7 +758,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       first(LiftRules.snippetNamesToSearch.vend(cls)) { nameToTry =>
         findSnippetClass(nameToTry) flatMap { clz =>
           instantiateOrRedirect(clz) flatMap { inst =>
-            invokeMethod(clz, inst, method) match {
+            invokeMethod(clz, inst, method) or invokeMethod(clz, inst, method, params.toList.toArray) match {
               case Full(md: MetaData) => Full(md.copy(rest))
               case _ => Empty
             }
@@ -789,6 +789,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case Null => Null
       case mine: PrefixedAttribute if (mine.pre == "lift") => {
         mine.key match {
+          case s if s.indexOf('.') > -1 => findAttributeSnippet(s, processAttributes(in.next), mine)
           case "snippet" => findAttributeSnippet(mine.value.text, processAttributes(in.next))
           case _ => mine.copy(processAttributes(in.next))
         }
