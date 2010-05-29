@@ -82,11 +82,13 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
     }
     "provide an aNumber parser - returning an Int if succeeding" in {
       val number: String => Boolean =
-        (s: String) => aNumber(s) match {
-             case Success(0, y) => s.toString must startWith("0")
-             case Success(x, y) => strToLst(s).dropWhile(_ == '0')(0) must_==(strToLst(x.toString).head)
-             case _ => true
-         }
+        (s: String) => {
+          aNumber(s) match {
+            case Success(x, y) => 
+              s.toInt == x
+            case _ => true
+          }
+        }
       forAll(number) must pass
     }
     "provide a slash parser" in {
