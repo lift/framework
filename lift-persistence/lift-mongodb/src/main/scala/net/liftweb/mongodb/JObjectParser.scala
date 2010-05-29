@@ -23,7 +23,8 @@ import _root_.net.liftweb.json.JsonAST._
 import _root_.net.liftweb.common.Box
 //import net.liftweb.json.Meta.Reflection._
 
-import com.mongodb.{BasicDBObject, BasicDBList, DBObject, ObjectId}
+import com.mongodb.{BasicDBObject, BasicDBList, DBObject}
+import org.bson.types.ObjectId
 
 object JObjectParser {
 

@@ -24,7 +24,8 @@ import net.liftweb.json.JsonAST._
 import net.liftweb.json.JsonParser._
 import net.liftweb.json.JsonDSL._
 
-import com.mongodb.{BasicDBList, BasicDBObject, ObjectId}
+import com.mongodb.{BasicDBList, BasicDBObject}
+import org.bson.types.ObjectId
 
 class MongoDocumentExamplesTest extends JUnit4(MongoDocumentExamples)
 
