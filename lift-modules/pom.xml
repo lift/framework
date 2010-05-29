@@ -49,9 +49,9 @@
     ~ Modules Setting
   -->
   <modules>
-    <!--FIXME: 280-->
+    
     <module>lift-testkit</module>
-    <!--<module>lift-osgi</module>-->
+    <!--FIXME: 280 <module>lift-osgi</module> -->
     <module>lift-wizard</module>
     <module>lift-widgets</module>
     <module>lift-machine</module>
@@ -64,7 +64,7 @@
     <module>lift-oauth</module>
     <module>lift-oauth-mapper</module>
     <module>lift-paypal</module>
-    <!--<module>lift-jta</module>-->
+    <module>lift-jta</module>
     <module>lift-imaging</module>
     <module>lift-ldap</module>
   </modules>

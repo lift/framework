@@ -212,6 +212,8 @@ class TransactionContext(private implicit val transactionService: TransactionSer
 
   private def setRollbackOnly = tm.setRollbackOnly
 
+  protected def getUnitName = "N/A"
+
   private def isRollbackOnly: Boolean = tm.getStatus == Status.STATUS_MARKED_ROLLBACK
 
   private def getTransactionManager: TransactionManager = tm
