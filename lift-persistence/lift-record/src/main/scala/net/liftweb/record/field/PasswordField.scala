@@ -103,7 +103,7 @@ class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
 
   protected def validatePassword(pwdBox: Box[String]): List[FieldError] = 
     pwdBox match {
-      case _: EmptyBox[_] => Text(S.??("password.must.be.set"))
+      case _: EmptyBox => Text(S.??("password.must.be.set"))
       case Full("") | Full(null) => Text(S.??("password.must.be.set"))
       case Full(pwd) if pwd == "*" ||
          pwd == PasswordField.blankPw || 
