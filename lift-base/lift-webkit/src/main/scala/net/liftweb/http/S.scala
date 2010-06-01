@@ -163,6 +163,7 @@ object S extends HasParams with Loggable {
   private val _responseCookies = new ThreadGlobal[CookieHolder]
   private val _lifeTime = new ThreadGlobal[Boolean]
   private val autoCleanUp = new ThreadGlobal[Boolean]
+  private val _oneShot = new ThreadGlobal[Boolean]
 
   private object postFuncs extends TransientRequestVar(new ListBuffer[() => Unit])
   private object p_queryLog extends TransientRequestVar(new ListBuffer[(String, Long)])
@@ -1811,25 +1812,66 @@ for {
    * that are executed when a request contains the 'name' request parameter.
    */
   def addFunctionMap(name: String, value: AFuncHolder) = {
-   autoCleanUp.box match {
-     case Full(true) =>  _functionMap.value += (name -> 
-       new S.ProxyFuncHolder(value) {
-         override def apply(in: List[String]): Any = {
-           try {
-             super.apply(in)
-           } finally {
-             S.session.map(_.removeFunction(name))
-           }
-         }
+   (autoCleanUp.box, _oneShot.box) match {
+     case (Full(true), _) => {
+       _functionMap.value += (name -> 
+                              new S.ProxyFuncHolder(value) {
+                                override def apply(in: List[String]): Any = {
+                                  try {
+                                    value.apply(in)
+                                  } finally {
+                                    S.session.map(_.removeFunction(name))
+                                  }
+                                }
+                                
+                                override def apply(in: FileParamHolder): Any = {
+                                  try {
+                                    value.apply(in)
+                                  } finally {
+                                    S.session.map(_.removeFunction(name))
+                                  }
+                                }
+                              })
+     }
 
-         override def apply(in: FileParamHolder): Any = {
-           try {
-             super.apply(in)
-           } finally {
-             S.session.map(_.removeFunction(name))
-           }
-         }
-       })
+     case (_, Full(true)) => {
+       def setProxyFunc(retVal: Any) {
+         _functionMap.value += 
+         (name -> new S.ProxyFuncHolder(value) {
+          override def apply(in: List[String]): Any = retVal
+          override def apply(in: FileParamHolder): Any = retVal
+        })
+       }
+       
+       _functionMap.value += 
+       (name -> 
+        new S.ProxyFuncHolder(value) {
+          override def apply(in: List[String]): Any = {
+            val ret = try {
+              value.apply(in)
+            } finally {
+              S.session.map(_.removeFunction(name))
+            }
+            // after the function is executed, memoize
+            // the return value and always return the memoized value
+            setProxyFunc(ret)
+            ret
+          }
+          
+          override def apply(in: FileParamHolder): Any = {
+            val ret = try {
+              value.apply(in)
+            } finally {
+              S.session.map(_.removeFunction(name))
+            }
+            // after the function is executed, memoize
+            // the return value and always return the memoized value
+            setProxyFunc(ret)
+            ret
+          }
+        })
+     }
+       
      case _ => _functionMap.value += (name -> value)
    }
   }
