@@ -569,7 +569,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
   private def _addOrdering(in: String, params: List[QueryParam[A]]): String = {
     params.flatMap{
-      case OrderBy(field, order) => List(MapperRules.quoteColumnName.vend(field._dbColumnNameLC)+" "+order.sql)
+      case OrderBy(field, order, nullOrder) => List(MapperRules.quoteColumnName.vend(field._dbColumnNameLC)+" "+order.sql+" "+(nullOrder.map(_.getSql).openOr("")))
       case OrderBySql(sql, _) => List(sql)
       case _ => Nil
     } match {
@@ -1467,7 +1467,30 @@ final case class Cmp[O<:Mapper[O], T](field: MappedField[T,O], opr: OprEnum.Valu
                                       otherField: Box[MappedField[T, O]], dbFunc: Box[String]) extends QueryParam[O]
 
 final case class OrderBy[O<:Mapper[O], T](field: MappedField[T,O],
-                                          order: AscOrDesc) extends QueryParam[O]
+                                          order: AscOrDesc, 
+                                          nullOrder: Box[NullOrder]) extends QueryParam[O]
+
+sealed trait NullOrder {
+  def getSql: String
+}
+case object NullsFirst extends NullOrder {
+  def getSql: String = " NULLS FIRST "
+}
+case object NullsLast extends NullOrder  {
+  def getSql: String = " NULLS LAST "
+}
+
+object OrderBy {
+  def apply[O <: Mapper[O], T](field: MappedField[T, O],
+                               order: AscOrDesc): OrderBy[O, T] =
+                                 new OrderBy[O, T](field, order, Empty)
+
+  def apply[O <: Mapper[O], T](field: MappedField[T, O],
+                               order: AscOrDesc,
+                             no: NullOrder): OrderBy[O, T] =
+                               new OrderBy[O, T](field, order, Full(no))
+}
+
 
 trait AscOrDesc {
   def sql: String
