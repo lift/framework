@@ -371,17 +371,22 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
       S.messages _
     else
       S.noIdMessages _
-
-    val xml = List((MsgsErrorMeta.get, f(S.errors), S.??("msg.error"), LiftRules.noticesContainerId + "_error"),
-      (MsgsWarningMeta.get, f(S.warnings), S.??("msg.warning"), LiftRules.noticesContainerId + "_warn"),
-      (MsgsNoticeMeta.get, f(S.notices), S.??("msg.notice"), LiftRules.noticesContainerId + "_notice")) flatMap {
-      msg => msg._1 match {
-        case Full(meta) => <div id={msg._4}>{func(msg._2 _, meta.title openOr "", 
-           meta.cssClass.map(new UnprefixedAttribute("class", _, Null)) openOr Null)}</div>
-        case _ => <div id={msg._4}>{func(msg._2 _, msg._3, Null)}</div>
+    
+    def makeList(meta: Box[AjaxMessageMeta], notices: List[NodeSeq], title: String, id: String): 
+      List[(Box[AjaxMessageMeta], List[NodeSeq], String, String)] = 
+        if (notices.isEmpty) Nil else List((meta, notices, title, id))
+    
+    val xml = 
+      ((makeList(MsgsErrorMeta.get, f(S.errors), S.??("msg.error"), LiftRules.noticesContainerId + "_error")) ++
+       (makeList(MsgsWarningMeta.get, f(S.warnings), S.??("msg.warning"), LiftRules.noticesContainerId + "_warn")) ++
+       (makeList(MsgsNoticeMeta.get, f(S.notices), S.??("msg.notice"), LiftRules.noticesContainerId + "_notice"))) flatMap {
+         msg => msg._1 match {
+           case Full(meta) => <div id={msg._4}>{func(msg._2 _, meta.title openOr "", 
+             meta.cssClass.map(new UnprefixedAttribute("class",_, Null)) openOr Null)}</div>
+           case _ => <div id={msg._4}>{func(msg._2 _, msg._3, Null)}</div>
+        }
       }
-    }
-
+    
     val groupMessages = xml match {
       case Nil => JsCmds.Noop
       case _ => LiftRules.jsArtifacts.setHtml(LiftRules.noticesContainerId, xml) &
