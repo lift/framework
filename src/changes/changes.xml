@@ -86,6 +86,10 @@
       <action dev="dpp" type="add" issue="532" system="assembla">
 	Add explicit test for MetaMapper comparisons in foreign keys
       </action>
+      
+      <action dev="eltimn" type="add" issue="533" system="assembla">
+	Add MongoPasswordField
+      </action>
     </release>
 
     <release version="2.0-M5" date="2010-05-05" description="Lift 2.0 Milestone 5">

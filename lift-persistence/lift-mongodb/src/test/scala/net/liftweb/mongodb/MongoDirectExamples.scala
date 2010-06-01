@@ -36,10 +36,17 @@ object MongoDirectExamples extends Specification {
     MongoDB.defineDb(DefaultMongoIdentifier, MongoAddress(MongoHost(), "test_direct"))
   }
   
-  def checkMongoIsRunning {
-    import com.mongodb.MongoException
-    (try { MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } ) }) must not(throwAnException[MongoException]).orSkipExample
+  def isMongoRunning: Boolean = {
+    try {
+      MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } )
+      true
+    }
+    catch {
+      case e => false
+    }
   }
+
+  def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkipExample
 
   import com.mongodb.util.JSON // Mongo parser/serializer
 
@@ -108,9 +115,6 @@ object MongoDirectExamples extends Specification {
       // server-side eval
       val six = db.eval(" function() { return 3+3; } ")
       six must_== 6
-      
-      // drop the db
-      db.dropDatabase
     })
   }
 
@@ -215,11 +219,6 @@ object MongoDirectExamples extends Specification {
         coll.drop
       }
     })
-    
-    // drop the database
-    MongoDB.use {
-      db => db.dropDatabase
-    }
   }
 
   "Mongo useSession example" in {
@@ -273,15 +272,6 @@ object MongoDirectExamples extends Specification {
       */
       db.getLastError.get("n") must_== 1
 
-      /* this works now
-      // try updating against the unique key			
-      val o3 = new BasicDBObject
-      o3.put("$set", new BasicDBObject("name", "MongoDB")) // set type
-      coll.update(qry, o3, true, false)
-      db.getLastError.get("err").toString must startWith("E12011 can't $inc/$set an indexed field")
-      db.getLastError.get("n") must_== 0
-      */
-
       // this update query won't find any docs to update
       coll.update(new BasicDBObject("name", "None"), o2, false, false)
       db.getLastError.get("updatedExisting") must_== false
@@ -306,13 +296,17 @@ object MongoDirectExamples extends Specification {
         coll.find.count must_== 0
         coll.drop
       }
-      
-      // drop the database
-      db.dropDatabase
     })
   }
 
   doAfterSpec {
+    if (!debug && isMongoRunning) {
+      // drop the database
+      MongoDB.use {
+        db => db.dropDatabase
+      }
+    }
+
     // clear the mongo instances
     MongoDB.close
   }

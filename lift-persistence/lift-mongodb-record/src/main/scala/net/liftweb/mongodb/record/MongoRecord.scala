@@ -35,12 +35,14 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends Record[MyType] {
   /**
   * Save the instance and return the instance
   */
-  def save: MyType = {
+  def save(strict: Boolean): MyType = {
     runSafe {
-      meta.save(this)
+      meta.save(this, strict)
     }
     this
   }
+
+  def save: MyType = save(false)
 
   /**
   * Delete the instance from backing store

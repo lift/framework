@@ -83,18 +83,19 @@ private[mongodb] object Meta {
       case x: Date => x
     }
 
+    /*
+    * Extended Mongo types.
+    */
     val mongotypes = Set[Class[_]](
-      classOf[DBRef], classOf[MongoRef], classOf[JObject], //classOf[JsonObject[Any]],
-      classOf[ObjectId], classOf[Pattern], classOf[Map[String, Any]])
+      classOf[DBRef], classOf[MongoRef], classOf[JObject],
+      classOf[ObjectId], classOf[Pattern])
 
     def mongotype_?(clazz: Class[_]) = mongotypes contains clazz
 
     def mongotype2dbovalue(a: Any, formats: Formats) = a match {
       case MongoRef(r, i) => new BasicDBObject("ref", r).append("id", i)
       case dbref: DBRef => dbref
-      case jo: JObject => JObjectParser.parse(jo)(formats) // Any JObject
-      //case jo: JsonObject[Any] => JObjectParser.parse(jo.asJObject) // A case class that extends JsonObject
-      //case m: Map[String, Any] => MapParser.parse(m)(formats)
+      case jo: JObject => JObjectParser.parse(jo)(formats) // Any JObject. @Deprecated
       case oid: ObjectId => oid
       case p: Pattern => p
       case _ => error("not a mongotype " + a.asInstanceOf[AnyRef].getClass)

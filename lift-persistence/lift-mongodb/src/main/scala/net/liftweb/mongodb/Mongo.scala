@@ -358,7 +358,6 @@ trait MongoMeta[BaseDocument] {
 
   /*
   * Update document with a JObject query using the given Mongo instance.
-  * For use with modifier operations $inc, $set, $push...
   */
   def update(qry: JObject, newobj: JObject, db: DB, opts: UpdateOption*) {
     update(
@@ -370,7 +369,7 @@ trait MongoMeta[BaseDocument] {
   }
 
   /*
-  * Update document with a JObject query. For use with modifier operations $inc, $set, $push...
+  * Update document with a JObject query.
   */
   def update(qry: JObject, newobj: JObject, opts: UpdateOption*) {
     MongoDB.use(mongoIdentifier) ( db => {
