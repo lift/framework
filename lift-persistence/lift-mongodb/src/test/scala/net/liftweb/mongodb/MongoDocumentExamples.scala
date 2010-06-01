@@ -152,10 +152,18 @@ object MongoDocumentExamples extends Specification {
     //MongoDB.defineDb(TstDBb, MongoAddress(mongoHost, "test_document_b"))
   }
   
-  def checkMongoIsRunning {
-    import com.mongodb.MongoException
-    (try { MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } ) }) must not(throwAnException[MongoException]).orSkipExample
+  def isMongoRunning: Boolean = {
+    try {
+      MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } )
+      MongoDB.use(TstDBa) ( db => { db.getLastError } )
+      true
+    }
+    catch {
+      case e => false
+    }
   }
+  
+  def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkipExample
 
   import com.mongodb.util.JSON // Mongo parser/serializer
 
@@ -211,11 +219,6 @@ object MongoDocumentExamples extends Specification {
       
       SimplePerson.drop
     }
-    
-    // drop the database
-    MongoDB.use {
-      db => db.dropDatabase
-    }
   }
 
   "Multiple Simple Person example" in {
@@ -269,11 +272,6 @@ object MongoDocumentExamples extends Specification {
       
       SimplePerson.drop
     }
-    
-    // drop the database
-    MongoDB.use {
-      db => db.dropDatabase
-    }
   }
 
   "Person example" in {
@@ -306,11 +304,6 @@ object MongoDocumentExamples extends Specification {
       pFromDb.isEmpty must_== true
       
       Person.drop
-    }
-    
-    // drop the database
-    MongoDB.use(TstDBa) {
-      db => db.dropDatabase
     }
   }
 
@@ -441,12 +434,6 @@ object MongoDocumentExamples extends Specification {
     IDoc.findAll.length must_== 50
     
     IDoc.drop
-    
-    // drop the database
-    MongoDB.use {
-      db => db.dropDatabase
-    }
-
   }
 
   "Mongo useSession example" in {
@@ -507,11 +494,6 @@ object MongoDocumentExamples extends Specification {
       }
 
     })
-    
-    // drop the database
-    MongoDB.use {
-      db => db.dropDatabase
-    }
   }
 
   "Primitives example" in {
@@ -538,11 +520,6 @@ object MongoDocumentExamples extends Specification {
 
       pFromDb.isEmpty must_== true
       Primitive.drop
-    }
-    
-    // drop the database
-    MongoDB.use {
-      db => db.dropDatabase
     }
   }
 
@@ -599,14 +576,19 @@ object MongoDocumentExamples extends Specification {
     
     MainJDoc.drop
     RefJDoc.drop
-    
-    // drop the database
-    MongoDB.use {
-      db => db.dropDatabase
-    }
   }
 
   doAfterSpec {
+    if (!debug && isMongoRunning) {
+      // drop the database
+      MongoDB.use {
+        db => db.dropDatabase
+      }
+      MongoDB.use(TstDBa) {
+        db => db.dropDatabase
+      }
+    }
+
     // clear the mongo instances
     MongoDB.close
   }

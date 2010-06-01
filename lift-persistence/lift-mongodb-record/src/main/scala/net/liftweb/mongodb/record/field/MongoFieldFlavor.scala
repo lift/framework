@@ -16,25 +16,14 @@ package mongodb {
 package record {
 package field {
 
-import scala.xml.{Node, NodeSeq, Text}
+import net.liftweb.common.Box
 
-import net.liftweb.common.{Box, Empty, Failure, Full}
-import net.liftweb.http.{S}
-import net.liftweb.http.js.JE.Str
-import net.liftweb.json.JsonAST.JObject
-import net.liftweb.json.JsonParser
-import net.liftweb.record.{Field, Record}
-import net.liftweb.util.{FieldError, Log}
-
-import com.mongodb._
-import com.mongodb.util.{JSON, JSONParseException}
+import com.mongodb.DBObject
 
 /**
 * Describes common aspects related to Mongo fields
 */
 trait MongoFieldFlavor[MyType] {
-
-  import com.mongodb.util.JSON
 
   /*
   * convert this field's value into a DBObject so it can be stored in Mongo.
@@ -43,12 +32,6 @@ trait MongoFieldFlavor[MyType] {
 
   // set this field's value using a DBObject returned from Mongo.
   def setFromDBObject(obj: DBObject): Box[MyType]
-  
-  // assume string is json
-  def setFromString(in: String): Box[MyType] = {
-    // use Mongo parser to convert to DBObject
-    setFromDBObject(JSON.parse(in).asInstanceOf[DBObject])
-  }
 
 }
 

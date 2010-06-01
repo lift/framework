@@ -38,7 +38,32 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+      <action dev="dpp" type="add" issue="511" system="assembla">
+	Enhanced TestKit to provide more generic HTTP request
+	capabilities
+      </action>
 
+      <action dev="dpp" type="fix" issue="514" system="assembla">
+	MappedString.apply(Empty) now correctly results in
+	a null String in the column
+      </action>
+
+      <action dev="dpp" type="add" issue="535" system="assembla">
+	Enhanced date math using JodaTime and more
+	seamless conversion to/from Date and JodaTime objects
+      </action>
+
+      <action dev="dpp" type="fix" issue="370" system="assembla">
+	Smarter caching of foreign key objects
+      </action>
+
+      <action dev="dpp" type="add" issue="532" system="assembla">
+	Add explicit test for MetaMapper comparisons in foreign keys
+      </action>
+      
+      <action dev="eltimn" type="add" issue="533" system="assembla">
+	Add MongoPasswordField
+      </action>
     </release>
 
     <release version="2.0-M5" date="2010-05-05" description="Lift 2.0 Milestone 5">

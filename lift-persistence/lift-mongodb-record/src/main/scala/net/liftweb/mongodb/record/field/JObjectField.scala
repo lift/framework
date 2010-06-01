@@ -22,6 +22,7 @@ import _root_.net.liftweb.json.JsonAST.{JNothing, JObject, JValue}
 import _root_.net.liftweb.json.JsonParser
 import _root_.net.liftweb.record.{Field, Record}
 
+@Deprecated
 class JObjectField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[JObject, OwnerType] {
 
   def asJs = Str(toString)

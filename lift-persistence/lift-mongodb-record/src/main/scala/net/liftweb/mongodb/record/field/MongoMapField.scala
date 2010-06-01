@@ -19,6 +19,7 @@ package field {
 import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
 import _root_.net.liftweb.http.js.JE.Str
 import _root_.net.liftweb.json.JsonAST.{JNothing, JValue}
+import _root_.net.liftweb.json.JsonParser
 import _root_.net.liftweb.record.{Field, Record}
 import _root_.net.liftweb.util.Log
 
@@ -54,6 +55,9 @@ class MongoMapField[OwnerType <: MongoRecord[OwnerType], MapValueType](rec: Owne
       }
     }
   }
+
+  // parse String into a JObject
+  def setFromString(in: String): Box[Map[String, MapValueType]] = setFromJValue(JsonParser.parse(in))
 
   def toForm = <div></div> // not implemented
 

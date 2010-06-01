@@ -18,7 +18,7 @@ package record {
 import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
 
-import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.json.DefaultFormats
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonAST.JObject
@@ -39,8 +39,6 @@ package mongotestrecords {
 
   class TstRecord extends MongoRecord[TstRecord] {
 
-    //import MongoHelpers._
-
     def meta = TstRecord
 
     def id = _id.value
@@ -60,44 +58,22 @@ package mongotestrecords {
     object intfield extends IntField(this)
     object localefield extends LocaleField(this)
     object longfield extends LongField(this)
-    object passwordfield extends PasswordField(this)
+    object passwordfield extends MongoPasswordField(this)
     //object postalcodefield extends PostalCodeField(this, countryfield)
     object stringfield extends StringField(this, 32)
     //object textareafield extends TextareaField(this, 200)
     object timezonefield extends TimeZoneField(this)
 
-    // JObjectField
-    object person extends JObjectField(this)
-
-    /* CaseClassField
-    object person2 extends CaseClassField[TstRecord, Person](this) {
-
-      def defaultValue = Person("", 0, Address("", ""), List())
-
-      def setFromAny(in: Any): Box[Person] = in match {
-        case jv: CaseType => Full(set(jv))
-        case Some(jv: CaseType) => Full(set(jv))
-        case Full(jv: CaseType) => Full(set(jv))
-        //case dbo: DBObject => Full(set(dbObjectToJObject(dbo)))
-        case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny)(0)
-        case (s: String) :: _ => setFromString(s)
-        case null => Full(set(null))
-        case s: String => setFromString(s)
-        case None | Empty | Failure(_, _, _) => Full(set(null))
-        case o => setFromString(o.toString)
-      }
-
-      def setFromString(in: String): Box[Person] = {
-        Full(set(Person.fromJObject(dbObjectToJObject(JSON.parse(in)))))
-      }
+    // JsonObjectField (requires a definition for defaultValue)
+    object person extends JsonObjectField[TstRecord, Person](this, Person) {
+      def defaultValue = Person("", 0, Address("", ""), Nil)
     }
-    */
   }
 
   object TstRecord extends TstRecord with MongoMetaRecord[TstRecord] {
     def createRecord = new TstRecord
   }
-  
+
   case class Address(street: String, city: String)
   case class Child(name: String, age: Int, birthdate: Option[Date])
 
@@ -112,7 +88,6 @@ package mongotestrecords {
 
     def meta = MainDoc
 
-    //object _id extends MongoIdField(this)
     object name extends StringField(this, 12)
     object cnt extends IntField(this)
 
@@ -167,16 +142,18 @@ package mongotestrecords {
     object boollist extends MongoListField[ListDoc, Boolean](this)
     object objidlist extends MongoListField[ListDoc, ObjectId](this)
     object calendarlist extends MongoListField[ListDoc, Calendar](this)
+    object dtlist extends MongoListField[ListDoc, Date](this)
     object patternlist extends MongoListField[ListDoc, Pattern](this)
     object dbreflist extends MongoListField[ListDoc, DBRef](this)
 
     // specialized list types
-    object jobjlist extends MongoJObjectListField(this)
+    object jobjlist extends MongoJObjectListField(this) // @Deprecated
     object datelist	extends MongoDateListField(this)
+    object jsonobjlist extends MongoJsonObjectListField[ListDoc, JsonDoc](this, JsonDoc)
 
     // these require custom setFromDBObject methods
-    //object jsonobjlist extends MongoJsonObjectListField[ListDoc, JsonDoc](this, JsonDoc)
-    object jsonobjlist extends MongoListField[ListDoc, JsonDoc](this) {
+    // This is now obsolete. Use MongoJsonObjectListField instead
+    object jsondoclist extends MongoListField[ListDoc, JsonDoc](this) {
       override def setFromDBObject(dbo: DBObject): Box[List[JsonDoc]] = {
         implicit val formats = meta.formats
         val lst: List[JsonDoc] =
@@ -256,6 +233,17 @@ package mongotestrecords {
   object OptionalDoc extends OptionalDoc with MongoMetaRecord[OptionalDoc] {
     def createRecord = new OptionalDoc
   }
+  class StrictDoc extends MongoRecord[StrictDoc] with MongoId[StrictDoc] {
+    def meta = StrictDoc
+    object name extends StringField(this, 32)
+  }
+  object StrictDoc extends StrictDoc with MongoMetaRecord[StrictDoc] {
+
+    import net.liftweb.json.JsonDSL._
+
+    ensureIndex(("name" -> 1), true) // unique name
+    def createRecord = new StrictDoc
+  }
 }
 
 object MongoRecordExamples extends Specification {
@@ -268,35 +256,40 @@ object MongoRecordExamples extends Specification {
     // define the db
     MongoDB.defineDb(DefaultMongoIdentifier, MongoAddress(MongoHost("localhost", 27017), "test_record"))
   }
-  
-  def checkMongoIsRunning {
-    import com.mongodb.MongoException
-    (try { MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } ) }) must not(throwAnException[MongoException]).orSkipExample
+
+  def isMongoRunning: Boolean = {
+    try {
+      MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } )
+      true
+    }
+    catch {
+      case e => false
+    }
   }
+
+  def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkipExample
 
   "TstRecord example" in {
 
     checkMongoIsRunning
 
-//		implicit val formats = TstRecord.formats
+    val pwd = "test"
 
     val tr = TstRecord.createRecord
-    tr.stringfield.set("test record string field")
-    tr.emailfield.set("test")
+    tr.stringfield("test record string field")
+    tr.emailfield("test")
     tr.validate.size must_== 2
-    tr.passwordfield.set("test")
-    tr.emailfield.set("test@example.com")
+    tr.passwordfield.setPassword(pwd)
+    tr.emailfield("test@example.com")
     tr.datetimefield.setFromAny(dateFormatter.parse("2009/01/02"))
     tr.validate.size must_== 0
     val newId = tr.id
 
+    // JsonObjectField
     val per = Person("joe", 27, Address("Bulevard", "Helsinki"), List(Child("Mary", 5, Some(now)), Child("Mazy", 3, None)))
+    tr.person(per)
 
-    tr.person.set(per.asJObject()(TstRecord.formats))
-
-    tr.id mustEqual newId
-
-    // save the person in the db
+    // save the record in the db
     tr.save
 
     // retrieve from db
@@ -313,29 +306,25 @@ object MongoRecordExamples extends Specification {
       t.intfield.value must_== tr.intfield.value
       t.localefield.value must_== tr.localefield.value
       t.longfield.value must_== tr.longfield.value
-      //t.passwordfield.value must_== tr.passwordfield.value
+      t.passwordfield.isMatch(pwd) must_== true
       t.stringfield.value must_== tr.stringfield.value
       t.timezonefield.value must_== tr.timezonefield.value
       t.datetimefield.value must_== tr.datetimefield.value
 
-      val p = Person.create(t.person.value)(TstRecord.formats)
-      p.name must_== per.name
-      p.age must_== per.age
-      p.address must_== per.address
-      p.children.size must_== per.children.size
-      for (i <- List.range(0, p.children.size-1)) {
-        p.children(i).name must_== per.children(i).name
-        p.children(i).age must_== per.children(i).age
-        TstRecord.formats.dateFormat.format(p.children(i).birthdate.get) must_==
-        TstRecord.formats.dateFormat.format(per.children(i).birthdate.get)
+      t.person.value.name must_== tr.person.value.name
+      t.person.value.age must_== tr.person.value.age
+      t.person.value.address.street must_== tr.person.value.address.street
+      t.person.value.address.city must_== tr.person.value.address.city
+      t.person.value.children.size must_== tr.person.value.children.size
+      for (i <- List.range(0, t.person.value.children.size-1)) {
+        t.person.value.children(i).name must_== tr.person.value.children(i).name
+        t.person.value.children(i).age must_== tr.person.value.children(i).age
+        TstRecord.formats.dateFormat.format(t.person.value.children(i).birthdate.get) must_==
+        TstRecord.formats.dateFormat.format(tr.person.value.children(i).birthdate.get)
       }
     }
-    
-    TstRecord.drop
-    // drop the database
-    MongoDB.use {
-      db => db.dropDatabase()
-    }
+
+    if (!debug) TstRecord.drop
   }
 
   "Ref example" in {
@@ -464,13 +453,10 @@ object MongoRecordExamples extends Specification {
       ref2.delete_!
 
       MainDoc.findAll.size must_== 0
-    }
-    
-    MainDoc.drop
-    RefDoc.drop
-    // drop the database
-    MongoDB.use {
-      db => db.dropDatabase()
+
+      MainDoc.drop
+      RefDoc.drop
+      RefStringDoc.drop
     }
   }
 
@@ -494,17 +480,18 @@ object MongoRecordExamples extends Specification {
     ld1.doublelist.set(List(997655.998,88.8))
     ld1.boollist.set(List(true,true,false))
     ld1.objidlist.set(List(ObjectId.get, ObjectId.get))
+    ld1.dtlist.set(List(now, now))
     ld1.jobjlist.set(List((("name" -> "jobj1") ~ ("type" -> "jobj")), (("name" -> "jobj2") ~ ("type" -> "jobj"))))
     ld1.jsonobjlist.set(List(JsonDoc("1", "jsondoc1"), JsonDoc("2", "jsondoc2")))
+    ld1.jsondoclist.set(List(JsonDoc("3", "jsondoc3"), JsonDoc("4", "jsondoc4")))
     ld1.datelist.set(List(now, now))
     /*val cal = Calendar.getInstance()
     cal.setTime(now)
     ld1.calendarlist.set(List(cal, cal))*/
     ld1.patternlist.set(List(Pattern.compile("^Mongo"), Pattern.compile("^Mongo2")))
-    ld1.dbreflist.set(List(ref1.getRef, ref2.getRef))
+    //ld1.dbreflist.set(List(ref1.getRef, ref2.getRef))
     ld1.maplist.set(List(Map("name" -> "map1", "type" -> "map"), Map("name" -> "map2", "type" -> "map")))
 
-    //lda..set(List())
     ld1.save must_== ld1
 
     val qld1 = ListDoc.find(ld1.id)
@@ -518,25 +505,29 @@ object MongoRecordExamples extends Specification {
       l.doublelist.value must_== ld1.doublelist.value
       l.boollist.value must_== ld1.boollist.value
       l.objidlist.value must_== ld1.objidlist.value
+      l.dtlist.value must_== ld1.dtlist.value
       l.jobjlist.value must_== ld1.jobjlist.value
       l.jsonobjlist.value must_== ld1.jsonobjlist.value
+      l.jsondoclist.value must_== ld1.jsondoclist.value
       l.datelist.value must_== ld1.datelist.value
       //l.patternlist.value must_== ld1.patternlist.value
-      //l.dbreflist.value must_== ld1.dbreflist.value // these don't compare properly because of the db mismatch(?)
+      l.dbreflist.value.size must_== ld1.dbreflist.value.size
+      for (i <- List.range(0, l.dbreflist.value.size-1)) {
+        l.dbreflist.value(i).getId must_== ld1.dbreflist.value(i).getId
+        l.dbreflist.value(i).getRef must_== ld1.dbreflist.value(i).getRef
+      }
       l.maplist.value must_== ld1.maplist.value
       l.jsonobjlist.value(0).id must_== "1"
     }
-    
-    ListDoc.drop
-    
-    // drop the database
-    MongoDB.use {
-      db => db.dropDatabase()
+
+    if (!debug) {
+      ListDoc.drop
+      RefDoc.drop
     }
   }
 
   "Map Example" in {
-  
+
     checkMongoIsRunning
 
     val md1 = MapDoc.createRecord
@@ -545,17 +536,12 @@ object MongoRecordExamples extends Specification {
     md1.save must_== md1
 
     md1.delete_!
-    
-    MapDoc.drop
-    
-    // drop the database
-    MongoDB.use {
-      db => db.dropDatabase()
-    }
+
+    if (!debug) MapDoc.drop
   }
 
   "Optional Example" in {
-  
+
     checkMongoIsRunning
 
     val od1 = OptionalDoc.createRecord
@@ -577,25 +563,34 @@ object MongoRecordExamples extends Specification {
       od2FromDB =>
         od2FromDB.stringbox.valueBox must_== od2.stringbox.valueBox
     }
+
+    if (!debug) OptionalDoc.drop
+  }
+
+  "Strict Example" in {
+
+    checkMongoIsRunning
+
+    val sd1 = StrictDoc.createRecord.name("sd1")
+    val sd2 = StrictDoc.createRecord.name("sd1")
+
+    sd1.save(true) must_== sd1
+    sd2.save(true) must throwA[MongoException]
     
-    OptionalDoc.drop
-    
-    // drop the database
-    MongoDB.use {
-      db => db.dropDatabase()
-    }
+    sd1.save
+
+    sd2.name("sd2")
+    sd2.save(true) must_== sd2
+
+    if (!debug) StrictDoc.drop
   }
 
   doAfterSpec {
-    if (!debug) {
-      /** drop the collections */
-      
-      
-      
-      
-      
-
-      
+    if (!debug && isMongoRunning) {
+      // drop the database
+      MongoDB.use {
+        db => db.dropDatabase
+      }
     }
 
     // clear the mongo instances

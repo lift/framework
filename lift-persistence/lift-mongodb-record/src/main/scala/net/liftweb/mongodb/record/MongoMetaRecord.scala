@@ -48,15 +48,15 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     foreachCallback(inst, _.afterDelete)
     true
   }
-  
+
   def bulkDelete_!!(qry: DBObject): Unit = {
   	MongoDB.useCollection(mongoIdentifier, collectionName)(coll => {
   		coll.remove(qry)
   	})
   }
-  
+
   def bulkDelete_!!(k: String, o: Any): Unit = bulkDelete_!!(new BasicDBObject(k, o))
-  
+
   /**
   * Find a single row by a qry, using a DBObject.
   */
@@ -181,11 +181,22 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /**
   * Save the instance in the appropriate backing store
   */
-  def save(inst: BaseRecord): Boolean = saveOp(inst) {
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
-      coll.save(inst.asDBObject)
-    )
+  def save(inst: BaseRecord, strict: Boolean): Boolean = saveOp(inst) {
+    if (strict) // strict mode will call getLastError and throw an exception if there was an error
+      MongoDB.useSession(mongoIdentifier) {
+        db =>
+          val coll = db.getCollection(collectionName)
+          coll.setWriteConcern(DB.WriteConcern.STRICT)
+          coll.save(inst.asDBObject)
+          coll.setWriteConcern(DB.WriteConcern.NORMAL)
+      }
+    else
+      MongoDB.useCollection(mongoIdentifier, collectionName) {
+        coll => coll.save(inst.asDBObject)
+      }
   }
+  
+  def save(inst: BaseRecord): Boolean = save(inst, false)
 
   /*
   * Save a document to the db using the given Mongo instance
@@ -206,29 +217,20 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   }
 
   /*
-  * Update document with a JObject query using the given Mongo instance
+  * Update records with a JObject query using the given Mongo instance
   */
   def update(qry: JObject, newbr: BaseRecord, db: DB, opts: UpdateOption*) {
     update(JObjectParser.parse(qry), newbr.asDBObject, db, opts :_*)
   }
 
   /*
-  * Update document with a JObject query
+  * Update records with a JObject query
   */
   def update(qry: JObject, newbr: BaseRecord, opts: UpdateOption*) {
-    MongoDB.use(mongoIdentifier) ( db => {
+    MongoDB.use(mongoIdentifier) ( db =>
       update(qry, newbr, db, opts :_*)
-    })
+    )
   }
-
-  /*
-  * Update document with a JObject query in strict mode
-
-  def updateStrict(qry: JObject, newbr: BaseRecord, opts: UpdateOption*): BaseRecord = {
-    MongoDB.use(mongoIdentifier) ( db => {
-      update(qry, newbr, db, opts :_*)
-    })
-  }*/
 
   /**
   * Create a BasicDBObject from the field names and values.
@@ -273,7 +275,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     val inst: BaseRecord = createRecord
     setFieldsFromDBObject(inst, dbo) map (_ => inst)
   }
-  
+
   /**
   * Populate the inst's fields with the values from a DBObject. Values are set
   * using setFromAny passing it the DBObject returned from Mongo.
