@@ -172,7 +172,9 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     in.addedPostCommit = false
   }
 
-  def afterCommit: List[A => Unit] = clearPostCommit _ :: Nil
+  private def clearPCFunc: A => Unit = clearPostCommit _
+
+  def afterCommit: List[A => Unit] = Nil
 
   def dbDefaultConnectionIdentifier: ConnectionIdentifier = DefaultConnectionIdentifier
 
@@ -1379,9 +1381,17 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   private[mapper] lazy val internal_dbTableName = fixTableName(internalTableName_$_$)
   
   private def setupInstanceForPostCommit(inst: A) {
-    if (!inst.addedPostCommit) {
-      DB.appendPostFunc(inst.connectionIdentifier, () => afterCommit.foreach(_(inst)))
-      inst.addedPostCommit = true
+    afterCommit match {
+      case Nil => 
+        // If there's no post-commit functions, then don't
+        // record (and retain) the instance
+        
+      case pcf =>
+        if (!inst.addedPostCommit) {
+          DB.appendPostFunc(inst.connectionIdentifier, 
+                            () => (clearPCFunc :: pcf).foreach(_(inst)))
+          inst.addedPostCommit = true
+        }
     }
   }
 
