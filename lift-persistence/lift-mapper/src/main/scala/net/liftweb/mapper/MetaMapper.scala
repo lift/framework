@@ -1016,11 +1016,15 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     )
   }
 
-  def checkFieldNames(in: A): Unit = mappedFieldList.foreach(f =>
-    ??(f.method, in) match {
-      case field if (field.i_name_! eq null) => field.setName_!(f.name)
-      case _ =>
-    })
+  private[mapper] def checkFieldNames(in: A): Unit = {
+    println("Checking names for "+in+" MappedFieldList "+mappedFieldList)
+
+    mappedFieldList.foreach(f =>
+      ??(f.method, in) match {
+        case field if (field.i_name_! eq null) => field.setName_!(f.name)
+        case _ =>
+      })
+  }
 
   /**
    * Get a field by the field name
@@ -1085,8 +1089,9 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
         case null => Nil
         case c =>
           // get the fields
+
           val fields = Map(c.getDeclaredFields.
-                           filter(f => Modifier.isPrivate(f.getModifiers)).
+                           // filter(f => Modifier.isPrivate(f.getModifiers)). // Issue 513 -- modifiers changed in Scala 2.8
                            filter(f => classOf[MappedField[_, _]].isAssignableFrom(f.getType)).
                            map(f => (deMod(f.getName), f)) :_*)
 
