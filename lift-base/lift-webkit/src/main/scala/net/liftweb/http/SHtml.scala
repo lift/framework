@@ -481,6 +481,57 @@ object SHtml {
     }
   }
 
+  /**
+   * This function does not really submit a JSON request to server instead json is a function
+   * that allows you to build a more complex JsCmd based on the JsExp <i>JE.JsRaw("this.value")</i>.
+   * This function is called by the overloaded version of jsonTextarea.
+   *
+   * @param value - the initial value of the text area field
+   * @param json - takes a JsExp which describes how to recover the
+   * value of the text area field and returns a JsExp containing the thing
+   * to execute on blur
+   *
+   * @return a text area field
+   */
+  def jsonTextarea(value: String, json: JsExp => JsCmd, attrs: (String, String)*): Elem = 
+  (attrs.foldLeft(<textarea>{value}</textarea>)(_ % _)) %
+  ("onblur" -> (json(JE.JsRaw("this.value"))))
+  
+
+  /**
+   * Create a JSON text area widget that makes a JSON call on blur
+   *
+   * @param value - the initial value of the text field
+   * @param cmd - the json command name
+   * @param json - the JsonCall returned from S.buildJsonFunc
+   *
+   * @return a text field
+   */
+  def jsonTextarea(value: String, cmd: String, json: JsonCall, attrs: (String, String)*): Elem =
+  jsonTextarea(value, exp => json(cmd, exp), attrs: _*)
+
+  def ajaxTextarea(value: String, func: String => JsCmd, attrs: (String, String)*): Elem = 
+  ajaxTextarea_*(value, Empty, SFuncHolder(func), attrs: _*)
+
+  def ajaxTextarea(value: String, jsFunc: Call, func: String => JsCmd, attrs: (String, String)*): Elem = 
+  ajaxTextarea_*(value, Full(jsFunc), SFuncHolder(func), attrs: _*)
+
+  private def ajaxTextarea_*(value: String, jsFunc: Box[Call], func: AFuncHolder, attrs: (String, String)*): Elem = {
+    val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + encodeURIComponent(" + value + ".value)")
+    val key = formFuncName
+
+    fmapFunc(contextFuncBuilder(func)) {
+      funcName =>
+      (attrs.foldLeft(<textarea>{value}</textarea>)(_ % _)) %
+      ("onblur" -> (jsFunc match {
+              case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
+              case _ => makeAjaxCall(raw(funcName, "this"))
+            })
+        )
+    }
+  }
+
+
   trait AreaShape {
     def shape: String
     def coords: String
