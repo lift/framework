@@ -392,12 +392,25 @@ object DocType {
   val html5 = "<!DOCTYPE html>"
 }
 
+/**
+ * Avoid using this in favor of LiftRules.docType
+ *
+ */
+@deprecated
 object ResponseInfo {
-  var docType: PartialFunction[Req, Box[String]] = {
-    case _ if S.skipDocType => Empty
-    case _ if S.getDocType._1 => S.getDocType._2
-    case _ => Full(DocType.xhtmlTransitional)
-  }
+
+   def docType: PartialFunction[Req, Box[String]] = new PartialFunction[Req, Box[String]](){
+     def isDefinedAt(req: Req): Boolean  = true
+
+     def apply(req: Req): Box[String] = LiftRules.docType.vend(req)
+   }
+
+   def docType_=(f: PartialFunction[Req, Box[String]]) = LiftRules.docType.default.set { (req: Req) => 
+     if (f.isDefinedAt(req))
+       f(req)
+     else
+       Full(DocType.xhtmlTransitional)
+   }
 }
 
 
