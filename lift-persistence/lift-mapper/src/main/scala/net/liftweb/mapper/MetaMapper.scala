@@ -1017,8 +1017,6 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   }
 
   private[mapper] def checkFieldNames(in: A): Unit = {
-    println("Checking names for "+in+" MappedFieldList "+mappedFieldList)
-
     mappedFieldList.foreach(f =>
       ??(f.method, in) match {
         case field if (field.i_name_! eq null) => field.setName_!(f.name)
