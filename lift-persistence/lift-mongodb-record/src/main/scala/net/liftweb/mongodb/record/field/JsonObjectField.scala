@@ -12,7 +12,9 @@
 */
 
 package net.liftweb {
-package mongodb.record.field {
+package mongodb {
+package record {
+package field {
 
 import scala.xml.{NodeSeq, Text}
 
@@ -88,5 +90,7 @@ abstract class JsonObjectField[OwnerType <: MongoRecord[OwnerType], JObjectType 
     setFromJValue(JObjectParser.serialize(dbo).asInstanceOf[JObject])
 }
 
+}
+}
 }
 }
