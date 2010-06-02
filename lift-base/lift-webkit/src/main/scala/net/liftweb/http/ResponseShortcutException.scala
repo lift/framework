@@ -39,6 +39,15 @@ object ResponseShortcutException {
       case _ => redirect(to)
     }
 
+  def seeOther(to: String): ResponseShortcutException =
+    new ResponseShortcutException(SeeOtherResponse(to, S responseCookies: _*), true)
+
+  def seeOther(to: String, func: () => Unit): ResponseShortcutException =
+    S.session match {
+      case Full(liftSession) => seeOther(liftSession.attachRedirectFunc(to, Full(func)))
+      case _ => seeOther(to)
+    }
+
 }
 
 }

@@ -91,7 +91,7 @@ trait Wizard extends DispatchSnippet with Factory {
     if (FirstTime) {
       FirstTime.set(false)
       val localSnapshot = createSnapshot
-      S.redirectTo(S.uri, () => localSnapshot.restore)
+      S.seeOther(S.uri, () => localSnapshot.restore)
     }
 
     val nextId = Helpers.nextFuncName
@@ -100,7 +100,7 @@ trait Wizard extends DispatchSnippet with Factory {
 
     val theScreen = currentScreen openOr {
       WizardRules.deregisterWizardSession(CurrentSession.is)
-      S.redirectTo(Referer.is)
+      S.seeOther(Referer.is)
     }
 
     val (nextButton, finishButton) =
@@ -160,20 +160,20 @@ trait Wizard extends DispatchSnippet with Factory {
 
     def doNext() {
       this.nextScreen
-      if (currentScreen.isEmpty) S.redirectTo(Referer.is)
+      if (currentScreen.isEmpty) S.seeOther(Referer.is)
     }
 
 
     def bindFields(xhtml: NodeSeq): NodeSeq =
       (<form id={nextId} action={url} method="post">{S.formGroup(-1)(SHtml.hidden(() =>
           snapshot.restore()))}{bind("wizard", xhtml, "line" -> bindFieldLine _)}{S.formGroup(4)(SHtml.hidden(() =>
-          {doNext(); val localSnapshot = createSnapshot; S.redirectTo(url, () => localSnapshot.restore)}))}</form> %
+          {doNext(); val localSnapshot = createSnapshot; S.seeOther(url, () => localSnapshot.restore)}))}</form> %
           theScreen.additionalAttributes) ++
-          <form id={prevId} action={url} method="post">{SHtml.hidden(() => {snapshot.restore(); this.prevScreen; val localSnapshot = createSnapshot; S.redirectTo(url, () => localSnapshot.restore)})}</form> ++
+          <form id={prevId} action={url} method="post">{SHtml.hidden(() => {snapshot.restore(); this.prevScreen; val localSnapshot = createSnapshot; S.seeOther(url, () => localSnapshot.restore)})}</form> ++
           <form id={cancelId} action={url} method="post">{SHtml.hidden(() => {
             snapshot.restore();
             WizardRules.deregisterWizardSession(CurrentSession.is)
-            S.redirectTo(Referer.is)
+            S.seeOther(Referer.is)
           })}</form>
 
     Helpers.bind("wizard", allTemplate,
@@ -237,7 +237,7 @@ trait Wizard extends DispatchSnippet with Factory {
       PrevSnapshot.set(snapshot)
       OnFirstScreen.set(firstScreen)
       if (!WizardRules.isValidWizardSession(CurrentSession.is)) {
-        S.redirectTo(Referer.is)
+        S.seeOther(Referer.is)
       }
     }
   }

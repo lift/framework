@@ -355,7 +355,12 @@ case class OutputStreamResponse(out: (java.io.OutputStream) => Unit,
 
 case class RedirectResponse(uri: String, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
-  def toResponse = InMemoryResponse(Array(0), List("Location" -> uri), cookies toList, 302)
+  def toResponse = InMemoryResponse(Array(), List("Location" -> uri, "Content-Type" -> "text/plain"), cookies toList, 302)
+}
+
+case class SeeOtherResponse(uri: String, cookies: HTTPCookie*) extends LiftResponse {
+  // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
+  def toResponse = InMemoryResponse(Array(), List("Location" -> uri, "Content-Type" -> "text/plain"), cookies toList, 303)
 }
 
 object DoRedirectResponse {

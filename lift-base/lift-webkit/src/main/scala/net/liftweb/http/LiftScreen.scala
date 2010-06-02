@@ -222,7 +222,7 @@ trait LiftScreen extends AbstractScreen with DispatchSnippet {
       FirstTime.set(false)
       localSetup()
       val localSnapshot = createSnapshot
-      S.redirectTo(S.uri, () => localSnapshot.restore)
+      S.seeOther(S.uri, () => localSnapshot.restore)
     }
 
     val finishId = Helpers.nextFuncName
@@ -280,11 +280,11 @@ trait LiftScreen extends AbstractScreen with DispatchSnippet {
     def bindFields(xhtml: NodeSeq): NodeSeq =
       (<form id={finishId} action={url} method="post">{S.formGroup(-1)(SHtml.hidden(() =>
           snapshot.restore()))}{bind("wizard", xhtml, "line" -> bindFieldLine _)}{S.formGroup(4)(SHtml.hidden(() =>
-          {doFinish(); val localSnapshot = createSnapshot; S.redirectTo(url, () => localSnapshot.restore)}))}</form> %
+          {doFinish(); val localSnapshot = createSnapshot; S.seeOther(url, () => localSnapshot.restore)}))}</form> %
           theScreen.additionalAttributes) ++
           <form id={cancelId} action={url} method="post">{SHtml.hidden(() => {
             snapshot.restore();
-            S.redirectTo(Referer.is)
+            S.seeOther(Referer.is)
           })}</form>
 
     Helpers.bind("wizard", allTemplate,
@@ -350,7 +350,7 @@ trait LiftScreen extends AbstractScreen with DispatchSnippet {
   }
 
   protected def redirectBack() {
-    S.redirectTo(Referer.is)
+    S.seeOther(Referer.is)
   }
 }
 
