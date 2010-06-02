@@ -92,7 +92,7 @@ class LiftServlet extends Loggable {
       req.request.resumeInfo match {
         case None => doIt
         case r if r eq null => doIt
-        case Some((or: Req, r: LiftResponse)) if (req.path == or.path) => sendResponse(r, resp, Empty); true
+        case Some((or: Req, r: LiftResponse)) if (req.path == or.path) => sendResponse(r, resp, req); true
         case _ => doIt
       }
     } catch {
@@ -197,7 +197,7 @@ class LiftServlet extends Loggable {
       case Full(EmptyResponse) => 
         true
       case Full(cresp) =>
-        sendResponse(cresp, response, Full(req))
+        sendResponse(cresp, response, req)
         true
 
       case _ => false
@@ -481,40 +481,54 @@ class LiftServlet extends Loggable {
    * Sends the  { @code HTTPResponse } to the browser using data from the
    * { @link Response } and  { @link Req }.
    */
-  def sendResponse(liftResp: LiftResponse, response: HTTPResponse, request: Box[Req]) {
+  private[http] def sendResponse(liftResp: LiftResponse, response: HTTPResponse, request: Req) {
     def fixHeaders(headers: List[(String, String)]) = headers map ((v) => v match {
-      case ("Location", uri) => (v._1, (
-              (for (u <- request;
-                    updated <- Full((if (!LiftRules.excludePathFromContextPathRewriting.vend(uri)) u.contextPath else "") + uri).filter(ignore => uri.startsWith("/"));
+      case ("Location", uri) =>
+        val u = request
+      (v._1, (
+        (for (
+              updated <- Full((if (!LiftRules.excludePathFromContextPathRewriting.vend(uri)) u.contextPath else "") + uri).filter(ignore => uri.startsWith("/"));
                     rwf <- URLRewriter.rewriteFunc) yield rwf(updated)) openOr uri
               ))
       case _ => v
     })
 
-    def pairFromRequest(in: Box[Req]): (Box[Req], Box[String]) = {
-      val acceptHeader = for (req <- in;
-                              innerReq <- Box.legacyNullTest(req.request);
+    def pairFromRequest(req: Req): (Box[Req], Box[String]) = {
+      val acceptHeader = for (innerReq <- Box.legacyNullTest(req.request);
                               accept <- innerReq.header("Accept")) yield accept
 
-      (in, acceptHeader)
+      (Full(req), acceptHeader)
     }
 
     val resp = liftResp.toResponse
 
-    request.map(r => logIfDump(r, resp))
+    logIfDump(request, resp)
 
+    def insureField(headers: List[(String, String)], toInsure: List[(String, String)]): List[(String, String)] = 
+      {
+        val org = Map(headers :_*)
+
+        toInsure.foldLeft(org){
+          case (map, (key, value)) =>
+            if (map.contains(key)) map
+          else map + (key -> value)
+        }.toList
+        
+      }
+                      
 
     val len = resp.size
     // insure that certain header fields are set
-    val header = if (resp.code == 304) {
+    val header = if (resp.code == 304 || resp.code == 303) 
       fixHeaders(resp.headers)
-    } else {
-      insureField(fixHeaders(resp.headers), List(("Content-Type",
-        LiftRules.determineContentType(pairFromRequest(request)))) ++
-          (if (len >= 0) List(("Content-Length", len.toString)) else Nil))
-    }
-
-    LiftRules.beforeSend.toList.foreach(f => tryo(f(resp, response, header, request)))
+    else 
+      insureField(fixHeaders(resp.headers),
+                  LiftRules.defaultHeaders(NodeSeq.Empty -> request) :::
+                  List(("Content-Type",
+                        LiftRules.determineContentType(pairFromRequest(request)))) :::
+                  (if (len >= 0) List(("Content-Length", len.toString)) else Nil))
+    
+    LiftRules.beforeSend.toList.foreach(f => tryo(f(resp, response, header, Full(request))))
     // set the cookies
     response.addCookies(resp.cookies)
 
@@ -563,7 +577,7 @@ class LiftServlet extends Loggable {
       case e: _root_.java.io.IOException => // ignore IO exceptions... they happen
     }
 
-    LiftRules.afterSend.toList.foreach(f => tryo(f(resp, response, header, request)))
+    LiftRules.afterSend.toList.foreach(f => tryo(f(resp, response, header, Full(request))))
   }
 }
 

@@ -818,6 +818,57 @@ for {
   def redirectTo[T](where: String, func: () => Unit): T =
     throw ResponseShortcutException.redirect(where, func)
 
+
+  /**
+   * Redirects the browser to a given URL. Note that the underlying mechanism for redirects is to
+   * throw a ResponseShortcutException, so if you're doing the redirect within a try/catch block,
+   * you need to make sure to either ignore the redirect exception or rethrow it. Two possible
+   * approaches would be:
+   *
+   * <pre name="code" class="scala" >
+   *   ...
+   *   try  {
+   *     // your code here
+   *     S.seeOther(...)
+   * } catch  {
+   *     case e: Exception if !e.instanceOf[net.liftweb.http.ResponseShortcutException] => ...
+   * }
+   * </pre>
+   *
+   * or
+   *
+   * <pre name="code" class="scala" >
+   *   ...
+   *   try  {
+   *     // your code here
+   *     S.seeOther(...)
+   * } catch  {
+   *     case rse: net.liftweb.http.ResponseShortcutException => throw rse
+   *     case e: Exception => ...
+   * }
+   * </pre>
+   *
+   * @param where The new URL to redirect to.
+   *
+   * @see ResponseShortcutException
+   * @see # seeOther ( String, ( ) => Unit)
+   */
+  def seeOther[T](where: String): T = throw ResponseShortcutException.seeOther(where)
+
+  /**
+   * Redirects the browser to a given URL and registers a function that will be executed when the browser
+   * accesses the new URL. Otherwise the function is exactly the same as S.seeOther(String), which has
+   * example documentation. Note that if the URL that you redirect to must be part of your web application
+   * or the function won't be executed. This is because the function is only registered locally.
+   *
+   * @param where The new URL to redirect to.
+   * @param func The function to be executed when the redirect is accessed.
+   *
+   * @see # seeOther ( String )
+   */
+  def seeOther[T](where: String, func: () => Unit): T =
+    throw ResponseShortcutException.seeOther(where, func)
+
   private[http] object oldNotices extends
   TransientRequestVar[Seq[(NoticeType.Value, NodeSeq, Box[String])]](Nil)
 

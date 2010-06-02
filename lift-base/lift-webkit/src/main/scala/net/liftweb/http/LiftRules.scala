@@ -969,11 +969,14 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
     }, headers, cookies, req)
 
   @volatile var defaultHeaders: PartialFunction[(NodeSeq, Req), List[(String, String)]] = {
-    case _ => List("Expires" -> Helpers.nowAsInternetDate,
-      "Cache-Control" ->
-              "no-cache; private; no-store; must-revalidate; max-stale=0; post-check=0; pre-check=0; max-age=0",
-      "Pragma" -> "no-cache" /*,
-      "Keep-Alive" -> "timeout=3, max=993" */ )
+    case _ => 
+      val d = Helpers.nowAsInternetDate
+      List("Expires" -> d,
+           "Date" -> d,
+           "Cache-Control" ->
+           "no-cache; private; no-store",
+           "Pragma" -> "no-cache" /*,
+           "Keep-Alive" -> "timeout=3, max=993" */ )
   }
 
   /**
@@ -1320,7 +1323,10 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
     requestState.testFor304(modTime) or
             Full(JavaScriptResponse(renderCometScript(liftSession),
               List("Last-Modified" -> toInternetDate(modTime),
-                "Expires" -> toInternetDate(modTime + 10.minutes)),
+                   "Expires" -> toInternetDate(modTime + 10.minutes),
+                   "Date" -> Helpers.nowAsInternetDate,
+                   "Pragma" -> "",
+                   "Cache-Control" -> ""),
               Nil, 200))
   }
 
