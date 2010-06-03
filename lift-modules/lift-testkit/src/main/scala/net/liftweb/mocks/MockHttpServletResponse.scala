@@ -45,43 +45,43 @@ import _root_.javax.servlet.http._
  */
 class MockHttpServletResponse(var writer: PrintWriter, var outputStream: ServletOutputStream)
   extends HttpServletResponse {
-  var statusCode : Int = 200
-  var statusString : String = "OK"
-  var contentType = "text/html"
-  var contentLength = 0
-  val headers: HashMap[String, String] = new HashMap[String, String]
-  var cookies: List[Cookie] = Nil
-  var locale: Locale = Locale.getDefault
-  var bufferSize: Int = 0
-  var charEncoding = "ISO-8859-1" // yes, that's HTTP's default
+  protected var statusCode : Int = 200
+  protected var statusString : String = "OK"
+  protected var contentType = "text/html"
+  protected var contentLength: Int = 0
+  protected var headers: Map[String, List[String]] = Map()
+  protected var cookies: List[Cookie] = Nil
+  protected var locale: Locale = Locale.getDefault
+  protected var bufferSize: Int = 0
+  protected var charEncoding = "ISO-8859-1" // yes, that's HTTP's default
 
-  def setStatus(i: Int, s: String) = {
+  def setStatus(i: Int, s: String): Unit = {
     statusCode = i
     statusString = s
   }
 
-  def setStatus(i: Int) = {
+  def setStatus(i: Int): Unit = {
     statusCode = i
   }
 
   def addIntHeader(s: String, i: Int) {
-    headers += (s -> i.toString)
+    addHeader(s, i.toString)
   }
   def setIntHeader(s: String, i: Int) {
-    headers += (s -> i.toString)
+    setHeader(s, i.toString)
   }
   def addHeader(s1: String, s2: String) {
-    headers += (s1 -> s2)
+    headers += (s1 -> (headers.getOrElse(s1, Nil) ::: List(s2)))
   }
   def setHeader(s1: String, s2: String) {
-    headers += (s1 -> s2)
+    headers += (s1 -> List(s2))
   }
 
   def addDateHeader(s: String, l: Long) {
-    headers += (s -> (new Date(l)).toString)
+    addHeader(s, (new Date(l)).toString)
   }
   def setDateHeader(s: String, l: Long) {
-    addDateHeader(s, l)
+    setHeader(s, (new Date(l)).toString)
   }
 
   def sendRedirect(uri: String) {
@@ -127,15 +127,15 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
   def flushBuffer {
     // flush the buffer
   }
-  def getBufferSize = bufferSize
-  def setBufferSize(i: Int) = bufferSize = i
-  def setContentType(t: String) = contentType = t
-  def setContentLength(l: Int) = contentLength = l
-  def setCharacterEncoding(e: String) = charEncoding = e
-  def getWriter = writer
-  def getOutputStream = outputStream
-  def getContentType = contentType
-  def getCharacterEncoding = charEncoding
+  def getBufferSize(): Int = bufferSize
+  def setBufferSize(i: Int): Unit = bufferSize = i
+  def setContentType(t: String): Unit = contentType = t
+  def setContentLength(l: Int): Unit = contentLength = l
+  def setCharacterEncoding(e: String): Unit = charEncoding = e
+  def getWriter(): PrintWriter = writer
+  def getOutputStream(): ServletOutputStream = outputStream
+  def getContentType(): String = contentType
+  def getCharacterEncoding(): String = charEncoding
 }
 
 }

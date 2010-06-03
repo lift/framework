@@ -31,6 +31,8 @@ import _root_.java.util.Arrays
 import _root_.java.util.Date
 import _root_.java.util.Locale
 import _root_.java.util.Vector
+import _root_.java.util.{Enumeration => JEnum}
+import _root_.java.util.{HashMap => JHash}
 import _root_.javax.servlet._
 import _root_.javax.servlet.http._
 import _root_.net.liftweb.util.Helpers
@@ -43,113 +45,131 @@ import scala.collection.JavaConversions._
  * @author Steve Jenson (stevej@pobox.com)
  */
 class MockHttpServletRequest extends HttpServletRequest {
+  private implicit def itToEnum[T <: Object](it: Iterator[T]): JEnum[Object] = 
+    new JEnum[Object] {
+      def hasMoreElements() = it.hasNext
+      def nextElement(): Object = it.next
+    }
+
+  private implicit def mapToMap[K <: Object, V <: Object](in: Seq[(K, V)]):
+  java.util.Map[Object, Object] = {
+    val ret = new JHash[Object, Object]
+
+    in.foreach {
+      case (k, v) => ret.put(k,v)
+    }
+
+    ret
+  }
+
+
   var session : HttpSession = new MockHttpSession
   var queryString: String = ""
-  var contextPath = ""
-  var path = ""
-  var method = "GET"
-  private val headers: HashMap[String, String] = new HashMap()
-  private val attr: HashMap[String, Object] = new HashMap()
-  private var cookies: List[Cookie] = Nil
-  var authType = null
+  var contextPath: String = ""
+  var path: String = ""
+  var method: String = "GET"
+  var headers: Map[String, List[String]] = Map()
+  var attr: Map[String, Object] = Map()
+  var cookies: List[Cookie] = Nil
+  var authType: String = null
   var localPort = 0
-  var localAddr = null
-  var localName = null
+  var localAddr: String = null
+  var localName: String = null
   var remotePort = 0
-  var remoteHost = null
-  var remoteAddr = null
+  var remoteHost: String = null
+  var remoteAddr: String = null
   var locale = Locale.getDefault
   var reader: BufferedReader = new BufferedReader(new StringReader(method + " " + path +  "/\r\n\r\n"))
   var serverPort = 0
-  var serverName = null
+  var serverName: String = null
   var scheme = "http"
-  var protocol = "http 1.0"
-  var parameterMap: HashMap[String, Array[String]] = new HashMap()
-  val sbis = new StringBufferInputStream("")
+  var protocol = "HTTP 1.0"
+  var parameterMap: Map[String, List[String]] = Map()
+  var sbis: InputStream = new StringBufferInputStream("")
   var inputStream: ServletInputStream = new MockServletInputStream(sbis)
-  var contentType = null
-  var contentLength = 0
-  var charEncoding = "ISO-8859-1" // HTTP's default encoding
+  var contentType: String = null
+  var contentLength: Int = 0
+  var charEncoding: String = "ISO-8859-1" // HTTP's default encoding
 
-  def isRequestedSessionIdFromURL = false
-  def isRequestedSessionIdFromUrl = false
-  def isRequestedSessionIdFromCookie = false
-  def isRequestedSessionIdValid = false
-  def getSession(p: Boolean) = {
+  def isRequestedSessionIdFromURL(): Boolean = false
+  def isRequestedSessionIdFromUrl(): Boolean = false
+  def isRequestedSessionIdFromCookie(): Boolean = false
+  def isRequestedSessionIdValid(): Boolean = false
+  def getSession(p: Boolean): HttpSession = {
     session
   }
-  def getSession = getSession(false)
-  def getServletPath = ""
-  def getRequestURL = new StringBuffer(path)
-  def getRequestURI = path
-  def getRequestedSessionId = null
-  def getUserPrincipal = null
+  def getSession(): HttpSession = getSession(false)
+  def getServletPath(): String = ""
+  def getRequestURL(): StringBuffer = new StringBuffer(path)
+  def getRequestURI(): String = path
+  def getRequestedSessionId(): String = null
+  def getUserPrincipal(): java.security.Principal = null
   def isUserInRole(user: String): Boolean = false
-  def getRemoteUser = ""
-  def getQueryString = queryString
-  def getContextPath = contextPath
-  def getPathTranslated = path
-  def getPathInfo = path
-  def getMethod = method
+  def getRemoteUser(): String = ""
+  def getQueryString(): String = queryString
+  def getContextPath(): String = contextPath
+  def getPathTranslated(): String = path
+  def getPathInfo(): String = path
+  def getMethod(): String = method
   def getIntHeader(h: String): Int = {
-    Helpers.toInt(headers(h))
+    headers.get(h).flatMap(_.headOption).map(_.toInt) getOrElse -1
   }
-  def getHeaderNames: java.util.Enumeration[String] = {
-    new Vector[String](asCollection(headers.keySet)).elements
-  }
-  def getHeaders = headers
-  def getHeaders(s: String): java.util.Enumeration[Object] = {
-    val v = new Vector[AnyRef]()
-    v.add(headers(s))
-    v.elements
-  }
-  def getHeader(h: String) = headers.get(h) match {
-    case Some(v) => v
-    case None => null
+  def getHeaderNames(): JEnum[Object] = headers.keys
+  def getHeaders(s: String): JEnum[Object] =
+    headers.getOrElse(s, Nil).elements
+
+  def getHeader(h: String): String = headers.get(h) match {
+    case Some(v :: _) => v
+    case _ => null
   }
   def getDateHeader(h: String): Long = {
-    Helpers.toLong(headers(h))
+    headers.get(h).flatMap(_.headOption.map(_.toLong)) getOrElse -1L
   }
   def setDateHeader(s: String, l: Long) {
-    headers(s) = l.toString
+    headers += (s -> List(new java.util.Date(l).toString))
   }
-  def getCookies = cookies.toArray
-  def getAuthType = authType
-  def getLocalPort = localPort
-  def getLocalAddr = localAddr
-  def getLocalName = localName
-  def getRemotePort = remotePort
-  def getRealPath(s: String) = s
+  def getCookies(): Array[Cookie] = cookies.toArray
+  def getAuthType(): String = authType
+  def getLocalPort(): Int = localPort
+  def getLocalAddr(): String = localAddr
+  def getLocalName(): String = localName
+  def getRemotePort(): Int = remotePort
+  def getRealPath(s: String): String = s
   def getRequestDispatcher(s: String): RequestDispatcher = null
   def isSecure = false
-  type ZZ = Q forSome {type Q}
-  def getLocales: java.util.Enumeration[Object] = new Vector[Object](Arrays.asList(Locale.getAvailableLocales : _*)).elements
-  def getLocale = locale
-  def removeAttribute(key: String) = attr -= key
-  def setAttribute(key: String, value: Object) = attr(key) = value
-  def getRemoteHost = remoteHost
-  def getRemoteAddr = remoteAddr
-  def getReader = reader
-  def getServerPort = serverPort
-  def getServerName = serverName
-  def getScheme = scheme
-  def getProtocol = protocol
-  def getParameterMap: java.util.Map[String, Array[String]] = parameterMap
-  def getParameterValues(key: String) =
-    parameterMap.get(key) match {
-    case Some(v) => v
-    case _ => null
-    }   	 
+  def getLocales(): JEnum[Object] = Locale.getAvailableLocales.elements
+  def getLocale(): Locale = locale
+  def removeAttribute(key: String): Unit = attr -= key
+  def setAttribute(key: String, value: Object): Unit = attr += (key -> value)
+  def getRemoteHost(): String = remoteHost
+  def getRemoteAddr(): String = remoteAddr
+  def getReader(): java.io.BufferedReader = reader
+  def getServerPort(): Int = serverPort
+  def getServerName(): String = serverName
+  def getScheme(): String = scheme
+  def getProtocol(): String = protocol
+  def getParameterMap(): java.util.Map[Object, Object] = {
+    parameterMap.map{
+      case (key, value) => key -> value.toArray
+    }.toSeq
+  }
 
-  def getParameterNames: java.util.Enumeration[Object] = new Vector[Object](parameterMap.keySet).elements
-  def getParameter(key: String) = parameterMap(key).apply(0)
-  def getInputStream = inputStream
-  def getContentType = contentType
-  def getContentLength = contentLength
-  def getCharacterEncoding = charEncoding
-  def setCharacterEncoding(enc: String) = charEncoding = enc
-  def getAttributeNames: java.util.Enumeration[Object] = new Vector[Object](attr.keySet).elements
-  def getAttribute(key: String) = attr(key).asInstanceOf[Object]
+  def getParameterValues(key: String): Array[String] =
+    parameterMap.get(key).map(_.toArray) getOrElse null
+
+  def getParameterNames(): JEnum[Object] = parameterMap.keys
+  def getParameter(key: String): String = parameterMap.get(key) match {
+    case Some(x :: _) => x
+    case _ => null
+  }
+
+  def getInputStream(): ServletInputStream = inputStream
+  def getContentType(): String = contentType
+  def getContentLength(): Int = contentLength
+  def getCharacterEncoding(): String = charEncoding
+  def setCharacterEncoding(enc: String): Unit = charEncoding = enc
+  def getAttributeNames(): JEnum[Object] = attr.keys
+  def getAttribute(key: String): Object = attr.get(key).getOrElse(null)
 }
 
 }
