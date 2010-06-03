@@ -50,7 +50,7 @@
     <dependency>
       <!-- need net.liftweb.util -->
       <groupId>${project.groupId}</groupId>
-      <artifactId>lift-webkit</artifactId>
+      <artifactId>lift-util</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
