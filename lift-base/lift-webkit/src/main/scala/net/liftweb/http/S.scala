@@ -1873,8 +1873,7 @@ for {
         })
      }
        
-     case _ =>
-       _functionMap.value += (name -> value)
+     case _ => _functionMap.value += (name -> value)
    }
   }
 
