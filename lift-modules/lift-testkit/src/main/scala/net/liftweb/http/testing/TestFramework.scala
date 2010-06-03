@@ -36,6 +36,10 @@ import _root_.org.apache.commons.httpclient.auth.AuthScope
 
 trait ToResponse {
   self: BaseGetPoster =>
+
+  type ResponseType = Response
+
+
   implicit def responseCapture(fullUrl: String,
                                        httpClient: HttpClient,
                                        getter: HttpMethodBase): Response = {
@@ -60,20 +64,23 @@ trait ToResponse {
   }                                         
 }
 
-trait ToBoxHttpResponse {
+trait ToBoxTheResponse {
   self: BaseGetPoster =>
+
+  type ResponseType = Box[TheResponse]
+
 
   implicit def responseCapture(fullUrl: String,
                                httpClient: HttpClient,
                                getter: HttpMethodBase): 
-  Box[HttpResponse] = {
+  Box[TheResponse] = {
     
     val ret = try {
       (baseUrl + fullUrl, httpClient.executeMethod(getter)) match {
         case (server, responseCode) =>
           val respHeaders = slurpApacheHeaders(getter.getResponseHeaders)
         
-        Full(new HttpResponse(baseUrl,
+        Full(new TheResponse(baseUrl,
                               responseCode, getter.getStatusText,
                               respHeaders, readWholeStream(getter.getResponseBodyAsStream),
                               httpClient))
@@ -95,6 +102,8 @@ trait GetPoster extends BaseGetPoster with ToResponse
  * A trait that wraps the Apache Commons HTTP client and supports GET and POST
  */
 trait BaseGetPoster {
+  type ResponseType
+
   /**
    * The base URL for all requests
    */
@@ -116,10 +125,11 @@ trait BaseGetPoster {
    * @param headers - any additional headers to include with the request
    * @param faux_params - the request parameters to include with the request
    */
-  def get[T](url: String, httpClient: HttpClient,
+  def get(url: String, httpClient: HttpClient,
           headers: List[(String, String)],
           faux_params: (String, Any)*)
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T): T // Response
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType):
+  ResponseType
   = {
     val params = faux_params.toList.map(x => (x._1, x._2.toString))
     val fullUrl = url + (params.map(v => urlEncode(v._1) + "=" + urlEncode(v._2)).mkString("&") match {case s if s.length == 0 => ""; case s => "?" + s})
@@ -137,10 +147,11 @@ trait BaseGetPoster {
    * @param headers - any additional headers to include with the request
    * @param faux_params - the request parameters to include with the request
    */
-  def delete[T](url: String, httpClient: HttpClient,
+  def delete(url: String, httpClient: HttpClient,
                 headers: List[(String, String)],
                 faux_params: (String, Any)*)
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T): T 
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType): 
+  ResponseType
   = {
     val params = faux_params.toList.map(x => (x._1, x._2.toString))
     val fullUrl = url + (params.map(v => urlEncode(v._1) + "=" + urlEncode(v._2)).mkString("&") match {case s if s.length == 0 => ""; case s => "?" + s})
@@ -158,10 +169,11 @@ trait BaseGetPoster {
    * @param headers - any additional headers to include with the request
    * @param faux_params - the request parameters to include with the request
    */
-  def post[T](url: String, httpClient: HttpClient,
+  def post(url: String, httpClient: HttpClient,
            headers: List[(String, String)],
            faux_params: (String, Any)*)
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T): T 
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType): 
+  ResponseType
   = {
     val params = faux_params.toList.map(x => (x._1, x._2.toString))
     val poster = new PostMethod(baseUrl + url)
@@ -209,11 +221,11 @@ trait BaseGetPoster {
    * @param headers - any additional headers to include with the request
    * @param body - the xml to post
    */
-  def post[T, RT](url: String, httpClient: HttpClient,
+  def post[RT](url: String, httpClient: HttpClient,
                   headers: List[(String, String)],
                   body: RT)
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T,
- bodyToRequestEntity: RT => RequestEntity): T 
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType,
+ bodyToRequestEntity: RT => RequestEntity): ResponseType
   = {
     val poster = new PostMethod(baseUrl + url)
     poster.getParams().setCookiePolicy(CookiePolicy.RFC_2965)
@@ -231,11 +243,12 @@ trait BaseGetPoster {
    * @param body - the pile of bytes to POST to the target server
    * @param contentType - the content type of the pile of bytes
    */
-  def post[T](url: String, httpClient: HttpClient,
+  def post(url: String, httpClient: HttpClient,
               headers: List[(String, String)],
               body: Array[Byte],
               contentType: String)
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T): T 
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType): 
+  ResponseType
   = {
     val poster = new PostMethod(baseUrl + url)
     poster.getParams().setCookiePolicy(CookiePolicy.RFC_2965)
@@ -262,9 +275,10 @@ trait BaseGetPoster {
    * @param url - the URL to append to the baseUrl
    * @param headers - any additional headers to include with the request
    */
-  def put[T](url: String, httpClient: HttpClient,
+  def put(url: String, httpClient: HttpClient,
           headers: List[(String, String)])
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T): T 
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType): 
+  ResponseType
   = {
     val poster = new PutMethod(baseUrl + url)
     poster.getParams().setCookiePolicy(CookiePolicy.RFC_2965)
@@ -280,11 +294,11 @@ trait BaseGetPoster {
    * @param headers - any additional headers to include with the request
    * @param body - the xml to post
    */
-  def put[T, RT](url: String, httpClient: HttpClient,
+  def put[RT](url: String, httpClient: HttpClient,
           headers: List[(String, String)],
           body: RT)
-    (implicit capture: (String, HttpClient, HttpMethodBase) => T,
-     bodyToRequestEntity: RT => RequestEntity): T 
+    (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType,
+     bodyToRequestEntity: RT => RequestEntity): ResponseType
     = {
       val poster = new PutMethod(baseUrl + url)
       poster.getParams().setCookiePolicy(CookiePolicy.RFC_2965)
@@ -302,11 +316,12 @@ trait BaseGetPoster {
    * @param body - the pile of bytes to POST to the target server
    * @param contentType - the content type of the pile of bytes
    */
-  def put[T](url: String, httpClient: HttpClient,
+  def put(url: String, httpClient: HttpClient,
           headers: List[(String, String)],
           body: Array[Byte],
           contentType: String)
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T): T 
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType): 
+  ResponseType
   = {
     val poster = new PutMethod(baseUrl + url)
     poster.getParams().setCookiePolicy(CookiePolicy.RFC_2965)
@@ -351,8 +366,9 @@ trait GetPosterHelper {
    * @param url the URL to make the request on
    * @param params the parameters to pass
    */
-  def get[T](url: String, params: (String, Any)*)
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T): T =
+  def get(url: String, params: (String, Any)*)
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType): 
+  ResponseType =
     get(url, theHttpClient, Nil, params: _*)(capture)
 
   /**
@@ -361,8 +377,9 @@ trait GetPosterHelper {
    * @param url the URL to make the request on
    * @param params the parameters to pass
    */
-  def delete[T](url: String, params: (String, Any)*)
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T): T =
+  def delete(url: String, params: (String, Any)*)
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType): 
+  ResponseType =
     delete(url, theHttpClient, Nil, params: _*)(capture)
 
   /**
@@ -371,8 +388,9 @@ trait GetPosterHelper {
    * @param url the URL to make the request on
    * @param params the parameters to pass
    */
-  def post[T](url: String, params: (String, Any)*)
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T): T =
+  def post(url: String, params: (String, Any)*)
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType): 
+  ResponseType =
     post(url, theHttpClient, Nil, params: _*)(capture)
 
   /**
@@ -381,9 +399,9 @@ trait GetPosterHelper {
    * @param url the URL to make the request on
    * @param xml the XML to POST to the server
    */
-  def post[T, RT](url: String, xml: RT)
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T,
-   bodyToRequestEntity: RT => RequestEntity): T =
+  def post[RT](url: String, xml: RT)
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType,
+   bodyToRequestEntity: RT => RequestEntity): ResponseType =
     post(url, theHttpClient, Nil, xml)(capture, bodyToRequestEntity)
 
   /**
@@ -393,8 +411,8 @@ trait GetPosterHelper {
    * @param body the bytes to POST to the server
    * @param contentType the content type of the message
    */
-  def post[T](url: String, body: Array[Byte], contentType: String)
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T): T =
+  def post(url: String, body: Array[Byte], contentType: String)
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType): ResponseType =
     post(url, theHttpClient, Nil, body, contentType)(capture)
 
   /**
@@ -403,9 +421,9 @@ trait GetPosterHelper {
    * @param url the URL to make the request on
    * @param xml the XML to PUT to the server
    */
-  def put[T, RT](url: String, xml: RT)
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T,
-   bodyToRequestEntity: RT => RequestEntity): T =
+  def put[RT](url: String, xml: RT)
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType,
+   bodyToRequestEntity: RT => RequestEntity): ResponseType =
     put(url, theHttpClient, Nil, xml)(capture, bodyToRequestEntity)
 
   /**
@@ -415,8 +433,8 @@ trait GetPosterHelper {
    * @param body the bytes to POST to the server
    * @param contentType the content type of the message
    */
-  def put[T](url: String, body: Array[Byte], contentType: String)
-  (implicit capture: (String, HttpClient, HttpMethodBase) => T): T =
+  def put(url: String, body: Array[Byte], contentType: String)
+  (implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType): ResponseType =
     put(url, theHttpClient, Nil, body, contentType)(capture)
 
 }
@@ -467,7 +485,7 @@ trait ClientBuilder {
 /**
  * Mix this trait into your test so you can make HTTP requests on a target
  */
-trait RequestKit extends ClientBuilder with BaseGetPoster with GetPosterHelper with ToBoxHttpResponse {
+trait RequestKit extends ClientBuilder with BaseGetPoster with GetPosterHelper with ToBoxTheResponse {
   /**
    * The base URL for all GET and POST requests
    */
@@ -617,6 +635,7 @@ object TestHelpers {
  * </pre>
  */
 trait Response {
+  type SelfType <: BaseResponse
   /**
    * The XML for the body
    */
@@ -654,26 +673,60 @@ trait Response {
   /**
    * the Response has a foreach method for chaining in a for comprehension
    */
-  def foreach(f: HttpResponse => Unit): Unit
+  def foreach(f: SelfType => Unit): Unit
 
   /**
    * the Response has a filter method for chaining in a for comprehension.  Note that the filter method does *NOT* have
    * to return a Boolean, any expression (e.g., an assertion)
    */
-  def filter(f: HttpResponse => Unit): HttpResponse
+  def filter(f: SelfType => Unit): SelfType
 }
 
 /**
  * The response to an HTTP request, as long as the server responds with *SOMETHING*
  *
  */
-class HttpResponse(override val baseUrl: String,
+class HttpResponse(baseUrl: String,
+                   code: Int, msg: String,
+                   headers: Map[String, List[String]],
+                   body: Array[Byte],
+                   theHttpClient: HttpClient) extends 
+  BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with
+  ToResponse {
+    type SelfType = HttpResponse
+    
+  }
+
+/**
+ * The response to an HTTP request, as long as the server responds with *SOMETHING*
+ *
+ */
+class TheResponse(baseUrl: String,
+                  code: Int, msg: String,
+                  headers: Map[String, List[String]],
+                  body: Array[Byte],
+                  theHttpClient: HttpClient) extends 
+  BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with
+  ToBoxTheResponse {
+    type SelfType = TheResponse
+    
+  }
+
+
+
+/**
+ * The response to an HTTP request, as long as the server responds with *SOMETHING*
+ *
+ */
+abstract class BaseResponse(override val baseUrl: String,
                    val code: Int, val msg: String,
                    override val headers: Map[String, List[String]],
                    val body: Array[Byte],
                    val theHttpClient: HttpClient) extends
   Response with BaseGetPoster with GetPosterHelper
 {
+  type SelfType <: BaseResponse
+
   private object FindElem {
     def unapply(in: NodeSeq): Option[Elem] = in match {
       case e: Elem => Some(e)
@@ -713,15 +766,18 @@ class HttpResponse(override val baseUrl: String,
   def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): Response =
     if (this.code != code) errorFunc.fail(msg) else this
 
-  def foreach(f: HttpResponse => Unit): Unit = f(this)
+  def foreach(f: SelfType => Unit): Unit = f(this.asInstanceOf[SelfType])
 
-  def filter(f: HttpResponse => Unit): HttpResponse = {
-    f(this)
-    this
+  def filter(f: SelfType => Unit): SelfType = {
+    val st = this.asInstanceOf[SelfType]
+    f(st)
+    st
   }
 }
 
 class CompleteFailure(val serverName: String, val exception: Box[Throwable]) extends Response {
+  type SelfType = HttpResponse
+
   override def toString = serverName + (exception.map(e => " Exception: " + e.getMessage) openOr "")
 
   def headers: Map[String, List[String]] = throw (exception openOr new java.io.IOException("HTTP Failure"))

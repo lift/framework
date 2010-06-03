@@ -29,6 +29,8 @@ object JettyTestServer {
   private val serverPort_ = System.getProperty("SERVLET_PORT", "8989").toInt
   private var baseUrl_ = "http://localhost:" + serverPort_
 
+  def baseUrl = baseUrl_
+
   private val server_ : Server = {
     val server = new Server(serverPort_)
     val context = new WebAppContext()
