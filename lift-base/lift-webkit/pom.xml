@@ -56,6 +56,12 @@
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
+      <artifactId>lift-testkit</artifactId>
+      <version>${project.version}</version>
+      <scope>testing</scope>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
       <artifactId>lift-json</artifactId>
       <version>${project.version}</version>
     </dependency>
