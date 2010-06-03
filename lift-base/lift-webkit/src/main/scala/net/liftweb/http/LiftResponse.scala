@@ -263,7 +263,7 @@ object JsonResponse extends HeaderDefaults {
   def apply(_json: JsonAST.JValue, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int): LiftResponse =
     new JsonResponse(new JsExp {
       lazy val toJsCmd = Printer.pretty(JsonAST.render((_json)))
-    }, headers, cookies, 200)
+    }, headers, cookies, code)
 }
 
 case class JsonResponse(json: JsExp, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends LiftResponse {
