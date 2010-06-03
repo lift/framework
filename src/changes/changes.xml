@@ -38,6 +38,18 @@
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+      <action dev="dpp" type="add" issue="437" system="assembla">
+	Mechanism to Abstract Over Retried AJAX Calls
+      </action>
+
+      <action dev="dpp" type="fix" issue="538" system="assembla">
+        Put Expires or Cache-Control=no-cache headers into Comet, REST and Ajax response
+      </action>
+
+      <action dev="dpp" type="add" issue="536" system="assembla">
+        add missing SHtml.ajaxTextarea...() methods
+      </action>
+
       <action dev="timperrett" type="fix" issue="542" system="assembla">
         AJAX and Comet S.notice et al no longer clear messages before posting their own 
         meaning you can now use Comet and AJAX and normal snippets to post messages all together
