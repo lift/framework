@@ -50,9 +50,12 @@ trait ToResponse {
           val respHeaders = slurpApacheHeaders(getter.getResponseHeaders)
 
           new HttpResponse(baseUrl,
-            responseCode, getter.getStatusText,
-            respHeaders, readWholeStream(getter.getResponseBodyAsStream),
-            httpClient)
+                           responseCode, getter.getStatusText,
+                           respHeaders, 
+                           for {st <- Box !! getter.getResponseBodyAsStream
+                                bytes <- tryo(readWholeStream(st))
+                              } yield bytes,
+                           httpClient)
       }
     } catch {
       case e: IOException => new CompleteFailure(baseUrl + fullUrl, Full(e))
@@ -81,9 +84,12 @@ trait ToBoxTheResponse {
           val respHeaders = slurpApacheHeaders(getter.getResponseHeaders)
         
         Full(new TheResponse(baseUrl,
-                              responseCode, getter.getStatusText,
-                              respHeaders, readWholeStream(getter.getResponseBodyAsStream),
-                              httpClient))
+                             responseCode, getter.getStatusText,
+                             respHeaders, 
+                             for {st <- Box !! getter.getResponseBodyAsStream
+                                  bytes <- tryo(readWholeStream(st))
+                                } yield bytes,
+                             httpClient))
       }
     } catch {
       case e: IOException => Failure(baseUrl + fullUrl, Full(e), Empty)
@@ -639,7 +645,7 @@ trait Response {
   /**
    * The XML for the body
    */
-  def xml: Elem
+  def xml: Box[Elem]
 
   /**
    * The response headers
@@ -689,7 +695,7 @@ trait Response {
 class HttpResponse(baseUrl: String,
                    code: Int, msg: String,
                    headers: Map[String, List[String]],
-                   body: Array[Byte],
+                   body: Box[Array[Byte]],
                    theHttpClient: HttpClient) extends 
   BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with
   ToResponse {
@@ -704,7 +710,7 @@ class HttpResponse(baseUrl: String,
 class TheResponse(baseUrl: String,
                   code: Int, msg: String,
                   headers: Map[String, List[String]],
-                  body: Array[Byte],
+                  body: Box[Array[Byte]],
                   theHttpClient: HttpClient) extends 
   BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with
   ToBoxTheResponse {
@@ -721,7 +727,7 @@ class TheResponse(baseUrl: String,
 abstract class BaseResponse(override val baseUrl: String,
                    val code: Int, val msg: String,
                    override val headers: Map[String, List[String]],
-                   val body: Array[Byte],
+                   val body: Box[Array[Byte]],
                    val theHttpClient: HttpClient) extends
   Response with BaseGetPoster with GetPosterHelper
 {
@@ -745,11 +751,15 @@ abstract class BaseResponse(override val baseUrl: String,
   /**
    * Get the body of the response as XML
    */
-  override lazy val xml: Elem = {
-    PCDataXmlParser(new _root_.java.io.ByteArrayInputStream(body)) match {
-       case Full(FindElem(e)) => e
-    }
-  }
+  override lazy val xml: Box[Elem] = 
+    for {
+      b <- body
+      nodeSeq <- PCDataXmlParser(new _root_.java.io.ByteArrayInputStream(b))
+      xml <- (nodeSeq.toList match {
+        case (x: Elem) :: _ => Full(x)
+        case _ => Empty
+      })
+    } yield xml
 
   /**
    * The content type header of the response
@@ -759,7 +769,10 @@ abstract class BaseResponse(override val baseUrl: String,
   /**
    * The response body as a UTF-8 encoded String
    */
-  lazy val bodyAsString = new String(body, "UTF-8")
+  lazy val bodyAsString = 
+    for {
+      b <- body
+    } yield new String(b, "UTF-8")
 
 
   def !@(msg: => String)(implicit errorFunc: ReportFailure): Response =
@@ -786,7 +799,7 @@ class CompleteFailure(val serverName: String, val exception: Box[Throwable]) ext
 
   def headers: Map[String, List[String]] = throw (exception openOr new java.io.IOException("HTTP Failure"))
 
-  def xml: Elem = throw (exception openOr new java.io.IOException("HTTP Failure"))
+  def xml: Box[Elem] = throw (exception openOr new java.io.IOException("HTTP Failure"))
 
   def !@(msg: => String)(implicit errorFunc: ReportFailure): Response = errorFunc.fail(msg)
 
