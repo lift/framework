@@ -63,6 +63,41 @@
       
       <action dev="eltimn" type="add" issue="533" system="assembla">
 	Add MongoPasswordField
+
+      <action dev="dpp" type="fix" issue="531" system="assembla">
+	BooleanOption not lazy enough
+      </action>
+
+      <action dev="dpp" type="update" issue="509" system="assembla">
+	Major cleanup of HTTP mocks
+      </action>
+
+      <action dev="dpp" type="update" issue="528" system="assembla">
+	Added a default logger to LiftActor
+      </action>
+
+      <action dev="dpp" type="update" issue="162" system="assembla">
+	Unified a lot of the input testing into a single trait (e.g.,
+	valMinLen, etc.)
+      </action>
+
+      <action dev="dpp" type="update" issue="527" system="assembla">
+	changed EmptyBox's type signature
+      </action>
+
+      <action dev="dpp" type="add" issue="512" system="assembla">
+	Added a method to create a query string in MetaMapper from
+	QueryParams
+      </action>
+
+      <action dev="dpp" type="add" issue="511" system="assembla">
+	Enhanced TestKit to provide more generic HTTP request
+	capabilities
+      </action>
+
+      <action dev="dpp" type="fix" issue="514" system="assembla">
+	MappedString.apply(Empty) now correctly results in
+	a null String in the column
       </action>
     </release>
 
