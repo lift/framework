@@ -63,6 +63,7 @@
       
       <action dev="eltimn" type="add" issue="533" system="assembla">
 	Add MongoPasswordField
+      </action>
 
       <action dev="timperrett" type="fix" issue="542" system="assembla">
         AJAX and Comet S.notice et al no longer clear messages before posting their own 
