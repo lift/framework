@@ -43,6 +43,18 @@
 	capabilities
       </action>
 
+      <action dev="dpp" type="fix" issue="544" system="assembla">
+	Fixed a null pointer exception in Testkit
+      </action>
+
+      <action dev="dpp" type="fix" issue="545" system="assembla">
+	JsonResponse passes the HTTP response code correctly now
+      </action>
+
+      <action dev="dpp" type="add" issue="437" system="assembla">
+	Mechanism to Abstract Over Retried AJAX Calls
+      </action>
+
       <action dev="dpp" type="fix" issue="514" system="assembla">
 	MappedString.apply(Empty) now correctly results in
 	a null String in the column
