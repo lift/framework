@@ -156,7 +156,7 @@ class MockHttpSession extends HttpSession {
   @volatile protected var values: Map[String, Object] = Map()
   @volatile protected var attr: Map[String, Object] = Map()
 
-  import scala.collection.javaConversions._
+  import scala.collection.JavaConversions._
 
   protected var maxii: Int = 0
   protected var creationTime: Long = System.currentTimeMillis

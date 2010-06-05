@@ -94,7 +94,7 @@ private[json] object Meta {
         case x: ParameterizedType => Some(x)
         case _ => None
       }
-        
+
       def fieldMapping(fType: Class[_], genType: Type): (Mapping, Boolean) = {
         if (primitive_?(fType)) (Value(fType), false)
         else if (classOf[List[_]].isAssignableFrom(fType))
@@ -147,7 +147,7 @@ private[json] object Meta {
 
   object Reflection {
     import java.lang.reflect._
-    import scala.collection.javaConversions._
+    import scala.collection.JavaConversions._
 
     private val cachedConstructorArgs = new Memo[JConstructor[_], List[(String, Class[_], Type)]]
 
