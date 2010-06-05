@@ -125,7 +125,7 @@ object Box {
  * <ul>
  *   <li> you can transform it to a Failure object if it is Empty (with the ?~ method)</li>
  *   <li> you can chain failure messages on Failure Boxes</li>
- *   <li> you "run" a function on your Box, with a default value: <code>Full(1).run("zero") { x: String, y: Int => y.toString }</code></li>
+ *   <li> you "run" a function on your Box, with a default value: <code>Full(1).run("zero") { (x: String, y: Int) => y.toString }</code></li>
  *   <li> you can "pass" a Box to a function for side effects: <code>Full(1) $ { x: Box[Int] => println(x openOr 0) }</code></li>
  * </ul>
  */

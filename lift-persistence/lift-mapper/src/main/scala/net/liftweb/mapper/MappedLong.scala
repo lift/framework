@@ -28,11 +28,16 @@ import _root_.net.liftweb.http.{S, SHtml}
 import _root_.net.liftweb.http.js._
 import _root_.net.liftweb.json._
 
-abstract class MappedLongForeignKey[T<:Mapper[T],O<:KeyedMapper[Long, O]](theOwner: T, foreign: => KeyedMetaMapper[Long, O])
+abstract class MappedLongForeignKey[T<:Mapper[T],O<:KeyedMapper[Long, O]](theOwner: T, _foreignMeta: => KeyedMetaMapper[Long, O])
 extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeignKey {
-  def defined_? = /*i_get_! != defaultValue &&*/ i_is_! > 0L
+  def defined_? = i_is_! > 0L
 
+  def foreignMeta = _foreignMeta
+
+  @deprecated
   def can: Box[Long] = if (defined_?) Full(is) else Empty
+
+  def box: Box[Long] = if (defined_?) Full(is) else Empty
 
   type KeyType = Long
   type KeyedForeignType = O
@@ -41,7 +46,8 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
   override def jdbcFriendly(field : String) = if (defined_?) new _root_.java.lang.Long(i_is_!) else null
   override def jdbcFriendly = if (defined_?) new _root_.java.lang.Long(i_is_!) else null
 
-  lazy val dbKeyToTable: KeyedMetaMapper[Long, O] = foreign
+  lazy val dbKeyToTable: KeyedMetaMapper[Long, O] = foreignMeta
+
   def dbKeyToColumn = dbKeyToTable.primaryKeyField
 
   override def dbIndexed_? = true
@@ -86,7 +92,7 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
 
   def findFor(key: KeyedForeignType): List[OwnerType] = theOwner.getSingleton.findAll(By(this, key))
 
-  def +(in: Long): Long = is + in
+  // def +(in: Long): Long = is + in
 
   /**
    * Given the driver type, return the string required to create the column in the database

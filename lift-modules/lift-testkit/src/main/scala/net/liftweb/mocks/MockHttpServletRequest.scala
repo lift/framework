@@ -137,6 +137,7 @@ class MockHttpServletRequest extends HttpServletRequest {
   def getRealPath(s: String): String = s
   def getRequestDispatcher(s: String): RequestDispatcher = null
   def isSecure = false
+  type ZZ = Q forSome {type Q}
   def getLocales(): JEnum[Object] = Locale.getAvailableLocales.elements
   def getLocale(): Locale = locale
   def removeAttribute(key: String): Unit = attr -= key

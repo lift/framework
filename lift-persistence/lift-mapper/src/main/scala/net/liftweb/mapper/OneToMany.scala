@@ -286,7 +286,6 @@ trait LongMappedForeignMapper[T<:Mapper[T],O<:KeyedMapper[Long,O]]
                               extends MappedLongForeignKey[T,O]
                               with LifecycleCallbacks {
   import net.liftweb.common.{Box, Empty, Full}
-  def foreign = obj //_foreign
 
   override def apply(f: O) = {
     this(Full(f))
@@ -314,14 +313,6 @@ trait LongMappedForeignMapper[T<:Mapper[T],O<:KeyedMapper[Long,O]]
   val valHasObj = (value: Long) =>
     if (obj eq Empty) List(FieldError(this, scala.xml.Text("Required field: " + name)))
     else Nil
-  /*override def i_is_! = {
-    if(!inited) {
-      _foreign = obj
-      inited = true
-    }
-    super.i_is_!
-  }*/
-
 }
 
 }

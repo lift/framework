@@ -230,8 +230,20 @@ trait MappedForeignKey[KeyType, MyOwner <: Mapper[MyOwner], Other <: KeyedMapper
   type FieldType <: KeyType
   // type ForeignType <: KeyedMapper[KeyType, Other]
 
+  /**
+   * What's the MetaMapper for the foreign key
+   */
+  def foreignMeta: KeyedMetaMapper[KeyType, Other]
+
+  /**
+   * Make sure the MetaMapper for the KeyedMapper we're checking
+   * is in fact the same one as we are associated with.  Issue #532.
+   */
+  private def checkTypes(km: KeyedMapper[KeyType, _]): Boolean = 
+    km.getSingleton eq foreignMeta
+
   override def equals(other: Any) = other match {
-    case km: KeyedMapper[KeyType, Other] => this.is == km.primaryKeyField.is
+    case km: KeyedMapper[KeyType, Other] if checkTypes(km) => this.is == km.primaryKeyField.is
     case _ => super.equals(other)
   }
 
@@ -262,11 +274,21 @@ trait MappedForeignKey[KeyType, MyOwner <: Mapper[MyOwner], Other <: KeyedMapper
    */
   def cached_? : Boolean = synchronized{ _calcedObj}
 
-  override protected def dirty_?(b: Boolean) = { // issue 165
-    _obj = Empty
-    _calcedObj = false
+  override protected def dirty_?(b: Boolean) = synchronized { // issue 165
+    // invalidate if the primary key has changed Issue 370
+    if (_obj.isEmpty || (_calcedObj && _obj.isDefined &&
+			 _obj.open_!.primaryKeyField.is != this.i_is_!)) {
+      _obj = Empty
+      _calcedObj = false
+    }
     super.dirty_?(b)
   }
+
+  /**
+   * Some people prefer the name foreign to materialize the
+   * foreign reference.  This is a proxy to the obj method.
+   */
+  def foreign: Box[Other] = obj
 
   /**
    * Load and cache the record that this field references

@@ -171,6 +171,26 @@ object ExtractionExamples extends Specification {
     json.extract[Address] must throwA(MappingException("No usable value for street\nDid not find value which can be converted into java.lang.String", null))
   }
 
+  "Best matching constructor selection example" in {
+    parse("""{"name":"john","age":32,"size":"M"}""").extract[MultipleConstructors] mustEqual
+      MultipleConstructors("john", 32, Some("M"))
+
+    parse("""{"name":"john","age":32}""").extract[MultipleConstructors] mustEqual
+      MultipleConstructors("john", 32, Some("S"))
+
+    parse("""{"name":"john","foo":"xxx"}""").extract[MultipleConstructors] mustEqual
+      MultipleConstructors("john", 30, None)
+
+    parse("""{"name":"john","age":32,"size":null}""").extract[MultipleConstructors] mustEqual
+      MultipleConstructors("john", 32, None)
+
+    parse("""{"birthYear":1990,"name":"john","foo":2}""").extract[MultipleConstructors] mustEqual
+      MultipleConstructors("john", 20, None)
+
+    parse("""{"foo":2,"age":12,"size":"XS"}""").extract[MultipleConstructors] mustEqual
+      MultipleConstructors("unknown", 12, Some("XS"))
+  }
+
   val testJson = 
 """
 { "name": "joe",
@@ -267,6 +287,13 @@ case class Parent(name: String)
 case class Event(name: String, timestamp: Date)
 
 case class MultiDim(ints: List[List[List[Int]]], names: List[List[Name]])
+
+case class MultipleConstructors(name: String, age: Int, size: Option[String]) {
+  def this(name: String) = this(name, 30, None)
+  def this(age: Int, name: String) = this(name, age, Some("S"))
+  def this(name: String, birthYear: Int) = this(name, 2010 - birthYear, None)
+  def this(size: Option[String], age: Int) = this("unknown", age, size)
+}
 
 }
 }
