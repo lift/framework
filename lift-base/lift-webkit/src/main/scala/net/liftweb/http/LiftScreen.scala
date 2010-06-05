@@ -52,6 +52,9 @@ private[liftweb] trait AbstractScreen extends Factory {
 
   def screenBottom: Box[Elem] = Empty
 
+  // an implicit coversion so we don't have to put Full around every Elem
+  protected implicit def elemInABox(in: Elem): Box[Elem] = Box !! in
+
   /**
    * The name of the screen.  Override this to change the screen name
    */
@@ -60,11 +63,6 @@ private[liftweb] trait AbstractScreen extends Factory {
   def screenNameAsHtml: NodeSeq = Text(screenName)
 
   def screenTitle: NodeSeq = screenNameAsHtml
-
-  def screenTopText: Box[String] = Empty
-
-  def screenTopTextAsHtml: Box[NodeSeq] = screenTopText.map(Text.apply)
-
 
   def cancelButton: Elem = <button>{S.??("Cancel")}</button>
 
@@ -135,6 +133,8 @@ private[liftweb] trait AbstractScreen extends Factory {
 
 
   }
+
+  def noticeTypeToAttr: Box[NoticeType.Value => MetaData] = inject[NoticeType.Value => MetaData] or LiftScreenRules.inject[NoticeType.Value => MetaData]
 }
 
 
@@ -244,6 +244,7 @@ trait LiftScreen extends AbstractScreen with DispatchSnippet {
 
   protected case class ScreenFieldInfo(field: FieldIdentifier, text: NodeSeq, help: Box[NodeSeq], input: Box[NodeSeq])
 
+
   protected def renderAll(screenTop: Box[Elem],
                           fields: List[ScreenFieldInfo],
                           cancel: Box[Elem],
@@ -274,7 +275,20 @@ trait LiftScreen extends AbstractScreen with DispatchSnippet {
 
     val snapshot = createSnapshot
 
+    def bindErrors(xhtml: NodeSeq): NodeSeq = notices.filter(_._3.isEmpty) match {
+      case Nil => NodeSeq.Empty
+      case xs =>
+        def doErrors(in: NodeSeq): NodeSeq = xs.flatMap{case (noticeType, msg, _) =>
+          val metaData: MetaData = noticeTypeToAttr.map(_(noticeType)) openOr Null
+          bind("wizard", in, "bind" -> 
+               (msg)).map {
+                 case e: Elem => e % metaData
+                 case x => x
+               }}
 
+        bind("wizard", xhtml,
+             "item" -> doErrors _)
+    }
 
 
     def bindFields(xhtml: NodeSeq): NodeSeq =
@@ -297,7 +311,7 @@ trait LiftScreen extends AbstractScreen with DispatchSnippet {
       "prev" -> (Unparsed("&nbsp;") : NodeSeq),
       "next" -> ((finish) openOr Unparsed("&nbsp;")),
       "cancel" -> (cancel openOr Unparsed("&nbsp;")),
-      "errors" -> NodeSeq.Empty, // FIXME deal with errors
+      "errors" -> bindErrors _,
       FuncBindParam("fields", bindFields _))
 
   }
@@ -398,6 +412,14 @@ object LiftScreenRules extends Factory with FormVendor {
   private def m[T](implicit man: Manifest[T]): Manifest[T] = man
 
   val allTemplatePath: FactoryMaker[List[String]] = new FactoryMaker[List[String]](() => List("templates-hidden", "wizard-all")) {}
+  val messageStyles: FactoryMaker[NoticeType.Value => MetaData] = 
+    new FactoryMaker[NoticeType.Value => MetaData](() => {
+      case NoticeType.Notice => Null
+      case NoticeType.Warning => Null
+      case NoticeType.Error => Null
+    }: PartialFunction[NoticeType.Value, MetaData]) {}
+
+  
 }
 
 }

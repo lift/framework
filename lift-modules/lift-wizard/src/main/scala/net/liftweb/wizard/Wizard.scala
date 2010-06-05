@@ -84,6 +84,14 @@ trait Wizard extends DispatchSnippet with Factory {
   private object CurrentSession extends WizardVar[String](WizardRules.registerWizardSession())
 
 
+  def noticeTypeToAttr(screen: Screen): Box[NoticeType.Value => MetaData] = {
+    screen.inject[NoticeType.Value => MetaData] or 
+    inject[NoticeType.Value => MetaData] or 
+    WizardRules.inject[NoticeType.Value => MetaData] or 
+    screen.noticeTypeToAttr
+  }
+
+
   def toForm = {
     Referer.is // touch to capture the referer
     CurrentSession.is
@@ -163,6 +171,22 @@ trait Wizard extends DispatchSnippet with Factory {
       if (currentScreen.isEmpty) S.seeOther(Referer.is)
     }
 
+    def bindErrors(xhtml: NodeSeq): NodeSeq = notices.filter(_._3.isEmpty) match {
+      case Nil => NodeSeq.Empty
+      case xs =>
+        def doErrors(in: NodeSeq): NodeSeq = xs.flatMap{case (noticeType, msg, _) =>
+          val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(noticeType)) openOr Null
+          bind("wizard", in, "bind" -> 
+               (msg)).map {
+                 case e: Elem => e % metaData
+                 case x => x
+               }}
+
+        bind("wizard", xhtml,
+             "item" -> doErrors _)
+    }
+
+
 
     def bindFields(xhtml: NodeSeq): NodeSeq =
       (<form id={nextId} action={url} method="post">{S.formGroup(-1)(SHtml.hidden(() =>
@@ -186,7 +210,7 @@ trait Wizard extends DispatchSnippet with Factory {
       "prev" -> (prev openOr Unparsed("&nbsp;")),
       "next" -> ((next or finish) openOr Unparsed("&nbsp;")),
       "cancel" -> (cancel openOr Unparsed("&nbsp;")),
-      "errors" -> NodeSeq.Empty, // FIXME deal with errors
+      "errors" -> bindErrors _,
       FuncBindParam("fields", bindFields _))
 
   }
