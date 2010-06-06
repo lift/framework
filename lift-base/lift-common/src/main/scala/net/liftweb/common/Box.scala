@@ -40,6 +40,18 @@ object Box {
   }
 
   /**
+   * Create a Box from the specified Option.
+   * @return a Box created from a Box. Full(x) if the Box is Full(x) and
+   * not null
+   * Empty otherwise
+   */
+  def apply[T](in: Box[T]) = in match {
+    case Full(x) => legacyNullTest(x)
+    case x: EmptyBox => x
+    case _ => Empty
+  }
+
+  /**
    * Transform a List with zero or one elements to a Box.
    * @return a Box object containing the head of a List. Full(x) if the List contains at least one element and Empty otherwise.
    */
@@ -47,6 +59,15 @@ object Box {
     case x :: _ => Full(x)
     case _ => Empty
   }
+
+  /**
+   * This method allows one to encapsulate any object in a Box in a null-safe manner,
+   * treating null values to Empty.  This is a parallel method to
+   * the Scala Option's apply method.
+   * 
+   * @return <code>Full(in)</code> if <code>in</code> is not null; Empty otherwise
+   */
+  def apply[T](in: T): Box[T] = legacyNullTest(in)
 
   /**
    * Apply the specified PartialFunction to the specified value and return the result
@@ -131,6 +152,7 @@ object Box {
  */
 @serializable
 sealed abstract class Box[+A] extends Product {
+  self =>
   /**
    * Returns true if this Box contains no value (is Empty or Failure)
    * @return true if this Box contains no value
@@ -176,6 +198,22 @@ sealed abstract class Box[+A] extends Product {
   def filter(p: A => Boolean): Box[A] = this
 
   /**
+   * Makes Box play better with Scala 2.8 for comprehensions
+   */
+  def withFilter(p: A => Boolean): WithFilter = new WithFilter(p)
+
+  /**
+   * Play NiceLike with the Scala 2.8 for comprehension
+   */
+  class WithFilter(p: A => Boolean) {
+    def map[B](f: A => B): Box[B] = self.filter(p).map(f)
+    def flatMap[B](f: A => Box[B]): Box[B] = self.filter(p).flatMap(f)
+    def foreach[U](f: A => U): Unit = self.filter(p).foreach(f)
+    def withFilter(q: A => Boolean): WithFilter =
+      new WithFilter(x => p(x) && q(x))
+  }
+
+  /**
    * Determine whether this Box contains a value which satisfies the specified predicate
    * @return true if this Box's value satisfies the specified predicate
    */
@@ -185,13 +223,19 @@ sealed abstract class Box[+A] extends Product {
    * Perform a side effect by calling the specified function
    * with the value contained in this box.
    */
-  def foreach(f: A => Any): Unit = {}
+  def foreach[U](f: A => U): Unit = {}
 
   /**
    * Return a Full[B] if the contents of this Box is an instance of the specified class,
    * otherwise return Empty
    */
   def isA[B](cls: Class[B]): Box[B] = Empty
+
+  /**
+   * If the partial function is defined at the current Box's value
+   * apply the partial function.
+   */
+  def collect[B](pf: PartialFunction[A, B]): Box[B] 
 
   /**
    * Return a Full[B] if the contents of this Box is of type <code>B</code>, otherwise return Empty
@@ -207,6 +251,11 @@ sealed abstract class Box[+A] extends Product {
    * Returns an Iterator over the value contained in this Box
    */
   def elements: Iterator[A] = Iterator.empty
+
+  /**
+   * Returns an Iterator over the value contained in this Box
+   */
+  def iterator: Iterator[A] = this.elements
 
   /**
    * Returns a List of one element if this is Full, or an empty list if Empty.
@@ -309,6 +358,21 @@ sealed abstract class Box[+A] extends Product {
    * Equivalent to map(f).or(Full(dflt)).open_!
    */
   def dmap[B](dflt: => B)(f: A => B): B = dflt
+
+  /**
+   * An <code>Either</code> that is a <code>Left</code> with the given argument
+   * <code>left</code> if this is empty, or a <code>Right</code> if this
+   * Full with the Box's value.
+   */
+  def toRight[B](left: => B): Either[B, A] = Left(left)
+
+  /**
+   * An <code>Either</code> that is a <code>Right</code> with the given
+   * argument
+   * <code>right</code> if this is empty, or a <code>Left</code> if this is
+   * Fill with the Box's value
+   */
+  def toLeft[B](right: => B): Either[A, B] = Right(right)
 }
 
 /**
@@ -329,7 +393,7 @@ final case class Full[+A](value: A) extends Box[A] {
 
   override def filter(p: A => Boolean): Box[A] = if (p(value)) this else Empty
 
-  override def foreach(f: A => Any): Unit = f(value)
+  override def foreach[U](f: A => U): Unit = f(value)
 
   override def map[B](f: A => B): Box[B] = Full(f(value))
 
@@ -343,6 +407,22 @@ final case class Full[+A](value: A) extends Box[A] {
 
   override def run[T](in: T)(f: (T, A) => T) = f(in, value)
 
+  /**
+   * An <code>Either</code> that is a <code>Left</code> with the given argument
+   * <code>left</code> if this is empty, or a <code>Right</code> if this
+   * Full with the Box's value.
+   */
+  override def toRight[B](left: => B): Either[B, A] = Right(value)
+
+  /**
+   * An <code>Either</code> that is a <code>Right</code> with the given
+   * argument
+   * <code>right</code> if this is empty, or a <code>Left</code> if this is
+   * Fill with the Box's value
+   */
+  override def toLeft[B](right: => B): Either[A, B] = Left(value)
+
+
   override def isA[B](cls: Class[B]): Box[B] = value match {
     case value: AnyRef =>
       if (cls.isAssignableFrom(value.getClass)) Full(value.asInstanceOf[B])
@@ -355,6 +435,15 @@ final case class Full[+A](value: A) extends Box[A] {
   override def ===[B >: A](to: B): Boolean = value == to
 
   override def dmap[B](dflt: => B)(f: A => B): B = f(value)
+
+  /**
+   * If the partial function is defined at the current Box's value
+   * apply the partial function.
+   */
+  final def collect[B](pf: PartialFunction[A, B]): Box[B] = {
+    if (pf.isDefinedAt(value)) Full(pf(value))
+    else Empty
+  }
 }
 
 /**
@@ -380,6 +469,12 @@ sealed abstract class EmptyBox extends Box[Nothing] {
   override def filter(p: Nothing => Boolean): Box[Nothing] = this
 
   override def ?~(msg: String) = Failure(msg, Empty, Empty)
+
+  /**
+   * If the partial function is defined at the current Box's value
+   * apply the partial function.
+   */
+  final override def collect[B](pf: PartialFunction[Nothing, B]): Box[B] = this
 }
 
 /**
