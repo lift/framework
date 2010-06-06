@@ -107,6 +107,11 @@ trait SettableField extends ReadableField with SettableValueHolder {
    * Create an input field for the item
    */
   def toForm: Box[NodeSeq]
+
+ /**
+  * Give the current state of things, should the this field be shown
+  */
+  def show_? = true
 }
 
 trait BaseField extends SettableField with FieldContainer {

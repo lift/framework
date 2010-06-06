@@ -753,8 +753,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private def findAttributeSnippet(attrValue: String, rest: MetaData, params: AnyRef*): MetaData = {
     S.doSnippet(attrValue) {
       val (cls, method) = splitColonPair(attrValue, null, "render")
-
-
       first(LiftRules.snippetNamesToSearch.vend(cls)) { nameToTry =>
         findSnippetClass(nameToTry) flatMap { clz =>
           instantiateOrRedirect(clz) flatMap { inst =>
@@ -798,9 +796,21 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
+  /**
+  * See if there's a object singleton with the right name
+  */
+  private def findSnippetObject(cls: String): Box[AnyRef] =
+  findSnippetClass(cls+"$").flatMap {
+    c =>
+    tryo {
+      val field = c.getField("MODULE$")
+      field.get(null)
+    }
+  }
+
   private def findSnippetInstance(cls: String): Box[AnyRef] =
   S.snippetForClass(cls) or
-  (findSnippetClass(cls).flatMap(c => instantiateOrRedirect(c)) match {
+  (findSnippetClass(cls).flatMap(c => instantiateOrRedirect(c) or findSnippetObject(cls)) match {
       case Full(inst: StatefulSnippet) =>
         inst.addName(cls); S.overrideSnippetForClass(cls, inst); Full(inst)
       case Full(ret) => Full(ret)

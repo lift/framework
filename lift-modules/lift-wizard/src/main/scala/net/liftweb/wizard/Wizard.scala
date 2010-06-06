@@ -31,17 +31,6 @@ object WizardRules extends Factory with FormVendor {
 
   private def m[T](implicit man: Manifest[T]): Manifest[T] = man
 
-  /*
-  private def textInfo(field: SettableValueHolder {type ValueType = String}) = SHtml.text(field.is, field.set _)
-
-  private def intInfo(field: SettableValueHolder {type ValueType = Int}) = SHtml.text(field.is.toString, s => Helpers.asInt(s).foreach(field.set _))
-
-  /**
-   * FIXME make configurable
-   */
-  def vendForm[T](man: Manifest[T]): Box[(T, T => Unit) => NodeSeq] = Empty
-*/
-
   val allTemplatePath: FactoryMaker[List[String]] = new FactoryMaker[List[String]](() => List("templates-hidden", "wizard-all")) {}
   private object currentWizards extends SessionVar[Set[String]](Set())
 
@@ -65,9 +54,9 @@ object WizardRules extends Factory with FormVendor {
   }
 }
 
-case class WizardFieldInfo(field: FieldIdentifier, text: NodeSeq, help: Box[NodeSeq], input: Box[NodeSeq])
+//case class WizardFieldInfo(field: FieldIdentifier, text: NodeSeq, help: Box[NodeSeq], input: Box[NodeSeq])
 
-trait Wizard extends DispatchSnippet with Factory {
+trait Wizard extends DispatchSnippet with Factory with ScreenWizardRendered {
   def dispatch = {
     case _ => ignore => this.toForm
   }
@@ -78,12 +67,23 @@ trait Wizard extends DispatchSnippet with Factory {
   private object ScreenVars extends RequestVar[Map[String, (NonCleanAnyVar[_], Any)]](Map())
   protected object CurrentScreen extends RequestVar[Box[Screen]](calcFirstScreen)
   private object PrevSnapshot extends RequestVar[Box[WizardSnapshot]](Empty)
-  private object Referer extends WizardVar[String](S.referer openOr "/")
+  protected object Referer extends WizardVar[String](S.referer openOr "/")
   protected object OnFirstScreen extends RequestVar[Boolean](true)
   private object FirstTime extends WizardVar[Boolean](true)
   private object CurrentSession extends WizardVar[String](WizardRules.registerWizardSession())
 
 
+<<<<<<< HEAD
+=======
+  def noticeTypeToAttr(screen: AbstractScreen): Box[NoticeType.Value => MetaData] = {
+    screen.inject[NoticeType.Value => MetaData] or 
+    inject[NoticeType.Value => MetaData] or 
+    WizardRules.inject[NoticeType.Value => MetaData] or 
+    screen.noticeTypeToAttr(screen)
+  }
+
+
+>>>>>>> 89757d9... Closes #375.  Significant reworking of Wizard and LiftScreen and supporting code
   def toForm = {
     Referer.is // touch to capture the referer
     CurrentSession.is
@@ -117,50 +117,23 @@ trait Wizard extends DispatchSnippet with Factory {
 
     val url = S.uri
 
-    renderAll(wizardTop, theScreen.screenTop,
-      theScreen.screenFields.map(f => WizardFieldInfo(f, f.displayHtml, f.helpAsHtml, f.toForm)),
-      prevButton, Full(cancelButton),
-      nextButton,
-      finishButton, theScreen.screenBottom, wizardBottom, nextId, prevId, cancelId, theScreen)
-  }
-
-  protected def renderAll(wizardTop: Box[Elem],
-                          screenTop: Box[Elem],
-                          fields: List[WizardFieldInfo],
-                          prev: Box[Elem],
-                          cancel: Box[Elem],
-                          next: Box[Elem],
-                          finish: Box[Elem],
-                          screenBottom: Box[Elem],
-                          wizardBottom: Box[Elem], nextId: String, prevId: String, cancelId: String, theScreen: Screen): NodeSeq = {
-
-    val notices: List[(NoticeType.Value, NodeSeq, Box[String])] = S.getAllNotices
-
-
-    def bindFieldLine(xhtml: NodeSeq): NodeSeq = {
-
-      fields.flatMap {
-        f =>
-            val myNotices = notices.filter(fi => fi._3.isDefined && fi._3 == f.field.uniqueFieldId)
-            bind("wizard", xhtml, "label" -> f.text, "form" -> f.input,
-              "help" -> NodeSeq.Empty,
-              FuncBindParam("field_errors", xml => {
-                myNotices match {
-                  case Nil => NodeSeq.Empty
-                  case xs => bind("wizard", xml, "error" ->
-                      (innerXml => xs.flatMap {case (_, msg, _) => bind("wizard", innerXml, "bind" -> msg)}))
-                }
-              }))
-      }
-    }
-
-    def url = S.uri
-
-    val snapshot = createSnapshot
-
-    def doNext() {
+  renderAll(
+    CurrentScreen.is.map(s => Text((s.myScreenNum + 1).toString)), //currentScreenNumber: Box[NodeSeq],
+          Full(Text(screenCount.toString)), //screenCount: Box[NodeSeq],
+          wizardTop, // wizardTop: Box[Elem],
+          theScreen.screenTop, //screenTop: Box[Elem],
+          theScreen.screenFields.flatMap(f =>
+        if (f.show_?) List(ScreenFieldInfo(f, f.displayHtml, f.helpAsHtml, f.toForm)) else Nil), //fields: List[ScreenFieldInfo],
+            prevButton, // prev: Box[Elem],
+            Full(cancelButton), // cancel: Box[Elem],
+            nextButton, // next: Box[Elem],
+            finishButton, //finish: Box[Elem],
+            theScreen.screenBottom, // screenBottom: Box[Elem],
+            wizardBottom, //wizardBottom: Box[Elem],
+            nextId -> (() => {
       this.nextScreen
       if (currentScreen.isEmpty) S.seeOther(Referer.is)
+<<<<<<< HEAD
     }
 
 
@@ -189,32 +162,16 @@ trait Wizard extends DispatchSnippet with Factory {
       "errors" -> NodeSeq.Empty, // FIXME deal with errors
       FuncBindParam("fields", bindFields _))
 
+=======
+    }), // nextId: (String, () => Unit),
+            Full(prevId -> (() => {this.prevScreen})), // prevId: Box[(String, () => Unit)],
+            cancelId -> (() => { WizardRules.deregisterWizardSession(CurrentSession.is)}), //cancelId: (String, () => Unit),
+            theScreen)
+>>>>>>> 89757d9... Closes #375.  Significant reworking of Wizard and LiftScreen and supporting code
   }
 
 
   protected def allTemplatePath: List[String] = WizardRules.allTemplatePath.vend
-
-  protected def allTemplateNodeSeq: NodeSeq =
-    <div>
-    <wizard:wizard_top> <div> <wizard:bind/> </div> </wizard:wizard_top>
-    <wizard:screen_top> <div> <wizard:bind/> </div> </wizard:screen_top>
-    <wizard:errors> <div> <ul> <wizard:item> <li> <wizard:bind/> </li> </wizard:item> </ul> </div> </wizard:errors>
-    <div> <wizard:fields>
-    <table>
-    <wizard:line>
-    <tr>
-    <td>
-    <wizard:label error_style="error"/> <wizard:help/> <wizard:field_errors> <ul> <wizard:error> <li> <wizard:bind/> </li> </wizard:error> </ul> </wizard:field_errors>
-    </td>
-    <td> <wizard:form/> </td>
-    </tr>
-    </wizard:line>
-    </table>
-    </wizard:fields> </div>
-    <div> <table> <tr> <td> <wizard:prev/> </td> <td> <wizard:cancel/> </td> <td> <wizard:next/> </td> </tr> </table> </div>
-    <wizard:screen_bottom> <div> <wizard:bind/> </div> </wizard:screen_bottom>
-    <wizard:wizard_bottom> <div> <wizard:bind/> </div> </wizard:wizard_bottom>
-    </div>
 
   protected def allTemplate: NodeSeq = TemplateFinder.findAnyTemplate(allTemplatePath) openOr allTemplateNodeSeq
 
@@ -230,7 +187,7 @@ trait Wizard extends DispatchSnippet with Factory {
   class WizardSnapshot(private[wizard] val screenVars: Map[String, (NonCleanAnyVar[_], Any)],
                        val currentScreen: Box[Screen],
                        private[wizard] val snapshot: Box[WizardSnapshot],
-                       private val firstScreen: Boolean) {
+                       private val firstScreen: Boolean) extends Snapshot {
     def restore() {
       ScreenVars.set(screenVars)
       CurrentScreen.set(currentScreen)
