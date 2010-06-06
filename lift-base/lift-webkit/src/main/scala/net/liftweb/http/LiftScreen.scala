@@ -54,6 +54,9 @@ private[liftweb] trait AbstractScreen extends Factory {
 
   def screenBottom: Box[Elem] = Empty
 
+  // an implicit coversion so we don't have to put Full around every Elem
+  protected implicit def elemInABox(in: Elem): Box[Elem] = Box !! in
+
   /**
    * The name of the screen.  Override this to change the screen name
    */
@@ -62,11 +65,6 @@ private[liftweb] trait AbstractScreen extends Factory {
   def screenNameAsHtml: NodeSeq = Text(screenName)
 
   def screenTitle: NodeSeq = screenNameAsHtml
-
-  def screenTopText: Box[String] = Empty
-
-  def screenTopTextAsHtml: Box[NodeSeq] = screenTopText.map(Text.apply)
-
 
   def cancelButton: Elem = <button>{S.??("Cancel")}</button>
 
