@@ -73,8 +73,6 @@ trait Wizard extends DispatchSnippet with Factory with ScreenWizardRendered {
   private object CurrentSession extends WizardVar[String](WizardRules.registerWizardSession())
 
 
-<<<<<<< HEAD
-=======
   def noticeTypeToAttr(screen: AbstractScreen): Box[NoticeType.Value => MetaData] = {
     screen.inject[NoticeType.Value => MetaData] or 
     inject[NoticeType.Value => MetaData] or 
@@ -83,7 +81,6 @@ trait Wizard extends DispatchSnippet with Factory with ScreenWizardRendered {
   }
 
 
->>>>>>> 89757d9... Closes #375.  Significant reworking of Wizard and LiftScreen and supporting code
   def toForm = {
     Referer.is // touch to capture the referer
     CurrentSession.is
@@ -133,41 +130,10 @@ trait Wizard extends DispatchSnippet with Factory with ScreenWizardRendered {
             nextId -> (() => {
       this.nextScreen
       if (currentScreen.isEmpty) S.seeOther(Referer.is)
-<<<<<<< HEAD
-    }
-
-
-    def bindFields(xhtml: NodeSeq): NodeSeq =
-      (<form id={nextId} action={url} method="post">{S.formGroup(-1)(SHtml.hidden(() =>
-          snapshot.restore()))}{bind("wizard", xhtml, "line" -> bindFieldLine _)}{S.formGroup(4)(SHtml.hidden(() =>
-          {doNext(); val localSnapshot = createSnapshot; S.seeOther(url, () => localSnapshot.restore)}))}</form> %
-          theScreen.additionalAttributes) ++
-          <form id={prevId} action={url} method="post">{SHtml.hidden(() => {snapshot.restore(); this.prevScreen; val localSnapshot = createSnapshot; S.seeOther(url, () => localSnapshot.restore)})}</form> ++
-          <form id={cancelId} action={url} method="post">{SHtml.hidden(() => {
-            snapshot.restore();
-            WizardRules.deregisterWizardSession(CurrentSession.is)
-            S.seeOther(Referer.is)
-          })}</form>
-
-    Helpers.bind("wizard", allTemplate,
-      "screen_number" -> Text(CurrentScreen.is.map(s => (s.myScreenNum + 1).toString) openOr ""),
-      "total_screens" -> Text(screenCount.toString),
-      FuncBindParam("wizard_top", xml => (wizardTop.map(top => bind("wizard", xml, "bind" -%> top)) openOr NodeSeq.Empty)),
-      FuncBindParam("screen_top", xml => (screenTop.map(top => bind("wizard", xml, "bind" -%> top)) openOr NodeSeq.Empty)),
-      FuncBindParam("wizard_bottom", xml => (wizardBottom.map(bottom => bind("wizard", xml, "bind" -%> bottom)) openOr NodeSeq.Empty)),
-      FuncBindParam("screen_bottom", xml => (screenBottom.map(bottom => bind("wizard", xml, "bind" -%> bottom)) openOr NodeSeq.Empty)),
-      "prev" -> (prev openOr Unparsed("&nbsp;")),
-      "next" -> ((next or finish) openOr Unparsed("&nbsp;")),
-      "cancel" -> (cancel openOr Unparsed("&nbsp;")),
-      "errors" -> NodeSeq.Empty, // FIXME deal with errors
-      FuncBindParam("fields", bindFields _))
-
-=======
     }), // nextId: (String, () => Unit),
             Full(prevId -> (() => {this.prevScreen})), // prevId: Box[(String, () => Unit)],
             cancelId -> (() => { WizardRules.deregisterWizardSession(CurrentSession.is)}), //cancelId: (String, () => Unit),
             theScreen)
->>>>>>> 89757d9... Closes #375.  Significant reworking of Wizard and LiftScreen and supporting code
   }
 
 

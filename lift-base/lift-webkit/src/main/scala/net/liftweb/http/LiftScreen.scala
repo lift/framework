@@ -459,15 +459,12 @@ trait ScreenWizardRendered {
   protected trait Snapshot {
     def restore(): Unit
   }
-<<<<<<< HEAD
-=======
 
   protected def createSnapshot: Snapshot
 
   def noticeTypeToAttr(screen: AbstractScreen): Box[NoticeType.Value => MetaData]
 
   protected def Referer: AnyVar[String, _]
->>>>>>> 89757d9... Closes #375.  Significant reworking of Wizard and LiftScreen and supporting code
 }
 
 
@@ -571,72 +568,6 @@ trait LiftScreen extends AbstractScreen with DispatchSnippet with ScreenWizardRe
 
     val url = S.uri
 
-<<<<<<< HEAD
-    renderAll(theScreen.screenTop,
-      theScreen.screenFields.map(f => ScreenFieldInfo(f, f.displayHtml, f.helpAsHtml, f.toForm)),
-      Full(cancelButton),
-      Full(finishButton), theScreen.screenBottom, finishId, cancelId, theScreen)
-  }
-
-  protected case class ScreenFieldInfo(field: FieldIdentifier, text: NodeSeq, help: Box[NodeSeq], input: Box[NodeSeq])
-
-  protected def renderAll(screenTop: Box[Elem],
-                          fields: List[ScreenFieldInfo],
-                          cancel: Box[Elem],
-                          finish: Box[Elem],
-                          screenBottom: Box[Elem],
-                          finishId: String, cancelId: String, theScreen: AbstractScreen): NodeSeq = {
-
-    val notices: List[(NoticeType.Value, NodeSeq, Box[String])] = S.getAllNotices
-
-
-    def bindFieldLine(xhtml: NodeSeq): NodeSeq = {
-      fields.flatMap {
-        f =>
-            val myNotices = notices.filter(fi => fi._3.isDefined && fi._3 == f.field.uniqueFieldId)
-            bind("wizard", xhtml, "label" -> f.text, "form" -> f.input,
-              "help" -> NodeSeq.Empty,
-              FuncBindParam("field_errors", xml => {
-                myNotices match {
-                  case Nil => NodeSeq.Empty
-                  case xs => bind("wizard", xml, "error" ->
-                      (innerXml => xs.flatMap {case (_, msg, _) => bind("wizard", innerXml, "bind" -> msg)}))
-                }
-              }))
-      }
-    }
-
-    def url = S.uri
-
-    val snapshot = createSnapshot
-
-
-
-
-    def bindFields(xhtml: NodeSeq): NodeSeq =
-      (<form id={finishId} action={url} method="post">{S.formGroup(-1)(SHtml.hidden(() =>
-          snapshot.restore()))}{bind("wizard", xhtml, "line" -> bindFieldLine _)}{S.formGroup(4)(SHtml.hidden(() =>
-          {doFinish(); val localSnapshot = createSnapshot; S.seeOther(url, () => localSnapshot.restore)}))}</form> %
-          theScreen.additionalAttributes) ++
-          <form id={cancelId} action={url} method="post">{SHtml.hidden(() => {
-            snapshot.restore();
-            S.seeOther(Referer.is)
-          })}</form>
-
-    Helpers.bind("wizard", allTemplate,
-      "screen_number" -> Text("1"),
-      "total_screens" -> Text("1"),
-      FuncBindParam("wizard_top", xml => NodeSeq.Empty),
-      FuncBindParam("screen_top", xml => (screenTop.map(top => bind("wizard", xml, "bind" -%> top)) openOr NodeSeq.Empty)),
-      FuncBindParam("wizard_bottom", xml => NodeSeq.Empty),
-      FuncBindParam("screen_bottom", xml => (screenBottom.map(bottom => bind("wizard", xml, "bind" -%> bottom)) openOr NodeSeq.Empty)),
-      "prev" -> (Unparsed("&nbsp;") : NodeSeq),
-      "next" -> ((finish) openOr Unparsed("&nbsp;")),
-      "cancel" -> (cancel openOr Unparsed("&nbsp;")),
-      "errors" -> NodeSeq.Empty, // FIXME deal with errors
-      FuncBindParam("fields", bindFields _))
-=======
->>>>>>> 89757d9... Closes #375.  Significant reworking of Wizard and LiftScreen and supporting code
 
     renderAll(
       Empty, //currentScreenNumber: Box[NodeSeq],
@@ -728,8 +659,6 @@ object LiftScreenRules extends Factory with FormVendor {
   private def m[T](implicit man: Manifest[T]): Manifest[T] = man
 
   val allTemplatePath: FactoryMaker[List[String]] = new FactoryMaker[List[String]](() => List("templates-hidden", "wizard-all")) {}
-<<<<<<< HEAD
-=======
   val messageStyles: FactoryMaker[NoticeType.Value => MetaData] =
   new FactoryMaker[NoticeType.Value => MetaData](() => {
       case NoticeType.Notice => new UnprefixedAttribute("class", "lift_notice", Null)
@@ -738,7 +667,6 @@ object LiftScreenRules extends Factory with FormVendor {
     }: PartialFunction[NoticeType.Value, MetaData]) {}
 
 
->>>>>>> 89757d9... Closes #375.  Significant reworking of Wizard and LiftScreen and supporting code
 }
 
 }
