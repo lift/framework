@@ -203,7 +203,7 @@ abstract class RequestVar[T](dflt: => T) extends AnyVar[T, RequestVar[T]](dflt) 
  * @param dflt - the default value to be returned if none was set prior to
  * requesting a value to be returned from the container
  */
-private[liftweb] abstract class TransientRequestVar[T](dflt: => T) extends AnyVar[T, TransientRequestVar[T]](dflt) with HasLogUnreadVal {
+abstract class TransientRequestVar[T](dflt: => T) extends AnyVar[T, TransientRequestVar[T]](dflt) with HasLogUnreadVal {
   type CleanUpParam = Box[LiftSession]
 
   override protected def findFunc(name: String): Box[T] = TransientRequestVarHandler.get(name)
