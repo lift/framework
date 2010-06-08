@@ -332,19 +332,24 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   def running_? = _running_?
 
-  private var cometList: List[AnyActor] = Nil
+  private var cometList: List[(AnyActor, Req)] = Nil
 
   private[http] def breakOutComet(): Unit = {
     val cl = synchronized {cometList}
-    cl.foreach(_ ! BreakOut)
+    cl.foreach(_._1 ! BreakOut)
+  }
+  
+  private[http] def cometForHost(hostAndPath: String): List[(AnyActor, Req)] =
+  synchronized {cometList}.filter{
+    case (_, r) => r.hostAndPath == hostAndPath
   }
 
-  private[http] def enterComet(what: AnyActor): Unit = synchronized {
+  private[http] def enterComet(what: (AnyActor, Req)): Unit = synchronized {
     cometList = what :: cometList
   }
 
   private[http] def exitComet(what: AnyActor): Unit = synchronized {
-    cometList = cometList.remove(_ eq what)
+    cometList = cometList.remove(_._1 eq what)
   }
 
   private case class RunnerHolder(name: String, func: S.AFuncHolder, owner: Box[String])

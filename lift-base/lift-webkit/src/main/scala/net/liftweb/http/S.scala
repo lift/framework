@@ -1704,21 +1704,13 @@ for {
    * The hostname to which the request was sent. This is taken from the "Host" HTTP header, or if that
    * does not exist, the DNS name or IP address of the server.
    */
-  def hostName: String = containerRequest.map(_.serverName) openOr {
-    import _root_.java.net._
-    InetAddress.getLocalHost.getHostName
-  }
+  def hostName: String = request.map(_.hostName) openOr Req.localHostName
 
   /**
    * The host and path of the request up to and including the context path. This does
    * not include the template path or query string.
    */
-  def hostAndPath: String =
-    containerRequest.map(r => (r.scheme, r.serverPort) match {
-      case ("http", 80) => "http://" + r.serverName + contextPath
-      case ("https", 443) => "https://" + r.serverName + contextPath
-      case (sch, port) => sch + "://" + r.serverName + ":" + port + contextPath
-    }) openOr ""
+  def hostAndPath: String = request.map(_.hostAndPath) openOr ""
 
   /**
    * Get a map of function name bindings that are used for form and other processing. Using these
