@@ -158,9 +158,29 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
         ret
     }
 
-    ret.breakOutComet()
+    makeCometBreakoutDecision(ret, req)
     ret
   }
+
+  /**
+  * A function that takes appropriate action in breaking out of any
+  * existing comet requests based on the request, browser type, etc.
+  */
+  @volatile var makeCometBreakoutDecision: (LiftSession, Req) => Unit =
+  (session, req) => {
+    // get the open sessions to the host (this means that any DNS wildcarded
+    // Comet requests will not be counted
+    val which = session.cometForHost(req.hostAndPath)
+
+    // get the maximum requests given the browser type
+    val max = maxConcurrentRequests.vend(req) - 2 // this request and any open comet requests
+
+    // dump the oldest requests
+    which.drop(max).foreach {
+      case (actor, req) => actor ! BreakOut
+    }
+  }
+    
 
 
   /**
@@ -217,7 +237,10 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
    * requests are being serviced for a given session, messages
    * will be sent to all Comet requests to terminate
    */
-  @volatile var maxConcurrentRequests = 2
+  val maxConcurrentRequests: FactoryMaker[Req => Int] = new FactoryMaker((x: Req) => x match {
+    case r if r.isFirefox35_+ || r.isIE8 || r.isChrome3_+ || r.isOpera9 || r.isSafari3_+ => 6
+    case _ => 2
+  }) {}
 
   /**
    * A partial function that determines content type based on an incoming

@@ -104,6 +104,11 @@ object FileParamHolder {
 object Req {
   object NilPath extends ParsePath(Nil, "", true, false)
 
+  private[http] lazy val localHostName = {
+    import _root_.java.net._
+    InetAddress.getLocalHost.getHostName
+  }
+
   def apply(original: Req, rewrite: List[LiftRules.RewritePF]): Req = {
 
     def processRewrite(path: ParsePath, params: Map[String, String]): RewriteResponse =
@@ -377,6 +382,24 @@ class Req(val path: ParsePath,
       case e: Exception => Failure(e.getMessage, Full(e), Empty)
     }
 
+  private def containerRequest = Box !! request
+    /**
+   * The hostname to which the request was sent. This is taken from the "Host" HTTP header, or if that
+   * does not exist, the DNS name or IP address of the server.
+   */
+  lazy val hostName: String = containerRequest.map(_.serverName) openOr Req.localHostName
+
+  /**
+   * The host and path of the request up to and including the context path. This does
+   * not include the template path or query string.
+   */
+  lazy val hostAndPath: String =
+    containerRequest.map(r => (r.scheme, r.serverPort) match {
+      case ("http", 80) => "http://" + r.serverName + contextPath
+      case ("https", 443) => "https://" + r.serverName + contextPath
+      case (sch, port) => sch + "://" + r.serverName + ":" + port + contextPath
+    }) openOr ""
+
 
   lazy val xml: Box[Elem] = if (!xml_?) Empty
   else 
@@ -514,13 +537,34 @@ class Req(val path: ParsePath,
 
   lazy val isSafari3: Boolean = (userAgent.map(s => s.indexOf("Safari/") >= 0 &&
                                                s.indexOf("Version/3.") >= 0)) openOr false
-  lazy val isSafari = isSafari2 || isSafari3
+  lazy val isSafari4: Boolean = (userAgent.map(s => s.indexOf("Safari/") >= 0 &&
+                                               s.indexOf("Version/4.") >= 0)) openOr false
+  lazy val isSafari5: Boolean = (userAgent.map(s => s.indexOf("Safari/") >= 0 &&
+                                               s.indexOf("Version/5.") >= 0)) openOr false
+
+  def isSafari3_+ = isSafari3 || isSafari4 || isSafari5
+  def isSafari = isSafari2 || isSafari3_+
 
   lazy val isIPhone = isSafari && (userAgent.map(s => s.indexOf("(iPhone;") >= 0) openOr false)
 
   lazy val isFirefox2: Boolean = (userAgent.map(_.indexOf("Firefox/2") >= 0)) openOr false
   lazy val isFirefox3: Boolean = (userAgent.map(_.indexOf("Firefox/3") >= 0)) openOr false
-  lazy val isFirefox = isFirefox2 || isFirefox3
+  lazy val isFirefox35: Boolean = (userAgent.map(_.indexOf("Firefox/3.5") >= 0)) openOr false
+  lazy val isFirefox36: Boolean = (userAgent.map(_.indexOf("Firefox/3.6") >= 0)) openOr false
+
+  def isFirefox35_+ : Boolean = isFirefox35 || isFirefox36
+
+  def isFirefox = isFirefox2 || isFirefox3 || isFirefox35_+
+
+  lazy val isChrome2 = (userAgent.map(_.indexOf("Chrome/2.") >= 0)) openOr false
+  lazy val isChrome3 = (userAgent.map(_.indexOf("Chrome/3.") >= 0)) openOr false
+  lazy val isChrome4 = (userAgent.map(_.indexOf("Chrome/4.") >= 0)) openOr false
+  lazy val isChrome5 = (userAgent.map(_.indexOf("Chrome/5.") >= 0)) openOr false
+  lazy val isChrome6 = (userAgent.map(_.indexOf("Chrome/6.") >= 0)) openOr false
+
+  def isChrome3_+ = isChrome3 || isChrome4 || isChrome5 || isChrome6
+
+  def isChrome = isChrome2 || isChrome3 || isChrome4 || isChrome5 || isChrome6
 
   lazy val isOpera9: Boolean = (userAgent.map(s => s.indexOf("Opera/9.") >= 0) openOr false)
 

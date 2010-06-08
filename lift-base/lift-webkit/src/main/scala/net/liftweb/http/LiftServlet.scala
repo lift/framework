@@ -390,7 +390,7 @@ class LiftServlet extends Loggable {
 
 
     try {
-      session.enterComet(cont)
+      session.enterComet(cont -> request)
 
       LAPinger.schedule(cont, BreakOut, TimeSpan(cometTimeout))
 
@@ -447,7 +447,7 @@ class LiftServlet extends Loggable {
     try {
       cont ! BeginContinuation
 
-      session.enterComet(cont)
+      session.enterComet(cont -> request)
 
       LAPinger.schedule(cont, BreakOut, TimeSpan(cometTimeout))
 
