@@ -37,79 +37,138 @@
     </action>
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
-    <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Snapshot">
+    <release version="${project.version}" date="${publishDate}" description="Lift 2.0 Release Candidate">
+
+    </release>
+
+    <release version="2.0-RC1" date="2010-06-09" description="Lift 2.0 Release Candidate 1">
       <action dev="dpp" type="fix" issue="544" system="assembla">
-	Fixed a null pointer exception in Testkit
+        Fixed a null pointer exception in Testkit
       </action>
-
       <action dev="dpp" type="fix" issue="545" system="assembla">
-	JsonResponse passes the HTTP response code correctly now
+        JsonResponse passes the HTTP response code correctly now
       </action>
-
       <action dev="dpp" type="add" issue="437" system="assembla">
-	Mechanism to Abstract Over Retried AJAX Calls
+        Mechanism to Abstract Over Retried AJAX Calls
       </action>
-
       <action dev="dpp" type="fix" issue="538" system="assembla">
         Put Expires or Cache-Control=no-cache headers into Comet, REST and Ajax response
       </action>
-
       <action dev="dpp" type="add" issue="536" system="assembla">
         add missing SHtml.ajaxTextarea...() methods
       </action>
-
       <action dev="timperrett" type="fix" issue="542" system="assembla">
-        AJAX and Comet S.notice et al no longer clear messages before posting their own 
+        AJAX and Comet S.notice et al no longer clear messages before posting their own
         meaning you can now use Comet and AJAX and normal snippets to post messages all together
       </action>
-
       <action dev="dpp" type="fix" issue="531" system="assembla">
         BooleanOption not lazy enough
       </action>
-
       <action dev="dpp" type="update" issue="509" system="assembla">
         Major cleanup of HTTP mocks
       </action>
-
       <action dev="dpp" type="update" issue="528" system="assembla">
         Added a default logger to LiftActor
       </action>
-
       <action dev="dpp" type="update" issue="162" system="assembla">
         Unified a lot of the input testing into a single trait (e.g.,valMinLen, etc.)
       </action>
-
       <action dev="dpp" type="update" issue="527" system="assembla">
         changed EmptyBox's type signature
       </action>
-
       <action dev="dpp" type="add" issue="512" system="assembla">
         Added a method to create a query string in MetaMapper from
         QueryParams
       </action>
-
       <action dev="dpp" type="add" issue="511" system="assembla">
         Enhanced TestKit to provide more generic HTTP request capabilities
       </action>
-
       <action dev="dpp" type="fix" issue="514" system="assembla">
         MappedString.apply(Empty) now correctly results in a null String in the column
       </action>
-
       <action dev="dpp" type="add" issue="535" system="assembla">
         Enhanced date math using JodaTime and more seamless conversion to/from Date and JodaTime objects
       </action>
-
       <action dev="dpp" type="fix" issue="370" system="assembla">
         Smarter caching of foreign key objects
       </action>
-
       <action dev="dpp" type="add" issue="532" system="assembla">
         Add explicit test for MetaMapper comparisons in foreign keys
       </action>
-      
       <action dev="eltimn" type="add" issue="533" system="assembla">
         Add MongoPasswordField
+      </action>
+      <action dev="dpp" type="add" issue="537" system="assembla" due-to="AliPanick">
+        Add Italian translation for lift-core.properties
+      </action>
+      <action dev="dpp" type="update" issue="375" system="assembla">
+        Enhance and Document Screen and Wizard
+      </action>
+      <action dev="jeppenejsum" type="fix" issue="519" system="assembla">
+        Fix slf4j version
+      </action>
+      <action dev="dpp" type="fix" issue="529" system="assembla">
+        Count wrong in sessions
+      </action>
+      <action dev="dpp" type="fix" issue="547" system="assembla">
+        maxConcurrentRequests not honored
+      </action>
+      <action dev="marius.danciu" type="fix" issue="449" system="assembla">
+        Fix swappable jQuery focus behavior
+      </action>
+      <action dev="marius.danciu" type="update" issue="478" system="assembla">
+        Make the default docType configurable in LiftRules
+      </action>
+      <action dev="joni.freeman" type="add" issue="489" system="assembla">
+        Support for Box in JSON
+      </action>
+      <action dev="marius.danciu" type="fix" issue="502" system="assembla">
+        Broaden S.notice et al so that one can configure JsCmd's
+      </action>
+      <action dev="nuttycombe" type="fix" issue="510" system="assembla">
+        Add path-based field replacement to JValue
+      </action>
+      <action dev="dpp" type="fix" issue="513" system="assembla">
+        Possible lift-mapper bug under Scala 2.8
+      </action>
+      <action dev="dpp" type="update" issue="515" system="assembla">
+        Documentation bug for Box
+      </action>
+      <action dev="jeppenejsum" type="fix" issue="517" system="assembla">
+        MappedField.asString should use name instead of displayName
+      </action>
+      <action dev="hoffrocket" type="update" issue="521" system="assembla">
+        Upgrade MongoDB driver to 2.0
+      </action>
+      <action dev="joni.freeman" type="fix" issue="522" system="assembla">
+        Improve case class constructor search when extracting values from JSON
+      </action>
+      <action dev="joni.freeman" type="update" issue="523" system="assembla">
+        Better JSON support for custom types
+      </action>
+      <action dev="dpp" type="fix" issue="524" system="assembla">
+        Consider allowing OrderBy to take an optional NullsFirst/NullsLast parameter
+      </action>
+      <action dev="joni.freeman" type="fix" issue="525" system="assembla">
+        JSON transform function
+      </action>
+      <action dev="dpp" type="fix" issue="530" system="assembla">
+        ActorPing can keep CometActors around forever
+      </action>
+      <action dev="marius.danciu" type="fix" issue="539" system="assembla">
+        Lift-up attribute snippets
+      </action>
+      <action dev="dpp" type="fix" issue="541" system="assembla">
+        Mapper items not tracked when there are no post-commit functions for MetaMapper
+      </action>
+      <action dev="dpp" type="fix" issue="543" system="assembla">
+        SBT archetype
+      </action>
+      <action dev="indrajitr" type="fix" issue="546" system="assembla">
+        Escape velocity filtering for inline maven variables in archetypes
+      </action>
+      <action dev="hoffrocket" type="fix" issue="548" system="assembla">
+        Remove package private access modifier on TransientRequestVar
       </action>
     </release>
 
