@@ -94,6 +94,10 @@
         <configuration>
           <instructions>
             <Export-Package>net.liftweb.util.*;version="${project.version}"</Export-Package>
+            <Import-Package>
+              !org.joda.time.base,
+              *
+            </Import-Package>
           </instructions>
         </configuration>
       </plugin>
