@@ -66,23 +66,6 @@ trait ToResponse {
   }                                         
 }
 
-object MyTest extends TestKit {
-  val baseUrl = ""
-
-  val l2: TestResponse = post("/foo")
-  l2.foreach {
-    x =>
-      val l3: TestResponse = x.get("ddd")
-    println("Hello")
-  }
-
-  
-  for {
-    login <- post("/whatever");
-    next <- login.get("/bla")
-  } {} 
-}
-
 trait ToBoxTheResponse {
   self: BaseGetPoster =>
 
