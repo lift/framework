@@ -37,13 +37,14 @@ import _root_.org.apache.commons.httpclient.auth.AuthScope
 trait ToResponse {
   self: BaseGetPoster =>
 
-  type ResponseType = TestResponse
- 
+  type ResponseType = Response
+
+
   implicit def responseCapture(fullUrl: String,
                                        httpClient: HttpClient,
-                                       getter: HttpMethodBase): ResponseType = {
+                                       getter: HttpMethodBase): Response = {
     
-    val ret: ResponseType = try {
+    val ret = try {
       (baseUrl + fullUrl, httpClient.executeMethod(getter)) match {
         case (server, responseCode) =>
           val respHeaders = slurpApacheHeaders(getter.getResponseHeaders)
@@ -64,23 +65,6 @@ trait ToResponse {
 
     ret
   }                                         
-}
-
-object MyTest extends TestKit {
-  val baseUrl = ""
-
-  val l2: TestResponse = post("/foo")
-  l2.foreach {
-    x =>
-      val l3: TestResponse = x.get("ddd")
-    println("Hello")
-  }
-
-  
-  for {
-    login <- post("/whatever");
-    next <- login.get("/bla")
-  } {} 
 }
 
 trait ToBoxTheResponse {
@@ -470,12 +454,12 @@ trait TestKit extends ClientBuilder with GetPoster with GetPosterHelper {
    */
   def baseUrl: String
 
-  class TestHandler(res: TestResponse) {
-    def then(f: TestResponse => TestResponse): TestResponse = f(res)
+  class TestHandler(res: Response) {
+    def then(f: Response => Response): Response = f(res)
 
-    def also(f: TestResponse => Any): TestResponse = {f(res); res}
+    def also(f: Response => Any): Response = {f(res); res}
   }
-  implicit def reqToHander(in: TestResponse): TestHandler = new TestHandler(in)
+  implicit def reqToHander(in: Response): TestHandler = new TestHandler(in)
 }
 
 trait ClientBuilder {
@@ -657,9 +641,7 @@ object TestHelpers {
  * </pre>
  */
 trait Response {
-  type SelfType
-  type FuncType
-
+  type SelfType <: BaseResponse
   /**
    * The XML for the body
    */
@@ -676,7 +658,7 @@ trait Response {
    * @param msg the String to report as an error
    * @param errorFunc the error reporting thing.
    */
-  def !@(msg: => String)(implicit errorFunc: ReportFailure): SelfType
+  def !@(msg: => String)(implicit errorFunc: ReportFailure): Response
 
   /**
    * Test that the server gave a response.  If the server failed to respond, call the errorFunc with the msg
@@ -684,7 +666,7 @@ trait Response {
    * @param msg the String to report as an error
    * @param errorFunc the error reporting thing.
    */
-  def !(msg: => String)(implicit errorFunc: ReportFailure): SelfType
+  def !(msg: => String)(implicit errorFunc: ReportFailure): Response
 
   /**
    * Test that the server gave a particular response code.  If the response is not a 200, call the errorFunc with the msg
@@ -692,18 +674,18 @@ trait Response {
    * @param msg the String to report as an error
    * @param errorFunc the error reporting thing.
    */
-  def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): SelfType
+  def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): Response
 
   /**
    * the Response has a foreach method for chaining in a for comprehension
    */
-  def foreach(f: FuncType => Unit): Unit
+  def foreach(f: SelfType => Unit): Unit
 
   /**
    * the Response has a filter method for chaining in a for comprehension.  Note that the filter method does *NOT* have
    * to return a Boolean, any expression (e.g., an assertion)
    */
-  def filter(f: FuncType => Unit): FuncType
+  def filter(f: SelfType => Unit): SelfType
 }
 
 /**
@@ -716,7 +698,9 @@ class HttpResponse(baseUrl: String,
                    body: Box[Array[Byte]],
                    theHttpClient: HttpClient) extends 
   BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with
-  ToResponse with TestResponse {
+  ToResponse {
+    type SelfType = HttpResponse
+    
   }
 
 /**
@@ -734,10 +718,7 @@ class TheResponse(baseUrl: String,
     
   }
 
-trait TestResponse extends Response {
-  override type SelfType = HttpResponse
-  override type FuncType = HttpResponse
-}
+
 
 /**
  * The response to an HTTP request, as long as the server responds with *SOMETHING*
@@ -750,6 +731,8 @@ abstract class BaseResponse(override val baseUrl: String,
                    val theHttpClient: HttpClient) extends
   Response with BaseGetPoster with GetPosterHelper
 {
+  type SelfType <: BaseResponse
+
   private object FindElem {
     def unapply(in: NodeSeq): Option[Elem] = in match {
       case e: Elem => Some(e)
@@ -757,11 +740,7 @@ abstract class BaseResponse(override val baseUrl: String,
       case g: Group => unapply(g.nodes)
       case n: Text => None
       case sn: SpecialNode => None
-      case n: NodeSeq => 
-       val ns: Seq[Node] = n
-       val x: Seq[Elem] = ns.flatMap(v => unapply(v))
-       x.headOption
-      case _ => None
+      case n: NodeSeq => n.flatMap(unapply).firstOption
     }
   }
 
@@ -792,36 +771,37 @@ abstract class BaseResponse(override val baseUrl: String,
     } yield new String(b, "UTF-8")
 
 
-  def !@(msg: => String)(implicit errorFunc: ReportFailure): SelfType =
-    if (code == 200) this.asInstanceOf[SelfType] else {errorFunc.fail(msg)}
+  def !@(msg: => String)(implicit errorFunc: ReportFailure): Response =
+    if (code == 200) this else {errorFunc.fail(msg)}
 
-  def !(msg: => String)(implicit errorFunc: ReportFailure): SelfType = 
-    this.asInstanceOf[SelfType]
+  def !(msg: => String)(implicit errorFunc: ReportFailure): Response = this
 
-  def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): SelfType =
-    if (this.code != code) errorFunc.fail(msg) else this.asInstanceOf[SelfType]
+  def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): Response =
+    if (this.code != code) errorFunc.fail(msg) else this
 
-  def foreach(f: FuncType => Unit): Unit = f(this.asInstanceOf[FuncType])
+  def foreach(f: SelfType => Unit): Unit = f(this.asInstanceOf[SelfType])
 
-  def filter(f: FuncType => Unit): FuncType = {
-    val st = this.asInstanceOf[FuncType]
+  def filter(f: SelfType => Unit): SelfType = {
+    val st = this.asInstanceOf[SelfType]
     f(st)
     st
   }
 }
 
-class CompleteFailure(val serverName: String, val exception: Box[Throwable]) extends TestResponse {
+class CompleteFailure(val serverName: String, val exception: Box[Throwable]) extends Response {
+  type SelfType = HttpResponse
+
   override def toString = serverName + (exception.map(e => " Exception: " + e.getMessage) openOr "")
 
   def headers: Map[String, List[String]] = throw (exception openOr new java.io.IOException("HTTP Failure"))
 
   def xml: Box[Elem] = throw (exception openOr new java.io.IOException("HTTP Failure"))
 
-  def !@(msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
+  def !@(msg: => String)(implicit errorFunc: ReportFailure): Response = errorFunc.fail(msg)
 
-  def !(msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
+  def !(msg: => String)(implicit errorFunc: ReportFailure): Response = errorFunc.fail(msg)
 
-  def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
+  def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): Response = errorFunc.fail(msg)
 
   def foreach(f: HttpResponse => Unit): Unit = throw (exception openOr new java.io.IOException("HTTP Failure"))
 
