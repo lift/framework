@@ -29,23 +29,40 @@ import _root_.net.liftweb.util.{Helpers}
  */
 
 
-object MyTest2 extends TestKit {
+object MyCode extends TestKit {
   val baseUrl = ""
 
-  val l2 = post("/foo")
+  val l2: TestResponse = post("/foo")
   l2.foreach {
-    x =>
+    x: HttpResponse =>
       val l3: TestResponse = x.get("ddd")
     println("Hello")
   }
 
   
   for {
-    login <- post("/whatever");
+    login <- post("/whatever")
     next <- login.get("/bla")
   } {} 
 }
 
+object MyBoxCode extends RequestKit {
+  def baseUrl = ""
+
+  val l2: Box[TheResponse] = post("/foo")
+  l2.foreach {
+    x: TheResponse =>
+      val l3: Box[TheResponse] = x.get("ddd")
+    println("Hello")
+  }
+
+  
+  for {
+    login: TheResponse <- post("/whatever")
+    next <- login.get("/bla")
+  } {} 
+  
+}
 
 }
 }
