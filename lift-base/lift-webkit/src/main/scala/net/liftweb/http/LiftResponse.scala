@@ -256,14 +256,25 @@ trait LiftResponse {
   def toResponse: BasicResponse
 }
 
-object JsonResponse extends HeaderDefaults {
-  def apply(json: JsExp): LiftResponse = JsonResponse(json, headers, cookies, 200)
-  def apply(json: JsonAST.JValue): LiftResponse = apply(json, headers, cookies, 200)
-  def apply(json: JsonAST.JValue, code: Int): LiftResponse = apply(json, headers, cookies, code)
-  def apply(_json: JsonAST.JValue, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int): LiftResponse =
+object JsonResponse {
+  def headers = S.getHeaders(Nil)
+  def cookies = S.responseCookies
+
+  def apply(json: JsExp): LiftResponse = 
+    new JsonResponse(json, headers, cookies, 200)
+  
+  def apply(json: JsonAST.JValue): LiftResponse = 
+    apply(json, headers, cookies, 200)
+
+  def apply(json: JsonAST.JValue, code: Int): LiftResponse = 
+    apply(json, headers, cookies, code)
+
+
+  def apply(_json: JsonAST.JValue, _headers: List[(String, String)], _cookies: List[HTTPCookie], code: Int): LiftResponse = {
     new JsonResponse(new JsExp {
       lazy val toJsCmd = Printer.pretty(JsonAST.render((_json)))
-    }, headers, cookies, code)
+    }, _headers, _cookies, code)
+  }
 }
 
 case class JsonResponse(json: JsExp, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends LiftResponse {
