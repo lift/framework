@@ -31,19 +31,27 @@ object MailerSpec extends Specification {
       @volatile var lastMessage: Box[MimeMessage] = Empty
 
      testModeSend.default.set((msg: MimeMessage) => {
-         lastMessage = Full(msg)
-        this.notifyAll()})
+       lastMessage = Full(msg)
+       MailerSpec.this.notifyAll()})
+
+    def touch() {
+      Props.testMode
+      Thread.sleep(10)
+    } // do nothing, but force initialization of this class
   }
+
+  MyMailer.touch()
+
   import MyMailer._
   
   private def doNewMessage(f: => Unit): MimeMessage = {
-      lastMessage = Empty
+    lastMessage = Empty
 
     val ignore = f
 
-    synchronized {
+    MailerSpec.this.synchronized {
       while (lastMessage.isEmpty) {
-        this.wait(100)
+        MailerSpec.this.wait(100)
       }
       lastMessage.open_!
     }
