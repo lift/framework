@@ -37,14 +37,13 @@ import _root_.org.apache.commons.httpclient.auth.AuthScope
 trait ToResponse {
   self: BaseGetPoster =>
 
-  type ResponseType = Response
-
-
+  type ResponseType = TestResponse
+ 
   implicit def responseCapture(fullUrl: String,
                                        httpClient: HttpClient,
-                                       getter: HttpMethodBase): Response = {
+                                       getter: HttpMethodBase): ResponseType = {
     
-    val ret = try {
+    val ret: ResponseType = try {
       (baseUrl + fullUrl, httpClient.executeMethod(getter)) match {
         case (server, responseCode) =>
           val respHeaders = slurpApacheHeaders(getter.getResponseHeaders)
@@ -454,12 +453,12 @@ trait TestKit extends ClientBuilder with GetPoster with GetPosterHelper {
    */
   def baseUrl: String
 
-  class TestHandler(res: Response) {
-    def then(f: Response => Response): Response = f(res)
+  class TestHandler(res: TestResponse) {
+    def then(f: TestResponse => TestResponse): TestResponse = f(res)
 
-    def also(f: Response => Any): Response = {f(res); res}
+    def also(f: TestResponse => Any): TestResponse = {f(res); res}
   }
-  implicit def reqToHander(in: Response): TestHandler = new TestHandler(in)
+  implicit def reqToHander(in: TestResponse): TestHandler = new TestHandler(in)
 }
 
 trait ClientBuilder {
@@ -641,7 +640,9 @@ object TestHelpers {
  * </pre>
  */
 trait Response {
-  type SelfType <: BaseResponse
+  type SelfType
+  type FuncType
+
   /**
    * The XML for the body
    */
@@ -658,7 +659,7 @@ trait Response {
    * @param msg the String to report as an error
    * @param errorFunc the error reporting thing.
    */
-  def !@(msg: => String)(implicit errorFunc: ReportFailure): Response
+  def !@(msg: => String)(implicit errorFunc: ReportFailure): SelfType
 
   /**
    * Test that the server gave a response.  If the server failed to respond, call the errorFunc with the msg
@@ -666,7 +667,7 @@ trait Response {
    * @param msg the String to report as an error
    * @param errorFunc the error reporting thing.
    */
-  def !(msg: => String)(implicit errorFunc: ReportFailure): Response
+  def !(msg: => String)(implicit errorFunc: ReportFailure): SelfType
 
   /**
    * Test that the server gave a particular response code.  If the response is not a 200, call the errorFunc with the msg
@@ -674,18 +675,18 @@ trait Response {
    * @param msg the String to report as an error
    * @param errorFunc the error reporting thing.
    */
-  def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): Response
+  def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): SelfType
 
   /**
    * the Response has a foreach method for chaining in a for comprehension
    */
-  def foreach(f: SelfType => Unit): Unit
+  def foreach(f: FuncType => Unit): Unit
 
   /**
    * the Response has a filter method for chaining in a for comprehension.  Note that the filter method does *NOT* have
    * to return a Boolean, any expression (e.g., an assertion)
    */
-  def filter(f: SelfType => Unit): SelfType
+  def filter(f: FuncType => Unit): FuncType
 }
 
 /**
@@ -698,9 +699,7 @@ class HttpResponse(baseUrl: String,
                    body: Box[Array[Byte]],
                    theHttpClient: HttpClient) extends 
   BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with
-  ToResponse {
-    type SelfType = HttpResponse
-    
+  ToResponse with TestResponse {
   }
 
 /**
@@ -718,7 +717,10 @@ class TheResponse(baseUrl: String,
     
   }
 
-
+trait TestResponse extends Response {
+  override type SelfType = HttpResponse
+  override type FuncType = HttpResponse
+}
 
 /**
  * The response to an HTTP request, as long as the server responds with *SOMETHING*
@@ -731,8 +733,6 @@ abstract class BaseResponse(override val baseUrl: String,
                    val theHttpClient: HttpClient) extends
   Response with BaseGetPoster with GetPosterHelper
 {
-  type SelfType <: BaseResponse
-
   private object FindElem {
     def unapply(in: NodeSeq): Option[Elem] = in match {
       case e: Elem => Some(e)
@@ -771,37 +771,36 @@ abstract class BaseResponse(override val baseUrl: String,
     } yield new String(b, "UTF-8")
 
 
-  def !@(msg: => String)(implicit errorFunc: ReportFailure): Response =
-    if (code == 200) this else {errorFunc.fail(msg)}
+  def !@(msg: => String)(implicit errorFunc: ReportFailure): SelfType =
+    if (code == 200) this.asInstanceOf[SelfType] else {errorFunc.fail(msg)}
 
-  def !(msg: => String)(implicit errorFunc: ReportFailure): Response = this
+  def !(msg: => String)(implicit errorFunc: ReportFailure): SelfType = 
+    this.asInstanceOf[SelfType]
 
-  def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): Response =
-    if (this.code != code) errorFunc.fail(msg) else this
+  def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): SelfType =
+    if (this.code != code) errorFunc.fail(msg) else this.asInstanceOf[SelfType]
 
-  def foreach(f: SelfType => Unit): Unit = f(this.asInstanceOf[SelfType])
+  def foreach(f: FuncType => Unit): Unit = f(this.asInstanceOf[FuncType])
 
-  def filter(f: SelfType => Unit): SelfType = {
-    val st = this.asInstanceOf[SelfType]
+  def filter(f: FuncType => Unit): FuncType = {
+    val st = this.asInstanceOf[FuncType]
     f(st)
     st
   }
 }
 
-class CompleteFailure(val serverName: String, val exception: Box[Throwable]) extends Response {
-  type SelfType = HttpResponse
-
+class CompleteFailure(val serverName: String, val exception: Box[Throwable]) extends TestResponse {
   override def toString = serverName + (exception.map(e => " Exception: " + e.getMessage) openOr "")
 
   def headers: Map[String, List[String]] = throw (exception openOr new java.io.IOException("HTTP Failure"))
 
   def xml: Box[Elem] = throw (exception openOr new java.io.IOException("HTTP Failure"))
 
-  def !@(msg: => String)(implicit errorFunc: ReportFailure): Response = errorFunc.fail(msg)
+  def !@(msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
 
-  def !(msg: => String)(implicit errorFunc: ReportFailure): Response = errorFunc.fail(msg)
+  def !(msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
 
-  def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): Response = errorFunc.fail(msg)
+  def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
 
   def foreach(f: HttpResponse => Unit): Unit = throw (exception openOr new java.io.IOException("HTTP Failure"))
 
