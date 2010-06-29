@@ -41,6 +41,15 @@
 
     </release>
 
+    <release version="2.0" date="2010-06-30" description="Lift 2.0 Final">
+      <action dev="dpp" type="fix" issue="555" system="assembla">
+        Fixed a problem with HelloDarwin
+      </action>
+      <action dev="marius.danciu" type="fix" issue="562" system="assembla">
+        Boot failures should be safer
+      </action>
+    </release>
+
     <release version="2.0-RC2" date="2010-06-18" description="Lift 2.0 Release Candidate 2">
       <action dev="dpp" type="fix" issue="549" system="assembla">
         Calls to HTTP methods in HttpResponse fail
