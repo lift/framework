@@ -17,7 +17,9 @@
 package net.liftweb {
 package mongodb {
 
-import net.liftweb.json.JsonAST.JObject
+import json.JsonAST.JObject
+
+import java.util.UUID
 
 import com.mongodb._
 import org.bson.types.ObjectId
@@ -38,7 +40,10 @@ trait MongoDocument[BaseDocument] extends JsonObject[BaseDocument] {
 
   def save = meta.save(this)
 
-  def getRef: MongoRef = MongoRef(meta.collectionName, _id.toString)
+  def getRef: Option[MongoRef] = _id match {
+    case oid: ObjectId => Some(MongoRef(meta.collectionName, oid))
+    case _ => None
+  }
 }
 
 /*
@@ -51,17 +56,9 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   }
 
   /**
-  * Find a single document by _id object.
-  def find(a: Any): Option[BaseDocument] = a match {
-    case oid: ObjectId => find(new BasicDBObject("_id", oid))
-    case s: String => find(new BasicDBObject("_id", s))
-  }
-  */
-
-  /**
   * Find a single row by a qry, using a DBObject.
   */
-  private def find(qry: DBObject): Option[BaseDocument] = {
+  def find(qry: DBObject): Option[BaseDocument] = {
     MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
       coll.findOne(qry) match {
         case null => None
@@ -73,20 +70,28 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   }
 
   /**
-  * Find a single document by _id.
+  * Find a single document by _id using a String.
   */
-  def find(s: String): Option[BaseDocument] = ObjectId.isValid(s) match {
-    case true => find(new BasicDBObject("_id", new ObjectId(s)))
-    case false => find(new BasicDBObject("_id", s))
-  }
+  def find(s: String): Option[BaseDocument] =
+    if (ObjectId.isValid(s))
+      find(new BasicDBObject("_id", new ObjectId(s)))
+    else
+      find(new BasicDBObject("_id", s))
+
+  /**
+  * Find a single document by _id using an ObjectId.
+  */
+  def find(oid: ObjectId): Option[BaseDocument] = find(new BasicDBObject("_id", oid))
+
+  /**
+  * Find a single document by _id using a UUID.
+  */
+  def find(uuid: UUID): Option[BaseDocument] = find(new BasicDBObject("_id", uuid))
 
   /**
   * Find a single document by a qry using String, Any inputs
   */
-  def find(k: String, v: Any): Option[BaseDocument] = find(new BasicDBObject(k, v match {
-    case s: String if (ObjectId.isValid(s)) => new ObjectId(s)
-    case _ => v
-  }))
+  def find(k: String, v: Any): Option[BaseDocument] = find(new BasicDBObject(k, v))
 
   /**
   * Find a single document by a qry using a json query
@@ -110,7 +115,7 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   /**
   * Find all documents using a DBObject query.
   */
-  private def findAll(qry: DBObject, sort: Option[DBObject], opts: FindOption*): List[BaseDocument] = {
+  def findAll(qry: DBObject, sort: Option[DBObject], opts: FindOption*): List[BaseDocument] = {
     import scala.collection.JavaConversions._
 
     val findOpts = opts.toList

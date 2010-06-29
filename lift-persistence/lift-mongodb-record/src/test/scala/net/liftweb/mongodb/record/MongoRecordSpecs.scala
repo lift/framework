@@ -31,8 +31,6 @@ import net.liftweb.json.JsonAST._
 import net.liftweb.json.ext.JsonBoxSerializer
 import net.liftweb.record.field.StringField
 
-import com.mongodb._
-
 class MongoRecordSpecsTest extends JUnit4(MongoRecordSpecs)
 
 package mongorecordspecs {
@@ -76,28 +74,7 @@ package mongorecordspecs {
   }
 }
 
-object MongoRecordSpecs extends Specification {
-
-  doBeforeSpec {
-    // create a Mongo instance
-    val mongoHost = MongoHost("localhost", 27017)
-    // define the db
-    MongoDB.defineDb(DefaultMongoIdentifier, MongoAddress(mongoHost, "record_specs"))
-  }
-
-  def isMongoRunning: Boolean = {
-    try {
-      MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } )
-      true
-    }
-    catch {
-      case e => false
-    }
-  }
-
-  val debug = false
-
-  def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkipExample
+object MongoRecordSpecs extends Specification with MongoTestKit {
 
   "MongoRecord" should {
 
@@ -160,18 +137,6 @@ object MongoRecordSpecs extends Specification {
       }
     }
 
-  }
-
-  doAfterSpec {
-    if (!debug && isMongoRunning) {
-      // drop the database
-      MongoDB.use {
-        db => db.dropDatabase
-      }
-    }
-
-    // clear the mongo instances
-    MongoDB.close
   }
 }
 

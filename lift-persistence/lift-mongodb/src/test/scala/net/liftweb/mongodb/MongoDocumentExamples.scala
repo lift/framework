@@ -17,17 +17,17 @@
 package net.liftweb {
 package mongodb {
 
-import java.util.{Date, UUID}
+import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
 
 import org.specs._
 import org.specs.runner.JUnit4
-
+import net.liftweb.json.DefaultFormats
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.JsonParser._
 import net.liftweb.json.JsonDSL._
 
-import com.mongodb.{BasicDBList, BasicDBObject}
+import com.mongodb.{BasicDBList, BasicDBObject, DBObject, MongoException}
 import org.bson.types.ObjectId
 
 class MongoDocumentExamplesTest extends JUnit4(MongoDocumentExamples)
@@ -44,15 +44,15 @@ package mongotestdocs {
   }
 
   /*
-  * Case classes
+  * _id as a ObjectId
   */
-  case class SimplePerson(_id: String, name: String, age: Int) extends MongoDocument[SimplePerson] {
+  case class SimplePerson(_id: ObjectId, name: String, age: Int) extends MongoDocument[SimplePerson] {
     def meta = SimplePerson
   }
   object SimplePerson extends MongoDocumentMeta[SimplePerson] {
     override val collectionName = "simplepersons"
     override def mongoIdentifier = DefaultMongoIdentifier
-
+    override def formats = super.formats + new ObjectIdSerializer
     // index name
     ensureIndex(("name" -> 1))
   }
@@ -60,7 +60,10 @@ package mongotestdocs {
   case class Address(street: String, city: String)
   case class Child(name: String, age: Int, birthdate: Option[Date])
 
-  case class Person(_id: String, name: String, age: Int, address: Address, children: List[Child])
+  /*
+  * _id as UUID
+  */
+  case class Person(_id: UUID, name: String, age: Int, address: Address, children: List[Child], dob: Date)
     extends MongoDocument[Person] {
 
     def meta = Person
@@ -69,10 +72,13 @@ package mongotestdocs {
   object Person extends MongoDocumentMeta[Person] {
     override def mongoIdentifier = TstDBa
     override def collectionName = "mypersons"
+    override def formats = super.formats + new UUIDSerializer
   }
 
-  // Mongo tutorial classes
-  case class TCInfo(x: Int, y: Int)
+  /*
+  * _id as ObjectId.toString
+  */
+  case class TCInfo(x: Int, y: Int, uuid: UUID)
   case class TstCollection(_id: String, name: String, dbtype: String, count: Int, info: TCInfo)
     extends MongoDocument[TstCollection] {
 
@@ -80,30 +86,30 @@ package mongotestdocs {
   }
 
   object TstCollection extends MongoDocumentMeta[TstCollection] {
-
+    override def formats = super.formats + new UUIDSerializer
     // create a unique index on name
     ensureIndex(("name" -> 1), true)
   }
 
-  case class IDoc(_id: String, i: Int) extends MongoDocument[IDoc] {
+  case class IDoc(_id: ObjectId, i: Int) extends MongoDocument[IDoc] {
 
     def meta = IDoc
   }
 
   object IDoc extends MongoDocumentMeta[IDoc] {
-
+    override def formats = super.formats + new ObjectIdSerializer
     // create an index on "i", descending with custom name
     ensureIndex(("i" -> -1), ("name" -> "i_ix1"))
   }
 
-  case class SessCollection(_id: String, name: String, dbtype: String, count: Int)
+  case class SessCollection(_id: ObjectId, name: String, dbtype: String, count: Int)
     extends MongoDocument[SessCollection] {
 
     def meta = SessCollection
   }
 
   object SessCollection extends MongoDocumentMeta[SessCollection] {
-
+    override def formats = super.formats + new ObjectIdSerializer
     // create a unique index on name
     ensureIndex(("name" -> 1), true)
   }
@@ -112,7 +118,7 @@ package mongotestdocs {
   * mongo-java-driver is not compatible with numbers that have an e in them
   */
   case class Primitive(
-    _id: String,
+    _id: ObjectId,
     intfield: Int,
     longfield: Long,
     doublefield: Double,
@@ -127,70 +133,71 @@ package mongotestdocs {
     def meta = Primitive
   }
 
-  object Primitive extends MongoDocumentMeta[Primitive]
+  object Primitive extends MongoDocumentMeta[Primitive] {
+    override def formats = super.formats + new ObjectIdSerializer
+  }
 
-  case class MainJDoc(_id: String, name: String, refdoc: MongoRef, refId: Option[String]) extends MongoDocument[MainJDoc] {
+  case class MainJDoc(_id: ObjectId, name: String, refdoc: Option[MongoRef], refId: Option[ObjectId]) extends MongoDocument[MainJDoc] {
 
     def meta = MainJDoc
   }
 
-  object MainJDoc extends MongoDocumentMeta[MainJDoc]
+  object MainJDoc extends MongoDocumentMeta[MainJDoc] {
+    override def formats = super.formats + new ObjectIdSerializer
+  }
 
-  case class RefJDoc(_id: String) extends MongoDocument[RefJDoc] {
+  case class RefJDoc(_id: ObjectId) extends MongoDocument[RefJDoc] {
     def meta = RefJDoc
   }
 
-  object RefJDoc extends MongoDocumentMeta[RefJDoc]
+  object RefJDoc extends MongoDocumentMeta[RefJDoc] {
+    override def formats = super.formats + new ObjectIdSerializer
+  }
+
+  case class PatternDoc(_id: ObjectId, regx: Pattern) extends MongoDocument[PatternDoc] {
+    def meta = PatternDoc
+  }
+  object PatternDoc extends MongoDocumentMeta[PatternDoc] {
+    override def formats = super.formats + new ObjectIdSerializer + new PatternSerializer
+  }
+
+  case class StringDateDoc(_id: ObjectId, dt: Date) extends MongoDocument[StringDateDoc] {
+    def meta = StringDateDoc
+  }
+  object StringDateDoc extends MongoDocumentMeta[StringDateDoc] {
+    override def formats = new DefaultFormats {
+      override def dateFormatter = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
+    } + new DateSerializer + new ObjectIdSerializer
+  }
+
 }
 
-object MongoDocumentExamples extends Specification {
+object MongoDocumentExamples extends Specification with MongoTestKit {
   import mongotestdocs._
 
-  doBeforeSpec {
-    // create a Mongo instance
-    val mongoHost = MongoHost("localhost", 27017)
-    // define the dbs
-    MongoDB.defineDb(DefaultMongoIdentifier, MongoAddress(mongoHost, "test_document"))
-    MongoDB.defineDb(TstDBa, MongoAddress(mongoHost, "test_document_a"))
-    //MongoDB.defineDb(TstDBb, MongoAddress(mongoHost, "test_document_b"))
-  }
+  override def dbName = "lift_mongodocumentexamples"
 
-  def isMongoRunning: Boolean = {
-    try {
-      MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } )
-      MongoDB.use(TstDBa) ( db => { db.getLastError } )
-      true
-    }
-    catch {
-      case e => false
-    }
-  }
-
-  def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkipExample
-
-  import com.mongodb.util.JSON // Mongo parser/serializer
-
-  val debug = false
+  override def dbs = (TstDBa, defaultHost, "lift_mongodocumentexamples_a") :: super.dbs
 
   "Simple Person example" in {
 
     checkMongoIsRunning
 
     // create a new SimplePerson
-    val pid = ObjectId.get.toString
+    val pid = ObjectId.get
     val p = SimplePerson(pid, "Tim", 38)
 
     // save it
     p.save
 
     // retrieve it
-    def pFromDb = SimplePerson.find("_id", pid)
+    def pFromDb = SimplePerson.find(pid)
 
     pFromDb.isDefined must_== true
     p mustEqual pFromDb.get
 
     // retrieve it using a Json query
-    def pFromDbViaJson = SimplePerson.find(("_id" -> p._id))
+    def pFromDbViaJson = SimplePerson.find(("_id" -> ("$oid" -> p._id.toString)))
 
     pFromDbViaJson.isDefined must_== true
 
@@ -229,11 +236,9 @@ object MongoDocumentExamples extends Specification {
     checkMongoIsRunning
 
     // create new SimplePersons
-    val p = SimplePerson(ObjectId.get.toString, "Jill", 27)
-    val p2 = SimplePerson(ObjectId.get.toString, "Bob", 25)
-    val p3 = SimplePerson(ObjectId.get.toString, "Bob", 29)
-
-    //p mustNotEqual p2
+    val p = SimplePerson(ObjectId.get, "Jill", 27)
+    val p2 = SimplePerson(ObjectId.get, "Bob", 25)
+    val p3 = SimplePerson(ObjectId.get, "Bob", 29)
 
     // save them
     p.save
@@ -243,7 +248,7 @@ object MongoDocumentExamples extends Specification {
     // retrieve them
     def pFromDb = SimplePerson.find(p._id)
     def p2FromDb = SimplePerson.find(p2._id)
-    def p3FromDb = SimplePerson.find(("_id" -> p3._id))
+    def p3FromDb = SimplePerson.find(("_id" -> ("$oid" -> p3._id.toString)))
 
     pFromDb.isDefined must_== true
     p2FromDb.isDefined must_== true
@@ -283,10 +288,11 @@ object MongoDocumentExamples extends Specification {
 
     def date(s: String) = Person.formats.dateFormat.parse(s).get
 
-    // create a new Person UUID.randomUUID.toString
-    val p = Person(UUID.randomUUID.toString, "joe", 27, Address("Bulevard", "Helsinki"), List(Child("Mary", 5, Some(date("2004-09-04T18:06:22.000Z"))), Child("Mazy", 3, None)))
+    val cal = Calendar.getInstance
+    cal.set(2009, 10, 2)
 
-    //println(p.toString)
+    // create a new Person UUID.randomUUID.toString
+    val p = Person(UUID.randomUUID, "joe", 27, Address("Bulevard", "Helsinki"), List(Child("Mary", 5, Some(cal.getTime)), Child("Mazy", 3, None)), date("2004-09-04T18:06:22.000Z"))
 
     // save it
     p.save
@@ -294,9 +300,10 @@ object MongoDocumentExamples extends Specification {
     // retrieve it
     def pFromDb = Person.find(p._id)
 
-    pFromDb.isDefined must_== true
-
-    p must_== pFromDb.get
+    // compare to original
+    val p2 = pFromDb
+    p2.isDefined must_== true
+    p must_== p2.get
 
     Person.count must_== 1
 
@@ -315,7 +322,7 @@ object MongoDocumentExamples extends Specification {
     checkMongoIsRunning
 
     // build a TstCollection
-    val info = TCInfo(203, 102)
+    val info = TCInfo(203, 102, UUID.randomUUID)
     val tc = TstCollection(ObjectId.get.toString, "MongoDB", "database", 1, info)
     val tc2 = TstCollection(ObjectId.get.toString, "OtherDB", "database", 1, info)
 
@@ -323,7 +330,7 @@ object MongoDocumentExamples extends Specification {
     tc.save
     tc2.save
 
-    // get the doc back from the db
+    // Query
     def tcFromDb = TstCollection.find(tc._id)
     def tc2FromDb = TstCollection.find(tc2._id)
 
@@ -367,7 +374,7 @@ object MongoDocumentExamples extends Specification {
 
     // insert multiple documents
     for (i <- List.range(1, 101)) {
-      IDoc(ObjectId.get.toString, i).save
+      IDoc(ObjectId.get, i).save
     }
 
     // count the docs
@@ -378,9 +385,6 @@ object MongoDocumentExamples extends Specification {
 
     // get a List of all documents
     val all = IDoc.findAll
-    for (d <- all) {
-      if (debug) println(d.toString)
-    }
     all.length must_== 100
 
     // get a single document with a query ( i = 71 )
@@ -443,9 +447,9 @@ object MongoDocumentExamples extends Specification {
 
     checkMongoIsRunning
 
-    val tc = SessCollection(ObjectId.get.toString, "MongoSession", "db", 1)
-    val tc2 = SessCollection(ObjectId.get.toString, "MongoSession", "db", 1)
-    val tc3 = SessCollection(ObjectId.get.toString, "MongoDB", "db", 1)
+    val tc = SessCollection(ObjectId.get, "MongoSession", "db", 1)
+    val tc2 = SessCollection(ObjectId.get, "MongoSession", "db", 1)
+    val tc3 = SessCollection(ObjectId.get, "MongoDB", "db", 1)
 
     // use a Mongo instance directly with a session
     MongoDB.useSession(DefaultMongoIdentifier) ( db => {
@@ -467,26 +471,28 @@ object MongoDocumentExamples extends Specification {
       //("$set" -> ("dbtype" -> "docdb")) // set dbtype
       SessCollection.update(qry, o2, db)
       db.getLastError.get("updatedExisting") must_== true
-      /* The update method only updates one document. see:
-      http://jira.mongodb.org/browse/SERVER-268
-      */
+      /* The update method only updates one document. */
       db.getLastError.get("n") must_== 1
 
-      // try updating against the unique key
-      /* This works now
-      val o3 = ("$set" -> ("name" -> "MongoDB")) // set name
-      TstCollection.update(qry, o3, db, Upsert)
-      db.getLastError.get("err").toString must startWith("E12011 can't $inc/$set an indexed field")
-      db.getLastError.get("n") must_== 0
-      */
+      /* Multiple documents now supported */
+      SessCollection.update(qry, o2, db, Multi)
+      db.getLastError.get("updatedExisting") must_== true
+      db.getLastError.get("n") must_== 2
 
       // regex query example
       val lst = SessCollection.findAll(new BasicDBObject("name", Pattern.compile("^Mongo")))
       lst.size must_== 2
 
+      // jobject query now also works
+      val lstjobj = SessCollection.findAll(("name" -> (("$regex" -> "^Mon") ~ ("$flags" -> 0))))
+      lstjobj.size must_== 2
+
       // use regex and another clause
-      val lst2 = SessCollection.findAll(new BasicDBObject("name", Pattern.compile("^Mongo")).append("count", 1))
+      val lst2 = SessCollection.findAll(new BasicDBObject("name", Pattern.compile("^Mon")).append("count", 2))
       lst2.size must_== 1
+
+      val lstjobj2 = SessCollection.findAll(("name" -> (("$regex" -> "^Mongo") ~ ("$flags" -> 0))) ~ ("count" -> 3))
+      lstjobj2.size must_== 1
 
       if (!debug) {
         // delete them
@@ -505,7 +511,7 @@ object MongoDocumentExamples extends Specification {
 
     def date(s: String) = Primitive.formats.dateFormat.parse(s).get
 
-    val p = Primitive(ObjectId.get.toString, 2147483647, 2147483648L, 1797693, 3.4028235F, 1000, 0, true, 512, date("2004-09-04T18:06:22.000Z"))
+    val p = Primitive(ObjectId.get, 2147483647, 2147483648L, 1797693, 3.4028235F, 1000, 0, true, 512, date("2004-09-04T18:06:22.000Z"))
 
     // save it
     p.save
@@ -530,16 +536,16 @@ object MongoDocumentExamples extends Specification {
 
     checkMongoIsRunning
 
-    val ref1 = RefJDoc(ObjectId.get.toString)
-    val ref2 = RefJDoc(ObjectId.get.toString)
+    val ref1 = RefJDoc(ObjectId.get)
+    val ref2 = RefJDoc(ObjectId.get)
 
     ref1.save
     ref2.save
 
-    val md1 = MainJDoc(ObjectId.get.toString, "md1", ref1.getRef, Some(ref1._id))
-    val md2 = MainJDoc(ObjectId.get.toString, "md2", ref1.getRef, None)
-    val md3 = MainJDoc(ObjectId.get.toString, "md3", ref2.getRef, None)
-    val md4 = MainJDoc(ObjectId.get.toString, "md4", ref2.getRef, None)
+    val md1 = MainJDoc(ObjectId.get, "md1", ref1.getRef, Some(ref1._id))
+    val md2 = MainJDoc(ObjectId.get, "md2", ref1.getRef, None)
+    val md3 = MainJDoc(ObjectId.get, "md3", ref2.getRef, None)
+    val md4 = MainJDoc(ObjectId.get, "md4", ref2.getRef, None)
 
     md1.save
     md2.save
@@ -574,26 +580,57 @@ object MongoDocumentExamples extends Specification {
     mdq2.first._id must_== md2._id
 
     // Find all documents using a k, v query
-    val mdq3 = MainJDoc.findAll("_id", new ObjectId(md1._id))
+    val mdq3 = MainJDoc.findAll("_id", md1._id)
     mdq3.size must_== 1
 
     MainJDoc.drop
     RefJDoc.drop
   }
 
-  doAfterSpec {
-    if (!debug && isMongoRunning) {
-      // drop the database
-      MongoDB.use {
-        db => db.dropDatabase
-      }
-      MongoDB.use(TstDBa) {
-        db => db.dropDatabase
-      }
+  "Pattern example" in {
+
+    checkMongoIsRunning
+
+    val pdoc1 = PatternDoc(ObjectId.get, Pattern.compile("^Mo", Pattern.CASE_INSENSITIVE))
+    pdoc1.save
+
+    PatternDoc.find(pdoc1._id).map {
+      pdoc =>
+        pdoc._id must_== pdoc1._id
+        pdoc.regx.pattern must_== pdoc1.regx.pattern
+        pdoc.regx.flags must_== pdoc1.regx.flags
+    }
+  }
+
+  "Issue 586 Date test" in {
+
+    checkMongoIsRunning
+
+    def date(s: String): Date = StringDateDoc.formats.dateFormat.parse(s).get
+
+    val newId = ObjectId.get
+    val dtStr = "2004-09-04T18:06Z"
+    val newDt = date(dtStr)
+
+    // create a document manually with a String for the Date field
+    MongoDB.useCollection("stringdatedocs") { coll =>
+      coll.save(new BasicDBObject("_id", newId).append("dt", dtStr))
     }
 
-    // clear the mongo instances
-    MongoDB.close
+    val fromDb = StringDateDoc.find(newId)
+    fromDb.isDefined must_== true
+    fromDb.foreach {
+      sdd =>
+        sdd._id must_== newId
+        sdd.dt must_== newDt
+        sdd.save
+
+        StringDateDoc.find(newId).foreach {
+          sdd2 =>
+            sdd2.dt must_== sdd.dt
+        }
+    }
+
   }
 }
 

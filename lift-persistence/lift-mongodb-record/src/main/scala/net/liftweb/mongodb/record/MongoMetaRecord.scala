@@ -18,7 +18,7 @@ package net.liftweb {
 package mongodb {
 package record {
 
-import java.util.Calendar
+import java.util.{Calendar, UUID}
 import java.util.regex.Pattern
 
 import scala.collection.JavaConversions._
@@ -27,6 +27,7 @@ import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.json.Formats
 import net.liftweb.json.JsonAST.JObject
 import net.liftweb.mongodb._
+import net.liftweb.mongodb.record.field._
 import net.liftweb.record.{MetaRecord, Record}
 import net.liftweb.record.field._
 
@@ -38,8 +39,6 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   extends MetaRecord[BaseRecord] with MongoMeta[BaseRecord] {
 
   self: BaseRecord =>
-
-  //def afterCommit: List[BaseRecord => Unit] = Nil
 
   /**
   * Delete the instance from backing store
@@ -77,6 +76,11 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   def find(oid: ObjectId): Box[BaseRecord] = find(new BasicDBObject("_id", oid))
 
   /**
+  * Find a single row by a UUID
+  */
+  def find(uid: UUID): Box[BaseRecord] = find(new BasicDBObject("_id", uid))
+
+  /**
   * Find a single row by Any
   * This doesn't work as find because we need JObject's to be implicitly converted.
   *
@@ -86,10 +90,11 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /**
   * Find a single row by a String id
   */
-  def find(s: String): Box[BaseRecord] = ObjectId.isValid(s) match {
-    case true => find(new BasicDBObject("_id", new ObjectId(s)))
-    case false => find(new BasicDBObject("_id", s))
-  }
+  def find(s: String): Box[BaseRecord] =
+    if (ObjectId.isValid(s))
+      find(new BasicDBObject("_id", new ObjectId(s)))
+    else
+      find(new BasicDBObject("_id", s))
 
   /**
   * Find a single row by an Int id
@@ -270,15 +275,23 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
         case Full(field) if (field.optional_? && field.valueBox.isEmpty) => // don't add to DBObject
         /* FIXME: Doesn't work
         case Full(field) if field.isInstanceOf[CountryField[Any]] =>
-          dbo.put(f.name, field.asInstanceOf[CountryField[Any]].value)
+          dbo.add(f.name, field.asInstanceOf[CountryField[Any]].value)
         */
+        case Full(field: EnumTypedField[Enumeration]) =>
+          field.asInstanceOf[EnumTypedField[Enumeration]].valueBox foreach {
+            v => dbo.add(f.name, v.id)
+          }
+        case Full(field: EnumNameTypedField[Enumeration]) =>
+          field.asInstanceOf[EnumNameTypedField[Enumeration]].valueBox foreach {
+            v => dbo.add(f.name, v.toString)
+          }
         case Full(field: MongoFieldFlavor[Any]) =>
           dbo.add(f.name, field.asInstanceOf[MongoFieldFlavor[Any]].asDBObject)
         case Full(field) => field.valueBox foreach (_.asInstanceOf[AnyRef] match {
           case null => dbo.add(f.name, null)
           case x if primitive_?(x.getClass) => dbo.add(f.name, x)
+          case x if mongotype_?(x.getClass) => dbo.add(f.name, x)
           case x if datetype_?(x.getClass) => dbo.add(f.name, datetype2dbovalue(x))
-          case x if mongotype_?(x.getClass) => dbo.add(f.name, mongotype2dbovalue(x, formats))
           case o => dbo.add(f.name, o.toString)
         })
         case _ => //dbo.markAsPartialObject // so we know it's only partial
@@ -288,7 +301,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   }
 
   /**
-  * Creates a new record from a then sets the fields with the given DBObject.
+  * Creates a new record, then sets the fields with the given DBObject.
   *
   * @param dbo - the DBObject
   * @return Box[BaseRecord]

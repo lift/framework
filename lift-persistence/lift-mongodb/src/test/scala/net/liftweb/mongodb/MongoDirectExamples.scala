@@ -17,7 +17,7 @@
 package net.liftweb {
 package mongodb {
 
-import java.util.Date
+import java.util.{Date, UUID}
 import java.util.regex.Pattern
 
 import org.specs.Specification
@@ -32,28 +32,7 @@ import com.mongodb.{BasicDBObject, BasicDBObjectBuilder, DBObject}
 
 class MongoDirectExamplesTest extends JUnit4(MongoDirectExamples)
 
-object MongoDirectExamples extends Specification {
-
-  doBeforeSpec {
-    // define the db
-    MongoDB.defineDb(DefaultMongoIdentifier, MongoAddress(MongoHost(), "test_direct"))
-  }
-
-  def isMongoRunning: Boolean = {
-    try {
-      MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } )
-      true
-    }
-    catch {
-      case e => false
-    }
-  }
-
-  def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkipExample
-
-  import com.mongodb.util.JSON // Mongo parser/serializer
-
-  val debug = false
+object MongoDirectExamples extends Specification with MongoTestKit {
 
   def date(s: String) = DefaultFormats.dateFormat.parse(s).get
 
@@ -143,12 +122,6 @@ object MongoDirectExamples extends Specification {
 
       // use a cursor to get all docs
       val cur = coll.find
-
-      // do something with the cursor
-      while(cur.hasNext) {
-        val dbo = cur.next
-        if (debug) println(dbo)
-      }
 
       cur.count must_== 100
 
@@ -302,16 +275,21 @@ object MongoDirectExamples extends Specification {
     })
   }
 
-  doAfterSpec {
-    if (!debug && isMongoRunning) {
-      // drop the database
-      MongoDB.use {
-        db => db.dropDatabase
-      }
-    }
+  "UUID Example" in {
 
-    // clear the mongo instances
-    MongoDB.close
+    checkMongoIsRunning
+
+    MongoDB.useCollection("examples.uuid") { coll =>
+      val uuid = UUID.randomUUID
+      val dbo = new BasicDBObject("_id", uuid).append("name", "dbo")
+      coll.save(dbo)
+
+      val qry = new BasicDBObject("_id", uuid)
+      val dbo2 = coll.findOne(qry)
+
+      dbo2.get("_id") must_== dbo.get("_id")
+      dbo2.get("name") must_== dbo.get("name")
+    }
   }
 }
 

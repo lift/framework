@@ -80,28 +80,7 @@ package mongodocumentspecs {
   }
 }
 
-object MongoDocumentSpecs extends Specification {
-
-  doBeforeSpec {
-    // create a Mongo instance
-    val mongoHost = MongoHost("localhost", 27017)
-    // define the db
-    MongoDB.defineDb(DefaultMongoIdentifier, MongoAddress(mongoHost, "document_specs"))
-  }
-
-  def isMongoRunning: Boolean = {
-    try {
-      MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } )
-      true
-    }
-    catch {
-      case e => false
-    }
-  }
-
-  val debug = false
-
-  def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkipExample
+object MongoDocumentSpecs extends Specification with MongoTestKit {
 
   "MongoDocument" should {
 
@@ -182,18 +161,6 @@ object MongoDocumentSpecs extends Specification {
 
       btdFromDb.get must_== btd
     }
-  }
-
-  doAfterSpec {
-    if (!debug && isMongoRunning) {
-      // drop the database
-      MongoDB.use {
-        db => db.dropDatabase
-      }
-    }
-
-    // clear the mongo instances
-    MongoDB.close
   }
 }
 

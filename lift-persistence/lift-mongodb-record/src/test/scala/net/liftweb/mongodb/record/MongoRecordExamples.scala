@@ -26,12 +26,12 @@ import net.liftweb.json.DefaultFormats
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonAST.JObject
 import net.liftweb.record.field._
+import net.liftweb.util.TimeHelpers._
 
 import org.specs.Specification
 import org.specs.runner.JUnit4
 
 import com.mongodb._
-import com.mongodb.util.JSON
 import org.bson.types.ObjectId
 
 import field._
@@ -46,9 +46,7 @@ package mongotestrecords {
 
     def id = _id.value
 
-    object _id extends StringField(this, 24) {
-      override def defaultValue = UUID.randomUUID.toString
-    }
+    object _id extends UUIDField(this)
 
     //object binaryfield extends BinaryField(this)
     object booleanfield	extends BooleanField(this)
@@ -66,6 +64,8 @@ package mongotestrecords {
     object stringfield extends StringField(this, 32)
     //object textareafield extends TextareaField(this, 200)
     object timezonefield extends TimeZoneField(this)
+    object patternfield extends PatternField(this)
+    object datefield extends DateField(this)
 
     // JsonObjectField (requires a definition for defaultValue)
     object person extends JsonObjectField[TstRecord, Person](this, Person) {
@@ -98,6 +98,10 @@ package mongotestrecords {
     object refdocId extends ObjectIdField(this) {
       def obj = RefDoc.find(value)
     }
+
+    object refuuid extends UUIDField(this) {
+      def obj = RefUuidDoc.find(value)
+    }
   }
   object MainDoc extends MainDoc with MongoMetaRecord[MainDoc]
 
@@ -123,7 +127,23 @@ package mongotestrecords {
   }
   object RefStringDoc extends RefStringDoc with MongoMetaRecord[RefStringDoc]
 
-  class ListDoc private () extends MongoRecord[ListDoc] with MongoId[ListDoc] {
+  // uuid as id
+  class RefUuidDoc extends MongoRecord[RefUuidDoc] {
+    def meta = RefUuidDoc
+
+    def id = _id.value
+
+    object _id extends UUIDField(this)
+
+    def getRef: DBRef =
+      MongoDB.use(meta.mongoIdentifier) ( db =>
+        new DBRef(db, meta.collectionName, _id.value)
+      )
+  }
+  object RefUuidDoc extends RefUuidDoc with MongoMetaRecord[RefUuidDoc]
+
+  //class ListDoc private () extends MongoRecord[ListDoc] with MongoId[ListDoc] {
+  class ListDoc extends MongoRecord[ListDoc] with MongoId[ListDoc] {
     def meta = ListDoc
 
     import scala.collection.JavaConversions._
@@ -135,29 +155,13 @@ package mongotestrecords {
     object doublelist extends MongoListField[ListDoc, Double](this)
     object boollist extends MongoListField[ListDoc, Boolean](this)
     object objidlist extends MongoListField[ListDoc, ObjectId](this)
-    object calendarlist extends MongoListField[ListDoc, Calendar](this)
     object dtlist extends MongoListField[ListDoc, Date](this)
     object patternlist extends MongoListField[ListDoc, Pattern](this)
-    object dbreflist extends MongoListField[ListDoc, DBRef](this)
 
     // specialized list types
-    object jobjlist extends MongoJObjectListField(this) // @Deprecated
-    object datelist	extends MongoDateListField(this)
-    object jsonobjlist extends MongoJsonObjectListField[ListDoc, JsonDoc](this, JsonDoc)
+    object jsonobjlist extends MongoJsonObjectListField(this, JsonDoc)
 
     // these require custom setFromDBObject methods
-    // This is now obsolete. Use MongoJsonObjectListField instead
-    object jsondoclist extends MongoListField[ListDoc, JsonDoc](this) {
-      override def setFromDBObject(dbo: DBObject): Box[List[JsonDoc]] = {
-        implicit val formats = meta.formats
-        val lst: List[JsonDoc] =
-          dbo.keySet.toList.map(k => {
-            JsonDoc.create(JObjectParser.serialize(dbo.get(k.toString)).asInstanceOf[JObject])
-          })
-        Full(set(lst))
-      }
-    }
-
     object maplist extends MongoListField[ListDoc, Map[String, String]](this) {
       override def asDBObject: DBObject = {
         val dbl = new BasicDBList
@@ -191,21 +195,15 @@ package mongotestrecords {
     }
 
   }
-  object ListDoc extends ListDoc with MongoMetaRecord[ListDoc] {
-    override def formats = DefaultFormats.lossless // adds .000 to Dates
-  }
+  object ListDoc extends ListDoc with MongoMetaRecord[ListDoc]
 
   case class JsonDoc(id: String, name: String) extends JsonObject[JsonDoc] {
     def meta = JsonDoc
   }
   object JsonDoc extends JsonObjectMeta[JsonDoc]
 
-  object CustomFormats extends DefaultFormats {
-    import java.text.SimpleDateFormat
-    override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-  }
-
-  class MapDoc private () extends MongoRecord[MapDoc] with MongoId[MapDoc] {
+  //class MapDoc private () extends MongoRecord[MapDoc] with MongoId[MapDoc] {
+  class MapDoc extends MongoRecord[MapDoc] with MongoId[MapDoc] {
     def meta = MapDoc
 
     object stringmap extends MongoMapField[MapDoc, String](this)
@@ -236,34 +234,17 @@ package mongotestrecords {
   }
 }
 
-object MongoRecordExamples extends Specification {
+object MongoRecordExamples extends Specification with MongoTestKit {
   import mongotestrecords._
   import net.liftweb.util.TimeHelpers._
-
-  val debug = false
-
-  doBeforeSpec {
-    // define the db
-    MongoDB.defineDb(DefaultMongoIdentifier, MongoAddress(MongoHost("localhost", 27017), "test_record"))
-  }
-
-  def isMongoRunning: Boolean = {
-    try {
-      MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } )
-      true
-    }
-    catch {
-      case e => false
-    }
-  }
-
-  def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkipExample
 
   "TstRecord example" in {
 
     checkMongoIsRunning
 
     val pwd = "test"
+    val cal = Calendar.getInstance
+    cal.set(2009, 10, 2)
 
     val tr = TstRecord.createRecord
     tr.stringfield("test record string field")
@@ -271,19 +252,20 @@ object MongoRecordExamples extends Specification {
     tr.validate.size must_== 2
     tr.passwordfield.setPassword(pwd)
     tr.emailfield("test@example.com")
-    tr.datetimefield.setFromAny(dateFormatter.parse("2009/01/02"))
+    tr.datetimefield(cal)
+    tr.patternfield(Pattern.compile("^Mo", Pattern.CASE_INSENSITIVE))
     tr.validate.size must_== 0
-    val newId = tr.id
 
     // JsonObjectField
-    val per = Person("joe", 27, Address("Bulevard", "Helsinki"), List(Child("Mary", 5, Some(now)), Child("Mazy", 3, None)))
+    val dob1 = Calendar.getInstance.setYear(2005).setMonth(7).setDay(4)
+    val per = Person("joe", 27, Address("Bulevard", "Helsinki"), List(Child("Mary", 5, Some(dob1.getTime)), Child("Mazy", 3, None)))
     tr.person(per)
 
     // save the record in the db
     tr.save
 
     // retrieve from db
-    def fromDb = TstRecord.find("_id", newId)
+    def fromDb = TstRecord.find("_id", tr.id)
 
     fromDb.isDefined must_== true
 
@@ -300,7 +282,9 @@ object MongoRecordExamples extends Specification {
       t.stringfield.value must_== tr.stringfield.value
       t.timezonefield.value must_== tr.timezonefield.value
       t.datetimefield.value must_== tr.datetimefield.value
-
+      t.patternfield.value.pattern must_== tr.patternfield.value.pattern
+      t.patternfield.value.flags must_== tr.patternfield.value.flags
+      t.datefield.value must_== tr.datefield.value
       t.person.value.name must_== tr.person.value.name
       t.person.value.age must_== tr.person.value.age
       t.person.value.address.street must_== tr.person.value.address.street
@@ -309,8 +293,7 @@ object MongoRecordExamples extends Specification {
       for (i <- List.range(0, t.person.value.children.size-1)) {
         t.person.value.children(i).name must_== tr.person.value.children(i).name
         t.person.value.children(i).age must_== tr.person.value.children(i).age
-        TstRecord.formats.dateFormat.format(t.person.value.children(i).birthdate.get) must_==
-        TstRecord.formats.dateFormat.format(tr.person.value.children(i).birthdate.get)
+        t.person.value.children(i).birthdate must_== tr.person.value.children(i).birthdate
       }
     }
 
@@ -332,6 +315,12 @@ object MongoRecordExamples extends Specification {
 
     refString1.save must_== refString1
     refString2.save must_== refString2
+
+    val refUuid1 = RefUuidDoc.createRecord
+    val refUuid2 = RefUuidDoc.createRecord
+
+    refUuid1.save must_== refUuid1
+    refUuid2.save must_== refUuid2
 
     val md1 = MainDoc.createRecord
     val md2 = MainDoc.createRecord
@@ -358,6 +347,11 @@ object MongoRecordExamples extends Specification {
     md3.refdocId.set(ref2.id)
     md4.refdocId.set(ref2.id)
 
+    md1.refuuid.set(refUuid1.id)
+    md2.refuuid.set(refUuid1.id)
+    md3.refuuid.set(refUuid2.id)
+    md4.refuuid.set(refUuid2.id)
+
     md1.save must_== md1
     md2.save must_== md2
     md3.save must_== md3
@@ -369,10 +363,14 @@ object MongoRecordExamples extends Specification {
 
     // get the docs back from the db
     MainDoc.find(md1.id).foreach(m => {
+      m.name.value must_== md1.name.value
+      m.cnt.value must_== md1.cnt.value
       m.refdoc.value.getId must_== ref1.getRef.getId
       m.refdoc.value.getRef must_== ref1.getRef.getRef
       m.refstringdoc.value.getId must_== refString1.getRef.getId
       m.refstringdoc.value.getRef must_== refString1.getRef.getRef
+      m.refdocId.value must_== md1.refdocId.value
+      m.refuuid.value must_== md1.refuuid.value
     })
 
     // fetch a refdoc
@@ -475,15 +473,8 @@ object MongoRecordExamples extends Specification {
     ld1.boollist.set(List(true,true,false))
     ld1.objidlist.set(List(ObjectId.get, ObjectId.get))
     ld1.dtlist.set(List(now, now))
-    ld1.jobjlist.set(List((("name" -> "jobj1") ~ ("type" -> "jobj")), (("name" -> "jobj2") ~ ("type" -> "jobj"))))
     ld1.jsonobjlist.set(List(jd1, JsonDoc("2", "jsondoc2"), jd1))
-    ld1.jsondoclist.set(List(JsonDoc("3", "jsondoc3"), JsonDoc("4", "jsondoc4")))
-    ld1.datelist.set(List(now, now))
-    /*val cal = Calendar.getInstance()
-    cal.setTime(now)
-    ld1.calendarlist.set(List(cal, cal))*/
     ld1.patternlist.set(List(Pattern.compile("^Mongo"), Pattern.compile("^Mongo2")))
-    //ld1.dbreflist.set(List(ref1.getRef, ref2.getRef))
     ld1.maplist.set(List(Map("name" -> "map1", "type" -> "map"), Map("name" -> "map2", "type" -> "map")))
 
     ld1.save must_== ld1
@@ -500,18 +491,15 @@ object MongoRecordExamples extends Specification {
       l.boollist.value must_== ld1.boollist.value
       l.objidlist.value must_== ld1.objidlist.value
       l.dtlist.value must_== ld1.dtlist.value
-      l.jobjlist.value must_== ld1.jobjlist.value
       l.jsonobjlist.value must_== ld1.jsonobjlist.value
-      l.jsondoclist.value must_== ld1.jsondoclist.value
-      l.datelist.value must_== ld1.datelist.value
-      //l.patternlist.value must_== ld1.patternlist.value
-      l.dbreflist.value.size must_== ld1.dbreflist.value.size
-      for (i <- List.range(0, l.dbreflist.value.size-1)) {
-        l.dbreflist.value(i).getId must_== ld1.dbreflist.value(i).getId
-        l.dbreflist.value(i).getRef must_== ld1.dbreflist.value(i).getRef
+      for (i <- List.range(0, l.patternlist.value.size-1)) {
+        l.patternlist.value(i).pattern must_== ld1.patternlist.value(i).pattern
       }
       l.maplist.value must_== ld1.maplist.value
-      l.jsonobjlist.value(0).id must_== "1"
+      for (i <- List.range(0, l.jsonobjlist.value.size-1)) {
+        l.jsonobjlist.value(i).id must_== ld1.jsonobjlist.value(i).id
+        l.jsonobjlist.value(i).name must_== ld1.jsonobjlist.value(i).name
+      }
     }
 
     if (!debug) {
@@ -577,18 +565,6 @@ object MongoRecordExamples extends Specification {
     sd2.save(true) must_== sd2
 
     if (!debug) StrictDoc.drop
-  }
-
-  doAfterSpec {
-    if (!debug && isMongoRunning) {
-      // drop the database
-      MongoDB.use {
-        db => db.dropDatabase
-      }
-    }
-
-    // clear the mongo instances
-    MongoDB.close
   }
 }
 

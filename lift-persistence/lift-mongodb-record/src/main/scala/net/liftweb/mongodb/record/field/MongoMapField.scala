@@ -19,13 +19,14 @@ package mongodb {
 package record {
 package field {
 
+import scala.xml.NodeSeq
+
 import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
-import _root_.net.liftweb.http.js.JE.Str
-import _root_.net.liftweb.json.JsonAST.{JNothing, JValue}
-import _root_.net.liftweb.json.JsonParser
-import _root_.net.liftweb.record.{Field, MandatoryTypedField, Record}
-import _root_.net.liftweb.util.Log
-import _root_.scala.xml.NodeSeq
+import _root_.net.liftweb.http.js.JE.{JsNull, JsRaw}
+import _root_.net.liftweb.json.JsonAST._
+import _root_.net.liftweb.json.{JsonParser, Printer}
+import _root_.net.liftweb.record._
+import _root_.net.liftweb.util.Helpers.tryo
 
 import com.mongodb._
 
@@ -33,66 +34,74 @@ class MongoMapField[OwnerType <: MongoRecord[OwnerType], MapValueType](rec: Owne
   extends Field[Map[String, MapValueType], OwnerType] with MandatoryTypedField[Map[String, MapValueType]]
   with MongoFieldFlavor[Map[String, MapValueType]] {
 
-  def asJs = Str(toString) // not implemented
+  import Meta.Reflection._
 
-  def asJValue = (JNothing: JValue) // not implemented
-
-  def setFromJValue(jvalue: JValue) = Empty // not implemented
-
-  def asXHtml = <div></div> // not implemented
+  def owner = rec
 
   def defaultValue = Map[String, MapValueType]()
 
   def setFromAny(in: Any): Box[Map[String, MapValueType]] = {
     in match {
-      case map: Map[String, MapValueType] => Full(set(map))
-      case Some(map: Map[String, MapValueType]) => Full(set(map))
-      case Full(map: Map[String, MapValueType]) => Full(set(map))
       case dbo: DBObject => setFromDBObject(dbo)
-      case seq: Seq[Map[String, MapValueType]] if !seq.isEmpty => setFromAny(seq(0))
-      case null => Full(set(null))
+      case map: Map[String, MapValueType] => setBox(Full(map))
+      case Some(map: Map[String, MapValueType]) => setBox(Full(map))
+      case Full(map: Map[String, MapValueType]) => setBox(Full(map))
+      case (map: Map[String, MapValueType]) :: _ => setBox(Full(map))
       case s: String => setFromString(s)
-      case None | Empty | Failure(_, _, _) => Full(set(null))
-      case o => {
-        println("setFromString: "+o.toString)
-        setFromString(o.toString)
-      }
+      case Some(s: String) => setFromString(s)
+      case Full(s: String) => setFromString(s)
+      case null|None|Empty => setBox(defaultValueBox)
+      case f: Failure => setBox(f)
+      case o => setFromString(o.toString)
     }
   }
 
-  // parse String into a JObject
-  def setFromString(in: String): Box[Map[String, MapValueType]] = setFromJValue(JsonParser.parse(in))
+  def setFromJValue(jvalue: JValue) = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case JObject(obj) => setBox(Full(
+      Map() ++ obj.map(jf => (jf.name, jf.value.asInstanceOf[MapValueType]))
+    ))
+    case other => setBox(FieldHelpers.expectedA("JObject", other))
+  }
 
-  def toForm: Box[NodeSeq] = Empty // not implemented
+  def setFromString(in: String): Box[Map[String, MapValueType]] = tryo(JsonParser.parse(in)) match {
+    case Full(jv: JValue) => setFromJValue(jv)
+    case f: Failure => setBox(f)
+    case other => setBox(Failure("Error parsing String into a JValue: "+in))
+  }
 
-  def owner = rec
+  def toForm = Empty // FIXME
+
+  def asJValue = JObject(value.keys.map {
+    k =>
+      JField(k, value(k).asInstanceOf[AnyRef] match {
+        case x if primitive_?(x.getClass) => primitive2jvalue(x)
+        case x if mongotype_?(x.getClass) => mongotype2jvalue(x)(owner.meta.formats)
+        case x if datetype_?(x.getClass) => datetype2jvalue(x)(owner.meta.formats)
+        case _ => JNothing
+      })
+  }.toList)
 
   /*
   * Convert this field's value into a DBObject so it can be stored in Mongo.
-  * Compatible with most object types. Including Pattern, ObjectId, JObject,
-  * and JsonObject case classes
-  * Override this method for custom logic.
   */
   def asDBObject: DBObject = {
     val dbo = new BasicDBObject
-
-    for (k <- value.keys)
+    value.keys.foreach { k =>
       dbo.put(k.toString, value.getOrElse(k, ""))
-
+    }
     dbo
   }
 
   // set this field's value using a DBObject returned from Mongo.
   def setFromDBObject(dbo: DBObject): Box[Map[String, MapValueType]] = {
     import scala.collection.JavaConversions._
-    //import scala.collection.mutable.{Map => MMap}
 
-    var ret = Map[String, MapValueType]()
-
-    for (k <- dbo.keySet)
-      ret += (k.toString -> dbo.get(k).asInstanceOf[MapValueType])
-
-    Full(set(ret))
+    setBox(Full(
+      Map() ++ dbo.keySet.map {
+        k => (k.toString, dbo.get(k).asInstanceOf[MapValueType])
+      }
+    ))
   }
 }
 
