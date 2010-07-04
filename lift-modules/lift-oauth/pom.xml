@@ -27,10 +27,10 @@
   -->
   <parent>
     <groupId>net.liftweb</groupId>
-    <artifactId>lift-modules</artifactId>
+    <artifactId>lift-modules_2.7.7</artifactId>
     <version>2.1-SNAPSHOT</version>
   </parent>
-  <artifactId>lift-oauth</artifactId>
+  <artifactId>lift-oauth_2.7.7</artifactId>
 
   <!--
     ~ More Project Information
@@ -49,7 +49,7 @@
    <dependencies>
      <dependency>
        <groupId>${project.groupId}</groupId>
-       <artifactId>lift-webkit</artifactId>
+       <artifactId>lift-webkit_${scala.version}</artifactId>
        <version>${project.version}</version>
      </dependency>
    </dependencies>
