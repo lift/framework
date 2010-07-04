@@ -67,23 +67,20 @@ trait HTTPProvider {
   /**
    * Executes Lift's Boot and makes necessary initializations
    */
-  protected def bootLift(loader: Box[String]): Unit =
-    {
+  protected def bootLift(loader: Box[String]): Unit = {
       try
       {
         val b: Bootable = loader.map(b => Class.forName(b).newInstance.asInstanceOf[Bootable]) openOr DefaultBootstrap
         preBoot
         b.boot
-        
+      } catch {
+        case e =>
+            logger.error("Failed to Boot! Your application may not run properly", e);
+      } finally {
         postBoot
 
         actualServlet = new LiftServlet(context)
         actualServlet.init
-
-      } catch {
-        case e =>
-            logger.error("Failed to Boot", e);
-            None
       }
     }
 

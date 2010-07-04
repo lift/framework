@@ -758,6 +758,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private def findAttributeSnippet(attrValue: String, rest: MetaData, params: AnyRef*): MetaData = {
     S.doSnippet(attrValue) {
       val (cls, method) = splitColonPair(attrValue, null, "render")
+      
       first(LiftRules.snippetNamesToSearch.vend(cls)) { nameToTry =>
         findSnippetClass(nameToTry) flatMap { clz =>
           instantiateOrRedirect(clz) flatMap { inst =>

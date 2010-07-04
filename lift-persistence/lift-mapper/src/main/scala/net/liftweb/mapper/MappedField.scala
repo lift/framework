@@ -632,7 +632,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
   /**
    * Return the field name and field value, delimited by an '='
    */
-  def asString = displayName + "=" + toString
+  def asString = name + "=" + toString
 
   def dbColumnCount = 1
 

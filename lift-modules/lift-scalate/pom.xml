@@ -27,8 +27,8 @@
   -->
   <parent>
     <groupId>net.liftweb</groupId>
-    <artifactId>lift-modules</artifactId>
-    <version>2.1-scala280-SNAPSHOT</version>
+    <artifactId>lift-modules_2.8.0.RC7</artifactId>
+    <version>2.1-SNAPSHOT</version>
   </parent>
   <artifactId>lift-scalate</artifactId>
 
@@ -49,7 +49,7 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>lift-webkit</artifactId>
+      <artifactId>lift-webkit_${scala.version}</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

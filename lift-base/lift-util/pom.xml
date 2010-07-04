@@ -27,10 +27,10 @@
   -->
   <parent>
     <groupId>net.liftweb</groupId>
-    <artifactId>lift-base</artifactId>
-    <version>2.1-scala280-SNAPSHOT</version>
+    <artifactId>lift-base_2.8.0.RC7</artifactId>
+    <version>2.1-SNAPSHOT</version>
   </parent>
-  <artifactId>lift-util</artifactId>
+  <artifactId>lift-util_2.8.0.RC7</artifactId>
 
   <!--
     ~ More Project Information
@@ -51,12 +51,12 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>lift-actor</artifactId>
+      <artifactId>lift-actor_${scala.version}</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>lift-json</artifactId>
+      <artifactId>lift-json_${scala.version}</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -94,6 +94,10 @@
         <configuration>
           <instructions>
             <Export-Package>net.liftweb.util.*;version="${project.version}"</Export-Package>
+            <Import-Package>
+              !org.joda.time.base,
+              *
+            </Import-Package>
           </instructions>
         </configuration>
       </plugin>
