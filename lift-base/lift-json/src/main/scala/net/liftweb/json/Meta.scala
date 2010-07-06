@@ -172,10 +172,14 @@ private[json] object Meta {
         def clean(name: String) = name match {
           case Name(text, junk) => text
         }
-        val names = paranamer.lookupParameterNames(c).map(clean)
-        val types = c.getParameterTypes
-        val ptypes = c.getGenericParameterTypes
-        zip3(names.toList, types.toList, ptypes.toList)
+        try {
+          val names = paranamer.lookupParameterNames(c).map(clean)
+          val types = c.getParameterTypes
+          val ptypes = c.getGenericParameterTypes
+          zip3(names.toList, types.toList, ptypes.toList)
+        } catch {
+          case e: ParameterNamesNotFoundException => Nil
+        }
       }
 
       cachedConstructorArgs.memoize(constructor, argsInfo(_))
