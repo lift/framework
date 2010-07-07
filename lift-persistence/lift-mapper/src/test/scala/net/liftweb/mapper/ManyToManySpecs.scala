@@ -20,7 +20,6 @@ package mapper {
 import org.specs._
 import _root_.org.specs.runner.{JUnit3, ConsoleRunner}
 
-
 class ManyToManySpecsAsTest extends JUnit3(ManyToManySpecs)
 object ManyToManySpecsRunner extends ConsoleRunner(ManyToManySpecs)
 

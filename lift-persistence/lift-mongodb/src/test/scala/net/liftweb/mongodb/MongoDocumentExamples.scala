@@ -1,15 +1,18 @@
 /*
-* Copyright 2010 WorldWide Conferencing, LLC
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2010 WorldWide Conferencing, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package net.liftweb {
 package mongodb {
@@ -49,7 +52,7 @@ package mongotestdocs {
   object SimplePerson extends MongoDocumentMeta[SimplePerson] {
     override val collectionName = "simplepersons"
     override def mongoIdentifier = DefaultMongoIdentifier
-    
+
     // index name
     ensureIndex(("name" -> 1))
   }
@@ -92,7 +95,7 @@ package mongotestdocs {
     // create an index on "i", descending with custom name
     ensureIndex(("i" -> -1), ("name" -> "i_ix1"))
   }
-  
+
   case class SessCollection(_id: String, name: String, dbtype: String, count: Int)
     extends MongoDocument[SessCollection] {
 
@@ -151,7 +154,7 @@ object MongoDocumentExamples extends Specification {
     MongoDB.defineDb(TstDBa, MongoAddress(mongoHost, "test_document_a"))
     //MongoDB.defineDb(TstDBb, MongoAddress(mongoHost, "test_document_b"))
   }
-  
+
   def isMongoRunning: Boolean = {
     try {
       MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } )
@@ -162,7 +165,7 @@ object MongoDocumentExamples extends Specification {
       case e => false
     }
   }
-  
+
   def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkipExample
 
   import com.mongodb.util.JSON // Mongo parser/serializer
@@ -216,7 +219,7 @@ object MongoDocumentExamples extends Specification {
 
       pFromDb.isEmpty must_== true
       pFromDbViaJson.isEmpty must_== true
-      
+
       SimplePerson.drop
     }
   }
@@ -269,7 +272,7 @@ object MongoDocumentExamples extends Specification {
       pFromDb.isEmpty must_== true
       p2FromDb.isEmpty must_== true
       p3FromDb.isEmpty must_== true
-      
+
       SimplePerson.drop
     }
   }
@@ -302,7 +305,7 @@ object MongoDocumentExamples extends Specification {
       p.delete
 
       pFromDb.isEmpty must_== true
-      
+
       Person.drop
     }
   }
@@ -432,7 +435,7 @@ object MongoDocumentExamples extends Specification {
     // remove some docs by a query
     IDoc.delete(("i" -> ("$gt" -> 50)))
     IDoc.findAll.length must_== 50
-    
+
     IDoc.drop
   }
 
@@ -489,7 +492,7 @@ object MongoDocumentExamples extends Specification {
         // delete them
         SessCollection.delete(qry)
         SessCollection.findAll.size must_== 0
-        
+
         SessCollection.drop
       }
 
@@ -573,7 +576,7 @@ object MongoDocumentExamples extends Specification {
     // Find all documents using a k, v query
     val mdq3 = MainJDoc.findAll("_id", new ObjectId(md1._id))
     mdq3.size must_== 1
-    
+
     MainJDoc.drop
     RefJDoc.drop
   }

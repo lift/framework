@@ -1,15 +1,18 @@
 /*
-* Copyright 2010 WorldWide Conferencing, LLC
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2010 WorldWide Conferencing, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package net.liftweb {
 package mongodb {
@@ -31,11 +34,11 @@ class MongoDirectExamplesTest extends JUnit4(MongoDirectExamples)
 
 object MongoDirectExamples extends Specification {
 
-  doBeforeSpec { 
+  doBeforeSpec {
     // define the db
     MongoDB.defineDb(DefaultMongoIdentifier, MongoAddress(MongoHost(), "test_direct"))
   }
-  
+
   def isMongoRunning: Boolean = {
     try {
       MongoDB.use(DefaultMongoIdentifier) ( db => { db.getLastError } )
@@ -276,14 +279,14 @@ object MongoDirectExamples extends Specification {
       coll.update(new BasicDBObject("name", "None"), o2, false, false)
       db.getLastError.get("updatedExisting") must_== false
       db.getLastError.get("n") must_== 0
-      
+
       // regex query example
       val key = "name"
       val regex = "^Mongo"
       val cur = coll.find(
           BasicDBObjectBuilder.start.add(key, Pattern.compile(regex)).get)
       cur.count must_== 2
-      
+
       // use regex and another dbobject
       val cur2 = coll.find(
           BasicDBObjectBuilder.start.add(key, Pattern.compile(regex)).add("count", 1).get)

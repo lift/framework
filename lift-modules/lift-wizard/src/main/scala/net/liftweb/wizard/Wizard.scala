@@ -74,9 +74,9 @@ trait Wizard extends DispatchSnippet with Factory with ScreenWizardRendered {
 
 
   def noticeTypeToAttr(screen: AbstractScreen): Box[NoticeType.Value => MetaData] = {
-    screen.inject[NoticeType.Value => MetaData] or 
-    inject[NoticeType.Value => MetaData] or 
-    WizardRules.inject[NoticeType.Value => MetaData] or 
+    screen.inject[NoticeType.Value => MetaData] or
+    inject[NoticeType.Value => MetaData] or
+    WizardRules.inject[NoticeType.Value => MetaData] or
     screen.noticeTypeToAttr(screen)
   }
 
@@ -185,13 +185,13 @@ trait Wizard extends DispatchSnippet with Factory with ScreenWizardRendered {
    * Given the current screen, what's the next screen?
    */
   def calcScreenAfter(which: Screen): Box[Screen] =
-    screens.dropWhile(_ ne which).drop(1).firstOption
+    screens.dropWhile(_ ne which).drop(1).headOption
 
 
   /**
    * What's the first screen in this wizard
    */
-  def calcFirstScreen: Box[Screen] = screens.firstOption
+  def calcFirstScreen: Box[Screen] = screens.headOption
 
   def nextButton: Elem = <button>{S.??("Next")}</button>
 

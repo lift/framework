@@ -224,8 +224,8 @@ object JsonAST {
       def find(json: JValue): Option[JValue] = {
         if (p(json)) return Some(json)
         json match {
-          case JObject(l) => l.flatMap(find _).firstOption
-          case JArray(l) => l.flatMap(find _).firstOption
+          case JObject(l) => l.flatMap(find _).headOption
+          case JArray(l) => l.flatMap(find _).headOption
           case JField(_, value) => find(value)
           case _ => None
         }
@@ -284,7 +284,7 @@ object JsonAST {
      * JObject(JField("name", JString("joe")) :: Nil).extract[Foo] == Person("joe")
      * </pre>
      */
-    def extract[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): A = 
+    def extract[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): A =
       Extraction.extract(this)(formats, mf)
 
     /** Extract a case class from a JSON.
@@ -294,7 +294,7 @@ object JsonAST {
      * JObject(JField("name", JString("joe")) :: Nil).extractOpt[Foo] == Some(Person("joe"))
      * </pre>
      */
-    def extractOpt[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): Option[A] = 
+    def extractOpt[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): Option[A] =
       Extraction.extractOpt(this)(formats, mf)
   }
 
@@ -330,7 +330,7 @@ object JsonAST {
   case class JObject(obj: List[JField]) extends JValue {
     type Values = Map[String, Any]
     def values = Map() ++ obj.map(_.values : (String, Any))
-    
+
     override def equals(that: Any): Boolean = that match {
       case o: JObject => Set(obj.toArray: _*) == Set(o.obj.toArray: _*)
       case _ => false
@@ -340,7 +340,7 @@ object JsonAST {
     type Values = List[Any]
     def values = arr.map(_.values)
     override def apply(i: Int): JValue = arr(i)
-    
+
     override def equals(that: Any): Boolean = that match {
       case a: JArray => Set(arr.toArray: _*) == Set(a.arr.toArray: _*)
       case _ => false
@@ -504,7 +504,7 @@ trait Printer {
       nodes = nodes.pop
       cur match {
         case DocText(s)      => out.write(s)
-        case DocCons(d1, d2) => 
+        case DocCons(d1, d2) =>
           if (!visited.containsKey(cur)) {
             visited.put(cur, ())
             nodes = nodes.push(cur)

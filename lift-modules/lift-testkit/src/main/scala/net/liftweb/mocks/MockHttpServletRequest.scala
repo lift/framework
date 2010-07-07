@@ -36,7 +36,6 @@ import _root_.java.util.{HashMap => JHash}
 import _root_.javax.servlet._
 import _root_.javax.servlet.http._
 import _root_.net.liftweb.util.Helpers
-import scala.collection.JavaConversions._
 
 /**
  * A Mock ServletRequest. Change it's state to to create the request you are
@@ -45,7 +44,7 @@ import scala.collection.JavaConversions._
  * @author Steve Jenson (stevej@pobox.com)
  */
 class MockHttpServletRequest extends HttpServletRequest {
-  private implicit def itToEnum[T <: Object](it: Iterator[T]): JEnum[Object] = 
+  private implicit def itToEnum[T <: Object](it: Iterator[T]): JEnum[Object] =
     new JEnum[Object] {
       def hasMoreElements() = it.hasNext
       def nextElement(): Object = it.next

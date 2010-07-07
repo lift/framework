@@ -78,7 +78,6 @@ trait LoggingBackend {
  */
 trait LogbackLoggingBackend extends LoggingBackend {
   import ch.qos.logback.classic.{Level, LoggerContext};
-  // import scala.collection.jcl.Conversions._
   import scala.collection.JavaConversions._
 
   type LoggerType = ch.qos.logback.classic.Logger

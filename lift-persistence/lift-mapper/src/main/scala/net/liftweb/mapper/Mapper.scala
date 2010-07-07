@@ -49,7 +49,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
   }
 
   def dbName:String = getSingleton.dbName
-  
+
   implicit def thisToMappee(in: Mapper[A]): A = this.asInstanceOf[A]
 
   def runSafe[T](f : => T) : T = {
