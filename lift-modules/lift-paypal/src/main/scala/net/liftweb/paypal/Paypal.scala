@@ -91,7 +91,7 @@ object PaypalTransactionStatus extends Enumeration {
 
   def find(name: String): Box[Value] = {
     val n = name.trim.toLowerCase
-    this.elements.filter(v => v.toString.toLowerCase == n).toList.firstOption
+    this.elements.filter(v => v.toString.toLowerCase == n).toList.headOption
   }
 }
 
@@ -298,7 +298,7 @@ trait PaypalResponse extends PaypalUtilities with HasParams {
   if (this.isVerified) Full(new PayPalInfo(this))
   else Empty
 
-  def rawHead: Box[String] = Box(response.firstOption)
+  def rawHead: Box[String] = Box(response.headOption)
 
   private def split(in: String): Box[(String, String)] = {
     val pos = in.indexOf("=")

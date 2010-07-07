@@ -172,7 +172,7 @@ private case class LiftHttpContext(context: HttpContext) extends HttpContext wit
           debug("""Lift-powerer bundle "%s" answered for resource "%s".""".format(liftBundle._1.getSymbolicName, s))
           Some(res)
       }
-    } firstOption match {
+    } headOption match {
       case None      => null
       case Some(res) => res
     }
