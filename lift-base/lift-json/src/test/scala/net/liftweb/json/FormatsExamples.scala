@@ -28,25 +28,23 @@ object FormatsExamples extends Specification with TypeHintExamples {
   import JsonParser._
 
   implicit val formats = ShortTypeHintExamples.formats + FullTypeHintExamples.formats.typeHints
-  
+
   val hintsForFish   = ShortTypeHintExamples.formats.typeHints.hintFor(classOf[Fish])
   val hintsForDog    = ShortTypeHintExamples.formats.typeHints.hintFor(classOf[Dog])
   val hintsForAnimal = FullTypeHintExamples.formats.typeHints.hintFor(classOf[Animal])
-  
+
   "hintsFor across composite formats" in {
     formats.typeHints.hintFor(classOf[Fish])   mustEqual (hintsForFish)
     formats.typeHints.hintFor(classOf[Dog])    mustEqual (hintsForDog)
     formats.typeHints.hintFor(classOf[Animal]) mustEqual (hintsForAnimal)
   }
-  
+
   "classFor across composite formats" in {
     formats.typeHints.classFor(hintsForFish)   mustEqual (ShortTypeHintExamples.formats.typeHints.classFor(hintsForFish))
     formats.typeHints.classFor(hintsForDog)    mustEqual (ShortTypeHintExamples.formats.typeHints.classFor(hintsForDog))
     formats.typeHints.classFor(hintsForAnimal) mustEqual (FullTypeHintExamples.formats.typeHints.classFor(hintsForAnimal))
   }
 }
-
-
 
 }
 }

@@ -298,7 +298,7 @@ trait PaypalResponse extends PaypalUtilities with HasParams {
   if (this.isVerified) Full(new PayPalInfo(this))
   else Empty
 
-  def rawHead: Box[String] = Box(response.firstOption)
+  def rawHead: Box[String] = Box(response.headOption)
 
   private def split(in: String): Box[(String, String)] = {
     val pos = in.indexOf("=")

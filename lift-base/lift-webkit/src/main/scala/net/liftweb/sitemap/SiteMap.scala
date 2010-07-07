@@ -48,11 +48,11 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
     else locs = locs + (name -> in.asInstanceOf[Loc[_]])
 
     if (SiteMap.enforceUniqueLinks &&
-	locPath.contains(in.link.uriList)) 
+	locPath.contains(in.link.uriList))
       throw new SiteMapException("Location "+name+
-				 " defines a duplicate link "+
-                                 in.link.uriList)
-    
+              " defines a duplicate link "+
+              in.link.uriList)
+
     locPath += in.link.uriList
   }
 
@@ -70,12 +70,12 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
   * Find all the menu items for a given group.
   * This method returns a linear sequence of menu items
   */
-  def locForGroup(group: String): Seq[Loc[_]] = 
+  def locForGroup(group: String): Seq[Loc[_]] =
     kids.flatMap(_.locForGroup(group)).filter(
       _.testAccess match {
         case Left(true) => true case _ => false
       })
-    
+
   /**
    * Find all the menu items for a given group.
    * This method returns menu tree

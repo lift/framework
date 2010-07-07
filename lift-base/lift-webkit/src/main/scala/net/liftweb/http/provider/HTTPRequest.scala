@@ -170,7 +170,6 @@ trait HTTPRequest {
   /**
    * @return - Some[Any] if this is a resumed request, return the state
    *           associated with it.
-   *           
    */
   def resumeInfo : Option[Any]
 

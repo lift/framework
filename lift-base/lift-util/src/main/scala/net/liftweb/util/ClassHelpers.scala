@@ -154,7 +154,7 @@ trait ClassHelpers { self: ControlHelpers =>
   @deprecated def camelCase(name : String): String = StringHelpers.camelify(name)
   @deprecated def camelCaseMethod(name: String): String = StringHelpers.camelifyMethod(name)
   @deprecated def unCamelCase(name : String) = StringHelpers.snakify(name)
-  
+
   /**
    * @return true if the method is public and has no parameters
    */

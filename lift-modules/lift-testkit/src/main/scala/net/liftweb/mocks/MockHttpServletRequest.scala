@@ -45,7 +45,7 @@ import scala.collection.JavaConversions._
  * @author Steve Jenson (stevej@pobox.com)
  */
 class MockHttpServletRequest extends HttpServletRequest {
-  private implicit def itToEnum[T <: Object](it: Iterator[T]): JEnum[Object] = 
+  private implicit def itToEnum[T <: Object](it: Iterator[T]): JEnum[Object] =
     new JEnum[Object] {
       def hasMoreElements() = it.hasNext
       def nextElement(): Object = it.next

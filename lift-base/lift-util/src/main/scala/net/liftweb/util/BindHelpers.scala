@@ -579,37 +579,37 @@ trait BindHelpers {
         case Null => Null
         case upa: UnprefixedAttribute => new UnprefixedAttribute(upa.key, upa.value, attrBind(upa.next))
         case pa: PrefixedAttribute if pa.pre == namespace => map.get(pa.key) match {
-            case None => paramFailureXform.map(_(pa)) openOr new PrefixedAttribute(pa.pre, pa.key, Text("FIX"+"ME find to bind attribute"), attrBind(pa.next))
-            case Some(abp: BindWithAttr) => abp.calcValue(pa.value).map(v => new UnprefixedAttribute(abp.newAttr, v, attrBind(pa.next))) getOrElse attrBind(pa.next)
-            case Some(bp: BindParam) => bp.calcValue(pa.value).map(v => new PrefixedAttribute(pa.pre, pa.key, v, attrBind(pa.next))) getOrElse attrBind(pa.next)
-          }
+          case None => paramFailureXform.map(_(pa)) openOr new PrefixedAttribute(pa.pre, pa.key, Text("FIX"+"ME find to bind attribute"), attrBind(pa.next))
+          case Some(abp: BindWithAttr) => abp.calcValue(pa.value).map(v => new UnprefixedAttribute(abp.newAttr, v, attrBind(pa.next))) getOrElse attrBind(pa.next)
+          case Some(bp: BindParam) => bp.calcValue(pa.value).map(v => new PrefixedAttribute(pa.pre, pa.key, v, attrBind(pa.next))) getOrElse attrBind(pa.next)
+        }
         case pa: PrefixedAttribute => new PrefixedAttribute(pa.pre, pa.key, pa.value, attrBind(pa.next))
       }
 
       def in_bind(xml: NodeSeq): NodeSeq = {
         xml.flatMap {
-          case s : Elem if s.prefix == namespace => BindHelpers._currentNode.doWith(s) {
-              map.get(s.label) match {
-                case None =>
-                  nodeFailureXform.map(_(s)) openOr s
+          case s: Elem if s.prefix == namespace => BindHelpers._currentNode.doWith(s) {
+            map.get(s.label) match {
+              case None =>
+                nodeFailureXform.map(_(s)) openOr s
 
-                case Some(ns) =>
-                  //val toRet = ns.calcValue(s.child)
-                  //mergeBindAttrs(toRet, namespace, s.attributes)
-                  ns.calcValue(s.child) getOrElse NodeSeq.Empty
-              }
+              case Some(ns) =>
+                //val toRet = ns.calcValue(s.child)
+                //mergeBindAttrs(toRet, namespace, s.attributes)
+                ns.calcValue(s.child) getOrElse NodeSeq.Empty
             }
-          case s : Elem if bindByNameType(s.label) && (attrStr(s, "name").startsWith(namespace+":")) &&
-            bindByNameTag(namespace, s) != "" => BindHelpers._currentNode.doWith(s) {
-              val tag = bindByNameTag(namespace, s)
-              map.get(tag) match {
-                case None => nodeFailureXform.map(_(s)) openOr s
-                case Some(bindParam) => bindByNameMixIn(bindParam, s)
-              }
+          }
+          case s: Elem if bindByNameType(s.label) && (attrStr(s, "name").startsWith(namespace+":")) &&
+                          bindByNameTag(namespace, s) != "" => BindHelpers._currentNode.doWith(s) {
+            val tag = bindByNameTag(namespace, s)
+            map.get(tag) match {
+              case None => nodeFailureXform.map(_(s)) openOr s
+              case Some(bindParam) => bindByNameMixIn(bindParam, s)
             }
+          }
           case Group(nodes) => Group(in_bind(nodes))
-          case s : Elem => Elem(s.prefix, s.label, attrBind(s.attributes), if (preserveScope) s.scope else TopScope,
-                                in_bind(s.child) : _*)
+          case s: Elem => Elem(s.prefix, s.label, attrBind(s.attributes), if (preserveScope) s.scope else TopScope,
+                               in_bind(s.child): _*)
           case n => n
         }
       }
@@ -619,10 +619,10 @@ trait BindHelpers {
   }
 
   private def setElemId(in: NodeSeq, attr: String, value: Seq[Node]): NodeSeq =
-  in.map {
-    case e: Elem => e % new UnprefixedAttribute(attr, value, Null)
-    case v => v
-  }
+    in.map {
+      case e: Elem => e % new UnprefixedAttribute(attr, value, Null)
+      case v => v
+    }
 
   /*
    private def mergeBindAttrs(in: NodeSeq, nameSpace: String, attrs: MetaData): NodeSeq = attrs match {
@@ -653,38 +653,38 @@ trait BindHelpers {
 
     xml.flatMap {
       node => node match {
-        case s : Elem if (isBind(s)) => {
-            node.attributes.get("name") match {
-              case None => {
+        case s: Elem if (isBind(s)) => {
+          node.attributes.get("name") match {
+            case None => {
+              if (Props.devMode) {
+                logger.warn("<lift:bind> tag encountered without name attribute!")
+              }
+              bind(vals, node.child)
+            }
+            case Some(ns) => {
+              def warnOnUnused() =
+                logger.warn("Unused binding values for <lift:bind>: " +
+                        vals.keySet.filter(key => key != ns.text).mkString(", "))
+              vals.get(ns.text) match {
+                case None => {
                   if (Props.devMode) {
-                    logger.warn("<lift:bind> tag encountered without name attribute!")
+                    logger.warn("No binding values match the <lift:bind> name attribute: " + ns.text)
+                    warnOnUnused()
                   }
                   bind(vals, node.child)
                 }
-              case Some(ns) => {
-                  def warnOnUnused() =
-                  logger.warn("Unused binding values for <lift:bind>: " +
-                           vals.keySet.filter(key => key != ns.text).mkString(", "))
-                  vals.get(ns.text) match {
-                    case None => {
-                        if (Props.devMode) {
-                          logger.warn("No binding values match the <lift:bind> name attribute: " + ns.text)
-                          warnOnUnused()
-                        }
-                        bind(vals, node.child)
-                      }
-                    case Some(nodes) => {
-                        if (Props.devMode && vals.size > 1) {
-                          warnOnUnused()
-                        }
-                        nodes
-                      }
+                case Some(nodes) => {
+                  if (Props.devMode && vals.size > 1) {
+                    warnOnUnused()
                   }
+                  nodes
                 }
+              }
             }
           }
+        }
         case Group(nodes) => Group(bind(vals, nodes))
-        case s : Elem => Elem(node.prefix, node.label, node.attributes,node.scope, bind(vals, node.child) : _*)
+        case s: Elem => Elem(node.prefix, node.label, node.attributes, node.scope, bind(vals, node.child): _*)
         case n => node
       }
     }
@@ -695,7 +695,7 @@ trait BindHelpers {
    * @return the NodeSeq that results from the specified transforms
    */
   def bindlist(listvals: List[Map[String, NodeSeq]], xml: NodeSeq): Box[NodeSeq] = {
-    def build (listvals: List[Map[String, NodeSeq]], ret: NodeSeq): NodeSeq = listvals match {
+    def build(listvals: List[Map[String, NodeSeq]], ret: NodeSeq): NodeSeq = listvals match {
       case Nil => ret
       case vals :: rest => build(rest, ret ++ bind(vals, xml))
     }
@@ -711,25 +711,25 @@ trait BindHelpers {
    * @deprecated use the bind function instead
    */
   @deprecated
-  def processBind(around: NodeSeq, atWhat: Map[String, NodeSeq]) : NodeSeq = {
+  def processBind(around: NodeSeq, atWhat: Map[String, NodeSeq]): NodeSeq = {
 
     /** Find element matched predicate f(x).isDefined, and return f(x) if found or None otherwise. */
     def findMap[A, B](s: Iterable[A])(f: A => Option[B]): Option[B] =
-    s.projection.map(f).find(_.isDefined).getOrElse(None)
+      s.projection.map(f).find(_.isDefined).getOrElse(None)
 
     around.flatMap {
       v =>
-      v match {
-        case Group(nodes) => Group(processBind(nodes, atWhat))
-        case Elem("lift", "bind", attr @ _, _, kids @ _*) =>
-          findMap(atWhat) {
-            case (at, what) if attr("name").text == at => Some(what)
-            case _ => None
-          }.getOrElse(processBind(v.asInstanceOf[Elem].child, atWhat))
+        v match {
+          case Group(nodes) => Group(processBind(nodes, atWhat))
+          case Elem("lift", "bind", attr @ _, _, kids @ _*) =>
+            findMap(atWhat) {
+              case (at, what) if attr("name").text == at => Some(what)
+              case _ => None
+            }.getOrElse(processBind(v.asInstanceOf[Elem].child, atWhat))
 
-        case e: Elem => {Elem(e.prefix, e.label, e.attributes, e.scope, processBind(e.child, atWhat): _*)}
-        case _ => {v}
-      }
+          case e: Elem => {Elem(e.prefix, e.label, e.attributes, e.scope, processBind(e.child, atWhat): _*)}
+          case _ => {v}
+        }
 
     }
   }
@@ -769,7 +769,7 @@ trait BindHelpers {
 
   // allow bind by name eg - <input name="namespace:tag"/>
   private def bindByNameTag(namespace: String, elem: Elem) =
-  attrStr(elem, "name").replaceAll(namespace+":","")
+    attrStr(elem, "name").replaceAll(namespace+":", "")
 
 
   // mixin what comes from xhtml with what is programatically added
@@ -777,7 +777,7 @@ trait BindHelpers {
     def mix(nodeSeq: NodeSeq): NodeSeq = nodeSeq match {
       case elem: Elem =>
         // mix in undefined attributes
-        val attributes = s.attributes.filter(attr => !elem.attribute(attr.key).isDefined )
+        val attributes = s.attributes.filter(attr => !elem.attribute(attr.key).isDefined)
         elem % attributes
       case Seq(x1: Elem, x2: Elem) if attrStr(x2, "type") == "checkbox" =>
         x1 ++ mix(x2)

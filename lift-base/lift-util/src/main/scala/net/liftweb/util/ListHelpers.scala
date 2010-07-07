@@ -97,7 +97,7 @@ trait ListHelpers {
    * Convert a java.util.Enumeration to a List[String] using the toString method on each element
    */
   def enumToStringList[C](enum: _root_.java.util.Enumeration[C]): List[String] =
-  if (enum.hasMoreElements) enum.nextElement.toString :: enumToStringList(enum) else Nil
+    if (enum.hasMoreElements) enum.nextElement.toString :: enumToStringList(enum) else Nil
 
   /**
    * Return the first element of a List or a default value if the list is empty
@@ -134,7 +134,7 @@ trait ListHelpers {
   def permuteList[T](in: Seq[T]): List[List[T]] = (in.toList: @unchecked) match {
     case Nil => Nil
     case x :: Nil => List(List(x))
-    case xs => rotateList(xs).flatMap(x => (x: @unchecked) match{case x :: xs => permuteList(xs).map(x :: _) case _ => Nil})
+    case xs => rotateList(xs).flatMap(x => (x: @unchecked) match {case x :: xs => permuteList(xs).map(x :: _) case _ => Nil})
   }
 
   /**
@@ -190,9 +190,9 @@ trait ListHelpers {
     /** return a new list where the element at position pos is replaced with another element */
     def replace(pos: Int, withWhat: T): List[T] = {
       def repl(pos: Int, withWhat: T, rest: List[T]): List[T] = rest match {
-          case Nil => Nil
-          case x :: xs if pos <= 0 => withWhat :: xs
-          case x :: xs => x :: repl(pos - 1, withWhat, xs)
+        case Nil => Nil
+        case x :: xs if pos <= 0 => withWhat :: xs
+        case x :: xs => x :: repl(pos - 1, withWhat, xs)
       }
       repl(pos, withWhat, what)
     }
