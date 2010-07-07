@@ -72,7 +72,7 @@ trait BoxGen {
     exception <- value(Full(new Exception("")))
     chainLen <- choose(1, 5)
     chain <- frequency((1, listOfN(chainLen, genFailureBox)), (3, value(Nil)))
-  } yield Failure(msg.mkString, exception, Box(chain.firstOption))
+  } yield Failure(msg.mkString, exception, Box(chain.headOption))
 
 }
 

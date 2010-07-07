@@ -46,7 +46,7 @@ trait PaginatedModelSnippet[T <: Mapper[T]] extends ModelSnippet[T] {
 class MapperPaginator[T <: Mapper[T]](val meta: MetaMapper[T]) extends Paginator[T] {
   var constantParams: Seq[QueryParam[T]] = Nil
   def count = meta.count(constantParams: _*)
-  def page = meta.findAll(constantParams ++ Seq(MaxRows(itemsPerPage), StartAt(first)): _*)
+  def page = meta.findAll(constantParams ++ Seq[QueryParam[T]](MaxRows(itemsPerPage), StartAt(first)): _*)
 }
 
 class MapperPaginatorSnippet[T <: Mapper[T]](meta: MetaMapper[T])
@@ -60,7 +60,7 @@ class SortedMapperPaginator[T <: Mapper[T]](meta: MetaMapper[T],
     val headers = _headers.toList
     sort = (headers.findIndexOf{case (_,`initialSort`)=>true; case _ => false}, true)
     
-    override def page = meta.findAll(constantParams ++ Seq(mapperSort, MaxRows(itemsPerPage), StartAt(first)): _*)
+    override def page = meta.findAll(constantParams ++ Seq[QueryParam[T]](mapperSort, MaxRows(itemsPerPage), StartAt(first)): _*)
     private def mapperSort = sort match {
       case (fieldIndex, ascending) =>
         OrderBy(

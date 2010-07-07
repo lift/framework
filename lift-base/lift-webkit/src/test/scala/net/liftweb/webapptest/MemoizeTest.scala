@@ -40,7 +40,7 @@ object SessionInfo {
 object MemoizeSpec extends Specification {
   import SessionInfo._
 
-  
+
   "Memoize" should {
     "Session memo should default to empty" >> {
       S.initIfUninitted(session1) {

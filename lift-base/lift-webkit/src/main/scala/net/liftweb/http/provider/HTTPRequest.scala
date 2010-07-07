@@ -50,7 +50,7 @@ trait HTTPRequest {
    * @return - the header value. Empty if there is no such header
    */
   def header(name: String): Box[String] =
-    headers.filter(_.name.equalsIgnoreCase(name)).firstOption.flatMap(_.values.firstOption)
+    headers.filter(_.name.equalsIgnoreCase(name)).headOption.flatMap(_.values.headOption)
 
   /**
    * Return the header values by the given name.
@@ -170,7 +170,6 @@ trait HTTPRequest {
   /**
    * @return - Some[Any] if this is a resumed request, return the state
    *           associated with it.
-   *           
    */
   def resumeInfo : Option[Any]
 

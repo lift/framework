@@ -190,12 +190,12 @@ trait OpenIDConsumer[UserType] extends Logger {
   val manager = new ConsumerManager
 
   var onComplete: Box[(Box[Identifier], Box[VerificationResult], Box[Exception]) => LiftResponse] = Empty
-  
+
   /**
    * Set this to a function that can modify (eg add extensions) to the auth request before send
    */
   var beforeAuth: Box[(DiscoveryInformation,AuthRequest) => Unit] = Empty
-  
+
   // --- placing the authentication request ---
   def authRequest(userSuppliedString: String, targetUrl: String): LiftResponse =
   {
@@ -218,7 +218,7 @@ trait OpenIDConsumer[UserType] extends Logger {
     val authReq = manager.authenticate(discovered, returnToUrl)
 
     beforeAuth foreach {f => f(discovered, authReq)}
-    
+
     if (! discovered.isVersion2() )
     {
       // Option 1: GET HTTP-redirect to the OpenID Provider endpoint
@@ -258,7 +258,7 @@ trait OpenIDConsumer[UserType] extends Logger {
     // extract the parameters from the authentication response
     // (which comes in as a HTTP request from the OpenID provider)
     val paramMap = new java.util.HashMap[String, String]
-    httpReq.params.foreach(e => paramMap.put(e.name, e.values.firstOption getOrElse null))
+    httpReq.params.foreach(e => paramMap.put(e.name, e.values.headOption getOrElse null))
     val response =	new ParameterList(paramMap);
 
     // retrieve the previously stored discovery information

@@ -327,7 +327,7 @@ object MapperSpecs extends Specification {
         "work with Mixed case update and delete" in {
           cleanup()
 
-          
+
           val elwood = Mixer.find(By(Mixer.name, "Elwood")).open_!
 
 
@@ -346,7 +346,7 @@ object MapperSpecs extends Specification {
           Mixer.find(By(Mixer.weight, 966)).isDefined must_== false
           Mixer.find(By(Mixer.name, "FruitBar")).isDefined must_== false
           Mixer.find(By(Mixer.name, "Elwood")).isDefined must_== false
-         
+
         }
 
         "work with Mixed case update and delete for Dog2" in {
@@ -363,7 +363,7 @@ object MapperSpecs extends Specification {
           fb.name.is must_== "FruitBar"
 
           fb.actualAge.is must_== 966
-         
+
           fb.delete_!
 
           Dog2.find(By(Dog2.actualAge, 966)).isDefined must_== false
