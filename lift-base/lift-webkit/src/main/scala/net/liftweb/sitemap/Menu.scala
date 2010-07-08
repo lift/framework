@@ -32,6 +32,31 @@ trait ConvertableToMenu {
 }
 
 /**
+ * A common trait that defines a portion of a Menu's Link URI path. This allows
+ * us to constrain how people construct paths using the DSL by restricting it to
+ * Strings or to the <pre>**</pre> object.
+ */
+sealed trait MenuPath {
+  def pathItem: String
+}
+
+/**
+ * This object may be appended to a Menu DSL path, with the syntax
+ * <pre>Menu("Foo") / "test" / **</pre> to match anything starting with
+ * a given path. For more info, see Loc.Link.matchHead_?
+ *
+ * @see Loc.Link
+ */
+object ** extends MenuPath {def pathItem = "**"}
+
+/**
+ * Defines a single path element for a Menu's Link URI. Typically users will
+ * not utilize this case class, but will use the WithSlash trait's "/" method
+ * that takes Strings.
+ */
+final case class AMenuPath(pathItem: String) extends MenuPath
+
+/**
  * A DSL for building menus.
  */
 object Menu {
@@ -61,28 +86,42 @@ object Menu {
    */
   def i(nameAndLink: String) = Menu(nameAndLink, S ? nameAndLink)
 
+
   /**
    * An intermediate class that holds the basic stuff that's needed to make a Menu item for SiteMap.
    * You must include at least one URI path element by calling the / method
    */
   class PreMenu(name: String, linkText: Loc.LinkText[Unit]) {
-
     /**
      * The method to add a path element to the URL representing this menu item
      */
-    def /(pathElement: String): Menuable = new Menuable(name, linkText, pathElement :: Nil, Nil, Nil)
+    def /(pathElement: String): Menuable with WithSlash = 
+      new Menuable(name, linkText, pathElement :: Nil, false, Nil, Nil) with WithSlash
   }
 
+  trait WithSlash {
+    self: Menuable =>
+      /**
+       * The method to add a path element to the URL representing this menu item. This method is
+       * typically only used to allow the <pre>**</pre> object mechanism for specifying head match.
+       */
+      def /(pathElement: MenuPath): Menuable = pathElement match {
+        case ** => new Menuable(name, linkText, path, true, params, submenus) // Slashing stops here
+        case _  => new Menuable(name, linkText, path ::: List(pathElement.pathItem), headMatch, params, submenus) with WithSlash
+      }
+
+      /**
+       * The method to add a path element to the URL representing this menu item
+       */
+      def /(pathElement: String): Menuable with WithSlash = 
+        new Menuable(name, linkText, path ::: List(pathElement), headMatch, params, submenus) with WithSlash
+  }
 
   class Menuable(val name: String,val linkText: Loc.LinkText[Unit],
                  val path: List[String],
+                 val headMatch: Boolean,
                  val params: List[Loc.LocParam[Unit]],val submenus: List[ConvertableToMenu]) extends ConvertableToMenu
   {
-    /**
-     * The method to add a path element to the URL representing this menu item
-     */
-    def /(pathElement: String): Menuable = new Menuable(name, linkText, path ::: List(pathElement), params, submenus)
-
     /**
      * Append a LocParam to the Menu item
      */
@@ -92,19 +131,18 @@ object Menu {
      * Append a LocParam to the Menu item
      */
     def >>(param: Loc.LocParam[Unit]): Menuable =
-    new Menuable(name, linkText, path, params ::: List(param), submenus)
+    new Menuable(name, linkText, path, headMatch, params ::: List(param), submenus)
     
     /**
      * Define the submenus of this menu item
      */
-    def submenus(subs: ConvertableToMenu*): Menuable =
-    new Menuable(name, linkText, path, params, submenus ::: subs.toList)
+    def submenus(subs: ConvertableToMenu*): Menuable = submenus(subs.toList)
 
     /**
      * Define the submenus of this menu item
      */
     def submenus(subs: List[ConvertableToMenu]): Menuable =
-    new Menuable(name, linkText, path, params, submenus ::: subs.toList)
+    new Menuable(name, linkText, path, headMatch, params, submenus ::: subs)
 
     /**
      * Convert the Menuable into a Menu instance
@@ -119,7 +157,8 @@ object Menu {
     /**
      * Convert a Menuable into a Menu when you need a Menu.
      */
-    implicit def toMenu(able: Menuable): Menu = Menu(Loc(able.name,new Loc.Link(able.path, false),
+    implicit def toMenu(able: Menuable): Menu = Menu(Loc(able.name,
+                                                         new Loc.Link(able.path, able.headMatch),
                                                          able.linkText, able.params), able.submenus :_*)
   }
 }

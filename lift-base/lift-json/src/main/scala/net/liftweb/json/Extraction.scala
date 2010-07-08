@@ -314,7 +314,11 @@ object Extraction {
     case JNull => null
     case JNothing => fail("Did not find value which can be converted into " + targetType.getName)
     case JField(_, x) => convert(x, targetType, formats)
-    case _ => fail("Do not know how to convert " + json + " into " + targetType)
+    case _ => 
+      val custom = formats.customDeserializer(formats)
+      val typeInfo = TypeInfo(targetType, None)
+      if (custom.isDefinedAt(typeInfo, json)) custom(typeInfo, json)
+      else fail("Do not know how to convert " + json + " into " + targetType)
   }
 }
 

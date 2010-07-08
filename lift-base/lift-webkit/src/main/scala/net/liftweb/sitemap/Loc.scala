@@ -520,7 +520,7 @@ object Loc {
   case class LinkText[-T](text: T => NodeSeq)
 
   /**
-  * The companion object to LinkText that contains some helpful implict conversion
+  * The companion object to LinkText that contains some helpful implicit conversion
   */
   object LinkText {
     implicit def nodeSeqToLinkText[T](in: => NodeSeq): LinkText[T] = LinkText[T](T => in)
