@@ -1758,7 +1758,7 @@ for {
 
   /**
    * Associates a name with a snippet function 'func'. This can be used to change a snippet
-   * mapping on a per-session basis. For example, if we have a page that we want to change
+   * mapping on a per-request basis. For example, if we have a page that we want to change
    * behavior on based on query parameters, we could use mapSnippet to programmatically determine
    * which snippet function to use for a given snippet in the template. Our code would look like:
    *
@@ -1793,7 +1793,8 @@ for {
    * Snippets are processed in the order that they're defined in the
    * template, so if you want to use this approach make sure that
    * the snippet that defines the mapping comes before the snippet that
-   * is being mapped.
+   * is being mapped. Also note that these mappings are per-request, and are
+   * discarded after the current request is processed.
    *
    * @param name The name of the snippet that you want to map (the part after "&lt;lift:").
    * @param func The snippet function to map to.
