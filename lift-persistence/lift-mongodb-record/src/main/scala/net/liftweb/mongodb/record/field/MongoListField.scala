@@ -174,3 +174,5 @@ class MongoJsonObjectListField[OwnerType <: MongoRecord[OwnerType], JObjectType 
 }
 }
 }
+}
+}
