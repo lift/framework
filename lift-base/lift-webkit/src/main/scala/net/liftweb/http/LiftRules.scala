@@ -1015,29 +1015,16 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   val responseTransformers = RulesSeq[LiftResponse => LiftResponse]
 
 
-  object NestedTupleUnapply {
-    def unapply(in: (Any, List[(String, String)], List[HTTPCookie], Req)):
-    Option[(Node, Int, List[(String, String)], List[HTTPCookie], Req)] = 
-      in match {
-	case (Pair(ns: NodeSeq, code: Int), headers, cookies, req) =>
-	  Some((Group(ns), code, headers, cookies, req))
-	case _ => None
-      }
-  }
-
   /**
    * convertResponse is a PartialFunction that reduces a given Tuple4 into a
    * LiftResponse that can then be sent to the browser.
    */
   var convertResponse: PartialFunction[(Any, List[(String, String)], List[HTTPCookie], Req), LiftResponse] = {
-    case NestedTupleUnapply(node, code, headers, cookies, req) =>
-      cvt(node, headers, cookies, req, code)
-      
     case (r: LiftResponse, _, _, _) => r
     case (ns: Group, headers, cookies, req) => cvt(ns, headers, cookies, req, 200)
     case (ns: Node, headers, cookies, req) => cvt(ns, headers, cookies, req, 200)
     case (ns: NodeSeq, headers, cookies, req) => cvt(Group(ns), headers, cookies, req, 200)
-
+    case ((ns: NodeSeq, code: Int), headers, cookies, req) => cvt(Group(ns), headers, cookies, req, code)
     case (SafeNodeSeq(n), headers, cookies, req) => cvt(Group(n), headers, cookies, req, 200)
 
     case (Full(o), headers, cookies, req) => convertResponse((o, headers, cookies, req))
