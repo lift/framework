@@ -17,9 +17,6 @@
 package net.liftweb {
 package ldap {
 
-package net.liftweb {
-package ldap {
-
 import javax.naming.directory.{Attributes}
 import scala.util.matching.{Regex}
 import scala.xml.{Elem, NodeSeq}
