@@ -171,7 +171,9 @@
           <groupId>org.scala-tools</groupId>
           <artifactId>maven-scala-plugin</artifactId>
           <configuration>
+            <forceAggregate>true</forceAggregate>
             <jvmArgs>
+              <jvmArg>-Xmx2g</jvmArg>
               <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
             </jvmArgs>
           </configuration>
