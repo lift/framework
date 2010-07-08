@@ -1445,20 +1445,35 @@ object OprEnum extends Enumeration {
   val Like = Value(9, "LIKE")
 }
 
-sealed abstract class BaseIndex[A <: Mapper[A]](val columns : IndexItem[A]*)
-case class Index[A <: Mapper[A]](indexColumns : IndexItem[A]*) extends BaseIndex[A](indexColumns : _*)
+sealed trait BaseIndex[A <: Mapper[A]] {
+  def columns: Seq[IndexItem[A]]
+}
+
+final case class Index[A <: Mapper[A]](columns: List[IndexItem[A]]) extends BaseIndex[A] // (columns :_*)
+
+object Index {
+  def apply[A <: Mapper[A]](cols: IndexItem[A] *): Index[A] = new Index[A](cols.toList)
+}
 
 /**
  *  Represents a unique index on the given columns
  */
-case class UniqueIndex[A <: Mapper[A]](uniqueColumns : IndexItem[A]*) extends BaseIndex[A](uniqueColumns : _*)
+final case class UniqueIndex[A <: Mapper[A]](columns: List[IndexItem[A]]) extends BaseIndex[A] // (uniqueColumns : _*)
+
+object UniqueIndex {
+  def apply[A <: Mapper[A]](cols: IndexItem[A] *): UniqueIndex[A] = new UniqueIndex[A](cols.toList)
+}
 
 /**
  * Represents a generic user-specified index on the given columns. The user provides a function to generate the SQL needed to create
  * the index based on the table and columns. Validation is required since this is raw SQL being run on the database server.
  */
-case class GenericIndex[A <: Mapper[A]](createFunc : (String,List[String]) => String, validated : IHaveValidatedThisSQL, indexColumns : IndexItem[A]*) extends BaseIndex[A](indexColumns : _*)
+final case class GenericIndex[A <: Mapper[A]](createFunc: (String,List[String]) => String, validated: IHaveValidatedThisSQL, columns: List[IndexItem[A]]) extends BaseIndex[A] // (indexColumns : _*)
 
+object GenericIndex {
+  def apply[A <: Mapper[A]](createFunc: (String,List[String]) => String, validated: IHaveValidatedThisSQL, cols: IndexItem[A] *): GenericIndex[A] =
+    new GenericIndex[A](createFunc, validated, cols.toList)
+}
 
 abstract class IndexItem[A <: Mapper[A]] {
   def field: BaseMappedField
