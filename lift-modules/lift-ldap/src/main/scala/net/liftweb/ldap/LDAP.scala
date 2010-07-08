@@ -24,7 +24,7 @@ import javax.naming.Context
 import javax.naming.directory.{Attributes, BasicAttributes, SearchControls}
 import javax.naming.ldap.{LdapName, InitialLdapContext}
 
-import scala.collection.jcl.{Hashtable => ScalaHashtable, MapWrapper}
+import scala.collection.jcl.MapWrapper
 
 import _root_.net.liftweb.util.Props
 import _root_.net.liftweb.common.Loggable

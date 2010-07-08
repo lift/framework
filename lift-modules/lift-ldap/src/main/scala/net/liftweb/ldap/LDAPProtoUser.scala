@@ -191,9 +191,7 @@ trait LDAPProtoUser[T <: LDAPProtoUser[T]] extends MegaProtoUser[T] {
         val filter = rolesSearchFilter.format(userDn)
 
         val groups = ldapVendor.search(filter)
-        groups.foreach(g => {
-            ldapRoles.set(ldapRoles.get + getGroupNameFromDn(g))
-        })
+        groups foreach { g => ldapRoles.set(ldapRoles.get + getGroupNameFromDn(g)) }
     }
 }
 

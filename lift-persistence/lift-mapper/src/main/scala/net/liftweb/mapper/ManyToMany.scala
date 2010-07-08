@@ -176,14 +176,14 @@ trait ManyToMany extends BaseKeyedMapper {
       children foreach unown
       _joins = Nil
     }
-    
+
     def refresh = {
       val by = new Cmp[O, TheKeyType](thisField, OprEnum.Eql, Full(primaryKeyField.is), Empty, Empty)
 
       _joins = joinMeta.findAll( (by :: qp.toList): _*)
       all
     }
-    
+
     def save = {
       _joins = joins.filter { join =>
           field(join).is ==
@@ -198,7 +198,7 @@ trait ManyToMany extends BaseKeyedMapper {
           joins.forall(_.save)
       )
     }
-    
+
     def delete_! = {
       removedJoins.forall(_.delete_!) &
         joins.forall(_.delete_!)

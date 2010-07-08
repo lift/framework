@@ -17,12 +17,13 @@
 package net.liftweb {
 package util {
 
-import _root_.scala.xml.parsing.{MarkupParser, MarkupHandler, FatalError, ConstructingHandler, ExternalSources}
+import common._
+
+import _root_.scala.xml.parsing.{ MarkupParser, MarkupHandler, FatalError, ConstructingHandler, ExternalSources }
 import _root_.scala.xml.dtd._
 import _root_.scala.xml._
-import _root_.scala.io.{Source}
-import _root_.java.io.{InputStream}
-import common._
+import _root_.java.io.InputStream
+import scala.io.Source
 
 /**
  * Utilities for simplifying use of named HTML symbols.
