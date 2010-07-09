@@ -608,7 +608,6 @@ object S extends HasParams with Loggable {
                   val meth = clz.getDeclaredMethods.
                   filter{m => m.getName == "clearCache" && m.getParameterTypes.length == 0}.
                   toList.head
-                
                   meth.invoke(null)
                 }
               }
@@ -895,8 +894,8 @@ for {
   /**
    * Log a query for the given request.  The query log can be tested to see
    * if queries for the particular page rendering took too long. The query log
-   * starts empty for each new request. net.liftweb.mapper.DB.queryCollector is a 
-   * method that can be used as a log function for the net.liftweb.mapper.DB.addLogFunc 
+   * starts empty for each new request. net.liftweb.mapper.DB.queryCollector is a
+   * method that can be used as a log function for the net.liftweb.mapper.DB.addLogFunc
    * method to enable logging of Mapper queries. You would set it up in your bootstrap like:
    *
    * <pre name="code" class="scala" >
@@ -1228,20 +1227,19 @@ for {
   private[liftweb] def lightInit[B](request: Req,
     session: LiftSession,
     attrs: List[(Either[String, (String, String)], String)])(f: => B): B =
-    
-    this._request.doWith(request) {
-      _sessionInfo.doWith(session) {
-        _lifeTime.doWith(false) {
-          _attrs.doWith(attrs) {
-            _resBundle.doWith(Nil) {
-              inS.doWith(true) {
-                f
+      this._request.doWith(request) {
+        _sessionInfo.doWith(session) {
+          _lifeTime.doWith(false) {
+            _attrs.doWith(attrs) {
+              _resBundle.doWith(Nil) {
+                inS.doWith(true) {
+                  f
+                }
               }
             }
           }
         }
       }
-    }
 
 
   private def _init[B](request: Req, session: LiftSession)(f: () => B): B =
@@ -1808,7 +1806,7 @@ for {
   def addFunctionMap(name: String, value: AFuncHolder) = {
    (autoCleanUp.box, _oneShot.box) match {
      case (Full(true), _) => {
-       _functionMap.value += (name -> 
+       _functionMap.value += (name ->
                               new S.ProxyFuncHolder(value) {
                                 override def apply(in: List[String]): Any = {
                                   try {
@@ -1817,7 +1815,7 @@ for {
                                     S.session.map(_.removeFunction(name))
                                   }
                                 }
-                                
+
                                 override def apply(in: FileParamHolder): Any = {
                                   try {
                                     value.apply(in)
@@ -1830,15 +1828,15 @@ for {
 
      case (_, Full(true)) => {
        def setProxyFunc(retVal: Any) {
-         _functionMap.value += 
+         _functionMap.value +=
          (name -> new S.ProxyFuncHolder(value) {
           override def apply(in: List[String]): Any = retVal
           override def apply(in: FileParamHolder): Any = retVal
         })
        }
-       
-       _functionMap.value += 
-       (name -> 
+
+       _functionMap.value +=
+       (name ->
         new S.ProxyFuncHolder(value) {
           override def apply(in: List[String]): Any = {
             val ret = try {
@@ -1851,7 +1849,7 @@ for {
             setProxyFunc(ret)
             ret
           }
-          
+
           override def apply(in: FileParamHolder): Any = {
             val ret = try {
               value.apply(in)
@@ -1865,7 +1863,7 @@ for {
           }
         })
      }
-       
+
      case _ =>
        _functionMap.value += (name -> value)
    }
@@ -2442,7 +2440,7 @@ for {
    *            takes one parameter which is the function that must be invoked
    *            for returning the actual response to the client. Note that f function
    *            is invoked asynchronously in the context of a different thread.
-   * 
+   *
    */
   def respondAsync(f: => Box[LiftResponse]): () => Box[LiftResponse] = {
    (for (req <- S.request) yield {

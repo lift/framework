@@ -1,18 +1,21 @@
 /*
-* Copyright 2010 WorldWide Conferencing, LLC
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2010 WorldWide Conferencing, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package net.liftweb {
-package mongodb { 
+package mongodb {
 
 import net.liftweb.json.JsonAST.JObject
 
@@ -94,13 +97,12 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   * Find all documents in this collection
   */
   def findAll: List[BaseDocument] = {
-    // import scala.collection.jcl.Conversions._
     import scala.collection.JavaConversions._
 
     /*
     * The call to toArray retrieves all documents and puts them in memory.
     */
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll => {
+    MongoDB.useCollection(mongoIdentifier, collectionName)(coll => {
       coll.find.toArray.map(dbo => create(dbo)).toList
     })
   }
@@ -110,7 +112,6 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   */
   private def findAll(qry: DBObject, sort: Option[DBObject], opts: FindOption*): List[BaseDocument] = {
     import scala.collection.JavaConversions._
-    //    import scala.collection.jcl.Conversions._
 
     val findOpts = opts.toList
 

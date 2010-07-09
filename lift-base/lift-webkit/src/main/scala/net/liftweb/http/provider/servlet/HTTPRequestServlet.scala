@@ -147,7 +147,7 @@ private class OfflineRequestSnapshot(req: HTTPRequest) extends HTTPRequest {
 
   private val _params = List(req.params :_*)
 
- 
+
   def cookies: List[HTTPCookie] = _cookies
 
   val authType: Box[String] = req.authType
@@ -194,25 +194,25 @@ private class OfflineRequestSnapshot(req: HTTPRequest) extends HTTPRequest {
 
   val resumeInfo : Option[Any] = req resumeInfo
 
-  def suspend(timeout: Long): RetryState.Value = 
+  def suspend(timeout: Long): RetryState.Value =
     throw new UnsupportedOperationException("Cannot suspend a snapshot")
 
-  def resume(what: AnyRef): Boolean = 
+  def resume(what: AnyRef): Boolean =
     throw new UnsupportedOperationException("Cannot resume a snapshot")
 
   def suspendResumeSupport_? = false
 
-  def inputStream: InputStream = 
+  def inputStream: InputStream =
     throw new UnsupportedOperationException("InputStream is not available")
 
   val multipartContent_? : Boolean = req.multipartContent_?
 
-  def extractFiles: List[ParamHolder] = 
+  def extractFiles: List[ParamHolder] =
     throw new UnsupportedOperationException("It is unsafe to extract files")
 
   val locale: Box[Locale] = req.locale
 
-  def setCharacterEncoding(encoding: String) = 
+  def setCharacterEncoding(encoding: String) =
     throw new UnsupportedOperationException("It is unsafe to set the character encoding ")
 
   def snapshot = this

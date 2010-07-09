@@ -1,15 +1,18 @@
 /*
-* Copyright 2010 WorldWide Conferencing, LLC
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2010 WorldWide Conferencing, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package net.liftweb {
 package mongodb {
@@ -38,14 +41,14 @@ class MongoListField[OwnerType <: MongoRecord[OwnerType], ListType](rec: OwnerTy
   with MongoFieldFlavor[List[ListType]] {
 
   import Meta.Reflection._
-  
+
   def owner = rec
 
   def toForm = NodeSeq.Empty // FIXME
   def asXHtml = NodeSeq.Empty // FIXME
-  
+
   def asJs = Str(toString) // FIXME
-  
+
   def asJValue = JArray(value.map(li => li match {
     case s: String => JString(s)
     case d: Double => JDouble(d)
@@ -53,7 +56,7 @@ class MongoListField[OwnerType <: MongoRecord[OwnerType], ListType](rec: OwnerTy
     case b: Boolean => JBool(b)
     case _ => JNothing
   }))
-  
+
   def setFromJValue(jvalue: JValue) = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case JArray(arr) => setBox(Full(arr.map(_.values.asInstanceOf[ListType])))
@@ -130,7 +133,7 @@ class MongoDateListField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
 @Deprecated
 class MongoJObjectListField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
   extends MongoListField[OwnerType, JObject](rec: OwnerType) {
-  
+
   override def setFromDBObject(dbo: DBObject): Box[List[JObject]] = {
     implicit val formats = owner.meta.formats
     val ret = dbo.keySet.map( k => {
@@ -151,12 +154,12 @@ class MongoJsonObjectListField[OwnerType <: MongoRecord[OwnerType], JObjectType 
     val dbl = new BasicDBList
 
     implicit val formats = owner.meta.formats
-    
+
     value.foreach { v => dbl.add(JObjectParser.parse(v.asJObject)) }
 
     dbl
   }
-  
+
   override def setFromDBObject(dbo: DBObject): Box[List[JObjectType]] = {
     implicit val formats = owner.meta.formats
     val ret = dbo.keySet.map(k => {
@@ -165,8 +168,6 @@ class MongoJsonObjectListField[OwnerType <: MongoRecord[OwnerType], JObjectType 
     Full(set(ret.toList))
   }
 }
-
-
 
 }
 }

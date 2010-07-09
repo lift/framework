@@ -150,7 +150,7 @@ trait TimeHelpers { self: ControlHelpers =>
     override def equals(cmp: Any) = {
       cmp match {
         case lo: Long => lo == this.millis
-        case i: Int => i.toLong == this.millis
+        case i: Int => i == this.millis
         case ti: TimeSpan => ti.dt == this.dt
         case d: Date => d.getTime() == this.millis
         case dt: DateTime => Left(dt) == this.dt

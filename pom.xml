@@ -80,7 +80,7 @@
   </distributionManagement>
   <properties>
     <!-- vscaladoc settings -->
-    <maven.scaladoc.vscaladocVersion>1.2-SNAPSHOT</maven.scaladoc.vscaladocVersion>
+    <maven.scaladoc.vscaladocVersion>1.2-m1</maven.scaladoc.vscaladocVersion>
     <vscaladoc.links.liftweb.baseurl>${project.basedir}/../..</vscaladoc.links.liftweb.baseurl>
     <vscaladoc.links.liftweb.pathsufix>target/site/scaladocs/</vscaladoc.links.liftweb.pathsufix>
 
@@ -171,8 +171,10 @@
           <groupId>org.scala-tools</groupId>
           <artifactId>maven-scala-plugin</artifactId>
           <configuration>
+            <aggregateDirectOnly>false</aggregateDirectOnly>
+            <forceAggregate>true</forceAggregate>
             <jvmArgs>
-              <jvmArg>-Xmx1024m</jvmArg>
+              <jvmArg>-Xmx2g</jvmArg>
               <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
             </jvmArgs>
           </configuration>
@@ -295,12 +297,14 @@
       <plugin>
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
-        <version>2.13.1</version>
+        <version>2.14</version>
         <configuration>
+          <aggregateDirectOnly>false</aggregateDirectOnly>
+          <forceAggregate>true</forceAggregate>
           <charset>${project.build.sourceEncoding}</charset>
           <!--<bottom>Copyright &#169; {inceptionYear}-{currentYear} {organizationName}. All Rights Reserved.</bottom>-->
           <jvmArgs>
-            <jvmArg>-Xmx1024m</jvmArg>
+            <jvmArg>-Xmx2g</jvmArg>
             <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
           </jvmArgs>
         </configuration>

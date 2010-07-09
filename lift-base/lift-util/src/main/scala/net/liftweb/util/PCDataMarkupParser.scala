@@ -311,14 +311,14 @@ object AltXML {
         case '\n' => sb.append('\n')
         case '\r' => sb.append('\r')
         case '\t' => sb.append('\t')
-        case c   => 
+        case c   =>
           if (reverse) {
             HtmlEntities.revMap.get(c) match {
               case Some(str) =>
                 sb.append('&')
                 sb.append(str)
                 sb.append(';')
-              case _ => 
+              case _ =>
                 if (c >= ' ' && c != '\u0085' && !(c >= '\u007f' && c <= '\u0095')) sb.append(c)
             }
           } else
@@ -351,7 +351,7 @@ object AltXML {
 
     case a: Atom[_] if a.getClass eq classOf[Atom[_]] =>
       escape(a.data.toString, sb, !convertAmp)
-      
+
     case c: Comment if !stripComment =>
       c.buildString(sb)
 

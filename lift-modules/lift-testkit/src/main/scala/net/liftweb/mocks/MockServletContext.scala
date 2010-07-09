@@ -33,7 +33,6 @@ import _root_.java.util.Locale
 import _root_.java.util.Vector
 import _root_.javax.servlet._
 import _root_.javax.servlet.http._
-import scala.collection.JavaConversions._
 
 /**
  * An example of how to use these mock classes in your unit tests:

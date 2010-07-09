@@ -87,7 +87,7 @@ object MapperRules extends Factory {
   /**
   * What are the rules and mechanisms for putting quotes around table names?
   */
-  val quoteTableName: FactoryMaker[String => String] = 
+  val quoteTableName: FactoryMaker[String => String] =
   new FactoryMaker[String => String]((s: String) => if (s.indexOf(' ') >= 0) '"'+s+'"' else s) {}
 
   /**
@@ -99,27 +99,27 @@ object MapperRules extends Factory {
  /**
   * Function that determines if foreign key constraints are
   * created by Schemifier for the specified connection.
-  * 
+  *
   * Note: The driver choosen must also support foreign keys for
   * creation to happen
   */
   var createForeignKeys_? : ConnectionIdentifier => Boolean = c => false
 
-  
+
   /**
    * This function is used to calculate the displayName of a field. Can be
-   * used to easily localize fields based on the locale in the 
+   * used to easily localize fields based on the locale in the
    * current request
    */
-  val displayNameCalculator: FactoryMaker[(BaseMapper, Locale, String) => String] = 
+  val displayNameCalculator: FactoryMaker[(BaseMapper, Locale, String) => String] =
   new FactoryMaker[(BaseMapper, Locale, String) => String]((m: BaseMapper,l: Locale,name: String) => name) {}
 
   /**
    * Calculate the name of a column based on the name
    * of the MappedField. Must be set in Boot
-   * 
+   *
    * To get snake_case, use this:
-   * 
+   *
    *  MapperRules.columnName =  (_,name) => StringHelpers.snakify(name)
    */
   var columnName: (ConnectionIdentifier,String) => String = (_,name) => name.toLowerCase
@@ -127,9 +127,9 @@ object MapperRules extends Factory {
   /**
    * Calculate the name of a table based on the name
    * of the Mapper. Must be set in Boot
-   * 
+   *
    * To get snake_case, use this
-   * 
+   *
    *  MapperRules.columnName =  (_,name) => StringHelpers.snakify(name)
    */
   var tableName: (ConnectionIdentifier,String) => String = (_,name) => name.toLowerCase
@@ -139,7 +139,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   self: A =>
 
   private val logger = Logger(classOf[MetaMapper[A]])
-  
+
   case class FieldHolder(name: String, method: Method, field: MappedField[_, A])
 
   type RealType = A
@@ -382,7 +382,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    * @returns a Tuple of the Query String, Start (offset), MaxRows (limit), and the list of all query parameters
    * including and synthetic query parameters
    */
-  def buildSelectString(fields: Seq[SelectableField], conn: SuperConnection, by: QueryParam[A]*): 
+  def buildSelectString(fields: Seq[SelectableField], conn: SuperConnection, by: QueryParam[A]*):
   (String, Box[Long], Box[Long], List[QueryParam[A]]) = {
     val bl = by.toList ::: addlQueryParams.is
     val selectStatement = "SELECT "+
@@ -390,7 +390,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     fields.map(_.dbSelectString).
     mkString(", ")+
     " FROM "+MapperRules.quoteTableName.vend(_dbTableNameLC)+"  "
-    
+
     val (str, start, max) = addEndStuffs(addFields(selectStatement, false, bl, conn), bl, conn)
     (str, start, max, bl)
   }
@@ -456,7 +456,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
               // of fields you add onto the query is equal to vals.length
             case ByList(field, orgVals) =>
               val vals = Set(orgVals :_*).toList // faster than list.removeDuplicates
-              
+
               if (vals.isEmpty) updatedWhat = updatedWhat + whereOrAnd + " 0 = 1 "
               else updatedWhat = updatedWhat +
               vals.map(v => MapperRules.quoteColumnName.vend(field._dbColumnNameLC)+ " = ?").mkString(whereOrAnd+" (", " OR ", ")")
@@ -510,7 +510,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 	      st.setObject(newPos,
                            field.convertToJDBCFriendly(v),
                            conn.driverType.columnTypeMap(field.targetSQLType))
-	    
+
               newPos = newPos + 1
             })
 
@@ -548,12 +548,12 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
             case List(d: Date) =>
               st.setTimestamp(curPos, new _root_.java.sql.Timestamp(d.getTime))
               setStatementFields(st, xs, curPos + 1, conn)
-            case List(field: BaseMappedField) => 
+            case List(field: BaseMappedField) =>
 	      if (field.dbIgnoreSQLType_?)
 		st.setObject(curPos, field.jdbcFriendly)
 	      else
 	      	st.setObject(curPos, field.jdbcFriendly, conn.driverType.columnTypeMap(field.targetSQLType))
-	    
+
               setStatementFields(st, xs, curPos + 1, conn)
 
             case p :: ps =>
@@ -815,11 +815,11 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                       colVal.targetSQLType(col._1) match {
                         case Types.VARCHAR => st.setString(colNum, colVal.jdbcFriendly(col._1).asInstanceOf[String])
 
-                        case _ => 
+                        case _ =>
 			  if (colVal.dbIgnoreSQLType_?)
 			    st.setObject(colNum, colVal.jdbcFriendly(col._1))
 			  else
-			    st.setObject(colNum, colVal.jdbcFriendly(col._1), 
+			    st.setObject(colNum, colVal.jdbcFriendly(col._1),
 					 conn.driverType.
 					 columnTypeMap(colVal.
 						       targetSQLType(col._1)))
@@ -828,7 +828,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                     }
                   }
 
-                  indexedField(toSave).foreach(indVal =>  
+                  indexedField(toSave).foreach(indVal =>
 		    if (indVal.dbIgnoreSQLType_?)
 		      st.setObject(colNum, indVal.jdbcFriendly(indexMap.
 							       open_!))
@@ -860,7 +860,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                       case Types.VARCHAR =>
                         st.setString(colNum, colVal.jdbcFriendly(col._1).asInstanceOf[String])
 
-                      case _ => 
+                      case _ =>
 			if (colVal.dbIgnoreSQLType_?)
 			  st.setObject(colNum, colVal.jdbcFriendly(col._1))
 			else
@@ -936,7 +936,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     for {
       pos <- (1 to colCnt).toList
       colName = meta.getColumnName(pos).toLowerCase
-    } yield 
+    } yield
       columnNameToMappee.get(colName) match {
         case None =>
           val colType = meta.getColumnType(pos)
@@ -1162,7 +1162,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
             mappedColumns += colName -> v
           }
           if (mf.dbPrimaryKey_? && mf.dbAutogenerated_?) {
-            indexMap = Full(MapperRules.quoteColumnName.vend(mf._dbColumnNameLC)) 
+            indexMap = Full(MapperRules.quoteColumnName.vend(mf._dbColumnNameLC))
           }
 
         case _ =>
@@ -1184,10 +1184,10 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
     mappedFieldList = resArray.toList
     mappedFieldList.foreach(ae => _mappedFields(ae.name) = ae.method)
-    
+
     logger.trace("Mapped fields for %s: %s".format(dbName, mappedFieldList.map(_.name).mkString(",")))
   }
-  
+
   val columnNamesForInsert = (mappedColumnInfo.filter(c => !(c._2.dbPrimaryKey_? && c._2.dbAutogenerated_?)).map(_._1)).toList.mkString(",")
 
   val columnQueriesForInsert = {
@@ -1365,7 +1365,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    * The name of the mapped object
    */
   override def dbName: String = internalTableName_$_$
-  
+
   /**
    * The table name, to lower case... ensures that it works on all DBs
    */
@@ -1381,16 +1381,16 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   }  // dbTableName.toLowerCase
 
   private[mapper] lazy val internal_dbTableName = fixTableName(internalTableName_$_$)
-  
+
   private def setupInstanceForPostCommit(inst: A) {
     afterCommit match {
-      case Nil => 
+      case Nil =>
         // If there's no post-commit functions, then don't
         // record (and retain) the instance
-        
+
       case pcf =>
         if (!inst.addedPostCommit) {
-          DB.appendPostFunc(inst.connectionIdentifier, 
+          DB.appendPostFunc(inst.connectionIdentifier,
                             () => (clearPCFunc :: pcf).foreach(_(inst)))
           inst.addedPostCommit = true
         }
@@ -1494,7 +1494,7 @@ final case class Cmp[O<:Mapper[O], T](field: MappedField[T,O], opr: OprEnum.Valu
                                       otherField: Box[MappedField[T, O]], dbFunc: Box[String]) extends QueryParam[O]
 
 final case class OrderBy[O<:Mapper[O], T](field: MappedField[T,O],
-                                          order: AscOrDesc, 
+                                          order: AscOrDesc,
                                           nullOrder: Box[NullOrder]) extends QueryParam[O]
 
 sealed trait NullOrder {
@@ -1867,7 +1867,7 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
 	if (field.dbIgnoreSQLType_?)
 	  st.setObject(1, field.makeKeyJDBCFriendly(key))
 	else
-	  st.setObject(1, field.makeKeyJDBCFriendly(key), 
+	  st.setObject(1, field.makeKeyJDBCFriendly(key),
 		       conn.driverType.
 		       columnTypeMap(field.
 				     targetSQLType(field._dbColumnNameLC)))

@@ -20,7 +20,6 @@ package mapper {
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.common._
 
-
 /**
  * Add this trait to a Mapper to add support for many-to-many relationships
  * @author nafg
@@ -91,7 +90,7 @@ trait ManyToMany extends BaseKeyedMapper {
     protected def isJoinForChild(e: T2)(join: O) = otherField.actualField(join).is == e.primaryKeyField.is
     protected def joinForChild(e: T2): Option[O] =
       joins.find(isJoinForChild(e))
-    
+
     protected def own(e: T2): O = {
       joinForChild(e) match {
         case None =>
@@ -124,18 +123,18 @@ trait ManyToMany extends BaseKeyedMapper {
           None
       }
     }
-    
+
     def all = children
 
     // 2.7
     //def readOnly = all
-    
+
     def length = children.length
     // 2.7
     //def elements = children.elements
     // 2.8
     def iterator = children.iterator
-    
+
     protected def childAt(n: Int) = children(n)
     def apply(n: Int) = childAt(n)
     def indexOf(e: T2) =
@@ -153,7 +152,7 @@ trait ManyToMany extends BaseKeyedMapper {
       _joins = before ++ ownedJoins ++ after
     }
 
-    // 2.7    
+    // 2.7
     // def +:(elem: T2) = {
     // 2.8
     def +=:(elem: T2) = {
@@ -165,6 +164,7 @@ trait ManyToMany extends BaseKeyedMapper {
       _joins ++= List(own(elem))
       this
     }
+
     def update(n: Int, newelem: T2) {
       unown(childAt(n)) match {
         case Some(join) =>
@@ -174,7 +174,7 @@ trait ManyToMany extends BaseKeyedMapper {
         case None =>
       }
     }
-    
+
     def remove(n: Int) = {
       val child = childAt(n)
       unown(child) match {
@@ -185,7 +185,7 @@ trait ManyToMany extends BaseKeyedMapper {
       child
     }
 
-    
+
     def clear() {
       children foreach unown
       _joins = Nil

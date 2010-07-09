@@ -36,7 +36,7 @@ trait ListHelpers {
    *
    * @return a Box containing the found element (or Empty if not found)
    */
-  def first_? [B](in: Seq[B])(f: => B => Boolean): Box[B] =
+  def first_?[B](in: Seq[B])(f: => B => Boolean): Box[B] =
     Box(in.find(f))
 
   /**
@@ -51,9 +51,9 @@ trait ListHelpers {
    *
    * @return a Box containing the first Full can or Empty if f never returns a Full can
    */
-  def first[B,C](in: Seq[B])(_f : B => Box[C]): Box[C] = {
+  def first[B, C](in: Seq[B])(_f: B => Box[C]): Box[C] = {
     val f: B => Iterable[C] = _f andThen Box.box2Iterable[C]
-    Box(in.view.flatMap(f).headOption)
+    Box(in.projection.flatMap(f).headOption)
   }
 
   /**
@@ -71,11 +71,11 @@ trait ListHelpers {
     def ciGet(swhat: String): Box[String] = {
       val what = swhat.toLowerCase
       def tGet(in: Seq[(String, String)]): Box[String] =
-      in match {
-        case Nil => Empty
-        case x :: xs if (x._1.toLowerCase == what) => Full(x._2)
-        case x :: xs => tGet(xs)
-      }
+        in match {
+          case Nil => Empty
+          case x :: xs if (x._1.toLowerCase == what) => Full(x._2)
+          case x :: xs => tGet(xs)
+        }
       tGet(theList)
     }
   }
@@ -97,7 +97,7 @@ trait ListHelpers {
    * Convert a java.util.Enumeration to a List[String] using the toString method on each element
    */
   def enumToStringList[C](enum: _root_.java.util.Enumeration[C]): List[String] =
-  if (enum.hasMoreElements) enum.nextElement.toString :: enumToStringList(enum) else Nil
+    if (enum.hasMoreElements) enum.nextElement.toString :: enumToStringList(enum) else Nil
 
   /**
    * Return the first element of a List or a default value if the list is empty
@@ -134,7 +134,7 @@ trait ListHelpers {
   def permuteList[T](in: Seq[T]): List[List[T]] = (in.toList: @unchecked) match {
     case Nil => Nil
     case x :: Nil => List(List(x))
-    case xs => rotateList(xs).flatMap(x => (x: @unchecked) match{case x :: xs => permuteList(xs).map(x :: _) case _ => Nil})
+    case xs => rotateList(xs).flatMap(x => (x: @unchecked) match {case x :: xs => permuteList(xs).map(x :: _) case _ => Nil})
   }
 
   /**
@@ -190,9 +190,9 @@ trait ListHelpers {
     /** return a new list where the element at position pos is replaced with another element */
     def replace(pos: Int, withWhat: T): List[T] = {
       def repl(pos: Int, withWhat: T, rest: List[T]): List[T] = rest match {
-          case Nil => Nil
-          case x :: xs if pos <= 0 => withWhat :: xs
-          case x :: xs => x :: repl(pos - 1, withWhat, xs)
+        case Nil => Nil
+        case x :: xs if pos <= 0 => withWhat :: xs
+        case x :: xs => x :: repl(pos - 1, withWhat, xs)
       }
       repl(pos, withWhat, what)
     }

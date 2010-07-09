@@ -59,8 +59,8 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
    * handled by lift rather than the default handler
    */
   type LiftRequestPF = PartialFunction[Req, Boolean]
- 
-  /** 
+
+  /**
    * Set the default fadeout mechanism for Lift notices. Thus you provide a function that take a NoticeType.Value
    * and decide the duration after which the fade out will start and the actual fadeout time. This is applicable
    * for general notices (not associated with id-s) regardless if they are set for the page rendering, ajax
@@ -73,7 +73,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
    * and the id of the element containing the specific notice. Thus it is the function's responsability to form
    * the javascript code for the visual effects. This is applicable for both ajax and non ajax contexts.
    * For notices associated with ID's the user type will receive an Empty notice type. That's because the effect
-   * is applied on the real estate holding the notices for this ID. Typically this contains a single message. 
+   * is applied on the real estate holding the notices for this ID. Typically this contains a single message.
    */
   var noticesEffects = new FactoryMaker[(Box[NoticeType.Value], String) => Box[JsCmd]]((notice: Box[NoticeType.Value], id: String) => Empty){}
 
@@ -120,16 +120,16 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   @volatile var getLiftSession: (Req) => LiftSession = (req) => _getLiftSession(req)
 
   /**
-   * Attached an ID entity for resource URI specified in 
+   * Attached an ID entity for resource URI specified in
    * link or script tags. This allows controlling browser
    * resource caching. By default this just adds a query string
    * parameter unique per application lifetime. More complex
    * implementation could user per resource MD5 sequences thus
    * "forcing" browsers to refresh the resource only when the resource
-   * file changes. Users can define other rules as well. Inside user's 
-   * function it is safe to use S context as attachResourceId is called 
+   * file changes. Users can define other rules as well. Inside user's
+   * function it is safe to use S context as attachResourceId is called
    * from inside the &lt;lift:with-resource-id> snippet
-   * 
+   *
    */
   @volatile var attachResourceId: (String) => String = (name) => {
     name + (if (name contains ("?")) "&" else "?") + pageResourceId + "=_"
@@ -163,9 +163,9 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   }
 
   /**
-  * A function that takes appropriate action in breaking out of any
-  * existing comet requests based on the request, browser type, etc.
-  */
+   * A function that takes appropriate action in breaking out of any
+   * existing comet requests based on the request, browser type, etc.
+   */
   @volatile var makeCometBreakoutDecision: (LiftSession, Req) => Unit =
   (session, req) => {
     // get the open sessions to the host (this means that any DNS wildcarded
@@ -180,8 +180,6 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
       case (actor, req) => actor ! BreakOut
     }
   }
-    
-
 
   /**
    * The path to handle served resources
@@ -192,7 +190,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
    * Holds the JS library specific UI artifacts. By efault it uses JQuery's artifacts
    */
   @volatile var jsArtifacts: JSArtifacts = JQuery13Artifacts
-  
+
   /**
    * Use this PartialFunction to to automatically add static URL parameters
    * to any URL reference from the markup of Ajax request.
@@ -382,12 +380,12 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
     import builtin.snippet._
 
 
-    def noticesFadeOut(noticeType: NoticeType.Value, id: String): JsCmd = 
+    def noticesFadeOut(noticeType: NoticeType.Value, id: String): JsCmd =
       (LiftRules.noticesAutoFadeOut()(noticeType) map {
         case (duration, fadeTime) => LiftRules.jsArtifacts.fadeOut(id, duration, fadeTime)
       }) openOr Noop
 
-    def effects(noticeType: Box[NoticeType.Value], id: String): JsCmd = 
+    def effects(noticeType: Box[NoticeType.Value], id: String): JsCmd =
       LiftRules.noticesEffects()(noticeType, id) match {
         case Full(jsCmd) => jsCmd
         case _ => Noop
@@ -403,22 +401,22 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
       S.messages _
     else
       S.noIdMessages _
-    
-    def makeList(meta: Box[AjaxMessageMeta], notices: List[NodeSeq], title: String, id: String): 
-      List[(Box[AjaxMessageMeta], List[NodeSeq], String, String)] = 
+
+    def makeList(meta: Box[AjaxMessageMeta], notices: List[NodeSeq], title: String, id: String):
+      List[(Box[AjaxMessageMeta], List[NodeSeq], String, String)] =
         if (notices.isEmpty) Nil else List((meta, notices, title, id))
-    
-    val xml = 
+
+    val xml =
       ((makeList(MsgsErrorMeta.get, f(S.errors), S.??("msg.error"), LiftRules.noticesContainerId + "_error")) ++
        (makeList(MsgsWarningMeta.get, f(S.warnings), S.??("msg.warning"), LiftRules.noticesContainerId + "_warn")) ++
        (makeList(MsgsNoticeMeta.get, f(S.notices), S.??("msg.notice"), LiftRules.noticesContainerId + "_notice"))) flatMap {
          msg => msg._1 match {
-           case Full(meta) => <div id={msg._4}>{func(msg._2 _, meta.title openOr "", 
+           case Full(meta) => <div id={msg._4}>{func(msg._2 _, meta.title openOr "",
              meta.cssClass.map(new UnprefixedAttribute("class",_, Null)) openOr Null)}</div>
            case _ => <div id={msg._4}>{func(msg._2 _, msg._3, Null)}</div>
         }
       }
-    
+
     val groupMessages = xml match {
       case Nil => JsCmds.Noop
       case _ => LiftRules.jsArtifacts.setHtml(LiftRules.noticesContainerId, xml) &
@@ -947,7 +945,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   val snippets = RulesSeq[SnippetPF]
 
   private var _configureLogging: () => Unit = _
-    
+
   /**
    * Holds the function that configures logging. Must be set before any loggers are created
    */
@@ -962,12 +960,12 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   }
 
   configureLogging = net.liftweb.util.LoggingAutoConfigurer()
-  
+
   private val _cometLogger: FatLazy[Logger] = FatLazy({
     val ret = Logger("comet_trace")
     ret
   })
-  
+
   /**
    * Holds the CometLogger that will be used to log comet activity
    */
@@ -992,7 +990,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
     }, headers, cookies, req)
 
   @volatile var defaultHeaders: PartialFunction[(NodeSeq, Req), List[(String, String)]] = {
-    case _ => 
+    case _ =>
       val d = Helpers.nowAsInternetDate
       List("Expires" -> d,
            "Date" -> d,
@@ -1017,29 +1015,16 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   val responseTransformers = RulesSeq[LiftResponse => LiftResponse]
 
 
-  object NestedTupleUnapply {
-    def unapply(in: (Any, List[(String, String)], List[HTTPCookie], Req)):
-    Option[(Node, Int, List[(String, String)], List[HTTPCookie], Req)] = 
-      in match {
-	case (Pair(ns: NodeSeq, code: Int), headers, cookies, req) =>
-	  Some((Group(ns), code, headers, cookies, req))
-	case _ => None
-      }
-  }
-
   /**
    * convertResponse is a PartialFunction that reduces a given Tuple4 into a
    * LiftResponse that can then be sent to the browser.
    */
   var convertResponse: PartialFunction[(Any, List[(String, String)], List[HTTPCookie], Req), LiftResponse] = {
-    case NestedTupleUnapply(node, code, headers, cookies, req) =>
-      cvt(node, headers, cookies, req, code)
-      
     case (r: LiftResponse, _, _, _) => r
     case (ns: Group, headers, cookies, req) => cvt(ns, headers, cookies, req, 200)
     case (ns: Node, headers, cookies, req) => cvt(ns, headers, cookies, req, 200)
     case (ns: NodeSeq, headers, cookies, req) => cvt(Group(ns), headers, cookies, req, 200)
-
+    case ((ns: NodeSeq, code: Int), headers, cookies, req) => cvt(Group(ns), headers, cookies, req, code)
     case (SafeNodeSeq(n), headers, cookies, req) => cvt(Group(n), headers, cookies, req, 200)
 
     case (Full(o), headers, cookies, req) => convertResponse((o, headers, cookies, req))
@@ -1396,7 +1381,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
     case null => Empty
     case s => Helpers.toDate(s)
   }
-  
+
   val dateTimeConverter: FactoryMaker[DateTimeConverter] = new FactoryMaker[DateTimeConverter]( () => DefaultDateTimeConverter ) {}
 
   /**

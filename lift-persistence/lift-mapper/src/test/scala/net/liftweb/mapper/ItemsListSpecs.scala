@@ -74,7 +74,7 @@ object ItemsListSpecs extends Specification {
       il.remove(il.added(0))
       il.save
       SampleItem.count must_== 4
-      il.added.length must_== 0  // BUG EXPOSED!!!
+      il.added.length must_== 0
       il.removed.length must_== 0
     }
   }

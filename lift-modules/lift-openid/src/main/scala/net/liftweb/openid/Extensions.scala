@@ -65,7 +65,7 @@ class RichMessage(underlying: Message) {
    * Return the AxMessage.OPENID_NS_AX FetchResponse extension if available
    */
   def fetchResponse: Box[FetchResponse] = extension(AxMessage.OPENID_NS_AX).asA[FetchResponse]
-  
+
   /**
    * Return the SRegMessage.OPENID_NS_SREG SRegResponse extentions if available
    */
@@ -77,17 +77,17 @@ class RichMessage(underlying: Message) {
  */
 class RichFetchResponse(underlying: FetchResponse) {
   import RawHelper._
-  
+
   /**
    * Return the list of attribute aliases available in the reponse
    */
   def aliases: List[String] = underlying.getAttributeAliases
-  
+
   /**
    * Get the first value with the specified alias
    */
   def value(alias:String) = Box !! underlying.getAttributeValue(alias)
-  
+
   /**
    * Get all values with the specified alias
    */
@@ -99,12 +99,12 @@ class RichFetchResponse(underlying: FetchResponse) {
  */
 class RichSRegResponse(underlying: SRegResponse) {
   import RawHelper._
-  
+
   /**
    * Return the list of attribute names available in the response
    */
   def names: List[String] =  underlying.getAttributeNames
-  
+
   /**
    * Get the value with the specified name
    */
@@ -119,14 +119,14 @@ object Implicits {
 
 /**
  * Attribute defines an attribute retrieved using either Sreg or Ax
- * 
+ *
  * name: SReg name of attribute
  * uri: Ax uri of attribute
  */
 case class Attribute(val name:String, val uri: String)
-  
+
 /**
- * Attributes that can retrieved using either Simple Registration or Attribute Exchange 
+ * Attributes that can retrieved using either Simple Registration or Attribute Exchange
  * extensions
  */
 object WellKnownAttributes {
@@ -135,22 +135,22 @@ object WellKnownAttributes {
   val FullName = Attribute("fullname", "http://axschema.org/namePerson")
   val Language = Attribute("language", "http://axschema.org/pref/language")
   val TimeZone  = Attribute("timezone", "http://axschema.org/pref/timezone")
-  
+
   // Ax supported only
   val FirstName = Attribute("first", "http://axschema.org/namePerson/first")
   val LastName = Attribute("last", "http://axschema.org/namePerson/last")
-  
+
   // All WellKnownAttributes
   val attributes = List(Nickname, Email, FullName, Language, TimeZone, FirstName, LastName, Language)
- 
-  // Locate attribute with the specified name 
+
+  // Locate attribute with the specified name
   def withName(name: String) = attributes find {_.name == name}
 
   /**
    * Extract all WellKnownAttributes & their values from message
    */
   def attributeValues(msg: Message): Map[Attribute, String] = {
-    Map() ++ 
+    Map() ++
       // Try Ax response
     (for {response <-  msg.fetchResponse.toList
          alias <- response.aliases
@@ -168,7 +168,7 @@ object WellKnownAttributes {
  * Endpoint as identifed from DiscoveredInformation
  */
 case class DiscoveredEndpoint(val name:String, val uriRegex: String) {
-  
+
   /**
    * Create a MessageExtension for the endpoint that fetches the requested attributes
    */
@@ -186,7 +186,7 @@ case class DiscoveredEndpoint(val name:String, val uriRegex: String) {
      attributes foreach {case (attr,required) => sreg.addAttribute(attr.name, required)}
      sreg
   }
- 
+
  /**
   * Create a provider specific MessageExtension for retrieving
   * the specified attributes using either Ax or SReg
@@ -197,7 +197,7 @@ case class DiscoveredEndpoint(val name:String, val uriRegex: String) {
 /**
  * WellKnownEndpoints know how to create an endpoint specific MessageExtension for retrieving
  * the WellKnownAttributes
- * 
+ *
  * Usefull for use in combination with the beforeAuth callback on OpenIDConsumer. The following example
  * shows a method that can be passed to beforeAuth to add an extension that fetches the Email, FullName,
  * FirstName & LastName attributes from the selected endpoint.
@@ -205,35 +205,35 @@ case class DiscoveredEndpoint(val name:String, val uriRegex: String) {
  * <pre>
  *  def ext(di:DiscoveryInformation, authReq: AuthRequest): Unit = {
  *   import WellKnownAttributes._
- *   WellKnownEndpoints.findEndpoint(di) map {ep 
+ *   WellKnownEndpoints.findEndpoint(di) map {ep
  *     => ep.makeAttributeExtension(List(Email, FullName, FirstName, LastName)) foreach {ex => authReq.addExtension(ex)}}
  * }
  * </pre>
- * 
+ *
  * See MetaOpenIDProtoUser for an example of how to extract the returned attribute values
  */
 object WellKnownEndpoints {
-  
+
   val Google = new DiscoveredEndpoint("Google","https://www\\.google\\.com/accounts/o8/.+") {
-    override def makeAttributeExtension(attrs: List[Attribute]): Box[MessageExtension] = 
+    override def makeAttributeExtension(attrs: List[Attribute]): Box[MessageExtension] =
       Full(fetchRequestExtension(attrs.zipAll(Nil, null, true)))
   }
 
   val Yahoo = new DiscoveredEndpoint("Yahoo","https://open\\.login\\.yahooapis\\.com/openid/op/auth") {
-    override def makeAttributeExtension(attrs: List[Attribute]): Box[MessageExtension] = 
+    override def makeAttributeExtension(attrs: List[Attribute]): Box[MessageExtension] =
       Full(fetchRequestExtension(attrs.zipAll(Nil, null, true)))
   }
 
   val MyOpenId = new DiscoveredEndpoint("MyOpenId","http://www\\.myopenid\\.com/server") {
-    override def makeAttributeExtension(attrs: List[Attribute]): Box[MessageExtension] = 
+    override def makeAttributeExtension(attrs: List[Attribute]): Box[MessageExtension] =
       Full(sRegRequestExtension(attrs.zipAll(Nil, null, true)))
   }
-  
+
   /**
    * List of WellKnownEndpoints
    */
   val endpoints = List(Google, MyOpenId, Yahoo)
-  
+
   /**
    * Try to identify a WellKnownEndpoint from DiscoveryInformation
    */
@@ -242,4 +242,5 @@ object WellKnownEndpoints {
   }
 }
 
-}}
+}
+}
