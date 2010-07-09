@@ -49,6 +49,7 @@ trait ItemsList[T <: Mapper[T]] {
    * Must itself be a T (the mapper type it represents)
    */
   def metaMapper: T with MetaMapper[T]
+
   /**
    * Whether the sorting algorithm should put null first or last
    */
