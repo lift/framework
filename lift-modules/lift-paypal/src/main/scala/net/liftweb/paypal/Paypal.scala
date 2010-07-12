@@ -434,12 +434,9 @@ trait BasePaypalTrait extends LiftRules.DispatchPF {
 
   def dispatch: List[LiftRules.DispatchPF] = Nil
 
-  lazy val mode: PaypalMode = Props.mode match {
-    case Props.RunModes.Production => PaypalLive
-    case _ => PaypalSandbox
-  }
+  lazy val mode = PaypalRules.mode.vend()
 
-  def connection: PaypalConnection = PaypalSSL
+  def connection = PaypalRules.connection.vend()
 
   def isDefinedAt(r: Req) = NamedPF.isDefinedAt(r, dispatch)
 
