@@ -1,6 +1,6 @@
 import java.net.URL
-import java.util.Calendar
-import java.util.jar.Attributes
+import java.util.{Calendar => C}
+import java.util.jar.Attributes.Name._
 import scala.xml.NodeSeq
 import sbt._
 
@@ -105,7 +105,7 @@ trait BasicLiftProject extends BasicManagedProject {
 
   // Additional user-defined properties that optionally can be defined for the project.
   lazy val projectUrl               = propertyOptional[URL](new URL("http://www.liftweb.net"), true)
-  lazy val projectInceptionyear     = propertyOptional[Int](Calendar.getInstance().get(Calendar.YEAR), true)
+  lazy val projectInceptionyear     = propertyOptional[Int](C.getInstance().get(C.YEAR), true)
   lazy val projectOrganizationName  = propertyOptional[String](organization, true)
   lazy val projectOrganizationUrl   = propertyOptional[URL](projectUrl.value, true)
 
@@ -168,23 +168,23 @@ abstract class LiftDefaultProject(info: ProjectInfo) extends DefaultProject(info
 
   // Package options
   lazy val extraSpecificationEntries = ManifestAttributes(
-    (Attributes.Name.SPECIFICATION_TITLE.toString,    name),
-    (Attributes.Name.SPECIFICATION_VERSION.toString,  version.toString),
-    (Attributes.Name.SPECIFICATION_VENDOR.toString,   projectOrganizationName.value))
+    (SPECIFICATION_TITLE.toString,    name),
+    (SPECIFICATION_VERSION.toString,  version.toString),
+    (SPECIFICATION_VENDOR.toString,   projectOrganizationName.value))
 
   lazy val extraImplementationEntries = ManifestAttributes(
-    (Attributes.Name.IMPLEMENTATION_TITLE.toString,     name),
-    (Attributes.Name.IMPLEMENTATION_VERSION.toString,   version.toString),
-    (Attributes.Name.IMPLEMENTATION_VENDOR_ID.toString, organization),
-    (Attributes.Name.IMPLEMENTATION_VENDOR.toString,    projectOrganizationName.value),
-    (Attributes.Name.IMPLEMENTATION_URL.toString,       projectUrl.value.toString))
+    (IMPLEMENTATION_TITLE.toString,     name),
+    (IMPLEMENTATION_VERSION.toString,   version.toString),
+    (IMPLEMENTATION_VENDOR_ID.toString, organization),
+    (IMPLEMENTATION_VENDOR.toString,    projectOrganizationName.value),
+    (IMPLEMENTATION_URL.toString,       projectUrl.value.toString))
 
   override def packageOptions =
     super.packageOptions ++ Seq(extraSpecificationEntries, extraImplementationEntries)
 
   // Document options
   private lazy val docBottom =
-    "Copyright (c) " + projectInceptionyear.value + "-" + Calendar.getInstance().get(Calendar.YEAR) + " " +
+    "Copyright (c) " + projectInceptionyear.value + "-" + C.getInstance().get(C.YEAR) + " " +
     projectOrganizationName.value + ". All Rights Reserved."
 
   override def documentOptions =
