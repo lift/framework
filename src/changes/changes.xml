@@ -41,6 +41,9 @@
       <action dev="dchenbecker" type="add" issue="574" system="assembla">
         Added support for head match in Menu DSL via the "**" object
       </action>
+      <action dev="dchenbecker" type="fix" issue="585" system="assembla">
+        Fixed FK support in Oracle and missing "timestamp" reserved word
+      </action>
     </release>
 
     <release version="2.0" date="2010-06-30" description="Lift 2.0 Final">
