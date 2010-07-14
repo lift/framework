@@ -400,6 +400,8 @@ object OracleDriver extends DriverType("Oracle") {
 
   // Oracle doesn't use "COLUMN" syntax when adding a column to a table
   override def alterAddColumn = "ADD"
+
+  override def supportsForeignKeys_? = true
 }
 
 object MaxDbDriver extends DriverType("MaxDB") {

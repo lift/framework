@@ -923,6 +923,7 @@ object DB extends Loggable {
        "then",
        "thread",
        "time",
+       "timestamp", // reserved in Oracle
        "to",
        "tracing",
        "transaction",
