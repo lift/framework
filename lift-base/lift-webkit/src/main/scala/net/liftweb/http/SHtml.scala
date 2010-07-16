@@ -735,8 +735,10 @@ object SHtml {
   /**
    * create an anchor tag around a body
    *
+   * @to - the target
    * @param func - the function to invoke when the link is clicked
    * @param body - the NodeSeq to wrap in the anchor tag
+   * @attrs - the (optional) attributes for the HTML element
    */
   def link(to: String, func: () => Any, body: NodeSeq,
            attrs: (String, String)*): Elem = {
