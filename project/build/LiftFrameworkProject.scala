@@ -4,7 +4,12 @@ import java.util.jar.Attributes.Name._
 import scala.xml.NodeSeq
 import sbt._
 
-class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with BasicLiftProject {
+
+/**
+ * Top level project definition for Lift.
+ * This is the entry point for the build definitions of the Lift sub-projects.
+ */
+class LiftFrameworkProject(info: ProjectInfo) extends LiftParentProject(info) {
 
   lazy val base         = project("lift-base",        "lift-base",        new LiftBaseProject(_))
   lazy val persistence  = project("lift-persistence", "lift-persistence", new LiftPersistenceProject(_),  base)
@@ -13,7 +18,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with B
   /**
    *  Lift Base Components
    */
-  class LiftBaseProject(info: ProjectInfo) extends ParentProject(info) with BasicLiftProject {
+  class LiftBaseProject(info: ProjectInfo) extends LiftParentProject(info) {
 
     // Lift Base Subprojects
     lazy val common = project("lift-common",  "lift-common",  new LiftCommonProject(_))
@@ -32,7 +37,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with B
   /**
    *  Lift Persistence Components
    */
-  class LiftPersistenceProject(info: ProjectInfo) extends ParentProject(info) with BasicLiftProject {
+  class LiftPersistenceProject(info: ProjectInfo) extends LiftParentProject(info) {
 
     // Lift Persistence Subprojects
     lazy val mapper         = project("lift-mapper",          "lift-mapper",          new LiftMapperProject(_))
@@ -53,7 +58,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with B
   /**
    *  Lift Modules
    */
-  class LiftModulesProject(info: ProjectInfo) extends ParentProject(info) with BasicLiftProject {
+  class LiftModulesProject(info: ProjectInfo) extends LiftParentProject(info) {
 
     // Lift Modules Subprojects
     lazy val testkit      = project("lift-testkit",       "lift-testkit",       new LiftTestkitProject(_))
@@ -94,11 +99,12 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with B
 
 }
 
+
 /**
  * Basic trait common for all the Lift project definitions.
- * This trait applies to both ParentProject as well as DefaultProject.
+ * This trait would be applied to both LiftParentProject as well as LiftDefaultProject.
  */
-trait BasicLiftProject extends BasicManagedProject {
+trait BasicLiftProject extends BasicDependencyProject {
 
   // Custom format for java.net.URL
   implicit lazy val urlFormat = new SimpleFormat[URL] { def fromString(s: String) = new URL(s) }
@@ -118,18 +124,37 @@ trait BasicLiftProject extends BasicManagedProject {
   private def isEmptyLic = projectLicenseName.value.trim.isEmpty
   private def isApacheLic = projectLicenseName.value.startsWith("Apache") // TODO: Enrich
 
+  lazy val publishRemote = propertyOptional[Boolean](false, true)
+
 //  override def disableCrossPaths = true
 
   // Add ScalaToolsSnapshots if this project is on snapshot
-  //  val snapshots = ScalaToolsSnapshots
-  override def repositories = version.toString match {
-    case s if s.endsWith("-SNAPSHOT") => super.repositories + ScalaToolsSnapshots
-    case _ => super.repositories
-  }
+  override def repositories =
+    if (version.toString.endsWith("-SNAPSHOT")) super.repositories + ScalaToolsSnapshots
+    else super.repositories
 
-  // Add Maven Local repository for SBT to search for
-  val mavenLocal = "Local Maven Repository" at "file://"+Path.userHome+"/.m2/repository"
+  // Add Maven Local repository for SBT to search for (TODO: remove if found to be redundant)
+  // val mavenLocal = "Local Maven Repository" at "file://" + (Path.userHome / ".m2" / "repository").absolutePath
 
+  // Set up publish repository (the tuple avoids SBT's ReflectiveRepositories detection)
+  private lazy val snapshotPublishRepo = ("Distribution Repository for Snapshots" -> "http://nexus.scala-tools.org/content/repositories/snapshots/")
+  private lazy val releasePublishRepo  = ("Distribution Repository for Releases"  -> "http://nexus.scala-tools.org/content/repositories/releases/")
+
+  val publishTo =
+    if (version.toString.endsWith("-SNAPSHOT")) snapshotPublishRepo._1 at snapshotPublishRepo._2
+    else releasePublishRepo._1 at releasePublishRepo._2
+
+  Credentials(Path.userHome / ".ivy2" / ".credentials", log)
+
+  // Tell SBT to publish to local Maven repository unless publish.remote=true
+  private lazy val localDestRepo = Resolver.file("maven-local", Path.userHome / ".m2" / "repository" asFile)
+//  private lazy val localDestRepo = mavenLocal.getRoot
+  override def defaultPublishRepository =
+    if (!publishRemote.value) Some(localDestRepo)
+    else super.defaultPublishRepository
+
+  // Enrich the generated POM
+  // TODO: add <url/> conditionally via pomPostProcess
   private lazy val pomBasic: NodeSeq =
     (<url>{projectUrl.value}</url>
     <inceptionYear>{projectInceptionyear.value}</inceptionYear>
@@ -142,17 +167,32 @@ trait BasicLiftProject extends BasicManagedProject {
     if (isEmptyLic) NodeSeq.Empty
     else
       (<licenses>
-        <license>
-          <name>{projectLicenseName.value}</name>
-          <url>{projectLicenseUrl.value}</url>
-          <distribution>{projectLicenseDistribution.value}</distribution>
-          <comments>{name} is licensed under {projectLicenseName.value}</comments>
-        </license>
-      </licenses>)
+         <license>
+           <name>{projectLicenseName.value}</name>
+           <url>{projectLicenseUrl.value}</url>
+           <distribution>{projectLicenseDistribution.value}</distribution>
+           <comments>{name} is licensed under {projectLicenseName.value}</comments>
+         </license>
+       </licenses>)
 
   override def pomExtra = pomBasic ++ pomLic
 
+  // Enforce Maven managedStyle
+  override def managedStyle = ManagedStyle.Maven
+
 }
+
+
+/**
+ * ParentProject specialized for Lift.
+ */
+abstract class LiftParentProject(info: ProjectInfo) extends ParentProject(info) with BasicLiftProject {
+
+  // Disable dependencies on sub-projects
+  override def deliverProjectDependencies = Nil
+
+}
+
 
 /**
  * DefaultProject specialized for Lift.
@@ -187,7 +227,15 @@ abstract class LiftDefaultProject(info: ProjectInfo) extends DefaultProject(info
     "Copyright (c) " + projectInceptionyear.value + "-" + C.getInstance().get(C.YEAR) + " " +
     projectOrganizationName.value + ". All Rights Reserved."
 
-  override def documentOptions =
-    super.documentOptions ++ Seq(LinkSource, documentBottom(docBottom), documentCharset("utf8"))
+  // TODO: comply with scaladoc for 2.8
+//  override def documentOptions =
+//    super.documentOptions ++ Seq(LinkSource, documentBottom(docBottom), documentCharset("utf8"))
+
+  // Make `package` depend on `test`
+  override def packageAction = super.packageAction dependsOn testAction
+
+  override def packageSrcJar = defaultJarPath("-sources.jar")
+  lazy val sourceArtifact = Artifact.sources(artifactID)
+  override def packageToPublishActions = super.packageToPublishActions ++ Seq(packageSrc)
 
 }
