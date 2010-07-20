@@ -133,8 +133,9 @@ trait BasicLiftProject extends BasicDependencyProject {
     if (version.toString.endsWith("-SNAPSHOT")) super.repositories + ScalaToolsSnapshots
     else super.repositories
 
-  // Add Maven Local repository for SBT to search for (TODO: remove if found to be redundant)
-  // val mavenLocal = "Local Maven Repository" at "file://" + (Path.userHome / ".m2" / "repository").absolutePath
+  // Add Maven Local repository for SBT to search for
+  // This is useful for resolving parent POM only; SBT does the needful of looking into (maven-local) for dependencies.
+  val mavenLocal = "Local Maven Repository" at "file://" + (Path.userHome / ".m2" / "repository").absolutePath
 
   // Set up publish repository (the tuple avoids SBT's ReflectiveRepositories detection)
   private lazy val snapshotPublishRepo = ("Distribution Repository for Snapshots" -> "http://nexus.scala-tools.org/content/repositories/snapshots/")
@@ -148,7 +149,6 @@ trait BasicLiftProject extends BasicDependencyProject {
 
   // Tell SBT to publish to local Maven repository unless publish.remote=true
   private lazy val localDestRepo = Resolver.file("maven-local", Path.userHome / ".m2" / "repository" asFile)
-//  private lazy val localDestRepo = mavenLocal.getRoot
   override def defaultPublishRepository =
     if (!publishRemote.value) Some(localDestRepo)
     else super.defaultPublishRepository
