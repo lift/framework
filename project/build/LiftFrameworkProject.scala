@@ -22,10 +22,10 @@ class LiftFrameworkProject(info: ProjectInfo) extends LiftParentProject(info) {
 
     // Lift Base Subprojects
     lazy val common = project("lift-common",  "lift-common",  new LiftCommonProject(_))
-    lazy val actor  = project("lift-actor",   "lift-actor",   new LiftActorProject(_),  common)
-    lazy val json   = project("lift-json",    "lift-json",    new LiftJsonProject(_),   common)
-    lazy val util   = project("lift-util",    "lift-util",    new LiftUtilProject(_),   actor)
-    lazy val webkit = project("lift-webkit",  "lift-webkit",  new LiftWebkitProject(_), json, util)
+    lazy val actor  = project("lift-actor",   "lift-actor",   new LiftActorProject(_), common)
+    lazy val json   = project("lift-json",    "lift-json",    new LiftJsonProject(_))
+    lazy val util   = project("lift-util",    "lift-util",    new LiftUtilProject(_), actor, json)
+    lazy val webkit = project("lift-webkit",  "lift-webkit",  new LiftWebkitProject(_), util)
 
     class LiftCommonProject(info: ProjectInfo)  extends LiftDefaultProject(info)
     class LiftActorProject(info:  ProjectInfo)  extends LiftDefaultProject(info)
@@ -41,11 +41,11 @@ class LiftFrameworkProject(info: ProjectInfo) extends LiftParentProject(info) {
 
     // Lift Persistence Subprojects
     lazy val mapper         = project("lift-mapper",          "lift-mapper",          new LiftMapperProject(_))
-    lazy val jpa            = project("lift-jpa",             "lift-jpa",             new LiftJpaProject(_),            mapper)
+    lazy val jpa            = project("lift-jpa",             "lift-jpa",             new LiftJpaProject(_))
     lazy val record         = project("lift-record",          "lift-record",          new LiftRecordProject(_),         mapper)
     lazy val couchdb        = project("lift-couchdb",         "lift-couchdb",         new LiftCouchDBProject(_),        record)
-    lazy val mongodb        = project("lift-mongodb",         "lift-mongodb",         new LiftMongoDBProject(_),        record)
-    lazy val mongodbRecord  = project("lift-mongodb-record",  "lift-mongodb-record",  new LiftMongoDBRecordProject(_),  mongodb)
+    lazy val mongodb        = project("lift-mongodb",         "lift-mongodb",         new LiftMongoDBProject(_))
+    lazy val mongodbRecord  = project("lift-mongodb-record",  "lift-mongodb-record",  new LiftMongoDBRecordProject(_),  mongodb, record)
 
     class LiftMapperProject       (info: ProjectInfo) extends LiftDefaultProject(info)
     class LiftRecordProject       (info: ProjectInfo) extends LiftDefaultProject(info)
