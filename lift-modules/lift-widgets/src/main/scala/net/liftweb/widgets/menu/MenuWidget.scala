@@ -105,16 +105,14 @@ class MenuWidget(style: MenuStyle.Value, jsObj: JsObj, groups : List[String]) {
           case _ => NodeSeq.Empty
 	    }
       }
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/menu/superfish.js"}></script>
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/menu/jquery.hoverIntent.js"}></script>
-      <script type="text/javascript" charset="utf-8">{
-        Unparsed("""
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/menu/superfish.js"}/>
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/menu/jquery.hoverIntent.js"}/>
+      {Script(JsRaw("""
          jQuery(document).ready(function() {
             jQuery('ul.sf-menu').superfish(""" + jsObj.toJsCmd + """);
           })
-         """)
+         """))
        }
-      </script>
     </head>
 
 

@@ -75,20 +75,19 @@ class CalendarDayView(val when: Calendar, val meta: DayViewMeta) {
 
     <head>
       <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath + "/calendars/dayview/style.css"} type="text/css"/>
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.dimensions.js"}></script>
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/calendars/js/calendarviews.js"}></script>
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.bgiframe.js"}></script>
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.tooltip.js"}></script>
-      <script type="text/javascript" charset="utf-8">{
-        Unparsed("\nvar itemClick = " + (itemClick openOr JsRaw("function(param){}")).toJsCmd) ++
-        Unparsed("\nvar calendars = " + CalendarUtils.toJSON(calendars filter (c => CalendarUtils.sameDay(c.start, when))).toJsCmd) ++
-        Unparsed("""
-         jQuery(document).ready(function() {
-            CalendarDayView.buildDayViewCalendars();
-          })
-         """)
-       }
-      </script>
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.dimensions.js"}/>
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/calendars/js/calendarviews.js"}/>
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.bgiframe.js"}/>
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.tooltip.js"}/>
+    {Script(
+      JsCrVar("itemClick", itemClick openOr JsRaw("function(param){}")) &
+      JsCrVar("calendars", CalendarUtils.toJSON(calendars filter (c => CalendarUtils.sameDay(c.start, when)))) &
+      JsRaw("""
+            jQuery(document).ready(function() {
+              CalendarWeekView.buildDayViewCalendars();
+            })
+            """)
+    )}
     </head>
 
     <div class="dayView">

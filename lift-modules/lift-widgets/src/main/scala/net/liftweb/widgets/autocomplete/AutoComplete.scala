@@ -202,7 +202,7 @@ class AutoComplete {
         <head>
           <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath +"/autocomplete/jquery.autocomplete.css"} type="text/css" />
           <script type="text/javascript" src={"/" + LiftRules.resourceServerPath +"/autocomplete/jquery.autocomplete.js"} />
-          <script type="text/javascript">{Unparsed(onLoad.toJsCmd)}</script>
+          {Script(onLoad)}
         </head>
         {
           attrs.foldLeft(<input type="text" id={id} value={start} />)(_ % _)

@@ -197,10 +197,10 @@ class CalendarMonthView(val when: Calendar, val meta: MonthViewMeta) {
 
       <head>
         <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath + "/calendars/monthview/style.css"} type="text/css"/>
-        <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.dimensions.js"}></script>
-        <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/calendars/js/calendarviews.js"}></script>
-        <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.bgiframe.js"}></script>
-        <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.tooltip.js"}></script>
+        <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.dimensions.js"}/>
+        <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/calendars/js/calendarviews.js"}/>
+        <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.bgiframe.js"}/>
+        <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.tooltip.js"}/>
         {Script((JsCrVar("itemClick", itemClick openOr JsRaw("function(param){}")) &
         JsCrVar("dayClick", dayClick openOr JsRaw("function(param){}")) &
         JsCrVar("weekClick", weekClick openOr JsRaw("function(param){}")) &

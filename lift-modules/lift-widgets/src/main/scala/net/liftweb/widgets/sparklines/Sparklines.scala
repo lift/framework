@@ -77,7 +77,7 @@ object Sparklines {
    */
   def renderCanvas(id: String, cssClass: String) : NodeSeq = {
     <head>
-       <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/sparklines/sparklines.min.js"}></script>
+       <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/sparklines/sparklines.min.js"}/>
     </head> ++
     <canvas id={id} class={cssClass}></canvas>
   }
