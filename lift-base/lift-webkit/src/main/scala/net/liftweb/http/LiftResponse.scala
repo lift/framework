@@ -18,7 +18,7 @@ package net.liftweb {
 package http {
 
 import _root_.net.liftweb.common._
-import _root_.scala.xml.{Node, Unparsed, Group, NodeSeq}
+import _root_.scala.xml.{Node, Group, NodeSeq}
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.http.provider._
 import js._

@@ -18,7 +18,7 @@ package net.liftweb {
 package widgets {
 package autocomplete {
 
-import _root_.scala.xml.{NodeSeq, Node, Elem, PCData, Text, Unparsed}
+import _root_.scala.xml.{NodeSeq, Node, Elem, PCData, Text}
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.http._
@@ -121,7 +121,7 @@ class AutoComplete {
         <head>
           <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath +"/autocomplete/jquery.autocomplete.css"} type="text/css" />
           <script type="text/javascript" src={"/" + LiftRules.resourceServerPath +"/autocomplete/jquery.autocomplete.js"} />
-          <script type="text/javascript">{Unparsed(onLoad.toJsCmd)}</script>
+          {Script(onLoad)}
         </head>
         <input type="text" id={id} value={default.openOr("")} />
         <input type="hidden" name={hidden} id={hidden} value={defaultNonce.openOr("")} />

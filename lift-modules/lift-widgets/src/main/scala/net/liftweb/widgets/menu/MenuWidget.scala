@@ -18,7 +18,7 @@ package net.liftweb {
 package widgets {
 package menu {
 
-import _root_.scala.xml.{NodeSeq, Node, Elem, PCData, Text, Unparsed}
+import _root_.scala.xml.{NodeSeq, Node, Elem, PCData, Text}
 import _root_.net.liftweb.http.{LiftRules, S}
 import _root_.net.liftweb.http.js._
 import _root_.net.liftweb.sitemap._

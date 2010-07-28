@@ -111,15 +111,15 @@ class CalendarDayView(val when: Calendar, val meta: DayViewMeta) {
         for (val i <- 0 to 23) yield
         try{
           <tr>
-            <td class="dayHour"><div>{Unparsed(meta.timeFormatter format(cal getTime))}</div></td>
+            <td class="dayHour"><div>{(meta.timeFormatter format(cal getTime)).toString}</div></td>
             {
-              <td id={Unparsed("didx_" + (i*2 toString))} class="dayCell borderDashed"></td>
+              <td id={"didx_" + (i*2 toString)} class="dayCell borderDashed"></td>
             }
           </tr>
           <tr>
             <td class="dayHour borderSolid"></td>
             {
-              <td id={Unparsed("didx_" + ((i*2+1) toString))} class="dayCell borderSolid"></td>
+              <td id={"didx_" + ((i*2+1) toString)} class="dayCell borderSolid"></td>
             }
           </tr>
         } finally {

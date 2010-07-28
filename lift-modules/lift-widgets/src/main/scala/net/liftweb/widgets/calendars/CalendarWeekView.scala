@@ -143,11 +143,11 @@ class CalendarWeekView(val when: Calendar, val meta: WeekViewMeta) {
         for (val i <- 0 to 23) yield
         try{
           <tr>
-            <td class="wkHour"><div>{Unparsed(meta.timeFormatter format(cal getTime))}</div></td>
+            <td class="wkHour"><div>{(meta.timeFormatter format(cal getTime)).toString}</div></td>
            {
-              <td id={Unparsed("wkhidx_" + startIndex + "_" + (i*2 toString))} class="wkCell borderDashed"></td> ++
+              <td id={("wkhidx_" + startIndex + "_" + (i*2 toString))} class="wkCell borderDashed"></td> ++
                 (for (val day <- 1 to 6) yield {
-                    <td id={Unparsed("wkhidx_" + (f(day, startIndex)) + "_" + (i*2 toString))} class="wkCell borderDashed borderLeft"></td>
+                    <td id={("wkhidx_" + (f(day, startIndex)) + "_" + (i*2 toString))} class="wkCell borderDashed borderLeft"></td>
                  }
                 )
             }
@@ -155,9 +155,9 @@ class CalendarWeekView(val when: Calendar, val meta: WeekViewMeta) {
           <tr>
             <td class="wkHour borderSolid"></td>
             {
-              <td id={Unparsed("wkhidx_" + startIndex + "_" + ((i*2+1) toString))} class="wkCell borderSolid"></td> ++
+              <td id={("wkhidx_" + startIndex + "_" + ((i*2+1) toString))} class="wkCell borderSolid"></td> ++
                 (for (val day <- 1 to 6) yield
-                    <td id={Unparsed("wkhidx_" + (f(day, startIndex)) + "_" + ((i*2+1) toString))} class="wkCell borderSolid borderLeft"></td>
+                    <td id={("wkhidx_" + (f(day, startIndex)) + "_" + ((i*2+1) toString))} class="wkCell borderSolid borderLeft"></td>
                 )
             }
           </tr>
