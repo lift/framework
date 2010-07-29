@@ -25,7 +25,7 @@ import _root_.javax.crypto.spec._
 import _root_.scala.xml.{Node, XML}
 import common._
 
-object SecurityHelpers extends StringHelpers with IoHelpers
+object SecurityHelpers extends StringHelpers with IoHelpers with SecurityHelpers
 
 /**
  * The SecurityHelpers trait provides functions to:<ul>
