@@ -509,6 +509,7 @@ object JsCmds {
     override val toJsCmd = {
       val html = fixHtml("inline", content);
       """
+  try {
   var parent = document.getElementById(""" + id.encJs + """);
   parent.innerHTML = """ + html + """;
   for (var i = 0; i < parent.childNodes.length; i++) {
@@ -516,6 +517,9 @@ object JsCmds {
     parent.parentNode.insertBefore(node.cloneNode(true), parent);
   }
   parent.parentNode.removeChild(parent);
+  } catch (e) {
+    // if the node doesn't exist or something else bad happens
+  }
 """
 
     }
