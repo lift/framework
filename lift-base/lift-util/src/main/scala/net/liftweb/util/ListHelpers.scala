@@ -53,7 +53,8 @@ trait ListHelpers {
    */
   def first[B, C](in: Seq[B])(_f: B => Box[C]): Box[C] = {
     val f: B => Iterable[C] = _f andThen Box.box2Iterable[C]
-    Box(in.projection.flatMap(f).headOption)
+    // We use toStream here to avoid multiple execution of "f" for each element access (Issue #596)
+    Box(in.toStream.flatMap(f).headOption)
   }
 
   /**
