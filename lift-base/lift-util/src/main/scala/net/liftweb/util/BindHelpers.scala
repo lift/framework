@@ -364,6 +364,26 @@ trait BindHelpers {
     })
   }
 
+  /**
+   * takes a NodeSeq and applies all the attributes to all the Elems at the top level of the
+   * NodeSeq.  The id attribute is applied to the first-found Elem only
+   */
+  def addAttributes(in: NodeSeq, attributes: MetaData): NodeSeq = {
+    if (attributes == Null) in
+    else {
+      val noId = attributes.filter(_.key != "id")
+      var doneId = false
+      in map {
+        case e: Elem =>
+          if (doneId) e % noId else {
+            doneId = true
+            e % attributes
+          }
+        case x => x
+      }
+    }
+  }
+
   private def snToNs(in: Seq[Node]): NodeSeq = in
 
   class SuperArrowAssoc(name: String) {
@@ -386,10 +406,18 @@ trait BindHelpers {
     def ->[T <: Bindable](in: T with Bindable) = TheBindableBindParam[T](name, in)
     def ->[T](in: T) = Tuple2[String, T](name, in)
 
-    def -%>(in: Elem) = FuncBindParam(name, old => in % (BindHelpers.currentNode.map(_.attributes) openOr Null))
-    def -%>(in: Box[Elem]) = FuncBindParam(name, old => in.map(_ % (BindHelpers.currentNode.map(_.attributes) openOr Null)) openOr NodeSeq.Empty)
-    def -%>(in: Option[Elem]) = FuncBindParam(name, old => in.map(_ % (BindHelpers.currentNode.map(_.attributes) openOr Null)) getOrElse NodeSeq.Empty)
-    def -%>(in: NodeSeq => Elem) = FuncBindParam(name, old => in(old) % (BindHelpers.currentNode.map(_.attributes) openOr Null))
+    def -%>(in: NodeSeq) = FuncBindParam(name, old => addAttributes(in , (BindHelpers.currentNode.map(_.attributes) openOr Null)))
+    def -%>(in: Box[NodeSeq]) = FuncBindParam(name, 
+                                              old => in.map(a => addAttributes(a, 
+                                                                               (BindHelpers.currentNode.map(_.attributes) openOr Null))) openOr
+                                              NodeSeq.Empty)
+    
+    def -%>(in: Option[NodeSeq]) = FuncBindParam(name, old => in.map(a => addAttributes(a,
+                                                                                        (BindHelpers.currentNode.map(_.attributes) openOr
+                                                                                         Null))) getOrElse NodeSeq.Empty)
+                                                 
+    def -%>(in: NodeSeq => NodeSeq) = FuncBindParam(name, old => addAttributes(in(old),
+                                                                               (BindHelpers.currentNode.map(_.attributes) openOr Null)))
 
     def _id_>(in: Elem) = FuncBindParam(name, _ => in % new UnprefixedAttribute("id", name, Null))
     def _id_>(in: Box[Elem]) = FuncBindParam(name, _ => in.map(_ % new UnprefixedAttribute("id", name, Null)) openOr NodeSeq.Empty)
