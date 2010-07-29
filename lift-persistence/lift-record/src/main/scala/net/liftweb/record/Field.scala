@@ -24,7 +24,6 @@ import net.liftweb.util._
 import scala.reflect.Manifest
 import scala.xml._
 
-
 trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
   private[record] var needsDefault = true
   private[record] var dirty = false
