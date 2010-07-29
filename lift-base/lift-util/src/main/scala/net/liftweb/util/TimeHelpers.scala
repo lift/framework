@@ -340,7 +340,7 @@ trait TimeHelpers { self: ControlHelpers =>
   /**
    * @return a standard format HH:mm:ss
    */
-  val hourFormat = new SimpleDateFormat("HH:mm:ss")
+  def hourFormat = new SimpleDateFormat("HH:mm:ss")
 
   /**
    * @return the formatted time for a given Date
