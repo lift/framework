@@ -309,8 +309,13 @@ object DBLog {
             chain(method,  args)
         }
       }
+      case "toString" => {
+        // We'll call into our own representation here
+        this.toString
+      }        
+        
       // These are from wrapper and are required
-    case "isWrapperFor" => args(0).getClass match {
+      case "isWrapperFor" => args(0).getClass match {
         case `representative` => Boolean.box(true)
         case _ => chain(method,  args)
       }
@@ -333,7 +338,10 @@ object DBLog {
       throw nsme
     }
 
-    override def toString = executedStatements.reverse.mkString("\n")
+    /* This toString only gets invoked if we target this instance as a
+     * LoggedStatementHandler directly, or via the proxied "toString" above.
+     */
+    override def toString = "Logged Statements =\n" + executedStatements.reverse.map("  " + _).mkString("\n")
   }
 
   /**
