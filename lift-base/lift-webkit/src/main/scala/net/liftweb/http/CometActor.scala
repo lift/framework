@@ -649,7 +649,8 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     performReRender(false)
   }
 
-  implicit def arrayToRenderOut(in: Array[Node]): RenderOut = xmlToXmlOrJsCmd(in: NodeSeq)
+  implicit def arrayToRenderOut(in: Array[Node]): RenderOut = 
+    xmlToXmlOrJsCmd(in.toSeq: NodeSeq)
 
   implicit def xmlToXmlOrJsCmd(in: NodeSeq): RenderOut = new RenderOut(Full(in), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode) else Empty, Empty, false)
 
