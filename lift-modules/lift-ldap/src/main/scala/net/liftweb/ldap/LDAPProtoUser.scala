@@ -81,6 +81,9 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
      */
     def loginErrorMessage: String = "Unable to login with : %s"
 
+  def commonNameAttributeName = "cn"
+  def uidAttributeName = "uid"
+
     override def loginXhtml : Elem = {
         <form method="post" action={S.uri}>
             <table>
@@ -140,12 +143,12 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
 
     def bindAttributes(attrs: Attributes) = {
         for {
-            theCn <- Box !! attrs.get("cn").get
-            theUid <- Box !! attrs.get("uid").get
+            theCn <- Box !! attrs.get(commonNameAttributeName).get
+            theUid <- Box !! attrs.get(uidAttributeName).get
         }
         {
-            cn(attrs.get("cn").get.toString)
-            uid(attrs.get("uid").get.toString)
+            cn(theCn.toString)
+            uid(theUid.toString)
         }
     }
 }
