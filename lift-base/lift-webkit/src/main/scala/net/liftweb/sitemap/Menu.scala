@@ -84,7 +84,108 @@ object Menu {
    * A convenient way to define a Menu items that's got the same name as it does it's localized LinkText.
    * <pre>Menu.i("Home") / "index"</pre> is short-hand for <pre>Menu("Home", S ? "Home") / "index"</pre>
    */
-  def i(nameAndLink: String) = Menu(nameAndLink, S ? nameAndLink)
+  def i(nameAndLink: String): PreMenu = Menu.apply(nameAndLink, S ? nameAndLink)
+
+  def param[T](name: String, linkText: Loc.LinkText[T], parser: String => Box[T],
+               encoder: T => String): PreParamMenu[T] =
+    new PreParamMenu[T](name, linkText, parser, encoder)
+
+
+  /**
+   * An intermediate class that holds the basic stuff that's needed to make a Menu item for SiteMap.
+   * You must include at least one URI path element by calling the / method
+   */
+  class PreParamMenu[T](name: String, linkText: Loc.LinkText[T], parser: String => Box[T], encoder: T => String) {
+    /**
+     * The method to add a path element to the URL representing this menu item
+     */
+    def /(pathElement: String): ParamMenuable[T] with WithSlash = 
+      new ParamMenuable[T](name, linkText, parser, encoder, pathElement :: Nil, false, Nil, Nil) with WithSlash
+  }
+
+  class ParamMenuable[T](val name: String,val linkText: Loc.LinkText[T],
+                         val parser: String => Box[T],
+                         val encoder: T => String,
+                         val path: List[String],
+                         val headMatch: Boolean,
+                         val params: List[Loc.LocParam[T]],val submenus: List[ConvertableToMenu]) extends ConvertableToMenu with BaseMenuable
+  {
+    type BuiltType = ParamMenuable[T]
+
+    def buildOne(newPath: List[String], newHead: Boolean): BuiltType = new ParamMenuable[T](name, linkText, parser, encoder, newPath, newHead, params, submenus)
+    def buildSlashOne(newPath: List[String], newHead: Boolean): BuiltType with WithSlash = new ParamMenuable[T](name, linkText, parser, encoder, newPath, newHead, params, submenus) with WithSlash
+
+
+    /**
+     * Append a LocParam to the Menu item
+     */
+    def rule(param: Loc.LocParam[T]): ParamMenuable[T] = >>(param)
+
+    /**
+     * Append a LocParam to the Menu item
+     */
+    def >>(param: Loc.LocParam[T]): ParamMenuable[T] =
+    new ParamMenuable[T](name, linkText, parser, encoder, path, headMatch, params ::: List(param), submenus)
+    
+    /**
+     * Define the submenus of this menu item
+     */
+    def submenus(subs: ConvertableToMenu*): ParamMenuable[T] = submenus(subs.toList)
+
+    /**
+     * Define the submenus of this menu item
+     */
+    def submenus(subs: List[ConvertableToMenu]): ParamMenuable[T] =
+      new ParamMenuable[T](name, linkText, parser, encoder, path, headMatch, params, submenus ::: subs)
+
+    /**
+     * Convert the Menuable into a Menu instance
+     */
+    def toMenu: Menu = ParamMenuable.toMenu(this)
+  }
+
+  /**
+   * The companion object to Menuable that has convenience methods
+   */
+  object ParamMenuable {
+    /**
+     * Convert a Menuable into a Menu when you need a Menu.
+     */
+    implicit def toMenu[T](able: ParamMenuable[T]): Menu = 
+      Menu(new Loc[T] {
+        import scala.xml._
+
+        // the name of the page
+        def name = able.name
+        
+        // the default parameters (used for generating the menu listing)
+        def defaultValue = Empty
+
+        // no extra parameters
+        def params = able.params
+
+        /**
+         * What's the text of the link?
+         */
+        def text = able.linkText
+
+        val link = new Loc.Link[T](able.path, able.headMatch) {
+          override def createLink(in: T) = Full(Text(able.path.mkString("/", "/", "/")+urlEncode(able.encoder(in))))
+        }
+
+        /**
+         * Rewrite the request and emit the type-safe parameter
+         */
+        override val rewrite: LocRewrite =
+          Full(NamedPF("Wiki Rewrite") {
+            case RewriteRequest(ParsePath(x, _, _,_), _, _) 
+            if x.dropRight(1) == able.path && x.takeRight(1).headOption.flatMap(a => able.parser(a)).isDefined
+            =>
+                                  (RewriteResponse(x.dropRight(1)), x.takeRight(1).headOption.flatMap(a => able.parser(a)).get) 
+              
+          })
+      })
+  }
 
 
   /**
@@ -99,29 +200,45 @@ object Menu {
       new Menuable(name, linkText, pathElement :: Nil, false, Nil, Nil) with WithSlash
   }
 
+  trait BaseMenuable {
+    type BuiltType
+
+    def path: List[String]
+    def headMatch: Boolean
+
+    def buildOne(newPath: List[String], newHead: Boolean): BuiltType
+    def buildSlashOne(newPath: List[String], newHead: Boolean): BuiltType with WithSlash
+  }
+
   trait WithSlash {
-    self: Menuable =>
+    self: BaseMenuable =>
       /**
        * The method to add a path element to the URL representing this menu item. This method is
        * typically only used to allow the <pre>**</pre> object mechanism for specifying head match.
        */
-      def /(pathElement: MenuPath): Menuable = pathElement match {
-        case ** => new Menuable(name, linkText, path, true, params, submenus) // Slashing stops here
-        case _  => new Menuable(name, linkText, path ::: List(pathElement.pathItem), headMatch, params, submenus) with WithSlash
+      def /(pathElement: MenuPath): BuiltType = pathElement match {
+        case ** => buildOne(path, true)
+        case _  => buildOne(path ::: List(pathElement.pathItem), headMatch)
       }
 
       /**
        * The method to add a path element to the URL representing this menu item
        */
-      def /(pathElement: String): Menuable with WithSlash = 
-        new Menuable(name, linkText, path ::: List(pathElement), headMatch, params, submenus) with WithSlash
+      def /(pathElement: String): BuiltType with WithSlash = buildSlashOne(path ::: List(pathElement), headMatch)
   }
 
   class Menuable(val name: String,val linkText: Loc.LinkText[Unit],
                  val path: List[String],
                  val headMatch: Boolean,
-                 val params: List[Loc.LocParam[Unit]],val submenus: List[ConvertableToMenu]) extends ConvertableToMenu
+                 val params: List[Loc.LocParam[Unit]],val submenus: List[ConvertableToMenu]) extends ConvertableToMenu with BaseMenuable
   {
+
+    type BuiltType = Menuable
+
+    def buildOne(newPath: List[String], newHead: Boolean): BuiltType = new Menuable(name, linkText, newPath, newHead, params, submenus)
+    def buildSlashOne(newPath: List[String], newHead: Boolean): BuiltType with WithSlash = new Menuable(name, linkText, newPath, newHead, params, submenus) with WithSlash
+
+
     /**
      * Append a LocParam to the Menu item
      */
