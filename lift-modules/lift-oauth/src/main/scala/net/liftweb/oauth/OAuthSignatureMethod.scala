@@ -107,7 +107,8 @@ class HMAC_SHA1(accessor: OAuthAccessor) extends OAuthSignatureMethod(accessor) 
   private val MAC_NAME = "HmacSHA1"
   override def isValid(signature: String, baseString: String) = {
     Thread.sleep(Helpers.randomLong(10)) // Avoid a timing attack
-    getSignature(baseString) == signature
+    Helpers.secureEquals(getSignature(baseString) openOr 
+                         signature.reverse.toString, signature)
   }
   override def getSignature(baseString: String) = for {
     cs <- computeSignature(baseString)
@@ -137,7 +138,8 @@ object HMAC_SHA1 extends OAuthSignatureMethodBuilder {
 class PLAINTEXT(accessor: OAuthAccessor) extends OAuthSignatureMethod(accessor) {
   override def isValid(signature: String, baseString: String) = {
     Thread.sleep(Helpers.randomLong(10)) // Avoid a timing attack
-    (getSignature(baseString) == signature)
+    Helpers.secureEquals(getSignature(baseString) openOr
+                         signature.reverse.toString, signature)
   }
 
   override def getSignature(baseString: String): Box[String] =

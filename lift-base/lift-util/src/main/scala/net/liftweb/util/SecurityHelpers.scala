@@ -201,6 +201,37 @@ trait SecurityHelpers { self: StringHelpers with IoHelpers =>
     Helpers.hexEncode(MessageDigest.getInstance("SHA").digest(in.getBytes("UTF-8")))
   }
 
+  /** Compare two strings in a way that does not vary if the strings
+   * are determined to be not equal early (test every byte... avoids
+   * timing attackes */
+  def secureEquals(s1: String, s2: String): Boolean = (s1, s2) match {
+    case (null, null) => true
+    case (null, _) => false
+    case (_, null) => false
+    case (a, b) => secureEquals(a.getBytes("UTF-8"), b.getBytes("UTF-8"))
+  }
+    
+  /** Compare two byte arrays in a way that does not vary if the arrays
+   * are determined to be not equal early (test every byte... avoids
+   * timing attackes */
+  def secureEquals(s1: Array[Byte], s2: Array[Byte]): Boolean = (s1, s2) match {
+    case (null, null) => true
+    case (null, _) => false
+    case (_, null) => false
+    case (a, b) => {
+      val la = a.length
+      val lb = b.length
+      var ret = true
+      var pos = 0
+      while (pos < la && pos < lb) {
+        ret &= (a(pos) == b(pos))
+        pos += 1
+      }
+      ret && la == lb
+    }
+  }
+    
+
   /** create a SHA-256 hash from a Byte array */
   def hash256(in : Array[Byte]) : Array[Byte] = {
     (MessageDigest.getInstance("SHA-256")).digest(in)
