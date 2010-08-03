@@ -18,7 +18,7 @@ package net.liftweb {
 package textile {
 
 import _root_.scala.util.parsing.combinator.{Parsers, ImplicitConversions}
-import _root_.scala.xml.{Elem => XmlElem, MetaData, NodeSeq, Null, Text, TopScope, Unparsed, UnprefixedAttribute, Group, Node}
+import _root_.scala.xml.{Elem => XmlElem, MetaData, NodeSeq, Null, Text, TopScope, UnprefixedAttribute, Group, Node}
 import _root_.scala.collection.mutable.HashMap
 
 /**

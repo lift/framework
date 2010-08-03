@@ -18,7 +18,7 @@ package net.liftweb {
 package widgets {
 package flot {
 
-import scala.xml.{NodeSeq, Node, PCData, Text, Unparsed}
+import scala.xml.{NodeSeq, Node, PCData, Text}
 
 import _root_.net.liftweb.http.js.JsCmd
 

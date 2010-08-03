@@ -100,15 +100,15 @@ trait OAuthSignatureMethodBuilder {
   def apply(accessor: OAuthAccessor): OAuthSignatureMethod
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
 // HMAC_SHA1 Signature Generator
-////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class HMAC_SHA1(accessor: OAuthAccessor) extends OAuthSignatureMethod(accessor) {
   private val ENCODING = OAuthUtil.ENCODING
   private val MAC_NAME = "HmacSHA1"
   override def isValid(signature: String, baseString: String) = {
-    getSignature(baseString) == signature
+    Thread.sleep(Helpers.randomLong(10)) // Avoid a timing attack
+    Helpers.secureEquals(getSignature(baseString) openOr 
+                         signature.reverse.toString, signature)
   }
   override def getSignature(baseString: String) = for {
     cs <- computeSignature(baseString)
@@ -132,12 +132,16 @@ object HMAC_SHA1 extends OAuthSignatureMethodBuilder {
   def apply(accessor: OAuthAccessor): OAuthSignatureMethod = new HMAC_SHA1(accessor)
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+  
 // Plaintext Signature Generator
-////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class PLAINTEXT(accessor: OAuthAccessor) extends OAuthSignatureMethod(accessor) {
-  override def isValid(signature: String, baseString: String) = (getSignature(baseString) == signature)
+  override def isValid(signature: String, baseString: String) = {
+    Thread.sleep(Helpers.randomLong(10)) // Avoid a timing attack
+    Helpers.secureEquals(getSignature(baseString) openOr
+                         signature.reverse.toString, signature)
+  }
+
   override def getSignature(baseString: String): Box[String] =
   for {
     ts <- getTokenSecret

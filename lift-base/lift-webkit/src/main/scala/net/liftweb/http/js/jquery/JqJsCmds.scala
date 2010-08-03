@@ -18,7 +18,7 @@ package http {
 package js {
 package jquery {
 
-import _root_.scala.xml.{NodeSeq, Group, Unparsed, Elem, Node, SpecialNode}
+import _root_.scala.xml.{NodeSeq, Group, Elem, Node, SpecialNode}
 import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.util.Helpers
 import _root_.net.liftweb.util.TimeHelpers

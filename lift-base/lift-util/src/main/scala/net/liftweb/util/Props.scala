@@ -19,6 +19,7 @@ package util {
 
 import _root_.java.net.InetAddress
 import _root_.java.util.Properties
+import _root_.java.io.InputStream
 import Helpers._
 import common._
 
@@ -195,6 +196,16 @@ object Props extends Logger {
       () => "/" + _modeName + "default.")
 
   /**
+   * This is a function that returns the first places to look for a props file.
+   * The function returns a List of String -> () => Box[InputStream].
+   * So, if you want to consult System.getProperties to look for a properties file or
+   * some such, you can set the whereToLook function in your Boot.scala file
+   * <b>before</b> you call anything else in Props.
+   */
+  @volatile var whereToLook: () => List[(String, () => Box[InputStream])] = () => Nil
+  
+
+  /**
    * The map of key/value pairs retrieved from the property file.
    */
   lazy val props: Map[String, String] = {
@@ -204,14 +215,23 @@ object Props extends Logger {
 
   var tried: List[String] = Nil
 
+  def vendStreams: List[(String, () => Box[InputStream])] = whereToLook() :::
+    toTry.map{
+      f => {
+        val name = f() + "props"
+        name -> (() => tryo{getClass.getResourceAsStream(name)}.filter(_ ne null))
+      }
+    }
+
   // find the first property file that is available
-  first(toTry){strFunc =>
-    val f = strFunc()
-    tried ::= f
-    tryo(getClass.getResourceAsStream(f+"props")).filter(_ ne null).
-    map{s =>
+  first(vendStreams){
+    case (str, streamBox) =>
+    tried ::= str
+    for {
+      stream <- streamBox()
+    } yield {
       val ret = new Properties
-      val ba = Helpers.readWholeStream(s)
+      val ba = Helpers.readWholeStream(stream)
       try {
         ret.loadFromXML(new ByteArrayInputStream(ba))
       } catch {

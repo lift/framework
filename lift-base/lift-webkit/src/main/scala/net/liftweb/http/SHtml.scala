@@ -1099,11 +1099,12 @@ object SHtml {
     }
   }
 
-  def fileUpload(func: FileParamHolder => Unit): Elem = {
-    val f2: FileParamHolder => Unit = fp =>
-            if (fp.file != null && fp.file.length > 0) func(fp)
-
-    fmapFunc(BinFuncHolder(f2))(name => <input type="file" name={name}/>)
+  def fileUpload(func: FileParamHolder => Unit, attrs: (String, String)*): Elem = {
+    val f2: FileParamHolder => Unit =
+      fp => if (fp.file != null && fp.file.length > 0) func(fp)
+    fmapFunc(BinFuncHolder(f2)) { name => 
+      attrs.foldLeft(<input type="file" name={ name }/>) { _ % _ }
+    }
   }
 
   /** Holds a form control as HTML along with some user defined value */

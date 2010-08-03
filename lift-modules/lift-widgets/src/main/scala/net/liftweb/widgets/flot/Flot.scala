@@ -71,8 +71,8 @@ object Flot
   ): NodeSeq =
   {
     val ieExcanvasPackJs = Unparsed("<!--[if IE]><script language=\"javascript\" type=\"text/javascript\" src=\"" +
-                                    net.liftweb.http.S.contextPath + "/" +
-                                    LiftRules.resourceServerPath + "/flot/excanvas.js\"></script><![endif]-->")
+                                    urlEncode(net.liftweb.http.S.contextPath) + "/" +
+                                    urlEncode(LiftRules.resourceServerPath) + "/flot/excanvas.js\"></script><![endif]-->")
 
     // 27/06/2009 add style tag )See http://groups.google.com/group/liftweb/browse_thread/thread/5e0335583e2a248b?hl=en&pli=1)
 
@@ -82,14 +82,14 @@ object Flot
 
     def renderHead(): NodeSeq = {
     val ieExcanvasPackJs = Unparsed("<!--[if IE]><script language=\"javascript\" type=\"text/javascript\" src=\"" +
-                                    net.liftweb.http.S.contextPath + "/" +
-                                    LiftRules.resourceServerPath + "/flot/excanvas.js\"></script><![endif]-->")
+                                    urlEncode(net.liftweb.http.S.contextPath) + "/" +
+                                    urlEncode(LiftRules.resourceServerPath) + "/flot/excanvas.js\"></script><![endif]-->")
 
     // 27/06/2009 add style tag )See http://groups.google.com/group/liftweb/browse_thread/thread/5e0335583e2a248b?hl=en&pli=1)
 
 
     <head>
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/flot/jquery.flot.js"}></script>
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/flot/jquery.flot.js"}/>
     {ieExcanvasPackJs}
       <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath + "/flot/jquery.flot.css"} type="text/css"/>
     </head>

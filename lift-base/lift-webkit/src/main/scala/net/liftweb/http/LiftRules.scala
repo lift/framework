@@ -625,7 +625,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
 
   private var sitemapFunc: Box[() => SiteMap] = Empty
 
-  private object sitemapRequestVar extends RequestVar(resolveSitemap())
+  private object sitemapRequestVar extends TransientRequestVar(resolveSitemap())
 
   /**
   * Set the sitemap to a function that will be run to generate the sitemap.

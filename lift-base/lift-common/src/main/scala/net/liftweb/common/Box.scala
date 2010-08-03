@@ -468,7 +468,13 @@ sealed abstract class EmptyBox extends Box[Nothing] {
 
   override def filter(p: Nothing => Boolean): Box[Nothing] = this
 
-  override def ?~(msg: String) = Failure(msg, Empty, Empty)
+  override def ?~(msg: String): Failure = Failure(msg, Empty, Empty)
+
+  override def ?~!(msg: String): Failure = Failure(msg, Empty, Empty)
+
+  override def ~>[T](errorCode: T): ParamFailure[T] = 
+    ParamFailure("", Empty, Empty, errorCode)
+
 
   /**
    * If the partial function is defined at the current Box's value
@@ -496,10 +502,6 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
     override def getCause() = exception openOr null
   }
 
-  override def ?~(msg: String) = this
-
-  override def ?~!(msg: String) = Failure(msg, Empty, Full(this))
-
   override def map[B](f: A => B): Box[B] = this
 
   override def flatMap[B](f: A => Box[B]): Box[B] = this
@@ -521,6 +523,10 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
     case _ => false
   }
 
+  override def ?~(msg: String): Failure = this
+
+  override def ?~!(msg: String): Failure = Failure(msg, Empty, Full(this))
+
   override def ~>[T](errorCode: T): ParamFailure[T] = ParamFailure(msg, exception, chain, errorCode)
 }
 
@@ -532,7 +538,21 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
 final class ParamFailure[T](override val msg: String,
 		            override val exception: Box[Throwable],
 		            override val chain: Box[Failure], val param: T) extends
-  Failure(msg, exception, chain)
+  Failure(msg, exception, chain) {
+    override def toString(): String = "ParamFailure("+msg+", "+exception+
+    ", "+chain+", "+param+")"
+
+    override def equals(that: Any): Boolean = that match {
+      case ParamFailure(m, e, c, p) =>
+        m == msg && e == exception && c == chain && p == param
+      case _ => false
+    }
+
+    override def hashCode(): Int = super.hashCode() + (param match {
+      case null => 0
+      case x => x.hashCode()
+    })
+  }
 
 object ParamFailure {
   def apply[T](msg: String, exception: Box[Throwable], chain: Box[Failure], param: T) =

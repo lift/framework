@@ -111,7 +111,7 @@ trait Queryable[SelfType <: Queryable[SelfType]] {
   protected def newQueryable(req: Request): SelfType
 
   /** Add parameters to the query */
-  protected def withParams(params: MapTrait[String, Any]): SelfType = newQueryable(this <<? params)
+  def withParams(params: MapTrait[String, Any]): SelfType = newQueryable(this <<? params)
 
   /** Fetch results of the query */
   def query: Handler[Box[QueryResults]] = this ># (QueryResult.read _)

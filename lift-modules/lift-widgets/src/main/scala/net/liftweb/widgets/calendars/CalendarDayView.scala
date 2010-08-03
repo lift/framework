@@ -75,20 +75,19 @@ class CalendarDayView(val when: Calendar, val meta: DayViewMeta) {
 
     <head>
       <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath + "/calendars/dayview/style.css"} type="text/css"/>
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.dimensions.js"}></script>
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/calendars/js/calendarviews.js"}></script>
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.bgiframe.js"}></script>
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.tooltip.js"}></script>
-      <script type="text/javascript" charset="utf-8">{
-        Unparsed("\nvar itemClick = " + (itemClick openOr JsRaw("function(param){}")).toJsCmd) ++
-        Unparsed("\nvar calendars = " + CalendarUtils.toJSON(calendars filter (c => CalendarUtils.sameDay(c.start, when))).toJsCmd) ++
-        Unparsed("""
-         jQuery(document).ready(function() {
-            CalendarDayView.buildDayViewCalendars();
-          })
-         """)
-       }
-      </script>
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.dimensions.js"}/>
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/calendars/js/calendarviews.js"}/>
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.bgiframe.js"}/>
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/common/jquery.tooltip.js"}/>
+    {Script(
+      JsCrVar("itemClick", itemClick openOr JsRaw("function(param){}")) &
+      JsCrVar("calendars", CalendarUtils.toJSON(calendars filter (c => CalendarUtils.sameDay(c.start, when)))) &
+      JsRaw("""
+            jQuery(document).ready(function() {
+              CalendarWeekView.buildDayViewCalendars();
+            })
+            """)
+    )}
     </head>
 
     <div class="dayView">
@@ -112,15 +111,15 @@ class CalendarDayView(val when: Calendar, val meta: DayViewMeta) {
         for (val i <- 0 to 23) yield
         try{
           <tr>
-            <td class="dayHour"><div>{Unparsed(meta.timeFormatter format(cal getTime))}</div></td>
+            <td class="dayHour"><div>{(meta.timeFormatter format(cal getTime)).toString}</div></td>
             {
-              <td id={Unparsed("didx_" + (i*2 toString))} class="dayCell borderDashed"></td>
+              <td id={"didx_" + (i*2 toString)} class="dayCell borderDashed"></td>
             }
           </tr>
           <tr>
             <td class="dayHour borderSolid"></td>
             {
-              <td id={Unparsed("didx_" + ((i*2+1) toString))} class="dayCell borderSolid"></td>
+              <td id={"didx_" + ((i*2+1) toString)} class="dayCell borderSolid"></td>
             }
           </tr>
         } finally {

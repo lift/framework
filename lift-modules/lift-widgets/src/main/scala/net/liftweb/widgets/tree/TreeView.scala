@@ -62,12 +62,10 @@ class TreeView {
     <head>
       <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath + "/tree/jquery.treeview.css"} type="text/css"/>
       <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/tree/jquery.treeview.js"}/>
-       <script type="text/javascript" charset="utf-8">{
-         OnLoad(JqId(id) ~> new JsExp with JsMember {
+       {Script(OnLoad(JqId(id) ~> new JsExp with JsMember {
            def toJsCmd = "treeview(" + jsObj.toJsCmd + ")"
-         }) toJsCmd
+         }))
        }
-       </script>
     </head>
 
   }

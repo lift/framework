@@ -312,7 +312,7 @@ object Schemifier extends Loggable {
         val md = connection.getMetaData
         // val rs = md.getCrossReference(null, null,otherTable , null, null, myTable)
         var foundIt = false
-        using(md.getExportedKeys(null, getDefaultSchemaName(connection), myTable))(rs =>
+        using(md.getImportedKeys(null, getDefaultSchemaName(connection), myTable))(rs =>
           //val rs = md.getCrossReference(null, null,myTable , null, null, otherTable)
           while (!foundIt && rs.next) {
             val pkName = rs.getString(4)

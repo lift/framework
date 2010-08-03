@@ -23,7 +23,7 @@ import _root_.scala.collection.mutable.{ListBuffer}
 import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.json._
-import _root_.scala.xml.{NodeSeq, Text, Elem, Unparsed, Node, Group, Null, PrefixedAttribute, UnprefixedAttribute}
+import _root_.scala.xml.{NodeSeq, Text, Elem, Node, Group, Null, PrefixedAttribute, UnprefixedAttribute}
 import _root_.scala.collection.immutable.TreeMap
 import _root_.scala.collection.mutable.{HashSet, ListBuffer}
 import _root_.net.liftweb.http.js._
@@ -648,6 +648,9 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     whosAsking = Empty
     performReRender(false)
   }
+
+  implicit def arrayToRenderOut(in: Array[Node]): RenderOut = 
+    xmlToXmlOrJsCmd(in.toSeq: NodeSeq)
 
   implicit def xmlToXmlOrJsCmd(in: NodeSeq): RenderOut = new RenderOut(Full(in), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode) else Empty, Empty, false)
 

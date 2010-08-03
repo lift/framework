@@ -39,7 +39,7 @@ class TextareaField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: I
 
     uniqueFieldId match {
       case Full(id) =>
-        <div id={id+"_holder"}><div><label for={id+"_field"}>{displayName}</label></div>{el % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
+        <div id={id+"_holder"}><div>{label}</div>{el % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
       case _ => <div>{el}</div>
     }
 

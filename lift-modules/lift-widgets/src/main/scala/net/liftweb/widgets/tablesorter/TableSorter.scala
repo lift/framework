@@ -50,8 +50,8 @@ object TableSorter {
             """
     <head>
       <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath + "/tablesorter/themes/blue/style.css"} type="text/css" id="" media="print, projection, screen" />
-      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/tablesorter/jquery.tablesorter.js"}></script>
-      <script type="text/javascript" charset="utf-8">{onLoad}</script>
+      <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/tablesorter/jquery.tablesorter.js"}/>
+      {Script(JsRaw(onLoad))}
     </head>
   }
 

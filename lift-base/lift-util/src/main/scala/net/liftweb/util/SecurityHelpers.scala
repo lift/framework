@@ -25,7 +25,7 @@ import _root_.javax.crypto.spec._
 import _root_.scala.xml.{Node, XML}
 import common._
 
-object SecurityHelpers extends StringHelpers with IoHelpers
+object SecurityHelpers extends StringHelpers with IoHelpers with SecurityHelpers
 
 /**
  * The SecurityHelpers trait provides functions to:<ul>
@@ -169,8 +169,13 @@ trait SecurityHelpers { self: StringHelpers with IoHelpers =>
     new CipherInputStream(in, cipher)
   }
 
+  private final def cleanArray(in: Array[Byte]): Array[Byte] = in.filter(a => a >= 32 && a <= 127)
+
   /** encode a Byte array in Base 64 */
-  def base64Encode(in: Array[Byte]): String = new String((new Base64).encode(in))
+  def base64Encode(in: Array[Byte]): String = new String(cleanArray((new Base64).encode(in)))
+
+  /** encode a Byte array in Base 64 in a way that's safe for use in URLs */
+  def base64EncodeURLSafe(in: Array[Byte]): String = new String(Base64.encodeBase64URLSafe(in))
 
   /** decode a String in Base 64 */
   def base64Decode(in: String): Array[Byte] = (new Base64).decode(in.getBytes("UTF-8"))
@@ -179,7 +184,7 @@ trait SecurityHelpers { self: StringHelpers with IoHelpers =>
   def md5(in: Array[Byte]): Array[Byte] = (MessageDigest.getInstance("MD5")).digest(in)
 
   /** create a MD5 digest from a String */
-  def md5(in: String): String = new String((new Base64) encode md5(in.getBytes("UTF-8")))
+  def md5(in: String): String = new String(cleanArray((new Base64) encode md5(in.getBytes("UTF-8"))))
 
   /** create a SHA hash from a Byte array */
   def hash(in : Array[Byte]) : Array[Byte] = {
@@ -188,13 +193,44 @@ trait SecurityHelpers { self: StringHelpers with IoHelpers =>
 
   /** create a SHA hash from a String */
   def hash(in: String) : String = {
-    new String((new Base64) encode (MessageDigest.getInstance("SHA")).digest(in.getBytes("UTF-8")))
+    new String(cleanArray((new Base64) encode (MessageDigest.getInstance("SHA")).digest(in.getBytes("UTF-8"))))
   }
 
    /** create a SHA hash from a String */
   def hashHex(in: String) : String = {
     Helpers.hexEncode(MessageDigest.getInstance("SHA").digest(in.getBytes("UTF-8")))
   }
+
+  /** Compare two strings in a way that does not vary if the strings
+   * are determined to be not equal early (test every byte... avoids
+   * timing attackes */
+  def secureEquals(s1: String, s2: String): Boolean = (s1, s2) match {
+    case (null, null) => true
+    case (null, _) => false
+    case (_, null) => false
+    case (a, b) => secureEquals(a.getBytes("UTF-8"), b.getBytes("UTF-8"))
+  }
+    
+  /** Compare two byte arrays in a way that does not vary if the arrays
+   * are determined to be not equal early (test every byte... avoids
+   * timing attackes */
+  def secureEquals(s1: Array[Byte], s2: Array[Byte]): Boolean = (s1, s2) match {
+    case (null, null) => true
+    case (null, _) => false
+    case (_, null) => false
+    case (a, b) => {
+      val la = a.length
+      val lb = b.length
+      var ret = true
+      var pos = 0
+      while (pos < la && pos < lb) {
+        ret &= (a(pos) == b(pos))
+        pos += 1
+      }
+      ret && la == lb
+    }
+  }
+    
 
   /** create a SHA-256 hash from a Byte array */
   def hash256(in : Array[Byte]) : Array[Byte] = {
@@ -203,7 +239,7 @@ trait SecurityHelpers { self: StringHelpers with IoHelpers =>
 
   /** create a SHA-256 hash from a String */
   def hash256(in : String): String = {
-    new String((new Base64) encode (MessageDigest.getInstance("SHA-256")).digest(in.getBytes("UTF-8")))
+    new String(cleanArray((new Base64) encode (MessageDigest.getInstance("SHA-256")).digest(in.getBytes("UTF-8"))))
   }
 
   /** create an hex encoded SHA hash from a Byte array */

@@ -85,7 +85,7 @@ class StringField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int
   def toForm = {
     uniqueFieldId match {
       case Full(id) =>
-         <div id={id+"_holder"}><div><label for={id+"_field"}>{displayName}</label></div>{elem % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
+         <div id={id+"_holder"}><div>{label}</div>{elem % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
       case _ => <div>{elem}</div>
     }
 

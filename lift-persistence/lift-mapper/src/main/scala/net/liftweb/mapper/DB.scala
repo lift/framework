@@ -457,6 +457,46 @@ object DB extends Loggable {
       })
   }
 
+  /**
+   * Executes the given parameterized update string with the given parameters.
+   * Parameters are substituted in order. For Date/Time types, passing a java.util.Date will result in a
+   * Timestamp parameter. If you want a specific SQL Date/Time type, use the corresponding
+   * java.sql.Date, java.sql.Time, or java.sql.Timestamp classes.
+   */
+  def runUpdate(query: String, params: List[Any]): Int =
+  runUpdate(query, params, DefaultConnectionIdentifier)
+
+  /**
+   * Executes the given parameterized update string with the given parameters.
+   * Parameters are substituted in order. For Date/Time types, passing a java.util.Date will result in a
+   * Timestamp parameter. If you want a specific SQL Date/Time type, use the corresponding
+   * java.sql.Date, java.sql.Time, or java.sql.Timestamp classes.
+   */
+  def runUpdate(query: String, params: List[Any], connectionIdentifier: ConnectionIdentifier): Int = {
+    use(connectionIdentifier)(conn => prepareStatement(query, conn) {
+        ps =>
+        params.zipWithIndex.foreach {
+          case (null, idx) => ps.setNull(idx + 1, Types.VARCHAR)
+          case (i: Int, idx) => ps.setInt(idx + 1, i)
+          case (l: Long, idx) => ps.setLong(idx + 1, l)
+          case (d: Double, idx) => ps.setDouble(idx + 1, d)
+          case (f: Float, idx) => ps.setFloat(idx + 1, f)
+            // Allow the user to specify how they want the Date handled based on the input type
+          case (t: _root_.java.sql.Timestamp, idx) => ps.setTimestamp(idx + 1, t)
+          case (d: _root_.java.sql.Date, idx) => ps.setDate(idx + 1, d)
+          case (t: _root_.java.sql.Time, idx) => ps.setTime(idx + 1, t)
+            /* java.util.Date has to go last, since the java.sql date/time classes subclass it. By default we
+             * assume a Timestamp value */
+          case (d: _root_.java.util.Date, idx) => ps.setTimestamp(idx + 1, new _root_.java.sql.Timestamp(d.getTime))
+          case (b: Boolean, idx) => ps.setBoolean(idx + 1, b)
+          case (s: String, idx) => ps.setString(idx + 1, s)
+          case (bn: _root_.java.math.BigDecimal, idx) => ps.setBigDecimal(idx + 1, bn)
+          case (obj, idx) => ps.setObject(idx + 1, obj)
+        }
+
+        ps.executeUpdate
+      })
+  }
 
   def runQuery(query: String): (List[String], List[List[String]]) =
     use(DefaultConnectionIdentifier)(conn => exec(conn, query)(resultSetTo))
