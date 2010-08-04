@@ -37,13 +37,96 @@
     </action>
    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
    -->
-    <release version="${project.version}" date="${publishDate}" description="Lift 2.1 Release Candidate">
+    <release version="${project.version}" date="${publishDate}" description="Lift 2.1 Snapshot Release">
+    </release>
+
+    <release version="2.1-M1" date="2010-08-04" description="Lift 2.1 Milestone 1">
       <action dev="dchenbecker" type="add" issue="574" system="assembla">
         Added support for head match in Menu DSL via the "**" object
       </action>
       <action dev="dchenbecker" type="fix" issue="585" system="assembla">
         Fixed FK support in Oracle and missing "timestamp" reserved word
       </action>
+      <action dev="dpp" type="fix" issue="584" system="assembla">
+        Many of the Scripts are not properly escaped
+      </action>
+      <action dev="dpp" type="fix" issue="598" system="assembla">
+        ParamFailure does not work correctly
+      </action>
+      <action dev="dpp" type="fix" issue="603" system="assembla">
+        The find method in Actors consumes stack space
+      </action>
+      <action dev="dpp" type="fix" issue="604" system="assembla">
+        object SecurityHelpers doesn't extend the trait
+      </action>
+      <action dev="dpp" type="fix" issue="605" system="assembla">
+        Enhance Menu DSL to support WikiStuff style Locs
+      </action>
+      <action dev="dpp" type="fix" issue="566" system="assembla">
+        add base64EncodeURLSafe to SecurityHelpers
+      </action>
+      <action dev="dpp" type="fix" issue="567" system="assembla">
+        ldap user bind attribute names should be overrideable
+      </action>
+      <action dev="dpp" type="fix" issue="571" system="assembla">
+        Allows to have properties configuration files outside of the war
+      </action>
+      <action dev="dpp" type="fix" issue="581" system="assembla">
+        Replace JS Command is fragile
+      </action>
+      <action dev="dpp" type="fix" issue="582" system="assembla">
+        SQL UPDATE query support in Mapper
+      </action>
+      <action dev="dpp" type="fix" issue="583" system="assembla">
+        snippet errors in CRUDify view/edit/delete pages
+      </action>
+      <action dev="dpp" type="fix" issue="592" system="assembla">
+        TimeHelpers.hourFormat is not thread safe
+      </action>
+      <action dev="dpp" type="fix" issue="594" system="assembla">
+        overriding Field#label not affecting TextareaField#toFrom
+      </action>
+      <action dev="dpp" type="fix" issue="595" system="assembla">
+        Enable attribute merging on wizard form fields
+      </action>
+      <action dev="dpp" type="fix" issue="575" system="assembla">
+        Better promotion of stuff to RenderOut in Comet
+      </action>
+      <action dev="dchenbecker" type="fix" issue="570" system="assembla">
+        DBLog dynamic proxy -- calling toString fails
+      </action>
+      <action dev="dchenbecker" type="fix" issue="597" system="assembla">
+        Schemifier FK support uses incorrect JDBC API method
+      </action>
+      <action dev="dchenbecker" type="fix" issue="596" system="assembla">
+        On 2.8 ordinary snippets get instantiated a few times
+      </action>
+      <action dev="indrajitr" type="fix" issue="554" system="assembla" due-to="nafg">
+        ItemsListSpecs not compiling on 2.8
+      </action>
+      <action dev="timperrett" type="fix" issue="557" system="assembla">
+        Add detailed toString method to PaypalInfo
+      </action>
+      <action dev="jonifreeman" type="fix" issue="564" system="assembla">
+        Custom JSON serialization fails if paranamer fails
+      </action>
+      <action dev="jonifreeman" type="fix" issue="565" system="assembla">
+        Custom JSON serialization fails with Date (and other primitives)
+      </action>
+      <action dev="indrajitr" type="fix" issue="578" system="assembla">
+        Adjust maven-scala-plugin to generate unified scaladoc
+      </action>
+      <action dev="timperrett" type="fix" issue="586" system="assembla">
+        Enhance the OOTB experience
+      </action>
+      <action dev="dridus" type="fix" issue="591" system="assembla">
+        Custom CouchDB view query params
+      </action>
+
+      <action dev="hseeberger" type="fix" issue="608" system="assembla">
+        Add attributes to fileUpload
+      </action>
+
     </release>
 
     <release version="2.0" date="2010-06-30" description="Lift 2.0 Final">
