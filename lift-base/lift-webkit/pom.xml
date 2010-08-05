@@ -65,7 +65,6 @@
       <artifactId>lift-json_${scala.version}</artifactId>
       <version>${project.version}</version>
     </dependency>
-
     <dependency>
       <groupId>commons-fileupload</groupId>
       <artifactId>commons-fileupload</artifactId>
@@ -81,6 +80,18 @@
     <dependency>
       <groupId>net.sourceforge.jwebunit</groupId>
       <artifactId>jwebunit-htmlunit-plugin</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-tools.testing</groupId>
+      <artifactId>specs_${scala.version}</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-tools.testing</groupId>
+      <artifactId>scalacheck_${scala.version}</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
     </dependency>
   </dependencies>
 
