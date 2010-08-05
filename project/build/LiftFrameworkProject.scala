@@ -202,7 +202,7 @@ abstract class LiftDefaultProject(info: ProjectInfo) extends DefaultProject(info
   // Compile options [TODO: add additional debug options conditionally]
   override def compileOptions =
 //    super.compileOptions ++ Seq(Unchecked) ++ Seq("-Xmigration", "-encoding", "utf8").map(x => CompileOption(x))
-    Unchecked :: Seq("-Xmigration", "-encoding", "utf8").map(x => CompileOption(x))
+    Seq(Unchecked) ++ Seq("-Xmigration", "-encoding", "utf8").map(x => CompileOption(x))
 
   // Test options
   // override def testOptions = super.testOptions ++ TODO
