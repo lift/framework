@@ -13,7 +13,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends LiftParentProject(info) {
 
   lazy val base         = project("lift-base",        "lift-base",        new LiftBaseProject(_))
   lazy val persistence  = project("lift-persistence", "lift-persistence", new LiftPersistenceProject(_),  base)
-  lazy val modules      = project("lift-modules",     "lift-modules",     new LiftModulesProject(_),      base, persistence)
+  lazy val modules      = project("lift-modules",     "lift-modules",     new LiftModulesProject(_),      persistence)
 
   /**
    *  Lift Base Components
@@ -22,9 +22,9 @@ class LiftFrameworkProject(info: ProjectInfo) extends LiftParentProject(info) {
 
     // Lift Base Subprojects
     lazy val common = project("lift-common",  "lift-common",  new LiftCommonProject(_))
-    lazy val actor  = project("lift-actor",   "lift-actor",   new LiftActorProject(_), common)
+    lazy val actor  = project("lift-actor",   "lift-actor",   new LiftActorProject(_),  common)
     lazy val json   = project("lift-json",    "lift-json",    new LiftJsonProject(_))
-    lazy val util   = project("lift-util",    "lift-util",    new LiftUtilProject(_), actor, json)
+    lazy val util   = project("lift-util",    "lift-util",    new LiftUtilProject(_),   actor, json)
     lazy val webkit = project("lift-webkit",  "lift-webkit",  new LiftWebkitProject(_), util)
 
     class LiftCommonProject(info: ProjectInfo)  extends LiftDefaultProject(info)
@@ -72,7 +72,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends LiftParentProject(info) {
     lazy val xmpp         = project("lift-xmpp",          "lift-xmpp",          new LiftXMPPProject(_))
     lazy val openid       = project("lift-openid",        "lift-openid",        new LiftOpenIdProject(_))
     lazy val oauth        = project("lift-oauth",         "lift-oauth",         new LiftOauthProject(_))
-    lazy val oauthMapper  = project("lift-oauth-mapper",  "lift-oauth-mapper",  new LiftOauthMapperProject(_))
+    lazy val oauthMapper  = project("lift-oauth-mapper",  "lift-oauth-mapper",  new LiftOauthMapperProject(_), oauth)
     lazy val paypal       = project("lift-paypal",        "lift-paypal",        new LiftPaypalProject(_))
     lazy val jta          = project("lift-jta",           "lift-jta",           new LiftJTAProject(_))
     lazy val imaging      = project("lift-imaging",       "lift-imaging",       new LiftImagingProject(_))
@@ -177,8 +177,8 @@ trait BasicLiftProject extends BasicDependencyProject {
 
   override def pomExtra = pomBasic ++ pomLic
 
-  // Enforce Maven managedStyle
-  override def managedStyle = ManagedStyle.Maven
+  // Enforce Maven managedStyle [FIXME: this is necessary to publish pom during 'sbt publish', but it breaks 'sbt update' when using dependencies from pom.xml]
+  // override def managedStyle = ManagedStyle.Maven
 
 }
 
@@ -199,9 +199,10 @@ abstract class LiftParentProject(info: ProjectInfo) extends ParentProject(info) 
  */
 abstract class LiftDefaultProject(info: ProjectInfo) extends DefaultProject(info) with BasicLiftProject {
 
-  // Compile options
+  // Compile options [TODO: add additional debug options conditionally]
   override def compileOptions =
-    super.compileOptions ++ Seq(Unchecked) ++ Seq("-Xcheckinit", "-Xmigration", "-encoding", "utf8").map(x => CompileOption(x))
+//    super.compileOptions ++ Seq(Unchecked) ++ Seq("-Xmigration", "-encoding", "utf8").map(x => CompileOption(x))
+    Unchecked :: Seq("-Xmigration", "-encoding", "utf8").map(x => CompileOption(x))
 
   // Test options
   // override def testOptions = super.testOptions ++ TODO
@@ -234,8 +235,9 @@ abstract class LiftDefaultProject(info: ProjectInfo) extends DefaultProject(info
   // Make `package` depend on `test`
   override def packageAction = super.packageAction dependsOn testAction
 
-  override def packageSrcJar = defaultJarPath("-sources.jar")
-  lazy val sourceArtifact = Artifact.sources(artifactID)
-  override def packageToPublishActions = super.packageToPublishActions ++ Seq(packageSrc)
+  // Publish sources [FIXME: this breaks 'sbt update' when using dependencies from pom.xml]
+  // override def packageSrcJar = defaultJarPath("-sources.jar")
+  // lazy val sourceArtifact = Artifact.sources(artifactID)
+  // override def packageToPublishActions = super.packageToPublishActions ++ Seq(packageSrc)
 
 }
