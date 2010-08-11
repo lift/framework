@@ -135,7 +135,7 @@ trait BasicLiftProject extends BasicDependencyProject {
 
   // Add Maven Local repository for SBT to search for
   // This is useful for resolving parent POM only; SBT does the needful of looking into (maven-local) for dependencies.
-  val mavenLocal = "Local Maven Repository" at "file://" + (Path.userHome / ".m2" / "repository").absolutePath
+  //val mavenLocal = "Local Maven Repository" at "file://" + (Path.userHome / ".m2" / "repository").absolutePath
 
   // Set up publish repository (the tuple avoids SBT's ReflectiveRepositories detection)
   private lazy val snapshotPublishRepo = ("Distribution Repository for Snapshots" -> "http://nexus.scala-tools.org/content/repositories/snapshots/")
