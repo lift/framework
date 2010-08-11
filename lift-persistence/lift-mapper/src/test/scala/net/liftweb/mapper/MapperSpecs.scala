@@ -144,8 +144,7 @@ object MapperSpecs extends Specification {
         "snake connection should snakify default table & column names" in {
           SampleModelSnake.firstName.name must_== "firstName"
           SampleModelSnake.firstName.dbColumnName must_== "first_name"
-          // FIXME: SBT doesn't like this, revisit
-          //SampleModelSnake.dbTableName must_== "sample_model_snake"
+          SampleModelSnake.dbTableName must_== "sample_model_snake"
         }
 
         "user defined names are not changed" in {
