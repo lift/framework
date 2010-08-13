@@ -38,9 +38,7 @@ abstract class JsonObjectField[OwnerType <: MongoRecord[OwnerType], JObjectType 
   /**
    * Convert the field value to an XHTML representation
    */
-  def toForm: NodeSeq = NodeSeq.Empty // FIXME
-
-  def asXHtml: NodeSeq = NodeSeq.Empty // FIXME
+  override def toForm: Box[NodeSeq] = Empty // FIXME
 
   /**
   * Returns the field's value as a valid JavaScript expression

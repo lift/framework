@@ -24,6 +24,7 @@ import _root_.net.liftweb.http.js.JE.{JsNull, Str}
 import _root_.net.liftweb.json.JsonAST.{JNothing, JNull, JString, JValue}
 import _root_.net.liftweb.record.{Field, Record}
 import _root_.net.liftweb.record.FieldHelpers
+import _root_.scala.xml.NodeSeq
 
 import org.bson.types.ObjectId
 
@@ -66,7 +67,7 @@ class ObjectIdField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
     }
   }
 
-  def toForm = <div></div>
+  def toForm: Box[NodeSeq] = Empty
 
   def owner = rec
 }

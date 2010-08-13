@@ -75,7 +75,9 @@ class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
     case _                => setBox(Full(s))
   }
 
-  override def validateField: List[FieldError] = runValidation(validatedValue)
+  override def validate: List[FieldError] = runValidation(validatedValue)
+
+  override def notOptionalErrorMessage = S.??("password.must.be.set")
 
   private def elem = S.fmapFunc(SFuncHolder(this.setFromAny(_))){
     funcName => <input type="password"
@@ -83,36 +85,20 @@ class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
       value={valueBox openOr ""}
       tabindex={tabIndex toString}/>}
 
-  def toForm = {
+  def toForm: Box[NodeSeq] =
     uniqueFieldId match {
-      case Full(id) =>
-        <div id={id+"_holder"}><div><label for={id+"_field"}>{displayName}</label></div>{elem % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
-      case _ => <div>{elem}</div>
+      case Full(id) => Full(elem % ("id" -> (id + "_field")))
+      case _ => Full(elem)
     }
 
-  }
-
-  def asXHtml: NodeSeq = {
-    var el = elem
-
-    uniqueFieldId match {
-      case Full(id) =>  el % ("id" -> (id+"_field"))
-      case _ => el
-    }
-  }
-
-  protected def validatePassword(pwdBox: Box[String]): List[FieldError] = 
-    pwdBox match {
-      case _: EmptyBox => Text(S.??("password.must.be.set"))
-      case Full("") | Full(null) => Text(S.??("password.must.be.set"))
-      case Full(pwd) if pwd == "*" ||
-         pwd == PasswordField.blankPw || 
-         pwd.length < PasswordField.minPasswordLength => 
-        Text(S.??("password.too.short"))
+  protected def validatePassword(pwd: String): List[FieldError] = 
+    pwd match {
+      case ""|null => Text(notOptionalErrorMessage)
+      case s if s == "*" || s == PasswordField.blankPw || s.length < PasswordField.minPasswordLength => Text(S.??("password.too.short"))
       case _ => Nil
     }
 
-  override def validators = validatePassword _ :: Nil
+  override def validations = validatePassword _ :: Nil
 
   def defaultValue = ""
 

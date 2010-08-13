@@ -32,15 +32,15 @@ class PostalCodeField[OwnerType <: Record[OwnerType]](rec: OwnerType, country: C
 
   override def setFilter = notNull _ :: toUpper _ :: trim _ :: super.setFilter
 
-  private def genericCheck(zip: Box[String]): List[FieldError] = {
-    zip flatMap {
+  private def genericCheck(zip: String): List[FieldError] = {
+    zip match {
       case null => Full(Text(S.??("invalid.postal.code")))
       case s if s.length < 3 => Full(Text(S.??("invalid.postal.code")))
       case _ => Empty
     }
   }
 
-  def validate(in : Box[String]): List[FieldError] = country.value match {
+  def validatePostalCode(in : String): List[FieldError] = country.value match {
     case Countries.USA       => valRegex(RegexPattern.compile("[0-9]{5}(\\-[0-9]{4})?"), S.??("invalid.zip.code"))(in)
     case Countries.Sweden    => valRegex(RegexPattern.compile("[0-9]{3}[ ]?[0-9]{2}"), S.??("invalid.postal.code"))(in)
     case Countries.Australia => valRegex(RegexPattern.compile("(0?|[1-9])[0-9]{3}"), S.??("invalid.postal.code"))(in)
@@ -48,7 +48,7 @@ class PostalCodeField[OwnerType <: Record[OwnerType]](rec: OwnerType, country: C
     case _ => genericCheck(in)
   }
 
-  override def validators = validate _ :: Nil
+  override def validations = validatePostalCode _ :: Nil
 
 }
 

@@ -24,6 +24,7 @@ import _root_.net.liftweb.http.js.JE.Str
 import _root_.net.liftweb.json.JsonAST.{JNothing, JObject, JValue}
 import _root_.net.liftweb.json.JsonParser
 import _root_.net.liftweb.record.{Field, Record}
+import _root_.scala.xml.NodeSeq
 
 @Deprecated
 class JObjectField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[JObject, OwnerType] {
@@ -56,7 +57,7 @@ class JObjectField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field
     Full(set(JsonParser.parse(in).asInstanceOf[JObject]))
   }
 
-  def toForm = <div></div>
+  def toForm: Box[NodeSeq] = Empty
 
   def owner = rec
 }

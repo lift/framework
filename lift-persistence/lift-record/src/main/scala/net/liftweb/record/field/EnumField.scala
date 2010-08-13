@@ -79,25 +79,11 @@ class EnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](rec: Ow
 
   private def elem = SHtml.selectObj[Box[EnumType#Value]](buildDisplayList, Full(valueBox), setBox(_)) % ("tabindex" -> tabIndex.toString)
 
-  def toForm = {
-    var el = elem
-
+  def toForm: Box[NodeSeq]  =
     uniqueFieldId match {
-      case Full(id) =>
-        <div id={id+"_holder"}><div><label for={id+"_field"}>{displayName}</label></div>{el % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
-      case _ => <div>{el}</div>
+      case Full(id) => Full(elem % ("id" -> (id + "_field")))
+      case _ => Full(elem)
     }
-
-  }
-
-  def asXHtml: NodeSeq = {
-    var el = elem
-
-    uniqueFieldId match {
-      case Full(id) => el % ("id" -> (id+"_field"))
-      case _ => el
-    }
-  }
 
   def defaultValue: EnumType#Value = enum.iterator.next
 

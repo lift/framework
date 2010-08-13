@@ -26,7 +26,7 @@ import net.liftweb.http.{Req, SHtml}
 import net.liftweb.mapper.Safe
 import field._
 
-trait Record[MyType <: Record[MyType]] {
+trait Record[MyType <: Record[MyType]] extends FieldContainer {
   self: MyType =>
 
   /**
@@ -38,6 +38,8 @@ trait Record[MyType <: Record[MyType]] {
    * Get the fields defined on the meta object for this record instance
    */
   def fields() = meta.fields(this)
+
+  def allFields = fields()
 
   /**
    * The meta record (the object that contains the meta result for this type)

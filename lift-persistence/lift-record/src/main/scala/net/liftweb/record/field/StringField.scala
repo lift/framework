@@ -36,11 +36,8 @@ class StringField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int
 
   def maxLen = maxLength
   
-  protected def valueTypeToBoxString(in: ValueType): Box[String] = in
-  protected def boxStrToValType(in: Box[String]): ValueType = in
-
-
-  type ValueType = Box[String]
+  protected def valueTypeToBoxString(in: ValueType): Box[String] = Full(in)
+  protected def boxStrToValType(in: Box[String]): ValueType = in openOr defaultValue
 
   def this(rec: OwnerType, maxLength: Int, value: String) = {
     this(rec, maxLength)
@@ -82,23 +79,11 @@ class StringField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int
       tabindex={tabIndex toString}/>
   }
 
-  def toForm = {
+  def toForm: Box[NodeSeq] =
     uniqueFieldId match {
-      case Full(id) =>
-         <div id={id+"_holder"}><div>{label}</div>{elem % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
-      case _ => <div>{elem}</div>
+      case Full(id) => Full(elem % ("id" -> (id + "_field")))
+      case _ => Full(elem)
     }
-
-  }
-
-  def asXHtml: NodeSeq = {
-    var el = elem
-
-    uniqueFieldId match {
-      case Full(id) =>  el % ("id" -> (id+"_field"))
-      case _ => el
-    }
-  }
 
 
   def defaultValue = ""

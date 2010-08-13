@@ -50,24 +50,11 @@ class TimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Stri
 
   private def elem = SHtml.select(buildDisplayList, Full(valueBox openOr ""), set) % ("tabindex" -> tabIndex.toString)
 
-  override def toForm = {
-    var el = elem
-
+  override def toForm: Box[NodeSeq] = 
     uniqueFieldId match {
-      case Full(id) =>
-        <div id={id+"_holder"}><div><label for={id+"_field"}>{displayName}</label></div>{el % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
-      case _ => <div>{el}</div>
+      case Full(id) => Full(elem % ("id" -> (id + "_field")))
+      case _ => Full(elem)
     }
-  }
-
-  override def asXHtml: NodeSeq = {
-    var el = elem
-
-    uniqueFieldId match {
-      case Full(id) => el % ("id" -> (id+"_field"))
-      case _ => el
-    }
-  }
 }
 
 import _root_.java.sql.{ResultSet, Types}

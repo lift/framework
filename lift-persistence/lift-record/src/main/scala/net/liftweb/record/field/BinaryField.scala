@@ -49,9 +49,7 @@ class BinaryField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[
     case _                => setBox(tryo(s.getBytes("UTF-8")))
   }
 
-  def toForm = NodeSeq.Empty
-
-  def asXHtml: NodeSeq = NodeSeq.Empty
+  def toForm: Box[NodeSeq] = Empty
 
   def defaultValue = Array(0)
 

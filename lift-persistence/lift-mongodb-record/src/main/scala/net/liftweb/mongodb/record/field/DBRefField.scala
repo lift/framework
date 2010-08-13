@@ -23,6 +23,7 @@ import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
 import _root_.net.liftweb.http.js.JE.Str
 import _root_.net.liftweb.json.JsonAST.{JNothing, JObject, JValue}
 import _root_.net.liftweb.record.{Field, Record}
+import _root_.scala.xml.NodeSeq
 
 import com.mongodb.{BasicDBObject, BasicDBObjectBuilder, DBObject, DBRef}
 import com.mongodb.util.JSON
@@ -91,7 +92,7 @@ class DBRefField[OwnerType <: MongoRecord[OwnerType], RefType <: MongoRecord[Ref
     })
   }
 
-  def toForm = <div></div>
+  def toForm: Box[NodeSeq] = Empty
 
   def owner = rec
 }

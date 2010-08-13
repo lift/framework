@@ -25,6 +25,7 @@ import _root_.net.liftweb.json.JsonAST.{JNothing, JValue}
 import _root_.net.liftweb.json.JsonParser
 import _root_.net.liftweb.record.{Field, Record}
 import _root_.net.liftweb.util.Log
+import _root_.scala.xml.NodeSeq
 
 import com.mongodb._
 
@@ -62,7 +63,7 @@ class MongoMapField[OwnerType <: MongoRecord[OwnerType], MapValueType](rec: Owne
   // parse String into a JObject
   def setFromString(in: String): Box[Map[String, MapValueType]] = setFromJValue(JsonParser.parse(in))
 
-  def toForm = <div></div> // not implemented
+  def toForm: Box[NodeSeq] = Empty // not implemented
 
   def owner = rec
 

@@ -34,25 +34,11 @@ class TextareaField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: I
       tabindex={tabIndex toString}>{valueBox openOr ""}</textarea>
   }
 
-  override def toForm = {
-    var el = elem
-
+  override def toForm: Box[NodeSeq] =
     uniqueFieldId match {
-      case Full(id) =>
-        <div id={id+"_holder"}><div>{label}</div>{el % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
-      case _ => <div>{el}</div>
+      case Full(id) =>  Full(elem % ("id" -> (id + "_field")))
+      case _ => Full(elem)
     }
-
-  }
-
-  override def asXHtml: NodeSeq = {
-    var el = elem
-
-    uniqueFieldId match {
-      case Full(id) =>  el % ("id" -> (id+"_field"))
-      case _ => el
-    }
-  }
 
 
   override def toString = valueBox match {

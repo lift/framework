@@ -44,29 +44,12 @@ class BooleanField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field
   def setFromAny(in: Any): Box[Boolean] = genericSetFromAny(in)
   def setFromString(s: String): Box[Boolean] = setBox(tryo(toBoolean(s)))
 
-  private def elem = SHtml.checkbox(value, this.set _, "tabIndex" -> tabIndex.toString)
-
-  def toForm = {
+  def toForm: Box[NodeSeq] =
     // FIXME? no support for optional_?
-    //var el = elem
     uniqueFieldId match {
-      case Full(id) =>
-        <div id={id+"_holder"}><div><label
-              for={id+"_field"}>{displayName}</label></div>{SHtml.checkbox(value, this.set _, "tabIndex" -> tabIndex.toString, "id" -> (id+"_field"))}<lift:msg id={id}/></div>
-      case _ => <div>{elem}</div>
+      case Full(id) => Full(SHtml.checkbox(value, this.set _, "tabIndex" -> tabIndex.toString, "id" -> (id+"_field")))
+      case _ => Full(SHtml.checkbox(value, this.set _, "tabIndex" -> tabIndex.toString))
     }
-
-  }
-
-  def asXHtml: NodeSeq = {
-
-    uniqueFieldId match {
-      case Full(id) => SHtml.checkbox(value, this.set _,
-                                      "tabIndex" -> tabIndex.toString,
-                                      "id" -> (id+"_field"))
-      case _ => elem
-    }
-  }
 
 
   def defaultValue = false

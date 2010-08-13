@@ -188,7 +188,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     foreachCallback(inst, _.beforeValidation)
     try{
 	    fieldList.flatMap(holder => inst.fieldByName(holder.name) match {
-          case Full(field) => field.validateField
+          case Full(field) => field.validate
           case _           => Nil
         })
     } finally {
@@ -250,7 +250,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     formTemplate match {
       case Full(template) => toForm(inst, template)
       case _ => fieldList.flatMap(holder => fieldByName(holder.name, inst).
-                                      map(_.toForm).openOr(NodeSeq.Empty) ++ Text("\n"))
+                                      flatMap(_.toForm).openOr(NodeSeq.Empty) ++ Text("\n"))
     }
   }
 
@@ -270,7 +270,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
         }
 
       case e @ <lift:field>{_*}</lift:field> => e.attribute("name") match {
-          case Some(name) => fieldByName(name.toString, inst).map(_.asXHtml).openOr(NodeSeq.Empty)
+          case Some(name) => fieldByName(name.toString, inst).flatMap(_.toForm).openOr(NodeSeq.Empty)
           case _ => NodeSeq.Empty
         }
 

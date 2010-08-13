@@ -201,8 +201,7 @@ class JSONSubRecordField[OwnerType <: JSONRecord[OwnerType], SubRecordType <: JS
 
   def owner = rec
   def asJs = asJValue
-  def toForm = NodeSeq.Empty // FIXME
-  def asXHtml = NodeSeq.Empty // FIXME
+  def toForm: Box[NodeSeq] = Empty // FIXME
   def defaultValue = valueMeta.createRecord
 
   def setFromString(s: String): Box[SubRecordType] = valueMeta.fromJSON(s)
@@ -217,40 +216,39 @@ class JSONSubRecordField[OwnerType <: JSONRecord[OwnerType], SubRecordType <: JS
 }
 
 /** Field that contains an array of some basic JSON type */
-class JSONBasicArrayField[OwnerType <: JSONRecord[OwnerType], ValueType <: JValue](rec: OwnerType)(implicit valueType: Manifest[ValueType])
-  extends Field[List[ValueType], OwnerType]
+class JSONBasicArrayField[OwnerType <: JSONRecord[OwnerType], ElemType <: JValue](rec: OwnerType)(implicit elemType: Manifest[ElemType])
+  extends Field[List[ElemType], OwnerType]
 {
-  def this(rec: OwnerType, value: List[ValueType])(implicit valueType: Manifest[ValueType]) = { this(rec); set(value) }
-  def this(rec: OwnerType, value: Box[List[ValueType]])(implicit valueType: Manifest[ValueType]) = { this(rec); setBox(value) }
+  def this(rec: OwnerType, value: List[ElemType])(implicit elemType: Manifest[ElemType]) = { this(rec); set(value) }
+  def this(rec: OwnerType, value: Box[List[ElemType]])(implicit elemType: Manifest[ElemType]) = { this(rec); setBox(value) }
 
   def owner = rec
   def asJs = asJValue
-  def toForm = NodeSeq.Empty // FIXME
-  def asXHtml = NodeSeq.Empty // FIXME
+  def toForm: Box[NodeSeq] = Empty // FIXME
   def defaultValue = Nil
 
-  def setFromString(s: String): Box[List[ValueType]] =
+  def setFromString(s: String): Box[List[ElemType]] =
     setBox(tryo(JsonParser.parse(s)) flatMap {
       case JArray(values) => checkValueTypes(values)
-      case other          => expectedA("JSON string with an array of " + valueType, other)
+      case other          => expectedA("JSON string with an array of " + elemType, other)
     })
 
-  def setFromAny(in: Any): Box[List[ValueType]] = genericSetFromAny(in)
+  def setFromAny(in: Any): Box[List[ElemType]] = genericSetFromAny(in)
 
-  def checkValueTypes(in: List[JValue]): Box[List[ValueType]] =
-    in.find(!_.isInstanceOf[ValueType]) match {
+  def checkValueTypes(in: List[JValue]): Box[List[ElemType]] =
+    in.find(!_.isInstanceOf[ElemType]) match {
       case Some(erroneousValue) if erroneousValue != null =>
-          Failure("Value in input array is a " + value.getClass.getName + ", should be a " + valueType.toString)
+          Failure("Value in input array is a " + value.getClass.getName + ", should be a " + elemType.toString)
 
-      case Some(erroneousValue) => Failure("Value in input array is null, should be a " + valueType.toString)
-      case None                 => Full(in.map(_.asInstanceOf[ValueType]))
+      case Some(erroneousValue) => Failure("Value in input array is null, should be a " + elemType.toString)
+      case None                 => Full(in.map(_.asInstanceOf[ElemType]))
     }
 
   def asJValue: JValue = valueBox.map(JArray) openOr (JNothing: JValue)
-  def setFromJValue(jvalue: JValue): Box[List[ValueType]] = jvalue match {
+  def setFromJValue(jvalue: JValue): Box[List[ElemType]] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case JArray(values)               => setBox(checkValueTypes(values))
-    case other                        => setBox(expectedA("JArray containing " + valueType.toString, other))
+    case other                        => setBox(expectedA("JArray containing " + elemType.toString, other))
   }
 }
 
@@ -272,8 +270,7 @@ class JSONSubRecordArrayField[OwnerType <: JSONRecord[OwnerType], SubRecordType 
 
   def owner = rec
   def asJs = asJValue
-  def toForm = NodeSeq.Empty // FIXME
-  def asXHtml = NodeSeq.Empty // FIXME
+  def toForm: Box[NodeSeq] = Empty // FIXME
   def defaultValue = Nil
 
   def setFromString(s: String): Box[List[SubRecordType]] =
