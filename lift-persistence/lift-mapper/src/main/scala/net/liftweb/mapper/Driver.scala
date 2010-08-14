@@ -317,6 +317,8 @@ abstract class SqlServerBaseDriver extends DriverType("Microsoft SQL Server") {
   def longColumnType = "BIGINT"
   def doubleColumnType = "FLOAT"
 
+  override def supportsForeignKeys_? = true
+
   override def defaultSchemaName : Box[String] = Full("dbo")
 
   // Microsoft doesn't use "COLUMN" syntax when adding a column to a table
