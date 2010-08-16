@@ -55,6 +55,7 @@
     <module>lift-couchdb</module>
     <module>lift-mongodb</module>
     <module>lift-mongodb-record</module>
+    <module>lift-squeryl-record</module>
   </modules>
 
   <!--
