@@ -19,7 +19,7 @@ package record {
 
 import _root_.net.liftweb.common.{Box, Empty, Full}
 import _root_.net.liftweb.http.S
-import _root_.net.liftweb.record.field.PasswordField
+import _root_.net.liftweb.record.field.{PasswordField, StringField}
 import _root_.net.liftweb.util.FieldError
 import _root_.org.specs._
 import _root_.org.specs.runner.{ConsoleRunner, JUnit3}
@@ -44,9 +44,23 @@ package fieldspecs {
         }
     }
   }
-  
+
   object PasswordTestRecord extends PasswordTestRecord with MetaRecord[PasswordTestRecord] {
-     def createRecord = new PasswordTestRecord
+    def createRecord = new PasswordTestRecord
+  }
+
+  class StringTestRecord extends Record[StringTestRecord] {
+    def meta = StringTestRecord
+
+    object string extends StringField(this, 32) {
+      override def validations =
+        valMinLen(3, "String field name must be at least 3 characters.") _ ::
+        super.validations
+    }
+  }
+
+  object StringTestRecord extends StringTestRecord with MetaRecord[StringTestRecord] {
+    def createRecord = new StringTestRecord
   }
 }
 
@@ -68,6 +82,18 @@ object FieldSpecs extends Specification {
 
       rec.validate must_== (
         FieldError(rec.password, Text("no way!")) ::
+        Nil
+      )
+    }
+  }
+
+  "StringField" should {
+    "honor validators" in {
+      import fieldspecs.StringTestRecord
+      val rec = new StringTestRecord
+
+      rec.validate must_== (
+        FieldError(rec.string, Text("String field name must be at least 3 characters.")) ::
         Nil
       )
     }
