@@ -26,20 +26,7 @@ import net.liftweb.util._
 import Helpers._
 import S._
 
-class LongField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends NumericField[Long, OwnerType] {
-
-  def this(rec: OwnerType, value: Long) = {
-    this(rec)
-    set(value)
-  }
-
-  def this(rec: OwnerType, value: Box[Long]) = {
-    this(rec)
-    setBox(value)
-  }
-
-  def owner = rec
-
+trait LongTypedField extends NumericTypedField[Long] {
   def setFromAny(in: Any): Box[Long] = setNumericFromAny(in, _.longValue)
 
   def setFromString(s: String): Box[Long] = setBox(asLong(s))
@@ -52,27 +39,28 @@ class LongField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends NumericF
     case JInt(i)                      => setBox(Full(i.longValue))
     case other                        => setBox(FieldHelpers.expectedA("JLong", other))
   }
-
 }
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.net.liftweb.mapper.{DriverType}
+class LongField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends Field[Long, OwnerType] with MandatoryTypedField[Long] with LongTypedField {
 
-/**
- * An int field holding DB related logic
- */
-abstract class DBLongField[OwnerType <: DBRecord[OwnerType]](rec: OwnerType) extends LongField[OwnerType](rec)
-  with JDBCFieldFlavor[Long]{
+  def this(rec: OwnerType, value: Long) = {
+    this(rec)
+    set(value)
+  }
 
-  def targetSQLType = Types.BIGINT
+  def owner = rec
+}
 
-  /**
-   * Given the driver type, return the string required to create the column in the database
-   */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.enumColumnType
+class OptionalLongField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends Field[Long, OwnerType] with OptionalTypedField[Long] with LongTypedField {
 
-  def jdbcFriendly(field : String) : Long = value
+  def this(rec: OwnerType, value: Box[Long]) = {
+    this(rec)
+    setBox(value)
+  }
 
+  def owner = rec
 }
 
 }

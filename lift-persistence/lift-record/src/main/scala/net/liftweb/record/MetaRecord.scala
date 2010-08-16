@@ -95,10 +95,10 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   private def isLifecycle(m: Method) = classOf[LifecycleCallbacks].isAssignableFrom(m.getReturnType)
   private def isField(m: Method) = classOf[Field[_, _]].isAssignableFrom(m.getReturnType)
 
-  def introspect(rec: BaseRecord, methods: Array[Method])(f: (Method, OwnedField[BaseRecord]) => Any) = {
+  def introspect(rec: BaseRecord, methods: Array[Method])(f: (Method, Field[_, BaseRecord]) => Any) = {
     for (v <- methods  if isField(v)) {
       v.invoke(rec) match {
-        case mf: OwnedField[BaseRecord] if !mf.ignoreField_? =>
+        case mf: Field[_, BaseRecord] if !mf.ignoreField_? =>
           mf.setName_!(v.getName)
           f(v, mf)
         case _ =>
@@ -294,7 +294,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     }
   }
 
-  private def ??(meth: Method, inst: BaseRecord) = meth.invoke(inst).asInstanceOf[OwnedField[BaseRecord]]
+  private def ??(meth: Method, inst: BaseRecord) = meth.invoke(inst).asInstanceOf[Field[_, BaseRecord]]
 
   /**
    * Get a field by the field name
@@ -303,9 +303,9 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    *
    * @return Box[The Field] (Empty if the field is not found)
    */
-  def fieldByName(fieldName: String, inst: BaseRecord): Box[OwnedField[BaseRecord]] = {
+  def fieldByName(fieldName: String, inst: BaseRecord): Box[Field[_, BaseRecord]] = {
     Box(fieldList.find(f => f.name == fieldName)).
-    map(holder => ??(holder.method, inst).asInstanceOf[OwnedField[BaseRecord]])
+    map(holder => ??(holder.method, inst).asInstanceOf[Field[_, BaseRecord]])
   }
 
   /**
@@ -373,7 +373,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    *
    * @return a List of Field
    */
-  def fieldOrder: List[OwnedField[BaseRecord]] = Nil
+  def fieldOrder: List[Field[_, BaseRecord]] = Nil
 
   /**
    * Renamed from fields() due to a clash with fields() in Record. Use this method
@@ -382,21 +382,21 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    *
    * @see Record
    */
-  def metaFields() : List[OwnedField[BaseRecord]] = fieldList.map(fh => fh.field)
+  def metaFields() : List[Field[_, BaseRecord]] = fieldList.map(fh => fh.field)
 
   /**
    * Obtain the fields for a particlar Record or subclass instance by passing
    * the instance itself.
    * (added 14th August 2009, Tim Perrett)
    */
-  def fields(rec: BaseRecord) : List[OwnedField[BaseRecord]] =
+  def fields(rec: BaseRecord) : List[Field[_, BaseRecord]] =
     for(fieldHolder <- fieldList;
       field <- rec.fieldByName(fieldHolder.name)
     ) yield {
       field
     }
 
-  case class FieldHolder(name: String, method: Method, field: OwnedField[BaseRecord])
+  case class FieldHolder(name: String, method: Method, field: Field[_, BaseRecord])
 }
 
 trait LifecycleCallbacks {

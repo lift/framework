@@ -25,8 +25,7 @@ import net.liftweb.http.{S}
 import S._
 import Helpers._
 
-class TextareaField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int) extends StringField(rec, maxLength) {
-
+trait TextareaTypedField extends StringTypedField {
   private def elem = S.fmapFunc(SFuncHolder(this.setFromAny(_))){
     funcName => <textarea name={funcName}
       rows={textareaRows.toString}
@@ -49,27 +48,13 @@ class TextareaField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: I
   def textareaRows  = 8
 
   def textareaCols = 20
-
 }
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.net.liftweb.mapper.{DriverType}
+class TextareaField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int)
+  extends StringField(rec, maxLength) with TextareaTypedField
 
-/**
- * A string field holding DB related logic
- */
-abstract class DBTextareaField[OwnerType <: DBRecord[OwnerType]](rec: OwnerType, maxLength: Int) extends
-TextareaField[OwnerType](rec, maxLength) with JDBCFieldFlavor[String]{
-
-  def targetSQLType = Types.VARCHAR
-
-  /**
-   * Given the driver type, return the string required to create the column in the database
-   */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName+" VARCHAR("+maxLength+")"
-
-  def jdbcFriendly(field : String) : String = value
-}
+class OptionalTextareaField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int)
+  extends OptionalStringField(rec, maxLength) with TextareaTypedField
 
 }
 }

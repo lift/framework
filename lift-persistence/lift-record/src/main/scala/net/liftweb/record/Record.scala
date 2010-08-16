@@ -121,7 +121,7 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
    *
    * @return Box[MappedField]
    */
-  def fieldByName(fieldName: String): Box[OwnedField[MyType]] = meta.fieldByName(fieldName, this)
+  def fieldByName(fieldName: String): Box[Field[_, MyType]] = meta.fieldByName(fieldName, this)
 
   // Initialize the field metadata by introspecting. Only do this if we are not initializing the meta record presently (then, meta == null)
   {

@@ -33,22 +33,15 @@ object TimeZoneField {
     sort(_ < _).map(tz => (tz, tz))
 }
 
-class TimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends StringField(rec, 32) {
-
-  override def defaultValue = TimeZone.getDefault.getID
-
-  def isAsTimeZone: TimeZone = TimeZone.getTimeZone(value) match {
-    case null => TimeZone.getDefault
-    case x => x
-  }
-
+trait TimeZoneTypedField extends StringTypedField {
   /** Label for the selection item representing Empty, show when this field is optional. Defaults to the empty string. */
   def emptyOptionLabel: String = ""
 
   def buildDisplayList: List[(String, String)] =
       if (optional_?) ("", emptyOptionLabel)::TimeZoneField.timeZoneList else TimeZoneField.timeZoneList
 
-  private def elem = SHtml.select(buildDisplayList, Full(valueBox openOr ""), set) % ("tabindex" -> tabIndex.toString)
+  private def elem = SHtml.select(buildDisplayList, Full(valueBox openOr ""),
+                                  timezone => setBox(Full(timezone))) % ("tabindex" -> tabIndex.toString)
 
   override def toForm: Box[NodeSeq] = 
     uniqueFieldId match {
@@ -57,22 +50,19 @@ class TimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Stri
     }
 }
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.net.liftweb.mapper.{DriverType}
+class TimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends StringField(rec, 32) with TimeZoneTypedField {
 
-class DBTimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends TimeZoneField(rec)
-  with JDBCFieldFlavor[String] {
+  override def defaultValue = TimeZone.getDefault.getID
 
-  def targetSQLType = Types.VARCHAR
-
-  /**
-   * Given the driver type, return the string required to create the column in the database
-   */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName+" VARCHAR("+32+")"
-
-  def jdbcFriendly(field : String) : String = value
-
+  def isAsTimeZone: TimeZone = TimeZone.getTimeZone(value) match {
+    case null => TimeZone.getDefault
+    case x => x
+  }
 }
+
+class OptionalTimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends OptionalStringField(rec, 32) with TimeZoneTypedField
 
 }
 }

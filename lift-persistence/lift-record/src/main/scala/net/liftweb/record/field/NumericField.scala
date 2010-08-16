@@ -28,7 +28,7 @@ import S._
 import Helpers._
 import JE._
 
-trait NumericField[MyType, OwnerType <: Record[OwnerType]] extends Field[MyType, OwnerType] {
+trait NumericTypedField[MyType] extends TypedField[MyType] {
 
   /** Augments genericSetFromAny with support for values of type Number (optionally wrapped in any of the usual suspects) */
   protected final def setNumericFromAny(in: Any, f: Number => MyType)(implicit m: Manifest[MyType]): Box[MyType] =

@@ -26,20 +26,7 @@ import _root_.net.liftweb.util._
 import Helpers._
 import S._
 
-class DoubleField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends NumericField[Double, OwnerType] {
-
-  def this(rec: OwnerType, value: Double) = {
-    this(rec)
-    set(value)
-  }
-
-  def this(rec: OwnerType, value: Box[Double]) = {
-    this(rec)
-    setBox(value)
-  }
-
-  def owner = rec
-
+trait DoubleTypedField extends NumericTypedField[Double] {
   def setFromAny(in: Any): Box[Double] = setNumericFromAny(in, _.doubleValue)
 
   def setFromString(s: String): Box[Double] = setBox(tryo(java.lang.Double.parseDouble(s)))
@@ -54,24 +41,26 @@ class DoubleField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Numeri
   }
 }
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.net.liftweb.mapper.{DriverType}
+class DoubleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends Field[Double, OwnerType] with MandatoryTypedField[Double] with DoubleTypedField {
 
-/**
- * An int field holding DB related logic
- */
-abstract class DBDoubleField[OwnerType <: DBRecord[OwnerType]](rec: OwnerType) extends DoubleField[OwnerType](rec)
-  with JDBCFieldFlavor[Double]{
+  def this(rec: OwnerType, value: Double) = {
+    this(rec)
+    set(value)
+  }
 
-  def targetSQLType = Types.DOUBLE
+  def owner = rec
+}
 
-  /**
-   * Given the driver type, return the string required to create the column in the database
-   */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.enumColumnType
+class OptionalDoubleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends Field[Double, OwnerType] with OptionalTypedField[Double] with DoubleTypedField {
 
-  def jdbcFriendly(field : String) : Double = value
+  def this(rec: OwnerType, value: Box[Double]) = {
+    this(rec)
+    setBox(value)
+  }
 
+  def owner = rec
 }
 
 }

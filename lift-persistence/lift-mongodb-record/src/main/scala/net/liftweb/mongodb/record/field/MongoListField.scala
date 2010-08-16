@@ -28,7 +28,7 @@ import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
 import _root_.net.liftweb.json.JsonAST._
 import _root_.net.liftweb.json.JsonParser
 import _root_.net.liftweb.http.js.JE.Str
-import _root_.net.liftweb.record.{Field, FieldHelpers, Record}
+import _root_.net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
 
 import com.mongodb._
 import org.bson.types.ObjectId
@@ -37,7 +37,7 @@ import org.bson.types.ObjectId
 * List field. Compatible with most object types. Including Pattern, ObjectId, DBRef.
 */
 class MongoListField[OwnerType <: MongoRecord[OwnerType], ListType](rec: OwnerType)
-  extends Field[List[ListType], OwnerType]
+  extends Field[List[ListType], OwnerType] with MandatoryTypedField[List[ListType]]
   with MongoFieldFlavor[List[ListType]] {
 
   import Meta.Reflection._

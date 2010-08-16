@@ -29,38 +29,11 @@ import S._
 import Helpers._
 import JE._
 
-/**
- * A Field containing String content.
- */
-class StringField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int) extends Field[String, OwnerType] with StringValidators {
+trait StringTypedField extends TypedField[String] with StringValidators {
+  val maxLength: Int
 
   def maxLen = maxLength
   
-  protected def valueTypeToBoxString(in: ValueType): Box[String] = Full(in)
-  protected def boxStrToValType(in: Box[String]): ValueType = in openOr defaultValue
-
-  def this(rec: OwnerType, maxLength: Int, value: String) = {
-    this(rec, maxLength)
-    set(value)
-  }
-
-  def this(rec: OwnerType, maxLength: Int, value: Box[String]) = {
-    this(rec, maxLength)
-    setBox(value)
-  }
-
-  def this(rec: OwnerType, value: String) = {
-    this(rec, 100)
-    set(value)
-  }
-
-  def this(rec: OwnerType, value: Box[String]) = {
-    this(rec, 100)
-    setBox(value)
-  }
-
-  def owner = rec
-
   def setFromAny(in: Any): Box[String] = in match {
     case seq: Seq[_] if !seq.isEmpty => setFromAny(seq.first)
     case _ => genericSetFromAny(in)
@@ -96,18 +69,10 @@ class StringField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int
     case JString(s)                   => setFromString(s)
     case other                        => setBox(FieldHelpers.expectedA("JString", other))
   }
-
 }
 
-
-import _root_.java.sql.{ResultSet, Types}
-import _root_.net.liftweb.mapper.{DriverType}
-
-/**
- * A string field holding DB related logic
- */
-class DBStringField[OwnerType <: DBRecord[OwnerType]](rec: OwnerType, maxLength: Int) extends
-   StringField[OwnerType](rec, maxLength) with JDBCFieldFlavor[String]{
+class StringField[OwnerType <: Record[OwnerType]](rec: OwnerType, val maxLength: Int)
+  extends Field[String, OwnerType] with MandatoryTypedField[String] with StringTypedField {
 
   def this(rec: OwnerType, maxLength: Int, value: String) = {
     this(rec, maxLength)
@@ -119,15 +84,30 @@ class DBStringField[OwnerType <: DBRecord[OwnerType]](rec: OwnerType, maxLength:
     set(value)
   }
 
-  def targetSQLType = Types.VARCHAR
+  def owner = rec
 
-  /**
-   * Given the driver type, return the string required to create the column in the database
-   */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName+" VARCHAR("+maxLength+")"
+  protected def valueTypeToBoxString(in: ValueType): Box[String] = toBoxMyType(in)
+  protected def boxStrToValType(in: Box[String]): ValueType = toValueType(in)
+}
 
-  def jdbcFriendly(field : String) : String = value
- }
+class OptionalStringField[OwnerType <: Record[OwnerType]](rec: OwnerType, val maxLength: Int)
+  extends Field[String, OwnerType] with OptionalTypedField[String] with StringTypedField {
+
+  def this(rec: OwnerType, maxLength: Int, value: Box[String]) = {
+    this(rec, maxLength)
+    setBox(value)
+  }
+
+  def this(rec: OwnerType, value: Box[String]) = {
+    this(rec, 100)
+    setBox(value)
+  }
+
+  def owner = rec
+
+  protected def valueTypeToBoxString(in: ValueType): Box[String] = toBoxMyType(in)
+  protected def boxStrToValType(in: Box[String]): ValueType = toValueType(in)
+}
 
 }
 }

@@ -24,19 +24,10 @@ import net.liftweb.util._
 import scala.reflect.Manifest
 import scala.xml._
 
-trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier with BaseField {
-  private[record] var needsDefault = true
-  private[record] var dirty = false
+/** Base trait of record fields, with functionality common to any type of field owned by any type of record */
+trait BaseField extends FieldIdentifier with util.BaseField {
   private[record] var fieldName: String = _
-
-  type MyType
-  type ValueType = MyType
-  type ValidationFunction = ValueType => List[FieldError]
-
-  /**
-   * Return the owner of this field
-   */
-  def owner: OwnerType
+  private[record] var dirty = false
 
   protected def dirty_?(b: Boolean) = dirty = b
 
@@ -64,7 +55,7 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier with Ba
   /**
    * Can the value of this field be read without obscuring the result?
    */
-  def canRead_? = owner.safe_? || checkCanRead_?
+  def canRead_? : Boolean = safe_? || checkCanRead_?
 
   /**
    * If the owner is not in "safe" mode, check the current environment to see if
@@ -72,8 +63,15 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier with Ba
    */
   def checkCanRead_? = true
 
-  def canWrite_? = owner.safe_? || checkCanWrite_?
+  /**
+   * Can the value of this field be written?
+   */
+  def canWrite_? : Boolean = safe_? || checkCanWrite_?
 
+  /**
+   * If the owner is not in "safe" mode, check the current environment to see if
+   * the field can be written
+   */
   def checkCanWrite_? = true
 
   /**
@@ -93,33 +91,6 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier with Ba
 
   /** Encode the field value into a JValue */
   def asJValue: JValue
-
-  /**
-   * Helper for implementing asJValue for a conversion to an encoded JString
-   *
-   * @param encode function to transform the field value into a String
-   */
-  protected def asJString(encode: MyType => String): JValue =
-      valueBox.map(v => JString(encode(v))) openOr (JNothing: JValue)
-
-  /** Decode the JValue and set the field to the decoded value. Returns Empty or Failure if the value could not be set */
-  def setFromJValue(jvalue: JValue): Box[MyType]
-
-  /**
-   * Helper for implementing setFromJValue for a conversion from an encoded JString
-   *
-   * @param decode function to try and transform a String into a field value
-   */
-  protected def setFromJString(jvalue: JValue)(decode: String => Box[MyType]): Box[MyType] = jvalue match {
-    case JNothing|JNull if optional_? => setBox(Empty)
-    case JString(s)                   => setBox(decode(s))
-    case other                        => setBox(FieldHelpers.expectedA("JString", other))
-  }
-
-  /**
-   * Are we in "safe" mode (i.e., the value of the field can be read or written without any security checks.)
-   */
-  final def safe_? : Boolean = owner.safe_?
 
   /**
    * Set the name of this field
@@ -144,10 +115,58 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier with Ba
 
   override def uniqueFieldId: Box[String] = Full(name+"_id")
 
-
   def label: NodeSeq = uniqueFieldId match {
     case Full(id) =>  <label for={id+"_field"}>{displayName}</label>
     case _ => NodeSeq.Empty
+  }
+
+  def asString: String
+
+  def safe_? : Boolean = true // let owned fields make it unsafe some times
+}
+
+/** Refined trait for fields owned by a particular record type */
+trait OwnedField[OwnerType <: Record[OwnerType]] extends BaseField {
+  /**
+   * Return the owner of this field
+   */
+  def owner: OwnerType
+
+  /**
+   * Are we in "safe" mode (i.e., the value of the field can be read or written without any security checks.)
+   */
+  override final def safe_? : Boolean = owner.safe_?
+}
+
+/** Refined trait for fields holding a particular value type */
+trait TypedField[ThisType] extends BaseField {
+  type MyType = ThisType // For backwards compatability
+
+  type ValidationFunction = ValueType => List[FieldError]
+
+  private[record] var data: Box[MyType] = Empty
+  private[record] var needsDefault = true
+  
+  /**
+   * Helper for implementing asJValue for a conversion to an encoded JString
+   *
+   * @param encode function to transform the field value into a String
+   */
+  protected def asJString(encode: MyType => String): JValue =
+    valueBox.map(v => JString(encode(v))) openOr (JNothing: JValue)
+
+  /** Decode the JValue and set the field to the decoded value. Returns Empty or Failure if the value could not be set */
+  def setFromJValue(jvalue: JValue): Box[MyType]
+
+  /**
+   * Helper for implementing setFromJValue for a conversion from an encoded JString
+   *
+   * @param decode function to try and transform a String into a field value
+   */
+  protected def setFromJString(jvalue: JValue)(decode: String => Box[MyType]): Box[MyType] = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case JString(s)                   => setBox(decode(s))
+    case other                        => setBox(FieldHelpers.expectedA("JString", other))
   }
 
   def validations: List[ValidationFunction] = Nil
@@ -157,7 +176,7 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier with Ba
 
   /** Helper function that does validation of a value by using the validators specified for the field */
   protected def runValidation(in: Box[MyType]): List[FieldError] = in match {
-    case Full(v) => validations.flatMap(_(v)).removeDuplicates
+    case Full(_) => validations.flatMap(_(toValueType(in))).distinct
     case Empty => Nil
     case Failure(msg, _, _) => Text(msg)
   }
@@ -175,19 +194,8 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier with Ba
   Box[MyType] => List[FieldError] =
     param => boxNodeToFieldError(in(param))
 
-  private[record] var data: Box[MyType] = Empty
-
-
-  def apply(in: MyType): OwnerType
-
-  /**
-   * The default value of the field when a field has no value set and is optional, or a method that must return a value (e.g. value) is used
-   */
-  def defaultValue: MyType
-
   /** The default value of the field when no value is set. Must return a Full Box unless optional_? is true */
-  def defaultValueBox: Box[MyType] = if (optional_?) Empty else Full(defaultValue)
-
+  def defaultValueBox: Box[MyType]
 
   /**
    * Convert the field to a String... usually of the form "displayName=value"
@@ -196,14 +204,7 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier with Ba
 
   def obscure(in: MyType): Box[MyType] = Failure("value obscured")
 
-  /**
-   * Set the value of the field to the given value.
-   * Note: Because setting a field can fail (return non-Full), this method will
-   * return defaultValue if the field could not be set.
-   */
-  def set(in: MyType): MyType = setBox(Full(in)) openOr defaultValue
-
-    def setBox(in: Box[MyType]): Box[MyType] = synchronized {
+  def setBox(in: Box[MyType]): Box[MyType] = synchronized {
     needsDefault = false
     data = in match {
       case _ if !checkCanWrite_? => Failure(noValueErrorMessage)
@@ -215,16 +216,20 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier with Ba
     data
   }
 
+  // Helper methods for things to easily use mixins and so on that use ValueType instead of Box[MyType], regardless of the optional-ness of the field
+  protected def toValueType(in: Box[MyType]): ValueType
+  protected def toBoxMyType(in: ValueType): Box[MyType]
+
   protected def set_!(in: Box[MyType]): Box[MyType] = runFilters(in, setFilterBox)
 
-  protected def setFilter: List[MyType => MyType] = Nil
+  protected def setFilter: List[ValueType => ValueType] = Nil
 
   /**
    * A list of functions that transform the value before it is set.  The transformations
    * are also applied before the value is used in a query.  Typical applications
    * of this are trimming and/or toLowerCase-ing strings
    */
-  protected def setFilterBox: List[Box[MyType] => Box[MyType]] = ((in: Box[MyType]) => in.map(v => setFilter.foldLeft(v)((prev, f) => f(prev)))) :: Nil
+  protected def setFilterBox: List[Box[MyType] => Box[MyType]] = ((in: Box[MyType]) => toBoxMyType(setFilter.foldLeft(toValueType(in))((prev, f) => f(prev)))) :: Nil
 
   def runFilters(in: Box[MyType], filter: List[Box[MyType] => Box[MyType]]): Box[MyType] = filter match {
     case Nil => in
@@ -278,11 +283,6 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier with Ba
    */
   def setFromString(s: String): Box[MyType]
 
-  def value: MyType = valueBox openOr defaultValue
-
-  def get: MyType = value
-  def is: MyType = value
-
   def valueBox: Box[MyType] = synchronized {
     if (needsDefault) {
       data = defaultValueBox
@@ -293,7 +293,7 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier with Ba
     else data.flatMap(obscure)
   }
 
-  override def toString = value match {
+  override def toString = valueBox match {
     case null => "null"
     case s => s.toString
   }
@@ -305,11 +305,73 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier with Ba
   }
 }
 
+trait MandatoryTypedField[ThisType] extends TypedField[ThisType] with Product1[ThisType] {
+  type ValueType = ThisType // For util.BaseField
+
+  //TODO: fullfil the contract of Product1[ThisType]
+  def canEqual(a:Any) = false
+  
+  def _1 = value
+
+  override def optional_? = false
+
+  /**
+   * Set the value of the field to the given value.
+   * Note: Because setting a field can fail (return non-Full), this method will
+   * return defaultValue if the field could not be set.
+   */
+  def set(in: MyType): MyType = setBox(Full(in)) openOr defaultValue
+
+  def toValueType(in: Box[MyType]) = in openOr defaultValue
+  def toBoxMyType(in: ValueType) = Full(in)
+
+  def value: MyType = valueBox openOr defaultValue
+
+  def get: MyType = value
+  def is: MyType = value
+
+
+  /**
+   * The default value of the field when a field has no value set and is optional, or a method that must return a value (e.g. value) is used
+   */
+  def defaultValue: MyType
+
+  def defaultValueBox: Box[MyType] = if (optional_?) Empty else Full(defaultValue)
+}
+  
+trait OptionalTypedField[ThisType] extends TypedField[ThisType] with Product1[Box[ThisType]] {
+  type ValueType = Option[ThisType] // For util.BaseField
+
+  //TODO: fullfil the contract of Product1[ThisType]
+  def canEqual(a:Any) = false
+  
+  def _1 = value
+
+  final override def optional_? = true
+
+  /**
+   * Set the value of the field to the given value.
+   * Note: Because setting a field can fail (return non-Full), this method will
+   * return defaultValueBox if the field could not be set.
+   */
+  def set(in: Option[MyType]): Option[MyType] = setBox(in) or defaultValueBox
+
+  def toValueType(in: Box[MyType]) = in
+  def toBoxMyType(in: ValueType) = in
+
+  def value: Option[MyType] = valueBox
+
+  def get: Option[MyType] = value
+  def is: Option[MyType] = value
+
+
+  def defaultValueBox: Box[MyType] = Empty
+}
+
 /**
  * A simple field that can store and retreive a value of a given type
  */
-trait Field[ThisType, OwnerType <: Record[OwnerType]] extends OwnedField[OwnerType] {
-  type MyType = ThisType
+trait Field[ThisType, OwnerType <: Record[OwnerType]] extends OwnedField[OwnerType] with TypedField[ThisType] {
 
   def apply(in: MyType): OwnerType = apply(Full(in))
 

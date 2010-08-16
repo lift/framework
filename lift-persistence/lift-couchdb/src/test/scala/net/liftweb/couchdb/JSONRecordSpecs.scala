@@ -22,7 +22,7 @@ import net.liftweb.json.Implicits.{int2jvalue, string2jvalue}
 import net.liftweb.json.JsonAST.{JField, JInt, JObject, JString, render}
 import net.liftweb.json.JsonDSL.{jobject2assoc, pair2Assoc, pair2jvalue}
 import net.liftweb.json.Printer.compact
-import net.liftweb.record.field.{IntField, StringField}
+import net.liftweb.record.field.{IntField, OptionalStringField, StringField}
 import org.specs._
 import org.specs.runner.JUnit4
 import DocumentHelpers.jobjectToJObjectExtension
@@ -37,9 +37,7 @@ package jsontestrecords {
     object age extends IntField(this) {
       override def defaultValue = 0
     }
-    object favoriteColor extends StringField(this, 200) {
-      override def optional_? = true
-    }
+    object favoriteColor extends OptionalStringField(this, 200)
   }
 
   object Person extends Person with JSONMetaRecord[Person] {
@@ -91,7 +89,7 @@ object JSONRecordTestSpecs extends Specification {
       recBox must verify (_.isDefined)
       val Full(rec) = recBox
 
-      rec.favoriteColor.valueBox must not (verify (_.isDefined))
+      rec.favoriteColor.value must not (verify (_.isDefined))
     }
 
     "support set optional fields" in {
@@ -99,7 +97,7 @@ object JSONRecordTestSpecs extends Specification {
       recBox must verify (_.isDefined)
       val Full(rec) = recBox
 
-      rec.favoriteColor.valueBox must_== Full("blue")
+      rec.favoriteColor.value must_== Some("blue")
     }
 
     "not set missing fields" in {

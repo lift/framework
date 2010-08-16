@@ -33,23 +33,12 @@ object LocaleField {
     .map(lo => (lo.toString, lo.getDisplayName))
 }
 
-class LocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends StringField(rec, 16) {
-
-  override def defaultValue = Locale.getDefault.toString
-
-  def isAsLocale: Locale = Locale.getAvailableLocales.filter(_.toString == value).toList match {
-    case Nil => Locale.getDefault
-    case x :: xs => x
-  }
-
-  /** Label for the selection item representing Empty, show when this field is optional. Defaults to the empty string. */
-  def emptyOptionLabel: String = ""
-
+trait LocaleTypedField extends TypedField[String] {
   /** Build a list of string pairs for a select list. */
-  def buildDisplayList: List[(String, String)] =
-    if (optional_?) ("", emptyOptionLabel)::LocaleField.localeList else LocaleField.localeList
+  def buildDisplayList: List[(String, String)]
 
-  private def elem = SHtml.select(buildDisplayList, Full(valueBox.map(_.toString) openOr ""), set) % ("tabindex" -> tabIndex.toString)
+  private def elem = SHtml.select(buildDisplayList, Full(valueBox.map(_.toString) openOr ""),
+                                  locale => setBox(Full(locale))) % ("tabindex" -> tabIndex.toString)
 
   override def toForm: Box[NodeSeq] =
     uniqueFieldId match {
@@ -58,21 +47,27 @@ class LocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends String
     }
 }
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.net.liftweb.mapper.{DriverType}
+class LocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends StringField(rec, 16) with LocaleTypedField {
 
-class DBLocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends LocaleField(rec)
-  with JDBCFieldFlavor[String] {
+  override def defaultValue = Locale.getDefault.toString
 
-  def targetSQLType = Types.VARCHAR
+  def isAsLocale: Locale = Locale.getAvailableLocales.filter(_.toString == value).toList match {
+    case Nil => Locale.getDefault
+    case x :: xs => x
+  }
 
-  /**
-   * Given the driver type, return the string required to create the column in the database
-   */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName+" VARCHAR("+16+")"
+  def buildDisplayList: List[(String, String)] = LocaleField.localeList
 
-  def jdbcFriendly(field : String) : String = value
+}
 
+class OptionalLocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends OptionalStringField(rec, 16) with LocaleTypedField {
+
+  /** Label for the selection item representing Empty, show when this field is optional. Defaults to the empty string. */
+  def emptyOptionLabel: String = ""
+
+  def buildDisplayList: List[(String, String)] = ("", emptyOptionLabel)::LocaleField.localeList
 }
 
 }

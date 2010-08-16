@@ -26,20 +26,7 @@ import net.liftweb.util._
 import Helpers._
 import S._
 
-class IntField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends NumericField[Int, OwnerType] {
-
-  def owner = rec
-
-  def this(rec: OwnerType, value: Int) = {
-    this(rec)
-    set(value)
-  }
-
-  def this(rec: OwnerType, value: Box[Int]) = {
-    this(rec)
-    setBox(value)
-  }
-
+trait IntTypedField extends NumericTypedField[Int] {
   def setFromAny(in: Any): Box[Int] = setNumericFromAny(in, _.intValue)
 
   def setFromString(s: String): Box[Int] = s match {
@@ -55,27 +42,28 @@ class IntField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends NumericFi
     case JInt(i)                      => setBox(Full(i.intValue))
     case other                        => setBox(FieldHelpers.expectedA("JInt", other))
   }
-
 }
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.net.liftweb.mapper.{DriverType}
+class IntField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends Field[Int, OwnerType] with MandatoryTypedField[Int] with IntTypedField {
 
-/**
- * An int field holding DB related logic
- */
-abstract class DBIntField[OwnerType <: DBRecord[OwnerType]](rec: OwnerType) extends IntField[OwnerType](rec)
-  with JDBCFieldFlavor[Int]{
+  def owner = rec
 
-  def targetSQLType = Types.INTEGER
+  def this(rec: OwnerType, value: Int) = {
+    this(rec)
+    set(value)
+  }
+}
 
-  /**
-   * Given the driver type, return the string required to create the column in the database
-   */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.enumColumnType
+class OptionalIntField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends Field[Int, OwnerType] with OptionalTypedField[Int] with IntTypedField {
 
-  def jdbcFriendly(field : String) : Int = value
+  def owner = rec
 
+  def this(rec: OwnerType, value: Box[Int]) = {
+    this(rec)
+    setBox(value)
+  }
 }
 
 }

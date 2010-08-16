@@ -23,14 +23,14 @@ import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
 import _root_.net.liftweb.http.js.JE.Str
 import _root_.net.liftweb.json.JsonAST.{JNothing, JValue}
 import _root_.net.liftweb.json.JsonParser
-import _root_.net.liftweb.record.{Field, Record}
+import _root_.net.liftweb.record.{Field, MandatoryTypedField, Record}
 import _root_.net.liftweb.util.Log
 import _root_.scala.xml.NodeSeq
 
 import com.mongodb._
 
 class MongoMapField[OwnerType <: MongoRecord[OwnerType], MapValueType](rec: OwnerType)
-  extends Field[Map[String, MapValueType], OwnerType]
+  extends Field[Map[String, MapValueType], OwnerType] with MandatoryTypedField[Map[String, MapValueType]]
   with MongoFieldFlavor[Map[String, MapValueType]] {
 
   def asJs = Str(toString) // not implemented
