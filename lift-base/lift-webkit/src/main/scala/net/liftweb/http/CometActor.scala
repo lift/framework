@@ -205,22 +205,32 @@ trait ListenerManager {
   protected def lowPriority: PartialFunction[Any, Unit] = Map.empty
 }
 
-trait CometListener extends CometListenee
+trait CometListener extends CometListenee {
+  self: CometActor =>
+}
 
-trait CometListenee extends CometActor {
+trait LocalSetupAndShutdown {
+  protected def localSetup(): Unit
+
+  protected def localShutdown(): Unit
+}
+
+trait CometListenee extends LocalSetupAndShutdown {
+  self: CometActor =>
   protected def registerWith: SimpleActor[Any]
 
   /**
-   * Override this in order to selectively update listeners based on the given message.
+   * Override this in order to selectively update listeners based on the given message.  This method has been deprecated because it's executed in a seperate context from the session's context.  This causes problems.  Accept/reject logic should be done in the partial function that handles the message.
    */
+  @deprecated
   protected def shouldUpdate: PartialFunction[Any, Boolean] = { case _ => true}
 
-  override protected def localSetup() {
+  abstract override protected def localSetup() {
     registerWith ! AddAListener(this, shouldUpdate)
     super.localSetup()
   }
 
-  override protected def localShutdown() {
+  abstract override protected def localShutdown() {
     registerWith ! RemoveAListener(this)
     super.localShutdown()
   }
