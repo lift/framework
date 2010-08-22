@@ -37,7 +37,7 @@ private[mongodb] object Meta {
     * These don't require a conversion and can be put directly into a DBObject
     */
     val primitives = Set[Class[_]](classOf[String], classOf[Int], classOf[Long], classOf[Double],
-                                  classOf[Float], classOf[Byte], classOf[BigDecimal], classOf[BigInt], classOf[Boolean],
+                                  classOf[Float], classOf[Byte], classOf[BigInt], classOf[Boolean],
                                   classOf[Short], classOf[java.lang.Integer], classOf[java.lang.Long],
                                   classOf[java.lang.Double], classOf[java.lang.Float],
                                   classOf[java.lang.Byte], classOf[java.lang.Boolean],
@@ -49,16 +49,15 @@ private[mongodb] object Meta {
     * This is used to convert DBObjects into JObjects
     */
     def primitive2jvalue(a: Any) = a match {
+      case x: String => JString(x)
       case x: Int => JInt(x)
       case x: Long => JInt(x)
       case x: Double => JDouble(x)
       case x: Float => JDouble(x)
       case x: Byte => JInt(BigInt(x))
       case x: BigInt => JInt(x)
-      //case x: BigDecimal => JString(x.toString) // this keeps the scale intact
       case x: Boolean => JBool(x)
       case x: Short => JInt(BigInt(x))
-      case x: String => JString(x)
       case x: java.lang.Integer => JInt(BigInt(x.asInstanceOf[Int]))
       case x: java.lang.Long => JInt(BigInt(x.asInstanceOf[Long]))
       case x: java.lang.Double => JDouble(x.asInstanceOf[Double])

@@ -369,9 +369,9 @@ object MongoRecordExamples extends Specification {
 
     // get the docs back from the db
     MainDoc.find(md1.id).foreach(m => {
-      m.refdoc.value.getId _== ref1.getRef.getId
+      m.refdoc.value.getId must_== ref1.getRef.getId
       m.refdoc.value.getRef must_== ref1.getRef.getRef
-      m.refstringdoc.value.getId _== refString1.getRef.getId
+      m.refstringdoc.value.getId must_== refString1.getRef.getId
       m.refstringdoc.value.getRef must_== refString1.getRef.getRef
     })
 
