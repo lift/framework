@@ -55,9 +55,7 @@ package mongorecordspecs {
     object jsonobjlist extends MongoJsonObjectListField[NullTestRec, JsonObj](this, JsonObj)
   }
 
-  object NullTestRec extends NullTestRec with MongoMetaRecord[NullTestRec] {
-    def createRecord = new NullTestRec
-  }
+  object NullTestRec extends NullTestRec with MongoMetaRecord[NullTestRec]
 
   case class BoxTestJsonObj(id: String, boxEmpty: Box[String], boxFull: Box[String], boxFail: Box[String])
   extends JsonObject[BoxTestJsonObj] {
@@ -74,7 +72,6 @@ package mongorecordspecs {
     object jsonobjlist extends MongoJsonObjectListField[BoxTestRec, BoxTestJsonObj](this, BoxTestJsonObj)
   }
   object BoxTestRec extends BoxTestRec with MongoMetaRecord[BoxTestRec] {
-    def createRecord = new BoxTestRec
     override def formats = super.formats + new BoxSerializer
   }
 }
@@ -123,7 +120,7 @@ object MongoRecordSpecs extends Specification {
         ntr.nullstring.valueBox.map(_ must beNull)
         ntr.nullstring.value must beNull
         // comes out as
-        n.nullstring.valueBox must_== Empty
+        n.nullstring.valueBox.map(_ must_== "")
         n.nullstring.value must_== ""
         // JsonObjects
         n.jsonobjlist.value.size must_== 2
