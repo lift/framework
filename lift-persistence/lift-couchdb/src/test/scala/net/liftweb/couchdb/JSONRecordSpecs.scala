@@ -30,7 +30,7 @@ import DocumentHelpers.jobjectToJObjectExtension
 class JSONRecordTestSpecsAsTest extends JUnit4(JSONRecordTestSpecs)
 
 package jsontestrecords {
-  class Person extends JSONRecord[Person] {
+  class Person private () extends JSONRecord[Person] {
     def meta = Person
 
     object name extends StringField(this, 200)
@@ -40,9 +40,7 @@ package jsontestrecords {
     object favoriteColor extends OptionalStringField(this, 200)
   }
 
-  object Person extends Person with JSONMetaRecord[Person] {
-    def createRecord = new Person
-  }
+  object Person extends Person with JSONMetaRecord[Person]
 }
 
 object JSONRecordTestSpecs extends Specification {

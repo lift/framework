@@ -17,6 +17,7 @@
 package net.liftweb {
 package record {
 
+import java.lang.reflect.Modifier
 import net.liftweb._
 import util._
 import common._
@@ -141,7 +142,16 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   /**
    * Creates a new record
    */
-  def createRecord: BaseRecord
+  final def createRecord: BaseRecord = {
+    val rec = instantiateRecord
+    rec runSafe {
+      introspect(rec, rec.getClass.getMethods) {case (v, mf) =>}
+    }
+    rec
+  }
+
+  /** Make a new record instance. This method can be overridden to provide caching behavior or what have you. */
+  protected def instantiateRecord: BaseRecord = rootClass.newInstance.asInstanceOf[BaseRecord]
 
   /**
    * Creates a new record setting the value of the fields from the original object but

@@ -29,26 +29,22 @@ import DocumentHelpers.{jobjectToJObjectExtension, stripIdAndRev}
 class CouchRecordTestSpecsAsTest extends JUnit4(CouchRecordTestSpecs)
 
 package couchtestrecords {
-  class Person extends CouchRecord[Person] {
+  class Person private () extends CouchRecord[Person] {
     def meta = Person
   
     object name extends StringField(this, 200)
     object age extends IntField(this)
   }
   
-  object Person extends Person with CouchMetaRecord[Person] {
-    def createRecord = new Person
-  }
+  object Person extends Person with CouchMetaRecord[Person]
   
-  class Company extends CouchRecord[Company] {
+  class Company private () extends CouchRecord[Company] {
     def meta = Company
   
     object name extends StringField(this, 200)
   }    
   
-  object Company extends Company with CouchMetaRecord[Company] {
-    def createRecord = new Company
-  }
+  object Company extends Company with CouchMetaRecord[Company]
 }
 
 object CouchRecordTestSpecs extends Specification {

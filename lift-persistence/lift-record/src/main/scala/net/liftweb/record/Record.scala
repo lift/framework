@@ -122,16 +122,6 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
    * @return Box[MappedField]
    */
   def fieldByName(fieldName: String): Box[Field[_, MyType]] = meta.fieldByName(fieldName, this)
-
-  // Initialize the field metadata by introspecting. Only do this if we are not initializing the meta record presently (then, meta == null)
-  {
-    val m = meta
-    if (m != null) {
-      runSafe {
-        m.introspect(this, getClass.getMethods) {case (v, mf) =>}
-      }
-    }
-  }
 }
 
 trait ExpandoRecord[MyType <: Record[MyType] with ExpandoRecord[MyType]] {

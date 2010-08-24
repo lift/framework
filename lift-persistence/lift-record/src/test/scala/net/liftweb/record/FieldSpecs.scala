@@ -30,7 +30,7 @@ class FieldSpecsAsTest extends JUnit3(FieldSpecs)
 object FieldSpecsRunner extends ConsoleRunner(FieldSpecs)
 
 package fieldspecs {
-  class PasswordTestRecord extends Record[PasswordTestRecord] {
+  class PasswordTestRecord private () extends Record[PasswordTestRecord] {
     def meta = PasswordTestRecord
 
     object password extends PasswordField(this) {
@@ -45,11 +45,9 @@ package fieldspecs {
     }
   }
 
-  object PasswordTestRecord extends PasswordTestRecord with MetaRecord[PasswordTestRecord] {
-    def createRecord = new PasswordTestRecord
-  }
+  object PasswordTestRecord extends PasswordTestRecord with MetaRecord[PasswordTestRecord]
 
-  class StringTestRecord extends Record[StringTestRecord] {
+  class StringTestRecord private () extends Record[StringTestRecord] {
     def meta = StringTestRecord
 
     object string extends StringField(this, 32) {
@@ -59,16 +57,14 @@ package fieldspecs {
     }
   }
 
-  object StringTestRecord extends StringTestRecord with MetaRecord[StringTestRecord] {
-    def createRecord = new StringTestRecord
-  }
+  object StringTestRecord extends StringTestRecord with MetaRecord[StringTestRecord]
 }
 
 object FieldSpecs extends Specification {
   "PasswordField" should {
     "require a nonempty password" in {
       import fieldspecs.PasswordTestRecord
-      val rec = new PasswordTestRecord().password("")
+      val rec = PasswordTestRecord.createRecord.password("")
 
       rec.validate must_== (
         FieldError(rec.password, Text(S.??("password.must.be.set"))) ::
@@ -78,7 +74,7 @@ object FieldSpecs extends Specification {
 
     "validate the unencrypted value" in {
       import fieldspecs.PasswordTestRecord
-      val rec = new PasswordTestRecord().password("testvalue")
+      val rec = PasswordTestRecord.createRecord.password("testvalue")
 
       rec.validate must_== (
         FieldError(rec.password, Text("no way!")) ::
@@ -90,7 +86,7 @@ object FieldSpecs extends Specification {
   "StringField" should {
     "honor validators" in {
       import fieldspecs.StringTestRecord
-      val rec = new StringTestRecord
+      val rec = StringTestRecord.createRecord
 
       rec.validate must_== (
         FieldError(rec.string, Text("String field name must be at least 3 characters.")) ::
