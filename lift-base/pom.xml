@@ -52,6 +52,7 @@
     <module>lift-common</module>
     <module>lift-actor</module>
     <module>lift-json</module>
+    <module>lift-json-ext</module>
     <module>lift-util</module>
     <module>lift-webkit</module>
   </modules>

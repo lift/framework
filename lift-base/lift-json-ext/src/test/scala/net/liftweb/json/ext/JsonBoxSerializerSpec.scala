@@ -15,7 +15,8 @@
  */
 
 package net.liftweb {
-package util {
+package json {
+package ext {
 
 import _root_.org.specs._
 import _root_.org.specs.runner._
@@ -23,8 +24,8 @@ import common._
 import json.JsonParser.parse
 import json.Serialization.{read, write => swrite}
 
-class JsonTypesSpecTest extends JUnit4(JsonTypesSpec)
-object JsonTypesSpec extends Specification {
+class JsonBoxSerializerSpecTest extends JUnit4(JsonBoxSerializerSpec)
+object JsonBoxSerializerSpec extends Specification {
   implicit val formats = net.liftweb.json.DefaultFormats + new JsonBoxSerializer
 
   "Extract empty age" in {
@@ -66,5 +67,6 @@ case class SomeException(msg: String) extends Exception
 
 case class Person(name: String, age: Box[Int], mother: Box[Person])
 
+}
 }
 }
