@@ -55,6 +55,12 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>lift-json-ext_${scala.version}</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.scala-tools.testing</groupId>
       <artifactId>specs_${scala.version}</artifactId>
     </dependency>

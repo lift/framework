@@ -24,8 +24,8 @@ import org.specs.Specification
 import org.specs.runner.JUnit4
 
 import net.liftweb.common._
-import net.liftweb.json.DefaultFormats
 import net.liftweb.json.JsonAST._
+import net.liftweb.json.ext.JsonBoxSerializer
 
 import com.mongodb._
 
@@ -76,7 +76,7 @@ package mongodocumentspecs {
     def meta = BoxTestDoc
   }
   object BoxTestDoc extends MongoDocumentMeta[BoxTestDoc] {
-    override def formats = super.formats + new BoxSerializer
+    override def formats = super.formats + new JsonBoxSerializer
   }
 }
 
@@ -168,7 +168,7 @@ object MongoDocumentSpecs extends Specification {
       otdFromDb.get must_== otd
     }
 
-    "handle Box using BoxSerializer" in {
+    "handle Box using JsonBoxSerializer" in {
       checkMongoIsRunning
       import mongodocumentspecs._
 

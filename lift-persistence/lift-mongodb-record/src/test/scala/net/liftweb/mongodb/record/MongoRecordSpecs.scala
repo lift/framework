@@ -27,8 +27,8 @@ import org.specs.Specification
 import org.specs.runner.JUnit4
 
 import net.liftweb.common._
-import net.liftweb.json.DefaultFormats
 import net.liftweb.json.JsonAST._
+import net.liftweb.json.ext.JsonBoxSerializer
 import net.liftweb.record.field.StringField
 
 import com.mongodb._
@@ -72,7 +72,7 @@ package mongorecordspecs {
     object jsonobjlist extends MongoJsonObjectListField[BoxTestRec, BoxTestJsonObj](this, BoxTestJsonObj)
   }
   object BoxTestRec extends BoxTestRec with MongoMetaRecord[BoxTestRec] {
-    override def formats = super.formats + new BoxSerializer
+    override def formats = super.formats + new JsonBoxSerializer
   }
 }
 
@@ -133,7 +133,7 @@ object MongoRecordSpecs extends Specification {
       }
     }
 
-    "handle Box using BoxSerializer" in {
+    "handle Box using JsonBoxSerializer" in {
       checkMongoIsRunning
       import mongorecordspecs._
 
