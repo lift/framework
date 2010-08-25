@@ -179,7 +179,7 @@ object S extends HasParams with Loggable {
   /**
    * Get a Req representing our current HTTP request.
    *
-   * @return A Full(Req) if S has been initialized, Empty otherwise.
+   * @return A Full(Req) if one has been initialized on the calling thread, Empty otherwise.
    *
    * @see Req
    */

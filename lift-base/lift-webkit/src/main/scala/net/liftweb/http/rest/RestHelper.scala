@@ -25,7 +25,7 @@ import net.liftweb.util.Props
 import scala.xml.{Elem, Node, Text}
 
 /**
- * Mix this trait into a class to provide a lost of REST helper methods
+ * Mix this trait into a class to provide a list of REST helper methods
  */
 trait RestHelper extends LiftRules.DispatchPF {
   import JsonAST._

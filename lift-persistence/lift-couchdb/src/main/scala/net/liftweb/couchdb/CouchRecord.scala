@@ -19,7 +19,7 @@ import _root_.dispatch.{Handler, Http}
 import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
 import Box.{box2Iterable, option2Box}
 import _root_.net.liftweb.json.JsonAST.{JField, JString, JValue}
-import _root_.net.liftweb.record.field.StringField
+import _root_.net.liftweb.record.field.OptionalStringField
 import _root_.net.liftweb.util.ControlHelpers.tryo
 import DocumentHelpers.jobjectToJObjectExtension
 
@@ -36,15 +36,13 @@ trait CouchRecord[MyType <: CouchRecord[MyType]] extends JSONRecord[MyType] {
   def meta: CouchMetaRecord[MyType]
 
   /** The mandatory _id field */
-  object id extends StringField(this, 100) with JSONField {
+  object id extends OptionalStringField(this, 100) with JSONField {
     override def jsonName = Full("_id")
-    override def optional_? = true
   }
 
   /** The mandatory _rev field */
-  object rev extends StringField(this, 100) with JSONField {
+  object rev extends OptionalStringField(this, 100) with JSONField {
     override def jsonName = Full("_rev")
-    override def optional_? = true
   }
 
   /** By default include a "type" field with value calculated by the typeName method */

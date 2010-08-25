@@ -33,7 +33,25 @@ object TimeZoneField {
     sort(_ < _).map(tz => (tz, tz))
 }
 
-class TimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends StringField(rec, 32) {
+trait TimeZoneTypedField extends StringTypedField {
+  /** Label for the selection item representing Empty, show when this field is optional. Defaults to the empty string. */
+  def emptyOptionLabel: String = ""
+
+  def buildDisplayList: List[(String, String)] =
+      if (optional_?) ("", emptyOptionLabel)::TimeZoneField.timeZoneList else TimeZoneField.timeZoneList
+
+  private def elem = SHtml.select(buildDisplayList, Full(valueBox openOr ""),
+                                  timezone => setBox(Full(timezone))) % ("tabindex" -> tabIndex.toString)
+
+  override def toForm: Box[NodeSeq] = 
+    uniqueFieldId match {
+      case Full(id) => Full(elem % ("id" -> (id + "_field")))
+      case _ => Full(elem)
+    }
+}
+
+class TimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends StringField(rec, 32) with TimeZoneTypedField {
 
   override def defaultValue = TimeZone.getDefault.getID
 
@@ -41,51 +59,10 @@ class TimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Stri
     case null => TimeZone.getDefault
     case x => x
   }
-
-  /** Label for the selection item representing Empty, show when this field is optional. Defaults to the empty string. */
-  def emptyOptionLabel: String = ""
-
-  def buildDisplayList: List[(String, String)] =
-      if (optional_?) ("", emptyOptionLabel)::TimeZoneField.timeZoneList else TimeZoneField.timeZoneList
-
-  private def elem = SHtml.select(buildDisplayList, Full(valueBox openOr ""), set) % ("tabindex" -> tabIndex.toString)
-
-  override def toForm = {
-    var el = elem
-
-    uniqueFieldId match {
-      case Full(id) =>
-        <div id={id+"_holder"}><div><label for={id+"_field"}>{displayName}</label></div>{el % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
-      case _ => <div>{el}</div>
-    }
-  }
-
-  override def asXHtml: NodeSeq = {
-    var el = elem
-
-    uniqueFieldId match {
-      case Full(id) => el % ("id" -> (id+"_field"))
-      case _ => el
-    }
-  }
 }
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.net.liftweb.mapper.{DriverType}
-
-class DBTimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends TimeZoneField(rec)
-  with JDBCFieldFlavor[String] {
-
-  def targetSQLType = Types.VARCHAR
-
-  /**
-   * Given the driver type, return the string required to create the column in the database
-   */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName+" VARCHAR("+32+")"
-
-  def jdbcFriendly(field : String) : String = value
-
-}
+class OptionalTimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends OptionalStringField(rec, 32) with TimeZoneTypedField
 
 }
 }

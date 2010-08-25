@@ -65,7 +65,7 @@ class MongoPasswordField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType, mi
     )
   }
 
-  override def validateField: List[FieldError] = runValidation(validatorValue)
+  override def validate: List[FieldError] = runValidation(validatorValue)
 
   private def elem = S.fmapFunc(S.SFuncHolder(this.setPassword(_))) {
     funcName => <input type="password"
@@ -73,32 +73,21 @@ class MongoPasswordField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType, mi
       value=""
       tabindex={tabIndex toString}/>}
 
-  override def toForm = {
+  override def toForm: Box[NodeSeq] =
     uniqueFieldId match {
-      case Full(id) =>
-        <div id={id+"_holder"}><div><label for={id+"_field"}>{displayName}</label></div>{elem % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
-      case _ => <div>{elem}</div>
+      case Full(id) => Full(elem % ("id" -> (id+"_field")))
+      case _ => Full(elem)
     }
+
+  private def validatePassword(pwd: Password): List[FieldError] = pwd match {
+    case null | Password("", _) | Password("*", _) | Password(MongoPasswordField.blankPw, _) =>
+      Text(S.??("password.must.be.set"))
+    case Password(pwd, _) if pwd.length < minLen =>
+      Text(S.??("password.too.short"))
+    case _ => Nil
   }
 
-  override def asXHtml: NodeSeq = {
-    var el = elem
-
-    uniqueFieldId match {
-      case Full(id) =>  el % ("id" -> (id+"_field"))
-      case _ => el
-    }
-  }
-
-  private def validatePassword(pwdBox: Box[Password]): Box[Node] = pwdBox.map(_.pwd) match {
-    case Full(null | "" | "*" | MongoPasswordField.blankPw) =>
-      Full(Text(S.??("password.must.be.set")))
-    case Full(pwd) if pwd.length < minLen =>
-      Full(Text(S.??("password.too.short")))
-    case _ => Empty
-  }
-
-  override def validators = validatePassword _ :: Nil
+  override def validations = validatePassword _ :: Nil
 
   override def defaultValue = Password("")
 

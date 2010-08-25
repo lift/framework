@@ -71,10 +71,7 @@ class CountryField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends EnumF
 
 }
 
-/**
- * A country field holding DB related logic
- */
-abstract class DBCountryField[OwnerType <: DBRecord[OwnerType]](rec: OwnerType) extends DBEnumField(rec, Countries) {
+class OptionalCountryField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends OptionalEnumField(rec, Countries) {
 
 }
 

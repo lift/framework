@@ -22,14 +22,14 @@ import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
 import _root_.net.liftweb.http.js.JE.Str
 import _root_.net.liftweb.json.JsonAST.{JNothing, JNull, JObject, JValue}
 import _root_.net.liftweb.json.JsonParser
-import _root_.net.liftweb.record.{Field, FieldHelpers, Record}
+import _root_.net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
 import _root_.net.liftweb.util.Helpers.tryo
 
 import com.mongodb.DBObject
 
 abstract class JsonObjectField[OwnerType <: MongoRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
   (rec: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
-  extends Field[JObjectType, OwnerType] with MongoFieldFlavor[JObjectType] {
+  extends Field[JObjectType, OwnerType] with MandatoryTypedField[JObjectType] with MongoFieldFlavor[JObjectType] {
 
   def owner = rec
 
@@ -38,9 +38,7 @@ abstract class JsonObjectField[OwnerType <: MongoRecord[OwnerType], JObjectType 
   /**
    * Convert the field value to an XHTML representation
    */
-  def toForm: NodeSeq = NodeSeq.Empty // FIXME
-
-  def asXHtml: NodeSeq = NodeSeq.Empty // FIXME
+  override def toForm: Box[NodeSeq] = Empty // FIXME
 
   /**
   * Returns the field's value as a valid JavaScript expression

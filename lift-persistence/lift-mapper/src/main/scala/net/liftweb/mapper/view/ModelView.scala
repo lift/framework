@@ -29,6 +29,9 @@ import scala.xml.{NodeSeq, Text}
 
 /**
  * A snippet that can list and edit items of a particular Mapper class
+ * This trait can help reduce boilerplate in the common scenario where
+ * you want a snippet class to provide list and edit snippets for a
+ * specific Mapper class.
  * @author nafg
  */
 trait ModelSnippet[T <: Mapper[T]] extends StatefulSnippet {
@@ -67,14 +70,19 @@ trait ModelSnippet[T <: Mapper[T]] extends StatefulSnippet {
     case "newOrEdit" =>  view.newOrEdit _
   }
   
-  
+  /**
+   * An "edit" BindParam
+  */
   def editAction(e: T) = TheBindParam("edit", link("edit", ()=>load(e), Text(?("Edit"))))
+  /**
+   * A "remove" BindParam
+  */
   def removeAction(e: T) = TheBindParam("remove", link("list", ()=>e.delete_!, Text(?("Remove"))))
 }
 
 
 /**
- * A wrapper around a Mapper that provides view-related utilities. Belongs to a parent snippet.
+ * A wrapper around a Mapper that provides view-related utilities. Belongs to a parent ModelSnippet.
  * @author nafg
  */
 class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {

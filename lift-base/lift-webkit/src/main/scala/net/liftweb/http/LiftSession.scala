@@ -736,6 +736,10 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
+  /*
+   * Given a Snippet name, try to determine the fully-qualified Class
+   * so that we can instantiate it via reflection.
+   */
   private def findSnippetClass(name: String): Box[Class[AnyRef]] = {
     if (name == null) Empty
     else {
@@ -814,15 +818,27 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
+  /*
+   * We need to locate a snippet instance for the given tag name. We look in
+   * this order:
+   *
+   * 1. Check to see if a StatefulSnippet has already registered itself
+   * 2. See if we have a custom snippet dispatch defined in LiftRules
+   * 3. Locate a Class or Object based on the snippet name
+   *
+   * For the cases #2 and #3, we need to set the snippet name if the returned snippet
+   * class is a StatefulSnippet so that the registration function works on return calls.
+   */
   private def findSnippetInstance(cls: String): Box[AnyRef] =
-  S.snippetForClass(cls) or
-  (findSnippetClass(cls).flatMap(c => instantiateOrRedirect(c) or findSnippetObject(cls)) match {
+    S.snippetForClass(cls) or 
+    (LiftRules.snippet(cls) or
+     findSnippetClass(cls).flatMap(c => instantiateOrRedirect(c) or findSnippetObject(cls))) match {
       case Full(inst: StatefulSnippet) =>
         inst.addName(cls); S.overrideSnippetForClass(cls, inst); Full(inst)
       case Full(ret) => Full(ret)
       case fail : Failure => fail
       case _ => Empty
-    })
+    }
 
   private def reportSnippetError(page: String,
                                  snippetName: Box[String],
@@ -900,6 +916,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
     val kids = if (eagerEval) processSurroundAndInclude(page, passedKids) else passedKids
 
+    // Locate a snippet as defined by our SiteMap Loc
     def locSnippet(snippet: String): Box[NodeSeq] =
       for (loc <- S.location;
            func <- loc.snippet(snippet)) yield func(kids)
@@ -907,7 +924,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     def locateAndCacheSnippet(tagName: String): Box[AnyRef] =
       snippetMap.is.get(tagName) or {
         first(LiftRules.snippetNamesToSearch.vend(tagName)) { nameToTry =>
-          val ret = LiftRules.snippet(nameToTry) or findSnippetInstance(nameToTry)
+          val ret = findSnippetInstance(nameToTry)
+          // Update the snippetMap so that we reuse the same instance in this request
           ret.foreach(s => snippetMap.set(snippetMap.is.update(tagName, s)))
           ret
         }

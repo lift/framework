@@ -27,31 +27,48 @@ import net.liftweb.mapper.{Mapper, MetaMapper, MappedField,
          QueryParam, OrderBy, StartAt, MaxRows, Ascending, Descending}
  
 /**
- * Snippet helper for people implementing 
- * pagination - this ensures they implement the paginator
- * 
+ * Helper for when using paginators with a ModelSnippet.
+ * Adds a dispatch that delegates the "paginate" snippet to the paginator member.
  * @author nafg and Timothy Perrett
  */ 
 trait PaginatedModelSnippet[T <: Mapper[T]] extends ModelSnippet[T] {
   abstract override def dispatch: DispatchIt = super.dispatch orElse Map("paginate" -> paginator.paginate _ )
+  /**
+   * The paginator to delegate to
+   */
   val paginator: PaginatorSnippet[T]
 }
 
 /** 
  * Paginate mapper instances by supplying the model you 
  * wish to paginate and Paginator will run your query for you etc.
- * 
+ *
+ * @param meta The singleton of the Mapper class you're paginating
  * @author nafg and Timothy Perrett
  */
 class MapperPaginator[T <: Mapper[T]](val meta: MetaMapper[T]) extends Paginator[T] {
+  /**
+   * QueryParams to use always
+   */
   var constantParams: Seq[QueryParam[T]] = Nil
+  
   def count = meta.count(constantParams: _*)
   def page = meta.findAll(constantParams ++ Seq[QueryParam[T]](MaxRows(itemsPerPage), StartAt(first)): _*)
 }
 
+/**
+ * Convenience class that combines MapperPaginator with PaginatorSnippet
+ * @param meta The singleton of the Mapper class you're paginating
+ */
 class MapperPaginatorSnippet[T <: Mapper[T]](meta: MetaMapper[T])
   extends MapperPaginator[T](meta) with PaginatorSnippet[T]
 
+/**
+ * Implements MapperPaginator and SortedPaginator.
+ * @param meta The singleton of the Mapper class you're paginating
+ * @param initialSort The field to sort by initially
+ * @param _headers Pairs of column labels and MappedFields.
+ */
 class SortedMapperPaginator[T <: Mapper[T]](meta: MetaMapper[T],
                                 initialSort: net.liftweb.mapper.MappedField[_, T],
                                 _headers: (String, MappedField[_, T])*)
@@ -70,6 +87,12 @@ class SortedMapperPaginator[T <: Mapper[T]](meta: MetaMapper[T],
     }
 }
 
+/**
+ * Convenience class that combines SortedMapperPaginator and SortedPaginatorSnippet.
+ * @param meta The singleton of the Mapper class you're paginating
+ * @param initialSort The field to sort by initially
+ * @param headers Pairs of column labels and MappedFields.
+ */
 class SortedMapperPaginatorSnippet[T <: Mapper[T]](
   meta: MetaMapper[T],
   initialSort: net.liftweb.mapper.MappedField[_, T],

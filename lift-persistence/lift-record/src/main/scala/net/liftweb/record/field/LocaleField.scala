@@ -33,7 +33,22 @@ object LocaleField {
     .map(lo => (lo.toString, lo.getDisplayName))
 }
 
-class LocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends StringField(rec, 16) {
+trait LocaleTypedField extends TypedField[String] {
+  /** Build a list of string pairs for a select list. */
+  def buildDisplayList: List[(String, String)]
+
+  private def elem = SHtml.select(buildDisplayList, Full(valueBox.map(_.toString) openOr ""),
+                                  locale => setBox(Full(locale))) % ("tabindex" -> tabIndex.toString)
+
+  override def toForm: Box[NodeSeq] =
+    uniqueFieldId match {
+      case Full(id) => Full(elem % ("id" -> (id + "_field")))
+      case _ => Full(elem)
+    }
+}
+
+class LocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends StringField(rec, 16) with LocaleTypedField {
 
   override def defaultValue = Locale.getDefault.toString
 
@@ -42,50 +57,17 @@ class LocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends String
     case x :: xs => x
   }
 
+  def buildDisplayList: List[(String, String)] = LocaleField.localeList
+
+}
+
+class OptionalLocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends OptionalStringField(rec, 16) with LocaleTypedField {
+
   /** Label for the selection item representing Empty, show when this field is optional. Defaults to the empty string. */
   def emptyOptionLabel: String = ""
 
-  /** Build a list of string pairs for a select list. */
-  def buildDisplayList: List[(String, String)] =
-    if (optional_?) ("", emptyOptionLabel)::LocaleField.localeList else LocaleField.localeList
-
-  private def elem = SHtml.select(buildDisplayList, Full(valueBox.map(_.toString) openOr ""), set) % ("tabindex" -> tabIndex.toString)
-
-  override def toForm = {
-    var el = elem
-
-    uniqueFieldId match {
-      case Full(id) =>
-        <div id={id+"_holder"}><div><label for={id+"_field"}>{displayName}</label></div>{el % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
-      case _ => <div>{el}</div>
-    }
-  }
-
-  override def asXHtml: NodeSeq = {
-    var el = elem
-
-    uniqueFieldId match {
-      case Full(id) =>  el % ("id" -> (id+"_field"))
-      case _ => el
-    }
-  }
-}
-
-import _root_.java.sql.{ResultSet, Types}
-import _root_.net.liftweb.mapper.{DriverType}
-
-class DBLocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends LocaleField(rec)
-  with JDBCFieldFlavor[String] {
-
-  def targetSQLType = Types.VARCHAR
-
-  /**
-   * Given the driver type, return the string required to create the column in the database
-   */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName+" VARCHAR("+16+")"
-
-  def jdbcFriendly(field : String) : String = value
-
+  def buildDisplayList: List[(String, String)] = ("", emptyOptionLabel)::LocaleField.localeList
 }
 
 }

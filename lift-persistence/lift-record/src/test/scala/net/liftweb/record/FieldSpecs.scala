@@ -19,7 +19,7 @@ package record {
 
 import _root_.net.liftweb.common.{Box, Empty, Full}
 import _root_.net.liftweb.http.S
-import _root_.net.liftweb.record.field.PasswordField
+import _root_.net.liftweb.record.field.{PasswordField, StringField}
 import _root_.net.liftweb.util.FieldError
 import _root_.org.specs._
 import _root_.org.specs.runner.{ConsoleRunner, JUnit3}
@@ -30,31 +30,41 @@ class FieldSpecsAsTest extends JUnit3(FieldSpecs)
 object FieldSpecsRunner extends ConsoleRunner(FieldSpecs)
 
 package fieldspecs {
-  class PasswordTestRecord extends Record[PasswordTestRecord] {
+  class PasswordTestRecord private () extends Record[PasswordTestRecord] {
     def meta = PasswordTestRecord
 
     object password extends PasswordField(this) {
-      override def validators = PasswordTestRecord.validateNonEmptyPassword _ ::
-      super.validators
+      override def validations = validateNonEmptyPassword _ ::
+      super.validations
+
+      def validateNonEmptyPassword(v: String): List[FieldError] = 
+        v match {
+          case "testvalue" => Text("no way!")
+          case _ => Nil
+        }
     }
   }
-  
-  object PasswordTestRecord extends PasswordTestRecord with MetaRecord[PasswordTestRecord] {
-    def createRecord = new PasswordTestRecord
 
-    private[fieldspecs] def validateNonEmptyPassword(b: Box[String]): Box[Node] = 
-      b flatMap {
-        case s if s == "testvalue" => Full(Text("no way!"))
-        case _ => Empty
-      }
+  object PasswordTestRecord extends PasswordTestRecord with MetaRecord[PasswordTestRecord]
+
+  class StringTestRecord private () extends Record[StringTestRecord] {
+    def meta = StringTestRecord
+
+    object string extends StringField(this, 32) {
+      override def validations =
+        valMinLen(3, "String field name must be at least 3 characters.") _ ::
+        super.validations
+    }
   }
+
+  object StringTestRecord extends StringTestRecord with MetaRecord[StringTestRecord]
 }
 
 object FieldSpecs extends Specification {
   "PasswordField" should {
     "require a nonempty password" in {
       import fieldspecs.PasswordTestRecord
-      val rec = new PasswordTestRecord().password("")
+      val rec = PasswordTestRecord.createRecord.password("")
 
       rec.validate must_== (
         FieldError(rec.password, Text(S.??("password.must.be.set"))) ::
@@ -64,10 +74,22 @@ object FieldSpecs extends Specification {
 
     "validate the unencrypted value" in {
       import fieldspecs.PasswordTestRecord
-      val rec = new PasswordTestRecord().password("testvalue")
+      val rec = PasswordTestRecord.createRecord.password("testvalue")
 
       rec.validate must_== (
         FieldError(rec.password, Text("no way!")) ::
+        Nil
+      )
+    }
+  }
+
+  "StringField" should {
+    "honor validators" in {
+      import fieldspecs.StringTestRecord
+      val rec = StringTestRecord.createRecord
+
+      rec.validate must_== (
+        FieldError(rec.string, Text("String field name must be at least 3 characters.")) ::
         Nil
       )
     }

@@ -40,7 +40,7 @@ class MongoRecordExamplesTest extends JUnit4(MongoRecordExamples)
 
 package mongotestrecords {
 
-  class TstRecord extends MongoRecord[TstRecord] {
+  class TstRecord private () extends MongoRecord[TstRecord] {
 
     def meta = TstRecord
 
@@ -73,9 +73,7 @@ package mongotestrecords {
     }
   }
 
-  object TstRecord extends TstRecord with MongoMetaRecord[TstRecord] {
-    def createRecord = new TstRecord
-  }
+  object TstRecord extends TstRecord with MongoMetaRecord[TstRecord]
 
   case class Address(street: String, city: String)
   case class Child(name: String, age: Int, birthdate: Option[Date])
@@ -87,7 +85,7 @@ package mongotestrecords {
 
   object Person extends JsonObjectMeta[Person]
 
-  class MainDoc extends MongoRecord[MainDoc] with MongoId[MainDoc] {
+  class MainDoc private () extends MongoRecord[MainDoc] with MongoId[MainDoc] {
 
     def meta = MainDoc
 
@@ -101,19 +99,15 @@ package mongotestrecords {
       def obj = RefDoc.find(value)
     }
   }
-  object MainDoc extends MainDoc with MongoMetaRecord[MainDoc] {
-    def createRecord = new MainDoc
-  }
+  object MainDoc extends MainDoc with MongoMetaRecord[MainDoc]
 
-  class RefDoc extends MongoRecord[RefDoc] with MongoId[RefDoc] {
+  class RefDoc private () extends MongoRecord[RefDoc] with MongoId[RefDoc] {
     def meta = RefDoc
   }
-  object RefDoc extends RefDoc with MongoMetaRecord[RefDoc] {
-    def createRecord = new RefDoc
-  }
+  object RefDoc extends RefDoc with MongoMetaRecord[RefDoc]
 
   // string as id
-  class RefStringDoc extends MongoRecord[RefStringDoc] {
+  class RefStringDoc private () extends MongoRecord[RefStringDoc] {
     def meta = RefStringDoc
 
     def id = _id.value
@@ -127,11 +121,9 @@ package mongotestrecords {
         new DBRef(db, meta.collectionName, _id.value)
       )
   }
-  object RefStringDoc extends RefStringDoc with MongoMetaRecord[RefStringDoc] {
-    def createRecord = new RefStringDoc
-  }
+  object RefStringDoc extends RefStringDoc with MongoMetaRecord[RefStringDoc]
 
-  class ListDoc extends MongoRecord[ListDoc] with MongoId[ListDoc] {
+  class ListDoc private () extends MongoRecord[ListDoc] with MongoId[ListDoc] {
     def meta = ListDoc
 
     import scala.collection.JavaConversions._
@@ -201,7 +193,6 @@ package mongotestrecords {
   }
   object ListDoc extends ListDoc with MongoMetaRecord[ListDoc] {
     override def formats = DefaultFormats.lossless // adds .000 to Dates
-    def createRecord = new ListDoc
   }
 
   case class JsonDoc(id: String, name: String) extends JsonObject[JsonDoc] {
@@ -214,17 +205,16 @@ package mongotestrecords {
     override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
   }
 
-  class MapDoc extends MongoRecord[MapDoc] with MongoId[MapDoc] {
+  class MapDoc private () extends MongoRecord[MapDoc] with MongoId[MapDoc] {
     def meta = MapDoc
 
     object stringmap extends MongoMapField[MapDoc, String](this)
   }
   object MapDoc extends MapDoc with MongoMetaRecord[MapDoc] {
     override def formats = DefaultFormats.lossless // adds .000
-    def createRecord = new MapDoc
   }
 
-  class OptionalDoc extends MongoRecord[OptionalDoc] with MongoId[OptionalDoc] {
+  class OptionalDoc private () extends MongoRecord[OptionalDoc] with MongoId[OptionalDoc] {
     def meta = OptionalDoc
     // optional fields
     object stringbox extends StringField(this, 32) {
@@ -232,10 +222,9 @@ package mongotestrecords {
       override def defaultValue = "nothin"
     }
   }
-  object OptionalDoc extends OptionalDoc with MongoMetaRecord[OptionalDoc] {
-    def createRecord = new OptionalDoc
-  }
-  class StrictDoc extends MongoRecord[StrictDoc] with MongoId[StrictDoc] {
+  object OptionalDoc extends OptionalDoc with MongoMetaRecord[OptionalDoc]
+
+  class StrictDoc private () extends MongoRecord[StrictDoc] with MongoId[StrictDoc] {
     def meta = StrictDoc
     object name extends StringField(this, 32)
   }
@@ -244,7 +233,6 @@ package mongotestrecords {
     import net.liftweb.json.JsonDSL._
 
     ensureIndex(("name" -> 1), true) // unique name
-    def createRecord = new StrictDoc
   }
 }
 

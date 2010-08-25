@@ -26,7 +26,7 @@ import net.liftweb.http.{Req, SHtml}
 import net.liftweb.mapper.Safe
 import field._
 
-trait Record[MyType <: Record[MyType]] {
+trait Record[MyType <: Record[MyType]] extends FieldContainer {
   self: MyType =>
 
   /**
@@ -38,6 +38,8 @@ trait Record[MyType <: Record[MyType]] {
    * Get the fields defined on the meta object for this record instance
    */
   def fields() = meta.fields(this)
+
+  def allFields = fields()
 
   /**
    * The meta record (the object that contains the meta result for this type)
@@ -119,17 +121,7 @@ trait Record[MyType <: Record[MyType]] {
    *
    * @return Box[MappedField]
    */
-  def fieldByName(fieldName: String): Box[OwnedField[MyType]] = meta.fieldByName(fieldName, this)
-
-  // Initialize the field metadata by introspecting. Only do this if we are not initializing the meta record presently (then, meta == null)
-  {
-    val m = meta
-    if (m != null) {
-      runSafe {
-        m.introspect(this, getClass.getMethods) {case (v, mf) =>}
-      }
-    }
-  }
+  def fieldByName(fieldName: String): Box[Field[_, MyType]] = meta.fieldByName(fieldName, this)
 }
 
 trait ExpandoRecord[MyType <: Record[MyType] with ExpandoRecord[MyType]] {

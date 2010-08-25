@@ -31,20 +31,9 @@ import Helpers._
 import JE._
 
 
-class EnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](rec: OwnerType, enum: EnumType)(implicit m: Manifest[EnumType#Value])
-  extends Field[EnumType#Value, OwnerType]
-{
-  def this(rec: OwnerType, enum: EnumType, value: EnumType#Value)(implicit m: Manifest[EnumType#Value]) = {
-    this(rec, enum)
-    set(value)
-  }
-
-  def this(rec: OwnerType, enum: EnumType, value: Box[EnumType#Value])(implicit m: Manifest[EnumType#Value]) = {
-    this(rec, enum)
-    setBox(value)
-  }
-
-  def owner = rec
+trait EnumTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Value] {
+  protected val enum: EnumType
+  protected val valueManifest: Manifest[EnumType#Value]
 
   def toInt: Box[Int] = valueBox.map(_.id)
 
@@ -59,7 +48,7 @@ class EnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](rec: Ow
     case Some(value: Number) => setBox(fromInt(value.intValue))
     case Full(value: Number) => setBox(fromInt(value.intValue))
     case (value: Number)::_  => setBox(fromInt(value.intValue))
-    case _                   => genericSetFromAny(in)
+    case _                   => genericSetFromAny(in)(valueManifest)
   }
 
   def setFromString(s: String): Box[EnumType#Value] = setBox(asInt(s).flatMap(fromInt))
@@ -79,25 +68,11 @@ class EnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](rec: Ow
 
   private def elem = SHtml.selectObj[Box[EnumType#Value]](buildDisplayList, Full(valueBox), setBox(_)) % ("tabindex" -> tabIndex.toString)
 
-  def toForm = {
-    var el = elem
-
+  def toForm: Box[NodeSeq]  =
     uniqueFieldId match {
-      case Full(id) =>
-        <div id={id+"_holder"}><div><label for={id+"_field"}>{displayName}</label></div>{el % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
-      case _ => <div>{el}</div>
+      case Full(id) => Full(elem % ("id" -> (id + "_field")))
+      case _ => Full(elem)
     }
-
-  }
-
-  def asXHtml: NodeSeq = {
-    var el = elem
-
-    uniqueFieldId match {
-      case Full(id) => el % ("id" -> (id+"_field"))
-      case _ => el
-    }
-  }
 
   def defaultValue: EnumType#Value = enum.iterator.next
 
@@ -121,24 +96,28 @@ class EnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](rec: Ow
   def setFromJValue(jvalue: JValue): Box[EnumType#Value] = setFromJIntOrdinal(jvalue)
 }
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.net.liftweb.mapper.{DriverType}
-
-/**
- * An enum field holding DB related logic
- */
-abstract class DBEnumField[OwnerType <: DBRecord[OwnerType], EnumType <: Enumeration](rec: OwnerType, enum: EnumType)(implicit m: Manifest[EnumType#Value])
-  extends EnumField[OwnerType, EnumType](rec, enum) with JDBCFieldFlavor[Integer]
+class EnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](rec: OwnerType, protected val enum: EnumType)(implicit m: Manifest[EnumType#Value])
+  extends Field[EnumType#Value, OwnerType] with MandatoryTypedField[EnumType#Value] with EnumTypedField[EnumType]
 {
-  def targetSQLType = Types.VARCHAR
+  def this(rec: OwnerType, enum: EnumType, value: EnumType#Value)(implicit m: Manifest[EnumType#Value]) = {
+    this(rec, enum)
+    set(value)
+  }
 
-  /**
-   * Given the driver type, return the string required to create the column in the database
-   */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.enumColumnType
+  def owner = rec
+  protected val valueManifest = m
+}
 
-  def jdbcFriendly(field: String) = new _root_.java.lang.Integer(this.toInt openOr defaultValue.id)
+class OptionalEnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](rec: OwnerType, protected val enum: EnumType)(implicit m: Manifest[EnumType#Value])
+  extends Field[EnumType#Value, OwnerType] with OptionalTypedField[EnumType#Value] with EnumTypedField[EnumType]
+{
+  def this(rec: OwnerType, enum: EnumType, value: Box[EnumType#Value])(implicit m: Manifest[EnumType#Value]) = {
+    this(rec, enum)
+    setBox(value)
+  }
 
+  def owner = rec
+  protected val valueManifest = m
 }
 
 }

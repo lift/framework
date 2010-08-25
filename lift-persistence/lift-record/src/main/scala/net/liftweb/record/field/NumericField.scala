@@ -28,7 +28,7 @@ import S._
 import Helpers._
 import JE._
 
-trait NumericField[MyType, OwnerType <: Record[OwnerType]] extends Field[MyType, OwnerType] {
+trait NumericTypedField[MyType] extends TypedField[MyType] {
 
   /** Augments genericSetFromAny with support for values of type Number (optionally wrapped in any of the usual suspects) */
   protected final def setNumericFromAny(in: Any, f: Number => MyType)(implicit m: Manifest[MyType]): Box[MyType] =
@@ -41,29 +41,17 @@ trait NumericField[MyType, OwnerType <: Record[OwnerType]] extends Field[MyType,
     }
 
   private def elem = S.fmapFunc((s: List[String]) => setFromAny(s)) {
-      funcName => <input type="text" name={funcName} value={valueBox.map(_.toString) openOr ""} tabindex={tabIndex toString}/>
+    funcName => <input type="text" name={funcName} value={valueBox.map(_.toString) openOr ""} tabindex={tabIndex toString}/>
   }
 
   /**
    * Returns form input of this field
    */
-  def toForm = {
+  def toForm: Box[NodeSeq] =
     uniqueFieldId match {
-      case Full(id) =>
-        <div id={id+"_holder"}><div><label for={id+"_field"}>{displayName}</label></div>{elem % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
-      case _ => <div>{elem}</div>
+      case Full(id) => Full(elem % ("id" -> (id + "_field")))
+      case _ => Full(elem)
     }
-
-  }
-
-  def asXHtml: NodeSeq = {
-    var el = elem
-
-    uniqueFieldId match {
-      case Full(id) =>  el % ("id" -> (id+"_field"))
-      case _ => el
-    }
-  }
 
   override def noValueErrorMessage = S.??("number.required")
 

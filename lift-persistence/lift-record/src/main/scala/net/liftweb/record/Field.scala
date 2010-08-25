@@ -24,18 +24,10 @@ import net.liftweb.util._
 import scala.reflect.Manifest
 import scala.xml._
 
-trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
-  private[record] var needsDefault = true
-  private[record] var dirty = false
+/** Base trait of record fields, with functionality common to any type of field owned by any type of record */
+trait BaseField extends FieldIdentifier with util.BaseField {
   private[record] var fieldName: String = _
-
-  type MyType
-  type ValidationFunction = Box[MyType] => List[FieldError]
-
-  /**
-   * Return the owner of this field
-   */
-  def owner: OwnerType
+  private[record] var dirty = false
 
   protected def dirty_?(b: Boolean) = dirty = b
 
@@ -61,14 +53,9 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
   def name: String = fieldName
 
   /**
-   * The display name of the field (by default, the 'internal' name of the field)
-   */
-  def displayName = name
-
-  /**
    * Can the value of this field be read without obscuring the result?
    */
-  def canRead_? = owner.safe_? || checkCanRead_?
+  def canRead_? : Boolean = safe_? || checkCanRead_?
 
   /**
    * If the owner is not in "safe" mode, check the current environment to see if
@@ -76,8 +63,15 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
    */
   def checkCanRead_? = true
 
-  def canWrite_? = owner.safe_? || checkCanWrite_?
+  /**
+   * Can the value of this field be written?
+   */
+  def canWrite_? : Boolean = safe_? || checkCanWrite_?
 
+  /**
+   * If the owner is not in "safe" mode, check the current environment to see if
+   * the field can be written
+   */
   def checkCanWrite_? = true
 
   /**
@@ -85,9 +79,10 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
    */
   def toXHtml: NodeSeq = Text(toString)
 
-  def toForm: NodeSeq
-
-  def asXHtml: NodeSeq
+  /**
+   * Generate a form control for the field
+   */
+  def toForm: Box[NodeSeq]
 
   /**
    * Returns the field's value as a valid JavaScript expression
@@ -96,33 +91,6 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
 
   /** Encode the field value into a JValue */
   def asJValue: JValue
-
-  /**
-   * Helper for implementing asJValue for a conversion to an encoded JString
-   *
-   * @param encode function to transform the field value into a String
-   */
-  protected def asJString(encode: MyType => String): JValue =
-      valueBox.map(v => JString(encode(v))) openOr (JNothing: JValue)
-
-  /** Decode the JValue and set the field to the decoded value. Returns Empty or Failure if the value could not be set */
-  def setFromJValue(jvalue: JValue): Box[MyType]
-
-  /**
-   * Helper for implementing setFromJValue for a conversion from an encoded JString
-   *
-   * @param decode function to try and transform a String into a field value
-   */
-  protected def setFromJString(jvalue: JValue)(decode: String => Box[MyType]): Box[MyType] = jvalue match {
-    case JNothing|JNull if optional_? => setBox(Empty)
-    case JString(s)                   => setBox(decode(s))
-    case other                        => setBox(FieldHelpers.expectedA("JString", other))
-  }
-
-  /**
-   * Are we in "safe" mode (i.e., the value of the field can be read or written without any security checks.)
-   */
-  final def safe_? : Boolean = owner.safe_?
 
   /**
    * Set the name of this field
@@ -147,26 +115,71 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
 
   override def uniqueFieldId: Box[String] = Full(name+"_id")
 
-
   def label: NodeSeq = uniqueFieldId match {
     case Full(id) =>  <label for={id+"_field"}>{displayName}</label>
     case _ => NodeSeq.Empty
   }
 
+  def asString: String
+
+  def safe_? : Boolean = true // let owned fields make it unsafe some times
+}
+
+/** Refined trait for fields owned by a particular record type */
+trait OwnedField[OwnerType <: Record[OwnerType]] extends BaseField {
   /**
-   * Return a list of functions that will be subsequently called for validating this field.
-   * Each function takes a field-type parameter and returns a Box[Node].
-   *
-   * The field values is valid if all validation functions return an Empty Box
+   * Return the owner of this field
    */
-  def validators: List[ValidationFunction] = Nil
+  def owner: OwnerType
+
+  /**
+   * Are we in "safe" mode (i.e., the value of the field can be read or written without any security checks.)
+   */
+  override final def safe_? : Boolean = owner.safe_?
+}
+
+/** Refined trait for fields holding a particular value type */
+trait TypedField[ThisType] extends BaseField {
+  type MyType = ThisType // For backwards compatability
+
+  type ValidationFunction = ValueType => List[FieldError]
+
+  private[record] var data: Box[MyType] = Empty
+  private[record] var needsDefault = true
+  
+  /**
+   * Helper for implementing asJValue for a conversion to an encoded JString
+   *
+   * @param encode function to transform the field value into a String
+   */
+  protected def asJString(encode: MyType => String): JValue =
+    valueBox.map(v => JString(encode(v))) openOr (JNothing: JValue)
+
+  /** Decode the JValue and set the field to the decoded value. Returns Empty or Failure if the value could not be set */
+  def setFromJValue(jvalue: JValue): Box[MyType]
+
+  /**
+   * Helper for implementing setFromJValue for a conversion from an encoded JString
+   *
+   * @param decode function to try and transform a String into a field value
+   */
+  protected def setFromJString(jvalue: JValue)(decode: String => Box[MyType]): Box[MyType] = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case JString(s)                   => setBox(decode(s))
+    case other                        => setBox(FieldHelpers.expectedA("JString", other))
+  }
+
+  def validations: List[ValidationFunction] = Nil
 
   /** Validate this field's setting, returning any errors found */
-  def validateField: List[FieldError] = runValidation(valueBox)
+  def validate: List[FieldError] = runValidation(valueBox)
 
   /** Helper function that does validation of a value by using the validators specified for the field */
-  protected def runValidation(in: Box[MyType]): List[FieldError] =
-    validators.flatMap(_(in)).removeDuplicates
+  protected def runValidation(in: Box[MyType]): List[FieldError] = in match {
+    case Full(_) => validations.flatMap(_(toValueType(in))).distinct
+    case Empty => Nil
+    case Failure(msg, _, _) => Text(msg)
+  }
 
   protected implicit def boxNodeToFieldError(in: Box[Node]): List[FieldError] =
     in match {
@@ -181,19 +194,8 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
   Box[MyType] => List[FieldError] =
     param => boxNodeToFieldError(in(param))
 
-  private[record] var data: Box[MyType] = Empty
-
-
-  def apply(in: MyType): OwnerType
-
-  /**
-   * The default value of the field when a field has no value set and is optional, or a method that must return a value (e.g. value) is used
-   */
-  def defaultValue: MyType
-
   /** The default value of the field when no value is set. Must return a Full Box unless optional_? is true */
-  def defaultValueBox: Box[MyType] = if (optional_?) Empty else Full(defaultValue)
-
+  def defaultValueBox: Box[MyType]
 
   /**
    * Convert the field to a String... usually of the form "displayName=value"
@@ -201,13 +203,6 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
   def asString = displayName + "=" + data
 
   def obscure(in: MyType): Box[MyType] = Failure("value obscured")
-
-  /**
-   * Set the value of the field to the given value.
-   * Note: Because setting a field can fail (return non-Full), this method will
-   * return defaultValue if the field could not be set.
-   */
-  def set(in: MyType): MyType = setBox(Full(in)) openOr defaultValue
 
   def setBox(in: Box[MyType]): Box[MyType] = synchronized {
     needsDefault = false
@@ -221,14 +216,20 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
     data
   }
 
-  protected def set_!(in: Box[MyType]): Box[MyType] = runFilters(in, setFilter)
+  // Helper methods for things to easily use mixins and so on that use ValueType instead of Box[MyType], regardless of the optional-ness of the field
+  protected def toValueType(in: Box[MyType]): ValueType
+  protected def toBoxMyType(in: ValueType): Box[MyType]
+
+  protected def set_!(in: Box[MyType]): Box[MyType] = runFilters(in, setFilterBox)
+
+  protected def setFilter: List[ValueType => ValueType] = Nil
 
   /**
    * A list of functions that transform the value before it is set.  The transformations
    * are also applied before the value is used in a query.  Typical applications
    * of this are trimming and/or toLowerCase-ing strings
    */
-  protected def setFilter: List[Box[MyType] => Box[MyType]] = Nil
+  protected def setFilterBox: List[Box[MyType] => Box[MyType]] = ((in: Box[MyType]) => toBoxMyType(setFilter.foldLeft(toValueType(in))((prev, f) => f(prev)))) :: Nil
 
   def runFilters(in: Box[MyType], filter: List[Box[MyType] => Box[MyType]]): Box[MyType] = filter match {
     case Nil => in
@@ -282,8 +283,6 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
    */
   def setFromString(s: String): Box[MyType]
 
-  def value: MyType = valueBox openOr defaultValue
-
   def valueBox: Box[MyType] = synchronized {
     if (needsDefault) {
       data = defaultValueBox
@@ -294,7 +293,7 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
     else data.flatMap(obscure)
   }
 
-  override def toString = value match {
+  override def toString = valueBox match {
     case null => "null"
     case s => s.toString
   }
@@ -306,12 +305,73 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends FieldIdentifier {
   }
 }
 
+trait MandatoryTypedField[ThisType] extends TypedField[ThisType] with Product1[ThisType] {
+  type ValueType = ThisType // For util.BaseField
+
+  //TODO: fullfil the contract of Product1[ThisType]
+  def canEqual(a:Any) = false
+  
+  def _1 = value
+
+  override def optional_? = false
+
+  /**
+   * Set the value of the field to the given value.
+   * Note: Because setting a field can fail (return non-Full), this method will
+   * return defaultValue if the field could not be set.
+   */
+  def set(in: MyType): MyType = setBox(Full(in)) openOr defaultValue
+
+  def toValueType(in: Box[MyType]) = in openOr defaultValue
+  def toBoxMyType(in: ValueType) = Full(in)
+
+  def value: MyType = valueBox openOr defaultValue
+
+  def get: MyType = value
+  def is: MyType = value
+
+
+  /**
+   * The default value of the field when a field has no value set and is optional, or a method that must return a value (e.g. value) is used
+   */
+  def defaultValue: MyType
+
+  def defaultValueBox: Box[MyType] = if (optional_?) Empty else Full(defaultValue)
+}
+  
+trait OptionalTypedField[ThisType] extends TypedField[ThisType] with Product1[Box[ThisType]] {
+  type ValueType = Option[ThisType] // For util.BaseField
+
+  //TODO: fullfil the contract of Product1[ThisType]
+  def canEqual(a:Any) = false
+  
+  def _1 = value
+
+  final override def optional_? = true
+
+  /**
+   * Set the value of the field to the given value.
+   * Note: Because setting a field can fail (return non-Full), this method will
+   * return defaultValueBox if the field could not be set.
+   */
+  def set(in: Option[MyType]): Option[MyType] = setBox(in) or defaultValueBox
+
+  def toValueType(in: Box[MyType]) = in
+  def toBoxMyType(in: ValueType) = in
+
+  def value: Option[MyType] = valueBox
+
+  def get: Option[MyType] = value
+  def is: Option[MyType] = value
+
+
+  def defaultValueBox: Box[MyType] = Empty
+}
+
 /**
  * A simple field that can store and retreive a value of a given type
  */
-trait Field[ThisType, OwnerType <: Record[OwnerType]] extends OwnedField[OwnerType] {
-  type MyType = ThisType
-
+trait Field[ThisType, OwnerType <: Record[OwnerType]] extends OwnedField[OwnerType] with TypedField[ThisType] {
 
   def apply(in: MyType): OwnerType = apply(Full(in))
 
@@ -322,6 +382,26 @@ trait Field[ThisType, OwnerType <: Record[OwnerType]] extends OwnedField[OwnerTy
     owner.meta.createWithMutableField(owner, this, in)
   }
 }
+
+/**
+ * Mix in to a field to change its form display to be formatted with the label aside.
+ *
+ * E.g.
+ *   <div id={ id + "_holder" }>
+ *     <div><label for={ id + "_field" }>{ displayName }</label></div>
+ *     { control }
+ *   </div>
+ */
+trait DisplayWithLabel[OwnerType <: Record[OwnerType]] extends OwnedField[OwnerType] {
+  override abstract def toForm: Box[NodeSeq] =
+    for (id <- uniqueFieldId; control <- super.toForm)
+    yield
+      <div id={ id + "_holder" }>
+        <div><label for={ id + "_field" }>{ displayName }</label></div>
+        { control }
+      </div>
+}
+
 
 import _root_.java.sql.{ResultSet, Types}
 import net.liftweb.mapper.{DriverType}

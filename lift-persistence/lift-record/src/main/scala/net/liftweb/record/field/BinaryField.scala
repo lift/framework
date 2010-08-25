@@ -29,19 +29,7 @@ import S._
 import JE._
 
 
-class BinaryField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[Array[Byte], OwnerType] {
-  def owner = rec
-
-  def this(rec: OwnerType, value: Array[Byte]) = {
-    this(rec)
-    set(value)
-  }
-
-  def this(rec: OwnerType, value: Box[Array[Byte]]) = {
-    this(rec)
-    setBox(value)
-  }
-
+trait BinaryTypedField extends TypedField[Array[Byte]] {
   def setFromAny(in: Any): Box[Array[Byte]] = genericSetFromAny(in)
 
   def setFromString(s: String): Box[Array[Byte]] = s match {
@@ -49,36 +37,36 @@ class BinaryField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[
     case _                => setBox(tryo(s.getBytes("UTF-8")))
   }
 
-  def toForm = NodeSeq.Empty
-
-  def asXHtml: NodeSeq = NodeSeq.Empty
-
-  def defaultValue = Array(0)
+  def toForm: Box[NodeSeq] = Empty
 
   def asJs = valueBox.map(v => Str(hexEncode(v))) openOr JsNull
 
   def asJValue = asJString(base64Encode _)
   def setFromJValue(jvalue: JValue) = setFromJString(jvalue)(s => tryo(base64Decode(s)))
 }
+  
+class BinaryField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends Field[Array[Byte], OwnerType] with MandatoryTypedField[Array[Byte]] with BinaryTypedField {
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.net.liftweb.mapper.{DriverType}
+  def owner = rec
 
-/**
- * An int field holding DB related logic
- */
-abstract class DBBinaryField[OwnerType <: DBRecord[OwnerType]](rec: OwnerType) extends BinaryField[OwnerType](rec)
-  with JDBCFieldFlavor[Array[Byte]] {
+  def this(rec: OwnerType, value: Array[Byte]) = {
+    this(rec)
+    set(value)
+  }
 
-  def targetSQLType = Types.BINARY
+  def defaultValue = Array(0)
+}
 
-  /**
-   * Given the driver type, return the string required to create the column in the database
-   */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.enumColumnType
+class OptionalBinaryField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends Field[Array[Byte], OwnerType] with OptionalTypedField[Array[Byte]] with BinaryTypedField {
 
-  def jdbcFriendly(field : String) : Array[Byte] = value
+  def owner = rec
 
+  def this(rec: OwnerType, value: Box[Array[Byte]]) = {
+    this(rec)
+    setBox(value)
+  }
 }
 
 }

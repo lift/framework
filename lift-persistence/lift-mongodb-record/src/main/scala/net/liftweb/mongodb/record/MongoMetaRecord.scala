@@ -255,12 +255,12 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
         */
         case Full(field: MongoFieldFlavor[Any]) =>
           dbo.add(f.name, field.asInstanceOf[MongoFieldFlavor[Any]].asDBObject)
-        case Full(field) => field.value.asInstanceOf[AnyRef] match {
+        case Full(field) => field.valueBox foreach (_.asInstanceOf[AnyRef] match {
           case x if primitive_?(x.getClass) => dbo.add(f.name, x)
           case x if datetype_?(x.getClass) => dbo.add(f.name, datetype2dbovalue(x))
           case x if mongotype_?(x.getClass) => dbo.add(f.name, mongotype2dbovalue(x, formats))
           case o => dbo.add(f.name, o.toString)
-        }
+        })
         case _ => //dbo.markAsPartialObject // so we know it's only partial
       }
     }

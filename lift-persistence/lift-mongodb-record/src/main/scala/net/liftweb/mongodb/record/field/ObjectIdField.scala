@@ -22,8 +22,9 @@ package field {
 import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
 import _root_.net.liftweb.http.js.JE.{JsNull, Str}
 import _root_.net.liftweb.json.JsonAST.{JNothing, JNull, JString, JValue}
-import _root_.net.liftweb.record.{Field, Record}
+import _root_.net.liftweb.record.{Field, MandatoryTypedField, Record}
 import _root_.net.liftweb.record.FieldHelpers
+import _root_.scala.xml.NodeSeq
 
 import org.bson.types.ObjectId
 
@@ -31,7 +32,7 @@ import org.bson.types.ObjectId
 * Field for storing an ObjectId
 */
 class ObjectIdField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
-  extends Field[ObjectId, OwnerType] {
+  extends Field[ObjectId, OwnerType] with MandatoryTypedField[ObjectId] {
 
   def asJs = valueBox.map(v => Str(v.toString)) openOr JsNull
 
@@ -66,7 +67,7 @@ class ObjectIdField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
     }
   }
 
-  def toForm = <div></div>
+  def toForm: Box[NodeSeq] = Empty
 
   def owner = rec
 }

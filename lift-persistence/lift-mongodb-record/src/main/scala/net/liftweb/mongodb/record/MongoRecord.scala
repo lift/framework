@@ -23,6 +23,8 @@ import net.liftweb.record.{MetaRecord, Record}
 
 import com.mongodb.{BasicDBObject, DBObject, DBRef}
 
+import org.bson.types.ObjectId
+
 trait MongoRecord[MyType <: MongoRecord[MyType]] extends Record[MyType] {
   self: MyType =>
 

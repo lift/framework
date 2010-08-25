@@ -29,19 +29,7 @@ import Helpers._
 import S._
 import JE._
 
-class DateTimeField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[Calendar, OwnerType] {
-  def owner = rec
-
-  def this(rec: OwnerType, value: Calendar) = {
-    this(rec)
-    setBox(Full(value))
-  }
-
-  def this(rec: OwnerType, value: Box[Calendar]) = {
-    this(rec)
-    setBox(value)
-  }
-
+trait DateTimeTypedField extends TypedField[Calendar] {
   private final def dateToCal(d: Date): Calendar = {
     val cal = Calendar.getInstance()
     cal.setTime(d)
@@ -63,24 +51,11 @@ class DateTimeField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
         tabindex={tabIndex toString}/>
     }
 
-  def toForm = {
+  def toForm: Box[NodeSeq] =
     uniqueFieldId match {
-      case Full(id) =>
-        <div id={id+"_holder"}><div><label for={id+"_field"}>{displayName}</label></div>{elem % ("id" -> (id+"_field"))}<lift:msg id={id}/></div>
-      case _ => <div>{elem}</div>
+      case Full(id) => Full(elem % ("id" -> (id + "_field")))
+      case _        => Full(elem)
     }
-
-  }
-
-  def asXHtml: NodeSeq = {
-    var el = elem
-    uniqueFieldId match {
-      case Full(id) =>  el % ("id" -> (id+"_field"))
-      case _ => el
-    }
-  }
-
-  def defaultValue = Calendar.getInstance
 
   def asJs = valueBox.map(v => Str(toInternetDate(v.getTime))) openOr JsNull
 
@@ -94,25 +69,27 @@ class DateTimeField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Fiel
   }
 }
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.net.liftweb.mapper.{DriverType}
+class DateTimeField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends Field[Calendar, OwnerType] with MandatoryTypedField[Calendar] with DateTimeTypedField {
 
-/**
- * An int field holding DB related logic
- */
-abstract class DBDateTimeField[OwnerType <: DBRecord[OwnerType]](rec: OwnerType) extends DateTimeField[OwnerType](rec)
-  with JDBCFieldFlavor[_root_.java.sql.Date] {
+  def owner = rec
 
-  def targetSQLType = Types.TIMESTAMP
+  def this(rec: OwnerType, value: Calendar) = {
+    this(rec)
+    setBox(Full(value))
+  }
 
-  /**
-   * Given the driver type, return the string required to create the column in the database
-   */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.enumColumnType
+  def defaultValue = Calendar.getInstance
+}
 
-  def jdbcFriendly(field : String) = value match {
-    case null => null
-    case d => new _root_.java.sql.Date(d.getTime.getTime)
+class OptionalDateTimeField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+  extends Field[Calendar, OwnerType] with OptionalTypedField[Calendar] with DateTimeTypedField {
+
+  def owner = rec
+
+  def this(rec: OwnerType, value: Box[Calendar]) = {
+    this(rec)
+    setBox(value)
   }
 }
 
