@@ -109,6 +109,13 @@ object MappedTimeZone {
 
 abstract class MappedCountry[T <: Mapper[T]](owner: T) extends MappedEnum[T, Countries.type](owner, Countries) {
 
+  override def buildDisplayList: List[(Int, String)] = {
+    val collator = java.text.Collator.getInstance(S.locale)
+
+    super.buildDisplayList.sort((s1, s2) => 
+      collator.compare(s1._2, s2._2) < 0)
+  }
+
 }
 
 abstract class MappedPostalCode[T <: Mapper[T]](owner: T, country: MappedCountry[T]) extends MappedString[T](owner, 32) {
