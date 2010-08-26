@@ -510,13 +510,13 @@ object JsCmds {
       val html = fixHtml("inline", content);
       """
   try {
-  var parent = document.getElementById(""" + id.encJs + """);
-  parent.innerHTML = """ + html + """;
-  for (var i = 0; i < parent.childNodes.length; i++) {
-    var node = parent.childNodes[i];
-    parent.parentNode.insertBefore(node.cloneNode(true), parent);
+  var parent1 = document.getElementById(""" + id.encJs + """);
+  parent1.innerHTML = """ + html + """;
+  for (var i = 0; i < parent1.childNodes.length; i++) {
+    var node = parent1.childNodes[i];
+    parent1.parentNode.insertBefore(node.cloneNode(true), parent1);
   }
-  parent.parentNode.removeChild(parent);
+  parent1.parentNode.removeChild(parent1);
   } catch (e) {
     // if the node doesn't exist or something else bad happens
   }
