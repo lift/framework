@@ -29,6 +29,115 @@ import JE._
 import S._
 import Helpers._
 
+
+/**
+ *
+ */
+object LazyLoad extends DispatchSnippet {
+  private object myFuncName extends TransientRequestVar(Helpers.nextFuncName)
+  private object myActor extends TransientRequestVar[Box[CometActor]](Empty)
+
+  def dispatch : DispatchIt = {
+    case _ => render _
+  }
+
+  def render(xhtml: NodeSeq): NodeSeq = {
+    (for {
+      session <- S.session ?~ ("FIXME: Invalid session")
+    } yield {
+      
+      // if we haven't created the actor yet, register on this
+      // thread to create the AsyncRenderComet actor
+      if (myActor.isEmpty) {
+        LiftRules.cometCreationFactory.request.set(
+          (ccinfo: CometCreationInfo) =>
+            ccinfo match {
+              case CometCreationInfo(theType @ "AsyncRenderComet",
+                                     name,
+                                     defaultXml,
+                                     attributes,
+                                     session) => {
+                val ret = new AsyncRenderComet()
+                ret.initCometActor(session,
+                                   Full(theType),
+                                   name, defaultXml, attributes)
+                ret ! PerformSetupComet
+                
+                // and save it in the request var
+                myActor.set(Full(ret))
+                
+                Full(ret)
+              }
+              
+              case _ => Empty
+            })
+      }
+
+      val id = Helpers.nextFuncName
+
+      val func: () => JsCmd = 
+        session.buildDeferredFunction(() => Replace(id, xhtml))
+
+      <div id={id}>
+      {
+        S.attr("template") match {
+          case Full(template) => <lift:embed what={template}/>
+          case _ => <img src="/images/ajax-loader.gif" alt="Loading"/>
+        }
+      }
+      </div>++ (myActor.is match {
+        case Full(actor) => actor ! Ready(func); NodeSeq.Empty
+        case _ => session.setupComet("AsyncRenderComet", Full(myFuncName.is), Ready(func))
+        <tail><lift:comet type="AsyncRenderComet" name={myFuncName.is}/></tail>
+      })
+    }) match {
+      case Full(x) => x
+      case Empty => Comment("FIX"+ "ME: session or request are invalid")
+      case Failure(msg, _, _) => Comment(msg)
+    }
+
+  }
+
+}
+
+
+private case class Ready(js: () => JsCmd)
+private case class Render(js: JsCmd)
+
+
+/**
+ * The Comet Actor for sending down the computed page fragments
+ *
+ */
+class AsyncRenderComet extends CometActor {
+
+  override def lifespan: Box[TimeSpan] = Full(90 seconds)
+
+  def render = NodeSeq.Empty
+
+  // make this method visible so that we can initialize the actor
+  override def initCometActor(theSession: LiftSession,
+                               theType: Box[String],
+                               name: Box[String],
+                               defaultXml: NodeSeq,
+                               attributes: Map[String, String]) {
+    super.initCometActor(theSession, theType, name, defaultXml,
+                         attributes)
+  }
+
+
+  override def lowPriority : PartialFunction[Any, Unit] = {
+    // farm the request off to another thread
+    case Ready(js) => 
+      ActorPing.schedule(() => this ! Render(js()), 0 seconds)
+
+    // render it
+    case Render(js) => 
+      partialUpdate(js)
+  }
+}
+
+/*
 /**
  * Buitin snippet for rendering page fragments asynchronously
  *
@@ -117,6 +226,7 @@ class AsyncRenderComet extends CometActor {
   }
 }
 
+*/
 }
 }
 }

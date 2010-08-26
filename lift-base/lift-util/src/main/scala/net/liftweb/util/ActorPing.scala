@@ -25,21 +25,47 @@ import common._
  * The ActorPing object schedules an actor to be ping-ed with a given message at specific intervals.
  * The schedule methods return a ScheduledFuture object which can be cancelled if necessary
  */
-object ActorPing {
+object ActorPing extends Loggable {
+
+  /**
+   * Set this variable to the number of threads to allocate in the thread pool
+   */
+  @volatile var threadPoolSize = 16 // issue 194
+
+  @volatile var maxThreadPoolSize = threadPoolSize * 25
+  
+  @volatile var buildExecutor: () => ThreadPoolExecutor =
+    () => new ThreadPoolExecutor(threadPoolSize, 
+                                 maxThreadPoolSize,
+                                 60,
+                                 TimeUnit.SECONDS,
+                                 new LinkedBlockingQueue)
+  
+    
 
   /** The underlying <code>java.util.concurrent.ScheduledExecutor</code> */
-  private var service = Executors.newSingleThreadScheduledExecutor(TF)
+  private var service: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor(TF)
+
+  private var pool = buildExecutor()
 
   /**
    * Re-create the underlying <code>SingleThreadScheduledExecutor</code>
    */
-  def restart: Unit = synchronized { if ((service eq null) || service.isShutdown)
-                                    service = Executors.newSingleThreadScheduledExecutor(TF) }
+  def restart: Unit = synchronized
+  { if ((service eq null) || service.isShutdown)
+    service = Executors.newSingleThreadScheduledExecutor(TF) 
+   if ((pool eq null) || pool.isShutdown)
+     pool = buildExecutor()
+ }
+
 
   /**
    * Shut down the underlying <code>SingleThreadScheduledExecutor</code>
    */
-  def shutdown: Unit = synchronized { service.shutdown }
+  def shutdown: Unit = synchronized { 
+    service.shutdown 
+    pool.shutdown
+  }
 
   /**
    * Schedules the sending of a message to occur after the specified delay.
@@ -57,12 +83,30 @@ object ActorPing {
    * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
    */
   def schedule(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = synchronized {
-    val r = new _root_.java.util.concurrent.Callable[Unit] {
-      def call: Unit = f.apply()
+    val r = new Runnable {
+      def run() { 
+        try {
+          f.apply()
+        } catch {
+          case e: Exception => logger.error(e)
+        }
+      }
     }
+
+    val fast = new _root_.java.util.concurrent.Callable[Unit] {
+      def call(): Unit = {
+        try {
+          ActorPing.this.restart
+          pool.execute(r)
+        } catch {
+          case e: Exception => logger.error(e)
+        }
+      }
+    }
+
     try {
       this.restart
-      service.schedule(r, delay.millis, TimeUnit.MILLISECONDS)
+      service.schedule(fast, delay.millis, TimeUnit.MILLISECONDS)
     } catch {
       case e: RejectedExecutionException => throw ActorPingException("ping could not be scheduled", e)
     }

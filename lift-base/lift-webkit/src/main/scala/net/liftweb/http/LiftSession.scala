@@ -904,6 +904,54 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
+  /**
+   * During the HTTP request/response cycle or in a CometActor,
+   * Lift populates "S" with information about the current session,
+   * the current request, etc.  This method allows you to wrap a
+   * function in another function that will snapshot current state
+   * (request vars, Req, Loc, etc.) such that when the returned
+   * function is executed, it will be executed as if it had been
+   * executed in the scope of the thread where it was create.
+   * This allows you to farm work out to separate threads, but make
+   * it look to those threads as if the scope was the same as if it
+   * had been executed on the thread that created the function.
+   */
+  def buildDeferredFunction[T](f: () => T): () => T = {
+    val currentReq: Box[Req] = S.request.map(_.snapshot)
+
+    val renderVersion = RenderVersion.get
+
+    val currentMap = snippetMap.is
+    val curLoc = S.location
+
+    val requestVarFunc = RequestVarHandler.generateSnapshotRestorer[T]()
+
+    () => {
+      requestVarFunc(() =>
+        executeInScope(currentReq, renderVersion)(f()))
+    }
+  }
+
+  def executeInScope[T](req: Box[Req], renderVersion: String)(f: => T): T = {
+    def doExec(): T = {
+      RenderVersion.set(renderVersion)
+      try {
+        f
+      } finally {
+        if (S.functionMap.size > 0) {
+          this.updateFunctionMap(S.functionMap,
+                                 renderVersion, millis)
+          S.clearFunctionMap
+        }
+      }
+    }
+
+    req match {
+      case Full(r) => S.init(r, this)(doExec())
+      case _ => S.initIfUninitted(this)(doExec())
+    }
+  }
+
   private def processSnippet(page: String, snippetName: Box[String],
                              attrs: MetaData,
                              wholeTag: NodeSeq,
@@ -1076,6 +1124,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       // name the node
       val nodeId = randomString(20)
 
+      val renderVersion = RenderVersion.get
+
       val theNode = <lift_deferred:node id={nodeId}/>
 
       // take a snapshot of the hashmap used to communicate between threads
@@ -1093,39 +1143,24 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       val actor = new DeferredProcessor
 
       // snapshot the current Req
-      val req = S.request
+      val req = S.request.map(_.snapshot)
 
       // send the ProcessSnippet message to the Actor
       actor ! ProcessSnippet(() => {
-
-        // do the actual processing
-        def doProcessing() {
+        executeInScope(req, renderVersion) {
           // process the message
           val bns = tryo {reqVarCallback(() => f)}
-
+          
           // set the node
           hash.synchronized {
             hash(nodeId) = bns match {
               case Empty => Failure("Weird Empty Node", Empty, Empty)
               case x => x
             }
-
+            
             // and notify listeners
             hash.notify()
           }
-        }
-
-        // init the stack frame and process the message
-        req match {
-          case Full(req) =>
-            S.init(req, this) {
-              doProcessing()
-            }
-
-          case _ =>
-            S.initIfUninitted(this) {
-              doProcessing()
-            }
         }
       })
 

@@ -419,9 +419,9 @@ trait ScreenWizardRendered {
                  FuncBindParam("screen_top", xml => (screenTop.map(top => bind("wizard", xml, "bind" -%> top)) openOr NodeSeq.Empty)),
                  FuncBindParam("wizard_bottom", xml => (wizardBottom.map(bottom => bind("wizard", xml, "bind" -%> bottom)) openOr NodeSeq.Empty)),
                  FuncBindParam("screen_bottom", xml => (screenBottom.map(bottom => bind("wizard", xml, "bind" -%> bottom)) openOr NodeSeq.Empty)),
-                 "prev" -%> (prev openOr Unparsed("&nbsp;")),
-                 "next" -%> ((next or finish) openOr Unparsed("&nbsp;")),
-                 "cancel" -%> (cancel openOr Unparsed("&nbsp;")),
+                 "prev" -%> (prev openOr EntityRef("nbsp")),
+                 "next" -%> ((next or finish) openOr EntityRef("nbsp")),
+                 "cancel" -%> (cancel openOr EntityRef("nbsp")),
                  "errors" -%> bindErrors _,
                  FuncBindParam("fields", bindFields _))
 

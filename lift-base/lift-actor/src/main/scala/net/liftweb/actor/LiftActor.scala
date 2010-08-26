@@ -33,12 +33,19 @@ object LAScheduler {
    */
   @volatile var threadPoolSize = 16 // issue 194
 
+  @volatile var maxThreadPoolSize = threadPoolSize * 25
+
   @volatile
   var createExecutor: () => ILAExecute = () => {
     new ILAExecute {
-      import _root_.java.util.concurrent.{Executors, Executor}
+      import _root_.java.util.concurrent._
 
-      private val es = Executors.newFixedThreadPool(threadPoolSize)
+      private val es = // Executors.newFixedThreadPool(threadPoolSize)
+        new ThreadPoolExecutor(threadPoolSize, 
+                               maxThreadPoolSize,
+                               60,
+                               TimeUnit.SECONDS,
+                               new LinkedBlockingQueue)
 
       def execute(f: () => Unit): Unit =
       es.execute(new Runnable{def run() {f()}})
