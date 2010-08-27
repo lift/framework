@@ -29,7 +29,7 @@ import Helpers._
 
 import net.liftweb.webapptest.snippet.Counter
 
-/* FIXME: SBT doesn't like this, revisit
+
 class OneShotTest extends JUnit3(OneShot)
 object OneShotRunner extends ConsoleRunner(OneShot)
 
@@ -78,6 +78,6 @@ object OneShot extends Specification with RequestKit {
   }
   //  JettyTestServer.stop()
 }
-*/
+
 }
 }

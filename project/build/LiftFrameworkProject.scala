@@ -31,7 +31,15 @@ class LiftFrameworkProject(info: ProjectInfo) extends LiftParentProject(info) {
     class LiftActorProject(info:  ProjectInfo)  extends LiftDefaultProject(info)
     class LiftJsonProject(info:   ProjectInfo)  extends LiftDefaultProject(info)
     class LiftUtilProject(info:   ProjectInfo)  extends LiftDefaultProject(info)
-    class LiftWebkitProject(info: ProjectInfo)  extends LiftDefaultProject(info)
+    class LiftWebkitProject(info: ProjectInfo)  extends LiftDefaultProject(info) {
+      // System property hack for webapptests
+      override def testAction =
+        super.testAction dependsOn
+        task { System.setProperty("net.liftweb.webapptest.src.test.webapp", (testSourcePath / "webapp").absString); None }
+      // FIXME: Resolve ToHeadUsages issue
+      override def testOptions =
+        ExcludeTests("net.liftweb.webapptest.ToHeadUsages" :: Nil) :: super.testOptions.toList
+    }
   }
 
   /**
