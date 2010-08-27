@@ -34,7 +34,8 @@ object OneShotRunner extends ConsoleRunner(OneShot)
 
 
 object OneShot extends Specification with RequestKit {
-  JettyTestServer.start()
+  doBeforeSpec(JettyTestServer.start())
+  doAfterSpec(JettyTestServer.stop())
 
   def baseUrl = JettyTestServer.baseUrl
 
@@ -75,7 +76,7 @@ object OneShot extends Specification with RequestKit {
       Counter.x must_== 2
     }
   }
-  //  JettyTestServer.stop()
+
 }
 
 }

@@ -29,7 +29,8 @@ object ToHeadUsagesRunner extends ConsoleRunner(ToHeadUsages)
 
 
 object ToHeadUsages extends Specification {
-  JettyTestServer.start()
+  doBeforeSpec(JettyTestServer.start())
+  doAfterSpec(JettyTestServer.stop())
 
   "lift <head> merger" should {
     "merge <head> from html fragment" >> {
@@ -171,7 +172,6 @@ object ToHeadUsages extends Specification {
     }
   }
 
-  //  JettyTestServer.stop()
 }
 
 }
