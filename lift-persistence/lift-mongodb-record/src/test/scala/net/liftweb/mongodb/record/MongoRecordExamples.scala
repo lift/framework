@@ -413,6 +413,11 @@ object MongoRecordExamples extends Specification {
     val mdq3 = MainDoc.findAll("_id", md1.id)
     mdq3.size must_== 1
 
+    // find all documents with field selection
+    val mdq4 = MainDoc.findAll(("name" -> "md1"), ("name" -> 1), Empty)
+    mdq4.size must_== 1
+    println(mdq4.first.refdoc.value)
+
     // Upsert - this should add a new row
     val md5 = MainDoc.createRecord
     md5.name.set("md5")
