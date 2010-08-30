@@ -87,10 +87,10 @@ object TimeHelpersSpec extends Specification with  ScalaCheck {
       3.seconds - 4.seconds must_== (-1).seconds
     }
     "have a later method returning a date relative to now plus the time span" in {
-      3.seconds.later.getTime must beCloseTo(new Date().getTime + 3.seconds.millis, 100L)
+      3.seconds.later.getTime must beCloseTo(new Date().getTime + 3.seconds.millis, 500L)
     }
     "have an ago method returning a date relative to now minus the time span" in {
-      3.seconds.ago.getTime must beCloseTo(new Date().getTime - 3.seconds.millis, 100L)
+      3.seconds.ago.getTime must beCloseTo(new Date().getTime - 3.seconds.millis, 500L)
     }
     "have a toString method returning the relevant number of weeks, days, hours, minutes, seconds, millis" in {
       val conversionIsOk = forAll(timeAmounts)((t: TimeAmounts) => { val (timeSpanToString, timeSpanAmounts) = t

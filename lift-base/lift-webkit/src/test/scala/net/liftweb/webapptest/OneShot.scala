@@ -29,6 +29,7 @@ import Helpers._
 
 import net.liftweb.webapptest.snippet.Counter
 
+
 class OneShotTest extends JUnit3(OneShot)
 object OneShotRunner extends ConsoleRunner(OneShot)
 
