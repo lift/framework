@@ -173,6 +173,6 @@ object ToHeadUsages extends Specification {
   }
 
 }
-*/
+
 }
 }
