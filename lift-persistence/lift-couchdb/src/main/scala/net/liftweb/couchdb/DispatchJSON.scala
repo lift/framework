@@ -40,7 +40,7 @@ case class JSONRequest(req: Request) {
   /** PUT a JValue rendered as compact JSON to the resource referenced by the request */
   def put(jvalue: JValue): Request = req.next {
     val m = new HttpPut
-    m.setEntity(new StringEntity(Printer.compact(render(jvalue)), Request.factoryCharset))
+    m.setEntity(jvalueToStringEntity(jvalue))
     HttpProtocolParams.setUseExpectContinue(m.getParams, false)
     Request.mimic(m) _
   } 
@@ -51,13 +51,20 @@ case class JSONRequest(req: Request) {
   /** POST a JValue rendered as compact JSON to the resource referenced by the request */
   def post(jvalue: JValue): Request = req.next {
     val m = new HttpPost
-    m.setEntity(new StringEntity(Printer.compact(render(jvalue)), Request.factoryCharset))
+    m.setEntity(jvalueToStringEntity(jvalue))
     HttpProtocolParams.setUseExpectContinue(m.getParams, false)
     Request.mimic(m) _
   }
 
   /** Alias for post */
   def <<# (jvalue: JValue): Request = post(jvalue)
+
+  /** Convert a JValue into a StringEntity with the application/json content type */
+  private def jvalueToStringEntity(in: JValue): StringEntity = {
+    val entity = new StringEntity(Printer.compact(render(in)), Request.factoryCharset)
+    entity.setContentType("application/json")
+    entity
+  }
 }
 
 }
