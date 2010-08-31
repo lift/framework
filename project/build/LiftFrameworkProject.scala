@@ -21,17 +21,19 @@ class LiftFrameworkProject(info: ProjectInfo) extends LiftParentProject(info) {
   class LiftBaseProject(info: ProjectInfo) extends LiftParentProject(info) {
 
     // Lift Base Subprojects
-    lazy val common = project("lift-common",  "lift-common",  new LiftCommonProject(_))
-    lazy val actor  = project("lift-actor",   "lift-actor",   new LiftActorProject(_),  common)
-    lazy val json   = project("lift-json",    "lift-json",    new LiftJsonProject(_))
-    lazy val util   = project("lift-util",    "lift-util",    new LiftUtilProject(_),   actor, json)
-    lazy val webkit = project("lift-webkit",  "lift-webkit",  new LiftWebkitProject(_), util)
+    lazy val common   = project("lift-common",   "lift-common",   new LiftCommonProject(_))
+    lazy val actor    = project("lift-actor",    "lift-actor",    new LiftActorProject(_),  common)
+    lazy val json     = project("lift-json",     "lift-json",     new LiftJsonProject(_))
+    lazy val json_ext = project("lift-json-ext", "lift-json-ext", new LiftJsonExtProject(_), json)
+    lazy val util     = project("lift-util",     "lift-util",     new LiftUtilProject(_),   actor, json)
+    lazy val webkit   = project("lift-webkit",   "lift-webkit",   new LiftWebkitProject(_), util)
 
-    class LiftCommonProject(info: ProjectInfo)  extends LiftDefaultProject(info)
-    class LiftActorProject(info:  ProjectInfo)  extends LiftDefaultProject(info)
-    class LiftJsonProject(info:   ProjectInfo)  extends LiftDefaultProject(info)
-    class LiftUtilProject(info:   ProjectInfo)  extends LiftDefaultProject(info)
-    class LiftWebkitProject(info: ProjectInfo)  extends LiftDefaultProject(info) {
+    class LiftCommonProject(info:  ProjectInfo)  extends LiftDefaultProject(info)
+    class LiftActorProject(info:   ProjectInfo)  extends LiftDefaultProject(info)
+    class LiftJsonProject(info:    ProjectInfo)  extends LiftDefaultProject(info)
+    class LiftJsonExtProject(info: ProjectInfo)  extends LiftDefaultProject(info)
+    class LiftUtilProject(info:    ProjectInfo)  extends LiftDefaultProject(info)
+    class LiftWebkitProject(info:  ProjectInfo)  extends LiftDefaultProject(info) {
       // System property hack for webapptests
       override def testAction =
         super.testAction dependsOn
