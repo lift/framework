@@ -232,7 +232,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   def insertAll(insts: List[BaseRecord]): Unit = {
     insts.foreach(inst => foreachCallback(inst, _.beforeSave))
     MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
-      coll.insert(insts.map(_.asDBObject).toArray)
+      coll.insert(insts.map(_.asDBObject).toArray:_*)
     )
     insts.foreach(inst => foreachCallback(inst, _.afterSave))
   }
