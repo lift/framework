@@ -80,7 +80,8 @@
   </distributionManagement>
   <properties>
     <!-- vscaladoc settings -->
-    <maven.scaladoc.vscaladocVersion>1.2-m1</maven.scaladoc.vscaladocVersion>
+    <!-- FIXME: 280 vscaladoc isn't 2.8 ready yet -->
+    <!-- <maven.scaladoc.vscaladocVersion>1.2-m1</maven.scaladoc.vscaladocVersion> -->
     <vscaladoc.links.liftweb.baseurl>${project.basedir}/../..</vscaladoc.links.liftweb.baseurl>
     <vscaladoc.links.liftweb.pathsufix>target/site/scaladocs/</vscaladoc.links.liftweb.pathsufix>
 
