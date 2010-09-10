@@ -639,13 +639,33 @@ trait BindHelpers {
    *
    * @return the NodeSeq that results from the specified transforms
    */
-  def bind(vals: Map[String, NodeSeq], xml: NodeSeq): NodeSeq = {
+  def bind(vals: Map[String, NodeSeq], xml: NodeSeq): NodeSeq = 
+    bind(vals,xml,true,_root_.scala.collection.mutable.Set(vals.keySet.toSeq : _*))
 
+  /**
+   * This method exists so that we can do recursive binding with only root-node
+   * error reporting.
+   * 
+   * Replace the content of lift:bind nodes with the corresponding nodes found in a map,
+   * according to the value of the "name" attribute.<p/>
+   * Usage: <pre>
+   *   bind(Map("a" -> <h1/>), <b><lift:bind name="a">change this</lift:bind></b>) must ==/(<b><h1></h1></b>)
+   * </pre>
+   *
+   * @param vals map of name/nodes to replace
+   * @param xml nodes containing lift:bind nodes
+   * @param reportUnused If true, report unused binding vals to the log
+   * @param unusedBindings The set of unused binding values. Mutable for expediency, but it would be
+   * nice to figure out a cleaner way
+   *
+   * @return the NodeSeq that results from the specified transforms
+   */
+  private def bind(vals: Map[String, NodeSeq], xml: NodeSeq, reportUnused : Boolean, unusedBindings : _root_.scala.collection.mutable.Set[String]): NodeSeq = {
     val isBind = (node: Elem) => {
       node.prefix == "lift" && node.label == "bind"
     }
 
-    xml.flatMap {
+    val bindResult = xml.flatMap {
       node => node match {
         case s: Elem if (isBind(s)) => {
           node.attributes.get("name") match {
@@ -653,24 +673,19 @@ trait BindHelpers {
               if (Props.devMode) {
                 logger.warn("<lift:bind> tag encountered without name attribute!")
               }
-              bind(vals, node.child)
+              bind(vals, node.child, false, unusedBindings)
             }
             case Some(ns) => {
-              def warnOnUnused() =
-                logger.warn("Unused binding values for <lift:bind>: " +
-                        vals.keySet.filter(key => key != ns.text).mkString(", "))
               vals.get(ns.text) match {
                 case None => {
                   if (Props.devMode) {
                     logger.warn("No binding values match the <lift:bind> name attribute: " + ns.text)
-                    warnOnUnused()
                   }
-                  bind(vals, node.child)
+                  bind(vals, node.child, false, unusedBindings)
                 }
                 case Some(nodes) => {
-                  if (Props.devMode && vals.size > 1) {
-                    warnOnUnused()
-                  }
+                  // Mark this bind as used by removing from the unused Set
+                  unusedBindings -= ns.text
                   nodes
                 }
               }
@@ -678,10 +693,16 @@ trait BindHelpers {
           }
         }
         case Group(nodes) => Group(bind(vals, nodes))
-        case s: Elem => Elem(node.prefix, node.label, node.attributes, node.scope, bind(vals, node.child): _*)
+        case s: Elem => Elem(node.prefix, node.label, node.attributes, node.scope, bind(vals, node.child, false, unusedBindings): _*)
         case n => node
       }
     }
+
+    if (Props.devMode && reportUnused && unusedBindings.size > 0) {
+      logger.warn("Unused binding values for <lift:bind>: " + unusedBindings.mkString(", "))
+    }
+
+    bindResult
   }
 
   /**
