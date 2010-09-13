@@ -293,11 +293,6 @@ trait TypedField[ThisType] extends BaseField {
     else data.flatMap(obscure)
   }
 
-  override def toString = valueBox match {
-    case null => "null"
-    case s => s.toString
-  }
-
   /** Clear the value of this field */
   def clear: Unit = optional_? match {
     case true  => setBox(Empty)
@@ -337,6 +332,12 @@ trait MandatoryTypedField[ThisType] extends TypedField[ThisType] with Product1[T
   def defaultValue: MyType
 
   def defaultValueBox: Box[MyType] = if (optional_?) Empty else Full(defaultValue)
+
+  override def toString = valueBox match {
+    case Full(null)|null => "null"
+    case Full(v) => v.toString
+    case _ => defaultValueBox.map(v => if (v != null) v.toString else "null") openOr ""
+  }
 }
   
 trait OptionalTypedField[ThisType] extends TypedField[ThisType] with Product1[Box[ThisType]] {
@@ -366,6 +367,13 @@ trait OptionalTypedField[ThisType] extends TypedField[ThisType] with Product1[Bo
 
 
   def defaultValueBox: Box[MyType] = Empty
+
+  override def toString = valueBox match {
+    case Full(null)|null => "null"
+    case Full(v) => v.toString
+    case _ => defaultValueBox.map(v => if (v != null) v.toString else "null") openOr ""
+  }
+
 }
 
 /**
