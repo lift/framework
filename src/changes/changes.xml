@@ -40,96 +40,79 @@
     <release version="${project.version}" date="${publishDate}" description="Lift 2.1 Snapshot Release">
     </release>
 
-    <release version="2.1-RC1" date="2010-09-03" description="Lift 2.1 Release Candidate 1">
+    <release version="2.1-RC2" date="2010-09-14" description="Lift 2.1 Release Candidate 2">
+      <action dev="dridus" type="fix" issue="641" system="assembla">
+        Breaking toString change in Record Fields
+      </action>
+    </release>
 
+    <release version="2.1-RC1" date="2010-09-03" description="Lift 2.1 Release Candidate 1">
       <action dev="dridus" type="fix" issue="354" system="assembla">
         Bug with record field initialisation
       </action>
-
       <action dev="dridus" type="update" issue="479" system="assembla">
         Allow for unowned field types in lift-record, to support squeryl integration
       </action>
-
       <action dev="dpp" type="fix" issue="588" system="assembla">
         Multiple &lt;lift:lazy-load&gt; in the same page does not work as expected
       </action>
-
       <action dev="indrajitr" type="fix" issue="631" system="assembla">
         JettyTestServer start/stop not sequenced properly in unit tests
       </action>
-
       <action dev="dchenbecker" type="fix" issue="580" system="assembla">
         LiftSession.processSnippet should handle StatefulSnippet instances returned via LiftRules.snippetDispatch
       </action>
-
       <action dev="dridus" type="fix" issue="594" system="assembla">
         overriding Field#label not affecting TextareaField#toFrom
       </action>
-
       <action dev="dpp" type="fix" issue="602" system="assembla">
         Alternate names for test_cond conditions
       </action>
-
       <action dev="dchenbecker" type="fix" issue="606" system="assembla">
         MS SQL Server Driver is set to disable FK support
       </action>
-
       <action dev="dchenbecker" type="fix" issue="607" system="assembla">
         General check of code to see if we have other things broken by new 2.8.0 collections semantics
       </action>
-
       <action dev="dchenbecker" type="fix" issue="609" system="assembla">
         DB.runQuery and runUpdate need common type handling refactored
       </action>
-
       <action dev="dpp" type="fix" issue="610" system="assembla">
         Comet chat - input drops down after page refresh
       </action>
-
       <action dev="dchenbecker" type="fix" issue="611" system="assembla">
         Paginator &amp; empty collection, negative offset
       </action>
-
       <action dev="dpp" type="add" issue="612" system="assembla">
         Add lift-core_zh_CN.properties (Simplified Chinese translation)
       </action>
-
       <action dev="indrajitr" type="fix" issue="614" system="assembla">
         Avoid version range for dependencies
       </action>
-
       <action dev="dridus" type="fix" issue="617" system="assembla">
         Remove undesired display logic from record Fields
       </action>
-
       <action dev="dpp" type="update" issue="618" system="assembla">
         Deprecate shouldUpdate in ListenerManager
       </action>
-
       <action dev="eltimn" type="add" issue="619" system="assembla">
         Support for null and Box in Mongo
       </action>
-
       <action dev="dpp" type="fix" issue="621" system="assembla">
         i18n sorting for countries
       </action>
-
       <action dev="dpp" type="fix" issue="625" system="assembla">
         JsCmds.Replace has no effect when using Opera
       </action>
-
       <action dev="eltimn" type="fix" issue="628" system="assembla">
         Move JsonBoxSerializer to new package and remove $ from field names
       </action>
-
       <action dev="indrajitr" type="add" issue="632" system="assembla">
         Add SBT build support for Lift Framework build
       </action>
-
       <action dev="anemish" type="fix" issue="633" system="assembla">
         mongodb-record querying with fields selection
       </action>
-
       <action dev="hoffrocket" type="add" issue="634" system="assembla">
         upgrade mongo-java-driver to 2.1
       </action>
