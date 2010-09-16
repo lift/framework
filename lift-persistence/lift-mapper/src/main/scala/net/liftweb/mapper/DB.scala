@@ -239,14 +239,16 @@ object DB extends Loggable {
   private def releaseConnectionNamed(name: ConnectionIdentifier, rollback: Boolean) {
     logger.trace("Request to release connection: " + name + " on thread " + Thread.currentThread)
     (info.get(name): @unchecked) match {
-      case Some(ConnectionHolder(c, 1, post)) =>
-        if (rollback) tryo{c.rollback}
-        else c.commit
+      case Some(ConnectionHolder(c, 1, post)) => {
+        if (! c.getAutoCommit()) {
+          if (rollback) tryo{c.rollback}
+          else c.commit
+        }
         tryo(c.releaseFunc())
         info -= name
         post.reverse.foreach(f => tryo(f()))
         logger.trace("Released connection " + name + " on thread " + Thread.currentThread)
-
+      }
       case Some(ConnectionHolder(c, n, post)) =>
         logger.trace("Did not release connection: " + name + " on thread " + Thread.currentThread + " count " + (n - 1))
         info(name) = ConnectionHolder(c, n - 1, post)
