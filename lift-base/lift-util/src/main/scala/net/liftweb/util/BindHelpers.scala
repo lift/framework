@@ -66,7 +66,7 @@ trait AttrHelper[+Holder[X]] {
  * in the appropriate context.
  *
  * Example:
- * <pre>
+ * <pre name="code" class="scala">
  * bind("hello", xml,
  *      "someNode" -> {node: NodeSeq => <function-body>})
  * </pre>
@@ -190,8 +190,20 @@ trait BindHelpers {
     def calcValue(in: NodeSeq): Option[NodeSeq]
   }
 
+  /**
+   * A trait that indicates what the newly bound attribute name should be.
+   */
   trait BindWithAttr {
     def newAttr: String
+  }
+
+  /**
+   * A case class that wraps attribute-oriented BindParams to allow prefixing the resulting attribute
+   */
+  sealed case class PrefixedBindWithAttr(prefix : String, binding: BindParam with BindWithAttr) extends BindParam with BindWithAttr {
+    val name = binding.name
+    def calcValue(in : NodeSeq) = binding.calcValue(in)
+    val newAttr = binding.newAttr
   }
 
   /**
@@ -219,16 +231,97 @@ trait BindHelpers {
   }
 
   /**
-   * BindParam taking its value from an attribute
+   * BindParam that binds a given value into a new attribute.
+   * For example, given the following markup:
+   *
+   * <pre name="code" class="xml">
+   * &lt;lift:AttrBinds &gt;
+   *   &lt;div test:w="foo" /&gt;
+   *   &lt;div test:x="foo" /&gt;
+   *   &lt;div test:y="foo" /&gt;
+   *   &lt;div test:z="foo" /&gt;
+   * &lt;/lift:AttrBinds &gt;
+   * </pre>
+   *
+   * The following snippet:
+   *
+   * <pre name="code" class="scala">
+   * import scala.xml._
+   * class AttrBinds {
+   *   def render(xhtml : NodeSeq) : NodeSeq =
+   *     BindHelpers.bind("test", xhtml,
+   *       AttrBindParam("w", Text("fooW"), "id"),
+   *       AttrBindParam("x", "fooX", "id"),
+   *       AttrBindParam("y", Text("fooW"), ("lift","calcId")),
+   *       AttrBindParam("z", "fooZ", ("lift", "calcId")))
+   * </pre>
+   *
+   * produces this markup:
+   *
+   * <pre name="code" class="xml">
+   *   &lt;div id="fooW" /&gt;
+   *   &lt;div id="fooX" /&gt;
+   *   &lt;div lift:calcId="fooY" /&gt;
+   *   &lt;div lift:calcId="fooZ" /&gt;
+   * </pre>
+   *
+   * @param name the name of the binding to replace
+   * @param myValue the value of the new attribute
+   * @param newAttr The new attribute label
    */
   final class AttrBindParam(val name: String, myValue: => NodeSeq, val newAttr: String)
           extends BindParam with BindWithAttr {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(myValue)
   }
 
+ 
+  /**
+   * BindParam that binds a given value into a new attribute.
+   *   
+   * This object provides factory methods for convenience.
+   */
   object AttrBindParam {
-    def apply(name: String, myValue: => NodeSeq, newAttr: String) = new AttrBindParam(name, myValue, newAttr)
-    def apply(name: String, myValue: String, newAttr: String) = new AttrBindParam(name, Text(myValue), newAttr)
+    /**
+     * Returns an unprefixed attribute binding containing the specified NodeSeq
+     *
+     * @param name The name to bind against
+     * @param myValue The value to place in the new attribute
+     * @param newAttr The new attribute label
+     */
+    def apply(name: String, myValue: => NodeSeq, newAttr: String) = 
+      new AttrBindParam(name, myValue, newAttr)
+
+    /**
+     * Returns an unprefixed attribute binding containing the specified String
+     * wrapped in a Text() element
+     *
+     * @param name The name to bind against
+     * @param myValue The value to place in the new attribute
+     * @param newAttr The new attribute label
+     */
+    def apply(name: String, myValue: String, newAttr: String) = 
+      new AttrBindParam(name, Text(myValue), newAttr)
+
+    /**
+     * Returns a prefixed attribute binding containing the specified NodeSeq
+     * 
+     * @param name The name to bind against
+     * @param myValue The value to place in the new attribute
+     * @param newAttr The new attribute in the form (prefix,label)
+     */
+    def apply(name: String, myValue: => NodeSeq, newAttr: Pair[String,String]) = 
+      PrefixedBindWithAttr(newAttr._1, new AttrBindParam(name, myValue, newAttr._2))
+
+    /**
+     * Returns a prefixed attribute binding containing the specified String
+     * wrapped in a Text() element
+     * 
+     * @param name The name to bind against
+     * @param myValue The value to place in the new attribute
+     * @param newAttr The new attribute in the form (prefix,label)
+     */
+    def apply(name: String, myValue: String, newAttr: Pair[String,String]) = 
+      PrefixedBindWithAttr(newAttr._1, new AttrBindParam(name, Text(myValue), newAttr._2))
   }
 
   /**
@@ -244,15 +337,71 @@ trait BindHelpers {
   }
 
   /**
-   * BindParam using a function to calculate its value
+   * BindParam that computes a new attribute value based on the current
+   * attribute value. For example, given the following markup:
+   *
+   * <pre name="code" class="xml">
+   * &lt;lift:AttrBinds &gt;
+   *   &lt;div test:x="foo" /&gt;
+   *   &lt;div test:y="foo" /&gt;
+   * &lt;/lift:AttrBinds &gt;
+   * </pre>
+   *
+   * The following snippet:
+   *
+   * <pre name="code" class="scala">
+   * import scala.xml._
+   * class AttrBinds {
+   *   def render(xhtml : NodeSeq) : NodeSeq =
+   *     BindHelpers.bind("test", xhtml,
+   *       FuncAttrBindParam("x", { ns : NodeSeq => Text(ns.text.toUpperCase + "X")}, "id"),
+   *       FuncAttrBindParam("y", { ns : NodeSeq => Text(ns.text.length + "Y")}, ("lift","calcId")))
+   * </pre>
+   *
+   * produces this markup:
+   *
+   * <pre name="code" class="xml">
+   *   &lt;div id="FOOX" /&gt;
+   *   &lt;div lift:calcId="3Y" /&gt;
+   * </pre>
+   *   
+   * @param name The name to bind against
+   * @param value A function that takes the current attribute's value and computes
+   * the new attribute value
+   * @param newAttr The new attribute label
    */
   final class FuncAttrBindParam(val name: String, value: => NodeSeq => NodeSeq, val newAttr: String)
           extends BindParam with BindWithAttr {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(value(in))
   }
 
+  /**
+   * BindParam using a function to calculate its value.
+   * 
+   * This object provides factory methods for convenience.
+   *
+   */
   object FuncAttrBindParam {
+    /**
+     * Returns an unprefixed attribute binding computed by the provided function
+     *
+     * @param name The name to bind against
+     * @param value The function that will transform the original attribute value
+     * into the new attribute value
+     * @param newAttr The new attribute label
+     */
     def apply(name: String, value: => NodeSeq => NodeSeq, newAttr: String) = new FuncAttrBindParam(name, value, newAttr)
+
+    /**
+     * Returns a prefixed attribute binding computed by the provided function
+     * 
+     * @param name The name to bind against
+     * @param value The function that will transform the original attribute value
+     * into the new attribute value
+     * @param newAttr The new attribute name in the form (prefix,label)
+     */
+    def apply(name: String, value: => NodeSeq => NodeSeq, newAttr: Pair[String,String]) = 
+      PrefixedBindWithAttr(newAttr._1, new FuncAttrBindParam(name, value, newAttr._2))
   }
 
   final class OptionBindParam(val name: String, value: Option[NodeSeq])
@@ -273,24 +422,169 @@ trait BindHelpers {
     def apply(name: String, value: Box[NodeSeq]) = new BoxBindParam(name, value)
   }
 
+  /**
+   * BindParam that computes an optional new attribute value based on
+   * the current attribute value. Returning None in the transform function
+   * will result in the Attribute being omitted. For example, given the
+   * following markup:
+   *
+   * <pre name="code" class="xml">
+   * &lt;lift:AttrBinds>
+   *   &lt;div test:x="foo">
+   *   &lt;div test:y="foo">
+   * &lt;/lift:AttrBinds>
+   * </pre>
+   *
+   * The following snippet:
+   *
+ <pre name="code" class="scala">
+ import scala.xml._
+ class AttrBinds {
+   def render(xhtml : NodeSeq) : NodeSeq =
+     BindHelpers.bind("test", xhtml,
+       FuncAttrOptionBindParam("x", { ns : NodeSeq =>
+           Some(Text(ns.text.toUpperCase + "X"))
+         }, ("lift","calcId")),
+       FuncAttrOptionBindParam("y", { ns : NodeSeq =>
+         if (ns.text.length > 10) {
+           Some(Text(ns.text.length + "Y"))
+         } else {
+           None
+         }, ("lift","calcId")))
+ </pre>
+   *
+   * produces this markup:
+   *
+   * <pre name="code" class="xml">
+   *   &lt;div lift:calcId="FOOX" />
+   *   &lt;div />
+   * </pre>
+   *
+   * @param name The name to bind against
+   * @param value The function that will transform the original attribute value
+   * into the new attribute value. Returning None will cause this attribute to
+   * be omitted.
+   * @param newAttr The new attribute label
+   *   
+   */
   final class FuncAttrOptionBindParam(val name: String, func: => NodeSeq => Option[NodeSeq], val newAttr: String)
           extends BindParam with BindWithAttr {
     def calcValue(in: NodeSeq): Option[NodeSeq] = func(in)
   }
 
+  /**
+   * BindParam that computes an optional new attribute value based on
+   * the current attribute value. Returning None in the transform function
+   * will result in the Attribute not being bound.
+   *
+   * This object provides factory methods for convenience.
+   */
   object FuncAttrOptionBindParam {
+    /**
+     * Returns an unprefixed attribute binding computed by the provided function
+     *
+     * @param name The name to bind against
+     * @param value The function that will transform the original attribute value
+     * into the new attribute value. Returning None will cause this attribute to
+     * be omitted.
+     * @param newAttr The new attribute label
+     */
     def apply(name: String, func: => NodeSeq => Option[NodeSeq], newAttr: String) =
       new FuncAttrOptionBindParam(name, func, newAttr)
+
+
+    /**
+     * Returns a prefixed attribute binding computed by the provided function
+     * 
+     * @param name The name to bind against
+     * @param value The function that will transform the original attribute value
+     * into the new attribute value. Returning None will cause this attribute to
+     * be omitted.
+     * @param newAttr The new attribute name in the form (prefix,label)
+     */
+    def apply(name: String, func: => NodeSeq => Option[NodeSeq], newAttr: Pair[String,String]) =
+      PrefixedBindWithAttr(newAttr._1, new FuncAttrOptionBindParam(name, func, newAttr._2))
   }
 
+  /**
+   * BindParam that computes an optional new attribute value based on
+   * the current attribute value. Returning Empty in the transform function
+   * will result in the Attribute being omitted. For example, given the
+   * following markup:
+   *
+   * <pre name="code" class="xml">
+   * &lt;lift:AttrBinds>
+   *   &lt;div test:x="foo">
+   *   &lt;div test:y="foo">
+   * &lt;/lift:AttrBinds>
+   * </pre>
+   *
+   * The following snippet:
+   *
+ <pre name="code" class="scala">
+ import scala.xml._
+ class AttrBinds {
+   def render(xhtml : NodeSeq) : NodeSeq =
+     BindHelpers.bind("test", xhtml,
+       FuncAttrBoxBindParam("x", { ns : NodeSeq => Full(Text(ns.text.toUpperCase + "X"))}, ("lift","calcId")),
+       FuncAttrBoxBindParam("y", { ns : NodeSeq =>
+         if (ns.text.length > 10) {
+           Full(Text(ns.text.length + "Y"))
+         } else {
+           Empty
+         }, ("lift","calcId")))
+ </pre>
+   *
+   * produces this markup:
+   *
+   * <pre name="code" class="xml">
+   *   &lt;div lift:calcId="FOOX" />
+   *   &lt;div />
+   * </pre>
+   *   
+   * @param name The name to bind against
+   * @param value The function that will transform the original attribute value
+   * into the new attribute value. Returning Empty will cause this attribute to
+   * be omitted.
+   * @param newAttr The new attribute label
+   *
+   */
   final class FuncAttrBoxBindParam(val name: String, func: => NodeSeq => Box[NodeSeq], val newAttr: String)
           extends BindParam with BindWithAttr {
     def calcValue(in: NodeSeq): Option[NodeSeq] = func(in)
   }
 
+  /**
+   * BindParam that computes an optional new attribute value based on
+   * the current attribute value. Returning Empty in the transform function
+   * will result in the Attribute being omitted.
+   *
+   * This object provides factory methods for convenience.
+   */
   object FuncAttrBoxBindParam {
+    /**
+     * Returns an unprefixed attribute binding computed by the provided function
+     *
+     * @param name The name to bind against
+     * @param value The function that will transform the original attribute value
+     * into the new attribute value. Returning Empty will cause this attribute to
+     * be omitted.
+     * @param newAttr The new attribute label
+     */
     def apply(name: String, func: => NodeSeq => Box[NodeSeq], newAttr: String) =
       new FuncAttrBoxBindParam(name, func, newAttr)
+
+    /**
+     * Returns a prefixed attribute binding computed by the provided function
+     * 
+     * @param name The name to bind against
+     * @param value The function that will transform the original attribute value
+     * into the new attribute value. Returning Empty will cause this attribute to
+     * be omitted.
+     * @param newAttr The new attribute name in the form (prefix,label)
+     */
+    def apply(name: String, func: => NodeSeq => Box[NodeSeq], newAttr: Pair[String,String]) =
+      PrefixedBindWithAttr(newAttr._1, new FuncAttrBoxBindParam(name, func, newAttr._2))
   }
 
   final class SymbolBindParam(val name: String, value: Symbol)
@@ -493,7 +787,7 @@ trait BindHelpers {
   /**
    * Bind a set of values to parameters and attributes in a block of XML.<p/>
    *
-   * For example: <pre>
+   * For example: <pre name="code" class="scala">
    *   bind("user", <user:hello>replace this</user:hello>, "hello" -> <h1/>)
    * </pre>
    * will return <pre><h1></h1></pre>
@@ -513,7 +807,7 @@ trait BindHelpers {
    * with defined transforms for unbound elements within the specified
    * namespace.<p/>
    *
-   * For example:<pre>
+   * For example:<pre name="code" class="scala">
    *   bind("user",
    *        Full(xhtml: NodeSeq => Text("Default Value")),
    *        Empty,
@@ -542,7 +836,7 @@ trait BindHelpers {
    * with defined transforms for unbound elements within the specified
    * namespace.<p/>
    *
-   * For example:<pre>
+   * For example:<pre name="code" class="scala">
    *   bind("user",
    *        Full(xhtml: NodeSeq => Text("Default Value")),
    *        Empty,
@@ -574,6 +868,7 @@ trait BindHelpers {
         case upa: UnprefixedAttribute => new UnprefixedAttribute(upa.key, upa.value, attrBind(upa.next))
         case pa: PrefixedAttribute if pa.pre == namespace => map.get(pa.key) match {
           case None => paramFailureXform.map(_(pa)) openOr new PrefixedAttribute(pa.pre, pa.key, Text("FIX"+"ME find to bind attribute"), attrBind(pa.next))
+          case Some(PrefixedBindWithAttr(prefix,binding)) => binding.calcValue(pa.value).map(v => new PrefixedAttribute(prefix, binding.newAttr, v, attrBind(pa.next))) getOrElse attrBind(pa.next)
           case Some(abp: BindWithAttr) => abp.calcValue(pa.value).map(v => new UnprefixedAttribute(abp.newAttr, v, attrBind(pa.next))) getOrElse attrBind(pa.next)
           case Some(bp: BindParam) => bp.calcValue(pa.value).map(v => new PrefixedAttribute(pa.pre, pa.key, v, attrBind(pa.next))) getOrElse attrBind(pa.next)
         }
@@ -630,7 +925,7 @@ trait BindHelpers {
   /**
    * Replace the content of lift:bind nodes with the corresponding nodes found in a map,
    * according to the value of the "name" attribute.<p/>
-   * Usage: <pre>
+   * Usage: <pre name="code" class="scala">
    *   bind(Map("a" -> <h1/>), <b><lift:bind name="a">change this</lift:bind></b>) must ==/(<b><h1></h1></b>)
    * </pre>
    *
@@ -648,7 +943,7 @@ trait BindHelpers {
    * 
    * Replace the content of lift:bind nodes with the corresponding nodes found in a map,
    * according to the value of the "name" attribute.<p/>
-   * Usage: <pre>
+   * Usage: <pre name="code" class="scala">
    *   bind(Map("a" -> <h1/>), <b><lift:bind name="a">change this</lift:bind></b>) must ==/(<b><h1></h1></b>)
    * </pre>
    *

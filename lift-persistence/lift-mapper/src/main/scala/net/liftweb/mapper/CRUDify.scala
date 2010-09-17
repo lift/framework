@@ -493,17 +493,16 @@ trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] {
           f => bind("crud", in, "value" -> f.asHtml))
 
         bind("crud", in , "row_item" -> doRowItem _,
-             FuncAttrBindParam("edit_href", _ =>
-            Text(editPathString+"/"+
-                 (obscurePrimaryKey(c))),"href"),
+             FuncAttrBindParam("edit_href", { ignore : NodeSeq =>
+               Text(editPathString+"/"+(obscurePrimaryKey(c))) },"href"),
 
-             FuncAttrBindParam("view_href", _ =>
+             FuncAttrBindParam("view_href", { ignore : NodeSeq =>
             Text(viewPathString+"/"+
-                 (obscurePrimaryKey(c))),"href"),
+                 (obscurePrimaryKey(c)))},"href"),
 
-             FuncAttrBindParam("delete_href", _ =>
+             FuncAttrBindParam("delete_href", { ignore : NodeSeq =>
             Text(deletePathString+"/"+
-                 (obscurePrimaryKey(c))),"href")
+                 (obscurePrimaryKey(c)))},"href")
         )}
 
       bind("crud", in, "header_item" -> doHeaderItems _,
