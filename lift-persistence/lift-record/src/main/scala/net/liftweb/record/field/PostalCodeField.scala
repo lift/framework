@@ -32,7 +32,7 @@ import S._
 trait PostalCodeTypedField extends StringTypedField {
   protected val country: CountryField[_]
 
-  override def setFilter = notNull _ :: toUpper _ :: trim _ :: super.setFilter
+  override def setFilter = toUpper _ :: trim _ :: super.setFilter
 
   override def validations = validatePostalCode _ :: Nil
 
