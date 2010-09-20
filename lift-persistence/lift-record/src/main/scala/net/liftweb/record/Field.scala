@@ -407,6 +407,7 @@ trait DisplayWithLabel[OwnerType <: Record[OwnerType]] extends OwnedField[OwnerT
       <div id={ id + "_holder" }>
         <div><label for={ id + "_field" }>{ displayName }</label></div>
         { control }
+        <lift:msg id={id} errorClass="lift_error"/>
       </div>
 }
 
