@@ -145,7 +145,7 @@ trait TypedField[ThisType] extends BaseField {
   type ValidationFunction = ValueType => List[FieldError]
 
   private[record] var data: Box[MyType] = Empty
-  private[record] var needsDefault = true
+  private[record] var needsDefault: Boolean = true
   
   /**
    * Helper for implementing asJValue for a conversion to an encoded JString
@@ -210,6 +210,7 @@ trait TypedField[ThisType] extends BaseField {
       case _ if !checkCanWrite_? => Failure(noValueErrorMessage)
       case Full(_)               => set_!(in)
       case _ if optional_?       => set_!(in)
+      case (f: Failure)          => set_!(f) // preserve failures set in
       case _                     => Failure(notOptionalErrorMessage)
     }
     dirty_?(true)
@@ -224,12 +225,15 @@ trait TypedField[ThisType] extends BaseField {
 
   protected def setFilter: List[ValueType => ValueType] = Nil
 
+  /** OptionalTypedField and MandatoryTypedField implement this to do the appropriate lifting of Box[MyType] to ValueType */
+  protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType]
+
   /**
    * A list of functions that transform the value before it is set.  The transformations
    * are also applied before the value is used in a query.  Typical applications
    * of this are trimming and/or toLowerCase-ing strings
    */
-  protected def setFilterBox: List[Box[MyType] => Box[MyType]] = ((in: Box[MyType]) => toBoxMyType(setFilter.foldLeft(toValueType(in))((prev, f) => f(prev)))) :: Nil
+  protected def setFilterBox: List[Box[MyType] => Box[MyType]] = liftSetFilterToBox _ :: Nil
 
   def runFilters(in: Box[MyType], filter: List[Box[MyType] => Box[MyType]]): Box[MyType] = filter match {
     case Nil => in
@@ -285,8 +289,8 @@ trait TypedField[ThisType] extends BaseField {
 
   def valueBox: Box[MyType] = synchronized {
     if (needsDefault) {
-      data = defaultValueBox
       needsDefault = false
+      data = defaultValueBox
     }
 
     if (canRead_?) data
@@ -296,7 +300,7 @@ trait TypedField[ThisType] extends BaseField {
   /** Clear the value of this field */
   def clear: Unit = optional_? match {
     case true  => setBox(Empty)
-    case false => needsDefault = true
+    case false => setBox(defaultValueBox)
   }
 }
 
@@ -325,6 +329,7 @@ trait MandatoryTypedField[ThisType] extends TypedField[ThisType] with Product1[T
   def get: MyType = value
   def is: MyType = value
 
+  protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType] = in.map(v => setFilter.foldLeft(v)((prev, f) => f(prev)))
 
   /**
    * The default value of the field when a field has no value set and is optional, or a method that must return a value (e.g. value) is used
@@ -364,6 +369,8 @@ trait OptionalTypedField[ThisType] extends TypedField[ThisType] with Product1[Bo
 
   def get: Option[MyType] = value
   def is: Option[MyType] = value
+
+  protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType] = setFilter.foldLeft(in)((prev, f) => f(prev))
 
 
   def defaultValueBox: Box[MyType] = Empty
@@ -407,6 +414,7 @@ trait DisplayWithLabel[OwnerType <: Record[OwnerType]] extends OwnedField[OwnerT
       <div id={ id + "_holder" }>
         <div><label for={ id + "_field" }>{ displayName }</label></div>
         { control }
+        <lift:msg id={id} errorClass="lift_error"/>
       </div>
 }
 

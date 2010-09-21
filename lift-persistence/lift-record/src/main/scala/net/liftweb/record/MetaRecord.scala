@@ -112,7 +112,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     val tArray = new ListBuffer[FieldHolder]
 
     lifecycleCallbacks = for (v <- rootClass.getMethods.toList
-                              if isLifecycle(v)) yield (v.getName, v)
+                              if v.getName != "meta" && isLifecycle(v)) yield (v.getName, v)
 
     introspect(this, rootClass.getMethods) {
       case (v, mf) => tArray += FieldHolder(mf.name, v, mf)
@@ -246,6 +246,10 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     }
 
   protected def foreachCallback(inst: BaseRecord, f: LifecycleCallbacks => Any) {
+    inst match {
+      case (lc: LifecycleCallbacks) => f(lc)
+      case _ => {}
+    }
     lifecycleCallbacks.foreach(m => f(m._2.invoke(inst).asInstanceOf[LifecycleCallbacks]))
   }
 

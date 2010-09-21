@@ -105,29 +105,19 @@ class MongoListField[OwnerType <: MongoRecord[OwnerType], ListType](rec: OwnerTy
 
   // set this field's value using a DBObject returned from Mongo.
   def setFromDBObject(dbo: DBObject): Box[List[ListType]] =
-    setBox(Full(dbo.keySet.map(k =>
-      dbo.get(k.toString).asInstanceOf[ListType]).toList))
+    setBox(Full(dbo.asInstanceOf[BasicDBList].toList.asInstanceOf[List[ListType]]))
 }
 
 /*
-* List of Dates. You can also just use MongListField(OwnerType, Date).
+* List of Dates. Use MongListField(OwnerType, Date) instead.
 */
+@Deprecated
 class MongoDateListField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
   extends MongoListField[OwnerType, Date](rec: OwnerType) {
-
-  override def setFromDBObject(dbo: DBObject): Box[List[Date]] = {
-    val ret = dbo.keySet.flatMap( k => {
-      (dbo.get(k.toString) match {
-        case d: Date => Some(d)
-        case _ => None
-      }).toList
-    })
-    Full(set(ret.toList))
-  }
 }
 
 /*
-* List of JObjects
+* List of JObjects. Use MongoJsonObjectListField instead.
 */
 @Deprecated
 class MongoJObjectListField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
@@ -135,10 +125,9 @@ class MongoJObjectListField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
 
   override def setFromDBObject(dbo: DBObject): Box[List[JObject]] = {
     implicit val formats = owner.meta.formats
-    val ret = dbo.keySet.map( k => {
+    setBox(Full(dbo.keySet.toList.map( k => {
       JObjectParser.serialize(dbo.get(k.toString)).asInstanceOf[JObject]
-    })
-    Full(set(ret.toList))
+    })))
   }
 }
 
@@ -151,20 +140,16 @@ class MongoJsonObjectListField[OwnerType <: MongoRecord[OwnerType], JObjectType 
 
   override def asDBObject: DBObject = {
     val dbl = new BasicDBList
-
     implicit val formats = owner.meta.formats
-
     value.foreach { v => dbl.add(JObjectParser.parse(v.asJObject)) }
-
     dbl
   }
 
   override def setFromDBObject(dbo: DBObject): Box[List[JObjectType]] = {
     implicit val formats = owner.meta.formats
-    val ret = dbo.keySet.map(k => {
+    setBox(Full(dbo.keySet.toList.map(k => {
       valueMeta.create(JObjectParser.serialize(dbo.get(k.toString)).asInstanceOf[JObject])
-    })
-    Full(set(ret.toList))
+    })))
   }
 }
 

@@ -151,9 +151,9 @@ package mongotestrecords {
       override def setFromDBObject(dbo: DBObject): Box[List[JsonDoc]] = {
         implicit val formats = meta.formats
         val lst: List[JsonDoc] =
-          dbo.keySet.map(k => {
+          dbo.keySet.toList.map(k => {
             JsonDoc.create(JObjectParser.serialize(dbo.get(k.toString)).asInstanceOf[JObject])
-          }).toList
+          })
         Full(set(lst))
       }
     }
@@ -179,13 +179,13 @@ package mongotestrecords {
 
       override def setFromDBObject(dbo: DBObject): Box[List[Map[String, String]]] = {
         val lst: List[Map[String, String]] =
-          dbo.keySet.map(k => {
+          dbo.keySet.toList.map(k => {
             dbo.get(k.toString) match {
               case bdbo: BasicDBObject if (bdbo.containsField("name") && bdbo.containsField("type")) =>
                 Map("name"-> bdbo.getString("name"), "type" -> bdbo.getString("type"))
               case _ => null
             }
-          }).toList.filter(_ != null)
+          }).filter(_ != null)
         Full(set(lst))
       }
     }
@@ -416,7 +416,6 @@ object MongoRecordExamples extends Specification {
     // find all documents with field selection
     val mdq4 = MainDoc.findAll(("name" -> "md1"), ("name" -> 1), Empty)
     mdq4.size must_== 1
-    println(mdq4.first.refdoc.value)
 
     // Upsert - this should add a new row
     val md5 = MainDoc.createRecord
@@ -456,8 +455,6 @@ object MongoRecordExamples extends Specification {
   }
 
   "List example" in {
-    skip("These don't pass with 2.8.0 RC3.")
-
     checkMongoIsRunning
 
     val ref1 = RefDoc.createRecord
@@ -467,18 +464,19 @@ object MongoRecordExamples extends Specification {
     ref2.save must_== ref2
 
     val name = "ld1"
-    val strlist = List("string1", "string2", "string3")
+    val strlist = List("string1", "string2", "string3", "string1")
+    val jd1 = JsonDoc("1", "jsondoc1")
 
     val ld1 = ListDoc.createRecord
     ld1.name.set(name)
     ld1.stringlist.set(strlist)
-    ld1.intlist.set(List(99988,88))
+    ld1.intlist.set(List(99988,88, 88))
     ld1.doublelist.set(List(997655.998,88.8))
     ld1.boollist.set(List(true,true,false))
     ld1.objidlist.set(List(ObjectId.get, ObjectId.get))
     ld1.dtlist.set(List(now, now))
     ld1.jobjlist.set(List((("name" -> "jobj1") ~ ("type" -> "jobj")), (("name" -> "jobj2") ~ ("type" -> "jobj"))))
-    ld1.jsonobjlist.set(List(JsonDoc("1", "jsondoc1"), JsonDoc("2", "jsondoc2")))
+    ld1.jsonobjlist.set(List(jd1, JsonDoc("2", "jsondoc2"), jd1))
     ld1.jsondoclist.set(List(JsonDoc("3", "jsondoc3"), JsonDoc("4", "jsondoc4")))
     ld1.datelist.set(List(now, now))
     /*val cal = Calendar.getInstance()
