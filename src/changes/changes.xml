@@ -40,8 +40,23 @@
     <release version="${project.version}" date="${publishDate}" description="Lift 2.1 Snapshot Release">
     </release>
 
+    <release version="2.1-RC3" date="2010-09-21" description="Lift 2.1 Release Candidate 3">
+      <action dev="eltimn" type="fix" issue="651" system="assembla">
+        MongoListField in 2.8.0 does not deserialize correctly
+      </action>
+      <action dev="dridus" type="fix" issue="652" system="assembla">
+        Regression in Fields marked Optional
+      </action>
+      <action dev="dpp" type="fix" issue="653" system="assembla">
+        DisplayWithLabel's toForm is missing the error
+      </action>
+    </release>
+
     <release version="2.1-RC2" date="2010-09-14" description="Lift 2.1 Release Candidate 2">
       <action dev="dridus" type="fix" issue="641" system="assembla">
+        Breaking toString change in Record Fields
+      </action>
+      <action dev="dpp" type="fix" issue="637" system="assembla">
         Breaking toString change in Record Fields
       </action>
     </release>
