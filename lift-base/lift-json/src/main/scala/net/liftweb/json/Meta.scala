@@ -223,11 +223,12 @@ private[json] object Meta {
     }
 
     def typeConstructors(t: Type, k: Kind): List[(Class[_], Type)] = {
-      def types(i: Int) = {
+      def types(i: Int): (Class[_], Type) = {
         val ptype = t.asInstanceOf[ParameterizedType]
-        val c = ptype.getActualTypeArguments()(i).asInstanceOf[ParameterizedType]
-        val ctype = c.getRawType.asInstanceOf[Class[_]]
-        (ctype, c)
+        ptype.getActualTypeArguments()(i) match {
+          case p: ParameterizedType => (p.getRawType.asInstanceOf[Class[_]], p)
+          case c: Class[_] => (c, c)
+        }
       }
 
       k match {
