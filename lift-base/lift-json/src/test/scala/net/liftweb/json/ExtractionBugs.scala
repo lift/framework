@@ -29,7 +29,14 @@ object ExtractionBugs extends Specification {
     Extraction.decompose(opt).extract[OptionOfInt].opt.get mustEqual 39
   }
 
+  "Extraction should not fail when Maps values are Lists" in {
+    val m = PMap(Map("a" -> List("b"), "c" -> List("d")))
+    Extraction.decompose(m).extract[PMap] mustEqual m
+  }
+
   case class OptionOfInt(opt: Option[Int])
+
+  case class PMap(m: Map[String, List[String]])
 }
 
 }
