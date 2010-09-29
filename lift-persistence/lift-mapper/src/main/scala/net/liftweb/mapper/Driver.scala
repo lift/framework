@@ -341,6 +341,7 @@ object SqlServerDriver extends SqlServerBaseDriver {
  *
  * <ul>
  *  <li>Oracle XE 10.2.0.1</li>
+ *  <li>Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - 64bit Production</li>
  * </ul>
  *
  * Other working install versions should be reported to liftweb@googlegroups.com.
