@@ -21,7 +21,7 @@ package imaging {
 import java.awt.{Graphics2D, Graphics, Transparency, AlphaComposite, RenderingHints}
 import java.awt.geom.AffineTransform 
 import java.awt.image.{AffineTransformOp, BufferedImage, ColorModel, IndexColorModel}
-import javax.imageio.ImageIO
+import javax.imageio.{IIOImage, ImageIO, ImageWriteParam}
 
 import org.apache.sanselan.ImageReadException
 import org.apache.sanselan.Sanselan
@@ -39,8 +39,8 @@ import java.io.{InputStream,ByteArrayOutputStream,ByteArrayInputStream}
 
 import net.liftweb.util.IoHelpers
 
-object ImageOutFormat extends Enumeration("png", "jpg"){
-  val png,jpeg = Value
+object ImageOutFormat extends Enumeration("png", "jpg", "gif", "bmp"){
+  val png,jpeg,gif,bmp = Value
 }
 
 //Degrees are positive going clockwise (270 is same as -90)
@@ -82,15 +82,33 @@ class ImageResizer(renderingHintsMap:Map[java.awt.RenderingHints.Key,Any], multi
     val orientation = getOrientation(imageBytes)
     val format = Sanselan.guessFormat(imageBytes) match {
       case ImageFormat.IMAGE_FORMAT_JPEG => ImageOutFormat.jpeg
-      case _ => ImageOutFormat.png
+      case ImageFormat.IMAGE_FORMAT_GIF => ImageOutFormat.gif
+      case ImageFormat.IMAGE_FORMAT_PNG => ImageOutFormat.png
+      case ImageFormat.IMAGE_FORMAT_BMP => ImageOutFormat.bmp
+      case f => throw new RuntimeException("Unsupported image format: " + f)
     }
     ImageWithMetaData(ImageIO.read(new java.io.ByteArrayInputStream(imageBytes)), orientation, format)
   }
   
   def imageToStream(format:ImageOutFormat.Value, image:BufferedImage):InputStream = {
+    new ByteArrayInputStream(imageToBytes(format, image, 0.8f))
+  }
+  
+  def imageToBytes(format: ImageOutFormat.Value, image: BufferedImage, jpegQuality: Float):Array[Byte] = {
     val outputStream = new ByteArrayOutputStream()
-    ImageIO.write(image, format.toString, outputStream)
-    new ByteArrayInputStream(outputStream.toByteArray)
+    format match {
+      case ImageOutFormat.jpeg =>
+        val imageWriter = ImageIO.getImageWritersByFormatName("jpeg").next()
+        val iwp = imageWriter.getDefaultWriteParam()
+        iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT)
+        iwp.setCompressionQuality(jpegQuality)
+        imageWriter.setOutput(ImageIO.createImageOutputStream(outputStream))
+        imageWriter.write(null, new IIOImage(image, null, null), iwp)
+        imageWriter.dispose()
+      case _ =>
+        ImageIO.write(image, format.toString, outputStream)
+    }
+    outputStream.toByteArray()
   }
   
   /**
