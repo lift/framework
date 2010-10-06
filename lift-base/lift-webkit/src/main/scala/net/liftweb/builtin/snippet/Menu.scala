@@ -325,16 +325,50 @@ object Menu extends DispatchSnippet {
    * &lt;lift:Menu.item name="b" a:style="color: red;" /&gt;
    * </pre>
    *
+   * <p>The param attribute may be used with Menu Locs that are
+   * CovertableLoc to parameterize the link</p>
+   *
    * <p>Normally, the Menu item is not shown on pages that match its Menu's Loc. You can
    * set the "donthide" attribute on the tag to force it to show text only (same text as normal,
    * but not in an anchor tag)</p>
    *
    */
-  def item(text: NodeSeq): NodeSeq =
-  for (name <- S.attr("name").toList;
-       request <- S.request.toList;
+  def item(text: NodeSeq): NodeSeq = {
+    for {
+      name <- S.attr("name").toList
+    } yield {
+      (S.request.flatMap(_.location), S.attr("param"), 
+       SiteMap.findAndTestLoc(name)) match {
+         case (_, Full(param), Full(loc: ConvertableLoc[_])) => {
+           (for {
+             pv <- loc.convert(param)
+             link <- loc.createLink(pv)
+           } yield <a href={link}></a> % S.prefixedAttrsToMetaData("a")) openOr
+           Text("")
+         }
+         
+         case (Full(loc), _, _) if loc.name == name => {
+           if (S.attr("donthide").isEmpty) Text("")
+           if (!text.isEmpty) Group(text)
+           else Group(loc.linkText openOr Text(loc.name))
+         }
+
+         case (Full(loc), _, _) => {
+           Group(SiteMap.buildLink(name, text) match {
+             case e : Elem => e % S.prefixedAttrsToMetaData("a")
+             case x => x
+           })
+         }
+
+         case _ => Text("")
+       }
+    }
+  }
+
+    /*
+    request <- S.request.toList;
        loc <- request.location.toList)
-  yield {
+
     if (loc.name != name) {
       val itemLink = SiteMap.buildLink(name, text) match {
         case e : Elem => e % S.prefixedAttrsToMetaData("a")
@@ -352,6 +386,7 @@ object Menu extends DispatchSnippet {
       Text("")
     }
   }
+    */
 }
 
 }

@@ -321,6 +321,16 @@ trait Loc[T] {
 
 }
 
+trait ConvertableLoc[T] {
+  self: Loc[T] =>
+    
+  /**
+   * Converts the String to T that can then be sent to
+   * the Loc in createLink
+   */
+  def convert(str: String): Box[T]
+}
+
 
 /**
  * The Loc companion object, complete with a nice constructor
