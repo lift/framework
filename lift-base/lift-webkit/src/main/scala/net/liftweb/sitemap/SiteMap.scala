@@ -47,13 +47,13 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
                                locs(name)+" and "+in)
     else locs = locs + (name -> in.asInstanceOf[Loc[_]])
 
-    if (SiteMap.enforceUniqueLinks &&
+    if (SiteMap.enforceUniqueLinks && !in.link.external_? &&
 	locPath.contains(in.link.uriList))
       throw new SiteMapException("Location "+name+
               " defines a duplicate link "+
               in.link.uriList)
 
-    locPath += in.link.uriList
+    if (!in.link.external_?) locPath += in.link.uriList
   }
 
   def globalParams: List[Loc.AnyLocParam] = {

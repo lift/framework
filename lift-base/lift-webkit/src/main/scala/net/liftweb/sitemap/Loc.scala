@@ -124,7 +124,7 @@ trait Loc[T] {
   }
 
   def snippet(name: String): Box[NodeSeq => NodeSeq] = {
-    val test = (name, requestValue.is)
+    val test = (name, currentValue)
 
     if ((snippets orElse calcSnippets).isDefinedAt(test)) Full((snippets orElse calcSnippets)(test))
     else Empty
@@ -288,7 +288,7 @@ trait Loc[T] {
   private[liftweb] def buildItem(kids: List[MenuItem], current: Boolean, path: Boolean): Box[MenuItem] =
     (calcHidden(kids), testAccess) match {
       case (false, Left(true)) => {
-          for {p <- (overrideValue or requestValue.is or defaultValue)
+          for {p <- currentValue
                t <- link.createLink(p)}
           yield new MenuItem(
             text.text(p),
@@ -544,6 +544,11 @@ object Loc {
       else uriList == req.path.partPath
     }
 
+    /**
+     * Is the Loc external
+     */
+    def external_? = false
+
     def apply(in: Req): Box[Boolean] = {
       if (isDefinedAt(in)) Full(true)
       else throw new MatchError("Failed for Link "+uriList)
@@ -592,6 +597,11 @@ object Loc {
   object ExtLink {
     def apply(url: String) = new Link[Unit](Nil, false) {
       override def createLink(value: Unit): Box[NodeSeq] = Full(Text(url))
+
+      /**
+       * Is the Loc external
+       */
+      override def external_? = true
     }
   }
 
