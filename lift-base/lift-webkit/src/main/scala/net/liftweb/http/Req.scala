@@ -551,8 +551,9 @@ class Req(val path: ParsePath,
   lazy val isFirefox3: Boolean = (userAgent.map(_.indexOf("Firefox/3") >= 0)) openOr false
   lazy val isFirefox35: Boolean = (userAgent.map(_.indexOf("Firefox/3.5") >= 0)) openOr false
   lazy val isFirefox36: Boolean = (userAgent.map(_.indexOf("Firefox/3.6") >= 0)) openOr false
+  lazy val isFirefox40: Boolean = (userAgent.map(_.indexOf("Firefox/4") >= 0)) openOr false
 
-  def isFirefox35_+ : Boolean = isFirefox35 || isFirefox36
+  def isFirefox35_+ : Boolean = isFirefox35 || isFirefox36  || isFirefox40
 
   def isFirefox = isFirefox2 || isFirefox3 || isFirefox35_+
 
