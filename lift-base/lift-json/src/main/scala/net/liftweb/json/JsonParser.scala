@@ -320,29 +320,23 @@ object JsonParser {
    * Buffer is divided to one or more segments (preallocated in Segments pool).
    */
   private[json] class Buffer(in: Reader) {
-    var length = -1
+    var offset = 0
     var curMark = -1
     var curMarkSegment = -1
-    private[this] var segments: List[Segment] = Nil
-    private[this] var segment: Array[Char] = _
+    private[this] var segments: List[Segment] = List(Segments.apply())
+    private[this] var segment: Array[Char] = segments.head.seg
     private[this] var cur = 0 // Pointer which points current parsing location
     private[this] var curSegmentIdx = 0 // Pointer which points current segment
-    read
 
     def mark = { curMark = cur; curMarkSegment = curSegmentIdx }
     def back = cur = cur-1
 
     def next: Char = {
-      try {
+      if (cur == offset && read < 0) EOF
+      else {
         val c = segment(cur)
-        if (cur >= length) return EOF
-        cur = cur+1
+        cur += 1
         c
-      } catch {
-        // suprisingly catching IndexOutOfBounds is faster than: if (cur == segment.length)
-        case e =>
-          read
-          if (length == -1) EOF else next
       }
     }
 
@@ -374,21 +368,23 @@ object JsonParser {
       }
     }
 
-    def near = new String(segment, (cur-20) max 0, (cur+20) min length)
+    def near = new String(segment, (cur-20) max 0, (cur+20) min offset)
 
     def release = segments.foreach(Segments.release)
 
     private[this] def read = {
-      try {
+      if (offset >= segment.length) {
         val newSegment = Segments.apply()
-        length = in.read(newSegment.seg)
+        offset = 0
         segment = newSegment.seg
         segments = segments ::: List(newSegment)
-        cur = 0
-        curSegmentIdx = segments.length-1
-      } finally {
-        if (length < segment.length) in.close
+        curSegmentIdx = segments.length - 1
       }
+
+      val length = in.read(segment, offset, segment.length-offset)
+      cur = offset
+      offset += length
+      length
     }
   }
 

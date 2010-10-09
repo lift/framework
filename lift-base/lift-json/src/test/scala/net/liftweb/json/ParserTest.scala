@@ -54,6 +54,22 @@ object ParserSpec extends Specification with JValueGen with ScalaCheck {
     parse("[\"abc\\\"\\\\\\/\\b\\f\\n\\r\\t\\u00a0\"]") must_== JArray(JString("abc\"\\/\b\f\n\r\t\u00a0")::Nil)
   }
 
+  "The EOF has reached when the Reader returns EOF" in {
+    class StingyReader(s: String) extends java.io.StringReader(s) {
+      override def read(cbuf: Array[Char], off: Int, len: Int): Int = {
+        val c = read()
+        if (c == -1) -1
+        else {
+          cbuf(off) = c.toChar
+          1
+        }
+      }
+    }
+
+    val json = parse(new StingyReader(""" ["hello"] """))
+    json mustEqual JArray(JString("hello") :: Nil)
+  }
+
   implicit def arbJValue: Arbitrary[JValue] = Arbitrary(genObject)
 
   private def parseVal(json: JValue, bufSize: Int) = {
