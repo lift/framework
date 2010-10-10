@@ -56,7 +56,20 @@ abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) 
       Empty
   }
 
+  /**
+   * Stateless session enforcement is new to Lift, but there
+   * are some legacy issues in WebKit and allowing for a SessionVar
+   * to be "magic" (settable even in stateless sessions) seems to be
+   * an efficient, yet somewhat hacky, way around the issue
+   */
+  private[liftweb] def magicSessionVar_? = false
+
   override protected def setFunc(name: String, value: T): Unit = S.session match {
+    // If we're in a stateless session, don't allow SessionVar setting
+    case Full(s) if !magicSessionVar_? && !s.stateful_? && !settingDefault_? =>
+      throw new StateInStatelessException("setting a SessionVar in a "+
+                                          "stateless session: "+getClass.getName)
+
     case Full(s) => s.set(name, value)
     case _ =>
       if (showWarningWhenAccessedOutOfSessionScope_?)

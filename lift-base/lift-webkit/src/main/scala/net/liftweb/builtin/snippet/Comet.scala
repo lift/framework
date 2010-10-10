@@ -47,6 +47,10 @@ object Comet extends DispatchSnippet with LazyLoggable {
   private def buildComet(kids: NodeSeq) : NodeSeq = {
 
     (for {ctx <- S.session} yield {
+      if (!ctx.stateful_?) 
+        throw new StateInStatelessException(
+          "Lift does not support Comet for stateless requests")
+
        val theType: Box[String] = S.attr.~("type").map(_.text)
        val name: Box[String] = S.attr.~("name").map(_.text)
        try {
@@ -63,7 +67,8 @@ object Comet extends DispatchSnippet with LazyLoggable {
                  buildSpan(Full(0), Comment("FIXME comet type "+theType+" name "+name+" timeout") ++ kids, c, c.uniqueId)
             }) openOr Comment("FIXME - comet type: "+theType+" name: "+name+" Not Found ") ++ kids
           } catch {
-            case e => logger.error("Failed to find a comet actor", e); kids
+            case e: StateInStatelessException => throw e
+            case e: Exception => logger.error("Failed to find a comet actor", e); kids
           }
     }) openOr Comment("FIXME: session or request are invalid")
   }

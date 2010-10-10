@@ -42,6 +42,13 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   private val pageResourceId = Helpers.nextFuncName
 
   type DispatchPF = PartialFunction[Req, () => Box[LiftResponse]];
+
+  /**
+   * The test between the path of a request and whether that path
+   * should result in stateless servicing of that path
+   */
+  type StatelessTestPF = PartialFunction[List[String], Boolean]
+
   type RewritePF = PartialFunction[RewriteRequest, RewriteResponse]
   type SnippetPF = PartialFunction[List[String], NodeSeq => NodeSeq]
   type LiftTagPF = PartialFunction[(String, Elem, MetaData, NodeSeq, String), NodeSeq]
@@ -152,7 +159,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
         ret
 
       case _ =>
-        val ret = LiftSession(req.request.session, req.request.contextPath)
+        val ret = LiftSession(req)
         ret.fixSessionTime()
         SessionMaster.addSession(ret, req.request.userAgent, SessionMaster.getIpFromReq(req))
         ret
@@ -177,7 +184,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
 
     // dump the oldest requests
     which.drop(max).foreach {
-      case (actor, req) => actor ! BreakOut
+      case (actor, req) => actor ! BreakOut()
     }
   }
 
@@ -215,6 +222,20 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
    * entities when rendered?
    */
   val convertToEntity: FactoryMaker[Boolean] = new FactoryMaker(false) {}
+
+  /**
+   * Certain paths within your application can be marked as stateless
+   * and if there is access to Lift's stateful facilities (setting
+   * SessionVars, updating function tables, etc.) the developer will
+   * receive a notice and the operation will not complete
+   */
+  val statelessTest = RulesSeq[StatelessTestPF]
+
+  val statelessSession: FactoryMaker[Req => LiftSession with StatelessSession] =
+    new FactoryMaker((req: Req) => new LiftSession(req.contextPath, 
+                                                   Helpers.randomString(20),
+                                                   Empty) with
+                     StatelessSession) {}
 
 
   /**
@@ -1059,6 +1080,8 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
     val NoNameSpecified = Value(5, "No Snippet Name Specified")
     val InstantiationException = Value(6, "Exception During Snippet Instantiation")
     val DispatchSnippetNotMatched = Value(7, "Dispatch Snippet: Dispatch Not Matched")
+
+    val StateInStateless = Value(8, "Access to Lift's statefull features from Stateless mode")
   }
 
   /**
@@ -1423,8 +1446,7 @@ case class NotFoundAsTemplate(path: ParsePath) extends NotFound
 
 case class NotFoundAsNode(node: NodeSeq) extends NotFound
 
-
-case object BreakOut
+case class BreakOut()
 
 abstract class Bootable {
   def boot(): Unit;
@@ -1434,15 +1456,18 @@ abstract class Bootable {
  * Factory object for RulesSeq instances
  */
 object RulesSeq {
-  def apply[T]: RulesSeq[T] = new RulesSeq[T] {}
+  def apply[T]: RulesSeq[T] = new RulesSeq[T]
 }
 
 /**
  * Generic container used mainly for adding functions
  *
  */
-trait RulesSeq[T] {
+class RulesSeq[T] {
   @volatile private var rules: List[T] = Nil
+  private val pre = new ThreadGlobal[List[T]]
+  private val app = new ThreadGlobal[List[T]]
+  private val cur = new ThreadGlobal[List[T]]
 
   private def safe_?(f: => Any) {
     LiftRules.doneBoot match {
@@ -1451,7 +1476,64 @@ trait RulesSeq[T] {
     }
   }
 
-  def toList = rules
+  /**
+   * Sometimes it's useful to change the rule for the duration of
+   * a thread... prepend a rule and execute the code within
+   * a scope with the prepended rule
+   */
+  def prependWith[A](what: T)(f: => A): A = prependWith(List(what))(f)
+
+  /**
+   * Sometimes it's useful to change the rule for the duration of
+   * a thread... append a rule and execute the code within
+   * a scope with the appended rule
+   */
+  def appendWith[A](what: T)(f: => A): A = appendWith(List(what))(f)
+
+  /**
+   * Sometimes it's useful to change the rule for the duration of
+   * a thread... prepend rules and execute the code within
+   * a scope with the prepended rules
+   */
+  def prependWith[A](what: List[T])(f: => A): A = {
+    val newList = pre.value match {
+      case null => what
+      case Nil => what
+      case x => what ::: x
+    }
+    pre.doWith(newList)(doCur(f))
+  }
+
+  /**
+   * Sometimes it's useful to change the rules for the duration of
+   * a thread... append rules and execute the code within
+   * a scope with the appended rules
+   */
+  def appendWith[A](what: List[T])(f: => A): A = {
+    val newList = pre.value match {
+      case null => what
+      case Nil => what
+      case x => x ::: what
+    }
+    app.doWith(newList)(doCur(f))
+  }
+  
+  /**
+   * Precompute the current rule set
+   */
+  private def doCur[A](f: => A): A = {
+    cur.doWith((pre.value, app.value) match {
+    case (null, null) | (null, Nil) | (Nil, null) | (Nil, Nil) => rules
+    case (null, xs) => rules ::: xs
+    case (xs, null) => xs ::: rules
+    case (p, a) => p ::: rules ::: a
+  })(f)
+  }
+
+  def toList = cur.value match {
+    case null => rules
+    case xs => xs
+  }
 
   def prepend(r: T): RulesSeq[T] = {
     safe_? {
@@ -1634,6 +1716,7 @@ trait FormVendor {
   private object sessionForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
   private object requestForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
 }
+
 
 }
 }

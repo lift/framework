@@ -138,10 +138,58 @@ object Menu {
     def submenus(subs: List[ConvertableToMenu]): ParamMenuable[T] =
       new ParamMenuable[T](name, linkText, parser, encoder, path, headMatch, params, submenus ::: subs)
 
+    // FIXME... do the right thing so that in development mode
+    // the menu and loc are recalculated when the menu is reloaded
+
     /**
      * Convert the Menuable into a Menu instance
      */
-    def toMenu: Menu = ParamMenuable.toMenu(this)
+    lazy val toMenu: Menu = Menu(toLoc, submenus :_*)
+
+    /**
+     * Convert the ParamMenuable into a Loc so you can access
+     * the well typed currentValue
+     */
+    lazy val toLoc: Loc[T] = new Loc[T] {
+        import scala.xml._
+
+        // the name of the page
+        def name = ParamMenuable.this.name
+        
+        // the default parameters (used for generating the menu listing)
+        def defaultValue = Empty
+
+        // no extra parameters
+        def params = ParamMenuable.this.params
+
+        /**
+         * What's the text of the link?
+         */
+        def text = ParamMenuable.this.linkText
+
+        val link = new Loc.Link[T](ParamMenuable.this.path, 
+                                   ParamMenuable.this.headMatch) {
+          override def createLink(in: T) = 
+            Full(Text(ParamMenuable.this.path.mkString("/", "/", "/")+
+                      urlEncode(ParamMenuable.this.encoder(in))))
+        }
+
+        /**
+         * Rewrite the request and emit the type-safe parameter
+         */
+        override val rewrite: LocRewrite =
+          Full(NamedPF("Wiki Rewrite") {
+            case RewriteRequest(ParsePath(x, _, _,_), _, _) 
+            if x.dropRight(1) == ParamMenuable.this.path && 
+            x.takeRight(1).headOption.flatMap(a => 
+              ParamMenuable.this.parser(a)).isDefined
+            =>
+              (RewriteResponse(x.dropRight(1)), 
+               x.takeRight(1).headOption.flatMap(a => 
+                 ParamMenuable.this.parser(a)).get) 
+              
+          })
+    }
   }
 
   /**
@@ -151,40 +199,7 @@ object Menu {
     /**
      * Convert a Menuable into a Menu when you need a Menu.
      */
-    implicit def toMenu[T](able: ParamMenuable[T]): Menu = 
-      Menu(new Loc[T] {
-        import scala.xml._
-
-        // the name of the page
-        def name = able.name
-        
-        // the default parameters (used for generating the menu listing)
-        def defaultValue = Empty
-
-        // no extra parameters
-        def params = able.params
-
-        /**
-         * What's the text of the link?
-         */
-        def text = able.linkText
-
-        val link = new Loc.Link[T](able.path, able.headMatch) {
-          override def createLink(in: T) = Full(Text(able.path.mkString("/", "/", "/")+urlEncode(able.encoder(in))))
-        }
-
-        /**
-         * Rewrite the request and emit the type-safe parameter
-         */
-        override val rewrite: LocRewrite =
-          Full(NamedPF("Wiki Rewrite") {
-            case RewriteRequest(ParsePath(x, _, _,_), _, _) 
-            if x.dropRight(1) == able.path && x.takeRight(1).headOption.flatMap(a => able.parser(a)).isDefined
-            =>
-                                  (RewriteResponse(x.dropRight(1)), x.takeRight(1).headOption.flatMap(a => able.parser(a)).get) 
-              
-          })
-      })
+    implicit def toMenu(able: ParamMenuable[_]): Menu = able.toMenu
   }
 
 

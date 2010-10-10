@@ -126,10 +126,18 @@ object Msgs extends DispatchSnippet {
 
 }
 
-object MsgsNoticeMeta extends SessionVar[Box[AjaxMessageMeta]](Empty)
-object MsgsWarningMeta extends SessionVar[Box[AjaxMessageMeta]](Empty)
-object MsgsErrorMeta extends SessionVar[Box[AjaxMessageMeta]](Empty)
-object ShowAll extends SessionVar[Boolean](false)
+object MsgsNoticeMeta extends SessionVar[Box[AjaxMessageMeta]](Empty) {
+    override private[liftweb] def magicSessionVar_? = true
+}
+object MsgsWarningMeta extends SessionVar[Box[AjaxMessageMeta]](Empty) {
+    override private[liftweb] def magicSessionVar_? = true
+}
+object MsgsErrorMeta extends SessionVar[Box[AjaxMessageMeta]](Empty) {
+    override private[liftweb] def magicSessionVar_? = true
+}
+object ShowAll extends SessionVar[Boolean](false) {
+    override private[liftweb] def magicSessionVar_? = true
+}
 
 case class AjaxMessageMeta(title: Box[String], cssClass: Box[String])
 

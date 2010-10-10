@@ -109,7 +109,10 @@ object Req {
     InetAddress.getLocalHost.getHostName
   }
 
-  def apply(original: Req, rewrite: List[LiftRules.RewritePF]): Req = {
+  def apply(original: Req, rewrite: List[LiftRules.RewritePF]): Req = 
+    this.apply(original, rewrite, Nil)
+
+  def apply(original: Req, rewrite: List[LiftRules.RewritePF], statelessTest: List[LiftRules.StatelessTestPF]): Req = {
 
     def processRewrite(path: ParsePath, params: Map[String, String]): RewriteResponse =
     NamedPF.applyBox(RewriteRequest(path, original.requestType, original.request), rewrite) match {
@@ -120,11 +123,19 @@ object Req {
 
     val rewritten = processRewrite(original.path, Map.empty)
 
-    new Req(rewritten.path, original.contextPath, original.requestType, original.contentType, original.request,
-      original.nanoStart, original.nanoEnd, original.paramCalculator, original.addlParams ++ rewritten.params)
+    val stateless = NamedPF.applyBox(rewritten.path.wholePath, statelessTest)
+
+    new Req(rewritten.path, original.contextPath, 
+            original.requestType, original.contentType, original.request,
+            original.nanoStart, original.nanoEnd, 
+            stateless openOr original.stateless_?,
+            original.paramCalculator, original.addlParams ++ rewritten.params)
   }
 
-  def apply(request: HTTPRequest, rewrite: List[LiftRules.RewritePF], nanoStart: Long): Req = {
+  def apply(request: HTTPRequest, rewrite: List[LiftRules.RewritePF],  nanoStart: Long): Req = this.apply(request, rewrite, Nil, nanoStart)
+
+
+  def apply(request: HTTPRequest, rewrite: List[LiftRules.RewritePF], statelessTest: List[LiftRules.StatelessTestPF], nanoStart: Long): Req = {
     val reqType = RequestType(request)
     val contextPath = LiftRules.calculateContextPath() openOr request.contextPath
     val turi = if (request.uri.length >= contextPath.length) request.uri.substring(contextPath.length) else ""
@@ -204,9 +215,11 @@ object Req {
       }
     }
 
+    val stateless = NamedPF.applyBox(rewritten.path.wholePath, statelessTest)
+
     new Req(rewritten.path, contextPath, reqType,
             contentType, request, nanoStart,
-            System.nanoTime, paramCalculator, Map())
+            System.nanoTime, stateless openOr false, paramCalculator, Map())
   }
 
   private def fixURI(uri: String) = uri indexOf ";jsessionid" match {
@@ -215,7 +228,7 @@ object Req {
   }
 
   def nil = new Req(NilPath, "", GetRequest, Empty, null,
-                    System.nanoTime, System.nanoTime,
+                    System.nanoTime, System.nanoTime, true,
                     () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map())
 
   def parsePath(in: String): ParsePath = {
@@ -300,11 +313,31 @@ class Req(val path: ParsePath,
           val request: HTTPRequest,
           val nanoStart: Long,
           val nanoEnd: Long,
+          val stateless_? : Boolean,
           private[http] val paramCalculator: () => ParamCalcInfo,
           private[http] val addlParams: Map[String, String]) extends HasParams
 {
   override def toString = "Req(" + paramNames + ", " + params + ", " + path +
   ", " + contextPath + ", " + requestType + ", " + contentType + ")"
+
+  def this(_path: ParsePath,
+           _contextPath: String,
+          _requestType: RequestType,
+          _contentType: Box[String],
+          _request: HTTPRequest,
+          _nanoStart: Long,
+          _nanoEnd: Long,
+          _paramCalculator: () => ParamCalcInfo,
+          _addlParams: Map[String, String]) = this(_path,
+                                                   _contextPath,
+                                                   _requestType,
+                                                   _contentType,
+                                                   _request,
+                                                   _nanoStart,
+                                                   _nanoEnd,
+                                                   false,
+                                                   _paramCalculator,
+                                                   _addlParams)
 
   /**
    * Returns true if the content-type is text/xml
@@ -322,14 +355,15 @@ class Req(val path: ParsePath,
   def snapshot = {
     val paramCalc = paramCalculator()
     new Req(path,
-     contextPath,
-     requestType,
-     contentType,
-     request.snapshot,
-     nanoStart,
-     nanoEnd,
-     () => paramCalc,
-     addlParams)
+            contextPath,
+            requestType,
+            contentType,
+            request.snapshot,
+            nanoStart,
+            nanoEnd,
+            stateless_?,
+            () => paramCalc,
+            addlParams)
   }
   val section = path(0) match {case null => "default"; case s => s}
   val view = path(1) match {case null => "index"; case s@_ => s}
@@ -460,6 +494,7 @@ class Req(val path: ParsePath,
                               this.request,
                               this.nanoStart, 
                               this.nanoEnd, 
+                              true,
                               this.paramCalculator, 
                               this.addlParams)
          S.withReq(newReq) {

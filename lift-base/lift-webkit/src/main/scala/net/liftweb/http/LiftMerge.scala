@@ -31,7 +31,7 @@ private[http] trait LiftMerge {
   /**
    * Manages the merge phase of the rendering pipeline
    */
-  private[http] def merge(xhtml: NodeSeq, req: Req): Node = {
+  def merge(xhtml: NodeSeq, req: Req): Node = {
     val snippetHashs: HashMap[String, Box[NodeSeq]] = this.deferredSnippets.is
     val waitUntil = millis + LiftRules.lazySnippetTimeout.vend.millis
     val stripComments: Boolean = LiftRules.stripComments.vend
@@ -203,7 +203,7 @@ private[http] trait LiftMerge {
         bodyChildren += nl
       }
 
-      if (LiftRules.enableLiftGC) {
+      if (LiftRules.enableLiftGC && stateful_?) {
         import js._
         import JsCmds._
         import JE._

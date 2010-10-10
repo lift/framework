@@ -72,6 +72,8 @@ abstract class AnyVar[T, MyType <: AnyVar[T, MyType]](dflt: => T) extends AnyVar
   self: MyType =>
 
   protected def calcDefaultValue: T = dflt
+
+  
 }
 
 /**
@@ -95,6 +97,13 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
 
   protected def __nameSalt = ""
 
+  /**
+   * Keep track of whether we're currently setting the default value
+   */
+  private val settingDefault = new ThreadGlobal[Boolean]
+
+  protected def settingDefault_? : Boolean = settingDefault.box openOr false
+
   type CleanUpParam
 
   /**
@@ -111,7 +120,9 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
       case Full(v) => v
       case _ => val ret = calcDefaultValue
         testInitialized
+      settingDefault.doWith(true) {
         apply(ret)
+      }
         // Use findFunc so that we clear the "unread" flag
         findFunc(name) match {
           case Full(v) => v

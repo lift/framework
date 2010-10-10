@@ -362,9 +362,9 @@ class LiftServlet extends Loggable {
 
       case ar: AnswerRender =>
         answers = ar :: answers
-        LAPinger.schedule(this, BreakOut, 5 millis)
+        LAPinger.schedule(this, BreakOut(), 5 millis)
 
-      case BreakOut if !done =>
+      case BreakOut() if !done =>
         done = true
         session.exitComet(this)
         actors.foreach {case (act, _) => tryo(act ! Unlisten(ListenerId(seqId)))}
@@ -392,7 +392,7 @@ class LiftServlet extends Loggable {
     try {
       session.enterComet(cont -> request)
 
-      LAPinger.schedule(cont, BreakOut, TimeSpan(cometTimeout))
+      LAPinger.schedule(cont, BreakOut(), TimeSpan(cometTimeout))
 
       request.request.suspend(cometTimeout + 2000L)
     } finally {
@@ -449,7 +449,7 @@ class LiftServlet extends Loggable {
 
       session.enterComet(cont -> request)
 
-      LAPinger.schedule(cont, BreakOut, TimeSpan(cometTimeout))
+      LAPinger.schedule(cont, BreakOut(), TimeSpan(cometTimeout))
 
       val ret2 = f.get(cometTimeout) openOr Nil
 

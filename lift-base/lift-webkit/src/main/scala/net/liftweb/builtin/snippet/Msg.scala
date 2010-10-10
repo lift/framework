@@ -87,9 +87,17 @@ object Msg extends DispatchSnippet {
 
 }
 
-object MsgErrorMeta extends SessionVar[HashMap[String, String]](new HashMap)
-object MsgWarningMeta extends SessionVar[HashMap[String, String]](new HashMap)
-object MsgNoticeMeta extends SessionVar[HashMap[String, String]](new HashMap)
+object MsgErrorMeta extends SessionVar[HashMap[String, String]](new HashMap) {
+    override private[liftweb] def magicSessionVar_? = true
+}
+
+object MsgWarningMeta extends SessionVar[HashMap[String, String]](new HashMap) {
+    override private[liftweb] def magicSessionVar_? = true
+}
+
+object MsgNoticeMeta extends SessionVar[HashMap[String, String]](new HashMap) {
+    override private[liftweb] def magicSessionVar_? = true
+}
 
 }
 }
