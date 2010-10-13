@@ -1436,17 +1436,17 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   ctor()
 }
 
-trait NotFound
+sealed trait NotFound
 
-case object DefaultNotFound extends NotFound
+final case object DefaultNotFound extends NotFound
 
-case class NotFoundAsResponse(response: LiftResponse) extends NotFound
+final case class NotFoundAsResponse(response: LiftResponse) extends NotFound
 
-case class NotFoundAsTemplate(path: ParsePath) extends NotFound
+final case class NotFoundAsTemplate(path: ParsePath) extends NotFound
 
-case class NotFoundAsNode(node: NodeSeq) extends NotFound
+final case class NotFoundAsNode(node: NodeSeq) extends NotFound
 
-case class BreakOut()
+final case class BreakOut()
 
 abstract class Bootable {
   def boot(): Unit;

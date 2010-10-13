@@ -461,9 +461,26 @@ class Req(val path: ParsePath,
   lazy val buildMenu: CompleteMenu = location.map(_.buildMenu) openOr
   CompleteMenu(Nil)
 
+  /**
+   * Computer the Not Found via a Template
+   */
+  private def notFoundViaTemplate(path: ParsePath): LiftResponse = {
+    S.statelessInit(this) {
+      (for {
+        session <- S.session
+        template =  TemplateFinder.findAnyTemplate(path.partPath)
+        resp <- session.processTemplate(template, this, path, 404)
+      } yield resp) match {
+        case Full(resp) => resp
+        case _ => Req.defaultCreateNotFound(this)
+      }
+    }
+  }
+
   def createNotFound: LiftResponse = 
     NamedPF((this, Empty), LiftRules.uriNotFound.toList) match {
       case DefaultNotFound => Req.defaultCreateNotFound(this)
+      case NotFoundAsTemplate(path) => notFoundViaTemplate(path)
       case NotFoundAsResponse(resp) => resp
       case NotFoundAsNode(node) => LiftRules.convertResponse((node, 404),
         S.getHeaders(LiftRules.defaultHeaders((node, this))),
@@ -474,6 +491,7 @@ class Req(val path: ParsePath,
   def createNotFound(f: Failure): LiftResponse = 
     NamedPF((this, Full(f)), LiftRules.uriNotFound.toList) match {
       case DefaultNotFound => Req.defaultCreateNotFound(this)
+      case NotFoundAsTemplate(path) => notFoundViaTemplate(path)
       case NotFoundAsResponse(resp) => resp
       case NotFoundAsNode(node) => LiftRules.convertResponse((node, 404),
         S.getHeaders(LiftRules.defaultHeaders((node, this))),
