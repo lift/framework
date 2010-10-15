@@ -337,9 +337,10 @@ object Menu extends DispatchSnippet {
     for {
       name <- S.attr("name").toList
     } yield {
+      type T = Q forSome {type Q}
       (S.request.flatMap(_.location), S.attr("param"), 
        SiteMap.findAndTestLoc(name)) match {
-         case (_, Full(param), Full(loc: ConvertableLoc[_])) => {
+         case (_, Full(param), Full(loc: ConvertableLoc[T])) => {
            (for {
              pv <- loc.convert(param)
              link <- loc.createLink(pv)
