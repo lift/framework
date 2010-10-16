@@ -971,6 +971,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case _ => Empty
     }
 
+  /**
+   * Report a snippet error depending on what the run mode is
+   */
   private def reportSnippetError(page: String,
                                  snippetName: Box[String],
                                  why: LiftRules.SnippetFailures.Value,
@@ -983,11 +986,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         f(LiftRules.SnippetFailure(page, snippetName, why))
 
       Props.mode match {
-        case Props.RunModes.Development =>
-          <div style="display: block; margin: 8px; border: 2px solid red">Error processing snippet {snippetName openOr "N/A"}. Reason: {why} {addlMsg} XML causing this error:<br/>
+        case Props.RunModes.Development | Props.RunModes.Test =>
+          <div class="snippeterror" style="display: block; margin: 8px; border: 2px solid red">Error processing snippet {snippetName openOr "N/A"}. <br/> Reason: {why} {addlMsg} XML causing this error:<br/>
           <pre>{whole.toString}</pre>
           <i>note: this error is displayed in the browser because
-          your application is running in "development" mode.If you
+          your application is running in "development" or "test" mode.If you
           set the system property run.mode=production, this error will not
           be displayed, but there will be errors in the output logs.
           </i>
@@ -1186,10 +1189,10 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         wholeTag)
                       }
       } catch {
-        case e: StateInStatelessException =>
+        case e: SnippetFailureException =>
           reportSnippetError(page, snippetName,
-                             LiftRules.SnippetFailures.StateInStateless,
-                             NodeSeq.Empty,
+                             e.snippetFailure,
+                             e.buildStackTrace,
                              wholeTag)
       }
 
@@ -1753,8 +1756,39 @@ final case class CometCreationInfo(contType: String,
                                    attributes: Map[String, String],
                                    session: LiftSession)
 
-class StateInStatelessException(msg: String) extends Exception(msg)
+/**
+ * An abstract exception that may be thrown during page rendering.
+ * The exception is caught and the appropriate report of a SnippetError
+ * is generated
+ */
+abstract class SnippetFailureException(msg: String) extends Exception(msg) {
+  def snippetFailure: LiftRules.SnippetFailures.Value
 
+  def buildStackTrace: NodeSeq = 
+    getStackTrace.dropWhile 
+  {
+    e => {
+      val cn = e.getClassName
+      cn.startsWith("net.liftweb.http") ||
+      cn.startsWith("net.liftweb.common") ||
+      cn.startsWith("net.liftweb.util")
+    }
+  }.filter {
+    e => {
+      val cn = e.getClassName
+      !cn.startsWith("java.lang") &&
+      !cn.startsWith("sun.")
+    }
+  }.take(10).map{
+      e =>
+      <code><span><br/>{e.toString}</span></code>
+    }
+}
+
+class StateInStatelessException(msg: String) extends SnippetFailureException(msg) {
+  def snippetFailure: LiftRules.SnippetFailures.Value = 
+    LiftRules.SnippetFailures.StateInStateless
+}
 
 
   // an object that extracts an elem that defines a snippet

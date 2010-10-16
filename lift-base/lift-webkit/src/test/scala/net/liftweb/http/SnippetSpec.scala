@@ -70,8 +70,6 @@ object SnippetSpec extends Specification {
       ret must_== xml
     }
     
-    // FIXME eager eval test
-
     "Snippet invocation works <lift:xxx/>" in {
       val res = <div/>
 
@@ -160,7 +158,7 @@ object SnippetSpec extends Specification {
           }
         }
 
-      ret.open_! must ==/(NodeSeq.Empty)
+      (ret.open_! \ "@class").text must_== "snippeterror"
     }
 
     object myInfo extends SessionVar("")
@@ -192,7 +190,8 @@ object SnippetSpec extends Specification {
           }
         }
 
-      ret.open_! must ==/(NodeSeq.Empty)
+      (ret.open_! \ "@class").text must_== "snippeterror"
+
     }
 
     "Snippet invocation succeeds in normal mode" in {
@@ -225,7 +224,7 @@ object SnippetSpec extends Specification {
           }
         }
 
-      ret.open_! must ==/(NodeSeq.Empty)
+      (ret.open_! \ "@class").text must_== "snippeterror"
     }
 
     "Snippet invocation succeeds in normal mode (function table)" in {
