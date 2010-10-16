@@ -678,6 +678,16 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
+  /**
+   * If the sitemap entry for this Req is marked stateless,
+   * run the rest of the request as stateless
+   */
+  private def checkStatelessInSiteMap[T](req: Req)(f: => T): T = {
+    req.location match {
+      case Full(loc) if loc.stateless_? => this.doAsStateless(f)
+      case _ => f
+    }
+  }
 
   private[http] def processRequest(request: Req): Box[LiftResponse] = {
     ieMode.is // make sure this is primed
@@ -709,13 +719,15 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
           // Process but make sure we're okay, sitemap wise
           val response: Box[LiftResponse] = early or (request.testLocation match {
             case Left(true) =>
-              cleanUpBeforeRender
-
-              PageName(request.uri + " -> " + request.path)
-              LiftRules.allowParallelSnippets.doWith(() => !Props.inGAE) {
-               (request.location.flatMap(_.earlyResponse) or LiftRules.earlyResponse.firstFull(request)) or
-                 (processTemplate(locTemplate, request, request.path, 200) or
-                    request.createNotFound{processTemplate(Empty, request, _, 404)})
+              checkStatelessInSiteMap(request) {
+                cleanUpBeforeRender
+                
+                PageName(request.uri + " -> " + request.path)
+                LiftRules.allowParallelSnippets.doWith(() => !Props.inGAE) {
+                  (request.location.flatMap(_.earlyResponse) or LiftRules.earlyResponse.firstFull(request)) or
+                  (processTemplate(locTemplate, request, request.path, 200) or
+                   request.createNotFound{processTemplate(Empty, request, _, 404)})
+                }
               }
 
             case Right(Full(resp)) => Full(resp)

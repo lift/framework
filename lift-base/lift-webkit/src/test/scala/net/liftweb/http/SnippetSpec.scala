@@ -27,6 +27,9 @@ import _root_.net.liftweb.common._
 
 class SnippetSpecTest extends Runner(SnippetSpec) with JUnit with Console
 object SnippetSpec extends Specification {
+  def makeReq = new Req(Req.NilPath, "", GetRequest, Empty, null,
+                    System.nanoTime, System.nanoTime, false,
+                    () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map())
 
   "LiftSession" should {
     "Correctly process lift:designer_friendly" in {
@@ -143,6 +146,118 @@ object SnippetSpec extends Specification {
         }
 
       ret.open_! must ==/( res)
+    }
+
+    "Snippet invocation fails bar:s='foo'" in {
+      val res = <div/>
+
+      val ret =
+        S.statelessInit(Req.nil) {
+          S.mapSnippetsWith("foo" -> ((a: NodeSeq) => a)) {
+            for {
+              s <- S.session
+            } yield s.processSurroundAndInclude("test", <div lift:s="bar" />)
+          }
+        }
+
+      ret.open_! must ==/(NodeSeq.Empty)
+    }
+
+    object myInfo extends SessionVar("")
+
+    object ChangeVar {
+      def foo(in: NodeSeq): NodeSeq = {
+        myInfo.set(in.text)
+        in
+      }
+    }
+
+    object Funky {
+      def foo(in: NodeSeq): NodeSeq = {
+        SHtml.text("", s => myInfo.set(s))
+        in
+      }
+    }
+
+    "Snippet invocation fails in stateless mode" in {
+      val res = <div>dog</div>
+
+      val ret =
+        S.statelessInit(Req.nil) {
+          S.mapSnippetsWith("foo" -> ChangeVar.foo _) {
+            for {
+              s <- S.session
+            } yield s.processSurroundAndInclude("test", 
+                                                <lift:foo>{res}</lift:foo>)
+          }
+        }
+
+      ret.open_! must ==/(NodeSeq.Empty)
+    }
+
+    "Snippet invocation succeeds in normal mode" in {
+      val res = <div>dog</div>
+      val session = new LiftSession("", "hello", Empty)
+
+      val ret =
+        S.init(makeReq, session) {
+          S.mapSnippetsWith("foo" -> ChangeVar.foo _) {
+            for {
+              s <- S.session
+            } yield s.processSurroundAndInclude("test", 
+                                                <lift:foo>{res}</lift:foo>)
+          }
+        }
+
+      ret.open_! must ==/(res)
+    }
+
+    "Snippet invocation fails in stateless mode (function table)" in {
+      val res = <div>dog</div>
+
+      val ret =
+        S.statelessInit(Req.nil) {
+          S.mapSnippetsWith("foo" -> Funky.foo _) {
+            for {
+              s <- S.session
+            } yield s.processSurroundAndInclude("test", 
+                                                <lift:foo>{res}</lift:foo>)
+          }
+        }
+
+      ret.open_! must ==/(NodeSeq.Empty)
+    }
+
+    "Snippet invocation succeeds in normal mode (function table)" in {
+      val res = <div>dog</div>
+      val session = new LiftSession("", "hello", Empty)
+
+      val ret =
+        S.init(makeReq, session) {
+          S.mapSnippetsWith("foo" -> Funky.foo _) {
+            for {
+              s <- S.session
+            } yield s.processSurroundAndInclude("test", 
+                                                <lift:foo>{res}</lift:foo>)
+          }
+        }
+
+      ret.open_! must ==/(res)
+    }
+
+    "Eager Eval works" in {
+      val res = <div>dog</div>
+      val session = new LiftSession("", "hello", Empty)
+
+      S.init(makeReq, session) {
+        S.mapSnippetsWith("foo" -> ChangeVar.foo _) {
+          for {
+            s <- S.session
+          } yield s.processSurroundAndInclude("test", 
+                                              <div l:eager_eval="true" l:s="foo">a<lift:foo>b</lift:foo></div>)
+        }
+        myInfo.is must_== "ab"
+      }
     }
 
 

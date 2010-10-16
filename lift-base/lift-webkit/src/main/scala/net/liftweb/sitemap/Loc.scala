@@ -93,6 +93,29 @@ trait Loc[T] {
 
   def snippets: SnippetTest = Map.empty
 
+  /**
+   * Is the Loc marked as Stateless (this will force rendering of
+   * the page into stateless mode)
+   */
+  def stateless_? : Boolean = 
+    if (Props.devMode) calcStateless()
+    else _frozenStateless
+
+  /**
+   * A lazy val used to track statelessness for non-dev mode.
+   * By default, it calls calcStateless().
+   */
+  protected lazy val _frozenStateless = calcStateless()
+
+  /**
+   * The method to calculate if this Loc is stateless.  By default
+   * looks for the Loc.Stateless Param
+   */
+  protected def calcStateless() = allParams.find {
+    case Loc.Stateless => true
+    case _ => false
+  }.isDefined
+
   lazy val calcSnippets: SnippetTest = {
     def buildPF(in: Loc.Snippet): PartialFunction[String, NodeSeq => NodeSeq] = {
       new PartialFunction[String, NodeSeq => NodeSeq] {
@@ -498,6 +521,12 @@ object Loc {
    * If the Loc has no children, hide the Loc itself
    */
   case object HideIfNoKids extends AnyLocParam
+
+  /**
+   * Is the Loc a stateless Loc... it will be served
+   * in stateless mode
+   */
+  case object Stateless extends AnyLocParam
 
   /**
    * The Loc does not represent a menu itself, but is the parent menu for

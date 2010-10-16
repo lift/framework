@@ -724,7 +724,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   /**
    * Does the current context support parallel snippet execution
    */
-  val allowParallelSnippets: FactoryMaker[Boolean] = new FactoryMaker(() => true) {}
+  val allowParallelSnippets: FactoryMaker[Boolean] = new FactoryMaker(() => false) {}
 
   /**
    * Update the function here that calculates particular paths to

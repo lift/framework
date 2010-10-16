@@ -227,8 +227,11 @@ object Req {
     case x@_ => uri substring (0, x)
   }
 
+  /**
+   * Create a nil request... useful for testing
+   */
   def nil = new Req(NilPath, "", GetRequest, Empty, null,
-                    System.nanoTime, System.nanoTime, true,
+                    System.nanoTime, System.nanoTime, false,
                     () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map())
 
   def parsePath(in: String): ParsePath = {
@@ -444,8 +447,15 @@ class Req(val path: ParsePath,
       case e: Exception => Failure(e.getMessage, Full(e), Empty)
     }
 
+  /**
+   * The SiteMap Loc associated with this Req
+   */
   lazy val location: Box[Loc[_]] = LiftRules.siteMap.flatMap(_.findLoc(this))
 
+  /**
+   * Test the current SiteMap Loc for access control to insure
+   * that this Req is allowed to access the page
+   */
   def testLocation: Either[Boolean, Box[LiftResponse]] = {
     if (LiftRules.siteMap.isEmpty) Left(true)
     else location.map(_.testAccess) match {

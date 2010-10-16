@@ -884,7 +884,11 @@ for {
    */
   def init[B](request: Req, session: LiftSession)(f: => B): B = {
     if (inS.value) f
-    else _init(request, session)(() => f)
+    else {
+      if (request.stateless_?) 
+        session.doAsStateless(_init(request, session)(() => f))
+      else _init(request, session)(() => f)
+    }
   }
   
   def statelessInit[B](request: Req)(f: => B): B = {
