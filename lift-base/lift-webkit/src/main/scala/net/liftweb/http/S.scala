@@ -1840,7 +1840,7 @@ for {
    * call stack... snippets that are local purpose. Use doWithSnippets
    * to temporarily define snippet mappings for the life of f.
    */
-  def doWithSnippets[T](snips: (String,  NodeSeq => NodeSeq)*)(f: => T): T = {
+  def mapSnippetsWith[T](snips: (String,  NodeSeq => NodeSeq)*)(f: => T): T = {
     val newMap = _snippetMap.is ++ snips
     _snippetMap.doWith(newMap)(f)
   }

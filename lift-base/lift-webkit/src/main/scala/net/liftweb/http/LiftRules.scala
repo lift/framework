@@ -706,6 +706,10 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
     }
   }
 
+  /**
+   * Return the sitemap if set in Boot.  If the current runMode is development
+   * mode, the sitemap may be recomputed on each page load.
+   */
   def siteMap: Box[SiteMap] = if (Props.devMode) {
     this.synchronized {
       sitemapRequestVar.is
@@ -720,7 +724,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   /**
    * Does the current context support parallel snippet execution
    */
-  val allowParallelSnippets: FactoryMaker[Boolean] = new FactoryMaker(() => false) {}
+  val allowParallelSnippets: FactoryMaker[Boolean] = new FactoryMaker(() => true) {}
 
   /**
    * Update the function here that calculates particular paths to

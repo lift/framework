@@ -311,7 +311,6 @@ trait StatelessSession extends HowStateful {
 /**
  * The LiftSession class containg the session state information
  */
-@serializable
 class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                   val httpSession: Box[HTTPSession]) extends LiftMerge with Loggable with HowStateful {
   import TemplateFinder._
@@ -323,6 +322,10 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   @volatile
   private var _running_? = false
+
+  private val fullPageLoad = new ThreadGlobal[Boolean] {
+    def ? = this.box openOr false
+  }
 
   /**
    *  ****IMPORTANT**** when you access messageCallback, it *MUST*
@@ -580,13 +583,24 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     for (loc <- S.location;
          template <- loc.template) yield template
 
+  /**
+   * Define the context path for this session.  This allows different
+   * sessions to have different context paths.
+   */
   def contextPath = LiftRules.calculateContextPath() openOr _contextPath
 
-  private def checkDesignerFriendly(in: NodeSeq): NodeSeq = {
+  /**
+   * Check to see if the template is marked designer friendly
+   * and lop off the stuff before the first surround
+   *
+   * This method is private[http] so that it's accessable to the tests
+   */
+  private[http] def checkDesignerFriendly(in: NodeSeq): NodeSeq = {
     def df(in: MetaData): Boolean = in match {
       case Null => false
       case p: PrefixedAttribute 
-      if (p.pre == "l" || p.pre == "lift") && p.key == "df" => true
+      if (p.pre == "l" || p.pre == "lift") && 
+        (p.key == "designer_friendly") => true
       case n => df(n.next)
     }
 
@@ -609,7 +623,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
       def isSurround(e: Elem) =
         (("l" == e.prefix || "lift" == e.prefix) &&
-         e.label == "surround") && isSurAttr(e.attributes)
+         e.label == "surround") || isSurAttr(e.attributes)
 
       in.flatMap {
         case Group(nodes) => findSurroundSnippet(nodes)
@@ -641,24 +655,26 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   def processTemplate(template: Box[NodeSeq], request: Req, path: ParsePath, code: Int): Box[LiftResponse] = {
     (template or findVisibleTemplate(path, request)).map { 
       xhtmlBase =>
-        val xhtml = checkDesignerFriendly(xhtmlBase)
-        // Phase 1: snippets & templates processing
-        val rawXml: NodeSeq = processSurroundAndInclude(PageName get, xhtml)
-      
-      // Make sure that functions have the right owner. It is important for this to
-      // happen before the merge phase so that in merge to have a correct view of
-      // mapped functions and their owners.
-      updateFunctionMap(S.functionMap, RenderVersion get, millis)
-      
-      // Phase 2: Head & Tail merge, add additional elements to body & head
-      val xml = merge(rawXml, request)
-      
-      notices = Nil
-      // Phase 3: Response conversion including fixHtml
-      LiftRules.convertResponse((xml, code),
-                                S.getHeaders(LiftRules.defaultHeaders((xml, request))),
-                                S.responseCookies,
-                                request)
+        fullPageLoad.doWith(true) { // allow parallel snippets
+          val xhtml = checkDesignerFriendly(xhtmlBase)
+          // Phase 1: snippets & templates processing
+          val rawXml: NodeSeq = processSurroundAndInclude(PageName get, xhtml)
+          
+          // Make sure that functions have the right owner. It is important for this to
+          // happen before the merge phase so that in merge to have a correct view of
+          // mapped functions and their owners.
+          updateFunctionMap(S.functionMap, RenderVersion get, millis)
+          
+          // Phase 2: Head & Tail merge, add additional elements to body & head
+          val xml = merge(rawXml, request)
+          
+          notices = Nil
+          // Phase 3: Response conversion including fixHtml
+          LiftRules.convertResponse((xml, code),
+                                    S.getHeaders(LiftRules.defaultHeaders((xml, request))),
+                                    S.responseCookies,
+                                    request)
+        }
     }
   }
 
@@ -1061,9 +1077,12 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                              passedKids: NodeSeq): NodeSeq = {
     val isForm = !attrs.get("form").toList.isEmpty
 
-    val eagerEval: Boolean = (attrs.get("eager_eval").map(toBoolean) or
-            findNSAttr(attrs, "lift", "eager_eval").map(toBoolean)
-            ) getOrElse false
+
+    val eagerEval: Boolean = 
+      (attrs.get("eager_eval").map(toBoolean) or
+       findNSAttr(attrs, "lift", "eager_eval").map(toBoolean) or
+       findNSAttr(attrs, "l", "eager_eval").map(toBoolean)
+     ) getOrElse false
 
     val kids = if (eagerEval) processSurroundAndInclude(page, passedKids) else passedKids
 
@@ -1240,7 +1259,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
             }.isDefined
             */
 
-    if (isLazy && LiftRules.allowParallelSnippets()) {
+    if (fullPageLoad.? && isLazy && LiftRules.allowParallelSnippets()) {
       // name the node
       val nodeId = randomString(20)
 
@@ -1292,37 +1311,36 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   /**
    * Processes the surround tag and other lift tags
    */
-  def processSurroundAndInclude(page: String, in: NodeSeq): NodeSeq =
+  def processSurroundAndInclude(page: String, in: NodeSeq): NodeSeq = {
     in.flatMap {
-      v =>
-              v match {
-                case Group(nodes) =>
-                  Group(processSurroundAndInclude(page, nodes))
-                
-                case SnippetNode(element, kids, isLazy, attrs, snippetName) =>
-
-                  // case elm: Elem if elm.prefix == "lift" || elm.prefix == "l" =>
-                  processOrDefer(isLazy) {
-                    S.doSnippet(snippetName) {
-                      S.withAttrs(attrs) {
-                        S.setVars(attrs) {
-                          processSurroundAndInclude(page, 
-                                                    NamedPF((snippetName, 
-                                                             element, attrs,
-                                                             kids,
-                                                             page),
-                                                            liftTagProcessing))
-                        }
-                      }
-                    }
-                  }
-
-                case elm: Elem =>
-                  Elem(v.prefix, v.label, processAttributes(v.attributes),
-                    v.scope, processSurroundAndInclude(page, v.child): _*)
-                case _ => v
+      case Group(nodes) =>
+        Group(processSurroundAndInclude(page, nodes))
+      
+      case SnippetNode(element, kids, isLazy, attrs, snippetName) =>
+        
+        // case elm: Elem if elm.prefix == "lift" || elm.prefix == "l" =>
+        processOrDefer(isLazy) {
+          S.doSnippet(snippetName) {
+            S.withAttrs(attrs) {
+              S.setVars(attrs) {
+                processSurroundAndInclude(page, 
+                                          NamedPF((snippetName, 
+                                                   element, attrs,
+                                                   kids,
+                                                   page),
+                                                  liftTagProcessing))
               }
+            }
+          }
+        }
+      
+      case v: Elem =>
+        Elem(v.prefix, v.label, processAttributes(v.attributes),
+             v.scope, processSurroundAndInclude(page, v.child): _*)
+
+      case v => v
     }
+  }
 
   /**
    * A nicely named proxy for processSurroundAndInclude.  This method processes
