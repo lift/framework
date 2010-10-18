@@ -43,7 +43,7 @@ Note, replace XXX with correct Lift version.
 
 Add dependency to your project description:
 
-    val lift_json = "net.liftweb" % "lift-json" % "XXX"
+    val lift_json = "net.liftweb" %% "lift-json" % "XXX"
 
 ### Maven users
 
