@@ -25,6 +25,7 @@ import JsonAST._
 import JsonDSL._
 import _root_.net.liftweb.common._
 import _root_.scala.xml._
+import _root_.scala.xml.Utility.trim
 import _root_.java.util.{Map => JavaMap, Set => JavaSet, Iterator => JavaIterator, List => JavaList}
 import _root_.java.util.regex.Pattern
 import _root_.java.io.IOException
@@ -678,6 +679,98 @@ trait Response {
   def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): SelfType
 
   /**
+   * Test that the server response contains a particular node anywhere in the xml
+   * with the exact attributes and children.
+   * If the response does not contain valid xml or does not contain the exact node,
+   *   call the errorFunc with the msg.
+   *
+   * @param node the XML node to search for in the response
+   * @param msg the String to report as an error
+   * @param errorFunc the error reporting thing.
+   */
+  def \\(node: Node, msg: => String)(implicit errorFunc: ReportFailure): SelfType
+
+  /**
+   * Test that the server response contains a node with a particular label anywhere in the xml.
+   * If the response does not contain valid xml or does not contain the node,
+   *   call the errorFunc with the msg
+   *
+   * @param label the label for the XML node to search for in the response
+   * @param msg the String to report as an error
+   * @param errorFunc the error reporting thing.
+   */
+  def \\(label: String, msg: => String)(implicit errorFunc: ReportFailure): SelfType
+
+  /**
+   * Test that the server response does not contain a particular node anywhere in the xml
+   * with the exact attributes and children.
+   * If the response does contain valid xml and does contain the exact node,
+   *   call the errorFunc with the msg.
+   *
+   * @param node the XML node to search for in the response
+   * @param msg the String to report as an error
+   * @param errorFunc the error reporting thing.
+   */
+  def !\\(node: Node, msg: => String)(implicit errorFunc: ReportFailure): SelfType
+
+  /**
+   * Test that the server response does not contain a node with a particular label anywhere in the xml.
+   * If the response does contain valid xml and does contain the node,
+   *   call the errorFunc with the msg
+   *
+   * @param label the label for the XML node to search for in the response
+   * @param msg the String to report as an error
+   * @param errorFunc the error reporting thing.
+   */
+  def !\\(label: String, msg: => String)(implicit errorFunc: ReportFailure): SelfType
+
+  /**
+   * Test that the server response contains a particular node as a direct child
+   * with the exact attributes and children.
+   * If the response does not contain valid xml or does not contain the exact node,
+   *   call the errorFunc with the msg.
+   *
+   * @param node the XML node to search for in the response
+   * @param msg the String to report as an error
+   * @param errorFunc the error reporting thing.
+   */
+  def \(node: Node, msg: => String)(implicit errorFunc: ReportFailure): SelfType
+
+  /**
+   * Test that the server response contains a node with a particular label as a direct child.
+   * If the response does not contain valid xml or does not contain the node,
+   *   call the errorFunc with the msg
+   *
+   * @param label the label for the XML node to search for in the response
+   * @param msg the String to report as an error
+   * @param errorFunc the error reporting thing.
+   */
+  def \(label: String, msg: => String)(implicit errorFunc: ReportFailure): SelfType
+
+  /**
+   * Test that the server response does not contain a particular node as a direct child
+   * with the exact attributes and children.
+   * If the response does contain valid xml and does contain the exact node,
+   *   call the errorFunc with the msg.
+   *
+   * @param node the XML node to search for in the response
+   * @param msg the String to report as an error
+   * @param errorFunc the error reporting thing.
+   */
+  def !\(node: Node, msg: => String)(implicit errorFunc: ReportFailure): SelfType
+
+  /**
+   * Test that the server response does not contain a node with a particular label as a direct child.
+   * If the response does contain valid xml and does contain the node,
+   *   call the errorFunc with the msg
+   *
+   * @param label the label for the XML node to search for in the response
+   * @param msg the String to report as an error
+   * @param errorFunc the error reporting thing.
+   */
+  def !\(label: String, msg: => String)(implicit errorFunc: ReportFailure): SelfType
+
+  /**
    * the Response has a foreach method for chaining in a for comprehension
    */
   def foreach(f: FuncType => Unit): Unit
@@ -784,6 +877,39 @@ abstract class BaseResponse(override val baseUrl: String,
   def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): SelfType =
     if (this.code != code) errorFunc.fail(msg) else this.asInstanceOf[SelfType]
 
+  def xmlMatch(findFunc: Elem => NodeSeq, filterFunc: Node => Boolean): Boolean =
+    xml.toList flatMap (theXml => findFunc(theXml)) exists ( n => filterFunc(trim(n)))
+      
+  def getOrFail(success: Boolean, msg: String, errorFunc: ReportFailure) =
+    if (success)
+      this.asInstanceOf[SelfType]
+    else
+      errorFunc.fail(msg)
+
+  def \\(node: Node, msg: => String)(implicit errorFunc: ReportFailure): SelfType =
+    getOrFail(xmlMatch(_ \\ node.label, _ == trim(node)), msg, errorFunc)
+
+  def \\(label: String, msg: => String)(implicit errorFunc: ReportFailure): SelfType =
+    getOrFail(xmlMatch(_ \\ label, _ => true), msg, errorFunc)
+
+  def !\\(node: Node, msg: => String)(implicit errorFunc: ReportFailure): SelfType =
+    getOrFail(!xmlMatch(_ \\ node.label, _ == trim(node)), msg, errorFunc)
+
+  def !\\(label: String, msg: => String)(implicit errorFunc: ReportFailure): SelfType =
+    getOrFail(!xmlMatch(_ \\ label, _ => true), msg, errorFunc)
+
+  def \(node: Node, msg: => String)(implicit errorFunc: ReportFailure): SelfType =
+    getOrFail(xmlMatch(_ \ node.label, _ == trim(node)), msg, errorFunc)
+
+  def \(label: String, msg: => String)(implicit errorFunc: ReportFailure): SelfType =
+    getOrFail(xmlMatch(_ \ label, _ => true), msg, errorFunc)
+
+  def !\(node: Node, msg: => String)(implicit errorFunc: ReportFailure): SelfType =
+    getOrFail(!xmlMatch(_ \ node.label, _ == trim(node)), msg, errorFunc)
+
+  def !\(label: String, msg: => String)(implicit errorFunc: ReportFailure): SelfType =
+    getOrFail(!xmlMatch(_ \ label, _ => true), msg, errorFunc)
+
   def foreach(f: FuncType => Unit): Unit = f(this.asInstanceOf[FuncType])
 
   def filter(f: FuncType => Unit): FuncType = {
@@ -805,6 +931,22 @@ class CompleteFailure(val serverName: String, val exception: Box[Throwable]) ext
   def !(msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
 
   def !(code: Int, msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
+
+  def \\(node: Node, msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
+
+  def \\(label: String, msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
+
+  def !\\(node: Node, msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
+
+  def !\\(label: String, msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
+
+  def \(node: Node, msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
+
+  def \(label: String, msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
+
+  def !\(node: Node, msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
+
+  def !\(label: String, msg: => String)(implicit errorFunc: ReportFailure): SelfType = errorFunc.fail(msg)
 
   def foreach(f: HttpResponse => Unit): Unit = throw (exception openOr new java.io.IOException("HTTP Failure"))
 
