@@ -26,8 +26,8 @@ import _root_.java.sql.{Connection, DriverManager}
 import _root_.java.io.File
 
 object DBProviders {
-  //    def asList = MySqlProvider :: DerbyProvider :: PostgreSqlProvider :: H2Provider :: H2MemoryProvider :: SqlServerProvider :: Nil
   def asList = PostgreSqlProvider :: MySqlProvider :: DerbyProvider :: H2Provider :: H2MemoryProvider :: Nil
+  // Uncomment to run tests faster, but only against H2 def asList =  H2MemoryProvider :: Nil
 
 
   case object SnakeConnectionIdentifier extends ConnectionIdentifier {
@@ -81,21 +81,6 @@ object DBProviders {
             if (rs.getString(4).toLowerCase == "table") toDelete = tableName :: toDelete
           }
           rs.close
-/*
-          toDelete.foreach {
-            table =>
-            try {
-              val ct = "DROP TABLE "+table
-              val st = conn.createStatement
-              st.execute(ct)
-              st.close
-            } catch {
-              case e => e.printStackTrace
-            }
-          }
-
-          if (toDelete.length > 0) deleteAllTables
-          */
         }
       }
       deleteAllTables
