@@ -55,6 +55,7 @@
     <module>lift-json-ext</module>
     <module>lift-util</module>
     <module>lift-webkit</module>
+    <module>lift-proto</module>
   </modules>
 
   <!--
