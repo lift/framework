@@ -397,66 +397,49 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
    */
   @volatile var resourceNames: List[String] = List("lift")
 
+  /**
+   * This function is called to convert the current set of Notices into
+   * a JsCmd that will be executed on the client to display the Notices.
+   *
+   * @see net.liftweb.builtin.snippet.Msgs
+   */
   @volatile var noticesToJsCmd: () => JsCmd = () => {
-    import builtin.snippet._
+    import builtin.snippet.{Msg,Msgs,MsgErrorMeta,MsgNoticeMeta,MsgWarningMeta}
 
+    // Delegate to Msgs for fadeout and effects
+    def noticesFadeOut(noticeType: NoticeType.Value): JsCmd =
+      Msgs.noticesFadeOut(noticeType, Noop, Empty)
 
-    def noticesFadeOut(noticeType: NoticeType.Value, id: String): JsCmd =
-      (LiftRules.noticesAutoFadeOut()(noticeType) map {
-        case (duration, fadeTime) => LiftRules.jsArtifacts.fadeOut(id, duration, fadeTime)
-      }) openOr Noop
+    def groupEffects(noticeType: NoticeType.Value): JsCmd =
+      Msgs.effects(Full(noticeType), noticeType.id, Noop, Empty)
 
-    def effects(noticeType: Box[NoticeType.Value], id: String): JsCmd =
-      LiftRules.noticesEffects()(noticeType, id) match {
-        case Full(jsCmd) => jsCmd
-        case _ => Noop
-      }
+    def idEffects(id : String): JsCmd =
+      Msgs.effects(Empty, id, Noop, Empty)
 
-
-    val func: (() => List[NodeSeq], String, MetaData) => NodeSeq = (f, title, attr) => f() map (e => <li>{e}</li>) match {
-      case Nil => Nil
-      case list => <div>{title}<ul>{list}</ul> </div> % attr
+    // Compute the global notices first
+    val groupMessages = Msgs.renderNotices() match {
+      case NodeSeq.Empty => JsCmds.Noop
+      case xml => LiftRules.jsArtifacts.setHtml(LiftRules.noticesContainerId, xml) &
+        noticesFadeOut(NoticeType.Notice) &
+        noticesFadeOut(NoticeType.Warning) &
+        noticesFadeOut(NoticeType.Error) &
+        groupEffects(NoticeType.Notice) &
+        groupEffects(NoticeType.Warning) &
+        groupEffects(NoticeType.Error)
     }
 
-    val f = if (ShowAll.get)
-      S.messages _
-    else
-      S.noIdMessages _
+    // We need to determine the full set of IDs that need messages rendered. 
+    // TODO: Change to use "distinct" when 2.7.7 support is dropped
+    val idSet = (S.idMessages((S.errors)) ++ 
+                 S.idMessages((S.warnings)) ++ 
+                 S.idMessages((S.notices))).map(_._1).removeDuplicates
 
-    def makeList(meta: Box[AjaxMessageMeta], notices: List[NodeSeq], title: String, id: String):
-      List[(Box[AjaxMessageMeta], List[NodeSeq], String, String)] =
-        if (notices.isEmpty) Nil else List((meta, notices, title, id))
-
-    val xml =
-      ((makeList(MsgsErrorMeta.get, f(S.errors), S.??("msg.error"), LiftRules.noticesContainerId + "_error")) ++
-       (makeList(MsgsWarningMeta.get, f(S.warnings), S.??("msg.warning"), LiftRules.noticesContainerId + "_warn")) ++
-       (makeList(MsgsNoticeMeta.get, f(S.notices), S.??("msg.notice"), LiftRules.noticesContainerId + "_notice"))) flatMap {
-         msg => msg._1 match {
-           case Full(meta) => <div id={msg._4}>{func(msg._2 _, meta.title openOr "",
-             meta.cssClass.map(new UnprefixedAttribute("class",_, Null)) openOr Null)}</div>
-           case _ => <div id={msg._4}>{func(msg._2 _, msg._3, Null)}</div>
-        }
-      }
-
-    val groupMessages = xml match {
-      case Nil => JsCmds.Noop
-      case _ => LiftRules.jsArtifacts.setHtml(LiftRules.noticesContainerId, xml) &
-        noticesFadeOut(NoticeType.Notice, LiftRules.noticesContainerId + "_notice") &
-        noticesFadeOut(NoticeType.Warning, LiftRules.noticesContainerId + "_warn") &
-        noticesFadeOut(NoticeType.Error, LiftRules.noticesContainerId + "_error") &
-        effects(Full(NoticeType.Notice), LiftRules.noticesContainerId + "_notice") &
-        effects(Full(NoticeType.Warning), LiftRules.noticesContainerId + "_warn") &
-        effects(Full(NoticeType.Error), LiftRules.noticesContainerId + "_error")
+    // Merge each Id's messages and effects into the JsCmd chain
+    idSet.foldLeft(groupMessages) { 
+      (chain,id) => chain & 
+        LiftRules.jsArtifacts.setHtml(id, Msg.renderIdMsgs(id)) & 
+        idEffects(id)
     }
-
-    val g = S.idMessages _
-    List((MsgErrorMeta.get, g(S.errors)),
-      (MsgWarningMeta.get, g(S.warnings)),
-      (MsgNoticeMeta.get, g(S.notices))).foldLeft(groupMessages)((car, cdr) => cdr match {
-      case (meta, m) => m.foldLeft(car)((left, r) =>
-              left & LiftRules.jsArtifacts.setHtml(r._1, <span>{r._2 flatMap (node => node)}</span> %
-                      (Box(meta.get(r._1)).map(new UnprefixedAttribute("class", _, Null)) openOr Null)) & effects(Empty, r._1))
-    })
   }
 
   /**
