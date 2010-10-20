@@ -360,7 +360,7 @@ trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
    * }
    * </pre>
    */
-  lazy val uniqueId: MappedString[T] = new MyUniqueId(this, 32)
+  lazy val uniqueId: MappedUniqueId[T] = new MyUniqueId(this, 32)
 
   protected class MyUniqueId(obj: T, size: Int) extends MappedUniqueId(obj, size) {
     override def dbIndexed_? = true
