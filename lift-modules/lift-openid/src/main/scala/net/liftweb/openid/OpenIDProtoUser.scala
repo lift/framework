@@ -37,11 +37,11 @@ trait MetaOpenIDProtoUser[ModelType <: OpenIDProtoUser[ModelType]] extends MetaM
   private val logger = Logger(classOf[MetaOpenIDProtoUser[ModelType]])
   import logger._
   
-  override def signupFields: List[BaseOwnedMappedField[ModelType]] = nickname ::
-  firstName :: lastName :: locale :: timezone :: Nil
+  override def signupFields: List[FieldPointerType] =
+    List(nickname, firstName, lastName, locale, timezone)
 
-  override def fieldOrder: List[BaseOwnedMappedField[ModelType]] = nickname ::
-  firstName :: lastName :: locale :: timezone :: Nil
+  override def fieldOrder: List[FieldPointerType] = 
+    List(nickname, firstName, lastName, locale, timezone)
 
   /**
    * Create a new user with the specified openId
