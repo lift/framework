@@ -1764,25 +1764,28 @@ final case class CometCreationInfo(contType: String,
 abstract class SnippetFailureException(msg: String) extends Exception(msg) {
   def snippetFailure: LiftRules.SnippetFailures.Value
 
-  def buildStackTrace: NodeSeq = 
-    getStackTrace.dropWhile 
-  {
-    e => {
-      val cn = e.getClassName
-      cn.startsWith("net.liftweb.http") ||
-      cn.startsWith("net.liftweb.common") ||
-      cn.startsWith("net.liftweb.util")
-    }
-  }.filter {
-    e => {
-      val cn = e.getClassName
-      !cn.startsWith("java.lang") &&
-      !cn.startsWith("sun.")
-    }
-  }.take(10).map{
+  def buildStackTrace: NodeSeq = {
+    val lines = getStackTrace.dropWhile 
+    {
+      e => {
+	val cn = e.getClassName
+	cn.startsWith("net.liftweb.http") ||
+	cn.startsWith("net.liftweb.common") ||
+	cn.startsWith("net.liftweb.util")
+      }
+    }.filter {
+      e => {
+	val cn = e.getClassName
+	!cn.startsWith("java.lang") &&
+	!cn.startsWith("sun.")
+      }
+    }.take(10)
+
+    lines.toList.map{
       e =>
-      <code><span><br/>{e.toString}</span></code>
+	<code><span><br/>{e.toString}</span></code>
     }
+  }
 }
 
 class StateInStatelessException(msg: String) extends SnippetFailureException(msg) {
