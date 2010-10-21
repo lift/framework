@@ -33,8 +33,8 @@ case class OkResponse() extends LiftResponse with HeaderDefaults {
 }
 
 trait HeaderDefaults {
-  val headers = S.getHeaders(Nil)
-  val cookies = S.responseCookies
+  val headers: List[(String, String)] = S.getHeaders(Nil)
+  val cookies: List[HTTPCookie] = S.responseCookies
 }
 
 /**
@@ -48,9 +48,9 @@ case class CreatedResponse(xml: Node, mime: String) extends NodeResponse {
 
   def code = 201
 
-  def headers = List("Content-Type" -> mime)
+  def headers: List[(String, String)] = List("Content-Type" -> mime)
 
-  def cookies = Nil
+  def cookies: List[HTTPCookie] = Nil
 
   def out = xml
 }
@@ -257,8 +257,8 @@ trait LiftResponse {
 }
 
 object JsonResponse {
-  def headers = S.getHeaders(Nil)
-  def cookies = S.responseCookies
+  def headers: List[(String, String)] = S.getHeaders(Nil)
+  def cookies: List[HTTPCookie] = S.responseCookies
 
   def apply(json: JsExp): LiftResponse = 
     new JsonResponse(json, headers, cookies, 200)
@@ -308,9 +308,9 @@ case class ResponseWithReason(response: LiftResponse, reason: String) extends Li
 }
 
 private[http] case object EmptyResponse extends BasicResponse {
-  def headers = Nil
+  def headers: List[(String, String)] = Nil
 
-  def cookies = Nil
+  def cookies: List[HTTPCookie] = Nil
 
   def code = 200
 
@@ -525,9 +525,9 @@ case class XmlMimeResponse(xml: Node, mime: String) extends NodeResponse {
 
   def code = 200
 
-  def headers = List("Content-Type" -> mime)
+  def headers: List[(String, String)] = List("Content-Type" -> mime)
 
-  def cookies = Nil
+  def cookies: List[HTTPCookie] = Nil
 
   def out = xml
 }
@@ -535,9 +535,9 @@ case class XmlMimeResponse(xml: Node, mime: String) extends NodeResponse {
 class XmlResponse(val xml: Node, val code: Int, val mime: String, val cookies: List[HTTPCookie]) extends NodeResponse {
   def docType = Empty
 
-  def headers = List("Content-Type" -> mime)
+  def headers: List[(String, String)] = List("Content-Type" -> mime)
 
-  def out = xml
+  def out: Node = xml
 }
 
 object XmlResponse {
@@ -575,9 +575,9 @@ case class AtomResponse(xml: Node) extends NodeResponse {
 
   def code = 200
 
-  def headers = List("Content-Type" -> "application/atom+xml; charset=utf-8")
+  def headers: List[(String, String)] = List("Content-Type" -> "application/atom+xml; charset=utf-8")
 
-  def cookies = Nil
+  def cookies: List[HTTPCookie] = Nil
 
   def out = xml
 }
@@ -590,9 +590,9 @@ case class OpenSearchResponse(xml: Node) extends NodeResponse {
 
   def code = 200
 
-  def headers = List("Content-Type" -> "application/opensearchdescription+xml; charset=utf-8")
+  def headers: List[(String, String)] = List("Content-Type" -> "application/opensearchdescription+xml; charset=utf-8")
 
-  def cookies = Nil
+  def cookies: List[HTTPCookie] = Nil
 
   def out = xml
 }

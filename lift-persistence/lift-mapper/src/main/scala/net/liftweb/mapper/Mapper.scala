@@ -322,9 +322,10 @@ trait IdPK /* extends BaseLongKeyedMapper */ {
 }
 
 /**
-* Mix this trait into your Mapper instance to get createdAt and updatedAt fields.
-*/
-trait CreatedUpdated {
+ * A trait you can mix into a Mapper class that gives you
+ * a createdat column
+ */
+trait CreatedTrait {
   self: BaseMapper =>
 
   import _root_.net.liftweb.util._
@@ -335,20 +336,62 @@ trait CreatedUpdated {
   protected def createdAtIndexed_? = false
 
   /**
-   * Override this method to index the updatedAt field
+   * The createdAt field.  You can change the behavior of this
+   * field:
+   * <pre>
+   * override lazy val createdAt = new MyCreatedAt(this) {
+   *   override def dbColumnName = "i_eat_time"
+   * }
+   * </pre>
    */
-  protected def updatedAtIndexed_? = false
+  lazy val createdAt: MappedDateTime[MapperType] = new MyCreatedAt(this)
 
-  object createdAt extends MappedDateTime[MapperType](this.asInstanceOf[MapperType]) {
+  protected class MyCreatedAt(obj: self.type) extends MappedDateTime[MapperType](obj.asInstanceOf[MapperType]) {
     override def defaultValue = Helpers.now
     override def dbIndexed_? = createdAtIndexed_?
   }
 
-  object updatedAt extends MappedDateTime[MapperType](this.asInstanceOf[MapperType]) with LifecycleCallbacks {
+}
+
+/**
+ * A trait you can mix into a Mapper class that gives you
+ * an updatedat column
+ */
+trait UpdatedTrait {
+  self: BaseMapper =>
+
+  import _root_.net.liftweb.util._
+
+  /**
+   * Override this method to index the updatedAt field
+   */
+  protected def updatedAtIndexed_? = false
+
+  /**
+   * The updatedAt field.  You can change the behavior of this
+   * field:
+   * <pre>
+   * override lazy val updatedAt = new MyUpdatedAt(this) {
+   *   override def dbColumnName = "i_eat_time_for_breakfast"
+   * }
+   * </pre>
+   */
+  lazy val updatedAt: MyUpdatedAt = new MyUpdatedAt(this)
+
+  protected class MyUpdatedAt(obj: self.type) extends MappedDateTime(obj.asInstanceOf[MapperType]) with LifecycleCallbacks {
     override def beforeSave() {super.beforeSave; this.set(Helpers.now)}
     override def defaultValue = Helpers.now
        override def dbIndexed_? = updatedAtIndexed_?
   }
+
+}
+
+/**
+* Mix this trait into your Mapper instance to get createdAt and updatedAt fields.
+*/
+trait CreatedUpdated extends CreatedTrait with UpdatedTrait {
+  self: BaseMapper =>
+
 }
 
 trait KeyedMapper[KeyType, OwnerType<:KeyedMapper[KeyType, OwnerType]] extends Mapper[OwnerType] with BaseKeyedMapper {
