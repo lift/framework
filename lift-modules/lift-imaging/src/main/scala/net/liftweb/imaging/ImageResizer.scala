@@ -37,7 +37,8 @@ import org.apache.sanselan.formats.tiff.constants.TiffTagConstants
 
 import java.io.{InputStream,ByteArrayOutputStream,ByteArrayInputStream}
 
-import net.liftweb.util.IoHelpers
+import net.liftweb.common.{Box, Full, Empty}
+import net.liftweb.util.Helpers
 
 object ImageOutFormat extends Enumeration("png", "jpg", "gif", "bmp"){
   val png,jpeg,gif,bmp = Value
@@ -56,9 +57,13 @@ object ImageOrientation extends Enumeration(1) {
   
   val rotate90mirror = Value(7, "Rotate 90 Mirror")
   val rotate90 = Value(8, "Rotate 90")
+  
+  def valueOf(v: Int):Box[Value] = {
+    if (v > 0 && v <= 8) Full(apply(v)) else Empty
+  }
 }
 
-case class ImageWithMetaData(image:BufferedImage, orientation:Option[ImageOrientation.Value], format:ImageOutFormat.Value)
+case class ImageWithMetaData(image:BufferedImage, orientation:Box[ImageOrientation.Value], format:ImageOutFormat.Value)
 
 object ImageResizer extends ImageResizer(Map(RenderingHints.KEY_INTERPOLATION -> RenderingHints.VALUE_INTERPOLATION_BILINEAR), true)
 
@@ -70,15 +75,17 @@ class ImageResizer(renderingHintsMap:Map[java.awt.RenderingHints.Key,Any], multi
     h
   }
 
-  def getOrientation(imageBytes:Array[Byte]):Option[ImageOrientation.Value] = Sanselan.getMetadata(imageBytes) match {
-    case metaJpg:JpegImageMetadata => 
-      val exifValue = metaJpg.findEXIFValue(TiffTagConstants.TIFF_TAG_ORIENTATION)
-      if (exifValue != null) Some(ImageOrientation(exifValue.getIntValue)) else None
-    case _ => None
-  }
+  def getOrientation(imageBytes:Array[Byte]):Box[ImageOrientation.Value] = Helpers.tryo {
+    Sanselan.getMetadata(imageBytes) match {
+      case metaJpg:JpegImageMetadata => 
+        val exifValue = metaJpg.findEXIFValue(TiffTagConstants.TIFF_TAG_ORIENTATION)
+        if (exifValue != null) ImageOrientation.valueOf(exifValue.getIntValue) else Empty
+      case _ => Empty
+    }
+  }.flatMap(x=>x)
   
   def getImageFromStream(is:java.io.InputStream):ImageWithMetaData = {
-    val imageBytes = IoHelpers.readWholeStream(is)
+    val imageBytes = Helpers.readWholeStream(is)
     val orientation = getOrientation(imageBytes)
     val format = Sanselan.guessFormat(imageBytes) match {
       case ImageFormat.IMAGE_FORMAT_JPEG => ImageOutFormat.jpeg
@@ -117,7 +124,7 @@ class ImageResizer(renderingHintsMap:Map[java.awt.RenderingHints.Key,Any], multi
    * A image of (200w,240h) squared to (100) will first resize to (100w,120h) and then take then crop
    * 10 pixels from the top and bottom of the image to produce (100w,100h)
    */
-  def square(orientation:Option[ImageOrientation.Value], originalImage:BufferedImage, max:Int):BufferedImage = {
+  def square(orientation:Box[ImageOrientation.Value], originalImage:BufferedImage, max:Int):BufferedImage = {
     val image = {
       val height = originalImage.getHeight
       val width = originalImage.getWidth
@@ -159,7 +166,7 @@ class ImageResizer(renderingHintsMap:Map[java.awt.RenderingHints.Key,Any], multi
    * Resize to maximum dimension preserving the aspect ratio.  This is basically equivalent to what you would expect by setting
    * "max-width" and "max-height" CSS attributes but will scale up an image if necessary
    */
-  def max(orientation:Option[ImageOrientation.Value],originalImage:BufferedImage, maxWidth:Int, maxHeight:Int):BufferedImage = {
+  def max(orientation:Box[ImageOrientation.Value],originalImage:BufferedImage, maxWidth:Int, maxHeight:Int):BufferedImage = {
     val (scaledWidth, scaledHeight) = scaledMaxDim(originalImage.getWidth, originalImage.getHeight, maxWidth, maxHeight)
     resize(orientation, originalImage, scaledWidth, scaledHeight)
   }
@@ -168,7 +175,7 @@ class ImageResizer(renderingHintsMap:Map[java.awt.RenderingHints.Key,Any], multi
    * Algorithm adapted from example in Filthy Rich Clients http://filthyrichclients.org/
    * Resize an image and account of its orientation.  This will not preserve aspect ratio.
    */
-  def resize(orientation:Option[ImageOrientation.Value], img:BufferedImage, targetWidth:Int, targetHeight:Int): BufferedImage = {
+  def resize(orientation:Box[ImageOrientation.Value], img:BufferedImage, targetWidth:Int, targetHeight:Int): BufferedImage = {
     val imgType = if (img.getTransparency() == Transparency.OPAQUE) BufferedImage.TYPE_INT_RGB else BufferedImage.TYPE_INT_ARGB
     var ret = img
     var scratchImage:BufferedImage = null
@@ -218,17 +225,17 @@ class ImageResizer(renderingHintsMap:Map[java.awt.RenderingHints.Key,Any], multi
     if (targetWidth != ret.getWidth || targetHeight != ret.getHeight || orientation.map(_ != ImageOrientation.ok).getOrElse(false)) {
 
       val (tW, tH, rotFunc) =  orientation match {
-        case Some(ImageOrientation.rotate180) =>
+        case Full(ImageOrientation.rotate180) =>
           (targetWidth, targetHeight, (g2:Graphics2D) => {
             g2.rotate(Math.Pi)
             g2.translate(-targetWidth, -targetHeight)
           })
-        case Some(ImageOrientation.rotate270) =>
+        case Full(ImageOrientation.rotate270) =>
           (targetHeight, targetWidth, (g2:Graphics2D) => {
             g2.rotate(Math.Pi/2)
             g2.translate(0, -targetHeight)
           })
-        case Some(ImageOrientation.rotate90) =>
+        case Full(ImageOrientation.rotate90) =>
           (targetHeight, targetWidth, (g2:Graphics2D) => {
             g2.rotate(-Math.Pi/2)
             g2.translate(-targetWidth, 0)
