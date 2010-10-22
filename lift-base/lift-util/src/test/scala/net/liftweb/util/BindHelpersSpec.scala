@@ -154,6 +154,17 @@ object BindHelpersSpec extends Specification  {
     }
   }
 
+  "Add CSS Class" should {
+    "add a new attribute" in {
+      (addCssClass("foo", <b/>) \ "@class").text must_== "foo"
+    }
+
+    "append an existing attribute" in {
+      (addCssClass("foo", <b class="dog"/>) \ "@class").text must_== "dog foo"
+    }
+
+  }
+
   "The bind helpers should deal correctly with <select>" should {
     "do <select> correctly" in {
       val xhtml = <select name="days"> <stats:options/> </select>

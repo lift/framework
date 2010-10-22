@@ -20,6 +20,8 @@ package util {
 import _root_.scala.xml._
 import common._
 
+
+
 /**
  * This trait is used to identify an object that is representable as a {@link NodeSeq}.
  */
@@ -120,6 +122,41 @@ object BindHelpers extends BindHelpers {
  */
 trait BindHelpers {
   private lazy val logger = Logger(classOf[BindHelpers])
+
+  /**
+   * Adds a css class to the existing class tag of an Elem or create
+   * the class attribute
+   */
+  def addCssClass(cssClass: Box[String], elem: Elem): Elem = 
+    cssClass match {
+      case Full(css) => addCssClass(css, elem)
+      case _ => elem
+    }
+
+  /**
+   * Adds a css class to the existing class tag of an Elem or create
+   * the class attribute
+   */
+  def addCssClass(cssClass: String, elem: Elem): Elem = {
+    elem.attribute("class") match {
+      case Some(clz) => {
+        def fix(in: MetaData) =
+          new UnprefixedAttribute("class", clz.text.trim + " " + cssClass.trim, 
+                                  in.filter{
+                                    case p: UnprefixedAttribute =>
+                                      p.key != "class"
+                                    case _ => true
+                                  })
+
+        new Elem(elem.prefix,
+                 elem.label,
+                 fix(elem.attributes),
+                 elem.scope,
+                 elem.child :_*)
+      }
+      case _ => elem % new UnprefixedAttribute("class", cssClass, Null)
+    }
+  }
 
   /**
    * Takes attributes from the first node of 'in' (if any) and mixes

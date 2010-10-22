@@ -41,6 +41,22 @@ trait Loc[T] {
     override val __nameSalt = randomString(10)
   }
 
+  /**
+   * When the menu item is displayed, what CSS class do we add to the
+   * node?
+   */
+  def cssClassForMenuItem: Box[String] = cacheCssClassForMenuItem.map(_())
+
+  /**
+   * By default, this lazy val looks for the MenuCssClass LocParam and
+   * uses it.
+   */
+  protected lazy val cacheCssClassForMenuItem: Box[() => String] = 
+    params.flatMap {
+      case a: Loc.MenuCssClass => List(a)
+      case _ => Nil
+    }.headOption.map(_.cssClass.func)
+
   def defaultValue: Box[T]
 
   def currentValue: Box[T] = overrideValue or requestValue.is or defaultValue
@@ -454,6 +470,20 @@ object Loc {
   case class IfValue[T](test: Box[T] => Boolean, failMsg: FailMsg) extends LocParam[T]
 
   /**
+   * MenuCssClass is used to add css to the Menu node.  The css allows for
+   * replacing menu with an icon and other super-fun and helpful things.
+   * cssClass is a StringFunc which can either be a String constant or
+   * a Function that returns a String.  Thus, you can compute the
+   * css based on the current state or you can have a constant.  Syntactically
+   * you can use either:
+   * <pre>
+   * MenuCssClass("foobar")
+   * MenuCssClass(() => calculateCssForMyMenuItem())
+   * </pre>
+   */
+  case class MenuCssClass(cssClass: StringFunc) extends AnyLocParam
+
+  /**
    * Unless the test returns True, the page can be accessed, otherwise,
    * the result of FailMsg will be sent as a response to the browser.
    * If the Loc cannot be accessed, it will not be displayed in menus.
@@ -671,6 +701,9 @@ case class MenuItem(text: NodeSeq, uri: NodeSeq,  kids: Seq[MenuItem],
   private var _placeholder = false
   def placeholder_? = _placeholder
 
+  private var _cssClass: Box[String] = Empty
+  def cssClass: Box[String] = _cssClass
+
   def this(text: NodeSeq, uri: NodeSeq,  kids: Seq[MenuItem],
            current: Boolean,
            path: Boolean,
@@ -678,6 +711,17 @@ case class MenuItem(text: NodeSeq, uri: NodeSeq,  kids: Seq[MenuItem],
            ph: Boolean) = {
     this(text, uri, kids, current, path, info)
     _placeholder = ph
+  }
+
+  def this(text: NodeSeq, uri: NodeSeq,  kids: Seq[MenuItem],
+           current: Boolean,
+           path: Boolean,
+           info: List[Box[() => _]],
+           ph: Boolean,
+           loc: Loc[_]) = {
+    this(text, uri, kids, current, path, info)
+    _placeholder = ph
+    _cssClass = loc.cssClassForMenuItem
   }
 
   def breadCrumbs: Seq[MenuItem] = {
