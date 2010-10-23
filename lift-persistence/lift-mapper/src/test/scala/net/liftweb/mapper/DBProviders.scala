@@ -26,9 +26,8 @@ import _root_.java.sql.{Connection, DriverManager}
 import _root_.java.io.File
 
 object DBProviders {
-  //def asList = PostgreSqlProvider :: MySqlProvider :: DerbyProvider :: H2Provider :: H2MemoryProvider :: Nil
-  // Uncomment to run tests faster, but only against H2
-  def asList =  H2MemoryProvider :: Nil
+  def asList = PostgreSqlProvider :: MySqlProvider :: DerbyProvider :: H2Provider :: H2MemoryProvider :: Nil
+  // Uncomment to run tests faster, but only against H2 def asList =  H2MemoryProvider :: Nil
 
 
   case object SnakeConnectionIdentifier extends ConnectionIdentifier {
