@@ -36,7 +36,7 @@ import _root_.scala.xml._
  * associated MetaMapper. You have been warned.
  */
 trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] extends 
-  net.liftweb.proto.CRUDify {
+  net.liftweb.proto.Crudify {
   self: CrudType with KeyedMetaMapper[KeyType, CrudType] =>
 
   /**
@@ -87,7 +87,7 @@ trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] extends
   def calcPrefix = List(_dbTableNameLC)
 
 
-  protected class MyBridge(in: CrudType) extends CRUDBridge {
+  protected class MyBridge(in: CrudType) extends CrudBridge {
     /**
      * Delete the instance of TheCrudType from the backing store
      */
@@ -115,7 +115,7 @@ trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] extends
    * that the appropriate logical operations can be performed
    * on TheCrudType
    */
-  protected implicit def buildBridge(from: TheCrudType): CRUDBridge =
+  protected implicit def buildBridge(from: TheCrudType): CrudBridge =
     new MyBridge(from)
 
   protected class MyPointer(in: MappedField[_, CrudType]) extends FieldPointerBridge {

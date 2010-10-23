@@ -43,7 +43,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   /**
    * The primary key field for the User.  You can override the behavior
    * of this field:
-   * <pre>
+   * <pre name="code" class="scala">
    * override lazy val id = new MyMappedLongClass(this) {
    *   println("I am doing something different")
    * }
@@ -61,7 +61,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   /**
    * The first name field for the User.  You can override the behavior
    * of this field:
-   * <pre>
+   * <pre name="code" class="scala">
    * override lazy val firstName = new MyFirstName(this, 32) {
    *   println("I am doing something different")
    * }
@@ -83,7 +83,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   /**
    * The last field for the User.  You can override the behavior
    * of this field:
-   * <pre>
+   * <pre name="code" class="scala">
    * override lazy val lastName = new MyLastName(this, 32) {
    *   println("I am doing something different")
    * }
@@ -104,7 +104,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   /**
    * The email field for the User.  You can override the behavior
    * of this field:
-   * <pre>
+   * <pre name="code" class="scala">
    * override lazy val email = new MyEmail(this, 48) {
    *   println("I am doing something different")
    * }
@@ -127,7 +127,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   /**
    * The password field for the User.  You can override the behavior
    * of this field:
-   * <pre>
+   * <pre name="code" class="scala">
    * override lazy val password = new MyPassword(this) {
    *   println("I am doing something different")
    * }
@@ -147,7 +147,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   /**
    * The superuser field for the User.  You can override the behavior
    * of this field:
-   * <pre>
+   * <pre name="code" class="scala">
    * override lazy val superUser = new MySuperUser(this) {
    *   println("I am doing something different")
    * }
@@ -301,10 +301,11 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
 
 
   /**
-   * Given an email address, find the user
+   * Given an username (probably email address), find the user
    */
-  protected def findUserByEmail(email: String): Box[TheUserType] =
+  protected def findUserByUserName(email: String): Box[TheUserType] =
     find(By(this.email, email))
+
   /**
    * Given a unique id, find the user
    */
@@ -354,7 +355,7 @@ trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
    * is used for validation, lost passwords, etc.
    * You can override the behavior
    * of this field:
-   * <pre>
+   * <pre name="code" class="scala">
    * override lazy val uniqueId = new MyUniqueId(this, 32) {
    *   println("I am doing something different")
    * }
@@ -371,7 +372,7 @@ trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
    * The has the user been validated.
    * You can override the behavior
    * of this field:
-   * <pre>
+   * <pre name="code" class="scala">
    * override lazy val validated = new MyValidated(this, 32) {
    *   println("I am doing something different")
    * }
@@ -388,7 +389,7 @@ trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
    * The locale field for the User.
    * You can override the behavior
    * of this field:
-   * <pre>
+   * <pre name="code" class="scala">
    * override lazy val locale = new MyLocale(this, 32) {
    *   println("I am doing something different")
    * }
@@ -405,7 +406,7 @@ trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
    * The time zone field for the User.
    * You can override the behavior
    * of this field:
-   * <pre>
+   * <pre name="code" class="scala">
    * override lazy val timezone = new MyTimeZone(this, 32) {
    *   println("I am doing something different")
    * }

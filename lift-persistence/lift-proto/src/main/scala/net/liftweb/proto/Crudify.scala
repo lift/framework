@@ -34,7 +34,7 @@ import _root_.scala.xml._
  * For example, you can disable deletion of entities by overriding deleteMenuLoc to Empty.
  *
  */
-trait CRUDify {
+trait Crudify {
   /**
    * The type of records we're manipulating
    */
@@ -50,11 +50,11 @@ trait CRUDify {
 
   /**
    * This trait represents a Bridge between TheCrudType
-   * and the CRUDify trait.  It's not necessary to mix this
+   * and the Crudify trait.  It's not necessary to mix this
    * trait into TheCrudType, but instead provide a mechanism
-   * for promoting a TheCrudType to CRUDBridge
+   * for promoting a TheCrudType to CrudBridge
    */
-  protected trait CRUDBridge {
+  protected trait CrudBridge {
     /**
      * Delete the instance of TheCrudType from the backing store
      */
@@ -82,7 +82,7 @@ trait CRUDify {
    * that the appropriate logical operations can be performed
    * on TheCrudType
    */
-  protected implicit def buildBridge(from: TheCrudType): CRUDBridge
+  protected implicit def buildBridge(from: TheCrudType): CrudBridge
 
   protected trait FieldPointerBridge {
     /**
@@ -203,12 +203,9 @@ trait CRUDify {
          */
         override val rewrite: LocRewrite =
         Full(NamedPF(name) {
-            case RewriteRequest(pp , _, _)
-              if pp.wholePath.startsWith(viewPath) &&
-              pp.wholePath.length == (viewPath.length + 1) &&
-              findForParam(pp.wholePath.last).isDefined
-              =>
-              (RewriteResponse(viewPath),findForParam(pp.wholePath.last).open_!)
+            case RewriteRequest(pp , _, _) if hasParamFor(pp, viewPath) =>
+              (RewriteResponse(viewPath),
+               findForParam(pp.wholePath.last).open_!)
           })
 
         def displayRecord(entry: TheCrudType)(in: NodeSeq): NodeSeq = {
@@ -267,12 +264,9 @@ trait CRUDify {
            */
           override val rewrite: LocRewrite =
           Full(NamedPF(name) {
-              case RewriteRequest(pp , _, _)
-                if pp.wholePath.startsWith(editPath) &&
-                pp.wholePath.length == (editPath.length + 1) &&
-                findForParam(pp.wholePath.last).isDefined
-                =>
-                (RewriteResponse(editPath),findForParam(pp.wholePath.last).open_!)
+              case RewriteRequest(pp , _, _) if hasParamFor(pp, editPath) =>
+                (RewriteResponse(editPath),
+                 findForParam(pp.wholePath.last).open_!)
             })
 
           override def calcTemplate = Full(editTemplate)
@@ -293,13 +287,21 @@ trait CRUDify {
 
   def editMenuName = S.??("Edit")+" "+displayName
 
+  /**
+   * This is the template that's used to render the page after the
+   * optional wrapping of the template in the page wrapper
+   */
   def editTemplate(): NodeSeq = pageWrapper(_editTemplate)
 
   def editId = "edit_page"
   def editClass = "edit_class"
   def editErrorClass = "edit_error_class"
 
-  def _editTemplate =
+  /**
+   * The core template for editting.  Does not include any
+   * page wrapping
+   */
+  protected def _editTemplate = {
   <lift:crud.edit form="post">
     <table id={editId} class={editClass}>
       <crud:field>
@@ -319,6 +321,7 @@ trait CRUDify {
       </tr>
     </table>
   </lift:crud.edit>
+  }
 
   def editButton = S.??("Save")
 
@@ -375,12 +378,9 @@ trait CRUDify {
            */
           override val rewrite: LocRewrite =
           Full(NamedPF(name) {
-              case RewriteRequest(pp , _, _)
-                if pp.wholePath.startsWith(deletePath) &&
-                pp.wholePath.length == (deletePath.length + 1) &&
-                findForParam(pp.wholePath.last).isDefined
-                =>
-                (RewriteResponse(deletePath),findForParam(pp.wholePath.last).open_!)
+            case RewriteRequest(pp , _, _) if hasParamFor(pp, deletePath) =>
+                (RewriteResponse(deletePath),
+                 findForParam(pp.wholePath.last).open_!)
             })
 
           override def calcTemplate = Full(deleteTemplate)
@@ -391,6 +391,12 @@ trait CRUDify {
             Full(Text(deletePathString+"/"+obscurePrimaryKey(in)))
           }
         }))
+  }
+
+  private def hasParamFor(pp: ParsePath, toTest: List[String]): Boolean = {
+    pp.wholePath.startsWith(toTest) &&
+    pp.wholePath.length == (toTest.length + 1) &&
+    findForParam(pp.wholePath.last).isDefined
   }
 
   /**
@@ -546,7 +552,8 @@ trait CRUDify {
        editMenuLoc, deleteMenuLoc).flatMap(x => x)
 
   /**
-   * Given a range, find the records
+   * Given a range, find the records.  Your implementation of this
+   * method should enforce ordering (e.g., on primary key)
    */
   def findForList(start: Long, count: Int): List[TheCrudType] 
 
@@ -562,6 +569,13 @@ trait CRUDify {
    */
   protected def computeFieldFromPointer(instance: TheCrudType, pointer: FieldPointerType): Box[BaseField]
 
+  /**
+   * This method defines how many rows are displayed per page.  By
+   * default, it's hard coded at 20, but you can make it session specific
+   * or change the default by overriding this method
+   */
+  protected def rowsPerPage: Int = 20
+
   lazy val locSnippets = new DispatchLocSnippets {
     val dispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
       case "crud.all" => doCrudAll
@@ -570,20 +584,20 @@ trait CRUDify {
 
     def doCrudAll(in: NodeSeq): NodeSeq = {
       val first = S.param("first").map(toLong) openOr 0L
-      val list = findForList(first, 20)
+      val list = findForList(first, rowsPerPage)
 
-      def prev(in: NodeSeq) = if (first < 20) <xml:group>&nbsp;</xml:group>
-      else <a href={listPathString+"?first="+(0L max (first - 20L))}>{in}</a>
+      def prev(in: NodeSeq) = if (first < rowsPerPage) <xml:group>&nbsp;</xml:group>
+      else <a href={listPathString+"?first="+(0L max (first - rowsPerPage.toLong))}>{in}</a>
 
-      def next(in: NodeSeq) = if (list.length < 20) <xml:group>&nbsp;</xml:group>
-      else <a href={listPathString+"?first="+(first + 20L)}>{in}</a>
+      def next(in: NodeSeq) = if (list.length < rowsPerPage) <xml:group>&nbsp;</xml:group>
+      else <a href={listPathString+"?first="+(first + rowsPerPage.toLong)}>{in}</a>
 
 
       def doHeaderItems(in: NodeSeq): NodeSeq = fieldsForList.flatMap(f => 
         bind("crud", in, "name" -> f.displayHtml))
 
       def doRows(in: NodeSeq): NodeSeq =
-      list.take(20).flatMap{
+      list.take(rowsPerPage).flatMap{
         c =>
         def doRowItem(in: NodeSeq): NodeSeq = 
           for {
@@ -612,15 +626,43 @@ trait CRUDify {
     }
   }
 
+  /**
+   * This method can be used to obscure the primary key.  This is more secure
+   * because end users will not have access to the primary key.
+   */
   def obscurePrimaryKey(in: TheCrudType): String = obscurePrimaryKey(in.primaryKeyFieldAsString)
 
+  /**
+   * This method can be used to obscure the primary key.  This is more secure
+   * because end users will not have access to the primary key.  This method
+   * actually does the obfuscation.  You can use Mapper's KeyObfuscator class
+   * to implement a nice implementation of this method for session-by-session
+   * obfuscation.<br/><br/>
+   *
+   * By default, there's no obfuscation.  Note that if you obfuscate the
+   * primary key, you need to update the findForParam method to accept
+   * the obfuscated keys (and translate them back.)
+   */
   def obscurePrimaryKey(in: String): String = in
 
   def referer: String = S.referer openOr listPathString
 
-
+  /**
+   * As the field names are being displayed for editting, this method
+   * is called with the XHTML that will be displayed as the field name
+   * an a flag indicating that the field is required (or not).  You
+   * can wrap the fieldName in a span with a css class indicating that
+   * the field is required or otherwise do something to update the field
+   * name indiciating to the user that the field is required.  By default
+   * the method wraps the fieldName in a span with the class attribute set
+   * to "required_field"
+   */
   def wrapNameInRequired(fieldName: NodeSeq, required: Boolean): NodeSeq = {
-    fieldName
+    if (required) {
+      <span class="required_field">{fieldName}</span>
+    } else {
+      fieldName
+    }
   }
 
   def crudDoForm(item: TheCrudType, noticeMsg: String)(in: NodeSeq): NodeSeq = {

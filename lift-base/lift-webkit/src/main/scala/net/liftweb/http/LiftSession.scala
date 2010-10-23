@@ -510,6 +510,14 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     onSessionEnd = f :: onSessionEnd
   }
 
+  /**
+   * Destroy this session and the underlying container session.
+   */
+  def destroySession() {
+    S.request.foreach(_.request.session.terminate)
+    this.shutDown()
+  }
+
   private[http] def doShutDown() {
     if (running_?) {
       // only deal with comet on stateful sessions

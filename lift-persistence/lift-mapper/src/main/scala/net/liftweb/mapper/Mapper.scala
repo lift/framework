@@ -338,7 +338,7 @@ trait CreatedTrait {
   /**
    * The createdAt field.  You can change the behavior of this
    * field:
-   * <pre>
+   * <pre name="code" class="scala">
    * override lazy val createdAt = new MyCreatedAt(this) {
    *   override def dbColumnName = "i_eat_time"
    * }
@@ -370,7 +370,7 @@ trait UpdatedTrait {
   /**
    * The updatedAt field.  You can change the behavior of this
    * field:
-   * <pre>
+   * <pre name="code" class="scala">
    * override lazy val updatedAt = new MyUpdatedAt(this) {
    *   override def dbColumnName = "i_eat_time_for_breakfast"
    * }

@@ -382,10 +382,10 @@ trait ProtoUser {
     If(notLoggedIn_? _, S.??("logout.first")) ::
     Nil
 
-/**
-* An alias for the sitemap property
-*/
-def menus: List[Menu] = sitemap // issue 182
+  /**
+   * An alias for the sitemap property
+   */
+  def menus: List[Menu] = sitemap // issue 182
 
   lazy val sitemap: List[Menu] =
   List(loginMenuLoc, logoutMenuLoc, createUserMenuLoc,
@@ -416,8 +416,6 @@ def menus: List[Menu] = sitemap // issue 182
        MenuItem(S.??("edit.profile"), editPath, true),
        MenuItem("", validateUserPath, false))
 
-  // def requestLoans: List[LoanWrapper] = Nil // List(curUser)
-
   var onLogIn: List[TheUserType => Unit] = Nil
 
   var onLogOut: List[Box[TheUserType] => Unit] = Nil
@@ -438,7 +436,9 @@ def menus: List[Menu] = sitemap // issue 182
     curUser.remove()
     curUserId(Full(id))
   }
+
   def logUserIn(who: TheUserType) {
+    curUserId.remove()
     curUser.remove()
     curUserId(Full(who.userIdAsString))
     onLogIn.foreach(_(who))
@@ -450,7 +450,7 @@ def menus: List[Menu] = sitemap // issue 182
     onLogOut.foreach(_(curUser))
     curUserId.remove()
     curUser.remove()
-    S.request.foreach(_.request.session.terminate)
+    S.session.foreach(_.destroySession())
   }
 
   private object curUserId extends SessionVar[Box[String]](Empty)
@@ -578,10 +578,22 @@ def menus: List[Menu] = sitemap // issue 182
     case _ => S.error(S.??("invalid.validation.link")); S.redirectTo(homePage)
   }
 
+  /**
+   * How do we prompt the user for the username.  By default,
+   * it's S.??("email.address"), you can can change it to something else
+   */
+  def userNameFieldString: String = S.??("email.address")
+
+  /**
+   * The string that's generated when the user name is not found.  By
+   * default: S.??("email.address.not.found")
+   */
+  def userNameNotFoundString: String = S.??("email.address.not.found")
+
   def loginXhtml = {
     (<form method="post" action={S.uri}><table><tr><td
               colspan="2">{S.??("log.in")}</td></tr>
-          <tr><td>{S.??("email.address")}</td><td><user:email /></td></tr>
+          <tr><td>{userNameFieldString}</td><td><user:email /></td></tr>
           <tr><td>{S.??("password")}</td><td><user:password /></td></tr>
           <tr><td><a href={lostPasswordPath.mkString("/", "/", "")}
                 >{S.??("recover.password")}</a></td><td><user:submit /></td></tr></table>
@@ -589,9 +601,9 @@ def menus: List[Menu] = sitemap // issue 182
   }
   
   /**
-   * Given an email address, find the user
+   * Given an username (probably email address), find the user
    */
-  protected def findUserByEmail(email: String): Box[TheUserType]
+  protected def findUserByUserName(username: String): Box[TheUserType]
 
   /**
    * Given a unique id, find the user
@@ -601,7 +613,7 @@ def menus: List[Menu] = sitemap // issue 182
   def login = {
     if (S.post_?) {
       S.param("username").
-      flatMap(username => findUserByEmail(username)) match {
+      flatMap(username => findUserByUserName(username)) match {
         case Full(user) if user.validated_? &&
           user.testPassword(S.param("password")) =>
           S.notice(S.??("logged.in"))
@@ -633,7 +645,7 @@ def menus: List[Menu] = sitemap // issue 182
     (<form method="post" action={S.uri}>
         <table><tr><td
               colspan="2">{S.??("enter.email")}</td></tr>
-          <tr><td>{S.??("email.address")}</td><td><user:email /></td></tr>
+          <tr><td>{userNameFieldString}</td><td><user:email /></td></tr>
           <tr><td>&nbsp;</td><td><user:submit /></td></tr>
         </table>
      </form>)
@@ -661,7 +673,7 @@ def menus: List[Menu] = sitemap // issue 182
   def passwordResetEmailSubject = S.??("reset.password.request")
 
   def sendPasswordReset(email: String) {
-    findUserByEmail(email) match {
+    findUserByUserName(email) match {
       case Full(user) if user.validated_? =>
         user.resetUniqueId().save
         val resetLink = S.hostAndPath+
@@ -682,7 +694,7 @@ def menus: List[Menu] = sitemap // issue 182
         S.notice(S.??("account.validation.resent"))
         S.redirectTo(homePage)
 
-      case _ => S.error(S.??("email.address.not.found"))
+      case _ => S.error(userNameNotFoundString)
     }
   }
 
@@ -818,35 +830,6 @@ def menus: List[Menu] = sitemap // issue 182
         }
       })) openOr in
 }
-
-/*
-trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
-  self: T =>
-  object uniqueId extends MappedUniqueId(this, 32) {
-    override def dbIndexed_? = true
-    override def writePermission_?  = true
-  }
-
-  object validated extends MappedBoolean[T](this) {
-    override def defaultValue = false
-    override val fieldId = Some(Text("txtValidated"))
-  }
-
-  object locale extends MappedLocale[T](this) {
-    override def displayName = fieldOwner.localeDisplayName
-    override val fieldId = Some(Text("txtLocale"))
-  }
-
-  object timezone extends MappedTimeZone[T](this) {
-    override def displayName = fieldOwner.timezoneDisplayName
-    override val fieldId = Some(Text("txtTimeZone"))
-  }
-
-  def timezoneDisplayName = ??("time.zone")
-
-  def localeDisplayName = ??("locale")
-
-}*/
 
 }
 }

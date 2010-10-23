@@ -51,11 +51,6 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>lift-webkit_${scala.version}</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
       <artifactId>lift-proto_${scala.version}</artifactId>
       <version>${project.version}</version>
     </dependency>

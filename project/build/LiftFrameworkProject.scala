@@ -50,6 +50,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends LiftParentProject(info) {
   class LiftPersistenceProject(info: ProjectInfo) extends LiftParentProject(info) {
 
     // Lift Persistence Subprojects
+    lazy val proto         = project("lift-proto",            "lift-proto",          new LiftProtoProject(_))
     lazy val mapper         = project("lift-mapper",          "lift-mapper",          new LiftMapperProject(_))
     lazy val jpa            = project("lift-jpa",             "lift-jpa",             new LiftJpaProject(_))
     lazy val record         = project("lift-record",          "lift-record",          new LiftRecordProject(_),         mapper)
@@ -57,6 +58,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends LiftParentProject(info) {
     lazy val mongodb        = project("lift-mongodb",         "lift-mongodb",         new LiftMongoDBProject(_))
     lazy val mongodbRecord  = project("lift-mongodb-record",  "lift-mongodb-record",  new LiftMongoDBRecordProject(_),  mongodb, record)
 
+    class LiftProtoProject       (info: ProjectInfo) extends LiftDefaultProject(info)
     class LiftMapperProject       (info: ProjectInfo) extends LiftDefaultProject(info)
     class LiftRecordProject       (info: ProjectInfo) extends LiftDefaultProject(info)
     class LiftJpaProject          (info: ProjectInfo) extends LiftDefaultProject(info)
