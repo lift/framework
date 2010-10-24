@@ -485,9 +485,7 @@ trait JsonDSL extends Implicits {
 object Printer extends Printer
 trait Printer {
   import java.io._
-  import java.util.IdentityHashMap
   import scala.text._
-  import scala.collection.immutable.Stack
 
   /** Compact printing (no whitespace etc.)
    */
@@ -496,28 +494,17 @@ trait Printer {
   /** Compact printing (no whitespace etc.)
    */
   def compact[A <: Writer](d: Document, out: A): A = {
-    // Non-recursive implementation to support serialization of big structures.
-    var nodes = Stack.Empty.push(d)
-    val visited = new IdentityHashMap[Document, Unit]()
-    while (!nodes.isEmpty) {
-      val cur = nodes.top
-      nodes = nodes.pop
-      cur match {
-        case DocText(s)      => out.write(s)
-        case DocCons(d1, d2) =>
-          if (!visited.containsKey(cur)) {
-            visited.put(cur, ())
-            nodes = nodes.push(cur)
-            nodes = nodes.push(d1)
-          } else {
-            nodes = nodes.push(d2)
-          }
-        case DocBreak        =>
-        case DocNest(_, d)   => nodes = nodes.push(d)
-        case DocGroup(d)     => nodes = nodes.push(d)
-        case DocNil          =>
-      }
+    def layout(docs: List[Document]): Unit = docs match {
+      case Nil                   =>
+      case DocText(s) :: rs      => out.write(s); layout(rs)
+      case DocCons(d1, d2) :: rs => layout(d1 :: d2 :: rs)
+      case DocBreak :: rs        => layout(rs)
+      case DocNest(_, d) :: rs   => layout(d :: rs)
+      case DocGroup(d) :: rs     => layout(d :: rs)
+      case DocNil :: rs          => layout(rs)
     }
+
+    layout(List(d))
     out.flush
     out
   }
