@@ -233,6 +233,29 @@ object StringHelpersSpec extends Specification with StringHelpers with StringGen
       "".roboSplit("a") must_== List()
     }
   }
+
+  "The SuperString class charSplit method" should {
+    "split a string according to a separator" in {
+      "hello".charSplit('l') must_== List("he", "o")
+    }
+    "split a string according to a separator - 2" in {
+      "hAeAlAlAo".charSplit('A') must_== List("h", "e", "l", "l", "o")
+    }
+    "split a string" in {
+      "hello . world ".charSplit('.') must_== List("hello ", " world ")
+    }
+    "split a string into parts" in {
+      "hello .. world ".charSplit('.') must_== List("hello ", " world ")
+    }
+    "return an empty list if the string is null" in {
+      (null: String).charSplit('a') must_== List()
+    }
+    "return a list containing the string if the string is empty" in {
+      "".charSplit('a') must_== List()
+    }
+  }
+
+
   "The SuperString class splitAt method" should {
     "split a string according to a separator and return a List containing a pair with the 2 parts" in {
       stringToSuper("hello").splitAt("ll") must_== List(("he", "o"))

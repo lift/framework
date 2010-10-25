@@ -252,6 +252,39 @@ trait StringHelpers {
     def roboSplit(sep: String): List[String] = what match {case null => Nil case s => s.split(sep).toList.map(_.trim).filter(_.length > 0)}
 
     /**
+     * Faster than roboSplit... this method splits Strings at a given
+     * character
+     */
+    def charSplit(sep: Char): List[String] = what match {
+      case null => Nil
+      case str => {
+        val ret = new scala.collection.mutable.ListBuffer[String]
+
+        val len = str.length
+        var pos = 0
+        var lastPos = 0
+        
+        while (pos < len) {
+          if (str.charAt(pos) == sep) {
+            if (pos > lastPos) {
+              val ns = str.substring(lastPos, pos)
+              ret += ns
+            }
+
+            lastPos = pos + 1
+          }
+          pos += 1
+        }
+
+        if (pos > lastPos) {
+          ret += str.substring(lastPos, pos)
+        }
+
+        ret.toList
+      }
+    }
+
+    /**
      * Split a string in 2 parts at the first place where a separator is found
      * @return a List containing a pair of the 2 trimmed parts
      */

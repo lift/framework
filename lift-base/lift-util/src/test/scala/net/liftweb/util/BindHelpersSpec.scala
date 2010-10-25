@@ -138,10 +138,69 @@ object BindHelpersSpec extends Specification  {
     "replace an attribute named 'namespace:bindparam name' in a NodeSeq with a new attribute name and calculated value from an FuncAttrOptionBindParam" in {
       bind("user", <t user:tag="dear"></t>, FuncAttrBoxBindParam("tag", (n: NodeSeq) => Full(Text(n.text + " world")), "hello")) must ==/(<t hello="dear world"></t>)
     }
-
-
-
   }
+
+  "findOption" should {
+    "find an id" in {
+      val xml = <foo><bar/>Dog<b><woof id="3"/></b></foo>
+
+      findOption(xml) {
+        e => e.attribute("id").
+        filter(_.text == "3").map(i => e)
+      }.get must ==/ (<woof id="3"/>)
+    }
+
+    "not find an ide" in {
+      val xml = <foo><bar/>Dog<b><woof ide="3"/></b></foo>
+
+      findOption(xml) {
+        e => e.attribute("id").
+        filter(_.text == "3").map(i => e)
+      } must_== None
+    }
+
+
+    "not find a the wrong id" in {
+      val xml = <foo><bar/>Dog<b><woof ide="4"/></b></foo>
+
+      findOption(xml) {
+        e => e.attribute("id").
+        filter(_.text == "3").map(i => e)
+      } must_== None
+    }
+  }
+
+  "findBox" should {
+    "find an id" in {
+      val xml = <foo><bar/>Dog<b><woof id="3"/></b></foo>
+
+      findBox(xml) {
+        e => e.attribute("id").
+        filter(_.text == "3").
+        map(i => e)
+      }.open_! must ==/ (<woof id="3"/>)
+    }
+
+    "not find an ide" in {
+      val xml = <foo><bar/>Dog<b><woof ide="3"/></b></foo>
+
+      findBox(xml) {
+        e => e.attribute("id").
+        filter(_.text == "3").map(i => e)
+      } must_== Empty
+    }
+
+
+    "not find a the wrong id" in {
+      val xml = <foo><bar/>Dog<b><woof ide="4"/></b></foo>
+
+      findBox(xml) {
+        e => e.attribute("id").
+        filter(_.text == "3").map(i => e)
+      } must_== Empty
+    }
+  }
+
   "the xmlParam function" should {
     "find the value of an attribute in an xml fragment" in {
       xmlParam(<t hello="world">world</t>, "hello") must_== Full("world")

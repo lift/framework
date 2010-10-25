@@ -32,28 +32,28 @@ object SnippetSpec extends Specification {
                     () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map())
 
   "LiftSession" should {
-    "Correctly process lift:designer_friendly" in {
+    "Correctly process lift:start_at" in {
       val session = new LiftSession("", "hello", Empty)
-      val ret = session.checkDesignerFriendly(<html lift:designer_friendly="true">
-                                              <head/>
-                                              <body>
-                                              <div l:s="surround"/>
-                                              </body>
-                                              </html>)
+      val ret = session.checkStartAt(<html lift:start_at="content">
+                                     <head/>
+                                     <body>
+                                     <div id="content" class="lift:surround"/>
+                                     </body>
+                                     </html>)
 
-      ret must_== <div l:s="surround"/>
+      ret must ==/ (<div id="content" class="lift:surround"/>)
     }
 
-    "Correctly process l:designer_friendly" in {
+    "Correctly process l:start_at" in {
       val session = new LiftSession("", "hello", Empty)
-      val ret = session.checkDesignerFriendly(<html l:designer_friendly="true">
-                                              <head/>
-                                              <body>
-                                              <lift:surround><div/></lift:surround>
-                                              </body>
-                                              </html>)
+      val ret = session.checkStartAt(<html l:start_at="dog">
+                                     <head/>
+                                     <body>
+                                     <lift:surround id="dog"><div/></lift:surround>
+                                     </body>
+                                     </html>)
 
-      ret must_== <lift:surround><div/></lift:surround>
+      ret must ==/ (<lift:surround id="dog"><div/></lift:surround>)
     }
 
     "Correctly process not lift:designer_friendly" in {
@@ -61,11 +61,11 @@ object SnippetSpec extends Specification {
       val xml = <html>
       <head/>
       <body>
-      <div l:s="surround"/>
+      <div class="lift:surround"/>
       </body>
       </html>
       
-      val ret = session.checkDesignerFriendly(xml)
+      val ret = session.checkStartAt(xml)
 
       ret must_== xml
     }
@@ -101,7 +101,7 @@ object SnippetSpec extends Specification {
       ret.open_! must ==/( res)
     }
 
-    "Snippet invocation works l:s='foo'" in {
+    "Snippet invocation works class='l:foo'" in {
       val res = <div/>
 
       val ret =
@@ -109,14 +109,14 @@ object SnippetSpec extends Specification {
           S.mapSnippetsWith("foo" -> ((a: NodeSeq) => a)) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div l:s="foo" />)
+            } yield s.processSurroundAndInclude("test", <div class="l:foo" />)
           }
         }
 
       ret.open_! must ==/( res)
     }
 
-    "Snippet invocation works lift:s='foo'" in {
+    "Snippet invocation works class='lift:foo'" in {
       val res = <div/>
 
       val ret =
@@ -124,14 +124,14 @@ object SnippetSpec extends Specification {
           S.mapSnippetsWith("foo" -> ((a: NodeSeq) => a)) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div lift:s="foo" />)
+            } yield s.processSurroundAndInclude("test", <div class='lift:foo' />)
           }
         }
 
       ret.open_! must ==/( res)
     }
 
-    "Snippet invocation works l:snippet='foo'" in {
+    "Snippet invocation fails class='l:bar'" in {
       val res = <div/>
 
       val ret =
@@ -139,22 +139,7 @@ object SnippetSpec extends Specification {
           S.mapSnippetsWith("foo" -> ((a: NodeSeq) => a)) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div l:snippet="foo"/>)
-          }
-        }
-
-      ret.open_! must ==/( res)
-    }
-
-    "Snippet invocation fails bar:s='foo'" in {
-      val res = <div/>
-
-      val ret =
-        S.statelessInit(Req.nil) {
-          S.mapSnippetsWith("foo" -> ((a: NodeSeq) => a)) {
-            for {
-              s <- S.session
-            } yield s.processSurroundAndInclude("test", <div lift:s="bar" />)
+            } yield s.processSurroundAndInclude("test", <div class="lift:bar" />)
           }
         }
 
@@ -253,7 +238,7 @@ object SnippetSpec extends Specification {
           for {
             s <- S.session
           } yield s.processSurroundAndInclude("test", 
-                                              <div l:eager_eval="true" l:s="foo">a<lift:foo>b</lift:foo></div>)
+                                              <div class="l:foo?eager_eval=true">a<lift:foo>b</lift:foo></div>)
         }
         myInfo.is must_== "ab"
       }

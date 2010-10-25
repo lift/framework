@@ -1094,6 +1094,40 @@ trait BindHelpers {
   }
 
   /**
+   * Given a NodeSeq and a function that returns an Option[T],
+   * return the first value found in which the function evaluates
+   * to Some
+   */
+  def findOption[T](nodes: Seq[Node])(f: Elem => Option[T]): Option[T] = {
+    nodes.projection.flatMap {
+      case Group(g) => findOption(g)(f)
+      case e: Elem => f(e) orElse findOption(e.child)(f)
+      case _ => None
+    }.firstOption
+  }
+
+  /**
+   * Given an id value, find the Elem with the specified id
+   */
+  def findId(nodes: Seq[Node], id: String): Option[Elem] =
+    findOption(nodes) {
+      e => e.attribute("id").filter(_.text == id).map(i => e)
+    }
+
+  /**
+   * Given a NodeSeq and a function that returns a Box[T],
+   * return the first value found in which the function evaluates
+   * to Full
+   */
+  def findBox[T](nodes: Seq[Node])(f: Elem => Box[T]): Box[T] = {
+    nodes.projection.flatMap {
+      case Group(g) => findBox(g)(f)
+      case e: Elem => f(e) or findBox(e.child)(f)
+      case _ => Empty
+    }.firstOption
+  }
+
+  /**
    * Finds and returns the first node in the specified NodeSeq and its children
    * with the same label and prefix as the specified element.
    */
@@ -1135,7 +1169,29 @@ trait BindHelpers {
     mix(bindParam.calcValue(s) getOrElse NodeSeq.Empty)
 
   }
+
+  /**
+   * promote a String to a ToCssBindPromotor
+   */
+  implicit def strToCssBindPromoter(str: String): ToCssBindPromoter =
+    new ToCssBindPromoter(CssSelectorParser.parse(str))
 }
+
+
+final class ToCssBindPromoter(css: Box[CssSelector]) {
+  def #>(str: String): CssBind = null
+}
+
+sealed trait CssBindFunc extends Function1[NodeSeq, NodeSeq] {
+  def &(other: CssBindFunc): CssBindFunc
+}
+
+sealed trait CssBind extends CssBindFunc {
+  def css: Box[CssSelector]
+  
+}
+
+
 
 }
 }

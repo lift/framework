@@ -603,50 +603,22 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    *
    * This method is private[http] so that it's accessable to the tests
    */
-  private[http] def checkDesignerFriendly(in: NodeSeq): NodeSeq = {
-    def df(in: MetaData): Boolean = in match {
-      case Null => false
+  private[http] def checkStartAt(in: NodeSeq): NodeSeq = {
+    def df(in: MetaData): Option[PrefixedAttribute] = in match {
+      case Null => None
       case p: PrefixedAttribute 
       if (p.pre == "l" || p.pre == "lift") && 
-        (p.key == "designer_friendly") => true
+        (p.key == "start_at") => Some(p)
       case n => df(n.next)
     }
 
 
-    val check = in.find {
-      case e: Elem => e.label == "html" && df(e.attributes)
-      case _ => false
-    }.isDefined
-
-    def findSurroundSnippet(in: NodeSeq): Option[NodeSeq] = {
-      def isSurAttr(m: MetaData): Boolean = m match {
-        case Null => false
-        case p: PrefixedAttribute if 
-          ((((p.pre == "l" || p.pre == "lift") && p.key == "s") ||
-            (p.pre == "l" && p.key == "snippet")) &&
-           p.value.text == "surround") => true
-        case n => isSurAttr(n.next)
-      }
-
-
-      def isSurround(e: Elem) =
-        (("l" == e.prefix || "lift" == e.prefix) &&
-         e.label == "surround") || isSurAttr(e.attributes)
-
-      in.flatMap {
-        case Group(nodes) => findSurroundSnippet(nodes)
-        case e: Elem if isSurround(e) => Some(e)
-        case e: Elem => findSurroundSnippet(e.child)
-        case _ => None
-      }.headOption
-    }
-
-    if (check) {
-      findSurroundSnippet(in) match {
-        case Some(found) => found
-        case _ => in
-      }
-    } else in
+    in.flatMap {
+      case e: Elem if e.label == "html" => df(e.attributes)
+      case _ => None
+    }.flatMap {
+      md => Helpers.findId(in, md.value.text)
+    }.headOption getOrElse in
   }
 
   /**
@@ -664,7 +636,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     (template or findVisibleTemplate(path, request)).map { 
       xhtmlBase =>
         fullPageLoad.doWith(true) { // allow parallel snippets
-          val xhtml = checkDesignerFriendly(xhtmlBase)
+          val xhtml = checkStartAt(xhtmlBase)
           // Phase 1: snippets & templates processing
           val rawXml: NodeSeq = processSurroundAndInclude(PageName get, xhtml)
           
@@ -1340,8 +1312,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         Group(processSurroundAndInclude(page, nodes))
       
       case SnippetNode(element, kids, isLazy, attrs, snippetName) =>
-        
-        // case elm: Elem if elm.prefix == "lift" || elm.prefix == "l" =>
         processOrDefer(isLazy) {
           S.doSnippet(snippetName) {
             S.withAttrs(attrs) {
@@ -1804,25 +1774,63 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
 
   // an object that extracts an elem that defines a snippet
   private object SnippetNode {
-    
-    private def snippy(in: MetaData): Option[String] =
-      in match {
-        case Null => None
-        case p: PrefixedAttribute if 
-          ((p.pre == "l" || p.pre == "lift") && p.key == "s") ||
-        (p.pre == "l" && p.key == "snippet") => Some(p.value.text)
-        case x => snippy(x.next)
+    private def removeLift(str: String): String =
+      str.indexOf(":") match {
+        case x if x >= 0 => str.substring(x + 1)
+        case _ => str
       }
 
-    private def liftAttrsAndParallel(in: MetaData): (Boolean, MetaData, MetaData) = {
+    private def makeMetaData(key: String, value: String, rest: MetaData): MetaData = key.indexOf(":") match {
+      case x if x > 0 => new PrefixedAttribute(key.substring(0, x),
+                                               key.substring(x + 1),
+                                               value, rest)
+
+      case _ => new UnprefixedAttribute(key, value, rest)
+    }
+
+    private def pairsToMetaData(in: List[String]): MetaData = in match {
+      case Nil => Null
+      case x :: xs => {
+        val rest = pairsToMetaData(xs)
+        x.charSplit('=').map(Helpers.urlDecode) match {
+          case Nil => rest
+          case x :: Nil => makeMetaData(x, "", rest)
+          case x :: y :: _ => makeMetaData(x, y, rest)
+        }
+      }
+    }
+
+    private def isLiftClass(s: String): Boolean =
+      s.startsWith("lift:") || s.startsWith("l:")
+
+    private def snippy(in: Elem): Option[(String, MetaData)] =
+      for {
+        cls <- in.attribute("class")
+        snip <- cls.text.charSplit(' ').find(isLiftClass)
+      } yield {
+        snip.charSplit('?') match {
+          case Nil => "this should never happen" -> Null
+          case x :: Nil => urlDecode(removeLift(x)) -> Null
+          case x :: xs => urlDecode(removeLift(x)) -> pairsToMetaData(xs)
+        }
+      }
+
+    private def liftAttrsAndParallel(in: MetaData): (Boolean, MetaData) = {
       var next = in
       var par = false
       var nonLift: MetaData = Null
-      var lift: MetaData = Null
-   
 
       while (next != Null) {
         next match {
+          // remove the lift class css classes from the class attribute
+          case up: UnprefixedAttribute if up.key == "class" =>
+            up.value.text.charSplit(' ').filter(s => !isLiftClass(s)) match {
+              case Nil =>
+              case xs => nonLift = new UnprefixedAttribute("class",
+                                                           xs.mkString(" "),
+                                                           nonLift)
+            }
+
           case p: PrefixedAttribute 
           if (p.pre == "l" || p.pre == "lift") && p.key == "parallel"
           => par = true
@@ -1832,9 +1840,7 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
           if p.pre == "lift" && p.key == "snippet"
           => nonLift = p.copy(nonLift)
 
-          case p: PrefixedAttribute 
-          if (p.pre == "l" || p.pre == "lift") 
-            => lift = new UnprefixedAttribute(p.key, p.value, lift)
+          
 
           case a => nonLift = a.copy(nonLift)
         }
@@ -1842,7 +1848,7 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
       }
       
       
-      (par, nonLift, lift)
+      (par, nonLift)
     }
            
       
@@ -1860,12 +1866,18 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
 
         case elm: Elem => {
           for {
-            snippetName <- snippy(elm.attributes)
+            (snippetName, lift) <- snippy(elm)
           } yield {
-            val (par, nonLift, lift) = liftAttrsAndParallel(elm.attributes)
+            val (par, nonLift) = liftAttrsAndParallel(elm.attributes)
             val newElm = new Elem(elm.prefix, elm.label, 
                                   nonLift, elm.scope, elm.child :_*)
-            (newElm, newElm, par, lift, snippetName)
+            (newElm, newElm, par || 
+             (lift.find {
+               case up: UnprefixedAttribute if up.key == "parallel" => true
+               case _ => false
+               }.
+              flatMap(up => AsBoolean.unapply(up.value.text)) getOrElse 
+              false), lift, snippetName)
              
           }
         }

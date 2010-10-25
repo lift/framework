@@ -49,7 +49,7 @@ private[common] trait LinkedListElem[T1, T2] {
 
 
 /**
- *
+ * Implements an LRU Hashmap
  */
 class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V) => Unit)*) extends LinkedListElem[K, V] {
   import java.util.HashMap
