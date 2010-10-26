@@ -70,7 +70,7 @@ trait MetaOpenIDProtoUser[ModelType <: OpenIDProtoUser[ModelType]] extends MetaM
       
       self.findAll(By(email, u.email.is)) map {existing =>
         info("Cannot register new user, email %s already exists with openId ".format(existing.email.is,existing.openId.is))
-        S.error("A user with email %s already exists with a different OpenID.".format(u.email.is))
+        S.error(duplicateEmailErrorMessage(u.email))
         S.redirectTo(homePage)
       }
       
@@ -147,6 +147,24 @@ trait MetaOpenIDProtoUser[ModelType <: OpenIDProtoUser[ModelType]] extends MetaM
 
   def openIDVendor: OpenIDVendor
 
+  /**
+   * Generate an error message on duplicate email addresses.
+   */
+  protected def duplicateEmailErrorMessage(email: String): String = 
+    "A user with email %s already exists with a different OpenID.".format(email)
+
+  /**
+   * Generate an error message based on an exception
+   */
+  protected def errorMessageFromException(exception: Exception): String =
+    (S ? "Got an exception") + ": " + exception.getMessage
+
+  /**
+   * Generate an error message based on a bad verification result
+   */
+  protected def unableToLogInErrorMessage(verificationResult: Box[VerificationResult]): String =
+    (S ? "Unable to log you in") +": "+verificationResult
+
   def performLogUserIn(openid: Box[Identifier], fo: Box[VerificationResult], exp: Box[Exception]): LiftResponse = {
       (openid, exp) match {
         case (Full(id), _) =>
@@ -156,12 +174,12 @@ trait MetaOpenIDProtoUser[ModelType <: OpenIDProtoUser[ModelType]] extends MetaM
 
         case (_, Full(exp)) =>
           warn("Got an exception", exp)
-          S.error("Got an exception: "+exp.getMessage)
+          S.error(errorMessageFromException(exp))
 
 
         case _ =>
-          warn("Unable to login using OpenID")
-          S.error("Unable to log you in: "+fo)
+          warn("Unable to login using OpenID: "+fo)
+          S.error(unableToLogInErrorMessage(fo))
       }
 
       val redir = loginRedirect.is match {
