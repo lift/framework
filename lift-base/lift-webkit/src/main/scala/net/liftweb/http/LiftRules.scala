@@ -73,7 +73,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
    * for general notices (not associated with id-s) regardless if they are set for the page rendering, ajax
    * response or Comet response.
    */
-  var noticesAutoFadeOut = new FactoryMaker[(NoticeType.Value) => Box[(TimeSpan, TimeSpan)]]((notice : NoticeType.Value) => Empty){}
+  val noticesAutoFadeOut = new FactoryMaker[(NoticeType.Value) => Box[(TimeSpan, TimeSpan)]]((notice : NoticeType.Value) => Empty){}
 
   /**
    * Use this to apply various effects to the notices. The user function receives the NoticeType
@@ -82,7 +82,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
    * For notices associated with ID's the user type will receive an Empty notice type. That's because the effect
    * is applied on the real estate holding the notices for this ID. Typically this contains a single message.
    */
-  var noticesEffects = new FactoryMaker[(Box[NoticeType.Value], String) => Box[JsCmd]]((notice: Box[NoticeType.Value], id: String) => Empty){}
+  val noticesEffects = new FactoryMaker[(Box[NoticeType.Value], String) => Box[JsCmd]]((notice: Box[NoticeType.Value], id: String) => Empty){}
 
 
   /**
@@ -871,7 +871,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   /**
    * Obtain the resource URL by name
    */
-  var getResource: String => Box[_root_.java.net.URL] = defaultGetResource _
+  @volatile var getResource: String => Box[_root_.java.net.URL] = defaultGetResource _
 
   /**
    * Obtain the resource URL by name

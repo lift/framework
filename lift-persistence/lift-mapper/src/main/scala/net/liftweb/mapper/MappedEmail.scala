@@ -21,9 +21,10 @@ import _root_.java.util.regex._
 import _root_.scala.xml.Text
 import _root_.net.liftweb.http.{S}
 import _root_.net.liftweb.util.{FieldError}
+import _root_.net.liftweb.proto._
 
 object MappedEmail {
-  val emailPattern = Pattern.compile("^[a-z0-9._%\\-+]+@(?:[a-z0-9\\-]+\\.)+[a-z]{2,4}$")
+  def emailPattern = ProtoRules.emailRegexPattern.vend
 
   def validEmailAddr_?(email: String): Boolean = emailPattern.matcher(email).matches
 }
