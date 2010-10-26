@@ -285,6 +285,9 @@ trait Crudify {
   def editMenuLocParams: List[Loc.LocParam[TheCrudType]] = Nil
 
 
+  /**
+   * The String displayed for menu editing
+   */
   def editMenuName = S.??("Edit")+" "+displayName
 
   /**
@@ -407,11 +410,19 @@ trait Crudify {
 
   def deleteMenuName = S.??("Delete")+" "+displayName
 
+  /**
+   * This is the template that's used to render the page after the
+   * optional wrapping of the template in the page wrapper
+   */
   def deleteTemplate(): NodeSeq = pageWrapper(_deleteTemplate)
 
   def deleteId = "delete_page"
   def deleteClass = "delete_class"
 
+  /**
+   * The core template for deleting.  Does not include any
+   * page wrapping
+   */
   def _deleteTemplate =
   <lift:crud.delete form="post">
     <table id={deleteId} class={deleteClass}>
@@ -438,11 +449,19 @@ trait Crudify {
 
   def createMenuName = S.??("Create")+" "+displayName
 
+  /**
+   * This is the template that's used to render the page after the
+   * optional wrapping of the template in the page wrapper
+   */
   def createTemplate(): NodeSeq = pageWrapper(_createTemplate)
 
   def createId = "create_page"
   def createClass = "create_class"
 
+  /**
+   * The core template for creating.  Does not include any
+   * page wrapping
+   */
   def _createTemplate =
   <lift:crud.create form="post">
     <table id={createId} class={createClass}>
@@ -468,11 +487,19 @@ trait Crudify {
 
   def viewMenuName = S.??("View")+" "+displayName
 
+  /**
+   * This is the template that's used to render the page after the
+   * optional wrapping of the template in the page wrapper
+   */
   def viewTemplate(): NodeSeq = pageWrapper(_viewTemplate)
 
   def viewId = "view_page"
   def viewClass = "view_class"
 
+  /**
+   * The core template for viewing.  Does not include any
+   * page wrapping
+   */
   def _viewTemplate =
   <lift:crud.view>
     <table id={viewId} class={viewClass}>
@@ -487,11 +514,19 @@ trait Crudify {
 
   def showAllMenuName = S.??("List")+" "+displayName
 
+  /**
+   * This is the template that's used to render the page after the
+   * optional wrapping of the template in the page wrapper
+   */
   def showAllTemplate(): NodeSeq = pageWrapper(_showAllTemplate)
 
   def showAllId = "show_all"
   def showAllClass = "show_all"
 
+  /**
+   * The core template for showing record.  Does not include any
+   * page wrapping
+   */
   def _showAllTemplate =
   <lift:crud.all>
     <table id={showAllId} class={showAllClass}>
