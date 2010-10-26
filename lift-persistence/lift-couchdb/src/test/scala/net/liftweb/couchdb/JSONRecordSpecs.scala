@@ -17,9 +17,9 @@
 package net.liftweb {
 package couchdb {
 
-import net.liftweb.common.{Failure, Full}
+import net.liftweb.common.{Failure, Full, Empty}
 import net.liftweb.json.Implicits.{int2jvalue, string2jvalue}
-import net.liftweb.json.JsonAST.{JField, JInt, JObject, JString, render}
+import net.liftweb.json.JsonAST.{JField, JInt, JObject, JString, JNull, render}
 import net.liftweb.json.JsonDSL.{jobject2assoc, pair2Assoc, pair2jvalue}
 import net.liftweb.json.Printer.compact
 import net.liftweb.record.field.{IntField, OptionalStringField, StringField}
@@ -38,9 +38,26 @@ package jsontestrecords {
       override def defaultValue = 0
     }
     object favoriteColor extends OptionalStringField(this, 200)
+    object address extends JSONSubRecordField(this, Address, Empty) {
+      override def optional_? = true
+      
+    }
   }
 
   object Person extends Person with JSONMetaRecord[Person]
+  
+  class Address extends JSONRecord[Address] {
+	  def meta = Address
+	
+	//  object country extends CountryField(this)
+	//  object postalCode extends PostalCodeField(this, country)
+	  object country extends StringField(this, 60)
+	  object postalCode extends StringField(this, 10)
+	  object city extends StringField(this, 60)
+	  object street extends StringField(this, 200)
+	}
+	
+	object Address extends Address with JSONMetaRecord[Address]
 }
 
 object JSONRecordTestSpecs extends Specification {
@@ -49,7 +66,14 @@ object JSONRecordTestSpecs extends Specification {
   def assertEqualPerson(a: Person, b: Person) = {
     a.name.valueBox must_== b.name.valueBox
     a.age.valueBox must_== b.age.valueBox
-    a.age.valueBox must_== b.age.valueBox
+    a.favoriteColor.valueBox must_== b.favoriteColor.valueBox
+    a.address.valueBox.isEmpty must_== b.address.valueBox.isEmpty
+    for (aa <- a.address.valueBox ; ba <- b.address.valueBox) {
+	  aa.country.valueBox must_== ba.country.valueBox
+	  aa.postalCode.valueBox must_== aa.postalCode.valueBox
+	  aa.city.valueBox must_== aa.city.valueBox
+	  aa.street.valueBox must_== aa.street.valueBox
+    }
   }
     
   "A JSON record" should {
@@ -59,11 +83,17 @@ object JSONRecordTestSpecs extends Specification {
     val testDoc2: JObject = ("age" -> 30) ~ ("extra1" -> "value1") ~ ("extra2" -> "value2") ~ ("favoriteColor" -> "blue") ~ ("name" -> "Bob")
     def testRec3: Person = Person.createRecord.name("Charlie").age(0)
     val testDoc3: JObject = ("name" -> "Bob")
+    def testRec4: Person = Person.createRecord.name("Max").age(25).address(Address.createRecord.street("my street").country("France").city("Paris").postalCode("75001"))
+    val testDoc4: JObject = ("address" ->  ("city" -> "Paris") ~ ("country" -> "France") ~ ("postalCode" -> "75001") ~ ("street" -> "my street")) ~ ("age" -> 25) ~ ("name" -> "Max")
 
     "encode basic records correctly" in {
       compact(render(testRec1.asJValue)) must_== compact(render(testDoc1))
     }
 
+    "encode record with subrecord correctly" in {
+      compact(render(testRec4.asJValue)) must_== compact(render(testDoc4))
+    }
+    
     "decode basic records correctly" in {
       val recBox = Person.fromJValue(testDoc1)
       recBox must verify (_.isDefined)
@@ -96,6 +126,14 @@ object JSONRecordTestSpecs extends Specification {
       val Full(rec) = recBox
 
       rec.favoriteColor.value must_== Some("blue")
+    }
+
+    "support set subRecord field" in {
+      val recBox = Person.fromJValue(testDoc4)
+      recBox must verify (_.isDefined)
+      val Full(rec) = recBox
+
+      rec.address.valueBox.flatMap(_.street.valueBox) must_== Full("my street")
     }
 
     "not set missing fields" in {

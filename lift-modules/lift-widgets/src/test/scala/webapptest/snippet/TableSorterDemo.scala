@@ -17,13 +17,31 @@
 package webapptest {
 package snippet {
 
-import _root_.scala.xml.NodeSeq
-import _root_.net.liftweb.widgets.tablesorter.TableSorter
+import _root_.scala.xml.{NodeSeq, Text}
+import _root_.net.liftweb.http.SHtml._
+import _root_.net.liftweb.util.Helpers._
+import _root_.net.liftweb.widgets.tablesorter.{TableSorter, DisableSorting, Sorting, Sorter}
 
 class TableSorterDemo {
-  def render(xhtml: NodeSeq) :NodeSeq = {
-    TableSorter("table")
+  
+  val headers = (0, DisableSorting()) :: (3,Sorter("currency")) :: Nil
+  val sortList = (3,Sorting.DSC) :: Nil
+  
+  val options = TableSorter.options(headers,sortList)
+  
+  def demo1(xhtml: NodeSeq) :NodeSeq = {
+    TableSorter("#myTable")
   }
+  
+  def demo2(xhtml: NodeSeq) :NodeSeq = {
+    TableSorter("#myTable2", options)
+  }
+  
+  def demo3(xhtml: NodeSeq) :NodeSeq = {
+    bind("demo3", xhtml, 
+      "btn" -> a( () => TableSorter.jsRender("#myTable3", options).cmd, Text("TableSorter that table!") ))
+  }
+  
 }
 
 }

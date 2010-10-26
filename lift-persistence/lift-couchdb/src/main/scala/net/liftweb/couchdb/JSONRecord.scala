@@ -214,7 +214,7 @@ class JSONSubRecordField[OwnerType <: JSONRecord[OwnerType], SubRecordType <: JS
   def asJValue: JValue = valueBox.map(_.asJValue) openOr (JNothing: JValue)
   def setFromJValue(jvalue: JValue): Box[SubRecordType] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
-    case _                            => setBox(setFromJValue(jvalue))
+    case _                            => setBox(valueMeta.fromJValue(jvalue))
   }
 }
 
