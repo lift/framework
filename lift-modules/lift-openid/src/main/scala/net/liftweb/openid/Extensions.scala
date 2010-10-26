@@ -43,7 +43,9 @@ private object RawHelper {
     //val lTyped: java.util.List[T] = l.asInstanceOf[java.util.List[T]]
     //val s = convertList(lTyped)
     //s.toList
-    (for {i <- 0 until l.size} yield l(i).asInstanceOf[T]).toList
+    val arr: Array[Object] = l.toArray()
+    arr.toList.map(_.asInstanceOf[T])
+    // (for {i <- 0 until l.size} yield l(i).asInstanceOf[T]).toList
   }
 }
 
