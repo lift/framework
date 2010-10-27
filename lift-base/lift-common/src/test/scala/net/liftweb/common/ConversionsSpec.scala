@@ -22,8 +22,28 @@ import _root_.net.liftweb.common.Box._
 import _root_.org.specs.runner._
 import _root_.org.specs.Sugar._
 
+import _root_.scala.xml._
+
 class ConversionsSpecTest extends Runner(ConversionsSpec) with JUnit with Console
 object ConversionsSpec extends Specification {
+  "A StringOrNodeSeq" should {
+    "convert from a String" in {
+      val sns: StringOrNodeSeq = "Hello"
+      sns.nodeSeq must_== Text("Hello")
+    }
+
+    "convert from an Elem" in {
+      val sns: StringOrNodeSeq = <b/>
+      sns.nodeSeq must ==/ ( <b/> )
+    }
+
+    "convert from a Seq[Node]" in {
+      val sns: StringOrNodeSeq = List(<a/>, <b/>)
+      sns.nodeSeq must ==/ (List(<a/>, <b/>) : NodeSeq)
+    }
+  }
+
+
   "A StringFunc" should {
     "be created by a String constant" in {
       val sf: StringFunc = "Foo"
