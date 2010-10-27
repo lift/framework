@@ -23,6 +23,44 @@ package common {
  */
 
 /**
+ * A helpful trait that will accept either a String or a NodeSeq via
+ * an implicit conversion.  So, all you need to do is put in a String or
+ * a NodeSeq and the right thing will happen.
+ */
+sealed trait StringOrNodeSeq {
+  def nodeSeq: scala.xml.NodeSeq
+}
+
+/**
+ * The companion object that has helpful
+ * implicit conversions from String and NodeSeq
+ */
+object StringOrNodeSeq {
+  import scala.xml._
+
+  /**
+   * Convert a String to a StringOrNodeSeq
+   */
+  implicit def strTo[T <% String](str: T): StringOrNodeSeq = 
+    new StringOrNodeSeq {
+      def nodeSeq: NodeSeq = Text(str)
+    }
+
+  /**
+   * Convert a NodeSeq (well, a Seq[Node]) to a StringOrNodeSeq
+   */
+  implicit def nsTo(ns: Seq[Node]): StringOrNodeSeq = 
+    new StringOrNodeSeq {
+      def nodeSeq: NodeSeq = ns
+    }
+
+  /**
+   * Convert a StringOrNodeSeq into a NodeSeq
+   */
+  implicit def toNodeSeq(sns: StringOrNodeSeq): NodeSeq = sns.nodeSeq
+}
+
+/**
  * Sometimes you want a function that returns a String as a parameter,
  * but many times, you'll just want to pass a String constant.  In
  * those cases, this trait and it's implicit conversions come in really
