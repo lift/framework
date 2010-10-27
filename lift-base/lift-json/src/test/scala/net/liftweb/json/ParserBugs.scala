@@ -24,7 +24,7 @@ class ParserBugsTest extends Runner(ParserBugs) with JUnit
 object ParserBugs extends Specification {
   import JsonParser.parseOpt
 
-  "\uffff is a valid char in string literal" in {
+  "Unicode ffff is a valid char in string literal" in {
     parseOpt(""" {"x":"\uffff"} """).isDefined mustEqual true
   }
 }
