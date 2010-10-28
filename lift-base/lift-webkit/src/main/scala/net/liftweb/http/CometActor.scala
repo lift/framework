@@ -402,12 +402,17 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   /**
    * Creates the span element acting as the real estate for commet rendering.
    */
-  def buildSpan(time: Long, xml: NodeSeq): NodeSeq =
+  def buildSpan(time: Long, xml: NodeSeq): NodeSeq = {
     Elem(parentTag.prefix, parentTag.label, parentTag.attributes,
-      parentTag.scope, Group(xml)) %
-            (new UnprefixedAttribute("id", Text(spanId), Null)) %
-            (new PrefixedAttribute("lift", "when", Text(time.toString), Null))
-
+         parentTag.scope, Group(xml)) %
+    new UnprefixedAttribute("id", 
+                            Text(spanId), 
+                            if (time > 0L) {
+                              new PrefixedAttribute("lift", "when", 
+                                                    time.toString, 
+                                                    Null)
+                            } else {Null})
+  }
 
   def messageHandler = {
     val what = composeFunction

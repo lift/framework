@@ -42,7 +42,7 @@ object Comet extends DispatchSnippet with LazyLoggable {
   Elem(cometActor.parentTag.prefix, cometActor.parentTag.label, cometActor.parentTag.attributes,
        cometActor.parentTag.scope, Group(xml)) %
   (new UnprefixedAttribute("id", Text(spanId), Null)) %
-  (timeb.map(time => (new PrefixedAttribute("lift", "when", Text(time.toString), Null))) openOr Null)
+  (timeb.filter(_ > 0L).map(time => (new PrefixedAttribute("lift", "when", Text(time.toString), Null))) openOr Null)
     
   private def buildComet(kids: NodeSeq) : NodeSeq = {
     val theType: Box[String] = S.attr.~("type").map(_.text)
