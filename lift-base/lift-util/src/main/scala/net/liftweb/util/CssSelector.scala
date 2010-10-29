@@ -80,7 +80,7 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
     }
   }
 
-  private implicit def str2chars(s: String): List[Char] = stringWrapper(s).toList
+  private implicit def str2chars(s: String): List[Char] = new scala.collection.immutable.WrappedString(s).toList
 
   private lazy val topParser: Parser[CssSelector] = {
     idMatch |
