@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import scala.xml.NodeSeq
+
 package net.liftweb {
 package common {
 
@@ -101,6 +103,49 @@ final case class RealStringFunc(func: () => String) extends StringFunc
 final case class ConstStringFunc(str: String) extends StringFunc {
   lazy val func = () => str
 }
+
+/**
+ * Sometimes you want a function that returns a NodeSeq as a parameter,
+ * but many times, you'll just want to pass a NodeSeq constant.  In
+ * those cases, this trait and it's implicit conversions come in really
+ * handy.  Basically, a NodeSeq constant or a NodeSeq function can be passed and
+ * either will be implicitly converted into a NodeSeqFunc.
+ */
+sealed trait NodeSeqFunc {
+  def func: () => NodeSeq
+}
+
+/**
+ * The companion object to NodeSeqFunc with helpful implicit conversions
+ */
+object NodeSeqFunc {
+  /**
+   * If you've got something that can be converted into a NodeSeq (a constant)
+   * but want a NodeSeqFunc, this implicit will do the conversion.
+   */
+  implicit def nsToNodeSeqFunc[T](ns: T)(implicit f: T => NodeSeq): NodeSeqFunc = 
+    ConstNodeSeqFunc(f(ns))
+
+  /**
+   * If you've got something that can be converted into a String Function
+   * but want a StringFunc, this implicit will do the conversion.
+   */
+  implicit def funcToNodeSeqFunc[T](func: () => T)(implicit f: T => NodeSeq): NodeSeqFunc =
+    RealNodeSeqFunc(() => f(func()))
+}
+
+/**
+ * The case class that holds a NodeSeq function.
+ */
+final case class RealNodeSeqFunc(func: () => NodeSeq) extends NodeSeqFunc
+
+/**
+ * The case class that holds the NodeSeq constant.
+ */
+final case class ConstNodeSeqFunc(ns: NodeSeq) extends NodeSeqFunc {
+  lazy val func = () => ns
+}
+
 
 }
 }

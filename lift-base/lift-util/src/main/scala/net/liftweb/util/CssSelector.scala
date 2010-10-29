@@ -88,7 +88,7 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
     attrMatch
   }
     
-  private lazy val idMatch: Parser[CssSelector] = '.' ~> id ~ opt(subNode) ^^ {
+  private lazy val idMatch: Parser[CssSelector] = '#' ~> id ~ opt(subNode) ^^ {
     case id ~ sn => IdSelector(id, sn)
   }
 
@@ -106,12 +106,13 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
   private lazy val number: Parser[Char] = elem("number", isNumber)
 
   private lazy val classMatch: Parser[CssSelector] = 
-    '#' ~> attrName ~ opt(subNode) ^^ {
+    '.' ~> attrName ~ opt(subNode) ^^ {
       case cls ~ sn => ClassSelector(cls, sn)
     }
 
   private lazy val attrMatch: Parser[CssSelector] = 
     attrName ~ '=' ~ attrConst ~ opt(subNode) ^^ {
+      case "id" ~ _ ~ const ~ sn => IdSelector(const, sn)
       case "name" ~ _ ~ const ~ sn => NameSelector(const, sn)
       case n ~ _  ~ v ~ sn => AttrSelector(n, v, sn)
     }

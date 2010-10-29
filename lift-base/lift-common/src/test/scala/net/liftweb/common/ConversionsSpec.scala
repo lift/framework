@@ -73,6 +73,37 @@ object ConversionsSpec extends Specification {
     }
 
   }
+
+  "A NodeSeqFunc" should {
+    "be created by a NodeSeq constant" in {
+      val sf: NodeSeqFunc = <b>Foo</b>
+
+      sf.func() must ==/ (<b>Foo</b>)
+    }
+
+
+    "be created by a NodeSeq Function" in {
+      val sf: NodeSeqFunc = () => <i>Bar</i>
+
+      sf.func() must ==/ (<i>Bar</i>)
+    }
+
+    "be created by a constant that can be converted to a NodeSeq" in {
+      implicit def intToNS(in: Int): NodeSeq = <a>{in}</a>
+      val sf: NodeSeqFunc = 55
+
+      sf.func() must ==/ (<a>55</a>)
+    }
+
+    "be created by a function that can be converted to a NodeSeq" in {
+      implicit def intToNodeSeq(in: Int): NodeSeq = <a>{in}</a>
+      val sf: NodeSeqFunc = () => 55
+
+      sf.func() must ==/ (<a>55</a>)
+    }
+
+  }
+
 }
 
 }

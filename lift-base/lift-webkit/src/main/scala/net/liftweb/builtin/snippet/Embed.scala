@@ -43,7 +43,7 @@ object Embed extends DispatchSnippet {
       ctx <- S.session ?~ ("FIX"+"ME: session is invalid")
       what <- S.attr ~ ("what") ?~ ("FIX" + "ME The 'what' attribute not defined")
       templateOpt <- ctx.findTemplate(what.text) ?~ ("FIX"+"ME the "+what+" template not found")
-    } yield (what,templateOpt)) match {
+    } yield (what,LiftSession.checkForContentId(templateOpt))) match {
     case Full((what,template)) => {
       val bindingMap : Map[String,NodeSeq] = Map(kids.flatMap({
         case p : _root_.scala.xml.PCData => None // Discard whitespace and other non-tag junk

@@ -32,9 +32,8 @@ object SnippetSpec extends Specification {
                     () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map())
 
   "LiftSession" should {
-    "Correctly process lift:start_at" in {
-      val session = new LiftSession("", "hello", Empty)
-      val ret = session.checkStartAt(<html lift:start_at="content">
+    "Correctly process lift:content_id" in {
+      val ret = LiftSession.checkForContentId(<html lift:content_id="content">
                                      <head/>
                                      <body>
                                      <div id="content" class="lift:surround"/>
@@ -44,9 +43,8 @@ object SnippetSpec extends Specification {
       ret must ==/ (<div id="content" class="lift:surround"/>)
     }
 
-    "Correctly process l:start_at" in {
-      val session = new LiftSession("", "hello", Empty)
-      val ret = session.checkStartAt(<html l:start_at="dog">
+    "Correctly process l:content_id" in {
+      val ret = LiftSession.checkForContentId(<html l:content_id="dog">
                                      <head/>
                                      <body>
                                      <lift:surround id="dog"><div/></lift:surround>
@@ -57,7 +55,6 @@ object SnippetSpec extends Specification {
     }
 
     "Correctly process not lift:designer_friendly" in {
-      val session = new LiftSession("", "hello", Empty)
       val xml = <html>
       <head/>
       <body>
@@ -65,7 +62,7 @@ object SnippetSpec extends Specification {
       </body>
       </html>
       
-      val ret = session.checkStartAt(xml)
+      val ret = LiftSession.checkForContentId(xml)
 
       ret must_== xml
     }

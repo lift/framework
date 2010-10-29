@@ -123,6 +123,23 @@ object BindHelpers extends BindHelpers {
 trait BindHelpers {
   private lazy val logger = Logger(classOf[BindHelpers])
 
+  def errorDiv(body: NodeSeq): Box[NodeSeq] = 
+    Props.mode match {
+      case Props.RunModes.Development | Props.RunModes.Test =>
+        Full(<div class="snippeterror" style="display: block; margin: 8px; border: 2px solid red">
+             {body}
+             <br/>
+             <br/>
+          <i>note: this error is displayed in the browser because
+          your application is running in "development" or "test" mode.If you
+          set the system property run.mode=production, this error will not
+          be displayed, but there will be errors in the output logs.
+          </i>
+          </div>)
+
+        case _ => Empty
+    }
+
   /**
    * Adds a css class to the existing class tag of an Elem or create
    * the class attribute
@@ -1174,23 +1191,573 @@ trait BindHelpers {
    * promote a String to a ToCssBindPromotor
    */
   implicit def strToCssBindPromoter(str: String): ToCssBindPromoter =
-    new ToCssBindPromoter(CssSelectorParser.parse(str))
+    new ToCssBindPromoter(Full(str), CssSelectorParser.parse(str))
+
+  /**
+   * promote a String to a ToCssBindPromotor
+   */
+  implicit def cssSelectorToCssBindPromoter(sel: CssSelector): ToCssBindPromoter =
+    new ToCssBindPromoter(Empty, Full(sel))
+}
+
+/**
+ * An intermediate class used to promote a String or a CssSelector to
+ * something that can be associated with a value to apply to the selector
+ */
+final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]) {
+
+  /**
+   * Inserts a String constant according to the CssSelector rules
+   */
+  def #>(str: String): CssBind = new CssBindImpl(stringSelector, css) {
+    def calculate(in: NodeSeq): Seq[NodeSeq] = List(Text(str))
+  }
+
+  /**
+   * Inserts a NodeSeq constant according to the CssSelector rules
+   */
+  def #>(ns: NodeSeq): CssBind = new CssBindImpl(stringSelector, css) {
+    def calculate(in: NodeSeq): Seq[NodeSeq] = List(ns)
+  }
+
+  /**
+   * A function that transforms the content according to the CssSelector rules
+   */
+  def #>(nsFunc: NodeSeq => NodeSeq): CssBind = new CssBindImpl(stringSelector, css) {
+    def calculate(in: NodeSeq): Seq[NodeSeq] = List(nsFunc(in))
+  }
+  
+  /**
+   * Inserts a Bindable constant according to the CssSelector rules.
+   * Mapper and Record fields implement Bindable.
+   */
+  def #>(bindable: Bindable): CssBind = new CssBindImpl(stringSelector, css) {
+    def calculate(in: NodeSeq): Seq[NodeSeq] = List(bindable.asHtml)
+  }
+
+  /**
+   * Inserts a StringPromotable constant according to the CssSelector rules.
+   * StringPromotable includes Int, Long, Boolean, and Symbol
+   */
+  def #>(strPromo: StringPromotable): CssBind = new CssBindImpl(stringSelector, css) {
+    def calculate(in: NodeSeq): Seq[NodeSeq] = List(Text(strPromo.toString))
+  }
+
+  /**
+   * Applies the N constants according to the CssSelector rules.
+   * This allows for Seq[String], Seq[NodeSeq], Box[String],
+   * Box[NodeSeq], Option[String], Option[NodeSeq]
+   */
+  def #>(itrConst: IterableConst): CssBind = new CssBindImpl(stringSelector, css) {
+    def calculate(in: NodeSeq): Seq[NodeSeq] = itrConst.constList
+  }
+
+  /**
+   * Apply the function and then apply the results account the the CssSelector
+   * rules.
+   * This allows for NodeSeq => Seq[String], NodeSeq =>Seq[NodeSeq],
+   * NodeSeq => Box[String],
+   * NodeSeq => Box[NodeSeq], NodeSeq => Option[String],
+   * NodeSeq =>Option[NodeSeq]
+   */
+  def #>(itrFunc: IterableFunc): CssBind = new CssBindImpl(stringSelector, css) {
+    def calculate(in: NodeSeq): Seq[NodeSeq] = itrFunc(in)
+  }
+}
+
+/**
+ * A trait that has some helpful implicit conversions from
+ * Iterable[NodeSeq], Seq[String], Box[String], and Option[String]
+ */
+trait IterableConst {
+  def constList: Seq[NodeSeq]
 }
 
 
-final class ToCssBindPromoter(css: Box[CssSelector]) {
-  def #>(str: String): CssBind = null
+/**
+ * The companion object that does the helpful promotion of common
+ * collection types into an IterableConst,
+ * e.g. Iterable[NodeSeq], Seq[String], Box[String], and Option[String]
+ */
+object IterableConst {
+  /**
+   * Converts anything that can be converted into an Iterable[NodeSeq]
+   * into an IterableConst.  This includes Seq[NodeSeq], Option[NodeSeq],
+   * and Box[NodeSeq]
+   */
+  implicit def itNodeSeq[C <% Iterable[NodeSeq]](it: C): IterableConst =
+    new IterableConst {
+      def constList: Seq[NodeSeq] = it.toSeq
+    }
+
+  implicit def itStringPromotable(it: Seq[String]): IterableConst =
+    new IterableConst {
+      def constList: Seq[NodeSeq] = it.map(a => Text(a))
+    }
+
+
+  implicit def boxStringPromotable(it: Box[String]): IterableConst =
+    new IterableConst {
+      def constList: Seq[NodeSeq] = it.toList.map(a => Text(a))
+    }
+
+
+  implicit def optionStringPromotable(it: Option[String]): IterableConst =
+    new IterableConst {
+      def constList: Seq[NodeSeq] = it.toList.map(a => Text(a))
+    }
+
+  implicit def itBindablePromotable(it: Seq[Bindable]): IterableConst =
+    new IterableConst {
+      def constList: Seq[NodeSeq] = it.map(a => a.asHtml)
+    }
+
+
+  implicit def boxBindablePromotable(it: Box[Bindable]): IterableConst =
+    new IterableConst {
+      def constList: Seq[NodeSeq] = it.toList.map(a => a.asHtml)
+    }
+
+
+  implicit def optionBindablePromotable(it: Option[Bindable]): IterableConst =
+    new IterableConst {
+      def constList: Seq[NodeSeq] = it.toList.map(a => a.asHtml)
+    }
 }
 
+sealed trait IterableFunc extends Function1[NodeSeq, Seq[NodeSeq]] {
+  def apply(ns: NodeSeq): Seq[NodeSeq]
+}
+
+object IterableFunc {
+  implicit def itNodeSeq[C <% Iterable[NodeSeq]](it: NodeSeq => C): IterableFunc =
+    new IterableFunc {
+      def apply(in: NodeSeq): Seq[NodeSeq] = it(in).toSeq
+    }
+
+  implicit def itNodeSeqPromotable(it: NodeSeq => NodeSeq): IterableFunc =
+    new IterableFunc {
+      def apply(in: NodeSeq): Seq[NodeSeq] = List(it(in))
+    }
+
+
+  implicit def itStringFuncPromotable(it: NodeSeq => String): IterableFunc =
+    new IterableFunc {
+      def apply(in: NodeSeq): Seq[NodeSeq] = List(Text(it(in)))
+    }
+
+
+  implicit def itStringPromotable(it: NodeSeq => Seq[String]): IterableFunc =
+    new IterableFunc {
+      def apply(in: NodeSeq): Seq[NodeSeq] = it(in).map(a => Text(a))
+    }
+
+  implicit def boxStringPromotable(it: NodeSeq => Box[String]): IterableFunc =
+    new IterableFunc {
+      def apply(in: NodeSeq): Seq[NodeSeq] = it(in).toList.map(a => Text(a))
+    }
+
+
+  implicit def optionStringPromotable(it: NodeSeq => Option[String]): IterableFunc =
+    new IterableFunc {
+      def apply(in: NodeSeq): Seq[NodeSeq] = it(in).toList.map(a => Text(a))
+    }
+}
+
+
+/**
+ * This trait marks something that can be promoted into a String.
+ * The companion object has helpful conversions from Int,
+ * Symbol, Long, and Boolean
+ */
+trait StringPromotable
+
+object StringPromotable {
+  implicit def intToStrPromo(in: Int): StringPromotable = 
+    new StringPromotable {
+      override val toString = in.toString
+    }
+
+  implicit def symbolToStrPromo(in: Symbol): StringPromotable = 
+    new StringPromotable {
+      override val toString = in.name
+    }
+
+  implicit def longToStrPromo(in: Long): StringPromotable = 
+    new StringPromotable {
+      override val toString = in.toString
+    }
+
+  implicit def booleanToStrPromo(in: Boolean): StringPromotable = 
+    new StringPromotable {
+      override val toString = in.toString
+    }
+}
+
+/**
+ * This trait is both a NodeSeq => NodeSeq and has the ability
+ * to chain CssBindFunc instances so that they can be applied
+ * en masse to incoming NodeSeq and do the transformation.
+ */
 sealed trait CssBindFunc extends Function1[NodeSeq, NodeSeq] {
-  def &(other: CssBindFunc): CssBindFunc
+  def &(other: CssBindFunc): CssBindFunc = (this, other) match {
+    case (AggregatedCssBindFunc(a), AggregatedCssBindFunc(b)) =>
+      AggregatedCssBindFunc(a ::: b)
+    case (AggregatedCssBindFunc(a), o: CssBind) =>
+      AggregatedCssBindFunc(a ::: List(o))
+    case (t: CssBind, AggregatedCssBindFunc(a)) =>
+      AggregatedCssBindFunc(t :: a)
+    case (t: CssBind, o: CssBind) => AggregatedCssBindFunc(List(t, o))
+  }
 }
 
-sealed trait CssBind extends CssBindFunc {
-  def css: Box[CssSelector]
+/**
+ * A passthrough function that does not change the nodes
+ *
+ * @tag CssFunction
+ */
+object PassThru extends Function1[NodeSeq, NodeSeq] {
+  def apply(in: NodeSeq): NodeSeq = in
+}
+
+/**
+ * Replaces the nodes with an Empty NodeSeq.  Useful
+ * for removing unused nodes
+ *
+ * @tag CssFunction
+ */
+object ClearNodes extends Function1[NodeSeq, NodeSeq] {
+  def apply(in: NodeSeq): NodeSeq = NodeSeq.Empty
+}
+
+
+
+private final case class AggregatedCssBindFunc(binds: List[CssBind]) extends CssBindFunc {
+  private lazy val (good, bad) = binds.partition{_.css.isDefined}
+  private lazy val selectorMap = new SelectorMap(good)
+
+  def apply(in: NodeSeq): NodeSeq = bad match {
+    case Nil => selectorMap(in)
+    case bv => bad.flatMap(_(in)) ++ selectorMap(in)
+  }
+}
+
+/**
+ * This CssBind will clear all nodes marked with the class
+ * clearable.  Designers can mark extra nodes in markup with
+ * class="clearable" and this Bind will make them go away
+ */
+object ClearClearable extends CssBindImpl(Full(".clearable"), CssSelectorParser.parse(".clearable")) {
+  
+  def calculate(in: NodeSeq): Seq[NodeSeq] = Nil
+}
+
+private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeSeq] {
+  private val (idMap, nameMap, clzMap, attrMap)  = {
+    var idMap: Map[String, CssBind] = Map()
+    var nameMap: Map[String, CssBind] = Map()
+    var clzMap: Map[String, CssBind] = Map()
+    var attrMap: Map[String, Map[String, CssBind]] = Map()
+
+    binds.foreach {
+      case i @ CssBind(IdSelector(id, _)) => if (!idMap.isDefinedAt(id)) {
+        idMap += (id -> i)
+      }
+
+      case i @ CssBind(NameSelector(name, _)) => if (!nameMap.isDefinedAt(name)) {
+        nameMap += (name -> i)
+      }
+
+      case i @ CssBind(ClassSelector(clz, _)) => if (!clzMap.isDefinedAt(clz)) {
+        clzMap += (clz -> i)
+      }
+
+      case i @ CssBind(AttrSelector(name, value, _)) => {
+        val oldMap = attrMap.getOrElse(name, Map())
+        if (!oldMap.isDefinedAt(value)) {
+          attrMap += (name -> (oldMap + (value -> i)))
+        }
+      }
+
+      case _ =>
+    }
+
+    (idMap, nameMap, clzMap, attrMap)
+  }
+
+  private abstract class SlurpedAttrs(val id: Box[String],val name: Box[String]) {
+    def attrs: Map[String, String]
+    def classes: List[String]
+
+    def removeId(in: MetaData) = in.filter {
+      case up: UnprefixedAttribute => up.key != "id"
+      case _ => true
+    }
+
+    def applyRule(bind: CssBind, realE: Elem): NodeSeq = {
+      def mergeAll(other: MetaData, stripId: Boolean): MetaData = {
+        var oldAttrs = attrs - (if (stripId) "id" else "")
+
+        var builtMeta: MetaData = Null
+        var pos = other
+        
+        while (pos != Null) {
+          pos match {
+            case up: UnprefixedAttribute if stripId && up.key == "id" =>
+              // ignore the id attribute
+
+            case up: UnprefixedAttribute if up.key == "class" => {
+              oldAttrs.get("class") match {
+                case Some(ca) => {
+                  oldAttrs -= "class"
+                  builtMeta = new UnprefixedAttribute("class",
+                                                      up.value.text + " "+
+                                                      ca, builtMeta)
+                }
+
+                case _ => builtMeta = up.copy(builtMeta)
+              }
+            }
+
+            case up: UnprefixedAttribute => {
+              oldAttrs -= up.key
+              builtMeta = up.copy(builtMeta)
+            }
+
+            case pa: PrefixedAttribute => {
+              oldAttrs -= (pa.pre+":"+pa.key)
+              builtMeta = pa.copy(builtMeta)
+            }
+            case _ =>
+          }
+
+          pos = pos.next
+        }
+        
+        for {
+          (k, v) <- oldAttrs
+        } {
+          import Helpers._
+          k.charSplit(':') match {
+            case p :: k :: _ => 
+              builtMeta = new PrefixedAttribute(p, k, v, builtMeta)
+            case k :: _ => builtMeta = new UnprefixedAttribute(k, v, builtMeta)
+            case _ =>
+          }
+        }
+
+        builtMeta
+      }
+
+      // we can do an open_! here because all the CssBind elems
+      // have been vetted
+      bind.css.open_!.subNodes match {
+        case Full(KidsSubNode()) => {
+          val calced = bind.calculate(realE.child)
+          calced.length match {
+            case 0 => NodeSeq.Empty
+            case 1 => new Elem(realE.prefix, realE.label, 
+                               realE.attributes, realE.scope, calced.first :_*)
+            case _ if id.isEmpty => 
+              calced.map(kids => new Elem(realE.prefix, realE.label, 
+                                          realE.attributes, realE.scope,
+                                          kids :_*))
+
+            case _ => {
+              val noId = removeId(realE.attributes)
+              calced.toList.zipWithIndex.map {
+                case (kids, 0) => 
+                  new Elem(realE.prefix, realE.label, 
+                           realE.attributes, realE.scope, kids :_*)
+                case (kids, _) => 
+                  new Elem(realE.prefix, realE.label, 
+                           noId, realE.scope, kids :_*)
+              }
+            }
+          }
+        }
+
+        case Full(AttrSubNode(attr)) => {
+          val calced = bind.calculate(realE)
+          val filtered = realE.attributes.filter{
+            case up: UnprefixedAttribute => up.key != attr
+            case _ => true
+          }
+
+          val newAttr = if (calced.isEmpty) {
+            filtered
+          } else {
+            val flat: NodeSeq = calced.flatMap(a => a)
+            new UnprefixedAttribute(attr, flat, filtered)
+          }
+
+          new Elem(realE.prefix, 
+                   realE.label, newAttr,
+                   realE.scope, SelectorMap.this.apply(realE.child) :_*)
+        }
+          
+        case x: EmptyBox => {
+          val calced = bind.calculate(realE)
+
+          calced.length match {
+            case 0 => NodeSeq.Empty
+            case 1 => {
+              calced.first match {
+                case Group(g) => g
+                case e: Elem => new Elem(e.prefix, 
+                                         e.label, mergeAll(e.attributes, false),
+                                         e.scope, e.child :_*)
+                case x => x
+              }
+            }
+            
+            case n => {
+              calced.toList.zipWithIndex.flatMap {
+                case (Group(g), _) => g
+                case (e: Elem, 0) => 
+                  new Elem(e.prefix, 
+                           e.label, mergeAll(e.attributes, false),
+                           e.scope, e.child :_*)
+                case (e: Elem, _) =>
+                  new Elem(e.prefix, 
+                           e.label, mergeAll(e.attributes, true),
+                           e.scope, e.child :_*)
+                case (x, _) => 
+                  x
+              }
+            }
+          }
+        }
+      }
+    }
+
+
+    def processId(in: Elem): Box[NodeSeq] = 
+      for {
+        rid <- id
+        bind <- idMap.get(rid)
+      } yield applyRule(bind, in)
+
+    def processName(in: Elem): Box[NodeSeq] = 
+      for {
+        rid <- name
+        bind <- nameMap.get(rid)
+      } yield applyRule(bind, in)
+
+    def findClass(clz: List[String]): Box[CssBind] = clz match {
+      case Nil => Empty
+      case x :: xs =>
+        clzMap.get(x) match {
+          case Some(cb) => Full(cb)
+          case _ => findClass(xs)
+        }
+    }
+
+    def processClass(in: Elem): Box[NodeSeq] = 
+      findClass(classes) match {
+        case Full(bind) => Full(applyRule(bind, in))
+        case _ => Empty
+      }
+
+    def processAttr(in: Elem): Box[NodeSeq] = 
+      if (attrMap.isEmpty || attrs.isEmpty) Empty
+    else {
+      (for {
+        (key, map) <- attrMap
+        v <- attrs.get(key)
+        cb <- map.get(v)
+      } yield applyRule(cb, in)).toSeq.firstOption
+    }
+  }
+
+  private def slurpAttrs(in: MetaData): SlurpedAttrs = {
+    var id: Box[String] = Empty
+    var cur: MetaData = in
+    var name: Box[String] = Empty
+    var clzs: List[String] = Nil
+    var theAttrs: Map[String, String] = Map()
+
+    while (cur != Null) {
+      cur match {
+        case up: UnprefixedAttribute => {
+          val key = up.key
+          val value = up.value.text
+          import Helpers._
+          key match {
+            case "id" => id = Full(value)
+            case "name" => name = Full(value)
+            case "class" => clzs = value.charSplit(' ')
+            case _ =>
+          }
+
+          theAttrs += key -> value
+        }
+
+        case pa: PrefixedAttribute => {
+          theAttrs += ((pa.pre+":"+pa.key) -> pa.value.text)
+        }
+        
+        case _ =>
+      }
+
+      cur = cur.next
+    }
+
+    new SlurpedAttrs(id, name) {
+      def attrs: Map[String, String] = theAttrs
+      def classes: List[String] = clzs
+    }
+  }
+  
+  private def treatElem(e: Elem): NodeSeq = {
+    val slurp = slurpAttrs(e.attributes)
+
+    (slurp.processId(e) or
+    slurp.processName(e) or
+    slurp.processClass(e) or
+    slurp.processAttr(e)) openOr {
+      new Elem(e.prefix, e.label, 
+               e.attributes, e.scope, apply(e.child) :_*)
+    }
+  }
+
+  def apply(in: NodeSeq): NodeSeq = in flatMap {
+    case Group(g) => apply(g)
+    case e: Elem => treatElem(e)
+    case x => x
+  }
   
 }
 
+object CssBind {
+  def unapply(in: CssBind): Option[CssSelector] = in.css
+}
+
+sealed trait CssBind extends CssBindFunc {
+  def stringSelector: Box[String]
+  def css: Box[CssSelector]
+  
+  def apply(in: NodeSeq): NodeSeq = css match {
+    case Full(c) => selectorMap(in)
+    case _ => Helpers.errorDiv(
+      <div>
+      Syntax error in CSS selector definition: {stringSelector openOr "N/A"}.
+      The selector will not be applied.
+      </div>) openOr NodeSeq.Empty
+  }
+
+  private lazy val selectorMap: SelectorMap = new SelectorMap(List(this))
+
+  def calculate(in: NodeSeq): Seq[NodeSeq]
+}
+
+/**
+ * An abstract implementation of CssBind.  You can instantiate
+ * this class and create a custom calculate method
+ */
+abstract class CssBindImpl(val stringSelector: Box[String], val css: Box[CssSelector]) extends CssBind {
+  def calculate(in: NodeSeq): Seq[NodeSeq]
+}
 
 
 }

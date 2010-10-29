@@ -321,5 +321,232 @@ object BindHelpersSpec extends Specification  {
 }
 class BindHelpersTest extends JUnit4(BindHelpersSpec)
 
+
+object CssBindHelpersSpec extends Specification  {
+  import BindHelpers._
+
+  "css bind helpers" should {
+    "clear clearable" in {
+      ClearClearable(<b><span class="clearable"/></b>) must ==/ (<b/>)
+    }
+
+    "substitute a String by id" in {
+      ("#foo" #> "hello")(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
+    }
+
+    "substitute multiple Strings by id" in {
+      ("#foo" #> "hello" &
+     "#baz" #> "bye")(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("hello")}</b>)
+    }
+
+    "substitute multiple Strings with a List by id" in {
+      ("#foo" #> "hello" &
+     "#baz" #> List("bye", "bye"))(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("bye")}{Text("hello")}</b>)
+    }
+
+
+    "substitute multiple Strings with a List of XML by id" in {
+      val answer = ("#foo" #> "hello" &
+     "#baz" #> List[NodeSeq](<i/>, <i>Meow</i>))(<b><div frog="dog" id="baz">Hello</div><span id="foo"/></b>)
+      
+      (answer \ "i").length must_== 2
+      (answer \ "i")(0) must ==/ (<i id="baz" frog="dog"/>)
+      (answer \ "i")(1) must ==/ (<i frog="dog">Meow</i>)
+    }
+
+    "substitute by name" in {
+      val answer = ("name=moose" #> <input name="goof"/>).apply (
+        <div><input name="moose" value="start" id="79"/></div>)
+
+      (answer \ "input")(0) must ==/ (<input name="goof" value="start" id="79"/>)
+    }
+    
+
+    "substitute by name with attrs" in {
+      val answer = ("name=moose" #> <input name="goof" value="8" id="88"/>).apply (
+        <div><input name="moose" value="start" id="79"/></div>)
+
+      (answer \ "input")(0) must ==/ (<input name="goof" value="8" id="88"/>)
+    }
+    
+
+    "substitute by a selector with attrs" in {
+      val answer = ("cute=moose" #> <input name="goof" value="8" id="88"/>).apply (
+        <div><input name="meow" cute="moose" value="start" id="79"/></div>)
+
+      (answer \ "input")(0) must ==/ (<input cute="moose" name="goof" value="8" id="88"/>)
+    }
+    
+
+    "merge classes" in {
+      val answer = ("cute=moose" #> <input class="a" name="goof" value="8" id="88"/>).apply (
+        <div><input name="meow" class="b" cute="moose" value="start" id="79"/></div>)
+
+      (answer \ "input")(0) must ==/ (<input class="a b" cute="moose" name="goof" value="8" id="88"/>)
+    }
+    
+
+    "list of strings" in {
+      val answer = ("#moose *" #> List("a", "b", "c", "woof") &
+                    ClearClearable).apply (
+        <ul>
+        <li id="moose">first</li>
+        <li class="clearable">second</li>
+        <li class="clearable">Third</li>
+        </ul>)
+        
+      val lis = (answer \ "li").toList
+      
+      lis.length must_== 4
+
+      lis(0) must ==/ (<li id="moose">a</li>)
+      lis(3) must ==/ (<li>woof</li>)
+    }
+    
+
+    "list of Nodes" in {
+      val answer = ("#moose *" #> List[NodeSeq](<i>"a"</i>, Text("b"), Text("c"), <b>woof</b>) &
+                    ClearClearable).apply (
+        <ul>
+        <li id="moose">first</li>
+        <li class="clearable">second</li>
+        <li class="clearable">Third</li>
+        </ul>)
+        
+      val lis = (answer \ "li").toList
+      
+      lis.length must_== 4
+
+      lis(0) must ==/ (<li id="moose"><i>"a"</i></li>)
+      lis(3) must ==/ (<li><b>woof</b></li>)
+    }
+    
+
+    "set href" in {
+      val answer = ("#moose [href]" #> "Hi" &
+                    ClearClearable).apply (
+        <ul><a id="moose" href="meow">first</a><li class="clearable">second</li><li class="clearable">Third</li></ul>)
+        
+    
+    (answer \ "a" \ "@href").text must_== "Hi"
+      (answer \ "li").length must_== 0
+    }
+    
+    "set href and subnodes" in {
+      val answer = ("#moose [href]" #> "Hi" &
+                    ClearClearable).apply (
+        <ul><a id="moose" href="meow">first<li class="clearable">second</li><li class="clearable">Third</li></a></ul>)
+        
+    
+    (answer \ "a" \ "@href").text must_== "Hi"
+      (answer \\ "li").length must_== 0
+    }
+    
+
+  }
+}
+class CssBindHelpersTest extends JUnit4(CssBindHelpersSpec)
+
+/**
+ * This class doesn't actually perform any tests, but insures that
+ * the implicit conversions work correctly
+ */
+object CheckTheImplicitConversionsForToCssBindPromoter {
+  val bog = new ToCssBindPromoter(Empty, Empty)
+
+  import BindHelpers._
+
+  "foo" #> "baz"
+
+  bog #> "Hello" 
+  bog #> <span/>
+  bog #> 1
+  bog #> 'foo
+  bog #> 44L
+  bog #> false
+
+  bog #> List(<span/>)
+  bog #> Full(<span/>)
+  bog #> Some(<span/>)
+
+
+  bog #> List("Hello")
+  bog #> Full("Dog")
+  bog #> Some("Moo")
+
+
+  bog #> List((null: Bindable))
+  bog #> Full((null: Bindable))
+  bog #> Some((null: Bindable))
+
+  bog #> nsToNs _
+  bog #> nsToOptNs _
+  bog #> nsToBoxNs _
+  bog #> nsToSeqNs _
+
+  bog #> nsToString _
+  bog #> nsToOptString _
+  bog #> nsToBoxString _
+  bog #> nsToSeqString _
+
+  val nsf: NodeSeq => NodeSeq = bog #> "Hello" &
+  bog #> <span/> &
+  bog #> 1 &
+  bog #> 'foo &
+  bog #> 44L &
+  bog #> false
+
+  "foo" #> "Hello" 
+  "foo" #> <span/>
+  "foo" #> 1
+  "foo" #> 'foo
+  "foo" #> 44L
+  "foo" #> false
+
+  "foo" #> List(<span/>)
+  "foo" #> Full(<span/>)
+  "foo" #> Some(<span/>)
+
+
+  "foo" #> List("Hello")
+  "foo" #> Full("Dog")
+  "foo" #> Some("Moo")
+
+
+  "foo" #> List((null: Bindable))
+  "foo" #> Full((null: Bindable))
+  "foo" #> Some((null: Bindable))
+
+  "foo" #> nsToNs _
+  "foo" #> nsToOptNs _
+  "foo" #> nsToBoxNs _
+  "foo" #> nsToSeqNs _
+
+  "foo" #> nsToString _
+  "foo" #> nsToOptString _
+  "foo" #> nsToBoxString _
+  "foo" #> nsToSeqString _
+
+  val nsf2: NodeSeq => NodeSeq = "foo" #> "Hello" &
+  "foo" #> <span/> &
+  "foo" #> 1 &
+  "foo" #> 'foo &
+  "foo" #> 44L &
+  "foo" #> false
+
+
+
+  def nsToNs(in: NodeSeq): NodeSeq = in
+  def nsToOptNs(in: NodeSeq): Option[NodeSeq] = Some(in)
+  def nsToBoxNs(in: NodeSeq): Box[NodeSeq] = Full(in)
+  def nsToSeqNs(in: NodeSeq): Seq[NodeSeq] = List(in)
+
+  def nsToString(in: NodeSeq): String = in.text
+  def nsToOptString(in: NodeSeq): Option[String] = Some(in.text)
+  def nsToBoxString(in: NodeSeq): Box[String] = Full(in.text)
+  def nsToSeqString(in: NodeSeq): Seq[String] = List(in.text)
+}
+
+
 }
 }

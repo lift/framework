@@ -31,21 +31,21 @@ object CssSelectorSpec extends Specification  {
     }
 
     "select an id" in {
-      CssSelectorParser.parse(".foo").open_! must_== IdSelector("foo", Empty)
+      CssSelectorParser.parse("#foo").open_! must_== IdSelector("foo", Empty)
     }
 
     "select an id with subnodes" in {
-      CssSelectorParser.parse(".foo  * ").open_! must_== 
+      CssSelectorParser.parse("#foo  * ").open_! must_== 
       IdSelector("foo", Full(KidsSubNode()))
     }
 
     "select an id with attr subnodes" in {
-      CssSelectorParser.parse(".foo  *[dog] ").open_! must_== 
+      CssSelectorParser.parse("#foo  *[dog] ").open_! must_== 
       IdSelector("foo", Full(AttrSubNode("dog")))
     }
 
     "select an id with no star attr subnodes" in {
-      CssSelectorParser.parse(".foo  [woof] ").open_! must_== 
+      CssSelectorParser.parse("#foo  [woof] ").open_! must_== 
       IdSelector("foo", Full(AttrSubNode("woof")))
     }
 
@@ -84,21 +84,21 @@ object CssSelectorSpec extends Specification  {
     }
 
     "select a class" in {
-      CssSelectorParser.parse("#foo").open_! must_== ClassSelector("foo", Empty)
+      CssSelectorParser.parse(".foo").open_! must_== ClassSelector("foo", Empty)
     }
 
     "select a class with subnodes" in {
-      CssSelectorParser.parse("#foo  * ").open_! must_== 
+      CssSelectorParser.parse(".foo  * ").open_! must_== 
       ClassSelector("foo", Full(KidsSubNode()))
     }
 
     "select a class with attr subnodes" in {
-      CssSelectorParser.parse("#foo  *[dog] ").open_! must_== 
+      CssSelectorParser.parse(".foo  *[dog] ").open_! must_== 
       ClassSelector("foo", Full(AttrSubNode("dog")))
     }
 
     "select an id with no star attr subnodes" in {
-      CssSelectorParser.parse("#foo  [woof] ").open_! must_== 
+      CssSelectorParser.parse(".foo  [woof] ").open_! must_== 
       ClassSelector("foo", Full(AttrSubNode("woof")))
     }
 

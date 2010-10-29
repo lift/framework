@@ -55,21 +55,27 @@ object Comet extends DispatchSnippet with LazyLoggable {
           "Lift does not support Comet for stateless requests")
 
        try {
-         ctx.findComet(theType, name, kids, S.attrsFlattenToMap).map(c =>
-
-            (c.!?(26600L, AskRender)) match {
-              case Full(AnswerRender(response, _, when, _)) if c.hasOuter =>
-                buildSpan(Empty, c.buildSpan(when, response.inSpan) ++ response.outSpan, c, c.uniqueId+"_outer")
-
-              case Full(AnswerRender(response, _, when, _)) =>
-                c.buildSpan(when, response.inSpan)
-
-              case _ => 
-                throw new CometTimeoutException("type: "+theType+" name: "+name)
-            }) openOr {
-           throw new CometNotFoundException("type: "+theType+" name: "+name)
-         }
-
+         ctx.findComet(theType, name, kids, S.attrsFlattenToMap).map {
+           c => {
+             // Update the view on each page load in dev mode
+             // this make development easier
+             if (Props.devMode) {
+               c ! UpdateDefaultXml(kids)
+             }
+             
+             (c.!?(26600L, AskRender)) match {
+               case Full(AnswerRender(response, _, when, _)) if c.hasOuter =>
+                 buildSpan(Empty, c.buildSpan(when, response.inSpan) ++ response.outSpan, c, c.uniqueId+"_outer")
+               
+               case Full(AnswerRender(response, _, when, _)) =>
+                 c.buildSpan(when, response.inSpan)
+               
+               case _ => 
+                 throw new CometTimeoutException("type: "+theType+" name: "+name)
+             }}} openOr {
+               throw new CometNotFoundException("type: "+theType+" name: "+name)
+             }
+         
        } catch {
          case e: SnippetFailureException => throw e
          case e: Exception => logger.error("Failed to find a comet actor", e); kids

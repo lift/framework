@@ -83,6 +83,30 @@ object LiftSession {
    * Holds user's functions that will be called when a stateful request has been processed
    */
   var onEndServicing: List[(LiftSession, Req, Box[LiftResponse]) => Unit] = Nil
+
+  /**
+   * Check to see if the template is marked designer friendly
+   * and lop off the stuff before the first surround
+   */
+  def checkForContentId(in: NodeSeq): NodeSeq = {
+    def df(in: MetaData): Option[PrefixedAttribute] = in match {
+      case Null => None
+      case p: PrefixedAttribute 
+      if (p.pre == "l" || p.pre == "lift") && 
+      (p.key == "content_id") => Some(p)
+      case n => df(n.next)
+    }
+    
+    
+    in.flatMap {
+      case e: Elem if e.label == "html" => df(e.attributes)
+      case _ => None
+    }.flatMap {
+      md => Helpers.findId(in, md.value.text)
+    }.headOption getOrElse in
+  }
+  
+
 }
 
 
@@ -598,30 +622,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   def contextPath = LiftRules.calculateContextPath() openOr _contextPath
 
   /**
-   * Check to see if the template is marked designer friendly
-   * and lop off the stuff before the first surround
-   *
-   * This method is private[http] so that it's accessable to the tests
-   */
-  private[http] def checkStartAt(in: NodeSeq): NodeSeq = {
-    def df(in: MetaData): Option[PrefixedAttribute] = in match {
-      case Null => None
-      case p: PrefixedAttribute 
-      if (p.pre == "l" || p.pre == "lift") && 
-        (p.key == "start_at") => Some(p)
-      case n => df(n.next)
-    }
-
-
-    in.flatMap {
-      case e: Elem if e.label == "html" => df(e.attributes)
-      case _ => None
-    }.flatMap {
-      md => Helpers.findId(in, md.value.text)
-    }.headOption getOrElse in
-  }
-
-  /**
    * Convert a template into a Lift Response.
    *
    * @param template -- the NodeSeq that makes up the page... or the template
@@ -636,7 +636,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     (template or findVisibleTemplate(path, request)).map { 
       xhtmlBase =>
         fullPageLoad.doWith(true) { // allow parallel snippets
-          val xhtml = checkStartAt(xhtmlBase)
+          val xhtml = LiftSession.checkForContentId(xhtmlBase)
           // Phase 1: snippets & templates processing
           val rawXml: NodeSeq = processSurroundAndInclude(PageName get, xhtml)
           
@@ -965,18 +965,10 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       }
         f(LiftRules.SnippetFailure(page, snippetName, why))
 
-      Props.mode match {
-        case Props.RunModes.Development | Props.RunModes.Test =>
-          <div class="snippeterror" style="display: block; margin: 8px; border: 2px solid red">Error processing snippet {snippetName openOr "N/A"}. <br/> Reason: {why} {addlMsg} XML causing this error:<br/>
-          <pre>{whole.toString}</pre>
-          <i>note: this error is displayed in the browser because
-          your application is running in "development" or "test" mode.If you
-          set the system property run.mode=production, this error will not
-          be displayed, but there will be errors in the output logs.
-          </i>
-          </div>
-        case _ => NodeSeq.Empty
-      }
+      Helpers.errorDiv(
+        <div>Error processing snippet {snippetName openOr "N/A"}. <br/> Reason: {why} {addlMsg} XML causing this error:<br/>
+        <pre>{whole.toString}</pre>
+        </div>) openOr NodeSeq.Empty
     }
 
   private final def findNSAttr(attrs: MetaData, prefix: String, key: String): Option[Seq[Node]] =
@@ -1130,6 +1122,14 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                         wholeTag)
 
                     case Full(inst) => {
+                      val gotIt = 
+                        for {
+                          meth <- tryo(inst.getClass.getMethod(method)) 
+                          if classOf[CssBindFunc].isAssignableFrom(meth.getReturnType)
+                        } yield meth.invoke(inst).asInstanceOf[CssBindFunc].apply(kids)
+
+                      gotIt openOr {
+
                       val ar: Array[AnyRef] = List(Group(kids)).toArray
                       ((Helpers.invokeMethod(inst.getClass, inst, method, ar)) or
                               Helpers.invokeMethod(inst.getClass, inst, method)) match {
@@ -1146,8 +1146,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                             LiftRules.SnippetFailures.MethodNotFound,
                             if (intersection.isEmpty) NodeSeq.Empty else
                               <div>There are possible matching methods ({intersection}),
-                              but none has the required signature:<pre>def{method}(in: NodeSeq): NodeSeq</pre> </div>,
+                              but none has the required signature:<pre>def {method}(in: NodeSeq): NodeSeq</pre> </div>,
                             wholeTag)
+                      }
                       }
                     }
                     case Failure(_, Full(exception), _) => logger.warn("Snippet instantiation error", exception)
@@ -1377,6 +1378,25 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   }
 
   /**
+   * This method will send a message to a CometActor, whether or not
+   * the CometActor is instantiated.  If the CometActor already exists
+   * in the session, the message will be sent immediately.  If the CometActor
+   * is not yet instantiated, the message will be sent to the CometActor
+   * as part of setup (@see setupComet) if it is created as part
+   * of the current HTTP request/response cycle.
+   *
+   * @param theType the type of the CometActor
+   * @param name the optional name of the CometActor
+   * @param msg the message to send to the CometActor
+   */
+  def setCometActorMessage(theType: String, name: Box[String], msg: Any) {
+    findComet(theType, name) match {
+      case Full(a) => a ! msg
+      case _ => setupComet(theType, name, msg)
+    }
+  }
+
+  /**
    * Allows you to send messages to a CometActor that may or may not be set up yet
    */
   def setupComet(theType: String, name: Box[String], msg: Any) {
@@ -1504,9 +1524,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   private def failedFind(in: Failure): NodeSeq =
     <html xmlns:lift="http://liftweb.net" xmlns="http://www.w3.org/1999/xhtml"> <head/>
-    <body> 
-  <div style="border: 1px red solid">Error locating template.Message: {in.msg} <br/> {in.exception.map(e => <pre>{e.toString}{e.getStackTrace.map(_.toString).mkString("\n")}</pre>).openOr(NodeSeq.Empty)} This message is displayed because you are in Development mode.
-    </div> </body> </html>
+    <body> {
+      Helpers.errorDiv(
+        <div>Error locating template.Message: {in.msg} <br/> {in.exception.map(e => <pre>{e.toString}{e.getStackTrace.map(_.toString).mkString("\n")}</pre>).openOr(NodeSeq.Empty)}</div>) openOr NodeSeq.Empty
+    }
+  </body> </html>
 
   private[liftweb] def findAndMerge(templateName: Box[Seq[Node]], atWhat: Map[String, NodeSeq]): NodeSeq = {
     val name = templateName.map(s => if (s.text.startsWith("/")) s.text else "/" + s.text).openOr("/templates-hidden/default")
@@ -1645,33 +1667,32 @@ object TemplateFinder {
                     case _ => Empty
                   }
                 } catch {
-                  case e: ValidationException if Props.devMode =>
-                    return (Full(
-                      <div style="border: 1px red solid">Error locating template {name}.<br/>
+                  case e: ValidationException if Props.devMode | Props.testMode =>
+                    return Helpers.errorDiv(<div>Error locating template {name}.<br/>
                       Message:{e.getMessage}<br/>
                       {
                       <pre>{e.toString}{e.getStackTrace.map(_.toString).mkString("\n")}</pre>
                       }
-                      This message is displayed because you are in Development mode.
-                    </div>))
+                    </div>)
 
                   case e: ValidationException => Empty
                 }
                 if (xmlb.isDefined) {
                   found = true
                   ret = (cache(key) = xmlb.open_!)
-                } else if (xmlb.isInstanceOf[Failure] && Props.devMode) {
+                } else if (xmlb.isInstanceOf[Failure] && 
+                           (Props.devMode | Props.testMode)) {
                   val msg = xmlb.asInstanceOf[Failure].msg
                   val e = xmlb.asInstanceOf[Failure].exception
-                  return (Full(<div style="border: 1px red solid">Error locating template{name}.<br/>Message:{msg}<br/>{
+                  return Helpers.errorDiv(<div>Error locating template {name}.<br/>Message: {msg}<br/>{
                   {
                     e match {
                       case Full(e) =>
                         <pre>{e.toString}{e.getStackTrace.map(_.toString).mkString("\n")}</pre>
                       case _ => NodeSeq.Empty
                     }
-                  }}This message is displayed because you are in Development mode.
-                  </div>))
+                  }}
+                  </div>)
                 }
               }
             }
