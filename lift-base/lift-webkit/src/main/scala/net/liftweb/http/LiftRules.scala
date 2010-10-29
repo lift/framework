@@ -635,7 +635,12 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   * Set the sitemap to a function that will be run to generate the sitemap.
   *
   * This allows for changing the SiteMap when in development mode and having
-  * the function re-run for each request.
+  * the function re-run for each request.<br/>
+  *
+  * This is **NOT** a mechanism for dynamic SiteMap.  This is a mechanism
+  * **ONLY** for allowing you to change the SiteMap during development.
+  * There will be significant performance penalties (serializing the
+  * service of requests... only one at a time) for changing the SiteMap.
   */
   def setSiteMapFunc(smf: () => SiteMap) {
     sitemapFunc = Full(smf)
@@ -645,9 +650,9 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   }
 
   /**
-  * Define the sitemap.
-  */
-  def setSiteMap(sm: => SiteMap) {
+   * Define the sitemap.
+   */
+  def setSiteMap(sm: SiteMap) {
     this.setSiteMapFunc(() => sm)
   }
 
