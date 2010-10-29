@@ -54,7 +54,7 @@
     </dependency>
     <dependency>
       <groupId>org.scala-libs</groupId>
-      <artifactId>scalajpa</artifactId>
+      <artifactId>scalajpa_${scala.version}</artifactId>
     </dependency>
     <dependency>
       <groupId>com.atomikos</groupId>
