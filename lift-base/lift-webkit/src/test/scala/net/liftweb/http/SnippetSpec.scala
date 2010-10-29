@@ -113,6 +113,99 @@ object SnippetSpec extends Specification {
       ret.open_! must ==/( res)
     }
 
+    "Snippet invocation works class='l:foo' and ? for attr sep" in {
+      val res = <div/>
+
+      def testAttrs(in: NodeSeq): NodeSeq = {
+        S.attr("bing") must_== Full("bong")
+        S.attr("fuzz") must_== Full("faz snark")
+        S.attr("noodle") must_== Full("FatPoodle")
+        in
+      }
+
+      val ret =
+        S.statelessInit(Req.nil) {
+          S.mapSnippetsWith("foo" -> testAttrs _) {
+            for {
+              s <- S.session
+            } yield s.processSurroundAndInclude("test", <div class="l:foo?bing=bong?fuzz=faz+snark?noodle=FatPoodle" />)
+          }
+        }
+
+      ret.open_! must ==/( res)
+    }
+
+
+    "Snippet invocation works class='l:foo' and ; for attr sep" in {
+      val res = <div/>
+
+      def testAttrs(in: NodeSeq): NodeSeq = {
+        S.attr("bing") must_== Full("bong")
+        S.attr("fuzz") must_== Full("faz snark")
+        S.attr("noodle") must_== Full("FatPoodle")
+        in
+      }
+
+      val ret =
+        S.statelessInit(Req.nil) {
+          S.mapSnippetsWith("foo" -> testAttrs _) {
+            for {
+              s <- S.session
+            } yield s.processSurroundAndInclude("test", <div class="l:foo?bing=bong;fuzz=faz+snark;noodle=FatPoodle" />)
+          }
+        }
+
+      ret.open_! must ==/( res)
+    }
+
+
+    "Snippet invocation works class='l:foo' and & for attr sep" in {
+      val res = <div/>
+
+      def testAttrs(in: NodeSeq): NodeSeq = {
+        S.attr("bing") must_== Full("bong")
+        S.attr("fuzz") must_== Full("faz snark")
+        S.attr("noodle") must_== Full("FatPoodle")
+        in
+      }
+
+      val ret =
+        S.statelessInit(Req.nil) {
+          S.mapSnippetsWith("foo" -> testAttrs _) {
+            for {
+              s <- S.session
+            } yield s.processSurroundAndInclude("test", <div class="l:foo?bing=bong&amp;fuzz=faz+snark&amp;noodle=FatPoodle" />)
+          }
+        }
+
+      ret.open_! must ==/( res)
+    }
+
+
+    "Snippet invocation works class='l:foo' and mixed attr sep" in {
+      val res = <div/>
+
+      def testAttrs(in: NodeSeq): NodeSeq = {
+        S.attr("bing") must_== Full("bong")
+        S.attr("fuzz") must_== Full("faz snark")
+        S.attr("noodle") must_== Full("FatPoodle")
+        in
+      }
+
+      val ret =
+        S.statelessInit(Req.nil) {
+          S.mapSnippetsWith("foo" -> testAttrs _) {
+            for {
+              s <- S.session
+            } yield s.processSurroundAndInclude("test", <div class="l:foo?bing=bong?fuzz=faz+snark;noodle=FatPoodle" />)
+          }
+        }
+
+      ret.open_! must ==/( res)
+    }
+
+
+
     "Snippet invocation works class='lift:foo'" in {
       val res = <div/>
 
@@ -173,7 +266,6 @@ object SnippetSpec extends Specification {
         }
 
       (ret.open_! \ "@class").text must_== "snippeterror"
-
     }
 
     "Snippet invocation succeeds in normal mode" in {

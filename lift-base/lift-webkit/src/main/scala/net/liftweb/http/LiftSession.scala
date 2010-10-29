@@ -1832,7 +1832,7 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
         snip.charSplit('?') match {
           case Nil => "this should never happen" -> Null
           case x :: Nil => urlDecode(removeLift(x)) -> Null
-          case x :: xs => urlDecode(removeLift(x)) -> pairsToMetaData(xs)
+          case x :: xs => urlDecode(removeLift(x)) -> pairsToMetaData(xs.flatMap(_.roboSplit("[;&]")))
         }
       }
 
