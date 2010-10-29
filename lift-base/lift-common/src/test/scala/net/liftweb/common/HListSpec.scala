@@ -26,7 +26,7 @@ class HListSpecTest extends Runner(HListSpec) with JUnit with Console
 object HListSpec extends Specification {
   "An HList" should {
     "Must get types right" in {
-      import HList._
+      import HLists._
 
       val x = 1 :+: "Foo" :+: HNil
 
@@ -38,6 +38,53 @@ object HListSpec extends Specification {
     }
 
     
+  }
+
+  "A combinable box" should {
+    "build a box with a failure must be a failure" in {
+      import CombinableBox._
+
+      val x = Full("a") :&: Full(1) :&: Empty
+
+      // result in a failure
+      x match {
+        case Left(_) => true must_== true
+      }
+    }
+
+    "build a box with all Full must match" in {
+      import CombinableBox._
+      import HLists._
+
+      val x = Full("a") :&: Full(1) :&: Full(List(1,2,3))
+
+      // result in a failure
+      x match {
+        case Right(a :+: one :+: lst :+:HNil) => {
+          // val a2: Int = a  fails... not type safe
+
+          val as: String = a
+          val onei: Int = one
+          val lstl: List[Int] = lst
+
+          true must_== true
+        }
+      }
+    }
+
+    "Use in for comprehension" in {
+      import CombinableBox._
+      import HLists._
+
+      val res = for {
+        a :+: one :+: lst :+: _ <- 
+        (Full("a") ?~ "Yak" :&: Full(1) :&: Full(List(1,2,3))) ?~! "Dude"
+      } yield a.length * one * lst.foldLeft(1)(_ * _)
+
+      res must_== Full(6)
+    }
+
+
   }
 }
 

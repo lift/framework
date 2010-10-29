@@ -554,6 +554,13 @@ final class ParamFailure[T](override val msg: String,
     })
   }
 
+/**
+ * A trait that a class can mix into itself to convert itself into a Box
+ */
+trait Boxable[T] {
+  def asBox: Box[T]
+}
+
 object ParamFailure {
   def apply[T](msg: String, exception: Box[Throwable], chain: Box[Failure], param: T) =
     new ParamFailure(msg, exception, chain, param)

@@ -17,48 +17,77 @@
 package net.liftweb {
 package common {
 
-import _root_.scala.reflect.Manifest
-  
+/**
+ * Support for heterogenious lists, aka <a href="http://apocalisp.wordpress.com/2010/07/06/type-level-programming-in-scala-part-6a-heterogeneous-list%C2%A0basics/">HLists</a>
+ * 
+ */
+object HLists {
+  /**
+   * The trait that defines HLists
+   */
   sealed trait HList {
-    type ConsType
-    def manifest: Manifest[ConsType]
+    type Head
+    type Tail <: HList
 
     /**
      * The length of the HList
      */
     def length: Int
-
   }
 
-  final case class HCons[H, T <: HList](head: H, tail: T)(implicit val manifest: Manifest[H]) extends HList {
-    type ConsType = H
-
-    def :+:[T](v : T)(implicit m: Manifest[T]) = HCons(v, this)
-
-    override def toString = head + " :+: "+tail
-
-    def length = 1 + tail.length
-  }
-
-  final object HNil extends HList {
-    type ConsType = Nothing
-
-    def :+:[T](v : T)(implicit m: Manifest[T]) = HCons(v, this)
-
-    private def implicitly[T](implicit m: Manifest[T]): Manifest[T] = m
+  /**
+   * The last element of an HList
+   */
+  final class HNil extends HList {
+    type Head = Nothing
+    type Tail = HNil
     
-    val manifest = implicitly[ConsType]
-    
+    /**
+     * Create a new HList based on this node
+     */
+    def :+:[T](v : T) = HCons(v, this)
+
     override def toString = "HNil"
 
+    /**
+     * The length of the HList
+     */
     def length = 0
   }
 
-  object HList {
-    type :+:[H, T <: HList] = HCons[H, T]
-    type HNil = HCons[Nothing, Nothing]
-    val :+: = HCons
+  /**
+   * The HNil singleton
+   */
+  val HNil = new HNil()
+
+  /**
+   * The HList cons cell
+   */
+  final case class HCons[H, T <: HList](head : H, tail : T) extends HList {
+    type This = HCons[H, T]
+    type Head = H
+    type Tail = T
+    
+    /**
+     * Create a new HList based on this node
+     */
+    def :+:[T](v : T) = HCons(v, this)
+
+    override def toString = head + " :+: " + tail
+
+    /**
+     * The length of the HList
+     */
+    def length = 1 + tail.length
   }
+
+  type :+:[H, T <: HList] = HCons[H, T]
+  object :+: {
+    def unapply[H, T <: HList](in: HCons[H, T]): Option[(H, T)] = Some(in.head, in.tail)
+    }
+  
+}
+
 }
 }
 // vim: set ts=2 sw=2 et:
