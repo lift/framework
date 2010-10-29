@@ -56,7 +56,7 @@ object WizardRules extends Factory with FormVendor {
 
 //case class WizardFieldInfo(field: FieldIdentifier, text: NodeSeq, help: Box[NodeSeq], input: Box[NodeSeq])
 
-trait Wizard extends DispatchSnippet with Factory with ScreenWizardRendered {
+trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
   def dispatch = {
     case _ => ignore => this.toForm
   }
@@ -155,6 +155,7 @@ trait Wizard extends DispatchSnippet with Factory with ScreenWizardRendered {
                        private[wizard] val snapshot: Box[WizardSnapshot],
                        private val firstScreen: Boolean) extends Snapshot {
     def restore() {
+      registerThisSnippet();      
       ScreenVars.set(screenVars)
       CurrentScreen.set(currentScreen)
       PrevSnapshot.set(snapshot)

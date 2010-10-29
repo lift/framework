@@ -38,9 +38,24 @@ private[liftweb] trait AbstractScreen extends Factory {
   if (hasUploadField) new UnprefixedAttribute("enctype", Text("multipart/form-data"), Null) else Null
 
 
-  protected def _register(field: () => FieldContainer) {
-    _fieldList = _fieldList ::: List(field)
+  /**
+   * Add a FieldContainer to the Screen.  A FieldContainer
+   * can contain either a single field (a BaseField) or
+   * a collection of BaseFields.  The key take-away is that
+   * if the LiftScreen or Wizard is a singleton, you can still
+   * display variable number of fields by returning a variable
+   * number of BaseField instances from the FieldContainer.
+   */
+  protected def addFields(fields: () => FieldContainer) {
+    _fieldList = _fieldList ::: List(fields)
   }
+
+  /**
+   * Use addFields
+   * 
+   * @deprecated
+   */
+  protected def _register(field: () => FieldContainer) = addFields(field)
 
   protected def hasUploadField: Boolean = screenFields.foldLeft(false)(_ | _.uploadField_?)
 
@@ -468,7 +483,7 @@ trait ScreenWizardRendered {
 
 case class ScreenFieldInfo(field: FieldIdentifier, text: NodeSeq, help: Box[NodeSeq], input: Box[NodeSeq])
 
-trait LiftScreen extends AbstractScreen with DispatchSnippet with ScreenWizardRendered {
+trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRendered {
   def dispatch = {
     case _ => ignore => this.toForm
   }
@@ -481,6 +496,7 @@ trait LiftScreen extends AbstractScreen with DispatchSnippet with ScreenWizardRe
   protected class ScreenSnapshot(private[http] val screenVars: Map[String, (NonCleanAnyVar[_], Any)],
                                  private[http] val snapshot: Box[ScreenSnapshot]) extends Snapshot {
     def restore() {
+      registerThisSnippet();
       ScreenVars.set(screenVars)
       PrevSnapshot.set(snapshot)
     }
