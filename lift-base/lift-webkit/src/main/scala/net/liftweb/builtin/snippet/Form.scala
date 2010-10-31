@@ -37,6 +37,7 @@ object Form extends DispatchSnippet {
 
   def dispatch : DispatchIt = {
     case "render" => render _
+    case "ajax" => render _
     case "post" => post _
   }
 
@@ -65,7 +66,19 @@ object Form extends DispatchSnippet {
   }
   
 
-  def render(kids: NodeSeq) : NodeSeq = Elem(null, "form", addAjaxForm, TopScope, kids : _*)
+  def render(kids: NodeSeq) : NodeSeq = {
+    // yeah it's ugly, but I'm not sure
+    // we could do it reliably with pattern matching
+    // dpp Oct 29, 2010
+    if (kids.length == 1 && 
+        kids(0).isInstanceOf[Elem] && 
+        (kids(0).prefix eq null) &&
+        kids(0).label == "form") {
+      new Elem(null, "form", addAjaxForm , TopScope, kids(0).child :_*)
+    } else {
+      Elem(null, "form", addAjaxForm, TopScope, kids : _*)
+    }
+  }
 
   private def addAjaxForm: MetaData = {
     val id = Helpers.nextFuncName
