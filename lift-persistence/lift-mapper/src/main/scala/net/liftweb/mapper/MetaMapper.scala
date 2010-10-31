@@ -1853,6 +1853,24 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
     case key => anyToFindString(key) flatMap (find(dbId, _))
   }
 
+  /**
+   * Find the element based on the first element of the List
+   */
+  def find(key: List[String]): Box[A] = key match {
+    case Nil => Empty
+    case x :: _ => find(x)
+  }
+
+  /**
+   * Find an element by primary key or create a new one
+   */
+  def findOrCreate(key: Any): A = find(key) openOr create
+
+  /**
+   * Find an element by primary key or create a new one
+   */
+  def findOrCreate(key: List[String]): A = find(key) openOr create
+
   def find(key: String): Box[A] = dbStringToKey(key) flatMap (realKey => findDbByKey(selectDbForKey(realKey), realKey))
 
   def find(dbId: ConnectionIdentifier, key: String): Box[A] =  dbStringToKey(key) flatMap (realKey =>  findDbByKey(dbId, realKey))
