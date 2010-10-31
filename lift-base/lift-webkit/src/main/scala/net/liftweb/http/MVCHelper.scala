@@ -129,7 +129,7 @@ trait MVCHelper extends LiftRules.DispatchPF {
   }
 
   object MVCResponse {
-    implicit def unitToThingy(unit: Unit): MVCResponse = 
+    implicit def unitToResponse(unit: Unit): MVCResponse = 
       new MVCResponse {
         val toResponse: Box[LiftResponse] = 
           for {
@@ -141,7 +141,7 @@ trait MVCHelper extends LiftRules.DispatchPF {
           } yield resp
       }
 
-    implicit def bindToThingy(bind: CssBindFunc): MVCResponse = 
+    implicit def bindToResponse(bind: CssBindFunc): MVCResponse = 
       new MVCResponse {
         val toResponse: Box[LiftResponse] = 
           for {
@@ -153,7 +153,7 @@ trait MVCHelper extends LiftRules.DispatchPF {
           } yield resp
       }
 
-    implicit def nsToThingy(nodes: Seq[Node]): MVCResponse = {
+    implicit def nsToResponse(nodes: Seq[Node]): MVCResponse = {
       new MVCResponse {
         val toResponse: Box[LiftResponse] = 
           for {
@@ -165,7 +165,7 @@ trait MVCHelper extends LiftRules.DispatchPF {
       }
     }
 
-    implicit def respToThingy(resp: LiftResponse): MVCResponse = 
+    implicit def respToResponse(resp: LiftResponse): MVCResponse = 
       new MVCResponse {
         val toResponse: Box[LiftResponse] = Full(resp)
       }
