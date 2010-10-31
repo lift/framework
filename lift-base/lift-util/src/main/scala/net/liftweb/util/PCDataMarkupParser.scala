@@ -182,17 +182,36 @@ object PCDataXmlParser {
 
   def apply(in: InputStream): Box[NodeSeq] = {
     for {
-      source <- (tryo{Source.fromInputStream(in)(Codec.UTF8)} match {case Full(x) => Full(x) case _ => Empty})
+      ba <- tryo(Helpers.readWholeStream(in))
+      ret <- apply(new String(ba, "UTF-8"))
+    } yield ret
+  }
+
+  private def apply(source: Source): Box[NodeSeq] = {
+    for {
       p <- tryo{new PCDataXmlParser(source)}
       val _ = while (p.ch != '<' && p.curInput.hasNext) p.nextch
       bd <- tryo(p.document)
       doc <- Box !! bd
     } yield doc
+
   }
 
   def apply(in: String): Box[NodeSeq] = {
-    import _root_.java.io.ByteArrayInputStream
-    apply(new ByteArrayInputStream(in.getBytes("UTF-8")))
+    var pos = 0
+    val len = in.length
+    while (pos < len && in.charAt(pos) != '<') {
+      pos += 1
+    }
+    // scan past <!DOCTYPE ....>
+    if (pos + 1 < len && in.charAt(pos + 1) == '!') {
+    pos += 1
+    while (pos < len && in.charAt(pos) != '<') {
+      pos += 1
+    }
+    }
+    
+    apply(Source.fromString(in.substring(pos)))
   }
 }
 
