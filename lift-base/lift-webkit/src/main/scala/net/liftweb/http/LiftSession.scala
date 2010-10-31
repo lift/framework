@@ -103,6 +103,29 @@ object LiftSession {
       case _ => None
     }.flatMap {
       md => Helpers.findId(in, md.value.text)
+    }.headOption orElse 
+    in.flatMap {
+      case e: Elem if e.label == "html" =>
+        e.child.flatMap {
+          case e: Elem if e.label == "body" => {
+            e.attribute("class").flatMap {
+              ns => {
+                val clz = ns.text.charSplit(' ')
+                clz.flatMap {
+                  case s if s.startsWith("lift:content_id=") =>
+                    Some(urlDecode(s.substring("lift:content_id=".length)))
+                  case _ => None
+                }.headOption
+                
+              }
+            }
+          }
+
+          case _ => None
+        }
+      case _ => None
+    }.flatMap {
+      id => Helpers.findId(in, id)
     }.headOption getOrElse in
   }
   

@@ -114,7 +114,7 @@ class PCDataXmlParser(val input: Source) extends ConstructingHandler with PCData
 
       Utility.prefix(qname) match {
         case Some("xmlns") =>
-          val prefix = qname.substring(6 /*xmlns:*/ , qname.length);
+          val prefix = qname.substring(6 /* xmlns: */ , qname.length);
           scope = new NamespaceBinding(prefix, value, scope);
 
         case Some(prefix)       =>
@@ -193,22 +193,31 @@ object PCDataXmlParser {
       val _ = while (p.ch != '<' && p.curInput.hasNext) p.nextch
       bd <- tryo(p.document)
       doc <- Box !! bd
-    } yield doc
+    } yield (doc.children: NodeSeq)
 
   }
 
   def apply(in: String): Box[NodeSeq] = {
     var pos = 0
     val len = in.length
-    while (pos < len && in.charAt(pos) != '<') {
-      pos += 1
+    def moveToLT() {
+      while (pos < len && in.charAt(pos) != '<') {
+        pos += 1
+      }
     }
+    
+    moveToLT()
+
+    // scan past <? ... ?>
+    if (pos + 1 < len && in.charAt(pos + 1) == '?') {
+      pos += 1
+      moveToLT()
+    }    
+
     // scan past <!DOCTYPE ....>
     if (pos + 1 < len && in.charAt(pos + 1) == '!') {
-    pos += 1
-    while (pos < len && in.charAt(pos) != '<') {
       pos += 1
-    }
+      moveToLT()
     }
     
     apply(Source.fromString(in.substring(pos)))

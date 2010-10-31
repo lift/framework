@@ -43,6 +43,19 @@ object SnippetSpec extends Specification {
       ret must ==/ (<div id="content" class="lift:surround"/>)
     }
 
+    "Correctly process body class" in {
+      val ret = LiftSession.checkForContentId(<html>
+                                     <head/>
+                                     <body class="lift:content_id=frog">
+                                      <div><span> mooose dog
+                                     <div id="frog" class="lift:surround"/>
+                                      </span></div>
+                                     </body>
+                                     </html>)
+
+      ret must ==/ (<div id="frog" class="lift:surround"/>)
+    }
+
     "Correctly process l:content_id" in {
       val ret = LiftSession.checkForContentId(<html l:content_id="dog">
                                      <head/>
