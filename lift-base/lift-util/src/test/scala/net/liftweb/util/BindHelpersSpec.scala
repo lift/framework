@@ -334,9 +334,19 @@ object CssBindHelpersSpec extends Specification  {
       ("#foo" #> "hello")(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
     }
 
+
+    "substitute a String by id" in {
+      ("#foo" replaceWith "hello")(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
+    }
+
     "substitute multiple Strings by id" in {
       ("#foo" #> "hello" &
      "#baz" #> "bye")(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("hello")}</b>)
+    }
+
+    "substitute multiple Strings by id" in {
+      (("#foo" replaceWith "hello") &
+       ("#baz" replaceWith "bye"))(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("hello")}</b>)
     }
 
     "substitute multiple Strings with a List by id" in {
@@ -344,10 +354,24 @@ object CssBindHelpersSpec extends Specification  {
      "#baz" #> List("bye", "bye"))(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("bye")}{Text("hello")}</b>)
     }
 
+    "substitute multiple Strings with a List by id" in {
+      (("#foo" replaceWith "hello") &
+       ("#baz" replaceWith List("bye", "bye")))(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("bye")}{Text("hello")}</b>)
+    }
+
 
     "substitute multiple Strings with a List of XML by id" in {
       val answer = ("#foo" #> "hello" &
      "#baz" #> List[NodeSeq](<i/>, <i>Meow</i>))(<b><div frog="dog" id="baz">Hello</div><span id="foo"/></b>)
+      
+      (answer \ "i").length must_== 2
+      (answer \ "i")(0) must ==/ (<i id="baz" frog="dog"/>)
+      (answer \ "i")(1) must ==/ (<i frog="dog">Meow</i>)
+    }
+
+    "substitute multiple Strings with a List of XML by id" in {
+      val answer = (("#foo" replaceWith "hello") &
+                    ("#baz" replaceWith List[NodeSeq](<i/>, <i>Meow</i>)))(<b><div frog="dog" id="baz">Hello</div><span id="foo"/></b>)
       
       (answer \ "i").length must_== 2
       (answer \ "i")(0) must ==/ (<i id="baz" frog="dog"/>)
@@ -361,9 +385,23 @@ object CssBindHelpersSpec extends Specification  {
       (answer \ "input")(0) must ==/ (<input name="goof" value="start" id="79"/>)
     }
     
+    "substitute by name" in {
+      val answer = ("name=moose" replaceWith <input name="goof"/>).apply (
+        <div><input name="moose" value="start" id="79"/></div>)
+
+      (answer \ "input")(0) must ==/ (<input name="goof" value="start" id="79"/>)
+    }
+    
 
     "substitute by name with attrs" in {
       val answer = ("name=moose" #> <input name="goof" value="8" id="88"/>).apply (
+        <div><input name="moose" value="start" id="79"/></div>)
+
+      (answer \ "input")(0) must ==/ (<input name="goof" value="8" id="88"/>)
+    }
+    
+    "substitute by name with attrs" in {
+      val answer = ("name=moose" replaceWith <input name="goof" value="8" id="88"/>).apply (
         <div><input name="moose" value="start" id="79"/></div>)
 
       (answer \ "input")(0) must ==/ (<input name="goof" value="8" id="88"/>)
@@ -377,6 +415,13 @@ object CssBindHelpersSpec extends Specification  {
       (answer \ "input")(0) must ==/ (<input cute="moose" name="goof" value="8" id="88"/>)
     }
     
+    "substitute by a selector with attrs" in {
+      val answer = ("cute=moose" replaceWith <input name="goof" value="8" id="88"/>).apply (
+        <div><input name="meow" cute="moose" value="start" id="79"/></div>)
+
+      (answer \ "input")(0) must ==/ (<input cute="moose" name="goof" value="8" id="88"/>)
+    }
+    
 
     "merge classes" in {
       val answer = ("cute=moose" #> <input class="a" name="goof" value="8" id="88"/>).apply (
@@ -385,6 +430,16 @@ object CssBindHelpersSpec extends Specification  {
       (answer \ "input")(0) must ==/ (<input class="a b" cute="moose" name="goof" value="8" id="88"/>)
     }
     
+
+    "merge classes" in {
+      val answer = ("cute=moose" replaceWith <input class="a" name="goof" value="8" id="88"/>).apply (
+        <div><input name="meow" class="b" cute="moose" value="start" id="79"/></div>)
+
+      (answer \ "input")(0) must ==/ (<input class="a b" cute="moose" name="goof" value="8" id="88"/>)
+    }
+    
+
+
 
     "list of strings" in {
       val answer = ("#moose *" #> List("a", "b", "c", "woof") &
@@ -434,6 +489,63 @@ object CssBindHelpersSpec extends Specification  {
     
     "set href and subnodes" in {
       val answer = ("#moose [href]" #> "Hi" &
+                    ClearClearable).apply (
+        <ul><a id="moose" href="meow">first<li class="clearable">second</li><li class="clearable">Third</li></a></ul>)
+        
+    
+    (answer \ "a" \ "@href").text must_== "Hi"
+      (answer \\ "li").length must_== 0
+    }
+
+
+    "list of strings" in {
+      val answer = (("#moose *" replaceWith List("a", "b", "c", "woof")) &
+                    ClearClearable).apply (
+        <ul>
+        <li id="moose">first</li>
+        <li class="clearable">second</li>
+        <li class="clearable">Third</li>
+        </ul>)
+        
+      val lis = (answer \ "li").toList
+      
+      lis.length must_== 4
+
+      lis(0) must ==/ (<li id="moose">a</li>)
+      lis(3) must ==/ (<li>woof</li>)
+    }
+    
+
+    "list of Nodes" in {
+      val answer = (("#moose *" replaceWith List[NodeSeq](<i>"a"</i>, Text("b"), Text("c"), <b>woof</b>)) &
+                    ClearClearable).apply (
+        <ul>
+        <li id="moose">first</li>
+        <li class="clearable">second</li>
+        <li class="clearable">Third</li>
+        </ul>)
+        
+      val lis = (answer \ "li").toList
+      
+      lis.length must_== 4
+
+      lis(0) must ==/ (<li id="moose"><i>"a"</i></li>)
+      lis(3) must ==/ (<li><b>woof</b></li>)
+    }
+    
+
+    "set href" in {
+      val answer = (("#moose [href]" replaceWith "Hi") &
+                    ClearClearable).apply (
+        <ul><a id="moose" href="meow">first</a><li class="clearable">second</li><li class="clearable">Third</li></ul>)
+        
+    
+    (answer \ "a" \ "@href").text must_== "Hi"
+      (answer \ "li").length must_== 0
+    }
+    
+    "set href and subnodes" in {
+      val answer = (("#moose [href]" replaceWith "Hi") &
                     ClearClearable).apply (
         <ul><a id="moose" href="meow">first<li class="clearable">second</li><li class="clearable">Third</li></a></ul>)
         
