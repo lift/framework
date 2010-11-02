@@ -967,15 +967,6 @@ trait BindHelpers {
       case v => v
     }
 
-  /*
-   private def mergeBindAttrs(in: NodeSeq, nameSpace: String, attrs: MetaData): NodeSeq = attrs match {
-   case Null => in
-   case p: PrefixedAttribute if p.pre == nameSpace =>
-   mergeBindAttrs(setElemId(in, p.key, p.value), nameSpace, p.next)
-   case m => mergeBindAttrs(in, nameSpace, m.next)
-   }
-   */
-
   /**
    * Replace the content of lift:bind nodes with the corresponding nodes found in a map,
    * according to the value of the "name" attribute.<p/>
@@ -1198,6 +1189,42 @@ trait BindHelpers {
    */
   implicit def cssSelectorToCssBindPromoter(sel: CssSelector): ToCssBindPromoter =
     new ToCssBindPromoter(Empty, Full(sel))
+
+  /**
+   * For a list of NodeSeq, ensure that the the id of the root Elems
+   * are unique.  If there's a duplicate, that Elem will be returned
+   * without an id
+   */
+  def ensureUniqueId(in: Seq[NodeSeq]): Seq[NodeSeq] = {
+    var ids: Set[String] = Set()
+
+    def ensure(in: Elem): Elem = {
+      in.attribute("id") match {
+        case Some(id) => {
+          if (ids.contains(id.text)) {
+            new Elem(in.prefix,
+                   in.label, in.attributes.filter {
+                     case up: UnprefixedAttribute => up.key != "id"
+                     case _ => true
+                   }, in.scope, in.child :_*)
+          } else {
+            ids += id.text
+            in
+          }
+        }
+          
+        case _ => in
+      }
+    }
+
+    in.map {
+      case e: Elem => ensure(e)
+      case x => x.map {
+        case e: Elem => ensure(e)
+        case x => x
+      }
+    }
+  }
 }
 
 /**
@@ -1249,7 +1276,7 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * Box[NodeSeq], Option[String], Option[NodeSeq]
    */
   def #>(itrConst: IterableConst): CssBind = new CssBindImpl(stringSelector, css) {
-    def calculate(in: NodeSeq): Seq[NodeSeq] = itrConst.constList
+    def calculate(in: NodeSeq): Seq[NodeSeq] = itrConst.constList(in)
   }
 
   /**
@@ -1307,7 +1334,7 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * Box[NodeSeq], Option[String], Option[NodeSeq]
    */
   def replaceWith(itrConst: IterableConst): CssBind = new CssBindImpl(stringSelector, css) {
-    def calculate(in: NodeSeq): Seq[NodeSeq] = itrConst.constList
+    def calculate(in: NodeSeq): Seq[NodeSeq] = itrConst.constList(in)
   }
 
   /**
@@ -1328,7 +1355,7 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
  * Iterable[NodeSeq], Seq[String], Box[String], and Option[String]
  */
 trait IterableConst {
-  def constList: Seq[NodeSeq]
+  def constList(nodeSeq: NodeSeq): Seq[NodeSeq]
 }
 
 
@@ -1345,41 +1372,47 @@ object IterableConst {
    */
   implicit def itNodeSeq[C <% Iterable[NodeSeq]](it: C): IterableConst =
     new IterableConst {
-      def constList: Seq[NodeSeq] = it.toSeq
+      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toSeq
     }
 
-  implicit def itStringPromotable(it: Seq[String]): IterableConst =
+  implicit def itNodeSeqFunc(it: Iterable[NodeSeq => NodeSeq]): IterableConst =
     new IterableConst {
-      def constList: Seq[NodeSeq] = it.map(a => Text(a))
+      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = 
+        Helpers.ensureUniqueId(it.map(_(nodeSeq)).toSeq)
+    }
+
+  implicit def itStringPromotable(it: Iterable[String]): IterableConst =
+    new IterableConst {
+      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.map(a => Text(a)).toSeq
     }
 
 
   implicit def boxStringPromotable(it: Box[String]): IterableConst =
     new IterableConst {
-      def constList: Seq[NodeSeq] = it.toList.map(a => Text(a))
+      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toList.map(a => Text(a))
     }
 
 
   implicit def optionStringPromotable(it: Option[String]): IterableConst =
     new IterableConst {
-      def constList: Seq[NodeSeq] = it.toList.map(a => Text(a))
+      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toList.map(a => Text(a))
     }
 
   implicit def itBindablePromotable(it: Seq[Bindable]): IterableConst =
     new IterableConst {
-      def constList: Seq[NodeSeq] = it.map(a => a.asHtml)
+      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.map(a => a.asHtml)
     }
 
 
   implicit def boxBindablePromotable(it: Box[Bindable]): IterableConst =
     new IterableConst {
-      def constList: Seq[NodeSeq] = it.toList.map(a => a.asHtml)
+      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toList.map(a => a.asHtml)
     }
 
 
   implicit def optionBindablePromotable(it: Option[Bindable]): IterableConst =
     new IterableConst {
-      def constList: Seq[NodeSeq] = it.toList.map(a => a.asHtml)
+      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toList.map(a => a.asHtml)
     }
 }
 

@@ -421,6 +421,14 @@ object CssBindHelpersSpec extends Specification  {
 
       (answer \ "input")(0) must ==/ (<input cute="moose" name="goof" value="8" id="88"/>)
     }
+
+    "Map of funcs" in {
+      val func: NodeSeq => NodeSeq = "#horse" #> List(1,2,3).map(".item *" #> _)
+      val answer: NodeSeq = func(<span><div id="horse">frog<span class="item">i</span></div></span>)
+
+      answer must ==/ (<span><div id="horse">frog<span class="item">1</span></div><div>frog<span class="item">2</span></div><div>frog<span class="item">3</span></div></span>)
+                  
+    }
     
 
     "merge classes" in {
@@ -639,12 +647,16 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
   "foo" #> nsToBoxString _
   "foo" #> nsToSeqString _
 
+  "#foo" #> Set("a", "b", "c")
+
   val nsf2: NodeSeq => NodeSeq = "foo" #> "Hello" &
   "foo" #> <span/> &
   "foo" #> 1 &
   "foo" #> 'foo &
   "foo" #> 44L &
   "foo" #> false
+
+  "bar" #> List("1","2","3").map(s => "baz" #> s)
 
 
 
