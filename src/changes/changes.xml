@@ -35,9 +35,148 @@
         due-to  = "(optional) Name of the person 'non-committer' to be credited for this change">
       Short description of the change
     </action>
-   see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
-   -->
+    see http://maven.apache.org/plugins/maven-changes-plugin/usage.html for full guide
+    -->
     <release version="${project.version}" date="${publishDate}" description="Lift 2.1 Snapshot Release">
+    </release>
+
+    <release version="2.2-M1" date="2010-11-03" description="Lift 2.2 Milestone 1">
+      <action dev="dpp" type="fix" issue="552" system="assembla">
+        save an edited db-record which has a custom primary key -> Trying to open an empty Box
+      </action>
+      <action dev="dpp" type="fix" issue="646" system="assembla">
+        Browser Detection (for max simultaneous connections) Doesn't Handle Firefox 4
+      </action>
+      <action dev="indrajitr" type="fix" issue="648" system="assembla">
+        lift-mapper should not depend on H2 and Derby
+      </action>
+      <action dev="dpp" type="fix" issue="698" system="assembla">
+        Chrome 7 barf on comet tags that include lift:when = ...
+      </action>
+      <action dev="dpp" type="fix" issue="556" system="assembla">
+        Bug at OpenID's rawJUL2List
+      </action>
+      <action dev="dpp" type="update" issue="561" system="assembla">
+        OpenID error messages should be customizable
+      </action>
+      <action dev="eltimn" type="add" issue="568" system="assembla">
+        Add full BSON support to lift-mongodb
+      </action>
+      <action dev="indrajitr" type="update" issue="579" system="assembla">
+        Update vscaladoc packageLink defs with baseUri for external dependencies
+      </action>
+      <action dev="dchenbecker" type="fix" issue="589" system="assembla">
+        Inconsistent rendering of notices in AJAX responses
+      </action>
+      <action dev="dpp" type="fix" issue="613" system="assembla">
+        Add "body: NodeSeq" Parameter to Shtml.submit()
+      </action>
+      <action dev="dpp" type="fix" issue="615" system="assembla">
+        All external links in SiteMap treated as same link
+      </action>
+      <action dev="dchenbecker" type="add" issue="620" system="assembla">
+        Support for Sybase ASE using JTDS JDBC driver for Lift 3.0
+      </action>
+      <action dev="dchenbecker" type="add" issue="639" system="assembla">
+        Add binding support to the embed tag
+      </action>
+      <action dev="vdichev" type="add" issue="640" system="assembla">
+        Add XML matchers to TestResponse
+      </action>
+      <action dev="indrajitr" type="update" issue="516" system="assembla">
+        Update slf4j and logback revisions and make using logging backend more flexible
+      </action>
+      <action dev="indrajitr" type="update" issue="644" system="assembla">
+        Change log4j version in lift 2.1 from 1.2.14 to 1.2.16
+      </action>
+      <action dev="dchenbecker" type="add" issue="647" system="assembla">
+        Add support for prefixed attributes to BindParam subclasses
+      </action>
+      <action dev="david.bernard.31" type="fix" issue="649" system="assembla">
+        couchdb : StackOverflow in
+      </action>
+      <action dev="jonifreeman" type="fix" issue="654" system="assembla">
+        Values can't be extracted from JSON with Map[String, List[String]]
+      </action>
+      <action dev="dpp" type="fix" issue="657" system="assembla">
+        SHtml.ajaxRadio()
+      </action>
+      <action dev="dpp" type="fix" issue="661" system="assembla">
+        change Loc.snippet to use currentValue
+      </action>
+      <action dev="hoffrocket" type="update" issue="662" system="assembla">
+        ImageResizer support for gif, bmp detection and jpeg quality
+      </action>
+      <action dev="dpp" type="update" issue="663" system="assembla">
+        Consider ways of making &lt;lift:Menu.item/&gt; work with custom locs
+      </action>
+      <action dev="dpp" type="add" issue="664" system="assembla">
+        Support for multiple validation
+      </action>
+      <action dev="dpp" type="update" issue="665" system="assembla">
+        Features that require session state should warn when container sessions are disabled
+      </action>
+      <action dev="dpp" type="update" issue="668" system="assembla">
+        LiftRules.uriNotFound does not support NotFoundAsTemplate when handling 404s for urls served
+        by ResourceServer
+      </action>
+      <action dev="jonifreeman" type="fix" issue="671" system="assembla">
+        JsonParser.Buffer incorrectly handles input Reader
+      </action>
+      <action dev="dchenbecker" type="fix" issue="678" system="assembla">
+        XMLApiHelpers has ambiguous implicit conversions from NodeSeq and Seq[Node]
+      </action>
+      <action dev="dpp" type="update" issue="679" system="assembla">
+        Add a class LocParam to SiteMap
+      </action>
+      <action dev="hoffrocket" type="fix" issue="682" system="assembla">
+        ImageResizer.getOrientation should handle Exceptions
+      </action>
+      <action dev="dpp" type="add" issue="684" system="assembla">
+        Update CRUDify and ProtoUser to be persistance agnostic
+      </action>
+      <action dev="dpp" type="add" issue="690" system="assembla">
+        implement FuncBoxBindParam
+      </action>
+      <action dev="dpp" type="fix" issue="691" system="assembla">
+        n.l.r.f.EmailField.emailPatter n is broken
+      </action>
+      <action dev="dpp" type="add" issue="695" system="assembla">
+        Review designer friendly and add bind by css selectors
+      </action>
+      <action dev="jonifreeman" type="fix" issue="696" system="assembla">
+        Performance degradation in JSON compact rendering
+      </action>
+      <action dev="jonifreeman" type="fix" issue="697" system="assembla">
+        \uffff is a valid char in JSON string literal
+      </action>
+      <action dev="dpp" type="update" issue="699" system="assembla">
+        Make LiftScreen and Wizard stateful snippets
+      </action>
+      <action dev="indrajitr" type="update" issue="700" system="assembla">
+        Enrich archetypes to take CLI parameter logBackend
+      </action>
+      <action dev="indrajitr" type="delete" issue="701" system="assembla">
+        Remove Lift standalone installer
+      </action>
+      <action dev="dpp" type="update" issue="702" system="assembla">
+        Skip the &lt;!DOCTYPE ...&gt; tag at the beginning of an HTML file
+      </action>
+      <action dev="dpp" type="add" issue="703" system="assembla">
+        Add some simple MVC style helpers for Lift
+      </action>
+      <action dev="indrajitr" type="fix" issue="447" system="assembla">
+        POM Housekeeping
+      </action>
+      <action dev="dpp" type="fix" issue="629" system="assembla">
+        option bind, being able to remove large portion of html if none
+      </action>
+      <action dev="dpp" type="fix" issue="645" system="assembla">
+        Misleading error message in net.liftweb.util.Props
+      </action>
+    </release>
+
+    <release version="2.1" date="2010-09-24" description="Lift 2.1 Final Release">
     </release>
 
     <release version="2.1-RC3" date="2010-09-21" description="Lift 2.1 Release Candidate 3">
