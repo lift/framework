@@ -607,6 +607,8 @@ object DB extends Loggable {
 
   /**
   * The default reserved words.
+  *
+  * TODO : Maybe this should be refactored to allow for driver-specific reserved words
   */
   lazy val defaultReservedWords:  _root_.scala.collection.immutable.Set[String] = _root_.scala.collection.immutable.HashSet("abort",
        "accept",
@@ -895,6 +897,7 @@ object DB extends Loggable {
        "set",
        "share",
        "shared",
+       "show", // MySQL reserved word
        "size",
        "smallint",
        "snapshot",
