@@ -157,6 +157,7 @@ object DriverType {
       case (H2Driver.name,_,_) => H2Driver
       case (SqlServerDriver.name,major,_) if major >= 9 => SqlServerDriver
       case (SqlServerDriver.name,_,_) => SqlServerPre2005Driver
+      case (SybaseSQLAnywhereDriver.name,_,_) => SybaseSQLAnywhereDriver
       case (SybaseASEDriver.name,_,_) => SybaseASEDriver
       case (OracleDriver.name,_,_) => OracleDriver
       case (MaxDbDriver.name,_,_) => MaxDbDriver
@@ -348,6 +349,16 @@ object SqlServerPre2005Driver extends SqlServerBaseDriver
 object SqlServerDriver extends SqlServerBaseDriver {
   override def binaryColumnType = "VARBINARY(MAX)"
   override def clobColumnType = "NVARCHAR(MAX)"
+}
+
+/**
+ * Sybase SQL Anywhere Driver. Tested against version 10.0
+ */
+object SybaseSQLAnywhereDriver extends SqlServerBaseDriver {
+  override val name = "SQL Anywhere"
+  
+  // SQL Anywhere prefers the default schema name for metadata calls
+  override val defaultSchemaName = Full(null)
 }
 
 /**
