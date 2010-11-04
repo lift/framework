@@ -65,7 +65,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
       coll.findOne(qry) match {
         case null => Empty
-        case dbo => fromDBObject(dbo)
+        case dbo => Full(fromDBObject(dbo))
       }
     )
   }
@@ -119,7 +119,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     * The call to toArray retrieves all documents and puts them in memory.
     */
     MongoDB.useCollection(mongoIdentifier, collectionName) ( coll => {
-      coll.find.toArray.flatMap(dbo => fromDBObject(dbo).toList).toList
+      coll.find.toArray.map(dbo => fromDBObject(dbo)).toList
     })
   }
 
@@ -137,7 +137,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     findAll(sort, opts:_*) { coll => coll.find(qry, keys) }
   }
 
-  private def findAll(sort: Option[DBObject], opts: FindOption*)(f: (DBCollection) => DBCursor): List[BaseRecord] = {
+  protected def findAll(sort: Option[DBObject], opts: FindOption*)(f: (DBCollection) => DBCursor): List[BaseRecord] = {
     val findOpts = opts.toList
 
     MongoDB.useCollection(mongoIdentifier, collectionName) ( coll => {
@@ -148,7 +148,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
       )
       sort.foreach( s => cur.sort(s))
       // The call to toArray retrieves all documents and puts them in memory.
-      cur.toArray.flatMap(dbo => fromDBObject(dbo).toList).toList
+      cur.toArray.map(dbo => fromDBObject(dbo)).toList
     })
   }
 
@@ -270,31 +270,30 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
 
     val dbo = BasicDBObjectBuilder.start // use this so regex patterns can be stored.
 
-    for (f <- fields) {
-      fieldByName(f.name, inst) match {
-        case Full(field) if (field.optional_? && field.valueBox.isEmpty) => // don't add to DBObject
+    for (f <- fields(inst)) {
+      f match {
+        case field if (field.optional_? && field.valueBox.isEmpty) => // don't add to DBObject
         /* FIXME: Doesn't work
         case Full(field) if field.isInstanceOf[CountryField[Any]] =>
           dbo.add(f.name, field.asInstanceOf[CountryField[Any]].value)
         */
-        case Full(field: EnumTypedField[Enumeration]) =>
+        case field: EnumTypedField[Enumeration] =>
           field.asInstanceOf[EnumTypedField[Enumeration]].valueBox foreach {
             v => dbo.add(f.name, v.id)
           }
-        case Full(field: EnumNameTypedField[Enumeration]) =>
+        case field: EnumNameTypedField[Enumeration] =>
           field.asInstanceOf[EnumNameTypedField[Enumeration]].valueBox foreach {
             v => dbo.add(f.name, v.toString)
           }
-        case Full(field: MongoFieldFlavor[Any]) =>
+        case field: MongoFieldFlavor[Any] =>
           dbo.add(f.name, field.asInstanceOf[MongoFieldFlavor[Any]].asDBObject)
-        case Full(field) => field.valueBox foreach (_.asInstanceOf[AnyRef] match {
+        case field => field.valueBox foreach (_.asInstanceOf[AnyRef] match {
           case null => dbo.add(f.name, null)
           case x if primitive_?(x.getClass) => dbo.add(f.name, x)
           case x if mongotype_?(x.getClass) => dbo.add(f.name, x)
           case x if datetype_?(x.getClass) => dbo.add(f.name, datetype2dbovalue(x))
           case o => dbo.add(f.name, o.toString)
-        })
-        case _ => //dbo.markAsPartialObject // so we know it's only partial
+        }) 
       }
     }
     dbo.get
@@ -306,9 +305,10 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   * @param dbo - the DBObject
   * @return Box[BaseRecord]
   */
-  def fromDBObject(dbo: DBObject): Box[BaseRecord] = {
+  def fromDBObject(dbo: DBObject): BaseRecord = {
     val inst: BaseRecord = createRecord
-    setFieldsFromDBObject(inst, dbo) map (_ => inst)
+    setFieldsFromDBObject(inst, dbo)
+    inst
   }
 
   /**
@@ -319,13 +319,10 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   * @param obj - The DBObject
   * @return Box[BaseRecord]
   */
-  def setFieldsFromDBObject(inst: BaseRecord, dbo: DBObject): Box[Unit] = {
-    dbo.keySet.toList.foreach {
-      k => inst.fieldByName(k.toString).map {
-        field => field.setFromAny(dbo.get(k.toString))
-      }
+  def setFieldsFromDBObject(inst: BaseRecord, dbo: DBObject): Unit = {
+    for (k <- dbo.keySet; field <- inst.fieldByName(k.toString)) {
+      field.setFromAny(dbo.get(k.toString))
     }
-    Full(())
   }
 
 }
