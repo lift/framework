@@ -236,7 +236,14 @@ object SessionMaster extends LiftActor with Loggable {
    */
   private[http] def shutDownAllSessions() {
     val ses = lockRead(sessions)
-    ses.keySet.foreach(k => this ! RemoveSession(k))
+    ses.foreach {
+      case (key, sess) =>
+        if (!sess.session.markedForShutDown_?) {
+          sess.session.markedForShutDown_? = true
+          this ! RemoveSession(key)
+        }
+    }
+
     while(true) {
       val s2 = lockRead(sessions)
       if (s2.size == 0) return
@@ -249,19 +256,21 @@ object SessionMaster extends LiftActor with Loggable {
       val ses = lockRead(sessions)
       ses.get(sessionId).foreach {
         case SessionInfo(s, _, _, _, _) =>
-                try {
-                  s.doShutDown
-                  try {
-                    s.httpSession.foreach(_.unlink(s))
-                  } catch {
-                    case e => // ignore... sometimes you can't do this and it's okay
-                  }
-                } catch {
-                  case e => logger.warn("Failure in remove session", e)
-
-                } finally {
-                  lockWrite {sessions = sessions - sessionId}
-                }
+          s.markedForShutDown_? = true
+          ActorPing.schedule(() => {
+            try {
+              s.doShutDown
+              try {
+                s.httpSession.foreach(_.unlink(s))
+              } catch {
+                case e: Exception => // ignore... sometimes you can't do this and it's okay
+              }
+            } catch {
+              case e: Exception => logger.warn("Failure in remove session", e)
+              
+            }
+          }, 0 seconds)
+        lockWrite {sessions = sessions - sessionId}
       }
 
     case CheckAndPurge =>
@@ -271,9 +280,25 @@ object SessionMaster extends LiftActor with Loggable {
         f <- sessionCheckFuncs
       } {
         if (Props.inGAE) {
-          f(ses, shutDown => this.sendMsg(RemoveSession(shutDown.session.uniqueId)))
+          f(ses, shutDown => {
+            if (!shutDown.session.markedForShutDown_?) {
+              shutDown.session.markedForShutDown_? = true
+              this.sendMsg(RemoveSession(shutDown.session.uniqueId))
+            }
+          })
         } else {
-          ActorPing.schedule(() => f(ses, shutDown => this ! RemoveSession(shutDown.session.uniqueId)), 0 seconds)
+          ActorPing.schedule(() => f(ses, 
+                                     shutDown => {
+                                       if (!shutDown.session.markedForShutDown_?) {
+                                         shutDown.session.
+                                         markedForShutDown_? = true
+                                         
+                                         this ! RemoveSession(shutDown.
+                                                              session.
+                                                              uniqueId)
+                                       }
+                                     }
+                                   ), 0 seconds)
         }
       }
 
@@ -370,6 +395,12 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   @volatile
   private var _running_? = false
 
+  /**
+   * Was this session marked for shutdown... if so,
+   * don't remark
+   */
+  @volatile private[http] var markedForShutDown_? = false
+
   private val fullPageLoad = new ThreadGlobal[Boolean] {
     def ? = this.box openOr false
   }
@@ -396,7 +427,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private[http] var lastServiceTime = millis
 
   @volatile
-  private[http] var inactivityLength: Long = 30 minutes
+  private[http] var inactivityLength: Long = 
+    LiftRules.sessionInactivityTimeout.vend openOr ((30 minutes): Long)
 
   private[http] var highLevelSessionDispatcher = new HashMap[String, LiftRules.DispatchPF]()
   private[http] var sessionRewriter = new HashMap[String, LiftRules.RewritePF]()
@@ -410,7 +442,17 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private[http] def startSession(): Unit = {
     _running_? = true
     for (sess <- httpSession) {
-      inactivityLength = sess.maxInactiveInterval * 1000L
+      // calculate the inactivity length.  If the length is
+      // defined in LiftRules and it's less than the container's length
+      // then use the Lift length.  Why not use it if the Lift length is
+      // longer?  Well, the container's just going to time you out, so
+      // why bother.
+      inactivityLength = 
+        (sess.maxInactiveInterval * 1000L, 
+         LiftRules.sessionInactivityTimeout.vend) match {
+          case (container, Full(lift)) if lift < container => lift
+          case (container, _) => container
+        }
     }
 
     lastServiceTime = millis
@@ -562,7 +604,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    */
   def destroySession() {
     S.request.foreach(_.request.session.terminate)
-    this.shutDown()
+    this.doShutDown()
   }
 
   private[http] def doShutDown() {
@@ -570,8 +612,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       // only deal with comet on stateful sessions
       // stateless temporary sessions bar comet use
       if (stateful_?) {
-        this.breakOutComet()
-        Thread.sleep(100)
+        val cl = synchronized {cometList}
+        if (cl.length > 0) {
+          this.breakOutComet()
+          Thread.sleep(100)
+        }
       }
       this.shutDown()
     }
@@ -582,10 +627,12 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       val now = millis
       messageCallback.keys.toList.foreach {
         k =>
-                val f = messageCallback(k)
-                if (!f.sessionLife && f.owner.isDefined && (now - f.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
-                  messageCallback -= k
-                }
+          val f = messageCallback(k)
+        if (!f.sessionLife && 
+            f.owner.isDefined && 
+            (now - f.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
+              messageCallback -= k
+            }
       }
     }
   }
