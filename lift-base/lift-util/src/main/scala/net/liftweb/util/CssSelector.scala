@@ -24,6 +24,11 @@ sealed trait CssSelector {
   def subNodes: Box[SubNode]
 }
 
+final case class ElemSelector(elem: String, subNodes: Box[SubNode]) extends 
+  CssSelector
+
+final case class StarSelector(subNodes: Box[SubNode]) extends CssSelector
+
 final case class IdSelector(id: String, subNodes: Box[SubNode]) extends 
   CssSelector
 
@@ -85,12 +90,23 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
   private lazy val topParser: Parser[CssSelector] = {
     idMatch |
     classMatch |
-    attrMatch
+    attrMatch |
+    elemMatch |
+    starMatch
   }
     
   private lazy val idMatch: Parser[CssSelector] = '#' ~> id ~ opt(subNode) ^^ {
     case id ~ sn => IdSelector(id, sn)
   }
+
+  private lazy val elemMatch: Parser[CssSelector] =  id ~ opt(subNode) ^^ {
+    case elem ~ sn => ElemSelector(elem, sn)
+  }
+
+  private lazy val starMatch: Parser[CssSelector] =  '*' ~> opt(subNode) ^^ {
+    case sn => StarSelector(sn)
+  }
+
 
   private lazy val id: Parser[String] = letter ~ 
   rep(letter | number | '-' | '_' | ':' | '.') ^^ {
