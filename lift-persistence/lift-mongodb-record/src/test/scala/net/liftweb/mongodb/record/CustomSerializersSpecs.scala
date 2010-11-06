@@ -301,7 +301,7 @@ object CustomSerializersSpecs extends Specification with MongoTestKit {
 
     }
 
-    "hanlde ObjectId as ObjectId values in JsonObjects using ObjectIdSerializer" in {
+    "handle ObjectId as ObjectId values in JsonObjects using ObjectIdSerializer" in {
       checkMongoIsRunning
 
       // test data

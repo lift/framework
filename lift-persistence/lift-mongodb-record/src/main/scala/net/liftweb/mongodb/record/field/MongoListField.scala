@@ -25,7 +25,7 @@ import scala.collection.JavaConversions._
 
 import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
 import _root_.net.liftweb.json.JsonAST._
-import _root_.net.liftweb.json.{JsonParser, Printer}
+import _root_.net.liftweb.json.JsonParser
 import _root_.net.liftweb.http.js.JE.{JsNull, JsRaw}
 import _root_.net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
 import _root_.net.liftweb.util.Helpers.tryo
@@ -135,6 +135,14 @@ class MongoJsonObjectListField[OwnerType <: MongoRecord[OwnerType], JObjectType 
     })))
 
   override def asJValue = JArray(value.map(_.asJObject()(owner.meta.formats)))
+
+  override def setFromJValue(jvalue: JValue) = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case JArray(arr) => setBox(Full(arr.map( jv => {
+      valueMeta.create(jv.asInstanceOf[JObject])(owner.meta.formats)
+    })))
+    case other => setBox(FieldHelpers.expectedA("JArray", other))
+  }
 }
 
 }

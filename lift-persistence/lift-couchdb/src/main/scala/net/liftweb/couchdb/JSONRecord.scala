@@ -86,12 +86,6 @@ trait JSONRecord[MyType <: JSONRecord[MyType]] extends Record[MyType] {
    * Default implementation preserves the fields intact and returns them via additionalJFields
    */
   def additionalJFields_= (fields: List[JField]): Unit = _additionalJFields = fields
-
-  /** Encode this record instance as a JObject */
-  def asJValue: JObject = meta.asJValue(this)
-
-  /** Set the fields of this record from the given JValue */
-  def setFieldsFromJValue(jvalue: JValue): Box[Unit] = meta.setFieldsFromJValue(this, jvalue)
 }
 
 object JSONMetaRecord {
@@ -127,19 +121,13 @@ trait JSONMetaRecord[BaseRecord <: JSONRecord[BaseRecord]] extends MetaRecord[Ba
     setFieldsFromJValue(inst, JsonParser.parse(json))
 
   /** Encode a record instance into a JValue */
-  def asJValue(rec: BaseRecord): JObject = {
+  override def asJValue(rec: BaseRecord): JObject = {
     val recordJFields = fields(rec).map(f => JField(jsonName(f), f.asJValue))
     JObject(dedupe(recordJFields ++ rec.fixedAdditionalJFields ++ rec.additionalJFields).sort(_.name < _.name))
   }
 
-  /** Create a record by decoding a JValue which must be a JObject */
-  def fromJValue(jvalue: JValue): Box[BaseRecord] = {
-    val inst = createRecord
-    setFieldsFromJValue(inst, jvalue) map (_ => inst)
-  }
-
   /** Attempt to decode a JValue, which must be a JObject, into a record instance */
-  def setFieldsFromJValue(rec: BaseRecord, jvalue: JValue): Box[Unit] = {
+  override def setFieldsFromJValue(rec: BaseRecord, jvalue: JValue): Box[Unit] = {
     def fromJFields(jfields: List[JField]): Box[Unit] = {
       import JSONMetaRecord._
 

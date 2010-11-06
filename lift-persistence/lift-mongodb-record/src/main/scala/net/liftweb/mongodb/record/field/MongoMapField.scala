@@ -59,7 +59,7 @@ class MongoMapField[OwnerType <: MongoRecord[OwnerType], MapValueType](rec: Owne
   def setFromJValue(jvalue: JValue) = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case JObject(obj) => setBox(Full(
-      Map() ++ obj.map(jf => (jf.name, jf.value.asInstanceOf[MapValueType]))
+      Map() ++ obj.map(jf => (jf.name, jf.value.values.asInstanceOf[MapValueType]))
     ))
     case other => setBox(FieldHelpers.expectedA("JObject", other))
   }

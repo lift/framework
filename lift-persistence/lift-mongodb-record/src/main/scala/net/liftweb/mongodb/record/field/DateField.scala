@@ -61,9 +61,8 @@ class DateField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
     case o => setFromString(o.toString)
   }
 
-  def setFromString(in: String): Box[Date] = tryo(owner.meta.formats.dateFormat.parse(in)) match {
-    case Full(d: Date) => setBox(Full(d))
-    case f: Failure => setBox(f)
+  def setFromString(in: String): Box[Date] = owner.meta.formats.dateFormat.parse(in) match {
+    case Some(d: Date) => setBox(Full(d))
     case other => setBox(Failure("Invalid Date string: "+in))
   }
 

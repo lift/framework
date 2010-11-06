@@ -18,12 +18,12 @@ package net.liftweb {
 package record {
 package fixtures {
 
-import _root_.java.math.MathContext
-import _root_.scala.xml.Text
-import _root_.net.liftweb.common.{Box, Empty, Full}
-import _root_.net.liftweb.util.FieldError
-import _root_.org.specs._
-import _root_.org.specs.runner.{ConsoleRunner, JUnit3}
+import java.math.MathContext
+import scala.xml.Text
+import common.{Box, Empty, Full}
+import util.{FieldError, Helpers}
+import org.specs._
+import org.specs.runner.{ConsoleRunner, JUnit3}
 
 import field._
 
@@ -202,6 +202,27 @@ class FieldTypeTestRecord private () extends Record[FieldTypeTestRecord] {
   object mandatoryTimeZoneField extends TimeZoneField(this)
   object legacyOptionalTimeZoneField extends TimeZoneField(this) { override def optional_? = true }
   object optionalTimeZoneField extends OptionalTimeZoneField(this)
+
+  override def equals(other: Any): Boolean = other match {
+    case that:FieldTypeTestRecord =>
+      //this.mandatoryBinaryField.value mustEqual that.mandatoryBinaryField.value
+      this.mandatoryBooleanField.value == that.mandatoryBooleanField.value &&
+      this.mandatoryCountryField.value == that.mandatoryCountryField.value &&
+      Helpers.toInternetDate(this.mandatoryDateTimeField.value.getTime) ==
+        Helpers.toInternetDate(that.mandatoryDateTimeField.value.getTime) &&
+      //this.mandatoryDecimalField.value == that.mandatoryDecimalField.value &&
+      this.mandatoryDoubleField.value == that.mandatoryDoubleField.value &&
+      this.mandatoryEmailField.value == that.mandatoryEmailField.value &&
+      this.mandatoryEnumField.value == that.mandatoryEnumField.value &&
+      this.mandatoryIntField.value == that.mandatoryIntField.value &&
+      this.mandatoryLocaleField.value == that.mandatoryLocaleField.value &&
+      this.mandatoryLongField.value == that.mandatoryLongField.value &&
+      this.mandatoryPostalCodeField.value == that.mandatoryPostalCodeField.value &&
+      this.mandatoryStringField.value == that.mandatoryStringField.value &&
+      this.mandatoryTextareaField.value == that.mandatoryTextareaField.value &&
+      this.mandatoryTimeZoneField.value == that.mandatoryTimeZoneField.value
+    case _ => false
+  }
 }
 
 object FieldTypeTestRecord extends FieldTypeTestRecord with MetaRecord[FieldTypeTestRecord]
