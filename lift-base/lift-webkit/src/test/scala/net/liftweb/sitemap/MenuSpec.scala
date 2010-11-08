@@ -59,10 +59,43 @@ object MenuSpec extends Specification {
       menu.toMenu.kids.size mustEqual 2
     }
 
+    "handle sub-submenus" in {
+      val menu = 
+        Menu("Foo") / "test" submenus (
+          Menu("Bar") / "bar" submenus (
+            Menu("BarOne") / "bar" / "one",
+            Menu("BarTwo") / "bar" / "two"
+          ),
+          Menu("Bat") / "bat"
+        )
+
+      menu.toMenu.kids(0).kids.size mustEqual 2
+    }
+
     "handle I18N menu names" in {
       val menu = Menu.i("Home") / "index"
 
       menu.toMenu.loc.name mustEqual "Home"
+    }
+  }
+
+  "MenuItems" should {
+    "support nesting deeper than two levels" in {
+      val menu = 
+        Menu("Foo") / "test" submenus (
+          Menu("Bar") / "bar" submenus (
+            Menu("BarOne") / "bar" / "one",
+            Menu("BarTwo") / "bar" / "two",
+            Menu("BarThree") / "bar" / "three"
+          ),
+          Menu("Bat") / "bat"
+        )
+
+
+      val complete = SiteMap(menu).kids(0).makeMenuItem(List()).open_!
+
+      complete.kids.size must_== 2
+      complete.kids(0).kids.size must_== 3
     }
   }
 }
