@@ -809,6 +809,132 @@ object SHtml {
       }
     }
 
+  private def dupWithName(elem: Elem, name: String): Elem = {
+    new Elem(elem.prefix,
+             elem.label,
+             new UnprefixedAttribute("name", name, 
+                                     elem.attributes.filter {
+                                       case up: UnprefixedAttribute =>
+                                         up.key != "name"
+                                       case _ => true
+                                     }),
+             elem.scope,
+             elem.child :_*)
+  }
+
+  private def isRadio(in: MetaData): Boolean = 
+    in.get("type").map(_.text equalsIgnoreCase "radio") getOrElse false
+
+  private def isCheckbox(in: MetaData): Boolean = 
+    in.get("type").map(_.text equalsIgnoreCase "checkbox") getOrElse false
+
+  /**
+   * Run the function when the form is submitted.
+   * This method returns a function that can be applied to
+   * form fields (input, button, textarea, select) and the
+   * function is executed when the form containing the field is submitted.
+   */
+  def runUnit(func: () => Any): NodeSeq => NodeSeq = run(func: AFuncHolder)
+
+  /**
+   * Run the String function when the form is submitted.
+   * This method returns a function that can be applied to
+   * form fields (input, button, textarea, select) and the
+   * function is executed when the form containing the field is submitted.
+   */
+  def run(func: String => Any): NodeSeq => NodeSeq = run(func: AFuncHolder)
+
+  /**
+   * Run the List[String] function when the form is submitted.
+   * This method returns a function that can be applied to
+   * form fields (input, button, textarea, select) and the
+   * function is executed when the form containing the field is submitted.
+   */
+  def runList(func: List[String] => Any): NodeSeq => NodeSeq = run(func: AFuncHolder)
+
+  /**
+   * Run the Boolean function when the form is submitted.
+   * This method returns a function that can be applied to
+   * form fields (input, button, textarea, select) and the
+   * function is executed when the form containing the field is submitted.
+   */
+  def runBoolean(func: Boolean => Any): NodeSeq => NodeSeq = run(func: AFuncHolder)
+
+  /**
+   * Run the function when the form is submitted.
+   * This method returns a function that can be applied to
+   * form fields (input, button, textarea, select) and the
+   * function is executed when the form containing the field is submitted.
+   */
+  def run(func: AFuncHolder): NodeSeq => NodeSeq =
+    (in: NodeSeq) => {
+      var radioName: Box[String] = Empty
+      var checkBoxName: Box[String] = Empty
+      var checkBoxCnt = 0
+
+      def runNodes(in: NodeSeq): NodeSeq = 
+        in.flatMap {
+          case Group(g) => runNodes(g)
+          // button
+          case e: Elem if e.label == "button" => 
+            fmapFunc(func) {dupWithName(e, _)}
+
+          // textarea
+          case e: Elem if e.label == "textarea" => 
+            fmapFunc(func) {dupWithName(e, _)}
+
+          // select
+          case e: Elem if e.label == "select" => 
+            fmapFunc(func) {dupWithName(e, _)}
+
+          // radio
+          case e: Elem if e.label == "input" && isRadio(e.attributes) => 
+            radioName match {
+              case Full(name) => dupWithName(e, name)
+              case _ =>
+                fmapFunc(func) {
+                  name => {
+                    radioName = Full(name)
+                    dupWithName(e, name)
+                  }
+                }
+            }
+          
+          // checkbox
+          case e: Elem if e.label == "input" && isCheckbox(e.attributes) => 
+            checkBoxName match {
+              case Full(name) =>
+                checkBoxCnt += 1
+                dupWithName(e, name)
+              case _ =>
+                fmapFunc(func) {
+                  name => {
+                    checkBoxName = Full(name)
+                    checkBoxCnt += 1
+                    dupWithName(e, name)
+                  }
+                }
+            }
+
+          // generic input
+          case e: Elem if e.label == "input" => 
+            fmapFunc(func) {dupWithName(e, _)}
+
+          case x => x
+        }
+
+      val ret = runNodes(in)
+      
+      checkBoxName match {
+        // if we've got a single checkbox, add a hidden false checkbox
+        case Full(name) if checkBoxCnt == 1 => {
+          ret ++ <input type="hidden" name={name} value="false"/> 
+        }
+
+        case _ => ret
+      }
+    }
+
   def text(value: String, func: String => Any, attrs: (String, String)*): Elem =
     text_*(value, SFuncHolder(func), attrs: _*)
 

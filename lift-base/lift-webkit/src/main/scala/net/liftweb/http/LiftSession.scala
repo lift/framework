@@ -1192,13 +1192,61 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                         wholeTag)
 
                     case Full(inst) => {
-                      val gotIt = 
+                      def gotIt: Box[NodeSeq] = 
                         for {
                           meth <- tryo(inst.getClass.getMethod(method)) 
                           if classOf[CssBindFunc].isAssignableFrom(meth.getReturnType)
                         } yield meth.invoke(inst).asInstanceOf[CssBindFunc].apply(kids)
+                      
+                      import java.lang.reflect.{Type, ParameterizedType}
+                      
+                      def isFunc1(tpe: Type): Boolean = tpe match {
+                        case null => false
+                        case c: Class[_] => classOf[Function1[_, _]] isAssignableFrom c
+                        case _ => false
+                      }
 
-                      gotIt openOr {
+                      def isNodeSeq(tpe: Type): Boolean = tpe match {
+                        case null => false
+                        case c: Class[_] => classOf[NodeSeq] isAssignableFrom c
+                        case _ => false
+                      }
+
+                      def testGeneric(tpe: Type): Boolean = tpe match {
+                        case null => false
+                        case pt: ParameterizedType => 
+                          if (isFunc1(pt.getRawType) &&
+                              pt.getActualTypeArguments.length == 2 &&
+                              isNodeSeq(pt.getActualTypeArguments()(0)) &&
+                              isNodeSeq(pt.getActualTypeArguments()(1)))
+                            true
+                        else testGeneric(pt.getRawType)
+
+                        case clz: Class[_] => 
+                          if (clz == classOf[Object]) false
+                          else clz.getGenericInterfaces.find(testGeneric) match {
+                            case Some(_) => true
+                            case _ => testGeneric(clz.getSuperclass)
+                          }
+
+                        case _ => false
+                      }
+
+                      def isFuncNodeSeq(meth: Method): Boolean = {
+                        (classOf[Function1[_, _]] isAssignableFrom meth.getReturnType) &&
+                        testGeneric(meth.getGenericReturnType)
+                      }
+                      
+                      
+                      def nodeSeqFunc: Box[NodeSeq] =
+                        for {
+                          meth <- tryo(inst.getClass.getMethod(method)) 
+                          if isFuncNodeSeq(meth)
+                        } yield meth.invoke(inst).asInstanceOf[Function1[NodeSeq, 
+                                                                         NodeSeq]].apply(kids)
+                          
+
+                      (gotIt or nodeSeqFunc) openOr {
 
                       val ar: Array[AnyRef] = List(Group(kids)).toArray
                       ((Helpers.invokeMethod(inst.getClass, inst, method, ar)) or

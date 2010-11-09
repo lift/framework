@@ -2173,6 +2173,25 @@ for {
   }
 
   /**
+   * The companion object that generates AFuncHolders from other functions
+   */
+  object AFuncHolder {
+    implicit def strToAnyAF(f: String => Any): AFuncHolder =
+      SFuncHolder(f)
+
+    implicit def unitToAF(f: () => Any): AFuncHolder = NFuncHolder(f)
+
+    implicit def listStrToAF(f: List[String] => Any): AFuncHolder =
+      LFuncHolder(f)
+
+    implicit def boolToAF(f: Boolean => Any): AFuncHolder =
+      LFuncHolder(lst => lst match {
+        case Helpers.AsBoolean(true) :: _ => f(true)
+        case _ => f(false)
+      })
+  }
+
+  /**
    * Execute code synchronized to the current session object
    */
   def synchronizeForSession[T](f: => T): T = {

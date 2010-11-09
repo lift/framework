@@ -331,6 +331,56 @@ object SnippetSpec extends Specification {
       ret.open_! must ==/(res)
     }
 
+    "run string input" in {
+      val session = new LiftSession("", "hello", Empty)
+
+      S.init(makeReq, session) {
+        val ret = SHtml.run(s => ())(<input/>)
+
+        ret.size must_== 1
+        (ret \ "@name").text.length must be > 0
+      }
+    }
+
+    "run string checkbox must have hidden element" in {
+      val session = new LiftSession("", "hello", Empty)
+
+      S.init(makeReq, session) {
+        val ret = SHtml.runBoolean(s => ())(<input type="checkbox"/>)
+
+        ret.size must_== 2
+        (ret \\ "input" ).flatMap(_ \ "@name").map(_.text).mkString.length must be > 0
+      }
+    }
+
+    "Check snippets as Function1[NodeSeq, NodeSeq]" in {
+      val session = new LiftSession("", "hello", Empty)
+
+      val ret = S.init(makeReq, session) {
+        for {
+          s <- S.session
+        } yield s.processSurroundAndInclude("test", 
+                                            <lift:Meower>Moo</lift:Meower>)
+      }
+
+      ret.open_! must ==/ (<yak/>)
+    }
+
+    "Check snippets via run" in {
+      val session = new LiftSession("", "hello", Empty)
+
+      val ret = S.init(makeReq, session) {
+        for {
+          s <- S.session
+        } yield s.processSurroundAndInclude("test", 
+                                            <input class="lift:Splunker"/>)
+      }
+
+      (ret.open_! \ "@name").text.length must be > 0
+    }
+
+
+
     "Eager Eval works" in {
       val res = <div>dog</div>
       val session = new LiftSession("", "hello", Empty)
