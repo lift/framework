@@ -1412,10 +1412,12 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * @param name the optional name of the CometActor
    * @param msg the message to send to the CometActor
    */
-  def setCometActorMessage(theType: String, name: Box[String], msg: Any) {
-    findComet(theType, name) match {
-      case Full(a) => a ! msg
-      case _ => setupComet(theType, name, msg)
+  def sendCometActorMessage(theType: String, name: Box[String], msg: Any) {
+    testStatefulFeature {
+      findComet(theType, name) match {
+        case Full(a) => a ! msg
+        case _ => setupComet(theType, name, msg)
+      }
     }
   }
 
