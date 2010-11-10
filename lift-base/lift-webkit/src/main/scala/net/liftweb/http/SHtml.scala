@@ -829,44 +829,47 @@ object SHtml {
     in.get("type").map(_.text equalsIgnoreCase "checkbox") getOrElse false
 
   /**
-   * Run the function when the form is submitted.
+   * execute the function when the form is submitted.
    * This method returns a function that can be applied to
    * form fields (input, button, textarea, select) and the
    * function is executed when the form containing the field is submitted.
    */
-  def runUnit(func: () => Any): NodeSeq => NodeSeq = run(func: AFuncHolder)
+  def onSubmitUnit(func: () => Any): NodeSeq => NodeSeq = onSubmit(func: AFuncHolder)
 
   /**
-   * Run the String function when the form is submitted.
+   * execute the String function when the form is submitted.
    * This method returns a function that can be applied to
    * form fields (input, button, textarea, select) and the
    * function is executed when the form containing the field is submitted.
    */
-  def run(func: String => Any): NodeSeq => NodeSeq = run(func: AFuncHolder)
+  def onSubmit(func: String => Any): NodeSeq => NodeSeq = 
+    onSubmit(func: AFuncHolder)
 
   /**
-   * Run the List[String] function when the form is submitted.
+   * execute the List[String] function when the form is submitted.
    * This method returns a function that can be applied to
    * form fields (input, button, textarea, select) and the
    * function is executed when the form containing the field is submitted.
    */
-  def runList(func: List[String] => Any): NodeSeq => NodeSeq = run(func: AFuncHolder)
+  def onSubmitList(func: List[String] => Any): NodeSeq => NodeSeq = 
+    onSubmit(func: AFuncHolder)
 
   /**
-   * Run the Boolean function when the form is submitted.
+   * Execute the Boolean function when the form is submitted.
    * This method returns a function that can be applied to
    * form fields (input, button, textarea, select) and the
    * function is executed when the form containing the field is submitted.
    */
-  def runBoolean(func: Boolean => Any): NodeSeq => NodeSeq = run(func: AFuncHolder)
+  def onSubmitBoolean(func: Boolean => Any): NodeSeq => NodeSeq = 
+    onSubmit(func: AFuncHolder)
 
   /**
-   * Run the function when the form is submitted.
+   * Execute the function when the form is submitted.
    * This method returns a function that can be applied to
    * form fields (input, button, textarea, select) and the
    * function is executed when the form containing the field is submitted.
    */
-  def run(func: AFuncHolder): NodeSeq => NodeSeq =
+  def onSubmit(func: AFuncHolder): NodeSeq => NodeSeq =
     (in: NodeSeq) => {
       var radioName: Box[String] = Empty
       var checkBoxName: Box[String] = Empty

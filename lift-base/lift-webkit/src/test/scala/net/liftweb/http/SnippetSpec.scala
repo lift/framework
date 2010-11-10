@@ -335,7 +335,7 @@ object SnippetSpec extends Specification {
       val session = new LiftSession("", "hello", Empty)
 
       S.init(makeReq, session) {
-        val ret = SHtml.run(s => ())(<input/>)
+        val ret = SHtml.onSubmit(s => ())(<input/>)
 
         ret.size must_== 1
         (ret \ "@name").text.length must be > 0
@@ -346,7 +346,7 @@ object SnippetSpec extends Specification {
       val session = new LiftSession("", "hello", Empty)
 
       S.init(makeReq, session) {
-        val ret = SHtml.runBoolean(s => ())(<input type="checkbox"/>)
+        val ret = SHtml.onSubmitBoolean(s => ())(<input type="checkbox"/>)
 
         ret.size must_== 2
         (ret \\ "input" ).flatMap(_ \ "@name").map(_.text).mkString.length must be > 0
