@@ -89,6 +89,22 @@ object BindingsSpec extends Specification {
 
   }
 }
+
+"CSS Selector Transforms" should {
+  "retain attributes for input" in {
+    val session = new LiftSession("hello", "", Empty)
+
+    S.initIfUninitted(session) {
+      val org = <span><input id="frog" class="dog cat"/></span>
+      
+      val res = ("#frog" #> SHtml.text("", s => ()) ).apply(org)
+
+      (res \ "input" \ "@id").text must_== "frog"
+      
+      (res \ "input" \ "@class").text must_== "dog cat"
+    }
+  }
+}
 }
 
 }}

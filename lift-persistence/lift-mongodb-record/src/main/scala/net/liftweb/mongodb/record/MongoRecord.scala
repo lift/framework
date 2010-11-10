@@ -87,7 +87,7 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends Record[MyType] {
   /**
   * Set the fields of this record from the given DBObject
   */
-  def setFieldsFromDBObject(dbo: DBObject): Box[Unit] = meta.setFieldsFromDBObject(this, dbo)
+  def setFieldsFromDBObject(dbo: DBObject): Unit = meta.setFieldsFromDBObject(this, dbo)
 }
 
 /**

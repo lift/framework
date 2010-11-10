@@ -90,7 +90,7 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
   /**
    * Sets the fields of this Record from the given Req.
    */
-  def setFieldsFromReq(req: Req): Box[Unit] = meta.setFieldsFromReq(this, req)
+  def setFieldsFromReq(req: Req){ meta.setFieldsFromReq(this, req) }
 
   /**
    * Present the model as a form and execute the function on submission of the form

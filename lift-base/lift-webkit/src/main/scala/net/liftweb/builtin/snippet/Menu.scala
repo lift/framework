@@ -97,8 +97,7 @@ object Menu extends DispatchSnippet {
     val expandAll = S.attr("expandAll").isDefined
     val linkToSelf: Boolean = S.attr("linkToSelf").map(Helpers.toBoolean) openOr false
 
-
-    val expandAny: Boolean = (for (e <- S.attr("expand")) yield Helpers.toBoolean(e)) openOr true
+    val expandAny: Boolean = S.attr("expand").map(Helpers.toBoolean) openOr true
 
     val level: Box[Int] = for (lvs <- S.attr("level"); i <- Helpers.asInt(lvs)) yield i
 
@@ -121,7 +120,8 @@ object Menu extends DispatchSnippet {
       case _ => renderWhat(expandAll)
     }
 
-    def ifExpand(f: => NodeSeq): NodeSeq = if (expandAny) f else NodeSeq.Empty
+    def ifExpandCurrent(f: => NodeSeq): NodeSeq = if (expandAny || expandAll) f else NodeSeq.Empty
+    def ifExpandAll(f: => NodeSeq): NodeSeq = if (expandAll) f else NodeSeq.Empty
 
     toRender.toList match {
       case Nil if S.attr("group").isDefined => NodeSeq.Empty
@@ -132,35 +132,39 @@ object Menu extends DispatchSnippet {
 
         def buildANavItem(i: MenuItem) = {
           i match {
+            // Per Loc.PlaceHolder, placeholder implies HideIfNoKids
+            case m@MenuItem(text, uri, kids, _, _, _) if m.placeholder_? && kids.isEmpty => NodeSeq.Empty
+
             case m@MenuItem(text, uri, kids, _, _, _) if m.placeholder_? =>
               Helpers.addCssClass(i.cssClass,
                                   Elem(null, innerTag, Null, TopScope,
-                                       <xml:group> <span>{text}</span>{ifExpand(buildUlLine(kids))}</xml:group>) %
+                                       // Is a placeholder useful if we don't display the kids? I say no (DCB, 20101108)
+                                       <xml:group> <span>{text}</span>{buildUlLine(kids)}</xml:group>) %
                                   (if (m.path) S.prefixedAttrsToMetaData("li_path", liMap) else Null) %
                                   (if (m.current) S.prefixedAttrsToMetaData("li_item", liMap) else Null))
 
-            case MenuItem(text, uri, kids, true, _, _) if expandAll || linkToSelf =>
+            case MenuItem(text, uri, kids, true, _, _) if linkToSelf =>
               Helpers.addCssClass(i.cssClass,
                                   Elem(null, innerTag, Null, TopScope,
-                                       <xml:group> <a href={uri}>{text}</a>{ifExpand(buildUlLine(kids))}</xml:group>) %
+                                       <xml:group> <a href={uri}>{text}</a>{ifExpandCurrent(buildUlLine(kids))}</xml:group>) %
                                   S.prefixedAttrsToMetaData("li_item", liMap))
 
             case MenuItem(text, uri, kids, true, _, _) =>
               Helpers.addCssClass(i.cssClass,
                                   Elem(null, innerTag, Null, TopScope,
-                                       <xml:group> <span>{text}</span>{ifExpand(buildUlLine(kids))}</xml:group>) %
+                                       <xml:group> <span>{text}</span>{ifExpandCurrent(buildUlLine(kids))}</xml:group>) %
                                   S.prefixedAttrsToMetaData("li_item", liMap))
 
             case MenuItem(text, uri, kids, _, true, _) =>
               Helpers.addCssClass(i.cssClass,
                                   Elem(null, innerTag, Null, TopScope,
-                                       <xml:group> <a href={uri}>{text}</a>{ifExpand(buildUlLine(kids))}</xml:group>) %
+                                       <xml:group> <a href={uri}>{text}</a>{ifExpandAll(buildUlLine(kids))}</xml:group>) %
                                   S.prefixedAttrsToMetaData("li_path", liMap))
 
             case MenuItem(text, uri, kids, _, _, _) =>
               Helpers.addCssClass(i.cssClass,
                                   Elem(null, innerTag, Null, TopScope,
-                                       <xml:group> <a href={uri}>{text}</a>{ifExpand(buildUlLine(kids))}</xml:group>) % li)
+                                       <xml:group> <a href={uri}>{text}</a>{ifExpandAll(buildUlLine(kids))}</xml:group>) % li)
           }
         }
 
