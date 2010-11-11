@@ -180,7 +180,7 @@ class Database(couch: Request, database: String) extends Request(couch / databas
     }
 
   /** Attempt to create the database (PUT) */
-  def create: Handler[Unit] = this <<< Nil >|
+  def create: Handler[Unit] = this <<< "" >|
 
   /** Retrieve information about the database (GET) */
   def info: Handler[DatabaseInfo] = {
