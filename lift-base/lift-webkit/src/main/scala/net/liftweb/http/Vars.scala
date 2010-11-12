@@ -133,6 +133,188 @@ private[http] trait HasLogUnreadVal {
 
 /**
  * A typesafe container for data with a lifetime nominally equivalent to the
+ * lifetime of HttpSession attributes.  This alternative to SessionVar
+ * keeps data in the container's session and must be serializable to
+ * support session migration.  Use SessionVars unless you are using
+ * MigratoryLiftSessions.
+ *
+ * <code>
+ * object MySnippetCompanion {
+ *   object mySessionVar extends ContainerVar[String]("hello")
+ * }
+ * </code>
+ *
+ * The standard pattern is to create a singleton object extending ContainerVar instead
+ * of creating an instance variable of a concrete ContainerVar subclass. This is preferred
+ * because ContainerVar will use the name of its instantiating class for part of its state
+ * maintenance mechanism.
+ *
+ * If you find it necessary to create a ContainerVar subclass of which there may be more
+ * than one instance, it is necessary to override the __nameSalt() method to return
+ * a unique salt value for each instance to prevent name collisions.
+ *
+ * @param dflt - the default value to be returned if none was set prior to
+ * requesting a value to be returned from the container
+ * @param containerSerializer -- an implicit parameter that keeps us honest
+ * about only storing things that can be actually serialized.  Lift
+ * provides a subset of these.
+ */
+abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: ContainerSerializer[T]) extends AnyVar[T, ContainerVar[T]](dflt) with LazyLoggable {
+  override protected def findFunc(name: String): Box[T] = S.session match {
+    case Full(session) => {
+      localGet(session, name) match {
+        case Full(array: Array[Byte]) => Full(containerSerializer.deserialize(array))
+        case _ => Empty
+      }
+    }
+
+    case _ => {
+      if (showWarningWhenAccessedOutOfSessionScope_?)
+      logger.warn("Getting a SessionVar "+name+" outside session scope") // added warning per issue 188
+
+      Empty
+    }
+  }
+
+  private def localSet(session: LiftSession, name: String, value: Any): Unit = {
+    for {
+      httpSession <- session.httpSession
+    } httpSession.setAttribute(name, value)
+  }
+
+  private def localGet(session: LiftSession, name: String): Box[Any] = {
+    for {
+      httpSession <- session.httpSession
+      attr <- Box !! httpSession.attribute(name)
+    } yield attr
+  }
+
+
+  override protected def setFunc(name: String, value: T): Unit = S.session match {
+    // If we're in a stateless session, don't allow SessionVar setting
+    case Full(s) if !s.allowContainerState_? && !s.stateful_? && !settingDefault_? =>
+      throw new StateInStatelessException("setting a SessionVar in a "+
+                                          "stateless session: "+getClass.getName)
+
+    case Full(session) => {
+      localSet(session, name, containerSerializer.serialize(value))
+    }
+
+    case _ =>
+      if (showWarningWhenAccessedOutOfSessionScope_?)
+      logger.warn("Setting a ContainerVar "+name+" to "+value+" outside session scope") // added warning per issue 188
+  }
+
+  /**
+   * Different Vars require different mechanisms for synchronization.  This method implements
+   * the Var specific synchronization mechanism
+   */
+  def doSync[F](f: => F): F = S.session match {
+    case Full(s) => {
+      // lock the session while the Var-specific lock object is found/created
+      val lockName = name + VarConstants.lockSuffix
+      val lockObj: Object = s.synchronized {
+        localGet(s, lockName) match {
+          case Full(lock: Object) => lock
+          case _ => val lock = new Object
+          localSet(s, lockName, lock)
+          lock
+        }
+      }
+
+      // execute the query in the scope of the lock obj
+      lockObj.synchronized {
+        f
+      }
+    }
+
+    case _ => f
+  }
+
+  def showWarningWhenAccessedOutOfSessionScope_? = false
+
+  override protected def clearFunc(name: String): Unit = 
+    for {
+      session <- S.session
+      httpSession <- session.httpSession
+    } httpSession.removeAttribute(name)
+
+  override protected def wasInitialized(name: String): Boolean = {
+    val bn = name + VarConstants.initedSuffix
+    val old: Boolean = S.session.flatMap(s => localGet(s, bn) match {
+      case Full(b: Boolean) => Full(b)
+      case _ => Empty
+    }) openOr false
+    S.session.foreach(s => localSet(s, bn, true))
+    old
+  }
+
+  override protected def testWasSet(name: String): Boolean = {
+    val bn = name + VarConstants.initedSuffix
+    S.session.flatMap(s => localGet(s, name)).isDefined ||
+    (S.session.flatMap(s => localGet(s, bn) match {
+      case Full(b: Boolean) => Full(b)
+      case _ => Empty
+    }) openOr false)
+  }
+
+  protected override def registerCleanupFunc(in: LiftSession => Unit): Unit =
+  S.session.foreach(_.addSessionCleanup(in))
+
+  type CleanUpParam = LiftSession
+}
+
+/**
+ * A trait that provides *actual* serialization of a type so that
+ * the type can be stored into a container's session and be migrated across
+ * servers
+ */
+trait ContainerSerializer[T] {
+  def serialize(in: T): Array[Byte]
+  def deserialize(in: Array[Byte]): T
+}
+
+object ContainerSerializer {
+  import java.util.Date
+  import org.joda.time.DateTime
+
+  private def buildSerializer[T]: ContainerSerializer[T] =
+    new ContainerSerializer[T] {
+      import java.io._
+      def serialize(in: T): Array[Byte] = {
+        val bos = new ByteArrayOutputStream()
+        val oos = new ObjectOutputStream(bos)
+        oos.writeObject(in)
+        oos.flush()
+        bos.toByteArray()
+      }
+
+      def deserialize(in: Array[Byte]): T = {
+        val bis = new ByteArrayInputStream(in)
+        val ois = new ObjectInputStream(bis)
+        ois.readObject.asInstanceOf[T]
+      }
+    }
+
+  implicit val objectSerializer: ContainerSerializer[Object] = buildSerializer
+  implicit val intSerializer: ContainerSerializer[Int] = buildSerializer
+  implicit val longSerializer: ContainerSerializer[Long] = buildSerializer
+  implicit val charSerializer: ContainerSerializer[Char] = buildSerializer
+  implicit val shortSerializer: ContainerSerializer[Short] = buildSerializer
+  implicit val byteSerializer: ContainerSerializer[Byte] = buildSerializer
+  implicit val floatSerializer: ContainerSerializer[Float] = buildSerializer
+  implicit val doubleSerializer: ContainerSerializer[Double] = buildSerializer
+  implicit val booleanSerializer: ContainerSerializer[Boolean] = buildSerializer
+  implicit val dateSerializer: ContainerSerializer[Date] = buildSerializer
+  implicit val stringSerializer: ContainerSerializer[String] = buildSerializer
+  implicit val jodaDateSerializer: ContainerSerializer[DateTime] = buildSerializer
+  implicit def arraySerializer[T](implicit tc: ContainerSerializer[T]): ContainerSerializer[Array[T]] = buildSerializer
+  implicit def listSerializer[T](implicit tc: ContainerSerializer[T]): ContainerSerializer[List[T]] = buildSerializer
+  
+}
+
+/**
+ * A typesafe container for data with a lifetime nominally equivalent to the
  * lifetime of a page rendered by an HTTP request.
  * RequestVars maintain their value throughout the duration of the current HTTP
  * request and any callbacks for servicing AJAX calls associated with the rendered page.

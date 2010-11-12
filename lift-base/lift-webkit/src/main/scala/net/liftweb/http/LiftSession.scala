@@ -359,6 +359,13 @@ trait HowStateful {
   def stateful_? = howStateful.box openOr true
 
   /**
+   * There may be cases when you are allowed container state (e.g.,
+   * migratory session, but you're not allowed to write Lift
+   * non-migratory state, return true here.
+   */
+  def allowContainerState_? = howStateful.box openOr true
+
+  /**
    * Within the scope of the call, this session is forced into
    * statelessness.  This allows for certain URLs in on the site
    * to be stateless and not generate a session, but if a valid
@@ -377,7 +384,23 @@ trait StatelessSession extends HowStateful {
   self: LiftSession =>
 
   override def stateful_? = false
+
+  override def allowContainerState_? = false
 }
+
+/**
+ * Sessions that include this trait will only have access to the container's
+ * state via ContainerVars.  This mode is "migratory" so that a session
+ * can migrate across app servers.  In this mode, functions that
+ * access Lift state will give notifications of failure if stateful features
+ * of Lift are accessed
+ */
+trait MigratorySession extends HowStateful {
+  self: LiftSession =>
+
+  override def stateful_? = false
+}
+
 
 
 /**
