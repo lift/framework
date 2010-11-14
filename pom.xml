@@ -319,10 +319,22 @@
   <profiles>
     <profile>
       <id>lift-debug</id>
+      <activation>
+        <property>
+          <name>lift.debug</name>
+          <value>true</value>
+        </property>
+      </activation>
       <!-- <build/> -->
     </profile>
     <profile>
       <id>lift-hudson</id>
+      <activation>
+        <property>
+          <name>lift.hudson</name>
+          <value>true</value>
+        </property>
+      </activation>
       <properties>
         <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites-snapshots/liftweb</vscaladoc.links.liftweb.baseurl>
         <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
@@ -336,6 +348,12 @@
     </profile>
     <profile>
       <id>lift-release</id>
+      <activation>
+        <property>
+          <name>lift.release</name>
+          <value>true</value>
+        </property>
+      </activation>
       <properties>
         <vscaladoc.links.liftweb.baseurl>http://scala-tools.org/mvnsites/liftweb</vscaladoc.links.liftweb.baseurl>
         <vscaladoc.links.liftweb.pathsufix>scaladocs/</vscaladoc.links.liftweb.pathsufix>
