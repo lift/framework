@@ -762,11 +762,33 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
-  private[http] def processRequest(request: Req): Box[LiftResponse] = {
+  /**
+   * Destroy the current session, then create a new session and
+   * continue the execution of the code.  The continuation function
+   * must return Nothing (it must throw an exception... this is typically
+   * done by calling S.redirectTo(...)).  This method is
+   * useful for changing sessions on login.  Issue #727.
+   */
+  def destroySessionAndContinueInNewSession(continuation: () => Nothing): Nothing = {
+    throw new ContinueResponseException(continuation)
+  }
+
+  private[http] def processRequest(request: Req,
+                                   continuation: Box[() => Nothing]): Box[LiftResponse] = {
     ieMode.is // make sure this is primed
     S.oldNotices(notices)
     LiftSession.onBeginServicing.foreach(f => tryo(f(this, request)))
     val ret = try {
+      // run the continuation in the new session
+      // if there is a continuation
+      continuation match {
+        case Full(func) => {
+          func()
+          S.redirectTo("/")
+        }
+        case _ => // do nothing
+      }
+
       val sessionDispatch = S.highLevelSessionDispatcher
 
       val toMatch = request
@@ -815,6 +837,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
           response.map(checkRedirect)
       }
     } catch {
+      case ContinueResponseException(cre) => throw cre
+
       case ite: _root_.java.lang.reflect.InvocationTargetException if (ite.getCause.isInstanceOf[ResponseShortcutException]) =>
         Full(handleRedirect(ite.getCause.asInstanceOf[ResponseShortcutException], request))
 

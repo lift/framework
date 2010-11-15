@@ -355,6 +355,15 @@ class Req(val path: ParsePath,
     }
   }
 
+  /**
+   * Make the servlet session go away
+   */
+  def destroyServletSession() {
+    for {
+      httpReq <- Box !! request
+    } httpReq.destroyServletSession()
+  }
+
   def snapshot = {
     val paramCalc = paramCalculator()
     new Req(path,

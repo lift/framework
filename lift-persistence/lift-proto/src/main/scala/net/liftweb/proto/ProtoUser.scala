@@ -437,6 +437,13 @@ trait ProtoUser {
     curUserId(Full(id))
   }
 
+  def logUserIn(who: TheUserType, postLogin: () => Nothing): Nothing = {
+    S.session.open_!.destroySessionAndContinueInNewSession(() => {
+      logUserIn(who)
+      postLogin()
+    })
+  }
+
   def logUserIn(who: TheUserType) {
     curUserId.remove()
     curUser.remove()
@@ -530,15 +537,18 @@ trait ProtoUser {
   /**
    * Override this method to do something else after the user signs up
    */
-  protected def actionsAfterSignup(theUser: TheUserType) {
+  protected def actionsAfterSignup(theUser: TheUserType, func: () => Nothing): Nothing = {
     theUser.setValidated(skipEmailValidation).resetUniqueId()
     theUser.save
     if (!skipEmailValidation) {
       sendValidationEmail(theUser)
       S.notice(S.??("sign.up.message"))
+      func()
     } else {
-      S.notice(S.??("welcome"))
-      logUserIn(theUser)
+      logUserIn(theUser, () => {      
+        S.notice(S.??("welcome"))
+        func()
+      })
     }
   }
 
@@ -559,8 +569,7 @@ trait ProtoUser {
     def testSignup() {
       validateSignup(theUser) match {
         case Nil =>
-          actionsAfterSignup(theUser)
-          S.redirectTo(homePage)
+          actionsAfterSignup(theUser, () => S.redirectTo(homePage))
 
         case xs => S.error(xs) ; signupFunc(Full(innerSignup _))
       }
@@ -587,9 +596,10 @@ trait ProtoUser {
   def validateUser(id: String): NodeSeq = findUserByUniqueId(id) match {
     case Full(user) if !user.validated_? =>
       user.setValidated(true).resetUniqueId().save
-      S.notice(S.??("account.validated"))
-      logUserIn(user)
-      S.redirectTo(homePage)
+      logUserIn(user, () => {
+        S.notice(S.??("account.validated"))
+        S.redirectTo(homePage)
+      })
 
     case _ => S.error(S.??("invalid.validation.link")); S.redirectTo(homePage)
   }
@@ -631,18 +641,20 @@ trait ProtoUser {
       S.param("username").
       flatMap(username => findUserByUserName(username)) match {
         case Full(user) if user.validated_? &&
-          user.testPassword(S.param("password")) =>
-          S.notice(S.??("logged.in"))
-          logUserIn(user)
-          //S.redirectTo(homePage)
-          val redir = loginRedirect.is match {
-            case Full(url) =>
-              loginRedirect(Empty)
-              url
-            case _ =>
-              homePage
+          user.testPassword(S.param("password")) => {
+            logUserIn(user, () => {
+              S.notice(S.??("logged.in"))
+
+              val redir = loginRedirect.is match {
+                case Full(url) =>
+                  loginRedirect(Empty)
+                url
+                case _ =>
+                  homePage
+              }
+              S.redirectTo(redir)
+            })
           }
-          S.redirectTo(redir)
 
         case Full(user) if !user.validated_? =>
           S.error(S.??("account.validation.error"))
@@ -755,7 +767,7 @@ trait ProtoUser {
         user.validate match {
           case Nil => S.notice(S.??("password.changed"))
             user.save
-            logUserIn(user); S.redirectTo(homePage)
+            logUserIn(user, () => S.redirectTo(homePage))
 
           case xs => S.error(xs)
         }

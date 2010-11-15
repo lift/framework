@@ -20,6 +20,24 @@ package http {
 import _root_.net.liftweb.common._
 import _root_.net.liftweb.util._
 
+/**
+ * This exception is used by LiftSession.destroySessionAndContinueInNewSession
+ * to unwind the stack so that the session can be destroyed and a new
+ * session can be created and have the balance of the continuation executed
+ * in the context of the new session.
+ */
+class ContinueResponseException(val continue: () => Nothing) extends Exception("Continue in new session")
+
+object ContinueResponseException {
+  def unapply(in: Throwable): Option[ContinueResponseException] = in match {
+    case null => None
+    case cre: ContinueResponseException => Some(cre)
+    case e: Exception => unapply(e.getCause)
+    case _ => None
+  }
+    
+}
+
 class ResponseShortcutException(_response: => LiftResponse, val doNotices: Boolean) extends Exception("Shortcut") {
   lazy val response = _response
 
