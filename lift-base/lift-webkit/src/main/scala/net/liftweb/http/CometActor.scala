@@ -287,7 +287,33 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   private var spanId = uniqueId
   private var lastRenderTime = Helpers.nextNum
 
-  private var lastRendering: RenderOut = _
+  /**
+   * If we're going to cache the last rendering, here's the
+   * private cache
+   */
+  private[this] var _realLastRendering: RenderOut = _
+
+  /**
+   * The last rendering (cached or not)
+   */
+  private def lastRendering: RenderOut = 
+    if (dontCacheRendering) {
+      val ret = (render ++ jsonInCode): RenderOut
+      theSession.updateFunctionMap(S.functionMap, spanId, lastRenderTime)
+      ret
+    } else {
+      _realLastRendering
+    }
+
+  /**
+   * set the last rendering... ignore if we're not caching
+   */
+  private def lastRendering_=(last: RenderOut) {
+    if (!dontCacheRendering) {
+      _realLastRendering = last
+    }
+  }
+  
   private var wasLastFullRender = false
   @transient
   private var listeners: List[(ListenerId, AnswerRender => Unit)] = Nil
@@ -335,8 +361,11 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
                                name: Box[String],
                                defaultXml: NodeSeq,
                                attributes: Map[String, String]) {
-    lastRendering = RenderOut(Full(defaultXml),
-      Empty, Empty, Empty, false)
+    if (!dontCacheRendering) {
+      lastRendering = RenderOut(Full(defaultXml),
+                                Empty, Empty, Empty, false)
+    }
+
     this._theType = theType
     this._theSession = theSession
     this._defaultXml = defaultXml
@@ -609,18 +638,39 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    */
   def render: RenderOut
 
+  /**
+   * Cause the entire component to be reRendered and pushed out
+   * to any listeners.
+   *
+   * @param sendAll -- Should the fixed part of the CometActor be
+   * rendered.
+   */
   def reRender(sendAll: Boolean) {
     this ! ReRender(sendAll)
   }
 
+  /**
+   * Cause the entire component to be reRendered and pushed out
+   * to any listeners.
+   */
   def reRender() {reRender(false)}
+
+
+  /**
+   * Set this method to true if you want to avoid caching the
+   * rendering.  This trades space for time.
+   */
+  protected def dontCacheRendering: Boolean = false
 
   private def performReRender(sendAll: Boolean) {
     lastRenderTime = Helpers.nextNum
     wasLastFullRender = sendAll & hasOuter
     deltas = Nil
 
-    lastRendering = render ++ jsonInCode
+    if (!dontCacheRendering) {
+      lastRendering = render ++ jsonInCode
+    }
+
     theSession.updateFunctionMap(S.functionMap, spanId, lastRenderTime)
 
     val rendered: AnswerRender =
