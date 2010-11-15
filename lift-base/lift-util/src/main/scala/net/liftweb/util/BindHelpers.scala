@@ -1556,38 +1556,42 @@ object ClearClearable extends CssBindImpl(Full(".clearable"), CssSelectorParser.
 }
 
 private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeSeq] {
+  private def sortBinds(lst: List[CssBind]): List[CssBind] =
+    lst.sort {
+      case (SubNode(me: EmptyBox), SubNode(_)) => true
+      case (SubNode(_), SubNode(them: EmptyBox)) => false
+      case (SubNode(Full(KidsSubNode())), SubNode(_)) => true
+      case (SubNode(_), SubNode(Full(KidsSubNode()))) => false
+      case _ => true
+    }
+
   private val (idMap, nameMap, clzMap, attrMap, elemMap, starFunc)  = {
-    var idMap: Map[String, CssBind] = Map()
-    var nameMap: Map[String, CssBind] = Map()
-    var clzMap: Map[String, CssBind] = Map()
-    var attrMap: Map[String, Map[String, CssBind]] = Map()
-    var elemMap: Map[String, CssBind] = Map()
-    var starFunc: Box[CssBind] = Empty
+    var idMap: Map[String, List[CssBind]] = Map()
+    var nameMap: Map[String, List[CssBind]] = Map()
+    var clzMap: Map[String, List[CssBind]] = Map()
+    var attrMap: Map[String, Map[String, List[CssBind]]] = Map()
+    var elemMap: Map[String, List[CssBind]] = Map()
+    var starFunc: Box[List[CssBind]] = Empty
 
     binds.foreach {
-      case i @ CssBind(IdSelector(id, _)) => if (!idMap.isDefinedAt(id)) {
-        idMap += (id -> i)
-      }
+      case i @ CssBind(IdSelector(id, _)) => 
+        idMap += (id -> sortBinds(i :: idMap.getOrElse(id, Nil)))
 
-      case i @ CssBind(ElemSelector(id, _)) => if (!elemMap.isDefinedAt(id)) {
-        elemMap += (id -> i)
-      }
+      case i @ CssBind(ElemSelector(id, _)) => 
+        elemMap += (id -> sortBinds(i :: elemMap.getOrElse(id, Nil)))
+      
 
-      case i @ CssBind(StarSelector(_)) => starFunc = Full(i)
+      case i @ CssBind(StarSelector(_)) => starFunc = Full(sortBinds(i :: starFunc.openOr(Nil)))
 
-      case i @ CssBind(NameSelector(name, _)) => if (!nameMap.isDefinedAt(name)) {
-        nameMap += (name -> i)
-      }
+      case i @ CssBind(NameSelector(name, _)) => 
+        nameMap += (name -> sortBinds(i :: nameMap.getOrElse(name, Nil)))
 
-      case i @ CssBind(ClassSelector(clz, _)) => if (!clzMap.isDefinedAt(clz)) {
-        clzMap += (clz -> i)
-      }
+      case i @ CssBind(ClassSelector(clz, _)) => 
+        clzMap += (clz -> sortBinds(i :: clzMap.getOrElse(clz, Nil)))
 
       case i @ CssBind(AttrSelector(name, value, _)) => {
         val oldMap = attrMap.getOrElse(name, Map())
-        if (!oldMap.isDefinedAt(value)) {
-          attrMap += (name -> (oldMap + (value -> i)))
-        }
+        attrMap += (name -> (oldMap + (value -> sortBinds(i :: oldMap.getOrElse(value, Nil)))))
       }
     }
 
@@ -1603,6 +1607,18 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       case _ => true
     }
 
+    def applyRule(bindList: List[CssBind], realE: Elem): NodeSeq = 
+      bindList match {
+        case Nil => realE 
+        case bind :: xs => {
+          applyRule(bind, realE) flatMap {
+            case e: Elem => applyRule(xs, e)
+            case x => x
+          }
+        }
+      }
+      
+    
     def applyRule(bind: CssBind, realE: Elem): NodeSeq = {
       def mergeAll(other: MetaData, stripId: Boolean): MetaData = {
         var oldAttrs = attrs - (if (stripId) "id" else "")
@@ -1763,7 +1779,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         bind <- nameMap.get(rid)
       } yield applyRule(bind, in)
 
-    def findClass(clz: List[String]): Box[CssBind] = clz match {
+    def findClass(clz: List[String]): Box[List[CssBind]] = clz match {
       case Nil => Empty
       case x :: xs =>
         clzMap.get(x) match {

@@ -43,6 +43,11 @@ subNodes: Box[SubNode]) extends CssSelector
 
 sealed trait SubNode
 
+object SubNode {
+  def unapply(bind: CssBind): Option[Box[SubNode]] = 
+    Some(bind.css.flatMap(_.subNodes))
+}
+
 final case class KidsSubNode() extends SubNode
 final case class AttrSubNode(attr: String) extends SubNode
 

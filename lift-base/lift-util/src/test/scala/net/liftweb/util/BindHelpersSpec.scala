@@ -344,6 +344,34 @@ object CssBindHelpersSpec extends Specification  {
      "#baz" #> "bye")(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("hello")}</b>)
     }
 
+    "bind href and None content" in {
+      val opt: Option[String] = None
+      val res = ("top *" #> opt &
+                 "top [href]" #> "frog")(<top>cat</top>)
+
+      res.length must_== 0
+    }
+
+    "bind href and Some content" in {
+      val opt: Option[String] = Some("Dog")
+      val res = ("top *" #> opt &
+                 "top [href]" #> "frog")(<top>cat</top>)
+
+      res.text must_== "Dog"
+      (res \ "@href").text.mkString must_== "frog"
+    }
+
+    "bind href and Some content with multiple attrs" in {
+      val opt: Option[String] = Some("Dog")
+      val res = ("top *" #> opt &
+                 "top [meow]" #> "woof" &
+                 "top [href]" #> "frog")(<top href="#">cat</top>)
+
+      res.text must_== "Dog"
+      (res \ "@href").text.mkString must_== "frog"
+      (res \ "@meow").text.mkString must_== "woof"
+    }
+
     "option transform on *" in {
       val opt: Option[String] = None
       val res = ("* *" #> opt.map(ignore => "Dog"))(<top>cat</top>)
