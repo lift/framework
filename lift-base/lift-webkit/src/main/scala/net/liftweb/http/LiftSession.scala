@@ -84,6 +84,53 @@ object LiftSession {
    */
   var onEndServicing: List[(LiftSession, Req, Box[LiftResponse]) => Unit] = Nil
 
+  @volatile private var constructorCache: Map[(Class[_], Box[Class[_]]), Box[ConstructorType]] = Map()
+
+  private[http] def constructFrom[T](session: LiftSession, pp: Box[ParamPair], clz: Class[T]): Box[T] = {
+    def calcConstructor(): Box[ConstructorType] = {
+      val const = clz.getDeclaredConstructors()
+      
+      def nullConstructor(): Box[ConstructorType] =
+        const.find(_.getParameterTypes.length == 0).map(const => UnitConstructor(const))
+      
+      pp match {
+        case Full(ParamPair(value, clz)) =>
+          const.find{cp => {
+            cp.getParameterTypes.length == 2 && 
+            cp.getParameterTypes().apply(0).isAssignableFrom(clz) &&
+            cp.getParameterTypes().apply(1).isAssignableFrom(classOf[LiftSession])
+          }}.
+        map(const => PAndSessionConstructor(const)) orElse
+        const.find{cp => {
+          cp.getParameterTypes.length == 1 && 
+          cp.getParameterTypes().apply(0).isAssignableFrom(clz)
+        }}.
+        map(const => PConstructor(const)) orElse nullConstructor()
+        
+        case _ => 
+          nullConstructor()
+      }
+    }
+    
+    (if (Props.devMode) { // no caching in dev mode
+      calcConstructor()
+    } else {
+      val key = (clz -> pp.map(_.clz))
+        constructorCache.get(key) match {
+          case Some(v) => v
+          case _ => {
+            val nv = calcConstructor()
+            constructorCache += (key -> nv)
+            nv
+          }
+        }
+    }).map {
+      case uc: UnitConstructor => uc.makeOne
+      case pc: PConstructor => pc.makeOne(pp.open_!.v) // open_! okay
+      case psc: PAndSessionConstructor => psc.makeOne(pp.open_!.v, session)
+    }
+  }
+
   /**
    * Check to see if the template is marked designer friendly
    * and lop off the stuff before the first surround
@@ -981,11 +1028,26 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
-  private def instantiateOrRedirect[T](c: Class[T]): Box[T] = tryo({
+  private def instantiateOrRedirect[T](c: Class[T]): Box[T] = {
+    try {
+      LiftSession.constructFrom(this, 
+                                S.location.flatMap(_.
+                                                   currentValue.map(v =>
+                                                     ParamPair(v, v.asInstanceOf[Object].getClass))),
+                              c)
+
+    } catch {
+      case e: IllegalAccessException => Empty
+    }
+  }
+
+  /*
+    tryo({
     case e: ResponseShortcutException => throw e
     case ite: _root_.java.lang.reflect.InvocationTargetException
       if (ite.getCause.isInstanceOf[ResponseShortcutException]) => throw ite.getCause.asInstanceOf[ResponseShortcutException]
   }, c.newInstance)
+  */
 
   private def findAttributeSnippet(attrValue: String, rest: MetaData, params: AnyRef*): MetaData = {
     S.doSnippet(attrValue) {
@@ -2074,6 +2136,39 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
           None
         }
       }
+  }
+
+  /**
+   * Holds a pair of parameters
+   */
+  private case class ParamPair(v: Any, clz: Class[_])
+
+  /**
+   * a trait that defines some ways of constructing an instance
+   */
+  private sealed trait ConstructorType
+  
+  /**
+   * A unit constructor... just pass in null
+   */
+  private final case class UnitConstructor(c: java.lang.reflect.Constructor[_]) extends ConstructorType {
+    def makeOne[T]: T = c.newInstance().asInstanceOf[T]
+  }
+
+  /**
+   * A parameter and session constructor
+   */
+  private final case class PAndSessionConstructor(c: java.lang.reflect.Constructor[_]) extends ConstructorType {
+    def makeOne[T](p: Any, s: LiftSession): T = 
+      c.newInstance(p.asInstanceOf[Object], s).asInstanceOf[T]
+  }
+
+  /**
+   * A parameter constructor
+   */
+  private final case class PConstructor(c: java.lang.reflect.Constructor[_]) extends ConstructorType {
+    def makeOne[T](p: Any): T = 
+      c.newInstance(p.asInstanceOf[Object]).asInstanceOf[T]
   }
 
 
