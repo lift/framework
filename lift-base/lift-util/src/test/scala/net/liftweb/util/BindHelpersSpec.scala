@@ -344,6 +344,42 @@ object CssBindHelpersSpec extends Specification  {
      "#baz" #> "bye")(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("hello")}</b>)
     }
 
+    "option transform on *" in {
+      val opt: Option[String] = None
+      val res = ("* *" #> opt.map(ignore => "Dog"))(<top>cat</top>)
+      res.length must_== 0
+    }
+
+    "option transform on *" in {
+      val opt: Option[Int] = Full(44)
+      val res = ("* *" #> opt.map(ignore => "Dog"))(<top>cat</top>)
+      res must ==/ (<top>Dog</top>)
+    }
+
+
+    "option transform on *" in {
+      val opt: Box[String] = Empty
+      val res = ("* *" #> opt.map(ignore => "Dog"))(<top>cat</top>)
+      res.length must_== 0
+    }
+
+    "option transform on *" in {
+      val opt: Box[Int] = Some(44)
+      val res = ("* *" #> opt.map(ignore => "Dog"))(<top>cat</top>)
+      res must ==/ (<top>Dog</top>)
+    }
+
+    "transform on *" in {
+      val res = ("* *" #> "Dog")(<top>cat</top>)
+      res must ==/ (<top>Dog</top>)
+    }
+
+    "transform on li" in {
+      val res = ("li *" #> List("Woof", "Bark") & ClearClearable)(
+        <ul><li>meow</li><li class="clearable">a</li><li class="clearable">a</li></ul>)
+      res must ==/ (<ul><li>Woof</li><li>Bark</li></ul>)
+    }
+
     "substitute multiple Strings by id" in {
       (("#foo" replaceWith "hello") &
        ("#baz" replaceWith "bye"))(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("hello")}</b>)
@@ -657,6 +693,9 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
   "foo" #> false
 
   "bar" #> List("1","2","3").map(s => "baz" #> s)
+
+  "bar" #> Full(1).map(s => ("baz" #> s): CssBindFunc)
+  "bar" #> Some(1).map(s => ("baz" #> s): CssBindFunc)
 
 
 

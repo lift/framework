@@ -1381,6 +1381,18 @@ object IterableConst {
         Helpers.ensureUniqueId(it.map(_(nodeSeq)).toSeq)
     }
 
+  implicit def boxNodeSeqFunc(it: Box[NodeSeq => NodeSeq]): IterableConst =
+    new IterableConst {
+      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = 
+        it.toList.map(_(nodeSeq))
+    }
+
+  implicit def optionNodeSeqFunc(it: Option[NodeSeq => NodeSeq]): IterableConst =
+    new IterableConst {
+      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = 
+        it.toList.map(_(nodeSeq))
+    }
+
   implicit def itStringPromotable(it: Iterable[String]): IterableConst =
     new IterableConst {
       def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.map(a => Text(a)).toSeq
@@ -1544,16 +1556,24 @@ object ClearClearable extends CssBindImpl(Full(".clearable"), CssSelectorParser.
 }
 
 private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeSeq] {
-  private val (idMap, nameMap, clzMap, attrMap)  = {
+  private val (idMap, nameMap, clzMap, attrMap, elemMap, starFunc)  = {
     var idMap: Map[String, CssBind] = Map()
     var nameMap: Map[String, CssBind] = Map()
     var clzMap: Map[String, CssBind] = Map()
     var attrMap: Map[String, Map[String, CssBind]] = Map()
+    var elemMap: Map[String, CssBind] = Map()
+    var starFunc: Box[CssBind] = Empty
 
     binds.foreach {
       case i @ CssBind(IdSelector(id, _)) => if (!idMap.isDefinedAt(id)) {
         idMap += (id -> i)
       }
+
+      case i @ CssBind(ElemSelector(id, _)) => if (!elemMap.isDefinedAt(id)) {
+        elemMap += (id -> i)
+      }
+
+      case i @ CssBind(StarSelector(_)) => starFunc = Full(i)
 
       case i @ CssBind(NameSelector(name, _)) => if (!nameMap.isDefinedAt(name)) {
         nameMap += (name -> i)
@@ -1569,11 +1589,9 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
           attrMap += (name -> (oldMap + (value -> i)))
         }
       }
-
-      case _ =>
     }
 
-    (idMap, nameMap, clzMap, attrMap)
+    (idMap, nameMap, clzMap, attrMap, elemMap, starFunc)
   }
 
   private abstract class SlurpedAttrs(val id: Box[String],val name: Box[String]) {
@@ -1729,6 +1747,16 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         bind <- idMap.get(rid)
       } yield applyRule(bind, in)
 
+    def processElem(in: Elem): Box[NodeSeq] =
+      for {
+        bind <- elemMap.get(in.label)
+      } yield applyRule(bind, in)
+
+    def processStar(in: Elem): Box[NodeSeq] =
+      for {
+        bind <- starFunc
+      } yield applyRule(bind, in)
+
     def processName(in: Elem): Box[NodeSeq] = 
       for {
         rid <- name
@@ -1804,9 +1832,11 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     val slurp = slurpAttrs(e.attributes)
 
     (slurp.processId(e) or
-    slurp.processName(e) or
-    slurp.processClass(e) or
-    slurp.processAttr(e)) openOr {
+     slurp.processName(e) or
+     slurp.processClass(e) or
+     slurp.processElem(e) or
+     slurp.processAttr(e) or
+     slurp.processStar(e)) openOr {
       new Elem(e.prefix, e.label, 
                e.attributes, e.scope, apply(e.child) :_*)
     }
