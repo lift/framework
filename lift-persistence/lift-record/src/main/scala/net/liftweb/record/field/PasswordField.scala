@@ -43,6 +43,9 @@ trait PasswordTypedField extends TypedField[String] {
 
   private var validatedValue: Box[String] = valueBox
 
+  def match_?(toTest: String): Boolean = 
+    is == hash("{"+toTest+"} salt={"+salt_i.get+"}")
+
   override def set_!(in: Box[String]): Box[String] = {
     validatedValue = in
     in.map(s => hash("{"+s+"} salt={"+salt_i.get+"}"))
@@ -51,7 +54,7 @@ trait PasswordTypedField extends TypedField[String] {
   def setFromAny(in: Any): Box[String] = {
     in match {
       case (a: Array[String]) if (a.length == 2 && a(0)   == a(1)) => setBox(Full(a(0)))
-      case (l: List[String])  if (l.length == 2 && l.head == l(1)) => setBox(Full(l.head))
+      case (h1: String) :: (h2: String) :: Nil if h1 == h2 => setBox(Full(h1))
       case _ => genericSetFromAny(in)
     }
   }
