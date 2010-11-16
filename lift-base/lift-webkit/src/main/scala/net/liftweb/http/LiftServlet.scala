@@ -207,11 +207,14 @@ class LiftServlet extends Loggable {
     resp match {
       case Full(EmptyResponse) => 
         true
+
       case Full(cresp) =>
         sendResponse(cresp, response, req)
         true
 
-      case _ => false
+      case _ => {
+        false
+      }
     }
   }
 
@@ -282,7 +285,9 @@ class LiftServlet extends Loggable {
 
       val wp = req.path.wholePath
 
-      if (LiftRules.enableContainerSessions) req.request.session
+      if (LiftRules.enableContainerSessions && !req.stateless_?) {
+        req.request.session
+      }
 
     def respToFunc(in: Box[LiftResponse]): () => Box[LiftResponse] = {
       val ret = in.map(LiftRules.performTransform)

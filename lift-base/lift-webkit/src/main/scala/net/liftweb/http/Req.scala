@@ -316,7 +316,7 @@ class Req(val path: ParsePath,
           val request: HTTPRequest,
           val nanoStart: Long,
           val nanoEnd: Long,
-          val stateless_? : Boolean,
+          _stateless_? : Boolean,
           private[http] val paramCalculator: () => ParamCalcInfo,
           private[http] val addlParams: Map[String, String]) extends HasParams
 {
@@ -341,6 +341,14 @@ class Req(val path: ParsePath,
                                                    false,
                                                    _paramCalculator,
                                                    _addlParams)
+
+  /**
+   * Should the request be treated as stateless (no session created for it)?
+   */
+  lazy val stateless_? = {
+    val ret = _stateless_? || (location.map(_.stateless_?) openOr false)
+    ret
+  }
 
   /**
    * Returns true if the content-type is text/xml
@@ -418,6 +426,15 @@ class Req(val path: ParsePath,
     case null => Nil
     case ca => ca.toList
   }
+
+  /**
+   * Get the session ID if there is one without creating on
+   */
+  def sessionId: Box[String] =
+    for {
+      httpRequest <- Box !! request
+      sid <- httpRequest.sessionId
+    } yield sid
 
   lazy val json: Box[JsonAST.JValue] = 
     if (!json_?) Empty

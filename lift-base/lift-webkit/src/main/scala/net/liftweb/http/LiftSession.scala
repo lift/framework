@@ -222,6 +222,20 @@ object SessionMaster extends LiftActor with Loggable {
         }
       }}) :: Nil
 
+  def getSession(req: Req, otherId: Box[String]): Box[LiftSession] = {
+    this.synchronized {
+      otherId.flatMap(sessions.get) match {
+        case Full(session) => lockAndBump(Full(session))
+        // for stateless requests, vend a stateless session if none is found
+        case _ if req.stateless_? => 
+          lockAndBump {
+            req.sessionId.flatMap(sessions.get)
+          } or Full(LiftRules.statelessSession.vend.apply(req))
+        case _ => getSession(req.request, otherId)
+      }
+    }
+  }
+
   def getSession(id: String, otherId: Box[String]): Box[LiftSession] = lockAndBump {
     otherId.flatMap(sessions.get) or Box(sessions.get(id))
   }

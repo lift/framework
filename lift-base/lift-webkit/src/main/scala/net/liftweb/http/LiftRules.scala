@@ -169,7 +169,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
     else
       Empty
 
-    val ret = SessionMaster.getSession(req.request, cometSessionId) match {
+    val ret = SessionMaster.getSession(req, cometSessionId) match {
       case Full(ret) =>
         ret.fixSessionTime()
         ret
