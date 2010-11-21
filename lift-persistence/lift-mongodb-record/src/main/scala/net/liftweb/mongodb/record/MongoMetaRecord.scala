@@ -51,10 +51,13 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     true
   }
 
+  protected def useColl[T](f: DBCollection => T) =
+    MongoDB.useCollection(mongoIdentifier, collectionName)(f)
+
   def bulkDelete_!!(qry: DBObject): Unit = {
-  	MongoDB.useCollection(mongoIdentifier, collectionName)(coll => {
-  		coll.remove(qry)
-  	})
+    useColl(coll =>
+      coll.remove(qry)
+    )
   }
 
   def bulkDelete_!!(k: String, o: Any): Unit = bulkDelete_!!(new BasicDBObject(k, o))
@@ -63,7 +66,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   * Find a single row by a qry, using a DBObject.
   */
   def find(qry: DBObject): Box[BaseRecord] = {
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
+    useColl( coll =>
       coll.findOne(qry) match {
         case null => Empty
         case dbo => Full(fromDBObject(dbo))
@@ -119,7 +122,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     /*
     * The call to toArray retrieves all documents and puts them in memory.
     */
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll => {
+    useColl( coll => {
       coll.find.toArray.map(dbo => fromDBObject(dbo)).toList
     })
   }
@@ -141,7 +144,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   protected def findAll(sort: Option[DBObject], opts: FindOption*)(f: (DBCollection) => DBCursor): List[BaseRecord] = {
     val findOpts = opts.toList
 
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll => {
+    useColl( coll => {
       val cur = f(coll).limit(
         findOpts.find(_.isInstanceOf[Limit]).map(x => x.value).getOrElse(0)
       ).skip(
@@ -198,6 +201,17 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   def findAll(k: String, o: Any, sort: JObject, opts: FindOption*): List[BaseRecord] =
     findAll(new BasicDBObject(k, o), Some(JObjectParser.parse(sort)), opts :_*)
 
+
+  /**
+  * Find all documents with the given ids
+  */
+  def findAll(ids: List[ObjectId]): List[BaseRecord] = if (ids.isEmpty) Nil else {
+    val list = new java.util.ArrayList[ObjectId]()
+    for (id <- ids.distinct) list.add(id)
+    val query = QueryBuilder.start("_id").in(list).get()
+    findAll(query)
+  }
+
   private def saveOp(inst: BaseRecord)(f: => Unit): Boolean = {
     foreachCallback(inst, _.beforeSave)
     f
@@ -218,7 +232,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
           coll.setWriteConcern(DB.WriteConcern.NORMAL)
       }
     else
-      MongoDB.useCollection(mongoIdentifier, collectionName) {
+      useColl {
         coll => coll.save(inst.asDBObject)
       }
   }
@@ -237,7 +251,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
    */
   def insertAll(insts: List[BaseRecord]): Unit = {
     insts.foreach(inst => foreachCallback(inst, _.beforeSave))
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
+    useColl( coll =>
       coll.insert(insts.map(_.asDBObject).toArray:_*)
     )
     insts.foreach(inst => foreachCallback(inst, _.afterSave))
@@ -257,6 +271,43 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     MongoDB.use(mongoIdentifier) ( db =>
       update(qry, newbr, db, opts :_*)
     )
+  }
+
+  /**
+  * Upsert records with a DBObject query
+  */
+  def upsert(query: DBObject, update: DBObject): Unit = {
+    useColl( coll =>
+      coll.update(query, update, true, false)
+    )
+  }
+
+  /**
+  * Update one record with a DBObject query
+  */
+  def update(query: DBObject, update: DBObject): Unit = {
+    useColl( coll =>
+      coll.update(query, update)
+    )
+  }
+
+  /**
+  * Update multiple records with a DBObject query
+  */
+  def updateMulti(query: DBObject, update: DBObject): Unit = {
+    useColl( coll =>
+      coll.updateMulti(query, update)
+    )
+  }
+
+  /**
+  * Update a record with a DBObject query
+  */
+  def update(obj: BaseRecord, update: DBObject): Unit = {
+    val query = (BasicDBObjectBuilder.start
+                      .add("_id", obj.id)
+                      .get)
+    this.update(query, update)
   }
 
   /**
@@ -319,6 +370,9 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   def setFieldsFromDBObject(inst: BaseRecord, dbo: DBObject): Unit = {
     for (k <- dbo.keySet; field <- inst.fieldByName(k.toString)) {
       field.setFromAny(dbo.get(k.toString))
+    }
+    inst.runSafe {
+      inst.fields.foreach(_.resetDirty)
     }
   }
 }

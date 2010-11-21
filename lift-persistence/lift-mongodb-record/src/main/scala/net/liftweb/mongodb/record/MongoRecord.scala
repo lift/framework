@@ -88,6 +88,18 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends Record[MyType] {
   * Set the fields of this record from the given DBObject
   */
   def setFieldsFromDBObject(dbo: DBObject): Unit = meta.setFieldsFromDBObject(this, dbo)
+
+  override def toString = {
+    val fieldList = this.fields.map(f => "%s=%s" format (f.name,
+        f.valueBox match {
+          case Full(c: java.util.Calendar) => c.getTime().toString()
+          case Full(null) => ""
+          case Full(v) => v.toString
+          case _ => ""
+        }))
+
+    "%s={%s}" format (this.getClass.toString, fieldList.mkString(", "))
+  }
 }
 
 /**

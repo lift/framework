@@ -25,6 +25,7 @@ import _root_.net.liftweb.http.js.{JsExp, JsObj}
 import _root_.net.liftweb.json.JsonParser
 import _root_.net.liftweb.json.JsonAST.{JArray, JBool, JInt, JDouble, JField, JNothing, JNull, JObject, JString, JValue}
 import _root_.net.liftweb.record.{Field, MandatoryTypedField, MetaRecord, Record}
+import net.liftweb.record.RecordHelpers.jvalueToJsExp
 import _root_.net.liftweb.record.FieldHelpers.expectedA
 import _root_.net.liftweb.record.field._
 import _root_.net.liftweb.util.ThreadGlobal
@@ -34,22 +35,6 @@ import _root_.net.liftweb.util.Helpers.{base64Decode, base64Encode}
 import _root_.net.liftweb.util.TimeHelpers.{boxParseInternetDate, toInternetDate}
 
 private[couchdb] object JSONRecordHelpers {
-
-  /* For the moment, I couldn't find any other way to bridge JValue and JsExp, so I wrote something simple here */
-  implicit def jvalueToJsExp(jvalue: JValue): JsExp = {
-    import _root_.net.liftweb.http.js.JE.{JsArray, JsFalse, JsNull, JsObj, JsTrue, Num, Str}
-    jvalue match {
-      case JArray(vs)  => JsArray(vs.map(jvalueToJsExp): _*)
-      case JBool(b)    => if (b) JsTrue else JsFalse
-      case JDouble(d)  => Num(d)
-      case JField(n,v) => error("no parallel")
-      case JInt(i)     => Num(i)
-      case JNothing    => error("cannot convert JNothing")
-      case JNull       => JsNull
-      case JObject(fs) => JsObj(fs.map(f => (f.name, jvalueToJsExp(f.value))): _*)
-      case JString(s)  => Str(s)
-    }
-  }
 
   /** Remove duplicate fields, preferring the first field seen with a given name */
   def dedupe(fields: List[JField]): List[JField] = {
