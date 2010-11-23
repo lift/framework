@@ -77,10 +77,10 @@
       <artifactId>joda-time</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>nu.validator.htmlparser</groupId>
-      <artifactId>htmlparser</artifactId>
-    </dependency>
+      <dependency>
+        <groupId>nu.validator.htmlparser</groupId>
+        <artifactId>htmlparser</artifactId>
+      </dependency>
 
     <dependency>
       <groupId>org.slf4j</groupId>
