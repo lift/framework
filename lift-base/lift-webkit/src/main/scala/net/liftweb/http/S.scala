@@ -2373,7 +2373,10 @@ for {
         case _ =>
           val ret = LiftSession(httpRequest.session, req.contextPath)
           ret.fixSessionTime()
-          SessionMaster.addSession(ret, httpRequest.userAgent, SessionMaster.getIpFromReq(req))
+          SessionMaster.addSession(ret, 
+                                   req,
+                                   httpRequest.userAgent, 
+                                   SessionMaster.getIpFromReq(req))
           ret
       }
 
