@@ -18,7 +18,7 @@ package net.liftweb {
 package http {
 
 import _root_.net.liftweb.common._
-import _root_.scala.xml.{Node, Group, NodeSeq}
+import _root_.scala.xml.{Node, NodeSeq, Elem}
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.util.Helpers._
 import java.io.{Writer, InputStream}
@@ -37,11 +37,12 @@ trait HtmlProperties {
    * Creates a new instance of HtmlProperties with the
    * docType property changed
    */
-  def setDocType(newDocType: Box[String]) = {
+  def setDocType(newDocType: () => Box[String]) = {
     val old = this
     new HtmlProperties {
-      def docType = newDocType
+      def docType = newDocType()
       def encoding = old.encoding
+      def contentType = old.contentType
       def htmlOutputHeader = old.htmlOutputHeader
       def htmlParser = old.htmlParser
       def htmlWriter = old.htmlWriter
@@ -60,11 +61,12 @@ trait HtmlProperties {
    * Creates a new instance of HtmlProperties with the
    * encoding property changed
    */
-  def setEncoding(newEncoding: Box[String]) = {
+  def setEncoding(newEncoding: () => Box[String]) = {
     val old = this
     new HtmlProperties {
       def docType = old.docType
-      def encoding = newEncoding
+      def encoding = newEncoding()
+      def contentType = old.contentType
       def htmlOutputHeader = old.htmlOutputHeader
       def htmlParser = old.htmlParser
       def htmlWriter = old.htmlWriter
@@ -87,12 +89,13 @@ trait HtmlProperties {
    * Creates a new instance of HtmlProperties with the
    * htmlOutputHeader property changed
    */
-  def setHtmlOutputHeader(newHeader: Box[String]) = {
+  def setHtmlOutputHeader(newHeader: () => Box[String]) = {
     val old = this
     new HtmlProperties {
       def docType = old.docType
       def encoding = old.encoding
-      def htmlOutputHeader = newHeader
+      def htmlOutputHeader = newHeader()
+      def contentType = old.contentType
       def htmlParser = old.htmlParser
       def htmlWriter = old.htmlWriter
       def html5FormsSupport = old.html5FormsSupport
@@ -101,16 +104,22 @@ trait HtmlProperties {
     }
   }
 
-  /*
+  /**
+   * What's the content type that should be put in the
+   * response header?
+   */
+  def contentType: Box[String]
+
   /**
    * Creates a new instance of HtmlProperties with the
-   * htmlOutputHeader property changed
+   * contentType property changed
    */
-  def setHtmlOutputHeader(newHeader: Box[String]) = {
+  def setContentType(newContentType: () => Box[String]) = {
     val old = this
     new HtmlProperties {
       def docType = old.docType
       def encoding = old.encoding
+      def contentType = newContentType()
       def htmlOutputHeader = old.htmlOutputHeader
       def htmlParser = old.htmlParser
       def htmlWriter = old.htmlWriter
@@ -119,7 +128,6 @@ trait HtmlProperties {
       def userAgent = old.userAgent
     }
   }
-  */
 
   /**
    * How are we parsing incoming files into a NodeSeq?
@@ -129,15 +137,75 @@ trait HtmlProperties {
   def htmlParser: InputStream => Box[NodeSeq]
 
   /**
+   * Creates a new instance of HtmlProperties with the
+   * htmlParser property changed
+   */
+  def setHtmlParser(newParser: InputStream => Box[NodeSeq]) = {
+    val old = this
+    new HtmlProperties {
+      def docType = old.docType
+      def encoding = old.encoding
+      def contentType = old.contentType
+      def htmlOutputHeader = old.htmlOutputHeader
+      def htmlParser = newParser
+      def htmlWriter = old.htmlWriter
+      def html5FormsSupport = old.html5FormsSupport
+      def maxOpenRequests = old.maxOpenRequests
+      def userAgent = old.userAgent
+    }
+  }
+  
+
+  /**
    * Given a NodeSeq and a Writer, convert the output
    * to the writer.
    */
-  def htmlWriter: (NodeSeq, Writer) => Unit
+  def htmlWriter: (Node, Writer) => Unit
+
+  /**
+   * Creates a new instance of HtmlProperties with the
+   * htmlWriter property changed
+   */
+  def setHtmlWriter(newWriter: (Node, Writer) => Unit) = {
+    val old = this
+    new HtmlProperties {
+      def docType = old.docType
+      def encoding = old.encoding
+      def contentType = old.contentType
+      def htmlOutputHeader = old.htmlOutputHeader
+      def htmlParser = old.htmlParser
+      def htmlWriter = newWriter
+      def html5FormsSupport = old.html5FormsSupport
+      def maxOpenRequests = old.maxOpenRequests
+      def userAgent = old.userAgent
+    }
+  }
+
 
   /**
    * Are there HTML5 forms support?
    */
   def html5FormsSupport: Boolean
+
+  /**
+   * Creates a new instance of HtmlProperties with the
+   * html5FormsSupport property changed
+   */
+  def setHtml5FormsSupport(newFormsSupport: Boolean) = {
+    val old = this
+    new HtmlProperties {
+      def docType = old.docType
+      def encoding = old.encoding
+      def contentType = old.contentType
+      def htmlOutputHeader = old.htmlOutputHeader
+      def htmlParser = old.htmlParser
+      def htmlWriter = old.htmlWriter
+      def html5FormsSupport = newFormsSupport
+      def maxOpenRequests = old.maxOpenRequests
+      def userAgent = old.userAgent
+    }
+  }
+
 
   /**
    * What is the maximum number of open HTTP
@@ -146,10 +214,131 @@ trait HtmlProperties {
   def maxOpenRequests: Int
 
   /**
+   * Creates a new instance of HtmlProperties with the
+   * maxOpenRequests property changed
+   */
+  def setMaxOpenRequests(maxOpen: Int) = {
+    val old = this
+    new HtmlProperties {
+      def docType = old.docType
+      def encoding = old.encoding
+      def contentType = old.contentType
+      def htmlOutputHeader = old.htmlOutputHeader
+      def htmlParser = old.htmlParser
+      def htmlWriter = old.htmlWriter
+      def html5FormsSupport = old.html5FormsSupport
+      def maxOpenRequests = maxOpen
+      def userAgent = old.userAgent
+    }
+  }
+
+
+  /**
    * What's the UserAgent that was used to create
    * this HtmlChoice
    */
-  def userAgent: String
+  def userAgent: Box[String]
+
+  /**
+   * Creates a new instance of HtmlProperties with the
+   * userAgent property changed
+   */
+  def setUserAgent(newUA: Box[String]) = {
+    val old = this
+    new HtmlProperties {
+      def docType = old.docType
+      def encoding = old.encoding
+      def contentType = old.contentType
+      def htmlOutputHeader = old.htmlOutputHeader
+      def htmlParser = old.htmlParser
+      def htmlWriter = old.htmlWriter
+      def html5FormsSupport = old.html5FormsSupport
+      def maxOpenRequests = old.maxOpenRequests
+      def userAgent = newUA
+    }
+  }
+  
+}
+
+/**
+ * This set of properties is based on Lift's current XHTML support
+ */
+final case class OldHtmlProperties(userAgent: Box[String]) extends HtmlProperties {
+  def docType: Box[String] = LiftRules.docType.vend.apply(S.request openOr Req.nil)
+  def encoding: Box[String] = Full("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+  def contentType: Box[String] = {
+    if (LiftRules.useXhtmlMimeType) {
+      // FIXME read accepts header
+      Full("application/xhtml+xml; charset=utf-8")
+    } else 
+      Full("text/html; charset=utf-8")
+  }
+
+  def htmlParser: InputStream => Box[NodeSeq] = PCDataXmlParser.apply _
+
+  def htmlWriter: (Node, Writer) => Unit =
+    (n: Node, w: Writer) => {
+      val sb = new StringBuilder(64000)
+      AltXML.toXML(n, _root_.scala.xml.TopScope,
+                   sb, false, !LiftRules.convertToEntity.vend,
+                   S.ieMode)
+      w.append(sb)
+      w.flush()
+    }
+  
+  def htmlOutputHeader: Box[String] = 
+    (docType -> encoding) match {
+      case (Full(dt), Full(enc)) => 
+        if (LiftRules.calcIE6ForResponse() && LiftRules.flipDocTypeForIE6) {
+          Full(dt + "\n" + enc + "\n")
+        } else {
+          Full(enc + "\n" + dt + "\n")
+        }
+
+      case (Full(dt), _) => Full(dt + "\n")
+
+      case (_, Full(enc)) => Full(enc + "\n")
+
+      case _ => Empty
+    }
+
+  val html5FormsSupport: Boolean = {
+    val r = S.request openOr Req.nil
+    r.isSafari5 || r.isFirefox36 || r.isFirefox40 ||
+    r.isChrome5 || r.isChrome6
+  }
+
+  val maxOpenRequests: Int = 
+    LiftRules.maxConcurrentRequests.vend(S.request openOr Req.nil)
+}
+
+/**
+ * If you're going to use HTML5, then this is the set of properties
+ * to use
+ */
+final case class Html5Properties(userAgent: Box[String]) extends HtmlProperties {
+  def docType: Box[String] = Full("<!DOCTYPE html>")
+  def encoding: Box[String] = Empty
+
+  def contentType: Box[String] = {
+      Full("text/html; charset=utf-8")
+  }
+
+  def htmlParser: InputStream => Box[Elem] = Html5.parse _
+
+  def htmlWriter: (Node, Writer) => Unit =
+    Html5.write(_, _, false)
+  
+  def htmlOutputHeader: Box[String] = docType.map(_ + "\n")
+
+  val html5FormsSupport: Boolean = {
+    val r = S.request openOr Req.nil
+    r.isSafari5 || r.isFirefox36 || r.isFirefox40 ||
+    r.isChrome5 || r.isChrome6
+  }
+
+  val maxOpenRequests: Int = 
+    LiftRules.maxConcurrentRequests.vend(S.request openOr Req.nil)
 }
 
 }

@@ -24,6 +24,7 @@ import _root_.net.liftweb.http.provider._
 import js._
 import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.json.{JsonAST, Printer}
+import java.io.{OutputStream, OutputStreamWriter, Writer, ByteArrayOutputStream}
 
 /**
  * 200 response but without body.
@@ -336,16 +337,16 @@ final case class StreamingResponse(data: {def read(buf: Array[Byte]): Int}, onEn
 
 object OutputStreamResponse {
 
-  def apply(out: (java.io.OutputStream) => Unit) = 
+  def apply(out: (OutputStream) => Unit) = 
     new OutputStreamResponse(out, -1, Nil, Nil, 200)
 
-  def apply(out: (java.io.OutputStream) => Unit, size: Long) = 
+  def apply(out: (OutputStream) => Unit, size: Long) = 
     new OutputStreamResponse(out, size, Nil, Nil, 200)
 
-  def apply(out: (java.io.OutputStream) => Unit, headers: List[(String, String)]) = 
+  def apply(out: (OutputStream) => Unit, headers: List[(String, String)]) = 
     new OutputStreamResponse(out, -1, headers, Nil, 200)
 
-  def apply(out: (java.io.OutputStream) => Unit, size: Long, headers: List[(String, String)]) = 
+  def apply(out: (OutputStream) => Unit, size: Long, headers: List[(String, String)]) = 
     new OutputStreamResponse(out, size, headers, Nil, 200)
 
 }
@@ -354,7 +355,7 @@ object OutputStreamResponse {
  * Use this response to write your data directly to the response pipe. Along with StreamingResponse
  * you have an aternative to send data to the client.
  */
-case class OutputStreamResponse(out: (java.io.OutputStream) => Unit,  
+case class OutputStreamResponse(out: (OutputStream) => Unit,  
   size: Long, 
   headers: List[(String, String)], 
   cookies: List[HTTPCookie], 
@@ -459,6 +460,8 @@ case class CSSResponse(text: String, headers: List[(String, String)], code: Int)
 trait NodeResponse extends LiftResponse {
   def out: Node
 
+  val htmlProperties: HtmlProperties = S.htmlProperties
+
   def headers: List[(String, String)]
 
   def cookies: List[HTTPCookie]
@@ -475,44 +478,69 @@ trait NodeResponse extends LiftResponse {
 
   def flipDocTypeForIE6 = false
 
-  def toResponse = {
+  protected def writeDocType(writer: Writer): Unit = {
+    val doc: String = docType.map(_ + "\n") openOr ""
     val encoding: String = if (!includeXmlVersion) "" else _encoding
 
-    val doc = docType.map(_ + "\n") openOr ""
-
-    val sb = new StringBuilder(64000)
-
     if (flipDocTypeForIE6 && isIE6) {
-      sb.append(doc)
-      sb.append(encoding)
+      writer.append(doc)
+      writer.append(encoding)
     } else {
-      sb.append(encoding)
-      sb.append(doc)
+      writer.append(encoding)
+      writer.append(doc)
     }
-    AltXML.toXML(out, _root_.scala.xml.TopScope,
-      sb, false, !LiftRules.convertToEntity.vend, renderInIEMode)
-
-    sb.append("  \n  ")
-
-    val ret = sb.toString
-
-    InMemoryResponse(ret.getBytes("UTF-8"), headers, cookies, code)
   }
 
-   private val _encoding: String =
-   LiftRules.calculateXmlHeader(this, out, headers.ciGet("Content-Type"))
+  protected lazy val _encoding: String =  
+    LiftRules.calculateXmlHeader(this, out, headers.ciGet("Content-Type"))  
+
+  def toResponse = {
+    val bos = new ByteArrayOutputStream(64000)
+    val writer = new OutputStreamWriter(bos, "UTF-8")
+
+    writeDocType(writer)
+
+    htmlProperties.htmlWriter(out, writer)
+
+    writer.append("  \n  ")
+
+    writer.flush()
+    bos.flush()
+
+    InMemoryResponse(bos.toByteArray, headers, cookies, code)
+  }
 }
 
-case class XhtmlResponse(out: Node, docType: Box[String],
-                         headers: List[(String, String)],
+case class XhtmlResponse(out: Node, 
+                         private val __docType: Box[String],
+                         private val _headers: List[(String, String)],
                          cookies: List[HTTPCookie],
                          code: Int,
                          override val renderInIEMode: Boolean) extends NodeResponse {
-  private[http] var _includeXmlVersion = true
+  private[http] var _includeXmlVersion: Boolean = true
 
-  override def includeXmlVersion = _includeXmlVersion
+  override def includeXmlVersion: Boolean = _includeXmlVersion
 
-  override def flipDocTypeForIE6 = LiftRules.flipDocTypeForIE6
+  override val flipDocTypeForIE6: Boolean = LiftRules.flipDocTypeForIE6
+
+  val docType: Box[String] = htmlProperties.docType
+
+  protected override def writeDocType(writer: Writer): Unit = {
+    htmlProperties.htmlOutputHeader.foreach {
+      writer.append
+    }
+  }
+
+  override protected lazy val _encoding: String = htmlProperties.encoding openOr ""
+
+  val headers: List[(String, String)] =
+    _headers.find(_._1 equalsIgnoreCase "content-type") match {
+      case Some(_) => _headers
+      case _ => htmlProperties.contentType match {
+        case Full(ct) => ("Content-Type" -> ct) :: _headers
+        case _ => _headers
+      }
+    }
 }
 
 

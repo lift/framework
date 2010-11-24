@@ -328,12 +328,18 @@ trait Html5Parser {
    */
   def parse(in: InputStream): Box[Elem] = {
     Helpers.tryo {
-      val hp = new HtmlParser()
+      val hp = new HtmlParser(common.XmlViolationPolicy.ALLOW)
       val saxer = new NoBindingFactoryAdapter 
 
       saxer.scopeStack.push(TopScope)
       hp.setContentHandler(saxer)
-      hp.parse(new InputSource(in))
+      hp.parseFragment(new InputSource(in), "")
+
+      println("tag stack "+saxer.tagStack)
+      println("cur tag "+saxer.curTag)
+      println("hStack tag "+saxer.hStack)
+      
+      
       saxer.scopeStack.pop
       
       in.close()

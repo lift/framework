@@ -486,7 +486,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   type AnyActor = {def !(in: Any): Unit}
 
   val sessionHtmlProperties: SessionVar[HtmlProperties] =
-    new SessionVar[HtmlProperties](null) {} // FIXME 
+    new SessionVar[HtmlProperties](LiftRules.htmlProperties.vend(
+      S.request openOr Req.nil
+    )) {} 
 
   val requestHtmlProperties: TransientRequestVar[HtmlProperties] = 
     new TransientRequestVar[HtmlProperties](sessionHtmlProperties.is) {}
@@ -1905,7 +1907,8 @@ object TemplateFinder {
     val lrCache = LiftRules.templateCache
     val cache = if (lrCache.isDefined) lrCache.open_! else NoCache
 
-    val parserFunction: InputStream => Box[NodeSeq] = PCDataXmlParser.apply _
+    val parserFunction: InputStream => Box[NodeSeq] = 
+      S.htmlProperties.htmlParser
 
     val key = (locale, places)
     val tr = cache.get(key)

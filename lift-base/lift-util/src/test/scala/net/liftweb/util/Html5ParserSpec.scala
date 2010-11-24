@@ -33,6 +33,7 @@ object Html5ParserSpec extends Specification with Html5Parser with Html5Writer {
 "Html5 Parser" should {
   "parse page1" in {
     val parsed = parse(page1).open_!
+    println(parsed)
     (parsed \\ "script").length must be >= 4
   }
 
@@ -41,11 +42,29 @@ object Html5ParserSpec extends Specification with Html5Parser with Html5Writer {
     (parsed \\ "script").length must be >= 4
   }
 
+  /*
   "fail to parse page3" in {
     val parsed = parse(page3)
     parsed match {
       case f: Failure => 1 must_== 1
     }
+  }*/
+
+  "Parse stuff with lift: namespace" in {
+    val parsed = parse("""<lift:surround with="dog"><div/></lift:surround>""")
+    println("Parsed "+parsed)
+    val e = parsed.open_!.asInstanceOf[scala.xml.Elem]
+    e.prefix must_== "lift"
+    e.label must_== "surround"
+    (parsed.open_! \ "@with").text must_== "dog"
+  }
+
+  "Parse stuff without lift: namespace" in {
+    val parsed = parse("""<div with="dog"><div/></div>""")
+    println("Parsed "+parsed)
+    val e = parsed.open_!.asInstanceOf[scala.xml.Elem]
+    e.label must_== "div"
+    (parsed.open_! \ "@with").text must_== "dog"
   }
 }
 
