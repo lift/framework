@@ -155,10 +155,11 @@ object Menu extends DispatchSnippet {
                                        <xml:group> <span>{text}</span>{ifExpandCurrent(buildUlLine(kids))}</xml:group>) %
                                   S.prefixedAttrsToMetaData("li_item", liMap))
 
+            // Not current, but on the path, so we need to expand children to show the current one
             case MenuItem(text, uri, kids, _, true, _) =>
               Helpers.addCssClass(i.cssClass,
                                   Elem(null, innerTag, Null, TopScope,
-                                       <xml:group> <a href={uri}>{text}</a>{ifExpandAll(buildUlLine(kids))}</xml:group>) %
+                                       <xml:group> <a href={uri}>{text}</a>{buildUlLine(kids)}</xml:group>) %
                                   S.prefixedAttrsToMetaData("li_path", liMap))
 
             case MenuItem(text, uri, kids, _, _, _) =>
