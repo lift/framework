@@ -103,7 +103,7 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
         </form>
     }
 
-    def ldapVendor: SimpleLDAPVendor = SimpleLDAPVendor
+    def ldapVendor: LDAPVendor = SimpleLDAPVendor
 
     override def login : NodeSeq = {
         if (S.post_?) {
