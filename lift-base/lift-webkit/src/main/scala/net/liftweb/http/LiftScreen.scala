@@ -604,7 +604,12 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
 
   protected def allTemplatePath: List[String] = LiftScreenRules.allTemplatePath.vend
 
-  protected def allTemplate: NodeSeq = TemplateFinder.findAnyTemplate(allTemplatePath) openOr allTemplateNodeSeq
+  protected def allTemplate: NodeSeq = {
+    val ret = TemplateFinder.
+    findAnyTemplate(allTemplatePath) openOr allTemplateNodeSeq
+
+    ret
+  }
 
   /**
    * What additional attributes should be put on the

@@ -43,22 +43,23 @@ trait Html5Writer {
         writer.append(' ')
         writer.append(up.key)
         val v = up.value
-        if (!v.isEmpty) {
+        if ((v ne null) && !v.isEmpty) {
           writer.append("=\"")
           val str = v.text
           var pos = 0
           val len = str.length
           while (pos < len) {
             str.charAt(pos) match {
-              case '"' => writer.append("U+0022")
-               case '<' => writer.append("U+003C")
+              case '"' => writer.append("&quot;")
+              case '<' => writer.append("&lt;")
               case c if c >= ' ' && c.toInt <= 127 => writer.append(c)
               case c if c == '\u0085' =>
               case c => {
                 val str = Integer.toHexString(c)
-                writer.append("U+")
+                writer.append("&#x")
                 writer.append("0000".substring(str.length))
                 writer.append(str)
+                writer.append(';')
               }
             }
 
@@ -77,7 +78,7 @@ trait Html5Writer {
         writer.append(':')
         writer.append(pa.key)
         val v = pa.value
-        if (!v.isEmpty) {
+        if ((v ne null) && !v.isEmpty) {
           writer.append("=\"")
           val str = v.text
           var pos = 0
@@ -234,7 +235,6 @@ trait Html5Writer {
             case _ =>
           }
         }
-        writer.append(e.text)
         writer.append("</")
         writer.append(e.label)
         writer.append('>')
@@ -249,6 +249,7 @@ trait Html5Writer {
       }
       
 
+      /*
       case e: Elem if ((e.child eq null) || e.child.isEmpty) => {
         writer.append('<')
         if (null ne e.prefix) {
@@ -258,7 +259,7 @@ trait Html5Writer {
         writer.append(e.label)
         writeAttributes(e.attributes, writer)
         writer.append(" />")
-      }
+      }*/
       
       case e: Elem => {
         writer.append('<')
@@ -329,26 +330,80 @@ trait Html5Parser {
   def parse(in: InputStream): Box[Elem] = {
     Helpers.tryo {
       val hp = new HtmlParser(common.XmlViolationPolicy.ALLOW)
-      val saxer = new NoBindingFactoryAdapter 
+      hp.setCommentPolicy(common.XmlViolationPolicy.ALLOW)
+      hp.setContentNonXmlCharPolicy(common.XmlViolationPolicy.ALLOW)
+      hp.setContentSpacePolicy(common.XmlViolationPolicy.FATAL)
+      hp.setNamePolicy(common.XmlViolationPolicy.ALLOW)
+      val saxer = new NoBindingFactoryAdapter {
+        override def captureText(): Unit = {
+          if (capture) {
+            val text = buffer.toString()
+            if (text.length() > 0) {
+              hStack.push(createText(text))
+            }
+	  }
+	  buffer.setLength(0)
+	}
+      }
 
       saxer.scopeStack.push(TopScope)
       hp.setContentHandler(saxer)
-      hp.parseFragment(new InputSource(in), "")
+      val is = new InputSource(in)
+      is.setEncoding("UTF-8")
+      hp.parse(is)
 
-      println("tag stack "+saxer.tagStack)
-      println("cur tag "+saxer.curTag)
-      println("hStack tag "+saxer.hStack)
-      
-      
       saxer.scopeStack.pop
       
       in.close()
       saxer.rootElem match {
         case null => Empty
-        case e: Elem => Full(e)
+        case e: Elem => 
+          AutoInsertedBody.unapply(e) match {
+            case Some(x) => Full(x)
+            case _ => Full(e)
+          }
         case _ => Empty
       }
     }.flatMap(a => a)
+  }
+
+  private object AutoInsertedBody {
+    def checkHead(n: Node): Boolean = 
+      n match {
+        case e: Elem => {
+          e.label == "head" && e.prefix == null &&
+          e.attributes == Null &&
+          e.child.length == 0
+        }
+        case _ => false
+      }
+    
+    def checkBody(n: Node): Boolean = 
+      n match {
+        case e: Elem => {
+          e.label == "body" && e.prefix == null &&
+          e.attributes == Null &&
+          e.child.length >= 1 &&
+          e.child(0).isInstanceOf[Elem]
+        }
+        case _ => false
+      }
+    
+    def unapply(n: Node): Option[Elem] = n match {
+      case e: Elem => {
+        if (e.label == "html" && e.prefix == null &&
+            e.attributes == Null &&
+            e.child.length == 2 &&
+            checkHead(e.child(0)) &&
+            checkBody(e.child(1))) {
+              Some(e.child(1).asInstanceOf[Elem].child(0).asInstanceOf[Elem])
+            } else {
+              None
+            }
+      }
+        
+      case _ => None
+    }
   }
 
   /**

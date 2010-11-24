@@ -934,6 +934,8 @@ trait BindHelpers {
            paramFailureXform: Box[PrefixedAttribute => MetaData],
            preserveScope: Boolean,
            xml: NodeSeq, params: BindParam*): NodeSeq = {
+    val nsColon = namespace + ":"
+
     BindHelpers._bindNodes.doWith(xml :: (BindHelpers._bindNodes.box.openOr(Nil))) {
       val map: _root_.scala.collection.immutable.Map[String, BindParam] = _root_.scala.collection.immutable.HashMap.empty ++ params.map(p => (p.name, p))
 
@@ -951,6 +953,36 @@ trait BindHelpers {
 
       def in_bind(xml: NodeSeq): NodeSeq = {
         xml.flatMap {
+          case BoundAttr(e, av) if av.startsWith(nsColon) => {
+            val fixedAttrs = e.attributes.filter  {
+              case up: UnprefixedAttribute => true
+              case pa: PrefixedAttribute => {
+                val res = !(pa.pre == "lift" && pa.key == "bind")
+                res
+              }
+              case _ => true
+            }
+
+            val fixedLabel = av.substring(nsColon.length)
+
+            val fake = new Elem(namespace, fixedLabel, fixedAttrs,
+                                e.scope, new Elem(e.namespace,
+                                                  e.label,
+                                                  fixedAttrs,
+                                                  e.scope,
+                                                  e.child :_*))
+
+            BindHelpers._currentNode.doWith(fake) {
+              map.get(fake.label) match {
+                case None =>
+                  nodeFailureXform.map(_(fake)) openOr fake
+                
+                case Some(ns) =>
+                  ns.calcValue(fake.child) getOrElse NodeSeq.Empty
+              }
+            }
+          }
+
           case s: Elem if s.prefix == namespace => BindHelpers._currentNode.doWith(s) {
             map.get(s.label) match {
               case None =>
@@ -962,6 +994,7 @@ trait BindHelpers {
                 ns.calcValue(s.child) getOrElse NodeSeq.Empty
             }
           }
+
           case s: Elem if bindByNameType(s.label) && (attrStr(s, "name").startsWith(namespace+":")) &&
                           bindByNameTag(namespace, s) != "" => BindHelpers._currentNode.doWith(s) {
             val tag = bindByNameTag(namespace, s)
@@ -978,6 +1011,28 @@ trait BindHelpers {
       }
 
       in_bind(xml)
+    }
+  }
+
+  private object BoundAttr {
+    def unapply(in: Node): Option[(Elem, String)] = {
+      in match {
+        case e: Elem => {
+          val bound = e.attributes.filter {
+            case up: UnprefixedAttribute => false
+            case pa: PrefixedAttribute =>
+              pa.pre == "lift" && pa.key == "bind"
+            case _ => false
+          }
+          
+          bound.elements.toList match {
+            case xs :: _ => Some(e -> xs.value.text)
+            case _ => None
+          }
+        }
+        
+        case _ => None 
+      }
     }
   }
 

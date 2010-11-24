@@ -314,8 +314,20 @@ object JqJsCmds {
   }
 
   class ModalDialog(html: NodeSeq, css: Box[JsObj]) extends JsCmd {
-    val toJsCmd = "jQuery.blockUI({ message: " + AltXML.toXML(Group(S.session.map(s =>
-            s.fixHtml(s.processSurroundAndInclude("Modal Dialog", html))).openOr(html)), false, true, S.ieMode).encJs +
+    private def contentAsJsStr = {
+    val w = new java.io.StringWriter
+    
+    S.htmlProperties.
+    htmlWriter(Group(S.session.
+                     map(s =>
+                       s.fixHtml(s.processSurroundAndInclude("Modal Dialog",
+                                                             html))).
+                     openOr(html)),
+               w)
+    w.toString.encJs
+    }
+
+    val toJsCmd = "jQuery.blockUI({ message: " + contentAsJsStr +
             (css.map(",  css: " + _.toJsCmd + " ").openOr("")) + "});"
   }
 

@@ -91,6 +91,12 @@ object BindHelpersSpec extends Specification  {
     "replace a node named 'namespace:bindparam name' in a NodeSeq with the Symbol value of the BindParam" in {
       bind("user", <t><user:tag>replacethis</user:tag></t>, "tag" -> 'world) must ==/(<t>world</t>)
     }
+
+
+    "replace a node named 'namespace:bindparam name' in a NodeSeq with the Symbol value of the BindParam via lift:bind attribute" in {
+      bind("user", <t><div lift:bind="user:tag">replacethis</div></t>, "tag" -> 'world) must ==/(<t>world</t>)
+    }
+
     "replace a node named 'namespace:bindparam name' in a NodeSeq with the NodeSeq value of the BindParam" in {
       bind("user", <user:tag>replacethis</user:tag>, "tag" -> <world></world>) must ==/(<world></world>)
     }
