@@ -703,6 +703,26 @@ trait BindHelpers {
   }
 
   /**
+   * Replace the element with the id that matches with the replacement
+   * nodeseq.
+   */
+  def replaceIdNode(in: NodeSeq, id: String, replacement: NodeSeq): NodeSeq = {
+    import scala.xml.transform._
+
+    val cmp = Some(Text(id))
+
+    val rewrite = new RewriteRule {
+      override def transform(in: Node): Seq[Node] = in match {
+        case e: Elem if e.attribute("id") == cmp => replacement
+
+        case x => x
+      }
+    }
+
+    (new RuleTransformer(rewrite)).transform(in)
+  }
+
+  /**
    *  transforms a Box into a Text node
    */
   object BindParamAssoc {
@@ -1719,6 +1739,41 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
           new Elem(realE.prefix, 
                    realE.label, newAttr,
                    realE.scope, SelectorMap.this.apply(realE.child) :_*)
+        }
+
+        case Full(AttrAppendSubNode(attr)) => {
+          val org: NodeSeq = realE.attribute(attr).getOrElse(NodeSeq.Empty)
+          val calced = bind.calculate(realE).toList
+
+
+          if (calced.isEmpty) {
+            realE
+          } else {
+            val filtered = realE.attributes.filter{
+              case up: UnprefixedAttribute => up.key != attr
+              case _ => true
+            }
+            
+            val flat: NodeSeq = if (attr == "class") {
+              if (org.isEmpty) {
+                calced.dropRight(1).flatMap(a => a ++ Text(" ")) ++
+                calced.takeRight(1).head
+              } else {
+                org ++ Text(" ") ++ 
+                calced.dropRight(1).flatMap(a => a ++ Text(" ")) ++
+                calced.takeRight(1).head
+              }
+            } else {
+              org ++ (calced.flatMap(a => a): NodeSeq)
+            }
+
+            val newAttr = new UnprefixedAttribute(attr, flat, filtered)
+
+            new Elem(realE.prefix, 
+                     realE.label, newAttr,
+                     realE.scope, SelectorMap.this.apply(realE.child) :_*)
+            
+          }
         }
           
         case x: EmptyBox => {

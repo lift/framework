@@ -561,9 +561,20 @@ trait ProtoUser {
    * Create a new instance of the User
    */
   protected def createNewUserInstance(): TheUserType
+
+  /**
+   * If there's any mutation to do to the user on creation for
+   * signup, override this method and mutate the user.  This can
+   * be used to pull query parameters from the request and assign
+   * certain fields. . Issue #722
+   *
+   * @param user the user to mutate
+   * @return the mutated user
+   */
+  protected def mutateUserOnSignup(user: TheUserType): TheUserType = user
   
   def signup = {
-    val theUser: TheUserType = createNewUserInstance()
+    val theUser: TheUserType = mutateUserOnSignup(createNewUserInstance())
     val theName = signUpPath.mkString("")
 
     def testSignup() {
@@ -825,8 +836,21 @@ trait ProtoUser {
 
   object editFunc extends RequestVar[Box[() => NodeSeq]](Empty)
 
+  /**
+   * If there's any mutation to do to the user on retrieval for
+   * editting, override this method and mutate the user.  This can
+   * be used to pull query parameters from the request and assign
+   * certain fields. Issue #722
+   *
+   * @param user the user to mutate
+   * @return the mutated user
+   */
+  protected def mutateUserOnEdit(user: TheUserType): TheUserType = user
+
   def edit = {
-    val theUser: TheUserType = currentUser.open_! // we know we're logged in
+    val theUser: TheUserType = 
+      mutateUserOnEdit(currentUser.open_!) // we know we're logged in
+
     val theName = editPath.mkString("")
 
     def testEdit() {

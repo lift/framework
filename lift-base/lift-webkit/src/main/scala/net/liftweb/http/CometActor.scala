@@ -696,11 +696,23 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   }
 
   protected implicit def nsToNsFuncToRenderOut(f: NodeSeq => NodeSeq) =
-    new RenderOut((Box !! defaultXml).map(f), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode) else Empty, Empty, false)
+    new RenderOut((Box !! defaultXml).map(f), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend()) else {
+      S.jsToAppend match {
+        case Nil => Empty
+        case x :: Nil => Full(x)
+        case xs => Full(xs.reduceLeft(_ & _))
+      }
+      }, Empty, false)
 
-  protected implicit def arrayToRenderOut(in: Seq[Node]): RenderOut = new RenderOut(Full(in: NodeSeq), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode) else Empty, Empty, false)
+  protected implicit def arrayToRenderOut(in: Seq[Node]): RenderOut = new RenderOut(Full(in: NodeSeq), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend()) else {
+      S.jsToAppend match {
+        case Nil => Empty
+        case x :: Nil => Full(x)
+        case xs => Full(xs.reduceLeft(_ & _))
+      }
+      }, Empty, false)
 
-  protected implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = new RenderOut(Empty, Empty, if (autoIncludeJsonCode) Full(in & jsonToIncludeInCode) else Full(in), Empty, false)
+  protected implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = new RenderOut(Empty, Empty, if (autoIncludeJsonCode) Full(in & jsonToIncludeInCode & S.jsToAppend()) else Full(in & S.jsToAppend()), Empty, false)
 
   implicit def pairToPair(in: (String, Any)): (String, NodeSeq) = (in._1, Text(in._2 match {case null => "null" case s => s.toString}))
 

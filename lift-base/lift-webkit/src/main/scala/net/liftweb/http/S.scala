@@ -167,6 +167,13 @@ object S extends HasParams with Loggable {
   private val _disableTestFuncNames = new ThreadGlobal[Boolean]
 
   private object postFuncs extends TransientRequestVar(new ListBuffer[() => Unit])
+
+  /**
+   * We can now collect JavaScript to append to the outgoing request,
+   * no matter the format of the outgoing request
+   */
+  private object _jsToAppend extends TransientRequestVar(new ListBuffer[JsCmd])
+  
   private object p_queryLog extends TransientRequestVar(new ListBuffer[(String, Long)])
   private object p_notice extends TransientRequestVar(new ListBuffer[(NoticeType.Value, NodeSeq, Box[String])])
 
@@ -530,6 +537,31 @@ object S extends HasParams with Loggable {
    */
   def removeSessionRewriter(name: String) =
     session map (_.sessionRewriter -= name)
+
+  /**
+   * Sometimes it's helpful to accumute JavaScript as part of servicing
+   * a request.  For example, you may want to accumulate the JavaScript
+   * as part of an Ajax response or a Comet Rendering or
+   * as part of a regular HTML rendering.  Call S.appendJs(jsCmd).
+   * The accumulation of Js will be emitted as part of the response.
+   */
+  def appendJs(js: JsCmd): Unit = _jsToAppend.is += js
+
+  /**
+   * Sometimes it's helpful to accumute JavaScript as part of servicing
+   * a request.  For example, you may want to accumulate the JavaScript
+   * as part of an Ajax response or a Comet Rendering or
+   * as part of a regular HTML rendering.  Call S.appendJs(jsCmd).
+   * The accumulation of Js will be emitted as part of the response.
+   */
+  def appendJs(js: Seq[JsCmd]): Unit = _jsToAppend.is ++= js
+
+  /**
+   * Get the accumulated JavaScript
+   *
+   * @see appendJs
+   */
+  def jsToAppend(): List[JsCmd] = _jsToAppend.is.toList
 
   /**
    * Clears the per-session rewrite table. See addSessionRewriter for an
@@ -1543,15 +1575,35 @@ for {
    * TemplateFinder.findAnyTemplate.
    *
    * @param path The path for the template that you want to process
+   * @param snips any snippet mapping specific to this template run
    * @return a Full Box containing the processed template, or a Failure if the template could not be found.
    *
    * @see TempalateFinder # findAnyTemplate
    */
-  def runTemplate(path: List[String]): Box[NodeSeq] =
-    for{
-      t <- TemplateFinder.findAnyTemplate(path) ?~ ("Couldn't find template " + path)
-      sess <- session ?~ "No current session"
-    } yield sess.processSurroundAndInclude(path.mkString("/", "/", ""), t)
+  def runTemplate(path: List[String], snips: (String,  NodeSeq => NodeSeq)*): Box[NodeSeq] =
+    mapSnippetsWith(snips :_*) {
+      for{
+        t <- TemplateFinder.findAnyTemplate(path) ?~ ("Couldn't find template " + path)
+        sess <- session ?~ "No current session"
+      } yield sess.processSurroundAndInclude(path.mkString("/", "/", ""), t)
+    }
+
+
+  /**
+   * Evaluate a template for snippets. This can be used to run a template
+   * from within some other Lift processing,
+   * such as a snippet or view.
+   *
+   * @param template the HTML template to run through the Snippet re-writing process
+   * @param snips any snippet mapping specific to this template run
+   * @return a Full Box containing the processed template, or a Failure if the template could not be found.
+   */
+  def eval(template: NodeSeq, snips: (String,  NodeSeq => NodeSeq)*): Box[NodeSeq] =
+    mapSnippetsWith(snips :_*) {
+      for{
+        sess <- session ?~ "No current session"
+      } yield sess.processSurroundAndInclude("HTML Constant", template)
+    }
 
   /**
    * Used to get an attribute by its name. There are several means to getting
