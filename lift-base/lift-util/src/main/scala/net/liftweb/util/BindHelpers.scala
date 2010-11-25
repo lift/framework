@@ -19,7 +19,7 @@ package util {
 
 import _root_.scala.xml._
 import common._
-
+import _root_.scala.collection.mutable.ListBuffer
 
 
 /**
@@ -1867,61 +1867,68 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     }
 
 
-    def processId(in: Elem): Box[NodeSeq] = 
+    final def forId(in: Elem, buff: ListBuffer[CssBind]) {
       for {
         rid <- id
         bind <- idMap.get(rid)
-      } yield applyRule(bind, in)
+      } buff ++= bind
+    }
 
-    def processElem(in: Elem): Box[NodeSeq] =
+    final def forElem(in: Elem, buff: ListBuffer[CssBind]) {
       for {
         bind <- elemMap.get(in.label)
-      } yield applyRule(bind, in)
+      } buff ++= bind
+    }
 
-    def processStar(in: Elem): Box[NodeSeq] =
+    final def forStar(buff: ListBuffer[CssBind]) {
       for {
         bind <- starFunc
-      } yield applyRule(bind, in)
+      } buff ++= bind
+    }
 
-    def processName(in: Elem): Box[NodeSeq] = 
+    final def forName(in: Elem, buff: ListBuffer[CssBind]) {
       for {
         rid <- name
         bind <- nameMap.get(rid)
-      } yield applyRule(bind, in)
-
-    def findClass(clz: List[String]): Box[List[CssBind]] = clz match {
-      case Nil => Empty
-      case x :: xs =>
-        clzMap.get(x) match {
-          case Some(cb) => Full(cb)
-          case _ => findClass(xs)
-        }
+      } buff ++= bind
     }
-
-    def processClass(in: Elem): Box[NodeSeq] = 
-      findClass(classes) match {
-        case Full(bind) => Full(applyRule(bind, in))
-        case _ => Empty
+    
+    def findClass(clz: List[String], buff: ListBuffer[CssBind]) {
+      clz match {
+        case Nil => ()
+          case x :: xs => {
+            clzMap.get(x) match {
+              case Some(cb) => buff ++= cb 
+              case _ => 
+            }
+            findClass(xs, buff)
+          }
       }
-
-    def processAttr(in: Elem): Box[NodeSeq] = 
-      if (attrMap.isEmpty || attrs.isEmpty) Empty
-    else {
-      (for {
-        (key, map) <- attrMap
-        v <- attrs.get(key)
-        cb <- map.get(v)
-      } yield applyRule(cb, in)).toSeq.firstOption
     }
-  }
-
+    
+    def forClass(in: Elem, buff: ListBuffer[CssBind]) {
+      findClass(classes, buff) 
+    }
+    
+    def forAttr(in: Elem, buff: ListBuffer[CssBind]) {
+      if (attrMap.isEmpty || attrs.isEmpty) ()
+      else {
+        for {
+          (key, map) <- attrMap
+          v <- attrs.get(key)
+          cb <- map.get(v)
+        } buff ++= cb
+      }
+    }
+  }  
+    
   private def slurpAttrs(in: MetaData): SlurpedAttrs = {
     var id: Box[String] = Empty
     var cur: MetaData = in
     var name: Box[String] = Empty
     var clzs: List[String] = Nil
     var theAttrs: Map[String, String] = Map()
-
+    
     while (cur != Null) {
       cur match {
         case up: UnprefixedAttribute => {
@@ -1934,46 +1941,50 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             case "class" => clzs = value.charSplit(' ')
             case _ =>
           }
-
+          
           theAttrs += key -> value
         }
-
+        
         case pa: PrefixedAttribute => {
           theAttrs += ((pa.pre+":"+pa.key) -> pa.value.text)
         }
         
         case _ =>
       }
-
+      
       cur = cur.next
     }
-
+    
     new SlurpedAttrs(id, name) {
       def attrs: Map[String, String] = theAttrs
       def classes: List[String] = clzs
     }
   }
-  
+    
   private def treatElem(e: Elem): NodeSeq = {
     val slurp = slurpAttrs(e.attributes)
-
-    (slurp.processId(e) or
-     slurp.processName(e) or
-     slurp.processClass(e) or
-     slurp.processElem(e) or
-     slurp.processAttr(e) or
-     slurp.processStar(e)) openOr {
-      new Elem(e.prefix, e.label, 
-               e.attributes, e.scope, apply(e.child) :_*)
+    val lb = new ListBuffer[CssBind]
+    
+    slurp.forId(e, lb)
+    slurp.forName(e, lb)
+    slurp.forClass(e, lb)
+    slurp.forElem(e, lb)
+    slurp.forAttr(e, lb)
+    slurp.forStar(lb)
+    
+    lb.toList match {
+      case Nil => new Elem(e.prefix, e.label, 
+                           e.attributes, e.scope, apply(e.child) :_*)
+      case csb => slurp.applyRule(csb, e)
     }
   }
-
+  
+  
   def apply(in: NodeSeq): NodeSeq = in flatMap {
     case Group(g) => apply(g)
     case e: Elem => treatElem(e)
     case x => x
   }
-  
 }
 
 object CssBind {

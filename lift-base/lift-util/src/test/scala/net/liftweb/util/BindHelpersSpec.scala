@@ -354,6 +354,14 @@ object CssBindHelpersSpec extends Specification  {
       ("#foo" #> "hello")(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
     }
 
+    "Compound selector" in {
+      val res = 
+      (".foo [href]" #> "http://dog.com" & ".bar [id]" #> "moo").apply(
+        <a class="foo bar" href="#"/>)
+      (res \ "@href").text must_== "http://dog.com"
+      (res \ "@id").text must_== "moo"
+    }
+
 
     "substitute a String by id" in {
       ("#foo" replaceWith "hello")(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
