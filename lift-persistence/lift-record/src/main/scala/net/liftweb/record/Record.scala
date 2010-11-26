@@ -88,7 +88,7 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
    *
    * @return a JsObj
    */
-  def asJson: JsExp = meta.asJson(this)
+  def asJsExp: JsExp = meta.asJsExp(this)
 
   /**
    * Sets the fields of this Record from the given JSON.
@@ -104,7 +104,7 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
   /**
    * Sets the fields of this Record from the given JSON.
    */
-  def setFieldsFromJson(json: String): Box[Unit] = meta.setFieldsFromJson(this, json)
+  def setFieldsFromJsonString(json: String): Box[Unit] = meta.setFieldsFromJsonString(this, json)
 
   /**
    * Sets the fields of this Record from the given Req.

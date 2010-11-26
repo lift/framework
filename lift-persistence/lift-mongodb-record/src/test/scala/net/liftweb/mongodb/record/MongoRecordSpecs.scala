@@ -292,8 +292,8 @@ object MongoRecordSpecs extends Specification with MongoTestKit {
       ))
     }
     
-    "convert Mongo type fields to JsExp via asJson" in {
-      mfttr.asJson mustEqual JsObj(
+    "convert Mongo type fields to JsExp" in {
+      mfttr.asJsExp mustEqual JsObj(
         ("_id", JsObj(("$oid", Str(mfttr.id.toString)))),
         ("mandatoryDateField", JsObj(("$dt", Str(mfttr.meta.formats.dateFormat.format(mfttr.mandatoryDateField.value))))),
         ("legacyOptionalDateField", Str("null")),
@@ -309,7 +309,7 @@ object MongoRecordSpecs extends Specification with MongoTestKit {
         ("legacyOptionalUUIDField", Str("null"))
       )
 
-      ltr.asJson mustEqual JsObj(
+      ltr.asJsExp mustEqual JsObj(
         ("_id", JsObj(("$oid", Str(ltr.id.toString)))),
         ("mandatoryStringListField", JsArray(Str("abc"), Str("def"), Str("ghi"))),
         ("legacyOptionalStringListField", JsArray()),
@@ -322,7 +322,7 @@ object MongoRecordSpecs extends Specification with MongoTestKit {
         ("legacyOptionalMongoJsonObjectListField", JsArray())
       )
 
-      mtr.asJson mustEqual JsObj(
+      mtr.asJsExp mustEqual JsObj(
         ("_id", JsObj(("$oid", Str(mtr.id.toString)))),
         ("_id", JsObj(("$oid", Str(mtr.id.toString)))),
         ("mandatoryStringMapField", JsObj(
@@ -341,19 +341,19 @@ object MongoRecordSpecs extends Specification with MongoTestKit {
     }
 
     "get set from json string using lift-json parser" in {
-      val mfftrFromJson = MongoFieldTypeTestRecord.fromJson(json)
+      val mfftrFromJson = MongoFieldTypeTestRecord.fromJsonString(json)
       mfftrFromJson must notBeEmpty
       mfftrFromJson foreach { tr =>
         tr mustEqual mfttr
       }
 
-      val ltrFromJson = ListTestRecord.fromJson(ljson)
+      val ltrFromJson = ListTestRecord.fromJsonString(ljson)
       ltrFromJson must notBeEmpty
       ltrFromJson foreach { tr =>
         tr mustEqual ltr
       }
 
-      val mtrFromJson = MapTestRecord.fromJson(mjson)
+      val mtrFromJson = MapTestRecord.fromJsonString(mjson)
       mtrFromJson must notBeEmpty
       mtrFromJson foreach { tr =>
         tr mustEqual mtr
