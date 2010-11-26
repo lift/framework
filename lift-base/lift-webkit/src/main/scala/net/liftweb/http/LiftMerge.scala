@@ -192,6 +192,12 @@ private[http] trait LiftMerge {
         bodyChildren += nl
       }
 
+      S.jsToAppend match {
+        case Nil => 
+        case x :: Nil => addlTail += js.JsCmds.Script(x)
+        case xs => addlTail += js.JsCmds.Script(xs.foldLeft(js.JsCmds.Noop)(_ & _))
+      }
+
       for{
         node <- HeadHelper.removeHtmlDuplicates(addlTail.toList)
       } bodyChildren += node

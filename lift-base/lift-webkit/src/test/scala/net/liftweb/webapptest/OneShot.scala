@@ -40,6 +40,88 @@ object OneShot extends Specification with RequestKit {
 
   def baseUrl = JettyTestServer.baseUrl
 
+
+  "ContainerVars" should {
+    "have correct int default" in {
+      val tmp = LiftRules.sessionCreator
+      try {
+        LiftRules.sessionCreator = LiftRules.sessionCreatorForMigratorySessions
+        
+        val bx = 
+          for {
+            resp <- get("/cv_int")
+            xml <- resp.xml
+          } yield xml
+        
+        bx.open_! must ==/ (<int>45</int>)
+      } finally {
+        LiftRules.sessionCreator = tmp
+      }
+    }
+
+    "be settable as Int" in {
+      val tmp = LiftRules.sessionCreator
+      try {
+        LiftRules.sessionCreator = LiftRules.sessionCreatorForMigratorySessions
+        
+      val bx = 
+        for {
+          resp <- get("/cv_int/33")
+          resp2 <- resp.get("/cv_int")
+          xml <- resp2.xml
+        } yield xml
+
+      bx.open_! must ==/ (<int>33</int>)
+      } finally {
+        LiftRules.sessionCreator = tmp
+      }
+    }
+
+    "be session aware" in {
+      val tmp = LiftRules.sessionCreator
+      try {
+        LiftRules.sessionCreator = LiftRules.sessionCreatorForMigratorySessions
+        
+      val bx = 
+        for {
+          resp <- get("/cv_int/33")
+          resp2 <- resp.get("/cv_int")
+          xml <- resp2.xml
+          resp3 <- get("/cv_int")
+          xml2 <- resp3.xml
+        } yield (xml, xml2)
+
+      bx.open_!._1 must ==/ (<int>33</int>)
+      bx.open_!._2 must ==/ (<int>45</int>)
+      } finally {
+        LiftRules.sessionCreator = tmp
+      }
+    }
+
+    "support multiple vars" in {
+      val tmp = LiftRules.sessionCreator
+      try {
+        LiftRules.sessionCreator = LiftRules.sessionCreatorForMigratorySessions
+        
+        val bx = 
+          for {
+            resp <- get("/cv_int/33")
+            resp2 <- resp.get("/cv_int")
+            xml <- resp2.xml
+            respx <- resp.get("/cv_str/meow")
+            resp3 <- resp.get("/cv_str")
+            xml <- resp2.xml
+            xml2 <- resp3.xml
+          } yield (xml, xml2)
+            
+            bx.open_!._1 must ==/ (<int>33</int>)
+              bx.open_!._2 must ==/ (<str>meow</str>)
+      } finally {
+        LiftRules.sessionCreator = tmp
+      }
+    }
+  }
+
   "OneShot" should {
     "fire once for oneshot" >> {
       Counter.x = 0

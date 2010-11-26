@@ -130,6 +130,14 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
     case (httpSession, contextPath) => new LiftSession(contextPath, httpSession.sessionId, Full(httpSession))
   }
 
+  /**
+   * A method that returns a function to create migratory sessions.  If you want migratory sessions for your
+   * application, <code>LiftRules.sessionCreator = LiftRules.sessionCreatorForMigratorySessions</code>
+   */
+  def sessionCreatorForMigratorySessions: (HTTPSession, String) => LiftSession = {
+    case (httpSession, contextPath) => new LiftSession(contextPath, httpSession.sessionId, Full(httpSession)) with MigratorySession
+  }
+
   @volatile var enableContainerSessions = true
 
   @volatile var getLiftSession: (Req) => LiftSession = (req) => _getLiftSession(req)
@@ -161,7 +169,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
     else
       Empty
 
-    val ret = SessionMaster.getSession(req.request, cometSessionId) match {
+    val ret = SessionMaster.getSession(req, cometSessionId) match {
       case Full(ret) =>
         ret.fixSessionTime()
         ret

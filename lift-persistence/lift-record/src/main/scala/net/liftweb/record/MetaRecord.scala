@@ -25,6 +25,9 @@ import scala.collection.mutable.{ListBuffer}
 import scala.xml._
 import net.liftweb.http.js.{JsExp, JE, JsObj}
 import net.liftweb.http.{SHtml, Req, LiftResponse, LiftRules}
+import net.liftweb.json.{JsonParser, Printer}
+import net.liftweb.json.JsonAST._
+import net.liftweb.record.FieldHelpers.expectedA
 import _root_.java.lang.reflect.Method
 import field._
 import Box._
@@ -213,6 +216,15 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     }
     JsObj(tups:_*)
   }
+  
+  /**
+   * Retuns the JSON representation of <i>inst</i> record, converts asJValue to JsObj
+   *
+   * @return a JsObj
+   */
+  def asJson(inst: BaseRecord): JsExp = new JsExp {
+    lazy val toJsCmd = Printer.compact(render(asJValue(inst)))
+  }
 
   /**
    * Create a record with fields populated with values from the JSON construct
@@ -241,6 +253,49 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
       case Full(_) => Empty
       case failure => failure.asA[Unit]
     }
+
+  /** Encode a record instance into a JValue */
+  def asJValue(rec: BaseRecord): JObject = {
+    JObject(fields(rec).map(f => JField(f.name, f.asJValue)))
+  }
+
+  /** Create a record by decoding a JValue which must be a JObject */
+  def fromJValue(jvalue: JValue): Box[BaseRecord] = {
+    val inst = createRecord
+    setFieldsFromJValue(inst, jvalue) map (_ => inst)
+  }
+
+  /** Attempt to decode a JValue, which must be a JObject, into a record instance */
+  def setFieldsFromJValue(rec: BaseRecord, jvalue: JValue): Box[Unit] = {
+    def fromJFields(jfields: List[JField]): Box[Unit] = {
+      for {
+        jfield <- jfields
+        field <- rec.fieldByName(jfield.name)
+      } field.setFromJValue(jfield.value)
+
+      Full(())
+    }
+
+    jvalue match {
+      case JObject(jfields) => fromJFields(jfields)
+      case other => expectedA("JObject", other)
+    }
+  }
+
+  /**
+   * Create a record with fields populated with values from the JSON construct
+   *
+   * @param json - The stringified JSON object
+   * @return Box[BaseRecord]
+   */
+  def fromJson(json: String): Box[BaseRecord] = {
+    val inst = createRecord
+    setFieldsFromJson(inst, json) map (_ => inst)
+  }
+
+  /** Set from a Json String using the lift-json parser **/
+  def setFieldsFromJson(inst: BaseRecord, json: String): Box[Unit] =
+    setFieldsFromJValue(inst, JsonParser.parse(json))
 
   protected def foreachCallback(inst: BaseRecord, f: LifecycleCallbacks => Any) {
     inst match {

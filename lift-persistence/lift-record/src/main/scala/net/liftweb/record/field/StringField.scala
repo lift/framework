@@ -90,6 +90,13 @@ class StringField[OwnerType <: Record[OwnerType]](rec: OwnerType, val maxLength:
   protected def boxStrToValType(in: Box[String]): ValueType = toValueType(in)
 }
 
+abstract class UniqueIdField[OwnerType <: Record[OwnerType]](rec: OwnerType, override val maxLength: Int) extends StringField[OwnerType](rec, maxLength) {
+  override lazy val defaultValue = randomString(maxLen)
+
+  def reset(): OwnerType = this(randomString(maxLen))
+}
+
+
 class OptionalStringField[OwnerType <: Record[OwnerType]](rec: OwnerType, val maxLength: Int)
   extends Field[String, OwnerType] with OptionalTypedField[String] with StringTypedField {
 

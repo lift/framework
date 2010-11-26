@@ -122,6 +122,11 @@ trait HTTPRequest {
   def session: HTTPSession
 
   /**
+   * Destroy the underlying servlet session
+   */
+  def destroyServletSession(): Unit
+
+  /**
    * @return the sessionID (if there is one) for this request.  This will *NOT* create
    * a new session if one does not already exist
    */

@@ -17,14 +17,15 @@
 package net.liftweb {
 package record {
 
-import net.liftweb._
-import util._
 import common._
-import scala.xml._
-import net.liftweb.http.js.JsExp
-import net.liftweb.http.{Req, SHtml}
-import net.liftweb.mapper.Safe
+import http.js.{JsExp, JsObj}
+import http.{Req, SHtml}
+import json.JsonAST._
+import mapper.Safe
+import util._
 import field._
+
+import scala.xml._
 
 trait Record[MyType <: Record[MyType]] extends FieldContainer {
   self: MyType =>
@@ -78,14 +79,32 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
   /**
    * Retuns the JSON representation of this record
    *
-   * @return a JsObjss
+   * @return a JsObj
    */
   def asJSON: JsExp = meta.asJSON(this)
+  
+  /**
+   * Retuns the JSON representation of this record, converts asJValue to JsObj
+   *
+   * @return a JsObj
+   */
+  def asJson: JsExp = meta.asJson(this)
 
   /**
    * Sets the fields of this Record from the given JSON.
    */
   def setFieldsFromJSON(json: String): Box[Unit] = meta.setFieldsFromJSON(this, json)
+
+  /** Encode this record instance as a JObject */
+  def asJValue: JObject = meta.asJValue(this)
+
+  /** Set the fields of this record from the given JValue */
+  def setFieldsFromJValue(jvalue: JValue): Box[Unit] = meta.setFieldsFromJValue(this, jvalue)
+
+  /**
+   * Sets the fields of this Record from the given JSON.
+   */
+  def setFieldsFromJson(json: String): Box[Unit] = meta.setFieldsFromJson(this, json)
 
   /**
    * Sets the fields of this Record from the given Req.

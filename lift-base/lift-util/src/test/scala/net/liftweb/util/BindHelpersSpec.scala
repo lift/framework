@@ -201,6 +201,20 @@ object BindHelpersSpec extends Specification  {
     }
   }
 
+  "replaceIdNode" should {
+    "replace a node" in {
+      Helpers.replaceIdNode(<foo><bar id="dog"/></foo>,
+                            "dog",
+                            <baz/>) must ==/ (<foo><baz/></foo>)
+    }
+
+    "Ignore if no id match" in {
+      Helpers.replaceIdNode(<foo><bar/></foo>,
+                            "dog",
+                            <baz/>) must ==/ (<foo><bar/></foo>)
+    }
+  }
+
   "the xmlParam function" should {
     "find the value of an attribute in an xml fragment" in {
       xmlParam(<t hello="world">world</t>, "hello") must_== Full("world")
@@ -344,10 +358,50 @@ object CssBindHelpersSpec extends Specification  {
      "#baz" #> "bye")(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("hello")}</b>)
     }
 
+    "bind href and None content" in {
+      val opt: Option[String] = None
+      val res = ("top *" #> opt &
+                 "top [href]" #> "frog")(<top>cat</top>)
+
+      res.length must_== 0
+    }
+
+    "bind href and Some content" in {
+      val opt: Option[String] = Some("Dog")
+      val res = ("top *" #> opt &
+                 "top [href]" #> "frog")(<top>cat</top>)
+
+      res.text must_== "Dog"
+      (res \ "@href").text.mkString must_== "frog"
+    }
+
+    "bind href and Some content with multiple attrs" in {
+      val opt: Option[String] = Some("Dog")
+      val res = ("top *" #> opt &
+                 "top [meow]" #> "woof" &
+                 "top [href]" #> "frog")(<top href="#">cat</top>)
+
+      res.text must_== "Dog"
+      (res \ "@href").text.mkString must_== "frog"
+      (res \ "@meow").text.mkString must_== "woof"
+    }
+
     "option transform on *" in {
       val opt: Option[String] = None
       val res = ("* *" #> opt.map(ignore => "Dog"))(<top>cat</top>)
       res.length must_== 0
+    }
+
+    "append attribute to a class with spaces" in {
+      val stuff = List("a", "b")
+      val res = ("* [class+]" #> stuff)(<top class="q">cat</top>)
+      (res \ "@class").text must_== "q a b"
+    }
+
+    "append attribute to an href" in {
+      val stuff = List("&a=b", "&b=d")
+      val res = ("* [href+]" #> stuff)(<top href="q?z=r">cat</top>)
+      (res \ "@href").text must_== "q?z=r&a=b&b=d"
     }
 
     "option transform on *" in {

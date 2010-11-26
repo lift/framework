@@ -316,7 +316,7 @@ class Req(val path: ParsePath,
           val request: HTTPRequest,
           val nanoStart: Long,
           val nanoEnd: Long,
-          val stateless_? : Boolean,
+          _stateless_? : Boolean,
           private[http] val paramCalculator: () => ParamCalcInfo,
           private[http] val addlParams: Map[String, String]) extends HasParams
 {
@@ -343,6 +343,14 @@ class Req(val path: ParsePath,
                                                    _addlParams)
 
   /**
+   * Should the request be treated as stateless (no session created for it)?
+   */
+  lazy val stateless_? = {
+    val ret = _stateless_? || (location.map(_.stateless_?) openOr false)
+    ret
+  }
+
+  /**
    * Returns true if the content-type is text/xml
    */
   def xml_? = contentType != null && contentType.dmap(false)(_.toLowerCase.startsWith("text/xml"))
@@ -353,6 +361,15 @@ class Req(val path: ParsePath,
       case x if x.startsWith("application/json") => true
       case _ => false
     }
+  }
+
+  /**
+   * Make the servlet session go away
+   */
+  def destroyServletSession() {
+    for {
+      httpReq <- Box !! request
+    } httpReq.destroyServletSession()
   }
 
   def snapshot = {
@@ -409,6 +426,15 @@ class Req(val path: ParsePath,
     case null => Nil
     case ca => ca.toList
   }
+
+  /**
+   * Get the session ID if there is one without creating on
+   */
+  def sessionId: Box[String] =
+    for {
+      httpRequest <- Box !! request
+      sid <- httpRequest.sessionId
+    } yield sid
 
   lazy val json: Box[JsonAST.JValue] = 
     if (!json_?) Empty

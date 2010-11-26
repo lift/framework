@@ -84,6 +84,53 @@ object LiftSession {
    */
   var onEndServicing: List[(LiftSession, Req, Box[LiftResponse]) => Unit] = Nil
 
+  @volatile private var constructorCache: Map[(Class[_], Box[Class[_]]), Box[ConstructorType]] = Map()
+
+  private[http] def constructFrom[T](session: LiftSession, pp: Box[ParamPair], clz: Class[T]): Box[T] = {
+    def calcConstructor(): Box[ConstructorType] = {
+      val const = clz.getDeclaredConstructors()
+      
+      def nullConstructor(): Box[ConstructorType] =
+        const.find(_.getParameterTypes.length == 0).map(const => UnitConstructor(const))
+      
+      pp match {
+        case Full(ParamPair(value, clz)) =>
+          const.find{cp => {
+            cp.getParameterTypes.length == 2 && 
+            cp.getParameterTypes().apply(0).isAssignableFrom(clz) &&
+            cp.getParameterTypes().apply(1).isAssignableFrom(classOf[LiftSession])
+          }}.
+        map(const => PAndSessionConstructor(const)) orElse
+        const.find{cp => {
+          cp.getParameterTypes.length == 1 && 
+          cp.getParameterTypes().apply(0).isAssignableFrom(clz)
+        }}.
+        map(const => PConstructor(const)) orElse nullConstructor()
+        
+        case _ => 
+          nullConstructor()
+      }
+    }
+    
+    (if (Props.devMode) { // no caching in dev mode
+      calcConstructor()
+    } else {
+      val key = (clz -> pp.map(_.clz))
+        constructorCache.get(key) match {
+          case Some(v) => v
+          case _ => {
+            val nv = calcConstructor()
+            constructorCache += (key -> nv)
+            nv
+          }
+        }
+    }).map {
+      case uc: UnitConstructor => uc.makeOne
+      case pc: PConstructor => pc.makeOne(pp.open_!.v) // open_! okay
+      case psc: PAndSessionConstructor => psc.makeOne(pp.open_!.v, session)
+    }
+  }
+
   /**
    * Check to see if the template is marked designer friendly
    * and lop off the stuff before the first surround
@@ -174,6 +221,20 @@ object SessionMaster extends LiftActor with Loggable {
           session.cleanupUnseenFuncs()
         }
       }}) :: Nil
+
+  def getSession(req: Req, otherId: Box[String]): Box[LiftSession] = {
+    this.synchronized {
+      otherId.flatMap(sessions.get) match {
+        case Full(session) => lockAndBump(Full(session))
+        // for stateless requests, vend a stateless session if none is found
+        case _ if req.stateless_? => 
+          lockAndBump {
+            req.sessionId.flatMap(sessions.get)
+          } or Full(LiftRules.statelessSession.vend.apply(req))
+        case _ => getSession(req.request, otherId)
+      }
+    }
+  }
 
   def getSession(id: String, otherId: Box[String]): Box[LiftSession] = lockAndBump {
     otherId.flatMap(sessions.get) or Box(sessions.get(id))
@@ -359,6 +420,13 @@ trait HowStateful {
   def stateful_? = howStateful.box openOr true
 
   /**
+   * There may be cases when you are allowed container state (e.g.,
+   * migratory session, but you're not allowed to write Lift
+   * non-migratory state, return true here.
+   */
+  def allowContainerState_? = howStateful.box openOr true
+
+  /**
    * Within the scope of the call, this session is forced into
    * statelessness.  This allows for certain URLs in on the site
    * to be stateless and not generate a session, but if a valid
@@ -377,7 +445,23 @@ trait StatelessSession extends HowStateful {
   self: LiftSession =>
 
   override def stateful_? = false
+
+  override def allowContainerState_? = false
 }
+
+/**
+ * Sessions that include this trait will only have access to the container's
+ * state via ContainerVars.  This mode is "migratory" so that a session
+ * can migrate across app servers.  In this mode, functions that
+ * access Lift state will give notifications of failure if stateful features
+ * of Lift are accessed
+ */
+trait MigratorySession extends HowStateful {
+  self: LiftSession =>
+
+  override def stateful_? = false
+}
+
 
 
 /**
@@ -739,11 +823,33 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
-  private[http] def processRequest(request: Req): Box[LiftResponse] = {
+  /**
+   * Destroy the current session, then create a new session and
+   * continue the execution of the code.  The continuation function
+   * must return Nothing (it must throw an exception... this is typically
+   * done by calling S.redirectTo(...)).  This method is
+   * useful for changing sessions on login.  Issue #727.
+   */
+  def destroySessionAndContinueInNewSession(continuation: () => Nothing): Nothing = {
+    throw new ContinueResponseException(continuation)
+  }
+
+  private[http] def processRequest(request: Req,
+                                   continuation: Box[() => Nothing]): Box[LiftResponse] = {
     ieMode.is // make sure this is primed
     S.oldNotices(notices)
     LiftSession.onBeginServicing.foreach(f => tryo(f(this, request)))
     val ret = try {
+      // run the continuation in the new session
+      // if there is a continuation
+      continuation match {
+        case Full(func) => {
+          func()
+          S.redirectTo("/")
+        }
+        case _ => // do nothing
+      }
+
       val sessionDispatch = S.highLevelSessionDispatcher
 
       val toMatch = request
@@ -792,6 +898,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
           response.map(checkRedirect)
       }
     } catch {
+      case ContinueResponseException(cre) => throw cre
+
       case ite: _root_.java.lang.reflect.InvocationTargetException if (ite.getCause.isInstanceOf[ResponseShortcutException]) =>
         Full(handleRedirect(ite.getCause.asInstanceOf[ResponseShortcutException], request))
 
@@ -934,11 +1042,26 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
-  private def instantiateOrRedirect[T](c: Class[T]): Box[T] = tryo({
+  private def instantiateOrRedirect[T](c: Class[T]): Box[T] = {
+    try {
+      LiftSession.constructFrom(this, 
+                                S.location.flatMap(_.
+                                                   currentValue.map(v =>
+                                                     ParamPair(v, v.asInstanceOf[Object].getClass))),
+                              c)
+
+    } catch {
+      case e: IllegalAccessException => Empty
+    }
+  }
+
+  /*
+    tryo({
     case e: ResponseShortcutException => throw e
     case ite: _root_.java.lang.reflect.InvocationTargetException
       if (ite.getCause.isInstanceOf[ResponseShortcutException]) => throw ite.getCause.asInstanceOf[ResponseShortcutException]
   }, c.newInstance)
+  */
 
   private def findAttributeSnippet(attrValue: String, rest: MetaData, params: AnyRef*): MetaData = {
     S.doSnippet(attrValue) {
@@ -1653,10 +1776,21 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private[liftweb] def findAndMerge(templateName: Box[Seq[Node]], atWhat: Map[String, NodeSeq]): NodeSeq = {
     val name = templateName.map(s => if (s.text.startsWith("/")) s.text else "/" + s.text).openOr("/templates-hidden/default")
 
+    def hasLiftBind(s: NodeSeq): Boolean =
+      (Helpers.findOption(s) {
+        case e if "lift" == e.prefix && "bind" == e.label => Some(true)
+        case _ => None
+      }).isDefined
+
     findTemplate(name) match {
       case f@Failure(msg, be, _) if Props.devMode =>
         failedFind(f)
-      case Full(s) => bind(atWhat, s)
+      case Full(s) => 
+        if (hasLiftBind(s)) Helpers.bind(atWhat, s)
+        else atWhat.toList.foldLeft(s){
+          case (xml, (id, replacement)) => 
+            Helpers.replaceIdNode(xml, id, replacement)
+        }
       case _ => atWhat.values.flatMap(_.toSeq).toList
     }
   }
@@ -2027,6 +2161,39 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
           None
         }
       }
+  }
+
+  /**
+   * Holds a pair of parameters
+   */
+  private case class ParamPair(v: Any, clz: Class[_])
+
+  /**
+   * a trait that defines some ways of constructing an instance
+   */
+  private sealed trait ConstructorType
+  
+  /**
+   * A unit constructor... just pass in null
+   */
+  private final case class UnitConstructor(c: java.lang.reflect.Constructor[_]) extends ConstructorType {
+    def makeOne[T]: T = c.newInstance().asInstanceOf[T]
+  }
+
+  /**
+   * A parameter and session constructor
+   */
+  private final case class PAndSessionConstructor(c: java.lang.reflect.Constructor[_]) extends ConstructorType {
+    def makeOne[T](p: Any, s: LiftSession): T = 
+      c.newInstance(p.asInstanceOf[Object], s).asInstanceOf[T]
+  }
+
+  /**
+   * A parameter constructor
+   */
+  private final case class PConstructor(c: java.lang.reflect.Constructor[_]) extends ConstructorType {
+    def makeOne[T](p: Any): T = 
+      c.newInstance(p.asInstanceOf[Object]).asInstanceOf[T]
   }
 
 

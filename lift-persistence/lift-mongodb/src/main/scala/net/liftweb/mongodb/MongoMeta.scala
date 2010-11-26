@@ -74,7 +74,7 @@ trait MongoMeta[BaseDocument] {
   /*
   * Count documents by DBObject query
   */
-  private def count(qry: DBObject):Long = {
+  def count(qry: DBObject):Long = {
     MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
       coll.getCount(qry)
     )
@@ -84,6 +84,15 @@ trait MongoMeta[BaseDocument] {
   * Count documents by JObject query
   */
   def count(qry: JObject):Long = count(JObjectParser.parse(qry))
+
+  /*
+  * Count distinct records on a given field
+  */
+  def countDistinct(key: String, query: DBObject): Long = {
+    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
+      coll.distinct(key, query).size
+    )
+  }
 
   /*
   * Delete documents by a DBObject query

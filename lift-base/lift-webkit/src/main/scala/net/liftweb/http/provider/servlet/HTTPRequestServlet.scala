@@ -29,7 +29,9 @@ import _root_.net.liftweb.util._
 import Helpers._
 
 class HTTPRequestServlet(val req: HttpServletRequest) extends HTTPRequest {
-  private lazy val ctx = new HTTPServletContext(req.getSession.getServletContext)
+  private lazy val ctx = {
+    new HTTPServletContext(req.getSession.getServletContext)
+  }
 
   lazy val cookies: List[HTTPCookie] = {
     req.getSession(false) // do this to make sure we capture the JSESSIONID cookie
@@ -55,7 +57,9 @@ class HTTPRequestServlet(val req: HttpServletRequest) extends HTTPRequest {
 
   def contentType = Box !! req.getContentType
 
-  lazy val session = new HTTPServletSession(req getSession)
+  // don't cache... allow multiple sessions for the request
+  // necessary for session destruction on login
+  def session = new HTTPServletSession(req getSession)
 
   def uri = req.getRequestURI
 
@@ -94,6 +98,15 @@ class HTTPRequestServlet(val req: HttpServletRequest) extends HTTPRequest {
   def inputStream: InputStream = req.getInputStream
 
   def multipartContent_? = ServletFileUpload.isMultipartContent(req)
+
+  /**
+   * Destroy the underlying servlet session
+   */
+  def destroyServletSession() {
+    for{
+      httpSession <- Box !! req.getSession(false)
+    } yield httpSession.invalidate()
+  }
 
   /**
    * @return the sessionID (if there is one) for this request.  This will *NOT* create
@@ -173,6 +186,13 @@ private class OfflineRequestSnapshot(req: HTTPRequest) extends HTTPRequest {
   def params: List[HTTPParam] = _params
 
   def paramNames: List[String] = _params.map(_.name)
+
+  /**
+   * Destroy the underlying servlet session... null for offline requests
+   */
+  def destroyServletSession() {
+    // do nothing here
+  }
 
   val session: HTTPSession = req.session
 

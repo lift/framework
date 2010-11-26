@@ -184,9 +184,20 @@ class LiftServlet extends Loggable {
       } else {
       // otherwise do a stateful response
       val liftSession = getLiftSession(req)
-      val lzy = S.init(req, liftSession) {
-        dispatchStatefulRequest(S.request.open_!, liftSession, req)
-      }
+
+        def doSession(r2: Req, s2: LiftSession, continue: Box[() => Nothing]): () => Box[LiftResponse] = {
+          try {
+            S.init(r2, s2) {
+              dispatchStatefulRequest(S.request.open_!, liftSession, r2, continue)
+            }
+          } catch {
+            case cre: ContinueResponseException =>
+              r2.destroyServletSession()
+              doSession(r2, getLiftSession(r2), Full(cre.continue))
+          }
+        }
+
+      val lzy: () => Box[LiftResponse] = doSession(req, liftSession, Empty)
 
       lzy()
     }
@@ -196,17 +207,21 @@ class LiftServlet extends Loggable {
     resp match {
       case Full(EmptyResponse) => 
         true
+
       case Full(cresp) =>
         sendResponse(cresp, response, req)
         true
 
-      case _ => false
+      case _ => {
+        false
+      }
     }
   }
 
   private def dispatchStatefulRequest(req: Req,
                                       liftSession: LiftSession,
-  originalRequest: Req): () => Box[LiftResponse] = {
+                                      originalRequest: Req,
+                                      continuation: Box[() => Nothing]): () => Box[LiftResponse] = {
       val toMatch = req
 
       val dispatch: (Boolean, Box[LiftResponse]) =
@@ -216,6 +231,16 @@ class LiftServlet extends Loggable {
           val ret: (Boolean, Box[LiftResponse]) =
           try {
             try {
+              // run the continuation in the new session
+              // if there is a continuation
+              continuation match {
+                case Full(func) => {
+                  func()
+                  S.redirectTo("/")
+                }
+                case _ => // do nothing
+              }
+
               liftSession.runParams(req)
               S.functionLifespan(true) {
               pf(toMatch)() match {
@@ -231,6 +256,8 @@ class LiftServlet extends Loggable {
               }
               }
             } catch {
+              case ContinueResponseException(cre) => throw cre
+
               case ite: _root_.java.lang.reflect.InvocationTargetException if (ite.getCause.isInstanceOf[ResponseShortcutException]) =>
                 (true, Full(liftSession.handleRedirect(ite.getCause.asInstanceOf[ResponseShortcutException], req)))
 
@@ -258,7 +285,9 @@ class LiftServlet extends Loggable {
 
       val wp = req.path.wholePath
 
-      if (LiftRules.enableContainerSessions) req.request.session
+      if (LiftRules.enableContainerSessions && !req.stateless_?) {
+        req.request.session
+      }
 
     def respToFunc(in: Box[LiftResponse]): () => Box[LiftResponse] = {
       val ret = in.map(LiftRules.performTransform)
@@ -282,7 +311,7 @@ class LiftServlet extends Loggable {
     } else if (wp.length >= 1 && wp.head == LiftRules.ajaxPath) {
       respToFunc(handleAjax(liftSession, req))
     } else {
-      respToFunc(liftSession.processRequest(req))
+      respToFunc(liftSession.processRequest(req, continuation))
     }
 
       toReturn
@@ -323,7 +352,14 @@ class LiftServlet extends Loggable {
 
             val ret: LiftResponse = what2 match {
               case (json: JsObj) :: Nil => JsonResponse(json)
-              case (js: JsCmd) :: xs => (JsCommands(S.noticesToJsCmd :: Nil) & ((js :: xs).flatMap {case js: JsCmd => List(js) case _ => Nil}.reverse)).toResponse
+              case (js: JsCmd) :: xs => {
+                (JsCommands(S.noticesToJsCmd :: Nil) & 
+                 ((js :: xs).flatMap
+                  {case js: JsCmd => List(js)
+                   case _ => Nil}.reverse) &
+                 S.jsToAppend).toResponse
+              }
+                
               case (n: Node) :: _ => XmlResponse(n)
               case (ns: NodeSeq) :: _ => XmlResponse(Group(ns))
               case (r: LiftResponse) :: _ => r
