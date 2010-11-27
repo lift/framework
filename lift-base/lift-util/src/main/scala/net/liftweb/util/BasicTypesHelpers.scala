@@ -123,6 +123,12 @@ trait BasicTypesHelpers { self: StringHelpers with ControlHelpers =>
     }
   }
 
+  /**
+   * A helper that will convert the String to a Boolean if it's
+   * t, true, yes, 1, f, false, no, or 0
+   */
+  def asBoolean(in: String): Box[Boolean] = AsBoolean.unapply(in)
+
 /**
 * A helpful Boolean extractor
 */

@@ -643,7 +643,9 @@ object S extends HasParams with Loggable {
   def resourceBundles: List[ResourceBundle] = {
     _resBundle.box match {
       case Full(Nil) => {
-        _resBundle.set(LiftRules.resourceNames.flatMap(name => tryo{
+        _resBundle.set(
+          LiftRules.resourceForCurrentLoc.vend() :::
+          LiftRules.resourceNames.flatMap(name => tryo{
               if (Props.devMode) {
                 tryo{
                   val clz = this.getClass.getClassLoader.loadClass("java.util.ResourceBundle")

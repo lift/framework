@@ -651,6 +651,16 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
 
   val resourceBundleFactories = RulesSeq[ResourceBundleFactoryPF]
 
+  /**
+   * Given the current location (based on the Req.path.partPath),
+   * what are the resource bundles in the templates for the current
+   * page.
+   *
+   * @see DefaultRoutines.resourceForCurrentLoc()
+   */
+  val resourceForCurrentLoc: FactoryMaker[() => List[ResourceBundle]] =
+    new FactoryMaker(() => () => DefaultRoutines.resourceForCurrentReq()) {}
+
   private var _sitemap: Box[SiteMap] = Empty
 
   private var sitemapFunc: Box[() => SiteMap] = Empty

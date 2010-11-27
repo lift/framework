@@ -23,14 +23,16 @@ import _root_.net.liftweb.http._
 
 object Loc extends DispatchSnippet {
   def dispatch : DispatchIt = {
-    case _ => render _
+    case s => ns => render(s, ns)
   }
 
-  def render(kids: NodeSeq) : NodeSeq =
-    S.attr.~("locid").map(_.text) match {
+  def render(locId: String, kids: NodeSeq) : NodeSeq = {
+    S.loc(locId) openOr 
+    (S.attr.~("locid").map(_.text) match {
       case Some(id) => S.loc(id, kids)
       case _ => S.loc(kids.text, kids)
-    }
+    })
+  }
 
 }
 
