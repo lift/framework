@@ -193,14 +193,14 @@ trait Html5Writer {
           case Some(chr) if chr.toInt >= 128 => writer.append(chr)
           case _ => {
             val sb = new StringBuilder()
-            er.toString(sb)
+            er.buildString(sb)
             writer.append(sb)
           }
         }
       
       case x: SpecialNode => {
         val sb = new StringBuilder()
-        x.toString(sb)
+        x.buildString(sb)
         writer.append(sb)
       }
       
@@ -220,12 +220,12 @@ trait Html5Writer {
             case Text(str) => writer.append(str)
             case pc: PCData => {
               val sb = new StringBuilder()
-              pc.toString(sb)
+              pc.buildString(sb)
               writer.append(sb)
             }
             case pc: scala.xml.PCData => {
               val sb = new StringBuilder()
-              pc.toString(sb)
+              pc.buildString(sb)
               writer.append(sb)
             }
             case Unparsed(text) => writer.append(text)
