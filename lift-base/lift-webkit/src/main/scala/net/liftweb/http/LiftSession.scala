@@ -80,6 +80,13 @@ object LiftSession {
   var onBeginServicing: List[(LiftSession, Req) => Unit] = Nil
 
   /**
+   * After the session is created, if you need to do anything within
+   * the context of the session (like set SessionVars, etc),
+   * add the function to this list
+   */
+  var afterSessionCreate: List[(LiftSession, Req) => Unit] = Nil
+
+  /**
    * Holds user's functions that will be called when a stateful request has been processed
    */
   var onEndServicing: List[(LiftSession, Req, Box[LiftResponse]) => Unit] = Nil
@@ -282,11 +289,16 @@ object SessionMaster extends LiftActor with Loggable {
   /**
    * Adds a new session to SessionMaster
    */
-  def addSession(liftSession: LiftSession, userAgent: Box[String], ipAddress: Box[String]) {
+  def addSession(liftSession: LiftSession, req: Req,
+                 userAgent: Box[String], ipAddress: Box[String]) {
     lockAndBump {
       Full(SessionInfo(liftSession, userAgent, ipAddress, -1, 0L)) // bumped twice during session creation.  Ticket #529 DPP
     }
-    liftSession.startSession()
+    S.init(req, liftSession) {
+      liftSession.startSession()
+      LiftSession.afterSessionCreate.foreach(_(liftSession, req))
+    }
+
     liftSession.httpSession.foreach(_.link(liftSession))
   }
 
@@ -473,6 +485,14 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   type AnyActor = {def !(in: Any): Unit}
 
+  val sessionHtmlProperties: SessionVar[HtmlProperties] =
+    new SessionVar[HtmlProperties](LiftRules.htmlProperties.vend(
+      S.request openOr Req.nil
+    )) {} 
+
+  val requestHtmlProperties: TransientRequestVar[HtmlProperties] = 
+    new TransientRequestVar[HtmlProperties](sessionHtmlProperties.is) {}
+
   @volatile
   private[http] var markedForTermination = false
 
@@ -541,6 +561,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
     lastServiceTime = millis
     LiftSession.onSetupSession.foreach(_(this))
+    sessionHtmlProperties.is // cause the properties to be calculated
   }
 
   def running_? = _running_?
@@ -1886,6 +1907,9 @@ object TemplateFinder {
     val lrCache = LiftRules.templateCache
     val cache = if (lrCache.isDefined) lrCache.open_! else NoCache
 
+    val parserFunction: InputStream => Box[NodeSeq] = 
+      S.htmlProperties.htmlParser
+
     val key = (locale, places)
     val tr = cache.get(key)
 
@@ -1916,7 +1940,7 @@ object TemplateFinder {
                 val name = pls + p + (if (s.length > 0) "." + s else "")
                 import scala.xml.dtd.ValidationException
                 val xmlb = try {
-                  LiftRules.doWithResource(name) { PCDataXmlParser(_) } match {
+                  LiftRules.doWithResource(name) { parserFunction } match {
                     case Full(seq) => seq
                     case _ => Empty
                   }

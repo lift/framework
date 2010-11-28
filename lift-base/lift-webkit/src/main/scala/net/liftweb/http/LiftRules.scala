@@ -177,7 +177,9 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
       case _ =>
         val ret = LiftSession(req)
         ret.fixSessionTime()
-        SessionMaster.addSession(ret, req.request.userAgent, SessionMaster.getIpFromReq(req))
+        SessionMaster.addSession(ret, req, 
+                                 req.request.userAgent,
+                                 SessionMaster.getIpFromReq(req))
         ret
     }
 
@@ -508,17 +510,25 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
         "surround" -> Surround,
         "test_cond" -> TestCond,
         "TestCond" -> TestCond,
+        "testcond" -> TestCond,
         "embed" -> Embed,
         "tail" -> Tail,
         "with-param" -> WithParam,
+        "withparam" -> WithParam,
+        "WithParam" -> WithParam,
         "bind-at" -> WithParam,
         "VersionInfo" -> VersionInfo,
+        "versioninfo" -> VersionInfo,
         "version_info" -> VersionInfo,
         "SkipDocType" -> SkipDocType,
+        "skipdoctype" -> SkipDocType,
         "skip_doc_type" -> SkipDocType,
         "xml_group" -> XmlGroup,
         "XmlGroup" -> XmlGroup,
+        "xmlgroup" -> XmlGroup,
         "lazy-load" -> LazyLoad,
+        "LazyLoad" -> LazyLoad,
+        "lazyload" -> LazyLoad,
         "html5" -> HTML5,
         "HTML5" -> HTML5,
         "with-resource-id" -> WithResourceId
@@ -719,6 +729,17 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
       sitemapRequestVar.is
     }
   } else _sitemap
+
+  /**
+   * A unified set of properties for managing how to treat
+   * HTML, XHTML, HTML5.  The default behavior is to return an
+   * OldHtmlPropteries instance, but you can change this
+   * to return an Html5Properties instance any you'll get
+   * HTML5 support.
+   * LiftRules.htmlProperties.default.set((r: Req) => new Html5Properties(r.userAgent))
+   */
+  val htmlProperties: FactoryMaker[Req => HtmlProperties] =
+    new FactoryMaker(() => (r: Req) => (new OldHtmlProperties(r.userAgent): HtmlProperties)) {}
 
   /**
    * How long should we wait for all the lazy snippets to render

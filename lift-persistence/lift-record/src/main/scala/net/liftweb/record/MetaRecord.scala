@@ -222,7 +222,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    *
    * @return a JsObj
    */
-  def asJson(inst: BaseRecord): JsExp = new JsExp {
+  def asJsExp(inst: BaseRecord): JsExp = new JsExp {
     lazy val toJsCmd = Printer.compact(render(asJValue(inst)))
   }
 
@@ -288,13 +288,13 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    * @param json - The stringified JSON object
    * @return Box[BaseRecord]
    */
-  def fromJson(json: String): Box[BaseRecord] = {
+  def fromJsonString(json: String): Box[BaseRecord] = {
     val inst = createRecord
-    setFieldsFromJson(inst, json) map (_ => inst)
+    setFieldsFromJsonString(inst, json) map (_ => inst)
   }
 
   /** Set from a Json String using the lift-json parser **/
-  def setFieldsFromJson(inst: BaseRecord, json: String): Box[Unit] =
+  def setFieldsFromJsonString(inst: BaseRecord, json: String): Box[Unit] =
     setFieldsFromJValue(inst, JsonParser.parse(json))
 
   protected def foreachCallback(inst: BaseRecord, f: LifecycleCallbacks => Any) {

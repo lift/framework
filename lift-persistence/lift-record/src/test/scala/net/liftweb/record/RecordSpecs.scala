@@ -232,8 +232,8 @@ object RecordSpecs extends Specification {
       fttr.asJSON mustEqual fttrAsJsObj
     }
 
-    "convert to JsExp (via asJson)" in {
-      fttr.asJson mustEqual fttrAsJsObj
+    "convert to JsExp (via asJsExp)" in {
+      fttr.asJsExp mustEqual fttrAsJsObj
     }
 
     "convert to JValue" in {
@@ -287,7 +287,7 @@ object RecordSpecs extends Specification {
     }
 
     "get set from json string using lift-json parser" in {
-      val fttrFromJson = FieldTypeTestRecord.fromJson(json)
+      val fttrFromJson = FieldTypeTestRecord.fromJsonString(json)
       fttrFromJson must notBeEmpty
       fttrFromJson foreach { r =>
         r.mandatoryDecimalField.value mustEqual fttr.mandatoryDecimalField.value

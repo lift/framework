@@ -468,10 +468,19 @@ trait HtmlFixer {
    * This method must be run in the context of the thing creating the XHTML
    * to capture the bound functions
    */
-  protected def fixHtml(uid: String, content: NodeSeq): String =
-  AltXML.toXML(Group(S.session.map(s => s.fixHtml(s.processSurroundAndInclude("JS SetHTML id: " + uid, content))).openOr(content)),
-               false, true, S.ieMode).encJs
-
+  protected def fixHtml(uid: String, content: NodeSeq): String = {
+    val w = new java.io.StringWriter
+    
+    S.htmlProperties.
+    htmlWriter(Group(S.session.
+                     map(s =>
+                       s.fixHtml(s.processSurroundAndInclude("JS SetHTML id: "
+                                                             + uid,
+                                                             content))).
+                     openOr(content)),
+               w)
+    w.toString.encJs
+  }
 }
 
 trait JsCmd extends HtmlFixer with ToJsCmd {

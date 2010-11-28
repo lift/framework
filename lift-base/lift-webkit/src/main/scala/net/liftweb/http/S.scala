@@ -365,6 +365,16 @@ object S extends HasParams with Loggable {
   def ieMode: Boolean = session.map(_.ieMode.is) openOr false // LiftRules.calcIEMode()
 
   /**
+   * Get the current instance of HtmlProperties
+   */
+  def htmlProperties: HtmlProperties = {
+    session.map(_.requestHtmlProperties.is) openOr 
+    LiftRules.htmlProperties.vend(
+      S.request openOr Req.nil
+    )
+  }
+
+  /**
    * Return a List of the LiftRules.DispatchPF functions that are set for this
    * session. See addHighLevelSessionDispatcher for an example of how these are
    * used.
@@ -2373,7 +2383,10 @@ for {
         case _ =>
           val ret = LiftSession(httpRequest.session, req.contextPath)
           ret.fixSessionTime()
-          SessionMaster.addSession(ret, httpRequest.userAgent, SessionMaster.getIpFromReq(req))
+          SessionMaster.addSession(ret, 
+                                   req,
+                                   httpRequest.userAgent, 
+                                   SessionMaster.getIpFromReq(req))
           ret
       }
 

@@ -560,8 +560,8 @@ class LiftServlet extends Loggable {
     else 
       insureField(fixHeaders(resp.headers),
                   LiftRules.defaultHeaders(NodeSeq.Empty -> request) :::
-                  List(("Content-Type",
-                        LiftRules.determineContentType(pairFromRequest(request)))) :::
+                  /* List(("Content-Type",
+                        LiftRules.determineContentType(pairFromRequest(request)))) ::: */
                   (if (len >= 0) List(("Content-Length", len.toString)) else Nil))
     
     LiftRules.beforeSend.toList.foreach(f => tryo(f(resp, response, header, Full(request))))
