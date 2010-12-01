@@ -363,7 +363,7 @@ class LiftServlet extends Loggable {
               case (n: Node) :: _ => XmlResponse(n)
               case (ns: NodeSeq) :: _ => XmlResponse(Group(ns))
               case (r: LiftResponse) :: _ => r
-              case _ => JsCommands(S.noticesToJsCmd :: JsCmds.Noop :: Nil).toResponse
+              case _ => JsCommands(S.noticesToJsCmd :: JsCmds.Noop :: S.jsToAppend).toResponse
             }
 
             LiftRules.cometLogger.debug("AJAX Response: " + liftSession.uniqueId + " " + ret)
@@ -471,7 +471,20 @@ class LiftServlet extends Loggable {
 
     actors foreach (_._1 ! ClearNotices)
 
-    (new JsCommands(JsCmds.Run(jsUpdateTime) :: jsUpdateStuff)).toResponse
+    val addl: List[JsCmd] = 
+      (for {
+        req <- S.request
+        rendVer <- extractRenderVersion(req.path.partPath)
+      } yield RenderVersion.doWith(rendVer) {
+        S.jsToAppend
+      }) openOr Nil
+
+    (new JsCommands(JsCmds.Run(jsUpdateTime) :: jsUpdateStuff ::: addl)).toResponse
+  }
+
+  private def extractRenderVersion(in: List[String]): Box[String] = in match {
+    case _ :: _ :: _ :: rv :: _ => Full(rv)
+    case _ => Empty
   }
 
   private def handleNonContinuationComet(request: Req, session: LiftSession, actors: List[(LiftCometActor, Long)],

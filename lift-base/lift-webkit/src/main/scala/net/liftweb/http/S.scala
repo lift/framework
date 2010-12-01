@@ -571,7 +571,15 @@ object S extends HasParams with Loggable {
    *
    * @see appendJs
    */
-  def jsToAppend(): List[JsCmd] = _jsToAppend.is.toList
+  def jsToAppend(): List[JsCmd] = (
+    for {
+      sess <- S.session
+    } yield sess.postPageJavaScript()
+  ) match {
+    case Full(Nil) => _jsToAppend.is.toList
+    case Full(xs) => _jsToAppend.is.toList ::: xs
+    case _ => _jsToAppend.is.toList
+  }
 
   /**
    * Clears the per-session rewrite table. See addSessionRewriter for an

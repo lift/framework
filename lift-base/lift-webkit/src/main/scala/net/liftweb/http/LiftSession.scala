@@ -415,6 +415,8 @@ private[http] object RenderVersion {
   private object ver extends RequestVar(Helpers.nextFuncName)
   def get: String = ver.is
 
+  def doWith[T](v: String)(f: => T): T = ver.doWith(v)(f)
+
   def set(value: String) {
     ver(value)
   }
@@ -474,7 +476,31 @@ trait MigratorySession extends HowStateful {
   override def stateful_? = false
 }
 
+/**
+ * Keeps information around about what kinds of functions are run
+ * at the end of page rendering.  The results of these functions will be
+ * appended to the bottom of the page.
+ *
+ * @param renderVersion -- the page ID (aka the RenderVersion)
+ * @param functionCount -- the number of functions in the collection
+ * @param lastSeen -- page of the page-level GC
+ * @param functions -- the list of functions to run
+ */
+private final case class PostPageFunctions(renderVersion: String,
+                                           functionCount: Int,
+                                           lastSeen: Long,
+                                           functions: List[() => JsCmd]) 
+{
+  /**
+   * Create a new instance based on the last seen time
+   */
+  def updateLastSeen = new PostPageFunctions(renderVersion,
+                                             functionCount,
+                                             Helpers.millis,
+                                             functions)
 
+  
+}
 
 /**
  * The LiftSession class containg the session state information
@@ -526,6 +552,17 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private var onSessionEnd: List[LiftSession => Unit] = Nil
 
   private val sessionVarSync = new Object
+
+  /**
+   * A mapping between pages denoted by RenderVersion and
+   * functions to execute at the end of the page rendering
+   */
+  private var postPageFunctions: Map[String, PostPageFunctions] = Map()
+
+  /**
+   * The synchronization lock for the postPageFunctions
+   */
+  private val postPageLock = new Object
 
   @volatile
   private[http] var lastServiceTime = millis
@@ -673,6 +710,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     asyncById = HashMap.empty
     myVariables = Map.empty
     onSessionEnd = Nil
+    postPageFunctions = Map()
     highLevelSessionDispatcher = HashMap.empty
     sessionRewriter = HashMap.empty
   }
@@ -727,17 +765,100 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
-  private[http] def cleanupUnseenFuncs(): Unit = synchronized {
+  /**
+   * Puts the correct thread locking around access to postPageFunctions
+   */
+  private def accessPostPageFuncs[T](f: => T): T = {
+    postPageLock.synchronized {
+      f
+    }
+  }
+
+  private[http] def cleanupUnseenFuncs(): Unit = {
     if (LiftRules.enableLiftGC && stateful_?) {
       val now = millis
-      messageCallback.keys.toList.foreach {
-        k =>
-          val f = messageCallback(k)
-        if (!f.sessionLife && 
-            f.owner.isDefined && 
-            (now - f.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
-              messageCallback -= k
-            }
+
+      accessPostPageFuncs {
+        for {
+          (key, pageInfo) <- postPageFunctions
+        } if ((now - pageInfo.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
+          postPageFunctions -= key
+        }
+      }
+      
+      synchronized {
+        messageCallback.keys.toList.foreach {
+          k =>
+            val f = messageCallback(k)
+          if (!f.sessionLife && 
+              f.owner.isDefined && 
+              (now - f.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
+                messageCallback -= k
+              }
+        }
+      }
+    }
+  }
+
+  /**
+   * Associate a function that renders JavaScript with the current page.
+   * This function will be run and the resulting JavaScript will be appended
+   * to any rendering associated with this page... the normal page render,
+   * Ajax calls, and even Comet calls for this page.
+   *
+   * @param func -- the function that returns JavaScript to be appended to
+   * responses associated with this page
+   */
+  def addPostPageJavaScript(func: () => JsCmd) {
+    accessPostPageFuncs {
+      val rv = RenderVersion.get
+      val old = postPageFunctions.getOrElse(rv,
+                                            PostPageFunctions(rv,
+                                                              0,
+                                                              Helpers.millis,
+                                                              Nil))
+
+      val updated = PostPageFunctions(old.renderVersion,
+                                      old.functionCount + 1,
+                                      Helpers.millis,
+                                      func :: old.functions)
+      postPageFunctions += (rv -> updated)
+    }
+  }
+
+  def postPageJavaScript(): List[JsCmd] = {
+    val rv = RenderVersion.get
+    def org = accessPostPageFuncs {
+      val ret = postPageFunctions.get(rv)
+      ret.foreach {
+        r => postPageFunctions += (rv -> r.updateLastSeen)
+      }
+      ret
+    }
+
+    org match {
+      case None => Nil
+      case Some(ppf) => {
+        val lb = new ListBuffer[JsCmd]
+
+        def run(count: Int, funcs: List[() => JsCmd]) {
+          funcs.reverse.foreach(f => lb += f())
+          val next = org.get // safe to do get here because we know the
+          // postPageFunc is defined
+
+          val diff = next.functionCount - count
+
+          // if the function table is updated, make sure to get
+          // the additional functions
+          if (diff == 0) {} else {
+            run(next.functionCount, next.functions.take(diff))
+          }
+        }
+                
+        run(ppf.functionCount, ppf.functions)
+                
+        lb.toList
+        
       }
     }
   }
@@ -746,17 +867,24 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * Updates the timestamp of the functions owned by this owner and return the
    * number of updated functions
    */
-  private[http] def updateFuncByOwner(ownerName: String, time: Long): Int = synchronized {
-    (0 /: messageCallback)((l, v) => l + (v._2.owner match {
-      case Full(owner) if (owner == ownerName) =>
-        v._2.lastSeen = time
-        1
-      case Empty => v._2.lastSeen = time
-      1
-      case _ => 0
-    }))
-  }
+  private[http] def updateFuncByOwner(ownerName: String, time: Long): Int = {
+    accessPostPageFuncs {
+      for {
+        funcInfo <- postPageFunctions.get(ownerName)
+      } postPageFunctions += (ownerName -> funcInfo.updateLastSeen)
+    }
 
+    synchronized {
+      (0 /: messageCallback)((l, v) => l + (v._2.owner match {
+        case Full(owner) if (owner == ownerName) =>
+          v._2.lastSeen = time
+        1
+        case Empty => v._2.lastSeen = time
+        1
+        case _ => 0
+      }))
+    }
+  }
   /**
    * Returns true if there are functions bound for this owner
    */

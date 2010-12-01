@@ -865,7 +865,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   @volatile var calcCometPath: String => JsExp = prefix => {
     Str(prefix + "/" + cometPath + "/") +
             JsRaw("Math.floor(Math.random() * 100000000000)") +
-            Str(S.session.map(s => S.encodeURL("/" + s.uniqueId)) openOr "")
+            Str(S.session.map(session => S.encodeURL("/" + session.uniqueId)) openOr "xx") + Str("/") + JsRaw("lift_page")
   }
 
 
