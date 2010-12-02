@@ -211,6 +211,9 @@ trait TimeHelpers { self: ControlHelpers =>
       new TimeSpan(Right(in))
   }
 
+  /** @return the current System.nanoTime() */
+  def nano = System.nanoTime()
+
   /** @return the current number of millis: System.currentTimeMillis  */
   def millis = System.currentTimeMillis
 

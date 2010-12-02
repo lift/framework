@@ -810,19 +810,21 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * responses associated with this page
    */
   def addPostPageJavaScript(func: () => JsCmd) {
-    accessPostPageFuncs {
-      val rv = RenderVersion.get
-      val old = postPageFunctions.getOrElse(rv,
-                                            PostPageFunctions(rv,
-                                                              0,
-                                                              Helpers.millis,
-                                                              Nil))
-
-      val updated = PostPageFunctions(old.renderVersion,
-                                      old.functionCount + 1,
-                                      Helpers.millis,
-                                      func :: old.functions)
-      postPageFunctions += (rv -> updated)
+    testStatefulFeature {
+      accessPostPageFuncs {
+        val rv = RenderVersion.get
+        val old = postPageFunctions.getOrElse(rv,
+                                              PostPageFunctions(rv,
+                                                                0,
+                                                                Helpers.millis,
+                                                                Nil))
+        
+        val updated = PostPageFunctions(old.renderVersion,
+                                        old.functionCount + 1,
+                                        Helpers.millis,
+                                        func :: old.functions)
+        postPageFunctions += (rv -> updated)
+      }
     }
   }
 
