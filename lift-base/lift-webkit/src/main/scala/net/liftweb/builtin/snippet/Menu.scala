@@ -244,6 +244,19 @@ object Menu extends DispatchSnippet {
    * &lt;/head&gt;
    * ...
    * </pre>
+   * <p>HTML5 does not support tags inside the &lt;title&gt; tag,
+   * so you must do:
+   * </p>
+   *
+   * <pre>
+   *    * &lt;head&gt;
+   *   &lt;title class=&quot;lift:Menu.title&quote;&gt;The page named %*% is being displayed&lt;/title&gt;
+   * &lt;/head&gt;
+   * </pre>
+   * <p>
+   * And Lift will substitute the title at the %*% marker, alternative, Lift
+   * will append the title the the contents of the &lt;title&gt; tag.
+   * </p>
    */
   def title(text: NodeSeq): NodeSeq = {
     val r =
@@ -278,7 +291,9 @@ object Menu extends DispatchSnippet {
       if (in.length == 1 && in(0).isInstanceOf[Elem]) {
         val e = in(0).asInstanceOf[Elem]
         if (e.prefix == null && e.label == "title") {
-          if (e.child.length == 1 && e.child(0).isInstanceOf[Atom[_]]) {
+          if (e.child.length == 0) {
+            Some(e.attributes -> "")
+          } else if (e.child.length == 1 && e.child(0).isInstanceOf[Atom[_]]) {
             Some(e.attributes -> e.child.text)
           } else None
         } else None
