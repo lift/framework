@@ -38,12 +38,19 @@ object HeadHelper {
    * same src attribute and <link> containing the same href attribute value are considered duplicates.
    */
   def removeHtmlDuplicates(in: NodeSeq): NodeSeq = {
-    var jsSources = new ListBuffer[NodeSeq]
-    var hrefs = new ListBuffer[NodeSeq]
+    var jsSources: Set[String] = Set()
+    var hrefs: Set[String] = Set()
 
     Text("\n\t") ++ (in flatMap { e =>
-       val src = e.attributes("src")
-       val href = e.attributes("href")
+       val src = e.attributes("src") match {
+         case null => null
+         case x => x.text
+       }
+
+       val href = e.attributes("href") match {
+         case null => null
+         case x => x.text
+       }
 
        e match {
          case e : Elem if (e.label == "script") && (src != null) && (jsSources contains src) => NodeSeq.Empty
