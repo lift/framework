@@ -18,7 +18,6 @@ package net.liftweb {
 package util {
 
 import _root_.net.liftweb.common._
-
   /**
    * A wiring Cell.  A Cell can be a ValueCell which holds
    * a value which can be set (and thus update the dependencies),
@@ -36,6 +35,13 @@ import _root_.net.liftweb.common._
      * Get the cell's value
      */
     def get: T = currentValue._1
+
+    /**
+     * Create a new Cell by applying the function to this cell
+     */
+    def lift[A](f: T => A): Cell[A] = FuncCell(this)(f)
+
+    def lift[A,B](cell: Cell[B])(f: (T, B) => A) = FuncCell(this, cell)(f)
   }
 
   /**
@@ -57,15 +63,20 @@ import _root_.net.liftweb.common._
    * The companion object that has a helpful constructor
    */
   object ValueCell {
-    def apply[A](value: A): Cell[A] = new ValueCell(value)
+    def apply[A](value: A): ValueCell[A] = new ValueCell(value)
   }
 
   /**
    * A ValueCell holds a value that can be mutated.
    */
-  final class ValueCell[A](initialValue: A) extends Cell[A] {
+  final class ValueCell[A](initialValue: A) extends Cell[A] with PSettableValueHolder[A] {
     private var value: A = initialValue
     private var ct: Long = System.nanoTime()
+
+    /**
+     * For compatibility with PSettableValueHolder
+     */
+    def is: A = get
 
     /**
      * The cell's value and most recent change time
@@ -101,33 +112,46 @@ import _root_.net.liftweb.common._
   }
 
   /**
+   * A collection of Cells og a given type
+   */
+  final case class SeqCell[T](cells: Cell[T]*) extends Cell[Seq[T]] {
+    /**
+     * The cell's value and most recent change time
+     */
+    def currentValue: (Seq[T], Long) = {
+      val tcv = cells.map(_.currentValue)
+      tcv.map(_._1) -> tcv.foldLeft(0L)((max, c) => if (max > c._2) max else c._2)
+    }
+  }
+
+  /**
    * The companion object for FuncCell (function cells)
    */
   object FuncCell {
     /**
      * Construct a function cell based on a single parameter
      */
-    def apply[A, Z](a: Cell[A], f: A => Z): Cell[Z] = FuncCell1(a, f)
+    def apply[A, Z](a: Cell[A])(f: A => Z): Cell[Z] = FuncCell1(a, f)
 
     /**
      * Construct a function cell based on two parameters
      */
-    def apply[A, B, Z](a: Cell[A], b: Cell[B], f: (A, B) => Z): Cell[Z] = FuncCell2(a, b, f)
+    def apply[A, B, Z](a: Cell[A], b: Cell[B])(f: (A, B) => Z): Cell[Z] = FuncCell2(a, b, f)
 
     /**
      * Construct a function cell based on three parameters
      */
-    def apply[A, B, C, Z](a: Cell[A], b: Cell[B], c: Cell[C], f: (A, B, C) => Z): Cell[Z] = FuncCell3(a, b, c, f)
+    def apply[A, B, C, Z](a: Cell[A], b: Cell[B], c: Cell[C])(f: (A, B, C) => Z): Cell[Z] = FuncCell3(a, b, c, f)
 
     /**
      * Construct a function cell based on four parameters
      */
-    def apply[A, B, C, D, Z](a: Cell[A], b: Cell[B], c: Cell[C], d: Cell[D], f: (A, B, C, D) => Z): Cell[Z] = FuncCell4(a, b, c, d, f)
+    def apply[A, B, C, D, Z](a: Cell[A], b: Cell[B], c: Cell[C], d: Cell[D])(f: (A, B, C, D) => Z): Cell[Z] = FuncCell4(a, b, c, d, f)
 
     /**
      * Construct a function cell based on five parameters
      */
-    def apply[A, B, C, D, E, Z](a: Cell[A], b: Cell[B], c: Cell[C], d: Cell[D], e: Cell[E], f: (A, B, C, D, E) => Z): Cell[Z] = FuncCell5(a, b, c, d, e, f)
+    def apply[A, B, C, D, E, Z](a: Cell[A], b: Cell[B], c: Cell[C], d: Cell[D], e: Cell[E])(f: (A, B, C, D, E) => Z): Cell[Z] = FuncCell5(a, b, c, d, e, f)
   }
 
   final case class FuncCell1[A, Z](a: Cell[A], f: A => Z) extends Cell[Z] {

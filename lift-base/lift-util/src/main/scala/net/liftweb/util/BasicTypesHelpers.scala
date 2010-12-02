@@ -155,6 +155,18 @@ object AsInt {
 }
 
   /**
+   * Safely convert the specified String to an Int.
+   */
+  def asDouble(in: String): Box[Double] = tryo{in.toDouble}
+
+/**
+* A helpful Int extractor
+*/
+object AsDouble {
+  def unapply(in: String): Option[Double] = asDouble(in)
+}
+
+  /**
    * Safely convert the specified String to a Long.
    */
   def asLong(in: String): Box[Long] = tryo(in.toLong)

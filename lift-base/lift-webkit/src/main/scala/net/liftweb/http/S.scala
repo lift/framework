@@ -571,14 +571,21 @@ object S extends HasParams with Loggable {
    *
    * @see appendJs
    */
-  def jsToAppend(): List[JsCmd] = (
-    for {
+  def jsToAppend(): List[JsCmd] = {
+    import js.JsCmds._
+    (for {
       sess <- S.session
-    } yield sess.postPageJavaScript()
-  ) match {
-    case Full(Nil) => _jsToAppend.is.toList
-    case Full(xs) => _jsToAppend.is.toList ::: xs
-    case _ => _jsToAppend.is.toList
+    } yield sess.postPageJavaScript()) match {
+      case Full(Nil) => _jsToAppend.is.toList match {
+        case Nil => Nil
+        case xs => List(OnLoad(xs))
+      }
+      case Full(xs) => List(OnLoad(_jsToAppend.is.toList ::: xs))
+      case _ => _jsToAppend.is.toList match {
+        case Nil => Nil
+        case xs => List(OnLoad(xs))
+      }
+    }
   }
 
   /**

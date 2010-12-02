@@ -452,6 +452,10 @@ object SHtml {
   def jsonText(value: String, cmd: String, json: JsonCall, attrs: (String, String)*): Elem =
   jsonText(value, exp => json(cmd, exp), attrs: _*)
 
+  def ajaxText(settable: PSettableValueHolder[String], attrs: (String, String)*): Elem =
+    ajaxText(settable.get, b => {settable.set(b); Noop}, attrs :_*)
+
+
   def ajaxText(value: String, func: String => JsCmd, attrs: (String, String)*): Elem = 
   ajaxText_*(value, false, Empty, SFuncHolder(func), attrs: _*)
 
@@ -590,6 +594,8 @@ object SHtml {
     }
   }
 
+  def ajaxCheckbox(settable: PSettableValueHolder[Boolean], attrs: (String, String)*): Elem =
+    ajaxCheckbox(settable.get, b => {settable.set(b); Noop}, attrs :_*)
 
   def ajaxCheckbox(value: Boolean, func: Boolean => JsCmd, attrs: (String, String)*): Elem =
     ajaxCheckbox_*(value, Empty, LFuncHolder(in => func(in.exists(toBoolean(_)))), attrs: _*)

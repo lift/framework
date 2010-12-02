@@ -20,7 +20,7 @@ package http {
 import _root_.net.liftweb.util._
 import js._
 import JsCmds._
-import _root_.scala.xml.{NodeSeq, Elem}
+import _root_.scala.xml.{NodeSeq, Elem, Text}
 
 /**
  * Surface a user interface on top of Wiring
@@ -80,6 +80,41 @@ object WiringUI {
   def toNode[T](in: NodeSeq, cell: Cell[T])(f: (T, NodeSeq) => NodeSeq): NodeSeq = toNode(in, cell, (id, first, js) => js)(f)
 
   /**
+   * Given a NodeSeq, a Cell register the
+   * postPageJavaScript that will update the element with
+   * a new value.
+   *
+   * @param in the NodeSeq that contains the view markup
+   * @param cell the cell to associate with
+   * 
+   * @return the mutated NodeSeq (an id attribute may be added if
+   * there's none already defined)
+   */
+  def asText[T](in: NodeSeq, cell: Cell[T]): NodeSeq = 
+    toNode(in, cell, (id, first, js) => js)((t, ns) => Text(t.toString))
+
+  /**
+   * Given a NodeSeq, a Cell register the
+   * postPageJavaScript that will update the element with
+   * a new value.
+   *
+   * @param in the NodeSeq that contains the view markup
+   * @param cell the cell to associate with
+   * 
+   * @param jsEffect a function that wraps the SetHtml JsCmd so
+   * you can, for example, fade out the old value, set the new value and
+   * fade it in.  The first parameter is the id of the element, the
+   * second is a flag that's true if this is the first time the element is
+   * being rendered (you might want to skip effects for the inital page load),
+   * and the third parameter is the SetHtml JavaScript code.
+   * 
+   * @return the mutated NodeSeq (an id attribute may be added if
+   * there's none already defined)
+   */
+  def asText[T](in: NodeSeq, cell: Cell[T], jsEffect: (String, Boolean, JsCmd) => JsCmd): NodeSeq = 
+    toNode(in, cell, jsEffect)((t, ns) => Text(t.toString))
+
+  /**
    * Given a NodeSeq, a Cell and a function that can generate
    * a NodeSeq from the cell's value and the template value, register the
    * postPageJavaScript that will update the element with
@@ -125,12 +160,14 @@ object WiringUI {
   def addJsFunc[T](cell: Cell[T], f: (T, Boolean) => JsCmd) {
     val trc = TransientRequestCell(cell)
     var lastTime: Long = 0L
+    var lastValue: T = null.asInstanceOf[T]
     for {
       sess <- S.session
     } sess.addPostPageJavaScript(() => {
       val (value, ct) = trc.get
       val first = lastTime == 0L
-      if (first || ct > lastTime) {
+      if (first || (ct > lastTime && value != lastValue)) {
+        lastValue = value
         lastTime = ct
         f(value, first)
       } else Noop
