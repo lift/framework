@@ -190,6 +190,24 @@ trait HttpHelpers { self: ListHelpers with StringHelpers  =>
     case x :: xs => (in, x.text)
   }
 
+  /**
+   * Within a NodeSeq, find the first elem and run it through
+   * the function.  Return the resulting NodeSeq
+   */
+  def evalElemWithId(f: (String, Elem) => NodeSeq)(ns: NodeSeq): NodeSeq = {
+    var found = false
+    ns.flatMap {
+      case e: Elem if !found => {
+        found = true
+        val (ne, id) = findOrAddId(e)
+        f(id, ne)
+      }
+      case x => x
+    }
+  }
+    
+
+
   private val serial = new AtomicLong(Math.abs(Helpers.randomLong(Helpers.millis)) + 1000000L)
 
   /**
