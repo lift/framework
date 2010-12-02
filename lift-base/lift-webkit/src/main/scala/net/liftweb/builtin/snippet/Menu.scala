@@ -247,9 +247,42 @@ object Menu extends DispatchSnippet {
    */
   def title(text: NodeSeq): NodeSeq = {
     val r =
-    for (request <- S.request;
-         loc <- request.location) yield loc.title
-    r openOr Text("")
+      for (request <- S.request;
+           loc <- request.location) yield loc.title
+
+    text match {
+      case TitleText(attrs, str) => {
+        r.map {
+          rt => {
+            val rts = rt.text
+            val idx = str.indexOf("%*%")
+            val bodyStr = if (idx >= 0) {
+              str.substring(0, idx) + rts + str.substring(idx + 3)
+            } else {
+              str +" "+rts
+            }
+
+            <title>{bodyStr}</title> % attrs
+          }
+        } openOr text
+      }
+
+      case _ => {
+        r openOr Text("")
+      }
+    }
+  }
+
+  private object TitleText {
+    def unapply(in: NodeSeq): Option[(MetaData, String)] =
+      if (in.length == 1 && in(0).isInstanceOf[Elem]) {
+        val e = in(0).asInstanceOf[Elem]
+        if (e.prefix == null && e.label == "title") {
+          if (e.child.length == 1 && e.child(0).isInstanceOf[Atom[_]]) {
+            Some(e.attributes -> e.child.text)
+          } else None
+        } else None
+      } else None
   }
 
   /**
