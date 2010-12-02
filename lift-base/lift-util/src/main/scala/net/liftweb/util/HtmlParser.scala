@@ -335,6 +335,14 @@ trait Html5Parser {
       hp.setContentSpacePolicy(common.XmlViolationPolicy.FATAL)
       hp.setNamePolicy(common.XmlViolationPolicy.ALLOW)
       val saxer = new NoBindingFactoryAdapter {
+        override def createNode (pre: String, label: String, attrs: MetaData, scope: NamespaceBinding, children: List[Node]) : Elem = {
+          if (pre == "lift" && label == "head") {
+            super.createNode(null, label, attrs, scope, children)            
+          } else {
+            super.createNode(pre, label, attrs, scope, children)
+          }
+        }
+
         override def captureText(): Unit = {
           if (capture) {
             val text = buffer.toString()

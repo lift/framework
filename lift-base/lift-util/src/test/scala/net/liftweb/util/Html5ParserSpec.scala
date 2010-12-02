@@ -20,6 +20,8 @@ package util {
 import _root_.org.specs._
 import _root_.org.specs.specification._
 
+import _root_.scala.xml.Elem
+
 import common._
 
 object Html5ParserSpec extends Specification with Html5Parser with Html5Writer {
@@ -34,6 +36,14 @@ object Html5ParserSpec extends Specification with Html5Parser with Html5Writer {
   "parse page1" in {
     val parsed = parse(page1).open_!
     (parsed \\ "script").length must be >= 4
+  }
+
+  "change <lift:head> to <head>" in {
+    val parsed = parse("<div><lift:head>123</lift:head></div>").open_!
+    val heads = parsed \\ "head"
+    heads.length must_== 1
+    heads.text must_== "123"
+    (heads(0).asInstanceOf[Elem].prefix == null) must_== true
   }
 
   "parse page2" in {
