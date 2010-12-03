@@ -63,7 +63,7 @@ object BundleBuilder {
                                       e.attribute("lang").map(_.text),
                                       e.attribute("country").map(_.text),
                                       e.attribute("default").map(_.text).
-                                      flatMap(Helpers.asBoolean) getOrElse false) -> e.child)
+                                      flatMap(Helpers.asBoolean) getOrElse false) -> (e.child: NodeSeq))
               }
               
               case _ => Nil
@@ -100,7 +100,7 @@ object BundleBuilder {
           
           List(new ResourceBundle {
             def getKeys(): Enumeration[String] = {
-              val it = res.keys
+              val it = res.keys.iterator
               new Enumeration[String] {
                 def hasMoreElements() = it.hasNext
                 def nextElement() = it.next
