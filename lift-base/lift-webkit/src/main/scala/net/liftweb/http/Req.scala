@@ -616,45 +616,83 @@ class Req(val path: ParsePath,
        uah <- request.header("User-Agent"))
   yield uah
 
-  lazy val isIE6: Boolean = (userAgent.map(_.indexOf("MSIE 6") >= 0)) openOr false
-  lazy val isIE7: Boolean = (userAgent.map(_.indexOf("MSIE 7") >= 0)) openOr false
-  lazy val isIE8: Boolean = (userAgent.map(_.indexOf("MSIE 8") >= 0)) openOr false
-  lazy val isIE = isIE6 || isIE7 || isIE8
+  lazy val ieVersion: Box[Int] = {
+    val re = """MSIE ([0-9]+)""".r
+    for {
+      ua <- userAgent
+      m = re.pattern.matcher(ua)
+      ver <- if (m.find) Helpers.asInt(m.group(1)) else Empty
+    } yield ver
+  }
 
-  lazy val isSafari2: Boolean = (userAgent.map(s => s.indexOf("Safari/") >= 0 &&
-                                               s.indexOf("Version/2.") >= 0)) openOr false
+  lazy val isIE6: Boolean = ieVersion.map(_ == 6) openOr false
+  lazy val isIE7: Boolean = ieVersion.map(_ == 7) openOr false
+  lazy val isIE8: Boolean = ieVersion.map(_ == 8) openOr false
+  lazy val isIE9: Boolean = ieVersion.map(_ == 9) openOr false
+  lazy val isIE = ieVersion.map(_ >= 6) openOr false
 
-  lazy val isSafari3: Boolean = (userAgent.map(s => s.indexOf("Safari/") >= 0 &&
-                                               s.indexOf("Version/3.") >= 0)) openOr false
-  lazy val isSafari4: Boolean = (userAgent.map(s => s.indexOf("Safari/") >= 0 &&
-                                               s.indexOf("Version/4.") >= 0)) openOr false
-  lazy val isSafari5: Boolean = (userAgent.map(s => s.indexOf("Safari/") >= 0 &&
-                                               s.indexOf("Version/5.") >= 0)) openOr false
+  lazy val safariVersion: Box[Int] = {
+    val re = """Version.([0-9]+)[.0-9]+ Safari\/""".r
+    for {
+      ua <- userAgent
+      m = re.pattern.matcher(ua)
+      ver <- if (m.find) Helpers.asInt(m.group(1)) else Empty
+    } yield ver
+  }
 
-  def isSafari3_+ = isSafari3 || isSafari4 || isSafari5
-  def isSafari = isSafari2 || isSafari3_+
+
+
+  def isSafari2: Boolean = false
+
+  lazy val isSafari3: Boolean = safariVersion.map(_ == 3) openOr false
+  lazy val isSafari4: Boolean = safariVersion.map(_ == 4) openOr false
+  lazy val isSafari5: Boolean = safariVersion.map(_ == 5) openOr false
+  
+  def isSafari3_+ = safariVersion.map(_ >= 3) openOr false
+  def isSafari = safariVersion.isDefined
 
   lazy val isIPhone = isSafari && (userAgent.map(s => s.indexOf("(iPhone;") >= 0) openOr false)
 
-  lazy val isFirefox2: Boolean = (userAgent.map(_.indexOf("Firefox/2") >= 0)) openOr false
-  lazy val isFirefox3: Boolean = (userAgent.map(_.indexOf("Firefox/3") >= 0)) openOr false
-  lazy val isFirefox35: Boolean = (userAgent.map(_.indexOf("Firefox/3.5") >= 0)) openOr false
-  lazy val isFirefox36: Boolean = (userAgent.map(_.indexOf("Firefox/3.6") >= 0)) openOr false
-  lazy val isFirefox40: Boolean = (userAgent.map(_.indexOf("Firefox/4") >= 0)) openOr false
+  lazy val firefoxVersion: Box[Double] = {
+    val re = """Firefox.([1-9][0-9]*\.[0-9])""".r   
 
-  def isFirefox35_+ : Boolean = isFirefox35 || isFirefox36  || isFirefox40
+    for {
+      ua <- userAgent
+      m = re.pattern.matcher(ua)
+      ver <- if (m.find) Helpers.tryo(m.group(1).toDouble) else Empty
+    } yield ver
+  }
 
-  def isFirefox = isFirefox2 || isFirefox3 || isFirefox35_+
+  lazy val isFirefox2: Boolean = firefoxVersion.map(v => v >= 2d && v < 3d) openOr false
+  lazy val isFirefox3: Boolean = firefoxVersion.map(v => v >= 3d && v < 3.5d) openOr false
+  lazy val isFirefox35: Boolean = firefoxVersion.map(v => v >= 3.5d && v < 3.6d) openOr false
+  lazy val isFirefox36: Boolean = firefoxVersion.map(v => v >= 3.6d && v < 4d) openOr false
+  lazy val isFirefox40: Boolean = firefoxVersion.map(v => v >= 4d) openOr false
 
-  lazy val isChrome2 = (userAgent.map(_.indexOf("Chrome/2.") >= 0)) openOr false
-  lazy val isChrome3 = (userAgent.map(_.indexOf("Chrome/3.") >= 0)) openOr false
-  lazy val isChrome4 = (userAgent.map(_.indexOf("Chrome/4.") >= 0)) openOr false
-  lazy val isChrome5 = (userAgent.map(_.indexOf("Chrome/5.") >= 0)) openOr false
-  lazy val isChrome6 = (userAgent.map(_.indexOf("Chrome/6.") >= 0)) openOr false
+  def isFirefox35_+ : Boolean = firefoxVersion.map(_ >= 3.5d) openOr false
 
-  def isChrome3_+ = isChrome3 || isChrome4 || isChrome5 || isChrome6
+  def isFirefox = firefoxVersion.isDefined
 
-  def isChrome = isChrome2 || isChrome3 || isChrome4 || isChrome5 || isChrome6
+
+  lazy val chromeVersion: Box[Double] = {
+    val re = """Chrome.([1-9][0-9]*\.[0-9])""".r   
+
+    for {
+      ua <- userAgent
+      m = re.pattern.matcher(ua)
+      ver <- if (m.find) Helpers.tryo(m.group(1).toDouble) else Empty
+    } yield ver
+  }
+
+  lazy val isChrome2 = chromeVersion.map(v => v >= 2d && v < 3d) openOr false
+  lazy val isChrome3 = chromeVersion.map(v => v >= 3d && v < 4d) openOr false
+  lazy val isChrome4 = chromeVersion.map(v => v >= 4d && v < 5d) openOr false
+  lazy val isChrome5 = chromeVersion.map(v => v >= 5d && v < 6d) openOr false
+  lazy val isChrome6 = chromeVersion.map(v => v >= 6d && v < 7d) openOr false
+
+  def isChrome3_+ = chromeVersion.map(_ >= 3d) openOr false
+
+  def isChrome = chromeVersion.isDefined
 
   lazy val isOpera9: Boolean = (userAgent.map(s => s.indexOf("Opera/9.") >= 0) openOr false)
 
