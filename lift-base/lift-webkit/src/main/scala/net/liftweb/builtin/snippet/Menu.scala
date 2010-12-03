@@ -255,7 +255,7 @@ object Menu extends DispatchSnippet {
    * </pre>
    * <p>
    * And Lift will substitute the title at the %*% marker, alternative, Lift
-   * will append the title the the contents of the &lt;title&gt; tag.
+   * will append the Menu.title to the contents of the &lt;title&gt; tag.
    * </p>
    */
   def title(text: NodeSeq): NodeSeq = {
