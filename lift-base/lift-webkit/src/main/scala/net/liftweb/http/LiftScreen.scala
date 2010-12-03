@@ -103,11 +103,33 @@ private[liftweb] trait AbstractScreen extends Factory {
     implicit def fToType[T](field: Field{type ValueType=T}): T = field.is
   }
 
+  protected sealed trait OtherValueInitializer[T]
+  protected final case object NothingOtherValueInitializer extends OtherValueInitializer[Nothing]
+  protected final case class OtherValueInitializerImpl[T](f: () => T) extends OtherValueInitializer[T]
+
+  /**
+   * A field that's part of a Screen
+   */
   trait Field extends BaseField {
+    type OtherValueType // >: Nothing
+
     AbstractScreen.this._register(() => this)
 
     private val _currentValue: NonCleanAnyVar[ValueType] =
     vendAVar[ValueType](setFilter.foldLeft(default)((nv, f) => f(nv)))
+
+    private val _otherValue: NonCleanAnyVar[OtherValueType] =
+    vendAVar[OtherValueType](otherValueDefault)
+
+    protected def otherValueDefault: OtherValueType = null
+
+    /**
+     * A field my have an "otherValue" which can be used
+     * to store a list of options or other information that
+     * the fields needs on a Screen/Wizard by Screen/Wizard
+     * basis
+     */
+    def otherValue: OtherValueType = _otherValue.get
 
     def default: ValueType
 
@@ -230,9 +252,14 @@ private[liftweb] trait AbstractScreen extends Factory {
 
   protected object FilterOrValidate {
     implicit def promoteFilter[T](f: T => T): FilterOrValidate[T] = AFilter(f)  
-  implicit def promoteValidate[T](v: T => List[FieldError]): FilterOrValidate[T] = AVal(v)  
+    implicit def promoteValidate[T](v: T => List[FieldError]): FilterOrValidate[T] = AVal(v)  
+    
+    implicit def promoteToFormParam(a: SHtml.ElemAttr): FilterOrValidate[Nothing] = FormParam(a)
+    implicit def promoteToFormParam(a: (String, String)): FilterOrValidate[Nothing] = FormParam(a)
   }
-  sealed protected trait FilterOrValidate[T]
+  sealed protected trait FilterOrValidate[+T]
+
+  protected final case class FormParam(fp: SHtml.ElemAttr) extends FilterOrValidate[Nothing]
 
   protected final case class AFilter[T](val f: T => T) extends FilterOrValidate[T]
   protected final case class AVal[T](val v: T => List[FieldError]) extends FilterOrValidate[T]
@@ -318,6 +345,233 @@ private[liftweb] trait AbstractScreen extends Factory {
 
   def noticeTypeToAttr(screen: AbstractScreen): Box[NoticeType.Value => MetaData] =
   inject[NoticeType.Value => MetaData] or LiftScreenRules.inject[NoticeType.Value => MetaData]
+
+
+  /**
+   * Create a field that's added to the Screen
+   *
+   * @param theName - the name of the field.  This is call-by-name, so you
+   * can do things like S.?("Dog's Name") such that the string will be
+   * localized
+   *
+   * @param defaultValue - the starting value for the field.  This is
+   * also call-by-name which is handy for constructs like:
+   * <code class="scala">SomeExternalRequestVarOrSessionVar.get</code>
+   *
+   * @theToForm - a function to convert the field into a form
+   *
+   * @otherValue - a handy way include other values in the field.  The other value is
+   * calcualted when the field is initialized.  You can, for example, put
+   * a list of valid options in the field.
+   *
+   * @stuff - a list of filters and validations for the field
+   *
+   * @return a newly minted Field
+   */
+  protected def makeField[T, OV](theName: => String, defaultValue: => T,
+                                 theToForm: (Field {type OtherValueType = OV
+                                                    type ValueType = T } =>
+                                                      Box[NodeSeq]), 
+                                 otherValue: OtherValueInitializer[OV], 
+                                 stuff: FilterOrValidate[T]*): 
+  Field{type ValueType = T; type OtherValueType = OV} = {
+    otherValue match {
+      case OtherValueInitializerImpl(otherValueInitFunc) => {
+        new Field {
+          type OtherValueType = OV
+          type ValueType = T
+
+          override protected def otherValueDefault: OtherValueType = otherValueInitFunc()
+
+          override def name: String = theName
+          override implicit def manifest = buildIt[T]
+          override def default: T = defaultValue
+          override val setFilter = stuff.flatMap{case AFilter(f) => List(f) case _ => Nil}.toList
+          override val validations = stuff.flatMap{case AVal(v) => List(v) case _ => Nil}.toList
+          override def toForm: Box[NodeSeq] = theToForm(this)
+        }
+      }
+
+      case _ => {
+        new Field {
+          type ValueType = T
+          type OtherValueType = OV
+          override def name: String = theName
+          override implicit def manifest = buildIt[T]
+          override def default: T = defaultValue
+          override val setFilter = stuff.flatMap{case AFilter(f) => List(f) case _ => Nil}.toList
+          override val validations = stuff.flatMap{case AVal(v) => List(v) case _ => Nil}.toList
+          override def toForm: Box[NodeSeq] = theToForm(this)
+        }
+      }
+    }
+  }
+
+  /**
+   * Create a password field
+   *
+   * @param name the name of the field (call-by-name)
+   * @param defaultValue the starting value of the field (call-by-name)
+   * @param stuff the filters, validators and attributes
+   *
+   * @returns a newly minted Field
+   */
+  protected def password(name: => String, defaultValue: => String, stuff: FilterOrValidate[String]*): Field{type ValueType=String} = {
+    val eAttr: List[SHtml.ElemAttr] = stuff.flatMap{case FormParam(fp) => List(fp) case _ => Nil}.toList
+    
+    makeField[String, Nothing](name, 
+                               defaultValue,
+                               field => SHtml.password(field.get, field.set(_), eAttr :_*),
+                               NothingOtherValueInitializer,
+                               stuff :_*)
+  }
+
+  /**
+   * Create a text field
+   *
+   * @param name the name of the field (call-by-name)
+   * @param defaultValue the starting value of the field (call-by-name)
+   * @param stuff the filters, validators and attributes
+   *
+   * @returns a newly minted Field
+   */
+  protected def text(name: => String, defaultValue: => String, stuff: FilterOrValidate[String]*): Field{type ValueType=String} = {
+    val eAttr: List[SHtml.ElemAttr] = stuff.flatMap{case FormParam(fp) => List(fp) case _ => Nil}.toList
+    
+    makeField[String, Nothing](name, 
+                               defaultValue,
+                               field => SHtml.text(field.get, field.set(_), eAttr :_*),
+                               NothingOtherValueInitializer,
+                               stuff :_*)
+  }
+
+
+  /**
+   * Create a textarea Field with 80 columns and 5 rows
+   *
+   * @param name the name of the field (call-by-name)
+   * @param defaultValue the starting value of the field (call-by-name)
+   *
+   * @param stuff - a list of filters and validations for the field
+   *
+   * @returns a newly minted Field{type ValueType = String}
+   */
+  protected def textarea(name: => String, defaultValue: => String, stuff: FilterOrValidate[String]*): Field{type ValueType = String} =
+    textarea(name, defaultValue, 5, 80, stuff :_*)
+  
+    
+  
+  /**
+   * Create a textarea Field
+   *
+   * @param name the name of the field (call-by-name)
+   * @param defaultValue the starting value of the field (call-by-name)
+   * @param rows the number of rows in the textarea
+   * @param cols the number of columns in the textarea
+   *
+   * @param stuff - a list of filters and validations for the field
+   *
+   * @returns a newly minted Field{type ValueType = String}
+   */
+  protected def textarea(name: => String, defaultValue: => String, rows: Int, cols: Int, stuff: FilterOrValidate[String]*): 
+  Field{type ValueType = String} = {
+    
+    val eAttr: List[SHtml.ElemAttr] = (("rows" -> rows.toString): SHtml.ElemAttr) ::
+    (("cols" -> cols.toString): SHtml.ElemAttr) ::
+    stuff.flatMap{case FormParam(fp) => List(fp) case _ => Nil}.toList
+    
+    makeField[String, Nothing](name, 
+                               defaultValue,
+                               field => SHtml.textarea(field.is,
+                                                       field.set(_),
+                                                       eAttr :_*),
+                               NothingOtherValueInitializer,
+                               stuff :_*)
+  }
+
+
+  /**
+   * Create a select HTML element
+   *
+   * @param name the name of the field (call-by-name)
+   * @param default the starting value of the field (call-by-name)
+   * @param choices the possible choices for the select
+   *
+   * @param stuff - a list of filters and validations for the field
+   * @param f a PairStringPromoter (a wrapper around a function) that converts T => display String
+   *
+   * @returns a newly minted Field{type ValueType = String}
+   */  
+  protected def select[T](name: => String, default: => T, choices: => Seq[T], stuff: FilterOrValidate[T]*)
+  (implicit f: SHtml.PairStringPromoter[T]): Field{type ValueType = T; type OtherValueType = Seq[T]} 
+  =
+    {
+      val eAttr: List[SHtml.ElemAttr] = stuff.flatMap{case FormParam(fp) => List(fp) case _ => Nil}.toList
+      
+      
+      makeField[T, Seq[T]](name, default,
+                           field =>
+                             SHtml.selectElem(field.otherValue,
+                                              Full(field.is), eAttr :_*)(field.set(_)),
+                           OtherValueInitializerImpl[Seq[T]](() => choices),
+                           stuff :_*)
+    }
+  
+  /**
+   * Create a multi select HTML element
+   *
+   * @param name the name of the field (call-by-name)
+   * @param default the starting value of the field (call-by-name)
+   * @param choices the possible choices for the select
+   *
+   * @param stuff - a list of filters and validations for the field
+   * @param f a PairStringPromoter (a wrapper around a function) that converts T => display String
+   *
+   * @returns a newly minted Field{type ValueType = String}
+   */  
+  protected def multiselect[T](name: => String, default: => Seq[T], choices: => Seq[T], stuff: FilterOrValidate[Seq[T]]*)
+  (implicit f: SHtml.PairStringPromoter[T]): Field{type ValueType = Seq[T]; type OtherValueType = Seq[T]} 
+  =
+    {
+      val eAttr: List[SHtml.ElemAttr] = stuff.flatMap{case FormParam(fp) => List(fp) case _ => Nil}.toList
+      
+      
+      makeField[Seq[T], Seq[T]](name, default,
+                                field =>
+                                  SHtml.multiSelectElem(field.otherValue,
+                                                        field.is, eAttr :_*)(field.set(_)),
+                                OtherValueInitializerImpl[Seq[T]](() => choices),
+                                stuff :_*)
+    }
+  
+  
+
+  /**
+   * Create a radio HTML element
+   *
+   * @param name the name of the field (call-by-name)
+   * @param default the starting value of the field (call-by-name)
+   * @param choices the possible choices for the select
+   *
+   * @param stuff - a list of filters and validations for the field
+   * @param f a PairStringPromoter (a wrapper around a function) that converts T => display String
+   *
+   * @returns a newly minted Field{type ValueType = String}
+   */  
+  protected def radio(name: => String, default: => String, choices: => Seq[String], stuff: FilterOrValidate[String]*):
+  Field{type ValueType = String; type OtherValueType = Seq[String]} = {
+    val eAttr: List[SHtml.ElemAttr] = stuff.flatMap{case FormParam(fp) => List(fp) case _ => Nil}.toList
+    
+    
+    makeField[String, Seq[String]](name, default,
+                                   field =>
+                                     Full(SHtml.radio(field.otherValue,
+                                                      Full(field.is),
+                                                      field.set _,
+                                                      eAttr :_*).toForm),
+                                   OtherValueInitializerImpl[Seq[String]](() => choices),
+                                   stuff :_*)
+  }
 }
 
 

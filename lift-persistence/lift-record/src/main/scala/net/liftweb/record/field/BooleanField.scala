@@ -32,7 +32,7 @@ trait BooleanTypedField extends TypedField[Boolean] {
   def setFromAny(in: Any): Box[Boolean] = genericSetFromAny(in)
   def setFromString(s: String): Box[Boolean] = setBox(tryo(toBoolean(s)))
 
-  private def elem(attrs: (String, String)*) =
+  private def elem(attrs: SHtml.ElemAttr*) =
       SHtml.checkbox(valueBox openOr false, (b: Boolean) => this.setBox(Full(b)), ("tabIndex" -> tabIndex.toString) :: attrs.toList: _*)
 
   def toForm: Box[NodeSeq] =

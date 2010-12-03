@@ -35,7 +35,7 @@ abstract class FormProcessor(prefix: String) {
 
   def text(attrs: (String, String)*)(init: String, action: String=>Unit) = SHtml.text(init, action, attrs:_*)
   def text: (String,String=>Unit)=>NodeSeq  = text()_
-  def checkbox(attrs: (String, String)*)(init: Boolean, action: Boolean=>Unit) = SHtml.checkbox(init, action, attrs:_*)
+  def checkbox(attrs: (String, String)*)(init: Boolean, action: Boolean=>Unit) = SHtml.checkbox(init, action, (attrs: Seq[SHtml.ElemAttr]):_*)
   def checkbox: (Boolean, Boolean=>Unit)=>NodeSeq = checkbox()_
 
   val stringValues: mMap[String, String] = mMap.empty[String, String]
