@@ -1721,5 +1721,14 @@ object Html5ElemAttr {
   }
 }
 
+/**
+ * Mix this trait into a snippet class so that you have a convenient
+ * value to redirect back to (whence).
+ * When you're done with the snippet, <code>S.redirectTo(whence)</code>
+ */
+trait Whence {
+  protected val whence = S.referer openOr "/"
+}
+
 }
 }
