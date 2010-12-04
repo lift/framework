@@ -44,6 +44,10 @@ import _root_.net.liftweb.common._
     def lift[A,B](cell: Cell[B])(f: (T, B) => A) = FuncCell(this, cell)(f)
   }
 
+  object Cell {
+    def apply[T](v: T): ValueCell[T] = new ValueCell[T](v)
+  }
+
   /**
    * A cell that changes value on each access.  This kind of cell
    * could be used to access an external resource.  <b>Warning</b>
@@ -64,6 +68,8 @@ import _root_.net.liftweb.common._
    */
   object ValueCell {
     def apply[A](value: A): ValueCell[A] = new ValueCell(value)
+
+    implicit def vcToT[T](in: ValueCell[T]): T = in.get
   }
 
   /**
