@@ -110,11 +110,23 @@ private[http] trait LiftMerge {
                 var bodyTail = false
 
                 v match {
-                  case e: Elem if e.label == "html" && !inHtml => htmlTag = e; inHtml = true && doMergy
-                  case e: Elem if e.label == "head" && inHtml && !inBody => headTag = e; inHead = true && doMergy; justHead = true && doMergy
-                  case e: Elem if e.label == "head" && inHtml && inBody => bodyHead = true && doMergy
-                  case e: Elem if e.label == "tail" && inHtml && inBody => bodyTail = true && doMergy
-                  case e: Elem if e.label == "body" && inHtml => bodyTag = e; inBody = true && doMergy; justBody = true && doMergy
+                  case e: Elem if e.label == "html" && 
+                  !inHtml => htmlTag = e; inHtml = true && doMergy
+
+                  case e: Elem if e.label == "head" && inHtml && 
+                  !inBody => headTag = e; 
+                  inHead = true && doMergy; justHead = true && doMergy
+
+                  case e: Elem if (e.label == "head" || 
+                                   e.label.startsWith("head_")) && 
+                  inHtml && inBody => bodyHead = true && doMergy
+
+                  case e: Elem if e.label == "tail" && inHtml && 
+                  inBody => bodyTail = true && doMergy
+
+                  case e: Elem if e.label == "body" && inHtml =>
+                    bodyTag = e; inBody = true && doMergy; 
+                  justBody = true && doMergy
 
                   case _ =>
                 }
