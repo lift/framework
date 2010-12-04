@@ -681,6 +681,23 @@ object JsCmds {
     def toJsCmd = "try { " + what.toJsCmd + " } catch (e) {" + (if (alert) "alert(e);" else "") + "}"
   }
 
+  /**
+   * A companion object with a helpful alternative constructor
+   */
+  object RedirectTo {
+    /**
+     * Redirect to a page and execute the function
+     * when the page is loaded (only if the page is on the
+     * same server, not going to some other server on the internet)
+     */
+    def apply(where: String, func: () => Unit): RedirectTo =
+    S.session match {
+      case Full(liftSession) => 
+        new RedirectTo(liftSession.attachRedirectFunc(where, Full(func)))
+      case _ => new RedirectTo(where)
+    }
+  }
+
   case class RedirectTo(where: String) extends JsCmd {
     private val where2 = // issue 176
     if (where.startsWith("/") &&
