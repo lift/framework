@@ -515,7 +515,7 @@ object SHtml {
   def jsonText(value: String, cmd: String, json: JsonCall, attrs: ElemAttr*): Elem =
   jsonText(value, exp => json(cmd, exp), attrs: _*)
 
-  def ajaxText(settable: PSettableValueHolder[String], attrs: ElemAttr*): Elem =
+  def ajaxTextElem(settable: Settable{type ValueType = String}, attrs: ElemAttr*): Elem =
     ajaxText(settable.get, (b: String) => {settable.set(b); Noop}, attrs :_*)
 
   def ajaxText(value: String, func: String => JsCmd, attrs: ElemAttr*): Elem = 
@@ -656,11 +656,16 @@ object SHtml {
     }
   }
 
-  def ajaxCheckbox(settable: PSettableValueHolder[Boolean], attrs: ElemAttr*): Elem =
+  def ajaxCheckboxElem(settable: Settable{type ValueType = Boolean}, attrs: ElemAttr*): Elem =
     ajaxCheckbox(settable.get, (b: Boolean) => {settable.set(b); Noop}, attrs :_*)
 
   def ajaxCheckbox(value: Boolean, func: Boolean => JsCmd, attrs: ElemAttr*): Elem =
     ajaxCheckbox_*(value, Empty, LFuncHolder(in => func(in.exists(toBoolean(_)))), attrs: _*)
+
+  def ajaxCheckboxElem(settable: Settable{type ValueType = Boolean}, jsFunc: Call, attrs: ElemAttr*): Elem =
+    ajaxCheckbox_*(settable.get, Full(jsFunc), 
+                   LFuncHolder(in => {settable.set(in.exists(toBoolean( _))); 
+                                      Noop}), attrs: _*)
 
   def ajaxCheckbox(value: Boolean, jsFunc: Call, func: Boolean => JsCmd, attrs: ElemAttr*): Elem =
     ajaxCheckbox_*(value, Full(jsFunc), LFuncHolder(in => func(in.exists(toBoolean(_)))), attrs: _*)
@@ -937,7 +942,8 @@ object SHtml {
    * form fields (input, button, textarea, select) and the
    * function is executed when the form containing the field is submitted.
    */
-  def onSubmitUnit(func: () => Any): NodeSeq => NodeSeq = onSubmit(func: AFuncHolder)
+  def onSubmitUnit(func: () => Any): NodeSeq => NodeSeq = 
+    onSubmitImpl(func: AFuncHolder)
 
   /**
    * execute the String function when the form is submitted.
@@ -946,7 +952,7 @@ object SHtml {
    * function is executed when the form containing the field is submitted.
    */
   def onSubmit(func: String => Any): NodeSeq => NodeSeq = 
-    onSubmit(func: AFuncHolder)
+    onSubmitImpl(func: AFuncHolder)
 
   /**
    * execute the List[String] function when the form is submitted.
@@ -955,7 +961,7 @@ object SHtml {
    * function is executed when the form containing the field is submitted.
    */
   def onSubmitList(func: List[String] => Any): NodeSeq => NodeSeq = 
-    onSubmit(func: AFuncHolder)
+    onSubmitImpl(func: AFuncHolder)
 
   /**
    * Execute the Boolean function when the form is submitted.
@@ -964,7 +970,7 @@ object SHtml {
    * function is executed when the form containing the field is submitted.
    */
   def onSubmitBoolean(func: Boolean => Any): NodeSeq => NodeSeq = 
-    onSubmit(func: AFuncHolder)
+    onSubmitImpl(func: AFuncHolder)
 
   /**
    * Execute the function when the form is submitted.
@@ -972,7 +978,7 @@ object SHtml {
    * form fields (input, button, textarea, select) and the
    * function is executed when the form containing the field is submitted.
    */
-  def onSubmit(func: AFuncHolder): NodeSeq => NodeSeq =
+  def onSubmitImpl(func: AFuncHolder): NodeSeq => NodeSeq =
     (in: NodeSeq) => {
       var radioName: Box[String] = Empty
       var checkBoxName: Box[String] = Empty
@@ -1044,6 +1050,121 @@ object SHtml {
   def text(value: String, func: String => Any, attrs: ElemAttr*): Elem =
     text_*(value, SFuncHolder(func), attrs: _*)
 
+  /**
+   * Generate an input element for the Settable
+   */
+  def textElem(settable: Settable{type ValueType = String}, attrs: ElemAttr*): Elem =
+    text_*(settable.get, SFuncHolder(settable.set _), attrs: _*)
+
+  /**
+   * Generate an input field with type email.  At some point,
+   * there will be graceful fallback for non-HTML5 browsers.  FIXME
+   */
+  def email(value: String, func: String => Any, attrs: ElemAttr*): Elem =
+    email_*(value, SFuncHolder(func), attrs: _*)
+
+  /**
+   * Generate an email input element for the Settable. At some point
+   * there will be graceful fallback for non-HTML5 browsers. FIXME
+   */
+  def email(settable: Settable{type ValueType = String},
+            attrs: ElemAttr*): Elem =
+              email_*(settable.get, SFuncHolder(settable.set _), attrs: _*)
+
+  private def email_*(value: String, func: AFuncHolder, attrs: ElemAttr*): Elem =
+    makeFormElement("email", func, attrs: _*) %
+  new UnprefixedAttribute("value", Text(value), Null)
+
+  /**
+   * Generate an input field with type url.  At some point,
+   * there will be graceful fallback for non-HTML5 browsers.  FIXME
+   */
+  def url(value: String, func: String => Any, attrs: ElemAttr*): Elem =
+    url_*(value, SFuncHolder(func), attrs: _*)
+
+  /**
+   * Generate a url input element for the Settable. At some point
+   * there will be graceful fallback for non-HTML5 browsers. FIXME
+   */
+  def url(settable: Settable{type ValueType = String},
+          attrs: ElemAttr*): Elem =
+            url_*(settable.get, SFuncHolder(settable.set _), attrs: _*)
+
+  private def url_*(value: String, func: AFuncHolder, attrs: ElemAttr*): Elem =
+    makeFormElement("url", func, attrs: _*) %
+  new UnprefixedAttribute("value", Text(value), Null)
+
+  /**
+   * Generate an input field with type number.  At some point,
+   * there will be graceful fallback for non-HTML5 browsers.  FIXME
+   */
+  def number(value: Int, func: Int => Any,
+             min: Int, max: Int, attrs: ElemAttr*): Elem =
+    number_*(value, 
+             min, max,
+             SFuncHolder(s => Helpers.asInt(s).map(func)), attrs: _*)
+
+  /**
+   * Generate a number input element for the Settable. At some point
+   * there will be graceful fallback for non-HTML5 browsers. FIXME
+   */
+  def number(settable: Settable{type ValueType = Int},
+             min: Int, max: Int,
+             attrs: ElemAttr*): Elem =
+               number_*(settable.get, min, max,
+                        SFuncHolder(s => Helpers.asInt(s).map(settable.set _)),
+                        attrs: _*)
+  
+  private def number_*(value: Int,
+                       min: Int, max: Int,
+                       func: AFuncHolder, attrs: ElemAttr*): Elem = {
+    import Helpers._
+
+    makeFormElement("number", 
+                    func,
+                    attrs: _*) % 
+    ("value" -> value.toString) %
+    ("min" -> min.toString) %  
+    ("max" -> max.toString)
+  }
+
+  /**
+   * Generate an input field with type range.  At some point,
+   * there will be graceful fallback for non-HTML5 browsers.  FIXME
+   */
+  def range(value: Int, func: Int => Any,
+             min: Int, max: Int, attrs: ElemAttr*): Elem =
+    range_*(value, 
+            min, max,
+            SFuncHolder(s => Helpers.asInt(s).map(func)), attrs: _*)
+
+  /**
+   * Generate a range input element for the Settable. At some point
+   * there will be graceful fallback for non-HTML5 browsers. FIXME
+   */
+  def range(settable: Settable{type ValueType = Int},
+            min: Int, max: Int,
+             attrs: ElemAttr*): Elem =
+               range_*(settable.get, min, max,
+                       SFuncHolder(s => Helpers.asInt(s).map(settable.set _)),
+                       attrs: _*)
+  
+  private def range_*(value: Int,
+                      min: Int, max: Int,
+                      func: AFuncHolder, attrs: ElemAttr*): Elem = {
+    import Helpers._
+
+    makeFormElement("range", 
+                    func,
+                    attrs: _*) % 
+    ("value" -> value.toString) %
+    ("min" -> min.toString) %  
+    ("max" -> max.toString)
+  }
+
+
+
+
   def textAjaxTest(value: String, func: String => Any, ajaxTest: String => JsCmd, attrs: ElemAttr*): Elem =
     text_*(value, SFuncHolder(func), ajaxTest, attrs: _*)
 
@@ -1053,6 +1174,9 @@ object SHtml {
 
   def password(value: String, func: String => Any, attrs: ElemAttr*): Elem =
     makeFormElement("password", SFuncHolder(func), attrs: _*) % new UnprefixedAttribute("value", Text(value), Null)
+
+  def passwordElem(settable: Settable{type ValueType = String}, attrs: ElemAttr*): Elem =
+    makeFormElement("password", SFuncHolder(settable.set _), attrs: _*) % new UnprefixedAttribute("value", Text(settable.get), Null)
 
   def hidden(func: () => Any, attrs: ElemAttr*): Elem =
     makeFormElement("hidden", NFuncHolder(func), attrs: _*) % ("value" -> "true")
@@ -1273,6 +1397,27 @@ object SHtml {
    * Create a select box based on the list with a default value and the function
    * to be executed on form submission
    *
+   * @param options -- a list of values
+   * @param default -- the default value (or Empty if no default value)
+   * @param attrs -- the attributes to append to the resulting Elem,
+   * these may be name-value pairs (static attributes) or special
+   * HTML5 ElemAtts
+   * @param onSubmit -- the function to execute on form submission
+   * @param f -- the function that converts a T to a Display String.
+   */
+  def selectElem[T](options: Seq[T], 
+                    settable: LiftValue[T], 
+                    attrs: ElemAttr*)
+  (implicit f: PairStringPromoter[T]): 
+  Elem = {
+    selectObj[T](options.map(v => (v, f(v))), Full(settable.get), 
+                 settable.set _, attrs :_*)
+  }
+
+  /**
+   * Create a select box based on the list with a default value and the function
+   * to be executed on form submission
+   *
    * @param options -- a list of value and text pairs (value, text to display)
    * @param default -- the default value (or Empty if no default value)
    * @param onSubmit -- the function to execute on form submission
@@ -1391,6 +1536,10 @@ object SHtml {
   def textarea(value: String, func: String => Any, attrs: ElemAttr*): Elem =
     textarea_*(value, SFuncHolder(func), attrs: _*)
 
+  def textareaElem(settable: Settable{type ValueType = String}, 
+                   attrs: ElemAttr*):
+  Elem = textarea_*(settable.get, SFuncHolder(settable.set _), attrs: _*)
+
   def textarea_*(value: String, func: AFuncHolder, attrs: ElemAttr*): Elem =
     fmapFunc(func)(funcName =>
             attrs.foldLeft(<textarea name={funcName}>{value}</textarea>)(_ % _))
@@ -1473,11 +1622,30 @@ object SHtml {
   }
 
   /**
+   * Defines a new checkbox for the Settable
+   */
+  def checkboxElem(settable: Settable{type ValueType = Boolean}, attrs: ElemAttr*): NodeSeq = {
+    checkbox_id(settable.get, settable.set _, Empty, attrs: _*)
+  }
+
+  /**
    * Defines a new checkbox set to  { @code value } and running  { @code func } when the
    * checkbox is submitted.
    */
   def checkbox(value: Boolean, func: Boolean => Any, attrs: ElemAttr*): NodeSeq = {
     checkbox_id(value, func, Empty, attrs: _*)
+  }
+
+  /**
+   * Defines a new checkbox for the Settable
+   */
+  def checkbox_id(settable: Settable{type ValueType = Boolean},
+                  id: Box[String], attrs: ElemAttr*): NodeSeq = {
+    def from(f: Boolean => Any): List[String] => Boolean = (in: List[String]) => {
+      f(in.exists(toBoolean(_)))
+      true
+    }
+    checkbox_*(settable.get, LFuncHolder(from(settable.set _)), id, attrs: _*)
   }
 
   /**
@@ -1523,6 +1691,35 @@ case class AjaxContext(success: Box[String], failure: Box[String], responseType:
 case class JsContext(override val success: Box[String], override val failure: Box[String]) extends AjaxContext(success, failure, AjaxType.JavaScript)
 
 case class JsonContext(override val success: Box[String], override val failure: Box[String]) extends AjaxContext(success, failure, AjaxType.JSON)
+
+object Html5ElemAttr {
+  /**
+   * The autofocus attribute
+   */
+  final case object Autofocus extends SHtml.ElemAttr {
+    // FIXME detect HTML5 browser and do the right thing
+    def apply(in: Elem): Elem = in % ("autofocus" -> "true")
+  }
+
+  /**
+   * The required attribute
+   */
+  final case object Required extends SHtml.ElemAttr {
+    // FIXME detect HTML5 browser and do the right thing
+    def apply(in: Elem): Elem = in % ("required" -> "true")
+  }
+
+  /**
+   * The placeholder attribute for HTML5.
+   *
+   * @param text - a String or () => String that will be the
+   * placeholder property in the attribute
+   */
+  final case class Placeholder(text: StringFunc) extends SHtml.ElemAttr {
+    // FIXME detect HTML5 browser and do the right thing
+    def apply(in: Elem): Elem = in % ("placeholder" -> text.func())
+  }
+}
 
 }
 }

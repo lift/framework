@@ -69,14 +69,9 @@ import _root_.net.liftweb.common._
   /**
    * A ValueCell holds a value that can be mutated.
    */
-  final class ValueCell[A](initialValue: A) extends Cell[A] with PSettableValueHolder[A] {
+  final class ValueCell[A](initialValue: A) extends Cell[A] with LiftValue[A] {
     private var value: A = initialValue
     private var ct: Long = System.nanoTime()
-
-    /**
-     * For compatibility with PSettableValueHolder
-     */
-    def is: A = get
 
     /**
      * The cell's value and most recent change time

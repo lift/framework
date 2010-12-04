@@ -265,13 +265,18 @@ trait HtmlProperties {
  */
 final case class OldHtmlProperties(userAgent: Box[String]) extends HtmlProperties {
   def docType: Box[String] = LiftRules.docType.vend.apply(S.request openOr Req.nil)
-  def encoding: Box[String] = Full("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+  def encoding: Box[String] = 
+    Full(LiftRules.calculateXmlHeader(null, <ignore/>, contentType))
+
   def contentType: Box[String] = {
-    if (LiftRules.useXhtmlMimeType) {
-      // FIXME read accepts header
-      Full("application/xhtml+xml; charset=utf-8")
-    } else 
-      Full("text/html; charset=utf-8")
+    val req = S.request
+    val accept = req.flatMap(_.accept)
+    val key = req -> accept
+    if (LiftRules.determineContentType.isDefinedAt(key)) {
+      Full(LiftRules.determineContentType(key))
+    } else {
+      Empty
+    }
   }
 
   def htmlParser: InputStream => Box[NodeSeq] = PCDataXmlParser.apply _
@@ -288,16 +293,16 @@ final case class OldHtmlProperties(userAgent: Box[String]) extends HtmlPropertie
   
   def htmlOutputHeader: Box[String] = 
     (docType -> encoding) match {
-      case (Full(dt), Full(enc)) => 
+      case (Full(dt), Full(enc)) if dt.length > 0 && enc.length > 0 => 
         if (LiftRules.calcIE6ForResponse() && LiftRules.flipDocTypeForIE6) {
           Full(dt + "\n" + enc + "\n")
         } else {
           Full(enc + "\n" + dt + "\n")
         }
 
-      case (Full(dt), _) => Full(dt + "\n")
+      case (Full(dt), _) if dt.length > 0 => Full(dt + "\n")
 
-      case (_, Full(enc)) => Full(enc + "\n")
+      case (_, Full(enc)) if enc.length > 0=> Full(enc + "\n")
 
       case _ => Empty
     }

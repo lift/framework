@@ -660,6 +660,11 @@ class Req(val path: ParsePath,
 
   def isOpera = isOpera9
 
+  lazy val accept: Box[String] = {
+    request.headers.filter(_.name equalsIgnoreCase "accept").
+    headOption.flatMap(_.values.headOption)
+  }
+
   lazy val acceptsJavaScript_? = {
     request.headers.filter(_.name.toLowerCase == "accept").
     find(h => h.values.find(s =>

@@ -331,7 +331,9 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   }
 
   /**
-   * Set the doc type used.
+   * Set the doc type used.  Use the HtmlProperties
+   *
+   * @deprecated
    */
   val docType: FactoryMaker[Req => Box[String]] = new FactoryMaker( (r: Req) => r  match {
     case _ if S.skipDocType => Empty
@@ -1042,7 +1044,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   private def cvt(ns: Node, headers: List[(String, String)], cookies: List[HTTPCookie], req: Req, code:Int) =
     convertResponse({
       val ret = XhtmlResponse(ns,
-        LiftRules.docType.vend(req),
+        /*LiftRules.docType.vend(req)*/S.htmlProperties.docType,
         headers, cookies, code,
         S.ieMode)
       ret._includeXmlVersion = !S.skipDocType
@@ -1137,11 +1139,11 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   @volatile var exceptionHandler = RulesSeq[ExceptionHandlerPF].append {
     case (Props.RunModes.Development, r, e) =>
       logger.error("Exception being returned to browser when processing " + r.uri.toString + ": " + showException(e))
-      XhtmlResponse((<html> <body>Exception occured while processing {r.uri}<pre>{showException(e)}</pre> </body> </html>), LiftRules.docType.vend(r), List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.ieMode)
+      XhtmlResponse((<html> <body>Exception occured while processing {r.uri}<pre>{showException(e)}</pre> </body> </html>), S.htmlProperties.docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.ieMode)
 
     case (_, r, e) =>
       logger.error("Exception being returned to browser when processing " + r, e)
-      XhtmlResponse((<html> <body>Something unexpected happened while serving the page at {r.uri}</body> </html>), LiftRules.docType.vend(r), List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.ieMode)
+      XhtmlResponse((<html> <body>Something unexpected happened while serving the page at {r.uri}</body> </html>), S.htmlProperties.docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.ieMode)
   }
 
   /**

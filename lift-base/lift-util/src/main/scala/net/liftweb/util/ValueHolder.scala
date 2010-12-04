@@ -19,17 +19,31 @@ package util {
 
 trait ValueHolder {
   type ValueType
-    def is: ValueType
+
+  /**
+   * Get the value.  Use get.
+   *
+   * @deprecated
+   */
+  def is: ValueType
+
+  /**
+   * An alternative way to get the value
+   */
   def get: ValueType
 }
 
-trait SettableValueHolder extends ValueHolder {
+/**
+ * A value that can be set
+ */
+trait Settable extends ValueHolder {
   def set(in: ValueType): ValueType
 }
 
+trait SettableValueHolder extends Settable
+
 trait PValueHolder[T] extends ValueHolder {
  type ValueType = T
-  // def manifest: Manifest[T]
 }
 
 object PValueHolder {
@@ -43,6 +57,14 @@ object ValueHolder {
 }
 
 trait PSettableValueHolder[T] extends PValueHolder[T] with SettableValueHolder
+
+/**
+ * Kinda like a JavaBean property.  It's something that can
+ * be set and retrieved
+ */
+trait LiftValue[T] extends PSettableValueHolder[T] {
+  def is: T = get
+}
 
 }
 }
