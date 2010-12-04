@@ -1054,7 +1054,7 @@ object SHtml {
    * Generate an input element for the Settable
    */
   def textElem(settable: Settable{type ValueType = String}, attrs: ElemAttr*): Elem =
-    text_*(settable.get, SFuncHolder(settable.set _), attrs: _*)
+    text_*(settable.get, SFuncHolder(s => settable.set(s)), attrs: _*)
 
   /**
    * Generate an input field with type email.  At some point,
@@ -1069,7 +1069,7 @@ object SHtml {
    */
   def email(settable: Settable{type ValueType = String},
             attrs: ElemAttr*): Elem =
-              email_*(settable.get, SFuncHolder(settable.set _), attrs: _*)
+              email_*(settable.get, SFuncHolder(s => settable.set(s)), attrs: _*)
 
   private def email_*(value: String, func: AFuncHolder, attrs: ElemAttr*): Elem =
     makeFormElement("email", func, attrs: _*) %
@@ -1088,7 +1088,7 @@ object SHtml {
    */
   def url(settable: Settable{type ValueType = String},
           attrs: ElemAttr*): Elem =
-            url_*(settable.get, SFuncHolder(settable.set _), attrs: _*)
+            url_*(settable.get, SFuncHolder(s => settable.set(s)), attrs: _*)
 
   private def url_*(value: String, func: AFuncHolder, attrs: ElemAttr*): Elem =
     makeFormElement("url", func, attrs: _*) %
@@ -1112,7 +1112,7 @@ object SHtml {
              min: Int, max: Int,
              attrs: ElemAttr*): Elem =
                number_*(settable.get, min, max,
-                        SFuncHolder(s => Helpers.asInt(s).map(settable.set _)),
+                        SFuncHolder(s => Helpers.asInt(s).map(s => settable.set(s))),
                         attrs: _*)
   
   private def number_*(value: Int,
@@ -1146,7 +1146,7 @@ object SHtml {
             min: Int, max: Int,
              attrs: ElemAttr*): Elem =
                range_*(settable.get, min, max,
-                       SFuncHolder(s => Helpers.asInt(s).map(settable.set _)),
+                       SFuncHolder(s => Helpers.asInt(s).map(s => settable.set(s))),
                        attrs: _*)
   
   private def range_*(value: Int,
@@ -1176,7 +1176,7 @@ object SHtml {
     makeFormElement("password", SFuncHolder(func), attrs: _*) % new UnprefixedAttribute("value", Text(value), Null)
 
   def passwordElem(settable: Settable{type ValueType = String}, attrs: ElemAttr*): Elem =
-    makeFormElement("password", SFuncHolder(settable.set _), attrs: _*) % new UnprefixedAttribute("value", Text(settable.get), Null)
+    makeFormElement("password", SFuncHolder(s => settable.set(s)), attrs: _*) % new UnprefixedAttribute("value", Text(settable.get), Null)
 
   def hidden(func: () => Any, attrs: ElemAttr*): Elem =
     makeFormElement("hidden", NFuncHolder(func), attrs: _*) % ("value" -> "true")
@@ -1411,7 +1411,7 @@ object SHtml {
   (implicit f: PairStringPromoter[T]): 
   Elem = {
     selectObj[T](options.map(v => (v, f(v))), Full(settable.get), 
-                 settable.set _, attrs :_*)
+                 s => settable.set(s), attrs :_*)
   }
 
   /**
@@ -1538,7 +1538,7 @@ object SHtml {
 
   def textareaElem(settable: Settable{type ValueType = String}, 
                    attrs: ElemAttr*):
-  Elem = textarea_*(settable.get, SFuncHolder(settable.set _), attrs: _*)
+  Elem = textarea_*(settable.get, SFuncHolder(s => settable.set(s)), attrs: _*)
 
   def textarea_*(value: String, func: AFuncHolder, attrs: ElemAttr*): Elem =
     fmapFunc(func)(funcName =>
@@ -1625,7 +1625,7 @@ object SHtml {
    * Defines a new checkbox for the Settable
    */
   def checkboxElem(settable: Settable{type ValueType = Boolean}, attrs: ElemAttr*): NodeSeq = {
-    checkbox_id(settable.get, settable.set _, Empty, attrs: _*)
+    checkbox_id(settable.get, s => settable.set(s), Empty, attrs: _*)
   }
 
   /**
@@ -1645,7 +1645,7 @@ object SHtml {
       f(in.exists(toBoolean(_)))
       true
     }
-    checkbox_*(settable.get, LFuncHolder(from(settable.set _)), id, attrs: _*)
+    checkbox_*(settable.get, LFuncHolder(from(s => settable.set(s))), id, attrs: _*)
   }
 
   /**

@@ -86,7 +86,7 @@ trait StatefulSnippet extends DispatchSnippet {
    * @param body - the NodeSeq to wrap in the anchor tag
    * @attrs - the (optional) attributes for the HTML element
    */
-  def link(to: String, func: () => Any, body: NodeSeq, attrs: (String, String)*): Elem =
+  def link(to: String, func: () => Any, body: NodeSeq, attrs: SHtml.ElemAttr*): Elem =
     SHtml.link(to, () => { registerThisSnippet(); func() }, body, attrs: _*)
 
   def redirectTo(where: String) = S.redirectTo(where, registerThisSnippet)

@@ -121,7 +121,7 @@ private[liftweb] trait AbstractScreen extends Factory {
     private val _otherValue: NonCleanAnyVar[OtherValueType] =
     vendAVar[OtherValueType](otherValueDefault)
 
-    protected def otherValueDefault: OtherValueType = null
+    protected def otherValueDefault: OtherValueType = null.asInstanceOf[OtherValueType]
 
     /**
      * A field my have an "otherValue" which can be used
