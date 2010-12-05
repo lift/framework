@@ -27,7 +27,18 @@ object SquerylRecord extends Loggable {
   
   /**
    * Initialize the Squeryl/Record integration. This must be called somewhere during your Boot, and before you use any
-   * Records with Squeryl.
+   * Records with Squeryl. Use this function instead of init if you want to use the squeryl session factory
+   * instead of mapper.DB as the transaction manager with squeryl-record.
+   */
+  def initWithSquerylSession(sessionFactory: => Session) {
+    FieldMetaData.factory = new RecordMetaDataFactory
+    SessionFactory.concreteFactory = Some(() => sessionFactory)
+  }
+  
+  /**
+   * Initialize the Squeryl/Record integration. This must be called somewhere during your Boot, and before you use any
+   * Records with Squeryl. Use this function if you want to use mapper.DB as the transaction manager
+   * with squeryl-record.
    */
   def init(mkAdapter: () => DatabaseAdapter) = {
     FieldMetaData.factory = new RecordMetaDataFactory

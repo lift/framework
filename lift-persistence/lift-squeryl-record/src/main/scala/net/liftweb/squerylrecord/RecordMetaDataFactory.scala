@@ -63,14 +63,23 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
     val colAnnotation = annotations.find(a => a.isInstanceOf[Column]).map(a => a.asInstanceOf[Column])
 
     val fieldsValueType = metaField match {
+      case (f: SquerylRecordField) => f.classOfPersistentField 
       case (_: BooleanTypedField)  => classOf[Boolean]
       case (_: DateTimeTypedField) => classOf[Timestamp]
       case (_: DoubleTypedField)   => classOf[Double]
-      case (_: IntTypedField)      => classOf[Int]
-      case (_: LongTypedField)     => classOf[Long]
+      case (_: IntTypedField)      => classOf[java.lang.Integer]
+      case (_: LongTypedField)     => classOf[java.lang.Long]
+      case (_: DecimalTypedField)     => classOf[BigDecimal]
+      case (_: TimeZoneTypedField)   => classOf[String]
       case (_: StringTypedField)   => classOf[String]
+      case (_: PasswordTypedField)   => classOf[String]
+      case (_: BinaryTypedField)   => classOf[Array[Byte]]
+      case (_: LocaleTypedField)   => classOf[String]
       case (_: EnumTypedField[_])   => classOf[Enumeration#Value]
-      case _ => error("unsupported field type : " + metaField)
+      case (_: EnumNameTypedField[_])   => classOf[Enumeration#Value]
+      case _ => error("Unsupported field type. Consider implementing " +
+		      "SquerylRecordField for defining the persistent class." +
+		      "Field: " + metaField)
     } 
 
     val overrideColLength = metaField match {
@@ -106,6 +115,22 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
       }
     }
   }
+  
+
+  /**
+   * For records, the constructor must not be used directly when
+   * constructing Objects. Instead, the createRecord method must be called.
+   */
+  def createPosoFactory(posoMetaData: PosoMetaData[_]): () => AnyRef = {
+    
+    // Extract the MetaRecord for the companion object. This
+    // is done only once for each class.
+    val metaRecord = Class.forName(posoMetaData.clasz.getName +
+      "$").getField("MODULE$").get(null).asInstanceOf[MetaRecord[_]]
+
+    () => metaRecord.createRecord.asInstanceOf[AnyRef]
+  }
+
 }
 
 }
