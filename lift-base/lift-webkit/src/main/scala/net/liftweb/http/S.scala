@@ -169,6 +169,12 @@ object S extends HasParams with Loggable {
   private object postFuncs extends TransientRequestVar(new ListBuffer[() => Unit])
 
   /**
+   * During an Ajax call made on a Comet component, make the Req's
+   * params available
+   */
+  private object paramsForComet extends TransientRequestVar[Map[String, List[String]]](Map())
+
+  /**
    * We can now collect JavaScript to append to the outgoing request,
    * no matter the format of the outgoing request
    */
@@ -2484,12 +2490,23 @@ for {
   /**
    * Returns all the HTTP parameters having 'n' name
    */
-  def params(n: String): List[String] = request.flatMap(_.params.get(n)).openOr(Nil)
+  def params(n: String): List[String] = 
+    paramsForComet.get.get(n) getOrElse
+    request.flatMap(_.params.get(n)).openOr(Nil)
 
   /**
    * Returns the HTTP parameter having 'n' name
    */
-  def param(n: String): Box[String] = request.flatMap(r => Box(r.param(n)))
+  def param(n: String): Box[String] = 
+    paramsForComet.get.get(n).flatMap(_.headOption) orElse
+    request.flatMap(r => Box(r.param(n)))
+
+  /**
+   * Set the paramsForComet and run the function
+   */
+  private[http] def doCometParams[T](map: Map[String, List[String]])(f: => T): T = {
+    paramsForComet.doWith(map)(f)
+  }
 
   /**
    * Sets an ERROR notice as a plain text
