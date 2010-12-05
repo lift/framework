@@ -417,7 +417,7 @@ object Loc {
    * Algebraic data type for parameters that modify handling of a Loc
    * in a SiteMap
    */
-  sealed trait LocParam[-T] {
+  trait LocParam[-T] {
     def onCreate(loc: Loc[_]){
     }
   }

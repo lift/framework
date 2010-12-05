@@ -307,6 +307,12 @@ case class Menu(loc: Loc[_], private val convertableKids: ConvertableToMenu*) ex
     loc.menu = this
   }
 
+  /**
+   * Rebuild the menu by mutating the child menu items.
+   * This mutation can be changing, adding or removing
+   */
+  def rebuild(f: List[Menu] => List[Menu]): Menu = Menu(loc, f(kids.toList) :_*)
+
   private[sitemap] def validate {
     _parent.foreach(p => if (p.isRoot_?) throw new SiteMapException("Menu items with root location (\"/\") cannot have children"))
     kids.foreach(_.validate)

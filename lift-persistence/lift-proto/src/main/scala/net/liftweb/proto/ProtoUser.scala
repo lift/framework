@@ -387,6 +387,38 @@ trait ProtoUser {
    */
   def menus: List[Menu] = sitemap // issue 182
 
+  /**
+   * Insert this LocParam into your menu if you want the
+   * User's menu items to be inserted at the same level
+   * and after the item
+   */
+  final case object AddUserMenusAfter extends Loc.LocParam[Any]
+
+  /**
+   * replace the menu that has this LocParam with the User's menu
+   * items
+   */
+  final case object AddUserMenusHere extends Loc.LocParam[Any]
+
+  /**
+   * Insert this LocParam into your menu if you want the
+   * User's menu items to be children of that menu
+   */
+  final case object AddUserMenusUnder extends Loc.LocParam[Any]
+
+  private lazy val AfterUnapply = SiteMap.buildMenuMatcher(_ == AddUserMenusAfter)
+  private lazy val HereUnapply = SiteMap.buildMenuMatcher(_ == AddUserMenusHere)
+  private lazy val UnderUnapply = SiteMap.buildMenuMatcher(_ == AddUserMenusUnder)
+
+  /**
+   * The SiteMap mutator function
+   */
+  def sitemapMutator: SiteMap => SiteMap = SiteMap.sitemapMutator {
+    case AfterUnapply(menu) => menu :: sitemap
+    case HereUnapply(_) => sitemap
+    case UnderUnapply(menu) => List(menu.rebuild(_ ::: sitemap))
+  }(SiteMap.addMenusAtEndMutator(sitemap))
+
   lazy val sitemap: List[Menu] =
   List(loginMenuLoc, logoutMenuLoc, createUserMenuLoc,
        lostPasswordMenuLoc, resetPasswordMenuLoc,
