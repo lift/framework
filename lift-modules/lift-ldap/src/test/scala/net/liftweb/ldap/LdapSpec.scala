@@ -17,6 +17,8 @@
 package net.liftweb {
 package ldap {
 
+import common.Full
+
 import _root_.org.specs._
 import _root_.org.specs.runner.JUnit3
 import _root_.org.specs.runner.ConsoleRunner
@@ -114,7 +116,13 @@ object LdapSpecs extends Specification {
       object badLdap extends LDAPVendor
       badLdap.configure()
 
-      badLdap.search("objectClass=person") must throwA[CommunicationException]
+      // Make sure that we use a port where LDAP won't live
+      badLdap.ldapUrl.doWith("ldap://localhost:2") {
+        // Let's not make this spec *too* slow
+        badLdap.retryInterval.doWith(1000) {
+          badLdap.search("objectClass=person") must throwA[CommunicationException]
+        }
+      }
     }
   }
 
