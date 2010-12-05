@@ -173,6 +173,16 @@ object S extends HasParams with Loggable {
    * no matter the format of the outgoing request
    */
   private object _jsToAppend extends TransientRequestVar(new ListBuffer[JsCmd])
+
+  /**
+   * We can now collect Elems to put in the head tag
+   */
+  private object _headTags extends TransientRequestVar(new ListBuffer[Elem])
+
+  /**
+   * We can now collect Elems to put at the end of the body
+   */
+  private object _tailTags extends TransientRequestVar(new ListBuffer[Elem])
   
   private object p_queryLog extends TransientRequestVar(new ListBuffer[(String, Long)])
   private object p_notice extends TransientRequestVar(new ListBuffer[(NoticeType.Value, NodeSeq, Box[String])])
@@ -547,6 +557,32 @@ object S extends HasParams with Loggable {
    */
   def removeSessionRewriter(name: String) =
     session map (_.sessionRewriter -= name)
+
+  /**
+   * Put the given Elem in the head tag.  The Elems
+   * will be de-dupped so no problems adding the
+   * same style tag multiple times
+   */
+  def putInHead(elem: Elem): Unit = _headTags.is += elem
+
+  /**
+   * Get the accumulated Elems for head
+   *
+   * @see putInHead
+   */
+  def forHead(): List[Elem] = _headTags.is.toList
+
+  /**
+   * Put the given Elem at the end of the body tag.
+   */
+  def putAtEndOfBody(elem: Elem): Unit = _tailTags.is += elem
+
+  /**
+   * Get the accumulated Elems for the end of the body
+   *
+   * @see putAtEndOfBody
+   */
+  def atEndOfBody(): List[Elem] = _tailTags.is.toList
 
   /**
    * Sometimes it's helpful to accumute JavaScript as part of servicing

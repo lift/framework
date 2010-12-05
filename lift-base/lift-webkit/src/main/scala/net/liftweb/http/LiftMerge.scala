@@ -76,7 +76,9 @@ private[http] trait LiftMerge {
     val headChildren = new ListBuffer[Node]
     val bodyChildren = new ListBuffer[Node]
     val addlHead = new ListBuffer[Node]
+    addlHead ++= S.forHead()
     val addlTail = new ListBuffer[Node]
+    addlTail ++= S.atEndOfBody()
     val cometTimes = new ListBuffer[CometVersionPair]
     val rewrite = URLRewriter.rewriteFunc
     val fixHref = Req.fixHref
