@@ -225,7 +225,7 @@ abstract class SnippetFailureException(msg: String) extends Exception(msg) {
   def snippetFailure: LiftRules.SnippetFailures.Value
 
   def buildStackTrace: NodeSeq = 
-    getStackTrace.dropWhile 
+    getStackTrace.toList.dropWhile 
   {
     e => {
       val cn = e.getClassName
@@ -239,7 +239,7 @@ abstract class SnippetFailureException(msg: String) extends Exception(msg) {
       !cn.startsWith("java.lang") &&
       !cn.startsWith("sun.")
     }
-  }.take(10).map{
+  }.take(10).toList.map{
       e =>
       <code><span><br/>{e.toString}</span></code>
     }
