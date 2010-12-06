@@ -156,7 +156,9 @@ trait Crudify {
    */
   def showAllMenuLoc: Box[Menu] =
   Full(Menu(Loc("List "+Prefix, listPath, showAllMenuName,
-                locSnippets :: Loc.Template(showAllTemplate) :: showAllMenuLocParams)))
+                addlMenuLocParams ::: (
+                  locSnippets :: Loc.Template(showAllTemplate) :: 
+                  showAllMenuLocParams))))
 
   /**
    * Override to include new Params for the show all menu
@@ -168,11 +170,42 @@ trait Crudify {
    */
   def createMenuLoc: Box[Menu] =
   Full(Menu(Loc("Create "+Prefix, createPath, createMenuName,
-                locSnippets :: Loc.Template(createTemplate) :: createMenuLocParams)))
+                (addlMenuLocParams ::: (
+                  locSnippets :: Loc.Template(createTemplate) ::
+                  createMenuLocParams)))))
   /**
    * Override to include new Params for the create menu
    */
   def createMenuLocParams: List[Loc.AnyLocParam] = Nil
+
+  /**
+   * If there are any Loc.LocParams that need to be
+   * added to every menu (e.g., a guard for access control
+   * of the Crudify screens)
+   */
+  protected def addlMenuLocParams: List[Loc.AnyLocParam] = Nil
+
+
+  /**
+   * Customize the display of a row for displayRecord
+   */
+  protected def doDisplayRecordRow(entry: TheCrudType)(in: NodeSeq): NodeSeq =
+    for {
+      pointer <- fieldsForDisplay
+      field <- computeFieldFromPointer(entry, pointer).toList
+      if field.shouldDisplay_?
+      node <- bind("crud", in, 
+                   "name" -> field.displayHtml, 
+                   "value" -> field.asHtml)
+    } yield node
+  
+  /**
+   * Customize the display of records for view menu loc
+   */
+  protected def displayRecord(entry: TheCrudType)(in: NodeSeq): NodeSeq = {
+    
+    bind("crud", in, "row" -> doDisplayRecordRow(entry) _)
+  }
 
 
   /**
@@ -189,7 +222,7 @@ trait Crudify {
 
         def defaultValue = Empty
 
-        def params = viewMenuLocParams
+        lazy val params = addlMenuLocParams ::: viewMenuLocParams
 
         /**
          * What's the text of the link?
@@ -207,20 +240,6 @@ trait Crudify {
               (RewriteResponse(viewPath),
                findForParam(pp.wholePath.last).open_!)
           })
-
-        def displayRecord(entry: TheCrudType)(in: NodeSeq): NodeSeq = {
-          def doRow(in: NodeSeq): NodeSeq =
-            for {
-              pointer <- fieldsForDisplay
-              field <- computeFieldFromPointer(entry, pointer).toList
-              if field.shouldDisplay_?
-              node <- bind("crud", in, 
-                           "name" -> field.displayHtml, 
-                           "value" -> field.asHtml)
-            } yield node
-
-          bind("crud", in, "row" -> doRow _)
-        }
 
         override def calcTemplate = Full(viewTemplate)
 
@@ -250,7 +269,7 @@ trait Crudify {
 
           def defaultValue = Empty
 
-          def params = editMenuLocParams
+          lazy val params = addlMenuLocParams ::: editMenuLocParams
 
           /**
            * What's the text of the link?
@@ -329,6 +348,44 @@ trait Crudify {
   def editButton = S.??("Save")
 
   /**
+   * Override this method to change how fields are displayed for delete
+   */
+  protected def doDeleteFields(item: TheCrudType)(html: NodeSeq): NodeSeq =
+    for {
+      pointer <- fieldsForDisplay
+      field <- computeFieldFromPointer(item, pointer).toList
+      if field.shouldDisplay_?
+      node <- bind("crud", html, 
+                   "name" -> field.displayHtml,
+                   "value" -> field.asHtml)
+    } yield node
+  
+  /**
+   * Override this method to change the behavior of deleting an item
+   */
+  protected def doDeleteSubmit(item: TheCrudType, from: String)() = {
+    S.notice(S ? "Deleted")
+    item.delete_!
+    S.redirectTo(from)
+  }
+
+
+
+  /**
+   * Override this method to change how the delete screen is built
+   */
+  protected def crudyDelete(item: TheCrudType)(html: NodeSeq): NodeSeq = {
+    val from = referer
+    
+    bind("crud", html,
+         "field" -> doDeleteFields(item) _,
+         "submit" ->
+         ((text: NodeSeq) => SHtml.submit(text.text, 
+                                          doDeleteSubmit(item, from) _)))
+  }
+
+
+  /**
    * The menu item for deleting an item (make this "Empty" to disable)
    */
   def deleteMenuLoc: Box[Menu] = {
@@ -340,34 +397,9 @@ trait Crudify {
             case ("crud.delete", Full(wp: TheCrudType)) => crudyDelete(wp)
           }
 
-          def crudyDelete(item: TheCrudType)(html: NodeSeq): NodeSeq = {
-            val from = referer
-
-            def doFields(html: NodeSeq): NodeSeq =
-              for {
-                pointer <- fieldsForDisplay
-                field <- computeFieldFromPointer(item, pointer).toList
-                if field.shouldDisplay_?
-                node <- bind("crud", html, 
-                             "name" -> field.displayHtml,
-                             "value" -> field.asHtml)
-              } yield node
-
-            def doSubmit() = {
-              S.notice("Deleted")
-              item.delete_!
-              S.redirectTo(from)
-            }
-
-            bind("crud", html,
-                 "field" -> doFields _,
-                 "submit" ->
-                 ((text: NodeSeq) => SHtml.submit(text.text, doSubmit _)))
-          }
-
           def defaultValue = Empty
 
-          def params = deleteMenuLocParams
+          lazy val params = addlMenuLocParams ::: deleteMenuLocParams
 
           /**
            * What's the text of the link?
@@ -611,54 +643,87 @@ trait Crudify {
    */
   protected def rowsPerPage: Int = 20
 
+  /**
+   * Override this method to customize how header items are treated
+   */
+  protected def doCrudAllHeaderItems(in: NodeSeq): NodeSeq =
+    fieldsForList.flatMap(f => 
+      bind("crud", in, "name" -> f.displayHtml))
+    
+  /**
+   * Override this method to customize how a crudAll line is generated
+   */
+  protected def doCrudAllRowItem(c: TheCrudType)(in: NodeSeq): NodeSeq = 
+    for {
+      pointer <- fieldsForList
+      field <- computeFieldFromPointer(c, pointer).toList
+      node <- bind("crud", in, "value" -> field.asHtml)
+    } yield node
+  
+  /**
+   * Override this method to determine how all the rows on a crud
+   * page are displayed
+   */
+  protected def doCrudAllRows(list: List[TheCrudType])(in: NodeSeq): NodeSeq =
+    list.take(rowsPerPage).flatMap{
+      c =>
+      bind("crud", in , "row_item" -> doCrudAllRowItem(c) _,
+           FuncAttrBindParam("edit_href", { ignore : NodeSeq =>
+             Text(editPathString+"/"+(obscurePrimaryKey(c))) },"href"),
+           
+           FuncAttrBindParam("view_href", { ignore : NodeSeq =>
+             Text(viewPathString+"/"+
+                  (obscurePrimaryKey(c)))},"href"),
+           
+           FuncAttrBindParam("delete_href", { ignore : NodeSeq =>
+             Text(deletePathString+"/"+
+                  (obscurePrimaryKey(c)))},"href")
+         )}
+  
+  /**
+   * Override this method to change how the previous link is
+   * generated
+   */
+  protected def crudAllPrev(first: Long)(in: NodeSeq) = 
+    if (first < rowsPerPage) <xml:group>&nbsp;</xml:group>
+    else <a href={listPathString+
+                  "?first="+(0L max (first -
+                                     rowsPerPage.toLong))}>{in}</a>
+  
+  /**
+   * Override this method to change how the next link is generated
+   */
+  protected def crudAllNext(first: Long, list: List[TheCrudType])(in: NodeSeq) = 
+    if (list.length < rowsPerPage) <xml:group>&nbsp;</xml:group>
+    else <a href={listPathString+"?first="+(first +
+                                            rowsPerPage.toLong)}>{in}</a>
+  
+
+  /**
+   * Override this method if you want to change the behavior
+   * of displaying records via the crud.all snippet
+   */
+  protected def doCrudAll(in: NodeSeq): NodeSeq = {
+    val first = S.param("first").map(toLong) openOr 0L
+    val list = findForList(first, rowsPerPage)
+    
+    
+    
+    
+    bind("crud", in, "header_item" -> doCrudAllHeaderItems _,
+         "row" -> doCrudAllRows(list) _,
+         "prev" -> crudAllPrev(first) _, 
+         "next" -> crudAllNext(first, list) _)
+    
+  }
+  
+
   lazy val locSnippets = new DispatchLocSnippets {
     val dispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
       case "crud.all" => doCrudAll
       case "crud.create" => crudDoForm(create, S.??("Created"))
     }
 
-    def doCrudAll(in: NodeSeq): NodeSeq = {
-      val first = S.param("first").map(toLong) openOr 0L
-      val list = findForList(first, rowsPerPage)
-
-      def prev(in: NodeSeq) = if (first < rowsPerPage) <xml:group>&nbsp;</xml:group>
-      else <a href={listPathString+"?first="+(0L max (first - rowsPerPage.toLong))}>{in}</a>
-
-      def next(in: NodeSeq) = if (list.length < rowsPerPage) <xml:group>&nbsp;</xml:group>
-      else <a href={listPathString+"?first="+(first + rowsPerPage.toLong)}>{in}</a>
-
-
-      def doHeaderItems(in: NodeSeq): NodeSeq = fieldsForList.flatMap(f => 
-        bind("crud", in, "name" -> f.displayHtml))
-
-      def doRows(in: NodeSeq): NodeSeq =
-      list.take(rowsPerPage).flatMap{
-        c =>
-        def doRowItem(in: NodeSeq): NodeSeq = 
-          for {
-            pointer <- fieldsForList
-            field <- computeFieldFromPointer(c, pointer).toList
-            node <- bind("crud", in, "value" -> field.asHtml)
-          } yield node
-
-        bind("crud", in , "row_item" -> doRowItem _,
-             FuncAttrBindParam("edit_href", { ignore : NodeSeq =>
-               Text(editPathString+"/"+(obscurePrimaryKey(c))) },"href"),
-
-             FuncAttrBindParam("view_href", { ignore : NodeSeq =>
-            Text(viewPathString+"/"+
-                 (obscurePrimaryKey(c)))},"href"),
-
-             FuncAttrBindParam("delete_href", { ignore : NodeSeq =>
-            Text(deletePathString+"/"+
-                 (obscurePrimaryKey(c)))},"href")
-        )}
-
-      bind("crud", in, "header_item" -> doHeaderItems _,
-           "row" -> doRows _,
-           "prev" -> prev _, "next" -> next _)
-
-    }
   }
 
   /**

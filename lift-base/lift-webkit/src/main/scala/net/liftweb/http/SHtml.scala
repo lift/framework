@@ -1548,6 +1548,44 @@ object SHtml {
             attrs: ElemAttr*): ChoiceHolder[String] =
     radio_*(opts, deflt, SFuncHolder(func), attrs: _*)
 
+  /**
+   * Generate a collection or radio box items from a sequence of
+   * things
+   */
+  def radioElem[T](opts: Seq[T], deflt: Box[T], attrs: ElemAttr*)
+  (onSubmit: Box[T] => Any): ChoiceHolder[T] = {
+    val possible = opts.map(v => Helpers.nextFuncName -> v).toList
+
+    val hiddenId = Helpers.nextFuncName
+
+    fmapFunc(LFuncHolder(lst => lst.filter(_ != hiddenId) match {
+      case Nil => onSubmit(Empty)
+      case x :: _ => onSubmit(possible.filter(_._1 == x).
+                              headOption.map(_._2))
+    })) {
+      name => {
+        val items = possible.zipWithIndex.map {
+          case ((id, value), idx) => {
+            val radio = 
+              attrs.foldLeft(<input type="radio"
+                             name={name} value={id}/>)(_ % _) %
+            checked(deflt.filter(_ == value).isDefined)
+
+            val elem = if (idx == 0) {
+              radio ++ <input type="hidden" value={hiddenId} name={name}/>
+            } else {
+              radio
+            }
+            
+            ChoiceItem(value, elem)
+          }
+        }
+        
+        ChoiceHolder(items)
+      }
+    }
+  }
+
   def radio_*(opts: Seq[String], deflt: Box[String],
               func: AFuncHolder, attrs: ElemAttr*): ChoiceHolder[String] = {
     fmapFunc(func) {
@@ -1568,15 +1606,15 @@ object SHtml {
   }
 
   /** Holds a form control as HTML along with some user defined value */
-  case class ChoiceItem[T](key: T, xhtml: NodeSeq)
+  final case class ChoiceItem[T](key: T, xhtml: NodeSeq)
 
   /** Holds a series of choices: HTML for input controls alongside some user defined value */
-  case class ChoiceHolder[T](items: Seq[ChoiceItem[T]]) {
+  final case class ChoiceHolder[T](items: Seq[ChoiceItem[T]]) {
     /** Retrieve the ChoiceItem that has the given key, throwing NoSuchElementException if there is no matching ChoiceItem */
-    def apply(in: T) = items.filter(_.key == in).first.xhtml
+    def apply(in: T): NodeSeq = items.filter(_.key == in).first.xhtml
 
     /** Retrieve the nth ChoiceItem, 0-based */
-    def apply(in: Int) = items(in).xhtml
+    def apply(in: Int): NodeSeq = items(in).xhtml
 
     /** Apply a function to each ChoiceItem, collecting the results */
     def map[A](f: ChoiceItem[T] => A) = items.map(f)

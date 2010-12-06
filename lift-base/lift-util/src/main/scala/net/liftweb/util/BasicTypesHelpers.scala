@@ -78,22 +78,18 @@ trait BasicTypesHelpers { self: StringHelpers with ControlHelpers =>
   }
 
   /**
-   * Optional cons that implements the expression: <code>expr ?> value ::: List</code>
-   * @param expr the predicate to evaluate
-   */
-  class OptionalCons(expr: => Boolean) {
-    /**
-     * Return the specified value in a single-element list if the predicate
-     * evaluates to true.
-     */
-    def ?>[T](f: => T): List[T] = if (expr) List(f) else Nil
-  }
-
-  /**
    * Implicit transformation from a Boolean expression to an OptionalCons object so
    * that an element can be added to a list if the expression is true
    */
   implicit def toOptiCons(expr: => Boolean): OptionalCons = new OptionalCons(expr)
+
+  /**
+   * promote a partial function such that we can invoke the guard method
+   * to wrap the guarded partial function with a guard
+   */
+  implicit def pfToGuardable[A](in: PartialFunction[A, _]):
+                         PartialFunctionWrapper[A] =
+                           new PartialFunctionWrapper[A](in)
 
   /**
    * Convert any object to an "equivalent" Boolean depending on its value
@@ -275,6 +271,37 @@ object AsLong {
     a.length == b.length && eq(a, b, 0, a.length)
   }
 }
+
+/**
+ * Optional cons that implements the expression: <code>expr ?> value ::: List</code>
+ * @param expr the predicate to evaluate
+ */
+final class OptionalCons(expr: => Boolean) {
+  /**
+   * Return the specified value in a single-element list if the predicate
+   * evaluates to true.
+   */
+  def ?>[T](f: => T): List[T] = if (expr) List(f) else Nil
+}
+
+/**
+ * The helper class that facilitates wrapping of one PartialFunction
+ * around another
+ */
+final class PartialFunctionWrapper[A](around: PartialFunction[A, _]) {
+  /**
+   * Allows you to put a guard around a partial function
+   * such that the around's isDefinedMethod must return true
+   * before the other's isDefinedAt method is tested
+   */
+  def guard[B](other: PartialFunction[A, B]): PartialFunction[A,B] =
+    new PartialFunction[A, B] {
+      def isDefinedAt(a: A) = around.isDefinedAt(a) && other.isDefinedAt(a)
+      def apply(a: A): B = other.apply(a)
+    }
+    
+}
+
 
 }
 }

@@ -236,30 +236,38 @@ trait StringHelpers {
     }
   }
 
-  /** @return a SuperString with more available methods such as roboSplit or commafy */
-  implicit def stringToSuper(in: String): SuperString = new SuperString(in)
+  /**
+   * Creates a List of Strings from two Strings
+   */
+  def listFromStrings(s1: String, s2: String): List[String] = List(s1, s2)
 
   /**
-   * The SuperString class adds functionalities to the String class
+   * Creates a List of Strings from a List[String] and a String
    */
-  class SuperString(val what: String) {
+  def listFromListAndString(lst: List[String], s: String): List[String] =
+    lst ::: List(s)
 
-    /**
-     * Split a string according to a separator
-     * @param sep a regexp to use with the String::split method
-     * @return a list of trimmed parts whose length is &gt; 0
-     */
-    def roboSplit(sep: String): List[String] = what match {case null => Nil case s => s.split(sep).toList.map(_.trim).filter(_.length > 0)}
+  /**
+   * Split a string according to a separator
+   * @param sep a regexp to use with the String::split method
+   * @return a list of trimmed parts whose length is &gt; 0
+   */
+  def roboSplit(what: String, sep: String): List[String] = 
+    what match {
+      case null => Nil
+      case s => s.split(sep).toList.map(_.trim).filter(_.length > 0)
+    }
 
-    /**
-     * Faster than roboSplit... this method splits Strings at a given
-     * character
-     */
-    def charSplit(sep: Char): List[String] = what match {
+  /**
+   * Faster than roboSplit... this method splits Strings at a given
+   * character
+   */
+  def charSplit(what: String, sep: Char): List[String] = 
+    what match {
       case null => Nil
       case str => {
         val ret = new scala.collection.mutable.ListBuffer[String]
-
+        
         val len = str.length
         var pos = 0
         var lastPos = 0
@@ -284,71 +292,135 @@ trait StringHelpers {
       }
     }
 
-    /**
-     * Split a string in 2 parts at the first place where a separator is found
-     * @return a List containing a pair of the 2 trimmed parts
-     */
-    def splitAt(sep: String): List[(String, String)] = {
-      if (what == null)
-        return Nil
-      else
-        what.indexOf(sep) match {
-          case -1 => Nil
-          case n => List((what.substring(0, n).trim, what.substring(n + sep.length).trim))
-        }
-    }
-
-    /**
-     * Encode the string to be including in JavaScript, replacing '\' or '\\' or non-ASCII characters by their unicode value
-     * @return the encoded string inserted into quotes
-     */
-    def encJs: String = {
-      if (what eq null) "null"
-      else {
-        val len = what.length
-        val sb = new GoodSB(len * 2)
-        sb.append('"')
-        var pos = 0
-        while (pos < len) {
-          what.charAt(pos) match {
-            case c @ ('\\' | '\'') => sb.append(escChar(c))
-            case '"' => sb.append("\\\"")
-            case c if c < ' ' || c > '~' => sb.append(escChar(c))
-            case c => sb.append(c)
-          }
-          pos += 1
-        }
-        sb.append('"')
-        sb.toString
+  /**
+   * Split a string in 2 parts at the first place where a separator is found
+   * @return a List containing a pair of the 2 trimmed parts
+   */
+  def splitAt(what: String, sep: String): List[(String, String)] = {
+    if (null eq what)
+      return Nil
+    else
+      what.indexOf(sep) match {
+        case -1 => Nil
+        case n => List((what.substring(0, n).trim, what.substring(n + sep.length).trim))
       }
-    }
+  }
 
-    /**
-     * Add commas before the last 3 characters
-     * @return the string with commas
-     */
-    def commafy: String = {
-      if (what eq null) null
-      else {
-        val toDo = what.toList.reverse
-
-        def commaIt(in: List[Char]): List[Char] = in match {
-          case Nil => in
-          case x :: Nil => in
-          case x1 :: x2 :: Nil => in
-          case x1 :: x2 :: x3 :: Nil => in
-          case x1 :: x2 :: x3 :: xs => x1 :: x2 :: x3 :: ',' :: commaIt(xs)
+  /**
+   * Encode the string to be including in JavaScript, replacing '\' or '\\' or non-ASCII characters by their unicode value
+   * @return the encoded string inserted into quotes
+   */
+  def encJs(what: String): String = {
+    if (what eq null) "null"
+    else {
+      val len = what.length
+      val sb = new GoodSB(len * 2)
+      sb.append('"')
+      var pos = 0
+      while (pos < len) {
+        what.charAt(pos) match {
+          case c @ ('\\' | '\'') => sb.append(escChar(c))
+          case '"' => sb.append("\\\"")
+          case c if c < ' ' || c > '~' => sb.append(escChar(c))
+          case c => sb.append(c)
         }
-        commaIt(toDo).reverse.mkString("")
+        pos += 1
       }
+      sb.append('"')
+      sb.toString
     }
   }
+
+  /**
+   * Add commas before the last 3 characters
+   * @return the string with commas
+   */
+  def commafy(what: String): String = {
+    if (null eq what) null
+    else {
+      val toDo = what.toList.reverse
+      
+      def commaIt(in: List[Char]): List[Char] = in match {
+        case Nil => in
+        case x :: Nil => in
+        case x1 :: x2 :: Nil => in
+        case x1 :: x2 :: x3 :: Nil => in
+        case x1 :: x2 :: x3 :: xs => x1 :: x2 :: x3 :: ',' :: commaIt(xs)
+      }
+      commaIt(toDo).reverse.mkString("")
+    }
+  }
+
+
+  /** @return a SuperString with more available methods such as roboSplit or commafy */
+  implicit def stringToSuper(in: String): SuperString = new SuperString(in)
+
+  /** @return a SuperString with more available methods such as roboSplit or commafy */
+  implicit def listStringToSuper(in: List[String]): SuperListString = new SuperListString(in)
+
 
   /**
    * Test for null and return either the given String if not null or the empty String.
    */
   def emptyForNull(s: String) = if (s != null) s else ""
 }
+
+/**
+ * A class that allows chaining "foo" / "bar" / "baz"
+ */
+final class SuperListString(lst: List[String]) {
+  /**
+   * Add the / method that allows chaining "foo" / "bar" / "baz"
+   */
+  def /(str: String): List[String] = lst ::: List(str)
+}
+
+/**
+ * The SuperString class adds functionalities to the String class
+ */
+final class SuperString(what: String) {
+  /**
+   * Split a string according to a separator
+   * @param sep a regexp to use with the String::split method
+   * @return a list of trimmed parts whose length is &gt; 0
+   */
+  def roboSplit(sep: String): List[String] = Helpers.roboSplit(what, sep)
+  
+  /**
+   * Faster than roboSplit... this method splits Strings at a given
+   * character
+   */
+  def charSplit(sep: Char): List[String] = Helpers.charSplit(what, sep)
+
+  /**
+   * Split a string in 2 parts at the first place where a separator is found
+   * @return a List containing a pair of the 2 trimmed parts
+   */
+  def splitAt(sep: String): List[(String, String)] = Helpers.splitAt(what, sep)
+
+  /**
+   * Encode the string to be including in JavaScript, replacing '\' or '\\' or non-ASCII characters by their unicode value
+   * @return the encoded string inserted into quotes
+   */
+  def encJs: String = Helpers.encJs(what)
+
+  /**
+   * Add commas before the last 3 characters
+   * @return the string with commas
+   */
+  def commafy: String = Helpers.commafy(what)
+
+  /**
+   * Create a List of Strings using the / method so you
+   * can write "foo" / "bar"
+   */
+  def /(other: String): List[String] = List(what, other)
+
+  
+
+  
+}
+
 
 }
 }

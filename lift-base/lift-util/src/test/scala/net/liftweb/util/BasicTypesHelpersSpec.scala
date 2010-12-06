@@ -154,6 +154,26 @@ object BasicTypesHelpersSpec extends Specification with DataTables {
       BasicTypesHelpers.notEq(a, b) must beTrue
     }
   }
+
+  "PartialFunction guard" should {
+    "put a guard around a partial function" in {
+      val pf1: PartialFunction[String, Unit] = {
+        case s if s.startsWith("s") => true
+      }
+
+      val pf2: PartialFunction[String, Boolean] = {
+        case "snipe" => true
+        case "bipe" => false
+      }
+
+      val pf3 = pf1.guard(pf2)
+      val pf4: PartialFunction[String, Boolean] = pf1.guard(pf3)
+
+      pf3.isDefinedAt("bipe") must_== false
+      pf3.isDefinedAt("snipe") must_== true
+      
+    }
+  }
 }
 
 }

@@ -94,6 +94,16 @@ object StringHelpersSpec extends Specification with StringHelpers with StringGen
     }
   }
 
+  "SuperListString" should {
+    """allow "foo" / "bar" """ in {
+      ("foo" / "bar") must_== List("foo", "bar")
+    }
+
+    """allow "foo" / "bar" / "baz" """ in {
+      ("foo" / "bar" / "baz") must_== List("foo", "bar", "baz")
+    }
+  }
+
   "The StringHelpers processString function" should {
     "replace groups found in a string surrounded by <%= ... %> by their corresponding value in a map" in {
       processString("<%=hello%>", Map("hello" -> "bonjour")) must_== "bonjour"
