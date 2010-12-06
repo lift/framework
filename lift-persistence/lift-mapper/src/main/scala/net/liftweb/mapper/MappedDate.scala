@@ -113,6 +113,10 @@ abstract class MappedDate[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
     case "" | null => this.set(null)
     case s: String => parse(s).map(d => this.set(d)).openOr(this.is)
     case (s: String) :: _ => parse(s).map(d => this.set(d)).openOr(this.is)
+    case d: Date => this.set(d)
+    case Some(d: Date) => this.set(d)
+    case Full(d: Date) => this.set(d)
+    case None | Empty | Failure(_, _, _) => this.set(null)
     case _ => this.is
   }
 
