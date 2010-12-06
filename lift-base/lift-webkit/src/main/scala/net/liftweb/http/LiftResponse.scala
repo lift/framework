@@ -595,6 +595,27 @@ object XmlResponse {
 
 }
 
+object AppXmlResponse {
+  /** Construct XmlResponse with 200 OK response code and "application/xml" mime type */
+  def apply(xml: Node) = new XmlResponse(xml, 200, "application/xml; charset=utf-8", Nil)
+
+  /** Construct XmlResponse with given response code and "application/xml" mime type */
+  def apply(xml: Node, code: Int) = new XmlResponse(xml, code, "application/xml; charset=utf-8", Nil)
+
+  /** Construct XmlResponse with 200 OK response code and given mime type */
+  def apply(xml: Node, mime: String) = new XmlResponse(xml, 200, mime, Nil)
+
+  /** Construct XmlResponse with given response code and mime type */
+  def apply(xml: Node, code: Int, mime: String) = new XmlResponse(xml, code, mime, Nil)
+
+  /** Construct XmlResponse with 200 OK response code, "application/xml" mime type and given cookies */
+  def apply(xml: Node, cookies: List[HTTPCookie]) = new XmlResponse(xml, 200, "application/xml; charset=utf-8", cookies)
+
+  /** Construct XmlResponse with given response code, given cookies and "application/xml" mime type */
+  def apply(xml: Node, code: Int, cookies: List[HTTPCookie]) = new XmlResponse(xml, code, "application/xml; charset=utf-8", cookies)
+
+}
+
 /**
  * Returning an Atom document.
  */

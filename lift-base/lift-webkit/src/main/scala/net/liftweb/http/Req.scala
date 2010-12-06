@@ -36,7 +36,7 @@ sealed trait ParamHolder {
   def name: String
 }
 @serializable
-case class NormalParamHolder(name: String, value: String) extends ParamHolder
+final case class NormalParamHolder(name: String, value: String) extends ParamHolder
 @serializable
 abstract class FileParamHolder(val name: String, val mimeType: String,
                                val fileName: String) extends ParamHolder
@@ -300,15 +300,115 @@ object Req {
   def unapply(in: Req): Option[(List[String], String, RequestType)] = Some((in.path.partPath, in.path.suffix, in.requestType))
 }
 
-case class ParamCalcInfo(paramNames: List[String],
-            params: Map[String, List[String]],
-            uploadedFiles: List[FileParamHolder],
-            body: Box[Array[Byte]])
+final case class ParamCalcInfo(paramNames: List[String],
+                               params: Map[String, List[String]],
+                               uploadedFiles: List[FileParamHolder],
+                               body: Box[Array[Byte]])
+
+
+/**
+ * Holds information about the content type and subtype including
+ * the q parameter and extension information.
+ */
+final case class ContentType(theType: String, 
+                             subtype: String, 
+                             order: Int,
+                             q: Box[Double], 
+                             extension: List[(String, String)]) extends Ordered[ContentType]
+  {
+    /**
+     * Compares this to another ContentType instance based on the q
+     * and if the q matches, compare based on specialization (* vs.
+     * explicit and then order.
+     */
+    def compare(that: ContentType): Int = ((that.q openOr 1d) compare (q openOr 1d)) match {
+      case 0 => 
+        def doDefault = {
+          order compare that.order
+        }
+
+        (theType, that.theType, subtype, that.subtype) match {
+          case ("*", "*", _, _) => doDefault
+          case ("*", _, _, _) => -1
+          case (_, "*", _, _) => 1
+          case (_, _, "*", "*") => doDefault
+          case (_, _, "*", _) => -1
+          case (_, _, _, "*") => 1
+          case _ => doDefault
+        }
+      case x => x
+    }
+
+    /**
+     * Does this ContentType match the String including
+     * wildcard support
+     */
+    def matches(contentType: (String, String)): Boolean =
+      (theType == "*" || (theType == contentType._1)) &&
+    (subtype == "*" || subtype == contentType._2)
+    
+    /**
+     * Is it a wildcard
+     */
+    def wildCard_? = theType == "*" && subtype == "*"
+  }
+
+/**
+ * The ContentType companion object that has helper methods
+ * for parsing Accept headers and other things that
+ * contain multiple ContentType information.
+ */
+object ContentType {
+  /**
+   * Parse the String into a series of ContentType instances,
+   * returning the multiple ContentType instances
+   */
+  def parse(str: String): List[ContentType] = 
+    (for {
+      (part, index) <- str.charSplit(',').
+      map(_.trim).zipWithIndex // split at comma
+      content <- parseIt(part, index)
+    } yield content).sort(_ < _)
+
+  private object TwoType {
+    def unapply(in: String): Option[(String, String)] = 
+      in.charSplit('/') match {
+        case a :: b :: Nil => Some(a -> b)
+        case _ => None
+      }
+  }
+
+
+  private object EqualsSplit {
+    private def removeQuotes(s: String) = 
+      if (s.startsWith("\"") && s.endsWith("\"")) s.substring(1, s.length - 1)
+      else s
+
+    def unapply(in: String): Option[(String, String)] = in.roboSplit("=") match {
+      case a :: b :: Nil => Some(a -> removeQuotes(b))
+      case _ => None
+    }
+  }
+
+  private def parseIt(content: String, index: Int): Box[ContentType] = content.roboSplit(";") match {
+    case TwoType(typ, subType) :: xs => {
+      val kv = xs.flatMap(EqualsSplit.unapply) // get the key/value pairs
+      val q: Box[Double] = first(kv){
+        case (k, v) if k == "q" => Helpers.asDouble(v)
+        case _ => Empty
+      }
+      Full(ContentType(typ, subType, index, q, kv.filter{_._1 != "q"}))
+    }
+
+    case _ => Empty
+  }
+}
+
+
 
 /**
  * Contains request information
  */
-@serializable
 class Req(val path: ParsePath,
           val contextPath: String,
           val requestType: RequestType,
@@ -351,10 +451,19 @@ class Req(val path: ParsePath,
   }
 
   /**
-   * Returns true if the content-type is text/xml
+   * Returns true if the content-type is text/xml or application/xml
    */
-  def xml_? = contentType != null && contentType.dmap(false)(_.toLowerCase.startsWith("text/xml"))
+  def xml_? = contentType != null && contentType.dmap(false){
+    _.toLowerCase match {
+      case x if x.startsWith("text/xml") => true
+      case x if x.startsWith("application/xml") => true
+      case _ => false
+    }
+  }
 
+  /**
+   * Returns true if the content-type is text/json or application/json
+   */
   def json_? = contentType != null && contentType.dmap(false){
     _.toLowerCase match {
       case x if x.startsWith("text/json") => true
@@ -698,25 +807,53 @@ class Req(val path: ParsePath,
 
   def isOpera = isOpera9
 
-  lazy val accept: Box[String] = {
-    request.headers.filter(_.name equalsIgnoreCase "accept").
-    headOption.flatMap(_.values.headOption)
+  /**
+   * the accept header
+   */
+  lazy val accepts: Box[String] = {
+    request.headers.toList.
+    filter(_.name equalsIgnoreCase "accept").flatMap(_.values) match {
+      case Nil => Empty
+      case xs => Full(xs.mkString(", "))
+    }
+  }
+    
+  /**
+   * What is the content type in order of preference by the requestor
+   * calculated via the Accept header
+   */
+  lazy val weightedAccept: List[ContentType] = accepts match {
+    case Full(a) => ContentType.parse(a)
+    case _ => Nil
   }
 
-  lazy val acceptsJavaScript_? = {
-    request.headers.filter(_.name.toLowerCase == "accept").
-    find(h => h.values.find(s =>
-        s.toLowerCase.indexOf("text/javascript") >= 0 ||
-        s.toLowerCase.indexOf("application/javascript") >= 0 ||
-        s.toLowerCase.indexOf("*/*") >= 0
-      ).isDefined).isDefined
-  }
+  /**
+   * Returns true if the request accepts XML
+   */
+  lazy val acceptsXml_? =
+    (weightedAccept.find(_.matches("text" -> "xml")) orElse
+     weightedAccept.find(_.matches("application" -> "xml"))).isDefined
+
+  /**
+   * Returns true if the request accepts JSON
+   */
+  lazy val acceptsJson_? =
+    (weightedAccept.find(_.matches("text" -> "json")) orElse
+     weightedAccept.find(_.matches("application" -> "json"))).isDefined
+
+  /**
+   * Returns true if the request accepts JavaScript
+   */
+  lazy val acceptsJavaScript_? = 
+    (weightedAccept.find(_.matches("text" -> "javascript")) orElse
+     weightedAccept.find(_.matches("application" -> "javascript"))).
+    isDefined
 
   def updateWithContextPath(uri: String): String = if (uri.startsWith("/")) contextPath + uri else uri
 }
 
-case class RewriteRequest(path: ParsePath, requestType: RequestType, httpRequest: HTTPRequest)
-case class RewriteResponse(path: ParsePath, params: Map[String, String], stopRewriting: Boolean)
+final case class RewriteRequest(path: ParsePath, requestType: RequestType, httpRequest: HTTPRequest)
+final case class RewriteResponse(path: ParsePath, params: Map[String, String], stopRewriting: Boolean)
 
 /**
  * The representation of an URI path

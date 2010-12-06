@@ -58,11 +58,15 @@ trait HTTPProvider {
     val newReq = Req(req, LiftRules.statelessRewrite.toList,
                      LiftRules.statelessTest.toList, System.nanoTime)
 
-    URLRewriter.doWith(url => NamedPF.applyBox(resp.encodeUrl(url), LiftRules.urlDecorate.toList) openOr resp.encodeUrl(url)) {
-      if (!(isLiftRequest_?(newReq) && actualServlet.service(newReq, resp))) {
-        chain
-      }
-    }
+    URLRewriter.doWith(url => 
+      NamedPF.applyBox(resp.encodeUrl(url),
+                       LiftRules.urlDecorate.toList) openOr
+                       resp.encodeUrl(url)) {
+                         if (!(isLiftRequest_?(newReq) && 
+                               actualServlet.service(newReq, resp))) {
+                                 chain
+                               }
+                       }
   }
 
   /**

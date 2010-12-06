@@ -270,7 +270,7 @@ final case class OldHtmlProperties(userAgent: Box[String]) extends HtmlPropertie
 
   def contentType: Box[String] = {
     val req = S.request
-    val accept = req.flatMap(_.accept)
+    val accept = req.flatMap(_.accepts)
     val key = req -> accept
     if (LiftRules.determineContentType.isDefinedAt(key)) {
       Full(LiftRules.determineContentType(key))

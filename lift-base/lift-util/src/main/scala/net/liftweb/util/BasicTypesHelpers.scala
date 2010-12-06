@@ -145,7 +145,7 @@ object AsBoolean {
   /**
    * Safely convert the specified String to an Int.
    */
-  def asInt(in: String): Box[Int] = tryo{in.toInt}
+  def asInt(in: String): Box[Int] = tryo{in.trim.toInt}
 
 /**
 * A helpful Int extractor
@@ -157,7 +157,7 @@ object AsInt {
   /**
    * Safely convert the specified String to an Int.
    */
-  def asDouble(in: String): Box[Double] = tryo{in.toDouble}
+  def asDouble(in: String): Box[Double] = tryo{in.trim.toDouble}
 
 /**
 * A helpful Int extractor

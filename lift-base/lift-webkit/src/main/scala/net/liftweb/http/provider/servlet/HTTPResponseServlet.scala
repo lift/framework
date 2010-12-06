@@ -38,7 +38,17 @@ class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
       resp.addCookie(cookie)
   }
 
-  def encodeUrl(url: String): String = resp encodeURL url
+  private val shouldEncodeUrl = LiftRules.encodeJSessionIdInUrl_?
+
+  /**
+   * Encode the JSESSIONID in the URL if specified by LiftRules
+   */
+  def encodeUrl(url: String): String = 
+    if (shouldEncodeUrl) {
+      resp encodeURL url
+    } else {
+      url
+    }
 
   def addHeaders(headers: List[HTTPParam]) {
     val appearOnce = Set(LiftRules.overwrittenReponseHeaders.vend.map(_.toLowerCase): _*)

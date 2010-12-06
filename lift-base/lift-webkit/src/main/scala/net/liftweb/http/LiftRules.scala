@@ -223,6 +223,12 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   val urlDecorate = RulesSeq[URLDecoratorPF]
 
   /**
+   * Should the JSESSIONID be encoded in the URL if cookies are
+   * not supported
+   */
+  @volatile var encodeJSessionIdInUrl_? = false
+
+  /**
   * Partial function to allow you to build a CometActor from code rather than via reflection
   */
   val cometCreation = RulesSeq[CometCreationPF]

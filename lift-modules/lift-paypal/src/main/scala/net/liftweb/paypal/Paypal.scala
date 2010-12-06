@@ -189,6 +189,7 @@ class PayPalInfo(params: HasParams) {
 private object HttpClientFactory {
   def apply(url: String, port: Int, connection: String): HttpClient = {
     val c: HttpClient = new HttpClient()
+    c.getParams().setParameter("http.protocol.content-charset", "UTF-8")
     c.getHostConfiguration().setHost(url, port, connection)
     c
   }

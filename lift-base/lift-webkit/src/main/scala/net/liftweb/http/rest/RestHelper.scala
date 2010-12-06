@@ -32,17 +32,14 @@ trait RestHelper extends LiftRules.DispatchPF {
 
   /**
    * Will the request accept a JSON response?  Yes if
-   * the Accept header contains "application/json" or
+   * the Accept header contains "text/json", "application/json" or
    * the Accept header is missing or contains "star/star" and the
    * suffix is "json".  Override this method to provide your
    * own logic
    */
   protected def jsonResponse_?(in: Req): Boolean = {
-    val accept = in.headers("accept")
-    accept.find(_.toLowerCase.indexOf("application/json") >= 0).isDefined ||
-    ((in.path.suffix equalsIgnoreCase "json") && 
-     (accept.isEmpty || 
-      accept.find(_.toLowerCase.indexOf("*/*") >= 0).isDefined)) ||
+    in.acceptsJson_? || 
+    (in.weightedAccept.isEmpty && in.path.suffix.equalsIgnoreCase("json")) ||
     suplimentalJsonResponse_?(in)
   }
   
@@ -55,17 +52,14 @@ trait RestHelper extends LiftRules.DispatchPF {
   
   /**
    * Will the request accept an XML response?  Yes if
-   * the Accept header contains "text/xml" or
+   * the Accept header contains "application/xml" or "text/xml" or
    * the Accept header is missing or contains "star/star" and the
    * suffix is "xml".  Override this method to provide your
    * own logic
    */
   protected def xmlResponse_?(in: Req): Boolean = {
-    val accept = in.headers("accept")
-    accept.find(_.toLowerCase.indexOf("text/xml") >= 0).isDefined ||
-    ((in.path.suffix equalsIgnoreCase "xml") && 
-     (accept.isEmpty || 
-      accept.find(_.toLowerCase.indexOf("*/*") >= 0).isDefined)) ||
+    in.acceptsXml_? || 
+    (in.weightedAccept.isEmpty && in.path.suffix.equalsIgnoreCase("xml")) ||
     suplimentalXmlResponse_?(in)
   }
   
@@ -564,11 +558,19 @@ trait RestHelper extends LiftRules.DispatchPF {
         case _ => Empty
       }
 
+
+  /**
+   * Override this method to create an AppXmlResponse with the
+   * mime type application/xml rather then text/xml
+   */
+  protected def createXmlResponse(in: scala.xml.Node): LiftResponse =
+    XmlResponse(in)
+
   /**
    * Convert a Node to an XmlResponse
    */
   protected implicit def nodeToResp(in: scala.xml.Node): LiftResponse = 
-    XmlResponse(in)
+    createXmlResponse(in)
 
   /**
    * Convert a JValue to a LiftResponse
