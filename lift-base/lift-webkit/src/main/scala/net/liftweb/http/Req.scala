@@ -329,11 +329,11 @@ final case class ContentType(theType: String,
 
         (theType, that.theType, subtype, that.subtype) match {
           case ("*", "*", _, _) => doDefault
-          case ("*", _, _, _) => -1
-          case (_, "*", _, _) => 1
+          case ("*", _, _, _) => 1
+          case (_, "*", _, _) => -1
           case (_, _, "*", "*") => doDefault
-          case (_, _, "*", _) => -1
-          case (_, _, _, "*") => 1
+          case (_, _, "*", _) => 1
+          case (_, _, _, "*") => -1
           case _ => doDefault
         }
       case x => x
