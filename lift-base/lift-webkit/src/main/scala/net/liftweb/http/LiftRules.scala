@@ -926,7 +926,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
 
   private val defaultFinder = getClass.getResource _
 
-  private def resourceFinder(name: String): _root_.java.net.URL = _context.resource(name)
+  private def resourceFinder(name: String): _root_.java.net.URL = if (null eq _context) null else _context.resource(name)
 
   /**
    * Obtain the resource URL by name
