@@ -34,6 +34,7 @@ object ResourceServer {
     case "json.js" :: Nil => true
     case "jlift.js" :: Nil => true
     case bp@("blueprint" :: _) if bp.last.endsWith(".css") || bp.last.endsWith(".png") => true
+    case bp@("blueprint_10" :: _) if bp.last.endsWith(".css") || bp.last.endsWith(".png") => true
     case "jquery-autocomplete" :: "jquery.autocomplete.js" :: Nil => true
     case "jquery-autocomplete" :: "jquery.autocomplete.css" :: Nil => true
     case "jquery-autocomplete" :: "indicator.gif" :: Nil => true
@@ -45,7 +46,7 @@ object ResourceServer {
     def apply(in: List[String]): List[String] = LiftRules.jsArtifacts.pathRewriter(in)
   }
 
-  var pathRewriter: PartialFunction[List[String], List[String]] = rewriter orElse {
+  @volatile var pathRewriter: PartialFunction[List[String], List[String]] = rewriter orElse {
     case "json.js" :: Nil => List("json2-min.js")
     case "json2.js" :: Nil => List("json2-min.js")
     case xs => xs
