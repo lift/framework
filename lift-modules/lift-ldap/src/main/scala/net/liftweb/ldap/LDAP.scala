@@ -410,8 +410,8 @@ class LDAPVendor extends Loggable with SimpleInjector {
         }
       } catch {
         case commE : CommunicationException => {
-          logger.error("Communcations failure on attempt %d while " +
-                       "verifying InitialContext: %s".format(attempts + 1, commE.getMessage))
+          logger.error(("Communications failure on attempt %d while " +
+                       "verifying InitialContext: %s").format(attempts + 1, commE.getMessage))
 
           // The current context failed, so clear it
           currentInitialContext(null)
