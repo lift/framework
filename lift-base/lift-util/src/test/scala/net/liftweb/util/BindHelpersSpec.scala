@@ -367,6 +367,22 @@ object CssBindHelpersSpec extends Specification  {
       ("#foo" replaceWith "hello")(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
     }
 
+    "Select a node" in {
+      ("#foo ^^" #> "hello")(<span id="foo"/>) must ==/ (<span id="foo"/>)
+    }
+
+
+    "Select a node and transform stuff" in {
+      val ret = ("#foo ^^" #> "hello" &
+                 "span [id]" #> "bar")(<span id="foo"/>)
+
+      ret(0).asInstanceOf[Elem].label must_== "span"
+      ret.length must_== 1
+      (ret \ "@id").text must_== "bar"
+    }
+
+
+
     "substitute multiple Strings by id" in {
       ("#foo" #> "hello" &
      "#baz" #> "bye")(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("hello")}</b>)

@@ -194,9 +194,19 @@ object DB extends Loggable {
           def recurseMe(lst: List[ConnectionIdentifier]): T = lst match {
             case Nil =>
               try {
-                val ret = f
-                success = true
-                ret
+                try {
+                  val ret = f
+                  success = true
+                  ret
+                } catch {
+                  // this is the case when we want to commit the transaction
+                  // but continue to throw the exception
+                  case e: net.liftweb.http.ContinueResponseException => {
+                    success = true
+                    throw e
+                  }
+                }
+                 
               } finally {
                 clearThread(success)
               }
@@ -207,9 +217,18 @@ object DB extends Loggable {
         } else {
           CurrentConnectionSet.run(new ThreadBasedConnectionManager(in)) {
             try {
-              val ret = f
-              success = true
-              ret
+              try {
+                val ret = f
+                success = true
+                ret
+              } catch {
+                // this is the case when we want to commit the transaction
+                // but continue to throw the exception
+                case e: net.liftweb.http.ContinueResponseException => {
+                  success = true
+                  throw e
+                }
+              }
             } finally {
               clearThread(success)
             }
@@ -587,6 +606,13 @@ object DB extends Loggable {
         val ret = f(conn)
         rollback = false
         ret
+      } catch {
+        // this is the case when we want to commit the transaction
+        // but continue to throw the exception
+        case e: net.liftweb.http.ContinueResponseException => {
+          rollback = false
+          throw e
+        }
       } finally {
         releaseConnectionNamed(name, rollback)
       }

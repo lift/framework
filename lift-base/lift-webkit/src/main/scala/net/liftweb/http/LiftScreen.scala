@@ -739,8 +739,22 @@ case class ScreenFieldInfo(field: FieldIdentifier, text: NodeSeq, help: Box[Node
 
 trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRendered {
   def dispatch = {
-    case _ => ignore => this.toForm
+    case _ => template => {
+      _defaultXml.set(template)
+      this.toForm
+    }
   }
+
+  /**
+   * Holds the template passed via the snippet for the duration
+   * of the request
+   */
+  protected object _defaultXml extends RequestVar[NodeSeq](NodeSeq.Empty)
+
+  /**
+   * the NodeSeq passed as a parameter when the snippet was invoked
+   */
+  protected def defaultXml: NodeSeq = _defaultXml.get
 
   private object ScreenVars extends RequestVar[Map[String, (NonCleanAnyVar[_], Any)]](Map())
   private object PrevSnapshot extends RequestVar[Box[ScreenSnapshot]](Empty)
@@ -811,6 +825,10 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
     ScreenVars.set(ScreenVars.is - name)
   }
 
+  /**
+   * Override this method to do setup the first time the
+   * screen is entered
+   */
   protected def localSetup() {
 
   }

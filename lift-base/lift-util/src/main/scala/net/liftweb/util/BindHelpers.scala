@@ -1682,19 +1682,28 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       case _ => true
     }
 
-    def applyRule(bindList: List[CssBind], realE: Elem): NodeSeq = 
+    private final def isSelThis(bind: CssBind): Boolean = 
+      bind.css.open_!.subNodes match {
+        case Full(SelectThisNode()) => true
+        case _ => false
+      }
+
+    final def applyRule(bindList: List[CssBind], realE: Elem, ignoreSelThis: Boolean): NodeSeq = 
       bindList match {
         case Nil => realE 
+        case bind :: xs 
+        if ignoreSelThis && isSelThis(bind) => applyRule(xs, realE, ignoreSelThis)
+
         case bind :: xs => {
           applyRule(bind, realE) flatMap {
-            case e: Elem => applyRule(xs, e)
+            case e: Elem => applyRule(xs, e, ignoreSelThis)
             case x => x
           }
         }
       }
       
     
-    def applyRule(bind: CssBind, realE: Elem): NodeSeq = {
+    final def applyRule(bind: CssBind, realE: Elem): NodeSeq = {
       def mergeAll(other: MetaData, stripId: Boolean): MetaData = {
         var oldAttrs = attrs - (if (stripId) "id" else "")
 
@@ -1752,6 +1761,10 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       // we can do an open_! here because all the CssBind elems
       // have been vetted
       bind.css.open_!.subNodes match {
+        case Full(SelectThisNode()) => {
+          throw new RetryWithException(realE)
+        }
+          
         case Full(KidsSubNode()) => {
           val calced = bind.calculate(realE.child)
           calced.length match {
@@ -1972,20 +1985,33 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     slurp.forAttr(e, lb)
     slurp.forStar(lb)
     
-    lb.toList match {
+    lb.toList  match {
       case Nil => new Elem(e.prefix, e.label, 
                            e.attributes, e.scope, apply(e.child) :_*)
-      case csb => slurp.applyRule(csb, e)
+      case csb => slurp.applyRule(csb, e, ignoreSelectThis.value)
     }
   }
   
+  private val ignoreSelectThis = new ThreadGlobal[Boolean]
   
-  def apply(in: NodeSeq): NodeSeq = in flatMap {
-    case Group(g) => apply(g)
-    case e: Elem => treatElem(e)
-    case x => x
-  }
+  def apply(in: NodeSeq): NodeSeq = run(in, false)
+
+  private def run(in: NodeSeq, ignore: Boolean): NodeSeq =
+    try {
+      this.ignoreSelectThis.doWith(ignore) {
+        in flatMap {
+          case Group(g) => apply(g)
+          case e: Elem => treatElem(e)
+          case x => x
+        }
+      }
+    } catch {
+      case RetryWithException(newElem) =>
+        run(newElem, true)
+    }
 }
+
+private case class RetryWithException(e: Elem) extends Exception()
 
 object CssBind {
   def unapply(in: CssBind): Option[CssSelector] = in.css

@@ -106,7 +106,7 @@ trait ProtoUser {
     /**
      * Save the user to backing store
      */
-    def save(): Boolean
+    def save: Boolean
 
     /**
      * Get a nice name for the user
