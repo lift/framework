@@ -311,6 +311,9 @@ object Extraction {
     case JString(s) if (targetType == classOf[Date]) => formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'"))
     case JBool(x) if (targetType == classOf[Boolean]) => x
     case JBool(x) if (targetType == classOf[JavaBoolean]) => new JavaBoolean(x)
+    case j: JValue if (targetType == classOf[JValue]) => j
+    case j: JObject if (targetType == classOf[JObject]) => j
+    case j: JArray if (targetType == classOf[JArray]) => j
     case JNull => null
     case JNothing => fail("Did not find value which can be converted into " + targetType.getName)
     case JField(_, x) => convert(x, targetType, formats)

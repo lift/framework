@@ -161,7 +161,8 @@ private[json] object Meta {
       classOf[Short], classOf[java.lang.Integer], classOf[java.lang.Long],
       classOf[java.lang.Double], classOf[java.lang.Float],
       classOf[java.lang.Byte], classOf[java.lang.Boolean], classOf[Number],
-      classOf[java.lang.Short], classOf[Date], classOf[Symbol]).map((_, ())))
+      classOf[java.lang.Short], classOf[Date], classOf[Symbol], classOf[JValue],
+      classOf[JObject], classOf[JArray]).map((_, ())))
 
     def constructors(clazz: Class[_]): List[(JConstructor[_], List[(String, Class[_], Type)])] =
       clazz.getDeclaredConstructors.map(c => (c, constructorArgs(c))).toList
