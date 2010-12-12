@@ -207,29 +207,12 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
 
   /**
    * Different Vars require different mechanisms for synchronization.  This method implements
-   * the Var specific synchronization mechanism
+   * the Var specific synchronization mechanism.
+   *
+   * In the case of ContainerVar, we synchronize on the ContainerVar
+   * instance itself.
    */
-  def doSync[F](f: => F): F = S.session match {
-    case Full(s) => {
-      // lock the session while the Var-specific lock object is found/created
-      val lockName = name + VarConstants.lockSuffix
-      val lockObj: Object = s.synchronized {
-        localGet(s, lockName) match {
-          case Full(lock: Object) => lock
-          case _ => val lock = new Object
-          localSet(s, lockName, lock)
-          lock
-        }
-      }
-
-      // execute the query in the scope of the lock obj
-      lockObj.synchronized {
-        f
-      }
-    }
-
-    case _ => f
-  }
+  def doSync[F](f: => F): F = this.synchronized(f)
 
   def showWarningWhenAccessedOutOfSessionScope_? = false
 
