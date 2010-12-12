@@ -89,6 +89,8 @@ package mongotestdocs {
     override def formats = super.formats + new UUIDSerializer
     // create a unique index on name
     ensureIndex(("name" -> 1), true)
+    // create a non-unique index on dbtype passing unique = false.
+    ensureIndex(("dbtype" -> 1), false)
   }
 
   case class IDoc(_id: ObjectId, i: Int) extends MongoDocument[IDoc] {
@@ -319,7 +321,29 @@ object MongoDocumentExamples extends Specification with MongoTestKit {
 
   "Mongo tutorial example" in {
 
+    import scala.collection.JavaConversions._
+
     checkMongoIsRunning
+
+    // get the indexes
+    val ixs = MongoDB.useCollection(TstCollection.collectionName)( coll => {
+      coll.getIndexInfo
+    })
+
+    // unique index on name
+    val ixName = ixs.find(dbo => dbo.get("name") == "name_1")
+    ixName must notBeEmpty
+    ixName foreach { ix =>
+      ix.containsField("unique") must beTrue
+      ix.get("unique").asInstanceOf[Boolean] must beTrue
+    }
+
+    // non-unique index on dbtype
+    val ixDbtype = ixs.find(dbo => dbo.get("name") == "dbtype_1")
+    ixDbtype must notBeEmpty
+    ixDbtype foreach { ix =>
+      ix.containsField("unique") must beFalse
+    }
 
     // build a TstCollection
     val info = TCInfo(203, 102, UUID.randomUUID)

@@ -138,8 +138,10 @@ trait MongoMeta[BaseDocument] {
   * Ensure an index exists and make unique
   */
   def ensureIndex(keys: JObject, unique: Boolean) {
+    val options = new BasicDBObject
+    if (unique) options.put("unique", true)
     MongoDB.useCollection(mongoIdentifier, collectionName) ( coll => {
-      coll.ensureIndex(JObjectParser.parse(keys), new BasicDBObject("unique", true))
+      coll.ensureIndex(JObjectParser.parse(keys), options)
     })
   }
 
