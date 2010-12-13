@@ -1640,13 +1640,22 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       case _ => true
     }
 
-  private val (idMap, nameMap, clzMap, attrMap, elemMap, starFunc)  = {
+  private val (idMap, nameMap, clzMap, attrMap, elemMap, 
+               starFunc, selectThis: Box[CssBind])  = {
     var idMap: Map[String, List[CssBind]] = Map()
     var nameMap: Map[String, List[CssBind]] = Map()
     var clzMap: Map[String, List[CssBind]] = Map()
     var attrMap: Map[String, Map[String, List[CssBind]]] = Map()
     var elemMap: Map[String, List[CssBind]] = Map()
     var starFunc: Box[List[CssBind]] = Empty
+
+    val selThis: Box[CssBind] = binds.flatMap {
+      b =>
+        b.css.open_!.subNodes match {
+          case Full(SelectThisNode()) => List(b)
+          case _ => Nil
+        }
+    }.headOption
 
     binds.foreach {
       case i @ CssBind(IdSelector(id, _)) => 
@@ -1670,7 +1679,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       }
     }
 
-    (idMap, nameMap, clzMap, attrMap, elemMap, starFunc)
+    (idMap, nameMap, clzMap, attrMap, elemMap, starFunc, selThis)
   }
 
   private abstract class SlurpedAttrs(val id: Box[String],val name: Box[String]) {
@@ -1688,15 +1697,18 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         case _ => false
       }
 
-    final def applyRule(bindList: List[CssBind], realE: Elem, ignoreSelThis: Boolean): NodeSeq = 
+    final def applyRule(bindList: List[CssBind], realE: Elem, onlySelThis: Boolean): NodeSeq = 
       bindList match {
         case Nil => realE 
-        case bind :: xs 
-        if ignoreSelThis && isSelThis(bind) => applyRule(xs, realE, ignoreSelThis)
 
+        // ignore selectThis commands outside the
+        // select context
+        case bind :: xs 
+        if !onlySelThis && isSelThis(bind) => applyRule(xs, realE, onlySelThis)
+        
         case bind :: xs => {
           applyRule(bind, realE) flatMap {
-            case e: Elem => applyRule(xs, e, ignoreSelThis)
+            case e: Elem => applyRule(xs, e, onlySelThis)
             case x => x
           }
         }
@@ -1974,7 +1986,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     }
   }
     
-  private def treatElem(e: Elem): NodeSeq = {
+  final private def treatElem(e: Elem, onlySel: Boolean): NodeSeq = {
     val slurp = slurpAttrs(e.attributes)
     val lb = new ListBuffer[CssBind]
     
@@ -1985,30 +1997,42 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     slurp.forAttr(e, lb)
     slurp.forStar(lb)
     
-    lb.toList  match {
-      case Nil => new Elem(e.prefix, e.label, 
-                           e.attributes, e.scope, apply(e.child) :_*)
-      case csb => slurp.applyRule(csb, e, ignoreSelectThis.value)
+    if (onlySel) {
+      lb.toList.filter(_.selectThis_?) match {
+        case Nil => {
+          run(e.child, onlySel) 
+          NodeSeq.Empty
+        }
+        
+        case csb => throw new RetryWithException(e)
+      }
+    } else {
+      lb.toList  match {
+        case Nil => new Elem(e.prefix, e.label, 
+                             e.attributes, e.scope, run(e.child, onlySel) :_*)
+        case csb => slurp.applyRule(csb, e, onlySel)
+      }
     }
   }
   
-  private val ignoreSelectThis = new ThreadGlobal[Boolean]
-  
-  def apply(in: NodeSeq): NodeSeq = run(in, false)
-
-  private def run(in: NodeSeq, ignore: Boolean): NodeSeq =
-    try {
-      this.ignoreSelectThis.doWith(ignore) {
-        in flatMap {
-          case Group(g) => apply(g)
-          case e: Elem => treatElem(e)
-          case x => x
-        }
+  final def apply(in: NodeSeq): NodeSeq = selectThis match {
+    case Full(_) => {
+      try {
+        run(in, true)
+      } catch {
+        case RetryWithException(newElem) => run(newElem, false)
       }
-    } catch {
-      case RetryWithException(newElem) =>
-        run(newElem, true)
     }
+
+    case _ => run(in, false)
+  }
+
+  final private def run(in: NodeSeq, onlyRunSel: Boolean): NodeSeq =
+      in flatMap {
+        case Group(g) => run(g, onlyRunSel)
+        case e: Elem => treatElem(e, onlyRunSel)
+        case x => x
+      }
 }
 
 private case class RetryWithException(e: Elem) extends Exception()
@@ -2028,6 +2052,20 @@ sealed trait CssBind extends CssBindFunc {
       Syntax error in CSS selector definition: {stringSelector openOr "N/A"}.
       The selector will not be applied.
       </div>) openOr NodeSeq.Empty
+  }
+
+  /**
+   * Is this CssBind a SelectThis bind?
+   */
+  private[util] def selectThis_? : Boolean = css match {
+    case Full(sel) => {
+      sel.subNodes match {
+        case Full(SelectThisNode()) => true
+        case _ => false
+      }
+    }
+      
+    case _ => false
   }
 
   private lazy val selectorMap: SelectorMap = new SelectorMap(List(this))

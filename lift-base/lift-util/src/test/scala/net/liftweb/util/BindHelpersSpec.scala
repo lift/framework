@@ -368,7 +368,7 @@ object CssBindHelpersSpec extends Specification  {
     }
 
     "Select a node" in {
-      ("#foo ^^" #> "hello")(<span id="foo"/>) must ==/ (<span id="foo"/>)
+      ("#foo ^^" #> "hello")(<div><span id="foo"/></div>) must ==/ (<span id="foo"/>)
     }
 
 
@@ -379,6 +379,27 @@ object CssBindHelpersSpec extends Specification  {
       ret(0).asInstanceOf[Elem].label must_== "span"
       ret.length must_== 1
       (ret \ "@id").text must_== "bar"
+    }
+
+
+    "Select a node and transform stuff deeply nested" in {
+      val ret = ("#foo ^^" #> "hello" &
+                 "span [id]" #> "bar")(<div><div><span id="foo"/></div></div>)
+
+      ret(0).asInstanceOf[Elem].label must_== "span"
+      ret.length must_== 1
+      (ret \ "@id").text must_== "bar"
+    }
+
+
+    "Select a node and transform stuff deeply nested 2" in {
+      val ret = ("#foo ^^" #> "hello" &
+                 "span [id]" #> "bar")(<div><div><span id="foo2"/><span id="foo3"/><span dog="woof" id="foo"/></div></div>)
+
+      ret(0).asInstanceOf[Elem].label must_== "span"
+      ret.length must_== 1
+      (ret \ "@id").text must_== "bar"
+      (ret \ "@dog").text must_== "woof"
     }
 
 
