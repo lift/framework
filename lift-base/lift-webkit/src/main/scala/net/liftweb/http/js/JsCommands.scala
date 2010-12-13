@@ -172,14 +172,14 @@ object JE {
   }
 
   case class ValById(id: String) extends JsExp {
-    def toJsCmd = "document.getElementById(" + id.encJs + ").value"
+    def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").value;} else {null;}"
   }
 
   /**
    * Given the id of a checkbox, see if it's checked
    */
   case class CheckedById(id: String) extends JsExp {
-    def toJsCmd = "document.getElementById(" + id.encJs + ").checked"
+    def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").checked} else {false;}"
   }
 
   /**
@@ -549,7 +549,7 @@ object JsCmds {
   object FocusOnLoad {
     def apply(in: Elem): NodeSeq = {
       val (elem, id) = findOrAddId(in)
-      elem ++ Script(LiftRules.jsArtifacts.onLoad(Run("document.getElementById(" + id.encJs + ").focus();")))
+      elem ++ Script(LiftRules.jsArtifacts.onLoad(Run("if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").focus();};")))
     }
   }
 
@@ -557,16 +557,16 @@ object JsCmds {
    * Sets the value of an element and sets the focus
    */
   case class SetValueAndFocus(id: String, value: String) extends JsCmd {
-    def toJsCmd = "document.getElementById(" + id.encJs + ").value = " +
+    def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").value = " +
             value.encJs +
-            "; document.getElementById(" + id.encJs + ").focus();"
+            "; document.getElementById(" + id.encJs + ").focus();};"
   }
 
   /**
    * Sets the focus on the element denominated by the id
    */ 
   case class Focus(id: String) extends JsCmd {
-    def toJsCmd = "document.getElementById(" + id.encJs + ").focus();"
+    def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").focus();};"
   }
 
 
@@ -597,8 +597,8 @@ object JsCmds {
    * the result of the 'right' expression
    */
   case class SetValById(id: String, right: JsExp) extends JsCmd {
-    def toJsCmd = "document.getElementById(" + id.encJs + ").value = " +
-    right.toJsCmd + ";"
+    def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").value = " +
+    right.toJsCmd + ";};"
   }
 
   /**
@@ -622,9 +622,9 @@ object JsCmds {
    * having this 'id', chained by 'then' sequences 
    */
   case class SetElemById(id: String, right: JsExp, then: String*) extends JsCmd {
-    def toJsCmd = "document.getElementById(" + id.encJs + ")" + (
+    def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ")" + (
       if (then.isEmpty) "" else then.mkString(".", ".", "")
-    ) + " = " + right.toJsCmd + ";"
+    ) + " = " + right.toJsCmd + ";};"
   }
 
   implicit def jsExpToJsCmd(in: JsExp) = in.cmd
@@ -712,6 +712,7 @@ object JsCmds {
    */
   case class ReplaceOptions(select: String, opts: List[(String, String)], dflt: Box[String]) extends JsCmd {
     def toJsCmd = """var x=document.getElementById(""" + select.encJs + """);
+    if (x) {
     while (x.length > 0) {x.remove(0);}
     var y = null;
     """ +
@@ -722,7 +723,7 @@ object JsCmds {
         "y.value = " + value.encJs + "; " +
         (if (Full(value) == dflt) "y.selected = true; " else "") +
         " try {x.add(y, null);} catch(e) {if (typeof(e) == 'object' && typeof(e.number) == 'number' && (e.number & 0xFFFF) == 5){ x.add(y,x.options.length); } } "
-    }.mkString("\n")
+    }.mkString("\n")+"};"
   }
 
   case object JsIf {
