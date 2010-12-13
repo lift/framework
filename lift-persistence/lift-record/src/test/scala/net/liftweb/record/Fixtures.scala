@@ -27,6 +27,18 @@ import org.specs.runner.{ConsoleRunner, JUnit3}
 
 import field._
 
+class BasicTestRecord private () extends Record[BasicTestRecord] {
+  def meta = BasicTestRecord
+
+  object field1 extends StringField(this,10)
+  object field2 extends StringField(this,10)
+  object field3 extends StringField(this,10)
+}
+
+object BasicTestRecord extends BasicTestRecord with MetaRecord[BasicTestRecord] {
+  override def fieldOrder = List(field2,field1)
+}
+
 class PasswordTestRecord private () extends Record[PasswordTestRecord] {
   def meta = PasswordTestRecord
 

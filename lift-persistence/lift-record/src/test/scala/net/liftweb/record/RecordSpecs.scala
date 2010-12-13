@@ -303,6 +303,12 @@ object RecordSpecs extends Specification {
       }
     }
   }
+  
+  "basic record" should {
+    "order fields according to fieldOrder" in {
+      BasicTestRecord.metaFields must_==  List(BasicTestRecord.field2, BasicTestRecord.field1, BasicTestRecord.field3)
+    }
+  }
 }
 
 }

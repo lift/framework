@@ -124,15 +124,11 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
       case (v, mf) => tArray += FieldHolder(mf.name, v, mf)
     }
     
-    val posMap = Map() ++ tArray.map(_.metaField).toList.zipWithIndex
-
-    val resArray = new ListBuffer[FieldHolder]
-
-    fieldOrder.foreach(f => posMap.get(f).foreach(pos => resArray += tArray.remove(pos)))
-
-    resArray ++= tArray
-
-    fieldList = resArray.toList
+    fieldList = {
+      val ordered = fieldOrder.flatMap(f => tArray.find(_.metaField == f))
+      ordered ++ (tArray -- ordered)
+    }
+    
     fieldMap = Map() ++ fieldList.map(i => (i.name, i))
   }
 
