@@ -51,7 +51,7 @@ object Serialization {
 
   /** Deserialize from a Reader.
    */
-  def read[A, R <: Reader](in: Reader)(implicit formats: Formats, mf: Manifest[A]): A =
+  def read[A](in: Reader)(implicit formats: Formats, mf: Manifest[A]): A =
     parse(in).extract(formats, mf)
 
   /** Create Serialization formats with given type hints.
