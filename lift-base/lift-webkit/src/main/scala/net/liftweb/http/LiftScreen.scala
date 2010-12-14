@@ -662,12 +662,18 @@ trait ScreenWizardRendered {
     def bindFields(xhtml: NodeSeq): NodeSeq =
     (<form id={nextId._1} action={url} method="post">{S.formGroup(-1)(SHtml.hidden(() =>
             snapshot.restore()))}{bind("wizard", xhtml, "line" -%> bindFieldLine _)}{S.formGroup(4)(SHtml.hidden(() =>
-            {nextId._2(); val localSnapshot = createSnapshot; S.seeOther(url, () => localSnapshot.restore)}))}</form> %
+            {nextId._2(); 
+             val localSnapshot = createSnapshot
+             S.seeOther(url, () => {
+               localSnapshot.restore
+             })}))}</form> %
       theScreen.additionalAttributes) ++
     prevId.toList.map{case (id, func) =>
-        <form id={id} action={url} method="post">{SHtml.hidden(() => {snapshot.restore(); func();
-                                                                      val localSnapshot = createSnapshot;
-                                                                      S.seeOther(url, () => localSnapshot.restore)})}</form>
+        <form id={id} action={url} method="post">{
+          SHtml.hidden(() => {snapshot.restore(); func();
+                              val localSnapshot = createSnapshot;
+                              S.seeOther(url, () => localSnapshot.restore)
+                            })}</form>
     } ++
     <form id={cancelId._1} action={url} method="post">{SHtml.hidden(() => {
             snapshot.restore();
@@ -749,7 +755,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
    * Holds the template passed via the snippet for the duration
    * of the request
    */
-  protected object _defaultXml extends RequestVar[NodeSeq](NodeSeq.Empty)
+  protected object _defaultXml extends TransientRequestVar[NodeSeq](NodeSeq.Empty)
 
   /**
    * the NodeSeq passed as a parameter when the snippet was invoked
@@ -774,7 +780,10 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
     override protected def __nameSalt = randomString(20)
   }
 
-  protected def createSnapshot = new ScreenSnapshot(ScreenVars.is, PrevSnapshot.is)
+  protected def createSnapshot = {
+    val prev = PrevSnapshot.is
+    new ScreenSnapshot(ScreenVars.is, prev)
+  }
 
   /**
    * Keep request-local information around without the nastiness of naming session variables
@@ -839,8 +848,14 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
     if (FirstTime) {
       FirstTime.set(false)
       localSetup()
+
       val localSnapshot = createSnapshot
-      S.seeOther(S.uri, () => localSnapshot.restore)
+      val notices = S.getAllNotices
+
+      S.seeOther(S.uri, () => {
+        S.appendNotices(notices)
+        localSnapshot.restore
+      })
     }
 
     val finishId = Helpers.nextFuncName
@@ -860,7 +875,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
           Empty, //screenCount: Box[NodeSeq],
           Empty, // wizardTop: Box[Elem],
           theScreen.screenTop, //screenTop: Box[Elem],
-          theScreen.screenFields.flatMap(f =>
+          theScreen.screenFields.filter(_.shouldDisplay_?).flatMap(f =>
         if (f.show_?) List(ScreenFieldInfo(f, f.displayHtml, f.helpAsHtml, f.toForm)) else Nil), //fields: List[ScreenFieldInfo],
             Empty, // prev: Box[Elem],
             Full(cancelButton), // cancel: Box[Elem],

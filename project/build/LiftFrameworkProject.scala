@@ -132,6 +132,8 @@ abstract class LiftParentProject(info: ProjectInfo) extends ParentProject(info) 
 
   lazy val publishRemote = propertyOptional[Boolean](false, true)
 
+  val localhostRepo = "localhost" at "file:///home/dpp/.m2/repository"
+
   // Add ScalaToolsSnapshots if this project is on snapshot
   override def repositories =
     if (version.toString.endsWith("-SNAPSHOT")) super.repositories + ScalaToolsSnapshots

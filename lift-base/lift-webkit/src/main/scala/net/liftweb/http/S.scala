@@ -2578,7 +2578,10 @@ for {
 
   private[http] def message(msg: NodeSeq, notice: NoticeType.Value) {p_notice += ((notice, msg, Empty))}
 
-  private[http] def messagesFromList(list: List[(NoticeType.Value, NodeSeq, Box[String])]) {list foreach (p_notice += _)}
+  /**
+   * Add a whole list of notices
+   */
+  def appendNotices(list: Seq[(NoticeType.Value, NodeSeq, Box[String])]) {p_notice.is ++= list}
 
   /**
    * Returns the current notices
