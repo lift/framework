@@ -642,7 +642,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
     val toRun = {
       // get all the commands, sorted by owner,
-      (state.uploadedFiles.map(_.name) ::: state.paramNames).
+      (state.uploadedFiles.map(_.name) ::: state.paramNames).removeDuplicates.
               flatMap {n => synchronized {messageCallback.get(n)}.map(mcb => RunnerHolder(n, mcb, mcb.owner))}.
               sort {
         case (RunnerHolder(_, _, Full(a)), RunnerHolder(_, _, Full(b))) if a < b => true
