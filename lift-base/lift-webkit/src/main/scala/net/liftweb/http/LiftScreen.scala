@@ -24,7 +24,11 @@ import Helpers._
 import _root_.scala.xml._
 import _root_.scala.reflect.Manifest
 
-private[liftweb] trait AbstractScreen extends Factory {
+/**
+ * The trait that forms the basis for LiftScreen and the
+ * Screen instances in Wizard
+ */
+trait AbstractScreen extends Factory {
   override def toString = screenName
 
   protected type Errors = List[FieldError]
