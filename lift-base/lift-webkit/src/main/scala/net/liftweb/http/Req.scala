@@ -150,8 +150,6 @@ object Req {
       case Full(resp) => processRewrite(resp.path, params ++ resp.params)
     }
 
-
-
     // val (uri, path, localSingleParams) = processRewrite(tmpUri, tmpPath, TreeMap.empty)
     val rewritten = processRewrite(tmpPath, Map.empty)
 
@@ -164,11 +162,11 @@ object Req {
     val contentType = request.contentType
 
     //    val (paramNames: List[String], params: Map[String, List[String]], files: List[FileParamHolder], body: Box[Array[Byte]]) =
-    val paramCalculator = () => {
 
-      // calculate the query parameters
-      lazy val queryStringParam:  (List[String], Map[String, List[String]]) = {
-        val params: List[(String, String)] =
+          
+    // calculate the query parameters
+    lazy val queryStringParam:  (List[String], Map[String, List[String]]) = {
+      val params: List[(String, String)] =
         for {
           queryString <- request.queryString.toList
           nameVal <- queryString.split("&").toList.map(_.trim).filter(_.length > 0)
@@ -177,42 +175,71 @@ object Req {
             case n :: v :: _ => Full((urlDecode(n), urlDecode(v)))
             case n :: _ => Full((urlDecode(n), ""))
           }} yield (name, value)
-
-        val names: List[String] = params.map(_._1).removeDuplicates
-        val nvp: Map[String, List[String]] = params.foldLeft(Map[String, List[String]]()) {
-          case (map, (name, value)) => map + (name -> (map.getOrElse(name, Nil) ::: List(value)))
-        }
-
-        (names, nvp)
+            
+            val names: List[String] = params.map(_._1).removeDuplicates
+      val nvp: Map[String, List[String]] = params.foldLeft(Map[String, List[String]]()) {
+        case (map, (name, value)) => map + (name -> (map.getOrElse(name, Nil) ::: List(value)))
       }
+      
+      (names, nvp)
+    }
 
+    // make this a thunk so it only gets calculated once
+    lazy val paramCalcInfo: ParamCalcInfo = {
+      // post/put of XML or JSON... eagerly read the stream
       if ((reqType.post_? ||
            reqType.put_?) && contentType.dmap(false){
 	_.toLowerCase match {
 	  case x => 
 	    x.startsWith("text/xml") || 
+	    x.startsWith("application/xml") || 
 	  x.startsWith("text/json") ||
 	  x.startsWith("application/json")
 	}}) {
-        ParamCalcInfo(queryStringParam._1, queryStringParam._2 ++ localParams, Nil, tryo(readWholeStream(request.inputStream)))
+        ParamCalcInfo(queryStringParam._1, 
+                      queryStringParam._2 ++ localParams, 
+                      Nil, 
+                      tryo(readWholeStream(request.inputStream)))
+        // it's multipart
       } else if (request multipartContent_?) {
         val allInfo = request extractFiles
+        
+        val normal: List[NormalParamHolder] = 
+          allInfo.flatMap {
+            case v: NormalParamHolder => List(v)
+            case _ => Nil}
 
-        val normal: List[NormalParamHolder] = allInfo.flatMap {case v: NormalParamHolder => List(v) case _ => Nil}
-        val files: List[FileParamHolder] = allInfo.flatMap {case v: FileParamHolder => List(v) case _ => Nil}
-
+        val files: List[FileParamHolder] = allInfo.flatMap {
+          case v: FileParamHolder => List(v)
+          case _ => Nil}
+        
         val params = normal.foldLeft(eMap)((a, b) =>
           a + (b.name -> (a.getOrElse(b.name, Nil) ::: List(b.value))))
-
-        ParamCalcInfo((queryStringParam._1 ::: normal.map(_.name)).removeDuplicates, queryStringParam._2 ++ localParams ++ params, files, Empty)
+        
+        ParamCalcInfo((queryStringParam._1 ::: 
+                       normal.map(_.name)).removeDuplicates, 
+                      queryStringParam._2 ++ localParams ++
+                      params, files, Empty)
+        // it's a GET
       } else if (reqType.get_?) {
-        ParamCalcInfo(queryStringParam._1, queryStringParam._2 ++ localParams, Nil, Empty)
-      } else if (contentType.dmap(false)(_.toLowerCase.startsWith("application/x-www-form-urlencoded"))) {
-        val params = localParams ++ (request.params.sort {(s1, s2) => s1.name < s2.name}).map(n => (n.name, n.values))
+        ParamCalcInfo(queryStringParam._1,
+                      queryStringParam._2 ++ localParams, Nil, Empty)
+      } else if (contentType.dmap(false)(_.toLowerCase.
+                                         startsWith("application/x-www-form-urlencoded"))) {
+        val params = localParams ++ (request.params.sort
+                                     {(s1, s2) => s1.name < s2.name}).
+                                           map(n => (n.name, n.values))
         ParamCalcInfo(request paramNames, params, Nil, Empty)
       } else {
-        ParamCalcInfo(queryStringParam._1, queryStringParam._2 ++ localParams, Nil, tryo(readWholeStream(request inputStream)))
+        ParamCalcInfo(queryStringParam._1, 
+                      queryStringParam._2 ++ localParams, 
+                      Nil, tryo(readWholeStream(request inputStream)))
       }
+    }
+
+
+    val paramCalculator: () => ParamCalcInfo = () => {
+      paramCalcInfo
     }
 
     val stateless = NamedPF.applyBox(rewritten.path.wholePath, statelessTest)
@@ -525,7 +552,10 @@ class Req(val path: ParsePath,
   lazy val ParamCalcInfo(paramNames: List[String],
             _params: Map[String, List[String]],
             uploadedFiles: List[FileParamHolder],
-            body: Box[Array[Byte]]) = paramCalculator()
+            body: Box[Array[Byte]]) = {
+    val ret = paramCalculator()
+    ret
+  }
 
   lazy val params: Map[String, List[String]] = addlParams.foldLeft(_params){
     case (map, (key, value)) => map + (key -> (value :: map.getOrElse(key, Nil)))
