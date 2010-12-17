@@ -172,14 +172,14 @@ object JE {
   }
 
   case class ValById(id: String) extends JsExp {
-    def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").value;} else {null;}"
+    def toJsCmd = "(function() {if (document.getElementById(" + id.encJs + ")) {return document.getElementById(" + id.encJs + ").value;} else {return null;}})()"
   }
 
   /**
    * Given the id of a checkbox, see if it's checked
    */
   case class CheckedById(id: String) extends JsExp {
-    def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").checked} else {false;}"
+    def toJsCmd = "(function() {if (document.getElementById(" + id.encJs + ")) {return document.getElementById(" + id.encJs + ").checked} else {return false;}})()"
   }
 
   /**

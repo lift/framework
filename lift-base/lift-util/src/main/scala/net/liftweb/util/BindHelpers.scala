@@ -1468,6 +1468,7 @@ object IterableConst {
         it.toList.map(_(nodeSeq))
     }
 
+
   implicit def itStringPromotable(it: Iterable[String]): IterableConst =
     new IterableConst {
       def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.map(a => Text(a)).toSeq
@@ -1551,6 +1552,17 @@ object IterableFunc {
 trait StringPromotable
 
 object StringPromotable {
+  implicit def jsCmdToStrPromo(in: ToJsCmd): StringPromotable =
+    new StringPromotable {
+      override val toString = in.toJsCmd
+    }
+
+  implicit def jsCmdToStrPromo(in: (_, ToJsCmd)): StringPromotable =
+    new StringPromotable {
+      override val toString = in._2.toJsCmd
+    }
+
+
   implicit def intToStrPromo(in: Int): StringPromotable = 
     new StringPromotable {
       override val toString = in.toString
