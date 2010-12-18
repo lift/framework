@@ -154,12 +154,17 @@ object ExtractionExamples extends Specification {
     Extraction.unflatten(Extraction.flatten(Extraction.decompose(s))).extract[SetWrapper] mustEqual s
   }
 
-  /* Does not work yet.
   "List extraction example" in {
     val json = parse(testJson)
-    (json \ "children").extract[List[Name]] mustEqual List("Mary", "Mazy")
+    val JField(_, x) = json \ "children"
+    x.extract[List[Name]] mustEqual List(Name("Mary"), Name("Mazy"))
   }
-  */
+
+  "Map extraction example" in {
+    val json = parse(testJson)
+    val JField(_, x) = json \ "address"
+    x.extract[Map[String, String]] mustEqual Map("street" -> "Bulevard", "city" -> "Helsinki")
+  }
 
   "Extraction and decomposition are symmetric" in {
     val person = parse(testJson).extract[Person]

@@ -166,15 +166,19 @@ object Extraction {
   }
 
   private def extract0[A](json: JValue, mf: Manifest[A])(implicit formats: Formats): A = {
-    if (mf.erasure == classOf[List[_]] || mf.erasure == classOf[Map[_, _]])
-      fail("Root object can't yet be List or Map (needs a feature from Scala 2.8)")
-
-    extract(json, TypeInfo(mf.erasure, None)).asInstanceOf[A]
+    val mapping = 
+      if (mf.erasure == classOf[List[_]] || mf.erasure == classOf[Set[_]] || mf.erasure == classOf[Array[_]]) 
+        Col(mf.erasure, mappingOf(mf.typeArguments(0).erasure))
+      else if (mf.erasure == classOf[Map[_, _]]) 
+        Dict(mappingOf(mf.typeArguments(1).erasure))
+      else mappingOf(mf.erasure)
+    extract0(json, mapping).asInstanceOf[A]
   }
 
-  def extract(json: JValue, target: TypeInfo)(implicit formats: Formats): Any = {
-    val mapping = mappingOf(target.clazz)
+  def extract(json: JValue, target: TypeInfo)(implicit formats: Formats): Any = 
+    extract0(json, mappingOf(target.clazz))
 
+  private def extract0(json: JValue, mapping: Mapping)(implicit formats: Formats): Any = {
     def newInstance(constructor: Constructor, json: JValue) = {
       def findBestConstructor = {
         if (constructor.choices.size == 1) constructor.choices.head // optimized common case

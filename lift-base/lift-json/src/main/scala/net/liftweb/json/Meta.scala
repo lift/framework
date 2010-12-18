@@ -74,7 +74,7 @@ private[json] object Meta {
   private val unmangledNames = new Memo[String, String]
   private val paranamer = new CachingParanamer(new BytecodeReadingParanamer)
 
-  private[json] def mappingOf(clazz: Class[_]) = {
+  private[json] def mappingOf(clazz: Class[_]): Mapping = {
     import Reflection._
 
     def constructors(clazz: Class[_], visited: Set[Class[_]]) =
