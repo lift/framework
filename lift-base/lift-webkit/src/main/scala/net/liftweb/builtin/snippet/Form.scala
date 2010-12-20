@@ -41,27 +41,38 @@ object Form extends DispatchSnippet {
     case "post" => post _
   }
 
+  /**
+   * Add the post method and postback (current URL) as action.
+   * If the multipart attribute is specified, set the enctype
+   * as "multipart/form-data"
+   */
   def post(kids: NodeSeq): NodeSeq = {
     // yeah it's ugly, but I'm not sure
     // we could do it reliably with pattern matching
     // dpp Oct 29, 2010
-    if (kids.length == 1 && 
-        kids(0).isInstanceOf[Elem] && 
-        (kids(0).prefix eq null) &&
-        kids(0).label == "form") {
-      val e = kids(0).asInstanceOf[Elem]
-      val meta = 
-        new UnprefixedAttribute("method", "post",
-                                new UnprefixedAttribute(
-                                  "action", S.uri,
-                                  e.attributes.filter {
-                                    case up: UnprefixedAttribute =>
-                                      up.key != "method" && up.key != "action"
-                                    case x => true
-                                  }))
-      new Elem(null, "form", meta , e.scope, e.child :_*)
-    } else {
-      <form method="post" action={S.uri}>{kids}</form>
+    val ret: Elem = 
+      if (kids.length == 1 && 
+          kids(0).isInstanceOf[Elem] && 
+          (kids(0).prefix eq null) &&
+          kids(0).label == "form") {
+            val e = kids(0).asInstanceOf[Elem]
+            val meta = 
+              new UnprefixedAttribute("method", "post",
+                                      new UnprefixedAttribute(
+                                        "action", S.uri,
+                                        e.attributes.filter {
+                                          case up: UnprefixedAttribute =>
+                                            up.key != "method" && up.key != "action"
+                                          case x => true
+                                        }))
+            new Elem(null, "form", meta , e.scope, e.child :_*)
+          } else {
+            <form method="post" action={S.uri}>{kids}</form>
+          }
+    
+    S.attr("multipart") match {
+      case Full(x) if Helpers.toBoolean(x) => ret % ("enctype" -> "multipart/form-data")
+      case _ => ret
     }
   }
   

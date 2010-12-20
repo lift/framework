@@ -1451,7 +1451,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                       if (inst.dispatch.isDefinedAt(method)) {
                         val res = inst.dispatch(method)(kids)
 
-                        (if (isForm && !res.isEmpty) <div>{SHtml.hidden(() => inst.registerThisSnippet)}</div> else NodeSeq.Empty) ++
+                        (if (isForm && !res.isEmpty) <span style="display:none">{SHtml.hidden(() => inst.registerThisSnippet)}</span> else NodeSeq.Empty) ++
                                 res
                       } else reportSnippetError(page, snippetName,
                         LiftRules.SnippetFailures.StatefulDispatchNotMatched,
@@ -1582,10 +1582,20 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       }
 
     if (ret.isEmpty) ret else
-      attrs.get("form").map(ft => (
-              (<form action={S.uri} method={ft.text.trim.toLowerCase}>{ret}</form> %
-                      checkMultiPart(attrs)) % LiftRules.formAttrs.vend.foldLeft[MetaData](Null)((base, name) => checkAttr(name, attrs, base))
-              )) getOrElse ret
+      attrs.get("form").map(_.text.trim.toLowerCase) match {
+        case Some("post") =>
+          S.setVars(attrs.filter(_.key == "multipart")) {
+            net.liftweb.builtin.snippet.Form.post(ret) 
+          } match {
+            case e: Elem => e % LiftRules.formAttrs.vend.foldLeft[MetaData](Null)((base, name) => checkAttr(name, attrs, base))
+            case x => x
+          }
+
+        case Some(ft) => 
+          <form action={S.uri} method={ft}>{ret}</form> %
+        checkMultiPart(attrs) % LiftRules.formAttrs.vend.foldLeft[MetaData](Null)((base, name) => checkAttr(name, attrs, base))
+        case _ => ret
+      }
 
   }
 
