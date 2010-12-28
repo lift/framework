@@ -124,7 +124,7 @@ object Msg extends DispatchSnippet {
    * @see net.liftweb.builtin.snippet.Msgs#effects[T](Box[NoticeType.Value],String,T,Box[JsCmd => T])
    */
   def effects(id: String): NodeSeq = 
-    Msgs.effects(Empty, id, NodeSeq.Empty, Full(Msgs.tailScript))
+    Msgs.effects(Empty, id, NodeSeq.Empty, Msgs.tailScript)
 }
 
 /**

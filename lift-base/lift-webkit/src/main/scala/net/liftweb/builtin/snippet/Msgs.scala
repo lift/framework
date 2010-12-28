@@ -145,15 +145,15 @@ object Msgs extends DispatchSnippet {
   /**
    * This method produces appropriate JavaScript to fade out the given
    * notice type. The caller must provide a default value for cases where
-   * fadeout is not configured, and may optionally provide a wrapping
+   * fadeout is not configured, as well as a wrapping
    * function to transform the output.
    *
    * @see net.liftweb.http.LiftRules.noticesAutoFadeOut
    */
-  def noticesFadeOut[T](noticeType: NoticeType.Value, default : T, wrap : Box[JsCmd => T]): T =
-    LiftRules.noticesAutoFadeOut()(noticeType) flatMap {
+  def noticesFadeOut[T](noticeType: NoticeType.Value, default : T, wrap : JsCmd => T): T =
+    LiftRules.noticesAutoFadeOut()(noticeType) map {
       case (duration, fadeTime) => {
-        wrap.map(_(LiftRules.jsArtifacts.fadeOut(noticeType.id, duration, fadeTime)))
+        wrap(LiftRules.jsArtifacts.fadeOut(noticeType.id, duration, fadeTime))
       }
     } openOr default
 
@@ -164,19 +164,19 @@ object Msgs extends DispatchSnippet {
    * @see net.liftweb.http.LiftRules.noticesAutoFadeOut
    */
   def noticesFadeOut(noticeType: NoticeType.Value): NodeSeq = 
-    noticesFadeOut(noticeType, NodeSeq.Empty, Full(tailScript))
+    noticesFadeOut(noticeType, NodeSeq.Empty, tailScript)
 
   /**
    * This method produces appropriate JavaScript to apply effects to the given
    * notice type. The caller must provide a default value for cases where
-   * effects are not configured, and may optionally provide a wrapping
+   * effects are not configured, as well as a wrapping
    * function to transform the output.
    *
    * @see net.liftweb.http.LiftRules.noticesEffects
    */
-  def effects[T](noticeType: Box[NoticeType.Value], id : String, default : T, wrap : Box[JsCmd => T]): T = 
+  def effects[T](noticeType: Box[NoticeType.Value], id : String, default : T, wrap : JsCmd => T): T = 
     LiftRules.noticesEffects()(noticeType, id) match {
-      case Full(jsCmd) => wrap.map(_(jsCmd)) openOr default
+      case Full(jsCmd) => wrap(jsCmd)
       case _ => default
     }
 
@@ -187,7 +187,7 @@ object Msgs extends DispatchSnippet {
    * @see net.liftweb.http.LiftRules.noticesEffects
    */
   def effects(noticeType: NoticeType.Value): NodeSeq =
-    effects(Full(noticeType), noticeType.id, NodeSeq.Empty, Full(tailScript))
+    effects(Full(noticeType), noticeType.id, NodeSeq.Empty, tailScript)
 }
 
 /**

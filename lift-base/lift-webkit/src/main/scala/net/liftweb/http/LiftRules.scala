@@ -432,15 +432,18 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   @volatile var noticesToJsCmd: () => JsCmd = () => {
     import builtin.snippet.{Msg,Msgs,MsgErrorMeta,MsgNoticeMeta,MsgWarningMeta}
 
+    // A "wrapper" that simply returns the javascript
+    val passJs = (in : JsCmd) => in
+
     // Delegate to Msgs for fadeout and effects
     def noticesFadeOut(noticeType: NoticeType.Value): JsCmd =
-      Msgs.noticesFadeOut(noticeType, Noop, Empty)
+      Msgs.noticesFadeOut(noticeType, Noop, passJs)
 
     def groupEffects(noticeType: NoticeType.Value): JsCmd =
-      Msgs.effects(Full(noticeType), noticeType.id, Noop, Empty)
+      Msgs.effects(Full(noticeType), noticeType.id, Noop, passJs)
 
     def idEffects(id : String): JsCmd =
-      Msgs.effects(Empty, id, Noop, Empty)
+      Msgs.effects(Empty, id, Noop, passJs)
 
     // Compute the global notices first
     val groupMessages = Msgs.renderNotices() match {
