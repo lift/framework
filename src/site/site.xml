@@ -39,8 +39,8 @@
   <!--</poweredBy>-->
   <skin>
     <groupId>net.liftweb</groupId>
-    <artifactId>lift-site-skin_2.8.0</artifactId>
-    <version>2.2-SNAPSHOT</version>
+    <artifactId>lift-site-skin_2.8.1</artifactId>
+    <version>2.3-SNAPSHOT</version>
   </skin>
 
   <body>
