@@ -42,11 +42,12 @@ object JsonCommand {
 
   def unapply(in: JValue): Option[(String, Option[String], JValue)] =
   for {
-    JField("command", JString(command)) <- in \ "command"
-    JField("params", params) <- in \ "params"
+    JString(command) <- in \ "command"
+    params <- in \ "params"
+    if params != JNothing
   } yield {
     val target = (in \ "target") match {
-      case JField("target", JString(t)) => Some(t)
+      case JString(t) => Some(t)
       case _ => None
     }
     (command, target, params)

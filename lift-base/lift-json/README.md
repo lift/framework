@@ -18,7 +18,7 @@ All features are implemented in terms of above AST. Functions are used to transf
 the AST itself, or to transform the AST between different formats. Common transformations
 are summarized in a following picture.
 
-![Json AST](http://github.com/lift/lift/raw/master/framework/lift-base/lift-json/json.png "Json AST")
+![Json AST](https://github.com/lift/lift/raw/master/framework/lift-base/lift-json/json.png)
 
 Summary of the features:
 
@@ -62,6 +62,21 @@ Download following jars:
 * http://scala-tools.org/repo-releases/net/liftweb/lift-json/XXX/lift-json-XXX.jar
 * http://mirrors.ibiblio.org/pub/mirrors/maven2/com/thoughtworks/paranamer/paranamer/2.1/paranamer-2.1.jar
 
+Migration from older versions
+=============================
+
+2.2 ->
+------
+
+Path expressions were changed after 2.2 version. Previous versions returned JField which 
+unnecessarily complicated the use of the expressions. If you have used path expressions
+with pattern matching like:
+
+    val JField("bar", JInt(x)) = json \ "foo" \ "bar"
+
+It is now required to change that to:
+
+    val JInt(x) = json \ "foo" \ "bar"
 
 Parsing JSON
 ============
@@ -297,11 +312,11 @@ Json AST can be queried using XPath like functions. Following REPL session shows
       )
 
     scala> json \\ "spouse"
-    res0: net.liftweb.json.JsonAST.JValue = JField(spouse,JObject(List(
-          JField(person,JObject(List(JField(name,JString(Marilyn)), JField(age,JInt(33))))))))
+    res0: net.liftweb.json.JsonAST.JValue = JObject(List(
+          JField(person,JObject(List(JField(name,JString(Marilyn)), JField(age,JInt(33)))))))
 
     scala> compact(render(res0))
-    res1: String = {"spouse":{"person":{"name":"Marilyn","age":33}}}
+    res1: String = {"person":{"name":"Marilyn","age":33}}
 
     scala> compact(render(json \\ "name"))
     res2: String = {"name":"Joe","name":"Marilyn"}
@@ -310,10 +325,10 @@ Json AST can be queried using XPath like functions. Following REPL session shows
     res3: String = {"name":"Joe"}
 
     scala> compact(render(json \ "person" \ "name"))
-    res4: String = "name":"Joe"
+    res4: String = "Joe"
 
     scala> compact(render(json \ "person" \ "spouse" \ "person" \ "name"))
-    res5: String = "name":"Marilyn"
+    res5: String = "Marilyn"
 
     scala> json find {
              case JField("name", _) => true
@@ -358,7 +373,7 @@ Indexed path expressions work too and values can be unboxed using type expressio
     res0: net.liftweb.json.JsonAST.JValue = JObject(List(JField(name,JString(Mary)), JField(age,JInt(5))))
 
     scala> (json \ "children")(1) \ "name"
-    res1: net.liftweb.json.JsonAST.JValue = JField(name,JString(Mazy))
+    res1: net.liftweb.json.JsonAST.JValue = JString(Mazy)
 
     scala> json \\ classOf[JInt]
     res2: List[net.liftweb.json.JsonAST.JInt#Values] = List(5, 3)

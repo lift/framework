@@ -49,6 +49,7 @@ object JsonAST {
       }
       findDirect(children, p) match {
         case Nil => JNothing
+        case JField(_, x) :: Nil => x
         case x :: Nil => x
         case x => JArray(x)
       }
@@ -79,6 +80,7 @@ object JsonAST {
         case _ => Nil
       }
       find(this) match {
+        case JField(_, x) :: Nil => x
         case x :: Nil => x
         case x => JObject(x)
       }

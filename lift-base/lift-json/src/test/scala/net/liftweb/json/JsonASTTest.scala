@@ -126,13 +126,13 @@ object JsonASTSpec extends Specification with JValueGen with ScalaCheck {
           case Nil => x == in
 
           case name :: Nil => (in \ name) match {
-            case JField(`name`, `replacement`) => true
+            case `replacement` => true
             case _ => false
           }
 
           case name :: xs => (in \ name) match {
-            case JField(`name`, value) => replaced(xs, value)
-            case _ => false
+            case JNothing => false
+            case value => replaced(xs, value)
           }
         }
       }

@@ -155,15 +155,13 @@ object ExtractionExamples extends Specification {
   }
 
   "List extraction example" in {
-    val json = parse(testJson)
-    val JField(_, x) = json \ "children"
-    x.extract[List[Name]] mustEqual List(Name("Mary"), Name("Mazy"))
+    val json = parse(testJson) \ "children"
+    json.extract[List[Name]] mustEqual List(Name("Mary"), Name("Mazy"))
   }
 
   "Map extraction example" in {
-    val json = parse(testJson)
-    val JField(_, x) = json \ "address"
-    x.extract[Map[String, String]] mustEqual Map("street" -> "Bulevard", "city" -> "Helsinki")
+    val json = parse(testJson) \ "address"
+    json.extract[Map[String, String]] mustEqual Map("street" -> "Bulevard", "city" -> "Helsinki")
   }
 
   "Extraction and decomposition are symmetric" in {

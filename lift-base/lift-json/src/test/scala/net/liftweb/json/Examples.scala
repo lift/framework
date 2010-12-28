@@ -38,7 +38,7 @@ object Examples extends Specification {
     json mustEqual parse(renderedPerson)
     render(json) mustEqual render(personDSL)
     compact(render(json \\ "name")) mustEqual """{"name":"Joe","name":"Marilyn"}"""
-    compact(render(json \ "person" \ "name")) mustEqual "\"name\":\"Joe\""
+    compact(render(json \ "person" \ "name")) mustEqual "\"Joe\""
   }
 
   "Transformation example" in {
@@ -71,8 +71,8 @@ object Examples extends Specification {
   "Object array example" in {
     val json = parse(objArray)
     compact(render(json \ "children" \ "name")) mustEqual """["name":"Mary","name":"Mazy"]"""
-    compact(render((json \ "children")(0) \ "name")) mustEqual "\"name\":\"Mary\""
-    compact(render((json \ "children")(1) \ "name")) mustEqual "\"name\":\"Mazy\""
+    compact(render((json \ "children")(0) \ "name")) mustEqual "\"Mary\""
+    compact(render((json \ "children")(1) \ "name")) mustEqual "\"Mazy\""
     (for { JField("name", JString(y)) <- json } yield y) mustEqual List("joe", "Mary", "Mazy")
   }
 

@@ -281,8 +281,7 @@ object Extraction {
 
     def fieldValue(json: JValue): JValue = json match {
       case JField(_, value) => value
-      case JNothing => JNothing
-      case x => fail("Expected JField but got " + x)
+      case x => x
     }
 
     build(json, mapping)
