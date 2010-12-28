@@ -67,6 +67,11 @@ object ActorWatcher extends scala.actors.Actor with Loggable {
   this.start
 }
 
+/**
+ * This is used as an indicator message for linked actors.
+ *
+ * @see ActorWatcher
+ */
 case object RelinkToActorWatcher
 
 trait DeltaTrait {
@@ -145,7 +150,25 @@ object CurrentCometActor extends ThreadGlobal[Box[LiftCometActor]] {
 object AddAListener {
   def apply(who: SimpleActor[Any]) = new AddAListener(who, { case _ => true } )
 }
+
+/**
+ * This is a message class for use with ListenerManager and CometListener
+ * instances. The use of the shouldUpdate function is deprecated, and
+ * should instead be handled by the message processing partial functions
+ * on the CometListner instances themselves.
+ *
+ * @see CometListener
+ * @see ListenerManager
+ */
 case class AddAListener(who: SimpleActor[Any], shouldUpdate: PartialFunction[Any, Boolean])
+
+/**
+ * This is a message class for use with ListenerManager and CometListener
+ * instances.
+ *
+ * @see CometListener
+ * @see ListenerManager
+ */
 case class RemoveAListener(who: SimpleActor[Any])
 
 
@@ -153,7 +176,6 @@ object ListenerManager {
   type ActorTest = (SimpleActor[Any], PartialFunction[Any, Boolean])
 }
 
-import ListenerManager._
 
 /**
  * This trait manages a set of Actors in a publish/subscribe pattern. When you extend your Actor with
@@ -161,9 +183,56 @@ import ListenerManager._
  * override the high-, medium-, or lowPriority handlers to do your message processing. When you want to update
  * all subscribers, just call the updateListeners method. The createUpdate method is used to generate
  * the message that you want sent to all subscribers.
+ *
+ * Note that the AddAListener and RemoveAListener messages (for subscription control) are processed
+ * after any highPriority or mediumPriority messages are processed, so take care to avoid overly
+ * broad matches in those handlers that might consume internal messages.
+ *
+ * For example, you could write a simple service to provide clock ticks using the following code:
+ *
+ * <pre name="code" class="scala">
+ * case object Tick
+ * 
+ * object Ticker extends ListenerManager {
+ *   import net.liftweb.util.ActorPing
+ * 
+ *   // Set up the initial tick
+ *   ActorPing.schedule(this, Tick, 1000L)
+ *
+ *   // This is a placeholder, since we're only interested
+ *   // in Ticks
+ *   def createUpdate = "Registered"
+ * 
+ *   override def mediumPriority = {
+ *     case Tick => {
+ *       updateListeneres(Tick)
+ *       ActorPing.schedule(this, Tick, 1000L)
+ *     }
+ *   }
+ * }
+ * </pre>
+ *
+ * A client CometActor could look like:
+ *
+ * <pre name="code" class="scala">
+ * class CometClock extends CometListener {
+ *   val registerWith = Ticker
+ *
+ *   ... handling code ...
+ * }
+ * </pre>
+ *
+ * @see CometListener
+ *   
  */
 trait ListenerManager {
   self: SimpleActor[Any] =>
+
+  import ListenerManager._
+
+  /**
+   * This is the list of all registered actors
+   */
   private var listeners: List[ActorTest] = Nil
 
   protected def messageHandler: PartialFunction[Any, Unit] =
@@ -190,13 +259,20 @@ trait ListenerManager {
   }
 
   /**
-   * Update the listeners with a message that we create
+   * Update the listeners with a message that we create. Note that
+   * with this invocation the createUpdate method is not used.
    */
   protected def updateListeners(msg: Any) {
     listeners foreach (_._1 ! msg)
   }
 
-
+  /**
+   * This method provides legacy functionality for filtering messages
+   * before sending to each registered actor. It is deprecated in
+   * favor of doing the filtering in the registered Actor's
+   * message handling partial functions instead.
+   */
+  @deprecated("Accept/reject logic should be done in the partial function that handles the message.")
   protected def updateIfPassesTest(update: Any)(info: ActorTest) {
     info match {
       case (who, test) => if (test.isDefinedAt(update) && test(update)) who ! update
@@ -204,36 +280,75 @@ trait ListenerManager {
   }
 
   /**
-   * This method is called when the updateListeners method needs a message to send to subscribed
-   * Actors.
+   * This method is called when the <pre>updateListeners()</pre> method
+   * needs a message to send to subscribed Actors. In particular, createUpdate
+   * is used to create the first message that a newly subscribed CometListener
+   * will receive.
    */
   protected def createUpdate: Any
 
+  /**
+   * Override this method to process high priority messages. Note:
+   * <b>you must not process messages with a wildcard (match all)</b>, since
+   * this will intercept the messages used for subscription control.
+   */
   protected def highPriority: PartialFunction[Any, Unit] = Map.empty
 
+  /**
+   * Override this method to process medium priority messages. See
+   * the highPriority method for an important note on wildcard
+   * processing.
+   *
+   * @see #highPriority
+   */
   protected def mediumPriority: PartialFunction[Any, Unit] = Map.empty
 
+  /**
+   * Override this method to process low priority messages.
+   */
   protected def lowPriority: PartialFunction[Any, Unit] = Map.empty
 }
 
-trait CometListener extends CometListenee {
+/**
+ * This is a legacy trait, left over from Lift's
+ * Scala 2.7 support. You should use or migrate to
+ * CometListener instead.
+ *
+ * @see CometListener
+ */
+@deprecated("Use the CometListener trait instead.")
+trait CometListenee extends CometListener {
   self: CometActor =>
 }
 
-trait LocalSetupAndShutdown {
-  protected def localSetup(): Unit
-
-  protected def localShutdown(): Unit
-}
-
-trait CometListenee extends LocalSetupAndShutdown {
+/**
+ * This trait adds functionality to automatically register with a given
+ * Actor using AddAListener and RemoveAListener control messages. The most
+ * typical usage would be to register with an instance of ListenerManager.
+ * You will need to provide a def/val for the <pre>registerWith</pre> member
+ * to control which Actor to connect to.
+ *
+ * See ListenerManager for a complete example.
+ *
+ * @see ListenerManager
+ */
+trait CometListener extends CometActor {
   self: CometActor =>
+
+  /**
+   * This controls which Actor to register with for updates. Typically
+   * this will be an instance of ListenerActor, although you can provide
+   * your own subscription handling on top of any SimpleActor.
+   */
   protected def registerWith: SimpleActor[Any]
 
   /**
-   * Override this in order to selectively update listeners based on the given message.  This method has been deprecated because it's executed in a seperate context from the session's context.  This causes problems.  Accept/reject logic should be done in the partial function that handles the message.
+   * Override this in order to selectively update listeners based on the given message.
+   * This method has been deprecated because it's executed in a seperate context from
+   * the session's context.  This causes problems.  Accept/reject logic should be done
+   * in the partial function that handles the message.
    */
-  @deprecated
+  @deprecated("Accept/reject logic should be done in the partial function that handles the message.")
   protected def shouldUpdate: PartialFunction[Any, Boolean] = { case _ => true}
 
   abstract override protected def localSetup() {

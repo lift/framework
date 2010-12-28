@@ -22,7 +22,9 @@ import Helpers.TimeSpan
 import common._
 
 /**
- * The ActorPing object schedules an actor to be ping-ed with a given message at specific intervals.
+ * The ActorPing object schedules an actor to be ping-ed with a given message after a specified
+ * delay. If you need recurrent scheduled pings you will need to reschedule.
+ * 
  * The schedule methods return a ScheduledFuture object which can be cancelled if necessary
  */
 object ActorPing extends Loggable {
