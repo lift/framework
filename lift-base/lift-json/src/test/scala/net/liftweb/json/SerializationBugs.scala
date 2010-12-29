@@ -17,8 +17,8 @@
 package net.liftweb {
 package json {
 
-import _root_.org.specs.Specification
-import _root_.org.specs.runner.{Runner, JUnit}
+import org.specs.Specification
+import org.specs.runner.{Runner, JUnit}
 
 class SerializationBugsTest extends Runner(SerializationBugs) with JUnit
 object SerializationBugs extends Specification {
@@ -64,7 +64,7 @@ object SerializationBugs extends Specification {
   }
 
   "StackOverflowError with large Lists" in {
-    val xs = LongList(List.make(5000, 0).map(Num))
+    val xs = LongList(List.fill(5000)(0).map(Num))
     val ser = swrite(xs)
     read[LongList](ser).xs.length mustEqual 5000
   }

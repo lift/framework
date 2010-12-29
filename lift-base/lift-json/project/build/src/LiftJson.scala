@@ -6,6 +6,8 @@ class LiftJson(info: ProjectInfo) extends DefaultProject(info) {
   val specs      = "org.scala-tools.testing" %% "specs" % "1.6.5"
   val scalacheck = "org.scala-tools.testing" %% "scalacheck" % "1.7"
 
+  override def compileOptions = super.compileOptions ++ compileOptions("-unchecked")
+
   override def ivyXML =
     <publications>
       <artifact name="lift-json" type="jar" ext="jar"/>

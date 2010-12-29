@@ -96,15 +96,14 @@ object Extraction {
 
     def flatten0(path: String, json: JValue): Map[String, String] = {
       json match {
-        case JNothing | JNull           => Map()
-        case JString(s: String)         => Map(path -> ("\"" + quote(s) + "\""))
-        case JDouble(num: Double)       => Map(path -> num.toString)
-        case JInt(num: BigInt)          => Map(path -> num.toString)
-        case JBool(value: Boolean)      => Map(path -> value.toString)
-        case JField(name: String, 
-                    value: JValue)      => flatten0(path + escapePath(name), value)
-        case JObject(obj: List[JField]) => obj.foldLeft(Map[String, String]()) { (map, field) => map ++ flatten0(path + ".", field) }
-        case JArray(arr: List[JValue])  => arr.length match {
+        case JNothing | JNull    => Map()
+        case JString(s)          => Map(path -> ("\"" + quote(s) + "\""))
+        case JDouble(num)        => Map(path -> num.toString)
+        case JInt(num)           => Map(path -> num.toString)
+        case JBool(value)        => Map(path -> value.toString)
+        case JField(name, value) => flatten0(path + escapePath(name), value)
+        case JObject(obj)        => obj.foldLeft(Map[String, String]()) { (map, field) => map ++ flatten0(path + ".", field) }
+        case JArray(arr)         => arr.length match {
           case 0 => Map(path -> "[]")
           case _ => arr.foldLeft((Map[String, String](), 0)) { 
                       (tuple, value) => (tuple._1 ++ flatten0(path + "[" + tuple._2 + "]", value), tuple._2 + 1) 
@@ -153,7 +152,7 @@ object Extraction {
           case ArrayElem(p, i)    => set + p        
           case x @ _              => set + x
         }
-    }.toList.sort(_ < _) // Sort is necessary to get array order right
+    }.toList.sortWith(_ < _) // Sort is necessary to get array order right
     
     uniquePaths.foldLeft[JValue](JNothing) { (jvalue, key) => 
       jvalue.merge(key match {

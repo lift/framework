@@ -17,11 +17,11 @@
 package net.liftweb {
 package json {
 
-import _root_.org.scalacheck._
-import _root_.org.scalacheck.Prop.forAll
-import _root_.org.specs.Specification
-import _root_.org.specs.runner.{Runner, JUnit}
-import _root_.org.specs.ScalaCheck
+import org.scalacheck._
+import org.scalacheck.Prop.forAll
+import org.specs.Specification
+import org.specs.runner.{Runner, JUnit}
+import org.specs.ScalaCheck
 
 class PrintingTest extends Runner(PrintingSpec) with JUnit
 object PrintingSpec extends Specification with JValueGen with ScalaCheck {

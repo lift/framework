@@ -17,8 +17,8 @@
 package net.liftweb {
 package json {
 
-import _root_.org.specs.Specification
-import _root_.org.specs.runner.{Runner, JUnit}
+import org.specs.Specification
+import org.specs.runner.{Runner, JUnit}
 
 class QueryExamplesTest extends Runner(QueryExamples) with JUnit
 object QueryExamples extends Specification {
@@ -57,7 +57,7 @@ object QueryExamples extends Specification {
       JField("uptime", JInt(uptime)) <- server
     } yield Server(ip, uptime.longValue)
 
-    servers sort (_.uptime > _.uptime) mustEqual List(Server("192.168.1.127", 901214), Server("192.168.2.125", 453423), Server("192.168.2.126", 214312), Server("192.168.1.126", 189822), Server("192.168.1.125", 150123))
+    servers sortWith (_.uptime > _.uptime) mustEqual List(Server("192.168.1.127", 901214), Server("192.168.2.125", 453423), Server("192.168.2.126", 214312), Server("192.168.1.126", 189822), Server("192.168.1.125", 150123))
   }
 
   "Clusters administered by liza" in {

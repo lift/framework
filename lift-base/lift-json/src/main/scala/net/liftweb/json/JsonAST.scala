@@ -444,7 +444,7 @@ object JsonDSL extends JsonDSL with Printer
 trait JsonDSL extends Implicits {
   import JsonAST._
 
-  implicit def seq2jvalue[A <% JValue](s: Seq[A]) = JArray(s.toList.map { a => val v: JValue = a; v })
+  implicit def seq2jvalue[A <% JValue](s: Traversable[A]) = JArray(s.toList.map { a => val v: JValue = a; v })
   implicit def option2jvalue[A <% JValue](opt: Option[A]): JValue = opt match {
     case Some(x) => x
     case None => JNothing

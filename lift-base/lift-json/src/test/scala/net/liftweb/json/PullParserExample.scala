@@ -1,7 +1,7 @@
 package net.liftweb.json
 
-import _root_.org.specs.Specification
-import _root_.org.specs.runner.{Runner, JUnit}
+import org.specs.Specification
+import org.specs.runner.{Runner, JUnit}
 
 class PullParserExampleTest extends Runner(PullParserExample) with JUnit
 object PullParserExample extends Specification {

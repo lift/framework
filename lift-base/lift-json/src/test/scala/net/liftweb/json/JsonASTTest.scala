@@ -17,11 +17,11 @@
 package net.liftweb {
 package json {
 
-import _root_.org.scalacheck._
-import _root_.org.scalacheck.Prop.{forAll, forAllNoShrink}
-import _root_.org.specs.Specification
-import _root_.org.specs.runner.{Runner, JUnit}
-import _root_.org.specs.ScalaCheck
+import org.scalacheck._
+import org.scalacheck.Prop.{forAll, forAllNoShrink}
+import org.specs.Specification
+import org.specs.runner.{Runner, JUnit}
+import org.specs.ScalaCheck
 
 class JsonASTTest extends Runner(JsonASTSpec) with JUnit
 object JsonASTSpec extends Specification with JValueGen with ScalaCheck {
