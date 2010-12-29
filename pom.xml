@@ -95,7 +95,14 @@
   -->
   <!--<dependencyManagement />-->
   <!-- Dependencies omitted, each project must provide their own -->
-  <!--<dependencies />-->
+  <dependencies>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>0.9.26</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
   <!--
     ~ Build Settings
