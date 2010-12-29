@@ -20,7 +20,6 @@ package json {
 /** Fast imperative parser.
  */
 object JsonParser {
-  import JsonAST._
   import java.io._
 
   class ParseException(message: String, cause: Exception) extends Exception(message, cause)

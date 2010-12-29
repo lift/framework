@@ -21,7 +21,6 @@ import java.lang.reflect.{Constructor => JConstructor, Type}
 import java.lang.{Integer => JavaInteger, Long => JavaLong, Short => JavaShort, Byte => JavaByte, Boolean => JavaBoolean, Double => JavaDouble, Float => JavaFloat}
 import java.util.Date
 import scala.reflect.Manifest
-import JsonAST._
 
 /** Function to extract values from JSON AST using case classes.
  *
@@ -97,7 +96,7 @@ object Extraction {
     def flatten0(path: String, json: JValue): Map[String, String] = {
       json match {
         case JNothing | JNull    => Map()
-        case JString(s)          => Map(path -> ("\"" + quote(s) + "\""))
+        case JString(s)          => Map(path -> ("\"" + JsonAST.quote(s) + "\""))
         case JDouble(num)        => Map(path -> num.toString)
         case JInt(num)           => Map(path -> num.toString)
         case JBool(value)        => Map(path -> value.toString)

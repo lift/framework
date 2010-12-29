@@ -20,12 +20,9 @@ package json {
 import java.util.Date
 import org.specs.Specification
 import org.specs.runner.{Runner, JUnit}
-import JsonAST._
 
 class ExtractionExampleTest extends Runner(ExtractionExamples) with JUnit
 object ExtractionExamples extends Specification {
-  import JsonParser._
-
   implicit val formats = DefaultFormats
 
   "Extraction example" in {

@@ -25,10 +25,6 @@ import org.specs.ScalaCheck
 
 class ParserTest extends Runner(ParserSpec) with JUnit
 object ParserSpec extends Specification with JValueGen with ScalaCheck {
-  import JsonAST._
-  import JsonParser._
-  import Printer._
-
   "Any valid json can be parsed" in {
     val parsing = (json: JValue) => { parse(Printer.pretty(render(json))); true }
     forAll(parsing) must pass
@@ -71,7 +67,7 @@ object ParserSpec extends Specification with JValueGen with ScalaCheck {
       }
     }
 
-    val json = parse(new StingyReader(""" ["hello"] """))
+    val json = JsonParser.parse(new StingyReader(""" ["hello"] """))
     json mustEqual JArray(JString("hello") :: Nil)
   }
 

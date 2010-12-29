@@ -148,7 +148,6 @@ object JSONSpec extends Specification {
 class JsonCommandSpecTest extends Runner(JsonCommandSpec) with Console with JUnit
 object JsonCommandSpec extends Specification {
   import json._
-  import JsonAST._
 
   private def parse(in: String): JValue = JsonParser.parse(in)
 

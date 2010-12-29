@@ -22,7 +22,6 @@ import org.specs.runner.{Runner, JUnit}
 
 class LottoExampleTest extends Runner(LottoExample) with JUnit
 object LottoExample extends Specification {
-  import JsonAST._
   import JsonDSL._
 
   implicit val formats = DefaultFormats

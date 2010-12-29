@@ -22,7 +22,6 @@ import org.specs.runner.{Runner, JUnit}
 
 class XmlBugsTest extends Runner(XmlBugs) with JUnit
 object XmlBugs extends Specification {
-  import JsonAST._
   import Xml._
   import scala.xml.{Group, Text}
 

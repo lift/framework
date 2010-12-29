@@ -17,8 +17,6 @@
 package net.liftweb {
 package json {
 
-import JsonAST._
-
 /** A difference between two JSONs (j1 diff j2).
  * @param changed what has changed from j1 to j2
  * @param added what has been added to j2

@@ -22,9 +22,7 @@ import org.specs.runner.{Runner, JUnit}
 
 class XmlExamplesTest extends Runner(XmlExamples) with JUnit
 object XmlExamples extends Specification {
-  import JsonAST._
   import JsonDSL._
-  import JsonParser.parse
   import Xml._
   import scala.xml.{Group, Text}
 

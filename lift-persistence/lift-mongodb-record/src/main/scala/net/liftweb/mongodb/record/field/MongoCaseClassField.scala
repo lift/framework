@@ -14,7 +14,6 @@ import net.liftweb.mongodb.JObjectParser
 import com.mongodb.{BasicDBList, DBObject}
 import net.liftweb.common.{Failure, Empty, Full, Box}
 import net.liftweb.util.Helpers
-import net.liftweb.json.JsonAST._
 import net.liftweb.json._
 import reflect.Manifest
 import net.liftweb.http.js.JsExp

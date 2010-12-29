@@ -20,7 +20,6 @@ package json {
 /** Functions to convert between JSON and XML.
  */
 object Xml {
-  import JsonAST._
   import scala.xml._
 
   /** Convert given XML to JSON.

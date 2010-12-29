@@ -20,8 +20,6 @@ package json {
 /** Function to merge two JSONs.
  */
 object Merge {
-  import JsonAST._
-
   /** Return merged JSON.
    * <p>
    * Example:<pre>

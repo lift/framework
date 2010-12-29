@@ -83,7 +83,7 @@ Parsing JSON
 
 Any valid json can be parsed into internal AST format.
 
-    scala> import net.liftweb.json.JsonParser._
+    scala> import net.liftweb.json._
     scala> parse(""" { "numbers" : [1, 2, 3, 4] } """)
     res0: net.liftweb.json.JsonAST.JValue = 
           JObject(List(JField(numbers,JArray(List(JInt(1), JInt(2), JInt(3), JInt(4))))))
@@ -99,7 +99,7 @@ DSL rules
 
       scala> val json = List(1, 2, 3)
 
-      scala> compact(JsonAST.render(json))
+      scala> compact(render(json))
 
       res0: String = [1,2,3]
 
@@ -107,7 +107,7 @@ DSL rules
 
       scala> val json = ("name" -> "joe")
 
-      scala> compact(JsonAST.render(json))
+      scala> compact(render(json))
 
       res1: String = {"name":"joe"}
 
@@ -115,7 +115,7 @@ DSL rules
 
       scala> val json = ("name" -> "joe") ~ ("age" -> 35)
 
-      scala> compact(JsonAST.render(json))
+      scala> compact(render(json))
 
       res2: String = {"name":"joe","age":35}
 
@@ -123,13 +123,13 @@ DSL rules
 
       scala> val json = ("name" -> "joe") ~ ("age" -> Some(35))
 
-      scala> compact(JsonAST.render(json))
+      scala> compact(render(json))
 
       res3: String = {"name":"joe","age":35}
 
       scala> val json = ("name" -> "joe") ~ ("age" -> (None: Option[Int]))
 
-      scala> compact(JsonAST.render(json))
+      scala> compact(render(json))
 
       res4: String = {"name":"joe"}
 
@@ -137,7 +137,6 @@ Example
 -------
 
     object JsonExample extends Application {
-      import net.liftweb.json.JsonAST
       import net.liftweb.json.JsonDSL._
 
       case class Winner(id: Long, numbers: List[Int])
@@ -156,7 +155,7 @@ Example
               (("winner-id" -> w.id) ~
                ("numbers" -> w.numbers))}))
 
-      println(compact(JsonAST.render(json)))
+      println(compact(render(json)))
     }
 
     scala> JsonExample
@@ -165,7 +164,7 @@ Example
 
 Example produces following pretty printed JSON. Notice that draw-date field is not rendered since its value is None:
 
-    scala> pretty(JsonAST.render(JsonExample.json))
+    scala> pretty(render(JsonExample.json))
 
     {
       "lotto":{
@@ -187,9 +186,7 @@ Merging & Diffing
 Two JSONs can be merged and diffed with each other.
 Please see more examples in src/test/scala/net/liftweb/json/MergeExamples.scala and src/test/scala/net/liftweb/json/DiffExamples.scala
 
-    scala> import net.liftweb.json.JsonParser.parse
-    scala> import net.liftweb.json.JsonAST._
-    scala> import net.liftweb.json.Printer.pretty
+    scala> import net.liftweb.json._
 
     scala> val lotto1 = parse("""{
              "lotto":{
@@ -245,8 +242,7 @@ Querying JSON
 JSON values can be extracted using for-comprehensions.
 Please see more examples in src/test/scala/net/liftweb/json/QueryExamples.scala
 
-    scala> import net.liftweb.json.JsonParser.parse
-    scala> import net.liftweb.json.JsonAST._
+    scala> import net.liftweb.json._
     scala> val json = parse("""
              { "name": "joe",
                "children": [
@@ -296,7 +292,7 @@ Json AST can be queried using XPath like functions. Following REPL session shows
 
     Translated to DSL syntax:
 
-    scala> import net.liftweb.json.JsonAST._
+    scala> import net.liftweb.json._
     scala> import net.liftweb.json.JsonDSL._
 
     scala> val json = 
@@ -350,7 +346,7 @@ Json AST can be queried using XPath like functions. Following REPL session shows
     JField(person,JObject(List(JField(NAME,JString(MARILYN)), JField(age,JInt(33)))))))))))))
 
     scala> json.values
-    res8: net.liftweb.json.JsonAST.JValue#Values = Map(person -> Map(name -> Joe, age -> 35, spouse -> Map(person -> Map(name -> Marilyn, age -> 33))))
+    res8: scala.collection.immutable.Map[String,Any] = Map(person -> Map(name -> Joe, age -> 35, spouse -> Map(person -> Map(name -> Marilyn, age -> 33))))
 
 Indexed path expressions work too and values can be unboxed using type expressions.
 
@@ -382,7 +378,7 @@ Indexed path expressions work too and values can be unboxed using type expressio
     res3: List[net.liftweb.json.JsonAST.JString#Values] = List(Mary, Mazy)
 
     scala> json \ "children" \ classOf[JField] 
-    res4: List[(String, net.liftweb.json.JsonAST.JField#value.Values)] = List((name,Mary), (age,5), (name,Mazy), (age,3))
+    res4: List[net.liftweb.json.JsonAST.JField#Values] = List((name,Mary), (age,5), (name,Mazy), (age,3))
 
 Extracting values
 =================
@@ -392,11 +388,11 @@ can be extracted into scala.Option and strings can be automatically converted in
 java.util.Dates.
 Please see more examples in src/test/scala/net/liftweb/json/ExtractionExamples.scala
 
-    scala> implicit val formats = net.liftweb.json.DefaultFormats // Brings in default date formats etc.
+    scala> import net.liftweb.json._
+    scala> implicit val formats = DefaultFormats // Brings in default date formats etc.
     scala> case class Child(name: String, age: Int, birthdate: Option[java.util.Date])
     scala> case class Address(street: String, city: String)
     scala> case class Person(name: String, address: Address, children: List[Child])
-    scala> import net.liftweb.json.JsonParser._
     scala> val json = parse("""
              { "name": "joe",
                "address": {

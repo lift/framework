@@ -22,9 +22,8 @@ import org.specs.runner.{Runner, JUnit}
 
 class ExampleTest extends Runner(Examples) with JUnit
 object Examples extends Specification {
-  import JsonAST._
+  import JsonAST.concat
   import JsonDSL._
-  import JsonParser._
 
   "Lotto example" in {
     val json = parse(lotto)
@@ -34,7 +33,7 @@ object Examples extends Specification {
 
   "Person example" in {
     val json = parse(person)
-    val renderedPerson = JsonDSL.pretty(render(json))
+    val renderedPerson = Printer.pretty(render(json))
     json mustEqual parse(renderedPerson)
     render(json) mustEqual render(personDSL)
     compact(render(json \\ "name")) mustEqual """{"name":"Joe","name":"Marilyn"}"""

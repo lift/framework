@@ -25,8 +25,6 @@ import org.specs.ScalaCheck
 
 class JsonASTTest extends Runner(JsonASTSpec) with JUnit
 object JsonASTSpec extends Specification with JValueGen with ScalaCheck {
-  import JsonAST._
-
   "Functor identity" in {
     val identityProp = (json: JValue) => json == (json map identity)
     forAll(identityProp) must pass

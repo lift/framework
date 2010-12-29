@@ -22,8 +22,6 @@ import Gen._
 import Arbitrary.arbitrary
 
 trait JValueGen {
-  import JsonAST._
-
   def genJValue: Gen[JValue] = frequency((5, genSimple), (1, wrap(genArray)), (1, wrap(genObject)))
   def genSimple: Gen[JValue] = oneOf(
     value(JNull), 

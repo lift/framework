@@ -422,8 +422,6 @@ object JsonAST {
  */
 object Implicits extends Implicits
 trait Implicits {
-  import JsonAST._
-
   implicit def int2jvalue(x: Int) = JInt(x)
   implicit def long2jvalue(x: Long) = JInt(x)
   implicit def bigint2jvalue(x: BigInt) = JInt(x)
@@ -440,10 +438,8 @@ trait Implicits {
  * ("name", "joe") ~ ("age", 15) == JObject(JField("name",JString("joe")) :: JField("age",JInt(15)) :: Nil)
  * </pre>
  */
-object JsonDSL extends JsonDSL with Printer
+object JsonDSL extends JsonDSL
 trait JsonDSL extends Implicits {
-  import JsonAST._
-
   implicit def seq2jvalue[A <% JValue](s: Traversable[A]) = JArray(s.toList.map { a => val v: JValue = a; v })
   implicit def option2jvalue[A <% JValue](opt: Option[A]): JValue = opt match {
     case Some(x) => x

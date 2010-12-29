@@ -21,7 +21,6 @@ package testing {
 import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.json._
-import JsonAST._
 import JsonDSL._
 import _root_.net.liftweb.common._
 import _root_.scala.xml._

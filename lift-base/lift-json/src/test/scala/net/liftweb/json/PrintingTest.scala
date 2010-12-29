@@ -25,7 +25,6 @@ import org.specs.ScalaCheck
 
 class PrintingTest extends Runner(PrintingSpec) with JUnit
 object PrintingSpec extends Specification with JValueGen with ScalaCheck {
-  import JsonAST._
   import scala.text.Document
 
   "rendering does not change semantics" in {

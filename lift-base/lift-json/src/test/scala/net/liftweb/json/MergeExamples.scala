@@ -22,9 +22,6 @@ import org.specs.runner.{Runner, JUnit}
 
 class MergeExamplesTest extends Runner(MergeExamples) with JUnit
 object MergeExamples extends Specification {
-  import JsonAST._
-  import JsonParser._
-
   "Merge example" in {
     (scala1 merge scala2) mustEqual expectedMergeResult
   }

@@ -19,7 +19,6 @@ package json {
 
 import java.lang.reflect.{Constructor => JConstructor, Field, Type, ParameterizedType}
 import java.util.Date
-import JsonAST._
 
 case class TypeInfo(clazz: Class[_], parameterizedType: Option[ParameterizedType])
 

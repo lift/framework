@@ -26,9 +26,6 @@ import org.specs.ScalaCheck
 class XmlTest extends Runner(XmlSpec) with JUnit
 object XmlSpec extends Specification with NodeGen with JValueGen with ScalaCheck {
   import Xml._
-  import JsonAST._
-  import Printer.compact
-  import JsonParser.parse
   import scala.xml.Node
 
   "Valid XML can be converted to JSON and back (symmetric op)" in {

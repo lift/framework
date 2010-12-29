@@ -22,8 +22,6 @@ import org.specs.runner.{Runner, JUnit}
 
 class DiffExamplesTest extends Runner(DiffExamples) with JUnit
 object DiffExamples extends Specification {
-  import JsonAST._
-  import JsonParser._
   import MergeExamples.{scala1, scala2, lotto1, lotto2, mergedLottoResult}
 
   "Diff example" in {

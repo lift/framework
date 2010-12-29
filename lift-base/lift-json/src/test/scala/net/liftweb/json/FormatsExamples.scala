@@ -24,9 +24,6 @@ import org.specs.runner.{Runner, JUnit}
 class FormatsExamplesTest extends Runner(FormatsExamples) with JUnit
 
 object FormatsExamples extends Specification with TypeHintExamples {
-  import JsonAST._
-  import JsonParser._
-
   implicit val formats = ShortTypeHintExamples.formats + FullTypeHintExamples.formats.typeHints
 
   val hintsForFish   = ShortTypeHintExamples.formats.typeHints.hintFor(classOf[Fish])

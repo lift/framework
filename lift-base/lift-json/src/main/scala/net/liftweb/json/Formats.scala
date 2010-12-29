@@ -18,7 +18,6 @@ package net.liftweb {
 package json {
 
 import java.util.{Date, TimeZone}
-import JsonAST.{JObject, JValue}
 
 /** Formats to use when converting JSON.
  * Formats are usually configured by using an implicit parameter:
