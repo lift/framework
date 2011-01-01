@@ -51,7 +51,7 @@ object JObjectParser {
       case x if mongotype_?(x.getClass) => mongotype2jvalue(x)(formats)
       case x: BasicDBList => JArray(x.toList.map( x => serialize(x, formats)))
       case x: BasicDBObject =>
-        x.keySet.toArray.toList.map { f =>
+        x.keySet.toList.map { f =>
           JField(f.toString, serialize(x.get(f.toString), formats))
         }
         match {
