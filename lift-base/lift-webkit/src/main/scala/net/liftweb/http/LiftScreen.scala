@@ -178,7 +178,7 @@ trait AbstractScreen extends Factory {
 
     def setFilter: List[ValueType => ValueType] = Nil
 
-    override lazy val uniqueFieldId: Box[String] = Full("I"+Helpers.hash(this.getClass.getName))
+    override lazy val uniqueFieldId: Box[String] = Full(Helpers.nextFuncName) 
 
     override def toString = is.toString
   }
@@ -603,7 +603,7 @@ trait ScreenWizardRendered {
     def bindFieldLine(xhtml: NodeSeq): NodeSeq = {
       fields.flatMap {
         f =>
-        val curId = f.field.uniqueFieldId openOr randomString(20)
+        val curId = f.field.uniqueFieldId openOr ("I"+randomString(20))
         val myNotices = notices.filter(fi => fi._3.isDefined && fi._3 == f.field.uniqueFieldId)
         def doLabel(in: NodeSeq): NodeSeq =
         myNotices match {
