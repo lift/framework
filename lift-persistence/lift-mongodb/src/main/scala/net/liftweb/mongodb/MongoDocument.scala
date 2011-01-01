@@ -104,11 +104,11 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   def findAll: List[BaseDocument] = {
     import scala.collection.JavaConversions._
 
-    /*
-    * The call to toArray retrieves all documents and puts them in memory.
-    */
     MongoDB.useCollection(mongoIdentifier, collectionName)(coll => {
-      coll.find.toArray.map(dbo => create(dbo)).toList
+      /** Mongo Cursors are both Iterable and Iterator, 
+       * so we need to reduce ambiguity for implicits 
+       */
+      (coll.find: Iterator[DBObject]).map(create).toList
     })
   }
 
@@ -127,8 +127,10 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
         findOpts.find(_.isInstanceOf[Skip]).map(x => x.value).getOrElse(0)
       )
       sort.foreach( s => cur.sort(s))
-      // The call to toArray retrieves all documents and puts them in memory.
-      cur.toArray.map(dbo => create(dbo)).toList
+      /** Mongo Cursors are both Iterable and Iterator, 
+       * so we need to reduce ambiguity for implicits 
+       */
+      (cur: Iterator[DBObject]).map(create).toList
     })
   }
 
