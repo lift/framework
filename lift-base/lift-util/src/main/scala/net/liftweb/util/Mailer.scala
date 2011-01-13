@@ -64,9 +64,6 @@ protected trait MailerImpl extends SimpleInjector {
   case class BCC(address: String) extends AddressType(address)
   case class ReplyTo(address: String) extends AddressType(address)
 
-  // implicit def stringToMailBodyType(text: String): MailBodyType = PlainMailBodyType(text)
-  // removed per issue 814
-
   implicit def xmlToMailBodyType(html: NodeSeq): MailBodyType = XHTMLMailBodyType(html)
 
   case class MessageInfo(from: From, subject: Subject, info: List[MailTypes])
