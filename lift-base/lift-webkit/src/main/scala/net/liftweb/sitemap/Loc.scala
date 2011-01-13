@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package sitemap {
+package net.liftweb
+package sitemap
 
-import _root_.net.liftweb.http._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import net.liftweb.http._
+import net.liftweb.common._
+import net.liftweb.util._
 import Helpers._
 import auth._
 
-import _root_.scala.xml.{NodeSeq, Text}
+import scala.xml.{NodeSeq, Text}
 
 /**
  * A menu location
@@ -533,7 +533,17 @@ object Loc {
    * A single snippet that's assocaited with a given location... the snippet
    * name and the snippet function'
    */
-  case class Snippet(name: String, func: NodeSeq => NodeSeq) extends AnyLocParam
+  class Snippet(val name: String, _func: => NodeSeq => NodeSeq) extends AnyLocParam {
+    /**
+     * The NodeSeq => NodeSeq function 
+     */
+    def func: NodeSeq => NodeSeq = _func
+  }
+
+  object Snippet {
+    def apply(name: String, func: => NodeSeq => NodeSeq): Snippet = new Snippet(name, func)
+    def unapply(in: Snippet): Option[(String, NodeSeq => NodeSeq)] = Some(in.name -> in.func)
+  }
 
   /**
    * Allows you to create a handler for many snippets that are associated with
@@ -730,5 +740,3 @@ case class MenuItem(text: NodeSeq, uri: NodeSeq,  kids: Seq[MenuItem],
   }
 }
 
-}
-}

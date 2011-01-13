@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.net.liftweb.common._
-import _root_.net.liftweb._
+import net.liftweb.common._
+import net.liftweb._
 import util._
 import Helpers._
-import _root_.scala.xml.{NodeSeq, Elem}
+import scala.xml.{NodeSeq, Elem}
 
 /**
  * The same StatefulSnippet instance is used across a given page rendering.
@@ -92,11 +92,46 @@ trait StatefulSnippet extends DispatchSnippet {
   def redirectTo(where: String) = S.redirectTo(where, registerThisSnippet)
 }
 
+/**
+ * Mix this into a StatefulSnippet if you want a defined render method.
+ */
+trait RenderDispatch {
+  /**
+   * The pre-defined dispatch
+   */
+  def dispatch: PartialFunction[String, NodeSeq => NodeSeq] = Map("render" -> render _)
+
+  /**
+   * You have to define this method
+   */
+  def render(in: NodeSeq): NodeSeq
+}
+
+/**
+ * Mix this into a StatefulSnippet if you want a defined render method.  Differs
+ * from RenderDispatch because the render method returns a NodeSeq => NodeSeq
+ */
+trait RenderFuncDispatch {
+  /**
+   * The pre-defined dispatch
+   */
+  def dispatch: PartialFunction[String, NodeSeq => NodeSeq] = Map("render" -> render)
+
+  /**
+   * You have to define this method
+   */
+  def render: NodeSeq => NodeSeq
+}
+
+/**
+ * The simple composition of StatefulSnippet, Whence and RenderFuncDispatch.
+ * This is the common use of stateful snippets and makes things easier.
+ */
+trait SimpleStateful extends StatefulSnippet with Whence with RenderFuncDispatch
+
 trait DispatchSnippet {
   type DispatchIt = PartialFunction[String, NodeSeq => NodeSeq]
 
   def dispatch: DispatchIt
 }
 
-}
-}
