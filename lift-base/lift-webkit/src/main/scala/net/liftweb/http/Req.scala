@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.net.liftweb.util.Helpers
+import util.Helpers
 import Helpers._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.json._
-import _root_.net.liftweb.http.provider._
-import _root_.net.liftweb.util.Helpers
-import _root_.java.io.{InputStream, ByteArrayInputStream, File, FileInputStream,
+import common._
+import util._
+import json._
+import http.provider._
+import java.io.{InputStream, ByteArrayInputStream, File, FileInputStream,
                        FileOutputStream}
-import _root_.scala.xml._
+import scala.xml._
 import sitemap._
-import _root_.scala._
-
+import java.io.{InputStream, ByteArrayInputStream, File, FileInputStream,
+                FileOutputStream}
+import scala.xml._
 
 trait UserAgentCalculator {
   lazy val ieVersion: Box[Int] = {
@@ -134,29 +134,87 @@ sealed trait ParamHolder {
 }
 @serializable
 final case class NormalParamHolder(name: String, value: String) extends ParamHolder
+
+/**
+ * A FileParamHolder contains a file uploaded via a multipart
+ * form.
+ *
+ * @param name The name of the form field for this file
+ * @param mimeType the mime type, as specified in the Content-Type field
+ * @param fileName The local filename on the client
+ */
 @serializable
 abstract class FileParamHolder(val name: String, val mimeType: String,
                                val fileName: String) extends ParamHolder
 {
+  /**
+   * Returns the contents of the uploaded file as a Byte array.
+   */
   def file: Array[Byte]
 
+  /**
+   * Returns an input stream that can be used to read the
+   * contents of the uploaded file.
+   */
   def fileStream: InputStream
+
+  /**
+   * Returns the length of the uploaded file.
+   */
+  def length : Long
 }
 
+/**
+ * This FileParamHolder stores the uploaded file directly into memory.
+ *
+ * @param name The name of the form field for this file
+ * @param mimeType the mime type, as specified in the Content-Type field
+ * @param fileName The local filename on the client
+ * @param file The contents of the uploaded file in a byte array
+ */
 class InMemFileParamHolder(override val name: String, override val mimeType: String,
                            override val fileName: String, val file: Array[Byte]) extends
 FileParamHolder(name, mimeType, fileName)
 {
+  /**
+   * Returns an input stream that can be used to read the
+   * contents of the uploaded file.
+   */
   def fileStream: InputStream = new ByteArrayInputStream(file)
+
+  /**
+   * Returns the length of the uploaded file.
+   */
+  def length : Long = if (file == null) 0 else file.length
 }
 
+/**
+ * This FileParamHolder stores the uploaded file directly into memory.
+ *
+ * @param name The name of the form field for this file
+ * @param mimeType the mime type, as specified in the Content-Type field
+ * @param fileName The local filename on the client
+ * @param localFile The local copy of the uploaded file
+ */
 class OnDiskFileParamHolder(override val name: String, override val mimeType: String,
                             override val fileName: String, val localFile: File) extends
 FileParamHolder(name, mimeType, fileName)
 {
+  /**
+   * Returns an input stream that can be used to read the
+   * contents of the uploaded file.
+   */
   def fileStream: InputStream = new FileInputStream(localFile)
 
+  /**
+   * Returns the contents of the uploaded file as a Byte array.
+   */
   def file: Array[Byte] = Helpers.readWholeStream(fileStream)
+
+  /**
+   * Returns the length of the uploaded file.
+   */
+  def length : Long = if (localFile == null) 0 else localFile.length
 
   protected override def finalize {
     tryo(localFile.delete)
@@ -996,7 +1054,4 @@ object URLRewriter {
   }
 
   def rewriteFunc: Box[(String) => String] = Box.legacyNullTest(funcHolder value)
-}
-
-}
 }

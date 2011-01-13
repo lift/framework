@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
 import S._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.http.js._
-import _root_.net.liftweb.http.js.AjaxInfo
+import common._
+import util._
+import util.Helpers._
+import http.js._
+import http.js.AjaxInfo
 import JE._
 import JsCmds._
-import _root_.scala.xml._
+import scala.xml._
 
 /**
  * The SHtml object defines a suite of XHTML element generator methods
@@ -1598,9 +1598,21 @@ object SHtml {
     }
   }
 
+  /**
+   * Defines a form element for a file upload that will call the
+   * specified function when the file is uploaded if the file size
+   * is greater than zero. Note that in order to use the fileUpload
+   * element you need to specify the multipart attribute on your
+   * snippet tag:
+   *
+   * <pre name="code" class="xml">
+   * &lt;lift:Some.snippet form="POST" multipart="true">
+   * ...
+   * &lt;/lift:Some.snippet>
+   * </pre>
+   */
   def fileUpload(func: FileParamHolder => Any, attrs: ElemAttr*): Elem = {
-    val f2: FileParamHolder => Any =
-      fp => if (fp.file != null && fp.file.length > 0) func(fp)
+    val f2: FileParamHolder => Any = fp => if (fp.length > 0) func(fp)
     fmapFunc(BinFuncHolder(f2)) { name => 
       attrs.foldLeft(<input type="file" name={ name }/>) { _ % _ }
     }
@@ -1767,7 +1779,4 @@ object Html5ElemAttr {
  */
 trait Whence {
   protected val whence = S.referer openOr "/"
-}
-
-}
 }
