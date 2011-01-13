@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.scala.xml.{NodeSeq}
-import _root_.javax.mail._
-import _root_.javax.mail.internet._
-import _root_.javax.naming.{Context, InitialContext}
-import _root_.java.util.Properties
+import scala.xml.{NodeSeq}
+import javax.mail._
+import javax.mail.internet._
+import javax.naming.{Context, InitialContext}
+import java.util.Properties
 import common._
 import actor._
 
@@ -64,7 +64,8 @@ protected trait MailerImpl extends SimpleInjector {
   case class BCC(address: String) extends AddressType(address)
   case class ReplyTo(address: String) extends AddressType(address)
 
-  implicit def stringToMailBodyType(text: String): MailBodyType = PlainMailBodyType(text)
+  // implicit def stringToMailBodyType(text: String): MailBodyType = PlainMailBodyType(text)
+  // removed per issue 814
 
   implicit def xmlToMailBodyType(html: NodeSeq): MailBodyType = XHTMLMailBodyType(html)
 
@@ -191,14 +192,14 @@ protected trait MailerImpl extends SimpleInjector {
                       rel_bpi.setFileName(i.name)
                       rel_bpi.setContentID(i.name)
                       rel_bpi.setDisposition("inline")
-                      rel_bpi.setDataHandler(new _root_.javax.activation.DataHandler(new _root_.javax.activation.DataSource {
+                      rel_bpi.setDataHandler(new javax.activation.DataHandler(new javax.activation.DataSource {
                             def getContentType = i.mimeType
 
-                            def getInputStream = new _root_.java.io.ByteArrayInputStream(i.bytes)
+                            def getInputStream = new java.io.ByteArrayInputStream(i.bytes)
 
                             def getName = i.name
 
-                            def getOutputStream = throw new _root_.java.io.IOException("Unable to write to item")
+                            def getOutputStream = throw new java.io.IOException("Unable to write to item")
                           }))
                       html_mp.addBodyPart(rel_bpi)
                     }
@@ -269,5 +270,3 @@ protected trait MailerImpl extends SimpleInjector {
   }
 }
 
-}
-}
