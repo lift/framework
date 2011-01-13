@@ -291,15 +291,16 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
       s.startsWith("lift:") || s.startsWith("l:")
 
     private def snippy(in: Elem): Option[(String, MetaData)] =
-      for {
+      ((for {
         cls <- in.attribute("class")
         snip <- cls.text.charSplit(' ').find(isLiftClass)
-      } yield {
-        snip.charSplit('?') match {
-          case Nil => "this should never happen" -> Null
-          case x :: Nil => urlDecode(removeLift(x)) -> Null
-          case x :: xs => urlDecode(removeLift(x)) -> pairsToMetaData(xs.flatMap(_.roboSplit("[;&]")))
-        }
+      } yield snip) orElse in.attribute("lift").map(_.text)).map{
+        snip =>
+          snip.charSplit('?') match {
+            case Nil => "this should never happen" -> Null
+            case x :: Nil => urlDecode(removeLift(x)) -> Null
+            case x :: xs => urlDecode(removeLift(x)) -> pairsToMetaData(xs.flatMap(_.roboSplit("[;&]")))
+          }
       }
 
     private def liftAttrsAndParallel(in: MetaData): (Boolean, MetaData) = {
@@ -322,12 +323,11 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
           if (p.pre == "l" || p.pre == "lift") && p.key == "parallel"
           => par = true
 
+          case up: UnprefixedAttribute if up.key == "lift" => // ignore
 
           case p: PrefixedAttribute 
           if p.pre == "lift" && p.key == "snippet"
           => nonLift = p.copy(nonLift)
-
-          
 
           case a => nonLift = a.copy(nonLift)
         }
