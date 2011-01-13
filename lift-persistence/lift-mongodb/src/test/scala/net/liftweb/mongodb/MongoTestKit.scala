@@ -30,7 +30,7 @@ trait MongoTestKit {
     .replace(".", "_")
     .toLowerCase
 
-  val defaultHost = MongoHost("localhost", 27017)
+  def defaultHost = MongoHost("localhost", 27017)
 
   // If you need more than one db, override this
   def dbs: List[(MongoIdentifier, MongoHost, String)] = List((DefaultMongoIdentifier, defaultHost, dbName))
@@ -38,25 +38,26 @@ trait MongoTestKit {
   def debug = false
 
   doBeforeSpec {
-    // define the dbs
-    dbs foreach { dbtuple =>
-      MongoDB.defineDb(dbtuple._1, MongoAddress(dbtuple._2, dbtuple._3))
+    if (isMongoRunning) {
+      // define the dbs
+      dbs foreach { dbtuple =>
+        MongoDB.defineDb(dbtuple._1, MongoAddress(dbtuple._2, dbtuple._3))
+      }
     }
   }
 
   def isMongoRunning: Boolean =
-    if (dbs.length < 1)
-      false
-    else {
-      try {
+    try {
+      if (dbs.length < 1)
+        false
+      else {
         dbs foreach { dbtuple =>
           MongoDB.use(dbtuple._1) ( db => { db.getLastError } )
         }
         true
       }
-      catch {
-        case _ => false
-      }
+    } catch {
+      case _ => false
     }
 
   def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkipExample
