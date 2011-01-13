@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb 
+package util 
 
-import _root_.java.util.regex._
-import _root_.java.lang.Character._
-import _root_.java.lang.{StringBuilder => GoodSB}
-import _root_.scala.xml.NodeSeq
+import java.security.SecureRandom
+import java.util.regex._
+import java.lang.Character._
+import java.lang.{StringBuilder => GoodSB}
+import scala.xml.NodeSeq
 import common._
 
 object StringHelpers extends StringHelpers
@@ -31,7 +32,7 @@ object StringHelpers extends StringHelpers
 trait StringHelpers {
 
   /** random numbers generator */
-  private val random = new _root_.java.security.SecureRandom
+  private val _random = new SecureRandom
 
   /**
    * If str is surrounded by quotes it return the content between the quotes
@@ -166,15 +167,20 @@ trait StringHelpers {
   def clean(in : String) =  if (in == null) "" else in.replaceAll("[^a-zA-Z0-9_]", "")
 
   /**
-   * Create a random string of a given size
-   * @param size size of the string to create. Must be a positive or nul integer
+   * Create a random string of a given size.  5 bits of randomness per character
+   * @param size size of the string to create. Must be a positive integer.
    * @return the generated string
    */
   def randomString(size: Int): String = {
     def addChar(pos: Int, lastRand: Int, sb: GoodSB): GoodSB = {
       if (pos >= size) sb
       else {
-        val randNum = if ((pos % 6) == 0) random.nextInt else lastRand
+        val randNum = if ((pos % 6) == 0) {
+          _random.synchronized(_random.nextInt)
+        } else {
+          lastRand
+        }
+
         sb.append((randNum & 0x1f) match {
           case n if n < 26 => ('A' + n).toChar
           case n => ('0' + (n - 26)).toChar
@@ -421,6 +427,3 @@ final class SuperString(what: String) {
   
 }
 
-
-}
-}
