@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.scala.collection.mutable._
-import _root_.java.lang.reflect.Method
-import _root_.scala.xml._
-import _root_.java.util.Date
-import _root_.net.liftweb.http.{S, SHtml}
-import _root_.net.liftweb.http.S._
-import _root_.net.liftweb.http.js._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.json._
-import _root_.net.liftweb.util._
+import scala.collection.mutable._
+import java.lang.reflect.Method
+import scala.xml._
+import java.util.Date
+import net.liftweb.http.{S, SHtml}
+import net.liftweb.http.S._
+import net.liftweb.http.js._
+import net.liftweb.common._
+import net.liftweb.json._
+import net.liftweb.util._
 
 
 /**
@@ -544,10 +544,29 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
    */
   override def _toForm: Box[NodeSeq] =
   S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
-    Full(<input type='text' id={fieldId}
-        name={funcName}
-        value={is match {case null => "" case s => s.toString}}/>)
+    Full(appendFieldId(<input type={formInputType}
+                       name={funcName}
+                       value={is match {case null => "" case s => s.toString}}/>))
   }
+
+  /**
+   * When building the form field, what's the input element's
+   * type attribute.  Defaults to 'text', but change to 'email'
+   * or other HTML5 values.
+   */
+  protected def formInputType = "text"
+
+  /**
+   * If the field has a defined fieldId, append it
+   */
+  protected def appendFieldId(in: Elem): Elem = fieldId match {
+    case Some(i) => {
+      import util.Helpers._
+      in % ("id" -> i)
+    }
+    case _ => in
+  }
+
 
   /**
    * Set the field to the Box value if the Box is Full
@@ -815,5 +834,3 @@ trait LifecycleCallbacks {
   def afterDelete {}
 }
 
-}
-}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.scala.collection.mutable._
-import _root_.scala.xml.{Elem, NodeSeq}
-import _root_.net.liftweb.http.S
+import scala.collection.mutable._
+import scala.xml.{Elem, NodeSeq}
+import net.liftweb.http.S
 import S._
-import _root_.net.liftweb.http.js._
-import _root_.net.liftweb.util.{FieldError, FieldContainer, BaseField}
-import _root_.net.liftweb.common.{Box, Empty, Full, ParamFailure}
+import net.liftweb.http.js._
+import net.liftweb.util.{FieldError, FieldContainer, BaseField}
+import net.liftweb.common.{Box, Empty, Full, ParamFailure}
 
 trait BaseMapper extends FieldContainer {
   type MapperType <: Mapper[MapperType]
@@ -203,7 +203,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
   S.fmapFunc((ignore: List[String]) => f(this)){
     (name: String) =>
     (<input type='hidden' name={name} value="n/a" />)} ++
-  (button.map(b => getSingleton.formatFormElement( <xml:group>&nbsp;</xml:group> , <input type="submit" value={b}/> )) openOr _root_.scala.xml.Text(""))
+  (button.map(b => getSingleton.formatFormElement( <xml:group>&nbsp;</xml:group> , <input type="submit" value={b}/> )) openOr scala.xml.Text(""))
 
   def toForm(button: Box[String], redoSnippet: NodeSeq => NodeSeq, onSuccess: A => Unit): NodeSeq = {
     val snipName = S.currentSnippet
@@ -217,7 +217,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
 
     getSingleton.toForm(this) ++
     S.fmapFunc((ignore: List[String]) => doSubmit())(name => <input type='hidden' name={name} value="n/a" />) ++
-    (button.map(b => getSingleton.formatFormElement( <xml:group>&nbsp;</xml:group> , <input type="submit" value={b}/> )) openOr _root_.scala.xml.Text(""))
+    (button.map(b => getSingleton.formatFormElement( <xml:group>&nbsp;</xml:group> , <input type="submit" value={b}/> )) openOr scala.xml.Text(""))
   }
 
   def saved_? : Boolean = getSingleton.saved_?(this)
@@ -328,7 +328,7 @@ trait IdPK /* extends BaseLongKeyedMapper */ {
 trait CreatedTrait {
   self: BaseMapper =>
 
-  import _root_.net.liftweb.util._
+  import net.liftweb.util._
 
   /**
    * Override this method to index the createdAt field
@@ -360,7 +360,7 @@ trait CreatedTrait {
 trait UpdatedTrait {
   self: BaseMapper =>
 
-  import _root_.net.liftweb.util._
+  import net.liftweb.util._
 
   /**
    * Override this method to index the updatedAt field
@@ -438,7 +438,4 @@ object StopValidationOnError {
     def apply(in: T): List[FieldError] = f(in)
     def isDefinedAt(in: T): Boolean = f.isDefinedAt(in)
   }
-}
-
-}
 }

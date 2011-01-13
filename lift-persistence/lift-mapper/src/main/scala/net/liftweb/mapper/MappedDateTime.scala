@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.java.util.Date
-import _root_.java.lang.reflect.Method
+import java.sql.{ResultSet, Types}
+import java.util.Date
+import java.lang.reflect.Method
 
-import _root_.net.liftweb._
+import net.liftweb._
 import util._
 import common._
 import Helpers._
@@ -30,7 +30,7 @@ import json._
 import S._
 import js._
 
-import _root_.scala.xml.{NodeSeq}
+import scala.xml.{NodeSeq}
 
 abstract class MappedDateTime[T<:Mapper[T]](val fieldOwner: T) extends MappedField[Date, T] {
   private val data = FatLazy(defaultValue)
@@ -93,9 +93,9 @@ abstract class MappedDateTime[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
    */
   override def _toForm: Box[NodeSeq] =
   S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
-  Full(<input type='text' id={fieldId}
-      name={funcName}
-      value={is match {case null => "" case s => format(s)}}/>)
+  Full(appendFieldId(<input type={formInputType}
+                     name={funcName}
+                     value={is match {case null => "" case s => format(s)}}/>))
   }
 
   override def setFromAny(f: Any): Date = f match {
@@ -114,10 +114,10 @@ abstract class MappedDateTime[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
 
   def jdbcFriendly(field : String) : Object = is match {
     case null => null
-    case d => new _root_.java.sql.Timestamp(d.getTime)
+    case d => new java.sql.Timestamp(d.getTime)
   }
 
-  def real_convertToJDBCFriendly(value: Date): Object = if (value == null) null else new _root_.java.sql.Timestamp(value.getTime)
+  def real_convertToJDBCFriendly(value: Date): Object = if (value == null) null else new java.sql.Timestamp(value.getTime)
 
   private def st(in: Box[Date]): Unit =
   in match {
@@ -157,5 +157,3 @@ abstract class MappedDateTime[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
   override def toString: String = if(is==null) "NULL" else format(is)
 }
 
-}
-}
