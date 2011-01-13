@@ -1134,6 +1134,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
     val StateInStateless = Value(8, "Access to Lift's statefull features from Stateless mode")
     val CometTimeout = Value(9, "Comet Component did not response to requests")
     val CometNotFound = Value(10, "Comet Component not found")
+    val ExecutionFailure = Value(11, "Execution Failure")
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,14 +57,14 @@ object Embed extends DispatchSnippet {
             case None => logger.warn("Found <lift:bind-at> tag without name while embedding \"%s\"".format(what.text)); None
           }
         }
-        case invalidTag => 
-          logger.warn("Found invalid embed tag content \"%s\" while embedding \"%s\"".format(invalidTag, what.text)) ; None
+        case _ => None
       }): _*)
 
       BindHelpers.bind(bindingMap, template)
     }
-    case Failure(msg, _, _) => Comment(msg)
-    case _ => Comment("FIXME: session is invalid")
+    case Failure(msg, _, _) => throw new SnippetExecutionException(msg)
+
+    case _ => throw new SnippetExecutionException("session is invalid")
   }
 
 }

@@ -217,6 +217,14 @@ final case class CometCreationInfo(contType: String,
                                    session: LiftSession)
 
 /**
+ * Throw this exception if there's a catostrophic failure executing
+ * a snippet
+ */
+class SnippetExecutionException(msg: String) extends SnippetFailureException(msg) {
+  def snippetFailure = LiftRules.SnippetFailures.ExecutionFailure 
+}
+
+/**
  * An abstract exception that may be thrown during page rendering.
  * The exception is caught and the appropriate report of a SnippetError
  * is generated

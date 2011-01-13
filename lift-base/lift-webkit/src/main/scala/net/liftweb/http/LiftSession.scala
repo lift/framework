@@ -397,7 +397,7 @@ object SessionMaster extends LiftActor with Loggable {
       try {
         ActorPing schedule (this, CheckAndPurge, 10 seconds)
       } catch {
-        case e => logger.error("Couldn't start SessionMaster ping", e)
+        case e: Exception => logger.error("Couldn't start SessionMaster ping", e)
       }
     }
   }
