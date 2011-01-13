@@ -277,11 +277,11 @@ trait HttpHelpers { self: ListHelpers with StringHelpers  =>
    * (16 or 17 letters and numbers, starting with a letter)
    */
   def nextFuncName(seed: Long): String = {
-    val sb = new StringBuilder(20)
+    val sb = new StringBuilder(24)
     sb.append('F')
     sb.append(nextNum + seed)
     // sb.append('_')
-    sb.append(randomString(3))
+    sb.append(randomString(6))
     sb.toString
   }
 
