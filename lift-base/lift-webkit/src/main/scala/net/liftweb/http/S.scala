@@ -2250,9 +2250,11 @@ for {
    */
   private[http] def noticesToJsCmd: JsCmd = LiftRules.noticesToJsCmd()
 
-  implicit def toLFunc(in: List[String] => Any): AFuncHolder = LFuncHolder(in, Empty)
-
-  implicit def toNFunc(in: () => Any): AFuncHolder = NFuncHolder(in, Empty)
+  @deprecated("Use AFuncHolder.listStrToAF")
+  def toLFunc(in: List[String] => Any): AFuncHolder = LFuncHolder(in, Empty)
+ 
+  @deprecated("Use AFuncHolder.unitToAF")
+  def toNFunc(in: () => Any): AFuncHolder = NFuncHolder(in, Empty)
 
   implicit def stuff2ToUnpref(in: (Symbol, Any)): UnprefixedAttribute = new UnprefixedAttribute(in._1.name, Text(in._2.toString), Null)
 

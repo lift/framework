@@ -30,6 +30,7 @@ import _root_.net.liftweb.http.js._
 import JsCmds._
 import JE._
 import _root_.java.util.concurrent.atomic.AtomicLong
+import java.util.Locale
 
 /**
  * An actor that monitors other actors that are linked with it. If a watched
@@ -390,6 +391,16 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
   def buildSpan(time: Long, xml: NodeSeq): NodeSeq
 
   def parentTag: Elem
+
+  /**
+   * The locale for the session that created the CometActor
+   */
+  def cometActorLocale: Locale = _myLocale
+  private var _myLocale = Locale.getDefault()
+  
+  private[http] def setCometActorLocale(loc: Locale) {
+    _myLocale = loc
+  }
 }
 
 /**

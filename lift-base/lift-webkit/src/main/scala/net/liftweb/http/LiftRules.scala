@@ -911,20 +911,22 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   /**
    * Used by Lift to construct full pacakge names fromthe packages provided to addToPackages function
    */
-  def buildPackage(end: String) = synchronized(otherPackages.map(_ + "." + end))
+  def buildPackage(end: String) = otherPackages.map(_ + "." + end)
 
   /**
    * Tells Lift where to find Snippets,Views, Comet Actors and Lift ORM Model object
    */
   def addToPackages(what: String) {
-    synchronized {otherPackages = what :: otherPackages}
+    if (doneBoot) throw new IllegalStateException("Cannot modify after boot.");
+    otherPackages = what :: otherPackages
   }
 
   /**
    * Tells Lift where to find Snippets,Views, Comet Actors and Lift ORM Model object
    */
   def addToPackages(what: Package) {
-    synchronized {otherPackages = what.getName :: otherPackages}
+    if (doneBoot) throw new IllegalStateException("Cannot modify after boot.");
+    otherPackages = what.getName :: otherPackages
   }
 
   private val defaultFinder = getClass.getResource _

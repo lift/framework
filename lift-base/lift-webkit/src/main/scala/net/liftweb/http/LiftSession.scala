@@ -1899,7 +1899,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     testStatefulFeature {
     val createInfo = CometCreationInfo(contType, name, defaultXml, attributes, this)
 
-    LiftRules.cometCreationFactory.vend.apply(createInfo).map{
+     val boxCA: Box[LiftCometActor] = LiftRules.cometCreationFactory.vend.apply(createInfo).map{
     a => a ! PerformSetupComet; a} or
     LiftRules.cometCreation.toList.find(_.isDefinedAt(createInfo)).map(_.apply(createInfo)).map{
     a => a ! PerformSetupComet; a} or
@@ -1923,6 +1923,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                 ret.asInstanceOf[LiftCometActor]
               }
     })
+    boxCA.foreach{_.setCometActorLocale(S.locale)}
+    
+    boxCA
     }
   }
 

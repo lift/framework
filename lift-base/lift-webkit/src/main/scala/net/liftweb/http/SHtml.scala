@@ -951,8 +951,9 @@ object SHtml {
    * form fields (input, button, textarea, select) and the
    * function is executed when the form containing the field is submitted.
    */
-  def onSubmit(func: String => Any): NodeSeq => NodeSeq = 
+  def onSubmit(func: String => Any): NodeSeq => NodeSeq = {
     onSubmitImpl(func: AFuncHolder)
+  }
 
   /**
    * execute the List[String] function when the form is submitted.
