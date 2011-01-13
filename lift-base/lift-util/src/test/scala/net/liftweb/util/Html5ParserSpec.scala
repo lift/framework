@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.org.specs._
-import _root_.org.specs.specification._
+import org.specs._
+import org.specs.specification._
 
-import _root_.scala.xml.Elem
+import scala.xml.{Elem, UnprefixedAttribute}
 
 import common._
 
@@ -29,6 +29,11 @@ object Html5ParserSpec extends Specification with Html5Parser with Html5Writer {
 "Htm5 Writer" should {
   "Write &" in {
     toString(<foo baz="&amp;dog"/>) must_== """<foo baz="&dog"></foo>"""
+  }
+
+  "ignore attributes that are null" in {
+    toString(<foo id={None}/>) must_==
+    """<foo></foo>"""
   }
 }
 
@@ -458,5 +463,3 @@ pageTracker._trackPageview();
 }
 class Html5ParserSpecTest extends _root_.org.specs.runner.JUnit4(Html5ParserSpec)
 
-}
-}
