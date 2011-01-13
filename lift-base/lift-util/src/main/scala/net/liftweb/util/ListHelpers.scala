@@ -87,18 +87,14 @@ trait ListHelpers {
   /**
    * Convert a java.util.Enumeration to a List[T]
    */
-  def enumToList[T](enum: _root_.java.util.Enumeration[T]): List[T] = {
-    if (enum.hasMoreElements) {
-      val next = enum.nextElement
-      next :: enumToList(enum)
-    } else Nil
-  }
+  def enumToList[T](enum: _root_.java.util.Enumeration[T]): List[T] =
+    scala.collection.JavaConversions.asIterator(enum).toList
 
   /**
    * Convert a java.util.Enumeration to a List[String] using the toString method on each element
    */
   def enumToStringList[C](enum: _root_.java.util.Enumeration[C]): List[String] =
-    if (enum.hasMoreElements) enum.nextElement.toString :: enumToStringList(enum) else Nil
+    enumToList(enum).map(_.toString)
 
   /**
    * Return the first element of a List or a default value if the list is empty

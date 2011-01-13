@@ -296,7 +296,7 @@ object Req {
         ParamCalcInfo(queryStringParam._1, 
                       queryStringParam._2 ++ localParams, 
                       Nil, 
-                      tryo(readWholeStream(request.inputStream)))
+                      Full(BodyOrInputStream(request.inputStream)))
         // it's multipart
       } else if (request multipartContent_?) {
         val allInfo = request extractFiles
@@ -330,7 +330,7 @@ object Req {
       } else {
         ParamCalcInfo(queryStringParam._1, 
                       queryStringParam._2 ++ localParams, 
-                      Nil, tryo(readWholeStream(request inputStream)))
+                      Nil, Full(BodyOrInputStream(request inputStream)))
       }
     }
 
@@ -424,10 +424,32 @@ object Req {
   def unapply(in: Req): Option[(List[String], String, RequestType)] = Some((in.path.partPath, in.path.suffix, in.requestType))
 }
 
+/**
+ * Holds either the body or the request input stream, depending on which was requested first
+ */
+final case class BodyOrInputStream(is: InputStream) {
+  private var calc = false
+  lazy val body: Box[Array[Byte]] = synchronized {
+    if (calc) Empty
+    else {
+      calc = true
+      tryo(readWholeStream(is))
+    }
+  }
+
+  lazy val stream: Box[InputStream] = synchronized {
+    if (calc) Empty
+    else {
+      calc = true
+      Full(is)
+    }
+  }
+}
+
 final case class ParamCalcInfo(paramNames: List[String],
                                params: Map[String, List[String]],
                                uploadedFiles: List[FileParamHolder],
-                               body: Box[Array[Byte]])
+                               body: Box[BodyOrInputStream])
 
 
 /**
@@ -607,6 +629,7 @@ class Req(val path: ParsePath,
 
   def snapshot = {
     val paramCalc = paramCalculator()
+    paramCalc.body.map(_.body) // make sure we grab the body
     new Req(path,
             contextPath,
             requestType,
@@ -646,10 +669,40 @@ class Req(val path: ParsePath,
     case _ => Empty
   }
 
-  lazy val ParamCalcInfo(paramNames: List[String],
-            _params: Map[String, List[String]],
-            uploadedFiles: List[FileParamHolder],
-            body: Box[Array[Byte]]) = {
+  /**
+   * Get the name of the params
+   */
+  def paramNames: List[String] = _paramNames
+
+  /**
+   * the raw parameters, use params
+   */
+  def _params: Map[String, List[String]] = __params
+
+  /**
+   * The uploaded files
+   */
+  def uploadedFiles: List[FileParamHolder] = _uploadedFiles
+
+  /**
+   * The POST or PUT body.  This will be empty if the content
+   * type is application/x-www-form-urlencoded or a multipart mime.
+   * It will also be empty if rawInputStream is accessed
+   */
+  def body: Box[Array[Byte]] = _body.flatMap(_.body)
+
+  /**
+   * The raw input stream of a POST or PUT that is not
+   * application/x-www-form-urlencoded or a multipart mime
+   * and if this method is called before the body method.
+   * Remember to close the stream when done.
+   */
+  def rawInputStream: Box[InputStream] = _body.flatMap(_.stream)
+
+  private lazy val ParamCalcInfo(_paramNames: List[String],
+            __params: Map[String, List[String]],
+            _uploadedFiles: List[FileParamHolder],
+            _body: Box[BodyOrInputStream]) = {
     val ret = paramCalculator()
     ret
   }

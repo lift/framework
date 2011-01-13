@@ -1391,6 +1391,15 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   (fieldName, contentType, fileName, inputStream) =>
           new InMemFileParamHolder(fieldName, contentType, fileName, Helpers.readWholeStream(inputStream))
 
+  private object _mimeHeaders extends TransientRequestVar[Box[Map[String, List[String]]]](Empty)
+
+  /**
+   * Returns any mimeHeaders for the currently invoked handleMimeFile.
+   */
+  def mimeHeaders = _mimeHeaders.get
+
+  private[http] def withMimeHeaders[T](map: Map[String, List[String]])(f: => T): T = _mimeHeaders.doWith(Full(map))(f)
+
   /**
    * Holds the last update time of the Comet request. Based on this server mayreturn HTTP 304 status
    * indicating the client to used the cached information.

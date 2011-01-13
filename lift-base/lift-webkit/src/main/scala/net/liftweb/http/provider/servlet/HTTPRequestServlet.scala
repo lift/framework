@@ -132,9 +132,18 @@ class HTTPRequestServlet(val req: HttpServletRequest) extends HTTPRequest {
 
     def hasNext = what.hasNext
 
+    import scala.collection.JavaConversions._
+
     def next = what.next match {
       case f if (f.isFormField) => NormalParamHolder(f.getFieldName, new String(readWholeStream(f.openStream), "UTF-8"))
-      case f => LiftRules.handleMimeFile(f.getFieldName, f.getContentType, f.getName, f.openStream)
+      case f => {
+        val headers = f.getHeaders()
+        val names: List[String] = if (headers eq null) Nil else headers.getHeaderNames().asInstanceOf[java.util.Iterator[String]].toList
+        val map: Map[String, List[String]] = Map(names.map(n => n -> headers.getHeaders(n).asInstanceOf[java.util.Iterator[String]].toList) :_*)
+        LiftRules.withMimeHeaders(map) {
+          LiftRules.handleMimeFile(f.getFieldName, f.getContentType, f.getName, f.openStream)
+        }
+      }
     }
   }).toList
 
