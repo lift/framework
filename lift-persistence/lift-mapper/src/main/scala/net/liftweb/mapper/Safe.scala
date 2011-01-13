@@ -29,7 +29,7 @@ object Safe {
   /**
    * Get the next "safe" number
    */
-  def next = rand.nextLong
+  def next = rand.synchronized{rand.nextLong}
   private val threadLocal = new ThreadGlobal[Long]
 
   /**

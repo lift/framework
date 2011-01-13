@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb 
+package util 
 
-import _root_.org.apache.commons.codec.binary.Base64
-import _root_.java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, File, FileInputStream, BufferedReader, InputStreamReader}
-import _root_.java.security.{SecureRandom, MessageDigest}
-import _root_.javax.crypto._
-import _root_.javax.crypto.spec._
-import _root_.scala.xml.{Node, XML}
+import org.apache.commons.codec.binary.Base64
+import java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, File, FileInputStream, BufferedReader, InputStreamReader}
+import java.security.{SecureRandom, MessageDigest}
+import javax.crypto._
+import javax.crypto.spec._
+import scala.xml.{Node, XML}
 import common._
 
 object SecurityHelpers extends StringHelpers with IoHelpers with SecurityHelpers
@@ -35,23 +35,27 @@ object SecurityHelpers extends StringHelpers with IoHelpers with SecurityHelpers
  * <li> create SHA, SHA-256, MD5 hashs (can be hex encoded)
  * </ul>
  */
-trait SecurityHelpers { self: StringHelpers with IoHelpers =>
+trait SecurityHelpers { 
+  self: StringHelpers with IoHelpers => 
 
   /** short alias for java.security.SecureRandom */
-  private val random = new _root_.java.security.SecureRandom
+  private val _random = new SecureRandom
+
+  private def withRandom[T](f: SecureRandom => T): T = 
+    _random.synchronized(f(_random))
 
   /** return a random Long modulo a number */
-  def randomLong(mod: Long): Long = Math.abs(random.nextLong) % mod
+  def randomLong(mod: Long): Long = withRandom(random => Math.abs(random.nextLong) % mod)
 
   /** return a random int modulo a number */
-  def randomInt(mod: Int): Int = Math.abs(random.nextInt) % mod
+  def randomInt(mod: Int): Int = withRandom(random => Math.abs(random.nextInt) % mod)
 
   /**
    * return true only 'percent' times when asked repeatedly.
    * This function is used in the Skittr example to get a random set of users
    * @param percent percentage as a double number <= 1.0
    */
-  def shouldShow(percent: Double): Boolean = random.nextDouble <= percent
+  def shouldShow(percent: Double): Boolean = withRandom(_.nextDouble <= percent)
 
   /** create a Blowfish key as an array of bytes */
   def makeBlowfishKey: Array[Byte] = KeyGenerator.getInstance("blowfish").generateKey.getEncoded
@@ -311,5 +315,3 @@ trait SecurityHelpers { self: StringHelpers with IoHelpers =>
 
 }
 
-}
-}
