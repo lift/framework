@@ -195,6 +195,10 @@ object FileParamHolder {
   }
 }
 
+private[http] object CurrentReq extends ThreadGlobal[Req]
+
+
+
 /**
  * Helper object for constructing Req instances
  */
@@ -731,6 +735,7 @@ class Req(val path: ParsePath,
       import _root_.java.io._
       body.map(b => JsonParser.parse(new InputStreamReader(new ByteArrayInputStream(b))))
     } catch {
+      case e: LiftFlowOfControlException => throw e
       case e: Exception => Failure(e.getMessage, Full(e), Empty)
     }
 
@@ -759,6 +764,7 @@ class Req(val path: ParsePath,
       import _root_.java.io._
       body.map(b => XML.load(new ByteArrayInputStream(b)))
     } catch {
+      case e: LiftFlowOfControlException => throw e
       case e: Exception => Failure(e.getMessage, Full(e), Empty)
     }
 

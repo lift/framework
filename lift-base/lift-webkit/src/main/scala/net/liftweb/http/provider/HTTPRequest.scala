@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package provider {
+package net.liftweb 
+package http 
+package provider 
 
-import _root_.java.io.{InputStream}
-import _root_.java.util.{Locale}
-import _root_.net.liftweb.common.{Box}
+import java.io.{InputStream}
+import java.util.{Locale}
+import net.liftweb.common.{Box}
 
 
 object RetryState extends Enumeration {
@@ -36,6 +36,11 @@ trait HTTPRequest {
    * @return - cookies from this request. Nil if there are no cookies.
    */
   def cookies: List[HTTPCookie]
+
+  /**
+   * The provider associated with this request
+   */
+  def provider: HTTPProvider
 
   /**
    * @return - HTTP authentication scheme: BASIC, DIGEST etc.
@@ -176,7 +181,7 @@ trait HTTPRequest {
    * @return - Some[Any] if this is a resumed request, return the state
    *           associated with it.
    */
-  def resumeInfo : Option[Any]
+  def resumeInfo : Option[(Req, LiftResponse)]
 
   /**
    * Suspend the curent request and resume it after a given timeout
@@ -188,7 +193,7 @@ trait HTTPRequest {
    * @return false if this continuation cannot be resumed
    *         as it is not in pending state.
    */
-  def resume(what: AnyRef): Boolean
+  def resume(what: (Req, LiftResponse)): Boolean
 
   /**
    * @return - the input stream for the request body
@@ -231,6 +236,3 @@ trait HTTPRequest {
   def userAgent: Box[String]
 }
 
-}
-}
-}

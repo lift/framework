@@ -16,7 +16,10 @@
 
 package net.liftweb.http.provider.servlet
 
-import net.liftweb.http.provider._
+import net.liftweb._
+import http._
+import http.provider._
+import common._
 
 /**
  * Abstracts the management of asynchronous HTTP requests in order
@@ -33,7 +36,7 @@ trait ServletAsyncProvider {
   /** 
    * @return the reference that was provided in the resume call 
    */ 
-  def resumeInfo : Option[Any]
+  def resumeInfo : Option[(Req, LiftResponse)]
 
   /**
    * Suspends this request for a given period of time
@@ -49,7 +52,17 @@ trait ServletAsyncProvider {
    * @param ref - an object that will be associated with the resumed request
    * @return false if the resume cannot occure
    */
-  def resume(ref: AnyRef): Boolean
+  def resume(ref: (Req, LiftResponse)): Boolean
+}
 
+trait AsyncProviderMeta {
+  /**
+   * @return true if the underlying JEE container supports suspend/resume
+   */
+  def suspendResumeSupport_? : Boolean
 
+  /**
+   * return a function that vends the ServletAsyncProvider
+   */
+  def providerFunction: Box[HTTPRequest => ServletAsyncProvider]
 }

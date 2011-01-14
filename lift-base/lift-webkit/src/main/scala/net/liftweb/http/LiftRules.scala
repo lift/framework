@@ -257,7 +257,7 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
 
   val statelessSession: FactoryMaker[Req => LiftSession with StatelessSession] =
     new FactoryMaker((req: Req) => new LiftSession(req.contextPath, 
-                                                   Helpers.randomString(20),
+                                                   Helpers.nextFuncName,
                                                    Empty) with
                      StatelessSession) {}
 
@@ -838,7 +838,12 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
 
   @volatile private[http] var ending = false
 
-  @volatile private[http] var doneBoot = false;
+  private[http] var doneBoot = false;
+
+  private[http] def bootFinished() {
+    doneBoot = true
+    
+  }
 
   /**
    * Holds user's DispatchPF functions that will be executed in a stateless context. This means that
@@ -1489,7 +1494,32 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
   /**
    * Provides the async provider instance responsible for suspending/resuming requests
    */
-  @volatile var servletAsyncProvider: (HTTPRequest) => ServletAsyncProvider = (req) => new Jetty6AsyncProvider(req)
+  @deprecated("Register your povider via addSyncProvider")
+  var servletAsyncProvider: (HTTPRequest) => ServletAsyncProvider = null // (req) => new Jetty6AsyncProvider(req)
+
+  /**
+   * The meta for the detected AsyncProvider given the container we're running in
+   */
+  lazy val asyncProviderMeta: Box[AsyncProviderMeta] =
+    asyncMetaList.find(_.suspendResumeSupport_?)
+
+  /**
+   * A function that converts the current Request into an AsyncProvider.
+   */
+  lazy val theServletAsyncProvider: Box[HTTPRequest => ServletAsyncProvider] =
+    (Box !! servletAsyncProvider) or asyncProviderMeta.flatMap(_.providerFunction)
+
+  private var asyncMetaList: List[AsyncProviderMeta] =
+    List(Servlet30AsyncProvider, Jetty6AsyncProvider, Jetty7AsyncProvider)
+
+  /**
+   * Register an AsyncMeta provider in addition to the default
+   * Jetty6, Jetty7, and Servlet 3.0 providers
+   */
+  def addSyncProvider(asyncMeta: AsyncProviderMeta) {
+    if (doneBoot) throw new IllegalStateException("Cannot modify after boot.")
+    asyncMetaList ::= asyncMeta
+  }
 
 
   private def ctor() {

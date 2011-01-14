@@ -651,6 +651,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         case (RunnerHolder(_, _, Full(_)), _) => false
         case (_, RunnerHolder(_, _, Full(_))) => true
         case (RunnerHolder(a, _, _), RunnerHolder(b, _, _)) => a < b
+        case _ => false
       }
     }
 
@@ -1056,6 +1057,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
       case rd: _root_.net.liftweb.http.ResponseShortcutException => Full(handleRedirect(rd, request))
 
+      case e: LiftFlowOfControlException => throw e
+
       case e => NamedPF.applyBox((Props.mode, request, e), LiftRules.exceptionHandler.toList);
 
     }
@@ -1205,14 +1208,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case e: IllegalAccessException => Empty
     }
   }
-
-  /*
-    tryo({
-    case e: ResponseShortcutException => throw e
-    case ite: _root_.java.lang.reflect.InvocationTargetException
-      if (ite.getCause.isInstanceOf[ResponseShortcutException]) => throw ite.getCause.asInstanceOf[ResponseShortcutException]
-  }, c.newInstance)
-  */
 
   private def findAttributeSnippet(attrValue: String, rest: MetaData, params: AnyRef*): MetaData = {
     S.doSnippet(attrValue) {

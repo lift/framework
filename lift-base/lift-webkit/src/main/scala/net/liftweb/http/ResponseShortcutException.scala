@@ -26,7 +26,7 @@ import _root_.net.liftweb.util._
  * session can be created and have the balance of the continuation executed
  * in the context of the new session.
  */
-class ContinueResponseException(val continue: () => Nothing) extends Exception("Continue in new session")
+class ContinueResponseException(val continue: () => Nothing) extends LiftFlowOfControlException("Continue in new session")
 
 object ContinueResponseException {
   def unapply(in: Throwable): Option[ContinueResponseException] = in match {
@@ -38,7 +38,12 @@ object ContinueResponseException {
     
 }
 
-class ResponseShortcutException(_response: => LiftResponse, val doNotices: Boolean) extends Exception("Shortcut") {
+/**
+ * The superclass for all Lift flow of control exceptions
+ */
+class LiftFlowOfControlException(msg: String) extends RuntimeException(msg)
+
+class ResponseShortcutException(_response: => LiftResponse, val doNotices: Boolean) extends LiftFlowOfControlException("Shortcut") {
   lazy val response = _response
 
   def this(resp: => LiftResponse) = this (resp, false)

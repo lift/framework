@@ -75,6 +75,49 @@ class LiftServlet extends Loggable {
 
   def getLiftSession(request: Req): LiftSession = LiftRules.getLiftSession(request)
 
+  private def wrapState[T](req: Req, session: Box[LiftSession])(f: => T): T = {
+    session match {
+      case Full(ses) => S.init(req, ses)(f)
+      case _ => CurrentReq.doWith(req)(f)
+    }
+  }
+
+  private def handleGenericContinuation(reqOrg: Req, resp: HTTPResponse, session: Box[LiftSession], func: ((=> LiftResponse) => Unit) => Unit): Boolean = {
+
+    val req = if (null eq reqOrg) reqOrg else reqOrg.snapshot
+
+    def runFunction(doAnswer: LiftResponse => Unit) {
+      ActorPing.schedule(() => {
+        val answerFunc: (=> LiftResponse) => Unit = response =>
+          doAnswer(wrapState(req, session)(response))
+
+        func(answerFunc)
+        
+      }, 5 millis)
+    }
+
+    if (reqOrg.request.suspendResumeSupport_?) {
+      runFunction(liftResponse => {
+        // do the actual write on a separate thread
+        ActorPing.schedule(() => {
+          reqOrg.request.resume(reqOrg, liftResponse)
+        }, 0 seconds)
+      })
+
+      reqOrg.request.suspend(cometTimeout)
+      false
+    } else {
+      val future = new LAFuture[LiftResponse]
+      
+      runFunction(answer => future.satisfy(answer))
+      
+      future.get(cometTimeout) match {
+        case Full(answer) => sendResponse(answer, resp, req); true
+        case _ => false
+      }
+    }
+  }
+
   /**
    * Processes the HTTP requests
    */
@@ -89,6 +132,7 @@ class LiftServlet extends Loggable {
           doService(req, resp)
         }
       }
+
       req.request.resumeInfo match {
         case None => doIt
         case r if r eq null => doIt
@@ -96,6 +140,9 @@ class LiftServlet extends Loggable {
         case _ => doIt
       }
     } catch {
+      case rest.ContinuationException(theReq, sesBox, func) => 
+        handleGenericContinuation(theReq, resp, sesBox, func)
+
       case e if e.getClass.getName.endsWith("RetryRequest") => throw e
       case e => logger.info("Request for " + req.request.uri + " failed " + e.getMessage, e); throw e
     }
@@ -264,6 +311,9 @@ class LiftServlet extends Loggable {
               case rd: _root_.net.liftweb.http.ResponseShortcutException => (true, Full(liftSession.handleRedirect(rd, req)))
 
               case e if (e.getClass.getName.endsWith("RetryRequest")) =>  throw e
+
+              case e: LiftFlowOfControlException => throw e
+              
               case e => (true, NamedPF.applyBox((Props.mode, req, e), LiftRules.exceptionHandler.toList))
 
             }
@@ -445,11 +495,14 @@ class LiftServlet extends Loggable {
    
     if (actors.isEmpty) Left(Full(new JsCommands(new JE.JsRaw("lift_toWatch = {}") with JsCmd :: JsCmds.RedirectTo(LiftRules.noCometSessionPage) :: Nil).toResponse))
     else requestState.request.suspendResumeSupport_? match {
-      case true =>
+      case true => {
         setupContinuation(requestState, sessionActor, actors)
         Left(Full(EmptyResponse))
-      case _ =>
+      }
+
+      case _ => {
         Right(handleNonContinuationComet(requestState, sessionActor, actors, originalRequest))
+      }
     }
   }
 
@@ -457,16 +510,17 @@ class LiftServlet extends Loggable {
     val ret2: List[AnswerRender] = ret.toList
     val jsUpdateTime = ret2.map(ar => "if (lift_toWatch['" + ar.who.uniqueId + "'] !== undefined) lift_toWatch['" + ar.who.uniqueId + "'] = '" + ar.when + "';").mkString("\n")
     val jsUpdateStuff = ret2.map {
-      ar =>
-              val ret = ar.response.toJavaScript(session, ar.displayAll)
-
-              if (!S.functionMap.isEmpty) {
-                session.updateFunctionMap(S.functionMap,
-                  ar.who.uniqueId, ar.when)
-                S.clearFunctionMap
-              }
-
-              ret
+      ar => {
+        val ret = ar.response.toJavaScript(session, ar.displayAll)
+        
+        if (!S.functionMap.isEmpty) {
+          session.updateFunctionMap(S.functionMap,
+                                    ar.who.uniqueId, ar.when)
+          S.clearFunctionMap
+        }
+        
+        ret
+      }
     }
 
     actors foreach (_._1 ! ClearNotices)

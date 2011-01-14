@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package provider {
-package servlet {
+package net.liftweb 
+package http 
+package provider 
+package servlet 
 
-import _root_.java.io.{InputStream}
-import _root_.java.util.{Locale}
-import _root_.javax.servlet.http.{HttpServletRequest}
-import _root_.org.apache.commons.fileupload.servlet._
-import _root_.org.apache.commons.fileupload.ProgressListener
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import java.io.{InputStream}
+import java.util.{Locale}
+import javax.servlet.http.{HttpServletRequest}
+import org.apache.commons.fileupload.servlet._
+import org.apache.commons.fileupload.ProgressListener
+import net.liftweb.common._
+import net.liftweb.util._
 import Helpers._
 
-class HTTPRequestServlet(val req: HttpServletRequest) extends HTTPRequest {
+class HTTPRequestServlet(val req: HttpServletRequest, val provider: HTTPProvider) extends HTTPRequest {
   private lazy val ctx = {
     new HTTPServletContext(req.getSession.getServletContext)
   }
@@ -46,9 +46,9 @@ class HTTPRequestServlet(val req: HttpServletRequest) extends HTTPRequest {
 
   lazy val authType: Box[String] = Box !! req.getAuthType
 
-  def headers(name: String): List[String] = enumToList[String](req.getHeaders(name).asInstanceOf[_root_.java.util.Enumeration[String]])
+  def headers(name: String): List[String] = enumToList[String](req.getHeaders(name).asInstanceOf[java.util.Enumeration[String]])
 
-  lazy val headers: List[HTTPParam] = enumToList[String](req.getHeaderNames.asInstanceOf[_root_.java.util.Enumeration[String]]).
+  lazy val headers: List[HTTPParam] = enumToList[String](req.getHeaderNames.asInstanceOf[java.util.Enumeration[String]]).
           map(n => HTTPParam(n, headers(n)))
 
   def contextPath: String = req.getContextPath
@@ -69,7 +69,7 @@ class HTTPRequestServlet(val req: HttpServletRequest) extends HTTPRequest {
 
   def param(name: String): List[String] = req.getParameterValues(name) match {case null => Nil case x => x.toList}
 
-  lazy val params: List[HTTPParam] = enumToList[String](req.getParameterNames.asInstanceOf[_root_.java.util.Enumeration[String]]).
+  lazy val params: List[HTTPParam] = enumToList[String](req.getParameterNames.asInstanceOf[java.util.Enumeration[String]]).
           map(n => HTTPParam(n, param(n)))
 
   lazy val paramNames: List[String] = params map (_.name)
@@ -150,18 +150,27 @@ class HTTPRequestServlet(val req: HttpServletRequest) extends HTTPRequest {
 
   def setCharacterEncoding(encoding: String) = req.setCharacterEncoding(encoding)
 
-  def snapshot: HTTPRequest  = new OfflineRequestSnapshot(this)
+  def snapshot: HTTPRequest  = new OfflineRequestSnapshot(this, provider)
 
-  def resumeInfo : Option[Any] = LiftRules.servletAsyncProvider(this).resumeInfo
+  private lazy val asyncProvider: Box[ServletAsyncProvider] =
+    LiftRules.theServletAsyncProvider.map(_(this))
 
-  def suspend(timeout: Long): RetryState.Value = LiftRules.servletAsyncProvider(this).suspend(timeout)
+  def resumeInfo : Option[(Req, LiftResponse)] = asyncProvider.flatMap(_.resumeInfo)
 
-  def resume(what: AnyRef): Boolean = LiftRules.servletAsyncProvider(this).resume(what)
+  
+  def suspend(timeout: Long): RetryState.Value = asyncProvider.open_!.suspend(timeout) // open_! is bad, but presumably, the suspendResume support was checked
 
-  def suspendResumeSupport_? = LiftRules.servletAsyncProvider(this).suspendResumeSupport_?
+  def resume(what: (Req, LiftResponse)): Boolean = asyncProvider.open_!.resume(what)
+
+  lazy val suspendResumeSupport_? = {
+    LiftRules.asyncProviderMeta.
+    map(_.suspendResumeSupport_? && 
+        (asyncProvider.map(_.suspendResumeSupport_?) openOr
+         false)) openOr false
+  }
 }
 
-private class OfflineRequestSnapshot(req: HTTPRequest) extends HTTPRequest {
+private class OfflineRequestSnapshot(req: HTTPRequest, val provider: HTTPProvider) extends HTTPRequest {
 
   private val _cookies = List(req.cookies :_*)
 
@@ -221,12 +230,12 @@ private class OfflineRequestSnapshot(req: HTTPRequest) extends HTTPRequest {
 
   val method: String = req.method
 
-  val resumeInfo : Option[Any] = req resumeInfo
+  val resumeInfo : Option[(Req, LiftResponse)] = req resumeInfo
 
   def suspend(timeout: Long): RetryState.Value =
     throw new UnsupportedOperationException("Cannot suspend a snapshot")
 
-  def resume(what: AnyRef): Boolean =
+  def resume(what: (Req, LiftResponse)): Boolean =
     throw new UnsupportedOperationException("Cannot resume a snapshot")
 
   def suspendResumeSupport_? = false
@@ -251,9 +260,4 @@ private class OfflineRequestSnapshot(req: HTTPRequest) extends HTTPRequest {
    */
   lazy val userAgent: Box[String] =  headers find (_.name equalsIgnoreCase "user-agent") flatMap (_.values.headOption)
 
-}
-
-}
-}
-}
 }

@@ -229,7 +229,7 @@ class SnippetExecutionException(msg: String) extends SnippetFailureException(msg
  * The exception is caught and the appropriate report of a SnippetError
  * is generated
  */
-abstract class SnippetFailureException(msg: String) extends Exception(msg) {
+abstract class SnippetFailureException(msg: String) extends LiftFlowOfControlException(msg) {
   def snippetFailure: LiftRules.SnippetFailures.Value
 
   def buildStackTrace: NodeSeq = 

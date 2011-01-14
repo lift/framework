@@ -882,7 +882,7 @@ for {
    *     // your code here
    *     S.redirectTo(...)
    * } catch  {
-   *     case e: Exception if !e.instanceOf[net.liftweb.http.ResponseShortcutException] => ...
+   *     case e: Exception if !e.isInstanceOf[LiftFlowOfControlException] => ...
    * }
    * </pre>
    *
@@ -894,7 +894,7 @@ for {
    *     // your code here
    *     S.redirectTo(...)
    * } catch  {
-   *     case rse: net.liftweb.http.ResponseShortcutException => throw rse
+   *     case rse: LiftFlowOfControlException => throw rse
    *     case e: Exception => ...
    * }
    * </pre>
@@ -933,7 +933,7 @@ for {
    *     // your code here
    *     S.seeOther(...)
    * } catch  {
-   *     case e: Exception if !e.instanceOf[net.liftweb.http.ResponseShortcutException] => ...
+   *     case e: Exception if !e.instanceOf[LiftFlowOfControlException] => ...
    * }
    * </pre>
    *
@@ -945,7 +945,7 @@ for {
    *     // your code here
    *     S.seeOther(...)
    * } catch  {
-   *     case rse: net.liftweb.http.ResponseShortcutException => throw rse
+   *     case rse: LiftFlowOfControlException => throw rse
    *     case e: Exception => ...
    * }
    * </pre>
@@ -1008,7 +1008,7 @@ for {
           _init(request, 
                 fakeSess)(() => f)
         } finally {
-          ActorPing.schedule(() => fakeSess.doShutDown(), 0 seconds)
+          // ActorPing.schedule(() => fakeSess.doShutDown(), 0 seconds)
         }
       }
     }
@@ -1338,8 +1338,10 @@ for {
   }
 
   private[http] def withReq[T](req: Req)(f: => T): T = {
-    _request.doWith(req) {
-       f
+    CurrentReq.doWith(req) {
+      _request.doWith(req) {
+        f
+      }
     }
   }
 
@@ -1350,24 +1352,6 @@ for {
     for (r <- (request).toList;
          ca <- Box.legacyNullTest(r.cookies).toList;
          c <- ca) yield c
-
-
-  private[liftweb] def lightInit[B](request: Req,
-    session: LiftSession,
-    attrs: List[(Either[String, (String, String)], String)])(f: => B): B =
-      this._request.doWith(request) {
-        _sessionInfo.doWith(session) {
-          _lifeTime.doWith(false) {
-            _attrs.doWith(attrs) {
-              _resBundle.doWith(Nil) {
-                inS.doWith(true) {
-                  f
-                }
-              }
-            }
-          }
-        }
-      }
 
 
   private def _init[B](request: Req, session: LiftSession)(f: () => B): B =
@@ -2436,23 +2420,27 @@ for {
       val req = Req(httpRequest, LiftRules.statelessRewrite.toList,
                     LiftRules.statelessTest.toList,
                     System.nanoTime)
-      val ses: LiftSession = SessionMaster.getSession(httpRequest, Empty) match {
-        case Full(ret) =>
-          ret.fixSessionTime()
-          ret
 
-        case _ =>
-          val ret = LiftSession(httpRequest.session, req.contextPath)
+      CurrentReq.doWith(req) {
+        val ses: LiftSession = SessionMaster.getSession(httpRequest,
+                                                        Empty) match {
+          case Full(ret) =>
+            ret.fixSessionTime()
+          ret
+          
+          case _ =>
+            val ret = LiftSession(httpRequest.session, req.contextPath)
           ret.fixSessionTime()
           SessionMaster.addSession(ret, 
                                    req,
                                    httpRequest.userAgent, 
                                    SessionMaster.getIpFromReq(req))
           ret
-      }
-
-      init(req, ses) {
-        doRender(ses)
+        }
+        
+        init(req, ses) {
+          doRender(ses)
+        }
       }
     }
   }
@@ -2739,6 +2727,7 @@ abstract class JsonHandler {
 
   def apply(in: Any): JsCmd
 }
+
 
 }
 }

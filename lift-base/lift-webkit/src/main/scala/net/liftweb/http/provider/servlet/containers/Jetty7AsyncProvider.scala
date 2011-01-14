@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,39 +14,31 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package provider {
-package servlet {
-package containers {
+package net.liftweb
+package http
+package provider
+package servlet
+package containers
 
-import _root_.javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletRequest
 
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.http._
-import _root_.net.liftweb.http.provider._
-import _root_.net.liftweb.http.provider.servlet._
-import _root_.net.liftweb.util._
+import net.liftweb.common._
+import net.liftweb.http._
+import net.liftweb.http.provider._
+import net.liftweb.http.provider.servlet._
+import net.liftweb.util._
 import Helpers._
 
-/**
- * Jetty7AsyncProvider
- *
- * Implemented by using Jetty 7 Continuation API
- *
- */
-class Jetty7AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
 
-  private val servletReq = (req.asInstanceOf[HTTPRequestServlet]).req
-
+object Jetty7AsyncProvider extends AsyncProviderMeta {
   private val (hasContinuations_?,
                contSupport,
                getContinuation,
                getAttribute,
                setAttribute,
-               suspend,
+               suspendMeth,
                setTimeout,
-               resume,
+               resumeMeth,
                isExpired,
                isResumed) = {
     try {
@@ -56,7 +48,7 @@ class Jetty7AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
       val getAttribute = cci.getMethod("getAttribute", classOf[String])
       val setAttribute = cci.getMethod("setAttribute", classOf[String], classOf[AnyRef])
       val suspend = cci.getMethod("suspend")
-      val setTimeout = cci.getMethod("setTimeout", _root_.java.lang.Long.TYPE)
+      val setTimeout = cci.getMethod("setTimeout", java.lang.Long.TYPE)
       val resume = cci.getMethod("resume")
       val isExpired = cci.getMethod("isExpired")
       val isResumed = cci.getMethod("isResumed")
@@ -69,7 +61,31 @@ class Jetty7AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
 
   def suspendResumeSupport_? : Boolean = hasContinuations_?
 
-  def resumeInfo: Option[Any] =
+
+  /**
+   * return a function that vends the ServletAsyncProvider
+   */
+  def providerFunction: Box[HTTPRequest => ServletAsyncProvider] =
+    Full(req => new Jetty7AsyncProvider(req)).
+  filter(i => suspendResumeSupport_?)
+}
+
+/**
+ * Jetty7AsyncProvider
+ *
+ * Implemented by using Jetty 7 Continuation API
+ *
+ */
+class Jetty7AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
+
+  import Jetty7AsyncProvider._
+
+  private val servletReq = (req.asInstanceOf[HTTPRequestServlet]).req
+
+
+  def suspendResumeSupport_? : Boolean = hasContinuations_?
+
+  def resumeInfo: Option[(Req, LiftResponse)] =
     if (!hasContinuations_?) None
     else if (Props.inGAE) None
     else {
@@ -77,7 +93,10 @@ class Jetty7AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
       val ret = getAttribute.invoke(cont, "__liftCometState")
       try {
         setAttribute.invoke(cont, "__liftCometState", null)
-        Some(ret)
+        ret match {
+          case (r: Req, lr: LiftResponse) => Some(r -> lr)
+          case _ => None
+        }
       }
       catch {
         case e: Exception => None
@@ -95,29 +114,22 @@ class Jetty7AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
     else if (resumed)
       RetryState.RESUMED
     else {
-      setTimeout.invoke(cont, new _root_.java.lang.Long(timeout))
-      suspend.invoke(cont)
+      setTimeout.invoke(cont, new java.lang.Long(timeout))
+      suspendMeth.invoke(cont)
       RetryState.SUSPENDED
     }
     
   }
 
-  def resume(what: AnyRef): Boolean = {
+  def resume(what: (Req, LiftResponse)): Boolean = {
     val cont = getContinuation.invoke(contSupport, servletReq)
     try {
       setAttribute.invoke(cont, "__liftCometState", what)
-      resume.invoke(cont)
+      resumeMeth.invoke(cont)
       true
     } catch {
       case e => setAttribute.invoke(cont, "__liftCometState", null)
                 false
     }
   }
-
-
-}
-}
-}
-}
-}
 }

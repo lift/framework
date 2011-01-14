@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package provider {
+package net.liftweb 
+package http 
+package provider 
 
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
-import _root_.java.util.{Locale, ResourceBundle}
+import net.liftweb.common._
+import net.liftweb.util._
+import java.util.{Locale, ResourceBundle}
 import Helpers._
 
 /**
@@ -28,6 +28,8 @@ import Helpers._
  */
 trait HTTPProvider {
   private var actualServlet: LiftServlet = _
+
+  def liftServlet = actualServlet
 
   // Logger needs to be lazy to delay creation of logger until after boot. User can have changed the logging config
   private lazy val logger = Logger(classOf[HTTPProvider])
@@ -58,15 +60,17 @@ trait HTTPProvider {
     val newReq = Req(req, LiftRules.statelessRewrite.toList,
                      LiftRules.statelessTest.toList, System.nanoTime)
 
-    URLRewriter.doWith(url => 
-      NamedPF.applyBox(resp.encodeUrl(url),
-                       LiftRules.urlDecorate.toList) openOr
-                       resp.encodeUrl(url)) {
-                         if (!(isLiftRequest_?(newReq) && 
-                               actualServlet.service(newReq, resp))) {
-                                 chain
-                               }
-                       }
+    CurrentReq.doWith(newReq) {
+      URLRewriter.doWith(url => 
+        NamedPF.applyBox(resp.encodeUrl(url),
+                         LiftRules.urlDecorate.toList) openOr
+                         resp.encodeUrl(url)) {
+                           if (!(isLiftRequest_?(newReq) && 
+                                 actualServlet.service(newReq, resp))) {
+                                   chain
+                                 }
+                         }
+    }
   }
 
   /**
@@ -108,7 +112,7 @@ trait HTTPProvider {
     } catch {
       case _ => logger.error("LiftWeb core resource bundle for locale " + Locale.getDefault() + ", was not found ! ")
     } finally {
-      LiftRules.doneBoot = true;
+      LiftRules.bootFinished()
     }
   }
 
@@ -131,9 +135,4 @@ trait HTTPProvider {
               context.resource(session.uri) == null
     }
   }
-
-}
-
-}
-}
 }
