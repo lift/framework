@@ -507,7 +507,7 @@ Serializing polymorphic Lists
 -----------------------------
 
 Type hints are required when serializing polymorphic (or heterogeneous) Lists. Serialized JSON objects
-will get an extra field named 'jsonClass'.
+will get an extra field named 'jsonClass' (the name can be changed by overriding 'typeHintFieldName' from Formats).
 
     scala> trait Animal
     scala> case class Dog(name: String) extends Animal

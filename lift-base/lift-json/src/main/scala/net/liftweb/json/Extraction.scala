@@ -57,7 +57,8 @@ object Extraction {
    * </pre>
    */
   def decompose(a: Any)(implicit formats: Formats): JValue = {
-    def prependTypeHint(clazz: Class[_], o: JObject) = JField("jsonClass", JString(formats.typeHints.hintFor(clazz))) ++ o
+    def prependTypeHint(clazz: Class[_], o: JObject) = 
+      JField(formats.typeHintFieldName, JString(formats.typeHints.hintFor(clazz))) ++ o
 
     def mkObject(clazz: Class[_], fields: List[JField]) = formats.typeHints.containsHint_?(clazz) match {
       case true  => prependTypeHint(clazz, JObject(fields))
@@ -216,11 +217,12 @@ object Extraction {
       }
 
       val custom = formats.customDeserializer(formats)
+      val JsonClass = formats.typeHintFieldName
       if (custom.isDefinedAt(constructor.targetType, json)) custom(constructor.targetType, json)
       else json match {
         case JNull => null
-        case JObject(JField("jsonClass", JString(t)) :: xs) => mkWithTypeHint(t, xs)
-        case JField(_, JObject(JField("jsonClass", JString(t)) :: xs)) => mkWithTypeHint(t, xs)
+        case JObject(JField(JsonClass, JString(t)) :: xs) => mkWithTypeHint(t, xs)
+        case JField(_, JObject(JField(JsonClass, JString(t)) :: xs)) => mkWithTypeHint(t, xs)
         case _ => instantiate
       }
     }

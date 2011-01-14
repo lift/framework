@@ -158,6 +158,22 @@ object FullTypeHintExamples extends TypeHintExamples {
   }
 }
 
+object CustomTypeHintFieldNameExample extends TypeHintExamples {
+  import Serialization.{read, write => swrite}
+
+  implicit val formats = new Formats {
+    val dateFormat = DefaultFormats.lossless.dateFormat
+    override val typeHints = ShortTypeHints(classOf[Fish] :: classOf[Dog] :: Nil)
+    override val typeHintFieldName = "$type$"
+  }
+
+  "Serialized JSON contains configured field name" in {
+    val animals = Animals(Dog("pluto") :: Fish(1.2) :: Nil, Dog("pluto"))
+    val ser = swrite(animals)
+    ser mustEqual """{"animals":[{"$type$":"Dog","name":"pluto"},{"$type$":"Fish","weight":1.2}],"pet":{"$type$":"Dog","name":"pluto"}}"""
+  }
+}
+
 trait TypeHintExamples extends Specification {
   import Serialization.{read, write => swrite}
 

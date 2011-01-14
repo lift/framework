@@ -29,6 +29,11 @@ trait Formats { self: Formats =>
   val dateFormat: DateFormat
   val typeHints: TypeHints = NoTypeHints
   val customSerializers: List[Serializer[_]] = Nil
+
+  /**
+   * The name of the field in JSON where type hints are added (jsonClass by default)
+   */
+  val typeHintFieldName = "jsonClass"
   
   /**
    * Adds the specified type hints to this formats.
