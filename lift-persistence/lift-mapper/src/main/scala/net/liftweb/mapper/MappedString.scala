@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.java.lang.reflect.Method
-import _root_.net.liftweb.util.{FatLazy}
-import _root_.net.liftweb.common.{Box, Full, Empty, Failure}
-import _root_.java.util.Date
-import _root_.java.util.regex._
-import _root_.scala.xml.{NodeSeq, Text, Elem}
-import _root_.net.liftweb.http.{S}
-import _root_.net.liftweb.util.{FieldError}
-import _root_.net.liftweb.http.js._
-import _root_.net.liftweb.json._
+import java.sql.{ResultSet, Types}
+import java.lang.reflect.Method
+import net.liftweb.util.{FatLazy}
+import net.liftweb.common.{Box, Full, Empty, Failure}
+import java.util.Date
+import java.util.regex._
+import scala.xml.{NodeSeq, Text, Elem}
+import net.liftweb.http.{S}
+import net.liftweb.util.{FieldError}
+import net.liftweb.http.js._
+import net.liftweb.json._
 import S._
 
 /**
@@ -96,9 +96,9 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
 
   override def _toForm: Box[Elem] =
   fmapFunc({s: List[String] => this.setFromAny(s)}){name =>
-    Full(<input type='text' id={fieldId} maxlength={maxLen.toString}
-        name={name}
-        value={is match {case null => "" case s => s.toString}}/>)}
+    Full(appendFieldId(<input type={formInputType} maxlength={maxLen.toString}
+                       name={name}
+                       value={is match {case null => "" case s => s.toString}}/>))}
 
   protected def i_obscure_!(in : String) : String = {
     ""
@@ -195,5 +195,3 @@ private[mapper] object IsElem {
   }
 }
 
-}
-}

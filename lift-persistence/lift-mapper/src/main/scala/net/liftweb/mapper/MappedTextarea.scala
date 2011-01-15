@@ -29,12 +29,12 @@ abstract class MappedTextarea[T<:Mapper[T]](owner : T, maxLen: Int) extends Mapp
    */
   override def _toForm: Box[Elem] = {
     S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
-    Full(<textarea name={funcName}
-	 rows={textareaRows.toString}
-	 cols={textareaCols.toString} id={fieldId}>{
+    Full(appendFieldId(<textarea name={funcName}
+	               rows={textareaRows.toString}
+	               cols={textareaCols.toString}>{
 	   is match {
 	     case null => ""
-	     case s => s}}</textarea>)}
+	     case s => s}}</textarea>))}
   }
 
   override def toString = {

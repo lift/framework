@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.net.liftweb.mapper._
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.util.FatLazy
-import _root_.java.sql.{ResultSet, Types}
-import _root_.java.lang.reflect.Method
-import _root_.scala.xml.{Node, Text, NodeSeq}
-import _root_.java.util.Date
-import _root_.net.liftweb.http.{S}
-import _root_.net.liftweb.http.S._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.json._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.http.js._
+import net.liftweb.mapper._
+import net.liftweb.util.Helpers._
+import net.liftweb.util.FatLazy
+import java.sql.{ResultSet, Types}
+import java.lang.reflect.Method
+import scala.xml.{Node, Text, NodeSeq}
+import java.util.Date
+import net.liftweb.http.{S}
+import net.liftweb.http.S._
+import net.liftweb.util._
+import net.liftweb.json._
+import net.liftweb.common._
+import net.liftweb.http.js._
 
 object MappedPassword {
   val blankPw = "*******"
@@ -124,12 +124,18 @@ extends MappedField[String, T] {
    */
   override def _toForm: Box[NodeSeq] = {
     S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
-      Full(<span><input id={fieldId} type='password' name={funcName}
-            value={is.toString}/>&nbsp;{S.??("repeat")}&nbsp;<input
-            type='password' name={funcName}
+      Full(<span>{appendFieldId(<input type={formInputType} name={funcName}
+            value={is.toString}/>)}&nbsp;{S.??("repeat")}&nbsp;<input
+            type={formInputType} name={funcName}
             value={is.toString}/></span>)
     }
   }
+
+  /**
+   * When building the form field, what's the input element's
+   * type attribute.
+   */
+  override protected def formInputType = "password"
 
 
   def jdbcFriendly(columnName : String) = {
@@ -188,7 +194,4 @@ extends MappedField[String, T] {
    * Given the driver type, return the string required to create the column in the database
    */
   def fieldCreatorString(dbType: DriverType, colName: String): String = (if (colName.endsWith("_pw")) colName+" VARCHAR(48)" else colName+" VARCHAR(20)")  + notNullAppender()
-}
-
-}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.net.liftweb.common._
-import _root_.scala.xml._
+import net.liftweb.common._
+import scala.xml._
 import parsing._
-import _root_.java.io._
+import java.io._
 
-import _root_.nu.validator.htmlparser._
+import nu.validator.htmlparser._
 import sax.HtmlParser
 
 import _root_.org.xml.sax.InputSource
@@ -39,21 +39,21 @@ trait Html5Writer {
     m match {
       case null => 
       case Null =>
+      case md if (null eq md.value) => // issue 807. Don't do empty
       case up: UnprefixedAttribute => {
         writer.append(' ')
         writer.append(up.key)
         val v = up.value
-        if ((v ne null) && !v.isEmpty) {
-          writer.append("=\"")
-          val str = v.text
-          var pos = 0
-          val len = str.length
-          while (pos < len) {
-            str.charAt(pos) match {
-              case '"' => writer.append("&quot;")
-              case '<' => writer.append("&lt;")
-              case c if c >= ' ' && c.toInt <= 127 => writer.append(c)
-              case c if c == '\u0085' =>
+        writer.append("=\"")
+        val str = v.text
+        var pos = 0
+        val len = str.length
+        while (pos < len) {
+          str.charAt(pos) match {
+            case '"' => writer.append("&quot;")
+            case '<' => writer.append("&lt;")
+            case c if c >= ' ' && c.toInt <= 127 => writer.append(c)
+            case c if c == '\u0085' =>
               case c => {
                 val str = Integer.toHexString(c)
                 writer.append("&#x")
@@ -61,13 +61,12 @@ trait Html5Writer {
                 writer.append(str)
                 writer.append(';')
               }
-            }
-
-            pos += 1
           }
-
-          writer.append('"')          
+          
+          pos += 1
         }
+        
+        writer.append('"')          
 
         writeAttributes(up.next, writer)        
       }
@@ -424,5 +423,3 @@ trait Html5Parser {
     parse(new ByteArrayInputStream(str.getBytes("UTF-8")))
 }
 
-}
-}
