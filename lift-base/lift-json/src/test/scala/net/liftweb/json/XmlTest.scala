@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import org.scalacheck._
 import org.scalacheck.Prop.forAll
@@ -40,7 +40,4 @@ object XmlSpec extends Specification with NodeGen with JValueGen with ScalaCheck
 
   implicit def arbXml: Arbitrary[Node] = Arbitrary(genXml)
   implicit def arbJValue: Arbitrary[JValue] = Arbitrary(genObject)
-}
-
-}
 }

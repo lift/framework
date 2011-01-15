@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import org.scalacheck._
 import org.scalacheck.Prop.{forAll, forAllNoShrink}
@@ -157,7 +157,4 @@ object JsonASTSpec extends Specification with JValueGen with ScalaCheck {
 
   implicit def arbJValue: Arbitrary[JValue] = Arbitrary(genJValue)
   implicit def arbJObject: Arbitrary[JObject] = Arbitrary(genObject)
-}
-
-}
 }

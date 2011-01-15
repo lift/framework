@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb 
+package json 
 
 import java.lang.reflect.{Constructor => JConstructor, Type}
 import java.lang.{Integer => JavaInteger, Long => JavaLong, Short => JavaShort, Byte => JavaByte, Boolean => JavaBoolean, Double => JavaDouble, Float => JavaFloat}
@@ -308,6 +308,8 @@ object Extraction {
     case JDouble(x) if (targetType == classOf[Float]) => x.floatValue
     case JDouble(x) if (targetType == classOf[JavaFloat]) => new JavaFloat(x.floatValue)
     case JDouble(x) if (targetType == classOf[String]) => x.toString
+    case JDouble(x) if (targetType == classOf[Int]) => x.intValue
+    case JDouble(x) if (targetType == classOf[Long]) => x.longValue
     case JDouble(x) if (targetType == classOf[Number]) => x
     case JString(s) if (targetType == classOf[String]) => s
     case JString(s) if (targetType == classOf[Symbol]) => Symbol(s)
@@ -328,5 +330,3 @@ object Extraction {
   }
 }
 
-}
-}

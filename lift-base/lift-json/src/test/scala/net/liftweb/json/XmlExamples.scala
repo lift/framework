@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import org.specs.Specification
 import org.specs.runner.{Runner, JUnit}
@@ -186,7 +186,4 @@ object XmlExamples extends Specification {
   val messageXml3 = <message expiry_date="20091126"><stats count="0"></stats></message>
 
   val expected2 = """{"message":{"expiry_date":"20091126","stats":{"count":0}}}"""
-}
-
-}
 }

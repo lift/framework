@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import org.specs.Specification
 import org.specs.runner.{Runner, JUnit}
@@ -97,7 +97,4 @@ object QueryExamples extends Specification {
       }
    ]}
   """)
-}
-
-}
 }

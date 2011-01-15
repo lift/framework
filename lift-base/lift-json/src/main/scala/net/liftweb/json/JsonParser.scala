@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 /** Fast imperative parser.
  */
@@ -430,7 +430,4 @@ object JsonParser {
   }
   case class RecycledSegment(seg: Array[Char]) extends Segment
   case class DisposableSegment(seg: Array[Char]) extends Segment
-}
-
-}
 }

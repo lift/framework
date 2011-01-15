@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import scala.reflect.Manifest
 
@@ -63,7 +63,4 @@ object Serialization {
     val dateFormat = DefaultFormats.lossless.dateFormat
     override val typeHints = hints
   }
-}
-
-}
 }

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import org.specs.Specification
 import org.specs.runner.{Runner, JUnit}
@@ -25,7 +25,4 @@ object ParserBugs extends Specification {
   "Unicode ffff is a valid char in string literal" in {
     parseOpt(""" {"x":"\uffff"} """).isDefined mustEqual true
   }
-}
-
-}
 }

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb 
+package json 
 
 /** A difference between two JSONs (j1 diff j2).
  * @param changed what has changed from j1 to j2
@@ -96,7 +96,4 @@ object Diff {
      */
     def diff(other: JValue) = Diff.diff(this, other)
   }
-}
-
-}
 }

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import org.specs.Specification
 import org.specs.runner.{Runner, JUnit}
@@ -37,7 +37,4 @@ object ExtractionBugs extends Specification {
   case class OptionOfInt(opt: Option[Int])
 
   case class PMap(m: Map[String, List[String]])
-}
-
-}
 }

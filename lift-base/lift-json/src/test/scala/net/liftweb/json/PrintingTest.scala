@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import org.scalacheck._
 import org.scalacheck.Prop.forAll
@@ -35,7 +35,4 @@ object PrintingSpec extends Specification with JValueGen with ScalaCheck {
   private def parse(json: String) = scala.util.parsing.json.JSON.parse(json)
 
   implicit def arbDoc: Arbitrary[Document] = Arbitrary(genJValue.map(render(_)))
-}
-
-}
 }

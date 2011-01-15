@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
+package net.liftweb 
+
 package object json {
   import java.io.Reader
   import scala.text.Document
@@ -43,4 +44,4 @@ package object json {
   def render(value: JValue): Document = JsonAST.render(value)
   def compact(d: Document): String = Printer.compact(d)
   def pretty(d: Document): String = Printer.pretty(d)
-}}
+}

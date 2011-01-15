@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import org.scalacheck._
 import org.scalacheck.Prop._
@@ -83,7 +83,4 @@ object ParserSpec extends Specification with JValueGen with ScalaCheck {
       JsonParser.Segments.segmentSize = existingSize
     }
   }
-}
-
-}
 }

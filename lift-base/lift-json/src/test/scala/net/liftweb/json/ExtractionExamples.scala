@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import java.util.Date
 import org.specs.Specification
@@ -196,6 +196,11 @@ object ExtractionExamples extends Specification {
     parse(objField).extract[ClassWithJSON] mustEqual ClassWithJSON("one", JObject(List(JField("yes", JString("woo")))))
   }
 
+  "Double can be coerced to Int or Long" in {
+    JDouble(2.1).extract[Int] mustEqual 2
+    JDouble(2.1).extract[Long] mustEqual 2L
+  }
+
   val testJson = 
 """
 { "name": "joe",
@@ -320,5 +325,3 @@ case class MultipleConstructors(name: String, age: Int, size: Option[String]) {
 
 case class ClassWithJSON(name: String, message: JValue)
 
-}
-}

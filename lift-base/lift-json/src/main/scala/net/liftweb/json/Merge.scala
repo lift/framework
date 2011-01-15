@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 /** Function to merge two JSONs.
  */
@@ -68,7 +68,4 @@ object Merge {
      */
     def merge(other: JValue): JValue = Merge.merge(this, other)
   }
-}
-
-}
 }

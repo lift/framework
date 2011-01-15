@@ -1,4 +1,5 @@
-package net.liftweb.json
+package net.liftweb
+package json
 
 import org.specs.Specification
 import org.specs.runner.{Runner, JUnit}

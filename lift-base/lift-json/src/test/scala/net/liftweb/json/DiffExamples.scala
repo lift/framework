@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import org.specs.Specification
 import org.specs.runner.{Runner, JUnit}
@@ -72,7 +72,4 @@ object DiffExamples extends Specification {
 
   private def read(resource: String) =
     parse(scala.io.Source.fromInputStream(classOf[DiffExamplesTest].getResourceAsStream(resource)).getLines().mkString)
-}
-
-}
 }

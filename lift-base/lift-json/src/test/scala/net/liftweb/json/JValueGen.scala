@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import org.scalacheck._
 import Gen._
@@ -62,7 +62,4 @@ trait NodeGen {
 
   def genName = frequency((2, identifier), (1, value("const")))
   private def children = choose(1, 3).sample.get
-}
-
-}
 }

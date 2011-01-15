@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import java.lang.reflect.{Constructor => JConstructor, Field, Type, ParameterizedType}
 import java.util.Date
@@ -273,7 +273,4 @@ private[json] object Meta {
 
 case class MappingException(msg: String, cause: Exception) extends Exception(msg, cause) {
   def this(msg: String) = this(msg, null)
-}
-
-}
 }

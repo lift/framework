@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import java.util.Date
 import org.specs.Specification
@@ -345,6 +345,3 @@ case class SetContainer(set: Set[String])
 case class ArrayContainer(array: Array[String])
 
 case class OptionOfTupleOfDouble(position: Option[Tuple2[Double, Double]])
-
-}
-}

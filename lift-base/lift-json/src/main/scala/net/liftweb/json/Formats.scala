@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb 
+package json 
 
 import java.util.{Date, TimeZone}
 
@@ -218,7 +218,4 @@ trait DefaultFormats extends Formats {
 private[json] class ThreadLocal[A](init: => A) extends java.lang.ThreadLocal[A] with (() => A) {
   override def initialValue = init
   def apply = get
-}
-
-}
 }
