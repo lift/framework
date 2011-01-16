@@ -11,18 +11,24 @@
  * limitations under the License.
  */
 
-package net.liftweb.squerylrecord
+package net.liftweb
+package squerylrecord
+
+import RecordTypeMode._
+import MySchema.{ TestData => td }
+import MySchema.{ companies, employees }
+
+import record.{ BaseField, Record }
 
 import org.specs.Specification
 import org.specs.runner.JUnit4
-import RecordTypeMode._
-import net.liftweb.record.{ BaseField, Record }
-import MySchema.{ TestData => td }
-import MySchema.{ companies, employees }
+import org.junit.runner.RunWith
+import org.specs.runner.JUnitSuiteRunner
 
 /**
  * Class for running the specs tests with JUnit4.
  */
+@RunWith(classOf[JUnitSuiteRunner])
 class SquerylRecordSpecsTest extends JUnit4(SquerylRecordSpecs)
 
 object SquerylRecordSpecs extends Specification {
@@ -97,10 +103,10 @@ object SquerylRecordSpecs extends Specification {
         val loaded = companies.lookup(id).get
         checkCompaniesEqual(company, loaded)
 
-	update(companies)(c => where (c.id === id)
-			  set (c.name := "Name2"))
-	val afterPartialUpdate = companies.lookup(id).get
-	afterPartialUpdate.name.is must_== "Name2"
+        update(companies)(c => where(c.id === id)
+          set (c.name := "Name2"))
+        val afterPartialUpdate = companies.lookup(id).get
+        afterPartialUpdate.name.is must_== "Name2"
       }
 
       // After rollback, the company should still be the same:
@@ -112,8 +118,21 @@ object SquerylRecordSpecs extends Specification {
 
     "support delete" >> {
       transactionWithRollback {
-	employees.delete(td.e2.id)
-	employees.lookup(td.e2.id) must beNone
+        employees.delete(td.e2.id)
+        employees.lookup(td.e2.id) must beNone
+      }
+    }
+    
+    "support select with properties of formerly fetched objects" >> {
+      transaction {
+        val company = companies.lookup(td.c2.id).head
+        val employee = from(employees)(e => 
+          where (e.companyId === company.idField) select(e)).head
+        employee.id must_== td.e2.id
+        
+        val loadedCompanies = from(companies)(c => 
+          where (c.created === company.created) select(c))
+        loadedCompanies.size must beGreaterThanOrEqualTo(1)
       }
     }
   }
@@ -165,13 +184,13 @@ object SquerylRecordSpecs extends Specification {
     // Photo must be checked separately
     e1.photo.is match {
       case Some(p) => {
-	val p2 = e2.photo.is
+        val p2 = e2.photo.is
         p2 must beSome[Array[Byte]]
-	p2.get.size must_== p.size
+        p2.get.size must_== p.size
 
-	(0 until p.size).foreach { i =>
-	  p2.get(i) must_== p(i)
-	}
+        (0 until p.size).foreach { i =>
+          p2.get(i) must_== p(i)
+        }
       }
       case None => e2.photo.is must beNone
     }

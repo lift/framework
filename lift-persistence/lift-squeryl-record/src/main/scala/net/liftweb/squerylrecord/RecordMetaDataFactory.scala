@@ -11,19 +11,22 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package squerylrecord {
+package net.liftweb
+package squerylrecord
 
-import _root_.java.lang.reflect.{Method, Field}
-import _root_.java.lang.annotation.Annotation
-import _root_.java.sql.{ResultSet, Timestamp}
-import _root_.java.util.{Calendar, Date}
-import _root_.net.liftweb.common.{Box, Full}
-import _root_.net.liftweb.record.{BaseField, MetaRecord, Record, TypedField}
-import _root_.net.liftweb.record.field._
-import _root_.org.squeryl.annotations.Column
-import _root_.org.squeryl.internals.{FieldMetaData, PosoMetaData, FieldMetaDataFactory}
-import _root_.scala.collection.immutable.Map
+import common.{Box, Full}
+import record.{BaseField, MetaRecord, Record, TypedField}
+import record.field._
+
+import org.squeryl.internals.{FieldMetaData, PosoMetaData, FieldMetaDataFactory}
+import org.squeryl.annotations.Column
+
+import java.lang.reflect.{Method, Field}
+import java.lang.annotation.Annotation
+import java.sql.{ResultSet, Timestamp}
+import java.util.{Calendar, Date}
+
+import scala.collection.immutable.Map
 
 /** FieldMetaDataFactory that allows Squeryl to use Records as model objects. */
 class RecordMetaDataFactory extends FieldMetaDataFactory {
@@ -131,7 +134,4 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
     () => metaRecord.createRecord.asInstanceOf[AnyRef]
   }
 
-}
-
-}
 }

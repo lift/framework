@@ -11,11 +11,11 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package squerylrecord {
+package net.liftweb
+package squerylrecord
 
-import _root_.net.liftweb.record.MandatoryTypedField
-import _root_.org.squeryl.IndirectKeyedEntity
+import record.MandatoryTypedField
+import org.squeryl.IndirectKeyedEntity
 
 /**
  * Trait to mix into records that have a primary key. The primary key field must be named "idField", though
@@ -29,5 +29,3 @@ trait KeyedRecord[K] extends IndirectKeyedEntity[K, MandatoryTypedField[K]] {
   def id = idField.value
 }
 
-}
-}

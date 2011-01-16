@@ -11,7 +11,8 @@
  * limitations under the License.
  */
 
-package net.liftweb.squerylrecord
+package net.liftweb
+package squerylrecord
 
 /**
  * This trait has to be extended for new fields that

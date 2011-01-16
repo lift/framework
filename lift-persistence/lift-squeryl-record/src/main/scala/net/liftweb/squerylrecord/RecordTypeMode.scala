@@ -11,77 +11,152 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package squerylrecord {
+package net.liftweb
+package squerylrecord
 
-import _root_.java.util.{Calendar, Date}
-import _root_.net.liftweb.record.{MandatoryTypedField, OptionalTypedField, TypedField}
-import _root_.org.squeryl.PrimitiveTypeMode
-import _root_.org.squeryl.dsl.{BooleanExpression, DateExpression, EnumExpression, NumericalExpression, StringExpression}
-import _root_.org.squeryl.dsl.ast.SelectElementReference
-import _root_.org.squeryl.internals.FieldReferenceLinker
+import record.{ MandatoryTypedField, OptionalTypedField, TypedField }
 
+import org.squeryl.{ PrimitiveTypeMode, Schema }
+import org.squeryl.dsl.{ BooleanExpression, DateExpression, EnumExpression, NumericalExpression, StringExpression, NonNumericalExpression }
+import org.squeryl.dsl.ast.{ SelectElementReference, SelectElement, ConstantExpressionNode }
+import org.squeryl.internals.{ AttributeValidOnNonNumericalColumn, AttributeValidOnNumericalColumn, FieldReferenceLinker, OutMapper }
+
+import java.util.{ Calendar, Date }
+import java.sql.Timestamp
+
+/**
+ * All methods from this object should be imported when creating queries using the Squeryl DSL with lift records.
+ * 
+ * It provides implicit conversions for all record field types to the underlying primitive types. Thus, you can use
+ * record fields in the Squeryl DSL as if they were primitive types.
+ */
 object RecordTypeMode extends RecordTypeMode
 
 trait RecordTypeMode extends PrimitiveTypeMode {
-  implicit def long2ScalarLong(l: MandatoryTypedField[Long]) =
-    new SelectElementReference[LongType](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperLongType) with NumericalExpression[Long]
 
-  implicit def int2ScalarInt(i: MandatoryTypedField[Int]) = 
-    new SelectElementReference[Int](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperIntType) with NumericalExpression[Int]
+  /** Conversion of mandatory Long fields to Squeryl Expressions. */
+  implicit def long2ScalarLong(f: MandatoryTypedField[Long]) = convertNumericalMandatory(f, createOutMapperLongType)
 
-  implicit def double2ScalarDouble(d: MandatoryTypedField[Double]) =
-    new SelectElementReference[Double](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperDoubleType) with NumericalExpression[Double]
+  /** Conversion of mandatory Int fields to Squeryl Expressions. */
+  implicit def int2ScalarInt(f: MandatoryTypedField[Int]) = convertNumericalMandatory(f, createOutMapperIntType)
 
-//  implicit def float2ScalarFloat(d: Float) =
-//    new SelectElementReference[Float](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperFloatType) with NumericalExpression[Float]
+  /** Conversion of mandatory Double fields to Squeryl Expressions. */
+  implicit def double2ScalarDouble(f: MandatoryTypedField[Double]) = convertNumericalMandatory(f, createOutMapperDoubleType)
 
-  implicit def string2ScalarString(s: MandatoryTypedField[String]) =
-    new SelectElementReference[String](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperStringType) with StringExpression[String]
+  /** Conversion of mandatory BigDecimal fields to Squeryl Expressions. */
+  implicit def decimal2ScalarBoolean(f: MandatoryTypedField[BigDecimal]) = convertNumericalMandatory(f, createOutMapperBigDecimalType)
 
-  implicit def bool2ScalarBoolean(b: MandatoryTypedField[Boolean]) =
-    new SelectElementReference[Boolean](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperBooleanType) with BooleanExpression[Boolean]
+  /** Conversion of optional Int fields to Squeryl Expressions. */
+  implicit def optionInt2ScalarInt(f: OptionalTypedField[Int]) = convertNumericalOptional(f, createOutMapperIntTypeOption)
 
-  implicit def date2ScalarDate(b: MandatoryTypedField[Calendar]) =
-    new SelectElementReference[Date](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperDateType) with DateExpression[Date]
+  /** Conversion of optional Long fields to Squeryl Expressions. */
+  implicit def optionLong2ScalarLong(f: OptionalTypedField[Long]) = convertNumericalOptional(f, createOutMapperLongTypeOption)
 
-  implicit def decimal2ScalarBoolean(i: MandatoryTypedField[BigDecimal]) =
-    new SelectElementReference[BigDecimal](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperBigDecimalType) with NumericalExpression[BigDecimal]
+  /** Conversion of optional Double fields to Squeryl Expressions. */
+  implicit def optionDouble2ScalarDouble(f: OptionalTypedField[Double]) = convertNumericalOptional(f, createOutMapperDoubleTypeOption)
 
-  implicit def enum2EnumExpr[EnumType <: Enumeration](l: MandatoryTypedField[EnumType#Value]) = {
-    val n = FieldReferenceLinker.takeLastAccessedFieldReference.get
-    new SelectElementReference[Enumeration#Value](n)(n.createEnumerationMapper) with EnumExpression[Enumeration#Value]
+  /** Conversion of optional BigDecimal fields to Squeryl Expressions. */
+  implicit def optionDecimal2ScalarBoolean(f: OptionalTypedField[BigDecimal]) = convertNumericalOptional(f, createOutMapperBigDecimalTypeOption)
+
+  /** Conversion of mandatory String fields to Squeryl Expressions. */
+  implicit def string2ScalarString(f: MandatoryTypedField[String]) = fieldReference match {
+    case Some(e) => new SelectElementReference[String](e)(createOutMapperStringType) with StringExpression[String] with SquerylRecordNonNumericalExpression[String]
+    case None => new ConstantExpressionNode[String](f.is) with StringExpression[String] with SquerylRecordNonNumericalExpression[String]
   }
 
-  implicit def optionString2ScalarString(i: OptionalTypedField[String]) =
-    new SelectElementReference[Option[String]](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperStringTypeOption) with StringExpression[Option[String]]
+  /** Conversion of optional String fields to Squeryl Expressions. */
+  implicit def optionString2ScalarString(f: OptionalTypedField[String]) = fieldReference match {
+    case Some(e) => new SelectElementReference[Option[String]](e)(createOutMapperStringTypeOption) with StringExpression[Option[String]] with SquerylRecordNonNumericalExpression[Option[String]]
+    case None => new ConstantExpressionNode[Option[String]](f.is) with StringExpression[Option[String]] with SquerylRecordNonNumericalExpression[Option[String]]
+  }
 
-  implicit def optionInt2ScalarInt(i: OptionalTypedField[Int]) =
-    new SelectElementReference[Option[Int]](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperIntTypeOption) with NumericalExpression[Option[Int]]
-
-  implicit def optionLong2ScalarLong(i: OptionalTypedField[Long]) =
-    new SelectElementReference[Option[Long]](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperLongTypeOption) with NumericalExpression[Option[Long]]
-
-  implicit def optionDouble2ScalarDouble(i: OptionalTypedField[Double]) =
-    new SelectElementReference[Option[Double]](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperDoubleTypeOption) with NumericalExpression[Option[Double]]
+  /** Conversion of mandatory Boolean fields to Squeryl Expressions. */
+  implicit def bool2ScalarBoolean(f: MandatoryTypedField[Boolean]) = fieldReference match {
+    case Some(e) => new SelectElementReference[Boolean](e)(createOutMapperBooleanType) with BooleanExpression[Boolean] with SquerylRecordNonNumericalExpression[Boolean]
+    case None => new ConstantExpressionNode[Boolean](f.is) with BooleanExpression[Boolean] with SquerylRecordNonNumericalExpression[Boolean]
+  }
   
-//  implicit def optionFloat2ScalarFloat(i: OptionalTypedField[Float]) =
-//    new SelectElementReference[Option[Float]](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperFloatTypeOption) with NumericalExpression[Option[Float]]
+  /** Conversion of optional Boolean fields to Squeryl Expressions. */
+  implicit def optionBoolean2ScalarBoolean(f: OptionalTypedField[Boolean]) = fieldReference match {
+    case Some(e) => new SelectElementReference[Option[Boolean]](e)(createOutMapperBooleanTypeOption) with BooleanExpression[Option[Boolean]] with SquerylRecordNonNumericalExpression[Option[Boolean]]
+    case None => new ConstantExpressionNode[Option[Boolean]](f.is) with BooleanExpression[Option[Boolean]] with SquerylRecordNonNumericalExpression[Option[Boolean]]
+  }
+  
+  /** Conversion of mandatory Calendar fields to Squeryl Expressions. */
+  implicit def date2ScalarDate(f: MandatoryTypedField[Calendar]) = fieldReference match {
+    case Some(e) => new SelectElementReference[Timestamp](e)(createOutMapperTimestampType) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
+    case None => new ConstantExpressionNode[Timestamp](new Timestamp(f.is.getTimeInMillis)) with BooleanExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
+  }
 
-  implicit def optionBoolean2ScalarBoolean(i: OptionalTypedField[Boolean]) =
-    new SelectElementReference[Option[Boolean]](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperBooleanTypeOption) with BooleanExpression[Option[Boolean]]
+  /** Conversion of optional Calendar fields to Squeryl Expressions. */
+  implicit def optionDate2ScalarDate(f: OptionalTypedField[Calendar]) = fieldReference match {
+    case Some(e) => new SelectElementReference[Option[Timestamp]](e)(createOutMapperTimestampTypeOption) with DateExpression[Option[Timestamp]] with SquerylRecordNonNumericalExpression[Option[Timestamp]]
+    case None => {
+      val date = f.is match {
+        case Some(calendar) => Some(new Timestamp(calendar.getTimeInMillis))
+        case None => None
+      }
+      new ConstantExpressionNode[Option[Timestamp]](date) with BooleanExpression[Option[Timestamp]] with SquerylRecordNonNumericalExpression[Option[Timestamp]]
+    }
+  }
 
-  implicit def optionDate2ScalarDate(i: OptionalTypedField[Calendar]) =
-    new SelectElementReference[Option[Date]](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperDateTypeOption) with DateExpression[Option[Date]]
+  /** Conversion of mandatory Enum fields to Squeryl Expressions. */
+  implicit def enum2EnumExpr[EnumType <: Enumeration](f: MandatoryTypedField[EnumType#Value]) = fieldReference match {
+    case Some(e) => new SelectElementReference[Enumeration#Value](e)(e.createEnumerationMapper) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
+    case None => new ConstantExpressionNode[Enumeration#Value](f.is) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
+  }
+    
+  /** Conversion of optional Enum fields to Squeryl Expressions. */
+  implicit def optionEnum2ScalaEnum[EnumType <: Enumeration](f: OptionalTypedField[EnumType#Value]) = fieldReference match {
+    case Some(e) => new SelectElementReference[Option[Enumeration#Value]](e)(e.createEnumerationOptionMapper) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
+    case None => new ConstantExpressionNode[Option[Enumeration#Value]](f.is) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
+  }
 
-  implicit def optionDecimal2ScalarBoolean(i: OptionalTypedField[BigDecimal]) =
-    new SelectElementReference[Option[BigDecimal]](FieldReferenceLinker.takeLastAccessedFieldReference.get)(createOutMapperBigDecimalTypeOption) with NumericalExpression[Option[BigDecimal]]
+  /**
+   * Helper method for converting mandatory numerical fields to Squeryl Expressions.
+   */
+  private def convertNumericalMandatory[T](f: MandatoryTypedField[T], outMapper: OutMapper[T]) = fieldReference match {
+    case Some(e) => new SelectElementReference[T](e)(outMapper) with NumericalExpression[T] with SquerylRecordNumericalExpression[T]
+    case None => new ConstantExpressionNode[T](f.is) with NumericalExpression[T] with SquerylRecordNumericalExpression[T]
+  }
 
-  implicit def optionEnum2ScalaEnum[EnumType <: Enumeration](l: OptionalTypedField[EnumType#Value]) = {  
-    val n = FieldReferenceLinker.takeLastAccessedFieldReference.get
-    new SelectElementReference[Option[Enumeration#Value]](n)(n.createEnumerationOptionMapper) with EnumExpression[Option[Enumeration#Value]]
+  /**
+   * Helper method for converting optional numerical fields to Squeryl Expressions.
+   */
+  private def convertNumericalOptional[T](f: OptionalTypedField[T], outMapper: OutMapper[Option[T]]) = fieldReference match {
+    case Some(e: SelectElement) => new SelectElementReference[Option[T]](e)(outMapper) with NumericalExpression[Option[T]] with SquerylRecordNumericalExpression[Option[T]]
+    case None => new ConstantExpressionNode[Option[T]](f.is) with NumericalExpression[Option[T]] with SquerylRecordNumericalExpression[Option[T]]
+  }
+
+  /**
+   * Returns the field that was last referenced by Squeryl. Can also be None.
+   */
+  private def fieldReference = FieldReferenceLinker.takeLastAccessedFieldReference
+
+}
+
+/**
+ * Record-Specific extensions to numerical Squeryl Expressions.
+ */
+trait SquerylRecordNumericalExpression[T] { this: NumericalExpression[T] =>
+
+  /**
+   * Can be used instead of the often conflicting "is" function.
+   */
+  def defineAs(columnAttributes: AttributeValidOnNumericalColumn*)(implicit restrictUsageWithinSchema: Schema) = {
+    is(columnAttributes: _*)(restrictUsageWithinSchema)
   }
 }
 
-}
+/**
+ * Record-Specific extensions to non-numerical Squeryl Expressions.
+ */
+trait SquerylRecordNonNumericalExpression[T] { this: NonNumericalExpression[T] =>
+
+  /**
+   * Can be used instead of the often conflicting "is" function.
+   */
+  def defineAs(columnAttributes: AttributeValidOnNonNumericalColumn*)(implicit restrictUsageWithinSchema: Schema) = {
+    is(columnAttributes: _*)(restrictUsageWithinSchema)
+  }
 }

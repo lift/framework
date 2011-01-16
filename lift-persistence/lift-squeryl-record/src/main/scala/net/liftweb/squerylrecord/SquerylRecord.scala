@@ -11,14 +11,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package squerylrecord {
+package net.liftweb
+package squerylrecord
 
-import _root_.net.liftweb.common.{Box, Full, Loggable}
-import _root_.net.liftweb.mapper.DB // FIXME should be moved out of mapper
-import _root_.net.liftweb.util.DynoVar
-import _root_.org.squeryl.{Session, SessionFactory}
-import _root_.org.squeryl.internals.{DatabaseAdapter, FieldMetaData}
+import common.{Box, Full, Loggable}
+import mapper.DB // FIXME should be moved out of mapper
+import util.DynoVar
+
+import org.squeryl.{Session, SessionFactory}
+import org.squeryl.internals.{DatabaseAdapter, FieldMetaData}
 
 /** Object containing initialization logic for the Squeryl/Record integration */
 object SquerylRecord extends Loggable {
@@ -54,7 +55,4 @@ object SquerylRecord extends Loggable {
       }
     })
   }
-}
-
-}
 }
