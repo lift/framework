@@ -558,6 +558,22 @@ by providing following serializer.
 Function 'serialize' creates a JSON object to hold serialized data. Function 'deserialize' knows how
 to construct serialized object by pattern matching against type info and data.
 
+Extensions
+----------
+
+Module lift-json-ext contains extensions to extraction and serialization. Following types are supported.
+
+    // Lift's box
+    implicit val formats = net.liftweb.json.DefaultFormats + new JsonBoxSerializer
+
+    // Scala enums
+    implicit val formats = net.liftweb.json.DefaultFormats + new EnumSerializer(MyEnum)
+    // or
+    implicit val formats = net.liftweb.json.DefaultFormats + new EnumNameSerializer(MyEnum)
+
+    // Joda Time
+    implicit val formats = net.liftweb.json.DefaultFormats ++ JodaTimeSerializers.all
+
 XML support
 ===========
 
@@ -656,6 +672,23 @@ Constructed parser recursively reads tokens until it finds `FieldStart("postalCo
 token. After that the next token must be `IntVal`, otherwise parsing fails. It returns parsed
 integer and stops parsing immediately.
 
+FAQ
+===
+
+1. Q: I have a JSON object and I want to extract it to a case class:
+
+    scala> case class Person(name: Sting, age: Int)
+    scala> val json = """{"name":"joe","age":15}"""
+
+But extraction fails:
+
+    scala> parse(json).extract[Person]                                                  
+    net.liftweb.json.MappingException: Parsed JSON values do not match with class constructor
+
+Answer:
+
+Extraction does not work for classes defined in REPL. Compile the case class definitions
+with scalac and import those to REPL.
 
 Kudos
 =====

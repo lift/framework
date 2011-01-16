@@ -53,6 +53,12 @@ trait Formats { self: Formats =>
     override val customSerializers = newSerializer :: self.customSerializers
   }
 
+  /**
+   * Adds the specified custom serializers to this formats.
+   */
+  def ++ (newSerializers: Traversable[Serializer[_]]): Formats = 
+    newSerializers.foldLeft(this)(_ + _)
+
   def customSerializer(implicit format: Formats) = 
     customSerializers.foldLeft(Map(): PartialFunction[Any, JValue]) { (acc, x) => 
       acc.orElse(x.serialize) 

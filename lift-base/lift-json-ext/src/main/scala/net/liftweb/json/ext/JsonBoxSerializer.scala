@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
-package ext {
+package net.liftweb
+package json
+package ext
 
 import java.io._
 import java.lang.reflect.ParameterizedType
 import scala.reflect.Manifest
 import common._
 import Extraction.{decompose, extract}
-import JsonAST._
 import _root_.org.apache.commons.codec.binary.Base64
 
 class JsonBoxSerializer extends Serializer[Box[_]] {
@@ -100,6 +99,3 @@ class JsonBoxSerializer extends Serializer[Box[_]] {
   }
 }
 
-}
-}
-}

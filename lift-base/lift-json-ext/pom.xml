@@ -64,6 +64,10 @@
       <artifactId>commons-codec</artifactId>
     </dependency>
     <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.scala-tools.testing</groupId>
       <artifactId>specs_${scala.version}</artifactId>
     </dependency>

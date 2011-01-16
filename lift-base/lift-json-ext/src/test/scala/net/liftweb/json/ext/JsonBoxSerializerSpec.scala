@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
-package ext {
+package net.liftweb
+package json
+package ext
 
 import _root_.org.specs._
 import _root_.org.specs.runner._
 import common._
-import json.JsonParser.parse
 import json.Serialization.{read, write => swrite}
 
 class JsonBoxSerializerSpecTest extends JUnit4(JsonBoxSerializerSpec)
@@ -67,6 +66,3 @@ case class SomeException(msg: String) extends Exception
 
 case class Person(name: String, age: Box[Int], mother: Box[Person])
 
-}
-}
-}

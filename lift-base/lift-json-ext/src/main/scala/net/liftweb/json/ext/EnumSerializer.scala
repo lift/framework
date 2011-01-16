@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
-package ext {
+package net.liftweb
+package json
+package ext
 
 class EnumSerializer[E <: Enumeration: ClassManifest](enum: E)
-  extends json.Serializer[E#Value]
-{
-  import JsonAST._
+  extends json.Serializer[E#Value] {
   import JsonDSL._
 
   val EnumerationClass = classOf[E#Value]
@@ -41,9 +39,7 @@ class EnumSerializer[E <: Enumeration: ClassManifest](enum: E)
 }
 
 class EnumNameSerializer[E <: Enumeration: ClassManifest](enum: E)
-  extends json.Serializer[E#Value]
-{
-  import JsonAST._
+  extends json.Serializer[E#Value] {
   import JsonDSL._
 
   val EnumerationClass = classOf[E#Value]
@@ -61,9 +57,4 @@ class EnumNameSerializer[E <: Enumeration: ClassManifest](enum: E)
   def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
     case i: E#Value => i.toString
   }
-}
-
-
-}
-}
 }
