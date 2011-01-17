@@ -189,7 +189,8 @@ FileParamHolder(name, mimeType, fileName)
 }
 
 /**
- * This FileParamHolder stores the uploaded file directly into memory.
+ * This FileParamHolder stores the uploaded file in a
+ * temporary file on disk.
  *
  * @param name The name of the form field for this file
  * @param mimeType the mime type, as specified in the Content-Type field
