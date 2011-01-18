@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.net.liftweb.util.Helpers._
-import _root_.org.specs._
-import _root_.org.specs.runner._
-import _root_.org.specs.Sugar._
-import scala.xml.NodeSeq
-import scala.xml.Text
-import _root_.net.liftweb.common._
+import common._
+import util.Helpers._
+import org.specs._
+import org.specs.runner._
+import org.specs.Sugar._
+import scala.xml.{NodeSeq,Null,PrefixedAttribute,Text,UnprefixedAttribute}
 
 class SnippetSpecTest extends Runner(SnippetSpec) with JUnit with Console
 object SnippetSpec extends Specification {
@@ -395,12 +394,76 @@ object SnippetSpec extends Specification {
         myInfo.is must_== "ab"
       }
     }
-
-
-
   }
 
+  "Snippet attributes" should {
+    "properly reflect the full snippet stack with S.attrs" in {
+      S.initIfUninitted(new LiftSession("", "", Empty)) {
+        S.withAttrs(new UnprefixedAttribute("a", "a", Null)) {
+          S.withAttrs(new UnprefixedAttribute("b", "b", new UnprefixedAttribute("c", "c", Null))) {
+            S.withAttrs(new UnprefixedAttribute("d", "d", Null)) {
+              S.attr("a") must_== Full("a")
+              S.attr("b") must_== Full("b")
+              S.attr("c") must_== Full("c")
+              S.attr("d") must_== Full("d")
+
+              // Also check currentAttrs (should be set only for the inner-most call)
+              S.currentAttr("a") must_== Empty
+              S.currentAttr("b") must_== Empty
+              S.currentAttr("c") must_== Empty
+              S.currentAttr("d") must_== Full("d")
+            }
+            // Make sure the stack is unwound
+            S.attr("d") must_== Empty
+          }
+          S.attr("b") must_== Empty
+          S.attr("c") must_== Empty
+        }
+        S.attr("a") must_== Empty
+        S.attrs must_== Nil
+        S.currentAttrs must_== Null
+      }
+    }
+
+    "reflect only the last pushed values with S.currentAttrs" in {
+      S.initIfUninitted(new LiftSession("", "", Empty)) {
+        S.withAttrs(new UnprefixedAttribute("a", "a", Null)) {
+          S.withAttrs(new UnprefixedAttribute("b", "b", new UnprefixedAttribute("c", "c", Null))) {
+            S.withAttrs(new UnprefixedAttribute("d", "d", Null)) {
+              S.currentAttr("a") must_== Empty
+              S.currentAttr("b") must_== Empty
+              S.currentAttr("c") must_== Empty
+              S.currentAttr("d") must_== Full("d")
+            }
+          }
+        }
+      }
+    }
+
+    "handle prefixes" in {
+      S.initIfUninitted(new LiftSession("", "", Empty)) {
+        S.withAttrs(new PrefixedAttribute("foo", "a", "a", Null)) {
+          S.withAttrs(new PrefixedAttribute("foo", "b", "b", Null)) {
+            S.withAttrs(new PrefixedAttribute("bar", "a", "aBar", Null)) {
+              S.attr("a") must_== Empty
+              S.attr("foo", "a") must_== Full("a")
+
+              S.attr("bar", "a") must_== Full("aBar")
+
+              val fooMap = S.prefixedAttrsToMap("foo", Map())
+
+              fooMap("a") must_== "a"
+              fooMap("b") must_== "b"
+
+              val barMap = S.prefixedAttrsToMap("bar")
+
+              barMap("a") must_== "aBar"
+              barMap.get("b") must_== None
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
-
-}}

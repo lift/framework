@@ -19,12 +19,12 @@ package http
 
 import scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
 import scala.xml._
-import net.liftweb.common._
-import net.liftweb.util._
-import net.liftweb.actor._
-import net.liftweb.http.js.{JsCmd, AjaxInfo}
-import net.liftweb.util.Helpers._
-import net.liftweb.builtin.snippet._
+import common._
+import util._
+import actor._
+import http.js.{JsCmd, AjaxInfo}
+import util.Helpers._
+import builtin.snippet._
 import java.lang.reflect.{Method, Modifier, InvocationTargetException}
 import scala.xml._
 import java.io.InputStream
@@ -33,7 +33,6 @@ import java.util.Locale
 import js._
 import scala.reflect.Manifest
 import provider._
-import net.liftweb.actor._
 import Box._
 
 
@@ -1580,7 +1579,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     if (ret.isEmpty) ret else
       attrs.get("form").map(_.text.trim.toLowerCase) match {
         case Some("post") =>
-          S.setVars(attrs.filter(_.key == "multipart")) {
+          S.withAttrs(attrs.filter(_.key == "multipart")) {
             net.liftweb.builtin.snippet.Form.post(ret) 
           } match {
             case e: Elem => e % LiftRules.formAttrs.vend.foldLeft[MetaData](Null)((base, name) => checkAttr(name, attrs, base))
@@ -1714,14 +1713,12 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         processOrDefer(isLazy) {
           S.doSnippet(snippetName) {
             S.withAttrs(attrs) {
-              S.setVars(attrs) {
                 processSurroundAndInclude(page, 
                                           NamedPF((snippetName, 
                                                    element, attrs,
                                                    kids,
                                                    page),
                                                   liftTagProcessing))
-              }
             }
           }
         }
@@ -1981,5 +1978,4 @@ trait LiftView {
 
   def dispatch: PartialFunction[String, () => Box[NodeSeq]]
 }
-
 

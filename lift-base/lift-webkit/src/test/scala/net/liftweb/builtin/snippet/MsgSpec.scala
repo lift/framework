@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package builtin.snippet {
+package net.liftweb
+package builtin.snippet
 
-import _root_.org.specs._
-import _root_.org.specs.runner._
-import _root_.org.specs.Sugar._
-import _root_.net.liftweb.http.{LiftRules,LiftSession,S}
-import _root_.net.liftweb.common._
+import common._
+import http.{LiftRules,LiftSession,S}
 
-import _root_.scala.xml.{Null,Text,UnprefixedAttribute,XML}
+import org.specs._
+import runner._
+import Sugar._
+
+import scala.xml.{Null,Text,UnprefixedAttribute,XML}
 
 class MsgSpecTest extends Runner(MsgSpec) with JUnit with Console
 object MsgSpec extends Specification {
@@ -39,7 +40,7 @@ object MsgSpec extends Specification {
         S.notice("foo", "Notice")
 
         // We reparse due to inconsistencies with UnparsedAttributes
-        val result = S.setVars(new UnprefixedAttribute("id", Text("foo"), new UnprefixedAttribute("noticeClass", Text("funky"), Null))) {
+        val result = S.withAttrs(new UnprefixedAttribute("id", Text("foo"), new UnprefixedAttribute("noticeClass", Text("funky"), Null))) {
           XML.loadString(Msg.render(<div/>).toString)
         }
         
@@ -53,4 +54,3 @@ object MsgSpec extends Specification {
   }
 }
 
-}} // Close nested packages

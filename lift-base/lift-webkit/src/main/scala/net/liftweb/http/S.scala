@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.scala.collection.mutable.{HashMap, ListBuffer}
-import _root_.scala.xml._
-import _root_.scala.collection.immutable.{ListMap, TreeMap}
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import scala.collection.mutable.{HashMap, ListBuffer}
+import scala.xml._
+import scala.collection.immutable.{ListMap, TreeMap}
+import common._
+import util._
 import Helpers._
 import js._
-import _root_.java.util.{Locale, TimeZone, ResourceBundle}
-import _root_.java.util.concurrent.atomic.AtomicLong
-import _root_.net.liftweb.builtin.snippet._
+import java.util.{Locale, TimeZone, ResourceBundle}
+import java.util.concurrent.atomic.AtomicLong
+import builtin.snippet._
 import provider._
-import _root_.scala.reflect.Manifest
-import _root_.java.util.concurrent.{ConcurrentHashMap => CHash}
-import _root_.net.liftweb.http.rest.RestContinuation
+import scala.reflect.Manifest
+import java.util.concurrent.{ConcurrentHashMap => CHash}
+import http.rest.RestContinuation
 
 /**
  * An object representing the current state of the HTTP request and response.
@@ -135,12 +135,13 @@ object S extends HasParams with Loggable {
 
   /**
    * Holds the attributes that are set on the current snippet tag. Attributes are available
-   * to snippet functions via the S.attr and S.attrs methods.
+   * to snippet functions via the S.attr and S.attrs methods. The attributes are held in a
+   * tuple, representing (most recent attributes, full attribute stack).
    *
    * @see # attrs
    * @see # attr
    */
-  private val _attrs = new ThreadGlobal[List[(Either[String, (String, String)], String)]]
+  private val _attrs = new ThreadGlobal[(MetaData,List[(Either[String, (String, String)], String)])]
 
   /**
    * Holds the per-request LiftSession instance.
@@ -1325,7 +1326,7 @@ for {
 
   private def _innerInit[B](request: Req, f: () => B): B = {
     _lifeTime.doWith(false) {
-      _attrs.doWith(Nil) {
+      _attrs.doWith((Null,Nil)) {
           _resBundle.doWith(Nil) {
             inS.doWith(true) {
               withReq(doStatefulRewrite(request)) {
@@ -1441,7 +1442,7 @@ for {
    */
   def attrs: List[(Either[String, (String, String)], String)] = S._attrs.value match {
     case null => Nil
-    case xs => xs
+    case (current,full) => full
   }
 
   /**
@@ -1590,7 +1591,7 @@ for {
    * attributes to one or more XML elements. Similar to prefixedAttrsToMetaData, except
    * that it handles both prefixed and unprefixed attributes. This version of the method will
    * use all of the currently set attributes from S.attrs. If you want to filter it, use the
-   * attrsToMetaData(String => Boolean) version, which allows you to specify a predicate
+   * currentAttrsToMetaData(String => Boolean) version, which allows you to specify a predicate
    * function for filtering. For example, if you want all of the current attributes to be
    * added to a div tag, you could do:
    *
@@ -1675,6 +1676,19 @@ for {
   // There are also prefixed versions:
   val prefixedAttr = S.attr("prefix", "name") openOr "Not found"
    * </pre>
+   *
+   * Note that this uses the data held in S.attrs, which means that
+   * it will find attributes through the entire snippet nesting stack.
+   * For example, given the snippets:
+   *
+   * <pre name="code" class="xml">
+   * &lt;lift:MyStuff.snippetA foo="bar">
+   *   &lt;lift.MyStuff.snippetB>...&lt;/lift.MyStuff.snippetB>
+   * &lt;/lift:MyStuff.snippetA>
+   * </pre>
+   *
+   * Calling <code>S.attr("foo")</code> from snippetB will return
+   * <code>Full("bar")</code>.
    */
   object attr extends AttrHelper[Box] {
     type Info = String
@@ -1707,17 +1721,12 @@ for {
   }
 
   /**
-   * Temporarily adds the given attributes to the current set, then executes the given function. Note that
-   * this does not modify the current attributes available via S.attr.
+   * Temporarily adds the given attributes to the current set, then executes the given function.
    *
    * @param attr The attributes to set temporarily
    */
-  def setVars[T](attr: MetaData)(f: => T): T = {
-    _attrs.doWith(attr.toList.map {
-      case pa: PrefixedAttribute => (Right(pa.pre, pa.key), pa.value.text)
-      case m => (Left(m.key), m.value.text)
-    } ::: attrs)(f)
-  }
+  @deprecated("Use the S.withAttrs method instead")
+  def setVars[T](attr: MetaData)(f: => T): T = withAttrs(attr)(f)
 
   /**
    * Initialize the current request session if it's not already initialized.
@@ -1733,18 +1742,97 @@ for {
     else init(Req.nil, session)(f)
   }
 
-  private object _currentAttrs extends RequestVar[MetaData](Null)
+  /**
+   * Retrieves the attributes from the most recently executed
+   * snippet element.
+   * 
+   * For example, given the snippets:
+   *
+   * <pre name="code" class="xml">
+   * &lt;lift:MyStuff.snippetA foo="bar">
+   *   &lt;lift.MyStuff.snippetB>...&lt;/lift.MyStuff.snippetB>
+   * &lt;/lift:MyStuff.snippetA>
+   * </pre>
+   *
+   * S.currentAttrs will return <code>Nil</code>.
+   *
+   * If you want a particular attribute, the S.currentAttr
+   * helper object simplifies things considerably.
+   */
+  def currentAttrs: MetaData = _attrs.value match {
+    case null => Null
+    case (current, full) => current
+  }
 
-  def currentAttrs: MetaData = _currentAttrs.is
-
+  /**
+   * Temporarily adds the given attributes to the current set, then executes the given function.
+   *
+   * @param attrs The attributes to set temporarily
+   */
   def withAttrs[T](attrs: MetaData)(f: => T): T = {
-    val oldAttrs = _currentAttrs.is
-    _currentAttrs.set(attrs)
-    try {
-      f
-    } finally {
-      _currentAttrs.set(oldAttrs)
+    val currentStack = _attrs.value._2
+    val newFrame = attrs.toList.map {
+      case pa: PrefixedAttribute => (Right(pa.pre, pa.key), pa.value.text)
+      case m => (Left(m.key), m.value.text)
     }
+
+    _attrs.doWith((attrs, newFrame ::: currentStack))(f)
+  }
+
+  /**
+   * Used to get an attribute by its name from the current
+   * snippet element. There are several means to getting
+   * attributes:
+   *
+   * <pre name="code" class="scala">
+  // Get a Box for the attribute:
+  val myAttr = S.currentAttr("test") openOr "Not found"
+
+  // Get an attribute or return a default value:
+  val myAttr = S.currentAttr("name", "Fred")
+
+  // Apply a transform function on the attribute value, or return an Empty:
+  val pageSize = S.currentAttr("count", _.toInt) openOr 20
+
+  // There are also prefixed versions:
+  val prefixedAttr = S.currentAttr("prefix", "name") openOr "Not found"
+   * </pre>
+   *
+   * Note that this uses the data held in S.currentAttrs, which means that
+   * it will only find attributes from the current snippet element.
+   * For example, given the snippets:
+   *
+   * <pre name="code" class="xml">
+   * &lt;lift:MyStuff.snippetA foo="bar">
+   *   &lt;lift.MyStuff.snippetB>...&lt;/lift.MyStuff.snippetB>
+   * &lt;/lift:MyStuff.snippetA>
+   * </pre>
+   *
+   * Calling <code>S.currentAttr("foo")</code> from snippetB will return
+   * <code>Empty</code>.
+   */
+  object currentAttr extends AttrHelper[Box] {
+    type Info = String
+
+    protected def findAttr(key: String): Option[Info] =
+      currentAttrs.toList.find{ _.key == key }.map(_.value.text)
+
+    protected def findAttr(prefix: String, key: String): Option[Info] =
+      currentAttrs.toList.find{ _.prefixedKey == (prefix + ":" + key) }.map(_.value.text)
+
+    protected def convert[T](in: Option[T]): Box[T] = Box(in)
+
+    /**
+     * Returns the unprefixed attribute value as an Option[NodeSeq]
+     * for easy addition to the attributes
+     */
+    def ~(key: String): Option[NodeSeq] = apply(key).toOption.map(Text)
+
+    /**
+     * Returns the prefixed attribute value as an Option[NodeSeq]
+     * for easy addition to the attributes
+     */
+    def ~(prefix: String, key: String): Option[NodeSeq] = apply(prefix, key).toOption.map(Text)
   }
 
   /**
@@ -2728,6 +2816,3 @@ abstract class JsonHandler {
   def apply(in: Any): JsCmd
 }
 
-
-}
-}
