@@ -90,6 +90,27 @@ trait StatefulSnippet extends DispatchSnippet {
     SHtml.link(to, () => { registerThisSnippet(); func() }, body, attrs: _*)
 
   def redirectTo(where: String) = S.redirectTo(where, registerThisSnippet)
+
+  /**
+   * Merge the SHtml into the form
+   */
+  private[http] def mergeIntoForm(isForm: Boolean, res: NodeSeq, toMerge: => NodeSeq): NodeSeq = {
+    val formElem = Helpers.findOption(res){
+      case e: Elem if e.label == "form" && null == e.prefix=> Some(e)
+      case _ => None
+    }
+
+    if (formElem.isDefined) {
+      import util.Helpers._
+
+      ("form *" #> ((kids: NodeSeq) => toMerge ++ kids))(res)
+    } else if (isForm) {
+      toMerge ++ res
+    } else {
+      res
+    }
+  }
+
 }
 
 /**
@@ -105,6 +126,7 @@ trait RenderDispatch {
    * You have to define this method
    */
   def render(in: NodeSeq): NodeSeq
+
 }
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import js._
+import JsCmds._
+
+import net.liftweb.common._
+import net.liftweb.util._
 import Helpers._
 
-import _root_.scala.xml._
-import _root_.scala.reflect.Manifest
+import scala.xml._
+import scala.reflect.Manifest
 
 /**
  * The trait that forms the basis for LiftScreen and the
@@ -99,7 +102,7 @@ trait AbstractScreen extends Factory {
 
   def screenValidate: List[FieldError] = validations.flatMap(_())
 
-  protected def vendForm[T](implicit man: Manifest[T]): Box[(T, T => Unit) => NodeSeq] = Empty
+  protected def vendForm[T](implicit man: Manifest[T]): Box[(T, T => Any) => NodeSeq] = Empty
 
   protected def vendAVar[T](dflt: => T): NonCleanAnyVar[T]
 
@@ -112,9 +115,14 @@ trait AbstractScreen extends Factory {
   protected final case class OtherValueInitializerImpl[T](f: () => T) extends OtherValueInitializer[T]
 
   /**
+   * By default, are all the fields on this screen on the confirm screen?
+   */
+  def onConfirm_? : Boolean
+
+  /**
    * A field that's part of a Screen
    */
-  trait Field extends BaseField {
+  trait Field extends ConfirmField {
     type OtherValueType // >: Nothing
 
     AbstractScreen.this._register(() => this)
@@ -124,6 +132,11 @@ trait AbstractScreen extends Factory {
 
     private val _otherValue: NonCleanAnyVar[OtherValueType] =
     vendAVar[OtherValueType](otherValueDefault)
+
+    /**
+     * Is this field on the confirm screen
+     */
+    def onConfirm_? : Boolean = AbstractScreen.this.onConfirm_?
 
     protected def otherValueDefault: OtherValueType = null.asInstanceOf[OtherValueType]
 
@@ -160,14 +173,14 @@ trait AbstractScreen extends Factory {
     def editable_? = true
 
     def toForm: Box[NodeSeq] = {
-      val func: Box[(ValueType, ValueType => Unit) => NodeSeq] =
+      val func: Box[(ValueType, ValueType => Any) => NodeSeq] =
       AbstractScreen.this.vendForm(manifest) or otherFuncVendors(manifest) or
       LiftRules.vendForm(manifest)
 
       func.map(f => f(is, set _)).filter(x => editable_?)
     }
 
-    protected def otherFuncVendors(what: Manifest[ValueType]): Box[(ValueType, ValueType => Unit) => NodeSeq] = Empty
+    protected def otherFuncVendors(what: Manifest[ValueType]): Box[(ValueType, ValueType => Any) => NodeSeq] = Empty
 
 
     def validate: List[FieldError] = currentField.doWith(this) {
@@ -581,6 +594,9 @@ trait AbstractScreen extends Factory {
 
 
 trait ScreenWizardRendered {
+  protected def wrapInDiv(in: NodeSeq): Elem = 
+    <div style="display: inline" id={FormGUID.is}>{in}</div>
+  
   protected def renderAll(currentScreenNumber: Box[NodeSeq],
                           screenCount: Box[NodeSeq],
                           wizardTop: Box[Elem],
@@ -592,53 +608,53 @@ trait ScreenWizardRendered {
                           finish: Box[Elem],
                           screenBottom: Box[Elem],
                           wizardBottom: Box[Elem],
-                          nextId: (String, () => Unit),
-                          prevId: Box[(String, () => Unit)],
-                          cancelId: (String, () => Unit),
-                          theScreen: AbstractScreen): NodeSeq = {
+                          nextId: (String, () => JsCmd),
+                          prevId: Box[(String, () => JsCmd)],
+                          cancelId: (String, () => JsCmd),
+                          theScreen: AbstractScreen,
+                          ajax_? : Boolean): NodeSeq = {
 
     val notices: List[(NoticeType.Value, NodeSeq, Box[String])] = S.getAllNotices
-
 
     def bindFieldLine(xhtml: NodeSeq): NodeSeq = {
       fields.flatMap {
         f =>
-        val curId = f.field.uniqueFieldId openOr ("I"+randomString(20))
+          val curId = f.field.uniqueFieldId openOr ("I"+randomString(20))
         val myNotices = notices.filter(fi => fi._3.isDefined && fi._3 == f.field.uniqueFieldId)
         def doLabel(in: NodeSeq): NodeSeq =
-        myNotices match {
-          case Nil => bind("wizard", in, AttrBindParam("for", curId, "for"), "bind" -%> f.text)
-          case _ =>
-            val maxN = myNotices.map(_._1).sort{_.id > _.id}.head // get the maximum type of notice (Error > Warning > Notice)
+          myNotices match {
+            case Nil => bind("wizard", in, AttrBindParam("for", curId, "for"), "bind" -%> f.text)
+            case _ =>
+              val maxN = myNotices.map(_._1).sort{_.id > _.id}.head // get the maximum type of notice (Error > Warning > Notice)
             val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(maxN)) openOr Null
             bind("wizard", in, AttrBindParam("for", curId, "for"), "bind" -%> f.text).map {
               case e: Elem => e % metaData
               case x => x
             }
-        }
+          }
         bind("wizard", xhtml,
              "label" -%> doLabel _, 
              "form" -%> f.input.map(f => f.map{
-            case e: Elem => e % ("id" -> curId)
-            case x => x}: NodeSeq),
+               case e: Elem => e % ("id" -> curId)
+               case x => x}: NodeSeq),
              FuncBindParam("help", xml => {
-              f.help match {
-                case Full(hlp) => bind("wizard", xml, "bind" -%> hlp)
-                case _ => NodeSeq.Empty
-              }
-            }),
+               f.help match {
+                 case Full(hlp) => bind("wizard", xml, "bind" -%> hlp)
+                 case _ => NodeSeq.Empty
+               }
+             }),
              FuncBindParam("field_errors", xml => {
-              myNotices match {
-                case Nil => NodeSeq.Empty
-                case xs => bind("wizard", xml, "error" -%>
-                                (innerXml => xs.flatMap {case (noticeType, msg, _) =>
-                          val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(noticeType)) openOr Null
-                          bind("wizard", innerXml, "bind" -%> msg).map {
-                            case e: Elem => e % metaData
-                            case x => x
-                          }}))
-              }
-            }))
+               myNotices match {
+                 case Nil => NodeSeq.Empty
+                 case xs => bind("wizard", xml, "error" -%>
+                                 (innerXml => xs.flatMap {case (noticeType, msg, _) =>
+                                   val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(noticeType)) openOr Null
+                                                          bind("wizard", innerXml, "bind" -%> msg).map {
+                                                            case e: Elem => e % metaData
+                                                            case x => x
+                                                          }}))
+               }
+             }))
       }
     }
 
@@ -650,40 +666,60 @@ trait ScreenWizardRendered {
       case Nil => NodeSeq.Empty
       case xs =>
         def doErrors(in: NodeSeq): NodeSeq = xs.flatMap{case (noticeType, msg, _) =>
-            val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(noticeType)) openOr Null
-            bind("wizard", in, "bind" -%>
-                 (msg)).map {
-              case e: Elem => e % metaData
-              case x => x
-            }}
+          val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(noticeType)) openOr Null
+                                                        bind("wizard", in, "bind" -%>
+                                                             (msg)).map {
+                                                               case e: Elem => e % metaData
+                                                               case x => x
+                                                             }}
 
-        bind("wizard", xhtml,
-             "item" -%> doErrors _)
+      bind("wizard", xhtml,
+           "item" -%> doErrors _)
     }
 
-
-
-    def bindFields(xhtml: NodeSeq): NodeSeq =
-    (<form id={nextId._1} action={url} method="post">{S.formGroup(-1)(SHtml.hidden(() =>
-            snapshot.restore()))}{bind("wizard", xhtml, "line" -%> bindFieldLine _)}{S.formGroup(4)(SHtml.hidden(() =>
-            {nextId._2(); 
-             val localSnapshot = createSnapshot
-             S.seeOther(url, () => {
-               localSnapshot.restore
-             })}))}</form> %
-      theScreen.additionalAttributes) ++
-    prevId.toList.map{case (id, func) =>
+    def bindFields(xhtml: NodeSeq): NodeSeq = {
+      val ret = 
+        (<form id={nextId._1} action={url} 
+         method="post">{S.formGroup(-1)(SHtml.hidden(() =>
+           snapshot.restore()))}{bind("wizard", xhtml,
+                                      "line" -%> bindFieldLine _)}{
+             S.formGroup(4)(
+               SHtml.hidden(() =>
+                 {val res = nextId._2(); 
+                  if (!ajax_?) {
+                    val localSnapshot = createSnapshot
+                    S.seeOther(url, () => {
+                      localSnapshot.restore
+                    })}
+                  res
+                }))}</form> %
+         theScreen.additionalAttributes) ++
+      prevId.toList.map{case (id, func) =>
         <form id={id} action={url} method="post">{
-          SHtml.hidden(() => {snapshot.restore(); func();
-                              val localSnapshot = createSnapshot;
-                              S.seeOther(url, () => localSnapshot.restore)
+          SHtml.hidden(() => {snapshot.restore(); 
+                              val res = func();
+                              if (!ajax_?) {
+                                val localSnapshot = createSnapshot;
+                                S.seeOther(url, () => localSnapshot.restore)
+                              }
+                              res
                             })}</form>
-    } ++
-    <form id={cancelId._1} action={url} method="post">{SHtml.hidden(() => {
-            snapshot.restore();
-            cancelId._2() // WizardRules.deregisterWizardSession(CurrentSession.is)
-            S.seeOther(Referer.is)
-          })}</form>
+                      } ++
+      <form id={cancelId._1} action={url} method="post">{SHtml.hidden(() => {
+        snapshot.restore();
+        val res = cancelId._2() // WizardRules.deregisterWizardSession(CurrentSession.is)
+        if (!ajax_?) {
+          S.seeOther(Referer.is)
+        }
+        res
+      })}</form>
+
+      if (ajax_?) {
+        SHtml.makeFormsAjax(ret)
+      } else {
+        ret
+      }
+    }
 
     def bindScreenInfo(xhtml: NodeSeq): NodeSeq = (currentScreenNumber, screenCount) match {
       case (Full(num), Full(cnt)) =>
@@ -710,26 +746,26 @@ trait ScreenWizardRendered {
 
   protected def allTemplateNodeSeq: NodeSeq = {
     <div>
-      <wizard:screen_info><div>Page <wizard:screen_number/> of <wizard:total_screens/></div></wizard:screen_info>
-      <wizard:wizard_top> <div> <wizard:bind/> </div> </wizard:wizard_top>
-      <wizard:screen_top> <div> <wizard:bind/> </div> </wizard:screen_top>
-      <wizard:errors> <div> <ul> <wizard:item> <li> <wizard:bind/> </li> </wizard:item> </ul> </div> </wizard:errors>
-      <div> <wizard:fields>
-          <table>
-            <wizard:line>
-              <tr>
-                <td>
-                  <wizard:label><label wizard:for=""><wizard:bind/></label></wizard:label>
-                  <wizard:help><span><wizard:bind/></span></wizard:help> <wizard:field_errors> <ul> <wizard:error> <li> <wizard:bind/> </li> </wizard:error> </ul> </wizard:field_errors>
-                </td>
-                <td> <wizard:form/> </td>
-              </tr>
-            </wizard:line>
-          </table>
-            </wizard:fields> </div>
-      <div> <table> <tr> <td> <wizard:prev/> </td> <td> <wizard:cancel/> </td> <td> <wizard:next/> </td> </tr> </table> </div>
-      <wizard:screen_bottom> <div> <wizard:bind/> </div> </wizard:screen_bottom>
-      <wizard:wizard_bottom> <div> <wizard:bind/> </div> </wizard:wizard_bottom>
+    <wizard:screen_info><div>Page <wizard:screen_number/> of <wizard:total_screens/></div></wizard:screen_info>
+    <wizard:wizard_top> <div> <wizard:bind/> </div> </wizard:wizard_top>
+    <wizard:screen_top> <div> <wizard:bind/> </div> </wizard:screen_top>
+    <wizard:errors> <div> <ul> <wizard:item> <li> <wizard:bind/> </li> </wizard:item> </ul> </div> </wizard:errors>
+    <div> <wizard:fields>
+    <table>
+    <wizard:line>
+    <tr>
+    <td>
+    <wizard:label><label wizard:for=""><wizard:bind/></label></wizard:label>
+    <wizard:help><span><wizard:bind/></span></wizard:help> <wizard:field_errors> <ul> <wizard:error> <li> <wizard:bind/> </li> </wizard:error> </ul> </wizard:field_errors>
+    </td>
+    <td> <wizard:form/> </td>
+    </tr>
+    </wizard:line>
+    </table>
+    </wizard:fields> </div>
+    <div> <table> <tr> <td> <wizard:prev/> </td> <td> <wizard:cancel/> </td> <td> <wizard:next/> </td> </tr> </table> </div>
+    <wizard:screen_bottom> <div> <wizard:bind/> </div> </wizard:screen_bottom>
+    <wizard:wizard_bottom> <div> <wizard:bind/> </div> </wizard:wizard_bottom>
     </div>
   }
 
@@ -742,6 +778,30 @@ trait ScreenWizardRendered {
   def noticeTypeToAttr(screen: AbstractScreen): Box[NoticeType.Value => MetaData]
 
   protected def Referer: AnyVar[String, _]
+
+  protected def Ajax_? : AnyVar[Boolean, _]
+
+  protected def AjaxOnDone: AnyVar[JsCmd, _]
+
+  protected def FormGUID: AnyVar[String, _]
+
+
+  protected def redirectBack(): JsCmd = {
+    if (ajaxForms_?) {
+      AjaxOnDone.is
+    } else {
+      S.seeOther(Referer.is)
+    }
+  }
+
+
+  /**
+   * Are the forms Ajax or regular HTTP/HTML.
+   *
+   * If the ajax=true attribute is present on the original snippet
+   * invocation, the forms will be ajax.
+   */
+  protected def ajaxForms_? : Boolean = Ajax_?.is
 }
 
 
@@ -754,6 +814,11 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
       this.toForm
     }
   }
+
+  /**
+   * By default, are all the fields on this screen on the confirm screen?
+   */
+  def onConfirm_? : Boolean = true
 
   /**
    * Holds the template passed via the snippet for the duration
@@ -769,6 +834,20 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
   private object ScreenVars extends RequestVar[Map[String, (NonCleanAnyVar[_], Any)]](Map())
   private object PrevSnapshot extends RequestVar[Box[ScreenSnapshot]](Empty)
   protected object Referer extends ScreenVar[String](S.referer openOr "/")
+  /**
+   * A unique GUID for the form... this allows us to do an Ajax SetHtml
+   * to replace the form
+   */
+  protected object FormGUID extends ScreenVar[String](Helpers.nextFuncName)
+
+  protected object Ajax_? extends ScreenVar[Boolean](S.attr("ajax").flatMap(Helpers.asBoolean) openOr false)
+  /**
+   * What to do when the Screen is done.  By default, will
+   * do a redirect back to Whence, but you can change this behavior,
+   * for example, put up some other Ajax thing or alternatively,
+   * remove the form from the screen.
+   */
+  protected object AjaxOnDone extends ScreenVar[JsCmd](RedirectTo(Referer.is))
   private object FirstTime extends ScreenVar[Boolean](true)
 
   protected class ScreenSnapshot(private[http] val screenVars: Map[String, (NonCleanAnyVar[_], Any)],
@@ -846,8 +925,10 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
 
   }
 
-  def toForm = {
+  def toForm: NodeSeq = {
     Referer.is // touch to capture the referer
+    Ajax_?.is // capture the ajaxiness of these forms
+    FormGUID.is
 
     if (FirstTime) {
       FirstTime.set(false)
@@ -856,41 +937,61 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
       val localSnapshot = createSnapshot
       val notices = S.getAllNotices
 
-      S.seeOther(S.uri, () => {
-        S.appendNotices(notices)
-        localSnapshot.restore
-      })
+      // if we're not Ajax, 
+      if (!ajaxForms_?) {
+        S.seeOther(S.uri, () => {
+          S.appendNotices(notices)
+          localSnapshot.restore
+        })
+      }
     }
 
+    val form = renderHtml()
+    if (ajaxForms_?) wrapInDiv(form) else form
+  }
+
+  protected def renderHtml(): NodeSeq = {
     val finishId = Helpers.nextFuncName
     val cancelId = Helpers.nextFuncName
 
     val theScreen = this
 
-    val finishButton = theScreen.finishButton % ("onclick" -> ("document.getElementById(" + finishId.encJs + ").submit()"))
+    val finishButton = theScreen.finishButton % 
+    ("onclick" ->
+     (if (ajaxForms_?) {
+       SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(finishId)).toJsCmd
+     } else {
+       "document.getElementById(" + finishId.encJs + ").submit()"
+     }))
 
-    val cancelButton: Elem = theScreen.cancelButton % ("onclick" -> ("document.getElementById(" + cancelId.encJs + ").submit()"))
+    val cancelButton: Elem = theScreen.cancelButton % 
+    ("onclick" ->      
+     (if (ajaxForms_?) {
+       SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(cancelId)).toJsCmd
+     } else {
+       "document.getElementById(" + cancelId.encJs + ").submit()"
+     }))
 
     val url = S.uri
 
-
     renderAll(
       Empty, //currentScreenNumber: Box[NodeSeq],
-          Empty, //screenCount: Box[NodeSeq],
-          Empty, // wizardTop: Box[Elem],
-          theScreen.screenTop, //screenTop: Box[Elem],
-          theScreen.screenFields.filter(_.shouldDisplay_?).flatMap(f =>
+      Empty, //screenCount: Box[NodeSeq],
+      Empty, // wizardTop: Box[Elem],
+      theScreen.screenTop, //screenTop: Box[Elem],
+      theScreen.screenFields.filter(_.shouldDisplay_?).flatMap(f =>
         if (f.show_?) List(ScreenFieldInfo(f, f.displayHtml, f.helpAsHtml, f.toForm)) else Nil), //fields: List[ScreenFieldInfo],
-            Empty, // prev: Box[Elem],
-            Full(cancelButton), // cancel: Box[Elem],
-            Empty, // next: Box[Elem],
-            Full(finishButton), //finish: Box[Elem],
-            theScreen.screenBottom, // screenBottom: Box[Elem],
-            Empty, //wizardBottom: Box[Elem],
-            finishId -> doFinish _, // nextId: (String, () => Unit),
-            Empty, // prevId: Box[(String, () => Unit)],
-            cancelId -> (() => {}), //cancelId: (String, () => Unit),
-            theScreen)
+      Empty, // prev: Box[Elem],
+      Full(cancelButton), // cancel: Box[Elem],
+      Empty, // next: Box[Elem],
+      Full(finishButton), //finish: Box[Elem],
+      theScreen.screenBottom, // screenBottom: Box[Elem],
+      Empty, //wizardBottom: Box[Elem],
+      finishId -> doFinish _,
+      Empty, 
+      cancelId -> (() => {redirectBack()}), //cancelId: (String, () => Unit),
+      theScreen,
+      ajaxForms_?)
   }
 
   protected def allTemplatePath: List[String] = LiftScreenRules.allTemplatePath.vend
@@ -909,7 +1010,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
 
   protected def finish(): Unit
 
-  protected def doFinish() {
+  protected def doFinish(): JsCmd= {
     validate match {
       case Nil =>
         val snapshot = createSnapshot
@@ -917,12 +1018,15 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
         finish()
         redirectBack()
 
-      case xs => S.error(xs)
+      case xs => {
+        S.error(xs)
+        if (ajaxForms_?) {
+          SetHtml(FormGUID, renderHtml())
+        } else {
+          Noop
+        }
+      }
     }
-  }
-
-  protected def redirectBack() {
-    S.seeOther(Referer.is)
   }
 }
 
@@ -979,5 +1083,3 @@ object LiftScreenRules extends Factory with FormVendor {
 
 }
 
-}
-}

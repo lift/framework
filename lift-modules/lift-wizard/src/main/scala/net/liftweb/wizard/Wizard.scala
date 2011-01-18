@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package wizard {
+package net.liftweb
+package wizard
 
-import _root_.net.liftweb.http._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.mapper._
+import net.liftweb._
+import http._
+import js._
+import JsCmds._
+
+import common._
+import util._
+import mapper._
 import Helpers._
-import _root_.scala.xml._
-import _root_.scala.reflect.Manifest
+import scala.xml._
+import scala.reflect.Manifest
 
 object WizardRules extends Factory with FormVendor {
   val dbConnectionsForTransaction: FactoryMaker[List[ConnectionIdentifier]] =
@@ -54,8 +58,10 @@ object WizardRules extends Factory with FormVendor {
   }
 }
 
-//case class WizardFieldInfo(field: FieldIdentifier, text: NodeSeq, help: Box[NodeSeq], input: Box[NodeSeq])
-
+/**
+ * A wizard allows you to create a multi-screen set of input forms
+ * with back-button support and state support
+ */
 trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
   def dispatch = {
     case _ => template => {
@@ -86,9 +92,27 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
   })
   private object PrevSnapshot extends RequestVar[Box[WizardSnapshot]](Empty)
   protected object Referer extends WizardVar[String](S.referer openOr "/")
+  protected object Ajax_? extends WizardVar[Boolean](S.attr("ajax").flatMap(Helpers.asBoolean) openOr false)
+
+  /**
+   * A unique GUID for the form... this allows us to do an Ajax SetHtml
+   * to replace the form
+   */
+  protected object FormGUID extends WizardVar[String](Helpers.nextFuncName)
+
+  /**
+   * What to do when the Screen is done.  By default, will
+   * do a redirect back to Whence, but you can change this behavior,
+   * for example, put up some other Ajax thing or alternatively,
+   * remove the form from the screen.
+   */
+  protected object AjaxOnDone extends WizardVar[JsCmd](RedirectTo(Referer.is))
+
   protected object OnFirstScreen extends RequestVar[Boolean](true)
   private object FirstTime extends WizardVar[Boolean](true)
   private object CurrentSession extends WizardVar[String](WizardRules.registerWizardSession())
+
+  protected object VisitedScreens extends WizardVar[Vector[Screen]](Vector())
 
 
   def noticeTypeToAttr(screen: AbstractScreen): Box[NoticeType.Value => MetaData] = {
@@ -106,69 +130,101 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
 
   }
 
-  def toForm = {
+  def toForm: NodeSeq = {
     ScreenVars.is // initialize
     Referer.is // touch to capture the referer
+    Ajax_?.is // capture the Ajax state
     CurrentSession.is
+    FormGUID.is
 
     if (FirstTime) {
       FirstTime.set(false)
 
       localSetup()
-
-      val localSnapshot = createSnapshot
-      val notices = S.getAllNotices
-      S.seeOther(S.uri, () => {
-        S.appendNotices(notices)
-        localSnapshot.restore
-      })
+      
+      if (!ajaxForms_?) {
+        val localSnapshot = createSnapshot
+        val notices = S.getAllNotices
+        S.seeOther(S.uri, () => {
+          S.appendNotices(notices)
+          localSnapshot.restore
+        })
+      }
     }
 
+    val form = renderHtml()
+    if (ajaxForms_?) wrapInDiv(form) else form
+  }
+
+  protected def submitOrAjax(id: String): String =
+    (if (ajaxForms_?) {
+      SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(id)).toJsCmd
+    } else {
+      "document.getElementById(" + id.encJs + ").submit()"
+    })
+
+  protected def renderHtml(): NodeSeq = {
     val nextId = Helpers.nextFuncName
     val prevId = Helpers.nextFuncName
     val cancelId = Helpers.nextFuncName
 
-    val theScreen = currentScreen openOr {
+    val theScreen: Screen = currentScreen openOr {
       WizardRules.deregisterWizardSession(CurrentSession.is)
-      S.seeOther(Referer.is)
+      S.seeOther(Referer.is) // this should never happen
     }
 
     val (nextButton, finishButton) =
     if (!theScreen.isLastScreen)
-      (Full(theScreen.nextButton % ("onclick" -> ("document.getElementById(" + nextId.encJs + ").submit()"))), Empty)
+      (Full(theScreen.nextButton % 
+            ("onclick" -> submitOrAjax(nextId))), Empty)
     else
-      (Empty, Full(theScreen.finishButton % ("onclick" -> ("document.getElementById(" + nextId.encJs + ").submit()"))))
+      (Empty, Full(theScreen.finishButton % 
+                   ("onclick" -> submitOrAjax(nextId))))
 
     val prevButton: Box[Elem] = if (OnFirstScreen) Empty else
-      Full(theScreen.prevButton % ("onclick" -> ("document.getElementById(" + prevId.encJs + ").submit()")))
+      Full(theScreen.prevButton % ("onclick" -> submitOrAjax(prevId)))
 
-    val cancelButton: Elem = theScreen.cancelButton % ("onclick" -> ("document.getElementById(" + cancelId.encJs + ").submit()"))
+    val cancelButton: Elem = theScreen.cancelButton % 
+    ("onclick" -> submitOrAjax(cancelId))
 
 
     val url = S.uri
 
+    val extraFields: List[ScreenFieldInfo] = 
+      if (theScreen.confirmScreen_?) {
+        
+        for {
+          screen <- VisitedScreens.is.toList
+          field <- screen.screenFields.collect {
+            case c: ConfirmField => c
+            } if field.show_? && field.onConfirm_?
+        } yield ScreenFieldInfo(field, field.displayHtml, Empty,
+                                Full(field.asHtml))
+      } else Nil
+
   renderAll(
     CurrentScreen.is.map(s => Text((s.myScreenNum + 1).toString)), //currentScreenNumber: Box[NodeSeq],
-          Full(Text(screenCount.toString)), //screenCount: Box[NodeSeq],
-          wizardTop, // wizardTop: Box[Elem],
-          theScreen.screenTop, //screenTop: Box[Elem],
-          theScreen.screenFields.flatMap(f =>
-        if (f.show_?) List(ScreenFieldInfo(f, f.displayHtml, f.helpAsHtml, f.toForm)) else Nil), //fields: List[ScreenFieldInfo],
-            prevButton, // prev: Box[Elem],
-            Full(cancelButton), // cancel: Box[Elem],
-            nextButton, // next: Box[Elem],
-            finishButton, //finish: Box[Elem],
-            theScreen.screenBottom, // screenBottom: Box[Elem],
-            wizardBottom, //wizardBottom: Box[Elem],
-            nextId -> (() => {
-      this.nextScreen
-      if (currentScreen.isEmpty) S.seeOther(Referer.is)
+    Full(Text(screenCount.toString)), //screenCount: Box[NodeSeq],
+    wizardTop, // wizardTop: Box[Elem],
+    theScreen.screenTop, //screenTop: Box[Elem],
+    extraFields :::
+    theScreen.screenFields.flatMap(f =>
+      if (f.show_?) List(ScreenFieldInfo(f, f.displayHtml, f.helpAsHtml, f.toForm)) else Nil), //fields: List[ScreenFieldInfo],
+    prevButton, // prev: Box[Elem],
+    Full(cancelButton), // cancel: Box[Elem],
+    nextButton, // next: Box[Elem],
+    finishButton, //finish: Box[Elem],
+    theScreen.screenBottom, // screenBottom: Box[Elem],
+    wizardBottom, //wizardBottom: Box[Elem],
+    nextId -> (() => {
+      this.nextScreen()
+      // if (currentScreen.isEmpty) S.seeOther(Referer.is)
     }), // nextId: (String, () => Unit),
-            Full(prevId -> (() => {this.prevScreen})), // prevId: Box[(String, () => Unit)],
-            cancelId -> (() => { WizardRules.deregisterWizardSession(CurrentSession.is)}), //cancelId: (String, () => Unit),
-            theScreen)
+    Full(prevId -> (() => {this.prevScreen})), // prevId: Box[(String, () => Unit)],
+    cancelId -> (() => { WizardRules.deregisterWizardSession(CurrentSession.is); redirectBack()}), //cancelId: (String, () => Unit),
+    theScreen, ajaxForms_?)
   }
-
+  
 
   protected def allTemplatePath: List[String] = WizardRules.allTemplatePath.vend
 
@@ -214,7 +270,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
       PrevSnapshot.set(snapshot)
       OnFirstScreen.set(firstScreen)
       if (!WizardRules.isValidWizardSession(CurrentSession.is)) {
-        S.seeOther(Referer.is)
+        S.seeOther(Referer.is) // FIXME Wizard
       }
     }
   }
@@ -269,15 +325,18 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
    */
   protected def finish(): Unit
 
-  def nextScreen {
-    for{
+  def nextScreen(): JsCmd = {
+    (for {
       screen <- CurrentScreen.is
-    } {
+    } yield {
       screen.validate match {
         case Nil => {
           val snapshot = createSnapshot
           PrevSnapshot.set(Full(snapshot))
           val nextScreen = screen.nextScreen
+          CurrentScreen.is.foreach{
+            s => VisitedScreens.set(VisitedScreens :+ s)
+          }
           doTransition(CurrentScreen.get, nextScreen)
           CurrentScreen.set(nextScreen)
           OnFirstScreen.set(false)
@@ -297,19 +356,27 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
                 }
               }
               useAndFinish(dbConnections)
+            if (ajaxForms_?) {
+              AjaxOnDone.is
+            } else {
+              Noop
+            }
 
-            case _ =>
+            case _ => SetHtml(FormGUID, renderHtml())
           }
         }
-        case xs => S.error(xs)
+        case xs => {
+          S.error(xs)
+          SetHtml(FormGUID, renderHtml())
+        }
       }
-    }
+    }) openOr AjaxOnDone.is
   }
 
-  def prevScreen {
-    for{
+  def prevScreen(): JsCmd = {
+    (for{
       snapshot <- PrevSnapshot.is
-    } {
+    } yield {
       val cur = if (CurrentScreen.set_?) CurrentScreen.get else Empty
       snapshot.restore()
 
@@ -318,13 +385,15 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
       } else {
         cur.foreach(_.transitionIntoFrom(Empty))
       }
-    }
+
+      SetHtml(FormGUID, renderHtml())
+    }) openOr AjaxOnDone.is
   }
 
-  protected def vendForm[T](implicit man: Manifest[T]): Box[(T, T => Unit) => NodeSeq] = Empty
+  protected def vendForm[T](implicit man: Manifest[T]): Box[(T, T => Any) => NodeSeq] = Empty
 
   /**
-   * By default, are all the fields on all the screen in this wizardn on the confirm screen?
+   * By default, are all the fields on all the screen in this wizard on the confirm screen?
    */
   def onConfirm_? = true
 
@@ -385,14 +454,14 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
     /**
      * Define a field within the screen
      */
-    trait Field extends super.Field {
+    trait Field extends super.Field with ConfirmField {
       /**
        * Is this field on the confirm screen
        */
-      def onConfirm_? = Screen.this.onConfirm_?
+      override def onConfirm_? = Screen.this.onConfirm_?
 
       override protected def otherFuncVendors(what: Manifest[ValueType]):
-      Box[(ValueType, ValueType => Unit) => NodeSeq] =
+      Box[(ValueType, ValueType => Any) => NodeSeq] =
         Wizard.this.vendForm(manifest) or WizardRules.vendForm(manifest)
     }
 
@@ -453,7 +522,4 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
     def clear(name: String): Unit =
       ScreenVars.set(ScreenVars.is - name)
   }
-}
-
-}
 }

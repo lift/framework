@@ -1331,6 +1331,38 @@ object SHtml {
    */
   def submitAjaxForm(formId: String):JsCmd = SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(formId))
 
+  /**
+   * Vend a function that will take all of the form elements and turns them
+   * into Ajax forms
+   */
+  def makeFormsAjax: NodeSeq => NodeSeq = "form" #> ((ns: NodeSeq) => 
+    (ns match {
+      case e: Elem => {
+        val id: String = e.attribute("id").map(_.text) getOrElse
+        Helpers.nextFuncName
+        
+        val newMeta = e.attributes.filter{
+          case up: UnprefixedAttribute =>
+            up.key match {
+              case "id" => false
+              case "action" => false
+              case "onsubmit" => false
+              case "method" => false
+              case _ => true
+            }
+          case _ => true
+        }
+
+        new Elem(e.prefix, e.label, 
+                 newMeta, e.scope, e.child :_*) % ("id" -> id) %
+        ("action" -> "javascript://") % 
+        ("onsubmit" -> 
+         (SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(id)).toJsCmd +
+          "; return false;"))
+      }
+      case x => x
+  }): NodeSeq)
+
   /** 
    * Submits a form denominated by a formId and execute the func function
    * after form fields functions are executed.

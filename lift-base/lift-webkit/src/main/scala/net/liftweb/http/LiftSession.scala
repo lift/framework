@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
-import _root_.scala.xml._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.actor._
-import _root_.net.liftweb.http.js.{JsCmd, AjaxInfo}
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.builtin.snippet._
-import _root_.java.lang.reflect.{Method, Modifier, InvocationTargetException}
-import _root_.scala.xml._
-import _root_.java.io.InputStream
-import _root_.java.util.concurrent.TimeUnit
-import _root_.java.util.Locale
+import scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
+import scala.xml._
+import net.liftweb.common._
+import net.liftweb.util._
+import net.liftweb.actor._
+import net.liftweb.http.js.{JsCmd, AjaxInfo}
+import net.liftweb.util.Helpers._
+import net.liftweb.builtin.snippet._
+import java.lang.reflect.{Method, Modifier, InvocationTargetException}
+import scala.xml._
+import java.io.InputStream
+import java.util.concurrent.TimeUnit
+import java.util.Locale
 import js._
 import scala.reflect.Manifest
 import provider._
-import _root_.net.liftweb.actor._
+import net.liftweb.actor._
 import Box._
 
 
@@ -1052,10 +1052,10 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     } catch {
       case ContinueResponseException(cre) => throw cre
 
-      case ite: _root_.java.lang.reflect.InvocationTargetException if (ite.getCause.isInstanceOf[ResponseShortcutException]) =>
+      case ite: java.lang.reflect.InvocationTargetException if (ite.getCause.isInstanceOf[ResponseShortcutException]) =>
         Full(handleRedirect(ite.getCause.asInstanceOf[ResponseShortcutException], request))
 
-      case rd: _root_.net.liftweb.http.ResponseShortcutException => Full(handleRedirect(rd, request))
+      case rd: net.liftweb.http.ResponseShortcutException => Full(handleRedirect(rd, request))
 
       case e: LiftFlowOfControlException => throw e
 
@@ -1446,8 +1446,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                       if (inst.dispatch.isDefinedAt(method)) {
                         val res = inst.dispatch(method)(kids)
 
-                        (if (isForm && !res.isEmpty) <span style="display:none">{SHtml.hidden(() => inst.registerThisSnippet)}</span> else NodeSeq.Empty) ++
-                                res
+                        inst.mergeIntoForm(isForm, res, SHtml.hidden(() => inst.registerThisSnippet))
+                                      /* (if (isForm && !res.isEmpty) SHtml.hidden(() => inst.registerThisSnippet) else NodeSeq.Empty) ++
+                                res*/
                       } else reportSnippetError(page, snippetName,
                         LiftRules.SnippetFailures.StatefulDispatchNotMatched,
                         NodeSeq.Empty,
@@ -1774,6 +1775,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
+  
+
   /**
    * This method will send a message to a CometActor, whether or not
    * the CometActor is instantiated.  If the CometActor already exists
@@ -1901,7 +1904,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     (findType[LiftCometActor](contType, LiftRules.buildPackage("comet") ::: ("lift.app.comet" :: Nil)).flatMap {
       cls =>
               tryo((e: Throwable) => e match {
-                case e: _root_.java.lang.NoSuchMethodException => ()
+                case e: java.lang.NoSuchMethodException => ()
                 case e => logger.info("Comet find by type Failed to instantiate " + cls.getName, e)
               }) {
                 val constr = cls.getConstructor()
@@ -1980,5 +1983,3 @@ trait LiftView {
 }
 
 
-}
-}
