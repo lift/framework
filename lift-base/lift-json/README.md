@@ -675,7 +675,7 @@ integer and stops parsing immediately.
 FAQ
 ===
 
-1. Q: I have a JSON object and I want to extract it to a case class:
+Q1: I have a JSON object and I want to extract it to a case class:
 
     scala> case class Person(name: Sting, age: Int)
     scala> val json = """{"name":"joe","age":15}"""
@@ -685,7 +685,7 @@ But extraction fails:
     scala> parse(json).extract[Person]                                                  
     net.liftweb.json.MappingException: Parsed JSON values do not match with class constructor
 
-Answer:
+A1:
 
 Extraction does not work for classes defined in REPL. Compile the case class definitions
 with scalac and import those to REPL.
