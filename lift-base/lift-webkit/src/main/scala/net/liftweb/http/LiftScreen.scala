@@ -355,6 +355,11 @@ trait AbstractScreen extends Factory {
        */
       override def shouldDisplay_? = underlying.shouldDisplay_?
 
+      override def displayName = underlying.displayName
+
+      override def displayNameHtml: Box[NodeSeq] = underlying.displayNameHtml
+
+      override def asHtml = underlying.asHtml
       
       override def name: String = underlying.name
       override def default = underlying.get
