@@ -349,9 +349,12 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
             case Empty =>
               def useAndFinish(in: List[ConnectionIdentifier]) {
                 in match {
-                  case Nil =>
+                  case Nil => {
                     WizardRules.deregisterWizardSession(CurrentSession.is)
+                    VisitedScreens.foreach{s => s.finish()}
                     finish()
+                    VisitedScreens.foreach{s => s.postFinish()}                    
+                  }
 
                   case x :: xs => DB.use(x) {
                     conn =>
@@ -473,6 +476,22 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
     Wizard.this._register(this)
 
     private object _touched extends WizardVar(false)
+
+    /**
+     * override this method if there's a screen-specific thing
+     * to do on finish.  This method is called before the main Wizard's
+     * finish method
+     */
+    def finish() {
+    }
+
+    /**
+     * override this method if there's a screen-specific thing
+     * to do on finish.  This method is executed after the main Wizards
+     * finish() method.
+     */
+    def postFinish() {
+    }
 
     private[wizard] def enterScreen() {
       if (!_touched) {

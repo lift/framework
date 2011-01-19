@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.java.text.SimpleDateFormat
-import _root_.java.util.{TimeZone, Calendar, Date, Locale}
+import java.text.SimpleDateFormat
+import java.util.{TimeZone, Calendar, Date, Locale}
 import common._
-import _root_.org.joda.time.{DateTime, Duration}
+import org.joda.time.{DateTime, Duration, Period, PeriodType}
 
 /**
  * The TimeHelpers object extends the TimeHelpers. It can be imported to access all of the trait functions.
@@ -50,18 +50,24 @@ trait TimeHelpers { self: ControlHelpers =>
   /** transforms an int to a TimeSpan object. Usage: 3000 returns a TimeSpan of 3000L millis  */
   implicit def intToTimeSpan(in: Int): TimeSpan = TimeSpan(in)
 
+  private implicit def durToPeriod(dur: Duration): Period = dur.toPeriod(PeriodType.standard())
+
   /** class building TimeSpans given an amount (len) and a method specify the time unit  */
   case class TimeSpanBuilder(val len: Long) {
-    def seconds = new TimeSpan(Right(Duration.standardSeconds(len)))
+    def seconds = new TimeSpan(Right((new Period).plusSeconds(len.toInt)))
     def second = seconds
-    def minutes = new TimeSpan(Right(Duration.standardMinutes(len)))
+    def minutes = new TimeSpan(Right((new Period).plusMinutes(len.toInt)))
     def minute = minutes
-    def hours = new TimeSpan(Right(Duration.standardHours(len)))
+    def hours = new TimeSpan(Right(Duration.standardHours(len): Period))
     def hour = hours
-    def days = new TimeSpan(Right(Duration.standardDays(len)))
+    def days = new TimeSpan(Right(Duration.standardDays(len): Period))
     def day = days
-    def weeks = new TimeSpan(Right(Duration.standardDays(len * 7L)))
+    def weeks = new TimeSpan(Right(Duration.standardDays(len * 7L): Period))
     def week = weeks
+    def months = new TimeSpan(Right((new Period().plusMonths(len.toInt))))
+    def month = months
+    def years = new TimeSpan(Right((new Period().plusYears(len.toInt))))
+    def year = years
   }
 
   /*
@@ -80,11 +86,11 @@ trait TimeHelpers { self: ControlHelpers =>
    * It can be translated to a date with the date method. In that case, the number of millis seconds will be used to create a Date
    * object starting from the Epoch time (see the documentation for java.util.Date)
    */
-  class TimeSpan(private val dt: Either[DateTime, Duration]) extends ConvertableToDate {
+  class TimeSpan(private val dt: Either[DateTime, Period]) extends ConvertableToDate {
     /** @return a Date as the amount of time represented by the TimeSpan after the Epoch date */
 
     def this(ms: Long) = 
-      this(if (ms < 52L * 7L * 24L * 60L * 60L * 1000L) Right(new Duration(ms))
+      this(if (ms < 52L * 7L * 24L * 60L * 60L * 1000L) Right(new Period(ms))
            else Left(new DateTime(ms)))
 
     def date: Date = dt match {
@@ -109,7 +115,7 @@ trait TimeHelpers { self: ControlHelpers =>
 
     def millis = dt match {
       case Left(datetime) => datetime.getMillis()
-      case Right(duration) => duration.getMillis()
+      case Right(duration) => duration.toStandardDuration.getMillis()
     }
     
 
@@ -130,6 +136,7 @@ trait TimeHelpers { self: ControlHelpers =>
     /** @return a TimeSpan representing the addition of 2 TimeSpans */
     def +[B](in: B)(implicit f: B => TimeSpan): TimeSpan =
       (this.dt, f(in).dt) match {
+        case (Right(p1), Right(p2)) => p1.plus(p2)
         case (Left(date), Right(duration)) => date.plus(duration)
         case (Right(duration), Left(date)) => date.plus(duration)
         case _ => TimeSpan(this.millis + f(in).millis)
@@ -141,6 +148,7 @@ trait TimeHelpers { self: ControlHelpers =>
     /** @return a TimeSpan representing the substraction of 2 TimeSpans */
     def -[B](in: B)(implicit f: B => TimeSpan): TimeSpan =
       (this.dt, f(in).dt) match {
+        case (Right(p1), Right(p2)) => p1.minus(p2)
         case (Left(date), Right(duration)) => date.minus(duration)
         case (Right(duration), Left(date)) => date.minus(duration)
         case _ => TimeSpan(this.millis - f(in).millis)
@@ -154,7 +162,8 @@ trait TimeHelpers { self: ControlHelpers =>
         case ti: TimeSpan => ti.dt == this.dt
         case d: Date => d.getTime() == this.millis
         case dt: DateTime => Left(dt) == this.dt
-        case dur: Duration => Right(dur) == this.dt
+        case dur: Duration => Right(dur: Period) == this.dt
+        case dur: Period => Right(dur) == this.dt
         case _ => false
       }
     }
@@ -162,7 +171,7 @@ trait TimeHelpers { self: ControlHelpers =>
     /** override the toString method to display a readable amount of time */
     override def toString = dt match {
       case Left(date) => date.toString
-      case Right(dur) => TimeSpan.format(dur.getMillis())
+      case Right(dur) => TimeSpan.format(millis)
     }
   }
 
@@ -208,6 +217,12 @@ trait TimeHelpers { self: ControlHelpers =>
      * Convert a Duration to a TimeSpan
      */
     implicit def durationToTS(in: Duration): TimeSpan =
+      new TimeSpan(Right(in: Period))
+
+    /**
+     * Convert a Period to a TimeSpan
+     */
+    implicit def periodToTS(in: Period): TimeSpan =
       new TimeSpan(Right(in))
   }
 
@@ -422,5 +437,3 @@ object ConvertableToDate {
   
 }
 
-}
-}
