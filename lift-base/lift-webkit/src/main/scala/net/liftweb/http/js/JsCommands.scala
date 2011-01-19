@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.liftweb {
-package http {
-package js {
+package net.liftweb 
+package http 
+package js 
 
-import _root_.scala.xml.{NodeSeq, Group, Unparsed, Elem}
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.util.Helpers
-import _root_.net.liftweb.util.TimeHelpers
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
-import _root_.scala.xml.{Node, SpecialNode, Text}
+import scala.xml.{NodeSeq, Group, Unparsed, Elem}
+import net.liftweb.util.Helpers._
+import net.liftweb.util.Helpers
+import net.liftweb.util.TimeHelpers
+import net.liftweb.common._
+import net.liftweb.util._
+import scala.xml.{Node, SpecialNode, Text}
 
 object JsCommands {
   def create = new JsCommands(Nil)
@@ -468,6 +468,7 @@ trait HtmlFixer {
    * This method must be run in the context of the thing creating the XHTML
    * to capture the bound functions
    */
+  @deprecated("Use fixHtmlAndJs or fixHtmlFunc")
   protected def fixHtml(uid: String, content: NodeSeq): String = {
     val w = new java.io.StringWriter
     
@@ -481,6 +482,79 @@ trait HtmlFixer {
                w)
     w.toString.encJs
   }
+
+  /**
+   * Calls fixHtmlAndJs and if there's embedded script tags,
+   * construct a function that executes the contents of the scripts
+   * then evaluations to Expression.  For use when converting
+   * a JsExp that contains HTML.
+   */
+  def fixHtmlFunc(uid: String, content: NodeSeq)(f: String => String) = 
+    fixHtmlAndJs(uid, content) match {
+      case (str, Nil) => f(str)
+      case (str, cmds) => "((function() {"+cmds.reduceLeft{_ & _}.toJsCmd+" return "+f(str)+";})())"
+    }
+
+  /**
+   * Calls fixHtmlAndJs and if there's embedded script tags,
+   * append the JsCmds to the String returned from applying
+   * the function to the enclosed HTML.
+   * For use when converting
+   * a JsCmd that contains HTML.
+   */
+  def fixHtmlCmdFunc(uid: String, content: NodeSeq)(f: String => String) = 
+    fixHtmlAndJs(uid, content) match {
+      case (str, Nil) => f(str)
+      case (str, cmds) => f(str)+"; "+cmds.reduceLeft(_ & _).toJsCmd
+    }
+
+  /**
+   * Super important... call fixHtml at instance creation time and only once
+   * This method must be run in the context of the thing creating the XHTML
+   * to capture the bound functions
+   */
+  protected def fixHtmlAndJs(uid: String, content: NodeSeq): (String, List[JsCmd]) = {
+    import Helpers._
+
+    val w = new java.io.StringWriter
+    
+    val xhtml = S.session.
+    map(s =>
+      s.fixHtml(s.processSurroundAndInclude("JS SetHTML id: "
+                                            + uid,
+                                            content))).
+    openOr(content)
+
+    import scala.collection.mutable.ListBuffer
+    val lb = new ListBuffer[JsCmd]
+    
+    val revised = ("script" #> ((ns: NodeSeq) => {
+      ns match {
+        case FindScript(e) => {
+          lb += JE.JsRaw(ns.text).cmd
+          NodeSeq.Empty
+        }
+        case x => x
+      }
+    }))(xhtml)
+
+    S.htmlProperties.htmlWriter(Group(revised), w)
+
+    (w.toString.encJs, lb.toList)
+  }
+
+  private object FindScript {
+    def unapply(in: NodeSeq): Option[Elem] = in match {
+      case e: Elem => {
+        e.attribute("type").map(_.text).filter(_ == "text/javascript").flatMap {
+          a =>
+            if (e.attribute("src").isEmpty) Some(e) else None
+        }
+      }
+      case _ => None
+    }
+  }
+
 }
 
 trait JsCmd extends HtmlFixer with ToJsCmd {
@@ -516,7 +590,9 @@ object JsCmds {
    */
   case class Replace(id: String, content: NodeSeq) extends JsCmd with HtmlFixer {
     override val toJsCmd = {
-      val html = fixHtml("inline", content);
+      val (html, js) = fixHtmlAndJs("inline", content)
+
+      var ret = 
       """
   try {
   var parent1 = document.getElementById(""" + id.encJs + """);
@@ -530,6 +606,7 @@ object JsCmds {
     // if the node doesn't exist or something else bad happens
   }
 """
+      if (js.isEmpty) ret else ret + " "+js.toJsCmd
 
     }
   }
@@ -799,6 +876,3 @@ object JsRules {
   @volatile var fadeTime: Helpers.TimeSpan = 1 second
 }
 
-}
-}
-}

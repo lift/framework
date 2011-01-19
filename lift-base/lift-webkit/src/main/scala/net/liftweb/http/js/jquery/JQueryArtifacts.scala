@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package js {
-package jquery {
+package net.liftweb 
+package http 
+package js 
+package jquery 
 
-import _root_.scala.xml.{Elem, NodeSeq}
+import scala.xml.{Elem, NodeSeq}
 
-import _root_.net.liftweb.http.S
-import _root_.net.liftweb.http.js.JE
-import _root_.net.liftweb.http.js.JsCmds
+import net.liftweb.http.S
+import net.liftweb.http.js.JE
+import net.liftweb.http.js.JsCmds
 import JE._
 import JqJE._
 import JqJsCmds._
@@ -103,7 +103,3 @@ case object JQuery14Artifacts extends JQueryArtifacts {
 }
 
 
-}
-}
-}
-}

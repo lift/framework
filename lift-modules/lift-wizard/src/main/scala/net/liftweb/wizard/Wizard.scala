@@ -84,15 +84,16 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
   implicit def elemInABox(in: Elem): Box[Elem] = Full(in)
 
   @volatile private[this] var _screenList: List[Screen] = Nil
-  private object ScreenVars extends RequestVar[Map[String, (NonCleanAnyVar[_], Any)]](Map())
+  private object ScreenVars extends TransientRequestVar[Map[String, (NonCleanAnyVar[_], Any)]](Map())
   protected object CurrentScreen extends WizardVar[Box[Screen]]({
     val screen = calcFirstScreen
     screen.foreach(_.transitionIntoFrom(Empty))
+    screen.foreach(_.enterScreen())
     screen
   })
-  private object PrevSnapshot extends RequestVar[Box[WizardSnapshot]](Empty)
-  protected object Referer extends WizardVar[String](S.referer openOr "/")
-  protected object Ajax_? extends WizardVar[Boolean](S.attr("ajax").flatMap(Helpers.asBoolean) openOr false)
+  private object PrevSnapshot extends TransientRequestVar[Box[WizardSnapshot]](Empty)
+  protected object Referer extends WizardVar[String](calcReferer)
+  protected object Ajax_? extends WizardVar[Boolean](calcAjax)
 
   /**
    * A unique GUID for the form... this allows us to do an Ajax SetHtml
@@ -106,9 +107,9 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
    * for example, put up some other Ajax thing or alternatively,
    * remove the form from the screen.
    */
-  protected object AjaxOnDone extends WizardVar[JsCmd](RedirectTo(Referer.is))
+  protected object AjaxOnDone extends WizardVar[JsCmd](calcAjaxOnDone)
 
-  protected object OnFirstScreen extends RequestVar[Boolean](true)
+  protected object OnFirstScreen extends TransientRequestVar[Boolean](true)
   private object FirstTime extends WizardVar[Boolean](true)
   private object CurrentSession extends WizardVar[String](WizardRules.registerWizardSession())
 
@@ -240,6 +241,8 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
   protected def wizardBottom: Box[Elem] = None
 
   private def doTransition(from: Box[Screen], to: Box[Screen]) {
+    to.foreach(_.enterScreen())
+    
     (from, to) match  {
       case (Full(old), Full(cur)) if old eq cur => {/* do nothing */}
       case (Full(old), Full(cur)) => {
@@ -264,6 +267,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
         doTransition(CurrentScreen.get, currentScreen)
       } else {
         currentScreen.foreach(_.transitionIntoFrom(Empty))
+        currentScreen.foreach(_.enterScreen())
       }
 
       CurrentScreen.set(currentScreen)
@@ -384,6 +388,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
         doTransition(cur, CurrentScreen.get)
       } else {
         cur.foreach(_.transitionIntoFrom(Empty))
+        cur.foreach(_.enterScreen())
       }
 
       SetHtml(FormGUID, renderHtml())
@@ -466,6 +471,15 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
     }
 
     Wizard.this._register(this)
+
+    private object _touched extends WizardVar(false)
+
+    private[wizard] def enterScreen() {
+      if (!_touched) {
+        _touched.set(true)
+        localSetup()
+      }
+    }
 
     protected def vendAVar[T](dflt: => T): NonCleanAnyVar[T] = Wizard.this.vendAVar[T](dflt)
   }

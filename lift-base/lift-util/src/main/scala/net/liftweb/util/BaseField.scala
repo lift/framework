@@ -83,7 +83,7 @@ trait SettableField extends ReadableField with SettableValueHolder {
    * are also applied before the value is used in a query.  Typical applications
    * of this are trimming and/or toLowerCase-ing strings
    */
-  protected def setFilter: List[ValueType => ValueType]
+  def setFilter: List[ValueType => ValueType]
 
   def validations: List[ValueType => List[FieldError]]
 

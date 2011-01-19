@@ -581,7 +581,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
    * are also applied before the value is used in a query.  Typical applications
    * of this are trimming and/or toLowerCase-ing strings
    */
-  protected def setFilter: List[FieldType => FieldType] = Nil
+  def setFilter: List[FieldType => FieldType] = Nil
 
   protected final def i_set_!(value: FieldType): FieldType = {
     real_i_set_!(runFilters(value, setFilter))

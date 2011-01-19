@@ -52,16 +52,22 @@ trait AbstractScreen extends Factory {
    * if the LiftScreen or Wizard is a singleton, you can still
    * display variable number of fields by returning a variable
    * number of BaseField instances from the FieldContainer.
+   * <br/>
+   * WARNING -- this method is public so it can be called
+   * from a Wizard.  This method should only be called from within
+   * the Screen or Wizard that owns the Screen and not
+   * from external code.
    */
-  protected def addFields(fields: () => FieldContainer) {
+  def addFields(fields: () => FieldContainer) {
     _fieldList = _fieldList ::: List(fields)
   }
-
+  
   /**
    * Use addFields
    * 
    * @deprecated
    */
+  @deprecated("use addFields()")
   protected def _register(field: () => FieldContainer) = addFields(field)
 
   protected def hasUploadField: Boolean = screenFields.foldLeft(false)(_ | _.uploadField_?)
@@ -70,6 +76,14 @@ trait AbstractScreen extends Factory {
    *  A list of fields in this screen
    */
   def screenFields: List[BaseField] = _fieldList.flatMap(_.apply().allFields)
+
+  /**
+   * Override this method to do any setup of this screen
+   */
+  protected def localSetup() {
+    
+  }
+
 
 
   def screenTop: Box[Elem] = Empty
@@ -203,40 +217,57 @@ trait AbstractScreen extends Factory {
                                   manifest: Manifest[T],
                                   help: Box[NodeSeq],
                                   validations: List[T => List[FieldError]],
-                                  filters: List[T => T])
+                                  filters: List[T => T],
+                                  stuff: Seq[FilterOrValidate[T]])
   {
     /**
      * Set the Help HTML
      */
     def help(h: NodeSeq): FieldBuilder[T] = new FieldBuilder[T](name, default,
-                                                                manifest, Full(h), validations, filters)
+                                                                manifest, Full(h), validations, filters, stuff)
 
     /**
      * Add a filter field (the wacky symbols are supposed to look like a filter symbol)
      */
     def <*>(f: T => T): FieldBuilder[T] =
     new FieldBuilder[T](name, default,
-                        manifest, help, validations, filters ::: List(f))
+                        manifest, help, validations, filters ::: List(f),
+                      stuff)
 
     /**
      * Add a validtion (the wacky symbols are supposed to look like a check mark)
      */
     def ^/(f: T => List[FieldError]): FieldBuilder[T] =
     new FieldBuilder[T](name, default,
-                        manifest, help, validations ::: List(f), filters)
+                        manifest, help, validations ::: List(f), filters, stuff)
 
     /**
      * Convert the field builder into a field
      */
-    def make: Field{type ValueType = T} = new Field {
-      type ValueType = T
-      override def name: String = FieldBuilder.this.name
-      override def default = FieldBuilder.this.default
-      override implicit def manifest: Manifest[ValueType] = FieldBuilder.this.manifest
-      override def helpAsHtml = help
-      override def validations = FieldBuilder.this.validations
-      override def setFilter = FieldBuilder.this.filters
-      override lazy val uniqueFieldId: Box[String] = Full("I"+randomString(15))
+    def make: Field{type ValueType = T} = {
+      val confirmInfo = stuff.collect{
+        case NotOnConfirmScreen => false
+      }.headOption orElse
+      stuff.collect {
+        case OnConfirmScreen => true
+      }.headOption 
+
+      new Field {
+        type ValueType = T
+        
+        /**
+         * Is this field on the confirm screen
+         */
+        override def onConfirm_? : Boolean = confirmInfo getOrElse super.onConfirm_?
+        
+        override def name: String = FieldBuilder.this.name
+        override def default = FieldBuilder.this.default
+        override implicit def manifest: Manifest[ValueType] = FieldBuilder.this.manifest
+        override def helpAsHtml = help
+        override def validations = FieldBuilder.this.validations
+        override def setFilter = FieldBuilder.this.filters
+        override lazy val uniqueFieldId: Box[String] = Full("I"+randomString(15))
+      }
     }
   }
 
@@ -263,9 +294,10 @@ trait AbstractScreen extends Factory {
    * @param validate - any validation functions
    */
   protected def builder[T](name: => String, default: => T, stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): FieldBuilder[T] =
-  new FieldBuilder[T](name, default, man, Empty, stuff.toList.flatMap{
-    case AVal(v) => List(v) case _ => Nil}, stuff.toList.flatMap{
-    case AFilter(v) => List(v) case _ => Nil})
+    new FieldBuilder[T](name, default, man, Empty, 
+                        stuff.toList.collect{case AVal(v) => v},
+                        stuff.toList.collect {case AFilter(v) => v},
+                        stuff)
 
   protected object FilterOrValidate {
     implicit def promoteFilter[T](f: T => T): FilterOrValidate[T] = AFilter(f)  
@@ -276,10 +308,73 @@ trait AbstractScreen extends Factory {
   }
   sealed protected trait FilterOrValidate[+T]
 
+  /**
+   * Override the screen default for fields appearing on the confirm
+   * screen and force this field to appear on the confirm screen
+   */
+  protected final case object OnConfirmScreen extends FilterOrValidate[Nothing]
+
+  
+  /**
+   * Override the screen default for fields appearing on the confirm
+   * screen and force this field not to appear on the confirm screen
+   */
+  protected final case object NotOnConfirmScreen extends FilterOrValidate[Nothing]
+
   protected final case class FormParam(fp: SHtml.ElemAttr) extends FilterOrValidate[Nothing]
 
   protected final case class AFilter[T](val f: T => T) extends FilterOrValidate[T]
   protected final case class AVal[T](val v: T => List[FieldError]) extends FilterOrValidate[T]
+
+  protected def field[T](underlying: => BaseField{type ValueType=T},
+                         stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): Field{type ValueType=T} = {    
+    val confirmInfo = stuff.collect{
+      case NotOnConfirmScreen => false
+    }.headOption orElse
+    stuff.collect {
+      case OnConfirmScreen => true
+    }.headOption 
+    
+    new Field {
+      type ValueType = T
+      
+      /**
+       * Is this field on the confirm screen
+       */
+      override def onConfirm_? : Boolean = confirmInfo getOrElse super.onConfirm_?
+
+      override def toForm: Box[NodeSeq] = underlying.toForm
+
+      /**
+       * Give the current state of things, should the this field be shown
+       */
+      override def show_? = underlying.show_?
+
+      /**
+       * Given the current context, should this field be displayed
+       */
+      override def shouldDisplay_? = underlying.shouldDisplay_?
+
+      
+      override def name: String = underlying.name
+      override def default = underlying.get
+      override implicit def manifest: Manifest[ValueType] = man
+      override def helpAsHtml = underlying.helpAsHtml
+      override def validations = stuff.collect {
+        case AVal(f) => f
+      }.toList ::: underlying.validations
+      override def setFilter = stuff.collect {
+        case AFilter(f) => f
+      }.toList ::: underlying.setFilter
+
+      override def is = underlying.is
+      override def get = underlying.get
+      override def set(v: T) = underlying.set(v)
+
+      override lazy val uniqueFieldId: Box[String] = underlying.uniqueFieldId or Full("I"+randomString(15))
+    }
+  }
+                          
 
   /**
    * Create a field with a name, default value, and
@@ -292,7 +387,7 @@ trait AbstractScreen extends Factory {
   protected def field[T](name: => String, default: => T, stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): Field{type ValueType = T} =
   new FieldBuilder[T](name, default, man, Empty, stuff.toList.flatMap{
     case AVal(v) => List(v) case _ => Nil}, stuff.toList.flatMap{
-    case AFilter(v) => List(v) case _ => Nil}).make
+    case AFilter(v) => List(v) case _ => Nil}, stuff).make
 
   protected def removeRegExChars(regEx: String): String => String =
   s => s match {
@@ -619,7 +714,9 @@ trait ScreenWizardRendered {
     def bindFieldLine(xhtml: NodeSeq): NodeSeq = {
       fields.flatMap {
         f =>
-          val curId = f.field.uniqueFieldId openOr ("I"+randomString(20))
+          val theForm = f.input
+          val curId = f.field.uniqueFieldId or theForm.flatMap(x => (x \ "@id").headOption.map(_.text)) openOr Helpers.nextFuncName
+
         val myNotices = notices.filter(fi => fi._3.isDefined && fi._3 == f.field.uniqueFieldId)
         def doLabel(in: NodeSeq): NodeSeq =
           myNotices match {
@@ -634,7 +731,7 @@ trait ScreenWizardRendered {
           }
         bind("wizard", xhtml,
              "label" -%> doLabel _, 
-             "form" -%> f.input.map(f => f.map{
+             "form" -%> theForm.map(f => f.map{
                case e: Elem => e % ("id" -> curId)
                case x => x}: NodeSeq),
              FuncBindParam("help", xml => {
@@ -785,6 +882,28 @@ trait ScreenWizardRendered {
 
   protected def FormGUID: AnyVar[String, _]
 
+  /**
+   * What should be done at the end of an Ajax session.  By
+   * default, RedirectTo(Referer.is)
+   */
+  protected def calcAjaxOnDone: JsCmd = RedirectTo(Referer.is)
+
+  /**
+   * Should all instances of this Wizard or Screen unless
+   * they are explicitly set to Ajax
+   */
+  protected def defaultToAjax_? : Boolean = false
+
+  /**
+   * Calculate the referer (the page to go back to on finish).
+   * defaults to S.referer openOr "/"
+   */
+  protected def calcReferer : String = S.referer openOr "/"
+
+  /**
+   * Calculate if this Screen/Wizard should be ajax
+   */
+  protected def calcAjax: Boolean = S.attr("ajax").flatMap(Helpers.asBoolean) openOr defaultToAjax_?
 
   protected def redirectBack(): JsCmd = {
     if (ajaxForms_?) {
@@ -831,23 +950,23 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
    */
   protected def defaultXml: NodeSeq = _defaultXml.get
 
-  private object ScreenVars extends RequestVar[Map[String, (NonCleanAnyVar[_], Any)]](Map())
-  private object PrevSnapshot extends RequestVar[Box[ScreenSnapshot]](Empty)
-  protected object Referer extends ScreenVar[String](S.referer openOr "/")
+  private object ScreenVars extends TransientRequestVar[Map[String, (NonCleanAnyVar[_], Any)]](Map())
+  private object PrevSnapshot extends TransientRequestVar[Box[ScreenSnapshot]](Empty)
+  protected object Referer extends ScreenVar[String](calcReferer)
   /**
    * A unique GUID for the form... this allows us to do an Ajax SetHtml
    * to replace the form
    */
   protected object FormGUID extends ScreenVar[String](Helpers.nextFuncName)
 
-  protected object Ajax_? extends ScreenVar[Boolean](S.attr("ajax").flatMap(Helpers.asBoolean) openOr false)
+  protected object Ajax_? extends ScreenVar[Boolean](calcAjax)
   /**
    * What to do when the Screen is done.  By default, will
    * do a redirect back to Whence, but you can change this behavior,
    * for example, put up some other Ajax thing or alternatively,
    * remove the form from the screen.
    */
-  protected object AjaxOnDone extends ScreenVar[JsCmd](RedirectTo(Referer.is))
+  protected object AjaxOnDone extends ScreenVar[JsCmd](calcAjaxOnDone)
   private object FirstTime extends ScreenVar[Boolean](true)
 
   protected class ScreenSnapshot(private[http] val screenVars: Map[String, (NonCleanAnyVar[_], Any)],
@@ -915,14 +1034,6 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
 
     def clear(name: String): Unit =
     ScreenVars.set(ScreenVars.is - name)
-  }
-
-  /**
-   * Override this method to do setup the first time the
-   * screen is entered
-   */
-  protected def localSetup() {
-
   }
 
   def toForm: NodeSeq = {

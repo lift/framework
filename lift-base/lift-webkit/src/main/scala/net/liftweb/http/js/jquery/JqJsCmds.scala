@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.liftweb {
-package http {
-package js {
-package jquery {
+package net.liftweb 
+package http 
+package js 
+package jquery 
 
-import _root_.scala.xml.{NodeSeq, Group, Elem, Node, SpecialNode}
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.util.Helpers
-import _root_.net.liftweb.util.TimeHelpers
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import scala.xml.{NodeSeq, Group, Elem, Node, SpecialNode}
+import net.liftweb.util.Helpers._
+import net.liftweb.util.Helpers
+import net.liftweb.util.TimeHelpers
+import net.liftweb.common._
+import net.liftweb.util._
 
-import _root_.net.liftweb.http.js.{JsExp, JE}
+import net.liftweb.http.js.{JsExp, JE}
 import JE._
 import JsCmds._
 
@@ -142,7 +142,8 @@ object JqJE {
    * Append content to a JQuery
    */
   case class JqAppend(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
-    override val toJsCmd = "append(" + fixHtml("inline", content) + ")"
+    override val toJsCmd = 
+      fixHtmlFunc("inline", content){"append(" + _ + ")"}      
   }
 
   /**
@@ -157,21 +158,22 @@ object JqJE {
    * AppendTo content to a JQuery
    */
   case class JqAppendTo(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
-    override val toJsCmd = "appendTo(" + fixHtml("inline", content) + ")"
+    override val toJsCmd =       
+      fixHtmlFunc("inline", content){str => "appendTo(" + str + ")"}
   }
 
   /**
    * Prepend content to a JQuery
    */
   case class JqPrepend(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
-    override val toJsCmd = "prepend(" + fixHtml("inline", content) + ")"
+    override val toJsCmd = fixHtmlFunc("inline", content){"prepend(" + _ + ")"}
   }
 
   /**
    * PrependTo content to a JQuery
    */
   case class JqPrependTo(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
-    override val toJsCmd = "prependTo(" + fixHtml("inline", content) + ")"
+    override val toJsCmd = fixHtmlFunc("inline", content){"prependTo(" + _ + ")"}
   }
 
   case class JqCss (name: JsExp, value: JsExp) extends JsExp with JsMember with JQueryRight with JQueryLeft {
@@ -183,7 +185,7 @@ object JqJE {
    * a cleaner innerHTML.
    */
   case class JqEmptyAfter(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
-    override val toJsCmd = "empty().after(" + fixHtml("inline", content) + ")"
+    override val toJsCmd = fixHtmlFunc("inline", content){"empty().after(" + _ + ")"}
   }
 
   object JqHtml {
@@ -192,7 +194,7 @@ object JqJE {
     }
 
     def apply(content: NodeSeq) = new JsExp with JsMember with JQueryRight with JQueryLeft {
-      val toJsCmd = "html(" + fixHtml("inline", content) + ")"
+      val toJsCmd = fixHtmlFunc("inline", content){"html(" + _  + ")"}
     }
   }
 
@@ -299,7 +301,7 @@ object JqJsCmds {
      * Eagerly evaluate
      */
     val toJsCmd =
-    "try{jQuery(" + ("#" + uid).encJs + ").each(function(i) {this.innerHTML = " + fixHtml(uid, content) + ";});} catch (e) {}"
+    fixHtmlCmdFunc(uid, content){"try{jQuery(" + ("#" + uid).encJs + ").each(function(i) {this.innerHTML = " + _ + ";});} catch (e) {}"}
   }
 
   object Show {
@@ -361,6 +363,7 @@ object JqJsCmds {
   }
 
   class ModalDialog(html: NodeSeq, css: Box[JsObj]) extends JsCmd {
+    /*
     private def contentAsJsStr = {
     val w = new java.io.StringWriter
     
@@ -373,10 +376,13 @@ object JqJsCmds {
                w)
     w.toString.encJs
     }
+*/
 
-    val toJsCmd = "jQuery.blockUI({ message: " + contentAsJsStr +
-            (css.map(",  css: " + _.toJsCmd + " ").openOr("")) + "});"
+    val toJsCmd = fixHtmlCmdFunc("inline", html){str => 
+      "jQuery.blockUI({ message: " + str +
+      (css.map(",  css: " + _.toJsCmd + " ").openOr("")) + "});"}
   }
+ 
 
   case object Unblock extends JsCmd {
     def toJsCmd = "jQuery.unblockUI();"
@@ -394,7 +400,3 @@ object JqJsCmds {
 
 }
 
-}
-}
-}
-}

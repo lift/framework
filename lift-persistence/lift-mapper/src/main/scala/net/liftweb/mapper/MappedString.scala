@@ -36,7 +36,7 @@ import S._
  */
 abstract class MappedPoliteString[T <: Mapper[T]](towner: T, theMaxLen: Int) extends MappedString[T](towner, theMaxLen) {
   override def defaultValue = ""
-  override protected def setFilter = crop _ :: super.setFilter
+  override def setFilter = crop _ :: super.setFilter
 }
 
 /**

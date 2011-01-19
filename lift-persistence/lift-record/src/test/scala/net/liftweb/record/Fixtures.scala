@@ -134,7 +134,7 @@ class FilterTestRecord private() extends Record[FilterTestRecord] {
 
   object stringFieldWithFiltering extends StringField(this, 100) {
     var setFilterHarness: ValueType => ValueType = identity _
-    override protected def setFilter = setFilterHarness :: super.setFilter
+    override def setFilter = setFilterHarness :: super.setFilter
 
     var setFilterBoxHarness: Box[MyType] => Box[MyType] = identity _
     override protected def setFilterBox = setFilterBoxHarness :: super.setFilterBox

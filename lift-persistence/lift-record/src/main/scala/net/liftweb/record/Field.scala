@@ -223,7 +223,7 @@ trait TypedField[ThisType] extends BaseField {
 
   protected def set_!(in: Box[MyType]): Box[MyType] = runFilters(in, setFilterBox)
 
-  protected def setFilter: List[ValueType => ValueType] = Nil
+  def setFilter: List[ValueType => ValueType] = Nil
 
   /** OptionalTypedField and MandatoryTypedField implement this to do the appropriate lifting of Box[MyType] to ValueType */
   protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType]
