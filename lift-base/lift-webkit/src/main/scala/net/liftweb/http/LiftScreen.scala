@@ -368,16 +368,22 @@ trait AbstractScreen extends Factory {
       override def default = underlying.get
       override implicit def manifest: Manifest[ValueType] = man
       override def helpAsHtml = underlying.helpAsHtml
+
+      override def validate: List[FieldError] = underlying.validate
+
+      /*
       override def validations = stuff.collect {
         case AVal(f) => f
       }.toList ::: underlying.validations
+      */
+
       override def setFilter = stuff.collect {
         case AFilter(f) => f
-      }.toList ::: underlying.setFilter
+      }.toList
 
       override def is = underlying.is
       override def get = underlying.get
-      override def set(v: T) = underlying.set(v)
+      override def set(v: T) = underlying.set(setFilter.foldLeft(v)((v, f) => f(v)))
 
       override def uniqueFieldId: Box[String] = underlying.uniqueFieldId or super.uniqueFieldId
     }
@@ -429,16 +435,22 @@ trait AbstractScreen extends Factory {
       override def default = underlying.open_!.get
       override implicit def manifest: Manifest[ValueType] = man
       override def helpAsHtml = underlying.flatMap(_.helpAsHtml)
+
+      override def validate: List[FieldError] = underlying.toList.flatMap(_.validate)
+
+      /*
       override def validations = stuff.collect {
         case AVal(f) => f
       }.toList ::: underlying.toList.flatMap(_.validations)
+      */
+
       override def setFilter = stuff.collect {
         case AFilter(f) => f
-      }.toList ::: underlying.toList.flatMap(_.setFilter)
+      }.toList
 
       override def is = underlying.open_!.is
       override def get = underlying.open_!.get
-      override def set(v: T) = underlying.open_!.set(v)
+      override def set(v: T) = underlying.open_!.set(setFilter.foldLeft(v)((v, f) => f(v)))
 
       override def uniqueFieldId: Box[String] = underlying.flatMap(_.uniqueFieldId) or super.uniqueFieldId
     }
