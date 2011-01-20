@@ -205,7 +205,10 @@ trait AbstractScreen extends Factory {
 
     def setFilter: List[ValueType => ValueType] = Nil
 
-    override lazy val uniqueFieldId: Box[String] = Full(Helpers.nextFuncName) 
+    // override lazy val uniqueFieldId: Box[String] = Full(Helpers.nextFuncName) 
+    override def uniqueFieldId: Box[String] = _theFieldId
+
+    private lazy val _theFieldId = Full(Helpers.nextFuncName)
 
     override def toString = is.toString
   }
@@ -376,7 +379,68 @@ trait AbstractScreen extends Factory {
       override def get = underlying.get
       override def set(v: T) = underlying.set(v)
 
-      override lazy val uniqueFieldId: Box[String] = underlying.uniqueFieldId or Full("I"+randomString(15))
+      override def uniqueFieldId: Box[String] = underlying.uniqueFieldId or super.uniqueFieldId
+    }
+  }
+
+  sealed protected trait BoxMarker
+  /**
+   * A little hack because => BaseField and => Box[BaseField]
+   * have the same method signature
+   */
+  protected final implicit object BoxMarkerObj extends BoxMarker
+  
+  protected def field[T](underlying: => Box[BaseField{type ValueType=T}],
+                         stuff: FilterOrValidate[T]*)(implicit man: Manifest[T], marker: BoxMarker): Field{type ValueType=T} = {    
+    val confirmInfo = stuff.collect{
+      case NotOnConfirmScreen => false
+    }.headOption orElse
+    stuff.collect {
+      case OnConfirmScreen => true
+    }.headOption 
+    
+    new Field {
+      type ValueType = T
+      
+      /**
+       * Is this field on the confirm screen
+       */
+      override def onConfirm_? : Boolean = confirmInfo getOrElse super.onConfirm_?
+
+      override def toForm: Box[NodeSeq] = underlying.flatMap(_.toForm)
+
+      /**
+       * Give the current state of things, should the this field be shown
+       */
+      override def show_? = underlying.map(_.show_?) openOr false
+
+      /**
+       * Given the current context, should this field be displayed
+       */
+      override def shouldDisplay_? = underlying.map(_.shouldDisplay_?) openOr false
+
+      override def displayName = underlying.map(_.displayName) openOr "N/A"
+
+      override def displayNameHtml: Box[NodeSeq] = underlying.flatMap(_.displayNameHtml)
+
+      override def asHtml = underlying.map(_.asHtml) openOr NodeSeq.Empty
+      
+      override def name: String = underlying.map(_.name) openOr "N/A"
+      override def default = underlying.open_!.get
+      override implicit def manifest: Manifest[ValueType] = man
+      override def helpAsHtml = underlying.flatMap(_.helpAsHtml)
+      override def validations = stuff.collect {
+        case AVal(f) => f
+      }.toList ::: underlying.toList.flatMap(_.validations)
+      override def setFilter = stuff.collect {
+        case AFilter(f) => f
+      }.toList ::: underlying.toList.flatMap(_.setFilter)
+
+      override def is = underlying.open_!.is
+      override def get = underlying.open_!.get
+      override def set(v: T) = underlying.open_!.set(v)
+
+      override def uniqueFieldId: Box[String] = underlying.flatMap(_.uniqueFieldId) or super.uniqueFieldId
     }
   }
                           
