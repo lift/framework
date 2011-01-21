@@ -228,7 +228,7 @@ private[http] trait LiftMerge {
         import JsCmds._
         import JE._
 
-        bodyChildren += JsCmds.Script((if (hasFuncsForOwner(RenderVersion.get)) OnLoad(JsRaw("liftAjax.lift_successRegisterGC()")) else Noop) &
+        bodyChildren += JsCmds.Script((if (!cometList.isEmpty || hasFuncsForOwner(RenderVersion.get)) OnLoad(JsRaw("liftAjax.lift_successRegisterGC()")) else Noop) &
                 JsCrVar("lift_page", RenderVersion.get))
       }
 
