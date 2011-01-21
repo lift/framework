@@ -712,7 +712,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
     case ShutdownIfPastLifespan =>
       for{
-        ls <- lifespan if (lastListenTime + ls.millis) < millis
+        ls <- lifespan if (lastListenTime + math.min(ls.millis, 150000)) < millis
       } this ! ShutDown
 
     case ReRender(all) => performReRender(all)
