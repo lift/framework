@@ -212,7 +212,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     findAll(query)
   }
 
-  private def saveOp(inst: BaseRecord)(f: => Unit): Boolean = {
+  protected def saveOp(inst: BaseRecord)(f: => Unit): Boolean = {
     foreachCallback(inst, _.beforeSave)
     f
     foreachCallback(inst, _.afterSave)
@@ -222,28 +222,17 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /**
   * Save the instance in the appropriate backing store
   */
-  def save(inst: BaseRecord, strict: Boolean): Boolean = saveOp(inst) {
-    if (strict) // strict mode will call getLastError and throw an exception if there was an error
-      MongoDB.useSession(mongoIdentifier) {
-        db =>
-          val coll = db.getCollection(collectionName)
-          coll.setWriteConcern(DB.WriteConcern.STRICT)
-          coll.save(inst.asDBObject)
-          coll.setWriteConcern(DB.WriteConcern.NORMAL)
-      }
-    else
-      useColl {
-        coll => coll.save(inst.asDBObject)
-      }
+  def save(inst: BaseRecord, concern: WriteConcern): Boolean = saveOp(inst) {
+    useColl { coll => 
+      coll.save(inst.asDBObject, concern)
+    }
   }
-
-  def save(inst: BaseRecord): Boolean = save(inst, false)
 
   /*
   * Save a document to the db using the given Mongo instance
   */
-  def save(inst: BaseRecord, db: DB): Boolean = saveOp(inst) {
-    db.getCollection(collectionName).save(inst.asDBObject)
+  def save(inst: BaseRecord, db: DB, concern: WriteConcern): Boolean = saveOp(inst) {
+    db.getCollection(collectionName).save(inst.asDBObject, concern)
   }
 
   /**

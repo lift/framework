@@ -46,11 +46,15 @@ case object DefaultMongoIdentifier extends MongoIdentifier {
 /*
 * Wrapper for getting a reference to a db from the given Mongo instance
 */
-case class MongoAddress(host: MongoHost, name: String) {
-  def db = host.mongo.getDB(name)
-
-  override def toString = host.host+":"+host.port+"/"+name
+trait MongoAddressBase {
+  def db: DB
 }
+
+case class MongoAddress(host: MongoHostBase, name: String) extends MongoAddressBase {
+  def db = host.mongo.getDB(name)
+}
+
+
 
 /*
 * Wrapper for creating a Mongo instance
@@ -59,7 +63,7 @@ abstract class MongoHostBase {
   def mongo: Mongo
 }
 case class MongoHost(host: String, port: Int) extends MongoHostBase {
-  val mongo = new Mongo(host, port)
+  lazy val mongo = new Mongo(host, port)
 }
 object MongoHost {
   def apply(): MongoHost = MongoHost("localhost", 27017)
@@ -70,7 +74,7 @@ object MongoHost {
 * Wrapper for creating a Paired Mongo instance
 */
 case class MongoPair(left: DBAddress, right: DBAddress) extends MongoHostBase {
-  val mongo = new Mongo(left, right)
+  lazy val mongo = new Mongo(left, right)
 }
 
 /*
@@ -81,19 +85,19 @@ object MongoDB {
   /*
   * HashMap of MongoAddresses, keyed by MongoIdentifier
   */
-  private val dbs = new ConcurrentHashMap[MongoIdentifier, MongoAddress]
+  private val dbs = new ConcurrentHashMap[MongoIdentifier, MongoAddressBase]
 
   /*
   * Define a Mongo db
   */
-  def defineDb(name: MongoIdentifier, address: MongoAddress) {
+  def defineDb(name: MongoIdentifier, address: MongoAddressBase) {
     dbs.put(name, address)
   }
 
   /*
   * Define and authenticate a Mongo db
   */
-  def defineDbAuth(name: MongoIdentifier, address: MongoAddress, username: String, password: String) {
+  def defineDbAuth(name: MongoIdentifier, address: MongoAddressBase, username: String, password: String) {
     if (!address.db.authenticate(username, password.toCharArray))
       throw new MongoException("Authorization failed: "+address.toString)
 
@@ -105,7 +109,7 @@ object MongoDB {
   */
   def getDb(name: MongoIdentifier): Option[DB] = dbs.get(name) match {
     case null => None
-    case ma: MongoAddress => Some(ma.db)
+    case ma: MongoAddressBase => Some(ma.db)
   }
 
   /*

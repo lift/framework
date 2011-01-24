@@ -21,7 +21,7 @@ package record {
 import net.liftweb.common.{Box, Full}
 import net.liftweb.record.{MetaRecord, Record}
 
-import com.mongodb.{BasicDBObject, DBObject, DBRef}
+import com.mongodb.{BasicDBObject, DBObject, DBRef, WriteConcern}
 
 import org.bson.types.ObjectId
 
@@ -41,13 +41,26 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends Record[MyType] {
   /**
   * Save the instance and return the instance
   */
-  def save(strict: Boolean): MyType = {
+  def save(concern: WriteConcern): MyType = {
     runSafe {
-      meta.save(this, strict)
+      meta.save(this, concern)
     }
     this
   }
+  
+  /**
+  * Save the instance and return the instance
+  * @param safe - if true will use WriteConcern SAFE else NORMAL
+  */
+  def save(safe: Boolean): MyType = {
+    save(if (safe) WriteConcern.SAFE else WriteConcern.NORMAL)
+  }
 
+  /**
+  * Save the instance and return the instance
+  * WILL NOT RAISE MONGO SERVER ERRORS.  
+  * Use save(Boolean) or save(WriteConcern) to control error behavior
+  */
   def save: MyType = save(false)
 
   /**
