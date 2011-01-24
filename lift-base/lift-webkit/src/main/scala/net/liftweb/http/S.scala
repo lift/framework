@@ -1113,6 +1113,10 @@ for {
    * execute code before and after the request is processed (but still have S scope).
    * This allows for query analysis, etc. See S.addAround(LoanWrapper) for an example.
    * This version of the method takes a list of LoanWrappers that are applied in order.
+   * This method is *NOT* intended to change the generated HTTP request or
+   * to respond to requests early.  LoanWrappers are there to set up
+   * and take down state *ONLY*.  The LoanWrapper may be called outside
+   * the scope of an HTTP request (e.g., as part of an Actor invocation).
    *
    * @see # addAround ( LoanWrapper )
    * @see LoanWrapper
@@ -1149,6 +1153,10 @@ for {
    * }
    * }
    * </pre>
+   * This method is *NOT* intended to change the generated HTTP request or
+   * to respond to requests early.  LoanWrappers are there to set up
+   * and take down state *ONLY*.  The LoanWrapper may be called outside
+   * the scope of an HTTP request (e.g., as part of an Actor invocation).
    *
    * @see # addAround ( LoanWrapper )
    * @see LoanWrapper
