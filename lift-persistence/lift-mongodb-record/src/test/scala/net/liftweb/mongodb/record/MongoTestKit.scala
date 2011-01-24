@@ -31,7 +31,7 @@ trait MongoTestKit {
     .replace(".", "_")
     .toLowerCase
 
-  val defaultHost = MongoHost("localhost", 27017)
+  val defaultHost = MongoHost()
 
   // If you need more than one db, override this
   def dbs: List[(MongoIdentifier, MongoHost, String)] =

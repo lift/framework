@@ -66,7 +66,7 @@ case class MongoHost(host: String, port: Int) extends MongoHostBase {
   lazy val mongo = new Mongo(host, port)
 }
 object MongoHost {
-  def apply(): MongoHost = MongoHost("localhost", 27017)
+  def apply(): MongoHost = MongoHost("127.0.0.1", 27017)
   def apply(host: String): MongoHost = MongoHost(host, 27017)
 }
 
