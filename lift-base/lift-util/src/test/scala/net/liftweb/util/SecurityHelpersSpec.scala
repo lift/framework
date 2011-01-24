@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 package net.liftweb {
 package util {
 
@@ -37,12 +38,16 @@ object SecurityHelpersSpec extends Specification with SecurityHelpers with IoHel
       shouldShow(1.0) must beTrue
       shouldShow(0.0) must beFalse
     }
+
+    /*
     "provide makeBlowfishKey, blowfishEncrypt, blowfishDecrypt functions to encrypt/decrypt Strings with Blowfish keys" in {
       val key = makeBlowfishKey
       val encrypted = blowfishEncrypt("hello world", key)
       encrypted must_!= "hello world"
       blowfishDecrypt(encrypted, key) must_== "hello world"
     }
+    */
+
     "provide a md5 function to create a md5 digest from a string" in {
       md5("hello") must_== "XUFAKrxLKna5cZ2REBfFkg=="
       md5("hello") must_!= md5("hell0")

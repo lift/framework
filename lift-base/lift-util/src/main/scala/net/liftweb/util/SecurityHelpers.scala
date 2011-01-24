@@ -57,6 +57,7 @@ trait SecurityHelpers {
    */
   def shouldShow(percent: Double): Boolean = withRandom(_.nextDouble <= percent)
 
+  /*
   /** create a Blowfish key as an array of bytes */
   def makeBlowfishKey: Array[Byte] = KeyGenerator.getInstance("blowfish").generateKey.getEncoded
 
@@ -172,6 +173,7 @@ trait SecurityHelpers {
 
     new CipherInputStream(in, cipher)
   }
+  */
 
   private final def cleanArray(in: Array[Byte]): Array[Byte] = in.filter(a => a >= 32 && a <= 127)
 
