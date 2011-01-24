@@ -1,0 +1,77 @@
+/*
+ * Copyright 2011 WorldWide Conferencing, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package net.liftweb
+package mocks
+
+import org.specs._
+import org.specs.runner._
+
+class MockHttpRequestSpecTest extends Runner(MockHttpRequestSpec) with JUnit with Console
+
+object MockHttpRequestSpec extends Specification {
+  val IF_MODIFIED_HEADER = "If-Modified-Since"
+  val TEST_URL = "https://foo.com/test/this/page?a=b&b=a&a=c"
+
+  "MockHttpRequest" should {
+
+    "properly deconstruct from a URL" in {
+      val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
+
+      testRequest.getScheme must_== "https"
+      testRequest.isSecure must_== true
+      testRequest.getServerName must_== "foo.com"
+      testRequest.getContextPath must_== "/test"
+      testRequest.getRequestURI must_== "/test/this/page"
+      testRequest.getRequestURL.toString must_== TEST_URL
+      testRequest.getQueryString must_== "a=b&b=a&a=c"
+      testRequest.getParameterValues("a").toList must_== List("b","c")
+      testRequest.getParameter("b") must_== "a"
+    }
+
+    "correctly add and parse a date header" in {
+      val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
+
+      val epoch = 241000 // (milliseconds not included in RFC 1123)
+
+      testRequest.setDateHeader(IF_MODIFIED_HEADER, epoch)
+
+      testRequest.getDateHeader(IF_MODIFIED_HEADER) must_== epoch
+    }
+
+    "throw an IllegalArgumentException for an invalid date header" in {
+      val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
+
+      testRequest.headers += IF_MODIFIED_HEADER -> List("this is not a valid date")
+
+      testRequest.getDateHeader(IF_MODIFIED_HEADER) must throwA[IllegalArgumentException]
+    }
+
+    "throw an IllegalArgumentException for an invalid context path" in {
+      (new MockHttpServletRequest(TEST_URL, "foo")) must throwA[IllegalArgumentException]
+      (new MockHttpServletRequest(TEST_URL, "/foo/")) must throwA[IllegalArgumentException]
+     }
+
+    "throw an IllegalArgumentException for an invalid query string" in {
+      val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
+      
+      (testRequest.queryString ="this=a&&that=b") must throwA[IllegalArgumentException]
+      (testRequest.queryString = "foo") must throwA[IllegalArgumentException]
+     }
+
+  }
+}
+
+      

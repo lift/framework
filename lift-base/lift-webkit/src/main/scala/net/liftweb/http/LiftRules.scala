@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,33 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.sitemap._
-import _root_.net.liftweb.http.js.JSArtifacts
-import _root_.net.liftweb.http.js.jquery._
-import _root_.net.liftweb.http.provider._
-import _root_.scala.xml._
-import _root_.scala.collection.mutable.{ListBuffer}
-import _root_.java.util.{Locale, TimeZone, ResourceBundle, Date}
-import _root_.java.io.{InputStream, ByteArrayOutputStream, BufferedReader, StringReader}
+import common._
+import util._
+import util.Helpers._
+import sitemap._
+import http.js.JSArtifacts
+import http.js.jquery._
+import http.provider._
 import js._
 import JE._
 import JsCmds._
 import auth._
-import _root_.java.util.concurrent.{ConcurrentHashMap => CHash}
-import _root_.scala.reflect.Manifest
 
-import _root_.java.util.concurrent.atomic.AtomicInteger
+import scala.xml._
+import scala.collection.mutable.{ListBuffer}
+import java.util.{Locale, TimeZone, ResourceBundle, Date}
+import java.io.{InputStream, ByteArrayOutputStream, BufferedReader, StringReader}
+import java.util.concurrent.{ConcurrentHashMap => CHash}
+import scala.reflect.Manifest
 
+import java.util.concurrent.atomic.AtomicInteger
+
+/**
+ * LiftRules is the global object that holds all of Lift's configuration.
+ */
 object LiftRules extends Factory with FormVendor with LazyLoggable {
   val noticesContainerId = "lift__noticesContainer__"
   private val pageResourceId = Helpers.nextFuncName
@@ -1811,6 +1815,3 @@ trait FormVendor {
   private object requestForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
 }
 
-
-}
-}

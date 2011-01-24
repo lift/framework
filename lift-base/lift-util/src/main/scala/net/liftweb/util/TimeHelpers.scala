@@ -377,7 +377,8 @@ trait TimeHelpers { self: ControlHelpers =>
   /** @return now's time formatted as HH:mm zzz */
   def formattedTimeNow = timeFormatter.format(now)
 
-  /** @return a formatter for internet dates including: the day of week, the month, day of month, time and time zone */
+  /** @return a formatter for internet dates (RFC822/1123) including:
+   *  the day of week, the month, day of month, time and time zone */
   def internetDateFormatter = {
     val ret = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z", Locale.US)
     ret.setTimeZone(utc)

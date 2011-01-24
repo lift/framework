@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 WorldWide Conferencing, LLC
+ * Copyright 2008-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,163 +14,524 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mocks {
+package net.liftweb
+package mocks
 
-import _root_.scala.collection.mutable.HashMap
-import _root_.java.io.PrintWriter
-import _root_.java.io.StringReader
-import _root_.java.io.BufferedReader
-import _root_.java.io.ByteArrayOutputStream
-import _root_.java.io.ByteArrayInputStream
-import _root_.java.io.FileInputStream
-import _root_.java.io.InputStream
-import _root_.java.io.StringBufferInputStream
-import _root_.java.io.File
-import _root_.java.util.Arrays
-import _root_.java.util.Date
-import _root_.java.util.Locale
-import _root_.java.util.Vector
-import _root_.java.util.{Enumeration => JEnum}
-import _root_.java.util.{HashMap => JHash}
-import _root_.javax.servlet._
-import _root_.javax.servlet.http._
-import _root_.net.liftweb.util.Helpers
+import java.io.{BufferedReader,ByteArrayInputStream,InputStreamReader}
+import java.net.URL
+import java.security.Principal
+import java.text.ParseException
+import java.util.Date
+import java.util.Locale
+import java.util.{Enumeration => JEnum}
+import java.util.{HashMap => JHash}
+import javax.servlet._
+import javax.servlet.http._
+
+import scala.collection.JavaConversions._
+import scala.collection.mutable.ListBuffer
+import scala.xml.NodeSeq
+
+// Lift imports
+import common.{Box,Empty}
+import util.Helpers
+
+import json.JsonAST._
 
 /**
- * A Mock ServletRequest. Change it's state to to create the request you are
+ * A Mock ServletRequest. Change its state to create the request you are
  * interested in. At the very least, you will need to change method and path.
  *
+ * There are several things that aren't supported:
+ *
+ * <ul>
+ *   <li>getRequestDispatcher - returns null always</li>
+ *   <li>getRequestedSessionId - always returns null. The related
+ *       isRequestedSessionId... methods similarly all return false</li>
+ *   <li>getRealPath - simply returns the input string</li>
+ * </ul>
+ *
  * @author Steve Jenson (stevej@pobox.com)
+ * @author Derek Chen-Becker
+ *
+ * @param url The URL to extract from
+ * @param contextPath The context path for this request. Defaults to "" per the Servlet API.
+ * 
  */
-class MockHttpServletRequest extends HttpServletRequest {
-  private implicit def itToEnum[T <: Object](it: Iterator[T]): JEnum[Object] =
-    new JEnum[Object] {
-      def hasMoreElements() = it.hasNext
-      def nextElement(): Object = it.next
-    }
+class MockHttpServletRequest(val url : String = null, var contextPath : String = "") extends HttpServletRequest {
+  @deprecated("Use the \"attributes\" var instead")
+  def attr = attributes
 
-  private implicit def mapToMap[K <: Object, V <: Object](in: Seq[(K, V)]):
-  java.util.Map[Object, Object] = {
-    val ret = new JHash[Object, Object]
+  @deprecated("Use the \"attributes\" var instead")
+  def attr_= (attrs : Map[String,Object]) = attributes = attrs
+  
+  var attributes: Map[String, Object] = Map()
 
-    in.foreach {
-      case (k, v) => ret.put(k,v)
-    }
-
-    ret
-  }
-
-
-  var session : HttpSession = new MockHttpSession
-  var queryString: String = ""
-  var contextPath: String = ""
-  var path: String = ""
-  var method: String = "GET"
-  var headers: Map[String, List[String]] = Map()
-  var attr: Map[String, Object] = Map()
-  var cookies: List[Cookie] = Nil
   var authType: String = null
-  var localPort = 0
-  var localAddr: String = null
-  var localName: String = null
-  var remotePort = 0
-  var remoteHost: String = null
-  var remoteAddr: String = null
-  var locale = Locale.getDefault
-  var reader: BufferedReader = new BufferedReader(new StringReader(method + " " + path +  "/\r\n\r\n"))
-  var serverPort = 0
-  var serverName: String = null
-  var scheme = "http"
-  var protocol = "HTTP 1.0"
-  var parameterMap: Map[String, List[String]] = Map()
-  var sbis: InputStream = new StringBufferInputStream("")
-  var inputStream: ServletInputStream = new MockServletInputStream(sbis)
-  var contentType: String = null
-  var contentLength: Int = 0
-  var charEncoding: String = "ISO-8859-1" // HTTP's default encoding
 
-  def isRequestedSessionIdFromURL(): Boolean = false
-  def isRequestedSessionIdFromUrl(): Boolean = false
-  def isRequestedSessionIdFromCookie(): Boolean = false
-  def isRequestedSessionIdValid(): Boolean = false
-  def getSession(p: Boolean): HttpSession = {
-    session
+  /**
+   * The character encoding of the request.
+   *
+   * Defaults to UTF-8. Note that this differs from the default
+   * encoding per the HTTP spec (ISO-8859-1), so you
+   * will need to change this if you need something
+   * other than UTF-8.
+   */
+  var charEncoding: String = "UTF-8" // HTTP's default encoding
+
+  /** The raw body of the request. */
+  var body: Array[Byte] = Array()
+
+  /**
+   * Sets the body to the given string.
+   * 
+   * Note that the String will be converted to bytes
+   * based on the current setting of charEncoding.
+   */
+  def body_= (s : String) { body = s.getBytes(charEncoding) }
+
+  /**
+   * Sets the body to the given elements. Also sets
+   * the contentType to "text/xml"
+   * 
+   * Note that the elements will be converted to bytes
+   * based on the current setting of charEncoding.
+   */
+  def body_= (nodes : NodeSeq) { 
+    body = nodes.toString.getBytes(charEncoding)
+    contentType = "text/xml"
   }
-  def getSession(): HttpSession = getSession(false)
-  def getServletPath(): String = ""
-  def getRequestURL(): StringBuffer = new StringBuffer(path)
-  def getRequestURI(): String = path
-  def getRequestedSessionId(): String = null
-  def getUserPrincipal(): java.security.Principal = null
-  def isUserInRole(user: String): Boolean = false
-  def getRemoteUser(): String = ""
-  def getQueryString(): String = queryString
+
+  /**
+   * Sets the body to the given json value. Also
+   * sets the contentType to "text/json"
+   */
+  def body_= (jval : JValue) {
+    import json.JsonDSL._
+    import json.Printer
+    body = Printer.pretty(render(jval)).getBytes(charEncoding)
+    contentType = "text/json"
+  }
+
+  var contentType: String = null
+
+  var cookies: List[Cookie] = Nil
+
+  var headers: Map[String, List[String]] = Map()
+
+  /**
+   * The port that this request was received on. You should
+   * probably change serverPort as well if you change this.
+   */
+  var localPort = 80
+
+  /**
+   * The local address that the request was received on.
+   *
+   * If you change this you should probably change localName
+   * and serverName as well.
+   */
+  var localAddr: String = "127.0.0.1"
+
+  /**
+   * The local hostname that the request was received on.
+   *
+   * If you change this you should probably change localAddr
+   * and serverName as well.
+   */
+  var localName: String = "localhost"
+
+  /**
+   * The preferred locales for the client, in decreasing order
+   * of preference. If not set, the default locale will be
+   * used.
+   */
+  var locales : List[Locale] = Nil
+
+  var method: String = "GET"
+
+  /**
+   * The query parameters for the request. There are two main
+   * ways to set this List, either by modifying the parameters
+   * var directly, or by assigning to queryString, which will
+   * parse the provided string into GET parameters.
+   */
+  var parameters : List[(String,String)] = Nil
+
+  @deprecated("Use the \"parameters\" var instead")
+  def parameterMap = Map(parameters : _*)
+
+  @deprecated("Use the \"parameters\" var instead")
+  def parameterMap_= (params : Map[String, List[String]]) {
+    parameters = params.toList.flatMap {
+      case (key,values) => values.map{(key,_)}
+    }
+  }
+
+  var path : String = "/"
+
+  var pathInfo : String = null
+
+  var protocol = "HTTP/1.0"
+
+  def queryString : String =
+    if (method == "GET" && !parameters.isEmpty) {
+      parameters.map{ case (k,v) => k + "=" + v }.mkString("&")
+    } else {
+      null
+    }
+
+  def queryString_= (q : String) {
+    if (q != null && q.length > 0) {
+      val newParams = ListBuffer[(String,String)]()
+
+      q.split('&').foreach { 
+        pair => pair.split('=') match {
+          case Array(key,value) => {
+            // Append to the current key's value
+            newParams += key -> value
+          }
+          case invalid => throw new IllegalArgumentException("Invalid query string: \"" + q + "\"")
+        }
+      }
+      
+      parameters = newParams.toList
+      method = "GET"
+    }
+  }
+
+  var remotePort = 80
+
+  /**
+   * The hostname of the client that sent the request.
+   *
+   * If you change this you should probably change remoteAddr
+   * as well.
+   */
+  var remoteHost: String = null
+
+  /**
+   * The address of the client that sent the request.
+   *
+   * If you change this you should probably change remoteHost
+   * as well.
+   */
+  var remoteAddr: String = null
+
+  // Default to the root URI
+  var requestUri : String = "/"
+
+  var user : String = null
+
+  var userRoles : Set[String] = Set()
+  
+  var userPrincipal : Principal = null
+
+  var scheme = "http"
+
+  /**
+   * Indicates whether the request is being handled by a
+   * secure protocol (e.g. HTTPS). If you set the scheme
+   * to https you should set this to true.
+   */
+  var secure = false
+
+  var serverName: String = "localhost"
+
+  /**
+   * The port that this request was received on. You should
+   * probably change localPort as well if you change this.
+   */
+  var serverPort = 80
+
+  // Defaults to "" for servlet matching "/*"
+  var servletPath : String = ""
+
+  var session : HttpSession = null
+
+  // BEGIN PRIMARY CONSTRUCTOR LOGIC
+  if (contextPath.length > 0 && (contextPath(0) != '/' || contextPath.last == '/')) {
+    throw new IllegalArgumentException("Context path must be empty, or must start with a '/' and not end with a '/': " + contextPath)
+  }
+
+  if (url != null) {
+    processUrl(url)
+  }
+
+  // END PRIMARY CONSTRUCTOR
+
+  /**
+   * Construct a new mock request for the given URL. See processUrl
+   * for limitations.
+   *
+   * @param url The URL to extract from
+   */
+  def this(url : URL) = {
+    this()
+    processUrl(url)
+  }
+
+  /**
+   * Construct a new mock request for the given URL. See processUrl
+   * for limitations.
+   *
+   * @param url The URL to extract from
+   * @param contextPath The servlet context of the request.
+   */
+  def this(url : URL, contextPath : String) = {
+    this(null : String, contextPath)
+    processUrl(url)
+  }
+
+  /**
+   * Set fields based on the given url string. If the
+   * url begins with "http" it is assumed to be a full URL, and is
+   * processed with processUrl(URL). If the url begins with "/" then it's
+   * assumed to be only the path and query string.
+   *
+   * @param url The URL to extract from
+   */
+  def processUrl (url : String) {
+    if (url.toLowerCase.startsWith("http")) {
+      processUrl(new URL(url))
+    } else if (url.startsWith("/")) {
+      computeRealPath(url).split('?') match {
+        case Array(path, query) => this.path = path; queryString = query
+        case Array(path) => this.path = path; queryString = null
+        case _ => throw new IllegalArgumentException("too many '?' in URL : " + url)
+      }
+    } else {
+      throw new IllegalArgumentException("Could not process url: \"%s\"".format(url))
+    }
+  }
+
+  /**
+   * Set fields based on the given URL. There are several limitations:
+   *
+   * <ol>
+   *   <li>The host portion is used to set localAddr, localHost and serverName. You will
+   *       need to manually set these if you want different behavior.</li>
+   *   <li>The userinfo field isn't processed. If you want to mock BASIC authentication,
+   *       use the addBasicAuth method</li>
+   * </ol>
+   * 
+   * @param url The URL to extract from
+   * @param contextPath The servlet context of the request. Defaults to ""
+   */
+  def processUrl (url : URL) {
+    // Deconstruct the URL to set values
+    url.getProtocol match {
+      case "http" => scheme = "http"; secure = false
+      case "https" => scheme = "https"; secure = true
+      case other => throw new IllegalArgumentException("Unsupported protocol: " + other)
+    }
+
+    localName = url.getHost
+    localAddr = localName
+    serverName = localName
+
+    if (url.getPort == -1) {
+      localPort = 80
+    } else {
+      localPort = url.getPort
+    }
+
+    serverPort = localPort
+
+    path = computeRealPath(url.getPath)
+
+    queryString = url.getQuery
+
+    
+  }
+
+  /** Compute the path portion after the contextPath */
+  def computeRealPath (path : String) = { 
+    if (! path.startsWith(contextPath)) {
+      throw new IllegalArgumentException("Path \"%s\" doesn't begin with context path \"%s\"!".format(path, contextPath))
+    }
+
+    path.substring(contextPath.length)
+  }
+
+  /**
+   * Adds an "Authorization" header, per RFC1945.
+   */
+  def addBasicAuth (user : String, pass : String) {
+    val hashedCredentials =
+      Helpers.base64Encode((user  + ":" + pass).getBytes)
+    headers += "Authorization" -> List("Basic " + hashedCredentials)
+  }
+
+  // ServletRequest methods
+
+  def getAttribute(key: String): Object = attr.get(key).getOrElse(null)
+
+  def getAttributeNames(): JEnum[Object] = attr.keys.iterator
+
+  def getCharacterEncoding(): String = charEncoding
+
+  def getContentLength(): Int = body.length
+
+  def getContentType(): String = contentType
+
+  def getInputStream(): ServletInputStream = {
+    new MockServletInputStream(new ByteArrayInputStream(body))
+  }
+
+  def getLocalAddr(): String = localAddr
+
+  def getLocale(): Locale = locales.headOption.getOrElse(Locale.getDefault)
+
+  def getLocales(): JEnum[Object] = locales.elements
+  
+  def getLocalName(): String = localName
+
+  def getLocalPort(): Int = localPort
+  
+  def getParameter(key: String): String = 
+    parameters.find(_._1 == key).map(_._2) getOrElse null
+
+  def getParameterMap(): java.util.Map[Object, Object] = {
+    // Build a new map based on the parameters List
+    var newMap = Map[String,List[String]]().withDefault(ignore => Nil)
+
+    parameters.foreach {
+      case (k,v) => newMap += k -> (newMap(k) ::: v :: Nil) // Ugly, but it works and keeps order
+    }
+
+    asJavaMap(newMap.map{case (k,v) => (k,v.toArray)}.asInstanceOf[Map[Object,Object]])
+  }
+
+  def getParameterNames(): JEnum[Object] = 
+    parameters.map(_._1).distinct.elements
+
+  def getParameterValues(key: String): Array[String] = 
+    parameters.filter(_._1 == key).map(_._2).toArray
+
+  def getProtocol(): String = protocol
+  
+  def getReader(): BufferedReader = 
+    new BufferedReader(new InputStreamReader(new ByteArrayInputStream(body), charEncoding))
+  
+  def getRealPath(s: String): String = s
+
+  def getRemoteAddr(): String = remoteAddr
+
+  def getRemoteHost(): String = remoteHost
+
+  def getRemotePort(): Int = remotePort
+
+  def getRequestDispatcher(s: String): RequestDispatcher = null
+
+  def getScheme(): String = scheme
+
+  def getServerName(): String = serverName
+
+  def getServerPort(): Int = serverPort
+
+  def isSecure = secure
+
+  def removeAttribute(key: String): Unit = attr -= key
+
+  def setAttribute(key: String, value: Object): Unit = attr += (key -> value)
+
+  def setCharacterEncoding(enc: String): Unit = charEncoding = enc
+
+  // HttpServletRequest methods
+  def getAuthType(): String = authType
+
   def getContextPath(): String = contextPath
-  def getPathTranslated(): String = path
-  def getPathInfo(): String = path
-  def getMethod(): String = method
-  def getIntHeader(h: String): Int = {
-    headers.get(h).flatMap(_.headOption).map(_.toInt) getOrElse -1
+
+  def getCookies(): Array[Cookie] = cookies.toArray
+
+  def getDateHeader(h: String): Long = {
+    val handler : PartialFunction[Throwable,Box[Long]] = {
+      case pe : ParseException => {
+        throw new IllegalArgumentException("Could not parse the date for %s : \"%s\"".format(h, getHeader(h)))
+        Empty
+      }
+    }
+    
+    Helpers.tryo(handler,{
+      // Have to use internetDateFormatter directly since parseInternetDate returns the epoch date on failure
+      Box.!!(getHeader(h)).map(Helpers.internetDateFormatter.parse(_).getTime)
+    }).flatMap(x => x) openOr -1L
   }
-  def getHeaderNames(): JEnum[Object] = headers.keys.iterator
-  def getHeaders(s: String): JEnum[Object] =
-    headers.getOrElse(s, Nil).elements
 
   def getHeader(h: String): String = headers.get(h) match {
     case Some(v :: _) => v
     case _ => null
   }
-  def getDateHeader(h: String): Long = {
-    headers.get(h).flatMap(_.headOption.map(_.toLong)) getOrElse -1L
+
+  def getHeaderNames(): JEnum[Object] = headers.keys.iterator
+
+  def getHeaders(s: String): JEnum[Object] =
+    headers.getOrElse(s, Nil).elements
+
+  def getIntHeader(h: String): Int = {
+    Box.!!(getHeader(h)).map(_.toInt) openOr -1
   }
+
+  def getMethod(): String = method
+
+  def getPathInfo(): String = pathInfo
+
+  def getPathTranslated(): String = path
+
+  def getQueryString(): String = queryString
+
+  def getRemoteUser(): String = user
+
+  def getRequestedSessionId(): String = null
+  
+  def getRequestURI(): String = contextPath + path
+
+  def getRequestURL(): StringBuffer = {
+    val buffer = new StringBuffer(scheme + "://" + localName)
+    
+    if (localPort != 80) buffer.append(":" + localPort)
+    
+    if (contextPath != "") buffer.append(contextPath)
+
+    buffer.append(path)
+
+    if (queryString ne null) {
+      buffer.append("?" + queryString)
+    }
+
+    buffer
+  }
+
+  def getServletPath(): String = servletPath
+
+  def getSession(): HttpSession = getSession(true)
+
+  def getSession(create: Boolean): HttpSession = {
+   if ((session eq null) && create) {
+      session = new MockHttpSession
+    }
+    session
+  }
+
+  def getUserPrincipal(): java.security.Principal = null
+
+  def isRequestedSessionIdFromURL(): Boolean = false
+
+  def isRequestedSessionIdFromUrl(): Boolean = false
+
+  def isRequestedSessionIdFromCookie(): Boolean = false
+
+  def isRequestedSessionIdValid(): Boolean = false
+
+  def isUserInRole(user: String): Boolean = false
+
+  /**
+   * A utility method to set the given header to an RFC1123 date
+   * based on the given long value (epoch seconds).
+   */
   def setDateHeader(s: String, l: Long) {
-    headers += (s -> List(new java.util.Date(l).toString))
+    headers += (s -> List(Helpers.toInternetDate(l)))
   }
-  def getCookies(): Array[Cookie] = cookies.toArray
-  def getAuthType(): String = authType
-  def getLocalPort(): Int = localPort
-  def getLocalAddr(): String = localAddr
-  def getLocalName(): String = localName
-  def getRemotePort(): Int = remotePort
-  def getRealPath(s: String): String = s
-  def getRequestDispatcher(s: String): RequestDispatcher = null
-  def isSecure = false
-  type ZZ = Q forSome {type Q}
-  def getLocales(): JEnum[Object] = Locale.getAvailableLocales.elements
-  def getLocale(): Locale = locale
-  def removeAttribute(key: String): Unit = attr -= key
-  def setAttribute(key: String, value: Object): Unit = attr += (key -> value)
-  def getRemoteHost(): String = remoteHost
-  def getRemoteAddr(): String = remoteAddr
-  def getReader(): java.io.BufferedReader = reader
-  def getServerPort(): Int = serverPort
-  def getServerName(): String = serverName
-  def getScheme(): String = scheme
-  def getProtocol(): String = protocol
-  def getParameterMap(): java.util.Map[Object, Object] = {
-    parameterMap.map{
-      case (key, value) => key -> value.toArray
-    }.toSeq
-  }
-
-  def getParameterValues(key: String): Array[String] =
-    parameterMap.get(key).map(_.toArray) getOrElse null
-
-  def getParameterNames(): JEnum[Object] = parameterMap.keys.iterator
-  def getParameter(key: String): String = parameterMap.get(key) match {
-    case Some(x :: _) => x
-    case _ => null
-  }
-
-  def getInputStream(): ServletInputStream = inputStream
-  def getContentType(): String = contentType
-  def getContentLength(): Int = contentLength
-  def getCharacterEncoding(): String = charEncoding
-  def setCharacterEncoding(enc: String): Unit = charEncoding = enc
-  def getAttributeNames(): JEnum[Object] = attr.keys.iterator
-  def getAttribute(key: String): Object = attr.get(key).getOrElse(null)
 }
 
-}
-}

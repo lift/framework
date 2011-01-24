@@ -52,8 +52,9 @@ trait ControlHelpers extends ClassHelpers {
 
   /**
    * Wraps a "try" block around the function f. If f throws
-   * an exception with its class in the 'ignore' list or if 'ignore' is
-   * null or an empty list, ignore the exception and return None.
+   * an exception that is in the domain of the handler PF,
+   * the handler will be invoked on the exception. Otherwise
+   * the exception is wrapped into a Failure.
    *
    * @param handler - A partial function that handles exceptions
    * @param f - the block of code to evaluate
@@ -61,6 +62,7 @@ trait ControlHelpers extends ClassHelpers {
    *   <li>Full(result of the evaluation of f) if f doesn't throw any exception
    *   <li>a Failure if f throws an exception
    *   </ul>
+   * @see net.liftweb.common.Failure
    */
   def tryo[T](handler: PartialFunction[Throwable, T], f: => T): Box[T] = {
     try {
