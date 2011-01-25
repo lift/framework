@@ -24,7 +24,7 @@ import JsCmds._
 
 import common._
 import util._
-import mapper._
+import db._
 import Helpers._
 import scala.xml._
 import scala.reflect.Manifest

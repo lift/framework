@@ -30,14 +30,14 @@
     <artifactId>lift-persistence_2.8.1</artifactId>
     <version>2.3-SNAPSHOT</version>
   </parent>
-  <artifactId>lift-mapper_2.8.1</artifactId>
+  <artifactId>lift-db_2.8.1</artifactId>
 
   <!--
     ~ More Project Information
   -->
-  <name>Lift Mapper</name>
+  <name>Lift DB</name>
   <description>
-    Lift's old-style OR Mapping
+    JDBC Database connection management
   </description>
 
   <!--
@@ -51,35 +51,8 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>lift-db_${scala.version}</artifactId>
+      <artifactId>lift-util_${scala.version}</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>lift-proto_${scala.version}</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.derby</groupId>
-      <artifactId>derby</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.scala-tools.testing</groupId>
-      <artifactId>specs_${scala.version}</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.scala-tools.testing</groupId>
-      <artifactId>scalacheck_${scala.version}</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
     </dependency>
   </dependencies>
 
@@ -93,7 +66,9 @@
         <artifactId>maven-bundle-plugin</artifactId>
         <configuration>
           <instructions>
-            <Export-Package>net.liftweb.mapper.*;version="${project.version}"</Export-Package>
+            <Export-Package>
+              net.liftweb.db.*;version="${project.version}",
+            </Export-Package>
           </instructions>
         </configuration>
       </plugin>

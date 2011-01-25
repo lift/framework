@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb 
+package object mapper {
+  type SuperConnection = db.SuperConnection
+  type ConnectionIdentifier = db.ConnectionIdentifier
+  type DriverType = db.DriverType
+  type ConnectionManager = db.ConnectionManager
+  type DBLogEntry = db.DBLogEntry
+  type StandardDBVendor = db.StandardDBVendor
 
-import _root_.java.sql.Connection
-import _root_.net.liftweb.common._
-
-/**
- * Vend JDBC connections
- */
-trait ConnectionManager {
-  def newConnection(name: ConnectionIdentifier): Box[Connection]
-  def releaseConnection(conn: Connection)
-  def newSuperConnection(name: ConnectionIdentifier): Box[SuperConnection] = Empty
-}
-
-}
+  def DBLogEntry = db.DBLogEntry
+  def DefaultConnectionIdentifier = db.DefaultConnectionIdentifier
+  def DriverType = db.DriverType
 }

@@ -49,6 +49,7 @@
     ~ Modules Setting
   -->
   <modules>
+    <module>lift-db</module>
     <module>lift-proto</module>
     <module>lift-mapper</module>
     <module>lift-jpa</module>

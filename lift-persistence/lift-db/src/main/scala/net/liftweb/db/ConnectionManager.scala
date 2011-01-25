@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package mapper 
+package net.liftweb
+package db
 
-import http.S
+import java.sql.Connection
+import net.liftweb.common._
 
-object DB extends db.DB1 {
-  db.DB.queryCollector = {
-    case (query, time) => 
-      query.statementEntries.foreach(
-        {case db.DBLogEntry(stmt, duration) => S.logQuery(stmt, duration)
-       }
-      )
-  }
+/**
+ * Vend JDBC connections
+ */
+trait ConnectionManager {
+  def newConnection(name: ConnectionIdentifier): Box[Connection]
+  def releaseConnection(conn: Connection)
+  def newSuperConnection(name: ConnectionIdentifier): Box[SuperConnection] = Empty
 }
+

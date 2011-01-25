@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb 
+package db
 
-import _root_.java.sql.{Connection,PreparedStatement,ResultSet,Statement}
-import _root_.net.liftweb.common._
+import java.sql.{Connection,PreparedStatement,ResultSet,Statement}
+import net.liftweb.common._
 
 /**
  * JDBC Driver Abstraction base class. New driver types should extend this base
@@ -459,6 +459,4 @@ object MaxDbDriver extends DriverType("MaxDB") {
   def enumListColumnType = "FIXED(38)"
   def longColumnType = "FIXED(38)"
   def doubleColumnType = "FLOAT(38)"
-}
-}
 }

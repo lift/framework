@@ -46,7 +46,7 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>lift-mapper_${scala.version}</artifactId> <!-- FIXME we only need DB out of here, and that should be moved out of mapper -->
+      <artifactId>lift-db_${scala.version}</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
