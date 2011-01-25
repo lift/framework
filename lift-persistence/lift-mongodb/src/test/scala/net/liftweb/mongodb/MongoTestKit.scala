@@ -30,7 +30,7 @@ trait MongoTestKit {
     .replace(".", "_")
     .toLowerCase
 
-  def defaultHost = MongoHost("localhost", 27017)
+  def defaultHost = MongoHost("127.0.0.1", 27017)
 
   // If you need more than one db, override this
   def dbs: List[(MongoIdentifier, MongoHost, String)] = List((DefaultMongoIdentifier, defaultHost, dbName))

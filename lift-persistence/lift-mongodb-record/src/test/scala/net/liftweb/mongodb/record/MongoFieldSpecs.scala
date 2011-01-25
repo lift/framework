@@ -251,6 +251,8 @@ object MongoFieldSpecs extends Specification with MongoTestKit {
 
   "PasswordField" should {
     "require a nonempty password" in {
+      checkMongoIsRunning
+
       val rec = PasswordTestRecord.createRecord
       rec.password.setPassword("")
       rec.validate must_== (
@@ -260,6 +262,8 @@ object MongoFieldSpecs extends Specification with MongoTestKit {
     }
 
     "require at least 3 character password" in {
+      checkMongoIsRunning
+
       val rec = PasswordTestRecord.createRecord
       rec.password.setPassword("ab")
       rec.validate must_== (
@@ -270,82 +274,102 @@ object MongoFieldSpecs extends Specification with MongoTestKit {
   }
 
   "MongoListField (String)" should {
-    val rec = ListTestRecord.createRecord
-    val lst = List("abc", "def", "ghi")
-    passBasicTests(lst, rec.mandatoryStringListField, rec.legacyOptionalStringListField)
-    passConversionTests(
-      lst,
-      rec.mandatoryStringListField,
-      JsArray(Str("abc"), Str("def"), Str("ghi")),
-      JArray(List(JString("abc"), JString("def"), JString("ghi"))),
-      Empty
-    )
+    "function correctly" in {
+      checkMongoIsRunning
+
+      val rec = ListTestRecord.createRecord
+      val lst = List("abc", "def", "ghi")
+      passBasicTests(lst, rec.mandatoryStringListField, rec.legacyOptionalStringListField)
+      passConversionTests(
+        lst,
+        rec.mandatoryStringListField,
+        JsArray(Str("abc"), Str("def"), Str("ghi")),
+        JArray(List(JString("abc"), JString("def"), JString("ghi"))),
+        Empty
+      )
+    }
   }
 
   "MongoListField (Int)" should {
-    val rec = ListTestRecord.createRecord
-    val lst = List(4, 5, 6)
-    passBasicTests(lst, rec.mandatoryIntListField, rec.legacyOptionalIntListField)
-    passConversionTests(
-      lst,
-      rec.mandatoryIntListField,
-      JsArray(Num(4), Num(5), Num(6)),
-      JArray(List(JInt(4), JInt(5), JInt(6))),
-      Empty
-    )
+    "function correctly" in {
+      checkMongoIsRunning
+
+      val rec = ListTestRecord.createRecord
+      val lst = List(4, 5, 6)
+      passBasicTests(lst, rec.mandatoryIntListField, rec.legacyOptionalIntListField)
+      passConversionTests(
+        lst,
+        rec.mandatoryIntListField,
+        JsArray(Num(4), Num(5), Num(6)),
+        JArray(List(JInt(4), JInt(5), JInt(6))),
+        Empty
+      )
+    }
   }
 
   "MongoJsonObjectListField" should {
-    val rec = ListTestRecord.createRecord
-    val lst = List(TypeTestJsonObject(1, "jsonobj1"), TypeTestJsonObject(2, "jsonobj2"))
-    passBasicTests(lst, rec.mandatoryMongoJsonObjectListField, rec.legacyOptionalMongoJsonObjectListField)
-    passConversionTests(
-      lst,
-      rec.mandatoryMongoJsonObjectListField,
-      JsArray(
-        JsObj(("intField", Num(1)), ("stringField", Str("jsonobj1"))),
-        JsObj(("intField", Num(2)), ("stringField", Str("jsonobj2")))
-      ),
-      JArray(List(
-        JObject(List(JField("intField", JInt(1)), JField("stringField", JString("jsonobj1")))),
-        JObject(List(JField("intField", JInt(2)), JField("stringField", JString("jsonobj2"))))
-      )),
-      Empty
-    )
+    "function correctly" in {
+      checkMongoIsRunning
+
+      val rec = ListTestRecord.createRecord
+      val lst = List(TypeTestJsonObject(1, "jsonobj1"), TypeTestJsonObject(2, "jsonobj2"))
+      passBasicTests(lst, rec.mandatoryMongoJsonObjectListField, rec.legacyOptionalMongoJsonObjectListField)
+      passConversionTests(
+        lst,
+        rec.mandatoryMongoJsonObjectListField,
+        JsArray(
+          JsObj(("intField", Num(1)), ("stringField", Str("jsonobj1"))),
+          JsObj(("intField", Num(2)), ("stringField", Str("jsonobj2")))
+        ),
+        JArray(List(
+          JObject(List(JField("intField", JInt(1)), JField("stringField", JString("jsonobj1")))),
+          JObject(List(JField("intField", JInt(2)), JField("stringField", JString("jsonobj2"))))
+        )),
+        Empty
+      )
+    }
   }
 
   "MongoMapField (String)" should {
-    val rec = MapTestRecord.createRecord
-    val map = Map("a" -> "abc", "b" -> "def", "c" -> "ghi")
-    passBasicTests(map, rec.mandatoryStringMapField, rec.legacyOptionalStringMapField)
-    passConversionTests(
-      map,
-      rec.mandatoryStringMapField,
-      JsObj(("a", Str("abc")), ("b", Str("def")), ("c", Str("ghi"))),
-      JObject(List(
-        JField("a", JString("abc")),
-        JField("b", JString("def")),
-        JField("c", JString("ghi"))
-      )),
-      Empty
-    )
+    "function correctly" in {
+      checkMongoIsRunning
+
+      val rec = MapTestRecord.createRecord
+      val map = Map("a" -> "abc", "b" -> "def", "c" -> "ghi")
+      passBasicTests(map, rec.mandatoryStringMapField, rec.legacyOptionalStringMapField)
+      passConversionTests(
+        map,
+        rec.mandatoryStringMapField,
+        JsObj(("a", Str("abc")), ("b", Str("def")), ("c", Str("ghi"))),
+        JObject(List(
+          JField("a", JString("abc")),
+          JField("b", JString("def")),
+          JField("c", JString("ghi"))
+        )),
+        Empty
+      )
+    }
   }
 
   "MongoMapField (Int)" should {
-    val rec = MapTestRecord.createRecord
-    val map = Map("a" -> 4, "b" -> 5, "c" -> 6)
-    passBasicTests(map, rec.mandatoryIntMapField, rec.legacyOptionalIntMapField)
-    passConversionTests(
-      map,
-      rec.mandatoryIntMapField,
-      JsObj(("a", Num(4)), ("b", Num(5)), ("c", Num(6))),
-      JObject(List(
-        JField("a", JInt(4)),
-        JField("b", JInt(5)),
-        JField("c", JInt(6))
-      )),
-      Empty
-    )
+    "function correctly" in {
+      checkMongoIsRunning
+
+      val rec = MapTestRecord.createRecord
+      val map = Map("a" -> 4, "b" -> 5, "c" -> 6)
+      passBasicTests(map, rec.mandatoryIntMapField, rec.legacyOptionalIntMapField)
+      passConversionTests(
+        map,
+        rec.mandatoryIntMapField,
+        JsObj(("a", Num(4)), ("b", Num(5)), ("c", Num(6))),
+        JObject(List(
+          JField("a", JInt(4)),
+          JField("b", JInt(5)),
+          JField("c", JInt(6))
+        )),
+        Empty
+      )
+    }
   }
 }
 
