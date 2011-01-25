@@ -89,14 +89,48 @@ trait JsObj extends JsExp {
   }
 }
 
-trait JsExp extends SpecialNode with HtmlFixer with JxBase with ToJsCmd {
+/**
+ * The companion object to JsExp that has some
+ * helpful conversions to/from Lift's JSON library
+ */
+object JsExp {
+  import json._
+
+  implicit def jValueToJsExp(jv: JValue): JsExp = new JsExp {
+    lazy val toJsCmd = Printer.compact(JsonAST.render(jv))
+  }
+
+  implicit def strToJsExp(str: String): JE.Str = JE.Str(str)
+
+  implicit def boolToJsExp(b: Boolean): JsExp = JE.boolToJsExp(b)
+
+  implicit def intToJsExp(in: Int): JE.Num = JE.Num(in)
+
+  implicit def longToJsExp(in: Long): JE.Num = JE.Num(in)
+
+  implicit def doubleToJsExp(in: Double): JE.Num = JE.Num(in)
+
+  implicit def floatToJsExp(in: Float): JE.Num = JE.Num(in)
+
+  implicit def numToJValue(in: JE.Num): JValue = in match {
+    case JE.Num(n) => JDouble(n.doubleValue())
+  }
+
+  implicit def strToJValue(in: JE.Str): JValue = JString(in.str)
+}
+
+/**
+ * The basic JavaScript expression
+ */
+trait JsExp extends HtmlFixer with ToJsCmd {
   def toJsCmd: String
 
   // def label: String = "#JS"
 
+  /*
   override def buildString(sb: StringBuilder) = {
     (new Text(toJsCmd)).buildString(sb)
-  }
+  }*/
 
   def appendToParent(parentName: String): JsCmd = {
     val ran = "v" + Helpers.nextFuncName
@@ -143,9 +177,10 @@ trait JsMember {
  * sites/example/src/webapp/json.html
  */
 object JE {
-  implicit def strToS(in: String): Str = Str(in)
+  def boolToJsExp(in: Boolean): JsExp = if (in) JsTrue else JsFalse
 
-  implicit def boolToJsExp(in: Boolean): JsExp = if (in) JsTrue else JsFalse
+  /*
+  implicit def strToS(in: String): Str = Str(in)
 
   implicit def numToJsExp(in: Int): JsExp = Num(in)
 
@@ -154,6 +189,7 @@ object JE {
   implicit def numToJsExp(in: Double): JsExp = Num(in)
 
   implicit def numToJsExp(in: Float): JsExp = Num(in)
+  */
 
   case class Num(n: Number) extends JsExp {
     def toJsCmd = n.toString
