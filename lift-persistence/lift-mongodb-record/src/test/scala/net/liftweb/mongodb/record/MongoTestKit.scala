@@ -31,10 +31,10 @@ trait MongoTestKit {
     .replace(".", "_")
     .toLowerCase
 
-  val defaultHost = MongoHost()
+  val defaultHost = MongoHost("127.0.0.1", 27017)
 
   // If you need more than one db, override this
-  def dbs: List[(MongoIdentifier, MongoHost, String)] =
+  def dbs: List[(MongoIdentifier, MongoHost, String)] = 
     List((DefaultMongoIdentifier, defaultHost, dbName))
 
   def debug = false
@@ -47,18 +47,17 @@ trait MongoTestKit {
   }
 
   def isMongoRunning: Boolean =
-    if (dbs.length < 1)
-      false
-    else {
-      try {
+    try {
+      if (dbs.length < 1)
+        false
+      else {
         dbs foreach { dbtuple =>
           MongoDB.use(dbtuple._1) ( db => { db.getLastError } )
         }
         true
       }
-      catch {
-        case e: Exception => false
-      }
+    } catch {
+      case _ => false
     }
 
   def checkMongoIsRunning =

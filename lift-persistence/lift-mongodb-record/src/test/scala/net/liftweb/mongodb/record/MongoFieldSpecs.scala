@@ -192,9 +192,13 @@ object MongoFieldSpecs extends Specification with MongoTestKit {
   }
 
   "DBRefField" should {
-    val rec = MongoFieldTypeTestRecord.createRecord
-    val dbref = DBRefTestRecord.createRecord.getRef
-    passBasicTests(dbref, rec.mandatoryDBRefField, rec.legacyOptionalDBRefField)
+    checkMongoIsRunning
+    
+    if (isMongoRunning) { // Even if this gets skipped, the vals still get set.
+      val rec = MongoFieldTypeTestRecord.createRecord
+      val dbref = DBRefTestRecord.createRecord.getRef // This makes a call to MongoDB.use and needs a MongoDB connection.
+      passBasicTests(dbref, rec.mandatoryDBRefField, rec.legacyOptionalDBRefField)
+    }
   }
 
   "JsonObjectField" should {
@@ -251,8 +255,6 @@ object MongoFieldSpecs extends Specification with MongoTestKit {
 
   "PasswordField" should {
     "require a nonempty password" in {
-      checkMongoIsRunning
-
       val rec = PasswordTestRecord.createRecord
       rec.password.setPassword("")
       rec.validate must_== (
@@ -262,8 +264,6 @@ object MongoFieldSpecs extends Specification with MongoTestKit {
     }
 
     "require at least 3 character password" in {
-      checkMongoIsRunning
-
       val rec = PasswordTestRecord.createRecord
       rec.password.setPassword("ab")
       rec.validate must_== (
@@ -275,8 +275,6 @@ object MongoFieldSpecs extends Specification with MongoTestKit {
 
   "MongoListField (String)" should {
     "function correctly" in {
-      checkMongoIsRunning
-
       val rec = ListTestRecord.createRecord
       val lst = List("abc", "def", "ghi")
       passBasicTests(lst, rec.mandatoryStringListField, rec.legacyOptionalStringListField)
@@ -292,8 +290,6 @@ object MongoFieldSpecs extends Specification with MongoTestKit {
 
   "MongoListField (Int)" should {
     "function correctly" in {
-      checkMongoIsRunning
-
       val rec = ListTestRecord.createRecord
       val lst = List(4, 5, 6)
       passBasicTests(lst, rec.mandatoryIntListField, rec.legacyOptionalIntListField)
@@ -309,8 +305,6 @@ object MongoFieldSpecs extends Specification with MongoTestKit {
 
   "MongoJsonObjectListField" should {
     "function correctly" in {
-      checkMongoIsRunning
-
       val rec = ListTestRecord.createRecord
       val lst = List(TypeTestJsonObject(1, "jsonobj1"), TypeTestJsonObject(2, "jsonobj2"))
       passBasicTests(lst, rec.mandatoryMongoJsonObjectListField, rec.legacyOptionalMongoJsonObjectListField)
@@ -332,8 +326,6 @@ object MongoFieldSpecs extends Specification with MongoTestKit {
 
   "MongoMapField (String)" should {
     "function correctly" in {
-      checkMongoIsRunning
-
       val rec = MapTestRecord.createRecord
       val map = Map("a" -> "abc", "b" -> "def", "c" -> "ghi")
       passBasicTests(map, rec.mandatoryStringMapField, rec.legacyOptionalStringMapField)
@@ -353,8 +345,6 @@ object MongoFieldSpecs extends Specification with MongoTestKit {
 
   "MongoMapField (Int)" should {
     "function correctly" in {
-      checkMongoIsRunning
-
       val rec = MapTestRecord.createRecord
       val map = Map("a" -> 4, "b" -> 5, "c" -> 6)
       passBasicTests(map, rec.mandatoryIntMapField, rec.legacyOptionalIntMapField)

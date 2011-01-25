@@ -41,6 +41,8 @@ object MongoRecordSpecs extends Specification with MongoTestKit {
   import fixtures._
 
   "MongoRecord field introspection" should {
+    checkMongoIsRunning
+
     val rec = MongoFieldTypeTestRecord.createRecord
     val allExpectedFieldNames: List[String] = "_id" :: (for {
       typeName <- "Date DBRef JsonObject ObjectId Pattern UUID".split(" ")
@@ -65,6 +67,8 @@ object MongoRecordSpecs extends Specification with MongoTestKit {
   }
 
   "MongoRecord lifecycle callbacks" should {
+    checkMongoIsRunning
+
     def testOneHarness(scope: String, f: LifecycleTestRecord => HarnessedLifecycleCallbacks): Unit = {
       ("be called before validation when specified at " + scope) in {
         val rec = LifecycleTestRecord.createRecord
@@ -164,7 +168,8 @@ object MongoRecordSpecs extends Specification with MongoTestKit {
   }
 
   "MongoRecord" should {
-
+    checkMongoIsRunning
+    
     val fttr = FieldTypeTestRecord.createRecord
       //.mandatoryBinaryField()
       .mandatoryBooleanField(false)
@@ -183,11 +188,15 @@ object MongoRecordSpecs extends Specification with MongoTestKit {
 
     val mfttr = MongoFieldTypeTestRecord.createRecord
       .mandatoryDateField(new Date)
-      .mandatoryDBRefField(DBRefTestRecord.createRecord.getRef)
       .mandatoryJsonObjectField(TypeTestJsonObject(1, "jsonobj1"))
       .mandatoryObjectIdField(ObjectId.get)
       .mandatoryPatternField(Pattern.compile("^Mo", Pattern.CASE_INSENSITIVE))
       .mandatoryUUIDField(UUID.randomUUID)
+    
+    /* This causes problems if MongoDB is not running */
+    if (isMongoRunning) {
+      mfttr.mandatoryDBRefField(DBRefTestRecord.createRecord.getRef)
+    }
 
     val ltr = ListTestRecord.createRecord
       .mandatoryStringListField(List("abc", "def", "ghi"))
@@ -245,6 +254,8 @@ object MongoRecordSpecs extends Specification with MongoTestKit {
     }
 
     "convert Mongo type fields to JValue" in {
+      checkMongoIsRunning
+
       mfttr.asJValue mustEqual JObject(List(
         JField("_id", JObject(List(JField("$oid", JString(mfttr.id.toString))))),
         JField("mandatoryDateField", JObject(List(JField("$dt", JString(mfttr.meta.formats.dateFormat.format(mfttr.mandatoryDateField.value)))))),
@@ -293,6 +304,8 @@ object MongoRecordSpecs extends Specification with MongoTestKit {
     }
     
     "convert Mongo type fields to JsExp" in {
+      checkMongoIsRunning
+
       mfttr.asJsExp mustEqual JsObj(
         ("_id", JsObj(("$oid", Str(mfttr.id.toString)))),
         ("mandatoryDateField", JsObj(("$dt", Str(mfttr.meta.formats.dateFormat.format(mfttr.mandatoryDateField.value))))),
@@ -341,6 +354,8 @@ object MongoRecordSpecs extends Specification with MongoTestKit {
     }
 
     "get set from json string using lift-json parser" in {
+      checkMongoIsRunning
+
       val mfftrFromJson = MongoFieldTypeTestRecord.fromJsonString(json)
       mfftrFromJson must notBeEmpty
       mfftrFromJson foreach { tr =>
@@ -393,7 +408,7 @@ object MongoRecordSpecs extends Specification with MongoTestKit {
 
     "handle Box using JsonBoxSerializer" in {
       checkMongoIsRunning
-
+      
       val btr = BoxTestRecord.createRecord
       btr.jsonobjlist.set(
         BoxTestJsonObj("1", Empty, Full("Full String1"), Failure("Failure1")) ::
