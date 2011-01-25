@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.scala.xml._
+import scala.xml._
 import common._
-import _root_.scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ListBuffer
 
 
 /**
@@ -937,7 +937,7 @@ trait BindHelpers {
     val nsColon = namespace + ":"
 
     BindHelpers._bindNodes.doWith(xml :: (BindHelpers._bindNodes.box.openOr(Nil))) {
-      val map: _root_.scala.collection.immutable.Map[String, BindParam] = _root_.scala.collection.immutable.HashMap.empty ++ params.map(p => (p.name, p))
+      val map: scala.collection.immutable.Map[String, BindParam] = scala.collection.immutable.HashMap.empty ++ params.map(p => (p.name, p))
 
       def attrBind(attr: MetaData): MetaData = attr match {
         case Null => Null
@@ -1055,7 +1055,7 @@ trait BindHelpers {
    * @return the NodeSeq that results from the specified transforms
    */
   def bind(vals: Map[String, NodeSeq], xml: NodeSeq): NodeSeq = 
-    bind(vals,xml,true,_root_.scala.collection.mutable.Set(vals.keySet.toSeq : _*))
+    bind(vals,xml,true,scala.collection.mutable.Set(vals.keySet.toSeq : _*))
 
   /**
    * This method exists so that we can do recursive binding with only root-node
@@ -1075,7 +1075,7 @@ trait BindHelpers {
    *
    * @return the NodeSeq that results from the specified transforms
    */
-  private def bind(vals: Map[String, NodeSeq], xml: NodeSeq, reportUnused : Boolean, unusedBindings : _root_.scala.collection.mutable.Set[String]): NodeSeq = {
+  private def bind(vals: Map[String, NodeSeq], xml: NodeSeq, reportUnused : Boolean, unusedBindings : scala.collection.mutable.Set[String]): NodeSeq = {
     val isBind = (node: Elem) => {
       node.prefix == "lift" && node.label == "bind"
     }
@@ -1789,26 +1789,29 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
           throw new RetryWithException(realE)
         }
           
-        case Full(KidsSubNode()) => {
+        case Full(todo: WithKids) => {
           val calced = bind.calculate(realE.child)
           calced.length match {
             case 0 => NodeSeq.Empty
             case 1 => new Elem(realE.prefix, realE.label, 
-                               realE.attributes, realE.scope, calced.first :_*)
+                               realE.attributes, realE.scope, 
+                               todo.transform(realE.child, calced.first) :_*)
             case _ if id.isEmpty => 
               calced.map(kids => new Elem(realE.prefix, realE.label, 
                                           realE.attributes, realE.scope,
-                                          kids :_*))
+                                          todo.transform(realE.child, kids) :_*))
 
             case _ => {
               val noId = removeId(realE.attributes)
               calced.toList.zipWithIndex.map {
                 case (kids, 0) => 
                   new Elem(realE.prefix, realE.label, 
-                           realE.attributes, realE.scope, kids :_*)
+                           realE.attributes, realE.scope, 
+                           todo.transform(realE.child, kids) :_*)
                 case (kids, _) => 
                   new Elem(realE.prefix, realE.label, 
-                           noId, realE.scope, kids :_*)
+                           noId, realE.scope, 
+                           todo.transform(realE.child, kids) :_*)
               }
             }
           }
@@ -2093,7 +2096,4 @@ abstract class CssBindImpl(val stringSelector: Box[String], val css: Box[CssSele
   def calculate(in: NodeSeq): Seq[NodeSeq]
 }
 
-
-}
-}
 // vim: set ts=2 sw=2 et:

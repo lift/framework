@@ -479,6 +479,16 @@ object CssBindHelpersSpec extends Specification  {
       res must ==/ (<top>Dog</top>)
     }
 
+    "transform child content on *+" in {
+      val res = ("* *+" #> "moose")(<a>I like </a>)
+      res.text must_== "I like moose"
+    }
+
+    "transform child content on -*" in {
+      val res = ("* -*" #> "moose")(<a> I like</a>)
+      res.text must_== "moose I like"
+    }
+
     "transform on li" in {
       val res = ("li *" #> List("Woof", "Bark") & ClearClearable)(
         <ul><li>meow</li><li class="clearable">a</li><li class="clearable">a</li></ul>)

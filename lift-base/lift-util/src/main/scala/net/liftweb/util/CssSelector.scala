@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.scala.util.parsing.combinator.{Parsers, ImplicitConversions}
-import _root_.net.liftweb.common._
+import scala.util.parsing.combinator.{Parsers, ImplicitConversions}
+import scala.xml.NodeSeq
+import net.liftweb.common._
 
 sealed trait CssSelector {
   def subNodes: Box[SubNode]
@@ -48,7 +49,22 @@ object SubNode {
     Some(bind.css.flatMap(_.subNodes))
 }
 
-final case class KidsSubNode() extends SubNode
+sealed trait WithKids {
+  def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq
+}
+
+final case class KidsSubNode() extends SubNode with WithKids {
+  def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq = newNs
+}
+
+final case class PrependKidsSubNode() extends SubNode with WithKids {
+  def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq = newNs ++ original
+}
+
+final case class AppendKidsSubNode() extends SubNode with WithKids {
+  def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq = original ++ newNs
+}
+
 final case class AttrSubNode(attr: String) extends SubNode
 final case class AttrAppendSubNode(attr: String) extends SubNode
 final case class SelectThisNode() extends SubNode
@@ -62,7 +78,10 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
   /**
    * Parse a String into a CSS Selector
    */
-  def parse(toParse: String): Box[CssSelector] = synchronized {
+  def parse(_toParse: String): Box[CssSelector] = synchronized {
+    // trim off leading and trailing spaces
+    val toParse = _toParse.trim
+
     // this method is synchronized because the Parser combinator is not
     // thread safe, so we'll only parse one at a time, but given that most
     // of the selectors will be cached, it's not really a performance hit
@@ -95,15 +114,33 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
   private implicit def str2chars(s: String): List[Char] = new scala.collection.immutable.WrappedString(s).toList
 
   private lazy val topParser: Parser[CssSelector] = {
-    idMatch |
-    classMatch |
-    attrMatch |
-    elemMatch |
-    starMatch
+    phrase(idMatch |
+           nameMatch |
+           classMatch |
+           attrMatch |
+           elemMatch |
+           starMatch |
+           colonMatch)
   }
     
+  private lazy val colonMatch: Parser[CssSelector] =
+    ':' ~> id ~ opt(subNode) ^? {
+      case "button" ~ sn => AttrSelector("type", "button", sn)
+      case "checkbox" ~ sn => AttrSelector("type", "checkbox", sn)
+      case "file" ~ sn => AttrSelector("type", "file", sn)
+      case "password" ~ sn => AttrSelector("type", "password", sn)
+      case "radio" ~ sn => AttrSelector("type", "radio", sn)
+      case "reset" ~ sn => AttrSelector("type", "reset", sn)
+      case "submit" ~ sn => AttrSelector("type", "submit", sn)
+      case "text" ~ sn => AttrSelector("type", "text", sn)
+    }
+
   private lazy val idMatch: Parser[CssSelector] = '#' ~> id ~ opt(subNode) ^^ {
     case id ~ sn => IdSelector(id, sn)
+  }
+
+  private lazy val nameMatch: Parser[CssSelector] = '@' ~> id ~ opt(subNode) ^^ {
+    case name ~ sn => NameSelector(name, sn)
   }
 
   private lazy val elemMatch: Parser[CssSelector] =  id ~ opt(subNode) ^^ {
@@ -147,6 +184,8 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
    (opt('*') ~ '[' ~> attrName <~ ']' ^^ {
      name => AttrSubNode(name)
    }) | 
+   ('-' ~ '*' ^^ (a => PrependKidsSubNode())) |
+   ('*' ~ '+' ^^ (a => AppendKidsSubNode())) |
    '*' ^^ (a => KidsSubNode()) |
    '^' ~ '^' ^^ (a => SelectThisNode()))
 
@@ -177,5 +216,3 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
   
 }
 
-}
-}

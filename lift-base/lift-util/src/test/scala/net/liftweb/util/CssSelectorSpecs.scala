@@ -34,9 +34,52 @@ object CssSelectorSpec extends Specification  {
       CssSelectorParser.parse("#foo").open_! must_== IdSelector("foo", Empty)
     }
 
-    "select an id with subnodes" in {
-      CssSelectorParser.parse("#foo  * ").open_! must_== 
-      IdSelector("foo", Full(KidsSubNode()))
+    "a selector with cruft at the end must fail" in {
+      CssSelectorParser.parse("#foo I like yaks").isDefined must_== false
+    }
+
+    ":yak must not parse" in {
+      CssSelectorParser.parse(":yak").isDefined must_== false
+    }
+
+    ":button must  parse" in {
+      CssSelectorParser.parse(":button").open_! must_== 
+      AttrSelector("type", "button", Empty)
+    }
+
+    ":checkbox must  parse" in {
+      CssSelectorParser.parse(":checkbox").open_! must_== 
+      AttrSelector("type", "checkbox", Empty)
+    }
+
+    ":file must  parse" in {
+      CssSelectorParser.parse(":file").open_! must_== 
+      AttrSelector("type", "file", Empty)
+    }
+
+    ":password must  parse" in {
+      CssSelectorParser.parse(":password").open_! must_== 
+      AttrSelector("type", "password", Empty)
+    }
+
+    ":radio must  parse" in {
+      CssSelectorParser.parse(":radio").open_! must_== 
+      AttrSelector("type", "radio", Empty)
+    }
+
+    ":reset must  parse" in {
+      CssSelectorParser.parse(":reset").open_! must_== 
+      AttrSelector("type", "reset", Empty)
+    }
+
+    ":submit must  parse" in {
+      CssSelectorParser.parse(":submit").open_! must_== 
+      AttrSelector("type", "submit", Empty)
+    }
+
+    ":text must  parse" in {
+      CssSelectorParser.parse(":text").open_! must_== 
+      AttrSelector("type", "text", Empty)
     }
 
     "select an id with attr subnodes" in {
@@ -69,6 +112,26 @@ object CssSelectorSpec extends Specification  {
     "select name/val pair" in {
       CssSelectorParser.parse("name=dog") must_==
       Full(NameSelector("dog", Empty))
+    }
+
+    "select name/val pair" in {
+      CssSelectorParser.parse("@dog") must_==
+      Full(NameSelector("dog", Empty))
+    }
+
+    "select name/val pair" in {
+      CssSelectorParser.parse("@dog *") must_==
+      Full(NameSelector("dog", Full(KidsSubNode())))
+    }
+
+    "select name/val pair" in {
+      CssSelectorParser.parse("@dog -*") must_==
+      Full(NameSelector("dog", Full(PrependKidsSubNode())))
+    }
+
+    "select name/val pair" in {
+      CssSelectorParser.parse("@dog *+") must_==
+      Full(NameSelector("dog", Full(AppendKidsSubNode())))
     }
 
 
