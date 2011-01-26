@@ -21,6 +21,7 @@ import scala.collection.mutable.{HashMap, ListBuffer}
 import scala.xml._
 import scala.collection.immutable.{ListMap, TreeMap}
 import common._
+import actor.LAFuture
 import util._
 import Helpers._
 import js._
@@ -2095,58 +2096,87 @@ for {
      case (Full(true), _) => {
        _functionMap.value += (name ->
                               new S.ProxyFuncHolder(value) {
+                                var shot = false
                                 override def apply(in: List[String]): Any = {
-                                  try {
-                                    value.apply(in)
-                                  } finally {
-                                    S.session.map(_.removeFunction(name))
+                                  synchronized {
+                                    if (!shot) {
+                                      shot = true
+                                      S.session.map(_.removeFunction(name))
+                                      value.apply(in)
+                                    } else {
+                                      js.JsCmds.Noop
+                                    }
                                   }
                                 }
 
                                 override def apply(in: FileParamHolder): Any = {
-                                  try {
-                                    value.apply(in)
-                                  } finally {
-                                    S.session.map(_.removeFunction(name))
+                                  synchronized {
+                                    if (!shot) {
+                                      shot = true
+                                      S.session.map(_.removeFunction(name))
+                                      value.apply(in)
+                                    } else {
+                                      js.JsCmds.Noop
+                                    }
                                   }
                                 }
                               })
      }
 
      case (_, Full(true)) => {
-       def setProxyFunc(retVal: Any) {
-         _functionMap.value +=
-         (name -> new S.ProxyFuncHolder(value) {
-          override def apply(in: List[String]): Any = retVal
-          override def apply(in: FileParamHolder): Any = retVal
-        })
-       }
-
-       _functionMap.value +=
-       (name ->
+       _functionMap.value +=  (name ->
         new S.ProxyFuncHolder(value) {
-          override def apply(in: List[String]): Any = {
-            val ret = try {
-              value.apply(in)
-            } finally {
-              S.session.map(_.removeFunction(name))
-            }
-            // after the function is executed, memoize
-            // the return value and always return the memoized value
-            setProxyFunc(ret)
+          var shot = false 
+          lazy val theFuture: LAFuture[Any] = {
+            S.session.map(_.removeFunction(name))
+            val future: LAFuture[Any] = new LAFuture
+            
+            _functionMap.value += (name -> new S.ProxyFuncHolder(value) {
+              override def apply(in: List[String]): Any = future.get(5000).open_!
+              override def apply(in: FileParamHolder): Any = future.get(5000).open_!
+            })
+            
+            future
+          }
+
+          
+          def fixShot(): Boolean = synchronized {
+            val ret = shot
+            shot = true
             ret
           }
 
-          override def apply(in: FileParamHolder): Any = {
-            val ret = try {
-              value.apply(in)
-            } finally {
-              S.session.map(_.removeFunction(name))
+          override def apply(in: List[String]): Any = {
+            val ns = fixShot()
+            if (ns) {
+              theFuture.get(5000).open_!
+            } else {
+              val future = theFuture
+              try {
+                val ret = value.apply(in)
+                future.satisfy(ret)
+                ret
+              } catch {
+                case e => future.satisfy(e); throw e
+              }
             }
-            // after the function is executed, memoize
-            // the return value and always return the memoized value
-            setProxyFunc(ret)
-            ret
+          }
+
+          override def apply(in: FileParamHolder): Any = {
+            val ns = fixShot()
+
+            if (ns) {
+              theFuture.get(5000).open_!
+            } else {
+              val future = theFuture
+              try {
+                val ret = value.apply(in)
+                future.satisfy(ret)
+                ret
+              } catch {
+                case e => future.satisfy(e); throw e
+              }
+            }
           }
         })
      }
