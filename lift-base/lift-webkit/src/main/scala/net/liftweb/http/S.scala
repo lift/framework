@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,7 +207,7 @@ object S extends HasParams with Loggable {
    *
    * @see Req
    */
-  def request: Box[Req] = Box !! _request.value
+  def request: Box[Req] = (Box !! _request.value) or CurrentReq.box
 
   private[http] object CurrentLocation extends RequestVar[Box[sitemap.Loc[_]]](request.flatMap(_.location))
 
@@ -691,6 +691,29 @@ object S extends HasParams with Loggable {
    */
   def loc(str: String, dflt: NodeSeq): NodeSeq = loc(str).openOr(dflt)
 
+  
+  /**
+   * Localize the incoming string based on a resource bundle for the current locale. The
+   * localized string is converted to an XML element if necessary via the <code>LiftRules.localizeStringToXml</code>
+   * function (the default behavior is to wrap it in a Text element). If the lookup fails for a given resource
+   * bundle (e.g. a null is returned), then the <code>LiftRules.localizationLookupFailureNotice</code>
+   * function is called with the input string and locale.  The
+   * function is applied to the result/
+   *
+   * @param str the string or ID to localize
+   * @param xform the function that transforms the NodeSeq
+   *
+   * @return A Full box containing the localized XML or Empty if there's no way to do localization
+   *
+   * @see # locale
+   * @see # resourceBundles
+   * @see LiftRules.localizeStringToXml
+   * @see LiftRules.localizationLookupFailureNotice
+   * @see # loc ( String, NodeSeq )
+   */
+  def loc(str: String, xform: NodeSeq => NodeSeq): Box[NodeSeq] =
+    S.loc(str).map(xform)
+
   /**
    * Get a List of the resource bundles for the current locale. The resource bundles are defined by
    * the LiftRules.resourceNames and LiftRules.resourceBundleFactories variables.
@@ -787,6 +810,8 @@ object S extends HasParams with Loggable {
 
   private def ?!(str: String, resBundle: List[ResourceBundle]): String = resBundle.flatMap(r => tryo(r.getObject(str) match {
     case s: String => Full(s)
+    case n: Node => Full(n.text)
+    case ns: NodeSeq => Full(ns.text)
     case _ => Empty
   }).flatMap(s => s)).find(s => true) getOrElse {
     LiftRules.localizationLookupFailureNotice.foreach(_(str, locale));
