@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.net.liftweb.common._
-import _root_.scala.xml.{Node, NodeSeq, Elem}
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.util.Helpers._
+import net.liftweb.common._
+import scala.xml.{Node, NodeSeq, Elem}
+import net.liftweb.util._
+import net.liftweb.util.Helpers._
 import java.io.{Writer, InputStream}
 
 /**
@@ -284,7 +284,7 @@ final case class OldHtmlProperties(userAgent: Box[String]) extends HtmlPropertie
   def htmlWriter: (Node, Writer) => Unit =
     (n: Node, w: Writer) => {
       val sb = new StringBuilder(64000)
-      AltXML.toXML(n, _root_.scala.xml.TopScope,
+      AltXML.toXML(n, scala.xml.TopScope,
                    sb, false, !LiftRules.convertToEntity.vend,
                    S.ieMode)
       w.append(sb)
@@ -332,7 +332,7 @@ final case class Html5Properties(userAgent: Box[String]) extends HtmlProperties 
   def htmlParser: InputStream => Box[Elem] = Html5.parse _
 
   def htmlWriter: (Node, Writer) => Unit =
-    Html5.write(_, _, false)
+    Html5.write(_, _, false, !LiftRules.convertToEntity.vend)
   
   def htmlOutputHeader: Box[String] = docType.map(_ + "\n")
 
@@ -346,5 +346,35 @@ final case class Html5Properties(userAgent: Box[String]) extends HtmlProperties 
     LiftRules.maxConcurrentRequests.vend(S.request openOr Req.nil)
 }
 
+/**
+ * If you're going to use HTML5 out, but
+ * want XHTML in (so you can have mixed case snippet tags
+ * and you don't get the Html5 parsers obnoxious table behavior),
+ * then this is the set of properties
+ * to use
+ */
+final case class XHtmlInHtml5OutProperties(userAgent: Box[String]) extends HtmlProperties {
+  def docType: Box[String] = Full("<!DOCTYPE html>")
+  def encoding: Box[String] = Empty
+
+  def contentType: Box[String] = {
+      Full("text/html; charset=utf-8")
+  }
+
+  def htmlParser: InputStream => Box[NodeSeq] = PCDataXmlParser.apply _
+
+  def htmlWriter: (Node, Writer) => Unit =
+    Html5.write(_, _, false, !LiftRules.convertToEntity.vend)
+  
+  def htmlOutputHeader: Box[String] = docType.map(_ + "\n")
+
+  val html5FormsSupport: Boolean = {
+    val r = S.request openOr Req.nil
+    r.isSafari5 || r.isFirefox36 || r.isFirefox40 ||
+    r.isChrome5 || r.isChrome6
+  }
+
+  val maxOpenRequests: Int = 
+    LiftRules.maxConcurrentRequests.vend(S.request openOr Req.nil)
 }
-}
+

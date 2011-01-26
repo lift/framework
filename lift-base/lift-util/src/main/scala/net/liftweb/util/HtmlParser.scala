@@ -84,15 +84,16 @@ trait Html5Writer {
           val len = str.length
           while (pos < len) {
             str.charAt(pos) match {
-              case '"' => writer.append("U+0022")
-               case '<' => writer.append("U+003C")
+              case '"' => writer.append("&quot;")
+              case '<' => writer.append("&lt;")
               case c if c >= ' ' && c.toInt <= 127 => writer.append(c)
               case c if c == '\u0085' =>
               case c => {
                 val str = Integer.toHexString(c)
-                writer.append("U+")
+                writer.append("&#x")
                 writer.append("0000".substring(str.length))
                 writer.append(str)
+                writer.append(';')
               }
             }
 
@@ -114,7 +115,7 @@ trait Html5Writer {
    * @param str the String to escape
    * @param the place to send the escaped characters
    */
-  protected def escape(str: String, sb: Writer) {
+  protected def escape(str: String, sb: Writer, reverse: Boolean) {
     val len = str.length
     var pos = 0
     while (pos < len) {
@@ -127,16 +128,22 @@ trait Html5Writer {
         case '\r' => sb.append('\r')
         case '\t' => sb.append('\t')
         case c   => 
-          HtmlEntities.revMap.get(c) match {
-            case Some(str) => {
-              sb.append('&')
-              sb.append(str)
-              sb.append(';')
+          if (reverse) {
+            HtmlEntities.revMap.get(c) match {
+              case Some(str) => {
+                sb.append('&')
+                sb.append(str)
+                sb.append(';')
+              }
+              case _ => 
+                if (c >= ' ' && 
+                    c != '\u0085' && 
+                    !(c >= '\u007f' && c <= '\u0095')) sb.append(c)
             }
-            case _ => 
-              if (c >= ' ' && 
-                  c != '\u0085' && 
-                  !(c >= '\u007f' && c <= '\u0095')) sb.append(c)
+          } else {
+            if (c >= ' ' && 
+                c != '\u0085' && 
+                !(c >= '\u007f' && c <= '\u0095')) sb.append(c)
           }
       }
 
@@ -149,7 +156,7 @@ trait Html5Writer {
    */
   def toString(x: Node): String = {
     val sr = new StringWriter()
-    write(x, sr, false)
+    write(x, sr, false, true)
     sr.toString()
   }
 
@@ -160,9 +167,9 @@ trait Html5Writer {
    * @param writer the place to send the node
    * @param stripComment should comments be stripped from output?
    */
-  def write(x: Node, writer: Writer, stripComment: Boolean): Unit = {
+  def write(x: Node, writer: Writer, stripComment: Boolean, convertAmp: Boolean): Unit = {
     x match {
-      case Text(str) => escape(str, writer)
+      case Text(str) => escape(str, writer, !convertAmp)
 
       case PCData(data) => {
         writer.append("<![CDATA[")
@@ -179,7 +186,7 @@ trait Html5Writer {
       case Unparsed(data) => writer.append(data)
 
       case a: Atom[_] if a.getClass eq classOf[Atom[_]] =>
-        escape(a.data.toString, writer)
+        escape(a.data.toString, writer, !convertAmp)
       
       case Comment(comment) if !stripComment => {
         writer.append("<!--")
@@ -205,7 +212,7 @@ trait Html5Writer {
       
       case g: Group =>
         for (c <- g.nodes)
-          write(c, writer, stripComment)
+          write(c, writer, stripComment, convertAmp)
       
       case e: Elem if (null eq e.prefix) && 
       Html5Constants.nonReplaceable_?(e.label) => {
@@ -269,7 +276,7 @@ trait Html5Writer {
         writer.append(e.label)
         writeAttributes(e.attributes, writer)
         writer.append(">")
-        e.child.foreach(write(_, writer, stripComment))
+        e.child.foreach(write(_, writer, stripComment, convertAmp))
         writer.append("</")
         if (null ne e.prefix) {
           writer.append(e.prefix)
