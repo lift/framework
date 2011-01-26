@@ -339,12 +339,23 @@ object SHtml {
     ajaxButton(Text(text), jsFunc, func, attrs: _*)
 
   /**
-   * This method generates an AJAX editable field. Normally, the displayContents
-   * will be shown, with an "Edit" button. If the "Edit" button is clicked, the field
-   * will be replaced with the edit form, along with an "OK" and "Cancel" button.
+   * This method generates an AJAX editable field.
+   *
+   * Normally, the displayContents will be shown, with an "Edit" button.
+   * If the "Edit" button is clicked, the field will be replaced with
+   * the edit form, along with an "OK" and "Cancel" button.
    * If the OK button is pressed, the form fields are submitted and the onSubmit
    * function is called, and then the displayContents are re-run to get a new display.
    * If cancel is pressed then the original displayContents are re-shown.
+   *
+   * Note that the editForm NodeSeq is wrapped inside of an <code>ajaxForm</code>, so it can be comprised
+   * of normal (non-AJAX) <code>SHtml</code> form elements. For example:
+   *
+   * <pre name="code" class="scala">
+   * ajaxEditable(Test("Click me"),
+   *              SHtml.text("Edit me", s => println("Edited with " +s)),
+   *              () => { println("submitted"); Noop })
+   * </pre>
    */
   def ajaxEditable (displayContents : => NodeSeq, editForm : => NodeSeq, onSubmit : () => JsCmd) : NodeSeq = {
     import _root_.net.liftweb.http.js
