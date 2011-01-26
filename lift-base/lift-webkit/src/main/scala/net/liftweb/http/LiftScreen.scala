@@ -110,7 +110,8 @@ trait AbstractScreen extends Factory {
   implicit def boxOfScreen[T <: AbstractScreen](in: T): Box[T] = Box !! in
 
 
-  def validate: List[FieldError] = screenFields.flatMap(_.validate) ++ screenValidate
+  def validate: List[FieldError] = screenFields.filter(_.shouldDisplay_?).
+  filter(_.show_?).flatMap(_.validate) ++ screenValidate
 
   def validations: List[() => List[FieldError]] = Nil
 
