@@ -44,20 +44,33 @@ trait RecordTypeMode extends PrimitiveTypeMode {
   implicit def double2ScalarDouble(f: MandatoryTypedField[Double]) = convertNumericalMandatory(f, createOutMapperDoubleType)
 
   /** Conversion of mandatory BigDecimal fields to Squeryl Expressions. */
-  implicit def decimal2ScalarBoolean(f: MandatoryTypedField[BigDecimal]) = convertNumericalMandatory(f, createOutMapperBigDecimalType)
+  implicit def decimal2ScalarDecimal(f: MandatoryTypedField[BigDecimal]) = convertNumericalMandatory(f, createOutMapperBigDecimalType)
 
   /** Conversion of optional Int fields to Squeryl Expressions. */
   implicit def optionInt2ScalarInt(f: OptionalTypedField[Int]) = convertNumericalOptional(f, createOutMapperIntTypeOption)
+  
+  /** Conversion needed for outer joins */
+  implicit def optionIntField2OptionInt(f: Option[TypedField[Int]]) = convertNumericalOption(f, createOutMapperIntTypeOption)
 
   /** Conversion of optional Long fields to Squeryl Expressions. */
   implicit def optionLong2ScalarLong(f: OptionalTypedField[Long]) = convertNumericalOptional(f, createOutMapperLongTypeOption)
+  
+  /** Conversion needed for outer joins */
+  implicit def optionLongField2OptionLong(f: Option[TypedField[Long]]) = convertNumericalOption(f, createOutMapperLongTypeOption)
 
   /** Conversion of optional Double fields to Squeryl Expressions. */
   implicit def optionDouble2ScalarDouble(f: OptionalTypedField[Double]) = convertNumericalOptional(f, createOutMapperDoubleTypeOption)
 
+  /** Conversion needed for outer joins */
+  implicit def optionDoubleField2OptionDouble(f: Option[TypedField[Double]]) = convertNumericalOption(f, createOutMapperDoubleTypeOption)
+
   /** Conversion of optional BigDecimal fields to Squeryl Expressions. */
   implicit def optionDecimal2ScalarBoolean(f: OptionalTypedField[BigDecimal]) = convertNumericalOptional(f, createOutMapperBigDecimalTypeOption)
 
+  /** Conversion needed for outer joins */
+  implicit def optionDecimalField2OptionDecimal(f: Option[TypedField[BigDecimal]]) = convertNumericalOption(f, createOutMapperBigDecimalTypeOption)
+
+  
   /** Conversion of mandatory String fields to Squeryl Expressions. */
   implicit def string2ScalarString(f: MandatoryTypedField[String]) = fieldReference match {
     case Some(e) => new SelectElementReference[String](e)(createOutMapperStringType) with StringExpression[String] with SquerylRecordNonNumericalExpression[String]
@@ -68,6 +81,12 @@ trait RecordTypeMode extends PrimitiveTypeMode {
   implicit def optionString2ScalarString(f: OptionalTypedField[String]) = fieldReference match {
     case Some(e) => new SelectElementReference[Option[String]](e)(createOutMapperStringTypeOption) with StringExpression[Option[String]] with SquerylRecordNonNumericalExpression[Option[String]]
     case None => new ConstantExpressionNode[Option[String]](f.is) with StringExpression[Option[String]] with SquerylRecordNonNumericalExpression[Option[String]]
+  }
+  
+  /** Needed for outer joins */
+  implicit def optionStringField2OptionString(f: Option[TypedField[String]]) = fieldReference match {
+    case Some(e) => new SelectElementReference[String](e)(createOutMapperStringType) with StringExpression[String] with SquerylRecordNonNumericalExpression[String]
+    case None => new ConstantExpressionNode[String](getValueOrNull(f)) with StringExpression[String] with SquerylRecordNonNumericalExpression[String]
   }
 
   /** Conversion of mandatory Boolean fields to Squeryl Expressions. */
@@ -80,6 +99,12 @@ trait RecordTypeMode extends PrimitiveTypeMode {
   implicit def optionBoolean2ScalarBoolean(f: OptionalTypedField[Boolean]) = fieldReference match {
     case Some(e) => new SelectElementReference[Option[Boolean]](e)(createOutMapperBooleanTypeOption) with BooleanExpression[Option[Boolean]] with SquerylRecordNonNumericalExpression[Option[Boolean]]
     case None => new ConstantExpressionNode[Option[Boolean]](f.is) with BooleanExpression[Option[Boolean]] with SquerylRecordNonNumericalExpression[Option[Boolean]]
+  }
+  
+  /** Needed for outer joins. */
+  implicit def optionBooleanField2Boolean(f: Option[TypedField[Boolean]]) = fieldReference match {
+    case Some(e) => new SelectElementReference[Boolean](e)(createOutMapperBooleanType) with BooleanExpression[Boolean] with SquerylRecordNonNumericalExpression[Boolean]
+    case None => new ConstantExpressionNode[Boolean](getValue(f).getOrElse(false)) with BooleanExpression[Boolean] with SquerylRecordNonNumericalExpression[Boolean]
   }
   
   /** Conversion of mandatory Calendar fields to Squeryl Expressions. */
@@ -99,6 +124,12 @@ trait RecordTypeMode extends PrimitiveTypeMode {
       new ConstantExpressionNode[Option[Timestamp]](date) with BooleanExpression[Option[Timestamp]] with SquerylRecordNonNumericalExpression[Option[Timestamp]]
     }
   }
+  
+  /** Needed for outer joins. */
+  implicit def optionDateField2OptionDate(f: Option[TypedField[Calendar]]) = fieldReference match {
+    case Some(e) => new SelectElementReference[Timestamp](e)(createOutMapperTimestampType) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
+    case None => new ConstantExpressionNode[Timestamp](getValue(f).map(field => new Timestamp(field.getTimeInMillis)).orNull) with BooleanExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
+  }
 
   /** Conversion of mandatory Enum fields to Squeryl Expressions. */
   implicit def enum2EnumExpr[EnumType <: Enumeration](f: MandatoryTypedField[EnumType#Value]) = fieldReference match {
@@ -110,6 +141,12 @@ trait RecordTypeMode extends PrimitiveTypeMode {
   implicit def optionEnum2ScalaEnum[EnumType <: Enumeration](f: OptionalTypedField[EnumType#Value]) = fieldReference match {
     case Some(e) => new SelectElementReference[Option[Enumeration#Value]](e)(e.createEnumerationOptionMapper) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
     case None => new ConstantExpressionNode[Option[Enumeration#Value]](f.is) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
+  }
+  
+  /** Needed for outer joins. */
+  implicit def optionEnumField2OptionEnum[EnumType <: Enumeration](f: Option[TypedField[EnumType#Value]]) = fieldReference match {
+    case Some(e) => new SelectElementReference[Enumeration#Value](e)(e.createEnumerationMapper) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
+    case None => new ConstantExpressionNode[Enumeration#Value](getValue(f).orNull) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
   }
 
   /**
@@ -126,6 +163,21 @@ trait RecordTypeMode extends PrimitiveTypeMode {
   private def convertNumericalOptional[T](f: OptionalTypedField[T], outMapper: OutMapper[Option[T]]) = fieldReference match {
     case Some(e: SelectElement) => new SelectElementReference[Option[T]](e)(outMapper) with NumericalExpression[Option[T]] with SquerylRecordNumericalExpression[Option[T]]
     case None => new ConstantExpressionNode[Option[T]](f.is) with NumericalExpression[Option[T]] with SquerylRecordNumericalExpression[Option[T]]
+  }
+  
+  private def convertNumericalOption[T](f: Option[TypedField[T]], outMapper: OutMapper[Option[T]]) = fieldReference match {
+    case Some(e) => new SelectElementReference[Option[T]](e)(outMapper) with NumericalExpression[Option[T]] with SquerylRecordNumericalExpression[Option[T]]
+    case None => new ConstantExpressionNode[Option[T]](getValue(f)) with NumericalExpression[Option[T]] with SquerylRecordNumericalExpression[Option[T]]
+  }
+  
+  private def getValue[T](f: Option[TypedField[T]]): Option[T] = f match {
+    case Some(field) => field.valueBox
+    case None => None
+  }
+  
+  private def getValueOrNull[T <: AnyRef](f: Option[TypedField[T]]): T = f match {
+    case Some(field) => field.valueBox.openOr(null.asInstanceOf[T])
+    case None => null.asInstanceOf[T]
   }
 
   /**

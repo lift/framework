@@ -16,7 +16,7 @@ package squerylrecord
 
 import RecordTypeMode._
 import MySchema.{ TestData => td }
-import MySchema.{ companies, employees }
+import MySchema.{ companies, employees, rooms, roomAssignments }
 
 import record.{ BaseField, Record }
 
@@ -68,7 +68,7 @@ object SquerylRecordSpecs extends Specification {
       }
     }
 
-    "support joins" >> {
+    "support normal joins" >> {
       transaction {
         val companiesWithEmployees = from(companies, employees)((c, e) =>
           where(c.id === e.id)
@@ -80,6 +80,60 @@ object SquerylRecordSpecs extends Specification {
           (td.c2.id, td.e2.id)))
       }
     }
+    
+    "support left outer joins" >> {
+      transaction {
+        val companiesWithEmployees = join(companies, employees.leftOuter)((c, e) =>
+          select(c, e)
+          on(c.id === e.map(_.companyId))
+        )
+        
+        companiesWithEmployees must haveSize(3)
+        // One company doesn't have an employee, two have
+        companiesWithEmployees.filter(ce => ce._2.isEmpty) must haveSize(1)
+        
+        val companiesAndEmployeesWithSameName = join(companies, employees.leftOuter)((c, e) =>
+          groupBy(c.id)
+          compute(countDistinct(e.map(_.id)))
+          on(c.name === e.map(_.name))
+        )
+        
+        // There are three companies
+        companiesAndEmployeesWithSameName must haveSize(3)
+        // One company has the same name as an employee, two don't
+        companiesAndEmployeesWithSameName.filter(ce => ce.measures == 0) must haveSize(2)
+        
+        val employeesWithSameAdminSetting = join(employees, employees.leftOuter)((e1, e2) =>
+          select(e1, e2)
+          on(e1.admin === e2.map(_.admin))
+        )
+        
+        // two employees, both have distinct admin settings
+        employeesWithSameAdminSetting must haveSize(2)
+        employeesWithSameAdminSetting.foreach { ee =>
+          ee._2 must not (beEmpty)
+          ee._1.id must_== ee._2.get.id
+        }
+        
+        val companiesWithSameCreationDate = join(companies, companies.leftOuter)((c1, c2) =>
+          select(c1, c2)
+          on(c1.created === c2.map(_.created))
+        )
+        companiesWithSameCreationDate must not (beEmpty)
+        
+        val employeesWithSameDepartmentNumber = join(employees, employees.leftOuter)((e1, e2) =>
+          select(e1, e2)
+          on(e1.departmentNumber === e2.map(_.departmentNumber))
+        )
+        employeesWithSameDepartmentNumber must not (beEmpty)
+
+        val employeesWithSameRoles = join(employees, employees.leftOuter)((e1, e2) =>
+          select(e1, e2)
+          on(e1.role === e2.map(_.role))
+        )
+        employeesWithSameRoles must not (beEmpty)
+      } 
+    }
 
     "support one to many relations" >> {
       transaction {
@@ -88,6 +142,20 @@ object SquerylRecordSpecs extends Specification {
         val employees = company.get.employees
         employees must haveSize(1)
         checkEmployeesEqual(td.e1, employees.head)
+      }
+    }
+    
+    "support many to many relations" >> {
+      transactionWithRollback {
+        td.e1.rooms must haveSize(2)
+        
+        td.e2.rooms must beEmpty
+        
+        td.r1.employees must haveSize(1)
+        td.r3.employees must beEmpty
+        
+        td.r3.employees.associate(td.e2)
+        td.e2.rooms must haveSize(1)
       }
     }
 
@@ -135,6 +203,8 @@ object SquerylRecordSpecs extends Specification {
         loadedCompanies.size must beGreaterThanOrEqualTo(1)
       }
     }
+    
+
   }
 
   class TransactionRollbackException extends RuntimeException

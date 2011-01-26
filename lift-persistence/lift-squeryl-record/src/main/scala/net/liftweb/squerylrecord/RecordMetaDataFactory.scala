@@ -60,6 +60,13 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
   def build(parentMetaData: PosoMetaData[_], name: String,
             property: (Option[Field], Option[Method], Option[Method], Set[Annotation]),
             sampleInstance4OptionTypeDeduction: AnyRef, isOptimisticCounter: Boolean): FieldMetaData = {
+  	if (!isRecord(parentMetaData.clasz)) {
+  		// No Record class, treat it as a normal class in primitive type mode.
+  		// This is needed for ManyToMany association classes, for example
+  		return SquerylRecord.posoMetaDataFactory.build(parentMetaData, name, property, 
+  				sampleInstance4OptionTypeDeduction, isOptimisticCounter)
+  	}
+
     val metaField = findMetaField(parentMetaData.clasz, name)
 
     val (field, getter, setter, annotations) = property
@@ -119,13 +126,25 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
     }
   }
   
+  /**
+   * Checks if the given class is a subclass of Record. A special handling is only
+   * needed for such subtypes. For other classes, use the standard squeryl methods.
+   */
+  private def isRecord(clasz: Class[_]) = {
+    classOf[Record[_]].isAssignableFrom(clasz)
+  }
+  
 
   /**
    * For records, the constructor must not be used directly when
    * constructing Objects. Instead, the createRecord method must be called.
    */
   def createPosoFactory(posoMetaData: PosoMetaData[_]): () => AnyRef = {
-    
+  	if (!isRecord(posoMetaData.clasz)) {
+  	  // No record class - use standard poso meta data factory
+  	  return SquerylRecord.posoMetaDataFactory.createPosoFactory(posoMetaData);
+  	}
+
     // Extract the MetaRecord for the companion object. This
     // is done only once for each class.
     val metaRecord = Class.forName(posoMetaData.clasz.getName +

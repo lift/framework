@@ -28,6 +28,8 @@ import org.squeryl.adapters.H2Adapter
 import org.squeryl.annotations.Column
 import org.squeryl.internals.AutoIncremented
 import org.squeryl.internals.PrimaryKey
+import org.squeryl.dsl.CompositeKey2
+import org.squeryl.KeyedEntity
 
 import java.math.MathContext
 import java.sql.DriverManager
@@ -48,9 +50,14 @@ object DBHelper {
    */
   def createSchema() {
     inTransaction {
-      //MySchema.printDdl
-      MySchema.dropAndCreate
-      MySchema.createTestData
+    	try {
+	      //MySchema.printDdl
+	      MySchema.dropAndCreate
+	      MySchema.createTestData
+    	} catch {
+    		case e => e.printStackTrace()
+    		  throw e;
+    	}
     }
   }
 }
@@ -129,9 +136,36 @@ class Employee private () extends Record[Employee] with KeyedRecord[Long] {
   val role = new EnumNameField(this, EmployeeRole)
 
   lazy val company = MySchema.companyToEmployees.right(this)
+  lazy val rooms = MySchema.roomAssignments.left(this)
 
 }
 object Employee extends Employee with MetaRecord[Employee]
+
+/**
+ * Test record: One or more employees can have a room (one-to-many-relation).
+ */
+class Room private() extends Record[Room] with KeyedRecord[Long] {
+	override def meta = Room
+	
+	override val idField = new LongField(this)
+	
+	val name = new StringField(this, 50)
+	
+	lazy val employees = MySchema.roomAssignments.right(this)
+}
+
+object Room extends Room with MetaRecord[Room]
+
+/**
+ * Relation table for assignments of rooms to employees.
+ * This must not be a Record. However, it's ok if it is not
+ * a record, because we won't use a relation table for
+ * a web form or similar.
+ */
+class RoomAssignment(val employeeId: Long, val roomId: Long) extends KeyedEntity[CompositeKey2[Long,Long]] {
+  def id = compositeKey(employeeId, roomId)
+}
+
 
 /**
  * Schema for the test database.
@@ -139,10 +173,15 @@ object Employee extends Employee with MetaRecord[Employee]
 object MySchema extends Schema {
   val companies = table[Company]
   val employees = table[Employee]
+  val rooms = table[Room]
 
   val companyToEmployees =
     oneToManyRelation(companies, employees).via((c, e) => c.id === e.companyId)
 
+  val roomAssignments = manyToManyRelation(employees, rooms).
+  	via[RoomAssignment]((employee, room, roomAssignment) => 
+  		(roomAssignment.employeeId === employee.idField, roomAssignment.roomId === room.idField))
+    
   on(employees)(e =>
     declare(e.companyId defineAs (indexed("idx_employee_companyId")),
       e.email defineAs indexed("idx_employee_email")))
@@ -165,6 +204,10 @@ object MySchema extends Schema {
 
     allCompanies.foreach(companies.insert(_))
     allEmployees.foreach(employees.insert(_))
+    allRooms.foreach(rooms.insert(_))
+    
+    e1.rooms.associate(r1)
+    e1.rooms.associate(r2)
   }
 
   object TestData {
@@ -174,7 +217,7 @@ object MySchema extends Schema {
     val c2 = Company.createRecord.name("Second Company USA").
       created(Calendar.getInstance()).
       country(Countries.USA).postCode("54321")
-    val c3 = Company.createRecord.name("First Company Canada").
+    val c3 = Company.createRecord.name("Company or Employee").
       created(Calendar.getInstance()).
       country(Countries.Canada).postCode("1234")
 
@@ -189,7 +232,7 @@ object MySchema extends Schema {
       photo(Array[Byte](0, 1, 2, 3, 4))
 
     lazy val e2 = Employee.createRecord.companyId(c2.idField.is).
-      name("Test Name").
+      name("Company or Employee").
       email("test@example.com").salary(BigDecimal("123.123")).
       locale(java.util.Locale.US.toString()).
       timeZone("America/Los_Angeles").password("test").
@@ -197,6 +240,12 @@ object MySchema extends Schema {
       photo(Array[Byte](1))
 
     lazy val allEmployees = List(e1, e2)
+    
+    val r1 = Room.createRecord.name("Room 1")
+    val r2 = Room.createRecord.name("Room 2")
+    val r3 = Room.createRecord.name("Room 3")
+    
+    val allRooms = List(r1, r2, r3)
   }
 }
 
