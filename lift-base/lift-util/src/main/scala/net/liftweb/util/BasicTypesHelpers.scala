@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, File, FileInputStream, BufferedReader, InputStreamReader}
-import _root_.scala.xml._
+import java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, File, FileInputStream, BufferedReader}
+import scala.xml._
 import common._
 
 /**
@@ -184,7 +184,7 @@ object AsLong {
       case null => Empty
       case i: Int => Full(i.toLong)
       case n: Long => Full(n)
-      case d: _root_.java.util.Date => Full(d.getTime)
+      case d: java.util.Date => Full(d.getTime)
       case n : Number => Full(n.longValue)
       case (n: Number) :: _ => Full(n.longValue)
       case Some(n) => asLong(n)
@@ -210,7 +210,7 @@ object AsLong {
       case Full(n) => toInt(n)
       case None | Empty | Failure(_, _, _) => 0
       case s: String => parseNumber(s).toInt
-      case d: _root_.java.util.Date => (d.getTime / 1000L).toInt
+      case d: java.util.Date => (d.getTime / 1000L).toInt
       case x :: xs => toInt(x)
       case o => toInt(o.toString)
     }
@@ -224,7 +224,7 @@ object AsLong {
       case null => 0L
       case i: Int => i
       case n: Long => n
-      case d: _root_.java.util.Date => d.getTime
+      case d: java.util.Date => d.getTime
       case n : Number => n.longValue
       case (n: Number) :: _ => n.longValue
       case Some(n) => toLong(n)
@@ -302,6 +302,3 @@ final class PartialFunctionWrapper[A](around: PartialFunction[A, _]) {
     
 }
 
-
-}
-}

@@ -265,7 +265,7 @@ object Req {
   object NilPath extends ParsePath(Nil, "", true, false)
 
   private[http] lazy val localHostName = {
-    import _root_.java.net._
+    import java.net._
     InetAddress.getLocalHost.getHostName
   }
 
@@ -791,8 +791,17 @@ class Req(val path: ParsePath,
   lazy val json: Box[JsonAST.JValue] = 
     if (!json_?) Empty
     else try {
-      import _root_.java.io._
-      body.map(b => JsonParser.parse(new InputStreamReader(new ByteArrayInputStream(b))))
+      import java.io._
+
+      def r = """; *charset=(.*)""".r
+      def r2 = """[^=]*$""".r
+
+      def charSet: String = contentType.flatMap(ct => r.findFirstIn(ct).flatMap(r2.findFirstIn)).getOrElse("UTF-8")
+      
+      body.map(b => 
+        JsonParser.parse(new 
+                         InputStreamReader(new 
+                                           ByteArrayInputStream(b), charSet)))
     } catch {
       case e: LiftFlowOfControlException => throw e
       case e: Exception => Failure(e.getMessage, Full(e), Empty)
@@ -820,7 +829,7 @@ class Req(val path: ParsePath,
   lazy val xml: Box[Elem] = if (!xml_?) Empty
   else 
     try {
-      import _root_.java.io._
+      import java.io._
       body.map(b => XML.load(new ByteArrayInputStream(b)))
     } catch {
       case e: LiftFlowOfControlException => throw e

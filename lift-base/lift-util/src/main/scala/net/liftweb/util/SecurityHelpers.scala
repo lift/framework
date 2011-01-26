@@ -18,7 +18,7 @@ package net.liftweb
 package util 
 
 import org.apache.commons.codec.binary.Base64
-import java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, File, FileInputStream, BufferedReader, InputStreamReader}
+import java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, File, FileInputStream, BufferedReader}
 import java.security.{SecureRandom, MessageDigest}
 import javax.crypto._
 import javax.crypto.spec._

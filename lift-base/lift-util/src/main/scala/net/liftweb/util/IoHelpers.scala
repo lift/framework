@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.java.io._
-import _root_.scala.collection.mutable.ListBuffer
+import java.io._
+import scala.collection.mutable.ListBuffer
 import ControlHelpers._
 import common._
 
@@ -33,7 +33,7 @@ trait IoHelpers {
     try {
       class ReadItAll(in: InputStream, done: String => Unit) extends Runnable {
         def run {
-          val br = new BufferedReader(new InputStreamReader(in))
+          val br = new BufferedReader(new InputStreamReader(in)) // default to platform character set
           val lines = new ListBuffer[String]
           var line = ""
           while (line != null) {
@@ -110,14 +110,11 @@ trait IoHelpers {
   /**
    * Executes by-name function f and then closes the Cloaseables parameters
    */
-  def doClose[T](is: _root_.java.io.Closeable*)(f : => T): T = {
+  def doClose[T](is: java.io.Closeable*)(f : => T): T = {
     try {
       f
     } finally {
       is.foreach(stream => tryo{ stream.close })
     }
   }
-}
-
-}
 }
