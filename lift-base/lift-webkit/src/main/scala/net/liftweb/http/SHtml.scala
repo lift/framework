@@ -851,16 +851,6 @@ object SHtml {
   }
 
 
-  private[http] def appendFuncToURL(url: String, funcStr: String): String =
-  splitAtHash(url){to => to + (if (to.indexOf("?") >= 0) "&" else "?") + funcStr}
-
-  private def splitAtHash(str: String)(f: String => String): String =
-  str.indexOf("#") match {
-    case idx if idx < 0 => f(str)
-    case idx => f(str.substring(0, idx)) + str.substring(idx)
-  }
-
-
   /**
    * create an anchor tag around a body
    *
@@ -872,7 +862,7 @@ object SHtml {
   def link(to: String, func: () => Any, body: NodeSeq,
            attrs: ElemAttr*): Elem = {
     fmapFunc((a: List[String]) => {func(); true})(key =>
-            attrs.foldLeft(<a href={appendFuncToURL(to, key + "=_")}>{body}</a>)(_ % _))
+            attrs.foldLeft(<a href={Helpers.appendFuncToURL(to, key + "=_")}>{body}</a>)(_ % _))
   }
 
   private def makeFormElement(name: String, func: AFuncHolder,
@@ -935,6 +925,118 @@ object SHtml {
 
   private def isCheckbox(in: MetaData): Boolean = 
     in.get("type").map(_.text equalsIgnoreCase "checkbox") getOrElse false
+
+
+  /**
+   * If you want to update the href of an &lt;a> tag,
+   * this method returns a function that mutates the href
+   * by adding a function that will be executed when the link
+   * is clicked:
+   * <code>
+   * "#my_link" #> SHtml.hrefFunc(() => println("howdy"))
+   * </code>
+   */
+  def hrefFunc(func: () => Any): NodeSeq => NodeSeq = {
+    val allEvent = List("href")
+
+    ns => {
+      def runNodes(in: NodeSeq): NodeSeq = 
+        in.flatMap {
+          case Group(g) => runNodes(g)
+          // button
+          case e: Elem => {
+            val oldAttr: Map[String, String] =
+              Map(allEvent.
+                  flatMap(a => e.attribute(a).
+                          map(v => a -> (v.text))) :_*)
+
+            val newAttr = e.attributes.filter{
+              case up: UnprefixedAttribute => !oldAttr.contains(up.key)
+              case _ => true
+            }
+
+            fmapFunc(func) {
+              funcName => 
+                new Elem(e.prefix, e.label,
+                         allEvent.foldLeft(newAttr){
+                           case (meta, attr) =>
+                             new UnprefixedAttribute(attr,
+                                                     Helpers.
+                                                     appendFuncToURL(oldAttr.
+                                                                     getOrElse(attr, ""), 
+                                                                     funcName+"=_"),
+                                                     meta)
+                           
+                         }, e.scope, e.child :_*)
+            }
+          }
+
+
+          case x => x
+        }
+      
+      runNodes(ns)
+    }
+  }
+
+  /**
+   * Create something that's bindable to an event attribute
+   * and when the event happens, the command will fire:
+   * <code>
+   * "input [onblur]" #> SHtml.onEvent(s => Alert("Thanks: "+s))
+   * </code>
+   */
+  def onEvent(func: String => JsCmd): (String, JsExp) = 
+    ajaxCall(JsRaw("this.value"), func)
+
+  /**
+   * Specify the events (e.g., onblur, onchange, etc.)
+   * and the function to execute on those events.  Returns
+   * a NodeSeq => NodeSeq that will add the events to all
+   * the Elements
+   * <code>
+   * ":text" #> SHtml.onEvents("onchange", "onblur")(s => Alert("yikes "+s))
+   * </code>
+   */
+  def onEvents(event: String, events: String*)(func: String => JsCmd):
+  NodeSeq => NodeSeq = {
+    val allEvent = event :: events.toList
+    ns => {
+      def runNodes(in: NodeSeq): NodeSeq = 
+        in.flatMap {
+          case Group(g) => runNodes(g)
+          // button
+          case e: Elem => {
+            val oldAttr: Map[String, String] =
+              Map(allEvent.
+                  flatMap(a => e.attribute(a).
+                          map(v => a -> (v.text+"; "))) :_*)
+
+            val newAttr = e.attributes.filter{
+              case up: UnprefixedAttribute => !oldAttr.contains(up.key)
+                case _ => true
+            }
+
+            val cmd = ajaxCall(JsRaw("this.value"), func)._2.toJsCmd
+            
+            new Elem(e.prefix, e.label,
+                     allEvent.foldLeft(newAttr){
+                       case (meta, attr) =>
+                         new UnprefixedAttribute(attr,
+                                                 oldAttr.getOrElse(attr, "") +
+                                                 cmd,
+                                                 meta)
+                       
+                     }, e.scope, e.child :_*)
+          }
+
+
+          case x => x
+        }
+      
+      runNodes(ns)
+    }
+  }
 
   /**
    * execute the function when the form is submitted.

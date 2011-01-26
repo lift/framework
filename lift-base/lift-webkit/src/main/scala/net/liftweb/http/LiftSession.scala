@@ -1126,7 +1126,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                 })
                 funcName
               }
-              SHtml.appendFuncToURL(uri, func + "=_")
+              Helpers.appendFuncToURL(uri, func + "=_")
     } openOr uri
 
   }

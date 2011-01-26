@@ -90,6 +90,11 @@ object Menu {
                encoder: T => String): PreParamMenu[T] =
     new PreParamMenu[T](name, linkText, parser, encoder)
 
+  def params[T](name: String, linkText: Loc.LinkText[T],
+                parser: List[String] => Box[T],
+                encoder: T => List[String]): PreParamsMenu[T] =
+    new PreParamsMenu[T](name, linkText, parser, encoder)
+
 
   /**
    * An intermediate class that holds the basic stuff that's needed to make a Menu item for SiteMap.
@@ -200,6 +205,129 @@ object Menu {
      * Convert a Menuable into a Menu when you need a Menu.
      */
     implicit def toMenu(able: ParamMenuable[_]): Menu = able.toMenu
+  }
+
+  /**
+   * An intermediate class that holds the basic stuff that's needed to make a Menu item for SiteMap.
+   * You must include at least one URI path element by calling the / method
+   */
+  class PreParamsMenu[T](name: String, linkText: Loc.LinkText[T],
+                         parser: List[String] => Box[T],
+                         encoder: T => List[String]) {
+    /**
+     * The method to add a path element to the URL representing this menu item
+     */
+    def /(pathElement: String): ParamsMenuable[T] with WithSlash = 
+      new ParamsMenuable[T](name, linkText, parser, encoder, 
+                            pathElement :: Nil, false, Nil, Nil) with WithSlash
+  }
+
+  class ParamsMenuable[T](val name: String,
+                          val linkText: Loc.LinkText[T],
+                          val parser: List[String] => Box[T],
+                          val encoder: T => List[String],
+                          val path: List[String],
+                          val headMatch: Boolean,
+                          val params: List[Loc.LocParam[T]],
+                          val submenus: List[ConvertableToMenu]) extends ConvertableToMenu with BaseMenuable
+  {
+    type BuiltType = ParamsMenuable[T]
+
+    def buildOne(newPath: List[String], newHead: Boolean): BuiltType = new ParamsMenuable[T](name, linkText, parser, encoder, newPath, newHead, params, submenus)
+    def buildSlashOne(newPath: List[String], newHead: Boolean): BuiltType with WithSlash = new ParamsMenuable[T](name, linkText, parser, encoder, newPath, newHead, params, submenus) with WithSlash
+
+
+    /**
+     * Append a LocParam to the Menu item
+     */
+    def rule(param: Loc.LocParam[T]): ParamsMenuable[T] = >>(param)
+
+    /**
+     * Append a LocParam to the Menu item
+     */
+    def >>(param: Loc.LocParam[T]): ParamsMenuable[T] =
+    new ParamsMenuable[T](name, linkText, parser, encoder, path, headMatch, params ::: List(param), submenus)
+    
+    /**
+     * Define the submenus of this menu item
+     */
+    def submenus(subs: ConvertableToMenu*): ParamsMenuable[T] = submenus(subs.toList)
+
+    /**
+     * Define the submenus of this menu item
+     */
+    def submenus(subs: List[ConvertableToMenu]): ParamsMenuable[T] =
+      new ParamsMenuable[T](name, linkText, parser, encoder, path, headMatch, params, submenus ::: subs)
+
+    // FIXME... do the right thing so that in development mode
+    // the menu and loc are recalculated when the menu is reloaded
+
+    /**
+     * Convert the Menuable into a Menu instance
+     */
+    lazy val toMenu: Menu = Menu(toLoc, submenus :_*)
+
+    /**
+     * Convert the ParamsMenuable into a Loc so you can access
+     * the well typed currentValue
+     */
+    lazy val toLoc: Loc[T] = new Loc[T] {
+        import scala.xml._
+
+        // the name of the page
+        def name = ParamsMenuable.this.name
+        
+        // the default parameters (used for generating the menu listing)
+        def defaultValue = Empty
+
+        // no extra parameters
+        def params = ParamsMenuable.this.params
+
+        /**
+         * What's the text of the link?
+         */
+        def text = ParamsMenuable.this.linkText
+
+        val link = new Loc.Link[T](ParamsMenuable.this.path, 
+                                   ParamsMenuable.this.headMatch) {
+          override def createLink(in: T) = 
+            Full(Text(
+              (ParamsMenuable.this.path :::
+               ParamsMenuable.this.encoder(in).map(urlEncode)).
+              mkString("/", "/", "")))
+        }
+
+     val pathLen = ParamsMenuable.this.path.length
+
+      object ExtractOMatic {
+        def unapply(in: List[String]): Option[(List[String], T)] = {
+          val (left, right) = in.splitAt(pathLen)
+          if (left != ParamsMenuable.this.path) None
+          else ParamsMenuable.this.parser(right).map(v => left -> v)
+        }
+          
+      }
+
+        /**
+         * Rewrite the request and emit the type-safe parameter
+         */
+        override val rewrite: LocRewrite =
+          Full(NamedPF("Wiki Rewrite") {
+            case RewriteRequest(ParsePath(ExtractOMatic(p, v), _, _,_), _, _) 
+            =>
+              RewriteResponse(p) -> v 
+          })
+    }
+  }
+
+  /**
+   * The companion object to Menuable that has convenience methods
+   */
+  object ParamsMenuable {
+    /**
+     * Convert a Menuable into a Menu when you need a Menu.
+     */
+    implicit def toMenu(able: ParamsMenuable[_]): Menu = able.toMenu
   }
 
 

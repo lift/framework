@@ -563,6 +563,13 @@ trait JsCmd extends HtmlFixer with ToJsCmd {
   def toJsCmd: String
 }
 
+object JsCmd {
+  /**
+   * If you've got Unit and need a JsCmd, return a Noop
+   */
+  implicit def unitToJsCmd(in: Unit): JsCmd = JsCmds.Noop
+}
+
 object JsCmds {
   implicit def seqJsToJs(in: Seq[JsCmd]): JsCmd = in.foldLeft[JsCmd](Noop)(_ & _)
 
@@ -752,7 +759,7 @@ object JsCmds {
 
   implicit def cmdToString(in: JsCmd): String = in.toJsCmd
 
-  val Noop: JsCmd = _Noop
+  def Noop: JsCmd = _Noop
 
   case class JsTry(what: JsCmd, alert: Boolean) extends JsCmd {
     def toJsCmd = "try { " + what.toJsCmd + " } catch (e) {" + (if (alert) "alert(e);" else "") + "}"

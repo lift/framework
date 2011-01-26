@@ -189,21 +189,21 @@ object JqJE {
   }
 
   object JqHtml {
-    def apply() = new JsExp with JsMember with JQueryRight {
+    def apply(): JsExp with JsMember with JQueryRight = new JsExp with JsMember with JQueryRight {
       def toJsCmd = "html()"
     }
 
-    def apply(content: NodeSeq) = new JsExp with JsMember with JQueryRight with JQueryLeft {
+    def apply(content: NodeSeq): JsExp with JsMember with JQueryRight with JQueryLeft = new JsExp with JsMember with JQueryRight with JQueryLeft {
       val toJsCmd = fixHtmlFunc("inline", content){"html(" + _  + ")"}
     }
   }
 
   object JqText {
-    def apply() = new JsExp with JsMember with JQueryRight {
+    def apply(): JsExp with JsMember with JQueryRight = new JsExp with JsMember with JQueryRight {
       def toJsCmd = "text()"
     }
 
-    def apply(content: String) = new JsExp with JsMember with JQueryRight with JQueryLeft {
+    def apply(content: String): JsExp with JsMember with JQueryRight with JQueryLeft = new JsExp with JsMember with JQueryRight with JQueryLeft {
       def toJsCmd = "text(" + content.encJs + ")"
     }
   }
