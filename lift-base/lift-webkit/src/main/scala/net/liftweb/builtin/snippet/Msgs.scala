@@ -73,9 +73,10 @@ object Msgs extends DispatchSnippet {
          (NoticeType.Warning, MsgsWarningMeta),
          (NoticeType.Notice, MsgsNoticeMeta)).foreach {
       case (noticeType, ajaxStorage) => {
-        // Extract the title if provided, or default to none
-        val title : String = (styles \\ noticeType.titleTag).
-          filter(_.prefix == "lift").map(_.text.trim).headOption getOrElse ""
+        // Extract the title if provided, or default to none. Allow for XML nodes
+        // so that people can localize, etc.
+        val title : NodeSeq = (styles \\ noticeType.titleTag).
+          filter(_.prefix == "lift").flatMap(_.child)
   
         // Extract any provided classes for the messages
         val cssClasses = ((styles \\ noticeType.styleTag) ++
@@ -119,7 +120,7 @@ object Msgs extends DispatchSnippet {
       case (messages,noticeType,ajaxStorage) =>
 
       // get current settings
-      val title = ajaxStorage.get.map(_.title) openOr ""
+      val title = ajaxStorage.get.map(_.title) openOr Text("")
       val styles = ajaxStorage.get.flatMap(_.cssClasses)
 
       // Compute the resulting div
@@ -227,7 +228,7 @@ object ShowAll extends SessionVar[Boolean](false) {
  * notice groups so that AJAX and static notices
  * render consistently.
  */
-case class AjaxMessageMeta(title: String, cssClasses: Box[String])
+case class AjaxMessageMeta(title: NodeSeq, cssClasses: Box[String])
 
 // Close nested packages
 }
