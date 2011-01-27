@@ -17,26 +17,28 @@ object Example extends Specification {
   
   "Parse address in Applicative style" in {
     val json = JsonParser.parse(""" {"street": "Manhattan 2", "zip": "00223" } """)
-    val a = field[String](json, "zip") <*> (field[String](json, "street") map Address.curried)
-    a mustEqual Success(Address("Manhattan 2", "00223"))
+    val a1 = field[String](json, "zip") <*> (field[String](json, "street") map Address.curried)
+    val a2 = (field[String](json, "street") |@| field[String](json, "zip")) { Address }
+    a1 mustEqual Success(Address("Manhattan 2", "00223"))
+    a2 mustEqual a1
   }
 
   "Failed address parsing" in {
     val json = JsonParser.parse(""" {"street": "Manhattan 2", "zip": "00223" } """)
-    val a = field[String](json, "zip") <*> (field[String](json, "streets") map Address.curried)
+    val a = (field[String](json, "streets") |@| field[String](json, "zip")) { Address }
     a mustEqual Failure("no such field 'streets'")
   }
 
   "Parse Person with Address" in {
     implicit def addrJSON: JSON[Address] = new JSON[Address] {
       def read(json: JValue) = 
-        field[String](json, "zip") <*> (field[String](json, "street") map Address.curried)
+        (field[String](json, "street") |@| field[String](json, "zip")) { Address }
 
       def write(value: Address) = error("fixme")
     }
 
     val p = JsonParser.parse(""" {"name":"joe","age":34,"address":{"street": "Manhattan 2", "zip": "00223" }} """)
-    val person = field[Address](p, "address") <*> (field[Int](p, "age") <*> (field[String](p, "name") map Person.curried))
+    val person = (field[String](p, "name") |@| field[Int](p, "age") |@| field[Address](p, "address")) { Person }
     person mustEqual Success(Person("joe", 34, Address("Manhattan 2", "00223")))
   }
 }
