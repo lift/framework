@@ -247,6 +247,26 @@ object SHtml {
   }
 
   /**
+   * Memoize the NodeSeq used in apply() and then call
+   * applyAgain() in an Ajax call and you don't have to
+   * explicitly capture the template
+   */
+  def memoize(f: => NodeSeq => NodeSeq): MemoizeTransform = {
+    val salt = (new Exception()).getStackTrace().apply(1).toString
+    new MemoizeTransform {
+      object latestNodeSeq extends RequestVar[NodeSeq](NodeSeq.Empty) {
+        override val __nameSalt = salt
+      }
+      def apply(ns: NodeSeq): NodeSeq = {
+        latestNodeSeq.set(ns)
+        f(ns)
+      }
+
+      def applyAgain(): NodeSeq = f(latestNodeSeq.get)
+    }
+  }
+
+  /**
    * Create an Ajax buttun that when it's pressed it submits an Ajax request and expects back a JSON
    * construct which will be passed to the <i>success</i> function
    *
@@ -1924,4 +1944,15 @@ object Html5ElemAttr {
  */
 trait Whence {
   protected val whence = S.referer openOr "/"
+}
+
+/**
+ * Memoize the CSS Selector Transform and the most recent
+ * NodeSeq sent to the NodeSeq => NodeSeq so that when
+ * applyAgain() is called, the NodeSeq most recently used
+ * in apply() is used.
+ */
+trait MemoizeTransform extends Function1[NodeSeq, NodeSeq] {
+
+  def applyAgain(): NodeSeq
 }
