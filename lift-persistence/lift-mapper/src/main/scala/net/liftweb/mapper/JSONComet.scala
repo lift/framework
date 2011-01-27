@@ -1,3 +1,5 @@
+
+
 /*
  * Copyright 2006-2010 WorldWide Conferencing, LLC
  *
@@ -30,6 +32,7 @@ import _root_.scala.xml.NodeSeq
 * Allows for the creation of JSON-based JavaScript widgets with very little
 * code
 */
+/*
 trait JsonComet {
   self: CometActor =>
 
@@ -164,8 +167,8 @@ trait JsonComet {
 
     def buildLine =
     Jx(JxIfElse(JsRaw("current."+field.name+" == it[1]"),
-    <option selected="true" value={JsRaw("it[1]")}>{JsRaw("it[0]")}</option>,
-    <option value={JsRaw("it[1]")}>{JsRaw("it[0]")}</option> ))
+    <option selected="true" value={JsRaw("it[1]").toJsCmd}>{JsRaw("it[0]")}</option>,
+    <option value={JsRaw("it[1]").toJsCmd}>{JsRaw("it[0]")}</option> ))
 
     def onChangeCmd: JsCmd = theCall(JsRaw("this.options[this.selectedIndex].value")) & JsRaw("this.blur()")
 
@@ -206,6 +209,6 @@ trait JsonComet {
   }
 
 }
-
+*/
 }
 }

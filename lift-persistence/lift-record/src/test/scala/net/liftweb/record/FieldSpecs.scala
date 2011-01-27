@@ -249,7 +249,7 @@ object FieldSpecs extends Specification {
     passConversionTests(
       bd,
       rec.mandatoryDecimalField,
-      Str(bd.toString),
+      JsRaw(bd.toString),
       JString(bd.toString),
       Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+bd.toString+"\" id=\"mandatoryDecimalField_id_field\"></input>")
     )
@@ -262,7 +262,7 @@ object FieldSpecs extends Specification {
     passConversionTests(
       d,
       rec.mandatoryDoubleField,
-      Str(d.toString),
+      JsRaw(d.toString),
       JDouble(d),
       Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+d.toString+"\" id=\"mandatoryDoubleField_id_field\"></input>")
     )
@@ -301,7 +301,7 @@ object FieldSpecs extends Specification {
     passConversionTests(
       num,
       rec.mandatoryIntField,
-      Str(num.toString),
+      JsRaw(num.toString),
       JInt(num),
       Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+num.toString+"\" id=\"mandatoryIntField_id_field\"></input>")
     )
@@ -323,7 +323,7 @@ object FieldSpecs extends Specification {
     passConversionTests(
       lng,
       rec.mandatoryLongField,
-      Str(lng.toString),
+      JsRaw(lng.toString),
       JInt(lng),
       Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+lng.toString+"\" id=\"mandatoryLongField_id_field\"></input>")
     )

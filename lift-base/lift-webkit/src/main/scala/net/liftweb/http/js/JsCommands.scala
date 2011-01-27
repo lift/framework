@@ -81,6 +81,33 @@ trait JsObj extends JsExp {
 
   def toJsCmd = props.map {case (n, v) => n.encJs + ": " + v.toJsCmd}.mkString("{", ", ", "}")
 
+  override def toString(): String = toJsCmd
+
+  override def equals(other: Any): Boolean = {
+    other match {
+      case jsObj: JsObj => {
+        import scala.annotation.tailrec
+        
+        @tailrec def test(me: Map[String, JsExp], them: List[(String, JsExp)]): Boolean = {
+          them match {
+            case Nil => me.isEmpty
+            case _ if me.isEmpty => false
+            case (k, v) :: xs => 
+              me.get(k) match {
+                case None => false
+                case Some(mv) if mv != v => false
+                case _ => test(me - k, xs)
+              }
+          }
+        }
+        
+        test(Map(props :_*), jsObj.props)
+      }
+      
+      case x => super.equals(x)
+    }
+  }
+
   def +*(other: JsObj) = {
     val np = props ::: other.props
     new JsObj {
@@ -124,6 +151,15 @@ object JsExp {
  */
 trait JsExp extends HtmlFixer with ToJsCmd {
   def toJsCmd: String
+
+  override def equals(other: Any): Boolean = {
+    other match {
+      case jx: JsExp => this.toJsCmd == jx.toJsCmd
+      case _ => super.equals(other)
+    }
+  }
+
+  override def toString = "JsExp("+toJsCmd+")"
 
   // def label: String = "#JS"
 
