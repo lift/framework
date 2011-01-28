@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package builtin {
-package snippet {
+package net.liftweb
+package builtin
+package snippet
 
-import _root_.net.liftweb.http.{S, DispatchSnippet, LiftRules}
-import _root_.net.liftweb.http.js._
-import _root_.net.liftweb.sitemap._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
-import _root_.scala.xml._
+import http.{S, DispatchSnippet, LiftRules}
+import http.js._
+import sitemap._
+import util._
+import common._
+import scala.xml._
 import JsCmds._
 import JE._
 import Helpers._
@@ -392,14 +392,31 @@ object Menu extends DispatchSnippet {
    * set the "donthide" attribute on the tag to force it to show text only (same text as normal,
    * but not in an anchor tag)</p>
    *
+   * <p>Alternatively, you can set the "linkToSelf" attribute to "true" to force a link. You
+   * can specify your own link text with the tag's contents. Note that <b>case is significant</b>, so
+   * make sure you specify "linkToSelf" and not "linktoself".</p>
+   *
    */
   def item(text: NodeSeq): NodeSeq = {
+    val donthide = S.attr("donthide").map(Helpers.toBoolean) openOr false
+    val linkToSelf = S.attr("linkToSelf").map(Helpers.toBoolean) openOr false
+
     for {
       name <- S.attr("name").toList
     } yield {
       type T = Q forSome {type Q}
-      (S.request.flatMap(_.location), S.attr("param"), 
-       SiteMap.findAndTestLoc(name)) match {
+
+      // Builds a link for the given loc
+      def buildLink[T](loc : Loc[T]) = {
+        Group(SiteMap.buildLink(name, text) match {
+          case e : Elem => 
+            Helpers.addCssClass(loc.cssClassForMenuItem,
+                                e % S.prefixedAttrsToMetaData("a"))
+          case x => x
+        })
+      }
+
+      (S.request.flatMap(_.location), S.attr("param"), SiteMap.findAndTestLoc(name)) match {
          case (_, Full(param), Full(loc: ConvertableLoc[T])) => {
            (for {
              pv <- loc.convert(param)
@@ -412,19 +429,20 @@ object Menu extends DispatchSnippet {
          }
          
          case (Full(loc), _, _) if loc.name == name => {
-           if (S.attr("donthide").isEmpty) Text("")
-           if (!text.isEmpty) Group(text)
-           else Group(loc.linkText openOr Text(loc.name))
+           (linkToSelf, donthide) match {
+             case (true, _) => buildLink(loc)
+             case (_, true) => {
+               if (!text.isEmpty) {
+                 Group(text)
+               } else {
+                 Group(loc.linkText openOr Text(loc.name))
+               }
+             }
+             case _ => Text("")
+           }
          }
 
-         case (Full(loc), _, _) => {
-           Group(SiteMap.buildLink(name, text) match {
-             case e : Elem => 
-               Helpers.addCssClass(loc.cssClassForMenuItem,
-                                   e % S.prefixedAttrsToMetaData("a"))
-             case x => x
-           })
-         }
+         case (Full(loc), _, _) => buildLink(loc)
 
          case _ => Text("")
        }
@@ -432,6 +450,3 @@ object Menu extends DispatchSnippet {
   }
 }
 
-}
-}
-}

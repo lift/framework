@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package sitemap {
+package net.liftweb
+package sitemap
 
-import _root_.net.liftweb.http._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
+import http._
+import util._
+import common._
 import Helpers._
 
-import _root_.scala.xml.{NodeSeq, Text}
+import scala.xml.{NodeSeq, Text}
 
 class SiteMapException(msg: String) extends Exception(msg)
 
@@ -219,7 +219,7 @@ object SiteMap {
         link <- loc.createDefaultLink
       } yield {
         val linkText = text match {
-          case x if x.text.length > 0 => x
+          case x if x.length > 0 => x
           case _ => loc.linkText openOr Text(loc.name)
         }
         <a href={link}>{linkText}</a>
@@ -249,5 +249,3 @@ trait HasKids {
   private[sitemap] def testAccess: Either[Boolean, Box[() => LiftResponse]] = Left(true)
 }
 
-}
-}
