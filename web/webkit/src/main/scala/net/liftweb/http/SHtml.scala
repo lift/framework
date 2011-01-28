@@ -1649,6 +1649,41 @@ trait SHtml {
     fmapFunc(func)(funcName =>
             attrs.foldLeft(<select name={funcName}>{opts.flatMap {case (value, text) => (<option value={value}>{text}</option>) % selected(deflt.exists(_ == value))}}</select>)(_ % _))
 
+  /**
+   * Create a multiple select box based on the list with a default value and the function to be executed on
+   * form submission.  No check is made to see if the resulting value was in the original list.
+   * For use with DHTML form updating.
+   *
+   * @param opts -- the options.  A list of value and text pairs
+   * @param deflt -- the default value (or Empty if no default value)
+   * @param func -- the function to execute on form submission
+   */
+  def untrustedMultiSelect(opts: Seq[(String, String)], deflt: Seq[String],
+                      func: List[String] => Any, attrs: ElemAttr*): NodeSeq =
+    untrustedMultiSelect_*(opts, deflt, LFuncHolder(func), attrs: _*)
+
+  /**
+   * Create a multiple select box based on the list with a default value and the function to be executed on
+   * form submission.  No check is made to see if the resulting value was in the original list.
+   * For use with DHTML form updating.
+   *
+   * @param opts -- the options.  A list of value and text pairs
+   * @param deflt -- the default value (or Empty if no default value)
+   * @param func -- the function to execute on form submission
+   */
+  def untrustedMultiSelect_*(opts: Seq[(String, String)], deflt: Seq[String],
+                        lf: AFuncHolder, attrs: ElemAttr*): NodeSeq = {
+    val hiddenId = Helpers.nextFuncName
+    fmapFunc(LFuncHolder(l => lf(l.filter(_ != hiddenId)))) {
+      funcName => NodeSeq.fromSeq(
+        List(
+          attrs.foldLeft(<select multiple="true" name={funcName}>{opts.flatMap {case (value, text) => (<option value={value}>{text}</option>) % selected(deflt.contains(value))}}</select>)(_ % _),
+          <input type="hidden" value={hiddenId} name={funcName}/>
+        )
+      )
+    }
+  }
+
 
   private def selected(in: Boolean) = if (in) new UnprefixedAttribute("selected", "selected", Null) else Null
 
