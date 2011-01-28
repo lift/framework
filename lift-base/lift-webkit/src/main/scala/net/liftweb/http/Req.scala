@@ -256,7 +256,9 @@ object FileParamHolder {
 
 private[http] object CurrentReq extends ThreadGlobal[Req]
 
-
+private final case class AvoidGAL(func: () => ParamCalcInfo) {
+  lazy val thunk: ParamCalcInfo = func()
+}
 
 /**
  * Helper object for constructing Req instances
@@ -345,7 +347,7 @@ object Req {
     }
 
     // make this a thunk so it only gets calculated once
-    lazy val paramCalcInfo: ParamCalcInfo = {
+    val paramCalcInfo: AvoidGAL = new AvoidGAL(() => {
       // post/put of XML or JSON... eagerly read the stream
       if ((reqType.post_? ||
            reqType.put_?) && contentType.dmap(false){
@@ -395,11 +397,11 @@ object Req {
                       queryStringParam._2 ++ localParams, 
                       Nil, Full(BodyOrInputStream(request inputStream)))
       }
-    }
+    })
 
 
     val paramCalculator: () => ParamCalcInfo = () => {
-      paramCalcInfo
+      paramCalcInfo.thunk
     }
 
     val stateless = NamedPF.applyBox(rewritten.path.wholePath, statelessTest)
