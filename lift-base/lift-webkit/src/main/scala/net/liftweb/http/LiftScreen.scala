@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -206,10 +206,10 @@ trait AbstractScreen extends Factory {
 
     def setFilter: List[ValueType => ValueType] = Nil
 
-    // override lazy val uniqueFieldId: Box[String] = Full(Helpers.nextFuncName) 
-    override def uniqueFieldId: Box[String] = _theFieldId
+    override def uniqueFieldId: Box[String] = Full(_theFieldId.get)
 
-    private lazy val _theFieldId = Full(Helpers.nextFuncName)
+    private lazy val _theFieldId: NonCleanAnyVar[String] =
+      vendAVar(Helpers.nextFuncName)
 
     override def toString = is.toString
   }
@@ -249,6 +249,10 @@ trait AbstractScreen extends Factory {
      * Convert the field builder into a field
      */
     def make: Field{type ValueType = T} = {
+      val paramFieldId: Box[String] = (stuff.collect {
+        case FormFieldId(id) => id
+      }).headOption
+      
       val confirmInfo = stuff.collect{
         case NotOnConfirmScreen => false
       }.headOption orElse
@@ -270,7 +274,11 @@ trait AbstractScreen extends Factory {
         override def helpAsHtml = help
         override def validations = FieldBuilder.this.validations
         override def setFilter = FieldBuilder.this.filters
-        override lazy val uniqueFieldId: Box[String] = Full("I"+randomString(15))
+        override def uniqueFieldId: Box[String] = 
+          paramFieldId or Full(_theFieldId.get)
+          
+        private lazy val _theFieldId: NonCleanAnyVar[String] =
+          vendAVar(Helpers.nextFuncName)
       }
     }
   }
@@ -327,11 +335,17 @@ trait AbstractScreen extends Factory {
 
   protected final case class FormParam(fp: SHtml.ElemAttr) extends FilterOrValidate[Nothing]
 
+  protected final case class FormFieldId(id: String) extends FilterOrValidate[Nothing]
+
   protected final case class AFilter[T](val f: T => T) extends FilterOrValidate[T]
   protected final case class AVal[T](val v: T => List[FieldError]) extends FilterOrValidate[T]
 
   protected def field[T](underlying: => BaseField{type ValueType=T},
                          stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): Field{type ValueType=T} = {    
+    val paramFieldId: Box[String] = (stuff.collect {
+      case FormFieldId(id) => id
+    }).headOption
+
     val confirmInfo = stuff.collect{
       case NotOnConfirmScreen => false
     }.headOption orElse
@@ -386,7 +400,7 @@ trait AbstractScreen extends Factory {
       override def get = underlying.get
       override def set(v: T) = underlying.set(setFilter.foldLeft(v)((v, f) => f(v)))
 
-      override def uniqueFieldId: Box[String] = underlying.uniqueFieldId or super.uniqueFieldId
+      override def uniqueFieldId: Box[String] = paramFieldId or underlying.uniqueFieldId or super.uniqueFieldId
     }
   }
 
@@ -399,6 +413,10 @@ trait AbstractScreen extends Factory {
   
   protected def field[T](underlying: => Box[BaseField{type ValueType=T}],
                          stuff: FilterOrValidate[T]*)(implicit man: Manifest[T], marker: BoxMarker): Field{type ValueType=T} = {    
+    val paramFieldId: Box[String] = (stuff.collect {
+      case FormFieldId(id) => id
+    }).headOption
+
     val confirmInfo = stuff.collect{
       case NotOnConfirmScreen => false
     }.headOption orElse
@@ -439,12 +457,6 @@ trait AbstractScreen extends Factory {
 
       override def validate: List[FieldError] = underlying.toList.flatMap(_.validate)
 
-      /*
-      override def validations = stuff.collect {
-        case AVal(f) => f
-      }.toList ::: underlying.toList.flatMap(_.validations)
-      */
-
       override def setFilter = stuff.collect {
         case AFilter(f) => f
       }.toList
@@ -453,7 +465,7 @@ trait AbstractScreen extends Factory {
       override def get = underlying.open_!.get
       override def set(v: T) = underlying.open_!.set(setFilter.foldLeft(v)((v, f) => f(v)))
 
-      override def uniqueFieldId: Box[String] = underlying.flatMap(_.uniqueFieldId) or super.uniqueFieldId
+      override def uniqueFieldId: Box[String] = paramFieldId or underlying.flatMap(_.uniqueFieldId) or super.uniqueFieldId
     }
   }
                           
@@ -797,9 +809,10 @@ trait ScreenWizardRendered {
       fields.flatMap {
         f =>
           val theForm = f.input
-          val curId = f.field.uniqueFieldId or theForm.flatMap(x => (x \ "@id").headOption.map(_.text)) openOr Helpers.nextFuncName
+          val curId = theForm.flatMap(Helpers.findId) or 
+        f.field.uniqueFieldId openOr Helpers.nextFuncName
 
-        val myNotices = notices.filter(fi => fi._3.isDefined && fi._3 == f.field.uniqueFieldId)
+        val myNotices = notices.filter(fi => fi._3.isDefined && fi._3 == curId)
         def doLabel(in: NodeSeq): NodeSeq =
           myNotices match {
             case Nil => bind("wizard", in, AttrBindParam("for", curId, "for"), "bind" -%> f.text)

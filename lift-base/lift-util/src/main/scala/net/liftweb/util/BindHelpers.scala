@@ -1210,6 +1210,13 @@ trait BindHelpers {
     }.firstOption
   }
 
+    
+  /**
+   * Finds the first Element in the NodeSeq (or any children)
+   * that has an ID attribute
+   */
+  def findId(ns: NodeSeq): Box[String] = findBox(ns)(_.attribute("id").map(_.text))
+
   /**
    * Finds and returns the first node in the specified NodeSeq and its children
    * with the same label and prefix as the specified element.
