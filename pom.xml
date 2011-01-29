@@ -79,9 +79,6 @@
     </site>
   </distributionManagement>
   <properties>
-    <!-- vscaladoc settings -->
-    <!-- FIXME: 280 vscaladoc isn't 2.8 ready yet -->
-    <!-- <maven.scaladoc.vscaladocVersion>1.2-m1</maven.scaladoc.vscaladocVersion> -->
     <vscaladoc.links.liftweb.baseurl>${project.basedir}/../..</vscaladoc.links.liftweb.baseurl>
     <vscaladoc.links.liftweb.pathsufix>target/site/scaladocs/</vscaladoc.links.liftweb.pathsufix>
 
@@ -179,11 +176,8 @@
           <groupId>org.scala-tools</groupId>
           <artifactId>maven-scala-plugin</artifactId>
           <configuration>
-            <aggregateDirectOnly>false</aggregateDirectOnly>
-            <forceAggregate>true</forceAggregate>
             <jvmArgs>
               <jvmArg>-Xmx2g</jvmArg>
-              <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
             </jvmArgs>
           </configuration>
         </plugin>
@@ -209,6 +203,11 @@
       <plugin>
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
+        <inherited>false</inherited>
+        <configuration>
+          <!-- this configuration should not be inherited, it's to avoid framework_... as artifactId in doc -->
+          <artifactId>lift_${scala.version}</artifactId>
+        </configuration>
       </plugin>
     </plugins>
   </build>
@@ -305,15 +304,12 @@
       <plugin>
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
-        <version>2.14.3</version>
+        <version>2.15.1</version>
         <configuration>
-          <aggregateDirectOnly>false</aggregateDirectOnly>
-          <forceAggregate>true</forceAggregate>
           <charset>${project.build.sourceEncoding}</charset>
           <!--<bottom>Copyright &#169; {inceptionYear}-{currentYear} {organizationName}. All Rights Reserved.</bottom>-->
           <jvmArgs>
             <jvmArg>-Xmx2g</jvmArg>
-            <jvmArg>-DpackageLinkDefs=file://${project.build.directory}/packageLinkDefs.properties</jvmArg>
           </jvmArgs>
         </configuration>
       </plugin>
