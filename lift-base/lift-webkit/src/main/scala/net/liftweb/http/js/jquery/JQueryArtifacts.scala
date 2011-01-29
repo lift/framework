@@ -97,8 +97,8 @@ case object JQuery13Artifacts extends JQueryArtifacts {
 
 case object JQuery14Artifacts extends JQueryArtifacts {
   override def pathRewriter: PartialFunction[List[String], List[String]] = {
-    case "jquery.js" :: Nil if Props.devMode => List("jquery-1.4.2.js")
-    case "jquery.js" :: Nil => List("jquery-1.4.2-min.js")
+    case "jquery.js" :: Nil if Props.devMode => List("jquery-1.4.4.js")
+    case "jquery.js" :: Nil => List("jquery-1.4.4-min.js")
   }
 }
 
