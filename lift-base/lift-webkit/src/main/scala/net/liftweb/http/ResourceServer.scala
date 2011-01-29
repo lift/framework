@@ -34,7 +34,6 @@ object ResourceServer {
     case "json.js" :: Nil => true
     case "jlift.js" :: Nil => true
     case bp@("blueprint" :: _) if bp.last.endsWith(".css") || bp.last.endsWith(".png") => true
-    case bp@("blueprint_10" :: _) if bp.last.endsWith(".css") || bp.last.endsWith(".png") => true
     case "jquery-autocomplete" :: "jquery.autocomplete.js" :: Nil => true
     case "jquery-autocomplete" :: "jquery.autocomplete.css" :: Nil => true
     case "jquery-autocomplete" :: "indicator.gif" :: Nil => true
