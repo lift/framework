@@ -1880,8 +1880,8 @@ object SHtml {
   def checkbox_*(value: Boolean, func: AFuncHolder, id: Box[String],
                  attrs: ElemAttr*): NodeSeq = {
     fmapFunc(func)(name =>
-            (<input type="hidden" name={name} value="false"/>) ++
-                    (attrs.foldLeft(<input type="checkbox" name={name} value="true"/>)(_ % _) % checked(value) % setId(id))
+      (attrs.foldLeft(<input type="checkbox" name={name} value="true"/>)(_ % _) % checked(value) % setId(id)) ++ 
+                   (<input type="hidden" name={name} value="false"/>)
       )
   }
 

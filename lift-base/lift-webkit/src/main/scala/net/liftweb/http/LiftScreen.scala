@@ -623,7 +623,7 @@ trait AbstractScreen extends Factory {
    * @returns a newly minted Field
    */
   protected def password(name: => String, defaultValue: => String, stuff: FilterOrValidate[String]*): Field{type ValueType=String} = {
-    val eAttr: List[SHtml.ElemAttr] = stuff.flatMap{case FormParam(fp) => List(fp) case _ => Nil}.toList
+    val eAttr = grabParams(stuff)
     
     makeField[String, Nothing](name, 
                                defaultValue,
@@ -642,7 +642,7 @@ trait AbstractScreen extends Factory {
    * @returns a newly minted Field
    */
   protected def text(name: => String, defaultValue: => String, stuff: FilterOrValidate[String]*): Field{type ValueType=String} = {
-    val eAttr: List[SHtml.ElemAttr] = stuff.flatMap{case FormParam(fp) => List(fp) case _ => Nil}.toList
+    val eAttr = grabParams(stuff)
     
     makeField[String, Nothing](name, 
                                defaultValue,
@@ -683,8 +683,7 @@ trait AbstractScreen extends Factory {
   Field{type ValueType = String} = {
     
     val eAttr: List[SHtml.ElemAttr] = (("rows" -> rows.toString): SHtml.ElemAttr) ::
-    (("cols" -> cols.toString): SHtml.ElemAttr) ::
-    stuff.flatMap{case FormParam(fp) => List(fp) case _ => Nil}.toList
+    (("cols" -> cols.toString): SHtml.ElemAttr) :: grabParams(stuff)
     
     makeField[String, Nothing](name, 
                                defaultValue,
@@ -712,8 +711,7 @@ trait AbstractScreen extends Factory {
   (implicit f: SHtml.PairStringPromoter[T]): Field{type ValueType = T; type OtherValueType = Seq[T]} 
   =
     {
-      val eAttr: List[SHtml.ElemAttr] = stuff.flatMap{case FormParam(fp) => List(fp) case _ => Nil}.toList
-      
+      val eAttr = grabParams(stuff)      
       
       makeField[T, Seq[T]](name, default,
                            field =>
@@ -739,8 +737,7 @@ trait AbstractScreen extends Factory {
   (implicit f: SHtml.PairStringPromoter[T]): Field{type ValueType = Seq[T]; type OtherValueType = Seq[T]} 
   =
     {
-      val eAttr: List[SHtml.ElemAttr] = stuff.flatMap{case FormParam(fp) => List(fp) case _ => Nil}.toList
-      
+      val eAttr = grabParams(stuff)      
       
       makeField[Seq[T], Seq[T]](name, default,
                                 field =>
@@ -750,7 +747,16 @@ trait AbstractScreen extends Factory {
                                 stuff :_*)
     }
   
-  
+  /**
+   * Grabs the FormFieldId and FormParam parameters 
+   */
+  protected def grabParams(in: Seq[FilterOrValidate[_]]): 
+  List[SHtml.ElemAttr] = {
+    val sl = in.toList
+    in.collect{case FormFieldId(id) => ("id" -> id): SHtml.ElemAttr}.
+    headOption.toList :::
+    sl.collect{case FormParam(fp) => fp}
+  }
 
   /**
    * Create a radio HTML element
@@ -766,8 +772,7 @@ trait AbstractScreen extends Factory {
    */  
   protected def radio(name: => String, default: => String, choices: => Seq[String], stuff: FilterOrValidate[String]*):
   Field{type ValueType = String; type OtherValueType = Seq[String]} = {
-    val eAttr: List[SHtml.ElemAttr] = stuff.flatMap{case FormParam(fp) => List(fp) case _ => Nil}.toList
-    
+    val eAttr = grabParams(stuff)
     
     makeField[String, Seq[String]](name, default,
                                    field =>
@@ -813,7 +818,8 @@ trait ScreenWizardRendered {
         f.field.uniqueFieldId openOr Helpers.nextFuncName
 
         val theForm = theFormEarly.map{
-          f => {
+          fe => {
+            val f = Helpers.deepEnsureUniqueId(fe)
             val id = Helpers.findBox(f)(_.attribute("id").
                                         map(_.text).
                                         filter(_ == curId))
@@ -839,9 +845,7 @@ trait ScreenWizardRendered {
           }
         bind("wizard", xhtml,
              "label" -%> doLabel _, 
-             "form" -%> theForm.map(f => f.map{
-               case e: Elem => e % ("id" -> curId)
-               case x => x}: NodeSeq),
+             "form" -%> theForm,
              FuncBindParam("help", xml => {
                f.help match {
                  case Full(hlp) => bind("wizard", xml, "bind" -%> hlp)

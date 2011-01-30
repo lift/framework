@@ -2443,10 +2443,8 @@ for {
       LFuncHolder(f)
 
     implicit def boolToAF(f: Boolean => Any): AFuncHolder =
-      LFuncHolder(lst => lst match {
-        case Helpers.AsBoolean(true) :: _ => f(true)
-        case _ => f(false)
-      })
+      LFuncHolder(lst => f(lst.foldLeft(false)(
+        (v, str) => v || Helpers.toBoolean(str))))
   }
 
   /**

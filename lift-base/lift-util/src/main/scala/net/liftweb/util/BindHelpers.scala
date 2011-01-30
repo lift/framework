@@ -1231,6 +1231,8 @@ trait BindHelpers {
           case _ => true
         }
 
+        found = true
+
         new Elem(e.prefix,
                  e.label, new UnprefixedAttribute("id", id, meta),
                  e.scope, e.child :_*)
@@ -1330,6 +1332,47 @@ trait BindHelpers {
       }
     }
   }
+
+  /**
+   * For a list of NodeSeq, ensure that the the id of the root Elems
+   * are unique.  If there's a duplicate, that Elem will be returned
+   * without an id
+   */
+  def deepEnsureUniqueId(in: NodeSeq): NodeSeq = {
+    var ids: Set[String] = Set()
+
+    def ensure(node: Node): Node = node match {
+      case Group(ns) => Group(ns.map(ensure))
+      case in: Elem => 
+        in.attribute("id") match {
+          case Some(id) => {
+            if (ids.contains(id.text)) {
+              new Elem(in.prefix,
+                       in.label, in.attributes.filter {
+                         case up: UnprefixedAttribute => up.key != "id"
+                         case _ => true
+                       }, in.scope, in.child.map(ensure) :_*)
+            } else {
+              ids += id.text
+              new Elem(in.prefix,
+                       in.label, in.attributes,
+                       in.scope, in.child.map(ensure) :_*)
+            }
+            
+          }
+          
+          case _ => 
+            new Elem(in.prefix,
+                     in.label, in.attributes,
+                     in.scope, in.child.map(ensure) :_*)
+        }
+      
+      case x => x
+    }
+
+    in.map(ensure)
+  }
+
 }
 
 /**
