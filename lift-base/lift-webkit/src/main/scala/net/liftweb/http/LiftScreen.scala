@@ -808,9 +808,22 @@ trait ScreenWizardRendered {
     def bindFieldLine(xhtml: NodeSeq): NodeSeq = {
       fields.flatMap {
         f =>
-          val theForm = f.input
-          val curId = theForm.flatMap(Helpers.findId) or 
+          val theFormEarly = f.input
+          val curId = theFormEarly.flatMap(Helpers.findId) or 
         f.field.uniqueFieldId openOr Helpers.nextFuncName
+
+        val theForm = theFormEarly.map{
+          f => {
+            val id = Helpers.findBox(f)(_.attribute("id").
+                                        map(_.text).
+                                        filter(_ == curId))
+            if (id.isEmpty) {
+              Helpers.ensureId(f, curId)
+            } else {
+              f
+            }
+          }
+        }
 
         val myNotices = notices.filter(fi => fi._3.isDefined && fi._3 == curId)
         def doLabel(in: NodeSeq): NodeSeq =

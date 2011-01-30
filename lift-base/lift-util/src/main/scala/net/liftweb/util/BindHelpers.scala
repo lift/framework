@@ -1218,6 +1218,29 @@ trait BindHelpers {
   def findId(ns: NodeSeq): Box[String] = findBox(ns)(_.attribute("id").map(_.text))
 
   /**
+   * Ensure that the first Element has the specified ID
+   */
+  def ensureId(ns: NodeSeq, id: String): NodeSeq = {
+    var found = false
+    
+    ns.map {
+      case x if found => x
+      case e: Elem => {
+        val meta = e.attributes.filter {
+          case up: UnprefixedAttribute => up.key != "id"
+          case _ => true
+        }
+
+        new Elem(e.prefix,
+                 e.label, new UnprefixedAttribute("id", id, meta),
+                 e.scope, e.child :_*)
+      }
+ 
+      case x => x
+    }
+  }
+
+  /**
    * Finds and returns the first node in the specified NodeSeq and its children
    * with the same label and prefix as the specified element.
    */
