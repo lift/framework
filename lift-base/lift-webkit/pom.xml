@@ -108,6 +108,7 @@
           <instructions>
             <Private-Package>i18n.*,toserve.*</Private-Package>
             <Export-Package>
+              net.liftweb.mocks.*;version="${project.version}",
               net.liftweb.builtin.*;version="${project.version}",
               net.liftweb.http.*;version="${project.version}",
               net.liftweb.sitemap.*;version="${project.version}"
