@@ -227,6 +227,17 @@ object JE {
   implicit def numToJsExp(in: Float): JsExp = Num(in)
   */
 
+  /**
+   * The companion object to Num which has some helpful
+   * constructors
+   */
+  object Num {
+    def apply(i: Int): Num = new Num(i)
+    def apply(lng: Long): Num = new Num(lng)
+    def apply(d: Double): Num = new Num(d)
+    def apply(f: Float): Num = new Num(f)
+  }
+  
   case class Num(n: Number) extends JsExp {
     def toJsCmd = n.toString
   }
