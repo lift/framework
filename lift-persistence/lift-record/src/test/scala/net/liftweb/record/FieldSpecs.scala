@@ -211,7 +211,7 @@ object FieldSpecs extends Specification {
       rec.mandatoryBooleanField,
       JsTrue,
       JBool(bool),
-      Full("<input value=\"false\" type=\"hidden\" name=\".*\"></input><input checked=\"checked\" tabIndex=\"1\" value=\"true\" type=\"checkbox\" name=\".*\" id=\"mandatoryBooleanField_id_field\"></input>")
+      Full("<input checked=\"checked\" tabIndex=\"1\" value=\"true\" type=\"checkbox\" name=\".*\" id=\"mandatoryBooleanField_id_field\"></input><input value=\"false\" type=\"hidden\" name=\".*\"></input>")
     )
   }
 
