@@ -30,11 +30,9 @@ object Example extends Specification {
   }
 
   "Parse Person with Address" in {
-    implicit def addrJSON: JSON[Address] = new JSON[Address] {
+    implicit def addrJSON: JSONR[Address] = new JSONR[Address] {
       def read(json: JValue) = 
         (field[String](json, "street") |@| field[String](json, "zip")) { Address }
-
-      def write(value: Address) = error("fixme")
     }
 
     val p = JsonParser.parse(""" {"name":"joe","age":34,"address":{"street": "Manhattan 2", "zip": "00223" }} """)

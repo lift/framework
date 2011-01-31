@@ -6,11 +6,16 @@ import net.liftweb.json._
 import net.liftweb.json.JsonAST._
 
 object JsonScalaz {
-  trait JSON[A] {
+  trait JSONR[A] {
 //    def read(json: JValue): Validation[(JValue, Class[A]), A]
     def read(json: JValue): Validation[String, A]
+  }
+
+  trait JSONW[A] {
     def write(value: A): JValue
   }
+
+  trait JSON[A] extends JSONR[A] with JSONW[A]
 
   implicit def boolJSON: JSON[Boolean] = new JSON[Boolean] {
     def read(json: JValue) = json match {
@@ -83,12 +88,12 @@ object JsonScalaz {
     def write(values: List[A]) = JArray(values.map(x => JsonScalaz.write(x)))
   }
 
-  def read[A: JSON](json: JValue) = implicitly[JSON[A]].read(json)
-  def write[A: JSON](value: A) = implicitly[JSON[A]].write(value)
-  def field[A: JSON](json: JValue, name: String) = json match {
+  def read[A: JSONR](json: JValue) = implicitly[JSONR[A]].read(json)
+  def write[A: JSONW](value: A) = implicitly[JSONW[A]].write(value)
+  def field[A: JSONR](json: JValue, name: String) = json match {
     case JObject(fs) => 
       fs.find(_.name == name)
-        .map(f => implicitly[JSON[A]].read(f.value))
+        .map(f => implicitly[JSONR[A]].read(f.value))
         .getOrElse(failure("no such field '" + name + "'"))
     case x => failure(x.toString)
   }
