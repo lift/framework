@@ -125,6 +125,12 @@ object JsonParser {
     buf.substring
   }
 
+  // FIXME fail fast to prevent infinite loop, see 
+  // http://www.exploringbinary.com/java-hangs-when-converting-2-2250738585072012e-308/
+  private[json] def parseDouble(s: String) =
+    if (s.trim == "2.2250738585072012e-308") error("Error parsing 2.2250738585072012e-308")
+    else s.toDouble 
+
   private val astParser = (p: Parser) => {
     val vals = new ValStack(p)
     var token: Token = null
@@ -253,7 +259,8 @@ object JsonParser {
           } else s.append(c)
         }
         val value = s.toString
-        if (doubleVal) DoubleVal(value.toDouble) else IntVal(BigInt(value))
+        if (doubleVal) DoubleVal(parseDouble(value)) 
+        else IntVal(BigInt(value))
       }
 
       while (true) {

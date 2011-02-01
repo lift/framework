@@ -128,7 +128,8 @@ object Extraction {
       case "[]"    => JArray(Nil)
       case x @ _   => 
         if (value.charAt(0).isDigit) {
-          if (value.indexOf('.') == -1) JInt(BigInt(value)) else JDouble(value.toDouble)
+          if (value.indexOf('.') == -1) JInt(BigInt(value)) 
+          else JDouble(JsonParser.parseDouble(value))
         }
         else JString(JsonParser.unquote(value.substring(1)))
     }
