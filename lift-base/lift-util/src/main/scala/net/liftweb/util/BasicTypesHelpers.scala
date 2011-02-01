@@ -153,7 +153,7 @@ object AsInt {
   /**
    * Safely convert the specified String to an Int.
    */
-  def asDouble(in: String): Box[Double] = tryo{in.trim.toDouble}
+  def asDouble(in: String): Box[Double] = tryo{ParseDouble(in.trim)}
 
 /**
 * A helpful Int extractor

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 WorldWide Conferencing, LLC
+ * Copyright 2008-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.scala.util.parsing.combinator.{Parsers, ImplicitConversions}
+import scala.util.parsing.combinator.{Parsers, ImplicitConversions}
 import Helpers._
 import common._
+import common.{ParseDouble => SafeParseDouble}
 
 object JSONParser extends SafeSeqParser with ImplicitConversions {
   implicit def strToInput(in: String): Input = new _root_.scala.util.parsing.input.CharArrayReader(in.toCharArray)
@@ -101,21 +102,21 @@ object JSONParser extends SafeSeqParser with ImplicitConversions {
   lazy val e = ('e' ~ '-' ^^ {case _ => -1}) | ('e' ~ '+' ^^ {case _ => 1}) | ('e' ^^ {case _ => 1}) |
   ('E' ~ '-' ^^ {case _ => -1}) | ('E' ~ '+' ^^ {case _ => 1}) | ('E' ^^ {case _ => 1})
 
-  lazy val intFracExp: Parser[Double] = anInt ~ frac ~ exp ^^ {case i ~ f ~ exp => ((i.toString+"."+f+"e"+exp).toDouble)}
+  lazy val intFracExp: Parser[Double] = anInt ~ frac ~ exp ^^ {case i ~ f ~ exp => (SafeParseDouble(i.toString+"."+f+"e"+exp))}
 
-  lazy val intFrac: Parser[Double] = anInt ~ frac ^^ {case i ~ f => ((i.toString+"."+f).toDouble)}
+  lazy val intFrac: Parser[Double] = anInt ~ frac ^^ {case i ~ f => (SafeParseDouble(i.toString+"."+f))}
 
-  lazy val intExp = anInt ~ exp ^^ {case i ~ e => ((i.toString+"e"+e).toDouble)}
+  lazy val intExp = anInt ~ exp ^^ {case i ~ e => (SafeParseDouble(i.toString+"e"+e))}
 
   lazy val anInt: Parser[Long] = (digit19 ~ digits ^? {case x ~ xs if xs.length < 12 => (x :: xs).mkString("").toLong}) |
   (digit ^^ {case x => x.toString.toLong}) |
   ('-' ~> digit19 ~ digits ^? {case x ~ xs if xs.length < 12 => ((x :: xs).mkString("").toLong * -1L)}) |
   ('-' ~> digit ^^ {case x => x.toString.toLong * -1L})
 
-  lazy val manyCharInt: Parser[Double] = (digit19 ~ digits ^^ {case x ~ xs => (x :: xs).mkString.toDouble}) |
-  (digit ^^ {case x => x.toString.toDouble}) |
-  ('-' ~> digit19 ~ digits ^^ {case  x ~ xs => ((x :: xs).mkString.toDouble * -1d)}) |
-  ('-' ~> digit ^^ {case x => x.toString.toDouble * -1d})
+  lazy val manyCharInt: Parser[Double] = (digit19 ~ digits ^^ {case x ~ xs => SafeParseDouble((x :: xs).mkString)}) |
+  (digit ^^ {case x => SafeParseDouble(x.toString)}) |
+  ('-' ~> digit19 ~ digits ^^ {case  x ~ xs => SafeParseDouble(((x :: xs).mkString)) * -1d}) |
+  ('-' ~> digit ^^ {case x => SafeParseDouble(x.toString) * -1d})
 
   lazy val digit19 = elem("digit", c => c >= '1' && c <= '9')
 
@@ -136,7 +137,4 @@ object JSONParser extends SafeSeqParser with ImplicitConversions {
   lazy val istrue: Parser[Boolean] = acceptSeq("true") ^^ {case _ => true}
   lazy val isfalse: Parser[Boolean] = acceptSeq("false") ^^ {case _ => false}
   lazy val isnull = acceptSeq("null") ^^ {case _ => Empty}
-}
-
-}
 }

@@ -59,7 +59,7 @@ trait OAuthValidator {
   for {
     msg <- message
     verParam <- msg.getParameter(OAuthUtil.OAUTH_VERSION)
-    version <- tryo(verParam.value.toDouble).filter(v => v < MIN_VERSION || MAX_VERSION < v) ?~
+    version <- tryo(ParseDouble(verParam.value)).filter(v => v < MIN_VERSION || MAX_VERSION < v) ?~
     OAuthUtil.Problems.VERSION_REJECTED._1 ~> OAuthProblem(OAuthUtil.Problems.VERSION_REJECTED,
                                                            (OAuthUtil.ProblemParams.OAUTH_ACCEPTABLE_VERSIONS, MIN_VERSION + "-" + MAX_VERSION))
   } yield msg
