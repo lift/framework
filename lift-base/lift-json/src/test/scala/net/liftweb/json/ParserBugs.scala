@@ -19,10 +19,16 @@ package json
 
 import org.specs.Specification
 import org.specs.runner.{Runner, JUnit}
+import scala.util.control.Exception._
 
 class ParserBugsTest extends Runner(ParserBugs) with JUnit
 object ParserBugs extends Specification {
   "Unicode ffff is a valid char in string literal" in {
     parseOpt(""" {"x":"\uffff"} """).isDefined mustEqual true
+  }
+
+  "Does not hang when parsing 2.2250738585072012e-308" in {
+    allCatch.opt(parse(""" [ 2.2250738585072012e-308 ] """)) mustEqual None
+    allCatch.opt(parse(""" [ 22.250738585072012e-309 ] """)) mustEqual None
   }
 }

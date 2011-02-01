@@ -23,14 +23,17 @@ package common
  * 2.2250738585072012e-308
  */
 object ParseDouble {
+  private val BrokenDouble = BigDecimal("2.2250738585072012e-308")
+
   /**
    * Parse a String to a Double avoiding the
    * JVM parsing bug.  May throw NumberFormatException
    * if the String is not properly formatted
    */
-  def apply(str: String): Double = str.trim match {
-    case "2.2250738585072012e-308" => throw new NumberFormatException("Error parsing 2.2250738585072012e-308")
-    case str => java.lang.Double.parseDouble(str)
+  def apply(str: String): Double = {
+    val d = BigDecimal(str)
+    if (d == BrokenDouble) error("Error parsing 2.2250738585072012e-308")
+    else d.doubleValue
   }
 
   /**
