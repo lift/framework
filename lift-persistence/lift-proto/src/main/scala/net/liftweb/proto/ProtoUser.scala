@@ -470,10 +470,15 @@ trait ProtoUser {
   }
 
   def logUserIn(who: TheUserType, postLogin: () => Nothing): Nothing = {
-    S.session.open_!.destroySessionAndContinueInNewSession(() => {
+    if (destroySessionOnLogin) {
+      S.session.open_!.destroySessionAndContinueInNewSession(() => {
+        logUserIn(who)
+        postLogin()
+      })
+    } else {
       logUserIn(who)
       postLogin()
-    })
+    }
   }
 
   def logUserIn(who: TheUserType) {
@@ -679,22 +684,42 @@ trait ProtoUser {
    */
   protected def findUserByUniqueId(id: String): Box[TheUserType]
 
+  /**
+   * By default, destroy the session on login.
+   * Change this is some of the session information needs to
+   * be preserved.
+   */
+  protected def destroySessionOnLogin = true
+
+  /**
+   * If there's any state that you want to capture pre-login
+   * to be set post-login (the session is destroyed),
+   * then set the state here.  Just make a function
+   * that captures the state... that function will be applied
+   * post login.
+   */
+  protected def capturePreLoginState(): () => Unit = () => {}
+
   def login = {
     if (S.post_?) {
       S.param("username").
       flatMap(username => findUserByUserName(username)) match {
         case Full(user) if user.validated_? &&
           user.testPassword(S.param("password")) => {
+            val preLoginState = capturePreLoginState()
+            val redir = loginRedirect.is match {
+              case Full(url) =>
+                loginRedirect(Empty)
+              url
+              case _ =>
+                homePage
+            }
+
             logUserIn(user, () => {
               S.notice(S.??("logged.in"))
 
-              val redir = loginRedirect.is match {
-                case Full(url) =>
-                  loginRedirect(Empty)
-                url
-                case _ =>
-                  homePage
-              }
+              preLoginState()
+
               S.redirectTo(redir)
             })
           }
