@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 package net.liftweb
-package mocks
+package mockweb
 
 import common.{Box,Empty,Full}
 import http._
 import http.rest._
 import json._
 import json.JsonDSL._
+import mocks.MockHttpServletRequest
 
 import org.specs._
 import org.specs.runner._

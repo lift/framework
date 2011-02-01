@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 package net.liftweb
-package mocks
+package mockweb
 
 import javax.servlet.http.HttpServletRequest
 
@@ -25,6 +25,7 @@ import org.specs._
 import common.{Box,Empty,Full}
 import http._
 import json.JsonAST._
+import mocks.MockHttpServletRequest
 
 
 /**

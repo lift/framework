@@ -16,7 +16,7 @@
 
 // Don't lose the braces here, we use nested packages in this source
 package net.liftweb {
-package mocks {
+package mockweb {
 
 import javax.servlet.http.HttpServletRequest
 
@@ -25,6 +25,7 @@ import http.{LiftRules,LiftSession,Req,S}
 import util.ThreadGlobal
 import util.Helpers._
 import http.provider.servlet.HTTPRequestServlet
+import mocks.MockHttpServletRequest
 
 import scala.xml.{MetaData,Null}
 

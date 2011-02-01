@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 package net.liftweb
-package mocks
+package mockweb
 
 import javax.servlet.http.Cookie
 
@@ -23,6 +23,7 @@ import scala.xml.{Null,Text,UnprefixedAttribute}
 import common._
 import http._
 import http.provider.servlet.HTTPRequestServlet
+import mocks.MockHttpServletRequest
 import util._
 
 import org.specs._
