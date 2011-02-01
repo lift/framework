@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
 import Helpers._
 import common._
@@ -81,7 +81,4 @@ object Currency {
     case List(cur, a, d) => for (av <- asLong(a); dv <- asInt(d)) yield new Currency(av, urlDecode(cur), dv)
     case _ => Empty
   }
-}
-
-}
 }

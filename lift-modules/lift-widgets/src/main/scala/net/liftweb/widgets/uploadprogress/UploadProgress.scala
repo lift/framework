@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package widgets {
-package uploadprogress {
+package net.liftweb 
+package widgets 
+package uploadprogress 
 
-import _root_.scala.xml.{NodeSeq,Text}
-import _root_.net.liftweb.http.{SessionVar,Req,GetRequest,PlainTextResponse,JsonResponse,
+import scala.xml.{NodeSeq,Text}
+import net.liftweb.http.{SessionVar,Req,GetRequest,PlainTextResponse,JsonResponse,
                                 LiftRules,OnDiskFileParamHolder,S,ResourceServer,LiftResponse}
-import _root_.net.liftweb.http.js.JsCmds._
-import _root_.net.liftweb.http.js.JE._
-import _root_.net.liftweb.common.{Box,Empty,Failure,Full}
-import _root_.net.liftweb.util.{Log}
+import net.liftweb.http.js.JsCmds._
+import net.liftweb.http.js.JE._
+import net.liftweb.common.{Box,Empty,Failure,Full}
+import net.liftweb.util.{Log}
+import net.liftweb.common.ParseDouble
 
 /**
  * A helper widget that makes it easy to do upload
@@ -77,13 +78,13 @@ object UploadProgress {
    * </code></pre>
    */
   def progressJsonResponse: Full[LiftResponse] = {
-    val recived: Double = StatusHolder.is.map(_._1.toDouble).openOr(0D)
-    val size: Double = StatusHolder.is.map(_._2.toDouble).openOr(0D)
+    val recived: Double = StatusHolder.is.map(v => (v._1.toDouble)).openOr(0D)
+    val size: Double = StatusHolder.is.map(v => (v._2.toDouble)).openOr(0D)
     val state: String = if(recived == size){ "completed" } else { "uploading" }
     Full(JsonResponse(
       JsObj(
         "state" -> state, 
-        "percentage" -> Str(Math.floor((recived.toDouble / size.toDouble)*100).toString)
+        "percentage" -> Str(Math.floor(((recived) / (size))*100).toString)
       )
     ))
   }
@@ -142,6 +143,3 @@ object UploadProgress {
  */
 object StatusHolder extends SessionVar[Box[(Long, Long)]](Empty)
 
-}
-}
-}

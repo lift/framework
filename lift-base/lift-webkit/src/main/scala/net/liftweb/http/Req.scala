@@ -83,7 +83,7 @@ trait UserAgentCalculator {
     for {
       ua <- userAgent
       m = re.pattern.matcher(ua)
-      ver <- if (m.find) Helpers.tryo(m.group(1).toDouble) else Empty
+      ver <- (if (m.find) {Helpers.tryo(ParseDouble(m.group(1)))} else Empty)
     } yield ver
   }
 
@@ -104,7 +104,7 @@ trait UserAgentCalculator {
     for {
       ua <- userAgent
       m = re.pattern.matcher(ua)
-      ver <- if (m.find) Helpers.tryo(m.group(1).toDouble) else Empty
+      ver <- if (m.find) Helpers.tryo(ParseDouble(m.group(1))) else Empty
     } yield ver
   }
 

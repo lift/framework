@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
-package field {
+package net.liftweb 
+package record 
+package field 
 
-import _root_.scala.xml._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.http.{S}
-import _root_.net.liftweb.json.JsonAST.{JDouble, JNothing, JNull, JValue}
-import _root_.net.liftweb.util._
+import scala.xml._
+import net.liftweb.common._
+import net.liftweb.http.{S}
+import net.liftweb.json.JsonAST.{JDouble, JNothing, JNull, JValue}
+import net.liftweb.util._
 import Helpers._
 import S._
 
 trait DoubleTypedField extends NumericTypedField[Double] {
   def setFromAny(in: Any): Box[Double] = setNumericFromAny(in, _.doubleValue)
 
-  def setFromString(s: String): Box[Double] = setBox(tryo(java.lang.Double.parseDouble(s)))
+  def setFromString(s: String): Box[Double] = setBox(tryo(ParseDouble(s)))
 
   def defaultValue = 0.0
 
@@ -63,6 +63,3 @@ class OptionalDoubleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
   def owner = rec
 }
 
-}
-}
-}

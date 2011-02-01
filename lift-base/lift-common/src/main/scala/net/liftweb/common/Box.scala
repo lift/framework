@@ -166,7 +166,14 @@ sealed abstract class Box[+A] extends Product {
   def isDefined: Boolean = !isEmpty
 
   /**
-   * Return the value contained in this Box if it is full; throw an exception otherwise
+   * Return the value contained in this Box if it is Full;
+   * throw an exception otherwise.
+   * The method has a '!' in its name.  This means "don't use it unless
+   * you are 100% sure that the Box is Full and you should probably
+   * comment your code with the explanation of the guaranty.
+   * The better case for extracting the value out of a Box can
+   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
+   *
    * @return the value contained in this Box if it is full; throw an exception otherwise
    */
   def open_! : A
@@ -355,7 +362,7 @@ sealed abstract class Box[+A] extends Product {
   def ===[B >: A](to: B): Boolean = false
 
   /**
-   * Equivalent to map(f).or(Full(dflt)).open_!
+   * Equivalent to map(f).openOr(Full(dflt))
    */
   def dmap[B](dflt: => B)(f: A => B): B = dflt
 
@@ -383,6 +390,18 @@ final case class Full[+A](value: A) extends Box[A] {
 
   def isEmpty: Boolean = false
 
+  
+  /**
+   * Return the value contained in this Box if it is Full;
+   * throw an exception otherwise.
+   * The method has a '!' in its name.  This means "don't use it unless
+   * you are 100% sure that the Box is Full and you should probably
+   * comment your code with the explanation of the guaranty.
+   * The better case for extracting the value out of a Box can
+   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
+   *
+   * @return the value contained in this Box if it is full; throw an exception otherwise
+   */
   def open_! : A = value
 
   override def openOr[B >: A](default: => B): B = value
@@ -460,6 +479,17 @@ sealed abstract class EmptyBox extends Box[Nothing] {
 
   def isEmpty: Boolean = true
 
+  /**
+   * Return the value contained in this Box if it is Full;
+   * throw an exception otherwise.
+   * The method has a '!' in its name.  This means "don't use it unless
+   * you are 100% sure that the Box is Full and you should probably
+   * comment your code with the explanation of the guaranty.
+   * The better case for extracting the value out of a Box can
+   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
+   *
+   * @return the value contained in this Box if it is full; throw an exception otherwise
+   */
   def open_!  = throw new NullPointerException("Trying to open an empty Box")
 
   override def openOr[B >: Nothing](default: => B): B = default
@@ -498,6 +528,17 @@ object Failure {
 sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Failure]) extends EmptyBox {
   type A = Nothing
 
+  /**
+   * Return the value contained in this Box if it is Full;
+   * throw an exception otherwise.
+   * The method has a '!' in its name.  This means "don't use it unless
+   * you are 100% sure that the Box is Full and you should probably
+   * comment your code with the explanation of the guaranty.
+   * The better case for extracting the value out of a Box can
+   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
+   *
+   * @return the value contained in this Box if it is full; throw an exception otherwise
+   */
   override def open_! = throw new NullPointerException("Trying to open a Failure Box: " + msg) {
     override def getCause() = exception openOr null
   }
