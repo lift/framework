@@ -4,7 +4,6 @@ import scalaz._
 import Scalaz._
 import net.liftweb.json._
 import net.liftweb.json.JsonAST._ // FIXME remove
-import net.liftweb.json.Printer._ // FIXME remove
 
 import org.specs.Specification
 import org.specs.runner.{Runner, JUnit}
@@ -51,7 +50,7 @@ object Example extends Specification {
     val json = makeObj(("name" -> toJSON(p.name)) :: 
                        ("age" -> toJSON(p.age)) :: 
                        ("address" -> toJSON(p.address)) :: Nil)
-    compact(render(json)) mustEqual 
+    json.shows mustEqual 
       """{"name":"joe","age":34,"address":{"street":"Manhattan 2","zip":"00223"}}"""
   }
 }

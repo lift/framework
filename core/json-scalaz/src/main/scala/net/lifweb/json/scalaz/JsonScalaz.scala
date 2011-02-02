@@ -3,9 +3,14 @@ package net.liftweb.json.scalaz
 import scalaz._
 import Scalaz._
 import net.liftweb.json._
-import net.liftweb.json.JsonAST._
+import net.liftweb.json.JsonAST._ // FIXME remove
+import net.liftweb.json.Printer._ // FIXME remove
 
 object JsonScalaz {
+  implicit def jvalueShow[A <: JValue]: Show[A] = new Show[A] {
+    def show(json: A) = compact(render(json)).toList
+  }
+
   trait JSONR[A] {
     // FIXME Validation or Either ?
 //    def read(json: JValue): Validation[(JValue, Class[A]), A]
@@ -94,7 +99,7 @@ object JsonScalaz {
       case x => fromJSON[A](x).map(some)
     }
 
-    def write(value: Option[A]) = value.map(x => toJSON(x)).getOrElse(JNothing)
+    def write(value: Option[A]) = value.map(x => toJSON(x)).getOrElse(JNull)
   }
 
   def fromJSON[A: JSONR](json: JValue) = implicitly[JSONR[A]].read(json)
