@@ -80,16 +80,16 @@ object JsonScalaz {
   implicit def listJSON[A: JSON]: JSON[List[A]] = new JSON[List[A]] {
     def read(json: JValue) = json match {
       case JArray(xs) => 
-        xs.map(JsonScalaz.read[A])
-          .sequence[PartialApply1Of2[Validation, String]#Apply, A]
+        xs.map(fromJSON[A]).sequence[PartialApply1Of2[Validation, String]#Apply, A]
       case x => failure(x.toString)
     }
 
-    def write(values: List[A]) = JArray(values.map(x => JsonScalaz.write(x)))
+    def write(values: List[A]) = JArray(values.map(x => toJSON(x)))
   }
 
-  def read[A: JSONR](json: JValue) = implicitly[JSONR[A]].read(json)
-  def write[A: JSONW](value: A) = implicitly[JSONW[A]].write(value)
+  def fromJSON[A: JSONR](json: JValue) = implicitly[JSONR[A]].read(json)
+  def toJSON[A: JSONW](value: A) = implicitly[JSONW[A]].write(value)
+
   def field[A: JSONR](json: JValue, name: String) = json match {
     case JObject(fs) => 
       fs.find(_.name == name)
@@ -97,4 +97,7 @@ object JsonScalaz {
         .getOrElse(failure("no such field '" + name + "'"))
     case x => failure(x.toString)
   }
+
+  def makeObj(fields: Traversable[(String, JValue)]): JObject = 
+    JObject(fields.toList.map { case (n, v) => JField(n, v) })
 }
