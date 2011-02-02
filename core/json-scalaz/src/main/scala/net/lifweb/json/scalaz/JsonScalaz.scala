@@ -7,6 +7,7 @@ import net.liftweb.json.JsonAST._
 
 object JsonScalaz {
   trait JSONR[A] {
+    // FIXME Validation or Either ?
 //    def read(json: JValue): Validation[(JValue, Class[A]), A]
     def read(json: JValue): Validation[String, A]
   }
@@ -87,6 +88,15 @@ object JsonScalaz {
     def write(values: List[A]) = JArray(values.map(x => toJSON(x)))
   }
 
+  implicit def optionJSON[A: JSON]: JSON[Option[A]] = new JSON[Option[A]] {
+    def read(json: JValue) = json match {
+      case JNothing | JNull => success(None)
+      case x => fromJSON[A](x).map(some)
+    }
+
+    def write(value: Option[A]) = value.map(x => toJSON(x)).getOrElse(JNothing)
+  }
+
   def fromJSON[A: JSONR](json: JValue) = implicitly[JSONR[A]].read(json)
   def toJSON[A: JSONW](value: A) = implicitly[JSONW[A]].write(value)
 
@@ -100,4 +110,7 @@ object JsonScalaz {
 
   def makeObj(fields: Traversable[(String, JValue)]): JObject = 
     JObject(fields.toList.map { case (n, v) => JField(n, v) })
+
+  // FIXME to get ridof explicit toJSON calls?
+  // implicit def jsonw2jvalue[A: JSONW](a: A): JValue = a.toJSON
 }
