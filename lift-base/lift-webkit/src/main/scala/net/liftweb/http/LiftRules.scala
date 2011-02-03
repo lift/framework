@@ -38,13 +38,14 @@ import scala.reflect.Manifest
 
 import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * LiftRules is the global object that holds all of Lift's configuration.
- */
-object LiftRules extends Factory with FormVendor with LazyLoggable {
-  val noticesContainerId = "lift__noticesContainer__"
-  private val pageResourceId = Helpers.nextFuncName
+class LiftRulesJBridge {
+  def liftRules = LiftRules
+}
 
+/**
+ * The Lift configuration singleton
+ */
+object LiftRules extends LiftRules {
   type DispatchPF = PartialFunction[Req, () => Box[LiftResponse]];
 
   /**
@@ -70,6 +71,19 @@ object LiftRules extends Factory with FormVendor with LazyLoggable {
    * handled by lift rather than the default handler
    */
   type LiftRequestPF = PartialFunction[Req, Boolean]
+
+}
+
+/**
+ * LiftRules is the global object that holds all of Lift's configuration.
+ */
+sealed trait LiftRules extends Factory with FormVendor with LazyLoggable {
+
+  import LiftRules._
+
+  val noticesContainerId = "lift__noticesContainer__"
+  private val pageResourceId = Helpers.nextFuncName
+
 
   /**
    * If you want to make the Lift inactivity timeout shorter than

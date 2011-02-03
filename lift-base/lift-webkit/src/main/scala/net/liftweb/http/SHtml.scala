@@ -27,11 +27,21 @@ import JE._
 import JsCmds._
 import scala.xml._
 
+class SHtmlJBridge {
+  def sHtml = SHtml
+}
+
 /**
  * The SHtml object defines a suite of XHTML element generator methods
  * to simplify the creation of markup, particularly with forms and AJAX.
  */
-object SHtml {
+object SHtml extends SHtml
+
+/**
+ * The SHtml object defines a suite of XHTML element generator methods
+ * to simplify the creation of markup, particularly with forms and AJAX.
+ */
+trait SHtml {
 
   /**
    * Convert a T to a String for display in Select, MultiSelect,

@@ -33,6 +33,10 @@ import scala.reflect.Manifest
 import java.util.concurrent.{ConcurrentHashMap => CHash}
 import http.rest.RestContinuation
 
+class SJBridge {
+  def s = S
+}
+
 /**
  * An object representing the current state of the HTTP request and response.
  * It uses the DynamicVariable construct such that each thread has its own
@@ -42,7 +46,7 @@ import http.rest.RestContinuation
  * @see LiftSession
  * @see LiftFilter
  */
-object S extends HasParams with Loggable {
+object S extends S {
   /**
    * RewriteHolder holds a partial function that re-writes an incoming request. It is
    * used for per-session rewrites, as opposed to global rewrites, which are handled
@@ -95,6 +99,156 @@ object S extends HasParams with Loggable {
     def delete(old: HTTPCookie) =
       add(old.setMaxAge(0).setValue(""))
   }
+
+  final case class PFPromoter[A, B](pff: () => PartialFunction[A, B])
+
+  object PFPromoter {
+    implicit def fromPF[A, B](pf: PartialFunction[A, B]): PFPromoter[A, B] = new PFPromoter[A, B](() => pf)
+
+    implicit def fromFunc[A, B](pff: () => PartialFunction[A, B]): PFPromoter[A, B] = new PFPromoter[A, B](pff)
+  }
+
+  private[http] class ProxyFuncHolder(proxyTo: AFuncHolder, _owner: Box[String]) extends AFuncHolder {
+    def this(proxyTo: AFuncHolder) = this (proxyTo, Empty)
+
+    def owner: Box[String] = _owner or proxyTo.owner
+
+    def apply(in: List[String]): Any = proxyTo.apply(in)
+
+    override def apply(in: FileParamHolder): Any = proxyTo.apply(in)
+
+    override def supportsFileParams_? : Boolean = proxyTo.supportsFileParams_?
+
+    override private[http] def lastSeen: Long = proxyTo.lastSeen
+
+    override private[http] def lastSeen_=(when: Long) = proxyTo.lastSeen = when
+
+    override def sessionLife = proxyTo.sessionLife
+  }
+
+  /**
+   *  Impersonates a function that will be called when uploading files
+   */
+  @serializable
+  private final class BinFuncHolder(val func: FileParamHolder => Any, val owner: Box[String]) extends AFuncHolder {
+    def apply(in: List[String]) {logger.info("You attempted to call a 'File Upload' function with a normal parameter.  Did you forget to 'enctype' to 'multipart/form-data'?")}
+
+    override def apply(in: FileParamHolder) = func(in)
+
+    override def supportsFileParams_? : Boolean = true
+  }
+
+  object BinFuncHolder {
+    def apply(func: FileParamHolder => Any): AFuncHolder = new BinFuncHolder(func, Empty)
+
+    def apply(func: FileParamHolder => Any, owner: Box[String]): AFuncHolder = new BinFuncHolder(func, owner)
+  }
+
+  object SFuncHolder {
+    def apply(func: String => Any): AFuncHolder = new SFuncHolder(func, Empty)
+
+    def apply(func: String => Any, owner: Box[String]): AFuncHolder = new SFuncHolder(func, owner)
+  }
+
+  /**
+   * Impersonates a function that is executed on HTTP requests from client. The function
+   * takes a String as the only parameter and returns an Any.
+   */
+  @serializable
+  private final class SFuncHolder(val func: String => Any, val owner: Box[String]) extends AFuncHolder {
+    def this(func: String => Any) = this (func, Empty)
+
+    def apply(in: List[String]): Any = in.headOption.toList.map(func(_))
+  }
+
+  object LFuncHolder {
+    def apply(func: List[String] => Any): AFuncHolder = new LFuncHolder(func, Empty)
+
+    def apply(func: List[String] => Any, owner: Box[String]): AFuncHolder = new LFuncHolder(func, owner)
+  }
+
+  /**
+   * Impersonates a function that is executed on HTTP requests from client. The function
+   * takes a List[String] as the only parameter and returns an Any.
+   */
+  @serializable
+  private final class LFuncHolder(val func: List[String] => Any, val owner: Box[String]) extends AFuncHolder {
+    def apply(in: List[String]): Any = func(in)
+  }
+
+  object NFuncHolder {
+    def apply(func: () => Any): AFuncHolder = new NFuncHolder(func, Empty)
+
+    def apply(func: () => Any, owner: Box[String]): AFuncHolder = new NFuncHolder(func, owner)
+  }
+
+  /**
+   * Impersonates a function that is executed on HTTP requests from client. The function
+   * takes zero arguments and returns an Any.
+   */
+  @serializable
+  private final class NFuncHolder(val func: () => Any, val owner: Box[String]) extends AFuncHolder {
+    def apply(in: List[String]): Any = in.headOption.toList.map(s => func())
+  }
+
+  /**
+   * Abstrats a function that is executed on HTTP requests from client.
+   */
+  @serializable
+  sealed trait AFuncHolder extends Function1[List[String], Any] {
+    def owner: Box[String]
+
+    def apply(in: List[String]): Any
+
+    def apply(in: FileParamHolder): Any = {
+      error("Attempt to apply file upload to a non-file upload handler")
+    }
+
+    def supportsFileParams_? : Boolean = false
+
+    def duplicate(newOwner: String): AFuncHolder = new ProxyFuncHolder(this, Full(newOwner))
+
+    @volatile private[this] var _lastSeen: Long = millis
+
+    private[http] def lastSeen = _lastSeen
+
+    private[http] def lastSeen_=(when: Long) = _lastSeen = when
+
+    def sessionLife: Boolean = _sessionLife
+
+    private[this] val _sessionLife: Boolean = functionLifespan_?
+  }
+
+  /**
+   * The companion object that generates AFuncHolders from other functions
+   */
+  object AFuncHolder {
+    implicit def strToAnyAF(f: String => Any): AFuncHolder =
+      SFuncHolder(f)
+
+    implicit def unitToAF(f: () => Any): AFuncHolder = NFuncHolder(f)
+
+    implicit def listStrToAF(f: List[String] => Any): AFuncHolder =
+      LFuncHolder(f)
+
+    implicit def boolToAF(f: Boolean => Any): AFuncHolder =
+      LFuncHolder(lst => f(lst.foldLeft(false)(
+        (v, str) => v || Helpers.toBoolean(str))))
+  }
+
+}
+
+/**
+ * An object representing the current state of the HTTP request and response.
+ * It uses the DynamicVariable construct such that each thread has its own
+ * local session info without passing a huge state construct around. The S object
+ * is initialized by LiftSession on request startup.
+ *
+ * @see LiftSession
+ * @see LiftFilter
+ */
+trait S extends HasParams with Loggable {
+  import S._
 
   /*
    * The current session state is contained in the following val/vars:
@@ -2239,13 +2393,6 @@ for {
     }
   }
 
-  final case class PFPromoter[A, B](pff: () => PartialFunction[A, B])
-
-  object PFPromoter {
-    implicit def fromPF[A, B](pf: PartialFunction[A, B]): PFPromoter[A, B] = new PFPromoter[A, B](() => pf)
-
-    implicit def fromFunc[A, B](pff: () => PartialFunction[A, B]): PFPromoter[A, B] = new PFPromoter[A, B](pff)
-  }
 
   import json.JsonAST._
   /**
@@ -2402,50 +2549,6 @@ for {
     session map (_ attachRedirectFunc (uri, Box.legacyNullTest(f))) openOr uri
   }
 
-  /**
-   * Abstrats a function that is executed on HTTP requests from client.
-   */
-  @serializable
-  sealed trait AFuncHolder extends Function1[List[String], Any] {
-    def owner: Box[String]
-
-    def apply(in: List[String]): Any
-
-    def apply(in: FileParamHolder): Any = {
-      error("Attempt to apply file upload to a non-file upload handler")
-    }
-
-    def supportsFileParams_? : Boolean = false
-
-    def duplicate(newOwner: String): AFuncHolder = new ProxyFuncHolder(this, Full(newOwner))
-
-    @volatile private[this] var _lastSeen: Long = millis
-
-    private[http] def lastSeen = _lastSeen
-
-    private[http] def lastSeen_=(when: Long) = _lastSeen = when
-
-    def sessionLife: Boolean = _sessionLife
-
-    private[this] val _sessionLife: Boolean = functionLifespan_?
-  }
-
-  /**
-   * The companion object that generates AFuncHolders from other functions
-   */
-  object AFuncHolder {
-    implicit def strToAnyAF(f: String => Any): AFuncHolder =
-      SFuncHolder(f)
-
-    implicit def unitToAF(f: () => Any): AFuncHolder = NFuncHolder(f)
-
-    implicit def listStrToAF(f: List[String] => Any): AFuncHolder =
-      LFuncHolder(f)
-
-    implicit def boolToAF(f: Boolean => Any): AFuncHolder =
-      LFuncHolder(lst => f(lst.foldLeft(false)(
-        (v, str) => v || Helpers.toBoolean(str))))
-  }
 
   /**
    * Execute code synchronized to the current session object
@@ -2457,88 +2560,6 @@ for {
     }
   }
 
-  private[http] class ProxyFuncHolder(proxyTo: AFuncHolder, _owner: Box[String]) extends AFuncHolder {
-    def this(proxyTo: AFuncHolder) = this (proxyTo, Empty)
-
-    def owner: Box[String] = _owner or proxyTo.owner
-
-    def apply(in: List[String]): Any = proxyTo.apply(in)
-
-    override def apply(in: FileParamHolder): Any = proxyTo.apply(in)
-
-    override def supportsFileParams_? : Boolean = proxyTo.supportsFileParams_?
-
-    override private[http] def lastSeen: Long = proxyTo.lastSeen
-
-    override private[http] def lastSeen_=(when: Long) = proxyTo.lastSeen = when
-
-    override def sessionLife = proxyTo.sessionLife
-  }
-
-  /**
-   *  Impersonates a function that will be called when uploading files
-   */
-  @serializable
-  private final class BinFuncHolder(val func: FileParamHolder => Any, val owner: Box[String]) extends AFuncHolder {
-    def apply(in: List[String]) {logger.info("You attempted to call a 'File Upload' function with a normal parameter.  Did you forget to 'enctype' to 'multipart/form-data'?")}
-
-    override def apply(in: FileParamHolder) = func(in)
-
-    override def supportsFileParams_? : Boolean = true
-  }
-
-  object BinFuncHolder {
-    def apply(func: FileParamHolder => Any): AFuncHolder = new BinFuncHolder(func, Empty)
-
-    def apply(func: FileParamHolder => Any, owner: Box[String]): AFuncHolder = new BinFuncHolder(func, owner)
-  }
-
-  object SFuncHolder {
-    def apply(func: String => Any): AFuncHolder = new SFuncHolder(func, Empty)
-
-    def apply(func: String => Any, owner: Box[String]): AFuncHolder = new SFuncHolder(func, owner)
-  }
-
-  /**
-   * Impersonates a function that is executed on HTTP requests from client. The function
-   * takes a String as the only parameter and returns an Any.
-   */
-  @serializable
-  private final class SFuncHolder(val func: String => Any, val owner: Box[String]) extends AFuncHolder {
-    def this(func: String => Any) = this (func, Empty)
-
-    def apply(in: List[String]): Any = in.headOption.toList.map(func(_))
-  }
-
-  object LFuncHolder {
-    def apply(func: List[String] => Any): AFuncHolder = new LFuncHolder(func, Empty)
-
-    def apply(func: List[String] => Any, owner: Box[String]): AFuncHolder = new LFuncHolder(func, owner)
-  }
-
-  /**
-   * Impersonates a function that is executed on HTTP requests from client. The function
-   * takes a List[String] as the only parameter and returns an Any.
-   */
-  @serializable
-  private final class LFuncHolder(val func: List[String] => Any, val owner: Box[String]) extends AFuncHolder {
-    def apply(in: List[String]): Any = func(in)
-  }
-
-  object NFuncHolder {
-    def apply(func: () => Any): AFuncHolder = new NFuncHolder(func, Empty)
-
-    def apply(func: () => Any, owner: Box[String]): AFuncHolder = new NFuncHolder(func, owner)
-  }
-
-  /**
-   * Impersonates a function that is executed on HTTP requests from client. The function
-   * takes zero arguments and returns an Any.
-   */
-  @serializable
-  private final class NFuncHolder(val func: () => Any, val owner: Box[String]) extends AFuncHolder {
-    def apply(in: List[String]): Any = in.headOption.toList.map(s => func())
-  }
 
   /**
    * Maps a function with an random generated and name
