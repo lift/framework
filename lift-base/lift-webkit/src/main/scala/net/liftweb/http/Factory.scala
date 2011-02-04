@@ -35,8 +35,15 @@ trait Factory extends SimpleInjector {
    * the scope of the call.
    */
   abstract class FactoryMaker[T](_default: Vendor[T])
-                                (implicit man: Manifest[T]) extends StackableMaker[T] with Vendor[T] {
+                                (implicit man: Manifest[T]) extends
+  StackableMaker[T] with Vendor[T] {
     registerInjection(this)(man)
+    
+    /**
+     * An alias for the default object so that it can be accessed
+     * from Java
+     */
+    def theDefault: PSettableValueHolder[Vendor[T]] = default
 
     /**
      * The default function for vending an instance

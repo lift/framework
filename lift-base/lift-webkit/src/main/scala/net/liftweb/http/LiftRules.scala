@@ -39,13 +39,23 @@ import scala.reflect.Manifest
 import java.util.concurrent.atomic.AtomicInteger
 
 class LiftRulesJBridge {
-  def liftRules = LiftRules
+  def liftRules: LiftRules = LiftRules
+}
+
+sealed trait LiftRulesMocker {
+  def realInstance: LiftRules
+}
+
+object LiftRulesMocker {
+  implicit def toLiftRules(in: LiftRulesMocker): LiftRules = in.realInstance
 }
 
 /**
  * The Lift configuration singleton
  */
-object LiftRules extends LiftRules {
+object LiftRules extends LiftRulesMocker {
+  lazy val realInstance: LiftRules = new LiftRules {}
+  
   type DispatchPF = PartialFunction[Req, () => Box[LiftResponse]];
 
   /**
@@ -72,13 +82,39 @@ object LiftRules extends LiftRules {
    */
   type LiftRequestPF = PartialFunction[Req, Boolean]
 
+  private var _doneBoot = false
+  private[http] def doneBoot = _doneBoot
+
+  private[http] def doneBoot_=(in: Boolean) {_doneBoot = in}
+
+
+
+  /**
+   * Holds the falure information when a snippet can not be executed.
+   */
+  case class SnippetFailure(page: String, typeName: Box[String], failure: SnippetFailures.Value)
+
+  object SnippetFailures extends Enumeration {
+    val NoTypeDefined = Value(1, "No Type Defined")
+    val ClassNotFound = Value(2, "Class Not Found")
+    val StatefulDispatchNotMatched = Value(3, "Stateful Snippet: Dispatch Not Matched")
+    val MethodNotFound = Value(4, "Method Not Found")
+    val NoNameSpecified = Value(5, "No Snippet Name Specified")
+    val InstantiationException = Value(6, "Exception During Snippet Instantiation")
+    val DispatchSnippetNotMatched = Value(7, "Dispatch Snippet: Dispatch Not Matched")
+
+    val StateInStateless = Value(8, "Access to Lift's statefull features from Stateless mode")
+    val CometTimeout = Value(9, "Comet Component did not response to requests")
+    val CometNotFound = Value(10, "Comet Component not found")
+    val ExecutionFailure = Value(11, "Execution Failure")
+  }
+
 }
 
 /**
  * LiftRules is the global object that holds all of Lift's configuration.
  */
-sealed trait LiftRules extends Factory with FormVendor with LazyLoggable {
-
+trait LiftRules extends Factory with FormVendor with LazyLoggable {
   import LiftRules._
 
   val noticesContainerId = "lift__noticesContainer__"
@@ -624,6 +660,17 @@ sealed trait LiftRules extends Factory with FormVendor with LazyLoggable {
    */
   @volatile var ajaxStart: Box[() => JsCmd] = Empty
 
+  import FuncJBridge._
+
+  /**
+   * Set the Ajax end JavaScript function.  The
+   * Java calable alternative to assigning the var ajaxStart
+   */
+  def setAjaxStart(f: Func0[JsCmd]): Unit = {
+    ajaxStart = Full(f: () => JsCmd)
+  }
+
+
   /**
    * The function that calculates if the response should be rendered in
    * IE6/7 compatibility mode
@@ -637,6 +684,14 @@ sealed trait LiftRules extends Factory with FormVendor with LazyLoggable {
    * Ajax request (for example, removing the spinning working thingy)
    */
   @volatile var ajaxEnd: Box[() => JsCmd] = Empty
+
+  /**
+   * Set the Ajax end JavaScript function.  The
+   * Java calable alternative to assigning the var ajaxEnd
+   */
+  def setAjaxEnd(f: Func0[JsCmd]): Unit = {
+    ajaxEnd = Full(f: () => JsCmd)
+  }
 
   /**
    * An XML header is inserted at the very beginning of returned XHTML pages.
@@ -855,8 +910,6 @@ sealed trait LiftRules extends Factory with FormVendor with LazyLoggable {
   private[http] val reqCnt = new AtomicInteger(0)
 
   @volatile private[http] var ending = false
-
-  private[http] var doneBoot = false;
 
   private[http] def bootFinished() {
     doneBoot = true
@@ -1142,25 +1195,6 @@ sealed trait LiftRules extends Factory with FormVendor with LazyLoggable {
    */
   @volatile var redirectAjaxOnSessionLoss = true
 
-  /**
-   * Holds the falure information when a snippet can not be executed.
-   */
-  case class SnippetFailure(page: String, typeName: Box[String], failure: SnippetFailures.Value)
-
-  object SnippetFailures extends Enumeration {
-    val NoTypeDefined = Value(1, "No Type Defined")
-    val ClassNotFound = Value(2, "Class Not Found")
-    val StatefulDispatchNotMatched = Value(3, "Stateful Snippet: Dispatch Not Matched")
-    val MethodNotFound = Value(4, "Method Not Found")
-    val NoNameSpecified = Value(5, "No Snippet Name Specified")
-    val InstantiationException = Value(6, "Exception During Snippet Instantiation")
-    val DispatchSnippetNotMatched = Value(7, "Dispatch Snippet: Dispatch Not Matched")
-
-    val StateInStateless = Value(8, "Access to Lift's statefull features from Stateless mode")
-    val CometTimeout = Value(9, "Comet Component did not response to requests")
-    val CometNotFound = Value(10, "Comet Component not found")
-    val ExecutionFailure = Value(11, "Execution Failure")
-  }
 
   /**
    * The sequence of partial functions (pattern matching) for handling converting an exception to something to

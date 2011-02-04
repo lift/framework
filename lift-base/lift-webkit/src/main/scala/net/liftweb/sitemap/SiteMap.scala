@@ -105,7 +105,16 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
   }
 }
 
-object SiteMap {
+/**
+ * The bridge to get the SiteMap singleton
+ */
+final class SiteMapJBridge {
+  def siteMap(): SiteMapSingleton = SiteMap
+}
+
+object SiteMap extends SiteMapSingleton
+
+sealed trait SiteMapSingleton {
   /**
    * By default, Lift enforced unique links in a SiteMap.  However, you
    * can disable this feature by setting enforceUniqueLinks to false
@@ -229,6 +238,12 @@ object SiteMap {
   }
 
   def buildLink(name: String): NodeSeq = buildLink(name, Nil)
+
+  /**
+   * A Java-callable method that builds a SiteMap
+   */
+  def build(kids: Array[ConvertableToMenu]): SiteMap = 
+    this.apply(kids :_*)
 
   def apply(kids: ConvertableToMenu *) = new SiteMap(Nil, kids :_*)
 

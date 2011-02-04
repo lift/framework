@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb 
+package util 
 
-import _root_.java.util.concurrent.{ConcurrentHashMap => CHash}
-import _root_.java.lang.ThreadLocal
-import _root_.scala.reflect.Manifest
+import java.util.concurrent.{ConcurrentHashMap => CHash}
+import java.lang.ThreadLocal
+import scala.reflect.Manifest
 import common._
 import xml.NodeSeq
 
@@ -173,8 +173,6 @@ trait Vendor[T] extends Maker[T] with Function0[T] {
   def apply() = vend
 }
 
-
-
 /**
  * A companion to the Vendor trait
  */
@@ -196,5 +194,3 @@ object Vendor {
 
 case class FormBuilderLocator[T](func: (T, T => Unit) => NodeSeq)(implicit val manifest: Manifest[T])
 
-}
-}

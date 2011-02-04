@@ -1384,21 +1384,21 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
   /**
    * Inserts a String constant according to the CssSelector rules
    */
-  def #>(str: String): CssBind = new CssBindImpl(stringSelector, css) {
+  def #>(str: String): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = List(Text(str))
   }
 
   /**
    * Inserts a NodeSeq constant according to the CssSelector rules
    */
-  def #>(ns: NodeSeq): CssBind = new CssBindImpl(stringSelector, css) {
+  def #>(ns: NodeSeq): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = List(ns)
   }
 
   /**
    * A function that transforms the content according to the CssSelector rules
    */
-  def #>(nsFunc: NodeSeq => NodeSeq): CssBind = new CssBindImpl(stringSelector, css) {
+  def #>(nsFunc: NodeSeq => NodeSeq): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = List(nsFunc(in))
   }
   
@@ -1406,7 +1406,7 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * Inserts a Bindable constant according to the CssSelector rules.
    * Mapper and Record fields implement Bindable.
    */
-  def #>(bindable: Bindable): CssBind = new CssBindImpl(stringSelector, css) {
+  def #>(bindable: Bindable): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = List(bindable.asHtml)
   }
 
@@ -1414,7 +1414,7 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * Inserts a StringPromotable constant according to the CssSelector rules.
    * StringPromotable includes Int, Long, Boolean, and Symbol
    */
-  def #>(strPromo: StringPromotable): CssBind = new CssBindImpl(stringSelector, css) {
+  def #>(strPromo: StringPromotable): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = List(Text(strPromo.toString))
   }
 
@@ -1423,7 +1423,7 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * This allows for Seq[String], Seq[NodeSeq], Box[String],
    * Box[NodeSeq], Option[String], Option[NodeSeq]
    */
-  def #>(itrConst: IterableConst): CssBind = new CssBindImpl(stringSelector, css) {
+  def #>(itrConst: IterableConst): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = itrConst.constList(in)
   }
 
@@ -1435,28 +1435,28 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * NodeSeq => Box[NodeSeq], NodeSeq => Option[String],
    * NodeSeq =>Option[NodeSeq]
    */
-  def #>(itrFunc: IterableFunc): CssBind = new CssBindImpl(stringSelector, css) {
+  def #>(itrFunc: IterableFunc): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = itrFunc(in)
   }
 
   /**
    * Inserts a String constant according to the CssSelector rules
    */
-  def replaceWith(str: String): CssBind = new CssBindImpl(stringSelector, css) {
+  def replaceWith(str: String): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = List(Text(str))
   }
 
   /**
    * Inserts a NodeSeq constant according to the CssSelector rules
    */
-  def replaceWith(ns: NodeSeq): CssBind = new CssBindImpl(stringSelector, css) {
+  def replaceWith(ns: NodeSeq): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = List(ns)
   }
 
   /**
    * A function that transforms the content according to the CssSelector rules
    */
-  def replaceWith(nsFunc: NodeSeq => NodeSeq): CssBind = new CssBindImpl(stringSelector, css) {
+  def replaceWith(nsFunc: NodeSeq => NodeSeq): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = List(nsFunc(in))
   }
   
@@ -1464,7 +1464,7 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * Inserts a Bindable constant according to the CssSelector rules.
    * Mapper and Record fields implement Bindable.
    */
-  def replaceWith(bindable: Bindable): CssBind = new CssBindImpl(stringSelector, css) {
+  def replaceWith(bindable: Bindable): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = List(bindable.asHtml)
   }
 
@@ -1472,7 +1472,7 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * Inserts a StringPromotable constant according to the CssSelector rules.
    * StringPromotable includes Int, Long, Boolean, and Symbol
    */
-  def replaceWith(strPromo: StringPromotable): CssBind = new CssBindImpl(stringSelector, css) {
+  def replaceWith(strPromo: StringPromotable): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = List(Text(strPromo.toString))
   }
 
@@ -1481,7 +1481,7 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * This allows for Seq[String], Seq[NodeSeq], Box[String],
    * Box[NodeSeq], Option[String], Option[NodeSeq]
    */
-  def replaceWith(itrConst: IterableConst): CssBind = new CssBindImpl(stringSelector, css) {
+  def replaceWith(itrConst: IterableConst): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = itrConst.constList(in)
   }
 
@@ -1493,7 +1493,7 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * NodeSeq => Box[NodeSeq], NodeSeq => Option[String],
    * NodeSeq =>Option[NodeSeq]
    */
-  def replaceWith(itrFunc: IterableFunc): CssBind = new CssBindImpl(stringSelector, css) {
+  def replaceWith(itrFunc: IterableFunc): CssSel = new CssBindImpl(stringSelector, css) {
     def calculate(in: NodeSeq): Seq[NodeSeq] = itrFunc(in)
   }
 }
@@ -1659,11 +1659,11 @@ object StringPromotable {
 
 /**
  * This trait is both a NodeSeq => NodeSeq and has the ability
- * to chain CssBindFunc instances so that they can be applied
+ * to chain CssSel instances so that they can be applied
  * en masse to incoming NodeSeq and do the transformation.
  */
-sealed trait CssBindFunc extends Function1[NodeSeq, NodeSeq] {
-  def &(other: CssBindFunc): CssBindFunc = (this, other) match {
+sealed trait CssSel extends Function1[NodeSeq, NodeSeq] {
+  def &(other: CssSel): CssSel = (this, other) match {
     case (AggregatedCssBindFunc(a), AggregatedCssBindFunc(b)) =>
       AggregatedCssBindFunc(a ::: b)
     case (AggregatedCssBindFunc(a), o: CssBind) =>
@@ -1672,6 +1672,54 @@ sealed trait CssBindFunc extends Function1[NodeSeq, NodeSeq] {
       AggregatedCssBindFunc(t :: a)
     case (t: CssBind, o: CssBind) => AggregatedCssBindFunc(List(t, o))
   }
+
+  /**
+   * A Java callable aggregator
+   */
+  def and(that: CssSel): CssSel = this & that
+
+  /**
+   * promote a String to a ToCssBindPromotor
+   */
+  private implicit def strToCssBindPromoter(str: String): ToCssBindPromoter =
+    new ToCssBindPromoter(Full(str), CssSelectorParser.parse(str))
+
+
+  /**
+   * Inserts a String constant according to the CssSelector rules
+   */
+  def sel(selector: String, str: String): CssSel = this & (selector #> str)
+
+  /**
+   * Inserts a String constant according to the CssSelector rules
+   */
+  def sel(selector: String, str: NodeSeq): CssSel = this & (selector #> str)
+
+
+  /**
+   * Inserts a String constant according to the CssSelector rules
+   */
+  def sel(selector: String, str: NodeSeq => NodeSeq): CssSel = this & (selector #> str)
+
+  /**
+   * Inserts a String constant according to the CssSelector rules
+   */
+  def sel(selector: String, str: Bindable): CssSel = this & (selector #> str)
+
+  /**
+   * Inserts a String constant according to the CssSelector rules
+   */
+  def sel(selector: String, str: StringPromotable): CssSel = this & (selector #> str)
+
+  /**
+   * Inserts a String constant according to the CssSelector rules
+   */
+  def sel(selector: String, str: IterableConst): CssSel = this & (selector #> str)
+
+  /**
+   * Inserts a String constant according to the CssSelector rules
+   */
+  def sel(selector: String, str: IterableFunc): CssSel = this & (selector #> str)
 }
 
 /**
@@ -1695,7 +1743,7 @@ object ClearNodes extends Function1[NodeSeq, NodeSeq] {
 
 
 
-private final case class AggregatedCssBindFunc(binds: List[CssBind]) extends CssBindFunc {
+private final case class AggregatedCssBindFunc(binds: List[CssBind]) extends CssSel {
   private lazy val (good, bad) = binds.partition{_.css.isDefined}
   private lazy val selectorMap = new SelectorMap(good)
 
@@ -2129,7 +2177,7 @@ object CssBind {
   def unapply(in: CssBind): Option[CssSelector] = in.css
 }
 
-sealed trait CssBind extends CssBindFunc {
+sealed trait CssBind extends CssSel {
   def stringSelector: Box[String]
   def css: Box[CssSelector]
   
@@ -2167,6 +2215,22 @@ sealed trait CssBind extends CssBindFunc {
  */
 abstract class CssBindImpl(val stringSelector: Box[String], val css: Box[CssSelector]) extends CssBind {
   def calculate(in: NodeSeq): Seq[NodeSeq]
+}
+
+/**
+ * Bridge from Java-land to Scala
+ */
+final class CssJBridge {
+  /**
+   * promote a String to a ToCssBindPromotor
+   */
+  private implicit def strToCssBindPromoter(str: String): ToCssBindPromoter =
+    new ToCssBindPromoter(Full(str), CssSelectorParser.parse(str))
+
+  def sel(selector: String, value: String): CssSel = selector #> value
+  def sel(selector: String, value: NodeSeq): CssSel = selector #> value
+  def sel(selector: String, value: NodeSeq => NodeSeq): CssSel = selector #> value
+  def sel(selector: String, value: Bindable): CssSel = selector #> value
 }
 
 // vim: set ts=2 sw=2 et:

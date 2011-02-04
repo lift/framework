@@ -57,45 +57,13 @@ object ** extends MenuPath {def pathItem = "**"}
 final case class AMenuPath(pathItem: String) extends MenuPath
 
 /**
- * A DSL for building menus.
+ * The bridge from the Menu singleton to Java-land
  */
-object Menu {
-  /**
-   * A Menu can be created with the syntax <pre>Menu("Home") / "index"</pre>
-   * The first parameter is the LinkText which calculates how Links are presented.  The
-   * parameter to Menu will be treated as call-by-name such that it is re-evaluated each time
-   * the menu link is needed.  That means you can do <pre>Menu(S ? "Home") / "index"</pre>
-   * and the menu link will be localized for each display.
-   */
-  def apply(linkText: Loc.LinkText[Unit]): PreMenu = this.apply(Helpers.randomString(20), linkText)
+final class MenuJBridge {
+  def menu(): MenuSingleton = Menu
+}
 
-  /**
-   * A Menu can be created with the syntax <pre>Menu("home_page", "Home") / "index"</pre>
-   * The first parameter is the name of the page and the second is the LinkText which calculates how Links are presented.
-   * The LinkText
-   * parameter to Menu will be treated as call-by-name such that it is re-evaluated each time
-   * the menu link is needed.  That means you can do <pre>Menu("home_page", S ? "Home") / "index"</pre>
-   * and the menu link will be localized for each display.  You can look up a Menu item by
-   * name as well as using the &lt;lift:menu.item name="home_page"&gt; snippet.
-   */
-  def apply(name: String,linkText: Loc.LinkText[Unit]): PreMenu = new PreMenu(name, linkText)
-
-  /**
-   * A convenient way to define a Menu items that's got the same name as it does it's localized LinkText.
-   * <pre>Menu.i("Home") / "index"</pre> is short-hand for <pre>Menu("Home", S ? "Home") / "index"</pre>
-   */
-  def i(nameAndLink: String): PreMenu = Menu.apply(nameAndLink, S ? nameAndLink)
-
-  def param[T](name: String, linkText: Loc.LinkText[T], parser: String => Box[T],
-               encoder: T => String): PreParamMenu[T] =
-    new PreParamMenu[T](name, linkText, parser, encoder)
-
-  def params[T](name: String, linkText: Loc.LinkText[T],
-                parser: List[String] => Box[T],
-                encoder: T => List[String]): PreParamsMenu[T] =
-    new PreParamsMenu[T](name, linkText, parser, encoder)
-
-
+object Menu extends MenuSingleton {
   /**
    * An intermediate class that holds the basic stuff that's needed to make a Menu item for SiteMap.
    * You must include at least one URI path element by calling the / method
@@ -106,6 +74,8 @@ object Menu {
      */
     def /(pathElement: String): ParamMenuable[T] with WithSlash = 
       new ParamMenuable[T](name, linkText, parser, encoder, pathElement :: Nil, false, Nil, Nil) with WithSlash
+
+    def path(pathElement: String): ParamMenuable[T] with WithSlash = this./(pathElement)
   }
 
   class ParamMenuable[T](val name: String,val linkText: Loc.LinkText[T],
@@ -218,6 +188,10 @@ object Menu {
      * The method to add a path element to the URL representing this menu item
      */
     def /(pathElement: String): ParamsMenuable[T] with WithSlash = 
+      new ParamsMenuable[T](name, linkText, parser, encoder, 
+                            pathElement :: Nil, false, Nil, Nil) with WithSlash
+
+    def path(pathElement: String): ParamsMenuable[T] with WithSlash = 
       new ParamsMenuable[T](name, linkText, parser, encoder, 
                             pathElement :: Nil, false, Nil, Nil) with WithSlash
   }
@@ -341,6 +315,9 @@ object Menu {
      */
     def /(pathElement: String): Menuable with WithSlash = 
       new Menuable(name, linkText, pathElement :: Nil, false, Nil, Nil) with WithSlash
+
+    def path(pathElement: String): Menuable with WithSlash = 
+      new Menuable(name, linkText, pathElement :: Nil, false, Nil, Nil) with WithSlash
   }
 
   trait BaseMenuable {
@@ -364,10 +341,15 @@ object Menu {
         case _  => buildOne(path ::: List(pathElement.pathItem), headMatch)
       }
 
+
+      def path(pathElement: MenuPath): BuiltType = this./(pathElement)
+
       /**
        * The method to add a path element to the URL representing this menu item
        */
       def /(pathElement: String): BuiltType with WithSlash = buildSlashOne(path ::: List(pathElement), headMatch)
+
+      def path(pathElement: String): BuiltType with WithSlash = this./(pathElement)
   }
 
   class Menuable(val name: String,val linkText: Loc.LinkText[Unit],
@@ -421,6 +403,50 @@ object Menu {
                                                          new Loc.Link(able.path, able.headMatch),
                                                          able.linkText, able.params), able.submenus :_*)
   }
+}
+
+/**
+ * A DSL for building menus.
+ */
+sealed trait MenuSingleton {
+  import Menu._
+
+  /**
+   * A Menu can be created with the syntax <pre>Menu("Home") / "index"</pre>
+   * The first parameter is the LinkText which calculates how Links are presented.  The
+   * parameter to Menu will be treated as call-by-name such that it is re-evaluated each time
+   * the menu link is needed.  That means you can do <pre>Menu(S ? "Home") / "index"</pre>
+   * and the menu link will be localized for each display.
+   */
+  def apply(linkText: Loc.LinkText[Unit]): PreMenu = this.apply(Helpers.randomString(20), linkText)
+
+  /**
+   * A Menu can be created with the syntax <pre>Menu("home_page", "Home") / "index"</pre>
+   * The first parameter is the name of the page and the second is the LinkText which calculates how Links are presented.
+   * The LinkText
+   * parameter to Menu will be treated as call-by-name such that it is re-evaluated each time
+   * the menu link is needed.  That means you can do <pre>Menu("home_page", S ? "Home") / "index"</pre>
+   * and the menu link will be localized for each display.  You can look up a Menu item by
+   * name as well as using the &lt;lift:menu.item name="home_page"&gt; snippet.
+   */
+  def apply(name: String,linkText: Loc.LinkText[Unit]): PreMenu = new PreMenu(name, linkText)
+
+  /**
+   * A convenient way to define a Menu items that's got the same name as it does it's localized LinkText.
+   * <pre>Menu.i("Home") / "index"</pre> is short-hand for <pre>Menu("Home", S ? "Home") / "index"</pre>
+   */
+  def i(nameAndLink: String): PreMenu = Menu.apply(nameAndLink, S ? nameAndLink)
+
+  def param[T](name: String, linkText: Loc.LinkText[T], parser: String => Box[T],
+               encoder: T => String): PreParamMenu[T] =
+    new PreParamMenu[T](name, linkText, parser, encoder)
+
+  def params[T](name: String, linkText: Loc.LinkText[T],
+                parser: List[String] => Box[T],
+                encoder: T => List[String]): PreParamsMenu[T] =
+    new PreParamsMenu[T](name, linkText, parser, encoder)
+
+
 }
 
 case class Menu(loc: Loc[_], private val convertableKids: ConvertableToMenu*) extends HasKids with ConvertableToMenu {

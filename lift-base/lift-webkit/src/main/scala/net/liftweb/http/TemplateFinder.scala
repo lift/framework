@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb 
+package http 
 
 import common._
-import _root_.java.util.Locale
-import _root_.scala.xml._
+import java.util.Locale
+import scala.xml._
 import util._
 import Helpers._
-import _root_.java.io.InputStream
+import java.io.InputStream
 
 /**
  * Contains functions for obtaining templates
@@ -30,9 +30,7 @@ import _root_.java.io.InputStream
 object TemplateFinder {
   private val suffixes = List("html", "xhtml", "htm")
 
-  import LiftRules.ViewDispatchPF
-
-  private def checkForLiftView(part: List[String], last: String, what: ViewDispatchPF): Box[NodeSeq] = {
+  private def checkForLiftView(part: List[String], last: String, what: LiftRules.ViewDispatchPF): Box[NodeSeq] = {
     if (what.isDefinedAt(part)) {
       what(part) match {
         case Right(lv) => if (lv.dispatch.isDefinedAt(last)) lv.dispatch(last)() else Empty
@@ -41,7 +39,7 @@ object TemplateFinder {
     } else Empty
   }
 
-  private def checkForFunc(whole: List[String], what: ViewDispatchPF): Box[NodeSeq] =
+  private def checkForFunc(whole: List[String], what: LiftRules.ViewDispatchPF): Box[NodeSeq] =
     if (what.isDefinedAt(whole)) what(whole) match {
       case Left(func) => func()
       case _ => Empty
@@ -50,7 +48,7 @@ object TemplateFinder {
 
   private def findInViews(whole: List[String], part: List[String],
                           last: String,
-                          what: List[ViewDispatchPF]): Box[NodeSeq] =
+                          what: List[LiftRules.ViewDispatchPF]): Box[NodeSeq] =
     what match {
       case Nil => Empty
       case x :: xs =>
@@ -199,7 +197,7 @@ object TemplateFinder {
                           }
                 }
               } catch {
-                case ite: _root_.java.lang.reflect.InvocationTargetException /* if (ite.getCause.isInstanceOf[ResponseShortcutException]) */ => throw ite.getCause
+                case ite: java.lang.reflect.InvocationTargetException /* if (ite.getCause.isInstanceOf[ResponseShortcutException]) */ => throw ite.getCause
                 case re: ResponseShortcutException => throw re
                 case _ => Empty
               }
@@ -408,6 +406,3 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
       c.newInstance(p.asInstanceOf[Object]).asInstanceOf[T]
   }
 
-
-}
-}
