@@ -427,17 +427,17 @@ with ForwardableActor[Any, Any] {
 import java.lang.reflect._
 
 object JavaActor {
-  private var methods: Map[Class[_], PartialFunction[Any, Unit]] = Map()
+  private var methods: Map[Class[_], DispatchVendor] = Map()
 
   def calculateHandler(what: JavaActor): PartialFunction[Any, Unit] = 
     synchronized {
       val clz = what.getClass
       methods.get(clz) match {
-        case Some(pf) => pf
+        case Some(pf) => pf.vend(what)
         case _ => {
           val pf = buildPF(clz)
           methods += clz -> pf
-          pf
+          pf.vend(what)
         }
       }
     }
@@ -447,13 +447,57 @@ object JavaActor {
     case clz => clz :: getBaseClasses(clz.getSuperclass)
   }
 
-  private def receiver(in: Method): Boolean = false 
+  private def receiver(in: Method): Boolean = {
+    in.getParameterTypes().length == 1 &&
+    (in.getAnnotation(classOf[JavaActorBase.Receive]) != null)
+  }
 
-  private def buildPF(clz: Class[_]): PartialFunction[Any, Unit] = {
+  private def buildPF(clz: Class[_]): DispatchVendor = {
     val methods = getBaseClasses(clz).
     flatMap(_.getDeclaredMethods.toList.filter(receiver))
-    Map()
+
+    val clzMap: Map[Class[_], Method] = 
+      Map(methods.map{m => 
+        m.setAccessible(true) // access private and protected methods
+        m.getParameterTypes().apply(0) -> m} :_*)
+
+    new DispatchVendor(clzMap)
   }
+}
+
+private final class DispatchVendor(map: Map[Class[_], Method]) {
+  private val baseMap: Map[Class[_], Option[Method]] = 
+    Map(map.map{case (k,v) => (k, Some(v))}.toList :_*)
+
+  def vend(actor: JavaActor): PartialFunction[Any, Unit] =
+    new PartialFunction[Any, Unit] {
+      var theMap: Map[Class[_], Option[Method]] = baseMap
+
+      def findClass(clz: Class[_]): Option[Method] = 
+        theMap.find(_._1.isAssignableFrom(clz)).flatMap(_._2)
+
+      def isDefinedAt(v: Any): Boolean = {
+        val clz = v.asInstanceOf[Object].getClass
+        theMap.get(clz) match {
+          case Some(Some(_)) => true
+          case None => {
+            val answer = findClass(clz)
+            theMap += clz -> answer
+            answer.isDefined
+          }
+          case _ => false
+        }
+      }
+
+      def apply(v: Any): Unit = {
+        val o: Object = v.asInstanceOf[Object]
+        val meth = theMap(o.getClass).get
+        meth.invoke(actor, o) match {
+          case null => 
+          case x => actor.internalReply(x)
+        }
+      }
+    }
 }
 
 /**
@@ -468,5 +512,6 @@ class JavaActor extends JavaActorBase with LiftActor {
   protected def calculateJavaMessageHandler = JavaActor.calculateHandler(this)
 
   protected def messageHandler = _messageHandler
-  
+
+  private[actor] def internalReply(v: Any) = reply(v)  
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.actor._
-import _root_.scala.collection.mutable.{ListBuffer}
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.json._
-import _root_.scala.xml.{NodeSeq, Text, Elem, Node, Group, Null, PrefixedAttribute, UnprefixedAttribute}
-import _root_.scala.collection.immutable.TreeMap
-import _root_.scala.collection.mutable.{HashSet, ListBuffer}
-import _root_.net.liftweb.http.js._
+import net.liftweb.common._
+import net.liftweb.actor._
+import scala.collection.mutable.{ListBuffer}
+import net.liftweb.util.Helpers._
+import net.liftweb.util._
+import net.liftweb.json._
+import scala.xml.{NodeSeq, Text, Elem, Node, Group, Null, PrefixedAttribute, UnprefixedAttribute}
+import scala.collection.immutable.TreeMap
+import scala.collection.mutable.{HashSet, ListBuffer}
+import net.liftweb.http.js._
 import JsCmds._
 import JE._
-import _root_.java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicLong
 import java.util.Locale
 
 /**
@@ -404,9 +404,18 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
 }
 
 /**
+ * Subclass from this class if you're in Java-land
+ * and want a CometActor
+ */
+abstract class JavaCometActor extends JavaActor with CometActor {
+
+  override def lowPriority = _messageHandler
+
+}
+
+/**
  * Takes care of the plumbing for building Comet-based Web Apps
  */
-@serializable
 trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   private val logger = Logger(classOf[CometActor])
   val uniqueId = Helpers.nextFuncName
@@ -580,7 +589,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
                             } else {Null})
   }
 
-  def messageHandler = {
+  protected override def messageHandler = {
     val what = composeFunction
     val myPf: PartialFunction[Any, Unit] = new PartialFunction[Any, Unit] {
       def apply(in: Any): Unit =
@@ -1095,5 +1104,3 @@ case class RenderOut(xhtml: Box[NodeSeq], fixedXhtml: Box[NodeSeq], script: Box[
 @serializable
 private[http] object Never
 
-}
-}

@@ -32,6 +32,12 @@ object ActorSpec extends Specification {
       (a. !?(5L, Get())) must_== Full(Answer(33))
     }
 
+    "Allow setting & getting of a value with subclass of Get()" in {
+      val a = make
+      a ! Set(33)
+      (a. !?(5L, new FunnyGet())) must_== Full(Answer(33))
+    }
+
     "Allow adding of a value" in {
       val a = make
       a ! Set(33)
@@ -50,15 +56,23 @@ object ActorSpec extends Specification {
     }
   }
 
-/*
   "A Java Actor" should {
     def make = new MyJavaActor()
 
     "Allow setting & getting of a value" in {
       val a = make
       a ! Set(33)
-      (a.!?(5, Get())) must_== Full(Answer(33))
+      a !? Get()
+      (a.!?(25, Get())) must_== Full(Answer(33))
     }
+
+    "Allow setting & getting of a value with subclass of Get()" in {
+      val a = make
+      a ! Set(33)
+      a ! new FunnyGet()
+      (a. !?(50L, new FunnyGet())) must_== Full(Answer(33))
+    }
+
 
     "Allow adding of a value" in {
       val a = make
@@ -77,13 +91,15 @@ object ActorSpec extends Specification {
       (a !< Set(33)).get(5) must_== Empty
     }
   }
-  */
 }
 
 case class Add(num: Int)
 case class Sub(num: Int)
 case class Set(num: Int)
 case class Get()
+
+class FunnyGet() extends Get()
+
 case class Answer(num: Int)
 
 class MyActor extends LiftActor {

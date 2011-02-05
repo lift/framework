@@ -22,4 +22,10 @@ package net.liftweb
  */
 package object util {
   type CssBindFunc = CssSel
+
+  /**
+   * Changed the name ActorPing to Schedule
+   */
+  @deprecated("Use Schedule")
+  val ActorPing = Schedule
 }

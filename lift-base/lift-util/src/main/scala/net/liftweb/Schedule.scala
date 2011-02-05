@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,32 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.java.util.concurrent._
+import java.util.concurrent._
 import Helpers.TimeSpan
 import common._
 
+class ScheduleJBridge {
+  def schedule: Schedule = Schedule
+}
+
 /**
- * The ActorPing object schedules an actor to be ping-ed with a given message after a specified
+ * The Schedule object schedules an actor to be ping-ed with a given message after a specified
  * delay. If you need recurrent scheduled pings you will need to reschedule.
  * 
  * The schedule methods return a ScheduledFuture object which can be cancelled if necessary
  */
-object ActorPing extends Loggable {
+object Schedule extends Schedule
+
+/**
+ * The Schedule object schedules an actor to be ping-ed with a given message after a specified
+ * delay. If you need recurrent scheduled pings you will need to reschedule.
+ * 
+ * The schedule methods return a ScheduledFuture object which can be cancelled if necessary
+ */
+sealed trait Schedule extends Loggable {
 
   /**
    * Set this variable to the number of threads to allocate in the thread pool
@@ -78,6 +90,24 @@ object ActorPing extends Loggable {
   def schedule[T](to: SimpleActor[T], msg: T, delay: TimeSpan): ScheduledFuture[Unit] =
   this.schedule(() => Helpers.tryo( to ! msg ), delay)
 
+  /**
+   * Schedules the sending of a message to occur after the specified delay.
+   *
+   * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
+   * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
+   */
+  def perform[T](to: SimpleActor[T], msg: T, delay: Long): ScheduledFuture[Unit] =
+  this.schedule(() => Helpers.tryo( to ! msg ), delay: TimeSpan)
+
+   /**
+   * Schedules the sending of a message to occur after the specified delay.
+   *
+   * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
+   * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
+   */
+  def perform(f: () => Unit, delay: Long): ScheduledFuture[Unit] =
+    schedule(f, delay: TimeSpan)
+
    /**
    * Schedules the sending of a message to occur after the specified delay.
    *
@@ -98,7 +128,7 @@ object ActorPing extends Loggable {
     val fast = new _root_.java.util.concurrent.Callable[Unit] {
       def call(): Unit = {
         try {
-          ActorPing.this.restart
+          Schedule.this.restart
           pool.execute(r)
         } catch {
           case e: Exception => logger.error(e)
@@ -134,11 +164,9 @@ private object TF extends ThreadFactory {
   val threadFactory = Executors.defaultThreadFactory()
   def newThread(r: Runnable) : Thread = {
     val d: Thread = threadFactory.newThread(r)
-    d setName "ActorPing"
+    d setName "Lift Scheduler"
     d setDaemon true
     d
   }
 }
 
-}
-}
