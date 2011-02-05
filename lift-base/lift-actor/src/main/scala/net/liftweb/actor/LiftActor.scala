@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package actor {
+package net.liftweb
+package actor
 
 import common._
 
@@ -324,31 +324,73 @@ with ForwardableActor[Any, Any] {
     } else forwardTo ! msg
   }
 
+  /**
+  * Send a message to the Actor and get an LAFuture
+  * that will contain the reply (if any) from the message.
+  * This method calls !&lt; and is here for Java compatibility
+  */
+  def sendAndGetFuture(msg: Any): LAFuture[Any] = this !< msg
+
+  /**
+  * Send a message to the Actor and get an LAFuture
+  * that will contain the reply (if any) from the message
+  */
   def !<(msg: Any): LAFuture[Any] = {
     val future = new LAFuture[Any]
     this ! MsgWithResp(msg, future)
     future
   }
 
+  /**
+  * Send a message to the Actor and wait for
+  * the actor to process the message and reply.
+  * This method is the Java callable version of !?.
+  */
+  def sendAndGetReply(msg: Any): Any = this !? msg
+  
+  /**
+  * Send a message to the Actor and wait for
+  * the actor to process the message and reply.
+  */
   def !?(msg: Any): Any = {
     val future = new LAFuture[Any]
     this ! MsgWithResp(msg, future)
     future.get
   }
 
+
   /**
-   * Compatible with Scala Actors' !? method
-   */
+  * Send a message to the Actor and wait for
+  * up to timeout milliseconds for
+  * the actor to process the message and reply.
+  * This method is the Java callable version of !?.
+  */
+  def sendAndGetReply(timeout: Long, msg: Any): Any = this.!?(timeout, msg)
+
+  /**
+  * Send a message to the Actor and wait for
+  * up to timeout milliseconds for
+  * the actor to process the message and reply.
+  */
   def !?(timeout: Long, message: Any): Box[Any] =
     this !! (message, timeout)
 
 
+    /**
+    * Send a message to the Actor and wait for
+    * up to timeout milliseconds for
+    * the actor to process the message and reply.
+    */
   def !!(msg: Any, timeout: Long): Box[Any] = {
     val future = new LAFuture[Any]
     this ! MsgWithResp(msg, future)
     future.get(timeout)
   }
 
+  /**
+  * Send a message to the Actor and wait for
+  * the actor to process the message and reply.
+  */
   def !!(msg: Any): Box[Any] = {
     val future = new LAFuture[Any]
     this ! MsgWithResp(msg, future)
@@ -371,7 +413,10 @@ with ForwardableActor[Any, Any] {
     case v => f(v)
   }
 
-
+  /**
+  * The Actor should call this method with a reply
+  * to the message
+  */
   protected def reply(v: Any) {
     if (null ne responseFuture) {
       responseFuture.satisfy(v)
@@ -379,5 +424,9 @@ with ForwardableActor[Any, Any] {
   }
 }
 
-}
+/**
+* Java versions of Actors should subclass this method
+*/
+abstract class JavaActor extends JavaActorBase with LiftActor {
+  
 }
