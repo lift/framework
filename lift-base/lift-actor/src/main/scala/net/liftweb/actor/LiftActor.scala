@@ -424,9 +424,49 @@ with ForwardableActor[Any, Any] {
   }
 }
 
+import java.lang.reflect._
+
+object JavaActor {
+  private var methods: Map[Class[_], PartialFunction[Any, Unit]] = Map()
+
+  def calculateHandler(what: JavaActor): PartialFunction[Any, Unit] = 
+    synchronized {
+      val clz = what.getClass
+      methods.get(clz) match {
+        case Some(pf) => pf
+        case _ => {
+          val pf = buildPF(clz)
+          methods += clz -> pf
+          pf
+        }
+      }
+    }
+
+  private def getBaseClasses(clz: Class[_]): List[Class[_]] = clz match {
+    case null => Nil
+    case clz => clz :: getBaseClasses(clz.getSuperclass)
+  }
+
+  private def receiver(in: Method): Boolean = false 
+
+  private def buildPF(clz: Class[_]): PartialFunction[Any, Unit] = {
+    val methods = getBaseClasses(clz).
+    flatMap(_.getDeclaredMethods.toList.filter(receiver))
+    Map()
+  }
+}
+
 /**
-* Java versions of Actors should subclass this method
-*/
-abstract class JavaActor extends JavaActorBase with LiftActor {
+ * Java versions of Actors should subclass this method.
+ * Methods decorated with the @Receive annotation
+ * will receive messages of that type.
+ */
+class JavaActor extends JavaActorBase with LiftActor {
+  protected lazy val _messageHandler: PartialFunction[Any, Unit] =
+    calculateJavaMessageHandler
+
+  protected def calculateJavaMessageHandler = JavaActor.calculateHandler(this)
+
+  protected def messageHandler = _messageHandler
   
 }
