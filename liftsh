@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Load custom liftsh config
+if test -f ~/.liftsh.config; then
+  . ~/.liftsh.config
+fi
+
+# Default option if nothing is specified
+DEFAULT_OPTS="-Dfile.encoding=UTF-8 -Xss8M -Xmx1G -noverify -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=512M -Dfile.encoding=utf8 -Dsbt.intransitive=true"
+
+exec java ${LIFTSH_OPTS:-${DEFAULT_OPTS}} -jar `dirname $0`/project/sbt-launch-0.7.5.RC0.jar "$@"

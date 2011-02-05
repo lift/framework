@@ -1,239 +1,120 @@
-import java.net.URL
-import java.util.{Calendar => C}
-import java.util.jar.Attributes.Name._
-import scala.xml.NodeSeq
+/*
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import net.liftweb.sbt._
 import sbt._
 
 
-/**
- * Top level project definition for Lift.
- * This is the entry point for the build definitions of the Lift sub-projects.
- */
-class LiftFrameworkProject(info: ProjectInfo) extends LiftParentProject(info) {
+class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with LiftParentProject {
 
-  lazy val base         = project("lift-base",        "lift-base",        new LiftBaseProject(_))
-  lazy val persistence  = project("lift-persistence", "lift-persistence", new LiftPersistenceProject(_),  base)
-  lazy val modules      = project("lift-modules",     "lift-modules",     new LiftModulesProject(_),      persistence)
+  import CompileScope._
+  import ProvidedScope._
 
-  /**
-   *  Lift Base Components
-   */
-  class LiftBaseProject(info: ProjectInfo) extends LiftParentProject(info) {
 
-    // Lift Base Subprojects
-    lazy val common   = project("lift-common",   "lift-common",   new LiftCommonProject(_))
-    lazy val actor    = project("lift-actor",    "lift-actor",    new LiftActorProject(_),  common)
-    lazy val json     = project("lift-json",     "lift-json",     new LiftJsonProject(_))
-    lazy val json_ext = project("lift-json-ext", "lift-json-ext", new LiftJsonExtProject(_), json)
-    lazy val util     = project("lift-util",     "lift-util",     new LiftUtilProject(_),   actor, json)
-    lazy val webkit   = project("lift-webkit",   "lift-webkit",   new LiftWebkitProject(_), util)
+  // Core projects
+  // -------------
+  lazy val common   = coreProject("common", slf4j_api, logback, log4j)()
+  lazy val actor    = coreProject("actor")(common)
+  lazy val json     = coreProject("json", paranamer)()
+  lazy val json_ext = coreProject("json-ext", commons_codec, joda_time)(common, json)
+  lazy val util     = coreProject("util", joda_time, commons_codec, javamail, log4j, htmlparser)(actor, json)
 
-    class LiftCommonProject(info:  ProjectInfo)  extends LiftDefaultProject(info)
-    class LiftActorProject(info:   ProjectInfo)  extends LiftDefaultProject(info)
-    class LiftJsonProject(info:    ProjectInfo)  extends LiftDefaultProject(info)
-    class LiftJsonExtProject(info: ProjectInfo)  extends LiftDefaultProject(info)
-    class LiftUtilProject(info:    ProjectInfo)  extends LiftDefaultProject(info)
-    class LiftWebkitProject(info:  ProjectInfo)  extends LiftDefaultProject(info) {
-      // System property hack for webapptests
-      override def testAction =
-        super.testAction dependsOn
-        task { System.setProperty("net.liftweb.webapptest.src.test.webapp", (testSourcePath / "webapp").absString); None }
-      // FIXME: Resolve ToHeadUsages issue
-      override def testOptions =
-        ExcludeTests("net.liftweb.webapptest.ToHeadUsages" :: Nil) :: super.testOptions.toList
-    }
+
+  // Web projects
+  // ------------
+  lazy val testkit = webProject("testkit", commons_httpclient, servlet_api)(util)
+  lazy val webkit  = webkitProject("webkit", commons_fileupload, servlet_api, TestScope.jetty6, TestScope.jwebunit)(util, testkit)
+  lazy val wizard  = webProject("wizard")(webkit, db)
+
+
+  // Persistence projects
+  // --------------------
+  lazy val db             = persistenceProject("db")(util)
+  lazy val proto          = persistenceProject("proto")(webkit)
+  lazy val jpa            = persistenceProject("jpa", scalajpa, persistence_api)(webkit)
+  lazy val mapper         = persistenceProject("mapper", RuntimeScope.h2database, RuntimeScope.derby)(db, proto)
+  lazy val record         = persistenceProject("record")(mapper)
+  lazy val ldap           = persistenceProject("ldap", TestScope.apacheds)(mapper)
+  lazy val couchdb        = persistenceProject("couchdb", dispatch_http)(record)
+  lazy val squeryl_record = persistenceProject("squeryl-record", RuntimeScope.h2database, squeryl)(record)
+  lazy val mongodb        = persistenceProject("mongodb", mongo_driver)(json_ext)
+  lazy val mongodb_record = persistenceProject("mongodb-record", dispatch_http)(record, mongodb)
+
+
+  // Framework apidocs
+  // -----------------
+  lazy val framework_doc = project(".", "lift-framework-doc", new DefaultProject(_) with LiftDefaultDocProject {
+    // TODO: Make it more generic or move it to ivyXml
+    val blacklists = "commons-codec-1.2.jar" :: "commons-codec-1.3.jar" :: Nil
+    override def docClasspath = super.docClasspath.filter(f => !blacklists.contains(f.asFile.getName))
+  })
+
+
+  private def coreProject = frameworkProject("core") _
+  private def webProject = frameworkProject("web") _
+  private def persistenceProject = frameworkProject("persistence") _
+
+  private def frameworkProject(base: String)(path: String, libs: ModuleID*)(deps: Project*) =
+    project(base / path, "lift-" + path, new FrameworkProject(_, libs: _*), deps: _*)
+
+  // Webkit Project has testkit dependency in non-default scope -- needs special treatment
+  // so that it doesn't fall over.
+  // Ref: http://groups.google.com/group/simple-build-tool/browse_thread/thread/40d8ecafbf03f901
+  private def webkitProject(path: String, libs: ModuleID*)(deps: Project*) =
+    project("web" / path, "lift-" + path, new FrameworkProject(_, libs: _*) {
+      // HACK: Specs needed in 'provided' scope, this will lead to duplications in testclasspath though
+      override def libraryDependencies =
+        super.libraryDependencies ++ Seq("org.scala-tools.testing" %% "specs" % specsVersion % "provided")
+
+      // HACK: Manipulate deliverProjectDependencies to move testkit dependency from 'compile' (default) to 'provided' scope
+      override def deliverProjectDependencies =
+        testkit.projectID % "provided" :: super.deliverProjectDependencies.toList - testkit.projectID
+    }, deps: _*)
+
+
+  // Default base
+  // ------------
+  class FrameworkProject(info: ProjectInfo, libs: ModuleID*) extends DefaultProject(info) with LiftDefaultProject {
+
+    override def libraryDependencies = super.libraryDependencies ++ libs
+
+    // TODO: Remove these and resort to LiftDefaultProject settings
+    override def compileOptions = Seq("-Xwarninit", "-encoding", "utf8").map(CompileOption)
+
+    // System property hack for derby.log, webapptests
+    override def testAction =
+      super.testAction dependsOn
+      task {
+        System.setProperty("derby.stream.error.file", (outputPath / "derby.log").absString)
+        System.setProperty("net.liftweb.webapptest.src.test.webapp", (testSourcePath / "webapp").absString)
+        None
+      }
+
+    // FIXME: breaks with SBT
+    override def testOptions =
+      ExcludeTests(
+        // Core tests
+        "net.liftweb.util.ActorPingUnit" :: "net.liftweb.util.ActorPingSpec" ::
+        // Web tests
+        "net.liftweb.webapptest.OneShot" :: "net.liftweb.webapptest.ToHeadUsages" :: "net.liftweb.http.SnippetSpec" ::
+        // Persistence tests
+        "net.liftweb.mapper.MapperSpecs" :: "net.liftweb.squerylrecord.SquerylRecordSpecs" ::
+        // LDAP
+        "net.liftweb.ldap.LdapSpecs" :: Nil) ::
+      super.testOptions.toList
   }
-
-  /**
-   *  Lift Persistence Components
-   */
-  class LiftPersistenceProject(info: ProjectInfo) extends LiftParentProject(info) {
-
-    // Lift Persistence Subprojects
-    lazy val proto         = project("lift-proto",            "lift-proto",          new LiftProtoProject(_))
-    lazy val mapper         = project("lift-mapper",          "lift-mapper",          new LiftMapperProject(_))
-    lazy val jpa            = project("lift-jpa",             "lift-jpa",             new LiftJpaProject(_))
-    lazy val record         = project("lift-record",          "lift-record",          new LiftRecordProject(_),         mapper)
-    lazy val couchdb        = project("lift-couchdb",         "lift-couchdb",         new LiftCouchDBProject(_),        record)
-    lazy val mongodb        = project("lift-mongodb",         "lift-mongodb",         new LiftMongoDBProject(_))
-    lazy val mongodbRecord  = project("lift-mongodb-record",  "lift-mongodb-record",  new LiftMongoDBRecordProject(_),  mongodb, record)
-
-    class LiftProtoProject       (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftMapperProject       (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftRecordProject       (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftJpaProject          (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftCouchDBProject      (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftMongoDBProject      (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftMongoDBRecordProject(info: ProjectInfo) extends LiftDefaultProject(info)
-  }
-
-  /**
-   *  Lift Modules
-   */
-  class LiftModulesProject(info: ProjectInfo) extends LiftParentProject(info) {
-
-    // Lift Modules Subprojects
-    lazy val testkit      = project("lift-testkit",       "lift-testkit",       new LiftTestkitProject(_))
-    lazy val wizard       = project("lift-wizard",        "lift-wizard",        new LiftWizardProject(_))
-    lazy val widgets      = project("lift-widgets",       "lift-widgets",       new LiftWidgetsProject(_))
-    lazy val machine      = project("lift-machine",       "lift-machine",       new LiftMachineProject(_))
-    lazy val scalate      = project("lift-scalate",       "lift-scalate",       new LiftScalateProject(_))
-    lazy val textile      = project("lift-textile",       "lift-textile",       new LiftTextileProject(_))
-    lazy val facebook     = project("lift-facebook",      "lift-facebook",      new LiftFacebookProject(_))
-    lazy val amqp         = project("lift-amqp",          "lift-amqp",          new LiftAMQPProject(_))
-    lazy val xmpp         = project("lift-xmpp",          "lift-xmpp",          new LiftXMPPProject(_))
-    lazy val openid       = project("lift-openid",        "lift-openid",        new LiftOpenIdProject(_))
-    lazy val oauth        = project("lift-oauth",         "lift-oauth",         new LiftOauthProject(_))
-    lazy val oauthMapper  = project("lift-oauth-mapper",  "lift-oauth-mapper",  new LiftOauthMapperProject(_), oauth)
-    lazy val paypal       = project("lift-paypal",        "lift-paypal",        new LiftPaypalProject(_))
-    lazy val jta          = project("lift-jta",           "lift-jta",           new LiftJTAProject(_))
-    lazy val imaging      = project("lift-imaging",       "lift-imaging",       new LiftImagingProject(_))
-    lazy val ldap         = project("lift-ldap",          "lift-ldap",          new LiftLDAPProject(_))
-
-    class LiftTestkitProject    (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftWizardProject     (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftWidgetsProject    (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftMachineProject    (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftScalateProject    (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftTextileProject    (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftFacebookProject   (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftAMQPProject       (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftXMPPProject       (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftOpenIdProject     (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftOauthProject      (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftOauthMapperProject(info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftPaypalProject     (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftJTAProject        (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftImagingProject    (info: ProjectInfo) extends LiftDefaultProject(info)
-    class LiftLDAPProject       (info: ProjectInfo) extends LiftDefaultProject(info)
-
-  }
-
-}
-
-
-/**
- * ParentProject specialized for Lift.
- */
-abstract class LiftParentProject(info: ProjectInfo) extends ParentProject(info) {
-
-  // Custom format for java.net.URL
-  implicit lazy val urlFormat = new SimpleFormat[URL] { def fromString(s: String) = new URL(s) }
-
-  // Additional user-defined properties that optionally can be defined for the project.
-  lazy val projectUrl                 = propertyOptional[URL](new URL("http://www.liftweb.net"), true)
-  lazy val projectInceptionyear       = propertyOptional[Int](C.getInstance().get(C.YEAR), true)
-  lazy val projectOrganizationName    = propertyOptional[String](organization, true)
-  lazy val projectOrganizationUrl     = propertyOptional[URL](projectUrl.value, true)
-
-  lazy val projectLicenseName         = propertyOptional[String]("Apache License, Version 2.0", true)
-  lazy val projectLicenseUrl          = propertyOptional[URL](new URL("http://www.apache.org/licenses/LICENSE-2.0.txt"), true)
-  lazy val projectLicenseDistribution = propertyOptional[String]("repo", true)
-
-  lazy val publishRemote = propertyOptional[Boolean](false, true)
-
-  val localhostRepo = "localhost" at "file:///home/dpp/.m2/repository"
-
-  // Add ScalaToolsSnapshots if this project is on snapshot
-  override def repositories =
-    if (version.toString.endsWith("-SNAPSHOT")) super.repositories + ScalaToolsSnapshots
-    else super.repositories
-
-  // Set up publish repository (the tuple avoids SBT's ReflectiveRepositories detection)
-  private lazy val snapshotPublishRepo = ("Distribution Repository for Snapshots" -> "http://nexus.scala-tools.org/content/repositories/snapshots/")
-  private lazy val releasePublishRepo  = ("Distribution Repository for Releases"  -> "http://nexus.scala-tools.org/content/repositories/releases/")
-
-  val publishTo =
-    if (version.toString.endsWith("-SNAPSHOT")) snapshotPublishRepo._1 at snapshotPublishRepo._2
-    else releasePublishRepo._1 at releasePublishRepo._2
-
-  Credentials(Path.userHome / ".ivy2" / ".credentials", log)
-
-  // Tell SBT to publish to local Maven repository unless publish.remote=true
-  private lazy val localDestRepo = Resolver.file("maven-local", Path.userHome / ".m2" / "repository" asFile)
-  override def defaultPublishRepository =
-    if (!publishRemote.value) Some(localDestRepo)
-    else super.defaultPublishRepository
-
-
-  // Disable dependencies on sub-projects
-  override def deliverProjectDependencies = Nil
-
-}
-
-
-/**
- * DefaultProject specialized for Lift.
- */
-abstract class LiftDefaultProject(info: ProjectInfo) extends DefaultProject(info) {
-
-  // Custom format for java.net.URL
-  implicit lazy val urlFormat = new SimpleFormat[URL] { def fromString(s: String) = new URL(s) }
-
-  // Additional user-defined properties that optionally can be defined for the project.
-  lazy val projectUrl                 = propertyOptional[URL](new URL("http://www.liftweb.net"), true)
-  lazy val projectInceptionyear       = propertyOptional[Int](C.getInstance().get(C.YEAR), true)
-  lazy val projectOrganizationName    = propertyOptional[String](organization, true)
-  lazy val projectOrganizationUrl     = propertyOptional[URL](projectUrl.value, true)
-
-  lazy val projectLicenseName         = propertyOptional[String]("Apache License, Version 2.0", true)
-  lazy val projectLicenseUrl          = propertyOptional[URL](new URL("http://www.apache.org/licenses/LICENSE-2.0.txt"), true)
-  lazy val projectLicenseDistribution = propertyOptional[String]("repo", true)
-
-  lazy val publishRemote = propertyOptional[Boolean](false, true)
-
-  // Add ScalaToolsSnapshots if this project is on snapshot
-  override def repositories =
-    if (version.toString.endsWith("-SNAPSHOT")) super.repositories + ScalaToolsSnapshots
-    else super.repositories
-
-  // Set up publish repository (the tuple avoids SBT's ReflectiveRepositories detection)
-  private lazy val snapshotPublishRepo = ("Distribution Repository for Snapshots" -> "http://nexus.scala-tools.org/content/repositories/snapshots/")
-  private lazy val releasePublishRepo  = ("Distribution Repository for Releases"  -> "http://nexus.scala-tools.org/content/repositories/releases/")
-
-  val publishTo =
-    if (version.toString.endsWith("-SNAPSHOT")) snapshotPublishRepo._1 at snapshotPublishRepo._2
-    else releasePublishRepo._1 at releasePublishRepo._2
-
-  Credentials(Path.userHome / ".ivy2" / ".credentials", log)
-
-  // Tell SBT to publish to local Maven repository unless publish.remote=true
-  private lazy val localDestRepo = Resolver.file("maven-local", Path.userHome / ".m2" / "repository" asFile)
-  override def defaultPublishRepository =
-    if (!publishRemote.value) Some(localDestRepo)
-    else super.defaultPublishRepository
-
-
-  // Compile options [TODO: add additional debug options conditionally]
-  override def compileOptions =
-    Seq(Unchecked) ++ Seq("-encoding", "utf8").map(x => CompileOption(x))
-
-  // Package options
-  lazy val extraSpecificationEntries = ManifestAttributes(
-    (SPECIFICATION_TITLE.toString,    name),
-    (SPECIFICATION_VERSION.toString,  version.toString),
-    (SPECIFICATION_VENDOR.toString,   projectOrganizationName.value))
-
-  lazy val extraImplementationEntries = ManifestAttributes(
-    (IMPLEMENTATION_TITLE.toString,     name),
-    (IMPLEMENTATION_VERSION.toString,   version.toString),
-    (IMPLEMENTATION_VENDOR_ID.toString, organization),
-    (IMPLEMENTATION_VENDOR.toString,    projectOrganizationName.value),
-    (IMPLEMENTATION_URL.toString,       projectUrl.value.toString))
-
-  override def packageOptions =
-    super.packageOptions ++ Seq(extraSpecificationEntries, extraImplementationEntries)
-
-  // Document options
-  private lazy val docBottom =
-    "Copyright (c) " + projectInceptionyear.value + "-" + C.getInstance().get(C.YEAR) + " " +
-    projectOrganizationName.value + ". All Rights Reserved."
-
-  // TODO: comply with scaladoc for 2.8
-//  override def documentOptions =
-//    super.documentOptions ++ Seq(LinkSource, documentBottom(docBottom), documentCharset("utf8"))
-
-  // Make `package` depend on `test`
-  override def packageAction = super.packageAction dependsOn testAction
 
 }
