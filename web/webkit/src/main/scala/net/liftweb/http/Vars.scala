@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,30 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import net.liftweb.common._
+import net.liftweb.util._
 import Helpers._
-import _root_.scala.collection.mutable.{HashMap, HashSet, ListBuffer}
+import scala.collection.mutable.{HashMap, HashSet, ListBuffer}
+import java.util.concurrent.Callable
+
+/**
+ * The bridge between Scala *Vars implementations and
+ * the 
+ */
+class VarsJBridge {
+  def vendSessionVar[T](default: T, e: Exception): SessionVar[T] = {
+    vendSessionVar(new Callable[T] {def call() = default}, e)
+  }
+
+  def vendSessionVar[T](default: Callable[T], e: Exception): SessionVar[T] = {
+    new SessionVar(default.call()) {
+      override val __nameSalt = e.getStackTrace.apply(1).toString
+    }
+  }
+}
 
 /**
  * A typesafe container for data with a lifetime nominally equivalent to the
@@ -555,7 +572,4 @@ abstract class RequestMemoize[K, V] extends MemoizeVar[K, V] {
   protected object coreVar extends RequestVar[LRU[K, V]](buildLRU) {
     override def __nameSalt = RequestMemoize.this.__nameSalt
   }
-}
-
-}
 }

@@ -20,7 +20,7 @@ package util
 import scala.xml._
 import common._
 import scala.collection.mutable.ListBuffer
-
+import java.util.{List => JavaList}
 
 /**
  * This trait is used to identify an object that is representable as a {@link NodeSeq}.
@@ -1506,6 +1506,59 @@ trait IterableConst {
   def constList(nodeSeq: NodeSeq): Seq[NodeSeq]
 }
 
+import scala.collection.JavaConversions._
+
+/**
+ * The implementation for a NodeSeq Iterable Const
+ */
+final case class NodeSeqIterableConst(it: Iterable[NodeSeq]) extends IterableConst {
+  def this(it: JavaList[NodeSeq]) = this(it: Iterable[NodeSeq])
+  
+  def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toSeq
+}
+
+/**
+ * The implementation for a NodeSeq => NodeSeq Iterable Const
+ */
+final case class NodeSeqFuncIterableConst(it: Iterable[NodeSeq => NodeSeq]) extends IterableConst {
+  def this(it: JavaList[NodeSeq => NodeSeq]) = this(it: Iterable[NodeSeq => NodeSeq])
+
+  def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(it.map(_(nodeSeq)).toSeq)
+}
+
+/**
+ * The implementation for a Box[NodeSeq => Node] Iterable Const
+ */
+final case class BoxNodeSeqFuncIterableConst(it: Box[NodeSeq => NodeSeq]) extends IterableConst {
+
+  def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toList.map(_(nodeSeq))
+}
+
+/**
+ * The implementation for a Option[NodeSeq => Node] Iterable Const
+ */
+final case class OptionNodeSeqFuncIterableConst(it: Option[NodeSeq => NodeSeq]) extends IterableConst {
+
+  def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toList.map(_(nodeSeq))
+}
+
+/**
+ * Sequence of String iterable const
+ */
+final case class SeqStringIterableConst(it: Iterable[String]) extends IterableConst {
+  def this(it: JavaList[String]) = this(it: Iterable[String])
+
+  def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.map(a => Text(a)).toSeq  
+}
+
+/**
+ * Sequence of Bindable iterable const
+ */
+final case class SeqBindableIterableConst(it: Iterable[Bindable]) extends IterableConst {
+  def this(it: JavaList[Bindable]) = this(it: Iterable[Bindable])
+
+  def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.map(_.asHtml).toSeq  
+}
 
 /**
  * The companion object that does the helpful promotion of common
@@ -1515,66 +1568,67 @@ trait IterableConst {
 object IterableConst {
   /**
    * Converts anything that can be converted into an Iterable[NodeSeq]
+   * into an IterableConst.  This includes Seq[NodeSeq]
+   */
+  implicit def itNodeSeq(it: Iterable[NodeSeq]): IterableConst =
+    NodeSeqIterableConst(it)
+
+  /**
+   * Converts anything that can be converted into an Box[NodeSeq]
+   */
+  implicit def boxNodeSeq(it: Box[NodeSeq]): IterableConst =
+    NodeSeqIterableConst(it.toList)
+
+  /**
+   * Converts anything that can be converted into an Box[NodeSeq]
+   */
+  implicit def optionNodeSeq(it: Option[NodeSeq]): IterableConst =
+    NodeSeqIterableConst(it.toList)
+
+  /**
+   * Converts anything that can be converted into an Iterable[NodeSeq]
    * into an IterableConst.  This includes Seq[NodeSeq], Option[NodeSeq],
    * and Box[NodeSeq]
    */
-  implicit def itNodeSeq[C <% Iterable[NodeSeq]](it: C): IterableConst =
-    new IterableConst {
-      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toSeq
-    }
+  implicit def itNodeSeq(it: JavaList[NodeSeq]): IterableConst =
+    new NodeSeqIterableConst(it)
 
   implicit def itNodeSeqFunc(it: Iterable[NodeSeq => NodeSeq]): IterableConst =
-    new IterableConst {
-      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = 
-        Helpers.ensureUniqueId(it.map(_(nodeSeq)).toSeq)
-    }
+    NodeSeqFuncIterableConst(it)
+
+  implicit def itNodeSeqFunc(it: JavaList[NodeSeq => NodeSeq]): IterableConst =
+    new NodeSeqFuncIterableConst(it)
 
   implicit def boxNodeSeqFunc(it: Box[NodeSeq => NodeSeq]): IterableConst =
-    new IterableConst {
-      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = 
-        it.toList.map(_(nodeSeq))
-    }
+    BoxNodeSeqFuncIterableConst(it)
 
   implicit def optionNodeSeqFunc(it: Option[NodeSeq => NodeSeq]): IterableConst =
-    new IterableConst {
-      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = 
-        it.toList.map(_(nodeSeq))
-    }
-
+    OptionNodeSeqFuncIterableConst(it)
 
   implicit def itStringPromotable(it: Iterable[String]): IterableConst =
-    new IterableConst {
-      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.map(a => Text(a)).toSeq
-    }
+    SeqStringIterableConst(it)
 
+  implicit def javaListStringPromotable(it: JavaList[String]): IterableConst =
+    new SeqStringIterableConst(it)
 
-  implicit def boxStringPromotable(it: Box[String]): IterableConst =
-    new IterableConst {
-      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toList.map(a => Text(a))
-    }
+  implicit def boxString(it: Box[String]): IterableConst =
+    SeqStringIterableConst(it.toList)
 
+  implicit def optionString(it: Option[String]): IterableConst =
+    SeqStringIterableConst(it.toList)
 
-  implicit def optionStringPromotable(it: Option[String]): IterableConst =
-    new IterableConst {
-      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toList.map(a => Text(a))
-    }
+  implicit def itBindable(it: Iterable[Bindable]): IterableConst =
+    SeqBindableIterableConst(it)
 
-  implicit def itBindablePromotable(it: Seq[Bindable]): IterableConst =
-    new IterableConst {
-      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.map(a => a.asHtml)
-    }
+  implicit def itBindable(it: JavaList[Bindable]): IterableConst =
+    new SeqBindableIterableConst(it)
 
 
   implicit def boxBindablePromotable(it: Box[Bindable]): IterableConst =
-    new IterableConst {
-      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toList.map(a => a.asHtml)
-    }
-
+    SeqBindableIterableConst(it.toList)
 
   implicit def optionBindablePromotable(it: Option[Bindable]): IterableConst =
-    new IterableConst {
-      def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toList.map(a => a.asHtml)
-    }
+    SeqBindableIterableConst(it.toList)
 }
 
 sealed trait IterableFunc extends Function1[NodeSeq, Seq[NodeSeq]] {
@@ -1758,10 +1812,17 @@ private final case class AggregatedCssBindFunc(binds: List[CssBind]) extends Css
  * clearable.  Designers can mark extra nodes in markup with
  * class="clearable" and this Bind will make them go away
  */
-object ClearClearable extends CssBindImpl(Full(".clearable"), CssSelectorParser.parse(".clearable")) {
+class ClearClearable extends CssBindImpl(Full(".clearable"), CssSelectorParser.parse(".clearable")) {
   
   def calculate(in: NodeSeq): Seq[NodeSeq] = Nil
 }
+
+/**
+ * This CssBind will clear all nodes marked with the class
+ * clearable.  Designers can mark extra nodes in markup with
+ * class="clearable" and this Bind will make them go away
+ */
+object ClearClearable extends ClearClearable
 
 private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeSeq] {
   private def sortBinds(lst: List[CssBind]): List[CssBind] =
@@ -2231,6 +2292,22 @@ final class CssJBridge {
   def sel(selector: String, value: NodeSeq): CssSel = selector #> value
   def sel(selector: String, value: NodeSeq => NodeSeq): CssSel = selector #> value
   def sel(selector: String, value: Bindable): CssSel = selector #> value
-}
+
+  /**
+   * Inserts a String constant according to the CssSelector rules
+   */
+  def sel(selector: String, str: StringPromotable): CssSel = (selector #> str)
+
+  /**
+   * Inserts a String constant according to the CssSelector rules
+   */
+  def sel(selector: String, str: IterableConst): CssSel = (selector #> str)
+
+  /**
+   * Inserts a String constant according to the CssSelector rules
+   */
+  def sel(selector: String, str: IterableFunc): CssSel = (selector #> str)
+
+ }
 
 // vim: set ts=2 sw=2 et:

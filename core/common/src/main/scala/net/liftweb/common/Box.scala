@@ -179,6 +179,19 @@ sealed abstract class Box[+A] extends Product {
   def open_! : A
 
   /**
+   * Return the value contained in this Box if it is Full;
+   * throw an exception otherwise.
+   * This means "don't use it unless
+   * you are 100% sure that the Box is Full and you should probably
+   * comment your code with the explanation of the guaranty.
+   * The better case for extracting the value out of a Box can
+   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
+   *
+   * @return the value contained in this Box if it is full; throw an exception otherwise
+   */
+  def openTheBox: A = this.open_!
+
+  /**
    * Return the value contained in this Box if it is full; otherwise return the specified default
    * @return the value contained in this Box if it is full; otherwise return the specified default
    */
@@ -234,7 +247,7 @@ sealed abstract class Box[+A] extends Product {
 
   /**
    * Return a Full[B] if the contents of this Box is an instance of the specified class,
-   * otherwise return Empty
+  * otherwise return Empty
    */
   def isA[B](cls: Class[B]): Box[B] = Empty
 

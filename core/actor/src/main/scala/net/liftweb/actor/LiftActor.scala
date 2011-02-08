@@ -130,8 +130,19 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
       case x if f(x) => Full(x)
       case x => findMailboxItem(x.next, f)
     }
-                            
+  
+  /**
+   * Send a message to the Actor.  This call will always succeed
+   * and return almost immediately.  The message will be processed
+   * asynchronously.  This is a Java-callable alias for !.
+   */
+  def send(msg: T): Unit = this ! msg
 
+  /**
+   * Send a message to the Actor.  This call will always succeed
+   * and return almost immediately.  The message will be processed
+   * asynchronously.
+   */
   def !(msg: T): Unit = {
     val toDo: () => Unit = baseMailbox.synchronized {
       msgList ::= msg
@@ -426,10 +437,10 @@ with ForwardableActor[Any, Any] {
 
 import java.lang.reflect._
 
-object JavaActor {
+object LiftActorJ {
   private var methods: Map[Class[_], DispatchVendor] = Map()
 
-  def calculateHandler(what: JavaActor): PartialFunction[Any, Unit] = 
+  def calculateHandler(what: LiftActorJ): PartialFunction[Any, Unit] = 
     synchronized {
       val clz = what.getClass
       methods.get(clz) match {
@@ -469,7 +480,7 @@ private final class DispatchVendor(map: Map[Class[_], Method]) {
   private val baseMap: Map[Class[_], Option[Method]] = 
     Map(map.map{case (k,v) => (k, Some(v))}.toList :_*)
 
-  def vend(actor: JavaActor): PartialFunction[Any, Unit] =
+  def vend(actor: LiftActorJ): PartialFunction[Any, Unit] =
     new PartialFunction[Any, Unit] {
       var theMap: Map[Class[_], Option[Method]] = baseMap
 
@@ -505,11 +516,11 @@ private final class DispatchVendor(map: Map[Class[_], Method]) {
  * Methods decorated with the @Receive annotation
  * will receive messages of that type.
  */
-class JavaActor extends JavaActorBase with LiftActor {
+class LiftActorJ extends JavaActorBase with LiftActor {
   protected lazy val _messageHandler: PartialFunction[Any, Unit] =
     calculateJavaMessageHandler
 
-  protected def calculateJavaMessageHandler = JavaActor.calculateHandler(this)
+  protected def calculateJavaMessageHandler = LiftActorJ.calculateHandler(this)
 
   protected def messageHandler = _messageHandler
 

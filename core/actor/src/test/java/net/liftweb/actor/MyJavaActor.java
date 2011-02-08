@@ -17,7 +17,7 @@
 package net.liftweb.actor;
 
 
-public class MyJavaActor extends JavaActor {
+public class MyJavaActor extends LiftActorJ {
     private int myValue = 0;
 
     @Receive protected void set(Set what) {

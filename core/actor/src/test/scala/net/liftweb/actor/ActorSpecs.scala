@@ -63,7 +63,7 @@ object ActorSpec extends Specification {
       val a = make
       a ! Set(33)
       a !? Get()
-      (a.!?(25, Get())) must_== Full(Answer(33))
+      (a.!?(50, Get())) must_== Full(Answer(33))
     }
 
     "Allow setting & getting of a value with subclass of Get()" in {
@@ -77,18 +77,18 @@ object ActorSpec extends Specification {
     "Allow adding of a value" in {
       val a = make
       a ! Set(33)
-      (a !< Add(44)).get(5) must_== Full(Answer(77))
+      (a !< Add(44)).get(50) must_== Full(Answer(77))
     }
 
     "Allow subtracting of a value" in {
       val a = make
       a ! Set(33)
-      (a !< Sub(11)).get(5) must_== Full(Answer(22))
+      (a !< Sub(11)).get(50) must_== Full(Answer(22))
     }
 
     "Properly timeout" in {
       val a = make
-      (a !< Set(33)).get(5) must_== Empty
+      (a !< Set(33)).get(50) must_== Empty
     }
   }
 }

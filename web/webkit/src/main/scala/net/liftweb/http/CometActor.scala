@@ -322,6 +322,17 @@ trait CometListenee extends CometListener {
   self: CometActor =>
 }
 
+
+/**
+ * A LiftActorJ with ListenerManager.  Subclass this class
+ * to get a Java-useable LiftActorJ with ListenerManager
+ */
+abstract class LiftActorJWithListenerManager extends LiftActorJ with ListenerManager {
+  protected override def messageHandler: PartialFunction[Any, Unit] = 
+        highPriority orElse mediumPriority orElse
+            listenerService orElse lowPriority orElse _messageHandler
+}
+
 /**
  * This trait adds functionality to automatically register with a given
  * Actor using AddAListener and RemoveAListener control messages. The most
@@ -407,10 +418,18 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
  * Subclass from this class if you're in Java-land
  * and want a CometActor
  */
-abstract class JavaCometActor extends JavaActor with CometActor {
+abstract class CometActorJ extends LiftActorJ with CometActor {
 
   override def lowPriority = _messageHandler
 
+}
+
+/**
+ * Subclass from this class if you want a CometActorJ with
+ * CometListeners
+ */
+abstract class CometActorJWithCometListener extends CometActorJ with CometListener {
+  override def lowPriority = _messageHandler
 }
 
 /**
