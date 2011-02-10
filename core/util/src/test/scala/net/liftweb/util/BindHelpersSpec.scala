@@ -384,10 +384,7 @@ object CssBindHelpersSpec extends Specification  {
       
       val res = sel(xml)
 
-      println(res)
-
-      ((res \\ "a").head \ "@class").head.text must_== "selected L"
-      
+      ((res \\ "a").head \ "@class").head.text must_== "selected L"      
     }
 
 
