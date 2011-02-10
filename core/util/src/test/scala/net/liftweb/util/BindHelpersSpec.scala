@@ -354,6 +354,43 @@ object CssBindHelpersSpec extends Specification  {
       ("#foo" #> "hello")(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
     }
 
+
+    "not duplicate classes" in {
+
+      def anchor(quesType: String, value: String) = {
+        <a href="foo" class="selected">(value)</a>
+      }
+      var page = 1
+      var elements = List("1","2","3","4")
+      
+      val xml = <div class="lift:Bug.attack bug">
+      <div id="question" class="question">
+      <a href="#" class="L">1</a>
+      <a href="#" class="U">1</a>
+      <a href="#" class="D">1</a>
+      </div>
+      <div class="navigation">
+      <button class="previous">Previous</button> <button class="next">Next</button>
+      </div>
+      </div>
+      
+      val sel = ".question" #> elements.map(value => {
+        ".question [id]" #> ("question-" + value) &
+        ".question [class]" #> ("question-" + value) &
+        ".L" #> anchor("L", value) &
+        ".U" #> anchor("U", value) &
+        ".D" #> anchor("D", value)
+      })
+      
+      val res = sel(xml)
+
+      println(res)
+
+      ((res \\ "a").head \ "@class").head.text must_== "selected L"
+      
+    }
+
+
     "Compound selector" in {
       val res = 
       (".foo [href]" #> "http://dog.com" & ".bar [id]" #> "moo").apply(

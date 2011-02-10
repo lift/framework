@@ -1910,6 +1910,23 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       
     
     final def applyRule(bind: CssBind, realE: Elem): NodeSeq = {
+      def uniqueClasses(cv: String*): String = {
+        import Helpers._
+
+        val ls: List[String] = cv.toList.flatMap(_.charSplit(' '))
+        import scala.collection.mutable._
+        val hs: HashSet[String] = new HashSet()
+        val ret: ListBuffer[String] = new ListBuffer()
+        ls.foreach {
+          v =>
+            if (!hs.contains(v)) {
+              hs += v
+              ret += v
+            }
+        }
+        ret.mkString(" ")
+      }
+      
       def mergeAll(other: MetaData, stripId: Boolean): MetaData = {
         var oldAttrs = attrs - (if (stripId) "id" else "")
 
@@ -1926,8 +1943,10 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
                 case Some(ca) => {
                   oldAttrs -= "class"
                   builtMeta = new UnprefixedAttribute("class",
-                                                      up.value.text + " "+
-                                                      ca, builtMeta)
+                                                      uniqueClasses(up.value.
+                                                                    text,
+                                                                    ca),
+                                                      builtMeta)
                 }
 
                 case _ => builtMeta = up.copy(builtMeta)
