@@ -117,7 +117,7 @@ object LiftRules extends LiftRulesMocker {
 trait LiftRules extends Factory with FormVendor with LazyLoggable {
   import LiftRules._
 
-  val noticesContainerId = "lift__noticesContainer__"
+  def noticesContainerId = "lift__noticesContainer__"
   private val pageResourceId = Helpers.nextFuncName
 
 
@@ -1740,11 +1740,11 @@ case class XHTMLValidationError(msg: String, line: Int, col: Int)
 
 trait XHtmlValidator extends Function1[Node, List[XHTMLValidationError]]
 
-object StrictXHTML1_0Validator extends GenericValidtor {
-  val ngurl = "http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd"
+object StrictXHTML1_0Validator extends GenericValidator {
+  def ngurl = "http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd"
 }
 
-abstract class GenericValidtor extends XHtmlValidator with Loggable {
+abstract class GenericValidator extends XHtmlValidator with Loggable {
   import javax.xml.validation._
   import javax.xml._
   import XMLConstants._
@@ -1781,8 +1781,8 @@ abstract class GenericValidtor extends XHtmlValidator with Loggable {
 }
 
 
-object TransitionalXHTML1_0Validator extends GenericValidtor {
-  val ngurl = "http://www.w3.org/2002/08/xhtml/xhtml1-transitional.xsd"
+object TransitionalXHTML1_0Validator extends GenericValidator {
+  def ngurl = "http://www.w3.org/2002/08/xhtml/xhtml1-transitional.xsd"
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.java.net.URLDecoder
-import _root_.scala.xml.{Node, NodeSeq, Group, Elem, MetaData, Null, XML, Comment, Text}
-import _root_.scala.collection.immutable.HashMap
-import _root_.scala.xml.transform._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.util.Helpers
-import _root_.net.liftweb.util.ActorPing
-import _root_.java.util.{Locale, ResourceBundle}
-import _root_.java.net.URL
+import java.net.URLDecoder
+import scala.xml.{Node, NodeSeq, Group, Elem, MetaData, Null, XML, Comment, Text}
+import scala.collection.immutable.HashMap
+import scala.xml.transform._
+import net.liftweb.common._
+import net.liftweb.util.Helpers._
+import net.liftweb.util._
+import net.liftweb.util.Helpers
+import net.liftweb.util.ActorPing
+import java.util.{Locale, ResourceBundle}
+import java.net.URL
 import js._
 import auth._
 import provider._
 
-import _root_.net.liftweb.actor._
+import net.liftweb.actor._
 
 
 class LiftServlet extends Loggable {
@@ -174,6 +174,22 @@ class LiftServlet extends Loggable {
     }) openOr true
   }
 
+  private val recent: LRUMap[String, Int] = new LRUMap(2000)
+
+  private def registerRecentlyChecked(id: String): Unit = 
+    synchronized {
+      val next = recent.get(id) match {
+        case Full(x) => x + 1
+        case _ => 1
+      }
+
+      recent(id) = next
+    }
+
+  private def recentlyChecked(id: Box[String]): Int = synchronized {
+    id.flatMap(recent.get).openOr(0)
+  }
+
   /**
    * Service the HTTP request
    */
@@ -182,8 +198,10 @@ class LiftServlet extends Loggable {
 
     tryo {LiftRules.onBeginServicing.toList.foreach(_(req))}
 
-    def hasSession(req: Req): Boolean = {
-      req.request.sessionId.flatMap(id => SessionMaster.getSession(id, Empty)).isDefined
+    def hasSession(idb: Box[String]): Boolean = {
+      idb.flatMap{id => 
+        registerRecentlyChecked(id)
+        SessionMaster.getSession(id, Empty)}.isDefined
     }
 
     def isCometOrAjax(req: Req): Boolean = {
@@ -205,15 +223,27 @@ class LiftServlet extends Loggable {
       }
     }
 
-    val resp: Box[LiftResponse] =
+    val sessionIdCalc = new SessionIdCalc(req)
+
+    val resp: Box[LiftResponse] = try {
     // if the application is shutting down, return a 404
     if (LiftRules.ending) {
       LiftRules.notFoundOrIgnore(req, Empty)
     } else if (!authPassed_?(req)) {
       Full(LiftRules.authentication.unauthorizedResponse)
-    } else if (LiftRules.redirectAjaxOnSessionLoss && !hasSession(req) && isCometOrAjax(req)) {
-      Full(JavaScriptResponse(js.JE.JsRaw("window.location = " +
-              (req.request.header("Referer") openOr "/").encJs).cmd, Nil, Nil, 200))
+    } else if (LiftRules.redirectAjaxOnSessionLoss && !hasSession(sessionIdCalc.id) && isCometOrAjax(req)) {
+
+      val theId = sessionIdCalc.id
+      // okay after 2 attempts to redirect, just
+      // ignore calls to the comet URL
+      if (recentlyChecked(theId) > 1) {
+        Empty 
+      } else {
+        Full(JavaScriptResponse(js.JE.JsRaw("window.location = " +
+                                            (req.request.
+                                             header("Referer") openOr
+                                             "/").encJs).cmd, Nil, Nil, 200))
+      }
     } else
     // if the request is matched is defined in the stateless table, dispatch
     if ({
@@ -247,6 +277,12 @@ class LiftServlet extends Loggable {
       val lzy: () => Box[LiftResponse] = doSession(req, liftSession, Empty)
 
       lzy()
+    }
+    } catch {
+      case e: Exception if !e.getClass.getName.endsWith("RetryRequest") => {
+        val bundle = (Props.mode, req, e)
+          NamedPF.applyBox(bundle, LiftRules.exceptionHandler.toList)
+      }
     }
 
     tryo {LiftRules.onEndServicing.toList.foreach(_(req, resp))}
@@ -305,10 +341,10 @@ class LiftServlet extends Loggable {
             } catch {
               case ContinueResponseException(cre) => throw cre
 
-              case ite: _root_.java.lang.reflect.InvocationTargetException if (ite.getCause.isInstanceOf[ResponseShortcutException]) =>
+              case ite: java.lang.reflect.InvocationTargetException if (ite.getCause.isInstanceOf[ResponseShortcutException]) =>
                 (true, Full(liftSession.handleRedirect(ite.getCause.asInstanceOf[ResponseShortcutException], req)))
 
-              case rd: _root_.net.liftweb.http.ResponseShortcutException => (true, Full(liftSession.handleRedirect(rd, req)))
+              case rd: net.liftweb.http.ResponseShortcutException => (true, Full(liftSession.handleRedirect(rd, req)))
 
               case e if (e.getClass.getName.endsWith("RetryRequest")) =>  throw e
 
@@ -657,13 +693,13 @@ class LiftServlet extends Loggable {
             val ba = new Array[Byte](8192)
             val os = response.outputStream
             stream match {
-              case jio: _root_.java.io.InputStream => len = jio.read(ba)
+              case jio: java.io.InputStream => len = jio.read(ba)
               case stream => len = stream.read(ba)
             }
             while (len >= 0) {
               if (len > 0) os.write(ba, 0, len)
               stream match {
-                case jio: _root_.java.io.InputStream => len = jio.read(ba)
+                case jio: java.io.InputStream => len = jio.read(ba)
                 case stream => len = stream.read(ba)
               }
             }
@@ -677,7 +713,7 @@ class LiftServlet extends Loggable {
           response.outputStream.flush()
       }
     } catch {
-      case e: _root_.java.io.IOException => // ignore IO exceptions... they happen
+      case e: java.io.IOException => // ignore IO exceptions... they happen
     }
 
     LiftRules.afterSend.toList.foreach(f => tryo(f(resp, response, header, Full(request))))
@@ -688,5 +724,13 @@ import provider.servlet._
 
 class LiftFilter extends ServletFilterProvider
 
-}
+private class SessionIdCalc(req: Req) {
+  private val CometPath = LiftRules.cometPath
+  lazy val id: Box[String] = req.request.sessionId match {
+    case Full(id) => Full(id)
+    case _ => req.path.wholePath match {
+      case CometPath :: _ :: id :: _ if id != LiftRules.cometScriptName() => Full(id)
+      case _ => Empty
+    }
+  }
 }
