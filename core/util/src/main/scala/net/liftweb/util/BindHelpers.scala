@@ -1825,14 +1825,23 @@ class ClearClearable extends CssBindImpl(Full(".clearable"), CssSelectorParser.p
 object ClearClearable extends ClearClearable
 
 private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeSeq] {
-  private def sortBinds(lst: List[CssBind]): List[CssBind] =
+
+  // The KidsSubNode always has to go last or else we
+  // get into an issue where we're trying to apply the whole
+  // transform to the whole shooting match
+  private def sortBinds(lst: List[CssBind]): List[CssBind] =  {
     lst.sort {
       case (SubNode(me: EmptyBox), SubNode(_)) => true
       case (SubNode(_), SubNode(them: EmptyBox)) => false
-      case (SubNode(Full(KidsSubNode())), SubNode(_)) => true
-      case (SubNode(_), SubNode(Full(KidsSubNode()))) => false
+      case (SubNode(Full(KidsSubNode())), SubNode(_)) => false
+      case (SubNode(Full(PrependKidsSubNode())), SubNode(_)) => false
+      case (SubNode(Full(AppendKidsSubNode())), SubNode(_)) => false
+      case (SubNode(_), SubNode(Full(KidsSubNode()))) => true
+      case (SubNode(_), SubNode(Full(PrependKidsSubNode()))) => true
+      case (SubNode(_), SubNode(Full(AppendKidsSubNode()))) => true
       case _ => true
     }
+  }
 
   private val (idMap, nameMap, clzMap, attrMap, elemMap, 
                starFunc, selectThis: Box[CssBind])  = {

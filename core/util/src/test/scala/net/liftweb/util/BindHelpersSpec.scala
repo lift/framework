@@ -396,6 +396,27 @@ object CssBindHelpersSpec extends Specification  {
       (res \ "@id").text must_== "moo"
     }
 
+    "not stack overflow on Elem" in {
+      val xf = "* [id]" #> "xx" &
+      "* [style]" #> "border:thin solid black" &
+      "* *" #> <a/>
+    }
+
+    "not stack overflow on Elem" in {
+      val xf = "* [id]" #> "xx" &
+      "* [style]" #> "border:thin solid black" &
+      "* *+" #> <a/>
+
+      xf(<div/>)
+    }
+
+    "not stack overflow on Elem" in {
+      val xf = "* [id]" #> "xx" &
+      "* [style]" #> "border:thin solid black" &
+      "* -*" #> <a/>
+
+      xf(<div/>)
+    }
 
     "substitute a String by id" in {
       ("#foo" replaceWith "hello")(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
