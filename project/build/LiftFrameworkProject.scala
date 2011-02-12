@@ -107,7 +107,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
     override def testOptions =
       ExcludeTests(
         // Core tests
-        "net.liftweb.util.ActorPingUnit" :: "net.liftweb.util.ActorPingSpec" ::
+        "net.liftweb.actor.ActorSpec" :: "net.liftweb.util.ActorPingUnit" :: "net.liftweb.util.ActorPingSpec" ::
         // Web tests
         "net.liftweb.webapptest.OneShot" :: "net.liftweb.webapptest.ToHeadUsages" :: "net.liftweb.http.SnippetSpec" ::
         // Persistence tests
