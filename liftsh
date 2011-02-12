@@ -5,7 +5,11 @@ if test -f ~/.liftsh.config; then
   . ~/.liftsh.config
 fi
 
-# Default option if nothing is specified
-DEFAULT_OPTS="-Dfile.encoding=UTF-8 -Xss8M -Xmx1G -noverify -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=512M -Dfile.encoding=utf8 -Dsbt.intransitive=true"
+# Internal options, always specified
+INTERNAL_OPTS="-Dfile.encoding=UTF-8 -Xss8M -Xmx1G -noverify -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=512M"
 
-exec java ${LIFTSH_OPTS:-${DEFAULT_OPTS}} -jar `dirname $0`/project/sbt-launch-0.7.5.RC0.jar "$@"
+# Default options, if nothing is specified
+DEFAULT_OPTS="-Dsbt.intransitive=true"
+
+# Call with INTERNAL_OPTS followed by LIFTSH_OPTS (or DEFAULT_OPTS). java aways takes the last option when duplicate.
+exec java ${INTERNAL_OPTS} ${LIFTSH_OPTS:-${DEFAULT_OPTS}} -jar `dirname $0`/project/sbt-launch-0.7.5.RC0.jar "$@"
