@@ -144,9 +144,7 @@ trait StatefulComet extends CometActor {
   def render = state.render
 }
 
-object CurrentCometActor extends ThreadGlobal[Box[LiftCometActor]] {
-  this.set(Empty)
-}
+object CurrentCometActor extends ThreadGlobal[LiftCometActor]
 
 object AddAListener {
   def apply(who: SimpleActor[Any]) = new AddAListener(who, { case _ => true } )
@@ -612,24 +610,28 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     val what = composeFunction
     val myPf: PartialFunction[Any, Unit] = new PartialFunction[Any, Unit] {
       def apply(in: Any): Unit =
-        CurrentCometActor.doWith(Full(CometActor.this)) {
+        CurrentCometActor.doWith(CometActor.this) {
           S.initIfUninitted(theSession) {
-            S.functionLifespan(true) {
-              what.apply(in)
-              if (S.functionMap.size > 0) {
-                theSession.updateFunctionMap(S.functionMap,
-                                             uniqueId, lastRenderTime)
-                S.clearFunctionMap
+            RenderVersion.doWith(uniqueId) {
+              S.functionLifespan(true) {
+                what.apply(in)
+                if (S.functionMap.size > 0) {
+                  theSession.updateFunctionMap(S.functionMap,
+                                               uniqueId, lastRenderTime)
+                  S.clearFunctionMap
+                }
               }
             }
           }
         }
       
       def isDefinedAt(in: Any): Boolean =
-        CurrentCometActor.doWith(Full(CometActor.this)) {
+        CurrentCometActor.doWith(CometActor.this) {
           S.initIfUninitted(theSession) {
-            S.functionLifespan(true) {
-              what.isDefinedAt(in)
+            RenderVersion.doWith(uniqueId) {
+              S.functionLifespan(true) {
+                what.isDefinedAt(in)
+              }
             }
           }
         }
@@ -708,10 +710,10 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
     case ActionMessageSet(msgs, req) =>
       S.doCometParams(req.params) {
-        S.functionLifespan(true) {
+        //S.functionLifespan(true) {
           reply(msgs.map(_()) ::: List(S.jsToAppend() ::: 
                                        List(S.noticesToJsCmd)))
-        }
+        // }
       }
 
     case AskQuestion(what, who, otherlisteners) =>
@@ -723,7 +725,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
 
     case AnswerQuestion(what, otherListeners) =>
-      S.functionLifespan(true) {
+      //S.functionLifespan(true) {
         askingWho.foreach {
           ah =>
                   reply("A null message to release the actor from its send and await reply... do not delete this message")
@@ -736,7 +738,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
                   aw.foreach(_(what))
                   performReRender(true)
         }
-      }
+  //}
 
     case ShutdownIfPastLifespan =>
       for{

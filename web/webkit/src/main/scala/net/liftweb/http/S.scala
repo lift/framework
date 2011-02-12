@@ -409,6 +409,8 @@ trait S extends HasParams with Loggable {
     value <- cookie.value
   } yield value
 
+  def currentCometActor: Box[LiftCometActor] = CurrentCometActor.box
+
   /**
    * @return a List of any Cookies that have been added to the response to be sent
    * back to the user. If you want the cookies that were sent with the request, see

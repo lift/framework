@@ -787,14 +787,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       }
       
       synchronized {
-        messageCallback.keys.toList.foreach {
-          k =>
-            val f = messageCallback(k)
-          if (!f.sessionLife && 
-              f.owner.isDefined && 
-              (now - f.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
-                messageCallback -= k
-              }
+        messageCallback.foreach {
+          case (k, f) =>
+            if (!f.sessionLife && 
+                f.owner.isDefined && 
+                (now - f.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
+                  messageCallback -= k
+                }
         }
       }
     }
@@ -812,7 +811,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   def addPostPageJavaScript(func: () => JsCmd) {
     testStatefulFeature {
       accessPostPageFuncs {
-        val rv = RenderVersion.get
+        // The page or cometactor that the functions are associated with
+        val rv: String = RenderVersion.get
+
         val old = postPageFunctions.getOrElse(rv,
                                               PostPageFunctions(rv,
                                                                 0,
@@ -1876,6 +1877,17 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     asyncById -= act.uniqueId
     messageCallback -= act.jsonCall.funcId
     asyncComponents -= (act.theType -> act.name)
+
+      val toCmp = Full(act.uniqueId)
+
+    messageCallback.foreach {
+      case (k, f) =>
+        if (f.owner == toCmp) messageCallback -= k
+    }
+      
+    accessPostPageFuncs {
+      postPageFunctions -= act.uniqueId
+    }
     val id = Full(act.uniqueId)
     messageCallback.keys.toList.foreach {
       k =>
