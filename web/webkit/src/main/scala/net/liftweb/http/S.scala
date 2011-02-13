@@ -775,12 +775,10 @@ trait S extends HasParams with Loggable {
     import js.JsCmds._
     (for {
       sess <- S.session
-    } yield sess.postPageJavaScript()) match {
-      case Full(Nil) => _jsToAppend.is.toList match {
-        case Nil => Nil
-        case xs => List(OnLoad(xs))
-      }
-      case Full(xs) => List(OnLoad(_jsToAppend.is.toList ::: xs))
+    } yield sess.postPageJavaScript(RenderVersion.get :: 
+                                    S.currentCometActor.
+                                    map(_.uniqueId).toList)) match {
+      case Full(xs) if !xs.isEmpty => List(OnLoad(_jsToAppend.is.toList ::: xs))
       case _ => _jsToAppend.is.toList match {
         case Nil => Nil
         case xs => List(OnLoad(xs))

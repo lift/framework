@@ -778,6 +778,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     if (LiftRules.enableLiftGC && stateful_?) {
       val now = millis
 
+      // FIXME deal with comet-based last seen
       accessPostPageFuncs {
         for {
           (key, pageInfo) <- postPageFunctions
@@ -814,6 +815,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         // The page or cometactor that the functions are associated with
         val rv: String = RenderVersion.get
 
+        println("In postpage... comet is "+S.currentCometActor)
+
         val old = postPageFunctions.getOrElse(rv,
                                               PostPageFunctions(rv,
                                                                 0,
@@ -829,8 +832,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
-  def postPageJavaScript(): List[JsCmd] = {
-    val rv = RenderVersion.get
+  def postPageJavaScript(rv: String): List[JsCmd] = {
     def org = accessPostPageFuncs {
       val ret = postPageFunctions.get(rv)
       ret.foreach {
@@ -838,33 +840,50 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       }
       ret
     }
-
+    
     org match {
       case None => Nil
       case Some(ppf) => {
         val lb = new ListBuffer[JsCmd]
-
+        
         def run(count: Int, funcs: List[() => JsCmd]) {
           funcs.reverse.foreach(f => lb += f())
           val next = org.get // safe to do get here because we know the
           // postPageFunc is defined
-
+          
           val diff = next.functionCount - count
-
+          
           // if the function table is updated, make sure to get
           // the additional functions
           if (diff == 0) {} else {
             run(next.functionCount, next.functions.take(diff))
           }
         }
-                
+        
         run(ppf.functionCount, ppf.functions)
-                
+        
         lb.toList
         
       }
     }
   }
+
+  /**
+   * Get the post-page JavaScript functions for a sequence of page IDs.
+   * This is used by the CometActor to get the post-page JavaScript functions
+   * for the comet actor and for the page the the comet actor is associated with
+   */
+  def postPageJavaScript(pageIds: Seq[String]): List[JsCmd] = {
+    for {
+      rv <- pageIds.toList.removeDuplicates
+      js <- postPageJavaScript(rv)
+    } yield js
+  }
+
+  /**
+   * Get the JavaScript to execute as part of the current page
+   */
+  def postPageJavaScript(): List[JsCmd] = postPageJavaScript(RenderVersion.get)
 
   /**
    * Updates the timestamp of the functions owned by this owner and return the
@@ -1888,6 +1907,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     accessPostPageFuncs {
       postPageFunctions -= act.uniqueId
     }
+
     val id = Full(act.uniqueId)
     messageCallback.keys.toList.foreach {
       k =>

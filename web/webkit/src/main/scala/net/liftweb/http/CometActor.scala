@@ -801,7 +801,12 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
   /**
    * Cause the entire component to be reRendered and pushed out
-   * to any listeners.
+   * to any listeners.  This method will cause the entire component
+   * to be rendered which can result in a huge blob of JavaScript to
+   * be sent to the client.  It's a much better practice to use
+   * partialUpdate for non-trivial CometActor components.
+   * Daniel Spiewak claims that the use of this API will not only
+   * lead to bad code quality, but may result in a pox on your house.
    *
    * @param sendAll -- Should the fixed part of the CometActor be
    * rendered.
@@ -812,7 +817,12 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
   /**
    * Cause the entire component to be reRendered and pushed out
-   * to any listeners.
+   * to any listeners.  This method will cause the entire component
+   * to be rendered which can result in a huge blob of JavaScript to
+   * be sent to the client.  It's a much better practice to use
+   * partialUpdate for non-trivial CometActor components.
+   * Daniel Spiewak claims that the use of this API will not only
+   * lead to bad code quality, but may result in a pox on your house.
    */
   def reRender() {reRender(false)}
 
@@ -845,6 +855,21 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
   def unWatch = partialUpdate(Call("liftComet.lift_unlistWatch", uniqueId))
 
+  /**
+   * Poke the CometActor and cause it to do a partial update Noop which
+   * will have the effect of causing the component to redisplay any
+   * Wiring elements on the component.
+   * This method is Actor-safe and may be called from any thread, not
+   * just the Actor's message handler thread.
+   */
+  def poke(): Unit = partialUpdate(Noop)
+
+  /**
+   * Perform a partial update of the comet component based
+   * on the JsCmd.  This means that the JsCmd will be sent to
+   * all of the currently listening browser tabs.  This is the
+   * preferred method over reRender to update the component
+   */
   protected def partialUpdate(cmd: => JsCmd) {
     this ! PartialUpdateMsg(() => cmd)
   }
@@ -873,9 +898,16 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    */
   protected def localShutdown(): Unit = {}
 
-  protected def composeFunction = composeFunction_i
+  /**
+   * Compose the Message Handler function. By default,
+   * composes highPriority orElse mediumePriority orElse internalHandler orElse
+   * lowPriority orElse internalHandler.  But you can change how
+   * the handler works if doing stuff in highPriority, mediumPriority and
+   * lowPriority is not enough
+   */
+  protected def composeFunction: PartialFunction[Any, Unit] = composeFunction_i
 
-  private def composeFunction_i = {
+  private def composeFunction_i: PartialFunction[Any, Unit] = {
     // if we're no longer running don't pass messages to the other handlers
     // just pass them to our handlers
     if (!_running && (millis - 20000L) > _shutDownAt) 
@@ -885,10 +917,21 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     _mediumPriority orElse lowPriority orElse _lowPriority
   }
 
+  /**
+   * A helper for binding which uses the defaultXml property.
+   */
   def bind(prefix: String, vals: BindParam*): NodeSeq = bind(prefix, _defaultXml, vals: _*)
 
+  /**
+   * A helper for binding which uses the defaultXml propert and the
+   * default prefix.
+   */
   def bind(vals: BindParam*): NodeSeq = bind(_defaultPrefix, vals: _*)
 
+  /**
+   * Ask another CometActor a question.  That other CometActor will
+   * take over the screen real estate until the question is answered.
+   */
   protected def ask(who: LiftCometActor, what: Any)(answerWith: Any => Unit) {
     who.callInitCometActor(theSession, Full(who.uniqueId), name, defaultXml, attributes)
     theSession.addCometActor(who)
@@ -906,6 +949,13 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     performReRender(false)
   }
 
+  /**
+   * Convert a NodeSeq => NodeSeq to a RenderOut.  The render method
+   * returns a RenderOut.  This method implicitly (in Scala) or explicitly
+   * (in Java) will convert a NodeSeq => NodeSeq to a RenderOut.  This
+   * is helpful if you use Lift's CSS Seletor Transforms to define
+   * rendering.
+   */
   protected implicit def nsToNsFuncToRenderOut(f: NodeSeq => NodeSeq) =
     new RenderOut((Box !! defaultXml).map(f), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend()) else {
       S.jsToAppend match {
@@ -915,6 +965,13 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       }
       }, Empty, false)
 
+  /**
+   * Convert a Seq[Node] (the superclass of NodeSeq) to a RenderOut.
+   * The render method
+   * returns a RenderOut.  This method implicitly (in Scala) or explicitly
+   * (in Java) will convert a NodeSeq to a RenderOut.  This
+   * is helpful if you return a NodeSeq from your render method.
+   */
   protected implicit def arrayToRenderOut(in: Seq[Node]): RenderOut = new RenderOut(Full(in: NodeSeq), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend()) else {
       S.jsToAppend match {
         case Nil => Empty
