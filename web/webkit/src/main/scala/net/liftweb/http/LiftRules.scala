@@ -578,6 +578,8 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
         "testcond" -> TestCond,
         "embed" -> Embed,
         "tail" -> Tail,
+        "head" -> Head,
+        "Head" -> Head,
         "with-param" -> WithParam,
         "withparam" -> WithParam,
         "WithParam" -> WithParam,

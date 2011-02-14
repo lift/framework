@@ -815,8 +815,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         // The page or cometactor that the functions are associated with
         val rv: String = RenderVersion.get
 
-        println("In postpage... comet is "+S.currentCometActor)
-
         val old = postPageFunctions.getOrElse(rv,
                                               PostPageFunctions(rv,
                                                                 0,
@@ -827,6 +825,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                                         old.functionCount + 1,
                                         Helpers.millis,
                                         func :: old.functions)
+
         postPageFunctions += (rv -> updated)
       }
     }

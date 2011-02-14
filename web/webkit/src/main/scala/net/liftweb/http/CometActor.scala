@@ -763,7 +763,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       theSession.removeCometActor(this)
       _localShutdown()
 
-    case PartialUpdateMsg(cmdF) =>
+    case PartialUpdateMsg(cmdF) => {
       val cmd: JsCmd = cmdF.apply
       val time = Helpers.nextNum
       val delta = JsDelta(time, cmd)
@@ -772,13 +772,19 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       val m = millis
       deltas = (delta :: deltas).filter(d => (m - d.timestamp) < 120000L)
       if (!listeners.isEmpty) {
-        val rendered = AnswerRender(new XmlOrJsCmd(spanId, Empty, Empty,
-          Full(cmd), Empty, buildSpan, false, notices toList),
-          whosAsking openOr this, time, false)
+        val rendered = 
+          AnswerRender(new XmlOrJsCmd(spanId, Empty, Empty,
+                                      Full(cmd & 
+                                           theSession.
+                                           postPageJavaScript()),
+                                      Empty, buildSpan, false,
+                                      notices toList),
+                       whosAsking openOr this, time, false)
         clearNotices
         listeners.foreach(_._2(rendered))
         listeners = Nil
       }
+    }
   }
 
 
@@ -980,7 +986,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       }
       }, Empty, false)
 
-  protected implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = new RenderOut(Empty, Empty, if (autoIncludeJsonCode) Full(in & jsonToIncludeInCode & S.jsToAppend()) else Full(in & S.jsToAppend()), Empty, false)
+  protected implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = new RenderOut(Empty, fixedRender, if (autoIncludeJsonCode) Full(in & jsonToIncludeInCode & S.jsToAppend()) else Full(in & S.jsToAppend()), Empty, false)
 
   implicit def pairToPair(in: (String, Any)): (String, NodeSeq) = (in._1, Text(in._2 match {case null => "null" case s => s.toString}))
 
