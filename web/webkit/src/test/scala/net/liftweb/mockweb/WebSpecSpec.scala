@@ -155,6 +155,10 @@ object WebSpecSpec extends WebSpec {
       }
     }
 
+    "properly mutate the request" withSFor(testUrl) withMods(_.contentType = "application/xml") in {
+      (S.request.map(_.xml_?) openOr false) must_== true
+    }
+
     "process a JSON RestHelper Request" withReqFor("http://foo.com/api/info.json") in { req =>
       (WebSpecSpecRest(req)() match {
         case Full(JsonResponse(_, _, _, 200)) => true

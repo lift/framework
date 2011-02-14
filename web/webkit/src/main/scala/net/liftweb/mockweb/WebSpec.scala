@@ -110,7 +110,6 @@ abstract class WebSpec extends Specification {
         mockReq.body = text
         mockReq.contentType = contentType
         mockReq.method = "POST"
-        this
       }
 
     /**
@@ -119,7 +118,6 @@ abstract class WebSpec extends Specification {
     def withPost (jval : JValue) = withMods { mockReq =>
       mockReq.body = jval
       mockReq.method = "POST"
-      this
     }
 
     /**
@@ -128,7 +126,6 @@ abstract class WebSpec extends Specification {
     def withPost (node : NodeSeq) = withMods { mockReq =>
       mockReq.body = node
       mockReq.method = "POST"
-      this
     }
 
     /**
@@ -140,7 +137,6 @@ abstract class WebSpec extends Specification {
         mockReq.body = text
         mockReq.contentType = contentType
         mockReq.method = "PUT"
-        this
       }
 
     /**
@@ -149,7 +145,6 @@ abstract class WebSpec extends Specification {
     def withPut (jval : JValue) = withMods { mockReq =>
       mockReq.body = jval
       mockReq.method = "PUT"
-      this
     }
 
     /**
@@ -158,15 +153,14 @@ abstract class WebSpec extends Specification {
     def withPut (node : NodeSeq) = withMods { mockReq =>
       mockReq.body = node
       mockReq.method = "PUT"
-      this
     }
 
     /**
      * Allows you to specify your own modification function for the servlet request
      * prior to initialization.
      */
-    def withMods [A](f : MockHttpServletRequest => A) : A = req match {
-      case r : MockHttpServletRequest => f(r)
+    def withMods (f : MockHttpServletRequest => Unit) : T = req match {
+      case r : MockHttpServletRequest => f(r); this
       case _ => throw new IllegalArgumentException("We can only mutate MockHttpServletRequest instances")
     }
   }
