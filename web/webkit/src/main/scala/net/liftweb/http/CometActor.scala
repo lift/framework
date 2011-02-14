@@ -868,7 +868,9 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * This method is Actor-safe and may be called from any thread, not
    * just the Actor's message handler thread.
    */
-  def poke(): Unit = partialUpdate(Noop)
+  def poke(): Unit = {
+    if (running) partialUpdate(Noop)
+  }
 
   /**
    * Perform a partial update of the comet component based
