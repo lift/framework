@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb 
+package util 
 
-import _root_.org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.{Logger, LoggerFactory}
 
 /**
  * Object use to configure lift to use slf4j for as internal logging.
@@ -26,7 +26,7 @@ import _root_.org.slf4j.{Logger, LoggerFactory}
  * <pre name="code" class="scala">
  * package bootstrap.liftweb
  *
- * import _root_.net.liftweb.util._
+ * import net.liftweb.util._
  * ...
  * class Boot {
  *   def boot {
@@ -56,7 +56,7 @@ import _root_.org.slf4j.{Logger, LoggerFactory}
  * </pre>
  *
  */
-@deprecated object Slf4jLogBoot {
+@deprecated("use net.liftweb.common.Logger") object Slf4jLogBoot {
   private def _loggerByClass(clz: Class[AnyRef]): LiftLogger = new Slf4jLogger(LoggerFactory.getLogger(clz))
   private def _loggerByName(name: String): LiftLogger = new Slf4jLogger(LoggerFactory.getLogger(name))
 
@@ -73,7 +73,7 @@ import _root_.org.slf4j.{Logger, LoggerFactory}
  * Adapter use internaly by lift as Logger, if Slf4jLogBoot is enabled.
  * @see Slf4jLogBoot
  */
-@deprecated class Slf4jLogger(val logger: Logger) extends LiftLogger {
+@deprecated("use net.liftweb.common.Logger") class Slf4jLogger(val logger: Logger) extends LiftLogger {
   override def isTraceEnabled = logger.isTraceEnabled
   override def trace(msg: => AnyRef) = if (isTraceEnabled) logger.trace(String.valueOf(msg))
   override def trace(msg: => AnyRef, t: => Throwable) = if (isTraceEnabled) logger.trace(String.valueOf(msg), t)
@@ -116,5 +116,3 @@ import _root_.org.slf4j.{Logger, LoggerFactory}
   override def warn(msg: => AnyRef, t: => Throwable) = if (isWarnEnabled) logger.warn(String.valueOf(msg), t)
 }
 
-}
-}

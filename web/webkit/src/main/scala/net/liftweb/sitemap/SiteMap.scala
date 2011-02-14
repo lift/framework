@@ -114,7 +114,7 @@ final class SiteMapJBridge {
 
 object SiteMap extends SiteMapSingleton
 
-sealed trait SiteMapSingleton {
+sealed class SiteMapSingleton {
   /**
    * By default, Lift enforced unique links in a SiteMap.  However, you
    * can disable this feature by setting enforceUniqueLinks to false

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb 
+package util 
 
-import _root_.java.lang.reflect.{Method, InvocationTargetException}
-import _root_.java.lang.reflect.Modifier._
-import _root_.scala.reflect.Manifest
+import java.lang.reflect.{Method, InvocationTargetException}
+import java.lang.reflect.Modifier._
+import scala.reflect.Manifest
 import common._
 
 object ClassHelpers extends ClassHelpers with ControlHelpers
@@ -151,9 +151,9 @@ trait ClassHelpers { self: ControlHelpers =>
   def findClass(where: List[(String, List[String])]): Box[Class[AnyRef]] =
   findType[AnyRef](where)
 
-  @deprecated def camelCase(name : String): String = StringHelpers.camelify(name)
-  @deprecated def camelCaseMethod(name: String): String = StringHelpers.camelifyMethod(name)
-  @deprecated def unCamelCase(name : String) = StringHelpers.snakify(name)
+  @deprecated("Use StringHelpers.camelify") def camelCase(name : String): String = StringHelpers.camelify(name)
+  @deprecated("Use StringHelpers.camelifyMethod") def camelCaseMethod(name: String): String = StringHelpers.camelifyMethod(name)
+  @deprecated("Use StringHelpers.snakify") def unCamelCase(name : String) = StringHelpers.snakify(name)
 
   /**
    * @return true if the method is public and has no parameters
@@ -384,5 +384,3 @@ trait ClassHelpers { self: ControlHelpers =>
   }
 }
 
-}
-}

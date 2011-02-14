@@ -34,7 +34,7 @@ trait NamedPartialFunction[-A, +B] extends PartialFunction[A, B] {
 class NamedPF[-A, +B](name: String, f: PartialFunction[A, B]) extends NamedPartialFunction[A, B] {
   override def isDefinedAt(x: A): Boolean = f.isDefinedAt(x)
   override def apply(x: A): B = f(x)
-  val functionName = name
+  def functionName = name
 }
 
 object NamedPF {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package common {
+package net.liftweb
+package common
 
-import _root_.scala.reflect.Manifest
+import scala.reflect.Manifest
 
 /**
  * The Box companion object provides methods to create a Box from:
@@ -431,7 +431,7 @@ final case class Full[+A](value: A) extends Box[A] {
 
   override def flatMap[B](f: A => Box[B]): Box[B] = f(value)
 
-  override def elements: Iterator[A] = Iterator.fromValues(value)
+  override def elements: Iterator[A] = Iterator(value)
 
   override def toList: List[A] = List(value)
 
@@ -627,6 +627,4 @@ object ParamFailure {
   }
 }
 
-}
-}
 // vim: set ts=2 sw=2 et:

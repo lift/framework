@@ -725,6 +725,7 @@ trait BindHelpers {
   /**
    *  transforms a Box into a Text node
    */
+  @deprecated("use -> instead")
   object BindParamAssoc {
     implicit def canStrBoxNodeSeq(in: Box[Any]): Box[NodeSeq] = in.map(_ match {
       case null => Text("null")
@@ -802,7 +803,7 @@ trait BindHelpers {
    *
    * @deprecated use -> instead
    */
-  @deprecated
+  @deprecated("use -> instead")
   class BindParamAssoc(val name: String) {
     def -->(value: String): BindParam = TheBindParam(name, Text(value))
     def -->(value: NodeSeq): BindParam = TheBindParam(name, value)
@@ -819,7 +820,7 @@ trait BindHelpers {
    *
    * @deprecated use -> instead
    */
-  @deprecated
+  @deprecated("use -> instead")
   implicit def strToBPAssoc(in: String): BindParamAssoc = new BindParamAssoc(in)
 
   /**
@@ -829,7 +830,7 @@ trait BindHelpers {
    *
    * @deprecated use -> instead
    */
-  @deprecated
+  @deprecated("use -> instead")
   implicit def symToBPAssoc(in: Symbol): BindParamAssoc = new BindParamAssoc(in.name)
 
   /**
@@ -838,7 +839,7 @@ trait BindHelpers {
    *
    * @deprecated use bind instead
    */
-  @deprecated
+  @deprecated("use bind instead")
   def xbind(namespace: String, xml: NodeSeq)(transform: PartialFunction[String, NodeSeq => NodeSeq]): NodeSeq = {
     def rec_xbind(xml: NodeSeq): NodeSeq = {
       xml.flatMap {
@@ -1025,7 +1026,7 @@ trait BindHelpers {
             case _ => false
           }
           
-          bound.elements.toList match {
+          bound.iterator.toList match {
             case xs :: _ => Some(e -> xs.value.text)
             case _ => None
           }
@@ -1140,12 +1141,12 @@ trait BindHelpers {
    * @param atWhat data to bind
    * @deprecated use the bind function instead
    */
-  @deprecated
+  @deprecated("use the bind function instead")
   def processBind(around: NodeSeq, atWhat: Map[String, NodeSeq]): NodeSeq = {
 
     /** Find element matched predicate f(x).isDefined, and return f(x) if found or None otherwise. */
     def findMap[A, B](s: Iterable[A])(f: A => Option[B]): Option[B] =
-      s.projection.map(f).find(_.isDefined).getOrElse(None)
+      s.view.map(f).find(_.isDefined).getOrElse(None)
 
     around.flatMap {
       v =>
@@ -1182,11 +1183,11 @@ trait BindHelpers {
    * to Some
    */
   def findOption[T](nodes: Seq[Node])(f: Elem => Option[T]): Option[T] = {
-    nodes.projection.flatMap {
+    nodes.view.flatMap {
       case Group(g) => findOption(g)(f)
       case e: Elem => f(e) orElse findOption(e.child)(f)
       case _ => None
-    }.firstOption
+    }.headOption
   }
 
   /**
@@ -1203,11 +1204,11 @@ trait BindHelpers {
    * to Full
    */
   def findBox[T](nodes: Seq[Node])(f: Elem => Box[T]): Box[T] = {
-    nodes.projection.flatMap {
+    nodes.view.flatMap {
       case Group(g) => findBox(g)(f)
       case e: Elem => f(e) or findBox(e.child)(f)
       case _ => Empty
-    }.firstOption
+    }.headOption
   }
 
     
@@ -1830,7 +1831,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
   // get into an issue where we're trying to apply the whole
   // transform to the whole shooting match
   private def sortBinds(lst: List[CssBind]): List[CssBind] =  {
-    lst.sort {
+    lst.sortWith {
       case (SubNode(me: EmptyBox), SubNode(_)) => true
       case (SubNode(_), SubNode(them: EmptyBox)) => false
       case (SubNode(Full(KidsSubNode())), SubNode(_)) => false
@@ -2005,7 +2006,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             case 0 => NodeSeq.Empty
             case 1 => new Elem(realE.prefix, realE.label, 
                                realE.attributes, realE.scope, 
-                               todo.transform(realE.child, calced.first) :_*)
+                               todo.transform(realE.child, calced.head) :_*)
             case _ if id.isEmpty => 
               calced.map(kids => new Elem(realE.prefix, realE.label, 
                                           realE.attributes, realE.scope,
@@ -2087,7 +2088,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
           calced.length match {
             case 0 => NodeSeq.Empty
             case 1 => {
-              calced.first match {
+              calced.head match {
                 case Group(g) => g
                 case e: Elem => new Elem(e.prefix, 
                                          e.label, mergeAll(e.attributes, false),

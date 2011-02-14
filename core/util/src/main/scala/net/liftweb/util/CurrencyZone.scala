@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,48 +14,48 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.java.util.Locale
-import _root_.java.text.{NumberFormat, DecimalFormat}
+import java.util.Locale
+import java.text.{NumberFormat, DecimalFormat}
 
 trait TwoFractionDigits {
-    val numberOfFractionDigits = 2
-    val scale = 10
+    def numberOfFractionDigits = 2
+    def scale = 10
 }
 
 trait DollarCurrency extends TwoFractionDigits {
-    val currencySymbol = "$"
+    def currencySymbol: String = "$"
 }
 
 /* Various Currencies */
 object AU extends CurrencyZone {
     type Currency = AUD
     var locale = new Locale("en", "AU")
-    def make(x: BigDecimal) = new Currency{val amount = x}
+    def make(x: BigDecimal) = new Currency{def amount = x}
     abstract class AUD extends AbstractCurrency("AUD") with DollarCurrency {}
 }
 
 object US extends CurrencyZone {
     type Currency = USD
     var locale = Locale.US
-    def make(x: BigDecimal) = new Currency{val amount = x}
+    def make(x: BigDecimal) = new Currency{def amount = x}
     abstract class USD extends AbstractCurrency("USD") with DollarCurrency {}
 }
 
 object GB extends CurrencyZone {
     type Currency = GBP
     var locale = Locale.UK
-    def make(x: BigDecimal) = new Currency{val amount = x}
-    abstract class GBP extends AbstractCurrency("GBP") with TwoFractionDigits {val currencySymbol = "£"}
+    def make(x: BigDecimal) = new Currency{def amount = x}
+    abstract class GBP extends AbstractCurrency("GBP") with TwoFractionDigits {def currencySymbol = "£"}
 }
 
 object EU extends CurrencyZone {
     type Currency = EUR
     var locale = Locale.GERMANY // guess this is why its a var
-    def make(x: BigDecimal) = new Currency{val amount = x; override val _locale = locale}
-    abstract class EUR extends AbstractCurrency("EUR") with TwoFractionDigits {val currencySymbol = "€"}
+    def make(x: BigDecimal) = new Currency{def amount = x; override val _locale = locale}
+    abstract class EUR extends AbstractCurrency("EUR") with TwoFractionDigits {def currencySymbol = "€"}
 }
 
 abstract class CurrencyZone {
@@ -87,9 +87,9 @@ abstract class CurrencyZone {
         def amount: BigDecimal
         def floatValue = amount.floatValue
         def doubleValue = amount.doubleValue
-        val currencySymbol: String
-        val numberOfFractionDigits: Int
-        val scale: Int
+        def currencySymbol: String
+        def numberOfFractionDigits: Int
+        def scale: Int
 
         def +(that: Currency): Currency = make(this.amount + that.amount)
         def +(that: Int): Currency = this + make(that)
@@ -147,7 +147,4 @@ abstract class CurrencyZone {
 
     }
 
-}
-
-}
 }

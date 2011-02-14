@@ -139,7 +139,7 @@ trait StringValidators {
   def crop(in: ValueType): ValueType = 
     boxStrToValType(valueTypeToBoxString(in).map{
       case null => null
-      case s => s.substring(0, Math.min(s.length, maxLen))
+      case s => s.substring(0, math.min(s.length, maxLen))
     })
 
   def removeRegExChars(regEx: String)(in: ValueType): ValueType= 

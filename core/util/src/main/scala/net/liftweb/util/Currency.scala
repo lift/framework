@@ -28,7 +28,7 @@ class Currency(val amount: Long, val symbol: String, val decimals: Int) {
     if (decimals == 0) symbol+amount
     else {
       val d = amount.toDouble
-      val pow = Math.pow(10, decimals)
+      val pow = math.pow(10, decimals)
       symbol+(d / pow)
     }
   }

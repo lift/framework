@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.java.util.Properties
+import java.util.Properties
 import Helpers._
-import _root_.org.apache.log4j._
-import _root_.org.apache.log4j.xml._
+import org.apache.log4j._
+import org.apache.log4j.xml._
 import common.{Logger => _, _}
 
 /**
@@ -50,7 +50,7 @@ import common.{Logger => _, _}
 object LoggingAutoConfigurer {
   import ClassHelpers._
   
-  private def findTheFile(files: String*): Box[(_root_.java.net.URL)] = {
+  private def findTheFile(files: String*): Box[(java.net.URL)] = {
     val namesToTry = Props.toTry.flatMap(f => files.toList.map(file => f()+file))
     first(namesToTry) (name => tryo(getClass.getResource(name)).filter(_ ne null).map(s => s))
   }
@@ -82,59 +82,59 @@ object LoggingAutoConfigurer {
  * 
  * @deprecated Use net.liftweb.common.Logger
  */
-@deprecated object Log extends LiftLogger {
+@deprecated("Use net.liftweb.common.Logger") object Log extends LiftLogger {
   lazy val rootLogger: LiftLogger = LogBoot.loggerByName("lift")
 
-  @deprecated override def trace(msg: => AnyRef) = rootLogger.trace(msg)
-  @deprecated override def trace(msg: => AnyRef, t: => Throwable) = rootLogger.trace(msg, t)
+  @deprecated("Use net.liftweb.common.Logger") override def trace(msg: => AnyRef) = rootLogger.trace(msg)
+  @deprecated("Use net.liftweb.common.Logger") override def trace(msg: => AnyRef, t: => Throwable) = rootLogger.trace(msg, t)
 
-  @deprecated override def assertLog(assertion: Boolean, msg: => String) = rootLogger.assertLog(assertion, msg)
+  @deprecated("Use net.liftweb.common.Logger") override def assertLog(assertion: Boolean, msg: => String) = rootLogger.assertLog(assertion, msg)
 
-  @deprecated override def isEnabledFor(level: LiftLogLevels.Value) = rootLogger.isEnabledFor(level)
-  @deprecated override def isDebugEnabled = rootLogger.isDebugEnabled
-  @deprecated override def debug(msg: => AnyRef) = rootLogger.debug(msg)
+  @deprecated("Use net.liftweb.common.Logger") override def isEnabledFor(level: LiftLogLevels.Value) = rootLogger.isEnabledFor(level)
+  @deprecated("Use net.liftweb.common.Logger") override def isDebugEnabled = rootLogger.isDebugEnabled
+  @deprecated("Use net.liftweb.common.Logger") override def debug(msg: => AnyRef) = rootLogger.debug(msg)
   // override def debugF(msg: => AnyRef) = debug(msg)
-  @deprecated override def debug(msg: => AnyRef, t: => Throwable) = rootLogger.debug(msg, t)
+  @deprecated("Use net.liftweb.common.Logger") override def debug(msg: => AnyRef, t: => Throwable) = rootLogger.debug(msg, t)
 
-  @deprecated override def isErrorEnabled = rootLogger.isEnabledFor(LiftLogLevels.Error)
-  @deprecated override def error(msg: => AnyRef) = rootLogger.error(msg)
+  @deprecated("Use net.liftweb.common.Logger") override def isErrorEnabled = rootLogger.isEnabledFor(LiftLogLevels.Error)
+  @deprecated("Use net.liftweb.common.Logger") override def error(msg: => AnyRef) = rootLogger.error(msg)
   // override def errorF(msg: => AnyRef) = error(msg)
-  @deprecated override def error(msg: => AnyRef, t: => Throwable) = rootLogger.error(msg, t)
+  @deprecated("Use net.liftweb.common.Logger") override def error(msg: => AnyRef, t: => Throwable) = rootLogger.error(msg, t)
 
-  @deprecated override def fatal(msg: AnyRef) = rootLogger.fatal(msg)
+  @deprecated("Use net.liftweb.common.Logger") override def fatal(msg: AnyRef) = rootLogger.fatal(msg)
   // override def fatalF(msg: AnyRef) = fatal(msg)
-  @deprecated override def fatal(msg: AnyRef, t: Throwable) = rootLogger.fatal(msg, t)
+  @deprecated("Use net.liftweb.common.Logger") override def fatal(msg: AnyRef, t: Throwable) = rootLogger.fatal(msg, t)
 
-  @deprecated override def level = rootLogger.level
-  @deprecated override def level_=(level: LiftLogLevels.Value) = rootLogger.level = level
-  @deprecated override def name = rootLogger.name
+  @deprecated("Use net.liftweb.common.Logger") override def level = rootLogger.level
+  @deprecated("Use net.liftweb.common.Logger") override def level_=(level: LiftLogLevels.Value) = rootLogger.level = level
+  @deprecated("Use net.liftweb.common.Logger") override def name = rootLogger.name
   // def parent = rootLogger.parent
 
-  @deprecated override def isInfoEnabled = rootLogger.isInfoEnabled
-  @deprecated override def info(msg: => AnyRef) = rootLogger.info(msg)
+  @deprecated("Use net.liftweb.common.Logger") override def isInfoEnabled = rootLogger.isInfoEnabled
+  @deprecated("Use net.liftweb.common.Logger") override def info(msg: => AnyRef) = rootLogger.info(msg)
   /**
    * @deprecated Use Schemifier.infoF
    */
-  @deprecated def infoF(msg: => AnyRef) = info(msg)
-  @deprecated override def info(msg: => AnyRef, t: => Throwable) = rootLogger.info(msg, t)
+  @deprecated("Use Schemifier.infoF") def infoF(msg: => AnyRef) = info(msg)
+  @deprecated("Use net.liftweb.common.Logger") override def info(msg: => AnyRef, t: => Throwable) = rootLogger.info(msg, t)
 
 
   // def isEnabledFor(level: Priority) = rootLogger.isEnabledFor(level)
 
-  @deprecated override def isWarnEnabled = rootLogger.isWarnEnabled
-  @deprecated override def warn(msg: => AnyRef) = rootLogger.warn(msg)
+  @deprecated("Use net.liftweb.common.Logger") override def isWarnEnabled = rootLogger.isWarnEnabled
+  @deprecated("Use net.liftweb.common.Logger") override def warn(msg: => AnyRef) = rootLogger.warn(msg)
   // def warnF(msg: => AnyRef) = warn(msg)
-  @deprecated override def warn(msg: => AnyRef, t: => Throwable) = rootLogger.warn(msg, t)
+  @deprecated("Use net.liftweb.common.Logger") override def warn(msg: => AnyRef, t: => Throwable) = rootLogger.warn(msg, t)
 
-  @deprecated def never(msg: => AnyRef) {}
+  @deprecated("Use net.liftweb.common.Logger") def never(msg: => AnyRef) {}
   
   /**
    * @deprecated Use Schemifier.neverF
    */
-  @deprecated def neverF(msg: => AnyRef) {}
-  @deprecated def never(msg: => AnyRef, t: => Throwable) {}
+  @deprecated("Use Schemifier.neverF") def neverF(msg: => AnyRef) {}
+  @deprecated("Use net.liftweb.common.Logger") def never(msg: => AnyRef, t: => Throwable) {}
 
-  @deprecated override def isTraceEnabled = rootLogger.isTraceEnabled
+  @deprecated("Use net.liftweb.common.Logger") override def isTraceEnabled = rootLogger.isTraceEnabled
 }
 
 /**
@@ -157,15 +157,15 @@ object LoggingAutoConfigurer {
  * Thus, if you name your log4j config file 'default.log4j.xml' or
  * 'default.log4j.props' it will be picked up correctly.
  */
-@deprecated object LogBoot {
-  @deprecated lazy val checkConfig: Boolean = loggerSetup()
+@deprecated("Use net.liftweb.common.Logger") object LogBoot {
+  @deprecated("Use net.liftweb.common.Logger") lazy val checkConfig: Boolean = loggerSetup()
 
   // Prevent double initialization of log4j by new/old logging code
   private[util] var log4JInited = false
   
-  @deprecated var loggerSetup: () => Boolean = _log4JSetup _
+  @deprecated("Use net.liftweb.common.Logger") var loggerSetup: () => Boolean = _log4JSetup _
 
-  @deprecated var defaultProps =
+  @deprecated("Use net.liftweb.common.Logger") var defaultProps =
     """<?xml version="1.0" encoding="UTF-8" ?>
     <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
     <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
@@ -179,14 +179,14 @@ object LoggingAutoConfigurer {
     </log4j:configuration>
     """
 
-  @deprecated def _log4JSetup() =
+  @deprecated("Use net.liftweb.common.Logger") def _log4JSetup() =
   {
     if (log4JInited) {
       true
     } else {
       log4JInited = true
       def log4jIsConfigured = LogManager.getLoggerRepository.getCurrentLoggers.hasMoreElements
-      def findTheFile: Box[(_root_.java.net.URL, String)] = (first(Props.toTry.flatMap(f => List(f()+"log4j.props", f()+"log4j.xml")))
+      def findTheFile: Box[(java.net.URL, String)] = (first(Props.toTry.flatMap(f => List(f()+"log4j.props", f()+"log4j.xml")))
       (name =>tryo(getClass.getResource(name)).filter(_ ne null).map(s => (s, name))))
 
       val (log4jUrl, fileName) = findTheFile match {
@@ -204,7 +204,7 @@ object LoggingAutoConfigurer {
       if (!log4jUrl.isDefined && !log4jIsConfigured) {
         val domConf = new DOMConfigurator
         val defPropBytes = defaultProps.toString.getBytes("UTF-8")
-        val is = new _root_.java.io.ByteArrayInputStream(defPropBytes)
+        val is = new java.io.ByteArrayInputStream(defPropBytes)
         domConf.doConfigure(is, LogManager.getLoggerRepository())
       }
       true
@@ -214,17 +214,17 @@ object LoggingAutoConfigurer {
   private def _loggerCls(clz: Class[AnyRef]): LiftLogger = if (checkConfig) new Log4JLogger(Logger.getLogger(clz)) else NullLogger
   private def _logger(name: String): LiftLogger = if (checkConfig) new Log4JLogger(Logger.getLogger(name)) else NullLogger
 
-  @deprecated var loggerByName: String => LiftLogger = _logger
-  @deprecated var loggerByClass: Class[AnyRef] => LiftLogger = _loggerCls _
+  @deprecated("Use net.liftweb.common.Logger") var loggerByName: String => LiftLogger = _logger
+  @deprecated("Use net.liftweb.common.Logger") var loggerByClass: Class[AnyRef] => LiftLogger = _loggerCls _
 }
 
-@deprecated object NullLogger extends LiftLogger {
+@deprecated("Use net.liftweb.common.Logger") object NullLogger extends LiftLogger {
 
 }
 /**
  * @deprecated Use net.liftweb.common.Logger
  */
-@deprecated trait LiftLogger {
+@deprecated("Use net.liftweb.common.Logger") trait LiftLogger {
   def isTraceEnabled: Boolean = false
   def trace(msg: => AnyRef): Unit = ()
   def trace(msg: => AnyRef, t: => Throwable): Unit = ()
@@ -258,18 +258,18 @@ object LoggingAutoConfigurer {
   def warn(msg: => AnyRef, t: => Throwable): Unit = ()
 }
 
-@deprecated object LiftLogLevels extends Enumeration {
-  @deprecated val All = Value(1, "All")
-  @deprecated val Trace = Value(3, "Trace")
-  @deprecated val Debug = Value(5, "Debug")
-  @deprecated val Warn = Value(7, "Warn")
-  @deprecated val Error = Value(9, "Error")
-  @deprecated val Fatal = Value(11, "Fatal")
-  @deprecated val Info = Value(13, "Info")
-  @deprecated val Off = Value(15, "Off")
+@deprecated("Use net.liftweb.common.Logger") object LiftLogLevels extends Enumeration {
+  @deprecated("Use net.liftweb.common.Logger") val All = Value(1, "All")
+  @deprecated("Use net.liftweb.common.Logger") val Trace = Value(3, "Trace")
+  @deprecated("Use net.liftweb.common.Logger") val Debug = Value(5, "Debug")
+  @deprecated("Use net.liftweb.common.Logger") val Warn = Value(7, "Warn")
+  @deprecated("Use net.liftweb.common.Logger") val Error = Value(9, "Error")
+  @deprecated("Use net.liftweb.common.Logger") val Fatal = Value(11, "Fatal")
+  @deprecated("Use net.liftweb.common.Logger") val Info = Value(13, "Info")
+  @deprecated("Use net.liftweb.common.Logger") val Off = Value(15, "Off")
 }
 
-@deprecated class Log4JLogger(val logger: Logger) extends LiftLogger {
+@deprecated("Use net.liftweb.common.Logger") class Log4JLogger(val logger: Logger) extends LiftLogger {
   override def isTraceEnabled = logger.isTraceEnabled
   override def trace(msg: => AnyRef) = if (isTraceEnabled) logger.trace(msg)
   override def trace(msg: => AnyRef, t: => Throwable) = if (isTraceEnabled) logger.trace(msg, t)
@@ -322,7 +322,4 @@ object LoggingAutoConfigurer {
   override def isWarnEnabled = isEnabledFor(Level.WARN)
   override def warn(msg: => AnyRef) = if (isWarnEnabled) logger.warn(msg)
   override def warn(msg: => AnyRef, t: => Throwable) = if (isWarnEnabled) logger.warn(msg, t)
-}
-
-}
 }

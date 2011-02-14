@@ -227,7 +227,7 @@ trait HttpHelpers {
 
   
 
-  private val serial = new AtomicLong(Math.abs(Helpers.randomLong(Helpers.millis)) + 1000000L)
+  private val serial = new AtomicLong(math.abs(Helpers.randomLong(Helpers.millis)) + 1000000L)
 
   /**
    * Get a monotonically increasing number that's guaranteed to be unique for the
