@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,69 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
 import common._
 
 object ListHelpers extends ListHelpers
 
 /**
+ * Provide information about the deltas between
+ * two lists
+ */
+sealed trait DeltaInfo[T]
+
+/**
+ * The new list does not contain the item.  Remove it
+ * from the list
+ */
+final case class RemoveDelta[T](item: T) extends DeltaInfo[T]
+final case class InsertAtStartDelta[T](item: T) extends DeltaInfo[T]
+final case class AppendDelta[T](item: T) extends DeltaInfo[T]
+final case class InsertAfterDelta[T](item: T, after: T) extends DeltaInfo[T]
+
+/**
  * The ListHelpers trait provides useful functions which can be applied to Lists.<p/>
  */
 trait ListHelpers {
+
+  def delta[T, Res](old: List[T], newList: List[T])(f: DeltaInfo[T] => Res): List[Res] = {
+    import scala.collection.mutable.ListBuffer
+    import scala.annotation._
+
+    val newSet = Set(newList :_*)
+    val ret: ListBuffer[Res] = new ListBuffer()
+    var insertAfter: Box[T] = Empty
+
+    @tailrec def loop(o: List[T], n: List[T]) {
+      (o, n) match {
+        case (o, Nil) => o.foreach(t => ret += f(RemoveDelta(t)))
+        case (Nil, n) => n.foreach(t => ret += f(AppendDelta(t)))
+        case (o :: or, n :: nr) if o == n => {
+          insertAfter = Full(n)
+          loop(or, nr)
+        }
+        case (o :: or, nr) if !nr.contains(o) => {
+          ret += f(RemoveDelta(o))
+          loop(or, nr)
+        }
+
+        case (or, n :: nr) if !or.contains(n) => {
+          insertAfter match {
+            case Full(x) => ret += f(InsertAfterDelta(n, x))
+            case _ => ret += f(InsertAtStartDelta(n))
+          }
+          insertAfter = Full(n)
+          loop(or, nr)
+        }
+      }
+    }
+
+    loop(old, newList)
+    
+    ret.toList
+  }
 
   /**
    * Returns a Full can with the first element x of the list in
@@ -99,7 +151,8 @@ trait ListHelpers {
   /**
    * Return the first element of a List or a default value if the list is empty
    */
-  def head[T](l: Seq[T], deft: => T) = l.headOption.getOrElse(deft)
+  def head[T](l: Seq[T],
+              deft: => T) = l.headOption.getOrElse(deft)
 
   /**
    * Return a list containing the element f if the expression is true
@@ -196,5 +249,3 @@ trait ListHelpers {
   }
 }
 
-}
-}

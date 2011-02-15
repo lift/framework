@@ -372,7 +372,7 @@ trait CometListener extends CometActor {
   }
 }
 
-trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any] {
+trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any] with Dependent {
   def uniqueId: String
 
   private[http] def callInitCometActor(theSession: LiftSession,
@@ -400,6 +400,21 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
   def buildSpan(time: Long, xml: NodeSeq): NodeSeq
 
   def parentTag: Elem
+
+  /**
+   * Poke the CometActor and cause it to do a partial update Noop which
+   * will have the effect of causing the component to redisplay any
+   * Wiring elements on the component.
+   * This method is Actor-safe and may be called from any thread, not
+   * just the Actor's message handler thread.
+   */
+  def poke(): Unit = {}
+
+  /**
+   * If the predicate cell changes, the Dependent will be notified
+   */
+  def predicateChanged(which: Cell[_]): Unit = {poke()}
+
 
   /**
    * The locale for the session that created the CometActor
@@ -481,22 +496,43 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
   def theSession = _theSession
 
-  @volatile private var _defaultXml: NodeSeq = _
+  @volatile private var _defaultHtml: NodeSeq = _
 
-  def defaultXml = _defaultXml
+  @deprecated("Use defaultHtml")
+  def defaultXml = _defaultHtml
+
+  /**
+   * The template that was passed to this component during comet
+   * initializations
+   */
+  def defaultHtml: NodeSeq = _defaultHtml
 
   private var _name: Box[String] = Empty
 
-  def name = _name
+  /**
+   * The optional name of this CometActors
+   */
+  def name: Box[String] = _name
 
   private var _theType: Box[String] = Empty
 
-  def theType = _theType
+  /**
+   * The optional type of this CometActor
+   */
+  def theType: Box[String] = _theType
 
   private var _attributes: Map[String, String] = Map.empty
 
   def attributes = _attributes
 
+  /**
+   * The lifespan of this component.  By default CometActors
+   * will last for the entire session that they were created in,
+   * even if the CometActor is not currently visible.  You can
+   * set the lifespan of the CometActor.  If the CometActor
+   * isn't visible on any page for some period after its lifespan
+   * the CometActor will be shut down.
+   */
   def lifespan: Box[TimeSpan] = Empty
 
   private var _running = true
@@ -640,8 +676,26 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     myPf
   }
 
+  /**
+   * A part of the CometActor's screen real estate that is not
+   * updated by default with reRender().  This block of HTML is
+   * useful for the editor part of a Comet-based control where
+   * the data is JSON and updated with partialUpdates.
+   */
   def fixedRender: Box[NodeSeq] = Empty
 
+
+  /**
+   * A helpful implicit conversion that takes a NodeSeq => NodeSeq
+   * (for example a CssSel) and converts it to a Box[NodeSeq] by
+   * applying the function to defaultXml
+   */
+  protected implicit def nodeSeqFuncToBoxNodeSeq(f: NodeSeq => NodeSeq):
+  Box[NodeSeq] = Full(f(defaultXml))
+
+  /**
+   * Handle messages sent to this Actor before the 
+   */
   def highPriority: PartialFunction[Any, Unit] = Map.empty
 
   def lowPriority: PartialFunction[Any, Unit] = Map.empty
@@ -868,7 +922,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * This method is Actor-safe and may be called from any thread, not
    * just the Actor's message handler thread.
    */
-  def poke(): Unit = {
+  override def poke(): Unit = {
     if (running) partialUpdate(Noop)
   }
 

@@ -28,6 +28,47 @@ trait Dependent {
    * If the predicate cell changes, the Dependent will be notified
    */
   def predicateChanged(which: Cell[_]): Unit
+
+  /**
+   * The Cell notifies the Dependent of the dependency
+   */
+  def youDependOnMe(who: Cell[_]): Unit = synchronized {
+    _iDependOn = new WeakReference(who.asInstanceOf[Object]) :: _iDependOn.filter(_.get match {
+      case null => false
+      case x => x ne who
+    })
+  }
+
+  /**
+   * The Cell notifies the Dependent of the removed dependency
+   */
+  def youDontDependOnMe(who: Cell[_]): Unit =  synchronized {
+    val tList = _iDependOn.filter(_.get match {
+      case null => false
+      case x => x ne who
+    })
+
+    _iDependOn = tList
+  }
+
+  /**
+   * Get a list of all the cells this Dependency depends on
+   */
+  protected def whoDoIDependOn: Seq[Cell[_]] = synchronized {
+    _iDependOn.flatMap(_.get match {
+      case null => Nil
+      case x => List(x)
+    }).asInstanceOf[List[Cell[_]]]
+  }
+
+  private var _iDependOn: List[WeakReference[Object]] = Nil
+
+  /**
+   * Remove from all dependencies
+   */
+  protected def unregisterFromAllDepenencies(): Unit = {
+    whoDoIDependOn.foreach(_.removeDependent(this))
+  }
 }
 
 /**
@@ -64,25 +105,34 @@ trait Cell[T] extends Dependent {
    * are kept around as WeakReferences so they do not
    * have to be explicitly removed from the List
    */
-  def addDependent[T <: Dependent](dep: T): T = synchronized {
-    val tList = _dependentCells.filter(_.get match {
-      case null => false
-      case x => x ne dep
-    })
+  def addDependent[T <: Dependent](dep: T): T = {
+    synchronized {
+      val tList = _dependentCells.filter(_.get match {
+        case null => false
+        case x => x ne dep
+      })
+      
+      
+      _dependentCells = new WeakReference(dep: Dependent) :: tList
+    }
 
-    _dependentCells = new WeakReference(dep: Dependent) :: tList
+    dep.youDependOnMe(this)
 
     dep
   }
 
   /**
-   * Removea Dependent to this cell.
+   * Remove a Dependent to this cell.
    */
-  def removeDependent[T <: Dependent](dep: T): T = synchronized {
-    _dependentCells = _dependentCells.filter(_.get match {
-      case null => false
-      case x => x ne dep
-    })
+  def removeDependent[T <: Dependent](dep: T): T = {
+    synchronized {
+      _dependentCells = _dependentCells.filter(_.get match {
+        case null => false
+        case x => x ne dep
+      })
+    }
+
+    dep.youDontDependOnMe(this)
 
     dep
   }
@@ -253,7 +303,7 @@ final case class FuncCell1[A, Z](a: Cell[A], f: A => Z) extends Cell[Z] {
    * If the predicate cell changes, the Dependent will be notified
    */
   def predicateChanged(which: Cell[_]): Unit = {
-    a.notifyDependents()
+    notifyDependents()
   }
 
   a.addDependent(this)

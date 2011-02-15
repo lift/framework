@@ -280,6 +280,10 @@ object WiringUI {
    * if this is the first time 
    */
   def addJsFunc[T](cell: Cell[T], f: (T, Boolean) => JsCmd) {
+    for {
+      cometActor <- S.currentCometActor
+    } cell.addDependent(cometActor)
+
     val trc = TransientRequestCell(cell)
     var lastTime: Long = 0L
     var lastValue: T = null.asInstanceOf[T]

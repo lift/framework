@@ -1211,6 +1211,34 @@ trait BindHelpers {
     }.headOption
   }
 
+  /**
+   * Find the first Elem in the NodeSeq.  If it has an id attribute,
+   * then call the function, f, with that id.  If the first Elem
+   * does not have an id attribute, create an id attribute and
+   * pass that id attribute to the function
+   */
+  def findOrCreateId(f: String => NodeSeq => NodeSeq): NodeSeq => NodeSeq =
+    ns => {
+      var id: Box[String] = Empty
+
+      val realNs = ns map {
+        case e: Elem if id.isEmpty => {
+          id = e.attribute("id").map(_.text)
+          if (id.isDefined) {
+            e
+          } else {
+            val tid = Helpers.nextFuncName
+            id = Full(tid)
+            import Helpers._
+            e % ("id" -> tid)
+          }
+        }
+        case x => x
+      }
+
+      f(id openOr Helpers.nextFuncName)(realNs)
+    }
+
     
   /**
    * Finds the first Element in the NodeSeq (or any children)

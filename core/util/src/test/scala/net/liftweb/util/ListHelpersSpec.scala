@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,48 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb 
+package util 
 
-import _root_.org.specs._
-import _root_.org.specs.runner._
+import org.specs._
+import org.specs.runner._
 import common._
 
 object ListHelpersSpec extends Specification with ListHelpers {
+
+  "ListHelpers.delta" should {
+    "insert after 2" in {
+      val ret = delta(List(1,2,4,5), List(1,2,3,4,5)) {
+        case InsertAfterDelta(3, 2) => "ok"
+      }
+
+      ret must_== List("ok")
+    }
+
+    "prepend and append" in {
+      val ret = delta(List(2,4,99), List(1,2,3,4,5)) {
+        case InsertAfterDelta(3, 2) => "ok"
+        case AppendDelta(5) => "ok5"
+        case RemoveDelta(99) => "99"
+        case InsertAtStartDelta(1) => "1"
+      }
+
+      ret must_== List("1", "ok", "99", "ok5")
+    }
+
+    "prepend and append" in {
+      val ret = delta(List(4,2,99), List(1,2,3,4,5)) {
+        case InsertAfterDelta(3, 2) => "ok"
+        case AppendDelta(5) => "ok5"
+        case RemoveDelta(99) => "99"
+        case InsertAtStartDelta(1) => "1"
+      }
+
+      ret must_== List("1", "ok", "99", "ok5")
+    }
+
+  }
+
   "The ListHelpers first_? function" should {
     "return an Empty can if the list is empty" in {
       first_?((Nil: List[Int]))((i: Int) => true) must_== Empty
@@ -61,12 +95,12 @@ object ListHelpersSpec extends Specification with ListHelpers {
   }
   "The ListHelpers enumToList and enumToStringList functions" should {
     "convert a java enumeration to a List" in {
-      val v: _root_.java.util.Vector[Int] = new _root_.java.util.Vector[Int]
+      val v: java.util.Vector[Int] = new java.util.Vector[Int]
       v.add(1); v.add(2)
       enumToList(v.elements) must_== List(1, 2)
     }
     "convert a java enumeration containing any kind of object to a List of Strings" in {
-      val v: _root_.java.util.Vector[Any] = new _root_.java.util.Vector[Any]
+      val v: java.util.Vector[Any] = new java.util.Vector[Any]
       v.add(1); v.add("hello")
       enumToStringList(v.elements) must_== List("1", "hello")
     }
@@ -140,5 +174,3 @@ object ListHelpersSpec extends Specification with ListHelpers {
 }
 class ListHelpersSpecTest extends JUnit4(ListHelpersSpec)
 
-}
-}
