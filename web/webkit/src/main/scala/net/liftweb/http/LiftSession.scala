@@ -801,6 +801,21 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   }
 
   /**
+   * Clear the PostPage JavaScript functions for the current page.
+   * This is used by CometActor to remove the PostPage JavaScript
+   * functions from the given component during redraw.
+   */
+  def clearPostPageJavaScriptForThisPage() {
+    testStatefulFeature {
+      accessPostPageFuncs {
+        val rv: String = RenderVersion.get
+
+        postPageFunctions -= rv
+      }
+    }
+  }
+
+  /**
    * Associate a function that renders JavaScript with the current page.
    * This function will be run and the resulting JavaScript will be appended
    * to any rendering associated with this page... the normal page render,

@@ -684,6 +684,37 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    */
   def fixedRender: Box[NodeSeq] = Empty
 
+  /**
+   * Calculate fixedRender and capture the postpage javascript
+   */
+  protected def calcFixedRender: Box[NodeSeq] = 
+    fixedRender.map(ns => theSession.postPageJavaScript() match {
+      case Nil => ns
+      case xs => {
+        ns ++ Script(xs)
+      }
+    })
+
+  /**
+   * We have to cache fixedRender and only change it if
+   * the tempalte changes or we get a reRender(true)
+   */
+  private def internalFixedRender: Box[NodeSeq] = 
+    if (!cacheFixedRender) {
+      calcFixedRender
+    } else {
+      cachedFixedRender.get
+    }
+
+  private val cachedFixedRender: FatLazy[Box[NodeSeq]] = FatLazy(calcFixedRender)
+
+  /**
+   * By default, we do not cache the value of fixedRender.  If it's
+   * expensive to recompute it each time there's a convertion
+   * of something to a RenderOut, override this method if you
+   * want to cache fixedRender
+   */
+  protected def cacheFixedRender = false
 
   /**
    * A helpful implicit conversion that takes a NodeSeq => NodeSeq
@@ -750,16 +781,22 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       
       _defaultHtml = xml
 
-      if (redo) performReRender(false)
+      if (redo) {
+        performReRender(false)
+      }
     }
 
     case AskRender =>
       askingWho match {
         case Full(who) => forwardMessageTo(AskRender, who) //  forward AskRender
-        case _ => if (!deltas.isEmpty || devMode) performReRender(false);
-        reply(AnswerRender(new XmlOrJsCmd(spanId, lastRendering, buildSpan _, notices toList),
-          whosAsking openOr this, lastRenderTime, true))
-        clearNotices
+        case _ => {
+          if (!deltas.isEmpty || devMode) performReRender(false)
+          
+          reply(AnswerRender(new XmlOrJsCmd(spanId, lastRendering, 
+                                            buildSpan _, notices toList),
+                             whosAsking openOr this, lastRenderTime, true))
+          clearNotices
+        }
       }
 
     case ActionMessageSet(msgs, req) =>
@@ -779,20 +816,18 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
 
     case AnswerQuestion(what, otherListeners) =>
-      //S.functionLifespan(true) {
-        askingWho.foreach {
-          ah =>
-                  reply("A null message to release the actor from its send and await reply... do not delete this message")
-                  // askingWho.unlink(self)
-                  ah ! ShutDown
-                  this.listeners = this.listeners ::: otherListeners
-                  this.askingWho = Empty
-                  val aw = answerWith
-                  answerWith = Empty
-                  aw.foreach(_(what))
-                  performReRender(true)
+      askingWho.foreach {
+        ah => {
+          reply("A null message to release the actor from its send and await reply... do not delete this message")
+          ah ! ShutDown
+          this.listeners = this.listeners ::: otherListeners
+          this.askingWho = Empty
+          val aw = answerWith
+          answerWith = Empty
+          aw.foreach(_(what))
+          performReRender(true)
         }
-  //}
+      }
 
     case ShutdownIfPastLifespan =>
       for{
@@ -826,11 +861,10 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       val m = millis
       deltas = (delta :: deltas).filter(d => (m - d.timestamp) < 120000L)
       if (!listeners.isEmpty) {
+        val postPage = theSession.postPageJavaScript()
         val rendered = 
           AnswerRender(new XmlOrJsCmd(spanId, Empty, Empty,
-                                      Full(cmd & 
-                                           theSession.
-                                           postPageJavaScript()),
+                                      Full(cmd & postPage),
                                       Empty, buildSpan, false,
                                       notices toList),
                        whosAsking openOr this, time, false)
@@ -893,8 +927,30 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    */
   protected def dontCacheRendering: Boolean = false
 
+  /**
+   * Clear the common dependencies for Wiring.  This
+   * method will clearPostPageJavaScriptForThisPage() and
+   * unregisterFromAllDependencies().  The combination
+   * will result in a clean slate for Wiring during a redraw.
+   * You can change the behavior of the wiring dependency management
+   * by overriding this method
+   */
+  protected def clearWiringDependencies() {
+    theSession.clearPostPageJavaScriptForThisPage()
+    unregisterFromAllDepenencies()      
+  }
+
   private def performReRender(sendAll: Boolean) {
     lastRenderTime = Helpers.nextNum
+
+    if (sendAll) {
+      cachedFixedRender.reset
+    }
+
+    if (sendAll || !cacheFixedRender) {
+      clearWiringDependencies()
+    }
+
     wasLastFullRender = sendAll & hasOuter
     deltas = Nil
 
@@ -923,7 +979,9 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * just the Actor's message handler thread.
    */
   override def poke(): Unit = {
-    if (running) partialUpdate(Noop)
+    if (running) {
+      partialUpdate(Noop)
+    }
   }
 
   /**
@@ -1019,7 +1077,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * rendering.
    */
   protected implicit def nsToNsFuncToRenderOut(f: NodeSeq => NodeSeq) =
-    new RenderOut((Box !! defaultHtml).map(f), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend()) else {
+    new RenderOut((Box !! defaultHtml).map(f), internalFixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend()) else {
       S.jsToAppend match {
         case Nil => Empty
         case x :: Nil => Full(x)
@@ -1034,7 +1092,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * (in Java) will convert a NodeSeq to a RenderOut.  This
    * is helpful if you return a NodeSeq from your render method.
    */
-  protected implicit def arrayToRenderOut(in: Seq[Node]): RenderOut = new RenderOut(Full(in: NodeSeq), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend()) else {
+  protected implicit def arrayToRenderOut(in: Seq[Node]): RenderOut = new RenderOut(Full(in: NodeSeq), internalFixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend()) else {
       S.jsToAppend match {
         case Nil => Empty
         case x :: Nil => Full(x)
@@ -1042,7 +1100,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       }
       }, Empty, false)
 
-  protected implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = new RenderOut(Empty, fixedRender, if (autoIncludeJsonCode) Full(in & jsonToIncludeInCode & S.jsToAppend()) else Full(in & S.jsToAppend()), Empty, false)
+  protected implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = new RenderOut(Empty, internalFixedRender, if (autoIncludeJsonCode) Full(in & jsonToIncludeInCode & S.jsToAppend()) else Full(in & S.jsToAppend()), Empty, false)
 
   implicit def pairToPair(in: (String, Any)): (String, NodeSeq) = (in._1, Text(in._2 match {case null => "null" case s => s.toString}))
 

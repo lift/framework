@@ -92,6 +92,64 @@ object JqWiringSupport {
       }
     }
   }
+
+  /**
+   * Takes two sequences, the id of a containing component and a couple of
+   * functions and generates the jQuery-based JavaScript to update the browser
+   * DOM with the deltas between the old list and the new list.
+   */
+  def calculateDeltas[T](oldList: Seq[T], newList: Seq[T],id: String)(calcId: T => String, calcNodeSeq: T => NodeSeq): JsCmd = 
+    calculateDeltas[T](Full(oldList), newList, id)(calcId, calcNodeSeq)
+
+  /**
+   * Takes two sequences, the id of a containing component and a couple of
+   * functions and generates the jQuery-based JavaScript to update the browser
+   * DOM with the deltas between the old list and the new list.
+   *
+   * @param oldList -- the old list.  If it is Empty, then it is treated as Nil
+   * @param newList -- the new version of the list of items
+   * @param id -- the id of the enclosing DOM node.  Used for appending and inserting DOM nodes
+   * @param calcId -- given a T, calculate the id of the DOM node for the T
+   * @param calcNodeSeq -- given a T, calculate the DOM that represents the T
+   *
+   * @return the JsCmd that inserts, appends, removes, etc. the DOM so that
+   * the DOM represents the new List
+   */
+  def calculateDeltas[T](oldList: Box[Seq[T]], newList: Seq[T],id: String)(calcId: T => String, calcNodeSeq: T => NodeSeq): JsCmd = {
+    Helpers.delta(oldList, newList) {
+      case RemoveDelta(ci) => new JsCmd {
+        def toJsCmd = "jQuery('#'+"+calcId(ci).encJs+").remove();"
+      }
+      
+      case AppendDelta(ci) => 
+        new JsCmd {
+          val toJsCmd = 
+            fixHtmlFunc("inline", calcNodeSeq(ci)) {
+              "jQuery('#'+"+id.encJs+").append("+
+              _+
+              ");"}
+        }
+
+      case InsertAtStartDelta(ci) => 
+        new JsCmd {
+          val toJsCmd = 
+            fixHtmlFunc("inline", calcNodeSeq(ci)) {
+              "jQuery('#'+"+id.encJs+").prepend("+
+              _+
+              ");"}
+        }
+
+      case InsertAfterDelta(ci, prior) => 
+        new JsCmd {
+          val toJsCmd = 
+            fixHtmlFunc("inline", calcNodeSeq(ci)) {
+              "jQuery('#'+"+calcId(prior).encJs+").after("+
+              _+
+              ");"}
+        }
+    }
+  }
+                           
 }
 
 object JqJE {
@@ -399,4 +457,3 @@ object JqJsCmds {
   }
 
 }
-

@@ -41,7 +41,25 @@ final case class InsertAfterDelta[T](item: T, after: T) extends DeltaInfo[T]
  */
 trait ListHelpers {
 
-  def delta[T, Res](old: List[T], newList: List[T])(f: DeltaInfo[T] => Res): List[Res] = {
+  /**
+   * Compute the deltas between two sequences of a given type.
+   * Apply the function based on the differences between the two
+   * lists.  The resulting List of commands will be returned.
+   */
+  def delta[T, Res](old: Box[Seq[T]], newList: Seq[T])(f: DeltaInfo[T] => Res): List[Res] = delta(old openOr Nil, newList)(f)
+
+
+  /**
+   * Compute the deltas between two sequences of a given type.
+   * Apply the function based on the differences between the two
+   * lists.  The resulting List of commands will be returned.
+   * The algorithm used to calculate the diffs is not very efficient
+   * and can degrade to O(n^2), so it's not great for large collections.
+   * Internally the Seq[T] are converted to a List[T].  Finally,
+   * it's highly recommended that T be immutable and does proper equals
+   * testing (e.g., a case class).
+   */
+  def delta[T, Res](old: Seq[T], newList: Seq[T])(f: DeltaInfo[T] => Res): List[Res] = {
     import scala.collection.mutable.ListBuffer
     import scala.annotation._
 
@@ -83,7 +101,7 @@ trait ListHelpers {
       }
     }
 
-    loop(old, newList)
+    loop(old.toList, newList.toList)
     
     ret.toList
   }
