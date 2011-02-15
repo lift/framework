@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.net.liftweb.util._
+import common._
+import util._
+
 import js._
 import JsCmds._
-import _root_.scala.xml.{NodeSeq, Elem, Text}
+import scala.xml.{NodeSeq, Elem, Text}
 
 /**
  * Surface a user interface on top of Wiring
@@ -117,6 +119,23 @@ object WiringUI {
    * there's none already defined)
    */
   def toNode[T](in: NodeSeq, cell: Cell[T])(f: (T, NodeSeq) => NodeSeq): NodeSeq = toNode(in, cell, (id, first, js) => js)(f)
+
+  def history[T](cell: Cell[T])(f: (Box[T], T, NodeSeq) => JsCmd): NodeSeq => NodeSeq = 
+    in => {
+    val myElem: Elem = in.find {
+      case e: Elem => true
+      case _ => false
+    }.map(_.asInstanceOf[Elem]).getOrElse(<span id={Helpers.nextFuncName}>{in}</span>)
+
+
+      addHistJsFunc(cell, (old: Box[T], nw: T) => f(old, nw, in))
+      
+      new Elem(myElem.prefix,
+               myElem.label,
+               myElem.attributes,
+               myElem.scope)
+    }
+
 
   /**
    * Given a NodeSeq, a Cell and a function that can generate
@@ -299,6 +318,39 @@ object WiringUI {
       } else Noop
     })
   }
+
+
+  /**
+   * Associate a Cell and a function that converts from the
+   * cell's value to a JavaScript command to be sent to the
+   * browser as part of the page's post-processing.
+   *
+   * @param cell the cell to associate the JavaScript to
+   * @param f the function that takes the cell's value and a flag indicating
+   * if this is the first time 
+   */
+  def addHistJsFunc[T](cell: Cell[T], f: (Box[T], T) => JsCmd) {
+    for {
+      cometActor <- S.currentCometActor
+    } cell.addDependent(cometActor)
+
+    val trc = TransientRequestCell(cell)
+    var lastTime: Long = 0L
+    var lastValue: Box[T] = Empty
+    for {
+      sess <- S.session
+    } sess.addPostPageJavaScript(() => {
+      val (value, ct) = trc.get
+      val first = lastTime == 0L
+      if (first || (ct > lastTime && Full(value) != lastValue)) {
+        val oldValue = lastValue
+        lastValue = Full(value)
+        lastTime = ct
+        f(oldValue, value)
+      } else Noop
+    })
+  }
+
 }
 
 /**
@@ -308,5 +360,3 @@ private final case class TransientRequestCell[T](cell: Cell[T]) extends Transien
   override val __nameSalt = Helpers.nextFuncName
 }
 
-}
-}

@@ -52,13 +52,18 @@ trait ListHelpers {
     @tailrec def loop(o: List[T], n: List[T]) {
       (o, n) match {
         case (o, Nil) => o.foreach(t => ret += f(RemoveDelta(t)))
-        case (Nil, n) => n.foreach(t => ret += f(AppendDelta(t)))
+        case (Nil, n) => {
+          n.foreach{
+            t => ret += f(insertAfter match {
+              case Full(x) => InsertAfterDelta(t, x)
+              case _ => AppendDelta(t)
+            })
+            insertAfter = Full(t)
+          }
+        }
+
         case (o :: or, n :: nr) if o == n => {
           insertAfter = Full(n)
-          loop(or, nr)
-        }
-        case (o :: or, nr) if !nr.contains(o) => {
-          ret += f(RemoveDelta(o))
           loop(or, nr)
         }
 
@@ -68,6 +73,11 @@ trait ListHelpers {
             case _ => ret += f(InsertAtStartDelta(n))
           }
           insertAfter = Full(n)
+          loop(or, nr)
+        }
+
+        case (o :: or, nr) => {
+          ret += f(RemoveDelta(o))
           loop(or, nr)
         }
       }

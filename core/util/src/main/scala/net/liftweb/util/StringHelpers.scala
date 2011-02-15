@@ -327,7 +327,7 @@ trait StringHelpers {
         what.charAt(pos) match {
           case c @ ('\\' | '\'') => sb.append(escChar(c))
           case '"' => sb.append("\\\"")
-          case c if c < ' ' || c > '~' => sb.append(escChar(c))
+          case c if c < ' ' || c > '~' || c == ']' || c.toInt >= 127 => sb.append(escChar(c))
           case c => sb.append(c)
         }
         pos += 1

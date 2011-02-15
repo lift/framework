@@ -378,15 +378,15 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
   private[http] def callInitCometActor(theSession: LiftSession,
                                        theType: Box[String],
                                        name: Box[String],
-                                       defaultXml: NodeSeq,
+                                       defaultHtml: NodeSeq,
                                        attributes: Map[String, String]) {
-    initCometActor(theSession, theType, name, defaultXml, attributes)
+    initCometActor(theSession, theType, name, defaultHtml, attributes)
   }
 
   protected def initCometActor(theSession: LiftSession,
                                theType: Box[String],
                                name: Box[String],
-                               defaultXml: NodeSeq,
+                               defaultHtml: NodeSeq,
                                attributes: Map[String, String]): Unit
 
   def jsonCall: JsonCall
@@ -547,16 +547,16 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   protected def initCometActor(theSession: LiftSession,
                                theType: Box[String],
                                name: Box[String],
-                               defaultXml: NodeSeq,
+                               defaultHtml: NodeSeq,
                                attributes: Map[String, String]) {
     if (!dontCacheRendering) {
-      lastRendering = RenderOut(Full(defaultXml),
+      lastRendering = RenderOut(Full(defaultHtml),
                                 Empty, Empty, Empty, false)
     }
 
     this._theType = theType
     this._theSession = theSession
-    this._defaultXml = defaultXml
+    this._defaultHtml = defaultHtml
     this._name = name
     this._attributes = attributes
   }
@@ -688,10 +688,10 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   /**
    * A helpful implicit conversion that takes a NodeSeq => NodeSeq
    * (for example a CssSel) and converts it to a Box[NodeSeq] by
-   * applying the function to defaultXml
+   * applying the function to defaultHtml
    */
   protected implicit def nodeSeqFuncToBoxNodeSeq(f: NodeSeq => NodeSeq):
-  Box[NodeSeq] = Full(f(defaultXml))
+  Box[NodeSeq] = Full(f(defaultHtml))
 
   /**
    * Handle messages sent to this Actor before the 
@@ -743,12 +743,12 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       performReRender(true)
 
     /**
-     * Update the defaultXml... sent in dev mode
+     * Update the defaultHtml... sent in dev mode
      */
     case UpdateDefaultXml(xml) => {
-      val redo = xml != _defaultXml
+      val redo = xml != _defaultHtml
       
-      _defaultXml = xml
+      _defaultHtml = xml
 
       if (redo) performReRender(false)
     }
@@ -853,7 +853,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * There are implicit conversions for NodeSeq, so you can return a pile of
    * XML right here.  There's an implicit conversion for NodeSeq => NodeSeq,
    * so you can return a function (e.g., a CssBindFunc) that will convert
-   * the defaultXml to the correct output.  There's an implicit conversion
+   * the defaultHtml to the correct output.  There's an implicit conversion
    * from JsCmd, so you can return a pile of JavaScript that'll be shipped
    * to the browser.
    */
@@ -980,12 +980,12 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   }
 
   /**
-   * A helper for binding which uses the defaultXml property.
+   * A helper for binding which uses the defaultHtml property.
    */
-  def bind(prefix: String, vals: BindParam*): NodeSeq = bind(prefix, _defaultXml, vals: _*)
+  def bind(prefix: String, vals: BindParam*): NodeSeq = bind(prefix, _defaultHtml, vals: _*)
 
   /**
-   * A helper for binding which uses the defaultXml propert and the
+   * A helper for binding which uses the defaultHtml property and the
    * default prefix.
    */
   def bind(vals: BindParam*): NodeSeq = bind(_defaultPrefix, vals: _*)
@@ -995,7 +995,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * take over the screen real estate until the question is answered.
    */
   protected def ask(who: LiftCometActor, what: Any)(answerWith: Any => Unit) {
-    who.callInitCometActor(theSession, Full(who.uniqueId), name, defaultXml, attributes)
+    who.callInitCometActor(theSession, Full(who.uniqueId), name, defaultHtml, attributes)
     theSession.addCometActor(who)
     // who.link(this)
     who ! PerformSetupComet
@@ -1019,7 +1019,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * rendering.
    */
   protected implicit def nsToNsFuncToRenderOut(f: NodeSeq => NodeSeq) =
-    new RenderOut((Box !! defaultXml).map(f), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend()) else {
+    new RenderOut((Box !! defaultHtml).map(f), fixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend()) else {
       S.jsToAppend match {
         case Nil => Empty
         case x :: Nil => Full(x)
