@@ -19,6 +19,8 @@ package mocks
 import org.specs._
 import org.specs.runner._
 
+import json.JsonDSL._
+
 class MockHttpRequestSpecTest extends Runner(MockHttpRequestSpec) with JUnit with Console
 
 object MockHttpRequestSpec extends Specification {
@@ -71,6 +73,55 @@ object MockHttpRequestSpec extends Specification {
       (testRequest.queryString = "foo") must throwA[IllegalArgumentException]
      }
 
+
+    "properly set a default content type for JSON" in {
+      val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
+
+      testRequest.body = ("name" -> "joe")
+
+      testRequest.contentType must_== "application/json"
+    }
+
+    "properly set a user-specificed content type for JSON" in {
+      val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
+
+      testRequest.body_=(("name" -> "joe"), "text/json")
+
+      testRequest.contentType must_== "text/json"
+    }
+
+    "properly set a default content type for XML" in {
+      val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
+
+      testRequest.body = <test/>
+
+      testRequest.contentType must_== "text/xml"
+    }
+
+    "properly set a user-specificed content type for XML" in {
+      val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
+
+      testRequest.body_=(<test/>, "application/xml")
+
+      testRequest.contentType must_== "application/xml"  
+    }
+
+    "properly set a default content type for a String" in {
+      val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
+
+      testRequest.body = "test"
+
+      testRequest.contentType must_== "text/plain"
+    }
+
+    "properly set a user-specificed content type for a String" in {
+      val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
+
+      testRequest.body_=("test", "text/csv")
+
+      testRequest.contentType must_== "text/csv"
+    }
+    
   }
 }
 

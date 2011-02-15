@@ -83,12 +83,24 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   var body: Array[Byte] = Array()
 
   /**
-   * Sets the body to the given string.
+   * Sets the body to the given string. The content
+   * type is set to "text/plain".
    * 
    * Note that the String will be converted to bytes
    * based on the current setting of charEncoding.
    */
-  def body_= (s : String) { body = s.getBytes(charEncoding) }
+  def body_= (s : String) : Unit = body_=(s, "text/plain")
+
+  /**
+   * Sets the body to the given string and content type.
+   *
+   * Note that the String will be converted to bytes
+   * based on the current setting of charEncoding.
+   */
+  def body_= (s : String, contentType : String) : Unit = {
+    body = s.getBytes(charEncoding)
+    this.contentType = contentType
+  }
 
   /**
    * Sets the body to the given elements. Also sets
@@ -97,20 +109,33 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Note that the elements will be converted to bytes
    * based on the current setting of charEncoding.
    */
-  def body_= (nodes : NodeSeq) { 
+  def body_= (nodes : NodeSeq) : Unit = body_=(nodes, "text/xml")
+
+  /**
+   * Sets the body to the given elements and content type.
+   * 
+   * Note that the elements will be converted to bytes
+   * based on the current setting of charEncoding.
+   */
+  def body_= (nodes : NodeSeq, contentType : String) : Unit = {
     body = nodes.toString.getBytes(charEncoding)
-    contentType = "text/xml"
+    this.contentType = contentType
   }
 
   /**
    * Sets the body to the given json value. Also
-   * sets the contentType to "text/json"
+   * sets the contentType to "application/json"
    */
-  def body_= (jval : JValue) {
+  def body_= (jval : JValue) : Unit = body_=(jval, "application/json")
+
+  /**
+   * Sets the body to the given json value and content type.
+   */
+  def body_= (jval : JValue, contentType : String) : Unit = {
     import json.JsonDSL._
     import json.Printer
     body = Printer.pretty(render(jval)).getBytes(charEncoding)
-    contentType = "text/json"
+    this.contentType = contentType
   }
 
   var contentType: String = null
