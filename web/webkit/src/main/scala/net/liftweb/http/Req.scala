@@ -31,15 +31,99 @@ import java.io.{InputStream, ByteArrayInputStream, File, FileInputStream,
                 FileOutputStream}
 import scala.xml._
 
-trait UserAgentCalculator {
-  lazy val ieVersion: Box[Int] = {
-    val re = """MSIE ([0-9]+)""".r
+
+object UserAgentCalculator extends Factory {
+  /**
+   * The default regular expression for IE
+   */
+  val iePattern = """MSIE ([0-9]+)""".r
+
+  /**
+   * You can change the mechanism by which the user agent for IE
+   * is calculated by doing the Factory thing with this object
+   */
+  object ieCalcFunction extends FactoryMaker[Box[String] => 
+    Box[Double]](defaultIeCalcFunction _)
+
+  /**
+   * The built-in mechanism for calculating IE
+   */
+  def defaultIeCalcFunction(userAgent: Box[String]): Box[Double] = 
     for {
       ua <- userAgent
-      m = re.pattern.matcher(ua)
-      ver <- if (m.find) Helpers.asInt(m.group(1)) else Empty
+      m = iePattern.pattern.matcher(ua)
+      ver <- if (m.find) Helpers.asDouble(m.group(1)) else Empty
     } yield ver
-  }
+
+  /**
+   * The default regular expression for Safari
+   */
+  val safariPattern = """Version.([0-9]+)[.0-9]+ ([^S])*Safari\/""".r
+
+  /**
+   * You can change the mechanism by which the user agent for Safari
+   * is calculated by doing the Factory thing with this object
+   */
+  object safariCalcFunction extends FactoryMaker[Box[String] => 
+    Box[Double]](defaultSafariCalcFunction _)
+
+  /**
+   * The built-in mechanism for calculating Safari
+   */
+  def defaultSafariCalcFunction(userAgent: Box[String]): Box[Double] = 
+    for {
+      ua <- userAgent
+      m = safariPattern.pattern.matcher(ua)
+      ver <- if (m.find) Helpers.asDouble(m.group(1)) else Empty
+    } yield ver
+
+  /**
+   * The default regular expression for Firefox
+   */
+  val firefoxPattern = """Firefox.([1-9][0-9]*\.[0-9])""".r
+
+  /**
+   * You can change the mechanism by which the user agent for Firefox
+   * is calculated by doing the Factory thing with this object
+   */
+  object firefoxCalcFunction extends FactoryMaker[Box[String] => 
+    Box[Double]](defaultFirefoxCalcFunction _)
+
+  /**
+   * The built-in mechanism for calculating Firefox
+   */
+  def defaultFirefoxCalcFunction(userAgent: Box[String]): Box[Double] = 
+    for {
+      ua <- userAgent
+      m = firefoxPattern.pattern.matcher(ua)
+      ver <- if (m.find) Helpers.asDouble(m.group(1)) else Empty
+    } yield ver
+
+  /**
+   * The default regular expression for Chrome
+   */
+  val chromePattern = """Chrome.([1-9][0-9]*\.[0-9])""".r
+
+  /**
+   * You can change the mechanism by which the user agent for Chrome
+   * is calculated by doing the Factory thing with this object
+   */
+  object chromeCalcFunction extends FactoryMaker[Box[String] => 
+    Box[Double]](defaultChromeCalcFunction _)
+
+  /**
+   * The built-in mechanism for calculating Chrome
+   */
+  def defaultChromeCalcFunction(userAgent: Box[String]): Box[Double] = 
+    for {
+      ua <- userAgent
+      m = chromePattern.pattern.matcher(ua)
+      ver <- if (m.find) Helpers.asDouble(m.group(1)) else Empty
+    } yield ver
+}
+
+trait UserAgentCalculator {
+  lazy val ieVersion: Box[Int] = UserAgentCalculator.ieCalcFunction.vend.apply(userAgent).map(_.toInt)
 
   lazy val isIE6: Boolean = ieVersion.map(_ == 6) openOr false
   lazy val isIE7: Boolean = ieVersion.map(_ == 7) openOr false
@@ -47,16 +131,8 @@ trait UserAgentCalculator {
   lazy val isIE9: Boolean = ieVersion.map(_ == 9) openOr false
   lazy val isIE = ieVersion.map(_ >= 6) openOr false
 
-  lazy val safariVersion: Box[Int] = {
-    val re = """Version.([0-9]+)[.0-9]+ ([^S])*Safari\/""".r
-    for {
-      ua <- userAgent
-      m = re.pattern.matcher(ua)
-      ver <- if (m.find) Helpers.asInt(m.group(1)) else Empty
-    } yield ver
-  }
-
-
+  lazy val safariVersion: Box[Int] = 
+    UserAgentCalculator.safariCalcFunction.vend.apply(userAgent).map(_.toInt)
 
   def isSafari2: Boolean = false
 
@@ -77,15 +153,8 @@ trait UserAgentCalculator {
    */
   lazy val isIPad = isSafari && (userAgent.map(s => s.indexOf("(iPad") >= 0) openOr false)
 
-  lazy val firefoxVersion: Box[Double] = {
-    val re = """Firefox.([1-9][0-9]*\.[0-9])""".r   
-
-    for {
-      ua <- userAgent
-      m = re.pattern.matcher(ua)
-      ver <- (if (m.find) {Helpers.tryo(ParseDouble(m.group(1)))} else Empty)
-    } yield ver
-  }
+  lazy val firefoxVersion: Box[Double] = 
+    UserAgentCalculator.firefoxCalcFunction.vend.apply(userAgent)
 
   lazy val isFirefox2: Boolean = firefoxVersion.map(v => v >= 2d && v < 3d) openOr false
   lazy val isFirefox3: Boolean = firefoxVersion.map(v => v >= 3d && v < 3.5d) openOr false
@@ -98,15 +167,8 @@ trait UserAgentCalculator {
   def isFirefox = firefoxVersion.isDefined
 
 
-  lazy val chromeVersion: Box[Double] = {
-    val re = """Chrome.([1-9][0-9]*\.[0-9])""".r   
-
-    for {
-      ua <- userAgent
-      m = re.pattern.matcher(ua)
-      ver <- if (m.find) Helpers.tryo(ParseDouble(m.group(1))) else Empty
-    } yield ver
-  }
+  lazy val chromeVersion: Box[Double] = 
+    UserAgentCalculator.chromeCalcFunction.vend.apply(userAgent)
 
   lazy val isChrome2 = chromeVersion.map(v => v >= 2d && v < 3d) openOr false
   lazy val isChrome3 = chromeVersion.map(v => v >= 3d && v < 4d) openOr false

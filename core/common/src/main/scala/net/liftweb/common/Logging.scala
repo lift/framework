@@ -130,12 +130,46 @@ trait Logger  {
     logger.trace(msg+": "+v.toString)
     v
   }
-  
+ 
+  /**
+   * Trace a Failure.  If the log level is trace and the Box is
+   * a Failure, trace the message concatenated with the Failure's message.
+   * If the Failure contains an Exception, trace that as well.
+   */
+  def trace(msg: => AnyRef, box: Box[_]): Unit = {
+    if (logger.isTraceEnabled) {
+      box match {
+        case Failure(fmsg, Full(e), _) => trace(String.valueOf(msg)+": "+
+                                                fmsg: AnyRef, e: Throwable)
+        case Failure(fmsg, _, _) => trace(String.valueOf(msg)+": "+fmsg)
+        case _ =>
+      }
+    }
+  }
+
+
   def trace(msg: => AnyRef) = if (logger.isTraceEnabled) logger.trace(String.valueOf(msg))
   def trace(msg: => AnyRef, t: Throwable) = if (logger.isTraceEnabled) logger.trace(String.valueOf(msg), t)
   def trace(msg: => AnyRef, marker:  Marker) = if (logger.isTraceEnabled) logger.trace(marker,String.valueOf(msg))
   def trace(msg: => AnyRef, t: Throwable, marker: => Marker) = if (logger.isTraceEnabled) logger.trace(marker,String.valueOf(msg), t)
   def isTraceEnabled = logger.isTraceEnabled
+
+  /**
+   * Debug a Failure.  If the log level is debug and the Box is
+   * a Failure, debug the message concatenated with the Failure's message.
+   * If the Failure contains an Exception, debug that as well.
+   */
+  def debug(msg: => AnyRef, box: Box[_]): Unit = {
+    if (logger.isDebugEnabled) {
+      box match {
+        case Failure(fmsg, Full(e), _) => debug(String.valueOf(msg)+": "+
+                                                fmsg, e)
+        case Failure(fmsg, _, _) => debug(String.valueOf(msg)+": "+fmsg)
+        case _ =>
+      }
+    }
+  }
+ 
   
   def debug(msg: => AnyRef) = if (logger.isDebugEnabled) logger.debug(String.valueOf(msg))
   def debug(msg: => AnyRef, t:  Throwable) = if (logger.isDebugEnabled) logger.debug(String.valueOf(msg), t)
@@ -143,18 +177,64 @@ trait Logger  {
   def debug(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isDebugEnabled) logger.debug(marker, String.valueOf(msg), t)
   def isDebugEnabled = logger.isDebugEnabled
   
+  /**
+   * Info a Failure.  If the log level is info and the Box is
+   * a Failure, info the message concatenated with the Failure's message.
+   * If the Failure contains an Exception, info that as well.
+   */
+  def info(msg: => AnyRef, box: Box[_]): Unit = {
+    if (logger.isInfoEnabled) {
+      box match {
+        case Failure(fmsg, Full(e), _) => info(String.valueOf(msg)+": "+
+                                                fmsg, e)
+        case Failure(fmsg, _, _) => info(String.valueOf(msg)+": "+fmsg)
+        case _ =>
+      }
+    }
+  }
   def info(msg: => AnyRef) = if (logger.isInfoEnabled) logger.info(String.valueOf(msg))
   def info(msg: => AnyRef, t: => Throwable) = if (logger.isInfoEnabled) logger.info(String.valueOf(msg), t)
   def info(msg: => AnyRef, marker: Marker) = if (logger.isInfoEnabled) logger.info(marker,String.valueOf(msg))
   def info(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isInfoEnabled) logger.info(marker,String.valueOf(msg), t)
   def isInfoEnabled = logger.isInfoEnabled
   
+  /**
+   * Warn a Failure.  If the log level is warn and the Box is
+   * a Failure, warn the message concatenated with the Failure's message.
+   * If the Failure contains an Exception, warn that as well.
+   */
+  def warn(msg: => AnyRef, box: Box[_]): Unit = {
+    if (logger.isWarnEnabled) {
+      box match {
+        case Failure(fmsg, Full(e), _) => warn(String.valueOf(msg)+": "+
+                                                fmsg, e)
+        case Failure(fmsg, _, _) => warn(String.valueOf(msg)+": "+fmsg)
+        case _ =>
+      }
+    }
+  }
   def warn(msg: => AnyRef) = if (logger.isWarnEnabled) logger.warn(String.valueOf(msg))
   def warn(msg: => AnyRef, t: Throwable) = if (logger.isWarnEnabled) logger.warn(String.valueOf(msg), t)
   def warn(msg: => AnyRef, marker: Marker) = if (logger.isWarnEnabled) logger.warn(marker,String.valueOf(msg))
   def warn(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isWarnEnabled) logger.warn(marker,String.valueOf(msg), t)
   def isWarnEnabled = logger.isWarnEnabled
   
+  /**
+   * Error a Failure.  If the log level is error and the Box is
+   * a Failure, error the message concatenated with the Failure's message.
+   * If the Failure contains an Exception, error that as well.
+   */
+  def error(msg: => AnyRef, box: Box[_]): Unit = {
+    if (logger.isErrorEnabled) {
+      box match {
+        case Failure(fmsg, Full(e), _) => error(String.valueOf(msg)+": "+
+                                                fmsg, e)
+        case Failure(fmsg, _, _) => error(String.valueOf(msg)+": "+fmsg)
+        case _ =>
+      }
+    }
+  }
+
   def error(msg: => AnyRef) = if (logger.isErrorEnabled) logger.error(String.valueOf(msg))
   def error(msg: => AnyRef, t: Throwable) = if (logger.isErrorEnabled) logger.error(String.valueOf(msg), t)
   def error(msg: => AnyRef, marker: Marker) = if (logger.isErrorEnabled) logger.error(marker,String.valueOf(msg))

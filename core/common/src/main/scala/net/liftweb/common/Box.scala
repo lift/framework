@@ -19,6 +19,23 @@ package common
 
 import scala.reflect.Manifest
 
+import java.util.{Iterator => JavaIterator, ArrayList => JavaArrayList}
+
+/**
+ * The bridge from Java to Scala Box
+ */
+class BoxJBridge {
+  /**
+   * Get the Box companion object
+   */
+  def box: BoxTrait = Box
+
+  /**
+   * Get the None singleton
+   */
+  def empty: EmptyBox = Empty
+}
+
 /**
  * The Box companion object provides methods to create a Box from:
  * <ul>
@@ -29,7 +46,19 @@ import scala.reflect.Manifest
  *
  * It also provides implicit methods to transform Option to Box, Box to Iterable, and Box to Option
  */
-object Box {
+object Box extends BoxTrait
+
+/**
+ * The Box companion object provides methods to create a Box from:
+ * <ul>
+ *   <li>an Option</li>
+ *   <li>a List</li>
+ *   <li>any AnyRef object</li>
+ * </ul>
+ *
+ * It also provides implicit methods to transform Option to Box, Box to Iterable, and Box to Option
+ */
+sealed trait BoxTrait {
   /**
    * Create a Box from the specified Option.
    * @return a Box created from an Option. Full(x) if the Option is Some(x) and Empty otherwise
@@ -271,6 +300,15 @@ sealed abstract class Box[+A] extends Product {
    * Returns an Iterator over the value contained in this Box
    */
   def elements: Iterator[A] = Iterator.empty
+
+  /**
+   * Get a Java Iterator from the Box
+   */
+  def javaIterator[B >: A]: JavaIterator[B] = {
+    val ar = new JavaArrayList[B]()
+    foreach(v => ar.add(v))
+    ar.iterator()
+  }
 
   /**
    * Returns an Iterator over the value contained in this Box
@@ -568,6 +606,38 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
     case Full(f) => f :: f.chainList
     case _ => Nil
   }
+
+  /**
+   * Get the exception chain along with the exception chain of any
+   * chained failures
+   */
+  def exceptionChain: List[Throwable] = {
+    import scala.collection.mutable.ListBuffer
+    val ret = new ListBuffer[Throwable]()
+    var e: Throwable = exception openOr null
+    
+    while (e ne null) {
+      ret += e
+      e = e.getCause
+    }
+
+    ret ++= chain.toList.flatMap(_.exceptionChain)
+    ret.toList
+  }
+
+  /**
+   * Gets the deepest exception cause
+   */
+  def rootExceptionCause: Box[Throwable] = {
+    exceptionChain.lastOption
+  }
+
+  /**
+   * Flatten the Failure chain to a List where this
+   * Failure is at the head
+   */
+  def failureChain: List[Failure] = 
+    this :: chain.toList.flatMap(_.failureChain)
 
   def messageChain: String = (this :: chainList).map(_.msg).mkString(" <- ")
 
