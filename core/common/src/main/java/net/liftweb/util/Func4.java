@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb.util;
+package net.liftweb.common;
 
 /**
- * A two argument function that returns
+ * A four argument function that returns
  * something of type Z
  */
-public interface Func2<A, B, Z> {
+public interface Func4<A, B, C, D, Z> {
     /**
      * Apply the function
      */
-    public Z apply(A a, B b);
+    public Z apply(A a, B b, C c, D d);
 }

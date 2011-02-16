@@ -15,7 +15,7 @@
  */
 
 package net.liftweb 
-package util 
+package common
 
 
 object FuncJBridge extends FuncJBridge
@@ -72,9 +72,4 @@ class FuncJBridge {
   implicit def lift[Z](f: java.util.concurrent.Callable[Z]): Function0[Z] = new Function0[Z] {
     def apply(): Z = f.call()
   }
-
-  /**
-   * Promote a T to a Vendor
-   */
-  def vendor[T](t: T): Vendor[T] = Vendor(t)
 }

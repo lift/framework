@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.liftweb.util;
+package net.liftweb.common;
 
 /**
  * A one argument function that returns

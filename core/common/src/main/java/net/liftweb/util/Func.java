@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.liftweb.util;
+package net.liftweb.common;
 
 import scala.*;
 
@@ -91,12 +91,5 @@ public final class Func {
      */
     public static<Z> Function0<Z> lift(Callable<Z> f) {
 	return bridge.lift(f);
-    }
-
-    /**
-     * Promote a T to a Vendor
-     */
-    public static<T> Vendor<T> vendor(T v) {
-	return bridge.vendor(v);
     }
 }

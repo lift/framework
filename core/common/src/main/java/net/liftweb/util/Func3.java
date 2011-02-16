@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb.util;
+package net.liftweb.common;
 
 /**
- * A zero argument function that returns
+ * A three argument function that returns
  * something of type Z
  */
-public interface Func0<Z> {
+public interface Func3<A, B, C, Z> {
     /**
      * Apply the function
      */
-    public Z apply();
+    public Z apply(A a, B b, C c);
 }

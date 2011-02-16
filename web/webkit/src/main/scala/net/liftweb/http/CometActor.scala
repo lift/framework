@@ -574,6 +574,23 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
   def parentTag = <div style="display: inline"/>
 
+  /**
+   * Return the list of ListenerIds of all long poll agents that
+   * are waiting for this CometActor to change its state.  This method
+   * is useful for detecting presence.
+   */
+  protected def cometListeners: List[ListenerId] = listeners.map(_._1)
+
+  /**
+   * This method will be called when there's a change in the long poll
+   * listeners.  The method does nothing, but allows you to get a granular
+   * sense of how many browsers care about this CometActor.  Note that
+   * this method should not block for any material time and if there's
+   * any processing to do, use Scheduler.schedule or send a message to this
+   * CometActor.  Do not change the Actor's state from this method.
+   */
+  protected def listenerTransition(): Unit = {}
+
   private def _handleJson(in: Any): JsCmd =
     if (jsonHandlerChain.isDefinedAt(in))
       jsonHandlerChain(in)
@@ -738,14 +755,17 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   }
 
   private lazy val _mediumPriority: PartialFunction[Any, Unit] = {
-    case l@Unlisten(seq) =>
+    case l@Unlisten(seq) => {
       lastListenTime = millis
       askingWho match {
         case Full(who) => forwardMessageTo(l, who) // forward l
         case _ => listeners = listeners.filter(_._1 != seq)
       }
+      listenerTransition()
+    }
 
-    case l@Listen(when, seqId, toDo) =>
+
+    case l@Listen(when, seqId, toDo) => {
       lastListenTime = millis
       askingWho match {
         case Full(who) => forwardMessageTo(l, who) // who forward l
@@ -767,6 +787,9 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
             }
           }
       }
+      listenerTransition()
+    }
+
 
     case PerformSetupComet =>
       // this ! RelinkToActorWatcher
@@ -807,18 +830,20 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
         // }
       }
 
-    case AskQuestion(what, who, otherlisteners) =>
+    case AskQuestion(what, who, otherlisteners) => {
       this.spanId = who.uniqueId
       this.listeners = otherlisteners ::: this.listeners
       startQuestion(what)
       whosAsking = Full(who)
       this.reRender(true)
-
+      listenerTransition()
+    }
 
     case AnswerQuestion(what, otherListeners) =>
       askingWho.foreach {
         ah => {
           reply("A null message to release the actor from its send and await reply... do not delete this message")
+          // askingWho.unlink(self)
           ah ! ShutDown
           this.listeners = this.listeners ::: otherListeners
           this.askingWho = Empty
@@ -826,6 +851,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
           answerWith = Empty
           aw.foreach(_(what))
           performReRender(true)
+          listenerTransition()
         }
       }
 
@@ -871,6 +897,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
         clearNotices
         listeners.foreach(_._2(rendered))
         listeners = Nil
+        listenerTransition()
       }
     }
   }
