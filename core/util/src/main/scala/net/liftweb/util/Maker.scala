@@ -17,7 +17,7 @@
 package net.liftweb 
 package util 
 
-import java.util.concurrent.{ConcurrentHashMap => CHash}
+import java.util.concurrent.{ConcurrentHashMap => CHash, Callable}
 import java.lang.ThreadLocal
 import scala.reflect.Manifest
 import common._
@@ -171,6 +171,26 @@ class MakerStack[T](subMakers: PValueHolder[Maker[T]]*) extends StackableMaker[T
 trait Vendor[T] extends Maker[T] with Function0[T] {
   implicit def vend: T
   def apply() = vend
+}
+
+/**
+ * A bridge from Java to Scala
+ */
+class VendorJBridge {
+  /**
+   * Create a Vendor from a Func0
+   */
+  def vendor[T](f: Func0[T]): Vendor[T] = Vendor(Func.lift(f))
+
+  /**
+   * Create a Vendor from a Callable
+   */
+  def vendor[T](f: Callable[T]): Vendor[T] = Vendor(Func.lift(f))
+
+  /**
+   * Create a Vendor from a value
+   */
+  def vendor[T](v: T): Vendor[T] = Vendor(v)
 }
 
 /**
