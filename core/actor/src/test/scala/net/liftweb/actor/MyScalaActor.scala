@@ -14,30 +14,20 @@
  * limitations under the License.
  */
 
-package net.liftweb.actor;
+package net.liftweb
+package actor
 
 
 /**
- * Java implementation of LiftActor for test.
+ * Scala implementation of LiftActor for test.
  */
-public class MyJavaActor extends LiftActorJ {
-    private int myValue = 0;
+class MyScalaActor extends LiftActor {
+  private var value = 0
 
-    @Receive protected void set(Set what) {
-        myValue = what.num();
-    }
-
-    @Receive public void get(Get get) {
-        reply(new Answer(myValue));
-    }
-
-    @Receive protected Answer add(Add toAdd) {
-        myValue += toAdd.num();
-        return new Answer(myValue);
-    }
-
-    @Receive public Answer sub(Sub toSub) {
-        myValue -= toSub.num();
-        return new Answer(myValue);
-    }
+  override protected def messageHandler = {
+    case Add(n) => value += n; reply(Answer(value))
+    case Sub(n) => value -= n; reply(Answer(value))
+    case Set(n) => value = n
+    case Get()  => reply(Answer(value))
+  }
 }
