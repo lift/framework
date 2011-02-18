@@ -1898,7 +1898,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
        asyncComponents(what) = act
      }
      act.callInitCometActor(this, theType, name, defaultXml, attributes)
-     act ! PerformSetupComet
+     act ! PerformSetupComet2(if (act.sendInitialReq_?) 
+       S.request.map(_.snapshot) else Empty)
     }
   }
 
@@ -1941,9 +1942,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     val createInfo = CometCreationInfo(contType, name, defaultXml, attributes, this)
 
      val boxCA: Box[LiftCometActor] = LiftRules.cometCreationFactory.vend.apply(createInfo).map{
-    a => a ! PerformSetupComet; a} or
+    a => a ! PerformSetupComet2(if (a.sendInitialReq_?) 
+       S.request.map(_.snapshot) else Empty); a} or
     LiftRules.cometCreation.toList.find(_.isDefinedAt(createInfo)).map(_.apply(createInfo)).map{
-    a => a ! PerformSetupComet; a} or
+    a => a ! PerformSetupComet2(if (a.sendInitialReq_?) 
+       S.request.map(_.snapshot) else Empty); a} or
     (findType[LiftCometActor](contType, LiftRules.buildPackage("comet") ::: ("lift.app.comet" :: Nil)).flatMap {
       cls =>
               tryo((e: Throwable) => e match {
@@ -1954,13 +1957,15 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                 val ret = constr.newInstance().asInstanceOf[LiftCometActor]
                 ret.callInitCometActor(this, Full(contType), name, defaultXml, attributes)
 
-                ret ! PerformSetupComet
+                ret ! PerformSetupComet2(if (ret.sendInitialReq_?) 
+       S.request.map(_.snapshot) else Empty)
                 ret.asInstanceOf[LiftCometActor]
               } or tryo((e: Throwable) => logger.info("Comet find by type Failed to instantiate " + cls.getName, e)) {
                 val constr = cls.getConstructor(this.getClass, classOf[Box[String]], classOf[NodeSeq], classOf[Map[String, String]])
                 val ret = constr.newInstance(this, name, defaultXml, attributes).asInstanceOf[LiftCometActor];
 
-                ret ! PerformSetupComet
+                ret ! PerformSetupComet2(if (ret.sendInitialReq_?) 
+       S.request.map(_.snapshot) else Empty)
                 ret.asInstanceOf[LiftCometActor]
               }
     })

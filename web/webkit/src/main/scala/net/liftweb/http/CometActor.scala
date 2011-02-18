@@ -411,6 +411,19 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
   def poke(): Unit = {}
 
   /**
+   * Is this CometActor going to capture the initial Req
+   * object?  If yes, override this method and return true
+   * and override captureInitialReq to capture the Req.  Why
+   * have to explicitly ask for the Req? In order to send Req
+   * instances across threads, the Req objects must be snapshotted
+   * which is the process of reading the POST or PUT body from the
+   * HTTP request stream.  We don't want to do this unless we
+   * have to, so by default the Req is not snapshotted/sent.  But
+   * if you want it, you can have it.
+   */
+  def sendInitialReq_? : Boolean = false
+
+  /**
    * If the predicate cell changes, the Dependent will be notified
    */
   def predicateChanged(which: Cell[_]): Unit = {poke()}
@@ -791,10 +804,12 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     }
 
 
-    case PerformSetupComet =>
+    case PerformSetupComet2(initialReq) => {
       // this ! RelinkToActorWatcher
-      localSetup
+      localSetup()
+      captureInitialReq(initialReq)
       performReRender(true)
+    }
 
     /**
      * Update the defaultHtml... sent in dev mode
@@ -1028,6 +1043,18 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    */
   protected def localSetup(): Unit = {}
 
+  /**
+   * Comet Actors live outside the HTTP request/response cycle.
+   * However, it may be useful to know what Request led to the
+   * creation of the CometActor.  You can override this method
+   * and capture the initial Req object.  Note that keeping a reference
+   * to the Req may lead to memory retention issues if the Req contains
+   * large message bodies, etc.  It's optimal to capture the path
+   * or capture any request parameters that you care about rather
+   * the keeping the whole Req reference.
+   */
+  protected def captureInitialReq(initialReq: Box[Req]) {}
+
   private def _localShutdown() {
     localShutdown()
     clearNotices
@@ -1083,7 +1110,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     who.callInitCometActor(theSession, Full(who.uniqueId), name, defaultHtml, attributes)
     theSession.addCometActor(who)
     // who.link(this)
-    who ! PerformSetupComet
+    who ! PerformSetupComet2(Empty)
     askingWho = Full(who)
     this.answerWith = Full(answerWith)
     who ! AskQuestion(what, this, listeners)
@@ -1261,7 +1288,7 @@ case class UpdateDefaultXml(xml: NodeSeq) extends CometMessage
 case class PartialUpdateMsg(cmd: () => JsCmd) extends CometMessage
 case object AskRender extends CometMessage
 case class AnswerRender(response: XmlOrJsCmd, who: LiftCometActor, when: Long, displayAll: Boolean) extends CometMessage
-case object PerformSetupComet extends CometMessage
+case class PerformSetupComet2(initialReq: Box[Req]) extends CometMessage
 case object ShutdownIfPastLifespan extends CometMessage
 case class AskQuestion(what: Any, who: LiftCometActor, listeners: List[(ListenerId, AnswerRender => Unit)]) extends CometMessage
 case class AnswerQuestion(what: Any, listeners: List[(ListenerId, AnswerRender => Unit)]) extends CometMessage

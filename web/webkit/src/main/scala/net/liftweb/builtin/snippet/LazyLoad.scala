@@ -61,7 +61,8 @@ object LazyLoad extends DispatchSnippet {
                 ret.initCometActor(session,
                                    Full(theType),
                                    name, defaultXml, attributes)
-                ret ! PerformSetupComet
+                ret ! PerformSetupComet2(if (ret.sendInitialReq_?) 
+       S.request.map(_.snapshot) else Empty)
                 
                 // and save it in the request var
                 myActor.set(Full(ret))
