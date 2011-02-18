@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package common {
+package net.liftweb
+package common
 
-import _root_.org.specs._
-import _root_.net.liftweb.common.Box._
-import _root_.org.specs.runner._
-import _root_.org.specs.Sugar._
+import xml._
+import org.specs.Specification
 
-import _root_.scala.xml._
 
-class ConversionsSpecTest extends Runner(ConversionsSpec) with JUnit with Console
-object ConversionsSpec extends Specification {
+/**
+ * System under specification for Conversions.
+ */
+object ConversionsSpec extends Specification("Conversions Specification") {
+
   "A StringOrNodeSeq" should {
+
     "convert from a String" in {
       val sns: StringOrNodeSeq = "Hello"
       sns.nodeSeq must_== Text("Hello")
@@ -43,14 +44,13 @@ object ConversionsSpec extends Specification {
     }
   }
 
-
   "A StringFunc" should {
+
     "be created by a String constant" in {
       val sf: StringFunc = "Foo"
 
       sf.func() must_== "Foo"
     }
-
 
     "be created by a String Function" in {
       val sf: StringFunc = () => "Bar"
@@ -75,12 +75,12 @@ object ConversionsSpec extends Specification {
   }
 
   "A NodeSeqFunc" should {
+
     "be created by a NodeSeq constant" in {
       val sf: NodeSeqFunc = <b>Foo</b>
 
       sf.func() must ==/ (<b>Foo</b>)
     }
-
 
     "be created by a NodeSeq Function" in {
       val sf: NodeSeqFunc = () => <i>Bar</i>
@@ -104,7 +104,4 @@ object ConversionsSpec extends Specification {
 
   }
 
-}
-
-}
 }

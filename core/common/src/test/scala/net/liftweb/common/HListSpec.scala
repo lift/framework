@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package common {
+package net.liftweb
+package common
 
-import _root_.org.specs._
-import _root_.net.liftweb.common.Box._
-import _root_.org.specs.runner._
-import _root_.org.specs.Sugar._
+import org.specs.Specification
 
-class HListSpecTest extends Runner(HListSpec) with JUnit with Console
-object HListSpec extends Specification {
+
+/**
+ * System under specification for Heterogeneous List.
+ */
+object HListSpec extends Specification("HList Specification") {
+
   "An HList" should {
-    "Must get types right" in {
+
+    "get the types right" in {
       import HLists._
 
       val x = 1 :+: "Foo" :+: HNil
@@ -36,12 +38,11 @@ object HListSpec extends Specification {
       x.head must_== 1
       x.tail.head must_== "Foo"
     }
-
-    
   }
 
   "A combinable box" should {
-    "build a box with a failure must be a failure" in {
+
+    "have a box built with a failure result in a failure" in {
       import CombinableBox._
 
       val x = Full("a") :&: Full(1) :&: Empty
@@ -49,10 +50,11 @@ object HListSpec extends Specification {
       // result in a failure
       x match {
         case Left(_) => true must_== true
+        case _       => fail("Full elements available")
       }
     }
 
-    "build a box with all Full must match" in {
+    "be able to build a box with all the Full elements matching" in {
       import CombinableBox._
       import HLists._
 
@@ -69,10 +71,11 @@ object HListSpec extends Specification {
 
           true must_== true
         }
+        case Left(_) => fail("Failure elements available")
       }
     }
 
-    "Use in for comprehension" in {
+    "be usable in for comprehension" in {
       import CombinableBox._
       import HLists._
 
@@ -83,10 +86,6 @@ object HListSpec extends Specification {
 
       res must_== Full(6)
     }
-
-
   }
-}
 
-}
 }

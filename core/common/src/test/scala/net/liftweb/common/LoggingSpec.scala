@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,36 +14,18 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package common {
+package net.liftweb
+package common
 
-import _root_.org.specs._
-import _root_.org.specs.log.{Log => _}
-import _root_.net.liftweb.common.Box._
-import _root_.org.specs.runner._
-import _root_.org.specs.Sugar._
-import _root_.org.specs.ScalaCheck
-import _root_.org.scalacheck.Gen._
-import _root_.org.scalacheck._
-import _root_.org.scalacheck.Arbitrary._
-import _root_.org.scalacheck.Prop.{forAll}
+import org.specs.Specification
 
-class LoggingTest extends Runner(LoggingUnit) with JUnit
-
-class MyTopClass extends Logger {
-  val x=1
-  debug("Top level class logging")
-}
-
-object MyTopObj extends Logger {
-  val x=1
-  debug("Top level object logging")
-}
 
 /**
- * Test relies on logback being on the classpath, so no configuration necessary
+ * System under specification for Logging.
+ *
+ * Tests rely on logback being in the classpath, so no configuration should be necessary.
  */
-object LoggingUnit extends Specification {
+object LoggingSpec extends Specification("Logging Specification") {
   "Logging" can {
     "be mixed directly into object" in {
       object MyObj extends Logger {
@@ -138,5 +120,15 @@ object LoggingUnit extends Specification {
   }
 }
 
+
+class MyTopClass extends Logger {
+  val x=1
+  debug("Top level class logging")
 }
+
+
+object MyTopObj extends Logger {
+  val x=1
+  debug("Top level object logging")
 }
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package common {
+package net.liftweb
+package common
 
-import _root_.org.specs._
-import _root_.net.liftweb.common.Box._
-import _root_.org.specs.runner._
-import _root_.org.specs.Sugar._
+import org.specs.Specification
+import Box._
+import org.specs.{ScalaCheck, Specification}
+import org.scalacheck._
+import Gen._
+import Prop.forAll
 
-class BoxSpecTest extends Runner(BoxSpec) with JUnit with Console
-object BoxSpec extends Specification {
+
+/**
+ * System under specification for Box.
+ */
+object BoxSpec extends Specification("Box Specification") with ScalaCheck with BoxGenerator {
+
   "A Box" can {
     "be created from a Option. It is Empty if the option is None" in {
       Box(None) mustBe Empty
@@ -57,6 +63,7 @@ object BoxSpec extends Specification {
       Box.legacyNullTest(null) must_== Empty
     }
   }
+
   "A Box" should {
     "provide a 'choice' method to either apply a function to the Box value or return another default can" in {
       def gotIt = (x: Int) => Full("got it: " + x.toString)
@@ -65,6 +72,7 @@ object BoxSpec extends Specification {
       Empty.choice(gotIt)(Full("nothing")) must_== Full("nothing")
     }
   }
+
   "A Full Box" should {
     "not beEmpty" in {
       Full(1).isEmpty must beFalse
@@ -189,6 +197,7 @@ object BoxSpec extends Specification {
     }
 
   }
+
   "An Empty Box" should {
     "beEmpty" in {
       Empty.isEmpty must beTrue
@@ -223,14 +232,14 @@ object BoxSpec extends Specification {
     "define a 'foreach' doing nothing" in {
       var total = 0
       val empty: Box[Int] = Empty
-      empty foreach { total += _ }
+      empty foreach {total += _}
       total must_== 0
     }
     "define a 'map' method returning Empty" in {
-      Empty map { _.toString } mustBe Empty
+      Empty map {_.toString} mustBe Empty
     }
     "define a 'flatMap' method returning Empty" in {
-      Empty flatMap { x: Int => Full("full") } mustBe Empty
+      Empty flatMap {x: Int => Full("full")} mustBe Empty
     }
     "define an 'elements' method returning an empty iterator" in {
       Empty.elements.hasNext must beFalse
@@ -254,6 +263,7 @@ object BoxSpec extends Specification {
       Empty.asA[Double] must_== Empty
     }
   }
+
   "A Failure is an Empty Box which" can {
     "return its cause as an exception" in {
       case class LiftException(m: String) extends Exception
@@ -261,10 +271,11 @@ object BoxSpec extends Specification {
     }
     "return a chained list of causes" in {
       Failure("error",
-               Full(new Exception("broken")),
-               Full(Failure("nested cause", Empty, Empty))).chain must_== Full(Failure("nested cause", Empty, Empty))
+              Full(new Exception("broken")),
+              Full(Failure("nested cause", Empty, Empty))).chain must_== Full(Failure("nested cause", Empty, Empty))
     }
   }
+
   "A Failure is an Empty Box which" should {
     "return itself if mapped or flatmapped" in {
       Failure("error", Empty, Empty) map {_.toString} must_== Failure("error", Empty, Empty)
@@ -277,7 +288,56 @@ object BoxSpec extends Specification {
       Failure("error", Empty, Empty) ?~! "error2" must_== Failure("error2", Empty, Full(Failure("error", Empty, Empty)))
     }
   }
-}
+
+  "A Box equals method" should {
+
+    "return true with comparing two identical Box messages" in {
+      val equality = (c1: Box[Int], c2: Box[Int]) => (c1, c2) match {
+        case (Empty, Empty) => c1 == c2
+        case (Full(x), Full(y)) => (c1 == c2) == (x == y)
+        case (Failure(m1, e1, l1), Failure(m2, e2, l2)) => (c1 == c2) == ((m1, e1, l1) == (m2, e2, l2))
+        case _ => c1 != c2
+      }
+      Prop.forAll(equality) must pass
+    }
+
+    "return false with comparing one Full and another object" in {
+      Full(1) must_!= "hello"
+    }
+
+    "return false with comparing one Empty and another object" in {
+      Empty must_!= "hello"
+    }
+
+    "return false with comparing one Failure and another object" in {
+      Failure("", Empty, Empty) must_!= "hello"
+    }
+  }
 
 }
+
+
+trait BoxGenerator {
+
+  implicit def genThrowable: Arbitrary[Throwable] = Arbitrary[Throwable] {
+    case object UserException extends Throwable
+    value(UserException)
+  }
+
+  implicit def genBox[T](implicit a: Arbitrary[T]): Arbitrary[Box[T]] = Arbitrary[Box[T]] {
+    frequency(
+      (3, value(Empty)),
+      (3, a.arbitrary.map(Full[T])),
+      (1, genFailureBox)
+    )
+  }
+
+  def genFailureBox: Gen[Failure] = for {
+    msgLen <- choose(0, 4)
+    msg <- listOfN(msgLen, alphaChar)
+    exception <- value(Full(new Exception("")))
+    chainLen <- choose(1, 5)
+    chain <- frequency((1, listOfN(chainLen, genFailureBox)), (3, value(Nil)))
+  } yield Failure(msg.mkString, exception, Box(chain.headOption))
+
 }
