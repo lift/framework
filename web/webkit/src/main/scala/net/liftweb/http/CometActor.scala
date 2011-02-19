@@ -978,9 +978,21 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * by overriding this method
    */
   protected def clearWiringDependencies() {
-    theSession.clearPostPageJavaScriptForThisPage()
-    unregisterFromAllDepenencies()      
+    if (!manualWiringDependencyManagement) {
+      theSession.clearPostPageJavaScriptForThisPage()
+      unregisterFromAllDepenencies()
+    }
   }
+
+  /**
+   * By default, Lift deals with managing wiring dependencies.
+   * This means on each full render (a full render will
+   * happen on reRender() or on a page load if there have been
+   * partial updates.) You may want to manually deal with
+   * wiring dependencies.  If you do, override this method
+   * and return true
+   */
+  protected def manualWiringDependencyManagement = false
 
   private def performReRender(sendAll: Boolean) {
     lastRenderTime = Helpers.nextNum

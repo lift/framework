@@ -487,6 +487,7 @@ trait MigratorySession extends HowStateful {
  */
 private final case class PostPageFunctions(renderVersion: String,
                                            functionCount: Int,
+                                           longLife: Boolean,
                                            lastSeen: Long,
                                            functions: List[() => JsCmd]) 
 {
@@ -495,6 +496,7 @@ private final case class PostPageFunctions(renderVersion: String,
    */
   def updateLastSeen = new PostPageFunctions(renderVersion,
                                              functionCount,
+                                             longLife,
                                              Helpers.millis,
                                              functions)
 
@@ -778,11 +780,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     if (LiftRules.enableLiftGC && stateful_?) {
       val now = millis
 
-      // FIXME deal with comet-based last seen
       accessPostPageFuncs {
         for {
           (key, pageInfo) <- postPageFunctions
-        } if ((now - pageInfo.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
+        } if (!pageInfo.longLife && 
+              (now - pageInfo.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
           postPageFunctions -= key
         }
       }
@@ -830,14 +832,18 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         // The page or cometactor that the functions are associated with
         val rv: String = RenderVersion.get
 
-        val old = postPageFunctions.getOrElse(rv,
-                                              PostPageFunctions(rv,
-                                                                0,
-                                                                Helpers.millis,
-                                                                Nil))
+        val old = 
+          postPageFunctions.getOrElse(rv,
+                                      PostPageFunctions(rv,
+                                                        0,
+                                                        S.currentCometActor.
+                                                        isDefined,
+                                                        Helpers.millis,
+                                                        Nil))
         
         val updated = PostPageFunctions(old.renderVersion,
                                         old.functionCount + 1,
+                                        old.longLife,
                                         Helpers.millis,
                                         func :: old.functions)
 
