@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
-package record {
-package field {
+package net.liftweb
+package mongodb
+package record
+package field
 
 import java.util.Date
 
 import scala.collection.JavaConversions._
 
-import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
-import _root_.net.liftweb.json.JsonAST._
-import _root_.net.liftweb.json.JsonParser
-import _root_.net.liftweb.http.js.JE.{JsNull, JsRaw}
-import _root_.net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
-import _root_.net.liftweb.util.Helpers.tryo
+import common.{Box, Empty, Failure, Full}
+import json.JsonAST._
+import json.JsonParser
+import http.js.JE.{JsNull, JsRaw}
+import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
+import util.Helpers.tryo
 
 import com.mongodb._
 import org.bson.types.ObjectId
@@ -109,9 +109,9 @@ class MongoListField[OwnerType <: MongoRecord[OwnerType], ListType](rec: OwnerTy
 }
 
 /*
-* List of Dates. Use MongListField(OwnerType, Date) instead.
+* List of Dates. Use MongListField[OwnerType, Date] instead.
 */
-@Deprecated
+@deprecated("Use MongListField[OwnerType, Date] instead")
 class MongoDateListField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
   extends MongoListField[OwnerType, Date](rec: OwnerType) {
 }
@@ -143,9 +143,4 @@ class MongoJsonObjectListField[OwnerType <: MongoRecord[OwnerType], JObjectType 
     })))
     case other => setBox(FieldHelpers.expectedA("JArray", other))
   }
-}
-
-}
-}
-}
 }

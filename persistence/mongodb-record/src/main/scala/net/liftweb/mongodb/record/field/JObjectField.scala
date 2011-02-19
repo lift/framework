@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
-package record {
-package field {
+package net.liftweb
+package mongodb
+package record
+package field
 
-import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
-import _root_.net.liftweb.http.js.JE.Str
-import _root_.net.liftweb.json.JsonAST.{JNothing, JObject, JValue}
-import _root_.net.liftweb.json.JsonParser
-import _root_.net.liftweb.record.{Field, MandatoryTypedField, Record}
-import _root_.scala.xml.NodeSeq
+import common.{Box, Empty, Failure, Full}
+import http.js.JE.Str
+import json.JsonAST.{JNothing, JObject, JValue}
+import json.JsonParser
+import net.liftweb.record.{Field, MandatoryTypedField, Record}
 
-@Deprecated
+import scala.xml.NodeSeq
+
+@deprecated("Use JsonObjectField instead.")
 class JObjectField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[JObject, OwnerType] with MandatoryTypedField[JObject] {
 
   def asJs = Str(toString)
@@ -60,9 +61,4 @@ class JObjectField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field
   def toForm: Box[NodeSeq] = Empty
 
   def owner = rec
-}
-
-}
-}
-}
 }
