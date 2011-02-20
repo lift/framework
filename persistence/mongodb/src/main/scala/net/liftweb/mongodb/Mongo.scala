@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
+package net.liftweb
+package mongodb
 
 import java.util.concurrent.ConcurrentHashMap
 
@@ -46,15 +46,9 @@ case object DefaultMongoIdentifier extends MongoIdentifier {
 /*
 * Wrapper for getting a reference to a db from the given Mongo instance
 */
-trait MongoAddressBase {
-  def db: DB
-}
-
-case class MongoAddress(host: MongoHostBase, name: String) extends MongoAddressBase {
+case class MongoAddress(host: MongoHostBase, name: String) {
   def db = host.mongo.getDB(name)
 }
-
-
 
 /*
 * Wrapper for creating a Mongo instance
@@ -62,19 +56,28 @@ case class MongoAddress(host: MongoHostBase, name: String) extends MongoAddressB
 abstract class MongoHostBase {
   def mongo: Mongo
 }
-case class MongoHost(host: String, port: Int) extends MongoHostBase {
-  lazy val mongo = new Mongo(host, port)
+case class MongoHost(server: ServerAddress = new ServerAddress, options: MongoOptions = new MongoOptions) extends MongoHostBase {
+  lazy val mongo = new Mongo(server, options)
 }
 object MongoHost {
-  def apply(): MongoHost = MongoHost("127.0.0.1", 27017)
-  def apply(host: String): MongoHost = MongoHost(host, 27017)
+  def apply(host: String): MongoHost = MongoHost(new ServerAddress(host, 27017))
+  def apply(host: String, port: Int): MongoHost = MongoHost(new ServerAddress(host, port))
+  def apply(host: String, port: Int, options: MongoOptions): MongoHost = MongoHost(new ServerAddress(host, port), options)
 }
 
 /*
-* Wrapper for creating a Paired Mongo instance
+* Wrapper for creating a Replica Pair
 */
-case class MongoPair(left: DBAddress, right: DBAddress) extends MongoHostBase {
-  lazy val mongo = new Mongo(left, right)
+case class MongoPair(left: ServerAddress, right: ServerAddress, options: MongoOptions = new MongoOptions) extends MongoHostBase {
+  lazy val mongo = new Mongo(left, right, options)
+}
+
+/*
+ * Wrapper for creating a Replica Set
+ */
+case class MongoSet(dbs: List[ServerAddress], options: MongoOptions = new MongoOptions) extends MongoHostBase {
+  import scala.collection.JavaConversions._
+  lazy val mongo = new Mongo(dbs, options)
 }
 
 /*
@@ -85,19 +88,25 @@ object MongoDB {
   /*
   * HashMap of MongoAddresses, keyed by MongoIdentifier
   */
-  private val dbs = new ConcurrentHashMap[MongoIdentifier, MongoAddressBase]
+  private val dbs = new ConcurrentHashMap[MongoIdentifier, MongoAddress]
 
   /*
   * Define a Mongo db
   */
-  def defineDb(name: MongoIdentifier, address: MongoAddressBase) {
+  def defineDb(name: MongoIdentifier, address: MongoAddress) {
     dbs.put(name, address)
+  }
+  /*
+   * Define a Mongo db using a standard Mongo instance.
+   */
+  def defineDb(name: MongoIdentifier, mongo: Mongo, dbName: String) {
+    dbs.put(name, MongoAddress(new MongoHostBase { def mongo = mongo }, dbName))
   }
 
   /*
   * Define and authenticate a Mongo db
   */
-  def defineDbAuth(name: MongoIdentifier, address: MongoAddressBase, username: String, password: String) {
+  def defineDbAuth(name: MongoIdentifier, address: MongoAddress, username: String, password: String) {
     if (!address.db.authenticate(username, password.toCharArray))
       throw new MongoException("Authorization failed: "+address.toString)
 
@@ -109,7 +118,7 @@ object MongoDB {
   */
   def getDb(name: MongoIdentifier): Option[DB] = dbs.get(name) match {
     case null => None
-    case ma: MongoAddressBase => Some(ma.db)
+    case ma: MongoAddress => Some(ma.db)
   }
 
   /*
@@ -220,6 +229,4 @@ object MongoDB {
   def close {
     dbs.clear
   }
-}
-}
 }

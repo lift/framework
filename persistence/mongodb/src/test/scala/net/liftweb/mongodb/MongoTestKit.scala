@@ -37,11 +37,9 @@ trait MongoTestKit {
   def debug = false
 
   doBeforeSpec {
-    if (isMongoRunning) {
-      // define the dbs
-      dbs foreach { dbtuple =>
-        MongoDB.defineDb(dbtuple._1, MongoAddress(dbtuple._2, dbtuple._3))
-      }
+    // define the dbs
+    dbs foreach { dbtuple =>
+      MongoDB.defineDb(dbtuple._1, MongoAddress(dbtuple._2, dbtuple._3))
     }
   }
 
@@ -56,7 +54,7 @@ trait MongoTestKit {
         true
       }
     } catch {
-      case _ => false
+      case e: Exception => false
     }
 
   def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkipExample
