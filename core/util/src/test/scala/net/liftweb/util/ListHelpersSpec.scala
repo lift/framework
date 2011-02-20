@@ -30,6 +30,7 @@ object ListHelpersSpec extends Specification("ListHelpers Specification") with L
     "insert after 2" in {
       val ret = delta(List(1, 2, 4, 5), List(1, 2, 3, 4, 5)) {
         case InsertAfterDelta(3, 2) => "ok"
+        case _ => "not ok"
       }
       ret must_== List("ok")
     }

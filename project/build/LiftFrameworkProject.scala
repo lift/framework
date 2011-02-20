@@ -91,24 +91,20 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
 
     override def libraryDependencies = super.libraryDependencies ++ libs ++ Seq(TestScope.junit)
 
-    // TODO: Remove these and resort to LiftDefaultProject settings
-    // override def compileOptions = Seq("-Xwarninit", "-encoding", "utf8").map(CompileOption)
+    // FIXME: Build fails with -Xcheckinit -Xwarninit
+    override def compileOptions = super.compileOptions.toList -- compileOptions("-Xcheckinit", "-Xwarninit").toList
 
     // System property hack for derby.log, webapptests
     override def testAction =
       super.testAction dependsOn
       task {
-        System.setProperty("derby.stream.error.file", (outputPath / "derby.log").absString)
         System.setProperty("net.liftweb.webapptest.src.test.webapp", (testSourcePath / "webapp").absString)
         None
       }
 
     // FIXME: breaks with SBT
     override def testOptions =
-      TestFilter((name: String) => name.endsWith("ToHeadSpec")) ::
       ExcludeTests(
-        // Core tests
-        "net.liftweb.util.ActorPingUnit" :: "net.liftweb.util.ActorPingSpec" ::
         // Web tests
         "net.liftweb.webapptest.OneShot" :: "net.liftweb.webapptest.ToHeadUsages" :: "net.liftweb.http.SnippetSpec" ::
         // Persistence tests

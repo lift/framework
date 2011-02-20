@@ -91,7 +91,7 @@ object ClassHelpersSpec extends Specification("ClassHelpers Specification") {
       containsClass(classOf[String], Nil) must beFalse
     }
     "return false if the list to match doesn't contain any class assignable by the tested class" in {
-      containsClass(classOf[String], List(classOf[Float], classOf[Integer])) must beFalse
+      containsClass(classOf[String], List(classOf[Float], classOf[java.lang.Integer])) must beFalse
     }
   }
 
