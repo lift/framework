@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
-import org.specs._
-import org.specs.runner._
-import scala.xml._
+import xml._
+import org.specs.Specification
+
 import common._
+import BindHelpers._
 
-object BindHelpersSpec extends Specification  {
-  import BindHelpers._
-  
+
+/**
+ * Systems under specification for BindHelpers.
+ */
+object BindHelpersSpec extends Specification("BindHelpers Specification") {
+
   "the mixinAttributes function" should {
     "mixin in all the attributes" in {
       mixinAttributes(<input />)(<input id="10" class="wee" />) must ==/(<input class="wee" id="10"></input>)
@@ -339,11 +343,9 @@ object BindHelpersSpec extends Specification  {
     }
   }
 }
-class BindHelpersTest extends JUnit4(BindHelpersSpec)
 
 
 object CssBindHelpersSpec extends Specification  {
-  import BindHelpers._
 
   "css bind helpers" should {
     "clear clearable" in {
@@ -824,7 +826,7 @@ object CssBindHelpersSpec extends Specification  {
 
   }
 }
-class CssBindHelpersTest extends JUnit4(CssBindHelpersSpec)
+
 
 /**
  * This class doesn't actually perform any tests, but insures that
@@ -932,5 +934,3 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
   def nsToBoxString(in: NodeSeq): Box[String] = Full(in.text)
   def nsToSeqString(in: NodeSeq): Seq[String] = List(in.text)
 }
-
-

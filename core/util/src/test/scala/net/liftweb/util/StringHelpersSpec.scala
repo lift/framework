@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.org.specs.runner._
-import _root_.org.specs._
-import _root_.java.lang.reflect.{Method}
-import _root_.org.scalacheck.Arbitrary
-import _root_.org.scalacheck.{Prop, Gen}
-import Gen._
-import _root_.org.specs.ScalaCheck
-import common._
+import org.specs.{ScalaCheck, Specification}
+import org.scalacheck.Gen._
+import StringHelpers._
 
-object StringHelpersSpec extends Specification with StringHelpers with StringGenerators with ScalaCheck {
+
+/**
+ * Systems under specification for StringHelpers.
+ */
+object StringHelpersSpec extends Specification("StringHelpers Specification") with ScalaCheck with StringGen {
+
   "The snakify function" should {
     "replace upper case with underscore" in {
       snakify("MyCamelCase") must_== "my_camel_case"
@@ -67,9 +67,9 @@ object StringHelpersSpec extends Specification with StringHelpers with StringGen
         name.forall(_ == '_') && camelify(name).isEmpty ||
         name.toList.zipWithIndex.forall { case (c, i) =>
           c == '_' ||
-          correspondingIndexInCamelCase(name, i) == 0 && correspondingCharInCamelCase(name, i) == c.toUpperCase ||
+          correspondingIndexInCamelCase(name, i) == 0 && correspondingCharInCamelCase(name, i) == c.toUpper ||
           !previousCharacterIsUnderscore(name, i) && correspondingCharInCamelCase(name, i) == c ||
-          previousCharacterIsUnderscore(name, i) && correspondingCharInCamelCase(name, i) == c.toUpperCase
+          previousCharacterIsUnderscore(name, i) && correspondingCharInCamelCase(name, i) == c.toUpper
        }
       })
       doesntContainUnderscores && isCamelCased must pass
@@ -88,7 +88,7 @@ object StringHelpersSpec extends Specification with StringHelpers with StringGen
       val camelCasedMethodIsCamelCaseWithLowerCase = forAllProp(underscoredStrings){
         (name: String) =>
         camelify(name).isEmpty && camelifyMethod(name).isEmpty ||
-        camelifyMethod(name).toList.head.isLowerCase && camelify(name) == camelifyMethod(name).capitalize
+        camelifyMethod(name).toList.head.isLower && camelify(name) == camelifyMethod(name).capitalize
       }
       camelCasedMethodIsCamelCaseWithLowerCase must pass
     }
@@ -314,17 +314,20 @@ object StringHelpersSpec extends Specification with StringHelpers with StringGen
     }
   }
 }
-class StringHelpersSpecTest extends JUnit4(StringHelpersSpec)
-trait StringGenerators {
-  val underscoredStrings = for {length <- choose(0, 4)
-                                s <- listOfN(length, frequency((3, alphaChar), (1, Gen.oneOf(List('_')))))
-                                } yield List.toString(s)
 
-  val camelCasedStrings = for {length <- choose(0, 4)
-         firstLetter <- alphaNumChar.map(_.toUpperCase)
-         string <- listOfN(length, frequency((3, alphaNumChar.map(_.toLowerCase)), (1, alphaNumChar.map(_.toUpperCase))))
-        } yield List.toString(firstLetter :: string)
-}
 
-}
+trait StringGen {
+  val underscoredStrings =
+    for {
+      length <- choose(0, 4)
+      s <- listOfN(length, frequency((3, alphaChar), (1, oneOf(List('_')))))
+    } yield s.mkString
+
+  val camelCasedStrings =
+    for {
+      length <- choose(0, 4)
+      firstLetter <- alphaNumChar.map(_.toUpper)
+      string <- listOfN(length, frequency((3, alphaNumChar.map(_.toLower)),
+                                          (1, alphaNumChar.map(_.toUpper))))
+  } yield (firstLetter :: string).mkString
 }

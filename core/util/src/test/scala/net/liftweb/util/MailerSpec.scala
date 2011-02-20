@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,32 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.org.specs.runner._
-import _root_.org.specs._
+import javax.mail.internet.{MimeMessage, MimeMultipart}
+import org.specs.Specification
 import common._
-import javax.mail.internet.{MimeMultipart, MimeMessage}
-import javax.mail.Transport
 
 
-class MailerSpecTest extends Runner(MailerSpec) with JUnit
-object MailerSpec extends Specification {
+/**
+ * Systems under specification for Lift Mailer.
+ */
+object MailerSpec extends Specification("Mailer Specification") {
   
-  object MyMailer extends MailerImpl {
-      @volatile var lastMessage: Box[MimeMessage] = Empty
-
-     testModeSend.default.set((msg: MimeMessage) => {
-       lastMessage = Full(msg)
-       MailerSpec.this.notifyAll()})
-
-    def touch() {
-      Props.testMode
-      Thread.sleep(10)
-    } // do nothing, but force initialization of this class
-  }
-
   MyMailer.touch()
 
   import MyMailer._
@@ -57,7 +44,8 @@ object MailerSpec extends Specification {
     }
   }
 
-  "Mailer" should {
+  "A Mailer" should {
+
     "deliver simple messages as simple messages" in {
       val msg = doNewMessage {
         sendMail(
@@ -65,11 +53,11 @@ object MailerSpec extends Specification {
           Subject("This is a simple email"),
           To("recipient@nowhere.com"),
           PlainMailBodyType("Here is some plain text.")
-          )
+        )
       }
 
       msg.getContent match {
-        case s: String =>
+        case s: String => true must_== true
         case x => fail("The simple message has content type of " + x.getClass.getName)
       }
     }
@@ -82,11 +70,11 @@ object MailerSpec extends Specification {
           To("recipient@nowhere.com"),
           PlainMailBodyType("Here is some plain text."),
           PlainMailBodyType("Here is some more plain text.")
-          )
+        )
       }
 
       msg.getContent match {
-        case mp: MimeMultipart =>
+        case mp: MimeMultipart => true must_== true
         case x => fail("The complex message has content type of " + x.getClass.getName)
       }
     }
@@ -98,16 +86,28 @@ object MailerSpec extends Specification {
           Subject("This is a rich email"),
           To("recipient@nowhere.com"),
           XHTMLMailBodyType(<html> <body>Here is some rich text</body> </html>)
-          )
+        )
       }
 
       msg.getContent match {
-        case mp: MimeMultipart =>
+        case mp: MimeMultipart => true must_== true
         case x => fail("The complex message has content type of " + x.getClass.getName)
       }
     }
   }
 }
 
-}
+
+object MyMailer extends MailerImpl {
+    @volatile var lastMessage: Box[MimeMessage] = Empty
+
+   testModeSend.default.set((msg: MimeMessage) => {
+     lastMessage = Full(msg)
+//     MailerSpec.this.notifyAll()
+   })
+
+  def touch() {
+    Props.testMode
+    Thread.sleep(10)
+  } // do nothing, but force initialization of this class
 }

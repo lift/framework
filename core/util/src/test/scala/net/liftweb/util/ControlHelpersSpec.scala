@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.org.specs.runner._
-import _root_.org.specs._
+import org.specs.Specification
 import common._
+import ControlHelpers._
 
-class ControlHelpersSpecTest extends Runner(ControlHelpersSpec) with JUnit
-object ControlHelpersSpec extends Specification with ControlHelpers with ClassHelpers {
+
+/**
+ * Systems under specification for ControlHelpers.
+ */
+object ControlHelpersSpec extends Specification("ControlHelpers Specification") {
+
   "the tryo function" should {
     "return a Full can if the tested block doesn't throw an exception" in {
       tryo { "valid" } must_== Full("valid")
@@ -56,7 +60,4 @@ object ControlHelpersSpec extends Specification with ControlHelpers with ClassHe
       tryo(List(classOf[RuntimeException]), Full(callback)) { "valid" }
     }
   }
-}
-
-}
 }

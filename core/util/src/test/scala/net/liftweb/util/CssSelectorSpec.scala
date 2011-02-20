@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.org.specs._
-import _root_.org.specs.runner._
-import _root_.scala.xml._
+import org.specs.Specification
 import common._
+import BindHelpers._
 
-object CssSelectorSpec extends Specification  {
-  import BindHelpers._
-  
+
+/**
+ * Systems under specification for CSS Selector.
+ */
+object CssSelectorSpec extends Specification("CSS Selector Specification")  {
+
   "CssSelector" should {
     "fail for garbage input" in {
       CssSelectorParser.parse(" 49234e23") must_== Empty
@@ -174,10 +176,6 @@ object CssSelectorSpec extends Specification  {
       CssSelectorParser.parse(".foo  [woof] ").open_! must_== 
       ClassSelector("foo", Full(AttrSubNode("woof")))
     }
-
   }
-}
-class CssSelectorSpecTest extends JUnit4(CssSelectorSpec)
 
-}
 }

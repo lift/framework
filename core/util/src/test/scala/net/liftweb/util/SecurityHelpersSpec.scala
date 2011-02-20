@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,18 @@
  */
 
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.org.specs._
-import _root_.java.io.ByteArrayInputStream
-import common._
+import org.specs.Specification
+import SecurityHelpers._
 
-object SecurityHelpersSpec extends Specification with SecurityHelpers with IoHelpers with StringHelpers {
+
+/**
+ * Systems under specification for SecurityHelpers.
+ */
+object SecurityHelpersSpec extends Specification("SecurityHelpers Specification") {
+
   "Security Helpers" should {
     "provide a randomLong method returning a random Long modulo a number" in {
       randomLong(7L) must be_<(7L)
@@ -69,9 +73,5 @@ object SecurityHelpersSpec extends Specification with SecurityHelpers with IoHel
       hexDigest256("hello".getBytes) must_!= hexDigest256("hell0".getBytes)
     }
   }
-}
-import _root_.org.specs.runner._
-class SecurityHelpersSpecTest extends JUnit4(SecurityHelpersSpec)
 
-}
 }

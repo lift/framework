@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.org.specs._
-import _root_.org.specs.runner._
-import common._
-import scala.xml._
+import java.io.ByteArrayInputStream
+import xml.{Text, Unparsed}
+import org.specs.Specification
 
-class ToXmlParseTest extends JUnit4(XmlParseSpecs)
-object XmlParseSpecs extends Specification {
+
+/**
+ * Systems under specification for XmlParser, specifically PCDataMarkupParser.
+ */
+object XmlParserSpec extends Specification("Xml Parser Specification") {
+
   "Multiple attributes with same name, but different namespace" should {
     "parse correctly" >> {
       val actual =
@@ -36,7 +39,6 @@ object XmlParseSpecs extends Specification {
         <lift:Menu.builder  li_path:class="p" li_item:class="i"/>
       </lift:surround>
 
-      import _root_.java.io.ByteArrayInputStream
       val bis = new ByteArrayInputStream(actual.toString.getBytes("UTF-8"))
       val parsed = PCDataXmlParser(bis).open_!
       parsed must ==/(expected)
@@ -93,7 +95,4 @@ object XmlParseSpecs extends Specification {
     str.toList.foldLeft(0)((a, b) => a + cntIllegal(b)) must_== 0
   }
 
-}
-
-}
 }

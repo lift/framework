@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.org.specs._
-import _root_.org.specs.runner._
-import _root_.scala.xml._
-import common._
+import _root_.org.specs.Specification
 
-class PCDataMarkupTest extends JUnit4(PCDataMarkupSpecs)
-object PCDataMarkupSpecs extends Specification {
+
+/**
+ * Systems under specification for PCDataXmlParser.
+ */
+object PCDataXmlParserSpec extends Specification("PCDataXmlParser Specification") {
 val data1 = """
 
 
@@ -77,7 +77,4 @@ val data3 = """<?xml version="1.0" encoding="UTF-8"?>
 
    }
 
-}
-
-}
 }

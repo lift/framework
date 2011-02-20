@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,135 +14,71 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.org.specs._
-import _root_.org.specs.runner._
+import xml.XML._
+import org.specs.Specification
 import common._
+import ControlHelpers._
+import HeadHelper._
 
-class ToHeadTest extends JUnit4(ToHeadSpecs)
-object ToHeadSpecs extends Specification {
-   "lift <head> merger" should {
-     "merge /html/body//head into existing /html/head section" >> {
-       val actual = <html>
-         <head>
-           <title>hello</title>
-         </head>
-         <body>
-           blablabla
-           <head>
-             <script type="text/javascript" src="myScript.js"></script>
-           </head>
-           <div>
-             sub section
-             <head>
-               <style><![CDATA[
-               .myClass {
-                 text-align:right;
-                 }
-               ]]></style>
-             </head>
-           </div>
-         </body>
-       </html>
-       ;
-       val expected = <html>
-         <head>
-           <title>hello</title>
-           <script type="text/javascript" src="myScript.js"></script>
-           <style><![CDATA[
-           .myClass {
-             text-align:right;
-           }
-           ]]></style>
-         </head>
-         <body>
-           blablabla
-           <div>
-             sub section
-           </div>
-         </body>
-       </html>
-       HeadHelper.mergeToHtmlHead(actual).toString.replaceAll("\\s", "") must_==(expected.toString.replaceAll("\\s", ""))
-     }
 
-     "merge <head> from real example" >> {
-       val actual = <html xmlns:lift="http://liftweb.net/" xmlns="http://www.w3.org/1999/xhtml">
-          <head>
-            <meta content="text/html; charset=UTF-8" http-equiv="content-type"></meta>
-            <meta content="" name="description"></meta>
-            <meta content="" name="keywords"></meta>
+/**
+ * Systems under specification for ToHead.
+ */
+object ToHeadSpec extends Specification("ToHead Specification") {
 
-            <title>lift webapptest</title>
-            <script type="text/javascript" src="/scripts/jquery-1.2.1.js"></script>
-          </head>
-          <body>
-            <head>
-              <script type="text/javascript" src="foo.js" id="fromFrag"></script>
-            </head>
-            <h2>Welcome to your project!</h2>
-            <ul><li><a href="/">Home</a></li><li><a href="/htmlFragmentWithHead" id="current">htmlFragmentWithHead</a></li><li><a href="/htmlSnippetWithHead">htmlSnippetWithHead</a></li></ul>
-          </body>
-        </html>
-       val expected = <html xmlns:lift="http://liftweb.net/" xmlns="http://www.w3.org/1999/xhtml">
-          <head>
-            <meta content="text/html; charset=UTF-8" http-equiv="content-type"></meta>
-            <meta content="" name="description"></meta>
-            <meta content="" name="keywords"></meta>
+  "lift <head> merger" should {
+    "merge /html/body//head into existing /html/head section" in {
+      val susfiles = for {
+        act <- tryo(getClass.getResource("ToHeadSpec.actual1.html")).filter(_ ne null)
+        exp <- tryo(getClass.getResource("ToHeadSpec.expected1.html")).filter(_ ne null)
+      } yield (act, exp)
 
-            <title>lift webapptest</title>
-            <script type="text/javascript" src="/scripts/jquery-1.2.1.js"></script>
-            <script type="text/javascript" src="foo.js" id="fromFrag"></script>
-          </head>
-          <body>
-            <h2>Welcome to your project!</h2>
-            <ul><li><a href="/">Home</a></li><li><a href="/htmlFragmentWithHead" id="current">htmlFragmentWithHead</a></li><li><a href="/htmlSnippetWithHead">htmlSnippetWithHead</a></li></ul>
-          </body>
-        </html>
-       HeadHelper.mergeToHtmlHead(actual) must ==/(expected)
-     }
+      susfiles match {
+        case Full(sus) =>
+          val actual = load(sus._1)
+          val expected = load(sus._2)
+          mergeToHtmlHead(actual).toString.replaceAll("\\s", "") must_==
+          (expected.toString.replaceAll("\\s", ""))
+        case _         =>
+          fail("Failed loading test files") // TODO: Improve error message
+      }
+    }
 
-     "merge <lift:tohead> into a new head if not previously exist" >> {
-       val actual = <html>
-         <head/>
-         <body>
-           blablabla
-           <head>
-             <script type="text/javascript" src="myScript.js"></script>
-           </head>
-           <div>
-             sub section
-             <head>
-               <style>
-               .myClass {{
-                 text-align:right;
-               }}
-               </style>
-             </head>
-           </div>
-         </body>
-       </html>
+    "merge <head> from real example" in {
+      val susfiles = for {
+        act <- tryo(getClass.getResource("ToHeadSpec.actual2.html")).filter(_ ne null)
+        exp <- tryo(getClass.getResource("ToHeadSpec.expected2.html")).filter(_ ne null)
+      } yield (act, exp)
 
-       val expected = <html>
-         <head>
-           <script type="text/javascript" src="myScript.js"></script>
-           <style>
-           .myClass {{
-             text-align:right;
-           }}
-           </style>
-         </head>
-         <body>
-           blablabla
-           <div>
-             sub section
-           </div>
-         </body>
-       </html>
+      susfiles match {
+        case Full(sus) =>
+          val actual = load(sus._1)
+          val expected = load(sus._2)
+          mergeToHtmlHead(actual) must ==/(expected)
+        case _         =>
+          fail("Failed loading test files") // TODO: Improve error message
+      }
+    }
 
-      HeadHelper.mergeToHtmlHead(actual).toString.replaceAll("\\s", "") must_==(expected.toString.replaceAll("\\s", ""))
-     }
+    "merge <lift:tohead> into a new head if not previously exist" in {
+      val susfiles = for {
+        act <- tryo(getClass.getResource("ToHeadSpec.actual3.html")).filter(_ ne null)
+        exp <- tryo(getClass.getResource("ToHeadSpec.expected3.html")).filter(_ ne null)
+      } yield (act, exp)
+
+      susfiles match {
+        case Full(sus) =>
+          val actual = load(sus._1)
+          val expected = load(sus._2)
+          mergeToHtmlHead(actual).toString.replaceAll("\\s", "") must_==
+          (expected.toString.replaceAll("\\s", ""))
+        case _         =>
+          fail("Failed loading test files") // TODO: Improve error message
+      }
+    }
    }
 
   /*
@@ -210,7 +146,4 @@ object ToHeadSpecs extends Specification {
      }
    }
 */
-}
-
-}
 }

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import net.liftweb.sbt._
 import sbt._
+import net.liftweb.sbt._
 
 
 class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with LiftParentProject {
@@ -92,7 +92,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
     override def libraryDependencies = super.libraryDependencies ++ libs ++ Seq(TestScope.junit)
 
     // TODO: Remove these and resort to LiftDefaultProject settings
-    override def compileOptions = Seq("-Xwarninit", "-encoding", "utf8").map(CompileOption)
+    // override def compileOptions = Seq("-Xwarninit", "-encoding", "utf8").map(CompileOption)
 
     // System property hack for derby.log, webapptests
     override def testAction =
@@ -105,9 +105,10 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
 
     // FIXME: breaks with SBT
     override def testOptions =
+      TestFilter((name: String) => name.endsWith("ToHeadSpec")) ::
       ExcludeTests(
         // Core tests
-        "net.liftweb.actor.ActorSpec" :: "net.liftweb.util.ActorPingUnit" :: "net.liftweb.util.ActorPingSpec" ::
+        "net.liftweb.util.ActorPingUnit" :: "net.liftweb.util.ActorPingSpec" ::
         // Web tests
         "net.liftweb.webapptest.OneShot" :: "net.liftweb.webapptest.ToHeadUsages" :: "net.liftweb.http.SnippetSpec" ::
         // Persistence tests

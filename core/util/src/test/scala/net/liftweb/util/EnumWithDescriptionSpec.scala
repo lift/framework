@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,65 +14,64 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.java.util.GregorianCalendar
-import _root_.org.specs.runner._
-import _root_.org.specs._
-import common._
+import org.specs.Specification
 
-object Title2 extends EnumWithDescription {
-    val mr = Value("MR", "Mr")
-    val mrs = Value("MRS", "Mrs")
-    val dr = Value("DR", "Dr")
-    val sir = Value("SirS", "Sir")
-}
 
-object T2 extends EnumWithDescription {
-    val mr = Value("MR", "Mr")
-    val mrs = Value("MRS", "Mrs")
-}
+/**
+ * Systems under specification for EnumWithDescription.
+ */
+object EnumWithDescriptionSpec extends Specification("EnumWithDescription Specification") {
 
-class EnumWithDescriptionSpecTest extends JUnit4(EnumWithDescriptionSpec)
-object EnumWithDescriptionSpec extends Specification {
-
-    "An enumWithDescription" should {
-        "have a name" in {
-            val t = T2.valueOf("MR") == Some(T2.mr)
-            t must beTrue
-        }
-
-        "have a name" in {
-            Title2.mr.toString must_== "MR"
-        }
-
-        "have a type 1" in {
-            Title2.mr mustEqual Title2.mr
-        }
-
-        "have a type 2" in {
-            Title2.mr mustEqual Title2.valueOf("MR").getOrElse(null)
-        }
-
-        "have a type 3" in {
-            Title2.dr mustEqual Title2.valueOf("DR").getOrElse(null)
-        }
-
-        "have a mr description" in {
-            Title2.mr.description must_== "Mr"
-        }
-
-        "be able to be created from a string name" in {
-            Title2.valueOf("MRS").getOrElse(null) mustEqual Title2.mrs
-        }
-
-        "have a mrs description" in {
-            Title2.valueOf("MRS").getOrElse(null).description mustMatch "Mrs"
-        }
+  "An enumWithDescription" should {
+    "have a name" in {
+      val t = Title2.valueOf("MR") == Some(Title2.mr)
+      t must beTrue
     }
 
-}
+    "have a name" in {
+      Title1.mr.toString must_== "MR"
+    }
+
+    "have a type 1" in {
+      Title1.mr mustEqual Title1.mr
+    }
+
+    "have a type 2" in {
+      Title1.mr mustEqual Title1.valueOf("MR").getOrElse(null)
+    }
+
+    "have a type 3" in {
+      Title1.dr mustEqual Title1.valueOf("DR").getOrElse(null)
+    }
+
+    "have a mr description" in {
+      Title1.mr.description must_== "Mr"
+    }
+
+    "be able to be created from a string name" in {
+      Title1.valueOf("MRS").getOrElse(null) mustEqual Title1.mrs
+    }
+
+    "have a mrs description" in {
+      Title1.valueOf("MRS").getOrElse(null).description mustMatch "Mrs"
+    }
+  }
 
 }
+
+
+object Title1 extends EnumWithDescription {
+  val mr  = Value("MR", "Mr")
+  val mrs = Value("MRS", "Mrs")
+  val dr  = Value("DR", "Dr")
+  val sir = Value("SirS", "Sir")
+}
+
+
+object Title2 extends EnumWithDescription {
+  val mr  = Value("MR", "Mr")
+  val mrs = Value("MRS", "Mrs")
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.org.specs.Specification
-import _root_.org.specs.runner._
-import _root_.java.util._
-import _root_.java.text._
-import _root_.org.scalacheck.Gen._
-import _root_.org.scalacheck.Prop._
-import _root_.org.scalacheck.Arbitrary
-import _root_.org.specs.util.Products._
-import _root_.org.specs.mock.Mocker
-import _root_.org.specs.ScalaCheck
-
+import java.util.{Calendar, Date}
+import org.specs.{ScalaCheck, Specification}
+import org.specs.util.Products._
+import org.scalacheck.Gen._
+import org.scalacheck.Prop._
 import common._
+import TimeHelpers._
 
-class TimeHelpersTest extends JUnit4(TimeHelpersSpec)
-object TimeHelpersSpec extends Specification with  ScalaCheck {
-  object MyHelpers extends ControlHelpers with TimeHelpers with  TimeAmountsGen
-  import MyHelpers._
+
+
+/**
+ * Systems under specification for TimeHelpers.
+ */
+object TimeHelpersSpec extends Specification("TimeHelpers Specification") with ScalaCheck with TimeAmountsGen {
 
   "A TimeSpan" can {
     "be created from a number of milliseconds" in {
@@ -79,6 +76,7 @@ object TimeHelpersSpec extends Specification with  ScalaCheck {
       3.seconds must_!= "string"
     }
   }
+
   "A TimeSpan" should {
     "return a new TimeSpan representing the sum of the 2 times when added with another TimeSpan" in {
       3.seconds + 3.seconds must_== 6.seconds
@@ -108,6 +106,7 @@ object TimeHelpersSpec extends Specification with  ScalaCheck {
       conversionIsOk && timeSpanStringIsPluralized must pass
     }
   }
+
   "the TimeHelpers" should {
     "provide a 'seconds' function transforming a number of seconds into millis" in {
       seconds(3) must_== 3 * 1000
@@ -181,6 +180,7 @@ object TimeHelpersSpec extends Specification with  ScalaCheck {
       toDate(internetDateFormatter.format(d)).get.getTime.toLong must beCloseTo(d.getTime.toLong, 1000L)
     }
   }
+
   "The Calendar class" should {
     "have a setDay method setting the day of month and returning the updated Calendar" in {
       day(today.setTimezone(utc).setDay(1).getTime) must_== 1
@@ -199,9 +199,13 @@ object TimeHelpersSpec extends Specification with  ScalaCheck {
     }
   }
 }
-trait TimeAmountsGen { self: TimeHelpers =>
+
+
+trait TimeAmountsGen {
+
   type TimeAmounts = Tuple2[String, Tuple6[(Int, String), (Int, String), (Int, String), (Int, String), (Int, String), (Int, String)]]
-  val timeAmounts = for {
+  val timeAmounts =
+    for {
       w <- choose(0, 2)
       d <- choose(0, 6)
       h <- choose(0, 23)
@@ -210,8 +214,5 @@ trait TimeAmountsGen { self: TimeHelpers =>
       ml <- choose(0, 999)
     }
     yield (TimeSpan(weeks(w) + days(d) + hours(h) + minutes(m) + seconds(s) + ml).toString,
-           ((w, "week"), (d, "day"), (h, "hour"), (m, "minute"), (s, "second"), (ml, "milli")))
-}
-
-}
+      ((w, "week"), (d, "day"), (h, "hour"), (m, "minute"), (s, "second"), (ml, "milli")))
 }

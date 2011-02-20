@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.org.specs.Specification
-import _root_.org.specs.runner._
+import org.specs.Specification
 import common._
 
-class HelpersTest extends Runner(HelpersSpec) with JUnit
 
 object HelpersSpec extends Specification {
-}
-
-}
 }
