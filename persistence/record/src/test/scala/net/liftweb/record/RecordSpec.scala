@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
+package net.liftweb
+package record
 
 import java.util.Calendar
 import scala.xml.{Node, Text}
@@ -31,10 +31,11 @@ import org.specs.runner.{ConsoleRunner, JUnit3}
 
 import fixtures._
 
-class RecordSpecsAsTest extends JUnit3(RecordSpecs)
-object RecordSpecsRunner extends ConsoleRunner(RecordSpecs)
 
-object RecordSpecs extends Specification {
+/**
+ * Systems under specification for Record.
+ */
+object RecordSpec extends Specification("Record Specification") {
   "Record field introspection" should {
     val rec = FieldTypeTestRecord.createRecord
     val allExpectedFieldNames: List[String] = (for {
@@ -310,7 +311,4 @@ object RecordSpecs extends Specification {
       BasicTestRecord.metaFields must_==  List(BasicTestRecord.field2, BasicTestRecord.field1, BasicTestRecord.field3)
     }
   }
-}
-
-}
 }

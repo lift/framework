@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
+package net.liftweb
+package mongodb
 
 import java.util.Date
 
@@ -29,7 +29,6 @@ import net.liftweb.json.ext.JsonBoxSerializer
 
 import com.mongodb._
 
-class MongoDocumentSpecsTest extends JUnit4(MongoDocumentSpecs)
 
 package mongodocumentspecs {
   case class Primitives(
@@ -80,7 +79,10 @@ package mongodocumentspecs {
   }
 }
 
-object MongoDocumentSpecs extends Specification with MongoTestKit {
+/**
+ * System under specification for MongoDocument
+ */
+object MongoDocumentSpec extends Specification("MongoDocument Specification") with MongoTestKit {
 
   "MongoDocument" should {
 
@@ -162,7 +164,4 @@ object MongoDocumentSpecs extends Specification with MongoTestKit {
       btdFromDb.get must_== btd
     }
   }
-}
-
-}
 }

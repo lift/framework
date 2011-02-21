@@ -56,11 +56,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
 
   // Framework apidocs
   // -----------------
-  lazy val framework_doc = project(".", "lift-framework-doc", new DefaultProject(_) with LiftDefaultDocProject {
-    // TODO: Make it more generic or move it to ivyXml
-    val blacklists = "commons-codec-1.2.jar" :: "commons-codec-1.3.jar" :: Nil
-    override def docClasspath = super.docClasspath.filter(f => !blacklists.contains(f.asFile.getName))
-  })
+  lazy val framework_doc = project(".", "lift-framework-doc", new DefaultProject(_) with LiftDefaultDocProject)
 
 
   private def coreProject = frameworkProject("core") _
@@ -99,6 +95,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
       super.testAction dependsOn
       task {
         System.setProperty("net.liftweb.webapptest.src.test.webapp", (testSourcePath / "webapp").absString)
+        System.setProperty("apacheds.working.dir", (outputPath / "apacheds").absolutePath)
         None
       }
 
@@ -106,11 +103,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
     override def testOptions =
       ExcludeTests(
         // Web tests
-        "net.liftweb.webapptest.OneShot" :: "net.liftweb.webapptest.ToHeadUsages" :: "net.liftweb.http.SnippetSpec" ::
-        // Persistence tests
-        "net.liftweb.mapper.MapperSpecs" :: "net.liftweb.squerylrecord.SquerylRecordSpecs" ::
-        // LDAP
-        "net.liftweb.ldap.LdapSpecs" :: Nil) ::
+        "net.liftweb.webapptest.OneShot" :: "net.liftweb.webapptest.ToHeadUsages" :: "net.liftweb.http.SnippetSpec" :: Nil) ::
       super.testOptions.toList
   }
 

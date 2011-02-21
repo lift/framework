@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
+package net.liftweb
+package record
 
 import field.{Countries, PasswordField, StringField}
 
@@ -35,10 +35,11 @@ import org.specs.runner.{ConsoleRunner, JUnit3}
 
 import fixtures._
 
-class FieldSpecsAsTest extends JUnit3(FieldSpecs)
-object FieldSpecsRunner extends ConsoleRunner(FieldSpecs)
 
-object FieldSpecs extends Specification {
+/**
+ * Systems under specification for RecordField.
+ */
+object FieldSpec extends Specification("Record Field Specification") {
   def passBasicTests[A](example: A, mandatory: MandatoryTypedField[A], legacyOptional: MandatoryTypedField[A], optional: OptionalTypedField[A])(implicit m: scala.reflect.Manifest[A]): Unit = {
     val canCheckDefaultValues =
       !mandatory.defaultValue.isInstanceOf[Calendar] // don't try to use the default value of date/time typed fields, because it changes from moment to moment!
@@ -478,7 +479,4 @@ object FieldSpecs extends Specification {
       Full("<select tabindex=\"1\" name=\".*\" id=\"mandatoryTimeZoneField_id_field\">.*<option value=\""+example+"\" selected=\"selected\">"+example+"</option>.*</select>")
     )
   }
-}
-
-}
 }

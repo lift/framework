@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
 import _root_.org.specs._
 import _root_.org.specs.runner.JUnit3
@@ -29,12 +29,9 @@ import _root_.java.sql.{Connection, DriverManager}
 import view._
 
 
-class ItemsListSpecsAsTest extends JUnit3(ItemsListSpecs)
-object ItemsListSpecsRunner extends ConsoleRunner(ItemsListSpecs)
+object ItemsListSpec extends Specification {
 
-object ItemsListSpecs extends Specification {
-
-  val provider = DBProviders.H2MemoryProvider
+  val provider = DbProviders.H2MemoryProvider
 
   def init = {
     provider.setupDB
@@ -93,9 +90,4 @@ object SampleItem extends SampleItem with LongKeyedMetaMapper[SampleItem] {
     counter += 1
     x
   }
-}
-
-
-
-}
 }

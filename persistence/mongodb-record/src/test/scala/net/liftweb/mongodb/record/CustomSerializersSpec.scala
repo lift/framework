@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
-package record {
+package net.liftweb
+package mongodb
+package record
 
 import common._
 import field._
@@ -32,8 +32,6 @@ import org.specs.Specification
 import org.specs.runner.JUnit4
 
 import net.liftweb.record.field._
-
-class CustomSerializersSpecsTest extends JUnit4(CustomSerializersSpecs)
 
 package customserializersspecs {
 
@@ -132,7 +130,11 @@ package customserializersspecs {
   }
 }
 
-object CustomSerializersSpecs extends Specification with MongoTestKit {
+
+/**
+ * Systems under specification for CustomSerializers.
+ */
+object CustomSerializersSpec extends Specification("CustomSerializers Specification") with MongoTestKit {
 
   import customserializersspecs._
 
@@ -373,8 +375,4 @@ object CustomSerializersSpecs extends Specification with MongoTestKit {
       nfl._id.value mustEqual nflid
     }
   }
-}
-
-}
-}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,23 +11,22 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package couchdb {
+package net.liftweb
+package couchdb
 
-import _root_.java.net.ConnectException
-import _root_.dispatch.{Http, StatusCode}
-import _root_.net.liftweb.common.{Box, Full}
-import _root_.net.liftweb.json.Implicits._
-import _root_.net.liftweb.json.JsonAST.{JArray, JObject, JValue, render}
-import _root_.net.liftweb.json.JsonDSL._
-import _root_.net.liftweb.json.Printer.compact
-import _root_.org.specs._
-import _root_.org.specs.runner.JUnit4
+import java.net.ConnectException
+import dispatch.{Http, StatusCode}
+import common._
+import json._
+import JsonDSL._
+import org.specs.Specification
 import DocumentHelpers.jobjectToJObjectExtension
 
-class QueryTestSpecsAsTest extends JUnit4(QueryTestSpecs)
 
-object QueryTestSpecs extends Specification {
+/**
+ * Systems under specification for CouchQuery.
+ */
+object CouchQuerySpec extends Specification("CouchQuery Specification") {
   def setup = {
     val http = new Http
     val database = new Database("test")
@@ -185,7 +184,4 @@ object QueryTestSpecs extends Specification {
       }
     }
   }
-}
-
-}
 }

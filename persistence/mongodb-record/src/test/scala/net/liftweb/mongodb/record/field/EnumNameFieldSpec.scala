@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
-package record {
-package field {
+package net.liftweb
+package mongodb
+package record
+package field
 
 import org.bson.types.ObjectId
 import org.specs.Specification
@@ -65,9 +65,11 @@ package enumnamefieldspecs {
   }
 }
 
-class EnumNameFieldSpecsTest extends JUnit4(EnumNameFieldSpecs)
 
-object EnumNameFieldSpecs extends Specification with MongoTestKit {
+/**
+ * Systems under specification for EnumNameField.
+ */
+object EnumNameFieldSpec extends Specification("EnumNameField Specification") with MongoTestKit {
 
   import enumnamefieldspecs._
 
@@ -135,9 +137,4 @@ object EnumNameFieldSpecs extends Specification with MongoTestKit {
       }
     }
   }
-}
-
-}
-}
-}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,23 +11,22 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package couchdb {
+package net.liftweb
+package couchdb
 
-import _root_.java.net.ConnectException
-import _root_.dispatch.{Http, StatusCode}
-import _root_.net.liftweb.common.{Box, Full}
-import _root_.net.liftweb.json.Implicits._
-import _root_.net.liftweb.json.JsonAST.{JObject, JString, render}
-import _root_.net.liftweb.json.JsonDSL._
-import _root_.net.liftweb.json.Printer.compact
-import _root_.org.specs._
-import _root_.org.specs.runner.JUnit4
-import DocumentHelpers.{forceStore, jobjectToJObjectExtension, stripIdAndRev, updateIdAndRev}
+import java.net.ConnectException
+import dispatch.{Http, StatusCode}
+import org.specs.Specification
+import common._
+import json._
+import JsonDSL._
+import DocumentHelpers._
 
-class DocumentTestSpecsAsTest extends JUnit4(DocumentTestSpecs)
 
-object DocumentTestSpecs extends Specification {
+/**
+ * Systems under specification for CouchDocument.
+ */
+object CouchDocumentSpec extends Specification("CouchDocument Specification") {
   def setup = {
     val http = new Http
     val database = new Database("test")
@@ -105,7 +104,4 @@ object DocumentTestSpecs extends Specification {
       stripIdAndRev(verifyAndOpen(forceStore(http, database, doc))) must_== testDoc1
     }
   }
-}
-
-}
 }

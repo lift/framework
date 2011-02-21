@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,22 +11,18 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package couchdb {
+package net.liftweb
+package couchdb
 
 import java.net.ConnectException
 import dispatch.{Http, StatusCode}
-import net.liftweb.common.{Failure, Full}
-import net.liftweb.json.Implicits.{int2jvalue, string2jvalue}
-import net.liftweb.json.JsonAST.{JField, JInt, JObject, JString, render}
-import net.liftweb.json.JsonDSL.{jobject2assoc, pair2Assoc, pair2jvalue}
-import net.liftweb.json.Printer.compact
-import net.liftweb.record.field.{IntField, StringField}
-import org.specs._
-import org.specs.runner.JUnit4
+import org.specs.Specification
+import common._
+import json._
+import JsonDSL._
+import record.field.{IntField, StringField}
 import DocumentHelpers.{jobjectToJObjectExtension, stripIdAndRev}
 
-class CouchRecordTestSpecsAsTest extends JUnit4(CouchRecordTestSpecs)
 
 package couchtestrecords {
   class Person private () extends CouchRecord[Person] {
@@ -47,7 +43,10 @@ package couchtestrecords {
   object Company extends Company with CouchMetaRecord[Company]
 }
 
-object CouchRecordTestSpecs extends Specification {
+/**
+ * Systems under specification for CouchRecord.
+ */
+object CouchRecordSpec extends Specification("CouchRecord Specification") {
   import CouchDB.defaultDatabase
   import couchtestrecords._
   
@@ -316,7 +315,4 @@ object CouchRecordTestSpecs extends Specification {
       Person.queryViewDocs("test", "oldest", _.dontReduce) must beLike { case Full(seq) if seq.isEmpty => true }
     }
   }
-}
-
-}
 }

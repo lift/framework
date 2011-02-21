@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,17 @@
 package net.liftweb
 package squerylrecord
 
-import RecordTypeMode._
-import MySchema.{ TestData => td }
-import MySchema.{ companies, employees, rooms, roomAssignments }
-
-import record.{ BaseField, Record }
-
 import org.specs.Specification
-import org.specs.runner.JUnit4
-import org.junit.runner.RunWith
-import org.specs.runner.JUnitSuiteRunner
+import record.{BaseField, Record}
+import RecordTypeMode._
+import MySchema.{TestData => td}
+import MySchema.{companies, employees, rooms, roomAssignments}
+
 
 /**
- * Class for running the specs tests with JUnit4.
+ * Systems under specification for SquerylRecord.
  */
-@RunWith(classOf[JUnitSuiteRunner])
-class SquerylRecordSpecsTest extends JUnit4(SquerylRecordSpecs)
-
-object SquerylRecordSpecs extends Specification {
+object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
 
   doBeforeSpec {
     DBHelper.initSquerylRecordWithInMemoryDB()

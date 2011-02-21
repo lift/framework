@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
+package net.liftweb
+package mongodb
 
-import json.JsonAST._
+//import json.JsonAST._
 
 import java.util.{Calendar, Date, TimeZone}
 
 import org.bson.types.ObjectId
 import org.specs.Specification
-import org.specs.runner.JUnit4
 
-class CustomSerializersSpecsTest extends JUnit4(CustomSerializersSpecs)
 
 package customserializersspecs {
 
@@ -50,7 +48,11 @@ package customserializersspecs {
   }
 }
 
-object CustomSerializersSpecs extends Specification with MongoTestKit {
+
+/**
+ * Systems under specification for CustomSerializers.
+ */
+object CustomSerializersSpec extends Specification("CustomSerializers Specification") with MongoTestKit {
 
   import customserializersspecs._
 
@@ -99,8 +101,4 @@ object CustomSerializersSpecs extends Specification with MongoTestKit {
       }
     }
   }
-}
-
-
-}
 }

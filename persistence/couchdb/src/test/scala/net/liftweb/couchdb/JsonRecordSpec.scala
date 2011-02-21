@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package couchdb {
+package net.liftweb
+package couchdb
 
-import net.liftweb.common.{Failure, Full, Empty}
-import net.liftweb.json.Implicits.{int2jvalue, string2jvalue}
-import net.liftweb.json.JsonAST.{JField, JInt, JObject, JString, JNull, render}
-import net.liftweb.json.JsonDSL.{jobject2assoc, pair2Assoc, pair2jvalue}
-import net.liftweb.json.Printer.compact
-import net.liftweb.record.field.{IntField, OptionalStringField, StringField}
-import org.specs._
-import org.specs.runner.JUnit4
+import org.specs.Specification
+import common._
+import json._
+import JsonDSL._
+import record.field._
 import DocumentHelpers.jobjectToJObjectExtension
 
-class JSONRecordTestSpecsAsTest extends JUnit4(JSONRecordTestSpecs)
 
 package jsontestrecords {
   class Person private () extends JSONRecord[Person] {
@@ -45,22 +41,26 @@ package jsontestrecords {
   }
 
   object Person extends Person with JSONMetaRecord[Person]
-  
+
   class Address extends JSONRecord[Address] {
-	  def meta = Address
-	
-	//  object country extends CountryField(this)
-	//  object postalCode extends PostalCodeField(this, country)
-	  object country extends StringField(this, 60)
-	  object postalCode extends StringField(this, 10)
-	  object city extends StringField(this, 60)
-	  object street extends StringField(this, 200)
-	}
-	
-	object Address extends Address with JSONMetaRecord[Address]
+    def meta = Address
+
+  //  object country extends CountryField(this)
+  //  object postalCode extends PostalCodeField(this, country)
+    object country extends StringField(this, 60)
+    object postalCode extends StringField(this, 10)
+    object city extends StringField(this, 60)
+    object street extends StringField(this, 200)
+  }
+
+  object Address extends Address with JSONMetaRecord[Address]
 }
 
-object JSONRecordTestSpecs extends Specification {
+
+/**
+ * Systems under specification for JsonRecord.
+ */
+object JsonRecordSpec extends Specification("JsonRecord Specification") {
   import jsontestrecords._
 
   def assertEqualPerson(a: Person, b: Person) = {
@@ -68,14 +68,14 @@ object JSONRecordTestSpecs extends Specification {
     a.age.valueBox must_== b.age.valueBox
     a.favoriteColor.valueBox must_== b.favoriteColor.valueBox
     a.address.valueBox.isEmpty must_== b.address.valueBox.isEmpty
-    for (aa <- a.address.valueBox ; ba <- b.address.valueBox) {
-	  aa.country.valueBox must_== ba.country.valueBox
-	  aa.postalCode.valueBox must_== aa.postalCode.valueBox
-	  aa.city.valueBox must_== aa.city.valueBox
-	  aa.street.valueBox must_== aa.street.valueBox
-    }
+    for (aa <- a.address.valueBox; ba <- b.address.valueBox) {
+        aa.country.valueBox must_== ba.country.valueBox
+        aa.postalCode.valueBox must_== aa.postalCode.valueBox
+        aa.city.valueBox must_== aa.city.valueBox
+        aa.street.valueBox must_== aa.street.valueBox
+      }
   }
-    
+
   "A JSON record" should {
     def testRec1: Person = Person.createRecord.name("Alice").age(25)
     val testDoc1: JObject = ("age" -> 25) ~ ("name" -> "Alice")
@@ -163,7 +163,4 @@ object JSONRecordTestSpecs extends Specification {
       recBox must verify (_.isDefined)
     }
   }
-}
-
-}
 }

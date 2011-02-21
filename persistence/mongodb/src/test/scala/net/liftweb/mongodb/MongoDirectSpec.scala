@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
+package net.liftweb
+package mongodb
 
 import java.util.{Date, UUID}
 import java.util.regex.Pattern
@@ -30,9 +30,11 @@ import net.liftweb.json.JsonDSL._
 
 import com.mongodb.{BasicDBObject, BasicDBObjectBuilder, DBObject}
 
-class MongoDirectExamplesTest extends JUnit4(MongoDirectExamples)
 
-object MongoDirectExamples extends Specification with MongoTestKit {
+/**
+ * System under specification for MongoDirect.
+ */
+object MongoDirectSpec extends Specification("MongoDirect Specification") with MongoTestKit {
 
   def date(s: String) = DefaultFormats.dateFormat.parse(s).get
 
@@ -291,7 +293,4 @@ object MongoDirectExamples extends Specification with MongoTestKit {
       dbo2.get("name") must_== dbo.get("name")
     }
   }
-}
-
-}
 }

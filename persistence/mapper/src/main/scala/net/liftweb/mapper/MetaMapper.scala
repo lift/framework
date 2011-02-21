@@ -130,7 +130,7 @@ object MapperRules extends Factory {
    *
    * To get snake_case, use this
    *
-   *  MapperRules.columnName =  (_,name) => StringHelpers.snakify(name)
+   *  MapperRules.tableName =  (_,name) => StringHelpers.snakify(name)
    */
   var tableName: (ConnectionIdentifier,String) => String = (_,name) => name.toLowerCase
 }

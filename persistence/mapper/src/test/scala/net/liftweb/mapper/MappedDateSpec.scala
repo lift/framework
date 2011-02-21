@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
 import _root_.org.specs._
 import _root_.org.specs.runner.JUnit3
@@ -25,10 +25,8 @@ import _root_.net.liftweb.util._
 
 import Helpers._
 
-class MappedDateSpecsAsTest extends JUnit3(MappedDateSpecs)
-object MappedDateSpecsRunner extends ConsoleRunner(MappedDateSpecs)
 
-object MappedDateSpecs extends Specification {
+object MappedDateSpec extends Specification {
   "MappedDate" should {
     "handle a Number in setFromAny" in {
       val dog = Dog2.create
@@ -50,6 +48,4 @@ object MappedDateSpecs extends Specification {
       dog.createdTime.is must beNull
     }
   }
-}
-}
 }

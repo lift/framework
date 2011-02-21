@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
-package record {
+package net.liftweb
+package mongodb
+package record
 
 import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
@@ -36,7 +36,6 @@ import org.bson.types.ObjectId
 
 import field._
 
-class MongoRecordExamplesTest extends JUnit4(MongoRecordExamples)
 
 package mongotestrecords {
 
@@ -234,7 +233,11 @@ package mongotestrecords {
   }
 }
 
-object MongoRecordExamples extends Specification with MongoTestKit {
+
+/**
+ * Systems under specification for MongoRecordExamples.
+ */
+object MongoRecordExamplesSpec extends Specification("MongoRecordExamples Specification") with MongoTestKit {
   import mongotestrecords._
   import net.liftweb.util.TimeHelpers._
 
@@ -566,8 +569,4 @@ object MongoRecordExamples extends Specification with MongoTestKit {
 
     if (!debug) StrictDoc.drop
   }
-}
-
-}
-}
 }

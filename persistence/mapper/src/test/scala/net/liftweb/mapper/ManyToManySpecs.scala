@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
 import org.specs._
-import _root_.org.specs.runner.{JUnit3, ConsoleRunner}
 
-class ManyToManySpecsAsTest extends JUnit3(ManyToManySpecs)
-object ManyToManySpecsRunner extends ConsoleRunner(ManyToManySpecs)
 
-object ManyToManySpecs extends Specification {
+object ManyToManySpec extends Specification {
 
-  val provider = DBProviders.H2MemoryProvider
+  val provider = DbProviders.H2MemoryProvider
   
   private def ignoreLogger(f: => AnyRef): Unit = ()
   def setupDB {
@@ -92,6 +89,3 @@ class PersonCompany extends Mapper[PersonCompany] {
   object company extends MappedLongForeignKey(this, Company)
 }
 object PersonCompany extends PersonCompany with MetaMapper[PersonCompany]
-
-}
-}

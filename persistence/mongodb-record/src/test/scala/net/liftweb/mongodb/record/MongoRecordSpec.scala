@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
-package record {
+package net.liftweb
+package mongodb
+package record
 
 import common._
 import http.js.JE._
@@ -34,9 +34,11 @@ import net.liftweb.record.field.Countries
 
 import com.mongodb.DBRef
 
-class MongoRecordSpecsTest extends JUnit4(MongoRecordSpecs)
 
-object MongoRecordSpecs extends Specification with MongoTestKit {
+/**
+ * Systems under specification for MongoRecord.
+ */
+object MongoRecordSpec extends Specification("MongoRecord Specification") with MongoTestKit {
 
   import fixtures._
 
@@ -436,8 +438,4 @@ object MongoRecordSpecs extends Specification with MongoTestKit {
     }
 
   }
-}
-
-}
-}
 }

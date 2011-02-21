@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,19 +11,18 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package couchdb {
+package net.liftweb
+package couchdb
 
-import _root_.java.net.ConnectException
-import _root_.dispatch.{Http, StatusCode}
-import _root_.net.liftweb.common.{Box, Empty, Full}
-import _root_.net.liftweb.util.ControlHelpers.tryo
-import _root_.org.specs._
-import _root_.org.specs.runner.JUnit4
+import java.net.ConnectException
+import dispatch.{Http, StatusCode}
+import org.specs.Specification
 
-class DatabaseTestSpecsAsTest extends JUnit4(DatabaseTestSpecs)
 
-object DatabaseTestSpecs extends Specification {
+/**
+ * Systems under specification for CouchDatabase.
+ */
+object CouchDatabaseSpec extends Specification("CouchDatabase Specification") {
   def setup = {
     val http = new Http
     val database = new Database("test")
@@ -81,7 +80,4 @@ object DatabaseTestSpecs extends Specification {
       http(database create) must_== () 
     }
   }
-}
-
-}
 }

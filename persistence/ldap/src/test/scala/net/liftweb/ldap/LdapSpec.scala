@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package ldap {
-
-import common.Full
-
-import _root_.org.specs._
-import _root_.org.specs.runner.JUnit3
-import _root_.org.specs.runner.ConsoleRunner
+package net.liftweb
+package ldap
 
 import javax.naming.CommunicationException
+
+import org.specs.Specification
 
 import org.apache.mina.util.AvailablePortFinder
 import org.apache.directory.server.core.DefaultDirectoryService
@@ -34,10 +30,13 @@ import org.apache.directory.server.xdbm.Index
 import org.apache.directory.server.core.entry.ServerEntry
 import org.apache.directory.shared.ldap.name.LdapDN
 
-class LdapSpecsAsTest extends JUnit3(LdapSpecs)
-object LdapSpecsRunner extends ConsoleRunner(LdapSpecs)
+import common.{Box, Full}
 
-object LdapSpecs extends Specification {
+
+/**
+ * Systems under specification for Ldap.
+ */
+object LdapSpec extends Specification("LDAP Specification") {
   val ROOT_DN = "dc=ldap,dc=liftweb,dc=net"
 
   // Thanks to Francois Armand for pointing this utility out!
@@ -52,9 +51,19 @@ object LdapSpecs extends Specification {
    * http://stackoverflow.com/questions/1560230/running-apache-ds-embedded-in-my-application
    */
   doBeforeSpec {
-    try {
+    (try {
       // Disable changelog
       service.getChangeLog.setEnabled(false)
+
+      // Set a working directory
+      val workingDir = Box[String](System.getProperty("apacheds.working.dir"))
+      workingDir match {
+        case Full(d) =>
+          val dir = new java.io.File(d)
+          dir.mkdirs
+          service.setWorkingDirectory(dir)
+        case _ =>
+      }
 
       // Set up a partition
       val partition = new JdbmPartition
@@ -91,9 +100,7 @@ object LdapSpecs extends Specification {
       ldap.start()
 
       println("Started LDAP server on port " + service_port)
-    } catch {
-      case e => e.printStackTrace
-    }
+    }) must not(throwAn[Exception]).orSkipExample
   }
 
   "LDAPVendor" should {
@@ -147,6 +154,3 @@ object LdapSpecs extends Specification {
     }
   }
 }
-
-
-}} // Close nested packages

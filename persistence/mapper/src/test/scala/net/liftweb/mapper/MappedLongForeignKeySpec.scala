@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
 import _root_.org.specs._
 import _root_.org.specs.runner.JUnit3
@@ -25,11 +25,9 @@ import _root_.net.liftweb.util._
 
 import Helpers._
 
-class MappedLongForeignKeySpecAsTest extends JUnit3(MappedLongForeignKeySpec)
-object MappedLongForeignKeySpecRunner extends ConsoleRunner(MappedLongForeignKeySpec)
 
 object MappedLongForeignKeySpec extends Specification {
-  def provider = DBProviders.H2MemoryProvider
+  def provider = DbProviders.H2MemoryProvider
 
   def doLog = false
 
@@ -38,9 +36,9 @@ object MappedLongForeignKeySpec extends Specification {
   def cleanup() {
     try { provider.setupDB } catch { case e if !provider.required_? => skip("Provider %s not available: %s".format(provider, e)) }
     Schemifier.destroyTables_!!(DefaultConnectionIdentifier, if (doLog) Schemifier.infoF _ else ignoreLogger _,  SampleTag, SampleModel, Dog, Mixer, Dog2, User)
-    Schemifier.destroyTables_!!(DBProviders.SnakeConnectionIdentifier, if (doLog) Schemifier.infoF _ else ignoreLogger _, SampleTagSnake, SampleModelSnake)
+    Schemifier.destroyTables_!!(DbProviders.SnakeConnectionIdentifier, if (doLog) Schemifier.infoF _ else ignoreLogger _, SampleTagSnake, SampleModelSnake)
     Schemifier.schemify(true, if (doLog) Schemifier.infoF _ else ignoreLogger _, DefaultConnectionIdentifier, SampleModel, SampleTag, User, Dog, Mixer, Dog2)
-    Schemifier.schemify(true, if (doLog) Schemifier.infoF _ else ignoreLogger _, DBProviders.SnakeConnectionIdentifier, SampleModelSnake, SampleTagSnake)
+    Schemifier.schemify(true, if (doLog) Schemifier.infoF _ else ignoreLogger _, DbProviders.SnakeConnectionIdentifier, SampleModelSnake, SampleTagSnake)
   }
 
 
@@ -91,6 +89,4 @@ object MappedLongForeignKeySpec extends Specification {
       dog.owner.is mustBe 0L
     }
   }
-}
-}
 }

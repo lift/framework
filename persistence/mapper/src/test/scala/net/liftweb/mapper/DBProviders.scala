@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
 import _root_.net.liftweb.common.{Box, Empty, Full, Failure}
 import _root_.net.liftweb.util.{Helpers, Log, Props}
@@ -25,7 +25,7 @@ import _root_.net.liftweb.mapper._
 import _root_.java.sql.{Connection, DriverManager}
 import _root_.java.io.File
 
-object DBProviders {
+object DbProviders {
   def asList = PostgreSqlProvider :: MySqlProvider :: DerbyProvider :: H2Provider :: H2MemoryProvider :: Nil
   // Uncomment to run tests faster, but only against H2 def asList =  H2MemoryProvider :: Nil
 
@@ -175,7 +175,4 @@ object DBProviders {
     }
     def propName: String = "maxdb_local"
   }
-}
-
-}
 }

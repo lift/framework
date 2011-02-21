@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
+package net.liftweb
+package mongodb
 
 import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
@@ -30,7 +30,6 @@ import net.liftweb.json.JsonDSL._
 import com.mongodb.{BasicDBList, BasicDBObject, DBObject, MongoException}
 import org.bson.types.ObjectId
 
-class MongoDocumentExamplesTest extends JUnit4(MongoDocumentExamples)
 
 package mongotestdocs {
   /*
@@ -140,7 +139,6 @@ package mongotestdocs {
   }
 
   case class MainJDoc(_id: ObjectId, name: String, refdoc: Option[MongoRef], refId: Option[ObjectId]) extends MongoDocument[MainJDoc] {
-
     def meta = MainJDoc
   }
 
@@ -174,7 +172,11 @@ package mongotestdocs {
 
 }
 
-object MongoDocumentExamples extends Specification with MongoTestKit {
+
+/**
+ * Systems under specification for MongoDocumentExamples.
+ */
+object MongoDocumentExamplesSpec extends Specification with MongoTestKit {
   import mongotestdocs._
 
   override def dbName = "lift_mongodocumentexamples"
@@ -221,7 +223,7 @@ object MongoDocumentExamples extends Specification with MongoTestKit {
 
     if (!debug) {
       all.size must_== 1
-      all.first must_== p2
+      all.head must_== p2
 
       // delete it
       p2.delete
@@ -656,7 +658,4 @@ object MongoDocumentExamples extends Specification with MongoTestKit {
     }
 
   }
-}
-
-}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
 import _root_.org.specs._
 import _root_.org.specs.runner.JUnit3
@@ -26,11 +26,8 @@ import _root_.net.liftweb.http.{S,LiftSession,LiftRules}
 
 import Helpers._
 
-class DBSpecsAsTest extends JUnit3(DBSpecs)
-object DBSpecsRunner extends ConsoleRunner(DBSpecs)
-
-object DBSpecs extends Specification {
-  val provider = DBProviders.H2MemoryProvider
+object DbSpec extends Specification {
+  val provider = DbProviders.H2MemoryProvider
   val logF = Schemifier.infoF _
   
   def cleanup() {
@@ -58,7 +55,4 @@ object DBSpecs extends Specification {
       elwood.firstName.is must_== "Elwood"
     }
   }
-}
-
-}
 }

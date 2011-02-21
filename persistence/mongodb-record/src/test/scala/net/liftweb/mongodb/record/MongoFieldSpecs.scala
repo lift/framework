@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
-package record {
+package net.liftweb
+package mongodb
+package record
 
 import field._
 import common._
@@ -40,9 +40,11 @@ import net.liftweb.record._
 
 import com.mongodb.DBRef
 
-class MongoFieldSpecsTest extends JUnit4(MongoFieldSpecs)
 
-object MongoFieldSpecs extends Specification with MongoTestKit {
+/**
+ * Systems under specification for MongoField.
+ */
+object MongoFieldSpecs extends Specification("MongoField Specification") with MongoTestKit {
   import fixtures._
 
   def passBasicTests[A](example: A, mandatory: MandatoryTypedField[A], legacyOptional: MandatoryTypedField[A])(implicit m: scala.reflect.Manifest[A]): Unit = {
@@ -362,8 +364,4 @@ object MongoFieldSpecs extends Specification with MongoTestKit {
       )
     }
   }
-}
-
-}
-}
 }
