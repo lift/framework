@@ -503,8 +503,13 @@ final case class Full[+A](value: A) extends Box[A] {
   override def toLeft[B](right: => B): Either[A, B] = Left(value)
 
 
-  override def isA[B](cls: Class[B]): Box[B] = value match {
+  override def isA[B](clsOrg: Class[B]): Box[B] = value match {
     case value: AnyRef =>
+      val cls = Box.primativeMap.get(clsOrg) match {
+        case Some(c) => c
+        case _ => clsOrg
+      }
+
       if (cls.isAssignableFrom(value.getClass)) Full(value.asInstanceOf[B])
       else Empty
     case _ => Empty
