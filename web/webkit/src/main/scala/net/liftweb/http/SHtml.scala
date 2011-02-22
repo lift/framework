@@ -277,6 +277,42 @@ trait SHtml {
   }
 
   /**
+   * Memoize the NodeSeq used in apply() and then call
+   * applyAgain() in an Ajax call and you don't have to
+   * explicitly capture the template
+   */
+  def idMemoize(f: IdMemoizeTransform => NodeSeqFuncOrSeqNodeSeqFunc): IdMemoizeTransform = {
+    new IdMemoizeTransform {
+      var latestElem: Elem = <span/>
+      
+      var latestKids: NodeSeq = NodeSeq.Empty
+
+      var latestId = Helpers.nextFuncName
+
+      private def fixElem(e: Elem): Elem = {
+        e.attribute("id") match {
+          case Some(id) => latestId = id.text ; e
+          case None => e % ("id" -> latestId)
+        }
+      }
+
+      def apply(ns: NodeSeq): NodeSeq = 
+        Helpers.findBox(ns){e => latestElem = fixElem(e);
+                            latestKids = e.child; Full(e)}.
+      map(ignore => applyAgain()).openOr(NodeSeq.Empty)
+
+      def applyAgain(): NodeSeq = 
+        new Elem(latestElem.prefix,
+                 latestElem.label,
+                 latestElem.attributes,
+                 latestElem.scope,
+                 f(this)(latestKids) :_*)
+
+      def setHtml(): JsCmd = SetHtml(latestId, applyAgain())
+    }
+  }
+
+  /**
    * Create an Ajax buttun that when it's pressed it submits an Ajax request and expects back a JSON
    * construct which will be passed to the <i>success</i> function
    *
@@ -2000,4 +2036,37 @@ trait Whence {
 trait MemoizeTransform extends Function1[NodeSeq, NodeSeq] {
 
   def applyAgain(): NodeSeq
+}
+
+/**
+ * A mechanism to memoize a transformation and then
+ * re-use the most recent html and ID to redraw
+ * the content or even use an Ajax call to update the content
+ */
+trait IdMemoizeTransform extends Function1[NodeSeq, NodeSeq] {
+  /**
+   * The latest ID of the outer 
+   */
+  def latestId: String
+
+  def applyAgain(): NodeSeq
+  
+  def setHtml(): JsCmd
+}
+
+sealed trait NodeSeqFuncOrSeqNodeSeqFunc extends Function1[NodeSeq, NodeSeq]
+
+object NodeSeqFuncOrSeqNodeSeqFunc {
+  implicit def promoteNodeSeq(in: NodeSeq => NodeSeq): NodeSeqFuncOrSeqNodeSeqFunc =
+    NodeSeqFunc(in)
+
+  implicit def promoteSeqNodeSeq(in: Seq[NodeSeq => NodeSeq]): NodeSeqFuncOrSeqNodeSeqFunc = SeqNodeSeqFunc(in)
+}
+
+final case class NodeSeqFunc(f: NodeSeq => NodeSeq) extends NodeSeqFuncOrSeqNodeSeqFunc {
+  def apply(ns: NodeSeq): NodeSeq = f(ns)
+}
+
+final case class SeqNodeSeqFunc(f: Seq[NodeSeq => NodeSeq]) extends NodeSeqFuncOrSeqNodeSeqFunc {
+  def apply(ns: NodeSeq): NodeSeq = f.flatMap(_(ns))
 }
