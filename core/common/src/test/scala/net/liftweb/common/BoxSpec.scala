@@ -147,6 +147,47 @@ object BoxSpec extends Specification {
     "define a 'asA' method returning Empty if the value is not the instance of a given type" in {
       Full("s").asA[Double] must_== Empty
     }
+
+    "define a 'asA' method must work with Boolean" in {
+      Full(true).asA[Boolean] must_== Full(true)
+      Full(3).asA[Boolean] must_== Empty
+    }
+
+    "define a 'asA' method must work with Character" in {
+      Full('a').asA[Char] must_== Full('a')
+      Full('a').asA[Boolean] must_== Empty
+    }
+
+    "define a 'asA' method must work with Byte" in {
+      Full(3.toByte).asA[Byte] must_== Full(3.toByte)
+      Full(3.toByte).asA[Boolean] must_== Empty
+    }
+
+    "define a 'asA' method must work with Double" in {
+      Full(44d).asA[Double] must_== Full(44D)
+      Full(44d).asA[Boolean] must_== Empty
+    }
+
+    "define a 'asA' method must work with Float" in {
+      Full(32f).asA[Float] must_== Full(32f)
+      Full(33f).asA[Boolean] must_== Empty
+    }
+
+    "define a 'asA' method must work with Integer" in {
+      Full(3).asA[Int] must_== Full(3)
+      Full(3).asA[Boolean] must_== Empty
+    }
+
+    "define a 'asA' method must work with Long" in {
+      Full(32L).asA[Long] must_== Full(32L)
+      Full(32L).asA[Boolean] must_== Empty
+    }
+
+    "define a 'asA' method must work with Short" in {
+      Full(8.toShort).asA[Short] must_== Full(8.toShort)
+      Full(8.toShort).asA[Boolean] must_== Empty
+    }
+
   }
   "An Empty Box" should {
     "beEmpty" in {
