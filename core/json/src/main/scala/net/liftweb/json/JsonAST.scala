@@ -440,7 +440,12 @@ trait Implicits {
  */
 object JsonDSL extends JsonDSL
 trait JsonDSL extends Implicits {
-  implicit def seq2jvalue[A <% JValue](s: Traversable[A]) = JArray(s.toList.map { a => val v: JValue = a; v })
+  implicit def seq2jvalue[A <% JValue](s: Traversable[A]) = 
+    JArray(s.toList.map { a => val v: JValue = a; v })
+
+  implicit def map2jvalue[A <% JValue](m: Map[String, A]) = 
+    JObject(m.toList.map { case (k, v) => JField(k, v) })
+
   implicit def option2jvalue[A <% JValue](opt: Option[A]): JValue = opt match {
     case Some(x) => x
     case None => JNothing

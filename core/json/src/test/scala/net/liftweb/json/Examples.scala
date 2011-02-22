@@ -129,6 +129,13 @@ object Examples extends Specification {
     compact(render(ints)) mustEqual """[35,33]"""
   }
 
+  "Generate JSON with DSL example" in {
+    val json: JValue = 
+      ("id" -> 5) ~
+      ("tags" -> Map("a" -> 5, "b" -> 7))
+    compact(render(json)) mustEqual """{"id":5,"tags":{"a":5,"b":7}}"""
+  }
+
   val lotto = """
 {
   "lotto":{
