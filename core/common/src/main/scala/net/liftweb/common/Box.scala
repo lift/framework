@@ -59,6 +59,16 @@ object Box extends BoxTrait
  * It also provides implicit methods to transform Option to Box, Box to Iterable, and Box to Option
  */
 sealed trait BoxTrait {
+  val primativeMap: Map[Class[_], Class[_]] = Map(
+    java.lang.Boolean.TYPE -> classOf[java.lang.Boolean],
+    java.lang.Character.TYPE -> classOf[java.lang.Character],
+    java.lang.Byte.TYPE -> classOf[java.lang.Byte],
+    java.lang.Double.TYPE -> classOf[java.lang.Double],
+    java.lang.Float.TYPE -> classOf[java.lang.Float],
+    java.lang.Integer.TYPE -> classOf[java.lang.Integer],
+    java.lang.Long.TYPE -> classOf[java.lang.Long],
+    java.lang.Short.TYPE -> classOf[java.lang.Short])
+
   /**
    * Create a Box from the specified Option.
    * @return a Box created from an Option. Full(x) if the Option is Some(x) and Empty otherwise
@@ -493,8 +503,13 @@ final case class Full[+A](value: A) extends Box[A] {
   override def toLeft[B](right: => B): Either[A, B] = Left(value)
 
 
-  override def isA[B](cls: Class[B]): Box[B] = value match {
+  override def isA[B](clsOrg: Class[B]): Box[B] = value match {
     case value: AnyRef =>
+      val cls = Box.primativeMap.get(clsOrg) match {
+        case Some(c) => c
+        case _ => clsOrg
+      }
+
       if (cls.isAssignableFrom(value.getClass)) Full(value.asInstanceOf[B])
       else Empty
     case _ => Empty
