@@ -101,6 +101,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
 
     // FIXME: breaks with SBT
     override def testOptions =
+      // TestFilter((name: String) => name.startsWith("net.liftweb.mapper")) ::
       ExcludeTests(
         // Web tests
         "net.liftweb.webapptest.OneShot" :: "net.liftweb.webapptest.ToHeadUsages" :: "net.liftweb.http.SnippetSpec" :: Nil) ::

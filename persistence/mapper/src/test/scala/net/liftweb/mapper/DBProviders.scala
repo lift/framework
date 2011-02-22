@@ -17,13 +17,12 @@
 package net.liftweb
 package mapper
 
-import _root_.net.liftweb.common.{Box, Empty, Full, Failure}
-import _root_.net.liftweb.util.{Helpers, Log, Props}
-import Helpers._
-import _root_.scala.testing.SUnit
-import _root_.net.liftweb.mapper._
-import _root_.java.sql.{Connection, DriverManager}
-import _root_.java.io.File
+import java.io.File
+import java.sql.{Connection, DriverManager}
+
+import common._
+import util._
+
 
 object DbProviders {
   def asList = PostgreSqlProvider :: MySqlProvider :: DerbyProvider :: H2Provider :: H2MemoryProvider :: Nil

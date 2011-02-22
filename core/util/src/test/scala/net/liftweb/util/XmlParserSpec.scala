@@ -18,7 +18,9 @@ package net.liftweb
 package util
 
 import java.io.ByteArrayInputStream
+
 import xml.{Text, Unparsed}
+
 import org.specs.Specification
 
 

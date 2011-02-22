@@ -18,8 +18,10 @@ package net.liftweb
 package util
 
 import xml.Elem
+
 import org.specs.Specification
 import org.specs.specification.PendingUntilFixed
+
 import common._
 import Helpers._
 

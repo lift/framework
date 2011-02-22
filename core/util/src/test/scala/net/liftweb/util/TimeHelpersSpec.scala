@@ -18,10 +18,12 @@ package net.liftweb
 package util
 
 import java.util.{Calendar, Date}
+
 import org.specs.{ScalaCheck, Specification}
 import org.specs.util.Products._
 import org.scalacheck.Gen._
 import org.scalacheck.Prop._
+
 import common._
 import TimeHelpers._
 

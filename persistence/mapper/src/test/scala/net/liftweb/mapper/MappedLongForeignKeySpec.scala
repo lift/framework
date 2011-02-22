@@ -17,16 +17,16 @@
 package net.liftweb
 package mapper
 
-import _root_.org.specs._
-import _root_.org.specs.runner.JUnit3
-import _root_.org.specs.runner.ConsoleRunner
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import org.specs.Specification
 
-import Helpers._
+import common._
+import util._
 
 
-object MappedLongForeignKeySpec extends Specification {
+/**
+ * Systems under specification for MappedLongForeignKey.
+ */
+object MappedLongForeignKeySpec extends Specification("MappedLongForeignKey Specification") {
   def provider = DbProviders.H2MemoryProvider
 
   def doLog = false

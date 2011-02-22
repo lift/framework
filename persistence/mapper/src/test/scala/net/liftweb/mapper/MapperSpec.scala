@@ -17,9 +17,10 @@
 package net.liftweb
 package mapper
 
-import java.sql.{Connection, DriverManager}
 import java.util.Locale
+
 import org.specs.Specification
+
 import common._
 import json._
 import util._
@@ -28,7 +29,10 @@ import http.LiftRules
 import http.provider.HTTPRequest
 
 
-object MapperSpecs extends Specification {
+/**
+ * Systems under specification for Mapper.
+ */
+object MapperSpecs extends Specification("Mapper Specification") {
 
   val doLog = false
 
@@ -72,7 +76,7 @@ object MapperSpecs extends Specification {
   MapperRules.tableName = snakify
 
   // Simple name calculator
-  def displayNameCalculator(bm: BaseMapper, l: java.util.Locale, name: String) = {
+  def displayNameCalculator(bm: BaseMapper, l: Locale, name: String) = {
     val mapperName = bm.dbName
     val displayName = name match {
       case "firstName" if l == Locale.getDefault()    => "DEFAULT:" + mapperName + "." + name

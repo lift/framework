@@ -18,7 +18,9 @@ package net.liftweb
 package util
 
 import javax.mail.internet.{MimeMessage, MimeMultipart}
+
 import org.specs.Specification
+
 import common._
 
 

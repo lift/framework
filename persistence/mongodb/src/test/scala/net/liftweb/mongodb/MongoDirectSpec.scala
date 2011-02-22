@@ -17,18 +17,14 @@
 package net.liftweb
 package mongodb
 
-import java.util.{Date, UUID}
+import java.util.UUID
 import java.util.regex.Pattern
 
+import com.mongodb.{BasicDBObject, BasicDBObjectBuilder}
+
 import org.specs.Specification
-import org.specs.runner.JUnit4
 
-import net.liftweb.json.DefaultFormats
-import net.liftweb.json.JsonAST._
-import net.liftweb.json.JsonParser._
-import net.liftweb.json.JsonDSL._
-
-import com.mongodb.{BasicDBObject, BasicDBObjectBuilder, DBObject}
+import json.DefaultFormats
 
 
 /**

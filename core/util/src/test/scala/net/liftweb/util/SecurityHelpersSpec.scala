@@ -19,6 +19,7 @@ package net.liftweb
 package util
 
 import org.specs.Specification
+
 import SecurityHelpers._
 
 

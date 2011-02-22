@@ -18,6 +18,7 @@ package net.liftweb
 package couchdb
 
 import org.specs.Specification
+
 import common._
 import json._
 import JsonDSL._

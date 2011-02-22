@@ -17,11 +17,10 @@
 package net.liftweb
 package mongodb
 
-//import json.JsonAST._
-
 import java.util.{Calendar, Date, TimeZone}
 
 import org.bson.types.ObjectId
+
 import org.specs.Specification
 
 

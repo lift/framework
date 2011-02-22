@@ -19,8 +19,6 @@ package ldap
 
 import javax.naming.CommunicationException
 
-import org.specs.Specification
-
 import org.apache.mina.util.AvailablePortFinder
 import org.apache.directory.server.core.DefaultDirectoryService
 import org.apache.directory.server.core.partition.impl.btree.jdbm.{JdbmIndex,JdbmPartition}
@@ -30,7 +28,9 @@ import org.apache.directory.server.xdbm.Index
 import org.apache.directory.server.core.entry.ServerEntry
 import org.apache.directory.shared.ldap.name.LdapDN
 
-import common.{Box, Full}
+import org.specs.Specification
+
+import common._
 
 
 /**

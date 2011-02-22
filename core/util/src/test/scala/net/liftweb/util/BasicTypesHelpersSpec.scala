@@ -18,8 +18,10 @@ package net.liftweb
 package util
 
 import java.io.ByteArrayInputStream
+
 import org.specs.Specification
 import org.specs.util.DataTables
+
 import common._
 import BasicTypesHelpers._
 

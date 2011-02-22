@@ -17,16 +17,15 @@
 package net.liftweb
 package mapper
 
-import _root_.org.specs._
-import _root_.org.specs.runner.JUnit3
-import _root_.org.specs.runner.ConsoleRunner
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import org.specs.Specification
 
-import Helpers._
+import common._
 
 
-object MappedDateSpec extends Specification {
+/**
+ * Systems under specification for MappedDate.
+ */
+object MappedDateSpec extends Specification("MappedDate Specification") {
   "MappedDate" should {
     "handle a Number in setFromAny" in {
       val dog = Dog2.create

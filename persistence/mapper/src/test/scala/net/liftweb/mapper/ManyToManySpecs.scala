@@ -17,10 +17,13 @@
 package net.liftweb
 package mapper
 
-import org.specs._
+import org.specs.Specification
 
 
-object ManyToManySpec extends Specification {
+/**
+ * Systems under specification for ManyToMany.
+ */
+object ManyToManySpec extends Specification("ManyToMany Specification") {
 
   val provider = DbProviders.H2MemoryProvider
   

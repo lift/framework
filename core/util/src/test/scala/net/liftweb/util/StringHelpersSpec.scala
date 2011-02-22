@@ -19,6 +19,7 @@ package util
 
 import org.specs.{ScalaCheck, Specification}
 import org.scalacheck.Gen._
+
 import StringHelpers._
 
 

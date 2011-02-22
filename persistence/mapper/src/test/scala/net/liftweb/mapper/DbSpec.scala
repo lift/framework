@@ -17,16 +17,17 @@
 package net.liftweb
 package mapper
 
-import _root_.org.specs._
-import _root_.org.specs.runner.JUnit3
-import _root_.org.specs.runner.ConsoleRunner
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.http.{S,LiftSession,LiftRules}
+import org.specs.Specification
 
-import Helpers._
+import common._
+import util._
+import http.{S, LiftSession}
 
-object DbSpec extends Specification {
+
+/**
+ * Systems under specification for DB.
+ */
+object DbSpec extends Specification("DB Specification") {
   val provider = DbProviders.H2MemoryProvider
   val logF = Schemifier.infoF _
   

@@ -18,7 +18,9 @@ package net.liftweb
 package util
 
 import java.util.Locale
+
 import xml.NodeSeq
+
 import org.specs.Specification
 
 

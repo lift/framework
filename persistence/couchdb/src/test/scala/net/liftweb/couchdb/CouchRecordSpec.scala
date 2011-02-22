@@ -15,13 +15,16 @@ package net.liftweb
 package couchdb
 
 import java.net.ConnectException
+
 import dispatch.{Http, StatusCode}
+
 import org.specs.Specification
+
 import common._
 import json._
 import JsonDSL._
 import record.field.{IntField, StringField}
-import DocumentHelpers.{jobjectToJObjectExtension, stripIdAndRev}
+import DocumentHelpers.stripIdAndRev
 
 
 package couchtestrecords {

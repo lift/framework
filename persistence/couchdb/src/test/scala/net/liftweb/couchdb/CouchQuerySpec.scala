@@ -15,7 +15,9 @@ package net.liftweb
 package couchdb
 
 import java.net.ConnectException
+
 import dispatch.{Http, StatusCode}
+
 import common._
 import json._
 import JsonDSL._

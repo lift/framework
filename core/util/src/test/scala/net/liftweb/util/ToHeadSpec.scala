@@ -18,7 +18,9 @@ package net.liftweb
 package util
 
 import xml.XML._
+
 import org.specs.Specification
+
 import common._
 import ControlHelpers._
 import HeadHelper._

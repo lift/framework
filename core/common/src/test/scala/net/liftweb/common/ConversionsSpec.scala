@@ -18,6 +18,7 @@ package net.liftweb
 package common
 
 import xml._
+
 import org.specs.Specification
 
 

@@ -18,10 +18,11 @@ package net.liftweb
 package util
 
 import scala.util.parsing.combinator.Parsers
+
 import org.specs.{ScalaCheck, Specification}
-import org.scalacheck.Arbitrary
-import org.scalacheck.Gen._
-import org.scalacheck.Prop._
+import org.scalacheck.{Arbitrary, Gen, Prop}
+import Gen._
+import Prop._
 
 
 object CombParserHelpersSpec extends Specification("CombParserHelpers Specification") with ScalaCheck {

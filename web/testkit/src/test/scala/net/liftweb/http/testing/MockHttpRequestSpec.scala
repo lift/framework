@@ -16,14 +16,16 @@
 package net.liftweb
 package mocks
 
-import org.specs._
-import org.specs.runner._
+import org.specs.Specification
 
 import json.JsonDSL._
 
-class MockHttpRequestSpecTest extends Runner(MockHttpRequestSpec) with JUnit with Console
 
-object MockHttpRequestSpec extends Specification {
+/**
+ * System under specification for MockHttpRequest.
+ */
+object MockHttpRequestSpec extends Specification("MockHttpRequest Specification") {
+
   val IF_MODIFIED_HEADER = "If-Modified-Since"
   val TEST_URL = "https://foo.com/test/this/page?a=b&b=a&a=c"
 

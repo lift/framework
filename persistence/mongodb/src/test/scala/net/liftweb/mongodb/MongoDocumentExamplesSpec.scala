@@ -20,15 +20,14 @@ package mongodb
 import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
 
-import org.specs._
-import org.specs.runner.JUnit4
-import net.liftweb.json.DefaultFormats
-import net.liftweb.json.JsonAST._
-import net.liftweb.json.JsonParser._
-import net.liftweb.json.JsonDSL._
-
-import com.mongodb.{BasicDBList, BasicDBObject, DBObject, MongoException}
 import org.bson.types.ObjectId
+import com.mongodb.{BasicDBList, BasicDBObject, DBObject, MongoException}
+
+import org.specs.Specification
+
+import json.DefaultFormats
+import json.JsonParser._
+import json.JsonDSL._
 
 
 package mongotestdocs {
@@ -176,7 +175,7 @@ package mongotestdocs {
 /**
  * Systems under specification for MongoDocumentExamples.
  */
-object MongoDocumentExamplesSpec extends Specification with MongoTestKit {
+object MongoDocumentExamplesSpec extends Specification("MongoDocumentExamples Specification") with MongoTestKit {
   import mongotestdocs._
 
   override def dbName = "lift_mongodocumentexamples"

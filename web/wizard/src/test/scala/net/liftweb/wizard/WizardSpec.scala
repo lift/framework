@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package wizard {
+package net.liftweb
+package wizard
 
-import _root_.org.scalacheck._
-import _root_.org.scalacheck.Prop.forAll
-import _root_.org.specs.Specification
-import _root_.org.specs.runner.{Runner, JUnit}
-import _root_.org.specs.ScalaCheck
+import org.specs.Specification
 
-import _root_.net.liftweb._
-import http._
 import common._
-import _root_.net.liftweb.util._
+import util._
+import http._
 
-class WizardTest extends Runner(WizardSpec) with JUnit
-object WizardSpec extends Specification {
-  val session : LiftSession = new LiftSession("", Helpers.randomString(20), Empty)
+
+/**
+ * System under specification for Wizard.
+ */
+object WizardSpec extends Specification("Wizard Specification") {
+
+  val session: LiftSession = new LiftSession("", Helpers.randomString(20), Empty)
 
   val MyWizard = new Wizard {
+
     object completeInfo extends WizardVar(false)
 
     def finish() {
@@ -46,7 +46,7 @@ object WizardSpec extends Specification {
 
       val age = field(S ? "Age", 0,
                       minVal(5, S ?? "Too young"),
-        maxVal(120, S ?? "You should be dead"))
+                      maxVal(120, S ?? "You should be dead"))
 
       override def nextScreen = if (age.is < 18) parentName else favoritePet
     }
@@ -66,7 +66,6 @@ object WizardSpec extends Specification {
 
   "A Wizard can be defined" in {
     MyWizard.nameAndAge.screenName must_== "Screen 1"
-
     MyWizard.favoritePet.screenName must_== "Screen 3"
   }
 
@@ -131,10 +130,7 @@ object WizardSpec extends Specification {
 
     S.initIfUninitted(session) {
       MyWizard.currentScreen.open_! must_== MyWizard.nameAndAge
-
-
     }
-
 
     S.initIfUninitted(session) {
       ss.restore()
@@ -160,7 +156,4 @@ object WizardSpec extends Specification {
       MyWizard.completeInfo.is must_== true
     }
   }
-}
-
-}
 }

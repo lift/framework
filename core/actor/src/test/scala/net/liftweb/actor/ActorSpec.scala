@@ -18,6 +18,7 @@ package net.liftweb
 package actor
 
 import org.specs.Specification
+
 import common._
 
 
