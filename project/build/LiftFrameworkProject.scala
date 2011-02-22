@@ -89,7 +89,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   // ------------
   class FrameworkProject(info: ProjectInfo, libs: ModuleID*) extends DefaultProject(info) with LiftDefaultProject {
 
-    override def libraryDependencies = super.libraryDependencies ++ libs
+    override def libraryDependencies = super.libraryDependencies ++ libs ++ Seq(TestScope.junit)
 
     // TODO: Remove these and resort to LiftDefaultProject settings
     override def compileOptions = Seq("-Xwarninit", "-encoding", "utf8").map(CompileOption)
