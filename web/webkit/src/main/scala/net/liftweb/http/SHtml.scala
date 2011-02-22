@@ -2049,6 +2049,17 @@ trait IdMemoizeTransform extends Function1[NodeSeq, NodeSeq] {
    */
   def latestId: String
 
+  /**
+   * The outer Elem
+   */
+  def latestElem: Elem
+  
+  /**
+   * The children of the Elem
+   */
+  def latestKids: NodeSeq
+
+
   def applyAgain(): NodeSeq
   
   def setHtml(): JsCmd
