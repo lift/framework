@@ -485,6 +485,7 @@ trait ProtoUser {
     curUserId.remove()
     curUser.remove()
     curUserId(Full(who.userIdAsString))
+    curUser(Full(who))
     onLogIn.foreach(_(who))
   }
 
