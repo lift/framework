@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package net.liftweb
 package json
 
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class MergeExamplesTest extends Runner(MergeExamples) with JUnit
-object MergeExamples extends Specification {
+
+
+object MergeExamples extends Specification("Merge Examples") {
   "Merge example" in {
     (scala1 merge scala2) mustEqual expectedMergeResult
   }

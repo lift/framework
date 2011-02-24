@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package net.liftweb
 package json
 
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class LottoExampleTest extends Runner(LottoExample) with JUnit
-object LottoExample extends Specification {
+
+/**
+ * System under specification for Lotto Examples.
+ */
+object LottoExample extends Specification("Lotto Examples") {
   import JsonDSL._
 
   implicit val formats = DefaultFormats

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@
 package net.liftweb
 package json
 
-import java.util.Date
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class FormatsExamplesTest extends Runner(FormatsExamples) with JUnit
 
-object FormatsExamples extends Specification with TypeHintExamples {
+/**
+ * System under specification for JSON Formats.
+ */
+object JsonFormatsSpec extends Specification("JsonFormats Specification") with TypeHintExamples {
   implicit val formats = ShortTypeHintExamples.formats + FullTypeHintExamples.formats.typeHints
 
   val hintsForFish   = ShortTypeHintExamples.formats.typeHints.hintFor(classOf[Fish])

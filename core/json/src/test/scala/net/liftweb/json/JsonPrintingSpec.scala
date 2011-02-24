@@ -17,14 +17,15 @@
 package net.liftweb
 package json
 
-import org.scalacheck._
+import org.specs.{ScalaCheck, Specification}
+import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.forAll
-import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
-import org.specs.ScalaCheck
 
-class PrintingTest extends Runner(PrintingSpec) with JUnit
-object PrintingSpec extends Specification with JValueGen with ScalaCheck {
+
+/**
+ * System under specification for JSON Printing.
+ */
+object JsonPrintingSpec extends Specification("JSON Printing Specification") with JValueGen with ScalaCheck {
   import scala.text.Document
 
   "rendering does not change semantics" in {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package json {
+package net.liftweb
+package json
 
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class SerializationBugsTest extends Runner(SerializationBugs) with JUnit
+
 object SerializationBugs extends Specification {
   import Serialization.{read, write => swrite}
 
@@ -88,7 +87,4 @@ package plan2 {
   case class Game(buy: Map[String, Plan])
   case class Action(functionName: String, symbol: String,
                     inParams: Array[Number], subOperand: Option[Action]) 
-}
-
-}
 }

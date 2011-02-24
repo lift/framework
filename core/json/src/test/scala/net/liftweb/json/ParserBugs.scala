@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
-import scala.util.control.Exception._
+import util.control.Exception._
 
-class ParserBugsTest extends Runner(ParserBugs) with JUnit
+import org.specs.Specification
+
+
 object ParserBugs extends Specification {
   "Unicode ffff is a valid char in string literal" in {
     parseOpt(""" {"x":"\uffff"} """).isDefined mustEqual true

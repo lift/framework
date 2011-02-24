@@ -19,9 +19,8 @@ package json
 
 import java.util.Date
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class SerializationExamplesTest extends Runner(SerializationExamples, ShortTypeHintExamples, FullTypeHintExamples, CustomClassExamples) with JUnit
+
 object SerializationExamples extends Specification {
   import Serialization.{read, write => swrite}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,15 @@
 package net.liftweb
 package json
 
-import org.scalacheck._
+import org.specs.{ScalaCheck, Specification}
+import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.forAll
-import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
-import org.specs.ScalaCheck
 
-class XmlTest extends Runner(XmlSpec) with JUnit
-object XmlSpec extends Specification with NodeGen with JValueGen with ScalaCheck {
+
+/**
+ * System under specification for JSON XML.
+ */
+object JsonXmlSpec extends Specification("JSON XML Specification") with NodeGen with JValueGen with ScalaCheck {
   import Xml._
   import scala.xml.Node
 

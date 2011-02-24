@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,19 @@ package net.liftweb
 package json
 package ext
 
-import _root_.org.specs._
-import _root_.org.specs.runner._
-import common._
-import json.Serialization.{read, write => swrite}
 import org.joda.time._
 
-class JodaTimeSerializerSpecTest extends JUnit4(JodaTimeSerializerSpec)
-object JodaTimeSerializerSpec extends Specification {
+import org.specs.Specification
+
+import common._
+import json.Serialization.{read, write => swrite}
+
+
+/**
+ * System under specification for JodaTimeSerializer.
+ */
+object JodaTimeSerializerSpec extends Specification("JodaTimeSerializer Specification") {
+
   implicit val formats = Serialization.formats(NoTypeHints) ++ JodaTimeSerializers.all
 
   "Serialize joda time types" in {

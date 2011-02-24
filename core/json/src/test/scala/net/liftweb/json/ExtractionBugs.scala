@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package net.liftweb
 package json
 
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class ExtractionBugsTest extends Runner(ExtractionBugs) with JUnit
-object ExtractionBugs extends Specification {  
+
+/**
+ * System under specification for Extraction bugs.
+ */
+object ExtractionBugs extends Specification("Extraction bugs Specification") {
   implicit val formats = DefaultFormats
   
   "ClassCastException (BigInt) regression 2 must pass" in {

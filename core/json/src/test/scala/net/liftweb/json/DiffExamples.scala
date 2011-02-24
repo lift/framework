@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package net.liftweb
 package json
 
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class DiffExamplesTest extends Runner(DiffExamples) with JUnit
-object DiffExamples extends Specification {
+
+/**
+ * System under specification for Diff Examples.
+ */
+object DiffExamples extends Specification("Diff Examples") {
   import MergeExamples.{scala1, scala2, lotto1, lotto2, mergedLottoResult}
 
   "Diff example" in {
@@ -71,5 +73,5 @@ object DiffExamples extends Specification {
   }
 
   private def read(resource: String) =
-    parse(scala.io.Source.fromInputStream(classOf[DiffExamplesTest].getResourceAsStream(resource)).getLines().mkString)
+    parse(scala.io.Source.fromInputStream(getClass.getResourceAsStream(resource)).getLines().mkString)
 }

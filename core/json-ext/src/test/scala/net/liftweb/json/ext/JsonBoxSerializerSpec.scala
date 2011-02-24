@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,17 @@ package net.liftweb
 package json
 package ext
 
-import _root_.org.specs._
-import _root_.org.specs.runner._
+import org.specs.Specification
+
 import common._
 import json.Serialization.{read, write => swrite}
 
-class JsonBoxSerializerSpecTest extends JUnit4(JsonBoxSerializerSpec)
-object JsonBoxSerializerSpec extends Specification {
+
+/**
+ * System under specification for JsonBoxSerializer.
+ */
+object JsonBoxSerializerSpec extends Specification("JsonBoxSerializer Specification") {
+
   implicit val formats = net.liftweb.json.DefaultFormats + new JsonBoxSerializer
 
   "Extract empty age" in {

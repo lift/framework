@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package net.liftweb
 package json
 
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class XmlExamplesTest extends Runner(XmlExamples) with JUnit
-object XmlExamples extends Specification {
+
+/**
+ * System under specification for Xml Examples.
+ */
+object XmlExamples extends Specification("XML Examples") {
   import JsonDSL._
   import Xml._
   import scala.xml.{Group, Text}

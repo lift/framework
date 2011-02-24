@@ -240,7 +240,7 @@ Querying JSON
 ------------
 
 JSON values can be extracted using for-comprehensions.
-Please see more examples in src/test/scala/net/liftweb/json/QueryExamples.scala
+Please see more examples in src/test/scala/net/liftweb/json/JsonQueryExamples.scala
 
     scala> import net.liftweb.json._
     scala> val json = parse("""
@@ -386,7 +386,7 @@ Extracting values
 Case classes can be used to extract values from parsed JSON. Non-existing values
 can be extracted into scala.Option and strings can be automatically converted into
 java.util.Dates.
-Please see more examples in src/test/scala/net/liftweb/json/ExtractionExamples.scala
+Please see more examples in src/test/scala/net/liftweb/json/ExtractionExamplesSpec.scala
 
     scala> import net.liftweb.json._
     scala> implicit val formats = DefaultFormats // Brings in default date formats etc.

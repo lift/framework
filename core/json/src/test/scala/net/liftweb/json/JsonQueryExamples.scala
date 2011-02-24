@@ -18,10 +18,12 @@ package net.liftweb
 package json
 
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class QueryExamplesTest extends Runner(QueryExamples) with JUnit
-object QueryExamples extends Specification {
+
+/**
+ * System under specification for JSON Query Examples.
+ */
+object JsonQueryExamples extends Specification("JSON Query Examples") {
   "List of IPs" in {
     val ips = for { JString(ip) <- json \\ "ip" } yield ip
     ips mustEqual List("192.168.1.125", "192.168.1.126", "192.168.1.127", "192.168.2.125", "192.168.2.126")

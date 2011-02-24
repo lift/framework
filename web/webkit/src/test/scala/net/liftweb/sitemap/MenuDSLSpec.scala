@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package sitemap {
+package net.liftweb
+package sitemap
 
-import org.specs._
-import org.specs.runner._
+import org.specs.Specification
 
-// Define a helper so that Maven runs the Spec
-class MenuSpecTest extends Runner(MenuSpec) with JUnit with Console
 
-object MenuSpec extends Specification {
+/**
+ * Systems under specification for Menu DSL.
+ */
+object MenuDSLSpec extends Specification("Menu DSL Specification") {
+
   "The Menu DSL" should {
     "allow basic menu definition via '/ path'" in {
       val menu = (Menu("Test") / "foo").toMenu
@@ -99,8 +100,3 @@ object MenuSpec extends Specification {
     }
   }
 }
-
-
-}
-}
-

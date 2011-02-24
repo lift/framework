@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.net.liftweb.util.Helpers._
-import _root_.org.specs._
-import _root_.org.specs.runner._
-import _root_.org.specs.Sugar._
-import scala.xml.NodeSeq
-import scala.xml.Text
-import Bindings._
+import _root_.org.specs.Specification
 
 import common._
 
-class FactorySpecTest extends Runner(FactorySpec) with JUnit with Console
-object FactorySpec extends Specification {
+
+/**
+ * System under specification for FactoryMaker.
+ */
+object FactoryMakerSpec extends Specification("FactoryMaker Specification") {
 
 
   object MyFactory extends Factory {
@@ -50,5 +47,3 @@ object FactorySpec extends Specification {
     }
   }
 }
-
-}}

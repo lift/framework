@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,15 @@
 package net.liftweb
 package json
 
-import org.scalacheck._
+import org.specs.{ScalaCheck, Specification}
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
-import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
-import org.specs.ScalaCheck
 
-class ParserTest extends Runner(ParserSpec) with JUnit
-object ParserSpec extends Specification with JValueGen with ScalaCheck {
+
+/**
+ * System under specification for JSON Parser.
+ */
+object JsonParserSpec extends Specification("JSON Parser Specification") with JValueGen with ScalaCheck {
   "Any valid json can be parsed" in {
     val parsing = (json: JValue) => { parse(Printer.pretty(render(json))); true }
     forAll(parsing) must pass

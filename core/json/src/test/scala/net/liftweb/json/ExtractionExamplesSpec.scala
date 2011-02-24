@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,12 @@ package json
 
 import java.util.Date
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class ExtractionExampleTest extends Runner(ExtractionExamples) with JUnit
-object ExtractionExamples extends Specification {
+
+/**
+ * Systems under specification for Extraction Examples.
+ */
+object ExtractionExamples extends Specification("Extraction Examples Specification") {
   implicit val formats = DefaultFormats
 
   "Extraction example" in {
