@@ -17,8 +17,7 @@ package squerylrecord
 import org.specs.Specification
 import record.{BaseField, Record}
 import RecordTypeMode._
-import MySchema.{TestData => td}
-import MySchema.{companies, employees, rooms, roomAssignments}
+import MySchema.{TestData => td, _}
 
 
 /**
@@ -55,7 +54,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       transaction {
         val orderedCompanies = from(companies)(c =>
           select(c) orderBy (c.name))
-        val ids = orderedCompanies.map(c => c.id)
+        val ids = orderedCompanies.map(_.id)
         ids must containInOrder(
           td.allCompanies.sortBy(_.name.is).map(_.id))
       }
@@ -263,7 +262,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
     def check(fieldExtractor: (T) => BaseField) {
       val f1 = fieldExtractor(r1)
       val f2 = fieldExtractor(r2)
-      f1.is must_== f2.is
+      f1.get must_== f2.get
       f1.name must_== f2.name
     }
 

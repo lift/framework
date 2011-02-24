@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.org.specs._
-import _root_.org.specs.runner._
-import _root_.org.specs.Sugar._
+import org.specs.Specification
 
-class ResourceServerSpecTest extends Runner(ResourceServerSpec) with JUnit with Console
-object ResourceServerSpec extends Specification {
+
+/**
+ * System under specification for ResourceServer.
+ */
+object ResourceServerSpec extends Specification("ResourceServer Specification") {
   "ResourceServer.pathRewriter" should {
     "default jquery.js to jquery-1.3.2" in {
       ResourceServer.pathRewriter("jquery.js"::Nil) must_== List("jquery-1.3.2-min.js")
     }
   }
-}
-
-}
 }

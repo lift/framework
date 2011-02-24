@@ -21,7 +21,6 @@ package field
 
 import org.bson.types.ObjectId
 import org.specs.Specification
-import org.specs.runner.JUnit4
 
 import net.liftweb.common._
 import net.liftweb.json.ext.EnumNameSerializer

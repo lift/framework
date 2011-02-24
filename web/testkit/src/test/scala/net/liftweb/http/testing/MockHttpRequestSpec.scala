@@ -126,5 +126,3 @@ object MockHttpRequestSpec extends Specification("MockHttpRequest Specification"
     
   }
 }
-
-      

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package webapptest {
+package net.liftweb
+package webapptest
 
-import _root_.org.specs._
-import _root_.org.specs.runner.JUnit3
-import _root_.org.specs.runner.ConsoleRunner
-import _root_.net.sourceforge.jwebunit.junit.WebTester
-import _root_.net.liftweb._
-import http._
+import org.specs.Specification
+//import net.sourceforge.jwebunit.junit.WebTester
+
 import common._
-import _root_.net.liftweb.util._
-
-class MemoizeTest extends JUnit3(MemoizeSpec)
-object MemoizeRunner extends ConsoleRunner(MemoizeSpec)
+import util._
+import http._
 
 object SessionInfo {
   lazy val session1 = new LiftSession("/", Helpers.randomString(20), Empty)
@@ -37,7 +32,11 @@ object SessionInfo {
   object requestMemo extends RequestMemoize[Int, Int]
 }
 
-object MemoizeSpec extends Specification {
+
+/**
+ * System under specification for Memoize.
+ */
+object MemoizeSpec extends Specification("Memoize Specification") {
   import SessionInfo._
 
 
@@ -83,7 +82,4 @@ object MemoizeSpec extends Specification {
     }
 
   }
-}
-
-}
 }

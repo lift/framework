@@ -32,7 +32,7 @@ import http.provider.HTTPRequest
 /**
  * Systems under specification for Mapper.
  */
-object MapperSpecs extends Specification("Mapper Specification") {
+object MapperSpec extends Specification("Mapper Specification") {
 
   val doLog = false
 
@@ -98,6 +98,7 @@ object MapperSpecs extends Specification("Mapper Specification") {
     Schemifier.schemify(true, if (doLog) Schemifier.infoF _ else ignoreLogger _, DbProviders.SnakeConnectionIdentifier, SampleModelSnake, SampleTagSnake)
   }
 
+/*
   doBeforeSpec {
     providers.foreach(provider => {
       try {provider.setupDB} catch { case e if !provider.required_? => skip("Provider %s not available: %s".format(provider, e)) }
@@ -105,12 +106,20 @@ object MapperSpecs extends Specification("Mapper Specification") {
 //        println("Setup done for =>>> " + provider)
     })
   }
+*/
 
   providers.foreach(provider => {
 
     ("Mapper for " + provider.name) should {
 
-      doBefore { cleanup() }
+      doBefore {
+        (try {
+          provider.setupDB
+          cleanup
+        } catch {
+          case e if !provider.required_? => skip("Provider %s not available: %s".format(provider, e))
+        }) must not(throwAnException[Exception]).orSkipExample
+      }
       setSequential()
 
       "schemify" in {

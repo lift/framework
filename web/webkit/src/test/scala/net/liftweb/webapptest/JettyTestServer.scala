@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package webapptest {
+package net.liftweb
+package webapptest
 
-import _root_.org.mortbay.jetty.Server
-//import _root_.org.mortbay.jetty.servlet.Context
-import _root_.org.mortbay.jetty.servlet.ServletHolder
-import _root_.org.mortbay.jetty.webapp.WebAppContext
+import org.mortbay.jetty.Server
+import org.mortbay.jetty.webapp.WebAppContext
 
-import _root_.net.sourceforge.jwebunit.junit.WebTester
-import _root_.junit.framework.AssertionFailedError
+import net.sourceforge.jwebunit.junit.WebTester
+import junit.framework.AssertionFailedError
+
 
 object JettyTestServer {
   private val serverPort_ = System.getProperty("SERVLET_PORT", "8989").toInt
-  private var baseUrl_ = "http://localhost:" + serverPort_
+  private var baseUrl_ = "http://127.0.0.1:" + serverPort_
 
   def baseUrl = baseUrl_
 
@@ -61,7 +60,7 @@ object JettyTestServer {
       f(wc)
     } catch {
       case exc: AssertionFailedError => {
-        System.err.println("serveur response: ", wc.getServeurResponse())
+        System.err.println("server response: ", wc.getServerResponse())
         throw exc
       }
     } finally {
@@ -69,7 +68,4 @@ object JettyTestServer {
     }
   }
 
-}
-
-}
 }

@@ -34,7 +34,6 @@ import scala.xml.Text
 
 import org.bson.types.ObjectId
 import org.specs.Specification
-import org.specs.runner.JUnit4
 
 import net.liftweb.record._
 

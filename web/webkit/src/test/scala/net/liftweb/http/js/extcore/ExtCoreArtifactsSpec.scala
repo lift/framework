@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package js {
-package extcore {
+package net.liftweb
+package http
+package js
+package extcore
 
-import _root_.org.specs._
-import _root_.org.specs.runner._
-import _root_.org.specs.Sugar._
+import org.specs.Specification
 
-class ExtCoreArtifactsSpecTest extends Runner(ExtCoreArtifactsSpec) with JUnit with Console
-object ExtCoreArtifactsSpec extends Specification {
-	
+
+/**
+ * System under specification for ExtCoreArtifacts.
+ */
+object ExtCoreArtifactsSpec extends Specification("ExtCoreArtifacts Specification") {
+
   "ExtCoreArtifacts.toggle" should {
     "return the correct javascript expression" in {
       ExtCoreArtifacts.toggle("id").toJsCmd must_== """Ext.fly("id").toggle()"""
@@ -55,9 +56,4 @@ object ExtCoreArtifactsSpec extends Specification {
       ExtCoreArtifacts.serialize("id").toJsCmd must_== """Ext.Ajax.serializeForm("id")"""
     }
   }
-}
-
-}
-}
-}
 }

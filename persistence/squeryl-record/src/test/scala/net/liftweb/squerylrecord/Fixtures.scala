@@ -37,8 +37,8 @@ import java.util.Calendar
 
 object DBHelper {
   def initSquerylRecordWithInMemoryDB() {
-    SquerylRecord.initWithSquerylSession { 
-      val session = Session.create(DriverManager.getConnection("jdbc:h2:mem:testSquerylRecordDB;DB_CLOSE_DELAY=-1", "sa", ""), new H2Adapter)
+    SquerylRecord.initWithSquerylSession {
+      val session = Session.create(DriverManager.getConnection("jdbc:h2:mem:testSquerylRecordDB;DB_CLOSE_DELAY=-1"), new H2Adapter)
       //session.setLogger(statement => println(statement))
       session
     }
@@ -50,14 +50,14 @@ object DBHelper {
    */
   def createSchema() {
     inTransaction {
-    	try {
-	      //MySchema.printDdl
-	      MySchema.dropAndCreate
-	      MySchema.createTestData
-    	} catch {
-    		case e => e.printStackTrace()
-    		  throw e;
-    	}
+      try {
+        //MySchema.printDdl
+        MySchema.dropAndCreate
+        MySchema.createTestData
+      } catch {
+        case e => e.printStackTrace()
+          throw e;
+      }
     }
   }
 }
@@ -145,13 +145,13 @@ object Employee extends Employee with MetaRecord[Employee]
  * Test record: One or more employees can have a room (one-to-many-relation).
  */
 class Room private() extends Record[Room] with KeyedRecord[Long] {
-	override def meta = Room
-	
-	override val idField = new LongField(this)
-	
-	val name = new StringField(this, 50)
-	
-	lazy val employees = MySchema.roomAssignments.right(this)
+  override def meta = Room
+
+  override val idField = new LongField(this)
+
+  val name = new StringField(this, 50)
+
+  lazy val employees = MySchema.roomAssignments.right(this)
 }
 
 object Room extends Room with MetaRecord[Room]
@@ -179,9 +179,9 @@ object MySchema extends Schema {
     oneToManyRelation(companies, employees).via((c, e) => c.id === e.companyId)
 
   val roomAssignments = manyToManyRelation(employees, rooms).
-  	via[RoomAssignment]((employee, room, roomAssignment) => 
-  		(roomAssignment.employeeId === employee.idField, roomAssignment.roomId === room.idField))
-    
+    via[RoomAssignment]((employee, room, roomAssignment) =>
+      (roomAssignment.employeeId === employee.idField, roomAssignment.roomId === room.idField))
+
   on(employees)(e =>
     declare(e.companyId defineAs (indexed("idx_employee_companyId")),
       e.email defineAs indexed("idx_employee_email")))

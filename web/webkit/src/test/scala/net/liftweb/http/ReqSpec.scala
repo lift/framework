@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.net.liftweb.util.Helpers._
-import _root_.org.specs._
-import _root_.org.specs.runner._
-import _root_.org.specs.Sugar._
-import scala.xml.NodeSeq
-import scala.xml.Text
-import Bindings._
+import org.specs.Specification
 
 import common._
 
-class ReqSpecTest extends Runner(ReqSpec) with JUnit with Console
-object ReqSpec extends Specification {
+
+/**
+ * System under specification for Req.
+ */
+object ReqSpec extends Specification("Req Specification") {
+
   private val iPhoneUserAgents = 
     List("Mozilla/5.0 (iPhone Simulator; U; CPU iPhone OS 3_0 like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Version/4.0 Mobile/7A341 Safari/528.16",
          "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_2_1 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8C148 Safari/6533.18.5")
@@ -73,5 +71,3 @@ object ReqSpec extends Specification {
     }
   }
 }
-
-}}

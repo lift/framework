@@ -25,7 +25,7 @@ import util._
 
 
 object DbProviders {
-  def asList = PostgreSqlProvider :: MySqlProvider :: DerbyProvider :: H2Provider :: H2MemoryProvider :: Nil
+  def asList = PostgreSqlProvider :: MySqlProvider :: DerbyProvider :: H2FileProvider :: H2MemoryProvider :: Nil
   // Uncomment to run tests faster, but only against H2 def asList =  H2MemoryProvider :: Nil
 
 
@@ -132,7 +132,7 @@ object DbProviders {
     override def required_? = true
   }
 
-  object H2Provider extends Provider with FileDbSetup {
+  object H2FileProvider extends Provider with FileDbSetup {
     def name = "H2"
     def filePath = "target/tests_h2_lift"
     def vendor = new Vendor("org.h2.Driver") {

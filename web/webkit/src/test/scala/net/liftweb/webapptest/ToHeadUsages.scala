@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package webapptest {
+package net.liftweb
+package webapptest
 
-import _root_.org.specs._
-import _root_.org.specs.runner.JUnit3
-import _root_.org.specs.runner.ConsoleRunner
-import _root_.net.sourceforge.jwebunit.junit.WebTester
-import _root_.net.liftweb.http._
-import _root_.net.liftweb.util._
+import org.specs.Specification
 
-class ToHeadUsagesTest extends JUnit3(ToHeadUsages)
-object ToHeadUsagesRunner extends ConsoleRunner(ToHeadUsages)
+import util._
+import http._
 
 
-object ToHeadUsages extends Specification {
+/**
+ * System under specification for ToHeadUsages.
+ */
+object ToHeadUsages extends Specification("ToHeadUsages Specification") {
+
   doBeforeSpec(JettyTestServer.start())
   doAfterSpec(JettyTestServer.stop())
 
@@ -172,7 +171,4 @@ object ToHeadUsages extends Specification {
     }
   }
 
-}
-
-}
 }

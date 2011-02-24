@@ -17,15 +17,17 @@
 package net.liftweb
 package http
 
+import xml._
+import org.specs.Specification
+
 import common._
 import util.Helpers._
-import org.specs._
-import org.specs.runner._
-import org.specs.Sugar._
-import scala.xml.{NodeSeq,Null,PrefixedAttribute,Text,UnprefixedAttribute}
 
-class SnippetSpecTest extends Runner(SnippetSpec) with JUnit with Console
-object SnippetSpec extends Specification {
+
+/**
+ * System under specification for SnippetSpec.
+ */
+object SnippetSpec extends Specification("SnippetSpec Specification") {
   def makeReq = new Req(Req.NilPath, "", GetRequest, Empty, null,
                     System.nanoTime, System.nanoTime, false,
                     () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map())

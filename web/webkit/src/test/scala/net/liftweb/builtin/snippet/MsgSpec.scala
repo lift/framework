@@ -17,17 +17,17 @@
 package net.liftweb
 package builtin.snippet
 
+import xml._
+import org.specs.Specification
+
 import common._
-import http.{LiftRules,LiftSession,S}
+import http._
 
-import org.specs._
-import runner._
-import Sugar._
 
-import scala.xml.{Null,Text,UnprefixedAttribute,XML}
-
-class MsgSpecTest extends Runner(MsgSpec) with JUnit with Console
-object MsgSpec extends Specification {
+/**
+ * System under specification for Msg.
+ */
+object MsgSpec extends Specification("Msg Specification") {
   def withSession[T](f: => T) : T =
     S.initIfUninitted(new LiftSession("test", "", Empty))(f)
 

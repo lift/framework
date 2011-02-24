@@ -16,26 +16,22 @@
 package net.liftweb
 package mockweb
 
-import javax.servlet.http.Cookie
-
 import scala.xml.{Null,Text,UnprefixedAttribute}
 
+import org.specs.Specification
+
 import common._
-import http._
-import http.provider.servlet.HTTPRequestServlet
-import mocks.MockHttpServletRequest
 import util._
+import http._
+import provider.servlet.HTTPRequestServlet
+import mocks.MockHttpServletRequest
 
-import org.specs._
-import org.specs.runner._
-
-class MockWebSpecTest extends Runner(MockWebSpec) with JUnit with Console
 
 /**
- * This spec does double duty as both a spec against the
- * MockWeb object as well as an example of how to use it.
+ * System under specification for MockWeb. This does the double duty as both a spec
+ * against the MockWeb object as well as an example of how to use it.
  */
-object MockWebSpec extends Specification {
+object MockWebSpec extends Specification("MockWeb Specification") {
   import MockWeb._
 
 // TODO : Uncomment this code when LiftRules can be scoped

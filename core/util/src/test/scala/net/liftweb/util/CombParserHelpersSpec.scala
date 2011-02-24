@@ -83,8 +83,7 @@ object CombParserHelpersSpec extends Specification("CombParserHelpers Specificat
       val number: String => Boolean =
         (s: String) => {
           aNumber(s) match {
-            case Success(x, y) =>
-              s.toInt == x
+            case Success(x, y) => s.toInt == x
             case _ => true
           }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package builtin.snippet {
+package net.liftweb
+package builtin.snippet
 
-import _root_.org.specs._
-import _root_.org.specs.runner._
-import _root_.org.specs.Sugar._
-import _root_.net.liftweb.http.{LiftRules,LiftSession,S}
-import _root_.net.liftweb.common._
+import xml.XML
+import org.specs.Specification
 
-import _root_.scala.xml.XML
+import common._
+import http._
 
-class MsgsSpecTest extends Runner(MsgsSpec) with JUnit with Console
-object MsgsSpec extends Specification {
+
+/**
+ * System under specification for Msgs.
+ */
+object MsgsSpec extends Specification("Msgs Specification") {
+
   def withSession[T](f: => T) : T =
     S.initIfUninitted(new LiftSession("test", "", Empty))(f)
 
@@ -69,5 +71,3 @@ object MsgsSpec extends Specification {
     }
   }
 }
-
-}} // Close nested packages

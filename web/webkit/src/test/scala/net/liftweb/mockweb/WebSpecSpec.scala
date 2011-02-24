@@ -23,11 +23,6 @@ import json._
 import json.JsonDSL._
 import mocks.MockHttpServletRequest
 
-import org.specs._
-import org.specs.runner._
-
-
-class WebSpecSpecTest extends Runner(WebSpecSpec) with JUnit with Console
 
 // TODO : Uncomment this code when LiftRules can be scoped
 ///**

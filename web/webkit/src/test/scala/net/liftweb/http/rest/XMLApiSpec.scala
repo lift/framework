@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,24 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package rest {
+package net.liftweb
+package http
+package rest
 
-import scala.xml.{Elem,Node,NodeSeq,XML}
+import xml._
 
-import common.{Box,Empty,Failure,Full}
+import org.specs.Specification
+import org.specs.matcher.Matcher
+
+import common._
 import util.ControlHelpers.tryo
 
-import _root_.org.specs._
-import _root_.org.specs.matcher.{Matcher,Matchers}
-import _root_.org.specs.runner._
-import _root_.org.specs.Sugar._
 
+/**
+ * System under specification for XMLApi.
+ */
+object XmlApiSpec extends Specification("XMLApi Specification") {
 
-//import http.{BadResponse,GetRequest,LiftResponse,LiftRules,XmlResponse}
-//import http.rest.XMLApiHelper
-
-class XMLApiSpecTest extends Runner(XMLApiSpec) with JUnit with Console
-object XMLApiSpec extends Specification {
   object XMLApiExample extends XMLApiHelper {
     // Define our root tag
     def createTag(contents : NodeSeq) : Elem = <api>{contents}</api>
@@ -139,7 +137,3 @@ object XMLApiSpec extends Specification {
     }
   }
 }
-
-}
-
-}} // Close packages

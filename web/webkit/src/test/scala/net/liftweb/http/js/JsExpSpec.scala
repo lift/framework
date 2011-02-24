@@ -18,16 +18,17 @@ package net.liftweb
 package http
 package js
 
-import common._
+import org.specs.Specification
+
 import json._
 import JsonDSL._
 import util.Helpers._
-import org.specs._
-import org.specs.runner._
-import org.specs.Sugar._
 
-class JsExpSpecTest extends Runner(JsExpSpec) with JUnit with Console
-object JsExpSpec extends Specification {
+
+/**
+ * System under specification for JsExp.
+ */
+object JsExpSpec extends Specification("JsExp Specification") {
   "JsExp" should {
     "Deal with lift-json" in {
       val json = ("a" -> 4) ~ ("b" -> 44)

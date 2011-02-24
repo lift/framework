@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package webapptest {
+package net.liftweb
+package webapptest
 
-import _root_.org.specs._
-import _root_.org.specs.runner.JUnit3
-import _root_.org.specs.runner.ConsoleRunner
-import _root_.net.sourceforge.jwebunit.junit.WebTester
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.http._
-import _root_.net.liftweb.http.testing._
-import _root_.net.liftweb.util._
+import org.specs.Specification
+
+import util._
+import http._
+import testing._
 import Helpers._
 
-import net.liftweb.webapptest.snippet.Counter
-
-
-class OneShotTest extends JUnit3(OneShot)
-object OneShotRunner extends ConsoleRunner(OneShot)
+import snippet.Counter
 
 
 object OneShot extends Specification with RequestKit {
@@ -160,7 +153,4 @@ object OneShot extends Specification with RequestKit {
     }
   }
 
-}
-
-}
 }
