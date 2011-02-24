@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
+import scala.util.parsing.combinator.Parsers
 import Helpers._
-import _root_.scala.util.parsing.combinator.Parsers
+
 
 /**
- * The CombParserHelpers trait provides parser combinators helpers
+ * The CombParserHelpers trait provides parser combinators helpers.
  */
 trait CombParserHelpers {
   self: Parsers =>
@@ -38,10 +39,24 @@ trait CombParserHelpers {
   /** @return true if the character is not an end of file  */
   def notEof(c: Char): Boolean = !isEof(c)
 
-  /** @return true if the character is a digit  */
+  /**
+   * @return true if the character is a digit.
+   *
+   * @note Currently, it supports the BMP (Basic Multilingual Plane) set from U+0000 to U+FFFF and
+   * not the supplementary characters having code points greater than U+FFFF.
+   *
+   * @see java.lang.Character#isDigit(char)
+   */
   def isNum(c: Char): Boolean = Character.isDigit(c)
 
-  /** @return true if the character is not a digit  */
+  /**
+   * @return true if the character is not a digit.
+   *
+   * @note Currently, it supports the BMP (Basic Multilingual Plane) set from U+0000 to U+FFFF and
+   * not the supplementary characters having code points greater than U+FFFF.
+   *
+   * @see java.lang.Character#isDigit(char)
+   */
   def notNum(c: Char): Boolean = !isNum(c)
 
   /** @return true if the character is a space character  */
@@ -219,7 +234,4 @@ trait SafeSeqParser extends Parsers {
 
     }
   }
-}
-
-}
 }

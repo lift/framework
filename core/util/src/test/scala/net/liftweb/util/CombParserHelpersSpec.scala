@@ -74,7 +74,7 @@ object CombParserHelpersSpec extends Specification("CombParserHelpers Specificat
     "provide a digit parser - returning a String" in {
       val isDigit: String => Boolean =
         (s: String) => digit(s) match {
-          case Success(x, y) => s mustMatch("\\d")
+          case Success(x, y) => s.toInt == x
           case _ => true
         }
       forAll(isDigit) must pass
@@ -83,7 +83,7 @@ object CombParserHelpersSpec extends Specification("CombParserHelpers Specificat
       val number: String => Boolean =
         (s: String) => {
           aNumber(s) match {
-            case Success(x, y) => 
+            case Success(x, y) =>
               s.toInt == x
             case _ => true
           }
