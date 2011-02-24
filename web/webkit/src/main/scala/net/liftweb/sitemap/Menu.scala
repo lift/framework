@@ -175,6 +175,13 @@ object Menu extends MenuSingleton {
      * Convert a Menuable into a Menu when you need a Menu.
      */
     implicit def toMenu(able: ParamMenuable[_]): Menu = able.toMenu
+
+    /**
+     * Convert a Menuable into a Loc[T]
+     */
+    implicit def toLoc[T](able: ParamMenuable[T]): Loc[T] = 
+      able.toMenu.loc.asInstanceOf[Loc[T]]
+
   }
 
   /**

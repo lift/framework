@@ -57,6 +57,11 @@ trait Loc[T] {
       case _ => Nil
     }.headOption.map(_.cssClass.func)
 
+  /**
+   * Given a value calculate the HREF to this item
+   */
+  def calcHref(in: T): String = link.createPath(in)
+
   def defaultValue: Box[T]
 
   def currentValue: Box[T] = overrideValue or requestValue.is or defaultValue
