@@ -144,9 +144,9 @@ object Menu extends MenuSingleton {
 
         val link = new Loc.Link[T](ParamMenuable.this.path, 
                                    ParamMenuable.this.headMatch) {
-          override def createLink(in: T) = 
-            Full(Text(ParamMenuable.this.path.mkString("/", "/", "/")+
-                      urlEncode(ParamMenuable.this.encoder(in))))
+          override def createPath(in: T): String = 
+            ParamMenuable.this.path.mkString("/", "/", "/")+
+                      urlEncode(ParamMenuable.this.encoder(in))
         }
 
         /**
@@ -271,11 +271,10 @@ object Menu extends MenuSingleton {
 
         val link = new Loc.Link[T](ParamsMenuable.this.path, 
                                    ParamsMenuable.this.headMatch) {
-          override def createLink(in: T) = 
-            Full(Text(
-              (ParamsMenuable.this.path :::
-               ParamsMenuable.this.encoder(in).map(urlEncode)).
-              mkString("/", "/", "")))
+          override def createPath(in: T): String = 
+            (ParamsMenuable.this.path :::
+             ParamsMenuable.this.encoder(in).map(urlEncode)).
+          mkString("/", "/", "")
         }
 
      val pathLen = ParamsMenuable.this.path.length
