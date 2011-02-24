@@ -41,31 +41,31 @@ object ActorSpec extends Specification("Actor Specification") {
       val a = actor
       a ! Set(33)
       a !? Get()
-      (a.!?(50, Get())) must_== Full(Answer(33))
+      (a.!?(50, Get())) must be_==(Full(Answer(33))).eventually
     }
 
     "allow setting and getting of a value with subclass of Get()" in {
       val a = actor
       a ! Set(33)
       a ! new FunnyGet()
-      (a.!?(50L, new FunnyGet())) must_== Full(Answer(33))
+      (a.!?(50L, new FunnyGet())) must be_==(Full(Answer(33))).eventually
     }
 
     "allow adding of a value" in {
       val a = actor
       a ! Set(33)
-      (a !< Add(44)).get(50) must_== Full(Answer(77))
+      (a !< Add(44)).get(50) must be_==(Full(Answer(77))).eventually
     }
 
     "allow subtracting of a value" in {
       val a = actor
       a ! Set(33)
-      (a !< Sub(11)).get(50) must_== Full(Answer(22))
+      (a !< Sub(11)).get(50) must be_==(Full(Answer(22))).eventually
     }
 
     "properly timeout" in {
       val a = actor
-      (a !< Set(33)).get(50) must_== Empty
+      (a !< Set(33)).get(50) must be_==(Empty).eventually
     }
   }
 
