@@ -63,8 +63,20 @@ trait Loc[T] {
   def calcHref(in: T): String = link.createPath(in)
 
   def defaultValue: Box[T]
+  
+  /**
+  * The value of the Loc based on params (either Loc.Value or Loc.CalcValue)
+  */
+  def paramValue: Box[T] = calcValue.flatMap(f => f()) or staticValue
 
-  def currentValue: Box[T] = overrideValue or requestValue.is or defaultValue
+  private lazy val staticValue: Box[T] = params.collect{case Loc.Value(v: T) => v}.headOption
+  
+  private lazy val calcValue: Box[() => Box[T]] = params.collect{case Loc.CalcValue(f: Function0[Box[T]]) => f}.headOption
+
+  /**
+  * The current value of the cell: overrideValue or requestValue.is or defaultValue oe paramValue
+  */
+  def currentValue: Box[T] = overrideValue or requestValue.is or defaultValue or paramValue
 
   def childValues: List[T] = Nil
 
@@ -526,6 +538,17 @@ object Loc {
    * the groups can be specified and recalled at the top level
    */
   case class LocGroup(group: String*) extends AnyLocParam
+  
+  /**
+  * Calculate the value for the Loc.  This is useful for parameterized
+  * menus.  It allows you to calculate the value of the Loc.
+  */
+  case class CalcValue[T](func: () => Box[T]) extends LocParam[T]
+  
+  /**
+  * The value of Loc
+  */
+  case class Value[T](value: T) extends LocParam[T]
 
   /**
    * An extension point for adding arbitrary lazy values to a Loc.
