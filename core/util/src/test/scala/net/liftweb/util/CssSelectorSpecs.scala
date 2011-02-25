@@ -157,7 +157,12 @@ object CssSelectorSpec extends Specification  {
 
     "Support selecting this node" in {
       CssSelectorParser.parse(".foo  ^^ ").open_! must_== 
-      ClassSelector("foo", Full(SelectThisNode()))
+      ClassSelector("foo", Full(SelectThisNode(false)))
+    }
+
+    "Support selecting this node" in {
+      CssSelectorParser.parse(".foo  ^* ").open_! must_== 
+      ClassSelector("foo", Full(SelectThisNode(true)))
     }
 
     "select a class with attr subnodes" in {

@@ -65,9 +65,12 @@ final case class AppendKidsSubNode() extends SubNode with WithKids {
   def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq = original ++ newNs
 }
 
-final case class AttrSubNode(attr: String) extends SubNode
-final case class AttrAppendSubNode(attr: String) extends SubNode
-final case class SelectThisNode() extends SubNode
+sealed trait AttributeRule
+
+final case class AttrSubNode(attr: String) extends SubNode with AttributeRule
+final case class AttrAppendSubNode(attr: String) extends SubNode with AttributeRule
+
+final case class SelectThisNode(kids: Boolean) extends SubNode
 
 /**
  * Parse a subset of CSS into the appropriate selector objects
@@ -185,9 +188,12 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
      name => AttrSubNode(name)
    }) | 
    ('-' ~ '*' ^^ (a => PrependKidsSubNode())) |
+   ('>' ~ '*' ^^ (a => PrependKidsSubNode())) |
    ('*' ~ '+' ^^ (a => AppendKidsSubNode())) |
+   ('*' ~ '<' ^^ (a => AppendKidsSubNode())) |
    '*' ^^ (a => KidsSubNode()) |
-   '^' ~ '^' ^^ (a => SelectThisNode()))
+   '^' ~ '*' ^^ (a => SelectThisNode(true)) |
+   '^' ~ '^' ^^ (a => SelectThisNode(false)))
 
   private lazy val attrName: Parser[String] = (letter | '_' | ':') ~
   rep(letter | number | '-' | '_' | ':' | '.') ^^ {

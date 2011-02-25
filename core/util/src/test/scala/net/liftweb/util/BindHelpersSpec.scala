@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb 
+package util 
 
-import _root_.org.specs._
-import _root_.org.specs.runner._
-import _root_.scala.xml._
+import org.specs._
+import org.specs.runner._
+import scala.xml._
 import common._
 
 object BindHelpersSpec extends Specification  {
@@ -426,6 +426,59 @@ object CssBindHelpersSpec extends Specification  {
       ("#foo ^^" #> "hello")(<div><span id="foo"/></div>) must ==/ (<span id="foo"/>)
     }
 
+    "Another nested select" in {
+      val template = <span>
+      <div id="meow">
+      <lift:loc locid="asset.import.chooseFile"></lift:loc>
+      <span id="file_upload"></span>
+      <input type="submit" value="import" /><br></br>
+      </div>
+      <div id="get">
+      <lift:loc locid="asset.import.chooseFile"></lift:loc>
+      <span id="file_upload"></span>
+      <input type="submit" value="import" /><br></br>
+      </div>
+      </span>
+
+      val xf = "#get ^^" #> "ignore" & "#file_upload" #> <input type="moose"/>
+
+      val ret = xf(template)
+
+      ret(0).asInstanceOf[Elem].label must_== "div"
+      ret.length must_== 1
+      (ret \ "@id").text must_== "get"
+
+      (ret \\ "input").length must_== 2
+
+      ((ret \\ "input").toList(0) \ "@type").map(_.text) must_== List("moose")
+      
+    }
+
+    "Child nested select" in {
+      val template = <span>
+      <div id="meow">
+      <lift:loc locid="asset.import.chooseFile"></lift:loc>
+      <span id="file_upload"></span>
+      <input type="submit" value="import" /><br></br>
+      </div>
+      <div id="get">
+      <lift:loc locid="asset.import.chooseFile"></lift:loc>
+      <span id="file_upload"></span>
+      <input type="submit" value="import" /><br></br>
+      </div>
+      </span>
+
+      val xf = "#get ^*" #> "ignore" & "#file_upload" #> <input type="moose"/>
+
+      val ret = xf(template)
+
+      (ret \\ "div").length must_== 0
+
+      (ret \\ "input").length must_== 2
+
+      ((ret \\ "input").toList(0) \ "@type").map(_.text) must_== List("moose")
+      
+    }
 
     "Select a node and transform stuff" in {
       val ret = ("#foo ^^" #> "hello" &
@@ -881,5 +934,3 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
 }
 
 
-}
-}

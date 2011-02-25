@@ -1884,7 +1884,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     val selThis: Box[CssBind] = binds.flatMap {
       b =>
         b.css.open_!.subNodes match {
-          case Full(SelectThisNode()) => List(b)
+          case Full(SelectThisNode(_)) => List(b)
           case _ => Nil
         }
     }.headOption
@@ -1925,7 +1925,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
     private final def isSelThis(bind: CssBind): Boolean = 
       bind.css.open_!.subNodes match {
-        case Full(SelectThisNode()) => true
+        case Full(SelectThisNode(_)) => true
         case _ => false
       }
 
@@ -1936,7 +1936,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         // ignore selectThis commands outside the
         // select context
         case bind :: xs 
-        if !onlySelThis && isSelThis(bind) => applyRule(xs, realE, onlySelThis)
+        if onlySelThis && isSelThis(bind) => applyRule(xs, realE, onlySelThis)
         
         case bind :: xs => {
           applyRule(bind, realE) flatMap {
@@ -1945,6 +1945,66 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
           }
         }
       }
+
+    final def applyAttributeRules(bindList: List[CssBind], elem: Elem): Elem = {
+      bindList.map(b => (b, b.css.open_!.subNodes.open_!)).
+      foldLeft(elem){
+        case (elem, (bind, AttrSubNode(attr))) => {
+          val calced = bind.calculate(elem)
+          val filtered = elem.attributes.filter{
+            case up: UnprefixedAttribute => up.key != attr
+            case _ => true
+          }
+
+          val newAttr = if (calced.isEmpty) {
+            filtered
+          } else {
+            val flat: NodeSeq = calced.flatMap(a => a)
+            new UnprefixedAttribute(attr, flat, filtered)
+          }
+
+          new Elem(elem.prefix, 
+                   elem.label, newAttr,
+                   elem.scope, elem.child :_*)
+        }
+
+        case (elem, (bind, AttrAppendSubNode(attr))) => {
+          val org: NodeSeq = elem.attribute(attr).getOrElse(NodeSeq.Empty)
+          val calced = bind.calculate(elem).toList
+
+
+          if (calced.isEmpty) {
+            elem
+          } else {
+            val filtered = elem.attributes.filter{
+              case up: UnprefixedAttribute => up.key != attr
+              case _ => true
+            }
+            
+            val flat: NodeSeq = if (attr == "class") {
+              if (org.isEmpty) {
+                calced.dropRight(1).flatMap(a => a ++ Text(" ")) ++
+                calced.takeRight(1).head
+              } else {
+                org ++ Text(" ") ++ 
+                calced.dropRight(1).flatMap(a => a ++ Text(" ")) ++
+                calced.takeRight(1).head
+              }
+            } else {
+              org ++ (calced.flatMap(a => a): NodeSeq)
+            }
+
+            val newAttr = new UnprefixedAttribute(attr, flat, filtered)
+
+            new Elem(elem.prefix, 
+                     elem.label, newAttr,
+                     elem.scope, elem.child :_*)
+            
+          }
+        }
+      }
+    }
+
       
     
     final def applyRule(bind: CssBind, realE: Elem): NodeSeq = {
@@ -2024,8 +2084,8 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       // we can do an open_! here because all the CssBind elems
       // have been vetted
       bind.css.open_!.subNodes match {
-        case Full(SelectThisNode()) => {
-          throw new RetryWithException(realE)
+        case Full(SelectThisNode(kids)) => {
+          throw new RetryWithException(if (kids) realE.child else realE)
         }
           
         case Full(todo: WithKids) => {
@@ -2056,6 +2116,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
           }
         }
 
+        /*
         case Full(AttrSubNode(attr)) => {
           val calced = bind.calculate(realE)
           val filtered = realE.attributes.filter{
@@ -2109,6 +2170,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             
           }
         }
+        */
           
         case x: EmptyBox => {
           val calced = bind.calculate(realE)
@@ -2258,13 +2320,31 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
           NodeSeq.Empty
         }
         
-        case csb => throw new RetryWithException(e)
+        case csb :: _ => 
+          throw new RetryWithException(if (csb.selectThisChildren_?)
+            e.child else e)
       }
     } else {
-      lb.toList  match {
+      lb.toList.filterNot(_.selectThis_?)  match {
         case Nil => new Elem(e.prefix, e.label, 
                              e.attributes, e.scope, run(e.child, onlySel) :_*)
-        case csb => slurp.applyRule(csb, e, onlySel)
+        case csb =>
+          // do attributes first, then the body
+          csb.partition(_.attrSel_?) match {
+            case (Nil, rules) =>  slurp.applyRule(rules, e, onlySel)
+            case (attrs, Nil) => {
+              val elem = slurp.applyAttributeRules(attrs, e)
+              new Elem(elem.prefix, elem.label, 
+                       elem.attributes, elem.scope, run(elem.child, onlySel) :_*)
+            }
+
+            case (attrs, rules) => {
+              slurp.applyRule(rules, 
+                              slurp.applyAttributeRules(attrs, e),
+                              onlySel)
+            }
+          }
+          // slurp.applyRule(csb, e, onlySel)
       }
     }
   }
@@ -2274,7 +2354,8 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       try {
         run(in, true)
       } catch {
-        case RetryWithException(newElem) => run(newElem, false)
+        case RetryWithException(newElem) =>
+          run(newElem, false)
       }
     }
 
@@ -2289,7 +2370,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       }
 }
 
-private case class RetryWithException(e: Elem) extends Exception()
+private case class RetryWithException(e: NodeSeq) extends Exception()
 
 object CssBind {
   def unapply(in: CssBind): Option[CssSelector] = in.css
@@ -2299,6 +2380,9 @@ sealed trait CssBind extends CssSel {
   def stringSelector: Box[String]
   def css: Box[CssSelector]
   
+  override def toString(): String = "CssBind("+stringSelector+", "+
+  css+")"
+
   def apply(in: NodeSeq): NodeSeq = css match {
     case Full(c) => selectorMap(in)
     case _ => Helpers.errorDiv(
@@ -2314,7 +2398,32 @@ sealed trait CssBind extends CssSel {
   private[util] def selectThis_? : Boolean = css match {
     case Full(sel) => {
       sel.subNodes match {
-        case Full(SelectThisNode()) => true
+        case Full(SelectThisNode(_)) => true
+        case _ => false
+      }
+    }
+      
+    case _ => false
+  }
+
+  /**
+   * Is this an Attribute mutating node?
+   */
+  private[util] def attrSel_? : Boolean = css match {
+    case Full(sel) => {
+      sel.subNodes match {
+        case Full(x: AttributeRule) => true
+        case _ => false
+      }
+    }
+      
+    case _ => false
+  }
+
+  private[util] def selectThisChildren_? : Boolean = css match {
+    case Full(sel) => {
+      sel.subNodes match {
+        case Full(SelectThisNode(children)) => children
         case _ => false
       }
     }
