@@ -578,7 +578,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   private object snippetMap extends RequestVar[Map[String, AnyRef]](Map())
   private[http] object deferredSnippets extends RequestVar[HashMap[String, Box[NodeSeq]]](new HashMap)
-  private object cometSetup extends RequestVar[List[((Box[String], Box[String]), Any)]](Nil)
+  private object cometSetup extends SessionVar[List[((Box[String], Box[String]), Any)]](Nil)
 
 
   private[http] def startSession(): Unit = {
@@ -1840,7 +1840,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    */
   def setupComet(theType: String, name: Box[String], msg: Any) {
     testStatefulFeature {
-      cometSetup((Full(theType) -> name, msg) :: cometSetup.is)
+      cometSetup.atomicUpdate(v => (Full(theType) -> name, msg) :: v)
     }
   }
 
@@ -1871,6 +1871,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       actor <- ret
       (cst, csv) <- cometSetup.is if cst == what
     } actor ! csv
+
+      cometSetup.atomicUpdate(v => v.filter(_._1 != what))
 
     ret
     }
