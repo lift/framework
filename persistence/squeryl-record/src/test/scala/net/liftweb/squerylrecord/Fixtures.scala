@@ -38,6 +38,8 @@ import java.util.Calendar
 object DBHelper {
   def initSquerylRecordWithInMemoryDB() {
     SquerylRecord.initWithSquerylSession {
+      // TODO: Use mapper.StandardDBVendor
+      Class.forName("org.h2.Driver")
       val session = Session.create(DriverManager.getConnection("jdbc:h2:mem:testSquerylRecordDB;DB_CLOSE_DELAY=-1"), new H2Adapter)
       //session.setLogger(statement => println(statement))
       session
