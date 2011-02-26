@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package mongodb 
-package record 
+package net.liftweb
+package mongodb
+package record
 
 import net.liftweb.common.{Box, Full}
 import net.liftweb.record.{MetaRecord, Record}
@@ -25,7 +25,7 @@ import com.mongodb.{BasicDBObject, DBObject, DBRef, WriteConcern}
 
 import org.bson.types.ObjectId
 
-trait MongoRecord[MyType <: MongoRecord[MyType]] extends Record[MyType] {
+trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   self: MyType =>
 
   /*
@@ -71,48 +71,6 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends Record[MyType] {
       meta.delete_!(this)
     }
   }
-
-/* Set mongoIdentifier in meta object. No need to support calcDbId for sharding
-  private var dbMongoIdentifier: Option[MongoIdentifier] = None
-
-  def mongoIdentifier = dbMongoIdentifier getOrElse calcDbId
-
-  def dbCalculateMongoIdentifier: PartialFunction[MyType, MongoIdentifier] = Map.empty
-
-  private def calcDbId = if (dbCalculateMongoIdentifier.isDefinedAt(this)) dbCalculateMongoIdentifier(this)
-                        else meta.dbDefaultMongoIdentifier
-*/
-
-  /**
-  * Append a function to perform after the commit happens
-  * @param func - the function to perform after the commit happens
-
-  def doPostCommit(func: () => Unit) {
-    //DB.appendPostFunc(connectionIdentifier, func)
-  }
-*/
-
-  /**
-  * Encode a record instance into a DBObject
-  */
-  def asDBObject: DBObject = meta.asDBObject(this)
-
-  /**
-  * Set the fields of this record from the given DBObject
-  */
-  def setFieldsFromDBObject(dbo: DBObject): Unit = meta.setFieldsFromDBObject(this, dbo)
-
-  override def toString = {
-    val fieldList = this.fields.map(f => "%s=%s" format (f.name,
-        f.valueBox match {
-          case Full(c: java.util.Calendar) => c.getTime().toString()
-          case Full(null) => ""
-          case Full(v) => v.toString
-          case _ => ""
-        }))
-
-    "%s={%s}" format (this.getClass.toString, fieldList.mkString(", "))
-  }
 }
 
 /**
@@ -137,4 +95,3 @@ trait MongoId[OwnerType <: MongoRecord[OwnerType]] {
     )
   }
 }
-

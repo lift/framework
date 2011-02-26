@@ -150,7 +150,7 @@ class FieldTypeTestRecord private () extends MongoRecord[FieldTypeTestRecord] wi
   }
 }
 
-case class MongoCaseClassTestObject(intField: Int, stringField: String) 
+case class MongoCaseClassTestObject(intField: Int, stringField: String)
 
 object FieldTypeTestRecord extends FieldTypeTestRecord with MongoMetaRecord[FieldTypeTestRecord]
 
@@ -232,7 +232,7 @@ class ListTestRecord private () extends MongoRecord[ListTestRecord] with MongoId
 
   object mandatoryMongoJsonObjectListField extends MongoJsonObjectListField(this, TypeTestJsonObject)
   object legacyOptionalMongoJsonObjectListField extends MongoJsonObjectListField(this, TypeTestJsonObject) { override def optional_? = true }
-  
+
   object mongoCaseClassListField extends MongoCaseClassListField[ListTestRecord, MongoCaseClassTestObject](this)
 
   // TODO: More List types
@@ -289,6 +289,52 @@ class LifecycleTestRecord private ()
 object LifecycleTestRecord extends LifecycleTestRecord with MongoMetaRecord[LifecycleTestRecord] {
   // without this, the Scala 2.7 compiler panics, so don't blame me if you remove it and it's confusing!
   override def foreachCallback(inst: LifecycleTestRecord, f: LifecycleCallbacks => Any) = super.foreachCallback(inst, f)
+}
+
+/*
+ * SubRecord fields
+ */
+class SubRecord extends BsonRecord[SubRecord] {
+  def meta = SubRecord
+
+  object name extends StringField(this, 12)
+
+  override def equals(other: Any): Boolean = other match {
+    case that:SubRecord =>
+      this.name.value == that.name.value
+    case _ => false
+  }
+}
+object SubRecord extends SubRecord with BsonMetaRecord[SubRecord] {
+  override def formats = allFormats
+}
+
+class SubRecordTestRecord extends MongoRecord[SubRecordTestRecord] with MongoId[SubRecordTestRecord] {
+  def meta = SubRecordTestRecord
+
+  object mandatoryBsonRecordField extends BsonRecordField(this, SubRecord)
+  object legacyOptionalBsonRecordField extends BsonRecordField(this, SubRecord) {
+    override def optional_? = true
+  }
+
+  object mandatoryBsonRecordListField extends BsonRecordListField(this, SubRecord)
+  object legacyOptionalBsonRecordListField extends BsonRecordListField(this, SubRecord) {
+    override def optional_? = true
+  }
+
+  override def equals(other: Any): Boolean = other match {
+    case that:SubRecordTestRecord =>
+      this.id == that.id &&
+      this.mandatoryBsonRecordField.value == that.mandatoryBsonRecordField.value &&
+      this.legacyOptionalBsonRecordField.valueBox == that.legacyOptionalBsonRecordField.valueBox &&
+      this.mandatoryBsonRecordListField.value == that.mandatoryBsonRecordListField.value &&
+      this.legacyOptionalBsonRecordListField.valueBox == that.legacyOptionalBsonRecordListField.valueBox
+    case _ => false
+  }
+
+}
+object SubRecordTestRecord extends SubRecordTestRecord with MongoMetaRecord[SubRecordTestRecord] {
+  override def formats = allFormats
 }
 
 case class JsonObj(id: String, name: String) extends JsonObject[JsonObj] {

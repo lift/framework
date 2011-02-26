@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package mongodb 
-package record 
+package net.liftweb
+package mongodb
+package record
 
 import java.util.{Calendar, UUID}
 import java.util.regex.Pattern
@@ -37,7 +37,7 @@ import com.mongodb.util.JSON
 import org.bson.types.ObjectId
 
 trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
-  extends MetaRecord[BaseRecord] with MongoMeta[BaseRecord] {
+  extends BsonMetaRecord[BaseRecord] with MongoMeta[BaseRecord] {
 
   self: BaseRecord =>
 
@@ -298,71 +298,4 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
                       .get)
     this.update(query, update)
   }
-
-  /**
-  * Create a BasicDBObject from the field names and values.
-  * - MongoFieldFlavor types (List) are converted to DBObjects
-  *   using asDBObject
-  */
-  def asDBObject(inst: BaseRecord): DBObject = {
-
-    import Meta.Reflection._
-    import field.MongoFieldFlavor
-
-    val dbo = BasicDBObjectBuilder.start // use this so regex patterns can be stored.
-
-    for (f <- fields(inst)) {
-      f match {
-        case field if (field.optional_? && field.valueBox.isEmpty) => // don't add to DBObject
-        case field: EnumTypedField[Enumeration] =>
-          field.asInstanceOf[EnumTypedField[Enumeration]].valueBox foreach {
-            v => dbo.add(f.name, v.id)
-          }
-        case field: EnumNameTypedField[Enumeration] =>
-          field.asInstanceOf[EnumNameTypedField[Enumeration]].valueBox foreach {
-            v => dbo.add(f.name, v.toString)
-          }
-        case field: MongoFieldFlavor[Any] =>
-          dbo.add(f.name, field.asInstanceOf[MongoFieldFlavor[Any]].asDBObject)
-        case field => field.valueBox foreach (_.asInstanceOf[AnyRef] match {
-          case null => dbo.add(f.name, null)
-          case x if primitive_?(x.getClass) => dbo.add(f.name, x)
-          case x if mongotype_?(x.getClass) => dbo.add(f.name, x)
-          case x if datetype_?(x.getClass) => dbo.add(f.name, datetype2dbovalue(x))
-          case o => dbo.add(f.name, o.toString)
-        })
-      }
-    }
-    dbo.get
-  }
-
-  /**
-  * Creates a new record, then sets the fields with the given DBObject.
-  *
-  * @param dbo - the DBObject
-  * @return Box[BaseRecord]
-  */
-  def fromDBObject(dbo: DBObject): BaseRecord = {
-    val inst: BaseRecord = createRecord
-    setFieldsFromDBObject(inst, dbo)
-    inst
-  }
-
-  /**
-  * Populate the inst's fields with the values from a DBObject. Values are set
-  * using setFromAny passing it the DBObject returned from Mongo.
-  *
-  * @param inst - the record that will be populated
-  * @param obj - The DBObject
-  * @return Box[BaseRecord]
-  */
-  def setFieldsFromDBObject(inst: BaseRecord, dbo: DBObject): Unit = {
-    for (k <- dbo.keySet; field <- inst.fieldByName(k.toString)) {
-      field.setFromAny(dbo.get(k.toString))
-    }
-    inst.runSafe {
-      inst.fields.foreach(_.resetDirty)
-    }
-  }
 }
-

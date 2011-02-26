@@ -11,20 +11,29 @@
 * limitations under the License.
 */
 
-package net.liftweb 
-package mongodb 
+package net.liftweb
+package mongodb
 
 import org.bson.types.ObjectId
 
-import net.liftweb.json.{DefaultFormats, Formats}
-import net.liftweb.json.JsonAST.JObject
+import json.{DefaultFormats, Formats}
+import json.JsonAST.JObject
 
 import com.mongodb.{BasicDBObject, DB, DBObject}
+
+trait JsonFormats {
+  // override this for custom Formats
+  def formats: Formats = DefaultFormats.lossless
+
+  implicit lazy val _formats: Formats = formats
+
+  lazy val allFormats = DefaultFormats.lossless + new ObjectIdSerializer + new DateSerializer + new PatternSerializer + new UUIDSerializer
+}
 
 /*
 * This is used by both MongoDocumentMeta and MongoMetaRecord
 */
-trait MongoMeta[BaseDocument] {
+trait MongoMeta[BaseDocument] extends JsonFormats {
 
   // class name has a $ at the end. because it's an object(?)
   private lazy val _collectionName = {
@@ -54,13 +63,6 @@ trait MongoMeta[BaseDocument] {
 
   // override this to specify a MongoIdentifier for this MongoDocument type
   def mongoIdentifier: MongoIdentifier = DefaultMongoIdentifier
-
-  // override this for custom Formats
-  def formats: Formats = DefaultFormats.lossless
-
-  implicit lazy val _formats: Formats = formats
-
-  lazy val allFormats = DefaultFormats.lossless + new ObjectIdSerializer + new DateSerializer + new PatternSerializer + new UUIDSerializer
 
   /*
   * Count all documents
