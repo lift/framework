@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package ldap {
+package net.liftweb
+package ldap
 
 import java.io.{InputStream, FileInputStream}
 import java.util.{Hashtable, Properties}
@@ -27,8 +27,8 @@ import javax.naming.ldap.{InitialLdapContext,LdapName}
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConversions._
 
-import _root_.net.liftweb.util.{ControlHelpers,Props,SimpleInjector,ThreadGlobal}
-import _root_.net.liftweb.common.{Box,Empty,Full,Loggable}
+import util.{ControlHelpers,Props,SimpleInjector,ThreadGlobal}
+import common.{Box,Empty,Full,Loggable}
 
 /**
  * A simple extension to LDAPVendor to provide configuration
@@ -447,6 +447,3 @@ class LDAPVendor extends Loggable with SimpleInjector {
     new InitialLdapContext(env, null)
   }
 }
-
-}} // Close nested packages
-

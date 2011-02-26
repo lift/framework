@@ -230,7 +230,7 @@ trait ListHelpers {
       val ret = rot.flatMap(z => (z: @unchecked) match {case x :: xs => permuteList(xs).map(x :: _)})
       ret ::: rot.map(z => (z: @unchecked) match {case x :: xs => xs}).flatMap(internal(_))
     }
-    internal(in.toList).removeDuplicates.sortWith(_.length > _.length)
+    internal(in.toList).distinct.sortWith(_.length > _.length)
   }
 
   /** Add utility methods to Lists */

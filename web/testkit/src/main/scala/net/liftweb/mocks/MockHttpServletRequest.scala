@@ -408,7 +408,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
 
   def getLocale(): Locale = locales.headOption.getOrElse(Locale.getDefault)
 
-  def getLocales(): JEnum[Object] = locales.elements
+  def getLocales(): JEnum[Object] = locales.iterator
   
   def getLocalName(): String = localName
 
@@ -429,7 +429,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   }
 
   def getParameterNames(): JEnum[Object] = 
-    parameters.map(_._1).distinct.elements
+    parameters.map(_._1).distinct.iterator
 
   def getParameterValues(key: String): Array[String] = 
     parameters.filter(_._1 == key).map(_._2).toArray
@@ -492,7 +492,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   def getHeaderNames(): JEnum[Object] = headers.keys.iterator
 
   def getHeaders(s: String): JEnum[Object] =
-    headers.getOrElse(s, Nil).elements
+    headers.getOrElse(s, Nil).iterator
 
   def getIntHeader(h: String): Int = {
     Box.!!(getHeader(h)).map(_.toInt) openOr -1

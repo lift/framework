@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.scala.collection.mutable.{ListBuffer, HashMap}
-import _root_.scala.collection.immutable.{SortedMap, TreeMap}
-import _root_.java.lang.reflect.Method
-import _root_.java.sql.{ResultSet, Types, PreparedStatement}
-import _root_.scala.xml._
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.common.{Box, Empty, Full, Failure, Logger}
-import _root_.net.liftweb.json._
-import _root_.net.liftweb.util.{NamedPF, FieldError, Helpers}
-import _root_.net.liftweb.http.{LiftRules, S, SHtml, RequestMemoize,
-			      Factory}
-import _root_.java.util.{Date, Locale}
-import _root_.net.liftweb.http.js._
+import java.lang.reflect.Method
+import java.sql.{ResultSet, Types, PreparedStatement}
+import java.util.{Date, Locale}
+
+import collection.mutable.{ListBuffer, HashMap}
+import collection.immutable.{SortedMap, TreeMap}
+import xml._
+
+import common._
+import json._
+import util.Helpers._
+import util.{NamedPF, FieldError, Helpers}
+import http.{LiftRules, S, SHtml, RequestMemoize, Factory}
+import http.js._
 
 trait BaseMetaMapper {
   type RealType <: Mapper[RealType]
@@ -1162,7 +1163,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
           meths ::: findForClass(clz.getSuperclass)
       }
 
-      val ret = findForClass(staringClass).removeDuplicates
+      val ret = findForClass(staringClass).distinct
 
       ret
     }
@@ -2136,6 +2137,3 @@ trait SelectableField {
 }
 
 class MapperException(msg: String) extends Exception(msg)
-
-}
-}

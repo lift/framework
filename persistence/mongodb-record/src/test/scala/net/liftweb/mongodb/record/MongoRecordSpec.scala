@@ -18,20 +18,17 @@ package net.liftweb
 package mongodb
 package record
 
-import common._
-import http.js.JE._
-import json.JsonAST._
-import json.Printer
-
 import java.util.{Date, UUID}
 import java.util.regex.Pattern
 
 import org.bson.types.ObjectId
 import org.specs.Specification
 
-import net.liftweb.record.field.Countries
+import common._
+import json._
+import http.js.JE._
 
-import com.mongodb.DBRef
+import net.liftweb.record.field.Countries
 
 
 /**
@@ -51,7 +48,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
     } yield flavor + typeName + "Field").toList
 
     "introspect only the expected fields" in {
-      rec.fields().map(_.name).sort(_ < _) must_== allExpectedFieldNames.sort(_ < _)
+      rec.fields().map(_.name).sortWith(_ < _) must_== allExpectedFieldNames.sort(_ < _)
     }
 
     "correctly look up fields by name" in {
@@ -429,7 +426,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       btrFromDb foreach { b =>
         b.jsonobjlist.value.size must_== 2
         btr.jsonobjlist.value.size must_== 2
-        val sortedList = b.jsonobjlist.value.sort(_.id < _.id)
+        val sortedList = b.jsonobjlist.value.sortWith(_.id < _.id)
         sortedList(0).boxEmpty must_== Empty
         sortedList(0).boxFull must_== Full("Full String1")
         sortedList(0).boxFail must_== Failure("Failure1")

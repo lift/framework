@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,8 +11,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package couchdb {
+package net.liftweb
+package couchdb
 
 import _root_.java.math.MathContext
 import _root_.java.util.Calendar
@@ -108,7 +108,7 @@ trait JSONMetaRecord[BaseRecord <: JSONRecord[BaseRecord]] extends MetaRecord[Ba
   /** Encode a record instance into a JValue */
   override def asJValue(rec: BaseRecord): JObject = {
     val recordJFields = fields(rec).map(f => JField(jsonName(f), f.asJValue))
-    JObject(dedupe(recordJFields ++ rec.fixedAdditionalJFields ++ rec.additionalJFields).sort(_.name < _.name))
+    JObject(dedupe(recordJFields ++ rec.fixedAdditionalJFields ++ rec.additionalJFields).sortWith(_.name < _.name))
   }
 
   /** Attempt to decode a JValue, which must be a JObject, into a record instance */
@@ -234,7 +234,7 @@ class JSONSubRecordArrayField[OwnerType <: JSONRecord[OwnerType], SubRecordType 
   extends Field[List[SubRecordType], OwnerType] with MandatoryTypedField[List[SubRecordType]]
 {
   def this(rec: OwnerType, value: List[SubRecordType])(implicit subRecordType: Manifest[SubRecordType]) = {
-      this(rec, value.first.meta)
+      this(rec, value.head.meta)
       set(value)
   }
 
@@ -272,7 +272,4 @@ class JSONSubRecordArrayField[OwnerType <: JSONRecord[OwnerType], SubRecordType 
     case JArray(jvalues)              => setBox(fromJValues(jvalues))
     case other                        => setBox(expectedA("JArray containing " + valueMeta.getClass.getSuperclass.getName, other))
   }
-}
-
-}
 }

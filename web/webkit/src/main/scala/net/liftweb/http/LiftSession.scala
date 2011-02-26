@@ -643,7 +643,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
     val toRun = {
       // get all the commands, sorted by owner,
-      (state.uploadedFiles.map(_.name) ::: state.paramNames).removeDuplicates.
+      (state.uploadedFiles.map(_.name) ::: state.paramNames).distinct.
               flatMap {n => synchronized {messageCallback.get(n)}.map(mcb => RunnerHolder(n, mcb, mcb.owner))}.
               sort {
         case (RunnerHolder(_, _, Full(a)), RunnerHolder(_, _, Full(b))) if a < b => true
@@ -664,7 +664,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
           state.uploadedFiles.filter(_.name == i.name).map(_.fileName)))
     }
 
-    val ret = toRun.map(_.owner).removeDuplicates.flatMap {
+    val ret = toRun.map(_.owner).distinct.flatMap {
       w =>
               val f = toRun.filter(_.owner == w)
               w match {
@@ -895,7 +895,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    */
   def postPageJavaScript(pageIds: Seq[String]): List[JsCmd] = {
     for {
-      rv <- pageIds.toList.removeDuplicates
+      rv <- pageIds.toList.distinct
       js <- postPageJavaScript(rv)
     } yield js
   }
@@ -1563,7 +1563,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                         case CheckNodeSeq(md) => md
                         case it =>
                           val intersection = if (Props.devMode) {
-                            val methodNames = inst.getClass.getMethods().map(_.getName).toList.removeDuplicates
+                            val methodNames = inst.getClass.getMethods().map(_.getName).toList.distinct
                             val methodAlts = List(method, Helpers.camelCase(method),
                               Helpers.camelCaseMethod(method))
                             methodNames intersect methodAlts

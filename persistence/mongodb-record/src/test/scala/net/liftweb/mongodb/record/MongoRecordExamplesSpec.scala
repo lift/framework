@@ -33,10 +33,10 @@ import org.specs.Specification
 import com.mongodb._
 import org.bson.types.ObjectId
 
-import field._
-
 
 package mongotestrecords {
+
+  import field._
 
   class TstRecord private () extends MongoRecord[TstRecord] {
 
@@ -407,7 +407,7 @@ object MongoRecordExamplesSpec extends Specification("MongoRecordExamples Specif
     val qry = ("name" -> ("$in" -> List("md1", "md2")))
     val mdq2 = MainDoc.findAll(qry, ("name" -> -1))
     mdq2.size must_== 2
-    mdq2.first.id must_== md2.id
+    mdq2.head.id must_== md2.id
 
     // Find all documents using a k, v query
     val mdq3 = MainDoc.findAll("_id", md1.id)

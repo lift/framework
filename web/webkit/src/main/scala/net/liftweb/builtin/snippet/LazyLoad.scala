@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package builtin {
-package snippet {
+package net.liftweb
+package builtin
+package snippet
 
-import _root_.scala.xml._
-import _root_.net.liftweb.http._
-import _root_.net.liftweb.actor._
-import _root_.net.liftweb.http.js._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
+import xml._
+import http._
+import common._
+import actor._
+import util._
+import http.js._
 import JsCmds._
 import JE._
 import S._
@@ -37,7 +37,7 @@ object LazyLoad extends DispatchSnippet {
   private object myFuncName extends TransientRequestVar(Helpers.nextFuncName)
   private object myActor extends TransientRequestVar[Box[CometActor]](Empty)
 
-  def dispatch : DispatchIt = {
+  def dispatch: DispatchIt = {
     case _ => render _
   }
 
@@ -130,7 +130,7 @@ class AsyncRenderComet extends CometActor {
   override def lowPriority : PartialFunction[Any, Unit] = {
     // farm the request off to another thread
     case Ready(js) => 
-      ActorPing.schedule(() => this ! Render(js()), 0 seconds)
+      Schedule.schedule(() => this ! Render(js()), 0 seconds)
 
     // render it
     case Render(js) => 
@@ -228,6 +228,3 @@ class AsyncRenderComet extends CometActor {
 }
 
 */
-}
-}
-}

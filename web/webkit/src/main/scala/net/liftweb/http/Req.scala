@@ -17,19 +17,16 @@
 package net.liftweb
 package http
 
-import util.Helpers
-import Helpers._
-import common._
-import util._
-import json._
-import http.provider._
 import java.io.{InputStream, ByteArrayInputStream, File, FileInputStream,
                        FileOutputStream}
 import scala.xml._
+
+import common._
+import json._
+import util._
+import Helpers._
+import http.provider._
 import sitemap._
-import java.io.{InputStream, ByteArrayInputStream, File, FileInputStream,
-                FileOutputStream}
-import scala.xml._
 
 
 object UserAgentCalculator extends Factory {
@@ -400,7 +397,7 @@ object Req {
             case n :: _ => Full((urlDecode(n), ""))
           }} yield (name, value)
             
-            val names: List[String] = params.map(_._1).removeDuplicates
+            val names: List[String] = params.map(_._1).distinct
       val nvp: Map[String, List[String]] = params.foldLeft(Map[String, List[String]]()) {
         case (map, (name, value)) => map + (name -> (map.getOrElse(name, Nil) ::: List(value)))
       }
@@ -441,7 +438,7 @@ object Req {
           a + (b.name -> (a.getOrElse(b.name, Nil) ::: List(b.value))))
         
         ParamCalcInfo((queryStringParam._1 ::: 
-                       normal.map(_.name)).removeDuplicates, 
+                       normal.map(_.name)).distinct,
                       queryStringParam._2 ++ localParams ++
                       params, files, Empty)
         // it's a GET
@@ -450,7 +447,7 @@ object Req {
                       queryStringParam._2 ++ localParams, Nil, Empty)
       } else if (contentType.dmap(false)(_.toLowerCase.
                                          startsWith("application/x-www-form-urlencoded"))) {
-        val params = localParams ++ (request.params.sort
+        val params = localParams ++ (request.params.sortWith
                                      {(s1, s2) => s1.name < s2.name}).
                                            map(n => (n.name, n.values))
         ParamCalcInfo(request paramNames, params, Nil, Empty)
@@ -641,7 +638,7 @@ object ContentType {
       (part, index) <- str.charSplit(',').
       map(_.trim).zipWithIndex // split at comma
       content <- parseIt(part, index)
-    } yield content).sort(_ < _)
+    } yield content).sortWith(_ < _)
 
   private object TwoType {
     def unapply(in: String): Option[(String, String)] = 

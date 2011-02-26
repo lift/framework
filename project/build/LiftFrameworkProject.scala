@@ -102,6 +102,8 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
     // FIXME: breaks with SBT
     override def testOptions =
       ExcludeTests(
+        // Core tests
+        "net.liftweb.json.JsonFormatsSpec" ::
         // Persistence tests
         "net.liftweb.mapper.MapperSpec" :: "net.liftweb.squerylrecord.SquerylRecordSpec" ::
         // Web tests

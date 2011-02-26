@@ -38,7 +38,7 @@ object CouchQuerySpec extends Specification("CouchQuery Specification") {
     (http, database)
   }
 
-  private final def verifyAndOpen[A](b: Box[A]): A = {
+  private def verifyAndOpen[A](b: Box[A]): A = {
     b must verify(_.isDefined)
     b.open_!
   }
@@ -75,7 +75,7 @@ object CouchQuerySpec extends Specification("CouchQuery Specification") {
     }
 
     def sortedAndPrintedRows(docs: Seq[QueryRow]): String = sortedAndPrintedValues(docs.flatMap(_.value.asA[JObject]).toList)
-    def sortedAndPrintedValues(docs: List[JObject]): String = compact(render(docs.sort(compareName)))
+    def sortedAndPrintedValues(docs: List[JObject]): String = compact(render(docs.sortWith(compareName)))
 
     "work with all documents" in {
       val (http, database) = setup
@@ -121,8 +121,8 @@ object CouchQuerySpec extends Specification("CouchQuery Specification") {
 
       verifyAndOpen(http(database.design("test").view("students_by_age").from(11) query)) must beLike {
         case QueryResults(_, _, rows) =>
-          (rows.flatMap(_.value.asA[JObject]).toList.sort(compareName) must_==
-           students.filter(_.getInt("age").map(_ >= 11).open_!).sort(compareName))
+          (rows.flatMap(_.value.asA[JObject]).toList.sortWith(compareName) must_==
+           students.filter(_.getInt("age").map(_ >= 11).open_!).sortWith(compareName))
       }
     }
 
@@ -133,8 +133,8 @@ object CouchQuerySpec extends Specification("CouchQuery Specification") {
 
       verifyAndOpen(http(database.design("test").view("students_by_age").to(12) query)) must beLike {
         case QueryResults(_, _, rows) =>
-          (rows.flatMap(_.value.asA[JObject]).toList.sort(compareName) must_==
-           students.filter(_.getInt("age").map(_ <= 12).open_!).sort(compareName))
+          (rows.flatMap(_.value.asA[JObject]).toList.sortWith(compareName) must_==
+           students.filter(_.getInt("age").map(_ <= 12).open_!).sortWith(compareName))
       }
     }
 
@@ -146,7 +146,7 @@ object CouchQuerySpec extends Specification("CouchQuery Specification") {
       verifyAndOpen(http(database.design("test").view("students_by_age").key(11) query)) must beLike {
         case QueryResults(_, _, rows) =>
           rows.length must_== 2
-          (rows.flatMap(_.value.asA[JObject]).toList.sort(compareName) must_==
+          (rows.flatMap(_.value.asA[JObject]).toList.sortWith(compareName) must_==
            students.filter(_.getInt("age").map(_ == 11).open_!))
       }
     }
@@ -168,7 +168,7 @@ object CouchQuerySpec extends Specification("CouchQuery Specification") {
       verifyAndOpen(http(database.design("test").view("students_by_age").descending.from(11) query)) must beLike {
         case QueryResults(_, _, rows) =>
           rows.length must_== 3
-          (rows.flatMap(_.value.asA[JObject]).toList.sort(compareName) must_==
+          (rows.flatMap(_.value.asA[JObject]).toList.sortWith(compareName) must_==
            students.filter(_.getInt("age").map(_ <= 11).open_!))
       }
     }

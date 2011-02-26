@@ -145,7 +145,7 @@ object Extraction {
     val ArrayElem = new Regex("""^(\[(\d+)\]).*$""")
     val OtherProp = new Regex("""^(\.([^\.\[]+)).*$""")
   
-    val uniquePaths = map.keys.foldLeft[Set[String]](Set()) { 
+    val uniquePaths = map.keys.foldLeft[Set[String]](Set()) {
       (set, key) =>
         key match {
           case ArrayProp(p, f, i) => set + p

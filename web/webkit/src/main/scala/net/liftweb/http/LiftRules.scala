@@ -515,7 +515,7 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
     // TODO: Change to use "distinct" when 2.7.7 support is dropped
     val idSet = (S.idMessages((S.errors)) ++ 
                  S.idMessages((S.warnings)) ++ 
-                 S.idMessages((S.notices))).map(_._1).removeDuplicates
+                 S.idMessages((S.notices))).map(_._1).distinct
 
     // Merge each Id's messages and effects into the JsCmd chain
     idSet.foldLeft(groupMessages) { 

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package ldap {
+package net.liftweb
+package ldap
 
 import javax.naming.directory.{Attributes}
 import scala.util.matching.{Regex}
@@ -103,7 +103,7 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
         </form>
     }
 
-    def ldapVendor: LDAPVendor = SimpleLDAPVendor
+    def ldapVendor: LDAPVendor = new LDAPVendor
 
     override def login : NodeSeq = {
         if (S.post_?) {
@@ -199,7 +199,4 @@ trait LDAPProtoUser[T <: LDAPProtoUser[T]] extends MegaProtoUser[T] {
         val groups = ldapVendor.search(filter)
         groups foreach { g => ldapRoles.set(ldapRoles.get :+ getGroupNameFromDn(g)) }
     }
-}
-
-}
 }

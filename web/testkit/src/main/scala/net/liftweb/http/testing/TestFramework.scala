@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 WorldWide Conferencing, LLC
+ * Copyright 2008-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package testing {
+package net.liftweb
+package http
+package testing
 
 import _root_.net.liftweb.util.Helpers._
 import _root_.net.liftweb.util._
@@ -586,25 +586,22 @@ object TestHelpers {
     val p = Pattern.compile("""lift_toWatch\[\'([^\']*)\'] \= \'([0-9]*)""")
     val re = new REMatcher(body, p)
     val np = re.eachFound.foldLeft(Map(old: _*))((a, b) => a + ((b(1), b(2))))
-    np.elements.toList
+    np.iterator.toList
   }
 
 
   def getCookie(headers: List[(String, String)],
-                respHeaders: Map[String, List[String]]): Box[String]
-  =
-    {
-      val ret = (headers.filter {case ("Cookie", _) => true; case _ => false}.
-          map(_._2) :::
-          respHeaders.get("Set-Cookie").toList.flatMap(x => x)) match {
-        case Nil => Empty
-        case "" :: Nil => Empty
-        case "" :: xs => Full(xs.mkString(","))
-        case xs => Full(xs.mkString(","))
-      }
-
-      ret
+                respHeaders: Map[String, List[String]]): Box[String] = {
+    val ret = (headers.filter {case ("Cookie", _) => true; case _ => false}.
+                 map(_._2) :::
+               respHeaders.get("Set-Cookie").toList.flatMap(x => x)) match {
+      case Nil       => Empty
+      case "" :: Nil => Empty
+      case "" :: xs  => Full(xs.mkString(","))
+      case xs        => Full(xs.mkString(","))
     }
+    ret
+  }
 
   type CRK = JavaList[String]
 
@@ -950,8 +947,4 @@ class CompleteFailure(val serverName: String, val exception: Box[Throwable]) ext
   def foreach(f: HttpResponse => Unit): Unit = throw (exception openOr new java.io.IOException("HTTP Failure"))
 
   def filter(f: HttpResponse => Unit): HttpResponse = throw (exception openOr new java.io.IOException("HTTP Failure"))
-}
-
-}
-}
 }

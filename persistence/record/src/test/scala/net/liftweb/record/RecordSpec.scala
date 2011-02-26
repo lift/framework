@@ -18,16 +18,13 @@ package net.liftweb
 package record
 
 import java.util.Calendar
-import scala.xml.{Node, Text}
-import common.{Box, Empty, Full}
-import http.js.JE._
-import http.S
-import field.{Countries, PasswordField, StringField}
+
+import org.specs.Specification
+
 import json.JsonAST._
-import util.FieldError
-import util.Helpers
-import org.specs._
-import org.specs.runner.{ConsoleRunner, JUnit3}
+import util._
+import http.js.JE._
+import field.Countries
 
 import fixtures._
 
@@ -44,7 +41,7 @@ object RecordSpec extends Specification("Record Specification") {
     } yield flavor + typeName + "Field").toList
 
     "introspect only the expected fields" in {
-      rec.fields().map(_.name).sort(_ < _) must_== allExpectedFieldNames.sort(_ < _)
+      rec.fields().map(_.name).sortWith(_ < _) must_== allExpectedFieldNames.sortWith(_ < _)
     }
 
     "correctly look up fields by name" in {

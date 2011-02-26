@@ -602,7 +602,7 @@ object MongoDocumentExamplesSpec extends Specification("MongoDocumentExamples Sp
     val qry = ("name" -> ("$in" -> List("md1", "md2")))
     val mdq2 = MainJDoc.findAll(qry, ("name" -> -1))
     mdq2.size must_== 2
-    mdq2.first._id must_== md2._id
+    mdq2.head._id must_== md2._id
 
     // Find all documents using a k, v query
     val mdq3 = MainJDoc.findAll("_id", md1._id)
