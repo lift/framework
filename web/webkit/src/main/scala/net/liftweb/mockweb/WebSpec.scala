@@ -26,33 +26,34 @@ import common.{Box,Empty,Full}
 import http._
 import json.JsonAST._
 import mocks.MockHttpServletRequest
+import specification.Example
 
 
 /**
  * This trait provides Lift-specific extensions to the Specification
  * base trait to simplify unit testing of your code. In addition to
  * the Scaladoc, Please see the
- * source to WebSpecSpec.scala for an example of how to use this.
+ * source to WebSpecSpec.scala for an example of how to use this. This class
+ * allows you to optionally configure LiftRules for your spec. LiftRules rules
+ * are always used, so if you don't want that to happen you can just use MockWeb directly
+ * in your own custom spec and simply omit any LiftRules setup.
+ *
+ * @param boot defines a method that is called prior to
+ * testing to set up the Lift environment. This is where you'll
+ * initialize LiftRules, Mapper, etc. The simplest approach
+ * is to just point this at your Boostrap.boot method.
  */
-abstract class WebSpec extends Specification {
+abstract class WebSpec(boot : () => Any = () => {}) extends Specification {
+  /**
+   * This is our private spec instance of Liftrules. Everything we run will
+   * use this instance instead of the global instance
+   */
+  private val liftRules = new LiftRules()
 
-// TODO : Uncomment this code when LiftRules can be scoped
-///**
-// * This trait provides Lift-specific extensions to the Specification
-// * base trait to simplify unit testing of your code. In addition to
-// * the Scaladoc, Please see the
-// * source to WebSpecSpec.scala for an example of how to use this.
-// *
-// * @param boot defines a method that is called prior to
-// * testing to set up the Lift environment. This is where you'll
-// * initialize LiftRules, Mapper, etc. The simplest approach
-// * is to just point this at your Boostrap.boot method.
-// * 
-// * @param useLiftRules controls whether LiftRules are used for the expectations
-// */
-//abstract class WebSpec(boot : () => Any = () => {}, useLiftRules : Boolean = false) extends Specification {
-//  boot()
-  
+  LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
+    boot()
+  }
+
   /**
    * A class that bridges between the description string
    * and classes that provide the Lift-specific wrapping
@@ -82,6 +83,21 @@ abstract class WebSpec extends Specification {
 
     def withReqFor (req : HttpServletRequest) = 
       new ReqSpecification(description, req)
+
+    def withTemplateFor (url : String, session : Box[LiftSession] = Empty, contextPath : String = "") =
+      new TemplateSpecification(description, url, session, contextPath)
+
+    def withTemplateFor (url : String, session : LiftSession) =
+      new TemplateSpecification(description, url, Box.!!(session), "")
+
+    def withTemplateFor (req : HttpServletRequest) =
+      new TemplateSpecification(description, req, Empty)
+
+    def withTemplateFor (req : HttpServletRequest, session : Box[LiftSession])  =
+      new TemplateSpecification(description, req, session)
+
+    def withTemplateFor (req : HttpServletRequest, session : LiftSession) =
+      new TemplateSpecification(description, req, Box.!!(session))
   }
 
   /**
@@ -175,19 +191,18 @@ abstract class WebSpec extends Specification {
     def this (description : String, url : String, session : Box[LiftSession], contextPath : String) =
       this(description, new MockHttpServletRequest(url, contextPath), session)
 
-
     def in [T](expectations : => T)(implicit m : scala.reflect.ClassManifest[T]) = {
       val example = exampleContainer.createExample(description)
       if (sequential) example.setSequential()
 
       example.in {
-// TODO : Uncomment this code when LiftRules can be scoped
-//        MockWeb.useLiftRules.doWith(useLiftRules) {
-          MockWeb.testS(req, session) {
-            expectations
+        LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
+          MockWeb.useLiftRules.doWith(true) {
+            MockWeb.testS(req, session) {
+              expectations
+            }
           }
-// TODO : Uncomment this code when LiftRules can be scoped
-//        }
+        }
       }(m)
     }
   }
@@ -206,11 +221,41 @@ abstract class WebSpec extends Specification {
       if (sequential) example.setSequential()
 
       example.in {
-// TODO : Uncomment this code when LiftRules can be scoped
-//        MockWeb.useLiftRules.doWith(useLiftRules) {
-          MockWeb.testReq(req)(expectations)
-// TODO : Uncomment this code when LiftRules can be scoped
-//        }
+        LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
+          MockWeb.useLiftRules.doWith(true) {
+            MockWeb.testReq(req)(expectations)
+          }
+        }
+      }(m)
+    }
+  }
+
+  /**
+   * This class provides a wrapper to test methods that require
+   * a processed template.
+   */
+  class TemplateSpecification (description : String,
+                               val req : HttpServletRequest,
+                               session : Box[LiftSession]) extends ModifiableRequest[TemplateSpecification] {
+    def this (description : String, url : String, session : Box[LiftSession], contextPath : String) =
+      this(description, new MockHttpServletRequest(url, contextPath), session)
+
+    def in [T](expectations : Box[NodeSeq] => T)(implicit m : scala.reflect.ClassManifest[T]) = {
+      val example = exampleContainer.createExample(description)
+      if (sequential) example.setSequential()
+
+      example.in {
+        LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
+          MockWeb.useLiftRules.doWith(true) {
+            MockWeb.testS(req, session) {
+              S.request match {
+                case Full(sReq) => expectations(S.runTemplate(sReq.path.partPath))
+                case other => fail("Error: withTemplateFor call did not result in " +
+                  "request initialization (S.request = " + other + ")")
+              }
+            }
+          }
+        }
       }(m)
     }
   }

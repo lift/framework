@@ -48,23 +48,22 @@ import org.specs._
  *   
  */
 object MockWeb {
-// TODO : Uncomment this code when LiftRules can be scoped
-//  /**
-//   * Setting this var to <code>true</code>
-//   * will force all tests to use LiftRules. See
-//   * useLiftRules for more granular control.
-//   */
-//  var useLiftRulesGlobally = false
-//
-//  object useLiftRules extends ThreadGlobal[Boolean]
-//
-//  private def liftRulesEnabled = useLiftRulesGlobally || useLiftRules.box == Full(true)
-//  
-//  private def withLiftRules [T] (f : => T) = {
-//    if (liftRulesEnabled) {
-//      f
-//    }
-//  }
+  /**
+   * Setting this var to <code>true</code>
+   * will force all tests to use LiftRules. See
+   * useLiftRules for more granular control.
+   */
+  var useLiftRulesGlobally = false
+
+  object useLiftRules extends ThreadGlobal[Boolean]
+
+  private def liftRulesEnabled = useLiftRulesGlobally || useLiftRules.box == Full(true)
+
+  private def withLiftRules [T] (f : => T) = {
+    if (liftRulesEnabled) {
+      f
+    }
+  }
 
 
   /**
@@ -88,23 +87,22 @@ object MockWeb {
     // TODO : Confirm that we can pass in a null provider without issue
     val req = new HTTPRequestServlet(request, null)
     
-// TODO : Uncomment this code when LiftRules can be scoped
-//    withLiftRules {
-//      tryo {
-//        LiftRules.early.toList.foreach(_(req))
-//      }
-//    }
-//
-//    val r = 
-//      if(liftRulesEnabled) {
-//        // Apply stateless rewrites
-//        Req(req, LiftRules.statelessRewrite.toList,
-//            LiftRules.statelessTest.toList, System.nanoTime)
-//      } else {
-//        Req(req, Nil, System.nanoTime)
-//      }
+    withLiftRules {
+      tryo {
+        LiftRules.early.toList.foreach(_(req))
+      }
+    }
+
+    val r =
+      if(liftRulesEnabled) {
+        // Apply stateless rewrites
+        Req(req, LiftRules.statelessRewrite.toList,
+            LiftRules.statelessTest.toList, System.nanoTime)
+      } else {
+        Req(req, Nil, System.nanoTime)
+      }
     
-    f(Req(req, Nil, System.nanoTime))
+    f(r)
   }
 
   /**
@@ -202,9 +200,7 @@ object MockWeb {
    */
   def withSnippet[T](name : String, attrs : MetaData = Null)(f : => T) : T =
     S.withAttrs(attrs) {
-      S.setVars(attrs) {
-        http.httpPackageProxy.doSnippet(name)(f)
-      }
+      http.httpPackageProxy.doSnippet(name)(f)
     }
 }
 }

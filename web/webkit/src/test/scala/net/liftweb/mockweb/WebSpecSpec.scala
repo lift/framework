@@ -16,6 +16,8 @@
 package net.liftweb
 package mockweb
 
+import scala.xml.NodeSeq
+
 import common.{Box,Empty,Full}
 import http._
 import http.rest._
@@ -23,31 +25,33 @@ import json._
 import json.JsonDSL._
 import mocks.MockHttpServletRequest
 
+/**
+* This only exists to keep the WebSpecSpec clean. Normally,
+* you could just use "() => bootstrap.Boot.boot".
+*/
+object WebSpecSpecBoot {
+  def boot() {
+    println("WebSpecSpec Booting up")
 
-// TODO : Uncomment this code when LiftRules can be scoped
-///**
-// * This only exists to keep the WebSpecSpec clean. Normally,
-// * you could just use "() => bootstrap.Boot.boot".
-// */
-//object WebSpecSpecBoot {
-//  def boot {
-//    println("Booting up")
-//
-//    LiftRules.statelessRewrite.append {
-//      case RewriteRequest(ParsePath(List("test", "stateless"), _, _, _), _, _) => {
-//        RewriteResponse(List("stateless", "works"))
-//      }
-//    }
-//
-//    LiftRules.statefulRewrite.append {
-//      case RewriteRequest(ParsePath(List("test", "stateful"), _, _, _), _, _) => {
-//        RewriteResponse(List("stateful", "works"))
-//      }
-//    }    
-//
-//    println("Boot complete")
-//  }
-//}
+    // Add this so that withTemplateFor test works
+    LiftRules.addToPackages("net.liftweb.mockweb")
+
+
+    LiftRules.statelessRewrite.append {
+      case RewriteRequest(ParsePath(List("test", "stateless"), _, _, _), _, _) => {
+        RewriteResponse(List("stateless", "works"))
+      }
+    }
+
+    LiftRules.statefulRewrite.append {
+      case RewriteRequest(ParsePath(List("test", "stateful"), _, _, _), _, _) => {
+        RewriteResponse(List("stateful", "works"))
+      }
+    }
+
+    println("WebSpecSpec Boot complete")
+  }
+}
 
 /**
  * A test RestHelper to show usage.
@@ -64,9 +68,7 @@ object WebSpecSpecRest extends RestHelper  {
  * This spec does double duty as both a spec against the
  * WebSpec trait as well as an example of how to use it.
  */
-// TODO : Uncomment this code when LiftRules can be scoped
-//object WebSpecSpec extends WebSpec(WebSpecSpecBoot.boot _, true) {
-object WebSpecSpec extends WebSpec {
+class WebSpecSpec extends WebSpec(WebSpecSpecBoot.boot _) {
   "WebSpec" should {
     setSequential() // This is important for using SessionVars, etc.
 
@@ -84,9 +86,7 @@ object WebSpecSpec extends WebSpec {
 
     "properly set up S with a String url" withSFor(testUrl) in {
       S.request match {
-// TODO : Uncomment this code when LiftRules can be scoped
-//        case Full(req) => req.path.partPath must_== List("stateless", "works")
-        case Full(req) => req.path.partPath must_== List("test", "stateless")
+        case Full(req) => req.path.partPath must_== List("stateless", "works")
         case _ => fail("No request in S")
       }
     }
@@ -106,9 +106,7 @@ object WebSpecSpec extends WebSpec {
     }
 
     "properly set up a Req with a String url" withReqFor(testUrl) in {
-// TODO : Uncomment this code when LiftRules can be scoped
-//      _.path.partPath must_== List("stateless", "works")
-      _.path.partPath must_== List("test", "stateless")
+      _.path.partPath must_== List("stateless", "works")
     }
 
     "properly set up a Req with a String url and context path" withReqFor(testUrl, "/test") in {
@@ -160,5 +158,12 @@ object WebSpecSpec extends WebSpec {
         case other => fail("Invalid response : " + other); false
       }) must_== true
     }
+
+    "properly process a template" withTemplateFor("http://foo.com/net/liftweb/mockweb/webspecspectemplate") in ({
+      case Full(template) => template.toString.contains("Hello, WebSpec!") must_== true
+      case other => {
+        fail("Error on template : " + other)
+      }
+    } : PartialFunction[Box[NodeSeq],Unit])
   }
 }
