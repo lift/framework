@@ -118,8 +118,10 @@ class LiftServlet extends Loggable {
     try {
       def doIt: Boolean = {
         if (LiftRules.logServiceRequestTiming) {
-          logTime("Service request (" + req.request.method + ") " + req.request.uri) {
-            doService(req, resp)
+          logTime {
+            val ret = doService(req, resp)
+            val msg = "Service request (" + req.request.method + ") " + req.request.uri + " returned " + resp.getStatus +"," 
+            (msg, ret)
           }
         } else {
           doService(req, resp)

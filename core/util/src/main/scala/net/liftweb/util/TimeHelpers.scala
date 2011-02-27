@@ -346,11 +346,22 @@ trait TimeHelpers { self: ControlHelpers =>
   }
 
   /**
-   * Log a message with the time taken in millis to do something and retrun the result
+   * Log a message with the time taken in millis to do something and return the result
    * @return the result
    */
   def logTime[T](msg: String)(f: => T): T = {
     val (time, ret) = calcTime(f)
+    logger.info(msg + " took " + time + " Milliseconds")
+    ret
+  }
+
+ /**
+   * Call f and log the string returned together with the time taken in millis.
+   * @return the second result from f
+   */
+  def logTime[T](f: => (String,T)): T = {
+    val (time, fret) = calcTime(f)
+    val (msg, ret) = fret
     logger.info(msg + " took " + time + " Milliseconds")
     ret
   }

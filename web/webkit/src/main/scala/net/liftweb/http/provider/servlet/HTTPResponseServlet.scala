@@ -27,6 +27,8 @@ import _root_.net.liftweb.util._
 import Helpers._
 
 class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
+  private var _status = 0;
+ 
   def addCookies(cookies: List[HTTPCookie]) = cookies.foreach {
     case c =>
       val cookie = new javax.servlet.http.Cookie(c.name, c.value openOr null)
@@ -60,9 +62,17 @@ class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
     }
   }
 
-  def setStatus(status: Int) = resp setStatus status
+  def setStatus(status: Int) = {
+    _status = status
+    resp setStatus status
+  }
 
-  def setStatusWithReason(status: Int, reason: String) = resp setStatus (status, reason)
+  def getStatus = _status
+ 
+  def setStatusWithReason(status: Int, reason: String) = {
+    _status = status
+    resp setStatus (status, reason)
+  }
 
   def outputStream: OutputStream = resp getOutputStream
 }

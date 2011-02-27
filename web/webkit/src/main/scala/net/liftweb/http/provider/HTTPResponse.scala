@@ -56,6 +56,11 @@ trait HTTPResponse {
   def setStatus(status: Int)
 
   /**
+   * Returns the HTTP response status that has been set with setStatus
+   * */
+  def getStatus: Int
+
+  /**
    * Sets the HTTP response status
    *
    * @param status - the HTTP status
