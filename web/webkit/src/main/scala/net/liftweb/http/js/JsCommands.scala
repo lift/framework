@@ -215,18 +215,6 @@ trait JsMember {
 object JE {
   def boolToJsExp(in: Boolean): JsExp = if (in) JsTrue else JsFalse
 
-  /*
-  implicit def strToS(in: String): Str = Str(in)
-
-  implicit def numToJsExp(in: Int): JsExp = Num(in)
-
-  implicit def numToJsExp(in: Long): JsExp = Num(in)
-
-  implicit def numToJsExp(in: Double): JsExp = Num(in)
-
-  implicit def numToJsExp(in: Float): JsExp = Num(in)
-  */
-
   /**
    * The companion object to Num which has some helpful
    * constructors
@@ -252,6 +240,10 @@ object JE {
     }.toJsCmd
 
     def this(in: List[JsExp]) = this (in: _*)
+  }
+
+  object JsArray {
+    def apply(in: List[JsExp]) = new JsArray(in: _*)
   }
 
   case class ValById(id: String) extends JsExp {

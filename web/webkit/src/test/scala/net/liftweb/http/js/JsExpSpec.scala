@@ -38,5 +38,35 @@ object JsExpSpec extends Specification("JsExp Specification") {
 
       
     }
+
+    "Implicitly convert from Numeric types" in {
+      import JsExp._
+
+      (42:JsExp) must_== JE.Num(42)
+      (42L:JsExp) must_== JE.Num(42L)
+      (42.0:JsExp) must_== JE.Num(42.0)
+      (42.0f:JsExp) must_== JE.Num(42.0f)
+    }
+
+    "Correctly infer type" in {
+      val l:List[Option[Double]] = List(Some(1), None)
+
+      import JsExp._ 
+
+      // Can't get this to work:  JE.JsArray(l map {d => (d.getOrElse(0.0)):JsExp}) must_== JE.JsArray(1.0, 0.0)
+      JE.JsArray(l map {d => (d.getOrElse(0.0):Double):JsExp}) must_== JE.JsArray(1.0, 0.0)
+    }
+  
+  }
+
+  "JsArray" should {
+    "work with varags" in {
+      JE.JsArray(2, "x", 42.0).toJsCmd must_== "[2, \"x\", 42.0]\n"
+    }
+    
+    "work with lists" in {
+      val l:List[JsExp] = List(2, "x", 42.0)
+      JE.JsArray(l).toJsCmd must_== "[2, \"x\", 42.0]\n"
+    }
   }
 }
