@@ -670,7 +670,7 @@ object Loc {
      * Creates a string representation of the path to the Loc.
      */
     def createPath(value: T): String = {
-      val path: List[String] = pathList(value)
+      val path: List[String] = pathList(value).map(Helpers.urlEncode)
 
       if (matchHead_?) {
         path.mkString("/", "/", "/")

@@ -785,6 +785,20 @@ object CssBindHelpersSpec extends Specification  {
       lis(3) must ==/ (<li>woof</li>)
     }
     
+    "bind must bind to subnodes" in {
+      val html = <ul class="users">
+      <li class="user" userid="">
+      <img class="userimg" src=""/>
+      </li>
+      </ul>
+
+      val lst = List(1,2,3)
+
+      val f = ".users *" #> ("li" #> lst.map(i => ".user [userid]" #> i))
+
+      (f(html) \\ "ul").length must_== 1
+      (f(html) \\ "li").length must_== 3
+    }
 
     "list of Nodes" in {
       val answer = (("#moose *" replaceWith List[NodeSeq](<i>"a"</i>, Text("b"), Text("c"), <b>woof</b>)) &
