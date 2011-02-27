@@ -110,7 +110,7 @@ case class HttpDigestAuthentication(realmName: String)(func: PartialFunction[(St
 
     private[auth] def doPing() {
       try {
-        ActorPing schedule (this, CheckAndPurge, 5 seconds)
+        Schedule.schedule (this, CheckAndPurge, 5 seconds)
       } catch {
         case e => logger.error("Couldn't start NonceWatcher ping", e)
       }

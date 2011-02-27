@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
-package field {
+package net.liftweb
+package record
+package field
 
-import _root_.scala.xml._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.http.{S}
-import _root_.net.liftweb.http.js._
-import _root_.net.liftweb.json.JsonAST.{JNothing, JNull, JString, JValue}
-import _root_.net.liftweb.mapper.{Safe}
-import _root_.net.liftweb.util._
-import _root_.java.util.regex._
+import xml._
+
+import common._
+import json._
+import util._
 import Helpers._
+import http.S
+import http.js._
 import S._
 import JE._
+import mapper.Safe
+
 
 object PasswordField {
   @volatile var blankPw = "*******"
@@ -44,7 +45,7 @@ trait PasswordTypedField extends TypedField[String] {
   private var validatedValue: Box[String] = valueBox
 
   def match_?(toTest: String): Boolean = 
-    is == hash("{"+toTest+"} salt={"+salt_i.get+"}")
+    get == hash("{"+toTest+"} salt={"+salt_i.get+"}")
 
   override def set_!(in: Box[String]): Box[String] = {
     validatedValue = in
@@ -122,8 +123,4 @@ class OptionalPasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
   }
 
   def owner = rec
-}
-
-}
-}
 }

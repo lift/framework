@@ -17,20 +17,19 @@
 package net.liftweb
 package http
 
-import scala.collection.mutable.{HashMap, ListBuffer}
-import scala.xml._
-import scala.collection.immutable.{ListMap, TreeMap}
+import java.util.{Locale, TimeZone, ResourceBundle}
+
+import collection.mutable.{HashMap, ListBuffer}
+import xml._
+
 import common._
 import actor.LAFuture
 import util._
 import Helpers._
 import js._
-import java.util.{Locale, TimeZone, ResourceBundle}
-import java.util.concurrent.atomic.AtomicLong
+
 import builtin.snippet._
 import provider._
-import scala.reflect.Manifest
-import java.util.concurrent.{ConcurrentHashMap => CHash}
 import http.rest.RestContinuation
 
 class SJBridge {
@@ -1246,7 +1245,7 @@ for {
         case si: StatefulSnippet => si.addName(cls)  // addresses
         case _ =>
       }
-      _statefulSnip.set(_statefulSnip.is.update(cls, inst))
+      _statefulSnip.set(_statefulSnip.is.updated(cls, inst))
     }
   }
 
@@ -1259,7 +1258,7 @@ for {
         case si: StatefulSnippet => si.addName(cls)  // addresses
         case _ =>
       }
-    _statefulSnip.set(_statefulSnip.is.update(cls, inst))
+    _statefulSnip.set(_statefulSnip.is.updated(cls, inst))
   }
 
   private[http] def unsetSnippetForClass(cls: String): Unit =
@@ -1393,7 +1392,7 @@ for {
   def getHeaders(in: List[(String, String)]): List[(String, String)] = {
     Box.legacyNullTest(_responseHeaders.value).map(
       rh =>
-              rh.headers.elements.toList :::
+              rh.headers.iterator.toList :::
                       in.filter {case (n, v) => !rh.headers.contains(n)}
       ).openOr(Nil)
   }
@@ -2134,7 +2133,7 @@ for {
    */
   def functionMap: Map[String, AFuncHolder] = {
     Box.legacyNullTest(_functionMap.value).
-    map(s => Map(s.elements.toList: _*)).openOr(Map.empty)
+    map(s => Map(s.iterator.toList: _*)).openOr(Map.empty)
   }
 
   private def testFunctionMap[T](f: T): T = 
@@ -2227,7 +2226,7 @@ for {
    * @param name The name of the snippet that you want to map (the part after "&lt;lift:").
    * @param func The snippet function to map to.
    */
-  def mapSnippet(name: String, func: NodeSeq => NodeSeq) {_snippetMap.set(_snippetMap.is.update(name, func))}
+  def mapSnippet(name: String, func: NodeSeq => NodeSeq) {_snippetMap.set(_snippetMap.is.updated(name, func))}
 
   /**
    * The are times when it's helpful to define snippets for a certain

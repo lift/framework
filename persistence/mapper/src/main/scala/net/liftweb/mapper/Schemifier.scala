@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.java.sql.{Connection, ResultSet, DatabaseMetaData}
-import _root_.scala.collection.mutable.{HashMap, ListBuffer}
-import _root_.net.liftweb.common.{Full, Box, Loggable}
-import _root_.net.liftweb.util.Helpers
+import java.sql.{Connection, ResultSet, DatabaseMetaData}
+
+import collection.mutable.{HashMap, ListBuffer}
+
+import common.{Full, Box, Loggable}
+import util.Helpers
 import Helpers._
 
 /**
@@ -266,7 +268,7 @@ object Schemifier extends Loggable {
     // val q = quad(rs)
     // q.foreach{case (name, col, pos) => byColumn.get(col) match {case Some(li) => byColumn(col) = (name, col, pos) :: li case _ => byColumn(col) = List((name, col, pos))}}
     q.foreach{case (name, col, pos) => byName.get(name) match {case Some(li) => byName(name) = col :: li case _ => byName(name) = List(col)}}
-    val indexedFields: List[List[String]] = byName.map{case (name, value) => value.sort(_ < _)}.toList
+    val indexedFields: List[List[String]] = byName.map{case (name, value) => value.sortWith(_ < _)}.toList
     //rs.close
 
     val single = table.mappedFields.filter{f => f.dbIndexed_?}.toList.flatMap {
@@ -293,7 +295,7 @@ object Schemifier extends Loggable {
         case _ => logger.error("Invalid index: " + index); ""
       }
 
-      val fn = columns.map(_.field._dbColumnNameLC.toLowerCase).sort(_ < _)
+      val fn = columns.map(_.field._dbColumnNameLC.toLowerCase).sortWith(_ < _)
       if (!indexedFields.contains(fn)) {
         cmds += maybeWrite(performWrite, logFunc, connection) {
           () => createStatement
@@ -336,7 +338,4 @@ object Schemifier extends Loggable {
 
     Collector(ret, cmds.toList)
   }
-}
-
-}
 }

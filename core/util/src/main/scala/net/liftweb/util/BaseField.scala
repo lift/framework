@@ -66,7 +66,7 @@ trait ReadableField extends FieldIdentifier with ValueHolder with Bindable {
   /**
    * Default read-only rendering of field
    */
-  def asHtml: NodeSeq = Text(is.toString)
+  def asHtml: NodeSeq = Text(get.toString)
 
   /**
    * Given the current context, should this field be displayed

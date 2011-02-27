@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
-package field {
+package net.liftweb
+package record
+package field
 
-import scala.xml._
-import net.liftweb.util._
-import net.liftweb.common._
-import net.liftweb.http.{S, SHtml}
-import _root_.java.util.TimeZone
-import S._
+import java.util.TimeZone
+import xml._
+
+import common._
+import util._
 import Helpers._
+import http.{S, SHtml}
+import S._
+
 
 object TimeZoneField {
   lazy val timeZoneList: List[(String, String)] = TimeZone.getAvailableIDs.toList.
     filter(!_.startsWith("SystemV/")).
     filter(!_.startsWith("Etc/")).filter(_.length > 3).
-    sort(_ < _).map(tz => (tz, tz))
+    sortWith(_ < _).map(tz => (tz, tz))
 }
 
 trait TimeZoneTypedField extends StringTypedField {
@@ -63,7 +65,3 @@ class TimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType)
 
 class OptionalTimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType)
   extends OptionalStringField(rec, 32) with TimeZoneTypedField
-
-}
-}
-}

@@ -30,7 +30,6 @@ import JsCmds._
 import auth._
 
 import scala.xml._
-import scala.collection.mutable.{ListBuffer}
 import java.util.{Locale, TimeZone, ResourceBundle, Date}
 import java.io.{InputStream, ByteArrayOutputStream, BufferedReader, StringReader}
 import java.util.concurrent.{ConcurrentHashMap => CHash}
@@ -1586,7 +1585,7 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
 
 sealed trait NotFound
 
-final case object DefaultNotFound extends NotFound
+case object DefaultNotFound extends NotFound
 
 final case class NotFoundAsResponse(response: LiftResponse) extends NotFound
 
@@ -1692,7 +1691,7 @@ class RulesSeq[T] {
 
   private[http] def remove(f: T => Boolean) {
     safe_? {
-      rules = rules.remove(f)
+      rules = rules.filterNot(f)
     }
   }
 

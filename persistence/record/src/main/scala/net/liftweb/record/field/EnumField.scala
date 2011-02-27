@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
-package field {
+package net.liftweb
+package record
+package field
 
-import scala.reflect.Manifest
-import scala.xml._
-import net.liftweb.common._
-import net.liftweb.http.js._
-import net.liftweb.http.{S, SHtml}
-import net.liftweb.json.JsonAST.{JInt, JNothing, JNull, JString, JValue}
-import net.liftweb.util._
+import reflect.Manifest
+import xml._
+
+import common._
 import Box.option2Box
-import S._
+import json._
+import util._
 import Helpers._
+import http.js._
+import http.{S, SHtml}
+import S._
 import JE._
 
 
@@ -61,7 +62,7 @@ trait EnumTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Value]
    * is the value of the field and the second string is the Text name of the Value.
    */
   def buildDisplayList: List[(Box[EnumType#Value], String)] = {
-    val options = enum.map(a => (Full(a), a.toString)).toList
+    val options = enum.values.map(a => (Full(a), a.toString)).toList
     if (optional_?) (Empty, emptyOptionLabel)::options else options
   }
 
@@ -74,7 +75,7 @@ trait EnumTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Value]
       case _ => Full(elem)
     }
 
-  def defaultValue: EnumType#Value = enum.iterator.next
+  def defaultValue: EnumType#Value = enum.values.iterator.next
 
   def asJs = valueBox.map(_ => Str(toString)) openOr JsNull
 
@@ -118,8 +119,4 @@ class OptionalEnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration]
 
   def owner = rec
   protected val valueManifest = m
-}
-
-}
-}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
-package view {
+package net.liftweb
+package mapper
+package view
 
-import net.liftweb.http.{SHtml, S, DispatchSnippet}
-import S.?
-import net.liftweb.util.BindPlus._
-import net.liftweb.util.{Helpers, BindHelpers}
-import net.liftweb.common.{Box, Full, Empty}
+import xml.{NodeSeq, Text}
+
+import common.{Box, Full, Empty}
+import util.BindPlus._
+import util.{Helpers, BindHelpers}
 import Helpers._
+import http.{SHtml, S, DispatchSnippet}
+import S.?
 
-import net.liftweb.mapper.{Mapper,
-                           MetaMapper,
-                           LongKeyedMetaMapper,
-                           MappedField}
+import mapper.{Mapper, MetaMapper, LongKeyedMetaMapper, MappedField}
 
 import Util._
 
-import scala.xml.{NodeSeq, Text}
 
 /**
  * Keeps track of pending adds to and removes from a list of mappers.
@@ -87,7 +85,7 @@ trait ItemsList[T <: Mapper[T]] {
       case None =>
         unsorted
       case Some(field) =>
-        unsorted.sort {
+        unsorted.sortWith {
           (a, b) => ((field.actualField(a).is: Any, field.actualField(b).is: Any) match {
             case (aval: String, bval: String) => aval.toLowerCase < bval.toLowerCase
             case (aval: Ordered[Any], bval: Ordered[Any]) => aval < bval
@@ -310,8 +308,4 @@ trait ItemsListEditor[T<:Mapper[T]] {
     )
   }
   
-}
-
-}
-}
 }

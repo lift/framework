@@ -17,23 +17,24 @@
 package net.liftweb
 package http
 
-import scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
-import scala.xml._
-import common._
-import util._
-import actor._
-import http.js.{JsCmd, AjaxInfo}
-import util.Helpers._
-import builtin.snippet._
-import java.lang.reflect.{Method, Modifier, InvocationTargetException}
-import scala.xml._
 import java.io.InputStream
+import java.lang.reflect.{Method, Modifier, InvocationTargetException}
 import java.util.concurrent.TimeUnit
 import java.util.Locale
-import js._
-import scala.reflect.Manifest
-import provider._
+
+import collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
+import reflect.Manifest
+import xml._
+
+import common._
 import Box._
+import actor._
+import util._
+import Helpers._
+import http.js.{JsCmd, AjaxInfo}
+import builtin.snippet._
+import js._
+import provider._
 
 
 object LiftSession {
@@ -218,7 +219,7 @@ object SessionMaster extends LiftActor with Loggable {
       ((ses: Map[String, SessionInfo], destroyer: SessionInfo => Unit) => {
         val now = millis
 
-      for ((id, info @ SessionInfo(session, _, _, _, _)) <- ses.elements) {
+      for ((id, info @ SessionInfo(session, _, _, _, _)) <- ses.iterator) {
         if (now - session.lastServiceTime > session.inactivityLength || session.markedForTermination) {
           logger.info(" Session " + id + " expired")
           destroyer(info)
@@ -329,7 +330,7 @@ object SessionMaster extends LiftActor with Loggable {
       ses.get(sessionId).foreach {
         case SessionInfo(s, _, _, _, _) =>
           s.markedForShutDown_? = true
-          ActorPing.schedule(() => {
+          Schedule.schedule(() => {
             try {
               s.doShutDown
               try {
@@ -359,7 +360,7 @@ object SessionMaster extends LiftActor with Loggable {
             }
           })
         } else {
-          ActorPing.schedule(() => f(ses, 
+          Schedule.schedule(() => f(ses,
                                      shutDown => {
                                        if (!shutDown.session.markedForShutDown_?) {
                                          shutDown.session.
@@ -394,7 +395,7 @@ object SessionMaster extends LiftActor with Loggable {
   private def doPing() {
     if (!Props.inGAE) {
       try {
-        ActorPing schedule (this, CheckAndPurge, 10 seconds)
+        Schedule.schedule (this, CheckAndPurge, 10 seconds)
       } catch {
         case e: Exception => logger.error("Couldn't start SessionMaster ping", e)
       }
@@ -612,7 +613,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   }
 
   private[http] def cometForHost(hostAndPath: String): List[(AnyActor, Req)] =
-  synchronized {cometList}.filter{
+  synchronized {cometList}.filter {
     case (_, r) => r.hostAndPath == hostAndPath
   }
 
@@ -621,7 +622,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   }
 
   private[http] def exitComet(what: AnyActor): Unit = synchronized {
-    cometList = cometList.remove(_._1 eq what)
+    cometList = cometList.filterNot(_._1 eq what)
   }
 
   private case class RunnerHolder(name: String, func: S.AFuncHolder, owner: Box[String])
@@ -645,7 +646,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       // get all the commands, sorted by owner,
       (state.uploadedFiles.map(_.name) ::: state.paramNames).distinct.
               flatMap {n => synchronized {messageCallback.get(n)}.map(mcb => RunnerHolder(n, mcb, mcb.owner))}.
-              sort {
+              sortWith {
         case (RunnerHolder(_, _, Full(a)), RunnerHolder(_, _, Full(b))) if a < b => true
         case (RunnerHolder(_, _, Full(a)), RunnerHolder(_, _, Full(b))) if a > b => false
         case (RunnerHolder(an, _, Full(a)), RunnerHolder(bn, _, Full(b))) if a == b => an < bn
@@ -1461,7 +1462,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         first(LiftRules.snippetNamesToSearch.vend(tagName)) { nameToTry =>
           val ret = findSnippetInstance(nameToTry)
           // Update the snippetMap so that we reuse the same instance in this request
-          ret.foreach(s => snippetMap.set(snippetMap.is.update(tagName, s)))
+          ret.foreach(s => snippetMap.set(snippetMap.is.updated(tagName, s)))
           ret
         }
       }
@@ -1564,8 +1565,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                         case it =>
                           val intersection = if (Props.devMode) {
                             val methodNames = inst.getClass.getMethods().map(_.getName).toList.distinct
-                            val methodAlts = List(method, Helpers.camelCase(method),
-                              Helpers.camelCaseMethod(method))
+                            val methodAlts = List(method, Helpers.camelify(method),
+                              Helpers.camelifyMethod(method))
                             methodNames intersect methodAlts
                           } else Nil
 
@@ -1612,7 +1613,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     def checkAttr(attr_name: String, in: MetaData, base: MetaData): MetaData =
       in.filter(_.key == attr_name).toList match {
         case Nil => base
-        case x => new UnprefixedAttribute(attr_name, Text(x.first.value.text),
+        case x => new UnprefixedAttribute(attr_name, Text(x.head.value.text),
           base)
       }
 

@@ -26,7 +26,6 @@ import org.specs.Specification
 
 import common._
 import json._
-import http.js.JE._
 
 import net.liftweb.record.field.Countries
 
@@ -48,7 +47,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
     } yield flavor + typeName + "Field").toList
 
     "introspect only the expected fields" in {
-      rec.fields().map(_.name).sortWith(_ < _) must_== allExpectedFieldNames.sort(_ < _)
+      rec.fields().map(_.name).sortWith(_ < _) must_== allExpectedFieldNames.sortWith(_ < _)
     }
 
     "correctly look up fields by name" in {

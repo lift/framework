@@ -1870,7 +1870,7 @@ trait SHtml {
   /** Holds a series of choices: HTML for input controls alongside some user defined value */
   final case class ChoiceHolder[T](items: Seq[ChoiceItem[T]]) {
     /** Retrieve the ChoiceItem that has the given key, throwing NoSuchElementException if there is no matching ChoiceItem */
-    def apply(in: T): NodeSeq = items.filter(_.key == in).first.xhtml
+    def apply(in: T): NodeSeq = items.filter(_.key == in).head.xhtml
 
     /** Retrieve the nth ChoiceItem, 0-based */
     def apply(in: Int): NodeSeq = items(in).xhtml

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
-package field {
+package net.liftweb
+package record
+package field
 
-import _root_.scala.xml._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.http.{S, SHtml}
-import _root_.java.util.{Locale}
-import S._
+import java.util.{Locale}
+import xml._
+
+import common._
+import util._
 import Helpers._
+import http.{S, SHtml}
+import S._
+
 
 object LocaleField {
   lazy val localeList = Locale
     .getAvailableLocales.toList
-    .sort(_.getDisplayName < _.getDisplayName)
+    .sortWith(_.getDisplayName < _.getDisplayName)
     .map(lo => (lo.toString, lo.getDisplayName))
 }
 
@@ -68,8 +70,4 @@ class OptionalLocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
   def emptyOptionLabel: String = ""
 
   def buildDisplayList: List[(String, String)] = ("", emptyOptionLabel)::LocaleField.localeList
-}
-
-}
-}
 }

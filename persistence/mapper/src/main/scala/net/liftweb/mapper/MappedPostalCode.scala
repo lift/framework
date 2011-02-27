@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.scala.xml.{Text, Elem}
-import _root_.net.liftweb.http.{S, SHtml}
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import java.util.{Locale, TimeZone}
+
+import xml.{Text, Elem}
+
+import common._
+import util._
 import Helpers._
-import _root_.java.util.{Locale, TimeZone}
+import http.{S, SHtml}
+
 
 object Countries extends Enumeration(1) {
 
@@ -81,7 +84,7 @@ abstract class MappedLocale[T <: Mapper[T]](owner: T) extends MappedString[T](ow
 
   override def _toForm: Box[Elem] =
   Full(SHtml.select(Locale.getAvailableLocales.
-                    toList.sort(_.getDisplayName < _.getDisplayName).
+                    toList.sortWith(_.getDisplayName < _.getDisplayName).
                     map(lo => (lo.toString, lo.getDisplayName)),
                     Full(this.is), set) % ("id" -> fieldId))
 }
@@ -104,7 +107,7 @@ object MappedTimeZone {
   TimeZone.getAvailableIDs.toList.
   filter(!_.startsWith("SystemV/")).
   filter(!_.startsWith("Etc/")).filter(_.length > 3).
-  sort(_ < _).map(tz => (tz, tz))
+  sortWith(_ < _).map(tz => (tz, tz))
 }
 
 abstract class MappedCountry[T <: Mapper[T]](owner: T) extends MappedEnum[T, Countries.type](owner, Countries) {
@@ -112,7 +115,7 @@ abstract class MappedCountry[T <: Mapper[T]](owner: T) extends MappedEnum[T, Cou
   override def buildDisplayList: List[(Int, String)] = {
     val collator = java.text.Collator.getInstance(S.locale)
 
-    super.buildDisplayList.sort((s1, s2) => 
+    super.buildDisplayList.sortWith((s1, s2) =>
       collator.compare(s1._2, s2._2) < 0)
   }
 
@@ -152,7 +155,4 @@ abstract class MappedPostalCode[T <: Mapper[T]](owner: T, country: MappedCountry
 
     case _ => genericCheck _ :: super.validations
   }
-}
-
-}
 }

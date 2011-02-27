@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package sitemap {
+package net.liftweb
+package sitemap
 
 import scala.xml.NodeSeq
-import Loc._
+
 
 /**
  * The beginning of an experiment to provide a capability to define
@@ -32,14 +32,11 @@ import Loc._
  * @author nafg
  */
 object XmlMenu {
-  def apply(xml: scala.xml.NodeSeq): Seq[Menu] = for(node<-xml) yield node match {
+  def apply(xml: NodeSeq): Seq[Menu] = for(node<-xml) yield node match {
     case m @ <menu>{ children @ _* }</menu> =>
       val name = m \ "@name" text
-      val text = scala.xml.NodeSeq.fromSeq((m \ "text" elements) flatMap {_.child.elements} toSeq)
-      val link = net.liftweb.util.JSONParser.parse(m \ "link" text).get.asInstanceOf[List[Any]].map(_.asInstanceOf[String])
+      val text = NodeSeq.fromSeq((m \ "text" iterator) flatMap {_.child.iterator} toSeq)
+      val link = util.JSONParser.parse(m \ "link" text).get.asInstanceOf[List[Any]].map(_.asInstanceOf[String])
       Menu(Loc(name, link, text), apply(m \ "menu") : _*)
   }
-}
-
-}
 }

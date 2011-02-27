@@ -17,15 +17,15 @@
 package net.liftweb
 package http
 
+import xml._
+import reflect.Manifest
+
+import common._
+import util._
+import Helpers._
 import js._
 import JsCmds._
 
-import net.liftweb.common._
-import net.liftweb.util._
-import Helpers._
-
-import scala.xml._
-import scala.reflect.Manifest
 
 /**
  * The trait that forms the basis for LiftScreen and the
@@ -126,7 +126,7 @@ trait AbstractScreen extends Factory {
   }
 
   protected sealed trait OtherValueInitializer[T]
-  protected final case object NothingOtherValueInitializer extends OtherValueInitializer[Nothing]
+  protected case object NothingOtherValueInitializer extends OtherValueInitializer[Nothing]
   protected final case class OtherValueInitializerImpl[T](f: () => T) extends OtherValueInitializer[T]
 
   /**
@@ -140,7 +140,7 @@ trait AbstractScreen extends Factory {
   trait Field extends ConfirmField {
     type OtherValueType // >: Nothing
 
-    AbstractScreen.this._register(() => this)
+    AbstractScreen.this.addFields(() => this)
 
     private val _currentValue: NonCleanAnyVar[ValueType] =
     vendAVar[ValueType](setFilter.foldLeft(default)((nv, f) => f(nv)))
@@ -324,21 +324,21 @@ trait AbstractScreen extends Factory {
    * Override the screen default for fields appearing on the confirm
    * screen and force this field to appear on the confirm screen
    */
-  protected final case object OnConfirmScreen extends FilterOrValidate[Nothing]
+  protected case object OnConfirmScreen extends FilterOrValidate[Nothing]
 
   
   /**
    * Override the screen default for fields appearing on the confirm
    * screen and force this field not to appear on the confirm screen
    */
-  protected final case object NotOnConfirmScreen extends FilterOrValidate[Nothing]
+  protected case object NotOnConfirmScreen extends FilterOrValidate[Nothing]
 
   protected final case class FormParam(fp: SHtml.ElemAttr) extends FilterOrValidate[Nothing]
 
   protected final case class FormFieldId(id: String) extends FilterOrValidate[Nothing]
 
-  protected final case class AFilter[T](val f: T => T) extends FilterOrValidate[T]
-  protected final case class AVal[T](val v: T => List[FieldError]) extends FilterOrValidate[T]
+  protected final case class AFilter[T](f: T => T) extends FilterOrValidate[T]
+  protected final case class AVal[T](v: T => List[FieldError]) extends FilterOrValidate[T]
 
   protected def field[T](underlying: => BaseField{type ValueType=T},
                          stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): Field{type ValueType=T} = {    
@@ -409,7 +409,7 @@ trait AbstractScreen extends Factory {
    * A little hack because => BaseField and => Box[BaseField]
    * have the same method signature
    */
-  protected final implicit object BoxMarkerObj extends BoxMarker
+  protected implicit object BoxMarkerObj extends BoxMarker
   
   protected def field[T](underlying: => Box[BaseField{type ValueType=T}],
                          stuff: FilterOrValidate[T]*)(implicit man: Manifest[T], marker: BoxMarker): Field{type ValueType=T} = {    
@@ -836,7 +836,7 @@ trait ScreenWizardRendered {
           myNotices match {
             case Nil => bind("wizard", in, AttrBindParam("for", curId, "for"), "bind" -%> f.text)
             case _ =>
-              val maxN = myNotices.map(_._1).sort{_.id > _.id}.head // get the maximum type of notice (Error > Warning > Notice)
+              val maxN = myNotices.map(_._1).sortWith{_.id > _.id}.head // get the maximum type of notice (Error > Warning > Notice)
             val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(maxN)) openOr Null
             bind("wizard", in, AttrBindParam("for", curId, "for"), "bind" -%> f.text).map {
               case e: Elem => e % metaData

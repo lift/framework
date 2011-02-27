@@ -147,7 +147,7 @@ trait StackableMaker[T] extends Maker[T] {
   protected final def find(in: List[PValueHolder[Maker[T]]]): Box[T] = in match {
     case Nil => Empty
     case x :: rest =>
-      x.is.make match {
+      x.get.make match {
         case Full(v) => Full(v)
         case _ => find(rest)
       }

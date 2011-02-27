@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.java.lang.ref.{ReferenceQueue,SoftReference};
-import _root_.java.util._
-import _root_.java.util.concurrent.locks._
-import _root_.net.liftweb.util._
+import java.lang.ref.{ReferenceQueue,SoftReference};
+import java.util._
 import Map._
-import Helpers._
-import ActorPing._
+import concurrent.locks._
+
 import common._
+import util._
+import Helpers._
+import Schedule._
+
 
 /**
  * Companion module that has the role of monitoring garbage collected references and remove the orphaned
@@ -162,7 +164,4 @@ class SoftValue[K, V](k: K,
                       queue: ReferenceQueue[Any]) extends SoftReference[V](v, queue) {
     def key: K = k
     def cache: SoftReferenceCache[K, V] = lruCache
-}
-
-}
 }

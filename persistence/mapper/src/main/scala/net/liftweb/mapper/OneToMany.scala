@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
+
 
 /**
  * Add this trait to a Mapper for managed one-to-many support
@@ -174,7 +175,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
 
     def remove(n: Int) = {
       val e = unown(delegate(n))
-      delegate = delegate.remove(e eq)
+      delegate = delegate.filterNot(e eq)
       e
     }
 
@@ -313,7 +314,4 @@ trait LongMappedForeignMapper[T<:Mapper[T],O<:KeyedMapper[Long,O]]
   val valHasObj = (value: Long) =>
     if (obj eq Empty) List(FieldError(this, scala.xml.Text("Required field: " + name)))
     else Nil
-}
-
-}
 }

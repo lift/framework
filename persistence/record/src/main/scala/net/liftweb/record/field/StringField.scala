@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
-package field {
+package net.liftweb
+package record
+package field
 
-import scala.xml._
-import net.liftweb.common._
-import net.liftweb.http.js._
-import net.liftweb.http.{S}
-import net.liftweb.json.JsonAST.{JNothing, JNull, JString, JValue}
-import net.liftweb.util._
-import _root_.java.util.regex._
-import S._
+import xml._
+
+import common._
+import json._
+import util._
 import Helpers._
+import http.js._
+import http.S
+import S._
 import JE._
+
 
 trait StringTypedField extends TypedField[String] with StringValidators {
   val maxLength: Int
@@ -35,7 +36,7 @@ trait StringTypedField extends TypedField[String] with StringValidators {
   def maxLen = maxLength
   
   def setFromAny(in: Any): Box[String] = in match {
-    case seq: Seq[_] if !seq.isEmpty => setFromAny(seq.first)
+    case seq: Seq[_] if !seq.isEmpty => setFromAny(seq.head)
     case _ => genericSetFromAny(in)
   }
 
@@ -114,8 +115,4 @@ class OptionalStringField[OwnerType <: Record[OwnerType]](rec: OwnerType, val ma
 
   protected def valueTypeToBoxString(in: ValueType): Box[String] = toBoxMyType(in)
   protected def boxStrToValType(in: Box[String]): ValueType = toValueType(in)
-}
-
-}
-}
 }

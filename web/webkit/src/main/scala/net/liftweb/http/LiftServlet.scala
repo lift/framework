@@ -17,22 +17,15 @@
 package net.liftweb
 package http
 
-import java.net.URLDecoder
-import scala.xml.{Node, NodeSeq, Group, Elem, MetaData, Null, XML, Comment, Text}
-import scala.collection.immutable.HashMap
-import scala.xml.transform._
-import net.liftweb.common._
-import net.liftweb.util.Helpers._
-import net.liftweb.util._
-import net.liftweb.util.Helpers
-import net.liftweb.util.ActorPing
-import java.util.{Locale, ResourceBundle}
-import java.net.URL
+import xml.{Node, NodeSeq, Group}
+
+import common._
+import actor._
+import util._
+import util.Helpers._
 import js._
 import auth._
 import provider._
-
-import net.liftweb.actor._
 
 
 class LiftServlet extends Loggable {
@@ -58,7 +51,7 @@ class LiftServlet extends Loggable {
         Thread.sleep(20)
       }
 
-      tryo{ActorPing.shutdown}
+      tryo{Schedule.shutdown}
       tryo{LAScheduler.shutdown()}
 
       LiftRules.runUnloadHooks()
@@ -87,7 +80,7 @@ class LiftServlet extends Loggable {
     val req = if (null eq reqOrg) reqOrg else reqOrg.snapshot
 
     def runFunction(doAnswer: LiftResponse => Unit) {
-      ActorPing.schedule(() => {
+      Schedule.schedule(() => {
         val answerFunc: (=> LiftResponse) => Unit = response =>
           doAnswer(wrapState(req, session)(response))
 
@@ -99,7 +92,7 @@ class LiftServlet extends Loggable {
     if (reqOrg.request.suspendResumeSupport_?) {
       runFunction(liftResponse => {
         // do the actual write on a separate thread
-        ActorPing.schedule(() => {
+        Schedule.schedule(() => {
           reqOrg.request.resume(reqOrg, liftResponse)
         }, 0 seconds)
       })

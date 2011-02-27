@@ -107,7 +107,7 @@ object TemplateFinder {
           case _ =>
             val pls = places.mkString("/", "/", "")
 
-            val se = suffixes.elements
+            val se = suffixes.iterator
             val sl = List("_" + locale.toString, "_" + locale.getLanguage, "")
 
             var found = false
@@ -115,7 +115,7 @@ object TemplateFinder {
 
             while (!found && se.hasNext) {
               val s = se.next
-              val le = sl.elements
+              val le = sl.iterator
               while (!found && le.hasNext) {
                 val p = le.next
                 val name = pls + p + (if (s.length > 0) "." + s else "")
@@ -168,7 +168,7 @@ object TemplateFinder {
       case ctl :: _ => (ctl, "index")
       case Nil => ("default_template", "index")
     }
-    val trans = List[String => String](n => n, n => camelCase(n))
+    val trans = List[String => String](n => n, n => camelify(n))
     val toTry = trans.flatMap(f => (LiftRules.buildPackage("view") ::: ("lift.app.view" :: Nil)).map(_ + "." + f(controller)))
 
     first(toTry) {

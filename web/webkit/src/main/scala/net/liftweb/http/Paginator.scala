@@ -15,11 +15,12 @@
  */
 package net.liftweb
 package http
-  
-import scala.xml.{NodeSeq,Text,Elem}
-import net.liftweb.common.Loggable
-import net.liftweb.util.Helpers._
-import S.{?,??}
+
+import xml.{NodeSeq, Text}
+
+import common.Loggable
+import util.Helpers._
+import S.{?, ??}
 
 
 /**
@@ -309,4 +310,3 @@ trait StatefulSortedPaginatorSnippet[T, C] extends SortedPaginatorSnippet[T, C] 
       appendParams(super.sortedPageUrl(offset,sort), List(name -> "_"))
                                                        }
 }
-
