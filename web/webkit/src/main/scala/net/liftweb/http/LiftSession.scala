@@ -1345,7 +1345,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         f(LiftRules.SnippetFailure(page, snippetName, why))
 
       Helpers.errorDiv(
-        <div>Error processing snippet {snippetName openOr "N/A"}. <br/> Reason: {why} {addlMsg} XML causing this error:<br/>
+        <div>Error processing snippet: <b>{snippetName openOr "N/A"}</b><br/> 
+        Reason: <b>{why} {addlMsg}</b><br/>
+        XML causing this error:<br/>
         <pre>{whole.toString}</pre>
         </div>) openOr NodeSeq.Empty
     }
@@ -1988,9 +1990,12 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     <html xmlns:lift="http://liftweb.net" xmlns="http://www.w3.org/1999/xhtml"> <head/>
     <body> {
       Helpers.errorDiv(
-        <div>Error locating template.Message: {in.msg} <br/> {in.exception.map(e => <pre>{e.toString}{e.getStackTrace.map(_.toString).mkString("\n")}</pre>).openOr(NodeSeq.Empty)}</div>) openOr NodeSeq.Empty
+        <div>Error locating template.<br/>
+        Message: <b>{in.msg}</b><br/> 
+        {in.exception.map(e => <pre>{e.toString}{e.getStackTrace.map(_.toString).mkString("\n")}</pre>).openOr(NodeSeq.Empty)}
+        </div>) openOr NodeSeq.Empty
     }
-  </body> </html>
+    </body> </html>
 
   private[liftweb] def findAndMerge(templateName: Box[Seq[Node]], atWhat: Map[String, NodeSeq]): NodeSeq = {
     val name = templateName.map(s => if (s.text.startsWith("/")) s.text else "/" + s.text).openOr("/templates-hidden/default")

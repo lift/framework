@@ -127,8 +127,8 @@ object TemplateFinder {
                   }
                 } catch {
                   case e: ValidationException if Props.devMode | Props.testMode =>
-                    return Helpers.errorDiv(<div>Error locating template {name}.<br/>
-                      Message:{e.getMessage}<br/>
+                    return Helpers.errorDiv(<div>Error locating template: <b>{name}</b><br/>
+                      Message: <b>{e.getMessage}</b><br/>
                       {
                       <pre>{e.toString}{e.getStackTrace.map(_.toString).mkString("\n")}</pre>
                       }
@@ -143,7 +143,7 @@ object TemplateFinder {
                            (Props.devMode | Props.testMode)) {
                   val msg = xmlb.asInstanceOf[Failure].msg
                   val e = xmlb.asInstanceOf[Failure].exception
-                  return Helpers.errorDiv(<div>Error locating template {name}.<br/>Message: {msg}<br/>{
+                  return Helpers.errorDiv(<div>Error locating template: <b>{name}</b><br/>Message: <b>{msg}</b><br/>{
                   {
                     e match {
                       case Full(e) =>
