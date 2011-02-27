@@ -36,7 +36,18 @@ object ExtractionBugs extends Specification("Extraction bugs Specification") {
     Extraction.decompose(m).extract[PMap] mustEqual m
   }
 
+  "Extraction should always choose constructor with the most arguments if more than one constructor exists" in {
+    val args = Meta.Reflection.primaryConstructorArgs(classOf[ManyConstructors])
+    args.size mustEqual 4
+  }
+
   case class OptionOfInt(opt: Option[Int])
 
   case class PMap(m: Map[String, List[String]])
+
+  case class ManyConstructors(id: Long, name: String, lastName: String, email: String) {
+    def this() = this(0, "John", "Doe", "")
+    def this(name: String) = this(0, name, "Doe", "")
+    def this(name: String, email: String) = this(0, name, "Doe", email)
+  }
 }

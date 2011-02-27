@@ -185,7 +185,11 @@ private[json] object Meta {
       cachedConstructorArgs.memoize(constructor, argsInfo(_))
     }
 
-    def primaryConstructorArgs(c: Class[_]) = constructorArgs(c.getDeclaredConstructors()(0))
+    def primaryConstructorArgs(c: Class[_]) = {
+      val ord = Ordering[Int].on[JConstructor[_]](_.getParameterTypes.size)
+      val primary = c.getDeclaredConstructors.max(ord)
+      constructorArgs(primary)
+    }
 
     def typeParameters(t: Type, k: Kind): List[Class[_]] = {
       def term(i: Int) = t match {
