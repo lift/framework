@@ -839,10 +839,12 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
     case ActionMessageSet(msgs, req) =>
       S.doCometParams(req.params) {
-        //S.functionLifespan(true) {
-          reply(msgs.map(_()) ::: List(S.jsToAppend() ::: 
-                                       List(S.noticesToJsCmd)))
-        // }
+        S.jsToAppend() match {
+          case Nil =>
+          case js => partialUpdate(js)
+        }
+
+        reply(msgs.map(_()) ::: List(S.noticesToJsCmd))
       }
 
     case AskQuestion(what, who, otherlisteners) => {
