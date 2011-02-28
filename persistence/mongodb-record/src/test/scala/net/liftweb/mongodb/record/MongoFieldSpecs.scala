@@ -277,6 +277,7 @@ object MongoFieldSpecs extends Specification("MongoField Specification") with Mo
 
   "MongoListField (String)" should {
     "function correctly" in {
+      checkMongoIsRunning // This is broken for 2.8.0
       val rec = ListTestRecord.createRecord
       val lst = List("abc", "def", "ghi")
       passBasicTests(lst, rec.mandatoryStringListField, rec.legacyOptionalStringListField)
@@ -292,6 +293,7 @@ object MongoFieldSpecs extends Specification("MongoField Specification") with Mo
 
   "MongoListField (Int)" should {
     "function correctly" in {
+      checkMongoIsRunning // This is broken for 2.8.0
       val rec = ListTestRecord.createRecord
       val lst = List(4, 5, 6)
       passBasicTests(lst, rec.mandatoryIntListField, rec.legacyOptionalIntListField)
@@ -307,6 +309,7 @@ object MongoFieldSpecs extends Specification("MongoField Specification") with Mo
 
   "MongoJsonObjectListField" should {
     "function correctly" in {
+      checkMongoIsRunning // This is broken for 2.8.0
       val rec = ListTestRecord.createRecord
       val lst = List(TypeTestJsonObject(1, "jsonobj1"), TypeTestJsonObject(2, "jsonobj2"))
       passBasicTests(lst, rec.mandatoryMongoJsonObjectListField, rec.legacyOptionalMongoJsonObjectListField)
@@ -328,6 +331,7 @@ object MongoFieldSpecs extends Specification("MongoField Specification") with Mo
 
   "MongoMapField (String)" should {
     "function correctly" in {
+      checkMongoIsRunning // This is broken for 2.8.0
       val rec = MapTestRecord.createRecord
       val map = Map("a" -> "abc", "b" -> "def", "c" -> "ghi")
       passBasicTests(map, rec.mandatoryStringMapField, rec.legacyOptionalStringMapField)
@@ -347,6 +351,7 @@ object MongoFieldSpecs extends Specification("MongoField Specification") with Mo
 
   "MongoMapField (Int)" should {
     "function correctly" in {
+      checkMongoIsRunning // This is broken for 2.8.0
       val rec = MapTestRecord.createRecord
       val map = Map("a" -> 4, "b" -> 5, "c" -> 6)
       passBasicTests(map, rec.mandatoryIntMapField, rec.legacyOptionalIntMapField)
