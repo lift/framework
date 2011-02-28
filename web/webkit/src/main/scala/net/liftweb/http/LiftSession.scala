@@ -1348,7 +1348,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         <div>Error processing snippet: <b>{snippetName openOr "N/A"}</b><br/> 
         Reason: <b>{why} {addlMsg}</b><br/>
         XML causing this error:<br/>
-        <pre>{whole.toString}</pre>
+        <pre style="background: lightgrey; padding: 6px; border: 1px solid">{whole.toString}</pre>
         </div>) openOr NodeSeq.Empty
     }
 

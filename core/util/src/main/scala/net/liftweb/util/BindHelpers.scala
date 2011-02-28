@@ -126,10 +126,8 @@ trait BindHelpers {
   def errorDiv(body: NodeSeq): Box[NodeSeq] = 
     Props.mode match {
       case Props.RunModes.Development | Props.RunModes.Test =>
-        Full(<div class="snippeterror" style="display: block; margin: 8px; border: 2px solid red">
+        Full(<div class="snippeterror" style="display: block; padding: 4px; margin: 8px; border: 2px solid red">
              {body}
-             <br/>
-             <br/>
           <i>note: this error is displayed in the browser because
           your application is running in "development" or "test" mode.If you
           set the system property run.mode=production, this error will not
