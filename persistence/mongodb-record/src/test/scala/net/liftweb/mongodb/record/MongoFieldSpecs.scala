@@ -328,6 +328,15 @@ object MongoFieldSpecs extends Specification("MongoField Specification") with Mo
       )
     }
   }
+  
+  "MongoCaseClassListField" should {
+    "setFromAny a List" in {
+      val rec = ListTestRecord.createRecord
+      val lst = List(MongoCaseClassTestObject(1,"str1"))
+      rec.mongoCaseClassListField.setFromAny(lst)
+      rec.mongoCaseClassListField.value must_== lst
+    }
+  }
 
   "MongoMapField (String)" should {
     "function correctly" in {

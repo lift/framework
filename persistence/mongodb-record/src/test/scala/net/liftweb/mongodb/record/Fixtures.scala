@@ -150,6 +150,8 @@ class FieldTypeTestRecord private () extends MongoRecord[FieldTypeTestRecord] wi
   }
 }
 
+case class MongoCaseClassTestObject(intField: Int, stringField: String) 
+
 object FieldTypeTestRecord extends FieldTypeTestRecord with MongoMetaRecord[FieldTypeTestRecord]
 
 
@@ -230,6 +232,8 @@ class ListTestRecord private () extends MongoRecord[ListTestRecord] with MongoId
 
   object mandatoryMongoJsonObjectListField extends MongoJsonObjectListField(this, TypeTestJsonObject)
   object legacyOptionalMongoJsonObjectListField extends MongoJsonObjectListField(this, TypeTestJsonObject) { override def optional_? = true }
+  
+  object mongoCaseClassListField extends MongoCaseClassListField[ListTestRecord, MongoCaseClassTestObject](this)
 
   // TODO: More List types
 

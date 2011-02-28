@@ -104,7 +104,7 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
 
   def setFromAny(in: Any): Box[MyType] = in match {
     case dbo: DBObject => setFromDBObject(dbo)
-    case c if mf.erasure.isInstance(c) =>  setBox(Full(c.asInstanceOf[MyType]))
+    case list@c::xs if mf.erasure.isInstance(c) =>  setBox(Full(list.asInstanceOf[MyType]))
     case _ => setBox(Empty)
   }
 

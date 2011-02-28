@@ -199,7 +199,8 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       .mandatoryStringListField(List("abc", "def", "ghi"))
       .mandatoryIntListField(List(4, 5, 6))
       .mandatoryMongoJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1"), TypeTestJsonObject(2, "jsonobj2")))
-
+      .mongoCaseClassListField(List(MongoCaseClassTestObject(1,"str")))
+      
     val mtr = MapTestRecord.createRecord
       .mandatoryStringMapField(Map("a" -> "abc", "b" -> "def", "c" -> "ghi"))
       .mandatoryIntMapField(Map("a" -> 4, "b" -> 5, "c" -> 6))
@@ -279,7 +280,10 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
           JObject(List(JField("intField", JInt(1)), JField("stringField", JString("jsonobj1")))),
           JObject(List(JField("intField", JInt(2)), JField("stringField", JString("jsonobj2"))))
         ))),
-        JField("legacyOptionalMongoJsonObjectListField", JArray(List()))
+        JField("legacyOptionalMongoJsonObjectListField", JArray(List())),
+        JField("mongoCaseClassListField",JArray(List(
+          JObject(List(JField("intField", JInt(1)), JField("stringField", JString("str"))))
+        )))
       ))
 
       mtr.asJValue mustEqual JObject(List(
