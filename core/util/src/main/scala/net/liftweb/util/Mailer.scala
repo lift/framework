@@ -151,63 +151,7 @@ protected trait MailerImpl extends SimpleInjector {
     protected def messageHandler = {
       case MessageInfo(from, subject, info) =>
         try {
-          val session = authenticator match {
-            case Full(a) => jndiSession openOr Session.getInstance(buildProps, a)
-            case _ => jndiSession openOr Session.getInstance(buildProps)
-          }
-
-          val message = new MimeMessage(session)
-          message.setFrom(from)
-          message.setRecipients(Message.RecipientType.TO, info.flatMap {case x: To => Some[To](x) case _ => None})
-          message.setRecipients(Message.RecipientType.CC, info.flatMap {case x: CC => Some[CC](x) case _ => None})
-          message.setRecipients(Message.RecipientType.BCC, info.flatMap {case x: BCC => Some[BCC](x) case _ => None})
-          // message.setReplyTo(filter[MailTypes, ReplyTo](info, {case x @ ReplyTo(_) => Some(x); case _ => None}))
-          message.setReplyTo(info.flatMap {case x: ReplyTo => Some[ReplyTo](x) case _ => None})
-          message.setSubject(subject.subject)
-          val bodyTypes = info.flatMap {case x: MailBodyType => Some[MailBodyType](x); case _ => None}
-          bodyTypes match {
-            case PlainMailBodyType(txt) :: Nil =>
-              message.setText(txt)
-
-            case _ =>
-              val multiPart = new MimeMultipart("alternative")
-              bodyTypes.foreach {
-                tab =>
-                val bp = new MimeBodyPart
-                tab match {
-                  case PlainMailBodyType(txt) => bp.setText(txt, "UTF-8")
-                  case PlainPlusBodyType(txt, charset) => bp.setText(txt, charset)
-                  case XHTMLMailBodyType(html) => bp.setContent(html.toString, "text/html; charset=" + charSet)
-                  case XHTMLPlusImages(html, img@_*) =>
-                    val html_mp = new MimeMultipart("related")
-                    val bp2 = new MimeBodyPart
-                    bp2.setContent(html.toString, "text/html; charset=" + charSet)
-                    html_mp.addBodyPart(bp2)
-                    img.foreach {
-                      i =>
-                      val rel_bpi = new MimeBodyPart
-                      rel_bpi.setFileName(i.name)
-                      rel_bpi.setContentID(i.name)
-                      rel_bpi.setDisposition("inline")
-                      rel_bpi.setDataHandler(new javax.activation.DataHandler(new javax.activation.DataSource {
-                            def getContentType = i.mimeType
-
-                            def getInputStream = new java.io.ByteArrayInputStream(i.bytes)
-
-                            def getName = i.name
-
-                            def getOutputStream = throw new java.io.IOException("Unable to write to item")
-                          }))
-                      html_mp.addBodyPart(rel_bpi)
-                    }
-                    bp.setContent(html_mp)
-                }
-                multiPart.addBodyPart(bp)
-              }
-              message.setContent(multiPart);
-          }
-
-          MailerImpl.this.performTransportSend(message)
+          msgSendImpl(from, subject, info)
         } catch {
           case e: Exception => logger.error("Couldn't send mail", e)
         }
@@ -256,8 +200,75 @@ protected trait MailerImpl extends SimpleInjector {
    */
   lazy val profileModeSend: Inject[MimeMessage => Unit] = new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
 
-  protected lazy val msgSender = new MsgSender
+  /**
+   * Synchronously send an email.
+   */
+  def blockingSendMail(from: From, subject: Subject, rest: MailTypes*) {
+    msgSendImpl(from, subject, rest.toList)
+  }
+  
+  def msgSendImpl(from: From, subject: Subject, info: List[MailTypes]) {
+    val session = authenticator match {
+      case Full(a) => jndiSession openOr Session.getInstance(buildProps, a)
+      case _ => jndiSession openOr Session.getInstance(buildProps)
+    }
 
+    val message = new MimeMessage(session)
+    message.setFrom(from)
+    message.setRecipients(Message.RecipientType.TO, info.flatMap {case x: To => Some[To](x) case _ => None})
+    message.setRecipients(Message.RecipientType.CC, info.flatMap {case x: CC => Some[CC](x) case _ => None})
+    message.setRecipients(Message.RecipientType.BCC, info.flatMap {case x: BCC => Some[BCC](x) case _ => None})
+    // message.setReplyTo(filter[MailTypes, ReplyTo](info, {case x @ ReplyTo(_) => Some(x); case _ => None}))
+    message.setReplyTo(info.flatMap {case x: ReplyTo => Some[ReplyTo](x) case _ => None})
+    message.setSubject(subject.subject)
+    val bodyTypes = info.flatMap {case x: MailBodyType => Some[MailBodyType](x); case _ => None}
+    bodyTypes match {
+      case PlainMailBodyType(txt) :: Nil =>
+        message.setText(txt)
+
+      case _ =>
+        val multiPart = new MimeMultipart("alternative")
+        bodyTypes.foreach {
+          tab =>
+          val bp = new MimeBodyPart
+          tab match {
+            case PlainMailBodyType(txt) => bp.setText(txt, "UTF-8")
+            case PlainPlusBodyType(txt, charset) => bp.setText(txt, charset)
+            case XHTMLMailBodyType(html) => bp.setContent(html.toString, "text/html; charset=" + charSet)
+            case XHTMLPlusImages(html, img@_*) =>
+              val html_mp = new MimeMultipart("related")
+              val bp2 = new MimeBodyPart
+              bp2.setContent(html.toString, "text/html; charset=" + charSet)
+              html_mp.addBodyPart(bp2)
+              img.foreach {
+                i =>
+                val rel_bpi = new MimeBodyPart
+                rel_bpi.setFileName(i.name)
+                rel_bpi.setContentID(i.name)
+                rel_bpi.setDisposition("inline")
+                rel_bpi.setDataHandler(new javax.activation.DataHandler(new javax.activation.DataSource {
+                      def getContentType = i.mimeType
+
+                      def getInputStream = new java.io.ByteArrayInputStream(i.bytes)
+
+                      def getName = i.name
+
+                      def getOutputStream = throw new java.io.IOException("Unable to write to item")
+                    }))
+                html_mp.addBodyPart(rel_bpi)
+              }
+              bp.setContent(html_mp)
+          }
+          multiPart.addBodyPart(bp)
+        }
+        message.setContent(multiPart);
+    }
+
+    MailerImpl.this.performTransportSend(message)
+  }
+
+  protected lazy val msgSender = new MsgSender
+  
   /**
    * Asynchronously send an email.
    */
