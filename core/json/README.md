@@ -137,6 +137,7 @@ Example
 -------
 
     object JsonExample extends Application {
+      import net.liftweb.json._
       import net.liftweb.json.JsonDSL._
 
       case class Winner(id: Long, numbers: List[Int])
