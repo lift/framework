@@ -103,7 +103,9 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
     override def testOptions =
       ExcludeTests(
         // Persistence tests
-        "net.liftweb.mapper.MapperSpec" :: "net.liftweb.squerylrecord.SquerylRecordSpec" :: Nil) ::
+        "net.liftweb.mapper.MapperSpec" :: "net.liftweb.squerylrecord.SquerylRecordSpec" ::
+        // Web tests
+        "net.liftweb.webapptest.OneShot" :: "net.liftweb.webapptest.ToHeadUsages" :: Nil) ::
       super.testOptions.toList
   }
 
