@@ -23,3 +23,4 @@ import common._
 
 object HelpersSpec extends Specification {
 }
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
-package field {
+package net.liftweb 
+package record 
+package field 
 
 import scala.xml._
 import net.liftweb.common._
@@ -66,6 +66,3 @@ class OptionalIntField[OwnerType <: Record[OwnerType]](rec: OwnerType)
   }
 }
 
-}
-}
-}

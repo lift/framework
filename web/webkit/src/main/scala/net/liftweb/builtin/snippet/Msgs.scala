@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package builtin {
-package snippet {
+package net.liftweb
+package builtin
+package snippet
 
-import _root_.net.liftweb.http.{DispatchSnippet,LiftRules,NoticeType,S,SessionVar}
-import _root_.scala.xml._
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.http.js._
+import net.liftweb.http.{DispatchSnippet,LiftRules,NoticeType,S,SessionVar}
+import scala.xml._
+import net.liftweb.util.Helpers._
+import net.liftweb.http.js._
 import JsCmds._
-import _root_.net.liftweb.common.{Box, Full, Empty}
+import net.liftweb.common.{Box, Full, Empty}
 
 
 /**
@@ -230,7 +230,3 @@ object ShowAll extends SessionVar[Boolean](false) {
  */
 case class AjaxMessageMeta(title: NodeSeq, cssClasses: Box[String])
 
-// Close nested packages
-}
-}
-}

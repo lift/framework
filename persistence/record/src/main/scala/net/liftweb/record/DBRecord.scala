@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
+package net.liftweb 
+package record 
 
 import net.liftweb._
 import common._
@@ -81,5 +81,3 @@ trait DBRecord[MyType <: DBRecord[MyType]] extends Record[MyType] {
   }
 }
 
-}
-}

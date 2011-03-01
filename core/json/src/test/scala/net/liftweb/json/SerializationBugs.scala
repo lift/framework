@@ -88,3 +88,4 @@ package plan2 {
   case class Action(functionName: String, symbol: String,
                     inParams: Array[Number], subOperand: Option[Action]) 
 }
+

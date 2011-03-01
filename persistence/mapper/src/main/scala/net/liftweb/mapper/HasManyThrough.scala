@@ -21,7 +21,6 @@ import collection.mutable.HashSet
 import util.FatLazy
 import common._
 
-
 class HasManyThrough[From <: KeyedMapper[ThroughType, From],
                      To <: Mapper[To],
                      Through <: Mapper[Through],
@@ -109,3 +108,4 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
     super.afterCreate
   }
 }
+

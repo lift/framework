@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package provider {
+package net.liftweb
+package http
+package provider
 
-import _root_.java.io.{InputStream}
-import _root_.java.net.{URL}
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import java.io.{InputStream}
+import java.net.{URL}
+import net.liftweb.common._
+import net.liftweb.util._
 
 /**
  * Represents the service context information. Similar with servlet context.
@@ -94,6 +94,3 @@ trait HTTPContext {
   def removeAttribute(name: String): Unit
 }
 
-}
-}
-}

@@ -71,3 +71,4 @@ trait MongoTestKit {
     MongoDB.close
   }
 }
+

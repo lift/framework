@@ -71,7 +71,7 @@ abstract class DriverType(val name : String) {
   /**
    * Maximum value of the LIMIT clause in SELECT.
    */
-  def maxSelectLimit : String = _root_.java.lang.Long.MAX_VALUE.toString
+  def maxSelectLimit : String = java.lang.Long.MAX_VALUE.toString
 
   /**
     * Performs an insert and optionally returns the ResultSet of the generated keys that were inserted. If no keys are
@@ -410,7 +410,7 @@ object OracleDriver extends DriverType("Oracle") {
    */
   override def brokenLimit_? : Boolean = true
 
-  import _root_.java.sql.Types
+  import java.sql.Types
   override def customColumnTypeMap = {
     case Types.BOOLEAN => Types.INTEGER
   }

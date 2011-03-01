@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
+package net.liftweb
+package record
 
-import _root_.net.liftweb.http.js.{JsExp, JsObj}
-import _root_.net.liftweb.http.js.JE.{JsArray, JsFalse, JsNull, JsObj, JsTrue, Num, Str}
-import _root_.net.liftweb.json.JsonAST.{JArray, JBool, JInt, JDouble, JField, JNothing, JNull, JObject, JString, JValue}
+import net.liftweb.http.js.{JsExp, JsObj}
+import net.liftweb.http.js.JE.{JsArray, JsFalse, JsNull, JsObj, JsTrue, Num, Str}
+import net.liftweb.json.JsonAST.{JArray, JBool, JInt, JDouble, JField, JNothing, JNull, JObject, JString, JValue}
 
 object RecordHelpers {
   
@@ -39,7 +39,3 @@ object RecordHelpers {
   }
 }
 
-
-
-}
-}

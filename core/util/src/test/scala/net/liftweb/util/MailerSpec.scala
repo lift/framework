@@ -99,7 +99,6 @@ object MailerSpec extends Specification("Mailer Specification") {
   }
 }
 
-
 object MyMailer extends MailerImpl {
     @volatile var lastMessage: Box[MimeMessage] = Empty
 
@@ -113,3 +112,4 @@ object MyMailer extends MailerImpl {
     Thread.sleep(10)
   } // do nothing, but force initialization of this class
 }
+

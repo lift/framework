@@ -1,7 +1,5 @@
-
-
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +14,17 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import net.liftweb.common._
+import net.liftweb.util._
 import Helpers._
-import _root_.net.liftweb.http.js._
+import net.liftweb.http.js._
 import JsCmds._
 import JE._
-import _root_.net.liftweb.http._
-import _root_.scala.xml.NodeSeq
+import net.liftweb.http._
+import scala.xml.NodeSeq
 
 /**
 * Allows for the creation of JSON-based JavaScript widgets with very little
@@ -210,5 +208,3 @@ trait JsonComet {
 
 }
 */
-}
-}

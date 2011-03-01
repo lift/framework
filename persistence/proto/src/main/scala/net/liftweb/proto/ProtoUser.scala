@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package proto {
+package net.liftweb
+package proto
 
-import _root_.net.liftweb.http._
+import net.liftweb.http._
 import js._
 import JsCmds._
-import _root_.scala.xml.{NodeSeq, Node, Text, Elem}
-import _root_.scala.xml.transform._
-import _root_.net.liftweb.sitemap._
-import _root_.net.liftweb.sitemap.Loc._
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util.Mailer._
+import scala.xml.{NodeSeq, Node, Text, Elem}
+import scala.xml.transform._
+import net.liftweb.sitemap._
+import net.liftweb.sitemap.Loc._
+import net.liftweb.util.Helpers._
+import net.liftweb.util._
+import net.liftweb.common._
+import net.liftweb.util.Mailer._
 import S._
 
 /**
@@ -959,5 +959,3 @@ trait ProtoUser {
       })) openOr in
 }
 
-}
-}

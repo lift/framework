@@ -25,7 +25,7 @@ import java.io._
 import nu.validator.htmlparser._
 import sax.HtmlParser
 
-import _root_.org.xml.sax.InputSource
+import org.xml.sax.InputSource
 
 object Html5 extends Html5Parser with Html5Writer
 

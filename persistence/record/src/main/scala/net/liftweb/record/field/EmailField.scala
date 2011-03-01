@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
-package field {
+package net.liftweb
+package record
+package field
 
-import _root_.scala.xml._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.proto._
-import _root_.net.liftweb.http.{S}
-import _root_.java.util.regex._
+import scala.xml._
+import net.liftweb.util._
+import net.liftweb.common._
+import net.liftweb.proto._
+import net.liftweb.http.{S}
+import java.util.regex._
 import Helpers._
 import S._
 
@@ -49,6 +49,3 @@ class EmailField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int)
 class OptionalEmailField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int)
   extends OptionalStringField[OwnerType](rec, maxLength) with EmailTypedField
 
-}
-}
-}

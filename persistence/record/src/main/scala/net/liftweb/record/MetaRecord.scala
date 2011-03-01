@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
+package net.liftweb
+package record
 
 import java.lang.reflect.Modifier
 import net.liftweb._
@@ -28,7 +28,7 @@ import net.liftweb.http.{SHtml, Req, LiftResponse, LiftRules}
 import net.liftweb.json.{JsonParser, Printer}
 import net.liftweb.json.JsonAST._
 import net.liftweb.record.FieldHelpers.expectedA
-import _root_.java.lang.reflect.Method
+import java.lang.reflect.Method
 import field._
 import Box._
 import JE._
@@ -467,5 +467,3 @@ trait LifecycleCallbacks {
   def afterDelete {}
 }
 
-}
-}

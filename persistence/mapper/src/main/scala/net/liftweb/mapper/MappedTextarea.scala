@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.scala.xml.{NodeSeq, Elem}
-import _root_.net.liftweb.http.S
-import _root_.net.liftweb.http.S._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
+import scala.xml.{NodeSeq, Elem}
+import net.liftweb.http.S
+import net.liftweb.http.S._
+import net.liftweb.util._
+import net.liftweb.common._
 
 abstract class MappedTextarea[T<:Mapper[T]](owner : T, maxLen: Int) extends MappedString[T](owner, maxLen) {
   /**
@@ -49,5 +49,3 @@ abstract class MappedTextarea[T<:Mapper[T]](owner : T, maxLen: Int) extends Mapp
 
 }
 
-}
-}

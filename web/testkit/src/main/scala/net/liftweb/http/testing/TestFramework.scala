@@ -18,21 +18,21 @@ package net.liftweb
 package http
 package testing
 
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.json._
+import net.liftweb.util.Helpers._
+import net.liftweb.util._
+import net.liftweb.json._
 import JsonDSL._
-import _root_.net.liftweb.common._
-import _root_.scala.xml._
-import _root_.scala.xml.Utility.trim
-import _root_.java.util.{Map => JavaMap, Set => JavaSet, Iterator => JavaIterator, List => JavaList}
-import _root_.java.util.regex.Pattern
-import _root_.java.io.IOException
-import _root_.org.apache.commons.httpclient._
-import _root_.org.apache.commons.httpclient.cookie._
+import net.liftweb.common._
+import scala.xml._
+import scala.xml.Utility.trim
+import java.util.{Map => JavaMap, Set => JavaSet, Iterator => JavaIterator, List => JavaList}
+import java.util.regex.Pattern
+import java.io.IOException
+import org.apache.commons.httpclient._
+import org.apache.commons.httpclient.cookie._
 import methods._
-import _root_.java.io.OutputStream
-import _root_.org.apache.commons.httpclient.auth.AuthScope
+import java.io.OutputStream
+import org.apache.commons.httpclient.auth.AuthScope
 
 trait ToResponse {
   self: BaseGetPoster =>
@@ -843,7 +843,7 @@ abstract class BaseResponse(override val baseUrl: String,
   override lazy val xml: Box[Elem] =
     for {
       b <- body
-      nodeSeq <- PCDataXmlParser(new _root_.java.io.ByteArrayInputStream(b))
+      nodeSeq <- PCDataXmlParser(new java.io.ByteArrayInputStream(b))
       xml <- (nodeSeq.toList match {
         case (x: Elem) :: _ => Full(x)
         case _ => Empty
@@ -948,3 +948,4 @@ class CompleteFailure(val serverName: String, val exception: Box[Throwable]) ext
 
   def filter(f: HttpResponse => Unit): HttpResponse = throw (exception openOr new java.io.IOException("HTTP Failure"))
 }
+

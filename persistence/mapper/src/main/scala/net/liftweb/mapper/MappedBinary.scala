@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.java.sql.Types
-import _root_.java.lang.reflect.Method
-import _root_.java.util.Date
-import _root_.net.liftweb.util._
+import java.sql.Types
+import java.lang.reflect.Method
+import java.util.Date
+import net.liftweb.util._
 import Helpers._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.http.js._
-import _root_.net.liftweb.json._
+import net.liftweb.common._
+import net.liftweb.http.js._
+import net.liftweb.json._
 
 abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField[Array[Byte], T] {
   private val data : FatLazy[Array[Byte]] =  FatLazy(defaultValue)
@@ -167,7 +167,7 @@ abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[S
       case null => null
       case s: String => s
       case ba: Array[Byte] => new String(ba, "UTF-8")
-      case clob: _root_.java.sql.Clob => clob.getSubString(1,clob.length.toInt)
+      case clob: java.sql.Clob => clob.getSubString(1,clob.length.toInt)
       case other => other.toString
     }
     f.data() = toSet
@@ -259,7 +259,7 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
     val toSet = v match {
       case null => null
       case ba: Array[Byte] => new String(ba, "UTF-8")
-      case clob: _root_.java.sql.Clob => clob.getSubString(1,clob.length.toInt)
+      case clob: java.sql.Clob => clob.getSubString(1,clob.length.toInt)
       case other => other.toString
     }
     f.data() = toSet
@@ -284,5 +284,3 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
   def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.binaryColumnType + notNullAppender()
 }
 
-}
-}

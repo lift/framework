@@ -1,5 +1,5 @@
 /*
-* Copyright 2010 WorldWide Conferencing, LLC
+* Copyright 2010-2011 WorldWide Conferencing, LLC
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -11,10 +11,10 @@
 * limitations under the License.
 */
 
-package net.liftweb {
-package mongodb {
-package record {
-package field {
+package net.liftweb 
+package mongodb 
+package record 
+package field 
 
 import java.util.Date
 
@@ -94,7 +94,3 @@ class DateField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
   def asJValue: JValue = valueBox.map(v => Meta.Reflection.dateAsJValue(v)(owner.meta.formats)) openOr (JNothing: JValue)
 }
 
-}
-}
-}
-}

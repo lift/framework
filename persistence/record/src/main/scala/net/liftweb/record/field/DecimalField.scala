@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
-package field {
+package net.liftweb
+package record
+package field
 
-import _root_.java.math.{BigDecimal => JBigDecimal,MathContext,RoundingMode}
-import _root_.scala.xml._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.http.{S}
-import _root_.net.liftweb.json.JsonAST.JValue
-import _root_.net.liftweb.util._
+import java.math.{BigDecimal => JBigDecimal,MathContext,RoundingMode}
+import scala.xml._
+import net.liftweb.common._
+import net.liftweb.http.{S}
+import net.liftweb.json.JsonAST.JValue
+import net.liftweb.util._
 import Helpers._
 import S._
 
@@ -153,6 +153,3 @@ class OptionalDecimalField[OwnerType <: Record[OwnerType]](rec: OwnerType, val c
   def owner = rec
 }
 
-}
-}
-}

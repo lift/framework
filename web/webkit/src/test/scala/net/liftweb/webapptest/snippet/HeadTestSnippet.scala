@@ -24,8 +24,9 @@ class HeadTestSnippet {
     <head>
     <script type="text/javascript" src="snippet.js"></script>
     </head>
-    <span>Welcome to webtest1 at {new _root_.java.util.Date}</span>
+    <span>Welcome to webtest1 at {new java.util.Date}</span>
     </div>
   }
 
 }
+

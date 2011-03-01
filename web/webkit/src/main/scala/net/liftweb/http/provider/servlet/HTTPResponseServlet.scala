@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package provider {
-package servlet {
+package net.liftweb
+package http
+package provider
+package servlet
 
-import _root_.scala.collection.mutable.{ListBuffer}
-import _root_.java.io.{OutputStream}
-import _root_.javax.servlet.http.{HttpServletResponse, Cookie}
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import scala.collection.mutable.{ListBuffer}
+import java.io.{OutputStream}
+import javax.servlet.http.{HttpServletResponse, Cookie}
+import net.liftweb.common._
+import net.liftweb.util._
 import Helpers._
 
 class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
@@ -77,7 +77,3 @@ class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
   def outputStream: OutputStream = resp getOutputStream
 }
 
-}
-}
-}
-}

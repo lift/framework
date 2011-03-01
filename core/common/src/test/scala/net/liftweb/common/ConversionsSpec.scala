@@ -106,3 +106,4 @@ object ConversionsSpec extends Specification("Conversions Specification") {
   }
 
 }
+

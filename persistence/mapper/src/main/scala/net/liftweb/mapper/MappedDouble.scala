@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.java.lang.reflect.Method
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import java.sql.{ResultSet, Types}
+import java.lang.reflect.Method
+import net.liftweb.common._
+import net.liftweb.util._
 import Helpers._
-import _root_.java.util.Date
-import _root_.net.liftweb.http._
-import _root_.scala.xml.NodeSeq
+import java.util.Date
+import net.liftweb.http._
+import scala.xml.NodeSeq
 import js._
-import _root_.net.liftweb.json._
+import net.liftweb.json._
 
 abstract class MappedDouble[T<:Mapper[T]](val fieldOwner: T) extends MappedField[Double, T] {
 	private var data: Double = defaultValue
@@ -97,13 +97,13 @@ abstract class MappedDouble[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 		}
 	}
 
-	def real_convertToJDBCFriendly(value: Double): Object = new _root_.java.lang.Double(value)
+	def real_convertToJDBCFriendly(value: Double): Object = new java.lang.Double(value)
 
 	/**
 	* Get the JDBC SQL Type for this field
 	*/
 	def targetSQLType = Types.DOUBLE
-	def jdbcFriendly(field : String) = new _root_.java.lang.Double(i_is_!)
+	def jdbcFriendly(field : String) = new java.lang.Double(i_is_!)
 	def buildSetBooleanValue(accessor : Method, columnName : String) : (T, Boolean, Boolean) => Unit = null
 	def buildSetDateValue(accessor : Method, columnName : String) : (T, Date) => Unit =
 		(inst, v) => doField(inst, accessor, {case f: MappedDouble[T] => f.st(if (v == null) defaultValue else v.getTime)})
@@ -120,5 +120,3 @@ abstract class MappedDouble[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 	def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.doubleColumnType + notNullAppender()
 }
 
-}
-}

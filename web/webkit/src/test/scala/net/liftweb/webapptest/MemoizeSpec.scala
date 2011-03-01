@@ -18,7 +18,6 @@ package net.liftweb
 package webapptest
 
 import org.specs.Specification
-//import net.sourceforge.jwebunit.junit.WebTester
 
 import common._
 import util._
@@ -83,3 +82,4 @@ object MemoizeSpec extends Specification("Memoize Specification") {
 
   }
 }
+

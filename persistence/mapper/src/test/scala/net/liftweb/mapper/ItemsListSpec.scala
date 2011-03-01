@@ -91,3 +91,4 @@ object SampleItem extends SampleItem with LongKeyedMetaMapper[SampleItem] {
     x
   }
 }
+

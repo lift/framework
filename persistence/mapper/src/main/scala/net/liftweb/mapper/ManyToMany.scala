@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
+import net.liftweb.util._
+import net.liftweb.common._
 
 /**
  * Add this trait to a Mapper to add support for many-to-many relationships
@@ -220,5 +220,3 @@ trait ManyToMany extends BaseKeyedMapper {
   }
 }
 
-}
-}

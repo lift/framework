@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package jpa {
+package net.liftweb
+package jpa
 
-import _root_.javax.persistence.EntityManager
+import javax.persistence.EntityManager
 
-import _root_.net.liftweb.http.TransientRequestVar
+import net.liftweb.http.TransientRequestVar
 
-import _root_.org.scala_libs.jpa.{ScalaEMFactory, ScalaEntityManager}
+import org.scala_libs.jpa.{ScalaEMFactory, ScalaEntityManager}
 
 /**
  * This trait provides specific functionality for the Lift web framework
@@ -63,5 +63,3 @@ trait RequestVarEM extends ScalaEntityManager with ScalaEMFactory {
   def getUnderlying : EntityManager = em
 }
 
-}
-}

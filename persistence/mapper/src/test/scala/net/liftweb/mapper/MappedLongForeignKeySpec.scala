@@ -90,3 +90,4 @@ object MappedLongForeignKeySpec extends Specification("MappedLongForeignKey Spec
     }
   }
 }
+

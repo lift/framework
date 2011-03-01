@@ -332,3 +332,4 @@ trait StringGen {
                                           (1, alphaNumChar.map(_.toUpper))))
   } yield (firstLetter :: string).mkString
 }
+

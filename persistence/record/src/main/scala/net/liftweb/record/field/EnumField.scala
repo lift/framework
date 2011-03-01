@@ -120,3 +120,4 @@ class OptionalEnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration]
   def owner = rec
   protected val valueManifest = m
 }
+

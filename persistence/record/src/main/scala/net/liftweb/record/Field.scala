@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
+package net.liftweb
+package record
 
 import net.liftweb.common._
 import net.liftweb.http.js.{JsExp}
@@ -419,7 +419,7 @@ trait DisplayWithLabel[OwnerType <: Record[OwnerType]] extends OwnedField[OwnerT
 }
 
 
-import _root_.java.sql.{ResultSet, Types}
+import java.sql.{ResultSet, Types}
 import net.liftweb.mapper.{DriverType}
 
 /**
@@ -446,5 +446,3 @@ object FieldHelpers {
   def expectedA(what: String, notA: AnyRef): Failure = Failure("Expected a " + what + ", not a " + (if (notA == null) "null" else notA.getClass.getName))
 }
 
-}
-}

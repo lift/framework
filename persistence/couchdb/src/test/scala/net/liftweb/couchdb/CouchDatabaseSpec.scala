@@ -83,3 +83,4 @@ object CouchDatabaseSpec extends Specification("CouchDatabase Specification") {
     }
   }
 }
+

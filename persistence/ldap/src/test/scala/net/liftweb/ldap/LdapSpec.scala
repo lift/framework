@@ -179,3 +179,4 @@ object LdapSpec extends Specification("LDAP Specification") {
     }
   }
 }
+

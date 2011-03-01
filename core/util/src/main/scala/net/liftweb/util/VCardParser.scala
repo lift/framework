@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 WorldWide Conferencing, LLC
+ * Copyright 2008-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.scala.collection.mutable._
-import _root_.scala.util.parsing.combinator._
+import scala.collection.mutable._
+import scala.util.parsing.combinator._
 
 /**
  * Parser a VCard entry such as
@@ -38,7 +38,7 @@ import _root_.scala.util.parsing.combinator._
 object VCardParser extends Parsers {
   type Elem = Char
 
-  implicit def strToInput(in: String): Input = new _root_.scala.util.parsing.input.CharArrayReader(in.toCharArray)
+  implicit def strToInput(in: String): Input = new scala.util.parsing.input.CharArrayReader(in.toCharArray)
 
   case class VCardKey(name: String, props: List[(String, String)])
   case class VCardEntry(key: VCardKey, value: List[String])
@@ -57,5 +57,3 @@ object VCardParser extends Parsers {
   }
 }
 
-}
-}

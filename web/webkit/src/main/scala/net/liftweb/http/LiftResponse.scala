@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.net.liftweb.common._
-import _root_.scala.xml.{Node, Group, NodeSeq}
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.http.provider._
+import net.liftweb.common._
+import scala.xml.{Node, Group, NodeSeq}
+import net.liftweb.util._
+import net.liftweb.http.provider._
 import js._
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.json.{JsonAST, Printer}
+import net.liftweb.util.Helpers._
+import net.liftweb.json.{JsonAST, Printer}
 import java.io.{OutputStream, OutputStreamWriter, Writer, ByteArrayOutputStream}
 
 /**
@@ -667,5 +667,3 @@ case class AtomServiceResponse(xml: Node) extends LiftResponse {
   def toResponse = XmlMimeResponse(xml, "application/atomsvc+xml").toResponse
 }
 
-}
-}

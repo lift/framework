@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,16 +11,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package couchdb {
+package net.liftweb
+package couchdb
 
-import _root_.scala.reflect.Manifest
-import _root_.dispatch.{Http, StatusCode}
-import _root_.net.liftweb.common.{Box, Failure, Full}
+import scala.reflect.Manifest
+import dispatch.{Http, StatusCode}
+import net.liftweb.common.{Box, Failure, Full}
 import Box.option2Box
-import _root_.net.liftweb.json.Implicits.string2jvalue
-import _root_.net.liftweb.json.JsonAST.{JArray, JDouble, JField, JInt, JObject, JString, JValue}
-import _root_.net.liftweb.util.ControlHelpers.tryo
+import net.liftweb.json.Implicits.string2jvalue
+import net.liftweb.json.JsonAST.{JArray, JDouble, JField, JInt, JObject, JString, JValue}
+import net.liftweb.util.ControlHelpers.tryo
 
 object DocumentHelpers {
   /** Force a document into the database, clobbering any existing version. Usually good for design documents. */
@@ -100,5 +100,3 @@ object DocumentHelpers {
   }
 }
 
-}
-}

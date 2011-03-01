@@ -424,7 +424,7 @@ trait SHtml {
    * </pre>
    */
   def ajaxEditable (displayContents : => NodeSeq, editForm : => NodeSeq, onSubmit : () => JsCmd) : NodeSeq = {
-    import _root_.net.liftweb.http.js
+    import net.liftweb.http.js
     import js.{jquery,JsCmd,JsCmds,JE}
     import jquery.JqJsCmds
     import JsCmds.{Noop,SetHtml}

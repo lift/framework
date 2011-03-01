@@ -23,7 +23,6 @@ import common._
 import util._
 import http._
 
-
 /**
  * System under specification for Wizard.
  */
@@ -157,3 +156,4 @@ object WizardSpec extends Specification("Wizard Specification") {
     }
   }
 }
+

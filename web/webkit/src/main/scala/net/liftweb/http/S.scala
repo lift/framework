@@ -2190,7 +2190,7 @@ for {
    * which snippet function to use for a given snippet in the template. Our code would look like:
    *
    * <pre name="code" class="scala" >
-  import _root_.scala.xml.{ NodeSeq,Text }
+  import scala.xml.{ NodeSeq,Text }
   class SnipMap  {
   def topSnippet (xhtml : NodeSeq) : NodeSeq =  {
   if (S.param("showAll").isDefined)  {
@@ -2371,7 +2371,7 @@ for {
     val bump: Long = ((_formGroup.is openOr 0) + 1000L) * 10000L
     val num: Int = formItemNumber.is
     formItemNumber.set(num + 1)
-    import _root_.java.text._
+    import java.text._
     val prefix: String = new DecimalFormat("00000000000000000").format(bump + num)
     // take the first 2 non-Lift/non-Scala stack frames for use as hash issue 174
     "f" + prefix + "_" + Helpers.hashHex((new Exception).getStackTrace.toList.filter(notLiftOrScala).take(2).map(_.toString).mkString(","))
@@ -2482,9 +2482,9 @@ for {
       val key = formFuncName
 
       def checkCmd(in: Any) = in match {
-        case v2: _root_.scala.collection.Map[Any, _] if v2.isDefinedAt("command") =>
+        case v2: scala.collection.Map[Any, _] if v2.isDefinedAt("command") =>
           // ugly code to avoid type erasure warning
-          val v = v2.asInstanceOf[_root_.scala.collection.Map[String, Any]]
+          val v = v2.asInstanceOf[scala.collection.Map[String, Any]]
           JsonCmd(v("command").toString, v.get("target").
                   map {
             case null => null

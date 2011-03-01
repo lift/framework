@@ -99,3 +99,4 @@ object Html5ParserSpec extends Specification("Html5Parser Specification") with P
   }
 
 }
+

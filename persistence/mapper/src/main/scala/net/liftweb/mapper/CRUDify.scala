@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
 import sitemap._
 import Loc._
@@ -24,7 +24,7 @@ import util._
 import common._
 import Helpers._
 
-import _root_.scala.xml._
+import scala.xml._
 
 /**
  * This trait automatically adds CRUD (Create, read, update and delete) operations
@@ -141,5 +141,3 @@ trait LongCRUDify[CrudType <: KeyedMapper[Long, CrudType]] extends CRUDify[Long,
   self: CrudType with KeyedMetaMapper[Long, CrudType] =>
 }
 
-}
-}

@@ -125,7 +125,7 @@ sealed trait Schedule extends Loggable {
       }
     }
 
-    val fast = new _root_.java.util.concurrent.Callable[Unit] {
+    val fast = new java.util.concurrent.Callable[Unit] {
       def call(): Unit = {
         try {
           Schedule.this.restart

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
-package field {
+package net.liftweb
+package record
+package field
 
-import _root_.scala.xml._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.mapper.{Safe}
-import _root_.net.liftweb.http.{S}
-import _root_.java.util.regex._
-import _root_.java.util.regex.{Pattern => RegexPattern}
+import scala.xml._
+import net.liftweb.util._
+import net.liftweb.common._
+import net.liftweb.mapper.{Safe}
+import net.liftweb.http.{S}
+import java.util.regex._
+import java.util.regex.{Pattern => RegexPattern}
 import Helpers._
 import S._
 
@@ -59,6 +59,3 @@ extends StringField(rec, 32) with PostalCodeTypedField
 class OptionalPostalCodeField[OwnerType <: Record[OwnerType]](rec: OwnerType, val country: CountryField[OwnerType])
 extends OptionalStringField(rec, 32) with PostalCodeTypedField
 
-}
-}
-}

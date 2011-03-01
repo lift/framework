@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package js {
+package net.liftweb
+package http
+package js
 
-import _root_.net.liftweb.common.{Box, Full, Empty}
-import _root_.net.liftweb.http.NoticeType
-import _root_.scala.xml.{Elem, NodeSeq}
-import _root_.net.liftweb.util.Helpers._
+import net.liftweb.common.{Box, Full, Empty}
+import net.liftweb.http.NoticeType
+import scala.xml.{Elem, NodeSeq}
+import net.liftweb.util.Helpers._
 
 /**
  * Abstracted JavaScript artifacts used by lift core.
@@ -148,6 +148,3 @@ case class AjaxInfo(data: JsExp, action: String, timeout: Long,
                     cache: Boolean, dataType: String,
                     successFunc: Box[String], failFunc: Box[String])
 
-}
-}
-}

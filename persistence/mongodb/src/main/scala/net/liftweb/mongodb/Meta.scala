@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
+package net.liftweb 
+package mongodb 
 
 private[mongodb] object Meta {
 
@@ -125,5 +125,3 @@ private[mongodb] object Meta {
   }
 }
 
-}
-}

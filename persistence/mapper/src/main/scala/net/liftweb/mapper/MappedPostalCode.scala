@@ -26,7 +26,6 @@ import util._
 import Helpers._
 import http.{S, SHtml}
 
-
 object Countries extends Enumeration(1) {
 
   val C1,  C2,  C3,  C4,  C5,  C6,  C7,  C8,  C9,  C10,
@@ -132,7 +131,7 @@ abstract class MappedPostalCode[T <: Mapper[T]](owner: T, country: MappedCountry
     }
   }
 
-  import _root_.java.util.regex.{Pattern => REPat}
+  import java.util.regex.{Pattern => REPat}
 
   override def validations = country.is match {
     case Countries.USA =>  valRegex(REPat.compile("[0-9]{5}(\\-[0-9]{4})?"),
@@ -156,3 +155,4 @@ abstract class MappedPostalCode[T <: Mapper[T]](owner: T, country: MappedCountry
     case _ => genericCheck _ :: super.validations
   }
 }
+

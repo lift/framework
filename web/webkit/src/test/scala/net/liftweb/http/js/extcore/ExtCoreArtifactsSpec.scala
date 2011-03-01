@@ -57,3 +57,4 @@ object ExtCoreArtifactsSpec extends Specification("ExtCoreArtifacts Specificatio
     }
   }
 }
+

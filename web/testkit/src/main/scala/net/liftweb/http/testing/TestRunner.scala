@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 WorldWide Conferencing, LLC
+ * Copyright 2008-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package testing {
+package net.liftweb
+package http
+package testing
 
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.common.{ Box, Full, Empty, Failure}
-import _root_.net.liftweb.util.{Helpers}
-import _root_.scala.collection.mutable.ListBuffer
+import net.liftweb.util.Helpers._
+import net.liftweb.common.{ Box, Full, Empty, Failure}
+import net.liftweb.util.{Helpers}
+import scala.collection.mutable.ListBuffer
 
 class TestRunner(clearDB: Box[() => Any], setupDB: Box[() => Any],beforeAssertListeners: List[String => Any],  afterAssertListeners: List[(String, Boolean) => Any],
     beforeTestListeners: List[String => Any], afterTestListeners: List[(String, Boolean, Box[Throwable], List[StackTraceElement]) => Any]) {
@@ -170,7 +170,7 @@ case class TestResults(res: List[Tracker]) {
   }
 }
 
-class TestFailureError(msg: String) extends _root_.java.lang.Error(msg)
+class TestFailureError(msg: String) extends java.lang.Error(msg)
 
 class Item(val name: String, val resetDB: Boolean, val func: Box[() => Any], val forkCnt: Int, forkFunc: Box[Int => Any]) {
   def getFunc(cnt: Int) = {
@@ -202,6 +202,3 @@ case class Tracker(name: String, isAssert: Boolean, isBegin: Boolean, success: B
   def isTest = !isAssert
 }
 
-}
-}
-}

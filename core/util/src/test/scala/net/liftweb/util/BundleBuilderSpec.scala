@@ -54,3 +54,4 @@ object BundleBuilderSpec extends Specification("BundleBuilder Specification") {
 
   }
 }
+

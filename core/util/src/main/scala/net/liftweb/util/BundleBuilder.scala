@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.net.liftweb.common._
-import _root_.scala.xml._
-import _root_.java.util.{ResourceBundle, Enumeration, Locale}
+import net.liftweb.common._
+import scala.xml._
+import java.util.{ResourceBundle, Enumeration, Locale}
 
 /**
  * Converts a NodeSeq of a particular format into
@@ -123,5 +123,3 @@ object BundleBuilder {
   }
 }
 
-}
-}

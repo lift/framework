@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package builtin {
-package snippet {
+package net.liftweb
+package builtin
+package snippet
 
-import _root_.scala.xml._
-import _root_.net.liftweb.http._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
+import scala.xml._
+import net.liftweb.http._
+import net.liftweb.util._
+import net.liftweb.common._
 
 import Box._
 
@@ -46,8 +46,8 @@ object Embed extends DispatchSnippet {
     } yield (what,LiftSession.checkForContentId(templateOpt))) match {
     case Full((what,template)) => {
       val bindingMap : Map[String,NodeSeq] = Map(kids.flatMap({
-        case p : _root_.scala.xml.PCData => None // Discard whitespace and other non-tag junk
-        case t : _root_.scala.xml.Text => None // Discard whitespace and other non-tag junk
+        case p : scala.xml.PCData => None // Discard whitespace and other non-tag junk
+        case t : scala.xml.Text => None // Discard whitespace and other non-tag junk
         case e : Elem if e.prefix == "lift" && e.label == "bind-at" => {
           e.attribute("name") match {
             /* DCB: I was getting a type error if I just tried to use e.child
@@ -69,6 +69,3 @@ object Embed extends DispatchSnippet {
 
 }
 
-}
-}
-}

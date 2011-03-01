@@ -31,7 +31,7 @@ trait CombParserHelpers {
   type Elem = Char
 
   /** @return a CharArray input build from a String  */
-  implicit def strToInput(in: String): Input = new _root_.scala.util.parsing.input.CharArrayReader(in.toCharArray)
+  implicit def strToInput(in: String): Input = new scala.util.parsing.input.CharArrayReader(in.toCharArray)
 
   /** @return true if the character is an end of file  */
   def isEof(c: Char): Boolean = c == '\032'
@@ -182,7 +182,7 @@ trait SafeSeqParser extends Parsers {
    */
   override def rep1[T](first: => Parser[T], p: => Parser[T]): Parser[List[T]] = new Parser[List[T]] {
     def apply(in0: Input) = {
-      val xs = new _root_.scala.collection.mutable.ListBuffer[T]
+      val xs = new scala.collection.mutable.ListBuffer[T]
       var in = in0
 
       var res = first(in)
@@ -215,7 +215,7 @@ trait SafeSeqParser extends Parsers {
   override def rep1sep[T](p: => Parser[T], q: => Parser[Any]): Parser[List[T]] =
   new Parser[List[T]] {
     def apply(in0: Input) = {
-      val xs = new _root_.scala.collection.mutable.ListBuffer[T]
+      val xs = new scala.collection.mutable.ListBuffer[T]
       var in = in0
       var gotQ = true
       var res = p(in)
@@ -235,3 +235,4 @@ trait SafeSeqParser extends Parsers {
     }
   }
 }
+

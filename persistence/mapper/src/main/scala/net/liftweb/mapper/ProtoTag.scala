@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
+import net.liftweb.util._
+import net.liftweb.common._
 import Helpers._
 
 trait MetaProtoTag[ModelType <: ProtoTag[ModelType]] extends KeyedMetaMapper[Long, ModelType] {
@@ -82,5 +82,3 @@ abstract class ProtoTag[MyType <: ProtoTag[MyType]] extends KeyedMapper[Long, My
   def compare(other: MyType): Int = name.is.compare(other.name.is)
 }
 
-}
-}

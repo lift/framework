@@ -57,3 +57,4 @@ object DbSpec extends Specification("DB Specification") {
     }
   }
 }
+

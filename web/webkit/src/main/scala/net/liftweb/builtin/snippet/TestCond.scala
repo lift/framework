@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package builtin {
-package snippet {
+package net.liftweb
+package builtin
+package snippet
 
-import _root_.scala.xml._
-import _root_.net.liftweb.http._
+import scala.xml._
+import net.liftweb.http._
 
 object TestCond extends DispatchSnippet {
   def dispatch : DispatchIt = {
@@ -41,6 +41,3 @@ object TestCond extends DispatchSnippet {
   if (S.loggedIn_?) NodeSeq.Empty else xhtml
 }
 
-}
-}
-}

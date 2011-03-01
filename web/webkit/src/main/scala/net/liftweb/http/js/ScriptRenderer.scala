@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package js {
+package net.liftweb
+package http
+package js
 
-import _root_.net.liftweb.http._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import net.liftweb.http._
+import net.liftweb.common._
+import net.liftweb.util._
 
 object ScriptRenderer {
 
@@ -263,6 +263,3 @@ object ScriptRenderer {
           }).toJsCmd)
 }
 
-}
-}
-}

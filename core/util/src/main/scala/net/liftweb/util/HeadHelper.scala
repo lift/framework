@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.scala.xml._
-import _root_.scala.xml.transform._
-import _root_.scala.collection.mutable.ListBuffer
+import scala.xml._
+import scala.xml.transform._
+import scala.collection.mutable.ListBuffer
 import common._
 
 import Helpers._
@@ -107,5 +107,3 @@ object HeadHelper {
   }
 }
 
-}
-}

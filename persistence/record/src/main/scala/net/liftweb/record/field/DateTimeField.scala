@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
-package field {
+package net.liftweb
+package record
+package field
 
-import _root_.scala.xml._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.http.{S}
-import _root_.net.liftweb.http.js._
-import _root_.net.liftweb.json.JsonAST.JValue
-import _root_.net.liftweb.util._
-import _root_.java.util.{Calendar, Date}
+import scala.xml._
+import net.liftweb.common._
+import net.liftweb.http.{S}
+import net.liftweb.http.js._
+import net.liftweb.json.JsonAST.JValue
+import net.liftweb.util._
+import java.util.{Calendar, Date}
 import Helpers._
 import S._
 import JE._
@@ -93,6 +93,3 @@ class OptionalDateTimeField[OwnerType <: Record[OwnerType]](rec: OwnerType)
   }
 }
 
-}
-}
-}

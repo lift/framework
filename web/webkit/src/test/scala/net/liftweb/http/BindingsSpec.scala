@@ -108,3 +108,4 @@ object BindingsSpec extends Specification("Bindings Bindings") {
   }
 }
 }
+

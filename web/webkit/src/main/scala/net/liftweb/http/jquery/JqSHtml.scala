@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package jquery {
+package net.liftweb
+package http
+package jquery
 
-import _root_.net.liftweb.http.S._
-import _root_.net.liftweb.http.SHtml._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.http.js._
-import _root_.net.liftweb.http.js.jquery._
+import net.liftweb.http.S._
+import net.liftweb.http.SHtml._
+import net.liftweb.common._
+import net.liftweb.util._
+import net.liftweb.util.Helpers._
+import net.liftweb.http.js._
+import net.liftweb.http.js.jquery._
 import JE._
 import JqJsCmds._
-import _root_.scala.xml._
+import scala.xml._
 
 /**
  * This contains Html artifacts that are heavily relying on JQuery
@@ -78,6 +78,3 @@ object JqSHtml {
 
 }
 
-}
-}
-}

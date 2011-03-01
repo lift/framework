@@ -315,3 +315,4 @@ trait LongMappedForeignMapper[T<:Mapper[T],O<:KeyedMapper[Long,O]]
     if (obj eq Empty) List(FieldError(this, scala.xml.Text("Required field: " + name)))
     else Nil
 }
+

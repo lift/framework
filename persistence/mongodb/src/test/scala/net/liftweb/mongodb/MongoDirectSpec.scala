@@ -290,3 +290,4 @@ object MongoDirectSpec extends Specification("MongoDirect Specification") with M
     }
   }
 }
+

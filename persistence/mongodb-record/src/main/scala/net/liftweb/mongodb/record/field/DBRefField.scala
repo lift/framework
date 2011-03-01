@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
-package record {
-package field {
+package net.liftweb
+package mongodb
+package record
+package field
 
-import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
-import _root_.net.liftweb.http.js.JE.Str
-import _root_.net.liftweb.json.JsonAST.{JNothing, JObject, JValue}
-import _root_.net.liftweb.record.{Field, MandatoryTypedField, Record}
-import _root_.scala.xml.NodeSeq
+import net.liftweb.common.{Box, Empty, Failure, Full}
+import net.liftweb.http.js.JE.Str
+import net.liftweb.json.JsonAST.{JNothing, JObject, JValue}
+import net.liftweb.record.{Field, MandatoryTypedField, Record}
+import scala.xml.NodeSeq
 
 import com.mongodb.{BasicDBObject, BasicDBObjectBuilder, DBObject, DBRef}
 import com.mongodb.util.JSON
@@ -95,7 +95,3 @@ class DBRefField[OwnerType <: MongoRecord[OwnerType], RefType <: MongoRecord[Ref
   def owner = rec
 }
 
-}
-}
-}
-}

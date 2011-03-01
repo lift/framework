@@ -536,18 +536,18 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
               st.setString(curPos, s)
               setStatementFields(st, xs, curPos + 1, conn)
               // Allow specialization of time-related values based on the input parameter
-            case List(t: _root_.java.sql.Timestamp) =>
+            case List(t: java.sql.Timestamp) =>
               st.setTimestamp(curPos, t)
               setStatementFields(st, xs, curPos + 1, conn)
-            case List(d: _root_.java.sql.Date) =>
+            case List(d: java.sql.Date) =>
               st.setDate(curPos, d)
               setStatementFields(st, xs, curPos + 1, conn)
-            case List(t: _root_.java.sql.Time) =>
+            case List(t: java.sql.Time) =>
               st.setTime(curPos, t)
               setStatementFields(st, xs, curPos + 1, conn)
               // java.util.Date goes last, since it's a superclass of java.sql.{Date,Time,Timestamp}
             case List(d: Date) =>
-              st.setTimestamp(curPos, new _root_.java.sql.Timestamp(d.getTime))
+              st.setTimestamp(curPos, new java.sql.Timestamp(d.getTime))
               setStatementFields(st, xs, curPos + 1, conn)
             case List(field: BaseMappedField) =>
 	      if (field.dbIgnoreSQLType_?)
@@ -926,7 +926,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     var ret = new ListBuffer[T]
     val bm = buildMapper(rs)
     var pos = (start openOr 0L) * -1L
-    val max = omax openOr _root_.java.lang.Long.MAX_VALUE
+    val max = omax openOr java.lang.Long.MAX_VALUE
 
     while (pos < max && rs.next()) {
       if (pos >= 0L) {
@@ -2137,3 +2137,4 @@ trait SelectableField {
 }
 
 class MapperException(msg: String) extends Exception(msg)
+

@@ -90,3 +90,4 @@ object CurrencyZoneSpec extends Specification("CurrencyZone Specification") {
   }
 
 }
+

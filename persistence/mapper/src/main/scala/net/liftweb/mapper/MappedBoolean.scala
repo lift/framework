@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.java.lang.reflect.Method
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.http.{S, SHtml}
-import _root_.java.util.Date
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.json._
-import _root_.net.liftweb.http.js._
-import _root_.scala.xml._
+import java.sql.{ResultSet, Types}
+import java.lang.reflect.Method
+import net.liftweb.util.Helpers._
+import net.liftweb.http.{S, SHtml}
+import java.util.Date
+import net.liftweb.util._
+import net.liftweb.common._
+import net.liftweb.json._
+import net.liftweb.http.js._
+import scala.xml._
 
 abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedField[Boolean, T] {
   private var data : Box[Boolean] = Full(defaultValue)
@@ -55,9 +55,9 @@ abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedFiel
 
      def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JBool(is))
 
-  def real_convertToJDBCFriendly(value: Boolean): Object = new _root_.java.lang.Integer(if (value) 1 else 0)
+  def real_convertToJDBCFriendly(value: Boolean): Object = new java.lang.Integer(if (value) 1 else 0)
 
-  def jdbcFriendly(field : String) = data.map(v => new _root_.java.lang.Integer(if(v) 1 else 0)) openOr null
+  def jdbcFriendly(field : String) = data.map(v => new java.lang.Integer(if(v) 1 else 0)) openOr null
 
   def asJsExp: JsExp = if (is) JE.JsTrue else JE.JsFalse
 
@@ -116,5 +116,3 @@ abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedFiel
   override def _toForm: Box[NodeSeq] = Full(SHtml.checkbox(is,this.apply _))
 }
 
-}
-}

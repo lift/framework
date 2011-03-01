@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package net.liftweb
 package mapper
 
 import org.specs.Specification
-
 
 /**
  * Systems under specification for ManyToMany.
@@ -92,3 +91,4 @@ class PersonCompany extends Mapper[PersonCompany] {
   object company extends MappedLongForeignKey(this, Company)
 }
 object PersonCompany extends PersonCompany with MetaMapper[PersonCompany]
+

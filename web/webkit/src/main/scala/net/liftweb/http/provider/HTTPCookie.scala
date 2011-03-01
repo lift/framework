@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package provider {
+package net.liftweb
+package http
+package provider
 
-import _root_.net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.common.{Box, Empty, Full}
 
 /**
  * Companion module for creating HTTPCookie objects
@@ -87,6 +87,3 @@ case class HTTPCookie(name: String,
 
 }
 
-}
-}
-}

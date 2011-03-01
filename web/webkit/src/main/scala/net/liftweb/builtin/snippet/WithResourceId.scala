@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package builtin {
-package snippet {
+package net.liftweb
+package builtin
+package snippet
 
 
-import _root_.net.liftweb.http._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
-import _root_.scala.xml._
+import net.liftweb.http._
+import net.liftweb.common._
+import net.liftweb.util._
+import scala.xml._
 import Helpers._
 
 /**
@@ -72,6 +72,3 @@ object WithResourceId extends DispatchSnippet {
   } 
 }
 
-}
-}
-} 

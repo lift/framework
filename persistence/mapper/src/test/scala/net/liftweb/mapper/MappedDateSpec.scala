@@ -48,3 +48,4 @@ object MappedDateSpec extends Specification("MappedDate Specification") {
     }
   }
 }
+

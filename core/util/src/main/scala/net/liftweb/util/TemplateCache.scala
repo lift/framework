@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.scala.xml.{NodeSeq}
-import _root_.java.util.{Locale}
+import scala.xml.{NodeSeq}
+import java.util.{Locale}
 import common._
 
 trait TemplateCache[K, V] {
@@ -88,5 +88,3 @@ TemplateCache[(Locale, List[String]), NodeSeq] {
 
 }
 
-}
-}

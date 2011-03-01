@@ -89,3 +89,4 @@ object HListSpec extends Specification("HList Specification") {
   }
 
 }
+

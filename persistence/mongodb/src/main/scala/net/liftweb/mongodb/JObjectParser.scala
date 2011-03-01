@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
+package net.liftweb
+package mongodb
 
 import scala.collection.JavaConversions._
 
-import _root_.java.util.{Date, UUID}
-import _root_.java.util.regex.Pattern
+import java.util.{Date, UUID}
+import java.util.regex.Pattern
 
-import _root_.net.liftweb.json.Formats
-import _root_.net.liftweb.json.JsonAST._
-import _root_.net.liftweb.common.Box
+import net.liftweb.json.Formats
+import net.liftweb.json.JsonAST._
+import net.liftweb.common.Box
 
 import com.mongodb.{BasicDBObject, BasicDBList, DBObject}
 import org.bson.types.ObjectId
@@ -135,5 +135,3 @@ object JObjectParser {
   }
 }
 
-}
-}

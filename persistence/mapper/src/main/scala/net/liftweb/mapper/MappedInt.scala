@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.java.sql.{ResultSet, Types}
-import _root_.java.lang.reflect.Method
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import java.sql.{ResultSet, Types}
+import java.lang.reflect.Method
+import net.liftweb.common._
+import net.liftweb.util._
 import Helpers._
-import _root_.java.util.Date
-import _root_.net.liftweb.http._
-// import _root_.net.liftweb.widgets.autocomplete._
-import _root_.net.liftweb.json._
-import _root_.net.liftweb.http.jquery.{JqSHtml}
-import _root_.scala.xml.NodeSeq
+import java.util.Date
+import net.liftweb.http._
+// import net.liftweb.widgets.autocomplete._
+import net.liftweb.json._
+import net.liftweb.http.jquery.{JqSHtml}
+import scala.xml.NodeSeq
 import js._
 
 abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, val enum: ENUM) extends MappedField[ENUM#Value, T] {
@@ -60,13 +60,13 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
   override def readPermission_? = true
   override def writePermission_? = true
 
-  def real_convertToJDBCFriendly(value: ENUM#Value): Object = new _root_.java.lang.Integer(value.id)
+  def real_convertToJDBCFriendly(value: ENUM#Value): Object = new java.lang.Integer(value.id)
 
   def toInt = is.id
   def fromInt(in: Int): ENUM#Value = enum(in)
 
-  def jdbcFriendly(field: String) = new _root_.java.lang.Integer(toInt)
-  override def jdbcFriendly = new _root_.java.lang.Integer(toInt)
+  def jdbcFriendly(field: String) = new java.lang.Integer(toInt)
+  override def jdbcFriendly = new java.lang.Integer(toInt)
 
   def asJsExp: JsExp = JE.Num(is.id)
 
@@ -160,7 +160,7 @@ abstract class MappedIntIndex[T<:Mapper[T]](owner : T) extends MappedInt[T](owne
 
   override def dbIndexFieldIndicatesSaved_? = {i_is_! != defaultValue}
 
-  def makeKeyJDBCFriendly(in : Int) = new _root_.java.lang.Integer(in)
+  def makeKeyJDBCFriendly(in : Int) = new java.lang.Integer(in)
 
   def convertKey(in : String): Box[Int] = {
     if (in eq null) Empty
@@ -235,9 +235,9 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
 
   def +(in: Int): Int = is + in
 
-  def real_convertToJDBCFriendly(value: Int): Object = new _root_.java.lang.Integer(value)
+  def real_convertToJDBCFriendly(value: Int): Object = new java.lang.Integer(value)
 
-  def jdbcFriendly(field : String) = new _root_.java.lang.Integer(is)
+  def jdbcFriendly(field : String) = new java.lang.Integer(is)
 
   override def setFromAny(in: Any): Int = {
     in match {
@@ -283,5 +283,3 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
   def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.integerColumnType + notNullAppender()
 }
 
-}
-}

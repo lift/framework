@@ -218,3 +218,4 @@ trait TimeAmountsGen {
     yield (TimeSpan(weeks(w) + days(d) + hours(h) + minutes(m) + seconds(s) + ml).toString,
       ((w, "week"), (d, "day"), (h, "hour"), (m, "minute"), (s, "second"), (ml, "milli")))
 }
+

@@ -76,3 +76,4 @@ final class JettyTestServer(baseUrlBox: Box[URL]) {
   }
 
 }
+

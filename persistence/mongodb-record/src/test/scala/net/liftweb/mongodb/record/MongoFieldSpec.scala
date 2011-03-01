@@ -372,3 +372,4 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
     }
   }
 }
+

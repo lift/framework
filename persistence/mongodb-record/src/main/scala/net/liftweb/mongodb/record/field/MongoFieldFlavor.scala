@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
-package record {
-package field {
+package net.liftweb 
+package mongodb 
+package record 
+package field 
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, JsRaw}
@@ -52,7 +52,3 @@ trait MongoFieldFlavor[MyType] {
 
 }
 
-}
-}
-}
-}

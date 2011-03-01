@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.java.security.{SecureRandom, MessageDigest}
-import _root_.org.apache.commons.codec.binary.Base64
-import _root_.net.liftweb.util.{StringHelpers, Helpers, ThreadGlobal}
+import java.security.{SecureRandom, MessageDigest}
+import org.apache.commons.codec.binary.Base64
+import net.liftweb.util.{StringHelpers, Helpers, ThreadGlobal}
 
 /**
  * Manage the current "safety" state of the stack
@@ -48,5 +48,3 @@ object Safe {
   def randomString(len: Int): String = StringHelpers.randomString(len)
 }
 
-}
-}

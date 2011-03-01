@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,16 +11,16 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package couchdb {
+package net.liftweb
+package couchdb
 
-import _root_.scala.collection.immutable.Map
-import _root_.dispatch.{Handler, Http}
-import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
+import scala.collection.immutable.Map
+import dispatch.{Handler, Http}
+import net.liftweb.common.{Box, Empty, Failure, Full}
 import Box.{box2Iterable, option2Box}
-import _root_.net.liftweb.json.JsonAST.{JField, JString, JValue}
-import _root_.net.liftweb.record.field.OptionalStringField
-import _root_.net.liftweb.util.ControlHelpers.tryo
+import net.liftweb.json.JsonAST.{JField, JString, JValue}
+import net.liftweb.record.field.OptionalStringField
+import net.liftweb.util.ControlHelpers.tryo
 import DocumentHelpers.jobjectToJObjectExtension
 
 object CouchDB {
@@ -245,5 +245,3 @@ trait CouchMetaRecord[BaseRecord <: CouchRecord[BaseRecord]] extends JSONMetaRec
     }
 }
 
-}
-}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
 import common._
 
-import _root_.scala.xml.parsing.{ MarkupParser, MarkupHandler, FatalError, ConstructingHandler, ExternalSources }
-import _root_.scala.xml.dtd._
-import _root_.scala.xml._
-import _root_.java.io.InputStream
+import scala.xml.parsing.{ MarkupParser, MarkupHandler, FatalError, ConstructingHandler, ExternalSources }
+import scala.xml.dtd._
+import scala.xml._
+import java.io.InputStream
 import scala.io.{ Codec, Source }
 
 /**
@@ -227,7 +227,7 @@ object PCDataXmlParser {
 case class PCData(_data: String) extends Atom[String](_data) {
   /* The following code is a derivative work of scala.xml.Text */
   if (null == data)
-  throw new _root_.java.lang.NullPointerException("tried to construct Text with null")
+  throw new java.lang.NullPointerException("tried to construct Text with null")
 
   final override def equals(x: Any) = x match {
     case s:String  => s.equals(data.toString())
@@ -460,5 +460,3 @@ object AltXML {
 
 }
 
-}
-}

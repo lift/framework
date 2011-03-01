@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
+package net.liftweb
+package record
 
-import _root_.net.liftweb._
+import net.liftweb._
 import util._
 import common._
-import _root_.scala.xml._
-import _root_.net.liftweb.mapper.{ConnectionIdentifier, Safe, DefaultConnectionIdentifier, DB, KeyObfuscator, SuperConnection, QueryParam}
-import _root_.java.sql.{ResultSet, Types, PreparedStatement, Statement}
+import scala.xml._
+import net.liftweb.mapper.{ConnectionIdentifier, Safe, DefaultConnectionIdentifier, DB, KeyObfuscator, SuperConnection, QueryParam}
+import java.sql.{ResultSet, Types, PreparedStatement, Statement}
 
 trait DBMetaRecord[BaseRecord <: DBRecord[BaseRecord]] extends MetaRecord[BaseRecord] {
   self: BaseRecord =>
@@ -63,5 +63,3 @@ trait DBMetaRecord[BaseRecord <: DBRecord[BaseRecord]] extends MetaRecord[BaseRe
   // To be continued with DB related stuff
 }
 
-}
-}

@@ -332,7 +332,7 @@ trait DB extends Loggable {
   }
 
   private def asString(pos: Int, rs: ResultSet, md: ResultSetMetaData): String = {
-    import _root_.java.sql.Types._
+    import java.sql.Types._
     md.getColumnType(pos) match {
       case ARRAY | BINARY | BLOB | DATALINK | DISTINCT | JAVA_OBJECT | LONGVARBINARY | NULL | OTHER | REF | STRUCT | VARBINARY => rs.getObject(pos) match {
         case null => null
@@ -361,7 +361,7 @@ trait DB extends Loggable {
   }
 
   private def asAny(pos: Int, rs: ResultSet, md: ResultSetMetaData): Any = {
-    import _root_.java.sql.Types._
+    import java.sql.Types._
     md.getColumnType(pos) match {
       case ARRAY | BINARY | BLOB | DATALINK | DISTINCT | JAVA_OBJECT | LONGVARBINARY | NULL | OTHER | REF | STRUCT | VARBINARY => rs.getObject(pos)
 
@@ -421,15 +421,15 @@ trait DB extends Loggable {
       case (d: Double, idx) => ps.setDouble(idx + 1, d)
       case (f: Float, idx) => ps.setFloat(idx + 1, f)
       // Allow the user to specify how they want the Date handled based on the input type
-      case (t: _root_.java.sql.Timestamp, idx) => ps.setTimestamp(idx + 1, t)
-      case (d: _root_.java.sql.Date, idx) => ps.setDate(idx + 1, d)
-      case (t: _root_.java.sql.Time, idx) => ps.setTime(idx + 1, t)
+      case (t: java.sql.Timestamp, idx) => ps.setTimestamp(idx + 1, t)
+      case (d: java.sql.Date, idx) => ps.setDate(idx + 1, d)
+      case (t: java.sql.Time, idx) => ps.setTime(idx + 1, t)
       /* java.util.Date has to go last, since the java.sql date/time classes subclass it. By default we
        * assume a Timestamp value */
-      case (d: _root_.java.util.Date, idx) => ps.setTimestamp(idx + 1, new _root_.java.sql.Timestamp(d.getTime))
+      case (d: java.util.Date, idx) => ps.setTimestamp(idx + 1, new java.sql.Timestamp(d.getTime))
       case (b: Boolean, idx) => ps.setBoolean(idx + 1, b)
       case (s: String, idx) => ps.setString(idx + 1, s)
-      case (bn: _root_.java.math.BigDecimal, idx) => ps.setBigDecimal(idx + 1, bn)
+      case (bn: java.math.BigDecimal, idx) => ps.setBigDecimal(idx + 1, bn)
       case (obj, idx) => ps.setObject(idx + 1, obj)
     }
     ps
@@ -635,13 +635,13 @@ trait DB extends Loggable {
   /**
   * The SQL reserved words.  These words will be changed if they are used for column or table names.
   */
-  def reservedWords:  _root_.scala.collection.immutable.Set[String] = userReservedWords openOr defaultReservedWords
+  def reservedWords:  scala.collection.immutable.Set[String] = userReservedWords openOr defaultReservedWords
 
   /**
   *  If you need to change some of the reserved word, you can supply your own set in Boot.scala:
   * DB.userReservedWords = Full(Set("foo", "bar"))
   */
-  @volatile var userReservedWords: Box[ _root_.scala.collection.immutable.Set[String]] = Empty
+  @volatile var userReservedWords: Box[ scala.collection.immutable.Set[String]] = Empty
 
 
   /**
@@ -649,7 +649,7 @@ trait DB extends Loggable {
   *
   * TODO : Maybe this should be refactored to allow for driver-specific reserved words
   */
-  lazy val defaultReservedWords:  _root_.scala.collection.immutable.Set[String] = _root_.scala.collection.immutable.HashSet("abort",
+  lazy val defaultReservedWords:  scala.collection.immutable.Set[String] = scala.collection.immutable.HashSet("abort",
        "accept",
        "access",
        "add",

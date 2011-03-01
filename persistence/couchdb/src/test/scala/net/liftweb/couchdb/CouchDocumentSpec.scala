@@ -108,3 +108,4 @@ object CouchDocumentSpec extends Specification("CouchDocument Specification") {
     }
   }
 }
+

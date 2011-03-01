@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.java.util.concurrent.locks._
+import java.util.concurrent.locks._
 
 class ConcurrentLock extends ReentrantReadWriteLock {
 
@@ -51,5 +51,3 @@ class ConcurrentLock extends ReentrantReadWriteLock {
   }
 }
 
-}
-}

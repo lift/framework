@@ -26,7 +26,6 @@ import org.specs.matcher.Matcher
 import common._
 import util.ControlHelpers.tryo
 
-
 /**
  * System under specification for XMLApi.
  */
@@ -137,3 +136,4 @@ object XmlApiSpec extends Specification("XMLApi Specification") {
     }
   }
 }
+

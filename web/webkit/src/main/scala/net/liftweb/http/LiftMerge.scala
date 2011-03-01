@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
-import _root_.scala.xml._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.http.js._
+import scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
+import scala.xml._
+import net.liftweb.util._
+import net.liftweb.common._
+import net.liftweb.http.js._
 import Helpers._
 
 
@@ -244,7 +244,7 @@ private[http] trait LiftMerge {
         LiftRules.xhtmlValidator.toList.flatMap(_(tmpRet)) match {
           case Nil => tmpRet
           case xs =>
-            import _root_.scala.xml.transform._
+            import scala.xml.transform._
 
             val errors: NodeSeq = xs.map(e =>
                     <div style="border: red solid 2px">XHTML Validation error:{e.msg}at line{e.line + 1}and column{e.col}</div>)
@@ -267,5 +267,3 @@ private[http] trait LiftMerge {
   }
 }
 
-}
-}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
 import common._
 import xml.NodeSeq
@@ -29,9 +29,9 @@ trait HasParams {
  * Impersonates a JSON command
  */
 case class JsonCmd(command: String, target: String, params: Any,
-                   all: _root_.scala.collection.Map[String, Any])
+                   all: scala.collection.Map[String, Any])
 
-import _root_.net.liftweb.json.JsonAST._
+import net.liftweb.json.JsonAST._
 
 /**
 * A helpful extractor to take the JValue sent from the client-side JSON stuff and
@@ -73,5 +73,3 @@ class ResponseInfoHolder {
   def overrodeDocType = _setDocType
 }
 
-}
-}

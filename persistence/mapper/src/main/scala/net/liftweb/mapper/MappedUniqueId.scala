@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import net.liftweb.common._
+import net.liftweb.util._
 import Helpers._
-import _root_.net.liftweb.http.{S, SHtml}
-import _root_.scala.xml.NodeSeq
-import _root_.net.liftweb.http.js._
+import net.liftweb.http.{S, SHtml}
+import scala.xml.NodeSeq
+import net.liftweb.http.js._
 
 abstract class MappedUniqueId[T<:Mapper[T]](override val fieldOwner: T, override val maxLen: Int) extends MappedString[T](fieldOwner, maxLen) {
   override def writePermission_? = false
@@ -137,5 +137,3 @@ extends MappedString[T](fieldOwner, maxLen) with MappedForeignKey[String,T,O] wi
 
 }
 
-}
-}

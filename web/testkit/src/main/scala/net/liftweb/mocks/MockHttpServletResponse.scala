@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 WorldWide Conferencing, LLC
+ * Copyright 2008-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mocks {
+package net.liftweb
+package mocks
 
-import _root_.scala.collection.mutable.HashMap
-import _root_.java.io.PrintWriter
-import _root_.java.io.StringReader
-import _root_.java.io.BufferedReader
-import _root_.java.io.ByteArrayOutputStream
-import _root_.java.io.ByteArrayInputStream
-import _root_.java.io.FileInputStream
-import _root_.java.io.InputStream
-import _root_.java.io.StringBufferInputStream
-import _root_.java.io.File
-import _root_.java.util.Arrays
-import _root_.java.util.Date
-import _root_.java.util.Locale
-import _root_.java.util.Vector
-import _root_.javax.servlet._
-import _root_.javax.servlet.http._
+import scala.collection.mutable.HashMap
+import java.io.PrintWriter
+import java.io.StringReader
+import java.io.BufferedReader
+import java.io.ByteArrayOutputStream
+import java.io.ByteArrayInputStream
+import java.io.FileInputStream
+import java.io.InputStream
+import java.io.StringBufferInputStream
+import java.io.File
+import java.util.Arrays
+import java.util.Date
+import java.util.Locale
+import java.util.Vector
+import javax.servlet._
+import javax.servlet.http._
 
 /**
  * A Mock HttpServletResponse. Take a peek at it's writer or
@@ -138,5 +138,3 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
   def getCharacterEncoding(): String = charEncoding
 }
 
-}
-}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
-package record {
-package field {
+package net.liftweb 
+package mongodb 
+package record 
+package field 
 
 import scala.xml.{Node, NodeSeq, Text}
 
@@ -97,7 +97,3 @@ class MongoPasswordField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType, mi
     MongoPasswordField.encrypt(toMatch, value.salt) == value.pwd
 }
 
-}
-}
-}
-}

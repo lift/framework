@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.java.sql.Types
-import _root_.java.lang.reflect.Method
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
-import _root_.java.util.Date
-import _root_.scala.xml.NodeSeq
-import _root_.net.liftweb.http.{S, SHtml}
-import _root_.net.liftweb.http.js._
-import _root_.net.liftweb.json._
+import java.sql.Types
+import java.lang.reflect.Method
+import net.liftweb.util.Helpers._
+import net.liftweb.util._
+import net.liftweb.common._
+import java.util.Date
+import scala.xml.NodeSeq
+import net.liftweb.http.{S, SHtml}
+import net.liftweb.http.js._
+import net.liftweb.json._
 
 abstract class MappedLongForeignKey[T<:Mapper[T],O<:KeyedMapper[Long, O]](theOwner: T, _foreignMeta: => KeyedMetaMapper[Long, O])
 extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeignKey {
@@ -43,8 +43,8 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
   type KeyedForeignType = O
   type OwnerType = T
 
-  override def jdbcFriendly(field : String) = if (defined_?) new _root_.java.lang.Long(i_is_!) else null
-  override def jdbcFriendly = if (defined_?) new _root_.java.lang.Long(i_is_!) else null
+  override def jdbcFriendly(field : String) = if (defined_?) new java.lang.Long(i_is_!) else null
+  override def jdbcFriendly = if (defined_?) new java.lang.Long(i_is_!) else null
 
   lazy val dbKeyToTable: KeyedMetaMapper[Long, O] = foreignMeta
 
@@ -114,7 +114,7 @@ abstract class MappedLongIndex[T<:Mapper[T]](theOwner: T) extends MappedLong[T](
 
   override def dbIndexFieldIndicatesSaved_? = {i_is_! != defaultValue}
 
-  def makeKeyJDBCFriendly(in: Long) = new _root_.java.lang.Long(in)
+  def makeKeyJDBCFriendly(in: Long) = new java.lang.Long(in)
 
   def convertKey(in: String): Box[Long] = {
     if (in eq null) Empty
@@ -180,7 +180,7 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
 
   def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(toLong))
 
-  def real_convertToJDBCFriendly(value: Seq[ENUM#Value]): Object = new _root_.java.lang.Long(Helpers.toLong(value))
+  def real_convertToJDBCFriendly(value: Seq[ENUM#Value]): Object = new java.lang.Long(Helpers.toLong(value))
 
   private def rot(in: Int): Long = 1L << in
 
@@ -189,8 +189,8 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
   def fromLong(in: Long): Seq[ENUM#Value] =
     enum.iterator.toList.filter(v => (in & rot(v.id)) != 0)
 
-  def jdbcFriendly(field: String) = new _root_.java.lang.Long(toLong)
-  override def jdbcFriendly = new _root_.java.lang.Long(toLong)
+  def jdbcFriendly(field: String) = new java.lang.Long(toLong)
+  override def jdbcFriendly = new java.lang.Long(toLong)
 
 
 
@@ -290,7 +290,7 @@ abstract class MappedNullableLong[T<:Mapper[T]](val fieldOwner: T) extends Mappe
   override def writePermission_? = true
 
   def real_convertToJDBCFriendly(value: Box[Long]): Object = value match {
-    case Full(value) => new _root_.java.lang.Long(value)
+    case Full(value) => new java.lang.Long(value)
     case _ => null
   }
 
@@ -381,12 +381,12 @@ abstract class MappedLong[T<:Mapper[T]](val fieldOwner: T) extends MappedField[L
   override def readPermission_? = true
   override def writePermission_? = true
 
-  def real_convertToJDBCFriendly(value: Long): Object = new _root_.java.lang.Long(value)
+  def real_convertToJDBCFriendly(value: Long): Object = new java.lang.Long(value)
 
   // def asJsExp: JsExp = JE.Num(is)
 
-  def jdbcFriendly(field : String) = new _root_.java.lang.Long(i_is_!)
-  override def jdbcFriendly = new _root_.java.lang.Long(i_is_!)
+  def jdbcFriendly(field : String) = new java.lang.Long(i_is_!)
+  override def jdbcFriendly = new java.lang.Long(i_is_!)
 
   override def setFromAny(in: Any): Long = {
     in match {
@@ -433,5 +433,3 @@ abstract class MappedLong[T<:Mapper[T]](val fieldOwner: T) extends MappedField[L
   def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.longColumnType + notNullAppender()
 }
 
-}
-}

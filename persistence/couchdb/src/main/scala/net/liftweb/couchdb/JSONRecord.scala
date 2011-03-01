@@ -14,25 +14,25 @@
 package net.liftweb
 package couchdb
 
-import _root_.java.math.MathContext
-import _root_.java.util.Calendar
-import _root_.scala.collection.immutable.TreeSet
-import _root_.scala.reflect.Manifest
-import _root_.scala.xml.NodeSeq
-import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
+import java.math.MathContext
+import java.util.Calendar
+import scala.collection.immutable.TreeSet
+import scala.reflect.Manifest
+import scala.xml.NodeSeq
+import net.liftweb.common.{Box, Empty, Failure, Full}
 import Box.{box2Iterable, option2Box}
-import _root_.net.liftweb.http.js.{JsExp, JsObj}
-import _root_.net.liftweb.json.JsonParser
-import _root_.net.liftweb.json.JsonAST.{JArray, JBool, JInt, JDouble, JField, JNothing, JNull, JObject, JString, JValue}
-import _root_.net.liftweb.record.{Field, MandatoryTypedField, MetaRecord, Record}
+import net.liftweb.http.js.{JsExp, JsObj}
+import net.liftweb.json.JsonParser
+import net.liftweb.json.JsonAST.{JArray, JBool, JInt, JDouble, JField, JNothing, JNull, JObject, JString, JValue}
+import net.liftweb.record.{Field, MandatoryTypedField, MetaRecord, Record}
 import net.liftweb.record.RecordHelpers.jvalueToJsExp
-import _root_.net.liftweb.record.FieldHelpers.expectedA
-import _root_.net.liftweb.record.field._
-import _root_.net.liftweb.util.ThreadGlobal
-import _root_.net.liftweb.util.BasicTypesHelpers.{toBoolean, toInt}
-import _root_.net.liftweb.util.ControlHelpers.tryo
-import _root_.net.liftweb.util.Helpers.{base64Decode, base64Encode}
-import _root_.net.liftweb.util.TimeHelpers.{boxParseInternetDate, toInternetDate}
+import net.liftweb.record.FieldHelpers.expectedA
+import net.liftweb.record.field._
+import net.liftweb.util.ThreadGlobal
+import net.liftweb.util.BasicTypesHelpers.{toBoolean, toInt}
+import net.liftweb.util.ControlHelpers.tryo
+import net.liftweb.util.Helpers.{base64Decode, base64Encode}
+import net.liftweb.util.TimeHelpers.{boxParseInternetDate, toInternetDate}
 
 private[couchdb] object JSONRecordHelpers {
 
@@ -273,3 +273,4 @@ class JSONSubRecordArrayField[OwnerType <: JSONRecord[OwnerType], SubRecordType 
     case other                        => setBox(expectedA("JArray containing " + valueMeta.getClass.getSuperclass.getName, other))
   }
 }
+

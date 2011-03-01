@@ -438,3 +438,4 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
 
   }
 }
+

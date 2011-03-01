@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.liftweb {
-package mapper {
-package view {
+package net.liftweb 
+package mapper 
+package view 
 
 import scala.xml.{NodeSeq, Text, Elem}
 import net.liftweb.common.Loggable
@@ -100,6 +100,3 @@ class SortedMapperPaginatorSnippet[T <: Mapper[T]](
 ) extends SortedMapperPaginator[T](meta, initialSort, headers: _*)
   with SortedPaginatorSnippet[T, MappedField[_, T]]
 
-}
-}
-}

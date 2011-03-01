@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.java.net.InetAddress
-import _root_.java.util.Properties
-import _root_.java.io.InputStream
+import java.net.InetAddress
+import java.util.Properties
+import java.io.InputStream
 import Helpers._
 import common._
 
@@ -209,9 +209,9 @@ object Props extends Logger {
    * The map of key/value pairs retrieved from the property file.
    */
   lazy val props: Map[String, String] = {
-  import _root_.java.io.{ByteArrayInputStream}
-  import _root_.java.util.InvalidPropertiesFormatException
-  import _root_.java.util.{Map => JMap}
+  import java.io.{ByteArrayInputStream}
+  import java.util.InvalidPropertiesFormatException
+  import java.util.{Map => JMap}
 
   var tried: List[String] = Nil
 
@@ -255,5 +255,3 @@ object Props extends Logger {
 }
 }
 
-}
-}

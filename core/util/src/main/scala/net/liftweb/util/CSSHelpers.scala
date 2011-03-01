@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package util {
+package net.liftweb
+package util
 
-import _root_.scala.util.parsing.combinator._
+import scala.util.parsing.combinator._
 import common._
-import _root_.java.io._
+import java.io._
 
 object CSSHelpers extends ControlHelpers {
 
@@ -52,7 +52,7 @@ object CSSHelpers extends ControlHelpers {
  * Combinator parser for prefixing root relative paths with a given prefix
  */
 case class CSSParser(prefix: String) extends Parsers  {
-  implicit def strToInput(in: String): Input = new _root_.scala.util.parsing.input.CharArrayReader(in.toCharArray)
+  implicit def strToInput(in: String): Input = new scala.util.parsing.input.CharArrayReader(in.toCharArray)
   type Elem = Char
 
 
@@ -121,5 +121,3 @@ case class CSSParser(prefix: String) extends Parsers  {
 
 }
 
-}
-}

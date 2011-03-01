@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,15 +11,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package couchdb {
+package net.liftweb
+package couchdb
 
-import _root_.dispatch.{Handler, Request}
-import _root_.net.liftweb.json.JsonAST.{JValue, render}
-import _root_.net.liftweb.json.{JsonParser, Printer}
-import _root_.org.apache.http.client.methods.{HttpPost, HttpPut}
-import _root_.org.apache.http.entity.StringEntity
-import _root_.org.apache.http.params.HttpProtocolParams
+import dispatch.{Handler, Request}
+import net.liftweb.json.JsonAST.{JValue, render}
+import net.liftweb.json.{JsonParser, Printer}
+import org.apache.http.client.methods.{HttpPost, HttpPut}
+import org.apache.http.entity.StringEntity
+import org.apache.http.params.HttpProtocolParams
 
 object DispatchJSON {
   /** Implicitly convert a string (representing a URL) to a JSONRequest, which has operators for sending and receiving Lift JSON JValues */
@@ -67,5 +67,3 @@ case class JSONRequest(req: Request) {
   }
 }
 
-}
-}

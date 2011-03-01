@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 
 
-package net.liftweb {
-package util {
+package net.liftweb 
+package util 
 
 
 import Helpers.{tryo, internetDateFormatter=>internetDateFormat, dateFormatter=>dateFormat, hourFormat, timeFormatter=>timeFormat}
@@ -74,6 +74,3 @@ object DefaultDateTimeConverter extends DateTimeConverter {
   def parseTime(s: String) = tryo{hourFormat.parse(s)} or tryo{timeFormat.parse(s)}
 }
 
-
-}
-}

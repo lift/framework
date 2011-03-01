@@ -309,3 +309,4 @@ object RecordSpec extends Specification("Record Specification") {
     }
   }
 }
+

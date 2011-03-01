@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import scala.xml.NodeSeq
+package net.liftweb 
+package common 
 
-package net.liftweb {
-package common {
+import scala.xml.NodeSeq
 
 /*
  * This file contains common conversions and other utilities to make
@@ -146,7 +146,3 @@ final case class ConstNodeSeqFunc(ns: NodeSeq) extends NodeSeqFunc {
   lazy val func = () => ns
 }
 
-
-}
-}
-// vim: set ts=2 sw=2 et:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.java.math.{MathContext,RoundingMode}
-import _root_.java.sql.{ResultSet, Types}
-import _root_.java.lang.reflect.Method
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.http.{S, SHtml}
-import _root_.java.util.Date
-import _root_.net.liftweb.util._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.json._
-import _root_.net.liftweb.http.js._
-import _root_.scala.xml.NodeSeq
+import java.math.{MathContext,RoundingMode}
+import java.sql.{ResultSet, Types}
+import java.lang.reflect.Method
+import net.liftweb.util.Helpers._
+import net.liftweb.http.{S, SHtml}
+import java.util.Date
+import net.liftweb.util._
+import net.liftweb.common._
+import net.liftweb.json._
+import net.liftweb.http.js._
+import scala.xml.NodeSeq
 
 /**
  * <p>
@@ -173,5 +173,3 @@ abstract class MappedDecimal[T <: Mapper[T]] (val fieldOwner : T, val context : 
   }
 }
 
-}
-}

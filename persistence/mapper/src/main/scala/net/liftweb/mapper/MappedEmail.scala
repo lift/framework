@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mapper {
+package net.liftweb
+package mapper
 
-import _root_.java.util.regex._
-import _root_.scala.xml.Text
-import _root_.net.liftweb.http.{S}
-import _root_.net.liftweb.util.{FieldError}
-import _root_.net.liftweb.proto._
+import java.util.regex._
+import scala.xml.Text
+import net.liftweb.http.{S}
+import net.liftweb.util.{FieldError}
+import net.liftweb.proto._
 
 object MappedEmail {
   def emailPattern = ProtoRules.emailRegexPattern.vend
@@ -39,5 +39,3 @@ abstract class MappedEmail[T<:Mapper[T]](owner: T, maxLen: Int) extends MappedSt
 
 }
 
-}
-}

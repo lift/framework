@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 WorldWide Conferencing, LLC
+ * Copyright 2009-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package actor {
+package net.liftweb 
+package actor 
 
 import common._
 
@@ -54,5 +54,3 @@ class LAFuture[T] /*extends Future[T]*/ {
   }
 }
 
-}
-}

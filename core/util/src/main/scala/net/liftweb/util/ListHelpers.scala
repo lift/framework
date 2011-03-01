@@ -167,13 +167,13 @@ trait ListHelpers {
   /**
    * Convert a java.util.Enumeration to a List[T]
    */
-  def enumToList[T](enum: _root_.java.util.Enumeration[T]): List[T] =
+  def enumToList[T](enum: java.util.Enumeration[T]): List[T] =
     scala.collection.JavaConversions.asIterator(enum).toList
 
   /**
    * Convert a java.util.Enumeration to a List[String] using the toString method on each element
    */
-  def enumToStringList[C](enum: _root_.java.util.Enumeration[C]): List[String] =
+  def enumToStringList[C](enum: java.util.Enumeration[C]): List[String] =
     enumToList(enum).map(_.toString)
 
   /**

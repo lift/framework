@@ -76,3 +76,4 @@ object SecurityHelpersSpec extends Specification("SecurityHelpers Specification"
   }
 
 }
+

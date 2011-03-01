@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package builtin {
-package snippet {
+package net.liftweb
+package builtin
+package snippet
 
-import _root_.net.liftweb.http._
-import _root_.net.liftweb.http.S._
-import _root_.scala.xml._
-import _root_.net.liftweb.util.Helpers._
-import _root_.net.liftweb.common.{Full, Empty}
-import _root_.scala.collection.mutable.HashMap
-import  _root_.net.liftweb.http.js._
+import net.liftweb.http._
+import net.liftweb.http.S._
+import scala.xml._
+import net.liftweb.util.Helpers._
+import net.liftweb.common.{Full, Empty}
+import scala.collection.mutable.HashMap
+import net.liftweb.http.js._
 import JsCmds._
 
 /**
@@ -151,7 +151,3 @@ object MsgNoticeMeta extends SessionVar[HashMap[String, String]](new HashMap) {
     override private[liftweb] def magicSessionVar_? = true
 }
 
-// Close nested packages
-}
-}
-}

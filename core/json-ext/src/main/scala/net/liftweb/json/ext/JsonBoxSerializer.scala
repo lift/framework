@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 WorldWide Conferencing, LLC
+ * Copyright 2006-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.lang.reflect.ParameterizedType
 import scala.reflect.Manifest
 import common._
 import Extraction.{decompose, extract}
-import _root_.org.apache.commons.codec.binary.Base64
+import org.apache.commons.codec.binary.Base64
 
 class JsonBoxSerializer extends Serializer[Box[_]] {
   private val BoxClass = classOf[Box[_]]

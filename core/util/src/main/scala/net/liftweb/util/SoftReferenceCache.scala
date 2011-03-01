@@ -165,3 +165,4 @@ class SoftValue[K, V](k: K,
     def key: K = k
     def cache: SoftReferenceCache[K, V] = lruCache
 }
+

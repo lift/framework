@@ -47,3 +47,4 @@ object FactoryMakerSpec extends Specification("FactoryMaker Specification") {
     }
   }
 }
+

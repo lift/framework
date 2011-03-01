@@ -116,3 +116,4 @@ class OptionalStringField[OwnerType <: Record[OwnerType]](rec: OwnerType, val ma
   protected def valueTypeToBoxString(in: ValueType): Box[String] = toBoxMyType(in)
   protected def boxStrToValType(in: Box[String]): ValueType = toValueType(in)
 }
+

@@ -353,7 +353,7 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
     val ret: Box[String] =
     for{
       url <- Box !! LiftRules.getClass.getResource("/" + cn + ".class")
-      val newUrl = new _root_.java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
+      val newUrl = new java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
       str <- tryo(new String(readWholeStream(newUrl.openConnection.getInputStream), "UTF-8"))
       ma <- """lift_version: (.*)""".r.findFirstMatchIn(str)
     } yield ma.group(1)
@@ -366,7 +366,7 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
     val ret: Box[Date] =
     for{
       url <- Box !! LiftRules.getClass.getResource("/" + cn + ".class")
-      val newUrl = new _root_.java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
+      val newUrl = new java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
       str <- tryo(new String(readWholeStream(newUrl.openConnection.getInputStream), "UTF-8"))
       ma <- """Bnd-LastModified: (.*)""".r.findFirstMatchIn(str)
       asLong <- asLong(ma.group(1))
@@ -1008,17 +1008,17 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
 
   private val defaultFinder = getClass.getResource _
 
-  private def resourceFinder(name: String): _root_.java.net.URL = if (null eq _context) null else _context.resource(name)
+  private def resourceFinder(name: String): java.net.URL = if (null eq _context) null else _context.resource(name)
 
   /**
    * Obtain the resource URL by name
    */
-  @volatile var getResource: String => Box[_root_.java.net.URL] = defaultGetResource _
+  @volatile var getResource: String => Box[java.net.URL] = defaultGetResource _
 
   /**
    * Obtain the resource URL by name
    */
-  def defaultGetResource(name: String): Box[_root_.java.net.URL] =
+  def defaultGetResource(name: String): Box[java.net.URL] =
     for{
       rf <- (Box !! resourceFinder(name)) or (Box !! defaultFinder(name))
     } yield rf

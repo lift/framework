@@ -65,3 +65,4 @@ class TimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType)
 
 class OptionalTimeZoneField[OwnerType <: Record[OwnerType]](rec: OwnerType)
   extends OptionalStringField(rec, 32) with TimeZoneTypedField
+

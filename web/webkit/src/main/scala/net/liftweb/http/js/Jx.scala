@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package js {
+package net.liftweb
+package http
+package js
 
-import _root_.scala.xml._
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import scala.xml._
+import net.liftweb.common._
+import net.liftweb.util._
 import Helpers._
 
 import JE._
@@ -81,7 +81,7 @@ trait JxBase {
     case Group(nodes) => addToDocFrag(parent, nodes.toList)
     case Text(txt) => JsRaw(parent + ".appendChild(document.createTextNode(" + fixText(txt).encJs + "));").cmd
     case a: Atom[_] => JsRaw(parent + ".appendChild(document.createTextNode(" + a.text.encJs + "));").cmd
-    case e: _root_.scala.xml.Elem =>
+    case e: scala.xml.Elem =>
       val varName = "v" + Helpers.nextFuncName
       JsCrVar(varName, JsRaw("document.createElement(" + e.label.encJs + ")")) &
               addAttrs(varName, e.attributes.toList) &
@@ -195,6 +195,3 @@ case class Jx(child: NodeSeq) extends Node with JxBase with JxYieldFunc {
 
 }
 
-}
-}
-}

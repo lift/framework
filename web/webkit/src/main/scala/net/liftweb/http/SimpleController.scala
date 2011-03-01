@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 WorldWide Conferencing, LLC
+ * Copyright 2007-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
+package net.liftweb
+package http
 
-import _root_.scala.collection.immutable.TreeMap
-import _root_.net.liftweb.common._
-import _root_.net.liftweb.util._
+import scala.collection.immutable.TreeMap
+import net.liftweb.common._
+import net.liftweb.util._
 import provider._
 
 /**
@@ -59,5 +59,3 @@ trait SimpleController
   }
 }
 
-}
-}

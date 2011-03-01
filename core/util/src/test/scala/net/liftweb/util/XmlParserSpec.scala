@@ -98,3 +98,4 @@ object XmlParserSpec extends Specification("Xml Parser Specification") {
   }
 
 }
+

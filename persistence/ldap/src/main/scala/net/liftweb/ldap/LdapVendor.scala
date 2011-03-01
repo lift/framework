@@ -446,3 +446,4 @@ class LDAPVendor extends Loggable with SimpleInjector {
     new InitialLdapContext(env, null)
   }
 }
+

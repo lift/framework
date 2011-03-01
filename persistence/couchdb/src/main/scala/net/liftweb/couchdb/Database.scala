@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,22 +11,22 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package couchdb {
+package net.liftweb
+package couchdb
 
-import _root_.scala.collection.{Map => MapTrait}
-import _root_.scala.collection.immutable.Map
-import _root_.scala.collection.mutable.ArrayBuffer
-import _root_.scala.reflect.Manifest
-import _root_.dispatch.{:/, Handler, Http, Request, StatusCode}
-import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
-import _root_.net.liftweb.json.{DefaultFormats, Formats}
-import _root_.net.liftweb.json.Extraction.{decompose, extract}
-import _root_.net.liftweb.json.Implicits.string2jvalue
-import _root_.net.liftweb.json.JsonAST.{JArray, JBool, JField, JInt, JObject, JString, JValue, render}
-import _root_.net.liftweb.json.JsonDSL.pair2jvalue
-import _root_.net.liftweb.json.Printer.compact
-import _root_.net.liftweb.util.ControlHelpers.tryo
+import scala.collection.{Map => MapTrait}
+import scala.collection.immutable.Map
+import scala.collection.mutable.ArrayBuffer
+import scala.reflect.Manifest
+import dispatch.{:/, Handler, Http, Request, StatusCode}
+import net.liftweb.common.{Box, Empty, Failure, Full}
+import net.liftweb.json.{DefaultFormats, Formats}
+import net.liftweb.json.Extraction.{decompose, extract}
+import net.liftweb.json.Implicits.string2jvalue
+import net.liftweb.json.JsonAST.{JArray, JBool, JField, JInt, JObject, JString, JValue, render}
+import net.liftweb.json.JsonDSL.pair2jvalue
+import net.liftweb.json.Printer.compact
+import net.liftweb.util.ControlHelpers.tryo
 import DocumentHelpers.{jobjectToJObjectExtension, updateIdAndRev}
 import DispatchJSON.requestToJSONRequest
 
@@ -252,5 +252,3 @@ object QueryResult {
     } yield QueryRow(obj.get[JString]("id").map(_.s), key, obj.get[JValue]("value"), obj.get[JObject]("doc"), obj.get[JString]("error"))
 }
 
-}
-}

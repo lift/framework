@@ -71,7 +71,7 @@ object HttpHelpersSpec extends Specification("HttpHelpers Specification") with H
       }
     }
     "a toHashMap function transforming a Map to a mutable HashMap" in {
-      toHashMap(Map(1 -> 2, 3 -> 4)) must haveClass[_root_.scala.collection.mutable.HashMap[Int, Int]]
+      toHashMap(Map(1 -> 2, 3 -> 4)) must haveClass[scala.collection.mutable.HashMap[Int, Int]]
     }
     "an insureField function" in {
       "checking that the appropriate fields are in the header" in {
@@ -95,3 +95,4 @@ object HttpHelpersSpec extends Specification("HttpHelpers Specification") with H
   }
  // currentSus is no longer part of Specification in 1.6  def provide(e: =>Example) = { currentSus.verb += " provide"; e }
 }
+

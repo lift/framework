@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package mongodb {
-package record {
-package field {
+package net.liftweb
+package mongodb
+package record
+package field
 
 import scala.xml.NodeSeq
 
-import _root_.net.liftweb.common.{Box, Empty, Failure, Full}
-import _root_.net.liftweb.http.js.JE.{JsNull, JsObj, JsRaw, Str}
-import _root_.net.liftweb.http.S
-import _root_.net.liftweb.json.JsonAST._
-import _root_.net.liftweb.json.Printer
-import _root_.net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
-import _root_.net.liftweb.util.Helpers._
+import net.liftweb.common.{Box, Empty, Failure, Full}
+import net.liftweb.http.js.JE.{JsNull, JsObj, JsRaw, Str}
+import net.liftweb.http.S
+import net.liftweb.json.JsonAST._
+import net.liftweb.json.Printer
+import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
+import net.liftweb.util.Helpers._
 
 import org.bson.types.ObjectId
 
@@ -99,7 +99,3 @@ class ObjectIdField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
   def asJValue: JValue = valueBox.map(v => Meta.Reflection.objectIdAsJValue(v)(owner.meta.formats)) openOr (JNothing: JValue)
 }
 
-}
-}
-}
-}

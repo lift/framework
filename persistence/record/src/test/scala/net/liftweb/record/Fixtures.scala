@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package record {
-package fixtures {
+package net.liftweb 
+package record 
+package fixtures 
 
 import java.math.MathContext
 import scala.xml.Text
@@ -239,6 +239,3 @@ class FieldTypeTestRecord private () extends Record[FieldTypeTestRecord] {
 
 object FieldTypeTestRecord extends FieldTypeTestRecord with MetaRecord[FieldTypeTestRecord]
 
-}
-}
-}

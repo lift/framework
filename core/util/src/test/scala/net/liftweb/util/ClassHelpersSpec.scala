@@ -30,7 +30,7 @@ object ClassHelpersSpec extends Specification("ClassHelpers Specification") {
 
   "The findType function" should {
     "return a Full can with the found class when given the type, the name, and a list of packages to conform to" in {
-      findType[_root_.java.util.List[Object]]("ArrayList", List("java.util")) must_== Full(classOf[_root_.java.util.ArrayList[Object]])
+      findType[java.util.List[Object]]("ArrayList", List("java.util")) must_== Full(classOf[java.util.ArrayList[Object]])
     }
     "return an Empty can if the class cannot be coerced to the expected type" in {
       findType[String]("ClassHelpers", List("net.liftweb.util")) must_== Empty
@@ -78,7 +78,7 @@ object ClassHelpersSpec extends Specification("ClassHelpers Specification") {
       callableMethod_?(publicWithParameters) must beFalse
     }
     "return false if the method is private" in {
-      val privateMethod = classOf[_root_.java.util.ArrayList[Object]].getDeclaredMethod("readObject", classOf[_root_.java.io.ObjectInputStream])
+      val privateMethod = classOf[java.util.ArrayList[Object]].getDeclaredMethod("readObject", classOf[java.io.ObjectInputStream])
       callableMethod_?(privateMethod) must beFalse
     }
     "return false if the method is null" in {
@@ -104,7 +104,7 @@ object ClassHelpersSpec extends Specification("ClassHelpers Specification") {
       classHasControllerMethod(classOf[String], "isNotEmpty") must beFalse
     }
     "return false if the class has a method but it is not callable" in {
-      classHasControllerMethod(classOf[_root_.java.util.ArrayList[Object]], "readObject") must beFalse
+      classHasControllerMethod(classOf[java.util.ArrayList[Object]], "readObject") must beFalse
     }
     "return false if the class is null" in {
       classHasControllerMethod(null, "readObject") must beFalse
@@ -140,7 +140,7 @@ object ClassHelpersSpec extends Specification("ClassHelpers Specification") {
       invokeMethod(classOf[String], "", "length") must_== Full(0)
     }
     "return a Full can with the result if the method is an existing static method on the class" in {
-      invokeMethod(classOf[_root_.java.util.Calendar], null, "getInstance").isEmpty must_== false
+      invokeMethod(classOf[java.util.Calendar], null, "getInstance").isEmpty must_== false
     }
     "throw an exception if the method throws an exception" in {
       class SpecificException extends Exception
@@ -164,7 +164,7 @@ object ClassHelpersSpec extends Specification("ClassHelpers Specification") {
       instantiate(classOf[String]) must_== Full("")
     }
     "return a failure if a class can not be instantiated with a new instance" in {
-      instantiate(classOf[_root_.java.util.Calendar]) must beLike { case Failure(_, _, _) => true }
+      instantiate(classOf[java.util.Calendar]) must beLike { case Failure(_, _, _) => true }
     }
   }
 
@@ -181,3 +181,4 @@ object ClassHelpersSpec extends Specification("ClassHelpers Specification") {
   }
 
 }
+

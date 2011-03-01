@@ -124,3 +124,4 @@ class OptionalPasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
 
   def owner = rec
 }
+

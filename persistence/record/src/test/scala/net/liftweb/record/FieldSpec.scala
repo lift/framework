@@ -480,3 +480,4 @@ object FieldSpec extends Specification("Record Field Specification") {
     )
   }
 }
+

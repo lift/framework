@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package common {
+package net.liftweb
+package common
   
-import _root_.org.slf4j.{MDC => SLF4JMDC, Marker, Logger => SLF4JLogger, LoggerFactory}
+import org.slf4j.{MDC => SLF4JMDC, Marker, Logger => SLF4JLogger, LoggerFactory}
 
 object Logger {
   private[common] lazy val checkConfig: Boolean = {
@@ -328,8 +328,5 @@ object Logback  {
     lc.reset(); 
     configurator.doConfigure(url);
   }
-}
-
-}
 }
 
