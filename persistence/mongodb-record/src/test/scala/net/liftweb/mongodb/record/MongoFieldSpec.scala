@@ -83,6 +83,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
     }
 
     "support mandatory fields" in {
+      setSequential()
 
       "which are configured correctly" in {
         mandatory.optional_? must_== false
@@ -104,6 +105,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
     }
 
     "support 'legacy' optional fields (override optional_?)" in {
+      setSequential()
 
       "which are configured correctly" in {
         legacyOptional.optional_? must_== true
