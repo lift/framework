@@ -85,14 +85,14 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   // ------------
   class FrameworkProject(info: ProjectInfo, libs: ModuleID*) extends DefaultProject(info) with LiftDefaultProject {
 
-    override def libraryDependencies = super.libraryDependencies ++ libs
+    override def libraryDependencies = super.libraryDependencies ++ libs map (_ withSources())
 
     // FIXME: Build fails with -Xcheckinit -Xwarninit
     override def compileOptions = super.compileOptions.toList -- compileOptions("-Xcheckinit", "-Xwarninit").toList
 
     // System properties necessary during test
-    override def testAction =
-      super.testAction dependsOn
+    override def defaultTestTask(testOptions: => Seq[TestOption]) =
+      super.defaultTestTask(testOptions) dependsOn
       task {
         System.setProperty("net.liftweb.webapptest.src.test.webapp", (testSourcePath / "webapp").absString)
         System.setProperty("apacheds.working.dir", (outputPath / "apacheds").absolutePath)
@@ -104,8 +104,6 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
       ExcludeTests(
         // Persistence tests
         "net.liftweb.mapper.MapperSpec" :: "net.liftweb.squerylrecord.SquerylRecordSpec" ::
-        // Web tests
-        "net.liftweb.webapptest.OneShot" :: "net.liftweb.webapptest.ToHeadUsages" :: "net.liftweb.http.SnippetSpec" :: Nil) ::
       super.testOptions.toList
   }
 
