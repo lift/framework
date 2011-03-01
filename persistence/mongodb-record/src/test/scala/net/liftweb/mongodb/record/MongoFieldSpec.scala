@@ -40,7 +40,7 @@ import net.liftweb.record._
 /**
  * Systems under specification for MongoField.
  */
-object MongoFieldSpecs extends Specification("MongoField Specification") with MongoTestKit {
+object MongoFieldSpec extends Specification("MongoField Specification") with MongoTestKit {
   import fixtures._
 
   def passBasicTests[A](example: A, mandatory: MandatoryTypedField[A], legacyOptional: MandatoryTypedField[A])(implicit m: scala.reflect.Manifest[A]): Unit = {
