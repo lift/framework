@@ -28,63 +28,64 @@ import http._
  */
 object ToHeadUsages extends Specification("ToHeadUsages Specification") {
 
-  doBeforeSpec(JettyTestServer.start())
-  doAfterSpec(JettyTestServer.stop())
+  val J = JettyTestServer
+
+  doBeforeSpec(J.start())
 
   "lift <head> merger" should {
-    "merge <head> from html fragment" >> {
-      JettyTestServer.browse(
+    "merge <head> from html fragment" in {
+      J.browse(
         "/htmlFragmentWithHead", html =>
-         html.getElementByXPath("/html/head/script[@id='fromFrag']") must notBeNull
+         html.getElementByXPath("/html/head/script[@id='fromFrag']") must notBeNull.when(J.running)
       )
     }
 
-    "merge <head> from html fragment does not include head element in body" >> {
-      JettyTestServer.browse(
+    "merge <head> from html fragment does not include head element in body" in {
+      J.browse(
         "/htmlFragmentWithHead", html =>
-         html.getElementsByXPath("/html/body/script[@id='fromFrag']").size must_== 0
+         html.getElementsByXPath("/html/body/script[@id='fromFrag']").size must be_==(0).when(J.running)
       )
     }
 
-    "merge <head> from snippet" >> {
-      JettyTestServer.browse(
+    "merge <head> from snippet" in {
+      J.browse(
         "/htmlSnippetWithHead", html =>
-         html.getElementByXPath("/html/head/script[@src='snippet.js']") must notBeNull
+         html.getElementByXPath("/html/head/script[@src='snippet.js']") must notBeNull.when(J.running)
       )
     }
 
-    "not merge for bodyless html" >> {
-      JettyTestServer.browse(
+    "not merge for bodyless html" in {
+      J.browse(
         "/basicDiv",html => {
-          html.getElementById("fruit") must notBeNull
-          html.getElementById("bat")   must notBeNull
+          html.getElementById("fruit") must notBeNull.when(J.running)
+          html.getElementById("bat")   must notBeNull.when(J.running)
         }
       )
     }
 
-    "not merge for headless bodyless html" >> {
-      JettyTestServer.browse(
+    "not merge for headless bodyless html" in {
+      J.browse(
         "/h1",html => {
-          html.getElementById("h1") must notBeNull
+          html.getElementById("h1") must notBeNull.when(J.running)
         }
       )
     }
 
-    "not merge for headless body html" >> {
-      JettyTestServer.browse(
+    "not merge for headless body html" in {
+      J.browse(
         "/body_no_head",html => {
           // Note: The XPath expression "html/body/head/div" fails here with
           // HtmlUnit 2.5 since "head" is not recognized as a XHTML element
           // due to its incorrect position (under body instead of directly under html)
-          html.getElementsByXPath("/html/body//div").size must_== 1
+          html.getElementsByXPath("/html/body//div").size must be_==(1).when(J.running)
         }
       )
     }
 
-    "not merge non-html" >> {
-      JettyTestServer.browse(
+    "not merge non-html" in {
+      J.browse(
         "/non_html",html => {
-          html.getElementById("frog") must notBeNull
+          html.getElementById("frog") must notBeNull.when(J.running)
         }
       )
     }
@@ -92,24 +93,24 @@ object ToHeadUsages extends Specification("ToHeadUsages Specification") {
   }
 
   "pages " should {
-    "Template finder should recognize entities" >> {
+    "Template finder should recognize entities" in {
       val ns = TemplateFinder.findAnyTemplate(List("index")).open_!
       val str = AltXML.toXML(ns(0), false, false, false)
 
       val idx = str.indexOf("&mdash;")
-      (idx >= 0) must_== true
+      (idx >= 0) must beTrue.when(J.running)
     }
 
-    "Template finder should not recognize entities" >> {
+    "Template finder should not recognize entities" in {
       val ns = TemplateFinder.findAnyTemplate(List("index")).open_!
       val str = AltXML.toXML(ns(0), false, true, false)
 
       val idx = str.indexOf("&mdash;")
-      (idx >= 0) must_== false
+      (idx >= 0) must beFalse.when(J.running)
     }
 
     /*
-    "round trip entities" >> {
+    "round trip entities" in {
       JettyTestServer.browse(
         "/index",html => {
           val idx = html.getPageSource.indexOf("&mdash;")
@@ -121,32 +122,32 @@ object ToHeadUsages extends Specification("ToHeadUsages Specification") {
   }
 
   "deferred snippets" should {
-    "render" >> {
-      JettyTestServer.browse(
+    "render" in {
+      J.browse(
         "/deferred",html => {
-          html.getElementById("second") must notBeNull
+          html.getElementById("second") must notBeNull.when(J.running)
         }
       )
     }
 
-    "not deferred not in actor" >> {
-      JettyTestServer.browse(
+    "not deferred not in actor" in {
+      J.browse(
         "/deferred",html => {
-          html.getElementByXPath("/html/body/span[@id='whack1']/span[@id='actor_false']") must notBeNull
+          html.getElementByXPath("/html/body/span[@id='whack1']/span[@id='actor_false']") must notBeNull.when(J.running)
         }
       )
     }
 
-    "deferred in actor" >> {
-      JettyTestServer.browse(
+    "deferred in actor" in {
+      J.browse(
         "/deferred",html => {
-          html.getElementByXPath("/html/body/span[@id='whack2']/span[@id='actor_true']") must notBeNull
+          html.getElementByXPath("/html/body/span[@id='whack2']/span[@id='actor_true']") must notBeNull.when(J.running)
         }
       )
     }
 
-    "Exclude from context rewriting" >> {
-      val first = net.liftweb.http.Req.fixHtml("/wombat",
+    "Exclude from context rewriting" in {
+      val first = http.Req.fixHtml("/wombat",
         <span>
           <a href="/foo" id="foo">foo</a>
           <a href="/bar" id="bar">bar</a>
@@ -155,8 +156,8 @@ object ToHeadUsages extends Specification("ToHeadUsages Specification") {
 
       def excludeBar(in: String): Boolean = in.startsWith("/bar")
 
-      val second = net.liftweb.http.LiftRules.excludePathFromContextPathRewriting.doWith(excludeBar _) {
-        net.liftweb.http.Req.fixHtml("/wombat",
+      val second = LiftRules.excludePathFromContextPathRewriting.doWith(excludeBar _) {
+        Req.fixHtml("/wombat",
           <span>
             <a href="/foo" id="foo">foo</a>
             <a href="/bar" id="bar">bar</a>
@@ -164,11 +165,13 @@ object ToHeadUsages extends Specification("ToHeadUsages Specification") {
         )
       }
 
-      ((first \\ "a").filter(e => (e \ "@id").text == "foo") \ "@href").text must_== "/wombat/foo"
-      ((first \\ "a").filter(e => (e \ "@id").text == "bar") \ "@href").text must_== "/wombat/bar"
-      ((second \\ "a").filter(e => (e \ "@id").text == "foo") \ "@href").text must_== "/wombat/foo"
-      ((second \\ "a").filter(e => (e \ "@id").text == "bar") \ "@href").text must_== "/bar"
+      ((first \\ "a").filter(e => (e \ "@id").text == "foo") \ "@href").text must be_==("/wombat/foo").when(J.running)
+      ((first \\ "a").filter(e => (e \ "@id").text == "bar") \ "@href").text must be_==("/wombat/bar").when(J.running)
+      ((second \\ "a").filter(e => (e \ "@id").text == "foo") \ "@href").text must be_==("/wombat/foo").when(J.running)
+      ((second \\ "a").filter(e => (e \ "@id").text == "bar") \ "@href").text must be_==("/bar").when(J.running)
     }
   }
+
+  doAfterSpec(J.stop())
 
 }

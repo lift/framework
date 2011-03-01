@@ -85,7 +85,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   // ------------
   class FrameworkProject(info: ProjectInfo, libs: ModuleID*) extends DefaultProject(info) with LiftDefaultProject {
 
-    override def libraryDependencies = super.libraryDependencies ++ libs map (_ withSources())
+    override def libraryDependencies = super.libraryDependencies ++ libs
 
     // FIXME: Build fails with -Xcheckinit -Xwarninit
     override def compileOptions = super.compileOptions.toList -- compileOptions("-Xcheckinit", "-Xwarninit").toList
@@ -103,7 +103,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
     override def testOptions =
       ExcludeTests(
         // Persistence tests
-        "net.liftweb.mapper.MapperSpec" :: "net.liftweb.squerylrecord.SquerylRecordSpec" ::
+        "net.liftweb.mapper.MapperSpec" :: "net.liftweb.squerylrecord.SquerylRecordSpec" :: Nil) ::
       super.testOptions.toList
   }
 

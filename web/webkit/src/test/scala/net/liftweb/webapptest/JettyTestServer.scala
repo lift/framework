@@ -30,17 +30,19 @@ object JettyTestServer {
 
   def baseUrl = baseUrl_
 
-  private val server_ : Server = {
+  private val (server_, context_) = {
     val server = new Server(serverPort_)
     val context = new WebAppContext()
     context.setServer(server)
     context.setContextPath("/")
-    val dir = System.getProperties().getProperty("net.liftweb.webapptest.src.test.webapp", "src/test/webapp")
+    val dir = System.getProperty("net.liftweb.webapptest.src.test.webapp", "src/test/webapp")
     context.setWar(dir)
     //val context = new Context(_server, "/", Context.SESSIONS)
     //context.addFilter(new FilterHolder(new LiftFilter()), "/");
     server.addHandler(context)
-    server
+    server.setGracefulShutdown(100)
+    server.setStopAtShutdown(true)
+    (server, context)
   }
 
   def urlFor(path: String) = baseUrl_ + path
@@ -48,9 +50,12 @@ object JettyTestServer {
   def start() = server_.start()
 
   def stop() = {
+    context_.setShutdown(true)
     server_.stop()
     server_.join()
   }
+
+  def running() = server_.isRunning
 
   def browse(startPath: String, f:(WebTester) => Unit) = {
     val wc = new WebTester()

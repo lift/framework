@@ -19,6 +19,7 @@ package http
 
 import xml._
 import org.specs.Specification
+import org.specs.specification.PendingUntilFixed
 
 import common._
 import util.Helpers._
@@ -27,7 +28,7 @@ import util.Helpers._
 /**
  * System under specification for SnippetSpec.
  */
-object SnippetSpec extends Specification("SnippetSpec Specification") {
+object SnippetSpec extends Specification("SnippetSpec Specification") with PendingUntilFixed {
   def makeReq = new Req(Req.NilPath, "", GetRequest, Empty, null,
                     System.nanoTime, System.nanoTime, false,
                     () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map())
@@ -365,7 +366,7 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
       }
 
       ret.open_! must ==/ (<yak/>)
-    }
+    } pendingUntilFixed
 
     "Check snippets via run" in {
       val session = new LiftSession("", "hello", Empty)

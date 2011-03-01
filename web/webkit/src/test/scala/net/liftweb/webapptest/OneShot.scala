@@ -28,11 +28,12 @@ import snippet.Counter
 
 
 object OneShot extends Specification with RequestKit {
-  doBeforeSpec(JettyTestServer.start())
-  doAfterSpec(JettyTestServer.stop())
+
+  val J = JettyTestServer
+
+  doBeforeSpec(J.start())
 
   def baseUrl = JettyTestServer.baseUrl
-
 
   "ContainerVars" should {
     "have correct int default" in {
@@ -46,7 +47,7 @@ object OneShot extends Specification with RequestKit {
             xml <- resp.xml
           } yield xml
         
-        bx.open_! must ==/ (<int>45</int>)
+        bx.open_! must ==/ (<int>45</int>).when(J.running)
       } finally {
         LiftRules.sessionCreator = tmp
       }
@@ -64,7 +65,7 @@ object OneShot extends Specification with RequestKit {
           xml <- resp2.xml
         } yield xml
 
-      bx.open_! must ==/ (<int>33</int>)
+      bx.open_! must ==/ (<int>33</int>).when(J.running)
       } finally {
         LiftRules.sessionCreator = tmp
       }
@@ -84,8 +85,8 @@ object OneShot extends Specification with RequestKit {
           xml2 <- resp3.xml
         } yield (xml, xml2)
 
-      bx.open_!._1 must ==/ (<int>33</int>)
-      bx.open_!._2 must ==/ (<int>45</int>)
+      bx.open_!._1 must ==/ (<int>33</int>).when(J.running)
+      bx.open_!._2 must ==/ (<int>45</int>).when(J.running)
       } finally {
         LiftRules.sessionCreator = tmp
       }
@@ -107,8 +108,8 @@ object OneShot extends Specification with RequestKit {
             xml2 <- resp3.xml
           } yield (xml, xml2)
             
-            bx.open_!._1 must ==/ (<int>33</int>)
-              bx.open_!._2 must ==/ (<str>meow</str>)
+            bx.open_!._1 must ==/ (<int>33</int>).when(J.running)
+              bx.open_!._2 must ==/ (<str>meow</str>).when(J.running)
       } finally {
         LiftRules.sessionCreator = tmp
       }
@@ -116,7 +117,7 @@ object OneShot extends Specification with RequestKit {
   }
 
   "OneShot" should {
-    "fire once for oneshot" >> {
+    "fire once for oneshot" in {
       Counter.x = 0
 
       for {
@@ -131,10 +132,10 @@ object OneShot extends Specification with RequestKit {
         resp.get("/oneshot?"+urlEncode(name.text)+"=3")
       }
 
-      Counter.x must_== 1
+      Counter.x must be_==(1).when(J.running)
     }
 
-    "fire multiple times for normal" >> {
+    "fire multiple times for normal" in {
       Counter.x = 0
 
       for {
@@ -149,8 +150,10 @@ object OneShot extends Specification with RequestKit {
       }
 
 
-      Counter.x must_== 2
+      Counter.x must be_==(2).when(J.running)
     }
   }
+
+  doAfterSpec(J.stop())
 
 }

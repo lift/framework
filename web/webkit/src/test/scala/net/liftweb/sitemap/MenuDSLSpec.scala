@@ -23,7 +23,7 @@ import org.specs.Specification
 /**
  * Systems under specification for Menu DSL.
  */
-object MenuDSLSpec extends Specification("Menu DSL Specification") {
+object MenuDslSpec extends Specification("Menu DSL Specification") {
 
   "The Menu DSL" should {
     "allow basic menu definition via '/ path'" in {
