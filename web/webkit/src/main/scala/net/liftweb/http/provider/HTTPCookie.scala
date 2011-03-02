@@ -47,42 +47,42 @@ case class HTTPCookie(name: String,
    * @param newValue - the new cookie value
    * @return HTTPCookie
    */
-  def setValue(newValue: String): HTTPCookie = new HTTPCookie(name, Box !! newValue, domain, path, maxAge, version, secure_?)
+  def setValue(newValue: String): HTTPCookie = copy(value = Box !! newValue)
 
   /**
    * Returns a new HTTPCookie that preserve existing member values but sets the cookie domain to newDomain
    * @param newDomain - the new cookie domain
    * @return HTTPCookie
    */
-  def setDomain(newDomain: String): HTTPCookie = new HTTPCookie(name, value, Box !! newDomain, path, maxAge, version, secure_?)
+  def setDomain(newDomain: String): HTTPCookie = copy(domain = Box !! newDomain)
 
   /**
    * Returns a new HTTPCookie that preserve existing member values but sets the cookie path to newPath
    * @param newPath - the new cookie path
    * @return HTTPCookie
    */
-  def setPath(newPath: String): HTTPCookie = new HTTPCookie(name, value, domain, Box !! newPath, maxAge, version, secure_?)
+  def setPath(newPath: String): HTTPCookie = copy(path = Box !! newPath)
 
   /**
    * Returns a new HTTPCookie that preserve existing member values but sets the cookie maxAge to newVMaxAge
    * @param newMaxAge - the new cookie maxAge
    * @return HTTPCookie
    */
-  def setMaxAge(newMaxAge: Int): HTTPCookie = new HTTPCookie(name, value, domain, path, Box !! newMaxAge, version, secure_?)
+  def setMaxAge(newMaxAge: Int): HTTPCookie = copy(maxAge = Box !! newMaxAge)
 
   /**
    * Returns a new HTTPCookie that preserve existing member values but sets the cookie version to newVersion
    * @param newVersion - the new cookie version
    * @return HTTPCookie
    */
-  def setVersion(newVersion: Int): HTTPCookie = new HTTPCookie(name, value, domain, path, maxAge, Box !! newVersion, secure_?)
+  def setVersion(newVersion: Int): HTTPCookie = copy(version = Box !! newVersion)
 
   /**
    * Returns a new HTTPCookie that preserve existing member values but sets the cookie secure flag to newSecure
    * @param newSecure - the new cookie secure flag
    * @return HTTPCookie
    */
-  def setSecure(newSecure: Boolean): HTTPCookie = new HTTPCookie(name, value, domain, path, maxAge, version, Box !! newSecure)
+  def setSecure(newSecure: Boolean): HTTPCookie = copy(secure_? = Box !! newSecure)
 
 
 }
