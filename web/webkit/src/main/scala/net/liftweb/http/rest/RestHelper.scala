@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2011 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb {
-package http {
-package rest {
+package net.liftweb 
+package http 
+package rest 
 
 
-import net.liftweb.json._
-import net.liftweb.common._
-import net.liftweb.util.Props
+import net.liftweb._
+import json._
+import common._
+import util._
 import scala.xml.{Elem, Node, Text}
 
 /**
@@ -583,6 +584,46 @@ trait RestHelper extends LiftRules.DispatchPF {
    */
   implicit def jsExpToResp(in: js.JsExp): LiftResponse = 
     JsonResponse(in)
+
+  /** @return a SuperString with more available methods such as roboSplit or commafy */
+  protected implicit def listStringToSuper(in: List[String]): 
+  SuperListString = new SuperListString(in)
+
+  /** @return a SuperString with more available methods such as roboSplit or commafy */
+  protected implicit def stringToSuper(in: String): SuperString = new SuperString(in)
+
+  /**
+   * Allows you to use >> after a path list
+   * to handle all the cases where you have a prefix
+   * for a series of differ suffixes with the same
+   * path prefix.  For example:
+   * <code>
+   * serve("foo" / "bar" >> {
+   *   case baz :: Nil Post _ => ...
+   *   case Nil Get _ => ...
+   * })
+   * </code>
+   */
+  protected implicit def listToServeMagic(in: List[String]): 
+  ListServeMagic = new ListServeMagic(in)
+}
+
+
+final class ListServeMagic(list: List[String]) {
+  val listLen = list.length
+
+  def >>(pf: PartialFunction[Req, () => Box[LiftResponse]]):
+  PartialFunction[Req, () => Box[LiftResponse]] =
+    new PartialFunction[Req, () => Box[LiftResponse]] {
+      def isDefinedAt(req: Req): Boolean = 
+        req.path.partPath.startsWith(list) && {
+          pf.isDefinedAt(req.withNewPath(req.path.drop(listLen)))
+        }
+
+      def apply(req: Req): () => Box[LiftResponse] = 
+        pf.apply(req.withNewPath(req.path.drop(listLen)))
+    }
+ 
 }
 
 /**
@@ -606,6 +647,3 @@ final case object JsonSelect extends JsonXmlSelect
  */
 final case object XmlSelect extends JsonXmlSelect
 
-}
-}
-}

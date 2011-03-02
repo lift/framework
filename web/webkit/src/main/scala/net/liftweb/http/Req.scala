@@ -713,6 +713,61 @@ class Req(val path: ParsePath,
                                                    _addlParams)
 
   /**
+   * Build a new Req, except it has a different path.
+   * Useful for creating Reqs with sub-paths
+   */
+  def withNewPath(newPath: ParsePath): Req = {
+    val outer = this
+
+    new Req(newPath,
+            contextPath,
+            requestType,
+            contentType,
+            request,
+            nanoStart,
+            nanoEnd,
+            _stateless_?,
+            paramCalculator,
+            addlParams) {
+      override lazy val json: Box[JsonAST.JValue] = outer.json
+
+      override lazy val xml: Box[Elem] = outer.xml
+
+      override lazy val location: Box[Loc[_]] = outer.location
+
+      override lazy val buildMenu: CompleteMenu = outer.buildMenu
+
+      /**
+       * the accept header
+       */
+      override lazy val accepts: Box[String] = outer.accepts
+    
+      /**
+       * What is the content type in order of preference by the requestor
+       * calculated via the Accept header
+       */
+      override lazy val weightedAccept: List[ContentType] = 
+        outer.weightedAccept
+
+      /**
+       * Returns true if the request accepts XML
+       */
+      override lazy val acceptsXml_? = outer.acceptsXml_?
+
+      /**
+       * Returns true if the request accepts JSON
+       */
+      override lazy val acceptsJson_? = outer.acceptsJson_?
+
+      /**
+       * Returns true if the request accepts JavaScript
+       */
+      override lazy val acceptsJavaScript_? = 
+        outer.acceptsJavaScript_?
+    }
+  }
+
+  /**
    * Should the request be treated as stateless (no session created for it)?
    */
   lazy val stateless_? = {
@@ -823,10 +878,10 @@ class Req(val path: ParsePath,
    */
   def rawInputStream: Box[InputStream] = _body.flatMap(_.stream)
 
-  private lazy val ParamCalcInfo(_paramNames: List[String],
-            __params: Map[String, List[String]],
-            _uploadedFiles: List[FileParamHolder],
-            _body: Box[BodyOrInputStream]) = {
+  private lazy val ParamCalcInfo(_paramNames /*: List[String]*/,
+            __params /*: Map[String, List[String]]*/,
+            _uploadedFiles /*: List[FileParamHolder]*/,
+            _body /*: Box[BodyOrInputStream]*/) = {
     val ret = paramCalculator()
     ret
   }
