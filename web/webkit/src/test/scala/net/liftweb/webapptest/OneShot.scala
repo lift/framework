@@ -24,18 +24,29 @@ import http._
 import testing._
 import Helpers._
 
+import java.net.{URL, InetAddress}
+
+import common.Full
 import snippet.Counter
 
 
 object OneShot extends Specification with RequestKit {
 
-  val J = JettyTestServer
+  private val host_ = System.getProperty("net.liftweb.webapptest.oneshot.host", InetAddress.getLocalHost.getHostAddress)
+  private val port_ = System.getProperty("net.liftweb.webapptest.oneshot.port", "8181").toInt
 
-  doBeforeSpec(J.start())
+  private lazy val baseUrl_ = new URL("http://%s:%s".format(host_, port_))
 
-  def baseUrl = JettyTestServer.baseUrl
+  private lazy val jetty = new JettyTestServer(Full(baseUrl_))
+
+  def baseUrl = jetty.baseUrl.toString
+
+  doBeforeSpec(jetty.start())
 
   "ContainerVars" should {
+
+    setSequential()
+
     "have correct int default" in {
       val tmp = LiftRules.sessionCreator
       try {
@@ -47,7 +58,7 @@ object OneShot extends Specification with RequestKit {
             xml <- resp.xml
           } yield xml
         
-        bx.open_! must ==/ (<int>45</int>).when(J.running)
+        bx.open_! must ==/ (<int>45</int>).when(jetty.running)
       } finally {
         LiftRules.sessionCreator = tmp
       }
@@ -65,7 +76,7 @@ object OneShot extends Specification with RequestKit {
           xml <- resp2.xml
         } yield xml
 
-      bx.open_! must ==/ (<int>33</int>).when(J.running)
+      bx.open_! must ==/ (<int>33</int>).when(jetty.running)
       } finally {
         LiftRules.sessionCreator = tmp
       }
@@ -85,8 +96,8 @@ object OneShot extends Specification with RequestKit {
           xml2 <- resp3.xml
         } yield (xml, xml2)
 
-      bx.open_!._1 must ==/ (<int>33</int>).when(J.running)
-      bx.open_!._2 must ==/ (<int>45</int>).when(J.running)
+      bx.open_!._1 must ==/ (<int>33</int>).when(jetty.running)
+      bx.open_!._2 must ==/ (<int>45</int>).when(jetty.running)
       } finally {
         LiftRules.sessionCreator = tmp
       }
@@ -108,8 +119,8 @@ object OneShot extends Specification with RequestKit {
             xml2 <- resp3.xml
           } yield (xml, xml2)
             
-            bx.open_!._1 must ==/ (<int>33</int>).when(J.running)
-              bx.open_!._2 must ==/ (<str>meow</str>).when(J.running)
+            bx.open_!._1 must ==/ (<int>33</int>).when(jetty.running)
+              bx.open_!._2 must ==/ (<str>meow</str>).when(jetty.running)
       } finally {
         LiftRules.sessionCreator = tmp
       }
@@ -117,6 +128,9 @@ object OneShot extends Specification with RequestKit {
   }
 
   "OneShot" should {
+
+    setSequential()
+
     "fire once for oneshot" in {
       Counter.x = 0
 
@@ -132,7 +146,7 @@ object OneShot extends Specification with RequestKit {
         resp.get("/oneshot?"+urlEncode(name.text)+"=3")
       }
 
-      Counter.x must be_==(1).when(J.running)
+      Counter.x must be_==(1).when(jetty.running)
     }
 
     "fire multiple times for normal" in {
@@ -150,10 +164,10 @@ object OneShot extends Specification with RequestKit {
       }
 
 
-      Counter.x must be_==(2).when(J.running)
+      Counter.x must be_==(2).when(jetty.running)
     }
   }
 
-  doAfterSpec(J.stop())
+  doAfterSpec(jetty.stop())
 
 }

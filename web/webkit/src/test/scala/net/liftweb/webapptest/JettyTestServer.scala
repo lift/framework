@@ -17,21 +17,23 @@
 package net.liftweb
 package webapptest
 
+import java.net.URL
+
 import org.mortbay.jetty.Server
 import org.mortbay.jetty.webapp.WebAppContext
 
 import net.sourceforge.jwebunit.junit.WebTester
 import junit.framework.AssertionFailedError
 
+import common.Box
 
-object JettyTestServer {
-  private val serverPort_ = System.getProperty("SERVLET_PORT", "8989").toInt
-  private var baseUrl_ = "http://127.0.0.1:" + serverPort_
 
-  def baseUrl = baseUrl_
+final class JettyTestServer(baseUrlBox: Box[URL]) {
+
+  def baseUrl = baseUrlBox getOrElse new URL("http://127.0.0.1:8080")
 
   private val (server_, context_) = {
-    val server = new Server(serverPort_)
+    val server = new Server(baseUrl.getPort)
     val context = new WebAppContext()
     context.setServer(server)
     context.setContextPath("/")
@@ -45,7 +47,7 @@ object JettyTestServer {
     (server, context)
   }
 
-  def urlFor(path: String) = baseUrl_ + path
+  def urlFor(path: String) = baseUrl + path
 
   def start() = server_.start()
 
@@ -61,7 +63,7 @@ object JettyTestServer {
     val wc = new WebTester()
     try {
       wc.setScriptingEnabled(false)
-      wc.beginAt(JettyTestServer.urlFor(startPath))
+      wc.beginAt(urlFor(startPath))
       f(wc)
     } catch {
       case exc: AssertionFailedError => {
