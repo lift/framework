@@ -168,6 +168,11 @@ object OneShot extends Specification with RequestKit {
     }
   }
 
-  doAfterSpec(jetty.stop())
+  doAfterSpec {
+    tryo {
+      jetty.stop()
+    }
+  }
+
 
 }

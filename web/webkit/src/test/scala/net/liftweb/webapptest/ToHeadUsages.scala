@@ -24,7 +24,7 @@ import org.specs.Specification
 import common.Full
 import util._
 import http._
-
+import Helpers.tryo
 
 /**
  * System under specification for ToHeadUsages.
@@ -189,6 +189,10 @@ object ToHeadUsages extends Specification("ToHeadUsages Specification") {
     }
   }
 
-  doAfterSpec(jetty.stop())
+  doAfterSpec {
+    tryo {
+      jetty.stop()
+    }
+  }
 
 }
