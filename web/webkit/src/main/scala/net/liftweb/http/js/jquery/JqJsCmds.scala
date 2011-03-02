@@ -201,7 +201,7 @@ object JqJE {
    */
   case class JqAppend(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
     override val toJsCmd = 
-      fixHtmlFunc("inline", content){"append(" + _ + ")"}      
+      "append("+fixHtmlFunc("inline", content){a => a}+")"      
   }
 
   /**
@@ -217,21 +217,23 @@ object JqJE {
    */
   case class JqAppendTo(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
     override val toJsCmd =       
-      fixHtmlFunc("inline", content){str => "appendTo(" + str + ")"}
+      "appendTo("+fixHtmlFunc("inline", content){str => str}+ ")"
   }
 
   /**
    * Prepend content to a JQuery
    */
   case class JqPrepend(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
-    override val toJsCmd = fixHtmlFunc("inline", content){"prepend(" + _ + ")"}
+    override val toJsCmd = 
+    "prepend(" + fixHtmlFunc("inline", content){str => str }+ ")"
   }
 
   /**
    * PrependTo content to a JQuery
    */
   case class JqPrependTo(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
-    override val toJsCmd = fixHtmlFunc("inline", content){"prependTo(" + _ + ")"}
+    override val toJsCmd = 
+    "prependTo(" + fixHtmlFunc("inline", content){str => str} + ")"
   }
 
   case class JqCss (name: JsExp, value: JsExp) extends JsExp with JsMember with JQueryRight with JQueryLeft {
@@ -243,7 +245,8 @@ object JqJE {
    * a cleaner innerHTML.
    */
   case class JqEmptyAfter(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
-    override val toJsCmd = fixHtmlFunc("inline", content){"empty().after(" + _ + ")"}
+    override val toJsCmd = 
+    "empty().after(" + fixHtmlFunc("inline", content){str => str} + ")"
   }
 
   object JqHtml {
@@ -252,7 +255,8 @@ object JqJE {
     }
 
     def apply(content: NodeSeq): JsExp with JsMember with JQueryRight with JQueryLeft = new JsExp with JsMember with JQueryRight with JQueryLeft {
-      val toJsCmd = fixHtmlFunc("inline", content){"html(" + _  + ")"}
+      val toJsCmd = 
+      "html(" + fixHtmlFunc("inline", content){str => str} + ")"
     }
   }
 
