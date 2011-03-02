@@ -18,13 +18,10 @@ package net.liftweb
 package mongodb
 
 import org.specs.Specification
-import org.specs.runner.JUnit4
 
 import com.mongodb._
 
-class MongoSpecsTest extends JUnit4(MongoSpecs)
-
-object MongoSpecs extends Specification {
+object MongoSpec extends Specification("Mongo Specification") {
 
   case object TestMongoIdentifier extends MongoIdentifier {
     val jndiName = "test_a"
