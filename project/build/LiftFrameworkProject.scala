@@ -71,13 +71,17 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   // Ref: http://groups.google.com/group/simple-build-tool/browse_thread/thread/40d8ecafbf03f901
   private def webkitProject(path: String, libs: ModuleID*)(deps: Project*) =
     project("web" / path, "lift-" + path, new FrameworkProject(_, libs: _*) {
-      // HACK: Specs needed in 'provided' scope, this will lead to duplications in testclasspath though
+
+      // Specs needed in 'provided' scope, this will lead to duplications in testclasspath though
       override def libraryDependencies =
         super.libraryDependencies ++ Seq("org.scala-tools.testing" %% "specs" % specsVersion % "provided")
 
-      // HACK: Manipulate deliverProjectDependencies to move testkit dependency from 'compile' (default) to 'provided' scope
+      // Move testkit dependency from 'compile' (default) to 'provided' scope
       override def deliverProjectDependencies =
         testkit.projectID % "provided" :: super.deliverProjectDependencies.toList - testkit.projectID
+
+      // System properties necessary during test
+      System.setProperty("net.liftweb.webapptest.src.test.webapp", (testSourcePath / "webapp").absString)
     }, deps: _*)
 
 
@@ -91,21 +95,13 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
     override def compileOptions = super.compileOptions.toList -- compileOptions("-Xcheckinit", "-Xwarninit").toList
 
     // System properties necessary during test
-    override def defaultTestTask(testOptions: => Seq[TestOption]) =
-      super.defaultTestTask(testOptions) dependsOn
-      task {
-        System.setProperty("net.liftweb.webapptest.src.test.webapp", (testSourcePath / "webapp").absString)
-        System.setProperty("apacheds.working.dir", (outputPath / "apacheds").absolutePath)
-        None
-      }
+    System.setProperty("apacheds.working.dir", (outputPath / "apacheds").absolutePath)
 
     // FIXME: breaks with SBT
     override def testOptions =
       ExcludeTests(
         // Persistence tests
-        "net.liftweb.mapper.MapperSpec" :: "net.liftweb.squerylrecord.SquerylRecordSpec" ::
-        // Web tests
-        "net.liftweb.webapptest.OneShot" :: "net.liftweb.webapptest.ToHeadUsages" :: Nil) ::
+        "net.liftweb.mapper.MapperSpec" :: "net.liftweb.squerylrecord.SquerylRecordSpec" :: Nil) ::
       super.testOptions.toList
   }
 
