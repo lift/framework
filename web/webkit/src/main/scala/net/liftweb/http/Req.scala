@@ -109,6 +109,23 @@ object UserAgentCalculator extends Factory {
     Box[Double]](defaultChromeCalcFunction _)
 
   /**
+   * You can change the mechanism by which Lift calculates
+   * if the User-Agent represents an iPhone.  Put your
+   * special calculation function in here
+   */
+  object iPhoneCalcFunction extends FactoryMaker[Box[Box[String] => 
+    Boolean]](Empty)
+
+  /**
+   * You can change the mechanism by which Lift calculates
+   * if the User-Agent represents an iPad.  Put your
+   * special calculation function in here
+   */
+  object iPadCalcFunction extends FactoryMaker[Box[Box[String] => 
+    Boolean]](Empty)
+
+
+  /**
    * The built-in mechanism for calculating Chrome
    */
   def defaultChromeCalcFunction(userAgent: Box[String]): Box[Double] = 
@@ -143,12 +160,20 @@ trait UserAgentCalculator {
   /**
    * Is the Req coming from an iPhone
    */
-  lazy val isIPhone = isSafari && (userAgent.map(s => s.indexOf("(iPhone") >= 0) openOr false)
+  lazy val isIPhone: Boolean = 
+    UserAgentCalculator.iPhoneCalcFunction.vend.
+  map(_.apply(userAgent)) openOr 
+    isSafari && (userAgent.map(s => 
+      s.indexOf("(iPhone") >= 0) openOr false)
 
   /**
    * Is the Req coming from an iPad
    */
-  lazy val isIPad = isSafari && (userAgent.map(s => s.indexOf("(iPad") >= 0) openOr false)
+  lazy val isIPad: Boolean = 
+    UserAgentCalculator.iPadCalcFunction.vend.
+  map(_.apply(userAgent)) openOr 
+  isSafari && (userAgent.map(s =>
+    s.indexOf("(iPad") >= 0) openOr false)
 
   lazy val firefoxVersion: Box[Double] = 
     UserAgentCalculator.firefoxCalcFunction.vend.apply(userAgent)
