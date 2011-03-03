@@ -113,9 +113,20 @@ object Qop extends Enumeration(0, "auth", "auth-int", "auth,auth-int") {
 }
 
 /**
+ * Companion object with builder
+ */
+object UnauthorizedDigestResponse {
+  def apply(realm: String, qop: Qop.Value, nonce: String, opaque: String): UnauthorizedDigestResponse = 
+    new UnauthorizedDigestResponse(realm,
+                                   qop,
+                                   nonce,
+                                   opaque)
+}
+
+/**
  * 401 Unauthorized Response.
  */
-case class UnauthorizedDigestResponse(override val realm: String, qop: Qop.Value, nonce: String, opaque: String) extends UnauthorizedResponse(realm) {
+class UnauthorizedDigestResponse(override val realm: String, qop: Qop.Value, nonce: String, opaque: String) extends UnauthorizedResponse(realm) {
   override def toResponse = InMemoryResponse(Array(), List("WWW-Authenticate" -> (
           "Digest realm=\"" + realm + "\", " +
                   "qop=\"" + qop + "\", " +
@@ -273,9 +284,12 @@ object JsonResponse {
 
   def apply(_json: JsonAST.JValue, _headers: List[(String, String)], _cookies: List[HTTPCookie], code: Int): LiftResponse = {
     new JsonResponse(new JsExp {
-      lazy val toJsCmd = Printer.pretty(JsonAST.render((_json)))
+      lazy val toJsCmd = jsonPrinter(JsonAST.render((_json)))
     }, _headers, _cookies, code)
   }
+
+  lazy val jsonPrinter: scala.text.Document => String = 
+    LiftRules.jsonOutputConverter.vend
 }
 
 case class JsonResponse(json: JsExp, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends LiftResponse {
@@ -379,7 +393,12 @@ object DoRedirectResponse {
   def apply(url: String): LiftResponse = RedirectResponse(url, Nil: _*)
 }
 
-case class RedirectWithState(override val uri: String, state: RedirectState, override val cookies: HTTPCookie*) extends RedirectResponse(uri, cookies: _*)
+object RedirectWithState {
+  def apply(uri: String, state: RedirectState, cookies: HTTPCookie*): RedirectWithState =
+    new RedirectWithState(uri, state, cookies :_*)
+}
+
+class RedirectWithState(override val uri: String, state: RedirectState, override val cookies: HTTPCookie*) extends RedirectResponse(uri, cookies: _*)
 
 object RedirectState {
   def apply(f: () => Unit, msgs: (String, NoticeType.Value)*): RedirectState = new RedirectState(Full(f), msgs: _*)
@@ -388,9 +407,12 @@ case class RedirectState(func: Box[() => Unit], msgs: (String, NoticeType.Value)
 
 object MessageState {
   implicit def tuple2MessageState(msg: (String, NoticeType.Value)) = MessageState(msg)
+
+  def apply(msgs: (String, NoticeType.Value)*): MessageState =
+     new MessageState(msgs :_*)
 }
 
-case class MessageState(override val msgs: (String, NoticeType.Value)*) extends RedirectState(Empty, msgs: _*)
+class MessageState(override val msgs: (String, NoticeType.Value)*) extends RedirectState(Empty, msgs: _*)
 
 /**
  * Stock XHTML doctypes available to the lift programmer.
@@ -413,7 +435,7 @@ object DocType {
  * Avoid using this in favor of LiftRules.docType
  *
  */
-@deprecated
+@deprecated("Avoid using this in favor of LiftRules.docType")
 object ResponseInfo {
 
    def docType: PartialFunction[Req, Box[String]] = new PartialFunction[Req, Box[String]](){

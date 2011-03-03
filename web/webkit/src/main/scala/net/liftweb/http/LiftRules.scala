@@ -126,6 +126,15 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
    */
   val sessionInactivityTimeout = new FactoryMaker[Box[Long]](Empty){}
 
+  /**
+   * The function that converts a scala.text.Document to
+   * a String (used for JsonAST.JValue to text convertion.
+   * By default, use Printer.pretty for dev mode and
+   * Printer.compact for other modes
+   */
+  val jsonOutputConverter = new FactoryMaker[scala.text.Document => String]({
+    import json.Printer
+    if (Props.devMode) Printer.pretty _ else Printer.compact _}){}
 
 
   /**

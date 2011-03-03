@@ -712,4 +712,57 @@ object ParamFailure {
   }
 }
 
+/**
+ * Sometimes it's convenient to access either a Box[T]
+ * or a T.  If you specify BoxOrRaw[T], the
+ * either a T or a Box[T] can be passed and the "right thing"
+ * will happen
+ */
+sealed trait BoxOrRaw[T] {
+  def box: Box[T]
+}
+
+/**
+ * The companion object that has helpful conversions
+ */
+object BoxOrRaw {
+  /**
+   * Convert a T to a BoxOrRaw[T]
+   */
+  implicit def rawToBoxOrRaw[T, Q <: T](r: Q): BoxOrRaw[T] =
+    RawBoxOrRaw(r: T)
+
+  /**
+   * Convert a Box[T] to a BoxOrRaw[T]
+   */
+  implicit def boxToBoxOrRaw[T, Q <% T](r: Box[Q]): BoxOrRaw[T] = {
+    BoxedBoxOrRaw(r.map(v => v: T))
+  }
+
+  /**
+   * Convert an Option[T] to a BoxOrRaw[T]
+   */
+  implicit def optionToBoxOrRaw[T, Q <% T](r: Option[Q]): BoxOrRaw[T] = {
+    BoxedBoxOrRaw(r.map(v => v: T))
+  }
+
+  /**
+   * Convert a BoxOrRaw[T] to a Box[T]
+   */
+  implicit def borToBox[T](in: BoxOrRaw[T]): Box[T] = in.box
+}
+
+/**
+ * The Boxed up BoxOrRaw
+ */
+final case class BoxedBoxOrRaw[T](box: Box[T]) extends BoxOrRaw[T]
+
+/**
+ * The raw version of BoxOrRaw
+ */
+final case class RawBoxOrRaw[T](raw: T) extends BoxOrRaw[T] {
+  def box: Box[T] = 
+    if (raw.asInstanceOf[Object] ne null) Full(raw) else Empty
+}
+
 // vim: set ts=2 sw=2 et:

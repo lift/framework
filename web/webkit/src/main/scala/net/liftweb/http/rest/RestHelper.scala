@@ -273,9 +273,9 @@ trait RestHelper extends LiftRules.DispatchPF {
    * A function that chooses JSON or XML based on the request..
    * Use with serveType
    */
-  implicit def jxSel(req: Req): Box[JsonXmlSelect] = 
-    if (jsonResponse_?(req)) Full(JsonSelect)
-    else if (xmlResponse_?(req)) Full(XmlSelect)
+  implicit def jxSel(req: Req): BoxOrRaw[JsonXmlSelect] = 
+    if (jsonResponse_?(req)) JsonSelect
+    else if (xmlResponse_?(req)) XmlSelect
     else None
 
   /**
@@ -290,8 +290,8 @@ trait RestHelper extends LiftRules.DispatchPF {
    * to a the appropriate LiftResponse based on the selected response
    * type.
    */
-  protected def serveType[T, SelectType](selection: Req => Box[SelectType])
-  (pf: PartialFunction[Req, Box[T]])
+  protected def serveType[T, SelectType](selection: Req => BoxOrRaw[SelectType])
+  (pf: PartialFunction[Req, BoxOrRaw[T]])
   (implicit cvt: PartialFunction[(SelectType, T, Req), LiftResponse]): Unit = {
     serve(new PartialFunction[Req, () => Box[LiftResponse]] {
       def isDefinedAt(r: Req): Boolean = 
@@ -299,7 +299,7 @@ trait RestHelper extends LiftRules.DispatchPF {
    
       def apply(r: Req): () => Box[LiftResponse] = 
         () => {
-          pf(r) match {
+          pf(r).box match {
             case Full(resp) =>
               val selType = selection(r).open_! // Full because pass isDefinedAt
               if (cvt.isDefinedAt((selType, resp, r)))
@@ -326,7 +326,7 @@ trait RestHelper extends LiftRules.DispatchPF {
    * converters use Lift JSON's Extraction.decompose to convert the object
    * into JSON and then Xml.toXml() to convert to XML.
    */
-  protected def serveJx[T](pf: PartialFunction[Req, Box[T]])
+  protected def serveJx[T](pf: PartialFunction[Req, BoxOrRaw[T]])
   (implicit cvt: JxCvtPF[T]): Unit =
     serveType(jxSel)(pf)(cvt)
 
@@ -340,7 +340,7 @@ trait RestHelper extends LiftRules.DispatchPF {
    * Any (note that the response must be convertable into
    * JSON vis Lift JSON Extraction.decompose
    */
-  protected def serveJxa(pf: PartialFunction[Req, Box[Any]]): Unit = 
+  protected def serveJxa(pf: PartialFunction[Req, BoxOrRaw[Any]]): Unit = 
     serveType(jxSel)(pf)(new PartialFunction[(JsonXmlSelect,
                                               Any, Req), LiftResponse] {
       def isDefinedAt(p: (JsonXmlSelect, Any, Req)) =
@@ -609,10 +609,25 @@ trait RestHelper extends LiftRules.DispatchPF {
 }
 
 
+/**
+ * Do some magic to prefix path patterns with a single List
+ */
 final class ListServeMagic(list: List[String]) {
   val listLen = list.length
 
-  def >>(pf: PartialFunction[Req, () => Box[LiftResponse]]):
+  def prefixJx[T](pf: PartialFunction[Req, BoxOrRaw[T]]): PartialFunction[Req, BoxOrRaw[T]] = 
+    new PartialFunction[Req, BoxOrRaw[T]] {
+      def isDefinedAt(req: Req): Boolean = 
+        req.path.partPath.startsWith(list) && {
+          pf.isDefinedAt(req.withNewPath(req.path.drop(listLen)))
+        }
+
+      def apply(req: Req): BoxOrRaw[T] = 
+        pf.apply(req.withNewPath(req.path.drop(listLen)))
+    }
+
+
+  def prefix(pf: PartialFunction[Req, () => Box[LiftResponse]]):
   PartialFunction[Req, () => Box[LiftResponse]] =
     new PartialFunction[Req, () => Box[LiftResponse]] {
       def isDefinedAt(req: Req): Boolean = 
