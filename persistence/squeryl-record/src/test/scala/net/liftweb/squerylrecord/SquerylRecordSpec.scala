@@ -30,9 +30,11 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
     DBHelper.createSchema()
   }
 
+  // NOTE: Use explicit forExample() in the examples to avoid
+  // implicit ambiguity with Specs 1.6.6 in Scala 2.8.0
   "SquerylRecord" should {
 
-    "load record by ID" >> {
+    forExample("load record by ID") in {
       transaction {
         val company = companies.lookup(td.c2.id)
         checkCompaniesEqual(company.get, td.c2)
@@ -42,7 +44,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    "load record by string field value" >> {
+    forExample("load record by string field value") in {
       transaction {
         val company = from(companies)(c =>
           where(c.name === td.c1.name.is) select (c))
@@ -50,17 +52,19 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    "support order by" >> {
+    forExample("support order by") in {
       transaction {
         val orderedCompanies = from(companies)(c =>
           select(c) orderBy (c.name))
         val ids = orderedCompanies.map(_.id)
-        ids must containInOrder(
-          td.allCompanies.sortBy(_.name.is).map(_.id))
+        // NOTE: This circumvents implicit conversion for the contents on List
+        // ids must containInOrder(
+        //   td.allCompanies.sortBy(_.name.is).map(_.id))
+        ids.mkString("(", ",", ")") must_== td.allCompanies.sortBy(_.name.is).map(_.id).mkString("(", ",", ")")
       }
     }
 
-    "support normal joins" >> {
+    forExample("support normal joins") in {
       transaction {
         val companiesWithEmployees = from(companies, employees)((c, e) =>
           where(c.id === e.id)
@@ -72,47 +76,47 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
           (td.c2.id, td.e2.id)))
       }
     }
-    
-    "support left outer joins" >> {
+
+    forExample("support left outer joins") in {
       transaction {
         val companiesWithEmployees = join(companies, employees.leftOuter)((c, e) =>
           select(c, e)
           on(c.id === e.map(_.companyId))
         )
-        
+
         companiesWithEmployees must haveSize(3)
         // One company doesn't have an employee, two have
         companiesWithEmployees.filter(ce => ce._2.isEmpty) must haveSize(1)
-        
+
         val companiesAndEmployeesWithSameName = join(companies, employees.leftOuter)((c, e) =>
           groupBy(c.id)
           compute(countDistinct(e.map(_.id)))
           on(c.name === e.map(_.name))
         )
-        
+
         // There are three companies
         companiesAndEmployeesWithSameName must haveSize(3)
         // One company has the same name as an employee, two don't
         companiesAndEmployeesWithSameName.filter(ce => ce.measures == 0) must haveSize(2)
-        
+
         val employeesWithSameAdminSetting = join(employees, employees.leftOuter)((e1, e2) =>
           select(e1, e2)
           on(e1.admin === e2.map(_.admin))
         )
-        
+
         // two employees, both have distinct admin settings
         employeesWithSameAdminSetting must haveSize(2)
         employeesWithSameAdminSetting.foreach { ee =>
           ee._2 must not (beEmpty)
           ee._1.id must_== ee._2.get.id
         }
-        
+
         val companiesWithSameCreationDate = join(companies, companies.leftOuter)((c1, c2) =>
           select(c1, c2)
           on(c1.created === c2.map(_.created))
         )
         companiesWithSameCreationDate must not (beEmpty)
-        
+
         val employeesWithSameDepartmentNumber = join(employees, employees.leftOuter)((e1, e2) =>
           select(e1, e2)
           on(e1.departmentNumber === e2.map(_.departmentNumber))
@@ -124,10 +128,10 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
           on(e1.role === e2.map(_.role))
         )
         employeesWithSameRoles must not (beEmpty)
-      } 
+      }
     }
 
-    "support one to many relations" >> {
+    forExample("support one to many relations") in {
       transaction {
         val company = companies.lookup(td.c1.id)
         company must beSome[Company]
@@ -136,22 +140,22 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
         checkEmployeesEqual(td.e1, employees.head)
       }
     }
-    
-    "support many to many relations" >> {
+
+    forExample("support many to many relations") in {
       transactionWithRollback {
         td.e1.rooms must haveSize(2)
-        
+
         td.e2.rooms must beEmpty
-        
+
         td.r1.employees must haveSize(1)
         td.r3.employees must beEmpty
-        
+
         td.r3.employees.associate(td.e2)
         td.e2.rooms must haveSize(1)
       }
     }
 
-    "support updates" >> {
+    forExample("support updates") in {
       val id = td.c1.id
 
       transactionWithRollback {
@@ -176,27 +180,25 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    "support delete" >> {
+    forExample("support delete") in {
       transactionWithRollback {
         employees.delete(td.e2.id)
         employees.lookup(td.e2.id) must beNone
       }
     }
-    
-    "support select with properties of formerly fetched objects" >> {
+
+    forExample("support select with properties of formerly fetched objects") in {
       transaction {
         val company = companies.lookup(td.c2.id).head
-        val employee = from(employees)(e => 
+        val employee = from(employees)(e =>
           where (e.companyId === company.idField) select(e)).head
         employee.id must_== td.e2.id
-        
-        val loadedCompanies = from(companies)(c => 
+
+        val loadedCompanies = from(companies)(c =>
           where (c.created === company.created) select(c))
         loadedCompanies.size must beGreaterThanOrEqualTo(1)
       }
     }
-    
-
   }
 
   class TransactionRollbackException extends RuntimeException
