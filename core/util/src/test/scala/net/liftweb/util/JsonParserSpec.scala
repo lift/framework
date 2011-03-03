@@ -88,7 +88,7 @@ object JsonParserSpec extends Specification("JsonParser Specification") {
       val longArray = "[" + (1 to 100000).map(i => '"'+i.toString+'"').mkString(", ") + "]"
 
       val p2 = JSONParser.parse(longArray)
-      p2.isDefined must be(true)
+      p2.isDefined must be(true).eventually
     }
 
     "Parse doubles" in {
@@ -103,7 +103,7 @@ object JsonParserSpec extends Specification("JsonParser Specification") {
       p2.open_! must_== -51.348484
     }
 
-     "Parse negative longs" in {
+    "Parse negative longs" in {
       val p2 = JSONParser.parse("-517272833222")
       p2.isDefined must be(true)
       p2.open_! must_== -517272833222L
@@ -127,7 +127,6 @@ object JsonParserSpec extends Specification("JsonParser Specification") {
 
     }
 
-
     "-0.5033" in {
       val p2 = JSONParser.parse(
     """-0.5033""")
@@ -135,7 +134,6 @@ object JsonParserSpec extends Specification("JsonParser Specification") {
       p2.open_! must_== -0.5033
 
     }
-
 
     "complex JSON objects" in {
       val p2 = JSONParser.parse(
