@@ -98,16 +98,6 @@ object MapperSpec extends Specification("Mapper Specification") {
     Schemifier.schemify(true, if (doLog) Schemifier.infoF _ else ignoreLogger _, DbProviders.SnakeConnectionIdentifier, SampleModelSnake, SampleTagSnake)
   }
 
-/*
-  doBeforeSpec {
-    providers.foreach(provider => {
-      try {provider.setupDB} catch { case e if !provider.required_? => skip("Provider %s not available: %s".format(provider, e)) }
-        Thread.sleep(50)  // Yuck! FIXME
-//        println("Setup done for =>>> " + provider)
-    })
-  }
-*/
-
   providers.foreach(provider => {
 
     ("Mapper for " + provider.name) should {
@@ -664,11 +654,10 @@ object Mixer extends Mixer with LongKeyedMetaMapper[Mixer] {
   }
 }
 
-import java.util.UUID
-
 object Thing extends Thing with KeyedMetaMapper[String, Thing] {
   override def dbTableName = "things"
 
+  import java.util.UUID
   override def beforeCreate = List((thing: Thing) => {
     thing.thing_id(UUID.randomUUID().toString())
   })
