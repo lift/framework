@@ -355,14 +355,13 @@ class LDAPVendor extends Loggable with SimpleInjector {
 
     try {
       val username = dn + "," + ldapBaseDn.vend
-      var ctx = 
-        ldapUser.doWith(username) {
-          ldapPassword.doWith(password) {
-            openInitialContext()
-          }
+      
+      ldapUser.doWith(username) {
+        ldapPassword.doWith(password) {
+          val ctx = openInitialContext()
+          ctx.close()
         }
-
-      ctx.close
+      }
 
       logger.info("Successfully authenticated " + dn)
       true

@@ -17,6 +17,8 @@
 package net.liftweb
 package ldap
 
+import java.io.File
+
 import javax.naming.CommunicationException
 
 import org.apache.mina.util.AvailablePortFinder
@@ -31,6 +33,7 @@ import org.apache.directory.shared.ldap.name.LdapDN
 import org.specs.Specification
 
 import common._
+import util.Helpers.tryo
 
 
 /**
@@ -44,6 +47,7 @@ object LdapSpec extends Specification("LDAP Specification") {
   val service = new DefaultDirectoryService
   val ldap = new LdapServer
 
+  lazy val workingDir = Box[String](System.getProperty("apacheds.working.dir")) 
 
   /*
    * The following is taken from:
@@ -55,14 +59,15 @@ object LdapSpec extends Specification("LDAP Specification") {
       // Disable changelog
       service.getChangeLog.setEnabled(false)
 
-      // Set a working directory
-      val workingDir = Box[String](System.getProperty("apacheds.working.dir"))
+      // Configure a working directory if we have one set, otherwise fail
+      // because we don't want it using current directory under SBT
       workingDir match {
         case Full(d) =>
+          println("ApacheDS Working dir = " + d)
           val dir = new java.io.File(d)
           dir.mkdirs
           service.setWorkingDirectory(dir)
-        case _ =>
+        case _ => fail("No working dir set for ApacheDS!")
       }
 
       // Set up a partition
@@ -116,7 +121,7 @@ object LdapSpec extends Specification("LDAP Specification") {
     }
 
     "handle simple authentication" in {
-      myLdap.bindUser("cn=Test User", "letmein")
+      myLdap.bindUser("cn=Test User", "letmein") must_== true
     }
 
     "attempt reconnects" in {
@@ -138,18 +143,38 @@ object LdapSpec extends Specification("LDAP Specification") {
     ldap.stop()
     service.shutdown()
     println("Stopped server")
+
+    // Clean up the working directory
+    def deleteTree(f : File) {
+      // First, delete any children if this is a directory
+      if (f.isDirectory) {
+        f.listFiles.foreach(deleteTree)
+      }
+      f.delete()
+    }
+
+    tryo {
+      println("Cleaning LDAP work directory")
+      workingDir.foreach { dir =>
+        deleteTree(new File(dir))
+      }
+      println("LDAP work directory removed")
+    }
   }
 
   def addTestData() {
     val username = new LdapDN("cn=Test User," + ROOT_DN)
     if (! service.getAdminSession().exists(username)) {
-      println("Adding test user")
+      println("  Adding test user : " + username)
       // Add a test user. This will be used for searching and binding
       val entry = service.newEntry(username)
       entry.add("objectClass", "person", "organizationalPerson")
       entry.add("cn", "Test User")
       entry.add("sn", "User")
-      entry.add("userpassword", "letmein")
+      /* LDAP Schema for userPassword is octet string, so we
+       * need to use getBytes. If you just pass in a straight String,
+       * ApacheDS sets userPassword to null :( */
+      entry.add("userPassword", "letmein".getBytes())
       service.getAdminSession.add(entry)
     }
   }
