@@ -615,6 +615,15 @@ trait RestHelper extends LiftRules.DispatchPF {
 final class ListServeMagic(list: List[String]) {
   val listLen = list.length
 
+  /**
+   * Used in conjunction with RestHelper.serveJx to
+   * prefix the pattern matched path.  For example:
+   * <code>
+   * serveJx[Foo]("foo" / "bar" prefixJx {
+   *   case FindBaz(baz) :: Nil Get _ => baz
+   * })
+   * </code>
+   */
   def prefixJx[T](pf: PartialFunction[Req, BoxOrRaw[T]]): PartialFunction[Req, BoxOrRaw[T]] = 
     new PartialFunction[Req, BoxOrRaw[T]] {
       def isDefinedAt(req: Req): Boolean = 
@@ -627,6 +636,16 @@ final class ListServeMagic(list: List[String]) {
     }
 
 
+  /**
+   * Used in conjunction with RestHelper.serveJx to
+   * prefix the pattern matched path.  For example:
+   * <code>
+   * serve("foo" / "bar" prefix {
+   *   case FindBaz(baz) :: Nil GetJson _ => baz: JValue
+   *   case FindBaz(baz) :: Nil GetXml _ => baz: Node
+   * })
+   * </code>
+   */
   def prefix(pf: PartialFunction[Req, () => Box[LiftResponse]]):
   PartialFunction[Req, () => Box[LiftResponse]] =
     new PartialFunction[Req, () => Box[LiftResponse]] {
