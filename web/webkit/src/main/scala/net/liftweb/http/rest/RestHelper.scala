@@ -606,6 +606,34 @@ trait RestHelper extends LiftRules.DispatchPF {
    */
   protected implicit def listToServeMagic(in: List[String]): 
   ListServeMagic = new ListServeMagic(in)
+
+  /**
+   * Take an original piece of JSON (most probably, JObject
+   * and replace all the JFields with those in toMerge
+   */
+  protected def mergeJson(original: JValue, toMerge: JValue): JValue = {
+    def replace(lst: List[JField], f: JField): List[JField] = 
+      f :: lst.filterNot(_.name == f.name)
+
+    original match {
+      case JObject(fields) => 
+        toMerge match {
+          case jf: JField => JObject(replace(fields, jf))
+          case JObject(otherFields) =>
+            JObject(otherFields.foldLeft(fields)(replace(_, _)))
+          case _ => original
+        }
+
+      case jf: JField => 
+        toMerge match {
+          case jfMerge: JField => JObject(replace(List(jf), jfMerge))
+          case JObject(otherFields) =>
+            JObject(otherFields.foldLeft(List(jf))(replace(_, _)))
+          case _ => original
+        }
+      case _ => original // can't merge
+    }
+  }
 }
 
 
