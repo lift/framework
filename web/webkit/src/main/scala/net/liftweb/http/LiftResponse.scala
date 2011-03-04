@@ -396,9 +396,16 @@ object DoRedirectResponse {
 object RedirectWithState {
   def apply(uri: String, state: RedirectState, cookies: HTTPCookie*): RedirectWithState =
     new RedirectWithState(uri, state, cookies :_*)
+
+  def unapply(in: Any): Option[(String, RedirectState, Seq[HTTPCookie])] =
+    in match {
+      case rdws: RedirectWithState => Some((rdws.uri, rdws.state,
+                                            rdws.cookies))
+      case _ => None
+    }
 }
 
-class RedirectWithState(override val uri: String, state: RedirectState, override val cookies: HTTPCookie*) extends RedirectResponse(uri, cookies: _*)
+class RedirectWithState(override val uri: String,val state: RedirectState, override val cookies: HTTPCookie*) extends RedirectResponse(uri, cookies: _*)
 
 object RedirectState {
   def apply(f: () => Unit, msgs: (String, NoticeType.Value)*): RedirectState = new RedirectState(Full(f), msgs: _*)

@@ -403,6 +403,7 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
    *
    * @deprecated
    */
+  @deprecated("Use the HtmlProperties")
   val docType: FactoryMaker[Req => Box[String]] = new FactoryMaker( (r: Req) => r  match {
     case _ if S.skipDocType => Empty
     case _ if S.getDocType._1 => S.getDocType._2
@@ -1088,7 +1089,7 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
   /**
    * Use statelessRewrite or statefuleRewrite
    */
-  @deprecated
+  @deprecated("Use statelessRewrite or statefuleRewrite")
   val rewrite = statelessRewrite
 
   /**
@@ -1525,13 +1526,15 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
    * A function to format a Date... can be replaced by a function that is user-specific
    Replaced by dateTimeConverter
    */
-  @deprecated @volatile var formatDate: Date => String = date => date match {case null => LiftRules.formatDate(new Date(0L)) case s => toInternetDate(s)}
+  @deprecated("Replaced by dateTimeConverter")
+  @volatile var formatDate: Date => String = date => date match {case null => LiftRules.formatDate(new Date(0L)) case s => toInternetDate(s)}
 
   /**
    * A function that parses a String into a Date... can be replaced by something that's user-specific
    Replaced by dateTimeConverter
    */
-  @deprecated @volatile var parseDate: String => Box[Date] = str => str match {
+  @deprecated("Replaced by dateTimeConverter")
+  @volatile var parseDate: String => Box[Date] = str => str match {
     case null => Empty
     case s => Helpers.toDate(s)
   }

@@ -32,19 +32,16 @@ import scala.xml._
 /**
  * This contains Html artifacts that are heavily relying on JQuery
  */
-@deprecated
+@deprecated("This contains Html artifacts that are heavily relying on JQuery")
 object JqSHtml {
-  @deprecated
   def fadeOutErrors(duration: TimeSpan, fadeTime: TimeSpan): JsCmd = {
     FadeOut(LiftRules.noticesContainerId + "_error", duration, fadeTime)
   }
 
-  @deprecated
   def fadeOutWarnings(duration: TimeSpan, fadeTime: TimeSpan): JsCmd = {
     FadeOut(LiftRules.noticesContainerId + "_warn", duration, fadeTime)
   }
 
-  @deprecated
   def fadeOutNotices(duration: TimeSpan, fadeTime: TimeSpan): JsCmd = {
     FadeOut(LiftRules.noticesContainerId + "_notice", duration, fadeTime)
   }
@@ -53,7 +50,6 @@ object JqSHtml {
   * Generate a JavaScript FadeOut command for the Errors screen real estate using
   * the default prefade duration and fade time from JsRules
   */
-  @deprecated
   def fadeOutErrors(): JsCmd = {
     FadeOut(LiftRules.noticesContainerId + "_error", JsRules.prefadeDuration, JsRules.fadeTime)
   }
@@ -62,7 +58,6 @@ object JqSHtml {
   * Generate a JavaScript FadeOut command for the Warnings screen real estate using
   * the default prefade duration and fade time from JsRules
   */
-  @deprecated
   def fadeOutWarnings(): JsCmd = {
     FadeOut(LiftRules.noticesContainerId + "_warn", JsRules.prefadeDuration, JsRules.fadeTime)
   }
@@ -71,7 +66,6 @@ object JqSHtml {
   * Generate a JavaScript FadeOut command for the Notices screen real estate using
   * the default prefade duration and fade time from JsRules
   */
-  @deprecated
   def fadeOutNotices(): JsCmd = {
     FadeOut(LiftRules.noticesContainerId + "_notice", JsRules.prefadeDuration, JsRules.fadeTime)
   }

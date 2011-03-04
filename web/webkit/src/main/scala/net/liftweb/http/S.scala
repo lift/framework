@@ -2629,7 +2629,7 @@ for {
    *
    * Use fmapFunc(AFuncHolder)(String => T)
    */
-  @deprecated
+  @deprecated("Use fmapFunc(AFuncHolder)(String => T)")
   def mapFunc(in: AFuncHolder): String = {
     mapFunc(formFuncName, in)
   }
@@ -2639,7 +2639,7 @@ for {
    *
    * Use fmapFunc(AFuncHolder)(String => T)
    */
-  @deprecated
+  @deprecated("Use fmapFunc(AFuncHolder)(String => T)")
   def mapFunc(name: String, inf: AFuncHolder): String = {
     addFunctionMap(name, inf)
     name

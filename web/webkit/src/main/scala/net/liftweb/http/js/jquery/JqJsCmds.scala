@@ -34,7 +34,9 @@ import JsCmds._
  * is deprecated clases mixing this trait with stop doing so soon and they
  * will mixin JsMember instead.
  */
-@deprecated
+@deprecated(""" As JQueryRight
+is deprecated clases mixing this trait with stop doing so soon and they
+will mixin JsMember instead.""")
 trait JQueryRight {
   this: JsExp =>
   def toJsCmd: String
@@ -42,7 +44,7 @@ trait JQueryRight {
 /**
  * Classes mixing JQuryLeft will soon stop doing so. Extending/Mixing JsExp will be enough
  */ 
-@deprecated
+@deprecated("Classes mixing JQuryLeft will soon stop doing so. Extending/Mixing JsExp will be enough")
 trait JQueryLeft {
   this: JsExp =>
 }
@@ -453,7 +455,7 @@ object JqJsCmds {
   /**
    * Use SetValueAndFocus from JsCmds
    */
-  @deprecated
+  @deprecated("Use SetValueAndFocus from JsCmds")
   case class SetValueAndFocus(id: String, value: String) extends JsCmd {
     def toJsCmd = "document.getElementById(" + id.encJs + ").value = " +
             value.encJs +

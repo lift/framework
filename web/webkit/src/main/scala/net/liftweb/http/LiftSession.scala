@@ -1173,7 +1173,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   }
 
   private[http] def checkRedirect(resp: LiftResponse): LiftResponse = resp match {
-    case RedirectWithState(uri, state, cookies@_*) =>
+    case RedirectWithState(uri, state, cookies) =>
       state.msgs.foreach(m => S.message(m._1, m._2))
       notices = S.getNotices
       RedirectResponse(attachRedirectFunc(uri, state.func), cookies: _*)
