@@ -50,6 +50,12 @@ object JodaTimeSerializerSpec extends Specification("JodaTimeSerializer Specific
     val ser = swrite(x)
     ser mustEqual """{"dt":"2011-01-16 10:32:00Z","dm":"2011-01-16 00:00:00Z"}"""
   }
+
+  "null is serialized as JSON null" in {
+    val x = JodaTypes(null, null, null, null, null, null, null)
+    val ser = swrite(x)
+    read[JodaTypes](ser) mustEqual x
+  }
 }
 
 case class JodaTypes(duration: Duration, instant: Instant, dateTime: DateTime, 

@@ -104,6 +104,7 @@ case class ClassSerializer[A : Manifest, B : Manifest](t: ClassType[A, B]) exten
 
   def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), A] = {
     case (TypeInfo(Class, _), json) => json match {
+      case JNull => null.asInstanceOf[A]
       case xs: JObject if (xs.extractOpt[B].isDefined) => t.unwrap(xs.extract[B])
       case value => throw new MappingException("Can't convert " + value + " to " + Class)
     }
@@ -128,6 +129,7 @@ private[ext] class SimpleTypeSerializer[A, JS <: JValue](t: SimpleType[A, JS]) e
 
   def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), A] = {
     case (TypeInfo(Class, _), json) => json match {
+      case JNull => null.asInstanceOf[A]
       case json: JS => t.unwrap(json)
       case value => throw new MappingException("Can't convert " + value + " to " + Class)
     }
