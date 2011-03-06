@@ -270,15 +270,19 @@ object Extraction {
       case x => fail("Expected array but got " + x)
     }
 
-    def mkValue(root: JValue, mapping: Mapping, path: String, optional: Boolean) = try {
-      val x = build(root, mapping)
-      if (optional) {
-        if (x == null) None else Some(x) 
-      } else x
-    } catch { 
-      case MappingException(msg, _) => 
-        if (optional) None else fail("No usable value for " + path + "\n" + msg) 
-    }
+    def mkValue(root: JValue, mapping: Mapping, path: String, optional: Boolean) = 
+      if (optional && root == JNothing) None
+      else {
+        try {
+          val x = build(root, mapping)
+          if (optional) {
+            if (x == null) None else Some(x) 
+          } else x
+        } catch { 
+          case MappingException(msg, _) => 
+            if (optional) None else fail("No usable value for " + path + "\n" + msg)
+        }
+      }
 
     def fieldValue(json: JValue): JValue = json match {
       case JField(_, value) => value

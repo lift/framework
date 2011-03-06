@@ -18,7 +18,7 @@ package net.liftweb
 package json
 
 import org.specs.Specification
-
+import java.util.UUID
 
 object SerializationBugs extends Specification {
   import Serialization.{read, write => swrite}
@@ -67,6 +67,26 @@ object SerializationBugs extends Specification {
     val ser = swrite(xs)
     read[LongList](ser).xs.length mustEqual 5000
   }
+
+  "Custom serializer should work with Option" in {
+    class UUIDFormat extends Serializer[UUID] {
+      val UUIDClass = classOf[UUID]
+
+      def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), UUID] = {
+        case (TypeInfo(UUIDClass, _), JString(x)) => UUID.fromString(x)
+      }
+
+      def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
+        case x: UUID => JString(x.toString)
+      }
+    }
+
+    implicit val formats = Serialization.formats(NoTypeHints) + new UUIDFormat
+    val o1 = OptionalUUID(None)
+    val o2 = OptionalUUID(Some(UUID.randomUUID))
+    read[OptionalUUID](swrite(o1)) mustEqual o1
+    read[OptionalUUID](swrite(o2)) mustEqual o2
+  }
 }
 
 case class LongList(xs: List[Num])
@@ -74,6 +94,8 @@ case class Num(x: Int)
 
 case class X(yy: Y)
 case class Y(ss: String)
+
+case class OptionalUUID(uuid: Option[UUID])
 
 package plan1 {
   case class Plan(plan: Option[Action])
