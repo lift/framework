@@ -1412,7 +1412,8 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * Inserts a String constant according to the CssSelector rules
    */
   def #>(str: String): CssSel = new CssBindImpl(stringSelector, css) {
-    def calculate(in: NodeSeq): Seq[NodeSeq] = List(Text(str))
+    def calculate(in: NodeSeq): Seq[NodeSeq] = 
+      List(if (null eq str) NodeSeq.Empty else Text(str))
   }
 
   /**
@@ -1442,7 +1443,8 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * StringPromotable includes Int, Long, Boolean, and Symbol
    */
   def #>(strPromo: StringPromotable): CssSel = new CssBindImpl(stringSelector, css) {
-    def calculate(in: NodeSeq): Seq[NodeSeq] = List(Text(strPromo.toString))
+    def calculate(in: NodeSeq): Seq[NodeSeq] = 
+      List(Text(strPromo.toString))
   }
 
   /**
@@ -1470,7 +1472,8 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * Inserts a String constant according to the CssSelector rules
    */
   def replaceWith(str: String): CssSel = new CssBindImpl(stringSelector, css) {
-    def calculate(in: NodeSeq): Seq[NodeSeq] = List(Text(str))
+    def calculate(in: NodeSeq): Seq[NodeSeq] = 
+      List(if (null eq str) NodeSeq.Empty else Text(str))
   }
 
   /**
