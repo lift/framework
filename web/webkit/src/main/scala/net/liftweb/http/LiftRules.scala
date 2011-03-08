@@ -1480,12 +1480,12 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
   }
 
   /**
-   * The name of the Ajax script that manages Ajax rewuests.
+   * The name of the Ajax script that manages Ajax requests.
    */
   @volatile var ajaxScriptName: () => String = () => "liftAjax.js"
 
   /**
-   * The name of the Comet script that manages Comet rewuests.
+   * The name of the Comet script that manages Comet requests.
    */
   @volatile var cometScriptName: () => String = () => "cometAjax.js"
 
