@@ -24,7 +24,7 @@ trait ILAExecute {
   def shutdown(): Unit
 }
 
-object LAScheduler {
+object LAScheduler extends Loggable {
   @volatile
   var onSameThread = false
 
@@ -48,7 +48,13 @@ object LAScheduler {
                                new LinkedBlockingQueue)
 
       def execute(f: () => Unit): Unit =
-      es.execute(new Runnable{def run() {f()}})
+      es.execute(new Runnable{def run() {
+        try {
+          f()
+        } catch {
+          case e: Exception => logger.error("Lift Actor Scheduler", e)
+        }
+      }})
 
       def shutdown(): Unit = {
         es.shutdown()
