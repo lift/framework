@@ -19,13 +19,13 @@ package common
 
 import xml._
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * System under specification for Conversions.
  */
-object ConversionsSpec extends Specification("Conversions Specification") {
+class ConversionsSpec extends Specification {
 
   "A StringOrNodeSeq" should {
 
