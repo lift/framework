@@ -144,7 +144,7 @@ object LAFuture {
       case (f, idx) => 
         f.foreach {
           v => sync.synchronized {
-            vals(idx) = v
+            vals.insert(idx, v)
             gotCnt += 1
             if (gotCnt >= len) {
               ret.satisfy(vals.toList)
@@ -176,7 +176,7 @@ object LAFuture {
           vb => sync.synchronized {
             vb match {
               case Full(v) => {
-                vals(idx) = v
+                vals.insert(idx, v)
                 gotCnt += 1
                 if (gotCnt >= len) {
                   ret.satisfy(Full(vals.toList))
