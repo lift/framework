@@ -94,15 +94,8 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
     // FIXME: Build fails with -Xcheckinit -Xwarninit
     override def compileOptions = super.compileOptions.toList -- compileOptions("-Xcheckinit", "-Xwarninit").toList
 
-    // System properties necessary during test
+    // System properties necessary during test TODO: Figure out how to make this a subdir of persistence/ldap/
     System.setProperty("apacheds.working.dir", (outputPath / "apacheds").absolutePath)
-
-    // FIXME: breaks with SBT
-    override def testOptions =
-      ExcludeTests(
-        // Persistence tests
-        "net.liftweb.mapper.MapperSpec" :: Nil) ::
-      super.testOptions.toList
   }
 
 }

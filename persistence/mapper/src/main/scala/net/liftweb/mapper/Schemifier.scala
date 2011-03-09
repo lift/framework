@@ -332,9 +332,13 @@ object Schemifier extends Loggable {
             () => "ALTER TABLE "+table._dbTableNameLC+" ADD FOREIGN KEY ( "+field._dbColumnNameLC+" ) REFERENCES "+other._dbTableNameLC+" ( "+field.dbKeyToColumn._dbColumnNameLC+" ) "
           }
           field.dbAddedForeignKey.toList
-        } else Nil
+        } else {
+          Nil
+        }
       }
-    } else Nil
+    } else {
+      Nil
+    }
 
     Collector(ret, cmds.toList)
   }

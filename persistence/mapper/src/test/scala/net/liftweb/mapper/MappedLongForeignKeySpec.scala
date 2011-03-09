@@ -27,24 +27,22 @@ import util._
  * Systems under specification for MappedLongForeignKey.
  */
 object MappedLongForeignKeySpec extends Specification("MappedLongForeignKey Specification") {
+  // Make sure we have everything configured first
+  MapperSpecsModel.setup()
+
   def provider = DbProviders.H2MemoryProvider
 
-  def doLog = false
-
-  private def ignoreLogger(f: => AnyRef): Unit = ()
-
-  def cleanup() {
-    try { provider.setupDB } catch { case e if !provider.required_? => skip("Provider %s not available: %s".format(provider, e)) }
-    Schemifier.destroyTables_!!(DefaultConnectionIdentifier, if (doLog) Schemifier.infoF _ else ignoreLogger _,  SampleTag, SampleModel, Dog, Mixer, Dog2, User)
-    Schemifier.destroyTables_!!(DbProviders.SnakeConnectionIdentifier, if (doLog) Schemifier.infoF _ else ignoreLogger _, SampleTagSnake, SampleModelSnake)
-    Schemifier.schemify(true, if (doLog) Schemifier.infoF _ else ignoreLogger _, DefaultConnectionIdentifier, SampleModel, SampleTag, User, Dog, Mixer, Dog2)
-    Schemifier.schemify(true, if (doLog) Schemifier.infoF _ else ignoreLogger _, DbProviders.SnakeConnectionIdentifier, SampleModelSnake, SampleTagSnake)
-  }
-
-
   "MappedLongForeignKey" should {
+    doBefore {
+      (try {
+        provider.setupDB
+        MapperSpecsModel.cleanup()
+      } catch {
+        case e if !provider.required_? => skip("Provider %s not available: %s".format(provider, e))
+      }) must not(throwAnException[Exception]).orSkipExample
+    }
+
     "Not allow comparison to another FK" in {
-      cleanup()
       val dog = Dog.create.name("Froo").saveMe
       val user = {
         def ret: User = {
@@ -63,7 +61,6 @@ object MappedLongForeignKeySpec extends Specification("MappedLongForeignKey Spec
     }
 
     "be primed after setting a reference" in {
-      cleanup()
       val dog = Dog.create
       val user = User.create
       dog.owner(user)
@@ -71,7 +68,6 @@ object MappedLongForeignKeySpec extends Specification("MappedLongForeignKey Spec
     }
     
     "be primed after setting a Boxed reference" in {
-      cleanup()
       val dog = Dog.create
       val user = User.create
       dog.owner(Full(user))
@@ -79,8 +75,6 @@ object MappedLongForeignKeySpec extends Specification("MappedLongForeignKey Spec
     }
     
     "be empty after setting an Empty" in {
-      cleanup()
-      
       val user = User.create
       val dog = Dog.create.owner(user)
       dog.owner(Empty)
