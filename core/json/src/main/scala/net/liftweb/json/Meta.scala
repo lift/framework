@@ -22,6 +22,10 @@ import java.util.Date
 
 case class TypeInfo(clazz: Class[_], parameterizedType: Option[ParameterizedType])
 
+trait ParameterNameReader {
+  def lookupParameterNames(constructor: JConstructor[_]): Traversable[String]
+}
+
 private[json] object Meta {
   import com.thoughtworks.paranamer._
 
@@ -73,11 +77,16 @@ private[json] object Meta {
   private val unmangledNames = new Memo[String, String]
   private val paranamer = new CachingParanamer(new BytecodeReadingParanamer)
 
-  private[json] def mappingOf(clazz: Class[_]): Mapping = {
+  object ParanamerReader extends ParameterNameReader {
+    def lookupParameterNames(constructor: JConstructor[_]): Traversable[String] =
+      paranamer.lookupParameterNames(constructor)
+  }
+
+  private[json] def mappingOf(clazz: Class[_])(implicit formats: Formats): Mapping = {
     import Reflection._
 
     def constructors(clazz: Class[_], visited: Set[Class[_]]) =
-      Reflection.constructors(clazz).map { case (c, args) =>
+      Reflection.constructors(clazz, formats.parameterNameReader).map { case (c, args) =>
         DeclaredConstructor(c, args.map { case (name, atype, genericType) =>
           toArg(unmangleName(name), atype, genericType, visited) })
       }
@@ -163,17 +172,19 @@ private[json] object Meta {
       classOf[java.lang.Short], classOf[Date], classOf[Symbol], classOf[JValue],
       classOf[JObject], classOf[JArray]).map((_, ())))
 
-    def constructors(clazz: Class[_]): List[(JConstructor[_], List[(String, Class[_], Type)])] =
-      clazz.getDeclaredConstructors.map(c => (c, constructorArgs(c))).toList
+    def constructors(clazz: Class[_], 
+                     nameReader: ParameterNameReader): List[(JConstructor[_], List[(String, Class[_], Type)])] =
+      clazz.getDeclaredConstructors.map(c => (c, constructorArgs(c, nameReader))).toList
 
-    def constructorArgs(constructor: JConstructor[_]): List[(String, Class[_], Type)] = {
+    def constructorArgs(constructor: JConstructor[_], 
+                        nameReader: ParameterNameReader): List[(String, Class[_], Type)] = {
       def argsInfo(c: JConstructor[_]) = {
         val Name = """^((?:[^$]|[$][^0-9]+)+)([$][0-9]+)?$"""r
         def clean(name: String) = name match {
           case Name(text, junk) => text
         }
         try {
-          val names = paranamer.lookupParameterNames(c).map(clean)
+          val names = nameReader.lookupParameterNames(c).map(clean)
           val types = c.getParameterTypes
           val ptypes = c.getGenericParameterTypes
           (names.toList, types.toList, ptypes.toList).zip
@@ -185,10 +196,10 @@ private[json] object Meta {
       cachedConstructorArgs.memoize(constructor, argsInfo(_))
     }
 
-    def primaryConstructorArgs(c: Class[_]) = {
+    def primaryConstructorArgs(c: Class[_])(implicit formats: Formats) = {
       val ord = Ordering[Int].on[JConstructor[_]](_.getParameterTypes.size)
       val primary = c.getDeclaredConstructors.max(ord)
-      constructorArgs(primary)
+      constructorArgs(primary, formats.parameterNameReader)
     }
 
     def typeParameters(t: Type, k: Kind): List[Class[_]] = {

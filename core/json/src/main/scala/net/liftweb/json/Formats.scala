@@ -34,12 +34,19 @@ trait Formats { self: Formats =>
    * The name of the field in JSON where type hints are added (jsonClass by default)
    */
   val typeHintFieldName = "jsonClass"
+
+  /**
+   * Parameter name reading strategy. By deafult 'paranamer' is used.
+   */
+  val parameterNameReader: ParameterNameReader = Meta.ParanamerReader
   
   /**
    * Adds the specified type hints to this formats.
    */
   def + (extraHints: TypeHints): Formats = new Formats {
     val dateFormat = Formats.this.dateFormat
+    override val typeHintFieldName = self.typeHintFieldName
+    override val parameterNameReader = self.parameterNameReader
     override val typeHints = self.typeHints + extraHints
     override val customSerializers = self.customSerializers
   }
@@ -49,6 +56,8 @@ trait Formats { self: Formats =>
    */
   def + (newSerializer: Serializer[_]): Formats = new Formats {
     val dateFormat = Formats.this.dateFormat
+    override val typeHintFieldName = self.typeHintFieldName
+    override val parameterNameReader = self.parameterNameReader
     override val typeHints = self.typeHints
     override val customSerializers = newSerializer :: self.customSerializers
   }
