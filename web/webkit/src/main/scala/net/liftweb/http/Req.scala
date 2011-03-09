@@ -1167,7 +1167,6 @@ class Req(val path: ParsePath,
 }
 
 final case class RewriteRequest(path: ParsePath, requestType: RequestType, httpRequest: HTTPRequest)
-final case class RewriteResponse(path: ParsePath, params: Map[String, String], stopRewriting: Boolean)
 
 /**
  * The representation of an URI path
@@ -1180,6 +1179,10 @@ case class ParsePath(partPath: List[String], suffix: String, absolute: Boolean, 
   else partPath
 }
 
+final case class RewriteResponse(path: ParsePath, 
+                                 params: Map[String, String],
+                                 stopRewriting: Boolean)
+
 /**
  * Maintains the context of resolving the URL when cookies are disabled from container. It maintains
  * low coupling such as code within request processing is not aware of the actual response that
@@ -1189,6 +1192,10 @@ object RewriteResponse {
   def apply(path: List[String], params: Map[String, String]) = new RewriteResponse(ParsePath(path, "", true, false), params, false)
 
   def apply(path: List[String]) = new RewriteResponse(ParsePath(path, "", true, false), Map.empty, false)
+
+  def apply(path: List[String], stopRewriting: Boolean) = 
+    new RewriteResponse(ParsePath(path, "", true, false),
+                        Map.empty, stopRewriting)
 
   def apply(path: List[String], suffix: String) = new RewriteResponse(ParsePath(path, suffix, true, false), Map.empty, false)
 

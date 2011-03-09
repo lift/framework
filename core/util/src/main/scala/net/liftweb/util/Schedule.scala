@@ -47,13 +47,24 @@ sealed trait Schedule extends Loggable {
   @volatile var threadPoolSize = 16 // issue 194
 
   @volatile var maxThreadPoolSize = threadPoolSize * 25
+
+  /**
+   * If it's Full, then create a ArrayBlockingQueue
+   * otherwith create a LinkedBlockingQueue.  Default
+   * to Full(200000)
+   */
+  @volatile var blockingQueueSize: Box[Int] = Full(200000)
   
   @volatile var buildExecutor: () => ThreadPoolExecutor =
     () => new ThreadPoolExecutor(threadPoolSize, 
                                  maxThreadPoolSize,
                                  60,
                                  TimeUnit.SECONDS,
-                                 new LinkedBlockingQueue)
+                                 blockingQueueSize match {
+                                   case Full(x) => 
+                                     new ArrayBlockingQueue(x)
+                                   case _ => new LinkedBlockingQueue
+                                 })
   
     
 

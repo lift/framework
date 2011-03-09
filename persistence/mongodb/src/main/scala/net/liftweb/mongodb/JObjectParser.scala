@@ -59,7 +59,6 @@ object JObjectParser {
           case fields => JObject(fields)
         }
       case x => {
-        println("match error (serialize): "+x.getClass+" "+x.toString)
         JNothing
       }
     }
@@ -114,7 +113,7 @@ object JObjectParser {
       case JString(null) => "null"
       case JString(s) if (ObjectId.isValid(s)) => new ObjectId(s)
       case JString(s) => s
-      case _ => println("match error (renderValue): "+jv.getClass); ""
+      case _ =>  ""
     }
 
     // FIXME: This is not ideal.

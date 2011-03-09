@@ -46,9 +46,9 @@ object Comet extends DispatchSnippet with LazyLoggable {
     
   private def buildComet(kids: NodeSeq) : NodeSeq = {
     val theType: Box[String] = S.attr.~("type").map(_.text)
-    val name: Box[String] = S.attr.~("name").map(_.text) orElse
-    S.attr.~("metaname").map(_.text).flatMap(S.param) orElse 
-    S.attr.~("randomname").map(ignore => Helpers.nextFuncName)
+    val name: Box[String] = S.currentAttr("name") or
+    S.currentAttr("metaname").flatMap(S.param) or
+    S.currentAttr("randomname").map(ignore => Helpers.nextFuncName)
 
 
     (for {ctx <- S.session} yield {

@@ -63,7 +63,6 @@ object LdapSpec extends Specification("LDAP Specification") {
       // because we don't want it using current directory under SBT
       workingDir match {
         case Full(d) =>
-          println("ApacheDS Working dir = " + d)
           val dir = new java.io.File(d)
           dir.mkdirs
           service.setWorkingDirectory(dir)
@@ -93,7 +92,6 @@ object LdapSpec extends Specification("LDAP Specification") {
 
       // Inject the root entry if it does not already exist
       if ( !service.getAdminSession().exists(partition.getSuffixDn)) {
-        println("Adding root entry")
         val rootEntry = service.newEntry(new LdapDN(ROOT_DN))
         rootEntry.add( "objectClass", "top", "domain", "extensibleObject" );
         rootEntry.add( "dc", "ldap" );
@@ -104,7 +102,6 @@ object LdapSpec extends Specification("LDAP Specification") {
 
       ldap.start()
 
-      println("Started LDAP server on port " + service_port)
     }) must not(throwAn[Exception]).orSkipExample
   }
 
@@ -142,7 +139,6 @@ object LdapSpec extends Specification("LDAP Specification") {
   doAfterSpec {
     ldap.stop()
     service.shutdown()
-    println("Stopped server")
 
     // Clean up the working directory
     def deleteTree(f : File) {
@@ -154,18 +150,15 @@ object LdapSpec extends Specification("LDAP Specification") {
     }
 
     tryo {
-      println("Cleaning LDAP work directory")
       workingDir.foreach { dir =>
         deleteTree(new File(dir))
       }
-      println("LDAP work directory removed")
     }
   }
 
   def addTestData() {
     val username = new LdapDN("cn=Test User," + ROOT_DN)
     if (! service.getAdminSession().exists(username)) {
-      println("  Adding test user : " + username)
       // Add a test user. This will be used for searching and binding
       val entry = service.newEntry(username)
       entry.add("objectClass", "person", "organizationalPerson")

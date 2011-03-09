@@ -68,9 +68,10 @@ object LocPath {
     new NormalLocPath(in)
 }
 
-object * extends LocPath {
+case object * extends LocPath {
   def pathItem = "star"
   def wildcard_? = true
+  override def toString() = "WildcardLocPath()"
 }
 
 final case class NormalLocPath(pathItem: String) extends LocPath {
@@ -168,6 +169,8 @@ object Menu extends MenuSingleton {
      */
     lazy val toLoc: Loc[T] = new Loc[T] with ParamExtractor[String, T] {
       import scala.xml._
+
+      def headMatch: Boolean = ParamMenuable.this.headMatch
       
       // the name of the page
       def name = ParamMenuable.this.name
@@ -283,7 +286,10 @@ object Menu extends MenuSingleton {
     lazy val toLoc: Loc[T] = new Loc[T] with ParamExtractor[List[String], T] {
       // the name of the page
       def name = ParamsMenuable.this.name
-      
+     
+      def headMatch: Boolean = ParamsMenuable.this.headMatch
+
+
       // the default parameters (used for generating the menu listing)
       def defaultValue = Empty
 
@@ -374,13 +380,14 @@ object Menu extends MenuSingleton {
     /**
      * Rewrite the request and emit the type-safe parameter
      */
-    override val rewrite: LocRewrite =
-      Full(NamedPF("Param Rewrite") {
+    override lazy val rewrite: LocRewrite =
+      Full(NamedPF(locPath.toString) {
         case RewriteRequest(ParsePath(ExtractSan(path, param),
                                       _, _,_), _, _) => {
-          RewriteResponse(path) -> param
+          RewriteResponse(path, true) -> param
         }})
 
+    def headMatch: Boolean
 
     /**
      * Given an incoming request path, match the path and
@@ -393,14 +400,22 @@ object Menu extends MenuSingleton {
       import scala.collection.mutable._
       val retPath = new ListBuffer[String]()
       val retParams = new ListBuffer[String]()
+      var gotStar = false
 
       @tailrec
       def doExtract(op: List[String], mp: List[LocPath]): Boolean =
         (op, mp) match {
-          case (op, Nil) => retParams ++= op; true
+          case (Nil, Nil) => true
+          case (o :: Nil, Nil) => {
+            retParams += o 
+            headMatch || !gotStar
+          }
+
+          case (op, Nil) => retParams ++= op; headMatch
           case (Nil, _) => false
           case (o :: _, NormalLocPath(str) :: _) if o != str => false
           case (o :: os, * :: ms) => {
+            gotStar = true
             retParams += o
             retPath += *.pathItem
             doExtract(os, ms)
@@ -411,10 +426,11 @@ object Menu extends MenuSingleton {
           }
         }
 
-      if (doExtract(org, locPath)) 
-        Full(retPath.toList -> retParams.toList)
-      else
+      if (doExtract(org, locPath)) {
+        Full((retPath.toList, retParams.toList))
+      } else {
         Empty
+      }
     }
   }
 

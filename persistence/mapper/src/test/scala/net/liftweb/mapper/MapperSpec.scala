@@ -43,18 +43,6 @@ object MapperSpec extends Specification("Mapper Specification") {
   //      DbProviders.asList
   def providers = DbProviders.H2MemoryProvider :: DbProviders.DerbyProvider :: Nil
 
-  /*
-   private def logDBStuff(log: DBLog, len: Long) {
-   println(" in log stuff "+log.getClass.getName)
-   log match {
-   case null =>
-   case _ => println(log.allEntries)
-   }
-   }
-
-   DB.addLogFunc(logDBStuff)
-   */
-
   def dbSetup() {
     Schemifier.destroyTables_!!(ignoreLogger _, SampleModel, SampleTag, Dog, User, Mixer, Dog2)
     Schemifier.schemify(true, ignoreLogger _, SampleModel, SampleTag, User, Dog, Mixer, Dog2)

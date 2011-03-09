@@ -37,9 +37,15 @@ trait Loc[T] {
 
   def overrideValue: Box[T] = Empty
 
-  object requestValue extends RequestVar[Box[T]](Empty) {
+  object requestValue extends RequestVar[Box[T]](defaultRequestValue) {
     override val __nameSalt = randomString(10)
   }
+
+  /**
+   * Override this if the default request value should
+   * be something other than Empty
+   */
+  protected def defaultRequestValue: Box[T] = Empty
 
   /**
    * When the menu item is displayed, what CSS class do we add to the
@@ -311,13 +317,14 @@ trait Loc[T] {
   }
 
   def doesMatch_?(req: Req): Boolean = {
-    if (link.isDefinedAt(req)) {
+    (if (link.isDefinedAt(req)) {
       link(req) match {
         case Full(x) if testAllParams(allParams, req) => x
         case Full(x) => false
         case x => x.openOr(false)
       }
-    } else false
+    } else false) && currentValue.isDefined
+    // the loc only matches if we've got a current value
   }
 
   def breadCrumbs: List[Loc[_]] = _menu.breadCrumbs ::: List(this)
@@ -406,13 +413,13 @@ object Loc {
   def apply(name: String, link: Link[Unit], text: LinkText[Unit], params: LocParam[Unit]*): Loc[Unit] = UnitLoc(name, link, text, params.toList)
   def apply(name: String, link: Link[Unit], text: LinkText[Unit], params: List[LocParam[Unit]]): Loc[Unit] = UnitLoc(name, link, text, params)
 
-  private case class UnitLoc(
+  private final case class UnitLoc(
     override val name: String,
     override val link: Link[Unit],
     override val text: LinkText[Unit],
     override val params: List[LocParam[Unit]]
   ) extends Loc[Unit] {
-    override val defaultValue: Box[Unit] = Full(())
+    override def defaultValue: Box[Unit] = Full(())
 
     init()
   }
@@ -712,8 +719,8 @@ object Loc {
     }
   }
 
-  @deprecated def alwaysTrue(a: Req) = true
-  @deprecated def retString(toRet: String)(other: Seq[(String, String)]) = Full(toRet)
+  // @deprecated def alwaysTrue(a: Req) = true
+  // @deprecated def retString(toRet: String)(other: Seq[(String, String)]) = Full(toRet)
 
   implicit def strToFailMsg(in: => String): FailMsg = () => {
     RedirectWithState(

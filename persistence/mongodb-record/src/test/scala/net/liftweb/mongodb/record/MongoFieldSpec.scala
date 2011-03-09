@@ -145,7 +145,6 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
     /*
     "convert to JsExp" in {
       mandatory.set(example)
-      //println(mandatory.asJs)
       mandatory.asJs mustEqual jsexp
     }*/
 
@@ -168,7 +167,6 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
         val session = new LiftSession("", randomString(20), Empty)
         S.initIfUninitted(session) {
           val formXml = mandatory.toForm
-          //println(formXml)
           formXml must notBeEmpty
           formXml foreach { f =>
             f.toString must beMatching(fp)

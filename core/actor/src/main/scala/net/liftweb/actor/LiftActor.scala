@@ -35,6 +35,13 @@ object LAScheduler extends Loggable {
 
   @volatile var maxThreadPoolSize = threadPoolSize * 25
 
+  /**
+   * If it's Full, then create a ArrayBlockingQueue
+   * otherwith create a LinkedBlockingQueue.  Default
+   * to Full(200000)
+   */
+  @volatile var blockingQueueSize: Box[Int] = Full(200000)
+
   @volatile
   var createExecutor: () => ILAExecute = () => {
     new ILAExecute {
@@ -45,7 +52,11 @@ object LAScheduler extends Loggable {
                                maxThreadPoolSize,
                                60,
                                TimeUnit.SECONDS,
-                               new LinkedBlockingQueue)
+                               blockingQueueSize match {
+                                 case Full(x) => 
+                                   new ArrayBlockingQueue(x)
+                                 case _ => new LinkedBlockingQueue
+                               })
 
       def execute(f: () => Unit): Unit =
       es.execute(new Runnable{def run() {
