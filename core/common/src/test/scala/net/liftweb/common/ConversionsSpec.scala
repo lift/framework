@@ -17,7 +17,7 @@
 package net.liftweb
 package common
 
-import xml._
+import xml.{NodeSeq, Text}
 
 import org.specs2.mutable.Specification
 
@@ -36,7 +36,7 @@ class ConversionsSpec extends Specification {
 
     "convert from an Elem" in {
       val sns: StringOrNodeSeq = <b/>
-      sns.nodeSeq must ==/ ( <b/> )
+      sns.nodeSeq must ==/ (<b/>)
     }
 
     "convert from a Seq[Node]" in {
