@@ -29,7 +29,11 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   self: MyType =>
 
   /*
-  * every mongo record must have an _id field. Override this with the value of your _id object.
+  * Every MongoRecord must have an _id field. Use a MongoPkField to
+  * satisfy this.
+
+  * This may change to type MandatoryTypedField in the
+  * future (once MongoId is removed.)
   */
   def id: Any
 
@@ -47,7 +51,7 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
     }
     this
   }
-  
+
   /**
   * Save the instance and return the instance
   * @param safe - if true will use WriteConcern SAFE else NORMAL
@@ -58,7 +62,7 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
 
   /**
   * Save the instance and return the instance
-  * WILL NOT RAISE MONGO SERVER ERRORS.  
+  * WILL NOT RAISE MONGO SERVER ERRORS.
   * Use save(Boolean) or save(WriteConcern) to control error behavior
   */
   def save: MyType = save(false)

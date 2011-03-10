@@ -202,7 +202,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       .mandatoryObjectIdField(ObjectId.get)
       .mandatoryPatternField(Pattern.compile("^Mo", Pattern.CASE_INSENSITIVE))
       .mandatoryUUIDField(UUID.randomUUID)
-    
+
     /* This causes problems if MongoDB is not running */
     if (isMongoRunning) {
       mfttr.mandatoryDBRefField(DBRefTestRecord.createRecord.getRef)
@@ -213,7 +213,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       .mandatoryIntListField(List(4, 5, 6))
       .mandatoryMongoJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1"), TypeTestJsonObject(2, "jsonobj2")))
       .mongoCaseClassListField(List(MongoCaseClassTestObject(1,"str")))
-      
+
     val mtr = MapTestRecord.createRecord
       .mandatoryStringMapField(Map("a" -> "abc", "b" -> "def", "c" -> "ghi"))
       .mandatoryIntMapField(Map("a" -> 4, "b" -> 5, "c" -> 6))
@@ -288,7 +288,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
 
       fttr.save
 
-      val fttrFromDb = FieldTypeTestRecord.find(fttr.id)
+      val fttrFromDb = FieldTypeTestRecord.find(fttr.id.value)
       fttrFromDb must notBeEmpty
       fttrFromDb foreach { tr =>
         tr mustEqual fttr
@@ -299,9 +299,9 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       checkMongoIsRunning
 
       fttr.save
-      FieldTypeTestRecord.find(fttr.id) must notBeEmpty
+      FieldTypeTestRecord.find(fttr.id.value) must notBeEmpty
       fttr.delete_!
-      FieldTypeTestRecord.find(fttr.id) must beEmpty
+      FieldTypeTestRecord.find(fttr.id.value) must beEmpty
     }
 
     "save and retrieve Mongo type fields" in {
@@ -309,7 +309,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
 
       mfttr.save
 
-      val mfttrFromDb = MongoFieldTypeTestRecord.find(mfttr.id)
+      val mfttrFromDb = MongoFieldTypeTestRecord.find(mfttr.id.value)
       mfttrFromDb must notBeEmpty
       mfttrFromDb foreach { tr =>
         tr.mandatoryDBRefField.value.getId mustEqual mfttr.mandatoryDBRefField.value.getId
@@ -319,7 +319,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
 
       ltr.save
 
-      val ltrFromDb = ListTestRecord.find(ltr.id)
+      val ltrFromDb = ListTestRecord.find(ltr.id.value)
       ltrFromDb must notBeEmpty
       ltrFromDb foreach { tr =>
         tr mustEqual ltr
@@ -327,7 +327,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
 
       mtr.save
 
-      val mtrFromDb = MapTestRecord.find(mtr.id)
+      val mtrFromDb = MapTestRecord.find(mtr.id.value)
       mtrFromDb must notBeEmpty
       mtrFromDb foreach { tr =>
         tr mustEqual mtr
@@ -335,7 +335,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
 
       srtr.save
 
-      val srtrFromDb = SubRecordTestRecord.find(srtr.id)
+      val srtrFromDb = SubRecordTestRecord.find(srtr.id.value)
       srtrFromDb must notBeEmpty
       srtrFromDb foreach { tr =>
         tr mustEqual srtr
@@ -362,7 +362,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       ))
 
       ltr.asJValue mustEqual JObject(List(
-        JField("_id", JObject(List(JField("$oid", JString(ltr.id.toString))))),
+        JField("_id", JObject(List(JField("$uuid", JString(ltr.id.toString))))),
         JField("mandatoryStringListField", JArray(List(JString("abc"), JString("def"), JString("ghi")))),
         JField("legacyOptionalStringListField", JArray(List())),
         JField("mandatoryIntListField", JArray(List(JInt(4), JInt(5), JInt(6)))),
@@ -378,7 +378,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       ))
 
       mtr.asJValue mustEqual JObject(List(
-        JField("_id", JObject(List(JField("$oid", JString(mtr.id.toString))))),
+        JField("_id", JString(mtr.id.toString)),
         JField("mandatoryStringMapField", JObject(List(
           JField("a", JString("abc")),
           JField("b", JString("def")),
@@ -400,7 +400,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       srtrAsJValue \\ "mandatoryBsonRecordListField" mustEqual srtrJson \\ "mandatoryBsonRecordListField"
       srtrAsJValue \\ "legacyOptionalBsonRecordListField" mustEqual srtrJson \\ "legacyOptionalBsonRecordListField"
     }
-    
+
     "convert Mongo type fields to JsExp" in {
       checkMongoIsRunning
 
@@ -485,7 +485,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
 
       ntr.save must_== ntr
 
-      val ntrFromDb = NullTestRecord.find(ntr.id)
+      val ntrFromDb = NullTestRecord.find(ntr.id.value)
 
       ntrFromDb must notBeEmpty
 
@@ -509,7 +509,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
 
     "handle Box using JsonBoxSerializer" in {
       checkMongoIsRunning
-      
+
       val btr = BoxTestRecord.createRecord
       btr.jsonobjlist.set(
         BoxTestJsonObj("1", Empty, Full("Full String1"), Failure("Failure1")) ::
@@ -519,7 +519,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
 
       btr.save
 
-      val btrFromDb = BoxTestRecord.find(btr.id)
+      val btrFromDb = BoxTestRecord.find(btr.id.value)
 
       btrFromDb must notBeEmpty
 

@@ -28,7 +28,7 @@ import net.liftweb.json.{Formats, JsonParser}
 import net.liftweb.json.JsonAST._
 import net.liftweb.mongodb._
 import net.liftweb.mongodb.record.field._
-import net.liftweb.record.{MetaRecord, Record}
+import net.liftweb.record.{MandatoryTypedField, MetaRecord, Record}
 import net.liftweb.record.FieldHelpers.expectedA
 import net.liftweb.record.field._
 
@@ -41,12 +41,24 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
 
   self: BaseRecord =>
 
+  /*
+   * Utility method for determining the value of _id.
+   * This is needed for backwards compatibility with MongoId. This is
+   * due to the fact that MongoRecord.id is of type Any. That will
+   * be changed to type MandatoryTypedField in a future version. When
+   * that happens this will no longer be necessary.
+   */
+  private def idValue(inst: BaseRecord): Any = inst.id match {
+    case f: MandatoryTypedField[_] => f.value
+    case x => x
+  }
+
   /**
   * Delete the instance from backing store
   */
   def delete_!(inst: BaseRecord): Boolean = {
     foreachCallback(inst, _.beforeDelete)
-    delete("_id", inst.id)
+    delete("_id", idValue(inst))
     foreachCallback(inst, _.afterDelete)
     true
   }
@@ -104,6 +116,11 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   * Find a single row by an Int id
   */
   def find(id: Int): Box[BaseRecord] = find(new BasicDBObject("_id", id))
+
+  /**
+  * Find a single row by a Long id
+  */
+  def find(id: Long): Box[BaseRecord] = find(new BasicDBObject("_id", id))
 
   /**
   * Find a single document by a qry using a json value
@@ -294,7 +311,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   */
   def update(obj: BaseRecord, update: DBObject): Unit = {
     val query = (BasicDBObjectBuilder.start
-                      .add("_id", obj.id)
+                      .add("_id", idValue(obj))
                       .get)
     this.update(query, update)
   }
