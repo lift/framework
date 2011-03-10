@@ -20,6 +20,7 @@ package snippet
 
 import scala.xml._
 import net.liftweb.http._
+import net.liftweb.common._
 
 /**
  * The Loc snippet is used to render localized content.
@@ -64,8 +65,8 @@ object Loc extends DispatchSnippet {
      
   def render(locId: String, kids: NodeSeq) : NodeSeq = {
     S.loc(locId) openOr 
-    (S.attr.~("locid").map(_.text) match {
-      case Some(id) => S.loc(id, kids)
+    (S.attr("locid") match {
+      case Full(id) => S.loc(id, kids)
       case _ => S.loc(kids.text, kids)
     })
   }

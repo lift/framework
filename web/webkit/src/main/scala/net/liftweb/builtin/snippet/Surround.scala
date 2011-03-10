@@ -32,14 +32,16 @@ object Surround extends DispatchSnippet {
   }
 
   def render(kids: NodeSeq) : NodeSeq =
-  (for {ctx <- S.session ?~ ("FIX"+"ME: Invalid session")
-        req <- S.request ?~ ("FIX"+"ME: Invalid request")
-    } yield {
-      val mainParam = (S.attr.~("at").map(_.text).
-                       getOrElse("main"), ctx.processSurroundAndInclude(PageName.get, kids))
-      val paramsMap = WithParamVar.get + mainParam
-      ctx.findAndMerge(S.attr.~("with"), paramsMap)
-    }) match {
+  (for {
+    ctx <- S.session ?~ ("FIX"+"ME: Invalid session")
+    req <- S.request ?~ ("FIX"+"ME: Invalid request")
+  } yield {
+    WithParamVar.doWith(Map()) {
+      val mainParam = (S.attr("at") openOr "main", ctx.processSurroundAndInclude(PageName.get, kids))
+        val paramsMap = WithParamVar.get + mainParam
+      ctx.findAndMerge(S.attr("with"), paramsMap)
+    }
+  }) match {
     case Full(x) => x
     case Empty => Comment("FIX"+ "ME: session or request are invalid")
     case Failure(msg, _, _) => Comment(msg)

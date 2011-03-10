@@ -32,11 +32,13 @@ object WithParam extends DispatchSnippet {
   }
 
   def render(kids: NodeSeq) : NodeSeq = {
-    (for {ctx <- S.session ?~ ("FIX"+"ME: Invalid session")
-          req <- S.request ?~ ("FIX"+"ME: Invalid request")
+    (for {
+      ctx <- S.session ?~ ("FIX"+"ME: Invalid session")
+      req <- S.request ?~ ("FIX"+"ME: Invalid request")
     } yield {
-       val name = S.attr.~("name").map(_.text).getOrElse("main")
-       WithParamVar(WithParamVar.get + (name -> ctx.processSurroundAndInclude(PageName.get, kids)))
+      val name: String = S.attr("name") openOr "main"
+      val body = ctx.processSurroundAndInclude(PageName.get, kids)
+       WithParamVar.atomicUpdate(_ + (name -> body))
        NodeSeq.Empty
     }) match {
       case Full(x) => x
