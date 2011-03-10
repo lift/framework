@@ -22,6 +22,7 @@ package field
 import java.util.Date
 
 import scala.collection.JavaConversions._
+import scala.xml.NodeSeq
 
 import common.{Box, Empty, Failure, Full}
 import json.JsonAST._
@@ -77,7 +78,7 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType](rec: OwnerTyp
     case other => setBox(Failure("Error parsing String into a JValue: "+in))
   }
 
-  def toForm = Empty // FIXME
+  def toForm: Box[NodeSeq] = Empty
 
   def asJValue = JArray(value.map(li => li.asInstanceOf[AnyRef] match {
     case x if primitive_?(x.getClass) => primitive2jvalue(x)
