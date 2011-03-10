@@ -1916,6 +1916,16 @@ for {
   def setVars[T](attr: MetaData)(f: => T): T = withAttrs(attr)(f)
 
   /**
+   * A function that will eagerly evaluate a template.
+   */
+  def eagerEval : NodeSeq => NodeSeq = ns => {
+    S.session match {
+      case Full(session) => session.processSurroundAndInclude("Eager Eval", ns)
+      case _ => ns
+    }
+  }
+
+  /**
    * Initialize the current request session if it's not already initialized.
    * Generally this is handled by Lift during request processing, but this
    * method is available in case you want to use S outside the scope
