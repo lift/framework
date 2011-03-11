@@ -13,14 +13,19 @@ Function 'read' returns an Applicative Functor, enabling parsing in an applicati
 Simple example
 --------------
 
-    case class Address(street: String, zipCode: String)
-    case class Person(name: String, age: Int, address: Address)
+    scala> import scalaz._
+    scala> import Scalaz._
+    scala> import net.liftweb.json.scalaz.JsonScalaz._
+    scala> import net.liftweb.json._
+
+    scala> case class Address(street: String, zipCode: String)
+    scala> case class Person(name: String, age: Int, address: Address)
   
-    scala> val json = JsonParser.parse(""" {"street": "Manhattan 2", "zip": "00223" } """)
-    scala> field[String]("zip")(json) <*> (field[String]("street")(json) map Address.curried)
+    scala> val json = parse(""" {"street": "Manhattan 2", "zip": "00223" } """)
+    scala> (field[String]("street")(json) |@| field[String]("zip")(json)) { Address }
     res0: Success(Address(Manhattan 2,00223))
 
-    scala> field[String]("zip")(json) <*> (field[String]("streets")(json) map Address.curried)
+    scala> (field[String]("streets")(json) |@| field[String]("zip")(json)) { Address }
     res1: Failure("no such field 'streets'")
 
 Notice the required explicit types when reading fields from JSON. The library comes with helpers which
