@@ -62,6 +62,17 @@ Download following jars:
 * http://scala-tools.org/repo-releases/net/liftweb/lift-json/XXX/lift-json-XXX.jar
 * http://mirrors.ibiblio.org/pub/mirrors/maven2/com/thoughtworks/paranamer/paranamer/2.1/paranamer-2.1.jar
 
+Extras
+------
+
+* [lift-json-ext](../json-ext)
+
+Support for Box, Enum, Joda-Time, ...
+
+* [lift-json-scalaz](../json-scalaz)
+
+Applicative style parsing with Scalaz
+
 Migration from older versions
 =============================
 
