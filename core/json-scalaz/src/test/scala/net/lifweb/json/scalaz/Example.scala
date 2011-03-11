@@ -6,9 +6,7 @@ import JsonScalaz._
 import net.liftweb.json._
 
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class ExampleTest extends Runner(Example) with JUnit
 object Example extends Specification {
 
   case class Address(street: String, zipCode: String)

@@ -6,9 +6,7 @@ import JsonScalaz._
 import net.liftweb.json._
 
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class ValidationExampleTest extends Runner(Example) with JUnit
 object ValidationExample extends Specification {
 
   case class Person(name: String, age: Int)

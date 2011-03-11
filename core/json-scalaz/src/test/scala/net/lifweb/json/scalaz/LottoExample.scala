@@ -6,9 +6,7 @@ import JsonScalaz._
 import net.liftweb.json._
 
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class LottoExampleTest extends Runner(Example) with JUnit
 object LottoExample extends Specification {
 
   case class Winner(winnerId: Long, numbers: List[Int])

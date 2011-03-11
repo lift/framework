@@ -6,9 +6,7 @@ import JsonScalaz._
 import net.liftweb.json._
 
 import org.specs.Specification
-import org.specs.runner.{Runner, JUnit}
 
-class TupleExampleTest extends Runner(TupleExample) with JUnit
 object TupleExample extends Specification {
   "Parse tuple from List" in {
     val json = JsonParser.parse(""" [1,2,3] """)
