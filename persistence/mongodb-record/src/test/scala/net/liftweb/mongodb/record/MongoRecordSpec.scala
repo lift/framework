@@ -47,7 +47,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
     } yield flavor + typeName + "Field").toList
 
     "introspect only the expected fields" in {
-      rec.fields().map(_.name).sortWith(_ < _) must_== allExpectedFieldNames.sortWith(_ < _)
+      rec.fields().map(_.name).filterNot(allExpectedFieldNames.contains(_)) must_== Nil
     }
 
     "correctly look up fields by name" in {
@@ -167,10 +167,18 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
   "MongoRecord" should {
     checkMongoIsRunning
 
+    val ssr1 = SubSubRecord.createRecord.name("SubSubRecord1")
+    val ssr2 = SubSubRecord.createRecord.name("SubSubRecord2")
+
     val sr1 = SubRecord.createRecord
       .name("SubRecord1")
-    val sr2 = SubRecord.createRecord
-      .name("SubRecord2")
+      .subsub(ssr1)
+      .subsublist(ssr1 :: ssr2 :: Nil)
+      .slist("s1" :: "s2" :: Nil)
+      .smap(Map("a" -> "s1", "b" -> "s2"))
+      .pattern(Pattern.compile("^Mo", Pattern.CASE_INSENSITIVE))
+
+    val sr2 = SubRecord.createRecord.name("SubRecord2")
 
     val fttr = FieldTypeTestRecord.createRecord
       //.mandatoryBinaryField()
@@ -218,13 +226,59 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
     val ljson = Printer.compact(render(ltr.asJValue))
     val mjson = Printer.compact(render(mtr.asJValue))
 
+    val sr1Json =
+      JObject(List(
+        JField("name", JString("SubRecord1")),
+        JField("subsub", JObject(List(
+          JField("name", JString("SubSubRecord1"))
+        ))),
+        JField("subsublist", JArray(List(
+          JObject(List(JField("name", JString("SubSubRecord1")))),
+          JObject(List(JField("name", JString("SubSubRecord2"))))
+        ))),
+        JField("when", JObject(List(
+          JField("$dt", JString(srtr.meta.formats.dateFormat.format(sr1.when.value)))
+        ))),
+        JField("slist", JArray(List(JString("s1"), JString("s2")))),
+        JField("smap", JObject(List(
+          JField("a", JString("s1")),
+          JField("b", JString("s2"))
+        ))),
+        JField("oid", JObject(List(JField("$oid", JString(sr1.oid.value.toString))))),
+        JField("pattern", JObject(List(
+          JField("$regex", JString(sr1.pattern.value.pattern)),
+          JField("$flags", JInt(sr1.pattern.value.flags))
+        ))),
+        JField("uuid", JObject(List(JField("$uuid", JString(sr1.uuid.value.toString)))))
+      ))
+
+    val sr2Json =
+      JObject(List(
+        JField("name", JString("SubRecord2")),
+        JField("subsub", JObject(List(
+          JField("name", JString(""))
+        ))),
+        JField("subsublist", JArray(List())),
+        JField("when", JObject(List(
+          JField("$dt", JString(srtr.meta.formats.dateFormat.format(sr2.when.value)))
+        ))),
+        JField("slist", JArray(List())),
+        JField("smap", JObject(List())),
+        JField("oid", JObject(List(JField("$oid", JString(sr2.oid.value.toString))))),
+        JField("pattern", JObject(List(
+          JField("$regex", JString(sr2.pattern.value.pattern)),
+          JField("$flags", JInt(sr2.pattern.value.flags))
+        ))),
+        JField("uuid", JObject(List(JField("$uuid", JString(sr2.uuid.value.toString)))))
+      ))
+
     val srtrJson = JObject(List(
       JField("_id", JObject(List(JField("$oid", JString(srtr.id.toString))))),
-      JField("mandatoryBsonRecordField", JObject(List(JField("name", JString("SubRecord1"))))),
+      JField("mandatoryBsonRecordField", sr1Json),
       JField("legacyOptionalBsonRecordField", JNothing),
       JField("mandatoryBsonRecordListField", JArray(List(
-        JObject(List(JField("name", JString("SubRecord1")))),
-        JObject(List(JField("name", JString("SubRecord2"))))
+        sr1Json,
+        sr2Json
       ))),
       JField("legacyOptionalBsonRecordListField", JArray(List()))
     ))
@@ -239,6 +293,15 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       fttrFromDb foreach { tr =>
         tr mustEqual fttr
       }
+    }
+
+    "delete record properly" in {
+      checkMongoIsRunning
+
+      fttr.save
+      FieldTypeTestRecord.find(fttr.id) must notBeEmpty
+      fttr.delete_!
+      FieldTypeTestRecord.find(fttr.id) must beEmpty
     }
 
     "save and retrieve Mongo type fields" in {
@@ -315,7 +378,6 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       ))
 
       mtr.asJValue mustEqual JObject(List(
-        JField("_id", JObject(List(JField("$oid", JString(mtr.id.toString))))),
         JField("_id", JObject(List(JField("$oid", JString(mtr.id.toString))))),
         JField("mandatoryStringMapField", JObject(List(
           JField("a", JString("abc")),

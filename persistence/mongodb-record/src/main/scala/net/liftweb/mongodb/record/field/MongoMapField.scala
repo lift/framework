@@ -30,7 +30,7 @@ import net.liftweb.util.Helpers.tryo
 
 import com.mongodb._
 
-class MongoMapField[OwnerType <: MongoRecord[OwnerType], MapValueType](rec: OwnerType)
+class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: OwnerType)
   extends Field[Map[String, MapValueType], OwnerType] with MandatoryTypedField[Map[String, MapValueType]]
   with MongoFieldFlavor[Map[String, MapValueType]] {
 

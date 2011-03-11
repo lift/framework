@@ -32,7 +32,7 @@ import net.liftweb.util.Helpers._
 /*
 * Since MongoDB only stores UTC dates, Calendar data is not necessary.
 */
-class DateField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
+class DateField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
   extends Field[Date, OwnerType]
   with MandatoryTypedField[Date]
 {

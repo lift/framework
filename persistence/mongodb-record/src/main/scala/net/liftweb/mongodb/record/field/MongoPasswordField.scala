@@ -43,7 +43,7 @@ object MongoPasswordField {
   def encrypt(s: String, salt: String) = hash("{"+s+"} salt={" + salt + "}")
 }
 
-class MongoPasswordField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType, minLen: Int) extends JsonObjectField[OwnerType, Password](rec, Password) {
+class MongoPasswordField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType, minLen: Int) extends JsonObjectField[OwnerType, Password](rec, Password) {
 
   def this(rec: OwnerType) = {
     this(rec, 3)

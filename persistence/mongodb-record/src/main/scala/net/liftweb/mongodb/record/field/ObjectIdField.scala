@@ -34,7 +34,7 @@ import org.bson.types.ObjectId
 /*
 * Field for storing an ObjectId
 */
-class ObjectIdField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
+class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
   extends Field[ObjectId, OwnerType]
   with MandatoryTypedField[ObjectId]
 {

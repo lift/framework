@@ -26,7 +26,7 @@ import net.liftweb.mongodb.record._
 import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
 import net.liftweb.util.Helpers.tryo
 
-class PatternField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
+class PatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
   extends Field[Pattern, OwnerType]
   with MandatoryTypedField[Pattern]
 {

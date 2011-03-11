@@ -37,7 +37,7 @@ import org.bson.types.ObjectId
 * List field. Compatible with most object types,
 * including Pattern, ObjectId, Date, and UUID.
 */
-class MongoListField[OwnerType <: MongoRecord[OwnerType], ListType](rec: OwnerType)
+class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType](rec: OwnerType)
   extends Field[List[ListType], OwnerType]
   with MandatoryTypedField[List[ListType]]
   with MongoFieldFlavor[List[ListType]]
@@ -112,14 +112,14 @@ class MongoListField[OwnerType <: MongoRecord[OwnerType], ListType](rec: OwnerTy
 * List of Dates. Use MongListField[OwnerType, Date] instead.
 */
 @deprecated("Use MongListField[OwnerType, Date] instead")
-class MongoDateListField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
+class MongoDateListField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
   extends MongoListField[OwnerType, Date](rec: OwnerType) {
 }
 
 /*
 * List of JsonObject case classes
 */
-class MongoJsonObjectListField[OwnerType <: MongoRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
+class MongoJsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
   (rec: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
   extends MongoListField[OwnerType, JObjectType](rec: OwnerType) {
 

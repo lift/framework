@@ -31,7 +31,7 @@ import com.mongodb._
 import scala.xml._
 
 /** Field that contains an entire record represented as an inline object value. Inspired by JSONSubRecordField */
-class BsonRecordField[OwnerType <: MongoRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
+class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
                         (rec: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
   extends Field[SubRecordType, OwnerType]
   with MandatoryTypedField[SubRecordType]
@@ -75,7 +75,7 @@ class BsonRecordField[OwnerType <: MongoRecord[OwnerType], SubRecordType <: Bson
 /*
  * List of BsonRecords
  */
-class BsonRecordListField[OwnerType <: MongoRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
+class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
   (rec: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])
   extends MongoListField[OwnerType, SubRecordType](rec: OwnerType) {
 

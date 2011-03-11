@@ -298,14 +298,36 @@ class SubRecord extends BsonRecord[SubRecord] {
   def meta = SubRecord
 
   object name extends StringField(this, 12)
+  object subsub extends BsonRecordField(this, SubSubRecord)
+  object subsublist extends BsonRecordListField(this, SubSubRecord)
+  object when extends DateField(this)
+  object slist extends MongoListField[SubRecord, String](this)
+  object smap extends MongoMapField[SubRecord, String](this)
+  object oid extends ObjectIdField(this)
+  object pattern extends PatternField(this)
+  object uuid extends UUIDField(this)
 
   override def equals(other: Any): Boolean = other match {
-    case that:SubRecord =>
-      this.name.value == that.name.value
+    case that:SubRecord => this.toString == that.toString
     case _ => false
   }
 }
 object SubRecord extends SubRecord with BsonMetaRecord[SubRecord] {
+  override def formats = allFormats
+}
+
+class SubSubRecord extends BsonRecord[SubSubRecord] {
+  def meta = SubSubRecord
+
+  object name extends StringField(this, 12)
+
+  override def equals(other: Any): Boolean = other match {
+    case that:SubSubRecord =>
+      this.name.value == that.name.value
+    case _ => false
+  }
+}
+object SubSubRecord extends SubSubRecord with BsonMetaRecord[SubSubRecord] {
   override def formats = allFormats
 }
 
@@ -323,12 +345,7 @@ class SubRecordTestRecord extends MongoRecord[SubRecordTestRecord] with MongoId[
   }
 
   override def equals(other: Any): Boolean = other match {
-    case that:SubRecordTestRecord =>
-      this.id == that.id &&
-      this.mandatoryBsonRecordField.value == that.mandatoryBsonRecordField.value &&
-      this.legacyOptionalBsonRecordField.valueBox == that.legacyOptionalBsonRecordField.valueBox &&
-      this.mandatoryBsonRecordListField.value == that.mandatoryBsonRecordListField.value &&
-      this.legacyOptionalBsonRecordListField.valueBox == that.legacyOptionalBsonRecordListField.valueBox
+    case that:SubRecordTestRecord => this.toString == that.toString
     case _ => false
   }
 
