@@ -17,7 +17,7 @@
 package net.liftweb
 package json
 
-/** Fast imperative parser.
+/** JSON parser.
  */
 object JsonParser {
   import java.io._
