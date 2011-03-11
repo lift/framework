@@ -70,7 +70,7 @@ trait Types {
     case x => UnexpectedJSONError(x, classOf[JObject]).fail.liftFailNel
   }
 
-  def validate[A: JSONR](name: String): Kleisli[Result, JValue, A] = kleisli(field(name))
+  def validate[A: JSONR](name: String): Kleisli[Result, JValue, A] = kleisli(field[A](name))
 
   def makeObj(fields: Traversable[(String, JValue)]): JObject = 
     JObject(fields.toList.map { case (n, v) => JField(n, v) })
