@@ -50,7 +50,7 @@ Example which adds a new type class instance
            }
 
     scala> val p = JsonParser.parse(""" {"name":"joe","age":34,"address":{"street": "Manhattan 2", "zip": "00223" }} """)
-    scala> from(p, Person)(field("name"), field("age"), field("address"))
+    scala> Person.applyJSON(field("name"), field("age"), field("address"))(p)
     res0: Success(Person(joe,34,Address(Manhattan 2,00223)))
 
 Validation
