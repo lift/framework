@@ -65,11 +65,11 @@ Download following jars:
 Extras
 ------
 
-* [lift-json-ext](../json-ext)
+* [lift-json-ext](https://github.com/lift/framework/tree/master/core/json-ext)
 
 Support for Box, Enum, Joda-Time, ...
 
-* [lift-json-scalaz](../json-scalaz)
+* [lift-json-scalaz](https://github.com/lift/framework/tree/master/core/json-scalaz)
 
 Applicative style parsing with Scalaz
 
