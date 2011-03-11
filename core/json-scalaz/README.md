@@ -4,9 +4,11 @@ Scalaz support for Lift JSON
 This project adds a type class to parse JSON:
 
     trait JSON[A] {
-      def read(json: JValue): ValidationNEL[Error, A]
+      def read(json: JValue): Result[A]
       def write(value: A): JValue
     }
+
+    type Result[A] = ValidationNEL[Error, A]
 
 Function 'read' returns an Applicative Functor, enabling parsing in an applicative style.
 
