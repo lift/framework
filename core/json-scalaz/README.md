@@ -72,6 +72,6 @@ composition >=>.
 Links
 -----
 
-* [More examples](https://github.com/lift/framework/tree/joni_json_scalaz/core/json-scalaz/src/test/scala/net/lifweb/json/scalaz)
+* [More examples](https://github.com/lift/framework/tree/master/core/json-scalaz/src/test/scala/net/lifweb/json/scalaz)
 * [Scalaz](http://code.google.com/p/scalaz/)
 * [Kleisli composition](http://www.haskell.org/hoogle/?hoogle=%28a+-%3E+m+b%29+-%3E+%28b+-%3E+m+c%29+-%3E+%28a+-%3E+m+c%29)
