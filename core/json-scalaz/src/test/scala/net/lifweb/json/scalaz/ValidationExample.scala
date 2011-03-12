@@ -20,16 +20,17 @@ object ValidationExample extends Specification {
 
     val json = JsonParser.parse(""" {"name":"joe","age":17} """)
 
+    // Note 'apply _' is not needed on Scala 2.8.1 >=
     "fail when age is less than min age" in {
       // Age must be between 18 an 60
-      val person = Person.applyJSON(field("name"), validate[Int]("age") >=> min(18) >=> max(60))(json)
-      person.fail.toOption.get.list mustEqual List(UncategorizedError("min", "17 < 18", Nil))
+      val person = Person.applyJSON(field("name"), validate[Int]("age") >=> min(18) >=> max(60) apply _)
+      person(json).fail.toOption.get.list mustEqual List(UncategorizedError("min", "17 < 18", Nil))
     }
 
     "pass when age within limits" in {
       // Age must be between 16 an 60
-      val person = Person.applyJSON(field("name"), validate[Int]("age") >=> min(16) >=> max(60))(json)
-      person mustEqual Success(Person("joe", 17))
+      val person = Person.applyJSON(field("name"), validate[Int]("age") >=> min(16) >=> max(60) apply _)
+      person(json) mustEqual Success(Person("joe", 17))
     }
   }
 

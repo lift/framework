@@ -18,12 +18,13 @@ object LottoExample extends Specification {
   def len(x: Int) = (xs: List[Int]) => 
     if (xs.length != x) Fail("len", xs.length + " != " + x) else xs.success
 
+  // Note 'apply _' is not needed on Scala 2.8.1 >=
   implicit def winnerJSON: JSONR[Winner] =
-    Winner.applyJSON(field("winner-id"), validate[List[Int]]("numbers") >=> len(6))
+    Winner.applyJSON(field("winner-id"), validate[List[Int]]("numbers") >=> len(6) apply _)
 
   implicit def lottoJSON: JSONR[Lotto] =
     Lotto.applyJSON(field("id")
-                  , validate[List[Int]]("winning-numbers") >=> len(6)
+                  , validate[List[Int]]("winning-numbers") >=> len(6) apply _
                   , field("winners")
                   , field("draw-date"))
   
