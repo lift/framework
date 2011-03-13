@@ -31,7 +31,15 @@ import Helpers.tryo
  */
 object ToHeadUsages extends Specification("ToHeadUsages Specification") {
 
-  private val host_ = System.getProperty("net.liftweb.webapptest.toheadusages.host", InetAddress.getLocalHost.getHostAddress)
+  private def reachableLocalAddress = {
+    val l = InetAddress.getLocalHost
+    tryo { l.isReachable(50) } match {
+      case Full(true) => l.getHostAddress
+      case _          => "127.0.0.1"
+    }
+  }
+
+  private val host_ = System.getProperty("net.liftweb.webapptest.oneshot.host", reachableLocalAddress)
   private val port_ = System.getProperty("net.liftweb.webapptest.toheadusages.port", "8282").toInt
 
   private lazy val baseUrl_ = new URL("http://%s:%s".format(host_, port_))

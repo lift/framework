@@ -49,17 +49,19 @@ final class JettyTestServer(baseUrlBox: Box[URL]) {
 
   def urlFor(path: String) = baseUrl + path
 
-  def start() = server_.start()
+  def start() {
+    server_.start()
+  }
 
-  def stop() = {
+  def stop() {
     context_.setShutdown(true)
     server_.stop()
     server_.join()
   }
 
-  def running() = server_.isRunning
+  def running = server_.isRunning
 
-  def browse(startPath: String, f:(WebTester) => Unit) = {
+  def browse(startPath: String, f:(WebTester) => Unit) {
     val wc = new WebTester()
     try {
       wc.setScriptingEnabled(false)
@@ -67,7 +69,7 @@ final class JettyTestServer(baseUrlBox: Box[URL]) {
       f(wc)
     } catch {
       case exc: AssertionFailedError => {
-        System.err.println("server response: ", wc.getServerResponse())
+        System.err.println("server response: ", wc.getServerResponse)
         throw exc
       }
     } finally {

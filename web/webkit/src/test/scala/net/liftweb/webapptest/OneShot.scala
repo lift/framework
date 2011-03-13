@@ -32,7 +32,15 @@ import snippet.Counter
 
 object OneShot extends Specification with RequestKit {
 
-  private val host_ = System.getProperty("net.liftweb.webapptest.oneshot.host", InetAddress.getLocalHost.getHostAddress)
+  private def reachableLocalAddress = {
+    val l = InetAddress.getLocalHost
+    tryo { l.isReachable(50) } match {
+      case Full(true) => l.getHostAddress
+      case _          => "127.0.0.1"
+    }
+  }
+
+  private val host_ = System.getProperty("net.liftweb.webapptest.oneshot.host", reachableLocalAddress)
   private val port_ = System.getProperty("net.liftweb.webapptest.oneshot.port", "8181").toInt
 
   private lazy val baseUrl_ = new URL("http://%s:%s".format(host_, port_))
@@ -107,20 +115,20 @@ object OneShot extends Specification with RequestKit {
       val tmp = LiftRules.sessionCreator
       try {
         LiftRules.sessionCreator = LiftRules.sessionCreatorForMigratorySessions
-        
-        val bx = 
+
+        val bx =
           for {
             resp <- get("/cv_int/33")
             resp2 <- resp.get("/cv_int")
-            xml <- resp2.xml
             respx <- resp.get("/cv_str/meow")
             resp3 <- resp.get("/cv_str")
             xml <- resp2.xml
             xml2 <- resp3.xml
           } yield (xml, xml2)
-            
-            bx.open_!._1 must ==/ (<int>33</int>).when(jetty.running)
-              bx.open_!._2 must ==/ (<str>meow</str>).when(jetty.running)
+
+        bx.open_!._1 must ==/(<int>33</int>).when(jetty.running)
+        bx.open_!._2 must ==/(<str>meow</str>).when(jetty.running)
+
       } finally {
         LiftRules.sessionCreator = tmp
       }
@@ -141,9 +149,8 @@ object OneShot extends Specification with RequestKit {
         in <- (span \\ "input")
         name <- in \ "@name"
       } {
-
-        resp.get("/oneshot?"+urlEncode(name.text)+"=3")
-        resp.get("/oneshot?"+urlEncode(name.text)+"=3")
+        resp.get("/oneshot?" + urlEncode(name.text) + "=3")
+        resp.get("/oneshot?" + urlEncode(name.text) + "=3")
       }
 
       Counter.x must be_==(1).when(jetty.running)
@@ -159,8 +166,8 @@ object OneShot extends Specification with RequestKit {
         in <- (span \\ "input")
         name <- in \ "@name"
       } {
-        resp.get("/oneshot?"+urlEncode(name.text)+"=3")
-        resp.get("/oneshot?"+urlEncode(name.text)+"=3")
+        resp.get("/oneshot?" + urlEncode(name.text) + "=3")
+        resp.get("/oneshot?" + urlEncode(name.text) + "=3")
       }
 
 
