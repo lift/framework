@@ -66,7 +66,7 @@ trait SHtml {
   /**
    * An attribute that can be applied to an element.  Typically,
    * this will be a key-value pair, but there is a class of HTML5
-   * attributes that should be similated in JavaScript
+   * attributes that should be similated in JavaScript.  
    */
   trait ElemAttr extends Function1[Elem, Elem] {
     /**
@@ -97,7 +97,9 @@ trait SHtml {
     new ApplicableElem(e)
 
   /**
-   * Any old attribute
+   * Any old attribute.  You should not explicitly construct one of these,
+   * but rather use "name" -> "value" and let the implicit conversion
+   * take care of making a BasicElemAttr.
    */
   final case class BasicElemAttr(name: String, value: String) extends ElemAttr {
     /**

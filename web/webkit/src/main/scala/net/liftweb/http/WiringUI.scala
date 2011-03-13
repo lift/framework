@@ -173,7 +173,7 @@ object WiringUI {
    *
    * @param cell the cell to associate with
    * 
-   * @return the mutated NodeSeq (an id attribute may be added if
+   * @return a function that will mutate the NodeSeq (an id attribute may be added if
    * there's none already defined)
    */
   def asText[T](cell: Cell[T]): NodeSeq => NodeSeq = 
@@ -215,7 +215,7 @@ object WiringUI {
    * being rendered (you might want to skip effects for the inital page load),
    * and the third parameter is the SetHtml JavaScript code.
    * 
-   * @return the mutated NodeSeq (an id attribute may be added if
+   * @return a function that will mutate the NodeSeq (an id attribute may be added if
    * there's none already defined)
    */
   def asText[T](cell: Cell[T], jsEffect: (String, Boolean, JsCmd) => JsCmd): NodeSeq => NodeSeq = 
