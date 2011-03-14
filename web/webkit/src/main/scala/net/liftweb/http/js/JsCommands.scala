@@ -410,6 +410,9 @@ object JE {
 
   /**
    * A JavaScript method that takes parameters
+   *
+   * JsFunc is very similar to Call but only the latter will be implicitly converted to a JsCmd.
+   * @see Call
    */
   case class JsFunc(method: String, params: JsExp*) extends JsMember {
     def toJsCmd = params.map(_.toJsCmd).mkString(method + "(", ", ", ")")
@@ -465,6 +468,12 @@ object JE {
     def toJsCmd = "true"
   }
 
+  /**
+   * A JavaScript method that takes parameters
+   *
+   * Call is very similar to JsFunc but only the former will be implicitly converted to a JsCmd.
+   * @see JsFunc
+   */
   case class Call(function: String, params: JsExp*) extends JsExp {
     def toJsCmd = function + "(" + params.map(_.toJsCmd).mkString(",") + ")"
   }
