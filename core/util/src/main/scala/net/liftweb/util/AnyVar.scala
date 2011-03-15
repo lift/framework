@@ -32,9 +32,9 @@ trait HasCalcDefaultValue[T] {
 }
 
 trait MemoizeVar[K, V]  {
-  protected def coreVar: AnyVar[LRU[K, V], _]
+  protected def coreVar: AnyVar[LRU[K, Box[V]], _]
 
-  protected def buildLRU = new LRU[K, V](cacheSize)
+  protected def buildLRU = new LRU[K, Box[V]](cacheSize)
 
   /**
    * The number of entries that will be memoized
@@ -45,9 +45,27 @@ trait MemoizeVar[K, V]  {
 
   def apply(key: K, dflt: => V): V = get(key, dflt)
 
+  /**
+   * Use the MemoizeVar in an extractor
+   */
+  def unapply(key: K): Option[V] = get(key)
+
   def get(key: K): Box[V] = coreVar.doSync {
-    coreVar.is.get(key)
+    coreVar.is.get(key) match {
+      case Full(x) => x
+      case _ => {
+        val ret = defaultFunction(key)
+        coreVar.is.update(key, ret)
+        ret
+      }
+    }
   }
+
+  /**
+   * Override this method if there's a default way of calculating
+   * this MemoizedVar (for example, a database lookup)
+   */
+  protected def defaultFunction(key: K): Box[V] = Empty
 
   def get(key: K, dflt: => V): V = coreVar.doSync {
     get(key) match {
@@ -62,7 +80,7 @@ trait MemoizeVar[K, V]  {
   protected def __nameSalt: String = ""
 
   def set(key: K, value: V): Unit = coreVar.doSync {
-    coreVar.is.update(key, value)
+    coreVar.is.update(key, Full(value))
   }
 
   def update(key: K, value: V): Unit = set(key,value)

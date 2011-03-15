@@ -560,7 +560,7 @@ object AnyVar {
  * Memoize a value for the duration of the user's session
  */
 abstract class SessionMemoize[K, V] extends MemoizeVar[K, V] {
-  protected object coreVar extends SessionVar[LRU[K, V]](buildLRU) {
+  protected object coreVar extends SessionVar[LRU[K, Box[V]]](buildLRU) {
     override def __nameSalt = SessionMemoize.this.__nameSalt
   }
 }
@@ -569,7 +569,16 @@ abstract class SessionMemoize[K, V] extends MemoizeVar[K, V] {
  * Memoize a value for the duration of the current request (and subsequent Ajax requests made as a result of viewing the page)
  */
 abstract class RequestMemoize[K, V] extends MemoizeVar[K, V] {
-  protected object coreVar extends RequestVar[LRU[K, V]](buildLRU) {
+  protected object coreVar extends RequestVar[LRU[K, Box[V]]](buildLRU) {
     override def __nameSalt = RequestMemoize.this.__nameSalt
+  }
+}
+
+/**
+ * Memoize a value for the duration of the current HTTP request
+ */
+abstract class TransientRequestMemoize[K, V] extends MemoizeVar[K, V] {
+  protected object coreVar extends TransientRequestVar[LRU[K, Box[V]]](buildLRU) {
+    override def __nameSalt = TransientRequestMemoize.this.__nameSalt
   }
 }
