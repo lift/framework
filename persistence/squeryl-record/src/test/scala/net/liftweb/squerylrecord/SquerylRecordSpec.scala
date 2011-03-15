@@ -18,6 +18,7 @@ import org.specs.Specification
 import record.{BaseField, Record}
 import RecordTypeMode._
 import MySchema.{TestData => td, _}
+import java.util.Calendar
 
 
 /**
@@ -199,6 +200,89 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
         loadedCompanies.size must beGreaterThanOrEqualTo(1)
       }
     }
+
+    forExample("support associate with one-to-many relations") >> {
+      transactionWithRollback {
+        //td.c3.employees.associate(td.e2)
+        //td.e2.company.id must_== td.c3.id
+      }
+    }
+    
+    forExample("support many to many relations") >> {
+      transactionWithRollback {
+        td.e1.rooms must haveSize(2)
+      }
+    }
+
+    forExample("support date/time queries") >> {
+      transaction {
+	val c1 = from(companies)(c =>
+	  where (c.created <= Calendar.getInstance)
+	  select(c))
+	c1.size must beGreaterThan(1)
+
+	val c2 = from(companies)(c =>
+	  where (c.created <= Calendar.getInstance.getTime)
+	  select(c))
+	c2.size must beGreaterThan(1)
+      }
+    }
+
+    forExample("support inner queries") >> {
+      import record.field._
+
+      transaction {
+        // Should work with the ID function (returns a long):
+        val companyId: Long = from(companies)(c => where(c.id in 
+            from(companies)(c2 => where(c2.id === td.c1.id) select(c2.id))) 
+            select(c.id)).single
+        companyId must_== td.c1.id
+        
+        // It should also be possible to select the ID field directly:
+        val companyIdField: LongField[Company] = from(companies)(c => where(c.idField in 
+            from(companies)(c2 => where(c2.id === td.c1.id) select(c2.idField))) 
+            select(c.idField)).single
+        companyIdField.is must_== td.c1.id
+        
+        // Strings should also be selectable in inner queries
+        val companyIdByName: Long = from(companies)(c => where(c.name in 
+            from(companies)(c2 => where(c2.name === td.c1.name) select(c2.name)))
+            select(c.id)).single
+        companyIdByName must_== td.c1.id
+        
+        // ...And DateTime-Fields:
+        val companyIdByCreated: DateTimeField[Company] = from(companies)(c => where(c.created in 
+            from(companies)(c2 => where(c2.id === td.c1.id) select(c2.created)))
+            select(c.created)).single
+        companyIdByCreated.is must_== td.c1.created.is
+        
+        // Decimal Fields:
+        val empSalary: DecimalField[Employee] = from(employees)(e => where (e.salary in
+            from(employees)(e2 => where(e2.id === td.e1.id) select(e2.salary)))
+            select(e.salary)).single
+        empSalary.is must_== td.e1.salary.is
+           
+        // Email fields:
+        val empEmail: EmailField[Employee] = from(employees)(e => where (e.email in
+            from(employees)(e2 => where(e2.id === td.e1.id) select(e2.email)))
+            select(e.email)).single
+        empSalary.is must_== td.e1.salary.is
+        
+        // Boolean fields:
+        val empAdmin: BooleanField[Employee] = from(employees)(e => where (e.admin in
+            from(employees)(e2 => where(e2.id === td.e1.id) select(e2.admin)))
+            select(e.admin)).single
+        empAdmin.is must_== td.e1.admin.is
+        
+        // Enum fields:
+        val empRole: EnumNameField[_, _] = from(employees)(e => where (e.role in
+            from(employees)(e2 => where(e2.id === td.e1.id) select(e2.role)))
+            select(e.role)).single
+        empRole.is must_== td.e1.role.is 
+        
+      }
+    }
+
   }
 
   class TransactionRollbackException extends RuntimeException

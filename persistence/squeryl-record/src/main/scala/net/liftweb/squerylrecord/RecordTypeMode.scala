@@ -14,11 +14,12 @@
 package net.liftweb
 package squerylrecord
 
-import record.{ MandatoryTypedField, OptionalTypedField, TypedField }
+import record.{ MandatoryTypedField, OptionalTypedField, TypedField, Record}
+import record.field.{EnumNameField, OptionalEnumNameField, EnumField, OptionalEnumField}
 
-import org.squeryl.{ PrimitiveTypeMode, Schema }
+import org.squeryl.{ PrimitiveTypeMode, Schema, Query }
 import org.squeryl.dsl.{ BooleanExpression, DateExpression, EnumExpression, NumericalExpression, StringExpression, NonNumericalExpression }
-import org.squeryl.dsl.ast.{ SelectElementReference, SelectElement, ConstantExpressionNode }
+import org.squeryl.dsl.ast.{ SelectElementReference, SelectElement, ConstantExpressionNode, RightHandSideOfIn }
 import org.squeryl.internals.{ AttributeValidOnNonNumericalColumn, AttributeValidOnNumericalColumn, FieldReferenceLinker, OutMapper }
 
 import java.util.{ Calendar, Date }
@@ -125,12 +126,31 @@ trait RecordTypeMode extends PrimitiveTypeMode {
     }
   }
   
+  /** Needed for inner selects. The cast is possible here because the type is not 
+   * used in the in query. Only the AST of the query is needed. */
+  //implicit def queryStringField2QueryString[T <: TypedField[String]](q: Query[T]): Query[String] = q.asInstanceOf[Query[String]]
+  
   /** Needed for outer joins. */
   implicit def optionDateField2OptionDate(f: Option[TypedField[Calendar]]) = fieldReference match {
     case Some(e) => new SelectElementReference[Timestamp](e)(createOutMapperTimestampType) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
-    case None => new ConstantExpressionNode[Timestamp](getValue(f).map(field => new Timestamp(field.getTimeInMillis)).orNull) with BooleanExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
+    case None => new ConstantExpressionNode[Timestamp](getValue(f).map(field => new Timestamp(field.getTimeInMillis)).orNull) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
   }
+  
+  /** Needed for inner queries on date fields */
+  //implicit def dateField2Timestamp(f: MandatoryTypedField[Calendar]) = new java.sql.Timestamp(f.is.getTime.getTime)
+  //implicit def optionalDateField2Timestamp(f: OptionalTypedField[Calendar]): Option[java.sql.Timestamp] = f.is.map(d => new java.sql.Timestamp(d.getTime.getTime))
+  implicit def calendarFieldQuery2RightHandSideOfIn[F <: TypedField[Calendar]](q: org.squeryl.Query[F]) = new RightHandSideOfIn[Timestamp](q.ast)
 
+  /**
+   * Needed for queries on constant calendar values.
+   */
+  implicit def calendarToTimestampExpression(c: Calendar) = dateToTimestampExpression(c.getTime)
+
+  /**
+   * Neeed for queries on constant date values.
+   */
+  implicit def dateToTimestampExpression(d: java.util.Date) = new ConstantExpressionNode[Timestamp](new java.sql.Timestamp(d.getTime)) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
+  
   /** Conversion of mandatory Enum fields to Squeryl Expressions. */
   implicit def enum2EnumExpr[EnumType <: Enumeration](f: MandatoryTypedField[EnumType#Value]) = fieldReference match {
     case Some(e) => new SelectElementReference[Enumeration#Value](e)(e.createEnumerationMapper) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
@@ -148,6 +168,16 @@ trait RecordTypeMode extends PrimitiveTypeMode {
     case Some(e) => new SelectElementReference[Enumeration#Value](e)(e.createEnumerationMapper) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
     case None => new ConstantExpressionNode[Enumeration#Value](getValue(f).orNull) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
   }
+  
+  implicit def enumFieldQuery2RightHandSideOfIn[EnumType <: Enumeration, T <: Record[T]](q: org.squeryl.Query[EnumNameField[T, EnumType]]) = new RightHandSideOfIn[Enumeration#Value](q.ast)
+  
+  
+  /** Needed for inner queries on certain non-numerical fields: */
+  /*implicit def mandatoryTypedField2Value[T](f: MandatoryTypedField[T]): T = f.is
+  implicit def optionalTypedField2Value[T](f: OptionalTypedField[T]): Option[T] = f.is*/
+  
+  implicit def typedFieldQuery2RightHandSideOfIn[T, F <: TypedField[T]](q: org.squeryl.Query[F]) = new RightHandSideOfIn[T](q.ast)
+
 
   /**
    * Helper method for converting mandatory numerical fields to Squeryl Expressions.

@@ -15,7 +15,7 @@ package net.liftweb
 package squerylrecord
 
 import common.{Box, Full}
-import record.{BaseField, MetaRecord, Record, TypedField}
+import record.{BaseField, MetaRecord, Record, TypedField, OwnedField}
 import record.field._
 
 import org.squeryl.internals.{FieldMetaData, PosoMetaData, FieldMetaDataFactory}
@@ -151,6 +151,21 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
       "$").getField("MODULE$").get(null).asInstanceOf[MetaRecord[_]]
 
     () => metaRecord.createRecord.asInstanceOf[AnyRef]
+  }
+  
+  /**
+   * There needs to be a special handling for squeryl-record when single fields are selected.
+   * 
+   * The problem was that record fields reference the record itself and thus Squeryl was of the
+   * opinion that the whole record should be returned, as well as the selected field.
+   * It is described in detail in this bug report:
+   * https://www.assembla.com/spaces/liftweb/tickets/876-record-squeryl-selecting-unspecified-columns-in-generated-sql
+   * 
+   * By overriding this function, the reference to the record is excluded from
+   * the reference finding algorithm in Squeryl.
+   */
+  override def hideFromYieldInspection(o: AnyRef, f: Field): Boolean = {
+    o.isInstanceOf[OwnedField[_]] && isRecord(f.getType)
   }
 
 }
