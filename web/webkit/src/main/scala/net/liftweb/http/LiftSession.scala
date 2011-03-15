@@ -1054,7 +1054,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
               case _ => LiftRules.notFoundOrIgnore(request, Full(this))
             }
           } finally {
-            notices = S.getNotices
+            notices = S.getAllNotices
           }
 
         case _ =>
@@ -1121,7 +1121,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   }
 
   private[http] def handleRedirect(re: ResponseShortcutException, request: Req): LiftResponse = {
-    if (re.doNotices) notices = S.getNotices
+    if (re.doNotices) notices = S.getAllNotices
 
     re.response
   }
@@ -1175,7 +1175,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private[http] def checkRedirect(resp: LiftResponse): LiftResponse = resp match {
     case RedirectWithState(uri, state, cookies) =>
       state.msgs.foreach(m => S.message(m._1, m._2))
-      notices = S.getNotices
+      notices = S.getAllNotices
       RedirectResponse(attachRedirectFunc(uri, state.func), cookies: _*)
     case _ => resp
   }
