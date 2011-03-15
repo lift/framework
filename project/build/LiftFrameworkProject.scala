@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import java.util.Calendar
+import java.util.jar.Attributes.Name
 import sbt._
 import net.liftweb.sbt._
 
@@ -91,6 +93,9 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   class FrameworkProject(info: ProjectInfo, libs: ModuleID*) extends DefaultProject(info) with LiftDefaultProject {
 
     override def libraryDependencies = super.libraryDependencies ++ libs
+
+    override def packageOptions =
+      ManifestAttributes((new Name("Build-Time"), Calendar.getInstance.getTimeInMillis.toString)) :: super.packageOptions.toList
 
     // FIXME: Build fails with -Xcheckinit -Xwarninit
     override def compileOptions = super.compileOptions.toList -- compileOptions("-Xcheckinit", "-Xwarninit").toList
