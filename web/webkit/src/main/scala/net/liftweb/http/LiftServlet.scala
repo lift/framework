@@ -241,7 +241,7 @@ class LiftServlet extends Loggable {
       }
     } else
     // if the request is matched is defined in the stateless table, dispatch
-    if ({
+    if (S.statelessInit(req) {
       tmpStatelessHolder = NamedPF.applyBox(req,
         LiftRules.statelessDispatchTable.toList);
       tmpStatelessHolder.isDefined

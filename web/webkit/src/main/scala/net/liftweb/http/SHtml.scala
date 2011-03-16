@@ -310,7 +310,7 @@ trait SHtml {
                  latestElem.scope,
                  f(this)(latestKids) :_*)
 
-      def setHtml(): JsCmd = SetHtml(latestId, applyAgain())
+      def setHtml(): JsCmd = SetHtml(latestId, f(this)(latestKids))
     }
   }
 
