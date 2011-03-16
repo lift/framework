@@ -986,6 +986,14 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
   @volatile var throwOnOutOfScopeVarAccess: Boolean = false
 
   /**
+   * In Dev mode and Test mode, return a non-200 response code
+   * if there is an error on the page (one that would result in
+   * the red box with the error message being displayed).  This
+   * helps in automate testing
+   */
+  @volatile var devModeFailureResponseCodeOverride: Box[Int] = Empty
+
+  /**
    * Returns the HTTPContext
    */
   def context: HTTPContext = synchronized {_context}

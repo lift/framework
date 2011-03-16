@@ -979,30 +979,34 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * @returns a Box of LiftResponse with all the proper page rewriting
    */
   def processTemplate(template: Box[NodeSeq], request: Req, path: ParsePath, code: Int): Box[LiftResponse] = {
-    (template or findVisibleTemplate(path, request)).map { 
-      xhtmlBase =>
-        fullPageLoad.doWith(true) { // allow parallel snippets
-          val xhtml = LiftSession.checkForContentId(xhtmlBase)
-          // Phase 1: snippets & templates processing
-          val rawXml: NodeSeq = processSurroundAndInclude(PageName get, xhtml)
-          
-          // Make sure that functions have the right owner. It is important for this to
-          // happen before the merge phase so that in merge to have a correct view of
-          // mapped functions and their owners.
-          updateFunctionMap(S.functionMap, RenderVersion get, millis)
-          
-          // Phase 2: Head & Tail merge, add additional elements to body & head
-          val xml = merge(rawXml, request)
-          
-          notices = Nil
-          // Phase 3: Response conversion including fixHtml
-          LiftRules.convertResponse((xml, code),
-                                    S.getHeaders(LiftRules.defaultHeaders((xml, request))),
-                                    S.responseCookies,
-                                    request)
-        }
+    overrideResponseCode.doWith(Empty) {
+      (template or findVisibleTemplate(path, request)).map { 
+        xhtmlBase =>
+          fullPageLoad.doWith(true) { // allow parallel snippets
+            val xhtml = LiftSession.checkForContentId(xhtmlBase)
+            // Phase 1: snippets & templates processing
+            val rawXml: NodeSeq = processSurroundAndInclude(PageName get, xhtml)
+            
+            // Make sure that functions have the right owner. It is important for this to
+            // happen before the merge phase so that in merge to have a correct view of
+            // mapped functions and their owners.
+            updateFunctionMap(S.functionMap, RenderVersion get, millis)
+            
+            // Phase 2: Head & Tail merge, add additional elements to body & head
+            val xml = merge(rawXml, request)
+            
+            notices = Nil
+            // Phase 3: Response conversion including fixHtml
+            LiftRules.convertResponse((xml, overrideResponseCode.is openOr code),
+                                      S.getHeaders(LiftRules.defaultHeaders((xml, request))),
+                                      S.responseCookies,
+                                      request)
+          }
+      }
     }
   }
+
+  private object overrideResponseCode extends TransientRequestVar[Box[Int]](Empty)
 
   /**
    * If the sitemap entry for this Req is marked stateless,
@@ -1341,8 +1345,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     {
       for{
         f <- LiftRules.snippetFailedFunc.toList
-      }
+      } {
         f(LiftRules.SnippetFailure(page, snippetName, why))
+      }
+    
+      if (Props.devMode || Props.testMode) {
+        overrideResponseCode.set(LiftRules.devModeFailureResponseCodeOverride)
+      }
 
       Helpers.errorDiv(
         <div>Error processing snippet: <b>{snippetName openOr "N/A"}</b><br/> 
