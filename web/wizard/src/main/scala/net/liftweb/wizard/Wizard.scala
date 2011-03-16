@@ -145,9 +145,9 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
       
       if (!ajaxForms_?) {
         val localSnapshot = createSnapshot
-        val notices = S.getAllNotices
+        // val notices = S.getAllNotices
         S.seeOther(S.uri, () => {
-          S.appendNotices(notices)
+          // S.appendNotices(notices)
           localSnapshot.restore
         })
       }

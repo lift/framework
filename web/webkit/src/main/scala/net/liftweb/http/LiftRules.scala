@@ -1169,9 +1169,8 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
       List("Expires" -> d,
            "Date" -> d,
            "Cache-Control" ->
-           "no-cache; private; no-store",
-           "Pragma" -> "no-cache" /*,
-           "Keep-Alive" -> "timeout=3, max=993" */ )
+           "no-cache, private, no-store",
+           "Pragma" -> "no-cache" )
   }
 
   /**

@@ -454,7 +454,7 @@ private[http] object TransientRequestVarHandler extends CoreRequestVarHandler {
   type MyType = TransientRequestVar[_]
 }
 
-private[http] trait CoreRequestVarHandler extends Logger {
+private[http] trait CoreRequestVarHandler {
   type MyType <: HasLogUnreadVal
   
   private val logger = Logger(classOf[CoreRequestVarHandler])
@@ -492,8 +492,6 @@ private[http] trait CoreRequestVarHandler extends Logger {
       case null => 
         if (LiftRules.throwOnOutOfScopeVarAccess) {
           throw new IllegalAccessException("Access to Var outside a request or comet actor scope")
-        } else {
-          logger.warn("Access to Var outside a request or comet actor scope")
         }
         None
       case x => Full(x)

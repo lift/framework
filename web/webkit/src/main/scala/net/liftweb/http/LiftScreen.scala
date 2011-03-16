@@ -396,7 +396,7 @@ trait AbstractScreen extends Factory {
         case AFilter(f) => f
       }.toList
 
-      override def is = underlying.is
+      override def is = underlying.get
       override def get = underlying.get
       override def set(v: T) = underlying.set(setFilter.foldLeft(v)((v, f) => f(v)))
 
@@ -461,7 +461,7 @@ trait AbstractScreen extends Factory {
         case AFilter(f) => f
       }.toList
 
-      override def is = underlying.open_!.is
+      override def is = underlying.open_!.get
       override def get = underlying.open_!.get
       override def set(v: T) = underlying.open_!.set(setFilter.foldLeft(v)((v, f) => f(v)))
 
@@ -789,7 +789,7 @@ trait AbstractScreen extends Factory {
 
 trait ScreenWizardRendered {
   protected def wrapInDiv(in: NodeSeq): Elem = 
-    <div style="display: inline" id={FormGUID.is}>{in}</div>
+    <div style="display: inline" id={FormGUID.get}>{in}</div>
   
   protected def renderAll(currentScreenNumber: Box[NodeSeq],
                           screenCount: Box[NodeSeq],
@@ -918,7 +918,7 @@ trait ScreenWizardRendered {
         snapshot.restore();
         val res = cancelId._2() // WizardRules.deregisterWizardSession(CurrentSession.is)
         if (!ajax_?) {
-          S.seeOther(Referer.is)
+          S.seeOther(Referer.get)
         }
         res
       })}</form>
@@ -996,9 +996,9 @@ trait ScreenWizardRendered {
 
   /**
    * What should be done at the end of an Ajax session.  By
-   * default, RedirectTo(Referer.is)
+   * default, RedirectTo(Referer.get)
    */
-  protected def calcAjaxOnDone: JsCmd = RedirectTo(Referer.is)
+  protected def calcAjaxOnDone: JsCmd = RedirectTo(Referer.get)
 
   /**
    * Should all instances of this Wizard or Screen unless
@@ -1019,9 +1019,9 @@ trait ScreenWizardRendered {
 
   protected def redirectBack(): JsCmd = {
     if (ajaxForms_?) {
-      AjaxOnDone.is
+      AjaxOnDone.get
     } else {
-      S.seeOther(Referer.is)
+      S.seeOther(Referer.get)
     }
   }
 
@@ -1032,7 +1032,7 @@ trait ScreenWizardRendered {
    * If the ajax=true attribute is present on the original snippet
    * invocation, the forms will be ajax.
    */
-  protected def ajaxForms_? : Boolean = Ajax_?.is
+  protected def ajaxForms_? : Boolean = Ajax_?.get
 }
 
 
@@ -1095,8 +1095,8 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
   }
 
   protected def createSnapshot = {
-    val prev = PrevSnapshot.is
-    new ScreenSnapshot(ScreenVars.is, prev)
+    val prev = PrevSnapshot.get
+    new ScreenSnapshot(ScreenVars.get, prev)
   }
 
   /**
@@ -1142,28 +1142,28 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
 
 
     def set[T](name: String, from: ScreenVar[_], value: T): Unit =
-    ScreenVars.set(ScreenVars.is + (name -> (from, value)))
+    ScreenVars.set(ScreenVars.get + (name -> (from, value)))
 
     def clear(name: String): Unit =
-    ScreenVars.set(ScreenVars.is - name)
+    ScreenVars.set(ScreenVars.get - name)
   }
 
   def toForm: NodeSeq = {
-    Referer.is // touch to capture the referer
-    Ajax_?.is // capture the ajaxiness of these forms
-    FormGUID.is
+    Referer.get // touch to capture the referer
+    Ajax_?.get // capture the ajaxiness of these forms
+    FormGUID.get
 
     if (FirstTime) {
       FirstTime.set(false)
       localSetup()
 
       val localSnapshot = createSnapshot
-      val notices = S.getAllNotices
+      // val notices = S.getAllNotices
 
       // if we're not Ajax, 
       if (!ajaxForms_?) {
         S.seeOther(S.uri, () => {
-          S.appendNotices(notices)
+         // S.appendNotices(notices)
           localSnapshot.restore
         })
       }
