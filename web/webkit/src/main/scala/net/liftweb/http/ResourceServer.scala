@@ -46,8 +46,8 @@ object ResourceServer {
   }
 
   @volatile var pathRewriter: PartialFunction[List[String], List[String]] = rewriter orElse {
-    case "json.js" :: Nil => List("json2-min.js")
-    case "json2.js" :: Nil => List("json2-min.js")
+    case "json.js" :: Nil => List("yui", "json.js")
+    case "json2.js" :: Nil => List("yui", "json.js")
     case xs => xs
   }
 
