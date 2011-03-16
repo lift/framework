@@ -67,6 +67,10 @@ abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) 
   override protected def findFunc(name: String): Box[T] = S.session match {
     case Full(s) => s.get(name)
     case _ =>
+      if (LiftRules.throwOnOutOfScopeVarAccess) {
+        throw new IllegalAccessException("Access to SessionVar outside a request or comet actor scope")
+      }
+
       if (showWarningWhenAccessedOutOfSessionScope_?)
       logger.warn("Getting a SessionVar "+name+" outside session scope") // added warning per issue 188
 
@@ -89,6 +93,10 @@ abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) 
 
     case Full(s) => s.set(name, value)
     case _ =>
+      if (LiftRules.throwOnOutOfScopeVarAccess) {
+        throw new IllegalAccessException("Access to SessionVar outside a request or comet actor scope")
+      }
+
       if (showWarningWhenAccessedOutOfSessionScope_?)
       logger.warn("Setting a SessionVar "+name+" to "+value+" outside session scope") // added warning per issue 188
   }
@@ -132,10 +140,6 @@ abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) 
     val bn = name + VarConstants.initedSuffix
     S.session.flatMap(_.get(name)).isDefined || (S.session.flatMap(_.get(bn)) openOr false)
   }
-
-
-
-
 
   protected override def registerCleanupFunc(in: LiftSession => Unit): Unit =
   S.session.foreach(_.addSessionCleanup(in))
@@ -450,7 +454,7 @@ private[http] object TransientRequestVarHandler extends CoreRequestVarHandler {
   type MyType = TransientRequestVar[_]
 }
 
-private[http] trait CoreRequestVarHandler {
+private[http] trait CoreRequestVarHandler extends Logger {
   type MyType <: HasLogUnreadVal
   
   private val logger = Logger(classOf[CoreRequestVarHandler])
@@ -483,9 +487,21 @@ private[http] trait CoreRequestVarHandler {
     )
   }
 
+  private def backingStore: Box[HashMap[String, (MyType, Any, Boolean)]] =
+    vals.value match {
+      case null => 
+        if (LiftRules.throwOnOutOfScopeVarAccess) {
+          throw new IllegalAccessException("Access to Var outside a request or comet actor scope")
+        } else {
+          logger.warn("Access to Var outside a request or comet actor scope")
+        }
+        None
+      case x => Full(x)
+    }
+
   private[http] def get[T](name: String): Box[T] =
   for {
-    ht <- Box.legacyNullTest(vals.value)
+    ht <- backingStore
     (rvInstance,value,unread) <- ht.get(name)
   } yield {
     if (unread) {
@@ -496,11 +512,11 @@ private[http] trait CoreRequestVarHandler {
   }
 
   private[http] def set[T](name: String, from: MyType, value: T): Unit =
-  for (ht <- Box.legacyNullTest(vals.value))
+  for (ht <- backingStore)
   ht(name) = (from, value, true)
 
   private[http] def clear(name: String): Unit =
-  for (ht <- Box.legacyNullTest(vals.value))
+  for (ht <- backingStore)
   ht -= name
 
   private[http] def addCleanupFunc(f: Box[LiftSession] => Unit): Unit =

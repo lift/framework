@@ -980,6 +980,12 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
   @volatile private var _context: HTTPContext = _
 
   /**
+   * Should an exception be thrown on out of scope Session and RequestVar
+   * access.  By default, no.
+   */
+  @volatile var throwOnOutOfScopeVarAccess: Boolean = false
+
+  /**
    * Returns the HTTPContext
    */
   def context: HTTPContext = synchronized {_context}
