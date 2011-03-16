@@ -58,7 +58,7 @@ trait Loc[T] {
    * uses it.
    */
   protected lazy val cacheCssClassForMenuItem: Box[() => String] = 
-    params.flatMap {
+    allParams.flatMap {
       case a: Loc.MenuCssClass => List(a)
       case _ => Nil
     }.headOption.map(_.cssClass.func)
@@ -66,7 +66,8 @@ trait Loc[T] {
   /**
    * Given a value calculate the HREF to this item
    */
-  def calcHref(in: T): String = link.createPath(in)
+  def calcHref(in: T): String = appendQueryParameters(link.createPath(in),
+                                                      Full(in))
 
   def defaultValue: Box[T]
   
@@ -75,9 +76,29 @@ trait Loc[T] {
   */
   def paramValue: Box[T] = calcValue.flatMap(f => f()) or staticValue
 
-  private lazy val staticValue: Box[T] = params.collect{case Loc.Value(v: T) => v}.headOption
+  private lazy val staticValue: Box[T] = allParams.collect{case Loc.Value(v: T) => v}.headOption
   
   private lazy val calcValue: Box[() => Box[T]] = params.collect{case Loc.CalcValue(f: Function0[Box[T]]) => f}.headOption
+
+  /**
+   * Calculate the Query parameters
+   */
+  def queryParameters(what: Box[T]): List[(String, String)] =
+    addlQueryParams.flatMap(_()) ::: 
+  calcQueryParams.flatMap(_(what))
+
+  protected def appendQueryParams(what: T)(nodeSeq: NodeSeq): NodeSeq = 
+    Text(appendQueryParameters(nodeSeq.text, Full(what)))
+
+  protected def appendQueryParameters(in: String, what: Box[T]) = 
+    Helpers.appendQueryParameters(in, queryParameters(what))
+
+  private lazy val addlQueryParams: List[() => List[(String, String)]] =
+    params.collect{case lp: Loc.QueryParameters => lp.f}
+
+
+  private lazy val calcQueryParams: List[Box[T] => List[(String, String)]] =
+    params.collect{case lp: Loc.LocQueryParameters[T] => lp.f}
 
   /**
   * The current value of the cell: overrideValue or requestValue.is or defaultValue oe paramValue
@@ -88,7 +109,24 @@ trait Loc[T] {
 
   def params: List[Loc.LocParam[T]]
 
-  def allParams: List[Loc.LocParam[T]] = params ::: siteMap.globalParams
+  lazy val allParams: List[Loc.AnyLocParam] = 
+    (params.asInstanceOf[List[Loc.AnyLocParam]]) ::: 
+     parentParams :::
+     siteMap.globalParams
+
+  private def parentParams: List[Loc.AnyLocParam] = 
+    _menu match {
+      case null => Nil
+      case menu => menu._parent match {
+        case Full(parentMenu: Menu) => 
+          if (!params.collect{case i: Loc.UseParentParams => true}.isEmpty) {
+            parentMenu.loc.allParams.asInstanceOf[List[Loc.LocParam[Any]]]
+          } else {
+            Nil
+          }
+        case _ => Nil
+      }
+    }
 
   private lazy val _placeHolder_? = allParams.contains(Loc.PlaceHolder)
 
@@ -100,9 +138,13 @@ trait Loc[T] {
 
   def siteMap: SiteMap = _menu.siteMap
 
-  def createDefaultLink: Option[NodeSeq] = currentValue.flatMap(p => link.createLink(p)).toOption
+  def createDefaultLink: Option[NodeSeq] = 
+    currentValue.flatMap(p => link.createLink(p)).toOption.
+    map(ns => Text(appendQueryParameters(ns.text, currentValue)))
 
-  def createLink(in: T): Option[NodeSeq] = link.createLink(in).toOption
+
+  def createLink(in: T): Option[NodeSeq] = link.createLink(in).toOption.
+  map(ns => Text(appendQueryParameters(ns.text, Full(in))))
 
   override def toString = "Loc("+name+", "+link+", "+text+", "+params+")"
 
@@ -334,8 +376,10 @@ trait Loc[T] {
   }
 
   def supplimentalKidMenuItems: List[MenuItem] =
-    for (p <- childValues; l <- link.createLink(p))
-      yield MenuItem(
+    for {
+      p <- childValues
+      l <- link.createLink(p).map(appendQueryParams(p))
+    } yield MenuItem(
         text.text(p),
         l, Nil, false, false,
         allParams.flatMap {
@@ -351,9 +395,10 @@ trait Loc[T] {
   private[liftweb] def buildItem(kids: List[MenuItem], current: Boolean, path: Boolean): Box[MenuItem] =
     (calcHidden(kids), testAccess) match {
       case (false, Left(true)) => {
-          for {p <- currentValue
-               t <- link.createLink(p)}
-          yield new MenuItem(
+          for {
+            p <- currentValue
+            t <- link.createLink(p).map(appendQueryParams(p))
+          } yield new MenuItem(
             text.text(p),
             t, kids, current, path,
             allParams.flatMap {
@@ -591,6 +636,24 @@ object Loc {
    * will still be accessable.
    */
   case object Hidden extends AnyLocParam
+
+  /**
+   * If this is a submenu, use the parent Loc's params
+   */
+  case class UseParentParams() extends AnyLocParam
+
+  /**
+   * Calculate additional query parameters to add as a query
+   * string to the Loc
+   */
+  case class QueryParameters(f: () => List[(String, String)])
+
+  /**
+   * Calculate additional query parameters to add as a query
+   * string to the Loc
+   */
+  case class LocQueryParameters[T](f: Box[T] => List[(String, String)])
+
 
   /**
    * If the Loc has no children, hide the Loc itself
