@@ -511,8 +511,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                   val httpSession: Box[HTTPSession]) extends LiftMerge with Loggable with HowStateful {
   import TemplateFinder._
 
-  type AnyActor = {def !(in: Any): Unit}
-
   val sessionHtmlProperties: SessionVar[HtmlProperties] =
     new SessionVar[HtmlProperties](LiftRules.htmlProperties.vend(
       S.request openOr Req.nil
@@ -605,23 +603,23 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   def running_? = _running_?
 
-  private var cometList: List[(AnyActor, Req)] = Nil
+  private var cometList: List[(LiftActor, Req)] = Nil
 
   private[http] def breakOutComet(): Unit = {
     val cl = synchronized {cometList}
     cl.foreach(_._1 ! BreakOut())
   }
 
-  private[http] def cometForHost(hostAndPath: String): List[(AnyActor, Req)] =
+  private[http] def cometForHost(hostAndPath: String): List[(LiftActor, Req)] =
   synchronized {cometList}.filter {
     case (_, r) => r.hostAndPath == hostAndPath
   }
 
-  private[http] def enterComet(what: (AnyActor, Req)): Unit = synchronized {
+  private[http] def enterComet(what: (LiftActor, Req)): Unit = synchronized {
     cometList = what :: cometList
   }
 
-  private[http] def exitComet(what: AnyActor): Unit = synchronized {
+  private[http] def exitComet(what: LiftActor): Unit = synchronized {
     cometList = cometList.filterNot(_._1 eq what)
   }
 
