@@ -66,6 +66,7 @@ KeyedMetaMapper[Long, T] {
   def CookieName = "ext_id"
   type UserType <: UserIdAsString
 
+  /*
   private object myWrapper extends LoanWrapper {
     def apply[N](f: => N): N = {
       (recoverUserId, S.findCookie(CookieName)) match {
@@ -80,7 +81,7 @@ KeyedMetaMapper[Long, T] {
       }
       f
     }
-  }
+  }*/
 
   def logUserIdIn(uid: String): Unit
 
@@ -102,6 +103,27 @@ KeyedMetaMapper[Long, T] {
     }
   }
 
-  def requestLoans: List[LoanWrapper] = myWrapper :: Nil
+  // def requestLoans: List[LoanWrapper] = myWrapper :: Nil
+
+  /**
+   * This does the cookie to User lookup.  In Boot.scala:
+   * <code>
+    LiftRules.earlyInStateful.append(ExtendedSession.testCookieEarlyInStateful)
+   * </code>
+   */
+  def testCookieEarlyInStateful: Box[Req] => Unit = {
+    ignoredReq => {
+      (recoverUserId, S.findCookie(CookieName)) match {
+        case (Empty, Full(c)) =>
+          find(By(cookieId, c.value openOr "")) match {
+            case Full(es) if es.expiration.is < millis => es.delete_!
+            case Full(es) => logUserIdIn(es.userId)
+            case _ =>
+          }
+        
+        case _ =>
+      }
+    }
+  }
 }
 

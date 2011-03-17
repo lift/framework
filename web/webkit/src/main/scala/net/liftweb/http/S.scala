@@ -1495,6 +1495,16 @@ for {
       doAround(aroundRequest) {
         try {
           wrapQuery {
+            val req = this.request
+            session match {
+              case Full(s) if s.stateful_? =>
+                LiftRules.earlyInStateful.toList.foreach(_(req))
+              
+              case Full(s) => 
+                LiftRules.earlyInStateless.toList.foreach(_(req))
+
+              case _ => 
+            }
             f
           }
         } finally {

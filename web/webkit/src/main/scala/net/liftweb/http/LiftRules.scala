@@ -1118,6 +1118,17 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
    */
   val snippets = RulesSeq[SnippetPF]
 
+  /**
+   * Execute certain functions early in a Stateful Request
+   */
+  val earlyInStateful = RulesSeq[Box[Req] => Unit]
+
+  /**
+   * Execute certain functions early in a Stateful Request
+   */
+  val earlyInStateless = RulesSeq[Box[Req] => Unit]
+
+
   private var _configureLogging: () => Unit = _
 
   /**
