@@ -1490,6 +1490,14 @@ for {
    */
   def addCleanupFunc(f: () => Unit): Unit = postFuncs.is += f
 
+  /**
+   * Are we currently in the scope of a stateful request
+   */
+  def statefulRequest_? : Boolean = session match {
+    case Full(s) => s.stateful_?
+    case _ => false
+  }
+
   private def _nest2InnerInit[B](f: () => B): B = {
     _functionMap.doWith(new HashMap[String, AFuncHolder]) {
       doAround(aroundRequest) {
@@ -1516,8 +1524,11 @@ for {
 
   private def doStatefulRewrite(old: Req): Req = {
     // Don't even try to rewrite Req.nil
-    if (!old.path.partPath.isEmpty && (old.request ne null))
-      Req(old, S.sessionRewriter.map(_.rewrite) ::: LiftRules.statefulRewrite.toList, LiftRules.statelessTest.toList)
+    if (statefulRequest_? &&
+        !old.path.partPath.isEmpty && 
+        (old.request ne null))
+      Req(old, S.sessionRewriter.map(_.rewrite) ::: 
+          LiftRules.statefulRewrite.toList, LiftRules.statelessTest.toList)
     else old
   }
 
