@@ -850,9 +850,9 @@ class Req(val path: ParsePath,
 
   val id = pathParam(0)
 
-  def pathParam(n: Int) = head(path.wholePath.drop(n + 2), "")
+  def pathParam(n: Int) = path.wholePath.drop(n + 2).headOption getOrElse ""
 
-  def path(n: Int): String = head(path.wholePath.drop(n), null)
+  def path(n: Int): String = path.wholePath.drop(n).headOption getOrElse ""
 
   def param(n: String): Box[String] =
     params.get(n) match {
@@ -1175,8 +1175,14 @@ final case class RewriteRequest(path: ParsePath, requestType: RequestType, httpR
 case class ParsePath(partPath: List[String], suffix: String, absolute: Boolean, endSlash: Boolean) {
   def drop(cnt: Int) = ParsePath(partPath.drop(cnt), suffix, absolute, endSlash)
 
-  lazy val wholePath = if (suffix.length > 0) partPath.dropRight(1) ::: List(partPath.last + "." + suffix)
-  else partPath
+  lazy val wholePath = 
+    if (suffix.length > 0) {
+      partPath.dropRight(1) ::: List((partPath match {
+        case Nil => ""
+        case xs => xs.last}) + "." + suffix)
+    } else {
+      partPath
+    }
 }
 
 final case class RewriteResponse(path: ParsePath, 
