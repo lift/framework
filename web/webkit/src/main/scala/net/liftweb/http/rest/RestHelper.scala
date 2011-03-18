@@ -43,6 +43,15 @@ trait RestHelper extends LiftRules.DispatchPF {
     (in.weightedAccept.isEmpty && in.path.suffix.equalsIgnoreCase("json")) ||
     suplimentalJsonResponse_?(in)
   }
+
+  /**
+   * Take any value and convert it into a JValue.  Full box if
+   * it works, empty if it does
+   */
+  protected def anyToJValue(in: Any): Box[JValue] = Helpers.tryo{
+    implicit def formats = DefaultFormats
+    Extraction.decompose(in)
+  }
   
   /**
    * If there are additional custom rules (e.g., looking at query parameters)
