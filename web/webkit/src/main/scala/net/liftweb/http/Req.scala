@@ -785,6 +785,11 @@ class Req(val path: ParsePath,
       override lazy val acceptsJson_? = outer.acceptsJson_?
 
       /**
+       * Is the Accepts Header * / *
+       */
+      override lazy val acceptsStarStar : Boolean = outer.acceptsStarStar
+
+      /**
        * Returns true if the request accepts JavaScript
        */
       override lazy val acceptsJavaScript_? = 
@@ -1154,6 +1159,11 @@ class Req(val path: ParsePath,
   lazy val acceptsJson_? =
     (weightedAccept.find(_.matches("text" -> "json")) orElse
      weightedAccept.find(_.matches("application" -> "json"))).isDefined
+
+  /**
+   * Is the Accepts Header * / *
+   */
+  lazy val acceptsStarStar : Boolean = accepts.map(_ == "*/*") openOr false
 
   /**
    * Returns true if the request accepts JavaScript

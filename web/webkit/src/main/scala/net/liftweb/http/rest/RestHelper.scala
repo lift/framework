@@ -39,8 +39,9 @@ trait RestHelper extends LiftRules.DispatchPF {
    * own logic
    */
   protected def jsonResponse_?(in: Req): Boolean = {
-    in.acceptsJson_? || 
-    (in.weightedAccept.isEmpty && in.path.suffix.equalsIgnoreCase("json")) ||
+    (in.acceptsJson_? && !in.acceptsStarStar) || 
+    ((in.weightedAccept.isEmpty ||
+      in.acceptsStarStar) && in.path.suffix.equalsIgnoreCase("json")) ||
     suplimentalJsonResponse_?(in)
   }
 
@@ -68,8 +69,9 @@ trait RestHelper extends LiftRules.DispatchPF {
    * own logic
    */
   protected def xmlResponse_?(in: Req): Boolean = {
-    in.acceptsXml_? || 
-    (in.weightedAccept.isEmpty && in.path.suffix.equalsIgnoreCase("xml")) ||
+    (in.acceptsXml_? && !in.acceptsStarStar) || 
+    ((in.weightedAccept.isEmpty ||
+      in.acceptsStarStar) && in.path.suffix.equalsIgnoreCase("xml")) ||
     suplimentalXmlResponse_?(in)
   }
   

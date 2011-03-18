@@ -113,47 +113,66 @@ sealed trait Schedule extends Loggable {
    /**
    * Schedules the sending of a message to occur after the specified delay.
    *
-   * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
-   * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
+   * @return a <code>ScheduledFuture</code> which applies the function f
+   * after delay
    */
   def perform(f: () => Unit, delay: Long): ScheduledFuture[Unit] =
     schedule(f, delay: TimeSpan)
 
-   /**
-   * Schedules the sending of a message to occur after the specified delay.
+
+  /**
+   * Schedules the application of a function
    *
-   * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
-   * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
+   * @return a <code>ScheduledFuture</code> which executes the function f
+   * immediately on a worker thread
    */
-  def schedule(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = synchronized {
-    val r = new Runnable {
-      def run() { 
-        try {
-          f.apply()
-        } catch {
-          case e: Exception => logger.error(e)
+  def apply(f: () => Unit): ScheduledFuture[Unit] = schedule(f, 0)
+  
+  /**
+   * Schedules the application of a function
+   *
+   * @return a <code>ScheduledFuture</code> which executes the function f
+   * after the delay
+   */
+  def apply(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = 
+    schedule(f, delay)
+  
+  /**
+   * Schedules the application of a function
+   *
+   * @return a <code>ScheduledFuture</code> which executes the function f
+   * after the delay
+   */
+  def schedule(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = 
+    synchronized {
+      val r = new Runnable {
+        def run() { 
+          try {
+            f.apply()
+          } catch {
+            case e: Exception => logger.error(e)
+          }
         }
       }
-    }
-
-    val fast = new java.util.concurrent.Callable[Unit] {
-      def call(): Unit = {
-        try {
-          Schedule.this.restart
-          pool.execute(r)
-        } catch {
-          case e: Exception => logger.error(e)
+      
+      val fast = new java.util.concurrent.Callable[Unit] {
+        def call(): Unit = {
+          try {
+            Schedule.this.restart
+            pool.execute(r)
+          } catch {
+            case e: Exception => logger.error(e)
+          }
         }
       }
+      
+      try {
+        this.restart
+        service.schedule(fast, delay.millis, TimeUnit.MILLISECONDS)
+      } catch {
+        case e: RejectedExecutionException => throw ActorPingException("ping could not be scheduled", e)
+      }
     }
-
-    try {
-      this.restart
-      service.schedule(fast, delay.millis, TimeUnit.MILLISECONDS)
-    } catch {
-      case e: RejectedExecutionException => throw ActorPingException("ping could not be scheduled", e)
-    }
-  }
 }
 
 /**
