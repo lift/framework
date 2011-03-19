@@ -36,7 +36,7 @@ object Extraction {
    */
   def extract[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): A = 
     try {
-      extract0(json, mf)
+      extract0(json, mf.erasure, mf.typeArguments.map(_.erasure)).asInstanceOf[A]
     } catch {
       case e: MappingException => throw e
       case e: Exception => throw new MappingException("unknown error", e)
@@ -83,7 +83,18 @@ object Extraction {
             f.setAccessible(true)
             JField(unmangleName(name), decompose(f get x))
           } match {
-            case fields => mkObject(x.getClass, fields)
+            case args => 
+              val fields = formats.fieldSerializer(x.getClass).map { serializer => 
+                Reflection.fields(x.getClass).map {
+                  case (n, _) => 
+                    val fieldVal = Reflection.getField(x, n)
+                    val s = serializer.serializer orElse Map((n, fieldVal) -> Some(n, fieldVal))
+                    s((n, fieldVal)).map { case (name, value) => JField(name, decompose(value)) }
+                      .getOrElse(JField(n, JNothing))
+                }
+              } getOrElse Nil
+              val uniqueFields = fields filterNot (f => args.find(_.name == f.name).isDefined)
+              mkObject(x.getClass, uniqueFields ++ args)
           }
       }
     } else prependTypeHint(any.getClass, serializer(any))
@@ -165,14 +176,15 @@ object Extraction {
     }
   }
 
-  private def extract0[A](json: JValue, mf: Manifest[A])(implicit formats: Formats): A = {
+  private def extract0(json: JValue, clazz: Class[_], typeArgs: Seq[Class[_]])
+                      (implicit formats: Formats): Any = {
     val mapping = 
-      if (mf.erasure == classOf[List[_]] || mf.erasure == classOf[Set[_]] || mf.erasure.isArray) 
-        Col(mf.erasure, mappingOf(mf.typeArguments(0).erasure))
-      else if (mf.erasure == classOf[Map[_, _]]) 
-        Dict(mappingOf(mf.typeArguments(1).erasure))
-      else mappingOf(mf.erasure)
-    extract0(json, mapping).asInstanceOf[A]
+      if (clazz == classOf[List[_]] || clazz == classOf[Set[_]] || mf.erasure.isArray) 
+        Col(clazz, mappingOf(typeArgs(0)))
+      else if (clazz == classOf[Map[_, _]]) 
+        Dict(mappingOf(typeArgs(1)))
+      else mappingOf(clazz)
+    extract0(json, mapping)
   }
 
   def extract(json: JValue, target: TypeInfo)(implicit formats: Formats): Any = 
@@ -192,13 +204,42 @@ object Extraction {
         }
       }
 
+      def setFields(a: AnyRef, json: JValue, constructor: JConstructor[_]) = json match {
+        case o: JObject =>
+          formats.fieldSerializer(a.getClass).map { serializer =>
+            val constructorArgNames = 
+              Reflection.constructorArgs(constructor, formats.parameterNameReader).map(_._1).toSet
+            val jsonFields = o.obj.map { f => 
+              val JField(n, v) = (serializer.deserializer orElse Map(f -> f))(f)
+              (n, (n, v))
+            }.toMap
+
+            val fieldsToSet = 
+              Reflection.fields(a.getClass).filterNot(f => constructorArgNames.contains(f._1))
+
+            fieldsToSet.foreach { case (name, typeInfo) =>
+              jsonFields.get(name).foreach { case (n, v) =>
+                val typeArgs = typeInfo.parameterizedType
+                  .map(_.getActualTypeArguments.map(_.asInstanceOf[Class[_]]).toList)
+                val value = extract0(v, typeInfo.clazz, typeArgs.getOrElse(Nil))
+                Reflection.setField(a, n, value)
+              }
+            }
+          }
+          a
+        case _ => a
+      }
+
       def instantiate = {
         val c = findBestConstructor
         val jconstructor = c.constructor
         val args = c.args.map(a => build(json \ a.path, a))
         try {
-          if (jconstructor.getDeclaringClass == classOf[java.lang.Object]) fail("No information known about type")
-          jconstructor.newInstance(args.map(_.asInstanceOf[AnyRef]).toArray: _*)
+          if (jconstructor.getDeclaringClass == classOf[java.lang.Object]) 
+            fail("No information known about type")
+
+          val instance = jconstructor.newInstance(args.map(_.asInstanceOf[AnyRef]).toArray: _*)
+          setFields(instance.asInstanceOf[AnyRef], json, jconstructor)
         } catch {
           case e @ (_:IllegalArgumentException | _:InstantiationException) =>
             fail("Parsed JSON values do not match with class constructor\nargs=" + 

@@ -513,6 +513,7 @@ Serialization supports:
 * java.util.Date
 * Polymorphic Lists (see below)
 * Recursive types
+* Serialization of fields of a class (see below)
 * Custom serializer functions for types which are not supported (see below)
 
 Serializing polymorphic Lists
@@ -534,6 +535,30 @@ will get an extra field named 'jsonClass' (the name can be changed by overriding
 
 ShortTypeHints outputs short classname for all instances of configured objects. FullTypeHints outputs full
 classname. Other strategies can be implemented by extending TypeHints trait.
+
+Serializing fields of a class
+-----------------------------
+
+To enable serialization of fields, a FieldSerializer can be added for some type:
+
+    implicit val formats = DefaultFormats + FieldSerializer[WildDog]()
+
+Now the type WildDog (and all subtypes) gets serialized with all its fields (+ constructor parameters). 
+FieldSerializer takes two optional parameters which can be used to intercept the field serialization:
+
+    case class FieldSerializer[A: Manifest](
+      serializer:   PartialFunction[(String, Any), Option[(String, Any)]] = Map(),
+      deserializer: PartialFunction[JField, JField] = Map()
+    )
+
+Those PartialFunctions are called just before a field is serialized or deserialized. Some useful PFs to 
+rename and ignore fields are provided:
+
+    val dogSerializer = FieldSerializer[WildDog](
+      renameTo("name", "animalname") orElse ignore("owner"),
+      renameFrom("animalname", "name"))
+
+    implicit val formats = DefaultFormats + dogSerializer
 
 Serializing non-supported types
 -------------------------------

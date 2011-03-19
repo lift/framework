@@ -29,6 +29,7 @@ trait Formats { self: Formats =>
   val dateFormat: DateFormat
   val typeHints: TypeHints = NoTypeHints
   val customSerializers: List[Serializer[_]] = Nil
+  val fieldSerializers: List[(Class[_], FieldSerializer[_])] = Nil
 
   /**
    * The name of the field in JSON where type hints are added (jsonClass by default)
@@ -49,6 +50,7 @@ trait Formats { self: Formats =>
     override val parameterNameReader = self.parameterNameReader
     override val typeHints = self.typeHints + extraHints
     override val customSerializers = self.customSerializers
+    override val fieldSerializers = self.fieldSerializers
   }
 
   /**
@@ -60,6 +62,7 @@ trait Formats { self: Formats =>
     override val parameterNameReader = self.parameterNameReader
     override val typeHints = self.typeHints
     override val customSerializers = newSerializer :: self.customSerializers
+    override val fieldSerializers = self.fieldSerializers
   }
 
   /**
@@ -67,6 +70,28 @@ trait Formats { self: Formats =>
    */
   def ++ (newSerializers: Traversable[Serializer[_]]): Formats = 
     newSerializers.foldLeft(this)(_ + _)
+
+  /**
+   * Adds a field serializer for a given type to this formats.
+   */
+  def + [A](newSerializer: FieldSerializer[A])(implicit mf: Manifest[A]): Formats = new Formats {
+    val dateFormat = Formats.this.dateFormat
+    override val typeHintFieldName = self.typeHintFieldName
+    override val parameterNameReader = self.parameterNameReader
+    override val typeHints = self.typeHints
+    override val customSerializers = self.customSerializers
+    override val fieldSerializers = (mf.erasure, newSerializer) :: self.fieldSerializers
+  }
+
+  private[json] def fieldSerializer(clazz: Class[_]): Option[FieldSerializer[_]] = {
+    import ClassDelta._
+    
+    val ord = Ordering[Int].on[(Class[_], FieldSerializer[_])](x => delta(x._1, clazz))
+    fieldSerializers filter (_._1.isAssignableFrom(clazz)) match {
+      case Nil => None
+      case xs  => Some((xs min ord)._2)
+    }
+  }
 
   def customSerializer(implicit format: Formats) = 
     customSerializers.foldLeft(Map(): PartialFunction[Any, JValue]) { (acc, x) => 
@@ -111,6 +136,8 @@ trait Serializer[A] {
  * </pre>
  */
 trait TypeHints {  
+  import ClassDelta._
+
   val hints: List[Class[_]]
   
   /** Return hint for given type.
@@ -151,19 +178,21 @@ trait TypeHints {
     override def serialize: PartialFunction[Any, JObject] = components.foldLeft[PartialFunction[Any, JObject]](Map()) {
       (result, cur) => result.orElse(cur.serialize)
     }
-    
-    private def delta(class1: Class[_], class2: Class[_]): Int = {
-      if (class1 == class2) 0
-      else if (class1.getInterfaces.contains(class2)) 0
-      else if (class2.getInterfaces.contains(class1)) 0
-      else if (class1.isAssignableFrom(class2)) {
-        1 + delta(class1, class2.getSuperclass)
-      }
-      else if (class2.isAssignableFrom(class1)) {
-        1 + delta(class1.getSuperclass, class2)
-      }
-      else error("Don't call delta unless one class is assignable from the other")
+  }
+}
+
+private[json] object ClassDelta {  
+  def delta(class1: Class[_], class2: Class[_]): Int = {
+    if (class1 == class2) 0
+    else if (class1.getInterfaces.contains(class2)) 0
+    else if (class2.getInterfaces.contains(class1)) 0
+    else if (class1.isAssignableFrom(class2)) {
+      1 + delta(class1, class2.getSuperclass)
     }
+    else if (class2.isAssignableFrom(class1)) {
+      1 + delta(class1.getSuperclass, class2)
+    }
+    else error("Don't call delta unless one class is assignable from the other")
   }
 }
 

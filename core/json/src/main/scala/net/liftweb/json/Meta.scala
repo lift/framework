@@ -251,6 +251,35 @@ private[json] object Meta {
 
     def array_?(x: Any) = x != null && classOf[scala.Array[_]].isAssignableFrom(x.asInstanceOf[AnyRef].getClass)
 
+    def fields(clazz: Class[_]): List[(String, TypeInfo)] = {
+      val fs = clazz.getDeclaredFields.toList
+        .map(f => (f.getName, TypeInfo(f.getType, f.getGenericType match {
+          case p: ParameterizedType => Some(p)
+          case _ => None
+        })))
+      fs ::: (if (clazz.getSuperclass == null) Nil else fields(clazz.getSuperclass))
+    }
+
+    def setField(a: AnyRef, name: String, value: Any) = {      
+      val f = findField(a.getClass, name)
+      f.setAccessible(true)
+      f.set(a, value)
+    }
+
+    def getField(a: AnyRef, name: String) = {
+      val f = findField(a.getClass, name)
+      f.setAccessible(true)
+      f.get(a)
+    }
+
+    def findField(clazz: Class[_], name: String): Field = try {
+      clazz.getDeclaredField(name)
+    } catch {
+      case e: NoSuchFieldException => 
+        if (clazz.getSuperclass == null) throw e 
+        else findField(clazz.getSuperclass, name)
+    }
+
     def mkJavaArray(x: Any, componentType: Class[_]) = {
       val arr = x.asInstanceOf[scala.Array[_]]
       val a = java.lang.reflect.Array.newInstance(componentType, arr.size)
