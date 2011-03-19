@@ -24,7 +24,7 @@ import org.specs.Specification
  * System under specification for Extraction bugs.
  */
 object ExtractionBugs extends Specification("Extraction bugs Specification") {
-  implicit val formats = DefaultFormats
+  implicit val formats = DefaultFormats.withHints(FullTypeHints(classOf[ExtractWithAnyRef] :: Nil))
   
   "ClassCastException (BigInt) regression 2 must pass" in {
     val opt = OptionOfInt(Some(39))    
@@ -41,6 +41,12 @@ object ExtractionBugs extends Specification("Extraction bugs Specification") {
     args.size mustEqual 4
   }
 
+  "Extraction should handle AnyRef" in {
+    val extracted = Extraction.extract[AnyRef](JObject(JField("jsonClass", JString(classOf[ExtractWithAnyRef].getName)) :: Nil))
+
+    extracted mustEqual ExtractWithAnyRef()
+  }
+
   case class OptionOfInt(opt: Option[Int])
 
   case class PMap(m: Map[String, List[String]])
@@ -50,4 +56,6 @@ object ExtractionBugs extends Specification("Extraction bugs Specification") {
     def this(name: String) = this(0, name, "Doe", "")
     def this(name: String, email: String) = this(0, name, "Doe", email)
   }
+
+  case class ExtractWithAnyRef()
 }
