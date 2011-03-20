@@ -41,6 +41,13 @@ object ExtractionBugs extends Specification("Extraction bugs Specification") {
     args.size mustEqual 4
   }
 
+  "Extraction should handle AnyRef" in {
+    implicit val formats = DefaultFormats.withHints(FullTypeHints(classOf[ExtractWithAnyRef] :: Nil))
+    val json = JObject(JField("jsonClass", JString(classOf[ExtractWithAnyRef].getName)) :: Nil)
+    val extracted = Extraction.extract[AnyRef](json)
+    extracted mustEqual ExtractWithAnyRef()
+  }
+
   case class OptionOfInt(opt: Option[Int])
 
   case class PMap(m: Map[String, List[String]])
@@ -50,4 +57,6 @@ object ExtractionBugs extends Specification("Extraction bugs Specification") {
     def this(name: String) = this(0, name, "Doe", "")
     def this(name: String, email: String) = this(0, name, "Doe", email)
   }
+
+  case class ExtractWithAnyRef()
 }

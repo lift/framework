@@ -167,7 +167,7 @@ object Extraction {
 
   private def extract0[A](json: JValue, mf: Manifest[A])(implicit formats: Formats): A = {
     val mapping = 
-      if (mf.erasure == classOf[List[_]] || mf.erasure == classOf[Set[_]] || mf.erasure == classOf[Array[_]]) 
+      if (mf.erasure == classOf[List[_]] || mf.erasure == classOf[Set[_]] || mf.erasure.isArray) 
         Col(mf.erasure, mappingOf(mf.typeArguments(0).erasure))
       else if (mf.erasure == classOf[Map[_, _]]) 
         Dict(mappingOf(mf.typeArguments(1).erasure))
