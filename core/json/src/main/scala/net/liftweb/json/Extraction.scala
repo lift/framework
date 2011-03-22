@@ -179,7 +179,7 @@ object Extraction {
   private def extract0(json: JValue, clazz: Class[_], typeArgs: Seq[Class[_]])
                       (implicit formats: Formats): Any = {
     val mapping = 
-      if (clazz == classOf[List[_]] || clazz == classOf[Set[_]] || mf.erasure.isArray) 
+      if (clazz == classOf[List[_]] || clazz == classOf[Set[_]] || clazz.isArray) 
         Col(clazz, mappingOf(typeArgs(0)))
       else if (clazz == classOf[Map[_, _]]) 
         Dict(mappingOf(typeArgs(1)))
