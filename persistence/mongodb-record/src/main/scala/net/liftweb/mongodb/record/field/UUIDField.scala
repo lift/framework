@@ -73,7 +73,7 @@ class UUIDField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType)
 
   def toForm =
     uniqueFieldId match {
-      case Full(id) => Full(elem % ("id" -> (id + "_field")))
+      case Full(id) => Full(elem % ("id" -> id))
       case _ => Full(elem)
     }
 

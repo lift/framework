@@ -212,7 +212,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryBooleanField,
       JsTrue,
       JBool(bool),
-      Full("<input checked=\"checked\" tabIndex=\"1\" value=\"true\" type=\"checkbox\" name=\".*\" id=\"mandatoryBooleanField_id_field\"></input><input value=\"false\" type=\"hidden\" name=\".*\"></input>")
+      Full("<input checked=\"checked\" tabIndex=\"1\" value=\"true\" type=\"checkbox\" name=\".*\" id=\"mandatoryBooleanField_id\"></input><input value=\"false\" type=\"hidden\" name=\".*\"></input>")
     )
   }
 
@@ -225,7 +225,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryCountryField,
       Str(country.toString),
       JInt(country.id),
-      Full("<select tabindex=\"1\" name=\".*\" id=\"mandatoryCountryField_id_field\">.*<option value=\".*\" selected=\"selected\">"+country.toString+"</option>.*</select>")
+      Full("<select tabindex=\"1\" name=\".*\" id=\"mandatoryCountryField_id\">.*<option value=\".*\" selected=\"selected\">"+country.toString+"</option>.*</select>")
     )
   }
 
@@ -239,7 +239,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryDateTimeField,
       Str(dtStr),
       JString(dtStr),
-      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+dtStr+"\" id=\"mandatoryDateTimeField_id_field\"></input>")
+      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+dtStr+"\" id=\"mandatoryDateTimeField_id\"></input>")
     )
   }
 
@@ -252,7 +252,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryDecimalField,
       JsRaw(bd.toString),
       JString(bd.toString),
-      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+bd.toString+"\" id=\"mandatoryDecimalField_id_field\"></input>")
+      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+bd.toString+"\" id=\"mandatoryDecimalField_id\"></input>")
     )
   }
 
@@ -265,7 +265,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryDoubleField,
       JsRaw(d.toString),
       JDouble(d),
-      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+d.toString+"\" id=\"mandatoryDoubleField_id_field\"></input>")
+      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+d.toString+"\" id=\"mandatoryDoubleField_id\"></input>")
     )
   }
 
@@ -278,7 +278,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryEmailField,
       Str(email),
       JString(email),
-      Full("<input name=\".*\" type=\"text\" maxlength=\"100\" tabindex=\"1\" value=\""+email+"\" id=\"mandatoryEmailField_id_field\"></input>")
+      Full("<input name=\".*\" type=\"text\" maxlength=\"100\" tabindex=\"1\" value=\""+email+"\" id=\"mandatoryEmailField_id\"></input>")
     )
   }
 
@@ -291,7 +291,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryEnumField,
       Str(ev.toString),
       JInt(ev.id),
-      Full("<select tabindex=\"1\" name=\".*\" id=\"mandatoryEnumField_id_field\">.*<option value=\".*\" selected=\"selected\">"+ev.toString+"</option>.*</select>")
+      Full("<select tabindex=\"1\" name=\".*\" id=\"mandatoryEnumField_id\">.*<option value=\".*\" selected=\"selected\">"+ev.toString+"</option>.*</select>")
     )
   }
 
@@ -304,7 +304,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryIntField,
       JsRaw(num.toString),
       JInt(num),
-      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+num.toString+"\" id=\"mandatoryIntField_id_field\"></input>")
+      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+num.toString+"\" id=\"mandatoryIntField_id\"></input>")
     )
   }
 
@@ -326,7 +326,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryLongField,
       JsRaw(lng.toString),
       JInt(lng),
-      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+lng.toString+"\" id=\"mandatoryLongField_id_field\"></input>")
+      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+lng.toString+"\" id=\"mandatoryLongField_id\"></input>")
     )
   }
 
@@ -360,7 +360,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryPostalCodeField,
       Str(zip),
       JString(zip),
-      Full("<input name=\".*\" type=\"text\" maxlength=\"32\" tabindex=\"1\" value=\""+zip+"\" id=\"mandatoryPostalCodeField_id_field\"></input>")
+      Full("<input name=\".*\" type=\"text\" maxlength=\"32\" tabindex=\"1\" value=\""+zip+"\" id=\"mandatoryPostalCodeField_id\"></input>")
     )
   }
 
@@ -374,7 +374,7 @@ object FieldSpec extends Specification("Record Field Specification") {
         rec.mandatoryStringField,
         Str(str),
         JString(str),
-        Full("<input name=\".*\" type=\"text\" maxlength=\"100\" tabindex=\"1\" value=\""+str+"\" id=\"mandatoryStringField_id_field\"></input>")
+        Full("<input name=\".*\" type=\"text\" maxlength=\"100\" tabindex=\"1\" value=\""+str+"\" id=\"mandatoryStringField_id\"></input>")
       )
     }
 
@@ -460,7 +460,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryTextareaField,
       Str(txt),
       JString(txt),
-      Full("<textarea name=\".*\" rows=\"8\" tabindex=\"1\" cols=\"20\" id=\"mandatoryTextareaField_id_field\">"+txt+"</textarea>")
+      Full("<textarea name=\".*\" rows=\"8\" tabindex=\"1\" cols=\"20\" id=\"mandatoryTextareaField_id\">"+txt+"</textarea>")
     )
   }
 
@@ -476,7 +476,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryTimeZoneField,
       Str(example),
       JString(example),
-      Full("<select tabindex=\"1\" name=\".*\" id=\"mandatoryTimeZoneField_id_field\">.*<option value=\""+example+"\" selected=\"selected\">"+example+"</option>.*</select>")
+      Full("<select tabindex=\"1\" name=\".*\" id=\"mandatoryTimeZoneField_id\">.*<option value=\""+example+"\" selected=\"selected\">"+example+"</option>.*</select>")
     )
   }
 }

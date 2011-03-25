@@ -38,7 +38,7 @@ trait BooleanTypedField extends TypedField[Boolean] {
   def toForm: Box[NodeSeq] =
     // FIXME? no support for optional_?
     uniqueFieldId match {
-      case Full(id) => Full(elem("id" -> (id + "_field")))
+      case Full(id) => Full(elem("id" -> id))
       case _ => Full(elem())
     }
 

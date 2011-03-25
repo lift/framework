@@ -116,7 +116,7 @@ trait BaseField extends FieldIdentifier with util.BaseField {
   override def uniqueFieldId: Box[String] = Full(name+"_id")
 
   def label: NodeSeq = uniqueFieldId match {
-    case Full(id) =>  <label for={id+"_field"}>{displayName}</label>
+    case Full(id) =>  <label for={id}>{displayName}</label>
     case _ => NodeSeq.Empty
   }
 
@@ -403,7 +403,7 @@ trait Field[ThisType, OwnerType <: Record[OwnerType]] extends OwnedField[OwnerTy
  *
  * E.g.
  *   <div id={ id + "_holder" }>
- *     <div><label for={ id + "_field" }>{ displayName }</label></div>
+ *     <div><label for={ id }>{ displayName }</label></div>
  *     { control }
  *   </div>
  */
@@ -412,7 +412,7 @@ trait DisplayWithLabel[OwnerType <: Record[OwnerType]] extends OwnedField[OwnerT
     for (id <- uniqueFieldId; control <- super.toForm)
     yield
       <div id={ id + "_holder" }>
-        <div><label for={ id + "_field" }>{ displayName }</label></div>
+        <div><label for={ id }>{ displayName }</label></div>
         { control }
         <lift:msg id={id} errorClass="lift_error"/>
       </div>

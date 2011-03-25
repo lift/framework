@@ -75,7 +75,7 @@ class MongoPasswordField[OwnerType <: MongoRecord[OwnerType]](rec: OwnerType, mi
 
   override def toForm: Box[NodeSeq] =
     uniqueFieldId match {
-      case Full(id) => Full(elem % ("id" -> (id+"_field")))
+      case Full(id) => Full(elem % ("id" -> id))
       case _ => Full(elem)
     }
 

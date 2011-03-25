@@ -53,7 +53,7 @@ trait DateTimeTypedField extends TypedField[Calendar] {
 
   def toForm: Box[NodeSeq] =
     uniqueFieldId match {
-      case Full(id) => Full(elem % ("id" -> (id + "_field")))
+      case Full(id) => Full(elem % ("id" -> id))
       case _        => Full(elem)
     }
 

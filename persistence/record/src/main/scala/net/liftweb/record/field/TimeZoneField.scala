@@ -47,7 +47,7 @@ trait TimeZoneTypedField extends StringTypedField {
 
   override def toForm: Box[NodeSeq] = 
     uniqueFieldId match {
-      case Full(id) => Full(elem % ("id" -> (id + "_field")))
+      case Full(id) => Full(elem % ("id" -> id))
       case _ => Full(elem)
     }
 }
