@@ -186,7 +186,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       rec.mandatoryDateField,
       JsObj(("$dt", Str(nowStr))),
       JObject(List(JField("$dt", JString(nowStr)))),
-      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+nowStr+"\" id=\"mandatoryDateField_id_field\"></input>")
+      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+nowStr+"\" id=\"mandatoryDateField_id\"></input>")
     )
   }
 
@@ -222,7 +222,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       rec.mandatoryObjectIdField,
       JsObj(("$oid", oid.toString)),
       JObject(List(JField("$oid", JString(oid.toString)))),
-      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+oid.toString+"\" id=\"mandatoryObjectIdField_id_field\"></input>")
+      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+oid.toString+"\" id=\"mandatoryObjectIdField_id\"></input>")
     )
   }
 
@@ -248,7 +248,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       rec.mandatoryUUIDField,
       JsObj(("$uuid", Str(uuid.toString))),
       JObject(List(JField("$uuid", JString(uuid.toString)))),
-      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+uuid.toString+"\" id=\"mandatoryUUIDField_id_field\"></input>")
+      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+uuid.toString+"\" id=\"mandatoryUUIDField_id\"></input>")
     )
   }
 
