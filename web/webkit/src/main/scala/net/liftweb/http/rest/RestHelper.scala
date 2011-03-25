@@ -36,14 +36,33 @@ trait RestHelper extends LiftRules.DispatchPF {
    * the Accept header contains "text/json", "application/json" or
    * the Accept header is missing or contains "star/star" and the
    * suffix is "json".  Override this method to provide your
-   * own logic
+   * own logic.  If there's no suffix, no accepts (or it's "star/star")
+   * then look to either the Content-Type header or the defaultGetAsJson
+   * flag
    */
   protected def jsonResponse_?(in: Req): Boolean = {
     (in.acceptsJson_? && !in.acceptsStarStar) || 
     ((in.weightedAccept.isEmpty ||
-      in.acceptsStarStar) && in.path.suffix.equalsIgnoreCase("json")) ||
+      in.acceptsStarStar) && 
+     (in.path.suffix.equalsIgnoreCase("json") ||
+      in.json_? ||
+      (in.path.suffix.length == 0 && defaultGetAsJson))) ||
     suplimentalJsonResponse_?(in)
   }
+
+  /**
+   * If the headers and the suffix say nothing about the
+   * response type, should we default to JSON.  By default,
+   * yes, override to change the behavior.
+   */
+  protected def defaultGetAsJson: Boolean = true
+
+  /**
+   * If the headers and the suffix say nothing about the
+   * response type, should we default to XML.  By default,
+   * no, override to change the behavior.
+   */
+  protected def defaultGetAsXml: Boolean = false
 
   /**
    * Take any value and convert it into a JValue.  Full box if
@@ -66,12 +85,17 @@ trait RestHelper extends LiftRules.DispatchPF {
    * the Accept header contains "application/xml" or "text/xml" or
    * the Accept header is missing or contains "star/star" and the
    * suffix is "xml".  Override this method to provide your
-   * own logic
+   * own logic.  If there's no suffix, no accepts (or it's "star/star")
+   * then look to either the Content-Type header or the defaultGetAsXml
+   * flag.
    */
   protected def xmlResponse_?(in: Req): Boolean = {
     (in.acceptsXml_? && !in.acceptsStarStar) || 
     ((in.weightedAccept.isEmpty ||
-      in.acceptsStarStar) && in.path.suffix.equalsIgnoreCase("xml")) ||
+      in.acceptsStarStar) && 
+     (in.path.suffix.equalsIgnoreCase("xml") ||
+      in.xml_? ||
+      (in.path.suffix.length == 0 && defaultGetAsXml))) ||
     suplimentalXmlResponse_?(in)
   }
   
