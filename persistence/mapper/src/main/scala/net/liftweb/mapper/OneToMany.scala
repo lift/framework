@@ -156,7 +156,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
     }
 
     override def indexOf[B >: O](e: B): Int =
-      delegate.findIndexOf(e.asInstanceOf[AnyRef].eq)
+      delegate.indexWhere(e.asInstanceOf[AnyRef].eq)
 
     // 2.7
     // def insertAll(n: Int, iter: Iterable[O]) {

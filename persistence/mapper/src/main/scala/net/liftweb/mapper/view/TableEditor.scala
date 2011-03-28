@@ -72,15 +72,15 @@ trait ItemsList[T <: Mapper[T]] {
    * The sort direction
    */
   var ascending = true
-  
+
   /**
    * Returns the items (current + added - removed), sorted.
    * Sorting sorts strings case-insensitive, as well as Ordered and java.lang.Comparable.
    * Anything else where both values are nonnull are sorted via their toString method (case sensitive)
    */
   def items: Seq[T] = {
-    import scala.util.Sorting._  
-    val unsorted: List[T] = current -- removed ++ added
+    import scala.util.Sorting._
+    val unsorted: List[T] = current.filterNot(removed.contains) ++ added
     sortField match {
       case None =>
         unsorted
@@ -138,17 +138,17 @@ trait ItemsList[T <: Mapper[T]] {
   def save {
     val (successAdd, failAdd) = added.partition(_.save)
     added = failAdd
-    
+
     val (successRemove, failRemove) = removed.partition(_.delete_!)
-    current --= successRemove
+    current = current.filterNot(successRemove.contains)
     removed = failRemove
-    
+
     for(c <- current if c.validate.isEmpty) c.save
-    
+
     current ++= successAdd
   }
-  
-  
+
+
   def sortBy(field: MappedField[_, T]) = (sortField, ascending) match {
     case (Some(f), true) if f eq field =>
       ascending = false
@@ -165,7 +165,7 @@ trait ItemsList[T <: Mapper[T]] {
         ascending = true
       }
   }
-  
+
   reload
 }
 
@@ -180,7 +180,7 @@ trait ItemsList[T <: Mapper[T]] {
  */
 object TableEditor {
   net.liftweb.http.LiftRules.addToPackages("net.liftweb.mapper.view")
-  
+
   private[view] val map = new scala.collection.mutable.HashMap[String, TableEditorImpl[_]]
   def registerTable[T<:Mapper[T]](name: String, meta: T with MetaMapper[T], title: String) =
     map(name) = new TableEditorImpl(title, meta)
@@ -229,7 +229,7 @@ protected class TableEditorImpl[T <: Mapper[T]](val title: String, meta: T with 
 trait ItemsListEditor[T<:Mapper[T]] {
   def items: ItemsList[T]
   def title: String
-  
+
   def onInsert: Unit = items.add
   def onRemove(item: T): Unit = items.remove(item)
   def onSubmit: Unit = try {
@@ -239,11 +239,11 @@ trait ItemsListEditor[T<:Mapper[T]] {
       S.error("Not all items could be saved!")
   }
   def sortFn(f: MappedField[_, T]): ()=>Unit = items.sortFn(f)
-  
+
   val fieldFilter: MappedField[_,T]=>Boolean = (f: MappedField[_,T])=>true
-  
+
   def customBind(item: T): NodeSeq=>NodeSeq = (ns: NodeSeq) => ns
-  
+
   def edit(xhtml: NodeSeq): NodeSeq = {
     def unsavedScript = (<head><script type="text/javascript">
                            var safeToContinue = false
@@ -307,5 +307,5 @@ trait ItemsListEditor[T<:Mapper[T]] {
          "saveBtn" -> SHtml.submit(?("Save"), onSubmit _, noPrompt)
     )
   }
-  
+
 }
