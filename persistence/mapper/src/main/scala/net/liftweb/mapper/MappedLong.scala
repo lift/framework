@@ -58,7 +58,7 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
   def asSafeJs(obs: Box[KeyObfuscator]): JsExp =
   obs.map(o => JE.Str(o.obscure(dbKeyToTable, is))).openOr(JE.Num(is))
 
-  override def asJsonValue: Box[JsonAST.JValue] = 
+  override def asJsonValue: Box[JsonAST.JValue] =
     if (defined_?) super.asJsonValue else Full(JsonAST.JNull)
 
   override def setFromAny(in: Any): Long =
@@ -81,7 +81,7 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
     primeObj(v)
     fieldOwner
   }
-  
+
   def apply(v: O): T = {
     apply(v.primaryKeyField.is)
     primeObj(Full(v))
@@ -187,7 +187,7 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
   private def toLong: Long = is.foldLeft(0L)((a,b) => a + rot(b.id))
 
   def fromLong(in: Long): Seq[ENUM#Value] =
-    enum.iterator.toList.filter(v => (in & rot(v.id)) != 0)
+    enum.values.iterator.toList.filter(v => (in & rot(v.id)) != 0)
 
   def jdbcFriendly(field: String) = new java.lang.Long(toLong)
   override def jdbcFriendly = new java.lang.Long(toLong)
@@ -241,7 +241,7 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
    * Create an input field for the item
    */
   override def _toForm: Box[NodeSeq] =
-  Full(SHtml.checkbox[ENUM#Value](enum.iterator.toList, is,this(_)).toForm)
+  Full(SHtml.checkbox[ENUM#Value](enum.values.iterator.toList, is,this(_)).toForm)
 }
 
 /**
@@ -283,7 +283,7 @@ abstract class MappedNullableLong[T<:Mapper[T]](val fieldOwner: T) extends Mappe
 
   def asJsExp: JsExp = is.map(v => JE.Num(v)) openOr JE.JsNull
 
-  def asJsonValue: Box[JsonAST.JValue] = 
+  def asJsonValue: Box[JsonAST.JValue] =
     Full(is.map(v => JsonAST.JInt(v)) openOr JsonAST.JNull)
 
   override def readPermission_? = true
