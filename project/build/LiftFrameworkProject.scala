@@ -32,7 +32,8 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   lazy val common      = coreProject("common", slf4j_api, logback, log4j)()
   lazy val actor       = coreProject("actor")(common)
   lazy val json        = coreProject("json", paranamer, scalap)()
-  lazy val json_scalaz = coreProject("json-scalaz", scalaz)(json)
+  // FIXME: Scala 2.9.0.RC1
+  //  lazy val json_scalaz = coreProject("json-scalaz", scalaz)(json)
   lazy val json_ext    = coreProject("json-ext", commons_codec, joda_time)(common, json)
   lazy val util        = coreProject("util", joda_time, commons_codec, javamail, log4j, htmlparser)(actor, json)
 
@@ -48,12 +49,14 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   // --------------------
   lazy val db             = persistenceProject("db")(util)
   lazy val proto          = persistenceProject("proto")(webkit)
-  lazy val jpa            = persistenceProject("jpa", scalajpa, persistence_api)(webkit)
+// FIXME: Scala 2.9.0.RC1
+//  lazy val jpa            = persistenceProject("jpa", scalajpa, persistence_api)(webkit)
   lazy val mapper         = persistenceProject("mapper", RuntimeScope.h2database, RuntimeScope.derby)(db, proto)
   lazy val record         = persistenceProject("record")(proto, db) // db to be removed in v 2.5 (ticket 997)
   lazy val ldap           = persistenceProject("ldap", TestScope.apacheds)(mapper)
   lazy val couchdb        = persistenceProject("couchdb", dispatch_http)(record)
-  lazy val squeryl_record = persistenceProject("squeryl-record", RuntimeScope.h2database, squeryl)(record, db)
+// FIXME: Scala 2.9.0.RC1
+//  lazy val squeryl_record = persistenceProject("squeryl-record", RuntimeScope.h2database, squeryl)(record, db)
   lazy val mongodb        = persistenceProject("mongodb", mongo_driver)(json_ext)
   lazy val mongodb_record = persistenceProject("mongodb-record")(record, mongodb)
 
