@@ -273,9 +273,11 @@ trait TypedField[ThisType] extends BaseField {
     case (value: String)::_  => setFromString(value)
     case null|None|Empty     => setBox(defaultValueBox)
     case (failure: Failure)  => setBox(failure)
+    case Some(other)         => setFromString(String.valueOf(other)) 
+    case Full(other)         => setFromString(String.valueOf(other))
     case other               => setFromString(String.valueOf(other))
   }
-
+  
   /**
    * Set the value of the field using some kind of type-specific conversion from a String.
    * By convention, if the field is optional_?, then the empty string should be treated as no-value (Empty).

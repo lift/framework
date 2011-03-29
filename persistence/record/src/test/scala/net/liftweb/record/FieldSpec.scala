@@ -214,6 +214,21 @@ object FieldSpec extends Specification("Record Field Specification") {
       JBool(bool),
       Full("<input checked=\"checked\" tabIndex=\"1\" value=\"true\" type=\"checkbox\" name=\".*\" id=\"mandatoryBooleanField_id\"></input><input value=\"false\" type=\"hidden\" name=\".*\"></input>")
     )
+    "support java.lang.Boolean" in {
+      rec.mandatoryBooleanField.setFromAny(java.lang.Boolean.TRUE)
+      rec.optionalBooleanField.setFromAny(java.lang.Boolean.TRUE)
+      (rec.mandatoryBooleanField.is && (rec.optionalBooleanField.is getOrElse false)) must_== true
+    }
+    "support Full(java.lang.Boolean)" in {
+      rec.mandatoryBooleanField.setFromAny(Full(java.lang.Boolean.TRUE))
+      rec.optionalBooleanField.setFromAny(Full(java.lang.Boolean.TRUE))
+      (rec.mandatoryBooleanField.is && (rec.optionalBooleanField.is getOrElse false)) must_== true
+    }
+    "support Some(java.lang.Boolean)" in {
+       rec.mandatoryBooleanField.setFromAny(Some(java.lang.Boolean.TRUE))
+       rec.optionalBooleanField.setFromAny(Some(java.lang.Boolean.TRUE))
+       (rec.mandatoryBooleanField.is && (rec.optionalBooleanField.is getOrElse false)) must_== true
+    }
   }
 
   "CountryField" should {
