@@ -51,6 +51,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   lazy val proto          = persistenceProject("proto")(webkit)
 // FIXME: Scala 2.9.0.RC1
 //  lazy val jpa            = persistenceProject("jpa", scalajpa, persistence_api)(webkit)
+  lazy val jpa            = persistenceProject("jpa", "org.scala-libs" %% "scalajpa" % "1.4-SNAPSHOT", persistence_api)(webkit)
   lazy val mapper         = persistenceProject("mapper", RuntimeScope.h2database, RuntimeScope.derby)(db, proto)
   lazy val record         = persistenceProject("record")(proto, db) // db to be removed in v 2.5 (ticket 997)
   lazy val ldap           = persistenceProject("ldap", TestScope.apacheds)(mapper)
