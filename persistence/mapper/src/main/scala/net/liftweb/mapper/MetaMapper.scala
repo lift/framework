@@ -117,7 +117,8 @@ object MapperRules extends Factory {
 
   /**
    * Calculate the name of a column based on the name
-   * of the MappedField. Must be set in Boot
+   * of the MappedField. Must be set in Boot before any code
+   * that touches the MetaMapper.
    *
    * To get snake_case, use this:
    *
@@ -127,7 +128,8 @@ object MapperRules extends Factory {
 
   /**
    * Calculate the name of a table based on the name
-   * of the Mapper. Must be set in Boot
+   * of the Mapper. Must be set in Boot before any code
+   * that tocuhes the MetaMapper.
    *
    * To get snake_case, use this
    *
