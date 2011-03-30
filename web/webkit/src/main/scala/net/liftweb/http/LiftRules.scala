@@ -1096,7 +1096,10 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
   /**
    * Holds the user's rewrite functions that can alter the URI parts and query parameters.  This rewrite
    * is performed very early in the HTTP request cycle and may not include any state.  This rewrite is meant
-   * to rewrite requests for statelessDispatch
+   * to rewrite requests for statelessDispatch. <br/>
+   * Note also that rewrites should not have side effects except
+   * to memoize database query results.  No side effects means that you should not change SessionVars
+   * in a rewrite.
    */
   val statelessRewrite = RulesSeq[RewritePF]
 
@@ -1109,7 +1112,13 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
   /**
    *  Holds the user's rewrite functions that can alter the URI parts and query parameters.
    * This rewrite takes place within the scope of the S state so SessionVars and other session-related
-   * information is available.
+   * information is available. <br/>
+   * Note also that rewrites should not have side effects except
+   * to memoize database query results.  No side effects means that you should not change SessionVars
+   * in a rewrite. <br/>
+   * In general, rewrites should be considered low level access.  Rather than using a rewrite to extract
+   * parameters out of a URL, you'll be much better off using SiteMap generally and Menu.param and Menu.params
+   * specifically for extracting parameters from URLs.
    */
   val statefulRewrite = RulesSeq[RewritePF]
 

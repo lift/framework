@@ -1176,6 +1176,9 @@ class Req(val path: ParsePath,
   def updateWithContextPath(uri: String): String = if (uri.startsWith("/")) contextPath + uri else uri
 }
 
+/**
+ * This case class is used for pattern matching.  See LiftRules.statelessRewrite and LiftRules.statefulRewrite
+ */
 final case class RewriteRequest(path: ParsePath, requestType: RequestType, httpRequest: HTTPRequest)
 
 /**

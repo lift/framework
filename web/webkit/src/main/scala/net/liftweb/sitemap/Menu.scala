@@ -225,7 +225,7 @@ object Menu extends MenuSingleton {
     /**
      * The method to add a path element to the URL representing this menu item
      */
-    def /(pathElement: String): ParamsMenuable[T] with WithSlash = 
+    def /(pathElement: LocPath): ParamsMenuable[T] with WithSlash = 
       new ParamsMenuable[T](name, linkText, parser, encoder, 
                             pathElement :: Nil, false, Nil, Nil) with WithSlash
 
@@ -341,7 +341,7 @@ object Menu extends MenuSingleton {
     /**
      * The method to add a path element to the URL representing this menu item
      */
-    def /(pathElement: String): Menuable with WithSlash = 
+    def /(pathElement: LocPath): Menuable with WithSlash = 
       new Menuable(name, linkText, pathElement :: Nil, false, Nil, Nil) with WithSlash
 
     def path(pathElement: String): Menuable with WithSlash = 
