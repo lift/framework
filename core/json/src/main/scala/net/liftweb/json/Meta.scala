@@ -253,6 +253,7 @@ private[json] object Meta {
 
     def fields(clazz: Class[_]): List[(String, TypeInfo)] = {
       val fs = clazz.getDeclaredFields.toList
+        .filterNot(f => Modifier.isStatic(f.getModifiers))
         .map(f => (f.getName, TypeInfo(f.getType, f.getGenericType match {
           case p: ParameterizedType => Some(p)
           case _ => None
@@ -278,6 +279,13 @@ private[json] object Meta {
       case e: NoSuchFieldException => 
         if (clazz.getSuperclass == null) throw e 
         else findField(clazz.getSuperclass, name)
+    }
+
+    def hasDeclaredField(clazz: Class[_], name: String): Boolean = try {
+      clazz.getDeclaredField(name)
+      true
+    } catch {
+      case e: NoSuchFieldException => false
     }
 
     def mkJavaArray(x: Any, componentType: Class[_]) = {
