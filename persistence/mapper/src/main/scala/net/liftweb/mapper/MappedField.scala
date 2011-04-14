@@ -258,9 +258,6 @@ trait MappedForeignKey[KeyType, MyOwner <: Mapper[MyOwner], Other <: KeyedMapper
       case Nil => Empty
 
       case xs =>
-        val mapBack: HashMap[String, KeyType] = new HashMap
-        var selected: Box[String] = Empty
-
         Full(SHtml.selectObj(xs, Full(this.is), this.set))
     }.openOr(<span>{immutableMsg}</span>))
 
