@@ -49,9 +49,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   // --------------------
   lazy val db             = persistenceProject("db")(util)
   lazy val proto          = persistenceProject("proto")(webkit)
-// FIXME: Scala 2.9.0.RC1
-//  lazy val jpa            = persistenceProject("jpa", scalajpa, persistence_api)(webkit)
-  lazy val jpa            = persistenceProject("jpa", "org.scala-libs" %% "scalajpa" % "1.4-SNAPSHOT", persistence_api)(webkit)
+  lazy val jpa            = persistenceProject("jpa", scalajpa, persistence_api)(webkit)
   lazy val mapper         = persistenceProject("mapper", RuntimeScope.h2database, RuntimeScope.derby)(db, proto)
   lazy val record         = persistenceProject("record")(proto, db) // db to be removed in v 2.5 (ticket 997)
   lazy val ldap           = persistenceProject("ldap", TestScope.apacheds)(mapper)
@@ -114,6 +112,22 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
 
     // System properties necessary during test TODO: Figure out how to make this a subdir of persistence/ldap/
     System.setProperty("apacheds.working.dir", (outputPath / "apacheds").absolutePath)
+
+    // FIXME: Scala 2.9.0.RC1
+    override def testOptions =
+      ExcludeTests(
+        // lift-json tests
+        "net.liftweb.json.SerializationExamples" ::
+        "net.liftweb.json.FieldSerializerExamples" ::
+        "net.liftweb.json.ExtractionExamples" ::
+        "net.liftweb.json.XmlExamples" ::
+        "net.liftweb.json.LottoExample" ::
+        "net.liftweb.json.ExtractionBugs" ::
+        "net.liftweb.json.XmlBugs" ::
+        // lift-json-ext tests
+        "net.liftweb.json.ext.JsonBoxSerializerSpec" ::
+        Nil) ::
+      super.testOptions.toList
   }
 
 }
