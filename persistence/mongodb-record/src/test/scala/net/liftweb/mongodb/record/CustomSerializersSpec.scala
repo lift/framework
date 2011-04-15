@@ -284,7 +284,7 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
       // nfl._id.asJs mustEqual Str(nfl._id.value.toString)
       nfl._id.asJValue mustEqual JString(nfl._id.value.toString)
       val session = new LiftSession("", randomString(20), Empty)
-      val formPattern = "<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+nfl._id.value.toString+"\" id=\"_id_id_field\"></input>"
+      val formPattern = "<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+nfl._id.value.toString+"\" id=\"_id_id\"></input>"
       S.initIfUninitted(session) {
         val form = nfl._id.toForm
         form must notBeEmpty
@@ -347,7 +347,7 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
       // nfl._id.asJs mustEqual JsObj(("$oid", Str(nfl._id.value.toString)))
       nfl._id.asJValue mustEqual JObject(List(JField("$oid", JString(nfl._id.value.toString))))
       val session = new LiftSession("", randomString(20), Empty)
-      val formPattern = "<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+nfl._id.value.toString+"\" id=\"_id_id_field\"></input>"
+      val formPattern = "<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+nfl._id.value.toString+"\" id=\"_id_id\"></input>"
       S.initIfUninitted(session) {
         val form = nfl._id.toForm
         form must notBeEmpty
