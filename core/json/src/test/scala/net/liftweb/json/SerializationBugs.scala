@@ -87,6 +87,30 @@ object SerializationBugs extends Specification {
     read[OptionalUUID](swrite(o1)) mustEqual o1
     read[OptionalUUID](swrite(o2)) mustEqual o2
   }
+
+  "TypeInfo is not correctly constructed for customer serializer -- 970" in {
+    class SeqFormat extends Serializer[Seq[_]] {
+      val SeqClass = classOf[Seq[_]]
+
+      def serialize(implicit format: Formats) = {
+        case seq: Seq[_] => JArray(seq.toList.map(Extraction.decompose))
+      }
+
+      def deserialize(implicit format: Formats) = {
+        case (TypeInfo(SeqClass, parameterizedType), JArray(xs)) => 
+          val typeInfo = TypeInfo(parameterizedType
+            .map(_.getActualTypeArguments()(0))
+            .getOrElse(fail("No type parameter info for type Seq")).asInstanceOf[Class[_]], None)
+          xs.map(x => Extraction.extract(x, typeInfo))
+      }
+    }
+
+    implicit val formats = DefaultFormats + new SeqFormat
+
+    val seq = Seq(1, 2, 3)
+    val ser = Extraction.decompose(seq)
+    Extraction.extract[Seq[Int]](ser) mustEqual seq
+  }
 }
 
 case class LongList(xs: List[Num])

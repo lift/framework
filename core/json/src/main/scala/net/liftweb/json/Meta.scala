@@ -82,7 +82,8 @@ private[json] object Meta {
       paranamer.lookupParameterNames(constructor)
   }
 
-  private[json] def mappingOf(clazz: Class[_])(implicit formats: Formats): Mapping = {
+  private[json] def mappingOf(clazz: Class[_], typeArgs: Seq[Class[_]] = Seq())
+                             (implicit formats: Formats): Mapping = {
     import Reflection._
 
     def constructors(clazz: Class[_], visited: Set[Class[_]]) =
@@ -127,8 +128,22 @@ private[json] object Meta {
     }
 
     if (primitive_?(clazz)) Value(clazz)
-    else mappings.memoize(clazz, c => Constructor(TypeInfo(c, None), constructors(c, Set())))
+    else {
+      mappings.memoize(clazz, c => {
+        val typeInfo = 
+          if (typeArgs.isEmpty) TypeInfo(c, None) 
+          else TypeInfo(c, Some(mkParameterizedType(c, typeArgs)))
+        Constructor(typeInfo, constructors(c, Set())) 
+      })
+    }
   }
+
+  private[json] def mkParameterizedType(owner: Class[_], typeArgs: Seq[Class[_]]) = 
+    new ParameterizedType {
+      def getActualTypeArguments = typeArgs.toArray
+      def getOwnerType = owner
+      def getRawType = owner
+    }
 
   private[json] def unmangleName(name: String) =
     unmangledNames.memoize(name, operators.foldLeft(_)((n, o) => n.replace(o._1, o._2)))

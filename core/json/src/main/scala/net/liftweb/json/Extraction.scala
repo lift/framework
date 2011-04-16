@@ -184,7 +184,7 @@ object Extraction {
         Col(clazz, mappingOf(typeArgs(0)))
       else if (clazz == classOf[Map[_, _]]) 
         Dict(mappingOf(typeArgs(1)))
-      else mappingOf(clazz)
+      else mappingOf(clazz, typeArgs)
     extract0(json, mapping)
   }
 
