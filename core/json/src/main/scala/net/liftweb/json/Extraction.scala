@@ -202,6 +202,7 @@ object Extraction {
             case x => Nil
           }
           constructor.bestMatching(argNames)
+            .getOrElse(fail("No constructor for type " + constructor.targetType.clazz + ", " + json))
         }
       }
 

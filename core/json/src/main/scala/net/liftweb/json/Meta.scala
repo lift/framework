@@ -53,21 +53,24 @@ private[json] object Meta {
   case class Dict(mapping: Mapping) extends Mapping
   case class Col(targetType: Class[_], mapping: Mapping) extends Mapping
   case class Constructor(targetType: TypeInfo, choices: List[DeclaredConstructor]) extends Mapping {
-    def bestMatching(argNames: List[String]): DeclaredConstructor = {
+    def bestMatching(argNames: List[String]): Option[DeclaredConstructor] = {
       val names = Set(argNames: _*)
       def countOptionals(args: List[Arg]) =
         args.foldLeft(0)((n, x) => if (x.optional) n+1 else n)
       def score(args: List[Arg]) =
         args.foldLeft(0)((s, arg) => if (names.contains(arg.path)) s+1 else -100)
 
-      val best = choices.tail.foldLeft((choices.head, score(choices.head.args))) { (best, c) =>
-        val newScore = score(c.args)
-        if (newScore == best._2) {
-          if (countOptionals(c.args) < countOptionals(best._1.args))
-            (c, newScore) else best
-        } else if (newScore > best._2) (c, newScore) else best
+      if (choices.isEmpty) None
+      else {
+        val best = choices.tail.foldLeft((choices.head, score(choices.head.args))) { (best, c) =>
+          val newScore = score(c.args)
+          if (newScore == best._2) {
+            if (countOptionals(c.args) < countOptionals(best._1.args))
+              (c, newScore) else best
+          } else if (newScore > best._2) (c, newScore) else best
+        }
+        Some(best._1)
       }
-      best._1
     }
   }
 
