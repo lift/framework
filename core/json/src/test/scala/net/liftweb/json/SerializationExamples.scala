@@ -95,6 +95,12 @@ object SerializationExamples extends Specification {
     s.array.toList mustEqual unser.array.toList
   }
   
+  "Seq serialization example" in {
+    val s = SeqContainer(List("foo", "bar"))    
+    val ser = swrite(s)
+    read[SeqContainer](ser) mustEqual s
+  }
+
   "None Option of tuple serialization example" in {
     // This is a regression test case, failed in lift json
     val s = OptionOfTupleOfDouble(None)    
@@ -342,5 +348,7 @@ case class OptionOfAmbiguousP(opt: Option[Bird])
 case class SetContainer(set: Set[String])
 
 case class ArrayContainer(array: Array[String])
+
+case class SeqContainer(seq: Seq[String])
 
 case class OptionOfTupleOfDouble(position: Option[Tuple2[Double, Double]])
