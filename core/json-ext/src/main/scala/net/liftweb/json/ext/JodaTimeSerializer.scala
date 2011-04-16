@@ -24,7 +24,15 @@ import JsonDSL._
 object JodaTimeSerializers {
   def all = List(DurationSerializer(), InstantSerializer(), DateTimeSerializer(), 
                  DateMidnightSerializer(), IntervalSerializer(), LocalDateSerializer(),
-                 LocalTimeSerializer())
+                 LocalTimeSerializer(), PeriodSerializer())
+}
+
+object PeriodSerializer {
+  def apply() = new SimpleTypeSerializer(new JStringType[Period]() {
+    def targetClass = classOf[Period]
+    def unwrap(json: JString)(implicit format: Formats) = new Period(json.s)
+    def wrap(a: Period)(implicit format: Formats) = JString(a.toString)
+  })
 }
 
 object DurationSerializer {
