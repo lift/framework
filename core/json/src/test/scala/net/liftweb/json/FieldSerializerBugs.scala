@@ -23,7 +23,8 @@ object FieldSerializerBugs extends Specification {
   import Serialization.{read, write => swrite}
 
   implicit val formats = DefaultFormats + FieldSerializer[AnyRef]()
-/*
+
+/* FIXME: For some reason this fails on CI
   "AtomicInteger should not cause stack overflow" in {
     import java.util.concurrent.atomic.AtomicInteger
 
@@ -31,6 +32,6 @@ object FieldSerializerBugs extends Specification {
     val atomic = read[AtomicInteger](ser) 
     atomic.get mustEqual 1
   }
-*/
+  */
 }
 

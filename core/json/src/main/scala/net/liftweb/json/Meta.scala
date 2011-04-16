@@ -253,7 +253,7 @@ private[json] object Meta {
 
     def fields(clazz: Class[_]): List[(String, TypeInfo)] = {
       val fs = clazz.getDeclaredFields.toList
-        .filterNot(f => Modifier.isStatic(f.getModifiers))
+        .filterNot(f => Modifier.isStatic(f.getModifiers) || Modifier.isTransient(f.getModifiers))
         .map(f => (f.getName, TypeInfo(f.getType, f.getGenericType match {
           case p: ParameterizedType => Some(p)
           case _ => None
