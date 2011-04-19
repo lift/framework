@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import com.weiglewilczek.bnd4sbt.BNDPlugin
 import java.util.Calendar
 import java.util.jar.Attributes.Name
 import sbt._
@@ -90,7 +91,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
 
   // Default base
   // ------------
-  class FrameworkProject(info: ProjectInfo, libs: ModuleID*) extends DefaultProject(info) with LiftDefaultProject {
+  class FrameworkProject(info: ProjectInfo, libs: ModuleID*) extends DefaultProject(info) with BNDPlugin with LiftDefaultProject {
 
     override def libraryDependencies = super.libraryDependencies ++ libs
 
@@ -99,6 +100,10 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
 
     // FIXME: Build fails with -Xcheckinit -Xwarninit
     override def compileOptions = super.compileOptions.toList -- compileOptions("-Xcheckinit", "-Xwarninit").toList
+
+    // OSGi stuff
+    override def bndExportPackage = Seq("net.liftweb.*;version=\"%s\"".format(projectVersion.value))
+    override def bndImportPackage = "net.liftweb.*;version=\"%s\"".format(projectVersion.value) :: super.bndImportPackage.toList
 
     // System properties necessary during test TODO: Figure out how to make this a subdir of persistence/ldap/
     System.setProperty("apacheds.working.dir", (outputPath / "apacheds").absolutePath)
