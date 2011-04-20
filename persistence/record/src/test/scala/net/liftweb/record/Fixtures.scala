@@ -75,6 +75,8 @@ object MyTestEnum extends Enumeration {
 }
 
 trait HarnessedLifecycleCallbacks extends LifecycleCallbacks {
+  this: BaseField =>
+
   var beforeValidationHarness: () => Unit = () => ()
   override def beforeValidation = beforeValidationHarness()
   var afterValidationHarness: () => Unit = () => ()
@@ -100,21 +102,16 @@ trait HarnessedLifecycleCallbacks extends LifecycleCallbacks {
   override def afterDelete = afterDeleteHarness()
 }
 
-class LifecycleTestRecord private () extends Record[LifecycleTestRecord] with HarnessedLifecycleCallbacks {
+class LifecycleTestRecord private () extends Record[LifecycleTestRecord] {
   def meta = LifecycleTestRecord
 
   def foreachCallback(f: LifecycleCallbacks => Any): Unit =
     meta.foreachCallback(this, f)
 
-  object innerObjectWithCallbacks extends LifecycleCallbacks with HarnessedLifecycleCallbacks
-
-  object stringFieldWithCallbacks extends StringField(this, 100) with LifecycleCallbacks with HarnessedLifecycleCallbacks
+  object stringFieldWithCallbacks extends StringField(this, 100) with HarnessedLifecycleCallbacks
 }
 
-object LifecycleTestRecord extends LifecycleTestRecord with MetaRecord[LifecycleTestRecord] {
-  // without this, the Scala 2.7 compiler panics, so don't blame me if you remove it and it's confusing!
-  override def foreachCallback(inst: LifecycleTestRecord, f: LifecycleCallbacks => Any) = super.foreachCallback(inst, f)
-}
+object LifecycleTestRecord extends LifecycleTestRecord with MetaRecord[LifecycleTestRecord]
 
 
 class ValidationTestRecord private() extends Record[ValidationTestRecord] {

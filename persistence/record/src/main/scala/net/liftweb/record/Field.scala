@@ -448,3 +448,21 @@ object FieldHelpers {
   def expectedA(what: String, notA: AnyRef): Failure = Failure("Expected a " + what + ", not a " + (if (notA == null) "null" else notA.getClass.getName))
 }
 
+
+trait LifecycleCallbacks {
+  this: BaseField =>
+
+  def beforeValidation {}
+  def afterValidation {}
+
+  def beforeSave {}
+  def beforeCreate {}
+  def beforeUpdate {}
+
+  def afterSave {}
+  def afterCreate {}
+  def afterUpdate {}
+
+  def beforeDelete {}
+  def afterDelete {}
+}

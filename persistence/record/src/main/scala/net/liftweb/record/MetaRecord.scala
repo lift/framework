@@ -294,10 +294,6 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     setFieldsFromJValue(inst, JsonParser.parse(json))
 
   protected def foreachCallback(inst: BaseRecord, f: LifecycleCallbacks => Any) {
-    inst match {
-      case (lc: LifecycleCallbacks) => f(lc)
-      case _ => {}
-    }
     lifecycleCallbacks.foreach(m => f(m._2.invoke(inst).asInstanceOf[LifecycleCallbacks]))
   }
 
@@ -449,21 +445,5 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   case class FieldHolder(name: String, method: Method, metaField: Field[_, BaseRecord]) {
     def field(inst: BaseRecord): Field[_, BaseRecord] = method.invoke(inst).asInstanceOf[Field[_, BaseRecord]]
   }
-}
-
-trait LifecycleCallbacks {
-  def beforeValidation {}
-  def afterValidation {}
-
-  def beforeSave {}
-  def beforeCreate {}
-  def beforeUpdate {}
-
-  def afterSave {}
-  def afterCreate {}
-  def afterUpdate {}
-
-  def beforeDelete {}
-  def afterDelete {}
 }
 
