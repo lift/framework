@@ -207,7 +207,7 @@ trait TypedField[ThisType] extends BaseField {
   def setBox(in: Box[MyType]): Box[MyType] = synchronized {
     needsDefault = false
     data = in match {
-      case _ if !checkCanWrite_? => Failure(noValueErrorMessage)
+      case _ if !canWrite_?      => Failure(noValueErrorMessage)
       case Full(_)               => set_!(in)
       case _ if optional_?       => set_!(in)
       case (f: Failure)          => set_!(f) // preserve failures set in
