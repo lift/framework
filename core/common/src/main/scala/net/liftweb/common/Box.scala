@@ -279,6 +279,15 @@ sealed abstract class Box[+A] extends Product {
   def exists(func: A => Boolean): Boolean = false
 
   /**
+   * Creates a Box if the current Box is Full and the value does not satisfy the predicate, f.
+   *
+   * @param f the predicate used to test value.
+   *
+   * @returns a Box
+   */
+  def filterNot(f: A => Boolean): Box[A] = filter(a => !f(a))
+
+  /**
    * Perform a side effect by calling the specified function
    * with the value contained in this box.
    */
