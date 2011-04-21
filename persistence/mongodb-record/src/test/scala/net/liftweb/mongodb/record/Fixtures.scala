@@ -38,6 +38,8 @@ object MyTestEnum extends Enumeration {
 }
 
 trait HarnessedLifecycleCallbacks extends LifecycleCallbacks {
+  this: BaseField =>
+
   var beforeValidationHarness: () => Unit = () => ()
   override def beforeValidation = beforeValidationHarness()
   var afterValidationHarness: () => Unit = () => ()
@@ -278,22 +280,16 @@ object MapTestRecord extends MapTestRecord with MongoMetaRecord[MapTestRecord] {
 class LifecycleTestRecord private ()
   extends MongoRecord[LifecycleTestRecord]
   with MongoId[LifecycleTestRecord]
-  with HarnessedLifecycleCallbacks
 {
   def meta = LifecycleTestRecord
 
   def foreachCallback(f: LifecycleCallbacks => Any): Unit =
     meta.foreachCallback(this, f)
 
-  object innerObjectWithCallbacks extends LifecycleCallbacks with HarnessedLifecycleCallbacks
-
-  object stringFieldWithCallbacks extends StringField(this, 100) with LifecycleCallbacks with HarnessedLifecycleCallbacks
+  object stringFieldWithCallbacks extends StringField(this, 100) with HarnessedLifecycleCallbacks
 }
 
-object LifecycleTestRecord extends LifecycleTestRecord with MongoMetaRecord[LifecycleTestRecord] {
-  // without this, the Scala 2.7 compiler panics, so don't blame me if you remove it and it's confusing!
-  override def foreachCallback(inst: LifecycleTestRecord, f: LifecycleCallbacks => Any) = super.foreachCallback(inst, f)
-}
+object LifecycleTestRecord extends LifecycleTestRecord with MongoMetaRecord[LifecycleTestRecord]
 
 /*
  * SubRecord fields
