@@ -985,13 +985,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
             // Phase 1: snippets & templates processing
             val rawXml: NodeSeq = processSurroundAndInclude(PageName get, xhtml)
             
+            // Phase 2: Head & Tail merge, add additional elements to body & head
+            val xml = merge(rawXml, request)
+            
             // Make sure that functions have the right owner. It is important for this to
             // happen before the merge phase so that in merge to have a correct view of
             // mapped functions and their owners.
             updateFunctionMap(S.functionMap, RenderVersion get, millis)
-            
-            // Phase 2: Head & Tail merge, add additional elements to body & head
-            val xml = merge(rawXml, request)
             
             notices = Nil
             // Phase 3: Response conversion including fixHtml

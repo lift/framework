@@ -1084,7 +1084,7 @@ for {
    * @see ResponseShortcutException
    * @see # redirectTo ( String, ( ) => Unit)
    */
-  def redirectTo[T](where: String): T = throw ResponseShortcutException.redirect(where)
+  def redirectTo(where: String): Nothing = throw ResponseShortcutException.redirect(where)
 
   /**
    * Redirects the browser to a given URL and registers a function that will be executed when the browser
@@ -1097,7 +1097,7 @@ for {
    *
    * @see # redirectTo ( String )
    */
-  def redirectTo[T](where: String, func: () => Unit): T =
+  def redirectTo(where: String, func: () => Unit): Nothing =
     throw ResponseShortcutException.redirect(where, func)
 
 

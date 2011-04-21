@@ -39,10 +39,11 @@ object ContinueResponseException {
 }
 
 
-class ResponseShortcutException(_response: => LiftResponse, val doNotices: Boolean) extends LiftFlowOfControlException("Shortcut") {
-  lazy val response = _response
+final case class ResponseShortcutException(_response: () => LiftResponse, redirectTo: Box[String], doNotices: Boolean) extends LiftFlowOfControlException("Shortcut") {
+  lazy val response = _response()
 
-  def this(resp: => LiftResponse) = this (resp, false)
+  def this(resp: => LiftResponse, doNot: Boolean) = this(() => resp, Empty, doNot)
+  def this(resp: => LiftResponse) = this (() => resp, Empty, false)
 }
 
 object ResponseShortcutException {
@@ -50,7 +51,7 @@ object ResponseShortcutException {
     new ResponseShortcutException(responseIt, true)
 
   def redirect(to: String): ResponseShortcutException =
-    new ResponseShortcutException(RedirectResponse(to, S responseCookies: _*), true)
+    new ResponseShortcutException(() => RedirectResponse(to, S responseCookies: _*), Full(to), true)
 
   def redirect(to: String, func: () => Unit): ResponseShortcutException =
     S.session match {
@@ -59,13 +60,12 @@ object ResponseShortcutException {
     }
 
   def seeOther(to: String): ResponseShortcutException =
-    new ResponseShortcutException(SeeOtherResponse(to, S responseCookies: _*), true)
+    new ResponseShortcutException(() => SeeOtherResponse(to, S responseCookies: _*), Full(to), true)
 
   def seeOther(to: String, func: () => Unit): ResponseShortcutException =
     S.session match {
       case Full(liftSession) => seeOther(liftSession.attachRedirectFunc(to, Full(func)))
       case _ => seeOther(to)
     }
-
 }
 

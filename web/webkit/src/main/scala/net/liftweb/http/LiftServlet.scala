@@ -422,7 +422,13 @@ class LiftServlet extends Loggable {
 
         case _ =>
           try {
-            val what = flatten(liftSession.runParams(requestState))
+            val what = flatten(try {
+              liftSession.runParams(requestState)
+            } catch {
+              case ResponseShortcutException(_, Full(to), _) =>
+                import js.JsCmds._
+                List(RedirectTo(to))
+            })
 
             val what2 = what.flatMap {
               case js: JsCmd => List(js)
