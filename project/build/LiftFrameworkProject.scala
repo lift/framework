@@ -55,7 +55,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   lazy val couchdb        = persistenceProject("couchdb", dispatch_http)(record)
   lazy val squeryl_record = persistenceProject("squeryl-record", RuntimeScope.h2database, squeryl)(record)
   lazy val mongodb        = persistenceProject("mongodb", mongo_driver)(json_ext)
-  lazy val mongodb_record = persistenceProject("mongodb-record", dispatch_http)(record, mongodb)
+  lazy val mongodb_record = persistenceProject("mongodb-record")(record, mongodb)
 
 
   // Framework apidocs

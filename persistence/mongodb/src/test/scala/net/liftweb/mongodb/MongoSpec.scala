@@ -28,20 +28,20 @@ object MongoSpec extends Specification("Mongo Specification") {
   }
 
   def passDefinitionTests(id: MongoIdentifier, ma: MongoAddress): Unit = {
-    // define the db
-    MongoDB.close
-    MongoDB.defineDb(id, ma)
-    // make sure it can be used
+    // make sure mongo is running
     try {
       MongoDB.use(id) { db =>
         db.getLastError.ok must beEqualTo(true)
       }
     }
     catch {
-      case e: MongoInternalException if (e.getMessage == "DBPort.findOne failed") => skip("MongoDB is not running")
-      case e: NullPointerException => skip("MongoDB is not running")
-      case e: MongoException if (e.getMessage == "can't find a master") => skip("MongoDB is not running")
+      case e: Exception => skip("MongoDB is not running")
     }
+
+    // define the db
+    MongoDB.close
+    MongoDB.defineDb(id, ma)
+
     // using an undefined identifier throws an exception
     MongoDB.use(DefaultMongoIdentifier) { db =>
       db.getLastError.ok must beEqualTo(true)
