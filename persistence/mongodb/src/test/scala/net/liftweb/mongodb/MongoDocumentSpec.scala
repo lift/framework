@@ -17,6 +17,7 @@
 package net.liftweb
 package mongodb
 
+import org.bson.types.ObjectId
 import org.specs.Specification
 
 import common._
@@ -25,7 +26,7 @@ import json.ext.JsonBoxSerializer
 
 package mongodocumentspecs {
   case class Primitives(
-    _id: String,
+    _id: ObjectId,
     s: String,
     i: Int,
     l: Long,
@@ -46,36 +47,57 @@ package mongodocumentspecs {
 
     def meta = Primitives
   }
-  object Primitives extends MongoDocumentMeta[Primitives]
+  object Primitives extends MongoDocumentMeta[Primitives] {
+    override def formats = super.formats + new ObjectIdSerializer
+  }
 
   case class NullTestEmbed(nul: String)
-  case class NullTestDoc(_id: String, nul: String, ent: NullTestEmbed)
+  case class NullTestDoc(_id: ObjectId, nul: String, ent: NullTestEmbed)
   extends MongoDocument[NullTestDoc] {
     def meta = NullTestDoc
   }
-  object NullTestDoc extends MongoDocumentMeta[NullTestDoc]
+  object NullTestDoc extends MongoDocumentMeta[NullTestDoc] {
+    override def formats = super.formats + new ObjectIdSerializer
+  }
 
-  case class OptionTestDoc(_id: String, optNone: Option[String],
+  case class OptionTestDoc(_id: ObjectId, optNone: Option[String],
     optSome: Option[String])
   extends MongoDocument[OptionTestDoc] {
     def meta = OptionTestDoc
   }
-  object OptionTestDoc extends MongoDocumentMeta[OptionTestDoc]
+  object OptionTestDoc extends MongoDocumentMeta[OptionTestDoc] {
+    override def formats = super.formats + new ObjectIdSerializer
+  }
 
-  case class BoxTestDoc(_id: String, boxEmpty: Box[String],
+  case class BoxTestDoc(_id: ObjectId, boxEmpty: Box[String],
     boxFull: Box[String], boxFail: Box[String])
   extends MongoDocument[BoxTestDoc] {
     def meta = BoxTestDoc
   }
   object BoxTestDoc extends MongoDocumentMeta[BoxTestDoc] {
-    override def formats = super.formats + new JsonBoxSerializer
+    override def formats = super.formats + new JsonBoxSerializer + new ObjectIdSerializer
+  }
+
+  case class MapTestDoc(_id: ObjectId, aMap: Map[String, String])
+  extends MongoDocument[MapTestDoc] {
+    def meta = MapTestDoc
+  }
+  object MapTestDoc extends MongoDocumentMeta[MapTestDoc] {
+    override def formats = super.formats + new ObjectIdSerializer
   }
 }
 
 /**
- * System under specification for MongoDocument
+ * System specification for MongoDocument
  */
 object MongoDocumentSpec extends Specification("MongoDocument Specification") with MongoTestKit {
+
+  def passSaveAndRetrieveTests(obj: MongoDocument[_], meta: MongoDocumentMeta[_]): Unit = {
+    obj.save
+    val objFromDb = meta.find(obj._id.asInstanceOf[ObjectId])
+    objFromDb.isDefined must_== true
+    objFromDb.get must_== obj
+  }
 
   "MongoDocument" should {
 
@@ -84,7 +106,7 @@ object MongoDocumentSpec extends Specification("MongoDocument Specification") wi
       import mongodocumentspecs._
 
       val primitives = Primitives(
-        "1",
+        ObjectId.get,
         "This is a String",
         123,
         124L,
@@ -102,59 +124,43 @@ object MongoDocumentSpec extends Specification("MongoDocument Specification") wi
         java.lang.Boolean.TRUE,
         new java.lang.Short("135")
       )
-
-      primitives.save
-
-      val pFromDb = Primitives.find(primitives._id)
-
-      pFromDb.isDefined must_== true
-
-      pFromDb.get must_== primitives
+      passSaveAndRetrieveTests(primitives, Primitives)
     }
 
     "handle null" in {
       checkMongoIsRunning
       import mongodocumentspecs._
 
-      val ntd = NullTestDoc("1", null, NullTestEmbed(null))
-
-      ntd.save
-
-      val ntdFromDb = NullTestDoc.find(ntd._id)
-
-      ntdFromDb.isDefined must_== true
-
-      ntdFromDb.get must_== ntd
+      val ntd = NullTestDoc(ObjectId.get, null, NullTestEmbed(null))
+      passSaveAndRetrieveTests(ntd, NullTestDoc)
     }
 
     "handle Option" in {
       checkMongoIsRunning
       import mongodocumentspecs._
 
-      val otd = OptionTestDoc("1", None, Some("Some String"))
-
-      otd.save
-
-      val otdFromDb = OptionTestDoc.find(otd._id)
-
-      otdFromDb.isDefined must_== true
-
-      otdFromDb.get must_== otd
+      val otd = OptionTestDoc(ObjectId.get, None, Some("Some String"))
+      passSaveAndRetrieveTests(otd, OptionTestDoc)
     }
 
     "handle Box using JsonBoxSerializer" in {
       checkMongoIsRunning
       import mongodocumentspecs._
 
-      val btd = BoxTestDoc("1", Empty, Full("Full String"), Failure("This is a failure"))
+      val btd = BoxTestDoc(ObjectId.get, Empty, Full("Full String"), Failure("This is a failure"))
+      passSaveAndRetrieveTests(btd, BoxTestDoc)
+    }
 
-      btd.save
+    "handle Maps properly" in {
+      checkMongoIsRunning
+      import mongodocumentspecs._
 
-      val btdFromDb = BoxTestDoc.find(btd._id)
+      val mtd = MapTestDoc(ObjectId.get, Map("x" -> "1"))
+      passSaveAndRetrieveTests(mtd, MapTestDoc)
 
-      btdFromDb.isDefined must_== true
-
-      btdFromDb.get must_== btd
+      // empty map
+      val mtd2 = MapTestDoc(ObjectId.get, Map[String, String]())
+      passSaveAndRetrieveTests(mtd2, MapTestDoc)
     }
   }
 }

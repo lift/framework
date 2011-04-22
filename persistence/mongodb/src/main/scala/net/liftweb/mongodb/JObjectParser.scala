@@ -50,14 +50,11 @@ object JObjectParser {
       case x if datetype_?(x.getClass) => datetype2jvalue(x)(formats)
       case x if mongotype_?(x.getClass) => mongotype2jvalue(x)(formats)
       case x: BasicDBList => JArray(x.toList.map( x => serialize(x, formats)))
-      case x: BasicDBObject =>
+      case x: BasicDBObject => JObject(
         x.keySet.toList.map { f =>
           JField(f.toString, serialize(x.get(f.toString), formats))
         }
-        match {
-          case Nil => JNothing
-          case fields => JObject(fields)
-        }
+      )
       case x => {
         JNothing
       }

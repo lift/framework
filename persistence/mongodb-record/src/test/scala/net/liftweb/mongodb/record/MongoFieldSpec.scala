@@ -29,6 +29,7 @@ import org.specs.Specification
 
 import common._
 import json.{Num => JsonNum, _}
+import JsonDSL._
 import util.FieldError
 import util.Helpers.randomString
 import http.{LiftSession, S}
@@ -188,25 +189,18 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
     )
   }
 
-  "DBRefField" should {
-    checkMongoIsRunning
-    
-    if (isMongoRunning) { // Even if this gets skipped, the vals still get set.
-      val rec = MongoFieldTypeTestRecord.createRecord
-      val dbref = DBRefTestRecord.createRecord.getRef // This makes a call to MongoDB.use and needs a MongoDB connection.
-      passBasicTests(dbref, rec.mandatoryDBRefField, rec.legacyOptionalDBRefField, false)
-    }
-  }
-
   "JsonObjectField" should {
     val rec = MongoFieldTypeTestRecord.createRecord
-    val ttjo = TypeTestJsonObject(1, "jsonobj1")
+    val ttjo = TypeTestJsonObject(1, "jsonobj1", Map("x" -> "a"))
+    val json = ("intField" -> 1) ~ ("stringField" -> "jsonobj1") ~ ("mapField" -> (("x" -> "a")))
     passBasicTests(ttjo, rec.mandatoryJsonObjectField, rec.legacyOptionalJsonObjectField)
     passConversionTests(
       ttjo,
       rec.mandatoryJsonObjectField,
-      JsObj(("intField", Num(1)), ("stringField", Str("jsonobj1"))),
-      JObject(List(JField("intField", JInt(1)), JField("stringField", JString("jsonobj1")))),
+      new JsExp {
+        def toJsCmd = Printer.compact(render(json))
+      },
+      json,
       Empty
     )
   }
@@ -303,19 +297,19 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
   "MongoJsonObjectListField" should {
     "function correctly" in {
       val rec = ListTestRecord.createRecord
-      val lst = List(TypeTestJsonObject(1, "jsonobj1"), TypeTestJsonObject(2, "jsonobj2"))
+      val lst = List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2")))
+      val json = List(
+        ("intField" -> 1) ~ ("stringField" -> "jsonobj1") ~ ("mapField" -> (("x" -> "1"))),
+        ("intField" -> 2) ~ ("stringField" -> "jsonobj2") ~ ("mapField" -> (("x" -> "2")))
+      )
       passBasicTests(lst, rec.mandatoryMongoJsonObjectListField, rec.legacyOptionalMongoJsonObjectListField)
       passConversionTests(
         lst,
         rec.mandatoryMongoJsonObjectListField,
-        JsArray(
-          JsObj(("intField", Num(1)), ("stringField", Str("jsonobj1"))),
-          JsObj(("intField", Num(2)), ("stringField", Str("jsonobj2")))
-        ),
-        JArray(List(
-          JObject(List(JField("intField", JInt(1)), JField("stringField", JString("jsonobj1")))),
-          JObject(List(JField("intField", JInt(2)), JField("stringField", JString("jsonobj2"))))
-        )),
+        new JsExp {
+          def toJsCmd = Printer.compact(render(json))
+        },
+        json,
         Empty
       )
     }

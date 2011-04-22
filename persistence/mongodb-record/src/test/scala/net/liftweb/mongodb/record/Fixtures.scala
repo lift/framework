@@ -160,7 +160,8 @@ object FieldTypeTestRecord extends FieldTypeTestRecord with MongoMetaRecord[Fiel
 
 case class TypeTestJsonObject(
   intField: Int,
-  stringField: String
+  stringField: String,
+  mapField: Map[String, String]
 ) extends JsonObject[TypeTestJsonObject]
 {
   // TODO: Add more types
@@ -179,15 +180,12 @@ class MongoFieldTypeTestRecord private () extends MongoRecord[MongoFieldTypeTest
   object mandatoryDateField extends DateField(this)
   object legacyOptionalDateField extends DateField(this) { override def optional_? = true }
 
-  object mandatoryDBRefField extends DBRefField[MongoFieldTypeTestRecord, DBRefTestRecord](this, DBRefTestRecord)
-  object legacyOptionalDBRefField extends DBRefField[MongoFieldTypeTestRecord, DBRefTestRecord](this, DBRefTestRecord) { override def optional_? = true }
-
   object mandatoryJsonObjectField extends JsonObjectField(this, TypeTestJsonObject) {
-    def defaultValue = TypeTestJsonObject(0, "")
+    def defaultValue = TypeTestJsonObject(0, "", Map[String, String]())
   }
   object legacyOptionalJsonObjectField extends JsonObjectField(this, TypeTestJsonObject) {
     override def optional_? = true
-    def defaultValue = TypeTestJsonObject(0, "")
+    def defaultValue = TypeTestJsonObject(0, "", Map[String, String]())
   }
 
   object mandatoryObjectIdField extends ObjectIdField(this)
@@ -203,8 +201,6 @@ class MongoFieldTypeTestRecord private () extends MongoRecord[MongoFieldTypeTest
     case that:MongoFieldTypeTestRecord =>
       this.id.value == that.id.value &&
       this.mandatoryDateField.value == that.mandatoryDateField.value &&
-      //this.mandatoryDBRefField.value.getId == that.mandatoryDBRefField.value.getId &&
-      //this.mandatoryDBRefField.value.getRef == that.mandatoryDBRefField.value.getRef &&
       this.mandatoryJsonObjectField.value == that.mandatoryJsonObjectField.value &&
       this.mandatoryObjectIdField.value == that.mandatoryObjectIdField.value &&
       this.mandatoryPatternField.value.pattern == that.mandatoryPatternField.value.pattern &&
