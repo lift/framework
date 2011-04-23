@@ -2018,9 +2018,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         failedFind(f)
       case Full(s) => 
         if (hasLiftBind(s)) Helpers.bind(atWhat, s)
-        else atWhat.toList.foldLeft(s){
-          case (xml, (id, replacement)) => 
-            Helpers.replaceIdNode(xml, id, replacement)
+        else atWhat.toList match {
+          case Nil => s
+          case xs => xs.map{ case (id, replacement) => (("#" + id) #> replacement)}.reduceLeft(_ & _)(s)
         }
       case _ => atWhat.values.flatMap(_.toSeq).toList
     }

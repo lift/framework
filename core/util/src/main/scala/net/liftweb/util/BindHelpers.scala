@@ -688,6 +688,7 @@ trait BindHelpers {
    * Remove all the <head> tags, just leaving the child tags
    */
   def stripHead(in: NodeSeq): NodeSeq = {
+    ("head" #> ((ns: NodeSeq) => ns.asInstanceOf[Elem].child))(in)
     import scala.xml.transform._
 
     val rewrite = new RewriteRule {
@@ -705,6 +706,8 @@ trait BindHelpers {
    * nodeseq.
    */
   def replaceIdNode(in: NodeSeq, id: String, replacement: NodeSeq): NodeSeq = {
+    (("#"+id) #> replacement)(in)
+    /*
     import scala.xml.transform._
 
     val cmp = Some(Text(id))
@@ -718,6 +721,7 @@ trait BindHelpers {
     }
 
     (new RuleTransformer(rewrite)).transform(in)
+    */
   }
 
   /**

@@ -216,7 +216,7 @@ object BindHelpersSpec extends Specification("BindHelpers Specification") {
     "replace a node" in {
       Helpers.replaceIdNode(<foo><bar id="dog"/></foo>,
                             "dog",
-                            <baz/>) must ==/ (<foo><baz/></foo>)
+                            <baz/>) must ==/ (<foo><baz id="dog"></baz></foo>)
     }
 
     "Ignore if no id match" in {
