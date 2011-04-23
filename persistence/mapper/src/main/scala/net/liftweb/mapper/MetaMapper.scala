@@ -495,30 +495,19 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     by match {
       case Nil => curPos
       case Cmp(field, _, Full(value), _, _) :: xs =>
-	if (field.dbIgnoreSQLType_?)
-	  st.setObject(curPos, field.convertToJDBCFriendly(value))
-	else
-          st.setObject(curPos, field.convertToJDBCFriendly(value), conn.driverType.columnTypeMap(field.targetSQLType))
-
+        setPreparedStatementValue(conn, st, curPos, field, field.targetSQLType, value.asInstanceOf[AnyRef], objectSetterFor(field))
         setStatementFields(st, xs, curPos + 1, conn)
 
       case ByList(field, orgVals) :: xs => {
-           val vals = Set(orgVals :_*).toList
-          var newPos = curPos
-          vals.foreach(v => {
-	    if (field.dbIgnoreSQLType_?)
-	      st.setObject(newPos,
-                           field.convertToJDBCFriendly(v))
-	    else
-	      st.setObject(newPos,
-                           field.convertToJDBCFriendly(v),
-                           conn.driverType.columnTypeMap(field.targetSQLType))
+        val vals = Set(orgVals :_*).toList
+        var newPos = curPos
+        vals.foreach(v => {
+          setPreparedStatementValue(conn, st, newPos, field, field.targetSQLType, v.asInstanceOf[AnyRef], objectSetterFor(field))
+          newPos = newPos + 1
+        })
 
-              newPos = newPos + 1
-            })
-
-          setStatementFields(st, xs, newPos, conn)
-        }
+        setStatementFields(st, xs, newPos, conn)
+      }
 
       case (in: InThing[A]) :: xs =>
         val newPos = in.innerMeta.setStatementFields(st, in.queryParams,
@@ -552,13 +541,8 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
               st.setTimestamp(curPos, new java.sql.Timestamp(d.getTime))
               setStatementFields(st, xs, curPos + 1, conn)
             case List(field: BaseMappedField) =>
-	      if (field.dbIgnoreSQLType_?)
-		st.setObject(curPos, field.jdbcFriendly)
-	      else
-	      	st.setObject(curPos, field.jdbcFriendly, conn.driverType.columnTypeMap(field.targetSQLType))
-
+              setPreparedStatementValue(conn, st, curPos, field, field.targetSQLType, field.jdbcFriendly, objectSetterFor(field))
               setStatementFields(st, xs, curPos + 1, conn)
-
             case p :: ps =>
               setStatementFields(st, BySql[A](query, who, p) :: BySql[A](query, who, ps: _*) :: xs, curPos, conn)
           }
@@ -611,10 +595,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
             st =>
             val indVal = indexedField(toDelete)
             indVal.map{indVal =>
-	      if (indVal.dbIgnoreSQLType_?)
-		st.setObject(1, indVal.jdbcFriendly(im))
-	      else
-		st.setObject(1, indVal.jdbcFriendly(im), conn.driverType.columnTypeMap(indVal.targetSQLType(im)))
+              setPreparedStatementValue(conn, st, 1, indVal, im, objectSetterFor(indVal))
 
               st.executeUpdate == 1
             } openOr false
@@ -758,6 +739,87 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    */
   def clean_?(toCheck: A): Boolean = mappedColumns.foldLeft(true)((bool, ptr) => bool && !(??(ptr._2, toCheck).dirty_?))
 
+  /**
+   * Sets a prepared statement value based on the given MappedField's value
+   * and column name. This delegates to the BaseMappedField overload of
+   * setPreparedStatementValue by retrieving the necessary values.
+   *
+   * @param conn The connection for this prepared statement
+   * @param st The prepared statement
+   * @param index The index for this prepared statement value
+   * @param field The field corresponding to this prepared statement value
+   * @param columnName The column name to use to retrieve the type and value
+   * @param setObj A function that we can delegate to for setObject calls
+   */
+  private def setPreparedStatementValue(conn: SuperConnection,
+                                        st: PreparedStatement,
+                                        index: Int,
+                                        field: MappedField[_, A],
+                                        columnName : String,
+                                        setObj : (PreparedStatement, Int, AnyRef, Int) => Unit) {
+    setPreparedStatementValue(conn, st, index, field,
+                              field.targetSQLType(columnName),
+                              field.jdbcFriendly(columnName),
+                              setObj)
+  }
+
+  /**
+   * Sets a prepared statement value based on the given BaseMappedField's type and value. This
+   * allows us to do special handling based on the type in a central location.
+   *
+   * @param conn The connection for this prepared statement
+   * @param st The prepared statement
+   * @param index The index for this prepared statement value
+   * @param field The field corresponding to this prepared statement value
+   * @param columnType The JDBC SQL Type for this value
+   * @param value The value itself
+   * @param setObj A function that we can delegate to for setObject calls
+   */
+  private def setPreparedStatementValue(conn: SuperConnection,
+                                        st: PreparedStatement,
+                                        index: Int,
+                                        field: BaseMappedField,
+                                        columnType : Int,
+                                        value : Object,
+                                        setObj : (PreparedStatement, Int, AnyRef, Int) => Unit) {
+    // Remap the type if the driver wants
+    val mappedColumnType = conn.driverType.columnTypeMap(columnType)
+
+    // We generally use setObject for everything, but we've found some broken JDBC drivers
+    // which has prompted us to use type-specific handling for certain types
+    mappedColumnType match {
+      case Types.VARCHAR => 
+        // Set a string with a simple guard for null values
+        st.setString(index, if (value ne null) value.toString else value.asInstanceOf[String])
+
+      // Sybase SQL Anywhere and DB2 choke on using setObject for boolean data
+      case Types.BOOLEAN => value match {
+        case intData : java.lang.Integer => st.setBoolean(index, intData.intValue != 0)
+        case b : java.lang.Boolean => st.setBoolean(index, b.booleanValue)
+        // If we can't figure it out, maybe the driver can
+        case other => setObj(st, index, other, mappedColumnType) 
+      }
+
+      // In all other cases, delegate to the driver
+      case _ => setObj(st, index, value, mappedColumnType)
+    }
+  }
+
+  /**
+   * This is a utility method to simplify using setObject. It's intended use is to
+   * generate a setObject proxy so that the intermediate code doesn't need to be aware
+   * of drivers that ignore column types.
+   */
+  private def objectSetterFor(field : BaseMappedField) = {
+    (st : PreparedStatement, index : Int, value : AnyRef, columnType : Int) => {
+      if (field.dbIgnoreSQLType_?) {
+        st.setObject(index, value)
+      } else {
+        st.setObject(index, value, columnType)
+      }
+    }
+  }
+
   def save(toSave: A): Boolean = {
     toSave match {
       case x: MetaMapper[_] => throw new MapperException("Cannot save the MetaMapper singleton")
@@ -812,21 +874,11 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                   st =>
                   var colNum = 1
 
+                  // Here we apply each column's value to the prepared statement
                   for (col <- mappedColumns) {
                     val colVal = ??(col._2, toSave)
                     if (!columnPrimaryKey_?(col._1) && colVal.dirty_?) {
-                      colVal.targetSQLType(col._1) match {
-                        case Types.VARCHAR => st.setString(colNum, colVal.jdbcFriendly(col._1).asInstanceOf[String])
-
-                        case _ =>
-			  if (colVal.dbIgnoreSQLType_?)
-			    st.setObject(colNum, colVal.jdbcFriendly(col._1))
-			  else
-			    st.setObject(colNum, colVal.jdbcFriendly(col._1),
-					 conn.driverType.
-					 columnTypeMap(colVal.
-						       targetSQLType(col._1)))
-                      }
+                      setPreparedStatementValue(conn, st, colNum, colVal, col._1, objectSetterFor(colVal))
                       colNum = colNum + 1
                     }
                   }
@@ -835,13 +887,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                     indVal <- indexedField(toSave)
                     indexColumnName <- thePrimaryKeyField
                   } {
-		    if (indVal.dbIgnoreSQLType_?)
-		      st.setObject(colNum, indVal.jdbcFriendly(indexColumnName))
-		    else
-		      st.setObject(colNum, indVal.jdbcFriendly(indexColumnName),
-                                   conn.driverType.
-				   columnTypeMap(indVal.
-						 targetSQLType(indexColumnName)))
+                    setPreparedStatementValue(conn, st, colNum, indVal, indexColumnName, objectSetterFor(indVal))
                   }
 
                   st.executeUpdate
@@ -862,24 +908,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                 for (col <- mappedColumns) {
                   if (!columnPrimaryKey_?(col._1)) {
                     val colVal = col._2.invoke(toSave).asInstanceOf[MappedField[AnyRef, A]]
-                    colVal.targetSQLType(col._1) match {
-                      case Types.VARCHAR =>
-                        st.setString(colNum, colVal.jdbcFriendly(col._1).asInstanceOf[String])
-
-                      // Sybase SQL Anywhere chokes on using setObject for boolean data
-                      case Types.BOOLEAN =>
-                        // For some reason MappedBoolean uses Ints to represent data
-                        st.setBoolean(colNum, colVal.jdbcFriendly(col._1) == 1)
-
-                      case _ =>
-                        if (colVal.dbIgnoreSQLType_?)
-                          st.setObject(colNum, colVal.jdbcFriendly(col._1))
-                        else
-                          st.setObject(colNum, colVal.jdbcFriendly(col._1),
-                                       conn.driverType.
-                                       columnTypeMap(colVal.
-                                                     targetSQLType(col._1)))
-                    }
+                    setPreparedStatementValue(conn, st, colNum, colVal, col._1, objectSetterFor(colVal))
                     colNum = colNum + 1
                   }
                 }
