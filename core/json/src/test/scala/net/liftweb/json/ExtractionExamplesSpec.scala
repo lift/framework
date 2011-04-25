@@ -203,6 +203,18 @@ object ExtractionExamples extends Specification("Extraction Examples Specificati
     JDouble(2.1).extract[Long] mustEqual 2L
   }
 
+  "Map with nested non-polymorphic list extraction example" in {
+    parse("""{"a":["b"]}""").extract[Map[String, List[String]]] mustEqual Map("a" -> List("b"))
+  }
+
+  "List with nested non-polymorphic list extraction example" in {
+    parse("""[["a"]]""").extract[List[List[String]]] mustEqual List(List("a"))
+  }
+
+  "Complex nested non-polymorphic collections extraction example" in {
+    parse("""{"a":[{"b":"c"}]}""").extract[Map[String, List[Map[String, String]]]] mustEqual Map("a" -> List(Map("b" -> "c")))
+  }
+
   val testJson = 
 """
 { "name": "joe",

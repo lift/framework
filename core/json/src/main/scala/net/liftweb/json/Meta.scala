@@ -17,7 +17,7 @@
 package net.liftweb
 package json
 
-import java.lang.reflect.{Constructor => JConstructor, Field, Type, ParameterizedType}
+import java.lang.reflect.{Constructor => JConstructor, Field, Type, ParameterizedType, GenericArrayType}
 import java.util.Date
 
 case class TypeInfo(clazz: Class[_], parameterizedType: Option[ParameterizedType])
@@ -49,7 +49,7 @@ private[json] object Meta {
   sealed abstract class Mapping
   case class Arg(path: String, mapping: Mapping, optional: Boolean) extends Mapping
   case class Value(targetType: Class[_]) extends Mapping
-  case class Cycle(targetType: Class[_]) extends Mapping
+  case class Cycle(targetType: Type) extends Mapping
   case class Dict(mapping: Mapping) extends Mapping
   case class Col(targetType: Class[_], mapping: Mapping) extends Mapping
   case class Constructor(targetType: TypeInfo, choices: List[DeclaredConstructor]) extends Mapping {
@@ -76,7 +76,7 @@ private[json] object Meta {
 
   case class DeclaredConstructor(constructor: JConstructor[_], args: List[Arg])
 
-  private val mappings = new Memo[Class[_], Mapping]
+  private val mappings = new Memo[Type, Mapping]
   private val unmangledNames = new Memo[String, String]
   private val paranamer = new CachingParanamer(new BytecodeReadingParanamer)
 
@@ -85,60 +85,81 @@ private[json] object Meta {
       paranamer.lookupParameterNames(constructor)
   }
 
-  private[json] def mappingOf(clazz: Class[_], typeArgs: Seq[Class[_]] = Seq())
+  private[json] def mappingOf(clazz: Type, typeArgs: Seq[Class[_]] = Seq())
                              (implicit formats: Formats): Mapping = {
     import Reflection._
 
-    def constructors(clazz: Class[_], visited: Set[Class[_]]) =
-      Reflection.constructors(clazz, formats.parameterNameReader).map { case (c, args) =>
-        DeclaredConstructor(c, args.map { case (name, atype, genericType) =>
-          toArg(unmangleName(name), atype, genericType, visited) })
+    def constructors(t: Type, visited: Set[Type]) = {
+      Reflection.constructors(t, formats.parameterNameReader).map { case (c, args) =>
+        DeclaredConstructor(c, args.map { case (name, t) =>
+          toArg(unmangleName(name), t, visited) })
       }
+    }
 
-    def toArg(name: String, fieldType: Class[_], genericType: Type, visited: Set[Class[_]]): Arg = {
+    def toArg(name: String, genericType: Type, visited: Set[Type]): Arg = {
       def mkContainer(t: Type, k: Kind, valueTypeIndex: Int, factory: Mapping => Mapping) =
         if (typeConstructor_?(t)) {
-          val types = typeConstructors(t, k)(valueTypeIndex)
-          factory(fieldMapping(types._1, types._2)._1)
-        } else factory(fieldMapping(typeParameters(t, k)(valueTypeIndex), null)._1)
+          val typeArgs = typeConstructors(t, k)(valueTypeIndex)
+          factory(fieldMapping(typeArgs)._1)
+        } else factory(fieldMapping(typeParameters(t, k)(valueTypeIndex))._1)
 
       def parameterizedTypeOpt(t: Type) = t match {
         case x: ParameterizedType => Some(x)
         case _ => None
       }
 
-      def fieldMapping(fType: Class[_], genType: Type): (Mapping, Boolean) = {
-        if (primitive_?(fType)) (Value(fType), false)
-        else if (classOf[Set[_]].isAssignableFrom(fType))
-          (mkContainer(genType, `* -> *`, 0, Col.apply(classOf[Set[_]], _)), false)
-        else if (fType.isArray)
-          (mkContainer(genType, `* -> *`, 0, Col.apply(fType, _)), false)
-        else if (classOf[Option[_]].isAssignableFrom(fType))
-          (mkContainer(genType, `* -> *`, 0, identity _), true)
-        else if (classOf[Map[_, _]].isAssignableFrom(fType))
-          (mkContainer(genType, `(*,*) -> *`, 1, Dict.apply _), false)
-        else if (classOf[Seq[_]].isAssignableFrom(fType))
-          (mkContainer(genType, `* -> *`, 0, Col.apply(classOf[List[_]], _)), false)
-        else {
-          if (visited.contains(fType)) (Cycle(fType), false)
-          else (Constructor(TypeInfo(fType, parameterizedTypeOpt(genType)),
-                            constructors(fType, visited + fType)), false)
-        }
+      def mkConstructor(t: Type) =
+        if (visited.contains(t)) (Cycle(t), false)
+        else (Constructor(TypeInfo(rawClassOf(t), parameterizedTypeOpt(t)), constructors(t, visited + t)), false)
+
+      def fieldMapping(t: Type): (Mapping, Boolean) = t match {
+        case pType: ParameterizedType => 
+          val raw = rawClassOf(pType)
+          if (classOf[Set[_]].isAssignableFrom(raw))
+            (mkContainer(t, `* -> *`, 0, Col.apply(classOf[Set[_]], _)), false)
+          else if (raw.isArray)
+            (mkContainer(t, `* -> *`, 0, Col.apply(raw, _)), false)
+          else if (classOf[Option[_]].isAssignableFrom(raw))
+            (mkContainer(t, `* -> *`, 0, identity _), true)
+          else if (classOf[Map[_, _]].isAssignableFrom(raw))
+            (mkContainer(t, `(*,*) -> *`, 1, Dict.apply _), false)
+          else if (classOf[Seq[_]].isAssignableFrom(raw))
+            (mkContainer(t, `* -> *`, 0, Col.apply(classOf[List[_]], _)), false)
+          else 
+            mkConstructor(t)
+        case aType: GenericArrayType =>
+          // Couldn't find better way to reconstruct proper array type:
+          val raw = java.lang.reflect.Array.newInstance(rawClassOf(aType.getGenericComponentType), 0: Int).getClass
+          (Col(raw, fieldMapping(aType.getGenericComponentType)._1), false)
+        case raw: Class[_] =>
+          if (primitive_?(raw)) (Value(raw), false)
+          else if (raw.isArray)
+            (mkContainer(t, `* -> *`, 0, Col.apply(raw, _)), false)
+          else 
+            mkConstructor(t)
+        case x => (Constructor(TypeInfo(classOf[AnyRef], None), Nil), false)
       }
 
-      val (mapping, optional) = fieldMapping(fieldType, genericType)
+      val (mapping, optional) = fieldMapping(genericType)
       Arg(name, mapping, optional)
     }
 
-    if (primitive_?(clazz)) Value(clazz)
+    if (primitive_?(clazz)) Value(rawClassOf(clazz))
     else {
-      mappings.memoize(clazz, c => {
+      mappings.memoize(clazz, t => {
+        val c = rawClassOf(t)
         val typeInfo = 
           if (typeArgs.isEmpty) TypeInfo(c, None) 
           else TypeInfo(c, Some(mkParameterizedType(c, typeArgs)))
-        Constructor(typeInfo, constructors(c, Set())) 
+        Constructor(typeInfo, constructors(t, Set())) 
       })
     }
+  }
+
+  private[json] def rawClassOf(t: Type): Class[_] = t match {
+    case c: Class[_] => c
+    case p: ParameterizedType => rawClassOf(p.getRawType)
+    case x => fail("Raw type of " + x + " not known")
   }
 
   private[json] def mkParameterizedType(owner: Class[_], typeArgs: Seq[Class[_]]) = 
@@ -151,7 +172,7 @@ private[json] object Meta {
   private[json] def unmangleName(name: String) =
     unmangledNames.memoize(name, operators.foldLeft(_)((n, o) => n.replace(o._1, o._2)))
 
-  private[json] def fail(msg: String) = throw new MappingException(msg)
+  private[json] def fail(msg: String, cause: Exception = null) = throw new MappingException(msg, cause)
 
   private val operators = Map(
     "$eq" -> "=", "$greater" -> ">", "$less" -> "<", "$plus" -> "+", "$minus" -> "-",
@@ -175,8 +196,6 @@ private[json] object Meta {
     import java.lang.reflect._
     import scala.collection.JavaConversions._
 
-    private val cachedConstructorArgs = new Memo[JConstructor[_], List[(String, Class[_], Type)]]
-
     sealed abstract class Kind
     case object `* -> *` extends Kind
     case object `(*,*) -> *` extends Kind
@@ -190,34 +209,42 @@ private[json] object Meta {
       classOf[java.lang.Short], classOf[Date], classOf[Symbol], classOf[JValue],
       classOf[JObject], classOf[JArray]).map((_, ())))
 
-    def constructors(clazz: Class[_], 
-                     nameReader: ParameterNameReader): List[(JConstructor[_], List[(String, Class[_], Type)])] =
-      clazz.getDeclaredConstructors.map(c => (c, constructorArgs(c, nameReader))).toList
+    def constructors(t: Type, names: ParameterNameReader): List[(JConstructor[_], List[(String, Type)])] =
+      rawClassOf(t).getDeclaredConstructors.map(c => (c, constructorArgs(t, c, names))).toList
 
-    def constructorArgs(constructor: JConstructor[_], 
-                        nameReader: ParameterNameReader): List[(String, Class[_], Type)] = {
-      def argsInfo(c: JConstructor[_]) = {
+    def constructorArgs(t: Type, constructor: JConstructor[_], 
+                        nameReader: ParameterNameReader): List[(String, Type)] = {
+      def argsInfo(c: JConstructor[_], typeArgs: Map[TypeVariable[_], Type]) = {
         val Name = """^((?:[^$]|[$][^0-9]+)+)([$][0-9]+)?$"""r
         def clean(name: String) = name match {
           case Name(text, junk) => text
         }
         try {
           val names = nameReader.lookupParameterNames(c).map(clean)
-          val types = c.getParameterTypes
-          val ptypes = c.getGenericParameterTypes
-          (names.toList, types.toList, ptypes.toList).zip
+          val types = c.getGenericParameterTypes.toList map {
+            case v: TypeVariable[_] => typeArgs.getOrElse(v, v)
+            case x => x
+          }
+          names.toList.zip(types)
         } catch {
           case e: ParameterNamesNotFoundException => Nil
         }
       }
 
-      cachedConstructorArgs.memoize(constructor, argsInfo(_))
+      t match {
+        case c: Class[_] => argsInfo(constructor, Map())
+        case p: ParameterizedType =>
+          val vars = 
+            Map() ++ rawClassOf(p).getTypeParameters.toList.map(_.asInstanceOf[TypeVariable[_]]).zip(p.getActualTypeArguments.toList) // FIXME this cast should not be needed
+          argsInfo(constructor, vars)
+        case x => fail("Do not know how query constructor info for " + x)
+      }
     }
 
     def primaryConstructorArgs(c: Class[_])(implicit formats: Formats) = {
       val ord = Ordering[Int].on[JConstructor[_]](_.getParameterTypes.size)
       val primary = c.getDeclaredConstructors.max(ord)
-      constructorArgs(primary, formats.parameterNameReader)
+      constructorArgs(c, primary, formats.parameterNameReader)
     }
 
     def typeParameters(t: Type, k: Kind): List[Class[_]] = {
@@ -244,12 +271,12 @@ private[json] object Meta {
       }
     }
 
-    def typeConstructors(t: Type, k: Kind): List[(Class[_], Type)] = {
-      def types(i: Int): (Class[_], Type) = {
+    def typeConstructors(t: Type, k: Kind): List[Type] = {
+      def types(i: Int): Type = {
         val ptype = t.asInstanceOf[ParameterizedType]
         ptype.getActualTypeArguments()(i) match {
-          case p: ParameterizedType => (p.getRawType.asInstanceOf[Class[_]], p)
-          case c: Class[_] => (c, c)
+          case p: ParameterizedType => p
+          case c: Class[_] => c
         }
       }
 
@@ -259,7 +286,11 @@ private[json] object Meta {
       }
     }
 
-    def primitive_?(clazz: Class[_]) = primitives contains clazz
+    def primitive_?(t: Type) = t match {
+      case clazz: Class[_] => primitives contains clazz
+      case _ => false
+    }
+
     def static_?(f: Field) = Modifier.isStatic(f.getModifiers)
     def typeConstructor_?(t: Type) = t match {
       case p: ParameterizedType =>
