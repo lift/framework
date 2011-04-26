@@ -273,7 +273,7 @@ trait SHtml {
    * explicitly capture the template
    */
   def memoize(f: => NodeSeq => NodeSeq): MemoizeTransform = {
-    val salt = (new Exception()).getStackTrace().apply(1).toString
+    val salt = (new Exception()).getStackTrace().apply(2).toString
     new MemoizeTransform {
       object latestNodeSeq extends RequestVar[NodeSeq](NodeSeq.Empty) {
         override val __nameSalt = salt
