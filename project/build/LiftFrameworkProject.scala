@@ -20,7 +20,7 @@ import sbt._
 import net.liftweb.sbt._
 
 
-class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with LiftParentProject {
+class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with LiftParentProject with IdeaProject {
 
   import CompileScope._
   import ProvidedScope._
@@ -90,7 +90,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
 
   // Default base
   // ------------
-  class FrameworkProject(info: ProjectInfo, libs: ModuleID*) extends DefaultProject(info) with LiftDefaultProject {
+  class FrameworkProject(info: ProjectInfo, libs: ModuleID*) extends DefaultProject(info) with LiftDefaultProject with IdeaProject {
 
     override def libraryDependencies = super.libraryDependencies ++ libs
 
