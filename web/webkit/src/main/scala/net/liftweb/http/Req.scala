@@ -1013,7 +1013,7 @@ class Req(val path: ParsePath,
     S.statelessInit(this) {
       (for {
         session <- S.session
-        template =  TemplateFinder.findAnyTemplate(path.partPath)
+        template =  Templates(path.partPath)
         resp <- session.processTemplate(template, this, path, 404)
       } yield resp) match {
         case Full(resp) => resp

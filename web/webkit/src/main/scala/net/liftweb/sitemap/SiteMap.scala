@@ -91,7 +91,7 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
     CompleteMenu(kids.flatMap(_.makeMenuItem(Nil, group)))
   }
 
-  lazy val menus: List[Menu] = locs.values.map(_.menu).toList
+  lazy val menus: List[Menu] = locs.valuesIterator.map(_.menu).toList
 
   /**
    * Build a menu based on the current location

@@ -40,9 +40,9 @@ object DefaultRoutines {
     }
 
     for {
-      xml <- TemplateFinder.findAnyTemplate(realPath, loc) or
-      TemplateFinder.findAnyTemplate("templates-hidden" :: realPath, loc) or
-      TemplateFinder.findAnyTemplate(realPath.dropRight(1) :::
+      xml <- Templates(realPath, loc) or
+      Templates("templates-hidden" :: realPath, loc) or
+      Templates(realPath.dropRight(1) :::
                                      ("resources-hidden" ::
                                       realPath.takeRight(1)), loc)
 
@@ -70,12 +70,12 @@ object DefaultRoutines {
    * production mode, the resources will be cached (up to 2000
    * resource bundles will be cached). <br/><br/>
    *
-   * The resource bundles will be loaded using TemplateFinder and converted
+   * The resource bundles will be loaded using Templates and converted
    * via BundleBuilder.  The routine will search for resources given the
    * current Locale (see S.locale).  If the current path is /foo/bar,
    * the files /foo/_resources_bar, /templates-hidden/foo/_resources_bar,
    * and /foo/resources-hidden/_resources_bar will be searched.  The
-   * search will be based on the TemplateFinder locale search rules. <br/><br/>
+   * search will be based on the Templates locale search rules. <br/><br/>
    *
    * In addition to page-specific resources, there are global resources searched
    * in /_resources, /templates-hidden/_resources, and
@@ -90,7 +90,7 @@ object DefaultRoutines {
    * easier to remember to update the localization.
    *
    * @see S.locale
-   * @see TemplateFinder.findAnyTemplate
+   * @see Templates.apply
    * @see BundleBuilder.convert
    * 
    */

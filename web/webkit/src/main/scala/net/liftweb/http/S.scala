@@ -501,7 +501,7 @@ trait S extends HasParams with Loggable {
   def templateFromTemplateAttr: Box[NodeSeq] =
     for (templateName <- attr("template") ?~ "Template Attribute missing";
          val tmplList = templateName.roboSplit("/");
-         template <- TemplateFinder.findAnyTemplate(tmplList) ?~
+         template <- Templates(tmplList) ?~
                  "couldn't find template") yield template
 
 
@@ -1834,18 +1834,18 @@ for {
   /**
    * Find and process a template. This can be used to load a template from within some other Lift processing,
    * such as a snippet or view. If you just want to retrieve the XML contents of a template, use
-   * TemplateFinder.findAnyTemplate.
+   * Templates.apply.
    *
    * @param path The path for the template that you want to process
    * @param snips any snippet mapping specific to this template run
    * @return a Full Box containing the processed template, or a Failure if the template could not be found.
    *
-   * @see TempalateFinder # findAnyTemplate
+   * @see TempalateFinder # apply
    */
   def runTemplate(path: List[String], snips: (String,  NodeSeq => NodeSeq)*): Box[NodeSeq] =
     mapSnippetsWith(snips :_*) {
       for{
-        t <- TemplateFinder.findAnyTemplate(path) ?~ ("Couldn't find template " + path)
+        t <- Templates(path) ?~ ("Couldn't find template " + path)
         sess <- session ?~ "No current session"
       } yield sess.processSurroundAndInclude(path.mkString("/", "/", ""), t)
     }

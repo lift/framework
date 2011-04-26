@@ -142,46 +142,9 @@ object LiftSession {
    * Check to see if the template is marked designer friendly
    * and lop off the stuff before the first surround
    */
-  def checkForContentId(in: NodeSeq): NodeSeq = {
-    def df(in: MetaData): Option[PrefixedAttribute] = in match {
-      case Null => None
-      case p: PrefixedAttribute 
-      if (p.pre == "l" || p.pre == "lift") && 
-      (p.key == "content_id") => Some(p)
-      case n => df(n.next)
-    }
-    
-    
-    in.flatMap {
-      case e: Elem if e.label == "html" => df(e.attributes)
-      case _ => None
-    }.flatMap {
-      md => Helpers.findId(in, md.value.text)
-    }.headOption orElse 
-    in.flatMap {
-      case e: Elem if e.label == "html" =>
-        e.child.flatMap {
-          case e: Elem if e.label == "body" => {
-            e.attribute("class").flatMap {
-              ns => {
-                val clz = ns.text.charSplit(' ')
-                clz.flatMap {
-                  case s if s.startsWith("lift:content_id=") =>
-                    Some(urlDecode(s.substring("lift:content_id=".length)))
-                  case _ => None
-                }.headOption
-                
-              }
-            }
-          }
-
-          case _ => None
-        }
-      case _ => None
-    }.flatMap {
-      id => Helpers.findId(in, id)
-    }.headOption getOrElse in
-  }
+  @deprecated("Use Templates.checkForContentId")
+  def checkForContentId(in: NodeSeq): NodeSeq = 
+    Templates.checkForContentId(in)
   
 
 }
@@ -509,8 +472,6 @@ private final case class PostPageFunctions(renderVersion: String,
  */
 class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                   val httpSession: Box[HTTPSession]) extends LiftMerge with Loggable with HowStateful {
-  import TemplateFinder._
-
   val sessionHtmlProperties: SessionVar[HtmlProperties] =
     new SessionVar[HtmlProperties](LiftRules.htmlProperties.vend(
       S.request openOr Req.nil
@@ -979,9 +940,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   def processTemplate(template: Box[NodeSeq], request: Req, path: ParsePath, code: Int): Box[LiftResponse] = {
     overrideResponseCode.doWith(Empty) {
       (template or findVisibleTemplate(path, request)).map { 
-        xhtmlBase =>
+        xhtml =>
           fullPageLoad.doWith(true) { // allow parallel snippets
-            val xhtml = LiftSession.checkForContentId(xhtmlBase)
             // Phase 1: snippets & templates processing
             val rawXml: NodeSeq = processSurroundAndInclude(PageName get, xhtml)
             
@@ -1205,7 +1165,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case s@_ if (!s.isEmpty) => s
       case _ => List("index")
     }
-    findAnyTemplate(splits, S.locale)
+    Templates(splits, S.locale)
   }
 
   private[liftweb] def findTemplate(name: String): Box[NodeSeq] = {
@@ -1214,10 +1174,10 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case s => s
     }
 
-    findAnyTemplate("templates-hidden" :: splits, S.locale) match {
+    Templates("templates-hidden" :: splits, S.locale) match {
       case Full(x) => Full(x)
       case f: Failure if Props.devMode => f
-      case _ => findAnyTemplate(splits, S.locale)
+      case _ => Templates(splits, S.locale)
     }
   }
 
@@ -1279,7 +1239,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       } headOption
 
     for{
-      template <- findAnyTemplate(name, S.locale) ?~ ("Template " + name + " not found")
+      template <- Templates(name, S.locale) ?~ ("Template " + name + " not found")
       res <- findElem(processSurroundAndInclude(name.mkString("/", "/", ""), template))
     } yield res
   }

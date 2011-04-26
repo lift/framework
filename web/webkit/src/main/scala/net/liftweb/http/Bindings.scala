@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  */
-import scala.xml.{NodeSeq, Text}
 
-package net.liftweb {
+package net.liftweb
+package http 
+
 import common.{Box,Full,Empty,Failure}
 import util.Props
-
-package http {
+import scala.xml.{NodeSeq, Text}
 
 /**
  * A collection of types and implicit transformations used to allow composition
@@ -108,10 +108,10 @@ object Bindings {
 
         /**
          * Apply this binder's binding function to the specified templated
-         * looked up using TemplateFinder.findAnyTemplate 
+         * looked up using Templates.apply
          */
         def bind(templatePath: List[String]): NodeSeq = {
-            TemplateFinder.findAnyTemplate(templatePath) map binding match {
+            Templates(templatePath) map binding match {
                 case Full(xhtml) => xhtml
                 case Failure(msg, ex, _) if Props.mode == Props.RunModes.Development => Text(ex.map(_.getMessage).openOr(msg))
                 case Empty if Props.mode == Props.RunModes.Development => Text("Unable to find template with path " + templatePath.mkString("/", "/", ""))
@@ -127,5 +127,3 @@ object Bindings {
         override def apply(xhtml : NodeSeq) : NodeSeq = NodeSeq.Empty
     }
 }
-
-}}

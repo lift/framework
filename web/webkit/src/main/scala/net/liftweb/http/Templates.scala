@@ -27,8 +27,8 @@ import java.io.InputStream
 /**
  * Contains functions for obtaining templates
  */
-object TemplateFinder {
-  private val suffixes = List("html", "xhtml", "htm")
+object Templates {
+  private val suffixes = LiftRules.templateSuffixes
 
   private def checkForLiftView(part: List[String], last: String, what: LiftRules.ViewDispatchPF): Box[NodeSeq] = {
     if (what.isDefinedAt(part)) {
@@ -60,13 +60,40 @@ object TemplateFinder {
 
   /**
    * Given a list of paths (e.g. List("foo", "index")),
+   * find the template.  This method runs checkForContentId
+   * on any found templates.  To get the raw template,
+   * use findRawTemplate
+   * @param places - the path to look in
+   *
+   * @return the template if it can be found
+   */
+  def apply(places: List[String]): Box[NodeSeq] = 
+    apply(places, S.locale)
+
+
+  /**
+   * Given a list of paths (e.g. List("foo", "index")),
+   * find the template.  This method runs checkForContentId
+   * on any found templates.  To get the raw template,
+   * use findRawTemplate
+   * @param places - the path to look in
+   * @param locale the locale of the template
+   *
+   * @return the template if it can be found
+   */
+  def apply(places: List[String], locale: Locale): Box[NodeSeq] = 
+    findRawTemplate(places, locale).map(checkForContentId)
+
+  /**
+   * Given a list of paths (e.g. List("foo", "index")),
    * find the template.
    * @param places - the path to look in
    *
    * @return the template if it can be found
    */
+  @deprecated("use apply")
   def findAnyTemplate(places: List[String]): Box[NodeSeq] =
-    findAnyTemplate(places, S.locale)
+    findRawTemplate(places, S.locale)
 
   /**
    * Given a list of paths (e.g. List("foo", "index")),
@@ -76,7 +103,65 @@ object TemplateFinder {
    *
    * @return the template if it can be found
    */
-  def findAnyTemplate(places: List[String], locale: Locale): Box[NodeSeq] = {
+  @deprecated("use apply")
+  def findAnyTemplate(places: List[String], locale: Locale): Box[NodeSeq] = findRawTemplate(places, locale)
+
+
+  /**
+   * Check to see if the template is marked designer friendly
+   * and lop off the stuff before the first surround
+   */
+  def checkForContentId(in: NodeSeq): NodeSeq = {
+    def df(in: MetaData): Option[PrefixedAttribute] = in match {
+      case Null => None
+      case p: PrefixedAttribute 
+      if (p.pre == "l" || p.pre == "lift") && 
+      (p.key == "content_id") => Some(p)
+      case n => df(n.next)
+    }
+    
+    
+    in.flatMap {
+      case e: Elem if e.label == "html" => df(e.attributes)
+      case _ => None
+    }.flatMap {
+      md => Helpers.findId(in, md.value.text)
+    }.headOption orElse 
+    in.flatMap {
+      case e: Elem if e.label == "html" =>
+        e.child.flatMap {
+          case e: Elem if e.label == "body" => {
+            e.attribute("class").flatMap {
+              ns => {
+                val clz = ns.text.charSplit(' ')
+                clz.flatMap {
+                  case s if s.startsWith("lift:content_id=") =>
+                    Some(urlDecode(s.substring("lift:content_id=".length)))
+                  case _ => None
+                }.headOption
+                
+              }
+            }
+          }
+
+          case _ => None
+        }
+      case _ => None
+    }.flatMap {
+      id => Helpers.findId(in, id)
+    }.headOption getOrElse in
+  }
+
+
+  /**
+   * Given a list of paths (e.g. List("foo", "index")),
+   * find the template.
+   * @param places - the path to look in
+   * @param locale - the locale of the template to search for
+   *
+   * @return the template if it can be found
+   */
+  def findRawTemplate(places: List[String], locale: Locale): Box[NodeSeq] = {
     /*
      From a Scala coding standpoint, this method is ugly.  It's also a performance
      hotspot that needed some tuning.  I've made the code very imperative and
@@ -197,9 +282,9 @@ object TemplateFinder {
                           }
                 }
               } catch {
-                case ite: java.lang.reflect.InvocationTargetException /* if (ite.getCause.isInstanceOf[ResponseShortcutException]) */ => throw ite.getCause
-                case re: ResponseShortcutException => throw re
-                case _ => Empty
+                case ite: java.lang.reflect.InvocationTargetException => 
+                  throw ite.getCause
+                case e: NoClassDefFoundError => Empty
               }
     }
   }

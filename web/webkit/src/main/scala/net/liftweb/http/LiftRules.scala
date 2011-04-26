@@ -1071,9 +1071,9 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Obtain the resource as an XML by name. If you're using this to load a template, consider using
-   * the TemplateFinder object instead.
+   * the Template object instead.
    *
-   * @see TemplateFinder
+   * @see Template
    */
   def loadResourceAsXml(name: String): Box[NodeSeq] = loadResourceAsString(name).flatMap(s => PCDataXmlParser(s))
 
@@ -1469,6 +1469,12 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
       else (parts.dropRight(1) ::: List(last.substring(0, idx)), last.substring(idx + 1))
 
   }
+
+  /**
+   * The list of suffixes that Lift looks for in templates.
+   * By default, html, xhtml, and htm
+   */
+  @volatile var templateSuffixes: List[String] = List("html", "xhtml", "htm")
 
   /**
    * When a request is parsed into a Req object, certain suffixes are explicitly split from

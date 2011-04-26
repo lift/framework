@@ -61,6 +61,15 @@ trait SHtml {
 
     implicit def funcPromote[T](f: T => String): PairStringPromoter[T] =
       new PairStringPromoter[T]{def apply(in: T): String = f(in)}
+
+
+    type EnumerationTypeWorkaround = Enumeration#Value
+    
+    implicit def enumToStrValPromo[EnumerationTypeWorkaround]: SHtml.PairStringPromoter[EnumerationTypeWorkaround] = 
+      new SHtml.PairStringPromoter[EnumerationTypeWorkaround]{
+        def apply(in: EnumerationTypeWorkaround): String =
+          in.toString
+      }    
   }
 
   /**
@@ -1992,9 +2001,9 @@ object AjaxContext {
 
 case class AjaxContext(success: Box[String], failure: Box[String], responseType: AjaxType.Value)
 
-case class JsContext(override val success: Box[String], override val failure: Box[String]) extends AjaxContext(success, failure, AjaxType.JavaScript)
+class JsContext(override val success: Box[String], override val failure: Box[String]) extends AjaxContext(success, failure, AjaxType.JavaScript)
 
-case class JsonContext(override val success: Box[String], override val failure: Box[String]) extends AjaxContext(success, failure, AjaxType.JSON)
+class JsonContext(override val success: Box[String], override val failure: Box[String]) extends AjaxContext(success, failure, AjaxType.JSON)
 
 object Html5ElemAttr {
   /**
