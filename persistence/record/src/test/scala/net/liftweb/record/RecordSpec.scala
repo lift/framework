@@ -55,6 +55,11 @@ object RecordSpec extends Specification("Record Specification") {
         rec.fieldByName("x" + name + "y") must not(verify(_.isDefined))
       }
     }
+
+    "ignore synthetic methods" in {
+      SyntheticTestRecord.metaFields.size must_== 1
+    }
+
   }
 
   "Record lifecycle callbacks" should {

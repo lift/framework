@@ -98,7 +98,8 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   protected val rootClass = this.getClass.getSuperclass
 
   private def isLifecycle(m: Method) = classOf[LifecycleCallbacks].isAssignableFrom(m.getReturnType)
-  private def isField(m: Method) = classOf[Field[_, _]].isAssignableFrom(m.getReturnType)
+
+  private def isField(m: Method) = !m.isSynthetic && classOf[Field[_, _]].isAssignableFrom(m.getReturnType)
 
   def introspect(rec: BaseRecord, methods: Array[Method])(f: (Method, Field[_, BaseRecord]) => Any) = {
     for (v <- methods  if isField(v)) {
@@ -289,7 +290,9 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     setFieldsFromJsonString(inst, json) map (_ => inst)
   }
 
-  /** Set from a Json String using the lift-json parser **/
+  /**
+   * Set from a Json String using the lift-json parser
+   */
   def setFieldsFromJsonString(inst: BaseRecord, json: String): Box[Unit] =
     setFieldsFromJValue(inst, JsonParser.parse(json))
 

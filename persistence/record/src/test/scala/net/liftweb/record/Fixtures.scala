@@ -236,3 +236,19 @@ class FieldTypeTestRecord private () extends Record[FieldTypeTestRecord] {
 
 object FieldTypeTestRecord extends FieldTypeTestRecord with MetaRecord[FieldTypeTestRecord]
 
+trait SyntheticTestTrait{
+
+  val genericField: StringField[_]
+  
+}
+
+class SyntheticTestRecord extends Record[SyntheticTestRecord] with SyntheticTestTrait{
+
+  object genericField extends StringField(this, 1024)
+
+  def meta = SyntheticTestRecord
+
+}
+
+object SyntheticTestRecord extends SyntheticTestRecord with MetaRecord[SyntheticTestRecord]
+
