@@ -55,6 +55,18 @@ object ExtractionExamples extends Specification("Extraction Examples Specificati
                                      "address2" -> Address("Soho", "London")))
   }
 
+  "Map with nested non-polymorphic list extraction example" in {
+    parse("""{ "a" : [ "b" ] }""").extract[Map[String, List[String]]] mustEqual Map("a" -> List("b"))
+  }
+
+  "List with nested non-polymorphic list extraction example" in {
+    parse("""[ [ "a" ] ]""").extract[List[List[String]]] mustEqual List(List("a"))
+  }
+
+  "Complex nested non-polymorphic collections extraction example" in {
+    parse("""{ "a" : [ { "b" : "c" } ] }""").extract[Map[String, List[Map[String, String]]]] mustEqual Map("a" -> List(Map("b" -> "c")))
+  }
+
   "Simple value extraction example" in {
     val json = parse(testJson)
     json.extract[Name] mustEqual Name("joe")
