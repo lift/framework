@@ -16,6 +16,7 @@ package squerylrecord
 
 import org.specs.Specification
 import record.{BaseField, Record}
+import record.field._
 import RecordTypeMode._
 import MySchema.{TestData => td, _}
 import java.util.Calendar
@@ -280,6 +281,31 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
             select(e.role)).single
         empRole.is must_== td.e1.role.is 
         
+      }
+    }
+
+    forExample("support the CRUDify trait") >>  {
+      transaction{
+	val company = Company.create.name("CRUDify Company").
+	  created(Calendar.getInstance()).
+	  country(Countries.USA).postCode("90210")
+	val bridge = Company.buildBridge(company)
+	bridge.save
+	val id = company.id
+	company.isPersisted must_== true
+	id must be_>(0l)
+	company.postCode("10001")
+	bridge.save
+	val company2 = Company.findForParam(id.toString)
+	company2.isDefined must_== true
+	company2.foreach(c2 => {
+	  c2.postCode.get must_== "10001"
+	})
+	val allCompanies = Company.findForList(0, 1000)
+	allCompanies.size must be_>(0)
+	bridge.delete_!
+	val allCompanies2 = Company.findForList(0, 1000)
+	allCompanies2.size must_== (allCompanies.size - 1)
       }
     }
 

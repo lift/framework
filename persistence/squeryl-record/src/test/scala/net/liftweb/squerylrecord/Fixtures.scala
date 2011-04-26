@@ -83,7 +83,13 @@ class Company private () extends Record[Company] with KeyedRecord[Long] {
   lazy val employees = MySchema.companyToEmployees.left(this)
 
 }
-object Company extends Company with MetaRecord[Company]
+object Company extends Company with MetaRecord[Company] with CRUDify[Long, Company]{
+  
+  def table = MySchema.companies
+  
+  def idFromString(in: String) = in.toLong
+  
+}
 
 object EmployeeRole extends Enumeration {
   type EmployeeRole = Value
