@@ -562,7 +562,7 @@ trait SHtml {
    * @return a text field
    */
   def jsonText(value: String, ignoreBlur: Boolean, json: JsExp => JsCmd, attrs: ElemAttr*): Elem = 
-  (attrs.foldLeft(<input type="text" value={value}/>)(_ % _)) %
+  (attrs.foldLeft(<input type="text" value={value match {case null => "" case s => s}}/>)(_ % _)) %
   ("onkeypress" -> """liftUtils.lift_blurIfReturn(event)""") %
   (if (ignoreBlur) Null else ("onblur" -> (json(JE.JsRaw("this.value")))))
   
@@ -609,7 +609,9 @@ trait SHtml {
   def ajaxText(value: String, ignoreBlur: Boolean, jsFunc: Call, func: String => JsCmd, attrs: ElemAttr*): Elem =
   ajaxText_*(value, ignoreBlur, Full(jsFunc), SFuncHolder(func), attrs: _*)
 
-  private def ajaxText_*(value: String, ignoreBlur: Boolean, jsFunc: Box[Call], func: AFuncHolder, attrs: ElemAttr*): Elem = {
+  private def ajaxText_*(valuePreNull: String, ignoreBlur: Boolean, jsFunc: Box[Call], func: AFuncHolder, attrs: ElemAttr*): Elem = {
+    val value = (Box !! valuePreNull).openOr("")
+    
     val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + encodeURIComponent(" + value + ".value)")
     val key = formFuncName
 
@@ -964,7 +966,7 @@ trait SHtml {
 
 
   def text_*(value: String, ignoreBlur: Boolean, func: AFuncHolder, ajaxTest: Box[String => JsCmd], attrs: ElemAttr*): Elem =
-    makeFormElement("text", func, attrs: _*) % new UnprefixedAttribute("value", Text(value), Null) % (
+    makeFormElement("text", func, attrs: _*) % new UnprefixedAttribute("value", Text(value match {case null => "" case s => s}), Null) % (
       if (ignoreBlur) Null else buildOnBlur(ajaxTest))
 
   def text_*(value: String, func: AFuncHolder, ajaxTest: Box[String => JsCmd], attrs: ElemAttr*): Elem =
@@ -1160,8 +1162,10 @@ trait SHtml {
    * form fields (input, button, textarea, select) and the
    * function is executed when the form containing the field is submitted.
    */
-  def onSubmitImpl(func: AFuncHolder): NodeSeq => NodeSeq =
-    (in: NodeSeq) => {
+  def onSubmitImpl(func: AFuncHolder): NodeSeq => NodeSeq = {
+    val fgSnap = S._formGroup.get
+
+    (in: NodeSeq) => S._formGroup.doWith(fgSnap){
       var radioName: Box[String] = Empty
       var checkBoxName: Box[String] = Empty
       var checkBoxCnt = 0
@@ -1228,6 +1232,7 @@ trait SHtml {
         case _ => ret
       }
     }
+  }
 
   def text(value: String, func: String => Any, attrs: ElemAttr*): Elem =
     text_*(value, SFuncHolder(func), attrs: _*)
@@ -1791,7 +1796,7 @@ trait SHtml {
 
   def textarea_*(value: String, func: AFuncHolder, attrs: ElemAttr*): Elem =
     fmapFunc(func)(funcName =>
-            attrs.foldLeft(<textarea name={funcName}>{value}</textarea>)(_ % _))
+            attrs.foldLeft(<textarea name={funcName}>{value match {case null => "" case s => s}}</textarea>)(_ % _))
 
   def radio(opts: Seq[String], deflt: Box[String], func: String => Any,
             attrs: ElemAttr*): ChoiceHolder[String] =
