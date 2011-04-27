@@ -1166,16 +1166,19 @@ trait ProtoDBVendor extends ConnectionManager {
     notifyAll
   }
 
-  def closeAllConnections_!(): Unit = synchronized {
+  def closeAllConnections_!(): Unit = _closeAllConnections_!(0)
+
+
+  private def _closeAllConnections_!(cnt: Int): Unit = synchronized {
     logger.info("Closing all connections")
-    if (poolSize == 0) ()
+    if (poolSize <= 0 || cnt > 10) ()
     else {
       pool.foreach {c => tryo(c.close); poolSize -= 1}
       pool = Nil
       
       if (poolSize > 0) wait(250)
 
-      closeAllConnections_!()
+      _closeAllConnections_!(cnt + 1)
     }
   }
 }
