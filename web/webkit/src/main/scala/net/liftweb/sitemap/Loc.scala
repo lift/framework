@@ -109,7 +109,7 @@ trait Loc[T] {
 
   def params: List[Loc.LocParam[T]]
 
-  lazy val allParams: List[Loc.AnyLocParam] = 
+  def allParams: List[Loc.AnyLocParam] = 
     (params.asInstanceOf[List[Loc.AnyLocParam]]) ::: 
      parentParams :::
      siteMap.globalParams

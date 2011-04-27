@@ -37,36 +37,40 @@ protected trait MailerImpl extends SimpleInjector {
   private val logger = Logger(classOf[MailerImpl])
   
   sealed abstract class MailTypes
+  /**
+   * Add message headers to outgoing messages
+   */
+  final case class MessageHeader(name: String, value: String) extends MailTypes
   sealed abstract class MailBodyType extends MailTypes
-  case class PlusImageHolder(name: String, mimeType: String, bytes: Array[Byte])
+  final case class PlusImageHolder(name: String, mimeType: String, bytes: Array[Byte])
 
   /**
    * Represents a text/plain mail body. The given text will
    * be encoded as UTF-8 when sent.
    */
-  case class PlainMailBodyType(text: String) extends MailBodyType
+  final case class PlainMailBodyType(text: String) extends MailBodyType
 
   /**
    * Represents a text/plain mail body that is encoded with the
    * specified charset
    */
-  case class PlainPlusBodyType(text: String, charset: String) extends MailBodyType
+  final case class PlainPlusBodyType(text: String, charset: String) extends MailBodyType
 
-  case class XHTMLMailBodyType(text: NodeSeq) extends MailBodyType
-  case class XHTMLPlusImages(text: NodeSeq, items: PlusImageHolder*) extends MailBodyType
+  final case class XHTMLMailBodyType(text: NodeSeq) extends MailBodyType
+  final case class XHTMLPlusImages(text: NodeSeq, items: PlusImageHolder*) extends MailBodyType
 
   sealed abstract class RoutingType extends MailTypes
   sealed abstract class AddressType(val adr: String) extends RoutingType
-  case class From(address: String) extends AddressType(address)
-  case class To(address: String) extends AddressType(address)
-  case class CC(address: String) extends AddressType(address)
-  case class Subject(subject: String) extends RoutingType
-  case class BCC(address: String) extends AddressType(address)
-  case class ReplyTo(address: String) extends AddressType(address)
+  final case class From(address: String) extends AddressType(address)
+  final case class To(address: String) extends AddressType(address)
+  final case class CC(address: String) extends AddressType(address)
+  final case class Subject(subject: String) extends RoutingType
+  final case class BCC(address: String) extends AddressType(address)
+  final case class ReplyTo(address: String) extends AddressType(address)
 
   implicit def xmlToMailBodyType(html: NodeSeq): MailBodyType = XHTMLMailBodyType(html)
 
-  case class MessageInfo(from: From, subject: Subject, info: List[MailTypes])
+  final case class MessageInfo(from: From, subject: Subject, info: List[MailTypes])
 
   implicit def addressToAddress(in: AddressType): Address = new InternetAddress(in.adr)
 
@@ -221,6 +225,11 @@ protected trait MailerImpl extends SimpleInjector {
     // message.setReplyTo(filter[MailTypes, ReplyTo](info, {case x @ ReplyTo(_) => Some(x); case _ => None}))
     message.setReplyTo(info.flatMap {case x: ReplyTo => Some[ReplyTo](x) case _ => None})
     message.setSubject(subject.subject)
+    info.foreach {
+      case MessageHeader(name, value) => message.addHeader(name, value)
+      case _ => 
+    }
+
     val bodyTypes = info.flatMap {case x: MailBodyType => Some[MailBodyType](x); case _ => None}
     bodyTypes match {
       case PlainMailBodyType(txt) :: Nil =>

@@ -216,7 +216,9 @@ trait ProtoUser {
 
   def homePage = "/"
 
-  object loginRedirect extends SessionVar[Box[String]](Empty)
+  object loginRedirect extends SessionVar[Box[String]](Empty) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
 
 
 
@@ -264,7 +266,14 @@ trait ProtoUser {
    * The menu item for login (make this "Empty" to disable)
    */
   def loginMenuLoc: Box[Menu] =
-    Full(Menu(Loc("Login", loginPath, S.??("login"), loginMenuLocParams)))
+    Full(Menu(Loc("Login", loginPath, S.??("login"), loginMenuLocParams ::: globalUserLocParams)))
+
+
+  /**
+   * If you want to include a LocParam (e.g. LocGroup) on all the
+   * User menus, add them here
+   */
+  protected def globalUserLocParams: List[LocParam[Unit]] = Nil
 
   /**
    * The LocParams for the menu item for login.
@@ -279,7 +288,7 @@ trait ProtoUser {
    * The menu item for logout (make this "Empty" to disable)
    */
   def logoutMenuLoc: Box[Menu] =
-    Full(Menu(Loc("Logout", logoutPath, S.??("logout"), logoutMenuLocParams)))
+    Full(Menu(Loc("Logout", logoutPath, S.??("logout"), logoutMenuLocParams ::: globalUserLocParams)))
 
   /**
    * The LocParams for the menu item for logout.
@@ -294,7 +303,7 @@ trait ProtoUser {
    * The menu item for creating the user/sign up (make this "Empty" to disable)
    */
   def createUserMenuLoc: Box[Menu] =
-    Full(Menu(Loc("CreateUser", signUpPath, S.??("sign.up"), createUserMenuLocParams)))
+    Full(Menu(Loc("CreateUser", signUpPath, S.??("sign.up"), createUserMenuLocParams ::: globalUserLocParams)))
 
   /**
    * The LocParams for the menu item for creating the user/sign up.
@@ -309,7 +318,7 @@ trait ProtoUser {
    * The menu item for lost password (make this "Empty" to disable)
    */
   def lostPasswordMenuLoc: Box[Menu] =
-    Full(Menu(Loc("LostPassword", lostPasswordPath, S.??("lost.password"), lostPasswordMenuLocParams))) // not logged in
+    Full(Menu(Loc("LostPassword", lostPasswordPath, S.??("lost.password"), lostPasswordMenuLocParams ::: globalUserLocParams))) // not logged in
 
   /**
    * The LocParams for the menu item for lost password.
@@ -324,7 +333,7 @@ trait ProtoUser {
    * The menu item for resetting the password (make this "Empty" to disable)
    */
   def resetPasswordMenuLoc: Box[Menu] =
-    Full(Menu(Loc("ResetPassword", (passwordResetPath, true), S.??("reset.password"), resetPasswordMenuLocParams))) //not Logged in
+    Full(Menu(Loc("ResetPassword", (passwordResetPath, true), S.??("reset.password"), resetPasswordMenuLocParams ::: globalUserLocParams))) //not Logged in
 
   /**
    * The LocParams for the menu item for resetting the password.
@@ -340,7 +349,7 @@ trait ProtoUser {
    * The menu item for editing the user (make this "Empty" to disable)
    */
   def editUserMenuLoc: Box[Menu] =
-    Full(Menu(Loc("EditUser", editPath, S.??("edit.user"), editUserMenuLocParams)))
+    Full(Menu(Loc("EditUser", editPath, S.??("edit.user"), editUserMenuLocParams ::: globalUserLocParams)))
 
   /**
    * The LocParams for the menu item for editing the user.
@@ -355,7 +364,7 @@ trait ProtoUser {
    * The menu item for changing password (make this "Empty" to disable)
    */
   def changePasswordMenuLoc: Box[Menu] =
-    Full(Menu(Loc("ChangePassword", changePasswordPath, S.??("change.password"), changePasswordMenuLocParams)))
+    Full(Menu(Loc("ChangePassword", changePasswordPath, S.??("change.password"), changePasswordMenuLocParams ::: globalUserLocParams)))
 
   /**
    * The LocParams for the menu item for changing password.
@@ -370,7 +379,7 @@ trait ProtoUser {
    * The menu item for validating a user (make this "Empty" to disable)
    */
   def validateUserMenuLoc: Box[Menu] =
-    Full(Menu(Loc("ValidateUser", (validateUserPath, true), S.??("validate.user"), validateUserMenuLocParams)))
+    Full(Menu(Loc("ValidateUser", (validateUserPath, true), S.??("validate.user"), validateUserMenuLocParams ::: globalUserLocParams)))
 
   /**
    * The LocParams for the menu item for validating a user.
@@ -498,11 +507,17 @@ trait ProtoUser {
     S.session.foreach(_.destroySession())
   }
 
-  private object curUserId extends SessionVar[Box[String]](Empty)
+  private object curUserId extends SessionVar[Box[String]](Empty) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
+
 
   def currentUserId: Box[String] = curUserId.is
 
-  private object curUser extends RequestVar[Box[TheUserType]](currentUserId.flatMap(userFromStringId))  with CleanRequestVarOnSessionTransition
+  private object curUser extends RequestVar[Box[TheUserType]](currentUserId.flatMap(userFromStringId))  with CleanRequestVarOnSessionTransition  {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
+
 
   /**
    * Given a String representing the User ID, find the user
@@ -570,7 +585,10 @@ trait ProtoUser {
                                               resetLink: String):
   List[MailBodyType] = List(xmlToMailBodyType(signupMailBody(user, resetLink)))
 
-  protected object signupFunc extends RequestVar[Box[() => NodeSeq]](Empty)
+  protected object signupFunc extends RequestVar[Box[() => NodeSeq]](Empty) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
+
 
   /**
    * Override this method to do something else after the user signs up
@@ -892,7 +910,10 @@ trait ProtoUser {
      </form>)
   }
 
-  object editFunc extends RequestVar[Box[() => NodeSeq]](Empty)
+  object editFunc extends RequestVar[Box[() => NodeSeq]](Empty) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
+
 
   /**
    * If there's any mutation to do to the user on retrieval for

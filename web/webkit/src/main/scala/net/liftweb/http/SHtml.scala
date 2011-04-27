@@ -1184,7 +1184,11 @@ trait SHtml {
           case Group(g) => runNodes(g)
           // button
           case e: Elem if e.label == "button" => 
-            fmapFunc(func) {dupWithName(e, _)}
+            _formGroup.is match {
+              case Empty => 
+                formGroup(1)(fmapFunc(func) {dupWithName(e, _)})
+              case _ => fmapFunc(func) {dupWithName(e, _)}
+            }
 
           // textarea
           case e: Elem if e.label == "textarea" => 
@@ -1221,6 +1225,14 @@ trait SHtml {
                     dupWithName(e, name)
                   }
                 }
+            }
+
+          // submit
+          case e: Elem if e.label == "input" && e.attribute("type").map(_.text) == Some("submit") => 
+            _formGroup.is match {
+              case Empty => 
+                formGroup(1)(fmapFunc(func) {dupWithName(e, _)})
+              case _ => fmapFunc(func) {dupWithName(e, _)}
             }
 
           // generic input
