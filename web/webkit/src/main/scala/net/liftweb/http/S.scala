@@ -2399,7 +2399,7 @@ for {
     }
 
   def formFuncName: String = if (Props.testMode && !disableTestFuncNames_?) {
-    val bump: Long = ((_formGroup.is openOr 0) + 1000L) * 10000L
+    val bump: Long = ((_formGroup.is openOr 0) + 1000L) * 100000L
     val num: Int = formItemNumber.is
     formItemNumber.set(num + 1)
     import java.text._
@@ -2408,7 +2408,7 @@ for {
     "f" + prefix + "_" + Helpers.hashHex((new Exception).getStackTrace.toList.filter(notLiftOrScala).take(2).map(_.toString).mkString(","))
   } else {
     _formGroup.is match {
-      case Full(x) => Helpers.nextFuncName(x.toLong * 10000L)
+      case Full(x) => Helpers.nextFuncName(x.toLong * 100000L)
       case _ => Helpers.nextFuncName
     }
   }
