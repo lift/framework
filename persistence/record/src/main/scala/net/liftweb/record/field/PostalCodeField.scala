@@ -21,7 +21,6 @@ package field
 import scala.xml._
 import net.liftweb.util._
 import net.liftweb.common._
-import net.liftweb.mapper.{Safe}
 import net.liftweb.http.{S}
 import java.util.regex._
 import java.util.regex.{Pattern => RegexPattern}

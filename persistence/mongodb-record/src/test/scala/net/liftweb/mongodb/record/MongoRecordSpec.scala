@@ -432,22 +432,6 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       srtrAsJValue \\ "legacyOptionalBsonRecordListField" mustEqual srtrJson \\ "legacyOptionalBsonRecordListField"
     }
 
-    "convert Mongo type fields to JsExp" in {
-      checkMongoIsRunning
-
-      mfttr.asJsExp mustEqual new JsExp {
-        def toJsCmd = compact(render(mfttrJson))
-      }
-
-      ltr.asJsExp mustEqual new JsExp {
-        def toJsCmd = compact(render(ltrJson))
-      }
-
-      mtr.asJsExp mustEqual new JsExp {
-        def toJsCmd = compact(render(mtrJson))
-      }
-    }
-
     "get set from json string using lift-json parser" in {
       checkMongoIsRunning
 

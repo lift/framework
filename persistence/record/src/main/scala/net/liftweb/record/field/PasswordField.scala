@@ -28,8 +28,6 @@ import http.S
 import http.js._
 import S._
 import JE._
-import mapper.Safe
-
 
 object PasswordField {
   @volatile var blankPw = "*******"

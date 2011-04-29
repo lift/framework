@@ -50,10 +50,10 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   lazy val proto          = persistenceProject("proto")(webkit)
   lazy val jpa            = persistenceProject("jpa", scalajpa, persistence_api)(webkit)
   lazy val mapper         = persistenceProject("mapper", RuntimeScope.h2database, RuntimeScope.derby)(db, proto)
-  lazy val record         = persistenceProject("record")(mapper)
+  lazy val record         = persistenceProject("record")(proto, db) // db to be removed in v 2.5 (ticket 997)
   lazy val ldap           = persistenceProject("ldap", TestScope.apacheds)(mapper)
   lazy val couchdb        = persistenceProject("couchdb", dispatch_http)(record)
-  lazy val squeryl_record = persistenceProject("squeryl-record", RuntimeScope.h2database, squeryl)(record)
+  lazy val squeryl_record = persistenceProject("squeryl-record", RuntimeScope.h2database, squeryl)(record, db)
   lazy val mongodb        = persistenceProject("mongodb", mongo_driver)(json_ext)
   lazy val mongodb_record = persistenceProject("mongodb-record")(record, mongodb)
 

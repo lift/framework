@@ -17,13 +17,13 @@
 package net.liftweb
 package record
 
-import net.liftweb._
 import util._
 import common._
+import db.{ConnectionIdentifier, DefaultConnectionIdentifier}
 import scala.xml._
-import net.liftweb.mapper.{ConnectionIdentifier, Safe, DefaultConnectionIdentifier, DB, KeyObfuscator, SuperConnection, QueryParam}
 import java.sql.{ResultSet, Types, PreparedStatement, Statement}
 
+@deprecated("This was never fully implemented. If you're looking for a SQL implementation of Record, please see Squeryl-Record. If you have any questions, please bring them up on the mailing list.")
 trait DBMetaRecord[BaseRecord <: DBRecord[BaseRecord]] extends MetaRecord[BaseRecord] {
   self: BaseRecord =>
 

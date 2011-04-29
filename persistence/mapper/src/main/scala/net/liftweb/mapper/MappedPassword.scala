@@ -17,7 +17,6 @@
 package net.liftweb
 package mapper
 
-import net.liftweb.mapper._
 import net.liftweb.util.Helpers._
 import net.liftweb.util.FatLazy
 import java.sql.{ResultSet, Types}

@@ -21,7 +21,6 @@ import common._
 import http.js.{JsExp, JsObj}
 import http.{Req, SHtml}
 import json.JsonAST._
-import mapper.Safe
 import util._
 import field._
 

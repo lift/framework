@@ -24,8 +24,7 @@ import scala.xml.{Node, NodeSeq, Text}
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.S
 import net.liftweb.http.js.JE._
-import net.liftweb.mapper.Safe
-import net.liftweb.util.{FatLazy, FieldError, Helpers}
+import net.liftweb.util.{FatLazy, FieldError, Helpers, Safe}
 
 import Helpers._
 

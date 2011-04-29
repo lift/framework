@@ -15,11 +15,10 @@
  */
 
 package net.liftweb
-package mapper
+package util
 
 import java.security.{SecureRandom, MessageDigest}
 import org.apache.commons.codec.binary.Base64
-import net.liftweb.util.{StringHelpers, Helpers, ThreadGlobal}
 
 /**
  * Manage the current "safety" state of the stack

@@ -15,7 +15,7 @@ package net.liftweb
 package squerylrecord
 
 import common.{Box, Full, Loggable}
-import mapper.DB // FIXME should be moved out of mapper
+import db.DB
 import util.DynoVar
 
 import org.squeryl.{Session, SessionFactory}
@@ -25,14 +25,14 @@ import org.squeryl.internals.{DatabaseAdapter, FieldMetaData}
 object SquerylRecord extends Loggable {
   /** Keep track of the current Squeryl Session we've created using DB */
   private object currentSession extends DynoVar[Session]
-  
+
   /**
    * We have to remember the default Squeryl metadata factory before
    * we override it with our own implementation, so that we can use
    * the original factory for non-record classes.
    */
   private[squerylrecord] var posoMetaDataFactory = FieldMetaData.factory
-  
+
   /**
    * Initialize the Squeryl/Record integration. This must be called somewhere during your Boot, and before you use any
    * Records with Squeryl. Use this function instead of init if you want to use the squeryl session factory
@@ -42,7 +42,7 @@ object SquerylRecord extends Loggable {
     FieldMetaData.factory = new RecordMetaDataFactory
     SessionFactory.concreteFactory = Some(() => sessionFactory)
   }
-  
+
   /**
    * Initialize the Squeryl/Record integration. This must be called somewhere during your Boot, and before you use any
    * Records with Squeryl. Use this function if you want to use mapper.DB as the transaction manager

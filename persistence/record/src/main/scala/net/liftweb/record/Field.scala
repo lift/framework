@@ -422,14 +422,15 @@ trait DisplayWithLabel[OwnerType <: Record[OwnerType]] extends OwnedField[OwnerT
 
 
 import java.sql.{ResultSet, Types}
-import net.liftweb.mapper.{DriverType}
+import net.liftweb.db.{DriverType}
 
 /**
  * Desribes common aspects related with JDBC
  */
+@deprecated("This was never fully implemented. If you're looking for a SQL implementation of Record, please see Squeryl-Record. If you have any questions, please bring them up on the mailing list.")
 trait JDBCFieldFlavor[MyType] {
 
-  def jdbcFriendly(field : String) : MyType
+  def jdbcFriendly(field : String) : AnyRef
 
   def targetSQLType : Int
 

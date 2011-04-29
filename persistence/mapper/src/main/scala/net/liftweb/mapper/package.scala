@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.liftweb 
+package net.liftweb
 package object mapper {
   type SuperConnection = db.SuperConnection
   type ConnectionIdentifier = db.ConnectionIdentifier
@@ -26,4 +26,7 @@ package object mapper {
   def DBLogEntry = db.DBLogEntry
   def DefaultConnectionIdentifier = db.DefaultConnectionIdentifier
   def DriverType = db.DriverType
+
+  @deprecated("Use util.Safe instead.")
+  def Safe = util.Safe
 }
