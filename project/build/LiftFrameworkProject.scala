@@ -32,7 +32,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   lazy val common      = coreProject("common", slf4j_api, logback, log4j)()
   lazy val actor       = coreProject("actor")(common)
   lazy val json        = coreProject("json", paranamer, scalap)()
-  // FIXME: Scala 2.9.0.RC1
+  // FIXME: Scala 2.9.0.RC3
   //  lazy val json_scalaz = coreProject("json-scalaz", scalaz)(json)
   lazy val json_ext    = coreProject("json-ext", commons_codec, joda_time)(common, json)
   lazy val util        = coreProject("util", joda_time, commons_codec, javamail, log4j, htmlparser)(actor, json)
@@ -54,7 +54,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   lazy val record         = persistenceProject("record")(proto, db) // db to be removed in v 2.5 (ticket 997)
   lazy val ldap           = persistenceProject("ldap", TestScope.apacheds)(mapper)
   lazy val couchdb        = persistenceProject("couchdb", dispatch_http)(record)
-// FIXME: Scala 2.9.0.RC1
+// FIXME: Scala 2.9.0.RC3
 //  lazy val squeryl_record = persistenceProject("squeryl-record", RuntimeScope.h2database, squeryl)(record, db)
   lazy val mongodb        = persistenceProject("mongodb", mongo_driver)(json_ext)
   lazy val mongodb_record = persistenceProject("mongodb-record")(record, mongodb)
@@ -113,7 +113,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
     // System properties necessary during test TODO: Figure out how to make this a subdir of persistence/ldap/
     System.setProperty("apacheds.working.dir", (outputPath / "apacheds").absolutePath)
 
-    // FIXME: Scala 2.9.0.RC1
+    // FIXME: Scala 2.9.0.RC3
     override def testOptions =
       ExcludeTests(
         // lift-json tests
