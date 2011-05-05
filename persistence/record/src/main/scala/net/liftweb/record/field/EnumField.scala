@@ -89,7 +89,7 @@ trait EnumTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Value]
   def asJStringName: JValue = valueBox.map(v => JString(v.toString)) openOr (JNothing: JValue)
   def setFromJStringName(jvalue: JValue): Box[EnumType#Value] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
-    case JString(s)                   => setBox(enum.valueOf(s) ?~ ("Unknown value \"" + s + "\""))
+    case JString(s)                   => setBox(Option(enum.withName(s)) ?~ ("Unknown value \"" + s + "\""))
     case other                        => setBox(FieldHelpers.expectedA("JString", other))
   }
 
