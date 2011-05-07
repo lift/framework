@@ -99,8 +99,8 @@ object MongoDB {
   /*
    * Define a Mongo db using a standard Mongo instance.
    */
-  def defineDb(name: MongoIdentifier, mongo: Mongo, dbName: String) {
-    dbs.put(name, MongoAddress(new MongoHostBase { def mongo = mongo }, dbName))
+  def defineDb(name: MongoIdentifier, mngo: Mongo, dbName: String) {
+    dbs.put(name, MongoAddress(new MongoHostBase { def mongo = mngo }, dbName))
   }
 
   /*
@@ -111,6 +111,16 @@ object MongoDB {
       throw new MongoException("Authorization failed: "+address.toString)
 
     dbs.put(name, address)
+  }
+
+  /*
+  * Define and authenticate a Mongo db using a standard Mongo instance.
+  */
+  def defineDbAuth(name: MongoIdentifier, mngo: Mongo, dbName: String, username: String, password: String) {
+    if (!mngo.getDB(dbName).authenticate(username, password.toCharArray))
+      throw new MongoException("Authorization failed: "+mngo.toString)
+
+    dbs.put(name, MongoAddress(new MongoHostBase { def mongo = mngo }, dbName))
   }
 
   /*
