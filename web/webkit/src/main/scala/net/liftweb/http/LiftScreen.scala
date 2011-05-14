@@ -42,7 +42,7 @@ trait AbstractScreen extends Factory {
    * any additional parameters that need to be put in the on the form (e.g., mime type)
    */
   def additionalAttributes: MetaData =
-  if (hasUploadField) new UnprefixedAttribute("enctype", Text("multipart/form-data"), Null) else Null
+    if (hasUploadField) new UnprefixedAttribute("enctype", Text("multipart/form-data"), Null) else Null
 
 
   /**
@@ -61,10 +61,10 @@ trait AbstractScreen extends Factory {
   def addFields(fields: () => FieldContainer) {
     _fieldList = _fieldList ::: List(fields)
   }
-  
+
   /**
    * Use addFields
-   * 
+   *
    * @deprecated
    */
   @deprecated("use addFields()")
@@ -81,9 +81,8 @@ trait AbstractScreen extends Factory {
    * Override this method to do any setup of this screen
    */
   protected def localSetup() {
-    
-  }
 
+  }
 
 
   def screenTop: Box[Elem] = Empty
@@ -102,16 +101,20 @@ trait AbstractScreen extends Factory {
 
   def screenTitle: NodeSeq = screenNameAsHtml
 
-  def cancelButton: Elem = <button>{S.??("Cancel")}</button>
+  def cancelButton: Elem = <button>
+    {S.??("Cancel")}
+  </button>
 
-  def finishButton: Elem = <button>{S.??("Finish")}</button>
+  def finishButton: Elem = <button>
+    {S.??("Finish")}
+  </button>
 
 
   implicit def boxOfScreen[T <: AbstractScreen](in: T): Box[T] = Box !! in
 
 
   def validate: List[FieldError] = screenFields.filter(_.shouldDisplay_?).
-  filter(_.show_?).flatMap(_.validate) ++ screenValidate
+    filter(_.show_?).flatMap(_.validate) ++ screenValidate
 
   def validations: List[() => List[FieldError]] = Nil
 
@@ -122,11 +125,13 @@ trait AbstractScreen extends Factory {
   protected def vendAVar[T](dflt: => T): NonCleanAnyVar[T]
 
   object Field {
-    implicit def fToType[T](field: Field{type ValueType=T}): T = field.is
+    implicit def fToType[T](field: Field {type ValueType = T}): T = field.is
   }
 
   protected sealed trait OtherValueInitializer[T]
+
   protected case object NothingOtherValueInitializer extends OtherValueInitializer[Nothing]
+
   protected final case class OtherValueInitializerImpl[T](f: () => T) extends OtherValueInitializer[T]
 
   /**
@@ -138,15 +143,16 @@ trait AbstractScreen extends Factory {
    * A field that's part of a Screen
    */
   trait Field extends ConfirmField {
-    type OtherValueType // >: Nothing
+    type OtherValueType
+    // >: Nothing
 
     AbstractScreen.this.addFields(() => this)
 
     private val _currentValue: NonCleanAnyVar[ValueType] =
-    vendAVar[ValueType](setFilter.foldLeft(default)((nv, f) => f(nv)))
+      vendAVar[ValueType](setFilter.foldLeft(default)((nv, f) => f(nv)))
 
     private val _otherValue: NonCleanAnyVar[OtherValueType] =
-    vendAVar[OtherValueType](otherValueDefault)
+      vendAVar[OtherValueType](otherValueDefault)
 
     /**
      * Is this field on the confirm screen
@@ -189,8 +195,8 @@ trait AbstractScreen extends Factory {
 
     def toForm: Box[NodeSeq] = {
       val func: Box[(ValueType, ValueType => Any) => NodeSeq] =
-      AbstractScreen.this.vendForm(manifest) or otherFuncVendors(manifest) or
-      LiftRules.vendForm(manifest)
+        AbstractScreen.this.vendForm(manifest) or otherFuncVendors(manifest) or
+          LiftRules.vendForm(manifest)
 
       func.map(f => f(is, set _)).filter(x => editable_?)
     }
@@ -222,61 +228,66 @@ trait AbstractScreen extends Factory {
                                   help: Box[NodeSeq],
                                   validations: List[T => List[FieldError]],
                                   filters: List[T => T],
-                                  stuff: Seq[FilterOrValidate[T]])
-  {
+                                  stuff: Seq[FilterOrValidate[T]]) {
     /**
      * Set the Help HTML
      */
     def help(h: NodeSeq): FieldBuilder[T] = new FieldBuilder[T](name, default,
-                                                                manifest, Full(h), validations, filters, stuff)
+      manifest, Full(h), validations, filters, stuff)
 
     /**
      * Add a filter field (the wacky symbols are supposed to look like a filter symbol)
      */
     def <*>(f: T => T): FieldBuilder[T] =
-    new FieldBuilder[T](name, default,
-                        manifest, help, validations, filters ::: List(f),
-                      stuff)
+      new FieldBuilder[T](name, default,
+        manifest, help, validations, filters ::: List(f),
+        stuff)
 
     /**
      * Add a validtion (the wacky symbols are supposed to look like a check mark)
      */
     def ^/(f: T => List[FieldError]): FieldBuilder[T] =
-    new FieldBuilder[T](name, default,
-                        manifest, help, validations ::: List(f), filters, stuff)
+      new FieldBuilder[T](name, default,
+        manifest, help, validations ::: List(f), filters, stuff)
 
     /**
      * Convert the field builder into a field
      */
-    def make: Field{type ValueType = T} = {
+    def make: Field {type ValueType = T} = {
       val paramFieldId: Box[String] = (stuff.collect {
         case FormFieldId(id) => id
       }).headOption
-      
-      val confirmInfo = stuff.collect{
+
+      val confirmInfo = stuff.collect {
         case NotOnConfirmScreen => false
       }.headOption orElse
-      stuff.collect {
-        case OnConfirmScreen => true
-      }.headOption 
+        stuff.collect {
+          case OnConfirmScreen => true
+        }.headOption
 
       new Field {
         type ValueType = T
-        
+
         /**
          * Is this field on the confirm screen
          */
         override def onConfirm_? : Boolean = confirmInfo getOrElse super.onConfirm_?
-        
+
         override def name: String = FieldBuilder.this.name
+
         override def default = FieldBuilder.this.default
+
         override implicit def manifest: Manifest[ValueType] = FieldBuilder.this.manifest
+
         override def helpAsHtml = help
+
         override def validations = FieldBuilder.this.validations
+
         override def setFilter = FieldBuilder.this.filters
-        override def uniqueFieldId: Box[String] = 
+
+        override def uniqueFieldId: Box[String] =
           paramFieldId or Full(_theFieldId.get)
-          
+
         private lazy val _theFieldId: NonCleanAnyVar[String] =
           vendAVar(Helpers.nextFuncName)
       }
@@ -284,18 +295,18 @@ trait AbstractScreen extends Factory {
   }
 
   implicit def strToListFieldError(msg: String): List[FieldError] =
-  List(FieldError(currentField.box openOr new FieldIdentifier{}, Text(msg)))
+    List(FieldError(currentField.box openOr new FieldIdentifier {}, Text(msg)))
 
   implicit def xmlToListFieldError(msg: NodeSeq): List[FieldError] =
-  List(FieldError(currentField.box openOr new FieldIdentifier{}, msg))
+    List(FieldError(currentField.box openOr new FieldIdentifier {}, msg))
 
   implicit def boxStrToListFieldError(msg: Box[String]): List[FieldError] =
-  msg.toList.map(msg =>
-    FieldError(currentField.box openOr new FieldIdentifier{}, Text(msg)))
+    msg.toList.map(msg =>
+      FieldError(currentField.box openOr new FieldIdentifier {}, Text(msg)))
 
   implicit def boxXmlToListFieldError(msg: Box[NodeSeq]): List[FieldError] =
-  msg.toList.map(msg => FieldError(currentField.box openOr new FieldIdentifier{}, msg))
-  
+    msg.toList.map(msg => FieldError(currentField.box openOr new FieldIdentifier {}, msg))
+
   /**
    * Create a FieldBuilder so you can add help screens, validations and filters.  Remember to invoke "make" on
    * the returned FieldBuilder to convert it into a field
@@ -306,18 +317,25 @@ trait AbstractScreen extends Factory {
    * @param validate - any validation functions
    */
   protected def builder[T](name: => String, default: => T, stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): FieldBuilder[T] =
-    new FieldBuilder[T](name, default, man, Empty, 
-                        stuff.toList.collect{case AVal(v) => v},
-                        stuff.toList.collect {case AFilter(v) => v},
-                        stuff)
+    new FieldBuilder[T](name, default, man, Empty,
+      stuff.toList.collect {
+        case AVal(v) => v
+      },
+      stuff.toList.collect {
+        case AFilter(v) => v
+      },
+      stuff)
 
   protected object FilterOrValidate {
-    implicit def promoteFilter[T](f: T => T): FilterOrValidate[T] = AFilter(f)  
-    implicit def promoteValidate[T](v: T => List[FieldError]): FilterOrValidate[T] = AVal(v)  
-    
+    implicit def promoteFilter[T](f: T => T): FilterOrValidate[T] = AFilter(f)
+
+    implicit def promoteValidate[T](v: T => List[FieldError]): FilterOrValidate[T] = AVal(v)
+
     implicit def promoteToFormParam(a: SHtml.ElemAttr): FilterOrValidate[Nothing] = FormParam(a)
+
     implicit def promoteToFormParam(a: (String, String)): FilterOrValidate[Nothing] = FormParam(a)
   }
+
   sealed protected trait FilterOrValidate[+T]
 
   /**
@@ -326,7 +344,7 @@ trait AbstractScreen extends Factory {
    */
   protected case object OnConfirmScreen extends FilterOrValidate[Nothing]
 
-  
+
   /**
    * Override the screen default for fields appearing on the confirm
    * screen and force this field not to appear on the confirm screen
@@ -338,24 +356,25 @@ trait AbstractScreen extends Factory {
   protected final case class FormFieldId(id: String) extends FilterOrValidate[Nothing]
 
   protected final case class AFilter[T](f: T => T) extends FilterOrValidate[T]
+
   protected final case class AVal[T](v: T => List[FieldError]) extends FilterOrValidate[T]
 
-  protected def field[T](underlying: => BaseField{type ValueType=T},
-                         stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): Field{type ValueType=T} = {    
+  protected def field[T](underlying: => BaseField {type ValueType = T},
+                         stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): Field {type ValueType = T} = {
     val paramFieldId: Box[String] = (stuff.collect {
       case FormFieldId(id) => id
     }).headOption
 
-    val confirmInfo = stuff.collect{
+    val confirmInfo = stuff.collect {
       case NotOnConfirmScreen => false
     }.headOption orElse
-    stuff.collect {
-      case OnConfirmScreen => true
-    }.headOption 
-    
+      stuff.collect {
+        case OnConfirmScreen => true
+      }.headOption
+
     new Field {
       type ValueType = T
-      
+
       /**
        * Is this field on the confirm screen
        */
@@ -378,10 +397,13 @@ trait AbstractScreen extends Factory {
       override def displayNameHtml: Box[NodeSeq] = underlying.displayNameHtml
 
       override def asHtml = underlying.asHtml
-      
+
       override def name: String = underlying.name
+
       override def default = underlying.get
+
       override implicit def manifest: Manifest[ValueType] = man
+
       override def helpAsHtml = underlying.helpAsHtml
 
       override def validate: List[FieldError] = underlying.validate
@@ -397,7 +419,9 @@ trait AbstractScreen extends Factory {
       }.toList
 
       override def is = underlying.get
+
       override def get = underlying.get
+
       override def set(v: T) = underlying.set(setFilter.foldLeft(v)((v, f) => f(v)))
 
       override def uniqueFieldId: Box[String] = paramFieldId or underlying.uniqueFieldId or super.uniqueFieldId
@@ -405,28 +429,29 @@ trait AbstractScreen extends Factory {
   }
 
   sealed protected trait BoxMarker
+
   /**
    * A little hack because => BaseField and => Box[BaseField]
    * have the same method signature
    */
   protected implicit object BoxMarkerObj extends BoxMarker
-  
-  protected def field[T](underlying: => Box[BaseField{type ValueType=T}],
-                         stuff: FilterOrValidate[T]*)(implicit man: Manifest[T], marker: BoxMarker): Field{type ValueType=T} = {    
+
+  protected def field[T](underlying: => Box[BaseField {type ValueType = T}],
+                         stuff: FilterOrValidate[T]*)(implicit man: Manifest[T], marker: BoxMarker): Field {type ValueType = T} = {
     val paramFieldId: Box[String] = (stuff.collect {
       case FormFieldId(id) => id
     }).headOption
 
-    val confirmInfo = stuff.collect{
+    val confirmInfo = stuff.collect {
       case NotOnConfirmScreen => false
     }.headOption orElse
-    stuff.collect {
-      case OnConfirmScreen => true
-    }.headOption 
-    
+      stuff.collect {
+        case OnConfirmScreen => true
+      }.headOption
+
     new Field {
       type ValueType = T
-      
+
       /**
        * Is this field on the confirm screen
        */
@@ -449,10 +474,13 @@ trait AbstractScreen extends Factory {
       override def displayNameHtml: Box[NodeSeq] = underlying.flatMap(_.displayNameHtml)
 
       override def asHtml = underlying.map(_.asHtml) openOr NodeSeq.Empty
-      
+
       override def name: String = underlying.map(_.name) openOr "N/A"
+
       override def default = underlying.open_!.get
+
       override implicit def manifest: Manifest[ValueType] = man
+
       override def helpAsHtml = underlying.flatMap(_.helpAsHtml)
 
       override def validate: List[FieldError] = underlying.toList.flatMap(_.validate)
@@ -462,13 +490,15 @@ trait AbstractScreen extends Factory {
       }.toList
 
       override def is = underlying.open_!.get
+
       override def get = underlying.open_!.get
+
       override def set(v: T) = underlying.open_!.set(setFilter.foldLeft(v)((v, f) => f(v)))
 
       override def uniqueFieldId: Box[String] = paramFieldId or underlying.flatMap(_.uniqueFieldId) or super.uniqueFieldId
     }
   }
-                          
+
 
   /**
    * Create a field with a name, default value, and
@@ -478,50 +508,54 @@ trait AbstractScreen extends Factory {
    * @param default - the default value of the field
    * @param validate - any validation functions
    */
-  protected def field[T](name: => String, default: => T, stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): Field{type ValueType = T} =
-  new FieldBuilder[T](name, default, man, Empty, stuff.toList.flatMap{
-    case AVal(v) => List(v) case _ => Nil}, stuff.toList.flatMap{
-    case AFilter(v) => List(v) case _ => Nil}, stuff).make
+  protected def field[T](name: => String, default: => T, stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): Field {type ValueType = T} =
+    new FieldBuilder[T](name, default, man, Empty, stuff.toList.flatMap {
+      case AVal(v) => List(v)
+      case _ => Nil
+    }, stuff.toList.flatMap {
+      case AFilter(v) => List(v)
+      case _ => Nil
+    }, stuff).make
 
   protected def removeRegExChars(regEx: String): String => String =
-  s => s match {
-    case null => null
-    case s => s.replaceAll(regEx, "")
-  }
+    s => s match {
+      case null => null
+      case s => s.replaceAll(regEx, "")
+    }
 
   protected def toLower: String => String =
-  s => s match {
-    case null => null
-    case s => s.toLowerCase
-  }
+    s => s match {
+      case null => null
+      case s => s.toLowerCase
+    }
 
   protected def toUpper: String => String =
-  s => s match {
-    case null => null
-    case s => s.toUpperCase
-  }
+    s => s match {
+      case null => null
+      case s => s.toUpperCase
+    }
 
   protected def trim: String => String =
-  s => s match {
-    case null => null
-    case s => s.trim
-  }
+    s => s match {
+      case null => null
+      case s => s.trim
+    }
 
   protected def notNull: String => String =
-  s => s match {
-    case null => ""
-    case x => x
-  }
+    s => s match {
+      case null => ""
+      case x => x
+    }
 
   /**
    * A validation helper.  Make sure the string is at least a particular
    * length and generate a validation issue if not
    */
   protected def valMinLen(len: => Int, msg: => String): String => List[FieldError] =
-  s => s match {
-    case str if (null ne str) && str.length >= len => Nil
-    case _ => List(FieldError(currentField.box openOr new FieldIdentifier{}, Text(msg)))
-  }
+    s => s match {
+      case str if (null ne str) && str.length >= len => Nil
+      case _ => List(FieldError(currentField.box openOr new FieldIdentifier {}, Text(msg)))
+    }
 
 
   /**
@@ -529,28 +563,28 @@ trait AbstractScreen extends Factory {
    * length and generate a validation issue if not
    */
   protected def valMaxLen(len: => Int, msg: => String): String => List[FieldError] =
-  s => s match {
-    case str if (null ne str) && str.length <= len => Nil
-    case _ => List(FieldError(currentField.box openOr new FieldIdentifier{}, Text(msg)))
-  }
+    s => s match {
+      case str if (null ne str) && str.length <= len => Nil
+      case _ => List(FieldError(currentField.box openOr new FieldIdentifier {}, Text(msg)))
+    }
 
   /**
    * Make sure the field matches a regular expression
    */
   protected def valRegex(pat: => java.util.regex.Pattern, msg: => String): String => List[FieldError] =
-  s => s match {
-    case str if (null ne str) && pat.matcher(str).matches => Nil
-    case _ => List(FieldError(currentField.box openOr new FieldIdentifier{}, Text(msg)))
-  }
+    s => s match {
+      case str if (null ne str) && pat.matcher(str).matches => Nil
+      case _ => List(FieldError(currentField.box openOr new FieldIdentifier {}, Text(msg)))
+    }
 
   protected def minVal[T](len: => T, msg: => String)(implicit f: T => Number): T => List[FieldError] =
-  s => if (f(s).doubleValue < f(len).doubleValue) msg else Nil
+    s => if (f(s).doubleValue < f(len).doubleValue) msg else Nil
 
   protected def maxVal[T](len: => T, msg: => String)(implicit f: T => Number): T => List[FieldError] =
-  s => if (f(s).doubleValue > f(len).doubleValue) msg else Nil
+    s => if (f(s).doubleValue > f(len).doubleValue) msg else Nil
 
   def noticeTypeToAttr(screen: AbstractScreen): Box[NoticeType.Value => MetaData] =
-  inject[NoticeType.Value => MetaData] or LiftScreenRules.inject[NoticeType.Value => MetaData]
+    inject[NoticeType.Value => MetaData] or LiftScreenRules.inject[NoticeType.Value => MetaData]
 
 
   /**
@@ -576,11 +610,11 @@ trait AbstractScreen extends Factory {
    */
   protected def makeField[T, OV](theName: => String, defaultValue: => T,
                                  theToForm: (Field {type OtherValueType = OV
-                                                    type ValueType = T } =>
-                                                      Box[NodeSeq]), 
-                                 otherValue: OtherValueInitializer[OV], 
-                                 stuff: FilterOrValidate[T]*): 
-  Field{type ValueType = T; type OtherValueType = OV} = {
+                                   type ValueType = T} =>
+                                   Box[NodeSeq]),
+                                 otherValue: OtherValueInitializer[OV],
+                                 stuff: FilterOrValidate[T]*):
+  Field {type ValueType = T; type OtherValueType = OV} = {
     otherValue match {
       case OtherValueInitializerImpl(otherValueInitFunc) => {
         new Field {
@@ -590,10 +624,20 @@ trait AbstractScreen extends Factory {
           override protected def otherValueDefault: OtherValueType = otherValueInitFunc()
 
           override def name: String = theName
+
           override implicit def manifest = buildIt[T]
+
           override def default: T = defaultValue
-          override val setFilter = stuff.flatMap{case AFilter(f) => List(f) case _ => Nil}.toList
-          override val validations = stuff.flatMap{case AVal(v) => List(v) case _ => Nil}.toList
+
+          override val setFilter = stuff.flatMap {
+            case AFilter(f) => List(f)
+            case _ => Nil
+          }.toList
+          override val validations = stuff.flatMap {
+            case AVal(v) => List(v)
+            case _ => Nil
+          }.toList
+
           override def toForm: Box[NodeSeq] = theToForm(this)
         }
       }
@@ -602,11 +646,22 @@ trait AbstractScreen extends Factory {
         new Field {
           type ValueType = T
           type OtherValueType = OV
+
           override def name: String = theName
+
           override implicit def manifest = buildIt[T]
+
           override def default: T = defaultValue
-          override val setFilter = stuff.flatMap{case AFilter(f) => List(f) case _ => Nil}.toList
-          override val validations = stuff.flatMap{case AVal(v) => List(v) case _ => Nil}.toList
+
+          override val setFilter = stuff.flatMap {
+            case AFilter(f) => List(f)
+            case _ => Nil
+          }.toList
+          override val validations = stuff.flatMap {
+            case AVal(v) => List(v)
+            case _ => Nil
+          }.toList
+
           override def toForm: Box[NodeSeq] = theToForm(this)
         }
       }
@@ -622,14 +677,14 @@ trait AbstractScreen extends Factory {
    *
    * @returns a newly minted Field
    */
-  protected def password(name: => String, defaultValue: => String, stuff: FilterOrValidate[String]*): Field{type ValueType=String} = {
+  protected def password(name: => String, defaultValue: => String, stuff: FilterOrValidate[String]*): Field {type ValueType = String} = {
     val eAttr = grabParams(stuff)
-    
-    makeField[String, Nothing](name, 
-                               defaultValue,
-                               field => SHtml.password(field.get, field.set(_), eAttr :_*),
-                               NothingOtherValueInitializer,
-                               stuff :_*)
+
+    makeField[String, Nothing](name,
+      defaultValue,
+      field => SHtml.password(field.get, field.set(_), eAttr: _*),
+      NothingOtherValueInitializer,
+      stuff: _*)
   }
 
   /**
@@ -641,14 +696,14 @@ trait AbstractScreen extends Factory {
    *
    * @returns a newly minted Field
    */
-  protected def text(name: => String, defaultValue: => String, stuff: FilterOrValidate[String]*): Field{type ValueType=String} = {
+  protected def text(name: => String, defaultValue: => String, stuff: FilterOrValidate[String]*): Field {type ValueType = String} = {
     val eAttr = grabParams(stuff)
-    
-    makeField[String, Nothing](name, 
-                               defaultValue,
-                               field => SHtml.text(field.get, field.set(_), eAttr :_*),
-                               NothingOtherValueInitializer,
-                               stuff :_*)
+
+    makeField[String, Nothing](name,
+      defaultValue,
+      field => SHtml.text(field.get, field.set(_), eAttr: _*),
+      NothingOtherValueInitializer,
+      stuff: _*)
   }
 
 
@@ -662,11 +717,10 @@ trait AbstractScreen extends Factory {
    *
    * @returns a newly minted Field{type ValueType = String}
    */
-  protected def textarea(name: => String, defaultValue: => String, stuff: FilterOrValidate[String]*): Field{type ValueType = String} =
-    textarea(name, defaultValue, 5, 80, stuff :_*)
-  
-    
-  
+  protected def textarea(name: => String, defaultValue: => String, stuff: FilterOrValidate[String]*): Field {type ValueType = String} =
+    textarea(name, defaultValue, 5, 80, stuff: _*)
+
+
   /**
    * Create a textarea Field
    *
@@ -679,19 +733,19 @@ trait AbstractScreen extends Factory {
    *
    * @returns a newly minted Field{type ValueType = String}
    */
-  protected def textarea(name: => String, defaultValue: => String, rows: Int, cols: Int, stuff: FilterOrValidate[String]*): 
-  Field{type ValueType = String} = {
-    
+  protected def textarea(name: => String, defaultValue: => String, rows: Int, cols: Int, stuff: FilterOrValidate[String]*):
+  Field {type ValueType = String} = {
+
     val eAttr: List[SHtml.ElemAttr] = (("rows" -> rows.toString): SHtml.ElemAttr) ::
-    (("cols" -> cols.toString): SHtml.ElemAttr) :: grabParams(stuff)
-    
-    makeField[String, Nothing](name, 
-                               defaultValue,
-                               field => SHtml.textarea(field.is,
-                                                       field.set(_),
-                                                       eAttr :_*),
-                               NothingOtherValueInitializer,
-                               stuff :_*)
+      (("cols" -> cols.toString): SHtml.ElemAttr) :: grabParams(stuff)
+
+    makeField[String, Nothing](name,
+      defaultValue,
+      field => SHtml.textarea(field.is,
+        field.set(_),
+        eAttr: _*),
+      NothingOtherValueInitializer,
+      stuff: _*)
   }
 
 
@@ -706,21 +760,20 @@ trait AbstractScreen extends Factory {
    * @param f a PairStringPromoter (a wrapper around a function) that converts T => display String
    *
    * @returns a newly minted Field{type ValueType = String}
-   */  
+   */
   protected def select[T](name: => String, default: => T, choices: => Seq[T], stuff: FilterOrValidate[T]*)
-  (implicit f: SHtml.PairStringPromoter[T]): Field{type ValueType = T; type OtherValueType = Seq[T]} 
-  =
-    {
-      val eAttr = grabParams(stuff)      
-      
-      makeField[T, Seq[T]](name, default,
-                           field =>
-                             SHtml.selectElem(field.otherValue,
-                                              Full(field.is), eAttr :_*)(field.set(_)),
-                           OtherValueInitializerImpl[Seq[T]](() => choices),
-                           stuff :_*)
-    }
-  
+                         (implicit f: SHtml.PairStringPromoter[T]): Field {type ValueType = T; type OtherValueType = Seq[T]}
+  = {
+    val eAttr = grabParams(stuff)
+
+    makeField[T, Seq[T]](name, default,
+      field =>
+        SHtml.selectElem(field.otherValue,
+          Full(field.is), eAttr: _*)(field.set(_)),
+      OtherValueInitializerImpl[Seq[T]](() => choices),
+      stuff: _*)
+  }
+
   /**
    * Create a multi select HTML element
    *
@@ -732,30 +785,33 @@ trait AbstractScreen extends Factory {
    * @param f a PairStringPromoter (a wrapper around a function) that converts T => display String
    *
    * @returns a newly minted Field{type ValueType = String}
-   */  
+   */
   protected def multiselect[T](name: => String, default: => Seq[T], choices: => Seq[T], stuff: FilterOrValidate[Seq[T]]*)
-  (implicit f: SHtml.PairStringPromoter[T]): Field{type ValueType = Seq[T]; type OtherValueType = Seq[T]} 
-  =
-    {
-      val eAttr = grabParams(stuff)      
-      
-      makeField[Seq[T], Seq[T]](name, default,
-                                field =>
-                                  SHtml.multiSelectElem(field.otherValue,
-                                                        field.is, eAttr :_*)(field.set(_)),
-                                OtherValueInitializerImpl[Seq[T]](() => choices),
-                                stuff :_*)
-    }
-  
+                              (implicit f: SHtml.PairStringPromoter[T]): Field {type ValueType = Seq[T]; type OtherValueType = Seq[T]}
+  = {
+    val eAttr = grabParams(stuff)
+
+    makeField[Seq[T], Seq[T]](name, default,
+      field =>
+        SHtml.multiSelectElem(field.otherValue,
+          field.is, eAttr: _*)(field.set(_)),
+      OtherValueInitializerImpl[Seq[T]](() => choices),
+      stuff: _*)
+  }
+
   /**
    * Grabs the FormFieldId and FormParam parameters 
    */
-  protected def grabParams(in: Seq[FilterOrValidate[_]]): 
+  protected def grabParams(in: Seq[FilterOrValidate[_]]):
   List[SHtml.ElemAttr] = {
     val sl = in.toList
-    in.collect{case FormFieldId(id) => ("id" -> id): SHtml.ElemAttr}.
-    headOption.toList :::
-    sl.collect{case FormParam(fp) => fp}
+    in.collect {
+      case FormFieldId(id) => ("id" -> id): SHtml.ElemAttr
+    }.
+      headOption.toList :::
+      sl.collect {
+        case FormParam(fp) => fp
+      }
   }
 
   /**
@@ -769,28 +825,29 @@ trait AbstractScreen extends Factory {
    * @param f a PairStringPromoter (a wrapper around a function) that converts T => display String
    *
    * @returns a newly minted Field{type ValueType = String}
-   */  
+   */
   protected def radio(name: => String, default: => String, choices: => Seq[String], stuff: FilterOrValidate[String]*):
-  Field{type ValueType = String; type OtherValueType = Seq[String]} = {
+  Field {type ValueType = String; type OtherValueType = Seq[String]} = {
     val eAttr = grabParams(stuff)
-    
+
     makeField[String, Seq[String]](name, default,
-                                   field =>
-                                     Full(SHtml.radio(field.otherValue,
-                                                      Full(field.is),
-                                                      field.set _,
-                                                      eAttr :_*).toForm),
-                                   OtherValueInitializerImpl[Seq[String]](() => choices),
-                                   stuff :_*)
+      field =>
+        Full(SHtml.radio(field.otherValue,
+          Full(field.is),
+          field.set _,
+          eAttr: _*).toForm),
+      OtherValueInitializerImpl[Seq[String]](() => choices),
+      stuff: _*)
   }
 }
 
 
-
 trait ScreenWizardRendered {
-  protected def wrapInDiv(in: NodeSeq): Elem = 
-    <div style="display: inline" id={FormGUID.get}>{in}</div>
-  
+  protected def wrapInDiv(in: NodeSeq): Elem =
+    <div style="display: inline" id={FormGUID.get}>
+      {in}
+    </div>
+
   protected def renderAll(currentScreenNumber: Box[NodeSeq],
                           screenCount: Box[NodeSeq],
                           wizardTop: Box[Elem],
@@ -814,56 +871,60 @@ trait ScreenWizardRendered {
       fields.flatMap {
         f =>
           val theFormEarly = f.input
-          val curId = theFormEarly.flatMap(Helpers.findId) or 
-        f.field.uniqueFieldId openOr Helpers.nextFuncName
+          val curId = theFormEarly.flatMap(Helpers.findId) or
+            f.field.uniqueFieldId openOr Helpers.nextFuncName
 
-        val theForm = theFormEarly.map{
-          fe => {
-            val f = Helpers.deepEnsureUniqueId(fe)
-            val id = Helpers.findBox(f)(_.attribute("id").
-                                        map(_.text).
-                                        filter(_ == curId))
-            if (id.isEmpty) {
-              Helpers.ensureId(f, curId)
-            } else {
-              f
+          val theForm = theFormEarly.map {
+            fe => {
+              val f = Helpers.deepEnsureUniqueId(fe)
+              val id = Helpers.findBox(f)(_.attribute("id").
+                map(_.text).
+                filter(_ == curId))
+              if (id.isEmpty) {
+                Helpers.ensureId(f, curId)
+              } else {
+                f
+              }
             }
           }
-        }
 
-        val myNotices = notices.filter(fi => fi._3.isDefined && fi._3 == curId)
-        def doLabel(in: NodeSeq): NodeSeq =
-          myNotices match {
-            case Nil => bind("wizard", in, AttrBindParam("for", curId, "for"), "bind" -%> f.text)
-            case _ =>
-              val maxN = myNotices.map(_._1).sortWith{_.id > _.id}.head // get the maximum type of notice (Error > Warning > Notice)
-            val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(maxN)) openOr Null
-            bind("wizard", in, AttrBindParam("for", curId, "for"), "bind" -%> f.text).map {
-              case e: Elem => e % metaData
-              case x => x
+          val myNotices = notices.filter(fi => fi._3.isDefined && fi._3 == curId)
+          def doLabel(in: NodeSeq): NodeSeq =
+            myNotices match {
+              case Nil => bind("wizard", in, AttrBindParam("for", curId, "for"), "bind" -%> f.text)
+              case _ =>
+                val maxN = myNotices.map(_._1).sortWith {
+                  _.id > _.id
+                }.head // get the maximum type of notice (Error > Warning > Notice)
+                val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(maxN)) openOr Null
+                bind("wizard", in, AttrBindParam("for", curId, "for"), "bind" -%> f.text).map {
+                  case e: Elem => e % metaData
+                  case x => x
+                }
             }
-          }
-        bind("wizard", xhtml,
-             "label" -%> doLabel _, 
-             "form" -%> theForm,
-             FuncBindParam("help", xml => {
-               f.help match {
-                 case Full(hlp) => bind("wizard", xml, "bind" -%> hlp)
-                 case _ => NodeSeq.Empty
-               }
-             }),
-             FuncBindParam("field_errors", xml => {
-               myNotices match {
-                 case Nil => NodeSeq.Empty
-                 case xs => bind("wizard", xml, "error" -%>
-                                 (innerXml => xs.flatMap {case (noticeType, msg, _) =>
-                                   val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(noticeType)) openOr Null
-                                                          bind("wizard", innerXml, "bind" -%> msg).map {
-                                                            case e: Elem => e % metaData
-                                                            case x => x
-                                                          }}))
-               }
-             }))
+          bind("wizard", xhtml,
+            "label" -%> doLabel _,
+            "form" -%> theForm,
+            FuncBindParam("help", xml => {
+              f.help match {
+                case Full(hlp) => bind("wizard", xml, "bind" -%> hlp)
+                case _ => NodeSeq.Empty
+              }
+            }),
+            FuncBindParam("field_errors", xml => {
+              myNotices match {
+                case Nil => NodeSeq.Empty
+                case xs => bind("wizard", xml, "error" -%>
+                  (innerXml => xs.flatMap {
+                    case (noticeType, msg, _) =>
+                      val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(noticeType)) openOr Null
+                      bind("wizard", innerXml, "bind" -%> msg).map {
+                        case e: Elem => e % metaData
+                        case x => x
+                      }
+                  }))
+              }
+            }))
       }
     }
 
@@ -874,54 +935,63 @@ trait ScreenWizardRendered {
     def bindErrors(xhtml: NodeSeq): NodeSeq = notices.filter(_._3.isEmpty) match {
       case Nil => NodeSeq.Empty
       case xs =>
-        def doErrors(in: NodeSeq): NodeSeq = xs.flatMap{case (noticeType, msg, _) =>
-          val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(noticeType)) openOr Null
-                                                        bind("wizard", in, "bind" -%>
-                                                             (msg)).map {
-                                                               case e: Elem => e % metaData
-                                                               case x => x
-                                                             }}
+        def doErrors(in: NodeSeq): NodeSeq = xs.flatMap {
+          case (noticeType, msg, _) =>
+            val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(noticeType)) openOr Null
+            bind("wizard", in, "bind" -%>
+              (msg)).map {
+              case e: Elem => e % metaData
+              case x => x
+            }
+        }
 
-      bind("wizard", xhtml,
-           "item" -%> doErrors _)
+        bind("wizard", xhtml,
+          "item" -%> doErrors _)
     }
 
     def bindFields(xhtml: NodeSeq): NodeSeq = {
-      val ret = 
-        (<form id={nextId._1} action={url} 
-         method="post">{S.formGroup(-1)(SHtml.hidden(() =>
-           snapshot.restore()))}{bind("wizard", xhtml,
-                                      "line" -%> bindFieldLine _)}{
-             S.formGroup(4)(
-               SHtml.hidden(() =>
-                 {val res = nextId._2(); 
-                  if (!ajax_?) {
-                    val localSnapshot = createSnapshot
-                    S.seeOther(url, () => {
-                      localSnapshot.restore
-                    })}
-                  res
-                }))}</form> %
-         theScreen.additionalAttributes) ++
-      prevId.toList.map{case (id, func) =>
-        <form id={id} action={url} method="post">{
-          SHtml.hidden(() => {snapshot.restore(); 
-                              val res = func();
-                              if (!ajax_?) {
-                                val localSnapshot = createSnapshot;
-                                S.seeOther(url, () => localSnapshot.restore)
-                              }
-                              res
-                            })}</form>
-                      } ++
-      <form id={cancelId._1} action={url} method="post">{SHtml.hidden(() => {
-        snapshot.restore();
-        val res = cancelId._2() // WizardRules.deregisterWizardSession(CurrentSession.is)
-        if (!ajax_?) {
-          S.seeOther(Referer.get)
-        }
-        res
-      })}</form>
+      val ret =
+        (<form id={nextId._1} action={url}
+               method="post">
+          {S.formGroup(-1)(SHtml.hidden(() =>
+            snapshot.restore()))}{bind("wizard", xhtml,
+            "line" -%> bindFieldLine _)}{S.formGroup(4)(
+            SHtml.hidden(() => {
+              val res = nextId._2();
+              if (!ajax_?) {
+                val localSnapshot = createSnapshot
+                S.seeOther(url, () => {
+                  localSnapshot.restore
+                })
+              }
+              res
+            }))}
+        </form> %
+          theScreen.additionalAttributes) ++
+          prevId.toList.map {
+            case (id, func) =>
+              <form id={id} action={url} method="post">
+                {SHtml.hidden(() => {
+                snapshot.restore();
+                val res = func();
+                if (!ajax_?) {
+                  val localSnapshot = createSnapshot;
+                  S.seeOther(url, () => localSnapshot.restore)
+                }
+                res
+              })}
+              </form>
+          } ++
+          <form id={cancelId._1} action={url} method="post">
+            {SHtml.hidden(() => {
+            snapshot.restore();
+            val res = cancelId._2() // WizardRules.deregisterWizardSession(CurrentSession.is)
+            if (!ajax_?) {
+              S.seeOther(Referer.get)
+            }
+            res
+          })}
+          </form>
 
       if (ajax_?) {
         SHtml.makeFormsAjax(ret)
@@ -932,22 +1002,22 @@ trait ScreenWizardRendered {
 
     def bindScreenInfo(xhtml: NodeSeq): NodeSeq = (currentScreenNumber, screenCount) match {
       case (Full(num), Full(cnt)) =>
-        bind("wizard", xhtml, "screen_number" -%> num/*Text(CurrentScreen.is.map(s => (s.myScreenNum + 1).toString) openOr "")*/,
-             "total_screens" -%> cnt /*Text(screenCount.toString)*/)
+        bind("wizard", xhtml, "screen_number" -%> num /*Text(CurrentScreen.is.map(s => (s.myScreenNum + 1).toString) openOr "")*/ ,
+          "total_screens" -%> cnt /*Text(screenCount.toString)*/)
       case _ => NodeSeq.Empty
     }
 
     Helpers.bind("wizard", allTemplate,
-                 "screen_info" -%> bindScreenInfo _,
-                 FuncBindParam("wizard_top", xml => (wizardTop.map(top => bind("wizard", xml, "bind" -%> top)) openOr NodeSeq.Empty)),
-                 FuncBindParam("screen_top", xml => (screenTop.map(top => bind("wizard", xml, "bind" -%> top)) openOr NodeSeq.Empty)),
-                 FuncBindParam("wizard_bottom", xml => (wizardBottom.map(bottom => bind("wizard", xml, "bind" -%> bottom)) openOr NodeSeq.Empty)),
-                 FuncBindParam("screen_bottom", xml => (screenBottom.map(bottom => bind("wizard", xml, "bind" -%> bottom)) openOr NodeSeq.Empty)),
-                 "prev" -%> (prev openOr EntityRef("nbsp")),
-                 "next" -%> ((next or finish) openOr EntityRef("nbsp")),
-                 "cancel" -%> (cancel openOr EntityRef("nbsp")),
-                 "errors" -%> bindErrors _,
-                 FuncBindParam("fields", bindFields _))
+      "screen_info" -%> bindScreenInfo _,
+      FuncBindParam("wizard_top", xml => (wizardTop.map(top => bind("wizard", xml, "bind" -%> top)) openOr NodeSeq.Empty)),
+      FuncBindParam("screen_top", xml => (screenTop.map(top => bind("wizard", xml, "bind" -%> top)) openOr NodeSeq.Empty)),
+      FuncBindParam("wizard_bottom", xml => (wizardBottom.map(bottom => bind("wizard", xml, "bind" -%> bottom)) openOr NodeSeq.Empty)),
+      FuncBindParam("screen_bottom", xml => (screenBottom.map(bottom => bind("wizard", xml, "bind" -%> bottom)) openOr NodeSeq.Empty)),
+      "prev" -%> (prev openOr EntityRef("nbsp")),
+      "next" -%> ((next or finish) openOr EntityRef("nbsp")),
+      "cancel" -%> (cancel openOr EntityRef("nbsp")),
+      "errors" -%> bindErrors _,
+      FuncBindParam("fields", bindFields _))
 
   }
 
@@ -955,26 +1025,90 @@ trait ScreenWizardRendered {
 
   protected def allTemplateNodeSeq: NodeSeq = {
     <div>
-    <wizard:screen_info><div>Page <wizard:screen_number/> of <wizard:total_screens/></div></wizard:screen_info>
-    <wizard:wizard_top> <div> <wizard:bind/> </div> </wizard:wizard_top>
-    <wizard:screen_top> <div> <wizard:bind/> </div> </wizard:screen_top>
-    <wizard:errors> <div> <ul> <wizard:item> <li> <wizard:bind/> </li> </wizard:item> </ul> </div> </wizard:errors>
-    <div> <wizard:fields>
-    <table>
-    <wizard:line>
-    <tr>
-    <td>
-    <wizard:label><label wizard:for=""><wizard:bind/></label></wizard:label>
-    <wizard:help><span><wizard:bind/></span></wizard:help> <wizard:field_errors> <ul> <wizard:error> <li> <wizard:bind/> </li> </wizard:error> </ul> </wizard:field_errors>
-    </td>
-    <td> <wizard:form/> </td>
-    </tr>
-    </wizard:line>
-    </table>
-    </wizard:fields> </div>
-    <div> <table> <tr> <td> <wizard:prev/> </td> <td> <wizard:cancel/> </td> <td> <wizard:next/> </td> </tr> </table> </div>
-    <wizard:screen_bottom> <div> <wizard:bind/> </div> </wizard:screen_bottom>
-    <wizard:wizard_bottom> <div> <wizard:bind/> </div> </wizard:wizard_bottom>
+      <wizard:screen_info>
+        <div>Page
+            <wizard:screen_number/>
+          of
+            <wizard:total_screens/>
+        </div>
+      </wizard:screen_info>
+      <wizard:wizard_top>
+        <div>
+            <wizard:bind/>
+        </div>
+      </wizard:wizard_top>
+      <wizard:screen_top>
+        <div>
+            <wizard:bind/>
+        </div>
+      </wizard:screen_top>
+      <wizard:errors>
+        <div>
+          <ul>
+            <wizard:item>
+              <li>
+                  <wizard:bind/>
+              </li>
+            </wizard:item>
+          </ul>
+        </div>
+      </wizard:errors>
+      <div>
+        <wizard:fields>
+          <table>
+            <wizard:line>
+              <tr>
+                <td>
+                  <wizard:label>
+                    <label wizard:for=" ">
+                        <wizard:bind/>
+                    </label>
+                  </wizard:label>
+                  <wizard:help>
+                    <span>
+                        <wizard:bind/>
+                    </span>
+                  </wizard:help> <wizard:field_errors>
+                  <ul>
+                    <wizard:error>
+                      <li>
+                          <wizard:bind/>
+                      </li>
+                    </wizard:error>
+                  </ul>
+                </wizard:field_errors>
+                </td>
+                <td>
+                    <wizard:form/>
+                </td>
+              </tr>
+            </wizard:line>
+          </table>
+        </wizard:fields>
+      </div>
+      <div>
+        <table>
+          <tr>
+            <td>
+                <wizard:prev/>
+            </td> <td>
+              <wizard:cancel/>
+          </td> <td>
+              <wizard:next/>
+          </td>
+          </tr>
+        </table>
+      </div>
+      <wizard:screen_bottom>
+        <div>
+            <wizard:bind/>
+        </div>
+      </wizard:screen_bottom>
+      <wizard:wizard_bottom>
+        <div>
+            <wizard:bind/>
+        </div>
+      </wizard:wizard_bottom>
     </div>
   }
 
@@ -998,7 +1132,11 @@ trait ScreenWizardRendered {
    * What should be done at the end of an Ajax session.  By
    * default, RedirectTo(Referer.get)
    */
-  protected def calcAjaxOnDone: JsCmd = RedirectTo(Referer.get)
+  protected def calcAjaxOnDone: JsCmd = {
+    val notices = S.getAllNotices
+
+    RedirectTo(Referer.get, () => S.appendNotices(notices))
+  }
 
   /**
    * Should all instances of this Wizard or Screen unless
@@ -1010,7 +1148,7 @@ trait ScreenWizardRendered {
    * Calculate the referer (the page to go back to on finish).
    * defaults to S.referer openOr "/"
    */
-  protected def calcReferer : String = S.referer openOr "/"
+  protected def calcReferer: String = S.referer openOr "/"
 
   /**
    * Calculate if this Screen/Wizard should be ajax
@@ -1055,31 +1193,52 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
    * Holds the template passed via the snippet for the duration
    * of the request
    */
-  protected object _defaultXml extends TransientRequestVar[NodeSeq](NodeSeq.Empty)
+  protected object _defaultXml extends TransientRequestVar[NodeSeq](NodeSeq.Empty) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
 
   /**
    * the NodeSeq passed as a parameter when the snippet was invoked
    */
   protected def defaultXml: NodeSeq = _defaultXml.get
 
-  private object ScreenVars extends TransientRequestVar[Map[String, (NonCleanAnyVar[_], Any)]](Map())
-  private object PrevSnapshot extends TransientRequestVar[Box[ScreenSnapshot]](Empty)
-  protected object Referer extends ScreenVar[String](calcReferer)
+  private object ScreenVars extends TransientRequestVar[Map[String, (NonCleanAnyVar[_], Any)]](Map()) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
+
+  private object PrevSnapshot extends TransientRequestVar[Box[ScreenSnapshot]](Empty) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
+
+  protected object Referer extends ScreenVar[String](calcReferer) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
+
   /**
    * A unique GUID for the form... this allows us to do an Ajax SetHtml
    * to replace the form
    */
-  protected object FormGUID extends ScreenVar[String](Helpers.nextFuncName)
+  protected object FormGUID extends ScreenVar[String](Helpers.nextFuncName) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
 
-  protected object Ajax_? extends ScreenVar[Boolean](calcAjax)
+  protected object Ajax_? extends ScreenVar[Boolean](calcAjax) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
+
   /**
    * What to do when the Screen is done.  By default, will
    * do a redirect back to Whence, but you can change this behavior,
    * for example, put up some other Ajax thing or alternatively,
    * remove the form from the screen.
    */
-  protected object AjaxOnDone extends ScreenVar[JsCmd](calcAjaxOnDone)
-  private object FirstTime extends ScreenVar[Boolean](true)
+  protected object AjaxOnDone extends ScreenVar[JsCmd](calcAjaxOnDone) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
+
+  private object FirstTime extends ScreenVar[Boolean](true) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
 
   protected class ScreenSnapshot(private[http] val screenVars: Map[String, (NonCleanAnyVar[_], Any)],
                                  private[http] val snapshot: Box[ScreenSnapshot]) extends Snapshot {
@@ -1132,20 +1291,22 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
      * Different Vars require different mechanisms for synchronization. This method implements
      * the Var specific synchronization mechanism
      */
-    def doSync[F](f: => F): F = f // no sync necessary for RequestVars... always on the same thread
+    def doSync[F](f: => F): F = f
+
+    // no sync necessary for RequestVars... always on the same thread
   }
 
 
   private object ScreenVarHandler {
     def get[T](name: String): Box[T] =
-    ScreenVars.is.get(name).map(_._2.asInstanceOf[T])
+      ScreenVars.is.get(name).map(_._2.asInstanceOf[T])
 
 
     def set[T](name: String, from: ScreenVar[_], value: T): Unit =
-    ScreenVars.set(ScreenVars.get + (name -> (from, value)))
+      ScreenVars.set(ScreenVars.get + (name -> (from, value)))
 
     def clear(name: String): Unit =
-    ScreenVars.set(ScreenVars.get - name)
+      ScreenVars.set(ScreenVars.get - name)
   }
 
   def toForm: NodeSeq = {
@@ -1163,7 +1324,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
       // if we're not Ajax, 
       if (!ajaxForms_?) {
         S.seeOther(S.uri, () => {
-         // S.appendNotices(notices)
+          // S.appendNotices(notices)
           localSnapshot.restore
         })
       }
@@ -1179,21 +1340,21 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
 
     val theScreen = this
 
-    val finishButton = theScreen.finishButton % 
-    ("onclick" ->
-     (if (ajaxForms_?) {
-       SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(finishId)).toJsCmd
-     } else {
-       "document.getElementById(" + finishId.encJs + ").submit()"
-     }))
+    val finishButton = theScreen.finishButton %
+      ("onclick" ->
+        (if (ajaxForms_?) {
+          SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(finishId)).toJsCmd
+        } else {
+          "document.getElementById(" + finishId.encJs + ").submit()"
+        }))
 
-    val cancelButton: Elem = theScreen.cancelButton % 
-    ("onclick" ->      
-     (if (ajaxForms_?) {
-       SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(cancelId)).toJsCmd
-     } else {
-       "document.getElementById(" + cancelId.encJs + ").submit()"
-     }))
+    val cancelButton: Elem = theScreen.cancelButton %
+      ("onclick" ->
+        (if (ajaxForms_?) {
+          SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(cancelId)).toJsCmd
+        } else {
+          "document.getElementById(" + cancelId.encJs + ").submit()"
+        }))
 
     val url = S.uri
 
@@ -1211,8 +1372,10 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
       theScreen.screenBottom, // screenBottom: Box[Elem],
       Empty, //wizardBottom: Box[Elem],
       finishId -> doFinish _,
-      Empty, 
-      cancelId -> (() => {redirectBack()}), //cancelId: (String, () => Unit),
+      Empty,
+      cancelId -> (() => {
+        redirectBack()
+      }), //cancelId: (String, () => Unit),
       theScreen,
       ajaxForms_?)
   }
@@ -1232,7 +1395,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
 
   protected def finish(): Unit
 
-  protected def doFinish(): JsCmd= {
+  protected def doFinish(): JsCmd = {
     validate match {
       case Nil =>
         val snapshot = createSnapshot
@@ -1262,10 +1425,10 @@ trait IntField extends FieldIdentifier {
   lazy val manifest = buildIt[Int]
 
   def minVal(len: Int, msg: => String): Int => List[FieldError] = s =>
-  if (s < len) List(FieldError(this, Text(msg))) else Nil
+    if (s < len) List(FieldError(this, Text(msg))) else Nil
 
   def maxVal(len: Int, msg: => String): Int => List[FieldError] = s =>
-  if (s > len) List(FieldError(this, Text(msg))) else Nil
+    if (s > len) List(FieldError(this, Text(msg))) else Nil
 }
 
 trait BooleanField extends FieldIdentifier {
@@ -1288,6 +1451,7 @@ trait StringField extends FieldIdentifier with StringValidators {
   def maxLen = Integer.MAX_VALUE
 
   protected def valueTypeToBoxString(in: ValueType): Box[String] = Full(in)
+
   protected def boxStrToValType(in: Box[String]): ValueType = in openOr ""
 }
 
@@ -1296,10 +1460,10 @@ object LiftScreenRules extends Factory with FormVendor {
 
   val allTemplatePath: FactoryMaker[List[String]] = new FactoryMaker[List[String]](() => List("templates-hidden", "wizard-all")) {}
   val messageStyles: FactoryMaker[NoticeType.Value => MetaData] =
-  new FactoryMaker[NoticeType.Value => MetaData](() => {
+    new FactoryMaker[NoticeType.Value => MetaData](() => {
       case NoticeType.Notice => new UnprefixedAttribute("class", "lift_notice", Null)
-      case NoticeType.Warning =>  new UnprefixedAttribute("class", "lift_warning", Null)
-      case NoticeType.Error =>  new UnprefixedAttribute("class", "lift_error", Null)
+      case NoticeType.Warning => new UnprefixedAttribute("class", "lift_warning", Null)
+      case NoticeType.Error => new UnprefixedAttribute("class", "lift_error", Null)
     }: PartialFunction[NoticeType.Value, MetaData]) {}
 
 
