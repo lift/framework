@@ -163,7 +163,7 @@ object XmlExamples extends Specification("XML Examples") {
     val a1 = attrToObject("stats", "count", s => JInt(s.s.toInt)) _
     val a2 = attrToObject("messages", "href", identity) _
     val json = a1(a2(toJson(messageXml1)))
-    compact(render(json)) mustEqual expected1
+    (json diff parse(expected1)) mustEqual Diff(JNothing, JNothing, JNothing)
   }
 
   "Example with one attribute, one nested element " in { 
