@@ -421,6 +421,14 @@ object CssBindHelpersSpec extends Specification  {
       xf(<div/>)
     }
 
+    "support modifying attributes along with body" in {
+      val org = <a>foo</a>
+      val func = "a [href]" #> "dog" & "a *" #> "bar"
+      val res = func(org)
+
+      res.toString must_== "<a href=\"dog\">bar</a>"
+    }
+
     "substitute a String by id" in {
       ("#foo" replaceWith "hello")(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
     }

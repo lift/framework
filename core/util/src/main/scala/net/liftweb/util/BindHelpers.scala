@@ -2011,7 +2011,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     }
 
       
-    
+    // This is where the rules are applied -- DPP HERE
     final def applyRule(bind: CssBind, realE: Elem): NodeSeq = {
       def uniqueClasses(cv: String*): String = {
         import Helpers._
@@ -2120,62 +2120,6 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             }
           }
         }
-
-        /*
-        case Full(AttrSubNode(attr)) => {
-          val calced = bind.calculate(realE)
-          val filtered = realE.attributes.filter{
-            case up: UnprefixedAttribute => up.key != attr
-            case _ => true
-          }
-
-          val newAttr = if (calced.isEmpty) {
-            filtered
-          } else {
-            val flat: NodeSeq = calced.flatMap(a => a)
-            new UnprefixedAttribute(attr, flat, filtered)
-          }
-
-          new Elem(realE.prefix, 
-                   realE.label, newAttr,
-                   realE.scope, SelectorMap.this.apply(realE.child) :_*)
-        }
-
-        case Full(AttrAppendSubNode(attr)) => {
-          val org: NodeSeq = realE.attribute(attr).getOrElse(NodeSeq.Empty)
-          val calced = bind.calculate(realE).toList
-
-
-          if (calced.isEmpty) {
-            realE
-          } else {
-            val filtered = realE.attributes.filter{
-              case up: UnprefixedAttribute => up.key != attr
-              case _ => true
-            }
-            
-            val flat: NodeSeq = if (attr == "class") {
-              if (org.isEmpty) {
-                calced.dropRight(1).flatMap(a => a ++ Text(" ")) ++
-                calced.takeRight(1).head
-              } else {
-                org ++ Text(" ") ++ 
-                calced.dropRight(1).flatMap(a => a ++ Text(" ")) ++
-                calced.takeRight(1).head
-              }
-            } else {
-              org ++ (calced.flatMap(a => a): NodeSeq)
-            }
-
-            val newAttr = new UnprefixedAttribute(attr, flat, filtered)
-
-            new Elem(realE.prefix, 
-                     realE.label, newAttr,
-                     realE.scope, SelectorMap.this.apply(realE.child) :_*)
-            
-          }
-        }
-        */
           
         case x: EmptyBox => {
           val calced = bind.calculate(realE)
