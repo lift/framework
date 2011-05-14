@@ -25,19 +25,23 @@ import java.util.concurrent._
  */
 object LAPinger {
 
-  /** The underlying <code>java.util.concurrent.ScheduledExecutor</code> */
+  /**The underlying <code>java.util.concurrent.ScheduledExecutor</code> */
   private var service = Executors.newSingleThreadScheduledExecutor(TF)
 
   /**
    * Re-create the underlying <code>SingleThreadScheduledExecutor</code>
    */
-  def restart: Unit = synchronized { if ((service eq null) || service.isShutdown)
-                                    service = Executors.newSingleThreadScheduledExecutor(TF) }
+  def restart: Unit = synchronized {
+    if ((service eq null) || service.isShutdown)
+      service = Executors.newSingleThreadScheduledExecutor(TF)
+  }
 
   /**
    * Shut down the underlying <code>SingleThreadScheduledExecutor</code>
    */
-  def shutdown: Unit = synchronized { service.shutdown }
+  def shutdown: Unit = synchronized {
+    service.shutdown
+  }
 
   /**
    * Schedules the sending of a message to occur after the specified delay.
@@ -47,7 +51,9 @@ object LAPinger {
    */
   def schedule[T](to: SpecializedLiftActor[T], msg: T, delay: Long): ScheduledFuture[Unit] = {
     val r = new Callable[Unit] {
-      def call: Unit = { to ! msg }
+      def call: Unit = {
+        to ! msg
+      }
     }
     try {
       service.schedule(r, delay, TimeUnit.MILLISECONDS)
@@ -65,10 +71,12 @@ case class PingerException(msg: String, e: Throwable) extends RuntimeException(m
 
 private object TF extends ThreadFactory {
   val threadFactory = Executors.defaultThreadFactory()
-  def newThread(r: Runnable) : Thread = {
+
+  def newThread(r: Runnable): Thread = {
     val d: Thread = threadFactory.newThread(r)
     d setName "ActorPinger"
     d setDaemon true
+    d setContextClassLoader null
     d
   }
 }
