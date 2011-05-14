@@ -26,6 +26,8 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   import CompileScope._
   import ProvidedScope._
 
+  lazy val javaNetRepo = "java.net repo" at "http://download.java.net/maven/2"
+
 
   // Core projects
   // -------------
@@ -119,7 +121,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
         "net.liftweb.json.ExtractionExamples" ::
         "net.liftweb.json.XmlExamples" ::
         "net.liftweb.json.LottoExample" ::
-        "net.liftweb.json.ExtractionBugs" ::
+//        "net.liftweb.json.ExtractionBugs" ::
         "net.liftweb.json.XmlBugs" ::
         // lift-json-ext tests
         "net.liftweb.json.ext.JsonBoxSerializerSpec" ::

@@ -296,7 +296,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   def setFieldsFromJsonString(inst: BaseRecord, json: String): Box[Unit] =
     setFieldsFromJValue(inst, JsonParser.parse(json))
 
-  protected def foreachCallback(inst: BaseRecord, f: LifecycleCallbacks => Any) {
+  def foreachCallback(inst: BaseRecord, f: LifecycleCallbacks => Any) {
     lifecycleCallbacks.foreach(m => f(m._2.invoke(inst).asInstanceOf[LifecycleCallbacks]))
   }
 
