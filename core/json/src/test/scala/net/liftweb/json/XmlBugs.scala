@@ -42,8 +42,8 @@ object XmlBugs extends Specification {
     val example2 = <word term="example" self="http://localhost:8080/word/example" available="true"></word>
     val expected2 = """{"self":"http://localhost:8080/word/example","term":"example","available":"true"}"""
 
-    Printer.compact(render(toJson(example1))) mustEqual expected1
-    Printer.compact(render(toJson(example2))) mustEqual expected2
+    (toJson(example1) diff parse(expected1)) mustEqual Diff(JNothing, JNothing, JNothing)
+    (toJson(example2) diff parse(expected2)) mustEqual Diff(JNothing, JNothing, JNothing)
   }
 
   "Nodes with attributes converted to correct JSON" in {

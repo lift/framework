@@ -26,12 +26,13 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   import CompileScope._
   import ProvidedScope._
 
+  val scalap = "org.scala-lang" % "scalap" % buildScalaVersion
 
   // Core projects
   // -------------
   lazy val common      = coreProject("common", slf4j_api, logback, log4j)()
   lazy val actor       = coreProject("actor")(common)
-  lazy val json        = coreProject("json", paranamer)()
+  lazy val json        = coreProject("json", paranamer, scalap)()
   lazy val json_scalaz = coreProject("json-scalaz", scalaz)(json)
   lazy val json_ext    = coreProject("json-ext", commons_codec, joda_time)(common, json)
   lazy val util        = coreProject("util", joda_time, commons_codec, javamail, log4j, htmlparser)(actor, json)
