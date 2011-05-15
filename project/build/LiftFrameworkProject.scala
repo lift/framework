@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import com.weiglewilczek.bnd4sbt.BNDPlugin
 import java.util.Calendar
 import java.util.jar.Attributes.Name
-import sbt._
+import com.weiglewilczek.bnd4sbt.BNDPlugin
 import net.liftweb.sbt._
+import sbt._
 
 
 class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with LiftParentProject {
