@@ -26,7 +26,6 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   import CompileScope._
   import ProvidedScope._
 
-  val scalap = "org.scala-lang" % "scalap" % buildScalaVersion
 
   // Core projects
   // -------------
