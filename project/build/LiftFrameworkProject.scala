@@ -102,9 +102,12 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
     // FIXME: Build fails with -Xcheckinit -Xwarninit
     override def compileOptions = super.compileOptions.toList -- compileOptions("-Xcheckinit", "-Xwarninit").toList
 
-    // OSGi stuff
+    // OSGi Attributes
     override def bndExportPackage = Seq("net.liftweb.*;version=\"%s\"".format(projectVersion.value))
     override def bndImportPackage = "net.liftweb.*;version=\"%s\"".format(projectVersion.value) :: super.bndImportPackage.toList
+
+    // BNDPlugin should include mainResourcesOutputPath too, to include the generated resources
+    override def bndIncludeResource = super.bndIncludeResource ++ Seq(mainResourcesOutputPath.absolutePath)
 
     // System properties necessary during test TODO: Figure out how to make this a subdir of persistence/ldap/
     System.setProperty("apacheds.working.dir", (outputPath / "apacheds").absolutePath)
