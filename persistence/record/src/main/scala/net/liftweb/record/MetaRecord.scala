@@ -124,12 +124,12 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     introspect(this, methods) {
       case (v, mf) => tArray += FieldHolder(mf.name, v, mf)
     }
-    
+
     fieldList = {
       val ordered = fieldOrder.flatMap(f => tArray.find(_.metaField == f))
       ordered ++ (tArray -- ordered)
     }
-    
+
     fieldMap = Map() ++ fieldList.map(i => (i.name, i))
   }
 
@@ -213,7 +213,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     }
     JsObj(tups:_*)
   }
-  
+
   /**
    * Retuns the JSON representation of <i>inst</i> record, converts asJValue to JsObj
    *
@@ -296,7 +296,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   def setFieldsFromJsonString(inst: BaseRecord, json: String): Box[Unit] =
     setFieldsFromJValue(inst, JsonParser.parse(json))
 
-  protected def foreachCallback(inst: BaseRecord, f: LifecycleCallbacks => Any) {
+  def foreachCallback(inst: BaseRecord, f: LifecycleCallbacks => Any) {
     lifecycleCallbacks.foreach(m => f(m._2.invoke(inst).asInstanceOf[LifecycleCallbacks]))
   }
 
