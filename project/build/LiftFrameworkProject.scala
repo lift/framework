@@ -27,6 +27,17 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   import ProvidedScope._
 
   lazy val javaNetRepo = "java.net repo" at "http://download.java.net/maven/2"
+  override def managedStyle = ManagedStyle.Maven
+  val publishTo = if(isSnapshot)
+      ("Mojolly Snapshots" at "http://maven.mojolly.com/content/repositories/thirdparty-snapshots/")
+    else ("Mojolly Releases" at "http://maven.mojolly.com/content/repositories/thirdparty/")
+  Credentials(Path.userHome / ".ivy2" / ".credentials", log)
+
+//  lazy val ThirdPartySnapshot     = MavenRepository("Mojolly 3rd party snapshot", "http://maven.mojolly.com/content/repositories/thirdparty-snapshots")
+//  lazy val ThirdParty             = MavenRepository("Mojolly 3rd party", "http://maven.mojolly.com/content/repositories/thirdparty")
+//
+
+  override def defaultPublishRepository = { Some(publishTo) }
 
 
   // Core projects
@@ -72,7 +83,9 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   private def persistenceProject = frameworkProject("persistence") _
 
   private def frameworkProject(base: String)(path: String, libs: ModuleID*)(deps: Project*) =
-    project(base / path, "lift-" + path, new FrameworkProject(_, libs: _*), deps: _*)
+    project(base / path, "lift-" + path, new FrameworkProject(_, libs: _*) {
+      override def defaultPublishRepository = { Some(publishTo) }
+    }, deps: _*)
 
   // Webkit Project has testkit dependency in non-default scope -- needs special treatment
   // so that it doesn't fall over.
@@ -80,6 +93,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   private def webkitProject(path: String, libs: ModuleID*)(deps: Project*) =
     project("web" / path, "lift-" + path, new FrameworkProject(_, libs: _*) {
 
+      override def defaultPublishRepository = { Some(publishTo) }
       // Specs needed in 'provided' scope, this will lead to duplications in testclasspath though
       override def libraryDependencies =
         super.libraryDependencies ++ Seq("org.scala-tools.testing" %% "specs" % specsVersion % "provided")
