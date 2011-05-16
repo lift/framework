@@ -27,8 +27,8 @@ object ExtractionBugs extends Specification("Extraction bugs Specification") {
   implicit val formats = DefaultFormats
   
   "ClassCastException (BigInt) regression 2 must pass" in {
-    val opt = OptionOfInt(Some(39))    
-    Extraction.decompose(opt).extract[OptionOfInt].opt.get mustEqual 39
+    val iopt = OptionOfInt(Some(39))
+    Extraction.decompose(iopt).extract[OptionOfInt].opt.get mustEqual 39
   }
 
   "Extraction should not fail when Maps values are Lists" in {

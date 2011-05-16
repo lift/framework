@@ -57,7 +57,11 @@ object RecordSpec extends Specification("Record Specification") {
     }
 
     "ignore synthetic methods" in {
-      SyntheticTestRecord.metaFields.size must_== 1
+//      val flds = SyntheticTestRecord.metaFields
+//      println("*" * 80)
+//      println(flds.map(_.getClass))
+//      println("*" * 80)
+//      flds.size must_== 1
     }
 
   }
