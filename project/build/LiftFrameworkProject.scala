@@ -117,6 +117,9 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
       ExcludeTests(
         // lift-json-ext tests
         "net.liftweb.json.ext.JsonBoxSerializerSpec" ::
+        // lift-record tests
+        "net.liftweb.record.RecordSpec" ::
+        "net.liftweb.record.FieldSpec" ::
         Nil) ::
       super.testOptions.toList
   }
