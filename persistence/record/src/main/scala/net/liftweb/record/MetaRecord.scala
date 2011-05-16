@@ -124,12 +124,12 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     introspect(this, methods) {
       case (v, mf) => tArray += FieldHolder(mf.name, v, mf)
     }
-    
+
     fieldList = {
       val ordered = fieldOrder.flatMap(f => tArray.find(_.metaField == f))
       ordered ++ (tArray -- ordered)
     }
-    
+
     fieldMap = Map() ++ fieldList.map(i => (i.name, i))
   }
 
@@ -213,7 +213,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     }
     JsObj(tups:_*)
   }
-  
+
   /**
    * Retuns the JSON representation of <i>inst</i> record, converts asJValue to JsObj
    *

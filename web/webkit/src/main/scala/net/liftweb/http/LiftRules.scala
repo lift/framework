@@ -47,14 +47,38 @@ sealed trait LiftRulesMocker {
 
 object LiftRulesMocker {
   implicit def toLiftRules(in: LiftRulesMocker): LiftRules = in.realInstance
+
+  /**
+   * In Dev and Test mode, there's an option to stuff another LiftRules
+   * instance in here and use that one for mocking
+   */
+  object devTestLiftRulesInstance extends ThreadGlobal[LiftRules]
+
+  /**
+   * This function, in Test and Dev mode will vend the instance of LiftRules.
+   * If there is an instance set in devTestLiftRulesInstance, that instance
+   * will be used, otherwise the global instance in LiftRules.prodInstance
+   * will be used.
+   */
+  @volatile var calcLiftRulesInstance: () => LiftRules =
+    () => devTestLiftRulesInstance.box.openOr( LiftRules.prodInstance)
 }
 
 /**
  * The Lift configuration singleton
  */
 object LiftRules extends LiftRulesMocker {
-  lazy val realInstance: LiftRules = new LiftRules {}
-  
+  lazy val prodInstance: LiftRules = new LiftRules()
+
+  private[this] val devOrTest = Props.devMode || Props.testMode
+
+  /**
+   * Get the real instance of LiftRules
+   */
+  def realInstance: LiftRules = if (devOrTest) {
+    LiftRulesMocker.calcLiftRulesInstance()
+  } else prodInstance
+
   type DispatchPF = PartialFunction[Req, () => Box[LiftResponse]];
 
   /**
@@ -81,11 +105,12 @@ object LiftRules extends LiftRulesMocker {
    */
   type LiftRequestPF = PartialFunction[Req, Boolean]
 
-  private var _doneBoot = false
+  /*
+  private[this] var _doneBoot = false
   private[http] def doneBoot = _doneBoot
 
   private[http] def doneBoot_=(in: Boolean) {_doneBoot = in}
-
+*/
 
 
   /**
@@ -113,8 +138,15 @@ object LiftRules extends LiftRulesMocker {
 /**
  * LiftRules is the global object that holds all of Lift's configuration.
  */
-trait LiftRules extends Factory with FormVendor with LazyLoggable {
+class LiftRules() extends Factory with FormVendor with LazyLoggable {
   import LiftRules._
+
+  private var _doneBoot = false
+
+  /**
+   * Does the LiftRules instance think it's done booting?
+   */
+  def doneBoot = _doneBoot
 
   def noticesContainerId = "lift__noticesContainer__"
   private val pageResourceId = Helpers.nextFuncName
@@ -239,7 +271,7 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
       case _ =>
         val ret = LiftSession(req)
         ret.fixSessionTime()
-        SessionMaster.addSession(ret, req, 
+        SessionMaster.addSession(ret, req,
                                  req.request.userAgent,
                                  SessionMaster.getIpFromReq(req))
         ret
@@ -318,7 +350,7 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
   val statelessTest = RulesSeq[StatelessTestPF]
 
   val statelessSession: FactoryMaker[Req => LiftSession with StatelessSession] =
-    new FactoryMaker((req: Req) => new LiftSession(req.contextPath, 
+    new FactoryMaker((req: Req) => new LiftSession(req.contextPath,
                                                    Helpers.nextFuncName,
                                                    Empty) with
                      StatelessSession) {}
@@ -522,14 +554,14 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
 
     // We need to determine the full set of IDs that need messages rendered. 
     // TODO: Change to use "distinct" when 2.7.7 support is dropped
-    val idSet = (S.idMessages((S.errors)) ++ 
-                 S.idMessages((S.warnings)) ++ 
+    val idSet = (S.idMessages((S.errors)) ++
+                 S.idMessages((S.warnings)) ++
                  S.idMessages((S.notices))).map(_._1).distinct
 
     // Merge each Id's messages and effects into the JsCmd chain
-    idSet.foldLeft(groupMessages) { 
-      (chain,id) => chain & 
-        LiftRules.jsArtifacts.setHtml(id, Msg.renderIdMsgs(id)) & 
+    idSet.foldLeft(groupMessages) {
+      (chain,id) => chain &
+        LiftRules.jsArtifacts.setHtml(id, Msg.renderIdMsgs(id)) &
         idEffects(id)
     }
   }
@@ -572,45 +604,6 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
    */
   val snippetDispatch = RulesSeq[SnippetDispatchPF]
 
-  private def setupSnippetDispatch() {
-    import net.liftweb.builtin.snippet._
-
-    snippetDispatch.append(
-      Map("CSS" -> CSS, "Msgs" -> Msgs, "Msg" -> Msg,
-        "Menu" -> Menu, "css" -> CSS, "msgs" -> Msgs, "msg" -> Msg,
-        "menu" -> Menu,
-        "a" -> A, "children" -> Children,
-        "comet" -> Comet, "form" -> Form, "ignore" -> Ignore, "loc" -> Loc,
-        "surround" -> Surround,
-        "test_cond" -> TestCond,
-        "TestCond" -> TestCond,
-        "testcond" -> TestCond,
-        "embed" -> Embed,
-        "tail" -> Tail,
-        "head" -> Head,
-        "Head" -> Head,
-        "with-param" -> WithParam,
-        "withparam" -> WithParam,
-        "WithParam" -> WithParam,
-        "bind-at" -> WithParam,
-        "VersionInfo" -> VersionInfo,
-        "versioninfo" -> VersionInfo,
-        "version_info" -> VersionInfo,
-        "SkipDocType" -> SkipDocType,
-        "skipdoctype" -> SkipDocType,
-        "skip_doc_type" -> SkipDocType,
-        "xml_group" -> XmlGroup,
-        "XmlGroup" -> XmlGroup,
-        "xmlgroup" -> XmlGroup,
-        "lazy-load" -> LazyLoad,
-        "LazyLoad" -> LazyLoad,
-        "lazyload" -> LazyLoad,
-        "html5" -> HTML5,
-        "HTML5" -> HTML5,
-        "with-resource-id" -> WithResourceId
-        ))
-  }
-  setupSnippetDispatch()
 
   /**
    * Function that generates variants on snippet names to search for, given the name from the template.
@@ -788,12 +781,12 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
   }
 
   private def runAsSafe[T](f: => T): T = synchronized {
-     val old = LiftRules.doneBoot
+     val old = _doneBoot
      try {
-        LiftRules.doneBoot = false
+        _doneBoot = false
         f
      } finally {
-        LiftRules.doneBoot = old
+        _doneBoot = old
      }
   }
 
@@ -923,8 +916,7 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
   @volatile private[http] var ending = false
 
   private[http] def bootFinished() {
-    doneBoot = true
-    
+    _doneBoot = true
   }
 
   /**
@@ -1630,32 +1622,49 @@ trait LiftRules extends Factory with FormVendor with LazyLoggable {
     appendGlobalFormBuilder(FormBuilderLocator[String]((value, setter) => SHtml.text(value, setter)))
     appendGlobalFormBuilder(FormBuilderLocator[Int]((value, setter) => SHtml.text(value.toString, s => Helpers.asInt(s).foreach((setter)))))
     appendGlobalFormBuilder(FormBuilderLocator[Boolean]((value, setter) => SHtml.checkbox(value, s => setter(s))))
+
+    import net.liftweb.builtin.snippet._
+
+    snippetDispatch.append(
+      Map("CSS" -> CSS, "Msgs" -> Msgs, "Msg" -> Msg,
+        "Menu" -> Menu, "css" -> CSS, "msgs" -> Msgs, "msg" -> Msg,
+        "menu" -> Menu,
+        "a" -> A, "children" -> Children,
+        "comet" -> Comet, "form" -> Form, "ignore" -> Ignore, "loc" -> Loc,
+        "surround" -> Surround,
+        "test_cond" -> TestCond,
+        "TestCond" -> TestCond,
+        "testcond" -> TestCond,
+        "embed" -> Embed,
+        "tail" -> Tail,
+        "head" -> Head,
+        "Head" -> Head,
+        "with-param" -> WithParam,
+        "withparam" -> WithParam,
+        "WithParam" -> WithParam,
+        "bind-at" -> WithParam,
+        "VersionInfo" -> VersionInfo,
+        "versioninfo" -> VersionInfo,
+        "version_info" -> VersionInfo,
+        "SkipDocType" -> SkipDocType,
+        "skipdoctype" -> SkipDocType,
+        "skip_doc_type" -> SkipDocType,
+        "xml_group" -> XmlGroup,
+        "XmlGroup" -> XmlGroup,
+        "xmlgroup" -> XmlGroup,
+        "lazy-load" -> LazyLoad,
+        "LazyLoad" -> LazyLoad,
+        "lazyload" -> LazyLoad,
+        "html5" -> HTML5,
+        "HTML5" -> HTML5,
+        "with-resource-id" -> WithResourceId
+        ))
   }
   ctor()
-}
 
-sealed trait NotFound
-
-case object DefaultNotFound extends NotFound
-
-final case class NotFoundAsResponse(response: LiftResponse) extends NotFound
-
-final case class NotFoundAsTemplate(path: ParsePath) extends NotFound
-
-final case class NotFoundAsNode(node: NodeSeq) extends NotFound
-
-final case class BreakOut()
-
-abstract class Bootable {
-  def boot(): Unit;
-}
-
-/**
- * Factory object for RulesSeq instances
- */
-object RulesSeq {
-  def apply[T]: RulesSeq[T] = new RulesSeq[T]
-}
+  object RulesSeq {
+    def apply[T]: RulesSeq[T] = new RulesSeq[T]()
+  }
 
 /**
  * Generic container used mainly for adding functions
@@ -1668,7 +1677,7 @@ class RulesSeq[T] {
   private val cur = new ThreadGlobal[List[T]]
 
   private def safe_?(f: => Any) {
-    LiftRules.doneBoot match {
+    doneBoot match {
       case false => f
       case _ => throw new IllegalStateException("Cannot modify after boot.");
     }
@@ -1715,7 +1724,7 @@ class RulesSeq[T] {
     }
     app.doWith(newList)(doCur(f))
   }
-  
+
   /**
    * Precompute the current rule set
    */
@@ -1769,6 +1778,34 @@ trait FirstBox[F, T] {
     finder(toList)
   }
 }
+
+}
+
+sealed trait NotFound
+
+case object DefaultNotFound extends NotFound
+
+final case class NotFoundAsResponse(response: LiftResponse) extends NotFound
+
+final case class NotFoundAsTemplate(path: ParsePath) extends NotFound
+
+final case class NotFoundAsNode(node: NodeSeq) extends NotFound
+
+final case class BreakOut()
+
+abstract class Bootable {
+  def boot(): Unit;
+}
+
+/*
+/**
+ * Factory object for RulesSeq instances
+ */
+object RulesSeq {
+  def apply[T]: RulesSeq[T] = new RulesSeq[T]
+}
+*/
+
 
 private[http] case object DefaultBootstrap extends Bootable {
   def boot(): Unit = {

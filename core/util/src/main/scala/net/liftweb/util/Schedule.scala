@@ -196,6 +196,7 @@ private object TF extends ThreadFactory {
     val d: Thread = threadFactory.newThread(r)
     d setName "Lift Scheduler"
     d setDaemon true
+    d setContextClassLoader null
     d
   }
 }

@@ -20,7 +20,6 @@ package json
 import java.util.Date
 import org.specs.Specification
 
-
 object SerializationExamples extends Specification {
   import Serialization.{read, write => swrite}
 
@@ -113,6 +112,12 @@ object SerializationExamples extends Specification {
     val ser = swrite(m)
     ser mustEqual """{"x":"s","y":1}"""
     read[Members](ser) mustEqual m
+  }
+
+  "Case class from type constructors example" in {
+    val p = ProperType(TypeConstructor(Chicken(10)), (25, Player("joe")))
+    val ser = swrite(p)
+    read[ProperType](ser) mustEqual p
   }
 
   case class Ints(x: List[List[Int]])
@@ -329,7 +334,6 @@ class DateTime(val time: Long)
 
 case class Times(times: List[DateTime])
 
-
 sealed abstract class Bool
 case class True() extends Bool
 case class False() extends Bool
@@ -352,3 +356,7 @@ case class ArrayContainer(array: Array[String])
 case class SeqContainer(seq: Seq[String])
 
 case class OptionOfTupleOfDouble(position: Option[Tuple2[Double, Double]])
+
+case class Player(name: String)
+case class TypeConstructor[A](x: A)
+case class ProperType(x: TypeConstructor[Chicken], t: (Int, Player))

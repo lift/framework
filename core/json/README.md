@@ -61,6 +61,7 @@ Download following jars:
 
 * http://scala-tools.org/repo-releases/net/liftweb/lift-json/XXX/lift-json-XXX.jar
 * http://mirrors.ibiblio.org/pub/mirrors/maven2/com/thoughtworks/paranamer/paranamer/2.1/paranamer-2.1.jar
+* scalap (Only for Scala-2.9 compatible versions)
 
 Extras
 ------

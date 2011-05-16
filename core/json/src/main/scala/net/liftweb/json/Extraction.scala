@@ -34,13 +34,17 @@ object Extraction {
    * @see net.liftweb.json.JsonAST.JValue#extract
    * @throws MappingException is thrown if extraction fails
    */
-  def extract[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): A = 
+  def extract[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): A = {
+    def allTypes(mf: Manifest[_]): List[Class[_]] = mf.erasure :: (mf.typeArguments flatMap allTypes)
+
     try {
-      extract0(json, mf.erasure, mf.typeArguments.map(_.erasure)).asInstanceOf[A]
+      val types = allTypes(mf)
+      extract0(json, types.head, types.tail).asInstanceOf[A]
     } catch {
       case e: MappingException => throw e
       case e: Exception => throw new MappingException("unknown error", e)
     }
+  }
 
   /** Extract a case class from JSON.
    * @see net.liftweb.json.JsonAST.JValue#extract
@@ -79,7 +83,7 @@ object Extraction {
         case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
         case x => 
           val constructorArgs = primaryConstructorArgs(x.getClass)
-          constructorArgs.collect { case (name, _, _) if Reflection.hasDeclaredField(x.getClass, name) =>
+          constructorArgs.collect { case (name, _) if Reflection.hasDeclaredField(x.getClass, name) =>
             val f = x.getClass.getDeclaredField(name)
             f.setAccessible(true)
             JField(unmangleName(name), decompose(f get x))
@@ -179,13 +183,14 @@ object Extraction {
 
   private def extract0(json: JValue, clazz: Class[_], typeArgs: Seq[Class[_]])
                       (implicit formats: Formats): Any = {
-    val mapping = 
-      if (clazz == classOf[List[_]] || clazz == classOf[Set[_]] || clazz.isArray) 
-        Col(clazz, mappingOf(typeArgs(0)))
-      else if (clazz == classOf[Map[_, _]]) 
-        Dict(mappingOf(typeArgs(1)))
+    def mkMapping(clazz: Class[_], typeArgs: Seq[Class[_]])(implicit formats: Formats): Meta.Mapping = {
+      if (clazz == classOf[List[_]] || clazz == classOf[Set[_]] || clazz.isArray)
+        Col(clazz, mkMapping(typeArgs.head, typeArgs.tail))
+      else if (clazz == classOf[Map[_, _]])
+        Dict(mkMapping(typeArgs.tail.head, typeArgs.tail.tail))
       else mappingOf(clazz, typeArgs)
-    extract0(json, mapping)
+    }
+    extract0(json, mkMapping(clazz, typeArgs))
   }
 
   def extract(json: JValue, target: TypeInfo)(implicit formats: Formats): Any = 
@@ -210,7 +215,7 @@ object Extraction {
         case o: JObject =>
           formats.fieldSerializer(a.getClass).map { serializer =>
             val constructorArgNames = 
-              Reflection.constructorArgs(constructor, formats.parameterNameReader).map(_._1).toSet
+              Reflection.constructorArgs(a.getClass, constructor, formats.parameterNameReader, None).map(_._1).toSet
             val jsonFields = o.obj.map { f => 
               val JField(n, v) = (serializer.deserializer orElse Map(f -> f))(f)
               (n, (n, v))
@@ -222,7 +227,11 @@ object Extraction {
             fieldsToSet.foreach { case (name, typeInfo) =>
               jsonFields.get(name).foreach { case (n, v) =>
                 val typeArgs = typeInfo.parameterizedType
-                  .map(_.getActualTypeArguments.map(_.asInstanceOf[Class[_]]).toList)
+                  .map(_.getActualTypeArguments.map(_.asInstanceOf[Class[_]]).toList.zipWithIndex
+                    .map { case (t, idx) =>
+                      if (t == classOf[java.lang.Object]) ScalaSigReader.readField(name, a.getClass, idx)
+                      else t
+                    })
                 val value = extract0(v, typeInfo.clazz, typeArgs.getOrElse(Nil))
                 Reflection.setField(a, n, value)
               }
@@ -322,8 +331,8 @@ object Extraction {
             if (x == null) None else Some(x) 
           } else x
         } catch { 
-          case MappingException(msg, _) => 
-            if (optional) None else fail("No usable value for " + path + "\n" + msg)
+          case e @ MappingException(msg, _) =>
+            if (optional) None else fail("No usable value for " + path + "\n" + msg, e)
         }
       }
 

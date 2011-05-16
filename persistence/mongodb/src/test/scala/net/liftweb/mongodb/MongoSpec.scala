@@ -28,6 +28,10 @@ object MongoSpec extends Specification("Mongo Specification") {
   }
 
   def passDefinitionTests(id: MongoIdentifier, ma: MongoAddress): Unit = {
+    // define the db
+    MongoDB.close
+    MongoDB.defineDb(id, ma)
+
     // make sure mongo is running
     try {
       MongoDB.use(id) { db =>
@@ -37,10 +41,6 @@ object MongoSpec extends Specification("Mongo Specification") {
     catch {
       case e: Exception => skip("MongoDB is not running")
     }
-
-    // define the db
-    MongoDB.close
-    MongoDB.defineDb(id, ma)
 
     // using an undefined identifier throws an exception
     MongoDB.use(DefaultMongoIdentifier) { db =>
@@ -60,11 +60,6 @@ object MongoSpec extends Specification("Mongo Specification") {
     "Define DB with specified host and port" in {
       passDefinitionTests(TestMongoIdentifier, MongoAddress(MongoHost("127.0.0.1", 27017), "test_default"))
     }
-    "Define DB pair with DBAddress" in {
-      val dba = new DBAddress("127.0.0.1", 27017, "test_a")
-      val dbb = new DBAddress("127.0.0.1", 27018, "test_b")
-      passDefinitionTests(TestMongoIdentifier, MongoAddress(MongoPair(dba, dbb), "test_default"))
-    }
     "Define DB with ServerAddress and MongoOptions" in {
       passDefinitionTests(TestMongoIdentifier, MongoAddress(MongoHost(new ServerAddress, new MongoOptions), "test_default"))
     }
@@ -75,6 +70,12 @@ object MongoSpec extends Specification("Mongo Specification") {
       val mo = new MongoOptions
       mo.connectionsPerHost = 12
       passDefinitionTests(TestMongoIdentifier, MongoAddress(MongoHost(options=mo), "test_default"))
+    }
+    /* These need all of the Mongo instances to be running to be useful.
+    "Define DB pair with DBAddress" in {
+      val dba = new DBAddress("127.0.0.1", 27017, "test_a")
+      val dbb = new DBAddress("127.0.0.1", 27018, "test_b")
+      passDefinitionTests(TestMongoIdentifier, MongoAddress(MongoPair(dba, dbb), "test_default"))
     }
     "Define DB pair with ServerAddress" in {
       val dba = new ServerAddress("127.0.0.1", 27017)
@@ -87,5 +88,50 @@ object MongoSpec extends Specification("Mongo Specification") {
       val dbc = new ServerAddress("127.0.0.1", 27019)
       passDefinitionTests(TestMongoIdentifier, MongoAddress(MongoSet(List(dba, dbb, dbc)), "test_default"))
     }
+    */
+    "Define DB with Mongo instance" in {
+      // define the db
+      MongoDB.close
+      MongoDB.defineDb(TestMongoIdentifier, new Mongo, "test_default")
+
+      // make sure mongo is running
+      try {
+        MongoDB.use(TestMongoIdentifier) { db =>
+          db.getLastError.ok must beEqualTo(true)
+        }
+      }
+      catch {
+        case e: Exception => skip("MongoDB is not running")
+      }
+
+      // using an undefined identifier throws an exception
+      MongoDB.use(DefaultMongoIdentifier) { db =>
+        db.getLastError.ok must beEqualTo(true)
+      } must throwA(new MongoException("Mongo not found: MongoIdentifier(test)"))
+      // remove defined db
+      MongoDB.close
+    }
+    /* Requires a server other than localhost with auth setup.
+    "Define and authenticate DB with Mongo instance" in {
+      MongoDB.close
+
+      // make sure mongo is running
+      try {
+        val pwd = "lift_pwd"
+        val dbUri = new MongoURI("mongodb://")
+        // define the db
+        MongoDB.defineDbAuth(TestMongoIdentifier, new Mongo(dbUri), "lift_auth_test", "lift_user", pwd)
+        // try to use it
+        MongoDB.use(TestMongoIdentifier) { db =>
+          db.getLastError.ok must beEqualTo(true)
+        }
+      }
+      catch {
+        case e: Exception => skip("MongoDB is not running")
+      }
+      // remove defined db
+      MongoDB.close
+    }
+    */
   }
 }
