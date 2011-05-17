@@ -78,6 +78,86 @@ trait BasicTypesHelpers { self: StringHelpers with ControlHelpers =>
   }
 
   /**
+   * Compare two NodeSeq and return true if they are equal, even if
+   * attribute order of Elems is different
+   */
+  def compareXml(left: NodeSeq, right: NodeSeq): Boolean = {
+    val ls: Seq[Node] = left.toSeq
+    val rs: Seq[Node] = right.toSeq
+    if (ls.length == rs.length) {
+     ls.zip(rs).foldLeft(true){case (b, (l, r)) => b && compareNode(l, r)}
+    } else {
+      false
+    }
+  }
+
+  /**
+   * Compare two Elems
+   */
+  def compareElem(left: Elem, right: Elem): Boolean =
+    compareXml(left.child, right.child) &&
+  left.label == right.label &&
+  (((null eq left.prefix) && (null eq right.prefix)) || left.prefix == right.prefix) &&
+    left.scope == right.scope &&
+    compareMetaData(left.attributes.toList, right.attributes.toList)
+
+  private def findFilter(m: MetaData, lst: List[MetaData]): Box[List[MetaData]] = {
+    var found = false
+    val ret = lst.filter {
+      case PrefixedAttribute(pre, label, value, _) if !found =>
+        m match {
+          case PrefixedAttribute(p2, l2, v2, _) if p2 == pre && l2 == label && v2.text == value.text =>
+            found = true
+            false
+          case _ => true
+        }
+      case UnprefixedAttribute(label, value, _) if !found =>
+        m match {
+          case UnprefixedAttribute(l2, v2, _) if l2 == label && v2.text == value.text =>
+            found = true
+            false
+          case _ => true
+        }
+      case _ => true
+    }
+    if (found) Full(ret) else Empty
+  }
+
+  /**
+   * Compare the metadata of two attributes
+   */
+    def compareMetaData(left: List[MetaData], right: List[MetaData]): Boolean =
+    (left, right) match {
+      case (Nil, Nil) => true
+      case (_, Nil) => false
+      case (Nil, _) => false
+      case (attr :: rl, right) => findFilter(attr, right) match {
+        case Full(rr) => compareMetaData(rl, rr)
+        case _ => false
+      }
+      case _ => false
+    }
+
+  /**
+   * Comparse two XML nodes
+   */
+  def compareNode(left: Node, right: Node): Boolean = {
+    (left, right) match {
+      case (Group(gl), Group(gr)) => compareXml(gl, gr)
+      case (el: Elem, er: Elem) => compareElem(el, er)
+      case (Unparsed(tl), Unparsed(tr)) => tl == tr
+      case (Text(tl), Text(tr)) => tl == tr
+
+      case (el: EntityRef, er: EntityRef) => el === er
+      case (Comment(cl), Comment(cr)) => cl == cr
+      case (PCData(dl), PCData(dr)) => dl == dr
+      case (pl: ProcInstr, pr: ProcInstr) => pl === pr
+      case (a, b) => a.toString == b.toString
+    }
+
+  }
+
+  /**
    * Implicit transformation from a Boolean expression to an OptionalCons object so
    * that an element can be added to a list if the expression is true
    */

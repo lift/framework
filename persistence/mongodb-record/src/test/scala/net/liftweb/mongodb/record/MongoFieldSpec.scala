@@ -21,8 +21,6 @@ package record
 import java.util.{Date, UUID}
 import java.util.regex.Pattern
 
-import xml.Text
-
 import com.mongodb.DBRef
 import org.bson.types.ObjectId
 import org.specs.Specification
@@ -30,13 +28,15 @@ import org.specs.Specification
 import common._
 import json.{Num => JsonNum, _}
 import JsonDSL._
-import util.FieldError
 import util.Helpers.randomString
 import http.{LiftSession, S}
 import http.js.JE._
 import http.js.JsExp
 import net.liftweb.record._
-
+import common.Box._
+import xml.{Elem, NodeSeq, Text}
+import util.{Helpers, FieldError}
+import Helpers._
 
 /**
  * Systems under specification for MongoField.
@@ -139,7 +139,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
     }
   }
 
-  def passConversionTests[A](example: A, mandatory: MandatoryTypedField[A], jsexp: JsExp, jvalue: JValue, formPattern: Box[String]): Unit = {
+  def passConversionTests[A](example: A, mandatory: MandatoryTypedField[A], jsexp: JsExp, jvalue: JValue, formPattern: Box[NodeSeq]): Unit = {
 
     /*
     "convert to JsExp" in {
@@ -167,8 +167,14 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
         S.initIfUninitted(session) {
           val formXml = mandatory.toForm
           formXml must notBeEmpty
-          formXml foreach { f =>
-            f.toString must beMatching(fp)
+          formXml foreach { fprime =>
+            val f = ("* [name]" #> ".*" & "select *" #> (((ns: NodeSeq) => ns.filter {
+              case e: Elem => e.attribute("selected").map(_.text) == Some("selected")
+              case _ => false
+            }) andThen "* [value]" #> ".*"))(fprime)
+            val ret: Boolean = Helpers.compareXml(f, fp)
+
+            ret must_== true
           }
         }
       }
@@ -185,7 +191,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       rec.mandatoryDateField,
       JsObj(("$dt", Str(nowStr))),
       JObject(List(JField("$dt", JString(nowStr)))),
-      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+nowStr+"\" id=\"mandatoryDateField_id\"></input>")
+      Full(<input name=".*" type="text" tabindex="1" value={nowStr} id="mandatoryDateField_id"></input>)
     )
   }
 
@@ -214,7 +220,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       rec.mandatoryObjectIdField,
       JsObj(("$oid", oid.toString)),
       JObject(List(JField("$oid", JString(oid.toString)))),
-      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+oid.toString+"\" id=\"mandatoryObjectIdField_id\"></input>")
+      Full(<input name=".*" type="text" tabindex="1" value={oid.toString} id="mandatoryObjectIdField_id"></input>)
     )
   }
 
@@ -240,7 +246,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       rec.mandatoryUUIDField,
       JsObj(("$uuid", Str(uuid.toString))),
       JObject(List(JField("$uuid", JString(uuid.toString)))),
-      Full("<input name=\".*\" type=\"text\" tabindex=\"1\" value=\""+uuid.toString+"\" id=\"mandatoryUUIDField_id\"></input>")
+      Full(<input name=".*" type="text" tabindex="1" value={uuid.toString} id="mandatoryUUIDField_id"></input>)
     )
   }
 

@@ -112,6 +112,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
     // System properties necessary during test TODO: Figure out how to make this a subdir of persistence/ldap/
     System.setProperty("apacheds.working.dir", (outputPath / "apacheds").absolutePath)
 
+    /*
     // FIXME: Scala 2.9.0
     override def testOptions =
       ExcludeTests(
@@ -122,6 +123,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
         "net.liftweb.record.FieldSpec" ::
         Nil) ::
       super.testOptions.toList
+      */
   }
 
 }
