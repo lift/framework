@@ -44,7 +44,7 @@ trait HeaderDefaults {
  * The Resource was created. We then return the resource, post-processing, to
  * the client. Usually used with HTTP PUT.
  */
-case class CreatedResponse(xml: Node, mime: String) extends NodeResponse {
+case class CreatedResponse(xml: Node, mime: String) extends XmlNodeResponse {
   def docType = Empty
 
   def code = 201
@@ -540,6 +540,57 @@ trait NodeResponse extends LiftResponse {
   }
 }
 
+trait XmlNodeResponse extends LiftResponse {
+  def out: Node
+
+  def headers: List[(String, String)]
+
+  def cookies: List[HTTPCookie]
+
+  def code: Int
+
+  def docType: Box[String]
+
+  /**
+   * The encoding for this XML response
+   */
+  def encoding: String = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+
+  protected def writeDocType(writer: Writer): Unit = {
+    val doc: String = docType.map(_ + "\n") openOr ""
+
+      writer.append(encoding)
+      writer.append(doc)
+  }
+
+  def toResponse = {
+    val bos = new ByteArrayOutputStream(64000)
+    val writer = new OutputStreamWriter(bos, "UTF-8")
+
+    writeDocType(writer)
+
+    def htmlWriter: (Node, Writer) => Unit =
+    (n: Node, w: Writer) => {
+      val sb = new StringBuilder(64000)
+      AltXML.toXML(n, scala.xml.TopScope,
+                   sb, false, !LiftRules.convertToEntity.vend,
+                   false)
+      w.append(sb)
+      w.flush()
+    }
+
+    htmlWriter(out, writer)
+
+    writer.append("  \n  ")
+
+    writer.flush()
+    bos.flush()
+
+    InMemoryResponse(bos.toByteArray, headers, cookies, code)
+  }
+}
+
+
 case class XhtmlResponse(out: Node, 
                          private val __docType: Box[String],
                          private val _headers: List[(String, String)],
@@ -577,7 +628,7 @@ case class XhtmlResponse(out: Node,
  * Allows you to create custom 200 responses for clients using different
  * Content-Types.
  */
-case class XmlMimeResponse(xml: Node, mime: String) extends NodeResponse {
+case class XmlMimeResponse(xml: Node, mime: String) extends XmlNodeResponse {
   def docType = Empty
 
   def code = 200
@@ -589,7 +640,7 @@ case class XmlMimeResponse(xml: Node, mime: String) extends NodeResponse {
   def out = xml
 }
 
-class XmlResponse(val xml: Node, val code: Int, val mime: String, val cookies: List[HTTPCookie]) extends NodeResponse {
+class XmlResponse(val xml: Node, val code: Int, val mime: String, val cookies: List[HTTPCookie]) extends XmlNodeResponse {
   def docType = Empty
 
   def headers: List[(String, String)] = List("Content-Type" -> mime)
@@ -648,7 +699,7 @@ object AppXmlResponse {
 /**
  * Returning an Atom document.
  */
-case class AtomResponse(xml: Node) extends NodeResponse {
+case class AtomResponse(xml: Node) extends XmlNodeResponse {
   def docType = Empty
 
   def code = 200
@@ -663,7 +714,7 @@ case class AtomResponse(xml: Node) extends NodeResponse {
 /**
  * Returning an OpenSearch Description Document.
  */
-case class OpenSearchResponse(xml: Node) extends NodeResponse {
+case class OpenSearchResponse(xml: Node) extends XmlNodeResponse {
   def docType = Empty
 
   def code = 200

@@ -1006,11 +1006,17 @@ class Req(val path: ParsePath,
   lazy val buildMenu: CompleteMenu = location.map(_.buildMenu) openOr
   CompleteMenu(Nil)
 
+  private def initIfUnitted[T](f: T): T = S.session match {
+    case Full(_) => f
+    case _ => S.statelessInit(this)(f)
+  }
+
+
   /**
    * Computer the Not Found via a Template
    */
   private def notFoundViaTemplate(path: ParsePath): LiftResponse = {
-    S.statelessInit(this) {
+    this.initIfUnitted {
       (for {
         session <- S.session
         template =  Templates(path.partPath)
