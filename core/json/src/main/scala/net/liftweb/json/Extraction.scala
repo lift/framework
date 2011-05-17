@@ -76,6 +76,7 @@ object Extraction {
     } else if (!serializer.isDefinedAt(a)) {
       any match {
         case null => JNull
+        case x: JValue => x
         case x if primitive_?(x.getClass) => primitive2jvalue(x)(formats)
         case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
         case x: Collection[_] => JArray(x.toList map decompose)

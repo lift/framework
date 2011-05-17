@@ -111,6 +111,12 @@ object SerializationBugs extends Specification {
     val ser = Extraction.decompose(seq)
     Extraction.extract[Seq[Int]](ser) mustEqual seq
   }
+
+  "Serialization of an opaque value should not fail" in {
+    val o = Opaque(JObject(JField("some", JString("data")) :: Nil))
+    val ser = Serialization.write(o)
+    ser mustEqual """{"x":{"some":"data"}}"""
+  }
 }
 
 case class LongList(xs: List[Num])
@@ -135,3 +141,4 @@ package plan2 {
                     inParams: Array[Number], subOperand: Option[Action]) 
 }
 
+case class Opaque(x: JValue)
