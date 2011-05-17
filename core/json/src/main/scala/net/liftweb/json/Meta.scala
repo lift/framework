@@ -107,7 +107,14 @@ private[json] object Meta {
         } else factory(fieldMapping(typeParameters(t, k, context)(valueTypeIndex))._1)
 
       def parameterizedTypeOpt(t: Type) = t match {
-        case x: ParameterizedType => Some(x)
+        case x: ParameterizedType => 
+          val typeArgs = x.getActualTypeArguments.toList.zipWithIndex
+            .map { case (t, idx) =>
+              if (t == classOf[java.lang.Object]) 
+                ScalaSigReader.readConstructor(context.argName, context.containingClass, context.allArgs.map(_._1))
+              else t
+            }
+          Some(mkParameterizedType(x.getRawType, typeArgs))
         case _ => None
       }
 
@@ -165,7 +172,7 @@ private[json] object Meta {
     case x => fail("Raw type of " + x + " not known")
   }
 
-  private[json] def mkParameterizedType(owner: Class[_], typeArgs: Seq[Class[_]]) = 
+  private[json] def mkParameterizedType(owner: Type, typeArgs: Seq[Type]) = 
     new ParameterizedType {
       def getActualTypeArguments = typeArgs.toArray
       def getOwnerType = owner
