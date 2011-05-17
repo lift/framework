@@ -32,7 +32,6 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   lazy val common      = coreProject("common", slf4j_api, logback, log4j)()
   lazy val actor       = coreProject("actor")(common)
   lazy val json        = coreProject("json", paranamer, scalap)()
-  // FIXME: Scala 2.9.0
   lazy val json_scalaz = coreProject("json-scalaz", scalaz)(json)
   lazy val json_ext    = coreProject("json-ext", commons_codec, joda_time)(common, json)
   lazy val util        = coreProject("util", joda_time, commons_codec, javamail, log4j, htmlparser)(actor, json)
@@ -111,19 +110,6 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
 
     // System properties necessary during test TODO: Figure out how to make this a subdir of persistence/ldap/
     System.setProperty("apacheds.working.dir", (outputPath / "apacheds").absolutePath)
-
-    /*
-    // FIXME: Scala 2.9.0
-    override def testOptions =
-      ExcludeTests(
-        // lift-json-ext tests
-        "net.liftweb.json.ext.JsonBoxSerializerSpec" ::
-        // lift-record tests
-        "net.liftweb.record.RecordSpec" ::
-        "net.liftweb.record.FieldSpec" ::
-        Nil) ::
-      super.testOptions.toList
-      */
   }
 
 }
