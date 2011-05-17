@@ -65,10 +65,14 @@ object WithResourceId extends DispatchSnippet {
   }
 
 
-  private def attrStr(attrs: MetaData, attr: String): Box[String] = attrs.get(attr) match {
+  private def attrStr(attrs: MetaData, attr: String): Box[String] = (attrs.get(attr) match {
     case None => Empty
     case Some(Nil) => Empty 
     case Some(x) => Full(x.toString)
-  } 
+  }) or (attrs.get(attr.toLowerCase) match {
+    case None => Empty
+    case Some(Nil) => Empty 
+    case Some(x) => Full(x.toString)
+  })
 }
 

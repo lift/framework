@@ -94,8 +94,8 @@ object Menu extends DispatchSnippet {
   def builder(info: NodeSeq): NodeSeq = {
     val outerTag: String = S.attr("outer_tag") openOr "ul"
     val innerTag: String = S.attr("inner_tag") openOr "li"
-    val expandAll = S.attr("expandAll").isDefined
-    val linkToSelf: Boolean = S.attr("linkToSelf").map(Helpers.toBoolean) openOr false
+    val expandAll = (S.attr("expandAll") or S.attr("expandall")).isDefined
+    val linkToSelf: Boolean = (S.attr("linkToSelf") or S.attr("linktoself")).map(Helpers.toBoolean) openOr false
 
     val expandAny: Boolean = S.attr("expand").map(Helpers.toBoolean) openOr true
 
@@ -399,7 +399,7 @@ object Menu extends DispatchSnippet {
    */
   def item(text: NodeSeq): NodeSeq = {
     val donthide = S.attr("donthide").map(Helpers.toBoolean) openOr false
-    val linkToSelf = S.attr("linkToSelf").map(Helpers.toBoolean) openOr false
+    val linkToSelf = (S.attr("linkToSelf") or S.attr("linktoself")).map(Helpers.toBoolean) openOr false
 
     for {
       name <- S.attr("name").toList

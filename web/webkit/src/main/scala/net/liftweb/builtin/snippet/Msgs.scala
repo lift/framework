@@ -66,7 +66,7 @@ object Msgs extends DispatchSnippet {
    */
   def render(styles: NodeSeq): NodeSeq = {
     // Capture the value for later AJAX updates
-    ShowAll(toBoolean(S.attr("showAll")))
+    ShowAll(toBoolean(S.attr("showAll") or S.attr("showall")))
 
     // Extract user-specified titles and CSS classes for later use
     List((NoticeType.Error, MsgsErrorMeta),

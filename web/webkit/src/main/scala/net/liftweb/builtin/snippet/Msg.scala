@@ -74,9 +74,9 @@ object Msg extends DispatchSnippet {
     attr("id") match {
       case Full(id) => {
         // Extract the currently set CSS
-        attr("errorClass").map(cls => MsgErrorMeta += (id -> cls))
-        attr("warningClass").map(cls => MsgWarningMeta += (id -> cls))
-        attr("noticeClass").map(cls => MsgNoticeMeta += (id -> cls))
+        (attr("errorClass") or  attr("errorclass")).map(cls => MsgErrorMeta += (id -> cls))
+        (attr("warningClass") or attr("warningclass")).map(cls => MsgWarningMeta += (id -> cls))
+        (attr("noticeClass") or attr("noticeclass")).map(cls => MsgNoticeMeta += (id -> cls))
 
         renderIdMsgs(id) ++ effects(id)
       }
