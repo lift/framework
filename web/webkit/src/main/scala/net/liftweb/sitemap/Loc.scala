@@ -69,6 +69,14 @@ trait Loc[T] {
   def calcHref(in: T): String = appendQueryParameters(link.createPath(in),
                                                       Full(in))
 
+
+  /**
+   * Calculate HREF to this item using currentValue
+   */
+  def calcDefaultHref: String =  currentValue.map(p => link.createPath(p)).toOption.
+    map(path => appendQueryParameters(path, currentValue)).getOrElse("")
+
+
   def defaultValue: Box[T]
   
   /**
