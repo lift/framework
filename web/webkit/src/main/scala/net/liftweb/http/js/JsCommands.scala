@@ -182,6 +182,9 @@ trait JsExp extends HtmlFixer with ToJsCmd {
   def ~>(right: JsMember): JsExp = new JsExp {
     def toJsCmd = JsExp.this.toJsCmd + "." + right.toJsCmd
   }
+
+
+  def ~>(right: Box[JsMember]): JsExp = right.dmap(this)(r => ~>(r))
   
   /**
    * This exists for backward compatibility reasons for JQueryLeft and JQueryRight

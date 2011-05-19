@@ -20,6 +20,7 @@ package js
 
 import org.specs.Specification
 
+import common._
 import json._
 import JsonDSL._
 import util.Helpers._
@@ -57,6 +58,24 @@ object JsExpSpec extends Specification("JsExp Specification") {
       JE.JsArray(l map {d => (d.getOrElse(0.0):Double):JsExp}) must_== JE.JsArray(1.0, 0.0)
     }
   
+  }
+
+  "JsExp ~>" should {
+    import JE._
+
+    val js = JsVar("myVar")
+
+    "handle Full parameters" in {
+      val expected = (js ~> JsFunc("x") ~> JsFunc("y")).toJsCmd
+      (js ~> Full(JsFunc("x")) ~> JsFunc("y")).toJsCmd must_== expected
+      (js ~> Some(JsFunc("x")) ~> JsFunc("y")).toJsCmd must_== expected
+    }
+
+    "ignore Empty parameters" in {
+      val expected = (js ~> JsFunc("x")).toJsCmd
+      (js ~> Empty ~> JsFunc("x")).toJsCmd must_== expected
+      (js ~> None ~> JsFunc("x")).toJsCmd must_== expected
+    }
   }
 
   "JsArray" should {
