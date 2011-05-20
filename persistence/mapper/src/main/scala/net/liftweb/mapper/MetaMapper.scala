@@ -1090,10 +1090,11 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   this.runSafe {
     logger.debug("Initializing MetaMapper for %s".format(internalTableName_$_$))
     val tArray = new ListBuffer[FieldHolder]
-
-    def isMagicObject(m: Method) = m.getReturnType.getName.endsWith("$"+m.getName+"$") && m.getParameterTypes.length == 0
-    def isMappedField(m: Method) = classOf[MappedField[Nothing, A]].isAssignableFrom(m.getReturnType)
     def isLifecycle(m: Method) = classOf[LifecycleCallbacks].isAssignableFrom(m.getReturnType)
+    /*
+    def isMagicObject(m: Method) = m.getReturnType.getName.endsWith("$"+m.getName+"$") && m.getParameterTypes.length == 0
+    //this is not currently used
+    //def isMappedField(m: Method) = classOf[MappedField[Nothing, A]].isAssignableFrom(m.getReturnType)
 
     import java.lang.reflect.Modifier
 
@@ -1171,6 +1172,9 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     }
 
     val mapperAccessMethods = findMagicFields(this, this.getClass.getSuperclass)
+    */
+    val finder = new FieldFinder[A, MappedField[_,_]](this, logger)
+    val mapperAccessMethods = finder.accessorMethods
 
     mappedCallbacks = mapperAccessMethods.filter(isLifecycle).map(v => (v.getName, v))
 
