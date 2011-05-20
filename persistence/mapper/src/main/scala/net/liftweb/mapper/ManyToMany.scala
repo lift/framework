@@ -72,14 +72,13 @@ trait ManyToMany extends BaseKeyedMapper {
     val otherMeta: MetaMapper[T2],
     val qp: QueryParam[O]*) extends scala.collection.mutable.Buffer[T2] {
 
-    def field(join: O): MappedForeignKey[K,O, _ <: KeyedMapper[_,_]] =
-      thisField.actualField(join).asInstanceOf[MappedForeignKey[K,O, _<:KeyedMapper[_,_]]]
+    def thisFK[A](join: O)(f: MappedForeignKey[K,O,_>:T] => A): A =
+      thisField.actualField(join) match { case mfk: MappedForeignKey[K,O,T] => f(mfk) }
 
-    protected def children: List[T2] = {
-      joins.flatMap {
-        otherField.actualField(_).asInstanceOf[MappedForeignKey[K2,O,T2]].obj
-      }
-    }
+    def otherFK[A](join: O)(f: MappedForeignKey[K2,O,T2] => A): A =
+      otherField.actualField(join) match { case mfk: MappedForeignKey[K2,O,T2] => f(mfk) }
+
+    protected def children: List[T2] = joins.flatMap(otherFK(_)(_.obj))
 
     protected var _joins: List[O] = _
     def joins = _joins // read only to the public
@@ -102,8 +101,8 @@ trait ManyToMany extends BaseKeyedMapper {
               removedJoin // well, noLongerRemovedJoin...
             case None =>
               val newJoin = joinMeta.create
-              field(newJoin).set(ManyToMany.this.primaryKeyField.is)
-              otherField.actualField(newJoin).set(e.primaryKeyField.is)
+              thisFK(newJoin)(_.apply(ManyToMany.this))
+              otherFK(newJoin)(_.apply(e))
               newJoin
           }
         case Some(join) =>
@@ -116,8 +115,7 @@ trait ManyToMany extends BaseKeyedMapper {
           removedJoins = join :: removedJoins
           val o = otherField.actualField(join)
           o.set(o.defaultValue)
-          val f = field(join)
-          f.set(f.defaultValue)
+          thisFK(join)(f => f.set(f.defaultValue))
           Some(join)
         case None =>
           None
@@ -200,7 +198,7 @@ trait ManyToMany extends BaseKeyedMapper {
 
     def save = {
       _joins = joins.filter { join =>
-          field(join).is ==
+          thisFK(join)(_.is) ==
             ManyToMany.this.primaryKeyField.is && {
               val f = otherField.actualField(join)
               f.is != f.defaultValue

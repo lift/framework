@@ -67,6 +67,25 @@ object ManyToManySpec extends Specification("ManyToMany Specification") {
       person.companies.insertAll(7, Seq(c))
       person.companies(7).name.is must_== "new"
     }
+
+
+// from Florian
+
+    "count unsaved children" in {
+      setupDB
+      val person = new Person
+      val company = new Company
+      person.companies += company
+      person.companies.length must_== 1
+    }
+    "count saved children" in {
+      setupDB
+      val person = new Person
+      val company = new Company
+      company.save
+      person.companies += company
+      person.companies.length must_== 1
+    }
   }
 
 }
@@ -89,6 +108,8 @@ class PersonCompany extends Mapper[PersonCompany] {
   def getSingleton = PersonCompany
   object person extends MappedLongForeignKey(this, Person)
   object company extends MappedLongForeignKey(this, Company)
+
+  override def toString = "PersonCompany(person.is=%s, person.obj=%s, company.is=%s, company.obj=%s)".format(person.is,person.obj,company.is,company.obj)
 }
 object PersonCompany extends PersonCompany with MetaMapper[PersonCompany]
 
