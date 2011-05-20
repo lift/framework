@@ -86,6 +86,34 @@ object ManyToManySpec extends Specification("ManyToMany Specification") {
       person.companies += company
       person.companies.length must_== 1
     }
+//     "count unsaved children of a saved entity" in {
+//       setupDB
+//       val person = new Person
+//       val company = new Company
+//       person.companies += company
+//       person.save
+//       person.companies.length must_== 1
+//     }
+    "count saved children of a saved entity" in {
+      setupDB
+      val person = new Person
+      val company = new Company
+      company.save
+      person.companies += company
+      person.save
+      person.companies.length must_== 1
+    }
+    "count saved children of a saved entity after refresh" in {
+      setupDB
+      val person = new Person
+      person.save
+      val company = new Company
+      company.save
+      person.companies += company
+      person.save
+      person.companies.refresh
+      person.companies.length must_== 1
+    }
   }
 
 }

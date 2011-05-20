@@ -39,8 +39,7 @@ trait ManyToMany extends BaseKeyedMapper {
    * If they are all successful returns true.
    */
   abstract override def save = {
-    super.save &&
-      manyToManyFields.forall(_.save)
+      manyToManyFields.forall(_.save) && super.save
   }
 
   /**
