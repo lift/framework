@@ -212,106 +212,7 @@ trait DBIndexed extends BaseMappedField {
   override def dbIndexed_? = true
 }
 
-object MappedForeignKey {
-  implicit def getObj[KeyType, 
-		      MyOwner <: Mapper[MyOwner], 
-		      Other <: KeyedMapper[KeyType, 
-					   Other]](in:
-						   MappedForeignKey[KeyType, 
-								    MyOwner,
-								    Other]):
-  Box[Other] = in.obj
-}
 
-/**
- * The Trait that defines a field that is mapped to a foreign key
- */
-trait MappedForeignKey[KeyType, MyOwner <: Mapper[MyOwner], Other <: KeyedMapper[KeyType, Other]] extends MappedField[KeyType, MyOwner] {
-  type FieldType <: KeyType
-  // type ForeignType <: KeyedMapper[KeyType, Other]
-
-  /**
-   * What's the MetaMapper for the foreign key
-   */
-  def foreignMeta: KeyedMetaMapper[KeyType, Other]
-
-  /**
-   * Make sure the MetaMapper for the KeyedMapper we're checking
-   * is in fact the same one as we are associated with.  Issue #532.
-   */
-  private def checkTypes(km: KeyedMapper[KeyType, _]): Boolean = 
-    km.getSingleton eq foreignMeta
-
-  override def equals(other: Any) = other match {
-    case km: KeyedMapper[KeyType, Other] if checkTypes(km) => this.is == km.primaryKeyField.is
-    case _ => super.equals(other)
-  }
-
-  def dbKeyToTable: KeyedMetaMapper[KeyType, Other]
-
-  def validSelectValues: Box[List[(KeyType, String)]] = Empty
-
-
-  def immutableMsg: NodeSeq = Text(?("Can't change"))
-
-  override def _toForm: Box[Elem] = Full(validSelectValues.flatMap{
-      case Nil => Empty
-
-      case xs =>
-        Full(SHtml.selectObj(xs, Full(this.is), this.set))
-    }.openOr(<span>{immutableMsg}</span>))
-
-  /**
-   * Is the key defined
-   */
-  def defined_? : Boolean
-
-  /**
-   * Is the obj field cached
-   */
-  def cached_? : Boolean = synchronized{ _calcedObj}
-
-  override protected def dirty_?(b: Boolean) = synchronized { // issue 165
-    // invalidate if the primary key has changed Issue 370
-    if (_obj.isEmpty || (_calcedObj && _obj.isDefined &&
-			 _obj.open_!.primaryKeyField.is != this.i_is_!)) {
-      _obj = Empty
-      _calcedObj = false
-    }
-    super.dirty_?(b)
-  }
-
-  /**
-   * Some people prefer the name foreign to materialize the
-   * foreign reference.  This is a proxy to the obj method.
-   */
-  def foreign: Box[Other] = obj
-
-  /**
-   * Load and cache the record that this field references
-   */
-  def obj: Box[Other] = synchronized {
-    if (!_calcedObj) {
-      _calcedObj = true
-      this._obj = if(defined_?) dbKeyToTable.find(i_is_!) else Empty
-    }
-    _obj
-  }
-
-  private[mapper] def _primeObj(obj: Box[Any]) =
-    primeObj(obj.asInstanceOf[Box[Other]])
-
-  /**
-   * Prime the reference of this FK reference
-   */
-  def primeObj(obj: Box[Other]) = synchronized {
-    _obj = obj
-    _calcedObj = true
-  }
-
-  private var _obj: Box[Other] = Empty
-  private var _calcedObj = false
-}
 
 trait BaseOwnedMappedField[OwnerType <: Mapper[OwnerType]] extends BaseMappedField
 
@@ -777,39 +678,6 @@ trait BaseIndexedField extends BaseMappedField {
 
 }
 
-/**
- * A trait that defines foreign key references
- */
-trait BaseForeignKey extends BaseMappedField {
-
-  type KeyType
-  type KeyedForeignType <: KeyedMapper[KeyType, KeyedForeignType]
-
-  type OwnerType <: Mapper[OwnerType]
-
-  /**
-   * Is the key defined?
-   */
-  def defined_? : Boolean
-
-  /**
-   * get the object referred to by this foreign key
-   */
-
-  def dbKeyToTable: BaseMetaMapper
-
-  def dbKeyToColumn: BaseMappedField
-
-  def findFor(key: KeyType): List[OwnerType]
-
-  def findFor(key: KeyedForeignType): List[OwnerType]
-
-  /**
-   * Called when Schemifier adds a foreign key.  Return a function that will be called when Schemifier
-   * is done with the schemification.
-   */
-  def dbAddedForeignKey: Box[() => Unit]
-}
 
 trait LifecycleCallbacks {
   def beforeValidation {}
