@@ -195,7 +195,7 @@ class LiftServlet extends Loggable {
    * Service the HTTP request
    */
   def doService(req: Req, response: HTTPResponse): Boolean = {
-    var tmpStatelessHolder: Box[() => Box[LiftResponse]] = null
+    var tmpStatelessHolder: Box[Box[LiftResponse]] = Empty
 
     tryo {
       LiftRules.onBeginServicing.toList.foreach(_(req))
@@ -253,12 +253,15 @@ class LiftServlet extends Loggable {
       // if the request is matched is defined in the stateless table, dispatch
       if (S.statelessInit(req) {
         tmpStatelessHolder = NamedPF.applyBox(req,
-          LiftRules.statelessDispatchTable.toList);
+          LiftRules.statelessDispatchTable.toList).map(_.apply() match {
+          case Full(a) => Full(LiftRules.convertResponse((a, Nil, S.responseCookies, req)))
+          case r => r
+        });
         tmpStatelessHolder.isDefined
       }) {
         val f = tmpStatelessHolder.open_!
-        f() match {
-          case Full(v) => Full(LiftRules.convertResponse((v, Nil, S.responseCookies, req)))
+        f match {
+          case Full(v) => Full(v)
           case Empty => LiftRules.notFoundOrIgnore(req, Empty)
           case f: Failure => Full(req.createNotFound(f))
         }
