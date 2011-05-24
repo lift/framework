@@ -56,7 +56,7 @@ trait ManyToMany extends BaseKeyedMapper {
 
 
   /**
-   * This is the base class to use for fields that track many-to-many relationships.
+   * This is the base class to extend for fields that track many-to-many relationships.
    * @param joinMeta The singleton of the join table
    * @param thisField The foreign key in the join table that refers to this mapper's primaryKey.
    * @param otherField The foreign key in the join table that refers to the other mapper's primaryKey
@@ -81,10 +81,16 @@ trait ManyToMany extends BaseKeyedMapper {
     protected def children: List[T2] = joins.flatMap(otherFK(_)(_.obj))
 
     protected var _joins: List[O] = _
+
+    /**
+     * Get the list of instances of joinMeta
+     */
     def joins = _joins // read only to the public
     protected var removedJoins: List[O] = Nil
+
+
     refresh
-    manyToManyFields = this :: manyToManyFields
+    manyToManyFields ::= this
 
     protected def isJoinForChild(e: T2)(join: O) = otherField.actualField(join).is == e.primaryKeyField.is
     protected def joinForChild(e: T2): Option[O] =
@@ -122,6 +128,9 @@ trait ManyToMany extends BaseKeyedMapper {
       }
     }
 
+    /**
+     * Get the List backing this Buffer.
+     */
     def all = children
 
     def length = children.length
@@ -178,6 +187,9 @@ trait ManyToMany extends BaseKeyedMapper {
       _joins = Nil
     }
 
+    /**
+     * Discard the cached state of this MappedManyToMany's children and reinitialize it from the database
+     */
     def refresh = {
       val by = new Cmp[O, TheKeyType](thisField, OprEnum.Eql, Full(primaryKeyField.is), Empty, Empty)
 
@@ -185,13 +197,21 @@ trait ManyToMany extends BaseKeyedMapper {
       all
     }
 
+    /**
+     * Save the state of this MappedManyToMany to the database.
+     * This will do the following:
+     * 1) Prune references the following join table instances:
+     *  a. Those whose "parent" foreign key does not equal the parent's primary key
+     *  b. Those whose "child" foreign key's value is its defaultValue, i.e., -1
+     * 2) Delete all join table instances whose child instance was removed
+     * 3) Save all child instances
+     * 4) If step 3 succeeds save all join instances
+     * 5) Return true if steps 2-4 all returned true; otherwise false
+     */
     def save = {
       _joins = joins.filter { join =>
-          thisFK(join)(_.is) ==
-            ManyToMany.this.primaryKeyField.is && {
-              val f = otherField.actualField(join)
-              f.is != f.defaultValue
-          }
+          thisFK(join)(_.is == ManyToMany.this.primaryKeyField.is) &&
+            otherFK(join)(f => f.is != f.defaultValue)
       }
 
       removedJoins.forall {_.delete_!} & ( // continue saving even if deleting fails
@@ -200,6 +220,11 @@ trait ManyToMany extends BaseKeyedMapper {
       )
     }
 
+    /**
+     * Deletes all join rows, including those
+     * marked for removal.
+     * Returns true if both succeed, otherwise false
+     */
     def delete_! = {
       removedJoins.forall(_.delete_!) &
         joins.forall(_.delete_!)
