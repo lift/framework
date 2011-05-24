@@ -130,18 +130,10 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
   }
 
 
-  def apply(ov: Box[String]): T = {
-    ov match {
-      case Full(s) => this.set(s)
-      case _ => this.set(null)
-    }
-
-    fieldOwner
-  }
+  @deprecated("Just use apply(x openOr null). Will be removed in 2.5.")
+  def apply(ov: Box[String])(implicit disambiguateFromApplyBoxedForeign: BoxedStringToken): T = apply(ov openOr null)
 
   def asJsExp: JsExp = JE.Str(is)
-
-  override def apply(ov: String): T = apply(Full(ov))
 
   def jdbcFriendly(field : String): String = data.get
 
@@ -195,3 +187,7 @@ private[mapper] object IsElem {
   }
 }
 
+sealed trait BoxedStringToken
+object BoxedStringToken {
+  implicit val theBoxedStringToken: BoxedStringToken = new BoxedStringToken {}
+}

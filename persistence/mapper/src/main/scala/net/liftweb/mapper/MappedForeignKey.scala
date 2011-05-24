@@ -25,7 +25,7 @@ import http.{js, S, SHtml}
 import js._
 import S.?
 import json._
-
+import util.FieldError
 
 
 /**
@@ -77,7 +77,9 @@ object MappedForeignKey {
 /**
  * The Trait that defines a field that is mapped to a foreign key
  */
-trait MappedForeignKey[KeyType, MyOwner <: Mapper[MyOwner], Other <: KeyedMapper[KeyType, Other]] extends MappedField[KeyType, MyOwner] {
+trait MappedForeignKey[KeyType, MyOwner <: Mapper[MyOwner], Other <: KeyedMapper[KeyType, Other]]
+extends MappedField[KeyType, MyOwner]
+with LifecycleCallbacks {
   type FieldType <: KeyType
   // type ForeignType <: KeyedMapper[KeyType, Other]
 
@@ -162,45 +164,36 @@ trait MappedForeignKey[KeyType, MyOwner <: Mapper[MyOwner], Other <: KeyedMapper
 
   private var _obj: Box[Other] = Empty
   private var _calcedObj = false
-}
 
 
-/**
- * A subclass of MappedLongForeignKey whose value can be
- * get and set as the target parent mapper instead of as its primary key.
- * @author nafg
- */
-class LongMappedMapper[T<:Mapper[T], O<:KeyedMapper[Long,O]](theOwner: T, foreign: => KeyedMetaMapper[Long, O])
-  extends MappedLongForeignKey[T,O](theOwner, foreign) with LongMappedForeignMapper[T,O]
-
-
-/**
- * A subtype of MappedLongForeignKey whose value can be
- * get and set as the target parent mapper instead of as its primary key.
- * @deprecated Use LongMappedMapper instead, to avoid mixing in MappedLongForeignKey manually. May be folded into it in the future.
- * @author nafg
- */
-@deprecated
-trait LongMappedForeignMapper[T<:Mapper[T],O<:KeyedMapper[Long,O]]
-                              extends MappedLongForeignKey[T,O]
-                              with LifecycleCallbacks {
-  import net.liftweb.common.{Box, Empty, Full}
-
-  override def apply(f: O) = {
-    this(Full(f))
-  }
-  override def apply(f: Box[O]) = {
-    val ret = super.apply(f)
-    primeObj(f)
-    ret
+  /**
+   * Set the value from a possible instance of the foreign mapper class.
+   * v will be cached in obj.
+   * If v is Empty, set the value to defaultValue (-1)
+   * @return the Mapper containing this field
+   */
+  def apply(v: Box[Other]): MyOwner = {
+    apply(v.dmap(defaultValue)(_.primaryKeyField.is))
+    primeObj(v)
+    fieldOwner
   }
 
-  override def set(v: Long) = {
-    val ret = super.set(v)
-    primeObj(if(defined_?) dbKeyToTable.find(i_is_!) else Empty)
-    ret
+  /**
+   * Set the value from an instance of the foreign mapper class.
+   * obj will be set to Full(v)
+   * @return the Mapper containing this field
+   */
+  def apply(v: Other): MyOwner = {
+    apply(v.primaryKeyField.is)
+    primeObj(Full(v))
+    fieldOwner
   }
 
+  /**
+   * This method, which gets called when the mapper class is going to be saved,
+   * sets the field's value from obj if it's set to the default (!defined_?).
+   * Overrides LifecycleCallbacks.beforeSave
+   */
   override def beforeSave {
     if(!defined_?)
       for(o <- obj)
@@ -208,11 +201,23 @@ trait LongMappedForeignMapper[T<:Mapper[T],O<:KeyedMapper[Long,O]]
     super.beforeSave
   }
 
-  import net.liftweb.util.FieldError
+  /**
+   * A validation function that checks that obj is nonempty
+   */
   val valHasObj = (value: Long) =>
-    if (obj eq Empty) List(FieldError(this, scala.xml.Text("Required field: " + name)))
+    if (obj.isEmpty) List(FieldError(this, scala.xml.Text("Required field: " + name)))
     else Nil
 }
+
+
+@deprecated("Functionality folded into *MappedForeignKey; will be removed in 2.5")
+class LongMappedMapper[T<:Mapper[T], O<:KeyedMapper[Long,O]](theOwner: T, foreign: => KeyedMetaMapper[Long, O])
+  extends MappedLongForeignKey[T,O](theOwner, foreign) with LongMappedForeignMapper[T,O]
+
+
+@deprecated("Functionality folded into *MappedForeignKey; will be removed in 2.5")
+trait LongMappedForeignMapper[T<:Mapper[T],O<:KeyedMapper[Long,O]]
+                              extends MappedLongForeignKey[T,O]
 
 
 abstract class MappedLongForeignKey[T<:Mapper[T],O<:KeyedMapper[Long, O]](theOwner: T, _foreignMeta: => KeyedMetaMapper[Long, O])
@@ -221,7 +226,7 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
 
   def foreignMeta = _foreignMeta
 
-  @deprecated
+  @deprecated("Use 'box' instead")
   def can: Box[Long] = if (defined_?) Full(is) else Empty
 
   def box: Box[Long] = if (defined_?) Full(is) else Empty
@@ -262,18 +267,6 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
   def dbAddedForeignKey: Box[() => Unit] = Empty
 
   override def toString = if (defined_?) super.toString else "NULL"
-
-  def apply(v: Box[O]): T = {
-    apply(v.dmap(0L)(_.primaryKeyField.is))
-    primeObj(v)
-    fieldOwner
-  }
-
-  def apply(v: O): T = {
-    apply(v.primaryKeyField.is)
-    primeObj(Full(v))
-    fieldOwner
-  }
 
   def findFor(key: KeyType): List[OwnerType] = theOwner.getSingleton.findAll(By(this, key))
 
@@ -325,8 +318,6 @@ extends MappedString[T](fieldOwner, maxLen) with MappedForeignKey[String,T,O] wi
 
     this(toSet)
   }
-
-  def apply(v: O): T = this(v.primaryKeyField.is)
 
   def findFor(key: KeyType): List[OwnerType] = fieldOwner.getSingleton.findAll(By(this, key))
 
