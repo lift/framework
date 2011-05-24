@@ -207,7 +207,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       unlinked foreach {u =>
         val f = foreign(u)
         if(f.obj.map(_ eq OneToMany.this) openOr true) // obj is Empty or this
-          f.set(OneToMany.this.primaryKeyField.is)
+          f.apply(OneToMany.this)
       }
       unlinked = Nil
       delegate = delegate.filter {e =>
