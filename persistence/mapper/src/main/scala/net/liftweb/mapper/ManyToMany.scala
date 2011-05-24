@@ -124,13 +124,8 @@ trait ManyToMany extends BaseKeyedMapper {
 
     def all = children
 
-    // 2.7
-    //def readOnly = all
-
     def length = children.length
-    // 2.7
-    //def elements = children.elements
-    // 2.8
+
     def iterator = children.iterator
 
     protected def childAt(n: Int) = children(n)
@@ -138,9 +133,6 @@ trait ManyToMany extends BaseKeyedMapper {
     def indexOf(e: T2) =
       children.indexWhere(e eq)
 
-    // 2.7
-    // def insertAll(n: Int, iter: Iterable[T2]) {
-    // 2.8
     def insertAll(n: Int, traversable: Traversable[T2]) {
       val ownedJoins = traversable map own
       val n2 = joins.indexWhere(isJoinForChild(children(n)))
@@ -150,9 +142,6 @@ trait ManyToMany extends BaseKeyedMapper {
       _joins = before ++ ownedJoins ++ after
     }
 
-    // 2.7
-    // def +:(elem: T2) = {
-    // 2.8
     def +=:(elem: T2) = {
       _joins ::= own(elem)
       this
