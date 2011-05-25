@@ -30,7 +30,12 @@ trait ManyToMany extends BaseKeyedMapper {
   type K = TheKeyType
   type T = KeyedMapperType
 
-  private var manyToManyFields: List[MappedManyToMany[_,_,_]] = Nil
+  private[mapper] lazy val manyToManyFields: List[MappedManyToMany[_,_,_]] = {
+    new FieldFinder[MappedManyToMany[_,_,_]](
+      getSingleton,
+      net.liftweb.common.Logger(classOf[ManyToMany])
+    ).accessorMethods map (_.invoke(this).asInstanceOf[MappedManyToMany[_,_,_]])
+  }
 
   /**
    * An override for save to propagate the save to all children
@@ -89,7 +94,6 @@ trait ManyToMany extends BaseKeyedMapper {
 
 
     refresh
-    manyToManyFields ::= this
 
     protected def isJoinForChild(e: T2)(join: O) = otherField.actualField(join).is == e.primaryKeyField.is
     protected def joinForChild(e: T2): Option[O] =
