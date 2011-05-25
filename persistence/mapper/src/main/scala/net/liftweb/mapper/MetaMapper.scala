@@ -1173,7 +1173,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
     val mapperAccessMethods = findMagicFields(this, this.getClass.getSuperclass)
     */
-    val finder = new FieldFinder[A, MappedField[_,_]](this, logger)
+    val finder = new FieldFinder[MappedField[_,_]](this, logger)
     val mapperAccessMethods = finder.accessorMethods
 
     mappedCallbacks = mapperAccessMethods.filter(isLifecycle).map(v => (v.getName, v))

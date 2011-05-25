@@ -18,7 +18,7 @@ package net.liftweb
 package mapper
 
 
-class FieldFinder[A <: Mapper[A], T: ClassManifest](metaMapper: Mapper[A], logger: net.liftweb.common.Logger) {
+class FieldFinder[T: ClassManifest](metaMapper: AnyRef, logger: net.liftweb.common.Logger) {
   import java.lang.reflect._
 
   logger.debug("Created FieldFinder for " + classManifest[T].erasure)
@@ -30,7 +30,7 @@ class FieldFinder[A <: Mapper[A], T: ClassManifest](metaMapper: Mapper[A], logge
   /**
     * Find the magic mapper fields on the superclass
     */
-  def findMagicFields(onMagic: Mapper[A], staringClass: Class[_]): List[Method] = {
+  def findMagicFields(onMagic: AnyRef, startingClass: Class[_]): List[Method] = {
     // If a class name ends in $module, it's a subclass created for scala object instances
     def deMod(in: String): String =
       if (in.endsWith("$module")) in.substring(0, in.length - 7)
@@ -100,7 +100,7 @@ class FieldFinder[A <: Mapper[A], T: ClassManifest](metaMapper: Mapper[A], logge
         meths ::: findForClass(clz.getSuperclass)
     }
 
-    findForClass(staringClass).distinct
+    findForClass(startingClass).distinct
   }
 
   lazy val accessorMethods = findMagicFields(metaMapper, metaMapper.getClass.getSuperclass)

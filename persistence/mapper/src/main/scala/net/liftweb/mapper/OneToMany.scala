@@ -26,9 +26,8 @@ package mapper
  * @author nafg
  */
 trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
-  //private var oneToManyFields: List[MappedOneToManyBase[_]] = Nil
   private[mapper] lazy val oneToManyFields: List[MappedOneToManyBase[_]] = {
-    new FieldFinder[T, MappedOneToManyBase[_]](
+    new FieldFinder[MappedOneToManyBase[_]](
       getSingleton,
       net.liftweb.common.Logger(classOf[OneToMany[K,T]])
     ).accessorMethods map (_.invoke(this).asInstanceOf[MappedOneToManyBase[_]])
@@ -109,8 +108,6 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       _delegate
     }
     protected def delegate_=(d: List[O]) = _delegate = d
-
-    //oneToManyFields = this :: oneToManyFields
 
     /**
      * Takes ownership of e. Sets e's foreign key to our primary key
