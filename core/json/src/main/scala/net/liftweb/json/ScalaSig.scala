@@ -20,10 +20,10 @@ package json
 import scala.tools.scalap.scalax.rules.scalasig._
 
 private[json] object ScalaSigReader {
-  def readConstructor(argName: String, clazz: Class[_], argNames: List[String]): Class[_] = {
+  def readConstructor(argName: String, clazz: Class[_], typeArgIndex: Int, argNames: List[String]): Class[_] = {
     val cl = findClass(clazz)
     val cstr = findConstructor(cl, argNames).getOrElse(Meta.fail("Can't find constructor " + clazz))
-    findArgType(cstr, argNames.indexOf(argName))
+    findArgType(cstr, argNames.indexOf(argName), typeArgIndex)
   }
 
   def readField(name: String, clazz: Class[_], typeArgIndex: Int): Class[_] = {
@@ -60,17 +60,22 @@ private[json] object ScalaSigReader {
   private def findField(c: ClassSymbol, name: String): Option[MethodSymbol] = 
     (c.children collect { case m: MethodSymbol if m.name == name => m }).headOption
 
-  private def findArgType(s: MethodSymbol, argIdx: Int): Class[_] = {
+  private def findArgType(s: MethodSymbol, argIdx: Int, typeArgIndex: Int): Class[_] = {
     def findPrimitive(t: Type): Symbol = t match { 
+      case TypeRefType(ThisType(_), symbol, _) if isPrimitive(symbol) => symbol
       case TypeRefType(_, _, TypeRefType(ThisType(_), symbol, _) :: xs) => symbol
-      case TypeRefType(_, _, (ref @ TypeRefType(_, _, _)) :: xs) => findPrimitive(ref)
+      case TypeRefType(_, _, args) =>
+        args(typeArgIndex) match {
+          case ref @ TypeRefType(_, _, _) => findPrimitive(ref)
+          case x => Meta.fail("Unexpected type info " + x)
+        }
       case x => Meta.fail("Unexpected type info " + x)
     }
     toClass(findPrimitive(s.children(argIdx).asInstanceOf[SymbolInfoSymbol].infoType))
   }
 
   private def findArgTypeF(s: MethodSymbol, typeArgIdx: Int): Class[_] = {
-    // FIXME can be removed when 2.8 no loner needs to supported.
+    // FIXME can be removed when 2.8 no longer needs to be supported.
     // 2.8 does not have NullaryMethodType, work around that.
     /*
     val t = s.infoType match {
@@ -98,6 +103,8 @@ private[json] object ScalaSigReader {
     case "scala.Double"  => classOf[Double]
     case _               => classOf[AnyRef]
   }
+
+  private def isPrimitive(s: Symbol) = toClass(s) != classOf[AnyRef]
 
   private def findScalaSig(clazz: Class[_]): Option[ScalaSig] = 
     ScalaSigParser.parse(clazz).orElse(findScalaSig(clazz.getDeclaringClass))
