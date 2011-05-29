@@ -111,7 +111,7 @@ private[json] object Meta {
           val typeArgs = x.getActualTypeArguments.toList.zipWithIndex
             .map { case (t, idx) =>
               if (t == classOf[java.lang.Object]) 
-                ScalaSigReader.readConstructor(context.argName, context.containingClass, context.allArgs.map(_._1))
+                ScalaSigReader.readConstructor(context.argName, context.containingClass, idx, context.allArgs.map(_._1))
               else t
             }
           Some(mkParameterizedType(x.getRawType, typeArgs))
@@ -231,13 +231,13 @@ private[json] object Meta {
         }
         try {
           val names = nameReader.lookupParameterNames(c).map(clean)
-          val types = c.getGenericParameterTypes.toList map {
-            case v: TypeVariable[_] => 
+          val types = c.getGenericParameterTypes.toList.zipWithIndex map {
+            case (v: TypeVariable[_], idx) => 
               val arg = typeArgs.getOrElse(v, v)
               if (arg == classOf[java.lang.Object]) 
-                context.map(ctx => ScalaSigReader.readConstructor(ctx.argName, ctx.containingClass, ctx.allArgs.map(_._1))).getOrElse(arg)
+                context.map(ctx => ScalaSigReader.readConstructor(ctx.argName, ctx.containingClass, idx, ctx.allArgs.map(_._1))).getOrElse(arg)
               else arg
-            case x => x
+            case (x, _) => x
           }
           names.toList.zip(types)
         } catch {
@@ -266,7 +266,7 @@ private[json] object Meta {
         case ptype: ParameterizedType => ptype.getActualTypeArguments()(i) match {
           case c: Class[_] => 
             if (c == classOf[java.lang.Object]) 
-              ScalaSigReader.readConstructor(context.argName, context.containingClass, context.allArgs.map(_._1))
+              ScalaSigReader.readConstructor(context.argName, context.containingClass, i, context.allArgs.map(_._1))
             else c
           case p: ParameterizedType => p.getRawType.asInstanceOf[Class[_]]
           case x => fail("do not know how to get type parameter from " + x)

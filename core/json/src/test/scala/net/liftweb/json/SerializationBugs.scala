@@ -117,7 +117,16 @@ object SerializationBugs extends Specification {
     val ser = Serialization.write(o)
     ser mustEqual """{"x":{"some":"data"}}"""
   }
+
+  "Map with Map value" in {
+    val a = Map("a" -> Map("a" -> 5))
+    val b = Map("b" -> 1)
+    val str = Serialization.write(MapWithMap(a, b))
+    read[MapWithMap](str) mustEqual MapWithMap(a, b)
+  }
 }
+
+case class MapWithMap(a: Map[String, Map[String, Int]], b: Map[String, Int])
 
 case class LongList(xs: List[Num])
 case class Num(x: Int)

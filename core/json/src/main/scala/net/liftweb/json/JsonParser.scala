@@ -379,7 +379,7 @@ object JsonParser {
       }
     }
 
-    def near = new String(segment, (cur-20) max 0, (cur+20) min offset)
+    def near = new String(segment, (cur-20) max 0, 40 min (offset - cur + 20))
 
     def release = segments.foreach(Segments.release)
 
