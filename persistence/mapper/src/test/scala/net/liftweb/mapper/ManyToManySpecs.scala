@@ -67,13 +67,6 @@ object ManyToManySpec extends Specification("ManyToMany Specification") {
       person.companies.insertAll(7, Seq(c))
       person.companies(7).name.is must_== "new"
     }
-    "detect all MappedManyToMany fields" in {
-      setupDB
-      val person = Person.create
-      val fields = person.manyToManyFields
-      fields.length must_== 1
-      fields(0).asInstanceOf[Any] must_== person.companies
-    }
 
 
 // from Florian
