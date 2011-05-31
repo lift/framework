@@ -51,7 +51,12 @@ trait ValidateLength extends MixableMappedField {
 
 }
 
-abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) extends MappedField[String, T] with net.liftweb.util.StringValidators {
+trait HasApplyBoxString[T] {
+  @deprecated("Just use apply(x openOr null). Will be removed in 2.5.")
+  def apply(ov: Box[String])(implicit disambiguateFromApplyBoxedForeign: BoxedStringToken): T = apply(ov openOr null)
+  def apply(x: String): T
+}
+abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) extends MappedField[String, T] with net.liftweb.util.StringValidators with HasApplyBoxString[T] {
   private val data: FatLazy[String] =  FatLazy(defaultValue) // defaultValue
   private val orgData: FatLazy[String] =  FatLazy(defaultValue) // defaultValue
 
@@ -129,9 +134,7 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
     }
   }
 
-
-  @deprecated("Just use apply(x openOr null). Will be removed in 2.5.")
-  def apply(ov: Box[String])(implicit disambiguateFromApplyBoxedForeign: BoxedStringToken): T = apply(ov openOr null)
+  override def apply(v: String): T = super.apply(v)
 
   def asJsExp: JsExp = JE.Str(is)
 
