@@ -945,12 +945,21 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
             // Phase 1: snippets & templates processing
             val rawXml: NodeSeq = processSurroundAndInclude(PageName get, xhtml)
             
-            // Phase 2: Head & Tail merge, add additional elements to body & head
-            val xml = merge(rawXml, request)
-            
             // Make sure that functions have the right owner. It is important for this to
             // happen before the merge phase so that in merge to have a correct view of
             // mapped functions and their owners.
+            updateFunctionMap(S.functionMap, RenderVersion get, millis)
+
+            // Clear the function map after copying it... but it
+            // might get some nifty new functions during the merge phase
+            S.clearFunctionMap
+
+            // Phase 2: Head & Tail merge, add additional elements to body & head
+            val xml = merge(rawXml, request)
+            
+            // But we need to update the function map because there
+            // may be addition functions created during the JsToAppend processing
+            // See issue #983
             updateFunctionMap(S.functionMap, RenderVersion get, millis)
             
             notices = Nil

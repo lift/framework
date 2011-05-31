@@ -266,7 +266,7 @@ trait S extends HasParams with Loggable {
    * @see # addFunctionMap
    * @see # clearFunctionMap
    */
-  private val _functionMap = new ThreadGlobal[HashMap[String, AFuncHolder]]
+  private val __functionMap = new ThreadGlobal[Map[String, AFuncHolder]]
 
   /**
    * This is simply a flag so that we know whether or not the state for the S object
@@ -1499,7 +1499,7 @@ for {
   }
 
   private def _nest2InnerInit[B](f: () => B): B = {
-    _functionMap.doWith(new HashMap[String, AFuncHolder]) {
+    __functionMap.doWith(Map()) {
       doAround(aroundRequest) {
         try {
           wrapQuery {
@@ -2162,10 +2162,7 @@ for {
    * Get a map of function name bindings that are used for form and other processing. Using these
    * bindings is considered advanced functionality.
    */
-  def functionMap: Map[String, AFuncHolder] = {
-    Box.legacyNullTest(_functionMap.value).
-    map(s => Map(s.iterator.toList: _*)).openOr(Map.empty)
-  }
+  def functionMap: Map[String, AFuncHolder] = __functionMap.box.openOr(Map())
 
   private def testFunctionMap[T](f: T): T = 
     session match {
@@ -2179,7 +2176,7 @@ for {
    */
   def clearFunctionMap {
     testFunctionMap {
-      Box.!!(_functionMap.value).foreach(_.clear)
+      __functionMap.box.foreach(ignore  => __functionMap.set(Map()))
     }
   }
 
@@ -2268,7 +2265,13 @@ for {
     val newMap = _snippetMap.is ++ snips
     _snippetMap.doWith(newMap)(f)
   }
-   
+
+  private def updateFunctionMap(name: String, value: AFuncHolder) {
+    __functionMap.box match {
+      case Full(old) => __functionMap.set(old + ((name, value)))
+      case _ =>
+    }
+  }
 
   /**
    * Associates a name with a function impersonated by AFuncHolder. These are basically functions
@@ -2276,99 +2279,101 @@ for {
    */
   def addFunctionMap(name: String, value: AFuncHolder) = {
     testFunctionMap {
-   (autoCleanUp.box, _oneShot.box) match {
-     case (Full(true), _) => {
-       _functionMap.value += (name ->
-                              new S.ProxyFuncHolder(value) {
-                                var shot = false
-                                override def apply(in: List[String]): Any = {
-                                  synchronized {
-                                    if (!shot) {
-                                      shot = true
-                                      S.session.map(_.removeFunction(name))
-                                      value.apply(in)
-                                    } else {
-                                      js.JsCmds.Noop
-                                    }
-                                  }
-                                }
+      (autoCleanUp.box, _oneShot.box) match {
+        case (Full(true), _) => {
+          updateFunctionMap(name,
+            new S.ProxyFuncHolder(value) {
+              var shot = false
 
-                                override def apply(in: FileParamHolder): Any = {
-                                  synchronized {
-                                    if (!shot) {
-                                      shot = true
-                                      S.session.map(_.removeFunction(name))
-                                      value.apply(in)
-                                    } else {
-                                      js.JsCmds.Noop
-                                    }
-                                  }
-                                }
-                              })
-     }
+              override def apply(in: List[String]): Any = {
+                synchronized {
+                  if (!shot) {
+                    shot = true
+                    S.session.map(_.removeFunction(name))
+                    value.apply(in)
+                  } else {
+                    js.JsCmds.Noop
+                  }
+                }
+              }
 
-     case (_, Full(true)) => {
-       _functionMap.value +=  (name ->
-        new S.ProxyFuncHolder(value) {
-          var shot = false 
-          lazy val theFuture: LAFuture[Any] = {
-            S.session.map(_.removeFunction(name))
-            val future: LAFuture[Any] = new LAFuture
-            
-            _functionMap.value += (name -> new S.ProxyFuncHolder(value) {
-              override def apply(in: List[String]): Any = future.get(5000).open_!
-              override def apply(in: FileParamHolder): Any = future.get(5000).open_!
+              override def apply(in: FileParamHolder): Any = {
+                synchronized {
+                  if (!shot) {
+                    shot = true
+                    S.session.map(_.removeFunction(name))
+                    value.apply(in)
+                  } else {
+                    js.JsCmds.Noop
+                  }
+                }
+              }
             })
-            
-            future
-          }
+        }
 
-          
-          def fixShot(): Boolean = synchronized {
-            val ret = shot
-            shot = true
-            ret
-          }
+        case (_, Full(true)) => {
+          updateFunctionMap(name,
+            new S.ProxyFuncHolder(value) {
+              var shot = false
+              lazy val theFuture: LAFuture[Any] = {
+                S.session.map(_.removeFunction(name))
+                val future: LAFuture[Any] = new LAFuture
 
-          override def apply(in: List[String]): Any = {
-            val ns = fixShot()
-            if (ns) {
-              theFuture.get(5000).open_!
-            } else {
-              val future = theFuture
-              try {
-                val ret = value.apply(in)
-                future.satisfy(ret)
-                ret
-              } catch {
-                case e => future.satisfy(e); throw e
+                updateFunctionMap(name, new S.ProxyFuncHolder(value) {
+                  override def apply(in: List[String]): Any = future.get(5000).open_!
+
+                  override def apply(in: FileParamHolder): Any = future.get(5000).open_!
+                })
+
+                future
               }
-            }
-          }
 
-          override def apply(in: FileParamHolder): Any = {
-            val ns = fixShot()
 
-            if (ns) {
-              theFuture.get(5000).open_!
-            } else {
-              val future = theFuture
-              try {
-                val ret = value.apply(in)
-                future.satisfy(ret)
+              def fixShot(): Boolean = synchronized {
+                val ret = shot
+                shot = true
                 ret
-              } catch {
-                case e => future.satisfy(e); throw e
               }
-            }
-          }
-        })
-     }
 
-     case _ =>
-       _functionMap.value += (name -> value)
-   }
-  }
+              override def apply(in: List[String]): Any = {
+                val ns = fixShot()
+                if (ns) {
+                  theFuture.get(5000).open_!
+                } else {
+                  val future = theFuture
+                  try {
+                    val ret = value.apply(in)
+                    future.satisfy(ret)
+                    ret
+                  } catch {
+                    case e => future.satisfy(e); throw e
+                  }
+                }
+              }
+
+              override def apply(in: FileParamHolder): Any = {
+                val ns = fixShot()
+
+                if (ns) {
+                  theFuture.get(5000).open_!
+                } else {
+                  val future = theFuture
+                  try {
+                    val ret = value.apply(in)
+                    future.satisfy(ret)
+                    ret
+                  } catch {
+                    case e => future.satisfy(e); throw e
+                  }
+                }
+              }
+            })
+        }
+
+        case _ =>
+          updateFunctionMap(name, value)
+      }
+    }
   }
 
   private def booster(lst: List[String], func: String => Any): Unit = lst.foreach(v => func(v))
