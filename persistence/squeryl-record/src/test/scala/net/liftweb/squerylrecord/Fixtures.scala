@@ -15,22 +15,19 @@ package net.liftweb
 package squerylrecord
 
 import RecordTypeMode._
-
 import record.{ MetaRecord, Record, TypedField, MandatoryTypedField }
 import common.{ Box, Full }
 import record.field._
 import record.Field
 import json.JsonAST.{ JValue, JString }
 import http.js.JE.Str
-
-import org.squeryl.{ SessionFactory, Session, Schema }
+import org.squeryl.{ SessionFactory, Session, Schema, Optimistic }
 import org.squeryl.adapters.H2Adapter
 import org.squeryl.annotations.Column
 import org.squeryl.internals.AutoIncremented
 import org.squeryl.internals.PrimaryKey
 import org.squeryl.dsl.CompositeKey2
 import org.squeryl.KeyedEntity
-
 import java.math.MathContext
 import java.sql.DriverManager
 import java.util.Calendar
@@ -40,7 +37,7 @@ object DBHelper {
     SquerylRecord.initWithSquerylSession {
       // TODO: Use mapper.StandardDBVendor
       Class.forName("org.h2.Driver")
-      val session = Session.create(DriverManager.getConnection("jdbc:h2:mem:testSquerylRecordDB;DB_CLOSE_DELAY=-1"), new H2Adapter)
+      val session = Session.create(DriverManager.getConnection("jdbc:h2:mem:testSquerylRecordDB;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=3000"), new H2Adapter)
       //session.setLogger(statement => println(statement))
       session
     }
@@ -67,7 +64,7 @@ object DBHelper {
 /**
  * Test Record: Company. It has many different field types for test purposes.
  */
-class Company private () extends Record[Company] with KeyedRecord[Long] {
+class Company private () extends Record[Company] with KeyedRecord[Long] with Optimistic{
 
   override def meta = Company
 
@@ -124,7 +121,7 @@ class SpecialField[OwnerType <: Record[OwnerType]](rec: OwnerType)
 /**
  * Test record: An employee belongs to a company.
  */
-class Employee private () extends Record[Employee] with KeyedRecord[Long] {
+class Employee private () extends Record[Employee] with KeyedRecord[Long]{
 
   override def meta = Employee
 

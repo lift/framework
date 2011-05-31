@@ -284,30 +284,59 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    forExample("support the CRUDify trait") >>  {
-      transaction{
-	val company = Company.create.name("CRUDify Company").
-	  created(Calendar.getInstance()).
-	  country(Countries.USA).postCode("90210")
-	val bridge = Company.buildBridge(company)
-	bridge.save
-	val id = company.id
-	company.isPersisted must_== true
-	id must be_>(0l)
-	company.postCode("10001")
-	bridge.save
-	val company2 = Company.findForParam(id.toString)
-	company2.isDefined must_== true
-	company2.foreach(c2 => {
-	  c2.postCode.get must_== "10001"
-	})
-	val allCompanies = Company.findForList(0, 1000)
-	allCompanies.size must be_>(0)
-	bridge.delete_!
-	val allCompanies2 = Company.findForList(0, 1000)
-	allCompanies2.size must_== (allCompanies.size - 1)
-      }
-    }
+  forExample("support the CRUDify trait") >>  {
+	  transaction{
+		  val company = Company.create.name("CRUDify Company").
+		  created(Calendar.getInstance()).
+		  country(Countries.USA).postCode("90210")
+		  val bridge = Company.buildBridge(company)
+		  bridge.save
+		  val id = company.id
+		  company.isPersisted must_== true
+		  id must be_>(0l)
+		  company.postCode("10001")
+		  bridge.save
+		  val company2 = Company.findForParam(id.toString)
+		  company2.isDefined must_== true
+		  company2.foreach(c2 => {
+			  c2.postCode.get must_== "10001"
+		  })
+		  val allCompanies = Company.findForList(0, 1000)
+		  allCompanies.size must be_>(0)
+		  bridge.delete_!
+		  val allCompanies2 = Company.findForList(0, 1000)
+		  allCompanies2.size must_== (allCompanies.size - 1)
+	  }
+  }
+  
+  forExample("Support Optimistic Locking") >> {
+	  val company = Company.create.name("Optimistic Company").
+	  	created(Calendar.getInstance()).
+	  	country(Countries.USA).
+	  	postCode("90210")
+	  //First insert the company in one transaction	
+	  transaction{
+		  companies.insert(company)
+	  }
+	  //Retrieve and modify in another transaction
+	  val innerUpdate = new Thread(new Runnable{
+		  override def run(){
+			  transaction{
+				  val company2 = companies.lookup(company.id).get
+				  company2.created(Calendar.getInstance())
+				  companies.update(company2)
+			  }
+		  }
+	  })
+	  innerUpdate.start
+	  innerUpdate.join
+	  //Then in a third transaction, try to update the original object
+	  transaction{
+		  import org.squeryl.StaleUpdateException
+		  company.created(Calendar.getInstance())
+		  companies.update(company) must throwAn[StaleUpdateException]
+	  }
+  }
 
   }
 

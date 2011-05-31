@@ -60,9 +60,10 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
   def build(parentMetaData: PosoMetaData[_], name: String,
             property: (Option[Field], Option[Method], Option[Method], Set[Annotation]),
             sampleInstance4OptionTypeDeduction: AnyRef, isOptimisticCounter: Boolean): FieldMetaData = {
-  	if (!isRecord(parentMetaData.clasz)) {
-  		// No Record class, treat it as a normal class in primitive type mode.
-  		// This is needed for ManyToMany association classes, for example
+  	if (!isRecord(parentMetaData.clasz) || isOptimisticCounter) {
+  		// Either this is not a Record class, in which case we'll 
+  		//treat it as a normal class in primitive type mode, or the field
+  	    //was mixed in by the Optimisitic trait and is not a Record field.
   		return SquerylRecord.posoMetaDataFactory.build(parentMetaData, name, property, 
   				sampleInstance4OptionTypeDeduction, isOptimisticCounter)
   	}
