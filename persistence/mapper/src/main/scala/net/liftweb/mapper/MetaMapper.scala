@@ -495,14 +495,14 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     by match {
       case Nil => curPos
       case Cmp(field, _, Full(value), _, _) :: xs =>
-        setPreparedStatementValue(conn, st, curPos, field, field.targetSQLType, value.asInstanceOf[AnyRef], objectSetterFor(field))
+        setPreparedStatementValue(conn, st, curPos, field, field.targetSQLType, field.convertToJDBCFriendly(value), objectSetterFor(field))
         setStatementFields(st, xs, curPos + 1, conn)
 
       case ByList(field, orgVals) :: xs => {
         val vals = Set(orgVals :_*).toList
         var newPos = curPos
         vals.foreach(v => {
-          setPreparedStatementValue(conn, st, newPos, field, field.targetSQLType, v.asInstanceOf[AnyRef], objectSetterFor(field))
+          setPreparedStatementValue(conn, st, newPos, field, field.targetSQLType, field.convertToJDBCFriendly(v), objectSetterFor(field))
           newPos = newPos + 1
         })
 
@@ -596,7 +596,6 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
             val indVal = indexedField(toDelete)
             indVal.map{indVal =>
               setPreparedStatementValue(conn, st, 1, indVal, im, objectSetterFor(indVal))
-
               st.executeUpdate == 1
             } openOr false
           }

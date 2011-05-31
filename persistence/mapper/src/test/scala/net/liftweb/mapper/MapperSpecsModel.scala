@@ -106,6 +106,9 @@ class SampleTag extends LongKeyedMapper[SampleTag] with IdPK {
   }
 }
 
+object SampleStatus extends Enumeration {
+  val Active, Disabled, Hiatus = Value
+}
 
 object SampleModel extends SampleModel with KeyedMetaMapper[Long, SampleModel] {
   override def dbAddTable = Full(populate _)
@@ -117,11 +120,10 @@ object SampleModel extends SampleModel with KeyedMetaMapper[Long, SampleModel] {
   private def populate {
     create.firstName("Elwood").save
     create.firstName("Madeline").save
-    create.firstName("Archer").save
+    create.firstName("Archer").status(SampleStatus.Disabled).save
     create.firstName("NotNull").moose(Full(99L)).save
   }
 }
-
 
 class SampleModel extends KeyedMapper[Long, SampleModel] {
   def getSingleton = SampleModel
@@ -138,6 +140,8 @@ class SampleModel extends KeyedMapper[Long, SampleModel] {
   object notNull extends MappedString(this, 32) {
     override def dbNotNull_? = true
   }
+
+  object status extends MappedEnum(this, SampleStatus)
 
   def encodeAsJson(): JsonAST.JObject = SampleModel.encodeAsJson(this)
 }

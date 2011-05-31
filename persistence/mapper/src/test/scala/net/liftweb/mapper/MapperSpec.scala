@@ -82,6 +82,8 @@ object MapperSpec extends Specification("Mapper Specification") {
         archer.moose.is must_== Empty
         notNull.moose.is must_== Full(99L)
 
+        val disabled = SampleModel.find(By(SampleModel.status, SampleStatus.Disabled))
+
         val meow = SampleTag.find(By(SampleTag.tag, "Meow")).open_!
 
         meow.tag.is must_== "Meow"
