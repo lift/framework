@@ -295,14 +295,14 @@ final case class OldHtmlProperties(userAgent: Box[String]) extends HtmlPropertie
     (docType -> encoding) match {
       case (Full(dt), Full(enc)) if dt.length > 0 && enc.length > 0 => 
         if (LiftRules.calcIE6ForResponse() && LiftRules.flipDocTypeForIE6) {
-          Full(dt + "\n" + enc + "\n")
+          Full(dt.trim + "\n" + enc.trim + "\n")
         } else {
-          Full(enc + "\n" + dt + "\n")
+          Full(enc.trim + "\n" + dt.trim + "\n")
         }
 
-      case (Full(dt), _) if dt.length > 0 => Full(dt + "\n")
+      case (Full(dt), _) if dt.length > 0 => Full(dt.trim + "\n")
 
-      case (_, Full(enc)) if enc.length > 0=> Full(enc + "\n")
+      case (_, Full(enc)) if enc.length > 0=> Full(enc.trim + "\n")
 
       case _ => Empty
     }
@@ -334,7 +334,7 @@ final case class Html5Properties(userAgent: Box[String]) extends HtmlProperties 
   def htmlWriter: (Node, Writer) => Unit =
     Html5.write(_, _, false, !LiftRules.convertToEntity.vend)
   
-  def htmlOutputHeader: Box[String] = docType.map(_ + "\n")
+  def htmlOutputHeader: Box[String] = docType.map(_.trim + "\n")
 
   val html5FormsSupport: Boolean = {
     val r = S.request openOr Req.nil
