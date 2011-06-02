@@ -18,12 +18,12 @@ package net.liftweb
 package mongodb
 package record
 
-import net.liftweb.common.{Box, Full}
 import net.liftweb.record.{MetaRecord, Record}
 
 import com.mongodb.{BasicDBObject, DBObject, DBRef, WriteConcern}
 
 import org.bson.types.ObjectId
+import common.{Full, Box}
 
 trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   self: MyType =>
@@ -51,6 +51,12 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
     }
     this
   }
+
+
+ /**
+  * Save the instance and return the instance
+  */
+  override def saveTheRecord(): Box[MyType] = {save; Full(this)}
 
   /**
   * Save the instance and return the instance

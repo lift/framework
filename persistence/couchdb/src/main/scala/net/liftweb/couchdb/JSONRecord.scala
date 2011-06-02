@@ -23,16 +23,14 @@ import net.liftweb.common.{Box, Empty, Failure, Full}
 import Box.{box2Iterable, option2Box}
 import net.liftweb.http.js.{JsExp, JsObj}
 import net.liftweb.json.JsonParser
-import net.liftweb.json.JsonAST.{JArray, JBool, JInt, JDouble, JField, JNothing, JNull, JObject, JString, JValue}
+import net.liftweb.json.JsonAST._
 import net.liftweb.record.{Field, MandatoryTypedField, MetaRecord, Record}
 import net.liftweb.record.RecordHelpers.jvalueToJsExp
 import net.liftweb.record.FieldHelpers.expectedA
 import net.liftweb.record.field._
 import net.liftweb.util.ThreadGlobal
-import net.liftweb.util.BasicTypesHelpers.{toBoolean, toInt}
-import net.liftweb.util.ControlHelpers.tryo
-import net.liftweb.util.Helpers.{base64Decode, base64Encode}
-import net.liftweb.util.TimeHelpers.{boxParseInternetDate, toInternetDate}
+import net.liftweb.util.Helpers._
+import java.util.prefs.BackingStoreException
 
 private[couchdb] object JSONRecordHelpers {
 
@@ -71,6 +69,13 @@ trait JSONRecord[MyType <: JSONRecord[MyType]] extends Record[MyType] {
    * Default implementation preserves the fields intact and returns them via additionalJFields
    */
   def additionalJFields_= (fields: List[JField]): Unit = _additionalJFields = fields
+
+
+
+ /**
+  * Save the instance and return the instance
+  */
+  override def saveTheRecord(): Box[MyType] = throw new BackingStoreException("JSON Records don't save themselves")
 }
 
 object JSONMetaRecord {

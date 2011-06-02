@@ -26,6 +26,7 @@ import net.liftweb.record.{Field, MetaRecord, Record}
 import net.liftweb.record.field._
 
 import com.mongodb._
+import java.util.prefs.BackingStoreException
 
 /** Specialized Record that can be encoded and decoded from BSON (DBObject) */
 trait BsonRecord[MyType <: BsonRecord[MyType]] extends Record[MyType] {
@@ -55,6 +56,12 @@ trait BsonRecord[MyType <: BsonRecord[MyType]] extends Record[MyType] {
 
     "%s={%s}" format (this.getClass.toString, fieldList.mkString(", "))
   }
+
+
+ /**
+  * Save the instance and return the instance
+  */
+  override def saveTheRecord(): Box[MyType] = throw new BackingStoreException("BSON Records don't save themselves")
 }
 
 /** Specialized MetaRecord that deals with BsonRecords */

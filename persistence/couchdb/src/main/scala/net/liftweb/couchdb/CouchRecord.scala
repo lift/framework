@@ -64,6 +64,11 @@ trait CouchRecord[MyType <: CouchRecord[MyType]] extends JSONRecord[MyType] {
   /** Save the record instance and return it */
   def save: Box[MyType] = for (ok <- meta.save(this)) yield this
 
+  /**
+  * Save the instance and return the instance
+  */
+  override def saveTheRecord(): Box[MyType] = this.save
+
   /** Return whether this instance was saved into the backing store or not */
   def saved_? : Boolean = meta.saved_?(this)
 

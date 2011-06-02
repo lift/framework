@@ -46,6 +46,12 @@ trait DBRecord[MyType <: DBRecord[MyType]] extends Record[MyType] {
     this
   }
 
+
+ /**
+  * Save the instance and return the instance
+  */
+  override def saveTheRecord(): Box[MyType] = {save(); Full(this)}
+
   /**
    * Delete the instance from backing store
    */

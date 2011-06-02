@@ -25,6 +25,7 @@ import util._
 import field._
 
 import scala.xml._
+import java.util.prefs.BackingStoreException
 
 trait Record[MyType <: Record[MyType]] extends FieldContainer {
   self: MyType =>
@@ -81,6 +82,11 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
    * @return a JsObj
    */
   def asJSON: JsExp = meta.asJSON(this)
+
+ /**
+  * Save the instance and return the instance
+  */
+  def saveTheRecord(): Box[MyType] = throw new BackingStoreException("Raw Records don't save themselves")
   
   /**
    * Retuns the JSON representation of this record, converts asJValue to JsObj
