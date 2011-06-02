@@ -102,10 +102,12 @@ sealed trait BoxTrait {
   /**
    * This method allows one to encapsulate any object in a Box in a null-safe manner,
    * treating null values to Empty.  This is a parallel method to
-   * the Scala Option's apply method.
+   * the Scala Option's apply method.  Note that the apply method is overloaded
+   * and it's much, much better to use legacyNullTest in this case.
    * 
    * @return <code>Full(in)</code> if <code>in</code> is not null; Empty otherwise
    */
+  @deprecated("Use legacyNullTest")
   def apply[T](in: T): Box[T] = legacyNullTest(in)
 
   /**
@@ -180,8 +182,10 @@ sealed trait BoxTrait {
 }
 
 /**
- * The Box class is a container which is able to declare if it is Full (containing a single non-null value) or Empty.
- * It serves the same purpose as the Option class from Scala standard library but adds several features:
+ * The Box class is a container which is able to declare if it is Full (containing a single non-null value) or EmptyBox. An EmptyBox, or empty, can be the Empty singleton, Failure or ParamFailure.
+ * Failure and ParamFailure contain information about why the Box is empty including
+ * exception information, chained Failures and a String.
+ * It serves a similar purpose to the Option class from Scala standard library but adds several features:
  * <ul>
  *   <li> you can transform it to a Failure object if it is Empty (with the ?~ method)</li>
  *   <li> you can chain failure messages on Failure Boxes</li>
@@ -193,7 +197,7 @@ sealed trait BoxTrait {
 sealed abstract class Box[+A] extends Product {
   self =>
   /**
-   * Returns true if this Box contains no value (is Empty or Failure)
+   * Returns true if this Box contains no value (is Empty or Failure or ParamFailure)
    * @return true if this Box contains no value
    */
   def isEmpty: Boolean
@@ -238,15 +242,15 @@ sealed abstract class Box[+A] extends Product {
 
   /**
    * Apply a function to the value contained in this Box if it exists and return
-   * a new Box containing the result, or Empty otherwise.
-   * @return the modified Box or Empty
+   * a new Box containing the result, or empty otherwise.
+   * @return the modified Box or empty
    */
   def map[B](f: A => B): Box[B] = Empty
 
   /**
    * Apply a function returning a Box to the value contained in this Box if it exists
-   * and return the result, or Empty otherwise.
-   * @return the modified Box or Empty
+   * and return the result, or empty otherwise.
+   * @return the modified Box or empty
    */
   def flatMap[B](f: A => Box[B]): Box[B] = Empty
 
@@ -311,7 +315,7 @@ sealed abstract class Box[+A] extends Product {
   def asA[B](implicit m: Manifest[B]): Box[B] = Empty
 
   /**
-   * Return this Box if Full, or the specified alternative if this is Empty
+   * Return this Box if Full, or the specified alternative if this is empty
    */
   def or[B >: A](alternative: => Box[B]): Box[B] = alternative
 
@@ -335,13 +339,13 @@ sealed abstract class Box[+A] extends Product {
   def iterator: Iterator[A] = this.elements
 
   /**
-   * Returns a List of one element if this is Full, or an empty list if Empty.
+   * Returns a List of one element if this is Full, or an empty list if empty.
    */
   def toList: List[A] = Nil
 
   /**
    * Returns the contents of this box in an Option if this is Full, or
-   * None if this is a failure or Empty.
+   * None if this is a empty (Empty, Failure or ParamFailure)
    */
   def toOption: Option[A] = None
 
@@ -366,7 +370,7 @@ sealed abstract class Box[+A] extends Product {
   def failMsg(msg: String): Box[A] = ?~(msg)
 
   /**
-   * Transform an Empty to a Failure with the specified message and chain
+   * Transform an EmptyBox to a Failure with the specified message and chain
    * the new Failure to any previous Failure represented by this Box.
    * @param msg the failure message
    * @return a Failure with the message if this Box is an Empty Box. Chain the messages if it is already a Failure
@@ -419,7 +423,7 @@ sealed abstract class Box[+A] extends Product {
 
   /**
    * Apply the function f1 to the contents of this Box if available; if this
-   * is Empty return the specified alternative.
+   * is empty return the specified alternative.
    */
   def choice[B](f1: A => Box[B])(alternative: => Box[B]): Box[B] = this match {
     case Full(x) => f1(x)
@@ -596,7 +600,7 @@ object Failure {
 }
 
 /**
- * A Failure is an Empty with an additional failure message explaining the reason for its being empty.
+ * A Failure is an EmptyBox with an additional failure message explaining the reason for its being empty.
  * It can also optionally provide an exception or a chain of causes represented as a list of other Failure objects
  */
 @serializable
