@@ -17,6 +17,7 @@ package record
 package field 
 
 import java.util.regex.Pattern
+import scala.xml.NodeSeq
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, Str}
@@ -62,7 +63,7 @@ class PatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
     case other => setBox(Failure("Error parsing String into a JValue: "+in))
   }
 
-  def toForm = Empty
+  def toForm: Box[NodeSeq] = Empty
 
   def asJs = asJValue match {
     case JNothing => JsNull

@@ -40,7 +40,7 @@ class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerTyp
 
   def asXHtml = Text(value.toString)
 
-  def toForm = Empty
+  def toForm: Box[NodeSeq] = Empty
 
   override def defaultValue = null.asInstanceOf[MyType]
   override def optional_? = true
@@ -85,7 +85,7 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
 
   def asXHtml = Text(value.toString)
   
-  def toForm = Empty
+  def toForm: Box[NodeSeq] = Empty
 
   override def defaultValue: MyType = Nil
   override def optional_? = true

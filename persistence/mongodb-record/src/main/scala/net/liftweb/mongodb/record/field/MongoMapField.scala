@@ -70,7 +70,7 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
     case other => setBox(Failure("Error parsing String into a JValue: "+in))
   }
 
-  def toForm = Empty // FIXME
+  def toForm: Box[NodeSeq] = Empty
 
   def asJValue = JObject(value.keys.map {
     k =>
