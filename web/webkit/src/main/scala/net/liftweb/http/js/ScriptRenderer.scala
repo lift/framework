@@ -20,10 +20,11 @@ package js
 
 import net.liftweb.http._
 import net.liftweb.common._
-import net.liftweb.util._
 
+/**
+ * the default mechanisms for doing Ajax and Comet in Lift
+ */
 object ScriptRenderer {
-
   /**
    * Renders the default ajax script use by lift
    */
@@ -34,6 +35,7 @@ object ScriptRenderer {
   window.liftAjax = {
     lift_ajaxQueue: [],
     lift_ajaxInProcess: null,
+    lift_doCycleQueueCnt: 0,
     lift_ajaxShowing: false,
     lift_ajaxRetryCount: """ + (LiftRules.ajaxRetryCount openOr 3) + """,
 
@@ -47,6 +49,7 @@ object ScriptRenderer {
 
 	  liftAjax.lift_ajaxQueue.push(toSend);
 	  liftAjax.lift_ajaxQueueSort();
+	  liftAjax.lift_doCycleQueueCnt++;
 	  liftAjax.lift_doAjaxCycle();
 	  return false; // buttons in forms don't trigger the form
 
@@ -109,6 +112,7 @@ object ScriptRenderer {
        },
 
        lift_doAjaxCycle: function() {
+         if (liftAjax.lift_doCycleQueueCnt > 0) liftAjax.lift_doCycleQueueCnt--;
          var queue = liftAjax.lift_ajaxQueue;
          if (queue.length > 0) {
            var now = (new Date()).getTime();
@@ -122,6 +126,7 @@ object ScriptRenderer {
                if (aboutToSend.onSuccess) {
                  aboutToSend.onSuccess(data);
                }
+               liftAjax.lift_doCycleQueueCnt++;
                liftAjax.lift_doAjaxCycle();
              };
 
@@ -141,6 +146,7 @@ object ScriptRenderer {
                    liftAjax.lift_defaultFailure();
                  }
                }
+               liftAjax.lift_doCycleQueueCnt++;
                liftAjax.lift_doAjaxCycle();
              };
 
@@ -160,6 +166,11 @@ object ScriptRenderer {
          }
 
          liftAjax.lift_testAndShowAjax();
+         if (liftAjax.lift_doCycleQueueCnt <= 0) liftAjax.lift_doCycleIn200()
+       },
+
+       lift_doCycleIn200: function() {
+         liftAjax.lift_doCycleQueueCnt++;
          setTimeout("liftAjax.lift_doAjaxCycle();", 200);
        },
 
@@ -213,7 +224,7 @@ object ScriptRenderer {
 
 
           })();
-          """ + LiftRules.jsArtifacts.onLoad(new JsCmd() {def toJsCmd = "liftAjax.lift_doAjaxCycle()"}).toJsCmd)
+          """ + LiftRules.jsArtifacts.onLoad(new JsCmd() {def toJsCmd = "liftAjax.lift_doCycleIn200();"}).toJsCmd)
 
 
   /**
