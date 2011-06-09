@@ -2175,8 +2175,10 @@ for {
    * Clears the function map.  potentially very destuctive... use at your own risk!
    */
   def clearFunctionMap {
+    if (__functionMap.box.map(_.size).openOr(0) > 0) { // Issue #1037
     testFunctionMap {
       __functionMap.box.foreach(ignore  => __functionMap.set(Map()))
+    }
     }
   }
 
