@@ -113,15 +113,19 @@ object JsonParser {
       }
       s.toString
     }
-    
+
+    buf.eofIsFailure = true
     buf.mark
     var c = buf.next
     while (c != '"') {
       if (c == '\\') {
-        return unquote0(buf, buf.substring)
+        val s = unquote0(buf, buf.substring)
+        buf.eofIsFailure = false
+        return s
       }
       c = buf.next
     }
+    buf.eofIsFailure = false
     buf.substring
   }
 
@@ -238,13 +242,13 @@ object JsonParser {
         fail("expected string end")
       }
 
-      def parseString: String = {
+      def parseString: String = 
         try {
           unquote(buf)
         } catch {
+          case p: ParseException => throw p
           case _ => fail("unexpected string end")
         }
-      }
 
       def parseValue(first: Char) = {
         var wasInt = true
@@ -335,6 +339,7 @@ object JsonParser {
     var offset = 0
     var curMark = -1
     var curMarkSegment = -1
+    var eofIsFailure = false
     private[this] var segments: List[Segment] = List(Segments.apply())
     private[this] var segment: Array[Char] = segments.head.seg
     private[this] var cur = 0 // Pointer which points current parsing location
@@ -344,8 +349,9 @@ object JsonParser {
     def back = cur = cur-1
 
     def next: Char = {
-      if (cur == offset && read < 0) EOF
-      else {
+      if (cur == offset && read < 0) {
+        if (eofIsFailure) throw new ParseException("unexpected eof", null) else EOF
+      } else {
         val c = segment(cur)
         cur += 1
         c
@@ -380,7 +386,7 @@ object JsonParser {
       }
     }
 
-    def near = new String(segment, (cur-20) max 0, 40 min (offset - cur + 20))
+    def near = new String(segment, (cur-20) max 0, 40 min (offset - cur + 20) max 0)
 
     def release = segments.foreach(Segments.release)
 

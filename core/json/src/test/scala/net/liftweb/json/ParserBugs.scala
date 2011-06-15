@@ -31,11 +31,24 @@ object ParserBugs extends Specification {
     allCatch.opt(parse(""" [ 22.250738585072012e-309 ] """)) mustEqual None
   }
 
-  "Does not allow colon at start of array" in {
+  "Does not allow colon at start of array (1039)" in {
     parseOpt("""[:"foo", "bar"]""") mustEqual None
   }
 
-  "Does not allow colon instead of comma in array" in {
+  "Does not allow colon instead of comma in array (1039)" in {
     parseOpt("""["foo" : "bar"]""") mustEqual None
   }
+
+  "Solo quote mark should fail cleanly (not StringIndexOutOfBoundsException) (1041)" in {
+    JsonParser.parse("\"", discardParser) must throwA(new Exception()).like {
+      case e: JsonParser.ParseException => e.getMessage.startsWith("unexpected eof")
+    }
+  }
+
+  private val discardParser = (p : JsonParser.Parser) => {
+     var token: JsonParser.Token = null
+     do {
+       token = p.nextToken
+     } while (token != JsonParser.End)
+   }
 }
