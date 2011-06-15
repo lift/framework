@@ -303,6 +303,7 @@ object JsonParser {
             }
             fail("expected null")
           case ':' =>
+            if (blocks.peek == ARRAY) fail("Colon in an invalid position")
             fieldNameMode = false
           case '[' =>
             blocks.addFirst(ARRAY)

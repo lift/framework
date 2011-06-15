@@ -21,7 +21,6 @@ import util.control.Exception._
 
 import org.specs.Specification
 
-
 object ParserBugs extends Specification {
   "Unicode ffff is a valid char in string literal" in {
     parseOpt(""" {"x":"\uffff"} """).isDefined mustEqual true
@@ -30,5 +29,13 @@ object ParserBugs extends Specification {
   "Does not hang when parsing 2.2250738585072012e-308" in {
     allCatch.opt(parse(""" [ 2.2250738585072012e-308 ] """)) mustEqual None
     allCatch.opt(parse(""" [ 22.250738585072012e-309 ] """)) mustEqual None
+  }
+
+  "Does not allow colon at start of array" in {
+    parseOpt("""[:"foo", "bar"]""") mustEqual None
+  }
+
+  "Does not allow colon instead of comma in array" in {
+    parseOpt("""["foo" : "bar"]""") mustEqual None
   }
 }
