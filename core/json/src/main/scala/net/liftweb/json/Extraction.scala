@@ -92,8 +92,9 @@ object Extraction {
             case args => 
               val fields = formats.fieldSerializer(x.getClass).map { serializer => 
                 Reflection.fields(x.getClass).map {
-                  case (n, _) => 
-                    val fieldVal = Reflection.getField(x, n)
+                  case (mangledName, _) =>
+                    val n = Meta.unmangleName(mangledName)
+                    val fieldVal = Reflection.getField(x, mangledName)
                     val s = serializer.serializer orElse Map((n, fieldVal) -> Some(n, fieldVal))
                     s((n, fieldVal)).map { case (name, value) => JField(name, decompose(value)) }
                       .getOrElse(JField(n, JNothing))

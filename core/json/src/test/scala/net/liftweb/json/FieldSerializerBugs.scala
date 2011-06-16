@@ -33,5 +33,15 @@ object FieldSerializerBugs extends Specification {
     atomic.get mustEqual 1
   }
   */
+
+  "Name with symbols is correctly serialized" in {
+    implicit val formats = DefaultFormats + FieldSerializer[AnyRef]()
+
+    val s = WithSymbol(5)
+    val str = Serialization.write(s)
+    str mustEqual """{"a-b*c":5}"""
+    read[WithSymbol](str) mustEqual s
+  }
 }
 
+case class WithSymbol(`a-b*c`: Int)
