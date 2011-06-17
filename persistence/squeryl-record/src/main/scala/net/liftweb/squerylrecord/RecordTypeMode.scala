@@ -111,7 +111,7 @@ trait RecordTypeMode extends PrimitiveTypeMode {
   /** Conversion of mandatory Calendar fields to Squeryl Expressions. */
   implicit def date2ScalarDate(f: MandatoryTypedField[Calendar]) = fieldReference match {
     case Some(e) => new SelectElementReference[Timestamp](e)(createOutMapperTimestampType) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
-    case None => new ConstantExpressionNode[Timestamp](new Timestamp(f.is.getTimeInMillis)) with BooleanExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
+    case None => new ConstantExpressionNode[Timestamp](new Timestamp(f.is.getTimeInMillis)) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
   }
 
   /** Conversion of optional Calendar fields to Squeryl Expressions. */
@@ -122,7 +122,7 @@ trait RecordTypeMode extends PrimitiveTypeMode {
         case Some(calendar) => Some(new Timestamp(calendar.getTimeInMillis))
         case None => None
       }
-      new ConstantExpressionNode[Option[Timestamp]](date) with BooleanExpression[Option[Timestamp]] with SquerylRecordNonNumericalExpression[Option[Timestamp]]
+      new ConstantExpressionNode[Option[Timestamp]](date) with DateExpression[Option[Timestamp]] with SquerylRecordNonNumericalExpression[Option[Timestamp]]
     }
   }
   

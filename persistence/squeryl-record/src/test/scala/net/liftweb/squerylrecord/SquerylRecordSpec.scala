@@ -14,12 +14,19 @@
 package net.liftweb
 package squerylrecord
 
+import org.squeryl.Session
+import org.squeryl.dsl.ast.FunctionNode
+import org.squeryl.internals.OutMapper
+import org.squeryl.dsl.StringExpression
+import org.squeryl.dsl.DateExpression
 import org.specs.Specification
 import record.{BaseField, Record}
 import record.field._
 import RecordTypeMode._
 import MySchema.{TestData => td, _}
 import java.util.Calendar
+import java.sql.Timestamp
+import java.text.SimpleDateFormat
 
 
 /**
@@ -337,8 +344,24 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
 		  companies.update(company) must throwAn[StaleUpdateException]
 	  }
   }
+  
+  forExample("Allow custom functions") in {
+    inTransaction{
+	    val created =
+	      from(companies)(c =>
+	        where(c.name === "First Company USA")
+	        select(&(toChar(c.created,"EEE, d MMM yyyy")))
+	      )
+	    created.head must_== new SimpleDateFormat("EEE, d MMM yyyy").format(Calendar.getInstance().getTime())
+    }
+  }
 
   }
+  
+  class ToChar(d: DateExpression[Timestamp],e: StringExpression[String], m: OutMapper[String]) 
+  		extends FunctionNode[String]("FORMATDATETIME",Some(m), Seq(d,e)) with StringExpression[String]
+
+  def toChar(d: DateExpression[Timestamp],e: StringExpression[String])(implicit m: OutMapper[String]) = new ToChar(d,e,m)
 
   class TransactionRollbackException extends RuntimeException
 
