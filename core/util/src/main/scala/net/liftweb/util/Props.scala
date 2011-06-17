@@ -150,6 +150,7 @@ object Props extends Logger {
     case Production => "production"
     case Pilot => "pilot"
     case Profile => "profile"
+    case Development => "development"
     case _ => ""
   }
 
