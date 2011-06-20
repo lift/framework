@@ -50,12 +50,21 @@ object Schemifier extends Loggable {
   def neverF(msg: => AnyRef) = {}
   
  
-  def schemify(performWrite: Boolean, logFunc: (=> AnyRef) => Unit, stables: BaseMetaMapper*): List[String] = schemify(performWrite, logFunc, DefaultConnectionIdentifier, stables :_*)
-
-  case class Collector(funcs: List[() => Any], cmds: List[String]) {
+  def schemify(performWrite: Boolean, logFunc: (=> AnyRef) => Unit, stables: BaseMetaMapper*): List[String] = 
+    schemify(performWrite,  logFunc, DefaultConnectionIdentifier, stables :_*)
+  
+  def schemify(performWrite: Boolean, logFunc: (=> AnyRef) => Unit, dbId: ConnectionIdentifier, stables: BaseMetaMapper*): List[String] = 
+    schemify(performWrite, false, logFunc, dbId, stables :_*)
+ 
+  def schemify(performWrite: Boolean, structureOnly: Boolean, logFunc: (=> AnyRef) => Unit, stables: BaseMetaMapper*): List[String] = 
+    schemify(performWrite, structureOnly, logFunc, DefaultConnectionIdentifier, stables :_*)
+    
+  private case class Collector(funcs: List[() => Any], cmds: List[String]) {
     def +(other: Collector) = Collector(funcs ::: other.funcs, cmds ::: other.cmds)
   }
 
+  private val EmptyCollector = new Collector(Nil, Nil)
+  
   private def using[RetType <: Any, VarType <: ResultSet](f: => VarType)(f2: VarType => RetType): RetType = {
     val theVar = f
     try {
@@ -65,7 +74,19 @@ object Schemifier extends Loggable {
     }
   }
 
-  def schemify(performWrite: Boolean, logFunc: (=> AnyRef) => Unit, dbId: ConnectionIdentifier, stables: BaseMetaMapper*): List[String] = {
+  /**
+   * Modify database specified in dbId so it matches the structure specified in the MetaMappers
+   * 
+   * @param performWrite if false, will not write any changes to the database, only collect them
+   * @param structureOnly if true, will only check tables and columns, not indexes and constraints. 
+   *    Useful if schema is maintained outside Lift, but still needs structure to be in sync
+   * @param logFunc A function that will be called for each statement being executed if performWrite == true
+   * @param dbId The ConnectionIdentifier to be used
+   * @param stables The MetaMapper instances to check
+   * 
+   * @return The list of statements needed to bring the database in a consistent state. This list is created even if performWrite=false  
+   */
+  def schemify(performWrite: Boolean, structureOnly: Boolean, logFunc: (=> AnyRef) => Unit, dbId: ConnectionIdentifier, stables: BaseMetaMapper*): List[String] = {
     val tables = stables.toList
     DB.use(dbId) { con =>
       // Some databases (Sybase) don't like doing transactional DDL, so we disable transactions
@@ -73,27 +94,41 @@ object Schemifier extends Loggable {
         con.connection.commit
         con.connection.setAutoCommit(true)
       }
+      logger.debug("Starting schemify. write=%s, structureOnly=%s, dbId=%s, schema=%s, tables=%s".format(performWrite, structureOnly, dbId, getDefaultSchemaName(con), tables.map(_.dbTableName)))
 
       val connection = con // SuperConnection(con)
       val driver = DriverType.calcDriver(connection)
       val actualTableNames = new HashMap[String, String]
-      if (performWrite) tables.foreach(_.beforeSchemifier)
+      if (performWrite) {
+        tables.foreach{t =>
+          logger.debug("Running beforeSchemifier on table %s".format(t.dbTableName))
+          t.beforeSchemifier
+        }
+      }
+      
+      def tableCheck(t: BaseMetaMapper, desc: String, f: => Collector): Collector = {
+        actualTableNames.get(t._dbTableNameLC).map(x => f).getOrElse{
+          logger.warn("Skipping %s on table '%s' since it doesn't exist".format(desc, t.dbTableName))
+          EmptyCollector
+        }
+      }
+      
       val toRun =
-      tables.foldLeft(Collector(Nil, Nil))((b, t) => b + ensureTable(performWrite, logFunc, t, connection, actualTableNames)) +
-      tables.foldLeft(Collector(Nil, Nil))((b, t) => b + ensureColumns(performWrite, logFunc, t, connection, actualTableNames)) +
-      tables.foldLeft(Collector(Nil, Nil))((b, t) => b + ensureIndexes(performWrite, logFunc, t, connection, actualTableNames)) +
-      tables.foldLeft(Collector(Nil, Nil))((b, t) => b + ensureConstraints(performWrite, logFunc, t, dbId, connection, actualTableNames))
-
-      /*
-       val toRun = tables.flatMap(t => ensureTable(performWrite, t, connection, actualTableNames) ) :::
-       tables.flatMap{t => ensureColumns(performWrite, t, connection, actualTableNames)} :::
-       tables.flatMap{t => ensureIndexes(performWrite, t, connection, actualTableNames)} :::
-       tables.flatMap{t => ensureConstraints(performWrite, t, connection, actualTableNames)}
-       */
+        tables.foldLeft(EmptyCollector)((b, t) => b + ensureTable(performWrite, logFunc, t, connection, actualTableNames)) +
+        tables.foldLeft(EmptyCollector)((b, t) => b + tableCheck(t, "ensureColumns", ensureColumns(performWrite, logFunc, t, connection, actualTableNames))) +
+        (if (structureOnly) 
+          EmptyCollector 
+        else
+          (tables.foldLeft(EmptyCollector)((b, t) => b + tableCheck(t, "ensureIndexes", ensureIndexes(performWrite, logFunc, t, connection, actualTableNames))) +
+           tables.foldLeft(EmptyCollector)((b, t) => b + tableCheck(t, "ensureConstraints", ensureConstraints(performWrite, logFunc, t, dbId, connection, actualTableNames)))))
 
       if (performWrite) {
-        tables.foreach(_.afterSchemifier)
-        toRun.funcs.foreach(f => f())
+        logger.debug("Executing DDL statements")
+    	toRun.funcs.foreach(f => f())
+        tables.foreach{t =>
+          logger.debug("Running afterSchemifier on table %s".format(t.dbTableName))
+          t.afterSchemifier
+        }
       }
 
       toRun.cmds
@@ -166,6 +201,7 @@ object Schemifier extends Loggable {
    */
   private def maybeWrite(performWrite: Boolean, logFunc: (=> AnyRef) => Unit, connection: SuperConnection) (makeSql: () => String) : String ={
     val ct = makeSql()
+    logger.trace("maybeWrite DDL: "+ct)
     if (performWrite) {
       logFunc(ct)
       val st = connection.createStatement
@@ -176,8 +212,9 @@ object Schemifier extends Loggable {
   }
 
   private def ensureTable(performWrite: Boolean, logFunc: (=> AnyRef) => Unit, table: BaseMetaMapper, connection: SuperConnection, actualTableNames: HashMap[String, String]): Collector = {
-    val hasTable = hasTable_?(table, connection, actualTableNames)
+    val hasTable = logger.trace("Does table exist?: "+table.dbTableName, hasTable_?(table, connection, actualTableNames))
     val cmds = new ListBuffer[String]()
+    
     if (!hasTable) {
       cmds += maybeWrite(performWrite, logFunc, connection) {
         () => "CREATE TABLE "+table._dbTableNameLC+" ("+createColumns(table, connection).mkString(" , ")+") "+connection.createTablePostpend
@@ -219,12 +256,14 @@ object Schemifier extends Loggable {
           if (tableName == table._dbTableNameLC.toLowerCase && field.dbColumnNames(field.name).map(_.toLowerCase).contains(columnName)) {
             cols = columnName :: cols
             hasColumn = hasColumn + 1
+            logger.trace("Column exists: %s.%s ".format(table.dbTableName, columnName))
+      
           }
         })
-
       // FIXME deal with column types
-      (field.dbColumnNames(field.name).filter(f => !cols.map(_.toLowerCase).contains(f.toLowerCase))).foreach {
-        colName =>
+      (field.dbColumnNames(field.name).filter(f => !cols.map(_.toLowerCase).contains(f.toLowerCase))).foreach {colName =>
+        logger.trace("Column does not exist: %s.%s ".format(table.dbTableName, colName))
+          
         cmds += maybeWrite(performWrite, logFunc, connection) {
           () => "ALTER TABLE "+table._dbTableNameLC+" "+connection.driverType.alterAddColumn+" "+field.fieldCreatorString(connection.driverType, colName)
         }

@@ -707,6 +707,14 @@ object JsCmds {
     }
   }
 
+  /**
+   * Replaces the content of the node with the provided id with the markup given by content
+   *
+   * This is analogous to assigning a new value to a DOM object's innerHtml property in Javascript.
+   *
+   * @param id - the id of the node whose content will be replaced
+   * @param content - the new content
+   */
   case class SetHtml(uid: String, content: NodeSeq) extends JsCmd {
     // we want eager evaluation of the snippets so they get evaluated in context
     val toJsCmd = LiftRules.jsArtifacts.setHtml(uid, Helpers.stripHead(content)).toJsCmd

@@ -46,6 +46,7 @@ project/plugins/project
 #  ^\.pc/
 
 # IntelliJ
+*.eml
 *.iml
 *.ipr
 *.iws
