@@ -70,6 +70,6 @@ class PatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
     case jv => Str(Printer.compact(render(jv)))
   }
 
-  def asJValue: JValue = valueBox.map(v => Meta.Reflection.patternAsJValue(v)) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(v => Meta.patternAsJValue(v)) openOr (JNothing: JValue)
 }
 

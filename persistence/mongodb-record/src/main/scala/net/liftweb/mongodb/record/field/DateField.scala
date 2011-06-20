@@ -91,6 +91,6 @@ class DateField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
     case jv => JsRaw(Printer.compact(render(jv)))
   }
 
-  def asJValue: JValue = valueBox.map(v => Meta.Reflection.dateAsJValue(v)(owner.meta.formats)) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(v => Meta.dateAsJValue(v, owner.meta.formats)) openOr (JNothing: JValue)
 }
 

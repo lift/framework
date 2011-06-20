@@ -83,19 +83,11 @@ class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
       case _ => Full(elem)
     }
 
-  def asJs = valueBox.map { v =>
-    if (Meta.Reflection.isObjectIdSerializerUsed(owner.meta.formats))
-      JsObj(("$oid", Str(v.toString)))
-    else
-      Str(v.toString)
-  } openOr JsNull
-  /*
   def asJs = asJValue match {
     case JNothing => JsNull
     case jv => JsRaw(Printer.compact(render(jv)))
   }
-  */
 
-  def asJValue: JValue = valueBox.map(v => Meta.Reflection.objectIdAsJValue(v)(owner.meta.formats)) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(v => Meta.objectIdAsJValue(v, owner.meta.formats)) openOr (JNothing: JValue)
 }
 
