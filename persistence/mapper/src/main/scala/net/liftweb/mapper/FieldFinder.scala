@@ -45,12 +45,12 @@ class FieldFinder[T: ClassManifest](metaMapper: AnyRef, logger: net.liftweb.comm
         val fields = Map(c.getDeclaredFields.
                           filter{f =>
                             val ret = typeFilter(f.getType)
-                            logger.debug("typeFilter(" + f.getType + "); T=" + classManifest[T].erasure)
+                            logger.trace("typeFilter(" + f.getType + "); T=" + classManifest[T].erasure)
                             ret
                           }.
                           map(f => (deMod(f.getName), f)) :_*)
 
-        logger.debug("fields: " + fields)
+        logger.trace("fields: " + fields)
 
         // this method will find all the super classes and super-interfaces
         def getAllSupers(clz: Class[_]): List[Class[_]] = clz match {
