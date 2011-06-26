@@ -35,7 +35,7 @@ trait JsonFormats {
 */
 trait MongoMeta[BaseDocument] extends JsonFormats {
 
-  // class name has a $ at the end. because it's an object(?)
+  // class name has a $ at the end.
   private lazy val _collectionName = {
     getClass.getName.split("\\.").toList.last.replace("$", "")+"s"
   }

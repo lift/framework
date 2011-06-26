@@ -163,7 +163,6 @@ trait SHtml {
    * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript
    * 
    * @param jsCalcValue the JavaScript to calculate the value to be sent to the server
-   * @param jsContext the context instance that defines JavaScript to be executed on call success or failure
    * @param func the function to call when the data is sent
    *
    * @return the function ID and JavaScript that makes the call

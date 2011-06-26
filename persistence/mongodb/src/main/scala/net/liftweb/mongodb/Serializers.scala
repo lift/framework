@@ -41,7 +41,7 @@ class ObjectIdSerializer extends Serializer[ObjectId] {
   }
 
   def serialize(implicit formats: Formats): PartialFunction[Any, JValue] = {
-    case x: ObjectId => Meta.Reflection.objectIdAsJValue(x)(formats)
+    case x: ObjectId => Meta.objectIdAsJValue(x)
   }
 }
 
@@ -64,7 +64,7 @@ class PatternSerializer extends Serializer[Pattern] {
   }
 
   def serialize(implicit formats: Formats): PartialFunction[Any, JValue] = {
-    case x: Pattern => Meta.Reflection.patternAsJValue(x)
+    case x: Pattern => Meta.patternAsJValue(x)
   }
 }
 
@@ -86,7 +86,7 @@ class DateSerializer extends Serializer[Date] {
   }
 
   def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
-    case x: Date => Meta.Reflection.dateAsJValue(x)
+    case x: Date => Meta.dateAsJValue(x, format)
   }
 }
 
@@ -107,7 +107,7 @@ class UUIDSerializer extends Serializer[UUID] {
   }
 
   def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
-    case x: UUID => Meta.Reflection.uuidAsJValue(x)
+    case x: UUID => Meta.uuidAsJValue(x)
   }
 }
 

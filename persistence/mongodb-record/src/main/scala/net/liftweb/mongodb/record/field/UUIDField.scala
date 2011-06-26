@@ -82,7 +82,7 @@ class UUIDField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
     case jv => JsRaw(Printer.compact(render(jv)))
   }
 
-  def asJValue: JValue = valueBox.map(v => Meta.Reflection.uuidAsJValue(v)) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(v => Meta.uuidAsJValue(v)) openOr (JNothing: JValue)
 
 }
 

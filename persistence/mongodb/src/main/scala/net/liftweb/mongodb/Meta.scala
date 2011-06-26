@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package mongodb 
+package net.liftweb
+package mongodb
+
+import json._
+
+import java.util.{Calendar, Date, GregorianCalendar, UUID}
+import java.util.regex.Pattern
+
+import org.bson.types.ObjectId
 
 private[mongodb] object Meta {
 
@@ -24,14 +31,7 @@ private[mongodb] object Meta {
   */
   object Reflection {
     import java.lang.reflect._
-    import java.util.{Calendar, Date, GregorianCalendar, UUID}
-    import java.util.regex.Pattern
-
-    import net.liftweb.json.Formats
-    import net.liftweb.json.JsonAST._
-
     import com.mongodb.{BasicDBObject, DBRef}
-    import org.bson.types.ObjectId
 
     /*
     * These don't require a conversion and can be put directly into a DBObject
@@ -76,12 +76,9 @@ private[mongodb] object Meta {
     def datetype_?(clazz: Class[_]) = datetypes contains clazz
 
     def datetype2jvalue(a: Any)(implicit formats: Formats) = a match {
-      case x: Calendar => dateAsJValue(x.getTime)
-      case x: Date => dateAsJValue(x)
+      case x: Calendar => dateAsJValue(x.getTime, formats)
+      case x: Date => dateAsJValue(x, formats)
     }
-
-    def dateAsJValue(d: Date)(implicit formats: Formats) =
-      JObject(JField("$dt", JString(formats.dateFormat.format(d))) :: Nil)
 
     def datetype2dbovalue(a: Any) = a match {
       case x: Calendar => x.getTime
@@ -100,28 +97,31 @@ private[mongodb] object Meta {
     * Definitive place for JValue conversion of mongo types
     */
     def mongotype2jvalue(a: Any)(implicit formats: Formats) = a match {
-      case x: ObjectId => objectIdAsJValue(x)(formats)
+      case x: ObjectId => objectIdAsJValue(x, formats)
       case x: Pattern => patternAsJValue(x)
       case x: UUID => uuidAsJValue(x)
       case x: DBRef => error("DBRefs are not supported.")
       case _ => error("not a mongotype " + a.asInstanceOf[AnyRef].getClass)
     }
-
-    def objectIdAsJValue(oid: ObjectId)(formats: Formats): JValue =
-      if (isObjectIdSerializerUsed(formats))
-        JObject(JField("$oid", JString(oid.toString)) :: Nil)
-      else
-        JString(oid.toString)
-    def patternAsJValue(p: Pattern): JValue = JObject(JField("$regex", JString(p.pattern)) :: JField("$flags", JInt(p.flags)) :: Nil)
-    def uuidAsJValue(u: UUID): JValue = JObject(JField("$uuid", JString(u.toString)) :: Nil)
-
-    /*
-    * Check to see if the ObjectIdSerializer is being used.
-    */
-    def isObjectIdSerializerUsed(formats: Formats): Boolean =
-      formats.customSerializers.exists(_.getClass == objectIdSerializerClass)
-
-    private val objectIdSerializerClass = classOf[net.liftweb.mongodb.ObjectIdSerializer]
   }
+
+  def dateAsJValue(d: Date, formats: Formats) = JObject(JField("$dt", JString(formats.dateFormat.format(d))) :: Nil)
+  def objectIdAsJValue(oid: ObjectId): JValue = JObject(JField("$oid", JString(oid.toString)) :: Nil)
+  def patternAsJValue(p: Pattern): JValue = JObject(JField("$regex", JString(p.pattern)) :: JField("$flags", JInt(p.flags)) :: Nil)
+  def uuidAsJValue(u: UUID): JValue = JObject(JField("$uuid", JString(u.toString)) :: Nil)
+
+  def objectIdAsJValue(oid: ObjectId, formats: Formats): JValue =
+    if (isObjectIdSerializerUsed(formats))
+      objectIdAsJValue(oid)
+    else
+      JString(oid.toString)
+
+  /*
+  * Check to see if the ObjectIdSerializer is being used.
+  */
+  private def isObjectIdSerializerUsed(formats: Formats): Boolean =
+    formats.customSerializers.exists(_.getClass == objectIdSerializerClass)
+
+  private val objectIdSerializerClass = classOf[net.liftweb.mongodb.ObjectIdSerializer]
 }
 
