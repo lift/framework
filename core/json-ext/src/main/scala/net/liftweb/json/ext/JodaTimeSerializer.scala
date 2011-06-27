@@ -54,7 +54,7 @@ object InstantSerializer {
 object DateTimeSerializer {
   def apply() = new SimpleTypeSerializer(new JStringType[DateTime]() {
     def targetClass = classOf[DateTime]
-    def unwrap(json: JString)(implicit format: Formats) = new DateTime(parse(json))
+    def unwrap(json: JString)(implicit format: Formats) = new DateTime(parse(json), DateTimeZone.UTC)
     def wrap(a: DateTime)(implicit format: Formats) = JString(format.dateFormat.format(a.toDate))
   })
 
@@ -68,7 +68,7 @@ object DateMidnightSerializer {
   def apply() = new SimpleTypeSerializer(new JStringType[DateMidnight]() {
     def targetClass = classOf[DateMidnight]
     def unwrap(json: JString)(implicit format: Formats) = 
-      new DateMidnight(DateTimeSerializer.parse(json))
+      new DateMidnight(DateTimeSerializer.parse(json), DateTimeZone.UTC)
     def wrap(a: DateMidnight)(implicit format: Formats) = 
       JString(format.dateFormat.format(a.toDate))
   })
