@@ -124,7 +124,16 @@ object SerializationBugs extends Specification {
     val str = Serialization.write(MapWithMap(a, b))
     read[MapWithMap](str) mustEqual MapWithMap(a, b)
   }
+
+  "Either can't be deserialized with type hints" in {
+    implicit val formats = DefaultFormats + FullTypeHints(classOf[Either[_, _]] :: Nil)
+    val x = Eith(Left("hello"))
+    val s = Serialization.write(x)
+    read[Eith](s) mustEqual x
+  }
 }
+
+case class Eith(x: Either[String, Int])
 
 case class MapWithMap(a: Map[String, Map[String, Int]], b: Map[String, Int])
 

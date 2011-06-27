@@ -158,10 +158,13 @@ private[json] object Meta {
     else {
       mappings.memoize(clazz, t => {
         val c = rawClassOf(t)
-        val typeInfo = 
-          if (typeArgs.isEmpty) TypeInfo(c, None) 
-          else TypeInfo(c, Some(mkParameterizedType(c, typeArgs)))
-        Constructor(typeInfo, constructors(t, Set(), None)) 
+        val (pt, typeInfo) = 
+          if (typeArgs.isEmpty) (t, TypeInfo(c, None))
+          else {
+            val t = mkParameterizedType(c, typeArgs)
+            (t, TypeInfo(c, Some(t)))
+          }
+        Constructor(typeInfo, constructors(pt, Set(), None))         
       })
     }
   }
@@ -177,6 +180,7 @@ private[json] object Meta {
       def getActualTypeArguments = typeArgs.toArray
       def getOwnerType = owner
       def getRawType = owner
+      override def toString = getOwnerType + "[" + getActualTypeArguments.mkString(",") + "]"
     }
 
   private[json] def unmangleName(name: String) =

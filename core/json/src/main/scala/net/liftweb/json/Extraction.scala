@@ -262,12 +262,14 @@ object Extraction {
         }
       }
 
-      def mkWithTypeHint(typeHint: String, fields: List[JField]) = {
+      def mkWithTypeHint(typeHint: String, fields: List[JField], typeInfo: TypeInfo) = {
         val obj = JObject(fields)
         val deserializer = formats.typeHints.deserialize
         if (!deserializer.isDefinedAt(typeHint, obj)) {
           val concreteClass = formats.typeHints.classFor(typeHint) getOrElse fail("Do not know how to deserialize '" + typeHint + "'")
-          build(obj, mappingOf(concreteClass))
+          val typeArgs = typeInfo.parameterizedType
+            .map(_.getActualTypeArguments.toList.map(Meta.rawClassOf)).getOrElse(Nil)
+          build(obj, mappingOf(concreteClass, typeArgs))
         } else deserializer(typeHint, obj)
       }
 
@@ -276,8 +278,8 @@ object Extraction {
       if (custom.isDefinedAt(constructor.targetType, json)) custom(constructor.targetType, json)
       else json match {
         case JNull => null
-        case JObject(JField(JsonClass, JString(t)) :: xs) => mkWithTypeHint(t, xs)
-        case JField(_, JObject(JField(JsonClass, JString(t)) :: xs)) => mkWithTypeHint(t, xs)
+        case JObject(JField(JsonClass, JString(t)) :: xs) => mkWithTypeHint(t, xs, constructor.targetType)
+        case JField(_, JObject(JField(JsonClass, JString(t)) :: xs)) => mkWithTypeHint(t, xs, constructor.targetType)
         case _ => instantiate
       }
     }
