@@ -89,7 +89,17 @@ trait StatefulSnippet extends DispatchSnippet {
   def link(to: String, func: () => Any, body: NodeSeq, attrs: SHtml.ElemAttr*): Elem =
     SHtml.link(to, () => { registerThisSnippet(); func() }, body, attrs: _*)
 
-  def redirectTo(where: String) = S.redirectTo(where, registerThisSnippet)
+  /**
+   * Redirect to another page, but make sure this StatefulSnippet is registered
+   * on that page so the state continues on the new page
+   */
+  def redirectTo(where: String): Nothing = S.redirectTo(where, registerThisSnippet)
+
+  /**
+   * See Other to another page, but make sure this StatefulSnippet is registered
+   * on that page so the state continues on the new page
+   */
+  def seeOther(where: String): Nothing = S.seeOther(where, registerThisSnippet)
 
   /**
    * Merge the SHtml into the form
