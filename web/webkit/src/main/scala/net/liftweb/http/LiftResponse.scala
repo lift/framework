@@ -78,20 +78,6 @@ case class ResetContentResponse() extends LiftResponse with HeaderDefaults {
 }
 
 /**
- * 301 Redirect.
- */
-case class PermRedirectResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
-  def toResponse = InMemoryResponse(Array(), List("Location" -> request.updateWithContextPath(uri)), cookies.toList, 301)
-}
-
-/**
- * 307 Redirect.
- */
-case class TemporaryRedirectResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
-  def toResponse = InMemoryResponse(Array(), List("Location" -> request.updateWithContextPath(uri)), cookies.toList, 307)
-}
-
-/**
  * 400 Bad Request
  *
  * Your Request was missing an important element. Use this as a last resort if
@@ -379,23 +365,76 @@ case class OutputStreamResponse(out: (OutputStream) => Unit,
 
 }
 
-case class RedirectResponse(uri: String, cookies: HTTPCookie*) extends LiftResponse {
-  // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
-  def toResponse = InMemoryResponse(Array(), List("Location" -> uri, "Content-Type" -> "text/plain"), cookies toList, 302)
+
+/**
+ * 301 Redirect.
+ */
+case class PermRedirectResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
+  def toResponse = InMemoryResponse(Array(), List("Location" -> request.updateWithContextPath(uri)), cookies.toList, 301)
 }
 
-case class SeeOtherResponse(uri: String, cookies: HTTPCookie*) extends LiftResponse {
+/**
+ * 307 Redirect.
+ */
+case class TemporaryRedirectResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
+  def toResponse = InMemoryResponse(Array(), List("Location" -> request.updateWithContextPath(uri)), cookies.toList, 307)
+}
+
+/**
+ * Companion object to RedirectResponse
+ */
+object RedirectResponse {
+  /**
+   * Construct an instnace of RedirectResponse
+   */
+  def apply(uri: String, cookies: HTTPCookie*): RedirectResponse = 
+    new RedirectResponse(uri, S.request or CurrentReq.box openOr Req.nil, 
+                         cookies :_*)
+
+}
+
+/**
+ * 302
+ */
+case class RedirectResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
-  def toResponse = InMemoryResponse(Array(), List("Location" -> uri, "Content-Type" -> "text/plain"), cookies toList, 303)
+  def toResponse = InMemoryResponse(Array(), List("Location" -> request.updateWithContextPath(uri),
+    "Content-Type" -> "text/plain"), cookies toList, 302)
+}
+
+
+/**
+ * Companion object to RedirectResponse
+ */
+object SeeOtherResponse {
+  /**
+   * Construct an instnace of SeeOtherResponse
+   */
+  def apply(uri: String, cookies: HTTPCookie*): SeeOtherResponse = 
+    new SeeOtherResponse(uri, S.request or CurrentReq.box openOr Req.nil, 
+                         cookies :_*)
+}
+
+/**
+ * 303
+ */
+case class SeeOtherResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
+  // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
+  def toResponse = InMemoryResponse(Array(), List("Location" -> request.updateWithContextPath(uri),
+    "Content-Type" -> "text/plain"), cookies toList, 303)
 }
 
 object DoRedirectResponse {
-  def apply(url: String): LiftResponse = RedirectResponse(url, Nil: _*)
+  def apply(url: String): LiftResponse = RedirectResponse.apply(url, List[HTTPCookie]() :_*)
 }
 
 object RedirectWithState {
   def apply(uri: String, state: RedirectState, cookies: HTTPCookie*): RedirectWithState =
-    new RedirectWithState(uri, state, cookies :_*)
+    this.apply(uri, S.request or CurrentReq.box openOr Req.nil, state, cookies :_*)
+
+
+  def apply(uri: String, req: Req, state: RedirectState, cookies: HTTPCookie*): RedirectWithState =
+    new RedirectWithState(uri, req, state, cookies :_*)
 
   def unapply(in: Any): Option[(String, RedirectState, Seq[HTTPCookie])] =
     in match {
@@ -405,7 +444,7 @@ object RedirectWithState {
     }
 }
 
-class RedirectWithState(override val uri: String,val state: RedirectState, override val cookies: HTTPCookie*) extends RedirectResponse(uri, cookies: _*)
+class RedirectWithState(override val uri: String, val req: Req, val state: RedirectState, override val cookies: HTTPCookie*) extends RedirectResponse(uri, req, cookies: _*)
 
 object RedirectState {
   def apply(f: () => Unit, msgs: (String, NoticeType.Value)*): RedirectState = new RedirectState(Full(f), msgs: _*)
