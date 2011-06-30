@@ -1663,6 +1663,8 @@ object IterableConst {
 
   implicit def optionBindablePromotable(it: Option[Bindable]): IterableConst =
     SeqBindableIterableConst(it.toList)
+
+  implicit def optionStringPromotable[T](o: Option[T])(implicit view:T=>StringPromotable) = optionString(o.map(view(_).toString))
 }
 
 sealed trait IterableFunc extends Function1[NodeSeq, Seq[NodeSeq]] {
