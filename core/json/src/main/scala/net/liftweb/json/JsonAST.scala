@@ -330,7 +330,7 @@ object JsonAST {
      * JNothing.extractOrElse(Person("joe")) == Person("joe")
      * </pre>
      */
-    def extractOrElse[A](default: A)(implicit formats: Formats, mf: scala.reflect.Manifest[A]): A =
+    def extractOrElse[A](default: => A)(implicit formats: Formats, mf: scala.reflect.Manifest[A]): A =
       Extraction.extractOpt(this)(formats, mf).getOrElse(default)
   }
 
