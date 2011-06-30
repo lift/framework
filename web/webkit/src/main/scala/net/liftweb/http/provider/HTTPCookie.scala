@@ -36,11 +36,19 @@ case class HTTPCookie(name: String,
                       path: Box[String],
                       maxAge: Box[Int],
                       version: Box[Int],
-                      secure_? : Box[Boolean]) extends java.lang.Cloneable {
+                      secure_? : Box[Boolean],
+                       httpOnly: Box[Boolean] = Empty) extends java.lang.Cloneable {
   override def clone(): HTTPCookie = {
     super.clone()
-    new HTTPCookie(name, value, domain, path, maxAge, version, secure_?)
+    copy()
   }
+
+  /**
+   * Returns a new HTTPCookie that preserve existing member values but sets the httpOnly attribute
+   * @param flagHttpOnly - should the cookie be flagged as HTTP Only (only works in Servlet 3.0 containers)
+   * @return HTTPCookie
+   */
+  def setHttpOnly(flagHttpOnly: Boolean): HTTPCookie = copy(httpOnly = Full(flagHttpOnly))
 
   /**
    * Returns a new HTTPCookie that preserve existing member values but sets the cookie value to newValue
