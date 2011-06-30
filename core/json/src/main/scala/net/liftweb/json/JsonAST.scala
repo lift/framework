@@ -297,7 +297,7 @@ object JsonAST {
     def extract[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): A =
       Extraction.extract(this)(formats, mf)
 
-    /** Extract a case class from a JSON.
+    /** Extract a value from a JSON.
      * <p>
      * Value can be:
      * <ul>
@@ -315,7 +315,7 @@ object JsonAST {
     def extractOpt[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): Option[A] =
       Extraction.extractOpt(this)(formats, mf)
 
-    /** Extract a case class from a JSON using a default value.
+    /** Extract a value from a JSON using a default value.
      * <p>
      * Value can be:
      * <ul>
