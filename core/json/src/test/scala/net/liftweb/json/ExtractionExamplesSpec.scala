@@ -42,6 +42,11 @@ object ExtractionExamples extends Specification("Extraction Examples Specificati
     json.extract[SimplePerson] mustEqual SimplePerson("joe", Address("Bulevard", "Helsinki"))
   }
 
+  "Extract with a default value" in {
+    val json = parse(testJson)
+    (json \ "address2").extractOrElse(Address("Tie", "Helsinki")) mustEqual Address("Tie", "Helsinki")
+  }
+
   "Map with primitive values extraction example" in {
     val json = parse(testJson)
     json.extract[PersonWithMap] mustEqual 
