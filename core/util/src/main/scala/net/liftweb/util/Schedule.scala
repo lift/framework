@@ -20,6 +20,7 @@ package util
 import java.util.concurrent._
 import Helpers.TimeSpan
 import common._
+import actor.ThreadPoolRules
 
 class ScheduleJBridge {
   def schedule: Schedule = Schedule
@@ -196,7 +197,10 @@ private object TF extends ThreadFactory {
     val d: Thread = threadFactory.newThread(r)
     d setName "Lift Scheduler"
     d setDaemon true
-    d setContextClassLoader null
+
+    if (ThreadPoolRules.nullContextClassLoader) {
+      d setContextClassLoader null
+    }
     d
   }
 }

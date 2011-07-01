@@ -20,6 +20,20 @@ package actor
 import java.util.concurrent._
 
 /**
+ * Rules for dealing with thread pools, both in lift-actor and
+ * in lift-util
+ */
+object ThreadPoolRules {
+  /**
+   * When threads are created in the thread factories, should
+   * they null the context class loader.  By default false,
+   * but it you set it to true, Tomcat complains less about stuff.
+   * Must be set in the first line of Boot.scala
+   */
+  @volatile var nullContextClassLoader: Boolean = false
+}
+
+/**
  * The ActorPing object schedules an actor to be ping-ed with a given message at specific intervals.
  * The schedule methods return a ScheduledFuture object which can be cancelled if necessary
  */
@@ -76,7 +90,9 @@ private object TF extends ThreadFactory {
     val d: Thread = threadFactory.newThread(r)
     d setName "ActorPinger"
     d setDaemon true
-    d setContextClassLoader null
+    if (ThreadPoolRules.nullContextClassLoader) {
+      d setContextClassLoader null
+    }
     d
   }
 }
