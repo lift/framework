@@ -60,21 +60,28 @@ protected trait MailerImpl extends SimpleInjector {
   final case class XHTMLPlusImages(text: NodeSeq, items: PlusImageHolder*) extends MailBodyType
 
   sealed abstract class RoutingType extends MailTypes
-  sealed abstract class AddressType(val adr: String) extends RoutingType
-  final case class From(address: String) extends AddressType(address)
-  final case class To(address: String) extends AddressType(address)
-  final case class CC(address: String) extends AddressType(address)
+  sealed abstract class AddressType extends RoutingType {
+    def address: String
+    def name: Box[String]
+  }
+  final case class From(address: String, name: Box[String] = Empty) extends AddressType
+  final case class To(address: String, name: Box[String] = Empty) extends AddressType
+  final case class CC(address: String, name: Box[String] = Empty) extends AddressType
   final case class Subject(subject: String) extends RoutingType
-  final case class BCC(address: String) extends AddressType(address)
-  final case class ReplyTo(address: String) extends AddressType(address)
+  final case class BCC(address: String, name: Box[String] = Empty) extends AddressType
+  final case class ReplyTo(address: String, name: Box[String] = Empty) extends AddressType
 
   implicit def xmlToMailBodyType(html: NodeSeq): MailBodyType = XHTMLMailBodyType(html)
 
   final case class MessageInfo(from: From, subject: Subject, info: List[MailTypes])
 
-  implicit def addressToAddress(in: AddressType): Address = new InternetAddress(in.adr)
+  implicit def addressToAddress(in: AddressType): Address = {
+    val ret = new InternetAddress(in.address)
+    in.name.foreach{n => ret.setPersonal(n)}
+    ret
+  }
 
-  implicit def adListToAdArray(in: List[AddressType]): Array[Address] = in.map(a => new InternetAddress(a.adr)).toArray
+  implicit def adListToAdArray(in: List[AddressType]): Array[Address] = in.map(addressToAddress).toArray
 
   /**
    * Passwords cannot be accessed via System.getProperty.  Instead, we
