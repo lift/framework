@@ -375,7 +375,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * will be sent to all Comet requests to terminate
    */
   val maxConcurrentRequests: FactoryMaker[Req => Int] = new FactoryMaker((x: Req) => x match {
-    case r if r.isFirefox35_+ || r.isIE8 || r.isChrome3_+ || r.isOpera9 || r.isSafari3_+ => 6
+    case r if r.isFirefox35_+ || r.isIE8 || r.isIE9 || r.isChrome3_+ || r.isOpera9 || r.isSafari3_+ => 5
     case _ => 2
   }) {}
 
