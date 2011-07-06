@@ -564,7 +564,7 @@ trait AbstractScreen extends Factory {
    */
   protected def valMaxLen(len: => Int, msg: => String): String => List[FieldError] =
     s => s match {
-      case str if (null ne str) && str.length <= len => Nil
+      case str if (null eq str) || str.length <= len => Nil
       case _ => List(FieldError(currentField.box openOr new FieldIdentifier {}, Text(msg)))
     }
 

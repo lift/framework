@@ -189,7 +189,7 @@ trait StringValidators {
    */
   def valMaxLen(len: Int, msg: => String)(value: ValueType): List[FieldError] =
     valueTypeToBoxString(value) match {
-      case Full(str) if (null ne str) && str.length <= len => Nil
+      case Full(str) if (null eq str) || str.length <= len => Nil
       case _ =>  List(FieldError(this, Text(msg)))
     }
 
