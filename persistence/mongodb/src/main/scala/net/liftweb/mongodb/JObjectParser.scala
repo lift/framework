@@ -22,8 +22,7 @@ import scala.collection.JavaConversions._
 import java.util.{Date, UUID}
 import java.util.regex.Pattern
 
-import net.liftweb.json.Formats
-import net.liftweb.json.JsonAST._
+import net.liftweb.json._
 import net.liftweb.common.Box
 
 import com.mongodb.{BasicDBObject, BasicDBList, DBObject}
@@ -71,6 +70,14 @@ object JObjectParser {
       val dbl = new BasicDBList
       trimArr(arr).foreach { a =>
         a match {
+          case JObject(JField("$oid", JString(s)) :: Nil) if (ObjectId.isValid(s)) =>
+            dbl.add(new ObjectId(s))
+          case JObject(JField("$regex", JString(s)) :: JField("$flags", JInt(f)) :: Nil) =>
+            dbl.add(Pattern.compile(s, f.intValue))
+          case JObject(JField("$dt", JString(s)) :: Nil) =>
+            formats.dateFormat.parse(s) foreach { d => dbl.add(d) }
+          case JObject(JField("$uuid", JString(s)) :: Nil) =>
+            dbl.add(UUID.fromString(s))
           case JArray(arr) => dbl.add(parseArray(arr, formats))
           case JObject(jo) => dbl.add(parseObject(jo, formats))
           case jv: JValue => dbl.add(renderValue(jv, formats))
@@ -83,17 +90,15 @@ object JObjectParser {
       val dbo = new BasicDBObject
       trimObj(obj).foreach { jf =>
         jf.value match {
-          case JArray(arr) => dbo.put(jf.name, parseArray(arr, formats))
           case JObject(JField("$oid", JString(s)) :: Nil) if (ObjectId.isValid(s)) =>
             dbo.put(jf.name, new ObjectId(s))
           case JObject(JField("$regex", JString(s)) :: JField("$flags", JInt(f)) :: Nil) =>
             dbo.put(jf.name, Pattern.compile(s, f.intValue))
           case JObject(JField("$dt", JString(s)) :: Nil) =>
-            formats.dateFormat.parse(s) foreach {
-              d => dbo.put(jf.name, d)
-            }
+            formats.dateFormat.parse(s) foreach { d => dbo.put(jf.name, d) }
           case JObject(JField("$uuid", JString(s)) :: Nil) =>
             dbo.put(jf.name, UUID.fromString(s))
+          case JArray(arr) => dbo.put(jf.name, parseArray(arr, formats))
           case JObject(jo) => dbo.put(jf.name, parseObject(jo, formats))
           case jv: JValue => dbo.put(jf.name, renderValue(jv, formats))
         }

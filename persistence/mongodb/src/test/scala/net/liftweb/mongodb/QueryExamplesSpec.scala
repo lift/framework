@@ -75,11 +75,16 @@ object QueryExamplesSpec extends Specification("QueryExamples Specification") wi
     val flinstonesIds = List(fred._id, wilma._id)
     val rubblesIds = List(barney._id, betty._id)
 
-    // query for Bamm-Bamm's parents (UUID)
+    // query for Bamm-Bamm's parents (UUID) by childId
     val pebblesParents = Person.findAll(("childId" -> bammbammId))
 
     pebblesParents.length must_== 2
     pebblesParents.map(_._id).filterNot(rubblesIds.contains(_)) must_== List()
+
+    // query for Bamm-Bamm's and Pebbles' parents using List[UUID]
+    val pebblesAndBammBammsParents = Person.findAll(("childId" -> ("$in" -> List(pebblesId, bammbammId))))
+
+    pebblesAndBammBammsParents.length must_== 4
 
     // query for Dino's owners (ObjectId)
     val dinosOwners = Person.findAll(("petId" -> dinoId))
@@ -99,6 +104,12 @@ object QueryExamplesSpec extends Specification("QueryExamples Specification") wi
     flinstones.length must_== 2
     flinstones.map(_._id).filterNot(flinstonesIds.contains(_)) must_== List()
 
+    // query for the Flinstones using a List[ObjectId]
+    val flinstones2 = Person.findAll(("_id" -> ("$in" -> flinstonesIds)))
+
+    flinstones2.length must_== 2
+    flinstones2.map(_._id).filterNot(flinstonesIds.contains(_)) must_== List()
+
     // query using Dates
     implicit val formats = Person.formats // this is needed for Dates
     val qryDate = Calendar.getInstance
@@ -114,7 +125,7 @@ object QueryExamplesSpec extends Specification("QueryExamples Specification") wi
     people2.length must_== 3
     people2.map(_._id).filterNot(List(wilma._id, barney._id, betty._id).contains(_)) must_== List()
 
-    // query with Sort
+    // query all with Sort
     val people3 = Person.findAll(JObject(Nil), ("birthDate" -> -1))
 
     people3.length must_== 4

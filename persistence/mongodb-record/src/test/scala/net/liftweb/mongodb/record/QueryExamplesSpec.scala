@@ -103,6 +103,11 @@ object QueryExamplesSpec extends Specification("QueryExamples Specification") wi
     pebblesParents.length must_== 2
     pebblesParents.map(_.id.is).filterNot(rubblesIds.contains(_)) must_== List()
 
+    // query for Bamm-Bamm's and Pebbles' parents using List[UUID]
+    val pebblesAndBammBammsParents = Person.findAll(("childId" -> ("$in" -> List(pebblesId, bammbammId))))
+
+    pebblesAndBammBammsParents.length must_== 4
+
     // query for Dino's owners (ObjectId)
     val dinosOwners = Person.findAll(("petId" -> dinoId))
 
@@ -120,6 +125,12 @@ object QueryExamplesSpec extends Specification("QueryExamples Specification") wi
 
     flinstones.length must_== 2
     flinstones.map(_.id.is).filterNot(flinstonesIds.contains(_)) must_== List()
+
+    // query for the Flinstones using a List[ObjectId]
+    val flinstones2 = Person.findAll(("_id" -> ("$in" -> flinstonesIds)))
+
+    flinstones2.length must_== 2
+    flinstones2.map(_.id.is).filterNot(flinstonesIds.contains(_)) must_== List()
 
     // query using Dates
     implicit val formats = Person.formats // this is needed for Dates

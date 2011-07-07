@@ -20,6 +20,7 @@ package mongodb
 import BsonDSL._
 import json._
 
+import scala.collection.JavaConversions._
 import scala.util.matching.Regex
 
 import java.util.{Date, UUID}
@@ -28,7 +29,7 @@ import java.util.regex.Pattern
 import org.bson.types.ObjectId
 import org.specs.Specification
 
-import com.mongodb.{DBObject}
+import com.mongodb.{BasicDBList, DBObject}
 
 object BsonDSLSpec extends Specification("BsonDSL Specification") {
   "BsonDSL" should {
@@ -40,6 +41,15 @@ object BsonDSLSpec extends Specification("BsonDSL Specification") {
       dbo.get("id") must_== oid
     }
 
+    "Convert List[ObjectId] properly" in {
+      val oidList = ObjectId.get :: ObjectId.get :: ObjectId.get :: Nil
+      val qry: JObject = ("ids" -> oidList)
+      val dbo: DBObject = JObjectParser.parse(qry)(DefaultFormats)
+      val oidList2: List[ObjectId] = dbo.get("ids").asInstanceOf[BasicDBList].toList.map(_.asInstanceOf[ObjectId])
+
+      oidList2 must_== oidList
+    }
+
     "Convert Pattern properly" in {
       val ptrn: Pattern = Pattern.compile("^Mongo", Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
       val qry: JObject = ("ptrn" -> ptrn)
@@ -48,6 +58,21 @@ object BsonDSLSpec extends Specification("BsonDSL Specification") {
 
       ptrn2.pattern must_== ptrn.pattern
       ptrn2.flags must_== ptrn.flags
+    }
+
+    "Convert List[Pattern] properly" in {
+      val ptrnList =
+        Pattern.compile("^Mongo1", Pattern.MULTILINE | Pattern.CASE_INSENSITIVE) ::
+        Pattern.compile("^Mongo2", Pattern.CASE_INSENSITIVE) ::
+        Pattern.compile("^Mongo3") :: Nil
+      val qry: JObject = ("ptrns" -> ptrnList)
+      val dbo: DBObject = JObjectParser.parse(qry)(DefaultFormats)
+      val ptrnList2: List[Pattern] = dbo.get("ptrns").asInstanceOf[BasicDBList].toList.map(_.asInstanceOf[Pattern])
+
+      for (i <- 0 to 2) {
+        ptrnList(i).pattern must_== ptrnList2(i).pattern
+        ptrnList(i).flags must_== ptrnList2(i).flags
+      }
     }
 
     "Convert Regex properly" in {
@@ -68,6 +93,15 @@ object BsonDSLSpec extends Specification("BsonDSL Specification") {
       dbo.get("uuid") must_== uuid
     }
 
+    "Convert List[UUID] properly" in {
+      val uuidList = UUID.randomUUID :: UUID.randomUUID :: UUID.randomUUID :: Nil
+      val qry: JObject = ("ids" -> uuidList)
+      val dbo: DBObject = JObjectParser.parse(qry)(DefaultFormats)
+      val uuidList2: List[UUID] = dbo.get("ids").asInstanceOf[BasicDBList].toList.map(_.asInstanceOf[UUID])
+
+      uuidList2 must_== uuidList
+    }
+
     "Convert Date properly" in {
       implicit val formats = DefaultFormats.lossless
       val dt: Date = new Date
@@ -75,6 +109,16 @@ object BsonDSLSpec extends Specification("BsonDSL Specification") {
       val dbo: DBObject = JObjectParser.parse(qry)
 
       dbo.get("now") must_== dt
+    }
+
+    "Convert List[Date] properly" in {
+      implicit val formats = DefaultFormats.lossless
+      val dateList = new Date :: new Date :: new Date :: Nil
+      val qry: JObject = ("dts" -> dateList)
+      val dbo: DBObject = JObjectParser.parse(qry)
+      val dateList2: List[Date] = dbo.get("dts").asInstanceOf[BasicDBList].toList.map(_.asInstanceOf[Date])
+
+      dateList2 must_== dateList
     }
   }
 }
