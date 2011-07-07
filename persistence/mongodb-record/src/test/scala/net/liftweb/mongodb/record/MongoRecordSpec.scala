@@ -167,8 +167,9 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
   "MongoRecord" should {
     checkMongoIsRunning
 
+    val binData: Array[Byte] = Array(18, 19, 20)
+
     val fttr = FieldTypeTestRecord.createRecord
-      //.mandatoryBinaryField()
       .mandatoryBooleanField(false)
       .mandatoryCountryField(Countries.USA)
       .mandatoryDecimalField(BigDecimal("3.14"))
@@ -182,6 +183,9 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       .mandatoryStringField("string")
       .mandatoryTextareaField("string")
       .mandatoryTimeZoneField("America/Chicago")
+
+    val bftr = BinaryFieldTestRecord.createRecord
+      .mandatoryBinaryField(binData)
 
     val mfttr = MongoFieldTypeTestRecord.createRecord
       .mandatoryDateField(new Date)
@@ -327,6 +331,14 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       fttrFromDb must notBeEmpty
       fttrFromDb foreach { tr =>
         tr mustEqual fttr
+      }
+
+      bftr.save
+
+      val bftrFromDb = BinaryFieldTestRecord.find(bftr.id.value)
+      bftrFromDb must notBeEmpty
+      bftrFromDb foreach { tr =>
+        tr mustEqual bftr
       }
     }
 

@@ -68,10 +68,6 @@ trait HarnessedLifecycleCallbacks extends LifecycleCallbacks {
 class FieldTypeTestRecord private () extends MongoRecord[FieldTypeTestRecord] with ObjectIdPk[FieldTypeTestRecord] {
   def meta = FieldTypeTestRecord
 
-  object mandatoryBinaryField extends BinaryField(this)
-  object legacyOptionalBinaryField extends BinaryField(this) { override def optional_? = true }
-  object optionalBinaryField extends OptionalBinaryField(this)
-
   object mandatoryBooleanField extends BooleanField(this)
   object legacyOptionalBooleanField extends BooleanField(this) { override def optional_? = true }
   object optionalBooleanField extends OptionalBooleanField(this)
@@ -135,7 +131,6 @@ class FieldTypeTestRecord private () extends MongoRecord[FieldTypeTestRecord] wi
   override def equals(other: Any): Boolean = other match {
     case that: FieldTypeTestRecord =>
       this.id.value == that.id.value &&
-      //this.mandatoryBinaryField.value == that.mandatoryBinaryField.value &&
       this.mandatoryBooleanField.value == that.mandatoryBooleanField.value &&
       this.mandatoryCountryField.value == that.mandatoryCountryField.value &&
       this.mandatoryDecimalField.value == that.mandatoryDecimalField.value &&
@@ -153,9 +148,55 @@ class FieldTypeTestRecord private () extends MongoRecord[FieldTypeTestRecord] wi
   }
 }
 
-case class MongoCaseClassTestObject(intField: Int, stringField: String)
-
 object FieldTypeTestRecord extends FieldTypeTestRecord with MongoMetaRecord[FieldTypeTestRecord]
+
+class BinaryFieldTestRecord extends MongoRecord[BinaryFieldTestRecord] with IntPk[BinaryFieldTestRecord] {
+  def meta = BinaryFieldTestRecord
+
+  object mandatoryBinaryField extends BinaryField(this) {
+    // compare the elements of the Array
+    override def equals(other: Any): Boolean = other match {
+      case that: BinaryField[Any] =>
+        this.value.zip(that.value).filter(t => t._1 != t._2).length == 0
+      case _ => false
+    }
+  }
+  object legacyOptionalBinaryField extends BinaryField(this) {
+    override def optional_? = true
+    // compare the elements of the Array
+    override def equals(other: Any): Boolean = other match {
+      case that: BinaryField[Any] => (this.valueBox, that.valueBox) match {
+        case (Empty, Empty) => true
+        case (Full(a), Full(b)) =>
+          a.zip(b).filter(t => t._1 != t._2).length == 0
+        case _ => false
+      }
+      case _ => false
+    }
+  }
+  object optionalBinaryField extends OptionalBinaryField(this) {
+    // compare the elements of the Array
+    override def equals(other: Any): Boolean = other match {
+      case that: OptionalBinaryField[Any] => (this.valueBox, that.valueBox) match {
+        case (Empty, Empty) => true
+        case (Full(a), Full(b)) =>
+          a.zip(b).filter(t => t._1 != t._2).length == 0
+        case _ => false
+      }
+      case _ => false
+    }
+  }
+
+  override def equals(other: Any): Boolean = other match {
+    case that:BinaryFieldTestRecord =>
+      this.id.value == that.id.value &&
+      this.mandatoryBinaryField == that.mandatoryBinaryField &&
+      this.legacyOptionalBinaryField == that.legacyOptionalBinaryField &&
+      this.optionalBinaryField == that.optionalBinaryField
+    case _ => false
+  }
+}
+object BinaryFieldTestRecord extends BinaryFieldTestRecord with MongoMetaRecord[BinaryFieldTestRecord]
 
 
 case class TypeTestJsonObject(
@@ -220,6 +261,8 @@ class PasswordTestRecord private () extends MongoRecord[PasswordTestRecord] with
   object password extends MongoPasswordField(this, 3)
 }
 object PasswordTestRecord extends PasswordTestRecord with MongoMetaRecord[PasswordTestRecord]
+
+case class MongoCaseClassTestObject(intField: Int, stringField: String)
 
 class ListTestRecord private () extends MongoRecord[ListTestRecord] with UUIDPk[ListTestRecord] {
   def meta = ListTestRecord

@@ -99,6 +99,7 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
           case x if mongotype_?(x.getClass) => dbo.add(f.name, x)
           case x if datetype_?(x.getClass) => dbo.add(f.name, datetype2dbovalue(x))
           case x: BsonRecord[_] => dbo.add(f.name, x.asDBObject)
+          case x: Array[Byte] => dbo.add(f.name, x)
           case o => dbo.add(f.name, o.toString)
         })
       }
