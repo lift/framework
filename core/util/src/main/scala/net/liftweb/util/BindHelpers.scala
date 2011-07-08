@@ -1024,7 +1024,7 @@ trait BindHelpers {
           val bound = e.attributes.filter {
             case up: UnprefixedAttribute => false
             case pa: PrefixedAttribute =>
-              pa.pre == "lift" && pa.key == "bind"
+              pa.pre == "lift" && pa.key == "bind" && (null ne pa.value)
             case _ => false
           }
           
@@ -2223,7 +2223,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     
     while (cur != Null) {
       cur match {
-        case up: UnprefixedAttribute => {
+        case up: UnprefixedAttribute if (null ne up.value) => {
           val key = up.key
           val value = up.value.text
           import Helpers._
@@ -2237,7 +2237,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
           theAttrs += key -> value
         }
         
-        case pa: PrefixedAttribute => {
+        case pa: PrefixedAttribute if (null ne pa.value) => {
           theAttrs += ((pa.pre+":"+pa.key) -> pa.value.text)
         }
         
