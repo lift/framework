@@ -29,10 +29,12 @@ object JsonAST {
    */
   def concat(xs: JValue*) = xs.foldLeft(JNothing: JValue)(_ ++ _)
 
+  object JValue extends Merge.Mergeable
+
   /**
    * Data type for Json AST.
    */
-  sealed abstract class JValue extends Merge.Mergeable with Diff.Diffable {
+  sealed abstract class JValue extends Diff.Diffable {
     type Values
 
     /** XPath-like expression to query JSON fields by name. Matches only fields on
