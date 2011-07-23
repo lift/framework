@@ -184,15 +184,9 @@ private[json] object Meta {
     }
 
   private[json] def unmangleName(name: String) =
-    unmangledNames.memoize(name, operators.foldLeft(_)((n, o) => n.replace(o._1, o._2)))
+    unmangledNames.memoize(name, scala.reflect.NameTransformer.decode)
 
   private[json] def fail(msg: String, cause: Exception = null) = throw new MappingException(msg, cause)
-
-  private val operators = Map(
-    "$eq" -> "=", "$greater" -> ">", "$less" -> "<", "$plus" -> "+", "$minus" -> "-",
-    "$times" -> "*", "$div" -> "/", "$bang" -> "!", "$at" -> "@", "$hash" -> "#",
-    "$percent" -> "%", "$up" -> "^", "$amp" -> "&", "$tilde" -> "~", "$qmark" -> "?",
-    "$bar" -> "|", "$bslash" -> "\\")
 
   private class Memo[A, R] {
     private var cache = Map[A, R]()

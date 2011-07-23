@@ -20,10 +20,6 @@ package json
 import java.util.Date
 import org.specs.Specification
 
-
-/**
- * Systems under specification for Extraction Examples.
- */
 object ExtractionExamples extends Specification("Extraction Examples Specification") {
   implicit val formats = DefaultFormats
 

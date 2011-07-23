@@ -19,10 +19,6 @@ package json
 
 import org.specs.Specification
 
-
-/**
- * System under specification for Extraction bugs.
- */
 object ExtractionBugs extends Specification("Extraction bugs Specification") {
   implicit val formats = DefaultFormats
   
@@ -48,6 +44,10 @@ object ExtractionBugs extends Specification("Extraction bugs Specification") {
     extracted mustEqual ExtractWithAnyRef()
   }
 
+  "Extraction should work with unicode encoded field names (issue 1075)" in {
+    parse("""{"foo.bar,baz":"x"}""").extract[UnicodeFieldNames] mustEqual UnicodeFieldNames("x")
+  }
+
   case class OptionOfInt(opt: Option[Int])
 
   case class PMap(m: Map[String, List[String]])
@@ -59,4 +59,6 @@ object ExtractionBugs extends Specification("Extraction bugs Specification") {
   }
 
   case class ExtractWithAnyRef()
+
+  case class UnicodeFieldNames(`foo.bar,baz`: String)
 }
