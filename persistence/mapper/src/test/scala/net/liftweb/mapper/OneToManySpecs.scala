@@ -43,6 +43,19 @@ object OneToManySpecs extends Specification {
       fields.length must_== 1
       fields(0).asInstanceOf[Any] must_== contact.phones
     }
+    "cascade delete" in {
+      val contact = Contact.create
+      contact.phones += Phone.create
+      contact.save
+
+      Contact.count must_== 1
+      Phone.count must_== 1
+
+      contact.delete_!
+
+      Contact.count must_== 0
+      Phone.count must_== 0
+    }
   }
 
 }
@@ -51,13 +64,13 @@ object OneToManySpecs extends Specification {
 
 class Contact extends LongKeyedMapper[Contact] with IdPK with OneToMany[Long, Contact] {
   def getSingleton = Contact
-  object phones extends MappedOneToMany(Phone, Phone.contact)
+  object phones extends MappedOneToMany(Phone, Phone.contact) with Cascade[Phone]
 }
 object Contact extends Contact with LongKeyedMetaMapper[Contact]
 
 class Phone extends LongKeyedMapper[Phone] with IdPK {
   def getSingleton = Phone
-  object contact extends LongMappedMapper(this, Contact)
+  object contact extends MappedLongForeignKey(this, Contact)
   object number extends MappedString(this, 10)
 }
 object Phone extends Phone with LongKeyedMetaMapper[Phone]
