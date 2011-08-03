@@ -654,13 +654,13 @@ object Loc {
    * Calculate additional query parameters to add as a query
    * string to the Loc
    */
-  case class QueryParameters(f: () => List[(String, String)])
+  case class QueryParameters(f: () => List[(String, String)]) extends AnyLocParam
 
   /**
    * Calculate additional query parameters to add as a query
    * string to the Loc
    */
-  case class LocQueryParameters[T](f: Box[T] => List[(String, String)])
+  case class LocQueryParameters[T](f: Box[T] => List[(String, String)]) extends LocParam[T]
 
 
   /**
