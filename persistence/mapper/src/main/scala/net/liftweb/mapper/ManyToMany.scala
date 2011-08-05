@@ -39,7 +39,7 @@ trait ManyToMany extends BaseKeyedMapper {
    * If they are all successful returns true.
    */
   abstract override def save = {
-      manyToManyFields.forall(_.save) && super.save
+    super.save && manyToManyFields.forall(_.save)
   }
 
   /**
@@ -199,19 +199,18 @@ trait ManyToMany extends BaseKeyedMapper {
     /**
      * Save the state of this MappedManyToMany to the database.
      * This will do the following:
-     * 1) Prune references the following join table instances:
-     *  a. Those whose "parent" foreign key does not equal the parent's primary key
-     *  b. Those whose "child" foreign key's value is its defaultValue, i.e., -1
-     * 2) Delete all join table instances whose child instance was removed
-     * 3) Save all child instances
-     * 4) If step 3 succeeds save all join instances
-     * 5) Return true if steps 2-4 all returned true; otherwise false
+     * 1) Prune join table instances whose "child" foreign key's value is its defaultValue, i.e., -1
+     * 2) Set all join table instances' "parent" foreign key
+     * 3) Delete all join table instances whose child instance was removed
+     * 4) Save all child instances
+     * 5) If step 3 succeeds save all join instances
+     * 6) Return true if steps 2-4 all returned true; otherwise false
      */
     def save = {
       _joins = joins.filter { join =>
-          thisFK(join)(_.is == ManyToMany.this.primaryKeyField.is) &&
-            otherFK(join)(f => f.is != f.defaultValue)
+        otherFK(join)(f => f.is != f.defaultValue)
       }
+      _joins foreach { thisFK(_)(_ set ManyToMany.this.primaryKeyField.is) }
 
       removedJoins.forall {_.delete_!} & ( // continue saving even if deleting fails
         children.forall(_.save) &&

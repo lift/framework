@@ -24,8 +24,10 @@ import common.{Box, Full, Empty}
 import util.BindPlus._
 import util.{Helpers, BindHelpers}
 import Helpers._
-import http.{SHtml, S, DispatchSnippet}
+import http.{SHtml, S, DispatchSnippet, js}
 import S.?
+
+import js.JsCmds.{Script, Run}
 
 import mapper.{Mapper, MetaMapper, LongKeyedMetaMapper, MappedField}
 
@@ -245,7 +247,7 @@ trait ItemsListEditor[T<:Mapper[T]] {
   def customBind(item: T): NodeSeq=>NodeSeq = (ns: NodeSeq) => ns
 
   def edit(xhtml: NodeSeq): NodeSeq = {
-    def unsavedScript = (<head><script type="text/javascript">
+    def unsavedScript = (<head>{Script(Run("""
                            var safeToContinue = false
                            window.onbeforeunload = function(evt) {{  // thanks Tim!
                              if(!safeToContinue) {{
@@ -255,7 +257,7 @@ trait ItemsListEditor[T<:Mapper[T]] {
                                return reply;
                              }}
                            }}
-    </script></head>)
+    """))}</head>)
     val noPrompt = "onclick" -> "safeToContinue=true"
     val optScript = if(
       (items.added.length + items.removed.length == 0) &&
