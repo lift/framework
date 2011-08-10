@@ -48,6 +48,10 @@ object ExtractionBugs extends Specification("Extraction bugs Specification") {
     parse("""{"foo.bar,baz":"x"}""").extract[UnicodeFieldNames] mustEqual UnicodeFieldNames("x")
   }
 
+  "Extraction should not fail if case class has a companion object" in {
+    parse("""{"nums":[10]}""").extract[HasCompanion] mustEqual HasCompanion(List(10))
+  }
+
   case class OptionOfInt(opt: Option[Int])
 
   case class PMap(m: Map[String, List[String]])
@@ -61,4 +65,9 @@ object ExtractionBugs extends Specification("Extraction bugs Specification") {
   case class ExtractWithAnyRef()
 
   case class UnicodeFieldNames(`foo.bar,baz`: String)
+
+  object HasCompanion {
+    def hello = "hello"
+  }
+  case class HasCompanion(nums: List[Int])
 }

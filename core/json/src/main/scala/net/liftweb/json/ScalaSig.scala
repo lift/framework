@@ -22,7 +22,7 @@ import scala.tools.scalap.scalax.rules.scalasig._
 private[json] object ScalaSigReader {
   def readConstructor(argName: String, clazz: Class[_], typeArgIndex: Int, argNames: List[String]): Class[_] = {
     val cl = findClass(clazz)
-    val cstr = findConstructor(cl, argNames).getOrElse(Meta.fail("Can't find constructor " + clazz))
+    val cstr = findConstructor(cl, argNames).getOrElse(Meta.fail("Can't find constructor for " + clazz))
     findArgType(cstr, argNames.indexOf(argName), typeArgIndex)
   }
 
@@ -42,7 +42,7 @@ private[json] object ScalaSigReader {
   }
 
   private def findClass(sig: ScalaSig, clazz: Class[_]): Option[ClassSymbol] = {
-    sig.symbols.collect { case c: ClassSymbol => c }.find(_.name == clazz.getSimpleName).orElse {
+    sig.symbols.collect { case c: ClassSymbol if !c.isModule => c }.find(_.name == clazz.getSimpleName).orElse {
       sig.topLevelClasses.find(_.symbolInfo.name == clazz.getSimpleName).orElse {
         sig.topLevelObjects.map { obj => 
           val t = obj.infoType.asInstanceOf[TypeRefType]
