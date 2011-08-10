@@ -131,6 +131,30 @@ object SerializationBugs extends Specification {
     val s = Serialization.write(x)
     read[Eith](s) mustEqual x
   }
+
+  "Custom serializer should work as Map key (scala 2.9) (issue #1077)" in {
+    class SingleOrVectorSerializer extends Serializer[SingleOrVector[Double]] {
+      private val singleOrVectorClass = classOf[SingleOrVector[Double]]
+
+      def deserialize(implicit format: Formats) = {
+        case (TypeInfo(`singleOrVectorClass`, _), json) => json match {
+          case JObject(List(JField("val", JDouble(x)))) => SingleValue(x)
+          case JObject(List(JField("val", JArray(xs: List[JDouble])))) => VectorValue(xs.map(_.num).toIndexedSeq)
+          case x => throw new MappingException("Can't convert " + x + " to SingleOrVector")
+        }
+      }
+
+      def serialize(implicit format: Formats) = {
+        case SingleValue(x: Double) => JObject(List(JField("val", JDouble(x))))
+        case VectorValue(x: Vector[Double]) => JObject(List(JField("val", JArray(x.toList.map(JDouble(_))))))
+      }
+    }
+
+    implicit val formats = DefaultFormats + new SingleOrVectorSerializer
+
+    val ser = swrite(MapHolder(Map("hello" -> SingleValue(2.0))))
+    read[MapHolder](ser) mustEqual MapHolder(Map("hello" -> SingleValue(2.0)))
+  }
 }
 
 case class Eith(x: Either[String, Int])
@@ -160,3 +184,9 @@ package plan2 {
 }
 
 case class Opaque(x: JValue)
+
+sealed trait SingleOrVector[A]
+case class SingleValue[A](value: A) extends SingleOrVector[A]
+case class VectorValue[A](value: IndexedSeq[A]) extends SingleOrVector[A]
+
+case class MapHolder(a: Map[String, SingleOrVector[Double]])

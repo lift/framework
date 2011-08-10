@@ -33,7 +33,7 @@ private[json] object ScalaSigReader {
       else
         findField(findClass(current), name).getOrElse(read(current.getSuperclass))
     }
-    findArgTypeF(read(clazz), typeArgIndex)
+    findArgTypeForField(read(clazz), typeArgIndex)
   }
 
   private def findClass(clazz: Class[_]): ClassSymbol = {
@@ -64,6 +64,7 @@ private[json] object ScalaSigReader {
     def findPrimitive(t: Type): Symbol = t match { 
       case TypeRefType(ThisType(_), symbol, _) if isPrimitive(symbol) => symbol
       case TypeRefType(_, _, TypeRefType(ThisType(_), symbol, _) :: xs) => symbol
+      case TypeRefType(_, symbol, Nil) => symbol
       case TypeRefType(_, _, args) =>
         args(typeArgIndex) match {
           case ref @ TypeRefType(_, _, _) => findPrimitive(ref)
@@ -74,7 +75,7 @@ private[json] object ScalaSigReader {
     toClass(findPrimitive(s.children(argIdx).asInstanceOf[SymbolInfoSymbol].infoType))
   }
 
-  private def findArgTypeF(s: MethodSymbol, typeArgIdx: Int): Class[_] = {
+  private def findArgTypeForField(s: MethodSymbol, typeArgIdx: Int): Class[_] = {
     // FIXME can be removed when 2.8 no longer needs to be supported.
     // 2.8 does not have NullaryMethodType, work around that.
     /*
