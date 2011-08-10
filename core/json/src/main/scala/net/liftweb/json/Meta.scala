@@ -51,7 +51,7 @@ private[json] object Meta {
   case class Value(targetType: Class[_]) extends Mapping
   case class Cycle(targetType: Type) extends Mapping
   case class Dict(mapping: Mapping) extends Mapping
-  case class Col(targetType: Class[_], mapping: Mapping) extends Mapping
+  case class Col(targetType: TypeInfo, mapping: Mapping) extends Mapping
   case class Constructor(targetType: TypeInfo, choices: List[DeclaredConstructor]) extends Mapping {
     def bestMatching(argNames: List[String]): Option[DeclaredConstructor] = {
       val names = Set(argNames: _*)
@@ -125,26 +125,27 @@ private[json] object Meta {
       def fieldMapping(t: Type): (Mapping, Boolean) = t match {
         case pType: ParameterizedType => 
           val raw = rawClassOf(pType)
+          val info = TypeInfo(raw, Some(pType))
           if (classOf[Set[_]].isAssignableFrom(raw))
-            (mkContainer(t, `* -> *`, 0, Col.apply(classOf[Set[_]], _)), false)
+            (mkContainer(t, `* -> *`, 0, Col.apply(info, _)), false)
           else if (raw.isArray)
-            (mkContainer(t, `* -> *`, 0, Col.apply(raw, _)), false)
+            (mkContainer(t, `* -> *`, 0, Col.apply(info, _)), false)
           else if (classOf[Option[_]].isAssignableFrom(raw))
             (mkContainer(t, `* -> *`, 0, identity _), true)
           else if (classOf[Map[_, _]].isAssignableFrom(raw))
             (mkContainer(t, `(*,*) -> *`, 1, Dict.apply _), false)
           else if (classOf[Seq[_]].isAssignableFrom(raw))
-            (mkContainer(t, `* -> *`, 0, Col.apply(classOf[List[_]], _)), false)
+            (mkContainer(t, `* -> *`, 0, Col.apply(info, _)), false)
           else 
             mkConstructor(t)
         case aType: GenericArrayType =>
           // Couldn't find better way to reconstruct proper array type:
           val raw = java.lang.reflect.Array.newInstance(rawClassOf(aType.getGenericComponentType), 0: Int).getClass
-          (Col(raw, fieldMapping(aType.getGenericComponentType)._1), false)
+          (Col(TypeInfo(raw, None), fieldMapping(aType.getGenericComponentType)._1), false)
         case raw: Class[_] =>
           if (primitive_?(raw)) (Value(raw), false)
           else if (raw.isArray)
-            (mkContainer(t, `* -> *`, 0, Col.apply(raw, _)), false)
+            (mkContainer(t, `* -> *`, 0, Col.apply(TypeInfo(raw, None), _)), false)
           else 
             mkConstructor(t)
         case x => (Constructor(TypeInfo(classOf[AnyRef], None), Nil), false)

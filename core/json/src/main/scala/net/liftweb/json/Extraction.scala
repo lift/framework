@@ -187,7 +187,7 @@ object Extraction {
                       (implicit formats: Formats): Any = {
     def mkMapping(clazz: Class[_], typeArgs: Seq[Class[_]])(implicit formats: Formats): Meta.Mapping = {
       if (clazz == classOf[List[_]] || clazz == classOf[Set[_]] || clazz.isArray)
-        Col(clazz, mkMapping(typeArgs.head, typeArgs.tail))
+        Col(TypeInfo(clazz, None), mkMapping(typeArgs.head, typeArgs.tail))
       else if (clazz == classOf[Map[_, _]])
         Dict(mkMapping(typeArgs.tail.head, typeArgs.tail.tail))
       else mappingOf(clazz, typeArgs)
@@ -301,10 +301,14 @@ object Extraction {
       case c: Constructor => newInstance(c, root)
       case Cycle(targetType) => build(root, mappingOf(targetType))
       case Arg(path, m, optional) => mkValue(fieldValue(root), m, path, optional)
-      case Col(c, m) =>
-        if (c == classOf[List[_]]) newCollection(root, m, a => List(a: _*))
+      case Col(targetType, m) =>
+        val custom = formats.customDeserializer(formats)
+        val c = targetType.clazz
+        if (custom.isDefinedAt(targetType, root)) custom(targetType, root)
+        else if (c == classOf[List[_]]) newCollection(root, m, a => List(a: _*))
         else if (c == classOf[Set[_]]) newCollection(root, m, a => Set(a: _*))
         else if (c.isArray) newCollection(root, m, mkTypedArray(c))
+        else if (classOf[Seq[_]].isAssignableFrom(c)) newCollection(root, m, a => List(a: _*))
         else fail("Expected collection but got " + m + " for class " + c)
       case Dict(m) => root match {
         case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)

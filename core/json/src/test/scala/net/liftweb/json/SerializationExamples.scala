@@ -216,7 +216,7 @@ case class Fish(weight: Double) extends Animal
 case class Objs(objects: List[Obj[_]])
 case class Obj[A](a: A)
 
-object CustomClassExamples extends Specification {
+object CustomSerializerExamples extends Specification {
   import Serialization.{read, write => swrite}
   import JsonAST._
   import java.util.regex.Pattern
@@ -224,7 +224,7 @@ object CustomClassExamples extends Specification {
   class IntervalSerializer extends Serializer[Interval] {
     private val IntervalClass = classOf[Interval]
 
-    def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Interval] = {
+    def deserialize(implicit format: Formats) = {
       case (TypeInfo(IntervalClass, _), json) => json match {
         case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) =>
           new Interval(s.longValue, e.longValue)
@@ -232,7 +232,7 @@ object CustomClassExamples extends Specification {
       }
     }
 
-    def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
+    def serialize(implicit format: Formats) = {
       case x: Interval =>
         JObject(JField("start", JInt(BigInt(x.startTime))) :: 
                 JField("end",   JInt(BigInt(x.endTime))) :: Nil)
@@ -242,14 +242,14 @@ object CustomClassExamples extends Specification {
   class PatternSerializer extends Serializer[Pattern] {
     private val PatternClass = classOf[Pattern]
 
-    def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Pattern] = {
+    def deserialize(implicit format: Formats) = {
       case (TypeInfo(PatternClass, _), json) => json match {
         case JObject(JField("$pattern", JString(s)) :: Nil) => Pattern.compile(s)
         case x => throw new MappingException("Can't convert " + x + " to Pattern")
       }
     }
 
-    def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
+    def serialize(implicit format: Formats) = {
       case x: Pattern => JObject(JField("$pattern", JString(x.pattern)) :: Nil)
     }
   }
@@ -257,7 +257,7 @@ object CustomClassExamples extends Specification {
   class DateSerializer extends Serializer[Date] {
     private val DateClass = classOf[Date]
 
-    def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Date] = {
+    def deserialize(implicit format: Formats) = {
       case (TypeInfo(DateClass, _), json) => json match {
         case JObject(List(JField("$dt", JString(s)))) =>
           format.dateFormat.parse(s).getOrElse(throw new MappingException("Can't parse "+ s + " to Date"))
@@ -265,13 +265,28 @@ object CustomClassExamples extends Specification {
       }
     }
 
-    def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
+    def serialize(implicit format: Formats) = {
       case x: Date => JObject(JField("$dt", JString(format.dateFormat.format(x))) :: Nil)
     }
   }
 
+  class IndexedSeqSerializer extends Serializer[IndexedSeq[_]] {
+    def deserialize(implicit format: Formats) = {
+      case (TypeInfo(clazz, ptype), json) if classOf[IndexedSeq[_]].isAssignableFrom(clazz) => json match {
+        case JArray(xs) => 
+          val t = ptype.getOrElse(throw new MappingException("parameterized type not known"))
+          xs.map(x => Extraction.extract(x, TypeInfo(t.getActualTypeArguments()(0).asInstanceOf[Class[_]], None))).toIndexedSeq
+        case x => throw new MappingException("Can't convert " + x + " to IndexedSeq")
+      }
+    }
+
+    def serialize(implicit format: Formats) = {
+      case i: IndexedSeq[_] => JArray(i.map(Extraction.decompose).toList)
+    }
+  }
+
   implicit val formats =  Serialization.formats(NoTypeHints) + 
-    new IntervalSerializer + new PatternSerializer + new DateSerializer
+    new IntervalSerializer + new PatternSerializer + new DateSerializer + new IndexedSeqSerializer
 
   val i = new Interval(1, 4)
   val ser = swrite(i)
@@ -286,10 +301,17 @@ object CustomClassExamples extends Specification {
   read[Pattern](pser).pattern mustEqual p.pattern
 
   val d = new Date(0)
-  var dser = swrite(d)
+  val dser = swrite(d)
   dser mustEqual """{"$dt":"1970-01-01T00:00:00.000Z"}"""
   read[Date](dser) mustEqual d
+
+  val xs = Indexed(Vector("a", "b", "c"))
+  val iser = swrite(xs)
+  iser mustEqual """{"xs":["a","b","c"]}"""
+  read[Indexed](iser).xs.toList mustEqual List("a","b","c") 
 }
+
+case class Indexed(xs: IndexedSeq[String])
 
 class Interval(start: Long, end: Long) {
   val startTime = start
