@@ -26,7 +26,7 @@ import org.bson.types.ObjectId
 import org.specs.Specification
 
 import common._
-import json._
+import json.{Num => _, _}
 import JsonDSL._
 import util.Helpers.randomString
 import http.{LiftSession, S}
