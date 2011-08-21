@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package json 
+package net.liftweb
+package json
 
 import java.util.{Date, TimeZone}
 
@@ -40,7 +40,7 @@ trait Formats { self: Formats =>
    * Parameter name reading strategy. By deafult 'paranamer' is used.
    */
   val parameterNameReader: ParameterNameReader = Meta.ParanamerReader
-  
+
   /**
    * Adds the specified type hints to this formats.
    */
@@ -68,7 +68,7 @@ trait Formats { self: Formats =>
   /**
    * Adds the specified custom serializers to this formats.
    */
-  def ++ (newSerializers: Traversable[Serializer[_]]): Formats = 
+  def ++ (newSerializers: Traversable[Serializer[_]]): Formats =
     newSerializers.foldLeft(this)(_ + _)
 
   /**
@@ -85,7 +85,7 @@ trait Formats { self: Formats =>
 
   private[json] def fieldSerializer(clazz: Class[_]): Option[FieldSerializer[_]] = {
     import ClassDelta._
-    
+
     val ord = Ordering[Int].on[(Class[_], FieldSerializer[_])](x => delta(x._1, clazz))
     fieldSerializers filter (_._1.isAssignableFrom(clazz)) match {
       case Nil => None
@@ -93,14 +93,14 @@ trait Formats { self: Formats =>
     }
   }
 
-  def customSerializer(implicit format: Formats) = 
-    customSerializers.foldLeft(Map(): PartialFunction[Any, JValue]) { (acc, x) => 
-      acc.orElse(x.serialize) 
+  def customSerializer(implicit format: Formats) =
+    customSerializers.foldLeft(Map(): PartialFunction[Any, JValue]) { (acc, x) =>
+      acc.orElse(x.serialize)
     }
 
-  def customDeserializer(implicit format: Formats) = 
-    customSerializers.foldLeft(Map(): PartialFunction[(TypeInfo, JValue), Any]) { (acc, x) => 
-      acc.orElse(x.deserialize) 
+  def customDeserializer(implicit format: Formats) =
+    customSerializers.foldLeft(Map(): PartialFunction[(TypeInfo, JValue), Any]) { (acc, x) =>
+      acc.orElse(x.deserialize)
     }
 }
 
@@ -135,11 +135,11 @@ trait Serializer[A] {
  * implicit val formats = DefaultFormats.withHints(hints)
  * </pre>
  */
-trait TypeHints {  
+trait TypeHints {
   import ClassDelta._
 
   val hints: List[Class[_]]
-  
+
   /** Return hint for given type.
    */
   def hintFor(clazz: Class[_]): String
@@ -151,14 +151,14 @@ trait TypeHints {
   def containsHint_?(clazz: Class[_]) = hints exists (_ isAssignableFrom clazz)
   def deserialize: PartialFunction[(String, JObject), Any] = Map()
   def serialize: PartialFunction[Any, JObject] = Map()
-  
+
   def components: List[TypeHints] = List(this)
-  
+
   /**
    * Adds the specified type hints to this type hints.
    */
   def + (hints: TypeHints): TypeHints = CompositeTypeHints(hints.components ::: components)
-  
+
   private[TypeHints] case class CompositeTypeHints(override val components: List[TypeHints]) extends TypeHints {
     val hints: List[Class[_]] = components.flatMap(_.hints)
 
@@ -170,8 +170,8 @@ trait TypeHints {
       .sort((x, y) => delta(x._2, clazz) - delta(y._2, clazz) < 0).head._1
 
     def classFor(hint: String): Option[Class[_]] = {
-      def hasClass(h: TypeHints) = 
-        util.control.Exception.allCatch opt (h.classFor(hint)) map (_.isDefined) getOrElse(false)
+      def hasClass(h: TypeHints) =
+        scala.util.control.Exception.allCatch opt (h.classFor(hint)) map (_.isDefined) getOrElse(false)
 
       components find (hasClass) flatMap (_.classFor(hint))
   }
@@ -186,7 +186,7 @@ trait TypeHints {
   }
 }
 
-private[json] object ClassDelta {  
+private[json] object ClassDelta {
   def delta(class1: Class[_], class2: Class[_]): Int = {
     if (class1 == class2) 0
     else if (class1.getInterfaces.contains(class2)) 0
@@ -233,13 +233,13 @@ object DefaultFormats extends DefaultFormats {
 trait DefaultFormats extends Formats {
   import java.text.{ParseException, SimpleDateFormat}
 
-  val dateFormat = new DateFormat {    
+  val dateFormat = new DateFormat {
     def parse(s: String) = try {
       Some(formatter.parse(s))
     } catch {
       case e: ParseException => None
     }
-    
+
     def format(d: Date) = formatter.format(d)
 
     private def formatter = {
