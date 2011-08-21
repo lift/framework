@@ -233,7 +233,7 @@ object AsInt {
   /**
    * Safely convert the specified String to an Int.
    */
-  def asDouble(in: String): Box[Double] = tryo{ParseDouble(in.trim)}
+  def asDouble(in: String): Box[Double] = tryo{in.trim.toDouble}
 
 /**
 * A helpful Int extractor
@@ -379,6 +379,6 @@ final class PartialFunctionWrapper[A](around: PartialFunction[A, _]) {
       def isDefinedAt(a: A) = around.isDefinedAt(a) && other.isDefinedAt(a)
       def apply(a: A): B = other.apply(a)
     }
-    
+
 }
 

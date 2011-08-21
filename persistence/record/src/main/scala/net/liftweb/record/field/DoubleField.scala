@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package record 
-package field 
+package net.liftweb
+package record
+package field
 
 import scala.xml._
 import net.liftweb.common._
@@ -29,7 +29,7 @@ import S._
 trait DoubleTypedField extends NumericTypedField[Double] {
   def setFromAny(in: Any): Box[Double] = setNumericFromAny(in, _.doubleValue)
 
-  def setFromString(s: String): Box[Double] = setBox(tryo(ParseDouble(s)))
+  def setFromString(s: String): Box[Double] = setBox(tryo(java.lang.Double.parseDouble(s)))
 
   def defaultValue = 0.0
 

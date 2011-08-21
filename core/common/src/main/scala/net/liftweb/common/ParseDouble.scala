@@ -21,7 +21,13 @@ package common
  * Safely parse a String into a Double, avoiding the JVM bug
  * that causes the thread to hang if the String is
  * 2.2250738585072012e-308
+ *
+ * This wonkaround is not recommended anymore. Instead consider using a
+ * newer version of JVM which has the necessary fix.
+ *
+ * @see http://blogs.oracle.com/security/entry/security_alert_for_cve-2010-44
  */
+@deprecated("Use a newer or patched JVM instead.")
 object ParseDouble {
   private val BrokenDouble = BigDecimal("2.2250738585072012e-308")
 
