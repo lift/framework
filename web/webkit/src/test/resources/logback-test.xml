@@ -1,0 +1,13 @@
+<configuration>
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d [%thread] %level %logger - %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="org.mortbay.log" level="INFO" />
+
+  <root level="${logging-level:-INFO}">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+</configuration>
