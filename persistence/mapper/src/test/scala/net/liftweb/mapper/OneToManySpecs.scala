@@ -17,13 +17,9 @@
 package net.liftweb {
 package mapper {
 
-import org.specs._
-import _root_.org.specs.runner.{JUnit3, ConsoleRunner}
+import org.specs.Specification
 
-class OneToManySpecsAsTest extends JUnit3(OneToManySpecs)
-object OneToManySpecsRunner extends ConsoleRunner(OneToManySpecs)
-
-object OneToManySpecs extends Specification {
+object OneToManySpecs extends Specification("One to Many Specification") {
 
   val provider = DbProviders.H2MemoryProvider
 
