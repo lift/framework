@@ -26,7 +26,7 @@ import org.bson.types.ObjectId
 import org.specs.Specification
 
 import common._
-import json.{Num => JsonNum, _}
+import json._
 import JsonDSL._
 import util.Helpers.randomString
 import http.{LiftSession, S}
@@ -320,7 +320,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       )
     }
   }
-  
+
   "MongoCaseClassListField" should {
     "setFromAny a List" in {
       val rec = ListTestRecord.createRecord
