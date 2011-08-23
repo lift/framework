@@ -655,6 +655,17 @@ object Loc {
   }
 
   object Snippet {
+    /**
+     * Build a Loc.Snippet instance out of a name and a DispatchSnippet (or StatefulSnippet, LiftScreen or Wizard).
+     * The "render" method will be invoked on the Dispatch snippet
+     */
+    def apply(name: String, snippet: DispatchSnippet): Snippet =
+      new Snippet(name, ns => snippet.dispatch("render")(ns)) // Issue #919
+
+    /**
+     * Build a Loc.Snippet instance for a given name and a function.  Note that the function is call-by-name
+     * so that it will be created each time it's used.  This is useful for CSS Selector Transforms
+     */
     def apply(name: String, func: => NodeSeq => NodeSeq): Snippet = new Snippet(name, func)
     def unapply(in: Snippet): Option[(String, NodeSeq => NodeSeq)] = Some(in.name -> in.func)
   }
