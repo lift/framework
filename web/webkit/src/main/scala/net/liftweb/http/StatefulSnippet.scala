@@ -21,7 +21,7 @@ import net.liftweb.common._
 import net.liftweb._
 import util._
 import Helpers._
-import scala.xml.{NodeSeq, Elem}
+import xml.{Text, NodeSeq, Elem}
 
 /**
  * The same StatefulSnippet instance is used across a given page rendering.
@@ -167,3 +167,31 @@ trait DispatchSnippet {
   def dispatch: DispatchIt
 }
 
+/**
+ * Mix this snippet into any snippet.  If the snippet is invoked in response to a
+ * stateless request, then the behavior method is called with the method name of
+ * the snippet (usually render, but there may be others if you specify a method
+ * after the snippet name: MySnippet.dothing).
+ */
+trait StatelessBehavior {
+  /**
+   * Given the method name, return the transformation for the method
+   */
+  def behavior(methodName: String): NodeSeq => NodeSeq
+}
+
+/**
+ * A simpler way to define behavior if the snippet is invoked.  Just implement the behavior() method
+ * and all methods for the snippet will use that behavior.
+ */
+trait DefaultStatelessBehavior extends StatelessBehavior {
+  def behavior(): NodeSeq => NodeSeq
+  def behavior(methodName: String): NodeSeq => NodeSeq = behavior()
+}
+
+/**
+ * A "default" implementation of StatelessBehavior.  Just ignore everything and return a zero-length Text.
+ */
+trait BlankStatelessBehavior extends StatelessBehavior {
+  def behavior(methodName: String): NodeSeq => NodeSeq = ignore => Text("")
+}

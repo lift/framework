@@ -65,6 +65,12 @@ object LiftRulesMocker {
 }
 
 /**
+ * The data structure that contains information to determine if the
+ * request should be treated as a stateful or stateless request
+ */
+final case class StatelessReqTest(path: List[String], httpReq: HTTPRequest)
+
+/**
  * The Lift configuration singleton
  */
 object LiftRules extends LiftRulesMocker {
@@ -86,6 +92,13 @@ object LiftRules extends LiftRulesMocker {
    * should result in stateless servicing of that path
    */
   type StatelessTestPF = PartialFunction[List[String], Boolean]
+
+
+  /**
+   * The test between the path of a request, the HTTP request, and whether that path
+   * should result in stateless servicing of that path
+   */
+  type StatelessReqTestPF = PartialFunction[StatelessReqTest, Boolean]
 
   type RewritePF = PartialFunction[RewriteRequest, RewriteResponse]
   type SnippetPF = PartialFunction[List[String], NodeSeq => NodeSeq]
@@ -345,9 +358,21 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * Certain paths within your application can be marked as stateless
    * and if there is access to Lift's stateful facilities (setting
    * SessionVars, updating function tables, etc.) the developer will
-   * receive a notice and the operation will not complete
+   * receive a notice and the operation will not complete.  This test
+   * has been deprecated in favor of statelessReqTest which also passes
+   * the HTTPRequest instance for testing of the user agent and other stuff.
    */
+  @deprecated("Use statelessReqTest")
   val statelessTest = RulesSeq[StatelessTestPF]
+
+
+  /**
+   * Certain paths and requests within your application can be marked as stateless
+   * and if there is access to Lift's stateful facilities (setting
+   * SessionVars, updating function tables, etc.) the developer will
+   * receive a notice and the operation will not complete.
+   */
+  val statelessReqTest = RulesSeq[StatelessReqTestPF]
 
   val statelessSession: FactoryMaker[Req => LiftSession with StatelessSession] =
     new FactoryMaker((req: Req) => new LiftSession(req.contextPath,

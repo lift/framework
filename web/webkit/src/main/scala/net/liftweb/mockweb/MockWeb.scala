@@ -97,7 +97,8 @@ object MockWeb {
       if(liftRulesEnabled) {
         // Apply stateless rewrites
         Req(req, LiftRules.statelessRewrite.toList,
-            LiftRules.statelessTest.toList, System.nanoTime)
+            LiftRules.statelessTest.toList,
+            LiftRules.statelessReqTest.toList, System.nanoTime)
       } else {
         Req(req, Nil, System.nanoTime)
       }

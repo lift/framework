@@ -58,7 +58,9 @@ trait HTTPProvider {
     }
 
     val newReq = Req(req, LiftRules.statelessRewrite.toList,
-                     LiftRules.statelessTest.toList, System.nanoTime)
+                     LiftRules.statelessTest.toList,
+    LiftRules.statelessReqTest.toList,
+      System.nanoTime)
 
     CurrentReq.doWith(newReq) {
       URLRewriter.doWith(url => 

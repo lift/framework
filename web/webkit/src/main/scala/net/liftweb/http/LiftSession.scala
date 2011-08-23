@@ -1556,6 +1556,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
               S.locateSnippet(snippet).map(_(kids)) openOr {
                 val (cls, method) = splitColonPair(snippet)
                 (locateAndCacheSnippet(cls)) match {
+                  // deal with a stateless request when a snippet has
+                  // different behavior in stateless mode
+                  case Full(inst: StatelessBehavior) if !stateful_? =>
+                    inst.behavior(method)(kids)
+
                   case Full(inst: StatefulSnippet) if !stateful_? =>
                     reportSnippetError(page, snippetName,
                       LiftRules.SnippetFailures.StateInStateless,
@@ -1685,6 +1690,12 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
             wholeTag)
         }
       } catch {
+        case ExclosedSnippetFailure(e) =>
+          reportSnippetError(page, snippetName,
+            e.snippetFailure,
+            e.buildStackTrace,
+            wholeTag)
+          
         case e: SnippetFailureException =>
           reportSnippetError(page, snippetName,
             e.snippetFailure,
@@ -1725,6 +1736,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   }
 
+  private object ExclosedSnippetFailure {
+    def unapply(e: Throwable): Option[SnippetFailureException] = e.getCause match {
+      case null => None
+      case e: SnippetFailureException => Some(e)
+      case _ => None
+    }
+  }
 
   /**
    * Apply HTML specific corrections such as adding the context path etc.

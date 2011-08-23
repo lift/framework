@@ -356,9 +356,10 @@ object Req {
   }
 
   def apply(original: Req, rewrite: List[LiftRules.RewritePF]): Req = 
-    this.apply(original, rewrite, Nil)
+    this.apply(original, rewrite, Nil, Nil)
 
-  def apply(original: Req, rewrite: List[LiftRules.RewritePF], statelessTest: List[LiftRules.StatelessTestPF]): Req = {
+  def apply(original: Req, rewrite: List[LiftRules.RewritePF], statelessTest: List[LiftRules.StatelessTestPF],
+            otherStatelessTest: List[LiftRules.StatelessReqTestPF]): Req = {
 
     def processRewrite(path: ParsePath, params: Map[String, String]): RewriteResponse =
     NamedPF.applyBox(RewriteRequest(path, original.requestType, original.request), rewrite) match {
@@ -369,7 +370,11 @@ object Req {
 
     val rewritten = processRewrite(original.path, Map.empty)
 
-    val stateless = NamedPF.applyBox(rewritten.path.wholePath, statelessTest)
+    val wholePath = rewritten.path.wholePath
+
+
+    val stateless =  NamedPF.applyBox(StatelessReqTest(wholePath, original.request), otherStatelessTest) or
+      NamedPF.applyBox(wholePath, statelessTest)
 
     new Req(rewritten.path, original.contextPath, 
             original.requestType, original.contentType, original.request,
@@ -378,10 +383,12 @@ object Req {
             original.paramCalculator, original.addlParams ++ rewritten.params)
   }
 
-  def apply(request: HTTPRequest, rewrite: List[LiftRules.RewritePF],  nanoStart: Long): Req = this.apply(request, rewrite, Nil, nanoStart)
+  def apply(request: HTTPRequest, rewrite: List[LiftRules.RewritePF],  nanoStart: Long): Req =
+    this.apply(request, rewrite, Nil, Nil, nanoStart)
 
 
-  def apply(request: HTTPRequest, rewrite: List[LiftRules.RewritePF], statelessTest: List[LiftRules.StatelessTestPF], nanoStart: Long): Req = {
+  def apply(request: HTTPRequest, rewrite: List[LiftRules.RewritePF], statelessTest: List[LiftRules.StatelessTestPF],
+            otherStatelessTest: List[LiftRules.StatelessReqTestPF], nanoStart: Long): Req = {
     val reqType = RequestType(request)
     val contextPath = LiftRules.calculateContextPath() openOr request.contextPath
     val turi = if (request.uri.length >= contextPath.length) request.uri.substring(contextPath.length) else ""
@@ -488,7 +495,10 @@ object Req {
       paramCalcInfo.thunk
     }
 
-    val stateless = NamedPF.applyBox(rewritten.path.wholePath, statelessTest)
+    val wholePath = rewritten.path.wholePath
+
+    val stateless =  NamedPF.applyBox(StatelessReqTest(wholePath, request), otherStatelessTest) or
+      NamedPF.applyBox(wholePath, statelessTest)
 
     new Req(rewritten.path, contextPath, reqType,
             contentType, request, nanoStart,
@@ -497,7 +507,7 @@ object Req {
 
   private def fixURI(uri: String) = uri indexOf ";jsessionid" match {
     case -1 => uri
-    case x@_ => uri substring (0, x)
+    case x@_ => uri.substring(0, x)
   }
 
   /**

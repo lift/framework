@@ -1528,7 +1528,8 @@ for {
         !old.path.partPath.isEmpty && 
         (old.request ne null))
       Req(old, S.sessionRewriter.map(_.rewrite) ::: 
-          LiftRules.statefulRewrite.toList, LiftRules.statelessTest.toList)
+          LiftRules.statefulRewrite.toList, LiftRules.statelessTest.toList,
+      LiftRules.statelessReqTest.toList)
     else old
   }
 
@@ -2164,7 +2165,7 @@ for {
    */
   def functionMap: Map[String, AFuncHolder] = __functionMap.box.openOr(Map())
 
-  private def testFunctionMap[T](f: T): T = 
+  private def testFunctionMap[T](f: => T): T =
     session match {
       case Full(s) if s.stateful_? => f
       case _ => throw new StateInStatelessException(
@@ -2175,10 +2176,11 @@ for {
    * Clears the function map.  potentially very destuctive... use at your own risk!
    */
   def clearFunctionMap {
-    if (__functionMap.box.map(_.size).openOr(0) > 0) { // Issue #1037
-    testFunctionMap {
-      __functionMap.box.foreach(ignore  => __functionMap.set(Map()))
-    }
+    if (__functionMap.box.map(_.size).openOr(0) > 0) {
+      // Issue #1037
+      testFunctionMap {
+        __functionMap.box.foreach(ignore => __functionMap.set(Map()))
+      }
     }
   }
 
@@ -2626,6 +2628,7 @@ for {
     else {
       val req = Req(httpRequest, LiftRules.statelessRewrite.toList,
                     LiftRules.statelessTest.toList,
+                    LiftRules.statelessReqTest.toList,
                     System.nanoTime)
 
       CurrentReq.doWith(req) {

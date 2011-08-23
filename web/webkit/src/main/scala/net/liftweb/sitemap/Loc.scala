@@ -187,8 +187,8 @@ trait Loc[T] {
    * the page into stateless mode)
    */
   def stateless_? : Boolean = 
-    if (Props.devMode) calcStateless()
-    else _frozenStateless
+    if (Props.devMode) (calcStateless() || reqCalcStateless())
+    else (_frozenStateless || reqCalcStateless())
 
   /**
    * A lazy val used to track statelessness for non-dev mode.
@@ -200,10 +200,36 @@ trait Loc[T] {
    * The method to calculate if this Loc is stateless.  By default
    * looks for the Loc.Stateless Param
    */
-  protected def calcStateless() = allParams.find {
+  protected def calcStateless(): Boolean = allParams.find {
     case Loc.Stateless => true
     case _ => false
   }.isDefined
+
+  /**
+   * Find the stateless calculation Loc params
+   */
+  protected def findStatelessCalc: (Box[Loc.CalcStateless], Box[Loc.CalcParamStateless[T]]) = (allParams.collect {
+    case v @ Loc.CalcStateless(_) => v
+  }.headOption,
+    allParams.collect {
+    case v @ Loc.CalcParamStateless(_) => v
+  }.headOption)
+
+  /**
+   * The cached Loc params
+   */
+  protected lazy val _foundStatelessCalc: (Box[Loc.CalcStateless], Box[Loc.CalcParamStateless[T]]) = findStatelessCalc
+
+  protected def foundStatelessCalc: (Box[Loc.CalcStateless], Box[Loc.CalcParamStateless[T]])  =
+  if (Props.devMode) findStatelessCalc else _foundStatelessCalc
+
+  /**
+   * run the stateless calculation
+   */
+  protected def reqCalcStateless(): Boolean = {
+    val (np, param) = foundStatelessCalc
+    (np.map(_.f()) or param.map(_.f(currentValue))) openOr false
+  }
 
   lazy val calcSnippets: SnippetTest = {
     def buildPF(in: Loc.Snippet): PartialFunction[String, NodeSeq => NodeSeq] = {
@@ -674,6 +700,8 @@ object Loc {
    */
   case object Stateless extends AnyLocParam
 
+
+
   /**
    * The Loc does not represent a menu itself, but is the parent menu for
    * children (implies HideIfNoKids)
@@ -684,6 +712,17 @@ object Loc {
    * Extension point for user-defined LocParam instances.
    */
   trait UserLocParam[-T] extends LocParam[T]
+
+  /**
+   * A function that calculates the statelessness of the Loc for the given request
+   */
+  case class CalcStateless(f: () => Boolean) extends AnyLocParam
+
+  /**
+   * A function that calculates the statelessness of the Loc for the given request
+   * with the parameterized type passed into the function
+   */
+  case class CalcParamStateless[-T](f: Box[T] => Boolean) extends LocParam[T]
 
   /**
    * A subclass of LocSnippets with a built in dispatch method (no need to
