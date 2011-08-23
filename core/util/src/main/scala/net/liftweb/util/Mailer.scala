@@ -28,13 +28,14 @@ import actor._
 /**
  * Utilities for sending email.
  */
-object Mailer extends MailerImpl
+object Mailer extends Mailer
 
 /**
- * This trait implmenets the mail sending
+ * This trait implmenets the mail sending.  You can create subclasses of this class/trait and
+ * implement your own mailer functionality
  */
-protected trait MailerImpl extends SimpleInjector {
-  private val logger = Logger(classOf[MailerImpl])
+trait Mailer extends SimpleInjector {
+  private val logger = Logger(classOf[Mailer])
   
   sealed abstract class MailTypes
   /**
@@ -280,7 +281,7 @@ protected trait MailerImpl extends SimpleInjector {
         message.setContent(multiPart);
     }
 
-    MailerImpl.this.performTransportSend(message)
+    Mailer.this.performTransportSend(message)
   }
 
   protected lazy val msgSender = new MsgSender

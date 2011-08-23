@@ -99,7 +99,7 @@ object MailerSpec extends Specification("Mailer Specification") {
   }
 }
 
-object MyMailer extends MailerImpl {
+object MyMailer extends Mailer {
     @volatile var lastMessage: Box[MimeMessage] = Empty
 
    testModeSend.default.set((msg: MimeMessage) => {
