@@ -274,8 +274,11 @@ trait BindHelpers {
    * Constant BindParam always returning the same value
    */
   final class TheStrBindParam(val name: String, value: String)
-          extends Tuple2(name, value) with BindParam {
-    def calcValue(in: NodeSeq): Option[NodeSeq] = Some(Text(value))
+    extends Tuple2(name, value) with BindParam {
+    def calcValue(in: NodeSeq): Option[NodeSeq] = value match {
+      case null => Some(NodeSeq.Empty)
+      case str => Some(Text(str))
+    }
   }
 
   object TheStrBindParam {
@@ -352,7 +355,7 @@ trait BindHelpers {
      * @param newAttr The new attribute label
      */
     def apply(name: String, myValue: String, newAttr: String) = 
-      new AttrBindParam(name, Text(myValue), newAttr)
+      new AttrBindParam(name, if (null eq myValue) NodeSeq.Empty else Text(myValue), newAttr)
 
     /**
      * Returns a prefixed attribute binding containing the specified NodeSeq
@@ -373,7 +376,8 @@ trait BindHelpers {
      * @param newAttr The new attribute in the form (prefix,label)
      */
     def apply(name: String, myValue: String, newAttr: Pair[String,String]) = 
-      PrefixedBindWithAttr(newAttr._1, new AttrBindParam(name, Text(myValue), newAttr._2))
+      PrefixedBindWithAttr(newAttr._1, new AttrBindParam(name,
+        if (null eq myValue) NodeSeq.Empty else Text(myValue), newAttr._2))
   }
 
   /**
@@ -641,7 +645,7 @@ trait BindHelpers {
 
   final class SymbolBindParam(val name: String, value: Symbol)
           extends Tuple2(name, value) with BindParam {
-    def calcValue(in: NodeSeq): Option[NodeSeq] = Some(Text(value.name))
+    def calcValue(in: NodeSeq): Option[NodeSeq] = Some(if (null eq value.name) NodeSeq.Empty else Text(value.name))
   }
 
   object SymbolBindParam {
@@ -650,7 +654,9 @@ trait BindHelpers {
 
   final class IntBindParam(val name: String, value: Int)
           extends Tuple2[String, Int](name, value) with BindParam {
-    def calcValue(in: NodeSeq): Option[NodeSeq] = Some(Text(value.toString))
+    def calcValue(in: NodeSeq): Option[NodeSeq] = Some(value.toString match {
+      case null => NodeSeq.Empty
+      case str => Text(str)})
   }
 
   object IntBindParam {
@@ -731,7 +737,10 @@ trait BindHelpers {
   object BindParamAssoc {
     implicit def canStrBoxNodeSeq(in: Box[Any]): Box[NodeSeq] = in.map(_ match {
       case null => Text("null")
-      case v => Text(v.toString)
+      case v => v.toString match {
+        case null => NodeSeq.Empty
+        case str => Text(str)
+      }
     })
   }
 
@@ -807,10 +816,16 @@ trait BindHelpers {
    */
   @deprecated("use -> instead")
   class BindParamAssoc(val name: String) {
-    def -->(value: String): BindParam = TheBindParam(name, Text(value))
+    def -->(value: String): BindParam = TheBindParam(name, if (null eq value) NodeSeq.Empty else Text(value))
     def -->(value: NodeSeq): BindParam = TheBindParam(name, value)
     def -->(value: Symbol): BindParam = TheBindParam(name, Text(value.name))
-    def -->(value: Any): BindParam = TheBindParam(name, Text(if (value == null) "null" else value.toString))
+    def -->(value: Any): BindParam = TheBindParam(name, Text(value match {
+      case null => "null"
+      case v => v.toString match {
+        case null => ""
+        case str => str
+      }
+    }))
     def -->(func: NodeSeq => NodeSeq): BindParam = FuncBindParam(name, func)
     def -->(value: Box[NodeSeq]): BindParam = TheBindParam(name, value.openOr(Text("Empty")))
   }
@@ -1420,6 +1435,7 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
       List(if (null eq str) NodeSeq.Empty else Text(str))
   }
 
+
   /**
    * Inserts a NodeSeq constant according to the CssSelector rules
    */
@@ -1507,7 +1523,10 @@ final class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]
    * StringPromotable includes Int, Long, Boolean, and Symbol
    */
   def replaceWith(strPromo: StringPromotable): CssSel = new CssBindImpl(stringSelector, css) {
-    def calculate(in: NodeSeq): Seq[NodeSeq] = List(Text(strPromo.toString))
+    def calculate(in: NodeSeq): Seq[NodeSeq] = strPromo.toString match {
+      case null => NodeSeq.Empty
+      case str => List(Text(str))
+    }
   }
 
   /**
@@ -1685,24 +1704,26 @@ object IterableFunc {
 
   implicit def itStringFuncPromotable(it: NodeSeq => String): IterableFunc =
     new IterableFunc {
-      def apply(in: NodeSeq): Seq[NodeSeq] = List(Text(it(in)))
+      def apply(in: NodeSeq): Seq[NodeSeq] = it(in) match {
+        case null => List(NodeSeq.Empty)
+        case str => List(Text(str))}
     }
 
 
   implicit def itStringPromotable(it: NodeSeq => Seq[String]): IterableFunc =
     new IterableFunc {
-      def apply(in: NodeSeq): Seq[NodeSeq] = it(in).map(a => Text(a))
+      def apply(in: NodeSeq): Seq[NodeSeq] = it(in).filter(_ ne null).map(a => Text(a))
     }
 
   implicit def boxStringPromotable(it: NodeSeq => Box[String]): IterableFunc =
     new IterableFunc {
-      def apply(in: NodeSeq): Seq[NodeSeq] = it(in).toList.map(a => Text(a))
+      def apply(in: NodeSeq): Seq[NodeSeq] = it(in).filter(_ ne null).toList.map(a => Text(a))
     }
 
 
   implicit def optionStringPromotable(it: NodeSeq => Option[String]): IterableFunc =
     new IterableFunc {
-      def apply(in: NodeSeq): Seq[NodeSeq] = it(in).toList.map(a => Text(a))
+      def apply(in: NodeSeq): Seq[NodeSeq] = it(in).filter(_ ne null).toList.map(a => Text(a))
     }
 }
 
@@ -1921,6 +1942,12 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     (idMap, nameMap, clzMap, attrMap, elemMap, starFunc, selThis)
   }
 
+  private def findElemIfThereIsOne(in: NodeSeq): NodeSeq = in match {
+    case e: Elem => e
+    case ns if ns.length == 1 && ns(0).isInstanceOf[Elem] => ns(0)
+    case ns => ns
+  }
+
   private abstract class SlurpedAttrs(val id: Box[String],val name: Box[String]) {
     def attrs: Map[String, String]
     def classes: List[String]
@@ -1957,7 +1984,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       bindList.map(b => (b, b.css.open_!.subNodes.open_!)).
       foldLeft(elem){
         case (elem, (bind, AttrSubNode(attr))) => {
-          val calced = bind.calculate(elem)
+          val calced = bind.calculate(elem).map(findElemIfThereIsOne _)
           val filtered = elem.attributes.filter{
             case up: UnprefixedAttribute => up.key != attr
             case _ => true
@@ -1977,7 +2004,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
         case (elem, (bind, AttrAppendSubNode(attr))) => {
           val org: NodeSeq = elem.attribute(attr).getOrElse(NodeSeq.Empty)
-          val calced = bind.calculate(elem).toList
+          val calced = bind.calculate(elem).toList.map(findElemIfThereIsOne _)
 
 
           if (calced.isEmpty) {
@@ -2013,7 +2040,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     }
 
       
-    // This is where the rules are applied -- DPP HERE
+    // This is where the rules are applied 
     final def applyRule(bind: CssBind, realE: Elem): NodeSeq = {
       def uniqueClasses(cv: String*): String = {
         import Helpers._
@@ -2124,7 +2151,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         }
           
         case x: EmptyBox => {
-          val calced = bind.calculate(realE)
+          val calced = bind.calculate(realE).map(findElemIfThereIsOne _)
 
           calced.length match {
             case 0 => NodeSeq.Empty

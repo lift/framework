@@ -28,7 +28,7 @@ import scala.xml.{NodeSeq, Text}
 /**
  * A menu location
  */
-trait Loc[T] {
+trait Loc[T <: AnyRef] {
   def name: String
 
   def link: Loc.Link[T]
@@ -659,7 +659,7 @@ object Loc {
      * Build a Loc.Snippet instance out of a name and a DispatchSnippet (or StatefulSnippet, LiftScreen or Wizard).
      * The "render" method will be invoked on the Dispatch snippet
      */
-    def apply(name: String, snippet: DispatchSnippet): Snippet =
+    def apply(name: String, snippet: => DispatchSnippet): Snippet =
       new Snippet(name, ns => snippet.dispatch("render")(ns)) // Issue #919
 
     /**
