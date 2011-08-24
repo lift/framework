@@ -875,7 +875,9 @@ trait S extends HasParams with Loggable {
    * @see LiftRules.resourceNames
    * @see LiftRules.resourceBundleFactories
    */
-  def resourceBundles: List[ResourceBundle] = {
+  def resourceBundles: List[ResourceBundle] = resourceBundles(locale)
+
+  def resourceBundles(loc: Locale): List[ResourceBundle] = {
     _resBundle.box match {
       case Full(Nil) => {
         _resBundle.set(
@@ -890,9 +892,9 @@ trait S extends HasParams with Loggable {
                   meth.invoke(null)
                 }
               }
-          List(ResourceBundle.getBundle(name, locale))
+          List(ResourceBundle.getBundle(name, loc))
         }.openOr(
-          NamedPF.applyBox((name, locale), LiftRules.resourceBundleFactories.toList).map(List(_)) openOr Nil
+          NamedPF.applyBox((name, loc), LiftRules.resourceBundleFactories.toList).map(List(_)) openOr Nil
           )))
         _resBundle.value
       }
@@ -925,6 +927,18 @@ trait S extends HasParams with Loggable {
    */
   def ?(str: String): String = ?!(str, resourceBundles)
 
+  /**
+   * Get a localized string or return the original string.
+   *
+   * @param str the string to localize
+   *
+   * @param locale specific locale that should be used to localize this string
+   *
+   * @return the localized version of the string
+   *
+   * @see # resourceBundles
+   */
+  def ?(str: String, locale: Locale): String = ?!(str, resourceBundles(locale))
   /**
    * Attempt to localize and then format the given string. This uses the String.format method
    * to format the localized string.
