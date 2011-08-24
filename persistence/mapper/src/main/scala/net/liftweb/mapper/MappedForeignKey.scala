@@ -250,6 +250,8 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
   def asSafeJs(obs: Box[KeyObfuscator]): JsExp =
   obs.map(o => JE.Str(o.obscure(dbKeyToTable, is))).openOr(JE.Num(is))
 
+  override def asJsExp: JsExp = if (defined_?) super.asJsExp else JE.JsNull
+
   override def asJsonValue: Box[JsonAST.JValue] =
     if (defined_?) super.asJsonValue else Full(JsonAST.JNull)
 

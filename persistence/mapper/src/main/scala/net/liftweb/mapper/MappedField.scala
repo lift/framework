@@ -237,6 +237,23 @@ trait MappedNullableField[NullableFieldType <: Any,OwnerType <: Mapper[OwnerType
   * All fields of this type are NULLable
   */
   override final def dbNotNull_? : Boolean = false
+
+  override def toString = is.map(_.toString) openOr ""
+
+  /**
+   * Create an input field for the item
+   */
+  override def _toForm: Box[NodeSeq] =
+  S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
+    Full(appendFieldId(<input type={formInputType}
+                       name={funcName}
+                       value={is match {
+                         case null => ""
+                         case Full(null) => ""
+                         case Full(s) => s.toString
+                         case _ => ""
+                       }}/>))
+  }
 }
 
 /**
