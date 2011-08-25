@@ -574,6 +574,43 @@ object CssBindHelpersSpec extends Specification  {
       (res \ "@href").text must_== "q?z=r&a=b&b=d"
     }
 
+    "remove an attribute from a class" in {
+      val func = ".foo [class!]" #> "andOther"
+
+      (func(<span class="foo andOther" />) \ "@class").text must_== "foo"
+    }
+
+    "remove an attribute from a class and the attribute if it's the only one left" in {
+      val func = ".foo [class!]" #> "foo"
+      val res = func(<span class="foo" />)
+
+      (res \ "@class").length must_== 0
+    }
+
+
+    "not remove a non-existant class" in {
+      val func = ".foo [class!]" #> "bar"
+      val res = func(<span class="foo" />)
+
+      (res \ "@class").text must_== "foo"
+    }
+
+
+    "remove an attribute from an attribute" in {
+      val func = "span [href!]" #> "foo"
+      val res = func(<span href="foo" />)
+
+      (res \ "@href").length must_== 0
+    }
+
+
+    "not remove a non-existant href" in {
+      val func = "span [href!]" #> "bar"
+      val res = func(<span href="foo bar" />)
+
+      (res \ "@href").text must_== "foo bar"
+    }
+    
     "option transform on *" in {
       val opt: Option[Int] = Full(44)
       val res = ("* *" #> opt.map(ignore => "Dog"))(<top>cat</top>)

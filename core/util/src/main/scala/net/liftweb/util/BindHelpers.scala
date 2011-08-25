@@ -2036,6 +2036,41 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             
           }
         }
+
+        case (elem, (bind, AttrRemoveSubNode(attr))) => {
+          val org: NodeSeq = elem.attribute(attr).getOrElse(NodeSeq.Empty)
+          val calced = bind.calculate(elem).toList.map(findElemIfThereIsOne _)
+
+          if (calced.isEmpty || org.isEmpty) { // if either is empty, then return the Elem unmodified
+            elem
+          } else {
+            val filtered = elem.attributes.filter{
+              case up: UnprefixedAttribute => up.key != attr
+              case _ => true
+            }
+
+            val flat: Box[NodeSeq] = if (attr == "class") {
+                val set = Set(calced.map(_.text) :_*)
+                SuperString(org.text).charSplit(' ').toList.
+                  filter(_.length > 0).filter(s => !set.contains(s)) match {
+                  case Nil => Empty
+                  case xs => Full(Text(xs.mkString(" ")))
+                }
+            } else {
+              if (org.text == calced.flatMap(a => a).text) Empty else Full(org)
+            }
+
+            val newAttr = flat match {
+              case Full(a) => new UnprefixedAttribute(attr, a, filtered)
+              case _ => filtered
+            }
+
+            new Elem(elem.prefix,
+                     elem.label, newAttr,
+                     elem.scope, elem.child :_*)
+
+          }
+        }
       }
     }
 

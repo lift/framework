@@ -384,7 +384,7 @@ final class SuperListString(lst: List[String]) {
 /**
  * The SuperString class adds functionalities to the String class
  */
-final class SuperString(what: String) {
+final case class SuperString(what: String) {
   /**
    * Split a string according to a separator
    * @param sep a regexp to use with the String::split method

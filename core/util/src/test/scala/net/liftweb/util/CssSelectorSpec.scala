@@ -95,6 +95,28 @@ object CssSelectorSpec extends Specification("CSS Selector Specification")  {
       IdSelector("foo", Full(AttrSubNode("woof")))
     }
 
+    "select an id with attr append subnodes" in {
+      CssSelectorParser.parse("#foo  *[dog+] ").open_! must_==
+      IdSelector("foo", Full(AttrAppendSubNode("dog")))
+    }
+
+    "select an id with no star attr append subnodes" in {
+      CssSelectorParser.parse("#foo  [woof+] ").open_! must_==
+      IdSelector("foo", Full(AttrAppendSubNode("woof")))
+    }
+
+    "select an id with attr append subnodes" in {
+      CssSelectorParser.parse("#foo  *[dog!] ").open_! must_==
+      IdSelector("foo", Full(AttrRemoveSubNode("dog")))
+    }
+
+    "select an id with no star attr append subnodes" in {
+      CssSelectorParser.parse("#foo  [woof!] ").open_! must_==
+      IdSelector("foo", Full(AttrRemoveSubNode("woof")))
+    }
+
+
+
     "select attr/val pair" in {
       CssSelectorParser.parse("frog=dog") must_==
       Full(AttrSelector("frog", "dog", Empty))

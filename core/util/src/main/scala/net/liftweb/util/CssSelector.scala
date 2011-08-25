@@ -69,6 +69,7 @@ sealed trait AttributeRule
 
 final case class AttrSubNode(attr: String) extends SubNode with AttributeRule
 final case class AttrAppendSubNode(attr: String) extends SubNode with AttributeRule
+final case class AttrRemoveSubNode(attr: String) extends SubNode with AttributeRule
 
 final case class SelectThisNode(kids: Boolean) extends SubNode
 
@@ -184,7 +185,9 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
   ((opt('*') ~ '[' ~> attrName <~ '+' ~ ']' ^^ {
     name => AttrAppendSubNode(name)
   }) | 
-   (opt('*') ~ '[' ~> attrName <~ ']' ^^ {
+  (opt('*') ~ '[' ~> attrName <~ '!' ~ ']' ^^ {
+    name => AttrRemoveSubNode(name)
+  }) |    (opt('*') ~ '[' ~> attrName <~ ']' ^^ {
      name => AttrSubNode(name)
    }) | 
    ('-' ~ '*' ^^ (a => PrependKidsSubNode())) |
