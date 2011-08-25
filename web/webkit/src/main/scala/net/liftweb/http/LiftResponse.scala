@@ -44,12 +44,12 @@ trait HeaderDefaults {
  * The Resource was created. We then return the resource, post-processing, to
  * the client. Usually used with HTTP PUT.
  */
-case class CreatedResponse(xml: Node, mime: String) extends XmlNodeResponse {
+case class CreatedResponse(xml: Node, mime: String, addlHeaders: List[(String, String)] = XmlResponse.addlHeaders) extends XmlNodeResponse {
   def docType = Empty
 
   def code = 201
 
-  def headers: List[(String, String)] = List("Content-Type" -> mime)
+  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
 
@@ -246,7 +246,7 @@ object JavaScriptResponse {
 case class JavaScriptResponse(js: JsCmd, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends LiftResponse {
   def toResponse = {
     val bytes = js.toJsCmd.getBytes("UTF-8")
-    InMemoryResponse(bytes, ("Content-Length", bytes.length.toString) :: ("Content-Type", "text/javascript; charset=utf-8") :: headers, cookies, code)
+    InMemoryResponse(bytes, ("Content-Length", bytes.length.toString) :: ("Content-Type", "application/javascript; charset=utf-8") :: headers, cookies, code)
   }
 }
 
@@ -584,6 +584,8 @@ trait XmlNodeResponse extends LiftResponse {
 
   def headers: List[(String, String)]
 
+  def addlHeaders: List[(String, String)]
+
   def cookies: List[HTTPCookie]
 
   def code: Int
@@ -667,22 +669,23 @@ case class XhtmlResponse(out: Node,
  * Allows you to create custom 200 responses for clients using different
  * Content-Types.
  */
-case class XmlMimeResponse(xml: Node, mime: String) extends XmlNodeResponse {
+case class XmlMimeResponse(xml: Node, mime: String, addlHeaders: List[(String, String)] = XmlResponse.addlHeaders) extends XmlNodeResponse {
   def docType = Empty
 
   def code = 200
 
-  def headers: List[(String, String)] = List("Content-Type" -> mime)
+  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
 
   def out = xml
 }
 
-class XmlResponse(val xml: Node, val code: Int, val mime: String, val cookies: List[HTTPCookie]) extends XmlNodeResponse {
+class XmlResponse(val xml: Node, val code: Int, val mime: String, val cookies: List[HTTPCookie],
+                  val addlHeaders: List[(String, String)] = XmlResponse.addlHeaders) extends XmlNodeResponse {
   def docType = Empty
 
-  def headers: List[(String, String)] = List("Content-Type" -> mime)
+  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
 
   def out: Node = xml
 }
@@ -712,6 +715,18 @@ object XmlResponse {
   /** Construct XmlResponse with given response code, mime type and cookies */
   def apply(xml: Node, code: Int, mime: String, cookies: List[HTTPCookie]) = new XmlResponse(xml, code, mime, cookies)
 
+  private object _addlHeaders extends ThreadGlobal[List[(String, String)]]
+
+  /**
+   * Additional headers for the XmlResponse
+   */
+  def addlHeaders: List[(String, String)] = _addlHeaders.box openOr Nil
+
+  def withHeaders[T](headers: (String, String)*)(f: => T): T = {
+    val cur = _addlHeaders.box openOr Nil
+    _addlHeaders.doWith(headers.toList ::: cur)(f)
+  }
+
 }
 
 object AppXmlResponse {
@@ -738,12 +753,12 @@ object AppXmlResponse {
 /**
  * Returning an Atom document.
  */
-case class AtomResponse(xml: Node) extends XmlNodeResponse {
+case class AtomResponse(xml: Node, addlHeaders: List[(String, String)] = XmlResponse.addlHeaders) extends XmlNodeResponse {
   def docType = Empty
 
   def code = 200
 
-  def headers: List[(String, String)] = List("Content-Type" -> "application/atom+xml; charset=utf-8")
+  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> "application/atom+xml; charset=utf-8") :: addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
 
@@ -753,12 +768,13 @@ case class AtomResponse(xml: Node) extends XmlNodeResponse {
 /**
  * Returning an OpenSearch Description Document.
  */
-case class OpenSearchResponse(xml: Node) extends XmlNodeResponse {
+case class OpenSearchResponse(xml: Node, addlHeaders: List[(String, String)] = XmlResponse.addlHeaders) extends XmlNodeResponse {
   def docType = Empty
 
   def code = 200
 
-  def headers: List[(String, String)] = List("Content-Type" -> "application/opensearchdescription+xml; charset=utf-8")
+  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> "application/opensearchdescription+xml; charset=utf-8") ::
+  addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
 

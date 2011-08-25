@@ -618,7 +618,13 @@ trait RestHelper extends LiftRules.DispatchPF {
    * Convert a JsExp to a LiftResponse
    */
   implicit def jsExpToResp(in: js.JsExp): LiftResponse = 
-    JsonResponse(in)
+    JavaScriptResponse(in.cmd)
+
+    /**
+   * Convert a JsCmd to a LiftResponse
+   */
+  implicit def jsCmdToResp(in: js.JsCmd): LiftResponse =
+    JavaScriptResponse(in)
 
   /** @return a SuperString with more available methods such as roboSplit or commafy */
   protected implicit def listStringToSuper(in: List[String]): 
