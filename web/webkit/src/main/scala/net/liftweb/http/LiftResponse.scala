@@ -370,14 +370,14 @@ case class OutputStreamResponse(out: (OutputStream) => Unit,
  * 301 Redirect.
  */
 case class PermRedirectResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
-  def toResponse = InMemoryResponse(Array(), List("Location" -> request.updateWithContextPath(uri)), cookies.toList, 301)
+  def toResponse = InMemoryResponse(Array(), List("Location" -> uri), cookies.toList, 301)
 }
 
 /**
  * 307 Redirect.
  */
 case class TemporaryRedirectResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
-  def toResponse = InMemoryResponse(Array(), List("Location" -> request.updateWithContextPath(uri)), cookies.toList, 307)
+  def toResponse = InMemoryResponse(Array(), List("Location" -> uri), cookies.toList, 307)
 }
 
 /**
@@ -398,7 +398,7 @@ object RedirectResponse {
  */
 case class RedirectResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
-  def toResponse = InMemoryResponse(Array(), List("Location" -> request.updateWithContextPath(uri),
+  def toResponse = InMemoryResponse(Array(), List("Location" -> uri,
     "Content-Type" -> "text/plain"), cookies toList, 302)
 }
 
@@ -420,7 +420,7 @@ object SeeOtherResponse {
  */
 case class SeeOtherResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
-  def toResponse = InMemoryResponse(Array(), List("Location" -> request.updateWithContextPath(uri),
+  def toResponse = InMemoryResponse(Array(), List("Location" -> uri,
     "Content-Type" -> "text/plain"), cookies toList, 303)
 }
 
