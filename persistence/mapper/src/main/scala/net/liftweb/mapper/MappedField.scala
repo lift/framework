@@ -195,6 +195,11 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
 
   def asJs: List[(String, JsExp)] = List((name, asJsExp))
 
+  /**
+   * What form elements are we going to add to this field?
+   */
+  def formElemAttrs: scala.Seq[SHtml.ElemAttr] = Nil
+
   def renderJs_? = true
 
       /**
@@ -451,7 +456,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
       case other => other
     }
 
-    _toForm.map(_.flatMap(mf) )
+    _toForm.map(_.flatMap(mf) ).map(SHtml.ElemAttr.applyToAllElems(_, formElemAttrs))
   }
 
   /**

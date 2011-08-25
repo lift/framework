@@ -96,6 +96,16 @@ trait SHtml {
 
     implicit def strSeqToElemAttr(in: Seq[(String, String)]):
     Seq[ElemAttr] = in.map(a => a: ElemAttr)
+
+    def applyToAllElems(in: Seq[Node], elemAttrs: Seq[ElemAttr]): Seq[Node] = in map {
+      case Group(ns) => Group(applyToAllElems(ns, elemAttrs))
+      case e: Elem => val updated = elemAttrs.foldLeft(e)((e, f) => f(e))
+
+        new Elem(updated.prefix, updated.label,
+                               updated.attributes, updated.scope,
+                               applyToAllElems(updated.child, elemAttrs) :_*)
+      case n => n
+    }
   }
 
   private class ApplicableElem(in: Elem) {

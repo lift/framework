@@ -23,6 +23,7 @@ import net.liftweb.json.JsonAST.{JNothing, JNull, JString, JValue}
 import net.liftweb.util._
 import scala.reflect.Manifest
 import scala.xml._
+import http.SHtml
 
 /** Base trait of record fields, with functionality common to any type of field owned by any type of record */
 trait BaseField extends FieldIdentifier with util.BaseField {
@@ -91,6 +92,11 @@ trait BaseField extends FieldIdentifier with util.BaseField {
 
   /** Encode the field value into a JValue */
   def asJValue: JValue
+
+  /**
+   * What form elements are we going to add to this field?
+   */
+  def formElemAttrs: Seq[SHtml.ElemAttr] = Nil
 
   /**
    * Set the name of this field

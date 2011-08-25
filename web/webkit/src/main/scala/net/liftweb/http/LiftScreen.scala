@@ -189,6 +189,11 @@ trait AbstractScreen extends Factory {
     override def helpAsHtml: Box[NodeSeq] = Empty
 
     /**
+     * What form elements are we going to add to this field?
+     */
+    def formElemAttrs: Seq[SHtml.ElemAttr] = Nil
+
+    /**
      *  Is the field editable
      */
     def editable_? = true
@@ -198,7 +203,8 @@ trait AbstractScreen extends Factory {
         AbstractScreen.this.vendForm(manifest) or otherFuncVendors(manifest) or
           LiftRules.vendForm(manifest)
 
-      func.map(f => f(is, set _)).filter(x => editable_?)
+      func.map(f => f(is, set _)).filter(x => editable_?).
+        map(ns => SHtml.ElemAttr.applyToAllElems(ns, formElemAttrs))
     }
 
     protected def otherFuncVendors(what: Manifest[ValueType]): Box[(ValueType, ValueType => Any) => NodeSeq] = Empty
@@ -276,6 +282,11 @@ trait AbstractScreen extends Factory {
         override def name: String = FieldBuilder.this.name
 
         override def default = FieldBuilder.this.default
+
+        /**
+         * What form elements are we going to add to this field?
+         */
+        override lazy val formElemAttrs: Seq[SHtml.ElemAttr] = grabParams(stuff)
 
         override implicit def manifest: Manifest[ValueType] = FieldBuilder.this.manifest
 
@@ -388,6 +399,11 @@ trait AbstractScreen extends Factory {
       override def show_? = underlying.show_?
 
       /**
+       * What form elements are we going to add to this field?
+       */
+      override lazy val formElemAttrs: Seq[SHtml.ElemAttr] = grabParams(stuff)
+
+      /**
        * Given the current context, should this field be displayed
        */
       override def shouldDisplay_? = underlying.shouldDisplay_?
@@ -463,6 +479,11 @@ trait AbstractScreen extends Factory {
        * Give the current state of things, should the this field be shown
        */
       override def show_? = underlying.map(_.show_?) openOr false
+
+      /**
+       * What form elements are we going to add to this field?
+       */
+      override lazy val formElemAttrs: Seq[SHtml.ElemAttr] = grabParams(stuff)
 
       /**
        * Given the current context, should this field be displayed
@@ -629,6 +650,11 @@ trait AbstractScreen extends Factory {
 
           override def default: T = defaultValue
 
+          /**
+           * What form elements are we going to add to this field?
+           */
+          override lazy val formElemAttrs: Seq[SHtml.ElemAttr] = grabParams(stuff)
+
           override val setFilter = stuff.flatMap {
             case AFilter(f) => List(f)
             case _ => Nil
@@ -652,6 +678,11 @@ trait AbstractScreen extends Factory {
           override implicit def manifest = buildIt[T]
 
           override def default: T = defaultValue
+
+          /**
+           * What form elements are we going to add to this field?
+           */
+          override lazy val formElemAttrs: Seq[SHtml.ElemAttr] = grabParams(stuff)
 
           override val setFilter = stuff.flatMap {
             case AFilter(f) => List(f)
