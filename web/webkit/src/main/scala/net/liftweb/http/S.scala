@@ -1671,6 +1671,7 @@ for {
   def prefixedAttrsToMap(prefix: String, start: Map[String, String]): Map[String, String] =
     attrs.reverse.flatMap {
       case (Right((pre, name)), value) if pre == prefix => List((name, value))
+      case (Left(name), value) if name.startsWith(prefix + ":") => List(name.substring(prefix.length + 1) -> value)
       case _ => Nil
     }.foldRight(start) {
       case ((name, value), at) => at + (name -> value)

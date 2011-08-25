@@ -72,6 +72,10 @@ object Menu extends DispatchSnippet {
    *   <li>expand - Controls whether or not to expand child menus. Defaults to <pre>true</pre>.</li>
    * </ul>
    *
+   * <p>If you are using designer friendly invocation, you can access the namespaced attributes: <br/>
+   * &lt;div class="lift:Menu?li_item:class=foo+bar"&gt;menu&lt;/div&gt;
+   * </p>
+   * 
    * <p>For a simple, default menu, simply add</p>
    *
    * <pre>
