@@ -17,13 +17,13 @@
 package net.liftweb
 package util
 
-import scala.xml.{NodeSeq}
 import javax.mail._
 import javax.mail.internet._
 import javax.naming.{Context, InitialContext}
 import java.util.Properties
 import common._
 import actor._
+import xml.{Text, Elem, Node, NodeSeq}
 
 /**
  * Utilities for sending email.
@@ -42,7 +42,7 @@ trait Mailer extends SimpleInjector {
    * Add message headers to outgoing messages
    */
   final case class MessageHeader(name: String, value: String) extends MailTypes
-  sealed abstract class MailBodyType extends MailTypes
+  abstract class MailBodyType extends MailTypes
   final case class PlusImageHolder(name: String, mimeType: String, bytes: Array[Byte])
 
   /**
@@ -247,15 +247,46 @@ trait Mailer extends SimpleInjector {
         val multiPart = new MimeMultipart("alternative")
         bodyTypes.foreach {
           tab =>
-          val bp = new MimeBodyPart
+          val bp = buildMailBody(tab)
+          multiPart.addBodyPart(bp)
+        }
+        message.setContent(multiPart);
+    }
+
+    Mailer.this.performTransportSend(message)
+  }
+
+  protected lazy val msgSender = new MsgSender
+
+  /**
+   * The default mechanism for encoding a NodeSeq to a String representing HTML.  By default, use Html5.toString(node)
+   */
+  protected def encodeHtmlBodyPart(in: NodeSeq): String = Html5.toString(firstNode(in))
+
+  protected def firstNode(in: NodeSeq): Node = in match {
+    case n: Node => n
+    case ns => ns.toList.collect {
+      case e: Elem => e
+    } match {
+      case Nil => if (ns.length == 0) Text("") else ns(0)
+      case x :: xs => x
+    }
+  }
+
+  /**
+   * Given a MailBodyType, convert it to a javax.mail.BodyPart.  You can override this method if you
+   * add custom MailBodyTypes
+   */
+  protected def buildMailBody(tab: MailBodyType): BodyPart = {
+    val bp = new MimeBodyPart
           tab match {
             case PlainMailBodyType(txt) => bp.setText(txt, "UTF-8")
             case PlainPlusBodyType(txt, charset) => bp.setText(txt, charset)
-            case XHTMLMailBodyType(html) => bp.setContent(html.toString, "text/html; charset=" + charSet)
+            case XHTMLMailBodyType(html) => bp.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
             case XHTMLPlusImages(html, img@_*) =>
               val html_mp = new MimeMultipart("related")
               val bp2 = new MimeBodyPart
-              bp2.setContent(html.toString, "text/html; charset=" + charSet)
+              bp2.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
               html_mp.addBodyPart(bp2)
               img.foreach {
                 i =>
@@ -276,16 +307,10 @@ trait Mailer extends SimpleInjector {
               }
               bp.setContent(html_mp)
           }
-          multiPart.addBodyPart(bp)
-        }
-        message.setContent(multiPart);
-    }
-
-    Mailer.this.performTransportSend(message)
+    bp
   }
 
-  protected lazy val msgSender = new MsgSender
-  
+
   /**
    * Asynchronously send an email.
    */
