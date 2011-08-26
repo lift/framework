@@ -88,7 +88,7 @@ sealed trait Schedule extends Loggable {
   /**
    * Shut down the underlying <code>SingleThreadScheduledExecutor</code>
    */
-  def shutdown: Unit = synchronized { 
+  def shutdown(): Unit = synchronized {
     service.shutdown 
     pool.shutdown
   }

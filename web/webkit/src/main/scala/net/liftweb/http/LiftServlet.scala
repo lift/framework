@@ -60,6 +60,10 @@ class LiftServlet extends Loggable {
         LAScheduler.shutdown()
       }
 
+      tryo {
+        LAPinger.shutdown
+      }
+
       LiftRules.runUnloadHooks()
       logger.debug("Destroyed Lift handler.")
       // super.destroy
