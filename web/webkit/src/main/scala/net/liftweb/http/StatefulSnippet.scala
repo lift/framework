@@ -177,7 +177,7 @@ trait StatelessBehavior {
   /**
    * Given the method name, return the transformation for the method
    */
-  def behavior(methodName: String): NodeSeq => NodeSeq
+  def behaviorDispatch: PartialFunction[String, NodeSeq => NodeSeq]
 }
 
 /**
@@ -186,12 +186,16 @@ trait StatelessBehavior {
  */
 trait DefaultStatelessBehavior extends StatelessBehavior {
   def behavior(): NodeSeq => NodeSeq
-  def behavior(methodName: String): NodeSeq => NodeSeq = behavior()
+  def behaviorDispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
+    case _ => behavior()
+  }
 }
 
 /**
  * A "default" implementation of StatelessBehavior.  Just ignore everything and return a zero-length Text.
  */
 trait BlankStatelessBehavior extends StatelessBehavior {
-  def behavior(methodName: String): NodeSeq => NodeSeq = ignore => Text("")
+  def behaviorDispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
+    case _ => ignore => NodeSeq.Empty
+  }
 }
