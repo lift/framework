@@ -1263,7 +1263,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    */
   def toHtml(toMap: A): NodeSeq =
   mappedFieldList.map(e => ??(e.method, toMap)).
-  filter(f => f.dbDisplay_? && f.dbIncludeInForm_?).flatMap (
+  filter(f => f.dbDisplay_?).flatMap (
     field =>
     formatFormLine(Text(field.displayName), field.asHtml)
   )
