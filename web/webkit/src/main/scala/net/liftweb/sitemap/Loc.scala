@@ -333,6 +333,8 @@ trait Loc[T] {
     allParams.flatMap {
       case Loc.Template(f) => Some(f());
       case Loc.ValueTemplate(f) => Some(f(currentValue));
+      case Loc.TemplateBox(f) => f()
+      case Loc.ValueTemplateBox(f) => f(currentValue)
       case _ => None
     }.headOption
 
@@ -612,6 +614,14 @@ object Loc {
    */
   case class Template(template: () => NodeSeq) extends AnyLocParam
   case class ValueTemplate[T](template: Box[T] => NodeSeq) extends LocParam[T]
+
+    /**
+   * Allows a user to specify a template based upon a function from the current
+   * value encapsulated in the Loc.  Allow the return of Box[NodeSeq] so that it's more
+     * friendly to Templates.
+   */
+  case class TemplateBox(template: () => Box[NodeSeq]) extends AnyLocParam
+  case class ValueTemplateBox[T](template: Box[T] => Box[NodeSeq]) extends LocParam[T]
 
   /**
    * This LocParam may be used to specify a function that calculates a title for the page
