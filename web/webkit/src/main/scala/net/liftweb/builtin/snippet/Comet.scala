@@ -88,12 +88,17 @@ object Comet extends DispatchSnippet with LazyLoggable {
   }
 }
 
-class CometTimeoutException(msg: String) extends SnippetFailureException(msg) {
+abstract class CometFailureException(msg: String) extends SnippetFailureException(msg) {
+   override def buildStackTrace: NodeSeq = <div>{msg}</div> ++ super.buildStackTrace
+}
+class CometTimeoutException(msg: String) extends CometFailureException(msg) {
   def snippetFailure: LiftRules.SnippetFailures.Value = 
     LiftRules.SnippetFailures.CometTimeout
+
+
 }
 
-class CometNotFoundException(msg: String) extends SnippetFailureException(msg) {
+class CometNotFoundException(msg: String) extends CometFailureException(msg) {
   def snippetFailure: LiftRules.SnippetFailures.Value = 
     LiftRules.SnippetFailures.CometNotFound
 }
