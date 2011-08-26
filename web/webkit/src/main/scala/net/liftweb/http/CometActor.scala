@@ -557,6 +557,10 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    */
   protected def running = _running
 
+  /**
+   * It's seriously suboptimal to override this method.  Instead
+   * use localSetup()
+   */
   protected def initCometActor(theSession: LiftSession,
                                theType: Box[String],
                                name: Box[String],
@@ -933,7 +937,12 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * so you can return a function (e.g., a CssBindFunc) that will convert
    * the defaultHtml to the correct output.  There's an implicit conversion
    * from JsCmd, so you can return a pile of JavaScript that'll be shipped
-   * to the browser.
+   * to the browser.<br/>
+   * Note that the render method will be called each time a new browser tab
+   * is opened to the comet component or the comet component is otherwise
+   * accessed during a full page load (this is true if a partialUpdate
+   * has occured.)  You may want to look at the fixedRender method which is
+   * only called once and sets up a stable rendering state.
    */
   def render: RenderOut
 
@@ -943,8 +952,6 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * to be rendered which can result in a huge blob of JavaScript to
    * be sent to the client.  It's a much better practice to use
    * partialUpdate for non-trivial CometActor components.
-   * Daniel Spiewak claims that the use of this API will not only
-   * lead to bad code quality, but may result in a pox on your house.
    *
    * @param sendAll -- Should the fixed part of the CometActor be
    * rendered.
@@ -959,8 +966,6 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * to be rendered which can result in a huge blob of JavaScript to
    * be sent to the client.  It's a much better practice to use
    * partialUpdate for non-trivial CometActor components.
-   * Daniel Spiewak claims that the use of this API will not only
-   * lead to bad code quality, but may result in a pox on your house.
    */
   def reRender() {reRender(false)}
 
@@ -1053,7 +1058,8 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   protected def startQuestion(what: Any) {}
 
   /**
-   * This method will be called after the Actor has started.  Do any setup here
+   * This method will be called after the Actor has started.  Do any setup here.
+   * DO NOT do initialization in the constructor or in initCometActor... do it here.
    */
   protected def localSetup(): Unit = {}
 
