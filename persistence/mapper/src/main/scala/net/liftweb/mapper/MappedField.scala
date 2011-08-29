@@ -265,7 +265,7 @@ trait MappedNullableField[NullableFieldType <: Any,OwnerType <: Mapper[OwnerType
  * The strongly typed field that's mapped to a column (or many columns) in the database.
  * FieldType is the type of the field and OwnerType is the Owner of the field
  */
-trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends TypedField[FieldType] with BaseOwnedMappedField[OwnerType] with FieldIdentifier with PSettableValueHolder[FieldType] {
+trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends TypedField[FieldType] with BaseOwnedMappedField[OwnerType] with FieldIdentifier with PSettableValueHolder[FieldType] with scala.Equals {
 
   /**
    * Will be set to the type of the field
@@ -673,11 +673,22 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
    * Does the "right thing" comparing mapped fields
    */
   override def equals(other: Any): Boolean = {
-    other match {
-      case mapped: MappedField[_, _] => this.i_is_! == mapped.i_is_!
-      case ov: AnyRef if (ov ne null) && dbFieldClass.isAssignableFrom(ov.getClass) => this.is == runFilters(ov.asInstanceOf[FieldType], setFilter)
-      case ov => this.is == ov
-    }
+    (
+      other match {
+        case e: scala.Equals => e canEqual this
+        case _ => true}
+    ) && (
+      other match {
+        case mapped: MappedField[_, _] => this.i_is_! == mapped.i_is_!
+        case ov: AnyRef if (ov ne null) && dbFieldClass.isAssignableFrom(ov.getClass) => this.is == runFilters(ov.asInstanceOf[FieldType], setFilter)
+        case ov => this.is == ov
+      }
+    )
+  }
+
+  def canEqual(that: Any) = that match {
+    case ar: AnyRef => ar.getClass==this.getClass
+    case _ => false
   }
 
   override def asHtml : Node = Text(toString)
