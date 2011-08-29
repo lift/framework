@@ -686,7 +686,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
     )
   }
 
-  override def canEqual(that: Any) = that match {
+  def canEqual(that: Any) = that match {
     case ar: AnyRef => ar.getClass==this.getClass
     case _ => false
   }
