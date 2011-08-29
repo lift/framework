@@ -91,7 +91,7 @@ object Menu extends MenuSingleton {
    * An intermediate class that holds the basic stuff that's needed to make a Menu item for SiteMap.
    * You must include at least one URI path element by calling the / method
    */
-  class PreParamMenu[T](name: String, linkText: Loc.LinkText[T], parser: String => Box[T], encoder: T => String) {
+  class PreParamMenu[T<:AnyRef](name: String, linkText: Loc.LinkText[T], parser: String => Box[T], encoder: T => String) {
     /**
      * The method to add a path element to the URL representing this menu item
      */
@@ -219,7 +219,7 @@ object Menu extends MenuSingleton {
    * An intermediate class that holds the basic stuff that's needed to make a Menu item for SiteMap.
    * You must include at least one URI path element by calling the / method
    */
-  class PreParamsMenu[T](name: String, linkText: Loc.LinkText[T],
+  class PreParamsMenu[T<:AnyRef](name: String, linkText: Loc.LinkText[T],
                          parser: List[String] => Box[T],
                          encoder: T => List[String]) {
     /**
@@ -559,11 +559,11 @@ sealed trait MenuSingleton {
    */
   def i(nameAndLink: String): PreMenu = Menu.apply(nameAndLink, S ? nameAndLink)
 
-  def param[T](name: String, linkText: Loc.LinkText[T], parser: String => Box[T],
+  def param[T<:AnyRef](name: String, linkText: Loc.LinkText[T], parser: String => Box[T],
                encoder: T => String): PreParamMenu[T] =
     new PreParamMenu[T](name, linkText, parser, encoder)
 
-  def params[T](name: String, linkText: Loc.LinkText[T],
+  def params[T<:AnyRef](name: String, linkText: Loc.LinkText[T],
                 parser: List[String] => Box[T],
                 encoder: T => List[String]): PreParamsMenu[T] =
     new PreParamsMenu[T](name, linkText, parser, encoder)
