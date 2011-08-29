@@ -1418,6 +1418,7 @@ object OprEnum extends Enumeration {
   val IsNull = Value(7, "IS NULL")
   val IsNotNull = Value(8, "IS NOT NULL")
   val Like = Value(9, "LIKE")
+  val NotLike = Value(10, "NOT LIKE")
 }
 
 sealed trait BaseIndex[A <: Mapper[A]] {
@@ -1660,6 +1661,11 @@ object In {
 object Like {
   def apply[O <: Mapper[O]](field: MappedField[String, O], value: String) =
   Cmp[O, String](field, OprEnum.Like, Full(value), Empty, Empty)
+}
+
+object NotLike {
+  def apply[O <: Mapper[O]](field: MappedField[String, O], value: String) =
+  Cmp[O, String](field, OprEnum.NotLike, Full(value), Empty, Empty)
 }
 
 object By {
