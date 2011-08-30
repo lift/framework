@@ -391,7 +391,7 @@ trait TimeHelpers { self: ControlHelpers =>
   /** @return a formatter for internet dates (RFC822/1123) including:
    *  the day of week, the month, day of month, time and time zone */
   def internetDateFormatter = {
-    val ret = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z", Locale.US)
+    val ret = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss 'GMT'", Locale.US)
     ret.setTimeZone(utc)
     ret
   }
