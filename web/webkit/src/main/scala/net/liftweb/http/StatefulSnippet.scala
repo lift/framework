@@ -177,17 +177,17 @@ trait StatelessBehavior {
   /**
    * Given the method name, return the transformation for the method
    */
-  def behaviorDispatch: PartialFunction[String, NodeSeq => NodeSeq]
+  def statelessDispatch: PartialFunction[String, NodeSeq => NodeSeq]
 }
 
 /**
- * A simpler way to define behavior if the snippet is invoked.  Just implement the behavior() method
+ * A simpler way to define behavior if the snippet is invoked.  Just implement the stateless method
  * and all methods for the snippet will use that behavior.
  */
-trait DefaultStatelessBehavior extends StatelessBehavior {
-  def behavior(): NodeSeq => NodeSeq
-  def behaviorDispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
-    case _ => behavior()
+trait SimpleStatelessBehavior extends StatelessBehavior {
+  def stateless: NodeSeq => NodeSeq
+  def statelessDispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
+    case _ => stateless
   }
 }
 
@@ -195,7 +195,7 @@ trait DefaultStatelessBehavior extends StatelessBehavior {
  * A "default" implementation of StatelessBehavior.  Just ignore everything and return a zero-length Text.
  */
 trait BlankStatelessBehavior extends StatelessBehavior {
-  def behaviorDispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
-    case _ => ignore => NodeSeq.Empty
+  def statelessDispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
+    case _ => _ => NodeSeq.Empty
   }
 }

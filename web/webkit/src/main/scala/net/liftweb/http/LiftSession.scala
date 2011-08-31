@@ -1559,8 +1559,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                   // deal with a stateless request when a snippet has
                   // different behavior in stateless mode
                   case Full(inst: StatelessBehavior) if !stateful_? =>
-                    if (inst.behaviorDispatch.isDefinedAt(method))
-                    inst.behaviorDispatch(method)(kids) else NodeSeq.Empty
+                    if (inst.statelessDispatch.isDefinedAt(method))
+                    inst.statelessDispatch(method)(kids) else NodeSeq.Empty
 
                   case Full(inst: StatefulSnippet) if !stateful_? =>
                     reportSnippetError(page, snippetName,
