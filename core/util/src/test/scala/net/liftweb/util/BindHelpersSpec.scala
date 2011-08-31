@@ -533,7 +533,8 @@ object CssBindHelpersSpec extends Specification  {
       val res = ("top *" #> opt &
                  "top [href]" #> "frog")(<top>cat</top>)
 
-      res.length must_== 0
+      res.text must_== ""
+      (res \ "@href").text.mkString must_== "frog"
     }
 
     "bind href and Some content" in {
@@ -559,7 +560,7 @@ object CssBindHelpersSpec extends Specification  {
     "option transform on *" in {
       val opt: Option[String] = None
       val res = ("* *" #> opt.map(ignore => "Dog"))(<top>cat</top>)
-      res.length must_== 0
+      res.head must_== <top></top>
     }
 
     "append attribute to a class with spaces" in {
@@ -621,7 +622,7 @@ object CssBindHelpersSpec extends Specification  {
     "option transform on *" in {
       val opt: Box[String] = Empty
       val res = ("* *" #> opt.map(ignore => "Dog"))(<top>cat</top>)
-      res.length must_== 0
+      res.head must_== <top></top>
     }
 
     "option transform on *" in {

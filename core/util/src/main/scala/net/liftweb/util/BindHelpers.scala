@@ -2160,7 +2160,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         case Full(todo: WithKids) => {
           val calced = bind.calculate(realE.child)
           calced.length match {
-            case 0 => NodeSeq.Empty
+            case 0 => new Elem(realE.prefix, realE.label, realE.attributes, realE.scope)
             case 1 => new Elem(realE.prefix, realE.label, 
                                realE.attributes, realE.scope, 
                                todo.transform(realE.child, calced.head) :_*)
