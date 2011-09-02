@@ -46,7 +46,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
 
   // Persistence projects
   // --------------------
-  lazy val db             = persistenceProject("db")(util)
+  lazy val db             = persistenceProject("db",logback,TestScope.mockito_all)(util)
   lazy val proto          = persistenceProject("proto")(webkit)
   lazy val jpa            = persistenceProject("jpa", scalajpa, persistence_api)(webkit)
   lazy val mapper         = persistenceProject("mapper", RuntimeScope.h2database, RuntimeScope.derby)(db, proto)
