@@ -42,7 +42,7 @@ class DBSpec extends Specification with Mockito {
       there was one(m).f(true)
     }
 
-    "call postCommit functions with false if transaction is rolledback" in {
+    "call postTransaction functions with false if transaction is rolled back" in {
       val m = mock[CommitFunc]
 
       val lw = DB.buildLoanWrapper(true)
@@ -77,7 +77,7 @@ class DBSpec extends Specification with Mockito {
       there was one(m).f(true)
     }
 
-    "call postCommit functions with false if transaction is rolledback" in {
+    "call postTransaction functions with false if transaction is rolled back" in {
       val m = mock[CommitFunc]
 
       val lw = DB.buildLoanWrapper(false)
@@ -87,7 +87,7 @@ class DBSpec extends Specification with Mockito {
           DB.exec(c, "more stuff") { dummy => }
         }
         DB.use(DefaultConnectionIdentifier) {c =>
-          DB.appendPostTransaction(DefaultConnectionIdentifier, m.f _)
+          DB.appendPostTransaction (m.f _)
           DB.exec(c, "stuff") {dummy => throw new RuntimeException("oh no")}
         }
         42
@@ -110,7 +110,7 @@ class DBSpec extends Specification with Mockito {
       there was one(m).f(true)
     }
 
-    "call postTransaction functions with false if transaction is committed" in {
+    "call postTransaction functions with false if transaction is rolled back" in {
       val m = mock[CommitFunc]
 
       tryo(DB.use(DefaultConnectionIdentifier) {c =>
@@ -126,7 +126,7 @@ class DBSpec extends Specification with Mockito {
 
   "appendPostTransaction" should {
     "throw if called outside tx context" in {
-      DB.appendPostTransaction(DefaultConnectionIdentifier, d => ())  must throwA[IllegalStateException]
+      DB.appendPostTransaction {committed => ()}  must throwA[IllegalStateException]
     }
   }
 }

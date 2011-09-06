@@ -121,10 +121,10 @@ trait DB extends Loggable {
   private def postCommit_=(lst: List[() => Unit]): Unit = _postCommitFuncs.set(lst)
 
   /**
-   * perform this function after transaction has ended.  THis is helpful for sending messages to Actors after we know
-   * a transaction has committed
+   * perform this function after transaction has ended.  This is helpful for sending messages to Actors after we know
+   * a transaction has been either committed or rolled back
    */
-  @deprecated("Use appendPostTransaction")
+  @deprecated("Use appendPostTransaction {committed => ...}")
   def performPostCommit(f: => Unit) {
     postCommit = (() => f) :: postCommit
   }
@@ -293,7 +293,7 @@ trait DB extends Loggable {
   /**
    *  Append a function to be invoked after the transaction has ended for the given connection identifier
    */
-  @deprecated("Use appendPostTransaction")
+  @deprecated("Use appendPostTransaction (name, {committed => ...})")
   def appendPostFunc(name: ConnectionIdentifier, func: () => Unit) {
     appendPostTransaction(name, dontUse => func())
   }
@@ -313,6 +313,12 @@ trait DB extends Loggable {
       case _ => throw new IllegalStateException("Tried to append postTransaction function on illegal ConnectionIdentifer or outside transaction context")
     }
   }
+
+  /**
+   * Append function to be invoked after the current transaction on DefaultConnectionIdentifier has ended
+   * 
+   */
+  def appendPostTransaction(func: Boolean => Unit):Unit = appendPostTransaction(DefaultConnectionIdentifier, func)
 
   private def runLogger(logged: Statement, time: Long) = logged match {
     case st: DBLog => logFuncs.foreach(_(st, time))
