@@ -1879,6 +1879,12 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         Elem(v.prefix, v.label, processAttributes(v.attributes),
           v.scope, processSurroundAndInclude(page, v.child): _*)
 
+      case pcd: scala.xml.PCData => pcd
+      case text: Text => text
+      case unparsed: Unparsed => unparsed
+
+      case a: Atom[Any] if a.getClass() == "scala.xml.Atom" => new Text(a.data.toString)
+
       case v => v
     }
   }
