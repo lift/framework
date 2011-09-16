@@ -271,6 +271,8 @@ class Dog extends LongKeyedMapper[Dog] with IdPK {
   object weight extends MappedInt(this)
 
   object owner extends MappedLongForeignKey(this, User)
+
+  object price extends MappedDecimal(this, new java.math.MathContext(7), 2)
 }
 
 
