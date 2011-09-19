@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package common 
+package net.liftweb
+package common
 
 /**
  * Support for heterogenious lists, aka <a href="http://apocalisp.wordpress.com/2010/07/06/type-level-programming-in-scala-part-6a-heterogeneous-list%C2%A0basics/">HLists</a>
- * 
+ *
  */
 object HLists {
+
   /**
    * The trait that defines HLists
    */
@@ -41,11 +42,11 @@ object HLists {
   final class HNil extends HList {
     type Head = Nothing
     type Tail = HNil
-    
+
     /**
      * Create a new HList based on this node
      */
-    def :+:[T](v : T) = HCons(v, this)
+    def :+:[T](v: T) = HCons(v, this)
 
     override def toString = "HNil"
 
@@ -63,15 +64,15 @@ object HLists {
   /**
    * The HList cons cell
    */
-  final case class HCons[H, T <: HList](head : H, tail : T) extends HList {
+  final case class HCons[H, T <: HList](head: H, tail: T) extends HList {
     type This = HCons[H, T]
     type Head = H
     type Tail = T
-    
+
     /**
      * Create a new HList based on this node
      */
-    def :+:[T](v : T) = HCons(v, this)
+    def :+:[T](v: T) = HCons(v, this)
 
     override def toString = head + " :+: " + tail
 
@@ -82,9 +83,38 @@ object HLists {
   }
 
   type :+:[H, T <: HList] = HCons[H, T]
+
   object :+: {
     def unapply[H, T <: HList](in: HCons[H, T]): Option[(H, T)] = Some(in.head, in.tail)
-    }
-  
+  }
+
 }
+
+// Some useful type system stuff from Miles Sabin
+/**
+ * Encoding for "A is not a subtype of B"
+ */
+sealed trait ExcludeThisType[A, B]
+
+/**
+ * The companion object to <:!<. This allows one of specify
+ * that a type is not a subtype of another type
+ */
+object ExcludeThisType {
+  def unexpected: Nothing = sys.error("Unexpected invocation")
+
+  // Uses ambiguity to rule out the cases we're trying to exclude
+  implicit def nsub[A, B]: A ExcludeThisType B = null
+
+  implicit def `This type was excluded because it was explicitly excluded`[A, B >: A]: A ExcludeThisType B = unexpected
+
+  implicit def `Ignore me, I only exist to cause the compiler to fail`[A, B >: A]: A ExcludeThisType B = unexpected
+
+  // Type alias for context bound
+  type exclude[T] = {
+    type other[U] = U ExcludeThisType T
+  }
+}
+
+
 

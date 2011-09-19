@@ -25,6 +25,21 @@ import Prop.forAll
 import Box._
 
 
+// commented out because it tests the compilation phase and we want the compiler to "do the right thing"
+object TypeBoundsTest extends Specification("Type Bounds Spec") with ScalaCheck {
+  "Type bounds" can {
+    "do type testing" in {
+      def foo[T: ExcludeThisType.exclude[Nothing]#other](a: T) = a.toString
+      foo(33.0)
+      foo(throw new Exception("foo"))
+
+      true == true
+    }
+  }
+}
+
+//
+
 /**
  * System under specification for Box.
  */
