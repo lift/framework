@@ -25,7 +25,7 @@ import Prop.forAll
 import Box._
 
 
-// commented out because it tests the compilation phase and we want the compiler to "do the right thing"
+/* commented out because it tests the compilation phase and we want the compiler to "do the right thing"
 object TypeBoundsTest extends Specification("Type Bounds Spec") with ScalaCheck {
   "Type bounds" can {
     "do type testing" in {
@@ -38,7 +38,7 @@ object TypeBoundsTest extends Specification("Type Bounds Spec") with ScalaCheck 
   }
 }
 
-//
+*/
 
 /**
  * System under specification for Box.
