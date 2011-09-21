@@ -2201,19 +2201,24 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             }
             
             case n => {
-              calced.toList.zipWithIndex.flatMap {
-                case (Group(g), _) => g
-                case (e: Elem, 0) => 
-                  new Elem(e.prefix, 
-                           e.label, mergeAll(e.attributes, false),
-                           e.scope, e.child :_*)
-                case (e: Elem, _) =>
-                  new Elem(e.prefix, 
-                           e.label, mergeAll(e.attributes, true),
-                           e.scope, e.child :_*)
-                case (x, _) => 
-                  x
+              val calcedList = calced.toList
+              val availableIds = (attrs.get("id").toList ++
+                calcedList.collect({ case e:Elem => e.attribute("id") }).flatten.map(_.toString)).toSet
+              val merged = calcedList.foldLeft((availableIds, Nil: List[Seq[xml.Node]])) { (idsAndResult, a) =>
+                val (ids, result) = idsAndResult
+                a match {
+                  case Group(g) => (ids, g :: result)
+                  case e:Elem => {
+                    val targetId = e.attribute("id").map(_.toString) orElse (attrs.get("id"))
+                    val keepId = targetId map { id => ids.contains(id) } getOrElse (false)
+                    val newIds = targetId filter (_ => keepId) map (i => ids - i) getOrElse (ids)
+                    val newElem = new Elem(e.prefix, e.label, mergeAll(e.attributes, ! keepId), e.scope, e.child: _*)
+                    (newIds, newElem :: result)
+                  }
+                  case x => (ids, x :: result)
+                }
               }
+              merged._2.reverse.flatten
             }
           }
         }

@@ -737,7 +737,17 @@ object CssBindHelpersSpec extends Specification  {
       answer must ==/ (<span><div id="horse">frog<span class="item">1</span></div><div>frog<span class="item">2</span></div><div>frog<span class="item">3</span></div></span>)
                   
     }
-    
+
+    "maintain unique id attributes provided by transform" in {
+      val func = ".thinglist *" #>
+        (".thing" #> List("xx1", "xx2", "xx2", "xx2", "xx4").map(t => {
+            ".thing [id]" #> t
+          })
+        )
+      val answer = func(<ul class="thinglist"><li id="other" class="thing" /></ul>)
+
+      answer must ==/ (<ul class="thinglist"><li class="thing" id="xx1"></li><li class="thing" id="xx2"></li><li id="other" class="thing"></li><li class="thing"></li><li class="thing" id="xx4"></li></ul>)
+    }
 
     "merge classes" in {
       val answer = ("cute=moose" #> <input class="a" name="goof" value="8" id="88"/>).apply (
