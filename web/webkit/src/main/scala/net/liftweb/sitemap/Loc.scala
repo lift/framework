@@ -460,7 +460,7 @@ trait Loc[T] {
   def inGroup_?(group: String): Boolean = groupSet.contains(group)
 
   def init() {
-    params.foreach(_ onCreate(this))
+    allParams.foreach(_ onCreate(this))
   }
 
 }
