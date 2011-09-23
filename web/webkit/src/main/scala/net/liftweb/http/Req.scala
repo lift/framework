@@ -338,7 +338,16 @@ object FileParamHolder {
   }
 }
 
-private[http] object CurrentReq extends ThreadGlobal[Req]
+/**
+ * A Thread-global containing the current Req.  Set very, very early
+ */
+object CurrentReq extends ThreadGlobal[Req]
+
+/**
+ * A ThreadGlobal containing the low-level HTTPRequest and HTTPResponse instances
+ * Set very, very early.
+ */
+object CurrentHTTPReqResp extends ThreadGlobal[(HTTPRequest, HTTPResponse)]
 
 private final case class AvoidGAL(func: () => ParamCalcInfo) {
   lazy val thunk: ParamCalcInfo = func()
@@ -520,7 +529,7 @@ object Req {
   def parsePath(in: String): ParsePath = {
     val p1 = fixURI((in match {case null => "/"; case s if s.length == 0 => "/"; case s => s}).replaceAll("/+", "/"))
     val front = p1.startsWith("/")
-    val back = p1.length > 1 && p1.endsWith("/")
+    val back = p1.length >= 1 && p1.endsWith("/")
 
     val orgLst = p1.replaceAll("/$", "/index").split("/").
     toList.map(_.trim).filter(_.length > 0)
