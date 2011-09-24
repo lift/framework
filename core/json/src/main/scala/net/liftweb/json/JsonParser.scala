@@ -54,13 +54,13 @@ object JsonParser {
   /** Return parsed JSON.
    */
   def parseOpt(s: String): Option[JValue] = 
-    try { Some(parse(s)) } catch { case e: Exception => None }
+    try { parse(s).toOpt } catch { case e: Exception => None }
 
   /** Return parsed JSON.
    * @param closeAutomatically true (default) if the Reader is automatically closed on EOF
    */
   def parseOpt(s: Reader, closeAutomatically: Boolean = true): Option[JValue] = 
-    try { Some(parse(s, closeAutomatically)) } catch { case e: Exception => None }
+    try { parse(s, closeAutomatically).toOpt } catch { case e: Exception => None }
 
   /** Parse in pull parsing style.
    * Use <code>p.nextToken</code> to parse tokens one by one from a string.
@@ -197,7 +197,7 @@ object JsonParser {
       }
     } while (token != End)
 
-    root.getOrElse(throw new ParseException("expected object or array", null))
+    root getOrElse JNothing
   }
 
   private val EOF = (-1).asInstanceOf[Char]
@@ -386,7 +386,7 @@ object JsonParser {
       }
     }
 
-    def near = new String(segment, (cur-20) max 0, 40 min (offset - cur + 20) max 0)
+    def near = new String(segment, (cur-20) max 0, (cur + 1) min Segments.segmentSize)
 
     def release = segments.foreach(Segments.release)
 

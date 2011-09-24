@@ -334,6 +334,11 @@ object JsonAST {
      */
     def extractOrElse[A](default: => A)(implicit formats: Formats, mf: scala.reflect.Manifest[A]): A =
       Extraction.extractOpt(this)(formats, mf).getOrElse(default)
+
+    def toOpt: Option[JValue] = this match {
+      case JNothing => None
+      case json     => Some(json)
+    }
   }
 
   case object JNothing extends JValue {

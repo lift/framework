@@ -100,6 +100,12 @@ object SerializationExamples extends Specification {
     read[SeqContainer](ser) mustEqual s
   }
 
+  "Option serialization example" in {
+    val ser = swrite(Some(List(1, 2)))
+    read[Option[List[Int]]](ser) mustEqual Some(List(1, 2))
+    read[Option[List[Int]]]("") mustEqual None
+  }
+
   "None Option of tuple serialization example" in {
     // This is a regression test case, failed in lift json
     val s = OptionOfTupleOfDouble(None)    

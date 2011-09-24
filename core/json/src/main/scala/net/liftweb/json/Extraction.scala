@@ -192,7 +192,10 @@ object Extraction {
         Dict(mkMapping(typeArgs.tail.head, typeArgs.tail.tail))
       else mappingOf(clazz, typeArgs)
     }
-    extract0(json, mkMapping(clazz, typeArgs))
+    if (clazz == classOf[Option[_]])
+      json.toOpt.map(extract0(_, mkMapping(typeArgs.head, typeArgs.tail)))
+    else 
+      extract0(json, mkMapping(clazz, typeArgs))
   }
 
   def extract(json: JValue, target: TypeInfo)(implicit formats: Formats): Any = 
