@@ -76,6 +76,7 @@ class Company private () extends Record[Company] with KeyedRecord[Long] with Opt
   val country = new CountryField(this)
   val postCode = new PostalCodeField(this, country)
   val created = new DateTimeField(this)
+  val employeeSatisfaction = new OptionalDecimalField(this, new MathContext(10), 5)
 
   lazy val employees = MySchema.companyToEmployees.left(this)
 

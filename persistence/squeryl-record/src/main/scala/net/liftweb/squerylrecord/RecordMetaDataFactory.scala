@@ -91,11 +91,6 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
       case _ => error("Unsupported field type. Consider implementing " +
 		      "SquerylRecordField for defining the persistent class." +
 		      "Field: " + metaField)
-    } 
-
-    val overrideColLength = metaField match {
-      case (stringTypedField: StringTypedField) => Some(stringTypedField.maxLength)
-      case _ => None
     }
 
     new FieldMetaData(
@@ -112,7 +107,39 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
       isOptimisticCounter,
       metaField) {
 
-      override def length = overrideColLength getOrElse super.length
+      override def length = {
+        import java.math.MathContext
+        val fieldLength =
+          metaField match {
+        	  case (stringTypedField: StringTypedField) => Some(stringTypedField.maxLength)
+        	  case decimalField: DecimalField[_] => {
+        	    val precision = decimalField.context.getPrecision();
+        	    if(precision != 0)
+        	      Some(precision)
+        	    else
+        	      None
+        	  }
+        	  case decimalField: OptionalDecimalField[_] => {
+        	    val precision = decimalField.context.getPrecision();
+        	    if(precision != 0)
+        	      Some(precision)
+        	    else
+        	      None
+        	  }
+        	  case _ => None
+        }
+        fieldLength getOrElse super.length
+      }
+      
+      override def scale = {
+        val fieldScale = 
+          metaField match {
+        	  case decimalField: DecimalField[_] => Some(decimalField.scale)
+        	  case decimalField: OptionalDecimalField[_] => Some(decimalField.scale)
+        	  case _ => None
+        } 
+        fieldScale getOrElse super.scale
+      }
 
       private def fieldFor(o: AnyRef) = getter.get.invoke(o).asInstanceOf[TypedField[AnyRef]]
 
