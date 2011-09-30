@@ -25,35 +25,38 @@ import common._
 /**
  * Systems under specification for MappedDate.
  */
-object MappedDecimalSpec extends Specification("MappedDecimal Specification") {
+object MappedBooleanSpec extends Specification("MappedBoolean Specification") {
   val provider = DbProviders.H2MemoryProvider
   
   private def ignoreLogger(f: => AnyRef): Unit = ()
   def setupDB {
     provider.setupDB
-    Schemifier.destroyTables_!!(ignoreLogger _,  Dog, User)
-    Schemifier.schemify(true, ignoreLogger _, Dog, User)
+    Schemifier.destroyTables_!!(ignoreLogger _,  Dog2, User)
+    Schemifier.schemify(true, ignoreLogger _, Dog2, User)
   }
 
-  "MappedDecimal" should {
+  "MappedBoolean" should {
     "not be marked dirty on read" in {
       setupDB
-      val charlie = Dog.create
-      charlie.price(42.42).save
+      val charlie = Dog2.create
+      charlie.isDog(true).save
 
-      val read = Dog.find(charlie.id).open_!
+      val read = Dog2.find(charlie.dog2id).open_!
       read.dirty_? must_== false
     }
 
-    "be marked dirty on update" in {
+    "be marked dirty on update if value has changed" in {
       setupDB
-      val charlie = Dog.create
-      charlie.price(42.42).save
+      val charlie = Dog2.create
+      charlie.save
 
-      val read = Dog.find(charlie.id).open_!
+      val read = Dog2.find(charlie.dog2id).open_!
       read.dirty_? must_== false
-      read.price(100.42)
-      read.price(100.42)
+      read.isDog(false)
+      read.dirty_? must_== false
+
+      read.isDog(true)
+      read.isDog(true)
       read.dirty_? must_== true
     }
   }

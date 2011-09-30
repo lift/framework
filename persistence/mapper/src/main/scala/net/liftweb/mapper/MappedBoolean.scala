@@ -46,8 +46,11 @@ abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedFiel
   protected[mapper] def doneWithSave() {orgData = data}
 
   protected def real_i_set_!(value : Boolean) : Boolean = {
-    dirty_?(data.map(_ != value) openOr true)
-    data = Full(value)
+    val boxed = Full(value)
+    if (boxed != data) {
+      data = boxed
+      dirty_?(true)
+    }
     value
   }
   override def readPermission_? = true
