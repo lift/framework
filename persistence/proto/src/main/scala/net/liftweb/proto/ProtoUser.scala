@@ -742,9 +742,13 @@ trait ProtoUser {
 
     def innerSignup = bind("user",
                            signupXhtml(theUser),
-                           "submit" -> SHtml.submit(S.??("sign.up"), testSignup _))
+                           "submit" -> signupSubmitButton(S.??("sign.up"), testSignup _))
 
     innerSignup
+  }
+
+  def signupSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
+    standardSubmitButton(name, func)
   }
 
   def emailFrom = "noreply@"+S.hostName
@@ -851,7 +855,15 @@ trait ProtoUser {
     bind("user", loginXhtml,
          "email" -> (FocusOnLoad(<input type="text" name="username"/>)),
          "password" -> (<input type="password" name="password"/>),
-         "submit" -> (<input type="submit" value={S.??("log.in")}/>))
+         "submit" -> loginSubmitButton(S.??("log.in")))
+  }
+
+  def loginSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
+    standardSubmitButton(name, func)
+  }
+
+  def standardSubmitButton(name: String,  func: () => Any = () => {}) = {
+    SHtml.submit(name, func)
   }
 
   def lostPasswordXhtml = {
@@ -932,7 +944,11 @@ trait ProtoUser {
   def lostPassword = {
     bind("user", lostPasswordXhtml,
          "email" -> SHtml.text("", sendPasswordReset _),
-         "submit" -> <input type="submit" value={S.??("send.it")} />)
+         "submit" -> lostPasswordSubmitButton(S.??("send.it")))
+  }
+
+  def lostPasswordSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
+    standardSubmitButton(name, func)
   }
 
   def passwordResetXhtml = {
@@ -962,8 +978,12 @@ trait ProtoUser {
       bind("user", passwordResetXhtml,
            "pwd" -> SHtml.password_*("",(p: List[String]) =>
           user.setPasswordFromListString(p)),
-           "submit" -> SHtml.submit(S.??("set.password"), finishSet _))
+           "submit" -> resetPasswordSubmitButton(S.??("set.password"), finishSet _))
     case _ => S.error(S.??("password.link.invalid")); S.redirectTo(homePage)
+  }
+
+  def resetPasswordSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
+    standardSubmitButton(name, func)
   }
 
   def changePasswordXhtml = {
@@ -996,7 +1016,11 @@ trait ProtoUser {
     bind("user", changePasswordXhtml,
          "old_pwd" -> SHtml.password("", s => oldPassword = s),
          "new_pwd" -> SHtml.password_*("", LFuncHolder(s => newPassword = s)),
-         "submit" -> SHtml.submit(S.??("change"), testAndSet _))
+         "submit" -> changePasswordSubmitButton(S.??("change"), testAndSet _))
+  }
+
+  def changePasswordSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
+    standardSubmitButton(name, func)
   }
 
   def editXhtml(user: TheUserType) = {
@@ -1042,9 +1066,13 @@ trait ProtoUser {
     }
 
     def innerEdit = bind("user", editXhtml(theUser),
-                         "submit" -> SHtml.submit(S.??("edit"), testEdit _))
+                         "submit" -> editSubmitButton(S.??("edit"), testEdit _))
 
     innerEdit
+  }
+
+  def editSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
+    standardSubmitButton(name, func)
   }
 
   def logout = {
