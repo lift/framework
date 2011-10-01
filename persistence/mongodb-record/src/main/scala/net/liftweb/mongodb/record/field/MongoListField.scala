@@ -27,9 +27,10 @@ import scala.xml.NodeSeq
 import common.{Box, Empty, Failure, Full}
 import json.JsonAST._
 import json.JsonParser
+import http.SHtml
 import http.js.JE.{JsNull, JsRaw}
 import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
-import util.Helpers.tryo
+import util.Helpers._
 
 import com.mongodb._
 import org.bson.types.ObjectId
@@ -38,24 +39,27 @@ import org.bson.types.ObjectId
 * List field. Compatible with most object types,
 * including Pattern, ObjectId, Date, and UUID.
 */
-class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType](rec: OwnerType)
+class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec: OwnerType)
   extends Field[List[ListType], OwnerType]
   with MandatoryTypedField[List[ListType]]
   with MongoFieldFlavor[List[ListType]]
 {
-
   import Meta.Reflection._
+
+  lazy val mf = manifest[ListType]
+
+  override type MyType = List[ListType]
 
   def owner = rec
 
   def defaultValue = List[ListType]()
 
-  def setFromAny(in: Any): Box[List[ListType]] = {
+  def setFromAny(in: Any): Box[MyType] = {
     in match {
       case dbo: DBObject => setFromDBObject(dbo)
-      case list: List[ListType] => setBox(Full(list))
-      case Some(list: List[ListType]) => setBox(Full(list))
-      case Full(list: List[ListType]) => setBox(Full(list))
+      case list@c::xs if mf.erasure.isInstance(c) => setBox(Full(list.asInstanceOf[MyType]))
+      case Some(list@c::xs) if mf.erasure.isInstance(c) => setBox(Full(list.asInstanceOf[MyType]))
+      case Full(list@c::xs) if mf.erasure.isInstance(c) => setBox(Full(list.asInstanceOf[MyType]))
       case s: String => setFromString(s)
       case Some(s: String) => setFromString(s)
       case Full(s: String) => setFromString(s)
@@ -78,7 +82,28 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType](rec: OwnerTyp
     case other => setBox(Failure("Error parsing String into a JValue: "+in))
   }
 
-  def toForm: Box[NodeSeq] = Empty
+  /*
+   * MongoListField is built on MandatoryField, so optional_? is always false. It would be nice to use optional to differentiate
+   * between a list that requires at least one item and a list that can be empty.
+   */
+
+  /** Options for select list **/
+  def options: List[(ListType, String)] = Nil
+
+  private def elem = SHtml.multiSelectObj[ListType](
+    options,
+    value,
+    set(_)
+  ) % ("tabindex" -> tabIndex.toString)
+
+  def toForm: Box[NodeSeq] =
+    if (options.length > 0)
+      uniqueFieldId match {
+        case Full(id) => Full(elem % ("id" -> id))
+        case _ => Full(elem)
+      }
+    else
+      Empty
 
   def asJValue = JArray(value.map(li => li.asInstanceOf[AnyRef] match {
     case x if primitive_?(x.getClass) => primitive2jvalue(x)
@@ -105,8 +130,8 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType](rec: OwnerTyp
   }
 
   // set this field's value using a DBObject returned from Mongo.
-  def setFromDBObject(dbo: DBObject): Box[List[ListType]] =
-    setBox(Full(dbo.asInstanceOf[BasicDBList].toList.asInstanceOf[List[ListType]]))
+  def setFromDBObject(dbo: DBObject): Box[MyType] =
+    setBox(Full(dbo.asInstanceOf[BasicDBList].toList.asInstanceOf[MyType]))
 }
 
 /*
@@ -121,7 +146,7 @@ class MongoDateListField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
 * List of JsonObject case classes
 */
 class MongoJsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
-  (rec: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
+  (rec: OwnerType, valueMeta: JsonObjectMeta[JObjectType])(implicit mf: Manifest[JObjectType])
   extends MongoListField[OwnerType, JObjectType](rec: OwnerType) {
 
   override def asDBObject: DBObject = {

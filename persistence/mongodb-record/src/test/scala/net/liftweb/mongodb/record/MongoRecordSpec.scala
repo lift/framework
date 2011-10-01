@@ -541,12 +541,23 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
         .mandatoryStringRefField(mtr.id.is)
         .mandatoryIntRefField(ntr.id.is)
         .mandatoryLongRefField(btr.id.is)
+        .mandatoryObjectIdRefListField(List(fttr.id.is))
+        .mandatoryUUIDRefListField(List(ltr.id.is))
+        .mandatoryStringRefListField(List(mtr.id.is))
+        .mandatoryIntRefListField(List(ntr.id.is))
+        .mandatoryLongRefListField(List(btr.id.is))
 
       rftr.mandatoryObjectIdRefField.obj mustEqual Full(fttr)
       rftr.mandatoryUUIDRefField.obj mustEqual Full(ltr)
       rftr.mandatoryStringRefField.obj mustEqual Full(mtr)
       rftr.mandatoryIntRefField.obj mustEqual Full(ntr)
       rftr.mandatoryLongRefField.obj mustEqual Full(btr)
+
+      rftr.mandatoryObjectIdRefListField.objs mustEqual List(fttr)
+      rftr.mandatoryUUIDRefListField.objs mustEqual List(ltr)
+      rftr.mandatoryStringRefListField.objs mustEqual List(mtr)
+      rftr.mandatoryIntRefListField.objs mustEqual List(ntr)
+      rftr.mandatoryLongRefListField.objs mustEqual List(btr)
     }
 
   }

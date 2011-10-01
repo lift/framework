@@ -222,12 +222,14 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /**
   * Find all documents with the given ids
   */
-  def findAll(ids: List[ObjectId]): List[BaseRecord] = if (ids.isEmpty) Nil else {
-    val list = new java.util.ArrayList[ObjectId]()
+  def findAllByList[T](ids: List[T]): List[BaseRecord] = if (ids.isEmpty) Nil else {
+    val list = new java.util.ArrayList[T]()
     for (id <- ids.distinct) list.add(id)
     val query = QueryBuilder.start("_id").in(list).get()
     findAll(query)
   }
+
+  def findAll(ids: List[ObjectId]): List[BaseRecord] = findAllByList[ObjectId](ids)
 
   protected def saveOp(inst: BaseRecord)(f: => Unit): Boolean = {
     foreachCallback(inst, _.beforeSave)
