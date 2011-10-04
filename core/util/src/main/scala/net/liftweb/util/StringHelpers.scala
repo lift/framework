@@ -364,11 +364,25 @@ trait StringHelpers {
   /** @return a SuperString with more available methods such as roboSplit or commafy */
   implicit def listStringToSuper(in: List[String]): SuperListString = new SuperListString(in)
 
+  @deprecated("Use blankForNull instead")
+  def emptyForNull(s: String) = blankForNull(s)
 
   /**
-   * Test for null and return either the given String if not null or the empty String.
+   * Test for null and return either the given String if not null or the blank String.
    */
-  def emptyForNull(s: String) = if (s != null) s else ""
+  def blankForNull(s: String) = if (s != null) s else ""
+
+  /**
+   * Turn a String into a Box[String], with Empty for the blank string.
+   *
+   * A string containing only spaces is considered blank.
+   *
+   * @return Full(s.trim) if s is not null or blank, Empty otherwise
+   */
+  def emptyForBlank(s: String) = blankForNull(s).trim match {
+    case "" => Empty
+    case s => Full(s)
+  }
 }
 
 /**

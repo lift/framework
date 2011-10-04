@@ -306,12 +306,27 @@ object StringHelpersSpec extends Specification("StringHelpers Specification") wi
       (null: String).commafy must beNull
     }
   }
-  "The emptyForNull method" should {
+  "The blankForNull method" should {
     "return the empty String for a given null String" in {
-      StringHelpers.emptyForNull(null) must_== ""
+      StringHelpers.blankForNull(null) must_== ""
     }
     "return the given String for a given not-null String" in {
-      StringHelpers.emptyForNull("x") must_== "x"
+      StringHelpers.blankForNull("x") must_== "x"
+    }
+  }
+  "The emptyForBlank method" should {
+    import net.liftweb.common._
+    "return Empty for a given null String" in {
+      StringHelpers.emptyForBlank(null) must_== Empty
+    }
+    "return Empty for a given a blank String" in {
+      StringHelpers.emptyForBlank("") must_== Empty
+    }
+    "return Empty for a String of spaces" in {
+      StringHelpers.emptyForBlank("  ") must_== Empty
+    }
+    "return the trim'ed  String for a given not-null String" in {
+      StringHelpers.emptyForBlank(" x ") must_== Full("x")
     }
   }
 }
