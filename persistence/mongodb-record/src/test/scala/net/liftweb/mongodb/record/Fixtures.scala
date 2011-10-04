@@ -23,6 +23,7 @@ import field._
 
 import common.{Box, Empty, Failure, Full}
 import json.ext.JsonBoxSerializer
+import http.SHtml
 import util.FieldError
 
 import java.math.MathContext
@@ -30,6 +31,8 @@ import scala.xml.Text
 
 import net.liftweb.record._
 import net.liftweb.record.field._
+
+import org.bson.types.ObjectId
 
 object MyTestEnum extends Enumeration {
   val ONE = Value("ONE")
@@ -156,7 +159,7 @@ class BinaryFieldTestRecord extends MongoRecord[BinaryFieldTestRecord] with IntP
   object mandatoryBinaryField extends BinaryField(this) {
     // compare the elements of the Array
     override def equals(other: Any): Boolean = other match {
-      case that: BinaryField[Any] =>
+      case that: BinaryField[_] =>
         this.value.zip(that.value).filter(t => t._1 != t._2).length == 0
       case _ => false
     }
@@ -165,7 +168,7 @@ class BinaryFieldTestRecord extends MongoRecord[BinaryFieldTestRecord] with IntP
     override def optional_? = true
     // compare the elements of the Array
     override def equals(other: Any): Boolean = other match {
-      case that: BinaryField[Any] => (this.valueBox, that.valueBox) match {
+      case that: BinaryField[_] => (this.valueBox, that.valueBox) match {
         case (Empty, Empty) => true
         case (Full(a), Full(b)) =>
           a.zip(b).filter(t => t._1 != t._2).length == 0
@@ -177,7 +180,7 @@ class BinaryFieldTestRecord extends MongoRecord[BinaryFieldTestRecord] with IntP
   object optionalBinaryField extends OptionalBinaryField(this) {
     // compare the elements of the Array
     override def equals(other: Any): Boolean = other match {
-      case that: OptionalBinaryField[Any] => (this.valueBox, that.valueBox) match {
+      case that: OptionalBinaryField[_] => (this.valueBox, that.valueBox) match {
         case (Empty, Empty) => true
         case (Full(a), Full(b)) =>
           a.zip(b).filter(t => t._1 != t._2).length == 0
@@ -453,6 +456,12 @@ class RefFieldTestRecord private () extends MongoRecord[RefFieldTestRecord] with
   object mandatoryStringRefField extends StringRefField(this, MapTestRecord, 100)
   object mandatoryIntRefField extends IntRefField(this, NullTestRecord)
   object mandatoryLongRefField extends LongRefField(this, BoxTestRecord)
+
+  object mandatoryObjectIdRefListField extends ObjectIdRefListField(this, FieldTypeTestRecord)
+  object mandatoryUUIDRefListField extends UUIDRefListField(this, ListTestRecord)
+  object mandatoryStringRefListField extends StringRefListField(this, MapTestRecord)
+  object mandatoryIntRefListField extends IntRefListField(this, NullTestRecord)
+  object mandatoryLongRefListField extends LongRefListField(this, BoxTestRecord)
 }
 
 object RefFieldTestRecord extends RefFieldTestRecord with MongoMetaRecord[RefFieldTestRecord] {

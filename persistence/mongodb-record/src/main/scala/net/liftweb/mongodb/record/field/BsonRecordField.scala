@@ -76,7 +76,7 @@ class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonR
  * List of BsonRecords
  */
 class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
-  (rec: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])
+  (rec: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit mf: Manifest[SubRecordType])
   extends MongoListField[OwnerType, SubRecordType](rec: OwnerType) {
 
   import scala.collection.JavaConversions._

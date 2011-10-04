@@ -34,7 +34,7 @@ class LiftFrameworkProject(info: ProjectInfo) extends ParentProject(info) with L
   lazy val json        = coreProject("json", paranamer, scalap)()
   lazy val json_scalaz = coreProject("json-scalaz", scalaz)(json)
   lazy val json_ext    = coreProject("json-ext", commons_codec, joda_time)(common, json)
-  lazy val util        = coreProject("util", joda_time, commons_codec, javamail, log4j, htmlparser)(actor, json)
+  lazy val util        = coreProject("util", joda_time, commons_codec, javamail, logback, log4j, htmlparser)(actor, json)
 
 
   // Web projects

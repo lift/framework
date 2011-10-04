@@ -209,49 +209,57 @@ object Props extends Logger {
    * The map of key/value pairs retrieved from the property file.
    */
   lazy val props: Map[String, String] = {
-  import java.io.{ByteArrayInputStream}
-  import java.util.InvalidPropertiesFormatException
-  import java.util.{Map => JMap}
+    import java.io.{ByteArrayInputStream}
+    import java.util.InvalidPropertiesFormatException
+    import java.util.{Map => JMap}
 
-  var tried: List[String] = Nil
+    var tried: List[String] = Nil
 
-  def vendStreams: List[(String, () => Box[InputStream])] = whereToLook() :::
+    trace("Loading properties. Active run.mode is %s".format(if (modeName=="") "(Development)" else modeName))
+
+    def vendStreams: List[(String, () => Box[InputStream])] = whereToLook() :::
     toTry.map{
       f => {
         val name = f() + "props"
-        name -> (() => tryo{getClass.getResourceAsStream(name)}.filter(_ ne null))
+        name -> {() => 
+          val res = tryo{getClass.getResourceAsStream(name)}.filter(_ ne null)
+          trace("Trying to open resource %s. Result=%s".format(name, res))
+          res
+        }
       }
     }
 
-  // find the first property file that is available
-  first(vendStreams){
-    case (str, streamBox) =>
-    tried ::= str
-    for {
-      stream <- streamBox()
-    } yield {
-      val ret = new Properties
-      val ba = Helpers.readWholeStream(stream)
-      try {
-        ret.loadFromXML(new ByteArrayInputStream(ba))
-      } catch {
-        case _: InvalidPropertiesFormatException =>
-          ret.load(new ByteArrayInputStream(ba))
-      }
-      ret
-    }
-  } match {
-    // if we've got a propety file, create name/value pairs and turn them into a Map
-    case Full(prop) =>
-      Map(prop.entrySet.toArray.flatMap{
+    // find the first property file that is available
+    first(vendStreams){
+      case (str, streamBox) =>
+        tried ::= str
+        for {
+          stream <- streamBox()
+        } yield {
+          val ret = new Properties
+          val ba = Helpers.readWholeStream(stream)
+          try {
+            ret.loadFromXML(new ByteArrayInputStream(ba))
+            debug("Loaded XML properties from resource %s".format(str))
+          } catch {
+            case _: InvalidPropertiesFormatException =>
+              ret.load(new ByteArrayInputStream(ba))
+              debug("Loaded key/value properties from resource %s".format(str))
+          }
+          ret
+        }
+    } match {
+      // if we've got a propety file, create name/value pairs and turn them into a Map
+      case Full(prop) =>
+        Map(prop.entrySet.toArray.flatMap{
           case s: JMap.Entry[_, _] => List((s.getKey.toString, s.getValue.toString))
           case _ => Nil
         } :_*)
 
-    case _ =>
-      error("Failed to find a properties file (but properties were accessed).  Searched: "+tried.reverse.mkString(", "))
-      Map()
+      case _ =>
+        error("Failed to find a properties file (but properties were accessed).  Searched: "+tried.reverse.mkString(", "))
+        Map()
+    }
   }
-}
 }
 
