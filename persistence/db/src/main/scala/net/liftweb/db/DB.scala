@@ -73,7 +73,7 @@ trait DB extends Loggable {
    */
   def jndiJdbcConnAvailable_? : Boolean = {
     try {
-      ((new InitialContext).lookup("java:/comp/env").asInstanceOf[Context].lookup(DefaultConnectionIdentifier.jndiName).asInstanceOf[DataSource].getConnection) != null
+      jndiConnection(DefaultConnectionIdentifier)!= null
     } catch {
       case e => false
     }
@@ -142,13 +142,29 @@ trait DB extends Loggable {
       clearThread(success)
     }
   }
+  
+  private def jndiConnection(name: ConnectionIdentifier) : Connection = {
+	tryo {
+		(new InitialContext).lookup("java:/comp/env").asInstanceOf[Context].lookup(name.jndiName).asInstanceOf[DataSource].getConnection
+	} openOr {
+		tryo {
+			(new InitialContext).lookup("java:/comp/env/" + name.jndiName).asInstanceOf[DataSource].getConnection
+		} openOr {
+			tryo {
+				(new InitialContext).lookup(name.jndiName).asInstanceOf[DataSource].getConnection
+			} openOr {
+				throw new javax.naming.NameNotFoundException("DataSource for " + name + " not founded")
+			}
+		}
+	}
+  }
 
   private def newConnection(name: ConnectionIdentifier): SuperConnection = {
     val ret = ((threadLocalConnectionManagers.box.flatMap(_.get(name)) or Box(connectionManagers.get(name))).flatMap(cm => cm.newSuperConnection(name) or cm.newConnection(name).map(c => new SuperConnection(c, () => cm.releaseConnection(c))))) openOr {
       Helpers.tryo {
         val uniqueId = if (logger.isDebugEnabled) Helpers.nextNum.toString else ""
         logger.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " opened")
-        val conn = (new InitialContext).lookup("java:/comp/env").asInstanceOf[Context].lookup(name.jndiName).asInstanceOf[DataSource].getConnection
+        val conn = jndiConnection(name)
         new SuperConnection(conn, () => {logger.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " closed"); conn.close})
       } openOr {
         throw new NullPointerException("Looking for Connection Identifier " + name + " but failed to find either a JNDI data source " +
