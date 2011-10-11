@@ -76,13 +76,10 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
     forExample("support normal joins") in {
       transaction {
         val companiesWithEmployees = from(companies, employees)((c, e) =>
-          where(c.id === e.id)
-            select ((c, e)))
-        val ids = companiesWithEmployees.map(entry => (entry._1.id,
-          entry._2.id))
-        ids must haveSize(2)
-        ids must containAll(List((td.c1.id, td.e1.id),
-          (td.c2.id, td.e2.id)))
+          where(c.id === e.companyId.get)
+            select ((c.id, e.id))).toList
+        companiesWithEmployees must haveSize(td.allEmployees.size)
+        companiesWithEmployees must containAll(td.allEmployees map { e => (e.companyId.get, e.id) })
       }
     }
 
@@ -93,7 +90,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
             on (c.id === e.map(_.companyId))
         )
 
-        companiesWithEmployees must haveSize(3)
+        companiesWithEmployees must haveSize(4)
         // One company doesn't have an employee, two have
         companiesWithEmployees.filter(ce => ce._2.isEmpty) must haveSize(1)
 
@@ -113,11 +110,8 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
             on (e1.admin === e2.map(_.admin))
         )
 
-        // two employees, both have distinct admin settings
-        employeesWithSameAdminSetting must haveSize(2)
         employeesWithSameAdminSetting.foreach { ee =>
           ee._2 must not(beEmpty)
-          ee._1.id must_== ee._2.get.id
         }
 
         val companiesWithSameCreationDate = join(companies, companies.leftOuter)((c1, c2) =>
@@ -147,6 +141,8 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
         val employees = company.get.employees
         employees must haveSize(1)
         checkEmployeesEqual(td.e1, employees.head)
+        employees.associate(td.e3)
+        td.e3.companyId.get must_== company.get.id
       }
     }
 
@@ -206,13 +202,6 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
         val loadedCompanies = from(companies)(c =>
           where(c.created === company.created) select (c))
         loadedCompanies.size must beGreaterThanOrEqualTo(1)
-      }
-    }
-
-    forExample("support associate with one-to-many relations") >> {
-      transactionWithRollback {
-        //td.c3.employees.associate(td.e2)
-        //td.e2.company.id must_== td.c3.id
       }
     }
 
@@ -278,15 +267,16 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
 
         // Boolean fields:
         val empAdmin: BooleanField[Employee] = from(employees)(e => where(e.admin in
-          from(employees)(e2 => where(e2.id === td.e1.id) select (e2.admin)))
+          from(employees)(e2 => where(e2.id === td.e2.id) select (e2.admin)))
           select (e.admin)).single
-        empAdmin.is must_== td.e1.admin.is
+        empAdmin.is must_== td.e2.admin.is
 
         // Enum fields:
-        val empRole: EnumNameField[_, _] = from(employees)(e => where(e.role in
-          from(employees)(e2 => where(e2.id === td.e1.id) select (e2.role)))
-          select (e.role)).single
-        empRole.is must_== td.e1.role.is
+        val empRoleQuery = from(employees)(e => where(e.role in
+          from(employees)(e2 => where(e2.id === td.e2.id) select (e2.role)))
+          select (e.role.get))
+        val empRole = empRoleQuery.single
+        empRole must_== td.e2.role.is
       }
 
     }
