@@ -141,10 +141,10 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
         fieldScale getOrElse super.scale
       }
 
-      private def fieldFor(o: AnyRef) = getter.get.invoke(o).asInstanceOf[TypedField[AnyRef]]
+      private def fieldFor(o: AnyRef) = getter.get.invoke(o).asInstanceOf[TypedField[_ <: AnyRef]]
 
       override def set(target: AnyRef, value: AnyRef) = {
-        val typedField: TypedField[AnyRef] = fieldFor(target)
+        val typedField: TypedField[_] = fieldFor(target)
         typedField.setFromAny(Box !! value)
       }
 
