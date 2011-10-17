@@ -127,7 +127,7 @@ object LiftRules extends LiftRulesMocker {
 
 
   /**
-   * Holds the falure information when a snippet can not be executed.
+   * Holds the failure information when a snippet can not be executed.
    */
   case class SnippetFailure(page: String, typeName: Box[String], failure: SnippetFailures.Value)
 
