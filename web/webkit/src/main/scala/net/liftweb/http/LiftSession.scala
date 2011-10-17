@@ -1883,7 +1883,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case text: Text => text
       case unparsed: Unparsed => unparsed
 
-      case a: Atom[Any] if a.getClass() == "scala.xml.Atom" => new Text(a.data.toString)
+      case a: Atom[Any] if a.getClass().getName() == "scala.xml.Atom" => new Text(a.data.toString)
 
       case v => v
     }

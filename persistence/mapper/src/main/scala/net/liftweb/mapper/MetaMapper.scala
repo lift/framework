@@ -1686,6 +1686,30 @@ object By {
   }
 }
 
+object By_>= {
+
+  import OprEnum._
+
+  def apply[O <: Mapper[O], T, U <% T](field: MappedField[T, O],
+                                       value: U) = Cmp[O, T](field, >=, Full(value), Empty, Empty)
+
+  def apply[O <: Mapper[O], T](field: MappedField[T, O], otherField:
+  MappedField[T, O]) = Cmp[O, T](field, >=, Empty, Full(otherField),
+    Empty)
+}
+
+object By_<= {
+
+  import OprEnum._
+
+  def apply[O <: Mapper[O], T, U <% T](field: MappedField[T, O],
+                                       value: U) = Cmp[O, T](field, <=, Full(value), Empty, Empty)
+
+  def apply[O <: Mapper[O], T](field: MappedField[T, O], otherField:
+  MappedField[T, O]) = Cmp[O, T](field, <=, Empty, Full(otherField),
+    Empty)
+}
+
 object NotBy {
   import OprEnum._
 
