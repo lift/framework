@@ -266,7 +266,7 @@ object Extraction {
       }
 
       def mkWithTypeHint(typeHint: String, fields: List[JField], typeInfo: TypeInfo) = {
-        val obj = JObject(fields)
+        val obj = JObject(fields filterNot (_.name == formats.typeHintFieldName))
         val deserializer = formats.typeHints.deserialize
         if (!deserializer.isDefinedAt(typeHint, obj)) {
           val concreteClass = formats.typeHints.classFor(typeHint) getOrElse fail("Do not know how to deserialize '" + typeHint + "'")
@@ -277,14 +277,24 @@ object Extraction {
       }
 
       val custom = formats.customDeserializer(formats)
-      val JsonClass = formats.typeHintFieldName
       if (custom.isDefinedAt(constructor.targetType, json)) custom(constructor.targetType, json)
       else json match {
         case JNull => null
-        case JObject(JField(JsonClass, JString(t)) :: xs) => mkWithTypeHint(t, xs, constructor.targetType)
-        case JField(_, JObject(JField(JsonClass, JString(t)) :: xs)) => mkWithTypeHint(t, xs, constructor.targetType)
+        case JObject(TypeHint(t, fs)) => mkWithTypeHint(t, fs, constructor.targetType)
+        case JField(_, JObject(TypeHint(t, fs))) => mkWithTypeHint(t, fs, constructor.targetType)
         case _ => instantiate
       }
+    }
+
+    object TypeHint {
+      def unapply(fs: List[JField]): Option[(String, List[JField])] = 
+        if (formats.typeHints == NoTypeHints) None 
+        else {
+          val grouped = fs groupBy (_.name == formats.typeHintFieldName)
+          if (grouped.isDefinedAt(true)) 
+            Some((grouped(true).head.value.values.toString, grouped.get(false).getOrElse(Nil)))
+          else None
+        }
     }
 
     def newPrimitive(elementType: Class[_], elem: JValue) = convert(elem, elementType, formats)
