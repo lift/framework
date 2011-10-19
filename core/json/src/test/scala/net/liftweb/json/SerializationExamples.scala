@@ -138,6 +138,11 @@ object SerializationExamples extends Specification {
 
 object ShortTypeHintExamples extends TypeHintExamples {
   implicit val formats = Serialization.formats(ShortTypeHints(classOf[Fish] :: classOf[Dog] :: Nil))
+
+//  "Deserialization succeeds even if jsonClass is not the first field" in {
+//    val ser = """{"animals":[],"pet":{"name":"pluto","jsonClass":"Dog"}}"""
+//    Serialization.read[Animals](ser) mustEqual Animals(Nil, Dog("pluto"))
+//  }
 }
 
 object FullTypeHintExamples extends TypeHintExamples {

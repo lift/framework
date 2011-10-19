@@ -218,6 +218,9 @@ private[json] object Meta {
       classOf[java.lang.Short], classOf[Date], classOf[Symbol], classOf[JValue],
       classOf[JObject], classOf[JArray]).map((_, ())))
 
+    private val primaryConstructors = new Memo[Class[_], List[(String, Type)]]
+    private val declaredFields = new Memo[(Class[_], String), Boolean]
+
     def constructors(t: Type, names: ParameterNameReader, context: Option[Context]): List[(JConstructor[_], List[(String, Type)])] =
       rawClassOf(t).getDeclaredConstructors.map(c => (c, constructorArgs(t, c, names, context))).toList
 
@@ -255,9 +258,13 @@ private[json] object Meta {
     }
 
     def primaryConstructorArgs(c: Class[_])(implicit formats: Formats) = {
-      val ord = Ordering[Int].on[JConstructor[_]](_.getParameterTypes.size)
-      val primary = c.getDeclaredConstructors.max(ord)
-      constructorArgs(c, primary, formats.parameterNameReader, None)
+      def findMostComprehensive(c: Class[_]): List[(String, Type)] = {
+        val ord = Ordering[Int].on[JConstructor[_]](_.getParameterTypes.size)
+        val primary = c.getDeclaredConstructors.max(ord)
+        constructorArgs(c, primary, formats.parameterNameReader, None)
+      }
+
+      primaryConstructors.memoize(c, findMostComprehensive(_))
     }
 
     def typeParameters(t: Type, k: Kind, context: Context): List[Class[_]] = {
@@ -346,11 +353,15 @@ private[json] object Meta {
         else findField(clazz.getSuperclass, name)
     }
 
-    def hasDeclaredField(clazz: Class[_], name: String): Boolean = try {
-      clazz.getDeclaredField(name)
-      true
-    } catch {
-      case e: NoSuchFieldException => false
+    def hasDeclaredField(clazz: Class[_], name: String): Boolean = {
+      def declaredField = try {
+        clazz.getDeclaredField(name)
+        true
+      } catch {
+        case e: NoSuchFieldException => false
+      }
+
+      declaredFields.memoize((clazz, name), _ => declaredField)
     }
 
     def mkJavaArray(x: Any, componentType: Class[_]) = {
