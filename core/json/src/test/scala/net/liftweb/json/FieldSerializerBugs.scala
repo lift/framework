@@ -42,6 +42,20 @@ object FieldSerializerBugs extends Specification {
     str mustEqual """{"a-b*c":5}"""
     read[WithSymbol](str) mustEqual s
   }
+
+  "FieldSerialization should work with Options" in {
+    implicit val formats = DefaultFormats + FieldSerializer[ClassWithOption]() 
+
+    val t = new ClassWithOption
+    t.field = Some(5)
+    read[ClassWithOption](Serialization.write(t)).field mustEqual Some(5)
+  }
+
+  case class WithSymbol(`a-b*c`: Int)
+
+  class ClassWithOption { 
+    var field: Option[Int] = None 
+  }
 }
 
-case class WithSymbol(`a-b*c`: Int)
+
