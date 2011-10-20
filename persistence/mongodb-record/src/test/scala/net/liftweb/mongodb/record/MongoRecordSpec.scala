@@ -31,6 +31,7 @@ import JsonDSL._
 
 import net.liftweb.record.field.Countries
 
+import com.mongodb._
 
 /**
  * Systems under specification for MongoRecord.
@@ -560,6 +561,63 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       rftr.mandatoryLongRefListField.objs mustEqual List(btr)
     }
 
+    "use defaultValue when field is not present in the database" in {
+      checkMongoIsRunning
+
+      val missingFieldDocId = ObjectId.get
+
+      // create a dbobject with no fields manually
+      val builder = BasicDBObjectBuilder.start
+        .add("_id", missingFieldDocId)
+
+      FieldTypeTestRecord.useColl { coll => coll.save(builder.get) }
+
+      val recFromDb = FieldTypeTestRecord.find(missingFieldDocId)
+
+      recFromDb must notBeEmpty
+
+      recFromDb foreach { r =>
+        r.mandatoryBooleanField.is must_== false
+        r.legacyOptionalBooleanField
+        r.optionalBooleanField.is must beEmpty
+        r.mandatoryCountryField.is must_== Countries.C1
+        r.legacyOptionalCountryField.valueBox must beEmpty
+        r.optionalCountryField.is must beEmpty
+        r.mandatoryDecimalField.is must_== 0.00
+        r.legacyOptionalDecimalField.valueBox must beEmpty
+        r.optionalDecimalField.is must beEmpty
+        r.mandatoryDoubleField.is must_== 0d
+        r.legacyOptionalDoubleField.valueBox must beEmpty
+        r.optionalDoubleField.is must beEmpty
+        r.mandatoryEmailField.is must_== ""
+        r.legacyOptionalEmailField.valueBox must beEmpty
+        r.optionalEmailField.is must beEmpty
+        r.mandatoryEnumField.is must_== MyTestEnum.ONE
+        r.legacyOptionalEnumField.valueBox must beEmpty
+        r.optionalEnumField.is must beEmpty
+        r.mandatoryIntField.is must_== 0
+        r.legacyOptionalIntField.valueBox must beEmpty
+        r.optionalIntField.is must beEmpty
+        r.mandatoryLocaleField.is must_== "en_US"
+        r.legacyOptionalLocaleField.valueBox must beEmpty
+        r.optionalLocaleField.is must beEmpty
+        r.mandatoryLongField.is must_== 0L
+        r.legacyOptionalLongField.valueBox must beEmpty
+        r.optionalLongField.is must beEmpty
+        r.mandatoryPostalCodeField.is must_== ""
+        r.legacyOptionalPostalCodeField.valueBox must beEmpty
+        r.optionalPostalCodeField.is must beEmpty
+        r.mandatoryStringField.is must_== ""
+        r.legacyOptionalStringField.valueBox must beEmpty
+        r.optionalStringField.is must beEmpty
+        r.mandatoryTextareaField.is must_== ""
+        r.legacyOptionalTextareaField.valueBox must beEmpty
+        r.optionalTextareaField.is must beEmpty
+        r.mandatoryTimeZoneField.is must_== "America/Chicago"
+        r.legacyOptionalTimeZoneField.valueBox must beEmpty
+        r.optionalTimeZoneField.is must beEmpty
+      }
+    }
   }
 }
 

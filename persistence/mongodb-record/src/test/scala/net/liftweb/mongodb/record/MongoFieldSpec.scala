@@ -27,7 +27,7 @@ import org.specs.Specification
 
 import common._
 import json.{Num => _, _}
-import JsonDSL._
+import BsonDSL._
 import util.Helpers.randomString
 import http.{LiftSession, S}
 import http.js.JE._

@@ -63,9 +63,6 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     true
   }
 
-  protected def useColl[T](f: DBCollection => T) =
-    MongoDB.useCollection(mongoIdentifier, collectionName)(f)
-
   def bulkDelete_!!(qry: DBObject): Unit = {
     useColl(coll =>
       coll.remove(qry)
@@ -276,7 +273,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   * Update records with a JObject query
   */
   def update(qry: JObject, newbr: BaseRecord, opts: UpdateOption*) {
-    MongoDB.use(mongoIdentifier) ( db =>
+    useDb ( db =>
       update(qry, newbr, db, opts :_*)
     )
   }

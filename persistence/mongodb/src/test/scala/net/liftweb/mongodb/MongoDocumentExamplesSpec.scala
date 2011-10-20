@@ -17,6 +17,8 @@
 package net.liftweb
 package mongodb
 
+import BsonDSL._
+
 import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
 
@@ -27,7 +29,6 @@ import org.specs.Specification
 
 import json.DefaultFormats
 import json.JsonParser._
-import json.JsonDSL._
 
 
 package mongotestdocs {
@@ -175,7 +176,7 @@ package mongotestdocs {
 /**
  * Systems under specification for MongoDocumentExamples.
  */
-object MongoDocumentExamplesSpec extends Specification("MongoDocumentExamples Specification") with MongoTestKit {
+class MongoDocumentExamplesSpec extends Specification("MongoDocumentExamples Specification") with MongoTestKit {
   import mongotestdocs._
 
   override def dbName = "lift_mongodocumentexamples"
@@ -200,16 +201,14 @@ object MongoDocumentExamplesSpec extends Specification("MongoDocumentExamples Sp
     p mustEqual pFromDb.get
 
     // retrieve it using a Json query
-    def pFromDbViaJson = SimplePerson.find(("_id" -> ("$oid" -> p._id.toString)))
+    def pFromDbViaJson = SimplePerson.find(("_id" -> pid))
 
     pFromDbViaJson.isDefined must_== true
 
     p mustEqual pFromDbViaJson.get
 
     // modify and save the person
-    // with scala 2.8 you can use the copy function to do this
-    // val p3 = p.copy(name = "Tim3")
-    val p2 = SimplePerson(p._id, "Timm", 27)
+    val p2 = p.copy(name="Timm", age=27)
     p2.save
     pFromDb.isDefined must_== true
     p2 must_== pFromDb.get
@@ -220,16 +219,16 @@ object MongoDocumentExamplesSpec extends Specification("MongoDocumentExamples Sp
 
     all.isEmpty must_== false
 
+    all.size must_== 1
+    all.head must_== p2
+
+    // delete it
+    p2.delete
+
+    pFromDb.isEmpty must_== true
+    pFromDbViaJson.isEmpty must_== true
+
     if (!debug) {
-      all.size must_== 1
-      all.head must_== p2
-
-      // delete it
-      p2.delete
-
-      pFromDb.isEmpty must_== true
-      pFromDbViaJson.isEmpty must_== true
-
       SimplePerson.drop
     }
   }

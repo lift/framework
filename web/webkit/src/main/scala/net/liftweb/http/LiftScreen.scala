@@ -250,7 +250,7 @@ trait AbstractScreen extends Factory {
         stuff)
 
     /**
-     * Add a validtion (the wacky symbols are supposed to look like a check mark)
+     * Add a validation (the wacky symbols are supposed to look like a check mark)
      */
     def ^/(f: T => List[FieldError]): FieldBuilder[T] =
       new FieldBuilder[T](name, default,

@@ -124,8 +124,8 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
   * using setFromAny passing it the DBObject returned from Mongo.
   *
   * @param inst - the record that will be populated
-  * @param obj - The DBObject
-  * @return Box[BaseRecord]
+  * @param dbo - The DBObject
+  * @return Unit
   */
   def setFieldsFromDBObject(inst: BaseRecord, dbo: DBObject): Unit = {
     for (k <- dbo.keySet; field <- inst.fieldByName(k.toString)) {
