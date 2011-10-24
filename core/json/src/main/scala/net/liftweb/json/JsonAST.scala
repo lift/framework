@@ -383,11 +383,6 @@ object JsonAST {
     type Values = List[Any]
     def values = arr.map(_.values)
     override def apply(i: Int): JValue = arr(i)
-
-    override def equals(that: Any): Boolean = that match {
-      case a: JArray => Set(arr.toArray: _*) == Set(a.arr.toArray: _*)
-      case _ => false
-    }
   }
 
   /** Renders JSON.
