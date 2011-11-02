@@ -268,3 +268,17 @@ private[json] class ThreadLocal[A](init: => A) extends java.lang.ThreadLocal[A] 
   override def initialValue = init
   def apply = get
 }
+
+class CustomSerializer[A: Manifest](
+  ser: Formats => (PartialFunction[JValue, A], PartialFunction[Any, JValue])) extends Serializer[A] {
+
+  val Class = implicitly[Manifest[A]].erasure
+
+  def deserialize(implicit format: Formats) = {
+    case (TypeInfo(Class, _), json) => 
+      if (ser(format)._1.isDefinedAt(json)) ser(format)._1(json)
+      else throw new MappingException("Can't convert " + json + " to " + Class)
+  }
+
+  def serialize(implicit format: Formats) = ser(format)._2
+}

@@ -27,52 +27,60 @@ object JodaTimeSerializers {
                  LocalTimeSerializer(), PeriodSerializer())
 }
 
-object PeriodSerializer {
-  def apply() = new SimpleTypeSerializer(new JStringType[Period]() {
-    def targetClass = classOf[Period]
-    def unwrap(json: JString)(implicit format: Formats) = new Period(json.s)
-    def wrap(a: Period)(implicit format: Formats) = JString(a.toString)
-  })
+case class PeriodSerializer extends CustomSerializer[Period](format => (
+  {
+    case JString(p) => new Period(p)
+    case JNull => null
+  },
+  {
+    case p: Period => JString(p.toString)
+  }
+))
+
+case class DurationSerializer extends CustomSerializer[Duration](format => (
+  {
+    case JInt(d) => new Duration(d.longValue)
+    case JNull => null
+  },
+  {
+    case d: Duration => JInt(d.getMillis)
+  }
+))
+
+case class InstantSerializer extends CustomSerializer[Instant](format => (
+  {
+    case JInt(i) => new Instant(i.longValue)
+    case JNull => null
+  },
+  {
+    case i: Instant => JInt(i.getMillis)
+  }
+))
+
+object DateParser {
+  def parse(s: String, format: Formats) = 
+    format.dateFormat.parse(s).map(_.getTime).getOrElse(throw new MappingException("Invalid date format " + s))
 }
 
-object DurationSerializer {
-  def apply() = new SimpleTypeSerializer(new JIntType[Duration]() {
-    def targetClass = classOf[Duration]
-    def unwrap(json: JInt)(implicit format: Formats) = new Duration(json.num.longValue)
-    def wrap(a: Duration)(implicit format: Formats) = JInt(a.getMillis)
-  })
-}
+case class DateTimeSerializer extends CustomSerializer[DateTime](format => (
+  {
+    case JString(s) => new DateTime(DateParser.parse(s, format))
+    case JNull => null
+  },
+  {
+    case d: DateTime => JString(format.dateFormat.format(d.toDate))
+  }
+))
 
-object InstantSerializer {
-  def apply() = new SimpleTypeSerializer(new JIntType[Instant]() {
-    def targetClass = classOf[Instant]
-    def unwrap(json: JInt)(implicit format: Formats) = new Instant(json.num.longValue)
-    def wrap(a: Instant)(implicit format: Formats) = JInt(a.getMillis)
-  })
-}
-
-object DateTimeSerializer {
-  def apply() = new SimpleTypeSerializer(new JStringType[DateTime]() {
-    def targetClass = classOf[DateTime]
-    def unwrap(json: JString)(implicit format: Formats) = new DateTime(parse(json))
-    def wrap(a: DateTime)(implicit format: Formats) = JString(format.dateFormat.format(a.toDate))
-  })
-
-  private[ext] def parse(json: JString)(implicit format: Formats) = 
-    format.dateFormat.parse(json.s).map(_.getTime).getOrElse {
-      throw new MappingException("Invalid date format " + json.s)
-    }
-}
-
-object DateMidnightSerializer {
-  def apply() = new SimpleTypeSerializer(new JStringType[DateMidnight]() {
-    def targetClass = classOf[DateMidnight]
-    def unwrap(json: JString)(implicit format: Formats) = 
-      new DateMidnight(DateTimeSerializer.parse(json))
-    def wrap(a: DateMidnight)(implicit format: Formats) = 
-      JString(format.dateFormat.format(a.toDate))
-  })
-}
+case class DateMidnightSerializer extends CustomSerializer[DateMidnight](format => (
+  {
+    case JString(s) => new DateMidnight(DateParser.parse(s, format))
+    case JNull => null
+  },
+  {
+    case d: DateMidnight => JString(format.dateFormat.format(d.toDate))
+  }
+))
 
 private[ext] case class _Interval(start: Long, end: Long)
 object IntervalSerializer {
@@ -101,7 +109,6 @@ object LocalTimeSerializer {
   })
 }
 
-// FIXME consider moving these utilities to lift-json in some form
 private[ext] trait ClassType[A, B] {
   def unwrap(b: B)(implicit format: Formats): A
   def wrap(a: A)(implicit format: Formats): B
@@ -120,30 +127,5 @@ case class ClassSerializer[A : Manifest, B : Manifest](t: ClassType[A, B]) exten
 
   def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
     case a: A if a.asInstanceOf[AnyRef].getClass == Class => Extraction.decompose(t.wrap(a))
-  }
-}
-
-private[ext] trait SimpleType[A, JS <: JValue] {
-  def targetClass: Class[A]
-  def unwrap(json: JS)(implicit format: Formats): A
-  def wrap(a: A)(implicit format: Formats): JS
-}
-
-private[ext] trait JIntType[A] extends SimpleType[A, JInt]
-private[ext] trait JStringType[A] extends SimpleType[A, JString]
-
-private[ext] class SimpleTypeSerializer[A, JS <: JValue](t: SimpleType[A, JS]) extends Serializer[A] {
-  private val Class = t.targetClass
-
-  def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), A] = {
-    case (TypeInfo(Class, _), json) => json match {
-      case JNull => null.asInstanceOf[A]
-      case json: JS => t.unwrap(json)
-      case value => throw new MappingException("Can't convert " + value + " to " + Class)
-    }
-  }
-
-  def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
-    case d: A if d.asInstanceOf[AnyRef].getClass == t.targetClass => t.wrap(d)
   }
 }

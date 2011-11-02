@@ -232,54 +232,36 @@ object CustomSerializerExamples extends Specification {
   import JsonAST._
   import java.util.regex.Pattern
 
-  class IntervalSerializer extends Serializer[Interval] {
-    private val IntervalClass = classOf[Interval]
-
-    def deserialize(implicit format: Formats) = {
-      case (TypeInfo(IntervalClass, _), json) => json match {
-        case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) =>
-          new Interval(s.longValue, e.longValue)
-        case x => throw new MappingException("Can't convert " + x + " to Interval")
-      }
-    }
-
-    def serialize(implicit format: Formats) = {
+  class IntervalSerializer extends CustomSerializer[Interval](format => (
+    { 
+      case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) => 
+        new Interval(s.longValue, e.longValue) 
+    },
+    { 
       case x: Interval =>
         JObject(JField("start", JInt(BigInt(x.startTime))) :: 
-                JField("end",   JInt(BigInt(x.endTime))) :: Nil)
+                JField("end",   JInt(BigInt(x.endTime))) :: Nil) 
     }
-  }
+  ))
 
-  class PatternSerializer extends Serializer[Pattern] {
-    private val PatternClass = classOf[Pattern]
-
-    def deserialize(implicit format: Formats) = {
-      case (TypeInfo(PatternClass, _), json) => json match {
-        case JObject(JField("$pattern", JString(s)) :: Nil) => Pattern.compile(s)
-        case x => throw new MappingException("Can't convert " + x + " to Pattern")
-      }
+  class PatternSerializer extends CustomSerializer[Pattern](format => (
+    { 
+      case JObject(JField("$pattern", JString(s)) :: Nil) => Pattern.compile(s) 
+    },
+    { 
+      case x: Pattern => JObject(JField("$pattern", JString(x.pattern)) :: Nil) 
     }
+  ))
 
-    def serialize(implicit format: Formats) = {
-      case x: Pattern => JObject(JField("$pattern", JString(x.pattern)) :: Nil)
-    }
-  }
-
-  class DateSerializer extends Serializer[Date] {
-    private val DateClass = classOf[Date]
-
-    def deserialize(implicit format: Formats) = {
-      case (TypeInfo(DateClass, _), json) => json match {
-        case JObject(List(JField("$dt", JString(s)))) =>
-          format.dateFormat.parse(s).getOrElse(throw new MappingException("Can't parse "+ s + " to Date"))
-        case x => throw new MappingException("Can't convert " + x + " to Date")
-      }
-    }
-
-    def serialize(implicit format: Formats) = {
+  class DateSerializer extends CustomSerializer[Date](format => (
+    { 
+      case JObject(List(JField("$dt", JString(s)))) =>
+        format.dateFormat.parse(s).getOrElse(throw new MappingException("Can't parse "+ s + " to Date"))
+    },
+    {
       case x: Date => JObject(JField("$dt", JString(format.dateFormat.format(x))) :: Nil)
     }
-  }
+  ))
 
   class IndexedSeqSerializer extends Serializer[IndexedSeq[_]] {
     def deserialize(implicit format: Formats) = {
