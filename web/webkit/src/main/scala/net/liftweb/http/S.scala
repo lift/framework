@@ -996,6 +996,11 @@ trait S extends HasParams with Loggable {
   def get_? = request.map(_.get_?).openOr(false)
 
   /**
+   * Returns the logical page_id of the current request. All RequestVars for a current page share this id.
+   */
+  def renderVersion = RenderVersion.get
+
+  /**
    * The URI of the current request (not re-written). The URI is the portion of the request
    * URL after the context path. For example, with a context path of "myApp",
    * Lift would return the following URIs for the given requests:
