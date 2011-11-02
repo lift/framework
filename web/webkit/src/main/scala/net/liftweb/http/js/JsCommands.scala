@@ -684,27 +684,8 @@ object JsCmds {
    * @param id - the id of the node that will be replaced
    * @param node - the new node
    */
-  case class Replace(id: String, content: NodeSeq) extends JsCmd with HtmlFixer {
-    override val toJsCmd = {
-      val (html, js) = fixHtmlAndJs("inline", content)
-
-      var ret = 
-      """
-  try {
-  var parent1 = document.getElementById(""" + id.encJs + """);
-  parent1.innerHTML = """ + html + """;
-  for (var i = 0; i < parent1.childNodes.length; i++) {
-    var node = parent1.childNodes[i];
-    parent1.parentNode.insertBefore(node.cloneNode(true), parent1);
-  }
-  parent1.parentNode.removeChild(parent1);
-  } catch (e) {
-    // if the node doesn't exist or something else bad happens
-  }
-"""
-      if (js.isEmpty) ret else ret + " "+js.toJsCmd
-
-    }
+  case class Replace(id: String, content: NodeSeq) extends JsCmd {
+    val toJsCmd = LiftRules.jsArtifacts.replace(id, Helpers.stripHead(content)).toJsCmd
   }
 
   /**

@@ -251,14 +251,17 @@ object JqJE {
     "empty().after(" + fixHtmlFunc("inline", content){str => str} + ")"
   }
 
+  case class JqReplace(content: NodeSeq) extends JsExp with JsMember {
+    override val toJsCmd = fixHtmlCmdFunc("inline", content){"replaceWith(" + _ + ")"}
+  }
+
   object JqHtml {
     def apply(): JsExp with JsMember with JQueryRight = new JsExp with JsMember with JQueryRight {
       def toJsCmd = "html()"
     }
 
     def apply(content: NodeSeq): JsExp with JsMember with JQueryRight with JQueryLeft = new JsExp with JsMember with JQueryRight with JQueryLeft {
-      val toJsCmd = 
-      "html(" + fixHtmlFunc("inline", content){str => str} + ")"
+      val toJsCmd = fixHtmlCmdFunc("inline", content){"html(" + _ + ")"}
     }
   }
 
@@ -359,13 +362,15 @@ object JqJsCmds {
       JqJE.JqId(JE.Str(uid)) ~> JqJE.JqPrependTo(content)
   }
 
+  case class JqReplace(uid: String, content: NodeSeq) extends JsCmd {
+    val toJsCmd = (JqJE.JqId(JE.Str(uid)) ~> JqJE.JqReplace(content)).cmd.toJsCmd
+  }
 
   case class JqSetHtml(uid: String, content: NodeSeq) extends JsCmd {
     /**
      * Eagerly evaluate
      */
-    val toJsCmd =
-    fixHtmlCmdFunc(uid, content){"try{jQuery(" + ("#" + uid).encJs + ").each(function(i) {this.innerHTML = " + _ + ";});} catch (e) {}"}
+    val toJsCmd = (JqJE.JqId(JE.Str(uid)) ~> JqJE.JqHtml(content)).cmd.toJsCmd
   }
 
   object Show {

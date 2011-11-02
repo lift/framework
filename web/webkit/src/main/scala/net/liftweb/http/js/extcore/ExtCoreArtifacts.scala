@@ -49,6 +49,29 @@ object ExtCoreArtifacts extends JSArtifacts {
   	def toJsCmd = "Ext.Ajax.serializeForm(" + id.encJs + ")"
   }
 
+  def replace(id: String, content: NodeSeq): JsCmd = new JsCmd with HtmlFixer {
+    override val toJsCmd = {
+      val (html, js) = fixHtmlAndJs("inline", content)
+
+      val ret =
+        """
+	  try {
+	  var parent1 = document.getElementById(""" + id.encJs + """);
+	  parent1.innerHTML = """ + html + """;
+	  for (var i = 0; i < parent1.childNodes.length; i++) {
+	    var node = parent1.childNodes[i];
+	    parent1.parentNode.insertBefore(node.cloneNode(true), parent1);
+	  }
+	  parent1.parentNode.removeChild(parent1);
+	  } catch (e) {
+	    // if the node doesn't exist or something else bad happens
+	  }
+	"""
+      if (js.isEmpty) ret else ret + " "+js.toJsCmd
+
+    }
+  }
+
   def setHtml(id: String, xml: NodeSeq): JsCmd = new JsCmd {
   	def toJsCmd = fixHtmlCmdFunc(id, xml){s => "try { Ext.fly(" + id.encJs + ").dom.innerHTML = " + s + "; } catch (e) {}"}
   }

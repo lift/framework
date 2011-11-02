@@ -51,7 +51,9 @@ trait JQueryArtifacts extends JSArtifacts {
     def toJsCmd = "serialize()"
   }
 
-  def setHtml(id: String, xml: NodeSeq): JsCmd = JqJsCmds.JqSetHtml(id, xml)
+  def replace(id: String, content: NodeSeq): JsCmd = JqJsCmds.JqReplace(id, content)
+
+  def setHtml(id: String, content: NodeSeq): JsCmd = JqJsCmds.JqSetHtml(id, content)
 
   def onLoad(cmd: JsCmd): JsCmd = JqJsCmds.JqOnLoad(cmd)
 

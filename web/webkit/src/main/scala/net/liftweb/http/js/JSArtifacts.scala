@@ -55,9 +55,14 @@ trait JSArtifacts {
   def serialize(id: String): JsExp
 
   /**
+   * Replaces the content of the node with the provided id with the markup given by content
+   */
+  def replace(id: String, content: NodeSeq): JsCmd
+
+  /**
    * Sets the inner HTML of the element denominated by the id
    */
-  def setHtml(id: String, xml: NodeSeq): JsCmd
+  def setHtml(id: String, content: NodeSeq): JsCmd
 
   /**
    * Sets the JavScript that willbe executed when document is ready

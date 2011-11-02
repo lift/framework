@@ -58,6 +58,29 @@ object YUIArtifacts extends JSArtifacts {
     def toJsCmd = "YAHOO.util.Connect.setForm(" + id.encJs + ", false)"
   }
 
+  def replace(id: String, content: NodeSeq): JsCmd = new JsCmd with HtmlFixer {
+    override val toJsCmd = {
+      val (html, js) = fixHtmlAndJs("inline", content)
+
+      val ret =
+        """
+	  try {
+	  var parent1 = document.getElementById(""" + id.encJs + """);
+	  parent1.innerHTML = """ + html + """;
+	  for (var i = 0; i < parent1.childNodes.length; i++) {
+	    var node = parent1.childNodes[i];
+	    parent1.parentNode.insertBefore(node.cloneNode(true), parent1);
+	  }
+	  parent1.parentNode.removeChild(parent1);
+	  } catch (e) {
+	    // if the node doesn't exist or something else bad happens
+	  }
+	"""
+      if (js.isEmpty) ret else ret + " "+js.toJsCmd
+
+    }
+  }
+
   def setHtml(uid: String, content: NodeSeq): JsCmd = new JsCmd {
     val toJsCmd = fixHtmlCmdFunc(uid, content){s => "try{document.getElementById(" + uid.encJs + ").innerHTML = " + s + ";} catch (e) {}"}
   }
