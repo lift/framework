@@ -33,13 +33,14 @@ import DispatchJSON.requestToJSONRequest
 /** Helper functions */
 private[couchdb] object DatabaseHelpers {
   /** Handles the JSON result of an update action by parsing out id and rev, updating the given original object with the values and returning it */
-  def handleUpdateResult(original: JObject)(json: JValue): Box[JObject] =
+  def handleUpdateResult(original: JObject)(json: JValue): Box[JObject] = {
     for {
       obj <- Full(json).asA[JObject] ?~ ("update result is not a JObject: " + json)
-      ok  <- Full(json \ "ok" ).asA[JField].map(_.value).asA[JBool].filter(_.value) ?~ ("ok not present in reply or not true: "+json)
-      id  <- Full(json \ "id" ).asA[JField].map(_.value).asA[JString].map(_.s)    ?~ ("id not present or not a string: " + json)
-      rev <- Full(json \ "rev").asA[JField].map(_.value).asA[JString].map(_.s)    ?~ ("rev not present or not a string: " + json)
+      ok  <- Full(json \ "ok" ).asA[JBool].filter(_.value) ?~ ("ok not present in reply or not true: "+json)
+      id  <- Full(json \ "id" ).asA[JString].map(_.s)    ?~ ("id not present or not a string: " + json)
+      rev <- Full(json \ "rev").asA[JString].map(_.s)    ?~ ("rev not present or not a string: " + json)
     } yield updateIdAndRev(original, id, rev)
+  }
 }
 
 import DatabaseHelpers._
