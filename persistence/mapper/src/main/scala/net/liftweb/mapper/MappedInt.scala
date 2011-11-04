@@ -132,7 +132,7 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
     * Build a list for the select.  Return a tuple of (String, String) where the first string
     * is the id.string of the Value and the second string is the Text name of the Value.
     */
-  def buildDisplayList: List[(Int, String)] = enum.values.map(a => (a.id, a.toString)).toList
+  def buildDisplayList: List[(Int, String)] = enum.values.toList.map(a => (a.id, a.toString))
 
   /**
    * Create an input field for the item
