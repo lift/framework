@@ -30,6 +30,11 @@ import net.liftweb.http.jquery.{JqSHtml}
 import scala.xml.NodeSeq
 import js._
 
+/**
+ * Warning: Do not use unnamed Enumerations with 2.8.1 as this will cause too many items to be displayed in the dropdown.
+ *
+ * See https://issues.scala-lang.org/browse/SI-3687 for details
+ */ 
 abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, val enum: ENUM) extends MappedField[ENUM#Value, T] {
   private var data: ENUM#Value = defaultValue
   private var orgData: ENUM#Value = defaultValue
@@ -54,6 +59,7 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
     if (value != data) {
       data = value
       dirty_?(true)
+
     }
     data
   }
