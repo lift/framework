@@ -69,15 +69,36 @@ trait DB extends Loggable {
 
 
   /**
-   * can we get a JDBC connection from JNDI?
+   * Try to obtain a Connection using the jndiName of the ConnectionIdentifier
    */
-  def jndiJdbcConnAvailable_? : Boolean = {
-    try {
-      ((new InitialContext).lookup("java:/comp/env").asInstanceOf[Context].lookup(DefaultConnectionIdentifier.jndiName).asInstanceOf[DataSource].getConnection) != null
-    } catch {
-      case e => false
+  private def jndiConnection(name: ConnectionIdentifier) : Box[Connection] = {
+    val toTry: List[() => Connection] = List(
+      () => {
+        logger.trace("Trying JNDI lookup on java:/comp/env followed by lookup on %s".format(name.jndiName))
+        (new InitialContext).lookup("java:/comp/env").asInstanceOf[Context].lookup(name.jndiName).asInstanceOf[DataSource].getConnection
+      },
+      () => {
+        logger.trace("Trying JNDI lookup on java:/comp/env/%s".format(name.jndiName))
+        (new InitialContext).lookup("java:/comp/env/" + name.jndiName).asInstanceOf[DataSource].getConnection
+
+      },
+      () => {
+        logger.trace("Trying JNDI lookup on %s".format(name.jndiName))
+        (new InitialContext).lookup(name.jndiName).asInstanceOf[DataSource].getConnection
+
+      }
+    )
+
+    first(toTry) (f => tryo{t:Throwable => logger.trace("JNDI Lookup failed: "+t)}(f())) or {
+      logger.warn("A JNDI name was specified(%s), but no connection could be obtained".format(name.jndiName))
+      Empty
     }
   }
+
+  /**
+   * can we get a JDBC connection from JNDI?
+   */
+  def jndiJdbcConnAvailable_? : Boolean = jndiConnection(DefaultConnectionIdentifier).isDefined
 
   private val connectionManagers = new HashMap[ConnectionIdentifier, ConnectionManager]
 
@@ -144,19 +165,29 @@ trait DB extends Loggable {
   }
 
   private def newConnection(name: ConnectionIdentifier): SuperConnection = {
-    val ret = ((threadLocalConnectionManagers.box.flatMap(_.get(name)) or Box(connectionManagers.get(name))).flatMap(cm => cm.newSuperConnection(name) or cm.newConnection(name).map(c => new SuperConnection(c, () => cm.releaseConnection(c))))) openOr {
-      Helpers.tryo {
-        val uniqueId = if (logger.isDebugEnabled) Helpers.nextNum.toString else ""
-        logger.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " opened")
-        val conn = (new InitialContext).lookup("java:/comp/env").asInstanceOf[Context].lookup(name.jndiName).asInstanceOf[DataSource].getConnection
-        new SuperConnection(conn, () => {logger.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " closed"); conn.close})
-      } openOr {
-        throw new NullPointerException("Looking for Connection Identifier " + name + " but failed to find either a JNDI data source " +
+    def cmSuperConnection(cm: ConnectionManager): Box[SuperConnection] =
+      cm.newSuperConnection(name) or cm.newConnection(name).map(c => new SuperConnection(c, () => cm.releaseConnection(c)))
+
+    def jndiSuperConnection: Box[SuperConnection] = jndiConnection(name).map(c => {
+      val uniqueId = if (logger.isDebugEnabled) Helpers.nextNum.toString else ""
+      logger.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " opened")
+      new SuperConnection(c, () => {logger.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " closed"); c.close})
+    })
+
+
+    val cmConn = for {
+      connectionManager <- threadLocalConnectionManagers.box.flatMap(_.get(name)) or Box(connectionManagers.get(name))
+      connection <- cmSuperConnection(connectionManager)
+    } yield connection
+
+    val ret = cmConn or jndiSuperConnection
+
+    ret.foreach (_.setAutoCommit(false))
+
+    ret openOr {
+      throw new NullPointerException("Looking for Connection Identifier " + name + " but failed to find either a JNDI data source " +
                                        "with the name " + name.jndiName + " or a lift connection manager with the correct name")
-      }
     }
-    ret.setAutoCommit(false)
-    ret
   }
 
   private class ThreadBasedConnectionManager(connections: List[ConnectionIdentifier]) {
@@ -316,7 +347,7 @@ trait DB extends Loggable {
 
   /**
    * Append function to be invoked after the current transaction on DefaultConnectionIdentifier has ended
-   * 
+   *
    */
   def appendPostTransaction(func: Boolean => Unit):Unit = appendPostTransaction(DefaultConnectionIdentifier, func)
 
@@ -1076,19 +1107,18 @@ class StandardDBVendor(driverName: String,
                        dbUrl: String,
                        dbUser: Box[String],
                        dbPassword: Box[String]) extends ProtoDBVendor {
-  protected def createOne: Box[Connection] = try {
-    Class.forName(driverName)
 
-    val dm = (dbUser, dbPassword) match {
+  private val logger = Logger(classOf[StandardDBVendor])
+
+  protected def createOne: Box[Connection] =  {
+    tryo{t:Throwable => logger.error("Cannot load database driver: %s".format(driverName), t)}{Class.forName(driverName);()}
+
+    (dbUser, dbPassword) match {
       case (Full(user), Full(pwd)) =>
-        DriverManager.getConnection(dbUrl, user, pwd)
-
-      case _ => DriverManager.getConnection(dbUrl)
+        tryo{t:Throwable => logger.error("Unable to get database connection. url=%s, user=%s".format(dbUrl, user),t)}(DriverManager.getConnection(dbUrl, user, pwd))
+      case _ =>
+        tryo{t:Throwable => logger.error("Unable to get database connection. url=%s".format(dbUrl),t)}(DriverManager.getConnection(dbUrl))
     }
-
-    Full(dm)
-  } catch {
-    case e: Exception => e.printStackTrace; Empty
   }
 }
 
