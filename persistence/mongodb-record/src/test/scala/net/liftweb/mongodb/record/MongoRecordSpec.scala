@@ -620,6 +620,8 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
     }
 
     "reset dirty flags on save" in {
+      checkMongoIsRunning
+
       val fttr = FieldTypeTestRecord.createRecord.save
       fttr.mandatoryDecimalField(BigDecimal("3.14"))
       fttr.dirtyFields.length must_== 1
@@ -628,6 +630,8 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
     }
 
     "update dirty fields for a FieldTypeTestRecord" in {
+      checkMongoIsRunning
+
       val fttr = FieldTypeTestRecord.createRecord
         .legacyOptionalStringField("legacy optional string")
         .optionalStringField("optional string")
@@ -672,6 +676,8 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
     }
 
     "update dirty fields for a MongoFieldTypeTestRecord" in {
+      checkMongoIsRunning
+
       val mfttr = MongoFieldTypeTestRecord.createRecord
         .legacyOptionalDateField(new Date)
         .legacyOptionalObjectIdField(ObjectId.get)
@@ -714,6 +720,8 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
     }
 
     "update dirty fields for a ListTestRecord" in {
+      checkMongoIsRunning
+
       val ltr = ListTestRecord.createRecord.save
 
       ltr.mandatoryStringListField(List("abc", "def", "ghi"))
@@ -734,6 +742,8 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
     }
 
     "update dirty fields for a MapTestRecord" in {
+      checkMongoIsRunning
+
       val mtr = MapTestRecord.save
 
       mtr.mandatoryStringMapField(Map("a" -> "abc", "b" -> "def", "c" -> "ghi"))
@@ -752,6 +762,8 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
     }
 
     "update dirty fields for a SubRecordTestRecord" in {
+      checkMongoIsRunning
+
       val srtr = SubRecordTestRecord.createRecord.save
 
       val ssr1 = SubSubRecord.createRecord.name("SubSubRecord1")
