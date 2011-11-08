@@ -74,37 +74,45 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
   *   using asDBObject
   */
   def asDBObject(inst: BaseRecord): DBObject = {
+    val dbo = BasicDBObjectBuilder.start // use this so regex patterns can be stored.
 
+    for {
+      field <- fields(inst)
+      dbValue <- fieldDbValue(field)
+    } { dbo.add(field.name, dbValue) }
+
+    dbo.get
+  }
+
+  /**
+    * Return the value of a field suitable to be put in a DBObject
+    */
+  def fieldDbValue(f: Field[_, BaseRecord]): Box[Any] = {
     import Meta.Reflection._
     import field.MongoFieldFlavor
 
-    val dbo = BasicDBObjectBuilder.start // use this so regex patterns can be stored.
-
-    for (f <- fields(inst)) {
-      f match {
-        case field if (field.optional_? && field.valueBox.isEmpty) => // don't add to DBObject
-        case field: EnumTypedField[Enumeration] =>
-          field.asInstanceOf[EnumTypedField[Enumeration]].valueBox foreach {
-            v => dbo.add(f.name, v.id)
-          }
-        case field: EnumNameTypedField[Enumeration] =>
-          field.asInstanceOf[EnumNameTypedField[Enumeration]].valueBox foreach {
-            v => dbo.add(f.name, v.toString)
-          }
-        case field: MongoFieldFlavor[Any] =>
-          dbo.add(f.name, field.asInstanceOf[MongoFieldFlavor[Any]].asDBObject)
-        case field => field.valueBox foreach (_.asInstanceOf[AnyRef] match {
-          case null => dbo.add(f.name, null)
-          case x if primitive_?(x.getClass) => dbo.add(f.name, x)
-          case x if mongotype_?(x.getClass) => dbo.add(f.name, x)
-          case x if datetype_?(x.getClass) => dbo.add(f.name, datetype2dbovalue(x))
-          case x: BsonRecord[_] => dbo.add(f.name, x.asDBObject)
-          case x: Array[Byte] => dbo.add(f.name, x)
-          case o => dbo.add(f.name, o.toString)
-        })
-      }
+    f match {
+      case field if (field.optional_? && field.valueBox.isEmpty) => Empty // don't add to DBObject
+      case field: EnumTypedField[Enumeration] =>
+        field.asInstanceOf[EnumTypedField[Enumeration]].valueBox map {
+          v => v.id
+        }
+      case field: EnumNameTypedField[Enumeration] =>
+        field.asInstanceOf[EnumNameTypedField[Enumeration]].valueBox map {
+          v => v.toString
+        }
+      case field: MongoFieldFlavor[Any] =>
+        Full(field.asInstanceOf[MongoFieldFlavor[Any]].asDBObject)
+      case field => field.valueBox map (_.asInstanceOf[AnyRef] match {
+        case null => null
+        case x if primitive_?(x.getClass) => x
+        case x if mongotype_?(x.getClass) => x
+        case x if datetype_?(x.getClass) => datetype2dbovalue(x)
+        case x: BsonRecord[_] => x.asDBObject
+        case x: Array[Byte] => x
+        case o => o.toString
+      })
     }
-    dbo.get
   }
 
   /**

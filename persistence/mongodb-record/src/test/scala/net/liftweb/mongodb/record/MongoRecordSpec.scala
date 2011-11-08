@@ -618,6 +618,169 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
         r.optionalTimeZoneField.is must beEmpty
       }
     }
+
+    "reset dirty flags on save" in {
+      val fttr = FieldTypeTestRecord.createRecord.save
+      fttr.mandatoryDecimalField(BigDecimal("3.14"))
+      fttr.dirtyFields.length must_== 1
+      fttr.save
+      fttr.dirtyFields.length must_== 0
+    }
+
+    "update dirty fields for a FieldTypeTestRecord" in {
+      val fttr = FieldTypeTestRecord.createRecord
+        .legacyOptionalStringField("legacy optional string")
+        .optionalStringField("optional string")
+        .save
+
+      fttr.mandatoryBooleanField(false)
+      fttr.mandatoryDecimalField(BigDecimal("3.14"))
+      fttr.mandatoryDoubleField(1999)
+      fttr.mandatoryEnumField(MyTestEnum.ONE)
+      fttr.mandatoryIntField(99)
+      fttr.mandatoryLongField(100L)
+      fttr.mandatoryStringField("string")
+      fttr.optionalStringField(Empty)
+      fttr.legacyOptionalStringField(Empty)
+
+      fttr.dirtyFields.length must_== 9
+      fttr.update
+      fttr.dirtyFields.length must_== 0
+
+      val fromDb = FieldTypeTestRecord.find(fttr.id.is)
+      fromDb must notBeEmpty
+      fromDb foreach { rec =>
+        rec must_== fttr
+        rec.dirtyFields.length must_== 0
+      }
+
+      val fttr2 = FieldTypeTestRecord.createRecord.save
+
+      fttr2.legacyOptionalStringField("legacy optional string")
+      fttr2.optionalStringField("optional string")
+
+      fttr2.dirtyFields.length must_== 2
+      fttr2.update
+      fttr2.dirtyFields.length must_== 0
+
+      val fromDb2 = FieldTypeTestRecord.find(fttr2.id.is)
+      fromDb2 must notBeEmpty
+      fromDb2 foreach { rec =>
+        rec must_== fttr2
+        rec.dirtyFields.length must_== 0
+      }
+    }
+
+    "update dirty fields for a MongoFieldTypeTestRecord" in {
+      val mfttr = MongoFieldTypeTestRecord.createRecord
+        .legacyOptionalDateField(new Date)
+        .legacyOptionalObjectIdField(ObjectId.get)
+        .save
+
+      mfttr.mandatoryDateField(new Date)
+      mfttr.mandatoryJsonObjectField(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")))
+      mfttr.mandatoryObjectIdField(ObjectId.get)
+      mfttr.mandatoryPatternField(Pattern.compile("^Mon", Pattern.CASE_INSENSITIVE))
+      mfttr.mandatoryUUIDField(UUID.randomUUID)
+      mfttr.legacyOptionalDateField(Empty)
+      mfttr.legacyOptionalObjectIdField(Empty)
+
+      mfttr.dirtyFields.length must_== 7
+      mfttr.update
+      mfttr.dirtyFields.length must_== 0
+
+      val fromDb = MongoFieldTypeTestRecord.find(mfttr.id.is)
+      fromDb must notBeEmpty
+      fromDb foreach { rec =>
+        rec must_== mfttr
+        rec.dirtyFields.length must_== 0
+      }
+
+      val mfttr2 = MongoFieldTypeTestRecord.createRecord.save
+
+      mfttr2.legacyOptionalDateField(new Date)
+      mfttr2.legacyOptionalObjectIdField(ObjectId.get)
+
+      mfttr2.dirtyFields.length must_== 2
+      mfttr2.update
+      mfttr2.dirtyFields.length must_== 0
+
+      val fromDb2 = MongoFieldTypeTestRecord.find(mfttr2.id.is)
+      fromDb2 must notBeEmpty
+      fromDb2 foreach { rec =>
+        rec must_== mfttr2
+        rec.dirtyFields.length must_== 0
+      }
+    }
+
+    "update dirty fields for a ListTestRecord" in {
+      val ltr = ListTestRecord.createRecord.save
+
+      ltr.mandatoryStringListField(List("abc", "def", "ghi"))
+      ltr.mandatoryIntListField(List(4, 5, 6))
+      ltr.mandatoryMongoJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
+      ltr.mongoCaseClassListField(List(MongoCaseClassTestObject(1,"str")))
+
+      ltr.dirtyFields.length must_== 4
+      ltr.update
+      ltr.dirtyFields.length must_== 0
+
+      val fromDb = ListTestRecord.find(ltr.id.is)
+      fromDb must notBeEmpty
+      fromDb foreach { rec =>
+        rec must_== ltr
+        rec.dirtyFields.length must_== 0
+      }
+    }
+
+    "update dirty fields for a MapTestRecord" in {
+      val mtr = MapTestRecord.save
+
+      mtr.mandatoryStringMapField(Map("a" -> "abc", "b" -> "def", "c" -> "ghi"))
+      mtr.mandatoryIntMapField(Map("a" -> 4, "b" -> 5, "c" -> 6))
+
+      mtr.dirtyFields.length must_== 2
+      mtr.update
+      mtr.dirtyFields.length must_== 0
+
+      val fromDb = MapTestRecord.find(mtr.id.is)
+      fromDb must notBeEmpty
+      fromDb foreach { rec =>
+        rec must_== mtr
+        rec.dirtyFields.length must_== 0
+      }
+    }
+
+    "update dirty fields for a SubRecordTestRecord" in {
+      val srtr = SubRecordTestRecord.createRecord.save
+
+      val ssr1 = SubSubRecord.createRecord.name("SubSubRecord1")
+      val ssr2 = SubSubRecord.createRecord.name("SubSubRecord2")
+
+      val sr1 = SubRecord.createRecord
+        .name("SubRecord1")
+        .subsub(ssr1)
+        .subsublist(ssr1 :: ssr2 :: Nil)
+        .slist("s1" :: "s2" :: Nil)
+        .smap(Map("a" -> "s1", "b" -> "s2"))
+        .pattern(Pattern.compile("^Mon", Pattern.CASE_INSENSITIVE))
+
+      val sr2 = SubRecord.createRecord.name("SubRecord2")
+
+      srtr.mandatoryBsonRecordField(sr1)
+      srtr.mandatoryBsonRecordListField(List(sr1,sr2))
+
+      srtr.dirtyFields.length must_== 2
+      srtr.update
+      srtr.dirtyFields.length must_== 0
+
+      val fromDb = SubRecordTestRecord.find(srtr.id.is)
+      fromDb must notBeEmpty
+      fromDb foreach { rec =>
+        rec must_== srtr
+        rec.dirtyFields.length must_== 0
+      }
+    }
   }
 }
 

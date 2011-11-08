@@ -9,7 +9,7 @@ fi
 INTERNAL_OPTS="-Dfile.encoding=UTF-8 -Xss8M -Xmx1G -noverify -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=512M"
 
 # Default options, if nothing is specified
-DEFAULT_OPTS="-Dsbt.intransitive=true"
+DEFAULT_OPTS="-Dsbt.intransitive=true -Djava.util.logging.config.file=logging.properties"
 
 cd `dirname $0`
 

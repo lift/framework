@@ -149,6 +149,8 @@ class FieldTypeTestRecord private () extends MongoRecord[FieldTypeTestRecord] wi
       this.mandatoryTimeZoneField.value == that.mandatoryTimeZoneField.value
     case _ => false
   }
+
+  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 
 object FieldTypeTestRecord extends FieldTypeTestRecord with MongoMetaRecord[FieldTypeTestRecord]
@@ -252,6 +254,8 @@ class MongoFieldTypeTestRecord private () extends MongoRecord[MongoFieldTypeTest
       this.mandatoryUUIDField.value == that.mandatoryUUIDField.value
     case _ => false
   }
+
+  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 
 object MongoFieldTypeTestRecord extends MongoFieldTypeTestRecord with MongoMetaRecord[MongoFieldTypeTestRecord] {
@@ -291,6 +295,8 @@ class ListTestRecord private () extends MongoRecord[ListTestRecord] with UUIDPk[
       this.mandatoryMongoJsonObjectListField.value == that.mandatoryMongoJsonObjectListField.value
     case _ => false
   }
+
+  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 object ListTestRecord extends ListTestRecord with MongoMetaRecord[ListTestRecord] {
   override def formats = allFormats
@@ -314,6 +320,8 @@ class MapTestRecord private () extends MongoRecord[MapTestRecord] with StringPk[
       this.mandatoryIntMapField.value == that.mandatoryIntMapField.value
     case _ => false
   }
+
+  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 object MapTestRecord extends MapTestRecord with MongoMetaRecord[MapTestRecord] {
   override def formats = allFormats
@@ -391,6 +399,7 @@ class SubRecordTestRecord private () extends MongoRecord[SubRecordTestRecord] wi
     case _ => false
   }
 
+  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 object SubRecordTestRecord extends SubRecordTestRecord with MongoMetaRecord[SubRecordTestRecord] {
   override def formats = allFormats
