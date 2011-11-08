@@ -92,7 +92,7 @@ If you wish to build Lift from source, checkout this repository and use the incl
 
     git clone https://github.com/lift/framework.git
     cd framework
-    ./liftsh +publish
+    ./liftsh +update +publish
 
 There is [additional documentation on the wiki](http://www.assembla.com/spaces/liftweb/wiki/Building_Lift).
 
