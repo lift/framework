@@ -709,7 +709,7 @@ FAQ
 
 Q1: I have a JSON object and I want to extract it to a case class:
 
-    scala> case class Person(name: Sting, age: Int)
+    scala> case class Person(name: String, age: Int)
     scala> val json = """{"name":"joe","age":15}"""
 
 But extraction fails:
