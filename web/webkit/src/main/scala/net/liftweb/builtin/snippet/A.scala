@@ -34,7 +34,7 @@ object A extends DispatchSnippet {
   private def addAjaxHREF(): MetaData = {
     val ajax: JsExp = SHtml.makeAjaxCall(JE.Str(S.attr.~("key").map(_.text + "=true").getOrElse("")))
 
-    new UnprefixedAttribute("onclick", Text(ajax.toJsCmd),
+    new UnprefixedAttribute("onclick", Text(ajax.toJsCmd + "; return false;"),
                             new UnprefixedAttribute("href", Text("javascript://"),
                                                     S.currentAttrsToMetaData(name => name != "onclick" && name != "href" && name != "key")
                                                    ))
