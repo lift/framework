@@ -90,7 +90,7 @@ trait DB extends Loggable {
     )
 
     first(toTry) (f => tryo{t:Throwable => logger.trace("JNDI Lookup failed: "+t)}(f())) or {
-      logger.warn("A JNDI name was specified(%s), but no connection could be obtained".format(name.jndiName))
+      logger.trace("Unable to obtain Connection for JNDI name %s".format(name.jndiName))
       Empty
     }
   }
