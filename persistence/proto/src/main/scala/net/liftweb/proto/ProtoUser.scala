@@ -967,14 +967,12 @@ trait ProtoUser {
       def finishSet() {
         user.validate match {
           case Nil => S.notice(S.??("password.changed"))
-            user.save
+            user.resetUniqueId().save
             logUserIn(user, () => S.redirectTo(homePage))
 
           case xs => S.error(xs)
         }
       }
-      user.resetUniqueId().save
-
       bind("user", passwordResetXhtml,
            "pwd" -> SHtml.password_*("",(p: List[String]) =>
           user.setPasswordFromListString(p)),
@@ -1066,7 +1064,7 @@ trait ProtoUser {
     }
 
     def innerEdit = bind("user", editXhtml(theUser),
-                         "submit" -> editSubmitButton(S.??("edit"), testEdit _))
+                         "submit" -> editSubmitButton(S.??("save"), testEdit _))
 
     innerEdit
   }
