@@ -659,7 +659,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
           // if it's going to a CometActor, batch up the commands
           case Full(id) if asyncById.contains(id) =>
             asyncById.get(id).toList.
-              flatMap(a => a.!?(5000L, ActionMessageSet(f.map(i => buildFunc(i)), state)) match {
+              flatMap(a => a.!?(LiftRules.cometProcessingTimeout, ActionMessageSet(f.map(i => buildFunc(i)), state)) match {
               case Full(li: List[_]) => li
               case li: List[_] => li
               case other => Nil
@@ -1883,7 +1883,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case text: Text => text
       case unparsed: Unparsed => unparsed
 
-      case a: Atom[Any] if a.getClass().getName() == "scala.xml.Atom" => new Text(a.data.toString)
+      case a: Atom[Any] if (a.getClass == classOf[Atom[Any]]) => new Text(a.data.toString)
 
       case v => v
     }
