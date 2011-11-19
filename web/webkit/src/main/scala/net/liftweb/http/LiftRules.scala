@@ -624,7 +624,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var cometFailureRetryTimeout: Long = 10 seconds
 
   /**
-   * The optional timeot of a comet-request. If Empty, wait forever
+   * The optional timeout in milliseconds of a comet-request. Defaults to 5000 ms.
    */
   @volatile var cometProcessingTimeout: Long = 5 seconds
 
