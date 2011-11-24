@@ -19,10 +19,6 @@ package json
 
 import org.specs.Specification
 
-
-/**
- * System under specification for Lotto Examples.
- */
 object LottoExample extends Specification("Lotto Examples") {
   import JsonDSL._
 

@@ -19,10 +19,6 @@ package json
 
 import org.specs.Specification
 
-
-/**
- * System under specification for Xml Examples.
- */
 object XmlExamples extends Specification("XML Examples") {
   import JsonDSL._
   import Xml._
@@ -34,14 +30,14 @@ object XmlExamples extends Specification("XML Examples") {
   }
 
   "Conversion transformation example 1" in {
-    val json = toJson(users1).transform {
+    val json = toJson(users1).transformField {
       case JField("id", JString(s)) => JField("id", JInt(s.toInt))
     }
     compact(render(json)) mustEqual """{"users":{"count":"2","user":[{"disabled":"true","id":1,"name":"Harry"},{"id":2,"name":"David","nickname":"Dave"}]}}"""
   }
 
   "Conversion transformation example 2" in {
-    val json = toJson(users2).transform {
+    val json = toJson(users2).transformField {
       case JField("id", JString(s)) => JField("id", JInt(s.toInt))
       case JField("user", x: JObject) => JField("user", JArray(x :: Nil))
     }
@@ -58,7 +54,7 @@ object XmlExamples extends Specification("XML Examples") {
 
     val printer = new scala.xml.PrettyPrinter(100,2)
     val lotto: JObject = LottoExample.json
-    val xml = toXml(lotto.transform {
+    val xml = toXml(lotto.transformField {
       case JField("winning-numbers", JArray(nums)) => JField("winning-numbers", flattenArray(nums))
       case JField("numbers", JArray(nums)) => JField("numbers", flattenArray(nums))
     })
@@ -152,11 +148,11 @@ object XmlExamples extends Specification("XML Examples") {
   // default conversion rules. The transformation function 'attrToObject' makes following conversion:
   // { ..., "fieldName": "", "attrName":"someValue", ...}      ->
   // { ..., "fieldName": { "attrName": f("someValue") }, ... }
-  def attrToObject(fieldName: String, attrName: String, f: JString => JValue)(json: JValue) = json.transform {
-    case JField(n, v: JString) if n == attrName => JObject(JField(n, f(v)) :: Nil)
-    case JField(n, JString("")) if n == fieldName => JNothing
-  } transform {
-    case JField(n, x: JObject) if n == attrName => JField(fieldName, x)
+  def attrToObject(fieldName: String, attrName: String, f: JString => JValue)(json: JValue) = json.transformField {
+    case (n, v: JString) if n == attrName => JField(fieldName, JObject(JField(n, f(v)) :: Nil))
+    case (n, JString("")) if n == fieldName => JField(n, JNothing)
+  } transformField {
+    case (n, x: JObject) if n == attrName => JField(fieldName, x)
   }
 
   "Example with multiple attributes, multiple nested elements " in  {  
