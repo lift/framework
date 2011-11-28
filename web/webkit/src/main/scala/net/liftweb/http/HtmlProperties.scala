@@ -264,6 +264,10 @@ trait HtmlProperties {
  * This set of properties is based on Lift's current XHTML support
  */
 final case class OldHtmlProperties(userAgent: Box[String]) extends HtmlProperties {
+  /**
+   * If you want to change the DocType header, override this method rather than using
+   * setDocType.
+   */
   def docType: Box[String] = LiftRules.docType.vend.apply(S.request openOr Req.nil)
   def encoding: Box[String] = 
     Full(LiftRules.calculateXmlHeader(null, <ignore/>, contentType))

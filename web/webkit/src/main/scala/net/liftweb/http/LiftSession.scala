@@ -2212,7 +2212,8 @@ private object SnippetNode {
     ((for {
       cls <- in.attribute("class")
       snip <- cls.text.charSplit(' ').find(isLiftClass)
-    } yield snip) orElse in.attribute("lift").map(_.text)).map {
+    } yield snip) orElse in.attribute("lift").map(_.text)
+      orElse in.attribute("data-lift").map(_.text)).map {
       snip =>
         snip.charSplit('?') match {
           case Nil => "this should never happen" -> Null
