@@ -65,7 +65,7 @@ object Comet extends DispatchSnippet with LazyLoggable {
                c ! UpdateDefaultXml(kids)
              }
              
-             (c.!?(26600L, AskRender)) match {
+             (c.!?(c.cometRenderTimeout, AskRender)) match {
                case Full(AnswerRender(response, _, when, _)) if c.hasOuter =>
                  buildSpan(Empty, c.buildSpan(when, response.inSpan) ++ response.outSpan, c, c.uniqueId+"_outer")
                

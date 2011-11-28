@@ -657,9 +657,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         val f = toRun.filter(_.owner == w)
         w match {
           // if it's going to a CometActor, batch up the commands
-          case Full(id) if asyncById.contains(id) =>
-            asyncById.get(id).toList.
-              flatMap(a => a.!?(LiftRules.cometProcessingTimeout, ActionMessageSet(f.map(i => buildFunc(i)), state)) match {
+          case Full(id) if asyncById.contains(id) => asyncById.get(id).toList.flatMap(a =>
+            a.!?(a.cometProcessingTimeout, ActionMessageSet(f.map(i => buildFunc(i)), state)) match {
               case Full(li: List[_]) => li
               case li: List[_] => li
               case other => Nil

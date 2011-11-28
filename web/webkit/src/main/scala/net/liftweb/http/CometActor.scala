@@ -393,6 +393,16 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
     initCometActor(theSession, theType, name, defaultHtml, attributes)
   }
 
+  /**
+   * Override in sub-class to customise timeout for the render()-method for the specific comet
+   */
+  def cometRenderTimeout = LiftRules.cometRenderTimeout
+
+  /**
+   * Override in sub-class to customise timeout for AJAX-requests to the comet-component for the specific comet
+   */
+  def cometProcessingTimeout = LiftRules.cometProcessingTimeout
+
   protected def initCometActor(theSession: LiftSession,
                                theType: Box[String],
                                name: Box[String],
