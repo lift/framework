@@ -168,6 +168,31 @@ trait DispatchSnippet {
 }
 
 /**
+ * This trait indicates if the snippet instance should be kept around for the duration of
+ * the Request.  There are cases when you don't want a snippet to be kept around.
+ */
+trait TransientSnippet {
+
+  /**
+   * Calculate if this snippet should be treated as transiet.
+   */
+  def transient_? = true
+}
+
+/**
+ * The companion object to the TransientSnippet trait
+ */
+object TransientSnippet {
+  /**
+   * Compute if the instance should be treated as transient
+   */
+  def notTransient(obj: Any): Boolean = obj match {
+    case t: TransientSnippet => !t.transient_?
+    case _ => true
+  }
+}
+
+/**
  * Mix this snippet into any snippet.  If the snippet is invoked in response to a
  * stateless request, then the behavior method is called with the method name of
  * the snippet (usually render, but there may be others if you specify a method
