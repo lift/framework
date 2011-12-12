@@ -408,27 +408,12 @@ object JsonAST {
 
   private def trimArr(xs: List[JValue]) = xs.filter(_ != JNothing)
   private def trimObj(xs: List[JField]) = xs.filter(_.value != JNothing)
-  private def series(docs: List[Document]) = fold(punctuate(text(","), docs))
-  private def fields(docs: List[Document]) = fold(punctuate(text(",") :: break, docs))
-  private def fold(docs: List[Document]) = docs.foldLeft[Document](empty)(_ :: _)
+  private def series(docs: List[Document]) = punctuate(text(","), docs)
+  private def fields(docs: List[Document]) = punctuate(text(",") :: break, docs)
 
-  private def punctuate(p: => Document, docs: List[Document]): List[Document] = {
-    def prepend(d: DocText, ds: List[Document]) = ds match {
-      case DocText(h) :: t => DocText(h + d.txt) :: t
-      case _ => d :: ds
-    }
-
-    def punctuate0(docs: List[Document], acc: List[Document]): List[Document] = docs match {
-      case Nil => acc.reverse
-      case List(d) => punctuate0(Nil, d :: acc)
-      case DocText(d) :: ds => p match {
-        case DocText(punct) => punctuate0(ds, prepend(DocText(d + punct), acc))
-        case _ => punctuate0(ds, (d :: p) :: acc)
-      }
-      case d :: ds => punctuate0(ds, (d :: p) :: acc)
-    }
-    punctuate0(docs, Nil)
-  }
+  private def punctuate(p: Document, docs: List[Document]): Document = 
+    if (docs.length == 0) empty
+    else docs.reduceLeft((d1, d2) => d1 :: p :: d2)
 
   private[json] def quote(s: String): String = {
     val buf = new StringBuilder
