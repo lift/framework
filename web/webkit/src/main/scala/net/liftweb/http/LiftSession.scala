@@ -1540,8 +1540,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         first(LiftRules.snippetNamesToSearch.vend(tagName)) {
           nameToTry =>
             val ret = findSnippetInstance(nameToTry)
-            // Update the snippetMap so that we reuse the same instance in this request
-            ret.foreach(s => snippetMap.set(snippetMap.is.updated(tagName, s)))
+            // Update the snippetMap so that we reuse the same instance in this request (unless the snippet is transient)
+            ret.filter(TransientSnippet.notTransient(_)).foreach(s => snippetMap.set(snippetMap.is.updated(tagName, s)))
+            
             ret
         }
       }
@@ -2241,7 +2242,7 @@ private object SnippetNode {
           if (p.pre == "l" || p.pre == "lift") && p.key == "parallel"
         => par = true
 
-        case up: UnprefixedAttribute if up.key == "lift" => // ignore
+        case up: UnprefixedAttribute if up.key == "lift" || up.key == "data-lift" => // ignore
 
         case p: PrefixedAttribute
           if p.pre == "lift" && p.key == "snippet"
