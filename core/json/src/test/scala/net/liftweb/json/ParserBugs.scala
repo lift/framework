@@ -45,6 +45,13 @@ object ParserBugs extends Specification {
     }
   }
 
+  "Field names must be quoted" in {
+    val json = JObject(List(JField("foo\nbar", JInt(1))))
+    val s = compact(render(json))
+    s mustEqual """{"foo\nbar":1}"""
+    parse(s) mustEqual json
+  }
+
   private val discardParser = (p : JsonParser.Parser) => {
      var token: JsonParser.Token = null
      do {

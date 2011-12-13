@@ -232,16 +232,6 @@ object JsonParser {
     def nextToken: Token = {
       def isDelimiter(c: Char) = c == ' ' || c == '\n' || c == ',' || c == '\r' || c == '\t' || c == '}' || c == ']'
 
-      def parseFieldName: String = {
-        buf.mark
-        var c = buf.next
-        while (c != EOF) {
-          if (c == '"') return buf.substring
-          c = buf.next
-        }
-        fail("expected string end")
-      }
-
       def parseString: String = 
         try {
           unquote(buf)
@@ -283,7 +273,7 @@ object JsonParser {
             blocks.poll
             return CloseObj
           case '"' =>
-            if (fieldNameMode && blocks.peek == OBJECT) return FieldStart(parseFieldName)
+            if (fieldNameMode && blocks.peek == OBJECT) return FieldStart(parseString)
             else {
               fieldNameMode = true
               return StringVal(parseString)
