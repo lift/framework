@@ -661,6 +661,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
             a.!?(a.cometProcessingTimeout, ActionMessageSet(f.map(i => buildFunc(i)), state)) match {
               case Full(li: List[_]) => li
               case li: List[_] => li
+              case Empty => Full(a.cometProcessingTimeoutHandler())
               case other => Nil
             })
           case _ => f.map(i => buildFunc(i).apply())

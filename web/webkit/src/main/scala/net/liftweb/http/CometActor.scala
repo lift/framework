@@ -403,6 +403,38 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
    */
   def cometProcessingTimeout = LiftRules.cometProcessingTimeout
 
+  /**
+   * This is to react to comet-requests timing out.
+   * When the timeout specified in {@link LiftRules#cometProcessingTimeout} occurs one may override
+   * this to send a message to the user informing of the timeout.
+   * <p/><p/>
+   * Do NOT manipulate actor-state here. If you want to manipulate state, send the actor a new message.
+   * <p/><p/>
+   * Typical example would be:
+   * <pre>
+   *   override def cometTimeoutHandler(): JsCmd = {
+   *     Alert("Timeout processing comet-request, timeout is: " + cometProcessingTimeout + "ms")
+   *   }
+   * </pre>
+   */
+  def cometProcessingTimeoutHandler(): JsCmd = Noop
+
+  /**
+   * This is to react to comet-actors timing out while initial rendering, calls to render().
+   * When the timeout specified in {@link LiftRules#cometRenderTimeout} occurs one may override
+   * this to customise the output.
+   * <p/><p/>
+   * Do NOT manipulate actor-state here. If you want to manipulate state, send the actor a new message.
+   * <p/><p/>
+   * Typical example would be:
+   * <pre>
+   *   override def renderTimeoutHandler(): Box[NodeSeq] = {
+   *     Full(&lt;div&gt;Comet {this.getClass} timed out, timeout is {cometRenderTimeout}ms&lt;/div&gt;)
+   *   }
+   * </pre>
+   */
+  def cometRenderTimeoutHandler(): Box[NodeSeq] = Empty
+
   protected def initCometActor(theSession: LiftSession,
                                theType: Box[String],
                                name: Box[String],
