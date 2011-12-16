@@ -32,22 +32,30 @@ import JE._
 object PasswordField {
   @volatile var blankPw = "*******"
   @volatile var minPasswordLength = 5
+  @volatile var logRounds = 10
+  def hashpw(in: String): Box[String] =  tryo(BCrypt.hashpw(in, BCrypt.gensalt(logRounds))) 
 }
 
 trait PasswordTypedField extends TypedField[String] {
-  private val salt_i = FatLazy(Safe.randomString(16))
   private var invalidMsg : String = ""
-
-  def salt = this.salt_i
-
-  private var validatedValue: Box[String] = valueBox
+  private[record] var validatedValue: Box[String] = valueBox
 
   def match_?(toTest: String): Boolean = 
-    get == hash("{"+toTest+"} salt={"+salt_i.get+"}")
+	  valueBox.filter(_.length > 0)
+	          .flatMap(p => tryo(BCrypt.checkpw(toTest, p)))
+	          .openOr(false) 
 
   override def set_!(in: Box[String]): Box[String] = {
+    // can't be hashed here, because this get's called when setting value from database
+    in
+  }
+  
+  def setPlain(in: String): String = setBoxPlain(Full(in)) openOr defaultValue
+  
+  def setBoxPlain(in: Box[String]): Box[String] = {
     validatedValue = in
-    in.map(s => hash("{"+s+"} salt={"+salt_i.get+"}"))
+    val hashed = in.map(s => PasswordField.hashpw(s) openOr s)
+    setBox(hashed)
   }
 
   def setFromAny(in: Any): Box[String] = {
@@ -106,10 +114,17 @@ class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
 
   def this(rec: OwnerType, value: String) = {
     this(rec)
-    set(value)
+    setPlain(value)
   }
 
   def owner = rec
+  
+  override def apply(in: Box[String]): OwnerType = 
+  {
+    validatedValue = in
+    val hashed = in.map(s => PasswordField.hashpw(s) openOr s)
+    super.apply(hashed)
+  }  
 }
 
 class OptionalPasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
@@ -117,9 +132,16 @@ class OptionalPasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
 
   def this(rec: OwnerType, value: Box[String]) = {
     this(rec)
-    setBox(value)
+    setBoxPlain(value)
   }
 
   def owner = rec
+  
+  override def apply(in: Box[String]): OwnerType = 
+  {
+    validatedValue = in
+    val hashed = in.map(s => PasswordField.hashpw(s) openOr s)
+    super.apply(hashed)
+  }    
 }
 

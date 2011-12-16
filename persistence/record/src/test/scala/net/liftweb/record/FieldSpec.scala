@@ -368,6 +368,14 @@ object FieldSpec extends Specification("Record Field Specification") {
         Nil
       )
     }
+
+    "match with encrypted value" in {
+      val rec = PasswordTestRecord.createRecord.password("testpassword")
+      rec.password.match_?("testpassword") must_== true
+      
+      rec.password.set("$2a$10$6CJWdXpKoP8bVTjGH8SbKOWevNQVL8MkYVlBLmqtywVi7dp/YgPXC")
+      rec.password.match_?("dummyPassw0rd") must_== true
+    }      
   }
 
   "PostalCodeField" should {
