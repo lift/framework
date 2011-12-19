@@ -83,7 +83,13 @@ private[json] object ScalaSigReader {
       case NullaryMethodType(TypeRefType(_, _, args)) => args(typeArgIdx)
     }
     */
-    val t = s.infoType.asInstanceOf[{ def resultType: Type }].resultType match {
+    def resultType = try {
+      s.infoType.asInstanceOf[{ def resultType: Type }].resultType
+    } catch {
+      case e: java.lang.NoSuchMethodException => s.infoType.asInstanceOf[{ def typeRef: Type }].typeRef
+    }
+
+    val t = resultType match {
       case TypeRefType(_, _, args) => args(typeArgIdx)
     }
 
