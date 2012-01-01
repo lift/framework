@@ -5,6 +5,6 @@ class Plugins(info: ProjectInfo) extends PluginDefinition(info) {
   lazy val snapshots = ScalaToolsSnapshots
 
   // Add plugin
-  lazy val liftsbt = "net.liftweb" % "lift-sbt" % "2.4-RC1"
+  lazy val liftsbt = "net.liftweb" % "lift-sbt" % "2.4"
   lazy val bnd4sbt = "com.weiglewilczek.bnd4sbt" % "bnd4sbt" % "1.0.2"
 }
