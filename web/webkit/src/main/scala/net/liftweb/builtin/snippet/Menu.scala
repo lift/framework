@@ -396,14 +396,20 @@ object Menu extends DispatchSnippet {
    * set the "donthide" attribute on the tag to force it to show text only (same text as normal,
    * but not in an anchor tag)</p>
    *
+   *
    * <p>Alternatively, you can set the "linkToSelf" attribute to "true" to force a link. You
    * can specify your own link text with the tag's contents. Note that <b>case is significant</b>, so
    * make sure you specify "linkToSelf" and not "linktoself".</p>
    *
    */
-  def item(text: NodeSeq): NodeSeq = {
+  def item(_text: NodeSeq): NodeSeq = {
     val donthide = S.attr("donthide").map(Helpers.toBoolean) openOr false
     val linkToSelf = (S.attr("linkToSelf") or S.attr("linktoself")).map(Helpers.toBoolean) openOr false
+
+    val text = ("a" #> ((n: NodeSeq) => n match {
+      case e: Elem => e.child
+      case xs => xs
+    })).apply(_text)
 
     for {
       name <- S.attr("name").toList
