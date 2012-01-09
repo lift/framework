@@ -26,6 +26,7 @@ import http.js.AjaxInfo
 import JE._
 import JsCmds._
 import scala.xml._
+import json._
 
 class SHtmlJBridge {
   def sHtml = SHtml
@@ -170,6 +171,34 @@ trait SHtml {
     ajaxCall_*(jsCalcValue, jsContext, SFuncHolder(func))
 
   /**
+   * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript.
+   * This method uses the Lift-JSON package rather than the old, slow, not-typed JSONParser.  This is the preferred
+   * way to do client to server JSON calls.
+   *
+   * @param jsCalcValue the JavaScript to calculate the value to be sent to the server
+   * @param func the function to call when the data is sent
+   *
+   * @return the function ID and JavaScript that makes the call
+   */
+  def ljsonCall(jsCalcValue: JsExp, func: JsonAST.JValue => JsCmd): (String, JsExp) =
+    jsonCall_*(jsCalcValue, SFuncHolder(s => parseOpt(s).map(func) getOrElse Noop))
+
+  /**
+   * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript.
+   * This method uses the Lift-JSON package rather than the old, slow, not-typed JSONParser.  This is the preferred
+   * way to do client to server JSON calls.
+   *
+   * @param jsCalcValue the JavaScript to calculate the value to be sent to the server
+   * @param jsContext the context instance that defines JavaScript to be executed on call success or failure
+   * @param func the function to call when the data is sent
+   *
+   * @return the function ID and JavaScript that makes the call
+   */
+  def ljsonCall(jsCalcValue: JsExp, jsContext: JsContext, func: JsonAST.JValue => JsCmd): (String, JsExp) =
+    jsonCall_*(jsCalcValue, jsContext, SFuncHolder(s => parseOpt(s).map(func) getOrElse Noop))
+
+
+  /**
    * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript
    * 
    * @param jsCalcValue the JavaScript to calculate the value to be sent to the server
@@ -177,6 +206,7 @@ trait SHtml {
    *
    * @return the function ID and JavaScript that makes the call
    */
+  @scala.deprecated("Use ljsonCall")
   def jsonCall(jsCalcValue: JsExp, func: Any => JsCmd): (String, JsExp) =
     jsonCall_*(jsCalcValue, SFuncHolder(s => JSONParser.parse(s).map(func) openOr Noop))
 
@@ -189,6 +219,7 @@ trait SHtml {
    *
    * @return the function ID and JavaScript that makes the call
    */
+  @scala.deprecated("Use ljsonCall")
   def jsonCall(jsCalcValue: JsExp, jsContext: JsContext, func: Any => JsCmd): (String, JsExp) =
     jsonCall_*(jsCalcValue, jsContext, SFuncHolder(s => JSONParser.parse(s).map(func) openOr Noop))
 
