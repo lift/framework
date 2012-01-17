@@ -870,6 +870,14 @@ object JsCmds {
 
 
   /**
+   * Reload the current page
+   */
+  case object Reload extends JsCmd {
+    def toJsCmd = "window.location.reload();"
+  }
+
+
+  /**
    * Update a Select with new Options
    */
   case class ReplaceOptions(select: String, opts: List[(String, String)], dflt: Box[String]) extends JsCmd {
