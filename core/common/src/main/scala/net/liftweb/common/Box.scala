@@ -79,7 +79,6 @@ sealed trait BoxTrait {
   }
 
   /**
-   * Create a Box from the specified Option.
    * @return a Box created from a Box. Full(x) if the Box is Full(x) and
    * not null
    * Empty otherwise
