@@ -231,12 +231,12 @@ object AsInt {
 }
 
   /**
-   * Safely convert the specified String to an Int.
+   * Safely convert the specified String to a Double.
    */
   def asDouble(in: String): Box[Double] = tryo{in.trim.toDouble}
 
 /**
-* A helpful Int extractor
+* A helpful Double extractor
 */
 object AsDouble {
   def unapply(in: String): Option[Double] = asDouble(in)
