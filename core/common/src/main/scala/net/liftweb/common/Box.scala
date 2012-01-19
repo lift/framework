@@ -79,9 +79,8 @@ sealed trait BoxTrait {
   }
 
   /**
-   * Create a Box from the specified Option.
-   * @return a Box created from a Box. Full(x) if the Box is Full(x) and
-   * not null
+   * Create a Box from the specified Box, checking for null.
+   * @return Full(x) if in is Full(x) and x is not null
    * Empty otherwise
    */
   def apply[T](in: Box[T]) = in match {
