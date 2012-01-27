@@ -201,7 +201,7 @@ trait SHtml {
    * @return the function ID and JavaScript that makes the call
    */
   private def jsonCall_*(jsCalcValue: JsExp, func: AFuncHolder): (String, JsExp) =
-    fmapFunc(contextFuncBuilder(func))(name =>
+    fmapFunc((func))(name =>
             (name, makeAjaxCall(JsRaw("'" + name + "=' + encodeURIComponent(JSON.stringify(" + jsCalcValue.toJsCmd + "))"))))
 
   /**
@@ -215,7 +215,7 @@ trait SHtml {
   private def jsonCall_*(jsCalcValue: JsExp,
                          ajaxContext: AjaxContext,
                          func: AFuncHolder): (String, JsExp) =
-    fmapFunc(contextFuncBuilder(func))(name =>
+    fmapFunc((func))(name =>
             (name, makeAjaxCall(JsRaw("'" + name + "=' + encodeURIComponent(JSON.stringify(" + jsCalcValue.toJsCmd + "))"), ajaxContext)))
 
   def fajaxCall[T](jsCalcValue: JsExp, func: String => JsCmd)(f: (String, JsExp) => T): T = {
@@ -240,7 +240,7 @@ trait SHtml {
    * @return the JavaScript that makes the call
    */
   private def ajaxCall_*(jsCalcValue: JsExp, func: AFuncHolder): (String, JsExp) =
-    fmapFunc(contextFuncBuilder(func))(name =>
+    fmapFunc((func))(name =>
             (name, makeAjaxCall(JsRaw("'" + name + "=' + encodeURIComponent(" + jsCalcValue.toJsCmd + ")"))))
 
   /**
@@ -254,7 +254,7 @@ trait SHtml {
   private def ajaxCall_*(jsCalcValue: JsExp,
                          ajaxContext: AjaxContext,
                          func: AFuncHolder): (String, JsExp) =
-    fmapFunc(contextFuncBuilder(func))(name =>
+    fmapFunc((func))(name =>
             (name, makeAjaxCall(JsRaw("'" + name + "=' + encodeURIComponent(" + jsCalcValue.toJsCmd + ")"), ajaxContext)))
 
 
@@ -271,7 +271,7 @@ trait SHtml {
    * @return a button to put on your page
    */
   def ajaxButton(text: NodeSeq, func: () => JsCmd, attrs: ElemAttr*): Elem = {
-    attrs.foldLeft(fmapFunc(contextFuncBuilder(func))(name =>
+    attrs.foldLeft(fmapFunc((func))(name =>
             <button onclick={makeAjaxCall(Str(name + "=true")).toJsCmd +
                     "; return false;"}>{text}</button>))((e, f) => f(e))
   }
@@ -343,7 +343,7 @@ trait SHtml {
    *
    */
   def jsonButton(text: NodeSeq, func: () => JsObj, ajaxContext: JsonContext, attrs: ElemAttr*): Elem = {
-    attrs.foldLeft(fmapFunc(contextFuncBuilder(func))(name =>
+    attrs.foldLeft(fmapFunc((func))(name =>
             <button onclick={makeAjaxCall(Str(name + "=true"), ajaxContext).toJsCmd +
                     "; return false;"}>{text}</button>))((e, f) => f(e))
   }
@@ -358,7 +358,7 @@ trait SHtml {
    * @return a button to put on your page
    */
   def ajaxButton(text: NodeSeq, jsExp: JsExp, func: String => JsCmd, attrs: ElemAttr*): Elem = {
-    attrs.foldLeft(fmapFunc(contextFuncBuilder(SFuncHolder(func)))(name =>
+    attrs.foldLeft(fmapFunc((SFuncHolder(func)))(name =>
             <button onclick={makeAjaxCall(JsRaw(name.encJs + "+'='+encodeURIComponent(" + jsExp.toJsCmd + ")")).toJsCmd +
                     "; return false;"}>{text}</button>))((e, f) => f(e))
   }
@@ -393,7 +393,7 @@ trait SHtml {
    * @return a button to put on your pagejsFunc.params ++ List(AnonFunc(makeAjaxCall(Str(name+"=true"))))
    */
   def ajaxButton(text: NodeSeq, jsFunc: Call, func: () => JsCmd, attrs: ElemAttr*): Elem = {
-    attrs.foldLeft(fmapFunc(contextFuncBuilder(func))(name =>
+    attrs.foldLeft(fmapFunc((func))(name =>
             <button onclick={deferCall(Str(name + "=true"), jsFunc).toJsCmd + "; return false;"}>{text}</button>))(_ % _)
   }
 
@@ -493,7 +493,7 @@ trait SHtml {
    */
   def a(func: () => JsCmd, body: NodeSeq, attrs: ElemAttr*): Elem = {
     val key = formFuncName
-    addFunctionMap(key, contextFuncBuilder((a: List[String]) => func()))
+    addFunctionMap(key, ((a: List[String]) => func()))
     attrs.foldLeft(<lift:a key={key}>{body}</lift:a>)(_ % _)
   }
 
@@ -508,7 +508,7 @@ trait SHtml {
    * @param attrs - the anchor node attributes
    */
   def a(jsFunc: Call, func: () => JsCmd, body: NodeSeq, attrs: ElemAttr*): Elem = {
-    attrs.foldLeft(fmapFunc(contextFuncBuilder(func))(name =>
+    attrs.foldLeft(fmapFunc((func))(name =>
             <a href="javascript://" onclick={deferCall(Str(name + "=true"), jsFunc).toJsCmd + "; return false;"}>{body}</a>))(_ % _)
   }
 
@@ -517,7 +517,7 @@ trait SHtml {
         body: NodeSeq,
         attrs: ElemAttr*): Elem = {
 
-    attrs.foldLeft(fmapFunc(contextFuncBuilder(func))(name =>
+    attrs.foldLeft(fmapFunc((func))(name =>
             <a href="javascript://" onclick={makeAjaxCall(Str(name + "=true"), jsonContext).toJsCmd + "; return false;"}>{body}</a>))(_ % _)
   }
 
@@ -553,7 +553,7 @@ trait SHtml {
 
 
   def toggleKids(head: Elem, visible: Boolean, func: () => JsCmd, kids: Elem): NodeSeq = {
-    fmapFunc(contextFuncBuilder(func)) {
+    fmapFunc((func)) {
       funcName =>
 
               val (nk, id) = findOrAddId(kids)
@@ -631,7 +631,7 @@ trait SHtml {
     val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + encodeURIComponent(" + value + ".value)")
     val key = formFuncName
 
-    fmapFunc(contextFuncBuilder(func)) {
+    fmapFunc((func)) {
       funcName =>
       (attrs.foldLeft(<input type="text" value={value}/>)(_ % _)) %
       ("onkeypress" -> """liftUtils.lift_blurIfReturn(event)""") %
@@ -683,7 +683,7 @@ trait SHtml {
     val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + encodeURIComponent(" + value + ".value)")
     val key = formFuncName
 
-    fmapFunc(contextFuncBuilder(func)) {
+    fmapFunc((func)) {
       funcName =>
       (attrs.foldLeft(<textarea>{value}</textarea>)(_ % _)) %
       ("onblur" -> (jsFunc match {
@@ -746,7 +746,7 @@ trait SHtml {
    * @param attrs - the balance of the attributes for the tag
    */
   def area(shape: AreaShape, func: () => JsCmd, alt: String, attrs: ElemAttr*): Elem = {
-    fmapFunc(contextFuncBuilder(func)) {
+    fmapFunc((func)) {
       funcName =>
       area(shape, alt, (("onclick" -> (makeAjaxCall(Str(funcName + "=true")).toJsCmd +
                                       "; return false;")): ElemAttr) :: attrs.toList :_*)
@@ -771,7 +771,7 @@ trait SHtml {
     val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + " + value + ".checked")
     val key = formFuncName
 
-    fmapFunc(contextFuncBuilder(func)) {
+    fmapFunc((func)) {
       funcName =>
               (attrs.foldLeft(<input type="checkbox"/>)(_ % _)) %
                       checked(value) %
@@ -905,7 +905,7 @@ trait SHtml {
 
     val vals = opts.map(_._1)
     val testFunc = LFuncHolder(in => in.filter(v => vals.contains(v)) match {case Nil => false case xs => func(xs)}, func.owner)
-    fmapFunc(contextFuncBuilder(testFunc)) {
+    fmapFunc((testFunc)) {
       funcName =>
               (attrs.foldLeft(<select>{opts.flatMap {case (value, text) => (<option value={value}>{text}</option>) % selected(deflt.exists(_ == value))}}</select>)(_ % _)) %
                       ("onchange" -> (jsFunc match {
@@ -916,7 +916,7 @@ trait SHtml {
   }
 
   def ajaxInvoke(func: () => JsCmd): (String, JsExp) =
-    fmapFunc(contextFuncBuilder(NFuncHolder(func)))(name => (name, makeAjaxCall(name + "=true")))
+    fmapFunc((NFuncHolder(func)))(name => (name, makeAjaxCall(name + "=true")))
 
   /**
    * Build a swappable visual element.  If the shown element is clicked on, it turns into the hidden element and when
@@ -1412,7 +1412,7 @@ trait SHtml {
    */
   def button(strOrNodeSeq: StringOrNodeSeq, func: () => Any, attrs: ElemAttr*): Elem = {
     def doit: Elem = {
-      attrs.foldLeft(fmapFunc(contextFuncBuilder(func))(name =>
+      attrs.foldLeft(fmapFunc((func))(name =>
         <button type="submit" name={name} value="_">{
           strOrNodeSeq.nodeSeq}</button>))(_ % _)
     }
@@ -1454,7 +1454,7 @@ trait SHtml {
    */
   def ajaxSubmit(value: String, func: () => JsCmd, attrs: ElemAttr*): Elem = {
     val funcName = "z" + Helpers.nextFuncName
-    addFunctionMap(funcName, contextFuncBuilder(func))
+    addFunctionMap(funcName, (func))
 
     (attrs.foldLeft(<input type="submit" name={funcName}/>)(_ % _)) %
       new UnprefixedAttribute("value", Text(value), Null) %
@@ -1583,7 +1583,7 @@ trait SHtml {
    */ 
   def submitAjaxForm(formId: String, func: () => JsCmd): JsCmd = {
     val funcName = "Z" + Helpers.nextFuncName
-    addFunctionMap(funcName, contextFuncBuilder(func))
+    addFunctionMap(funcName, (func))
 
     makeAjaxCall(JsRaw(
        LiftRules.jsArtifacts.serialize(formId).toJsCmd + " + " + 

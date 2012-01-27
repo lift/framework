@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 WorldWide Conferencing, LLC
+ * Copyright 2007-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,9 @@
 package net.liftweb
 package http
 
-import java.io.InputStream
-import java.lang.reflect.{Method, Modifier, InvocationTargetException}
-import java.util.concurrent.TimeUnit
-import java.util.Locale
+import java.lang.reflect.{Method}
 
-import collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
-import reflect.Manifest
+import collection.mutable.{HashMap, ListBuffer}
 import xml._
 
 import common._
@@ -397,10 +393,24 @@ private[http] object RenderVersion {
 
   def get: String = ver.is
 
-  def doWith[T](v: String)(f: => T): T = ver.doWith(v)(f)
+  def doWith[T](v: String)(f: => T): T = {
+    val ret: Box[T] =
+      for {
+        sess <- S.session
+        func <- sess.findFunc(v).collect {
+          case f: S.PageStateHolder => f
+        }
+    } yield {
+        val tret = ver.doWith(v)(func.runInContext(f))
 
-  def set(value: String) {
-    ver(value)
+        if (S.functionMap.size > 0) {
+          sess.updateFunctionMap(S.functionMap, this.get, millis)
+          S.clearFunctionMap
+        }
+        tret
+      }
+
+    ret openOr ver.doWith(v)(f)
   }
 }
 
@@ -618,6 +628,16 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     if (_running_?) {
       markedForTermination = true;
     }
+  }
+
+
+  /**
+   * Find a function in the function lookup table.  You probably never need to do this, but
+   * well, you can look them up.
+   */
+  def findFunc(funcName: String): Option[S.AFuncHolder] =
+  synchronized {
+    messageCallback.get(funcName)
   }
 
   /**
@@ -996,6 +1016,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
             // Phase 2: Head & Tail merge, add additional elements to body & head
             val xml = merge(rawXml, request)
+
+            // snapshot for ajax calls
+            messageCallback(S.renderVersion) = S.PageStateHolder(Full(S.renderVersion), this)
 
             // But we need to update the function map because there
             // may be addition functions created during the JsToAppend processing
@@ -1499,7 +1522,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   def executeInScope[T](req: Box[Req], renderVersion: String)(f: => T): T = {
     def doExec(): T = {
-      RenderVersion.set(renderVersion)
+      RenderVersion.doWith(renderVersion) {
       try {
         f
       } finally {
@@ -1508,6 +1531,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
             renderVersion, millis)
           S.clearFunctionMap
         }
+      }
       }
     }
 
@@ -2051,7 +2075,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       }
 
       val id = Full(act.uniqueId)
-      messageCallback.keys.toList.foreach {
+      messageCallback.keysIterator.foreach {
         k =>
           val f = messageCallback(k)
           if (f.owner == id) {
@@ -2149,7 +2173,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
             case (id, replacement) => (("#" + id) #> replacement)
           }.reduceLeft(_ & _)(s)
         }
-      case _ => atWhat.values.flatMap(_.toSeq).toList
+      case _ => atWhat.valuesIterator.toSeq.flatMap(_.toSeq).toList
     }
   }
 
