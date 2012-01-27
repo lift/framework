@@ -26,6 +26,7 @@ import util.Helpers._
 import js._
 import auth._
 import provider._
+import json.JsonAST.JValue
 
 
 class LiftServlet extends Loggable {
@@ -417,16 +418,16 @@ class LiftServlet extends Loggable {
     toReturn
   }
 
-  private def extractVersion(path: List[String]) {
+  private def extractVersion[T](path: List[String])(f: => T): T = {
     path match {
-      case first :: second :: _ => RenderVersion.set(second)
-      case _ =>
+      case first :: second :: _ => RenderVersion.doWith(second)(f)
+      case _ => f
     }
   }
 
   private def handleAjax(liftSession: LiftSession,
                          requestState: Req): Box[LiftResponse] = {
-    extractVersion(requestState.path.partPath)
+    extractVersion(requestState.path.partPath) {
 
     LiftRules.cometLogger.debug("AJAX Request: " + liftSession.uniqueId + " " + requestState.params)
     tryo {
@@ -451,6 +452,7 @@ class LiftServlet extends Loggable {
 
             val what2 = what.flatMap {
               case js: JsCmd => List(js)
+              case jv: JValue => List(jv)
               case n: NodeSeq => List(n)
               case js: JsCommands => List(js)
               case r: LiftResponse => List(r)
@@ -459,6 +461,7 @@ class LiftServlet extends Loggable {
 
             val ret: LiftResponse = what2 match {
               case (json: JsObj) :: Nil => JsonResponse(json)
+              case (jv: JValue) :: Nil => JsonResponse(jv)
               case (js: JsCmd) :: xs => {
                 (JsCommands(S.noticesToJsCmd :: Nil) &
                   ((js :: xs).flatMap {
@@ -489,6 +492,7 @@ class LiftServlet extends Loggable {
       LiftSession.onEndServicing.foreach(_(liftSession, requestState, ret))
     }
     ret
+    }
   }
 
   /**
