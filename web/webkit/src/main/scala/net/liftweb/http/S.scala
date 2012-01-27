@@ -27,10 +27,9 @@ import actor.LAFuture
 import util._
 import Helpers._
 import js._
-
-import builtin.snippet._
 import provider._
 import http.rest.RestContinuation
+
 
 class SJBridge {
   def s = S
@@ -216,6 +215,24 @@ object S extends S {
     def sessionLife: Boolean = _sessionLife
 
     private[this] val _sessionLife: Boolean = functionLifespan_?
+  }
+
+  /**
+   * We create one of these dudes and put it 
+   */
+  private[http] final case class PageStateHolder(owner: Box[String], session: LiftSession) extends AFuncHolder {
+    private val loc = S.location
+    private val snapshot:  Function1[Function0[Any], Any] = RequestVarHandler.generateSnapshotRestorer()
+    override def sessionLife: Boolean = false
+    
+    def apply(in: List[String]): Any = {
+      error("You shouldn't really be calling apply on this dude...")
+    }
+
+    def runInContext[T](f: => T): T = {
+      val ret = snapshot(() => f).asInstanceOf[T]
+      ret
+    }
   }
 
   /**
@@ -998,7 +1015,7 @@ trait S extends HasParams with Loggable {
   /**
    * Returns the logical page_id of the current request. All RequestVars for a current page share this id.
    */
-  def renderVersion = RenderVersion.get
+  def renderVersion: String = RenderVersion.get
 
   /**
    * The URI of the current request (not re-written). The URI is the portion of the request
