@@ -695,16 +695,6 @@ trait BindHelpers {
    */
   def stripHead(in: NodeSeq): NodeSeq = {
     ("head" #> ((ns: NodeSeq) => ns.asInstanceOf[Elem].child))(in)
-    import scala.xml.transform._
-
-    val rewrite = new RewriteRule {
-      override def transform(in: Node): Seq[Node] = in match {
-        case e: Elem if e.label == "head" && (e.namespace eq null) => this.transform(e.child)
-        case x => x
-      }
-    }
-
-    (new RuleTransformer(rewrite)).transform(in)
   }
 
   /**
@@ -713,21 +703,6 @@ trait BindHelpers {
    */
   def replaceIdNode(in: NodeSeq, id: String, replacement: NodeSeq): NodeSeq = {
     (("#"+id) #> replacement)(in)
-    /*
-    import scala.xml.transform._
-
-    val cmp = Some(Text(id))
-
-    val rewrite = new RewriteRule {
-      override def transform(in: Node): Seq[Node] = in match {
-        case e: Elem if e.attribute("id") == cmp => replacement
-
-        case x => x
-      }
-    }
-
-    (new RuleTransformer(rewrite)).transform(in)
-    */
   }
 
   /**
