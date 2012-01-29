@@ -757,6 +757,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
                 try {
                   what.apply(in)
                 } catch {
+                  case e if exceptionHandler.isDefinedAt(e) => exceptionHandler(e)
                   case e: Exception => reportError("Message dispatch for " + in, e)
                 }
                 if (S.functionMap.size > 0) {
@@ -777,6 +778,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
                 try {
                   what.isDefinedAt(in)
                 } catch {
+                  case e if exceptionHandler.isDefinedAt(e) => exceptionHandler(e); false
                   case e: Exception => reportError("Message test for " + in, e); false
                 }
               }
@@ -914,6 +916,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
             try {
               performReRender(false)
             } catch {
+              case e if exceptionHandler.isDefinedAt(e) => exceptionHandler(e)
               case e: Exception => reportError("Failed performReRender", e)
             }
 
@@ -937,6 +940,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
             f => try {
               List(f())
             } catch {
+              case e if exceptionHandler.isDefinedAt(e) => exceptionHandler(e); Nil
               case e: Exception => reportError("Ajax function dispatch", e); Nil
             }
           }
