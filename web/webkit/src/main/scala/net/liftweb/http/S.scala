@@ -352,6 +352,8 @@ trait S extends HasParams with Loggable {
    */
   private object _jsToAppend extends TransientRequestVar(new ListBuffer[JsCmd])
 
+  private object _globalJsToAppend extends TransientRequestVar(new ListBuffer[JsCmd])
+
   /**
    * We can now collect Elems to put in the head tag
    */
@@ -783,17 +785,23 @@ trait S extends HasParams with Loggable {
   def appendJs(js: Seq[JsCmd]): Unit = _jsToAppend.is ++= js
 
   /**
+   * Add Javascript to the page rendering that
+   * will execute in the global scope
+   */
+  def appendGlobalJs(js: JsCmd*): Unit = _globalJsToAppend.is ++= js
+
+  /**
    * Get the accumulated JavaScript
    *
    * @see appendJs
    */
   def jsToAppend(): List[JsCmd] = {
     import js.JsCmds._
-    (for {
-      sess <- S.session
-    } yield sess.postPageJavaScript(RenderVersion.get :: 
-                                    S.currentCometActor.
-                                    map(_.uniqueId).toList)) match {
+    _globalJsToAppend.is.toList :::
+    S.session.map( sess =>
+      sess.postPageJavaScript(RenderVersion.get ::
+                              S.currentCometActor.map(_.uniqueId).toList)
+    ) match {
       case Full(xs) if !xs.isEmpty => List(OnLoad(_jsToAppend.is.toList ::: xs))
       case _ => _jsToAppend.is.toList match {
         case Nil => Nil
