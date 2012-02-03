@@ -22,6 +22,25 @@ import scala.xml._
 import common._
 
 /**
+ * Generics on the JVM have an issues with Type Erasure. Basically, Generic types (e.g.,
+ * Function1[String, Int] and Function1[Double, Bool]) look like the same type to the JVM
+ * so that methods cannot be overloaded with generic types. This "marker" trait is used as
+ * a work-around to the issue.  The marker is implicitly passed as a parameter to some overloaded
+ * methods.  If you see this as an implicit parameter to an overloaded method, just ignore it.
+ */
+trait AvoidTypeErasureIssues1
+
+/**
+ * The companion object that does the implicit vending of AvoidTypeErasureIssues1
+ */
+object AvoidTypeErasureIssues1 {
+  /**
+   * Automagically vend a AvoidTypeErasureIssues1
+   */
+  implicit def vendOne(): AvoidTypeErasureIssues1 = new AvoidTypeErasureIssues1 {}
+}
+
+/**
  * This object adds functionality to Scala standard types.
  */
 object BasicTypesHelpers extends BasicTypesHelpers with StringHelpers with ControlHelpers
