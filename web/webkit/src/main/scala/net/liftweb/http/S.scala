@@ -770,8 +770,11 @@ trait S extends HasParams with Loggable {
    * Sometimes it's helpful to accumute JavaScript as part of servicing
    * a request.  For example, you may want to accumulate the JavaScript
    * as part of an Ajax response or a Comet Rendering or
-   * as part of a regular HTML rendering.  Call S.appendJs(jsCmd).
-   * The accumulation of Js will be emitted as part of the response.
+   * as part of a regular HTML rendering.  Call `S.appendJs(jsCmd)`.
+   * The accumulated Javascript will be emitted as part of the response,
+   * wrapped in an `OnLoad` to ensure that it executes after
+   * the entire dom is available. If for some reason you need to run
+   * javascript at the top-level scope, use appendGlobalJs.
    */
   def appendJs(js: JsCmd): Unit = _jsToAppend.is += js
 
@@ -779,14 +782,22 @@ trait S extends HasParams with Loggable {
    * Sometimes it's helpful to accumute JavaScript as part of servicing
    * a request.  For example, you may want to accumulate the JavaScript
    * as part of an Ajax response or a Comet Rendering or
-   * as part of a regular HTML rendering.  Call S.appendJs(jsCmd).
-   * The accumulation of Js will be emitted as part of the response.
+   * as part of a regular HTML rendering.  Call `S.appendJs(jsCmd)`.
+   * The accumulated Javascript will be emitted as part of the response,
+   * wrapped in an `OnLoad` to ensure that it executes after
+   * the entire dom is available. If for some reason you need to run
+   * javascript at the top-level scope, use `appendGlobalJs`.
    */
   def appendJs(js: Seq[JsCmd]): Unit = _jsToAppend.is ++= js
 
   /**
-   * Add Javascript to the page rendering that
-   * will execute in the global scope
+   * Add javascript to the page rendering that
+   * will execute in the global scope.
+   * Usually you should use `appendJs`, so that the javascript
+   * runs after the entire dom is available. If you need to
+   * declare a global var or you want javascript to execute
+   * immediately with no guarantee that the entire dom is available,
+   * you may use `appendGlobalJs`.
    */
   def appendGlobalJs(js: JsCmd*): Unit = _globalJsToAppend.is ++= js
 
@@ -797,17 +808,18 @@ trait S extends HasParams with Loggable {
    */
   def jsToAppend(): List[JsCmd] = {
     import js.JsCmds._
-    _globalJsToAppend.is.toList :::
-    S.session.map( sess =>
-      sess.postPageJavaScript(RenderVersion.get ::
-                              S.currentCometActor.map(_.uniqueId).toList)
-    ) match {
-      case Full(xs) if !xs.isEmpty => List(OnLoad(_jsToAppend.is.toList ::: xs))
-      case _ => _jsToAppend.is.toList match {
-        case Nil => Nil
-        case xs => List(OnLoad(xs))
+    _globalJsToAppend.is.toList ::: (
+      S.session.map( sess =>
+        sess.postPageJavaScript(RenderVersion.get ::
+                                S.currentCometActor.map(_.uniqueId).toList)
+      ) match {
+        case Full(xs) if !xs.isEmpty => List(OnLoad(_jsToAppend.is.toList ::: xs))
+        case _ => _jsToAppend.is.toList match {
+          case Nil => Nil
+          case xs => List(OnLoad(xs))
+        }
       }
-    }
+    )
   }
 
   /**
