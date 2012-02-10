@@ -31,11 +31,6 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
   self: MyType =>
 
   /**
-   * A unique identifier for this record... used for access control
-   */
-  private val secure_# = Safe.next
-
-  /**
    * Get the fields defined on the meta object for this record instance
    */
   def fields() = meta.fields(this)
@@ -51,11 +46,11 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
    * Is it safe to make changes to the record (or should we check access control?)
    */
   final def safe_? : Boolean = {
-    Safe.safe_?(secure_#)
+    Safe.safe_?(System.identityHashCode(this))
   }
 
   def runSafe[T](f : => T) : T = {
-    Safe.runSafe(secure_#)(f)
+    Safe.runSafe(System.identityHashCode(this))(f)
   }
 
   /**

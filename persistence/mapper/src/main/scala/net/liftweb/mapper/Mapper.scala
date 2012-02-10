@@ -37,7 +37,6 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
   self: A =>
   type MapperType = A
 
-  private val secure_# = Safe.next
   private var was_deleted_? = false
   private var dbConnectionIdentifier: Box[ConnectionIdentifier] = Empty
   private[mapper] var addedPostCommit = false
@@ -45,7 +44,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
 
   def getSingleton : MetaMapper[A];
   final def safe_? : Boolean = {
-    Safe.safe_?(secure_#)
+    Safe.safe_?(System.identityHashCode(this))
   }
 
   def dbName:String = getSingleton.dbName
@@ -53,7 +52,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
   implicit def thisToMappee(in: Mapper[A]): A = this.asInstanceOf[A]
 
   def runSafe[T](f : => T) : T = {
-    Safe.runSafe(secure_#)(f)
+    Safe.runSafe(System.identityHashCode(this))(f)
   }
 
   def connectionIdentifier(id: ConnectionIdentifier): A = {

@@ -17,30 +17,22 @@
 package net.liftweb
 package util
 
-import java.security.{SecureRandom, MessageDigest}
-import org.apache.commons.codec.binary.Base64
-
 /**
  * Manage the current "safety" state of the stack
  */
 object Safe {
-  private val rand = new SecureRandom
-  /**
-   * Get the next "safe" number
-   */
-  def next = rand.synchronized{rand.nextLong}
-  private val threadLocal = new ThreadGlobal[Long]
+  private val threadLocal = new ThreadGlobal[Int]
 
   /**
    * Is the current context "safe" for the object with the
    * given safety code?
    */
-  def safe_?(test : Long) : Boolean = test == threadLocal.value
+  def safe_?(test : Int) : Boolean = test == threadLocal.value
 
   /**
    * Marks access to a given object as safe for the duration of the function
    */
-  def runSafe[T](x : Long)(f : => T) : T = {
+  def runSafe[T](x : Int)(f : => T) : T = {
      threadLocal.doWith(x)(f)
   }
 
