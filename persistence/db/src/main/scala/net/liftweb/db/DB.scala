@@ -396,9 +396,9 @@ trait DB extends Loggable {
           case x => x.toString
         }
 
-      case BIGINT | INTEGER | /* DECIMAL | NUMERIC | */ SMALLINT | TINYINT => rs.getLong(pos).toString
+      case BIGINT | INTEGER | /* DECIMAL | NUMERIC | */ SMALLINT | TINYINT => checkNull(rs, pos, rs.getLong(pos).toString)
 
-      case BIT | BOOLEAN => rs.getBoolean(pos).toString
+      case BIT | BOOLEAN => checkNull(rs, pos, rs.getBoolean(pos).toString)
 
       case VARCHAR | CHAR | CLOB | LONGVARCHAR => rs.getString(pos)
 
@@ -407,8 +407,16 @@ trait DB extends Loggable {
         case x => x.toString
       }
 
-      case DOUBLE | FLOAT | REAL => rs.getDouble(pos).toString
+      case DOUBLE | FLOAT | REAL => checkNull(rs, pos, rs.getDouble(pos).toString)
     }
+  }
+
+  /*
+   If the column is null, return null rather than the boxed primitive
+   */
+  def checkNull[T](rs: ResultSet, pos: Int, res: => T): T = {
+    if (null eq rs.getObject(pos)) null.asInstanceOf[T]
+    else res
   }
 
   private def asAny(pos: Int, rs: ResultSet, md: ResultSetMetaData): Any = {
@@ -418,15 +426,15 @@ trait DB extends Loggable {
 
       case DECIMAL | NUMERIC => rs.getBigDecimal(pos)
 
-      case BIGINT | INTEGER | /* DECIMAL | NUMERIC | */ SMALLINT | TINYINT => rs.getLong(pos)
+      case BIGINT | INTEGER | /* DECIMAL | NUMERIC | */ SMALLINT | TINYINT => checkNull(rs, pos, rs.getLong(pos))
 
-      case BIT | BOOLEAN => rs.getBoolean(pos)
+      case BIT | BOOLEAN => checkNull(rs, pos, rs.getBoolean(pos))
 
       case VARCHAR | CHAR | CLOB | LONGVARCHAR => rs.getString(pos)
 
       case DATE | TIME | TIMESTAMP => rs.getTimestamp(pos)
 
-      case DOUBLE | FLOAT | REAL => rs.getDouble(pos)
+      case DOUBLE | FLOAT | REAL => checkNull(rs, pos, rs.getDouble(pos))
     }
   }
 
