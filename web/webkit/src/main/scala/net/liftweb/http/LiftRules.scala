@@ -956,9 +956,32 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Holds user's DispatchPF functions that will be executed in a stateless context. This means that
-   * S object is not availble yet.
+   * no session will be created and no JSESSIONID cookie will be presented to the user (unless
+   * the user has presented a JSESSIONID cookie).
    */
-  val statelessDispatchTable = RulesSeq[DispatchPF]
+  @scala.deprecated("Use statelessDispatch")
+  def statelessDispatchTable = statelessDispatch
+
+  /**
+   * Holds user's DispatchPF functions that will be executed in a stateless context. This means that
+   * no session will be created and no JSESSIONID cookie will be presented to the user (unless
+   * the user has presented a JSESSIONID cookie).
+   *
+   * This is the way to do stateless REST in Lift
+   */
+  val statelessDispatch = RulesSeq[DispatchPF]
+
+  /**
+   * Add functionality around all of the HTTP request/response cycle.
+   * This is an optimal place to get a database connection.  Note that whatever
+   * is loaned at the begining of the request will not be returned until the end
+   * of the request.  It's super-important to (1) not do anything related
+   * to state or touch the request objects or anything else at the begining or
+   * end of the loan wrapper phase; (2) make sure that your code does not throw
+   * exceptions as exceptions can cause major problems.
+   */
+  val allAround = RulesSeq[LoanWrapper]
+
 
   private[http] def dispatchTable(req: HTTPRequest): List[DispatchPF] = {
     req match {
@@ -1772,7 +1795,7 @@ class RulesSeq[T] {
   })(f)
   }
 
-  def toList = cur.value match {
+  def toList: List[T] = cur.value match {
     case null => rules
     case xs => xs
   }

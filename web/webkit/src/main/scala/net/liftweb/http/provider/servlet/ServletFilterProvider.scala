@@ -50,6 +50,20 @@ trait ServletFilterProvider extends Filter with HTTPProvider {
   def context: HTTPContext = ctx
 
   /**
+   * Wrap the loans around the incoming request
+   */
+  private def handleLoanWrappers[T](f: => T): T = {
+    val wrappers = LiftRules.allAround.toList
+
+    def handleLoan(lst: List[LoanWrapper]): T = lst match {
+      case Nil => f
+      case x :: xs => x(handleLoan(xs))
+    }
+
+    handleLoan(wrappers)
+  }
+
+  /**
    * Executes the Lift filter component.
    */
   def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain) = {
@@ -59,14 +73,15 @@ trait ServletFilterProvider extends Filter with HTTPProvider {
       try {
         TransientRequestVarHandler(Empty,
                                    RequestVarHandler(Empty,
+
                                                      (req, res) match {
               case (httpReq: HttpServletRequest, httpRes: HttpServletResponse) =>
                 val httpRequest = new HTTPRequestServlet(httpReq, this)
                 val httpResponse = new HTTPResponseServlet(httpRes)
 
-                service(httpRequest, httpResponse) {
+                handleLoanWrappers(service(httpRequest, httpResponse) {
                   chain.doFilter(req, res)
-                }
+                })
               case _ => chain.doFilter(req, res)
             }))
       } finally {LiftRules.reqCnt.decrementAndGet()}
