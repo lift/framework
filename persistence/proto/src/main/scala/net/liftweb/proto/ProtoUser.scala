@@ -527,10 +527,10 @@ trait ProtoUser {
   }(SiteMap.addMenusAtEndMutator(sitemap))
 
   lazy val sitemap: List[Menu] =
-  List(loginMenuLoc, logoutMenuLoc, createUserMenuLoc,
+  List(loginMenuLoc, createUserMenuLoc,
        lostPasswordMenuLoc, resetPasswordMenuLoc,
        editUserMenuLoc, changePasswordMenuLoc,
-       validateUserMenuLoc).flatten(a => a)
+       validateUserMenuLoc, logoutMenuLoc).flatten(a => a)
 
 
   def skipEmailValidation = false
