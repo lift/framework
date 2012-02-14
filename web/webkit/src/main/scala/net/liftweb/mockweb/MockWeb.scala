@@ -115,13 +115,13 @@ object MockWeb {
    * <pre name="code" class="scala">
    * object testVar extends SessionVar[String]("Empty")
    * 
-   * val session = testS("http://foo.com/test") {
+   * val testSession = testS("http://foo.com/test") {
        testVar("Foo!")
        S.session // returns the current session
      }
 
      // A second test
-     testS("http://foo.com/test2", newSession = session) {
+     testS("http://foo.com/test2", session = testSession) {
        testVar.is must_== "Foo!"
      }
    * </pre>
