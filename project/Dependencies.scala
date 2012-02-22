@@ -1,0 +1,84 @@
+/*
+ * Copyright 2011 WorldWide Conferencing, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import sbt._
+import Keys._
+import net.liftweb.sbt.LiftBuildPlugin.selectDynamic
+
+
+object Dependencies {
+
+  lazy val slf4jVersion = "1.6.4"
+
+  lazy val scalacheckVersion = selectDynamic("1.9", "2.8.0" -> "1.7", "2.8.1" -> "1.8", "2.8.2" -> "1.8") _
+  lazy val specsVersion = selectDynamic("1.6.8", "2.8.0" -> "1.6.5", "2.9.1" -> "1.6.9") _
+
+  lazy val scalazGroup = selectDynamic("org.scalaz", "2.8.0" -> "com.googlecode.scalaz") _
+  lazy val scalazVersion = selectDynamic("6.0.2", "2.8.0" -> "5.0", "2.9.0" -> "6.0.RC2") _
+
+  type DynModuleID = String => ModuleID
+
+  // Compile scope:
+  // Scope available in all classpath, transitive by default.
+  lazy val commons_codec            = "commons-codec"              % "commons-codec"      % "1.4"
+  lazy val commons_fileupload       = "commons-fileupload"         % "commons-fileupload" % "1.2.2"
+  lazy val commons_httpclient       = "commons-httpclient"         % "commons-httpclient" % "3.1"
+  lazy val dispatch_http            = "net.databinder"            %% "dispatch-http"      % "0.7.8"
+  lazy val javamail                 = "javax.mail"                 % "mail"               % "1.4.4" // TODO: "[1.4.1,)"
+  lazy val joda_time                = "joda-time"                  % "joda-time"          % "1.6.2"
+  lazy val htmlparser               = "nu.validator.htmlparser"    % "htmlparser"         % "1.2.1"
+  lazy val mongo_java_driver        = "org.mongodb"                % "mongo-java-driver"  % "2.6.5"
+  lazy val paranamer                = "com.thoughtworks.paranamer" % "paranamer"          % "2.4.1"
+  lazy val scalajpa                 = "org.scala-libs"            %% "scalajpa"           % "1.4"
+  lazy val scalap: DynModuleID      = "org.scala-lang"             % "scalap"             % _
+  lazy val scalaz_core: DynModuleID = sv => scalazGroup(sv)       %% "scalaz-core"        % scalazVersion(sv)
+  lazy val slf4j_api                = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
+  lazy val squeryl                  = "org.squeryl"               %% "squeryl"            % "0.9.4"
+
+  // Aliases
+  lazy val mongo_driver = mongo_java_driver
+  lazy val scalaz = scalaz_core
+
+
+  // Provided scope:
+  // Scope provided by container, available only in compile and test classpath, non-transitive by default.
+  lazy val logback         = "ch.qos.logback"    % "logback-classic" % "1.0.0"      % "provided"
+  lazy val log4j           = "log4j"             % "log4j"           % "1.2.16"     % "provided"
+  lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"   % slf4jVersion % "provided"
+  lazy val persistence_api = "javax.persistence" % "persistence-api" % "1.0"        % "provided"
+  lazy val servlet_api     = "javax.servlet"     % "servlet-api"     % "2.5"        % "provided"
+
+
+  // Runtime scope:
+  // Scope provided in runtime, available only in runtime and test classpath, not compile classpath, non-transitive by default.
+  lazy val derby      = "org.apache.derby" % "derby" % "10.7.1.1" % "runtime" //% "optional"
+  lazy val h2database = "com.h2database"   % "h2"    % "1.2.147"  % "runtime" //% "optional"
+
+  // Aliases
+  lazy val h2 = h2database
+
+
+  // Test scope:
+  // Scope available only in test classpath, non-transitive by default.
+  // TODO: See if something alternative with lesser footprint can be used instead of mega heavy apacheds
+  lazy val apacheds = "org.apache.directory.server" % "apacheds-server-integ"    % "1.5.5"      % "test"
+  lazy val jetty6   = "org.mortbay.jetty"           % "jetty"                    % "6.1.26"     % "test"
+  lazy val jwebunit = "net.sourceforge.jwebunit"    % "jwebunit-htmlunit-plugin" % "2.5"        % "test"
+  lazy val scalacheck: DynModuleID = "org.scala-tools.testing" %% "scalacheck" % scalacheckVersion(_) % "test"
+  lazy val specs: DynModuleID      = "org.scala-tools.testing" %% "specs"      % specsVersion(_)      % "test"
+  lazy val specs2 = "org.specs2" %% "specs2"      % "1.5"      % "test"
+
+}
