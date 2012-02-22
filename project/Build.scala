@@ -117,6 +117,8 @@ object BuildDef extends Build {
   lazy val db =
     persistenceProject("db")
       .dependsOn(util)
+      .settings(
+        libraryDependencies += mockito_all)
 
   lazy val proto =
     persistenceProject("proto")

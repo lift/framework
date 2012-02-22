@@ -74,9 +74,10 @@ object Dependencies {
   // Test scope:
   // Scope available only in test classpath, non-transitive by default.
   // TODO: See if something alternative with lesser footprint can be used instead of mega heavy apacheds
-  lazy val apacheds = "org.apache.directory.server" % "apacheds-server-integ"    % "1.5.5"      % "test"
-  lazy val jetty6   = "org.mortbay.jetty"           % "jetty"                    % "6.1.26"     % "test"
-  lazy val jwebunit = "net.sourceforge.jwebunit"    % "jwebunit-htmlunit-plugin" % "2.5"        % "test"
+  lazy val apacheds    = "org.apache.directory.server" % "apacheds-server-integ"    % "1.5.5"      % "test"
+  lazy val jetty6      = "org.mortbay.jetty"           % "jetty"                    % "6.1.26"     % "test"
+  lazy val jwebunit    = "net.sourceforge.jwebunit"    % "jwebunit-htmlunit-plugin" % "2.5"        % "test"
+  lazy val mockito_all = "org.mockito"                 % "mockito-all"              % "1.8.5"      % "test"
   lazy val scalacheck: DynModuleID = "org.scala-tools.testing" %% "scalacheck" % scalacheckVersion(_) % "test"
   lazy val specs: DynModuleID      = "org.scala-tools.testing" %% "specs"      % specsVersion(_)      % "test"
   lazy val specs2 = "org.specs2" %% "specs2"      % "1.5"      % "test"
