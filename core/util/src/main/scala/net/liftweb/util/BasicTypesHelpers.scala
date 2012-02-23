@@ -37,7 +37,7 @@ object AvoidTypeErasureIssues1 {
   /**
    * Automagically vend a AvoidTypeErasureIssues1
    */
-  implicit def vendOne(): AvoidTypeErasureIssues1 = new AvoidTypeErasureIssues1 {}
+  implicit val vendOne: AvoidTypeErasureIssues1 = new AvoidTypeErasureIssues1 {}
 }
 
 /**
