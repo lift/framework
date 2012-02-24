@@ -548,17 +548,38 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
         .mandatoryIntRefListField(List(ntr.id.is))
         .mandatoryLongRefListField(List(btr.id.is))
 
+      // single objects
       rftr.mandatoryObjectIdRefField.obj mustEqual Full(fttr)
       rftr.mandatoryUUIDRefField.obj mustEqual Full(ltr)
       rftr.mandatoryStringRefField.obj mustEqual Full(mtr)
       rftr.mandatoryIntRefField.obj mustEqual Full(ntr)
       rftr.mandatoryLongRefField.obj mustEqual Full(btr)
 
+      val fttr2 = FieldTypeTestRecord.createRecord.save
+
+      rftr.mandatoryObjectIdRefField.cached_? mustEqual true
+      rftr.mandatoryObjectIdRefField(fttr2.id.is)
+      rftr.mandatoryObjectIdRefField.cached_? mustEqual false
+      rftr.mandatoryObjectIdRefField.find mustEqual Full(fttr2)
+      rftr.mandatoryObjectIdRefField.obj mustEqual Full(fttr2)
+      rftr.mandatoryObjectIdRefField.cached_? mustEqual true
+
+      // lists
       rftr.mandatoryObjectIdRefListField.objs mustEqual List(fttr)
       rftr.mandatoryUUIDRefListField.objs mustEqual List(ltr)
       rftr.mandatoryStringRefListField.objs mustEqual List(mtr)
       rftr.mandatoryIntRefListField.objs mustEqual List(ntr)
       rftr.mandatoryLongRefListField.objs mustEqual List(btr)
+
+      val fttr3 = FieldTypeTestRecord.createRecord.save
+      val objList = List(fttr2, fttr3)
+
+      rftr.mandatoryObjectIdRefListField.cached_? mustEqual true
+      rftr.mandatoryObjectIdRefListField(objList.map(_.id.is))
+      rftr.mandatoryObjectIdRefListField.cached_? mustEqual false
+      rftr.mandatoryObjectIdRefListField.findAll mustEqual objList
+      rftr.mandatoryObjectIdRefListField.objs mustEqual objList
+      rftr.mandatoryObjectIdRefListField.cached_? mustEqual true
     }
 
     "use defaultValue when field is not present in the database" in {
