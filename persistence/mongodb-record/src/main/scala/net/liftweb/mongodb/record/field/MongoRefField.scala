@@ -42,13 +42,18 @@ trait MongoRefField[RefType <: MongoRecord[RefType], MyType] extends TypedField[
   /** The MongoMetaRecord of the referenced object **/
   def refMeta: MongoMetaRecord[RefType]
 
-  /*
-  * get the referenced object
-  */
+  /**
+    * Find the referenced object
+    */
+  def find = valueBox.flatMap(v => refMeta.findAny(v))
+
+  /**
+    * Get the cacheable referenced object
+    */
   def obj = synchronized {
     if (!_calcedObj) {
       _calcedObj = true
-      this._obj = valueBox.flatMap(v => refMeta.findAny(v))
+      this._obj = find
     }
     _obj
   }
@@ -62,6 +67,11 @@ trait MongoRefField[RefType <: MongoRecord[RefType], MyType] extends TypedField[
 
   private var _obj: Box[RefType] = Empty
   private var _calcedObj = false
+
+  override def setBox(in: Box[MyType]): Box[MyType] = synchronized {
+    _calcedObj = false // invalidate the cache
+    super.setBox(in)
+  }
 
   /** Options for select list **/
   def options: List[(Box[MyType], String)] = Nil

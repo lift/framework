@@ -21,7 +21,6 @@ package record
 import java.util.{Date, UUID}
 import java.util.regex.Pattern
 
-import com.mongodb.DBRef
 import org.bson.types.ObjectId
 import org.specs.Specification
 

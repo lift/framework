@@ -41,13 +41,18 @@ abstract class MongoRefListField[OwnerType <: BsonRecord[OwnerType], RefType <: 
   /** The MongoMetaRecord of the referenced object **/
   def refMeta: MongoMetaRecord[RefType]
 
+  /**
+    * Find the referenced objects
+    */
+  def findAll = refMeta.findAllByList(this.value)
+
   /*
    * get the referenced objects
    */
   def objs = synchronized {
     if (!_calcedObjs) {
       _calcedObjs = true
-      this._objs = refMeta.findAllByList(this.value)
+      this._objs = findAll
     }
     _objs
   }
@@ -61,6 +66,11 @@ abstract class MongoRefListField[OwnerType <: BsonRecord[OwnerType], RefType <: 
 
   private var _objs: List[RefType] = Nil
   private var _calcedObjs = false
+
+  override def setBox(in: Box[MyType]): Box[MyType] = synchronized {
+    _calcedObjs = false // invalidate the cache
+    super.setBox(in)
+  }
 }
 
 class ObjectIdRefListField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
