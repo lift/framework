@@ -92,7 +92,7 @@ object LD {
       }
 
     matrix(y1, 0, (1 to x.length).toList) match {
-      case Nil => 10000
+      case Nil => 100000
       case xs => xs.last
     }
   }
