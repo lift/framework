@@ -695,8 +695,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * Updates the internal functions mapping
    */
   def updateFunctionMap(funcs: Map[String, S.AFuncHolder], uniqueId: String, when: Long): Unit = synchronized {
+    println("Updating function map for unique id "+uniqueId+" Map "+funcs)
+    Thread.dumpStack()
+
     funcs.foreach {
-      case (name, func) => messageCallback(name) = func.duplicate(uniqueId)
+      case (name, func) =>
+        messageCallback(name) =
+          if (func.owner == Full(uniqueId)) func else func.duplicate(uniqueId)
     }
   }
 
