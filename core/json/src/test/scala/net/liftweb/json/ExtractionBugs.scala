@@ -52,6 +52,13 @@ object ExtractionBugs extends Specification("Extraction bugs Specification") {
     parse("""{"nums":[10]}""").extract[HasCompanion] mustEqual HasCompanion(List(10))
   }
 
+  "Issue 1169" in {
+    val json = JsonParser.parse("""{"data":[{"one":1, "two":2}]}""")
+    json.extract[Response] mustEqual Response(List(Map("one" -> 1, "two" -> 2)))
+  }
+
+  case class Response(data: List[Map[String, Int]])
+
   case class OptionOfInt(opt: Option[Int])
 
   case class PMap(m: Map[String, List[String]])
