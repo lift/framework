@@ -179,5 +179,13 @@ object BasicTypesHelpersSpec extends Specification("BasicTypesHelpers Specificat
     }
   }
 
+  "AvoidTypeErasure implicit value" should {
+    "be in scope" in {
+      def f(i:Int)(implicit d: AvoidTypeErasureIssues1) = i+1
+
+      f(2) must_== 3
+    }
+  }
+
 }
 
