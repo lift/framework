@@ -367,11 +367,14 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
    * back the transaction afterwards.
    */
   private def transactionWithRollback[T](code: => T): T = {
+    
+    def rollback: Unit = throw new TransactionRollbackException()
+    
     var result: T = null.asInstanceOf[T]
     try {
       transaction {
         result = code
-        throw new TransactionRollbackException()
+        rollback
       }
     } catch {
       case e: TransactionRollbackException => // OK, was rolled back

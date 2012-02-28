@@ -50,16 +50,17 @@ object SquerylRecord extends Loggable {
    */
   def init(mkAdapter: () => DatabaseAdapter) = {
     FieldMetaData.factory = new RecordMetaDataFactory
-    SessionFactory.externalTransactionManagementAdapter = Some(() => currentSession.is openOr {
-      DB.currentConnection match {
-        case Full(superConn) =>
-          val sess = Session.create(superConn.connection, mkAdapter())
-          sess.setLogger(s => logger.debug(s))
-          currentSession.set(sess)
-          sess
-
-        case _ => error("no current connection in scope. wrap your transaction with DB.use or use one of the DB loan wrappers")
-      }
-    })
+    SessionFactory.externalTransactionManagementAdapter = Some(() => 
+      currentSession.get orElse {
+    	  DB.currentConnection match {
+    		  case Full(superConn) =>
+    		  	val sess: Session = Session.create(superConn.connection, mkAdapter())
+    		  	sess.setLogger(s => logger.info(s))
+    		  	currentSession.set(sess)
+    		  	Some(sess)
+    		  case _ => None
+    	  }
+      })
   }
+  
 }
