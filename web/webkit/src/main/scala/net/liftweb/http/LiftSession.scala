@@ -400,12 +400,16 @@ private[http] object RenderVersion {
         func <- sess.findFunc(v).collect {
           case f: S.PageStateHolder => f
         }
-    } yield {
-        val tret = ver.doWith(v)(func.runInContext(f))
+      } yield {
+        val tret = ver.doWith(v) {
+          val ret = func.runInContext(f)
 
-        if (S.functionMap.size > 0) {
-          sess.updateFunctionMap(S.functionMap, this.get, millis)
-          S.clearFunctionMap
+
+          if (S.functionMap.size > 0) {
+            sess.updateFunctionMap(S.functionMap, this.get, millis)
+            S.clearFunctionMap
+          }
+          ret
         }
         tret
       }
@@ -695,9 +699,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * Updates the internal functions mapping
    */
   def updateFunctionMap(funcs: Map[String, S.AFuncHolder], uniqueId: String, when: Long): Unit = synchronized {
-    println("Updating function map for unique id "+uniqueId+" Map "+funcs)
-    Thread.dumpStack()
-
     funcs.foreach {
       case (name, func) =>
         messageCallback(name) =
