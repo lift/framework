@@ -540,7 +540,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   private def lastRendering: RenderOut =
     if (dontCacheRendering) {
       val ret = (render ++ jsonInCode): RenderOut
-      theSession.updateFunctionMap(S.functionMap, spanId, lastRenderTime)
+      theSession.updateFunctionMap(S.functionMap, uniqueId, lastRenderTime)
       ret
     } else {
       _realLastRendering
@@ -1118,7 +1118,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       lastRendering = render ++ jsonInCode
     }
 
-    theSession.updateFunctionMap(S.functionMap, spanId, lastRenderTime)
+    theSession.updateFunctionMap(S.functionMap, uniqueId, lastRenderTime)
 
     val rendered: AnswerRender =
       AnswerRender(new XmlOrJsCmd(spanId, lastRendering, buildSpan _, notices toList),
