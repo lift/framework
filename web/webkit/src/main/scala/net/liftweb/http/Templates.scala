@@ -131,6 +131,7 @@ object Templates {
       case e: Elem if e.label == "html" =>
         e.child.flatMap {
           case e: Elem if e.label == "body" => {
+            e.attribute("data-lift-content-id").headOption.map(_.text) orElse
             e.attribute("class").flatMap {
               ns => {
                 val clz = ns.text.charSplit(' ')
