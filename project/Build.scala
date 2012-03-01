@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-import java.util.{Calendar => Cal}
 import sbt._
 import Keys._
-import net.liftweb.sbt._
+import net.liftweb.sbt.LiftBuildPlugin._
 import Dependencies._
 
 
@@ -28,7 +27,9 @@ object BuildDef extends Build {
   lazy val framework =
     liftProject("lift-framework", file("."))
       .aggregate(liftProjects: _*)
-      .settings(publishArtifact := false)
+      .settings(aggregatedSetting(sources in(Compile, doc)),
+                aggregatedSetting(dependencyClasspath in(Compile, doc)),
+                publishArtifact := false)
 
   // Core Projects
   // -------------
@@ -37,43 +38,37 @@ object BuildDef extends Build {
 
   lazy val common =
     coreProject("common")
-      .settings(
-        description := "Common Libraties and Utilities",
-        libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, commons_codec))
+      .settings(description := "Common Libraties and Utilities",
+                libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, commons_codec))
 
   lazy val actor =
     coreProject("actor")
-      .dependsOn(common)
-      .settings(
-        description := "Simple Actor")
+        .dependsOn(common)
+        .settings(description := "Simple Actor")
 
   lazy val json =
     coreProject("json")
-      .settings(
-        description := "JSON Library",
-        libraryDependencies <++= scalaVersion { sv => Seq(scalap(sv), paranamer) })
+        .settings(description := "JSON Library",
+                  libraryDependencies <++= scalaVersion { sv => Seq(scalap(sv), paranamer) })
 
   lazy val json_scalaz =
     coreProject("json-scalaz")
-      .dependsOn(json)
-      .settings(
-        description := "JSON Library based on Scalaz",
-        libraryDependencies <+= scalaVersion(scalaz))
+        .dependsOn(json)
+        .settings(description := "JSON Library based on Scalaz",
+                  libraryDependencies <+= scalaVersion(scalaz))
 
   lazy val json_ext =
     coreProject("json-ext")
-      .dependsOn(common, json)
-      .settings(
-        description := "Extentions to JSON Library",
-        libraryDependencies ++= Seq(commons_codec, joda_time))
+        .dependsOn(common, json)
+        .settings(description := "Extentions to JSON Library",
+                  libraryDependencies ++= Seq(commons_codec, joda_time))
 
   lazy val util =
     coreProject("util")
-      .dependsOn(actor, json)
-      .settings(
-        description := "Utilities Library",
-        parallelExecution in Test := false,
-        libraryDependencies ++= Seq(joda_time, commons_codec, javamail, log4j, htmlparser))
+        .dependsOn(actor, json)
+        .settings(description := "Utilities Library",
+                  parallelExecution in Test := false,
+                  libraryDependencies ++= Seq(joda_time, commons_codec, javamail, log4j, htmlparser))
 
 
   // Web Projects
@@ -83,30 +78,26 @@ object BuildDef extends Build {
 
   lazy val testkit =
     webProject("testkit")
-      .dependsOn(util)
-      .settings(
-        description := "Testkit for Webkit Library",
-        libraryDependencies ++= Seq(commons_httpclient, servlet_api))
+        .dependsOn(util)
+        .settings(description := "Testkit for Webkit Library",
+                  libraryDependencies ++= Seq(commons_httpclient, servlet_api))
 
   lazy val webkit =
     webProject("webkit")
-      .dependsOn(util, testkit % "provided")
-      .settings(
-        description := "Webkit Library",
-        packageOptions in packageBin += Package.ManifestAttributes("Build-Time" -> Cal.getInstance.getTimeInMillis.toString),
-        parallelExecution in Test := false,
-        libraryDependencies <++= scalaVersion { sv =>
-          Seq(commons_fileupload, servlet_api, specs(sv).copy(configurations = Some("provided")), jetty6, jwebunit)
-        },
-        initialize in Test <<= (sourceDirectory in Test) { src =>
-          System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
-        })
+        .dependsOn(util, testkit % "provided")
+        .settings(description := "Webkit Library",
+                  parallelExecution in Test := false,
+                  libraryDependencies <++= scalaVersion { sv =>
+                    Seq(commons_fileupload, servlet_api, specs(sv).copy(configurations = Some("provided")), jetty6, jwebunit)
+                  },
+                  initialize in Test <<= (sourceDirectory in Test) { src =>
+                    System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
+                  })
 
-  lazy val wizard  =
+  lazy val wizard =
     webProject("wizard")
-      .dependsOn(webkit, db)
-      .settings(
-        description := "Wizard Library")
+        .dependsOn(webkit, db)
+        .settings(description := "Wizard Library")
 
 
   // Persistence Projects
@@ -116,65 +107,63 @@ object BuildDef extends Build {
 
   lazy val db =
     persistenceProject("db")
-      .dependsOn(util)
-      .settings(
-        libraryDependencies += mockito_all)
+        .dependsOn(util)
+        .settings(libraryDependencies += mockito_all)
 
   lazy val proto =
     persistenceProject("proto")
-      .dependsOn(webkit)
+        .dependsOn(webkit)
 
   lazy val jpa =
     persistenceProject("jpa")
-      .dependsOn(webkit)
-      .settings(libraryDependencies ++= Seq(scalajpa, persistence_api))
+        .dependsOn(webkit)
+        .settings(libraryDependencies ++= Seq(scalajpa, persistence_api))
 
   lazy val mapper =
     persistenceProject("mapper")
-      .dependsOn(db, proto)
-      .settings(
-        description := "Mapper Library",
-        parallelExecution in Test := false,
-        libraryDependencies ++= Seq(h2, derby),
-        initialize in Test <<= (crossTarget in Test) { ct =>
-          System.setProperty("derby.stream.error.file", (ct / "derby.log").absolutePath)
-        })
+        .dependsOn(db, proto)
+        .settings(description := "Mapper Library",
+                  parallelExecution in Test := false,
+                  libraryDependencies ++= Seq(h2, derby),
+                  initialize in Test <<= (crossTarget in Test) { ct =>
+                    System.setProperty("derby.stream.error.file", (ct / "derby.log").absolutePath)
+                  })
 
   lazy val record =
     persistenceProject("record")
-      .dependsOn(proto, db)
+        .dependsOn(proto, db)
 
   lazy val couchdb =
     persistenceProject("couchdb")
-      .dependsOn(record)
-      .settings(
-        libraryDependencies += dispatch_http)
+        .dependsOn(record)
+        .settings(libraryDependencies += dispatch_http)
 
   lazy val squeryl_record =
     persistenceProject("squeryl-record")
-      .dependsOn(record, db)
-      .settings(libraryDependencies ++= Seq(h2, squeryl))
+        .dependsOn(record, db)
+        .settings(libraryDependencies ++= Seq(h2, squeryl))
 
   lazy val mongodb =
     persistenceProject("mongodb")
-      .dependsOn(json_ext)
-      .settings(
-        parallelExecution in Test := false,
-        libraryDependencies += mongo_driver)
+        .dependsOn(json_ext)
+        .settings(parallelExecution in Test := false,
+                  libraryDependencies += mongo_driver,
+                  initialize in Test <<= (classDirectory in Test) { cdir =>
+                    System.setProperty("java.util.logging.config.file", (cdir / "logging.properties").absolutePath)
+                  })
 
   lazy val mongodb_record =
     persistenceProject("mongodb-record")
-      .dependsOn(record, mongodb)
-      .settings(parallelExecution in Test := false)
+        .dependsOn(record, mongodb)
+        .settings(parallelExecution in Test := false)
 
   lazy val ldap =
     persistenceProject("ldap")
-      .dependsOn(mapper)
-      .settings(
-        libraryDependencies += apacheds,
-        initialize in Test <<= (crossTarget in Test) { ct =>
-          System.setProperty("apacheds.working.dir", (ct / "apacheds").absolutePath)
-        })
+        .dependsOn(mapper)
+        .settings(libraryDependencies += apacheds,
+                  initialize in Test <<= (crossTarget in Test) { ct =>
+                    System.setProperty("apacheds.working.dir", (ct / "apacheds").absolutePath)
+                  })
 
   def coreProject = liftProject("core") _
   def webProject = liftProject("web") _
@@ -190,10 +179,9 @@ object BuildDef extends Build {
     * @param module   the name of the project module. Typically, a project id is of the form lift-`module`.
     */
   def liftProject(base: String, prefix: String = "lift-")(module: String): Project =
-    liftProject(
-      id   = if(module.startsWith(prefix)) module else prefix + module,
-      base = file(base) / module.stripPrefix(prefix))
+    liftProject(id = if (module.startsWith(prefix)) module else prefix + module,
+                base = file(base) / module.stripPrefix(prefix))
 
   def liftProject(id: String, base: File): Project =
-    Project(id, base).settings(LiftBuildPlugin.liftBuildSettings: _*)
+    Project(id, base).settings(liftBuildSettings: _*)
 }
