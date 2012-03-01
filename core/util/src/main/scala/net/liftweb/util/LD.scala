@@ -91,7 +91,10 @@ object LD {
                                       new ListBuffer))
       }
 
-    matrix(y1, 0, (1 to x.length).toList).last
+    matrix(y1, 0, (1 to x.length).toList) match {
+      case Nil => 100000
+      case xs => xs.last
+    }
   }
 }
 
