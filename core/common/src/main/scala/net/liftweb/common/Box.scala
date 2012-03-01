@@ -303,12 +303,6 @@ sealed abstract class Box[+A] extends Product {
   def isA[B](cls: Class[B]): Box[B] = Empty
 
   /**
-   * If the partial function is defined at the current Box's value
-   * apply the partial function.
-   */
-  def collect[B](pf: PartialFunction[A, B]): Box[B] 
-
-  /**
    * Return a Full[B] if the contents of this Box is of type <code>B</code>, otherwise return Empty
    */
   def asA[B](implicit m: Manifest[B]): Box[B] = Empty
@@ -353,7 +347,7 @@ sealed abstract class Box[+A] extends Product {
    * @param msg the failure message
    * @return a Failure with the message if this Box is Empty
    */
-  def ?~(msg: String): Box[A] = this
+  def ?~(msg: => String): Box[A] = this
 
   /**
    * Transform an Empty to a ParamFailure with the specified typesafe
@@ -361,12 +355,12 @@ sealed abstract class Box[+A] extends Product {
    * @param errorCode a value indicating the error
    * @return a ParamFailure with the specified value
    */
-  def ~>[T](errorCode: T): Box[A] = this
+  def ~>[T](errorCode: => T): Box[A] = this
 
   /**
    * Alias for ?~
    */
-  def failMsg(msg: String): Box[A] = ?~(msg)
+  def failMsg(msg: => String): Box[A] = ?~(msg)
 
   /**
    * Transform an EmptyBox to a Failure with the specified message and chain
@@ -374,12 +368,12 @@ sealed abstract class Box[+A] extends Product {
    * @param msg the failure message
    * @return a Failure with the message if this Box is an Empty Box. Chain the messages if it is already a Failure
    */
-  def ?~!(msg: String): Box[A] = ?~(msg)
+  def ?~!(msg: => String): Box[A] = ?~(msg)
 
   /**
    * Alias for ?~!
    */
-  def compoundFailMsg(msg: String): Box[A] = ?~!(msg)
+  def compoundFailMsg(msg: => String): Box[A] = ?~!(msg)
 
   /**
    * Filter this box on the specified predicate, returning a Failure with the specified
@@ -394,7 +388,7 @@ sealed abstract class Box[+A] extends Product {
    * This method calls the specified function with the value contained in this Box
    * @return the result of the function or a default value
    */
-  def run[T](in: T)(f: (T, A) => T) = in
+  def run[T](in: => T)(f: (T, A) => T) = in
 
   /**
    * Perform a side effect by passing this Box to the specified function
@@ -453,6 +447,17 @@ sealed abstract class Box[+A] extends Product {
    * Fill with the Box's value
    */
   def toLeft[B](right: => B): Either[A, B] = Right(right)
+
+
+  /**
+   * If the partial function is defined at the current Box's value
+   * apply the partial function.
+   */
+  final def collect[B](pf: PartialFunction[A, B]): Box[B] = {
+    flatMap(value =>
+    if (pf.isDefinedAt(value)) Full(pf(value))
+    else Empty)
+  }
 }
 
 /**
@@ -497,7 +502,7 @@ final case class Full[+A](value: A) extends Box[A] {
 
   override def toOption: Option[A] = Some(value)
 
-  override def run[T](in: T)(f: (T, A) => T) = f(in, value)
+  override def run[T](in: => T)(f: (T, A) => T) = f(in, value)
 
   /**
    * An <code>Either</code> that is a <code>Left</code> with the given argument
@@ -532,15 +537,6 @@ final case class Full[+A](value: A) extends Box[A] {
   override def ===[B >: A](to: B): Boolean = value == to
 
   override def dmap[B](dflt: => B)(f: A => B): B = f(value)
-
-  /**
-   * If the partial function is defined at the current Box's value
-   * apply the partial function.
-   */
-  final def collect[B](pf: PartialFunction[A, B]): Box[B] = {
-    if (pf.isDefinedAt(value)) Full(pf(value))
-    else Empty
-  }
 }
 
 /**
@@ -576,19 +572,12 @@ sealed abstract class EmptyBox extends Box[Nothing] {
 
   override def filter(p: Nothing => Boolean): Box[Nothing] = this
 
-  override def ?~(msg: String): Failure = Failure(msg, Empty, Empty)
+  override def ?~(msg: => String): Failure = Failure(msg, Empty, Empty)
 
-  override def ?~!(msg: String): Failure = Failure(msg, Empty, Empty)
+  override def ?~!(msg: => String): Failure = Failure(msg, Empty, Empty)
 
-  override def ~>[T](errorCode: T): ParamFailure[T] = 
+  override def ~>[T](errorCode: => T): ParamFailure[T] =
     ParamFailure("", Empty, Empty, errorCode)
-
-
-  /**
-   * If the partial function is defined at the current Box's value
-   * apply the partial function.
-   */
-  final override def collect[B](pf: PartialFunction[Nothing, B]): Box[B] = this
 }
 
 /**
@@ -674,11 +663,11 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
     case _ => false
   }
 
-  override def ?~(msg: String): Failure = this
+  override def ?~(msg: => String): Failure = this
 
-  override def ?~!(msg: String): Failure = Failure(msg, Empty, Full(this))
+  override def ?~!(msg: => String): Failure = Failure(msg, Empty, Full(this))
 
-  override def ~>[T](errorCode: T): ParamFailure[T] = ParamFailure(msg, exception, chain, errorCode)
+  override def ~>[T](errorCode: => T): ParamFailure[T] = ParamFailure(msg, exception, chain, errorCode)
 }
 
 /**
