@@ -44,11 +44,13 @@ object BuildDef extends Build {
   lazy val actor =
     coreProject("actor")
         .dependsOn(common)
-        .settings(description := "Simple Actor")
+        .settings(description := "Simple Actor",
+                  parallelExecution in Test := false)
 
   lazy val json =
     coreProject("json")
         .settings(description := "JSON Library",
+                  parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv => Seq(scalap(sv), paranamer) })
 
   lazy val json_scalaz =
