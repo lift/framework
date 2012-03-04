@@ -30,3 +30,5 @@ pomExtra in ThisBuild              ~= (_ ++ <scm>
                                               <url>http://github.com/lift/framework</url>
                                               <connection>scm:git:https://github.com/lift/framework.git</connection>
                                             </scm> ++ {Developers.toXml})
+
+credentials in ThisBuild <+= state map { s => Credentials(BuildPaths.getGlobalSettingsDirectory(s, BuildPaths.getGlobalBase(s)) / ".credentials") }
