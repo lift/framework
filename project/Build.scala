@@ -148,8 +148,8 @@ object BuildDef extends Build {
         .dependsOn(json_ext)
         .settings(parallelExecution in Test := false,
                   libraryDependencies += mongo_driver,
-                  initialize in Test <<= (classDirectory in Test) { cdir =>
-                    System.setProperty("java.util.logging.config.file", (cdir / "logging.properties").absolutePath)
+                  initialize in Test <<= (resourceDirectory in Test) { rd =>
+                    System.setProperty("java.util.logging.config.file", (rd / "logging.properties").absolutePath)
                   })
 
   lazy val mongodb_record =
