@@ -434,7 +434,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
       url <- Box !! LiftRules.getClass.getResource("/" + cn + ".class")
       val newUrl = new java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
       str <- tryo(new String(readWholeStream(newUrl.openConnection.getInputStream), "UTF-8"))
-      ma <- """Build-Time: (.*)""".r.findFirstMatchIn(str)
+      ma <- """Built-Time: (.*)""".r.findFirstMatchIn(str)
       asLong <- asLong(ma.group(1))
     } yield new Date(asLong)
 
@@ -577,7 +577,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
         groupEffects(NoticeType.Error)
     }
 
-    // We need to determine the full set of IDs that need messages rendered. 
+    // We need to determine the full set of IDs that need messages rendered.
     // TODO: Change to use "distinct" when 2.7.7 support is dropped
     val idSet = (S.idMessages((S.errors)) ++
                  S.idMessages((S.warnings)) ++
