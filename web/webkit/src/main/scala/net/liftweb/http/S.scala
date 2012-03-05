@@ -338,6 +338,8 @@ trait S extends HasParams with Loggable {
   private val _oneShot = new ThreadGlobal[Boolean]
   private val _disableTestFuncNames = new ThreadGlobal[Boolean]
 
+  private object _exceptionThrown extends TransientRequestVar(false)
+
   private object postFuncs extends TransientRequestVar(new ListBuffer[() => Unit])
 
   /**
@@ -385,6 +387,18 @@ trait S extends HasParams with Loggable {
   private[http] object CurrentLocation extends RequestVar[Box[sitemap.Loc[_]]](request.flatMap(_.location))
 
   def location: Box[sitemap.Loc[_]] = CurrentLocation.is
+
+
+  /**
+   * An exception was thrown during the processing of this request.
+   * This is tested to see if the transaction should be rolled back
+   */
+  def assertExceptionThrown() {_exceptionThrown.set(true)}
+
+  /**
+   * Was an exception thrown during the processing of the current request?
+   */
+  def exceptionThrown_? : Boolean = _exceptionThrown.get
 
   /**
    * @return a List of any Cookies that have been set for this Response. If you want

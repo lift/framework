@@ -21,6 +21,8 @@ import common._
 import util._
 import Helpers._
 
+import net.liftweb.http.S
+
 import javax.sql.{DataSource}
 import java.sql.ResultSetMetaData
 import java.sql.{Statement, ResultSet, Types, PreparedStatement, Connection, DriverManager}
@@ -240,13 +242,13 @@ trait DB extends Loggable {
               try {
                 try {
                   val ret = f
-                  success = true
+                  success = !S.exceptionThrown_?
                   ret
                 } catch {
                   // this is the case when we want to commit the transaction
                   // but continue to throw the exception
                   case e: LiftFlowOfControlException => {
-                    success = true
+                    success = !S.exceptionThrown_?
                     throw e
                   }
                 }
@@ -263,13 +265,13 @@ trait DB extends Loggable {
             try {
               try {
                 val ret = f
-                success = true
+                success = !S.exceptionThrown_?
                 ret
               } catch {
                 // this is the case when we want to commit the transaction
                 // but continue to throw the exception
                 case e: LiftFlowOfControlException => {
-                  success = true
+                  success = !S.exceptionThrown_?
                   throw e
                 }
               }
@@ -676,13 +678,13 @@ trait DB extends Loggable {
       var rollback = true
       try {
         val ret = f(conn)
-        rollback = false
+        rollback = S.exceptionThrown_?
         ret
       } catch {
         // this is the case when we want to commit the transaction
         // but continue to throw the exception
         case e: LiftFlowOfControlException => {
-          rollback = false
+          rollback = S.exceptionThrown_?
           throw e
         }
       } finally {
