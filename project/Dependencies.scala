@@ -21,33 +21,35 @@ import net.liftweb.sbt.LiftBuildPlugin.{crossMapped, defaultOrMapped}
 
 object Dependencies {
 
-  type DynModuleID = String => ModuleID
+  type ModuleMap = String => ModuleID
 
-  lazy val CVMapping282   = crossMapped("2.8.2" -> "2.8.1")
+  lazy val CVMapping282  = crossMapped("2.8.2" -> "2.8.1")
+  lazy val CVMapping2911 = crossMapped("2.9.1-1" -> "2.9.1")
+  lazy val CVMappingAll  = crossMapped("2.9.1-1" -> "2.9.1", "2.8.2" -> "2.8.1")
 
   lazy val slf4jVersion = "1.6.4"
 
   lazy val scalazGroup       = defaultOrMapped("org.scalaz", "2.8.0" -> "com.googlecode.scalaz")
   lazy val scalazVersion     = defaultOrMapped("6.0.2", "2.8.0" -> "5.0", "2.9.0" -> "6.0.RC2")
   lazy val scalacheckVersion = defaultOrMapped("1.9", "2.8.0" -> "1.7", "2.8.1" -> "1.8", "2.8.2" -> "1.8")
-  lazy val specsVersion      = defaultOrMapped("1.6.8", "2.8.0" -> "1.6.5", "2.9.1" -> "1.6.9")
+  lazy val specsVersion      = defaultOrMapped("1.6.8", "2.8.0" -> "1.6.5", "2.9.1" -> "1.6.9", "2.9.1-1" -> "1.6.9")
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
-  lazy val commons_codec            = "commons-codec"              % "commons-codec"      % "1.4"
-  lazy val commons_fileupload       = "commons-fileupload"         % "commons-fileupload" % "1.2.2"
-  lazy val commons_httpclient       = "commons-httpclient"         % "commons-httpclient" % "3.1"
-  lazy val dispatch_http            = "net.databinder"            %% "dispatch-http"      % "0.7.8"
-  lazy val javamail                 = "javax.mail"                 % "mail"               % "1.4.4"
-  lazy val joda_time                = "joda-time"                  % "joda-time"          % "1.6.2"
-  lazy val htmlparser               = "nu.validator.htmlparser"    % "htmlparser"         % "1.2.1"
-  lazy val mongo_java_driver        = "org.mongodb"                % "mongo-java-driver"  % "2.6.5"
-  lazy val paranamer                = "com.thoughtworks.paranamer" % "paranamer"          % "2.4.1"
-  lazy val scalajpa                 = "org.scala-libs"             % "scalajpa"           % "1.4" cross CVMapping282
-  lazy val scalap: DynModuleID      = "org.scala-lang"             % "scalap"             % _
-  lazy val scalaz_core: DynModuleID = sv => scalazGroup(sv)        % "scalaz-core"        % scalazVersion(sv) cross CVMapping282
-  lazy val slf4j_api                = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
-  lazy val squeryl                  = "org.squeryl"                % "squeryl"            % "0.9.4" cross CVMapping282
+  lazy val commons_codec          = "commons-codec"              % "commons-codec"      % "1.4"
+  lazy val commons_fileupload     = "commons-fileupload"         % "commons-fileupload" % "1.2.2"
+  lazy val commons_httpclient     = "commons-httpclient"         % "commons-httpclient" % "3.1"
+  lazy val dispatch_http          = "net.databinder"             % "dispatch-http"      % "0.7.8"      cross CVMapping2911
+  lazy val javamail               = "javax.mail"                 % "mail"               % "1.4.4"
+  lazy val joda_time              = "joda-time"                  % "joda-time"          % "1.6.2"
+  lazy val htmlparser             = "nu.validator.htmlparser"    % "htmlparser"         % "1.2.1"
+  lazy val mongo_java_driver      = "org.mongodb"                % "mongo-java-driver"  % "2.6.5"
+  lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.4.1"
+  lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.4"        cross CVMappingAll
+  lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _
+  lazy val scalaz_core: ModuleMap = sv => scalazGroup(sv)        % "scalaz-core"        % scalazVersion(sv) cross CVMappingAll
+  lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
+  lazy val squeryl                = "org.squeryl"                % "squeryl"            % "0.9.4"      cross CVMappingAll
 
   // Aliases
   lazy val mongo_driver = mongo_java_driver
@@ -79,7 +81,7 @@ object Dependencies {
   lazy val jetty6      = "org.mortbay.jetty"           % "jetty"                    % "6.1.26"     % "test"
   lazy val jwebunit    = "net.sourceforge.jwebunit"    % "jwebunit-htmlunit-plugin" % "2.5"        % "test"
   lazy val mockito_all = "org.mockito"                 % "mockito-all"              % "1.8.5"      % "test"
-  lazy val scalacheck: DynModuleID = "org.scala-tools.testing" % "scalacheck" % scalacheckVersion(_) % "test" cross CVMapping282
-  lazy val specs: DynModuleID      = "org.scala-tools.testing" % "specs"      % specsVersion(_)      % "test" cross CVMapping282
+  lazy val scalacheck: ModuleMap = "org.scala-tools.testing" % "scalacheck" % scalacheckVersion(_) % "test" cross CVMappingAll
+  lazy val specs: ModuleMap      = "org.scala-tools.testing" % "specs"      % specsVersion(_)      % "test" cross CVMappingAll
 
 }
