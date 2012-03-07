@@ -32,3 +32,5 @@ pomExtra in ThisBuild              ~= (_ ++ <scm>
                                             </scm> ++ {Developers.toXml})
 
 credentials in ThisBuild <+= state map { s => Credentials(BuildPaths.getGlobalSettingsDirectory(s, BuildPaths.getGlobalBase(s)) / ".credentials") }
+
+initialize <<= (name, version) apply printLogo
