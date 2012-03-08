@@ -6,7 +6,7 @@ if test -f ~/.liftsh.config; then
 fi
 
 # Internal options, always specified
-INTERNAL_OPTS="-Dfile.encoding=UTF-8 -Xmx768m -noverify -XX:ReservedCodeCacheSize=96m -XX:+UseCompressedOops -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=512m"
+INTERNAL_OPTS="-Dfile.encoding=UTF-8 -Xmx768m -noverify -XX:ReservedCodeCacheSize=96m -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=512m"
 
 # Default options, if nothing is specified
 DEFAULT_OPTS=""
