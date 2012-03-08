@@ -1299,7 +1299,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * a default implementation is already appended.
    *
    */
-  @volatile var exceptionHandler = RulesSeq[ExceptionHandlerPF].append {
+  val exceptionHandler = RulesSeq[ExceptionHandlerPF].append {
     case (Props.RunModes.Development, r, e) =>
       logger.error("Exception being returned to browser when processing " + r.uri.toString + ": " + showException(e))
       XhtmlResponse((<html> <body>Exception occured while processing {r.uri}<pre>{showException(e)}</pre> </body> </html>), S.htmlProperties.docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.ieMode)

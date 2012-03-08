@@ -109,7 +109,7 @@ object BuildDef extends Build {
 
   lazy val db =
     persistenceProject("db")
-        .dependsOn(util)
+        .dependsOn(util, webkit)
         .settings(libraryDependencies += mockito_all)
 
   lazy val proto =
