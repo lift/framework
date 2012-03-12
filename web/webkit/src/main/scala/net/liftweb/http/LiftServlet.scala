@@ -294,6 +294,7 @@ class LiftServlet extends Loggable {
       case foc: LiftFlowOfControlException => throw foc
       case e: Exception if !e.getClass.getName.endsWith("RetryRequest") => {
         val bundle = (Props.mode, req, e)
+        S.assertExceptionThrown()
         NamedPF.applyBox(bundle, LiftRules.exceptionHandler.toList)
       }
     }
@@ -328,7 +329,6 @@ class LiftServlet extends Loggable {
           LiftSession.onBeginServicing.foreach(_(liftSession, req))
           val ret: (Boolean, Box[LiftResponse]) =
             try {
-              try {
                 // run the continuation in the new session
                 // if there is a continuation
                 continuation match {
@@ -353,21 +353,6 @@ class LiftServlet extends Loggable {
                       (true, Full(liftSession.checkRedirect(req.createNotFound(f))))
                   }
                 }
-              } catch {
-                case ContinueResponseException(cre) => throw cre
-
-                case ite: java.lang.reflect.InvocationTargetException if (ite.getCause.isInstanceOf[ResponseShortcutException]) =>
-                  (true, Full(liftSession.handleRedirect(ite.getCause.asInstanceOf[ResponseShortcutException], req)))
-
-                case rd: net.liftweb.http.ResponseShortcutException => (true, Full(liftSession.handleRedirect(rd, req)))
-
-                case e if (e.getClass.getName.endsWith("RetryRequest")) => throw e
-
-                case e: LiftFlowOfControlException => throw e
-
-                case e => (true, NamedPF.applyBox((Props.mode, req, e), LiftRules.exceptionHandler.toList))
-
-              }
 
             } finally {
               if (S.functionMap.size > 0) {
@@ -489,7 +474,7 @@ class LiftServlet extends Loggable {
         }
       } catch {
         case foc: LiftFlowOfControlException => throw foc
-        case e => NamedPF.applyBox((Props.mode, requestState, e), LiftRules.exceptionHandler.toList);
+        case e => S.assertExceptionThrown() ; NamedPF.applyBox((Props.mode, requestState, e), LiftRules.exceptionHandler.toList);
       }
       tryo {
         LiftSession.onEndServicing.foreach(_(liftSession, requestState, ret))

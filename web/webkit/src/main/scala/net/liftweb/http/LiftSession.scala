@@ -1145,7 +1145,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
       case e: LiftFlowOfControlException => throw e
 
-      case e => NamedPF.applyBox((Props.mode, request, e), LiftRules.exceptionHandler.toList);
+      case e => S.assertExceptionThrown() ; NamedPF.applyBox((Props.mode, request, e), LiftRules.exceptionHandler.toList);
 
     }
 
