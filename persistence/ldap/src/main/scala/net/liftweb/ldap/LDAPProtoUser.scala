@@ -114,7 +114,7 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
 
         Helpers.bind("user", loginXhtml,
                     "name" -> (JsCmds.FocusOnLoad(<input type="text" name="username"/>)),
-                    "password" -> (JsCmds.FocusOnLoad(<input type="password" name="password"/>)),
+                    "password" -> (<input type="password" name="password"/>),
                     "submit" -> (<input type="submit" value={S.??("log.in")}/>))
     }
 
