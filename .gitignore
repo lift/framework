@@ -7,6 +7,7 @@ syntax: glob
 *.off
 *.old
 .DS_Store
+.cache
 
 # logs
 derby.log

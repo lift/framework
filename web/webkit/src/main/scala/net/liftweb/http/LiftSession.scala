@@ -1000,7 +1000,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * @param path -- the ParsePath that led to this page
    * @param code -- the HTTP response code (usually 200)
    *
-   * @returns a Box of LiftResponse with all the proper page rewriting
+   * @return a Box of LiftResponse with all the proper page rewriting
    */
   def processTemplate(template: Box[NodeSeq], request: Req, path: ParsePath, code: Int): Box[LiftResponse] = {
     overrideResponseCode.doWith(Empty) {

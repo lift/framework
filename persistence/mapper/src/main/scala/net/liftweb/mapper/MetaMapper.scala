@@ -382,7 +382,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    * @param conn -- the SuperConnection to be used for calculating the query
    * @param by -- the varg of QueryParams
    *
-   * @returns a Tuple of the Query String, Start (offset), MaxRows (limit), and the list of all query parameters
+   * @return a Tuple of the Query String, Start (offset), MaxRows (limit), and the list of all query parameters
    * including and synthetic query parameters
    */
   def buildSelectString(fields: Seq[SelectableField], conn: SuperConnection, by: QueryParam[A]*):

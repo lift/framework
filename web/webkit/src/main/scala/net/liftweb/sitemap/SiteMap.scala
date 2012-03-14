@@ -134,7 +134,7 @@ sealed class SiteMapSingleton {
    * @param pf the partial function (pattern match) to test against the Menu, if it matches, apply it which causes menu mutation.
    * @param or the function to apply if none of the patterns match
    *
-   * @returns a function which will apply the changes to a SiteMap
+   * @return a function which will apply the changes to a SiteMap
    */
   def sitemapMutator(pf: PartialFunction[Menu, List[Menu]])(or: SiteMap => SiteMap): SiteMap => SiteMap = 
     (sm: SiteMap) => {
@@ -167,7 +167,7 @@ sealed class SiteMapSingleton {
    *
    * @param pf the partial function (pattern match) to test against the Menu, if it matches, apply it which causes menu mutation.
    *
-   * @returns a function which will apply the changes to a SiteMap
+   * @return a function which will apply the changes to a SiteMap
    */
   def simpleSitemapMutator(pf: PartialFunction[Menu, List[Menu]]) = sitemapMutator(pf)(s => s)
 

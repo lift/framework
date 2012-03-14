@@ -286,7 +286,7 @@ sealed abstract class Box[+A] extends Product {
    *
    * @param f the predicate used to test value.
    *
-   * @returns a Box
+   * @return a Box
    */
   def filterNot(f: A => Boolean): Box[A] = filter(a => !f(a))
 

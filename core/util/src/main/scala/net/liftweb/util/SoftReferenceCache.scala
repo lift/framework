@@ -146,7 +146,7 @@ class SoftReferenceCache[K, V](cacheSize: Int) {
   /**
    * Removes the cache entry mapped with this key
    *
-   * @returns the value removed
+   * @return the value removed
    */
   def remove(key: Any): Box[V] = {
     lock(writeLock) {

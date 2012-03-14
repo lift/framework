@@ -64,7 +64,7 @@ trait BasicTypesHelpers { self: StringHelpers with ControlHelpers =>
   class Boolean2(b: => Boolean) {
     /**
      * Ternary operator.
-     * @returns a BooleanSome containing the specified value
+     * @return a BooleanSome containing the specified value
      * if the decorated boolean is true, or a BooleanNone otherwise.
      */
     def ? [A](first: => A): BooleanOption[A] = {

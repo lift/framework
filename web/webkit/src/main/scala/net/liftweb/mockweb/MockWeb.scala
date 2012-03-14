@@ -25,7 +25,7 @@ import http.{LiftRules,LiftSession,Req,S}
 import util.ThreadGlobal
 import util.Helpers._
 import http.provider.servlet.HTTPRequestServlet
-import mocks.MockHttpServletRequest
+import net.liftweb.mocks.MockHttpServletRequest
 
 import scala.xml.{MetaData,Null}
 

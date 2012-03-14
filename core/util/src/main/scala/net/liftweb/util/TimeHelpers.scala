@@ -252,7 +252,7 @@ trait TimeHelpers { self: ControlHelpers =>
 
   /** This class adds a noTime method the Date class, in order to get at Date object starting at 00:00 */
   class DateExtension(date: Date) {
-    /** @returns a Date object starting at 00:00 from date */
+    /** @return a Date object starting at 00:00 from date */
     def noTime = {
       val calendar = Calendar.getInstance
       calendar.set(Calendar.HOUR_OF_DAY, 0)
