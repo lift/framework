@@ -19,17 +19,11 @@ libraryDependencies in ThisBuild <++= scalaVersion { sv => Seq(specs, scalacheck
 // Settings for Sonatype compliance
 pomIncludeRepository in ThisBuild  := { _ => false }
 
-publishTo in ThisBuild            <<= isSnapshot(if (_) Some(PublishRepo.Snapshot) else Some(PublishRepo.Staging))
+publishTo in ThisBuild            <<= isSnapshot(if (_) Some(Opts.resolver.sonatypeSnapshots) else Some(Opts.resolver.sonatypeStaging))
 
-// TODO: Enable after SBT 0.12.0-M2
-//scmInfo in ThisBuild               := Some(ScmInfo(url("https://github.com/lift/framework"), "scm:git:https://github.com/lift/framework.git"))
-//
-//pomExtra in ThisBuild              ~= (_ ++ {Developers.toXml})
+scmInfo in ThisBuild               := Some(ScmInfo(url("https://github.com/lift/framework"), "scm:git:https://github.com/lift/framework.git"))
 
-pomExtra in ThisBuild              ~= (_ ++ <scm>
-                                              <url>http://github.com/lift/framework</url>
-                                              <connection>scm:git:https://github.com/lift/framework.git</connection>
-                                            </scm> ++ {Developers.toXml})
+pomExtra in ThisBuild              ~= (_ ++ {Developers.toXml})
 
 credentials in ThisBuild <+= state map { s => Credentials(BuildPaths.getGlobalSettingsDirectory(s, BuildPaths.getGlobalBase(s)) / ".credentials") }
 
