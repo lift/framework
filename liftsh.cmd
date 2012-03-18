@@ -3,6 +3,12 @@
 @REM Internal options, always specified
 set INTERNAL_OPTS=-Dfile.encoding=UTF-8 -Xmx768m -noverify -XX:ReservedCodeCacheSize=96m -XX:+UseCompressedOops -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=512m
 
+@REM Add 64bit specific option
+java -version 2>&1 | find "64-Bit" >nul:
+if not errorlevel 1 (
+  set INTERNAL_OPTS=%INTERNAL_OPTS% -XX:+UseCompressedOops
+)
+
 @REM Default options, if nothing is specified
 set DEFAULT_OPTS=
 
