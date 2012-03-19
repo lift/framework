@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 WorldWide Conferencing, LLC
+ * Copyright 2007-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ import Helpers._
 
 
 /**
- *
+ * Enclose your snippet tags on your template with LazyLoad and the snippet will execute
+ * on a different thread, which avoids blocking the page render.
  */
 object LazyLoad extends DispatchSnippet {
   private object myFuncName extends TransientRequestVar(Helpers.nextFuncName)
@@ -41,6 +42,27 @@ object LazyLoad extends DispatchSnippet {
     case _ => render _
   }
 
+  /**
+   * Enclose your snippet like this:
+   *
+   * <pre name="code" class="xml">
+   *   &lt;div class="lift:LazyLoad">
+   *     &lt;div class="lift:MyLongRunningSnippet">&lt;/div>
+   *   &lt;/div>
+   * </pre>
+   *
+   * You can add the template attribute to the LazyLoad tag and instead of
+   * showing the spinning circle, it will render your template.
+   *
+   *
+   * <pre name="code" class="xml">
+   *   &lt;div class="lift:LazyLoad?template=&#39;my-nice-wait-message-template&#39;">
+   *     &lt;div class="lift:MyLongRunningSnippet">&lt;/div>
+   *   &lt;/div>
+   * </pre>
+   *
+   *
+   */
   def render(xhtml: NodeSeq): NodeSeq = {
     (for {
       session <- S.session ?~ ("FIXME: Invalid session")
