@@ -224,7 +224,7 @@ trait Mailer extends SimpleInjector {
       case Full(a) => jndiSession openOr Session.getInstance(buildProps, a)
       case _ => jndiSession openOr Session.getInstance(buildProps)
     }
-
+    val subj = MimeUtility.encodeText(subject.subject, "utf-8", "Q")
     val message = new MimeMessage(session)
     message.setFrom(from)
     message.setRecipients(Message.RecipientType.TO, info.flatMap {case x: To => Some[To](x) case _ => None})
@@ -232,7 +232,7 @@ trait Mailer extends SimpleInjector {
     message.setRecipients(Message.RecipientType.BCC, info.flatMap {case x: BCC => Some[BCC](x) case _ => None})
     // message.setReplyTo(filter[MailTypes, ReplyTo](info, {case x @ ReplyTo(_) => Some(x); case _ => None}))
     message.setReplyTo(info.flatMap {case x: ReplyTo => Some[ReplyTo](x) case _ => None})
-    message.setSubject(subject.subject)
+    message.setSubject(subj)
     info.foreach {
       case MessageHeader(name, value) => message.addHeader(name, value)
       case _ => 
