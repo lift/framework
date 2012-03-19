@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 WorldWide Conferencing, LLC
+ * Copyright 2009-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,10 @@ object SkipDocType extends DispatchSnippet {
     case _ => render _
   }
 
+  /**
+   * Useful if you need to omit the DocType from the returned html
+   * (calling the page from JavaScript, etc
+   */
   def render(kids: NodeSeq): NodeSeq = {
     S.skipDocType = true
     kids

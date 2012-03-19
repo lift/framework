@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 WorldWide Conferencing, LLC
+ * Copyright 2007-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,16 @@ object CSS extends DispatchSnippet {
     case "fancyType" => _ => fancyType
   }
 
+  /**
+   * Add
+   *
+   * <pre name="code" class="xml">
+   * &lt;style class="lift:CSS.blueprint"></style>
+   * </pre>
+   *
+   * to your template and Lift will replace it with the path to the blueprint css styles
+   * (screen and print media)
+   */
   def blueprint: NodeSeq = {
     <xml:group>
       <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath +
@@ -45,6 +55,17 @@ object CSS extends DispatchSnippet {
     """)
   }
 
+  /**
+   * Add
+   *
+   * <pre name="code" class="xml">
+   * &lt;style class="lift:CSS.fancyType"></style>
+   * </pre>
+   *
+   * to your template and Lift will replace it with the path to the blueprint fancy-type plugin
+   * css styles
+   * (screen media)
+   */
   def fancyType: NodeSeq = {
     <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath +
                                  "/blueprint/plugins/fancy-type/screen.css"}
