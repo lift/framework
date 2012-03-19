@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 WorldWide Conferencing, LLC
+ * Copyright 2009-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import scala.xml._
 import net.liftweb.http._
 import net.liftweb.common._
 
+/**
+ * Sets the DocType to html5
+ */
 object HTML5 extends DispatchSnippet {
 
   def dispatch : DispatchIt = {

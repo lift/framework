@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 WorldWide Conferencing, LLC
+ * Copyright 2009-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,14 @@ package snippet
 import scala.xml._
 import net.liftweb.http._
 
+/**
+ * Use this builtin snippet to either show or hide some html
+ * based on the user being logged in or not.
+ */
 object TestCond extends DispatchSnippet {
   def dispatch : DispatchIt = {
-    case "loggedin" |
-    "logged_in" |
-    "LoggedIn" | "loggedIn" => loggedIn _
-
-    case "loggedout" |
-    "logged_out" |
-    "LoggedOut" |
-    "loggedOut"
-    => loggedOut _
+    case "loggedin"  | "logged_in"  | "LoggedIn"  | "loggedIn"  => loggedIn _
+    case "loggedout" | "logged_out" | "LoggedOut" | "loggedOut" => loggedOut _
   }
 
   def loggedIn(xhtml: NodeSeq): NodeSeq =
