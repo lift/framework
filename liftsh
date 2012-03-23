@@ -9,7 +9,7 @@ fi
 INTERNAL_OPTS="-Dfile.encoding=UTF-8 -Xmx768m -noverify -XX:ReservedCodeCacheSize=96m -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=512m"
 
 # Add 64bit specific option
-exec java -version 2>&1 | grep -q "64-Bit" && INTERNAL_OPTS="${INTERNAL_OPTS} -XX:+UseCompressedOops"
+exec java -version 2>&1 | grep -q "64-Bit" && INTERNAL_OPTS="${INTERNAL_OPTS} -XX:+UseCompressedOops -XX:ReservedCodeCacheSize=128m"
 
 # Default options, if nothing is specified
 DEFAULT_OPTS=""
