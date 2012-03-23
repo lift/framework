@@ -27,4 +27,4 @@ pomExtra in ThisBuild              ~= (_ ++ {Developers.toXml})
 
 credentials in ThisBuild <+= state map { s => Credentials(BuildPaths.getGlobalSettingsDirectory(s, BuildPaths.getGlobalBase(s)) / ".credentials") }
 
-initialize <<= (name, version) apply printLogo
+initialize <<= (name, version, scalaVersion) apply printLogo
