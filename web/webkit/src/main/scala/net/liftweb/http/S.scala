@@ -218,13 +218,13 @@ object S extends S {
   }
 
   /**
-   * We create one of these dudes and put it 
+   * We create one of these dudes and put it
    */
   private[http] final case class PageStateHolder(owner: Box[String], session: LiftSession) extends AFuncHolder {
     private val loc = S.location
     private val snapshot:  Function1[Function0[Any], Any] = RequestVarHandler.generateSnapshotRestorer()
     override def sessionLife: Boolean = false
-    
+
     def apply(in: List[String]): Any = {
       error("You shouldn't really be calling apply on this dude...")
     }
@@ -365,7 +365,7 @@ trait S extends HasParams with Loggable {
    * We can now collect Elems to put at the end of the body
    */
   private object _tailTags extends TransientRequestVar(new ListBuffer[Elem])
-  
+
   private object p_queryLog extends TransientRequestVar(new ListBuffer[(String, Long)])
   private object p_notice extends TransientRequestVar(new ListBuffer[(NoticeType.Value, NodeSeq, Box[String])])
 
@@ -574,7 +574,7 @@ trait S extends HasParams with Loggable {
    * Get the current instance of HtmlProperties
    */
   def htmlProperties: HtmlProperties = {
-    session.map(_.requestHtmlProperties.is) openOr 
+    session.map(_.requestHtmlProperties.is) openOr
     LiftRules.htmlProperties.vend(
       S.request openOr Req.nil
     )
@@ -896,7 +896,7 @@ trait S extends HasParams with Loggable {
    */
   def loc(str: String, dflt: NodeSeq): NodeSeq = loc(str).openOr(dflt)
 
-  
+
   /**
    * Localize the incoming string based on a resource bundle for the current locale. The
    * localized string is converted to an XML element if necessary via the <code>LiftRules.localizeStringToXml</code>
@@ -1236,12 +1236,12 @@ for {
   def init[B](request: Req, session: LiftSession)(f: => B): B = {
     if (inS.value) f
     else {
-      if (request.stateless_?) 
+      if (request.stateless_?)
         session.doAsStateless(_init(request, session)(() => f))
       else _init(request, session)(() => f)
     }
   }
-  
+
   def statelessInit[B](request: Req)(f: => B): B = {
     session match {
       case Full(s) if s.stateful_? => {
@@ -1249,13 +1249,13 @@ for {
           "Attempt to initialize a stateless session within the context "+
           "of a stateful session")
       }
-      
+
       case Full(_) => f
 
       case _ => {
         val fakeSess = LiftRules.statelessSession.vend.apply(request)
         try {
-          _init(request, 
+          _init(request,
                 fakeSess)(() => f)
         } finally {
           // ActorPing.schedule(() => fakeSess.doShutDown(), 0 seconds)
@@ -1577,11 +1577,11 @@ for {
             session match {
               case Full(s) if s.stateful_? =>
                 LiftRules.earlyInStateful.toList.foreach(_(req))
-              
-              case Full(s) => 
+
+              case Full(s) =>
                 LiftRules.earlyInStateless.toList.foreach(_(req))
 
-              case _ => 
+              case _ =>
             }
             f
           }
@@ -1595,9 +1595,9 @@ for {
   private def doStatefulRewrite(old: Req): Req = {
     // Don't even try to rewrite Req.nil
     if (statefulRequest_? &&
-        !old.path.partPath.isEmpty && 
+        !old.path.partPath.isEmpty &&
         (old.request ne null))
-      Req(old, S.sessionRewriter.map(_.rewrite) ::: 
+      Req(old, S.sessionRewriter.map(_.rewrite) :::
           LiftRules.statefulRewrite.toList, LiftRules.statelessTest.toList,
       LiftRules.statelessReqTest.toList)
     else old
@@ -2035,7 +2035,7 @@ for {
   /**
    * Retrieves the attributes from the most recently executed
    * snippet element.
-   * 
+   *
    * For example, given the snippets:
    *
    * <pre name="code" class="xml">
@@ -2644,7 +2644,7 @@ for {
 
   @deprecated("Use AFuncHolder.listStrToAF")
   def toLFunc(in: List[String] => Any): AFuncHolder = LFuncHolder(in, Empty)
- 
+
   @deprecated("Use AFuncHolder.unitToAF")
   def toNFunc(in: () => Any): AFuncHolder = NFuncHolder(in, Empty)
 
@@ -2708,17 +2708,17 @@ for {
           case Full(ret) =>
             ret.fixSessionTime()
           ret
-          
+
           case _ =>
             val ret = LiftSession(httpRequest.session, req.contextPath)
           ret.fixSessionTime()
-          SessionMaster.addSession(ret, 
+          SessionMaster.addSession(ret,
                                    req,
-                                   httpRequest.userAgent, 
+                                   httpRequest.userAgent,
                                    SessionMaster.getIpFromReq(req))
           ret
         }
-        
+
         init(req, ses) {
           doRender(ses)
         }
@@ -2761,14 +2761,14 @@ for {
   /**
    * Returns all the HTTP parameters having 'n' name
    */
-  def params(n: String): List[String] = 
+  def params(n: String): List[String] =
     paramsForComet.get.get(n) getOrElse
     request.flatMap(_.params.get(n)).openOr(Nil)
 
   /**
    * Returns the HTTP parameter having 'n' name
    */
-  def param(n: String): Box[String] = 
+  def param(n: String): Box[String] =
     paramsForComet.get.get(n).flatMap(_.headOption) orElse
     request.flatMap(r => Box(r.param(n)))
 

@@ -19,7 +19,7 @@ package json
 
 import org.specs.Specification
 
-object FieldSerializerBugs extends Specification {  
+object FieldSerializerBugs extends Specification {
   import Serialization.{read, write => swrite}
 
   implicit val formats = DefaultFormats + FieldSerializer[AnyRef]()
@@ -29,7 +29,7 @@ object FieldSerializerBugs extends Specification {
     import java.util.concurrent.atomic.AtomicInteger
 
     val ser = swrite(new AtomicInteger(1))
-    val atomic = read[AtomicInteger](ser) 
+    val atomic = read[AtomicInteger](ser)
     atomic.get mustEqual 1
   }
   */
@@ -44,7 +44,7 @@ object FieldSerializerBugs extends Specification {
   }
 
   "FieldSerialization should work with Options" in {
-    implicit val formats = DefaultFormats + FieldSerializer[ClassWithOption]() 
+    implicit val formats = DefaultFormats + FieldSerializer[ClassWithOption]()
 
     val t = new ClassWithOption
     t.field = Some(5)
@@ -53,8 +53,8 @@ object FieldSerializerBugs extends Specification {
 
   case class WithSymbol(`a-b*c`: Int)
 
-  class ClassWithOption { 
-    var field: Option[Int] = None 
+  class ClassWithOption {
+    var field: Option[Int] = None
   }
 }
 

@@ -162,7 +162,7 @@ class PCDataXmlParser(val input: Source) extends ConstructingHandler with PCData
     val report = curInput.descr + ":" + line + ":" + col + ": " + msg
     System.err.println(report)
     try {
-      System.err.println(curInput.getLine(line))
+      System.err.println(curInput.getLines().toIndexedSeq(line))
     } catch {
       case e: Exception => // ignore
     }
@@ -205,21 +205,21 @@ object PCDataXmlParser {
         pos += 1
       }
     }
-    
+
     moveToLT()
 
     // scan past <? ... ?>
     if (pos + 1 < len && in.charAt(pos + 1) == '?') {
       pos += 1
       moveToLT()
-    }    
+    }
 
     // scan past <!DOCTYPE ....>
     if (pos + 1 < len && in.charAt(pos + 1) == '!') {
       pos += 1
       moveToLT()
     }
-    
+
     apply(Source.fromString(in.substring(pos)))
   }
 }

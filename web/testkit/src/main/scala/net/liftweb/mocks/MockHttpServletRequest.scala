@@ -56,7 +56,7 @@ import json.JsonAST._
  *
  * @param url The URL to extract from
  * @param contextPath The context path for this request. Defaults to "" per the Servlet API.
- * 
+ *
  */
 class MockHttpServletRequest(val url : String = null, var contextPath : String = "") extends HttpServletRequest {
   @deprecated("Use the \"attributes\" var instead")
@@ -64,7 +64,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
 
   @deprecated("Use the \"attributes\" var instead")
   def attr_= (attrs : Map[String,Object]) = attributes = attrs
-  
+
   var attributes: Map[String, Object] = Map()
 
   var authType: String = null
@@ -85,7 +85,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   /**
    * Sets the body to the given string. The content
    * type is set to "text/plain".
-   * 
+   *
    * Note that the String will be converted to bytes
    * based on the current setting of charEncoding.
    */
@@ -105,7 +105,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   /**
    * Sets the body to the given elements. Also sets
    * the contentType to "text/xml"
-   * 
+   *
    * Note that the elements will be converted to bytes
    * based on the current setting of charEncoding.
    */
@@ -113,7 +113,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
 
   /**
    * Sets the body to the given elements and content type.
-   * 
+   *
    * Note that the elements will be converted to bytes
    * based on the current setting of charEncoding.
    */
@@ -210,7 +210,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
     if (q != null && q.length > 0) {
       val newParams = ListBuffer[(String,String)]()
 
-      q.split('&').foreach { 
+      q.split('&').foreach {
         pair => pair.split('=') match {
           case Array(key,value) => {
             // Append to the current key's value
@@ -219,7 +219,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
           case invalid => throw new IllegalArgumentException("Invalid query string: \"" + q + "\"")
         }
       }
-      
+
       parameters = newParams.toList
       method = "GET"
     }
@@ -249,7 +249,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   var user : String = null
 
   var userRoles : Set[String] = Set()
-  
+
   var userPrincipal : Principal = null
 
   var scheme = "http"
@@ -339,7 +339,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    *   <li>The userinfo field isn't processed. If you want to mock BASIC authentication,
    *       use the addBasicAuth method</li>
    * </ol>
-   * 
+   *
    * @param url The URL to extract from
    * @param contextPath The servlet context of the request. Defaults to ""
    */
@@ -367,11 +367,11 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
 
     queryString = url.getQuery
 
-    
+
   }
 
   /** Compute the path portion after the contextPath */
-  def computeRealPath (path : String) = { 
+  def computeRealPath (path : String) = {
     if (! path.startsWith(contextPath)) {
       throw new IllegalArgumentException("Path \"%s\" doesn't begin with context path \"%s\"!".format(path, contextPath))
     }
@@ -390,9 +390,9 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
 
   // ServletRequest methods
 
-  def getAttribute(key: String): Object = attr.get(key).getOrElse(null)
+  def getAttribute(key: String): Object = attributes.get(key).getOrElse(null)
 
-  def getAttributeNames(): JEnum[Object] = attr.keys.iterator
+  def getAttributeNames(): JEnum[Object] = attributes.keys.iterator
 
   def getCharacterEncoding(): String = charEncoding
 
@@ -409,12 +409,12 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   def getLocale(): Locale = locales.headOption.getOrElse(Locale.getDefault)
 
   def getLocales(): JEnum[Object] = locales.iterator
-  
+
   def getLocalName(): String = localName
 
   def getLocalPort(): Int = localPort
-  
-  def getParameter(key: String): String = 
+
+  def getParameter(key: String): String =
     parameters.find(_._1 == key).map(_._2) getOrElse null
 
   def getParameterMap(): java.util.Map[Object, Object] = {
@@ -428,17 +428,17 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
     asMap(newMap.map{case (k,v) => (k,v.toArray)}.asInstanceOf[Map[Object,Object]])
   }
 
-  def getParameterNames(): JEnum[Object] = 
+  def getParameterNames(): JEnum[Object] =
     parameters.map(_._1).distinct.iterator
 
-  def getParameterValues(key: String): Array[String] = 
+  def getParameterValues(key: String): Array[String] =
     parameters.filter(_._1 == key).map(_._2).toArray
 
   def getProtocol(): String = protocol
-  
-  def getReader(): BufferedReader = 
+
+  def getReader(): BufferedReader =
     new BufferedReader(new InputStreamReader(new ByteArrayInputStream(body), charEncoding))
-  
+
   def getRealPath(s: String): String = s
 
   def getRemoteAddr(): String = remoteAddr
@@ -457,9 +457,9 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
 
   def isSecure = secure
 
-  def removeAttribute(key: String): Unit = attr -= key
+  def removeAttribute(key: String): Unit = attributes -= key
 
-  def setAttribute(key: String, value: Object): Unit = attr += (key -> value)
+  def setAttribute(key: String, value: Object): Unit = attributes += (key -> value)
 
   def setCharacterEncoding(enc: String): Unit = charEncoding = enc
 
@@ -477,7 +477,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
         Empty
       }
     }
-    
+
     Helpers.tryo(handler,{
       // Have to use internetDateFormatter directly since parseInternetDate returns the epoch date on failure
       Box.!!(getHeader(h)).map(Helpers.internetDateFormatter.parse(_).getTime)
@@ -509,14 +509,14 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   def getRemoteUser(): String = user
 
   def getRequestedSessionId(): String = null
-  
+
   def getRequestURI(): String = contextPath + path
 
   def getRequestURL(): StringBuffer = {
     val buffer = new StringBuffer(scheme + "://" + localName)
-    
+
     if (localPort != 80) buffer.append(":" + localPort)
-    
+
     if (contextPath != "") buffer.append(contextPath)
 
     buffer.append(path)

@@ -275,7 +275,7 @@ class CustomSerializer[A: Manifest](
   val Class = implicitly[Manifest[A]].erasure
 
   def deserialize(implicit format: Formats) = {
-    case (TypeInfo(Class, _), json) => 
+    case (TypeInfo(Class, _), json) =>
       if (ser(format)._1.isDefinedAt(json)) ser(format)._1(json)
       else throw new MappingException("Can't convert " + json + " to " + Class)
   }

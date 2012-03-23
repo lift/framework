@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.liftweb 
-package http 
-package js 
+package net.liftweb
+package http
+package js
 
 import scala.xml.{NodeSeq, Group, Unparsed, Elem}
 import net.liftweb.util.Helpers._
@@ -87,12 +87,12 @@ trait JsObj extends JsExp {
     other match {
       case jsObj: JsObj => {
         import scala.annotation.tailrec
-        
+
         @tailrec def test(me: Map[String, JsExp], them: List[(String, JsExp)]): Boolean = {
           them match {
             case Nil => me.isEmpty
             case _ if me.isEmpty => false
-            case (k, v) :: xs => 
+            case (k, v) :: xs =>
               me.get(k) match {
                 case None => false
                 case Some(mv) if mv != v => false
@@ -100,10 +100,10 @@ trait JsObj extends JsExp {
               }
           }
         }
-        
+
         test(Map(props :_*), jsObj.props)
       }
-      
+
       case x => super.equals(x)
     }
   }
@@ -185,12 +185,12 @@ trait JsExp extends HtmlFixer with ToJsCmd {
 
 
   def ~>(right: Box[JsMember]): JsExp = right.dmap(this)(r => ~>(r))
-  
+
   /**
    * This exists for backward compatibility reasons for JQueryLeft and JQueryRight
    * which are now deprecated. Use ~> whenever possible as this will be removed soon.
    */
-  @deprecated
+  @deprecated("Use `~>` instead")
   def >>(right: JsMember): JsExp = ~>(right)
 
 
@@ -228,7 +228,7 @@ object JE {
     def apply(d: Double): Num = new Num(d)
     def apply(f: Float): Num = new Num(f)
   }
-  
+
   case class Num(n: Number) extends JsExp {
     def toJsCmd = n.toString
   }
@@ -558,7 +558,7 @@ trait HtmlFixer {
   @deprecated("Use fixHtmlAndJs or fixHtmlFunc")
   protected def fixHtml(uid: String, content: NodeSeq): String = {
     val w = new java.io.StringWriter
-    
+
     S.htmlProperties.
     htmlWriter(Group(S.session.
                      map(s =>
@@ -576,7 +576,7 @@ trait HtmlFixer {
    * then evaluations to Expression.  For use when converting
    * a JsExp that contains HTML.
    */
-  def fixHtmlFunc(uid: String, content: NodeSeq)(f: String => String) = 
+  def fixHtmlFunc(uid: String, content: NodeSeq)(f: String => String) =
     fixHtmlAndJs(uid, content) match {
       case (str, Nil) => f(str)
       case (str, cmds) => "((function() {"+cmds.reduceLeft{_ & _}.toJsCmd+" return "+f(str)+";})())"
@@ -589,7 +589,7 @@ trait HtmlFixer {
    * For use when converting
    * a JsCmd that contains HTML.
    */
-  def fixHtmlCmdFunc(uid: String, content: NodeSeq)(f: String => String) = 
+  def fixHtmlCmdFunc(uid: String, content: NodeSeq)(f: String => String) =
     fixHtmlAndJs(uid, content) match {
       case (str, Nil) => f(str)
       case (str, cmds) => f(str)+"; "+cmds.reduceLeft(_ & _).toJsCmd
@@ -604,7 +604,7 @@ trait HtmlFixer {
     import Helpers._
 
     val w = new java.io.StringWriter
-    
+
     val xhtml = S.session.
     map(s =>
       s.fixHtml(s.processSurroundAndInclude("JS SetHTML id: "
@@ -614,7 +614,7 @@ trait HtmlFixer {
 
     import scala.collection.mutable.ListBuffer
     val lb = new ListBuffer[JsCmd]
-    
+
     val revised = ("script" #> ((ns: NodeSeq) => {
       ns match {
         case FindScript(e) => {
@@ -726,7 +726,7 @@ object JsCmds {
 
   /**
    * Sets the focus on the element denominated by the id
-   */ 
+   */
   case class Focus(id: String) extends JsCmd {
     def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").focus();};"
   }
@@ -781,7 +781,7 @@ object JsCmds {
 
   /**
    * Assigns the value of 'right' to the members of the element
-   * having this 'id', chained by 'then' sequences 
+   * having this 'id', chained by 'then' sequences
    */
   case class SetElemById(id: String, right: JsExp, then: String*) extends JsCmd {
     def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ")" + (
@@ -854,7 +854,7 @@ object JsCmds {
      */
     def apply(where: String, func: () => Unit): RedirectTo =
     S.session match {
-      case Full(liftSession) => 
+      case Full(liftSession) =>
         new RedirectTo(liftSession.attachRedirectFunc(where, Full(func)))
       case _ => new RedirectTo(where)
     }

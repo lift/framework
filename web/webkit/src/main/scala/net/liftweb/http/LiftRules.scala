@@ -457,8 +457,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Set the doc type used.  Use the HtmlProperties
-   *
-   * @deprecated
    */
   @deprecated("Use the HtmlProperties")
   val docType: FactoryMaker[Req => Box[String]] = new FactoryMaker( (r: Req) => r  match {
