@@ -39,7 +39,7 @@ object BuildDef extends Build {
   lazy val common =
     coreProject("common")
       .settings(description := "Common Libraties and Utilities",
-                libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, commons_codec))
+                libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12))
 
   lazy val actor =
     coreProject("actor")
