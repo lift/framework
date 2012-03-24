@@ -523,9 +523,8 @@ trait SHtml {
    * @param attrs - the anchor node attributes
    */
   def a(func: () => JsCmd, body: NodeSeq, attrs: ElemAttr*): Elem = {
-    val key = formFuncName
-    addFunctionMap(key, ((a: List[String]) => func()))
-    attrs.foldLeft(<lift:a key={key}>{body}</lift:a>)(_ % _)
+    attrs.foldLeft(fmapFunc((func))(name =>
+      <a href="javascript://" onclick={makeAjaxCall(Str(name + "=true")).toJsCmd + "; return false;"}>{body}</a>))(_ % _)
   }
 
   /**

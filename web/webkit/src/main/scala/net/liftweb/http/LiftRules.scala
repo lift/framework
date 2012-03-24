@@ -1685,7 +1685,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
       Map("CSS" -> CSS, "Msgs" -> Msgs, "Msg" -> Msg,
         "Menu" -> Menu, "css" -> CSS, "msgs" -> Msgs, "msg" -> Msg,
         "menu" -> Menu,
-        "a" -> A, "children" -> Children,
+        "children" -> Children,
         "comet" -> Comet, "form" -> Form, "ignore" -> Ignore, "loc" -> Loc,
         "surround" -> Surround,
         "test_cond" -> TestCond,
