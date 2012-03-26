@@ -472,7 +472,8 @@ trait SHtml {
    *              () => { println("submitted"); Noop })
    * </pre>
    */
-  def ajaxEditable (displayContents : => NodeSeq, editForm : => NodeSeq, onSubmit : () => JsCmd) : NodeSeq = {
+  def ajaxEditable (displayContents : => NodeSeq, editForm : => NodeSeq, onSubmit : () => JsCmd, 
+                      loadingContents: => NodeSeq = Text("...loading...")) : NodeSeq = {
     import net.liftweb.http.js
     import js.{jquery,JsCmd,JsCmds,JE}
     import jquery.JqJsCmds
@@ -486,23 +487,26 @@ trait SHtml {
 
     def swapJsCmd (show : String, hide : String) : JsCmd = Show(show) & Hide(hide)
 
-    def setAndSwap (show : String, showContents : => NodeSeq, hide : String) : JsCmd =
-      (SHtml.ajaxCall(Str("ignore"), {ignore : String => SetHtml(show, showContents)})._2.cmd & swapJsCmd(show,hide))
+    def setAndSwap (show : String, showContents : => NodeSeq, hide : String,
+                    hideContents: => NodeSeq = loadingContents) : JsCmd =
+      (SHtml.ajaxCall(Str("ignore"), {ignore : String => SetHtml(show, showContents)})._2.cmd & 
+        SHtml.ajaxCall(Str("ignore"), {ignore : String => SetHtml(hide, hideContents)})._2.cmd ) &
+        swapJsCmd(show,hide)
 
     def displayMarkup : NodeSeq =
       displayContents ++ Text(" ") ++
-      <input value={S.??("edit")} type="button" onclick={setAndSwap(editName, editMarkup, dispName).toJsCmd + " return false;"} />
+          <input value={S.??("edit")} type="button" onclick={setAndSwap(editName, editMarkup, dispName).toJsCmd + " return false;"} />
 
     def editMarkup : NodeSeq = {
       val formData : NodeSeq =
         editForm ++
-        <input type="submit" value={S.??("ok")} /> ++
-        hidden(onSubmit) ++
-        <input type="button" onclick={swapJsCmd(dispName,editName).toJsCmd + " return false;"} value={S.??("cancel")} />
-
+            <input type="submit" value={S.??("ok")} /> ++
+          hidden(onSubmit) ++
+            <input type="button" onclick={swapJsCmd(dispName,editName).toJsCmd + " return false;"} value={S.??("cancel")} />
+      
       ajaxForm(formData,
-               Noop,
-               setAndSwap(dispName, displayMarkup, editName))
+        Noop,
+        setAndSwap(dispName, displayMarkup, editName))
     }
 
     <div>
@@ -510,7 +514,7 @@ trait SHtml {
         {displayMarkup}
       </div>
       <div id={editName} style="display: none;">
-        {editMarkup}
+        {loadingContents}
       </div>
     </div>
   }
