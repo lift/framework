@@ -472,7 +472,7 @@ trait SHtml {
    *              () => { println("submitted"); Noop })
    * </pre>
    */
-  def myAjaxEditable (displayContents : => NodeSeq, editForm : => NodeSeq, onSubmit : () => JsCmd, 
+  def ajaxEditable (displayContents : => NodeSeq, editForm : => NodeSeq, onSubmit : () => JsCmd, 
                       loadingContents: => NodeSeq = Text("...loading...")) : NodeSeq = {
     import net.liftweb.http.js
     import js.{jquery,JsCmd,JsCmds,JE}
