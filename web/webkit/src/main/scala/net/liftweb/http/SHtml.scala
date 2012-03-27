@@ -472,7 +472,7 @@ trait SHtml {
    *              () => { println("submitted"); Noop })
    * </pre>
    */
-  def ajaxEditable (displayContents : => NodeSeq, editForm : => NodeSeq, onSubmit : () => JsCmd, 
+  def myAjaxEditable (displayContents : => NodeSeq, editForm : => NodeSeq, onSubmit : () => JsCmd, 
                       loadingContents: => NodeSeq = Text("...loading...")) : NodeSeq = {
     import net.liftweb.http.js
     import js.{jquery,JsCmd,JsCmds,JE}
@@ -488,25 +488,32 @@ trait SHtml {
     def swapJsCmd (show : String, hide : String) : JsCmd = Show(show) & Hide(hide)
 
     def setAndSwap (show : String, showContents : => NodeSeq, hide : String,
-                    hideContents: => NodeSeq = loadingContents) : JsCmd =
-      (SHtml.ajaxCall(Str("ignore"), {ignore : String => SetHtml(show, showContents)})._2.cmd & 
-        SHtml.ajaxCall(Str("ignore"), {ignore : String => SetHtml(hide, hideContents)})._2.cmd ) &
+                    showLoadingContents: => Box[NodeSeq] = Empty) : JsCmd = {
+      (replacementCmd (show, showContents) &
+        (showLoadingContents.map(SetHtml (show, _) ) openOr Noop ) )  &
         swapJsCmd(show,hide)
+    }
+    
+    def replacementCmd(where:String, what: => NodeSeq) = {
+      SHtml.ajaxCall(Str("ignore"), {ignore : String => SetHtml(where, what)})._2.cmd
+    }
 
     def displayMarkup : NodeSeq =
       displayContents ++ Text(" ") ++
-          <input value={S.??("edit")} type="button" onclick={setAndSwap(editName, editMarkup, dispName).toJsCmd + " return false;"} />
+          <input value={S.??("edit")} type="button" onclick={
+            setAndSwap(editName, editMarkup, dispName, Full(loadingContents)).toJsCmd + " return false;"} />
 
     def editMarkup : NodeSeq = {
       val formData : NodeSeq =
         editForm ++
             <input type="submit" value={S.??("ok")} /> ++
           hidden(onSubmit) ++
-            <input type="button" onclick={swapJsCmd(dispName,editName).toJsCmd + " return false;"} value={S.??("cancel")} />
-      
+            <input type="button" onclick={
+              swapJsCmd(dispName,editName).toJsCmd + " return false;"} value={S.??("cancel")} />
+
       ajaxForm(formData,
         Noop,
-        setAndSwap(dispName, displayMarkup, editName))
+        setAndSwap(dispName, displayMarkup, editName, Full(loadingContents)))
     }
 
     <div>
@@ -514,7 +521,7 @@ trait SHtml {
         {displayMarkup}
       </div>
       <div id={editName} style="display: none;">
-        {loadingContents}
+        {Text("This site requries javascript")}
       </div>
     </div>
   }
