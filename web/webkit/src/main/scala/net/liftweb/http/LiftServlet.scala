@@ -329,6 +329,7 @@ class LiftServlet extends Loggable {
           LiftSession.onBeginServicing.foreach(_(liftSession, req))
           val ret: (Boolean, Box[LiftResponse]) =
             try {
+              try {
                 // run the continuation in the new session
                 // if there is a continuation
                 continuation match {
@@ -353,7 +354,12 @@ class LiftServlet extends Loggable {
                       (true, Full(liftSession.checkRedirect(req.createNotFound(f))))
                   }
                 }
+              } catch {
+                case ite: java.lang.reflect.InvocationTargetException if (ite.getCause.isInstanceOf[ResponseShortcutException]) =>
+                  (true, Full(liftSession.handleRedirect(ite.getCause.asInstanceOf[ResponseShortcutException], req)))
 
+                case rd: net.liftweb.http.ResponseShortcutException => (true, Full(liftSession.handleRedirect(rd, req)))
+              }
             } finally {
               if (S.functionMap.size > 0) {
                 liftSession.updateFunctionMap(S.functionMap, S.renderVersion, millis)
