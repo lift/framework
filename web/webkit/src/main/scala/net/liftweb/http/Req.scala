@@ -855,7 +855,7 @@ class Req(val path: ParsePath,
   def ajax_? =
     request.headers.toList.exists { header =>
       (header.name equalsIgnoreCase "x-requested-with") &&
-      (header.value equalsIgnoreCase "xmlhttprequest")
+      (header.values.exists(_ equalsIgnoreCase "xmlhttprequest"))
     }
 
   /**
