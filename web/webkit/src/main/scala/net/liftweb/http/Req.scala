@@ -847,6 +847,18 @@ class Req(val path: ParsePath,
   }
 
   /**
+   * Returns true if the X-Requested-With header is set to XMLHttpRequest.
+   *
+   * Most ajax frameworks, including jQuery and Prototype, set this header
+   * when doing any ajax request.
+   */
+  def ajax_? =
+    request.headers.toList.exists { header =>
+      (header.name equalsIgnoreCase "x-requested-with") &&
+      (header.values.exists(_ equalsIgnoreCase "xmlhttprequest"))
+    }
+
+  /**
    * Make the servlet session go away
    */
   def destroyServletSession() {
