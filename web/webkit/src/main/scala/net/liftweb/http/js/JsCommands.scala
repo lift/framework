@@ -19,11 +19,9 @@ package js
 
 import scala.xml.{NodeSeq, Group, Unparsed, Elem}
 import net.liftweb.util.Helpers._
-import net.liftweb.util.Helpers
-import net.liftweb.util.TimeHelpers
 import net.liftweb.common._
 import net.liftweb.util._
-import scala.xml.{Node, SpecialNode, Text}
+import scala.xml.Node
 
 object JsCommands {
   def create = new JsCommands(Nil)
