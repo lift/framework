@@ -19,8 +19,7 @@ package http
 package js
 
 import net.liftweb.common.{Box, Full, Empty}
-import net.liftweb.http.NoticeType
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.NodeSeq
 import net.liftweb.util.Helpers._
 
 /**
@@ -39,7 +38,7 @@ trait JSArtifacts {
   def hide(id: String): JsExp
 
   /**
-   * SHows the element denominated by this id
+   * Shows the element denominated by this id
    */
   def show(id: String): JsExp
 
@@ -65,7 +64,7 @@ trait JSArtifacts {
   def setHtml(id: String, content: NodeSeq): JsCmd
 
   /**
-   * Sets the JavScript that willbe executed when document is ready
+   * Sets the JavScript that will be executed when document is ready
    * for processing
    */
   def onLoad(cmd: JsCmd): JsCmd

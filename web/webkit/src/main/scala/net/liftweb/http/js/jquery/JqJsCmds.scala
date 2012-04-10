@@ -18,7 +18,7 @@ package http
 package js 
 package jquery 
 
-import scala.xml.{NodeSeq, Group, Elem, Node, SpecialNode}
+import scala.xml.NodeSeq
 import net.liftweb.util.Helpers._
 import net.liftweb.util.Helpers
 import net.liftweb.util.TimeHelpers
@@ -159,10 +159,16 @@ object JqJE {
     def toJsCmd = "each(function(i) {this.scrollTop=this.scrollHeight;})"
   }
 
+  /**
+   * Bind an event handler to the "click" JavaScript event, or trigger that event on an element.
+   */
   case class JqClick(exp: JsExp) extends JsExp with JsMember with JQueryLeft with JQueryRight {
     def toJsCmd = "click(" + exp.toJsCmd + ")"
   }
 
+  /**
+   * Get the value of the first attribute specified by key
+   */
   case class JqGetAttr(key: String) extends JsExp with JsMember with JQueryRight with JQueryLeft {
     def toJsCmd = "attr(" + key.encJs + ")"
   }
@@ -178,6 +184,10 @@ object JqJE {
     override def toJsCmd = "jQuery(document)"
   }
 
+  /**
+   * Execute a JsCmd when the Char is pressed. Uses jQuery keypress
+   * @param what a tuple of (Char, JsCmd)
+   */
   case class JqKeypress(what: (Char, JsCmd)*) extends JsExp with JsMember with JQueryRight {
     override def toJsCmd = "keypress(function(e) {" +
             what.map {
@@ -194,6 +204,11 @@ object JqJE {
     override def toJsCmd = "jQuery('#'+" + id.toJsCmd + ")"
   }
 
+  /**
+   * Set the value of an attribute key, the value "value"
+   * @param key the attribute to set its value
+   * @param value the value :)
+   */
   case class JqAttr(key: String, value: JsExp) extends JsExp with JsMember with JQueryRight with JQueryLeft {
     def toJsCmd = "attr(" + key.encJs + ", " + value.toJsCmd + ")"
   }
@@ -238,6 +253,9 @@ object JqJE {
     "prependTo(" + fixHtmlFunc("inline", content){str => str} + ")"
   }
 
+  /**
+   * Set the css value of an element
+   */
   case class JqCss (name: JsExp, value: JsExp) extends JsExp with JsMember with JQueryRight with JQueryLeft {
     override def toJsCmd = "css(" + name.toJsCmd + "," + value.toJsCmd + ")"
   }
@@ -251,6 +269,9 @@ object JqJE {
     "empty().after(" + fixHtmlFunc("inline", content){str => str} + ")"
   }
 
+  /**
+   * Replace the html node with content
+   */
   case class JqReplace(content: NodeSeq) extends JsExp with JsMember {
     override val toJsCmd = fixHtmlCmdFunc("inline", content){"replaceWith(" + _ + ")"}
   }
@@ -266,10 +287,16 @@ object JqJE {
   }
 
   object JqText {
+    /**
+     * Get the combined text contents of each element in the set of matched elements, including their descendants.
+     */
     def apply(): JsExp with JsMember with JQueryRight = new JsExp with JsMember with JQueryRight {
       def toJsCmd = "text()"
     }
 
+    /**
+     * Sets the content of an element to "content", html tags are escaped.
+     */
     def apply(content: String): JsExp with JsMember with JQueryRight with JQueryLeft = new JsExp with JsMember with JQueryRight with JQueryLeft {
       def toJsCmd = "text(" + content.encJs + ")"
     }
@@ -318,6 +345,10 @@ object JqJE {
 object JqJsCmds {
   implicit def jsExpToJsCmd(in: JsExp) = in.cmd
 
+  /**
+   * Sets the JavScript that will be executed when document is ready
+   * for processing
+   */
   case class JqOnLoad(cmd: JsCmd) extends JsCmd {
     def toJsCmd = "jQuery(document).ready(function() {" + cmd.toJsCmd + "});"
   }
@@ -362,10 +393,16 @@ object JqJsCmds {
       JqJE.JqId(JE.Str(uid)) ~> JqJE.JqPrependTo(content)
   }
 
+  /**
+   * Replaces the content of the node with the provided id with the markup given by content
+   */
   case class JqReplace(uid: String, content: NodeSeq) extends JsCmd {
     val toJsCmd = (JqJE.JqId(JE.Str(uid)) ~> JqJE.JqReplace(content)).cmd.toJsCmd
   }
 
+  /**
+   * Sets the inner HTML of the element denominated by the id
+   */
   case class JqSetHtml(uid: String, content: NodeSeq) extends JsCmd {
     /**
      * Eagerly evaluate
@@ -373,26 +410,67 @@ object JqJsCmds {
     val toJsCmd = (JqJE.JqId(JE.Str(uid)) ~> JqJE.JqHtml(content)).cmd.toJsCmd
   }
 
+  /**
+   * Show an element identified by uid.
+   * There are two apply methods, one takes just the id, the other takes the id and timespan
+   * that represents how long the animation will last
+   */
   object Show {
+    /**
+     * Show an element based on the ID uid
+     */
     def apply(uid: String) = new Show(uid, Empty)
 
+    /**
+     *
+     * Show an element identified by uid
+     *
+     * @param uid the element id
+     * @param time the duration of the effect.
+     */
     def apply(uid: String, time: TimeSpan) = new Show(uid, Full(time))
   }
 
+  /**
+   * Show an element identified by uid
+   *
+   * @param uid the element id
+   * @param time the duration of the effect.
+   */
   class Show(val uid: String, val time: Box[TimeSpan]) extends JsCmd with HasTime {
     def toJsCmd = "try{jQuery(" + ("#" + uid).encJs + ").show(" + timeStr + ");} catch (e) {}"
   }
 
+  /**
+   * Hide an element identified by uid
+   */
   object Hide {
+    /**
+     * Hide an element identified by uid
+     */
     def apply(uid: String) = new Hide(uid, Empty)
 
+    /**
+     * Hide an element identified by uid and the animation will last @time
+     */
     def apply(uid: String, time: TimeSpan) = new Hide(uid, Full(time))
   }
 
+  /**
+   * Hide an element identified by uid and the animation will last @time
+   */
   class Hide(val uid: String, val time: Box[TimeSpan]) extends JsCmd with HasTime {
     def toJsCmd = "try{jQuery(" + ("#" + uid).encJs + ").hide(" + timeStr + ");} catch (e) {}"
   }
 
+  /**
+   * Show a message @msg in the id @where for @duration milliseconds and fade out in @fadeout milliseconds
+   *
+   * @param where the id of where to show the message
+   * @param msg the message as a NodeSeq
+   * @param duration show the msessage for @duration in milliseconds or "slow", "fast"
+   * @param fadeTime fadeout in @fadeout milliseconds or "slow", "fast"
+   */
   case class DisplayMessage(where: String, msg: NodeSeq, duration: TimeSpan, fadeTime: TimeSpan) extends JsCmd {
     def toJsCmd = (Show(where) & JqSetHtml(where, msg) & After(duration, Hide(where, fadeTime))).toJsCmd
   }
@@ -407,6 +485,10 @@ object JqJsCmds {
     def apply(id: String) = new FadeOut(id, JsRules.prefadeDuration, JsRules.fadeTime)
   }
 
+  /**
+   * Fades out the element having the provided id, by waiting
+   * for the given duration and fades out during fadeTime
+   */
   case class FadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) extends JsCmd {
     def toJsCmd = (After(duration, JqJE.JqId(id) ~> (new JsRaw("fadeOut(" + fadeTime.millis + ")") with JsMember))).toJsCmd
   }
@@ -421,16 +503,42 @@ object JqJsCmds {
     def apply(id: String) = new FadeIn(id, JsRules.prefadeDuration, JsRules.fadeTime)
   }
 
+  /**
+   * Fade in an element with @id for @duration in milliseconds or "slow", "fast"
+   * and use @fadeTime
+   *
+   * @param id
+   * @param duration
+   * @param fadeTime
+   */
   case class FadeIn(id: String, duration: TimeSpan, fadeTime: TimeSpan) extends JsCmd {
     def toJsCmd = (After(duration, JqJE.JqId(id) ~> (new JsRaw("fadeIn(" + fadeTime.millis + ")") with JsMember))).toJsCmd
   }
 
+  /**
+   * Companion object for ModelDialog that provides two alternative factories
+   */
   object ModalDialog {
+
+    /**
+     * Requires the jQuery blockUI plugin
+     *
+     * @param html the html for the ModalDialog
+     */
     def apply(html: NodeSeq) = new ModalDialog(html, Empty)
 
+    /**
+     * Requires the jQuery blockUI plugin
+     *
+     * @param html the html for the ModalDialog
+     * @param css the css to apply to the dialog
+     */
     def apply(html: NodeSeq, css: JsObj) = new ModalDialog(html, Full(css))
   }
 
+  /**
+   * Requires the jQuery blockUI plugin
+   */
   class ModalDialog(html: NodeSeq, css: Box[JsObj]) extends JsCmd {
     /*
     private def contentAsJsStr = {
@@ -451,8 +559,10 @@ object JqJsCmds {
       "jQuery.blockUI({ message: " + str +
       (css.map(",  css: " + _.toJsCmd + " ").openOr("")) + "});"}
   }
- 
 
+  /**
+   * Remove the jQuery.Block dialog
+   */
   case object Unblock extends JsCmd {
     def toJsCmd = "jQuery.unblockUI();"
   }
