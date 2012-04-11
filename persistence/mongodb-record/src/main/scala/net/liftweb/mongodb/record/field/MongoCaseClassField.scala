@@ -30,9 +30,9 @@ import reflect.Manifest
 import net.liftweb.http.js.JsExp
 
 
-class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerType)( implicit mf: Manifest[CaseType]) extends Field[CaseType, OwnerType] with MandatoryTypedField[CaseType] with MongoFieldFlavor[CaseType] {
+class MongoCaseClassField[OwnerType <: BsonRecord[OwnerType],CaseType](rec: OwnerType)( implicit mf: Manifest[CaseType]) extends Field[CaseType, OwnerType] with MandatoryTypedField[CaseType] with MongoFieldFlavor[CaseType] {
   
-  implicit val formats = net.liftweb.json.DefaultFormats
+  implicit val formats = rec.meta.formats
 
   override type MyType = CaseType
 
@@ -75,9 +75,9 @@ class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerTyp
   }
 }
 
-class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerType)( implicit mf: Manifest[CaseType]) extends Field[List[CaseType], OwnerType] with MandatoryTypedField[List[CaseType]] with MongoFieldFlavor[List[CaseType]] {
+class MongoCaseClassListField[OwnerType <: BsonRecord[OwnerType],CaseType](rec: OwnerType)( implicit mf: Manifest[CaseType]) extends Field[List[CaseType], OwnerType] with MandatoryTypedField[List[CaseType]] with MongoFieldFlavor[List[CaseType]] {
   
-  implicit val formats = net.liftweb.json.DefaultFormats
+  implicit val formats = rec.meta.formats
   
   override type MyType = List[CaseType]
   
