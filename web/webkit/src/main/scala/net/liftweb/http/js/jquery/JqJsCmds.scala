@@ -154,39 +154,74 @@ object JqWiringSupport {
                            
 }
 
+/**
+ * Contains Scala JsExps for jQuery behaviors.
+ *
+ * These functions are meant to be combined using the ~> operator. For
+ * example:
+ *
+ *   <pre>JqJE.Jq("button") ~> JqClick(AnonFunc(...))</pre>
+ *
+ * Documentation on the case classes themselves will point to the
+ * relevant jQuery documentation, if there is any.
+ */
 object JqJE {
+  /**
+   * Changes the scroll position of each matched element to its maximum.
+   */
   case object JqScrollToBottom extends JsExp with JsMember with JQueryRight with JQueryLeft {
     def toJsCmd = "each(function(i) {this.scrollTop=this.scrollHeight;})"
   }
 
   /**
-   * Bind an event handler to the "click" JavaScript event, or trigger that event on an element.
+   * Calls the jQuery click function with the parameter in exp.
+   *
+   * Used to set a click handler function (also see AnonFunc).
+   *
+   * See http://api.jquery.com/click/ .
    */
   case class JqClick(exp: JsExp) extends JsExp with JsMember with JQueryLeft with JQueryRight {
     def toJsCmd = "click(" + exp.toJsCmd + ")"
   }
 
   /**
-   * Get the value of the first attribute specified by key
+   * Calls the jQuery attr function with the given key.
+   *
+   * Used to get the value of the given attribute.
+   * 
+   * See http://api.jquery.com/attr/ .
    */
   case class JqGetAttr(key: String) extends JsExp with JsMember with JQueryRight with JQueryLeft {
     def toJsCmd = "attr(" + key.encJs + ")"
   }
 
   /**
-   * A JQuery query
+   * Calls the main jQuery (or $) function with the parameter in query.
+   *
+   * Used to get a set of elements to apply the other JqJE expressions to.
+   *
+   * See http://api.jquery.com/jQuery/ .
    */
   case class Jq(query: JsExp) extends JsExp with JQueryLeft {
     override def toJsCmd = "jQuery(" + query.toJsCmd + ")"
   }
 
+  /**
+   * Calls the main jQuery (or $) function with "document". This returns
+   * the jQueryied document object (e.g., for calling ready()).
+   *
+   * See http://api.jquery.com/jQuery/ .
+   */
   case object JqDoc extends JsExp with JQueryLeft {
     override def toJsCmd = "jQuery(document)"
   }
 
   /**
-   * Execute a JsCmd when the Char is pressed. Uses jQuery keypress
-   * @param what a tuple of (Char, JsCmd)
+   * For every passed tuple, executes the given JsCmd when the given
+   * Char is pressed by the user. Watches using the jQuery keypress
+   * function.
+   *
+   * See http://api.jquery.com/keypress/ .
    */
   case class JqKeypress(what: (Char, JsCmd)*) extends JsExp with JsMember with JQueryRight {
     override def toJsCmd = "keypress(function(e) {" +
@@ -205,16 +240,22 @@ object JqJE {
   }
 
   /**
-   * Set the value of an attribute key, the value "value"
-   * @param key the attribute to set its value
-   * @param value the value :)
+   * Calls the jQuery attr function with the given key and the given value.
+   *
+   * Used to set the given attribute to the given value.
+   *
+   * See http://api.jquery.com/attr/ .
    */
   case class JqAttr(key: String, value: JsExp) extends JsExp with JsMember with JQueryRight with JQueryLeft {
     def toJsCmd = "attr(" + key.encJs + ", " + value.toJsCmd + ")"
   }
 
   /**
-   * Append content to a JQuery
+   * Calls the jQuery append function with the given content.
+   *
+   * Used to append the given content to the matched elements.
+   *
+   * See http://api.jquery.com/append/ .
    */
   case class JqAppend(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
     override val toJsCmd = 
@@ -222,7 +263,11 @@ object JqJE {
   }
 
   /**
-   * Remove JQuery
+   * Calls the jQuery remove function.
+   *
+   * Used to remove the matched elements from the DOM.
+   *
+   * See http://api.jquery.com/remove/ .
    */
   case class JqRemove() extends JsExp with JsMember with JQueryRight with JQueryLeft {
     override def toJsCmd = "remove()"
@@ -230,7 +275,11 @@ object JqJE {
 
 
   /**
-   * AppendTo content to a JQuery
+   * Calls the jQuery appendTo function with the given content.
+   *
+   * Used to wrap the matched elements in the given content.
+   *
+   * See http://api.jquery.com/appendTo/ .
    */
   case class JqAppendTo(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
     override val toJsCmd =       
@@ -238,7 +287,11 @@ object JqJE {
   }
 
   /**
-   * Prepend content to a JQuery
+   * Calls the jQuery prepend function with the given content.
+   *
+   * Used to prepend the given content to each matched element.
+   *
+   * See http://api.jquery.com/prepend/ .
    */
   case class JqPrepend(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
     override val toJsCmd = 
@@ -246,7 +299,11 @@ object JqJE {
   }
 
   /**
-   * PrependTo content to a JQuery
+   * Calls the jQuery prependTo function with the given content.
+   *
+   * Used to prepend the matched elements to the given content.
+   *
+   * See http://api.jquery.com/prependTo/ .
    */
   case class JqPrependTo(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
     override val toJsCmd = 
@@ -254,15 +311,24 @@ object JqJE {
   }
 
   /**
-   * Set the css value of an element
+   * Calls the jQuery css function with the given name and value.
+   *
+   * Used to set the value of the given CSS property to the given value.
+   *
+   * See http://api.jquery.com/css/ .
    */
   case class JqCss (name: JsExp, value: JsExp) extends JsExp with JsMember with JQueryRight with JQueryLeft {
     override def toJsCmd = "css(" + name.toJsCmd + "," + value.toJsCmd + ")"
   }
 
   /**
-   * EmptyAfter will empty the node at the given uid and stick the given content behind it. Like
-   * a cleaner innerHTML.
+   * Calls the jQuery empty function followed by calling the jQuery
+   * after function with the given content.
+   *
+   * The intent is to empty the matched nodes and stick the given
+   * content at their tails. Like a cleaner innerHTML.
+   *
+   * See http://api.jquery.com/empty/ and http://api.jquery.com/after/ .
    */
   case class JqEmptyAfter(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
     override val toJsCmd = 
@@ -270,17 +336,35 @@ object JqJE {
   }
 
   /**
-   * Replace the html node with content
+   * Calls the jQuery replaceWith function with the given content.
+   *
+   * Used to replace the matched elements with the given content.
+   *
+   * See http://api.jquery.com/replaceWith/ .
    */
   case class JqReplace(content: NodeSeq) extends JsExp with JsMember {
     override val toJsCmd = fixHtmlCmdFunc("inline", content){"replaceWith(" + _ + ")"}
   }
 
   object JqHtml {
+    /**
+     * Calls the jQuery html function with no parameters.
+     *
+     * Used to get the inner HTML of the matched elements.
+     *
+     * See http://api.jquery.com/html/ .
+     */
     def apply(): JsExp with JsMember with JQueryRight = new JsExp with JsMember with JQueryRight {
       def toJsCmd = "html()"
     }
 
+    /**
+     * Calls the jQuery html function with the given content.
+     *
+     * Used to set the inner HTML of each matched element.
+     *
+     * See http://api.jquery.com/html/ .
+     */
     def apply(content: NodeSeq): JsExp with JsMember with JQueryRight with JQueryLeft = new JsExp with JsMember with JQueryRight with JQueryLeft {
       val toJsCmd = fixHtmlCmdFunc("inline", content){"html(" + _ + ")"}
     }
@@ -288,14 +372,22 @@ object JqJE {
 
   object JqText {
     /**
-     * Get the combined text contents of each element in the set of matched elements, including their descendants.
+     * Calls the jQuery text function with no parameters.
+     *
+     * Used to get the combined text contents of the matched elements.
+     *
+     * See http://api.jquery.com/text/ .
      */
     def apply(): JsExp with JsMember with JQueryRight = new JsExp with JsMember with JQueryRight {
       def toJsCmd = "text()"
     }
 
     /**
-     * Sets the content of an element to "content", html tags are escaped.
+     * Calls the jQuery text function with the given content.
+     *
+     * Used to set the text contents of the matched elements.
+     *
+     * See http://api.jquery.com/text/ .
      */
     def apply(content: String): JsExp with JsMember with JQueryRight with JQueryLeft = new JsExp with JsMember with JQueryRight with JQueryLeft {
       def toJsCmd = "text(" + content.encJs + ")"
@@ -303,14 +395,23 @@ object JqJE {
   }
 
   /**
-   * Serialize input elements intoa string data. ALso works for serializing forms
+   * Calls the jQuery serialize function.
+   *
+   * Used to serialize input elements or forms into query string data.
+   *
+   * See http://api.jquery.com/serialize/ .
    */
   case object JqSerialize extends JsExp with JsMember with JQueryRight {
     def toJsCmd = "serialize()"
   }
 
   /**
-   * Serialize the jquery into a JSON array
+   * Calls the jQuery serializeArray function.
+   *
+   * Used to serialize the matched elements into a JSON array containing
+   * objects with name and value properties.
+   *
+   * See http://api.jquery.com/serializeArray/ .
    */
   case object JsonSerialize extends JsExp with JsMember with JQueryRight {
     def toJsCmd = "serializeArray()"
@@ -346,8 +447,8 @@ object JqJsCmds {
   implicit def jsExpToJsCmd(in: JsExp) = in.cmd
 
   /**
-   * Sets the JavScript that will be executed when document is ready
-   * for processing
+   * Queues the JavaScript in cmd for execution when the document is
+   * ready for processing
    */
   case class JqOnLoad(cmd: JsCmd) extends JsCmd {
     def toJsCmd = "jQuery(document).ready(function() {" + cmd.toJsCmd + "});"
@@ -442,16 +543,21 @@ object JqJsCmds {
   }
 
   /**
-   * Hide an element identified by uid
+   * Hide an element identified by uid.
+   * There are two apply methods, one takes just the id, the other takes the id and timespan
+   * that represents how long the animation will last
    */
   object Hide {
     /**
-     * Hide an element identified by uid
+     * Hide an element based on the ID uid
      */
     def apply(uid: String) = new Hide(uid, Empty)
 
     /**
-     * Hide an element identified by uid and the animation will last @time
+     * Hide an element identified by uid
+     *
+     * @param uid the element id
+     * @param time the duration of the effect.
      */
     def apply(uid: String, time: TimeSpan) = new Hide(uid, Full(time))
   }
@@ -464,12 +570,7 @@ object JqJsCmds {
   }
 
   /**
-   * Show a message @msg in the id @where for @duration milliseconds and fade out in @fadeout milliseconds
-   *
-   * @param where the id of where to show the message
-   * @param msg the message as a NodeSeq
-   * @param duration show the msessage for @duration in milliseconds or "slow", "fast"
-   * @param fadeTime fadeout in @fadeout milliseconds or "slow", "fast"
+   * Show a message msg in the element with id where for duration milliseconds and fade out in fadeout milliseconds
    */
   case class DisplayMessage(where: String, msg: NodeSeq, duration: TimeSpan, fadeTime: TimeSpan) extends JsCmd {
     def toJsCmd = (Show(where) & JqSetHtml(where, msg) & After(duration, Hide(where, fadeTime))).toJsCmd
@@ -487,7 +588,7 @@ object JqJsCmds {
 
   /**
    * Fades out the element having the provided id, by waiting
-   * for the given duration and fades out during fadeTime
+   * for the given duration and fading out during fadeTime
    */
   case class FadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) extends JsCmd {
     def toJsCmd = (After(duration, JqJE.JqId(id) ~> (new JsRaw("fadeOut(" + fadeTime.millis + ")") with JsMember))).toJsCmd
@@ -504,12 +605,9 @@ object JqJsCmds {
   }
 
   /**
-   * Fade in an element with @id for @duration in milliseconds or "slow", "fast"
+   * Fades in the element having the provided id, by waiting
+   * for the given duration and fading in during fadeTime
    * and use @fadeTime
-   *
-   * @param id
-   * @param duration
-   * @param fadeTime
    */
   case class FadeIn(id: String, duration: TimeSpan, fadeTime: TimeSpan) extends JsCmd {
     def toJsCmd = (After(duration, JqJE.JqId(id) ~> (new JsRaw("fadeIn(" + fadeTime.millis + ")") with JsMember))).toJsCmd
