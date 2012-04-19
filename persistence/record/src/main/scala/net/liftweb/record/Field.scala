@@ -152,7 +152,7 @@ trait TypedField[ThisType] extends BaseField {
 
   private[record] var data: Box[MyType] = Empty
   private[record] var needsDefault: Boolean = true
-  
+
   /**
    * Helper for implementing asJValue for a conversion to an encoded JString
    *
@@ -259,7 +259,7 @@ trait TypedField[ThisType] extends BaseField {
    *   - null|None|Empty     => setBox(defaultValueBox)
    *   - f: Failure          => setBox(f)
    * And usually convert the input to a string and uses setFromString as a last resort.
-   * 
+   *
    * Note that setFromAny should _always_ call setBox, even if the conversion fails. This is so that validation
    * properly notes the error.
    *
@@ -279,17 +279,17 @@ trait TypedField[ThisType] extends BaseField {
     case (value: String)::_  => setFromString(value)
     case null|None|Empty     => setBox(defaultValueBox)
     case (failure: Failure)  => setBox(failure)
-    case Some(other)         => setFromString(String.valueOf(other)) 
+    case Some(other)         => setFromString(String.valueOf(other))
     case Full(other)         => setFromString(String.valueOf(other))
     case other               => setFromString(String.valueOf(other))
   }
-  
+
   /**
    * Set the value of the field using some kind of type-specific conversion from a String.
    * By convention, if the field is optional_?, then the empty string should be treated as no-value (Empty).
    * Note that setFromString should _always_ call setBox, even if the conversion fails. This is so that validation
    * properly notes the error.
-   * 
+   *
    * @return Full(convertedValue) if the conversion succeeds (the field value will be set by side-effect)
    *         Empty or Failure if the conversion does not succeed
    */
@@ -317,7 +317,7 @@ trait MandatoryTypedField[ThisType] extends TypedField[ThisType] with Product1[T
 
   //TODO: fullfil the contract of Product1[ThisType]
   def canEqual(a:Any) = false
-  
+
   def _1 = value
 
   override def optional_? = false
@@ -352,13 +352,13 @@ trait MandatoryTypedField[ThisType] extends TypedField[ThisType] with Product1[T
     case _ => defaultValueBox.map(v => if (v != null) v.toString else "null") openOr ""
   }
 }
-  
+
 trait OptionalTypedField[ThisType] extends TypedField[ThisType] with Product1[Box[ThisType]] {
   type ValueType = Option[ThisType] // For util.BaseField
 
   //TODO: fullfil the contract of Product1[ThisType]
   def canEqual(a:Any) = false
-  
+
   def _1 = value
 
   final override def optional_? = true
@@ -424,26 +424,6 @@ trait DisplayWithLabel[OwnerType <: Record[OwnerType]] extends OwnedField[OwnerT
         { control }
         <lift:msg id={id} errorClass="lift_error"/>
       </div>
-}
-
-
-import java.sql.{ResultSet, Types}
-import net.liftweb.db.{DriverType}
-
-/**
- * Desribes common aspects related with JDBC
- */
-@deprecated("This was never fully implemented. If you're looking for a SQL implementation of Record, please see Squeryl-Record. If you have any questions, please bring them up on the mailing list.")
-trait JDBCFieldFlavor[MyType] {
-
-  def jdbcFriendly(field : String) : AnyRef
-
-  def targetSQLType : Int
-
-  /**
-   * Given the driver type, return the string required to create the column in the database
-   */
-  def fieldCreatorString(dbType: DriverType, colName: String): String
 }
 
 trait KeyField[MyType, OwnerType <: Record[OwnerType] with KeyedRecord[OwnerType, MyType]] extends Field[MyType, OwnerType] {

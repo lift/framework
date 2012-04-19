@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,14 +132,6 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
   // set this field's value using a DBObject returned from Mongo.
   def setFromDBObject(dbo: DBObject): Box[MyType] =
     setBox(Full(dbo.asInstanceOf[BasicDBList].toList.asInstanceOf[MyType]))
-}
-
-/*
-* List of Dates. Use MongListField[OwnerType, Date] instead.
-*/
-@deprecated("Use MongListField[OwnerType, Date] instead")
-class MongoDateListField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
-  extends MongoListField[OwnerType, Date](rec: OwnerType) {
 }
 
 /*
