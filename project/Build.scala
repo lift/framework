@@ -133,7 +133,7 @@ object BuildDef extends Build {
 
   lazy val record =
     persistenceProject("record")
-        .dependsOn(proto, db)
+        .dependsOn(proto)
 
   lazy val couchdb =
     persistenceProject("couchdb")
