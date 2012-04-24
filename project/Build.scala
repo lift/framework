@@ -147,7 +147,7 @@ object BuildDef extends Build {
 
   lazy val mongodb =
     persistenceProject("mongodb")
-        .dependsOn(json_ext)
+        .dependsOn(common, json, json_ext % "test")
         .settings(parallelExecution in Test := false,
                   libraryDependencies += mongo_driver,
                   initialize in Test <<= (resourceDirectory in Test) { rd =>
@@ -156,7 +156,7 @@ object BuildDef extends Build {
 
   lazy val mongodb_record =
     persistenceProject("mongodb-record")
-        .dependsOn(record, mongodb)
+        .dependsOn(record, mongodb, json_ext % "test")
         .settings(parallelExecution in Test := false)
 
   lazy val ldap =
