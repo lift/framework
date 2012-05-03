@@ -44,7 +44,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
 
   def getSingleton : MetaMapper[A];
   final def safe_? : Boolean = {
-    Safe.safe_?(System.identityHashCode(this))
+    util.Safe.safe_?(System.identityHashCode(this))
   }
 
   def dbName:String = getSingleton.dbName
@@ -52,7 +52,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
   implicit def thisToMappee(in: Mapper[A]): A = this.asInstanceOf[A]
 
   def runSafe[T](f : => T) : T = {
-    Safe.runSafe(System.identityHashCode(this))(f)
+    util.Safe.runSafe(System.identityHashCode(this))(f)
   }
 
   def connectionIdentifier(id: ConnectionIdentifier): A = {
@@ -72,7 +72,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
    * @param func - the function to perform after the commit happens
    */
   def doPostCommit(func: () => Unit): A = {
-    DB.appendPostFunc(connectionIdentifier, func)
+    DB.appendPostTransaction(connectionIdentifier, dontUse => func())
     this
   }
 
@@ -404,7 +404,7 @@ trait KeyedMapper[KeyType, OwnerType<:KeyedMapper[KeyType, OwnerType]] extends M
 
   override def comparePrimaryKeys(other: OwnerType) = primaryKeyField.is == other.primaryKeyField.is
 
-  def reload: OwnerType = getSingleton.find(By(primaryKeyField, primaryKeyField)) openOr this
+  def reload: OwnerType = getSingleton.find(By(primaryKeyField, primaryKeyField.get)) openOr this
 
   def asSafeJs(f: KeyObfuscator): JsExp = getSingleton.asSafeJs(this, f)
 

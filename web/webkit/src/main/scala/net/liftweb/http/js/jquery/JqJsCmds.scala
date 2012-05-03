@@ -169,7 +169,7 @@ object JqJE {
   /**
    * Changes the scroll position of each matched element to its maximum.
    */
-  case object JqScrollToBottom extends JsExp with JsMember with JQueryRight with JQueryLeft {
+  case object JqScrollToBottom extends JsExp with JsMember {
     def toJsCmd = "each(function(i) {this.scrollTop=this.scrollHeight;})"
   }
 
@@ -180,7 +180,7 @@ object JqJE {
    *
    * See http://api.jquery.com/click/ .
    */
-  case class JqClick(exp: JsExp) extends JsExp with JsMember with JQueryLeft with JQueryRight {
+  case class JqClick(exp: JsExp) extends JsExp with JsMember {
     def toJsCmd = "click(" + exp.toJsCmd + ")"
   }
 
@@ -191,7 +191,7 @@ object JqJE {
    * 
    * See http://api.jquery.com/attr/ .
    */
-  case class JqGetAttr(key: String) extends JsExp with JsMember with JQueryRight with JQueryLeft {
+  case class JqGetAttr(key: String) extends JsExp with JsMember {
     def toJsCmd = "attr(" + key.encJs + ")"
   }
 
@@ -202,7 +202,7 @@ object JqJE {
    *
    * See http://api.jquery.com/jQuery/ .
    */
-  case class Jq(query: JsExp) extends JsExp with JQueryLeft {
+  case class Jq(query: JsExp) extends JsExp {
     override def toJsCmd = "jQuery(" + query.toJsCmd + ")"
   }
 
@@ -212,7 +212,7 @@ object JqJE {
    *
    * See http://api.jquery.com/jQuery/ .
    */
-  case object JqDoc extends JsExp with JQueryLeft {
+  case object JqDoc extends JsExp {
     override def toJsCmd = "jQuery(document)"
   }
 
@@ -223,7 +223,7 @@ object JqJE {
    *
    * See http://api.jquery.com/keypress/ .
    */
-  case class JqKeypress(what: (Char, JsCmd)*) extends JsExp with JsMember with JQueryRight {
+  case class JqKeypress(what: (Char, JsCmd)*) extends JsExp with JsMember {
     override def toJsCmd = "keypress(function(e) {" +
             what.map {
               case (chr, cmd) =>
@@ -235,7 +235,7 @@ object JqJE {
   /**
    * A JQuery query for an element based on the id of the element
    */
-  case class JqId(id: JsExp) extends JsExp with JQueryLeft {
+  case class JqId(id: JsExp) extends JsExp {
     override def toJsCmd = "jQuery('#'+" + id.toJsCmd + ")"
   }
 
@@ -246,7 +246,7 @@ object JqJE {
    *
    * See http://api.jquery.com/attr/ .
    */
-  case class JqAttr(key: String, value: JsExp) extends JsExp with JsMember with JQueryRight with JQueryLeft {
+  case class JqAttr(key: String, value: JsExp) extends JsExp with JsMember {
     def toJsCmd = "attr(" + key.encJs + ", " + value.toJsCmd + ")"
   }
 
@@ -257,7 +257,7 @@ object JqJE {
    *
    * See http://api.jquery.com/append/ .
    */
-  case class JqAppend(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
+  case class JqAppend(content: NodeSeq) extends JsExp with JsMember {
     override val toJsCmd = 
       "append("+fixHtmlFunc("inline", content){a => a}+")"      
   }
@@ -269,7 +269,7 @@ object JqJE {
    *
    * See http://api.jquery.com/remove/ .
    */
-  case class JqRemove() extends JsExp with JsMember with JQueryRight with JQueryLeft {
+  case class JqRemove() extends JsExp with JsMember {
     override def toJsCmd = "remove()"
   }
 
@@ -281,7 +281,7 @@ object JqJE {
    *
    * See http://api.jquery.com/appendTo/ .
    */
-  case class JqAppendTo(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
+  case class JqAppendTo(content: NodeSeq) extends JsExp with JsMember {
     override val toJsCmd =       
       "appendTo("+fixHtmlFunc("inline", content){str => str}+ ")"
   }
@@ -293,7 +293,7 @@ object JqJE {
    *
    * See http://api.jquery.com/prepend/ .
    */
-  case class JqPrepend(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
+  case class JqPrepend(content: NodeSeq) extends JsExp with JsMember {
     override val toJsCmd = 
     "prepend(" + fixHtmlFunc("inline", content){str => str }+ ")"
   }
@@ -305,7 +305,7 @@ object JqJE {
    *
    * See http://api.jquery.com/prependTo/ .
    */
-  case class JqPrependTo(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
+  case class JqPrependTo(content: NodeSeq) extends JsExp with JsMember {
     override val toJsCmd = 
     "prependTo(" + fixHtmlFunc("inline", content){str => str} + ")"
   }
@@ -317,7 +317,7 @@ object JqJE {
    *
    * See http://api.jquery.com/css/ .
    */
-  case class JqCss (name: JsExp, value: JsExp) extends JsExp with JsMember with JQueryRight with JQueryLeft {
+  case class JqCss (name: JsExp, value: JsExp) extends JsExp with JsMember {
     override def toJsCmd = "css(" + name.toJsCmd + "," + value.toJsCmd + ")"
   }
 
@@ -330,7 +330,7 @@ object JqJE {
    *
    * See http://api.jquery.com/empty/ and http://api.jquery.com/after/ .
    */
-  case class JqEmptyAfter(content: NodeSeq) extends JsExp with JsMember with JQueryRight with JQueryLeft {
+  case class JqEmptyAfter(content: NodeSeq) extends JsExp with JsMember {
     override val toJsCmd = 
     "empty().after(" + fixHtmlFunc("inline", content){str => str} + ")"
   }
@@ -354,7 +354,7 @@ object JqJE {
      *
      * See http://api.jquery.com/html/ .
      */
-    def apply(): JsExp with JsMember with JQueryRight = new JsExp with JsMember with JQueryRight {
+    def apply(): JsExp with JsMember = new JsExp with JsMember {
       def toJsCmd = "html()"
     }
 
@@ -365,7 +365,7 @@ object JqJE {
      *
      * See http://api.jquery.com/html/ .
      */
-    def apply(content: NodeSeq): JsExp with JsMember with JQueryRight with JQueryLeft = new JsExp with JsMember with JQueryRight with JQueryLeft {
+    def apply(content: NodeSeq): JsExp with JsMember = new JsExp with JsMember {
       val toJsCmd = fixHtmlCmdFunc("inline", content){"html(" + _ + ")"}
     }
   }
@@ -378,7 +378,7 @@ object JqJE {
      *
      * See http://api.jquery.com/text/ .
      */
-    def apply(): JsExp with JsMember with JQueryRight = new JsExp with JsMember with JQueryRight {
+    def apply(): JsExp with JsMember = new JsExp with JsMember {
       def toJsCmd = "text()"
     }
 
@@ -389,7 +389,7 @@ object JqJE {
      *
      * See http://api.jquery.com/text/ .
      */
-    def apply(content: String): JsExp with JsMember with JQueryRight with JQueryLeft = new JsExp with JsMember with JQueryRight with JQueryLeft {
+    def apply(content: String): JsExp with JsMember = new JsExp with JsMember {
       def toJsCmd = "text(" + content.encJs + ")"
     }
   }
@@ -401,7 +401,7 @@ object JqJE {
    *
    * See http://api.jquery.com/serialize/ .
    */
-  case object JqSerialize extends JsExp with JsMember with JQueryRight {
+  case object JqSerialize extends JsExp with JsMember {
     def toJsCmd = "serialize()"
   }
 
@@ -413,31 +413,31 @@ object JqJE {
    *
    * See http://api.jquery.com/serializeArray/ .
    */
-  case object JsonSerialize extends JsExp with JsMember with JQueryRight {
+  case object JsonSerialize extends JsExp with JsMember {
     def toJsCmd = "serializeArray()"
   }
 
-  case object JqTabsSelected extends JsExp with JsMember with JQueryRight {
+  case object JqTabsSelected extends JsExp with JsMember {
     def toJsCmd = "tabsSelected()"
   }
 
   object JqTabsClick {
-    def apply(tab: JsExp): JsExp with JsMember with JQueryRight with JQueryLeft =
-      new JsExp with JsMember with JQueryRight with JQueryLeft {
+    def apply(tab: JsExp): JsExp with JsMember =
+      new JsExp with JsMember {
         def toJsCmd = "tabsClick(" + tab.toJsCmd + ")"
       }
 
-    def apply(tab: Int): JsExp with JsMember with JQueryRight with JQueryLeft =
+    def apply(tab: Int): JsExp with JsMember =
       apply(Num(tab))
   }
 
   object JqTabs {
-    def apply(in: JsExp): JsExp with JsMember with JQueryRight with JQueryLeft =
-      new JsExp with JsMember with JQueryRight with JQueryLeft {
+    def apply(in: JsExp): JsExp with JsMember =
+      new JsExp with JsMember {
         def toJsCmd = "tabs(" + in.toJsCmd + ")"
       }
 
-    def apply(): JsExp with JsMember with JQueryRight with JQueryLeft =
+    def apply(): JsExp with JsMember =
       apply(JsRaw(""))
   }
 

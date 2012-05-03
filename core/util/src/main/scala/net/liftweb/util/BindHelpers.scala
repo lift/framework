@@ -816,14 +816,14 @@ trait BindHelpers {
   implicit def strToBPAssoc(in: String): BindParamAssoc = new BindParamAssoc(in)
 
   /**
-   * transforms a Symbol to a BindParamAssoc object which can be associated to a BindParam object
-   * using the --> operator.<p/>
-   * Usage: <code>'David --> "name"</code>
+   * transforms a Symbol to a SuperArrowAssoc object which can be associated to a BindParam object
+   * using the -> operator.<p/>
+   * Usage: <code>'David -> "name"</code>
    *
    * @deprecated use -> instead
    */
   @deprecated("use -> instead")
-  implicit def symToBPAssoc(in: Symbol): BindParamAssoc = new BindParamAssoc(in.name)
+  implicit def symToBPAssoc(in: Symbol): SuperArrowAssoc = new SuperArrowAssoc(in.name)
 
   /**
    * Experimental extension to bind which passes in an additional "parameter" from the XHTML to the transform

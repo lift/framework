@@ -51,7 +51,7 @@ extends MappedField[String, T] {
   def salt = this.salt_i
 
   private var password = FatLazy(defaultValue)
-  private val salt_i = FatLazy(Safe.randomString(16))
+  private val salt_i = FatLazy(util.Safe.randomString(16))
   private var invalidPw = false
   private var invalidMsg = ""
 

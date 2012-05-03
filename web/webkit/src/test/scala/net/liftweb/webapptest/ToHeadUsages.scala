@@ -115,16 +115,16 @@ object ToHeadUsages extends Specification("ToHeadUsages Specification") {
 
     setSequential()
 
-    "Template finder should recognize entities" in {
-      val ns = TemplateFinder.findAnyTemplate(List("index")).open_!
+    "Templates should recognize entities" in {
+      val ns = Templates(List("index")).open_!
       val str = AltXML.toXML(ns(0), false, false, false)
 
       val idx = str.indexOf("&mdash;")
       (idx >= 0) must beTrue.when(jetty.running)
     }
 
-    "Template finder should not recognize entities" in {
-      val ns = TemplateFinder.findAnyTemplate(List("index")).open_!
+    "Templates should not recognize entities" in {
+      val ns = Templates(List("index")).open_!
       val str = AltXML.toXML(ns(0), false, true, false)
 
       val idx = str.indexOf("&mdash;")

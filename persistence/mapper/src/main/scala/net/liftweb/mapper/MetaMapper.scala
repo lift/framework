@@ -1363,8 +1363,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
       case pcf =>
         if (!inst.addedPostCommit) {
-          DB.appendPostFunc(inst.connectionIdentifier,
-                            () => (clearPCFunc :: pcf).foreach(_(inst)))
+          DB.appendPostTransaction(inst.connectionIdentifier, dontUse =>  (clearPCFunc :: pcf).foreach(_(inst)))
           inst.addedPostCommit = true
         }
     }

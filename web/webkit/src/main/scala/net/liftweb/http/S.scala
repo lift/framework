@@ -1601,7 +1601,7 @@ for {
         !old.path.partPath.isEmpty &&
         (old.request ne null))
       Req(old, S.sessionRewriter.map(_.rewrite) :::
-          LiftRules.statefulRewrite.toList, LiftRules.statelessTest.toList,
+          LiftRules.statefulRewrite.toList, Nil,
       LiftRules.statelessReqTest.toList)
     else old
   }
@@ -2701,7 +2701,7 @@ for {
     if (inS.value) doRender(session.open_!)
     else {
       val req = Req(httpRequest, LiftRules.statelessRewrite.toList,
-                    LiftRules.statelessTest.toList,
+                    Nil,
                     LiftRules.statelessReqTest.toList,
                     System.nanoTime)
 

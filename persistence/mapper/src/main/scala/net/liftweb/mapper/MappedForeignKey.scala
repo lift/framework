@@ -212,7 +212,7 @@ with LifecycleCallbacks {
 
 @deprecated("Functionality folded into MappedForeignKey, so just use MappedLongForeignKey. Will be removed in 2.5")
 class LongMappedMapper[T<:Mapper[T], O<:KeyedMapper[Long,O]](theOwner: T, foreign: => KeyedMetaMapper[Long, O])
-  extends MappedLongForeignKey[T,O](theOwner, foreign) with LongMappedForeignMapper[T,O]
+  extends MappedLongForeignKey[T,O](theOwner, foreign)
 
 
 @deprecated("Functionality folded into MappedForeignKey, so just use MappedLongForeignKey. Will be removed in 2.5")

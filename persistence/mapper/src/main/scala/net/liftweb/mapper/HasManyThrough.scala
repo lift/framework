@@ -67,13 +67,13 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
   }
 
   override def beforeDelete {
-    through.findAll(By(throughFromField, owner.primaryKeyField)).foreach {
+    through.findAll(By(throughFromField, owner.primaryKeyField.get)).foreach {
       toDelete => toDelete.delete_!
     }
   }
 
   override def afterUpdate {
-    val current = through.findAll(By(throughFromField,owner.primaryKeyField))
+    val current = through.findAll(By(throughFromField, owner.primaryKeyField.get))
 
     val newKeys = new HashSet[ThroughType];
 
@@ -82,11 +82,11 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
     toDelete.foreach(_.delete_!)
 
     val oldKeys = new HashSet[ThroughType];
-    current.foreach(i => oldKeys += throughToField.actualField(i))
+    current.foreach(i => oldKeys += throughToField.actualField(i).get)
 
     theSetList.toList.distinct.filter(i => !oldKeys.contains(i)).foreach { i =>
       val toCreate = through.createInstance
-      throughFromField.actualField(toCreate).set(owner.primaryKeyField)
+      throughFromField.actualField(toCreate).set(owner.primaryKeyField.get)
       throughToField.actualField(toCreate).set(i)
       toCreate.save
     }
@@ -99,7 +99,7 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
   override def afterCreate {
     theSetList.toList.distinct.foreach { i =>
       val toCreate = through.createInstance
-      throughFromField.actualField(toCreate)(owner.primaryKeyField)
+      throughFromField.actualField(toCreate)(owner.primaryKeyField.get)
       throughToField.actualField(toCreate)(i)
       toCreate.save
     }

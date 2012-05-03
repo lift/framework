@@ -229,27 +229,27 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
     /**
      * Return the user's first name
      */
-    def getFirstName: String = in.firstName
+    def getFirstName: String = in.firstName.get
 
     /**
      * Return the user's last name
      */
-    def getLastName: String = in.lastName
+    def getLastName: String = in.lastName.get
 
     /**
      * Get the user's email
      */
-    def getEmail: String = in.email
+    def getEmail: String = in.email.get
 
     /**
      * Is the user a superuser
      */
-    def superUser_? : Boolean = in.superUser
+    def superUser_? : Boolean = in.superUser.get
 
     /**
      * Has the user been validated?
      */
-    def validated_? : Boolean = in.validated
+    def validated_? : Boolean = in.validated.get
 
     /**
      * Does the supplied password match the actual password?
@@ -273,7 +273,7 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
     /**
      * Return the unique ID for the user
      */
-    def getUniqueId(): String = in.uniqueId
+    def getUniqueId(): String = in.uniqueId.get
 
     /**
      * Validate the user
