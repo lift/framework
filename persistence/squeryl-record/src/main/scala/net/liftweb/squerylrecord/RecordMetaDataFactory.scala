@@ -37,8 +37,8 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
     def fieldFrom(mr: MetaRecord[_]): BaseField =
       mr.asInstanceOf[Record[_]].fieldByName(name) match {
         case Full(f: BaseField) => f
-        case Full(_) => error("field " + name + " in Record metadata for " + clasz + " is not a TypedField")
-        case _ => error("failed to find field " + name + " in Record metadata for " + clasz)
+        case Full(_) => org.squeryl.internals.Utils.throwError("field " + name + " in Record metadata for " + clasz + " is not a TypedField")
+        case _ => org.squeryl.internals.Utils.throwError("failed to find field " + name + " in Record metadata for " + clasz)
       }
 
     metaRecordsByClass get clasz match {
@@ -50,7 +50,7 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
           metaRecordsByClass = metaRecordsByClass updated (clasz, mr)
           fieldFrom(mr)
         } catch {
-          case ex => error("failed to find MetaRecord for " + clasz + " due to exception " + ex.toString)
+          case ex => org.squeryl.internals.Utils.throwError("failed to find MetaRecord for " + clasz + " due to exception " + ex.toString)
         }
     }
   }
@@ -88,7 +88,7 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
       case (_: LocaleTypedField) => classOf[String]
       case (_: EnumTypedField[_]) => classOf[Int]
       case (_: EnumNameTypedField[_]) => classOf[String]
-      case _ => error("Unsupported field type. Consider implementing " +
+      case _ => org.squeryl.internals.Utils.throwError("Unsupported field type. Consider implementing " +
         "SquerylRecordField for defining the persistent class." +
         "Field: " + metaField)
     }

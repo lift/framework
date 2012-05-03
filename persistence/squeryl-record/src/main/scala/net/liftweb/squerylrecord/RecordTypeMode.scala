@@ -154,19 +154,29 @@ trait RecordTypeMode extends PrimitiveTypeMode {
   
   /** Conversion of mandatory Enum fields to Squeryl Expressions. */
   implicit def enum2EnumExpr[EnumType <: Enumeration](f: MandatoryTypedField[EnumType#Value]) = fieldReference match {
-    case Some(e) => new SelectElementReference[Enumeration#Value](e)(e.createEnumerationMapper) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
+    case Some(e) => new SelectElementReference[Enumeration#Value](e)(e.createEnumerationMapper(f.defaultValue)) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
     case None => new ConstantExpressionNode[Enumeration#Value](f.is)(outMapperFromEnumValue(f.get)) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
+  }
+  
+  def reifySingleton[T](m: Manifest[T]) = {
+    val cls = m.erasure
+    val field = cls.getField("MODULE$")
+    field.get(null).asInstanceOf[T]
   }
     
   /** Conversion of optional Enum fields to Squeryl Expressions. */
-  implicit def optionEnum2ScalaEnum[EnumType <: Enumeration](f: OptionalTypedField[EnumType#Value]) = fieldReference match {
-    case Some(e) => new SelectElementReference[Option[Enumeration#Value]](e)(e.createEnumerationOptionMapper) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
-    case None => new ConstantExpressionNode[Option[Enumeration#Value]](f.is)(outMapperOptionFromOptionEnumValue(f.get) orNull) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
-  }
+  implicit def optionEnum2ScalaEnum[EnumType <: Enumeration](f: OptionalTypedField[EnumType#Value])(implicit m: Manifest[EnumType]) = 
+    fieldReference match {
+    	case Some(e) =>
+    	  new SelectElementReference[Option[Enumeration#Value]](e)(e.createEnumerationOptionMapper(Some(reifySingleton(m).values.iterator.next))) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
+    	case None => 
+    	  new ConstantExpressionNode[Option[Enumeration#Value]](f.is)(outMapperOptionFromOptionEnumValue(f.get) orNull) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
+  	}
   
   /** Needed for outer joins. */
-  implicit def optionEnumField2OptionEnum[EnumType <: Enumeration](f: Option[TypedField[EnumType#Value]]) = fieldReference match {
-    case Some(e) => new SelectElementReference[Enumeration#Value](e)(e.createEnumerationMapper) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
+  implicit def optionEnumField2OptionEnum[EnumType <: Enumeration](f: Option[TypedField[EnumType#Value]])(implicit m: Manifest[EnumType]) = fieldReference match {
+    case Some(e) =>
+      new SelectElementReference[Enumeration#Value](e)(e.createEnumerationMapper(reifySingleton(m).values.iterator.next)) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
     case None => new ConstantExpressionNode[Enumeration#Value](getValue(f).orNull)({
       val enumOption = f flatMap { f1: TypedField[EnumType#Value] => f1.valueBox.toOption } 
       val outMapperOption: Option[OutMapper[Enumeration#Value]] = enumOption map { e: EnumType#Value => outMapperFromEnumValue(e) : OutMapper[Enumeration#Value] /*crashes scala 2.9.1 without explicit type */ } 
