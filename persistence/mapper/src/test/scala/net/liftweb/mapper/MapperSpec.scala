@@ -335,10 +335,10 @@ object MapperSpec extends Specification("Mapper Specification") {
 
         val oldUpdate = dog.updatedAt.is
 
-        val d1 = (now.getTime - dog.createdAt.getTime) / 100000L
+        val d1 = (now.getTime - dog.createdAt.get.getTime) / 100000L
         d1 must_== 0L
 
-        val d2 = (now.getTime - dog.updatedAt.getTime) / 100000L
+        val d2 = (now.getTime - dog.updatedAt.get.getTime) / 100000L
         d2 must_== 0L
 
         dog.name("ralph").save

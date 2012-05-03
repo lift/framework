@@ -22,12 +22,12 @@ import org.joda.time._
 import JsonDSL._
 
 object JodaTimeSerializers {
-  def all = List(DurationSerializer(), InstantSerializer(), DateTimeSerializer(), 
-                 DateMidnightSerializer(), IntervalSerializer(), LocalDateSerializer(),
-                 LocalTimeSerializer(), PeriodSerializer())
+  def all = List(DurationSerializer, InstantSerializer, DateTimeSerializer,
+                 DateMidnightSerializer, IntervalSerializer(), LocalDateSerializer(),
+                 LocalTimeSerializer(), PeriodSerializer)
 }
 
-case class PeriodSerializer extends CustomSerializer[Period](format => (
+case object PeriodSerializer extends CustomSerializer[Period](format => (
   {
     case JString(p) => new Period(p)
     case JNull => null
@@ -37,7 +37,7 @@ case class PeriodSerializer extends CustomSerializer[Period](format => (
   }
 ))
 
-case class DurationSerializer extends CustomSerializer[Duration](format => (
+case object DurationSerializer extends CustomSerializer[Duration](format => (
   {
     case JInt(d) => new Duration(d.longValue)
     case JNull => null
@@ -47,7 +47,7 @@ case class DurationSerializer extends CustomSerializer[Duration](format => (
   }
 ))
 
-case class InstantSerializer extends CustomSerializer[Instant](format => (
+case object InstantSerializer extends CustomSerializer[Instant](format => (
   {
     case JInt(i) => new Instant(i.longValue)
     case JNull => null
@@ -62,7 +62,7 @@ object DateParser {
     format.dateFormat.parse(s).map(_.getTime).getOrElse(throw new MappingException("Invalid date format " + s))
 }
 
-case class DateTimeSerializer extends CustomSerializer[DateTime](format => (
+case object DateTimeSerializer extends CustomSerializer[DateTime](format => (
   {
     case JString(s) => new DateTime(DateParser.parse(s, format))
     case JNull => null
@@ -72,7 +72,7 @@ case class DateTimeSerializer extends CustomSerializer[DateTime](format => (
   }
 ))
 
-case class DateMidnightSerializer extends CustomSerializer[DateMidnight](format => (
+case object DateMidnightSerializer extends CustomSerializer[DateMidnight](format => (
   {
     case JString(s) => new DateMidnight(DateParser.parse(s, format))
     case JNull => null

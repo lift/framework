@@ -47,7 +47,7 @@ object LdapSpec extends Specification("LDAP Specification") {
   val service = new DefaultDirectoryService
   val ldap = new LdapServer
 
-  lazy val workingDir = Box[String](System.getProperty("apacheds.working.dir")) 
+  lazy val workingDir = Box.legacyNullTest(System.getProperty("apacheds.working.dir"))
 
   /*
    * The following is taken from:

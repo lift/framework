@@ -59,7 +59,7 @@ trait HTTPProvider {
 
     CurrentHTTPReqResp.doWith(req -> resp) {
       val newReq = Req(req, LiftRules.statelessRewrite.toList,
-        LiftRules.statelessTest.toList,
+        Nil,
         LiftRules.statelessReqTest.toList,
         System.nanoTime)
 

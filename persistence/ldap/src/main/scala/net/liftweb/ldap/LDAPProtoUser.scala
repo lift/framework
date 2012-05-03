@@ -126,7 +126,7 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
         if (users.size >= 1) {
             val userDn = users(0)
             if (ldapVendor.bindUser(userDn, password)) {
-                val completeDn = userDn + "," + ldapVendor.parameters().get("ldap.base").getOrElse("")
+                val completeDn = userDn + "," + ldapVendor.ldapBaseDn.vend //configure().get("ldap.base").getOrElse("")
                 logUserIn(this)
 
                 bindAttributes(_getUserAttributes(completeDn))

@@ -48,7 +48,7 @@ object NamedCometPerTabSpec extends Specification("NamedCometPerTabSpec Specific
 
     "be created for a comet" in {
       NamedCometListener.getDispatchersFor(Full("1")).foreach(
-        actor => actor.open_!.toString must startWith("net.liftweb.http.NamedCometDispatcher")
+        actor => actor.map(_.toString must startWith("net.liftweb.http.NamedCometDispatcher"))
       )
     }
     "be created even if no comet is present when calling getOrAddDispatchersFor" in {

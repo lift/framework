@@ -1652,7 +1652,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    Replaced by dateTimeConverter
    */
   @deprecated("Replaced by dateTimeConverter")
-  @volatile var formatDate: Date => String = date => date match {case null => LiftRules.formatDate(new Date(0L)) case s => toInternetDate(s)}
+  @volatile var formatDate: Date => String = date => date match {
+    case null => LiftRules.dateTimeConverter.vend.formatDate(new Date(0L))
+    case s    => toInternetDate(s)
+  }
 
   /**
    * A function that parses a String into a Date... can be replaced by something that's user-specific
