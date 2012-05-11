@@ -40,7 +40,7 @@ trait BooleanTypedField extends TypedField[Boolean] {
   def setFromString(s: String): Box[Boolean] = setBox(tryo(toBoolean(s)))
 
   private def elem(attrs: SHtml.ElemAttr*) =
-      SHtml.checkbox(valueBox openOr false, (b: Boolean) => this.setBox(Full(b)), (("tabIndex" -> tabIndex.toString): SHtml.ElemAttr) :: attrs.toList: _*)
+      SHtml.checkbox(valueBox openOr false, (b: Boolean) => this.setBox(Full(b)), (("tabindex" -> tabIndex.toString): SHtml.ElemAttr) :: attrs.toList: _*)
 
   def toForm: Box[NodeSeq] =
     // FIXME? no support for optional_?
