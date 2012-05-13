@@ -243,7 +243,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
       inst.getClass.getName.split("\\.").toList.last, 
       fieldList.foldLeft[MetaData](Null) { (md, f) => 
         val field = f.field(inst)
-        new UnprefixedAttribute(field.name, field.valueBox.openOr("NULL").toString, md)
+        new UnprefixedAttribute(field.name, if(field.valueBox.isEmpty){"NULL"}else{field.toString}, md)
       }, 
       TopScope)
   }
