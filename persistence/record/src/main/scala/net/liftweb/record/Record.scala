@@ -78,6 +78,13 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
    */
   def asJSON: JsExp = meta.asJSON(this)
 
+  /**
+   * Returns the XML representation of this record
+   *
+   * @return an Elem
+   */
+  def asXml: Elem = meta.asXml(this)
+
  /**
   * Save the instance and return the instance
   */

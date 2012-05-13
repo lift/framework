@@ -233,6 +233,22 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   }
 
   /**
+   * Returns the XML representation of <i>inst</i> record
+   *
+   * @param inst: BaseRecord
+   * @return Elem
+   */
+  def asXml(inst: BaseRecord): Elem = {
+    new Elem(null, 
+      inst.getClass.getName.split("\\.").toList.last, 
+      fieldList.foldLeft[MetaData](Null) { (md, f) => 
+        val field = f.field(inst)
+        new UnprefixedAttribute(field.name, field.valueBox.openOr("NULL").toString, md)
+      }, 
+      TopScope)
+  }
+
+  /**
    * Retuns the JSON representation of <i>inst</i> record, converts asJValue to JsObj
    *
    * @return a JsObj
