@@ -59,6 +59,8 @@ trait DateTimeTypedField extends TypedField[Calendar] {
 
   def asJs = valueBox.map(v => Str(toInternetDate(v.getTime))) openOr JsNull
 
+  override def toString = valueBox.map(v => toInternetDate(v.getTime)) openOr "NULL" 
+
   def asJValue = asJString(v => toInternetDate(v.getTime))
   def setFromJValue(jvalue: JValue) = setFromJString(jvalue) {
     v => boxParseInternetDate(v).map(d => {

@@ -181,6 +181,53 @@ object RecordSpec extends Specification("Record Specification") {
 
     val json = "{\"mandatoryBooleanField\": false, \"mandatoryCountryField\": 1, \"mandatoryDateTimeField\": \""+Helpers.toInternetDate(cal.getTime)+"\",\"mandatoryDecimalField\": \"3.14\", \"mandatoryDoubleField\": 1999.0,\"mandatoryEmailField\":\"test@liftweb.net\",\"mandatoryEnumField\":0,\"mandatoryIntField\":99,\"mandatoryLocaleField\":\"en_US\",\"mandatoryLongField\":100,\"mandatoryPostalCodeField\":\"55401\",\"mandatoryStringField\":\"foobar\",\"mandatoryTextareaField\":\"foobar\",\"mandatoryTimeZoneField\":\"America/Chicago\",\"mandatoryBinaryField\":\"EhMU\"}"
 
+    val fttrAsXml = <FieldTypeTestRecord 
+  mandatoryCountryField="United States"
+  optionalBooleanField="NULL"
+  mandatoryDecimalField="3.14"
+  mandatoryBooleanField="false"
+  optionalDoubleField="NULL"
+  mandatoryDateTimeField={fttr.mandatoryDateTimeField.toString}
+  legacyOptionalCountryField="NULL"
+  mandatoryBinaryField={fttr.mandatoryBinaryField.toString}
+  mandatoryDoubleField="1999.0"
+  mandatoryPostalCodeField="55401"
+  optionalEmailField="NULL"
+  optionalBinaryField="NULL"
+  legacyOptionalDoubleField="NULL"
+  legacyOptionalBooleanField="NULL"
+  legacyOptionalTextareaField="NULL"
+  legacyOptionalEmailField="NULL"
+  legacyOptionalLocaleField="NULL"
+  mandatoryLongField="100"
+  legacyOptionalBinaryField="NULL"
+  optionalEnumField="NULL"
+  legacyOptionalEnumField="NULL"
+  mandatoryIntField="99"
+  legacyOptionalLongField="NULL"
+  legacyOptionalStringField="NULL"
+  mandatoryTextareaField="foobar"
+  legacyOptionalIntField="NULL"
+  mandatoryTimeZoneField="America/Chicago"
+  optionalTimeZoneField="NULL"
+  mandatoryEnumField="ONE"
+  optionalCountryField="NULL"
+  optionalDecimalField="NULL"
+  optionalLocaleField="NULL"
+  optionalTextareaField="NULL"
+  optionalIntField="NULL"
+  optionalDateTimeField="NULL"
+  legacyOptionalDecimalField="NULL"
+  legacyOptionalDateTimeField="NULL"
+  mandatoryStringField="foobar"
+  optionalLongField="NULL"
+  legacyOptionalTimeZoneField="NULL"
+  mandatoryLocaleField="en_US" 
+  optionalStringField="NULL" 
+  optionalPostalCodeField="NULL" 
+  legacyOptionalPostalCodeField="NULL" 
+  mandatoryEmailField="test@liftweb.net"></FieldTypeTestRecord>
+
     val fttrAsJsObj = JsObj(
       ("mandatoryBooleanField", JsFalse),
       ("legacyOptionalBooleanField", JsNull),
@@ -231,6 +278,10 @@ object RecordSpec extends Specification("Record Specification") {
 
     "convert to JsExp (via asJSON)" in {
       fttr.asJSON mustEqual fttrAsJsObj
+    }
+
+    "convert to Elem (via asXml)" in {
+      fttr.asXml mustEqual fttrAsXml
     }
 
     /*  Test broken
