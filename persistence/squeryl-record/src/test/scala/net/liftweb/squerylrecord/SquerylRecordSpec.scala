@@ -352,6 +352,12 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       val columnDefinition = new PostgreSqlAdapter().writeColumnDeclaration(fieldMetaData, false, MySchema)
       columnDefinition.endsWith("numeric(" + Company.employeeSatisfaction.context.getPrecision() +"," + Company.employeeSatisfaction.scale + ")") must_== true
     }
+    
+    forExample("Properly reset the dirty_? flag after loading entities") >> inTransaction {
+      val company = from(companies)(company =>
+        select(company)).page(0, 1).single
+      company.allFields map { f => f.dirty_? must_== false }
+    }
 
   }
 
