@@ -42,44 +42,90 @@ object FieldSpec extends Specification("Record Field Specification") {
   def passBasicTests[A](example: A, mandatory: MandatoryTypedField[A], legacyOptional: MandatoryTypedField[A], optional: OptionalTypedField[A])(implicit m: scala.reflect.Manifest[A]): Unit = {
     val canCheckDefaultValues =
       !mandatory.defaultValue.isInstanceOf[Calendar] // don't try to use the default value of date/time typed fields, because it changes from moment to moment!
+    
+    def commonBehaviorsForMandatory(in: MandatoryTypedField[A]): Unit = {
+      
+		if (canCheckDefaultValues) {
+			"which have the correct initial value" in {
+				in.get must_== in.defaultValue
+			}
+		}
 
+        "which are readable and writable" in {
+          in.set(example)
+          in.get must_== example
+          in.clear
+          in.get must_!= example
+          in.setBox(Box !! example)
+          in.get must_== example
+        }
+
+        if (canCheckDefaultValues) {
+	        "which correctly clear back to the default value" in {
+	          in.set(example)
+	          in.clear
+	          in.get must_== in.defaultValue
+	        }
+        }
+    }
+    
     def commonBehaviorsForAllFlavors(in: TypedField[A]): Unit = {
+      
       if (canCheckDefaultValues) {
-        "which have the correct initial value" in {
-          mandatory.value must_== mandatory.defaultValue
-          mandatory.valueBox must_== mandatory.defaultValueBox
+        "which have the correct initial boxed value" in {
+          in match {
+            case mandatory: MandatoryTypedField[_] =>
+            	mandatory.value must_== mandatory.defaultValue
+            case _ => ()
+          }
+          in.valueBox must_== in.defaultValueBox
         }
       }
 
-      "which are readable and writable" in {
-        mandatory.valueBox must verify(_.isDefined)
-        mandatory.set(example)
-        mandatory.value must_== example
-        mandatory.valueBox must_== Full(example)
-        mandatory.clear
-        mandatory.value must_!= example
-        mandatory.valueBox must_!= Full(example)
-        mandatory.setBox(Full(example))
-        mandatory.value must_== example
-        mandatory.valueBox must_== Full(example)
+      "which have readable and writable boxed values" in {
+        in.setBox(Full(example))
+        in.valueBox must verify(_.isDefined)
+        in.valueBox must_== Full(example)
+        in.clear
+        in.valueBox must_!= Full(example)
       }
 
       if (canCheckDefaultValues) {
-        "which correctly clear back to the default" in {
-          mandatory.valueBox must verify(_.isDefined)
-          mandatory.clear
-          mandatory.valueBox must_== mandatory.defaultValueBox
+        "which correctly clear back to the default box value" in {
+          in.setBox(Full(example))
+          in.valueBox must verify(_.isDefined)
+          in.clear
+          in.valueBox must_== in.defaultValueBox
         }
       }
 
       "which capture error conditions set in" in {
-        mandatory.setBox(Failure("my failure"))
-        mandatory.valueBox must_== Failure("my failure")
+        in.setBox(Failure("my failure"))
+        in.valueBox must_== Failure("my failure")
+      }
+      
+      "which are only flagged as dirty_? when setBox is called with a different value" in {
+        in.clear
+        in match {
+          case owned: OwnedField[_] => owned.owner.runSafe {
+            in.resetDirty
+          }
+          case _ => in.resetDirty
+        }
+        in.dirty_? must_== false
+        val valueBox = in.valueBox
+        in.setBox(valueBox)
+        in.dirty_? must_== false
+        val exampleBox = Full(example)
+        valueBox must verify { v => ! (exampleBox === v) }
+        in.setBox(exampleBox)
+        in.dirty_? must_== true
       }
     }
 
     "support mandatory fields" in {
       commonBehaviorsForAllFlavors(mandatory)
+      commonBehaviorsForMandatory(mandatory)
 
       "which are configured correctly" in {
         mandatory.optional_? must_== false
@@ -98,7 +144,8 @@ object FieldSpec extends Specification("Record Field Specification") {
 
     "support 'legacy' optional fields (override optional_?)" in {
       commonBehaviorsForAllFlavors(legacyOptional)
-
+      commonBehaviorsForMandatory(legacyOptional)
+      
       "which are configured correctly" in {
         legacyOptional.optional_? must_== true
       }
