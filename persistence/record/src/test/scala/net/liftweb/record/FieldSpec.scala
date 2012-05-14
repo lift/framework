@@ -189,7 +189,6 @@ object FieldSpec extends Specification("Record Field Specification") {
               case _ => false
             }) andThen "* [value]" #> ".*"))(fprime)
             val ret: Boolean = Helpers.compareXml(f, fp)
-
             ret must_== true
           }
         }
@@ -217,7 +216,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryBooleanField,
       JsTrue,
       JBool(bool),
-      Full(<input checked="checked" tabIndex="1" value="true" type="checkbox" name=".*" id="mandatoryBooleanField_id"></input><input value="false" type="hidden" name=".*"></input>)
+      Full(<input checked="checked" tabindex="1" value="true" type="checkbox" name=".*" id="mandatoryBooleanField_id"></input><input value="false" type="hidden" name=".*"></input>)
     )
     "support java.lang.Boolean" in {
       rec.mandatoryBooleanField.setFromAny(java.lang.Boolean.TRUE)
