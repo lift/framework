@@ -141,15 +141,30 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
         fieldScale getOrElse super.scale
       }
 
-      private def fieldFor(o: AnyRef) = getter.get.invoke(o).asInstanceOf[TypedField[_ <: AnyRef]]
+      private def fieldFor(o: AnyRef) = getter.get.invoke(o) match {
+        case tf: TypedField[_] => tf
+        case other => org.squeryl.internals.Utils.throwError("Field's used with Squeryl must inherit from net.liftweb.record.TypedField : " + other )
+      }
 
-      override def set(target: AnyRef, value: AnyRef) = {
-        val typedField: TypedField[_] = fieldFor(target)
-        typedField.setFromAny(Box !! value)
+      /**
+       * Sets the value which was retrieved from the DB into the appropriate Record field
+       */
+      override def set(target: AnyRef, value: AnyRef) = target match {
+          case record: Record[_] =>
+            record.runSafe {
+            	val typedField: TypedField[_] = fieldFor(target)
+            	typedField.setFromAny(Box !! value)
+            	typedField.resetDirty
+            }
+          case other =>
+            org.squeryl.internals.Utils.throwError("RecordMetaDataFactory can not set fields on non Record objects : " + other)
       }
 
       override def setFromResultSet(target: AnyRef, rs: ResultSet, index: Int) = set(target, resultSetHandler(rs, index))
 
+      /**
+       * Extracts the value from the field referenced by o that will be stored in the DB
+       */
       override def get(o: AnyRef) = fieldFor(o) match {
         case enumField: EnumTypedField[_] => enumField.valueBox match {
           case Full(enum: Enumeration#Value) => enum.id: java.lang.Integer
@@ -161,7 +176,7 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
         }
         case other => other.valueBox match {
           case Full(c: Calendar) => new Timestamp(c.getTime.getTime)
-          case Full(other) => other
+          case Full(other: AnyRef) => other
           case _ => null
         }
       }
