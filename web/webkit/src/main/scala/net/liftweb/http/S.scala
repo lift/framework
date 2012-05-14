@@ -386,7 +386,10 @@ trait S extends HasParams with Loggable {
 
   private[http] object CurrentLocation extends RequestVar[Box[sitemap.Loc[_]]](request.flatMap(_.location))
 
-  def location: Box[sitemap.Loc[_]] = CurrentLocation.is
+  def location: Box[sitemap.Loc[_]] = CurrentLocation.is or {
+    //try again in case CurrentLocation was accessed before the request was available
+    request flatMap { r => CurrentLocation(r.location) }
+  }
 
 
   /**
