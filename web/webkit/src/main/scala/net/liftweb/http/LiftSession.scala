@@ -547,6 +547,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private val sessionVarSync = new Object
 
   /**
+  * Cache the value of allowing snippet attribute processing
+  */
+  private object allowAttributeProcessing extends TransientRequestVar(LiftRules.allowAttributeSnippets.vend())
+
+  /**
    * A mapping between pages denoted by RenderVersion and
    * functions to execute at the end of the page rendering
    */
@@ -1376,18 +1381,20 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     } yield res
   }
 
-  private def processAttributes(in: MetaData): MetaData = {
+  private def processAttributes(in: MetaData, allow: Boolean): MetaData = {
+    if (!allow) in else {
     in match {
       case Null => Null
       case mine: PrefixedAttribute if (mine.pre == "lift") => {
         mine.key match {
-          case s if s.indexOf('.') > -1 => findAttributeSnippet(s, processAttributes(in.next), mine)
-          case "snippet" => findAttributeSnippet(mine.value.text, processAttributes(in.next))
-          case _ => mine.copy(processAttributes(in.next))
+          case s if s.indexOf('.') > -1 => findAttributeSnippet(s, processAttributes(in.next, allow), mine)
+          case "snippet" => findAttributeSnippet(mine.value.text, processAttributes(in.next, allow))
+          case _ => mine.copy(processAttributes(in.next, allow))
         }
       }
-      case notMine => notMine.copy(processAttributes(in.next))
+      case notMine => notMine.copy(processAttributes(in.next, allow))
     }
+  }
   }
 
   /**
@@ -1578,14 +1585,28 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         }
       }
 
+    def runWhitelist(snippet: String, cls: String, method: String, kids: NodeSeq)(f: => NodeSeq): NodeSeq = {
+      val pf = LiftRules.snippetWhiteList.vend()
+      val pair = (cls, method)
+      if (pf.isDefinedAt(pair)) {
+        val func = pf(pair)
+        func.map(_.apply(kids)) openOr reportSnippetError(page, snippetName,
+                    LiftRules.SnippetFailures.MethodNotFound,
+                    NodeSeq.Empty,
+                    wholeTag)
+        } else f
+  }
+
     val ret: NodeSeq =
       try {
-        snippetName.map(snippet =>
+
+        snippetName.map{snippet =>
+          val (cls, method) = splitColonPair(snippet)
           S.doSnippet(snippet)(
-            (S.locateMappedSnippet(snippet).map(_(kids)) or
+            runWhitelist(snippet, cls, method, kids){(S.locateMappedSnippet(snippet).map(_(kids)) or
               locSnippet(snippet)).openOr(
               S.locateSnippet(snippet).map(_(kids)) openOr {
-                val (cls, method) = splitColonPair(snippet)
+                
                 (locateAndCacheSnippet(cls)) match {
                   // deal with a stateless request when a snippet has
                   // different behavior in stateless mode
@@ -1715,7 +1736,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                     wholeTag)
 
                 }
-              }))).openOr {
+              })})}.openOr {
           reportSnippetError(page, snippetName,
             LiftRules.SnippetFailures.NoNameSpecified,
             NodeSeq.Empty,
@@ -1907,7 +1928,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         }
 
       case v: Elem =>
-        Elem(v.prefix, v.label, processAttributes(v.attributes),
+        Elem(v.prefix, v.label, processAttributes(v.attributes, this.allowAttributeProcessing.is),
           v.scope, processSurroundAndInclude(page, v.child): _*)
 
       case pcd: scala.xml.PCData => pcd

@@ -782,6 +782,36 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val resourceForCurrentLoc: FactoryMaker[() => List[ResourceBundle]] =
     new FactoryMaker(() => () => DefaultRoutines.resourceForCurrentReq()) {}
 
+
+  /**
+  * There may be times when you want to entirely control the templating process.  You can insert
+  * a function to this factory that will do your custom template resolution.  If the PartialFunction
+  * isDefinedAt the given locale/path, then that's the template returned.  In this way, you can
+  * return Empty for a template that's not found and the template will not be found.  Otherwise,
+  * if the function is not defined for the locale/path pair, the normal templating system will
+  * be used.  Also, keep in mind how FactoryMaker can be used... it can be global, per request, etc.
+  */
+  val externalTemplateResolver: FactoryMaker[() => PartialFunction[(Locale, List[String]), Box[NodeSeq]]] =
+  new FactoryMaker(() => (() => Map.empty: PartialFunction[(Locale, List[String]), Box[NodeSeq]])) {}
+
+  /**
+  * There may be times when you want to entirely control the templating process.  You can insert a function
+  * that creates a white list of snippets.  The white list is the exhaustive list of snippets.  The
+  * snippets are class/method pairs.  If the partial function is defined and the result is a Full Box,
+  * the function is run.  If the Box is an EmptyBox, then the result is a snippet lookup failure.  If the
+  * partial function is not defined, then the normal snippet resolution mechanism is used.  Please note that
+  * in Scala a Map is PartialFunction and you can create Maps that have a default value using the withDefaultValue
+  * method.
+  */
+  val snippetWhiteList: FactoryMaker[() => PartialFunction[(String, String), Box[NodeSeq => NodeSeq]]] =
+  new FactoryMaker(() => (() => Map.empty: PartialFunction[(String, String), Box[NodeSeq => NodeSeq]])) {}
+
+  /**
+  * This FactoryMaker can be used to disable the little used attributeSnippets
+  */
+  val allowAttributeSnippets: FactoryMaker[() => Boolean] =
+  new FactoryMaker(() => () => true) {}
+
   private var _sitemap: Box[SiteMap] = Empty
 
   private var sitemapFunc: Box[() => SiteMap] = Empty

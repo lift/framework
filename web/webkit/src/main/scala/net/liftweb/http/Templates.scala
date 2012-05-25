@@ -171,13 +171,20 @@ object Templates {
      yield better performance.  Please don't change this method without chatting with
      me first.  Thanks!  DPP
      */
+
+     val resolver = LiftRules.externalTemplateResolver.vend()
+    val key = (locale, places)
+
+     if (resolver.isDefinedAt(key)) {
+      resolver(key)
+      } else {
     val lrCache = LiftRules.templateCache
     val cache = if (lrCache.isDefined) lrCache.open_! else NoCache
 
     val parserFunction: InputStream => Box[NodeSeq] = 
       S.htmlProperties.htmlParser
 
-    val key = (locale, places)
+
     val tr = cache.get(key)
 
     if (tr.isDefined) tr
@@ -247,6 +254,7 @@ object Templates {
         }
       }
   }
+}
 
   private def lookForClasses(places: List[String]): Box[NodeSeq] = {
     val (controller, action) = places match {
