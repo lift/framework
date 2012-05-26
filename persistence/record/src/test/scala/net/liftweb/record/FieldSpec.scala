@@ -104,22 +104,24 @@ object FieldSpec extends Specification("Record Field Specification") {
         in.valueBox must_== Failure("my failure")
       }
       
-      "which are only flagged as dirty_? when setBox is called with a different value" in {
-        in.clear
-        in match {
-          case owned: OwnedField[_] => owned.owner.runSafe {
-            in.resetDirty
-          }
-          case _ => in.resetDirty
-        }
-        in.dirty_? must_== false
-        val valueBox = in.valueBox
-        in.setBox(valueBox)
-        in.dirty_? must_== false
-        val exampleBox = Full(example)
-        valueBox must verify { v => ! (exampleBox === v) }
-        in.setBox(exampleBox)
-        in.dirty_? must_== true
+      if(canCheckDefaultValues) {
+	      "which are only flagged as dirty_? when setBox is called with a different value" in {
+	        in.clear
+	        in match {
+	          case owned: OwnedField[_] => owned.owner.runSafe {
+	            in.resetDirty
+	          }
+	          case _ => in.resetDirty
+	        }
+	        in.dirty_? must_== false
+	        val valueBox = in.valueBox
+	        in.setBox(valueBox)
+	        in.dirty_? must_== false
+	        val exampleBox = Full(example)
+	        valueBox must verify { v => ! (exampleBox === v) }
+	        in.setBox(exampleBox)
+	        in.dirty_? must_== true
+	      }
       }
     }
 
