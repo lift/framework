@@ -997,6 +997,7 @@ class Req(val path: ParsePath,
    */
   lazy val hostAndPath: String =
     containerRequest.map(r => (r.scheme, r.serverPort) match {
+      case ("http", 80) if r.header("X-SSL").isDefined => "https://" + r.serverName + contextPath
       case ("http", 80) => "http://" + r.serverName + contextPath
       case ("https", 443) => "https://" + r.serverName + contextPath
       case (sch, port) => sch + "://" + r.serverName + ":" + port + contextPath
