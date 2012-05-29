@@ -1448,7 +1448,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Tells Lift if the Ajax JavaScript shoukd be included. By default it is set to true.
    */
-  @volatile var autoIncludeAjax: LiftSession => Boolean = session => true
+  @deprecated("Use autoIncludeAjaxCalc")
+  @volatile var autoIncludeAjax: LiftSession => Boolean = session => autoIncludeAjaxCalc.vend().apply(session)
+
+  val autoIncludeAjaxCalc: FactoryMaker[() => LiftSession => Boolean] = 
+  new FactoryMaker(() => () => (session: LiftSession) => true) {}
 
   /**
    * Define the XHTML validator
