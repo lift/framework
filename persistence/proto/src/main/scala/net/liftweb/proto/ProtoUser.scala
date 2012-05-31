@@ -605,6 +605,18 @@ trait ProtoUser {
     S.session.foreach(_.destroySession())
   }
 
+  /**
+   * There may be times when you want to be another user
+   * for some stack frames.  Here's how to do it.
+   */
+  def doWithUser[T](u: Box[TheUserType])(f: => T): T =
+    curUserId.doWith(u.map(_.userIdAsString)) {
+      curUser.doWith(u) {
+        f
+      }
+    }
+
+
   private object curUserId extends SessionVar[Box[String]](Empty) {
     override lazy val __nameSalt = Helpers.nextFuncName
   }
