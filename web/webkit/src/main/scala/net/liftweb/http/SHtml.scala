@@ -109,11 +109,11 @@ trait SHtml {
     }
   }
 
-  private class ApplicableElem(in: Elem) {
+  class ApplicableElem(in: Elem) {
     def %(attr: ElemAttr): Elem = attr.apply(in)
   }
 
-  private implicit def elemToApplicable(e: Elem): ApplicableElem =
+  implicit def elemToApplicable(e: Elem): ApplicableElem =
     new ApplicableElem(e)
 
   /**

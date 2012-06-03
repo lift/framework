@@ -695,6 +695,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
 }
 
 object MappedField {
+  @deprecated("Automatic conversion to the field's type is not safe and will be removed. Please use field.get instead")
   implicit def mapToType[T, A<:Mapper[A]](in : MappedField[T, A]): T = in.is
 }
 
