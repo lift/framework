@@ -3,12 +3,14 @@ Scalaz support for Lift JSON
 
 This project adds a type class to parse JSON:
 
-    trait JSON[A] {
-      def read(json: JValue): Result[A]
-      def write(value: A): JValue
-    }
+```scala
+trait JSON[A] {
+  def read(json: JValue): Result[A]
+  def write(value: A): JValue
+}
 
-    type Result[A] = ValidationNEL[Error, A]
+type Result[A] = ValidationNEL[Error, A]
+```
 
 Function 'read' returns an Applicative Functor, enabling parsing in an applicative style.
 
@@ -22,7 +24,7 @@ Simple example
 
     scala> case class Address(street: String, zipCode: String)
     scala> case class Person(name: String, age: Int, address: Address)
-  
+
     scala> val json = parse(""" {"street": "Manhattan 2", "zip": "00223" } """)
     scala> (field[String]("street")(json) |@| field[String]("zip")(json)) { Address }
     res0: Success(Address(Manhattan 2,00223))
@@ -36,13 +38,17 @@ can lift functions with pure values into "parsing context". This works well with
     scala> Address.applyJSON(field("street"), field("zip"))(json)
     res2: Success(Address(Manhattan 2,00223))
 
-Function 'applyJSON' above lifts function 
+Function 'applyJSON' above lifts function
 
-    (String, String) => Address 
+```scala
+(String, String) => Address
+```
 
 to
 
-    (JValue => Result[String], JValue => Result[String]) => (JValue => Result[Address])
+```scala
+(JValue => Result[String], JValue => Result[String]) => (JValue => Result[Address])
+```
 
 Example which adds a new type class instance
 --------------------------------------------
@@ -56,25 +62,29 @@ Example which adds a new type class instance
 Validation
 ----------
 
-Applicative style parsing works nicely with validation and data conversion. It is easy to compose 
-transformations with various combinators Scalaz provides. An often used combinator is called a Kleisli 
+Applicative style parsing works nicely with validation and data conversion. It is easy to compose
+transformations with various combinators Scalaz provides. An often used combinator is called a Kleisli
 composition >=>.
 
-    def min(x: Int): Int => Result[Int] = (y: Int) => 
-      if (y < x) Fail("min", y + " < " + x) else y.success
+```scala
+def min(x: Int): Int => Result[Int] = (y: Int) =>
+  if (y < x) Fail("min", y + " < " + x) else y.success
 
-    def max(x: Int): Int => Result[Int] = (y: Int) => 
-      if (y > x) Fail("max", y + " > " + x) else y.success
+def max(x: Int): Int => Result[Int] = (y: Int) =>
+  if (y > x) Fail("max", y + " > " + x) else y.success
 
-    // Creates a function JValue => Result[Person]
-    Person.applyJSON(field("name"), validate[Int]("age") >=> min(18) >=> max(60))
+// Creates a function JValue => Result[Person]
+Person.applyJSON(field("name"), validate[Int]("age") >=> min(18) >=> max(60))
+```
 
 Installation
 ------------
 
 Add dependency to your SBT project description:
 
-    val lift_json_scalaz = "net.liftweb" %% "lift-json-scalaz" % "XXX"
+```scala
+val lift_json_scalaz = "net.liftweb" %% "lift-json-scalaz" % "XXX"
+```
 
 Links
 -----

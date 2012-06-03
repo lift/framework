@@ -19,34 +19,40 @@ You can create a new Lift project using your favorite build system by adding Lif
 
 Create or update your `project/plugins.sbt` file with the `xsbt-web-plugin`:
 
-	libraryDependencies <+= sbtVersion(v => "com.github.siasia" %% "xsbt-web-plugin" % (v+"-0.2.7"))
+```scala
+libraryDependencies <+= sbtVersion(v => "com.github.siasia" %% "xsbt-web-plugin" % (v+"-0.2.7"))
+```
 
 Then, add the plugin and Lift to your `build.sbt` file:
 
-	seq(webSettings :_*)
-	
-	libraryDependencies ++= {
-		val liftVersion = "2.4-M4"
-		Seq(
-		  "net.liftweb" %% "lift-webkit" % liftVersion % "compile",
-		  "org.mortbay.jetty" % "jetty" % "6.1.22" % "container",
-		  "ch.qos.logback" % "logback-classic" % "0.9.26"
-		)
-	}
+```scala
+seq(webSettings :_*)
+
+libraryDependencies ++= {
+	val liftVersion = "2.4"
+	Seq(
+	  "net.liftweb" %% "lift-webkit" % liftVersion % "compile",
+	  "org.mortbay.jetty" % "jetty" % "6.1.22" % "container",
+	  "ch.qos.logback" % "logback-classic" % "0.9.26"
+	)
+}
+```
 
 You can [learn more on the wiki](http://www.assembla.com/wiki/show/liftweb/Using_SBT).
 
 #### Maven:
 
-You can use one of the several archetypes -- `lift-archetype-blank`, `lift-archetype-basic`, `lift-archetype-jpa-basic` -- to generate a new Lift project. You must set `archetypeRepository` and `remoteRepositories` to `http://scala-tools.org/repo-releases` or `http://scala-tools.org/repo-snapshots`, depending on whether you are using a release or the latest SNAPSHOT.
+You can use one of the several archetypes -- `lift-archetype-blank`, `lift-archetype-basic`, `lift-archetype-jpa-basic` -- to generate a new Lift project. You must set `archetypeRepository` and `remoteRepositories` to `https://oss.sonatype.org/content/repositories/releases/` or `https://oss.sonatype.org/content/repositories/snapshots/`, depending on whether you are using a release or the latest SNAPSHOT.
 
 Or, you can add Lift to your `pom.xml` like so:
 
-    <dependency>
-      <groupId>net.liftweb</groupId>
-      <artifactId>lift-mapper_${scala.version}</artifactId>
-      <version>2.4-SNAPSHOT</version>
-    </dependency>
+```xml
+  <dependency>
+    <groupId>net.liftweb</groupId>
+    <artifactId>lift-mapper_${scala.version}</artifactId>
+    <version>2.4-SNAPSHOT</version>
+  </dependency>
+```
 
 Where `${scala.version}` is `2.8.0`, `2.8.1`, `2.9.1` etc.
 
@@ -112,7 +118,7 @@ The Lift wiki is hosted on Assembla and can be found at [http://www.assembla.com
 
 ### ScalaDocs
 
-The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on ScalaTools. You can access the source code-based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 2.4-M4 release can be accessed at [http://scala-tools.org/mvnsites/liftweb-2.4-M4/](http://scala-tools.org/mvnsites/liftweb-2.4-M4/).
+The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on ScalaTools. You can access the source code-based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 2.4 release can be accessed at [http://scala-tools.org/mvnsites/liftweb-2.4/](http://scala-tools.org/mvnsites/liftweb-2.4/).
 
 ## License
 

@@ -1,18 +1,20 @@
 Parsing and formatting utilities for JSON.
 
 A central concept in lift-json library is Json AST which models the structure of
-a JSON document as a syntax tree. 
+a JSON document as a syntax tree.
 
-    sealed abstract class JValue
-    case object JNothing extends JValue // 'zero' for JValue
-    case object JNull extends JValue
-    case class JString(s: String) extends JValue
-    case class JDouble(num: Double) extends JValue
-    case class JInt(num: BigInt) extends JValue
-    case class JBool(value: Boolean) extends JValue
-    case class JField(name: String, value: JValue) extends JValue
-    case class JObject(obj: List[JField]) extends JValue 
-    case class JArray(arr: List[JValue]) extends JValue
+```scala
+sealed abstract class JValue
+case object JNothing extends JValue // 'zero' for JValue
+case object JNull extends JValue
+case class JString(s: String) extends JValue
+case class JDouble(num: Double) extends JValue
+case class JInt(num: BigInt) extends JValue
+case class JBool(value: Boolean) extends JValue
+case class JField(name: String, value: JValue) extends JValue
+case class JObject(obj: List[JField]) extends JValue
+case class JArray(arr: List[JValue]) extends JValue
+```
 
 All features are implemented in terms of above AST. Functions are used to transform
 the AST itself, or to transform the AST between different formats. Common transformations
@@ -43,17 +45,21 @@ Note, replace XXX with correct Lift version.
 
 Add dependency to your project description:
 
-    val lift_json = "net.liftweb" %% "lift-json" % "XXX"
+```scala
+val lift_json = "net.liftweb" %% "lift-json" % "XXX"
+```
 
 ### Maven users
 
 Add dependency to your pom:
 
-    <dependency>
-      <groupId>net.liftweb</groupId>
-      <artifactId>lift-json</artifactId>
-      <version>XXX</version>
-    </dependency>
+```xml
+<dependency>
+  <groupId>net.liftweb</groupId>
+  <artifactId>lift-json</artifactId>
+  <version>XXX</version>
+</dependency>
+```
 
 ### Others
 
@@ -80,15 +86,19 @@ Migration from older versions
 2.2 ->
 ------
 
-Path expressions were changed after 2.2 version. Previous versions returned JField which 
+Path expressions were changed after 2.2 version. Previous versions returned JField which
 unnecessarily complicated the use of the expressions. If you have used path expressions
 with pattern matching like:
 
-    val JField("bar", JInt(x)) = json \ "foo" \ "bar"
+```scala
+val JField("bar", JInt(x)) = json \ "foo" \ "bar"
+```
 
 It is now required to change that to:
 
-    val JInt(x) = json \ "foo" \ "bar"
+```scala
+val JInt(x) = json \ "foo" \ "bar"
+```
 
 Parsing JSON
 ============
@@ -97,7 +107,7 @@ Any valid json can be parsed into internal AST format.
 
     scala> import net.liftweb.json._
     scala> parse(""" { "numbers" : [1, 2, 3, 4] } """)
-    res0: net.liftweb.json.JsonAST.JValue = 
+    res0: net.liftweb.json.JsonAST.JValue =
           JObject(List(JField(numbers,JArray(List(JInt(1), JInt(2), JInt(3), JInt(4))))))
 
 Producing JSON
@@ -109,41 +119,49 @@ DSL rules
 * Primitive types map to JSON primitives.
 * Any seq produces JSON array.
 
-      scala> val json = List(1, 2, 3)
+```
+scala> val json = List(1, 2, 3)
 
-      scala> compact(render(json))
+scala> compact(render(json))
 
-      res0: String = [1,2,3]
+res0: String = [1,2,3]
+```
 
 * Tuple2[String, A] produces field.
 
-      scala> val json = ("name" -> "joe")
+```
+scala> val json = ("name" -> "joe")
 
-      scala> compact(render(json))
+scala> compact(render(json))
 
-      res1: String = {"name":"joe"}
+res1: String = {"name":"joe"}
+```
 
 * ~ operator produces object by combining fields.
 
-      scala> val json = ("name" -> "joe") ~ ("age" -> 35)
+```
+scala> val json = ("name" -> "joe") ~ ("age" -> 35)
 
-      scala> compact(render(json))
+scala> compact(render(json))
 
-      res2: String = {"name":"joe","age":35}
+res2: String = {"name":"joe","age":35}
+```
 
 * Any value can be optional. Field and value is completely removed when it doesn't have a value.
 
-      scala> val json = ("name" -> "joe") ~ ("age" -> Some(35))
+```
+scala> val json = ("name" -> "joe") ~ ("age" -> Some(35))
 
-      scala> compact(render(json))
+scala> compact(render(json))
 
-      res3: String = {"name":"joe","age":35}
+res3: String = {"name":"joe","age":35}
 
-      scala> val json = ("name" -> "joe") ~ ("age" -> (None: Option[Int]))
+scala> val json = ("name" -> "joe") ~ ("age" -> (None: Option[Int]))
 
-      scala> compact(render(json))
+scala> compact(render(json))
 
-      res4: String = {"name":"joe"}
+res4: String = {"name":"joe"}
+```
 
 Example
 -------
@@ -158,7 +176,7 @@ Example
       val winners = List(Winner(23, List(2, 45, 34, 23, 3, 5)), Winner(54, List(52, 3, 12, 11, 18, 22)))
       val lotto = Lotto(5, List(2, 45, 34, 23, 7, 5, 3), winners, None)
 
-      val json = 
+      val json =
         ("lotto" ->
           ("lotto-id" -> lotto.id) ~
           ("winning-numbers" -> lotto.winningNumbers) ~
@@ -213,17 +231,17 @@ Please see more examples in src/test/scala/net/liftweb/json/MergeExamples.scala 
            }""")
 
     scala> val lotto2 = parse("""{
-             "lotto":{ 
+             "lotto":{
                "winners":[{
                  "winner-id":54,
                  "numbers":[52,3,12,11,18,22]
                }]
              }
            }""")
-    
+
     scala> val mergedLotto = lotto1 merge lotto2
     scala> pretty(render(mergedLotto))
-    res0: String = 
+    res0: String =
     {
       "lotto":{
         "lotto-id":5,
@@ -274,10 +292,10 @@ Please see more examples in src/test/scala/net/liftweb/json/JsonQueryExamples.sc
     scala> for { JField("age", JInt(age)) <- json } yield age
     res0: List[BigInt] = List(5, 3)
 
-    scala> for { 
+    scala> for {
              JObject(child) <- json
-             JField("name", JString(name)) <- child 
-             JField("age", JInt(age)) <- child 
+             JField("name", JString(name)) <- child
+             JField("age", JInt(age)) <- child
              if age > 4
            } yield (name, age)
     res1: List[(String, BigInt)] = List((Mary,5))
@@ -285,12 +303,12 @@ Please see more examples in src/test/scala/net/liftweb/json/JsonQueryExamples.sc
 XPath + HOFs
 ------------
 
-Json AST can be queried using XPath like functions. Following REPL session shows the usage of 
-'\\', '\\\\', 'find', 'filter', 'transform', 'remove' and 'values' functions. 
+Json AST can be queried using XPath like functions. Following REPL session shows the usage of
+'\\', '\\\\', 'find', 'filter', 'transform', 'remove' and 'values' functions.
 
     The example json is:
 
-    { 
+    {
       "person": {
         "name": "Joe",
         "age": 35,
@@ -308,12 +326,12 @@ Json AST can be queried using XPath like functions. Following REPL session shows
     scala> import net.liftweb.json._
     scala> import net.liftweb.json.JsonDSL._
 
-    scala> val json = 
+    scala> val json =
       ("person" ->
         ("name" -> "Joe") ~
         ("age" -> 35) ~
-        ("spouse" -> 
-          ("person" -> 
+        ("spouse" ->
+          ("person" ->
             ("name" -> "Marilyn") ~
             ("age" -> 33)
           )
@@ -390,7 +408,7 @@ Indexed path expressions work too and values can be unboxed using type expressio
     scala> json \ "children" \\ classOf[JString]
     res3: List[net.liftweb.json.JsonAST.JString#Values] = List(Mary, Mazy)
 
-    scala> json \ "children" \ classOf[JField] 
+    scala> json \ "children" \ classOf[JField]
     res4: List[net.liftweb.json.JsonAST.JField#Values] = List((name,Mary), (age,5), (name,Mazy), (age,3))
 
 Extracting values
@@ -426,11 +444,11 @@ Please see more examples in src/test/scala/net/liftweb/json/ExtractionExamplesSp
              }
            """)
 
-    scala> json.extract[Person] 
+    scala> json.extract[Person]
     res0: Person = Person(joe,Address(Bulevard,Helsinki),List(Child(Mary,5,Some(Sat Sep 04 18:06:22 EEST 2004)), Child(Mazy,3,None)))
 
-By default the constructor parameter names must match json field names. However, sometimes json 
-field names contain characters which are not allowed characters in Scala identifiers. There's two 
+By default the constructor parameter names must match json field names. However, sometimes json
+field names contain characters which are not allowed characters in Scala identifiers. There's two
 solutions for this (see src/test/scala/net/liftweb/json/LottoExample.scala for bigger example).
 
 Use back ticks.
@@ -542,24 +560,30 @@ Serializing fields of a class
 
 To enable serialization of fields, a FieldSerializer can be added for some type:
 
-    implicit val formats = DefaultFormats + FieldSerializer[WildDog]()
+```scala
+implicit val formats = DefaultFormats + FieldSerializer[WildDog]()
+```
 
-Now the type WildDog (and all subtypes) gets serialized with all its fields (+ constructor parameters). 
+Now the type WildDog (and all subtypes) gets serialized with all its fields (+ constructor parameters).
 FieldSerializer takes two optional parameters which can be used to intercept the field serialization:
 
-    case class FieldSerializer[A: Manifest](
-      serializer:   PartialFunction[(String, Any), Option[(String, Any)]] = Map(),
-      deserializer: PartialFunction[JField, JField] = Map()
-    )
+```scala
+case class FieldSerializer[A: Manifest](
+  serializer:   PartialFunction[(String, Any), Option[(String, Any)]] = Map(),
+  deserializer: PartialFunction[JField, JField] = Map()
+)
+```
 
-Those PartialFunctions are called just before a field is serialized or deserialized. Some useful PFs to 
+Those PartialFunctions are called just before a field is serialized or deserialized. Some useful PFs to
 rename and ignore fields are provided:
 
-    val dogSerializer = FieldSerializer[WildDog](
-      renameTo("name", "animalname") orElse ignore("owner"),
-      renameFrom("animalname", "name"))
+```scala
+val dogSerializer = FieldSerializer[WildDog](
+  renameTo("name", "animalname") orElse ignore("owner"),
+  renameFrom("animalname", "name"))
 
-    implicit val formats = DefaultFormats + dogSerializer
+implicit val formats = DefaultFormats + dogSerializer
+```
 
 Serializing non-supported types
 -------------------------------
@@ -574,14 +598,14 @@ by providing following serializer.
            }
 
     scala> class IntervalSerializer extends CustomSerializer[Interval](format => (
-             { 
-               case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) => 
-                 new Interval(s.longValue, e.longValue) 
+             {
+               case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) =>
+                 new Interval(s.longValue, e.longValue)
              },
-             { 
+             {
                case x: Interval =>
-                 JObject(JField("start", JInt(BigInt(x.startTime))) :: 
-                         JField("end",   JInt(BigInt(x.endTime))) :: Nil) 
+                 JObject(JField("start", JInt(BigInt(x.startTime))) ::
+                         JField("end",   JInt(BigInt(x.endTime))) :: Nil)
              }
            ))
 
@@ -595,16 +619,18 @@ Extensions
 
 Module lift-json-ext contains extensions to extraction and serialization. Following types are supported.
 
-    // Lift's box
-    implicit val formats = net.liftweb.json.DefaultFormats + new JsonBoxSerializer
+```scala
+// Lift's box
+implicit val formats = net.liftweb.json.DefaultFormats + new JsonBoxSerializer
 
-    // Scala enums
-    implicit val formats = net.liftweb.json.DefaultFormats + new EnumSerializer(MyEnum)
-    // or
-    implicit val formats = net.liftweb.json.DefaultFormats + new EnumNameSerializer(MyEnum)
+// Scala enums
+implicit val formats = net.liftweb.json.DefaultFormats + new EnumSerializer(MyEnum)
+// or
+implicit val formats = net.liftweb.json.DefaultFormats + new EnumNameSerializer(MyEnum)
 
-    // Joda Time
-    implicit val formats = net.liftweb.json.DefaultFormats ++ JodaTimeSerializers.all
+// Joda Time
+implicit val formats = net.liftweb.json.DefaultFormats ++ JodaTimeSerializers.all
+```
 
 XML support
 ===========
@@ -623,7 +649,7 @@ Please see more examples in src/test/scala/net/liftweb/json/XmlExamples.scala
                  <id>2</id>
                  <name>David</name>
                </user>
-             </users>   
+             </users>
 
     scala> val json = toJson(xml)
     scala> pretty(render(json))
@@ -714,7 +740,7 @@ Q1: I have a JSON object and I want to extract it to a case class:
 
 But extraction fails:
 
-    scala> parse(json).extract[Person]                                                  
+    scala> parse(json).extract[Person]
     net.liftweb.json.MappingException: Parsed JSON values do not match with class constructor
 
 A1:
