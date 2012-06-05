@@ -26,7 +26,7 @@ Then, add the plugin and Lift to your `build.sbt` file:
 	seq(webSettings :_*)
 	
 	libraryDependencies ++= {
-		val liftVersion = "2.4-M4"
+		val liftVersion = "2.4"
 		Seq(
 		  "net.liftweb" %% "lift-webkit" % liftVersion % "compile",
 		  "org.mortbay.jetty" % "jetty" % "6.1.22" % "container",
@@ -45,7 +45,7 @@ Or, you can add Lift to your `pom.xml` like so:
     <dependency>
       <groupId>net.liftweb</groupId>
       <artifactId>lift-mapper_${scala.version}</artifactId>
-      <version>2.4-SNAPSHOT</version>
+      <version>2.4</version>
     </dependency>
 
 Where `${scala.version}` is `2.8.0`, `2.8.1`, `2.9.1` etc.
@@ -112,7 +112,7 @@ The Lift wiki is hosted on Assembla and can be found at [http://www.assembla.com
 
 ### ScalaDocs
 
-The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on ScalaTools. You can access the source code-based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 2.4-M4 release can be accessed at [http://scala-tools.org/mvnsites/liftweb-2.4-M4/](http://scala-tools.org/mvnsites/liftweb-2.4-M4/).
+The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on ScalaTools. You can access the source code-based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 2.4 release can be accessed at [http://scala-tools.org/mvnsites/liftweb-2.4/](http://scala-tools.org/mvnsites/liftweb-2.4/).
 
 ## License
 
