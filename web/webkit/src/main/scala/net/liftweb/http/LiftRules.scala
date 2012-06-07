@@ -301,14 +301,18 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var makeCometBreakoutDecision: (LiftSession, Req) => Unit =
   (session, req) => {
     // get the open sessions to the host (this means that any DNS wildcarded
-    // Comet requests will not be counted
-    val which = session.cometForHost(req.hostAndPath)
+    // Comet requests will not be counted), as well as all invalid/expired
+    // sessions
+    val (which, invalid) = session.cometForHost(req.hostAndPath)
 
     // get the maximum requests given the browser type
     val max = maxConcurrentRequests.vend(req) - 2 // this request and any open comet requests
 
     // dump the oldest requests
     which.drop(max).foreach {
+      case (actor, req) => actor ! BreakOut()
+    }
+    invalid.foreach {
       case (actor, req) => actor ! BreakOut()
     }
   }

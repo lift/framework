@@ -612,11 +612,33 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     cl.foreach(_._1 ! BreakOut())
   }
 
-  private[http] def cometForHost(hostAndPath: String): List[(LiftActor, Req)] =
+  // Returns a 2-tuple: _1 is a list of valid (LiftActor, Req) pairs for
+  // this session that match the given hostAndPath, while _2 is a list
+  // of invalid (LiftActor, Req) pairs.
+  //
+  // Invalid pairs are pairs where the hostAndPath lookup for the
+  // associated Req fails by throwing an exception. Typically this
+  // happens on overloaded containers that leave Reqs with underlying
+  // HttpServletRequests that have expired; these will then throw
+  // NullPointerExceptions when their server name or otherwise are
+  // accessed.
+  private[http] def cometForHost(hostAndPath: String): (List[(LiftActor, Req)], List[(LiftActor, Req)]) =
     synchronized {
       cometList
-    }.filter {
-      case (_, r) => r.hostAndPath == hostAndPath
+    }.foldLeft((List[(LiftActor, Req)](), List[(LiftActor, Req)]())) {
+      (soFar, current) =>
+        (soFar, current) match {
+          case ((valid, invalid), pair @ (_, r)) =>
+            try {
+              if (r.hostAndPath == hostAndPath)
+                (pair :: valid, invalid)
+              else
+                soFar
+            } catch {
+              case exception =>
+                (valid, pair :: invalid)
+            }
+        }
     }
 
   private[http] def enterComet(what: (LiftActor, Req)): Unit = synchronized {
