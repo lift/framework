@@ -163,9 +163,20 @@ trait CssBoundScreen extends ScreenWizardRendered with Loggable {
       } yield traceInline("Binding custom field %s to %s".format(bindingInfo.selector(formName), custom.template),
         bindingInfo.selector(formName) #> bindField(field)(custom.template))
 
+    def dynamicFields: List[CssBindFunc] =
+      for {
+        field <- fields
+        bindingInfo <- field.binding
+        dynamic <- Some(bindingInfo.bindingStyle) collect { case d:Dynamic => d }
+      } yield {
+        val template = dynamic.func()
+        traceInline("Binding dynamic field %s to %s".format(bindingInfo.selector(formName), template),
+          bindingInfo.selector(formName) #> bindField(field)(template))
+      }
+
     def bindFields: CssBindFunc = {
       logger.trace("Binding fields", fields)
-      List(templateFields, selfFields, defaultFields, customFields).flatten.reduceLeft(_ & _)
+      List(templateFields, selfFields, defaultFields, customFields, dynamicFields).flatten.reduceLeft(_ & _)
     }
 
     def bindField(f: ScreenFieldInfo): NodeSeq => NodeSeq = {

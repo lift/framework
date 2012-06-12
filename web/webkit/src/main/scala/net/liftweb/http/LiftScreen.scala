@@ -1672,5 +1672,11 @@ object FieldBinding {
    */
   case class Custom(template: NodeSeq) extends BindingStyle
 
+  /**
+   * Bind the field using the results of a function.  The provided function will be called
+   * every time the field is rendered.
+   */
+  case class Dynamic(func: () => NodeSeq) extends BindingStyle
+
   def apply(fieldName: String) = new FieldBinding(fieldName, Default)
 }
