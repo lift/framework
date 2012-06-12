@@ -102,7 +102,7 @@ trait CssBoundScreen extends ScreenWizardRendered with Loggable {
   }
 
   protected def setLocalAction(s: String) {
-    logger.debug("Setting LocalAction (%s) to %s".format(
+    logger.trace("Setting LocalAction (%s) to %s".format(
       Integer.toString(System.identityHashCode(LocalAction), 16), s))
     LocalAction.set(s)
   }
