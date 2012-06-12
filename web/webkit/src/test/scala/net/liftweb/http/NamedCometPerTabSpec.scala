@@ -41,7 +41,11 @@ object NamedCometPerTabSpec extends Specification("NamedCometPerTabSpec Specific
     doBefore {
       val cometA= new CometA{override def name= Full("1")}
       cometA.localSetup
+
+      // HACK! to ensure tests doesn't fail when trying to access actor before they've been registered
+      Thread.sleep(500)
     }
+
     "be created for a comet" in {
       NamedCometListener.getDispatchersFor(Full("1")).foreach(
         actor => actor.open_!.toString must startWith("net.liftweb.http.NamedCometDispatcher")
