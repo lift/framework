@@ -147,7 +147,7 @@ object BuildDef extends Build {
 
   lazy val mongodb =
     persistenceProject("mongodb")
-        .dependsOn(json_ext)
+        .dependsOn(json_ext, util)
         .settings(parallelExecution in Test := false,
                   libraryDependencies += mongo_driver,
                   initialize in Test <<= (resourceDirectory in Test) { rd =>
