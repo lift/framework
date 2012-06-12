@@ -117,3 +117,7 @@ The ScalaDocs for each release of Lift, in additional to the actual JARs, are av
 ## License
 
 Lift is open source software released under the **Apache 2.0 license**. You must be a committer with signed comitter agreement to submit patches. You can learn more about Lift's comitter policy on the Lift website.
+
+## Continuous Integration
+
+SNAPSHOTs are built at CloudBees: https://lift.ci.cloudbees.com/
