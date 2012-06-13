@@ -658,17 +658,34 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
         .optionalStringField("optional string")
         .save
 
-      fttr.mandatoryBooleanField(false)
-      fttr.mandatoryDecimalField(BigDecimal("3.14"))
-      fttr.mandatoryDoubleField(1999)
-      fttr.mandatoryEnumField(MyTestEnum.ONE)
-      fttr.mandatoryIntField(99)
-      fttr.mandatoryLongField(100L)
-      fttr.mandatoryStringField("string")
-      fttr.optionalStringField(Empty)
-      fttr.legacyOptionalStringField(Empty)
+      fttr.mandatoryBooleanField(true)
+      fttr.mandatoryBooleanField.dirty_? must_== true
 
-      fttr.dirtyFields.length must_== 9
+      fttr.mandatoryDecimalField(BigDecimal("3.14"))
+      fttr.mandatoryDecimalField.dirty_? must_== true
+
+      fttr.mandatoryDoubleField(1999)
+      fttr.mandatoryDoubleField.dirty_? must_== true
+
+      fttr.mandatoryEnumField(MyTestEnum.TWO)
+      fttr.mandatoryEnumField.dirty_? must_== true
+
+      fttr.mandatoryIntField(99)
+      fttr.mandatoryIntField.dirty_? must_== true
+
+      fttr.mandatoryLongField(100L)
+      fttr.mandatoryLongField.dirty_? must_== true
+
+      fttr.mandatoryStringField("string")
+      fttr.mandatoryStringField.dirty_? must_== true
+
+      fttr.optionalStringField(Empty)
+      fttr.optionalStringField.dirty_? must_== true
+
+      fttr.legacyOptionalStringField(Empty)
+      fttr.legacyOptionalStringField.dirty_? must_== true
+
+      fttr.dirtyFields.length must_== 7
       fttr.update
       fttr.dirtyFields.length must_== 0
 
@@ -682,7 +699,10 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       val fttr2 = FieldTypeTestRecord.createRecord.save
 
       fttr2.legacyOptionalStringField("legacy optional string")
+      fttr2.legacyOptionalStringField.dirty_? must_== true
+
       fttr2.optionalStringField("optional string")
+      fttr2.optionalStringField.dirty_? must_== true
 
       fttr2.dirtyFields.length must_== 2
       fttr2.update
@@ -704,13 +724,28 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
         .legacyOptionalObjectIdField(ObjectId.get)
         .save
 
+      Thread.sleep(100) // sleep so dates will be different
+
       mfttr.mandatoryDateField(new Date)
+      mfttr.mandatoryDateField.dirty_? must_== true
+
       mfttr.mandatoryJsonObjectField(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")))
+      mfttr.mandatoryJsonObjectField.dirty_? must_== true
+
       mfttr.mandatoryObjectIdField(ObjectId.get)
+      mfttr.mandatoryObjectIdField.dirty_? must_== true
+
       mfttr.mandatoryPatternField(Pattern.compile("^Mon", Pattern.CASE_INSENSITIVE))
+      mfttr.mandatoryPatternField.dirty_? must_== true
+
       mfttr.mandatoryUUIDField(UUID.randomUUID)
+      mfttr.mandatoryUUIDField.dirty_? must_== true
+
       mfttr.legacyOptionalDateField(Empty)
+      mfttr.legacyOptionalDateField.dirty_? must_== true
+
       mfttr.legacyOptionalObjectIdField(Empty)
+      mfttr.legacyOptionalObjectIdField.dirty_? must_== true
 
       mfttr.dirtyFields.length must_== 7
       mfttr.update
@@ -726,7 +761,10 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       val mfttr2 = MongoFieldTypeTestRecord.createRecord.save
 
       mfttr2.legacyOptionalDateField(new Date)
+      mfttr2.legacyOptionalDateField.dirty_? must_== true
+
       mfttr2.legacyOptionalObjectIdField(ObjectId.get)
+      mfttr2.legacyOptionalObjectIdField.dirty_? must_== true
 
       mfttr2.dirtyFields.length must_== 2
       mfttr2.update
@@ -746,9 +784,16 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       val ltr = ListTestRecord.createRecord.save
 
       ltr.mandatoryStringListField(List("abc", "def", "ghi"))
+      ltr.mandatoryStringListField.dirty_? must_== true
+
       ltr.mandatoryIntListField(List(4, 5, 6))
+      ltr.mandatoryIntListField.dirty_? must_== true
+
       ltr.mandatoryMongoJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
+      ltr.mandatoryMongoJsonObjectListField.dirty_? must_== true
+
       ltr.mongoCaseClassListField(List(MongoCaseClassTestObject(1,"str")))
+      ltr.mongoCaseClassListField.dirty_? must_== true
 
       ltr.dirtyFields.length must_== 4
       ltr.update
@@ -768,7 +813,10 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       val mtr = MapTestRecord.save
 
       mtr.mandatoryStringMapField(Map("a" -> "abc", "b" -> "def", "c" -> "ghi"))
+      mtr.mandatoryStringMapField.dirty_? must_== true
+
       mtr.mandatoryIntMapField(Map("a" -> 4, "b" -> 5, "c" -> 6))
+      mtr.mandatoryIntMapField.dirty_? must_== true
 
       mtr.dirtyFields.length must_== 2
       mtr.update
@@ -801,7 +849,10 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
       val sr2 = SubRecord.createRecord.name("SubRecord2")
 
       srtr.mandatoryBsonRecordField(sr1)
+      srtr.mandatoryBsonRecordField.dirty_? must_== true
+
       srtr.mandatoryBsonRecordListField(List(sr1,sr2))
+      srtr.mandatoryBsonRecordListField.dirty_? must_== true
 
       srtr.dirtyFields.length must_== 2
       srtr.update
