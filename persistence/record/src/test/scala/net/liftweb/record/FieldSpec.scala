@@ -408,11 +408,13 @@ object FieldSpec extends Specification("Record Field Specification") {
       )
     }
 
-    "validate the unencrypted value" in {
+    "correctly validate the unencrypted value" in {
       val rec = PasswordTestRecord.createRecord.password("testvalue")
-
+      rec.validate must_== Nil
+      
+      rec.password("1234")
       rec.validate must_== (
-        FieldError(rec.password, Text("no way!")) ::
+        FieldError(rec.password, Text(S.??("password.too.short"))) ::
         Nil
       )
     }
