@@ -37,8 +37,8 @@ object PasswordField {
 }
 
 trait PasswordTypedField extends TypedField[String] {
-  private var invalidMsg : String = ""
-  private[record] var validatedValue: Box[String] = valueBox
+  private var invalidPw = false
+  private var invalidMsg = ""
 
   def match_?(toTest: String): Boolean = 
 	  valueBox.filter(_.length > 0)
@@ -46,32 +46,45 @@ trait PasswordTypedField extends TypedField[String] {
 	          .openOr(false) 
 
   override def set_!(in: Box[String]): Box[String] = {
-    // can't be hashed here, because this get's called when setting value from database
+    // can't be hashed here, because this get's called when setting value from database (Squeryl)
     in
   }
   
   def setPlain(in: String): String = setBoxPlain(Full(in)) openOr defaultValue
   
   def setBoxPlain(in: Box[String]): Box[String] = {
-    validatedValue = in
-    val hashed = in.map(s => PasswordField.hashpw(s) openOr s)
-    setBox(hashed)
+    if(!validatePassword(in)) {
+      val hashed = in.map(s => PasswordField.hashpw(s) openOr s)
+      setBox(hashed)
+    }
+    else setBox(defaultValueBox)
   }
 
+  /**
+   * If passed value is an Array[String] or a List[String] containing 2 items with equal value, it it hashes this value and sets it as new password.
+   * If passed value is a String or a Full[String] that starts with "$2a$", it assumes that it's a hashed version, thus sets it as it is, without hashing.
+   * In any other case, it fails the validation with "Passwords do not match" error
+   */
   def setFromAny(in: Any): Box[String] = {
     in match {
-      case (a: Array[String]) if (a.length == 2 && a(0)   == a(1)) => setBox(Full(a(0)))
-      case (h1: String) :: (h2: String) :: Nil if h1 == h2 => setBox(Full(h1))
-      case _ => genericSetFromAny(in)
+      case (a: Array[String]) if (a.length == 2 && a(0)   == a(1)) => setBoxPlain(Full(a(0)))
+      case (h1: String) :: (h2: String) :: Nil if h1 == h2 => setBoxPlain(Full(h1))
+      case (hash: String) if(hash.startsWith("$2a$")) => setBox(Full(hash))
+      case Full(hash: String) if(hash.startsWith("$2a$")) => setBox(Full(hash))
+      case _ => {invalidPw = true; invalidMsg = S.??("passwords.do.not.match"); Failure(invalidMsg)}
     }
   }
 
   def setFromString(s: String): Box[String] = s match {
-    case "" if optional_? => setBox(Empty)
-    case _                => setBox(Full(s))
+    case "" if optional_? => setBoxPlain(Empty)
+    case _                => setBoxPlain(Full(s))
   }
 
-  override def validate: List[FieldError] = runValidation(validatedValue)
+  override def validate: List[FieldError] = {
+    if (!invalidPw && valueBox != defaultValueBox) Nil
+    else if (invalidPw) List(FieldError(this, Text(invalidMsg)))
+    else List(FieldError(this, Text(notOptionalErrorMessage)))
+  }
 
   override def notOptionalErrorMessage = S.??("password.must.be.set")
 
@@ -87,26 +100,29 @@ trait PasswordTypedField extends TypedField[String] {
       case _ => Full(elem)
     }
 
-  protected def validatePassword(pwdValue: ValueType): List[FieldError] = 
-    toBoxMyType(pwdValue) match {
-      case Empty|Full(""|null) if !optional_? => Text(notOptionalErrorMessage)
-      case Full(s) if s == "*" || s == PasswordField.blankPw || s.length < PasswordField.minPasswordLength => 
-        Text(S.??("password.too.short"))
-      case _ => Nil
+  protected def validatePassword(pwdValue: Box[String]): Boolean = {
+    pwdValue match {
+      case Empty|Full(""|null) if !optional_? => { invalidPw = true ; invalidMsg = notOptionalErrorMessage }
+      case Full(s) if s == "" || s == PasswordField.blankPw || s.length < PasswordField.minPasswordLength => 
+        { invalidPw = true ; invalidMsg = S.??("password.too.short") }
+      case _ => { invalidPw = false; invalidMsg = "" }
     }
-
-  override def validations = validatePassword _ :: Nil
+    invalidPw
+  }
 
   def defaultValue = ""
 
   def asJs = valueBox.map(Str) openOr JsNull
 
   def asJValue: JValue = valueBox.map(v => JString(v)) openOr (JNothing: JValue)
+  
   def setFromJValue(jvalue: JValue): Box[MyType] = jvalue match {
-    case JNothing|JNull if optional_? => setBox(Empty)
+    case JNothing|JNull if optional_? => setBoxPlain(Empty)
     case JString(s)                   => setFromString(s)
-    case other                        => setBox(FieldHelpers.expectedA("JString", other))
+    case other                        => setBoxPlain(FieldHelpers.expectedA("JString", other))
   }
+  
+  
 }
 
 class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
@@ -120,11 +136,13 @@ class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
   def owner = rec
   
   override def apply(in: Box[String]): OwnerType = 
-  {
-    validatedValue = in
-    val hashed = in.map(s => PasswordField.hashpw(s) openOr s)
-    super.apply(hashed)
-  }  
+    if(owner.meta.mutable_?) {
+      this.setBoxPlain(in)
+      owner
+    } else {
+      owner.meta.createWithMutableField(owner, this, in)
+    }
+
 }
 
 class OptionalPasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
@@ -138,10 +156,11 @@ class OptionalPasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
   def owner = rec
   
   override def apply(in: Box[String]): OwnerType = 
-  {
-    validatedValue = in
-    val hashed = in.map(s => PasswordField.hashpw(s) openOr s)
-    super.apply(hashed)
-  }    
+    if(owner.meta.mutable_?) {
+      this.setBoxPlain(in)
+      owner
+    } else {
+      owner.meta.createWithMutableField(owner, this, in)
+    }
 }
 
