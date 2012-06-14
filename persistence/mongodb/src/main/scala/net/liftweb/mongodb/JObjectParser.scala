@@ -36,10 +36,12 @@ object JObjectParser extends SimpleInjector {
     *
     * <code>JObjectParser.stringProcessor.default.set((s: String) => s)</code>
     */
-  val stringProcessor = new Inject(() => (s: String) => {
+  val stringProcessor = new Inject(() => defaultStringProcessor _) {}
+
+  def defaultStringProcessor(s: String): Object = {
     if (ObjectId.isValid(s)) new ObjectId(s)
     else s
-  }) {}
+  }
 
   /*
   * Parse a JObject into a DBObject

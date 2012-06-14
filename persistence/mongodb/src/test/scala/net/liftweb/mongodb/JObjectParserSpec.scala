@@ -45,14 +45,14 @@ object JObjectParserSpec extends Specification("JObjectParser Specification") {
       }
     }
     "not convert strings to ObjectId when configured not to" in {
-      JObjectParser.stringProcessor.default.set((s: String) => s)
+      JObjectParser.stringProcessor.doWith((s: String) => s) {
+        val (oid, dbo) = buildTestData
+        val xval = tryo(dbo.get("x").asInstanceOf[String])
 
-      val (oid, dbo) = buildTestData
-      val xval = tryo(dbo.get("x").asInstanceOf[String])
-
-      xval must notBeEmpty
-      xval.foreach { x =>
-        x must_== oid.toString
+        xval must notBeEmpty
+        xval.foreach { x =>
+          x must_== oid.toString
+        }
       }
     }
   }
