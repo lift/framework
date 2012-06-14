@@ -323,7 +323,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
   "MongoCaseClassListField" should {
     "setFromAny a List" in {
       val rec = ListTestRecord.createRecord
-      val lst = List(MongoCaseClassTestObject(1,"str1"))
+      val lst = List(MongoCaseClassTestObject(1,"str1", MyTestEnum.THREE))
       rec.mongoCaseClassListField.setFromAny(lst)
       rec.mongoCaseClassListField.value must_== lst
     }
