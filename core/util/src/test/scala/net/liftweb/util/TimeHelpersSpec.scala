@@ -128,6 +128,12 @@ object TimeHelpersSpec extends Specification("TimeHelpers Specification") with S
     "provide a noTime function on Date objects to transform a date into a date at the same day but at 00:00" in {
       hourFormat(timeNow.noTime) must_== "00:00:00"
     }
+
+    "make sure noTime does not change the day" in {
+      dateFormatter.format(0.days.ago.noTime) must_== dateFormatter.format(new Date())
+      dateFormatter.format(3.days.ago.noTime) must_== dateFormatter.format(new Date(millis - (3 * 24 * 60 * 60 * 1000)))
+    }
+
     "provide a day function returning the day of month corresponding to a given date (relative to UTC)" in {
       day(today.setTimezone(utc).setDay(3).getTime) must_== 3
     }
