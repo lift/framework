@@ -87,14 +87,15 @@ object BuildDef extends Build {
   lazy val webkit =
     webProject("webkit")
         .dependsOn(util, testkit % "provided")
-        .settings((org.scala_tools.sbt.yuiCompressor.Plugin.yuiSettings ++ Seq(description := "Webkit Library",
+        .settings(yuiCompressor.Plugin.yuiSettings: _*)
+        .settings(description := "Webkit Library",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv =>
                     Seq(commons_fileupload, servlet_api, specs(sv).copy(configurations = Some("provided")), jetty6, jwebunit)
                   },
                   initialize in Test <<= (sourceDirectory in Test) { src =>
                     System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
-                  })):_*)
+                  })
 
   lazy val wizard =
     webProject("wizard")
