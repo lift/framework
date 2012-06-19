@@ -580,7 +580,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     }
 
     // We need to determine the full set of IDs that need messages rendered.
-    // TODO: Change to use "distinct" when 2.7.7 support is dropped
     val idSet = (S.idMessages((S.errors)) ++
                  S.idMessages((S.warnings)) ++
                  S.idMessages((S.notices))).map(_._1).distinct
