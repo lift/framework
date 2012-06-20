@@ -1316,11 +1316,14 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   private def logSnippetFailure(sf: SnippetFailure) = logger.info("Snippet Failure: " + sf)
 
   /**
-   * Set to false if you do not want Ajax/Comet requests that are not associated with a session
-   * to cause a page reload
+   * Set to false if you do not want ajax/comet requests that are not
+   * associated with a session to call their sessionLoss handlers (these
+   * are the client-side liftAjax.sessionLoss and liftComet.sessionLoss functions).
    */
-  @volatile var redirectAjaxOnSessionLoss = true
-
+  @volatile var redirectAsyncOnSessionLoss = true
+  @deprecated("Use redirectAsyncOnSessionLoss instead.", "2.5")
+  def redirectAjaxOnSessionLoss = redirectAsyncOnSessionLoss
+  def redirectAjaxOnSessionLoss_=(updated:Boolean) = redirectAsyncOnSessionLoss = updated
 
   /**
    * The sequence of partial functions (pattern matching) for handling converting an exception to something to
