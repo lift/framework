@@ -18,7 +18,7 @@ package net.liftweb
 package mongodb
 package record
 
-import java.util.{Date, UUID}
+import java.util.{Date, Locale, UUID}
 import java.util.regex.Pattern
 
 import org.bson.types.ObjectId
@@ -621,7 +621,7 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
         r.mandatoryIntField.is must_== 0
         r.legacyOptionalIntField.valueBox must beEmpty
         r.optionalIntField.is must beEmpty
-        r.mandatoryLocaleField.is must_== "en_US"
+        r.mandatoryLocaleField.is must_== Locale.getDefault.toString
         r.legacyOptionalLocaleField.valueBox must beEmpty
         r.optionalLocaleField.is must beEmpty
         r.mandatoryLongField.is must_== 0L
