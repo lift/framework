@@ -214,22 +214,26 @@ class LiftServlet extends Loggable {
       }.isDefined
     }
 
-    def isCometOrAjax(req: Req): Boolean = {
-      val wp = req.path.wholePath
-      val len = wp.length
-
-      if (len < 2) false
+    val wp = req.path.wholePath
+    val pathLen = wp.length
+    def isComet: Boolean = {
+      if (pathLen < 2) false
       else {
         val kindaComet = wp.head == LiftRules.cometPath
         val cometScript = (len >= 3 && kindaComet &&
           wp(2) == LiftRules.cometScriptName())
+
+        (kindaComet && !cometScript) && req.acceptsJavaScript_?
+      }
+    }
+    def isAjax: Boolean = {
+      if (pathLen < 2) false
+      else {
         val kindaAjax = wp.head == LiftRules.ajaxPath
-        val ajaxScript = len >= 2 && kindaAjax &&
+        val ajaxScript = kindaAjax &&
           wp(1) == LiftRules.ajaxScriptName()
 
-
-        ((kindaComet && !cometScript) || (kindaAjax && !ajaxScript)) &&
-          req.acceptsJavaScript_?
+        (kindaAjax && !ajaxScript) && req.acceptsJavaScript_?
       }
     }
 
@@ -241,20 +245,23 @@ class LiftServlet extends Loggable {
         LiftRules.notFoundOrIgnore(req, Empty)
       } else if (!authPassed_?(req)) {
         Full(LiftRules.authentication.unauthorizedResponse)
-      } else if (LiftRules.redirectAjaxOnSessionLoss && !hasSession(sessionIdCalc.id) && isCometOrAjax(req)) {
-
+      } else if (LiftRules.redirectAsyncOnSessionLoss && !hasSession(sessionIdCalc.id) && (isComet || isAjax)) {
         val theId = sessionIdCalc.id
-        // okay after 2 attempts to redirect, just
-        // ignore calls to the comet URL
+
+        // okay after 2 attempts to redirect, just ignore calls to the
+        // async URL
         if (recentlyChecked(theId) > 1) {
           Empty
         } else {
-          Full(JavaScriptResponse(js.JE.JsRaw("window.location = " +
-            (req.request.
-              header("Referer") openOr
-              "/").encJs).cmd, Nil, Nil, 200))
+          val cmd =
+            if (isComet)
+              js.JE.JsRaw("liftComet.sessionLoss(); lift_toWatch = {};").cmd
+            else
+              js.JE.JsRaw("liftAjax.sessionLoss()").cmd
+
+          Full(new JsCommands(cmd).toResponse)
         }
-      } else
+      }
       // if the request is matched is defined in the stateless table, dispatch
       if (S.statelessInit(req) {
         tmpStatelessHolder = NamedPF.applyBox(req,
@@ -556,7 +563,7 @@ class LiftServlet extends Loggable {
           sessionActor.getAsyncComponent(name).toList.map(c => (c, toLong(when)))
       }
 
-    if (actors.isEmpty) Left(Full(new JsCommands(new JE.JsRaw("lift_toWatch = {}") with JsCmd :: JsCmds.RedirectTo(LiftRules.noCometSessionPage) :: Nil).toResponse))
+    if (actors.isEmpty) Left(Full(new JsCommands(js.JE.JsRaw("liftComet.sessionLoss(); lift_toWatch = {};").cmd).toResponse))
     else requestState.request.suspendResumeSupport_? match {
       case true => {
         setupContinuation(requestState, sessionActor, actors)
