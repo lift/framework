@@ -823,7 +823,7 @@ trait BindHelpers {
    * @deprecated use -> instead
    */
   @deprecated("use -> instead")
-  implicit def symToBPAssoc(in: Symbol): SuperArrowAssoc = new SuperArrowAssoc(in.name)
+  implicit def symToSAAssoc(in: Symbol): SuperArrowAssoc = new SuperArrowAssoc(in.name)
 
   /**
    * Experimental extension to bind which passes in an additional "parameter" from the XHTML to the transform
