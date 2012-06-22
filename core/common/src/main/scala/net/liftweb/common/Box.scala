@@ -404,6 +404,15 @@ sealed abstract class Box[+A] extends Product {
 
   /**
    * Determines equality based upon the contents of this Box instead of the box itself.
+   * As a result, it is not symmetric. Which means that for
+   *
+   * <pre name="code" class="scala">
+   *     val foo = "foo"
+   *     val boxedFoo = Full(foo)
+   *     foo == boxedFoo //is false
+   *     boxedFoo == foo //is true
+   * </pre>
+   *
    * For Full and Empty, this has the expected behavior. Equality in terms of Failure
    * checks for equivalence of failure causes.
    */
