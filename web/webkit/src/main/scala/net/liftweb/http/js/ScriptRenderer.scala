@@ -112,7 +112,7 @@ object ScriptRenderer {
        },
 
 
-      lift_sessionLoss: function() {
+      lift_sessionLost: function() {
         location.reload();
       },
 
@@ -256,7 +256,7 @@ object ScriptRenderer {
         setTimeout("liftComet.lift_cometEntry();",""" + LiftRules.cometFailureRetryTimeout + """);
       },
 
-      lift_sessionLoss: function() { """ +
+      lift_sessionLost: function() { """ +
         JsCmds.RedirectTo(LiftRules.noCometSessionPage).toJsCmd +
       """},
 

@@ -601,7 +601,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Where to send the user if there's no comet session. Note that this is
    * contingent on an unchanged LiftRules.noCometSessionCommand and on
-   * liftComet.lift_sessionLoss not being overridden client-side.
+   * liftComet.lift_sessionLost not being overridden client-side.
    */
   @scala.deprecated("Use LiftRules.noCometSessionCmd.")
   @volatile var noCometSessionPage = "/"
@@ -613,15 +613,15 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * request comes in for a session that has no associated comet actors
    * (this typically happens when the server restarts).
    *
-   * By default, we invoke liftComet.lift_sessionLoss, which can be
+   * By default, we invoke liftComet.lift_sessionLost, which can be
    * overridden client-side for more complex work.
-   * liftComet.lift_sessionLoss redirects to
+   * liftComet.lift_sessionLost redirects to
    * LiftRules.noCometSessionPage by default for now, though
    * noCometSessionPage is deprecated and will be replaced by a
    * default of reloading the current page.
    */
   val noCometSessionCmd = new FactoryMaker[JsCmd](
-    () => JsCmds.Run("liftComet.lift_sessionLoss()")
+    () => JsCmds.Run("liftComet.lift_sessionLost()")
   ) {}
 
   /**
@@ -629,12 +629,12 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * session is considered lost when either an ajax request comes in for
    * a session that does not exist on the server.
    *
-   * By default, we invoke liftAjax.lift_sessionLoss, which can be
+   * By default, we invoke liftAjax.lift_sessionLost, which can be
    * overridden client-side for more complex work.
-   * liftAjax.lift_sessionLoss reloads the page by default.
+   * liftAjax.lift_sessionLost reloads the page by default.
    */
   val noAjaxSessionCmd = new FactoryMaker[JsCmd](
-    () => JsCmds.Run("liftAjax.lift_sessionLoss()")
+    () => JsCmds.Run("liftAjax.lift_sessionLost()")
   ) {}
 
   /**
@@ -1351,8 +1351,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Set to false if you do not want ajax/comet requests that are not
-   * associated with a session to call their sessionLoss handlers (these
-   * are the client-side liftAjax.sessionLoss and liftComet.sessionLoss functions).
+   * associated with a session to call their respective session
+   * loss handlers (set via LiftRules.noAjaxSessionCmd and
+   * LiftRules.noCometSessionCmd).
    */
   @volatile var redirectAsyncOnSessionLoss = true
   @deprecated("Use redirectAsyncOnSessionLoss instead.")
