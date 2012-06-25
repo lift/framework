@@ -1411,8 +1411,8 @@ private[http] class XmlOrJsCmd(val id: String,
    * Returns the JsCmd that will be sent to client
    */
   def toJavaScript(session: LiftSession, displayAll: Boolean): JsCmd = {
-    var ret: JsCmd = JsCmds.JsTry(JsCmds.Run("destroy_" + id + "();"), false) &
-      ((if (ignoreHtmlOnJs) Empty else xml, javaScript, displayAll) match {
+    val updateJs =
+      (if (ignoreHtmlOnJs) Empty else xml, javaScript, displayAll) match {
         case (Full(xml), Full(js), false) => LiftRules.jsArtifacts.setHtml(id, Helpers.stripHead(xml)) & JsCmds.JsTry(js, false)
         case (Full(xml), _, false) => LiftRules.jsArtifacts.setHtml(id, Helpers.stripHead(xml))
         case (Full(xml), Full(js), true) => LiftRules.jsArtifacts.setHtml(id + "_outer", (
@@ -1421,7 +1421,21 @@ private[http] class XmlOrJsCmd(val id: String,
           spanFunc(0, Helpers.stripHead(xml)) ++ fixedXhtml.openOr(Text(""))))
         case (_, Full(js), _) => js
         case _ => JsCmds.Noop
-      }) & JsCmds.JsTry(JsCmds.Run("destroy_" + id + " = function() {" + (destroy.openOr(JsCmds.Noop).toJsCmd) + "};"), false)
+      }
+    val fullUpdateJs =
+      LiftRules.cometUpdateExceptionHandler.vend.foldLeft(updateJs) { (commands, catchHandler) =>
+        JsCmds.Run(
+          "try{" +
+            commands.toJsCmd +
+          "}catch(e){" +
+            catchHandler.toJsCmd +
+          "}"
+        )
+      }
+
+    var ret: JsCmd = JsCmds.JsTry(JsCmds.Run("destroy_" + id + "();"), false) &
+       fullUpdateJs &
+       JsCmds.JsTry(JsCmds.Run("destroy_" + id + " = function() {" + (destroy.openOr(JsCmds.Noop).toJsCmd) + "};"), false)
 
     S.appendNotices(notices)
     ret = S.noticesToJsCmd & ret
