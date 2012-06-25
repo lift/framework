@@ -220,7 +220,7 @@ class LiftServlet extends Loggable {
       if (pathLen < 2) false
       else {
         val kindaComet = wp.head == LiftRules.cometPath
-        val cometScript = (len >= 3 && kindaComet &&
+        val cometScript = (pathLen >= 3 && kindaComet &&
           wp(2) == LiftRules.cometScriptName())
 
         (kindaComet && !cometScript) && req.acceptsJavaScript_?
@@ -255,11 +255,11 @@ class LiftServlet extends Loggable {
         } else {
           val cmd =
             if (isComet)
-              js.JE.JsRaw("liftComet.sessionLoss(); lift_toWatch = {};").cmd
+              js.JE.JsRaw(LiftRules.noCometSessionCmd.vend.toJsCmd + ";lift_toWatch = {};").cmd
             else
-              js.JE.JsRaw("liftAjax.sessionLoss()").cmd
+              js.JE.JsRaw(LiftRules.noAjaxSessionCmd.vend.toJsCmd).cmd
 
-          Full(new JsCommands(cmd).toResponse)
+          Full(new JsCommands(cmd :: Nil).toResponse)
         }
       }
       // if the request is matched is defined in the stateless table, dispatch
@@ -563,7 +563,7 @@ class LiftServlet extends Loggable {
           sessionActor.getAsyncComponent(name).toList.map(c => (c, toLong(when)))
       }
 
-    if (actors.isEmpty) Left(Full(new JsCommands(js.JE.JsRaw("liftComet.sessionLoss(); lift_toWatch = {};").cmd).toResponse))
+    if (actors.isEmpty) Left(Full(new JsCommands(LiftRules.noCometSessionCmd.vend :: js.JE.JsRaw("lift_toWatch = {};").cmd :: Nil).toResponse))
     else requestState.request.suspendResumeSupport_? match {
       case true => {
         setupContinuation(requestState, sessionActor, actors)

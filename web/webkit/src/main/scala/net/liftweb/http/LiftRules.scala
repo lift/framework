@@ -599,9 +599,43 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var liftCoreResourceName = "i18n.lift-core"
 
   /**
-   * Where to send the user if there's no comet session
+   * Where to send the user if there's no comet session. Note that this is
+   * contingent on an unchanged LiftRules.noCometSessionCommand and on
+   * liftComet.lift_sessionLoss not being overridden client-side.
    */
+  @scala.deprecated("Use LiftRules.noCometSessionCmd.")
   @volatile var noCometSessionPage = "/"
+
+  /**
+   * The JsCmd to execute when the comet session is lost. The comet
+   * session is considered lost when either (a) a comet request comes
+   * in for a session that does not exist on the server or (b) a comet
+   * request comes in for a session that has no associated comet actors
+   * (this typically happens when the server restarts).
+   *
+   * By default, we invoke liftComet.lift_sessionLoss, which can be
+   * overridden client-side for more complex work.
+   * liftComet.lift_sessionLoss redirects to
+   * LiftRules.noCometSessionPage by default for now, though
+   * noCometSessionPage is deprecated and will be replaced by a
+   * default of reloading the current page.
+   */
+  val noCometSessionCmd = new FactoryMaker[JsCmd](
+    () => JsCmds.Run("liftComet.lift_sessionLoss()")
+  ) {}
+
+  /**
+   * The JsCmd to execute when the ajax session is lost. The ajax
+   * session is considered lost when either an ajax request comes in for
+   * a session that does not exist on the server.
+   *
+   * By default, we invoke liftAjax.lift_sessionLoss, which can be
+   * overridden client-side for more complex work.
+   * liftAjax.lift_sessionLoss reloads the page by default.
+   */
+  val noAjaxSessionCmd = new FactoryMaker[JsCmd](
+    () => JsCmds.Run("liftAjax.lift_sessionLoss()")
+  ) {}
 
   /**
    * Put a function that will calculate the request timeout based on the
