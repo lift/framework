@@ -1534,7 +1534,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val cometUpdateExceptionHandler: FactoryMaker[Box[JsCmd]] =
     new FactoryMaker[Box[JsCmd]]( () => {
-      Full(JE.Call("liftComet.lift_cometError", JE.JsVar("e")).cmd)
+      if (Props.devMode)
+        Full(JE.Call("liftComet.lift_cometError", JE.JsVar("e")).cmd)
+      else
+        Empty
     } ) {}
 
   /**
