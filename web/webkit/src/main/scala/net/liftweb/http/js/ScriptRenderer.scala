@@ -111,6 +111,11 @@ object ScriptRenderer {
           """
        },
 
+
+      lift_sessionLoss: function() {
+        location.reload();
+      },
+
        lift_doAjaxCycle: function() {
          if (liftAjax.lift_doCycleQueueCnt > 0) liftAjax.lift_doCycleQueueCnt--;
          var queue = liftAjax.lift_ajaxQueue;
@@ -250,6 +255,10 @@ object ScriptRenderer {
       lift_handlerFailureFunc: function() {
         setTimeout("liftComet.lift_cometEntry();",""" + LiftRules.cometFailureRetryTimeout + """);
       },
+
+      lift_sessionLoss: function() { """ +
+        JsCmds.RedirectTo(LiftRules.noCometSessionPage).toJsCmd +
+      """},
 
       lift_cometEntry: function() {
         var isEmpty = function(){for (var i in lift_toWatch) {return false} return true}();
