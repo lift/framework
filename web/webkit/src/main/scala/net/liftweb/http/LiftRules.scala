@@ -1358,6 +1358,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var redirectAsyncOnSessionLoss = true
   @deprecated("Use redirectAsyncOnSessionLoss instead.")
   def redirectAjaxOnSessionLoss = redirectAsyncOnSessionLoss
+  @deprecated("Use redirectAsyncOnSessionLoss instead.")
   def redirectAjaxOnSessionLoss_=(updated:Boolean) = redirectAsyncOnSessionLoss = updated
 
   /**
