@@ -23,6 +23,7 @@ object Developers {
     "davidB" -> "David Bernard",
     "dcbriccetti" -> "Dave Briccetti",
     "dchenbecker" -> "Derek Chen-Becker",
+    "fmpwizard" -> "Diego Medina",
     "dpp" -> "David Pollak",
     "Dridus" -> "Ross Mellgren",
     "dlouwers" -> "Dirk Louwers",
