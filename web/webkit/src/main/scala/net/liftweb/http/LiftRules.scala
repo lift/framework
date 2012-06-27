@@ -1561,6 +1561,21 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     )
 
   /**
+   * A transform used to tag spans generated to contain comets. By
+   * default, adds a data-lift-comet attribute set to "true". Note that
+   * if you change this behavior, comet rehydration will not work.
+   */
+  val cometElementTagger: FactoryMaker[(NodeSeq)=>NodeSeq] =
+    new FactoryMaker({
+      ns:NodeSeq => ns match {
+        case elem:Elem =>
+          elem % new UnprefixedAttribute("data-lift-comet", Text("true"), Null)
+        case other =>
+          other
+      }
+    }) {}
+
+  /**
    * Holds the last update time of the Ajax request. Based on this server mayreturn HTTP 304 status
    * indicating the client to used the cached information.
    */

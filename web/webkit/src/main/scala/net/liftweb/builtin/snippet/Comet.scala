@@ -87,10 +87,10 @@ object Comet extends DispatchSnippet with LazyLoggable {
              
              (c.!?(c.cometRenderTimeout, AskRender)) match {
                case Full(AnswerRender(response, _, when, _)) if c.hasOuter =>
-                 buildSpan(Empty, c.buildSpan(when, response.inSpan) ++ response.outSpan, c, c.uniqueId+"_outer")
+                 LiftRules.cometElementTagger.vend(buildSpan(Empty, c.buildSpan(when, response.inSpan) ++ response.outSpan, c, c.uniqueId+"_outer"))
                
                case Full(AnswerRender(response, _, when, _)) =>
-                 c.buildSpan(when, response.inSpan)
+                 LiftRules.cometElementTagger.vend(c.buildSpan(when, response.inSpan))
                
                case e =>
                  if (c.cometRenderTimeoutHandler().isDefined) {
