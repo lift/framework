@@ -28,36 +28,45 @@ import java.util.Calendar
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import org.squeryl.adapters.PostgreSqlAdapter
+import common.Empty
+import http.{LiftSession, S}
+import util.Helpers
 
 /**
  * Systems under specification for SquerylRecord.
  */
 object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
 
+  val session = new LiftSession("", Helpers.randomString(20), Empty)
   doBeforeSpec {
-    DBHelper.initSquerylRecordWithInMemoryDB()
-    DBHelper.createSchema()
+    S.initIfUninitted(session) {
+      DBHelper.initSquerylRecordWithInMemoryDB()
+      DBHelper.createSchema()
+    }
   }
 
   // NOTE: Use explicit forExample() in the examples to avoid
   // implicit ambiguity with Specs 1.6.6 in Scala 2.8.0
   "SquerylRecord" should {
-
     forExample("load record by ID") in {
       transaction {
-        val company = companies.lookup(td.c2.id)
-        checkCompaniesEqual(company.get, td.c2)
+        S.initIfUninitted(session){
+          val company = companies.lookup(td.c2.id)
+          checkCompaniesEqual(company.get, td.c2)
 
-        val employee = employees.lookup(td.e1.id)
-        checkEmployeesEqual(employee.get, td.e1)
+          val employee = employees.lookup(td.e1.id)
+          checkEmployeesEqual(employee.get, td.e1)
+        }
       }
     }
 
     forExample("load record by string field value") in {
       transaction {
-        val company = from(companies)(c =>
-          where(c.name === td.c1.name.is) select (c))
-        checkCompaniesEqual(company.single, td.c1)
+        S.initIfUninitted(session){
+          val company = from(companies)(c =>
+            where(c.name === td.c1.name.is) select (c))
+          checkCompaniesEqual(company.single, td.c1)
+        }
       }
     }
 
@@ -85,52 +94,54 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
 
     forExample("support left outer joins") in {
       transaction {
-        val companiesWithEmployees = join(companies, employees.leftOuter)((c, e) =>
-          select(c, e)
-            on (c.id === e.map(_.companyId))
-        )
+        S.initIfUninitted(session){
+          val companiesWithEmployees = join(companies, employees.leftOuter)((c, e) =>
+            select(c, e)
+              on (c.id === e.map(_.companyId))
+          )
 
-        companiesWithEmployees must haveSize(4)
-        // One company doesn't have an employee, two have
-        companiesWithEmployees.filter(ce => ce._2.isEmpty) must haveSize(1)
+          companiesWithEmployees must haveSize(4)
+          // One company doesn't have an employee, two have
+          companiesWithEmployees.filter(ce => ce._2.isEmpty) must haveSize(1)
 
-        val companiesAndEmployeesWithSameName = join(companies, employees.leftOuter)((c, e) =>
-          groupBy(c.id)
-            compute (countDistinct(e.map(_.id)))
-            on (c.name === e.map(_.name))
-        )
+          val companiesAndEmployeesWithSameName = join(companies, employees.leftOuter)((c, e) =>
+            groupBy(c.id)
+              compute (countDistinct(e.map(_.id)))
+              on (c.name === e.map(_.name))
+          )
 
-        // There are three companies
-        companiesAndEmployeesWithSameName must haveSize(3)
-        // One company has the same name as an employee, two don't
-        companiesAndEmployeesWithSameName.filter(ce => ce.measures == 0) must haveSize(2)
+          // There are three companies
+          companiesAndEmployeesWithSameName must haveSize(3)
+          // One company has the same name as an employee, two don't
+          companiesAndEmployeesWithSameName.filter(ce => ce.measures == 0) must haveSize(2)
 
-        val employeesWithSameAdminSetting = join(employees, employees.leftOuter)((e1, e2) =>
-          select(e1, e2)
-            on (e1.admin === e2.map(_.admin))
-        )
+          val employeesWithSameAdminSetting = join(employees, employees.leftOuter)((e1, e2) =>
+            select(e1, e2)
+              on (e1.admin === e2.map(_.admin))
+          )
 
-        employeesWithSameAdminSetting.foreach { ee =>
-          ee._2 must not(beEmpty)
+          employeesWithSameAdminSetting.foreach { ee =>
+            ee._2 must not(beEmpty)
+          }
+
+          val companiesWithSameCreationDate = join(companies, companies.leftOuter)((c1, c2) =>
+            select(c1, c2)
+              on (c1.created === c2.map(_.created))
+          )
+          companiesWithSameCreationDate must not(beEmpty)
+
+          val employeesWithSameDepartmentNumber = join(employees, employees.leftOuter)((e1, e2) =>
+            select(e1, e2)
+              on (e1.departmentNumber === e2.map(_.departmentNumber))
+          )
+          employeesWithSameDepartmentNumber must not(beEmpty)
+
+          val employeesWithSameRoles = join(employees, employees.leftOuter)((e1, e2) =>
+            select(e1, e2)
+              on (e1.role === e2.map(_.role))
+          )
+          employeesWithSameRoles must not(beEmpty)
         }
-
-        val companiesWithSameCreationDate = join(companies, companies.leftOuter)((c1, c2) =>
-          select(c1, c2)
-            on (c1.created === c2.map(_.created))
-        )
-        companiesWithSameCreationDate must not(beEmpty)
-
-        val employeesWithSameDepartmentNumber = join(employees, employees.leftOuter)((e1, e2) =>
-          select(e1, e2)
-            on (e1.departmentNumber === e2.map(_.departmentNumber))
-        )
-        employeesWithSameDepartmentNumber must not(beEmpty)
-
-        val employeesWithSameRoles = join(employees, employees.leftOuter)((e1, e2) =>
-          select(e1, e2)
-            on (e1.role === e2.map(_.role))
-        )
-        employeesWithSameRoles must not(beEmpty)
       }
     }
 
@@ -164,24 +175,28 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       val id = td.c1.id
 
       transactionWithRollback {
-        val company = companies.lookup(id).get
-        company.name("New Name")
-        company.postCode("11111")
-        companies.update(company)
+        S.initIfUninitted(session) {
+          val company = companies.lookup(id).get
+          company.name("New Name")
+          company.postCode("11111")
+          companies.update(company)
 
-        val loaded = companies.lookup(id).get
-        checkCompaniesEqual(company, loaded)
+          val loaded = companies.lookup(id).get
+          checkCompaniesEqual(company, loaded)
 
-        update(companies)(c => where(c.id === id)
-          set (c.name := "Name2"))
-        val afterPartialUpdate = companies.lookup(id).get
-        afterPartialUpdate.name.is must_== "Name2"
+          update(companies)(c => where(c.id === id)
+            set (c.name := "Name2"))
+          val afterPartialUpdate = companies.lookup(id).get
+          afterPartialUpdate.name.is must_== "Name2"
+        }
       }
 
       // After rollback, the company should still be the same:
       transaction {
-        val company = companies.lookup(id).get
-        checkCompaniesEqual(td.c1, company)
+        S.initIfUninitted(session) {
+          val company = companies.lookup(id).get
+          checkCompaniesEqual(td.c1, company)
+        }
       }
     }
 
@@ -194,14 +209,16 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
 
     forExample("support select with properties of formerly fetched objects") in {
       transaction {
-        val company = companies.lookup(td.c2.id).head
-        val employee = from(employees)(e =>
-          where(e.companyId === company.idField) select (e)).head
-        employee.id must_== td.e2.id
+        S.initIfUninitted(session) {
+          val company = companies.lookup(td.c2.id).head
+          val employee = from(employees)(e =>
+            where(e.companyId === company.idField) select (e)).head
+          employee.id must_== td.e2.id
 
-        val loadedCompanies = from(companies)(c =>
-          where(c.created === company.created) select (c))
-        loadedCompanies.size must beGreaterThanOrEqualTo(1)
+          val loadedCompanies = from(companies)(c =>
+            where(c.created === company.created) select (c))
+          loadedCompanies.size must beGreaterThanOrEqualTo(1)
+        }
       }
     }
 
@@ -311,7 +328,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
         created(Calendar.getInstance()).
         country(Countries.USA).
         postCode("90210")
-      //First insert the company in one transaction	
+      //First insert the company in one transaction
       transaction {
         companies.insert(company)
       }
@@ -352,15 +369,13 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       val columnDefinition = new PostgreSqlAdapter().writeColumnDeclaration(fieldMetaData, false, MySchema)
       columnDefinition.endsWith("numeric(" + Company.employeeSatisfaction.context.getPrecision() +"," + Company.employeeSatisfaction.scale + ")") must_== true
     }
-    
+
     forExample("Properly reset the dirty_? flag after loading entities") >> inTransaction {
       val company = from(companies)(company =>
         select(company)).page(0, 1).single
       company.allFields map { f => f.dirty_? must_== false }
     }
-
   }
-
   class ToChar(d: DateExpression[Timestamp], e: StringExpression[String], m: OutMapper[String])
     extends FunctionNode[String]("FORMATDATETIME", Some(m), Seq(d, e)) with StringExpression[String]
 

@@ -43,6 +43,11 @@ import Helpers._
 object MongoFieldSpec extends Specification("MongoField Specification") with MongoTestKit {
   import fixtures._
 
+  val session = new LiftSession("", randomString(20), Empty)
+  def inLiftSession(a: =>Any) = S.initIfUninitted(session) { a }
+  new SpecContext {
+    aroundExpectations(inLiftSession(_))
+  }
   def passBasicTests[A](
     example: A,
     mandatory: MandatoryTypedField[A],

@@ -39,6 +39,11 @@ import scala.xml.{NodeSeq, Elem, Node, Text}
  * Systems under specification for RecordField.
  */
 object FieldSpec extends Specification("Record Field Specification") {
+  val session = new LiftSession("", randomString(20), Empty)
+  def inLiftSession(a: =>Any) = S.initIfUninitted(session) { a }
+  new SpecContext {
+    aroundExpectations(inLiftSession(_))
+  }
   def passBasicTests[A](example: A, mandatory: MandatoryTypedField[A], legacyOptional: MandatoryTypedField[A], optional: OptionalTypedField[A])(implicit m: scala.reflect.Manifest[A]): Unit = {
     val canCheckDefaultValues =
       !mandatory.defaultValue.isInstanceOf[Calendar] // don't try to use the default value of date/time typed fields, because it changes from moment to moment!
@@ -285,16 +290,19 @@ object FieldSpec extends Specification("Record Field Specification") {
   }
 
   "CountryField" should {
-    val rec = FieldTypeTestRecord.createRecord
-    val country = Countries.Canada
-    passBasicTests(country, rec.mandatoryCountryField, rec.legacyOptionalCountryField, rec.optionalCountryField)
-    passConversionTests(
-      country,
-      rec.mandatoryCountryField,
-      Str(country.toString),
-      JInt(country.id),
-      Full(<select tabindex="1" name=".*" id="mandatoryCountryField_id"><option value=".*" selected="selected">{country.toString}</option></select>)
-    )
+    val session = new LiftSession("", randomString(20), Empty)
+    S.initIfUninitted(session){
+      val rec = FieldTypeTestRecord.createRecord
+      val country = Countries.Canada
+      passBasicTests(country, rec.mandatoryCountryField, rec.legacyOptionalCountryField, rec.optionalCountryField)
+      passConversionTests(
+        country,
+        rec.mandatoryCountryField,
+        Str(country.toString),
+        JInt(country.id),
+        Full(<select tabindex="1" name=".*" id="mandatoryCountryField_id"><option value=".*" selected="selected">{country.toString}</option></select>)
+      )
+    }
   }
 
   "DateTimeField" should {
