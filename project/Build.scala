@@ -70,7 +70,7 @@ object BuildDef extends Build {
         .dependsOn(actor, json)
         .settings(description := "Utilities Library",
                   parallelExecution in Test := false,
-                  libraryDependencies ++= Seq(joda_time, commons_codec, javamail, log4j, htmlparser))
+                  libraryDependencies <++= scalaVersion {sv =>  Seq(scala_compiler(sv), joda_time, commons_codec, javamail, log4j, htmlparser)})
 
 
   // Web Projects

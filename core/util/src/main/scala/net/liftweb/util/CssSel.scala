@@ -37,9 +37,9 @@ trait CssSel extends Function1[NodeSeq, NodeSeq] {
   /**
    * promote a String to a ToCssBindPromotor
    */
+  /*
   private implicit def strToCssBindPromoter(str: String): ToCssBindPromoter =
-    new ToCssBindPromoter(Full(str), CssSelectorParser.parse(str))
-
+    new ToCssBindPromoter(Full(str), CssSelectorParser.parse(str)) */
 }
 
 /**

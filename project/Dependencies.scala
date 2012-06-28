@@ -44,6 +44,7 @@ object Dependencies {
   lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.4.1"
   lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.4"     cross CVMappingAll
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _
+  lazy val scala_compiler: ModuleMap  = "org.scala-lang"                % "scala-compiler"     % _
   lazy val scalaz_core: ModuleMap = sv => scalazGroup(sv)        % "scalaz-core"        % scalazVersion(sv) cross CVMappingAll
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
   lazy val squeryl                = "org.squeryl"                % "squeryl"            % "0.9.5-1" cross crossMapped("2.9.1-1" -> "2.9.1", "2.8.2" -> "2.8.1")
