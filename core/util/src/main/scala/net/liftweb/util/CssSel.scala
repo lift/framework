@@ -755,8 +755,8 @@ object ComputeTransformRules {
 
 
 
-  implicit def nodeSeqTransform: ComputeTransformRules[NodeSeq] = new ComputeTransformRules[NodeSeq] {
-    def computeTransform(param: => NodeSeq, ns: NodeSeq): Seq[NodeSeq] = List(param)
+  implicit def nodeSeqTransform[T](implicit f : T => NodeSeq): ComputeTransformRules[T] = new ComputeTransformRules[T] {
+    def computeTransform(param: => T, ns: NodeSeq): Seq[NodeSeq] = List(f(param))
   }
 
   implicit def nodeSeqFuncTransform: ComputeTransformRules[NodeSeq => NodeSeq] = new ComputeTransformRules[NodeSeq => NodeSeq] {
@@ -771,16 +771,20 @@ object ComputeTransformRules {
     def computeTransform(func: => NodeSeq => Node, ns: NodeSeq): Seq[NodeSeq] = List(func(ns))
   }
 
-  implicit def iterableNodeTransform[T[_]](implicit f: T[NodeSeq] => Iterable[NodeSeq]): ComputeTransformRules[T[NodeSeq]] =
-    new ComputeTransformRules[T[NodeSeq]] {
-      def computeTransform(info: => T[NodeSeq], ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info).toSeq)
+  implicit def iterableNodeTransform[NST](implicit f2: NST => NodeSeq): ComputeTransformRules[Iterable[NST]] =
+    new ComputeTransformRules[Iterable[NST]] {
+      def computeTransform(info: => Iterable[NST], ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(info.toSeq.map(f2))
     }
 
-  implicit def iterableElemTransform[T[_]](implicit f: T[Elem] => Iterable[Elem]): ComputeTransformRules[T[Elem]] =
-    new ComputeTransformRules[T[Elem]] {
-      def computeTransform(info: => T[Elem], ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info).toSeq.map(a => a:NodeSeq))
+  implicit def boxNodeTransform[NST](implicit f2: NST => NodeSeq): ComputeTransformRules[Box[NST]] =
+    new ComputeTransformRules[Box[NST]] {
+      def computeTransform(info: => Box[NST], ns: NodeSeq): Seq[NodeSeq] = info.toList.map(f2)
     }
 
+  implicit def optionNodeTransform[NST](implicit f2: NST => NodeSeq): ComputeTransformRules[Option[NST]] =
+    new ComputeTransformRules[Option[NST]] {
+      def computeTransform(info: => Option[NST], ns: NodeSeq): Seq[NodeSeq] = info.toList.map(f2)
+    }
 
   implicit def iterableStringTransform[T[_]](implicit f: T[String] => Iterable[String]): ComputeTransformRules[T[String]] =
     new ComputeTransformRules[T[String]] {
