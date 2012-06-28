@@ -613,7 +613,7 @@ trait HtmlFixer {
     import scala.collection.mutable.ListBuffer
     val lb = new ListBuffer[JsCmd]
 
-    val revised = ("script" #> ((ns: NodeSeq) => {
+    val revised = ("script" #> nsFunc(ns => {
       ns match {
         case FindScript(e) => {
           lb += JE.JsRaw(ns.text).cmd
@@ -621,7 +621,7 @@ trait HtmlFixer {
         }
         case x => x
       }
-    }))(xhtml)
+    })).apply(xhtml)
 
     S.htmlProperties.htmlWriter(Group(revised), w)
 

@@ -26,6 +26,7 @@ object SHtmlSpec extends Specification  {
   "NamedCometPerTabSpec Specification".title
 
   val html1= <span><input id="number"></input></span>
+
   val inputField1= testS("/")( ("#number" #> SHtml.number(0, println(_), 0, 100))(html1)  )
   val inputField2= testS("/")( ("#number" #> SHtml.number(0, println(_: Double), 0, 100, 0.1))(html1)  )
   val inputField3= testS("/")( ("#number" #> SHtml.number(0, println(_: Double), 0, 100, 1))(html1)  )

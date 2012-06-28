@@ -845,7 +845,6 @@ final case class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSele
   def #>[T](it: => T)(implicit computer: ComputeTransformRules[T]): CssSel = css match {
     case Full(EnclosedSelector(a, b)) => null
     (ToCssBindPromoter(stringSelector, Full(a))).#>(nsFunc(ns =>{
-      println("nesting "+ns+" for "+b)
       ToCssBindPromoter(stringSelector, Full(b)).#>(it)(computer)(ns)})) // (ComputeTransformRules.nodeSeqFuncTransform)
     case _ =>
       new CssBindImpl(stringSelector, css) {
