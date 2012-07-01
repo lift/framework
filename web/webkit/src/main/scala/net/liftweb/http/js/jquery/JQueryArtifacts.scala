@@ -133,6 +133,7 @@ trait JQueryArtifacts extends JSArtifacts {
             info.failFunc.map("error : " + _).toList mkString ("{ ", ", ", " }")
 }
 
+@deprecated("Either include your own jQuery or use https://github.com/karma4u101/lift-jquery-module")
 case object JQuery13Artifacts extends JQueryArtifacts {
   override def pathRewriter: PartialFunction[List[String], List[String]] = {
     case "jquery.js" :: Nil if Props.devMode => List("jquery-1.3.2.js")
@@ -140,7 +141,7 @@ case object JQuery13Artifacts extends JQueryArtifacts {
   }
 }
 
-
+@deprecated("Either include your own jQuery or use https://github.com/karma4u101/lift-jquery-module")
 case object JQuery14Artifacts extends JQueryArtifacts {
   override def pathRewriter: PartialFunction[List[String], List[String]] = {
     case "jquery.js" :: Nil if Props.devMode => List("jquery-1.4.4.js")
