@@ -1373,6 +1373,49 @@ trait SHtml {
     ("max" -> max.toString)
   }
 
+
+  /**
+   * Generate an input field with type number. It allows for Double if your step is
+   * for example: 0.1
+   * At some point,
+   * there will be graceful fallback for non-HTML5 browsers.  FIXME
+   */
+  def number(value: Double, func: Double => Any,
+             min: Double, max: Double,  step: Double ,
+             attrs: ElemAttr*): Elem =
+    number_double_*(value,
+      min, max, step,
+      SFuncHolder(s => Helpers.asDouble(s).map(func)), attrs: _*)
+
+  /**
+   * Generate a number input element for the Settable. It allows for Double if your step is
+   * for example: 0.1
+   * At some point
+   * there will be graceful fallback for non-HTML5 browsers. FIXME
+   */
+  def number(settable: Settable{type ValueType = Double},
+             min: Double, max: Double, step: Double,
+             attrs: ElemAttr*): Elem =
+    number_double_*(settable.get, min, max, step: Double,
+      SFuncHolder(s => Helpers.asDouble(s).map(s => settable.set(s))),
+      attrs: _*)
+
+  private def number_double_*(value: Double,
+                       min: Double, max: Double, step: Double,
+                       func: AFuncHolder, attrs: ElemAttr*): Elem = {
+    import Helpers._
+    import common.Full
+
+
+    makeFormElement("number",
+                    func,
+                    attrs: _*) %
+    ("value" -> value.toString) %
+    ("min" -> min.toString) %
+    ("min" -> min.toString) %
+    ("step" -> step.toString)
+  }
+
   /**
    * Generate an input field with type range.  At some point,
    * there will be graceful fallback for non-HTML5 browsers.  FIXME

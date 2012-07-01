@@ -111,6 +111,11 @@ object ScriptRenderer {
           """
        },
 
+
+      lift_sessionLost: function() {
+        location.reload();
+      },
+
        lift_doAjaxCycle: function() {
          if (liftAjax.lift_doCycleQueueCnt > 0) liftAjax.lift_doCycleQueueCnt--;
          var queue = liftAjax.lift_ajaxQueue;
@@ -251,11 +256,16 @@ object ScriptRenderer {
         setTimeout("liftComet.lift_cometEntry();",""" + LiftRules.cometFailureRetryTimeout + """);
       },
 
+
       lift_cometError: function(e) {
         if (console && typeof console.error == 'function')
           console.error(e.stack || e);
         throw e;
       },
+
+      lift_sessionLost: function() { """ +
+        JsCmds.RedirectTo(LiftRules.noCometSessionPage).toJsCmd +
+      """},
 
       lift_cometEntry: function() {
         var isEmpty = function(){for (var i in lift_toWatch) {return false} return true}();

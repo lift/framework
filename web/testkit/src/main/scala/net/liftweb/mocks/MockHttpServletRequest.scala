@@ -425,7 +425,8 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
       case (k,v) => newMap += k -> (newMap(k) ::: v :: Nil) // Ugly, but it works and keeps order
     }
 
-    asJavaMap(newMap.map{case (k,v) => (k,v.toArray)}.asInstanceOf[Map[Object,Object]])
+    newMap.map{case (k,v) => (k,v.toArray)}.asInstanceOf[Map[Object,Object]]
+//    asMap(newMap.map{case (k,v) => (k,v.toArray)}.asInstanceOf[Map[Object,Object]])
   }
 
   def getParameterNames(): JEnum[Object] =

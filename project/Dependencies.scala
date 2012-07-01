@@ -42,7 +42,7 @@ object Dependencies {
   lazy val dispatch_http          = "net.databinder"             % "dispatch-http"      % "0.7.8"   cross CVMapping2911
   lazy val javamail               = "javax.mail"                 % "mail"               % "1.4.4"
   lazy val joda_time              = "joda-time"                  % "joda-time"          % "1.6.2" // TODO: 2.1
-  lazy val htmlparser             = "nu.validator.htmlparser"    % "htmlparser"         % "1.2.1"
+  lazy val htmlparser             = "nu.validator.htmlparser"    % "htmlparser"         % "1.4"
   lazy val mongo_java_driver      = "org.mongodb"                % "mongo-java-driver"  % "2.7.3"
   lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.4.1"
   lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.4"     cross CVMappingAll
@@ -67,8 +67,8 @@ object Dependencies {
 
   // Runtime scope:
   // Scope provided in runtime, available only in runtime and test classpath, not compile classpath, non-transitive by default.
-  lazy val derby      = "org.apache.derby" % "derby" % "10.7.1.1" % "runtime" //% "optional"
-  lazy val h2database = "com.h2database"   % "h2"    % "1.2.147"  % "runtime" //% "optional"
+  lazy val derby      = "org.apache.derby" % "derby" % "10.7.1.1" % "test" //% "optional"
+  lazy val h2database = "com.h2database"   % "h2"    % "1.2.147"  % "test" //% "optional"
 
   // Aliases
   lazy val h2 = h2database
