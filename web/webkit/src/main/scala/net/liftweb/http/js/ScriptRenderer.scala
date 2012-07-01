@@ -251,6 +251,12 @@ object ScriptRenderer {
         setTimeout("liftComet.lift_cometEntry();",""" + LiftRules.cometFailureRetryTimeout + """);
       },
 
+      lift_cometError: function(e) {
+        if (console && typeof console.error == 'function')
+          console.error(e.stack || e);
+        throw e;
+      },
+
       lift_cometEntry: function() {
         var isEmpty = function(){for (var i in lift_toWatch) {return false} return true}();
         if (!isEmpty) {

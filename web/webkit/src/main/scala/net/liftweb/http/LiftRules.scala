@@ -1513,6 +1513,33 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var renderCometScript: LiftSession => JsCmd = session => ScriptRenderer.cometScript
 
   /**
+   * If this is Full, comet updates (partialUpdates or reRenders) are
+   * wrapped in a try/catch statement. The provided JsCmd is the body of
+   * the catch statement. Within that JsCmd, the varibale "e" refers to the
+   * caught exception.
+   *
+   * In development mode, this defaults to Full and the command within
+   * invokes liftComet.lift_cometError with the exception;
+   * lift_cometError rethrows the exception by default. In production
+   * mode, this defaults to Empty.
+   *
+   * Note that if you set this to Full, it is highly advised that you
+   * rethrow the exception. If you fail to rethrow the exception, you
+   * run the risk of dropping an unpredictable number of updates (i.e.,
+   * if the third of 20 updates that are sent to the client in a single
+   * response throws an exception, none of the subsequent ones will run;
+   * failing to rethrow the exception means any updates that did not run
+   * will never be run).
+   */
+  val cometUpdateExceptionHandler: FactoryMaker[Box[JsCmd]] =
+    new FactoryMaker[Box[JsCmd]]( () => {
+      if (Props.devMode)
+        Full(JE.Call("liftComet.lift_cometError", JE.JsVar("e")).cmd)
+      else
+        Empty
+    } ) {}
+
+  /**
    * Renders that JavaScript that holds Comet identification information
    */
   @volatile var renderCometPageContents: (LiftSession, Seq[CometVersionPair]) => JsCmd =
