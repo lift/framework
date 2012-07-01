@@ -67,8 +67,8 @@ object Dependencies {
 
   // Runtime scope:
   // Scope provided in runtime, available only in runtime and test classpath, not compile classpath, non-transitive by default.
-  lazy val derby      = "org.apache.derby" % "derby" % "10.7.1.1" % "runtime" //% "optional"
-  lazy val h2database = "com.h2database"   % "h2"    % "1.2.147"  % "runtime" //% "optional"
+  lazy val derby      = "org.apache.derby" % "derby" % "10.7.1.1" % "test" //% "optional"
+  lazy val h2database = "com.h2database"   % "h2"    % "1.2.147"  % "test" //% "optional"
 
   // Aliases
   lazy val h2 = h2database
