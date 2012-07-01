@@ -42,7 +42,7 @@ object Dependencies {
   lazy val dispatch_http          = "net.databinder"             % "dispatch-http"      % "0.7.8"   cross CVMapping2911
   lazy val javamail               = "javax.mail"                 % "mail"               % "1.4.4"
   lazy val joda_time              = "joda-time"                  % "joda-time"          % "1.6.2" // TODO: 2.1
-  lazy val htmlparser             = "nu.validator.htmlparser"    % "htmlparser"         % "1.2.1"
+  lazy val htmlparser             = "nu.validator.htmlparser"    % "htmlparser"         % "1.4"
   lazy val mongo_java_driver      = "org.mongodb"                % "mongo-java-driver"  % "2.7.3"
   lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.4.1"
   lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.4"     cross CVMappingAll
