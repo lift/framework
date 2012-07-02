@@ -790,19 +790,20 @@ object JsCmds {
   implicit def jsExpToJsCmd(in: JsExp) = in.cmd
 
   case class CmdPair(left: JsCmd, right: JsCmd) extends JsCmd {
-    def toJsCmd = {
-      val sb = new StringBuilder
-      append(sb, this)
-      sb.toString
+    import scala.collection.mutable.ListBuffer;
+
+    def toJsCmd: String = {
+      val acc = new ListBuffer[JsCmd]()
+      appendDo(acc, left :: right :: Nil)
+      acc.map(_.toJsCmd).mkString("\n")
     }
 
-    private def append(sb: StringBuilder, cmd: JsCmd) {
-      cmd match {
-        case CmdPair(l, r) => append(sb, l)
-          sb.append('\n')
-          append(sb, r)
-
-        case c => sb.append(c.toJsCmd)
+    @scala.annotation.tailrec
+    private def appendDo(acc: ListBuffer[JsCmd], cmds: List[JsCmd]) {
+      cmds match {
+        case Nil =>
+        case CmdPair(l, r) :: rest => appendDo(acc, l :: r :: rest)
+        case a :: rest => acc.append(a); appendDo(acc, rest)
       }
     }
   }
