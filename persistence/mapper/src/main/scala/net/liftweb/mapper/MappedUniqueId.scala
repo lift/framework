@@ -59,7 +59,7 @@ object Genders extends Enumeration {
 
   class I18NGender(id : Int, name: String) extends Val(id, name) {
     override def toString = {
-      S.??(name)
+      S.?(name)
     }
   }
 }

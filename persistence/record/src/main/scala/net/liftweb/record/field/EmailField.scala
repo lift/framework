@@ -37,7 +37,7 @@ trait EmailTypedField extends TypedField[String] {
   private def validateEmail(emailValue: ValueType): List[FieldError] =
     toBoxMyType(emailValue) match {
       case Full(email) if EmailField.validEmailAddr_?(email) => Nil
-      case _ => Text(S.??("invalid.email.address"))
+      case _ => Text(S.?("invalid.email.address"))
     }
 
   override def validations = validateEmail _ :: Nil

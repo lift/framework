@@ -259,7 +259,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       val rec = PasswordTestRecord.createRecord
       rec.password.setPassword("")
       rec.validate must_== (
-        FieldError(rec.password, Text(S.??("password.must.be.set"))) ::
+        FieldError(rec.password, Text(S.?("password.must.be.set"))) ::
         Nil
       )
     }
@@ -268,7 +268,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       val rec = PasswordTestRecord.createRecord
       rec.password.setPassword("ab")
       rec.validate must_== (
-        FieldError(rec.password, Text(S.??("password.too.short"))) ::
+        FieldError(rec.password, Text(S.?("password.too.short"))) ::
         Nil
       )
     }

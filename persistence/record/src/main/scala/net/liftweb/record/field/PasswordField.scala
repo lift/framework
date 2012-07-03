@@ -71,7 +71,7 @@ trait PasswordTypedField extends TypedField[String] {
       case (h1: String) :: (h2: String) :: Nil if h1 == h2 => setBoxPlain(Full(h1))
       case (hash: String) if(hash.startsWith("$2a$")) => setBox(Full(hash))
       case Full(hash: String) if(hash.startsWith("$2a$")) => setBox(Full(hash))
-      case _ => {invalidPw = true; invalidMsg = S.??("passwords.do.not.match"); Failure(invalidMsg)}
+      case _ => {invalidPw = true; invalidMsg = S.?("passwords.do.not.match"); Failure(invalidMsg)}
     }
   }
 
@@ -86,7 +86,7 @@ trait PasswordTypedField extends TypedField[String] {
     else List(FieldError(this, Text(notOptionalErrorMessage)))
   }
 
-  override def notOptionalErrorMessage = S.??("password.must.be.set")
+  override def notOptionalErrorMessage = S.?("password.must.be.set")
 
   private def elem = S.fmapFunc(SFuncHolder(this.setFromAny(_))){
     funcName => <input type="password"
@@ -104,7 +104,7 @@ trait PasswordTypedField extends TypedField[String] {
     pwdValue match {
       case Empty|Full(""|null) if !optional_? => { invalidPw = true ; invalidMsg = notOptionalErrorMessage }
       case Full(s) if s == "" || s == PasswordField.blankPw || s.length < PasswordField.minPasswordLength => 
-        { invalidPw = true ; invalidMsg = S.??("password.too.short") }
+        { invalidPw = true ; invalidMsg = S.?("password.too.short") }
       case _ => { invalidPw = false; invalidMsg = "" }
     }
     invalidPw

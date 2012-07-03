@@ -347,19 +347,19 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
   def calcFirstScreen: Box[Screen] = screens.headOption
 
   def nextButton: Elem = <button>
-    {S.??("Next")}
+    {S.?("Next")}
   </button>
 
   def prevButton: Elem = <button>
-    {S.??("Previous")}
+    {S.?("Previous")}
   </button>
 
   def cancelButton: Elem = <button>
-    {S.??("Cancel")}
+    {S.?("Cancel")}
   </button>
 
   def finishButton: Elem = <button>
-    {S.??("Finish")}
+    {S.?("Finish")}
   </button>
 
   def currentScreen: Box[Screen] = CurrentScreen.is
