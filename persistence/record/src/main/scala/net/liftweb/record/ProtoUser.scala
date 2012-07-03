@@ -112,7 +112,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends Record[T] {
   lazy val email: EmailField[T] = new MyEmail(this, 48)
 
   protected class MyEmail(obj: T, size: Int) extends EmailField(obj, size) {
-    override def validations = valUnique(S.??("unique.email.address")) _ :: super.validations
+    override def validations = valUnique(S.?("unique.email.address")) _ :: super.validations
     override def displayName = owner.emailDisplayName
     override val fieldId = Some(Text("txtEmail"))
   }

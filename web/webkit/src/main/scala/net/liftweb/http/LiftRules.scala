@@ -797,7 +797,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * The default action to take when the JavaScript action fails
    */
   @volatile var ajaxDefaultFailure: Box[() => JsCmd] =
-  Full(() => JsCmds.Alert(S.??("ajax.error")))
+  Full(() => JsCmds.Alert(S.?("ajax.error")))
 
   /**
    * A function that takes the current HTTP request and returns the current

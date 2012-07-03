@@ -114,7 +114,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
 
   protected class MyEmail(obj: T, size: Int) extends MappedEmail(obj, size) {
     override def dbIndexed_? = true
-    override def validations = valUnique(S.??("unique.email.address")) _ :: super.validations
+    override def validations = valUnique(S.?("unique.email.address")) _ :: super.validations
     override def displayName = fieldOwner.emailDisplayName
     override val fieldId = Some(Text("txtEmail"))
   }

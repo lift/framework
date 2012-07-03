@@ -491,14 +491,14 @@ trait SHtml {
 
     def displayMarkup : NodeSeq =
       displayContents ++ Text(" ") ++
-      <input value={S.??("edit")} type="button" onclick={setAndSwap(editName, editMarkup, dispName).toJsCmd + " return false;"} />
+      <input value={S.?("edit")} type="button" onclick={setAndSwap(editName, editMarkup, dispName).toJsCmd + " return false;"} />
 
     def editMarkup : NodeSeq = {
       val formData : NodeSeq =
         editForm ++
-        <input type="submit" value={S.??("ok")} /> ++
+        <input type="submit" value={S.?("ok")} /> ++
         hidden(onSubmit) ++
-        <input type="button" onclick={swapJsCmd(dispName,editName).toJsCmd + " return false;"} value={S.??("cancel")} />
+        <input type="button" onclick={swapJsCmd(dispName,editName).toJsCmd + " return false;"} value={S.?("cancel")} />
 
       ajaxForm(formData,
                Noop,

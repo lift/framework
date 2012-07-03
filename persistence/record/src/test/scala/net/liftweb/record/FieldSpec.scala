@@ -411,7 +411,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       val rec = PasswordTestRecord.createRecord.password("")
 
       rec.validate must_== (
-        FieldError(rec.password, Text(S.??("password.must.be.set"))) ::
+        FieldError(rec.password, Text(S.?("password.must.be.set"))) ::
         Nil
       )
     }
@@ -422,7 +422,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       
       rec.password("1234")
       rec.validate must_== (
-        FieldError(rec.password, Text(S.??("password.too.short"))) ::
+        FieldError(rec.password, Text(S.?("password.too.short"))) ::
         Nil
       )
     }
