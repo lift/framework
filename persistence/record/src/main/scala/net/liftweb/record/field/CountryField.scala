@@ -62,7 +62,7 @@ object Countries extends Enumeration(1) {
 
   class I18NCountry extends Val {
     override def toString() =
-      S.??("country_" + id)
+      S.?("country_" + id)
   }
 }
 

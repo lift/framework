@@ -102,11 +102,11 @@ trait AbstractScreen extends Factory {
   def screenTitle: NodeSeq = screenNameAsHtml
 
   def cancelButton: Elem = <button>
-    {S.??("Cancel")}
+    {S.?("Cancel")}
   </button>
 
   def finishButton: Elem = <button>
-    {S.??("Finish")}
+    {S.?("Finish")}
   </button>
 
 

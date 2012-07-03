@@ -88,7 +88,7 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
         <form method="post" action={S.uri}>
             <table>
                 <tr>
-                    <td colspan="2">{S.??("log.in")}</td>
+                    <td colspan="2">{S.?("log.in")}</td>
                 </tr>
                 <tr>
                     <td>Username</td><td><user:name /></td>
@@ -115,7 +115,7 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
         Helpers.bind("user", loginXhtml,
                     "name" -> (JsCmds.FocusOnLoad(<input type="text" name="username"/>)),
                     "password" -> (<input type="password" name="password"/>),
-                    "submit" -> (<input type="submit" value={S.??("log.in")}/>))
+                    "submit" -> (<input type="submit" value={S.?("log.in")}/>))
     }
 
     def ldapLogin(username: String, password: String): Boolean = {
