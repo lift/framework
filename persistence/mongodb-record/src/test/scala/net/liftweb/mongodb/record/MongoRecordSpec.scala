@@ -32,12 +32,14 @@ import JsonDSL._
 import net.liftweb.record.field.Countries
 
 import com.mongodb._
+import http.{S, LiftSession}
 
 /**
  * Systems under specification for MongoRecord.
  */
 object MongoRecordSpec extends Specification("MongoRecord Specification") with MongoTestKit {
   import fixtures._
+  val session = new LiftSession("hello", "", Empty)
 
   "MongoRecord field introspection" should {
     checkMongoIsRunning
@@ -328,30 +330,34 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
     "save and retrieve 'standard' type fields" in {
       checkMongoIsRunning
 
-      fttr.save
+      S.initIfUninitted(session) {
+        fttr.save
 
-      val fttrFromDb = FieldTypeTestRecord.find(fttr.id.value)
-      fttrFromDb must notBeEmpty
-      fttrFromDb foreach { tr =>
-        tr mustEqual fttr
-      }
+        val fttrFromDb = FieldTypeTestRecord.find(fttr.id.value)
+        fttrFromDb must notBeEmpty
+        fttrFromDb foreach { tr =>
+          tr mustEqual fttr
+        }
 
-      bftr.save
+        bftr.save
 
-      val bftrFromDb = BinaryFieldTestRecord.find(bftr.id.value)
-      bftrFromDb must notBeEmpty
-      bftrFromDb foreach { tr =>
-        tr mustEqual bftr
+        val bftrFromDb = BinaryFieldTestRecord.find(bftr.id.value)
+        bftrFromDb must notBeEmpty
+        bftrFromDb foreach { tr =>
+          tr mustEqual bftr
+        }
       }
     }
 
     "delete record properly" in {
       checkMongoIsRunning
 
-      fttr.save
-      FieldTypeTestRecord.find(fttr.id.value) must notBeEmpty
-      fttr.delete_!
-      FieldTypeTestRecord.find(fttr.id.value) must beEmpty
+      S.initIfUninitted(session) {
+        fttr.save
+        FieldTypeTestRecord.find(fttr.id.value) must notBeEmpty
+        fttr.delete_!
+        FieldTypeTestRecord.find(fttr.id.value) must beEmpty
+      }
     }
 
     "save and retrieve Mongo type fields with set values" in {
@@ -529,116 +535,119 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
     "retrieve MongoRef objects properly" in {
       checkMongoIsRunning
 
-      val ntr = NullTestRecord.createRecord
-      val btr = BoxTestRecord.createRecord
+      S.initIfUninitted(session) {
+        val ntr = NullTestRecord.createRecord
+        val btr = BoxTestRecord.createRecord
 
-      fttr.save
-      ltr.save
-      mtr.save
-      ntr.save
-      btr.save
+        fttr.save
+        ltr.save
+        mtr.save
+        ntr.save
+        btr.save
 
-      val rftr = RefFieldTestRecord.createRecord
-        .mandatoryObjectIdRefField(fttr.id.is)
-        .mandatoryUUIDRefField(ltr.id.is)
-        .mandatoryStringRefField(mtr.id.is)
-        .mandatoryIntRefField(ntr.id.is)
-        .mandatoryLongRefField(btr.id.is)
-        .mandatoryObjectIdRefListField(List(fttr.id.is))
-        .mandatoryUUIDRefListField(List(ltr.id.is))
-        .mandatoryStringRefListField(List(mtr.id.is))
-        .mandatoryIntRefListField(List(ntr.id.is))
-        .mandatoryLongRefListField(List(btr.id.is))
+        val rftr = RefFieldTestRecord.createRecord
+          .mandatoryObjectIdRefField(fttr.id.is)
+          .mandatoryUUIDRefField(ltr.id.is)
+          .mandatoryStringRefField(mtr.id.is)
+          .mandatoryIntRefField(ntr.id.is)
+          .mandatoryLongRefField(btr.id.is)
+          .mandatoryObjectIdRefListField(List(fttr.id.is))
+          .mandatoryUUIDRefListField(List(ltr.id.is))
+          .mandatoryStringRefListField(List(mtr.id.is))
+          .mandatoryIntRefListField(List(ntr.id.is))
+          .mandatoryLongRefListField(List(btr.id.is))
 
-      // single objects
-      rftr.mandatoryObjectIdRefField.obj mustEqual Full(fttr)
-      rftr.mandatoryUUIDRefField.obj mustEqual Full(ltr)
-      rftr.mandatoryStringRefField.obj mustEqual Full(mtr)
-      rftr.mandatoryIntRefField.obj mustEqual Full(ntr)
-      rftr.mandatoryLongRefField.obj mustEqual Full(btr)
+        // single objects
+        rftr.mandatoryObjectIdRefField.obj mustEqual Full(fttr)
+        rftr.mandatoryUUIDRefField.obj mustEqual Full(ltr)
+        rftr.mandatoryStringRefField.obj mustEqual Full(mtr)
+        rftr.mandatoryIntRefField.obj mustEqual Full(ntr)
+        rftr.mandatoryLongRefField.obj mustEqual Full(btr)
 
-      val fttr2 = FieldTypeTestRecord.createRecord.save
+        val fttr2 = FieldTypeTestRecord.createRecord.save
 
-      rftr.mandatoryObjectIdRefField.cached_? mustEqual true
-      rftr.mandatoryObjectIdRefField(fttr2.id.is)
-      rftr.mandatoryObjectIdRefField.cached_? mustEqual false
-      rftr.mandatoryObjectIdRefField.find mustEqual Full(fttr2)
-      rftr.mandatoryObjectIdRefField.obj mustEqual Full(fttr2)
-      rftr.mandatoryObjectIdRefField.cached_? mustEqual true
+        rftr.mandatoryObjectIdRefField.cached_? mustEqual true
+        rftr.mandatoryObjectIdRefField(fttr2.id.is)
+        rftr.mandatoryObjectIdRefField.cached_? mustEqual false
+        rftr.mandatoryObjectIdRefField.find mustEqual Full(fttr2)
+        rftr.mandatoryObjectIdRefField.obj mustEqual Full(fttr2)
+        rftr.mandatoryObjectIdRefField.cached_? mustEqual true
 
-      // lists
-      rftr.mandatoryObjectIdRefListField.objs mustEqual List(fttr)
-      rftr.mandatoryUUIDRefListField.objs mustEqual List(ltr)
-      rftr.mandatoryStringRefListField.objs mustEqual List(mtr)
-      rftr.mandatoryIntRefListField.objs mustEqual List(ntr)
-      rftr.mandatoryLongRefListField.objs mustEqual List(btr)
+        // lists
+        rftr.mandatoryObjectIdRefListField.objs mustEqual List(fttr)
+        rftr.mandatoryUUIDRefListField.objs mustEqual List(ltr)
+        rftr.mandatoryStringRefListField.objs mustEqual List(mtr)
+        rftr.mandatoryIntRefListField.objs mustEqual List(ntr)
+        rftr.mandatoryLongRefListField.objs mustEqual List(btr)
 
-      val fttr3 = FieldTypeTestRecord.createRecord.save
-      val objList = List(fttr2, fttr3)
+        val fttr3 = FieldTypeTestRecord.createRecord.save
+        val objList = List(fttr2, fttr3)
 
-      rftr.mandatoryObjectIdRefListField.cached_? mustEqual true
-      rftr.mandatoryObjectIdRefListField(objList.map(_.id.is))
-      rftr.mandatoryObjectIdRefListField.cached_? mustEqual false
-      rftr.mandatoryObjectIdRefListField.findAll mustEqual objList
-      rftr.mandatoryObjectIdRefListField.objs mustEqual objList
-      rftr.mandatoryObjectIdRefListField.cached_? mustEqual true
+        rftr.mandatoryObjectIdRefListField.cached_? mustEqual true
+        rftr.mandatoryObjectIdRefListField(objList.map(_.id.is))
+        rftr.mandatoryObjectIdRefListField.cached_? mustEqual false
+        rftr.mandatoryObjectIdRefListField.findAll mustEqual objList
+        rftr.mandatoryObjectIdRefListField.objs mustEqual objList
+        rftr.mandatoryObjectIdRefListField.cached_? mustEqual true
+      }
     }
 
     "use defaultValue when field is not present in the database" in {
       checkMongoIsRunning
+      S.initIfUninitted(session) {
+        val missingFieldDocId = ObjectId.get
 
-      val missingFieldDocId = ObjectId.get
+        // create a dbobject with no fields manually
+        val builder = BasicDBObjectBuilder.start
+          .add("_id", missingFieldDocId)
 
-      // create a dbobject with no fields manually
-      val builder = BasicDBObjectBuilder.start
-        .add("_id", missingFieldDocId)
+        FieldTypeTestRecord.useColl { coll => coll.save(builder.get) }
 
-      FieldTypeTestRecord.useColl { coll => coll.save(builder.get) }
+        val recFromDb = FieldTypeTestRecord.find(missingFieldDocId)
 
-      val recFromDb = FieldTypeTestRecord.find(missingFieldDocId)
+        recFromDb must notBeEmpty
 
-      recFromDb must notBeEmpty
-
-      recFromDb foreach { r =>
-        r.mandatoryBooleanField.is must_== false
-        r.legacyOptionalBooleanField
-        r.optionalBooleanField.is must beEmpty
-        r.mandatoryCountryField.is must_== Countries.C1
-        r.legacyOptionalCountryField.valueBox must beEmpty
-        r.optionalCountryField.is must beEmpty
-        r.mandatoryDecimalField.is must_== 0.00
-        r.legacyOptionalDecimalField.valueBox must beEmpty
-        r.optionalDecimalField.is must beEmpty
-        r.mandatoryDoubleField.is must_== 0d
-        r.legacyOptionalDoubleField.valueBox must beEmpty
-        r.optionalDoubleField.is must beEmpty
-        r.mandatoryEmailField.is must_== ""
-        r.legacyOptionalEmailField.valueBox must beEmpty
-        r.optionalEmailField.is must beEmpty
-        r.mandatoryEnumField.is must_== MyTestEnum.ONE
-        r.legacyOptionalEnumField.valueBox must beEmpty
-        r.optionalEnumField.is must beEmpty
-        r.mandatoryIntField.is must_== 0
-        r.legacyOptionalIntField.valueBox must beEmpty
-        r.optionalIntField.is must beEmpty
-        r.mandatoryLocaleField.is must_== Locale.getDefault.toString
-        r.legacyOptionalLocaleField.valueBox must beEmpty
-        r.optionalLocaleField.is must beEmpty
-        r.mandatoryLongField.is must_== 0L
-        r.legacyOptionalLongField.valueBox must beEmpty
-        r.optionalLongField.is must beEmpty
-        r.mandatoryPostalCodeField.is must_== ""
-        r.legacyOptionalPostalCodeField.valueBox must beEmpty
-        r.optionalPostalCodeField.is must beEmpty
-        r.mandatoryStringField.is must_== ""
-        r.legacyOptionalStringField.valueBox must beEmpty
-        r.optionalStringField.is must beEmpty
-        r.mandatoryTextareaField.is must_== ""
-        r.legacyOptionalTextareaField.valueBox must beEmpty
-        r.optionalTextareaField.is must beEmpty
-        // r.mandatoryTimeZoneField.is must_== "America/Chicago"
-        r.legacyOptionalTimeZoneField.valueBox must beEmpty
-        r.optionalTimeZoneField.is must beEmpty
+        recFromDb foreach { r =>
+          r.mandatoryBooleanField.is must_== false
+          r.legacyOptionalBooleanField
+          r.optionalBooleanField.is must beEmpty
+          r.mandatoryCountryField.is must_== Countries.C1
+          r.legacyOptionalCountryField.valueBox must beEmpty
+          r.optionalCountryField.is must beEmpty
+          r.mandatoryDecimalField.is must_== 0.00
+          r.legacyOptionalDecimalField.valueBox must beEmpty
+          r.optionalDecimalField.is must beEmpty
+          r.mandatoryDoubleField.is must_== 0d
+          r.legacyOptionalDoubleField.valueBox must beEmpty
+          r.optionalDoubleField.is must beEmpty
+          r.mandatoryEmailField.is must_== ""
+          r.legacyOptionalEmailField.valueBox must beEmpty
+          r.optionalEmailField.is must beEmpty
+          r.mandatoryEnumField.is must_== MyTestEnum.ONE
+          r.legacyOptionalEnumField.valueBox must beEmpty
+          r.optionalEnumField.is must beEmpty
+          r.mandatoryIntField.is must_== 0
+          r.legacyOptionalIntField.valueBox must beEmpty
+          r.optionalIntField.is must beEmpty
+          r.mandatoryLocaleField.is must_== Locale.getDefault.toString
+          r.legacyOptionalLocaleField.valueBox must beEmpty
+          r.optionalLocaleField.is must beEmpty
+          r.mandatoryLongField.is must_== 0L
+          r.legacyOptionalLongField.valueBox must beEmpty
+          r.optionalLongField.is must beEmpty
+          r.mandatoryPostalCodeField.is must_== ""
+          r.legacyOptionalPostalCodeField.valueBox must beEmpty
+          r.optionalPostalCodeField.is must beEmpty
+          r.mandatoryStringField.is must_== ""
+          r.legacyOptionalStringField.valueBox must beEmpty
+          r.optionalStringField.is must beEmpty
+          r.mandatoryTextareaField.is must_== ""
+          r.legacyOptionalTextareaField.valueBox must beEmpty
+          r.optionalTextareaField.is must beEmpty
+          // r.mandatoryTimeZoneField.is must_== "America/Chicago"
+          r.legacyOptionalTimeZoneField.valueBox must beEmpty
+          r.optionalTimeZoneField.is must beEmpty
+        }
       }
     }
 
@@ -655,66 +664,69 @@ object MongoRecordSpec extends Specification("MongoRecord Specification") with M
     "update dirty fields for a FieldTypeTestRecord" in {
       checkMongoIsRunning
 
-      val fttr = FieldTypeTestRecord.createRecord
-        .legacyOptionalStringField("legacy optional string")
-        .optionalStringField("optional string")
-        .save
+      S.initIfUninitted(session) {
+        val fttr = FieldTypeTestRecord.createRecord
+          .legacyOptionalStringField("legacy optional string")
+          .optionalStringField("optional string")
+          .save
 
-      fttr.mandatoryBooleanField(true)
-      fttr.mandatoryBooleanField.dirty_? must_== true
+        fttr.mandatoryBooleanField(true)
+        fttr.mandatoryBooleanField.dirty_? must_== true
 
-      fttr.mandatoryDecimalField(BigDecimal("3.14"))
-      fttr.mandatoryDecimalField.dirty_? must_== true
+        fttr.mandatoryDecimalField(BigDecimal("3.14"))
+        fttr.mandatoryDecimalField.dirty_? must_== true
 
-      fttr.mandatoryDoubleField(1999)
-      fttr.mandatoryDoubleField.dirty_? must_== true
+        fttr.mandatoryDoubleField(1999)
+        fttr.mandatoryDoubleField.dirty_? must_== true
 
-      fttr.mandatoryEnumField(MyTestEnum.TWO)
-      fttr.mandatoryEnumField.dirty_? must_== true
+        fttr.mandatoryEnumField(MyTestEnum.TWO)
+        fttr.mandatoryEnumField.dirty_? must_== true
 
-      fttr.mandatoryIntField(99)
-      fttr.mandatoryIntField.dirty_? must_== true
+        fttr.mandatoryIntField(99)
+        fttr.mandatoryIntField.dirty_? must_== true
 
-      fttr.mandatoryLongField(100L)
-      fttr.mandatoryLongField.dirty_? must_== true
+        fttr.mandatoryLongField(100L)
+        fttr.mandatoryLongField.dirty_? must_== true
 
-      fttr.mandatoryStringField("string")
-      fttr.mandatoryStringField.dirty_? must_== true
+        fttr.mandatoryStringField("string")
+        fttr.mandatoryStringField.dirty_? must_== true
 
-      fttr.optionalStringField(Empty)
-      fttr.optionalStringField.dirty_? must_== true
+        fttr.optionalStringField(Empty)
+        fttr.optionalStringField.dirty_? must_== true
 
-      fttr.legacyOptionalStringField(Empty)
-      fttr.legacyOptionalStringField.dirty_? must_== true
+        fttr.legacyOptionalStringField(Empty)
+        fttr.legacyOptionalStringField.dirty_? must_== true
 
-      fttr.dirtyFields.length must_== 9
-      fttr.update
-      fttr.dirtyFields.length must_== 0
+        fttr.dirtyFields.length must_== 9
+        fttr.update
+        fttr.dirtyFields.length must_== 0
 
-      val fromDb = FieldTypeTestRecord.find(fttr.id.is)
-      fromDb must notBeEmpty
-      fromDb foreach { rec =>
-        rec must_== fttr
-        rec.dirtyFields.length must_== 0
-      }
+        val fromDb = FieldTypeTestRecord.find(fttr.id.is)
+        fromDb must notBeEmpty
+        fromDb foreach { rec =>
+          rec must_== fttr
+          rec.dirtyFields.length must_== 0
+        }
 
-      val fttr2 = FieldTypeTestRecord.createRecord.save
 
-      fttr2.legacyOptionalStringField("legacy optional string")
-      fttr2.legacyOptionalStringField.dirty_? must_== true
+        val fttr2 = FieldTypeTestRecord.createRecord.save
 
-      fttr2.optionalStringField("optional string")
-      fttr2.optionalStringField.dirty_? must_== true
+        fttr2.legacyOptionalStringField("legacy optional string")
+        fttr2.legacyOptionalStringField.dirty_? must_== true
 
-      fttr2.dirtyFields.length must_== 2
-      fttr2.update
-      fttr2.dirtyFields.length must_== 0
+        fttr2.optionalStringField("optional string")
+        fttr2.optionalStringField.dirty_? must_== true
 
-      val fromDb2 = FieldTypeTestRecord.find(fttr2.id.is)
-      fromDb2 must notBeEmpty
-      fromDb2 foreach { rec =>
-        rec must_== fttr2
-        rec.dirtyFields.length must_== 0
+        fttr2.dirtyFields.length must_== 2
+        fttr2.update
+        fttr2.dirtyFields.length must_== 0
+
+        val fromDb2 = FieldTypeTestRecord.find(fttr2.id.is)
+        fromDb2 must notBeEmpty
+        fromDb2 foreach { rec =>
+          rec must_== fttr2
+          rec.dirtyFields.length must_== 0
+        }
       }
     }
 

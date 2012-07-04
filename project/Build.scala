@@ -139,7 +139,8 @@ object BuildDef extends Build {
   lazy val couchdb =
     persistenceProject("couchdb")
         .dependsOn(record)
-        .settings(libraryDependencies += dispatch_http)
+        .settings(libraryDependencies += dispatch_http,
+                  parallelExecution in Test := false)
 
   lazy val squeryl_record =
     persistenceProject("squeryl-record")
