@@ -53,7 +53,7 @@ trait JQueryArtifacts extends JSArtifacts {
   }
 
   /**
-   * Shows the element denoinated by id and puts the focus on it
+   * Shows the element denominated by id and puts the focus on it
    */
   def showAndFocus(id: String) = JqId(id) ~> new JsMember {
     def toJsCmd = "show().each(function(i) {var t = this; setTimeout(function() { t.focus(); }, 200);})"
@@ -109,7 +109,7 @@ trait JQueryArtifacts extends JSArtifacts {
   }
 
   /**
-   * Trabsforms a JSON object intoits string representation
+   * Transforms a JSON object in to its string representation
    */
   def jsonStringify(in: JsExp): JsExp = new JsExp {
     def toJsCmd = "JSON.stringify(" + in.toJsCmd + ")"
@@ -133,7 +133,7 @@ trait JQueryArtifacts extends JSArtifacts {
             info.failFunc.map("error : " + _).toList mkString ("{ ", ", ", " }")
 }
 
-@deprecated("Either include your own jQuery or use https://github.com/karma4u101/lift-jquery-module")
+@deprecated("Use JQueryArtifacts in LiftRules and see http://liftweb.net/jquery for more information", "2.5")
 case object JQuery13Artifacts extends JQueryArtifacts {
   override def pathRewriter: PartialFunction[List[String], List[String]] = {
     case "jquery.js" :: Nil if Props.devMode => List("jquery-1.3.2.js")
@@ -141,12 +141,14 @@ case object JQuery13Artifacts extends JQueryArtifacts {
   }
 }
 
-@deprecated("Either include your own jQuery or use https://github.com/karma4u101/lift-jquery-module")
+@deprecated("Use JQueryArtifacts in LiftRules and see http://liftweb.net/jquery for more information", "2.5")
 case object JQuery14Artifacts extends JQueryArtifacts {
   override def pathRewriter: PartialFunction[List[String], List[String]] = {
     case "jquery.js" :: Nil if Props.devMode => List("jquery-1.4.4.js")
     case "jquery.js" :: Nil => List("jquery-1.4.4-min.js")
   }
 }
+
+case object JQueryArtifacts extends JQueryArtifacts
 
 

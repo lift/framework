@@ -323,9 +323,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var resourceServerPath = "classpath"
 
   /**
-   * Holds the JS library specific UI artifacts. By efault it uses JQuery's artifacts
+   * Holds the JS library specific UI artifacts. By default it uses JQuery's artifacts
    */
-  @volatile var jsArtifacts: JSArtifacts = JQuery13Artifacts
+  @volatile var jsArtifacts: JSArtifacts = JQueryArtifacts
 
   /**
    * Use this PartialFunction to to automatically add static URL parameters
