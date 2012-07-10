@@ -163,6 +163,7 @@ object ScriptRenderer {
                var theData = aboutToSend.theData;
                if (liftAjax.lift_uriSuffix) {
                  theData += '&' + liftAjax.lift_uriSuffix;
+                 aboutToSend.theData = theData;
                  liftAjax.lift_uriSuffix = undefined;
                }
                liftAjax.lift_actualAjaxCall(theData, successFunc, failureFunc);
