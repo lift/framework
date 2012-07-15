@@ -206,7 +206,7 @@ trait SHtml {
    *
    * @return the function ID and JavaScript that makes the call
    */
-  @scala.deprecated("Use jsonCall with a function that takes JValue => JsCmd")
+  @deprecated("Use jsonCall with a function that takes JValue => JsCmd", "2.5")
   def jsonCall(jsCalcValue: JsExp, func: Any => JsCmd)(implicit d: AvoidTypeErasureIssues1): GUIDJsExp =
     jsonCall_*(jsCalcValue, SFuncHolder(s => JSONParser.parse(s).map(func) openOr Noop))
 
@@ -219,7 +219,7 @@ trait SHtml {
    *
    * @return the function ID and JavaScript that makes the call
    */
-  @scala.deprecated("Use jsonCall with a function that takes JValue => JsCmd")
+  @deprecated("Use jsonCall with a function that takes JValue => JsCmd", "2.5")
   def jsonCall(jsCalcValue: JsExp, jsContext: JsContext, func: Any => JsCmd)(implicit d: AvoidTypeErasureIssues1): GUIDJsExp =
     jsonCall_*(jsCalcValue, jsContext, SFuncHolder(s => JSONParser.parse(s).map(func) openOr Noop))
 

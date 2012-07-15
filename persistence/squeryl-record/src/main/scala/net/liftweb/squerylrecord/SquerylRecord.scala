@@ -63,7 +63,7 @@ object SquerylRecord extends Loggable {
    * */
   private object currentSession extends DynoVar[Session]
   
-  @deprecated(message = "Lift DB.use style transactions do not properly clean up Squeryl resources.  Please use initWithSquerylSession instead.")
+  @deprecated(message = "Lift DB.use style transactions do not properly clean up Squeryl resources.  Please use initWithSquerylSession instead.", "2.5")
   def init(mkAdapter: () => DatabaseAdapter) = {
     FieldMetaData.factory = new RecordMetaDataFactory
     SessionFactory.externalTransactionManagementAdapter = Some(() => 

@@ -364,7 +364,7 @@ trait StringHelpers {
   /** @return a SuperString with more available methods such as roboSplit or commafy */
   implicit def listStringToSuper(in: List[String]): SuperListString = new SuperListString(in)
 
-  @deprecated("Use blankForNull instead")
+  @deprecated("Use blankForNull instead", "2.3")
   def emptyForNull(s: String) = blankForNull(s)
 
   /**

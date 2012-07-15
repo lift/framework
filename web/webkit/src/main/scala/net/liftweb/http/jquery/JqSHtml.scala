@@ -26,7 +26,7 @@ import JqJsCmds._
 /**
  * This contains Html artifacts that are heavily relying on JQuery
  */
-@deprecated("This contains Html artifacts that are heavily relying on JQuery")
+@deprecated("This contains Html artifacts that are heavily relying on JQuery", "2.3")
 object JqSHtml {
   def fadeOutErrors(duration: TimeSpan, fadeTime: TimeSpan): JsCmd = {
     FadeOut(LiftRules.noticesContainerId + "_error", duration, fadeTime)

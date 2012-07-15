@@ -285,7 +285,7 @@ trait ListenerManager {
    * favor of doing the filtering in the registered Actor's
    * message handling partial functions instead.
    */
-  @deprecated("Accept/reject logic should be done in the partial function that handles the message.")
+  @deprecated("Accept/reject logic should be done in the partial function that handles the message.", "2.4")
   protected def updateIfPassesTest(update: Any)(info: ActorTest) {
     info match {
       case (who, test) => if (test.isDefinedAt(update) && test(update)) who ! update
@@ -329,7 +329,7 @@ trait ListenerManager {
  *
  * @see CometListener
  */
-@deprecated("Use the CometListener trait instead.")
+@deprecated("Use the CometListener trait instead.", "2.4")
 trait CometListenee extends CometListener {
   self: CometActor =>
 }
@@ -372,7 +372,7 @@ trait CometListener extends CometActor {
    * the session's context.  This causes problems.  Accept/reject logic should be done
    * in the partial function that handles the message.
    */
-  @deprecated("Accept/reject logic should be done in the partial function that handles the message.")
+  @deprecated("Accept/reject logic should be done in the partial function that handles the message.", "2.4")
   protected def shouldUpdate: PartialFunction[Any, Boolean] = {
     case _ => true
   }
@@ -572,7 +572,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
   @volatile private var _defaultHtml: NodeSeq = _
 
-  @deprecated("Use defaultHtml")
+  @deprecated("Use defaultHtml", "2.3")
   def defaultXml = _defaultHtml
 
   /**
@@ -1525,7 +1525,6 @@ object Notice {
  * @param destroyScript is executed when the comet widget is redrawn ( e.g., if you register drag or mouse-over or some events, you unregister them here so the page doesn't leak resources.)
  * @param ignoreHtmlOnJs -- if the reason for sending the render is a Comet update, ignore the xhtml part and just run the JS commands.  This is useful in IE when you need to redraw the stuff inside <table><tr><td>... just doing innerHtml on <tr> is broken in IE
  */
-@serializable
 case class RenderOut(xhtml: Box[NodeSeq], fixedXhtml: Box[NodeSeq], script: Box[JsCmd], destroyScript: Box[JsCmd], ignoreHtmlOnJs: Boolean) {
   def this(xhtml: NodeSeq) = this (Full(xhtml), Empty, Empty, Empty, false)
 
@@ -1538,6 +1537,5 @@ case class RenderOut(xhtml: Box[NodeSeq], fixedXhtml: Box[NodeSeq], script: Box[
       destroyScript, ignoreHtmlOnJs)
 }
 
-@serializable
-private[http] object Never
+private[http] object Never extends Serializable
 

@@ -22,7 +22,7 @@ import xml.{Elem, MetaData, NodeSeq}
 import java.util.{ResourceBundle, Locale, Date}
 
 package object http {
-  @deprecated("Use Templates")
+  @deprecated("Use Templates", "2.3")
   lazy val TemplateFinder = Templates
 }
 

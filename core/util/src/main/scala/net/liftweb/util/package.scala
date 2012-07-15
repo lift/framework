@@ -26,6 +26,6 @@ package object util {
   /**
    * Changed the name ActorPing to Schedule
    */
-  @deprecated("Use Schedule")
+  @deprecated("Use Schedule", "2.3")
   val ActorPing = Schedule
 }

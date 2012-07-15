@@ -29,7 +29,7 @@ object RecordHelpers {
       case JArray(vs)  => JsArray(vs.map(jvalueToJsExp): _*)
       case JBool(b)    => if (b) JsTrue else JsFalse
       case JDouble(d)  => Num(d)
-      case JField(n,v) => error("no parallel")
+      case JField(n,v) => sys.error("no parallel")
       case JInt(i)     => Num(i)
       case JNothing    => JsNull
       case JNull       => JsNull

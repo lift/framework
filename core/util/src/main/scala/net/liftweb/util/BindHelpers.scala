@@ -708,7 +708,7 @@ trait BindHelpers {
   /**
    *  transforms a Box into a Text node
    */
-  @deprecated("use -> instead")
+  @deprecated("use -> instead", "2.4")
   object BindParamAssoc {
     implicit def canStrBoxNodeSeq(in: Box[Any]): Box[NodeSeq] = in.map(_ match {
       case null => Text("null")
@@ -789,7 +789,7 @@ trait BindHelpers {
    *
    * @deprecated use -> instead
    */
-  @deprecated("use -> instead")
+  @deprecated("use -> instead", "2.4")
   class BindParamAssoc(val name: String) {
     def -->(value: String): BindParam = TheBindParam(name, if (null eq value) NodeSeq.Empty else Text(value))
     def -->(value: NodeSeq): BindParam = TheBindParam(name, value)
@@ -812,7 +812,7 @@ trait BindHelpers {
    *
    * @deprecated use -> instead
    */
-  @deprecated("use -> instead")
+  @deprecated("use -> instead", "2.4")
   implicit def strToBPAssoc(in: String): BindParamAssoc = new BindParamAssoc(in)
 
   /**
@@ -822,7 +822,7 @@ trait BindHelpers {
    *
    * @deprecated use -> instead
    */
-  @deprecated("use -> instead")
+  @deprecated("use -> instead", "2.4")
   implicit def symToSAAssoc(in: Symbol): SuperArrowAssoc = new SuperArrowAssoc(in.name)
 
   /**
@@ -831,7 +831,7 @@ trait BindHelpers {
    *
    * @deprecated use bind instead
    */
-  @deprecated("use bind instead")
+  @deprecated("use bind instead", "2.4")
   def xbind(namespace: String, xml: NodeSeq)(transform: PartialFunction[String, NodeSeq => NodeSeq]): NodeSeq = {
     def rec_xbind(xml: NodeSeq): NodeSeq = {
       xml.flatMap {
@@ -1133,7 +1133,7 @@ trait BindHelpers {
    * @param atWhat data to bind
    * @deprecated use the bind function instead
    */
-  @deprecated("use the bind function instead")
+  @deprecated("use the bind function instead", "2.3")
   def processBind(around: NodeSeq, atWhat: Map[String, NodeSeq]): NodeSeq = {
 
     /** Find element matched predicate f(x).isDefined, and return f(x) if found or None otherwise. */

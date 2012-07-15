@@ -134,7 +134,7 @@ object JsonParser {
   private val BrokenDouble = BigDecimal("2.2250738585072012e-308")
   private[json] def parseDouble(s: String) = {
     val d = BigDecimal(s)
-    if (d == BrokenDouble) error("Error parsing 2.2250738585072012e-308")
+    if (d == BrokenDouble) sys.error("Error parsing 2.2250738585072012e-308")
     else d.doubleValue
   }
 

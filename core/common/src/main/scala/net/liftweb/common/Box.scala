@@ -106,7 +106,7 @@ sealed trait BoxTrait {
    * 
    * @return <code>Full(in)</code> if <code>in</code> is not null; Empty otherwise
    */
-  @deprecated("Use legacyNullTest")
+  @deprecated("Use legacyNullTest", "2.5")
   def apply[T](in: T): Box[T] = legacyNullTest(in)
 
   /**
@@ -192,8 +192,7 @@ sealed trait BoxTrait {
  *   <li> you can "pass" a Box to a function for side effects: <code>Full(1) $ { x: Box[Int] => println(x openOr 0) }</code></li>
  * </ul>
  */
-@serializable
-sealed abstract class Box[+A] extends Product {
+sealed abstract class Box[+A] extends Product with Serializable{
   self =>
   /**
    * Returns true if this Box contains no value (is Empty or Failure or ParamFailure)
@@ -472,8 +471,7 @@ sealed abstract class Box[+A] extends Product {
 /**
  * Full is a Box containing a value.
  */
-@serializable
-final case class Full[+A](value: A) extends Box[A] {
+final case class Full[+A](value: A) extends Box[A]{
 
   def isEmpty: Boolean = false
 
@@ -551,14 +549,12 @@ final case class Full[+A](value: A) extends Box[A] {
 /**
  * Singleton object representing an Empty Box
  */
-@serializable
 case object Empty extends EmptyBox
 
 /**
  * The EmptyBox is a Box containing no value.
  */
-@serializable
-sealed abstract class EmptyBox extends Box[Nothing] {
+sealed abstract class EmptyBox extends Box[Nothing] with Serializable {
 
   def isEmpty: Boolean = true
 
@@ -600,8 +596,7 @@ object Failure {
  * A Failure is an EmptyBox with an additional failure message explaining the reason for its being empty.
  * It can also optionally provide an exception or a chain of causes represented as a list of other Failure objects
  */
-@serializable
-sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Failure]) extends EmptyBox {
+sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Failure]) extends EmptyBox{
   type A = Nothing
 
   /**
@@ -683,11 +678,10 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
  * A ParamFailure is a Failure with an additional typesafe parameter that can
  * allow an application to store other information related to the failure.
  */
-@serializable
 final class ParamFailure[T](override val msg: String,
 		            override val exception: Box[Throwable],
 		            override val chain: Box[Failure], val param: T) extends
-  Failure(msg, exception, chain) {
+  Failure(msg, exception, chain) with Serializable{
     override def toString(): String = "ParamFailure("+msg+", "+exception+
     ", "+chain+", "+param+")"
 
