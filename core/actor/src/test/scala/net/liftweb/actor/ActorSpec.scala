@@ -61,7 +61,7 @@ object ActorSpec extends Specification("Actor Specification") {
     "allow subtracting of a value" in {
       val a = actor
       a ! Set(33)
-      (a !< Sub(11)).get(50) must be_==(Full(Answer(22))).eventually(900, 100.milliseconds)
+      (a !< Sub(11)).get(500) must be_==(Full(Answer(22)))
     }
 
     "properly timeout" in {
