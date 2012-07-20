@@ -150,4 +150,21 @@ class DBSpec extends Specification with Mockito {
       DB.appendPostTransaction {committed => ()}  must throwA[IllegalStateException]
     }
   }
+
+  "DB.rollback" should {
+    "call postTransaction functions with false" in {
+      val m = mock[CommitFunc]
+      val activeConnection = mock[Connection]
+      DB.defineConnectionManager(DefaultConnectionIdentifier, dBVendor(activeConnection))
+
+      tryo(DB.use(DefaultConnectionIdentifier) {c =>
+        DB.appendPostTransaction(DefaultConnectionIdentifier, m.f _)
+        DB.rollback(DefaultConnectionIdentifier)
+        42
+      })
+
+      there was one(activeConnection).rollback
+      there was one(m).f(false)
+    }
+  }
 }
