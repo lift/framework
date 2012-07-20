@@ -81,7 +81,7 @@ object RestContinuation {
    *            is invoked asynchronously in the context of a different thread.
    * 
    */
-  @deprecated("Use RestContinuation.async.  It provides much better resource management")
+  @deprecated("Use RestContinuation.async.  It provides much better resource management", "2.4")
   def respondAsync(req: Req)(f: => Box[LiftResponse]): () => Box[LiftResponse] = {
     val store = ContinuationsStore.is
     val key = ContinuationKey(req.path, req.requestType)

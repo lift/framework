@@ -143,7 +143,7 @@ object LiftSession {
    * Check to see if the template is marked designer friendly
    * and lop off the stuff before the first surround
    */
-  @deprecated("Use Templates.checkForContentId")
+  @deprecated("Use Templates.checkForContentId", "2.3")
   def checkForContentId(in: NodeSeq): NodeSeq =
     Templates.checkForContentId(in)
 

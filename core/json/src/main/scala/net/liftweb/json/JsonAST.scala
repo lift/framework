@@ -396,7 +396,7 @@ object JsonAST {
     case JDouble(n)    => text(n.toString)
     case JInt(n)       => text(n.toString)
     case JNull         => text("null")
-    case JNothing      => error("can't render 'nothing'")
+    case JNothing      => sys.error("can't render 'nothing'")
     case JString(null) => text("null")
     case JString(s)    => text("\"" + quote(s) + "\"")
     case JArray(arr)   => text("[") :: series(trimArr(arr).map(render)) :: text("]")

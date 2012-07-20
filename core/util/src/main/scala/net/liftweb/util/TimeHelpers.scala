@@ -295,9 +295,9 @@ trait TimeHelpers { self: ControlHelpers =>
   def currentYear: Int = Calendar.getInstance.get(Calendar.YEAR)
 
   /**
-   * @deprecated use now instead
    * @return the current time as a Date object
    */
+  @deprecated("use now instead", "2.4")
   def timeNow = new Date
 
   /**

@@ -59,10 +59,10 @@ import json.JsonAST._
  *
  */
 class MockHttpServletRequest(val url : String = null, var contextPath : String = "") extends HttpServletRequest {
-  @deprecated("Use the \"attributes\" var instead")
+  @deprecated("Use the \"attributes\" var instead", "2.4")
   def attr = attributes
 
-  @deprecated("Use the \"attributes\" var instead")
+  @deprecated("Use the \"attributes\" var instead", "2.4")
   def attr_= (attrs : Map[String,Object]) = attributes = attrs
 
   var attributes: Map[String, Object] = Map()
@@ -183,10 +183,10 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    */
   var parameters : List[(String,String)] = Nil
 
-  @deprecated("Use the \"parameters\" var instead")
+  @deprecated("Use the \"parameters\" var instead", "2.4")
   def parameterMap = Map(parameters : _*)
 
-  @deprecated("Use the \"parameters\" var instead")
+  @deprecated("Use the \"parameters\" var instead", "2.4")
   def parameterMap_= (params : Map[String, List[String]]) {
     parameters = params.toList.flatMap {
       case (key,values) => values.map{(key,_)}

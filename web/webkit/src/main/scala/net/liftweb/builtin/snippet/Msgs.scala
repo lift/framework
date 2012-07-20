@@ -23,10 +23,9 @@ import scala.xml._
 import net.liftweb.util.Helpers._
 import net.liftweb.http.js._
 import JsCmds._
-import net.liftweb.common.{Box, Full, Empty}
+import net.liftweb.common.{Box, Empty}
 import common.Full
 import xml.Text
-import snippet.AjaxMessageMeta
 
 
 /**

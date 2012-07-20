@@ -127,8 +127,7 @@ object S extends S {
   /**
    *  Impersonates a function that will be called when uploading files
    */
-  @serializable
-  private final class BinFuncHolder(val func: FileParamHolder => Any, val owner: Box[String]) extends AFuncHolder {
+  private final class BinFuncHolder(val func: FileParamHolder => Any, val owner: Box[String]) extends AFuncHolder with Serializable{
     def apply(in: List[String]) {logger.info("You attempted to call a 'File Upload' function with a normal parameter.  Did you forget to 'enctype' to 'multipart/form-data'?")}
 
     override def apply(in: FileParamHolder) = func(in)
@@ -152,8 +151,7 @@ object S extends S {
    * Impersonates a function that is executed on HTTP requests from client. The function
    * takes a String as the only parameter and returns an Any.
    */
-  @serializable
-  private final class SFuncHolder(val func: String => Any, val owner: Box[String]) extends AFuncHolder {
+  private final class SFuncHolder(val func: String => Any, val owner: Box[String]) extends AFuncHolder with Serializable{
     def this(func: String => Any) = this (func, Empty)
 
     def apply(in: List[String]): Any = in.headOption.toList.map(func(_))
@@ -169,8 +167,7 @@ object S extends S {
    * Impersonates a function that is executed on HTTP requests from client. The function
    * takes a List[String] as the only parameter and returns an Any.
    */
-  @serializable
-  private final class LFuncHolder(val func: List[String] => Any, val owner: Box[String]) extends AFuncHolder {
+  private final class LFuncHolder(val func: List[String] => Any, val owner: Box[String]) extends AFuncHolder with Serializable {
     def apply(in: List[String]): Any = func(in)
   }
 
@@ -184,16 +181,14 @@ object S extends S {
    * Impersonates a function that is executed on HTTP requests from client. The function
    * takes zero arguments and returns an Any.
    */
-  @serializable
-  private final class NFuncHolder(val func: () => Any, val owner: Box[String]) extends AFuncHolder {
+  private final class NFuncHolder(val func: () => Any, val owner: Box[String]) extends AFuncHolder with Serializable{
     def apply(in: List[String]): Any = in.headOption.toList.map(s => func())
   }
 
   /**
    * Abstrats a function that is executed on HTTP requests from client.
    */
-  @serializable
-  sealed trait AFuncHolder extends Function1[List[String], Any] {
+  sealed trait AFuncHolder extends Function1[List[String], Any] with Serializable{
     def owner: Box[String]
 
     def apply(in: List[String]): Any
@@ -1026,7 +1021,7 @@ trait S extends HasParams with Loggable {
    *
    * @return the localized version of the string
    */
-  @deprecated("Use S.?() instead. S.?? will be removed in 2.6")
+  @deprecated("Use S.?() instead. S.?? will be removed in 2.6", "2.5")
   def ??(str: String): String = ?(str)
 
   /**
@@ -1037,7 +1032,7 @@ trait S extends HasParams with Loggable {
    *
    * @return the localized version of the string
    */
-  @deprecated("Use S.?() instead. S.?? will be removed in 2.6")
+  @deprecated("Use S.?() instead. S.?? will be removed in 2.6", "2.5")
   def ??(str: String, params: AnyRef*): String = String.format(locale, ?(str), params: _*)
 
   private def ?!(str: String, resBundle: List[ResourceBundle]): String = resBundle.flatMap(r => tryo(r.getObject(str) match {
@@ -2018,7 +2013,7 @@ for {
    *
    * @param attr The attributes to set temporarily
    */
-  @deprecated("Use the S.withAttrs method instead")
+  @deprecated("Use the S.withAttrs method instead", "2.4")
   def setVars[T](attr: MetaData)(f: => T): T = withAttrs(attr)(f)
 
   /**
@@ -2655,10 +2650,10 @@ for {
    */
   private[http] def noticesToJsCmd: JsCmd = LiftRules.noticesToJsCmd()
 
-  @deprecated("Use AFuncHolder.listStrToAF")
+  @deprecated("Use AFuncHolder.listStrToAF", "2.4")
   def toLFunc(in: List[String] => Any): AFuncHolder = LFuncHolder(in, Empty)
 
-  @deprecated("Use AFuncHolder.unitToAF")
+  @deprecated("Use AFuncHolder.unitToAF", "2.4")
   def toNFunc(in: () => Any): AFuncHolder = NFuncHolder(in, Empty)
 
   implicit def stuff2ToUnpref(in: (Symbol, Any)): UnprefixedAttribute = new UnprefixedAttribute(in._1.name, Text(in._2.toString), Null)
@@ -2754,7 +2749,7 @@ for {
    *
    * Use fmapFunc(AFuncHolder)(String => T)
    */
-  @deprecated("Use fmapFunc(AFuncHolder)(String => T)")
+  @deprecated("Use fmapFunc(AFuncHolder)(String => T)", "2.4")
   def mapFunc(in: AFuncHolder): String = {
     mapFunc(formFuncName, in)
   }
@@ -2764,7 +2759,7 @@ for {
    *
    * Use fmapFunc(AFuncHolder)(String => T)
    */
-  @deprecated("Use fmapFunc(AFuncHolder)(String => T)")
+  @deprecated("Use fmapFunc(AFuncHolder)(String => T)", "2.4")
   def mapFunc(name: String, inf: AFuncHolder): String = {
     addFunctionMap(name, inf)
     name
@@ -2948,10 +2943,10 @@ for {
    *
    */
   def respondAsync(f: => Box[LiftResponse]): () => Box[LiftResponse] = {
-   (for (req <- S.request) yield {
-     RestContinuation.respondAsync(req)(f)
-   }) openOr (() => Full(EmptyResponse))
+    RestContinuation.async {reply => f}
   }
+
+
 
   /**
    * If you bind functions (i.e. using SHtml helpers) inside the closure passed to callOnce,
@@ -2979,8 +2974,7 @@ for {
 /**
  * Defines the notices types
  */
-@serializable
-object NoticeType {
+object NoticeType extends Serializable{
   sealed abstract class Value(val title : String) {
     def lowerCaseTitle = title.toLowerCase
 

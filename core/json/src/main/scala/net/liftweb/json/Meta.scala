@@ -394,7 +394,7 @@ private[json] object Meta {
       case x: java.lang.Short => JInt(BigInt(x.asInstanceOf[Short]))
       case x: Date => JString(formats.dateFormat.format(x))
       case x: Symbol => JString(x.name)
-      case _ => error("not a primitive " + a.asInstanceOf[AnyRef].getClass)
+      case _ => sys.error("not a primitive " + a.asInstanceOf[AnyRef].getClass)
     }
   }
 }

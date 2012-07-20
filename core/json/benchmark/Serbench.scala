@@ -41,12 +41,8 @@ object Serbench extends Benchmark {
     }
   }
 
-  @serializable
-  case class Project(name: String, startDate: Date, lang: Option[Language], teams: List[Team])
-  @serializable
-  case class Language(name: String, version: Double)
-  @serializable
-  case class Team(role: String, members: List[Employee])
-  @serializable
-  case class Employee(name: String, experience: Int)
+  case class Project(name: String, startDate: Date, lang: Option[Language], teams: List[Team]) extends Serializable
+  case class Language(name: String, version: Double) extends Serializable
+  case class Team(role: String, members: List[Employee]) extends Serializable
+  case class Employee(name: String, experience: Int) extends Serializable
 }
