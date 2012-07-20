@@ -366,7 +366,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * has been deprecated in favor of statelessReqTest which also passes
    * the HTTPRequest instance for testing of the user agent and other stuff.
    */
-  @deprecated("Use statelessReqTest")
+  @deprecated("Use statelessReqTest", "2.4")
   val statelessTest = RulesSeq[StatelessTestPF]
 
 
@@ -462,7 +462,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Set the doc type used.  Use the HtmlProperties
    */
-  @deprecated("Use the HtmlProperties")
+  @deprecated("Use the HtmlProperties", "2.4")
   val docType: FactoryMaker[Req => Box[String]] = new FactoryMaker( (r: Req) => r  match {
     case _ if S.skipDocType => Empty
     case _ if S.getDocType._1 => S.getDocType._2
@@ -602,7 +602,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * contingent on an unchanged LiftRules.noCometSessionCommand and on
    * liftComet.lift_sessionLost not being overridden client-side.
    */
-  @scala.deprecated("Use LiftRules.noCometSessionCmd.")
+  @deprecated("Use LiftRules.noCometSessionCmd.", "2.5")
   @volatile var noCometSessionPage = "/"
 
   /**
@@ -1024,7 +1024,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * no session will be created and no JSESSIONID cookie will be presented to the user (unless
    * the user has presented a JSESSIONID cookie).
    */
-  @scala.deprecated("Use statelessDispatch")
+  @deprecated("Use statelessDispatch", "2.4")
   def statelessDispatchTable = statelessDispatch
 
   /**
@@ -1221,7 +1221,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Use statelessRewrite or statefuleRewrite
    */
-  @deprecated("Use statelessRewrite or statefuleRewrite")
+  @deprecated("Use statelessRewrite or statefuleRewrite", "2.3")
   val rewrite = statelessRewrite
 
   /**
@@ -1355,9 +1355,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * LiftRules.noCometSessionCmd).
    */
   @volatile var redirectAsyncOnSessionLoss = true
-  @deprecated("Use redirectAsyncOnSessionLoss instead.")
+  @deprecated("Use redirectAsyncOnSessionLoss instead.", "2.5")
   def redirectAjaxOnSessionLoss = redirectAsyncOnSessionLoss
-  @deprecated("Use redirectAsyncOnSessionLoss instead.")
+  @deprecated("Use redirectAsyncOnSessionLoss instead.", "2.5")
   def redirectAjaxOnSessionLoss_=(updated:Boolean) = redirectAsyncOnSessionLoss = updated
 
   /**
@@ -1490,7 +1490,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Tells Lift if the Ajax JavaScript shoukd be included. By default it is set to true.
    */
-  @deprecated("Use autoIncludeAjaxCalc")
+  @deprecated("Use autoIncludeAjaxCalc", "2.4")
   @volatile var autoIncludeAjax: LiftSession => Boolean = session => autoIncludeAjaxCalc.vend().apply(session)
 
   val autoIncludeAjaxCalc: FactoryMaker[() => LiftSession => Boolean] = 
@@ -1716,7 +1716,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * A function to format a Date... can be replaced by a function that is user-specific
    Replaced by dateTimeConverter
    */
-  @deprecated("Replaced by dateTimeConverter")
+  @deprecated("Replaced by dateTimeConverter", "2.3")
   @volatile var formatDate: Date => String = date => date match {
     case null => LiftRules.dateTimeConverter.vend.formatDate(new Date(0L))
     case s    => toInternetDate(s)
@@ -1726,7 +1726,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * A function that parses a String into a Date... can be replaced by something that's user-specific
    Replaced by dateTimeConverter
    */
-  @deprecated("Replaced by dateTimeConverter")
+  @deprecated("Replaced by dateTimeConverter", "2.3")
   @volatile var parseDate: String => Box[Date] = str => str match {
     case null => Empty
     case s => Helpers.toDate(s)
@@ -1752,7 +1752,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Provides the async provider instance responsible for suspending/resuming requests
    */
-  @deprecated("Register your povider via addSyncProvider")
+  @deprecated("Register your povider via addSyncProvider", "2.4")
   var servletAsyncProvider: (HTTPRequest) => ServletAsyncProvider = null // (req) => new Jetty6AsyncProvider(req)
 
   /**

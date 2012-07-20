@@ -91,7 +91,7 @@ object Templates {
    *
    * @return the template if it can be found
    */
-  @deprecated("use apply")
+  @deprecated("use apply", "2.4")
   def findAnyTemplate(places: List[String]): Box[NodeSeq] =
     findRawTemplate(places, S.locale)
 
@@ -103,7 +103,7 @@ object Templates {
    *
    * @return the template if it can be found
    */
-  @deprecated("use apply")
+  @deprecated("use apply", "2.4")
   def findAnyTemplate(places: List[String], locale: Locale): Box[NodeSeq] = findRawTemplate(places, locale)
 
 

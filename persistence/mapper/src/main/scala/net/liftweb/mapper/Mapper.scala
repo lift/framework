@@ -32,8 +32,7 @@ trait BaseMapper extends FieldContainer {
   def save: Boolean
 }
 
-@serializable
-trait Mapper[A<:Mapper[A]] extends BaseMapper {
+trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable{
   self: A =>
   type MapperType = A
 

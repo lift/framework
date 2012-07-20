@@ -166,7 +166,7 @@ trait TypeHints {
      * Chooses most specific class.
      */
     def hintFor(clazz: Class[_]): String = components.filter(_.containsHint_?(clazz))
-        .map(th => (th.hintFor(clazz), th.classFor(th.hintFor(clazz)).getOrElse(error("hintFor/classFor not invertible for " + th))))
+        .map(th => (th.hintFor(clazz), th.classFor(th.hintFor(clazz)).getOrElse(sys.error("hintFor/classFor not invertible for " + th))))
         .sort((x, y) => (delta(x._2, clazz) - delta(y._2, clazz)) < 0).head._1
 
     def classFor(hint: String): Option[Class[_]] = {
@@ -197,7 +197,7 @@ private[json] object ClassDelta {
     else if (class2.isAssignableFrom(class1)) {
       1 + delta(class1.getSuperclass, class2)
     }
-    else error("Don't call delta unless one class is assignable from the other")
+    else sys.error("Don't call delta unless one class is assignable from the other")
   }
 }
 
@@ -205,7 +205,7 @@ private[json] object ClassDelta {
  */
 case object NoTypeHints extends TypeHints {
   val hints = Nil
-  def hintFor(clazz: Class[_]) = error("NoTypeHints does not provide any type hints.")
+  def hintFor(clazz: Class[_]) = sys.error("NoTypeHints does not provide any type hints.")
   def classFor(hint: String) = None
 }
 

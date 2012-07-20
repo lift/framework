@@ -212,11 +212,10 @@ trait UserAgentCalculator {
   def userAgent: Box[String]
 }
 
-@serializable
-sealed trait ParamHolder {
+sealed trait ParamHolder extends Serializable{
   def name: String
 }
-@serializable
+
 final case class NormalParamHolder(name: String, value: String) extends ParamHolder
 
 /**
@@ -227,9 +226,8 @@ final case class NormalParamHolder(name: String, value: String) extends ParamHol
  * @param mimeType the mime type, as specified in the Content-Type field
  * @param fileName The local filename on the client
  */
-@serializable
 abstract class FileParamHolder(val name: String, val mimeType: String,
-                               val fileName: String) extends ParamHolder
+                               val fileName: String) extends ParamHolder with Serializable
 {
   /**
    * Returns the contents of the uploaded file as a Byte array.
@@ -1222,7 +1220,6 @@ final case class RewriteRequest(path: ParsePath, requestType: RequestType, httpR
 /**
  * The representation of an URI path
  */
-@serializable
 case class ParsePath(partPath: List[String], suffix: String, absolute: Boolean, endSlash: Boolean) {
   def drop(cnt: Int) = ParsePath(partPath.drop(cnt), suffix, absolute, endSlash)
 

@@ -164,9 +164,9 @@ trait PaginatorSnippet[T] extends Paginator[T] {
    */
   def currentXml: NodeSeq = 
     if(count==0)
-      Text(??("paginator.norecords"))
+      Text(S.?("paginator.norecords"))
     else
-      Text(??("paginator.displayingrecords", 
+      Text(S.?("paginator.displayingrecords",
               Array(recordsFrom, recordsTo, count).map(_.asInstanceOf[AnyRef]) : _*))
 
   /**

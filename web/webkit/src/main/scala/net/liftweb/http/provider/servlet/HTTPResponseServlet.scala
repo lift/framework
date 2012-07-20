@@ -81,7 +81,7 @@ class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
  
   def setStatusWithReason(status: Int, reason: String) = {
     _status = status
-    resp setStatus (status, reason)
+    resp sendError  (status, reason)
   }
 
   def outputStream: OutputStream = resp getOutputStream

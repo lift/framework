@@ -25,7 +25,7 @@ trait ValueHolder {
    *
    * @deprecated
    */
-  @deprecated("Use get")
+  @deprecated("Use get", "2.4")
   def is: ValueType
 
   /**

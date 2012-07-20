@@ -124,7 +124,7 @@ object JObjectParser extends SimpleInjector {
       case JInt(n) => renderInteger(n)
       case JDouble(n) => new java.lang.Double(n)
       case JNull => null
-      case JNothing => error("can't render 'nothing'")
+      case JNothing => sys.error("can't render 'nothing'")
       case JString(null) => "null"
       case JString(s) => stringProcessor.vend(s)
       case _ =>  ""

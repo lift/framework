@@ -23,7 +23,7 @@ import net.liftweb.http._
 import net.liftweb.http.js._
 import net.liftweb.util._
 
-@deprecated("Use any of the ajax methods in SHtml instead.")
+@deprecated("Use any of the ajax methods in SHtml instead.", "2.5")
 object A extends DispatchSnippet {
 
   def dispatch : DispatchIt = {

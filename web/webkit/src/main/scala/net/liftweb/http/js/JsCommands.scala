@@ -188,7 +188,7 @@ trait JsExp extends HtmlFixer with ToJsCmd {
    * This exists for backward compatibility reasons for JQueryLeft and JQueryRight
    * which are now deprecated. Use ~> whenever possible as this will be removed soon.
    */
-  @deprecated("Use `~>` instead")
+  @deprecated("Use `~>` instead", "2.3")
   def >>(right: JsMember): JsExp = ~>(right)
 
 
@@ -553,7 +553,7 @@ trait HtmlFixer {
    * This method must be run in the context of the thing creating the XHTML
    * to capture the bound functions
    */
-  @deprecated("Use fixHtmlAndJs or fixHtmlFunc")
+  @deprecated("Use fixHtmlAndJs or fixHtmlFunc", "2.4")
   protected def fixHtml(uid: String, content: NodeSeq): String = {
     val w = new java.io.StringWriter
 
