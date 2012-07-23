@@ -544,7 +544,7 @@ trait Crudify {
     </table>
   </lift:crud.view>
 
-  def showAllMenuName = S.?("List")+" "+displayName
+  def showAllMenuName = S.?("List", displayName)
 
   /**
    * This is the template that's used to render the page after the
