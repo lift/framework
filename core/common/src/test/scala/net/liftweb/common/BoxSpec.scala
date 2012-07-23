@@ -86,6 +86,18 @@ object BoxSpec extends Specification("Box Specification") with ScalaCheck with B
       Full(1).choice(gotIt)(Full("nothing")) must_== Full("got it: 1")
       Empty.choice(gotIt)(Full("nothing")) must_== Full("nothing")
     }
+    "define an '===' method, returning true only if this box is Full and its value matches" in {
+      Full(1).===(1) must beTrue
+      Full(2).===(1) must beFalse
+      Empty.===(1) must beFalse
+      (Empty ?~ "failure").===(1) must beFalse
+    }
+    "define a '!==' method, returning true only if this box is Empty or its value does not match" in {
+      Full(1).!==(1) must beFalse
+      Full(2).!==(1) must beTrue
+      Empty.!==(1) must beTrue
+      (Empty ?~ "failure").!==(1) must beTrue
+    }
   }
 
   "A Full Box" should {

@@ -437,6 +437,12 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def ===[B >: A](to: B): Boolean = false
 
   /**
+   * Returns true if the value contained in this box is NOT equal to the
+   * specified value, or if this Box is Empty.
+   */
+  def !==[B >: A](to: B): Boolean = ! (this === to)
+
+  /**
    * Equivalent to map(f).openOr(Full(dflt))
    */
   def dmap[B](dflt: => B)(f: A => B): B = dflt
