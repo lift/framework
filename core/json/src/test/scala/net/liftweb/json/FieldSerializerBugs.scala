@@ -17,7 +17,7 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 object FieldSerializerBugs extends Specification {
   import Serialization.{read, write => swrite}

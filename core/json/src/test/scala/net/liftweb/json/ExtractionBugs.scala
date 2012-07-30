@@ -17,13 +17,15 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
-object ExtractionBugs extends Specification("Extraction bugs Specification") {
+object ExtractionBugs extends Specification {
+  "Extraction bugs Specification".title
+
   implicit val formats = DefaultFormats
-  
+
   "ClassCastException (BigInt) regression 2 must pass" in {
-    val opt = OptionOfInt(Some(39))    
+    val opt = OptionOfInt(Some(39))
     Extraction.decompose(opt).extract[OptionOfInt].opt.get mustEqual 39
   }
 
