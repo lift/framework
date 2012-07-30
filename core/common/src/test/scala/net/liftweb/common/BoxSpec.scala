@@ -26,7 +26,9 @@ import Box._
 
 
 /* commented out because it tests the compilation phase and we want the compiler to "do the right thing"
-object TypeBoundsTest extends Specification("Type Bounds Spec") with ScalaCheck {
+object TypeBoundsTest extends Specification with ScalaCheck {
+  "Type Bounds Spec".title
+
   "Type bounds" can {
     "do type testing" in {
       def foo[T: ExcludeThisType.exclude[Nothing]#other](a: T) = a.toString
