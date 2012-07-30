@@ -17,7 +17,7 @@
 package net.liftweb
 package util
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import json._
 
@@ -25,7 +25,8 @@ import json._
 /**
  * Systems under specification for JsonCommand.
  */
-object JsonCommandSpec extends Specification("JsonCommand Specification") {
+object JsonCommandSpec extends Specification  {
+  "JsonCommand Specification".title
 
   private def parse(in: String): JValue = JsonParser.parse(in)
 

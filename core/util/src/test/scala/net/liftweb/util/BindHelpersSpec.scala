@@ -19,7 +19,7 @@ package util
 
 import xml._
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import BindHelpers._
@@ -28,7 +28,8 @@ import BindHelpers._
 /**
  * Systems under specification for BindHelpers.
  */
-object BindHelpersSpec extends Specification("BindHelpers Specification") {
+object BindHelpersSpec extends Specification  {
+  "BindHelpers Specification".title
 
   "the mixinAttributes function" should {
     "mixin in all the attributes" in {
@@ -403,6 +404,7 @@ object CssBindHelpersSpec extends Specification  {
       val xf = "* [id]" #> "xx" &
       "* [style]" #> "border:thin solid black" &
       "* *" #> <a/>
+      success
     }
 
     "not stack overflow on Elem" in {
@@ -411,6 +413,7 @@ object CssBindHelpersSpec extends Specification  {
       "* *+" #> <a/>
 
       xf(<div/>)
+      success
     }
 
     "not stack overflow on Elem" in {
@@ -419,6 +422,7 @@ object CssBindHelpersSpec extends Specification  {
       "* -*" #> <a/>
 
       xf(<div/>)
+      success
     }
 
     "support modifying attributes along with body" in {
@@ -525,7 +529,8 @@ object CssBindHelpersSpec extends Specification  {
 
     "substitute multiple Strings by id" in {
       ("#foo" #> "hello" &
-     "#baz" #> "bye")(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("hello")}</b>)
+     "#baz" #> "bye"
+     )(<b><div id="baz">Hello</div><span id="foo"/></b>) must be_== (NodeSeq fromSeq <b>{Text("bye")}{Text("hello")}</b>)
     }
 
     "bind href and None content" in {
@@ -654,17 +659,20 @@ object CssBindHelpersSpec extends Specification  {
 
     "substitute multiple Strings by id" in {
       (("#foo" replaceWith "hello") &
-       ("#baz" replaceWith "bye"))(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("hello")}</b>)
+       ("#baz" replaceWith "bye")
+       )(
+         <b><div id="baz">Hello</div><span id="foo"/></b>
+      ) must_== (NodeSeq fromSeq <b>{Text("bye")}{Text("hello")}</b>)
     }
 
     "substitute multiple Strings with a List by id" in {
       ("#foo" #> "hello" &
-     "#baz" #> List("bye", "bye"))(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("bye")}{Text("hello")}</b>)
+     "#baz" #> List("bye", "bye"))(<b><div id="baz">Hello</div><span id="foo"/></b>) must_== (NodeSeq fromSeq <b>{Text("bye")}{Text("bye")}{Text("hello")}</b>)
     }
 
     "substitute multiple Strings with a List by id" in {
       (("#foo" replaceWith "hello") &
-       ("#baz" replaceWith List("bye", "bye")))(<b><div id="baz">Hello</div><span id="foo"/></b>) must ==/ (<b>{Text("bye")}{Text("bye")}{Text("hello")}</b>)
+       ("#baz" replaceWith List("bye", "bye")))(<b><div id="baz">Hello</div><span id="foo"/></b>) must_== (NodeSeq fromSeq <b>{Text("bye")}{Text("bye")}{Text("hello")}</b>)
     }
 
 

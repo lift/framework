@@ -17,8 +17,9 @@
 package net.liftweb
 package util
 
-import org.specs.Specification
-import org.specs.specification.PendingUntilFixed
+import org.specs2.mutable.Specification
+import org.specs2.specification.BeforeExample
+import org.specs2.execute.PendingUntilFixed
 
 import actor._
 import Helpers._
@@ -27,12 +28,12 @@ import Helpers._
 /**
  * Systems under specification for Lift Schedule.
  */
-object ScheduleSpec extends Specification("Schedule Specification") with PendingUntilFixed with PingedService {
+object ScheduleSpec extends Specification with PendingUntilFixed with PingedService with BeforeExample {
+  "Schedule Specification".title
+
+  def before = Schedule.restart
 
   "The Schedule object" should {
-
-    doBefore { Schedule.restart }
-
     "provide a schedule method to ping an actor regularly" in {
       Schedule.schedule(service, Alive, TimeSpan(10))
       service.pinged must eventually(beTrue)
@@ -54,9 +55,8 @@ object ScheduleSpec extends Specification("Schedule Specification") with Pending
       Schedule.shutdown
       Schedule.shutdown
 //      service.pinged must eventually(beFalse)
-      service.pinged must throwAnException[ActorPingException].like
-      { case _: ActorPingException => true }
-    } pendingUntilFixed
+      service.pinged must throwA[ActorPingException]
+    }.pendingUntilFixed
   }
 
 }

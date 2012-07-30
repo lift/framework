@@ -17,13 +17,14 @@
 package net.liftweb
 package util
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for VCardParser.
  */
-object VCardParserSpec extends Specification("VCardParser Specification") {
+object VCardParserSpec extends Specification  {
+  "VCardParser Specification".title
 
   "VCard" should {
     "parse correctly" in {
@@ -55,7 +56,7 @@ object VCardParserSpec extends Specification("VCardParser Specification") {
               VCardEntry(VCardKey("TEL", List(("HOME", ""), ("VOICE", ""))), List("(404) 555-1212")),
               VCardEntry(VCardKey("END", List()), List("VCARD")))
         }
-        case Right(r) => fail(r toString)
+        case Right(r) => failure(r toString)
       }
 
     }
