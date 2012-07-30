@@ -91,7 +91,7 @@ object BuildDef extends Build {
         .settings(description := "Webkit Library",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv =>
-                    Seq(commons_fileupload, servlet_api, specs(sv).copy(configurations = Some("provided")), jetty6, jwebunit)
+                    Seq(commons_fileupload, servlet_api, specs2.copy(configurations = Some("provided")), jetty6, jwebunit)
                   },
                   initialize in Test <<= (sourceDirectory in Test) { src =>
                     System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
