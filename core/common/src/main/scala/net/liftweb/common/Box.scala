@@ -226,12 +226,12 @@ sealed abstract class Box[+A] extends Product with Serializable{
    *
    * @param nameOfPersonThatThoughtThisWasAGoodIdea -- yes... your name will be included in every exception
    *                                                thrown by calling this method
-   * @param lameButSemiPlausableReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
+   * @param lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
    *                                                         calling this method.  Tell us why.
    * @return The contents of the Box if it has one or an exception if not
    */
   def openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod(nameOfPersonThatThoughtThisWasAGoodIdea: String,
-                                                                   lameButSemiPlausableReasonWhyYouThinkThisIsAGoodIdea: String): A
+                                                                   lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea: String): A
 
   /**
    * Return the value contained in this Box if it is Full;
@@ -529,12 +529,12 @@ final case class Full[+A](value: A) extends Box[A]{
    *
    * @param nameOfPersonThatThoughtThisWasAGoodIdea -- yes... your name will be included in every exception
    *                                                thrown by calling this method
-   * @param lameButPlausableReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
+   * @param lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
    *                                                         calling this method.  Tell us why.
    * @return The contents of the Box if it has one or an exception if not
    */
   def openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod(nameOfPersonThatThoughtThisWasAGoodIdea: String,
-                                                                   lameButPlausableReasonWhyYouThinkThisIsAGoodIdea: String): A = value
+                                                                   lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea: String): A = value
 
 
   override def openOr[B >: A](default: => B): B = value
@@ -626,13 +626,15 @@ sealed abstract class EmptyBox extends Box[Nothing] with Serializable {
    *
    * @param nameOfPersonThatThoughtThisWasAGoodIdea -- yes... your name will be included in every exception
    *                                                thrown by calling this method
-   * @param lameButPlausableReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
+   * @param lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
    *                                                         calling this method.  Tell us why.
    * @return The contents of the Box if it has one or an exception if not
    */
   def openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod(nameOfPersonThatThoughtThisWasAGoodIdea: String,
-                                                                   lameButPlausableReasonWhyYouThinkThisIsAGoodIdea: String) =
-  throw new NullPointerException("So, "+nameOfPersonThatThoughtThisWasAGoodIdea+" thought it might be a good idea to open a Box even though it could be empty.  The justification was '"+lameButPlausableReasonWhyYouThinkThisIsAGoodIdea+"'.  Turns out it was a bad idea")
+                                                                   lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea: String) =
+  throw new NullPointerException("So, "+nameOfPersonThatThoughtThisWasAGoodIdea+
+    " thought it might be a good idea to open a Box even though it could be empty.  The justification was '"+
+    lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea+"'.  Turns out it was a bad idea")
 
 
 
@@ -685,15 +687,17 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
    *
    * @param nameOfPersonThatThoughtThisWasAGoodIdea -- yes... your name will be included in every exception
    *                                                thrown by calling this method
-   * @param lameButPlausableReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
+   * @param lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
    *                                                         calling this method.  Tell us why.
    * @return The contents of the Box if it has one or an exception if not
    */
   override def openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod(nameOfPersonThatThoughtThisWasAGoodIdea: String,
-                                                                   lameButPlausableReasonWhyYouThinkThisIsAGoodIdea: String) =
+                                                                   lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea: String) =
     throw new NullPointerException("So, "+nameOfPersonThatThoughtThisWasAGoodIdea+
       " thought it might be a good idea to open a Box even though it could be empty.  The justification was '"+
-      lameButPlausableReasonWhyYouThinkThisIsAGoodIdea+"'.  Turns out it was a bad idea. By the way, the Failure that was opened contained the error message: '"+msg+"'.")  {
+      lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea+
+      "'.  Turns out it was a bad idea. By the way, the Failure that was opened contained the error message: '"+
+      msg+"'.")  {
       override def getCause() = exception openOr null
     }
 
