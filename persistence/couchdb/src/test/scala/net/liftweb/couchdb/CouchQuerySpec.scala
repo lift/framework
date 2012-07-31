@@ -21,42 +21,45 @@ import dispatch.{Http, StatusCode}
 import common._
 import json._
 import JsonDSL._
-import org.specs.Specification
+import org.specs2.mutable.Specification
 import DocumentHelpers.jobjectToJObjectExtension
 
 
 /**
  * Systems under specification for CouchQuery.
  */
-object CouchQuerySpec extends Specification("CouchQuery Specification") {
+object CouchQuerySpec extends Specification  {
+  "CouchQuery Specification".title
+  sequential
+
   def setup = {
     val http = new Http
     val database = new Database("test")
-    (try { http(database delete) } catch { case StatusCode(_, _) => () }) must not(throwAnException[ConnectException]).orSkipExample
+    (try { http(database delete) } catch { case StatusCode(_, _) => () }) must not(throwA[ConnectException]).orSkip
     http(database create)
 
     (http, database)
   }
 
   private def verifyAndOpen[A](b: Box[A]): A = {
-    b must verify(_.isDefined)
+    b.isDefined must_== true
     b.open_!
   }
 
   "Queries" should {
-    val design: JObject = 
+    val design: JObject =
       ("language" -> "javascript") ~
       ("views" -> (("all_students"  -> ("map" -> "function(doc) { if (doc.type == 'student') { emit(null, doc); } }")) ~
              ("students_by_age" -> ("map" -> "function(doc) { if (doc.type == 'student') { emit(doc.age, doc); } }")) ~
              ("students_by_age_and_name" -> ("map" -> "function(doc) { if (doc.type == 'student') { emit([doc.age, doc.name], doc); } }"))))
 
     val docs: List[JObject] =
-      (("type" -> "student") ~ ("name" -> "Alice")   ~ ("age" -> 10)) :: 
-      (("type" -> "student") ~ ("name" -> "Bob")   ~ ("age" -> 11)) :: 
-      (("type" -> "student") ~ ("name" -> "Charlie") ~ ("age" -> 11)) :: 
-      (("type" -> "student") ~ ("name" -> "Donna")   ~ ("age" -> 12)) :: 
-      (("type" -> "student") ~ ("name" -> "Eric")  ~ ("age" -> 12)) :: 
-      (("type" -> "student") ~ ("name" -> "Fran")  ~ ("age" -> 13)) :: 
+      (("type" -> "student") ~ ("name" -> "Alice")   ~ ("age" -> 10)) ::
+      (("type" -> "student") ~ ("name" -> "Bob")   ~ ("age" -> 11)) ::
+      (("type" -> "student") ~ ("name" -> "Charlie") ~ ("age" -> 11)) ::
+      (("type" -> "student") ~ ("name" -> "Donna")   ~ ("age" -> 12)) ::
+      (("type" -> "student") ~ ("name" -> "Eric")  ~ ("age" -> 12)) ::
+      (("type" -> "student") ~ ("name" -> "Fran")  ~ ("age" -> 13)) ::
       (("type" -> "class") ~ ("name" -> "Astronomy")) ::
       (("type" -> "class") ~ ("name" -> "Baking")) ::
       (("type" -> "class") ~ ("name" -> "Chemistry")) ::
@@ -64,7 +67,7 @@ object CouchQuerySpec extends Specification("CouchQuery Specification") {
 
     def findStudents(docs: List[JObject]): List[JObject] = docs.filter(_.isA("student"))
 
-    def compareName(a: JObject, b: JObject): Boolean = 
+    def compareName(a: JObject, b: JObject): Boolean =
       (a.getString("name") openOr "design") < (b.getString("name") openOr "design")
 
     def prep(http: Http, database: Database): (JObject, List[JObject]) = {

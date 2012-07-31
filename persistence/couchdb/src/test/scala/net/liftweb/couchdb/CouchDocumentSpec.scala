@@ -18,7 +18,7 @@ import java.net.ConnectException
 
 import dispatch.{Http, StatusCode}
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import json._
@@ -29,18 +29,24 @@ import DocumentHelpers._
 /**
  * Systems under specification for CouchDocument.
  */
-object CouchDocumentSpec extends Specification("CouchDocument Specification") {
+object CouchDocumentSpec extends Specification  {
+  "CouchDocument Specification".title
+  sequential
+
+  def hasCode(i: Int): PartialFunction[Throwable, org.specs2.matcher.MatchResult[Any]] =
+    { case StatusCode(c, _) => c must_== i }
+
   def setup = {
     val http = new Http
     val database = new Database("test")
-    (try { http(database delete) } catch { case StatusCode(_, _) => () }) must not(throwAnException[ConnectException]).orSkipExample
+    (try { http(database delete) } catch { case StatusCode(_, _) => () }) must not(throwA[ConnectException]).orSkip
     http(database create)
 
     (http, database)
   }
 
   private final def verifyAndOpen[A](b: Box[A]): A = {
-    b must verify(_.isDefined)
+    b.isDefined must_== true
     b.open_!
   }
 
@@ -51,7 +57,7 @@ object CouchDocumentSpec extends Specification("CouchDocument Specification") {
     "give 404 on get when nonexistant" in {
       val (http, database) = setup
 
-      http(database("testdoc") fetch) must throwAnException[StatusCode].like { case StatusCode(404, _) => true }
+      http(database("testdoc") fetch) must throwA[StatusCode].like(hasCode(404))
     }
 
     "be insertable" in {
@@ -69,7 +75,7 @@ object CouchDocumentSpec extends Specification("CouchDocument Specification") {
       val (http, database) = setup
 
       val firstDocBox = http(database post testDoc1)
-      firstDocBox must verify(_.isDefined)
+      firstDocBox.isDefined must_== true
       val Full(firstDoc) = firstDocBox
       val Full(id) = firstDoc._id
       val Full(rev) = firstDoc._rev
@@ -87,16 +93,16 @@ object CouchDocumentSpec extends Specification("CouchDocument Specification") {
       val (http, database) = setup
 
       val newDoc = verifyAndOpen(http(database store testDoc1))
-      http(database(newDoc) @@ newDoc delete) must be ()
-      http(database(newDoc) fetch) must throwAnException[StatusCode].like { case StatusCode(404, _) => true }
+      http(database(newDoc) @@ newDoc delete) must_== ()
+      http(database(newDoc) fetch) must throwA[StatusCode].like(hasCode(404))
     }
 
     "give 404 on delete when nonexistant" in {
       val (http, database) = setup
 
       val newDoc = verifyAndOpen(http(database store testDoc1))
-      http(database(newDoc) @@ newDoc delete) must be ()
-      http(database(newDoc) @@ newDoc delete) must throwAnException[StatusCode].like { case StatusCode(404, _) => true }
+      http(database(newDoc) @@ newDoc delete) must_== ()
+      http(database(newDoc) @@ newDoc delete) must throwA[StatusCode].like(hasCode(404))
     }
 
     "be force storable" in {
