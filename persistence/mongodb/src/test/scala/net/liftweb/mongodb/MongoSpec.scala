@@ -17,17 +17,19 @@
 package net.liftweb
 package mongodb
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
+import org.specs2.execute.Result
 
 import com.mongodb._
 
-object MongoSpec extends Specification("Mongo Specification") {
+class MongoSpec extends Specification  {
+  "Mongo Specification".title
 
   case object TestMongoIdentifier extends MongoIdentifier {
     val jndiName = "test_a"
   }
 
-  def passDefinitionTests(id: MongoIdentifier, ma: MongoAddress): Unit = {
+  def passDefinitionTests(id: MongoIdentifier, ma: MongoAddress): Result = {
     // define the db
     MongoDB.close
     MongoDB.defineDb(id, ma)
@@ -39,7 +41,7 @@ object MongoSpec extends Specification("Mongo Specification") {
       }
     }
     catch {
-      case e: Exception => skip("MongoDB is not running")
+      case e: Exception => skipped("MongoDB is not running")
     }
 
     // using an undefined identifier throws an exception
@@ -48,6 +50,7 @@ object MongoSpec extends Specification("Mongo Specification") {
     } must throwA(new MongoException("Mongo not found: MongoIdentifier(test)"))
     // remove defined db
     MongoDB.close
+    success
   }
 
   "Mongo" should {
@@ -101,7 +104,7 @@ object MongoSpec extends Specification("Mongo Specification") {
         }
       }
       catch {
-        case e: Exception => skip("MongoDB is not running")
+        case e: Exception => skipped("MongoDB is not running")
       }
 
       // using an undefined identifier throws an exception
@@ -110,7 +113,9 @@ object MongoSpec extends Specification("Mongo Specification") {
       } must throwA(new MongoException("Mongo not found: MongoIdentifier(test)"))
       // remove defined db
       MongoDB.close
+      success
     }
+
     /* Requires a server other than localhost with auth setup.
     "Define and authenticate DB with Mongo instance" in {
       MongoDB.close

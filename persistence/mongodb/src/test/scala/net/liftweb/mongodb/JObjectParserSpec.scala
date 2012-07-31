@@ -22,11 +22,12 @@ import JsonDSL._
 import util.Helpers._
 
 import org.bson.types.ObjectId
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import com.mongodb.DBObject
 
-object JObjectParserSpec extends Specification("JObjectParser Specification") {
+object JObjectParserSpec extends Specification  {
+  "JObjectParser Specification".title
 
   def buildTestData: (ObjectId, DBObject) = {
     val oid = ObjectId.get
@@ -39,8 +40,8 @@ object JObjectParserSpec extends Specification("JObjectParser Specification") {
       val (oid, dbo) = buildTestData
       val xval = tryo(dbo.get("x").asInstanceOf[ObjectId])
 
-      xval must notBeEmpty
-      xval.foreach { x =>
+      xval.isDefined must_== true
+      xval.toList map { x =>
         x must_== oid
       }
     }
@@ -49,8 +50,8 @@ object JObjectParserSpec extends Specification("JObjectParser Specification") {
         val (oid, dbo) = buildTestData
         val xval = tryo(dbo.get("x").asInstanceOf[String])
 
-        xval must notBeEmpty
-        xval.foreach { x =>
+        xval.isDefined must_== true
+        xval.toList map { x =>
           x must_== oid.toString
         }
       }

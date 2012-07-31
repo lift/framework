@@ -27,11 +27,13 @@ import java.util.{Date, UUID}
 import java.util.regex.Pattern
 
 import org.bson.types.ObjectId
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import com.mongodb.{BasicDBList, DBObject}
 
-object BsonDSLSpec extends Specification("BsonDSL Specification") {
+object BsonDSLSpec extends Specification  {
+  "BsonDSL Specification".title
+
   "BsonDSL" should {
     "Convert ObjectId properly" in {
       val oid: ObjectId = ObjectId.get
@@ -69,7 +71,7 @@ object BsonDSLSpec extends Specification("BsonDSL Specification") {
       val dbo: DBObject = JObjectParser.parse(qry)(DefaultFormats)
       val ptrnList2: List[Pattern] = dbo.get("ptrns").asInstanceOf[BasicDBList].toList.map(_.asInstanceOf[Pattern])
 
-      for (i <- 0 to 2) {
+      for (i <- 0 to 2) yield {
         ptrnList(i).pattern must_== ptrnList2(i).pattern
         ptrnList(i).flags must_== ptrnList2(i).flags
       }
