@@ -207,31 +207,32 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def isDefined: Boolean = !isEmpty
 
   /**
-   * Yeah, Yeah, Yeah... you think it's alright to access references that may or may not be legal to access...
-   * well, it's really stupid idea.
+   * If you grew up on Java, you're used to Exceptions as part of your program logic.
+   * The Scala philosophy and the Lift philosophy is that exceptions are for exceptional
+   * conditions such as failure of an external resource (e.g., your database goes offline)
+   * rather than simply indicating that a parameter wasn't supplied or couldn't be parsed.
    *
-   * One of the major points of using Scala is to avoid things like Null Pointer Exceptions and Box
-   * is a key way to do this.  You can access the value of the Box (if and only if the Box contains a value)
-   * with a for comprehension or with the map, flatMap and foreach methods.  Using this method,
-   * however is the worst way to access to contents of the Box.
+   * Lift's Box and Scala's Option provide a mechanism for being explicit about a value
+   * existing or not existing rather than relying on a reference being not-null.  However,
+   * extracting a value from a Box should be done correctly.  Correctly can be (in order of use
+   * in David Pollak's code): a for comprehension; using map, flatMap or foreach; or using pattern matching.
    *
-   * But, but, but you say, this causes a fail-fast exception.
+   * The only times when you should be using this method are: the value is guaranteed to be available based
+   * on a guard outside of the method using the Box or in tests.  For example,
+   * User.currentUser.openOrThrowException("This snippet is used on pages where the user is logged in")
    *
-   * Dude... you don't want exceptions in your code.  Exceptions are for exceptional situations such as
-   * your disk failing or something on an external system.  Exceptions are not about the logic of your application.
-   * Your logic should work with all input values in your application.
+   * A valid justification for using this method should not be "I want my code to fail fast when I call it."
+   * Using exceptions in the core logic of your application should be strongly discouraged.
    *
-   * This method name reflects the design quality related to using this method.  It's also easy to
-   * find by grep'ing through your code... and when people see the method call in a code review... well...
+   * This method replaces open_! because people used open_! and generally ignored the reason for the "!",
+   * so we're making it more explicit that this method should not commonly be used and should be justified
+   * when used.
    *
-   * @param nameOfPersonThatThoughtThisWasAGoodIdea -- yes... your name will be included in every exception
-   *                                                thrown by calling this method
-   * @param lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
-   *                                                         calling this method.  Tell us why.
+   * @param justification Justify why calling this method is okay and why it will not result in an Exception
+   *
    * @return The contents of the Box if it has one or an exception if not
    */
-  def openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod(nameOfPersonThatThoughtThisWasAGoodIdea: String,
-                                                                   lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea: String): A
+  def openOrThrowException(justification: String): A
 
   /**
    * Return the value contained in this Box if it is Full;
@@ -248,8 +249,8 @@ sealed abstract class Box[+A] extends Product with Serializable{
    *
    * @return the value contained in this Box if it is full; throw an exception otherwise
    */
-  @deprecated("use openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod, or better yet, do the right thing with your code and use map, flatMap or foreach", "2.4")
-  final def open_! : A = openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod("dpp", "Implementing the deprecated method that you shouldn't be using")
+  @deprecated("use openOrThrowException, or better yet, do the right thing with your code and use map, flatMap or foreach", "2.4")
+  final def open_! : A = openOrThrowException("Legacy method implementation")
 
   /**
    * Return the value contained in this Box if it is Full;
@@ -262,8 +263,8 @@ sealed abstract class Box[+A] extends Product with Serializable{
    *
    * @return the value contained in this Box if it is full; throw an exception otherwise
    */
-  @deprecated("use openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod, or better yet, do the right thing with your code and use map, flatMap or foreach", "2.4")
-  final def openTheBox: A = openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod("dpp", "Implementing the deprecated method that you shouldn't be using")
+  @deprecated("use openOrThrowException, or better yet, do the right thing with your code and use map, flatMap or foreach", "2.4")
+  final def openTheBox: A = openOrThrowException("Legacy method implementation")
 
   /**
    * Return the value contained in this Box if it is full; otherwise return the specified default
@@ -509,32 +510,34 @@ final case class Full[+A](value: A) extends Box[A]{
   def isEmpty: Boolean = false
 
 
+
   /**
-   * Yeah, Yeah, Yeah... you think it's alright to access references that may or may not be legal to access...
-   * well, it's really stupid idea.
+   * If you grew up on Java, you're used to Exceptions as part of your program logic.
+   * The Scala philosophy and the Lift philosophy is that exceptions are for exceptional
+   * conditions such as failure of an external resource (e.g., your database goes offline)
+   * rather than simply indicating that a parameter wasn't supplied or couldn't be parsed.
    *
-   * One of the major points of using Scala is to avoid things like Null Pointer Exceptions and Box
-   * is a key way to do this.  You can access the value of the Box (if and only if the Box contains a value)
-   * with a for comprehension or with the map, flatMap and foreach methods.  Using this method,
-   * however is the worst way to access to contents of the Box.
+   * Lift's Box and Scala's Option provide a mechanism for being explicit about a value
+   * existing or not existing rather than relying on a reference being not-null.  However,
+   * extracting a value from a Box should be done correctly.  Correctly can be (in order of use
+   * in David Pollak's code): a for comprehension; using map, flatMap or foreach; or using pattern matching.
    *
-   * But, but, but you say, this causes a fail-fast exception.
+   * The only times when you should be using this method are: the value is guaranteed to be available based
+   * on a guard outside of the method using the Box or in tests.  For example,
+   * User.currentUser.openOrThrowException("This snippet is used on pages where the user is logged in")
    *
-   * Dude... you don't want exceptions in your code.  Exceptions are for exceptional situations such as
-   * your disk failing or something on an external system.  Exceptions are not about the logic of your application.
-   * Your logic should work with all input values in your application.
+   * A valid justification for using this method should not be "I want my code to fail fast when I call it."
+   * Using exceptions in the core logic of your application should be strongly discouraged.
    *
-   * This method name reflects the design quality related to using this method.  It's also easy to
-   * find by grep'ing through your code... and when people see the method call in a code review... well...
+   * This method replaces open_! because people used open_! and generally ignored the reason for the "!",
+   * so we're making it more explicit that this method should not commonly be used and should be justified
+   * when used.
    *
-   * @param nameOfPersonThatThoughtThisWasAGoodIdea -- yes... your name will be included in every exception
-   *                                                thrown by calling this method
-   * @param lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
-   *                                                         calling this method.  Tell us why.
+   * @param justification Justify why calling this method is okay and why it will not result in an Exception
+   *
    * @return The contents of the Box if it has one or an exception if not
    */
-  def openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod(nameOfPersonThatThoughtThisWasAGoodIdea: String,
-                                                                   lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea: String): A = value
+  def openOrThrowException(justification: String): A = value
 
 
   override def openOr[B >: A](default: => B): B = value
@@ -606,35 +609,35 @@ sealed abstract class EmptyBox extends Box[Nothing] with Serializable {
 
   def isEmpty: Boolean = true
 
+
   /**
-   * Yeah, Yeah, Yeah... you think it's alright to access references that may or may not be legal to access...
-   * well, it's really stupid idea.
+   * If you grew up on Java, you're used to Exceptions as part of your program logic.
+   * The Scala philosophy and the Lift philosophy is that exceptions are for exceptional
+   * conditions such as failure of an external resource (e.g., your database goes offline)
+   * rather than simply indicating that a parameter wasn't supplied or couldn't be parsed.
    *
-   * One of the major points of using Scala is to avoid things like Null Pointer Exceptions and Box
-   * is a key way to do this.  You can access the value of the Box (if and only if the Box contains a value)
-   * with a for comprehension or with the map, flatMap and foreach methods.  Using this method,
-   * however is the worst way to access to contents of the Box.
+   * Lift's Box and Scala's Option provide a mechanism for being explicit about a value
+   * existing or not existing rather than relying on a reference being not-null.  However,
+   * extracting a value from a Box should be done correctly.  Correctly can be (in order of use
+   * in David Pollak's code): a for comprehension; using map, flatMap or foreach; or using pattern matching.
    *
-   * But, but, but you say, this causes a fail-fast exception.
+   * The only times when you should be using this method are: the value is guaranteed to be available based
+   * on a guard outside of the method using the Box or in tests.  For example,
+   * User.currentUser.openOrThrowException("This snippet is used on pages where the user is logged in")
    *
-   * Dude... you don't want exceptions in your code.  Exceptions are for exceptional situations such as
-   * your disk failing or something on an external system.  Exceptions are not about the logic of your application.
-   * Your logic should work with all input values in your application.
+   * A valid justification for using this method should not be "I want my code to fail fast when I call it."
+   * Using exceptions in the core logic of your application should be strongly discouraged.
    *
-   * This method name reflects the design quality related to using this method.  It's also easy to
-   * find by grep'ing through your code... and when people see the method call in a code review... well...
+   * This method replaces open_! because people used open_! and generally ignored the reason for the "!",
+   * so we're making it more explicit that this method should not commonly be used and should be justified
+   * when used.
    *
-   * @param nameOfPersonThatThoughtThisWasAGoodIdea -- yes... your name will be included in every exception
-   *                                                thrown by calling this method
-   * @param lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
-   *                                                         calling this method.  Tell us why.
+   * @param justification Justify why calling this method is okay and why it will not result in an Exception
+   *
    * @return The contents of the Box if it has one or an exception if not
    */
-  def openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod(nameOfPersonThatThoughtThisWasAGoodIdea: String,
-                                                                   lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea: String) =
-  throw new NullPointerException("So, "+nameOfPersonThatThoughtThisWasAGoodIdea+
-    " thought it might be a good idea to open a Box even though it could be empty.  The justification was '"+
-    lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea+"'.  Turns out it was a bad idea")
+  def openOrThrowException(justification: String) =
+  throw new NullPointerException("An Empty Box was opened.  The justifcation for allowing the openOrThrowException was "+justification)
 
 
 
@@ -668,36 +671,34 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
 
 
   /**
-   * Yeah, Yeah, Yeah... you think it's alright to access references that may or may not be legal to access...
-   * well, it's really stupid idea.
+   * If you grew up on Java, you're used to Exceptions as part of your program logic.
+   * The Scala philosophy and the Lift philosophy is that exceptions are for exceptional
+   * conditions such as failure of an external resource (e.g., your database goes offline)
+   * rather than simply indicating that a parameter wasn't supplied or couldn't be parsed.
    *
-   * One of the major points of using Scala is to avoid things like Null Pointer Exceptions and Box
-   * is a key way to do this.  You can access the value of the Box (if and only if the Box contains a value)
-   * with a for comprehension or with the map, flatMap and foreach methods.  Using this method,
-   * however is the worst way to access to contents of the Box.
+   * Lift's Box and Scala's Option provide a mechanism for being explicit about a value
+   * existing or not existing rather than relying on a reference being not-null.  However,
+   * extracting a value from a Box should be done correctly.  Correctly can be (in order of use
+   * in David Pollak's code): a for comprehension; using map, flatMap or foreach; or using pattern matching.
    *
-   * But, but, but you say, this causes a fail-fast exception.
+   * The only times when you should be using this method are: the value is guaranteed to be available based
+   * on a guard outside of the method using the Box or in tests.  For example,
+   * User.currentUser.openOrThrowException("This snippet is used on pages where the user is logged in")
    *
-   * Dude... you don't want exceptions in your code.  Exceptions are for exceptional situations such as
-   * your disk failing or something on an external system.  Exceptions are not about the logic of your application.
-   * Your logic should work with all input values in your application.
+   * A valid justification for using this method should not be "I want my code to fail fast when I call it."
+   * Using exceptions in the core logic of your application should be strongly discouraged.
    *
-   * This method name reflects the design quality related to using this method.  It's also easy to
-   * find by grep'ing through your code... and when people see the method call in a code review... well...
+   * This method replaces open_! because people used open_! and generally ignored the reason for the "!",
+   * so we're making it more explicit that this method should not commonly be used and should be justified
+   * when used.
    *
-   * @param nameOfPersonThatThoughtThisWasAGoodIdea -- yes... your name will be included in every exception
-   *                                                thrown by calling this method
-   * @param lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
-   *                                                         calling this method.  Tell us why.
+   * @param justification Justify why calling this method is okay and why it will not result in an Exception
+   *
    * @return The contents of the Box if it has one or an exception if not
    */
-  override def openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod(nameOfPersonThatThoughtThisWasAGoodIdea: String,
-                                                                   lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea: String) =
-    throw new NullPointerException("So, "+nameOfPersonThatThoughtThisWasAGoodIdea+
-      " thought it might be a good idea to open a Box even though it could be empty.  The justification was '"+
-      lameButSemiPlausibleReasonWhyYouThinkThisIsAGoodIdea+
-      "'.  Turns out it was a bad idea. By the way, the Failure that was opened contained the error message: '"+
-      msg+"'.")  {
+  override def openOrThrowException(justification: String) =
+    throw new NullPointerException("An Failure Box was opened.  Failure Message: "+msg+
+      ".  The justifcation for allowing the openOrThrowException was "+justification)  {
       override def getCause() = exception openOr null
     }
 
