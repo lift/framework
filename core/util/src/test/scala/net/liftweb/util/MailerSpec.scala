@@ -108,8 +108,6 @@ object MyMailer extends Mailer {
      lastMessage = Full(msg)
 //     MailerSpec.this.notifyAll()
    })
-   //FIXME _sometimes_ mode is not detected correctly here
-   devModeSend.default.set{ m: MimeMessage => lastMessage = Full(m) }
 
   def touch() {
     Props.testMode
