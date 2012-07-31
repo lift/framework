@@ -18,7 +18,7 @@ package net.liftweb
 package builtin.snippet
 
 import xml._
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import http._
@@ -27,7 +27,9 @@ import http._
 /**
  * System under specification for Msg.
  */
-object MsgSpec extends Specification("Msg Specification") {
+object MsgSpec extends Specification  {
+  "Msg Specification".title
+
   def withSession[T](f: => T) : T =
     S.initIfUninitted(new LiftSession("test", "", Empty))(f)
 

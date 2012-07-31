@@ -18,13 +18,14 @@ package net.liftweb
 package sitemap
 
 import common._
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for Loc.
  */
-object LocSpec extends Specification("Loc Specification") {
+object LocSpec extends Specification  {
+  "Loc Specification".title
 
   case class Param(s: String)
 
