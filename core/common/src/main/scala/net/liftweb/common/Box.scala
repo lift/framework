@@ -207,6 +207,33 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def isDefined: Boolean = !isEmpty
 
   /**
+   * Yeah, Yeah, Yeah... you think it's alright to access references that may or may not be legal to access...
+   * well, it's really stupid idea.
+   *
+   * One of the major points of using Scala is to avoid things like Null Pointer Exceptions and Box
+   * is a key way to do this.  You can access the value of the Box (if and only if the Box contains a value)
+   * with a for comprehension or with the map, flatMap and foreach methods.  Using this method,
+   * however is the worst way to access to contents of the Box.
+   *
+   * But, but, but you say, this causes a fail-fast exception.
+   *
+   * Dude... you don't want exceptions in your code.  Exceptions are for exceptional situations such as
+   * your disk failing or something on an external system.  Exceptions are not about the logic of your application.
+   * Your logic should work with all input values in your application.
+   *
+   * This method name reflects the design quality related to using this method.  It's also easy to
+   * find by grep'ing through your code... and when people see the method call in a code review... well...
+   *
+   * @param nameOfPersonThatThoughtThisWasAGoodIdea -- yes... your name will be included in every exception
+   *                                                thrown by calling this method
+   * @param lameButSemiPlausableReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
+   *                                                         calling this method.  Tell us why.
+   * @return The contents of the Box if it has one or an exception if not
+   */
+  def openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod(nameOfPersonThatThoughtThisWasAGoodIdea: String,
+                                                                   lameButSemiPlausableReasonWhyYouThinkThisIsAGoodIdea: String): A
+
+  /**
    * Return the value contained in this Box if it is Full;
    * throw an exception otherwise.
    *
@@ -221,8 +248,8 @@ sealed abstract class Box[+A] extends Product with Serializable{
    *
    * @return the value contained in this Box if it is full; throw an exception otherwise
    */
-  @deprecated("Don't use this method unless you are guaranteed of a Full Box", "2.4")
-  def open_! : A
+  @deprecated("use openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod, or better yet, do the right thing with your code and use map, flatMap or foreach", "2.4")
+  final def open_! : A = openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod("dpp", "Implementing the deprecated method that you shouldn't be using")
 
   /**
    * Return the value contained in this Box if it is Full;
@@ -235,7 +262,8 @@ sealed abstract class Box[+A] extends Product with Serializable{
    *
    * @return the value contained in this Box if it is full; throw an exception otherwise
    */
-  def openTheBox: A = this.open_!
+  @deprecated("use openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod, or better yet, do the right thing with your code and use map, flatMap or foreach", "2.4")
+  final def openTheBox: A = openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod("dpp", "Implementing the deprecated method that you shouldn't be using")
 
   /**
    * Return the value contained in this Box if it is full; otherwise return the specified default
@@ -480,19 +508,34 @@ final case class Full[+A](value: A) extends Box[A]{
 
   def isEmpty: Boolean = false
 
-  
+
   /**
-   * Return the value contained in this Box if it is Full;
-   * throw an exception otherwise.
-   * The method has a '!' in its name.  This means "don't use it unless
-   * you are 100% sure that the Box is Full and you should probably
-   * comment your code with the explanation of the guaranty.
-   * The better case for extracting the value out of a Box can
-   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
+   * Yeah, Yeah, Yeah... you think it's alright to access references that may or may not be legal to access...
+   * well, it's really stupid idea.
    *
-   * @return the value contained in this Box if it is full; throw an exception otherwise
+   * One of the major points of using Scala is to avoid things like Null Pointer Exceptions and Box
+   * is a key way to do this.  You can access the value of the Box (if and only if the Box contains a value)
+   * with a for comprehension or with the map, flatMap and foreach methods.  Using this method,
+   * however is the worst way to access to contents of the Box.
+   *
+   * But, but, but you say, this causes a fail-fast exception.
+   *
+   * Dude... you don't want exceptions in your code.  Exceptions are for exceptional situations such as
+   * your disk failing or something on an external system.  Exceptions are not about the logic of your application.
+   * Your logic should work with all input values in your application.
+   *
+   * This method name reflects the design quality related to using this method.  It's also easy to
+   * find by grep'ing through your code... and when people see the method call in a code review... well...
+   *
+   * @param nameOfPersonThatThoughtThisWasAGoodIdea -- yes... your name will be included in every exception
+   *                                                thrown by calling this method
+   * @param lameButPlausableReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
+   *                                                         calling this method.  Tell us why.
+   * @return The contents of the Box if it has one or an exception if not
    */
-  def open_! : A = value
+  def openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod(nameOfPersonThatThoughtThisWasAGoodIdea: String,
+                                                                   lameButPlausableReasonWhyYouThinkThisIsAGoodIdea: String): A = value
+
 
   override def openOr[B >: A](default: => B): B = value
 
@@ -564,17 +607,34 @@ sealed abstract class EmptyBox extends Box[Nothing] with Serializable {
   def isEmpty: Boolean = true
 
   /**
-   * Return the value contained in this Box if it is Full;
-   * throw an exception otherwise.
-   * The method has a '!' in its name.  This means "don't use it unless
-   * you are 100% sure that the Box is Full and you should probably
-   * comment your code with the explanation of the guaranty.
-   * The better case for extracting the value out of a Box can
-   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
+   * Yeah, Yeah, Yeah... you think it's alright to access references that may or may not be legal to access...
+   * well, it's really stupid idea.
    *
-   * @return the value contained in this Box if it is full; throw an exception otherwise
+   * One of the major points of using Scala is to avoid things like Null Pointer Exceptions and Box
+   * is a key way to do this.  You can access the value of the Box (if and only if the Box contains a value)
+   * with a for comprehension or with the map, flatMap and foreach methods.  Using this method,
+   * however is the worst way to access to contents of the Box.
+   *
+   * But, but, but you say, this causes a fail-fast exception.
+   *
+   * Dude... you don't want exceptions in your code.  Exceptions are for exceptional situations such as
+   * your disk failing or something on an external system.  Exceptions are not about the logic of your application.
+   * Your logic should work with all input values in your application.
+   *
+   * This method name reflects the design quality related to using this method.  It's also easy to
+   * find by grep'ing through your code... and when people see the method call in a code review... well...
+   *
+   * @param nameOfPersonThatThoughtThisWasAGoodIdea -- yes... your name will be included in every exception
+   *                                                thrown by calling this method
+   * @param lameButPlausableReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
+   *                                                         calling this method.  Tell us why.
+   * @return The contents of the Box if it has one or an exception if not
    */
-  def open_!  = throw new NullPointerException("Trying to open an empty Box")
+  def openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod(nameOfPersonThatThoughtThisWasAGoodIdea: String,
+                                                                   lameButPlausableReasonWhyYouThinkThisIsAGoodIdea: String) =
+  throw new NullPointerException("So, "+nameOfPersonThatThoughtThisWasAGoodIdea+" thought it might be a good idea to open a Box even though it could be empty.  The justification was '"+lameButPlausableReasonWhyYouThinkThisIsAGoodIdea+"'.  Turns out it was a bad idea")
+
+
 
   override def openOr[B >: Nothing](default: => B): B = default
 
@@ -604,20 +664,38 @@ object Failure {
 sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Failure]) extends EmptyBox{
   type A = Nothing
 
+
   /**
-   * Return the value contained in this Box if it is Full;
-   * throw an exception otherwise.
-   * The method has a '!' in its name.  This means "don't use it unless
-   * you are 100% sure that the Box is Full and you should probably
-   * comment your code with the explanation of the guaranty.
-   * The better case for extracting the value out of a Box can
-   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
+   * Yeah, Yeah, Yeah... you think it's alright to access references that may or may not be legal to access...
+   * well, it's really stupid idea.
    *
-   * @return the value contained in this Box if it is full; throw an exception otherwise
+   * One of the major points of using Scala is to avoid things like Null Pointer Exceptions and Box
+   * is a key way to do this.  You can access the value of the Box (if and only if the Box contains a value)
+   * with a for comprehension or with the map, flatMap and foreach methods.  Using this method,
+   * however is the worst way to access to contents of the Box.
+   *
+   * But, but, but you say, this causes a fail-fast exception.
+   *
+   * Dude... you don't want exceptions in your code.  Exceptions are for exceptional situations such as
+   * your disk failing or something on an external system.  Exceptions are not about the logic of your application.
+   * Your logic should work with all input values in your application.
+   *
+   * This method name reflects the design quality related to using this method.  It's also easy to
+   * find by grep'ing through your code... and when people see the method call in a code review... well...
+   *
+   * @param nameOfPersonThatThoughtThisWasAGoodIdea -- yes... your name will be included in every exception
+   *                                                thrown by calling this method
+   * @param lameButPlausableReasonWhyYouThinkThisIsAGoodIdea -- Okay, Mr. Smartypants, you think it's a good idea
+   *                                                         calling this method.  Tell us why.
+   * @return The contents of the Box if it has one or an exception if not
    */
-  override def open_! = throw new NullPointerException("Trying to open a Failure Box: " + msg) {
-    override def getCause() = exception openOr null
-  }
+  override def openTheBoxButThisMightResultInAnExceptionSoDontUseThisMethod(nameOfPersonThatThoughtThisWasAGoodIdea: String,
+                                                                   lameButPlausableReasonWhyYouThinkThisIsAGoodIdea: String) =
+    throw new NullPointerException("So, "+nameOfPersonThatThoughtThisWasAGoodIdea+
+      " thought it might be a good idea to open a Box even though it could be empty.  The justification was '"+
+      lameButPlausableReasonWhyYouThinkThisIsAGoodIdea+"'.  Turns out it was a bad idea. By the way, the Failure that was opened contained the error message: '"+msg+"'.")  {
+      override def getCause() = exception openOr null
+    }
 
   override def map[B](f: A => B): Box[B] = this
 
