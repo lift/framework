@@ -637,7 +637,7 @@ sealed abstract class EmptyBox extends Box[Nothing] with Serializable {
    * @return The contents of the Box if it has one or an exception if not
    */
   def openOrThrowException(justification: String) =
-  throw new NullPointerException("An Empty Box was opened.  The justifcation for allowing the openOrThrowException was "+justification)
+  throw new NullPointerException("An Empty Box was opened.  The justification for allowing the openOrThrowException was "+justification)
 
 
 
@@ -698,7 +698,7 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
    */
   override def openOrThrowException(justification: String) =
     throw new NullPointerException("An Failure Box was opened.  Failure Message: "+msg+
-      ".  The justifcation for allowing the openOrThrowException was "+justification)  {
+      ".  The justification for allowing the openOrThrowException was "+justification)  {
       override def getCause() = exception openOr null
     }
 
