@@ -17,7 +17,7 @@
 package net.liftweb
 package mapper
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 
@@ -25,9 +25,12 @@ import common._
 /**
  * Systems under specification for MappedDate.
  */
-object MappedDecimalSpec extends Specification("MappedDecimal Specification") {
+object MappedDecimalSpec extends Specification  {
+  "MappedDecimal Specification".title
+  sequential
+
   val provider = DbProviders.H2MemoryProvider
-  
+
   private def ignoreLogger(f: => AnyRef): Unit = ()
   def setupDB {
     provider.setupDB
