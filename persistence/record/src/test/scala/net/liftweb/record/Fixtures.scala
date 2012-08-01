@@ -22,8 +22,7 @@ import java.math.MathContext
 import scala.xml.Text
 import common.{Box, Empty, Full}
 import util.{FieldError, Helpers}
-import org.specs._
-import org.specs.runner.{ConsoleRunner, JUnit3}
+import org.specs2.mutable._
 
 import field._
 
