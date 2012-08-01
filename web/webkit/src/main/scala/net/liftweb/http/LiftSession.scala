@@ -1461,6 +1461,15 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                                  why: LiftRules.SnippetFailures.Value,
                                  addlMsg: NodeSeq,
                                  whole: NodeSeq): NodeSeq = {
+
+    (for {
+      nodeSeq <- S.currentSnippetNodeSeq if S.ignoreFailedSnippets
+    } yield {
+      // don't keep nailing the same snippet name if we just failed it
+      S.currentSnippet.foreach(s => _lastFoundSnippet.set(s))
+      nodeSeq
+    }) openOr {
+
     for {
       f <- LiftRules.snippetFailedFunc.toList
     } {
@@ -1486,6 +1495,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
           {whole.toString}
         </pre>
       </div>) openOr NodeSeq.Empty
+    }
   }
 
   private final def findNSAttr(attrs: MetaData, prefix: String, key: String): Option[Seq[Node]] =
@@ -1927,39 +1937,50 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     else f
   }
 
+  private object _lastFoundSnippet extends ThreadGlobal[String]
+
   /**
    * Processes the surround tag and other lift tags
+   *
+   * @param page the name of the page currently being processed
+   * @param in the DOM to process
    */
   def processSurroundAndInclude(page: String, in: NodeSeq): NodeSeq = {
-    in.flatMap {
-      case Group(nodes) =>
-        Group(processSurroundAndInclude(page, nodes))
+    try {
+      in.flatMap {
+        case Group(nodes) =>
+          Group(processSurroundAndInclude(page, nodes))
 
-      case SnippetNode(element, kids, isLazy, attrs, snippetName) =>
-        processOrDefer(isLazy) {
-          S.doSnippet(snippetName) {
-            S.withAttrs(attrs) {
-              processSurroundAndInclude(page,
-                NamedPF((snippetName,
-                  element, attrs,
-                  kids,
-                  page),
-                  liftTagProcessing))
+        case elem @ SnippetNode(element, kids, isLazy, attrs, snippetName) if snippetName != _lastFoundSnippet.value =>
+          processOrDefer(isLazy) {
+            S.withCurrentSnippetNodeSeq(elem) {
+              S.doSnippet(snippetName) {
+                S.withAttrs(attrs) {
+                  processSurroundAndInclude(page,
+                    NamedPF((snippetName,
+                      element, attrs,
+                      kids,
+                      page),
+                      liftTagProcessing))
+                }
+              }
             }
           }
-        }
 
-      case v: Elem =>
-        Elem(v.prefix, v.label, processAttributes(v.attributes, this.allowAttributeProcessing.is),
-          v.scope, processSurroundAndInclude(page, v.child): _*)
+        case v: Elem =>
+          Elem(v.prefix, v.label, processAttributes(v.attributes, this.allowAttributeProcessing.is),
+            v.scope, processSurroundAndInclude(page, v.child): _*)
 
-      case pcd: scala.xml.PCData => pcd
-      case text: Text => text
-      case unparsed: Unparsed => unparsed
+        case pcd: scala.xml.PCData => pcd
+        case text: Text => text
+        case unparsed: Unparsed => unparsed
 
-      case a: Atom[Any] if (a.getClass == classOf[Atom[Any]]) => new Text(a.data.toString)
+        case a: Atom[Any] if (a.getClass == classOf[Atom[Any]]) => new Text(a.data.toString)
 
-      case v => v
+        case v => v
+      }
+    } finally {
+      _lastFoundSnippet.set(null)
     }
   }
 

@@ -2278,6 +2278,52 @@ for {
     NamedPF.applyBox(snippet, LiftRules.snippets.toList)
   }
 
+
+  private object _currentSnippetNodeSeq extends ThreadGlobal[NodeSeq]
+
+  /**
+   * The code block is executed while setting the current raw NodeSeq
+   * for access elsewhere
+   *
+   * @param ns the current NodeSeq
+   * @param f the call-by-name value to return (the code block to execute)
+   * @tparam T the type that f returns
+   * @return the value the the expression returns
+   */
+  def withCurrentSnippetNodeSeq[T](ns: NodeSeq)(f: => T): T =
+  _currentSnippetNodeSeq.doWith(ns)(f)
+
+  /**
+   * The current raw NodeSeq that resulted in a snippet invocation
+   * @return The current raw NodeSeq that resulted in a snippet invocation
+   */
+  def currentSnippetNodeSeq: Box[NodeSeq] = _currentSnippetNodeSeq.box
+
+  private object _ignoreFailedSnippets extends ThreadGlobal[Boolean]
+
+  /**
+   * Set the ignore snippet error mode.  In this mode, any
+   * snippet failures (usually snippets not being invocable) will be
+   * ignored and the original NodeSeq will be returned.
+   *
+   * This is useful if you want to do an initial pass of a page with a white-list
+   * of snippets, but not run every snippet on the page.
+   *
+   * @param ignore sets the ignore flag
+   * @param f the code block to execute
+   * @tparam T the return type of the code block
+   * @return the return of the code block
+   */
+  def runSnippetsWithIgnoreFailed[T](ignore: Boolean)(f: => T): T =
+  _ignoreFailedSnippets.doWith(ignore)(f)
+
+  /**
+   *
+   * @return should failed snippets be ignored and have the original NodeSeq
+   *         returned?
+   */
+  def ignoreFailedSnippets: Boolean = _ignoreFailedSnippets.box openOr false
+
   private object _currentSnippet extends RequestVar[Box[String]](Empty)
 
   private[http] def doSnippet[T](name: String)(f: => T): T = {
