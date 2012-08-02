@@ -1461,12 +1461,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                                  why: LiftRules.SnippetFailures.Value,
                                  addlMsg: NodeSeq,
                                  whole: NodeSeq): NodeSeq = {
-
     (for {
       nodeSeq <- S.currentSnippetNodeSeq if S.ignoreFailedSnippets
     } yield {
       // don't keep nailing the same snippet name if we just failed it
-      S.currentSnippet.foreach(s => _lastFoundSnippet.set(s))
+      (snippetName or S.currentSnippet).foreach(s => _lastFoundSnippet.set(s))
       nodeSeq
     }) openOr {
 
