@@ -41,11 +41,15 @@ object LAPinger {
 
   /**The underlying <code>java.util.concurrent.ScheduledExecutor</code> */
   private var service = Executors.newSingleThreadScheduledExecutor(TF)
-
+		  
+  private var isFullyShutdown = false;
+  
   /**
    * Re-create the underlying <code>SingleThreadScheduledExecutor</code>
    */
   def restart: Unit = synchronized {
+    if(isFullyShutdown) return
+    
     if ((service eq null) || service.isShutdown)
       service = Executors.newSingleThreadScheduledExecutor(TF)
   }
@@ -55,6 +59,12 @@ object LAPinger {
    */
   def shutdown: Unit = synchronized {
     service.shutdown
+  }
+
+  def shutdownFully() {
+    service.shutdownNow()
+    
+    isFullyShutdown = true;
   }
 
   /**

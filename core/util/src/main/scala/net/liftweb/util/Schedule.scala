@@ -74,11 +74,15 @@ sealed trait Schedule extends Loggable {
 
   private var pool = buildExecutor()
 
+  private var isFullyShutdown = false;
+    
   /**
    * Re-create the underlying <code>SingleThreadScheduledExecutor</code>
    */
   def restart: Unit = synchronized
-  { if ((service eq null) || service.isShutdown)
+  { 
+    if(isFullyShutdown) return
+    if ((service eq null) || service.isShutdown)
     service = Executors.newSingleThreadScheduledExecutor(TF) 
    if ((pool eq null) || pool.isShutdown)
      pool = buildExecutor()
@@ -91,6 +95,13 @@ sealed trait Schedule extends Loggable {
   def shutdown(): Unit = synchronized {
     service.shutdown 
     pool.shutdown
+  }
+  
+  def shutdownFully() {
+    service.shutdownNow()
+    pool.shutdownNow()
+    
+    isFullyShutdown = true;
   }
 
   /**
