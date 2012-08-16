@@ -296,6 +296,12 @@ object JsonParser {
               return NullVal
             }
             fail("expected null")
+          case 'N' =>
+            fieldNameMode = true
+            if (buf.next == 'a' && buf.next == 'N') {
+              return DoubleVal(Double.NaN)
+            }
+            fail("expected null")
           case ':' =>
             if (blocks.peek == ARRAY) fail("Colon in an invalid position")
             fieldNameMode = false
