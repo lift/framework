@@ -391,7 +391,7 @@ object Extraction {
     case JDouble(x) if (targetType == classOf[Number]) => x
     case JString(s) if (targetType == classOf[String]) => s
     case JString(s) if (targetType == classOf[Symbol]) => Symbol(s)
-    case JString(s) if (targetType == classOf[Date]) => formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'"))
+    case JString(s) if (classOf[Date].isAssignableFrom(targetType)) => formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'"))
     case JBool(x) if (targetType == classOf[Boolean]) => x
     case JBool(x) if (targetType == classOf[JavaBoolean]) => new JavaBoolean(x)
     case j: JValue if (targetType == classOf[JValue]) => j
