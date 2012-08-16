@@ -19,6 +19,7 @@ package json
 
 import java.lang.reflect.{Constructor => JConstructor, Field, Type, ParameterizedType, GenericArrayType}
 import java.util.Date
+import java.sql.Timestamp
 
 case class TypeInfo(clazz: Class[_], parameterizedType: Option[ParameterizedType])
 
@@ -215,7 +216,7 @@ private[json] object Meta {
       classOf[Short], classOf[java.lang.Integer], classOf[java.lang.Long],
       classOf[java.lang.Double], classOf[java.lang.Float],
       classOf[java.lang.Byte], classOf[java.lang.Boolean], classOf[Number],
-      classOf[java.lang.Short], classOf[Date], classOf[Symbol], classOf[JValue],
+      classOf[java.lang.Short], classOf[Date], classOf[Timestamp], classOf[Symbol], classOf[JValue],
       classOf[JObject], classOf[JArray]).map((_, ())))
 
     private val primaryConstructors = new Memo[Class[_], List[(String, Type)]]
@@ -392,6 +393,7 @@ private[json] object Meta {
       case x: java.lang.Byte => JInt(BigInt(x.asInstanceOf[Byte]))
       case x: java.lang.Boolean => JBool(x.asInstanceOf[Boolean])
       case x: java.lang.Short => JInt(BigInt(x.asInstanceOf[Short]))
+      case x: java.sql.Timestamp => JString(formats.dateFormat.format(x))
       case x: Date => JString(formats.dateFormat.format(x))
       case x: Symbol => JString(x.name)
       case _ => sys.error("not a primitive " + a.asInstanceOf[AnyRef].getClass)
