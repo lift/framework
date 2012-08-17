@@ -11,6 +11,13 @@ Lift applications are:
 
 Because Lift applications are written in [Scala](http://www.scala-lang.org), an elegant JVM language, you can still use your favorite Java libraries and deploy to your favorite Servlet Container and app server. Use the code you've already written and deploy to the container you've already configured!
 
+## No Pull Requests
+
+You must be a committer with signed committer agreement to submit patches. We do not accept pull requests from non-committers.
+
+Please discuss issues and improvements on the [mailing list](http://groups.google.com/forum/#!forum/liftweb), and read up on [other ways you can contribute](https://www.assembla.com/spaces/liftweb/wiki/Contributing).
+
+
 ## Getting Started
 
 You can create a new Lift project using your favorite build system by adding Lift as a dependency:
@@ -78,7 +85,9 @@ There are a variety of other repositories available on the Lift GitHub page. Whi
 
 #### modules
 
-The [modules](https://github.com/lift/modules) repository contains the many add-on modules that are part of the Lift project. If you don't find a module you need here, consider [making an external module](http://www.assembla.com/spaces/liftweb/wiki/Modules) and sharing it with the community.
+The [modules](https://github.com/liftmodules) repository contains the many add-on modules that are part of the Lift project. If you don't find a module you need here, consider [creating a module](http://www.assembla.com/spaces/liftweb/wiki/Modules) and sharing it with the community.
+
+Please note that the modules project does accept pull requests.
 
 #### examples
 
@@ -116,7 +125,7 @@ The ScalaDocs for each release of Lift, in additional to the actual JARs, are av
 
 ## License
 
-Lift is open source software released under the **Apache 2.0 license**. You must be a committer with signed comitter agreement to submit patches. You can learn more about Lift's comitter policy on the Lift website.
+Lift is open source software released under the **Apache 2.0 license**. You must be a committer with signed committer agreement to submit patches. You can learn more about Lift's committer policy on the Lift website.
 
 ## Continuous Integration
 
