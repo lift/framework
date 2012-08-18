@@ -496,10 +496,10 @@ class LiftServlet extends Loggable {
     }
   }
 
-/**
-   * An actor that manages continuations from container (Jetty style)
+  /**
+   * An actor that manages comet continuations from container (Jetty style)
    */
-  class ContinuationActor(request: Req, session: LiftSession,
+  class CometContinuationActor(request: Req, session: LiftSession,
                           actors: List[(LiftCometActor, Long)],
                           onBreakout: List[AnswerRender] => Unit) extends LiftActor {
     private var answers: List[AnswerRender] = Nil
@@ -529,15 +529,15 @@ class LiftServlet extends Loggable {
       case _ =>
     }
 
-    override def toString = "Actor dude " + seqId
+    override def toString = "Continuation Actor dude " + seqId
   }
 
   private object BeginContinuation
 
   private lazy val cometTimeout: Long = (LiftRules.cometRequestTimeout openOr 120) * 1000L
 
-  private def setupContinuation(request: Req, session: LiftSession, actors: List[(LiftCometActor, Long)]): Any = {
-    val cont = new ContinuationActor(request, session, actors,
+  private def setupCometContinuation(request: Req, session: LiftSession, actors: List[(LiftCometActor, Long)]): Any = {
+    val cont = new CometContinuationActor(request, session, actors,
       answers => request.request.resume(
         (request, S.init(request, session)
           (LiftRules.performTransform(
@@ -566,7 +566,7 @@ class LiftServlet extends Loggable {
     if (actors.isEmpty) Left(Full(new JsCommands(LiftRules.noCometSessionCmd.vend :: js.JE.JsRaw("lift_toWatch = {};").cmd :: Nil).toResponse))
     else requestState.request.suspendResumeSupport_? match {
       case true => {
-        setupContinuation(requestState, sessionActor, actors)
+        setupCometContinuation(requestState, sessionActor, actors)
         Left(Full(EmptyResponse))
       }
 
@@ -614,7 +614,7 @@ class LiftServlet extends Loggable {
   private def handleNonContinuationComet(request: Req, session: LiftSession, actors: List[(LiftCometActor, Long)],
                                          originalRequest: Req): () => Box[LiftResponse] = () => {
     val f = new LAFuture[List[AnswerRender]]
-    val cont = new ContinuationActor(request, session, actors,
+    val cont = new CometContinuationActor(request, session, actors,
       answers => f.satisfy(answers))
 
     try {
