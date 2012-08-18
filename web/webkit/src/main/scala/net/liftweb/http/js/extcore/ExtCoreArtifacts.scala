@@ -148,7 +148,7 @@ object ExtCoreArtifacts extends JSArtifacts {
   }
 
   private def toJson(info: AjaxInfo, server: String, path: String => JsExp): String =
-  (("url : liftAjax.addPageName(" + path(server).toJsCmd + ")" ) ::
+  (("url : liftAjax.addPageNameAndVersion(" + path(server).toJsCmd + ")" ) ::
    "params : " + info.data.toJsCmd ::
    ("method : " + info.action.encJs) ::
    ("dataType : " + info.dataType.encJs) ::
