@@ -418,11 +418,11 @@ class LiftServlet extends Loggable {
 
   private object AjaxVersions {
     def unapply(ajaxPathPart: String) : Option[(String,Int)] = {
-      val funcLength = Helpers.nextFuncName.length
-      if (ajaxPathPart.length > funcLength)
+      val dash = ajaxPathPart.indexOf("-")
+      if (dash > -1 && ajaxPathPart.length > dash + 1)
         Some(
-          (ajaxPathPart.substring(0, funcLength),
-           ajaxPathPart.charAt(funcLength))
+          (ajaxPathPart.substring(0, dash),
+           ajaxPathPart.charAt(dash + 1))
         )
       else
         None

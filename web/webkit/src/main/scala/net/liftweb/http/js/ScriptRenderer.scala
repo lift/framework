@@ -186,7 +186,7 @@ object ScriptRenderer {
        addPageNameAndVersion: function(url) {
          return """ + {
     if (LiftRules.enableLiftGC) {
-      "url.replace('" + LiftRules.ajaxPath + "', '" + LiftRules.ajaxPath + "/'+lift_page+(liftAjax.lift_ajaxVersion % 36).toString(36));"
+      "url.replace('" + LiftRules.ajaxPath + "', '" + LiftRules.ajaxPath + "/'+lift_page+('-'+liftAjax.lift_ajaxVersion%36).toString(36));"
     } else {
       "url;"
     }
