@@ -500,6 +500,16 @@ private final case class PostPageFunctions(renderVersion: String,
 }
 
 /**
+ * existingResponse is Empty if we have no response for this request
+ * yet. pendingActors is a list of actors who want to be notified when
+ * this response is received.
+ */
+private[http] final case class AjaxRequestInfo(requestVersion:Int,
+                                               existingResponse:Box[Box[LiftResponse]],
+                                               pendingActors:List[LiftActor],
+                                               lastSeen: Long)
+
+/**
  * The LiftSession class containg the session state information
  */
 class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
@@ -556,6 +566,16 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * functions to execute at the end of the page rendering
    */
   private var postPageFunctions: Map[String, PostPageFunctions] = Map()
+
+  /**
+   * A list of AJAX requests that may or may not be pending for this
+   * session. There is up to one entry per RenderVersion.
+   */
+  private var ajaxRequests = scala.collection.mutable.Map[String,AjaxRequestInfo]()
+
+  private[http] def withAjaxRequests[T](fn: (scala.collection.mutable.Map[String, AjaxRequestInfo]) => T) = {
+    ajaxRequests.synchronized { fn(ajaxRequests) }
+  }
 
   /**
    * The synchronization lock for the postPageFunctions
@@ -850,6 +870,15 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         }
       }
 
+      withAjaxRequests { currentAjaxRequests =>
+        for {
+          (version, requestInfo) <- currentAjaxRequests
+            if (now - requestInfo.lastSeen) > LiftRules.unusedFunctionsLifeTime
+        } {
+          currentAjaxRequests -= version
+        }
+      }
+
       synchronized {
         messageCallback.foreach {
           case (k, f) =>
@@ -975,6 +1004,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       for {
         funcInfo <- postPageFunctions.get(ownerName)
       } postPageFunctions += (ownerName -> funcInfo.updateLastSeen)
+    }
+
+    withAjaxRequests { currentAjaxRequests =>
+      currentAjaxRequests.get(ownerName).foreach {
+        case info: AjaxRequestInfo =>
+          currentAjaxRequests += (ownerName -> info.copy(lastSeen = time))
+      }
     }
 
     synchronized {
