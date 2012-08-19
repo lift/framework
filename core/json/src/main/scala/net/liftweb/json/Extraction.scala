@@ -20,6 +20,7 @@ package json
 import java.lang.reflect.{Constructor => JConstructor, Type}
 import java.lang.{Integer => JavaInteger, Long => JavaLong, Short => JavaShort, Byte => JavaByte, Boolean => JavaBoolean, Double => JavaDouble, Float => JavaFloat}
 import java.util.Date
+import java.sql.Timestamp
 import scala.reflect.Manifest
 
 /** Function to extract values from JSON AST using case classes.
@@ -392,6 +393,7 @@ object Extraction {
     case JString(s) if (targetType == classOf[String]) => s
     case JString(s) if (targetType == classOf[Symbol]) => Symbol(s)
     case JString(s) if (targetType == classOf[Date]) => formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'"))
+    case JString(s) if (targetType == classOf[Timestamp]) => new Timestamp(formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'")).getTime)
     case JBool(x) if (targetType == classOf[Boolean]) => x
     case JBool(x) if (targetType == classOf[JavaBoolean]) => new JavaBoolean(x)
     case j: JValue if (targetType == classOf[JValue]) => j

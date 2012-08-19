@@ -90,6 +90,11 @@ object ExtractionExamples extends Specification("Extraction Examples Specificati
     json.extract[Event] mustEqual Event("e1", date("2009-09-04T18:06:22Z"))
   }
 
+  "Timestamp extraction example" in {
+    val json = parse("""{"timestamp":"2009-09-04T18:06:22Z"}""")
+    new Date((json \ "timestamp").extract[java.sql.Timestamp].getTime) mustEqual date("2009-09-04T18:06:22Z")
+  }
+
   "Option extraction example" in {
     val json = parse("""{ "name": null, "age": 5, "mother":{"name":"Marilyn"}}""")
     json.extract[OChild] mustEqual OChild(None, 5, Some(Parent("Marilyn")), None)
