@@ -614,6 +614,12 @@ class LiftServlet extends Loggable {
       case Full(handlerVersion) =>
         val renderVersion = RenderVersion.get
 
+        // An Empty in toReturn indicates there is no precomputed response for
+        // this AJAX request/version. Note that runAjax returns a
+        // Box[LiftResponse]. So we can have a Full(Empty) that indicates
+        // runAjax has computed a response, and that response was an Empty.
+        // That's why we have a double Box here. If we get an Empty back,
+        // we compute the actual response by calling runAjax below.
         val toReturn: Box[Box[LiftResponse]] =
           liftSession.withAjaxRequests { currentAjaxRequests =>
             currentAjaxRequests.get(renderVersion).collect {
@@ -626,7 +632,7 @@ class LiftServlet extends Loggable {
                   (renderVersion ->
                     AjaxRequestInfo(handlerVersion, Empty, cont :: Nil, millis))
 
-                Empty // no response available, triggers the actual AJAX computation below
+                Empty
 
               case AjaxRequestInfo(storedVersion, existingResponseBox @ Full(_), _, _) =>
                 existingResponseBox // return the Full response Box
@@ -644,7 +650,7 @@ class LiftServlet extends Loggable {
                 (renderVersion ->
                   AjaxRequestInfo(handlerVersion, Empty, cont :: Nil, millis))
 
-              Empty // no response available, triggers the actual AJAX computation below
+              Empty
             }
           }
 
