@@ -61,6 +61,10 @@ final case class PrependKidsSubNode() extends SubNode with WithKids {
   def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq = newNs ++ original
 }
 
+final case object DontMergeAttributes extends SubNode {
+
+}
+
 final case class AppendKidsSubNode() extends SubNode with WithKids {
   def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq = original ++ newNs
 }
@@ -189,7 +193,8 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
     name => AttrRemoveSubNode(name)
   }) |    (opt('*') ~ '[' ~> attrName <~ ']' ^^ {
      name => AttrSubNode(name)
-   }) | 
+   }) |
+   ('!' ~ '!' ^^ (a => DontMergeAttributes)) |
    ('-' ~ '*' ^^ (a => PrependKidsSubNode())) |
    ('>' ~ '*' ^^ (a => PrependKidsSubNode())) |
    ('*' ~ '+' ^^ (a => AppendKidsSubNode())) |

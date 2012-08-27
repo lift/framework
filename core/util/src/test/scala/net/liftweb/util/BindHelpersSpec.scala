@@ -594,6 +594,16 @@ object CssBindHelpersSpec extends Specification  {
     }
 
 
+
+    "Remove a subnode's class attribute" in {
+
+      val func = ".removeme !!" #> ("td [class!]" #> "removeme")
+      val res = func.apply(<tr><td class="removeme fish">Hi</td></tr>)
+
+      ((res \ "td") \ "@class").text must_== "fish"
+    }
+
+
     "not remove a non-existant class" in {
       val func = ".foo [class!]" #> "bar"
       val res = func(<span class="foo" />)
