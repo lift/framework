@@ -650,6 +650,36 @@ object CssBindHelpersSpec extends Specification  {
     }
 
 
+    "Java number support" in {
+      val f = "a *" #> Full(new java.lang.Long(12))
+      val xml = <a>Hello</a>
+
+      f(xml) must ==/ (<a>12</a>)
+    }
+
+
+    "Andreas's thing doesn't blow up" in {
+      def cachedMessageList: Box[Box[String]] = Empty
+
+      def messageListId = "Hello"
+
+      def collapseUnless[A](isEmptyCond: Boolean)(f: => A): Box[A] = {
+        if (!isEmptyCond) {
+          Empty
+        } else {
+          Full(f)
+        }
+      }
+
+      ".noMail" #> collapseUnless(cachedMessageList.map(_.isEmpty).openOr(true)) {
+                       "tbody [id]" #> messageListId &
+                       "*" #> PassThru
+                  }
+
+      true must_== true
+    }
+
+
     "option transform on *" in {
       val opt: Box[String] = Empty
       val res = ("* *" #> opt.map(ignore => "Dog")).apply(<top>cat</top>)

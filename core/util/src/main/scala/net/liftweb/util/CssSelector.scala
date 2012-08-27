@@ -156,6 +156,7 @@ object CssSelectorParser extends PackratParsers with ImplicitConversions {
 
   private def fixAll(all: List[CssSelector], sn: Option[SubNode]): CssSelector = {
     (all, sn) match {
+      // case (Nil, Some())
       case (r :: Nil, None) => r
       case (r :: Nil, Some(sn)) => r.withSubnode(sn)
       case (lst, None) => lst.reduceRight((b, a) => EnclosedSelector(b, a))

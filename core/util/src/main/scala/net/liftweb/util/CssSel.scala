@@ -723,6 +723,15 @@ object ComputeTransformRules {
     def computeTransform(str: => Bindable, ns: NodeSeq): Seq[NodeSeq] = List(str.asHtml)
   }
 
+
+  implicit def numberTransform[T <: java.lang.Number]: ComputeTransformRules[T] = new ComputeTransformRules[java.lang.Number] {
+    def computeTransform(str: => java.lang.Number, ns: NodeSeq): Seq[NodeSeq] = {
+      val num = str
+      List(if (null eq num) NodeSeq.Empty else Text(num.toString))
+    }
+  }
+
+
   implicit def jsCmdTransform: ComputeTransformRules[ToJsCmd] = new ComputeTransformRules[ToJsCmd] {
     def computeTransform(str: => ToJsCmd, ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toJsCmd))
   }
@@ -789,6 +798,12 @@ object ComputeTransformRules {
   implicit def iterableStringTransform[T[_]](implicit f: T[String] => Iterable[String]): ComputeTransformRules[T[String]] =
     new ComputeTransformRules[T[String]] {
       def computeTransform(info: => T[String], ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.map(a => Text(a))
+    }
+
+  implicit def iterableNumberTransform[T[_], N <: java.lang.Number](implicit f: T[N] => Iterable[N]): ComputeTransformRules[T[N]] =
+    new ComputeTransformRules[T[N]] {
+      def computeTransform(info: => T[N], ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a =>
+        if (a eq null) Nil else List(Text(a.toString)))
     }
 
   implicit def iterableBindableTransform[T[_]](implicit f: T[Bindable] => Iterable[Bindable]): ComputeTransformRules[T[Bindable]] =

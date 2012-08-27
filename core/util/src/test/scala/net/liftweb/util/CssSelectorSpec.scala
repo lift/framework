@@ -50,6 +50,7 @@ object CssSelectorSpec extends Specification   {
       AttrSelector("type", "button", Empty)
     }
 
+
     ":checkbox must  parse" in {
       CssSelectorParser.parse(":checkbox").open_! must_== 
       AttrSelector("type", "checkbox", Empty)
