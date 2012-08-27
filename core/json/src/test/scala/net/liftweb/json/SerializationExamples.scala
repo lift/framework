@@ -18,7 +18,7 @@ package net.liftweb
 package json
 
 import java.util.Date
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 object SerializationExamples extends Specification {
   import Serialization.{read, write => swrite}
@@ -288,10 +288,10 @@ object CustomSerializerExamples extends Specification {
   i2.startTime mustEqual i.startTime
   i2.endTime mustEqual i.endTime
 
-  val p = Pattern.compile("^Curly")
-  val pser = swrite(p)
+  val pat = Pattern.compile("^Curly")
+  val pser = swrite(pat)
   pser mustEqual """{"$pattern":"^Curly"}"""
-  read[Pattern](pser).pattern mustEqual p.pattern
+  read[Pattern](pser).pattern mustEqual pat.pattern
 
   val d = new Date(0)
   val dser = swrite(d)

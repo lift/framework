@@ -19,7 +19,11 @@ import org.squeryl.dsl.ast.FunctionNode
 import org.squeryl.internals.OutMapper
 import org.squeryl.dsl.StringExpression
 import org.squeryl.dsl.DateExpression
-import org.specs.Specification
+
+import org.specs2.mutable.Specification
+import org.specs2.specification.AroundExample
+import org.specs2.execute.Result
+
 import record.{ BaseField, Record }
 import record.field._
 import RecordTypeMode._
@@ -35,22 +39,23 @@ import util.Helpers
 /**
  * Systems under specification for SquerylRecord.
  */
-object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
+class SquerylRecordSpec extends Specification with AroundExample {
+  "SquerylRecord Specification".title
+  sequential
 
-  val session = new LiftSession("", Helpers.randomString(20), Empty)
-  doBeforeSpec {
+  lazy val session = new LiftSession("", Helpers.randomString(20), Empty)
+  protected def around[T <% Result](t: =>T) = {
     S.initIfUninitted(session) {
       DBHelper.initSquerylRecordWithInMemoryDB()
       DBHelper.createSchema()
+      t
     }
   }
 
-  // NOTE: Use explicit forExample() in the examples to avoid
-  // implicit ambiguity with Specs 1.6.6 in Scala 2.8.0
   "SquerylRecord" should {
-    forExample("load record by ID") in {
+    "load record by ID" in {
       transaction {
-        S.initIfUninitted(session){
+        S.initIfUninitted(session) {
           val company = companies.lookup(td.c2.id)
           checkCompaniesEqual(company.get, td.c2)
 
@@ -60,7 +65,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    forExample("load record by string field value") in {
+    "load record by string field value" in {
       transaction {
         S.initIfUninitted(session){
           val company = from(companies)(c =>
@@ -70,7 +75,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    forExample("support order by") in {
+    "support order by" in {
       transaction {
         val orderedCompanies = from(companies)(c =>
           select(c) orderBy (c.name))
@@ -82,17 +87,17 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    forExample("support normal joins") in {
+    "support normal joins" in {
       transaction {
         val companiesWithEmployees = from(companies, employees)((c, e) =>
           where(c.id === e.companyId.get)
             select ((c.id, e.id))).toList
         companiesWithEmployees must haveSize(td.allEmployees.size)
-        companiesWithEmployees must containAll(td.allEmployees map { e => (e.companyId.get, e.id) })
+        companiesWithEmployees must containAllOf(td.allEmployees map { e => (e.companyId.get, e.id) })
       }
     }
 
-    forExample("support left outer joins") in {
+    "support left outer joins" in {
       transaction {
         S.initIfUninitted(session){
           val companiesWithEmployees = join(companies, employees.leftOuter)((c, e) =>
@@ -145,7 +150,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    forExample("support one to many relations") in {
+    "support one to many relations" in {
       transaction {
         val company = companies.lookup(td.c1.id)
         company must beSome[Company]
@@ -157,7 +162,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    forExample("support many to many relations") in {
+    "support many to many relations" in {
       transactionWithRollback {
         td.e1.rooms must haveSize(2)
 
@@ -171,7 +176,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    forExample("support updates") in {
+    "support updates" in {
       val id = td.c1.id
 
       transactionWithRollback {
@@ -200,14 +205,14 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    forExample("support delete") in {
+    "support delete" in {
       transactionWithRollback {
         employees.delete(td.e2.id)
         employees.lookup(td.e2.id) must beNone
       }
     }
 
-    forExample("support select with properties of formerly fetched objects") in {
+    "support select with properties of formerly fetched objects" in {
       transaction {
         S.initIfUninitted(session) {
           val company = companies.lookup(td.c2.id).head
@@ -222,13 +227,13 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    forExample("support many to many relations") >> {
+    "support many to many relations" >> {
       transactionWithRollback {
         td.e1.rooms must haveSize(2)
       }
     }
 
-    forExample("support date/time queries") >> {
+    "support date/time queries" >> {
       transaction {
         val c1 = from(companies)(c =>
           where(c.created <= Calendar.getInstance)
@@ -242,7 +247,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    forExample("support inner queries") >> {
+    "support inner queries" >> {
       import record.field._
 
       transaction {
@@ -298,7 +303,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
 
     }
 
-    forExample("support the CRUDify trait") >> {
+    "support the CRUDify trait" >> {
       transaction {
         val company = Company.create.name("CRUDify Company").
           created(Calendar.getInstance()).
@@ -323,7 +328,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    forExample("Support Optimistic Locking") >> {
+    "Support Optimistic Locking" >> {
       val company = Company.create.name("Optimistic Company").
         created(Calendar.getInstance()).
         country(Countries.USA).
@@ -352,7 +357,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    forExample("Allow custom functions") in {
+    "Allow custom functions" in {
       inTransaction {
         val created =
           from(companies)(c =>
@@ -363,14 +368,14 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
       }
     }
 
-    forExample("Support precision and scale taken from DecimalTypedField") >> {
+    "Support precision and scale taken from DecimalTypedField" >> {
       val posoMetaData = companies.posoMetaData
       val fieldMetaData = posoMetaData.findFieldMetaDataForProperty("employeeSatisfaction").get
       val columnDefinition = new PostgreSqlAdapter().writeColumnDeclaration(fieldMetaData, false, MySchema)
       columnDefinition.endsWith("numeric(" + Company.employeeSatisfaction.context.getPrecision() +"," + Company.employeeSatisfaction.scale + ")") must_== true
     }
 
-    forExample("Properly reset the dirty_? flag after loading entities") >> inTransaction {
+    "Properly reset the dirty_? flag after loading entities" >> inTransaction {
       val company = from(companies)(company =>
         select(company)).page(0, 1).single
       company.allFields map { f => f.dirty_? must_== false }
@@ -388,9 +393,9 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
    * back the transaction afterwards.
    */
   private def transactionWithRollback[T](code: => T): T = {
-    
+
     def rollback: Unit = throw new TransactionRollbackException()
-    
+
     var result: T = null.asInstanceOf[T]
     try {
       transaction {
@@ -404,7 +409,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
     result
   }
 
-  private def checkCompaniesEqual(c1: Company, c2: Company) {
+  private def checkCompaniesEqual(c1: Company, c2: Company): Result = {
     val cmp = new RecordComparer[Company](c1, c2)
     cmp.check(_.idField)
     cmp.check(_.description)
@@ -415,7 +420,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
     cmp.checkXHtml()
   }
 
-  private def checkEmployeesEqual(e1: Employee, e2: Employee) {
+  private def checkEmployeesEqual(e1: Employee, e2: Employee): Result = {
     val cmp = new RecordComparer[Employee](e1, e2)
     cmp.check(_.name)
     cmp.check(_.companyId)
@@ -435,7 +440,7 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
         p2 must beSome[Array[Byte]]
         p2.get.size must_== p.size
 
-        (0 until p.size).foreach { i =>
+        (0 until p.size) map { i =>
           p2.get(i) must_== p(i)
         }
       }
@@ -444,15 +449,14 @@ object SquerylRecordSpec extends Specification("SquerylRecord Specification") {
   }
 
   class RecordComparer[T <: Record[T]](val r1: T, val r2: T) {
-    def check(fieldExtractor: (T) => BaseField) {
+    def check(fieldExtractor: (T) => BaseField): Result = {
       val f1 = fieldExtractor(r1)
       val f2 = fieldExtractor(r2)
       f1.get must_== f2.get
       f1.name must_== f2.name
     }
 
-    def checkXHtml() {
+    def checkXHtml(): Result =
       r1.toXHtml must_== r2.toXHtml
-    }
   }
 }

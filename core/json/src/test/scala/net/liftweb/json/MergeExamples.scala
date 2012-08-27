@@ -17,11 +17,13 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 
-object MergeExamples extends Specification("Merge Examples") {
+object MergeExamples extends Specification  {
+  "Merge Examples".title
+
   "Merge example" in {
     (scala1 merge scala2) mustEqual expectedMergeResult
   }

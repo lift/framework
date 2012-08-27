@@ -17,7 +17,7 @@
 package net.liftweb
 package webapptest
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import util._
@@ -35,9 +35,11 @@ object SessionInfo {
 /**
  * System under specification for Memoize.
  */
-object MemoizeSpec extends Specification("Memoize Specification") {
-  import SessionInfo._
+object MemoizeSpec extends Specification  {
+  "Memoize Specification".title
+  sequential
 
+  import SessionInfo._
 
   "Memoize" should {
     "Session memo should default to empty" >> {

@@ -17,7 +17,7 @@
 package net.liftweb
 package util
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import BindHelpers._
@@ -26,7 +26,8 @@ import BindHelpers._
 /**
  * Systems under specification for CSS Selector.
  */
-object CssSelectorSpec extends Specification("CSS Selector Specification")  {
+object CssSelectorSpec extends Specification   {
+  "CSS Selector Specification".title
 
   "CssSelector" should {
     "fail for garbage input" in {

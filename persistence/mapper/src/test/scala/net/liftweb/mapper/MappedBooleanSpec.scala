@@ -17,7 +17,7 @@
 package net.liftweb
 package mapper
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 
@@ -25,7 +25,10 @@ import common._
 /**
  * Systems under specification for MappedDate.
  */
-object MappedBooleanSpec extends Specification("MappedBoolean Specification") {
+object MappedBooleanSpec extends Specification  {
+  "MappedBoolean Specification".title
+  sequential
+
   val provider = DbProviders.H2MemoryProvider
   
   private def ignoreLogger(f: => AnyRef): Unit = ()

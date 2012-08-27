@@ -16,7 +16,7 @@
 package net.liftweb
 package mocks
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import json.JsonDSL._
 
@@ -24,7 +24,8 @@ import json.JsonDSL._
 /**
  * System under specification for MockHttpRequest.
  */
-object MockHttpRequestSpec extends Specification("MockHttpRequest Specification") {
+object MockHttpRequestSpec extends Specification  {
+  "MockHttpRequest Specification".title
 
   val IF_MODIFIED_HEADER = "If-Modified-Since"
   val TEST_URL = "https://foo.com/test/this/page?a=b&b=a&a=c"

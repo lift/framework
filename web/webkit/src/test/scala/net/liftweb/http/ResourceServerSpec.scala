@@ -17,12 +17,14 @@
 package net.liftweb
 package http
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 /**
  * System under specification for ResourceServer.
  */
-object ResourceServerSpec extends Specification("ResourceServer Specification") {
+object ResourceServerSpec extends Specification  {
+  "ResourceServer Specification".title
+
   "ResourceServer.pathRewriter" should {
     "default jquery.js to jquery-1.3.2" in {
       ResourceServer.pathRewriter("jquery.js"::Nil) must_== List("jquery-1.3.2-min.js")

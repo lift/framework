@@ -17,8 +17,8 @@
 package net.liftweb
 package actor
 
-import org.specs.Specification
-import org.specs.util.TimeConversions._
+import org.specs2.mutable.Specification
+import org.specs2.time.TimeConversions._
 
 import common._
 
@@ -26,7 +26,9 @@ import common._
 /**
  * Systems under specification for Lift Actor.
  */
-object ActorSpec extends Specification("Actor Specification") {
+class ActorSpec extends Specification {
+  "Actor Specification".title
+  sequential
 
   "A Scala Actor" should {
     "support common features" in commonFeatures(new MyScalaActor)

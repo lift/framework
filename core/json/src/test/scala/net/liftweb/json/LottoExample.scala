@@ -17,13 +17,15 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * System under specification for Lotto Examples.
  */
-object LottoExample extends Specification("Lotto Examples") {
+object LottoExample extends Specification  {
+  "Lotto Examples".title
+
   import JsonDSL._
 
   implicit val formats = DefaultFormats

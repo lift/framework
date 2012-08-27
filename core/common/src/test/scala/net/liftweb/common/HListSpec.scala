@@ -17,13 +17,13 @@
 package net.liftweb
 package common
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * System under specification for Heterogeneous List.
  */
-object HListSpec extends Specification("HList Specification") {
+object HListSpec extends Specification {
 
   "An HList" should {
 
@@ -49,8 +49,8 @@ object HListSpec extends Specification("HList Specification") {
 
       // result in a failure
       x match {
-        case Left(_) => true must_== true
-        case _       => fail("Full elements available")
+        case Left(_) => success
+        case _       => failure
       }
     }
 
@@ -69,9 +69,9 @@ object HListSpec extends Specification("HList Specification") {
           val onei: Int = one
           val lstl: List[Int] = lst
 
-          true must_== true
+          success
         }
-        case Left(_) => fail("Failure elements available")
+        case Left(_) => failure
       }
     }
 

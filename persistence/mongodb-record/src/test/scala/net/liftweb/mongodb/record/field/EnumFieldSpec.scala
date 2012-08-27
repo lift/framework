@@ -20,7 +20,7 @@ package record
 package field
 
 import org.bson.types.ObjectId
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import net.liftweb.common._
 import net.liftweb.json.ext.EnumSerializer
@@ -68,7 +68,8 @@ package enumfieldspecs {
 /**
  * Systems under specification for EnumField.
  */
-object EnumFieldSpec extends Specification("EnumField Specification") with MongoTestKit {
+class EnumFieldSpec extends Specification  with MongoTestKit {
+  "EnumField Specification".title
 
   import enumfieldspecs._
 
@@ -80,8 +81,8 @@ object EnumFieldSpec extends Specification("EnumField Specification") with Mongo
       val er = EnumRec.createRecord.save
 
       val erFromDb = EnumRec.find(er.id)
-      erFromDb must notBeEmpty
-      erFromDb foreach { er2 =>
+      erFromDb.isDefined must_== true
+      erFromDb.toList map { er2 =>
         er2 mustEqual er
         er2.dow.value mustEqual WeekDay.Mon
         er2.dowOptional.valueBox mustEqual Empty
@@ -98,8 +99,8 @@ object EnumFieldSpec extends Specification("EnumField Specification") with Mongo
         .save
 
       val erFromDb = EnumRec.find(er.id)
-      erFromDb must notBeEmpty
-      erFromDb foreach { er2 =>
+      erFromDb.isDefined must_== true
+      erFromDb.toList map { er2 =>
         er2 mustEqual er
         er2.dow.value mustEqual WeekDay.Tue
         er2.jsonobj.value mustEqual JsonObj(WeekDay.Sun)
@@ -114,8 +115,8 @@ object EnumFieldSpec extends Specification("EnumField Specification") with Mongo
       er.save
 
       val erFromDb = EnumRec.find(er.id)
-      erFromDb must notBeEmpty
-      erFromDb foreach { er2 =>
+      erFromDb.isDefined must_== true
+      erFromDb.toList map { er2 =>
         er2 mustEqual er
         er2.dowOptional.valueBox mustEqual Empty
       }
@@ -129,8 +130,8 @@ object EnumFieldSpec extends Specification("EnumField Specification") with Mongo
       er.save
 
       val erFromDb = EnumRec.find(er.id)
-      erFromDb must notBeEmpty
-      erFromDb foreach { er2 =>
+      erFromDb.isDefined must_== true
+      erFromDb.toList map { er2 =>
         er2 mustEqual er
         er2.dowOptional.valueBox mustEqual Full(WeekDay.Sat)
       }

@@ -17,7 +17,8 @@
 package net.liftweb
 package json
 
-import org.specs.{ScalaCheck, Specification}
+import org.specs2.mutable.Specification
+import org.specs2.ScalaCheck
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.forAll
 
@@ -25,18 +26,20 @@ import org.scalacheck.Prop.forAll
 /**
  * System under specification for JSON XML.
  */
-object JsonXmlSpec extends Specification("JSON XML Specification") with NodeGen with JValueGen with ScalaCheck {
+object JsonXmlSpec extends Specification  with NodeGen with JValueGen with ScalaCheck {
+  "JSON XML Specification".title
+
   import Xml._
   import scala.xml.Node
 
   "Valid XML can be converted to JSON and back (symmetric op)" in {
     val conversion = (xml: Node) => { toXml(toJson(xml)).head == xml }
-    forAll(conversion) must pass
+    check(forAll(conversion))
   }
 
   "JSON can be converted to XML, and back to valid JSON (non symmetric op)" in {
     val conversion = (json: JValue) => { parse(compact(render(toJson(toXml(json))))); true }
-    forAll(conversion) must pass
+    check(forAll(conversion))
   }
 
   implicit def arbXml: Arbitrary[Node] = Arbitrary(genXml)

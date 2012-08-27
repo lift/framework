@@ -19,8 +19,9 @@ package util
 
 import java.util.{Calendar, Date}
 
-import org.specs.{ScalaCheck, Specification}
-import org.specs.util.Products._
+import org.specs2.mutable.Specification
+import org.specs2.ScalaCheck
+import org.specs2.time.NoTimeConversions
 import org.scalacheck.Gen._
 import org.scalacheck.Prop._
 
@@ -32,7 +33,8 @@ import TimeHelpers._
 /**
  * Systems under specification for TimeHelpers.
  */
-object TimeHelpersSpec extends Specification("TimeHelpers Specification") with ScalaCheck with TimeAmountsGen {
+object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen with NoTimeConversions {
+  "TimeHelpers Specification".title
 
   "A TimeSpan" can {
     "be created from a number of milliseconds" in {
@@ -105,7 +107,7 @@ object TimeHelpersSpec extends Specification("TimeHelpers Specification") with S
                amount == 0 && !timeSpanToString.contains(unit)
         }
       })
-      conversionIsOk && timeSpanStringIsPluralized must pass
+      check(conversionIsOk && timeSpanStringIsPluralized)
     }
   }
 
@@ -183,8 +185,8 @@ object TimeHelpersSpec extends Specification("TimeHelpers Specification") with S
     }
     "provide a toDate returning a Full(date) from many kinds of objects" in {
       val d = now
-      (null, Nil, None, Failure("", Empty, Empty)).toList forall { toDate(_) must_== Empty }
-      (Full(d), Some(d), d :: d).toList forall { toDate(_) must_== Full(d) }
+      List(null, Nil, None, Failure("", Empty, Empty)) forall { toDate(_) must_== Empty }
+      List(Full(d), Some(d), List(d)) forall { toDate(_) must_== Full(d) }
       toDate(internetDateFormatter.format(d)).get.getTime.toLong must beCloseTo(d.getTime.toLong, 1000L)
     }
   }
@@ -211,7 +213,8 @@ object TimeHelpersSpec extends Specification("TimeHelpers Specification") with S
 
 trait TimeAmountsGen {
 
-  type TimeAmounts = Tuple2[String, Tuple6[(Int, String), (Int, String), (Int, String), (Int, String), (Int, String), (Int, String)]]
+  type TimeAmounts = (String, List[(Int, String)])
+
   val timeAmounts =
     for {
       w <- choose(0, 2)
@@ -221,7 +224,9 @@ trait TimeAmountsGen {
       s <- choose(0, 59)
       ml <- choose(0, 999)
     }
-    yield (TimeSpan(weeks(w) + days(d) + hours(h) + minutes(m) + seconds(s) + ml).toString,
-      ((w, "week"), (d, "day"), (h, "hour"), (m, "minute"), (s, "second"), (ml, "milli")))
+    yield (
+      TimeSpan(weeks(w) + days(d) + hours(h) + minutes(m) + seconds(s) + ml).toString,
+      (w, "week") :: (d, "day") :: (h, "hour") :: (m, "minute") :: (s, "second") :: (ml, "milli") :: Nil
+    )
 }
 

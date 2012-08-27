@@ -116,11 +116,16 @@ object Props extends Logger {
       case Full("profile") => Profile
       case Full("development") => Development
       case _ => {
-        val exp = new Exception
-        exp.fillInStackTrace
-        if (exp.getStackTrace.find(st => st.getClassName.indexOf("SurefireBooter") >= 0).isDefined) Test
-        else if (exp.getStackTrace.find(st => st.getClassName.indexOf("sbt.TestRunner") >= 0).isDefined) Test
-        else Development
+        val st = Thread.currentThread.getStackTrace
+        val names = List(
+          "org.apache.maven.surefire.booter.SurefireBooter",
+          "sbt.TestRunner",
+          "org.specs2.runner.TestInterfaceRunner"  // sometimes specs2 runs tests on another thread
+        )
+        if(st.exists(e => names.exists(e.getClassName.startsWith)))
+          Test
+        else
+          Development
       }
     }
   }

@@ -17,9 +17,9 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
-object FieldSerializerExamples extends Specification {  
+object FieldSerializerExamples extends Specification {
   import Serialization.{read, write => swrite}
   import FieldSerializer._
 
@@ -33,7 +33,7 @@ object FieldSerializerExamples extends Specification {
   "All fields are serialized by default" in {
     implicit val formats = DefaultFormats + FieldSerializer[WildDog]()
     val ser = swrite(dog)
-    val dog2 = read[WildDog](ser) 
+    val dog2 = read[WildDog](ser)
     dog2.name mustEqual dog.name
     dog2.color mustEqual dog.color
     dog2.owner mustEqual dog.owner
@@ -49,7 +49,7 @@ object FieldSerializerExamples extends Specification {
     implicit val formats = DefaultFormats + dogSerializer
 
     val ser = swrite(dog)
-    val dog2 = read[WildDog](ser) 
+    val dog2 = read[WildDog](ser)
     dog2.name mustEqual dog.name
     dog2.color mustEqual dog.color
     dog2.owner must beNull
