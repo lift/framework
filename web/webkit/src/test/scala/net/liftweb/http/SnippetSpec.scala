@@ -18,7 +18,7 @@ package net.liftweb
 package http
 
 import xml._
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import util.Helpers._
@@ -27,7 +27,9 @@ import util.Helpers._
 /**
  * System under specification for SnippetSpec.
  */
-object SnippetSpec extends Specification("SnippetSpec Specification") {
+object SnippetSpec extends Specification  {
+  "SnippetSpec Specification".title
+
   def makeReq = new Req(Req.NilPath, "", GetRequest, Empty, null,
                     System.nanoTime, System.nanoTime, false,
                     () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map())
@@ -366,6 +368,7 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
 
       ret.open_! must ==/ (<yak/>)
       */
+      pending
     }
 
     "Check snippets via run" in {
@@ -381,6 +384,7 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
 
       (ret.open_! \ "@name").text.length must be > 0
       */
+      pending
     }
 
 

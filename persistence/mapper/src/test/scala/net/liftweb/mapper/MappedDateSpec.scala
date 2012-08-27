@@ -17,7 +17,7 @@
 package net.liftweb
 package mapper
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 
@@ -25,7 +25,9 @@ import common._
 /**
  * Systems under specification for MappedDate.
  */
-object MappedDateSpec extends Specification("MappedDate Specification") {
+object MappedDateSpec extends Specification  {
+  "MappedDate Specification".title
+
   "MappedDate" should {
     "handle a Number in setFromAny" in {
       val dog = Dog2.create

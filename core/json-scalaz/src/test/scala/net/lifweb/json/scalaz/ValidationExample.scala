@@ -5,7 +5,7 @@ import Scalaz._
 import JsonScalaz._
 import net.liftweb.json._
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 object ValidationExample extends Specification {
 
@@ -30,9 +30,9 @@ object ValidationExample extends Specification {
 
     "pass when age within limits" in {
       // Age must be between 16 an 60
-// FIXME enable when 2.8 no longer supported, 2.9 needs: import Validation.Monad._
-//      val person = Person.applyJSON(field("name"), validate[Int]("age") >=> min(16) >=> max(60) apply _)
-//      person(json) mustEqual Success(Person("joe", 17))
+      import Validation.Monad._
+      val person = Person.applyJSON(field("name"), validate[Int]("age") >=> min(16) >=> max(60) apply _)
+      person(json) mustEqual Success(Person("joe", 17))
     }
   }
 

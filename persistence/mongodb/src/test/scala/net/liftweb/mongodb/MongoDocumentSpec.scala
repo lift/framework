@@ -18,7 +18,8 @@ package net.liftweb
 package mongodb
 
 import org.bson.types.ObjectId
-import org.specs.Specification
+import org.specs2.mutable.Specification
+import org.specs2.execute.Result
 
 import common._
 import json.ext.JsonBoxSerializer
@@ -90,9 +91,10 @@ package mongodocumentspecs {
 /**
  * System specification for MongoDocument
  */
-object MongoDocumentSpec extends Specification("MongoDocument Specification") with MongoTestKit {
+class MongoDocumentSpec extends Specification with MongoTestKit {
+  "MongoDocument Specification".title
 
-  def passSaveAndRetrieveTests(obj: MongoDocument[_], meta: MongoDocumentMeta[_]): Unit = {
+  def passSaveAndRetrieveTests(obj: MongoDocument[_], meta: MongoDocumentMeta[_]): Result = {
     obj.save
     val objFromDb = meta.find(obj._id.asInstanceOf[ObjectId])
     objFromDb.isDefined must_== true

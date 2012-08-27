@@ -22,7 +22,7 @@ import java.util.regex.Pattern
 
 import com.mongodb.{BasicDBObject, BasicDBObjectBuilder}
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import json.DefaultFormats
 
@@ -30,7 +30,8 @@ import json.DefaultFormats
 /**
  * System under specification for MongoDirect.
  */
-object MongoDirectSpec extends Specification("MongoDirect Specification") with MongoTestKit {
+class MongoDirectSpec extends Specification with MongoTestKit {
+  "MongoDirect Specification".title
 
   def date(s: String) = DefaultFormats.dateFormat.parse(s).get
 
@@ -193,6 +194,7 @@ object MongoDirectSpec extends Specification("MongoDirect Specification") with M
         coll.drop
       }
     })
+    success
   }
 
   "Mongo useSession example" in {
@@ -271,6 +273,7 @@ object MongoDirectSpec extends Specification("MongoDirect Specification") with M
         coll.drop
       }
     })
+    success
   }
 
   "UUID Example" in {

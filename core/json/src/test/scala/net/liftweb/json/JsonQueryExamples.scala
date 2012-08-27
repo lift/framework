@@ -17,13 +17,15 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * System under specification for JSON Query Examples.
  */
-object JsonQueryExamples extends Specification("JSON Query Examples") {
+object JsonQueryExamples extends Specification  {
+  "JSON Query Examples".title
+
   "List of IPs" in {
     val ips = for { JString(ip) <- json \\ "ip" } yield ip
     ips mustEqual List("192.168.1.125", "192.168.1.126", "192.168.1.127", "192.168.2.125", "192.168.2.126")

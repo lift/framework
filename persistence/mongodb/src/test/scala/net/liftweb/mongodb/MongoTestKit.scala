@@ -17,11 +17,12 @@
 package net.liftweb
 package mongodb
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
+import org.specs2.specification.BeforeAfterExample
 
 
-trait MongoTestKit {
-  this: Specification =>
+trait MongoTestKit extends Specification with BeforeAfterExample {
+  sequential
 
   def dbName = "lift_"+this.getClass.getName
     .replace("$", "")
@@ -36,7 +37,7 @@ trait MongoTestKit {
 
   def debug = false
 
-  doBeforeSpec {
+  def before = {
     // define the dbs
     dbs foreach { dbtuple =>
       MongoDB.defineDb(dbtuple._1, MongoAddress(dbtuple._2, dbtuple._3))
@@ -57,9 +58,9 @@ trait MongoTestKit {
       case e: Exception => false
     }
 
-  def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkipExample
+  def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkip
 
-  doAfterSpec {
+  def after = {
     if (!debug && isMongoRunning) {
       // drop the databases
       dbs foreach { dbtuple =>

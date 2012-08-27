@@ -19,7 +19,7 @@ package json
 
 import util.control.Exception._
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 object ParserBugs extends Specification {
   "Unicode ffff is a valid char in string literal" in {
@@ -40,8 +40,8 @@ object ParserBugs extends Specification {
   }
 
   "Solo quote mark should fail cleanly (not StringIndexOutOfBoundsException) (1041)" in {
-    JsonParser.parse("\"", discardParser) must throwA(new Exception()).like {
-      case e: JsonParser.ParseException => e.getMessage.startsWith("unexpected eof")
+    JsonParser.parse("\"", discardParser) must throwA[JsonParser.ParseException].like {
+      case e => e.getMessage must startWith("unexpected eof")
     }
   }
 

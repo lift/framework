@@ -17,7 +17,7 @@
 package net.liftweb
 package mapper
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 
@@ -37,10 +37,11 @@ class EnumObj extends LongKeyedMapper[EnumObj] with IdPK {
 
 object EnumObj extends EnumObj with LongKeyedMetaMapper[EnumObj] 
 
-object MappedEnumSpec extends Specification("MappedEnum Specification") {
+object MappedEnumSpec extends Specification  {
+  "MappedEnum Specification".title
+
   "MappedEnum" should {
     "preserve enumeration order when building display list" in {
-      skip("Will not work with Scala 2.8.1  https://issues.scala-lang.org/browse/SI-3687")
       val v = EnumObj.create
 
       import MyEnum._

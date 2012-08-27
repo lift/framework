@@ -18,7 +18,7 @@ package net.liftweb
 package http
 
 import xml.{NodeSeq, Text}
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import util.Helpers._
@@ -28,7 +28,8 @@ import Bindings._
 /**
  * System under specification for Bindings.
  */
-object BindingsSpec extends Specification("Bindings Bindings") {
+object BindingsSpec extends Specification  {
+  "Bindings Bindings".title
 
   case class MyClass(str: String, i: Int, other: MyOtherClass)
   case class MyOtherClass(foo: String)
@@ -73,7 +74,7 @@ object BindingsSpec extends Specification("Bindings Bindings") {
 
   "Bindings.binder with an available implicit databinding" should {
     "allow the application of that databinding to an appropriate object" in {
-      MyClass("hi", 1, MyOtherClass("bar")).bind(template) must equalIgnoreSpace(expected)
+      MyClass("hi", 1, MyOtherClass("bar")).bind(template) must beEqualToIgnoringSpace(expected)
     }
   }
 

@@ -17,7 +17,7 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 object Examples extends Specification {

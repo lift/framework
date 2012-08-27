@@ -19,7 +19,9 @@ package record
 
 import java.util.Calendar
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
+import org.specs2.specification.Fragment
+
 import util.Helpers._
 import json.JsonAST.JField
 import json.JsonAST.JInt
@@ -28,8 +30,6 @@ import http.js.JE.Str
 import json.JsonAST.JObject
 import json.JsonAST.JDouble
 import json.JsonAST.JBool
-
-//import org.specs.Specification.
 
 import json.JsonAST._
 import util._
@@ -44,12 +44,9 @@ import common.Empty
 /**
  * Systems under specification for Record.
  */
-object RecordSpec extends Specification("Record Specification") {
-  val session = new LiftSession("", randomString(20), Empty)
-  def inLiftSession(a: =>Any) = S.initIfUninitted(session) { a }
-  new SpecContext {
-    aroundExpectations(inLiftSession(_))
-  }
+object RecordSpec extends Specification  {
+  "Record Specification".title
+
   "Record field introspection" should {
     val rec = FieldTypeTestRecord.createRecord
     val allExpectedFieldNames: List[String] = (for {
@@ -62,14 +59,14 @@ object RecordSpec extends Specification("Record Specification") {
     }
 
     "correctly look up fields by name" in {
-      for (name <- allExpectedFieldNames) {
-        rec.fieldByName(name) must verify(_.isDefined)
+      for (name <- allExpectedFieldNames) yield {
+        rec.fieldByName(name).isDefined must_== true
       }
     }
 
     "not look up fields by bogus names" in {
-      for (name <- allExpectedFieldNames) {
-        rec.fieldByName("x" + name + "y") must not(verify(_.isDefined))
+      for (name <- allExpectedFieldNames) yield {
+        rec.fieldByName("x" + name + "y").isDefined must_== false
       }
     }
 
@@ -80,7 +77,7 @@ object RecordSpec extends Specification("Record Specification") {
   }
 
   "Record lifecycle callbacks" should {
-    def testOneHarness(scope: String, f: LifecycleTestRecord => HarnessedLifecycleCallbacks): Unit = {
+    def testOneHarness(scope: String, f: LifecycleTestRecord => HarnessedLifecycleCallbacks): Fragment = {
       ("be called before validation when specified at " + scope) in {
         val rec = LifecycleTestRecord.createRecord
         var triggered = false
@@ -251,7 +248,9 @@ object RecordSpec extends Specification("Record Specification") {
       )
 
       "convert to JsExp (via asJSON)" in {
-        fttr.asJSON mustEqual fttrAsJsObj
+        S.initIfUninitted(new LiftSession("", randomString(20), Empty)) {
+          fttr.asJSON mustEqual fttrAsJsObj
+        }
       }
 
       /*  Test broken
@@ -311,8 +310,8 @@ object RecordSpec extends Specification("Record Specification") {
 
       "get set from json string using lift-json parser" in {
         val fttrFromJson = FieldTypeTestRecord.fromJsonString(json)
-        fttrFromJson must notBeEmpty
-        fttrFromJson foreach { r =>
+        fttrFromJson.isDefined must_== true
+        fttrFromJson.toList map { r =>
           r.mandatoryDecimalField.value mustEqual fttr.mandatoryDecimalField.value
           r mustEqual fttr
         }
@@ -320,14 +319,14 @@ object RecordSpec extends Specification("Record Specification") {
 
       "get set from json string using util.JSONParser" in {
         val fttrFromJSON = FieldTypeTestRecord.fromJSON(json)
-        fttrFromJSON must notBeEmpty
-        fttrFromJSON foreach { r =>
+        fttrFromJSON.isDefined must_== true
+        fttrFromJSON.toList map { r =>
           r mustEqual fttr
         }
       }
     }
   }
-  
+
   "basic record" should {
     "order fields according to fieldOrder" in {
       BasicTestRecord.metaFields must_==  List(BasicTestRecord.field2, BasicTestRecord.field1, BasicTestRecord.field3)

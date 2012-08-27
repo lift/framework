@@ -28,7 +28,7 @@ import util.Helpers._
 import java.util.{Calendar, Date}
 
 import org.bson.types.ObjectId
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import net.liftweb.record.field._
 import xml.{Elem, NodeSeq}
@@ -152,7 +152,8 @@ object EnumRec extends EnumRec with MongoMetaRecord[EnumRec] {
 /**
  * Systems under specification for CustomSerializers.
  */
-object CustomSerializersSpec extends Specification("CustomSerializers Specification") with MongoTestKit {
+object CustomSerializersSpec extends Specification  with MongoTestKit {
+  "CustomSerializers Specification".title
 
   import customserializersspecs._
 
@@ -176,7 +177,7 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
 
       // retrieve it and compare
       val mother2 = Person.find(mother.id)
-      mother2 must notBeEmpty
+      mother2.isDefined must_== true
       mother2 foreach {
         m =>
           m.children.value mustEqual mother.children.value
@@ -231,7 +232,7 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
 
       // retrieve it and compare
       val mother2 = Person2.find(mother.id)
-      mother2 must notBeEmpty
+      mother2.isDefined must_== true
       mother2 foreach {
         m =>
           m.children.value mustEqual mother.children.value
@@ -288,7 +289,7 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
 
       // retrieve it and compare
       val nfl2 = League.find(nfl.id)
-      nfl2 must notBeEmpty
+      nfl2.isDefined must_== true
       nfl2 foreach {
         l =>
           l.teams.value mustEqual nfl.teams.value
@@ -297,7 +298,7 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
 
       // find a player
       val vqb = Player.find(vikes.qb)
-      vqb must notBeEmpty
+      vqb.isDefined must_== true
       vqb foreach {
         p =>
           p.name.value mustEqual "Brett Favre"
@@ -310,7 +311,7 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
       val formPattern = <input name=".*" type="text" tabindex="1" value={nfl._id.value.toString} id="_id_id"></input>
       S.initIfUninitted(session) {
         val form = nfl._id.toForm
-        form must notBeEmpty
+        form.isDefined must_== true
         form foreach {
           fprime =>
             val f = ("* [name]" #> ".*" & "select *" #> (((ns: NodeSeq) => ns.filter {
@@ -359,7 +360,7 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
 
       // retrieve it and compare
       val nfl2 = League2.find(nfl.id.toString)
-      nfl2 must notBeEmpty
+      nfl2.isDefined must_== true
       nfl2 foreach {
         l =>
           l.teams.value mustEqual nfl.teams.value
@@ -368,7 +369,7 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
 
       // find a player
       val vqb = Player.find(vikes.qb)
-      vqb must notBeEmpty
+      vqb.isDefined must_== true
       vqb foreach {
         p =>
           p.name.value mustEqual "Brett Favre"
@@ -381,7 +382,7 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
       val formPattern = <input name=".*" type="text" tabindex="1" value={nfl._id.value.toString} id="_id_id"></input>
       S.initIfUninitted(session) {
         val form = nfl._id.toForm
-        form must notBeEmpty
+        form.isDefined must_== true
         form foreach {
           fprime =>
             val f = ("* [name]" #> ".*" & "select *" #> (((ns: NodeSeq) => ns.filter {

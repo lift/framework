@@ -17,13 +17,14 @@
 package net.liftweb
 package util
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for EnumWithDescription.
  */
-object EnumWithDescriptionSpec extends Specification("EnumWithDescription Specification") {
+object EnumWithDescriptionSpec extends Specification  {
+  "EnumWithDescription Specification".title
 
   "An enumWithDescription" should {
     "have a name" in {
@@ -56,7 +57,7 @@ object EnumWithDescriptionSpec extends Specification("EnumWithDescription Specif
     }
 
     "have a mrs description" in {
-      Title1.valueOf("MRS").getOrElse(null).description mustMatch "Mrs"
+      Title1.valueOf("MRS").getOrElse(null).description must beMatching ("Mrs")
     }
   }
 

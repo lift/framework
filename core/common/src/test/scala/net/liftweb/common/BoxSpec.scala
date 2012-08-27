@@ -17,16 +17,18 @@
 package net.liftweb
 package common
 
-import org.specs.{ScalaCheck, Specification}
-import org.scalacheck.{Arbitrary, Gen, Prop}
+import org.specs2.mutable.Specification
+import org.specs2.ScalaCheck
+import org.scalacheck.{Arbitrary, Gen}
 import Gen._
-import Prop.forAll
 
 import Box._
 
 
 /* commented out because it tests the compilation phase and we want the compiler to "do the right thing"
-object TypeBoundsTest extends Specification("Type Bounds Spec") with ScalaCheck {
+object TypeBoundsTest extends Specification with ScalaCheck {
+  "Type Bounds Spec".title
+
   "Type bounds" can {
     "do type testing" in {
       def foo[T: ExcludeThisType.exclude[Nothing]#other](a: T) = a.toString
@@ -43,17 +45,17 @@ object TypeBoundsTest extends Specification("Type Bounds Spec") with ScalaCheck 
 /**
  * System under specification for Box.
  */
-object BoxSpec extends Specification("Box Specification") with ScalaCheck with BoxGenerator {
+class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
 
   "A Box" can {
     "be created from a Option. It is Empty if the option is None" in {
-      Box(None) mustBe Empty
+      Box(None) must beEmpty
     }
     "be created from a Option. It is Full(x) if the option is Some(x)" in {
       Box(Some(1)) must_== Full(1)
     }
     "be created from a List containing one element. It is Empty if the list is empty" in {
-      Box(Nil) mustBe Empty
+      Box(Nil) must beEmpty
     }
     "be created from a List containing one element. It is Full(x) if the list is List(x)" in {
       Box(List(1)) must_== Full(1)
@@ -96,10 +98,10 @@ object BoxSpec extends Specification("Box Specification") with ScalaCheck with B
       Full(1).isDefined must beTrue
     }
     "return its value when opened" in {
-      Full(1).open_! mustBe 1
+      Full(1).open_! must_== 1
     }
     "return its value when opened with openOr(default value)" in {
-      Full(1) openOr 0 mustBe 1
+      Full(1) openOr 0 must_== 1
     }
     "return itself when or'ed with another Box" in {
       Full(1) or Full(2) must_== Full(1)
@@ -114,7 +116,7 @@ object BoxSpec extends Specification("Box Specification") with ScalaCheck with B
       Full(1) filter {_ > 0} must_== Full(1)
     }
     "define a 'filter' method, returning Empty if the filter is not satisfied" in {
-      Full(1) filter {_ == 0} mustBe Empty
+      Full(1) filter {_ == 0} must beEmpty
     }
     "define a 'filterMsg' method, returning a Failure if the filter predicate is not satisfied" in {
       Full(1).filterMsg("not equal to 0")(_ == 0) must_== Failure("not equal to 0", Empty, Empty)
@@ -131,7 +133,7 @@ object BoxSpec extends Specification("Box Specification") with ScalaCheck with B
       Full(1) flatMap { x: Int => if (x > 0) Full("full") else Empty } must_== Full("full")
     }
     "define a 'flatMap' method transforming its value in another Box. If the value is transformed in an Empty can, the total result is an Empty can" in {
-      Full(0) flatMap { x: Int => if (x > 0) Full("full") else Empty } mustBe Empty
+      Full(0) flatMap { x: Int => if (x > 0) Full("full") else Empty } must beEmpty
     }
     "define an 'elements' method returning an iterator containing its value" in {
       Full(1).elements.next must_== 1
@@ -224,14 +226,14 @@ object BoxSpec extends Specification("Box Specification") with ScalaCheck with B
       {Empty.open_!; ()} must throwA[NullPointerException]
     }
     "return a default value if opened with openOr" in {
-      Empty.openOr(1) mustBe 1
+      Empty.openOr(1) must_== 1
     }
     "return the other Box if or'ed with another Box" in {
       Empty.or(Full(1)) must_== Full(1)
     }
     "return itself if filtered with a predicate" in {
       val empty: Box[Int] = Empty
-      empty.filter {_ > 0} mustBe Empty
+      empty.filter {_ > 0} must beEmpty
     }
     "define an 'exists' method returning false" in {
       val empty: Box[Int] = Empty
@@ -239,7 +241,7 @@ object BoxSpec extends Specification("Box Specification") with ScalaCheck with B
     }
     "define a 'filter' method, returning Empty" in {
       val empty: Box[Int] = Empty
-      empty filter {_ > 0} mustBe Empty
+      empty filter {_ > 0} must beEmpty
     }
     "define a 'filterMsg' method, returning a Failure" in {
       Empty.filterMsg("not equal to 0")(_ == 0) must_== Failure("not equal to 0", Empty, Empty)
@@ -251,10 +253,10 @@ object BoxSpec extends Specification("Box Specification") with ScalaCheck with B
       total must_== 0
     }
     "define a 'map' method returning Empty" in {
-      Empty map {_.toString} mustBe Empty
+      Empty map {_.toString} must beEmpty
     }
     "define a 'flatMap' method returning Empty" in {
-      Empty flatMap {x: Int => Full("full")} mustBe Empty
+      Empty flatMap {x: Int => Full("full")} must beEmpty
     }
     "define an 'elements' method returning an empty iterator" in {
       Empty.elements.hasNext must beFalse
@@ -306,26 +308,25 @@ object BoxSpec extends Specification("Box Specification") with ScalaCheck with B
 
   "A Box equals method" should {
 
-    "return true with comparing two identical Box messages" in {
-      val equality = (c1: Box[Int], c2: Box[Int]) => (c1, c2) match {
-        case (Empty, Empty) => c1 == c2
-        case (Full(x), Full(y)) => (c1 == c2) == (x == y)
-        case (Failure(m1, e1, l1), Failure(m2, e2, l2)) => (c1 == c2) == ((m1, e1, l1) == (m2, e2, l2))
-        case _ => c1 != c2
+    "return true with comparing two identical Box messages" in check {
+      (c1: Box[Int], c2: Box[Int]) => (c1, c2) match {
+        case (Empty, Empty) => c1 must_== c2
+        case (Full(x), Full(y)) => (c1 == c2) must_== (x == y)
+        case (Failure(m1, e1, l1), Failure(m2, e2, l2)) => (c1 == c2) must_== ((m1, e1, l1) == (m2, e2, l2))
+        case _ => c1 must be_!=(c2)
       }
-      forAll(equality) must pass
     }
 
     "return false with comparing one Full and another object" in {
-      Full(1) must_!= "hello"
+      Full(1) must be_!=("hello")
     }
 
     "return false with comparing one Empty and another object" in {
-      Empty must_!= "hello"
+      Empty must be_!=("hello")
     }
 
     "return false with comparing one Failure and another object" in {
-      Failure("", Empty, Empty) must_!= "hello"
+      Failure("", Empty, Empty) must be_!=("hello")
     }
   }
 

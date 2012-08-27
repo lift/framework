@@ -18,7 +18,7 @@
 package net.liftweb
 package util
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import SecurityHelpers._
 
@@ -26,7 +26,8 @@ import SecurityHelpers._
 /**
  * Systems under specification for SecurityHelpers.
  */
-object SecurityHelpersSpec extends Specification("SecurityHelpers Specification") {
+object SecurityHelpersSpec extends Specification  {
+  "SecurityHelpers Specification".title
 
   "Security Helpers" should {
     "provide a randomLong method returning a random Long modulo a number" in {

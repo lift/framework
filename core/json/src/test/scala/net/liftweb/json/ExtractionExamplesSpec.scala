@@ -18,9 +18,11 @@ package net.liftweb
 package json
 
 import java.util.Date
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
-object ExtractionExamples extends Specification("Extraction Examples Specification") {
+object ExtractionExamples extends Specification {
+  "Extraction Examples Specification".title
+
   implicit val formats = DefaultFormats
 
   "Extraction example" in {

@@ -24,7 +24,7 @@ import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
 
 import org.bson.types.ObjectId
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 package queryexamplesfixtures {
   case class Person(_id: ObjectId, name: String, birthDate: Date, childId: UUID, petId: Option[ObjectId]) extends MongoDocument[Person] {
@@ -40,7 +40,9 @@ package queryexamplesfixtures {
   }
 }
 
-object QueryExamplesSpec extends Specification("QueryExamples Specification") with MongoTestKit {
+object QueryExamplesSpec extends Specification with MongoTestKit {
+  "QueryExamples Specification".title
+
   import queryexamplesfixtures._
 
   "Query examples" in {

@@ -23,16 +23,13 @@ object Dependencies {
 
   type ModuleMap = String => ModuleID
 
-  lazy val CVMapping282  = crossMapped("2.8.2" -> "2.8.1")
   lazy val CVMapping2911 = crossMapped("2.9.2" -> "2.9.1", "2.9.1-1" -> "2.9.1")
-  lazy val CVMappingAll  = crossMapped("2.9.2" -> "2.9.1", "2.9.1-1" -> "2.9.1", "2.8.2" -> "2.8.1")
+  lazy val CVMappingAll  = crossMapped("2.9.2" -> "2.9.1", "2.9.1-1" -> "2.9.1")
 
   lazy val slf4jVersion = "1.6.4"
 
-  lazy val scalazGroup       = defaultOrMapped("org.scalaz", "2.8.0" -> "com.googlecode.scalaz")
-  lazy val scalazVersion     = defaultOrMapped("6.0.4", "2.8.0" -> "5.0", "2.9.0" -> "6.0.RC2")
-  lazy val scalacheckVersion = defaultOrMapped("1.9", "2.8.0" -> "1.7", "2.8.1" -> "1.8", "2.8.2" -> "1.8")
-  lazy val specsVersion      = defaultOrMapped("1.6.8", "2.8.0" -> "1.6.5", "2.9.1" -> "1.6.9", "2.9.1-1" -> "1.6.9", "2.9.2" -> "1.6.9")
+  lazy val scalazGroup       = defaultOrMapped("org.scalaz")
+  lazy val scalazVersion     = defaultOrMapped("6.0.4", "2.9.0" -> "6.0.RC2")
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
@@ -80,8 +77,8 @@ object Dependencies {
   lazy val apacheds    = "org.apache.directory.server" % "apacheds-server-integ"    % "1.5.5"      % "test" // TODO: 1.5.7
   lazy val jetty6      = "org.mortbay.jetty"           % "jetty"                    % "6.1.26"     % "test"
   lazy val jwebunit    = "net.sourceforge.jwebunit"    % "jwebunit-htmlunit-plugin" % "2.5"        % "test"
-  lazy val mockito_all = "org.mockito"                 % "mockito-all"              % "1.8.5"      % "test"
-  lazy val scalacheck: ModuleMap = "org.scala-tools.testing" % "scalacheck" % scalacheckVersion(_) % "test" cross CVMappingAll
-  lazy val specs: ModuleMap      = "org.scala-tools.testing" % "specs"      % specsVersion(_)      % "test" cross CVMappingAll
+  lazy val mockito_all = "org.mockito"                 % "mockito-all"              % "1.9.0"      % "test"
+  lazy val scalacheck =  "org.scalacheck"              % "scalacheck"               % "1.10.0"     % "test" cross CVMappingAll
+  lazy val specs2 =      "org.specs2"                  % "specs2"                   % "1.11"       % "test" cross CVMappingAll
 
 }

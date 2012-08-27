@@ -18,33 +18,39 @@ import java.net.ConnectException
 
 import dispatch.{Http, StatusCode}
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for CouchDatabase.
  */
-object CouchDatabaseSpec extends Specification("CouchDatabase Specification") {
+object CouchDatabaseSpec extends Specification {
+  "CouchDatabase Specification".title
+  sequential
+
   def setup = {
     val http = new Http
     val database = new Database("test")
-    (try { http(database delete) } catch { case StatusCode(_, _) => () }) must not(throwAnException[ConnectException]).orSkipExample
+    (try { http(database delete) } catch { case StatusCode(_, _) => () }) must not(throwA[ConnectException]).orSkip
 
     (http, database)
   }
+
+  def hasCode(i: Int): PartialFunction[Throwable, org.specs2.matcher.MatchResult[Any]] =
+    { case StatusCode(c, _) => c must_== i }
 
   "A database" should {
     "give 404 when info called and nonexistant" in {
       setup
       val (http, database) = setup
 
-      http(database info) must throwAnException[StatusCode].like { case StatusCode(404, _) => true }
+      http(database info) must throwA[StatusCode].like(hasCode(404))
     }
 
     "give 404 when deleted but nonexistant" in {
       val (http, database) = setup
 
-      http(database delete) must throwAnException[StatusCode].like { case StatusCode(404, _) => true }
+      http(database delete) must throwA[StatusCode].like(hasCode(404))
     }
 
     "succeed being created" in {
@@ -57,9 +63,9 @@ object CouchDatabaseSpec extends Specification("CouchDatabase Specification") {
       val (http, database) = setup
 
       http(database create) must_== ()
-      http(database create) must throwAnException[StatusCode].like { case StatusCode(412, _) => true }
+      http(database create) must throwA[StatusCode].like(hasCode(412))
     }
-    
+
     "have info when created" in {
       val (http, database) = setup
 
@@ -70,16 +76,16 @@ object CouchDatabaseSpec extends Specification("CouchDatabase Specification") {
     "succeed in being deleted" in {
       val (http, database) = setup
 
-      http(database create) must_== () 
+      http(database create) must_== ()
       http(database delete) must_== ()
     }
 
     "succeed being recreated" in {
       val (http, database) = setup
 
-      http(database create) must_== () 
+      http(database create) must_== ()
       http(database delete) must_== ()
-      http(database create) must_== () 
+      http(database create) must_== ()
     }
   }
 }

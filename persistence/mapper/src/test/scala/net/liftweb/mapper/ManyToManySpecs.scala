@@ -17,15 +17,17 @@
 package net.liftweb
 package mapper
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 /**
  * Systems under specification for ManyToMany.
  */
-object ManyToManySpec extends Specification("ManyToMany Specification") {
+object ManyToManySpec extends Specification  {
+  "ManyToMany Specification".title
+  sequential
 
   val provider = DbProviders.H2MemoryProvider
-  
+
   private def ignoreLogger(f: => AnyRef): Unit = ()
   def setupDB {
     MapperRules.createForeignKeys_? = c => false
