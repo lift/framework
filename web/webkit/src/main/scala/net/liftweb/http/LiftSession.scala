@@ -500,6 +500,16 @@ private final case class PostPageFunctions(renderVersion: String,
 }
 
 /**
+ * existingResponse is Empty if we have no response for this request
+ * yet. pendingActors is a list of actors who want to be notified when
+ * this response is received.
+ */
+private[http] final case class AjaxRequestInfo(requestVersion:Int,
+                                               existingResponse:Box[Box[LiftResponse]],
+                                               pendingActors:List[LiftActor],
+                                               lastSeen: Long)
+
+/**
  * The LiftSession class containg the session state information
  */
 class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
@@ -556,6 +566,16 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * functions to execute at the end of the page rendering
    */
   private var postPageFunctions: Map[String, PostPageFunctions] = Map()
+
+  /**
+   * A list of AJAX requests that may or may not be pending for this
+   * session. There is up to one entry per RenderVersion.
+   */
+  private val ajaxRequests = scala.collection.mutable.Map[String,AjaxRequestInfo]()
+
+  private[http] def withAjaxRequests[T](fn: (scala.collection.mutable.Map[String, AjaxRequestInfo]) => T): T = {
+    ajaxRequests.synchronized { fn(ajaxRequests) }
+  }
 
   /**
    * The synchronization lock for the postPageFunctions
@@ -675,7 +695,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * Executes the user's functions based on the query parameters
    */
   def runParams(state: Req): List[Any] = {
-
     val toRun = {
       // get all the commands, sorted by owner,
       (state.uploadedFiles.map(_.name) ::: state.paramNames).distinct.
@@ -708,13 +727,28 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         val f = toRun.filter(_.owner == w)
         w match {
           // if it's going to a CometActor, batch up the commands
-          case Full(id) if asyncById.contains(id) => asyncById.get(id).toList.flatMap(a =>
-            a.!?(a.cometProcessingTimeout, ActionMessageSet(f.map(i => buildFunc(i)), state)) match {
+          case Full(id) if asyncById.contains(id) => asyncById.get(id).toList.flatMap(a => {
+            val future =
+              a.!<(ActionMessageSet(f.map(i => buildFunc(i)), state))
+
+            def processResult(result: Any): List[Any] = result match {
               case Full(li: List[_]) => li
               case li: List[_] => li
-              case Empty => Full(a.cometProcessingTimeoutHandler())
+              // We return the future so it can, from AJAX requests, be
+              // satisfied and update the pending ajax request map.
+              case Empty =>
+                val processingFuture = new LAFuture[Any]
+                // Wait for and process the future on a separate thread.
+                Schedule.schedule(() => {
+                  processingFuture.satisfy(processResult(future.get))
+                }, 0 seconds)
+                List((a.cometProcessingTimeoutHandler, processingFuture))
               case other => Nil
-            })
+            }
+
+            processResult(future.get(a.cometProcessingTimeout))
+          })
+
           case _ => f.map(i => buildFunc(i).apply())
         }
     }
@@ -833,6 +867,15 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         } if (!pageInfo.longLife &&
           (now - pageInfo.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
           postPageFunctions -= key
+        }
+      }
+
+      withAjaxRequests { currentAjaxRequests =>
+        for {
+          (version, requestInfo) <- currentAjaxRequests
+            if (now - requestInfo.lastSeen) > LiftRules.unusedFunctionsLifeTime
+        } {
+          currentAjaxRequests -= version
         }
       }
 
@@ -961,6 +1004,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       for {
         funcInfo <- postPageFunctions.get(ownerName)
       } postPageFunctions += (ownerName -> funcInfo.updateLastSeen)
+    }
+
+    withAjaxRequests { currentAjaxRequests =>
+      currentAjaxRequests.get(ownerName).foreach {
+        case info: AjaxRequestInfo =>
+          currentAjaxRequests += (ownerName -> info.copy(lastSeen = time))
+      }
     }
 
     synchronized {
