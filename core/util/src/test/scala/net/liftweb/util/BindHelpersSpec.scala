@@ -658,6 +658,13 @@ object CssBindHelpersSpec extends Specification  {
     }
 
 
+    "Surround kids" in {
+      val f = "a <*>" #> <div></div>
+      val xml = <b>Meow <a href="dog">Cat</a> woof</b>
+
+      f(xml) must ==/ (<b>Meow <a href="dog"><div>Cat</div></a> woof</b>)
+    }
+
     "Andreas's thing doesn't blow up" in {
       def cachedMessageList: Box[Box[String]] = Empty
 
@@ -675,6 +682,27 @@ object CssBindHelpersSpec extends Specification  {
                        "tbody [id]" #> messageListId &
                        "*" #> PassThru
                   }
+
+      true must_== true
+    }
+
+    "other Andreas test" in {
+      def renderBlogEntrySummary = {
+        ".blogEntry" #> ((ns: NodeSeq) => {
+          ("*" #> "Horse").apply(ns)
+        })
+      }
+
+
+
+      def render = {
+
+        "*" #> ((ns: NodeSeq) =>
+          renderBlogEntrySummary.apply(ns) ++ <a>hi</a>
+          )
+      }
+
+      render
 
       true must_== true
     }

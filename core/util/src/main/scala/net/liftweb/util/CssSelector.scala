@@ -19,7 +19,7 @@ package util
 
 
 import scala.util.parsing.combinator.{PackratParsers, Parsers, ImplicitConversions}
-import scala.xml.NodeSeq
+import xml.{Elem, NodeSeq}
 import net.liftweb.common._
 
 sealed trait CssSelector {
@@ -84,7 +84,20 @@ final case object DontMergeAttributes extends SubNode {
   }
 
 final case class SurroundKids() extends SubNode with WithKids {
-  def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq = newNs ++ original // FIXME
+  def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq = {
+    var changed = false
+
+    val res: NodeSeq = newNs.flatMap{
+      case e: Elem if !changed =>
+        changed = true
+        new Elem(e.prefix,
+          e.label, e.attributes,
+          e.scope, e.child ++ original :_*)
+      case x => x
+    }
+
+    if (changed) res else newNs ++ original
+  }
 }
 
 final case class AppendKidsSubNode() extends SubNode with WithKids {
@@ -167,6 +180,7 @@ object CssSelectorParser extends PackratParsers with ImplicitConversions {
   private lazy val topParser: Parser[CssSelector] =
     phrase(rep1((_idMatch | _nameMatch | _classMatch | _attrMatch | _elemMatch |
       _colonMatch | _starMatch) <~ (rep1(' ') | 26.toChar)) ~ opt(subNode)) ^^ {
+      case (one :: Nil) ~ sn => fixAll(List(one), sn)
     case all ~ None if all.takeRight(1).head == StarSelector(Empty) =>
       fixAll(all.dropRight(1), Some(KidsSubNode()))
     case all ~ sn => fixAll(all, sn)
