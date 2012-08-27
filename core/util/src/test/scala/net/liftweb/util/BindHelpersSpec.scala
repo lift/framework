@@ -355,7 +355,7 @@ object CssBindHelpersSpec extends Specification  {
     }
 
     "substitute a String by id" in {
-      ("#foo" #> "hello")(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
+      ("#foo" #> "hello").apply(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
     }
 
 
@@ -434,11 +434,27 @@ object CssBindHelpersSpec extends Specification  {
     }
 
     "substitute a String by id" in {
-      ("#foo" replaceWith "hello")(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
+      ("#foo" replaceWith "hello").apply(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
     }
 
+    "substitute a String by nested class" in {
+      ("div .foo" #> "hello").apply(<b><div><span class="foo"/></div><span><span class="foo"/></span></b>) must ==/ (<b><div>hello</div><span><span class="foo"/></span></b>)
+    }
+
+    "substitute a String by deep nested class" in {
+      ("#baz div .foo" #> "hello").apply(
+        <b><span id="baz"><div><span class="foo"/></div></span><span><span class="foo"/></span></b>) must ==/ (<b><span id="baz"><div>hello</div></span><span><span class="foo"/></span></b>)
+    }
+
+    "insert a String by deep nested class" in {
+      ("#baz div .foo *" #> "hello").apply(
+        <b><span id="baz"><div><span class="foo"/></div></span><span><div><span class="foo"/></div></span></b>) must ==/ (<b><span id="baz"><div><span class="foo">hello</span></div></span><span><div><span class="foo"/></div></span></b>)
+    }
+
+
+
     "Select a node" in {
-      ("#foo ^^" #> "hello")(<div><span id="foo"/></div>) must ==/ (<span id="foo"/>)
+      ("#foo ^^" #> "hello").apply(<div><span id="foo"/></div>) must ==/ (<span id="foo"/>)
     }
 
     "Another nested select" in {
@@ -564,19 +580,19 @@ object CssBindHelpersSpec extends Specification  {
 
     "option transform on *" in {
       val opt: Option[String] = None
-      val res = ("* *" #> opt.map(ignore => "Dog"))(<top>cat</top>)
+      val res = ("* *" #> opt.map(ignore => "Dog")).apply(<top>cat</top>)
       res.head must_== <top></top>
     }
 
     "append attribute to a class with spaces" in {
       val stuff = List("a", "b")
-      val res = ("* [class+]" #> stuff)(<top class="q">cat</top>)
+      val res = ("* [class+]" #> stuff).apply(<top class="q">cat</top>)
       (res \ "@class").text must_== "q a b"
     }
 
     "append attribute to an href" in {
       val stuff = List("&a=b", "&b=d")
-      val res = ("* [href+]" #> stuff)(<top href="q?z=r">cat</top>)
+      val res = ("* [href+]" #> stuff).apply(<top href="q?z=r">cat</top>)
       (res \ "@href").text must_== "q?z=r&a=b&b=d"
     }
 
@@ -629,35 +645,35 @@ object CssBindHelpersSpec extends Specification  {
     
     "option transform on *" in {
       val opt: Option[Int] = Full(44)
-      val res = ("* *" #> opt.map(ignore => "Dog"))(<top>cat</top>)
+      val res = ("* *" #> opt.map(ignore => "Dog")).apply(<top>cat</top>)
       res must ==/ (<top>Dog</top>)
     }
 
 
     "option transform on *" in {
       val opt: Box[String] = Empty
-      val res = ("* *" #> opt.map(ignore => "Dog"))(<top>cat</top>)
+      val res = ("* *" #> opt.map(ignore => "Dog")).apply(<top>cat</top>)
       res.head must_== <top></top>
     }
 
     "option transform on *" in {
       val opt: Box[Int] = Some(44)
-      val res = ("* *" #> opt.map(ignore => "Dog"))(<top>cat</top>)
+      val res = ("* *" #> opt.map(ignore => "Dog")).apply(<top>cat</top>)
       res must ==/ (<top>Dog</top>)
     }
 
     "transform on *" in {
-      val res = ("* *" #> "Dog")(<top>cat</top>)
+      val res = ("* *" #> "Dog").apply(<top>cat</top>)
       res must ==/ (<top>Dog</top>)
     }
 
     "transform child content on *+" in {
-      val res = ("* *+" #> "moose")(<a>I like </a>)
+      val res = ("* *+" #> "moose").apply(<a>I like </a>)
       res.text must_== "I like moose"
     }
 
     "transform child content on -*" in {
-      val res = ("* -*" #> "moose")(<a> I like</a>)
+      val res = ("* -*" #> "moose").apply(<a> I like</a>)
       res.text must_== "moose I like"
     }
 
