@@ -232,7 +232,10 @@ trait CssBoundScreen extends ScreenWizardRendered with Loggable {
 
       def bindAll() = bindLabel() & bindForm() & bindHelp() & bindErrors()
 
-      f.transform map (func => bindAll() andThen func(f.field)) openOr (bindAll())
+      if (f.transforms.isEmpty)
+        bindAll()
+      else
+        (bindAll() :: f.transforms.map(_ apply (f.field))).reduceLeft(_ andThen _)
     }
 
     def url = S.uri
