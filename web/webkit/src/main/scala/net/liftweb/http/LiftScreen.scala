@@ -229,7 +229,7 @@ trait AbstractScreen extends Factory {
 
     def binding: Box[FieldBinding] = Empty
 
-    def transform: Box[BaseField => CssSel] = Empty
+    def transforms: List[BaseField => NodeSeq => NodeSeq] = Nil
   }
 
   protected object currentField extends ThreadGlobal[FieldIdentifier]
@@ -284,9 +284,9 @@ trait AbstractScreen extends Factory {
         case Help(ns) => ns
       }).headOption
 
-      val newTransform: Box[BaseField => CssSel] = (stuff.collect {
+      val newTransforms: List[BaseField => NodeSeq => NodeSeq] = stuff.collect({
         case FieldTransform(func) => func
-      }).headOption
+      }).toList
 
       val newShow: Box[() => Boolean] = (stuff.collect {
         case DisplayIf(func) => func
@@ -325,7 +325,7 @@ trait AbstractScreen extends Factory {
         private lazy val _theFieldId: NonCleanAnyVar[String] =
           vendAVar(Helpers.nextFuncName)
 
-        override def transform = newTransform
+        override def transforms = newTransforms
 
         override def show_? = newShow map (_()) openOr (super.show_?)
       }
@@ -403,7 +403,7 @@ trait AbstractScreen extends Factory {
 
   protected final case class Help(ns: NodeSeq) extends FilterOrValidate[Nothing]
 
-  protected final case class FieldTransform(func: BaseField => CssSel) extends FilterOrValidate[Nothing]
+  protected final case class FieldTransform(func: BaseField => NodeSeq => NodeSeq) extends FilterOrValidate[Nothing]
 
   protected final case class DisplayIf(func: () => Boolean) extends FilterOrValidate[Nothing]
 
@@ -428,9 +428,9 @@ trait AbstractScreen extends Factory {
       case Help(ns) => ns
     }).headOption
 
-    val newTransform: Box[BaseField => CssSel] = (stuff.collect {
+    val newTransforms: List[BaseField => NodeSeq => NodeSeq] = stuff.collect({
       case FieldTransform(func) => func
-    }).headOption
+    }).toList
 
     val newShow: Box[() => Boolean] = (stuff.collect {
       case DisplayIf(func) => func
@@ -497,7 +497,7 @@ trait AbstractScreen extends Factory {
 
       override def binding = newBinding or super.binding
 
-      override def transform = newTransform or super.transform
+      override def transforms = super.transforms ++ newTransforms
     }
   }
 
@@ -523,9 +523,9 @@ trait AbstractScreen extends Factory {
       case Help(ns) => ns
     }).headOption
 
-    val newTransform: Box[BaseField => CssSel] = (stuff.collect {
+    val newTransforms: List[BaseField => NodeSeq => NodeSeq] = stuff.collect({
       case FieldTransform(func) => func
-    }).headOption
+    }).toList
 
     val newShow: Box[() => Boolean] = (stuff.collect {
       case DisplayIf(func) => func
@@ -593,7 +593,7 @@ trait AbstractScreen extends Factory {
 
       override def binding = newBinding or super.binding
 
-      override def transform = newTransform or super.transform
+      override def transforms = super.transforms ++ newTransforms
     }
   }
 
@@ -721,9 +721,9 @@ trait AbstractScreen extends Factory {
       case Help(ns) => ns
     }).headOption
 
-    val newTransform: Box[BaseField => CssSel] = (stuff.collect {
+    val newTransforms: List[BaseField => NodeSeq => NodeSeq] = stuff.collect({
       case FieldTransform(func) => func
-    }).headOption
+    }).toList
 
     val newShow: Box[() => Boolean] = (stuff.collect {
       case DisplayIf(func) => func
@@ -763,7 +763,7 @@ trait AbstractScreen extends Factory {
 
           override def toForm: Box[NodeSeq] = theToForm(this)
 
-          override def transform = newTransform
+          override def transforms = newTransforms
 
           override def show_? = newShow map (_()) openOr (super.show_?)
         }
@@ -800,7 +800,7 @@ trait AbstractScreen extends Factory {
 
           override def toForm: Box[NodeSeq] = theToForm(this)
 
-          override def transform = newTransform
+          override def transforms = newTransforms
 
           override def show_? = newShow map (_()) openOr (super.show_?)
         }
@@ -1321,9 +1321,9 @@ case class ScreenFieldInfo(
     help: Box[NodeSeq],
     input: Box[NodeSeq],
     binding: Box[FieldBinding],
-    transform: Box[BaseField => CssSel]) {
+    transforms: List[BaseField => NodeSeq => NodeSeq]) {
   def this(field: BaseField, text: NodeSeq, help: Box[NodeSeq], input: Box[NodeSeq]) =
-    this(field, text, help, input, Empty, Empty)
+    this(field, text, help, input, Empty, Nil)
  }
 
 object ScreenFieldInfo {
@@ -1524,10 +1524,10 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
         case _ => Empty
       }
 
-    def fieldTransform(field: BaseField): Box[BaseField => CssSel] =
+    def fieldTransform(field: BaseField): List[BaseField => NodeSeq => NodeSeq] =
       field match {
-        case f: Field => f.transform
-        case _ => Empty
+        case f: Field => f.transforms
+        case _ => Nil
       }
 
     renderAll(
