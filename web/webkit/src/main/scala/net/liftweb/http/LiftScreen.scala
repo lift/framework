@@ -444,7 +444,8 @@ trait AbstractScreen extends Factory {
        */
       override def onConfirm_? : Boolean = confirmInfo getOrElse super.onConfirm_?
 
-      override def toForm: Box[NodeSeq] = underlying.toForm
+      override def toForm: Box[NodeSeq] =
+        underlying.toForm.map(ns => SHtml.ElemAttr.applyToAllElems(ns, formElemAttrs))
 
       /**
        * Give the current state of things, should the this field be shown
@@ -546,7 +547,9 @@ trait AbstractScreen extends Factory {
        */
       override def onConfirm_? : Boolean = confirmInfo getOrElse super.onConfirm_?
 
-      override def toForm: Box[NodeSeq] = underlying.flatMap(_.toForm)
+      override def toForm: Box[NodeSeq] = underlying
+          .flatMap(_.toForm)
+          .map(ns => SHtml.ElemAttr.applyToAllElems(ns, formElemAttrs))
 
       /**
        * Give the current state of things, should the this field be shown
