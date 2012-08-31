@@ -626,6 +626,8 @@ class LiftServlet extends Loggable {
                   (renderVersion ->
                     AjaxRequestInfo(handlerVersion, Empty, cont :: Nil, millis))
 
+                suspendRequest()
+
                 Empty // no response available, triggers the actual AJAX computation below
 
               case AjaxRequestInfo(storedVersion, existingResponseBox @ Full(_), _, _) =>
@@ -644,12 +646,14 @@ class LiftServlet extends Loggable {
                 (renderVersion ->
                   AjaxRequestInfo(handlerVersion, Empty, cont :: Nil, millis))
 
+              suspendRequest()
+
               Empty // no response available, triggers the actual AJAX computation below
             }
           }
 
         toReturn or {
-          val result = Full(runAjax(requestState, liftSession, Full((result: LiftResponse) => {
+          Full(runAjax(requestState, liftSession, Full((result: LiftResponse) => {
             // When we get the response, synchronizedly check that the
             // versions are still the same in the map, and, if so, update
             // any waiting actors then clear the actor list and update the
@@ -665,10 +669,6 @@ class LiftServlet extends Loggable {
               }
             }
           })))
-
-          suspendRequest()
-
-          result
         } openOr Empty
 
       case _ =>
