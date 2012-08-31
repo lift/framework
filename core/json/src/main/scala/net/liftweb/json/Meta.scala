@@ -191,15 +191,14 @@ private[json] object Meta {
   private[json] def fail(msg: String, cause: Exception = null) = throw new MappingException(msg, cause)
 
   private class Memo[A, R] {
-    private var cache = Map[A, R]()
+    @volatile private var cache = Map[A, R]()
 
-    def memoize(x: A, f: A => R): R = synchronized {
+    def memoize(x: A, f: A => R): R = 
       if (cache contains x) cache(x) else {
         val ret = f(x)
         cache += (x -> ret)
         ret
       }
-    }
   }
 
   object Reflection {
