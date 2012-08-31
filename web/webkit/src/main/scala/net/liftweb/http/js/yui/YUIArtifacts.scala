@@ -126,15 +126,9 @@ object YUIArtifacts extends JSArtifacts {
    * attributes described by data parameter
    */
   def ajax(data: AjaxInfo): String = {
-    val versionIncluder =
-      if (data.includeVersion)
-        "liftAjax.addPageNameAndVersion"
-      else
-        "liftAjax.addPageName"
-
     val url = S.encodeURL(S.contextPath + "/" + LiftRules.ajaxPath + "/")
 
-    "url = YAHOO.lift.buildURI(" + versionIncluder + "(" + url.encJs + ") , " + data.data.toJsCmd + ");" +
+    "url = YAHOO.lift.buildURI(liftAjax.addPageName(" + url.encJs + ") , " + data.data.toJsCmd + ");" +
             "YAHOO.util.Connect.asyncRequest(" + data.action.encJs + ", url, " + toJson(data) + ");"
   }
 

@@ -107,7 +107,8 @@ object ScriptRenderer {
     "POST",
     LiftRules.ajaxPostTimeout,
     false, "script",
-    Full("liftAjax.lift_successRegisterGC"), Full("liftAjax.lift_failRegisterGC"), false)) + """
+    Full("liftAjax.lift_successRegisterGC"), Full("liftAjax.lift_failRegisterGC"))) +
+          """
        },
 
 
@@ -131,7 +132,6 @@ object ScriptRenderer {
                  aboutToSend.onSuccess(data);
                }
                liftAjax.lift_doCycleQueueCnt++;
-               liftAjax.lift_ajaxVersion++;
                liftAjax.lift_doAjaxCycle();
              };
 
@@ -145,7 +145,6 @@ object ScriptRenderer {
                  queue.push(aboutToSend);
                  liftAjax.lift_ajaxQueueSort();
                } else {
-                 liftAjax.lift_ajaxVersion++;
                  if (aboutToSend.onFailure) {
                    aboutToSend.onFailure();
                  } else {
@@ -181,18 +180,6 @@ object ScriptRenderer {
          setTimeout("liftAjax.lift_doAjaxCycle();", 200);
        },
 
-       lift_ajaxVersion: 0,
-
-       addPageNameAndVersion: function(url) {
-         return """ + {
-    if (LiftRules.enableLiftGC) {
-      "url.replace('" + LiftRules.ajaxPath + "', '" + LiftRules.ajaxPath + "/'+lift_page+(liftAjax.lift_ajaxVersion % 36).toString(36));"
-    } else {
-      "url;"
-    }
-  } + """
-    },
-
        addPageName: function(url) {
          return """ + {
     if (LiftRules.enableLiftGC) {
@@ -209,7 +196,7 @@ object ScriptRenderer {
             "POST",
             LiftRules.ajaxPostTimeout,
             false, "script",
-            Full("onSuccess"), Full("onFailure"), true)) +
+            Full("onSuccess"), Full("onFailure"))) +
           """
         },
 
@@ -219,7 +206,7 @@ object ScriptRenderer {
             "POST",
             LiftRules.ajaxPostTimeout,
             false, "json",
-            Full("onSuccess"), Full("onFailure"), true)) +
+            Full("onSuccess"), Full("onFailure"))) +
           """
               }
             };
@@ -292,7 +279,7 @@ object ScriptRenderer {
             false,
             "script",
             Full("liftComet.lift_handlerSuccessFunc"),
-            Full("liftComet.lift_handlerFailureFunc"), false)) +
+            Full("liftComet.lift_handlerFailureFunc"))) +
           """
               }
             }

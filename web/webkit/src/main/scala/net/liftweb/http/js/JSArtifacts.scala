@@ -112,24 +112,24 @@ trait JSArtifacts {
 }
 
 /**
- * The companion module for AjaxInfodd that provides
+ * The companion module for AjaxInfo that provides
  * different construction schemes
  */
 object AjaxInfo {
   def apply(data: JsExp, post: Boolean) =
-    new AjaxInfo(data, if (post) "POST" else "GET", 1000, false, "script", Empty, Empty, true)
+    new AjaxInfo(data, if (post) "POST" else "GET", 1000, false, "script", Empty, Empty)
 
   def apply(data: JsExp,
             dataType: String,
             post: Boolean) =
-    new AjaxInfo(data, if (post) "POST" else "GET", 1000, false, dataType, Empty, Empty, true)
+    new AjaxInfo(data, if (post) "POST" else "GET", 1000, false, dataType, Empty, Empty)
 
   def apply(data: JsExp) =
-    new AjaxInfo(data, "POST", 1000, false, "script", Empty, Empty, true)
+    new AjaxInfo(data, "POST", 1000, false, "script", Empty, Empty)
 
   def apply(data: JsExp,
             dataType: String) =
-    new AjaxInfo(data, "POST", 1000, false, dataType, Empty, Empty, true)
+    new AjaxInfo(data, "POST", 1000, false, dataType, Empty, Empty)
 
   def apply(data: JsExp,
             post: Boolean,
@@ -142,23 +142,7 @@ object AjaxInfo {
       false,
       "script",
       Full(successFunc),
-      Full(failFunc),
-      true)
-
-  def apply(data: JsExp,
-            post: Boolean,
-            timeout: Long,
-            successFunc: String,
-            failFunc: String,
-            includeVersion: Boolean) =
-    new AjaxInfo(data,
-      if (post) "POST" else "GET",
-      timeout,
-      false,
-      "script",
-      Full(successFunc),
-      Full(failFunc),
-      includeVersion)
+      Full(failFunc))
 }
 
 /**
@@ -166,6 +150,5 @@ object AjaxInfo {
  */
 case class AjaxInfo(data: JsExp, action: String, timeout: Long,
                     cache: Boolean, dataType: String,
-                    successFunc: Box[String], failFunc: Box[String],
-                    includeVersion: Boolean)
+                    successFunc: Box[String], failFunc: Box[String])
 

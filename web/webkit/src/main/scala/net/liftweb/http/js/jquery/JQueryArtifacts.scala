@@ -95,15 +95,9 @@ trait JQueryArtifacts extends JSArtifacts {
    * attributes described by data parameter
    */
   def ajax(data: AjaxInfo): String = {
-    val versionIncluder =
-      if (data.includeVersion)
-        "liftAjax.addPageNameAndVersion"
-      else
-        "liftAjax.addPageName"
-
     "jQuery.ajax(" + toJson(data, S.contextPath,
       prefix =>
-              JsRaw(versionIncluder + "(" + S.encodeURL(prefix + "/" + LiftRules.ajaxPath + "/").encJs + ")")) + ");"
+              JsRaw("liftAjax.addPageName(" + S.encodeURL(prefix + "/" + LiftRules.ajaxPath + "/").encJs + ")")) + ");"
   }
 
   /**
