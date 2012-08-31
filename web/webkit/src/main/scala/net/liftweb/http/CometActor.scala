@@ -400,12 +400,6 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
   }
 
   /**
-   * Asynchronous message send. Send-and-receive eventually. Returns a Future for the reply message.
-   */
-  def !<(msg: Any): LAFuture[Any]
-
-
-  /**
    * Override in sub-class to customise timeout for the render()-method for the specific comet
    */
   def cometRenderTimeout = LiftRules.cometRenderTimeout
