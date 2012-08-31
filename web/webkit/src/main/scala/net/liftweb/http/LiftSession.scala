@@ -571,7 +571,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * A list of AJAX requests that may or may not be pending for this
    * session. There is up to one entry per RenderVersion.
    */
-  private val ajaxRequests = scala.collection.mutable.Map[String,AjaxRequestInfo]()
+  private var ajaxRequests = scala.collection.mutable.Map[String,AjaxRequestInfo]()
 
   private[http] def withAjaxRequests[T](fn: (scala.collection.mutable.Map[String, AjaxRequestInfo]) => T): T = {
     ajaxRequests.synchronized { fn(ajaxRequests) }
