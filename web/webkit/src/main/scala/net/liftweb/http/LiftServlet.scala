@@ -472,7 +472,15 @@ class LiftServlet extends Loggable {
 
   private case class AjaxResponseComplete(response: Box[LiftResponse])
 
+  /**
+   * existingResponse is Empty if we have no response for this request
+   * yet. pendingActors is a list of actors who want to be notified when
+   * this response is received.
+   */
+  private case class AjaxRequestInfo(requestVersion:Int, existingResponse:Box[Box[LiftResponse]], pendingActors:List[LiftActor])
+
   private lazy val ajaxPostTimeout: Long = LiftRules.ajaxPostTimeout * 1000L
+  private val currentAjaxRequests = scala.collection.mutable.Map[String,AjaxRequestInfo]()
 
   /**
    * Runs the actual AJAX processing. This includes handling __lift__GC,
@@ -501,6 +509,9 @@ class LiftServlet extends Loggable {
         case Full(_) =>
           val renderVersion = RenderVersion.get
           liftSession.updateFuncByOwner(renderVersion, millis)
+
+          // FIXME We need to clean up currentAjaxRequests entries when
+          // FIXME the page expires.
 
           Full(JavaScriptResponse(js.JsCmds.Noop))
 
@@ -615,28 +626,28 @@ class LiftServlet extends Loggable {
         val renderVersion = RenderVersion.get
 
         val toReturn: Box[Box[LiftResponse]] =
-          liftSession.withAjaxRequests { currentAjaxRequests =>
+          currentAjaxRequests.synchronized {
             currentAjaxRequests.get(renderVersion).collect {
-              case AjaxRequestInfo(storedVersion, _, pendingActors, _) if handlerVersion != storedVersion =>
+              case AjaxRequestInfo(storedVersion, _, pendingActors) if handlerVersion != storedVersion =>
                 // Break out of any actors for the stale version.
                 pendingActors.foreach(_ ! BreakOut())
 
                 // Evict the older version's info.
                 currentAjaxRequests +=
                   (renderVersion ->
-                    AjaxRequestInfo(handlerVersion, Empty, cont :: Nil, millis))
+                    AjaxRequestInfo(handlerVersion, Empty, cont :: Nil))
 
                 suspendRequest()
 
                 Empty // no response available, triggers the actual AJAX computation below
 
-              case AjaxRequestInfo(storedVersion, existingResponseBox @ Full(_), _, _) =>
+              case AjaxRequestInfo(storedVersion, existingResponseBox @ Full(_), _) =>
                 existingResponseBox // return the Full response Box
 
-              case AjaxRequestInfo(storedVersion, _, pendingActors, _) =>
+              case AjaxRequestInfo(storedVersion, _, pendingActors) =>
                 currentAjaxRequests +=
                   (renderVersion ->
-                    AjaxRequestInfo(handlerVersion, Empty, cont :: pendingActors, millis))
+                    AjaxRequestInfo(handlerVersion, Empty, cont :: pendingActors))
 
                 suspendRequest()
 
@@ -644,7 +655,7 @@ class LiftServlet extends Loggable {
             } openOr {
               currentAjaxRequests +=
                 (renderVersion ->
-                  AjaxRequestInfo(handlerVersion, Empty, cont :: Nil, millis))
+                  AjaxRequestInfo(handlerVersion, Empty, cont :: Nil))
 
               suspendRequest()
 
@@ -659,13 +670,13 @@ class LiftServlet extends Loggable {
             // any waiting actors then clear the actor list and update the
             // request info to include the response in case any other
             // requests come in with this version.
-            liftSession.withAjaxRequests { currentAjaxRequests =>
+            currentAjaxRequests.synchronized {
               currentAjaxRequests.get(renderVersion).collect {
-                case AjaxRequestInfo(storedVersion, _, pendingActors, _) if storedVersion == handlerVersion =>
+                case AjaxRequestInfo(storedVersion, _, pendingActors) if storedVersion == handlerVersion =>
                   pendingActors.foreach(_ ! AjaxResponseComplete(Full(result)))
                   currentAjaxRequests +=
                     (renderVersion ->
-                      AjaxRequestInfo(handlerVersion, Full(Full(result)), Nil, millis))
+                      AjaxRequestInfo(handlerVersion, Full(Full(result)), Nil))
               }
             }
           })))
