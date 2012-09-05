@@ -1628,7 +1628,8 @@ for {
             inS.doWith(true) {
               val statefulRequest = doStatefulRewrite(request)
               withReq(statefulRequest) {
-                _originalRequest.set(Full(statefulRequest))
+                // set the request for standard requests
+                if (statefulRequest.standardRequest_?) _originalRequest.set(Full(statefulRequest))
 
                 _nest2InnerInit(f)
               }

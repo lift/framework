@@ -522,7 +522,9 @@ object Req {
    */
   def nil = new Req(NilPath, "", GetRequest, Empty, null,
                     System.nanoTime, System.nanoTime, false,
-                    () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map())
+                    () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map()) {
+    override lazy val standardRequest_? = false
+  }
 
   def parsePath(in: String): ParsePath = {
     val p1 = fixURI((in match {case null => "/"; case s if s.length == 0 => "/"; case s => s}).replaceAll("/+", "/"))
