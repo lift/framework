@@ -857,6 +857,14 @@ class Req(val path: ParsePath,
     }
 
   /**
+   * A request that is neither Ajax or Comet
+   */
+  lazy val standardRequest_? : Boolean = path.partPath match {
+    case x :: _ if x == LiftRules.ajaxPath || x == LiftRules.cometPath => false
+    case _ => true
+  }
+
+  /**
    * Make the servlet session go away
    */
   def destroyServletSession() {
@@ -865,7 +873,12 @@ class Req(val path: ParsePath,
     } httpReq.destroyServletSession()
   }
 
-  def snapshot = {
+  /**
+   * A snapshot of the request that can be passed off the current thread
+   *
+   * @return a copy of the Req
+   */
+  def snapshot: Req = {
     val paramCalc = paramCalculator()
     paramCalc.body.map(_.body) // make sure we grab the body
     new Req(path,

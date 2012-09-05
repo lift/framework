@@ -332,6 +332,7 @@ trait S extends HasParams with Loggable {
   private val autoCleanUp = new ThreadGlobal[Boolean]
   private val _oneShot = new ThreadGlobal[Boolean]
   private val _disableTestFuncNames = new ThreadGlobal[Boolean]
+  private object _originalRequest extends RequestVar[Box[Req]](Empty)
 
   private object _exceptionThrown extends TransientRequestVar(false)
 
@@ -378,6 +379,15 @@ trait S extends HasParams with Loggable {
    * @see Req
    */
   def request: Box[Req] = (Box !! _request.value) or CurrentReq.box
+
+
+  /**
+   * If this is an Ajax request, return the original request that created the page. The original
+   * request is useful because it has the original path which is helpful for localization purposes.
+   *
+   * @return the original request or if that's not available, the current request
+   */
+  def originalRequest: Box[Req] = _originalRequest.get or request
 
   private[http] object CurrentLocation extends RequestVar[Box[sitemap.Loc[_]]](request.flatMap(_.location))
 
@@ -1616,7 +1626,10 @@ for {
       _attrs.doWith((Null,Nil)) {
           _resBundle.doWith(Nil) {
             inS.doWith(true) {
-              withReq(doStatefulRewrite(request)) {
+              val statefulRequest = doStatefulRewrite(request)
+              withReq(statefulRequest) {
+                _originalRequest.set(Full(statefulRequest))
+
                 _nest2InnerInit(f)
               }
           }
