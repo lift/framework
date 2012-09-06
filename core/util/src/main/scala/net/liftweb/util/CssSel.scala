@@ -62,9 +62,10 @@ object ClearNodes extends Function1[NodeSeq, NodeSeq] {
 }
 
 
-
 private final case class AggregatedCssBindFunc(binds: List[CssBind]) extends CssSel {
-  private lazy val (good, bad) = binds.partition{_.css.isDefined}
+  private lazy val (good, bad) = binds.partition {
+    _.css.isDefined
+  }
   private lazy val selectorMap = new SelectorMap(good)
 
   def apply(in: NodeSeq): NodeSeq = bad match {
@@ -95,7 +96,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
   // The KidsSubNode always has to go last or else we
   // get into an issue where we're trying to apply the whole
   // transform to the whole shooting match
-  private def sortBinds(lst: List[CssBind]): List[CssBind] =  {
+  private def sortBinds(lst: List[CssBind]): List[CssBind] = {
     lst.sortWith {
       case (SubNode(me: EmptyBox), SubNode(_)) => true
       case (SubNode(_), SubNode(them: EmptyBox)) => false
@@ -111,7 +112,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
   }
 
   private val (idMap, nameMap, clzMap, attrMap, elemMap,
-  starFunc, selectThis: Box[CssBind])  = {
+  starFunc, selectThis: Box[CssBind]) = {
     var idMap: Map[String, List[CssBind]] = Map()
     var nameMap: Map[String, List[CssBind]] = Map()
     var clzMap: Map[String, List[CssBind]] = Map()
@@ -121,29 +122,29 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
     val selThis: Box[CssBind] = binds.flatMap {
       b =>
-        b.css.open_!.subNodes match {
+        b.css.openOrThrowException("Guarded with test before calling this method").subNodes match {
           case Full(SelectThisNode(_)) => List(b)
           case _ => Nil
         }
     }.headOption
 
     binds.foreach {
-      case i @ CssBind(IdSelector(id, _)) =>
+      case i@CssBind(IdSelector(id, _)) =>
         idMap += (id -> sortBinds(i :: idMap.getOrElse(id, Nil)))
 
-      case i @ CssBind(ElemSelector(id, _)) =>
+      case i@CssBind(ElemSelector(id, _)) =>
         elemMap += (id -> sortBinds(i :: elemMap.getOrElse(id, Nil)))
 
 
-      case i @ CssBind(StarSelector(_)) => starFunc = Full(sortBinds(i :: starFunc.openOr(Nil)))
+      case i@CssBind(StarSelector(_)) => starFunc = Full(sortBinds(i :: starFunc.openOr(Nil)))
 
-      case i @ CssBind(NameSelector(name, _)) =>
+      case i@CssBind(NameSelector(name, _)) =>
         nameMap += (name -> sortBinds(i :: nameMap.getOrElse(name, Nil)))
 
-      case i @ CssBind(ClassSelector(clz, _)) =>
+      case i@CssBind(ClassSelector(clz, _)) =>
         clzMap += (clz -> sortBinds(i :: clzMap.getOrElse(clz, Nil)))
 
-      case i @ CssBind(AttrSelector(name, value, _)) => {
+      case i@CssBind(AttrSelector(name, value, _)) => {
         val oldMap = attrMap.getOrElse(name, Map())
         attrMap += (name -> (oldMap + (value -> sortBinds(i :: oldMap.getOrElse(value, Nil)))))
       }
@@ -158,8 +159,9 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     case ns => ns
   }
 
-  private abstract class SlurpedAttrs(val id: Box[String],val name: Box[String]) {
+  private abstract class SlurpedAttrs(val id: Box[String], val name: Box[String]) {
     def attrs: Map[String, String]
+
     def classes: List[String]
 
     def removeId(in: MetaData) = in.filter {
@@ -168,7 +170,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     }
 
     private final def isSelThis(bind: CssBind): Boolean =
-      bind.css.open_!.subNodes match {
+      bind.css.openOrThrowException("Guarded with test before calling this method").subNodes match {
         case Full(SelectThisNode(_)) => true
         case _ => false
       }
@@ -191,11 +193,12 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       }
 
     final def applyAttributeRules(bindList: List[CssBind], elem: Elem): Elem = {
-      bindList.map(b => (b, b.css.open_!.subNodes.open_!)).
-        foldLeft(elem){
+      bindList.map(b => (b, b.css.openOrThrowException("Guarded with test before calling this method").
+        subNodes.openOrThrowException("Guarded with test before calling this method"))).
+        foldLeft(elem) {
         case (elem, (bind, AttrSubNode(attr))) => {
           val calced = bind.calculate(elem).map(findElemIfThereIsOne _)
-          val filtered = elem.attributes.filter{
+          val filtered = elem.attributes.filter {
             case up: UnprefixedAttribute => up.key != attr
             case _ => true
           }
@@ -209,7 +212,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
           new Elem(elem.prefix,
             elem.label, newAttr,
-            elem.scope, elem.child :_*)
+            elem.scope, elem.child: _*)
         }
 
         case (elem, (bind, AttrAppendSubNode(attr))) => {
@@ -220,7 +223,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
           if (calced.isEmpty) {
             elem
           } else {
-            val filtered = elem.attributes.filter{
+            val filtered = elem.attributes.filter {
               case up: UnprefixedAttribute => up.key != attr
               case _ => true
             }
@@ -242,7 +245,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
             new Elem(elem.prefix,
               elem.label, newAttr,
-              elem.scope, elem.child :_*)
+              elem.scope, elem.child: _*)
 
           }
         }
@@ -251,16 +254,17 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
           val org: NodeSeq = elem.attribute(attr).getOrElse(NodeSeq.Empty)
           val calced = bind.calculate(elem).toList.map(findElemIfThereIsOne _)
 
-          if (calced.isEmpty || org.isEmpty) { // if either is empty, then return the Elem unmodified
+          if (calced.isEmpty || org.isEmpty) {
+            // if either is empty, then return the Elem unmodified
             elem
           } else {
-            val filtered = elem.attributes.filter{
+            val filtered = elem.attributes.filter {
               case up: UnprefixedAttribute => up.key != attr
               case _ => true
             }
 
             val flat: Box[NodeSeq] = if (attr == "class") {
-              val set = Set(calced.map(_.text) :_*)
+              val set = Set(calced.map(_.text): _*)
               SuperString(org.text).charSplit(' ').toList.
                 filter(_.length > 0).filter(s => !set.contains(s)) match {
                 case Nil => Empty
@@ -277,7 +281,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
             new Elem(elem.prefix,
               elem.label, newAttr,
-              elem.scope, elem.child :_*)
+              elem.scope, elem.child: _*)
 
           }
         }
@@ -338,7 +342,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             }
 
             case pa: PrefixedAttribute => {
-              oldAttrs -= (pa.pre+":"+pa.key)
+              oldAttrs -= (pa.pre + ":" + pa.key)
               builtMeta = pa.copy(builtMeta)
             }
             case _ =>
@@ -364,7 +368,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
       // we can do an open_! here because all the CssBind elems
       // have been vetted
-      bind.css.open_!.subNodes match {
+      bind.css.openOrThrowException("Guarded with test before calling this method").subNodes match {
         case Full(SelectThisNode(kids)) => {
           throw new RetryWithException(if (kids) realE.child else realE)
         }
@@ -375,11 +379,11 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             case 0 => new Elem(realE.prefix, realE.label, realE.attributes, realE.scope)
             case 1 => new Elem(realE.prefix, realE.label,
               realE.attributes, realE.scope,
-              todo.transform(realE.child, calced.head) :_*)
+              todo.transform(realE.child, calced.head): _*)
             case _ if id.isEmpty =>
               calced.map(kids => new Elem(realE.prefix, realE.label,
                 realE.attributes, realE.scope,
-                todo.transform(realE.child, kids) :_*))
+                todo.transform(realE.child, kids): _*))
 
             case _ => {
               val noId = removeId(realE.attributes)
@@ -387,11 +391,11 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
                 case (kids, 0) =>
                   new Elem(realE.prefix, realE.label,
                     realE.attributes, realE.scope,
-                    todo.transform(realE.child, kids) :_*)
+                    todo.transform(realE.child, kids): _*)
                 case (kids, _) =>
                   new Elem(realE.prefix, realE.label,
                     noId, realE.scope,
-                    todo.transform(realE.child, kids) :_*)
+                    todo.transform(realE.child, kids): _*)
               }
             }
           }
@@ -407,7 +411,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
                 case Group(g) => g
                 case e: Elem => new Elem(e.prefix,
                   e.label, mergeAll(e.attributes, false, x == Full(DontMergeAttributes)),
-                  e.scope, e.child :_*)
+                  e.scope, e.child: _*)
                 case x => x
               }
             }
@@ -415,20 +419,25 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             case n => {
               val calcedList = calced.toList
               val availableIds = (attrs.get("id").toList ++
-                calcedList.collect({ case e:Elem => e.attribute("id") }).flatten.map(_.toString)).toSet
-              val merged = calcedList.foldLeft((availableIds, Nil: List[Seq[xml.Node]])) { (idsAndResult, a) =>
-                val (ids, result) = idsAndResult
-                a match {
-                  case Group(g) => (ids, g :: result)
-                  case e:Elem => {
-                    val targetId = e.attribute("id").map(_.toString) orElse (attrs.get("id"))
-                    val keepId = targetId map { id => ids.contains(id) } getOrElse (false)
-                    val newIds = targetId filter (_ => keepId) map (i => ids - i) getOrElse (ids)
-                    val newElem = new Elem(e.prefix, e.label, mergeAll(e.attributes, ! keepId, x == Full(DontMergeAttributes)), e.scope, e.child: _*)
-                    (newIds, newElem :: result)
+                calcedList.collect({
+                  case e: Elem => e.attribute("id")
+                }).flatten.map(_.toString)).toSet
+              val merged = calcedList.foldLeft((availableIds, Nil: List[Seq[xml.Node]])) {
+                (idsAndResult, a) =>
+                  val (ids, result) = idsAndResult
+                  a match {
+                    case Group(g) => (ids, g :: result)
+                    case e: Elem => {
+                      val targetId = e.attribute("id").map(_.toString) orElse (attrs.get("id"))
+                      val keepId = targetId map {
+                        id => ids.contains(id)
+                      } getOrElse (false)
+                      val newIds = targetId filter (_ => keepId) map (i => ids - i) getOrElse (ids)
+                      val newElem = new Elem(e.prefix, e.label, mergeAll(e.attributes, !keepId, x == Full(DontMergeAttributes)), e.scope, e.child: _*)
+                      (newIds, newElem :: result)
+                    }
+                    case x => (ids, x :: result)
                   }
-                  case x => (ids, x :: result)
-                }
               }
               merged._2.reverse.flatten
             }
@@ -517,7 +526,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         }
 
         case pa: PrefixedAttribute if (null ne pa.value) => {
-          theAttrs += ((pa.pre+":"+pa.key) -> pa.value.text)
+          theAttrs += ((pa.pre + ":" + pa.key) -> pa.value.text)
         }
 
         case _ =>
@@ -528,6 +537,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
     new SlurpedAttrs(id, name) {
       def attrs: Map[String, String] = theAttrs
+
       def classes: List[String] = clzs
     }
   }
@@ -552,20 +562,21 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
         case csb :: _ =>
           throw new RetryWithException(if (csb.selectThisChildren_?)
-            e.child else e)
+            e.child
+          else e)
       }
     } else {
-      lb.toList.filterNot(_.selectThis_?)  match {
+      lb.toList.filterNot(_.selectThis_?) match {
         case Nil => new Elem(e.prefix, e.label,
-          e.attributes, e.scope, run(e.child, onlySel) :_*)
+          e.attributes, e.scope, run(e.child, onlySel): _*)
         case csb =>
           // do attributes first, then the body
           csb.partition(_.attrSel_?) match {
-            case (Nil, rules) =>  slurp.applyRule(rules, e, onlySel)
+            case (Nil, rules) => slurp.applyRule(rules, e, onlySel)
             case (attrs, Nil) => {
               val elem = slurp.applyAttributeRules(attrs, e)
               new Elem(elem.prefix, elem.label,
-                elem.attributes, elem.scope, run(elem.child, onlySel) :_*)
+                elem.attributes, elem.scope, run(elem.child, onlySel): _*)
             }
 
             case (attrs, rules) => {
@@ -608,16 +619,19 @@ object CssBind {
 
 trait CssBind extends CssSel {
   def stringSelector: Box[String]
+
   def css: Box[CssSelector]
 
-  override def toString(): String = "CssBind("+stringSelector+", "+
-    css+")"
+  override def toString(): String = "CssBind(" + stringSelector + ", " +
+    css + ")"
 
   def apply(in: NodeSeq): NodeSeq = css match {
     case Full(c) => selectorMap(in)
     case _ => Helpers.errorDiv(
       <div>
-        Syntax error in CSS selector definition: {stringSelector openOr "N/A"}.
+        Syntax error in CSS selector definition:
+        {stringSelector openOr "N/A"}
+        .
         The selector will not be applied.
       </div>) openOr NodeSeq.Empty
   }
@@ -686,8 +700,11 @@ final class CssJBridge {
     new ToCssBindPromoter(Full(str), CssSelectorParser.parse(str))
 
   def sel(selector: String, value: String): CssSel = selector #> value
+
   def sel(selector: String, value: NodeSeq): CssSel = selector #> value
+
   def sel(selector: String, value: NodeSeq => NodeSeq): CssSel = selector #> value
+
   def sel(selector: String, value: Bindable): CssSel = selector #> value
 
   /**
@@ -708,6 +725,7 @@ final class CssJBridge {
 }
 
 trait ComputeTransformRules[-T] {
+  def name: String = "ComputeTransformRule"
   def computeTransform(it: => T, ns: NodeSeq): Seq[NodeSeq]
 }
 
@@ -737,7 +755,6 @@ object ComputeTransformRules {
   }
 
 
-
   implicit def jsCmdPairTransform: ComputeTransformRules[(_, ToJsCmd)] = new ComputeTransformRules[(_, ToJsCmd)] {
     def computeTransform(str: => (_, ToJsCmd), ns: NodeSeq): Seq[NodeSeq] = List(Text(str._2.toJsCmd))
   }
@@ -763,8 +780,8 @@ object ComputeTransformRules {
   }
 
 
-
-  implicit def nodeSeqTransform[T](implicit f : T => NodeSeq): ComputeTransformRules[T] = new ComputeTransformRules[T] {
+  implicit def toNodeSeqTransform[T](implicit f: T => NodeSeq): ComputeTransformRules[T] = new ComputeTransformRules[T] {
+    override def name: String = "def toNodeSeqTransform[T]"
     def computeTransform(param: => T, ns: NodeSeq): Seq[NodeSeq] = List(f(param))
   }
 
@@ -780,9 +797,17 @@ object ComputeTransformRules {
     def computeTransform(func: => NodeSeq => Node, ns: NodeSeq): Seq[NodeSeq] = List(func(ns))
   }
 
+
   implicit def iterableNodeTransform[NST](implicit f2: NST => NodeSeq): ComputeTransformRules[Iterable[NST]] =
     new ComputeTransformRules[Iterable[NST]] {
-      def computeTransform(info: => Iterable[NST], ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(info.toSeq.map(f2))
+      def computeTransform(info: => Iterable[NST], ns: NodeSeq): Seq[NodeSeq] =
+      {
+        val i = info
+        i match {
+          case ns: NodeSeq => List(ns)
+          case x => Helpers.ensureUniqueId(x.toSeq.map(f2))
+        }
+      }
     }
 
   implicit def boxNodeTransform[NST](implicit f2: NST => NodeSeq): ComputeTransformRules[Box[NST]] =
@@ -813,7 +838,7 @@ object ComputeTransformRules {
 
 
   implicit def iterableStringPromotableTransform[T[_], PM](implicit f: T[PM] => Iterable[PM],
-                                                           prom: PM => StringPromotable  ):
+                                                           prom: PM => StringPromotable):
   ComputeTransformRules[T[PM]] =
     new ComputeTransformRules[T[PM]] {
       def computeTransform(info: => T[PM], ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.map(a => Text(prom(a).toString))
@@ -824,14 +849,14 @@ object ComputeTransformRules {
       def computeTransform(info: => T[F], ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info).toSeq.map(_.apply(ns)))
     }
 
-  implicit def funcIterableTransform[T[_], F <: NodeSeq](implicit f: T[F] => Iterable[F]): ComputeTransformRules[ NodeSeq => T[F]] =
-    new ComputeTransformRules[ NodeSeq => T[F]] {
-      def computeTransform(info: =>  NodeSeq => T[F], ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info(ns)).toSeq)
+  implicit def funcIterableTransform[T[_], F <: NodeSeq](implicit f: T[F] => Iterable[F]): ComputeTransformRules[NodeSeq => T[F]] =
+    new ComputeTransformRules[NodeSeq => T[F]] {
+      def computeTransform(info: => NodeSeq => T[F], ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info(ns)).toSeq)
     }
 
   implicit def stringFuncTransform: ComputeTransformRules[NodeSeq => String] =
-    new ComputeTransformRules[ NodeSeq => String] {
-      def computeTransform(info: =>  NodeSeq => String, ns: NodeSeq): Seq[NodeSeq] = List(Text(info(ns)))
+    new ComputeTransformRules[NodeSeq => String] {
+      def computeTransform(info: => NodeSeq => String, ns: NodeSeq): Seq[NodeSeq] = List(Text(info(ns)))
     }
 
   implicit def stringIterFuncTransform[T[_]](implicit f: T[String] => Iterable[String]): ComputeTransformRules[NodeSeq => T[String]] =
@@ -861,14 +886,17 @@ final case class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSele
    * @tparam T the type of it
    * @return the function that will transform an incoming DOM based on the transform rules
    */
-  def #>[T](it: => T)(implicit computer: ComputeTransformRules[T]): CssSel = css match {
+  def #>[T](it: => T)(implicit computer: ComputeTransformRules[T]): CssSel = {
+    css match {
     case Full(EnclosedSelector(a, b)) => null
-    (ToCssBindPromoter(stringSelector, Full(a))).#>(nsFunc(ns =>{
-      ToCssBindPromoter(stringSelector, Full(b)).#>(it)(computer)(ns)})) // (ComputeTransformRules.nodeSeqFuncTransform)
+    (ToCssBindPromoter(stringSelector, Full(a))).#>(nsFunc(ns => {
+      ToCssBindPromoter(stringSelector, Full(b)).#>(it)(computer)(ns)
+    })) // (ComputeTransformRules.nodeSeqFuncTransform)
     case _ =>
       new CssBindImpl(stringSelector, css) {
         def calculate(in: NodeSeq): Seq[NodeSeq] = computer.computeTransform(it, in)
       }
+  }
   }
 
   /**
