@@ -157,7 +157,7 @@ for MODULE in framework ; do
     # Do a separate build for each configured Scala version so we don't blow the heap
     for SCALA_VERSION in $(grep crossScalaVersions build.sbt | cut -d '(' -f 2 |  sed s/[,\)\"]//g ); do
         echo -n "  Building against Scala ${SCALA_VERSION}..."
-        if ! ./liftsh ++${SCALA_VERSION} clean update test publish-local >> ${BUILDLOG} ; then
+        if ! ./liftsh ++${SCALA_VERSION} clean update test publish >> ${BUILDLOG} ; then
             echo "failed! See build log for details"
             exit
         fi
