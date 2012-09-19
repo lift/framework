@@ -1785,17 +1785,25 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
   def asSafeJs(actual: A, f: KeyObfuscator): JsExp = {
     val pk = actual.primaryKeyField
     val first = (pk.name, JE.Str(f.obscure(self, pk.is)))
-    JE.JsObj(first :: ("$lift_class", JE.Str(dbTableName)) :: mappedFieldList.
-             map(f => this.??(f.method, actual)).
-             filter(f => !f.dbPrimaryKey_? && f.renderJs_?).flatMap{
-        case fk:  Q =>
-          val key = f.obscure(fk.dbKeyToTable, fk.is)
-          List((fk.name, JE.Str(key)),
-               (fk.name+"_obj",
-                JE.AnonFunc("index", JE.JsRaw("return index["+key.encJs+"];").cmd)))
-
-        case x => x.asJs}.toList :::
-             actual.suplementalJs(Full(f)) :_*)
+    JE.JsObj(
+      first ::
+        ("$lift_class", JE.Str(dbTableName)) ::
+        mappedFieldList
+          .map(f => this.??(f.method, actual))
+          .filter(f => !f.dbPrimaryKey_? && f.renderJs_?)
+          .flatMap{
+            case fk0: MappedForeignKey[_, _, _] with MappedField[_, _] =>
+              val fk = fk0.asInstanceOf[Q]
+              val key = f.obscure(fk.dbKeyToTable, fk.is)
+              List(
+                (fk.name, JE.Str(key)),
+                (fk.name+"_obj", JE.AnonFunc("index", JE.JsRaw("return index["+key.encJs+"];").cmd))
+              )
+            case x => x.asJs
+          }
+          .toList :::
+        actual.suplementalJs(Full(f)) : _*
+    )
   }
 
   private def convertToQPList(prod: Product): Array[QueryParam[A]] = {

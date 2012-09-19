@@ -71,9 +71,6 @@ trait ManyToMany extends BaseKeyedMapper {
     val otherMeta: MetaMapper[T2],
     val qp: QueryParam[O]*) extends scala.collection.mutable.Buffer[T2] {
 
-    def thisFK[A](join: O)(f: MappedForeignKey[K,O,_>:T] => A): A =
-      thisField.actualField(join) match { case mfk: MappedForeignKey[K,O,T] => f(mfk) }
-
     def otherFK[A](join: O)(f: MappedForeignKey[K2,O,T2] => A): A =
       otherField.actualField(join) match { case mfk: MappedForeignKey[K2,O,T2] => f(mfk) }
 
@@ -106,7 +103,9 @@ trait ManyToMany extends BaseKeyedMapper {
               removedJoin // well, noLongerRemovedJoin...
             case None =>
               val newJoin = joinMeta.create
-              thisFK(newJoin)(_.apply(ManyToMany.this))
+              thisField.actualField(newJoin) match {
+                case mfk: MappedForeignKey[K,O,T] => mfk.set(primaryKeyField.is.asInstanceOf[K])
+              }
               otherFK(newJoin)(_.apply(e))
               newJoin
           }
@@ -120,7 +119,7 @@ trait ManyToMany extends BaseKeyedMapper {
           removedJoins = join :: removedJoins
           val o = otherField.actualField(join)
           o.set(o.defaultValue)
-          thisFK(join)(f => f.set(f.defaultValue))
+          thisField.actualField(join) match { case mfk => mfk set mfk.defaultValue }
           Some(join)
         case None =>
           None
@@ -190,7 +189,7 @@ trait ManyToMany extends BaseKeyedMapper {
      * Discard the cached state of this MappedManyToMany's children and reinitialize it from the database
      */
     def refresh = {
-      val by = new Cmp[O, TheKeyType](thisField, OprEnum.Eql, Full(primaryKeyField.is), Empty, Empty)
+      val by = new Cmp[O, TheKeyType](thisField, OprEnum.Eql, Full(primaryKeyField.is.asInstanceOf[K]), Empty, Empty)
 
       _joins = joinMeta.findAll( (by :: qp.toList): _*)
       all
@@ -210,7 +209,9 @@ trait ManyToMany extends BaseKeyedMapper {
       _joins = joins.filter { join =>
         otherFK(join)(f => f.is != f.defaultValue)
       }
-      _joins foreach { thisFK(_)(_ set ManyToMany.this.primaryKeyField.is) }
+      _joins foreach {
+        thisField.actualField(_).asInstanceOf[MappedForeignKey[K,O,X] forSome {type X <: KeyedMapper[K,X]}] set ManyToMany.this.primaryKeyField.is.asInstanceOf[K]
+      }
 
       removedJoins.forall {_.delete_!} & ( // continue saving even if deleting fails
         children.forall(_.save) &&

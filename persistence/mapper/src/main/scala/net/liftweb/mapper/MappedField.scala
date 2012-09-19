@@ -449,7 +449,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
 
 
   def toForm: Box[NodeSeq] = {
-    def mf(in: Node): NodeSeq = in match {
+    def mf(in: scala.xml.Node): NodeSeq = in match {
       case g: Group => g.nodes.flatMap(mf)
       case e: Elem => e % toFormAppendedAttributes
       case other => other
@@ -690,7 +690,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
     case _ => false
   }
 
-  override def asHtml : Node = Text(toString)
+  override def asHtml: scala.xml.Node = Text(toString)
 }
 
 object MappedField {
