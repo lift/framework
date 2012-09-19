@@ -785,8 +785,8 @@ object ComputeTransformRules {
     def computeTransform(param: => T, ns: NodeSeq): Seq[NodeSeq] = List(f(param))
   }
 
-  implicit def nodeSeqFuncTransform: ComputeTransformRules[NodeSeq => NodeSeq] = new ComputeTransformRules[NodeSeq => NodeSeq] {
-    def computeTransform(func: => NodeSeq => NodeSeq, ns: NodeSeq): Seq[NodeSeq] = List(func(ns))
+  implicit def nodeSeqFuncTransform[A](implicit view: A => NodeSeq => NodeSeq): ComputeTransformRules[A] = new ComputeTransformRules[A] {
+    def computeTransform(func: =>A, ns: NodeSeq): Seq[NodeSeq] = List(view(func)(ns))
   }
 
   implicit def nodeSeqSeqFuncTransform: ComputeTransformRules[NodeSeq => Seq[Node]] = new ComputeTransformRules[NodeSeq => Seq[Node]] {
