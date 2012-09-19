@@ -22,6 +22,9 @@ import org.specs2.mutable.Specification
 import common._
 import scala.xml._
 
+import BindHelpers._
+
+
 /**
  * Systems under specification for CSS Selector.
  */
