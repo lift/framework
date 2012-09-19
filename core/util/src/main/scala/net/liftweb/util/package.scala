@@ -33,18 +33,6 @@ package object util {
   val ActorPing = Schedule
 
   /**
-   * promote a String to a ToCssBindPromotor
-   */
-  implicit def strToCssBindPromoter(str: String): ToCssBindPromoter =
-    new ToCssBindPromoter(Full(str), CssSelectorParser.parse(str))
-
-  /**
-   * promote a String to a ToCssBindPromotor
-   */
-  implicit def cssSelectorToCssBindPromoter(sel: CssSelector): ToCssBindPromoter =
-    new ToCssBindPromoter(Empty, Full(sel))
-
-  /**
    * Wrap a function and make sure it's a NodeSeq => NodeSeq.  Much easier
    * than explicitly casting the first parameter
    *
