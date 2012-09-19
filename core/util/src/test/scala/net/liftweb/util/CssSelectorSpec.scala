@@ -30,7 +30,7 @@ object CssSelectorSpec extends Specification   {
 
   "CssSelector" should {
     "fail for garbage input" in {
-      CssSelectorParser.parse(" 49234e23") must_== Empty
+      CssSelectorParser.parse(" 49234e23").isDefined must_== false
     }
 
     "select an id" in {

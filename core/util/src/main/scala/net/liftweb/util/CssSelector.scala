@@ -151,7 +151,7 @@ object CssSelectorParser extends PackratParsers with ImplicitConversions {
     val reader: Input = new CharSequenceReader(toParse, 0)
     topParser(reader) match {
       case Success(v, _) => Full(v)
-      case x => Empty
+      case x: NoSuccess => ParamFailure(x.msg, Empty, Empty, x)
     }
   }
 
