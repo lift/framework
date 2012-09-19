@@ -432,7 +432,7 @@ trait TimeHelpers { self: ControlHelpers =>
         case o => toDate(o.toString)
       }
     } catch {
-      case e => logger.debug("Error parsing date "+in, e); Failure("Bad date: "+in, Full(e), Empty)
+      case e: Exception => logger.debug("Error parsing date "+in, e); Failure("Bad date: "+in, Full(e), Empty)
     }
   }
 }
