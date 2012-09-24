@@ -709,10 +709,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         w match {
           // if it's going to a CometActor, batch up the commands
           case Full(id) if asyncById.contains(id) => asyncById.get(id).toList.flatMap(a =>
-            a.!?(a.cometProcessingTimeout, ActionMessageSet(f.map(i => buildFunc(i)), state)) match {
-              case Full(li: List[_]) => li
+            a.!?(ActionMessageSet(f.map(i => buildFunc(i)), state)) match {
               case li: List[_] => li
-              case Empty => Full(a.cometProcessingTimeoutHandler())
               case other => Nil
             })
           case _ => f.map(i => buildFunc(i).apply())
