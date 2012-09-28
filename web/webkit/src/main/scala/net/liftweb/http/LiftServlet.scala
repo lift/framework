@@ -431,15 +431,15 @@ class LiftServlet extends Loggable {
    * client. The latter is used to expire result data for sequence
    * numbers that are no longer needed.
    */
-  private case class AjaxVersionInfo(renderVersion:String, sequenceNumber:Int, pendingRequests:Int)
+  private case class AjaxVersionInfo(renderVersion:String, sequenceNumber:Long, pendingRequests:Int)
   private object AjaxVersions {
     def unapply(ajaxPathPart: String) : Option[AjaxVersionInfo] = {
-      val dash = ajaxPathPart.indexOf("-")
-      if (dash > -1 && ajaxPathPart.length > dash + 2)
+      val separator = ajaxPathPart.indexOf("-")
+      if (separator > -1 && ajaxPathPart.length > separator + 2)
         Some(
-          AjaxVersionInfo(ajaxPathPart.substring(0, dash),
-            ajaxPathPart.charAt(dash + 1),
-            Integer.parseInt(ajaxPathPart.substring(dash + 2, dash + 3), 36))
+          AjaxVersionInfo(ajaxPathPart.substring(0, separator),
+            java.lang.Long.parseLong(ajaxPathPart.substring(separator + 1, ajaxPathPart.length - 1), 36),
+            Integer.parseInt(ajaxPathPart.substring(ajaxPathPart.length - 1), 36))
         )
       else
         None
