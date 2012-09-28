@@ -48,6 +48,11 @@ object ScriptRenderer {
 	  toSend.responseType = responseType;
 	  toSend.version = liftAjax.lift_ajaxVersion++;
 
+      // Make sure we wrap when we hit JS max int.
+      var version = liftAjax.lift_ajaxVersion
+      if ((version - (version + 1) != -1) || (version - (version - 1) != 1))
+        liftAjax.lift_ajaxVersion = 0;
+
 	  if (liftAjax.lift_uriSuffix) {
 	    theData += '&' + liftAjax.lift_uriSuffix;
 	    toSend.theData = theData;
