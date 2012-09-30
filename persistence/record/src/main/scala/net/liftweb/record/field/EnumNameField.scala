@@ -52,7 +52,7 @@ trait EnumNameTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Va
    * is the value of the field and the second string is the Text name of the Value.
    */
   def buildDisplayList: List[(Box[EnumType#Value], String)] = {
-    val options = enum.values.map(a => (Full(a), a.toString)).toList
+    val options = enum.values.toList.map(a => (Full(a), a.toString))
     if (optional_?) (Empty, emptyOptionLabel)::options else options
   }
 
