@@ -504,8 +504,8 @@ private final case class PostPageFunctions(renderVersion: String,
  * thread when the response has been calculated. Retries will wait for the
  * future to be satisfied in order to return the proper response.
  */
-private[http] final case class AjaxRequestInfo(requestVersion:Int,
-                                               responseFuture:LAFuture[Box[LiftResponse]],
+private[http] final case class AjaxRequestInfo(requestVersion: Long,
+                                               responseFuture: LAFuture[Box[LiftResponse]],
                                                lastSeen: Long)
 
 /**
