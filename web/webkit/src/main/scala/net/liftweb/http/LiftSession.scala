@@ -87,6 +87,8 @@ object LiftSession {
    */
   var onEndServicing: List[(LiftSession, Req, Box[LiftResponse]) => Unit] = Nil
 
+
+
   @volatile private var constructorCache: Map[(Class[_], Box[Class[_]]), Box[ConstructorType]] = Map()
 
   private[http] def constructFrom[T](session: LiftSession, pp: Box[ParamPair], clz: Class[T]): Box[T] = {
@@ -208,6 +210,18 @@ object SessionMaster extends LiftActor with Loggable {
           } or Full(LiftRules.statelessSession.vend.apply(req))
         case _ => getSession(req.request, otherId)
       }
+    }
+  }
+
+
+  /**
+   * End comet long polling for all sessions. This allows a clean reload of Nginx
+   * because Nginx children stick around for long polling.
+   */
+  def breakOutAllComet() {
+    val ses = lockRead(sessions)
+    ses.valuesIterator.foreach {
+      _.session.breakOutComet()
     }
   }
 
