@@ -427,7 +427,7 @@ object JsonAST {
         case '\n' => "\\n"
         case '\r' => "\\r"
         case '\t' => "\\t"
-        case c if ((c >= '\u0000' && c < '\u0020') || (c >= '\u0080' && c < '\u00a0') || (c >= '\u2000' && c < '\u2100')) => "\\u%04x".format(c: Int)
+        case c if ((c >= '\u0000' && c < '\u0020')) => "\\u%04x".format(c: Int)
         case c => c
       })
     }

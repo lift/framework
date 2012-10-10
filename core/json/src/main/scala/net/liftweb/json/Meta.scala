@@ -191,14 +191,16 @@ private[json] object Meta {
   private[json] def fail(msg: String, cause: Exception = null) = throw new MappingException(msg, cause)
 
   private class Memo[A, R] {
-    @volatile private var cache = Map[A, R]()
+    private val cache = new java.util.concurrent.atomic.AtomicReference(Map[A, R]())
 
-    def memoize(x: A, f: A => R): R = 
-      if (cache contains x) cache(x) else {
+    def memoize(x: A, f: A => R): R = {
+      val c = cache.get
+      if (c contains x) c(x) else {
         val ret = f(x)
-        cache += (x -> ret)
+        cache.set(c + (x -> ret))
         ret
       }
+    }
   }
 
   object Reflection {
