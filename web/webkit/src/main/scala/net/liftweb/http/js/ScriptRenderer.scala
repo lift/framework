@@ -47,6 +47,12 @@ object ScriptRenderer {
 	  toSend.onFailure = theFailure;
 	  toSend.responseType = responseType;
 
+	  if (liftAjax.lift_uriSuffix) {
+	    theData += '&' + liftAjax.lift_uriSuffix;
+	    toSend.theData = theData;
+	    liftAjax.lift_uriSuffix = undefined;
+	  }
+
 	  liftAjax.lift_ajaxQueue.push(toSend);
 	  liftAjax.lift_ajaxQueueSort();
 	  liftAjax.lift_doCycleQueueCnt++;
@@ -161,11 +167,6 @@ object ScriptRenderer {
                liftAjax.lift_actualJSONCall(aboutToSend.theData, successFunc, failureFunc);
              } else {
                var theData = aboutToSend.theData;
-               if (liftAjax.lift_uriSuffix) {
-                 theData += '&' + liftAjax.lift_uriSuffix;
-                 aboutToSend.theData = theData;
-                 liftAjax.lift_uriSuffix = undefined;
-               }
                liftAjax.lift_actualAjaxCall(theData, successFunc, failureFunc);
              }
             }
