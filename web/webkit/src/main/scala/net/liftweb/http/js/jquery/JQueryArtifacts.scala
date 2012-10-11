@@ -97,7 +97,7 @@ trait JQueryArtifacts extends JSArtifacts {
   def ajax(data: AjaxInfo): String = {
     "jQuery.ajax(" + toJson(data, S.contextPath,
       prefix =>
-              JsRaw("liftAjax.addPageName(" + S.encodeURL(prefix + "/" + LiftRules.ajaxPath + "/").encJs + ")")) + ");"
+              JsRaw("liftAjax.addPageNameAndVersion(" + S.encodeURL(prefix + "/" + LiftRules.ajaxPath + "/").encJs + ", version)")) + ");"
   }
 
   /**
