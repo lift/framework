@@ -261,9 +261,8 @@ class LiftServlet extends Loggable {
 
           Full(new JsCommands(cmd :: Nil).toResponse)
         }
-      }
-      // if the request is matched is defined in the stateless table, dispatch
-      if (S.statelessInit(req) {
+      } else if (S.statelessInit(req) {
+        // if the request is matched is defined in the stateless table, dispatch
         tmpStatelessHolder = NamedPF.applyBox(req,
           LiftRules.statelessDispatch.toList).map(_.apply() match {
           case Full(a) => Full(LiftRules.convertResponse((a, Nil, S.responseCookies, req)))
