@@ -514,6 +514,15 @@ private final case class PostPageFunctions(renderVersion: String,
 }
 
 /**
+ * The responseFuture will be satisfied by the original request handling
+ * thread when the response has been calculated. Retries will wait for the
+ * future to be satisfied in order to return the proper response.
+ */
+private[http] final case class AjaxRequestInfo(requestVersion: Long,
+                                               responseFuture: LAFuture[Box[LiftResponse]],
+                                               lastSeen: Long)
+
+/**
  * The LiftSession class containg the session state information
  */
 class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
@@ -570,6 +579,20 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * functions to execute at the end of the page rendering
    */
   private var postPageFunctions: Map[String, PostPageFunctions] = Map()
+
+  /**
+   * A list of AJAX requests that may or may not be pending for this
+   * session. There is an entry for every AJAX request we don't *know*
+   * has completed successfully or been discarded by the client.
+   *
+   * See LiftServlet.handleAjax for how we determine we no longer need
+   * to hold a reference to an AJAX request.
+   */
+  private var ajaxRequests = scala.collection.mutable.Map[String,List[AjaxRequestInfo]]()
+
+  private[http] def withAjaxRequests[T](fn: (scala.collection.mutable.Map[String, List[AjaxRequestInfo]]) => T) = {
+    ajaxRequests.synchronized { fn(ajaxRequests) }
+  }
 
   /**
    * The synchronization lock for the postPageFunctions
@@ -723,10 +746,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         w match {
           // if it's going to a CometActor, batch up the commands
           case Full(id) if asyncById.contains(id) => asyncById.get(id).toList.flatMap(a =>
-            a.!?(a.cometProcessingTimeout, ActionMessageSet(f.map(i => buildFunc(i)), state)) match {
-              case Full(li: List[_]) => li
+            a.!?(ActionMessageSet(f.map(i => buildFunc(i)), state)) match {
               case li: List[_] => li
-              case Empty => Full(a.cometProcessingTimeoutHandler())
               case other => Nil
             })
           case _ => f.map(i => buildFunc(i).apply())
@@ -847,6 +868,22 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         } if (!pageInfo.longLife &&
           (now - pageInfo.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
           postPageFunctions -= key
+        }
+      }
+
+      withAjaxRequests { currentAjaxRequests =>
+        for {
+          (version, requestInfos) <- currentAjaxRequests
+        } {
+          val remaining =
+            requestInfos.filter { info =>
+              (now - info.lastSeen) <= LiftRules.unusedFunctionsLifeTime
+            }
+
+          if (remaining.length > 0)
+            currentAjaxRequests += (version -> remaining)
+          else
+            currentAjaxRequests -= version
         }
       }
 
@@ -975,6 +1012,14 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       for {
         funcInfo <- postPageFunctions.get(ownerName)
       } postPageFunctions += (ownerName -> funcInfo.updateLastSeen)
+    }
+
+    withAjaxRequests { currentAjaxRequests =>
+      currentAjaxRequests.get(ownerName).foreach { requestInfos =>
+        val updated = requestInfos.map(_.copy(lastSeen = time))
+
+        currentAjaxRequests += (ownerName -> updated)
+      }
     }
 
     synchronized {
