@@ -933,10 +933,18 @@ trait S extends HasParams with Loggable {
    * If you do not define an entry for a particular key, we fall back to using
    * Lift's core entries.
    *
+   * We cache the values in modes other than DevMode
+   *
    * @see LiftRules.resourceNames
    * @see LiftRules.resourceBundleFactories
    */
-  def resourceBundles: List[ResourceBundle] = resourceBundles(locale) ++ liftCoreResourceBundle.toList
+  def _resourceBundles: List[ResourceBundle] = resourceBundles(locale) ++ liftCoreResourceBundle.toList
+
+  private lazy val cachedResourceBundles = _resourceBundles
+
+  private def resourceBundles: List[ResourceBundle] =
+    if (Props.devMode) _resourceBundles else cachedResourceBundles
+
 
   def resourceBundles(loc: Locale): List[ResourceBundle] = {
     _resBundle.box match {
