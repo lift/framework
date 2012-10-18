@@ -578,7 +578,7 @@ trait ProtoUser {
 
   def logUserIn(who: TheUserType, postLogin: () => Nothing): Nothing = {
     if (destroySessionOnLogin) {
-      S.session.open_!.destroySessionAndContinueInNewSession(() => {
+      S.session.openOrThrowException("we have a session here").destroySessionAndContinueInNewSession(() => {
         logUserIn(who)
         postLogin()
       })
@@ -1008,7 +1008,7 @@ trait ProtoUser {
   }
 
   def changePassword = {
-    val user = currentUser.open_! // we can do this because the logged in test has happened
+    val user = currentUser.openOrThrowException("we can do this because the logged in test has happened")
     var oldPassword = ""
     var newPassword: List[String] = Nil
 
@@ -1060,7 +1060,7 @@ trait ProtoUser {
 
   def edit = {
     val theUser: TheUserType = 
-      mutateUserOnEdit(currentUser.open_!) // we know we're logged in
+      mutateUserOnEdit(currentUser.openOrThrowException("we know we're logged in"))
 
     val theName = editPath.mkString("")
 

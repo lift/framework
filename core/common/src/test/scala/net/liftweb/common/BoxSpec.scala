@@ -71,7 +71,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Empty.isDefined must beFalse
     }
     "be implicitly defined from an Option. The open_! method can be used on an Option for example" in {
-      Some(1).open_! must_== 1
+      Some(1).openOrThrowException("This is a test") must_== 1
     }
     "be defined from some legacy code (possibly passing null values). If the passed value is not null, a Full(value) is returned" in {
       Box.legacyNullTest("s") must_== Full("s")
@@ -98,7 +98,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(1).isDefined must beTrue
     }
     "return its value when opened" in {
-      Full(1).open_! must_== 1
+      Full(1).openOrThrowException("This is a test") must_== 1
     }
     "return its value when opened with openOr(default value)" in {
       Full(1) openOr 0 must_== 1
@@ -223,7 +223,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Empty.isDefined must beFalse
     }
     "throw an exception if opened" in {
-      {Empty.open_!; ()} must throwA[NullPointerException]
+      {Empty.openOrThrowException("See what happens?, at least we expect it in this case :)"); ()} must throwA[NullPointerException]
     }
     "return a default value if opened with openOr" in {
       Empty.openOr(1) must_== 1

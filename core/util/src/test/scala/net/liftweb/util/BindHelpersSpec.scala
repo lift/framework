@@ -190,7 +190,7 @@ object BindHelpersSpec extends Specification  {
         e => e.attribute("id").
         filter(_.text == "3").
         map(i => e)
-      }.open_! must ==/ (<woof id="3"/>)
+      }.openOrThrowException("Test") must ==/ (<woof id="3"/>)
     }
 
     "not find an ide" in {

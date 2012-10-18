@@ -27,7 +27,13 @@ object DocumentHelpers {
   def forceStore(http: Http, database: Database, doc: JObject): Box[JObject] =
     tryo(http(database(doc) fetch)) match {
       case Full(existingDoc) =>
-        tryo(http(database store updateIdAndRev(doc, existingDoc._id.open_!, existingDoc._rev.open_!))).flatMap(b => b)
+        tryo{
+          http(database.store(updateIdAndRev(
+            doc,
+            existingDoc._id.openOrThrowException("We just got this document, so it has an id"),
+            existingDoc._rev.openOrThrowException("We just got this document, so it has a rev"))))
+        }.flatMap(b => b)
+
 
       case Failure(_, Full(StatusCode(404, _)), _) =>
         tryo(http(database store doc)).flatMap(b => b)

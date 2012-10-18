@@ -574,7 +574,7 @@ trait AbstractScreen extends Factory {
 
       override def name: String = underlying.map(_.name) openOr "N/A"
 
-      override def default = underlying.open_!.get
+      override def default = underlying.openOrThrowException("legacy code").get
 
       override implicit def manifest: Manifest[ValueType] = man
 
@@ -586,11 +586,11 @@ trait AbstractScreen extends Factory {
         case AFilter(f) => f
       }.toList
 
-      override def is = underlying.open_!.get
+      override def is = underlying.openOrThrowException("Legacy code").get
 
-      override def get = underlying.open_!.get
+      override def get = underlying.openOrThrowException("Legacy code").get
 
-      override def set(v: T) = underlying.open_!.set(setFilter.foldLeft(v)((v, f) => f(v)))
+      override def set(v: T) = underlying.openOrThrowException("Legacy code").set(setFilter.foldLeft(v)((v, f) => f(v)))
 
       override def uniqueFieldId: Box[String] = paramFieldId or underlying.flatMap(_.uniqueFieldId) or super.uniqueFieldId
 

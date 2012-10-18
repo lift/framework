@@ -127,7 +127,7 @@ with LifecycleCallbacks {
   override protected def dirty_?(b: Boolean) = synchronized { // issue 165
     // invalidate if the primary key has changed Issue 370
     if (_obj.isEmpty || (_calcedObj && _obj.isDefined &&
-       _obj.open_!.primaryKeyField.is != this.i_is_!)) {
+       _obj.openOrThrowException("_obj was just checked as full.").primaryKeyField.is != this.i_is_!)) {
       _obj = Empty
       _calcedObj = false
     }

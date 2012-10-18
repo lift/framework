@@ -41,7 +41,7 @@ object ReqSpec extends Specification  {
       val uac = new UserAgentCalculator {
         def userAgent = Full("Mozilla/5.0 (Windows; U; Windows NT 6.1; zh-HK) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5")
       }
-      uac.safariVersion.open_! must_== 5
+      uac.safariVersion.openOrThrowException("legacy code") must_== 5
     }
 
     "Do the right thing with iPhone" in {

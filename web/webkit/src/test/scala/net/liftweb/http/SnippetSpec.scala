@@ -95,7 +95,7 @@ object SnippetSpec extends Specification  {
           }
         }
 
-      ret.open_! must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/( res)
     }
 
 
@@ -111,7 +111,7 @@ object SnippetSpec extends Specification  {
           }
         }
 
-      ret.open_! must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/( res)
     }
 
     "Snippet invocation works class='l:foo'" in {
@@ -126,7 +126,7 @@ object SnippetSpec extends Specification  {
           }
         }
 
-      ret.open_! must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/( res)
     }
 
     "Snippet invocation works class='l:foo' and ? for attr sep" in {
@@ -148,7 +148,7 @@ object SnippetSpec extends Specification  {
           }
         }
 
-      ret.open_! must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/( res)
     }
 
 
@@ -171,7 +171,7 @@ object SnippetSpec extends Specification  {
           }
         }
 
-      ret.open_! must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/( res)
     }
 
 
@@ -195,7 +195,7 @@ object SnippetSpec extends Specification  {
           }
         }
 
-      ret.open_! must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/( res)
     }
 
 
@@ -218,7 +218,7 @@ object SnippetSpec extends Specification  {
           }
         }
 
-      ret.open_! must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/( res)
     }
 
 
@@ -235,7 +235,7 @@ object SnippetSpec extends Specification  {
           }
         }
 
-      ret.open_! must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/( res)
     }
 
     "Snippet invocation fails class='l:bar'" in {
@@ -248,7 +248,7 @@ object SnippetSpec extends Specification  {
           }
         }
 
-      (ret.open_! \ "@class").text must_== "snippeterror"
+      (ret.openOrThrowException("legacy code") \ "@class").text must_== "snippeterror"
     }
 
     object myInfo extends SessionVar("")
@@ -280,7 +280,7 @@ object SnippetSpec extends Specification  {
           }
         }
 
-      (ret.open_! \ "@class").text must_== "snippeterror"
+      (ret.openOrThrowException("legacy code") \ "@class").text must_== "snippeterror"
     }
 
     "Snippet invocation succeeds in normal mode" in {
@@ -297,7 +297,7 @@ object SnippetSpec extends Specification  {
           }
         }
 
-      ret.open_! must ==/(res)
+      ret.openOrThrowException("legacy code") must ==/(res)
     }
 
     "Snippet invocation fails in stateless mode (function table)" in {
@@ -313,7 +313,7 @@ object SnippetSpec extends Specification  {
           }
         }
 
-      (ret.open_! \ "@class").text must_== "snippeterror"
+      (ret.openOrThrowException("legacy code") \ "@class").text must_== "snippeterror"
     }
 
     "Snippet invocation succeeds in normal mode (function table)" in {
@@ -330,7 +330,7 @@ object SnippetSpec extends Specification  {
           }
         }
 
-      ret.open_! must ==/(res)
+      ret.openOrThrowException("legacy code") must ==/(res)
     }
 
     "run string input" in {
@@ -366,7 +366,7 @@ object SnippetSpec extends Specification  {
                                             <lift:Meower>Moo</lift:Meower>)
       }
 
-      ret.open_! must ==/ (<yak/>)
+      ret.openOrThrowException("legacy code") must ==/ (<yak/>)
       */
       pending
     }
@@ -382,7 +382,7 @@ object SnippetSpec extends Specification  {
                                             <input class="lift:Splunker"/>)
       }
 
-      (ret.open_! \ "@name").text.length must be > 0
+      (ret.openOrThrowException("legacy code") \ "@name").text.length must be > 0
       */
       pending
     }

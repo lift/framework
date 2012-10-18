@@ -112,7 +112,7 @@ object ToHeadUsages extends Specification  {
 
   "pages " should {
     "Templates should recognize entities" in {
-      val ns = Templates(List("index")).open_!
+      val ns = Templates(List("index")).openOrThrowException("legacy code")
       val str = AltXML.toXML(ns(0), false, false, false)
 
       val idx = str.indexOf("&mdash;")
@@ -120,7 +120,7 @@ object ToHeadUsages extends Specification  {
     }
 
     "Templates should not recognize entities" in {
-      val ns = Templates(List("index")).open_!
+      val ns = Templates(List("index")).openOrThrowException("legacy code")
       val str = AltXML.toXML(ns(0), false, true, false)
 
       val idx = str.indexOf("&mdash;")

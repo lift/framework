@@ -158,9 +158,9 @@ class HTTPRequestServlet(val req: HttpServletRequest, val provider: HTTPProvider
   def resumeInfo : Option[(Req, LiftResponse)] = asyncProvider.flatMap(_.resumeInfo)
 
   
-  def suspend(timeout: Long): RetryState.Value = asyncProvider.open_!.suspend(timeout) // open_! is bad, but presumably, the suspendResume support was checked
+  def suspend(timeout: Long): RetryState.Value = asyncProvider.openOrThrowException("open_! is bad, but presumably, the suspendResume support was checked").suspend(timeout)
 
-  def resume(what: (Req, LiftResponse)): Boolean = asyncProvider.open_!.resume(what)
+  def resume(what: (Req, LiftResponse)): Boolean = asyncProvider.openOrThrowException("open_! is bad, but presumably, the suspendResume support was checked").resume(what)
 
   lazy val suspendResumeSupport_? = {
     LiftRules.asyncProviderMeta.

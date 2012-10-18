@@ -328,7 +328,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
         .map(field => (field.name, fieldDbValue(field)))
         .partition(pair => pair._2.isDefined)
 
-      val fieldsToSet = fullFields.map(pair => (pair._1, pair._2.open_!)) // these are all Full
+      val fieldsToSet = fullFields.map(pair => (pair._1, pair._2.openOrThrowException("these are all Full")))
 
       val fieldsToUnset: List[String] = otherFields.filter(
         pair => pair._2 match {

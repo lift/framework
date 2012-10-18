@@ -93,9 +93,7 @@ object Comet extends DispatchSnippet with LazyLoggable {
                  c.buildSpan(when, response.inSpan)
                
                case e =>
-                 if (c.cometRenderTimeoutHandler().isDefined) {
-                   c.cometRenderTimeoutHandler().open_!
-                 } else {
+                 c.cometRenderTimeoutHandler().openOr{
                    throw new CometTimeoutException("type: "+theType+" name: "+name)
                  }
              }}} openOr {

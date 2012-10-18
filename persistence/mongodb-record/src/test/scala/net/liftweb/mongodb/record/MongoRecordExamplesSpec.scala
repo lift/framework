@@ -387,7 +387,7 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
     // fetch a refdoc
     val refFromFetch = md1.refdoc.obj
     refFromFetch.isDefined must_== true
-    refFromFetch.open_!.id must_== ref1.id
+    refFromFetch.openOrThrowException("we know this is Full").id must_== ref1.id
 
     // query for a single doc with a JObject query
     val md1a = MainDoc.find(("name") -> "md1")

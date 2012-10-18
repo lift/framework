@@ -56,7 +56,7 @@ object MappedLongForeignKeySpec extends Specification with org.specs2.specificat
         ret
       }
       dog.owner(user).save
-      val d2 = Dog.find(dog.id).open_!
+      val d2 = Dog.find(dog.id).openOrThrowException("Test")
       d2.id.is must_== user.id.is
       (d2.owner == user) must_== true
       (d2.owner == d2) must_== false

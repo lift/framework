@@ -170,7 +170,8 @@ class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {
   def edit(name: String) = {
     entity.fieldByName(name).map { (field: net.liftweb.mapper.MappedField[_,_]) =>
       TheBindParam(name, field.toForm.openOr(field.asHtml))
-    }.open_!
+    }.openOrThrowException("If nobody has complained about this giving a NPE, I'll assume it is safe")
+
   }
 }
 
