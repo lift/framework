@@ -2,7 +2,7 @@ import Dependencies._
 
 organization in ThisBuild          := "net.liftweb"
 
-version in ThisBuild               := "2.5-SNAPSHOT"
+version in ThisBuild :=  "2.5-M2"
 
 homepage in ThisBuild              := Some(url("http://www.liftweb.net"))
 
