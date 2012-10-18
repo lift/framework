@@ -2471,9 +2471,9 @@ for {
                 val future: LAFuture[Any] = new LAFuture
 
                 updateFunctionMap(name, new S.ProxyFuncHolder(value) {
-                  override def apply(in: List[String]): Any = future.get(5000).open_!
+                  override def apply(in: List[String]): Any = future.get(5000).openOrThrowException("legacy code")
 
-                  override def apply(in: FileParamHolder): Any = future.get(5000).open_!
+                  override def apply(in: FileParamHolder): Any = future.get(5000).openOrThrowException("legacy code")
                 })
 
                 future
@@ -2489,7 +2489,7 @@ for {
               override def apply(in: List[String]): Any = {
                 val ns = fixShot()
                 if (ns) {
-                  theFuture.get(5000).open_!
+                  theFuture.get(5000).openOrThrowException("legacy code")
                 } else {
                   val future = theFuture
                   try {
@@ -2506,7 +2506,7 @@ for {
                 val ns = fixShot()
 
                 if (ns) {
-                  theFuture.get(5000).open_!
+                  theFuture.get(5000).openOrThrowException("legacy code")
                 } else {
                   val future = theFuture
                   try {
@@ -2771,7 +2771,7 @@ for {
     def doRender(session: LiftSession): NodeSeq =
       session.processSurroundAndInclude("external render", xhtml)
 
-    if (inS.value) doRender(session.open_!)
+    if (inS.value) doRender(session.openOrThrowException("legacy code"))
     else {
       val req = Req(httpRequest, LiftRules.statelessRewrite.toList,
                     Nil,
@@ -2992,7 +2992,7 @@ for {
   def idMessages(f: => List[(NodeSeq, Box[String])]): List[(String, List[NodeSeq])] = {
     val res = new HashMap[String, List[NodeSeq]]
     f filter (_._2.isEmpty == false) foreach (_ match {
-      case (node, id) => val key = id open_!; res += (key -> (res.getOrElseUpdate(key, Nil) ::: List(node)))
+      case (node, id) => val key = id openOrThrowException("legacy code"); res += (key -> (res.getOrElseUpdate(key, Nil) ::: List(node)))
     })
 
     res toList

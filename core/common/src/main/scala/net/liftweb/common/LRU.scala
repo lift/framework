@@ -85,7 +85,7 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
     Full(v.value2)
   }
 
-  def apply(key: K) = get(key).open_!
+  def apply(key: K) = get(key).openOrThrowException("Simulating what happens with a regular Map, use contains(key) to check if it is present or not.")
 
   def contains(key: K): Boolean = localMap.containsKey(key)
 

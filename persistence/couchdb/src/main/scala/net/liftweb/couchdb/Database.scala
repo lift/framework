@@ -69,7 +69,7 @@ trait Document extends Request with FetchableAsJObject {
   def @@ (rev: String): DocumentRevision = at(rev)
 
   /** Refine to a particular revision of the document by getting _rev from a given JObject. */
-  def at(doc: JObject): DocumentRevision = at(doc._rev.open_!)
+  def at(doc: JObject): DocumentRevision = at(doc._rev.openOrThrowException("legacy code"))
 
   /** Alias for at */
   def @@ (doc: JObject): DocumentRevision = at(doc)
@@ -198,7 +198,7 @@ class Database(couch: Request, database: String) extends Request(couch / databas
   def apply(id: String): Document = new Request(this / id) with Document { }
   
   /** Access a particular document in the database with _id from a given JObject */
-  def apply(doc: JObject): Document = this(doc._id.open_!.s)
+  def apply(doc: JObject): Document = this(doc._id.openOrThrowException("legacy code").s)
 
   /** Access a series of documents by ID. */
   def apply(ids: Seq[String]): AllDocs = all.includeDocs.keys(ids.map(JString): _*)

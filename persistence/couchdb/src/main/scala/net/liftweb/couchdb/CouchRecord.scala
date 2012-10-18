@@ -89,7 +89,7 @@ trait CouchRecord[MyType <: CouchRecord[MyType]] extends JSONRecord[MyType] {
     case Full(database) => database
     case _ =>
       _database = Full(_calcDatabase)
-      _database.open_!
+      _database.openOrThrowException("We just made this a Full Box")
   }
 
   /** Set the current database (if any) for this record */

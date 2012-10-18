@@ -54,12 +54,12 @@ object Html5ParserSpec extends Specification with PendingUntilFixed with Html5Pa
         val (page1, page2, page3) = (new String(p._1), new String(p._2), new String(p._3))
 
         "parse valid page type1" in {
-          val parsed = parse(page1).open_!
+          val parsed = parse(page1).openOrThrowException("Test")
           (parsed \\ "script").length must be >= 4
         }
 
         "parse valid page type2" in {
-          val parsed = parse(page2).open_!
+          val parsed = parse(page2).openOrThrowException("Test")
           (parsed \\ "script").length must be >= 4
         }
 
@@ -76,7 +76,7 @@ object Html5ParserSpec extends Specification with PendingUntilFixed with Html5Pa
     }
 
     "change <lift:head> to <head>" in {
-      val parsed = parse("<div><lift:head>123</lift:head></div>").open_!
+      val parsed = parse("<div><lift:head>123</lift:head></div>").openOrThrowException("Test")
       val heads = parsed \\ "head"
       heads.length must_== 1
       heads.text must_== "123"
@@ -85,17 +85,17 @@ object Html5ParserSpec extends Specification with PendingUntilFixed with Html5Pa
 
     "Parse stuff with lift: namespace" in {
       val parsed = parse("""<lift:surround with="dog"><div/></lift:surround>""")
-      val e = parsed.open_!.asInstanceOf[Elem]
+      val e = parsed.openOrThrowException("Test").asInstanceOf[Elem]
       e.prefix must_== "lift"
       e.label must_== "surround"
-      (parsed.open_! \ "@with").text must_== "dog"
+      (parsed.openOrThrowException("Test") \ "@with").text must_== "dog"
     }
 
     "Parse stuff without lift: namespace" in {
       val parsed = parse("""<div with="dog"><div/></div>""")
-      val e = parsed.open_!.asInstanceOf[Elem]
+      val e = parsed.openOrThrowException("Test").asInstanceOf[Elem]
       e.label must_== "div"
-      (parsed.open_! \ "@with").text must_== "dog"
+      (parsed.openOrThrowException("Test") \ "@with").text must_== "dog"
     }
   }
 

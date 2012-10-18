@@ -267,10 +267,10 @@ class LiftServlet extends Loggable {
           LiftRules.statelessDispatch.toList).map(_.apply() match {
           case Full(a) => Full(LiftRules.convertResponse((a, Nil, S.responseCookies, req)))
           case r => r
-        });
+        })
         tmpStatelessHolder.isDefined
       }) {
-        val f = tmpStatelessHolder.open_!
+        val f = tmpStatelessHolder.openOrThrowException("This is a full box here, checked on previous line")
         f match {
           case Full(v) => Full(v)
           case Empty => LiftRules.notFoundOrIgnore(req, Empty)
@@ -283,7 +283,7 @@ class LiftServlet extends Loggable {
         def doSession(r2: Req, s2: LiftSession, continue: Box[() => Nothing]): () => Box[LiftResponse] = {
           try {
             S.init(r2, s2) {
-              dispatchStatefulRequest(S.request.open_!, liftSession, r2, continue)
+              dispatchStatefulRequest(S.request.openOrThrowException("I'm pretty sure this is a full box here"), liftSession, r2, continue)
             }
           } catch {
             case cre: ContinueResponseException =>

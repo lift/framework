@@ -47,7 +47,7 @@ object CouchDocumentSpec extends Specification  {
 
   private final def verifyAndOpen[A](b: Box[A]): A = {
     b.isDefined must_== true
-    b.open_!
+    b.openOrThrowException("This is a test")
   }
 
   "A document" should {

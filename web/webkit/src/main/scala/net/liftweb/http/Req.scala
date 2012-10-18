@@ -552,7 +552,7 @@ object Req {
              !updated.startsWith("http://") &&
              !updated.startsWith("https://") &&
              !updated.startsWith("#"))
-         rewrite.open_!.apply(updated) else updated)
+         rewrite.openOrThrowException("legacy code").apply(updated) else updated)
   }
 
   /**

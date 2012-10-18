@@ -108,7 +108,7 @@ object CouchRecordSpec extends Specification  {
       newRec.id.valueBox.isDefined must_== true
       newRec.rev.valueBox.isDefined must_== true
 
-      val Full(foundRec) = Person.fetch(newRec.id.valueBox.open_!)
+      val Full(foundRec) = Person.fetch(newRec.id.valueBox.openOrThrowException("This is a test"))
       assertEqualPerson(foundRec, testRec1)
       foundRec.id.valueBox must_== newRec.id.valueBox
       foundRec.rev.valueBox must_== newRec.rev.valueBox
@@ -119,7 +119,7 @@ object CouchRecordSpec extends Specification  {
       val newRec = testRec1
       newRec save
 
-      val foundDoc = Http(defaultDatabase(newRec.id.valueBox.open_!) fetch)
+      val foundDoc = Http(defaultDatabase(newRec.id.valueBox.openOrThrowException("This is a test")) fetch)
       compact(render(stripIdAndRev(foundDoc))) must_== compact(render(testDoc1))
     }
 
@@ -129,7 +129,7 @@ object CouchRecordSpec extends Specification  {
       newRec.save
 
       newRec.id.valueBox.isDefined must_== true
-      val id = newRec.id.valueBox.open_!
+      val id = newRec.id.valueBox.openOrThrowException("This is a test")
 
       Person.fetch(id).isDefined must_== true
       newRec.delete_!.isDefined must_== true
@@ -137,7 +137,7 @@ object CouchRecordSpec extends Specification  {
       newRec.delete_!.isDefined must_== false
 
       newRec.save
-      Http(defaultDatabase(newRec.id.valueBox.open_!) @@ newRec.rev.valueBox.open_! delete)
+      Http(defaultDatabase(newRec.id.valueBox.openOrThrowException("This is a test")) @@ newRec.rev.valueBox.openOrThrowException("This is a test") delete)
       newRec.delete_!.isDefined must_== false
     }
 
@@ -155,7 +155,8 @@ object CouchRecordSpec extends Specification  {
 
       val expectedRows = newRec1::newRec3::Nil
 
-      Person.fetchMany(newRec1.id.valueBox.open_!, newRec3.id.valueBox.open_!).map(_.toList) must beLike {
+      Person.fetchMany(newRec1.id.valueBox.openOrThrowException("This is a test"),
+        newRec3.id.valueBox.openOrThrowException("This is a test")).map(_.toList) must beLike {
         case Full(foundRows) => assertEqualRows(foundRows, expectedRows); 1 must_== 1
       }
     }
@@ -228,14 +229,14 @@ object CouchRecordSpec extends Specification  {
 
       newRec.saved_? must_== true
 
-      val foundRecBox = Person.fetchFrom(database2, newRec.id.valueBox.open_!)
+      val foundRecBox: Box[Person] = newRec.id.valueBox.flatMap{ id =>  Person.fetchFrom(database2, id)}
       foundRecBox.isDefined must_== true
       val Full(foundRec) = foundRecBox
       assertEqualPerson(foundRec, testRec1)
       foundRec.id.valueBox must_== newRec.id.valueBox
       foundRec.rev.valueBox must_== newRec.rev.valueBox
 
-      Person.fetch(newRec.id.valueBox.open_!).isDefined must_== false
+      newRec.id.valueBox.flatMap(id =>  Person.fetch(id)).isDefined must_== false
     }
 
     "support multiple databases for fetching in bulk" in {
@@ -258,11 +259,15 @@ object CouchRecordSpec extends Specification  {
 
       val expectedRows = newRec1::newRec3::Nil
 
-      Person.fetchManyFrom(database2, newRec1.id.valueBox.open_!, newRec3.id.valueBox.open_!).map(_.toList) must beLike {
+      Person.fetchManyFrom(database2,
+        newRec1.id.valueBox.openOrThrowException("This is a test"),
+        newRec3.id.valueBox.openOrThrowException("This is a test")
+      ).map(_.toList) must beLike {
         case Full(foundRows) => assertEqualRows(foundRows, expectedRows); 1 must_== 1
       }
 
-      Person.fetchMany(newRec1.id.valueBox.open_!, newRec3.id.valueBox.open_!) must beLike {
+      Person.fetchMany(newRec1.id.valueBox.openOrThrowException("This is a test"),
+        newRec3.id.valueBox.openOrThrowException("This is a test")) must beLike {
         case Full(seq) => seq.isEmpty must_== true
       }
     }

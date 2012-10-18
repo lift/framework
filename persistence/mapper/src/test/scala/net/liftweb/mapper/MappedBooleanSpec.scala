@@ -44,8 +44,8 @@ object MappedBooleanSpec extends Specification  {
       val charlie = Dog2.create
       charlie.isDog(true).save
 
-      val read = Dog2.find(charlie.dog2id).open_!
-      read.dirty_? must_== false
+      val read = Dog2.find(charlie.dog2id)
+      read.map(_.dirty_?) must_== Full(false)
     }
 
     "be marked dirty on update if value has changed" in {
@@ -53,7 +53,7 @@ object MappedBooleanSpec extends Specification  {
       val charlie = Dog2.create
       charlie.save
 
-      val read = Dog2.find(charlie.dog2id).open_!
+      val read = Dog2.find(charlie.dog2id).openOrThrowException("This is a test")
       read.dirty_? must_== false
       read.isDog(false)
       read.dirty_? must_== false

@@ -37,7 +37,7 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
     DB.use(owner.connectionIdentifier) { conn =>
       val query = "SELECT DISTINCT "+otherSingleton._dbTableNameLC+".* FROM "+otherSingleton._dbTableNameLC+","+
       through._dbTableNameLC+" WHERE "+
-      otherSingleton._dbTableNameLC+"."+otherSingleton.indexedField(otherSingleton.asInstanceOf[To]).open_!._dbColumnNameLC+" = "+
+      otherSingleton._dbTableNameLC+"."+otherSingleton.indexedField(otherSingleton.asInstanceOf[To]).openOrThrowException("legacy code")._dbColumnNameLC+" = "+
       through._dbTableNameLC+"."+throughToField._dbColumnNameLC+" AND "+
       through._dbTableNameLC+"."+throughFromField._dbColumnNameLC+" = ?"
       DB.prepareStatement(query, conn) { st =>

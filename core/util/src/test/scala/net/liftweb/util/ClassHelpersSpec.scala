@@ -174,10 +174,10 @@ object ClassHelpersSpec extends Specification  {
       createInvoker("length", null) must_== Empty
     }
     "return a Full can with the function from Unit to a can containing the result of the method to invoke" in {
-      createInvoker("length", "").open_!.apply().get must_== 0
+      createInvoker("length", "").openOrThrowException("Test").apply().get must_== 0
     }
     "The invoker function will throw the cause exception if the method can't be called" in {
-      createInvoker("get", "").open_!.apply must throwA[Exception]
+      createInvoker("get", "").openOrThrowException("Test").apply must throwA[Exception]
     }
   }
 
