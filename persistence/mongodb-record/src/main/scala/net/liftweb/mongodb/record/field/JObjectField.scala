@@ -19,23 +19,28 @@ package mongodb
 package record
 package field
 
-import common.{Box, Empty, Failure, Full}
-import http.js.JE.Str
-import json.JsonAST.{JNothing, JObject, JValue}
-import json.JsonParser
-import net.liftweb.record.{Field, MandatoryTypedField, Record}
+import common._
+import http.js.JE._
+import json._
+import util.Helpers.tryo
+import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
 
 import scala.xml.NodeSeq
 
 class JObjectField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[JObject, OwnerType] with MandatoryTypedField[JObject] {
 
-  def asJs = Str(toString)
+  def asJs = asJValue match {
+    case JNothing => JsNull
+    case jv => JsRaw(compact(render(jv)))
+  }
 
-  def asJValue = (JNothing: JValue) // not implemented
+  def asJValue = valueBox openOr (JNothing: JValue)
 
-  def setFromJValue(jvalue: JValue) = Empty // not implemented
-
-  def asXHtml = <div></div>
+  def setFromJValue(jvalue: JValue): Box[JObject] = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case jo: JObject => setBox(Full(jo))
+    case other => setBox(FieldHelpers.expectedA("JObject", other))
+  }
 
   def defaultValue = JObject(List())
 
@@ -54,7 +59,7 @@ class JObjectField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field
   // assume string is json
   def setFromString(in: String): Box[JObject] = {
     // use lift-json to parse string into a JObject
-    Full(set(JsonParser.parse(in).asInstanceOf[JObject]))
+    setBox(tryo(JsonParser.parse(in).asInstanceOf[JObject]))
   }
 
   def toForm: Box[NodeSeq] = Empty
