@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package record 
-package fixtures 
+package net.liftweb
+package record
+package fixtures
 
 import java.math.MathContext
 import scala.xml.Text
 import common.{Box, Empty, Full}
+import json._
 import util.{FieldError, Helpers}
 import org.specs2.mutable._
 
@@ -45,7 +46,7 @@ class PasswordTestRecord private () extends Record[PasswordTestRecord] {
     override def validations = validateNonEmptyPassword _ ::
     super.validations
 
-    def validateNonEmptyPassword(v: String): List[FieldError] = 
+    def validateNonEmptyPassword(v: String): List[FieldError] =
       v match {
         case "testvalue" => Text("no way!")
         case _ => Nil
@@ -238,7 +239,7 @@ object FieldTypeTestRecord extends FieldTypeTestRecord with MetaRecord[FieldType
 trait SyntheticTestTrait{
 
   val genericField: StringField[_]
-  
+
 }
 
 class SyntheticTestRecord extends Record[SyntheticTestRecord] with SyntheticTestTrait{
@@ -251,3 +252,17 @@ class SyntheticTestRecord extends Record[SyntheticTestRecord] with SyntheticTest
 
 object SyntheticTestRecord extends SyntheticTestRecord with MetaRecord[SyntheticTestRecord]
 
+class CustomFormatDateTimeRecord private () extends Record[CustomFormatDateTimeRecord] {
+  import java.text.SimpleDateFormat
+
+  def meta = CustomFormatDateTimeRecord
+
+  object customFormatDateTimeField extends DateTimeField(this) {
+    override val formats = new DefaultFormats {
+      override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+    }
+  }
+
+}
+
+object CustomFormatDateTimeRecord extends CustomFormatDateTimeRecord with MetaRecord[CustomFormatDateTimeRecord]
