@@ -96,6 +96,7 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
 /**
 * Mix this into a Record to add an ObjectIdField
 */
+@deprecated("Use one of the MongoPK traits instead", "2.5")
 trait MongoId[OwnerType <: MongoRecord[OwnerType]] {
   self: OwnerType =>
 
