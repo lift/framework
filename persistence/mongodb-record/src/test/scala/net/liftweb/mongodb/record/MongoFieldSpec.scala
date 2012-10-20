@@ -473,5 +473,27 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       )
     }
   }
+
+  "JObjectField" should {
+    val jo: JValue = ("minutes" -> 59)
+    val json: JObject = ("mandatoryJObjectField" -> jo)
+
+    "convert to JValue" in {
+      val rec = JObjectFieldTestRecord.createRecord
+        .mandatoryJObjectField(json)
+
+      rec.mandatoryJObjectField.asJValue must_== json
+
+    }
+    "get set from JValue" in {
+      val fromJson = JObjectFieldTestRecord.fromJValue(json)
+
+      fromJson.isDefined must_== true
+      fromJson foreach { r =>
+        r.asJValue must_== json
+      }
+      success
+    }
+  }
 }
 

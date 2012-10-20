@@ -485,3 +485,12 @@ class RefFieldTestRecord private () extends MongoRecord[RefFieldTestRecord] with
 object RefFieldTestRecord extends RefFieldTestRecord with MongoMetaRecord[RefFieldTestRecord] {
   override def formats = allFormats
 }
+
+
+class JObjectFieldTestRecord private () extends Record[JObjectFieldTestRecord] {
+  def meta = JObjectFieldTestRecord
+
+  object mandatoryJObjectField extends JObjectField(this)
+}
+
+object JObjectFieldTestRecord extends JObjectFieldTestRecord with MetaRecord[JObjectFieldTestRecord]
