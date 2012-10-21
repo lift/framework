@@ -29,21 +29,26 @@ import S._
 
 
 trait PostalCodeTypedField extends StringTypedField {
-  
+
   protected val country: CountryField[_]
 
   override def setFilter = toUpper _ :: trim _ :: super.setFilter
 
   override def validations = validatePostalCode _ :: Nil
 
-  def validatePostalCode(in: ValueType): List[FieldError] = country.value match {
-    case Countries.USA       => valRegex(RegexPattern.compile("[0-9]{5}(\\-[0-9]{4})?"), S.?("invalid.zip.code"))(in)
-    case Countries.Sweden    => valRegex(RegexPattern.compile("[0-9]{3}[ ]?[0-9]{2}"), S.?("invalid.postal.code"))(in)
-    case Countries.Australia => valRegex(RegexPattern.compile("(0?|[1-9])[0-9]{3}"), S.?("invalid.postal.code"))(in)
-    case Countries.Canada    => valRegex(RegexPattern.compile("[A-Z][0-9][A-Z][ ][0-9][A-Z][0-9]"), S.?("invalid.postal.code"))(in)
-    case _ => genericCheck(in)
+  def validatePostalCode(in: ValueType): List[FieldError] = {
+    toBoxMyType(in) match {
+      case Full(zip) if (optional_? && zip.isEmpty) => Nil
+      case _ =>
+        country.value match {
+          case Countries.USA       => valRegex(RegexPattern.compile("[0-9]{5}(\\-[0-9]{4})?"), S.?("invalid.zip.code"))(in)
+          case Countries.Sweden    => valRegex(RegexPattern.compile("[0-9]{3}[ ]?[0-9]{2}"), S.?("invalid.postal.code"))(in)
+          case Countries.Australia => valRegex(RegexPattern.compile("(0?|[1-9])[0-9]{3}"), S.?("invalid.postal.code"))(in)
+          case Countries.Canada    => valRegex(RegexPattern.compile("[A-Z][0-9][A-Z][ ][0-9][A-Z][0-9]"), S.?("invalid.postal.code"))(in)
+          case _ => genericCheck(in)
+        }
+    }
   }
-
   private def genericCheck(zip: ValueType): List[FieldError] = {
     toBoxMyType(zip) flatMap {
       case null => Full(Text(S.?("invalid.postal.code")))
