@@ -51,7 +51,7 @@ object FieldSpec extends Specification {
     def commonBehaviorsForMandatory(in: MandatoryTypedField[A]): Unit = {
 
 		if (canCheckDefaultValues) {
-    			"which have the correct initial value" in S.initIfUninitted(session) {
+			"which have the correct initial value" in S.initIfUninitted(session) {
 				in.get must_== in.defaultValue
 			}
 		}
@@ -366,6 +366,7 @@ object FieldSpec extends Specification {
   }
 
   "EmailField" should {
+    val session = new LiftSession("", randomString(20), Empty)
     val rec = FieldTypeTestRecord.createRecord
     val email = "foo@bar.baz"
     passBasicTests(email, rec.mandatoryEmailField, rec.legacyOptionalEmailField, rec.optionalEmailField)
@@ -376,6 +377,30 @@ object FieldSpec extends Specification {
       JString(email),
       Full(<input name=".*" type="text" maxlength="100" tabindex="1" value={email} id="mandatoryEmailField_id"></input>)
     )
+    "pass validation if field is optional and value is Empty" in {
+      S.initIfUninitted(session) {
+        rec.legacyOptionalEmailField(Empty)
+        rec.legacyOptionalEmailField.validate must have length(0)
+
+        rec.optionalEmailField(Empty)
+        rec.optionalEmailField.validate must have length(0)
+      }
+    }
+    "pass validation if field is optional and value is an empty string" in {
+      S.initIfUninitted(session) {
+        rec.legacyOptionalEmailField("")
+        rec.legacyOptionalEmailField.validate must have length(0)
+
+        rec.optionalEmailField("")
+        rec.optionalEmailField.validate must have length(0)
+      }
+    }
+    "fail validation if value is invalid" in {
+      S.initIfUninitted(session) {
+        rec.mandatoryEmailField("invalid email")
+        rec.mandatoryEmailField.validate must have length(1)
+      }
+    }
   }
 
   "EnumField" should {
@@ -457,6 +482,7 @@ object FieldSpec extends Specification {
   }
 
   "PostalCodeField" should {
+    val session = new LiftSession("", randomString(20), Empty)
     val rec = FieldTypeTestRecord.createRecord
     val zip = "02452"
     rec.mandatoryCountryField.set(Countries.USA)
@@ -468,6 +494,30 @@ object FieldSpec extends Specification {
       JString(zip),
       Full(<input name=".*" type="text" maxlength="32" tabindex="1" value={zip} id="mandatoryPostalCodeField_id"></input>)
     )
+    "pass validation if field is optional and value is Empty" in {
+      S.initIfUninitted(session) {
+        rec.legacyOptionalPostalCodeField(Empty)
+        rec.legacyOptionalPostalCodeField.validate must have length(0)
+
+        rec.optionalPostalCodeField(Empty)
+        rec.optionalPostalCodeField.validate must have length(0)
+      }
+    }
+    "pass validation if field is optional and value is an empty string" in {
+      S.initIfUninitted(session) {
+        rec.legacyOptionalPostalCodeField("")
+        rec.legacyOptionalPostalCodeField.validate must have length(0)
+
+        rec.optionalPostalCodeField("")
+        rec.optionalPostalCodeField.validate must have length(0)
+      }
+    }
+    "fail validation if value is invalid" in {
+      S.initIfUninitted(session) {
+        rec.mandatoryPostalCodeField("invalid zip")
+        rec.mandatoryPostalCodeField.validate must have length(1)
+      }
+    }
   }
 
   "StringField" should {
