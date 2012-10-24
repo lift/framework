@@ -33,8 +33,7 @@ import net.liftweb.record.field._
 import net.liftweb.proto.{ProtoUser => GenProtoUser}
 
 /**
- * ProtoUser is a base class that gives you a "User" with a first name,
- * last name, email, etc.
+ * ProtoUser provides a "User" with a first name, last name, email, etc.
  */
 trait ProtoUser[T <: ProtoUser[T]] extends Record[T] {
   self: T =>
