@@ -75,43 +75,43 @@ trait RecordTypeMode extends PrimitiveTypeMode {
   /** Conversion of mandatory String fields to Squeryl Expressions. */
   implicit def string2ScalarString(f: MandatoryTypedField[String]) = fieldReference match {
     case Some(e) => new SelectElementReference[String](e)(createOutMapperStringType) with StringExpression[String] with SquerylRecordNonNumericalExpression[String]
-    case None => new ConstantExpressionNode[String](f.is) with StringExpression[String] with SquerylRecordNonNumericalExpression[String]
+    case None => new ConstantExpressionNode[String](f.is)(createOutMapperStringType) with StringExpression[String] with SquerylRecordNonNumericalExpression[String]
   }
 
   /** Conversion of optional String fields to Squeryl Expressions. */
   implicit def optionString2ScalarString(f: OptionalTypedField[String]) = fieldReference match {
     case Some(e) => new SelectElementReference[Option[String]](e)(createOutMapperStringTypeOption) with StringExpression[Option[String]] with SquerylRecordNonNumericalExpression[Option[String]]
-    case None => new ConstantExpressionNode[Option[String]](f.is) with StringExpression[Option[String]] with SquerylRecordNonNumericalExpression[Option[String]]
+    case None => new ConstantExpressionNode[Option[String]](f.is)(createOutMapperStringTypeOption) with StringExpression[Option[String]] with SquerylRecordNonNumericalExpression[Option[String]]
   }
   
   /** Needed for outer joins */
   implicit def optionStringField2OptionString(f: Option[TypedField[String]]) = fieldReference match {
     case Some(e) => new SelectElementReference[String](e)(createOutMapperStringType) with StringExpression[String] with SquerylRecordNonNumericalExpression[String]
-    case None => new ConstantExpressionNode[String](getValueOrNull(f)) with StringExpression[String] with SquerylRecordNonNumericalExpression[String]
+    case None => new ConstantExpressionNode[String](getValueOrNull(f))(createOutMapperStringType) with StringExpression[String] with SquerylRecordNonNumericalExpression[String]
   }
 
   /** Conversion of mandatory Boolean fields to Squeryl Expressions. */
   implicit def bool2ScalarBoolean(f: MandatoryTypedField[Boolean]) = fieldReference match {
     case Some(e) => new SelectElementReference[Boolean](e)(createOutMapperBooleanType) with BooleanExpression[Boolean] with SquerylRecordNonNumericalExpression[Boolean]
-    case None => new ConstantExpressionNode[Boolean](f.is) with BooleanExpression[Boolean] with SquerylRecordNonNumericalExpression[Boolean]
+    case None => new ConstantExpressionNode[Boolean](f.is)(createOutMapperBooleanType) with BooleanExpression[Boolean] with SquerylRecordNonNumericalExpression[Boolean]
   }
   
   /** Conversion of optional Boolean fields to Squeryl Expressions. */
   implicit def optionBoolean2ScalarBoolean(f: OptionalTypedField[Boolean]) = fieldReference match {
     case Some(e) => new SelectElementReference[Option[Boolean]](e)(createOutMapperBooleanTypeOption) with BooleanExpression[Option[Boolean]] with SquerylRecordNonNumericalExpression[Option[Boolean]]
-    case None => new ConstantExpressionNode[Option[Boolean]](f.is) with BooleanExpression[Option[Boolean]] with SquerylRecordNonNumericalExpression[Option[Boolean]]
+    case None => new ConstantExpressionNode[Option[Boolean]](f.is)(createOutMapperBooleanTypeOption) with BooleanExpression[Option[Boolean]] with SquerylRecordNonNumericalExpression[Option[Boolean]]
   }
   
   /** Needed for outer joins. */
   implicit def optionBooleanField2Boolean(f: Option[TypedField[Boolean]]) = fieldReference match {
     case Some(e) => new SelectElementReference[Boolean](e)(createOutMapperBooleanType) with BooleanExpression[Boolean] with SquerylRecordNonNumericalExpression[Boolean]
-    case None => new ConstantExpressionNode[Boolean](getValue(f).getOrElse(false)) with BooleanExpression[Boolean] with SquerylRecordNonNumericalExpression[Boolean]
+    case None => new ConstantExpressionNode[Boolean](getValue(f).getOrElse(false))(createOutMapperBooleanType) with BooleanExpression[Boolean] with SquerylRecordNonNumericalExpression[Boolean]
   }
   
   /** Conversion of mandatory Calendar fields to Squeryl Expressions. */
   implicit def date2ScalarDate(f: MandatoryTypedField[Calendar]) = fieldReference match {
     case Some(e) => new SelectElementReference[Timestamp](e)(createOutMapperTimestampType) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
-    case None => new ConstantExpressionNode[Timestamp](new Timestamp(f.is.getTimeInMillis)) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
+    case None => new ConstantExpressionNode[Timestamp](new Timestamp(f.is.getTimeInMillis))(createOutMapperTimestampType) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
   }
 
   /** Conversion of optional Calendar fields to Squeryl Expressions. */
@@ -122,7 +122,7 @@ trait RecordTypeMode extends PrimitiveTypeMode {
         case Some(calendar) => Some(new Timestamp(calendar.getTimeInMillis))
         case None => None
       }
-      new ConstantExpressionNode[Option[Timestamp]](date) with DateExpression[Option[Timestamp]] with SquerylRecordNonNumericalExpression[Option[Timestamp]]
+      new ConstantExpressionNode[Option[Timestamp]](date)(createOutMapperTimestampTypeOption) with DateExpression[Option[Timestamp]] with SquerylRecordNonNumericalExpression[Option[Timestamp]]
     }
   }
   
@@ -133,7 +133,7 @@ trait RecordTypeMode extends PrimitiveTypeMode {
   /** Needed for outer joins. */
   implicit def optionDateField2OptionDate(f: Option[TypedField[Calendar]]) = fieldReference match {
     case Some(e) => new SelectElementReference[Timestamp](e)(createOutMapperTimestampType) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
-    case None => new ConstantExpressionNode[Timestamp](getValue(f).map(field => new Timestamp(field.getTimeInMillis)).orNull) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
+    case None => new ConstantExpressionNode[Timestamp](getValue(f).map(field => new Timestamp(field.getTimeInMillis)).orNull)(createOutMapperTimestampType) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
   }
   
   /** Needed for inner queries on date fields */
@@ -149,24 +149,39 @@ trait RecordTypeMode extends PrimitiveTypeMode {
   /**
    * Neeed for queries on constant date values.
    */
-  implicit def dateToTimestampExpression(d: java.util.Date) = new ConstantExpressionNode[Timestamp](new java.sql.Timestamp(d.getTime)) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
+  implicit def dateToTimestampExpression(d: java.util.Date) = 
+    new ConstantExpressionNode[Timestamp](new java.sql.Timestamp(d.getTime))(createOutMapperTimestampType) with DateExpression[Timestamp] with SquerylRecordNonNumericalExpression[Timestamp]
   
   /** Conversion of mandatory Enum fields to Squeryl Expressions. */
   implicit def enum2EnumExpr[EnumType <: Enumeration](f: MandatoryTypedField[EnumType#Value]) = fieldReference match {
-    case Some(e) => new SelectElementReference[Enumeration#Value](e)(e.createEnumerationMapper) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
-    case None => new ConstantExpressionNode[Enumeration#Value](f.is) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
+    case Some(e) => new SelectElementReference[Enumeration#Value](e)(e.createEnumerationMapper(f.defaultValue)) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
+    case None => new ConstantExpressionNode[Enumeration#Value](f.is)(outMapperFromEnumValue(f.get)) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
+  }
+  
+  def reifySingleton[T](m: Manifest[T]) = {
+    val cls = m.erasure
+    val field = cls.getField("MODULE$")
+    field.get(null).asInstanceOf[T]
   }
     
   /** Conversion of optional Enum fields to Squeryl Expressions. */
-  implicit def optionEnum2ScalaEnum[EnumType <: Enumeration](f: OptionalTypedField[EnumType#Value]) = fieldReference match {
-    case Some(e) => new SelectElementReference[Option[Enumeration#Value]](e)(e.createEnumerationOptionMapper) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
-    case None => new ConstantExpressionNode[Option[Enumeration#Value]](f.is) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
-  }
+  implicit def optionEnum2ScalaEnum[EnumType <: Enumeration](f: OptionalTypedField[EnumType#Value])(implicit m: Manifest[EnumType]) = 
+    fieldReference match {
+    	case Some(e) =>
+    	  new SelectElementReference[Option[Enumeration#Value]](e)(e.createEnumerationOptionMapper(Some(reifySingleton(m).values.iterator.next))) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
+    	case None => 
+    	  new ConstantExpressionNode[Option[Enumeration#Value]](f.is)(outMapperOptionFromOptionEnumValue(f.get) orNull) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
+  	}
   
   /** Needed for outer joins. */
-  implicit def optionEnumField2OptionEnum[EnumType <: Enumeration](f: Option[TypedField[EnumType#Value]]) = fieldReference match {
-    case Some(e) => new SelectElementReference[Enumeration#Value](e)(e.createEnumerationMapper) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
-    case None => new ConstantExpressionNode[Enumeration#Value](getValue(f).orNull) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
+  implicit def optionEnumField2OptionEnum[EnumType <: Enumeration](f: Option[TypedField[EnumType#Value]])(implicit m: Manifest[EnumType]) = fieldReference match {
+    case Some(e) =>
+      new SelectElementReference[Enumeration#Value](e)(e.createEnumerationMapper(reifySingleton(m).values.iterator.next)) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
+    case None => new ConstantExpressionNode[Enumeration#Value](getValue(f).orNull)({
+      val enumOption = f flatMap { f1: TypedField[EnumType#Value] => f1.valueBox.toOption } 
+      val outMapperOption: Option[OutMapper[Enumeration#Value]] = enumOption map { e: EnumType#Value => outMapperFromEnumValue(e) : OutMapper[Enumeration#Value] /*crashes scala 2.9.1 without explicit type */ } 
+      outMapperOption orNull
+    }) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
   }
   
   implicit def enumFieldQuery2RightHandSideOfIn[EnumType <: Enumeration, T <: Record[T]](q: org.squeryl.Query[EnumNameField[T, EnumType]]) = new RightHandSideOfIn[Enumeration#Value](q.ast)
@@ -184,7 +199,7 @@ trait RecordTypeMode extends PrimitiveTypeMode {
    */
   private def convertNumericalMandatory[T](f: MandatoryTypedField[T], outMapper: OutMapper[T]) = fieldReference match {
     case Some(e) => new SelectElementReference[T](e)(outMapper) with NumericalExpression[T] with SquerylRecordNumericalExpression[T]
-    case None => new ConstantExpressionNode[T](f.is) with NumericalExpression[T] with SquerylRecordNumericalExpression[T]
+    case None => new ConstantExpressionNode[T](f.is)(outMapper) with NumericalExpression[T] with SquerylRecordNumericalExpression[T]
   }
 
   /**
@@ -192,12 +207,12 @@ trait RecordTypeMode extends PrimitiveTypeMode {
    */
   private def convertNumericalOptional[T](f: OptionalTypedField[T], outMapper: OutMapper[Option[T]]) = fieldReference match {
     case Some(e: SelectElement) => new SelectElementReference[Option[T]](e)(outMapper) with NumericalExpression[Option[T]] with SquerylRecordNumericalExpression[Option[T]]
-    case None => new ConstantExpressionNode[Option[T]](f.is) with NumericalExpression[Option[T]] with SquerylRecordNumericalExpression[Option[T]]
+    case None => new ConstantExpressionNode[Option[T]](f.is)(outMapper) with NumericalExpression[Option[T]] with SquerylRecordNumericalExpression[Option[T]]
   }
   
   private def convertNumericalOption[T](f: Option[TypedField[T]], outMapper: OutMapper[Option[T]]) = fieldReference match {
     case Some(e) => new SelectElementReference[Option[T]](e)(outMapper) with NumericalExpression[Option[T]] with SquerylRecordNumericalExpression[Option[T]]
-    case None => new ConstantExpressionNode[Option[T]](getValue(f)) with NumericalExpression[Option[T]] with SquerylRecordNumericalExpression[Option[T]]
+    case None => new ConstantExpressionNode[Option[T]](getValue(f))(outMapper) with NumericalExpression[Option[T]] with SquerylRecordNumericalExpression[Option[T]]
   }
   
   private def getValue[T](f: Option[TypedField[T]]): Option[T] = f match {

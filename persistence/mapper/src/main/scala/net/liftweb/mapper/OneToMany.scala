@@ -77,7 +77,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
   class MappedOneToMany[O <: Mapper[O]](meta: MetaMapper[O], foreign: MappedForeignKey[K,O,T], qp: QueryParam[O]*)
     extends MappedOneToManyBase[O](
       ()=>{
-        val ret = meta.findAll(By(foreign, primaryKeyField) :: qp.toList : _*)
+        val ret = meta.findAll(By(foreign, primaryKeyField.get) :: qp.toList : _*)
         for(child <- ret) {
           foreign.actualField(child).asInstanceOf[MappedForeignKey[K,O,T]].primeObj(net.liftweb.common.Full(OneToMany.this : T))
         }
@@ -121,7 +121,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
         case f: MappedLongForeignKey[O,T] with MappedForeignKey[_,_,T] =>
           f.apply(OneToMany.this)
         case f =>
-          f.set(OneToMany.this.primaryKeyField)
+          f.set(OneToMany.this.primaryKeyField.get)
       }
       if(!OneToMany.this.saved_?)
          unlinked ::= e

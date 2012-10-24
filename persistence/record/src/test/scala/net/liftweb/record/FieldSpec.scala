@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import json.JsonAST._
 import util.Helpers._
 
 import java.util.Calendar
-import org.specs._
-import org.specs.runner.{ConsoleRunner, JUnit3}
+import org.specs2.mutable._
+import org.specs2.specification.Fragment
 
 import fixtures._
 import net.liftweb.util.{Helpers, FieldError}
@@ -38,66 +38,126 @@ import scala.xml.{NodeSeq, Elem, Node, Text}
 /**
  * Systems under specification for RecordField.
  */
-object FieldSpec extends Specification("Record Field Specification") {
-  def passBasicTests[A](example: A, mandatory: MandatoryTypedField[A], legacyOptional: MandatoryTypedField[A], optional: OptionalTypedField[A])(implicit m: scala.reflect.Manifest[A]): Unit = {
+object FieldSpec extends Specification {
+  "Record Field Specification".title
+  sequential
+
+  lazy val session = new LiftSession("", randomString(20), Empty)
+
+  def passBasicTests[A](example: A, mandatory: MandatoryTypedField[A], legacyOptional: MandatoryTypedField[A], optional: OptionalTypedField[A])(implicit m: scala.reflect.Manifest[A]): Fragment = {
     val canCheckDefaultValues =
       !mandatory.defaultValue.isInstanceOf[Calendar] // don't try to use the default value of date/time typed fields, because it changes from moment to moment!
 
+    def commonBehaviorsForMandatory(in: MandatoryTypedField[A]): Unit = {
+      
+		if (canCheckDefaultValues) {
+    			"which have the correct initial value" in S.initIfUninitted(session) {
+				in.get must_== in.defaultValue
+			}
+		}
+
+        "which are readable and writable" in {
+          in.set(example)
+          in.get must_== example
+          in.clear
+          in.get must_!= example
+          in.setBox(Box !! example)
+          in.get must_== example
+          in.clear
+          success
+        }
+
+        if (canCheckDefaultValues) {
+	        "which correctly clear back to the default value" in {
+	          in.set(example)
+	          in.clear
+	          in.get must_== in.defaultValue
+	        }
+        }
+    }
+
     def commonBehaviorsForAllFlavors(in: TypedField[A]): Unit = {
       if (canCheckDefaultValues) {
-        "which have the correct initial value" in {
-          mandatory.value must_== mandatory.defaultValue
-          mandatory.valueBox must_== mandatory.defaultValueBox
+        "which have the correct initial boxed value" in {
+          in match {
+            case mandatory: MandatoryTypedField[_] =>
+            	mandatory.value must_== mandatory.defaultValue
+            case _ => ()
+          }
+          in.valueBox must_== in.defaultValueBox
         }
       }
 
-      "which are readable and writable" in {
-        mandatory.valueBox must verify(_.isDefined)
-        mandatory.set(example)
-        mandatory.value must_== example
-        mandatory.valueBox must_== Full(example)
-        mandatory.clear
-        mandatory.value must_!= example
-        mandatory.valueBox must_!= Full(example)
-        mandatory.setBox(Full(example))
-        mandatory.value must_== example
-        mandatory.valueBox must_== Full(example)
+      "which have readable and writable boxed values" in S.initIfUninitted(session) {
+        in.setBox(Full(example))
+        in.valueBox.isDefined must_== true
+        in.valueBox must_== Full(example)
+        in.clear
+        in.valueBox must_!= Full(example)
       }
 
       if (canCheckDefaultValues) {
-        "which correctly clear back to the default" in {
-          mandatory.valueBox must verify(_.isDefined)
-          mandatory.clear
-          mandatory.valueBox must_== mandatory.defaultValueBox
+        "which correctly clear back to the default box value" in S.initIfUninitted(session) {
+          in.setBox(Full(example))
+          in.valueBox.isDefined must_== true
+          in.clear
+          in.valueBox must_== in.defaultValueBox
         }
       }
 
       "which capture error conditions set in" in {
-        mandatory.setBox(Failure("my failure"))
-        mandatory.valueBox must_== Failure("my failure")
+        val old = in.valueBox
+        in.setBox(Failure("my failure"))
+        in.valueBox must_== Failure("my failure")
+        in.setBox(old)
+        success
+      }
+
+      if(canCheckDefaultValues) {
+	      "which are only flagged as dirty_? when setBox is called with a different value" in {
+	        in.clear
+	        in match {
+	          case owned: OwnedField[_] => owned.owner.runSafe {
+	            in.resetDirty
+	          }
+	          case _ => in.resetDirty
+	        }
+	        in.dirty_? must_== false
+	        val valueBox = in.valueBox
+	        in.setBox(valueBox)
+	        in.dirty_? must_== false
+	        val exampleBox = Full(example)
+	        (valueBox === exampleBox) must_== false
+	        in.setBox(exampleBox)
+	        in.dirty_? must_== true
+	        in.setBox(valueBox)
+	        success
+	      }
       }
     }
 
     "support mandatory fields" in {
       commonBehaviorsForAllFlavors(mandatory)
+      commonBehaviorsForMandatory(mandatory)
 
       "which are configured correctly" in {
         mandatory.optional_? must_== false
       }
-      
+
       "which initialize to some value" in {
-        mandatory.valueBox must verify(_.isDefined)
+        mandatory.valueBox.isDefined must_== true
       }
 
       "which correctly fail to be set to Empty" in {
-        mandatory.valueBox must verify(_.isDefined)
+        mandatory.valueBox.isDefined must_== true
         mandatory.setBox(Empty)
-        mandatory.valueBox must beLike { case Failure(s, _, _) if s == mandatory.notOptionalErrorMessage => true }
+        mandatory.valueBox must beLike { case Failure(s, _, _) => s must_== mandatory.notOptionalErrorMessage}
       }
     }
 
     "support 'legacy' optional fields (override optional_?)" in {
       commonBehaviorsForAllFlavors(legacyOptional)
+      commonBehaviorsForMandatory(legacyOptional)
 
       "which are configured correctly" in {
         legacyOptional.optional_? must_== true
@@ -124,6 +184,7 @@ object FieldSpec extends Specification("Record Field Specification") {
           legacyOptional.value must_== legacyOptional.defaultValue
           legacyOptional.valueBox must_== legacyOptional.defaultValueBox
         }
+        success
       }
     }
 
@@ -155,9 +216,9 @@ object FieldSpec extends Specification("Record Field Specification") {
     }
   }
 
-  def passConversionTests[A](example: A, mandatory: MandatoryTypedField[A], jsexp: JsExp, jvalue: JValue, formPattern: Box[NodeSeq]): Unit = {
+  def passConversionTests[A](example: A, mandatory: MandatoryTypedField[A], jsexp: JsExp, jvalue: JValue, formPattern: Box[NodeSeq]): Fragment = {
 
-    "convert to JsExp" in {
+    "convert to JsExp" in S.initIfUninitted(session) {
       mandatory.set(example)
       mandatory.asJs mustEqual jsexp
     }
@@ -172,7 +233,6 @@ object FieldSpec extends Specification("Record Field Specification") {
       "get set from JValue" in {
         mandatory.setFromJValue(jvalue) mustEqual Full(example)
         mandatory.value mustEqual example
-        () // does not compile without this: no implicit argument matching parameter type scala.reflect.Manifest[org.specs.specification.Result[mandatory.MyType]]
       }
     }
 
@@ -182,19 +242,19 @@ object FieldSpec extends Specification("Record Field Specification") {
         val session = new LiftSession("", randomString(20), Empty)
         S.initIfUninitted(session) {
           val formXml = mandatory.toForm
-          formXml must notBeEmpty
-          formXml foreach { fprime =>
+          formXml.isDefined must_== true
+          formXml.toList map { fprime =>
             val f = ("* [name]" #> ".*" & "select *" #> (((ns: NodeSeq) => ns.filter {
               case e: Elem => e.attribute("selected").map(_.text) == Some("selected")
               case _ => false
             }) andThen "* [value]" #> ".*"))(fprime)
             val ret: Boolean = Helpers.compareXml(f, fp)
-
             ret must_== true
           }
         }
       }
     }
+    success
   }
 
     /* Since Array[Byte]s cannot be compared, commenting out this test for now
@@ -217,7 +277,7 @@ object FieldSpec extends Specification("Record Field Specification") {
       rec.mandatoryBooleanField,
       JsTrue,
       JBool(bool),
-      Full(<input checked="checked" tabIndex="1" value="true" type="checkbox" name=".*" id="mandatoryBooleanField_id"></input><input value="false" type="hidden" name=".*"></input>)
+      Full(<input checked="checked" tabindex="1" value="true" type="checkbox" name=".*" id="mandatoryBooleanField_id"></input><input value="false" type="hidden" name=".*"></input>)
     )
     "support java.lang.Boolean" in {
       rec.mandatoryBooleanField.setFromAny(java.lang.Boolean.TRUE)
@@ -237,16 +297,19 @@ object FieldSpec extends Specification("Record Field Specification") {
   }
 
   "CountryField" should {
-    val rec = FieldTypeTestRecord.createRecord
-    val country = Countries.Canada
-    passBasicTests(country, rec.mandatoryCountryField, rec.legacyOptionalCountryField, rec.optionalCountryField)
-    passConversionTests(
-      country,
-      rec.mandatoryCountryField,
-      Str(country.toString),
-      JInt(country.id),
-      Full(<select tabindex="1" name=".*" id="mandatoryCountryField_id"><option value=".*" selected="selected">{country.toString}</option></select>)
-    )
+    val session = new LiftSession("", randomString(20), Empty)
+    S.initIfUninitted(session){
+      val rec = FieldTypeTestRecord.createRecord
+      val country = Countries.Canada
+      passBasicTests(country, rec.mandatoryCountryField, rec.legacyOptionalCountryField, rec.optionalCountryField)
+      passConversionTests(
+        country,
+        rec.mandatoryCountryField,
+        Str(country.toString),
+        JInt(country.id),
+        Full(<select tabindex="1" name=".*" id="mandatoryCountryField_id"><option value=".*" selected="selected">{country.toString}</option></select>)
+      )
+    }
   }
 
   "DateTimeField" should {
@@ -351,22 +414,32 @@ object FieldSpec extends Specification("Record Field Specification") {
   }
 
   "PasswordField" should {
-    "require a nonempty password" in {
+    "require a nonempty password" in S.initIfUninitted(session) {
       val rec = PasswordTestRecord.createRecord.password("")
 
       rec.validate must_== (
-        FieldError(rec.password, Text(S.??("password.must.be.set"))) ::
+        FieldError(rec.password, Text(S.?("password.must.be.set"))) ::
         Nil
       )
     }
 
-    "validate the unencrypted value" in {
+    "correctly validate the unencrypted value" in S.initIfUninitted(session) {
       val rec = PasswordTestRecord.createRecord.password("testvalue")
+      rec.validate must_== Nil
 
+      rec.password("1234")
       rec.validate must_== (
-        FieldError(rec.password, Text("no way!")) ::
+        FieldError(rec.password, Text(S.?("password.too.short"))) ::
         Nil
       )
+    }
+
+    "match with encrypted value" in {
+      val rec = PasswordTestRecord.createRecord.password("testpassword")
+      rec.password.match_?("testpassword") must_== true
+
+      rec.password.set("$2a$10$6CJWdXpKoP8bVTjGH8SbKOWevNQVL8MkYVlBLmqtywVi7dp/YgPXC")
+      rec.password.match_?("dummyPassw0rd") must_== true
     }
   }
 
@@ -410,7 +483,7 @@ object FieldSpec extends Specification("Record Field Specification") {
     "honor harnessed validators" in {
       val rec = ValidationTestRecord.createRecord
       val field = rec.stringFieldWithValidation
-  
+
       "which always succeed" in {
         field.validationHarness = _ => Nil
         rec.validate must_== Nil

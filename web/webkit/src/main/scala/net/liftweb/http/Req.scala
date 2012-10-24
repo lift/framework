@@ -212,11 +212,10 @@ trait UserAgentCalculator {
   def userAgent: Box[String]
 }
 
-@serializable
-sealed trait ParamHolder {
+sealed trait ParamHolder extends Serializable{
   def name: String
 }
-@serializable
+
 final case class NormalParamHolder(name: String, value: String) extends ParamHolder
 
 /**
@@ -227,9 +226,8 @@ final case class NormalParamHolder(name: String, value: String) extends ParamHol
  * @param mimeType the mime type, as specified in the Content-Type field
  * @param fileName The local filename on the client
  */
-@serializable
 abstract class FileParamHolder(val name: String, val mimeType: String,
-                               val fileName: String) extends ParamHolder
+                               val fileName: String) extends ParamHolder with Serializable
 {
   /**
    * Returns the contents of the uploaded file as a Byte array.
@@ -524,7 +522,9 @@ object Req {
    */
   def nil = new Req(NilPath, "", GetRequest, Empty, null,
                     System.nanoTime, System.nanoTime, false,
-                    () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map())
+                    () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map()) {
+    override lazy val standardRequest_? = false
+  }
 
   def parsePath(in: String): ParsePath = {
     val p1 = fixURI((in match {case null => "/"; case s if s.length == 0 => "/"; case s => s}).replaceAll("/+", "/"))
@@ -847,6 +847,26 @@ class Req(val path: ParsePath,
   }
 
   /**
+   * Returns true if the X-Requested-With header is set to XMLHttpRequest.
+   *
+   * Most ajax frameworks, including jQuery and Prototype, set this header
+   * when doing any ajax request.
+   */
+  def ajax_? =
+    request.headers.toList.exists { header =>
+      (header.name equalsIgnoreCase "x-requested-with") &&
+      (header.values.exists(_ equalsIgnoreCase "xmlhttprequest"))
+    }
+
+  /**
+   * A request that is neither Ajax or Comet
+   */
+  lazy val standardRequest_? : Boolean = path.partPath match {
+    case x :: _ if x == LiftRules.ajaxPath || x == LiftRules.cometPath => false
+    case _ => true
+  }
+
+  /**
    * Make the servlet session go away
    */
   def destroyServletSession() {
@@ -855,7 +875,12 @@ class Req(val path: ParsePath,
     } httpReq.destroyServletSession()
   }
 
-  def snapshot = {
+  /**
+   * A snapshot of the request that can be passed off the current thread
+   *
+   * @return a copy of the Req
+   */
+  def snapshot: Req = {
     val paramCalc = paramCalculator()
     paramCalc.body.map(_.body) // make sure we grab the body
     new Req(path,
@@ -985,6 +1010,7 @@ class Req(val path: ParsePath,
    */
   lazy val hostAndPath: String =
     containerRequest.map(r => (r.scheme, r.serverPort) match {
+      case ("http", 80) if r.header("X-SSL").isDefined => "https://" + r.serverName + contextPath
       case ("http", 80) => "http://" + r.serverName + contextPath
       case ("https", 443) => "https://" + r.serverName + contextPath
       case (sch, port) => sch + "://" + r.serverName + ":" + port + contextPath
@@ -1209,7 +1235,6 @@ final case class RewriteRequest(path: ParsePath, requestType: RequestType, httpR
 /**
  * The representation of an URI path
  */
-@serializable
 case class ParsePath(partPath: List[String], suffix: String, absolute: Boolean, endSlash: Boolean) {
   def drop(cnt: Int) = ParsePath(partPath.drop(cnt), suffix, absolute, endSlash)
 

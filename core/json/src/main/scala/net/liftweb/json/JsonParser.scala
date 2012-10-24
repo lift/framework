@@ -134,7 +134,7 @@ object JsonParser {
   private val BrokenDouble = BigDecimal("2.2250738585072012e-308")
   private[json] def parseDouble(s: String) = {
     val d = BigDecimal(s)
-    if (d == BrokenDouble) error("Error parsing 2.2250738585072012e-308")
+    if (d == BrokenDouble) sys.error("Error parsing 2.2250738585072012e-308")
     else d.doubleValue
   }
 
@@ -232,22 +232,12 @@ object JsonParser {
     def nextToken: Token = {
       def isDelimiter(c: Char) = c == ' ' || c == '\n' || c == ',' || c == '\r' || c == '\t' || c == '}' || c == ']'
 
-      def parseFieldName: String = {
-        buf.mark
-        var c = buf.next
-        while (c != EOF) {
-          if (c == '"') return buf.substring
-          c = buf.next
-        }
-        fail("expected string end")
-      }
-
       def parseString: String = 
         try {
           unquote(buf)
         } catch {
           case p: ParseException => throw p
-          case _ => fail("unexpected string end")
+          case _: Exception => fail("unexpected string end")
         }
 
       def parseValue(first: Char) = {
@@ -283,7 +273,7 @@ object JsonParser {
             blocks.poll
             return CloseObj
           case '"' =>
-            if (fieldNameMode && blocks.peek == OBJECT) return FieldStart(parseFieldName)
+            if (fieldNameMode && blocks.peek == OBJECT) return FieldStart(parseString)
             else {
               fieldNameMode = true
               return StringVal(parseString)

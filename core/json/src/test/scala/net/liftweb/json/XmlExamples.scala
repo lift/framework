@@ -17,13 +17,14 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * System under specification for Xml Examples.
  */
-object XmlExamples extends Specification("XML Examples") {
+object XmlExamples extends Specification  {
+  "XML Examples".title
   import JsonDSL._
   import Xml._
   import scala.xml.{Group, Text}

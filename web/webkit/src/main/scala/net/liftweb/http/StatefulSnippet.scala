@@ -113,7 +113,7 @@ trait StatefulSnippet extends DispatchSnippet {
     if (formElem.isDefined) {
       import util.Helpers._
 
-      ("form *" #> ((kids: NodeSeq) => toMerge ++ kids))(res)
+      ("form *" #> ((kids: NodeSeq) => toMerge ++ kids)).apply(res)
     } else if (isForm) {
       toMerge ++ res
     } else {
@@ -165,6 +165,31 @@ trait DispatchSnippet {
   type DispatchIt = PartialFunction[String, NodeSeq => NodeSeq]
 
   def dispatch: DispatchIt
+}
+
+/**
+ * This trait indicates if the snippet instance should be kept around for the duration of
+ * the Request.  There are cases when you don't want a snippet to be kept around.
+ */
+trait TransientSnippet {
+
+  /**
+   * Calculate if this snippet should be treated as transiet.
+   */
+  def transient_? = true
+}
+
+/**
+ * The companion object to the TransientSnippet trait
+ */
+object TransientSnippet {
+  /**
+   * Compute if the instance should be treated as transient
+   */
+  def notTransient(obj: Any): Boolean = obj match {
+    case t: TransientSnippet => !t.transient_?
+    case _ => true
+  }
 }
 
 /**

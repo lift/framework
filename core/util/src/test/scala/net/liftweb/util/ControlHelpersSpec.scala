@@ -17,7 +17,7 @@
 package net.liftweb
 package util
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import ControlHelpers._
@@ -26,7 +26,8 @@ import ControlHelpers._
 /**
  * Systems under specification for ControlHelpers.
  */
-object ControlHelpersSpec extends Specification("ControlHelpers Specification") {
+object ControlHelpersSpec extends Specification  {
+  "ControlHelpers Specification".title
 
   "the tryo function" should {
     "return a Full can if the tested block doesn't throw an exception" in {
@@ -47,18 +48,24 @@ object ControlHelpersSpec extends Specification("ControlHelpers Specification") 
     "trigger a callback function with the exception if the tested block throws an exception" in {
       val callback = (e: Throwable) => { e must_== exception; () }
       tryo(callback) { failureBlock }
+      success
     }
     "trigger a callback function with the exception if the tested block throws an exception even if it is ignored" in {
       val callback = (e: Throwable) => { e must_== exception; () }
       tryo(List(classOf[RuntimeException]), Full(callback)) { failureBlock }
+      success
     }
     "don't trigger a callback if the tested block doesn't throw an exception" in {
-      val callback = (e: Throwable) => { fail("must not be called") }
+      var x = false
+      val callback = (e: Throwable) => { x = true }
       tryo(callback) { "valid" }
+      x must_== false
     }
     "don't trigger a callback if the tested block doesn't throw an exception, even with an ignore list" in {
-      val callback = (e: Throwable) => { fail("must not be called") }
+      var x = false
+      val callback = (e: Throwable) => { x = true }
       tryo(List(classOf[RuntimeException]), Full(callback)) { "valid" }
+      x must_== false
     }
   }
 }

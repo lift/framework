@@ -127,7 +127,7 @@ object LiftRules extends LiftRulesMocker {
 
 
   /**
-   * Holds the falure information when a snippet can not be executed.
+   * Holds the failure information when a snippet can not be executed.
    */
   case class SnippetFailure(page: String, typeName: Box[String], failure: SnippetFailures.Value)
 
@@ -301,14 +301,18 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var makeCometBreakoutDecision: (LiftSession, Req) => Unit =
   (session, req) => {
     // get the open sessions to the host (this means that any DNS wildcarded
-    // Comet requests will not be counted
-    val which = session.cometForHost(req.hostAndPath)
+    // Comet requests will not be counted), as well as all invalid/expired
+    // sessions
+    val (which, invalid) = session.cometForHost(req.hostAndPath)
 
     // get the maximum requests given the browser type
     val max = maxConcurrentRequests.vend(req) - 2 // this request and any open comet requests
 
     // dump the oldest requests
     which.drop(max).foreach {
+      case (actor, req) => actor ! BreakOut()
+    }
+    invalid.foreach {
       case (actor, req) => actor ! BreakOut()
     }
   }
@@ -319,7 +323,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var resourceServerPath = "classpath"
 
   /**
-   * Holds the JS library specific UI artifacts. By efault it uses JQuery's artifacts
+   * Holds the JS library specific UI artifacts. By default it uses JQuery's artifacts
    */
   @volatile var jsArtifacts: JSArtifacts = JQuery13Artifacts
 
@@ -362,7 +366,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * has been deprecated in favor of statelessReqTest which also passes
    * the HTTPRequest instance for testing of the user agent and other stuff.
    */
-  @deprecated("Use statelessReqTest")
+  @deprecated("Use statelessReqTest", "2.4")
   val statelessTest = RulesSeq[StatelessTestPF]
 
 
@@ -434,7 +438,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
       url <- Box !! LiftRules.getClass.getResource("/" + cn + ".class")
       val newUrl = new java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
       str <- tryo(new String(readWholeStream(newUrl.openConnection.getInputStream), "UTF-8"))
-      ma <- """Build-Time: (.*)""".r.findFirstMatchIn(str)
+      ma <- """Built-Time: (.*)""".r.findFirstMatchIn(str)
       asLong <- asLong(ma.group(1))
     } yield new Date(asLong)
 
@@ -457,10 +461,8 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Set the doc type used.  Use the HtmlProperties
-   *
-   * @deprecated
    */
-  @deprecated("Use the HtmlProperties")
+  @deprecated("Use the HtmlProperties", "2.4")
   val docType: FactoryMaker[Req => Box[String]] = new FactoryMaker( (r: Req) => r  match {
     case _ if S.skipDocType => Empty
     case _ if S.getDocType._1 => S.getDocType._2
@@ -577,8 +579,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
         groupEffects(NoticeType.Error)
     }
 
-    // We need to determine the full set of IDs that need messages rendered. 
-    // TODO: Change to use "distinct" when 2.7.7 support is dropped
+    // We need to determine the full set of IDs that need messages rendered.
     val idSet = (S.idMessages((S.errors)) ++
                  S.idMessages((S.warnings)) ++
                  S.idMessages((S.notices))).map(_._1).distinct
@@ -597,9 +598,43 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var liftCoreResourceName = "i18n.lift-core"
 
   /**
-   * Where to send the user if there's no comet session
+   * Where to send the user if there's no comet session. Note that this is
+   * contingent on an unchanged LiftRules.noCometSessionCommand and on
+   * liftComet.lift_sessionLost not being overridden client-side.
    */
+  @deprecated("Use LiftRules.noCometSessionCmd.", "2.5")
   @volatile var noCometSessionPage = "/"
+
+  /**
+   * The JsCmd to execute when the comet session is lost. The comet
+   * session is considered lost when either (a) a comet request comes
+   * in for a session that does not exist on the server or (b) a comet
+   * request comes in for a session that has no associated comet actors
+   * (this typically happens when the server restarts).
+   *
+   * By default, we invoke liftComet.lift_sessionLost, which can be
+   * overridden client-side for more complex work.
+   * liftComet.lift_sessionLost redirects to
+   * LiftRules.noCometSessionPage by default for now, though
+   * noCometSessionPage is deprecated and will be replaced by a
+   * default of reloading the current page.
+   */
+  val noCometSessionCmd = new FactoryMaker[JsCmd](
+    () => JsCmds.Run("liftComet.lift_sessionLost()")
+  ) {}
+
+  /**
+   * The JsCmd to execute when the ajax session is lost. The ajax
+   * session is considered lost when either an ajax request comes in for
+   * a session that does not exist on the server.
+   *
+   * By default, we invoke liftAjax.lift_sessionLost, which can be
+   * overridden client-side for more complex work.
+   * liftAjax.lift_sessionLost reloads the page by default.
+   */
+  val noAjaxSessionCmd = new FactoryMaker[JsCmd](
+    () => JsCmds.Run("liftAjax.lift_sessionLost()")
+  ) {}
 
   /**
    * Put a function that will calculate the request timeout based on the
@@ -622,6 +657,16 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * If a Comet request fails timeout for this period of time. Default value is 10 seconds
    */
   @volatile var cometFailureRetryTimeout: Long = 10 seconds
+
+  /**
+   * The timeout in milliseconds of a comet ajax-request. Defaults to 5000 ms.
+   */
+  @volatile var cometProcessingTimeout: Long = 5 seconds
+
+  /**
+   * The timeout in milliseconds of a comet render-request. Defaults to 30000 ms.
+   */
+  @volatile var cometRenderTimeout: Long = 30 seconds
 
   /**
    * The dispatcher that takes a Snippet and converts it to a
@@ -752,7 +797,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * The default action to take when the JavaScript action fails
    */
   @volatile var ajaxDefaultFailure: Box[() => JsCmd] =
-  Full(() => JsCmds.Alert(S.??("ajax.error")))
+  Full(() => JsCmds.Alert(S.?("ajax.error")))
 
   /**
    * A function that takes the current HTTP request and returns the current
@@ -773,6 +818,36 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val resourceForCurrentLoc: FactoryMaker[() => List[ResourceBundle]] =
     new FactoryMaker(() => () => DefaultRoutines.resourceForCurrentReq()) {}
+
+
+  /**
+  * There may be times when you want to entirely control the templating process.  You can insert
+  * a function to this factory that will do your custom template resolution.  If the PartialFunction
+  * isDefinedAt the given locale/path, then that's the template returned.  In this way, you can
+  * return Empty for a template that's not found and the template will not be found.  Otherwise,
+  * if the function is not defined for the locale/path pair, the normal templating system will
+  * be used.  Also, keep in mind how FactoryMaker can be used... it can be global, per request, etc.
+  */
+  val externalTemplateResolver: FactoryMaker[() => PartialFunction[(Locale, List[String]), Box[NodeSeq]]] =
+  new FactoryMaker(() => (() => Map.empty: PartialFunction[(Locale, List[String]), Box[NodeSeq]])) {}
+
+  /**
+  * There may be times when you want to entirely control the templating process.  You can insert a function
+  * that creates a white list of snippets.  The white list is the exhaustive list of snippets.  The
+  * snippets are class/method pairs.  If the partial function is defined and the result is a Full Box,
+  * the function is run.  If the Box is an EmptyBox, then the result is a snippet lookup failure.  If the
+  * partial function is not defined, then the normal snippet resolution mechanism is used.  Please note that
+  * in Scala a Map is PartialFunction and you can create Maps that have a default value using the withDefaultValue
+  * method.
+  */
+  val snippetWhiteList: FactoryMaker[() => PartialFunction[(String, String), Box[NodeSeq => NodeSeq]]] =
+  new FactoryMaker(() => (() => Map.empty: PartialFunction[(String, String), Box[NodeSeq => NodeSeq]])) {}
+
+  /**
+  * This FactoryMaker can be used to disable the little used attributeSnippets
+  */
+  val allowAttributeSnippets: FactoryMaker[() => Boolean] =
+  new FactoryMaker(() => () => true) {}
 
   private var _sitemap: Box[SiteMap] = Empty
 
@@ -946,9 +1021,32 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Holds user's DispatchPF functions that will be executed in a stateless context. This means that
-   * S object is not availble yet.
+   * no session will be created and no JSESSIONID cookie will be presented to the user (unless
+   * the user has presented a JSESSIONID cookie).
    */
-  val statelessDispatchTable = RulesSeq[DispatchPF]
+  @deprecated("Use statelessDispatch", "2.4")
+  def statelessDispatchTable = statelessDispatch
+
+  /**
+   * Holds user's DispatchPF functions that will be executed in a stateless context. This means that
+   * no session will be created and no JSESSIONID cookie will be presented to the user (unless
+   * the user has presented a JSESSIONID cookie).
+   *
+   * This is the way to do stateless REST in Lift
+   */
+  val statelessDispatch = RulesSeq[DispatchPF]
+
+  /**
+   * Add functionality around all of the HTTP request/response cycle.
+   * This is an optimal place to get a database connection.  Note that whatever
+   * is loaned at the begining of the request will not be returned until the end
+   * of the request.  It's super-important to (1) not do anything related
+   * to state or touch the request objects or anything else at the begining or
+   * end of the loan wrapper phase; (2) make sure that your code does not throw
+   * exceptions as exceptions can cause major problems.
+   */
+  val allAround = RulesSeq[LoanWrapper]
+
 
   private[http] def dispatchTable(req: HTTPRequest): List[DispatchPF] = {
     req match {
@@ -1123,7 +1221,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Use statelessRewrite or statefuleRewrite
    */
-  @deprecated("Use statelessRewrite or statefuleRewrite")
+  @deprecated("Use statelessRewrite or statefuleRewrite", "2.3")
   val rewrite = statelessRewrite
 
   /**
@@ -1251,11 +1349,16 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   private def logSnippetFailure(sf: SnippetFailure) = logger.info("Snippet Failure: " + sf)
 
   /**
-   * Set to false if you do not want Ajax/Comet requests that are not associated with a session
-   * to cause a page reload
+   * Set to false if you do not want ajax/comet requests that are not
+   * associated with a session to call their respective session
+   * loss handlers (set via LiftRules.noAjaxSessionCmd and
+   * LiftRules.noCometSessionCmd).
    */
-  @volatile var redirectAjaxOnSessionLoss = true
-
+  @volatile var redirectAsyncOnSessionLoss = true
+  @deprecated("Use redirectAsyncOnSessionLoss instead.", "2.5")
+  def redirectAjaxOnSessionLoss = redirectAsyncOnSessionLoss
+  @deprecated("Use redirectAsyncOnSessionLoss instead.", "2.5")
+  def redirectAjaxOnSessionLoss_=(updated:Boolean) = redirectAsyncOnSessionLoss = updated
 
   /**
    * The sequence of partial functions (pattern matching) for handling converting an exception to something to
@@ -1266,7 +1369,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * a default implementation is already appended.
    *
    */
-  @volatile var exceptionHandler = RulesSeq[ExceptionHandlerPF].append {
+  val exceptionHandler = RulesSeq[ExceptionHandlerPF].append {
     case (Props.RunModes.Development, r, e) =>
       logger.error("Exception being returned to browser when processing " + r.uri.toString + ": " + showException(e))
       XhtmlResponse((<html> <body>Exception occured while processing {r.uri}<pre>{showException(e)}</pre> </body> </html>), S.htmlProperties.docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.ieMode)
@@ -1387,7 +1490,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Tells Lift if the Ajax JavaScript shoukd be included. By default it is set to true.
    */
-  @volatile var autoIncludeAjax: LiftSession => Boolean = session => true
+  @deprecated("Use autoIncludeAjaxCalc", "2.4")
+  @volatile var autoIncludeAjax: LiftSession => Boolean = session => autoIncludeAjaxCalc.vend().apply(session)
+
+  val autoIncludeAjaxCalc: FactoryMaker[() => LiftSession => Boolean] = 
+  new FactoryMaker(() => () => (session: LiftSession) => true) {}
 
   /**
    * Define the XHTML validator
@@ -1443,6 +1550,33 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * Returns the JavaScript that manages Comet requests.
    */
   @volatile var renderCometScript: LiftSession => JsCmd = session => ScriptRenderer.cometScript
+
+  /**
+   * If this is Full, comet updates (partialUpdates or reRenders) are
+   * wrapped in a try/catch statement. The provided JsCmd is the body of
+   * the catch statement. Within that JsCmd, the varibale "e" refers to the
+   * caught exception.
+   *
+   * In development mode, this defaults to Full and the command within
+   * invokes liftComet.lift_cometError with the exception;
+   * lift_cometError rethrows the exception by default. In production
+   * mode, this defaults to Empty.
+   *
+   * Note that if you set this to Full, it is highly advised that you
+   * rethrow the exception. If you fail to rethrow the exception, you
+   * run the risk of dropping an unpredictable number of updates (i.e.,
+   * if the third of 20 updates that are sent to the client in a single
+   * response throws an exception, none of the subsequent ones will run;
+   * failing to rethrow the exception means any updates that did not run
+   * will never be run).
+   */
+  val cometUpdateExceptionHandler: FactoryMaker[Box[JsCmd]] =
+    new FactoryMaker[Box[JsCmd]]( () => {
+      if (Props.devMode)
+        Full(JE.Call("liftComet.lift_cometError", JE.JsVar("e")).cmd)
+      else
+        Empty
+    } ) {}
 
   /**
    * Renders that JavaScript that holds Comet identification information
@@ -1582,14 +1716,17 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * A function to format a Date... can be replaced by a function that is user-specific
    Replaced by dateTimeConverter
    */
-  @deprecated("Replaced by dateTimeConverter")
-  @volatile var formatDate: Date => String = date => date match {case null => LiftRules.formatDate(new Date(0L)) case s => toInternetDate(s)}
+  @deprecated("Replaced by dateTimeConverter", "2.3")
+  @volatile var formatDate: Date => String = date => date match {
+    case null => LiftRules.dateTimeConverter.vend.formatDate(new Date(0L))
+    case s    => toInternetDate(s)
+  }
 
   /**
    * A function that parses a String into a Date... can be replaced by something that's user-specific
    Replaced by dateTimeConverter
    */
-  @deprecated("Replaced by dateTimeConverter")
+  @deprecated("Replaced by dateTimeConverter", "2.3")
   @volatile var parseDate: String => Box[Date] = str => str match {
     case null => Empty
     case s => Helpers.toDate(s)
@@ -1615,7 +1752,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Provides the async provider instance responsible for suspending/resuming requests
    */
-  @deprecated("Register your povider via addSyncProvider")
+  @deprecated("Register your povider via addSyncProvider", "2.4")
   var servletAsyncProvider: (HTTPRequest) => ServletAsyncProvider = null // (req) => new Jetty6AsyncProvider(req)
 
   /**
@@ -1654,7 +1791,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
       Map("CSS" -> CSS, "Msgs" -> Msgs, "Msg" -> Msg,
         "Menu" -> Menu, "css" -> CSS, "msgs" -> Msgs, "msg" -> Msg,
         "menu" -> Menu,
-        "a" -> A, "children" -> Children,
+        "children" -> Children,
         "comet" -> Comet, "form" -> Form, "ignore" -> Ignore, "loc" -> Loc,
         "surround" -> Surround,
         "test_cond" -> TestCond,
@@ -1762,7 +1899,7 @@ class RulesSeq[T] {
   })(f)
   }
 
-  def toList = cur.value match {
+  def toList: List[T] = cur.value match {
     case null => rules
     case xs => xs
   }

@@ -61,7 +61,7 @@ final class JettyTestServer(baseUrlBox: Box[URL]) {
 
   def running = server_.isRunning
 
-  def browse(startPath: String, f:(WebTester) => Unit) {
+  def browse[A](startPath: String, f:(WebTester) => A): A = {
     val wc = new WebTester()
     try {
       wc.setScriptingEnabled(false)

@@ -91,7 +91,7 @@ object Templates {
    *
    * @return the template if it can be found
    */
-  @deprecated("use apply")
+  @deprecated("use apply", "2.4")
   def findAnyTemplate(places: List[String]): Box[NodeSeq] =
     findRawTemplate(places, S.locale)
 
@@ -103,7 +103,7 @@ object Templates {
    *
    * @return the template if it can be found
    */
-  @deprecated("use apply")
+  @deprecated("use apply", "2.4")
   def findAnyTemplate(places: List[String], locale: Locale): Box[NodeSeq] = findRawTemplate(places, locale)
 
 
@@ -131,6 +131,7 @@ object Templates {
       case e: Elem if e.label == "html" =>
         e.child.flatMap {
           case e: Elem if e.label == "body" => {
+            e.attribute("data-lift-content-id").headOption.map(_.text) orElse
             e.attribute("class").flatMap {
               ns => {
                 val clz = ns.text.charSplit(' ')
@@ -170,13 +171,20 @@ object Templates {
      yield better performance.  Please don't change this method without chatting with
      me first.  Thanks!  DPP
      */
+
+     val resolver = LiftRules.externalTemplateResolver.vend()
+    val key = (locale, places)
+
+     if (resolver.isDefinedAt(key)) {
+      resolver(key)
+      } else {
     val lrCache = LiftRules.templateCache
     val cache = if (lrCache.isDefined) lrCache.open_! else NoCache
 
     val parserFunction: InputStream => Box[NodeSeq] = 
       S.htmlProperties.htmlParser
 
-    val key = (locale, places)
+
     val tr = cache.get(key)
 
     if (tr.isDefined) tr
@@ -246,6 +254,7 @@ object Templates {
         }
       }
   }
+}
 
   private def lookForClasses(places: List[String]): Box[NodeSeq] = {
     val (controller, action) = places match {

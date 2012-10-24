@@ -19,6 +19,7 @@ package util
 
 import java.security.SecureRandom
 import java.util.regex._
+import java.util.Random
 import java.lang.Character._
 import java.lang.{StringBuilder => GoodSB}
 import scala.xml.NodeSeq
@@ -32,7 +33,23 @@ object StringHelpers extends StringHelpers
 trait StringHelpers {
 
   /** random numbers generator */
-  private val _random = new SecureRandom
+  private lazy val _slowRandom = new SecureRandom
+  private lazy val _currentTlrMethod = {
+    try {
+      val tlr = Class.forName("java.util.concurrent.ThreadLocalRandom")
+      Full(tlr.getMethod("current"))
+    } catch {
+      case e =>
+      Failure("ThreadLocalRandom is not available.", Full(e), Empty)
+    }
+  }
+  private def withRng[T](block: (Random)=>T) = {
+    _currentTlrMethod.map { meth =>
+      block(meth.invoke(null).asInstanceOf[Random])
+    } openOr {
+      _slowRandom.synchronized(block(_slowRandom))
+    }
+  }
 
   /**
    * If str is surrounded by quotes it return the content between the quotes
@@ -176,7 +193,7 @@ trait StringHelpers {
       if (pos >= size) sb
       else {
         val randNum = if ((pos % 6) == 0) {
-          _random.synchronized(_random.nextInt)
+          withRng(_.nextInt)
         } else {
           lastRand
         }
@@ -364,11 +381,25 @@ trait StringHelpers {
   /** @return a SuperString with more available methods such as roboSplit or commafy */
   implicit def listStringToSuper(in: List[String]): SuperListString = new SuperListString(in)
 
+  @deprecated("Use blankForNull instead", "2.3")
+  def emptyForNull(s: String) = blankForNull(s)
 
   /**
-   * Test for null and return either the given String if not null or the empty String.
+   * Test for null and return either the given String if not null or the blank String.
    */
-  def emptyForNull(s: String) = if (s != null) s else ""
+  def blankForNull(s: String) = if (s != null) s else ""
+
+  /**
+   * Turn a String into a Box[String], with Empty for the blank string.
+   *
+   * A string containing only spaces is considered blank.
+   *
+   * @return Full(s.trim) if s is not null or blank, Empty otherwise
+   */
+  def emptyForBlank(s: String) = blankForNull(s).trim match {
+    case "" => Empty
+    case s => Full(s)
+  }
 }
 
 /**

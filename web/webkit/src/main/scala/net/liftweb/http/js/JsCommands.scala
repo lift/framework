@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.liftweb 
-package http 
-package js 
+package net.liftweb
+package http
+package js
 
 import scala.xml.{NodeSeq, Group, Unparsed, Elem}
 import net.liftweb.util.Helpers._
-import net.liftweb.util.Helpers
-import net.liftweb.util.TimeHelpers
 import net.liftweb.common._
 import net.liftweb.util._
-import scala.xml.{Node, SpecialNode, Text}
+import scala.xml.Node
 
 object JsCommands {
   def create = new JsCommands(Nil)
@@ -87,12 +85,12 @@ trait JsObj extends JsExp {
     other match {
       case jsObj: JsObj => {
         import scala.annotation.tailrec
-        
+
         @tailrec def test(me: Map[String, JsExp], them: List[(String, JsExp)]): Boolean = {
           them match {
             case Nil => me.isEmpty
             case _ if me.isEmpty => false
-            case (k, v) :: xs => 
+            case (k, v) :: xs =>
               me.get(k) match {
                 case None => false
                 case Some(mv) if mv != v => false
@@ -100,10 +98,10 @@ trait JsObj extends JsExp {
               }
           }
         }
-        
+
         test(Map(props :_*), jsObj.props)
       }
-      
+
       case x => super.equals(x)
     }
   }
@@ -185,12 +183,12 @@ trait JsExp extends HtmlFixer with ToJsCmd {
 
 
   def ~>(right: Box[JsMember]): JsExp = right.dmap(this)(r => ~>(r))
-  
+
   /**
    * This exists for backward compatibility reasons for JQueryLeft and JQueryRight
    * which are now deprecated. Use ~> whenever possible as this will be removed soon.
    */
-  @deprecated
+  @deprecated("Use `~>` instead", "2.3")
   def >>(right: JsMember): JsExp = ~>(right)
 
 
@@ -228,7 +226,7 @@ object JE {
     def apply(d: Double): Num = new Num(d)
     def apply(f: Float): Num = new Num(f)
   }
-  
+
   case class Num(n: Number) extends JsExp {
     def toJsCmd = n.toString
   }
@@ -555,10 +553,10 @@ trait HtmlFixer {
    * This method must be run in the context of the thing creating the XHTML
    * to capture the bound functions
    */
-  @deprecated("Use fixHtmlAndJs or fixHtmlFunc")
+  @deprecated("Use fixHtmlAndJs or fixHtmlFunc", "2.4")
   protected def fixHtml(uid: String, content: NodeSeq): String = {
     val w = new java.io.StringWriter
-    
+
     S.htmlProperties.
     htmlWriter(Group(S.session.
                      map(s =>
@@ -576,7 +574,7 @@ trait HtmlFixer {
    * then evaluations to Expression.  For use when converting
    * a JsExp that contains HTML.
    */
-  def fixHtmlFunc(uid: String, content: NodeSeq)(f: String => String) = 
+  def fixHtmlFunc(uid: String, content: NodeSeq)(f: String => String) =
     fixHtmlAndJs(uid, content) match {
       case (str, Nil) => f(str)
       case (str, cmds) => "((function() {"+cmds.reduceLeft{_ & _}.toJsCmd+" return "+f(str)+";})())"
@@ -589,7 +587,7 @@ trait HtmlFixer {
    * For use when converting
    * a JsCmd that contains HTML.
    */
-  def fixHtmlCmdFunc(uid: String, content: NodeSeq)(f: String => String) = 
+  def fixHtmlCmdFunc(uid: String, content: NodeSeq)(f: String => String) =
     fixHtmlAndJs(uid, content) match {
       case (str, Nil) => f(str)
       case (str, cmds) => f(str)+"; "+cmds.reduceLeft(_ & _).toJsCmd
@@ -604,7 +602,7 @@ trait HtmlFixer {
     import Helpers._
 
     val w = new java.io.StringWriter
-    
+
     val xhtml = S.session.
     map(s =>
       s.fixHtml(s.processSurroundAndInclude("JS SetHTML id: "
@@ -614,8 +612,8 @@ trait HtmlFixer {
 
     import scala.collection.mutable.ListBuffer
     val lb = new ListBuffer[JsCmd]
-    
-    val revised = ("script" #> ((ns: NodeSeq) => {
+
+    val revised = ("script" #> nsFunc(ns => {
       ns match {
         case FindScript(e) => {
           lb += JE.JsRaw(ns.text).cmd
@@ -623,7 +621,7 @@ trait HtmlFixer {
         }
         case x => x
       }
-    }))(xhtml)
+    })).apply(xhtml)
 
     S.htmlProperties.htmlWriter(Group(revised), w)
 
@@ -684,27 +682,8 @@ object JsCmds {
    * @param id - the id of the node that will be replaced
    * @param node - the new node
    */
-  case class Replace(id: String, content: NodeSeq) extends JsCmd with HtmlFixer {
-    override val toJsCmd = {
-      val (html, js) = fixHtmlAndJs("inline", content)
-
-      var ret = 
-      """
-  try {
-  var parent1 = document.getElementById(""" + id.encJs + """);
-  parent1.innerHTML = """ + html + """;
-  for (var i = 0; i < parent1.childNodes.length; i++) {
-    var node = parent1.childNodes[i];
-    parent1.parentNode.insertBefore(node.cloneNode(true), parent1);
-  }
-  parent1.parentNode.removeChild(parent1);
-  } catch (e) {
-    // if the node doesn't exist or something else bad happens
-  }
-"""
-      if (js.isEmpty) ret else ret + " "+js.toJsCmd
-
-    }
+  case class Replace(id: String, content: NodeSeq) extends JsCmd {
+    val toJsCmd = LiftRules.jsArtifacts.replace(id, Helpers.stripHead(content)).toJsCmd
   }
 
   /**
@@ -745,7 +724,7 @@ object JsCmds {
 
   /**
    * Sets the focus on the element denominated by the id
-   */ 
+   */
   case class Focus(id: String) extends JsCmd {
     def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").focus();};"
   }
@@ -800,7 +779,7 @@ object JsCmds {
 
   /**
    * Assigns the value of 'right' to the members of the element
-   * having this 'id', chained by 'then' sequences 
+   * having this 'id', chained by 'then' sequences
    */
   case class SetElemById(id: String, right: JsExp, then: String*) extends JsCmd {
     def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ")" + (
@@ -811,19 +790,20 @@ object JsCmds {
   implicit def jsExpToJsCmd(in: JsExp) = in.cmd
 
   case class CmdPair(left: JsCmd, right: JsCmd) extends JsCmd {
-    def toJsCmd = {
-      val sb = new StringBuilder
-      append(sb, this)
-      sb.toString
+    import scala.collection.mutable.ListBuffer;
+
+    def toJsCmd: String = {
+      val acc = new ListBuffer[JsCmd]()
+      appendDo(acc, left :: right :: Nil)
+      acc.map(_.toJsCmd).mkString("\n")
     }
 
-    private def append(sb: StringBuilder, cmd: JsCmd) {
-      cmd match {
-        case CmdPair(l, r) => append(sb, l)
-          sb.append('\n')
-          append(sb, r)
-
-        case c => sb.append(c.toJsCmd)
+    @scala.annotation.tailrec
+    private def appendDo(acc: ListBuffer[JsCmd], cmds: List[JsCmd]) {
+      cmds match {
+        case Nil =>
+        case CmdPair(l, r) :: rest => appendDo(acc, l :: r :: rest)
+        case a :: rest => acc.append(a); appendDo(acc, rest)
       }
     }
   }
@@ -873,7 +853,7 @@ object JsCmds {
      */
     def apply(where: String, func: () => Unit): RedirectTo =
     S.session match {
-      case Full(liftSession) => 
+      case Full(liftSession) =>
         new RedirectTo(liftSession.attachRedirectFunc(where, Full(func)))
       case _ => new RedirectTo(where)
     }
@@ -885,6 +865,14 @@ object JsCmds {
         !LiftRules.excludePathFromContextPathRewriting.vend(where)) (S.contextPath + where) else where
 
     def toJsCmd = "window.location = " + S.encodeURL(where2).encJs + ";"
+  }
+
+
+  /**
+   * Reload the current page
+   */
+  case object Reload extends JsCmd {
+    def toJsCmd = "window.location.reload();"
   }
 
 

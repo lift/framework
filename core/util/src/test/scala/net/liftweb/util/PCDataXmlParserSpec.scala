@@ -17,13 +17,14 @@
 package net.liftweb
 package util
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for PCDataXmlParser.
  */
-object PCDataXmlParserSpec extends Specification("PCDataXmlParser Specification") {
+object PCDataXmlParserSpec extends Specification  {
+  "PCDataXmlParser Specification".title
 val data1 = """
 
 

@@ -27,7 +27,7 @@ package common
  *
  * @see http://blogs.oracle.com/security/entry/security_alert_for_cve-2010-44
  */
-@deprecated("Use a newer or patched JVM instead.")
+@deprecated("Use a newer or patched JVM instead.", "2.5")
 object ParseDouble {
   private val BrokenDouble = BigDecimal("2.2250738585072012e-308")
 

@@ -35,10 +35,10 @@ abstract class MappedUniqueId[T<:Mapper[T]](override val fieldOwner: T, override
   * A field that holds the birth year for the user
   */
 abstract class MappedBirthYear[T <: Mapper[T]](owner: T, minAge: Int) extends MappedInt[T](owner) {
-  override def defaultValue = year(timeNow) - minAge
+  override def defaultValue = year(now) - minAge
 
   override def _toForm: Box[NodeSeq] = {
-    val end = (year(timeNow) - minAge)
+    val end = (year(now) - minAge)
     val start = end - 100
     Full(SHtml.selectObj((start to end).
 		  toList.
@@ -59,7 +59,7 @@ object Genders extends Enumeration {
 
   class I18NGender(id : Int, name: String) extends Val(id, name) {
     override def toString = {
-      S.??(name)
+      S.?(name)
     }
   }
 }

@@ -28,37 +28,7 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConversions._
 
 import util.{ControlHelpers,Props,SimpleInjector,ThreadGlobal}
-import common.{Box,Empty,Full,Loggable}
-
-/**
- * A simple extension to LDAPVendor to provide configuration
- * methods. The class, parameters* methods and variable are now
- * deprecated in favor of the configure methods on LDAPVendor.
- * See LDAPVendor for more details.
- *
- * @see LDAPVendor
- */
-@deprecated("Instantiate directly from LDAPVendor")
-object SimpleLDAPVendor extends LDAPVendor {
-  @deprecated("Use the configure(filename : String) method")
-  def parametersFromFile(filename: String) : Map[String, String] = {
-    val input = new FileInputStream(filename)
-    val params = parametersFromStream(input)
-    input.close()
-    params
-  }
-
-  @deprecated("Use the configure(stream : InputStream method")
-  def parametersFromStream(stream: InputStream) : Map[String, String] = {
-    val p = new Properties()
-    p.load(stream)
-    
-    propertiesToMap(p)
-  }
-
-  @deprecated("Use the configure() method")
-  def setupFromBoot = configure()
-}
+import common._
 
 /**
  * This class provides functionality to allow us to search and
@@ -126,19 +96,7 @@ class LDAPVendor extends Loggable with SimpleInjector {
   final val DEFAULT_RETRY_INTERVAL = 5000
   final val DEFAULT_MAX_RETRIES = 6
 
-  // =========== Configuration ===========
-  @deprecated("Use the configure(...) methods")
-  def parameters : () => Map[String,String] =
-    if (internal_config.isEmpty) {
-      () => null
-    } else {
-      () => internal_config
-    }
 
-  @deprecated("Use the configure(...) methods")
-  def parameters_= (newParams : () => Map[String,String]) {
-    internal_config = processConfig(newParams())
-  }
 
   /**
    * Configure straight from the Props object. This allows
@@ -393,12 +351,13 @@ class LDAPVendor extends Loggable with SimpleInjector {
         context = (currentInitialContext.box, testLookup.vend) match {
           // If we don't want to test an existing context, just return it
           case (Full(ctxt), Empty) => Full(ctxt)
+          case (Full(ctxt), Failure(_,_,_)) => Full(ctxt)
           case (Full(ctxt), Full(test)) => {
             logger.debug("Testing InitialContext prior to returning")
             ctxt.lookup(test)
             Full(ctxt)
           }
-          case (Empty,_) => {
+          case (Empty | Failure(_,_,_) ,_) => {
             // We'll just allocate a new InitialContext to the thread
             currentInitialContext(openInitialContext())
 
@@ -425,7 +384,7 @@ class LDAPVendor extends Loggable with SimpleInjector {
     // We have a final check on the context before returning
     context match {
       case Full(ctxt) => ctxt
-      case Empty => throw new CommunicationException("Failed to connect to '%s' after %d attempts".
+      case Empty | Failure(_,_,_) => throw new CommunicationException("Failed to connect to '%s' after %d attempts".
                                                      format(ldapUrl.vend, attempts))
     }
   }

@@ -20,13 +20,13 @@ import javax.servlet.http.HttpServletRequest
 
 import scala.xml.NodeSeq
 
-import org.specs._
+import org.specs2.mutable._
+import org.specs2.execute.Result
 
 import common.{Box,Empty,Full}
 import http._
-import json.JsonAST._
+import net.liftweb.json.JsonAST._
 import mocks.MockHttpServletRequest
-import specification.Example
 
 
 /**
@@ -191,11 +191,8 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification {
     def this (description : String, url : String, session : Box[LiftSession], contextPath : String) =
       this(description, new MockHttpServletRequest(url, contextPath), session)
 
-    def in [T](expectations : => T)(implicit m : scala.reflect.ClassManifest[T]) = {
-      val example = exampleContainer.createExample(description)
-      if (sequential) example.setSequential()
-
-      example.in {
+    def in(expectations : => Result) =
+      exampleFactory newExample(description, {
         LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
           MockWeb.useLiftRules.doWith(true) {
             MockWeb.testS(req, session) {
@@ -203,8 +200,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification {
             }
           }
         }
-      }(m)
-    }
+      })
   }
 
   /**
@@ -216,18 +212,14 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification {
     def this (description : String, url : String, contextPath : String) =
       this(description, new MockHttpServletRequest(url, contextPath))
 
-    def in [T](expectations : Req => T)(implicit m : scala.reflect.ClassManifest[T]) = {
-      val example = exampleContainer.createExample(description)
-      if (sequential) example.setSequential()
-
-      example.in {
+    def in(expectations : Req => Result) =
+      exampleFactory newExample(description, {
         LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
           MockWeb.useLiftRules.doWith(true) {
             MockWeb.testReq(req)(expectations)
           }
         }
-      }(m)
-    }
+      })
   }
 
   /**
@@ -240,23 +232,19 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification {
     def this (description : String, url : String, session : Box[LiftSession], contextPath : String) =
       this(description, new MockHttpServletRequest(url, contextPath), session)
 
-    def in [T](expectations : Box[NodeSeq] => T)(implicit m : scala.reflect.ClassManifest[T]) = {
-      val example = exampleContainer.createExample(description)
-      if (sequential) example.setSequential()
-
-      example.in {
+    def in(expectations : Box[NodeSeq] => Result) =
+      exampleFactory.newExample(description, {
         LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
           MockWeb.useLiftRules.doWith(true) {
             MockWeb.testS(req, session) {
               S.request match {
                 case Full(sReq) => expectations(S.runTemplate(sReq.path.partPath))
-                case other => fail("Error: withTemplateFor call did not result in " +
+                case other => failure("Error: withTemplateFor call did not result in " +
                   "request initialization (S.request = " + other + ")")
               }
             }
           }
         }
-      }(m)
-    }
+      })
   }
 }

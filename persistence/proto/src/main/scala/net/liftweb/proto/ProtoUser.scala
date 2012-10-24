@@ -326,12 +326,12 @@ trait ProtoUser {
   /**
    * A Menu.LocParam to test if the user is logged in
    */
-  lazy val testLogginIn = If(loggedIn_? _, S.??("must.be.logged.in")) ;
+  lazy val testLogginIn = If(loggedIn_? _, S.?("must.be.logged.in")) ;
 
   /**
    * A Menu.LocParam to test if the user is a super user
    */
-  lazy val testSuperUser = If(superUser_? _, S.??("must.be.super.user"))
+  lazy val testSuperUser = If(superUser_? _, S.?("must.be.super.user"))
 
   /**
    * A Menu.LocParam for testing if the user is logged in and if they're not,
@@ -358,7 +358,7 @@ trait ProtoUser {
    * The menu item for login (make this "Empty" to disable)
    */
   def loginMenuLoc: Box[Menu] =
-    Full(Menu(Loc("Login" + menuNameSuffix, loginPath, S.??("login"), loginMenuLocParams ::: globalUserLocParams)))
+    Full(Menu(Loc("Login" + menuNameSuffix, loginPath, S.?("login"), loginMenuLocParams ::: globalUserLocParams)))
 
 
   /**
@@ -372,7 +372,7 @@ trait ProtoUser {
    * Overwrite in order to add custom LocParams. Attention: Not calling super will change the default behavior!
    */
   protected def loginMenuLocParams: List[LocParam[Unit]] =
-    If(notLoggedIn_? _, S.??("already.logged.in")) ::
+    If(notLoggedIn_? _, S.?("already.logged.in")) ::
     Template(() => wrapIt(login)) ::
     Nil
 
@@ -386,7 +386,7 @@ trait ProtoUser {
    * The menu item for logout (make this "Empty" to disable)
    */
   def logoutMenuLoc: Box[Menu] =
-    Full(Menu(Loc("Logout" + menuNameSuffix, logoutPath, S.??("logout"), logoutMenuLocParams ::: globalUserLocParams)))
+    Full(Menu(Loc("Logout" + menuNameSuffix, logoutPath, S.?("logout"), logoutMenuLocParams ::: globalUserLocParams)))
 
   /**
    * The LocParams for the menu item for logout.
@@ -401,7 +401,7 @@ trait ProtoUser {
    * The menu item for creating the user/sign up (make this "Empty" to disable)
    */
   def createUserMenuLoc: Box[Menu] =
-    Full(Menu(Loc("CreateUser" + menuNameSuffix, signUpPath, S.??("sign.up"), createUserMenuLocParams ::: globalUserLocParams)))
+    Full(Menu(Loc("CreateUser" + menuNameSuffix, signUpPath, S.?("sign.up"), createUserMenuLocParams ::: globalUserLocParams)))
 
   /**
    * The LocParams for the menu item for creating the user/sign up.
@@ -409,14 +409,14 @@ trait ProtoUser {
    */
   protected def createUserMenuLocParams: List[LocParam[Unit]] =
     Template(() => wrapIt(signupFunc.map(_()) openOr signup)) ::
-    If(notLoggedIn_? _, S.??("logout.first")) ::
+    If(notLoggedIn_? _, S.?("logout.first")) ::
     Nil
 
   /**
    * The menu item for lost password (make this "Empty" to disable)
    */
   def lostPasswordMenuLoc: Box[Menu] =
-    Full(Menu(Loc("LostPassword" + menuNameSuffix, lostPasswordPath, S.??("lost.password"), lostPasswordMenuLocParams ::: globalUserLocParams))) // not logged in
+    Full(Menu(Loc("LostPassword" + menuNameSuffix, lostPasswordPath, S.?("lost.password"), lostPasswordMenuLocParams ::: globalUserLocParams))) // not logged in
 
   /**
    * The LocParams for the menu item for lost password.
@@ -424,14 +424,14 @@ trait ProtoUser {
    */
   protected def lostPasswordMenuLocParams: List[LocParam[Unit]] =
     Template(() => wrapIt(lostPassword)) ::
-    If(notLoggedIn_? _, S.??("logout.first")) ::
+    If(notLoggedIn_? _, S.?("logout.first")) ::
     Nil
 
   /**
    * The menu item for resetting the password (make this "Empty" to disable)
    */
   def resetPasswordMenuLoc: Box[Menu] =
-    Full(Menu(Loc("ResetPassword" + menuNameSuffix, (passwordResetPath, true), S.??("reset.password"), resetPasswordMenuLocParams ::: globalUserLocParams))) //not Logged in
+    Full(Menu(Loc("ResetPassword" + menuNameSuffix, (passwordResetPath, true), S.?("reset.password"), resetPasswordMenuLocParams ::: globalUserLocParams))) //not Logged in
 
   /**
    * The LocParams for the menu item for resetting the password.
@@ -440,14 +440,14 @@ trait ProtoUser {
   protected def resetPasswordMenuLocParams: List[LocParam[Unit]] =
     Hidden ::
     Template(() => wrapIt(passwordReset(snarfLastItem))) ::
-    If(notLoggedIn_? _, S.??("logout.first")) ::
+    If(notLoggedIn_? _, S.?("logout.first")) ::
     Nil
 
   /**
    * The menu item for editing the user (make this "Empty" to disable)
    */
   def editUserMenuLoc: Box[Menu] =
-    Full(Menu(Loc("EditUser" + menuNameSuffix, editPath, S.??("edit.user"), editUserMenuLocParams ::: globalUserLocParams)))
+    Full(Menu(Loc("EditUser" + menuNameSuffix, editPath, S.?("edit.user"), editUserMenuLocParams ::: globalUserLocParams)))
 
   /**
    * The LocParams for the menu item for editing the user.
@@ -462,7 +462,7 @@ trait ProtoUser {
    * The menu item for changing password (make this "Empty" to disable)
    */
   def changePasswordMenuLoc: Box[Menu] =
-    Full(Menu(Loc("ChangePassword" + menuNameSuffix, changePasswordPath, S.??("change.password"), changePasswordMenuLocParams ::: globalUserLocParams)))
+    Full(Menu(Loc("ChangePassword" + menuNameSuffix, changePasswordPath, S.?("change.password"), changePasswordMenuLocParams ::: globalUserLocParams)))
 
   /**
    * The LocParams for the menu item for changing password.
@@ -477,7 +477,7 @@ trait ProtoUser {
    * The menu item for validating a user (make this "Empty" to disable)
    */
   def validateUserMenuLoc: Box[Menu] =
-    Full(Menu(Loc("ValidateUser" + menuNameSuffix, (validateUserPath, true), S.??("validate.user"), validateUserMenuLocParams ::: globalUserLocParams)))
+    Full(Menu(Loc("ValidateUser" + menuNameSuffix, (validateUserPath, true), S.?("validate.user"), validateUserMenuLocParams ::: globalUserLocParams)))
 
   /**
    * The LocParams for the menu item for validating a user.
@@ -486,7 +486,7 @@ trait ProtoUser {
   protected def validateUserMenuLocParams: List[LocParam[Unit]] =
     Hidden ::
     Template(() => wrapIt(validateUser(snarfLastItem))) ::
-    If(notLoggedIn_? _, S.??("logout.first")) ::
+    If(notLoggedIn_? _, S.?("logout.first")) ::
     Nil
 
   /**
@@ -527,10 +527,10 @@ trait ProtoUser {
   }(SiteMap.addMenusAtEndMutator(sitemap))
 
   lazy val sitemap: List[Menu] =
-  List(loginMenuLoc, logoutMenuLoc, createUserMenuLoc,
+  List(loginMenuLoc, createUserMenuLoc,
        lostPasswordMenuLoc, resetPasswordMenuLoc,
        editUserMenuLoc, changePasswordMenuLoc,
-       validateUserMenuLoc).flatten(a => a)
+       validateUserMenuLoc, logoutMenuLoc).flatten(a => a)
 
 
   def skipEmailValidation = false
@@ -546,13 +546,13 @@ trait ProtoUser {
   (for (r <- S.request) yield r.path.wholePath.last) openOr ""
 
   lazy val ItemList: List[MenuItem] =
-  List(MenuItem(S.??("sign.up"), signUpPath, false),
-       MenuItem(S.??("log.in"), loginPath, false),
-       MenuItem(S.??("lost.password"), lostPasswordPath, false),
+  List(MenuItem(S.?("sign.up"), signUpPath, false),
+       MenuItem(S.?("log.in"), loginPath, false),
+       MenuItem(S.?("lost.password"), lostPasswordPath, false),
        MenuItem("", passwordResetPath, false),
-       MenuItem(S.??("change.password"), changePasswordPath, true),
-       MenuItem(S.??("log.out"), logoutPath, true),
-       MenuItem(S.??("edit.profile"), editPath, true),
+       MenuItem(S.?("change.password"), changePasswordPath, true),
+       MenuItem(S.?("log.out"), logoutPath, true),
+       MenuItem(S.?("edit.profile"), editPath, true),
        MenuItem("", validateUserPath, false))
 
   var onLogIn: List[TheUserType => Unit] = Nil
@@ -605,6 +605,18 @@ trait ProtoUser {
     S.session.foreach(_.destroySession())
   }
 
+  /**
+   * There may be times when you want to be another user
+   * for some stack frames.  Here's how to do it.
+   */
+  def doWithUser[T](u: Box[TheUserType])(f: => T): T =
+    curUserId.doWith(u.map(_.userIdAsString)) {
+      curUser.doWith(u) {
+        f
+      }
+    }
+
+
   private object curUserId extends SessionVar[Box[String]](Empty) {
     override lazy val __nameSalt = Helpers.nextFuncName
   }
@@ -626,7 +638,7 @@ trait ProtoUser {
 
   def signupXhtml(user: TheUserType) = {
     (<form method="post" action={S.uri}><table><tr><td
-              colspan="2">{ S.??("sign.up") }</td></tr>
+              colspan="2">{ S.?("sign.up") }</td></tr>
           {localForm(user, false, signupFields)}
           <tr><td>&nbsp;</td><td><user:submit/></td></tr>
                                         </table></form>)
@@ -636,23 +648,23 @@ trait ProtoUser {
   def signupMailBody(user: TheUserType, validationLink: String): Elem = {
     (<html>
         <head>
-          <title>{S.??("sign.up.confirmation")}</title>
+          <title>{S.?("sign.up.confirmation")}</title>
         </head>
         <body>
-          <p>{S.??("dear")} {user.getFirstName},
+          <p>{S.?("dear")} {user.getFirstName},
             <br/>
             <br/>
-            {S.??("sign.up.validation.link")}
+            {S.?("sign.up.validation.link")}
             <br/><a href={validationLink}>{validationLink}</a>
             <br/>
             <br/>
-            {S.??("thank.you")}
+            {S.?("thank.you")}
           </p>
         </body>
      </html>)
   }
 
-  def signupMailSubject = S.??("sign.up.confirmation")
+  def signupMailSubject = S.?("sign.up.confirmation")
 
   /**
    * Send validation email to the user.  The XHTML version of the mail
@@ -696,11 +708,11 @@ trait ProtoUser {
     theUser.save
     if (!skipEmailValidation) {
       sendValidationEmail(theUser)
-      S.notice(S.??("sign.up.message"))
+      S.notice(S.?("sign.up.message"))
       func()
     } else {
       logUserIn(theUser, () => {      
-        S.notice(S.??("welcome"))
+        S.notice(S.?("welcome"))
         func()
       })
     }
@@ -742,9 +754,13 @@ trait ProtoUser {
 
     def innerSignup = bind("user",
                            signupXhtml(theUser),
-                           "submit" -> SHtml.submit(S.??("sign.up"), testSignup _))
+                           "submit" -> signupSubmitButton(S.?("sign.up"), testSignup _))
 
     innerSignup
+  }
+
+  def signupSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
+    standardSubmitButton(name, func)
   }
 
   def emailFrom = "noreply@"+S.hostName
@@ -762,32 +778,32 @@ trait ProtoUser {
     case Full(user) if !user.validated_? =>
       user.setValidated(true).resetUniqueId().save
       logUserIn(user, () => {
-        S.notice(S.??("account.validated"))
+        S.notice(S.?("account.validated"))
         S.redirectTo(homePage)
       })
 
-    case _ => S.error(S.??("invalid.validation.link")); S.redirectTo(homePage)
+    case _ => S.error(S.?("invalid.validation.link")); S.redirectTo(homePage)
   }
 
   /**
    * How do we prompt the user for the username.  By default,
-   * it's S.??("email.address"), you can can change it to something else
+   * it's S.?("email.address"), you can can change it to something else
    */
-  def userNameFieldString: String = S.??("email.address")
+  def userNameFieldString: String = S.?("email.address")
 
   /**
    * The string that's generated when the user name is not found.  By
-   * default: S.??("email.address.not.found")
+   * default: S.?("email.address.not.found")
    */
-  def userNameNotFoundString: String = S.??("email.address.not.found")
+  def userNameNotFoundString: String = S.?("email.address.not.found")
 
   def loginXhtml = {
     (<form method="post" action={S.uri}><table><tr><td
-              colspan="2">{S.??("log.in")}</td></tr>
+              colspan="2">{S.?("log.in")}</td></tr>
           <tr><td>{userNameFieldString}</td><td><user:email /></td></tr>
-          <tr><td>{S.??("password")}</td><td><user:password /></td></tr>
+          <tr><td>{S.?("password")}</td><td><user:password /></td></tr>
           <tr><td><a href={lostPasswordPath.mkString("/", "/", "")}
-                >{S.??("recover.password")}</a></td><td><user:submit /></td></tr></table>
+                >{S.?("recover.password")}</a></td><td><user:submit /></td></tr></table>
      </form>)
   }
   
@@ -833,7 +849,7 @@ trait ProtoUser {
             }
 
             logUserIn(user, () => {
-              S.notice(S.??("logged.in"))
+              S.notice(S.?("logged.in"))
 
               preLoginState()
 
@@ -842,22 +858,30 @@ trait ProtoUser {
           }
 
         case Full(user) if !user.validated_? =>
-          S.error(S.??("account.validation.error"))
+          S.error(S.?("account.validation.error"))
 
-        case _ => S.error(S.??("invalid.credentials"))
+        case _ => S.error(S.?("invalid.credentials"))
       }
     }
 
     bind("user", loginXhtml,
          "email" -> (FocusOnLoad(<input type="text" name="username"/>)),
          "password" -> (<input type="password" name="password"/>),
-         "submit" -> (<input type="submit" value={S.??("log.in")}/>))
+         "submit" -> loginSubmitButton(S.?("log.in")))
+  }
+
+  def loginSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
+    standardSubmitButton(name, func)
+  }
+
+  def standardSubmitButton(name: String,  func: () => Any = () => {}) = {
+    SHtml.submit(name, func)
   }
 
   def lostPasswordXhtml = {
     (<form method="post" action={S.uri}>
         <table><tr><td
-              colspan="2">{S.??("enter.email")}</td></tr>
+              colspan="2">{S.?("enter.email")}</td></tr>
           <tr><td>{userNameFieldString}</td><td><user:email /></td></tr>
           <tr><td>&nbsp;</td><td><user:submit /></td></tr>
         </table>
@@ -867,17 +891,17 @@ trait ProtoUser {
   def passwordResetMailBody(user: TheUserType, resetLink: String): Elem = {
     (<html>
         <head>
-          <title>{S.??("reset.password.confirmation")}</title>
+          <title>{S.?("reset.password.confirmation")}</title>
         </head>
         <body>
-          <p>{S.??("dear")} {user.getFirstName},
+          <p>{S.?("dear")} {user.getFirstName},
             <br/>
             <br/>
-            {S.??("click.reset.link")}
+            {S.?("click.reset.link")}
             <br/><a href={resetLink}>{resetLink}</a>
             <br/>
             <br/>
-            {S.??("thank.you")}
+            {S.?("thank.you")}
           </p>
         </body>
      </html>)
@@ -895,7 +919,7 @@ trait ProtoUser {
     List(xmlToMailBodyType(passwordResetMailBody(user, resetLink)))
 
 
-  def passwordResetEmailSubject = S.??("reset.password.request")
+  def passwordResetEmailSubject = S.?("reset.password.request")
 
   /**
    * Send password reset email to the user.  The XHTML version of the mail
@@ -917,12 +941,12 @@ trait ProtoUser {
                          generateResetEmailBodies(user, resetLink) :::
                          (bccEmail.toList.map(BCC(_)))) :_*)
 
-        S.notice(S.??("password.reset.email.sent"))
+        S.notice(S.?("password.reset.email.sent"))
         S.redirectTo(homePage)
 
       case Full(user) =>
         sendValidationEmail(user)
-        S.notice(S.??("account.validation.resent"))
+        S.notice(S.?("account.validation.resent"))
         S.redirectTo(homePage)
 
       case _ => S.error(userNameNotFoundString)
@@ -932,14 +956,18 @@ trait ProtoUser {
   def lostPassword = {
     bind("user", lostPasswordXhtml,
          "email" -> SHtml.text("", sendPasswordReset _),
-         "submit" -> <input type="submit" value={S.??("send.it")} />)
+         "submit" -> lostPasswordSubmitButton(S.?("send.it")))
+  }
+
+  def lostPasswordSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
+    standardSubmitButton(name, func)
   }
 
   def passwordResetXhtml = {
     (<form method="post" action={S.uri}>
-        <table><tr><td colspan="2">{S.??("reset.your.password")}</td></tr>
-          <tr><td>{S.??("enter.your.new.password")}</td><td><user:pwd/></td></tr>
-          <tr><td>{S.??("repeat.your.new.password")}</td><td><user:pwd/></td></tr>
+        <table><tr><td colspan="2">{S.?("reset.your.password")}</td></tr>
+          <tr><td>{S.?("enter.your.new.password")}</td><td><user:pwd/></td></tr>
+          <tr><td>{S.?("repeat.your.new.password")}</td><td><user:pwd/></td></tr>
           <tr><td>&nbsp;</td><td><user:submit/></td></tr>
         </table>
      </form>)
@@ -950,28 +978,30 @@ trait ProtoUser {
     case Full(user) =>
       def finishSet() {
         user.validate match {
-          case Nil => S.notice(S.??("password.changed"))
-            user.save
+          case Nil => S.notice(S.?("password.changed"))
+            user.resetUniqueId().save
             logUserIn(user, () => S.redirectTo(homePage))
 
           case xs => S.error(xs)
         }
       }
-      user.resetUniqueId().save
-
       bind("user", passwordResetXhtml,
            "pwd" -> SHtml.password_*("",(p: List[String]) =>
           user.setPasswordFromListString(p)),
-           "submit" -> SHtml.submit(S.??("set.password"), finishSet _))
-    case _ => S.error(S.??("password.link.invalid")); S.redirectTo(homePage)
+           "submit" -> resetPasswordSubmitButton(S.?("set.password"), finishSet _))
+    case _ => S.error(S.?("password.link.invalid")); S.redirectTo(homePage)
+  }
+
+  def resetPasswordSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
+    standardSubmitButton(name, func)
   }
 
   def changePasswordXhtml = {
     (<form method="post" action={S.uri}>
-        <table><tr><td colspan="2">{S.??("change.password")}</td></tr>
-          <tr><td>{S.??("old.password")}</td><td><user:old_pwd /></td></tr>
-          <tr><td>{S.??("new.password")}</td><td><user:new_pwd /></td></tr>
-          <tr><td>{S.??("repeat.password")}</td><td><user:new_pwd /></td></tr>
+        <table><tr><td colspan="2">{S.?("change.password")}</td></tr>
+          <tr><td>{S.?("old.password")}</td><td><user:old_pwd /></td></tr>
+          <tr><td>{S.?("new.password")}</td><td><user:new_pwd /></td></tr>
+          <tr><td>{S.?("repeat.password")}</td><td><user:new_pwd /></td></tr>
           <tr><td>&nbsp;</td><td><user:submit /></td></tr>
         </table>
      </form>)
@@ -983,11 +1013,11 @@ trait ProtoUser {
     var newPassword: List[String] = Nil
 
     def testAndSet() {
-      if (!user.testPassword(Full(oldPassword))) S.error(S.??("wrong.old.password"))
+      if (!user.testPassword(Full(oldPassword))) S.error(S.?("wrong.old.password"))
       else {
         user.setPasswordFromListString(newPassword)
         user.validate match {
-          case Nil => user.save; S.notice(S.??("password.changed")); S.redirectTo(homePage)
+          case Nil => user.save; S.notice(S.?("password.changed")); S.redirectTo(homePage)
           case xs => S.error(xs)
         }
       }
@@ -996,12 +1026,16 @@ trait ProtoUser {
     bind("user", changePasswordXhtml,
          "old_pwd" -> SHtml.password("", s => oldPassword = s),
          "new_pwd" -> SHtml.password_*("", LFuncHolder(s => newPassword = s)),
-         "submit" -> SHtml.submit(S.??("change"), testAndSet _))
+         "submit" -> changePasswordSubmitButton(S.?("change"), testAndSet _))
+  }
+
+  def changePasswordSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
+    standardSubmitButton(name, func)
   }
 
   def editXhtml(user: TheUserType) = {
     (<form method="post" action={S.uri}>
-        <table><tr><td colspan="2">{S.??("edit")}</td></tr>
+        <table><tr><td colspan="2">{S.?("edit")}</td></tr>
           {localForm(user, true, editFields)}
           <tr><td>&nbsp;</td><td><user:submit/></td></tr>
         </table>
@@ -1034,7 +1068,7 @@ trait ProtoUser {
       theUser.validate match {
         case Nil =>
           theUser.save
-          S.notice(S.??("profile.updated"))
+          S.notice(S.?("profile.updated"))
           S.redirectTo(homePage)
 
         case xs => S.error(xs) ; editFunc(Full(innerEdit _))
@@ -1042,9 +1076,13 @@ trait ProtoUser {
     }
 
     def innerEdit = bind("user", editXhtml(theUser),
-                         "submit" -> SHtml.submit(S.??("edit"), testEdit _))
+                         "submit" -> editSubmitButton(S.?("save"), testEdit _))
 
     innerEdit
+  }
+
+  def editSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
+    standardSubmitButton(name, func)
   }
 
   def logout = {

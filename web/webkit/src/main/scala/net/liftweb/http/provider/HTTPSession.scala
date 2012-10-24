@@ -45,7 +45,7 @@ trait HTTPSession {
   def unlink(liftSession: LiftSession)
 
   /**
-   * @returns - the maximim interval in seconds between client request and the time when
+   * @return - the maximim interval in seconds between client request and the time when
    *            the session will be terminated
    *
    */

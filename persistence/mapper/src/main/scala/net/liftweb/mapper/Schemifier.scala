@@ -197,7 +197,7 @@ object Schemifier extends Loggable {
    * @param connection Database connection.
    * @param makeSql Factory for SQL command.
    *
-   * @returns SQL command.
+   * @return SQL command.
    */
   private def maybeWrite(performWrite: Boolean, logFunc: (=> AnyRef) => Unit, connection: SuperConnection) (makeSql: () => String) : String ={
     val ct = makeSql()

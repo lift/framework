@@ -17,8 +17,10 @@
 package net.liftweb
 package util
 
-import org.specs.{ScalaCheck, Specification}
+import org.specs2.mutable.Specification
+import org.specs2.ScalaCheck
 import org.scalacheck.Gen._
+import org.scalacheck.Prop.forAll
 
 import StringHelpers._
 
@@ -26,7 +28,8 @@ import StringHelpers._
 /**
  * Systems under specification for StringHelpers.
  */
-object StringHelpersSpec extends Specification("StringHelpers Specification") with ScalaCheck with StringGen {
+object StringHelpersSpec extends Specification with ScalaCheck with StringGen {
+  "StringHelpers Specification".title
 
   "The snakify function" should {
     "replace upper case with underscore" in {
@@ -63,8 +66,8 @@ object StringHelpersSpec extends Specification("StringHelpers Specification") wi
       def correspondingIndexInCamelCase(name: String, i: Int) = i - underscoresNumber(name, i)
       def correspondingCharInCamelCase(name: String, i: Int): Char = camelify(name).charAt(correspondingIndexInCamelCase(name, i))
 
-      val doesntContainUnderscores = forAllProp(underscoredStrings)((name: String) => !camelify(name).contains("_"))
-      val isCamelCased = forAllProp(underscoredStrings) ((name: String) => {
+      val doesntContainUnderscores = forAll(underscoredStrings){ ((name: String) => !camelify(name).contains("_")) }
+      val isCamelCased = forAll(underscoredStrings) ((name: String) => {
         name.forall(_ == '_') && camelify(name).isEmpty ||
         name.toList.zipWithIndex.forall { case (c, i) =>
           c == '_' ||
@@ -73,25 +76,25 @@ object StringHelpersSpec extends Specification("StringHelpers Specification") wi
           previousCharacterIsUnderscore(name, i) && correspondingCharInCamelCase(name, i) == c.toUpper
        }
       })
-      doesntContainUnderscores && isCamelCased must pass
+      check(doesntContainUnderscores && isCamelCased)
     }
     "return an empty string if given null" in {
       camelify(null) must_== ""
     }
     "leave a CamelCased name untouched" in {
-      val camelCasedNameDoesntChange = forAllProp(camelCasedStrings){ (name: String) => camelify(name) == name }
-      camelCasedNameDoesntChange must pass
+      val camelCasedNameDoesntChange = forAll(camelCasedStrings){ (name: String) => camelify(name) == name }
+      check(camelCasedNameDoesntChange)
     }
   }
 
   "The camelifyMethod function" should {
     "camelCase a name with the first letter being lower cased" in {
-      val camelCasedMethodIsCamelCaseWithLowerCase = forAllProp(underscoredStrings){
+      val camelCasedMethodIsCamelCaseWithLowerCase = forAll(underscoredStrings){
         (name: String) =>
         camelify(name).isEmpty && camelifyMethod(name).isEmpty ||
         camelifyMethod(name).toList.head.isLower && camelify(name) == camelifyMethod(name).capitalize
       }
-      camelCasedMethodIsCamelCaseWithLowerCase must pass
+      check(camelCasedMethodIsCamelCaseWithLowerCase)
     }
   }
 
@@ -306,12 +309,27 @@ object StringHelpersSpec extends Specification("StringHelpers Specification") wi
       (null: String).commafy must beNull
     }
   }
-  "The emptyForNull method" should {
+  "The blankForNull method" should {
     "return the empty String for a given null String" in {
-      StringHelpers.emptyForNull(null) must_== ""
+      StringHelpers.blankForNull(null) must_== ""
     }
     "return the given String for a given not-null String" in {
-      StringHelpers.emptyForNull("x") must_== "x"
+      StringHelpers.blankForNull("x") must_== "x"
+    }
+  }
+  "The emptyForBlank method" should {
+    import net.liftweb.common._
+    "return Empty for a given null String" in {
+      StringHelpers.emptyForBlank(null) must_== Empty
+    }
+    "return Empty for a given a blank String" in {
+      StringHelpers.emptyForBlank("") must_== Empty
+    }
+    "return Empty for a String of spaces" in {
+      StringHelpers.emptyForBlank("  ") must_== Empty
+    }
+    "return the trim'ed  String for a given not-null String" in {
+      StringHelpers.emptyForBlank(" x ") must_== Full("x")
     }
   }
 }

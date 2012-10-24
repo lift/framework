@@ -25,12 +25,22 @@ import net.liftweb.common._
 
 object WithParamVar extends RequestVar[Map[String, NodeSeq]](Map.empty)
 
+/**
+ *  Evaluates the body and stores it in the WithParam RequestVar map.
+ *  This map is used in builtin.snippet.Surround to bind content to named sections.
+ *  Note that the WithParam snippet is also mapped to "bind-at"
+ */
 object WithParam extends DispatchSnippet {
 
   def dispatch : DispatchIt = {
     case _ => render _
   }
 
+  /**
+   *  Evaluates the body and stores it in the WithParam RequestVar map.
+   *  This map is used in builtin.snippet.Surround to bind content to named sections.
+   *  Note that the WithParam snippet is also mapped to "bind-at"
+   */
   def render(kids: NodeSeq) : NodeSeq = {
     (for {
       ctx <- S.session ?~ ("FIX"+"ME: Invalid session")

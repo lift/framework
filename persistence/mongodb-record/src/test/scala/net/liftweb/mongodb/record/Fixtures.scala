@@ -22,7 +22,9 @@ package fixtures
 import field._
 
 import common.{Box, Empty, Failure, Full}
-import json.ext.JsonBoxSerializer
+import json._
+import json.ext.{EnumSerializer, JsonBoxSerializer}
+import http.SHtml
 import util.FieldError
 
 import java.math.MathContext
@@ -30,6 +32,8 @@ import scala.xml.Text
 
 import net.liftweb.record._
 import net.liftweb.record.field._
+
+import org.bson.types.ObjectId
 
 object MyTestEnum extends Enumeration {
   val ONE = Value("ONE")
@@ -146,6 +150,8 @@ class FieldTypeTestRecord private () extends MongoRecord[FieldTypeTestRecord] wi
       this.mandatoryTimeZoneField.value == that.mandatoryTimeZoneField.value
     case _ => false
   }
+
+  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 
 object FieldTypeTestRecord extends FieldTypeTestRecord with MongoMetaRecord[FieldTypeTestRecord]
@@ -156,7 +162,7 @@ class BinaryFieldTestRecord extends MongoRecord[BinaryFieldTestRecord] with IntP
   object mandatoryBinaryField extends BinaryField(this) {
     // compare the elements of the Array
     override def equals(other: Any): Boolean = other match {
-      case that: BinaryField[Any] =>
+      case that: BinaryField[_] =>
         this.value.zip(that.value).filter(t => t._1 != t._2).length == 0
       case _ => false
     }
@@ -165,7 +171,7 @@ class BinaryFieldTestRecord extends MongoRecord[BinaryFieldTestRecord] with IntP
     override def optional_? = true
     // compare the elements of the Array
     override def equals(other: Any): Boolean = other match {
-      case that: BinaryField[Any] => (this.valueBox, that.valueBox) match {
+      case that: BinaryField[_] => (this.valueBox, that.valueBox) match {
         case (Empty, Empty) => true
         case (Full(a), Full(b)) =>
           a.zip(b).filter(t => t._1 != t._2).length == 0
@@ -177,7 +183,7 @@ class BinaryFieldTestRecord extends MongoRecord[BinaryFieldTestRecord] with IntP
   object optionalBinaryField extends OptionalBinaryField(this) {
     // compare the elements of the Array
     override def equals(other: Any): Boolean = other match {
-      case that: OptionalBinaryField[Any] => (this.valueBox, that.valueBox) match {
+      case that: OptionalBinaryField[_] => (this.valueBox, that.valueBox) match {
         case (Empty, Empty) => true
         case (Full(a), Full(b)) =>
           a.zip(b).filter(t => t._1 != t._2).length == 0
@@ -238,6 +244,10 @@ class MongoFieldTypeTestRecord private () extends MongoRecord[MongoFieldTypeTest
   object mandatoryUUIDField extends UUIDField(this)
   object legacyOptionalUUIDField extends UUIDField(this) { override def optional_? = true }
 
+  object mandatoryMongoCaseClassField extends MongoCaseClassField[MongoFieldTypeTestRecord, MongoCaseClassTestObject](this) {
+    override def formats = owner.meta.formats
+  }
+
   override def equals(other: Any): Boolean = other match {
     case that: MongoFieldTypeTestRecord =>
       this.id.value == that.id.value &&
@@ -246,13 +256,16 @@ class MongoFieldTypeTestRecord private () extends MongoRecord[MongoFieldTypeTest
       this.mandatoryObjectIdField.value == that.mandatoryObjectIdField.value &&
       this.mandatoryPatternField.value.pattern == that.mandatoryPatternField.value.pattern &&
       this.mandatoryPatternField.value.flags == that.mandatoryPatternField.value.flags &&
-      this.mandatoryUUIDField.value == that.mandatoryUUIDField.value
+      this.mandatoryUUIDField.value == that.mandatoryUUIDField.value &&
+      this.mandatoryMongoCaseClassField.value == that.mandatoryMongoCaseClassField.value
     case _ => false
   }
+
+  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 
 object MongoFieldTypeTestRecord extends MongoFieldTypeTestRecord with MongoMetaRecord[MongoFieldTypeTestRecord] {
-  override def formats = allFormats
+  override def formats = allFormats + new EnumSerializer(MyTestEnum)
 }
 
 class PasswordTestRecord private () extends MongoRecord[PasswordTestRecord] with ObjectIdPk[PasswordTestRecord] {
@@ -262,7 +275,7 @@ class PasswordTestRecord private () extends MongoRecord[PasswordTestRecord] with
 }
 object PasswordTestRecord extends PasswordTestRecord with MongoMetaRecord[PasswordTestRecord]
 
-case class MongoCaseClassTestObject(intField: Int, stringField: String)
+case class MongoCaseClassTestObject(intField: Int, stringField: String, enum: MyTestEnum.Value)
 
 class ListTestRecord private () extends MongoRecord[ListTestRecord] with UUIDPk[ListTestRecord] {
   def meta = ListTestRecord
@@ -276,7 +289,9 @@ class ListTestRecord private () extends MongoRecord[ListTestRecord] with UUIDPk[
   object mandatoryMongoJsonObjectListField extends MongoJsonObjectListField(this, TypeTestJsonObject)
   object legacyOptionalMongoJsonObjectListField extends MongoJsonObjectListField(this, TypeTestJsonObject) { override def optional_? = true }
 
-  object mongoCaseClassListField extends MongoCaseClassListField[ListTestRecord, MongoCaseClassTestObject](this)
+  object mongoCaseClassListField extends MongoCaseClassListField[ListTestRecord, MongoCaseClassTestObject](this) {
+    override def formats = owner.meta.formats
+  }
 
   // TODO: More List types
 
@@ -285,12 +300,15 @@ class ListTestRecord private () extends MongoRecord[ListTestRecord] with UUIDPk[
       this.id.value == that.id.value &&
       this.mandatoryStringListField.value == that.mandatoryStringListField.value &&
       this.mandatoryIntListField.value == that.mandatoryIntListField.value &&
-      this.mandatoryMongoJsonObjectListField.value == that.mandatoryMongoJsonObjectListField.value
+      this.mandatoryMongoJsonObjectListField.value == that.mandatoryMongoJsonObjectListField.value &&
+      this.mongoCaseClassListField.value == that.mongoCaseClassListField.value
     case _ => false
   }
+
+  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 object ListTestRecord extends ListTestRecord with MongoMetaRecord[ListTestRecord] {
-  override def formats = allFormats
+  override def formats = allFormats + new EnumSerializer(MyTestEnum)
 }
 
 class MapTestRecord private () extends MongoRecord[MapTestRecord] with StringPk[MapTestRecord] {
@@ -311,6 +329,8 @@ class MapTestRecord private () extends MongoRecord[MapTestRecord] with StringPk[
       this.mandatoryIntMapField.value == that.mandatoryIntMapField.value
     case _ => false
   }
+
+  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 object MapTestRecord extends MapTestRecord with MongoMetaRecord[MapTestRecord] {
   override def formats = allFormats
@@ -388,6 +408,7 @@ class SubRecordTestRecord private () extends MongoRecord[SubRecordTestRecord] wi
     case _ => false
   }
 
+  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 object SubRecordTestRecord extends SubRecordTestRecord with MongoMetaRecord[SubRecordTestRecord] {
   override def formats = allFormats
@@ -453,6 +474,12 @@ class RefFieldTestRecord private () extends MongoRecord[RefFieldTestRecord] with
   object mandatoryStringRefField extends StringRefField(this, MapTestRecord, 100)
   object mandatoryIntRefField extends IntRefField(this, NullTestRecord)
   object mandatoryLongRefField extends LongRefField(this, BoxTestRecord)
+
+  object mandatoryObjectIdRefListField extends ObjectIdRefListField(this, FieldTypeTestRecord)
+  object mandatoryUUIDRefListField extends UUIDRefListField(this, ListTestRecord)
+  object mandatoryStringRefListField extends StringRefListField(this, MapTestRecord)
+  object mandatoryIntRefListField extends IntRefListField(this, NullTestRecord)
+  object mandatoryLongRefListField extends LongRefListField(this, BoxTestRecord)
 }
 
 object RefFieldTestRecord extends RefFieldTestRecord with MongoMetaRecord[RefFieldTestRecord] {

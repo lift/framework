@@ -74,6 +74,16 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   def save: MyType = save(false)
 
   /**
+    * Update only the dirty fields
+    */
+  def update: MyType = {
+    runSafe {
+      meta.update(this)
+    }
+    this
+  }
+
+  /**
   * Delete the instance from backing store
   */
   def delete_! : Boolean = {

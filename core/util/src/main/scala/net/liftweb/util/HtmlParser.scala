@@ -39,7 +39,7 @@ trait Html5Writer {
     m match {
       case null => 
       case Null =>
-      case md if (null eq md.value) => // issue 807. Don't do empty
+      case md if (null eq md.value) => writeAttributes(md.next, writer)
       case up: UnprefixedAttribute => {
         writer.append(' ')
         writer.append(up.key)

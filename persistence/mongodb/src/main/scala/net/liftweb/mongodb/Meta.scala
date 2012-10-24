@@ -65,7 +65,7 @@ private[mongodb] object Meta {
       case x: java.lang.Byte => JInt(BigInt(x.asInstanceOf[Byte]))
       case x: java.lang.Boolean => JBool(x.asInstanceOf[Boolean])
       case x: java.lang.Short => JInt(BigInt(x.asInstanceOf[Short]))
-      case _ => error("not a primitive " + a.asInstanceOf[AnyRef].getClass)
+      case _ => sys.error("not a primitive " + a.asInstanceOf[AnyRef].getClass)
     }
 
     /*
@@ -100,8 +100,8 @@ private[mongodb] object Meta {
       case x: ObjectId => objectIdAsJValue(x, formats)
       case x: Pattern => patternAsJValue(x)
       case x: UUID => uuidAsJValue(x)
-      case x: DBRef => error("DBRefs are not supported.")
-      case _ => error("not a mongotype " + a.asInstanceOf[AnyRef].getClass)
+      case x: DBRef => sys.error("DBRefs are not supported.")
+      case _ => sys.error("not a mongotype " + a.asInstanceOf[AnyRef].getClass)
     }
   }
 

@@ -79,9 +79,8 @@ sealed trait BoxTrait {
   }
 
   /**
-   * Create a Box from the specified Option.
-   * @return a Box created from a Box. Full(x) if the Box is Full(x) and
-   * not null
+   * Create a Box from the specified Box, checking for null.
+   * @return Full(x) if in is Full(x) and x is not null
    * Empty otherwise
    */
   def apply[T](in: Box[T]) = in match {
@@ -107,7 +106,7 @@ sealed trait BoxTrait {
    * 
    * @return <code>Full(in)</code> if <code>in</code> is not null; Empty otherwise
    */
-  @deprecated("Use legacyNullTest")
+  @deprecated("Use legacyNullTest", "2.5")
   def apply[T](in: T): Box[T] = legacyNullTest(in)
 
   /**
@@ -193,8 +192,7 @@ sealed trait BoxTrait {
  *   <li> you can "pass" a Box to a function for side effects: <code>Full(1) $ { x: Box[Int] => println(x openOr 0) }</code></li>
  * </ul>
  */
-@serializable
-sealed abstract class Box[+A] extends Product {
+sealed abstract class Box[+A] extends Product with Serializable{
   self =>
   /**
    * Returns true if this Box contains no value (is Empty or Failure or ParamFailure)
@@ -209,17 +207,50 @@ sealed abstract class Box[+A] extends Product {
   def isDefined: Boolean = !isEmpty
 
   /**
+   * If you grew up on Java, you're used to Exceptions as part of your program logic.
+   * The Scala philosophy and the Lift philosophy is that exceptions are for exceptional
+   * conditions such as failure of an external resource (e.g., your database goes offline)
+   * rather than simply indicating that a parameter wasn't supplied or couldn't be parsed.
+   *
+   * Lift's Box and Scala's Option provide a mechanism for being explicit about a value
+   * existing or not existing rather than relying on a reference being not-null.  However,
+   * extracting a value from a Box should be done correctly.  Correctly can be (in order of use
+   * in David Pollak's code): a for comprehension; using map, flatMap or foreach; or using pattern matching.
+   *
+   * The only times when you should be using this method are: the value is guaranteed to be available based
+   * on a guard outside of the method using the Box or in tests.  For example,
+   * User.currentUser.openOrThrowException("This snippet is used on pages where the user is logged in")
+   *
+   * A valid justification for using this method should not be "I want my code to fail fast when I call it."
+   * Using exceptions in the core logic of your application should be strongly discouraged.
+   *
+   * This method replaces open_! because people used open_! and generally ignored the reason for the "!",
+   * so we're making it more explicit that this method should not commonly be used and should be justified
+   * when used.
+   *
+   * @param justification Justify why calling this method is okay and why it will not result in an Exception
+   *
+   * @return The contents of the Box if it has one or an exception if not
+   */
+  def openOrThrowException(justification: String): A
+
+  /**
    * Return the value contained in this Box if it is Full;
    * throw an exception otherwise.
+   *
+   * Using open_! in an example posted to the Lift mailing list
+   * may disqualify you for a helpful response.
+   *
    * The method has a '!' in its name.  This means "don't use it unless
    * you are 100% sure that the Box is Full and you should probably
-   * comment your code with the explanation of the guaranty.
+   * comment your code with the explanation of the guaranty."
    * The better case for extracting the value out of a Box can
    * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
    *
    * @return the value contained in this Box if it is full; throw an exception otherwise
    */
-  def open_! : A
+  @deprecated("use openOrThrowException, or better yet, do the right thing with your code and use map, flatMap or foreach", "2.4")
+  final def open_! : A = openOrThrowException("Legacy method implementation")
 
   /**
    * Return the value contained in this Box if it is Full;
@@ -232,7 +263,8 @@ sealed abstract class Box[+A] extends Product {
    *
    * @return the value contained in this Box if it is full; throw an exception otherwise
    */
-  def openTheBox: A = this.open_!
+  @deprecated("use openOrThrowException, or better yet, do the right thing with your code and use map, flatMap or foreach", "2.4")
+  final def openTheBox: A = openOrThrowException("Legacy method implementation")
 
   /**
    * Return the value contained in this Box if it is full; otherwise return the specified default
@@ -287,7 +319,7 @@ sealed abstract class Box[+A] extends Product {
    *
    * @param f the predicate used to test value.
    *
-   * @returns a Box
+   * @return a Box
    */
   def filterNot(f: A => Boolean): Box[A] = filter(a => !f(a))
 
@@ -302,12 +334,6 @@ sealed abstract class Box[+A] extends Product {
   * otherwise return Empty
    */
   def isA[B](cls: Class[B]): Box[B] = Empty
-
-  /**
-   * If the partial function is defined at the current Box's value
-   * apply the partial function.
-   */
-  def collect[B](pf: PartialFunction[A, B]): Box[B] 
 
   /**
    * Return a Full[B] if the contents of this Box is of type <code>B</code>, otherwise return Empty
@@ -354,7 +380,7 @@ sealed abstract class Box[+A] extends Product {
    * @param msg the failure message
    * @return a Failure with the message if this Box is Empty
    */
-  def ?~(msg: String): Box[A] = this
+  def ?~(msg: => String): Box[A] = this
 
   /**
    * Transform an Empty to a ParamFailure with the specified typesafe
@@ -362,12 +388,12 @@ sealed abstract class Box[+A] extends Product {
    * @param errorCode a value indicating the error
    * @return a ParamFailure with the specified value
    */
-  def ~>[T](errorCode: T): Box[A] = this
+  def ~>[T](errorCode: => T): Box[A] = this
 
   /**
    * Alias for ?~
    */
-  def failMsg(msg: String): Box[A] = ?~(msg)
+  def failMsg(msg: => String): Box[A] = ?~(msg)
 
   /**
    * Transform an EmptyBox to a Failure with the specified message and chain
@@ -375,12 +401,12 @@ sealed abstract class Box[+A] extends Product {
    * @param msg the failure message
    * @return a Failure with the message if this Box is an Empty Box. Chain the messages if it is already a Failure
    */
-  def ?~!(msg: String): Box[A] = ?~(msg)
+  def ?~!(msg: => String): Box[A] = ?~(msg)
 
   /**
    * Alias for ?~!
    */
-  def compoundFailMsg(msg: String): Box[A] = ?~!(msg)
+  def compoundFailMsg(msg: => String): Box[A] = ?~!(msg)
 
   /**
    * Filter this box on the specified predicate, returning a Failure with the specified
@@ -395,7 +421,7 @@ sealed abstract class Box[+A] extends Product {
    * This method calls the specified function with the value contained in this Box
    * @return the result of the function or a default value
    */
-  def run[T](in: T)(f: (T, A) => T) = in
+  def run[T](in: => T)(f: (T, A) => T) = in
 
   /**
    * Perform a side effect by passing this Box to the specified function
@@ -411,6 +437,15 @@ sealed abstract class Box[+A] extends Product {
 
   /**
    * Determines equality based upon the contents of this Box instead of the box itself.
+   * As a result, it is not symmetric. Which means that for
+   *
+   * <pre name="code" class="scala">
+   *     val foo = "foo"
+   *     val boxedFoo = Full(foo)
+   *     foo == boxedFoo //is false
+   *     boxedFoo == foo //is true
+   * </pre>
+   *
    * For Full and Empty, this has the expected behavior. Equality in terms of Failure
    * checks for equivalence of failure causes.
    */
@@ -454,29 +489,56 @@ sealed abstract class Box[+A] extends Product {
    * Fill with the Box's value
    */
   def toLeft[B](right: => B): Either[A, B] = Right(right)
+
+
+  /**
+   * If the partial function is defined at the current Box's value
+   * apply the partial function.
+   */
+  final def collect[B](pf: PartialFunction[A, B]): Box[B] = {
+    flatMap(value =>
+    if (pf.isDefinedAt(value)) Full(pf(value))
+    else Empty)
+  }
 }
 
 /**
  * Full is a Box containing a value.
  */
-@serializable
-final case class Full[+A](value: A) extends Box[A] {
+final case class Full[+A](value: A) extends Box[A]{
 
   def isEmpty: Boolean = false
 
-  
+
+
   /**
-   * Return the value contained in this Box if it is Full;
-   * throw an exception otherwise.
-   * The method has a '!' in its name.  This means "don't use it unless
-   * you are 100% sure that the Box is Full and you should probably
-   * comment your code with the explanation of the guaranty.
-   * The better case for extracting the value out of a Box can
-   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
+   * If you grew up on Java, you're used to Exceptions as part of your program logic.
+   * The Scala philosophy and the Lift philosophy is that exceptions are for exceptional
+   * conditions such as failure of an external resource (e.g., your database goes offline)
+   * rather than simply indicating that a parameter wasn't supplied or couldn't be parsed.
    *
-   * @return the value contained in this Box if it is full; throw an exception otherwise
+   * Lift's Box and Scala's Option provide a mechanism for being explicit about a value
+   * existing or not existing rather than relying on a reference being not-null.  However,
+   * extracting a value from a Box should be done correctly.  Correctly can be (in order of use
+   * in David Pollak's code): a for comprehension; using map, flatMap or foreach; or using pattern matching.
+   *
+   * The only times when you should be using this method are: the value is guaranteed to be available based
+   * on a guard outside of the method using the Box or in tests.  For example,
+   * User.currentUser.openOrThrowException("This snippet is used on pages where the user is logged in")
+   *
+   * A valid justification for using this method should not be "I want my code to fail fast when I call it."
+   * Using exceptions in the core logic of your application should be strongly discouraged.
+   *
+   * This method replaces open_! because people used open_! and generally ignored the reason for the "!",
+   * so we're making it more explicit that this method should not commonly be used and should be justified
+   * when used.
+   *
+   * @param justification Justify why calling this method is okay and why it will not result in an Exception
+   *
+   * @return The contents of the Box if it has one or an exception if not
    */
-  def open_! : A = value
+  def openOrThrowException(justification: String): A = value
+
 
   override def openOr[B >: A](default: => B): B = value
 
@@ -498,7 +560,7 @@ final case class Full[+A](value: A) extends Box[A] {
 
   override def toOption: Option[A] = Some(value)
 
-  override def run[T](in: T)(f: (T, A) => T) = f(in, value)
+  override def run[T](in: => T)(f: (T, A) => T) = f(in, value)
 
   /**
    * An <code>Either</code> that is a <code>Left</code> with the given argument
@@ -533,43 +595,51 @@ final case class Full[+A](value: A) extends Box[A] {
   override def ===[B >: A](to: B): Boolean = value == to
 
   override def dmap[B](dflt: => B)(f: A => B): B = f(value)
-
-  /**
-   * If the partial function is defined at the current Box's value
-   * apply the partial function.
-   */
-  final def collect[B](pf: PartialFunction[A, B]): Box[B] = {
-    if (pf.isDefinedAt(value)) Full(pf(value))
-    else Empty
-  }
 }
 
 /**
  * Singleton object representing an Empty Box
  */
-@serializable
 case object Empty extends EmptyBox
 
 /**
  * The EmptyBox is a Box containing no value.
  */
-@serializable
-sealed abstract class EmptyBox extends Box[Nothing] {
+sealed abstract class EmptyBox extends Box[Nothing] with Serializable {
 
   def isEmpty: Boolean = true
 
+
   /**
-   * Return the value contained in this Box if it is Full;
-   * throw an exception otherwise.
-   * The method has a '!' in its name.  This means "don't use it unless
-   * you are 100% sure that the Box is Full and you should probably
-   * comment your code with the explanation of the guaranty.
-   * The better case for extracting the value out of a Box can
-   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
+   * If you grew up on Java, you're used to Exceptions as part of your program logic.
+   * The Scala philosophy and the Lift philosophy is that exceptions are for exceptional
+   * conditions such as failure of an external resource (e.g., your database goes offline)
+   * rather than simply indicating that a parameter wasn't supplied or couldn't be parsed.
    *
-   * @return the value contained in this Box if it is full; throw an exception otherwise
+   * Lift's Box and Scala's Option provide a mechanism for being explicit about a value
+   * existing or not existing rather than relying on a reference being not-null.  However,
+   * extracting a value from a Box should be done correctly.  Correctly can be (in order of use
+   * in David Pollak's code): a for comprehension; using map, flatMap or foreach; or using pattern matching.
+   *
+   * The only times when you should be using this method are: the value is guaranteed to be available based
+   * on a guard outside of the method using the Box or in tests.  For example,
+   * User.currentUser.openOrThrowException("This snippet is used on pages where the user is logged in")
+   *
+   * A valid justification for using this method should not be "I want my code to fail fast when I call it."
+   * Using exceptions in the core logic of your application should be strongly discouraged.
+   *
+   * This method replaces open_! because people used open_! and generally ignored the reason for the "!",
+   * so we're making it more explicit that this method should not commonly be used and should be justified
+   * when used.
+   *
+   * @param justification Justify why calling this method is okay and why it will not result in an Exception
+   *
+   * @return The contents of the Box if it has one or an exception if not
    */
-  def open_!  = throw new NullPointerException("Trying to open an empty Box")
+  def openOrThrowException(justification: String) =
+  throw new NullPointerException("An Empty Box was opened.  The justification for allowing the openOrThrowException was "+justification)
+
+
 
   override def openOr[B >: Nothing](default: => B): B = default
 
@@ -577,19 +647,12 @@ sealed abstract class EmptyBox extends Box[Nothing] {
 
   override def filter(p: Nothing => Boolean): Box[Nothing] = this
 
-  override def ?~(msg: String): Failure = Failure(msg, Empty, Empty)
+  override def ?~(msg: => String): Failure = Failure(msg, Empty, Empty)
 
-  override def ?~!(msg: String): Failure = Failure(msg, Empty, Empty)
+  override def ?~!(msg: => String): Failure = Failure(msg, Empty, Empty)
 
-  override def ~>[T](errorCode: T): ParamFailure[T] = 
+  override def ~>[T](errorCode: => T): ParamFailure[T] =
     ParamFailure("", Empty, Empty, errorCode)
-
-
-  /**
-   * If the partial function is defined at the current Box's value
-   * apply the partial function.
-   */
-  final override def collect[B](pf: PartialFunction[Nothing, B]): Box[B] = this
 }
 
 /**
@@ -603,24 +666,41 @@ object Failure {
  * A Failure is an EmptyBox with an additional failure message explaining the reason for its being empty.
  * It can also optionally provide an exception or a chain of causes represented as a list of other Failure objects
  */
-@serializable
-sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Failure]) extends EmptyBox {
+sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Failure]) extends EmptyBox{
   type A = Nothing
 
+
   /**
-   * Return the value contained in this Box if it is Full;
-   * throw an exception otherwise.
-   * The method has a '!' in its name.  This means "don't use it unless
-   * you are 100% sure that the Box is Full and you should probably
-   * comment your code with the explanation of the guaranty.
-   * The better case for extracting the value out of a Box can
-   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
+   * If you grew up on Java, you're used to Exceptions as part of your program logic.
+   * The Scala philosophy and the Lift philosophy is that exceptions are for exceptional
+   * conditions such as failure of an external resource (e.g., your database goes offline)
+   * rather than simply indicating that a parameter wasn't supplied or couldn't be parsed.
    *
-   * @return the value contained in this Box if it is full; throw an exception otherwise
+   * Lift's Box and Scala's Option provide a mechanism for being explicit about a value
+   * existing or not existing rather than relying on a reference being not-null.  However,
+   * extracting a value from a Box should be done correctly.  Correctly can be (in order of use
+   * in David Pollak's code): a for comprehension; using map, flatMap or foreach; or using pattern matching.
+   *
+   * The only times when you should be using this method are: the value is guaranteed to be available based
+   * on a guard outside of the method using the Box or in tests.  For example,
+   * User.currentUser.openOrThrowException("This snippet is used on pages where the user is logged in")
+   *
+   * A valid justification for using this method should not be "I want my code to fail fast when I call it."
+   * Using exceptions in the core logic of your application should be strongly discouraged.
+   *
+   * This method replaces open_! because people used open_! and generally ignored the reason for the "!",
+   * so we're making it more explicit that this method should not commonly be used and should be justified
+   * when used.
+   *
+   * @param justification Justify why calling this method is okay and why it will not result in an Exception
+   *
+   * @return The contents of the Box if it has one or an exception if not
    */
-  override def open_! = throw new NullPointerException("Trying to open a Failure Box: " + msg) {
-    override def getCause() = exception openOr null
-  }
+  override def openOrThrowException(justification: String) =
+    throw new NullPointerException("An Failure Box was opened.  Failure Message: "+msg+
+      ".  The justification for allowing the openOrThrowException was "+justification)  {
+      override def getCause() = exception openOr null
+    }
 
   override def map[B](f: A => B): Box[B] = this
 
@@ -675,22 +755,21 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
     case _ => false
   }
 
-  override def ?~(msg: String): Failure = this
+  override def ?~(msg: => String): Failure = this
 
-  override def ?~!(msg: String): Failure = Failure(msg, Empty, Full(this))
+  override def ?~!(msg: => String): Failure = Failure(msg, Empty, Full(this))
 
-  override def ~>[T](errorCode: T): ParamFailure[T] = ParamFailure(msg, exception, chain, errorCode)
+  override def ~>[T](errorCode: => T): ParamFailure[T] = ParamFailure(msg, exception, chain, errorCode)
 }
 
 /**
  * A ParamFailure is a Failure with an additional typesafe parameter that can
  * allow an application to store other information related to the failure.
  */
-@serializable
 final class ParamFailure[T](override val msg: String,
 		            override val exception: Box[Throwable],
 		            override val chain: Box[Failure], val param: T) extends
-  Failure(msg, exception, chain) {
+  Failure(msg, exception, chain) with Serializable{
     override def toString(): String = "ParamFailure("+msg+", "+exception+
     ", "+chain+", "+param+")"
 

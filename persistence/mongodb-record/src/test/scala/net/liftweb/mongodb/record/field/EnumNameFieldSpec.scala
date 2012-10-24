@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package record
 package field
 
 import org.bson.types.ObjectId
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import net.liftweb.common._
 import net.liftweb.json.ext.EnumNameSerializer
@@ -68,7 +68,8 @@ package enumnamefieldspecs {
 /**
  * Systems under specification for EnumNameField.
  */
-object EnumNameFieldSpec extends Specification("EnumNameField Specification") with MongoTestKit {
+object EnumNameFieldSpec extends Specification with MongoTestKit {
+  "EnumNameField Specification".title
 
   import enumnamefieldspecs._
 
@@ -80,8 +81,8 @@ object EnumNameFieldSpec extends Specification("EnumNameField Specification") wi
       val er = EnumNameRec.createRecord.save
 
       val erFromDb = EnumNameRec.find(er.id)
-      erFromDb must notBeEmpty
-      erFromDb foreach { er2 =>
+      erFromDb.isDefined must_== true
+      erFromDb.toList map { er2 =>
         er2 mustEqual er
         er2.dow.value mustEqual WeekDay.Mon
         er2.dowOptional.valueBox mustEqual Empty
@@ -98,8 +99,8 @@ object EnumNameFieldSpec extends Specification("EnumNameField Specification") wi
         .save
 
       val erFromDb = EnumNameRec.find(er.id)
-      erFromDb must notBeEmpty
-      erFromDb foreach { er2 =>
+      erFromDb.isDefined must_== true
+      erFromDb.toList map { er2 =>
         er2 mustEqual er
         er2.dow.value mustEqual WeekDay.Tue
         er2.jsonobj.value mustEqual JsonObj(WeekDay.Sun)
@@ -114,8 +115,8 @@ object EnumNameFieldSpec extends Specification("EnumNameField Specification") wi
       er.save
 
       val erFromDb = EnumNameRec.find(er.id)
-      erFromDb must notBeEmpty
-      erFromDb foreach { er2 =>
+      erFromDb.isDefined must_== true
+      erFromDb.toList map { er2 =>
         er2 mustEqual er
         er2.dowOptional.valueBox mustEqual Empty
       }
@@ -129,8 +130,8 @@ object EnumNameFieldSpec extends Specification("EnumNameField Specification") wi
       er.save
 
       val erFromDb = EnumNameRec.find(er.id)
-      erFromDb must notBeEmpty
-      erFromDb foreach { er2 =>
+      erFromDb.isDefined must_== true
+      erFromDb.toList map { er2 =>
         er2 mustEqual er
         er2.dowOptional.valueBox mustEqual Full(WeekDay.Sat)
       }

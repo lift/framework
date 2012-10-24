@@ -17,7 +17,7 @@
 package net.liftweb
 package http
 
-import _root_.org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 
@@ -25,7 +25,8 @@ import common._
 /**
  * System under specification for FactoryMaker.
  */
-object FactoryMakerSpec extends Specification("FactoryMaker Specification") {
+object FactoryMakerSpec extends Specification  {
+  "FactoryMaker Specification".title
 
 
   object MyFactory extends Factory {

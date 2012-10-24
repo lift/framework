@@ -19,9 +19,9 @@ package http
 
 import net.liftweb.common._
 import net.liftweb.util._
-import Helpers._
-import scala.collection.mutable.{HashMap, HashSet, ListBuffer}
-import java.util.concurrent.Callable
+import scala.collection.mutable.ListBuffer
+import java.util.concurrent.{ConcurrentHashMap, Callable}
+import scala.collection.JavaConversions._
 
 /**
  * The bridge between Scala *Vars implementations and
@@ -534,7 +534,7 @@ private[http] trait CoreRequestVarHandler {
 
   private val logger = Logger(classOf[CoreRequestVarHandler])
   // This maps from the RV name to (RV instance, value, set-but-not-read flag)
-  private val vals: ThreadGlobal[HashMap[String, (MyType, Any, Boolean)]] = new ThreadGlobal
+  private val vals: ThreadGlobal[ConcurrentHashMap[String, (MyType, Any, Boolean)]] = new ThreadGlobal
   private val cleanup: ThreadGlobal[ListBuffer[Box[LiftSession] => Unit]] = new ThreadGlobal
   private val isIn: ThreadGlobal[String] = new ThreadGlobal
   private val sessionThing: ThreadGlobal[Box[LiftSession]] = new ThreadGlobal
@@ -562,7 +562,7 @@ private[http] trait CoreRequestVarHandler {
     )
   }
 
-  protected def backingStore: Box[HashMap[String, (MyType, Any, Boolean)]] =
+  protected def backingStore: Box[ConcurrentHashMap[String, (MyType, Any, Boolean)]] =
     vals.value match {
       case null =>
         if (LiftRules.throwOnOutOfScopeVarAccess) {
@@ -575,7 +575,7 @@ private[http] trait CoreRequestVarHandler {
   private[http] def get[T](name: String): Box[T] =
     for {
       ht <- backingStore
-      (rvInstance, value, unread) <- ht.get(name)
+      (rvInstance, value, unread) <- Box !! ht.get(name)
     } yield {
       if (unread) {
         // Flag the variable as no longer being set-but-unread
@@ -613,7 +613,7 @@ private[http] trait CoreRequestVarHandler {
       f
     } else {
       isIn.doWith("in")(
-        vals.doWith(new HashMap)(
+        vals.doWith(new ConcurrentHashMap)(
           cleanup.doWith(new ListBuffer) {
             sessionThing.doWith(session) {
               val ret: T = f

@@ -21,13 +21,14 @@ package record
 import java.util.{Date, UUID}
 import java.util.regex.Pattern
 
-import com.mongodb.DBRef
 import org.bson.types.ObjectId
-import org.specs.Specification
+import org.specs2.mutable.Specification
+import org.specs2.specification.Fragment
+import org.specs2.specification.AroundExample
 
 import common._
-import json.{Num => _, _}
-import JsonDSL._
+import json._
+import BsonDSL._
 import util.Helpers.randomString
 import http.{LiftSession, S}
 import http.js.JE._
@@ -41,8 +42,15 @@ import Helpers._
 /**
  * Systems under specification for MongoField.
  */
-object MongoFieldSpec extends Specification("MongoField Specification") with MongoTestKit {
+object MongoFieldSpec extends Specification with MongoTestKit with AroundExample {
+  "MongoField Specification".title
+  sequential
+
   import fixtures._
+
+  lazy val session = new LiftSession("", randomString(20), Empty)
+
+  protected def around[T <% org.specs2.execute.Result](t: =>T) = S.initIfUninitted(session) { t }
 
   def passBasicTests[A](
     example: A,
@@ -54,8 +62,8 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
     def commonBehaviorsForAllFlavors(field: MandatoryTypedField[A]) = {
 
       "which have the correct initial value" in {
-        field.value must beEqual(field.defaultValue).when(canCheckDefaultValues)
-        field.valueBox must beEqual(field.defaultValueBox).when(canCheckDefaultValues)
+        field.value must be_==(field.defaultValue).when(canCheckDefaultValues)
+        field.valueBox must be_==(field.defaultValueBox).when(canCheckDefaultValues)
       }
 
       "which are readable and writable" in {
@@ -71,25 +79,24 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       }
 
       "which correctly clear back to the default" in {
-        { field.clear; field.valueBox } must beEqual(field.defaultValueBox).when(canCheckDefaultValues)
+        { field.clear; field.valueBox } must be_==(field.defaultValueBox).when(canCheckDefaultValues)
       }
 
       "which capture error conditions set in" in {
         // FIXME: This needs to be rearranged just so that it doesn't foul with subsequent examples
         // field.setBox(Failure("my failure"))
         // Failure("my failure") must_== Failure("my failure")
+        pending
       }
     }
 
     "support mandatory fields" in {
-      setSequential()
-
       "which are configured correctly" in {
         mandatory.optional_? must_== false
       }
 
       "which initialize to some value" in {
-        mandatory.valueBox must verify(_.isDefined)
+        mandatory.valueBox.isDefined must_== true
       }
 
       "common behaviors for all flavors" in {
@@ -97,15 +104,13 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       }
 
       "which correctly fail to be set to Empty" in {
-        mandatory.valueBox must verify(_.isDefined)
+        mandatory.valueBox.isDefined must_== true
         mandatory.setBox(Empty)
-        mandatory.valueBox must beLike { case Failure(s, _, _) if s == mandatory.notOptionalErrorMessage => true }
+        mandatory.valueBox must beLike { case Failure(s, _, _) => s must_== mandatory.notOptionalErrorMessage }
       }
     }
 
     "support 'legacy' optional fields (override optional_?)" in {
-      setSequential()
-
       "which are configured correctly" in {
         legacyOptional.optional_? must_== true
       }
@@ -135,11 +140,12 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
           legacyOptional.value must_== legacyOptional.defaultValue
           legacyOptional.valueBox must_== legacyOptional.defaultValueBox
         }
+        success
       }
     }
   }
 
-  def passConversionTests[A](example: A, mandatory: MandatoryTypedField[A], jsexp: JsExp, jvalue: JValue, formPattern: Box[NodeSeq]): Unit = {
+  def passConversionTests[A](example: A, mandatory: MandatoryTypedField[A], jsexp: JsExp, jvalue: JValue, formPattern: Box[NodeSeq]): Fragment = {
 
     /*
     "convert to JsExp" in {
@@ -156,17 +162,16 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       "get set from JValue" in {
         mandatory.setFromJValue(jvalue) mustEqual Full(example)
         mandatory.value mustEqual example
-        () // does not compile without this: no implicit argument matching parameter type scala.reflect.Manifest[org.specs.specification.Result[mandatory.MyType]]
       }
     }
 
-    formPattern foreach { fp =>
-      "convert to form XML" in {
+    "convert to form XML" in {
+      formPattern foreach { fp =>
         mandatory.set(example)
         val session = new LiftSession("", randomString(20), Empty)
         S.initIfUninitted(session) {
           val formXml = mandatory.toForm
-          formXml must notBeEmpty
+          formXml.isDefined must_== true
           formXml foreach { fprime =>
             val f = ("* [name]" #> ".*" & "select *" #> (((ns: NodeSeq) => ns.filter {
               case e: Elem => e.attribute("selected").map(_.text) == Some("selected")
@@ -178,6 +183,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
           }
         }
       }
+      success
     }
   }
 
@@ -255,7 +261,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       val rec = PasswordTestRecord.createRecord
       rec.password.setPassword("")
       rec.validate must_== (
-        FieldError(rec.password, Text(S.??("password.must.be.set"))) ::
+        FieldError(rec.password, Text(S.?("password.must.be.set"))) ::
         Nil
       )
     }
@@ -264,7 +270,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
       val rec = PasswordTestRecord.createRecord
       rec.password.setPassword("ab")
       rec.validate must_== (
-        FieldError(rec.password, Text(S.??("password.too.short"))) ::
+        FieldError(rec.password, Text(S.?("password.too.short"))) ::
         Nil
       )
     }
@@ -324,7 +330,7 @@ object MongoFieldSpec extends Specification("MongoField Specification") with Mon
   "MongoCaseClassListField" should {
     "setFromAny a List" in {
       val rec = ListTestRecord.createRecord
-      val lst = List(MongoCaseClassTestObject(1,"str1"))
+      val lst = List(MongoCaseClassTestObject(1,"str1", MyTestEnum.THREE))
       rec.mongoCaseClassListField.setFromAny(lst)
       rec.mongoCaseClassListField.value must_== lst
     }

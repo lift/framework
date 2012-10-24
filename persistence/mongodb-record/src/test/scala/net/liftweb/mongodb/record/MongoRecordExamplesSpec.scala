@@ -28,10 +28,11 @@ import net.liftweb.json.JsonAST.JObject
 import net.liftweb.record.field._
 import net.liftweb.util.TimeHelpers._
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import com.mongodb._
 import org.bson.types.ObjectId
+import http.{S, LiftSession}
 
 
 package mongotestrecords {
@@ -236,70 +237,78 @@ package mongotestrecords {
 /**
  * Systems under specification for MongoRecordExamples.
  */
-object MongoRecordExamplesSpec extends Specification("MongoRecordExamples Specification") with MongoTestKit {
+class MongoRecordExamplesSpec extends Specification with MongoTestKit {
+  "MongoRecordExamples Specification".title
+
   import mongotestrecords._
   import net.liftweb.util.TimeHelpers._
 
+  val session = new LiftSession("hello", "", Empty)
   "TstRecord example" in {
 
     checkMongoIsRunning
 
-    val pwd = "test"
-    val cal = Calendar.getInstance
-    cal.set(2009, 10, 2)
+    S.initIfUninitted(session){
 
-    val tr = TstRecord.createRecord
-    tr.stringfield("test record string field")
-    tr.emailfield("test")
-    tr.validate.size must_== 2
-    tr.passwordfield.setPassword(pwd)
-    tr.emailfield("test@example.com")
-    tr.datetimefield(cal)
-    tr.patternfield(Pattern.compile("^Mo", Pattern.CASE_INSENSITIVE))
-    tr.validate.size must_== 0
+      val pwd = "test"
+      val cal = Calendar.getInstance
+      cal.set(2009, 10, 2)
 
-    // JsonObjectField
-    val dob1 = Calendar.getInstance.setYear(2005).setMonth(7).setDay(4)
-    val per = Person("joe", 27, Address("Bulevard", "Helsinki"), List(Child("Mary", 5, Some(dob1.getTime)), Child("Mazy", 3, None)))
-    tr.person(per)
+      val tr = TstRecord.createRecord
+      tr.stringfield("test record string field")
+      tr.emailfield("test")
+      tr.validate.size must_== 2
+      tr.passwordfield.setPassword(pwd)
+      tr.emailfield("test@example.com")
+      tr.datetimefield(cal)
+      tr.patternfield(Pattern.compile("^Mo", Pattern.CASE_INSENSITIVE))
+      tr.validate.size must_== 0
 
-    // save the record in the db
-    tr.save
+      // JsonObjectField
+      val dob1 = Calendar.getInstance.setYear(2005).setMonth(7).setDay(4)
+      val per = Person("joe", 27, Address("Bulevard", "Helsinki"), List(Child("Mary", 5, Some(dob1.getTime)), Child("Mazy", 3, None)))
+      tr.person(per)
 
-    // retrieve from db
-    def fromDb = TstRecord.find("_id", tr.id)
+      // save the record in the db
+      tr.save
 
-    fromDb.isDefined must_== true
+      // retrieve from db
+      def fromDb = TstRecord.find("_id", tr.id)
 
-    for (t <- fromDb) {
-      t._id.value must_== tr._id.value
-      t.booleanfield.value must_== tr.booleanfield.value
-      TstRecord.formats.dateFormat.format(t.datetimefield.value.getTime) must_==
-      TstRecord.formats.dateFormat.format(tr.datetimefield.value.getTime)
-      t.doublefield.value must_== tr.doublefield.value
-      t.intfield.value must_== tr.intfield.value
-      t.localefield.value must_== tr.localefield.value
-      t.longfield.value must_== tr.longfield.value
-      t.passwordfield.isMatch(pwd) must_== true
-      t.stringfield.value must_== tr.stringfield.value
-      t.timezonefield.value must_== tr.timezonefield.value
-      t.datetimefield.value must_== tr.datetimefield.value
-      t.patternfield.value.pattern must_== tr.patternfield.value.pattern
-      t.patternfield.value.flags must_== tr.patternfield.value.flags
-      t.datefield.value must_== tr.datefield.value
-      t.person.value.name must_== tr.person.value.name
-      t.person.value.age must_== tr.person.value.age
-      t.person.value.address.street must_== tr.person.value.address.street
-      t.person.value.address.city must_== tr.person.value.address.city
-      t.person.value.children.size must_== tr.person.value.children.size
-      for (i <- List.range(0, t.person.value.children.size-1)) {
-        t.person.value.children(i).name must_== tr.person.value.children(i).name
-        t.person.value.children(i).age must_== tr.person.value.children(i).age
-        t.person.value.children(i).birthdate must_== tr.person.value.children(i).birthdate
+      fromDb.isDefined must_== true
+
+      for (t <- fromDb) {
+        t._id.value must_== tr._id.value
+        t.booleanfield.value must_== tr.booleanfield.value
+        TstRecord.formats.dateFormat.format(t.datetimefield.value.getTime) must_==
+        TstRecord.formats.dateFormat.format(tr.datetimefield.value.getTime)
+        t.doublefield.value must_== tr.doublefield.value
+        t.intfield.value must_== tr.intfield.value
+        t.localefield.value must_== tr.localefield.value
+        t.longfield.value must_== tr.longfield.value
+        t.passwordfield.isMatch(pwd) must_== true
+        t.stringfield.value must_== tr.stringfield.value
+        t.timezonefield.value must_== tr.timezonefield.value
+        t.datetimefield.value must_== tr.datetimefield.value
+        t.patternfield.value.pattern must_== tr.patternfield.value.pattern
+        t.patternfield.value.flags must_== tr.patternfield.value.flags
+        t.datefield.value must_== tr.datefield.value
+        t.person.value.name must_== tr.person.value.name
+        t.person.value.age must_== tr.person.value.age
+        t.person.value.address.street must_== tr.person.value.address.street
+        t.person.value.address.city must_== tr.person.value.address.city
+        t.person.value.children.size must_== tr.person.value.children.size
+        for (i <- List.range(0, t.person.value.children.size-1)) {
+          t.person.value.children(i).name must_== tr.person.value.children(i).name
+          t.person.value.children(i).age must_== tr.person.value.children(i).age
+          t.person.value.children(i).birthdate must_== tr.person.value.children(i).birthdate
+        }
       }
+
+      if (!debug) TstRecord.drop
     }
 
-    if (!debug) TstRecord.drop
+    success
   }
 
   "Ref example" in {
@@ -452,6 +461,8 @@ object MongoRecordExamplesSpec extends Specification("MongoRecordExamples Specif
       RefDoc.drop
       RefStringDoc.drop
     }
+
+    success
   }
 
   "List example" in {
@@ -508,6 +519,8 @@ object MongoRecordExamplesSpec extends Specification("MongoRecordExamples Specif
       ListDoc.drop
       RefDoc.drop
     }
+
+    success
   }
 
   "Map Example" in {
@@ -522,6 +535,8 @@ object MongoRecordExamplesSpec extends Specification("MongoRecordExamples Specif
     md1.delete_!
 
     if (!debug) MapDoc.drop
+
+    success
   }
 
   "Optional Example" in {
@@ -549,6 +564,8 @@ object MongoRecordExamplesSpec extends Specification("MongoRecordExamples Specif
     }
 
     if (!debug) OptionalDoc.drop
+
+    success
   }
 
   "Strict Example" in {
@@ -567,5 +584,7 @@ object MongoRecordExamplesSpec extends Specification("MongoRecordExamples Specif
     sd2.save(true) must_== sd2
 
     if (!debug) StrictDoc.drop
+
+    success
   }
 }

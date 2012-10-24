@@ -76,6 +76,7 @@ class Company private () extends Record[Company] with KeyedRecord[Long] with Opt
   val country = new CountryField(this)
   val postCode = new PostalCodeField(this, country)
   val created = new DateTimeField(this)
+  val employeeSatisfaction = new OptionalDecimalField(this, new MathContext(10), 5)
 
   lazy val employees = MySchema.companyToEmployees.left(this)
 
@@ -89,6 +90,7 @@ object Company extends Company with MetaRecord[Company] with CRUDify[Long, Compa
 }
 
 object EmployeeRole extends Enumeration {
+  
   type EmployeeRole = Value
 
   val Programmer, Manager = Value
@@ -216,12 +218,15 @@ object MySchema extends Schema {
   }
 
   object TestData {
+    
     val c1 = Company.createRecord.name("First Company USA").
       created(Calendar.getInstance()).
       country(Countries.USA).postCode("12345")
+      
     val c2 = Company.createRecord.name("Second Company USA").
       created(Calendar.getInstance()).
       country(Countries.USA).postCode("54321")
+      
     val c3 = Company.createRecord.name("Company or Employee").
       created(Calendar.getInstance()).
       country(Countries.Canada).postCode("1234")
@@ -244,10 +249,20 @@ object MySchema extends Schema {
       admin(true).departmentNumber(1).role(EmployeeRole.Manager).
       photo(Array[Byte](1))
 
-    lazy val allEmployees = List(e1, e2)
+    lazy val e3 = Employee.createRecord.companyId(c2.idField.is).
+      name("Joe Shmo").
+      email("joe@shmo.com").salary(BigDecimal("100000.00")).
+      locale(java.util.Locale.US.toString()).
+      timeZone("America/Los_Angeles").password("test").
+      admin(false).departmentNumber(1).role(EmployeeRole.Programmer).
+      photo(Array[Byte](1))
+
+    lazy val allEmployees = List(e1, e2, e3)
     
     val r1 = Room.createRecord.name("Room 1")
+    
     val r2 = Room.createRecord.name("Room 2")
+    
     val r3 = Room.createRecord.name("Room 3")
     
     val allRooms = List(r1, r2, r3)

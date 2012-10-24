@@ -252,9 +252,10 @@ trait TimeHelpers { self: ControlHelpers =>
 
   /** This class adds a noTime method the Date class, in order to get at Date object starting at 00:00 */
   class DateExtension(date: Date) {
-    /** @returns a Date object starting at 00:00 from date */
+    /** @return a Date object starting at 00:00 from date */
     def noTime = {
       val calendar = Calendar.getInstance
+      calendar.setTime(date)
       calendar.set(Calendar.HOUR_OF_DAY, 0)
       calendar.set(Calendar.MINUTE, 0)
       calendar.set(Calendar.SECOND, 0)
@@ -294,9 +295,9 @@ trait TimeHelpers { self: ControlHelpers =>
   def currentYear: Int = Calendar.getInstance.get(Calendar.YEAR)
 
   /**
-   * @deprecated use now instead
    * @return the current time as a Date object
    */
+  @deprecated("use now instead", "2.4")
   def timeNow = new Date
 
   /**
@@ -431,7 +432,7 @@ trait TimeHelpers { self: ControlHelpers =>
         case o => toDate(o.toString)
       }
     } catch {
-      case e => logger.debug("Error parsing date "+in, e); Failure("Bad date: "+in, Full(e), Empty)
+      case e: Exception => logger.debug("Error parsing date "+in, e); Failure("Bad date: "+in, Full(e), Empty)
     }
   }
 }

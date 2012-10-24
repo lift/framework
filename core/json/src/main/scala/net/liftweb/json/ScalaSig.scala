@@ -65,6 +65,7 @@ private[json] object ScalaSigReader {
       case TypeRefType(ThisType(_), symbol, _) if isPrimitive(symbol) => symbol
       case TypeRefType(_, _, TypeRefType(ThisType(_), symbol, _) :: xs) => symbol
       case TypeRefType(_, symbol, Nil) => symbol
+      case TypeRefType(_, _, args) if typeArgIndex >= args.length => findPrimitive(args(0))
       case TypeRefType(_, _, args) =>
         args(typeArgIndex) match {
           case ref @ TypeRefType(_, _, _) => findPrimitive(ref)
@@ -83,7 +84,13 @@ private[json] object ScalaSigReader {
       case NullaryMethodType(TypeRefType(_, _, args)) => args(typeArgIdx)
     }
     */
-    val t = s.infoType.asInstanceOf[{ def resultType: Type }].resultType match {
+    def resultType = try {
+      s.infoType.asInstanceOf[{ def resultType: Type }].resultType
+    } catch {
+      case e: java.lang.NoSuchMethodException => s.infoType.asInstanceOf[{ def typeRef: Type }].typeRef
+    }
+
+    val t = resultType match {
       case TypeRefType(_, _, args) => args(typeArgIdx)
     }
 

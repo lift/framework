@@ -382,7 +382,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    * @param conn -- the SuperConnection to be used for calculating the query
    * @param by -- the varg of QueryParams
    *
-   * @returns a Tuple of the Query String, Start (offset), MaxRows (limit), and the list of all query parameters
+   * @return a Tuple of the Query String, Start (offset), MaxRows (limit), and the list of all query parameters
    * including and synthetic query parameters
    */
   def buildSelectString(fields: Seq[SelectableField], conn: SuperConnection, by: QueryParam[A]*):
@@ -1363,8 +1363,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
       case pcf =>
         if (!inst.addedPostCommit) {
-          DB.appendPostFunc(inst.connectionIdentifier,
-                            () => (clearPCFunc :: pcf).foreach(_(inst)))
+          DB.appendPostTransaction(inst.connectionIdentifier, dontUse =>  (clearPCFunc :: pcf).foreach(_(inst)))
           inst.addedPostCommit = true
         }
     }
@@ -1684,6 +1683,30 @@ object By {
     case Full(v) => Cmp[O,T](field, Eql, Full(v.primaryKeyField.is), Empty, Empty)
     case _ => Cmp(field, IsNull, Empty, Empty, Empty)
   }
+}
+
+object By_>= {
+
+  import OprEnum._
+
+  def apply[O <: Mapper[O], T, U <% T](field: MappedField[T, O],
+                                       value: U) = Cmp[O, T](field, >=, Full(value), Empty, Empty)
+
+  def apply[O <: Mapper[O], T](field: MappedField[T, O], otherField:
+  MappedField[T, O]) = Cmp[O, T](field, >=, Empty, Full(otherField),
+    Empty)
+}
+
+object By_<= {
+
+  import OprEnum._
+
+  def apply[O <: Mapper[O], T, U <% T](field: MappedField[T, O],
+                                       value: U) = Cmp[O, T](field, <=, Full(value), Empty, Empty)
+
+  def apply[O <: Mapper[O], T](field: MappedField[T, O], otherField:
+  MappedField[T, O]) = Cmp[O, T](field, <=, Empty, Full(otherField),
+    Empty)
 }
 
 object NotBy {

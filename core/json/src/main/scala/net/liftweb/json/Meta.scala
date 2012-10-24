@@ -19,6 +19,7 @@ package json
 
 import java.lang.reflect.{Constructor => JConstructor, Field, Type, ParameterizedType, GenericArrayType}
 import java.util.Date
+import java.sql.Timestamp
 
 case class TypeInfo(clazz: Class[_], parameterizedType: Option[ParameterizedType])
 
@@ -190,12 +191,13 @@ private[json] object Meta {
   private[json] def fail(msg: String, cause: Exception = null) = throw new MappingException(msg, cause)
 
   private class Memo[A, R] {
-    private var cache = Map[A, R]()
+    private val cache = new java.util.concurrent.atomic.AtomicReference(Map[A, R]())
 
-    def memoize(x: A, f: A => R): R = synchronized {
-      if (cache contains x) cache(x) else {
+    def memoize(x: A, f: A => R): R = {
+      val c = cache.get
+      if (c contains x) c(x) else {
         val ret = f(x)
-        cache += (x -> ret)
+        cache.set(c + (x -> ret))
         ret
       }
     }
@@ -215,8 +217,11 @@ private[json] object Meta {
       classOf[Short], classOf[java.lang.Integer], classOf[java.lang.Long],
       classOf[java.lang.Double], classOf[java.lang.Float],
       classOf[java.lang.Byte], classOf[java.lang.Boolean], classOf[Number],
-      classOf[java.lang.Short], classOf[Date], classOf[Symbol], classOf[JValue],
+      classOf[java.lang.Short], classOf[Date], classOf[Timestamp], classOf[Symbol], classOf[JValue],
       classOf[JObject], classOf[JArray]).map((_, ())))
+
+    private val primaryConstructors = new Memo[Class[_], List[(String, Type)]]
+    private val declaredFields = new Memo[(Class[_], String), Boolean]
 
     def constructors(t: Type, names: ParameterNameReader, context: Option[Context]): List[(JConstructor[_], List[(String, Type)])] =
       rawClassOf(t).getDeclaredConstructors.map(c => (c, constructorArgs(t, c, names, context))).toList
@@ -255,9 +260,13 @@ private[json] object Meta {
     }
 
     def primaryConstructorArgs(c: Class[_])(implicit formats: Formats) = {
-      val ord = Ordering[Int].on[JConstructor[_]](_.getParameterTypes.size)
-      val primary = c.getDeclaredConstructors.max(ord)
-      constructorArgs(c, primary, formats.parameterNameReader, None)
+      def findMostComprehensive(c: Class[_]): List[(String, Type)] = {
+        val ord = Ordering[Int].on[JConstructor[_]](_.getParameterTypes.size)
+        val primary = c.getDeclaredConstructors.max(ord)
+        constructorArgs(c, primary, formats.parameterNameReader, None)
+      }
+
+      primaryConstructors.memoize(c, findMostComprehensive(_))
     }
 
     def typeParameters(t: Type, k: Kind, context: Context): List[Class[_]] = {
@@ -346,11 +355,15 @@ private[json] object Meta {
         else findField(clazz.getSuperclass, name)
     }
 
-    def hasDeclaredField(clazz: Class[_], name: String): Boolean = try {
-      clazz.getDeclaredField(name)
-      true
-    } catch {
-      case e: NoSuchFieldException => false
+    def hasDeclaredField(clazz: Class[_], name: String): Boolean = {
+      def declaredField = try {
+        clazz.getDeclaredField(name)
+        true
+      } catch {
+        case e: NoSuchFieldException => false
+      }
+
+      declaredFields.memoize((clazz, name), _ => declaredField)
     }
 
     def mkJavaArray(x: Any, componentType: Class[_]) = {
@@ -383,7 +396,7 @@ private[json] object Meta {
       case x: java.lang.Short => JInt(BigInt(x.asInstanceOf[Short]))
       case x: Date => JString(formats.dateFormat.format(x))
       case x: Symbol => JString(x.name)
-      case _ => error("not a primitive " + a.asInstanceOf[AnyRef].getClass)
+      case _ => sys.error("not a primitive " + a.asInstanceOf[AnyRef].getClass)
     }
   }
 }

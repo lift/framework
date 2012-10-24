@@ -18,7 +18,7 @@ package net.liftweb
 package http
 
 import xml._
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import util.Helpers._
@@ -27,14 +27,16 @@ import util.Helpers._
 /**
  * System under specification for SnippetSpec.
  */
-object SnippetSpec extends Specification("SnippetSpec Specification") {
+object SnippetSpec extends Specification  {
+  "SnippetSpec Specification".title
+
   def makeReq = new Req(Req.NilPath, "", GetRequest, Empty, null,
                     System.nanoTime, System.nanoTime, false,
                     () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map())
 
-  "LiftSession" should {
+  "Templates" should {
     "Correctly process lift:content_id" in {
-      val ret = LiftSession.checkForContentId(<html lift:content_id="content">
+      val ret = Templates.checkForContentId(<html lift:content_id="content">
                                      <head/>
                                      <body>
                                      <div id="content" class="lift:surround"/>
@@ -45,7 +47,7 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
     }
 
     "Correctly process body class" in {
-      val ret = LiftSession.checkForContentId(<html>
+      val ret = Templates.checkForContentId(<html>
                                      <head/>
                                      <body class="lift:content_id=frog">
                                       <div><span> mooose dog
@@ -58,7 +60,7 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
     }
 
     "Correctly process l:content_id" in {
-      val ret = LiftSession.checkForContentId(<html l:content_id="dog">
+      val ret = Templates.checkForContentId(<html l:content_id="dog">
                                      <head/>
                                      <body>
                                      <lift:surround id="dog"><div/></lift:surround>
@@ -75,12 +77,12 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
       <div class="lift:surround"/>
       </body>
       </html>
-      
-      val ret = LiftSession.checkForContentId(xml)
+
+      val ret = Templates.checkForContentId(xml)
 
       ret must_== xml
     }
-    
+
     "Snippet invocation works <lift:xxx/>" in {
       val res = <div/>
 
@@ -186,9 +188,10 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
       val ret =
         S.statelessInit(Req.nil) {
           S.mapSnippetsWith("foo" -> testAttrs _) {
+            val clStr = "l:foo?bing=bong&amp;fuzz=faz+snark&amp;noodle=FatPoodle"
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div class="l:foo?bing=bong&amp;fuzz=faz+snark&amp;noodle=FatPoodle" />)
+            } yield s.processSurroundAndInclude("test", <div class={clStr} />)
           }
         }
 
@@ -236,8 +239,6 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
     }
 
     "Snippet invocation fails class='l:bar'" in {
-      val res = <div/>
-
       val ret =
         S.statelessInit(Req.nil) {
           S.mapSnippetsWith("foo" -> ((a: NodeSeq) => a)) {
@@ -274,7 +275,7 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
           S.mapSnippetsWith("foo" -> ChangeVar.foo _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", 
+            } yield s.processSurroundAndInclude("test",
                                                 <lift:foo>{res}</lift:foo>)
           }
         }
@@ -291,7 +292,7 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
           S.mapSnippetsWith("foo" -> ChangeVar.foo _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", 
+            } yield s.processSurroundAndInclude("test",
                                                 <lift:foo>{res}</lift:foo>)
           }
         }
@@ -307,7 +308,7 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
           S.mapSnippetsWith("foo" -> Funky.foo _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", 
+            } yield s.processSurroundAndInclude("test",
                                                 <lift:foo>{res}</lift:foo>)
           }
         }
@@ -324,7 +325,7 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
           S.mapSnippetsWith("foo" -> Funky.foo _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", 
+            } yield s.processSurroundAndInclude("test",
                                                 <lift:foo>{res}</lift:foo>)
           }
         }
@@ -361,12 +362,13 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
       val ret = S.init(makeReq, session) {
         for {
           s <- S.session
-        } yield s.processSurroundAndInclude("test", 
+        } yield s.processSurroundAndInclude("test",
                                             <lift:Meower>Moo</lift:Meower>)
       }
 
       ret.open_! must ==/ (<yak/>)
       */
+      pending
     }
 
     "Check snippets via run" in {
@@ -376,25 +378,25 @@ object SnippetSpec extends Specification("SnippetSpec Specification") {
       val ret = S.init(makeReq, session) {
         for {
           s <- S.session
-        } yield s.processSurroundAndInclude("test", 
+        } yield s.processSurroundAndInclude("test",
                                             <input class="lift:Splunker"/>)
       }
 
       (ret.open_! \ "@name").text.length must be > 0
       */
+      pending
     }
 
 
 
     "Eager Eval works" in {
-      val res = <div>dog</div>
       val session = new LiftSession("", "hello", Empty)
 
       S.init(makeReq, session) {
         S.mapSnippetsWith("foo" -> ChangeVar.foo _) {
           for {
             s <- S.session
-          } yield s.processSurroundAndInclude("test", 
+          } yield s.processSurroundAndInclude("test",
                                               <div class="l:foo?eager_eval=true">a<lift:foo>b</lift:foo></div>)
         }
         myInfo.is must_== "ab"

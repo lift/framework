@@ -573,28 +573,22 @@ by providing following serializer.
              val endTime = end
            }
 
-    scala> class IntervalSerializer extends Serializer[Interval] {
-             private val IntervalClass = classOf[Interval]
-
-             def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Interval] = {
-               case (TypeInfo(IntervalClass, _), json) => json match {
-                 case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) =>
-                   new Interval(s.longValue, e.longValue)
-                 case x => throw new MappingException("Can't convert " + x + " to Interval")
-               }
-             }
-
-             def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
+    scala> class IntervalSerializer extends CustomSerializer[Interval](format => (
+             { 
+               case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) => 
+                 new Interval(s.longValue, e.longValue) 
+             },
+             { 
                case x: Interval =>
                  JObject(JField("start", JInt(BigInt(x.startTime))) :: 
-                         JField("end",   JInt(BigInt(x.endTime))) :: Nil)
+                         JField("end",   JInt(BigInt(x.endTime))) :: Nil) 
              }
-           }
+           ))
 
     scala> implicit val formats = Serialization.formats(NoTypeHints) + new IntervalSerializer
 
-Function 'serialize' creates a JSON object to hold serialized data. Function 'deserialize' knows how
-to construct serialized object by pattern matching against type info and data.
+Custom serializer is created by providing two partial functions. The first evaluates to a value
+if it can unpack the data from JSON. The second creates the desired JSON if the type matches.
 
 Extensions
 ----------
@@ -715,7 +709,7 @@ FAQ
 
 Q1: I have a JSON object and I want to extract it to a case class:
 
-    scala> case class Person(name: Sting, age: Int)
+    scala> case class Person(name: String, age: Int)
     scala> val json = """{"name":"joe","age":15}"""
 
 But extraction fails:

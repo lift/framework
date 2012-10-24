@@ -17,13 +17,14 @@
 package net.liftweb
 package sitemap
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for Menu DSL.
  */
-object MenuDslSpec extends Specification("Menu DSL Specification") {
+object MenuDslSpec extends Specification  {
+  "Menu DSL Specification".title
 
   "The Menu DSL" should {
     "allow basic menu definition via '/ path'" in {

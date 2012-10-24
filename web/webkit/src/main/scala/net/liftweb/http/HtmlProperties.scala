@@ -154,7 +154,7 @@ trait HtmlProperties {
       def userAgent = old.userAgent
     }
   }
-  
+
 
   /**
    * Given a NodeSeq and a Writer, convert the output
@@ -257,15 +257,19 @@ trait HtmlProperties {
       def userAgent = newUA
     }
   }
-  
+
 }
 
 /**
  * This set of properties is based on Lift's current XHTML support
  */
 final case class OldHtmlProperties(userAgent: Box[String]) extends HtmlProperties {
+  /**
+   * If you want to change the DocType header, override this method rather than using
+   * setDocType.
+   */
   def docType: Box[String] = LiftRules.docType.vend.apply(S.request openOr Req.nil)
-  def encoding: Box[String] = 
+  def encoding: Box[String] =
     Full(LiftRules.calculateXmlHeader(null, <ignore/>, contentType))
 
   def contentType: Box[String] = {
@@ -290,10 +294,10 @@ final case class OldHtmlProperties(userAgent: Box[String]) extends HtmlPropertie
       w.append(sb)
       w.flush()
     }
-  
-  def htmlOutputHeader: Box[String] = 
+
+  def htmlOutputHeader: Box[String] =
     (docType -> encoding) match {
-      case (Full(dt), Full(enc)) if dt.length > 0 && enc.length > 0 => 
+      case (Full(dt), Full(enc)) if dt.length > 0 && enc.length > 0 =>
         if (LiftRules.calcIE6ForResponse() && LiftRules.flipDocTypeForIE6) {
           Full(dt.trim + "\n" + enc.trim + "\n")
         } else {
@@ -313,7 +317,7 @@ final case class OldHtmlProperties(userAgent: Box[String]) extends HtmlPropertie
     r.isChrome5 || r.isChrome6
   }
 
-  val maxOpenRequests: Int = 
+  val maxOpenRequests: Int =
     LiftRules.maxConcurrentRequests.vend(S.request openOr Req.nil)
 }
 
@@ -333,7 +337,7 @@ final case class Html5Properties(userAgent: Box[String]) extends HtmlProperties 
 
   def htmlWriter: (Node, Writer) => Unit =
     Html5.write(_, _, false, !LiftRules.convertToEntity.vend)
-  
+
   def htmlOutputHeader: Box[String] = docType.map(_.trim + "\n")
 
   val html5FormsSupport: Boolean = {
@@ -342,7 +346,7 @@ final case class Html5Properties(userAgent: Box[String]) extends HtmlProperties 
     r.isChrome5 || r.isChrome6
   }
 
-  val maxOpenRequests: Int = 
+  val maxOpenRequests: Int =
     LiftRules.maxConcurrentRequests.vend(S.request openOr Req.nil)
 }
 
@@ -365,7 +369,7 @@ final case class XHtmlInHtml5OutProperties(userAgent: Box[String]) extends HtmlP
 
   def htmlWriter: (Node, Writer) => Unit =
     Html5.write(_, _, false, !LiftRules.convertToEntity.vend)
-  
+
   def htmlOutputHeader: Box[String] = docType.map(_ + "\n")
 
   val html5FormsSupport: Boolean = {
@@ -374,7 +378,7 @@ final case class XHtmlInHtml5OutProperties(userAgent: Box[String]) extends HtmlP
     r.isChrome5 || r.isChrome6
   }
 
-  val maxOpenRequests: Int = 
+  val maxOpenRequests: Int =
     LiftRules.maxConcurrentRequests.vend(S.request openOr Req.nil)
 }
 

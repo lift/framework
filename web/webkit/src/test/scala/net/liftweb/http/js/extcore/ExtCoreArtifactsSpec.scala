@@ -19,13 +19,14 @@ package http
 package js
 package extcore
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * System under specification for ExtCoreArtifacts.
  */
-object ExtCoreArtifactsSpec extends Specification("ExtCoreArtifacts Specification") {
+object ExtCoreArtifactsSpec extends Specification  {
+  "ExtCoreArtifacts Specification".title
 
   "ExtCoreArtifacts.toggle" should {
     "return the correct javascript expression" in {

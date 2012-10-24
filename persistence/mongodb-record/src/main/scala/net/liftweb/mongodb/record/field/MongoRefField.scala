@@ -42,13 +42,18 @@ trait MongoRefField[RefType <: MongoRecord[RefType], MyType] extends TypedField[
   /** The MongoMetaRecord of the referenced object **/
   def refMeta: MongoMetaRecord[RefType]
 
-  /*
-  * get the referenced object
-  */
+  /**
+    * Find the referenced object
+    */
+  def find = valueBox.flatMap(v => refMeta.findAny(v))
+
+  /**
+    * Get the cacheable referenced object
+    */
   def obj = synchronized {
     if (!_calcedObj) {
       _calcedObj = true
-      this._obj = valueBox.flatMap(v => refMeta.findAny(v))
+      this._obj = find
     }
     _obj
   }
@@ -62,6 +67,11 @@ trait MongoRefField[RefType <: MongoRecord[RefType], MyType] extends TypedField[
 
   private var _obj: Box[RefType] = Empty
   private var _calcedObj = false
+
+  override def setBox(in: Box[MyType]): Box[MyType] = synchronized {
+    _calcedObj = false // invalidate the cache
+    super.setBox(in)
+  }
 
   /** Options for select list **/
   def options: List[(Box[MyType], String)] = Nil
@@ -90,46 +100,21 @@ trait MongoRefField[RefType <: MongoRecord[RefType], MyType] extends TypedField[
 }
 
 class ObjectIdRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, rm: MongoMetaRecord[RefType]
-)
-  extends ObjectIdField[OwnerType](rec)
-  with MongoRefField[RefType, ObjectId]
-{
-  def refMeta = rm
-}
+  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends ObjectIdField[OwnerType](rec) with MongoRefField[RefType, ObjectId] {}
 
 class UUIDRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, rm: MongoMetaRecord[RefType]
-)
-  extends UUIDField[OwnerType](rec)
-  with MongoRefField[RefType, UUID]
-{
-  def refMeta = rm
-}
+  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends UUIDField[OwnerType](rec) with MongoRefField[RefType, UUID] {}
 
 class StringRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, rm: MongoMetaRecord[RefType], maxLen: Int
-)
-  extends StringField[OwnerType](rec, maxLen)
-  with MongoRefField[RefType, String]
-{
-  def refMeta = rm
-}
+  rec: OwnerType, val refMeta: MongoMetaRecord[RefType], maxLen: Int
+) extends StringField[OwnerType](rec, maxLen) with MongoRefField[RefType, String] {}
 
 class IntRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, rm: MongoMetaRecord[RefType]
-)
-  extends IntField[OwnerType](rec)
-  with MongoRefField[RefType, Int]
-{
-  def refMeta = rm
-}
+  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends IntField[OwnerType](rec) with MongoRefField[RefType, Int] {}
 
 class LongRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, rm: MongoMetaRecord[RefType]
-)
-  extends LongField[OwnerType](rec)
-  with MongoRefField[RefType, Long]
-{
-  def refMeta = rm
-}
+  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends LongField[OwnerType](rec) with MongoRefField[RefType, Long] {}

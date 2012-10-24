@@ -77,7 +77,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends Record[T] {
   /**
    * The string name for the first name field
    */
-  def firstNameDisplayName = ??("first.name")
+  def firstNameDisplayName = S.?("first.name")
 
   /**
    * The last field for the User.  You can override the behavior
@@ -98,7 +98,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends Record[T] {
   /**
    * The last name string
    */
-  def lastNameDisplayName = ??("last.name")
+  def lastNameDisplayName = S.?("last.name")
 
   /**
    * The email field for the User.  You can override the behavior
@@ -112,7 +112,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends Record[T] {
   lazy val email: EmailField[T] = new MyEmail(this, 48)
 
   protected class MyEmail(obj: T, size: Int) extends EmailField(obj, size) {
-    override def validations = valUnique(S.??("unique.email.address")) _ :: super.validations
+    override def validations = valUnique(S.?("unique.email.address")) _ :: super.validations
     override def displayName = owner.emailDisplayName
     override val fieldId = Some(Text("txtEmail"))
   }
@@ -122,7 +122,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends Record[T] {
   /**
    * The email first name
    */
-  def emailDisplayName = ??("email.address")
+  def emailDisplayName = S.?("email.address")
 
   /**
    * The password field for the User.  You can override the behavior
@@ -142,7 +142,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends Record[T] {
   /**
    * The display name for the password field
    */
-  def passwordDisplayName = ??("password")
+  def passwordDisplayName = S.?("password")
 
   /**
    * The superuser field for the User.  You can override the behavior
@@ -419,11 +419,11 @@ trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
   /**
    * The string for the timezone field
    */
-  def timezoneDisplayName = ??("time.zone")
+  def timezoneDisplayName = S.?("time.zone")
 
   /**
    * The string for the locale field
    */
-  def localeDisplayName = ??("locale")
+  def localeDisplayName = S.?("locale")
 
 }

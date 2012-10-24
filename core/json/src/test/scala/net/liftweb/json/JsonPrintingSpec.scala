@@ -17,7 +17,8 @@
 package net.liftweb
 package json
 
-import org.specs.{ScalaCheck, Specification}
+import org.specs2.mutable.Specification
+import org.specs2.ScalaCheck
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.forAll
 
@@ -25,12 +26,14 @@ import org.scalacheck.Prop.forAll
 /**
  * System under specification for JSON Printing.
  */
-object JsonPrintingSpec extends Specification("JSON Printing Specification") with JValueGen with ScalaCheck {
+object JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
+  "JSON Printing Specification".title
+
   import scala.text.Document
 
   "rendering does not change semantics" in {
     val rendering = (json: Document) => parse(Printer.pretty(json)) == parse(Printer.compact(json))
-    forAll(rendering) must pass
+    check(forAll(rendering))
   }
 
   private def parse(json: String) = scala.util.parsing.json.JSON.parse(json)

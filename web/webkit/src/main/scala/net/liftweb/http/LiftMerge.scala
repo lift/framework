@@ -184,7 +184,7 @@ private[http] trait LiftMerge {
       }
 
       // Appends ajax stript to body
-      if (LiftRules.autoIncludeAjax(this)) {
+      if (LiftRules.autoIncludeAjaxCalc.vend().apply(this)) {
         bodyChildren +=
                 <script src={S.encodeURL(contextPath + "/" +
                         LiftRules.ajaxPath +

@@ -17,7 +17,7 @@
 package net.liftweb
 package wizard
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import util._
@@ -26,7 +26,8 @@ import http._
 /**
  * System under specification for Wizard.
  */
-object WizardSpec extends Specification("Wizard Specification") {
+object WizardSpec extends Specification  {
+  "Wizard Specification".title
 
   val session: LiftSession = new LiftSession("", Helpers.randomString(20), Empty)
 
@@ -41,25 +42,25 @@ object WizardSpec extends Specification("Wizard Specification") {
 
     val nameAndAge = new Screen {
       val name = field(S ? "First Name", "",
-                       valMinLen(2, S ?? "Name Too Short"))
+                       valMinLen(2, S ? "Name Too Short"))
 
       val age = field(S ? "Age", 0,
-                      minVal(5, S ?? "Too young"),
-                      maxVal(120, S ?? "You should be dead"))
+                      minVal(5, S ? "Too young"),
+                      maxVal(120, S ? "You should be dead"))
 
       override def nextScreen = if (age.is < 18) parentName else favoritePet
     }
 
     val parentName = new Screen {
       val parentName = field(S ? "Mom or Dad's name", "",
-                             valMinLen(2, S ?? "Name Too Short"),
-                             valMaxLen(40, S ?? "Name Too Long"))
+                             valMinLen(2, S ? "Name Too Short"),
+                             valMaxLen(40, S ? "Name Too Long"))
     }
 
     val favoritePet = new Screen {
       val petName = field(S ? "Pet's name", "",
-                          valMinLen(2, S ?? "Name Too Short"),
-                          valMaxLen(40, S ?? "Name Too Long"))
+                          valMinLen(2, S ? "Name Too Short"),
+                          valMaxLen(40, S ? "Name Too Long"))
     }
   }
 

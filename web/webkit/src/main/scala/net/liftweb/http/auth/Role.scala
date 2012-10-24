@@ -35,7 +35,7 @@ object AuthRole {
 }
 
 /**
- * A Role may be assingned to a resource denominated by a path. A subject
+ * A Role may be assigned to a resource denominated by a path. A subject
  * that is assigned to the same role or to a role higher into the roles hierarchy
  * will have access to requested resource.
  */
@@ -44,7 +44,7 @@ trait Role {
   private var childs: List[Role] = Nil
 
   /**
-   * The name ofthe role
+   * The name of the role
    */
   def name: String
 
@@ -70,7 +70,7 @@ trait Role {
   def getChildRoles = childs
 
   /**
-   * Retuns the parent node
+   * Returns the parent node
    */
   def getParent = parent
 

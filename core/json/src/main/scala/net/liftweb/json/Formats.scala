@@ -166,8 +166,8 @@ trait TypeHints {
      * Chooses most specific class.
      */
     def hintFor(clazz: Class[_]): String = components.filter(_.containsHint_?(clazz))
-      .map(th => (th.hintFor(clazz), th.classFor(th.hintFor(clazz)).getOrElse(error("hintFor/classFor not invertible for " + th))))
-      .sort((x, y) => delta(x._2, clazz) - delta(y._2, clazz) < 0).head._1
+        .map(th => (th.hintFor(clazz), th.classFor(th.hintFor(clazz)).getOrElse(sys.error("hintFor/classFor not invertible for " + th))))
+        .sort((x, y) => (delta(x._2, clazz) - delta(y._2, clazz)) < 0).head._1
 
     def classFor(hint: String): Option[Class[_]] = {
       def hasClass(h: TypeHints) =
@@ -197,7 +197,7 @@ private[json] object ClassDelta {
     else if (class2.isAssignableFrom(class1)) {
       1 + delta(class1.getSuperclass, class2)
     }
-    else error("Don't call delta unless one class is assignable from the other")
+    else sys.error("Don't call delta unless one class is assignable from the other")
   }
 }
 
@@ -205,7 +205,7 @@ private[json] object ClassDelta {
  */
 case object NoTypeHints extends TypeHints {
   val hints = Nil
-  def hintFor(clazz: Class[_]) = error("NoTypeHints does not provide any type hints.")
+  def hintFor(clazz: Class[_]) = sys.error("NoTypeHints does not provide any type hints.")
   def classFor(hint: String) = None
 }
 
@@ -267,4 +267,18 @@ trait DefaultFormats extends Formats {
 private[json] class ThreadLocal[A](init: => A) extends java.lang.ThreadLocal[A] with (() => A) {
   override def initialValue = init
   def apply = get
+}
+
+class CustomSerializer[A: Manifest](
+  ser: Formats => (PartialFunction[JValue, A], PartialFunction[Any, JValue])) extends Serializer[A] {
+
+  val Class = implicitly[Manifest[A]].erasure
+
+  def deserialize(implicit format: Formats) = {
+    case (TypeInfo(Class, _), json) =>
+      if (ser(format)._1.isDefinedAt(json)) ser(format)._1(json)
+      else throw new MappingException("Can't convert " + json + " to " + Class)
+  }
+
+  def serialize(implicit format: Formats) = ser(format)._2
 }

@@ -19,7 +19,7 @@ import org.bson.types.ObjectId
 import json.{DefaultFormats, Formats}
 import json.JsonAST.JObject
 
-import com.mongodb.{BasicDBObject, DB, DBObject}
+import com.mongodb.{BasicDBObject, DB, DBCollection, DBObject}
 
 trait JsonFormats {
   // override this for custom Formats
@@ -65,22 +65,25 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   def mongoIdentifier: MongoIdentifier = DefaultMongoIdentifier
 
   /*
+   * Use the collection associated with this Meta.
+   */
+  def useColl[T](f: DBCollection => T) =
+    MongoDB.useCollection(mongoIdentifier, collectionName)(f)
+
+  /*
+   * Use the db associated with this Meta.
+   */
+  def useDb[T](f: DB => T) = MongoDB.use(mongoIdentifier)(f)
+
+  /*
   * Count all documents
   */
-  def count: Long = {
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
-      coll.getCount
-    )
-  }
+  def count: Long = useColl { coll => coll.getCount }
 
   /*
   * Count documents by DBObject query
   */
-  def count(qry: DBObject):Long = {
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
-      coll.getCount(qry)
-    )
-  }
+  def count(qry: DBObject):Long = useColl { coll => coll.getCount(qry) }
 
   /*
   * Count documents by JObject query
@@ -90,20 +93,14 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   /*
   * Count distinct records on a given field
   */
-  def countDistinct(key: String, query: DBObject): Long = {
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
-      coll.distinct(key, query).size
-    )
-  }
+  def countDistinct(key: String, query: DBObject): Long =
+    useColl { coll => coll.distinct(key, query).size }
 
   /*
   * Delete documents by a DBObject query
   */
-  def delete(qry: DBObject) {
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
-      coll.remove(qry)
-    )
-  }
+  def delete(qry: DBObject): Unit =
+    useColl { coll => coll.remove(qry) }
 
   // delete a document
   def delete(k: String, v: Any) {
@@ -116,45 +113,35 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   /*
   * Delete documents by a JObject query
   */
-  def delete(qry: JObject) {
-    delete(JObjectParser.parse(qry))
-  }
+  def delete(qry: JObject): Unit = delete(JObjectParser.parse(qry))
 
   /* drop this document collection */
-  def drop {
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
-      coll.drop
-    )
-  }
+  def drop: Unit =  useColl { coll => coll.drop }
 
   /*
   * Ensure an index exists
   */
-  def ensureIndex(keys: JObject) {
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll => {
-      coll.ensureIndex(JObjectParser.parse(keys))
-    })
-  }
+  def ensureIndex(keys: JObject): Unit =
+    useColl { coll => coll.ensureIndex(JObjectParser.parse(keys)) }
 
   /*
   * Ensure an index exists and make unique
   */
-  def ensureIndex(keys: JObject, unique: Boolean) {
+  def ensureIndex(keys: JObject, unique: Boolean): Unit = {
     val options = new BasicDBObject
     if (unique) options.put("unique", true)
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll => {
+    useColl { coll =>
       coll.ensureIndex(JObjectParser.parse(keys), options)
-    })
+    }
   }
 
   /*
   * Ensure an index exists with options
   */
-  def ensureIndex(keys: JObject, opts: JObject) {
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll => {
+  def ensureIndex(keys: JObject, opts: JObject): Unit =
+    useColl { coll =>
       coll.ensureIndex(JObjectParser.parse(keys), JObjectParser.parse(opts))
-    })
-  }
+    }
 
   /*
   * Update document with a DBObject query using the given Mongo instance.
@@ -185,9 +172,7 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   * Update document with a JObject query.
   */
   def update(qry: JObject, newobj: JObject, opts: UpdateOption*) {
-    MongoDB.use(mongoIdentifier) ( db => {
-      update(qry, newobj, db, opts :_*)
-    })
+    useDb { db => update(qry, newobj, db, opts :_*) }
   }
 }
 

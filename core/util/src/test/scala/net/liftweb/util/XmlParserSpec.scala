@@ -21,13 +21,14 @@ import java.io.ByteArrayInputStream
 
 import xml.{Text, Unparsed}
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for XmlParser, specifically PCDataMarkupParser.
  */
-object XmlParserSpec extends Specification("Xml Parser Specification") {
+object XmlParserSpec extends Specification  {
+  "Xml Parser Specification".title
 
   "Multiple attributes with same name, but different namespace" should {
     "parse correctly" >> {

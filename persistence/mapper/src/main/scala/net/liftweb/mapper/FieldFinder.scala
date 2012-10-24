@@ -83,7 +83,7 @@ class FieldFinder[T: ClassManifest](metaMapper: AnyRef, logger: net.liftweb.comm
             }
 
           } catch {
-            case e =>
+            case e: Exception =>
               logger.debug("Not a valid mapped field: %s, got exception: %s".format(meth.getName, e))
               false
           }

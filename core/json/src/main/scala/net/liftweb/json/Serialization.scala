@@ -42,6 +42,16 @@ object Serialization {
   def write[A <: AnyRef, W <: Writer](a: A, out: W)(implicit formats: Formats): W =
     Printer.compact(render(Extraction.decompose(a)(formats)), out)
 
+  /** Serialize to String (pretty format).
+   */
+  def writePretty[A <: AnyRef](a: A)(implicit formats: Formats): String =
+    (writePretty(a, new StringWriter)(formats)).toString
+
+  /** Serialize to Writer (pretty format).
+   */
+  def writePretty[A <: AnyRef, W <: Writer](a: A, out: W)(implicit formats: Formats): W = 
+    Printer.pretty(render(Extraction.decompose(a)(formats)), out)
+
   /** Deserialize from a String.
    */
   def read[A](json: String)(implicit formats: Formats, mf: Manifest[A]): A =

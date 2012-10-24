@@ -17,7 +17,7 @@
 package net.liftweb
 package util
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import HttpHelpers._
 
@@ -25,7 +25,8 @@ import HttpHelpers._
 /**
  * Systems under specification for HttpHelpers.
  */
-object HttpHelpersSpec extends Specification("HttpHelpers Specification") with HttpHelpers with ListHelpers with StringHelpers {
+object HttpHelpersSpec extends Specification with HttpHelpers with ListHelpers with StringHelpers {
+  "HttpHelpers Specification".title
 
   "Http helpers" should {
     "urlEncode and urlDecode functions" >> {

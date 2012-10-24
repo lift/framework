@@ -31,47 +31,93 @@ import util.Helpers._
 import util.Props
 
 trait JQueryArtifacts extends JSArtifacts {
+  /**
+   * Toggles between current JS object and the object denominated by id
+   */
   def toggle(id: String) = JqId(id) ~> new JsMember {
     def toJsCmd = "toggle()"
   }
 
+  /**
+   * Hides the element denominated by id
+   */
   def hide(id: String) = JqId(id) ~> new JsMember {
     def toJsCmd = "hide()"
   }
 
+  /**
+   * Shows the element denominated by this id
+   */
   def show(id: String) = JqId(id) ~> new JsMember {
     def toJsCmd = "show()"
   }
 
+  /**
+   * Shows the element denominated by id and puts the focus on it
+   */
   def showAndFocus(id: String) = JqId(id) ~> new JsMember {
     def toJsCmd = "show().each(function(i) {var t = this; setTimeout(function() { t.focus(); }, 200);})"
   }
 
+  /**
+   * Serializes a form denominated by the id. It returns a query string
+   * containing the fields that are to be submitted
+   */
   def serialize(id: String) = JqId(id) ~> new JsMember {
     def toJsCmd = "serialize()"
   }
 
-  def setHtml(id: String, xml: NodeSeq): JsCmd = JqJsCmds.JqSetHtml(id, xml)
+  /**
+   * Replaces the content of the node with the provided id with the markup given by content
+   */
+  def replace(id: String, content: NodeSeq): JsCmd = JqJsCmds.JqReplace(id, content)
 
+  /**
+   * Sets the inner HTML of the element denominated by the id
+   */
+  def setHtml(id: String, content: NodeSeq): JsCmd = JqJsCmds.JqSetHtml(id, content)
+
+  /**
+   * Sets the JavScript that will be executed when document is ready
+   * for processing
+   */
   def onLoad(cmd: JsCmd): JsCmd = JqJsCmds.JqOnLoad(cmd)
 
+  /**
+   * Fades out the element having the provided id, by waiting
+   * for the given duration and fades out during fadeTime
+   */
   def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) = 
     FadeOut(id, duration, fadeTime)
 
+  /**
+   * Makes an Ajax request using lift's Ajax path and the request
+   * attributes described by data parameter
+   */
   def ajax(data: AjaxInfo): String = {
     "jQuery.ajax(" + toJson(data, S.contextPath,
       prefix =>
-              JsRaw("liftAjax.addPageName(" + S.encodeURL(prefix + "/" + LiftRules.ajaxPath + "/").encJs + ")")) + ");"
+              JsRaw("liftAjax.addPageNameAndVersion(" + S.encodeURL(prefix + "/" + LiftRules.ajaxPath + "/").encJs + ", version)")) + ");"
   }
 
+  /**
+   * Makes a Ajax comet request using lift's Comet path and the request
+   * attributes described by data parameter
+   */
   def comet(data: AjaxInfo): String = {
     "jQuery.ajax(" + toJson(data, LiftRules.cometServer(), LiftRules.calcCometPath) + ");"
   }
 
+  /**
+   * Transforms a JSON object in to its string representation
+   */
   def jsonStringify(in: JsExp): JsExp = new JsExp {
     def toJsCmd = "JSON.stringify(" + in.toJsCmd + ")"
   }
 
+  /**
+   * Converts a form denominated by formId into a JSON object
+   */
   def formToJSON(formId: String): JsExp = new JsExp() {
     def toJsCmd = "lift$.formToJSON('" + formId + "')";
   }
@@ -87,6 +133,7 @@ trait JQueryArtifacts extends JSArtifacts {
             info.failFunc.map("error : " + _).toList mkString ("{ ", ", ", " }")
 }
 
+@deprecated("Use JQueryArtifacts in LiftRules and see http://liftweb.net/jquery for more information", "2.5")
 case object JQuery13Artifacts extends JQueryArtifacts {
   override def pathRewriter: PartialFunction[List[String], List[String]] = {
     case "jquery.js" :: Nil if Props.devMode => List("jquery-1.3.2.js")
@@ -94,12 +141,14 @@ case object JQuery13Artifacts extends JQueryArtifacts {
   }
 }
 
-
+@deprecated("Use JQueryArtifacts in LiftRules and see http://liftweb.net/jquery for more information", "2.5")
 case object JQuery14Artifacts extends JQueryArtifacts {
   override def pathRewriter: PartialFunction[List[String], List[String]] = {
     case "jquery.js" :: Nil if Props.devMode => List("jquery-1.4.4.js")
     case "jquery.js" :: Nil => List("jquery-1.4.4-min.js")
   }
 }
+
+case object JQueryArtifacts extends JQueryArtifacts
 
 

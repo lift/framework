@@ -17,7 +17,7 @@
 package net.liftweb
 package util
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 
@@ -25,7 +25,8 @@ import common._
 /**
  * Systems under specification for ListHelpers.
  */
-object ListHelpersSpec extends Specification("ListHelpers Specification") with ListHelpers {
+object ListHelpersSpec extends Specification  with ListHelpers {
+  "ListHelpers Specification".title
 
   "ListHelpers.delta" should {
     "insert after 2" in {

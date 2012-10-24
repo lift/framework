@@ -17,7 +17,7 @@
 package net.liftweb
 package http
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 
@@ -25,7 +25,8 @@ import common._
 /**
  * System under specification for Req.
  */
-object ReqSpec extends Specification("Req Specification") {
+object ReqSpec extends Specification  {
+  "Req Specification".title
 
   private val iPhoneUserAgents = 
     List("Mozilla/5.0 (iPhone Simulator; U; CPU iPhone OS 3_0 like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Version/4.0 Mobile/7A341 Safari/528.16",
@@ -40,17 +41,15 @@ object ReqSpec extends Specification("Req Specification") {
       val uac = new UserAgentCalculator {
         def userAgent = Full("Mozilla/5.0 (Windows; U; Windows NT 6.1; zh-HK) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5")
       }
-      
       uac.safariVersion.open_! must_== 5
     }
 
     "Do the right thing with iPhone" in {
-      iPhoneUserAgents.foreach {
+      iPhoneUserAgents map {
         agent => {
           val uac = new UserAgentCalculator {
             def userAgent = Full(agent)
           }
-
           uac.isIPhone must_== true
           uac.isIPad must_== false
         }
@@ -58,12 +57,11 @@ object ReqSpec extends Specification("Req Specification") {
     }
 
     "Do the right thing with iPad" in {
-      iPadUserAgents.foreach {
+      iPadUserAgents map {
         agent => {
           val uac = new UserAgentCalculator {
             def userAgent = Full(agent)
           }
-
           uac.isIPhone must_== false
           uac.isIPad must_== true
         }

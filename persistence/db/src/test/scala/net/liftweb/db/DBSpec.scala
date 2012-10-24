@@ -17,8 +17,8 @@
 package net.liftweb
 package db
 
-import org.specs.Specification
-import org.specs.mock.Mockito
+import org.specs2.mutable.Specification
+import org.specs2.mock.Mockito
 import org.mockito.Matchers._
 
 import net.liftweb.common._
@@ -28,6 +28,8 @@ import net.liftweb.util.ControlHelpers._
 import java.sql._
 
 class DBSpec extends Specification with Mockito {
+  sequential
+
   trait CommitFunc {
     def f(success: Boolean): Unit
   }
@@ -142,12 +144,30 @@ class DBSpec extends Specification with Mockito {
 
       there was one(activeConnection).rollback
       there was one(m).f(false)
+      success
     }
   }
 
   "appendPostTransaction" should {
     "throw if called outside tx context" in {
       DB.appendPostTransaction {committed => ()}  must throwA[IllegalStateException]
+    }
+  }
+
+  "DB.rollback" should {
+    "call postTransaction functions with false" in {
+      val m = mock[CommitFunc]
+      val activeConnection = mock[Connection]
+      DB.defineConnectionManager(DefaultConnectionIdentifier, dBVendor(activeConnection))
+
+      tryo(DB.use(DefaultConnectionIdentifier) {c =>
+        DB.appendPostTransaction(DefaultConnectionIdentifier, m.f _)
+        DB.rollback(DefaultConnectionIdentifier)
+        42
+      })
+
+      there was one(activeConnection).rollback
+      there was one(m).f(false)
     }
   }
 }

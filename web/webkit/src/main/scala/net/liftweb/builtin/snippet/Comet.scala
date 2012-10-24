@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 WorldWide Conferencing, LLC
+ * Copyright 2007-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,26 @@ object Comet extends DispatchSnippet with LazyLoggable {
     case _ => render _
   }
 
+  /**
+   *
+   * A typical comet tag could look like:
+   *
+   * <pre name="code" class="xml">
+   *   &lt;lift:comet type=&lt;Your comet class> name=&lt;Optional, the name of this comet instance>>{xhtml}</lift:comet>
+   * </pre>
+   *
+   * For the name, you have three options
+   * <ul>
+   *   <li>You can set a fix name using <pre><code>name="MyComet"</code></pre>
+   *   <li>You can use a query parameter, for a url like foo?=id=122, your comet could take the
+   *   name "122" if you use: <pre><code>metaname=id</code></pre>
+   *   <li>You could assign a random name by using <pre><code>randomname=true</code></pre>
+   * </ul>
+   *
+   *
+   * @param kids The NodeSeq that is enclosed by the comet tags
+   * @return
+   */
   def render(kids: NodeSeq) : NodeSeq = {
 
     Props.inGAE match {
@@ -43,7 +63,7 @@ object Comet extends DispatchSnippet with LazyLoggable {
        cometActor.parentTag.scope, Group(xml)) %
   (new UnprefixedAttribute("id", Text(spanId), Null)) %
   (timeb.filter(_ > 0L).map(time => (new PrefixedAttribute("lift", "when", Text(time.toString), Null))) openOr Null)
-    
+
   private def buildComet(kids: NodeSeq) : NodeSeq = {
     val theType: Box[String] = S.attr.~("type").map(_.text)
     val name: Box[String] = S.currentAttr("name") or
@@ -65,15 +85,19 @@ object Comet extends DispatchSnippet with LazyLoggable {
                c ! UpdateDefaultXml(kids)
              }
              
-             (c.!?(26600L, AskRender)) match {
+             (c.!?(c.cometRenderTimeout, AskRender)) match {
                case Full(AnswerRender(response, _, when, _)) if c.hasOuter =>
                  buildSpan(Empty, c.buildSpan(when, response.inSpan) ++ response.outSpan, c, c.uniqueId+"_outer")
                
                case Full(AnswerRender(response, _, when, _)) =>
                  c.buildSpan(when, response.inSpan)
                
-               case _ => 
-                 throw new CometTimeoutException("type: "+theType+" name: "+name)
+               case e =>
+                 if (c.cometRenderTimeoutHandler().isDefined) {
+                   c.cometRenderTimeoutHandler().open_!
+                 } else {
+                   throw new CometTimeoutException("type: "+theType+" name: "+name)
+                 }
              }}} openOr {
                throw new CometNotFoundException("type: "+theType+" name: "+name)
              }

@@ -353,7 +353,7 @@ object OutputStreamResponse {
 
 /**
  * Use this response to write your data directly to the response pipe. Along with StreamingResponse
- * you have an aternative to send data to the client.
+ * you have an alternative to send data to the client.
  */
 case class OutputStreamResponse(out: (OutputStream) => Unit,  
   size: Long, 
@@ -481,7 +481,7 @@ object DocType {
  * Avoid using this in favor of LiftRules.docType
  *
  */
-@deprecated("Avoid using this in favor of LiftRules.docType")
+@deprecated("Avoid using this in favor of LiftRules.docType", "2.3")
 object ResponseInfo {
 
    def docType: PartialFunction[Req, Box[String]] = new PartialFunction[Req, Box[String]](){

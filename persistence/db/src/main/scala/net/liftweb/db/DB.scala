@@ -21,6 +21,8 @@ import common._
 import util._
 import Helpers._
 
+import net.liftweb.http.S
+
 import javax.sql.{DataSource}
 import java.sql.ResultSetMetaData
 import java.sql.{Statement, ResultSet, Types, PreparedStatement, Connection, DriverManager}
@@ -69,15 +71,36 @@ trait DB extends Loggable {
 
 
   /**
-   * can we get a JDBC connection from JNDI?
+   * Try to obtain a Connection using the jndiName of the ConnectionIdentifier
    */
-  def jndiJdbcConnAvailable_? : Boolean = {
-    try {
-      ((new InitialContext).lookup("java:/comp/env").asInstanceOf[Context].lookup(DefaultConnectionIdentifier.jndiName).asInstanceOf[DataSource].getConnection) != null
-    } catch {
-      case e => false
+  private def jndiConnection(name: ConnectionIdentifier) : Box[Connection] = {
+    val toTry: List[() => Connection] = List(
+      () => {
+        logger.trace("Trying JNDI lookup on java:/comp/env followed by lookup on %s".format(name.jndiName))
+        (new InitialContext).lookup("java:/comp/env").asInstanceOf[Context].lookup(name.jndiName).asInstanceOf[DataSource].getConnection
+      },
+      () => {
+        logger.trace("Trying JNDI lookup on java:/comp/env/%s".format(name.jndiName))
+        (new InitialContext).lookup("java:/comp/env/" + name.jndiName).asInstanceOf[DataSource].getConnection
+
+      },
+      () => {
+        logger.trace("Trying JNDI lookup on %s".format(name.jndiName))
+        (new InitialContext).lookup(name.jndiName).asInstanceOf[DataSource].getConnection
+
+      }
+    )
+
+    first(toTry) (f => tryo{t:Throwable => logger.trace("JNDI Lookup failed: "+t)}(f())) or {
+      logger.trace("Unable to obtain Connection for JNDI name %s".format(name.jndiName))
+      Empty
     }
   }
+
+  /**
+   * can we get a JDBC connection from JNDI?
+   */
+  def jndiJdbcConnAvailable_? : Boolean = jndiConnection(DefaultConnectionIdentifier).isDefined
 
   private val connectionManagers = new HashMap[ConnectionIdentifier, ConnectionManager]
 
@@ -96,7 +119,7 @@ trait DB extends Loggable {
     threadLocalConnectionManagers.doWith(newMap)(f)
   }
 
-  case class ConnectionHolder(conn: SuperConnection, cnt: Int, postTransaction: List[Boolean => Unit])
+  case class ConnectionHolder(conn: SuperConnection, cnt: Int, postTransaction: List[Boolean => Unit], rolledBack: Boolean)
 
   private def info: HashMap[ConnectionIdentifier, ConnectionHolder] = {
     threadStore.get match {
@@ -124,7 +147,7 @@ trait DB extends Loggable {
    * perform this function after transaction has ended.  This is helpful for sending messages to Actors after we know
    * a transaction has been either committed or rolled back
    */
-  @deprecated("Use appendPostTransaction {committed => ...}")
+  @deprecated("Use appendPostTransaction {committed => ...}", "2.4")
   def performPostCommit(f: => Unit) {
     postCommit = (() => f) :: postCommit
   }
@@ -144,19 +167,29 @@ trait DB extends Loggable {
   }
 
   private def newConnection(name: ConnectionIdentifier): SuperConnection = {
-    val ret = ((threadLocalConnectionManagers.box.flatMap(_.get(name)) or Box(connectionManagers.get(name))).flatMap(cm => cm.newSuperConnection(name) or cm.newConnection(name).map(c => new SuperConnection(c, () => cm.releaseConnection(c))))) openOr {
-      Helpers.tryo {
-        val uniqueId = if (logger.isDebugEnabled) Helpers.nextNum.toString else ""
-        logger.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " opened")
-        val conn = (new InitialContext).lookup("java:/comp/env").asInstanceOf[Context].lookup(name.jndiName).asInstanceOf[DataSource].getConnection
-        new SuperConnection(conn, () => {logger.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " closed"); conn.close})
-      } openOr {
-        throw new NullPointerException("Looking for Connection Identifier " + name + " but failed to find either a JNDI data source " +
+    def cmSuperConnection(cm: ConnectionManager): Box[SuperConnection] =
+      cm.newSuperConnection(name) or cm.newConnection(name).map(c => new SuperConnection(c, () => cm.releaseConnection(c)))
+
+    def jndiSuperConnection: Box[SuperConnection] = jndiConnection(name).map(c => {
+      val uniqueId = if (logger.isDebugEnabled) Helpers.nextNum.toString else ""
+      logger.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " opened")
+      new SuperConnection(c, () => {logger.debug("Connection ID " + uniqueId + " for JNDI connection " + name.jndiName + " closed"); c.close})
+    })
+
+
+    val cmConn = for {
+      connectionManager <- threadLocalConnectionManagers.box.flatMap(_.get(name)) or Box(connectionManagers.get(name))
+      connection <- cmSuperConnection(connectionManager)
+    } yield connection
+
+    val ret = cmConn or jndiSuperConnection
+
+    ret.foreach (_.setAutoCommit(false))
+
+    ret openOr {
+      throw new NullPointerException("Looking for Connection Identifier " + name + " but failed to find either a JNDI data source " +
                                        "with the name " + name.jndiName + " or a lift connection manager with the correct name")
-      }
     }
-    ret.setAutoCommit(false)
-    ret
   }
 
   private class ThreadBasedConnectionManager(connections: List[ConnectionIdentifier]) {
@@ -209,13 +242,13 @@ trait DB extends Loggable {
               try {
                 try {
                   val ret = f
-                  success = true
+                  success = !S.exceptionThrown_?
                   ret
                 } catch {
                   // this is the case when we want to commit the transaction
                   // but continue to throw the exception
                   case e: LiftFlowOfControlException => {
-                    success = true
+                    success = !S.exceptionThrown_?
                     throw e
                   }
                 }
@@ -232,13 +265,13 @@ trait DB extends Loggable {
             try {
               try {
                 val ret = f
-                success = true
+                success = !S.exceptionThrown_?
                 ret
               } catch {
                 // this is the case when we want to commit the transaction
                 // but continue to throw the exception
                 case e: LiftFlowOfControlException => {
-                  success = true
+                  success = !S.exceptionThrown_?
                   throw e
                 }
               }
@@ -259,8 +292,8 @@ trait DB extends Loggable {
   private def getConnection(name: ConnectionIdentifier): SuperConnection = {
     logger.trace("Acquiring " + name + " On thread " + Thread.currentThread)
     var ret = info.get(name) match {
-      case None => ConnectionHolder(newConnection(name), calcBaseCount(name) + 1, Nil)
-      case Some(ConnectionHolder(conn, cnt, post)) => ConnectionHolder(conn, cnt + 1, post)
+      case None => ConnectionHolder(newConnection(name), calcBaseCount(name) + 1, Nil, false)
+      case Some(ConnectionHolder(conn, cnt, post, rb)) => ConnectionHolder(conn, cnt + 1, post, rb)
     }
     info(name) = ret
     logger.trace("Acquired " + name + " on thread " + Thread.currentThread +
@@ -269,22 +302,24 @@ trait DB extends Loggable {
   }
 
   private def releaseConnectionNamed(name: ConnectionIdentifier, rollback: Boolean) {
-    logger.trace("Request to release " + name + " on thread " + Thread.currentThread)
+    logger.trace("Request to release %s on thread %s, auto rollback=%s".format(name,Thread.currentThread, rollback))
+
     (info.get(name): @unchecked) match {
-      case Some(ConnectionHolder(c, 1, post)) => {
-        if (! c.getAutoCommit()) {
+      case Some(ConnectionHolder(c, 1, post, manualRollback)) => {
+        if (! (c.getAutoCommit() || manualRollback)) {
           if (rollback) tryo{c.rollback}
           else c.commit
         }
         tryo(c.releaseFunc())
         info -= name
-        logger.trace("Invoking %d postTransaction functions ".format(post.size))
-        post.reverse.foreach(f => tryo(f(!rollback)))
-        logger.trace("Released " + name + " on thread " + Thread.currentThread)
+        val rolledback = rollback | manualRollback
+        logger.trace("Invoking %d postTransaction functions. rollback=%s".format(post.size, rolledback))
+        post.reverse.foreach(f => tryo(f(!rolledback)))
+        logger.trace("Released %s on thread %s".format(name,Thread.currentThread))
       }
-      case Some(ConnectionHolder(c, n, post)) =>
+      case Some(ConnectionHolder(c, n, post, rb)) =>
         logger.trace("Did not release " + name + " on thread " + Thread.currentThread + " count " + (n - 1))
-        info(name) = ConnectionHolder(c, n - 1, post)
+        info(name) = ConnectionHolder(c, n - 1, post, rb)
       case x =>
         // ignore
     }
@@ -293,7 +328,7 @@ trait DB extends Loggable {
   /**
    *  Append a function to be invoked after the transaction has ended for the given connection identifier
    */
-  @deprecated("Use appendPostTransaction (name, {committed => ...})")
+  @deprecated("Use appendPostTransaction (name, {committed => ...})", "2.4")
   def appendPostFunc(name: ConnectionIdentifier, func: () => Unit) {
     appendPostTransaction(name, dontUse => func())
   }
@@ -307,8 +342,8 @@ trait DB extends Loggable {
    */
   def appendPostTransaction(name: ConnectionIdentifier, func: Boolean => Unit) {
     info.get(name) match {
-      case Some(ConnectionHolder(c, n, post)) =>
-        info(name) = ConnectionHolder(c, n, func :: post)
+      case Some(ConnectionHolder(c, n, post, rb)) =>
+        info(name) = ConnectionHolder(c, n, func :: post, rb)
         logger.trace("Appended postTransaction function on %s, new count=%d".format(name, post.size+1))
       case _ => throw new IllegalStateException("Tried to append postTransaction function on illegal ConnectionIdentifer or outside transaction context")
     }
@@ -316,7 +351,7 @@ trait DB extends Loggable {
 
   /**
    * Append function to be invoked after the current transaction on DefaultConnectionIdentifier has ended
-   * 
+   *
    */
   def appendPostTransaction(func: Boolean => Unit):Unit = appendPostTransaction(DefaultConnectionIdentifier, func)
 
@@ -365,9 +400,9 @@ trait DB extends Loggable {
           case x => x.toString
         }
 
-      case BIGINT | INTEGER | /* DECIMAL | NUMERIC | */ SMALLINT | TINYINT => rs.getLong(pos).toString
+      case BIGINT | INTEGER | /* DECIMAL | NUMERIC | */ SMALLINT | TINYINT => checkNull(rs, pos, rs.getLong(pos).toString)
 
-      case BIT | BOOLEAN => rs.getBoolean(pos).toString
+      case BIT | BOOLEAN => checkNull(rs, pos, rs.getBoolean(pos).toString)
 
       case VARCHAR | CHAR | CLOB | LONGVARCHAR => rs.getString(pos)
 
@@ -376,8 +411,16 @@ trait DB extends Loggable {
         case x => x.toString
       }
 
-      case DOUBLE | FLOAT | REAL => rs.getDouble(pos).toString
+      case DOUBLE | FLOAT | REAL => checkNull(rs, pos, rs.getDouble(pos).toString)
     }
+  }
+
+  /*
+   If the column is null, return null rather than the boxed primitive
+   */
+  def checkNull[T](rs: ResultSet, pos: Int, res: => T): T = {
+    if (null eq rs.getObject(pos)) null.asInstanceOf[T]
+    else res
   }
 
   private def asAny(pos: Int, rs: ResultSet, md: ResultSetMetaData): Any = {
@@ -387,15 +430,15 @@ trait DB extends Loggable {
 
       case DECIMAL | NUMERIC => rs.getBigDecimal(pos)
 
-      case BIGINT | INTEGER | /* DECIMAL | NUMERIC | */ SMALLINT | TINYINT => rs.getLong(pos)
+      case BIGINT | INTEGER | /* DECIMAL | NUMERIC | */ SMALLINT | TINYINT => checkNull(rs, pos, rs.getLong(pos))
 
-      case BIT | BOOLEAN => rs.getBoolean(pos)
+      case BIT | BOOLEAN => checkNull(rs, pos, rs.getBoolean(pos))
 
       case VARCHAR | CHAR | CLOB | LONGVARCHAR => rs.getString(pos)
 
       case DATE | TIME | TIMESTAMP => rs.getTimestamp(pos)
 
-      case DOUBLE | FLOAT | REAL => rs.getDouble(pos)
+      case DOUBLE | FLOAT | REAL => checkNull(rs, pos, rs.getDouble(pos))
     }
   }
 
@@ -526,7 +569,17 @@ trait DB extends Loggable {
     use(DefaultConnectionIdentifier)(conn => exec(conn, query)(resultSetToAny))
 
 
-  def rollback(name: ConnectionIdentifier) = use(name)(conn => conn.rollback)
+  def rollback(name: ConnectionIdentifier): Unit = {
+    info.get(name) match {
+      case Some(ConnectionHolder(c, n, post, _)) =>
+        info(name) = ConnectionHolder(c, n, post, true)
+        logger.trace("Manual rollback on %s".format(name))
+        use(name)(conn => conn.rollback)
+      case _ => throw new IllegalStateException("Tried to rollback transaction on illegal ConnectionIdentifer or outside transaction context")
+    }
+  }
+
+  def rollback: Unit = rollback(DefaultConnectionIdentifier)
 
   /**
    * Executes  { @code statement } and converts the  { @code ResultSet } to model
@@ -630,6 +683,8 @@ trait DB extends Loggable {
   /**
    * Executes function  { @code f } with the connection named  { @code name }. Releases the connection
    * before returning.
+   *
+   * Only use within a stateful request
    */
   def use[T](name: ConnectionIdentifier)(f: (SuperConnection) => T): T = {
     val conn = getConnection(name)
@@ -637,13 +692,13 @@ trait DB extends Loggable {
       var rollback = true
       try {
         val ret = f(conn)
-        rollback = false
+        rollback = S.exceptionThrown_?
         ret
       } catch {
         // this is the case when we want to commit the transaction
         // but continue to throw the exception
         case e: LiftFlowOfControlException => {
-          rollback = false
+          rollback = S.exceptionThrown_?
           throw e
         }
       } finally {
@@ -1076,19 +1131,18 @@ class StandardDBVendor(driverName: String,
                        dbUrl: String,
                        dbUser: Box[String],
                        dbPassword: Box[String]) extends ProtoDBVendor {
-  protected def createOne: Box[Connection] = try {
-    Class.forName(driverName)
 
-    val dm = (dbUser, dbPassword) match {
+  private val logger = Logger(classOf[StandardDBVendor])
+
+  protected def createOne: Box[Connection] =  {
+    tryo{t:Throwable => logger.error("Cannot load database driver: %s".format(driverName), t)}{Class.forName(driverName);()}
+
+    (dbUser, dbPassword) match {
       case (Full(user), Full(pwd)) =>
-        DriverManager.getConnection(dbUrl, user, pwd)
-
-      case _ => DriverManager.getConnection(dbUrl)
+        tryo{t:Throwable => logger.error("Unable to get database connection. url=%s, user=%s".format(dbUrl, user),t)}(DriverManager.getConnection(dbUrl, user, pwd))
+      case _ =>
+        tryo{t:Throwable => logger.error("Unable to get database connection. url=%s".format(dbUrl),t)}(DriverManager.getConnection(dbUrl))
     }
-
-    Full(dm)
-  } catch {
-    case e: Exception => e.printStackTrace; Empty
   }
 }
 

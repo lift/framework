@@ -23,18 +23,30 @@ import net.liftweb.http._
 import net.liftweb.http.js._
 import net.liftweb.util._
 
+@deprecated("Use any of the ajax methods in SHtml instead.", "2.5")
 object A extends DispatchSnippet {
 
   def dispatch : DispatchIt = {
     case _ => render _
   }
 
+  /**
+   * Usage:
+   *
+   *   <pre name="code" class="xml"
+   *   def a(func: () => JsCmd, body: NodeSeq, attrs: ElemAttr*): Elem = {
+   *     val key = formFuncName
+   *     addFunctionMap(key, ((a: List[String]) => func()))
+   *     attrs.foldLeft(&lt;lift:a key={key}>{body}&lt;/lift:a>)(_ % _)
+   *   }
+   *   </pre>
+   */
   def render(kids: NodeSeq) : NodeSeq = Elem(null, "a", addAjaxHREF(), TopScope, kids :_*)
 
   private def addAjaxHREF(): MetaData = {
     val ajax: JsExp = SHtml.makeAjaxCall(JE.Str(S.attr.~("key").map(_.text + "=true").getOrElse("")))
 
-    new UnprefixedAttribute("onclick", Text(ajax.toJsCmd),
+    new UnprefixedAttribute("onclick", Text(ajax.toJsCmd + "; return false;"),
                             new UnprefixedAttribute("href", Text("javascript://"),
                                                     S.currentAttrsToMetaData(name => name != "onclick" && name != "href" && name != "key")
                                                    ))

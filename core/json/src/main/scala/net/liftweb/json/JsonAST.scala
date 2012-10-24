@@ -383,11 +383,6 @@ object JsonAST {
     type Values = List[Any]
     def values = arr.map(_.values)
     override def apply(i: Int): JValue = arr(i)
-
-    override def equals(that: Any): Boolean = that match {
-      case a: JArray => Set(arr.toArray: _*) == Set(a.arr.toArray: _*)
-      case _ => false
-    }
   }
 
   /** Renders JSON.
@@ -401,39 +396,24 @@ object JsonAST {
     case JDouble(n)    => text(n.toString)
     case JInt(n)       => text(n.toString)
     case JNull         => text("null")
-    case JNothing      => error("can't render 'nothing'")
+    case JNothing      => sys.error("can't render 'nothing'")
     case JString(null) => text("null")
     case JString(s)    => text("\"" + quote(s) + "\"")
     case JArray(arr)   => text("[") :: series(trimArr(arr).map(render)) :: text("]")
-    case JField(n, v)  => text("\"" + n + "\":") :: render(v)
+    case JField(n, v)  => text("\"" + quote(n) + "\":") :: render(v)
     case JObject(obj)  =>
-      val nested = break :: fields(trimObj(obj).map(f => text("\"" + f.name + "\":") :: render(f.value)))
+      val nested = break :: fields(trimObj(obj).map(f => text("\"" + quote(f.name) + "\":") :: render(f.value)))
       text("{") :: nest(2, nested) :: break :: text("}")
   }
 
   private def trimArr(xs: List[JValue]) = xs.filter(_ != JNothing)
   private def trimObj(xs: List[JField]) = xs.filter(_.value != JNothing)
-  private def series(docs: List[Document]) = fold(punctuate(text(","), docs))
-  private def fields(docs: List[Document]) = fold(punctuate(text(",") :: break, docs))
-  private def fold(docs: List[Document]) = docs.foldLeft[Document](empty)(_ :: _)
+  private def series(docs: List[Document]) = punctuate(text(","), docs)
+  private def fields(docs: List[Document]) = punctuate(text(",") :: break, docs)
 
-  private def punctuate(p: => Document, docs: List[Document]): List[Document] = {
-    def prepend(d: DocText, ds: List[Document]) = ds match {
-      case DocText(h) :: t => DocText(h + d.txt) :: t
-      case _ => d :: ds
-    }
-
-    def punctuate0(docs: List[Document], acc: List[Document]): List[Document] = docs match {
-      case Nil => acc.reverse
-      case List(d) => punctuate0(Nil, d :: acc)
-      case DocText(d) :: ds => p match {
-        case DocText(punct) => punctuate0(ds, prepend(DocText(d + punct), acc))
-        case _ => punctuate0(ds, (d :: p) :: acc)
-      }
-      case d :: ds => punctuate0(ds, (d :: p) :: acc)
-    }
-    punctuate0(docs, Nil)
-  }
+  private def punctuate(p: Document, docs: List[Document]): Document = 
+    if (docs.length == 0) empty
+    else docs.reduceLeft((d1, d2) => d1 :: p :: d2)
 
   private[json] def quote(s: String): String = {
     val buf = new StringBuilder
@@ -447,7 +427,7 @@ object JsonAST {
         case '\n' => "\\n"
         case '\r' => "\\r"
         case '\t' => "\\t"
-        case c if ((c >= '\u0000' && c < '\u001f') || (c >= '\u0080' && c < '\u00a0') || (c >= '\u2000' && c < '\u2100')) => "\\u%04x".format(c: Int)
+        case c if ((c >= '\u0000' && c < '\u0020')) => "\\u%04x".format(c: Int)
         case c => c
       })
     }

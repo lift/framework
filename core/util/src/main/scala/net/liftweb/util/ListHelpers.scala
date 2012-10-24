@@ -102,7 +102,7 @@ trait ListHelpers {
     }
 
     loop(old.toList, newList.toList)
-    
+
     ret.toList
   }
 
@@ -167,8 +167,10 @@ trait ListHelpers {
   /**
    * Convert a java.util.Enumeration to a List[T]
    */
-  def enumToList[T](enum: java.util.Enumeration[T]): List[T] =
-    scala.collection.JavaConversions.asIterator(enum).toList
+  def enumToList[T](enum: java.util.Enumeration[T]): List[T] = {
+    import scala.collection.JavaConversions._
+    enum.toList
+  }
 
   /**
    * Convert a java.util.Enumeration to a List[String] using the toString method on each element

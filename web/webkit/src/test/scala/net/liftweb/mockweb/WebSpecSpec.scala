@@ -69,9 +69,9 @@ object WebSpecSpecRest extends RestHelper  {
  * WebSpec trait as well as an example of how to use it.
  */
 class WebSpecSpec extends WebSpec(WebSpecSpecBoot.boot _) {
-  "WebSpec" should {
-    setSequential() // This is important for using SessionVars, etc.
+  sequential  // This is important for using SessionVars, etc.
 
+  "WebSpec" should {
     val testUrl = "http://foo.com/test/stateless"
 
     val testReq = 
@@ -87,7 +87,7 @@ class WebSpecSpec extends WebSpec(WebSpecSpecBoot.boot _) {
     "properly set up S with a String url" withSFor(testUrl) in {
       S.request match {
         case Full(req) => req.path.partPath must_== List("stateless", "works")
-        case _ => fail("No request in S")
+        case _ =>         failure("No request in S")
       }
     }
 
@@ -123,7 +123,7 @@ class WebSpecSpec extends WebSpec(WebSpecSpecBoot.boot _) {
         req.post_? must_== true
         req.body match {
           case Full(body) => (new String(body)) must_== "This is a test"
-          case _ => fail("No body set")
+          case _ =>          failure("No body set")
         }
     }
 
@@ -133,18 +133,17 @@ class WebSpecSpec extends WebSpec(WebSpecSpecBoot.boot _) {
         req.put_? must_== true
         req.json match {
           case Full(jval) => jval must_== JObject(List(JField("name", JString("Joe"))))
-          case _ => fail("No body set")
+          case _ =>          failure("No body set")
         }
     }
 
     "properly set an XML body" withSFor(testUrl) withPost(<test/>) in {
       S.request match {
-        case Full(req) => {
+        case Full(req) =>
           req.xml_? must_== true
           req.post_? must_== true
           req.xml must_== Full(<test/>)
-        }
-        case _ => fail("No request found in S")
+        case _ => failure("No request found in S")
       }
     }
 
@@ -154,16 +153,14 @@ class WebSpecSpec extends WebSpec(WebSpecSpecBoot.boot _) {
 
     "process a JSON RestHelper Request" withReqFor("http://foo.com/api/info.json") in { req =>
       (WebSpecSpecRest(req)() match {
-        case Full(JsonResponse(_, _, _, 200)) => true
-        case other => fail("Invalid response : " + other); false
-      }) must_== true
+        case Full(JsonResponse(_, _, _, 200)) => success
+        case other =>                            failure("Invalid response : " + other)
+      })
     }
 
-    "properly process a template" withTemplateFor("http://foo.com/net/liftweb/mockweb/webspecspectemplate") in ({
+    "properly process a template" withTemplateFor("http://foo.com/net/liftweb/mockweb/webspecspectemplate") in {
       case Full(template) => template.toString.contains("Hello, WebSpec!") must_== true
-      case other => {
-        fail("Error on template : " + other)
-      }
-    } : PartialFunction[Box[NodeSeq],Unit])
+      case other =>          failure("Error on template : " + other)
+    }
   }
 }

@@ -17,49 +17,66 @@ package squerylrecord
 import common.{Box, Full, Loggable}
 import db.DB
 import util.DynoVar
-
 import org.squeryl.{Session, SessionFactory}
 import org.squeryl.internals.{DatabaseAdapter, FieldMetaData}
+import net.liftweb.util.LoanWrapper
+import RecordTypeMode._
 
 /** Object containing initialization logic for the Squeryl/Record integration */
 object SquerylRecord extends Loggable {
-  /** Keep track of the current Squeryl Session we've created using DB */
-  private object currentSession extends DynoVar[Session]
 
   /**
    * We have to remember the default Squeryl metadata factory before
    * we override it with our own implementation, so that we can use
    * the original factory for non-record classes.
    */
-  private[squerylrecord] var posoMetaDataFactory = FieldMetaData.factory
+  private[squerylrecord] val posoMetaDataFactory = FieldMetaData.factory
+  
 
   /**
-   * Initialize the Squeryl/Record integration. This must be called somewhere during your Boot, and before you use any
-   * Records with Squeryl. Use this function instead of init if you want to use the squeryl session factory
-   * instead of mapper.DB as the transaction manager with squeryl-record.
+   * Initialize the Squeryl/Record integration. This must be called somewhere during your Boot before you use any
+   * Records with Squeryl.  When using this method, configure your Session separately
+   * (see [[http://squeryl.org/sessions-and-tx.html]] for details) or you can use initWithSquerylSession to do both at once.
+   */
+  def init() {
+    FieldMetaData.factory = new RecordMetaDataFactory
+  }
+
+  /**
+   * Initialize the Squeryl/Record integration and configure a default Session at the same time.
    */
   def initWithSquerylSession(sessionFactory: => Session) {
-    FieldMetaData.factory = new RecordMetaDataFactory
+    init()
     SessionFactory.concreteFactory = Some(() => sessionFactory)
   }
-
-  /**
-   * Initialize the Squeryl/Record integration. This must be called somewhere during your Boot, and before you use any
-   * Records with Squeryl. Use this function if you want to use mapper.DB as the transaction manager
-   * with squeryl-record.
-   */
+  
+  def buildLoanWrapper() = new LoanWrapper {
+    override def apply[T](f: => T): T = inTransaction {
+      f
+    }
+  }
+  
+  /** 
+   * 
+   * NOTE: Remove this along with the deprecated method below
+   * Keep track of the current Squeryl Session we've created using DB 
+   * */
+  private object currentSession extends DynoVar[Session]
+  
+  @deprecated(message = "Lift DB.use style transactions do not properly clean up Squeryl resources.  Please use initWithSquerylSession instead.", "2.5")
   def init(mkAdapter: () => DatabaseAdapter) = {
     FieldMetaData.factory = new RecordMetaDataFactory
-    SessionFactory.externalTransactionManagementAdapter = Some(() => currentSession.is openOr {
-      DB.currentConnection match {
-        case Full(superConn) =>
-          val sess = Session.create(superConn.connection, mkAdapter())
-          sess.setLogger(s => logger.debug(s))
-          currentSession.set(sess)
-          sess
-
-        case _ => error("no current connection in scope. wrap your transaction with DB.use or use one of the DB loan wrappers")
-      }
-    })
+    SessionFactory.externalTransactionManagementAdapter = Some(() => 
+      currentSession.get orElse {
+    	  DB.currentConnection match {
+    		  case Full(superConn) =>
+    		  	val sess: Session = Session.create(superConn.connection, mkAdapter())
+    		  	sess.setLogger(s => logger.info(s))
+    		  	currentSession.set(sess)
+    		  	Some(sess)
+    		  case _ => None
+    	  }
+      })
   }
+  
 }

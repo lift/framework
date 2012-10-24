@@ -18,21 +18,15 @@ package net.liftweb
 package http
 package jquery
 
-import net.liftweb.http.S._
-import net.liftweb.http.SHtml._
-import net.liftweb.common._
-import net.liftweb.util._
 import net.liftweb.util.Helpers._
 import net.liftweb.http.js._
 import net.liftweb.http.js.jquery._
-import JE._
 import JqJsCmds._
-import scala.xml._
 
 /**
  * This contains Html artifacts that are heavily relying on JQuery
  */
-@deprecated("This contains Html artifacts that are heavily relying on JQuery")
+@deprecated("This contains Html artifacts that are heavily relying on JQuery", "2.3")
 object JqSHtml {
   def fadeOutErrors(duration: TimeSpan, fadeTime: TimeSpan): JsCmd = {
     FadeOut(LiftRules.noticesContainerId + "_error", duration, fadeTime)

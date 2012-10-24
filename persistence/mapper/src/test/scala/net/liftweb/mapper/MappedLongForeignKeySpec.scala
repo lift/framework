@@ -17,7 +17,7 @@
 package net.liftweb
 package mapper
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import util._
@@ -26,21 +26,23 @@ import util._
 /**
  * Systems under specification for MappedLongForeignKey.
  */
-object MappedLongForeignKeySpec extends Specification("MappedLongForeignKey Specification") {
+object MappedLongForeignKeySpec extends Specification with org.specs2.specification.BeforeExample {
+  "MappedLongForeignKey Specification".title
+  sequential
+
   // Make sure we have everything configured first
   MapperSpecsModel.setup()
 
   def provider = DbProviders.H2MemoryProvider
 
+  def before = MapperSpecsModel.cleanup()
+
   "MappedLongForeignKey" should {
-    doBefore {
       (try {
         provider.setupDB
-        MapperSpecsModel.cleanup()
       } catch {
-        case e if !provider.required_? => skip("Provider %s not available: %s".format(provider, e))
-      }) must not(throwAnException[Exception]).orSkipExample
-    }
+        case e if !provider.required_? => 1 must be_==(2).orSkip("Provider %s not available: %s".format(provider, e))
+      }) must not(throwA[Exception]).orSkip
 
     "Not allow comparison to another FK" in {
       val dog = Dog.create.name("Froo").saveMe
@@ -79,8 +81,8 @@ object MappedLongForeignKeySpec extends Specification("MappedLongForeignKey Spec
       val dog = Dog.create.owner(user)
       dog.owner(Empty)
       
-      dog.owner.obj mustBe Empty
-      dog.owner.is mustBe 0L
+      dog.owner.obj must_== Empty
+      dog.owner.is must_== 0L
     }
   }
 }

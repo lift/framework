@@ -17,30 +17,49 @@
 package net.liftweb
 package util
 
-import scala.util.parsing.combinator.{Parsers, ImplicitConversions}
-import scala.xml.NodeSeq
+
+import scala.util.parsing.combinator.{PackratParsers, Parsers, ImplicitConversions}
+import xml.{Elem, NodeSeq}
 import net.liftweb.common._
 
 sealed trait CssSelector {
   def subNodes: Box[SubNode]
+  def withSubnode(sn: SubNode): CssSelector
 }
 
 final case class ElemSelector(elem: String, subNodes: Box[SubNode]) extends 
-  CssSelector
+  CssSelector {
+  def withSubnode(sn: SubNode): CssSelector = this.copy(subNodes = Full(sn))
+}
 
-final case class StarSelector(subNodes: Box[SubNode]) extends CssSelector
+final case class StarSelector(subNodes: Box[SubNode]) extends CssSelector {
+  def withSubnode(sn: SubNode): CssSelector = this.copy(subNodes = Full(sn))
+}
 
 final case class IdSelector(id: String, subNodes: Box[SubNode]) extends 
-  CssSelector
+  CssSelector {
+  def withSubnode(sn: SubNode): CssSelector = this.copy(subNodes = Full(sn))
+}
 
 final case class ClassSelector(clss: String, subNodes: Box[SubNode]) extends
-  CssSelector
+  CssSelector {
+  def withSubnode(sn: SubNode): CssSelector = this.copy(subNodes = Full(sn))
+}
 
 final case class NameSelector(name: String, subNodes: Box[SubNode]) extends
-  CssSelector
+  CssSelector {
+  def withSubnode(sn: SubNode): CssSelector = this.copy(subNodes = Full(sn))
+}
+
+final case class EnclosedSelector(selector: CssSelector, kid: CssSelector) extends CssSelector {
+  def subNodes: Box[SubNode] = Empty
+  def withSubnode(sn: SubNode): CssSelector = this
+}
 
 final case class AttrSelector(name: String, value: String, 
-subNodes: Box[SubNode]) extends CssSelector
+subNodes: Box[SubNode]) extends CssSelector {
+  def withSubnode(sn: SubNode): CssSelector = this.copy(subNodes = Full(sn))
+}
 
 sealed trait SubNode
 
@@ -61,9 +80,30 @@ final case class PrependKidsSubNode() extends SubNode with WithKids {
   def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq = newNs ++ original
 }
 
+final case object DontMergeAttributes extends SubNode {
+  }
+
+final case class SurroundKids() extends SubNode with WithKids {
+  def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq = {
+    var changed = false
+
+    val res: NodeSeq = newNs.flatMap{
+      case e: Elem if !changed =>
+        changed = true
+        new Elem(e.prefix,
+          e.label, e.attributes,
+          e.scope, e.child ++ original :_*)
+      case x => x
+    }
+
+    if (changed) res else newNs ++ original
+  }
+}
+
 final case class AppendKidsSubNode() extends SubNode with WithKids {
   def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq = original ++ newNs
 }
+
 
 sealed trait AttributeRule
 
@@ -76,7 +116,7 @@ final case class SelectThisNode(kids: Boolean) extends SubNode
 /**
  * Parse a subset of CSS into the appropriate selector objects
  */
-object CssSelectorParser extends Parsers with ImplicitConversions {
+object CssSelectorParser extends PackratParsers with ImplicitConversions {
   private val cache = new LRUMap[String, CssSelector](25000)
 
   /**
@@ -111,13 +151,13 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
     val reader: Input = new CharSequenceReader(toParse, 0)
     topParser(reader) match {
       case Success(v, _) => Full(v)
-      case x => Empty
+      case x: NoSuccess => ParamFailure(x.msg, Empty, Empty, x)
     }
   }
 
   private implicit def str2chars(s: String): List[Char] = new scala.collection.immutable.WrappedString(s).toList
 
-  private lazy val topParser: Parser[CssSelector] = {
+  private lazy val _topParser: Parser[CssSelector] = {
     phrase(idMatch |
            nameMatch |
            classMatch |
@@ -125,6 +165,37 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
            elemMatch |
            starMatch |
            colonMatch)
+  }
+
+  private def fixAll(all: List[CssSelector], sn: Option[SubNode]): CssSelector = {
+    (all, sn) match {
+      // case (Nil, Some())
+      case (r :: Nil, None) => r
+      case (r :: Nil, Some(sn)) => r.withSubnode(sn)
+      case (lst, None) => lst.reduceRight((b, a) => EnclosedSelector(b, a))
+      case (lst, Some(sn)) => (lst.dropRight(1) ::: lst.takeRight(1).map(_.withSubnode(sn))).reduceRight((b, a) => EnclosedSelector(b, a))
+    }
+  }
+
+  private lazy val topParser: Parser[CssSelector] =
+    phrase(rep1((_idMatch | _nameMatch | _classMatch | _attrMatch | _elemMatch |
+      _colonMatch | _starMatch) <~ (rep1(' ') | 26.toChar)) ~ opt(subNode)) ^^ {
+      case (one :: Nil) ~ sn => fixAll(List(one), sn)
+    case all ~ None if all.takeRight(1).head == StarSelector(Empty) =>
+      fixAll(all.dropRight(1), Some(KidsSubNode()))
+    case all ~ sn => fixAll(all, sn)
+  }
+
+  private lazy val _colonMatch: Parser[CssSelector] =
+  (':' ~> id) ^? {
+    case "button" => AttrSelector("type", "button", Empty)
+    case "checkbox" => AttrSelector("type", "checkbox", Empty)
+    case "file" => AttrSelector("type", "file", Empty)
+    case "password" => AttrSelector("type", "password", Empty)
+    case "radio" => AttrSelector("type", "radio", Empty)
+    case "reset" => AttrSelector("type", "reset", Empty)
+    case "submit" => AttrSelector("type", "submit", Empty)
+    case "text" => AttrSelector("type", "text", Empty)
   }
     
   private lazy val colonMatch: Parser[CssSelector] =
@@ -139,21 +210,62 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
       case "text" ~ sn => AttrSelector("type", "text", sn)
     }
 
+
   private lazy val idMatch: Parser[CssSelector] = '#' ~> id ~ opt(subNode) ^^ {
     case id ~ sn => IdSelector(id, sn)
+  }
+
+  private lazy val _idMatch: Parser[CssSelector] = '#' ~> id ^^ {
+    case id => IdSelector(id, Empty)
   }
 
   private lazy val nameMatch: Parser[CssSelector] = '@' ~> id ~ opt(subNode) ^^ {
     case name ~ sn => NameSelector(name, sn)
   }
 
+  private lazy val _nameMatch: Parser[CssSelector] = '@' ~> id ^^ {
+    case name => NameSelector(name, Empty)
+  }
+
   private lazy val elemMatch: Parser[CssSelector] =  id ~ opt(subNode) ^^ {
     case elem ~ sn => ElemSelector(elem, sn)
+  }
+
+  private lazy val _elemMatch: Parser[CssSelector] =  id ^^ {
+    case elem => ElemSelector(elem, Empty)
   }
 
   private lazy val starMatch: Parser[CssSelector] =  '*' ~> opt(subNode) ^^ {
     case sn => StarSelector(sn)
   }
+
+  private lazy val _starMatch: Parser[CssSelector] =  '*' ^^ {
+    case sn => StarSelector(Empty)
+  }
+
+  private lazy val classMatch: Parser[CssSelector] =
+    '.' ~> attrName ~ opt(subNode) ^^ {
+      case cls ~ sn => ClassSelector(cls, sn)
+    }
+
+  private lazy val attrMatch: Parser[CssSelector] =
+    attrName ~ '=' ~ attrConst ~ opt(subNode) ^^ {
+      case "id" ~ _ ~ const ~ sn => IdSelector(const, sn)
+      case "name" ~ _ ~ const ~ sn => NameSelector(const, sn)
+      case n ~ _  ~ v ~ sn => AttrSelector(n, v, sn)
+    }
+
+  private lazy val _classMatch: Parser[CssSelector] =
+    '.' ~> attrName ^^ {
+      case cls => ClassSelector(cls, Empty)
+    }
+
+  private lazy val _attrMatch: Parser[CssSelector] =
+    attrName ~ '=' ~ attrConst ^^ {
+      case "id" ~ _ ~ const  => IdSelector(const, Empty)
+      case "name" ~ _ ~ const  => NameSelector(const, Empty)
+      case n ~ _  ~ v => AttrSelector(n, v, Empty)
+    }
 
 
   private lazy val id: Parser[String] = letter ~ 
@@ -169,19 +281,8 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
   private lazy val letter: Parser[Char] = elem("letter", isLetter)
   private lazy val number: Parser[Char] = elem("number", isNumber)
 
-  private lazy val classMatch: Parser[CssSelector] = 
-    '.' ~> attrName ~ opt(subNode) ^^ {
-      case cls ~ sn => ClassSelector(cls, sn)
-    }
 
-  private lazy val attrMatch: Parser[CssSelector] = 
-    attrName ~ '=' ~ attrConst ~ opt(subNode) ^^ {
-      case "id" ~ _ ~ const ~ sn => IdSelector(const, sn)
-      case "name" ~ _ ~ const ~ sn => NameSelector(const, sn)
-      case n ~ _  ~ v ~ sn => AttrSelector(n, v, sn)
-    }
-
-  private lazy val subNode: Parser[SubNode] = rep1(' ') ~> 
+  private lazy val subNode: Parser[SubNode] = rep(' ') ~>
   ((opt('*') ~ '[' ~> attrName <~ '+' ~ ']' ^^ {
     name => AttrAppendSubNode(name)
   }) | 
@@ -189,7 +290,10 @@ object CssSelectorParser extends Parsers with ImplicitConversions {
     name => AttrRemoveSubNode(name)
   }) |    (opt('*') ~ '[' ~> attrName <~ ']' ^^ {
      name => AttrSubNode(name)
-   }) | 
+   }) |
+
+   ('!' ~ '!' ^^ (a => DontMergeAttributes)) |
+   ('<' ~ '*' ~ '>') ^^ (a => SurroundKids()) |
    ('-' ~ '*' ^^ (a => PrependKidsSubNode())) |
    ('>' ~ '*' ^^ (a => PrependKidsSubNode())) |
    ('*' ~ '+' ^^ (a => AppendKidsSubNode())) |

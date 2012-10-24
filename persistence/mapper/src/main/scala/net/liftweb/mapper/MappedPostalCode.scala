@@ -69,7 +69,7 @@ object Countries extends Enumeration(1) {
 
   class I18NCountry extends Val {
     override def toString() =
-    S.??("country_" + id)
+    S.?("country_" + id)
   }
 }
 
@@ -125,8 +125,8 @@ abstract class MappedPostalCode[T <: Mapper[T]](owner: T, country: MappedCountry
 
   private def genericCheck(zip: String): List[FieldError] = {
     zip match {
-      case null => List(FieldError(this, Text(S.??("invalid.postal.code"))))
-      case s if s.length < 3 => List(FieldError(this, Text(S.??("invalid.postal.code"))))
+      case null => List(FieldError(this, Text(S.?("invalid.postal.code"))))
+      case s if s.length < 3 => List(FieldError(this, Text(S.?("invalid.postal.code"))))
       case _ => Nil
     }
   }
@@ -135,22 +135,22 @@ abstract class MappedPostalCode[T <: Mapper[T]](owner: T, country: MappedCountry
 
   override def validations = country.is match {
     case Countries.USA =>  valRegex(REPat.compile("[0-9]{5}(\\-[0-9]{4})?"),
-                                    S.??("invalid.zip.code")) _ :: super.validations
+                                    S.?("invalid.zip.code")) _ :: super.validations
 
     case Countries.Sweden => valRegex(REPat.compile("[0-9]{3}[ ]?[0-9]{2}"),
-                                      S.??("invalid.postal.code")) _ :: super.validations
+                                      S.?("invalid.postal.code")) _ :: super.validations
 
     case Countries.Australia => valRegex(REPat.compile("(0?|[1-9])[0-9]{3}"),
-                                         S.??("invalid.postal.code")) _ :: super.validations
+                                         S.?("invalid.postal.code")) _ :: super.validations
 
     case Countries.Canada => valRegex(REPat.compile("[A-Z][0-9][A-Z][ ][0-9][A-Z][0-9]"),
-                                      S.??("invalid.postal.code")) _ :: super.validations
+                                      S.?("invalid.postal.code")) _ :: super.validations
 
     case Countries.Germany => valRegex(REPat.compile("[0-9]{5}"),
-                                       S.??("invalid.postal.code")) _ :: super.validations
+                                       S.?("invalid.postal.code")) _ :: super.validations
 
     case Countries.UK =>  valRegex(REPat.compile("[A-Z]{1,2}[0-9R][0-9A-Z]?[0-9][ABD-HJLNP-UW-Z]{2}"),
-                                     S.??("invalid.postal.code")) _ :: super.validations
+                                     S.?("invalid.postal.code")) _ :: super.validations
 
     case _ => genericCheck _ :: super.validations
   }

@@ -229,7 +229,7 @@ trait Crudify {
          */
         val text = new Loc.LinkText(calcLinkText _)
 
-        def calcLinkText(in: TheCrudType): NodeSeq = Text(S.??("crudify.menu.view.displayName", displayName))
+        def calcLinkText(in: TheCrudType): NodeSeq = Text(S.?("crudify.menu.view.displayName", displayName))
 
         /**
          * Rewrite the request and emit the type-safe parameter
@@ -264,7 +264,7 @@ trait Crudify {
           def name = "Edit "+Prefix
 
           override val snippets: SnippetTest = {
-            case ("crud.edit", Full(wp: TheCrudType)) => crudDoForm(wp, S.??("Save"))
+            case ("crud.edit", Full(wp: TheCrudType)) => crudDoForm(wp, S.?("Save"))
           }
 
           def defaultValue = Empty
@@ -276,7 +276,7 @@ trait Crudify {
            */
           val text = new Loc.LinkText(calcLinkText _)
 
-          def calcLinkText(in: TheCrudType): NodeSeq = Text(S.??("crudify.menu.edit.displayName", displayName))
+          def calcLinkText(in: TheCrudType): NodeSeq = Text(S.?("crudify.menu.edit.displayName", displayName))
 
           /**
            * Rewrite the request and emit the type-safe parameter
@@ -307,7 +307,7 @@ trait Crudify {
   /**
    * The String displayed for menu editing
    */
-  def editMenuName = S.??("Edit")+" "+displayName
+  def editMenuName = S.?("Edit")+" "+displayName
 
   /**
    * This is the template that's used to render the page after the
@@ -345,7 +345,7 @@ trait Crudify {
   </lift:crud.edit>
   }
 
-  def editButton = S.??("Save")
+  def editButton = S.?("Save")
 
   /**
    * Override this method to change how fields are displayed for delete
@@ -406,7 +406,7 @@ trait Crudify {
            */
           val text = new Loc.LinkText(calcLinkText _)
 
-          def calcLinkText(in: TheCrudType): NodeSeq = Text(S.??("crudify.menu.delete.displayName", displayName))
+          def calcLinkText(in: TheCrudType): NodeSeq = Text(S.?("crudify.menu.delete.displayName", displayName))
 
           /**
            * Rewrite the request and emit the type-safe parameter
@@ -440,7 +440,7 @@ trait Crudify {
   def deleteMenuLocParams: List[Loc.LocParam[TheCrudType]] = Nil
 
 
-  def deleteMenuName = S.??("Delete")+" "+displayName
+  def deleteMenuName = S.?("Delete")+" "+displayName
 
   /**
    * This is the template that's used to render the page after the
@@ -476,10 +476,10 @@ trait Crudify {
     </table>
   </lift:crud.delete>
 
-  def deleteButton = S.??("Delete")
+  def deleteButton = S.?("Delete")
 
 
-  def createMenuName = S.??("Create")+" "+displayName
+  def createMenuName = S.?("Create")+" "+displayName
 
   /**
    * This is the template that's used to render the page after the
@@ -515,9 +515,9 @@ trait Crudify {
     </table>
   </lift:crud.create>
 
-  def createButton = S.??("Create")
+  def createButton = S.?("Create")
 
-  def viewMenuName = S.??("View")+" "+displayName
+  def viewMenuName = S.?("View")+" "+displayName
 
   /**
    * This is the template that's used to render the page after the
@@ -544,7 +544,7 @@ trait Crudify {
     </table>
   </lift:crud.view>
 
-  def showAllMenuName = S.??("List")+" "+displayName
+  def showAllMenuName = S.?("List", displayName)
 
   /**
    * This is the template that's used to render the page after the
@@ -574,9 +574,9 @@ trait Crudify {
         <crud:row>
           <tr>
             <crud:row_item><td><crud:value/></td></crud:row_item>
-            <td><a crud:view_href="">{S.??("View")}</a></td>
-            <td><a crud:edit_href="">{S.??("Edit")}</a></td>
-            <td><a crud:delete_href="">{S.??("Delete")}</a></td>
+            <td><a crud:view_href="">{S.?("View")}</a></td>
+            <td><a crud:edit_href="">{S.?("Edit")}</a></td>
+            <td><a crud:delete_href="">{S.?("Delete")}</a></td>
           </tr>
         </crud:row>
       </tbody>
@@ -589,8 +589,8 @@ trait Crudify {
     </table>
   </lift:crud.all>
 
-  def nextWord = S.??("Next")
-  def previousWord = S.??("Previous")
+  def nextWord = S.?("Next")
+  def previousWord = S.?("Previous")
 
   lazy val listPath = Prefix ::: List(ListItems)
 
@@ -721,7 +721,7 @@ trait Crudify {
   lazy val locSnippets = new DispatchLocSnippets {
     val dispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
       case "crud.all" => doCrudAll
-      case "crud.create" => crudDoForm(create, S.??("Created"))
+      case "crud.create" => crudDoForm(create, S.?("Created"))
     }
 
   }

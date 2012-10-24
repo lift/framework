@@ -23,7 +23,7 @@ import java.util.regex.Pattern
 
 import scala.collection.JavaConversions._
 
-import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.common._
 import net.liftweb.json.{Formats, JsonParser}
 import net.liftweb.json.JsonAST._
 import net.liftweb.mongodb._
@@ -62,9 +62,6 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     foreachCallback(inst, _.afterDelete)
     true
   }
-
-  protected def useColl[T](f: DBCollection => T) =
-    MongoDB.useCollection(mongoIdentifier, collectionName)(f)
 
   def bulkDelete_!!(qry: DBObject): Unit = {
     useColl(coll =>
@@ -222,17 +219,20 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /**
   * Find all documents with the given ids
   */
-  def findAll(ids: List[ObjectId]): List[BaseRecord] = if (ids.isEmpty) Nil else {
-    val list = new java.util.ArrayList[ObjectId]()
+  def findAllByList[T](ids: List[T]): List[BaseRecord] = if (ids.isEmpty) Nil else {
+    val list = new java.util.ArrayList[T]()
     for (id <- ids.distinct) list.add(id)
     val query = QueryBuilder.start("_id").in(list).get()
     findAll(query)
   }
 
+  def findAll(ids: List[ObjectId]): List[BaseRecord] = findAllByList[ObjectId](ids)
+
   protected def saveOp(inst: BaseRecord)(f: => Unit): Boolean = {
     foreachCallback(inst, _.beforeSave)
     f
     foreachCallback(inst, _.afterSave)
+    inst.allFields.foreach { _.resetDirty }
     true
   }
 
@@ -240,7 +240,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   * Save the instance in the appropriate backing store
   */
   def save(inst: BaseRecord, concern: WriteConcern): Boolean = saveOp(inst) {
-    useColl { coll => 
+    useColl { coll =>
       coll.save(inst.asDBObject, concern)
     }
   }
@@ -274,7 +274,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   * Update records with a JObject query
   */
   def update(qry: JObject, newbr: BaseRecord, opts: UpdateOption*) {
-    MongoDB.use(mongoIdentifier) ( db =>
+    useDb ( db =>
       update(qry, newbr, db, opts :_*)
     )
   }
@@ -314,5 +314,51 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
                       .add("_id", idValue(obj))
                       .get)
     this.update(query, update)
+  }
+
+  /**
+    * Update only the dirty fields
+    */
+  def update(inst: BaseRecord): Unit = {
+    val dirtyFields = fields(inst).filter(_.dirty_?)
+    if (dirtyFields.length > 0) {
+      val (fullFields, otherFields) = dirtyFields
+        .map(field => (field.name, fieldDbValue(field)))
+        .partition(pair => pair._2.isDefined)
+
+      val fieldsToSet = fullFields.map(pair => (pair._1, pair._2.open_!)) // these are all Full
+
+      val fieldsToUnset: List[String] = otherFields.filter(
+        pair => pair._2 match {
+          case Empty => true
+          case _ => false
+        }
+      ).map(_._1)
+
+      if (fieldsToSet.length > 0 || fieldsToUnset.length > 0) {
+        val dbo = BasicDBObjectBuilder.start
+
+        if (fieldsToSet.length > 0) {
+          dbo.add(
+            "$set",
+            fieldsToSet.foldLeft(BasicDBObjectBuilder.start) {
+              (builder, pair) => builder.add(pair._1, pair._2)
+            }.get
+          )
+        }
+
+        if (fieldsToUnset.length > 0) {
+          dbo.add(
+            "$unset",
+            fieldsToUnset.foldLeft(BasicDBObjectBuilder.start) {
+              (builder, fieldName) => builder.add(fieldName, 1)
+            }.get
+          )
+        }
+
+        update(inst, dbo.get)
+        dirtyFields.foreach { _.resetDirty }
+      }
+    }
   }
 }

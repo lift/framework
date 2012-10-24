@@ -25,11 +25,11 @@ import http.{LiftRules,LiftSession,Req,S}
 import util.ThreadGlobal
 import util.Helpers._
 import http.provider.servlet.HTTPRequestServlet
-import mocks.MockHttpServletRequest
+import net.liftweb.mocks.MockHttpServletRequest
 
 import scala.xml.{MetaData,Null}
 
-import org.specs._
+import org.specs2.mutable._
 
 /**
  * The MockWeb object contains various methods to simplify
@@ -97,7 +97,7 @@ object MockWeb {
       if(liftRulesEnabled) {
         // Apply stateless rewrites
         Req(req, LiftRules.statelessRewrite.toList,
-            LiftRules.statelessTest.toList,
+            Nil,
             LiftRules.statelessReqTest.toList, System.nanoTime)
       } else {
         Req(req, Nil, System.nanoTime)
@@ -115,13 +115,13 @@ object MockWeb {
    * <pre name="code" class="scala">
    * object testVar extends SessionVar[String]("Empty")
    * 
-   * val session = testS("http://foo.com/test") {
+   * val testSession = testS("http://foo.com/test") {
        testVar("Foo!")
        S.session // returns the current session
      }
 
      // A second test
-     testS("http://foo.com/test2", newSession = session) {
+     testS("http://foo.com/test2", session = testSession) {
        testVar.is must_== "Foo!"
      }
    * </pre>

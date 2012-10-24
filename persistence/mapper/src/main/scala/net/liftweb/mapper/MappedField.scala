@@ -66,8 +66,7 @@ trait MixableMappedField extends BaseField {
  * The base (not Typed) trait that defines a field that is mapped to a column or more than 1 column
  * (e.g., MappedPassword) in the database
  */
-@serializable
-trait BaseMappedField extends SelectableField with Bindable with MixableMappedField {
+trait BaseMappedField extends SelectableField with Bindable with MixableMappedField with Serializable{
 
   def dbDisplay_? = true
 
@@ -695,6 +694,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
 }
 
 object MappedField {
+  @deprecated("Automatic conversion to the field's type is not safe and will be removed. Please use field.get instead", "2.5")
   implicit def mapToType[T, A<:Mapper[A]](in : MappedField[T, A]): T = in.is
 }
 

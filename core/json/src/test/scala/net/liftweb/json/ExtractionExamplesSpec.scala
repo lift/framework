@@ -18,9 +18,11 @@ package net.liftweb
 package json
 
 import java.util.Date
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
-object ExtractionExamples extends Specification("Extraction Examples Specification") {
+object ExtractionExamples extends Specification {
+  "Extraction Examples Specification".title
+
   implicit val formats = DefaultFormats
 
   "Extraction example" in {
@@ -88,6 +90,11 @@ object ExtractionExamples extends Specification("Extraction Examples Specificati
   "Date extraction example" in {
     val json = parse("""{"name":"e1","timestamp":"2009-09-04T18:06:22Z"}""")
     json.extract[Event] mustEqual Event("e1", date("2009-09-04T18:06:22Z"))
+  }
+
+  "Timestamp extraction example" in {
+    val json = parse("""{"timestamp":"2009-09-04T18:06:22Z"}""")
+    new Date((json \ "timestamp").extract[java.sql.Timestamp].getTime) mustEqual date("2009-09-04T18:06:22Z")
   }
 
   "Option extraction example" in {

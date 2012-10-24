@@ -18,7 +18,7 @@ package net.liftweb
 package json
 
 import java.util.Date
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 object SerializationExamples extends Specification {
   import Serialization.{read, write => swrite}
@@ -138,6 +138,11 @@ object SerializationExamples extends Specification {
 
 object ShortTypeHintExamples extends TypeHintExamples {
   implicit val formats = Serialization.formats(ShortTypeHints(classOf[Fish] :: classOf[Dog] :: Nil))
+
+  "Deserialization succeeds even if jsonClass is not the first field" in {
+    val ser = """{"animals":[],"pet":{"name":"pluto","jsonClass":"Dog"}}"""
+    Serialization.read[Animals](ser) mustEqual Animals(Nil, Dog("pluto"))
+  }
 }
 
 object FullTypeHintExamples extends TypeHintExamples {
@@ -227,54 +232,36 @@ object CustomSerializerExamples extends Specification {
   import JsonAST._
   import java.util.regex.Pattern
 
-  class IntervalSerializer extends Serializer[Interval] {
-    private val IntervalClass = classOf[Interval]
-
-    def deserialize(implicit format: Formats) = {
-      case (TypeInfo(IntervalClass, _), json) => json match {
-        case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) =>
-          new Interval(s.longValue, e.longValue)
-        case x => throw new MappingException("Can't convert " + x + " to Interval")
-      }
-    }
-
-    def serialize(implicit format: Formats) = {
+  class IntervalSerializer extends CustomSerializer[Interval](format => (
+    { 
+      case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) => 
+        new Interval(s.longValue, e.longValue) 
+    },
+    { 
       case x: Interval =>
         JObject(JField("start", JInt(BigInt(x.startTime))) :: 
-                JField("end",   JInt(BigInt(x.endTime))) :: Nil)
+                JField("end",   JInt(BigInt(x.endTime))) :: Nil) 
     }
-  }
+  ))
 
-  class PatternSerializer extends Serializer[Pattern] {
-    private val PatternClass = classOf[Pattern]
-
-    def deserialize(implicit format: Formats) = {
-      case (TypeInfo(PatternClass, _), json) => json match {
-        case JObject(JField("$pattern", JString(s)) :: Nil) => Pattern.compile(s)
-        case x => throw new MappingException("Can't convert " + x + " to Pattern")
-      }
+  class PatternSerializer extends CustomSerializer[Pattern](format => (
+    { 
+      case JObject(JField("$pattern", JString(s)) :: Nil) => Pattern.compile(s) 
+    },
+    { 
+      case x: Pattern => JObject(JField("$pattern", JString(x.pattern)) :: Nil) 
     }
+  ))
 
-    def serialize(implicit format: Formats) = {
-      case x: Pattern => JObject(JField("$pattern", JString(x.pattern)) :: Nil)
-    }
-  }
-
-  class DateSerializer extends Serializer[Date] {
-    private val DateClass = classOf[Date]
-
-    def deserialize(implicit format: Formats) = {
-      case (TypeInfo(DateClass, _), json) => json match {
-        case JObject(List(JField("$dt", JString(s)))) =>
-          format.dateFormat.parse(s).getOrElse(throw new MappingException("Can't parse "+ s + " to Date"))
-        case x => throw new MappingException("Can't convert " + x + " to Date")
-      }
-    }
-
-    def serialize(implicit format: Formats) = {
+  class DateSerializer extends CustomSerializer[Date](format => (
+    { 
+      case JObject(List(JField("$dt", JString(s)))) =>
+        format.dateFormat.parse(s).getOrElse(throw new MappingException("Can't parse "+ s + " to Date"))
+    },
+    {
       case x: Date => JObject(JField("$dt", JString(format.dateFormat.format(x))) :: Nil)
     }
-  }
+  ))
 
   class IndexedSeqSerializer extends Serializer[IndexedSeq[_]] {
     def deserialize(implicit format: Formats) = {
@@ -301,10 +288,10 @@ object CustomSerializerExamples extends Specification {
   i2.startTime mustEqual i.startTime
   i2.endTime mustEqual i.endTime
 
-  val p = Pattern.compile("^Curly")
-  val pser = swrite(p)
+  val pat = Pattern.compile("^Curly")
+  val pser = swrite(pat)
   pser mustEqual """{"$pattern":"^Curly"}"""
-  read[Pattern](pser).pattern mustEqual p.pattern
+  read[Pattern](pser).pattern mustEqual pat.pattern
 
   val d = new Date(0)
   val dser = swrite(d)

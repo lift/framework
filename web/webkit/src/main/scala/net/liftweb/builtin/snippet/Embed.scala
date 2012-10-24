@@ -41,9 +41,9 @@ object Embed extends DispatchSnippet {
   def render(kids: NodeSeq) : NodeSeq =
   (for {
       ctx <- S.session ?~ ("FIX"+"ME: session is invalid")
-      what <- S.attr ~ ("what") ?~ ("FIX" + "ME The 'what' attribute not defined")
-      templateOpt <- ctx.findTemplate(what.text) ?~ ("FIX"+"ME the "+what+" template not found")
-    } yield (what,LiftSession.checkForContentId(templateOpt))) match {
+      what <- S.attr ~ ("what") ?~ ("FIX" + "ME The 'what' attribute not defined. In order to embed a template, the 'what' attribute must be specified")
+      templateOpt <- ctx.findTemplate(what.text) ?~ ("FIX"+"ME trying to embed a template named '"+what+"', but the template not found. ")
+    } yield (what, Templates.checkForContentId(templateOpt))) match {
     case Full((what,template)) => {
       val bindingMap : Map[String,NodeSeq] = Map(kids.flatMap({
         case p : scala.xml.PCData => None // Discard whitespace and other non-tag junk
@@ -62,9 +62,13 @@ object Embed extends DispatchSnippet {
 
       BindHelpers.bind(bindingMap, template)
     }
-    case Failure(msg, _, _) => throw new SnippetExecutionException(msg)
+    case Failure(msg, _, _) =>
+      logger.error("'embed' snippet failed with message: "+msg)
+      throw new SnippetExecutionException("Embed Snippet failed: "+msg)
 
-    case _ => throw new SnippetExecutionException("session is invalid")
+    case _ =>
+      logger.error("'embed' snippet failed because it was invoked outside session context")
+      throw new SnippetExecutionException("session is invalid")
   }
 
 }

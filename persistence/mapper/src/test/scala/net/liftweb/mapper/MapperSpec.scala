@@ -19,7 +19,8 @@ package mapper
 
 import java.util.Locale
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
+import org.specs2.specification.BeforeExample
 
 import common._
 import json._
@@ -33,9 +34,10 @@ import http.provider.HTTPRequest
  * Systems under specification for Mapper. The model classes here are
  * defined in MapperSpecsModel.scala
  */
-object MapperSpec extends Specification("Mapper Specification") {
+class MapperSpec extends Specification with BeforeExample {
+  "Mapper Specification".title
   // Do everything in order.
-  setSequential()
+  sequential
 
   // Make sure we have everything configured first
   MapperSpecsModel.setup()
@@ -56,18 +58,13 @@ object MapperSpec extends Specification("Mapper Specification") {
 
 //  if (!DB.loggingEnabled_? && doLog) DB.addLogFunc(logDBStuff)
 
+  def before = MapperSpecsModel.cleanup()  // before each example
+
   providers.foreach(provider => {
+   try {
+    provider.setupDB
 
     ("Mapper for " + provider.name) should {
-
-      doBefore {
-        (try {
-          provider.setupDB
-          MapperSpecsModel.cleanup()
-        } catch {
-          case e if !provider.required_? => skip("Provider %s not available: %s".format(provider, e))
-        }) must not(throwAnException[Exception]).orSkipExample
-      }
 
       "schemify" in {
         val elwood = SampleModel.find(By(SampleModel.firstName, "Elwood")).open_!
@@ -106,6 +103,7 @@ object MapperSpec extends Specification("Mapper Specification") {
         SampleModel.firstName.displayName must_== "da_DK:SampleModel.firstName"
 
         LiftRules.localeCalculator = localeCalculator
+        success
       }
 
       "snake connection should snakify default table & column names" in {
@@ -176,7 +174,7 @@ object MapperSpec extends Specification("Mapper Specification") {
         for (t <- mm)
           (t.tag.is.startsWith("M")) must beTrue
 
-        for (t <- mm) {
+        for (t <- mm) yield {
           t.model.cached_? must beFalse
           t.model.obj
           t.model.cached_? must beTrue
@@ -199,8 +197,8 @@ object MapperSpec extends Specification("Mapper Specification") {
 
       "enforce FK constraint on DefaultConnection" in {
         val supportsFK = DB.use(DefaultConnectionIdentifier) { conn => conn.driverType.supportsForeignKeys_? }
-        if (!supportsFK) skip("Driver %s does not support FK constraints".format(provider))
-        
+        if (!supportsFK) skipped("Driver %s does not support FK constraints".format(provider))
+
         SampleTag.create.model(42).save must throwA[java.sql.SQLException]
       }
 
@@ -212,7 +210,7 @@ object MapperSpec extends Specification("Mapper Specification") {
         val oo = SampleTag.findAll(By(SampleTag.tag, "Meow"), PreCache(SampleTag.model))
 
         (oo.length > 0) must beTrue
-        for (t <- oo) t.model.cached_? must beTrue
+        for (t <- oo) yield t.model.cached_? must beTrue
       }
 
       "Precache works with OrderBy" in {
@@ -227,6 +225,7 @@ object MapperSpec extends Specification("Mapper Specification") {
           (oo.length > 0) must beTrue
           for (t <- oo) t.model.cached_? must beTrue
         }
+        success
       }
 
       "Non-deterministic Precache works" in {
@@ -234,7 +233,7 @@ object MapperSpec extends Specification("Mapper Specification") {
         val oo = SampleTag.findAll(By(SampleTag.tag, "Meow"), PreCache(SampleTag.model, false))
 
         (oo.length > 0) must beTrue
-        for (t <- oo) t.model.cached_? must beTrue
+        for (t <- oo) yield t.model.cached_? must beTrue
       }
 
       "Non-deterministic Precache works with OrderBy" in {
@@ -242,7 +241,7 @@ object MapperSpec extends Specification("Mapper Specification") {
         val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model, false))
 
         (oo.length > 0) must beTrue
-        for (t <- oo) t.model.cached_? must beTrue
+        for (t <- oo) yield t.model.cached_? must beTrue
       }
 
       "work with Mixed case" in {
@@ -316,8 +315,9 @@ object MapperSpec extends Specification("Mapper Specification") {
           val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model))
 
           (oo.length > 0) must beTrue
-          for (t <- oo) t.model.cached_? must beTrue
+          for (t <- oo) yield t.model.cached_? must beTrue
         }
+        success
       }
 
       "Non-deterministic Precache works with Mixed Case" in {
@@ -325,20 +325,20 @@ object MapperSpec extends Specification("Mapper Specification") {
         val oo = SampleTag.findAll(By(SampleTag.tag, "Meow"), PreCache(SampleTag.model, false))
 
         (oo.length > 0) must beTrue
-        for (t <- oo) t.model.cached_? must beTrue
+        for (t <- oo) yield t.model.cached_? must beTrue
       }
 
 
-      "Createdat and updated at work" in {
+      "CreatedAt and UpdatedAt work" in {
         val now = Helpers.now
         val dog = Dog2.find().open_!
 
         val oldUpdate = dog.updatedAt.is
 
-        val d1 = (now.getTime - dog.createdAt.getTime) / 100000L
+        val d1 = (now.getTime - dog.createdAt.get.getTime) / 100000L
         d1 must_== 0L
 
-        val d2 = (now.getTime - dog.updatedAt.getTime) / 100000L
+        val d2 = (now.getTime - dog.updatedAt.get.getTime) / 100000L
         d2 must_== 0L
 
         dog.name("ralph").save
@@ -355,10 +355,10 @@ object MapperSpec extends Specification("Mapper Specification") {
         val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model, false))
 
         (oo.length > 0) must beTrue
-        for (t <- oo) t.model.cached_? must beTrue
+        for (t <- oo) yield t.model.cached_? must beTrue
       }
 
-      "Save flag works" in {
+      "Save flag results in update rather than insert" in {
         val elwood = SampleModel.find(By(SampleModel.firstName, "Elwood")).open_!
         elwood.firstName.is must_== "Elwood"
         elwood.firstName("Frog").save
@@ -377,6 +377,10 @@ object MapperSpec extends Specification("Mapper Specification") {
         result.length must_== 2
       }
     }
+   } catch {
+     case e if !provider.required_? => skipped("Provider %s not available: %s".format(provider, e))
+     case _ => skipped
+   }
   })
 }
 

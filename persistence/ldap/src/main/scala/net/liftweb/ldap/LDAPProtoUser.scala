@@ -88,7 +88,7 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
         <form method="post" action={S.uri}>
             <table>
                 <tr>
-                    <td colspan="2">{S.??("log.in")}</td>
+                    <td colspan="2">{S.?("log.in")}</td>
                 </tr>
                 <tr>
                     <td>Username</td><td><user:name /></td>
@@ -114,8 +114,8 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
 
         Helpers.bind("user", loginXhtml,
                     "name" -> (JsCmds.FocusOnLoad(<input type="text" name="username"/>)),
-                    "password" -> (JsCmds.FocusOnLoad(<input type="password" name="password"/>)),
-                    "submit" -> (<input type="submit" value={S.??("log.in")}/>))
+                    "password" -> (<input type="password" name="password"/>),
+                    "submit" -> (<input type="submit" value={S.?("log.in")}/>))
     }
 
     def ldapLogin(username: String, password: String): Boolean = {
@@ -126,7 +126,7 @@ trait MetaLDAPProtoUser[ModelType <: LDAPProtoUser[ModelType]] extends MetaMegaP
         if (users.size >= 1) {
             val userDn = users(0)
             if (ldapVendor.bindUser(userDn, password)) {
-                val completeDn = userDn + "," + ldapVendor.parameters().get("ldap.base").getOrElse("")
+                val completeDn = userDn + "," + ldapVendor.ldapBaseDn.vend //configure().get("ldap.base").getOrElse("")
                 logUserIn(this)
 
                 bindAttributes(_getUserAttributes(completeDn))

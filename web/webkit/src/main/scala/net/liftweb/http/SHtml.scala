@@ -26,6 +26,7 @@ import http.js.AjaxInfo
 import JE._
 import JsCmds._
 import scala.xml._
+import json._
 
 class SHtmlJBridge {
   def sHtml = SHtml
@@ -64,18 +65,18 @@ trait SHtml {
 
 
     type EnumerationTypeWorkaround = Enumeration#Value
-    
-    implicit def enumToStrValPromo[EnumerationTypeWorkaround]: SHtml.PairStringPromoter[EnumerationTypeWorkaround] = 
+
+    implicit def enumToStrValPromo[EnumerationTypeWorkaround]: SHtml.PairStringPromoter[EnumerationTypeWorkaround] =
       new SHtml.PairStringPromoter[EnumerationTypeWorkaround]{
         def apply(in: EnumerationTypeWorkaround): String =
           in.toString
-      }    
+      }
   }
 
   /**
    * An attribute that can be applied to an element.  Typically,
    * this will be a key-value pair, but there is a class of HTML5
-   * attributes that should be similated in JavaScript.  
+   * attributes that should be similated in JavaScript.
    */
   trait ElemAttr extends Function1[Elem, Elem] {
     /**
@@ -88,10 +89,10 @@ trait SHtml {
    * The companion object that has some very helpful conversion
    */
   object ElemAttr {
-    implicit def pairToBasic(in: (String, String)): ElemAttr = 
+    implicit def pairToBasic(in: (String, String)): ElemAttr =
       new BasicElemAttr(in._1, in._2)
 
-    implicit def funcToElemAttr(f: Elem => Elem): ElemAttr = 
+    implicit def funcToElemAttr(f: Elem => Elem): ElemAttr =
       new ElemAttr{def apply(in: Elem): Elem = f(in)}
 
     implicit def strSeqToElemAttr(in: Seq[(String, String)]):
@@ -108,11 +109,11 @@ trait SHtml {
     }
   }
 
-  private class ApplicableElem(in: Elem) {
+  class ApplicableElem(in: Elem) {
     def %(attr: ElemAttr): Elem = attr.apply(in)
   }
 
-  private implicit def elemToApplicable(e: Elem): ApplicableElem =
+  implicit def elemToApplicable(e: Elem): ApplicableElem =
     new ApplicableElem(e)
 
   /**
@@ -149,47 +150,77 @@ trait SHtml {
 
   /**
    * Build a JavaScript function that will perform an AJAX call based on a value calculated in JavaScript
-   * 
+   *
    * @param jsCalcValue the JavaScript that will be executed on the client to calculate the value to be sent to the server
    * @param func the function to call when the data is sent
    *
    * @return the function ID and JavaScript that makes the call
    */
-  def ajaxCall(jsCalcValue: JsExp, func: String => JsCmd): (String, JsExp) = ajaxCall_*(jsCalcValue, SFuncHolder(func))
+  def ajaxCall(jsCalcValue: JsExp, func: String => JsCmd): GUIDJsExp = ajaxCall_*(jsCalcValue, SFuncHolder(func))
 
   /**
    * Build a JavaScript function that will perform an AJAX call based on a value calculated in JavaScript
-   * 
+   *
    * @param jsCalcValue the JavaScript that will be executed on the client to calculate the value to be sent to the server
    * @param jsContext the context instance that defines JavaScript to be executed on call success or failure
    * @param func the function to call when the data is sent
    *
    * @return the function ID and JavaScript that makes the call
    */
-  def ajaxCall(jsCalcValue: JsExp, jsContext: JsContext, func: String => JsCmd): (String, JsExp) =
+  def ajaxCall(jsCalcValue: JsExp, jsContext: JsContext, func: String => JsCmd): GUIDJsExp =
     ajaxCall_*(jsCalcValue, jsContext, SFuncHolder(func))
 
   /**
-   * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript
-   * 
+   * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript.
+   * This method uses the Lift-JSON package rather than the old, slow, not-typed JSONParser.  This is the preferred
+   * way to do client to server JSON calls.
+   *
    * @param jsCalcValue the JavaScript to calculate the value to be sent to the server
    * @param func the function to call when the data is sent
    *
    * @return the function ID and JavaScript that makes the call
    */
-  def jsonCall(jsCalcValue: JsExp, func: Any => JsCmd): (String, JsExp) =
+  def jsonCall(jsCalcValue: JsExp, func: JsonAST.JValue => JsCmd): GUIDJsExp =
+    jsonCall_*(jsCalcValue, SFuncHolder(s => parseOpt(s).map(func) getOrElse Noop))
+
+  /**
+   * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript.
+   * This method uses the Lift-JSON package rather than the old, slow, not-typed JSONParser.  This is the preferred
+   * way to do client to server JSON calls.
+   *
+   * @param jsCalcValue the JavaScript to calculate the value to be sent to the server
+   * @param jsContext the context instance that defines JavaScript to be executed on call success or failure
+   * @param func the function to call when the data is sent
+   *
+   * @return the function ID and JavaScript that makes the call
+   */
+  def jsonCall(jsCalcValue: JsExp, jsContext: JsContext, func: JsonAST.JValue => JsCmd): GUIDJsExp =
+    jsonCall_*(jsCalcValue, jsContext, SFuncHolder(s => parseOpt(s).map(func) getOrElse Noop))
+
+
+  /**
+   * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript
+   *
+   * @param jsCalcValue the JavaScript to calculate the value to be sent to the server
+   * @param func the function to call when the data is sent
+   *
+   * @return the function ID and JavaScript that makes the call
+   */
+  @deprecated("Use jsonCall with a function that takes JValue => JsCmd", "2.5")
+  def jsonCall(jsCalcValue: JsExp, func: Any => JsCmd)(implicit d: AvoidTypeErasureIssues1): GUIDJsExp =
     jsonCall_*(jsCalcValue, SFuncHolder(s => JSONParser.parse(s).map(func) openOr Noop))
 
   /**
    * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript
-   * 
+   *
    * @param jsCalcValue the JavaScript to calculate the value to be sent to the server
    * @param jsContext the context instance that defines JavaScript to be executed on call success or failure
    * @param func the function to call when the data is sent
    *
    * @return the function ID and JavaScript that makes the call
    */
-  def jsonCall(jsCalcValue: JsExp, jsContext: JsContext, func: Any => JsCmd): (String, JsExp) =
+  @deprecated("Use jsonCall with a function that takes JValue => JsCmd", "2.5")
+  def jsonCall(jsCalcValue: JsExp, jsContext: JsContext, func: Any => JsCmd)(implicit d: AvoidTypeErasureIssues1): GUIDJsExp =
     jsonCall_*(jsCalcValue, jsContext, SFuncHolder(s => JSONParser.parse(s).map(func) openOr Noop))
 
 
@@ -201,7 +232,7 @@ trait SHtml {
    * @return the function ID and JavaScript that makes the call
    */
   private def jsonCall_*(jsCalcValue: JsExp, func: AFuncHolder): (String, JsExp) =
-    fmapFunc(contextFuncBuilder(func))(name =>
+    fmapFunc((func))(name =>
             (name, makeAjaxCall(JsRaw("'" + name + "=' + encodeURIComponent(JSON.stringify(" + jsCalcValue.toJsCmd + "))"))))
 
   /**
@@ -215,20 +246,20 @@ trait SHtml {
   private def jsonCall_*(jsCalcValue: JsExp,
                          ajaxContext: AjaxContext,
                          func: AFuncHolder): (String, JsExp) =
-    fmapFunc(contextFuncBuilder(func))(name =>
+    fmapFunc((func))(name =>
             (name, makeAjaxCall(JsRaw("'" + name + "=' + encodeURIComponent(JSON.stringify(" + jsCalcValue.toJsCmd + "))"), ajaxContext)))
 
   def fajaxCall[T](jsCalcValue: JsExp, func: String => JsCmd)(f: (String, JsExp) => T): T = {
-    val (name, js) = ajaxCall(jsCalcValue, func)
+    val (name, js) = ajaxCall(jsCalcValue, func).product
     f(name, js)
   }
 
   def jsonCall(jsCalcValue: JsExp,
                jsonContext: JsonContext,
-               func: String => JsObj): (String, JsExp) = ajaxCall_*(jsCalcValue, jsonContext, SFuncHolder(func))
+               func: String => JsObj): GUIDJsExp = ajaxCall_*(jsCalcValue, jsonContext, SFuncHolder(func))
 
   def fjsonCall[T](jsCalcValue: JsExp, jsonContext: JsonContext, func: String => JsObj)(f: (String, JsExp) => T): T = {
-    val (name, js) = jsonCall(jsCalcValue, jsonContext, func)
+    val (name, js) = jsonCall(jsCalcValue, jsonContext, func).product
     f(name, js)
   }
 
@@ -240,7 +271,7 @@ trait SHtml {
    * @return the JavaScript that makes the call
    */
   private def ajaxCall_*(jsCalcValue: JsExp, func: AFuncHolder): (String, JsExp) =
-    fmapFunc(contextFuncBuilder(func))(name =>
+    fmapFunc((func))(name =>
             (name, makeAjaxCall(JsRaw("'" + name + "=' + encodeURIComponent(" + jsCalcValue.toJsCmd + ")"))))
 
   /**
@@ -254,7 +285,7 @@ trait SHtml {
   private def ajaxCall_*(jsCalcValue: JsExp,
                          ajaxContext: AjaxContext,
                          func: AFuncHolder): (String, JsExp) =
-    fmapFunc(contextFuncBuilder(func))(name =>
+    fmapFunc((func))(name =>
             (name, makeAjaxCall(JsRaw("'" + name + "=' + encodeURIComponent(" + jsCalcValue.toJsCmd + ")"), ajaxContext)))
 
 
@@ -271,7 +302,7 @@ trait SHtml {
    * @return a button to put on your page
    */
   def ajaxButton(text: NodeSeq, func: () => JsCmd, attrs: ElemAttr*): Elem = {
-    attrs.foldLeft(fmapFunc(contextFuncBuilder(func))(name =>
+    attrs.foldLeft(fmapFunc((func))(name =>
             <button onclick={makeAjaxCall(Str(name + "=true")).toJsCmd +
                     "; return false;"}>{text}</button>))((e, f) => f(e))
   }
@@ -302,7 +333,7 @@ trait SHtml {
   def idMemoize(f: IdMemoizeTransform => NodeSeqFuncOrSeqNodeSeqFunc): IdMemoizeTransform = {
     new IdMemoizeTransform {
       var latestElem: Elem = <span/>
-      
+
       var latestKids: NodeSeq = NodeSeq.Empty
 
       var latestId = Helpers.nextFuncName
@@ -314,12 +345,12 @@ trait SHtml {
         }
       }
 
-      def apply(ns: NodeSeq): NodeSeq = 
+      def apply(ns: NodeSeq): NodeSeq =
         Helpers.findBox(ns){e => latestElem = fixElem(e);
                             latestKids = e.child; Full(e)}.
       map(ignore => applyAgain()).openOr(NodeSeq.Empty)
 
-      def applyAgain(): NodeSeq = 
+      def applyAgain(): NodeSeq =
         new Elem(latestElem.prefix,
                  latestElem.label,
                  latestElem.attributes,
@@ -343,7 +374,7 @@ trait SHtml {
    *
    */
   def jsonButton(text: NodeSeq, func: () => JsObj, ajaxContext: JsonContext, attrs: ElemAttr*): Elem = {
-    attrs.foldLeft(fmapFunc(contextFuncBuilder(func))(name =>
+    attrs.foldLeft(fmapFunc((func))(name =>
             <button onclick={makeAjaxCall(Str(name + "=true"), ajaxContext).toJsCmd +
                     "; return false;"}>{text}</button>))((e, f) => f(e))
   }
@@ -358,7 +389,7 @@ trait SHtml {
    * @return a button to put on your page
    */
   def ajaxButton(text: NodeSeq, jsExp: JsExp, func: String => JsCmd, attrs: ElemAttr*): Elem = {
-    attrs.foldLeft(fmapFunc(contextFuncBuilder(SFuncHolder(func)))(name =>
+    attrs.foldLeft(fmapFunc((SFuncHolder(func)))(name =>
             <button onclick={makeAjaxCall(JsRaw(name.encJs + "+'='+encodeURIComponent(" + jsExp.toJsCmd + ")")).toJsCmd +
                     "; return false;"}>{text}</button>))((e, f) => f(e))
   }
@@ -393,7 +424,7 @@ trait SHtml {
    * @return a button to put on your pagejsFunc.params ++ List(AnonFunc(makeAjaxCall(Str(name+"=true"))))
    */
   def ajaxButton(text: NodeSeq, jsFunc: Call, func: () => JsCmd, attrs: ElemAttr*): Elem = {
-    attrs.foldLeft(fmapFunc(contextFuncBuilder(func))(name =>
+    attrs.foldLeft(fmapFunc((func))(name =>
             <button onclick={deferCall(Str(name + "=true"), jsFunc).toJsCmd + "; return false;"}>{text}</button>))(_ % _)
   }
 
@@ -460,14 +491,14 @@ trait SHtml {
 
     def displayMarkup : NodeSeq =
       displayContents ++ Text(" ") ++
-      <input value={S.??("edit")} type="button" onclick={setAndSwap(editName, editMarkup, dispName).toJsCmd + " return false;"} />
+      <input value={S.?("edit")} type="button" onclick={setAndSwap(editName, editMarkup, dispName).toJsCmd + " return false;"} />
 
     def editMarkup : NodeSeq = {
       val formData : NodeSeq =
         editForm ++
-        <input type="submit" value={S.??("ok")} /> ++
+        <input type="submit" value={S.?("ok")} /> ++
         hidden(onSubmit) ++
-        <input type="button" onclick={swapJsCmd(dispName,editName).toJsCmd + " return false;"} value={S.??("cancel")} />
+        <input type="button" onclick={swapJsCmd(dispName,editName).toJsCmd + " return false;"} value={S.?("cancel")} />
 
       ajaxForm(formData,
                Noop,
@@ -492,9 +523,8 @@ trait SHtml {
    * @param attrs - the anchor node attributes
    */
   def a(func: () => JsCmd, body: NodeSeq, attrs: ElemAttr*): Elem = {
-    val key = formFuncName
-    addFunctionMap(key, contextFuncBuilder((a: List[String]) => func()))
-    attrs.foldLeft(<lift:a key={key}>{body}</lift:a>)(_ % _)
+    attrs.foldLeft(fmapFunc((func))(name =>
+      <a href="javascript://" onclick={makeAjaxCall(Str(name + "=true")).toJsCmd + "; return false;"}>{body}</a>))(_ % _)
   }
 
   /**
@@ -508,7 +538,7 @@ trait SHtml {
    * @param attrs - the anchor node attributes
    */
   def a(jsFunc: Call, func: () => JsCmd, body: NodeSeq, attrs: ElemAttr*): Elem = {
-    attrs.foldLeft(fmapFunc(contextFuncBuilder(func))(name =>
+    attrs.foldLeft(fmapFunc((func))(name =>
             <a href="javascript://" onclick={deferCall(Str(name + "=true"), jsFunc).toJsCmd + "; return false;"}>{body}</a>))(_ % _)
   }
 
@@ -517,7 +547,7 @@ trait SHtml {
         body: NodeSeq,
         attrs: ElemAttr*): Elem = {
 
-    attrs.foldLeft(fmapFunc(contextFuncBuilder(func))(name =>
+    attrs.foldLeft(fmapFunc((func))(name =>
             <a href="javascript://" onclick={makeAjaxCall(Str(name + "=true"), jsonContext).toJsCmd + "; return false;"}>{body}</a>))(_ % _)
   }
 
@@ -553,7 +583,7 @@ trait SHtml {
 
 
   def toggleKids(head: Elem, visible: Boolean, func: () => JsCmd, kids: Elem): NodeSeq = {
-    fmapFunc(contextFuncBuilder(func)) {
+    fmapFunc((func)) {
       funcName =>
 
               val (nk, id) = findOrAddId(kids)
@@ -577,11 +607,11 @@ trait SHtml {
    *
    * @return a text field
    */
-  def jsonText(value: String, ignoreBlur: Boolean, json: JsExp => JsCmd, attrs: ElemAttr*): Elem = 
+  def jsonText(value: String, ignoreBlur: Boolean, json: JsExp => JsCmd, attrs: ElemAttr*): Elem =
   (attrs.foldLeft(<input type="text" value={value match {case null => "" case s => s}}/>)(_ % _)) %
   ("onkeypress" -> """liftUtils.lift_blurIfReturn(event)""") %
   (if (ignoreBlur) Null else ("onblur" -> (json(JE.JsRaw("this.value")))))
-  
+
 
 
   /**
@@ -613,10 +643,10 @@ trait SHtml {
   def ajaxTextElem(settable: Settable{type ValueType = String}, attrs: ElemAttr*): Elem =
     ajaxText(settable.get, (b: String) => {settable.set(b); Noop}, attrs :_*)
 
-  def ajaxText(value: String, func: String => JsCmd, attrs: ElemAttr*): Elem = 
+  def ajaxText(value: String, func: String => JsCmd, attrs: ElemAttr*): Elem =
   ajaxText_*(value, false, Empty, SFuncHolder(func), attrs: _*)
 
-  def ajaxText(value: String, jsFunc: Call, func: String => JsCmd, attrs: ElemAttr*): Elem = 
+  def ajaxText(value: String, jsFunc: Call, func: String => JsCmd, attrs: ElemAttr*): Elem =
   ajaxText_*(value, false, Full(jsFunc), SFuncHolder(func), attrs: _*)
 
   def ajaxText(value: String, ignoreBlur: Boolean, func: String => JsCmd, attrs: ElemAttr*): Elem =
@@ -627,11 +657,11 @@ trait SHtml {
 
   private def ajaxText_*(valuePreNull: String, ignoreBlur: Boolean, jsFunc: Box[Call], func: AFuncHolder, attrs: ElemAttr*): Elem = {
     val value = (Box !! valuePreNull).openOr("")
-    
+
     val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + encodeURIComponent(" + value + ".value)")
     val key = formFuncName
 
-    fmapFunc(contextFuncBuilder(func)) {
+    fmapFunc((func)) {
       funcName =>
       (attrs.foldLeft(<input type="text" value={value}/>)(_ % _)) %
       ("onkeypress" -> """liftUtils.lift_blurIfReturn(event)""") %
@@ -656,10 +686,10 @@ trait SHtml {
    *
    * @return a text area field
    */
-  def jsonTextarea(value: String, json: JsExp => JsCmd, attrs: ElemAttr*): Elem = 
+  def jsonTextarea(value: String, json: JsExp => JsCmd, attrs: ElemAttr*): Elem =
   (attrs.foldLeft(<textarea>{value}</textarea>)(_ % _)) %
   ("onblur" -> (json(JE.JsRaw("this.value"))))
-  
+
 
   /**
    * Create a JSON text area widget that makes a JSON call on blur
@@ -673,17 +703,17 @@ trait SHtml {
   def jsonTextarea(value: String, cmd: String, json: JsonCall, attrs: ElemAttr*): Elem =
   jsonTextarea(value, exp => json(cmd, exp), attrs: _*)
 
-  def ajaxTextarea(value: String, func: String => JsCmd, attrs: ElemAttr*): Elem = 
+  def ajaxTextarea(value: String, func: String => JsCmd, attrs: ElemAttr*): Elem =
   ajaxTextarea_*(value, Empty, SFuncHolder(func), attrs: _*)
 
-  def ajaxTextarea(value: String, jsFunc: Call, func: String => JsCmd, attrs: ElemAttr*): Elem = 
+  def ajaxTextarea(value: String, jsFunc: Call, func: String => JsCmd, attrs: ElemAttr*): Elem =
   ajaxTextarea_*(value, Full(jsFunc), SFuncHolder(func), attrs: _*)
 
   private def ajaxTextarea_*(value: String, jsFunc: Box[Call], func: AFuncHolder, attrs: ElemAttr*): Elem = {
     val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + encodeURIComponent(" + value + ".value)")
     val key = formFuncName
 
-    fmapFunc(contextFuncBuilder(func)) {
+    fmapFunc((func)) {
       funcName =>
       (attrs.foldLeft(<textarea>{value}</textarea>)(_ % _)) %
       ("onblur" -> (jsFunc match {
@@ -746,7 +776,7 @@ trait SHtml {
    * @param attrs - the balance of the attributes for the tag
    */
   def area(shape: AreaShape, func: () => JsCmd, alt: String, attrs: ElemAttr*): Elem = {
-    fmapFunc(contextFuncBuilder(func)) {
+    fmapFunc((func)) {
       funcName =>
       area(shape, alt, (("onclick" -> (makeAjaxCall(Str(funcName + "=true")).toJsCmd +
                                       "; return false;")): ElemAttr) :: attrs.toList :_*)
@@ -760,8 +790,8 @@ trait SHtml {
     ajaxCheckbox_*(value, Empty, LFuncHolder(in => func(in.exists(toBoolean(_)))), attrs: _*)
 
   def ajaxCheckboxElem(settable: Settable{type ValueType = Boolean}, jsFunc: Call, attrs: ElemAttr*): Elem =
-    ajaxCheckbox_*(settable.get, Full(jsFunc), 
-                   LFuncHolder(in => {settable.set(in.exists(toBoolean( _))); 
+    ajaxCheckbox_*(settable.get, Full(jsFunc),
+                   LFuncHolder(in => {settable.set(in.exists(toBoolean( _)));
                                       Noop}), attrs: _*)
 
   def ajaxCheckbox(value: Boolean, jsFunc: Call, func: Boolean => JsCmd, attrs: ElemAttr*): Elem =
@@ -771,7 +801,7 @@ trait SHtml {
     val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + " + value + ".checked")
     val key = formFuncName
 
-    fmapFunc(contextFuncBuilder(func)) {
+    fmapFunc((func)) {
       funcName =>
               (attrs.foldLeft(<input type="checkbox"/>)(_ % _)) %
                       checked(value) %
@@ -795,9 +825,9 @@ trait SHtml {
     val itemList = opts.map{
       v => {
         ChoiceItem(v, attrs.foldLeft(<input type="radio" name={groupName}
-                                     value={Helpers.nextFuncName}/>)(_ % _) % 
+                                     value={Helpers.nextFuncName}/>)(_ % _) %
                    checked(deflt == Full(v)) %
-                   ("onclick" -> ajaxCall(Str(""), 
+                   ("onclick" -> ajaxCall(Str(""),
                                           ignore => ajaxFunc(v))._2.toJsCmd))
       }
     }
@@ -857,7 +887,7 @@ trait SHtml {
                         jsFunc: Call,
                         attrs: ElemAttr*)
   (onSubmit: T => JsCmd)
-  (implicit f: PairStringPromoter[T]): Elem = 
+  (implicit f: PairStringPromoter[T]): Elem =
       {
         ajaxSelectObj[T](options.map(v => (v, f(v))), default,
                          jsFunc, onSubmit)
@@ -905,7 +935,7 @@ trait SHtml {
 
     val vals = opts.map(_._1)
     val testFunc = LFuncHolder(in => in.filter(v => vals.contains(v)) match {case Nil => false case xs => func(xs)}, func.owner)
-    fmapFunc(contextFuncBuilder(testFunc)) {
+    fmapFunc((testFunc)) {
       funcName =>
               (attrs.foldLeft(<select>{opts.flatMap {case (value, text) => (<option value={value}>{text}</option>) % selected(deflt.exists(_ == value))}}</select>)(_ % _)) %
                       ("onchange" -> (jsFunc match {
@@ -915,8 +945,8 @@ trait SHtml {
     }
   }
 
-  def ajaxInvoke(func: () => JsCmd): (String, JsExp) =
-    fmapFunc(contextFuncBuilder(NFuncHolder(func)))(name => (name, makeAjaxCall(name + "=true")))
+  def ajaxInvoke(func: () => JsCmd): GUIDJsExp =
+    fmapFunc((NFuncHolder(func)))(name => (name, makeAjaxCall(name + "=true")))
 
   /**
    * Build a swappable visual element.  If the shown element is clicked on, it turns into the hidden element and when
@@ -1007,7 +1037,7 @@ trait SHtml {
   private def dupWithName(elem: Elem, name: String): Elem = {
     new Elem(elem.prefix,
              elem.label,
-             new UnprefixedAttribute("name", name, 
+             new UnprefixedAttribute("name", name,
                                      elem.attributes.filter {
                                        case up: UnprefixedAttribute =>
                                          up.key != "name"
@@ -1017,10 +1047,10 @@ trait SHtml {
              elem.child :_*)
   }
 
-  private def isRadio(in: MetaData): Boolean = 
+  private def isRadio(in: MetaData): Boolean =
     in.get("type").map(_.text equalsIgnoreCase "radio") getOrElse false
 
-  private def isCheckbox(in: MetaData): Boolean = 
+  private def isCheckbox(in: MetaData): Boolean =
     in.get("type").map(_.text equalsIgnoreCase "checkbox") getOrElse false
 
 
@@ -1037,7 +1067,7 @@ trait SHtml {
     val allEvent = List("href")
 
     ns => {
-      def runNodes(in: NodeSeq): NodeSeq = 
+      def runNodes(in: NodeSeq): NodeSeq =
         in.flatMap {
           case Group(g) => runNodes(g)
           // button
@@ -1053,17 +1083,17 @@ trait SHtml {
             }
 
             fmapFunc(func) {
-              funcName => 
+              funcName =>
                 new Elem(e.prefix, e.label,
                          allEvent.foldLeft(newAttr){
                            case (meta, attr) =>
                              new UnprefixedAttribute(attr,
                                                      Helpers.
                                                      appendFuncToURL(oldAttr.
-                                                                     getOrElse(attr, ""), 
+                                                                     getOrElse(attr, ""),
                                                                      funcName+"=_"),
                                                      meta)
-                           
+
                          }, e.scope, e.child :_*)
             }
           }
@@ -1071,7 +1101,7 @@ trait SHtml {
 
           case x => x
         }
-      
+
       runNodes(ns)
     }
   }
@@ -1083,7 +1113,7 @@ trait SHtml {
    * "input [onblur]" #> SHtml.onEvent(s => Alert("Thanks: "+s))
    * </code>
    */
-  def onEvent(func: String => JsCmd): (String, JsExp) = 
+  def onEvent(func: String => JsCmd): GUIDJsExp =
     ajaxCall(JsRaw("this.value"), func)
 
   /**
@@ -1099,7 +1129,7 @@ trait SHtml {
   NodeSeq => NodeSeq = {
     val allEvent = event :: events.toList
     ns => {
-      def runNodes(in: NodeSeq): NodeSeq = 
+      def runNodes(in: NodeSeq): NodeSeq =
         in.flatMap {
           case Group(g) => runNodes(g)
           // button
@@ -1115,7 +1145,7 @@ trait SHtml {
             }
 
             val cmd = ajaxCall(JsRaw("this.value"), func)._2.toJsCmd
-            
+
             new Elem(e.prefix, e.label,
                      allEvent.foldLeft(newAttr){
                        case (meta, attr) =>
@@ -1123,14 +1153,14 @@ trait SHtml {
                                                  oldAttr.getOrElse(attr, "") +
                                                  cmd,
                                                  meta)
-                       
+
                      }, e.scope, e.child :_*)
           }
 
 
           case x => x
         }
-      
+
       runNodes(ns)
     }
   }
@@ -1141,7 +1171,7 @@ trait SHtml {
    * form fields (input, button, textarea, select) and the
    * function is executed when the form containing the field is submitted.
    */
-  def onSubmitUnit(func: () => Any): NodeSeq => NodeSeq = 
+  def onSubmitUnit(func: () => Any): NodeSeq => NodeSeq =
     onSubmitImpl(func: AFuncHolder)
 
   /**
@@ -1160,7 +1190,7 @@ trait SHtml {
    * form fields (input, button, textarea, select) and the
    * function is executed when the form containing the field is submitted.
    */
-  def onSubmitList(func: List[String] => Any): NodeSeq => NodeSeq = 
+  def onSubmitList(func: List[String] => Any): NodeSeq => NodeSeq =
     onSubmitImpl(func: AFuncHolder)
 
   /**
@@ -1169,7 +1199,7 @@ trait SHtml {
    * form fields (input, button, textarea, select) and the
    * function is executed when the form containing the field is submitted.
    */
-  def onSubmitBoolean(func: Boolean => Any): NodeSeq => NodeSeq = 
+  def onSubmitBoolean(func: Boolean => Any): NodeSeq => NodeSeq =
     onSubmitImpl(func: AFuncHolder)
 
   /**
@@ -1186,27 +1216,27 @@ trait SHtml {
       var checkBoxName: Box[String] = Empty
       var checkBoxCnt = 0
 
-      def runNodes(in: NodeSeq): NodeSeq = 
+      def runNodes(in: NodeSeq): NodeSeq =
         in.flatMap {
           case Group(g) => runNodes(g)
           // button
-          case e: Elem if e.label == "button" => 
+          case e: Elem if e.label == "button" =>
             _formGroup.is match {
-              case Empty => 
+              case Empty =>
                 formGroup(1)(fmapFunc(func) {dupWithName(e, _)})
               case _ => fmapFunc(func) {dupWithName(e, _)}
             }
 
           // textarea
-          case e: Elem if e.label == "textarea" => 
+          case e: Elem if e.label == "textarea" =>
             fmapFunc(func) {dupWithName(e, _)}
 
           // select
-          case e: Elem if e.label == "select" => 
+          case e: Elem if e.label == "select" =>
             fmapFunc(func) {dupWithName(e, _)}
 
           // radio
-          case e: Elem if e.label == "input" && isRadio(e.attributes) => 
+          case e: Elem if e.label == "input" && isRadio(e.attributes) =>
             radioName match {
               case Full(name) => dupWithName(e, name)
               case _ =>
@@ -1217,9 +1247,9 @@ trait SHtml {
                   }
                 }
             }
-          
+
           // checkbox
-          case e: Elem if e.label == "input" && isCheckbox(e.attributes) => 
+          case e: Elem if e.label == "input" && isCheckbox(e.attributes) =>
             checkBoxName match {
               case Full(name) =>
                 checkBoxCnt += 1
@@ -1235,26 +1265,26 @@ trait SHtml {
             }
 
           // submit
-          case e: Elem if e.label == "input" && e.attribute("type").map(_.text) == Some("submit") => 
+          case e: Elem if e.label == "input" && e.attribute("type").map(_.text) == Some("submit") =>
             _formGroup.is match {
-              case Empty => 
+              case Empty =>
                 formGroup(1)(fmapFunc(func) {dupWithName(e, _)})
               case _ => fmapFunc(func) {dupWithName(e, _)}
             }
 
           // generic input
-          case e: Elem if e.label == "input" => 
+          case e: Elem if e.label == "input" =>
             fmapFunc(func) {dupWithName(e, _)}
 
           case x => x
         }
 
       val ret = runNodes(in)
-      
+
       checkBoxName match {
         // if we've got a single checkbox, add a hidden false checkbox
         case Full(name) if checkBoxCnt == 1 => {
-          ret ++ <input type="hidden" name={name} value="false"/> 
+          ret ++ <input type="hidden" name={name} value="false"/>
         }
 
         case _ => ret
@@ -1315,7 +1345,7 @@ trait SHtml {
    */
   def number(value: Int, func: Int => Any,
              min: Int, max: Int, attrs: ElemAttr*): Elem =
-    number_*(value, 
+    number_*(value,
              min, max,
              SFuncHolder(s => Helpers.asInt(s).map(func)), attrs: _*)
 
@@ -1329,18 +1359,61 @@ trait SHtml {
                number_*(settable.get, min, max,
                         SFuncHolder(s => Helpers.asInt(s).map(s => settable.set(s))),
                         attrs: _*)
-  
+
   private def number_*(value: Int,
                        min: Int, max: Int,
                        func: AFuncHolder, attrs: ElemAttr*): Elem = {
     import Helpers._
 
-    makeFormElement("number", 
+    makeFormElement("number",
                     func,
-                    attrs: _*) % 
+                    attrs: _*) %
     ("value" -> value.toString) %
-    ("min" -> min.toString) %  
+    ("min" -> min.toString) %
     ("max" -> max.toString)
+  }
+
+
+  /**
+   * Generate an input field with type number. It allows for Double if your step is
+   * for example: 0.1
+   * At some point,
+   * there will be graceful fallback for non-HTML5 browsers.  FIXME
+   */
+  def number(value: Double, func: Double => Any,
+             min: Double, max: Double,  step: Double ,
+             attrs: ElemAttr*): Elem =
+    number_double_*(value,
+      min, max, step,
+      SFuncHolder(s => Helpers.asDouble(s).map(func)), attrs: _*)
+
+  /**
+   * Generate a number input element for the Settable. It allows for Double if your step is
+   * for example: 0.1
+   * At some point
+   * there will be graceful fallback for non-HTML5 browsers. FIXME
+   */
+  def number(settable: Settable{type ValueType = Double},
+             min: Double, max: Double, step: Double,
+             attrs: ElemAttr*): Elem =
+    number_double_*(settable.get, min, max, step: Double,
+      SFuncHolder(s => Helpers.asDouble(s).map(s => settable.set(s))),
+      attrs: _*)
+
+  private def number_double_*(value: Double,
+                       min: Double, max: Double, step: Double,
+                       func: AFuncHolder, attrs: ElemAttr*): Elem = {
+    import Helpers._
+    import common.Full
+
+
+    makeFormElement("number",
+                    func,
+                    attrs: _*) %
+    ("value" -> value.toString) %
+    ("min" -> min.toString) %
+    ("min" -> min.toString) %
+    ("step" -> step.toString)
   }
 
   /**
@@ -1349,7 +1422,7 @@ trait SHtml {
    */
   def range(value: Int, func: Int => Any,
              min: Int, max: Int, attrs: ElemAttr*): Elem =
-    range_*(value, 
+    range_*(value,
             min, max,
             SFuncHolder(s => Helpers.asInt(s).map(func)), attrs: _*)
 
@@ -1363,17 +1436,17 @@ trait SHtml {
                range_*(settable.get, min, max,
                        SFuncHolder(s => Helpers.asInt(s).map(s => settable.set(s))),
                        attrs: _*)
-  
+
   private def range_*(value: Int,
                       min: Int, max: Int,
                       func: AFuncHolder, attrs: ElemAttr*): Elem = {
     import Helpers._
 
-    makeFormElement("range", 
+    makeFormElement("range",
                     func,
-                    attrs: _*) % 
+                    attrs: _*) %
     ("value" -> value.toString) %
-    ("min" -> min.toString) %  
+    ("min" -> min.toString) %
     ("max" -> max.toString)
   }
 
@@ -1412,7 +1485,7 @@ trait SHtml {
    */
   def button(strOrNodeSeq: StringOrNodeSeq, func: () => Any, attrs: ElemAttr*): Elem = {
     def doit: Elem = {
-      attrs.foldLeft(fmapFunc(contextFuncBuilder(func))(name =>
+      attrs.foldLeft(fmapFunc((func))(name =>
         <button type="submit" name={name} value="_">{
           strOrNodeSeq.nodeSeq}</button>))(_ % _)
     }
@@ -1422,7 +1495,7 @@ trait SHtml {
       case _ => doit
     }
   }
-             
+
   /**
    * Generates a form submission button.
    *
@@ -1446,7 +1519,7 @@ trait SHtml {
   /**
    * Constructs an Ajax submit button that can be used inside ajax forms.
    * Multiple buttons can be used in the same form.
-   * 
+   *
    * @param value - the button text
    * @param func - the ajax function to be called
    * @param attrs - button attributes
@@ -1454,12 +1527,12 @@ trait SHtml {
    */
   def ajaxSubmit(value: String, func: () => JsCmd, attrs: ElemAttr*): Elem = {
     val funcName = "z" + Helpers.nextFuncName
-    addFunctionMap(funcName, contextFuncBuilder(func))
+    addFunctionMap(funcName, (func))
 
     (attrs.foldLeft(<input type="submit" name={funcName}/>)(_ % _)) %
       new UnprefixedAttribute("value", Text(value), Null) %
       ("onclick" -> ("liftAjax.lift_uriSuffix = '"+funcName+"=_'; return true;"))
-    
+
   }
 
   /**
@@ -1549,12 +1622,12 @@ trait SHtml {
    * Vend a function that will take all of the form elements and turns them
    * into Ajax forms
    */
-  def makeFormsAjax: NodeSeq => NodeSeq = "form" #> ((ns: NodeSeq) => 
+  def makeFormsAjax: NodeSeq => NodeSeq = "form" #> ((ns: NodeSeq) =>
     (ns match {
       case e: Elem => {
         val id: String = e.attribute("id").map(_.text) getOrElse
         Helpers.nextFuncName
-        
+
         val newMeta = e.attributes.filter{
           case up: UnprefixedAttribute =>
             up.key match {
@@ -1567,26 +1640,26 @@ trait SHtml {
           case _ => true
         }
 
-        new Elem(e.prefix, e.label, 
+        new Elem(e.prefix, e.label,
                  newMeta, e.scope, e.child :_*) % ("id" -> id) %
-        ("action" -> "javascript://") % 
-        ("onsubmit" -> 
+        ("action" -> "javascript://") %
+        ("onsubmit" ->
          (SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(id)).toJsCmd +
           "; return false;"))
       }
       case x => x
   }): NodeSeq)
 
-  /** 
+  /**
    * Submits a form denominated by a formId and execute the func function
    * after form fields functions are executed.
-   */ 
+   */
   def submitAjaxForm(formId: String, func: () => JsCmd): JsCmd = {
     val funcName = "Z" + Helpers.nextFuncName
-    addFunctionMap(funcName, contextFuncBuilder(func))
+    addFunctionMap(funcName, (func))
 
     makeAjaxCall(JsRaw(
-       LiftRules.jsArtifacts.serialize(formId).toJsCmd + " + " + 
+       LiftRules.jsArtifacts.serialize(formId).toJsCmd + " + " +
        Str("&" + funcName + "=true").toJsCmd))
   }
 
@@ -1635,7 +1708,7 @@ trait SHtml {
    */
   def selectElem[T](options: Seq[T], default: Box[T], attrs: ElemAttr*)
   (onSubmit: T => Any)
-  (implicit f: PairStringPromoter[T]): 
+  (implicit f: PairStringPromoter[T]):
   Elem = {
     selectObj[T](options.map(v => (v, f(v))), default, onSubmit, attrs :_*)
   }
@@ -1652,12 +1725,12 @@ trait SHtml {
    * @param onSubmit -- the function to execute on form submission
    * @param f -- the function that converts a T to a Display String.
    */
-  def selectElem[T](options: Seq[T], 
-                    settable: LiftValue[T], 
+  def selectElem[T](options: Seq[T],
+                    settable: LiftValue[T],
                     attrs: ElemAttr*)
-  (implicit f: PairStringPromoter[T]): 
+  (implicit f: PairStringPromoter[T]):
   Elem = {
-    selectObj[T](options.map(v => (v, f(v))), Full(settable.get), 
+    selectObj[T](options.map(v => (v, f(v))), Full(settable.get),
                  s => settable.set(s), attrs :_*)
   }
 
@@ -1755,6 +1828,73 @@ trait SHtml {
     }
   }
 
+    /**
+   * Create a select box based on the list with a default value and the function to be executed on
+   * form submission.  No check is made to see if the resulting value was in the original list.
+   * For use with DHTML form updating.
+   *
+   * @param opts -- the options.  A list of value and text pairs
+   * @param deflt -- the default value (or Empty if no default value)
+   * @param func -- the function to execute on form submission
+   * @param attrs -- select box attributes
+   */
+  def ajaxUntrustedSelect(opts: Seq[(String, String)],
+    deflt: Box[String],
+    func: String => JsCmd,
+    attrs: (String, String)*): Elem =
+    ajaxUntrustedSelect_*(opts, deflt, Empty, SFuncHolder(func), attrs: _*)
+
+   /**
+   * Create a select box based on the list with a default value and the function to be executed on
+   * form submission.  No check is made to see if the resulting value was in the original list.
+   * For use with DHTML form updating.
+   *
+   * @param opts -- the options.  A list of value and text pairs
+   * @poram jsFunc -- user provided function
+   * @param deflt -- the default value (or Empty if no default value)
+   * @param func -- the function to execute on form submission
+   * @param attrs -- select box attributes
+   */
+  def ajaxUntrustedSelect(opts: Seq[(String, String)],
+    deflt: Box[String],
+    jsFunc: Call,
+    func: String => JsCmd,
+    attrs: (String, String)*): Elem =
+    ajaxUntrustedSelect_*(opts, deflt, Full(jsFunc), SFuncHolder(func), attrs: _*)
+
+   /**
+   * Create a select box based on the list with a default value and the function to be executed on
+   * form submission.  No check is made to see if the resulting value was in the original list.
+   * For use with DHTML form updating.
+   *
+   * @param opts -- the options.  A list of value and text pairs
+   * @param deflt -- the default value (or Empty if no default value)
+   * @poram jsFunc -- user provided function
+   * @param func -- the function to execute on form submission
+   * @param attrs -- select box attributes
+   */
+  private def ajaxUntrustedSelect_*(opts: Seq[(String, String)],
+    deflt: Box[String],
+    jsFunc: Box[Call],
+    func: AFuncHolder,
+    attrs: (String, String)*): Elem =
+    {
+      val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + this.options[" + value + ".selectedIndex].value")
+      val key = formFuncName
+
+      val vals = opts.map(_._1)
+
+      val testFunc = LFuncHolder(in => in match { case Nil => false case xs => func(xs) }, func.owner)
+      fmapFunc(contextFuncBuilder(testFunc)) {
+        import net.liftweb.http.js.JsCmds.JsCrVar
+        funcName =>
+          (attrs.foldLeft(<select>{ opts.flatMap { case (value, text) => (<option value={ value }>{ text }</option>) % selected(deflt.exists(_ == value)) } }</select>)(_ % _)) %
+            ("onchange" -> (jsFunc match {
+              case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
+              case _ => makeAjaxCall(raw(funcName, "this"))
+            }))
+      }
+    }
 
   private def selected(in: Boolean) = if (in) new UnprefixedAttribute("selected", "selected", Null) else Null
 
@@ -1773,7 +1913,7 @@ trait SHtml {
   def multiSelectElem[T](options: Seq[T], default: Seq[T], attrs: ElemAttr*)
   (onSubmit: List[T] => Any)
   (implicit f: PairStringPromoter[T]): Elem = {
-    multiSelectObj[T](options.map(v => (v, f(v))), default, 
+    multiSelectObj[T](options.map(v => (v, f(v))), default,
                       onSubmit, attrs :_*)
   }
 
@@ -1818,7 +1958,7 @@ trait SHtml {
   def textarea(value: String, func: String => Any, attrs: ElemAttr*): Elem =
     textarea_*(value, SFuncHolder(func), attrs: _*)
 
-  def textareaElem(settable: Settable{type ValueType = String}, 
+  def textareaElem(settable: Settable{type ValueType = String},
                    attrs: ElemAttr*):
   Elem = textarea_*(settable.get, SFuncHolder(s => settable.set(s)), attrs: _*)
 
@@ -1848,7 +1988,7 @@ trait SHtml {
       name => {
         val items = possible.zipWithIndex.map {
           case ((id, value), idx) => {
-            val radio = 
+            val radio =
               attrs.foldLeft(<input type="radio"
                              name={name} value={id}/>)(_ % _) %
             checked(deflt.filter(_ == value).isDefined)
@@ -1858,11 +1998,11 @@ trait SHtml {
             } else {
               radio
             }
-            
+
             ChoiceItem(value, elem)
           }
         }
-        
+
         ChoiceHolder(items)
       }
     }
@@ -1894,7 +2034,7 @@ trait SHtml {
    */
   def fileUpload(func: FileParamHolder => Any, attrs: ElemAttr*): Elem = {
     val f2: FileParamHolder => Any = fp => if (fp.length > 0) func(fp)
-    fmapFunc(BinFuncHolder(f2)) { name => 
+    fmapFunc(BinFuncHolder(f2)) { name =>
       attrs.foldLeft(<input type="file" name={ name }/>) { _ % _ }
     }
   }
@@ -1923,7 +2063,7 @@ trait SHtml {
     def toForm: NodeSeq = flatMap(ChoiceHolder.htmlize)
   }
 
-   
+
   object ChoiceHolder {
     /** Convert a ChoiceItem into a span containing the control and the toString of the key */
     var htmlize: ChoiceItem[_] => NodeSeq = c => (<span>{c.xhtml}&nbsp;{c.key.toString}<br/> </span>)
@@ -1996,7 +2136,7 @@ trait SHtml {
   def checkbox_*(value: Boolean, func: AFuncHolder, id: Box[String],
                  attrs: ElemAttr*): NodeSeq = {
     fmapFunc(func)(name =>
-      (attrs.foldLeft(<input type="checkbox" name={name} value="true"/>)(_ % _) % checked(value) % setId(id)) ++ 
+      (attrs.foldLeft(<input type="checkbox" name={name} value="true"/>)(_ % _) % checked(value) % setId(id)) ++
                    (<input type="hidden" name={name} value="false"/>)
       )
   }
@@ -2080,7 +2220,7 @@ trait MemoizeTransform extends Function1[NodeSeq, NodeSeq] {
  */
 trait IdMemoizeTransform extends Function1[NodeSeq, NodeSeq] {
   /**
-   * The latest ID of the outer 
+   * The latest ID of the outer
    */
   def latestId: String
 
@@ -2088,7 +2228,7 @@ trait IdMemoizeTransform extends Function1[NodeSeq, NodeSeq] {
    * The outer Elem
    */
   def latestElem: Elem
-  
+
   /**
    * The children of the Elem
    */
@@ -2096,7 +2236,7 @@ trait IdMemoizeTransform extends Function1[NodeSeq, NodeSeq] {
 
 
   def applyAgain(): NodeSeq
-  
+
   def setHtml(): JsCmd
 }
 
@@ -2115,4 +2255,36 @@ final case class NodeSeqFunc(f: NodeSeq => NodeSeq) extends NodeSeqFuncOrSeqNode
 
 final case class SeqNodeSeqFunc(f: Seq[NodeSeq => NodeSeq]) extends NodeSeqFuncOrSeqNodeSeqFunc {
   def apply(ns: NodeSeq): NodeSeq = f.flatMap(_(ns))
+}
+
+/**
+ * A long time ago, Lift was going to track every function/GUID combination vended to
+ * a web page with extreme granularity. This meant that for every function/GUID vended,
+ * Lift would put that GUID in an attribute associated with the element on the page.  In
+ * order to capture the GUIDs, some methods like SHtml.ajaxCall() returned a Tuple containing
+ * the GUID and the JsExp.  This caused confusion and ugly code.  So, the GUIDJsExp
+ * came into being.  Basically, it's backward compatible with the Tuple (String, JsExp), but
+ * it functions like a JsExp (although you don't even have to call .toJsCmd because
+ * the toString method returns the expresion itself).  It should make the ajaxCall()._2.toJsCmd
+ * thing into ajaxCall().
+ */
+class GUIDJsExp(val guid: String,val exp: JsExp) extends JsExp {
+  def product: (String, JsExp) = this
+
+  def _1: String = guid
+  def _2: JsExp = exp
+
+  def toJsCmd: String = exp.toJsCmd
+
+  override def toString = this.toJsCmd
+}
+
+/**
+ * The companion object for GUIDJsExp that does helpful implicit conversions.
+ */
+object GUIDJsExp {
+  implicit def guidToTuple(in: GUIDJsExp): (String, JsExp) = (in.guid, in.exp)
+  implicit def tupleToGUIDJS(in: (String, JsExp)): GUIDJsExp = new GUIDJsExp(in._1, in._2)
+
+  def unapply(in: GUIDJsExp): Option[(String, JsExp)] = Some(in)
 }
