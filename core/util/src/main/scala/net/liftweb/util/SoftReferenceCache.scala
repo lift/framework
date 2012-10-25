@@ -119,27 +119,30 @@ class SoftReferenceCache[K, V](cacheSize: Int) {
    * @return Box[V]
    */
   def apply(key: K): Box[V] = {
-    val (doRemove:Boolean, retval:Box[V]) =
+    val result:(Boolean,Box[V]) /* (doRemove, retval) */ =
       lock(readLock) {
         Box.!!(cache.get(key)) match {
           case Full(value) =>
-            Box.!!(value.get).map((false, _)) openOr {
+            Box.!!(value.get).map(value => (false, Full(value))) openOr {
               (true, Empty)
             }
           case _ => (false, Empty)
         }
       }
 
-    if (doRemove) {
-      lock(writeLock) {
-        val value = cache.get(key)
+    result match {
+      case (doRemove, retval) if doRemove =>
+        lock(writeLock) {
+          val value = cache.get(key)
 
-        if (value != null && value.get == null)
-          remove(key)
-      }
+          if (value != null && value.get == null)
+            remove(key)
+        }
+
+        retval
+      case (_, retval) =>
+        retval
     }
-
-    retval
   }
 
   /**
