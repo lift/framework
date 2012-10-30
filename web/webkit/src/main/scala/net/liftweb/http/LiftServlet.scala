@@ -415,13 +415,6 @@ class LiftServlet extends Loggable {
     toReturn
   }
 
-  private def extractVersion[T](path: List[String])(f: => T): T = {
-    path match {
-      case first :: second :: _ => RenderVersion.doWith(second)(f)
-      case _ => f
-    }
-  }
-
   /**
    * Tracks the two aspects of an AJAX version: the sequence number,
    * whose sole purpose is to identify requests that are retries for the
@@ -456,8 +449,10 @@ class LiftServlet extends Loggable {
    */
   private def extractVersions[T](path: List[String])(f: (Box[AjaxVersionInfo]) => T): T = {
     path match {
-      case first :: AjaxVersions(versionInfo @ AjaxVersionInfo(renderVersion, _, _)) :: _ =>
+      case ajaxPath :: AjaxVersions(versionInfo @ AjaxVersionInfo(renderVersion, _, _)) :: _ =>
         RenderVersion.doWith(renderVersion)(f(Full(versionInfo)))
+      case ajaxPath :: renderVersion :: _ =>
+        RenderVersion.doWith(renderVersion)(f(Empty))
       case _ => f(Empty)
     }
   }
