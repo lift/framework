@@ -469,10 +469,10 @@ object RefFieldTestRecord extends RefFieldTestRecord with MongoMetaRecord[RefFie
 }
 
 
-class JObjectFieldTestRecord private () extends Record[JObjectFieldTestRecord] {
+class JObjectFieldTestRecord private () extends BsonRecord[JObjectFieldTestRecord] {
   def meta = JObjectFieldTestRecord
 
   object mandatoryJObjectField extends JObjectField(this)
 }
 
-object JObjectFieldTestRecord extends JObjectFieldTestRecord with MetaRecord[JObjectFieldTestRecord]
+object JObjectFieldTestRecord extends JObjectFieldTestRecord with BsonMetaRecord[JObjectFieldTestRecord]

@@ -77,6 +77,8 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
   def fieldDbValue(f: Field[_, BaseRecord]): Box[Any] = {
     import Meta.Reflection._
     import field.MongoFieldFlavor
+    import com.mongodb.util.JSON
+    import json._
 
     f match {
       case field if (field.optional_? && field.valueBox.isEmpty) => Empty // don't add to DBObject
@@ -95,6 +97,7 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
         case x if primitive_?(x.getClass) => x
         case x if mongotype_?(x.getClass) => x
         case x if datetype_?(x.getClass) => datetype2dbovalue(x)
+        case x: JValue => JSON.parse( compact(render( x )) )
         case x: BsonRecord[_] => x.asDBObject
         case x: Array[Byte] => x
         case o => o.toString
