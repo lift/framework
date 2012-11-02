@@ -76,8 +76,9 @@ trait PasswordTypedField extends TypedField[String] {
   }
 
   def setFromString(s: String): Box[String] = s match {
-    case "" if optional_? => setBoxPlain(Empty)
-    case _                => setBoxPlain(Full(s))
+    case null|"" if optional_? => setBoxPlain(Empty)
+    case null|"" => setBoxPlain(Failure(notOptionalErrorMessage))
+    case _ => setBoxPlain(Full(s))
   }
 
   override def validate: List[FieldError] = {

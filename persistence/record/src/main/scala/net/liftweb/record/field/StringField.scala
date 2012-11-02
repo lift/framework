@@ -41,8 +41,9 @@ trait StringTypedField extends TypedField[String] with StringValidators {
   }
 
   def setFromString(s: String): Box[String] = s match {
-    case "" if optional_? => setBox(Empty)
-    case _                => setBox(Full(s))
+    case null|"" if optional_? => setBox(Empty)
+    case null|"" => setBox(Failure(notOptionalErrorMessage))
+    case _ => setBox(Full(s))
   }
 
   private def elem = S.fmapFunc(SFuncHolder(this.setFromAny(_))) {

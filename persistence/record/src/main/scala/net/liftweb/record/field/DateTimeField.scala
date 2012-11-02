@@ -43,8 +43,9 @@ trait DateTimeTypedField extends TypedField[Calendar] {
   def setFromAny(in : Any): Box[Calendar] = toDate(in).flatMap(d => setBox(Full(dateToCal(d)))) or genericSetFromAny(in)
 
   def setFromString(s: String): Box[Calendar] = s match {
-    case "" if optional_? => setBox(Empty)
-    case other            => setBox(tryo(dateToCal(parseInternetDate(s))))
+    case null|"" if optional_? => setBox(Empty)
+    case null|"" => setBox(Failure(notOptionalErrorMessage))
+    case other => setBox(tryo(dateToCal(parseInternetDate(s))))
   }
 
   private def elem =

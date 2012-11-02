@@ -45,6 +45,7 @@ object FieldSpec extends Specification {
   lazy val session = new LiftSession("", randomString(20), Empty)
 
   def passBasicTests[A](example: A, mandatory: MandatoryTypedField[A], legacyOptional: MandatoryTypedField[A], optional: OptionalTypedField[A])(implicit m: scala.reflect.Manifest[A]): Fragment = {
+    
     val canCheckDefaultValues =
       !mandatory.defaultValue.isInstanceOf[Calendar] // don't try to use the default value of date/time typed fields, because it changes from moment to moment!
 
@@ -73,6 +74,22 @@ object FieldSpec extends Specification {
 	          in.clear
 	          in.get must_== in.defaultValue
 	        }
+        }
+ 
+        if(!in.optional_?) {
+        	"which fail when set with an empty string when not optional" in {
+        	  in.setFromString(null)
+        	  in.valueBox must beLike { case f: Failure => ok }
+        	  in.setFromString("")
+        	  in.valueBox must beLike { case f: Failure => ok }
+        	}
+        } else {
+          "which don't fail when set with an empty string when optional" in {
+        	  in.setFromString(null)
+        	  in.valueBox must_== Empty
+        	  in.setFromString("")
+        	  in.valueBox must_== Empty
+          }
         }
     }
 
@@ -145,6 +162,7 @@ object FieldSpec extends Specification {
       }
 
       "which initialize to some value" in {
+        mandatory.clear
         mandatory.valueBox.isDefined must_== true
       }
 
@@ -196,6 +214,15 @@ object FieldSpec extends Specification {
       }
 
       "which initialize to Empty" in {
+        optional.valueBox must_== Empty
+      }
+      
+      "which don't fail when set with an empty string" in {
+        optional.setFromString(null)
+        optional.value must_== None
+        optional.valueBox must_== Empty
+        optional.setFromString("")
+        optional.value must_== None
         optional.valueBox must_== Empty
       }
 

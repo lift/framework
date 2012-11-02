@@ -29,6 +29,7 @@ import S._
 import JE._
 
 trait BooleanTypedField extends TypedField[Boolean] {
+  
   def setFromAny(in: Any): Box[Boolean] = in match{
       case b: java.lang.Boolean => setBox(Full(b.booleanValue))
       case Full(b: java.lang.Boolean) => setBox(Full(b.booleanValue))
@@ -37,7 +38,15 @@ trait BooleanTypedField extends TypedField[Boolean] {
       case _ => genericSetFromAny(in)
   }
 
-  def setFromString(s: String): Box[Boolean] = setBox(tryo(toBoolean(s)))
+  def setFromString(s: String): Box[Boolean] = 
+    if(s == null || s.isEmpty) {
+      if(optional_?)
+    	  setBox(Empty)
+       else
+          setBox(Failure(notOptionalErrorMessage))
+    } else {
+      setBox(tryo(toBoolean(s)))
+    }
 
   private def elem(attrs: SHtml.ElemAttr*) =
       SHtml.checkbox(valueBox openOr false, (b: Boolean) => this.setBox(Full(b)), (("tabindex" -> tabIndex.toString): SHtml.ElemAttr) :: attrs.toList: _*)
