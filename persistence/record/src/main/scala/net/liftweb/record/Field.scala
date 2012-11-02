@@ -217,7 +217,7 @@ trait TypedField[ThisType] extends BaseField {
 
   def setBox(in: Box[MyType]): Box[MyType] = synchronized {
     needsDefault = false
-    val oldValue = valueBox
+    val oldValue = data
     data = in match {
       case _ if !canWrite_?      => Failure(noValueErrorMessage)
       case Full(_)               => set_!(in)
@@ -225,11 +225,13 @@ trait TypedField[ThisType] extends BaseField {
       case (f: Failure)          => set_!(f) // preserve failures set in
       case _                     => Failure(notOptionalErrorMessage)
     }
-    val same = (oldValue, valueBox) match {
-      case (Full(ov), Full(nv)) => ov == nv
-      case (a, b) => a == b
+    if(!dirty_?) {
+	    val same = (oldValue, data) match {
+	      case (Full(ov), Full(nv)) => ov == nv
+	      case (a, b) => a == b
+	    }
+	    dirty_?(!same)
     }
-    dirty_?(!same)
     data
   }
 
