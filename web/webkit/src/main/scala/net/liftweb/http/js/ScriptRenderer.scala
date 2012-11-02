@@ -196,7 +196,7 @@ object ScriptRenderer {
          """ + {
     if (LiftRules.enableLiftGC) { """
       var replacement = '""" + LiftRules.ajaxPath + """/'+lift_page;
-      if (version)
+      if (version!=null)
         replacement += ('-'+version.toString(36)) + (liftAjax.lift_ajaxQueue.length > 35 ? 35 : liftAjax.lift_ajaxQueue.length).toString(36);
       return url.replace('""" + LiftRules.ajaxPath + """', replacement);"""
     } else {
