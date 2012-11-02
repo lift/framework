@@ -147,6 +147,9 @@ object FieldSpec extends Specification {
 	        (valueBox === exampleBox) must_== false
 	        in.setBox(exampleBox)
 	        in.dirty_? must_== true
+	        //dirty value should remain true, even if the same value is set twice before persisting
+	        in.setBox(exampleBox)
+	        in.dirty_? must_== true
 	        in.setBox(valueBox)
 	        success
 	      }
