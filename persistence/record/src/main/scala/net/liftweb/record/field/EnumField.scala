@@ -52,7 +52,15 @@ trait EnumTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Value]
     case _                   => genericSetFromAny(in)(valueManifest)
   }
 
-  def setFromString(s: String): Box[EnumType#Value] = setBox(asInt(s).flatMap(fromInt))
+  def setFromString(s: String): Box[EnumType#Value] = 
+    if(s == null || s.isEmpty) {
+      if(optional_?)
+    	  setBox(Empty)
+       else
+          setBox(Failure(notOptionalErrorMessage))
+    } else {
+      setBox(asInt(s).flatMap(fromInt))
+    }
 
   /** Label for the selection item representing Empty, show when this field is optional. Defaults to the empty string. */
   def emptyOptionLabel: String = ""

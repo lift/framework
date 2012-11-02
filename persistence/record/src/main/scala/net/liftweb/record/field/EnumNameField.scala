@@ -39,8 +39,9 @@ trait EnumNameTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Va
   def setFromAny(in: Any): Box[EnumType#Value] = genericSetFromAny(in)(valueManifest)
 
   def setFromString(s: String): Box[EnumType#Value] = s match {
-    case "" if optional_? => setBox(Empty)
-    case _                => setBox(enum.values.find(_.toString == s))
+    case null|"" if optional_? => setBox(Empty)
+    case null|"" => setBox(Failure(notOptionalErrorMessage))
+    case _ => setBox(enum.values.find(_.toString == s))
   }
 
   /** Label for the selection item representing Empty, show when this field is optional. Defaults to the empty string. */
