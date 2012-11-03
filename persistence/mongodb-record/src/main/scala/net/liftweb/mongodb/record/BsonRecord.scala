@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 WorldWide Conferencing, LLC
+ * Copyright 2011-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,31 +36,18 @@ trait BsonRecord[MyType <: BsonRecord[MyType]] extends Record[MyType] {
   def meta: BsonMetaRecord[MyType]
 
   /**
-  * Encode a record instance into a DBObject
-  */
+    * Encode a record instance into a DBObject
+    */
   def asDBObject: DBObject = meta.asDBObject(this)
 
   /**
-  * Set the fields of this record from the given DBObject
-  */
+    * Set the fields of this record from the given DBObject
+    */
   def setFieldsFromDBObject(dbo: DBObject): Unit = meta.setFieldsFromDBObject(this, dbo)
 
-  override def toString = {
-    val fieldList = this.fields.map(f => "%s=%s" format (f.name,
-        f.valueBox match {
-          case Full(c: java.util.Calendar) => c.getTime().toString()
-          case Full(null) => ""
-          case Full(v) => v.toString
-          case _ => ""
-        }))
-
-    "%s={%s}" format (this.getClass.toString, fieldList.mkString(", "))
-  }
-
-
  /**
-  * Save the instance and return the instance
-  */
+   * Save the instance and return the instance
+   */
   override def saveTheRecord(): Box[MyType] = throw new BackingStoreException("BSON Records don't save themselves")
 }
 
@@ -69,10 +56,10 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
   self: BaseRecord =>
 
   /**
-  * Create a BasicDBObject from the field names and values.
-  * - MongoFieldFlavor types (List) are converted to DBObjects
-  *   using asDBObject
-  */
+    * Create a BasicDBObject from the field names and values.
+    * - MongoFieldFlavor types (List) are converted to DBObjects
+    *   using asDBObject
+    */
   def asDBObject(inst: BaseRecord): DBObject = {
     val dbo = BasicDBObjectBuilder.start // use this so regex patterns can be stored.
 
@@ -116,11 +103,11 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
   }
 
   /**
-  * Creates a new record, then sets the fields with the given DBObject.
-  *
-  * @param dbo - the DBObject
-  * @return Box[BaseRecord]
-  */
+    * Creates a new record, then sets the fields with the given DBObject.
+    *
+    * @param dbo - the DBObject
+    * @return Box[BaseRecord]
+    */
   def fromDBObject(dbo: DBObject): BaseRecord = {
     val inst: BaseRecord = createRecord
     setFieldsFromDBObject(inst, dbo)
@@ -128,13 +115,13 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
   }
 
   /**
-  * Populate the inst's fields with the values from a DBObject. Values are set
-  * using setFromAny passing it the DBObject returned from Mongo.
-  *
-  * @param inst - the record that will be populated
-  * @param dbo - The DBObject
-  * @return Unit
-  */
+    * Populate the inst's fields with the values from a DBObject. Values are set
+    * using setFromAny passing it the DBObject returned from Mongo.
+    *
+    * @param inst - the record that will be populated
+    * @param dbo - The DBObject
+    * @return Unit
+    */
   def setFieldsFromDBObject(inst: BaseRecord, dbo: DBObject): Unit = {
     for (k <- dbo.keySet; field <- inst.fieldByName(k.toString)) {
       field.setFromAny(dbo.get(k.toString))

@@ -441,6 +441,27 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   }
 
   /**
+   * Populate the fields of the record with values from an existing record
+   *
+   * @param inst - The record to populate
+   * @param rec - The Record to read from
+   */
+  def setFieldsFromRecord(inst: BaseRecord, rec: BaseRecord) {
+    for {
+      fh <- fieldList
+      fld <- rec.fieldByName(fh.name)
+    } {
+      fh.field(inst).setFromAny(fld.valueBox)
+    }
+  }
+
+  def copy(rec: BaseRecord): BaseRecord = {
+    val inst = createRecord
+    setFieldsFromRecord(inst, rec)
+    inst
+  }
+
+  /**
    * Defined the order of the fields in this record
    *
    * @return a List of Field

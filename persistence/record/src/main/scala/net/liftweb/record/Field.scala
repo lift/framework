@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 WorldWide Conferencing, LLC
+ * Copyright 2007-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@ trait BaseField extends FieldIdentifier with util.BaseField {
   }
 
   def dirty_? : Boolean = dirty
+
+  /**
+    * Should the dirty flag always be set when setBox is called
+    */
+  def forceDirty_? : Boolean = false
 
   /**
    * Should the field be ignored by the OR Mapper?
@@ -146,7 +151,7 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends BaseField {
 
 /** Refined trait for fields holding a particular value type */
 trait TypedField[ThisType] extends BaseField {
-  
+
   /*
    * Unless overriden, MyType is equal to ThisType.  Available for
    * backwards compatibility
@@ -225,19 +230,22 @@ trait TypedField[ThisType] extends BaseField {
       case (f: Failure)          => set_!(f) // preserve failures set in
       case _                     => Failure(notOptionalErrorMessage)
     }
-    if(!dirty_?) {
-	    val same = (oldValue, data) match {
-	      case (Full(ov), Full(nv)) => ov == nv
-	      case (a, b) => a == b
-	    }
-	    dirty_?(!same)
+    if (forceDirty_?) {
+      dirty_?(true)
+    }
+    else if (!dirty_?) {
+      val same = (oldValue, data) match {
+        case (Full(ov), Full(nv)) => ov == nv
+        case (a, b) => a == b
+      }
+      dirty_?(!same)
     }
     data
   }
 
   // Helper methods for things to easily use mixins and so on that use ValueType instead of Box[MyType], regardless of the optional-ness of the field
   protected def toValueType(in: Box[MyType]): ValueType
-  
+
   protected def toBoxMyType(in: ValueType): Box[MyType]
 
   protected def set_!(in: Box[MyType]): Box[MyType] = runFilters(in, setFilterBox)
@@ -326,7 +334,7 @@ trait TypedField[ThisType] extends BaseField {
 }
 
 trait MandatoryTypedField[ThisType] extends TypedField[ThisType] with Product1[ThisType] {
-  
+
   /**
    * ValueType represents the type that users will work with.  For MandatoryTypeField, this is
    * equal to ThisType.
@@ -353,7 +361,7 @@ trait MandatoryTypedField[ThisType] extends TypedField[ThisType] with Product1[T
   def value: MyType = valueBox openOr defaultValue
 
   def get: MyType = value
-  
+
   def is: MyType = value
 
   protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType] = in.map(v => setFilter.foldLeft(v)((prev, f) => f(prev)))
@@ -373,7 +381,7 @@ trait MandatoryTypedField[ThisType] extends TypedField[ThisType] with Product1[T
 }
 
 trait OptionalTypedField[ThisType] extends TypedField[ThisType] with Product1[Box[ThisType]] {
-  
+
   /**
    * ValueType represents the type that users will work with.  For OptionalTypedField, this is
    * equal to Option[ThisType].
@@ -395,16 +403,16 @@ trait OptionalTypedField[ThisType] extends TypedField[ThisType] with Product1[Bo
   def set(in: Option[MyType]): Option[MyType] = setBox(in) or defaultValueBox
 
   def toValueType(in: Box[MyType]) = in
-  
+
   def toBoxMyType(in: ValueType) = in
 
   def value: Option[MyType] = valueBox
 
   def get: Option[MyType] = value
-  
+
   def is: Option[MyType] = value
 
-  protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType] =  setFilter.foldLeft(in){ (prev, f) => 
+  protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType] =  setFilter.foldLeft(in){ (prev, f) =>
 	prev match {
 	  case fail: Failure => fail //stop on failure, otherwise some filters will clober it to Empty
 	  case other => f(other)
