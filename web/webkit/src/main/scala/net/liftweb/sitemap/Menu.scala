@@ -555,9 +555,9 @@ sealed trait MenuSingleton {
 
   /**
    * A convenient way to define a Menu items that's got the same name as it does it's localized LinkText.
-   * <pre>Menu.i("Home") / "index"</pre> is short-hand for <pre>Menu("Home", S ? "Home") / "index"</pre>
+   * <pre>Menu.i("Home") / "index"</pre> is short-hand for <pre>Menu("Home", S.loc("Home", Text("Home")) / "index"</pre>
    */
-  def i(nameAndLink: String): PreMenu = Menu.apply(nameAndLink, S ? nameAndLink)
+  def i(nameAndLink: String): PreMenu = Menu.apply(nameAndLink, S.loc(nameAndLink, scala.xml.Text(nameAndLink)))
 
   def param[T<:AnyRef](name: String, linkText: Loc.LinkText[T], parser: String => Box[T],
                encoder: T => String): PreParamMenu[T] =
