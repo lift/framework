@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,25 +132,6 @@ class FieldTypeTestRecord private () extends MongoRecord[FieldTypeTestRecord] wi
   object legacyOptionalTimeZoneField extends TimeZoneField(this) { override def optional_? = true }
   object optionalTimeZoneField extends OptionalTimeZoneField(this)
 
-  override def equals(other: Any): Boolean = other match {
-    case that: FieldTypeTestRecord =>
-      this.id.value == that.id.value &&
-      this.mandatoryBooleanField.value == that.mandatoryBooleanField.value &&
-      this.mandatoryCountryField.value == that.mandatoryCountryField.value &&
-      this.mandatoryDecimalField.value == that.mandatoryDecimalField.value &&
-      this.mandatoryDoubleField.value == that.mandatoryDoubleField.value &&
-      this.mandatoryEmailField.value == that.mandatoryEmailField.value &&
-      this.mandatoryEnumField.value == that.mandatoryEnumField.value &&
-      this.mandatoryIntField.value == that.mandatoryIntField.value &&
-      this.mandatoryLocaleField.value == that.mandatoryLocaleField.value &&
-      this.mandatoryLongField.value == that.mandatoryLongField.value &&
-      this.mandatoryPostalCodeField.value == that.mandatoryPostalCodeField.value &&
-      this.mandatoryStringField.value == that.mandatoryStringField.value &&
-      this.mandatoryTextareaField.value == that.mandatoryTextareaField.value &&
-      this.mandatoryTimeZoneField.value == that.mandatoryTimeZoneField.value
-    case _ => false
-  }
-
   def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 
@@ -238,9 +219,6 @@ class MongoFieldTypeTestRecord private () extends MongoRecord[MongoFieldTypeTest
   object mandatoryObjectIdField extends ObjectIdField(this)
   object legacyOptionalObjectIdField extends ObjectIdField(this) { override def optional_? = true }
 
-  object mandatoryPatternField extends PatternField(this)
-  object legacyOptionalPatternField extends PatternField(this) { override def optional_? = true }
-
   object mandatoryUUIDField extends UUIDField(this)
   object legacyOptionalUUIDField extends UUIDField(this) { override def optional_? = true }
 
@@ -248,24 +226,43 @@ class MongoFieldTypeTestRecord private () extends MongoRecord[MongoFieldTypeTest
     override def formats = owner.meta.formats
   }
 
-  override def equals(other: Any): Boolean = other match {
-    case that: MongoFieldTypeTestRecord =>
-      this.id.value == that.id.value &&
-      this.mandatoryDateField.value == that.mandatoryDateField.value &&
-      this.mandatoryJsonObjectField.value == that.mandatoryJsonObjectField.value &&
-      this.mandatoryObjectIdField.value == that.mandatoryObjectIdField.value &&
-      this.mandatoryPatternField.value.pattern == that.mandatoryPatternField.value.pattern &&
-      this.mandatoryPatternField.value.flags == that.mandatoryPatternField.value.flags &&
-      this.mandatoryUUIDField.value == that.mandatoryUUIDField.value &&
-      this.mandatoryMongoCaseClassField.value == that.mandatoryMongoCaseClassField.value
-    case _ => false
-  }
-
   def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 
 object MongoFieldTypeTestRecord extends MongoFieldTypeTestRecord with MongoMetaRecord[MongoFieldTypeTestRecord] {
   override def formats = allFormats + new EnumSerializer(MyTestEnum)
+}
+
+class PatternFieldTestRecord private () extends MongoRecord[PatternFieldTestRecord] with ObjectIdPk[PatternFieldTestRecord] {
+  def meta = PatternFieldTestRecord
+
+  import java.util.regex.Pattern
+
+  object mandatoryPatternField extends PatternField(this)
+  object legacyOptionalPatternField extends PatternField(this) { override def optional_? = true }
+
+  /**
+    * Pattern.equals doesn't work properly, so a custom equals is required with PatternField
+    */
+  override def equals(other: Any): Boolean = {
+    other match {
+      case that: PatternFieldTestRecord =>
+        that.fields.corresponds(this.fields) { (a,b) =>
+          (a.name == b.name) && ((a.valueBox, b.valueBox) match {
+            case (Full(ap: Pattern), Full(bp: Pattern)) =>
+              ap.pattern == bp.pattern && ap.flags == bp.flags
+            case _ => a.valueBox == b.valueBox
+          })
+        }
+      case _ => false
+    }
+  }
+
+  def dirtyFields = this.allFields.filter(_.dirty_?)
+}
+
+object PatternFieldTestRecord extends PatternFieldTestRecord with MongoMetaRecord[PatternFieldTestRecord] {
+  override def formats = allFormats
 }
 
 class PasswordTestRecord private () extends MongoRecord[PasswordTestRecord] with ObjectIdPk[PasswordTestRecord] {
@@ -379,12 +376,6 @@ class SubSubRecord private () extends BsonRecord[SubSubRecord] {
   def meta = SubSubRecord
 
   object name extends StringField(this, 12)
-
-  override def equals(other: Any): Boolean = other match {
-    case that: SubSubRecord =>
-      this.name.value == that.name.value
-    case _ => false
-  }
 }
 object SubSubRecord extends SubSubRecord with BsonMetaRecord[SubSubRecord] {
   override def formats = allFormats
@@ -431,11 +422,6 @@ class NullTestRecord private () extends MongoRecord[NullTestRecord] with IntPk[N
     def defaultValue = JsonObj("1", null)
   }
   object jsonobjlist extends MongoJsonObjectListField[NullTestRecord, JsonObj](this, JsonObj)
-
-  override def equals(other: Any): Boolean = other match {
-    case that: NullTestRecord => this.toString == that.toString
-    case _ => false
-  }
 }
 
 object NullTestRecord extends NullTestRecord with MongoMetaRecord[NullTestRecord]
@@ -454,10 +440,6 @@ class BoxTestRecord private () extends MongoRecord[BoxTestRecord] with LongPk[Bo
   }
   object jsonobjlist extends MongoJsonObjectListField[BoxTestRecord, BoxTestJsonObj](this, BoxTestJsonObj)
 
-  override def equals(other: Any): Boolean = other match {
-    case that: BoxTestRecord => this.toString == that.toString
-    case _ => false
-  }
 }
 object BoxTestRecord extends BoxTestRecord with MongoMetaRecord[BoxTestRecord] {
   override def formats = super.formats + new JsonBoxSerializer

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -317,7 +317,9 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   }
 
   /**
-    * Update only the dirty fields
+    * Update only the dirty fields.
+    *
+    * Note: PatternField will always set the dirty flag when set.
     */
   def update(inst: BaseRecord): Unit = {
     val dirtyFields = fields(inst).filter(_.dirty_?)

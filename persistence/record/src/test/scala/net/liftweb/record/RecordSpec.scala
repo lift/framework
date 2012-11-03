@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -312,7 +312,6 @@ object RecordSpec extends Specification  {
         val fttrFromJson = FieldTypeTestRecord.fromJsonString(json)
         fttrFromJson.isDefined must_== true
         fttrFromJson.toList map { r =>
-          r.mandatoryDecimalField.value mustEqual fttr.mandatoryDecimalField.value
           r mustEqual fttr
         }
       }

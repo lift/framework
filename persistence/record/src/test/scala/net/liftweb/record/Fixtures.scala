@@ -212,24 +212,18 @@ class FieldTypeTestRecord private () extends Record[FieldTypeTestRecord] {
   object legacyOptionalTimeZoneField extends TimeZoneField(this) { override def optional_? = true }
   object optionalTimeZoneField extends OptionalTimeZoneField(this)
 
+
+  def fieldsToCompare = {
+    fields
+      .filterNot(_.name == "mandatoryBinaryField") // binarys don't compare
+      .filterNot(_.name == "mandatoryDateTimeField") // toInternetDate is lossy (doesn't retain time to ms precision)
+  }
+
   override def equals(other: Any): Boolean = other match {
-    case that:FieldTypeTestRecord =>
-      //this.mandatoryBinaryField.value mustEqual that.mandatoryBinaryField.value
-      this.mandatoryBooleanField.value == that.mandatoryBooleanField.value &&
-      this.mandatoryCountryField.value == that.mandatoryCountryField.value &&
-      Helpers.toInternetDate(this.mandatoryDateTimeField.value.getTime) ==
-        Helpers.toInternetDate(that.mandatoryDateTimeField.value.getTime) &&
-      //this.mandatoryDecimalField.value == that.mandatoryDecimalField.value &&
-      this.mandatoryDoubleField.value == that.mandatoryDoubleField.value &&
-      this.mandatoryEmailField.value == that.mandatoryEmailField.value &&
-      this.mandatoryEnumField.value == that.mandatoryEnumField.value &&
-      this.mandatoryIntField.value == that.mandatoryIntField.value &&
-      this.mandatoryLocaleField.value == that.mandatoryLocaleField.value &&
-      this.mandatoryLongField.value == that.mandatoryLongField.value &&
-      this.mandatoryPostalCodeField.value == that.mandatoryPostalCodeField.value &&
-      this.mandatoryStringField.value == that.mandatoryStringField.value &&
-      this.mandatoryTextareaField.value == that.mandatoryTextareaField.value &&
-      this.mandatoryTimeZoneField.value == that.mandatoryTimeZoneField.value
+    case that: FieldTypeTestRecord =>
+      that.fieldsToCompare.corresponds(this.fieldsToCompare) { (a,b) =>
+        a.name == b.name && a.valueBox == b.valueBox
+      }
     case _ => false
   }
 }
