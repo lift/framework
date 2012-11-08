@@ -225,7 +225,7 @@ trait AbstractScreen extends Factory {
     private lazy val _theFieldId: NonCleanAnyVar[String] =
       vendAVar(Helpers.nextFuncName)
 
-    override def toString = is.toString
+    override def toString = if (is != null) is.toString else ""
 
     def binding: Box[FieldBinding] = Empty
 
