@@ -53,9 +53,7 @@ trait CssBoundLiftScreen extends LiftScreen with CssBoundScreen {
     LocalActionRef.get
   }
 
-  override def allTemplate = SavedDefaultXml.get
-
-  protected def defaultAllTemplate = super.allTemplate
+  protected def savedDefaultXml = SavedDefaultXml.get
 
   override protected def doFinish(): JsCmd= {
     val fMap: Map[String, () => JsCmd] = LocalActions.get
