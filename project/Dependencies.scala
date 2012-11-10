@@ -23,7 +23,8 @@ object Dependencies {
 
   type ModuleMap = String => ModuleID
 
-  lazy val CVMapping2911 = crossMapped("2.9.2" -> "2.9.1", "2.9.1-1" -> "2.9.1")
+  lazy val CVMapping2911 = crossMapped("2.9.1-1" -> "2.9.1")
+  lazy val CVMapping29   = crossMapped("2.9.1-1" -> "2.9.2", "2.9.1" -> "2.9.2")
   lazy val CVMappingAll  = crossMapped("2.9.2" -> "2.9.1", "2.9.1-1" -> "2.9.1")
 
   lazy val slf4jVersion = "1.6.4"
@@ -36,13 +37,13 @@ object Dependencies {
   lazy val commons_codec          = "commons-codec"              % "commons-codec"      % "1.6"
   lazy val commons_fileupload     = "commons-fileupload"         % "commons-fileupload" % "1.2.2"
   lazy val commons_httpclient     = "commons-httpclient"         % "commons-httpclient" % "3.1"
-  lazy val dispatch_http          = "net.databinder"             % "dispatch-http"      % "0.7.8"   cross CVMapping2911
+  lazy val dispatch_http          = "net.databinder"             % "dispatch-http"      % "0.7.8"   cross CVMappingAll
   lazy val javamail               = "javax.mail"                 % "mail"               % "1.4.4"
   lazy val joda_time              = "joda-time"                  % "joda-time"          % "1.6.2" // TODO: 2.1
   lazy val htmlparser             = "nu.validator.htmlparser"    % "htmlparser"         % "1.4"
   lazy val mongo_java_driver      = "org.mongodb"                % "mongo-java-driver"  % "2.7.3"
   lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.4.1"
-  lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.4"     cross CVMappingAll
+  lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.4"     cross CVMapping29
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _
   lazy val scala_compiler: ModuleMap  = "org.scala-lang"                % "scala-compiler"     % _
   lazy val scalaz_core: ModuleMap = sv => scalazGroup(sv)        % "scalaz-core"        % scalazVersion(sv) cross CVMappingAll

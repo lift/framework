@@ -14,7 +14,6 @@ organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
 
 crossScalaVersions in ThisBuild    := Seq("2.9.2", "2.9.1-1", "2.9.1")
 
-
 libraryDependencies in ThisBuild ++= Seq(specs2, scalacheck)
 
 // Settings for Sonatype compliance
