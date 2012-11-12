@@ -11,12 +11,17 @@ Lift applications are:
 
 Because Lift applications are written in [Scala](http://www.scala-lang.org), an elegant JVM language, you can still use your favorite Java libraries and deploy to your favorite Servlet Container and app server. Use the code you've already written and deploy to the container you've already configured!
 
-## No Pull Requests
+## Pull Requests
 
-You must be a committer with signed committer agreement to submit patches. We do not accept pull requests from non-committers.
+We will accept pull requests into the [Lift codebase](https://github.com/lift)
+if the pull requests meet the following criteria:
 
-Please discuss issues and improvements on the [mailing list](http://groups.google.com/forum/#!forum/liftweb), and read up on [other ways you can contribute](https://www.assembla.com/spaces/liftweb/wiki/Contributing).
-
+* One or more of the following:
+    * Documentation including ScalaDoc comments in code
+    * Example code
+    * Small changes, enhancements, or bug fixes to Lift's code
+* Each pull request must include a signature at the bottom of the
+  `/contributors.md` file.
 
 ## Getting Started
 
