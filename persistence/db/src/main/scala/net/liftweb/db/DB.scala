@@ -885,6 +885,7 @@ trait DB extends Loggable {
        "layer",
        "level",
        "like",
+       "limit", // reserved word for PostgreSQL
        "limited",
        "link",
        "lists",
