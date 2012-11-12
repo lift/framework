@@ -58,18 +58,18 @@ import scala.ref.WeakReference
  * it will restore the WeakReference and then return the value.
  */
 class RestoringWeakReference[T <: AnyRef](private var reference:WeakReference[T], restorer:()=>T) {
-  def value : T = {
-	val existing = reference.get
-	if (! existing.isDefined) {
-	  restoreReference
-	  value
-	} else {
-	  existing.get
-	}
+  def apply() : T = {
+    val existing = reference.get
+    if (! existing.isDefined) {
+      restoreReference
+      apply()
+    } else {
+      existing.get
+    }
   }
 
   private def restoreReference = {
-	reference = new WeakReference(restorer())
+    reference = new WeakReference(restorer())
   }
 }
 object RestoringWeakReference {
