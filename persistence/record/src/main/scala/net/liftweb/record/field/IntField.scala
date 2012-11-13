@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package record 
-package field 
+package net.liftweb
+package record
+package field
 
 import scala.xml._
 import net.liftweb.common._
@@ -27,7 +27,7 @@ import Helpers._
 import S._
 
 trait IntTypedField extends NumericTypedField[Int] {
-  
+
   def setFromAny(in: Any): Box[Int] = setNumericFromAny(in, _.intValue)
 
   def setFromString(s: String): Box[Int] = s match {
@@ -39,7 +39,7 @@ trait IntTypedField extends NumericTypedField[Int] {
   def defaultValue = 0
 
   def asJValue: JValue = valueBox.map(i => JInt(BigInt(i))) openOr (JNothing: JValue)
-  
+
   def setFromJValue(jvalue: JValue): Box[Int] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case JInt(i)                      => setBox(Full(i.intValue))
@@ -68,4 +68,3 @@ class OptionalIntField[OwnerType <: Record[OwnerType]](rec: OwnerType)
     setBox(value)
   }
 }
-

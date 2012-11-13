@@ -75,4 +75,3 @@ object Title2 extends EnumWithDescription {
   val mr  = Value("MR", "Mr")
   val mrs = Value("MRS", "Mrs")
 }
-

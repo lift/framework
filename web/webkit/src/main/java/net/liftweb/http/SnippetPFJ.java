@@ -25,4 +25,3 @@ public abstract class SnippetPFJ {
       String[] value();
     }
 }
-

@@ -560,4 +560,3 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
     headers += (s -> List(Helpers.toInternetDate(l)))
   }
 }
-

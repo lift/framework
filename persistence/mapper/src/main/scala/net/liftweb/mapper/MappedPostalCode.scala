@@ -155,4 +155,3 @@ abstract class MappedPostalCode[T <: Mapper[T]](owner: T, country: MappedCountry
     case _ => genericCheck _ :: super.validations
   }
 }
-

@@ -191,4 +191,3 @@ case class Skip(value: Int) extends FindOption
 abstract sealed class UpdateOption
 case object Upsert extends UpdateOption
 case object Multi extends UpdateOption
-

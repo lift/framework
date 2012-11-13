@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package common 
+package net.liftweb
+package common
 
 private[common] trait LinkedListElem[T1, T2] {
   private[common] var _prev: LinkedListElem[T1, T2] = null
@@ -94,7 +94,7 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
   def remove(key: K) {
     localMap.get(key) match {
       case null =>
-	case v =>
+        case v =>
           v.remove
       localMap.remove(key)
     }
@@ -167,4 +167,3 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
   def size: Int = localMap.size
 
 }
-

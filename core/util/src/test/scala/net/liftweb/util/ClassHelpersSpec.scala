@@ -180,6 +180,4 @@ object ClassHelpersSpec extends Specification  {
       createInvoker("get", "").open_!.apply must throwA[Exception]
     }
   }
-
 }
-

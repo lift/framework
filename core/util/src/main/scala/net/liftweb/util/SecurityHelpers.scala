@@ -196,6 +196,4 @@ trait SecurityHelpers {
     addDigit(in, 0, len, sb)
     sb.toString
   }
-
 }
-

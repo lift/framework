@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package provider 
+package net.liftweb
+package http
+package provider
 
 import java.io.{InputStream}
 import java.util.{Locale}
@@ -235,4 +235,3 @@ trait HTTPRequest {
   */
   def userAgent: Box[String]
 }
-

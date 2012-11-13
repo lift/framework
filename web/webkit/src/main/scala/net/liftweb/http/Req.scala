@@ -39,13 +39,13 @@ object UserAgentCalculator extends Factory {
    * You can change the mechanism by which the user agent for IE
    * is calculated by doing the Factory thing with this object
    */
-  object ieCalcFunction extends FactoryMaker[Box[String] => 
+  object ieCalcFunction extends FactoryMaker[Box[String] =>
     Box[Double]](defaultIeCalcFunction _)
 
   /**
    * The built-in mechanism for calculating IE
    */
-  def defaultIeCalcFunction(userAgent: Box[String]): Box[Double] = 
+  def defaultIeCalcFunction(userAgent: Box[String]): Box[Double] =
     for {
       ua <- userAgent
       m = iePattern.pattern.matcher(ua)
@@ -61,13 +61,13 @@ object UserAgentCalculator extends Factory {
    * You can change the mechanism by which the user agent for Safari
    * is calculated by doing the Factory thing with this object
    */
-  object safariCalcFunction extends FactoryMaker[Box[String] => 
+  object safariCalcFunction extends FactoryMaker[Box[String] =>
     Box[Double]](defaultSafariCalcFunction _)
 
   /**
    * The built-in mechanism for calculating Safari
    */
-  def defaultSafariCalcFunction(userAgent: Box[String]): Box[Double] = 
+  def defaultSafariCalcFunction(userAgent: Box[String]): Box[Double] =
     for {
       ua <- userAgent
       m = safariPattern.pattern.matcher(ua)
@@ -83,13 +83,13 @@ object UserAgentCalculator extends Factory {
    * You can change the mechanism by which the user agent for Firefox
    * is calculated by doing the Factory thing with this object
    */
-  object firefoxCalcFunction extends FactoryMaker[Box[String] => 
+  object firefoxCalcFunction extends FactoryMaker[Box[String] =>
     Box[Double]](defaultFirefoxCalcFunction _)
 
   /**
    * The built-in mechanism for calculating Firefox
    */
-  def defaultFirefoxCalcFunction(userAgent: Box[String]): Box[Double] = 
+  def defaultFirefoxCalcFunction(userAgent: Box[String]): Box[Double] =
     for {
       ua <- userAgent
       m = firefoxPattern.pattern.matcher(ua)
@@ -105,7 +105,7 @@ object UserAgentCalculator extends Factory {
    * You can change the mechanism by which the user agent for Chrome
    * is calculated by doing the Factory thing with this object
    */
-  object chromeCalcFunction extends FactoryMaker[Box[String] => 
+  object chromeCalcFunction extends FactoryMaker[Box[String] =>
     Box[Double]](defaultChromeCalcFunction _)
 
   /**
@@ -113,7 +113,7 @@ object UserAgentCalculator extends Factory {
    * if the User-Agent represents an iPhone.  Put your
    * special calculation function in here
    */
-  object iPhoneCalcFunction extends FactoryMaker[Box[Box[String] => 
+  object iPhoneCalcFunction extends FactoryMaker[Box[Box[String] =>
     Boolean]](Empty)
 
   /**
@@ -121,14 +121,14 @@ object UserAgentCalculator extends Factory {
    * if the User-Agent represents an iPad.  Put your
    * special calculation function in here
    */
-  object iPadCalcFunction extends FactoryMaker[Box[Box[String] => 
+  object iPadCalcFunction extends FactoryMaker[Box[Box[String] =>
     Boolean]](Empty)
 
 
   /**
    * The built-in mechanism for calculating Chrome
    */
-  def defaultChromeCalcFunction(userAgent: Box[String]): Box[Double] = 
+  def defaultChromeCalcFunction(userAgent: Box[String]): Box[Double] =
     for {
       ua <- userAgent
       m = chromePattern.pattern.matcher(ua)
@@ -145,7 +145,7 @@ trait UserAgentCalculator {
   lazy val isIE9: Boolean = ieVersion.map(_ == 9) openOr false
   lazy val isIE = ieVersion.map(_ >= 6) openOr false
 
-  lazy val safariVersion: Box[Int] = 
+  lazy val safariVersion: Box[Int] =
     UserAgentCalculator.safariCalcFunction.vend.apply(userAgent).map(_.toInt)
 
   def isSafari2: Boolean = false
@@ -153,29 +153,29 @@ trait UserAgentCalculator {
   lazy val isSafari3: Boolean = safariVersion.map(_ == 3) openOr false
   lazy val isSafari4: Boolean = safariVersion.map(_ == 4) openOr false
   lazy val isSafari5: Boolean = safariVersion.map(_ == 5) openOr false
-  
+
   def isSafari3_+ = safariVersion.map(_ >= 3) openOr false
   def isSafari = safariVersion.isDefined
 
   /**
    * Is the Req coming from an iPhone
    */
-  lazy val isIPhone: Boolean = 
+  lazy val isIPhone: Boolean =
     UserAgentCalculator.iPhoneCalcFunction.vend.
-  map(_.apply(userAgent)) openOr 
-    isSafari && (userAgent.map(s => 
+  map(_.apply(userAgent)) openOr
+    isSafari && (userAgent.map(s =>
       s.indexOf("(iPhone") >= 0) openOr false)
 
   /**
    * Is the Req coming from an iPad
    */
-  lazy val isIPad: Boolean = 
+  lazy val isIPad: Boolean =
     UserAgentCalculator.iPadCalcFunction.vend.
-  map(_.apply(userAgent)) openOr 
+  map(_.apply(userAgent)) openOr
   isSafari && (userAgent.map(s =>
     s.indexOf("(iPad") >= 0) openOr false)
 
-  lazy val firefoxVersion: Box[Double] = 
+  lazy val firefoxVersion: Box[Double] =
     UserAgentCalculator.firefoxCalcFunction.vend.apply(userAgent)
 
   lazy val isFirefox2: Boolean = firefoxVersion.map(v => v >= 2d && v < 3d) openOr false
@@ -189,7 +189,7 @@ trait UserAgentCalculator {
   def isFirefox = firefoxVersion.isDefined
 
 
-  lazy val chromeVersion: Box[Double] = 
+  lazy val chromeVersion: Box[Double] =
     UserAgentCalculator.chromeCalcFunction.vend.apply(userAgent)
 
   lazy val isChrome2 = chromeVersion.map(v => v >= 2d && v < 3d) openOr false
@@ -362,7 +362,7 @@ object Req {
     InetAddress.getLocalHost.getHostName
   }
 
-  def apply(original: Req, rewrite: List[LiftRules.RewritePF]): Req = 
+  def apply(original: Req, rewrite: List[LiftRules.RewritePF]): Req =
     this.apply(original, rewrite, Nil, Nil)
 
   def apply(original: Req, rewrite: List[LiftRules.RewritePF], statelessTest: List[LiftRules.StatelessTestPF],
@@ -383,9 +383,9 @@ object Req {
     val stateless =  NamedPF.applyBox(StatelessReqTest(wholePath, original.request), otherStatelessTest) or
       NamedPF.applyBox(wholePath, statelessTest)
 
-    new Req(rewritten.path, original.contextPath, 
+    new Req(rewritten.path, original.contextPath,
             original.requestType, original.contentType, original.request,
-            original.nanoStart, original.nanoEnd, 
+            original.nanoStart, original.nanoEnd,
             stateless openOr original.stateless_?,
             original.paramCalculator, original.addlParams ++ rewritten.params)
   }
@@ -423,7 +423,7 @@ object Req {
 
     //    val (paramNames: List[String], params: Map[String, List[String]], files: List[FileParamHolder], body: Box[Array[Byte]]) =
 
-          
+
     // calculate the query parameters
     lazy val queryStringParam:  (List[String], Map[String, List[String]]) = {
       val params: List[(String, String)] =
@@ -435,12 +435,12 @@ object Req {
             case n :: v :: _ => Full((urlDecode(n), urlDecode(v)))
             case n :: _ => Full((urlDecode(n), ""))
           }} yield (name, value)
-            
+
             val names: List[String] = params.map(_._1).distinct
       val nvp: Map[String, List[String]] = params.foldLeft(Map[String, List[String]]()) {
         case (map, (name, value)) => map + (name -> (map.getOrElse(name, Nil) ::: List(value)))
       }
-      
+
       (names, nvp)
     }
 
@@ -450,21 +450,21 @@ object Req {
       if ((reqType.post_? ||
            reqType.put_?) && contentType.dmap(false){
 	_.toLowerCase match {
-	  case x => 
-	    x.startsWith("text/xml") || 
-	    x.startsWith("application/xml") || 
+	  case x =>
+	    x.startsWith("text/xml") ||
+	    x.startsWith("application/xml") ||
 	  x.startsWith("text/json") ||
 	  x.startsWith("application/json")
 	}}) {
-        ParamCalcInfo(queryStringParam._1, 
-                      queryStringParam._2 ++ localParams, 
-                      Nil, 
+        ParamCalcInfo(queryStringParam._1,
+                      queryStringParam._2 ++ localParams,
+                      Nil,
                       Full(BodyOrInputStream(request.inputStream)))
         // it's multipart
       } else if (request multipartContent_?) {
         val allInfo = request extractFiles
-        
-        val normal: List[NormalParamHolder] = 
+
+        val normal: List[NormalParamHolder] =
           allInfo.flatMap {
             case v: NormalParamHolder => List(v)
             case _ => Nil}
@@ -472,11 +472,11 @@ object Req {
         val files: List[FileParamHolder] = allInfo.flatMap {
           case v: FileParamHolder => List(v)
           case _ => Nil}
-        
+
         val params = normal.foldLeft(eMap)((a, b) =>
           a + (b.name -> (a.getOrElse(b.name, Nil) ::: List(b.value))))
-        
-        ParamCalcInfo((queryStringParam._1 ::: 
+
+        ParamCalcInfo((queryStringParam._1 :::
                        normal.map(_.name)).distinct,
                       queryStringParam._2 ++ localParams ++
                       params, files, Empty)
@@ -491,8 +491,8 @@ object Req {
                                            map(n => (n.name, n.values))
         ParamCalcInfo(request paramNames, params, Nil, Empty)
       } else {
-        ParamCalcInfo(queryStringParam._1, 
-                      queryStringParam._2 ++ localParams, 
+        ParamCalcInfo(queryStringParam._1,
+                      queryStringParam._2 ++ localParams,
                       Nil, Full(BodyOrInputStream(request inputStream)))
       }
     })
@@ -624,10 +624,10 @@ final case class ParamCalcInfo(paramNames: List[String],
  * Holds information about the content type and subtype including
  * the q parameter and extension information.
  */
-final case class ContentType(theType: String, 
-                             subtype: String, 
+final case class ContentType(theType: String,
+                             subtype: String,
                              order: Int,
-                             q: Box[Double], 
+                             q: Box[Double],
                              extension: List[(String, String)]) extends Ordered[ContentType]
   {
     /**
@@ -636,7 +636,7 @@ final case class ContentType(theType: String,
      * explicit and then order.
      */
     def compare(that: ContentType): Int = ((that.q openOr 1d) compare (q openOr 1d)) match {
-      case 0 => 
+      case 0 =>
         def doDefault = {
           order compare that.order
         }
@@ -660,7 +660,7 @@ final case class ContentType(theType: String,
     def matches(contentType: (String, String)): Boolean =
       (theType == "*" || (theType == contentType._1)) &&
     (subtype == "*" || subtype == contentType._2)
-    
+
     /**
      * Is it a wildcard
      */
@@ -677,7 +677,7 @@ object ContentType {
    * Parse the String into a series of ContentType instances,
    * returning the multiple ContentType instances
    */
-  def parse(str: String): List[ContentType] = 
+  def parse(str: String): List[ContentType] =
     (for {
       (part, index) <- str.charSplit(',').
       map(_.trim).zipWithIndex // split at comma
@@ -685,7 +685,7 @@ object ContentType {
     } yield content).sortWith(_ < _)
 
   private object TwoType {
-    def unapply(in: String): Option[(String, String)] = 
+    def unapply(in: String): Option[(String, String)] =
       in.charSplit('/') match {
         case a :: b :: Nil => Some(a -> b)
         case _ => None
@@ -694,7 +694,7 @@ object ContentType {
 
 
   private object EqualsSplit {
-    private def removeQuotes(s: String) = 
+    private def removeQuotes(s: String) =
       if (s.startsWith("\"") && s.endsWith("\"")) s.substring(1, s.length - 1)
       else s
 
@@ -785,12 +785,12 @@ class Req(val path: ParsePath,
        * the accept header
        */
       override lazy val accepts: Box[String] = outer.accepts
-    
+
       /**
        * What is the content type in order of preference by the requestor
        * calculated via the Accept header
        */
-      override lazy val weightedAccept: List[ContentType] = 
+      override lazy val weightedAccept: List[ContentType] =
         outer.weightedAccept
 
       /**
@@ -811,7 +811,7 @@ class Req(val path: ParsePath,
       /**
        * Returns true if the request accepts JavaScript
        */
-      override lazy val acceptsJavaScript_? = 
+      override lazy val acceptsJavaScript_? =
         outer.acceptsJavaScript_?
     }
   }
@@ -978,7 +978,7 @@ class Req(val path: ParsePath,
       sid <- httpRequest.sessionId
     } yield sid
 
-  lazy val json: Box[JsonAST.JValue] = 
+  lazy val json: Box[JsonAST.JValue] =
     if (!json_?) Empty
     else try {
       import java.io._
@@ -987,10 +987,10 @@ class Req(val path: ParsePath,
       def r2 = """[^=]*$""".r
 
       def charSet: String = contentType.flatMap(ct => r.findFirstIn(ct).flatMap(r2.findFirstIn)).getOrElse("UTF-8")
-      
-      body.map(b => 
-        JsonParser.parse(new 
-                         InputStreamReader(new 
+
+      body.map(b =>
+        JsonParser.parse(new
+                         InputStreamReader(new
                                            ByteArrayInputStream(b), charSet)))
     } catch {
       case e: LiftFlowOfControlException => throw e
@@ -1018,7 +1018,7 @@ class Req(val path: ParsePath,
 
 
   lazy val xml: Box[Elem] = if (!xml_?) Empty
-  else 
+  else
     try {
       import java.io._
       body.map(b => XML.load(new ByteArrayInputStream(b)))
@@ -1073,7 +1073,7 @@ class Req(val path: ParsePath,
     }
   }
 
-  def createNotFound: LiftResponse = 
+  def createNotFound: LiftResponse =
     NamedPF((this, Empty), LiftRules.uriNotFound.toList) match {
       case DefaultNotFound => Req.defaultCreateNotFound(this)
       case NotFoundAsTemplate(path) => notFoundViaTemplate(path)
@@ -1084,7 +1084,7 @@ class Req(val path: ParsePath,
         this)
     }
 
-  def createNotFound(f: Failure): LiftResponse = 
+  def createNotFound(f: Failure): LiftResponse =
     NamedPF((this, Full(f)), LiftRules.uriNotFound.toList) match {
       case DefaultNotFound => Req.defaultCreateNotFound(this)
       case NotFoundAsTemplate(path) => notFoundViaTemplate(path)
@@ -1096,20 +1096,20 @@ class Req(val path: ParsePath,
     }
 
 
-  private[http] def createNotFound(f: (ParsePath) => Box[LiftResponse]): Box[LiftResponse] = 
+  private[http] def createNotFound(f: (ParsePath) => Box[LiftResponse]): Box[LiftResponse] =
     NamedPF((this, Empty), LiftRules.uriNotFound.toList) match {
       case DefaultNotFound => Full(Req.defaultCreateNotFound(this))
       case NotFoundAsResponse(resp) => Full(resp)
-      case NotFoundAsTemplate(path) => 
-         val newReq = new Req(path, 
-                              this.contextPath, 
-                              this.requestType, 
-                              this.contentType, 
+      case NotFoundAsTemplate(path) =>
+         val newReq = new Req(path,
+                              this.contextPath,
+                              this.requestType,
+                              this.contentType,
                               this.request,
-                              this.nanoStart, 
-                              this.nanoEnd, 
+                              this.nanoStart,
+                              this.nanoEnd,
                               true,
-                              this.paramCalculator, 
+                              this.paramCalculator,
                               this.addlParams)
          S.withReq(newReq) {
           f(path)
@@ -1119,7 +1119,7 @@ class Req(val path: ParsePath,
         S.responseCookies,
         this))
     }
-  
+
   def post_? = requestType.post_?
 
   def get_? = requestType.get_?
@@ -1187,7 +1187,7 @@ class Req(val path: ParsePath,
       case xs => Full(xs.mkString(", "))
     }
   }
-    
+
   /**
    * What is the content type in order of preference by the requestor
    * calculated via the Accept header
@@ -1219,7 +1219,7 @@ class Req(val path: ParsePath,
   /**
    * Returns true if the request accepts JavaScript
    */
-  lazy val acceptsJavaScript_? = 
+  lazy val acceptsJavaScript_? =
     (weightedAccept.find(_.matches("text" -> "javascript")) orElse
      weightedAccept.find(_.matches("application" -> "javascript"))).
     isDefined
@@ -1238,7 +1238,7 @@ final case class RewriteRequest(path: ParsePath, requestType: RequestType, httpR
 case class ParsePath(partPath: List[String], suffix: String, absolute: Boolean, endSlash: Boolean) {
   def drop(cnt: Int) = ParsePath(partPath.drop(cnt), suffix, absolute, endSlash)
 
-  lazy val wholePath = 
+  lazy val wholePath =
     if (suffix.length > 0) {
       partPath.dropRight(1) ::: List((partPath match {
         case Nil => ""
@@ -1248,7 +1248,7 @@ case class ParsePath(partPath: List[String], suffix: String, absolute: Boolean, 
     }
 }
 
-final case class RewriteResponse(path: ParsePath, 
+final case class RewriteResponse(path: ParsePath,
                                  params: Map[String, String],
                                  stopRewriting: Boolean)
 
@@ -1262,7 +1262,7 @@ object RewriteResponse {
 
   def apply(path: List[String]) = new RewriteResponse(ParsePath(path, "", true, false), Map.empty, false)
 
-  def apply(path: List[String], stopRewriting: Boolean) = 
+  def apply(path: List[String], stopRewriting: Boolean) =
     new RewriteResponse(ParsePath(path, "", true, false),
                         Map.empty, stopRewriting)
 

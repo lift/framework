@@ -61,4 +61,3 @@ object MappedDecimalSpec extends Specification  {
     }
   }
 }
-

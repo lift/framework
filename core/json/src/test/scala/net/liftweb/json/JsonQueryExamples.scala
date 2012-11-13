@@ -37,7 +37,7 @@ object JsonQueryExamples extends Specification  {
   }
 
   "List of IPs in cluster2" in {
-    val ips = for { 
+    val ips = for {
       cluster @ JObject(x) <- json \ "data_center"
       if (x contains JField("name", JString("cluster2")))
       JString(ip) <- cluster \\ "ip" } yield ip

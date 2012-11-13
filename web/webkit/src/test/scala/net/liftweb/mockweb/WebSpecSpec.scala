@@ -74,7 +74,7 @@ class WebSpecSpec extends WebSpec(WebSpecSpecBoot.boot _) {
   "WebSpec" should {
     val testUrl = "http://foo.com/test/stateless"
 
-    val testReq = 
+    val testReq =
       new MockHttpServletRequest("http://foo.com/test/this?foo=bar", "/test")
 
     // Create a new session for use in the tests
@@ -98,7 +98,7 @@ class WebSpecSpec extends WebSpec(WebSpecSpecBoot.boot _) {
 
     "properly re-use a provided session" withSFor(testUrl, testSession) in {
       TestVar.is must_== "foo!"
-    }      
+    }
 
     "properly set up S with a HttpServletRequest" withSFor(testReq) in {
       S.uri must_== "/this"

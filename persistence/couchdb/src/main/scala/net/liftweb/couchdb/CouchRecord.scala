@@ -236,17 +236,16 @@ trait CouchMetaRecord[BaseRecord <: CouchRecord[BaseRecord]] extends JSONMetaRec
    * Query using a view in the given database, using some projection function that converts each QueryRow into a JSON document to read
    * as the record.
    */
-  def queryViewProjectionFrom(database: Database, design: String, view: String, 
+  def queryViewProjectionFrom(database: Database, design: String, view: String,
                               filter: View => View, project: QueryRow => Box[JValue]): Box[Seq[BaseRecord]] =
     for (resultBox <- tryo(http(filter(database.design(design).view(view)) query)); result <- resultBox)
       yield result.rows.flatMap(row => project(row).flatMap(fromJValue))
 
   /** Perform the given action with loose parsing turned on */
-  def looseParsing[A](f: => A): A = 
+  def looseParsing[A](f: => A): A =
     JSONMetaRecord.overrideIgnoreExtraJSONFields.doWith(true) {
       JSONMetaRecord.overrideNeedAllJSONFields.doWith(false) {
         f
       }
     }
 }
-

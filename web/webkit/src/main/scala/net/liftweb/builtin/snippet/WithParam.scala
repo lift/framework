@@ -56,6 +56,4 @@ object WithParam extends DispatchSnippet {
       case Failure(msg, _, _) => Comment(msg)
     }
   }
-
 }
-

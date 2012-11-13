@@ -28,7 +28,7 @@ import Helpers._
 /**
  * Adds a resource id entity for each URI in order to control browser caching.
  * The rules of creating "unique" URI's are defined in LiftRules.attachResourceId function.
- * 
+ *
  * <pre>
  * &lt;lift:with-resource-id>
  *   &lt;link ... />
@@ -46,18 +46,18 @@ object WithResourceId extends DispatchSnippet {
 
   def render(xhtml: NodeSeq): NodeSeq = {
     xhtml flatMap (_ match {
-     case e @ Elem(prefix, "link", attrs, scope, childs @ _*) => 
+     case e @ Elem(prefix, "link", attrs, scope, childs @ _*) =>
         attrStr(attrs, "href").map ( href =>
-        Elem(prefix, "link",               
-             MetaData.update(attrs, 
-                             scope, 
+        Elem(prefix, "link",
+             MetaData.update(attrs,
+                             scope,
                              new UnprefixedAttribute("href", LiftRules.attachResourceId(href), Null)),
              scope, childs: _*)) openOr e
-     case e @ Elem(prefix, "script", attrs, scope, childs @ _*) => 
+     case e @ Elem(prefix, "script", attrs, scope, childs @ _*) =>
         attrStr(attrs, "src") map (src =>
-        Elem(prefix, "script", 
-             MetaData.update(attrs, 
-                             scope, 
+        Elem(prefix, "script",
+             MetaData.update(attrs,
+                             scope,
                              new UnprefixedAttribute("src", LiftRules.attachResourceId(src), Null)),
              scope, childs: _*)) openOr e
      case e => e
@@ -67,12 +67,11 @@ object WithResourceId extends DispatchSnippet {
 
   private def attrStr(attrs: MetaData, attr: String): Box[String] = (attrs.get(attr) match {
     case None => Empty
-    case Some(Nil) => Empty 
+    case Some(Nil) => Empty
     case Some(x) => Full(x.toString)
   }) or (attrs.get(attr.toLowerCase) match {
     case None => Empty
-    case Some(Nil) => Empty 
+    case Some(Nil) => Empty
     case Some(x) => Full(x.toString)
   })
 }
-

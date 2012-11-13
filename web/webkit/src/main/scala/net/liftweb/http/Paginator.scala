@@ -24,7 +24,7 @@ import S.{?, ??}
 
 
 /**
- * Base class for things that require pagination. Implements a contract 
+ * Base class for things that require pagination. Implements a contract
  * for supplying the correct number of browsable pages etc
  *
  * @tparam T the type of item being paginated
@@ -71,9 +71,9 @@ trait Paginator[T] extends Loggable {
 }
 
 /**
- * In many situations you'll want to sort things in your paginated view. 
+ * In many situations you'll want to sort things in your paginated view.
  * <code>SortedPaginator</code> is a specialized paginator for doing such tasks.
- * 
+ *
  * T: The type of the elements, accessed via def page within the listing snippet
  * C: The type of the columns, used to specify sorting
  *
@@ -119,7 +119,7 @@ trait SortedPaginator[T, C] extends Paginator[T] {
 /**
  * This is the paginator snippet. It provides page
  * navigation and column sorting links.
- * View XHTML is as follows: 
+ * View XHTML is as follows:
  * nav prefix (prefix is configurable by overriding def navPrefix)
  *  - &lt;nav:first/&gt; - a link to the first page
  *  - &lt;nav:prev/&gt; - a link to the previous page
@@ -150,7 +150,7 @@ trait PaginatorSnippet[T] extends Paginator[T] {
    * The "last page" link text
    */
   def lastXml: NodeSeq = Text(?(">>"))
-  
+
   /**
    * How to display the page's starting record
    */
@@ -162,7 +162,7 @@ trait PaginatorSnippet[T] extends Paginator[T] {
   /**
    * The status displayed when using &lt;nav:records/&gt; in the template.
    */
-  def currentXml: NodeSeq = 
+  def currentXml: NodeSeq =
     if(count==0)
       Text(S.?("paginator.norecords"))
     else
@@ -214,7 +214,7 @@ trait PaginatorSnippet[T] extends Paginator[T] {
                       }
                       case Nil => Nil
                     }
-  
+
   /**
    * This is the method that binds template XML according according to the specified configuration.
    * You can reference this as a snippet method directly in your template; or you can call it directly
@@ -288,8 +288,8 @@ trait SortedPaginatorSnippet[T, C] extends SortedPaginator[T, C] with PaginatorS
 }
 
 /**
- * Sort your paginated views by using lifts functions mapping. 
- * The only down side with this style is that your links are session 
+ * Sort your paginated views by using lifts functions mapping.
+ * The only down side with this style is that your links are session
  * specific and non-bookmarkable.
  * If you mix this trait in to a StatefulSnippet, it should work out the box.
  * Otherwise, implement 'registerThisSnippet.'

@@ -201,4 +201,3 @@ case class Tracker(name: String, isAssert: Boolean, isBegin: Boolean, success: B
   val at = millis
   def isTest = !isAssert
 }
-

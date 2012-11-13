@@ -50,4 +50,3 @@ class EmailField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int)
 
 class OptionalEmailField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int)
   extends OptionalStringField[OwnerType](rec, maxLength) with EmailTypedField
-

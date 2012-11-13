@@ -62,4 +62,3 @@ trait RequestVarEM extends ScalaEntityManager with ScalaEMFactory {
    */
   def getUnderlying : EntityManager = em
 }
-

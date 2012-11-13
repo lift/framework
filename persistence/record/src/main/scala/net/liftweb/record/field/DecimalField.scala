@@ -37,12 +37,12 @@ trait DecimalTypedField extends NumericTypedField[BigDecimal] {
 
   def setFromAny(in : Any): Box[BigDecimal] = setNumericFromAny(in, n => BigDecimal(n.toString))
 
-  def setFromString (s : String) : Box[BigDecimal] = 
+  def setFromString (s : String) : Box[BigDecimal] =
     if(s == null || s.isEmpty) {
       if(optional_?)
-    	  setBox(Empty)
-       else
-          setBox(Failure(notOptionalErrorMessage))
+        setBox(Empty)
+      else
+        setBox(Failure(notOptionalErrorMessage))
     } else {
       setBox(tryo(BigDecimal(s)))
     }
@@ -160,4 +160,3 @@ class OptionalDecimalField[OwnerType <: Record[OwnerType]](rec: OwnerType, val c
 
   def owner = rec
 }
-

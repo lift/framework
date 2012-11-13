@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 import java.security.SecureRandom
 import java.util.regex._
@@ -92,19 +92,19 @@ trait StringHelpers {
     m.appendTail(ret)
     ret.toString
   }
-  
+
  /**
    * Turn a string of format "FooBar" into snake case "foo_bar"
-   * 
+   *
    * Note: snakify is not reversible, ie. in general the following will _not_ be true:
-   * 
+   *
    * s == camelify(snakify(s))
-   * 
+   *
    * @return the underscored string
    */
   def snakify(name : String) = name.replaceAll("([A-Z]+)([A-Z][a-z])", "$1_$2").replaceAll("([a-z\\d])([A-Z])", "$1_$2").toLowerCase
 
-  
+
   /**
    * Turns a string of format "foo_bar" into camel case "FooBar"
    *
@@ -275,7 +275,7 @@ trait StringHelpers {
    * @param sep a regexp to use with the String::split method
    * @return a list of trimmed parts whose length is &gt; 0
    */
-  def roboSplit(what: String, sep: String): List[String] = 
+  def roboSplit(what: String, sep: String): List[String] =
     what match {
       case null => Nil
       case s => s.split(sep).toList.map(_.trim).filter(_.length > 0)
@@ -285,16 +285,16 @@ trait StringHelpers {
    * Faster than roboSplit... this method splits Strings at a given
    * character
    */
-  def charSplit(what: String, sep: Char): List[String] = 
+  def charSplit(what: String, sep: Char): List[String] =
     what match {
       case null => Nil
       case str => {
         val ret = new scala.collection.mutable.ListBuffer[String]
-        
+
         val len = str.length
         var pos = 0
         var lastPos = 0
-        
+
         while (pos < len) {
           if (str.charAt(pos) == sep) {
             if (pos > lastPos) {
@@ -362,7 +362,7 @@ trait StringHelpers {
     if (null eq what) null
     else {
       val toDo = what.toList.reverse
-      
+
       def commaIt(in: List[Char]): List[Char] = in match {
         case Nil => in
         case x :: Nil => in
@@ -422,7 +422,7 @@ final case class SuperString(what: String) {
    * @return a list of trimmed parts whose length is &gt; 0
    */
   def roboSplit(sep: String): List[String] = Helpers.roboSplit(what, sep)
-  
+
   /**
    * Faster than roboSplit... this method splits Strings at a given
    * character
@@ -453,8 +453,8 @@ final case class SuperString(what: String) {
    */
   def /(other: String): List[String] = List(what, other)
 
-  
 
-  
+
+
 }
 

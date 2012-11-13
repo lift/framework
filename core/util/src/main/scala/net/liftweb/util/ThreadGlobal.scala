@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 import common._
 
@@ -98,4 +98,3 @@ trait DynoVar[T] {
     }
   }
 }
-

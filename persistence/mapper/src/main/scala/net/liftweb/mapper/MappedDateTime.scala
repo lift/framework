@@ -156,4 +156,3 @@ abstract class MappedDateTime[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
 
   override def toString: String = if(is==null) "NULL" else format(is)
 }
-

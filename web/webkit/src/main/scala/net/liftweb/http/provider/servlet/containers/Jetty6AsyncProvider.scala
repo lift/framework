@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package provider 
-package servlet 
-package containers 
+package net.liftweb
+package http
+package provider
+package servlet
+package containers
 
 import javax.servlet.http.HttpServletRequest
 

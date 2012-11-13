@@ -83,7 +83,7 @@ trait Base { this: Types =>
 
   implicit def listJSONR[A: JSONR]: JSONR[List[A]] = new JSONR[List[A]] {
     def read(json: JValue) = json match {
-      case JArray(xs) => 
+      case JArray(xs) =>
         xs.map(fromJSON[A]).sequence[PartialApply1Of2[ValidationNEL, Error]#Apply, A]
       case x => UnexpectedJSONError(x, classOf[JArray]).fail.liftFailNel
     }
@@ -104,7 +104,7 @@ trait Base { this: Types =>
 
   implicit def mapJSONR[A: JSONR]: JSONR[Map[String, A]] = new JSONR[Map[String, A]] {
     def read(json: JValue) = json match {
-      case JObject(fs) => 
+      case JObject(fs) =>
         val r = fs.map(f => fromJSON[A](f.value).map(v => (f.name, v))).sequence[PartialApply1Of2[ValidationNEL, Error]#Apply, (String, A)]
         r.map(_.toMap)
       case x => UnexpectedJSONError(x, classOf[JObject]).fail.liftFailNel

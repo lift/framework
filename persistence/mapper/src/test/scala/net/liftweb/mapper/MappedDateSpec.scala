@@ -50,4 +50,3 @@ object MappedDateSpec extends Specification  {
     }
   }
 }
-

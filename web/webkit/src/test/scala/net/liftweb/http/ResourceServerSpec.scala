@@ -31,4 +31,3 @@ object ResourceServerSpec extends Specification  {
     }
   }
 }
-

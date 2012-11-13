@@ -41,10 +41,10 @@ abstract class MappedBirthYear[T <: Mapper[T]](owner: T, minAge: Int) extends Ma
     val end = (year(now) - minAge)
     val start = end - 100
     Full(SHtml.selectObj((start to end).
-		  toList.
-		  reverse.
-		  map(y => (y, y.toString)),
-		  Full(is), this.set) % ("id" -> fieldId))
+                         toList.
+                         reverse.
+                         map(y => (y, y.toString)),
+                         Full(is), this.set) % ("id" -> fieldId))
   }
 }
 
@@ -84,5 +84,3 @@ abstract class MappedStringIndex[T<:Mapper[T]](override val fieldOwner: T, overr
   def convertKey(in: AnyRef): Box[String] =
     Box.legacyNullTest(in).map(_.toString)
 }
-
-

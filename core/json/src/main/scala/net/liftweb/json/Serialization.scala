@@ -49,7 +49,7 @@ object Serialization {
 
   /** Serialize to Writer (pretty format).
    */
-  def writePretty[A <: AnyRef, W <: Writer](a: A, out: W)(implicit formats: Formats): W = 
+  def writePretty[A <: AnyRef, W <: Writer](a: A, out: W)(implicit formats: Formats): W =
     Printer.pretty(render(Extraction.decompose(a)(formats)), out)
 
   /** Deserialize from a String.

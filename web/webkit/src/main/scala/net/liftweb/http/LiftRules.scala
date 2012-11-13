@@ -1425,7 +1425,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    *
    * @param path - the path of the css resource
    * @prefix - the prefix to be added on the root relative paths. If this is Empty
-   * 	       the prefix will be the application context path.
+   *           the prefix will be the application context path.
    */
   def fixCSS(path: List[String], prefix: Box[String]) {
 
@@ -1493,7 +1493,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @deprecated("Use autoIncludeAjaxCalc", "2.4")
   @volatile var autoIncludeAjax: LiftSession => Boolean = session => autoIncludeAjaxCalc.vend().apply(session)
 
-  val autoIncludeAjaxCalc: FactoryMaker[() => LiftSession => Boolean] = 
+  val autoIncludeAjaxCalc: FactoryMaker[() => LiftSession => Boolean] =
   new FactoryMaker(() => () => (session: LiftSession) => true) {}
 
   /**
@@ -2113,4 +2113,3 @@ trait FormVendor {
   private object sessionForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
   private object requestForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
 }
-

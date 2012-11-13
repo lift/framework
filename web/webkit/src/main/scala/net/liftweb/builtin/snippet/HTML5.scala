@@ -36,4 +36,3 @@ object HTML5 extends DispatchSnippet {
     xhtml
   }
 }
-

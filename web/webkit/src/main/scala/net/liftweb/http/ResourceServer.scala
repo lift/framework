@@ -134,4 +134,3 @@ object ResourceServer {
     pathRewriter = rw orElse pathRewriter
   }
 }
-

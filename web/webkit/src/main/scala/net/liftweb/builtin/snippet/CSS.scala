@@ -72,4 +72,3 @@ object CSS extends DispatchSnippet {
       type="text/css" media="screen, projection"/>
   }
 }
-

@@ -58,4 +58,3 @@ trait SimpleController
     httpRequest.session.removeAttribute(name)
   }
 }
-

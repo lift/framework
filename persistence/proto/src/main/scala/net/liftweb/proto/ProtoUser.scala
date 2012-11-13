@@ -117,7 +117,7 @@ trait ProtoUser {
       case (_, l, e) if l.length > 1 => l+" ("+e+")"
       case (_, _, e) => e
     }
-    
+
     /**
      * Get a short name for the user
      */
@@ -127,7 +127,7 @@ trait ProtoUser {
       case (_, l) if l.length > 1 => l
       case _ => getEmail
     }
-    
+
     /**
      * Get an email link
      */
@@ -167,7 +167,7 @@ trait ProtoUser {
    * Based on a FieldPointer, build a FieldPointerBridge
    */
   protected implicit def buildFieldBridge(from: FieldPointerType): FieldPointerBridge
-  
+
   protected trait FieldPointerBridge {
     /**
      * What is the display name of this field?
@@ -681,7 +681,7 @@ trait ProtoUser {
     val msgXml = signupMailBody(user, resetLink)
 
     Mailer.sendMail(From(emailFrom),Subject(signupMailSubject),
-                    (To(user.getEmail) :: 
+                    (To(user.getEmail) ::
                      generateValidationEmailBodies(user, resetLink) :::
                      (bccEmail.toList.map(BCC(_)))) :_* )
   }
@@ -711,7 +711,7 @@ trait ProtoUser {
       S.notice(S.?("sign.up.message"))
       func()
     } else {
-      logUserIn(theUser, () => {      
+      logUserIn(theUser, () => {
         S.notice(S.?("welcome"))
         func()
       })
@@ -738,7 +738,7 @@ trait ProtoUser {
    * @return the mutated user
    */
   protected def mutateUserOnSignup(user: TheUserType): TheUserType = user
-  
+
   def signup = {
     val theUser: TheUserType = mutateUserOnSignup(createNewUserInstance())
     val theName = signUpPath.mkString("")
@@ -806,7 +806,7 @@ trait ProtoUser {
                 >{S.?("recover.password")}</a></td><td><user:submit /></td></tr></table>
      </form>)
   }
-  
+
   /**
    * Given an username (probably email address), find the user
    */
@@ -915,7 +915,7 @@ trait ProtoUser {
    */
   protected def generateResetEmailBodies(user: TheUserType,
                                          resetLink: String):
-  List[MailBodyType] = 
+  List[MailBodyType] =
     List(xmlToMailBodyType(passwordResetMailBody(user, resetLink)))
 
 
@@ -1059,7 +1059,7 @@ trait ProtoUser {
   protected def mutateUserOnEdit(user: TheUserType): TheUserType = user
 
   def edit = {
-    val theUser: TheUserType = 
+    val theUser: TheUserType =
       mutateUserOnEdit(currentUser.open_!) // we know we're logged in
 
     val theName = editPath.mkString("")
@@ -1115,4 +1115,3 @@ trait ProtoUser {
         }
       })) openOr in
 }
-

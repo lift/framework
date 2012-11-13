@@ -22,7 +22,7 @@ import scala.util.parsing.combinator._
 
 /**
  * Parser a VCard entry such as
- * 
+ *
  * BEGIN:VCARD
  * VERSION:2.1
  * N:Gump;Forrest
@@ -56,4 +56,3 @@ object VCardParser extends Parsers {
     case err @ _ => Right(err toString)
   }
 }
-

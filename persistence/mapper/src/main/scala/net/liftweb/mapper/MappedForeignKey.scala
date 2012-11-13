@@ -329,6 +329,4 @@ extends MappedString[T](fieldOwner, maxLen) with MappedForeignKey[String,T,O] wi
    * Given the driver type, return the string required to create the column in the database
    */
   // defect 79 override def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.longForeignKeyColumnType
-
 }
-

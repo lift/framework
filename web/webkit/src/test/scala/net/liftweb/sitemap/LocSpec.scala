@@ -42,4 +42,3 @@ object LocSpec extends Specification  {
     }
   }
 }
-

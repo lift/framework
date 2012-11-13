@@ -76,6 +76,4 @@ final class JettyTestServer(baseUrlBox: Box[URL]) {
       wc.closeBrowser()
     }
   }
-
 }
-

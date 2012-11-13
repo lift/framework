@@ -195,6 +195,4 @@ object ToHeadUsages extends Specification  {
       jetty.stop()
     }
   }
-
 }
-

@@ -42,7 +42,7 @@ import scala.xml.{NodeSeq}
 abstract class MappedDate[T<:Mapper[T]](val fieldOwner: T) extends MappedField[Date, T] {
   private val data = FatLazy(defaultValue)
   private val orgData = FatLazy(defaultValue)
-  
+
   /**
    * This defines the string parsing semantics of this field. Used in setFromAny.
    * By default uses LiftRules.dateTimeConverter's parseDate; override for field-specific behavior

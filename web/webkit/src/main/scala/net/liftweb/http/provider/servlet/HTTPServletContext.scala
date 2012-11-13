@@ -54,6 +54,4 @@ class HTTPServletContext(val ctx: ServletContext) extends HTTPContext {
   def removeAttribute(name: String) {
     ctx.removeAttribute(name)
   }
-
 }
-

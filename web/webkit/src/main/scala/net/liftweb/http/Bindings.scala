@@ -15,7 +15,7 @@
  */
 
 package net.liftweb
-package http 
+package http
 
 import common.{Box,Full,Empty,Failure}
 import util.Props
@@ -26,7 +26,7 @@ import scala.xml.{NodeSeq, Text}
  * of page elements based upon the types of rendered objects.
  *
  * In Lift, a "snippet" is a function from NodeSeq => NodeSeq, where the argument
- * to the function is a template, and the result is a fragment of a page to be 
+ * to the function is a template, and the result is a fragment of a page to be
  * rendered. Of course, this is a bit of an abbreviation; the snippet function
  * also has an argument which is the application state made available from S.
  * A DataBinding[T] is very similar in this respect; it is a function from some
@@ -34,7 +34,7 @@ import scala.xml.{NodeSeq, Text}
  * DataBinding is strongly typed with respect to the type of information being
  * rendered, DataBinding instances are ideal for the rendering of objects that
  * is used to build up snippets. For example:
- * 
+ *
  * <pre>
  * import net.liftweb.http.Bindings._
 
@@ -47,7 +47,7 @@ import scala.xml.{NodeSeq, Text}
  *   override def apply(entity: MyClass) = (xhtml: NodeSeq) =&gt; {
  *     val otherTemplate = chooseTemplate("myclass", "other", xhtml)
  *     bind(
- *       "myclass", xhtml, 
+ *       "myclass", xhtml,
  *       "str" -&gt; Text("#" + entity.str + "#"),
  *       "i" -&gt; Text(entity.i.toString),
  *       "other" -&gt; entity.other.bind(otherTemplate)
@@ -55,7 +55,7 @@ import scala.xml.{NodeSeq, Text}
  *   }
  *
  * }
- * 
+ *
  * object myOtherClassBinding extends DataBinding[MyOtherClass] {
  *   override def apply(other: MyOtherClass) = (xhtml: NodeSeq) =&gt; {
  *     bind("other", xhtml, "foo" -&gt; Text("%" + other.foo + "%"))
@@ -85,7 +85,7 @@ object Bindings {
 
     /**
      * Implicitly convert the specified object to a binder for that object if a DataBinding for
-     * that object's type is available in implicit scope. This essentially adds a bind() method 
+     * that object's type is available in implicit scope. This essentially adds a bind() method
      * to an object if an appropriate implicit DataBinding is available.
      */
     implicit def binder[T](t: T)(implicit binding: DataBinding[T]): Binder = Binder(binding(t))

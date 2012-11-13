@@ -413,10 +413,10 @@ trait OptionalTypedField[ThisType] extends TypedField[ThisType] with Product1[Bo
   def is: Option[MyType] = value
 
   protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType] =  setFilter.foldLeft(in){ (prev, f) =>
-	prev match {
-	  case fail: Failure => fail //stop on failure, otherwise some filters will clober it to Empty
-	  case other => f(other)
-	}
+    prev match {
+      case fail: Failure => fail //stop on failure, otherwise some filters will clober it to Empty
+      case other => f(other)
+    }
   }
 
   def defaultValueBox: Box[MyType] = Empty

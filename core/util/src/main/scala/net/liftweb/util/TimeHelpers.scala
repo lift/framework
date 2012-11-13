@@ -447,6 +447,4 @@ object ConvertableToDate {
   implicit def toDate(in: ConvertableToDate): Date = in.toDate
   implicit def toDateTime(in: ConvertableToDate): DateTime = in.toDateTime
   implicit def toMillis(in: ConvertableToDate): Long = in.millis
-
 }
-

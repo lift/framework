@@ -90,4 +90,3 @@ class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
 
   def asJValue: JValue = valueBox.map(v => Meta.objectIdAsJValue(v, owner.meta.formats)) openOr (JNothing: JValue)
 }
-

@@ -57,13 +57,13 @@ object OneShot extends Specification with RequestKit {
       val tmp = LiftRules.sessionCreator
       try {
         LiftRules.sessionCreator = LiftRules.sessionCreatorForMigratorySessions
-        
-        val bx = 
+
+        val bx =
           for {
             resp <- get("/cv_int")
             xml <- resp.xml
           } yield xml
-        
+
         bx.open_! must ==/ (<int>45</int>).when(jetty.running)
       } finally {
         LiftRules.sessionCreator = tmp
@@ -74,8 +74,8 @@ object OneShot extends Specification with RequestKit {
       val tmp = LiftRules.sessionCreator
       try {
         LiftRules.sessionCreator = LiftRules.sessionCreatorForMigratorySessions
-        
-      val bx = 
+
+      val bx =
         for {
           resp <- get("/cv_int/33")
           resp2 <- resp.get("/cv_int")
@@ -92,8 +92,8 @@ object OneShot extends Specification with RequestKit {
       val tmp = LiftRules.sessionCreator
       try {
         LiftRules.sessionCreator = LiftRules.sessionCreatorForMigratorySessions
-        
-      val bx = 
+
+      val bx =
         for {
           resp <- get("/cv_int/33")
           resp2 <- resp.get("/cv_int")
@@ -175,7 +175,4 @@ object OneShot extends Specification with RequestKit {
       jetty.stop()
     }
   }
-
-
 }
-

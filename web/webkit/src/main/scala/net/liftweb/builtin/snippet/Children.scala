@@ -41,4 +41,3 @@ object Children extends DispatchSnippet {
    */
   def render(kids: NodeSeq): NodeSeq = kids
 }
-

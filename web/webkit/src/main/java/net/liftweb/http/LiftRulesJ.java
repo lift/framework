@@ -22,6 +22,6 @@ package net.liftweb.http;
  */
 public class LiftRulesJ {
     public static LiftRules j() {
-	return (new LiftRulesJBridge()).liftRules();
+        return (new LiftRulesJBridge()).liftRules();
     }
 }

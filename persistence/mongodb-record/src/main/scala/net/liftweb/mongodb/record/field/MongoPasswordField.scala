@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package mongodb 
-package record 
-package field 
+package net.liftweb
+package mongodb
+package record
+package field
 
 import scala.xml.{Node, NodeSeq, Text}
 
@@ -95,4 +95,3 @@ class MongoPasswordField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType, min
   def isMatch(toMatch: String): Boolean =
     MongoPasswordField.encrypt(toMatch, value.salt) == value.pwd
 }
-

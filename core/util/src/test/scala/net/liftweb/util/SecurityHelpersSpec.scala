@@ -75,6 +75,4 @@ object SecurityHelpersSpec extends Specification  {
       hexDigest256("hello".getBytes) must_!= hexDigest256("hell0".getBytes)
     }
   }
-
 }
-

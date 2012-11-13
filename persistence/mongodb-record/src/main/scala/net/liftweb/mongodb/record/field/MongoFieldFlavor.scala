@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package mongodb 
-package record 
-package field 
+package net.liftweb
+package mongodb
+package record
+package field
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, JsRaw}
@@ -49,6 +49,4 @@ trait MongoFieldFlavor[MyType] {
 
   /** Encode the field value into a JValue */
   def asJValue: JValue
-
 }
-

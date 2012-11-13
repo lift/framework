@@ -118,7 +118,7 @@ class Jetty7AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
       suspendMeth.invoke(cont)
       RetryState.SUSPENDED
     }
-    
+
   }
 
   def resume(what: (Req, LiftResponse)): Boolean = {

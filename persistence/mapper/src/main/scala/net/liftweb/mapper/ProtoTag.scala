@@ -81,4 +81,3 @@ abstract class ProtoTag[MyType <: ProtoTag[MyType]] extends KeyedMapper[Long, My
 
   def compare(other: MyType): Int = name.is.compare(other.name.is)
 }
-

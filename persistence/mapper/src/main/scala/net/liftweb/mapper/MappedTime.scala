@@ -55,7 +55,7 @@ abstract class MappedTime[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
    * By default uses LiftRules.dateTimeConverter's formatTime; override for field-specific behavior
    */
   def format(d: Date): String = LiftRules.dateTimeConverter().formatTime(d)
-  
+
 
   protected def real_i_set_!(value: Date): Date = {
     if (value != data.get) {
@@ -153,8 +153,7 @@ abstract class MappedTime[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
    * Given the driver type, return the string required to create the column in the database
    */
   def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.timeColumnType + notNullAppender()
-  
-  
+
+
   override def toString = if(is==null) "NULL" else format(is)
 }
-

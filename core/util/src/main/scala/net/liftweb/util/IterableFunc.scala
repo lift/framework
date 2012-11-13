@@ -44,4 +44,3 @@ object IterableFunc {
       def apply(in: NodeSeq): Seq[NodeSeq] = it(in).filter(_ ne null).toList.map(a => Text(a))
     }
 }
-

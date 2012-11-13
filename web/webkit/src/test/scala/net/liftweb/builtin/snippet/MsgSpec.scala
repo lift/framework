@@ -68,4 +68,3 @@ object MsgSpec extends Specification  {
     }
   }
 }
-

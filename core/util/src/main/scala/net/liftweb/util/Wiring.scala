@@ -94,7 +94,7 @@ trait Cell[T] extends Dependent {
    */
   def lift[A](f: T => A): Cell[A] = FuncCell(this)(f)
 
-  def lift[A,B](cell: Cell[B])(f: (T, B) => A): Cell[A] = 
+  def lift[A,B](cell: Cell[B])(f: (T, B) => A): Cell[A] =
     FuncCell(this, cell)(f)
 
   private var _dependentCells: List[WeakReference[Dependent]] = Nil
@@ -111,8 +111,8 @@ trait Cell[T] extends Dependent {
         case null => false
         case x => x ne dep
       })
-      
-      
+
+
       _dependentCells = new WeakReference(dep: Dependent) :: tList
     }
 
@@ -173,7 +173,7 @@ final case class DynamicCell[T](f: () => T) extends Cell[T] {
   /**
    * The cell's value and most recent change time
    */
-  def currentValue: (T, Long) = 
+  def currentValue: (T, Long) =
     f() -> System.nanoTime()
 
   /**

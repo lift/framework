@@ -229,4 +229,3 @@ trait TimeAmountsGen {
       (w, "week") :: (d, "day") :: (h, "hour") :: (m, "minute") :: (s, "second") :: (ml, "milli") :: Nil
     )
 }
-

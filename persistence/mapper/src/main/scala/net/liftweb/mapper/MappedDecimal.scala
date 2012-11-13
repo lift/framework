@@ -167,9 +167,8 @@ abstract class MappedDecimal[T <: Mapper[T]] (val fieldOwner : T, val context : 
       ""
     } else {
       "(" + context.getPrecision + "," + scale + ")"
-    } 
+    }
 
     colName + " DECIMAL" + suffix + notNullAppender()
   }
 }
-

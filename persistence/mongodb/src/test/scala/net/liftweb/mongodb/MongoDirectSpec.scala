@@ -293,4 +293,3 @@ class MongoDirectSpec extends Specification with MongoTestKit {
     }
   }
 }
-

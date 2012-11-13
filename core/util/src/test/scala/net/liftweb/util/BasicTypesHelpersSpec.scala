@@ -187,6 +187,4 @@ object BasicTypesHelpersSpec extends Specification  with DataTables {
       f(2) must_== 3
     }
   }
-
 }
-

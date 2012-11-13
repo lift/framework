@@ -95,4 +95,3 @@ object FlexMenuBuilderSpecBoot {
     LiftRules.setSiteMap(siteMap)
   }
 }
-

@@ -18,7 +18,7 @@ package squerylrecord
  * This trait has to be extended for new fields that
  * are derived from net.liftweb.record.BaseField or TypedField and should be used
  * in squeryl records.
- * 
+ *
  * This is necessary because the class of the field's value in the database
  * has to be known for squeryl, and this information is not directly
  * available in BaseField or TypedField.

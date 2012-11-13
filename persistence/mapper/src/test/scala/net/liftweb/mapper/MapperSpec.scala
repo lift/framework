@@ -383,5 +383,3 @@ class MapperSpec extends Specification with BeforeExample {
    }
   })
 }
-
-

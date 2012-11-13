@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 import java.lang.reflect.{Method, InvocationTargetException}
 import java.lang.reflect.Modifier._
@@ -386,4 +386,3 @@ trait ClassHelpers { self: ControlHelpers =>
     ret.toList
   }
 }
-

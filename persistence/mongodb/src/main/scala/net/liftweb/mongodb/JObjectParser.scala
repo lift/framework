@@ -147,4 +147,3 @@ object JObjectParser extends SimpleInjector {
     private def trimObj(xs: List[JField]) = xs.filter(_.value != JNothing)
   }
 }
-

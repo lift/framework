@@ -27,6 +27,4 @@ class HeadTestSnippet {
     <span>Welcome to webtest1 at {new java.util.Date}</span>
     </div>
   }
-
 }
-

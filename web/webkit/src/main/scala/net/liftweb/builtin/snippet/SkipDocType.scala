@@ -36,4 +36,3 @@ object SkipDocType extends DispatchSnippet {
     kids
   }
 }
-

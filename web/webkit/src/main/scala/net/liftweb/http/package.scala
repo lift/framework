@@ -25,4 +25,3 @@ package object http {
   @deprecated("Use Templates", "2.3")
   lazy val TemplateFinder = Templates
 }
-

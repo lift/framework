@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 import java.util.concurrent.{ConcurrentHashMap => CHash, Callable}
 import java.lang.ThreadLocal
@@ -213,4 +213,3 @@ object Vendor {
 
 
 case class FormBuilderLocator[T](func: (T, T => Unit) => NodeSeq)(implicit val manifest: Manifest[T])
-

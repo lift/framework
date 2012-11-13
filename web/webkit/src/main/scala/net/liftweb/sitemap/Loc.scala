@@ -57,7 +57,7 @@ trait Loc[T] {
    * By default, this lazy val looks for the MenuCssClass LocParam and
    * uses it.
    */
-  protected lazy val cacheCssClassForMenuItem: Box[() => String] = 
+  protected lazy val cacheCssClassForMenuItem: Box[() => String] =
     allParams.flatMap {
       case a: Loc.MenuCssClass => List(a)
       case _ => Nil
@@ -78,27 +78,27 @@ trait Loc[T] {
 
 
   def defaultValue: Box[T]
-  
+
   /**
   * The value of the Loc based on params (either Loc.Value or Loc.CalcValue)
   */
   def paramValue: Box[T] = calcValue.flatMap(f => f()) or staticValue
 
   private lazy val staticValue: Box[T] = allParams.collect{case Loc.Value(v: T) => v}.headOption
-  
+
   private lazy val calcValue: Box[() => Box[T]] = params.collect{case Loc.CalcValue(f: Function0[Box[T]]) => f}.headOption
 
   /**
    * Calculate the Query parameters
    */
   def queryParameters(what: Box[T]): List[(String, String)] =
-    addlQueryParams.flatMap(_()) ::: 
+    addlQueryParams.flatMap(_()) :::
   calcQueryParams.flatMap(_(what))
 
-  protected def appendQueryParams(what: T)(nodeSeq: NodeSeq): NodeSeq = 
+  protected def appendQueryParams(what: T)(nodeSeq: NodeSeq): NodeSeq =
     Text(appendQueryParameters(nodeSeq.text, Full(what)))
 
-  protected def appendQueryParameters(in: String, what: Box[T]) = 
+  protected def appendQueryParameters(in: String, what: Box[T]) =
     Helpers.appendQueryParameters(in, queryParameters(what))
 
   private lazy val addlQueryParams: List[() => List[(String, String)]] =
@@ -117,16 +117,16 @@ trait Loc[T] {
 
   def params: List[Loc.LocParam[T]]
 
-  def allParams: List[Loc.AnyLocParam] = 
-    (params.asInstanceOf[List[Loc.AnyLocParam]]) ::: 
+  def allParams: List[Loc.AnyLocParam] =
+    (params.asInstanceOf[List[Loc.AnyLocParam]]) :::
      parentParams :::
      siteMap.globalParams
 
-  private def parentParams: List[Loc.AnyLocParam] = 
+  private def parentParams: List[Loc.AnyLocParam] =
     _menu match {
       case null => Nil
       case menu => menu._parent match {
-        case Full(parentMenu: Menu) => 
+        case Full(parentMenu: Menu) =>
           if (!params.collect{case i: Loc.UseParentParams => true}.isEmpty) {
             parentMenu.loc.allParams.asInstanceOf[List[Loc.LocParam[Any]]]
           } else {
@@ -146,7 +146,7 @@ trait Loc[T] {
 
   def siteMap: SiteMap = _menu.siteMap
 
-  def createDefaultLink: Option[NodeSeq] = 
+  def createDefaultLink: Option[NodeSeq] =
     currentValue.flatMap(p => link.createLink(p)).toOption.
     map(ns => Text(appendQueryParameters(ns.text, currentValue)))
 
@@ -186,7 +186,7 @@ trait Loc[T] {
    * Is the Loc marked as Stateless (this will force rendering of
    * the page into stateless mode)
    */
-  def stateless_? : Boolean = 
+  def stateless_? : Boolean =
     if (Props.devMode) (calcStateless() || reqCalcStateless())
     else (_frozenStateless || reqCalcStateless())
 
@@ -467,7 +467,7 @@ trait Loc[T] {
 
 trait ConvertableLoc[T] {
   self: Loc[T] =>
-    
+
   /**
    * Converts the String to T that can then be sent to
    * the Loc in createLink
@@ -634,13 +634,13 @@ object Loc {
    * the groups can be specified and recalled at the top level
    */
   case class LocGroup(group: String*) extends AnyLocParam
-  
+
   /**
   * Calculate the value for the Loc.  This is useful for parameterized
   * menus.  It allows you to calculate the value of the Loc.
   */
   case class CalcValue[T](func: () => Box[T]) extends LocParam[T]
-  
+
   /**
   * The value of Loc
   */
@@ -659,7 +659,7 @@ object Loc {
    */
   class Snippet(val name: String, _func: => NodeSeq => NodeSeq) extends AnyLocParam {
     /**
-     * The NodeSeq => NodeSeq function 
+     * The NodeSeq => NodeSeq function
      */
     def func: NodeSeq => NodeSeq = _func
   }
@@ -918,4 +918,3 @@ case class MenuItem(text: NodeSeq, uri: NodeSeq,  kids: Seq[MenuItem],
     else this :: kids.toList.flatMap(_.breadCrumbs)
   }
 }
-

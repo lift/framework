@@ -839,7 +839,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   Box[NodeSeq] = Full(f(defaultHtml))
 
   /**
-   * Handle messages sent to this Actor before the 
+   * Handle messages sent to this Actor before the
    */
   def highPriority: PartialFunction[Any, Unit] = Map.empty
 
@@ -1517,7 +1517,7 @@ object Notice {
 
 /**
  * The RenderOut case class contains the rendering for the CometActor.
- * Because of the implicit conversions, RenderOut can come from 
+ * Because of the implicit conversions, RenderOut can come from
  * <br/>
  * @param xhtml is the "normal" render body
  * @param fixedXhtml is the "fixed" part of the body.  This is ignored unless reRender(true)
@@ -1538,4 +1538,3 @@ case class RenderOut(xhtml: Box[NodeSeq], fixedXhtml: Box[NodeSeq], script: Box[
 }
 
 private[http] object Never extends Serializable
-

@@ -48,18 +48,18 @@ object JsonParser {
    * @param closeAutomatically true (default) if the Reader is automatically closed on EOF
    * @throws ParseException is thrown if parsing fails
    */
-  def parse(s: Reader, closeAutomatically: Boolean = true): JValue = 
+  def parse(s: Reader, closeAutomatically: Boolean = true): JValue =
     parse(new Buffer(s, closeAutomatically))
 
   /** Return parsed JSON.
    */
-  def parseOpt(s: String): Option[JValue] = 
+  def parseOpt(s: String): Option[JValue] =
     try { parse(s).toOpt } catch { case e: Exception => None }
 
   /** Return parsed JSON.
    * @param closeAutomatically true (default) if the Reader is automatically closed on EOF
    */
-  def parseOpt(s: Reader, closeAutomatically: Boolean = true): Option[JValue] = 
+  def parseOpt(s: Reader, closeAutomatically: Boolean = true): Option[JValue] =
     try { parse(s, closeAutomatically).toOpt } catch { case e: Exception => None }
 
   /** Parse in pull parsing style.
@@ -83,10 +83,10 @@ object JsonParser {
       case e: Exception => throw new ParseException("parsing failed", e)
     } finally { buf.release }
   }
-  
-  private[json] def unquote(string: String): String = 
+
+  private[json] def unquote(string: String): String =
     unquote(new JsonParser.Buffer(new java.io.StringReader(string), false))
-  
+
   private[json] def unquote(buf: JsonParser.Buffer): String = {
     def unquote0(buf: JsonParser.Buffer, base: String): String = {
       val s = new java.lang.StringBuilder(base)
@@ -129,7 +129,7 @@ object JsonParser {
     buf.substring
   }
 
-  // FIXME fail fast to prevent infinite loop, see 
+  // FIXME fail fast to prevent infinite loop, see
   // http://www.exploringbinary.com/java-hangs-when-converting-2-2250738585072012e-308/
   private val BrokenDouble = BigDecimal("2.2250738585072012e-308")
   private[json] def parseDouble(s: String) = {
@@ -232,7 +232,7 @@ object JsonParser {
     def nextToken: Token = {
       def isDelimiter(c: Char) = c == ' ' || c == '\n' || c == ',' || c == '\r' || c == '\t' || c == '}' || c == ']'
 
-      def parseString: String = 
+      def parseString: String =
         try {
           unquote(buf)
         } catch {
@@ -256,13 +256,13 @@ object JsonParser {
           } else s.append(c)
         }
         val value = s.toString
-        if (doubleVal) DoubleVal(parseDouble(value)) 
+        if (doubleVal) DoubleVal(parseDouble(value))
         else IntVal(BigInt(value))
       }
 
       while (true) {
         buf.next match {
-          case c if EOF == c => 
+          case c if EOF == c =>
             buf.automaticClose
             return End
           case '{' =>
@@ -418,7 +418,7 @@ object JsonParser {
 
     private[this] def acquire: Segment = {
       val curCount = segmentCount.get
-      val createNew = 
+      val createNew =
         if (segments.size == 0 && curCount < maxNumOfSegments)
           segmentCount.compareAndSet(curCount, curCount + 1)
         else false

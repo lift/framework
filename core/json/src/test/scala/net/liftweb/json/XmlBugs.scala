@@ -58,7 +58,7 @@ object XmlBugs extends Specification {
 
   "XML with empty node is converted correctly to JSON" in {
     val xml =
-      <tips><group type="Foo"></group><group type="Bar"><tip><text>xxx</text></tip><tip><text>yyy</text></tip></group></tips> 
+      <tips><group type="Foo"></group><group type="Bar"><tip><text>xxx</text></tip><tip><text>yyy</text></tip></group></tips>
     val expected = """{"tips":{"group":[{"type":"Foo"},{"type":"Bar","tip":[{"text":"xxx"},{"text":"yyy"}]}]}}"""
     Printer.compact(render(toJson(xml))) mustEqual expected
   }

@@ -178,4 +178,3 @@ object StringWithWhiteGen {
   implicit def genString: Arbitrary[String] =
     Arbitrary { genStringWithWhite }
 }
-

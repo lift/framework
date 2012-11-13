@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 import common._
 
@@ -172,4 +172,3 @@ class ThreadLazy[TheType](theFunc: => TheType) extends LoanWrapper {
     }
   }
 }
-

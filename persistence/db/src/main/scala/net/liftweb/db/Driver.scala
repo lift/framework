@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.liftweb 
+package net.liftweb
 package db
 
 import java.sql.{Connection,PreparedStatement,ResultSet,Statement}
@@ -381,7 +381,7 @@ object SqlServerDriver extends SqlServerBaseDriver {
  */
 object SybaseSQLAnywhereDriver extends SqlServerBaseDriver {
   override val name = "SQL Anywhere"
-  
+
   // SQL Anywhere prefers the default schema name for metadata calls
   override val defaultSchemaName = Full(null)
 }

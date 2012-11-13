@@ -57,5 +57,3 @@ object FieldSerializerBugs extends Specification {
     var field: Option[Int] = None
   }
 }
-
-

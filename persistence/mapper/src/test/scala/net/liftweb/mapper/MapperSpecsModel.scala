@@ -44,7 +44,7 @@ object MapperSpecsModel {
 
   MapperRules.columnName = snakify
   MapperRules.tableName = snakify
-  
+
   // Simple name calculator
   def displayNameCalculator(bm: BaseMapper, l: Locale, name: String) = {
     val mapperName = bm.dbName

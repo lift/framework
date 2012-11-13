@@ -967,4 +967,3 @@ object JsRules {
   //@deprecated
   @volatile var fadeTime: Helpers.TimeSpan = 1 second
 }
-

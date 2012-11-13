@@ -114,4 +114,3 @@ object CouchDocumentSpec extends Specification  {
     }
   }
 }
-

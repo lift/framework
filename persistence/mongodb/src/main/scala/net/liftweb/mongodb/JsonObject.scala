@@ -11,8 +11,8 @@
 * limitations under the License.
 */
 
-package net.liftweb 
-package mongodb 
+package net.liftweb
+package mongodb
 
 import json.Formats
 import json.JsonAST.JObject
@@ -55,4 +55,3 @@ class JsonObjectMeta[BaseDocument](implicit mf: Manifest[BaseDocument]) {
 * Only works with ObjectIds.
 */
 case class MongoRef(ref: String, id: ObjectId)
-

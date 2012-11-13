@@ -127,4 +127,3 @@ trait Role {
     str + ")"
   }
 }
-

@@ -20,7 +20,7 @@ package net.liftweb.sitemap;
  * The bridge from Java-land into Menus
  */
 public final class MenuJ {
-    private final static MenuSingleton j = 
+    private final static MenuSingleton j =
 	(new MenuJBridge()).menu();
 
     /**

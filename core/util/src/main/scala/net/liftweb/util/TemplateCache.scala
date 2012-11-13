@@ -85,6 +85,4 @@ TemplateCache[(Locale, List[String]), NodeSeq] {
   override def delete(key: T) {
     cache.synchronized(cache.remove(key))
   }
-
 }
-

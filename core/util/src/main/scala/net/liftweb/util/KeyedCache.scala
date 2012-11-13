@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 import common._
 
@@ -61,4 +61,3 @@ class KeyedCache[K, T](size: Int, loadFactor: Box[Float], cons: K => Box[T]) {
     }
   }
 }
-

@@ -72,4 +72,3 @@ class ResponseInfoHolder {
 
   def overrodeDocType = _setDocType
 }
-

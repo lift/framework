@@ -101,13 +101,13 @@ trait JSArtifacts {
    * Rewrites the incomming path with the actual script path
    *
    */
-  def pathRewriter: PartialFunction[List[String], List[String]] = 
+  def pathRewriter: PartialFunction[List[String], List[String]] =
     new PartialFunction[List[String], List[String]] {
-    
+
       def isDefinedAt(in: List[String]): Boolean = false
 
-      def apply(in: List[String]): List[String] = Nil 
- 
+      def apply(in: List[String]): List[String] = Nil
+
     }
 }
 
@@ -151,4 +151,3 @@ object AjaxInfo {
 case class AjaxInfo(data: JsExp, action: String, timeout: Long,
                     cache: Boolean, dataType: String,
                     successFunc: Box[String], failFunc: Box[String])
-

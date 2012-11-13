@@ -28,4 +28,3 @@ trait KeyedRecord[K] extends IndirectKeyedEntity[K, MandatoryTypedField[K]] {
   /** Implement requirements of KeyedEntity by returning the current value of idField */
   def id = idField.value
 }
-

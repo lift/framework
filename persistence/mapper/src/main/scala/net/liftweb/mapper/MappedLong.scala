@@ -360,4 +360,3 @@ abstract class MappedLong[T<:Mapper[T]](val fieldOwner: T) extends MappedField[L
    */
   def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.longColumnType + notNullAppender()
 }
-

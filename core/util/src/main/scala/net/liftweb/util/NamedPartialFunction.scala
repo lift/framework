@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 import common._
 
@@ -96,4 +96,3 @@ object NamedPF {
   def applyBox[A, B](value: A, lst: Seq[PartialFunction[A, B]]): Box[B] =
   find(value, lst).map(_.apply(value))
 }
-

@@ -28,4 +28,3 @@ trait ConnectionManager {
   def releaseConnection(conn: Connection)
   def newSuperConnection(name: ConnectionIdentifier): Box[SuperConnection] = Empty
 }
-

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package record 
-package field 
+package net.liftweb
+package record
+package field
 
 import net.liftweb.http.{S}
 import net.liftweb.http.js._
@@ -56,6 +56,4 @@ trait NumericTypedField[MyType] extends TypedField[MyType] {
   override def noValueErrorMessage = S.?("number.required")
 
   def asJs = valueBox.map(v => JsRaw(String.valueOf(v))) openOr JsNull
-
 }
-

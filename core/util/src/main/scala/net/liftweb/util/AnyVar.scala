@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 import Helpers._
 import common._
@@ -91,7 +91,7 @@ abstract class AnyVar[T, MyType <: AnyVar[T, MyType]](dflt: => T) extends AnyVar
 
   protected def calcDefaultValue: T = dflt
 
-  
+
 }
 
 /**
@@ -248,4 +248,3 @@ abstract class NonCleanAnyVar[T](dflt: => T) extends AnyVar[T, NonCleanAnyVar[T]
 object AnyVar {
   implicit def whatVarIs[T](in: AnyVar[T, _]): T = in.is
 }
-

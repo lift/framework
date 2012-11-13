@@ -278,4 +278,3 @@ trait ListHelpers {
     }
   }
 }
-

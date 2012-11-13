@@ -33,6 +33,6 @@ object ProtoRules extends Factory with LazyLoggable {
    * assumes that the email address has been converted to lower case.
    */
   val emailRegexPattern = new FactoryMaker(Pattern.compile("^[a-z0-9._%\\-+]+@(?:[a-z0-9\\-]+\\.)+[a-z]{2,4}$")) {}
-  
+
 }
 

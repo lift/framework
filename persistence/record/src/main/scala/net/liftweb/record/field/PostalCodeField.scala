@@ -61,4 +61,3 @@ trait PostalCodeTypedField extends StringTypedField {
 class PostalCodeField[OwnerType <: Record[OwnerType]](rec: OwnerType, val country: CountryField[OwnerType]) extends StringField(rec, 32) with PostalCodeTypedField
 
 class OptionalPostalCodeField[OwnerType <: Record[OwnerType]](rec: OwnerType, val country: CountryField[OwnerType]) extends OptionalStringField(rec, 32) with PostalCodeTypedField
-

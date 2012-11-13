@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package mapper 
-package view 
+package net.liftweb
+package mapper
+package view
 
 import net.liftweb.mapper.{Mapper,
                            MappedField
@@ -49,14 +49,14 @@ object Util {
    * argument.
    */
   def bindFields[T <: Mapper[T]](mapper: T, nsfn: MappedField[_,T]=>NodeSeq): NodeSeq=>NodeSeq = {
-    case xml.Elem(_, name, _, _, _*) => 
+    case xml.Elem(_, name, _, _, _*) =>
       mapper.fieldByName(name) match {
         case Full(field) => nsfn(field)
         case _ => NodeSeq.Empty
       }
     case ns => ns
   }
-  
+
   /**
    * Iterates over the fields of the specified mapper. If the node currently being processed by bind
    * has an attribute "fields" then it is taken as a whitespace-delimited list of fields to iterate
@@ -69,7 +69,7 @@ object Util {
    * returned by this method, passing this method the mapper instance whose fields should be used and
    * a function that returns BindParams to process the "field:" prefixed nodes.
    * This method takes an additional filter function to restrict certain fields from being
-   * displayed. There is an overload without it too. 
+   * displayed. There is an overload without it too.
    */
   def eachField[T<:net.liftweb.mapper.Mapper[T]](
     mapper: T,
@@ -102,6 +102,6 @@ object Util {
     fn:MappedField[_,T]=>Seq[BindParam]
   ): NodeSeq=>NodeSeq = eachField(mapper, fn, (f:MappedField[_,T])=>true)
 
-  
+
 }
 

@@ -57,7 +57,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
    * Convert the id to a String
    */
   def userIdAsString: String = id.is.toString
-  
+
   /**
    * The first name field for the User.  You can override the behavior
    * of this field:
@@ -152,7 +152,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
    *   println("I am doing something different")
    * }
    * </pre>
-   */  
+   */
   lazy val superUser: MappedBoolean[T] = new MySuperUser(this)
 
   protected class MySuperUser(obj: T) extends MappedBoolean(obj) {
@@ -214,7 +214,7 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
   /**
    * Convert an instance of TheUserType to the Bridge trait
    */
-  protected implicit def typeToBridge(in: TheUserType): UserBridge = 
+  protected implicit def typeToBridge(in: TheUserType): UserBridge =
     new MyUserBridge(in)
 
   /**
@@ -254,7 +254,7 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
     /**
      * Does the supplied password match the actual password?
      */
-    def testPassword(toTest: Box[String]): Boolean = 
+    def testPassword(toTest: Box[String]): Boolean =
       toTest.map(in.password.match_?) openOr false
 
     /**
@@ -325,20 +325,20 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
   /**
    * The list of fields presented to the user at sign-up
    */
-  def signupFields: List[FieldPointerType] = List(firstName, 
-                                                  lastName, 
-                                                  email, 
-                                                  locale, 
+  def signupFields: List[FieldPointerType] = List(firstName,
+                                                  lastName,
+                                                  email,
+                                                  locale,
                                                   timezone,
                                                   password)
 
   /**
    * The list of fields presented to the user for editing
    */
-  def editFields: List[FieldPointerType] = List(firstName, 
-                                                lastName, 
-                                                email, 
-                                                locale, 
+  def editFields: List[FieldPointerType] = List(firstName,
+                                                lastName,
+                                                email,
+                                                locale,
                                                 timezone)
 
 }
@@ -428,6 +428,4 @@ trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
    * The string for the locale field
    */
   def localeDisplayName = S.?("locale")
-
 }
-

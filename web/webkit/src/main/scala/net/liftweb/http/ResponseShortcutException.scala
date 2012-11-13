@@ -35,7 +35,7 @@ object ContinueResponseException {
     case e: Exception => unapply(e.getCause)
     case _ => None
   }
-    
+
 }
 
 
@@ -68,4 +68,3 @@ object ResponseShortcutException {
       case _ => seeOther(to)
     }
 }
-

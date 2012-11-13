@@ -52,4 +52,3 @@ object A extends DispatchSnippet {
                                                    ))
  }
 }
-

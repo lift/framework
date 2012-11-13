@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package js 
-package yui 
+package net.liftweb
+package http
+package js
+package yui
 
 import scala.xml.{Elem, NodeSeq}
 
@@ -83,18 +83,18 @@ object YUIArtifacts extends JSArtifacts {
 
       val ret =
         """
-	  try {
-	  var parent1 = document.getElementById(""" + id.encJs + """);
-	  parent1.innerHTML = """ + html + """;
-	  for (var i = 0; i < parent1.childNodes.length; i++) {
-	    var node = parent1.childNodes[i];
-	    parent1.parentNode.insertBefore(node.cloneNode(true), parent1);
-	  }
-	  parent1.parentNode.removeChild(parent1);
-	  } catch (e) {
-	    // if the node doesn't exist or something else bad happens
-	  }
-	"""
+    try {
+    var parent1 = document.getElementById(""" + id.encJs + """);
+    parent1.innerHTML = """ + html + """;
+    for (var i = 0; i < parent1.childNodes.length; i++) {
+      var node = parent1.childNodes[i];
+      parent1.parentNode.insertBefore(node.cloneNode(true), parent1);
+    }
+    parent1.parentNode.removeChild(parent1);
+    } catch (e) {
+      // if the node doesn't exist or something else bad happens
+    }
+  """
       if (js.isEmpty) ret else ret + " "+js.toJsCmd
 
     }
@@ -162,7 +162,4 @@ object YUIArtifacts extends JSArtifacts {
             "success : function(resp) { res = YAHOO.lift.eval(resp);" + info.successFunc.map(_ + "(res);").openOr("") + "}" ::
             "failure : " + info.failFunc.openOr("function (arg) {YAHOO.log('Ajax request failed');}") ::
             Nil) mkString ("{ ", ", ", " }")
-
-
 }
-
