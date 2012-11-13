@@ -103,7 +103,7 @@ sealed trait BoxTrait {
    * treating null values to Empty.  This is a parallel method to
    * the Scala Option's apply method.  Note that the apply method is overloaded
    * and it's much, much better to use legacyNullTest in this case.
-   * 
+   *
    * @return <code>Full(in)</code> if <code>in</code> is not null; Empty otherwise
    */
   @deprecated("Use legacyNullTest", "2.5")
@@ -723,7 +723,7 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
     import scala.collection.mutable.ListBuffer
     val ret = new ListBuffer[Throwable]()
     var e: Throwable = exception openOr null
-    
+
     while (e ne null) {
       ret += e
       e = e.getCause
@@ -744,7 +744,7 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
    * Flatten the Failure chain to a List where this
    * Failure is at the head
    */
-  def failureChain: List[Failure] = 
+  def failureChain: List[Failure] =
     this :: chain.toList.flatMap(_.failureChain)
 
   def messageChain: String = (this :: chainList).map(_.msg).mkString(" <- ")
@@ -853,7 +853,7 @@ final case class BoxedBoxOrRaw[T](box: Box[T]) extends BoxOrRaw[T]
  * The raw version of BoxOrRaw
  */
 final case class RawBoxOrRaw[T](raw: T) extends BoxOrRaw[T] {
-  def box: Box[T] = 
+  def box: Box[T] =
     if (raw.asInstanceOf[Object] ne null) Full(raw) else Empty
 }
 

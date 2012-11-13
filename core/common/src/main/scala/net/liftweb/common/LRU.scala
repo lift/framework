@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package common 
+package net.liftweb
+package common
 
 private[common] trait LinkedListElem[T1, T2] {
   private[common] var _prev: LinkedListElem[T1, T2] = null

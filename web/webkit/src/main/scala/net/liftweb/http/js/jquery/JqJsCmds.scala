@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.liftweb 
-package http 
-package js 
-package jquery 
+package net.liftweb
+package http
+package js
+package jquery
 
 import scala.xml.NodeSeq
 import net.liftweb.util.Helpers._
@@ -43,7 +43,7 @@ trait JQueryRight {
 }
 /**
  * Classes mixing JQuryLeft will soon stop doing so. Extending/Mixing JsExp will be enough
- */ 
+ */
 @deprecated("Classes mixing JQuryLeft will soon stop doing so. Extending/Mixing JsExp will be enough", "2.3")
 trait JQueryLeft {
   this: JsExp =>
@@ -100,7 +100,7 @@ object JqWiringSupport {
    * functions and generates the jQuery-based JavaScript to update the browser
    * DOM with the deltas between the old list and the new list.
    */
-  def calculateDeltas[T](oldList: Seq[T], newList: Seq[T],id: String)(calcId: T => String, calcNodeSeq: T => NodeSeq): JsCmd = 
+  def calculateDeltas[T](oldList: Seq[T], newList: Seq[T],id: String)(calcId: T => String, calcNodeSeq: T => NodeSeq): JsCmd =
     calculateDeltas[T](Full(oldList), newList, id)(calcId, calcNodeSeq)
 
   /**
@@ -122,28 +122,28 @@ object JqWiringSupport {
       case RemoveDelta(ci) => new JsCmd {
         def toJsCmd = "jQuery('#'+"+calcId(ci).encJs+").remove();"
       }
-      
-      case AppendDelta(ci) => 
+
+      case AppendDelta(ci) =>
         new JsCmd {
-          val toJsCmd = 
+          val toJsCmd =
             fixHtmlFunc("inline", calcNodeSeq(ci)) {
               "jQuery('#'+"+id.encJs+").append("+
               _+
               ");"}
         }
 
-      case InsertAtStartDelta(ci) => 
+      case InsertAtStartDelta(ci) =>
         new JsCmd {
-          val toJsCmd = 
+          val toJsCmd =
             fixHtmlFunc("inline", calcNodeSeq(ci)) {
               "jQuery('#'+"+id.encJs+").prepend("+
               _+
               ");"}
         }
 
-      case InsertAfterDelta(ci, prior) => 
+      case InsertAfterDelta(ci, prior) =>
         new JsCmd {
-          val toJsCmd = 
+          val toJsCmd =
             fixHtmlFunc("inline", calcNodeSeq(ci)) {
               "jQuery('#'+"+calcId(prior).encJs+").after("+
               _+
@@ -151,7 +151,7 @@ object JqWiringSupport {
         }
     }
   }
-                           
+
 }
 
 /**
@@ -188,7 +188,7 @@ object JqJE {
    * Calls the jQuery attr function with the given key.
    *
    * Used to get the value of the given attribute.
-   * 
+   *
    * See http://api.jquery.com/attr/ .
    */
   case class JqGetAttr(key: String) extends JsExp with JsMember {
@@ -258,8 +258,8 @@ object JqJE {
    * See http://api.jquery.com/append/ .
    */
   case class JqAppend(content: NodeSeq) extends JsExp with JsMember {
-    override val toJsCmd = 
-      "append("+fixHtmlFunc("inline", content){a => a}+")"      
+    override val toJsCmd =
+      "append("+fixHtmlFunc("inline", content){a => a}+")"
   }
 
   /**
@@ -282,7 +282,7 @@ object JqJE {
    * See http://api.jquery.com/appendTo/ .
    */
   case class JqAppendTo(content: NodeSeq) extends JsExp with JsMember {
-    override val toJsCmd =       
+    override val toJsCmd =
       "appendTo("+fixHtmlFunc("inline", content){str => str}+ ")"
   }
 
@@ -294,7 +294,7 @@ object JqJE {
    * See http://api.jquery.com/prepend/ .
    */
   case class JqPrepend(content: NodeSeq) extends JsExp with JsMember {
-    override val toJsCmd = 
+    override val toJsCmd =
     "prepend(" + fixHtmlFunc("inline", content){str => str }+ ")"
   }
 
@@ -306,7 +306,7 @@ object JqJE {
    * See http://api.jquery.com/prependTo/ .
    */
   case class JqPrependTo(content: NodeSeq) extends JsExp with JsMember {
-    override val toJsCmd = 
+    override val toJsCmd =
     "prependTo(" + fixHtmlFunc("inline", content){str => str} + ")"
   }
 
@@ -331,7 +331,7 @@ object JqJE {
    * See http://api.jquery.com/empty/ and http://api.jquery.com/after/ .
    */
   case class JqEmptyAfter(content: NodeSeq) extends JsExp with JsMember {
-    override val toJsCmd = 
+    override val toJsCmd =
     "empty().after(" + fixHtmlFunc("inline", content){str => str} + ")"
   }
 
@@ -641,7 +641,7 @@ object JqJsCmds {
     /*
     private def contentAsJsStr = {
     val w = new java.io.StringWriter
-    
+
     S.htmlProperties.
     htmlWriter(Group(S.session.
                      map(s =>
@@ -653,7 +653,7 @@ object JqJsCmds {
     }
 */
 
-    val toJsCmd = fixHtmlCmdFunc("inline", html){str => 
+    val toJsCmd = fixHtmlCmdFunc("inline", html){str =>
       "jQuery.blockUI({ message: " + str +
       (css.map(",  css: " + _.toJsCmd + " ").openOr("")) + "});"}
   }

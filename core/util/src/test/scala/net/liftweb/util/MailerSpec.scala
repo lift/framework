@@ -30,11 +30,11 @@ import common._
 object MailerSpec extends Specification {
   "Mailer Specification".title
   sequential
-  
+
   MyMailer.touch()
 
   import MyMailer._
-  
+
   private def doNewMessage(f: => Unit): MimeMessage = {
     lastMessage = Empty
 

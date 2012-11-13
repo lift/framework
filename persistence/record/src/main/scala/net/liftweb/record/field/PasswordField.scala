@@ -33,25 +33,25 @@ object PasswordField {
   @volatile var blankPw = "*******"
   @volatile var minPasswordLength = 5
   @volatile var logRounds = 10
-  def hashpw(in: String): Box[String] =  tryo(BCrypt.hashpw(in, BCrypt.gensalt(logRounds))) 
+  def hashpw(in: String): Box[String] =  tryo(BCrypt.hashpw(in, BCrypt.gensalt(logRounds)))
 }
 
 trait PasswordTypedField extends TypedField[String] {
   private var invalidPw = false
   private var invalidMsg = ""
 
-  def match_?(toTest: String): Boolean = 
+  def match_?(toTest: String): Boolean =
 	  valueBox.filter(_.length > 0)
 	          .flatMap(p => tryo(BCrypt.checkpw(toTest, p)))
-	          .openOr(false) 
+	          .openOr(false)
 
   override def set_!(in: Box[String]): Box[String] = {
     // can't be hashed here, because this get's called when setting value from database (Squeryl)
     in
   }
-  
+
   def setPlain(in: String): String = setBoxPlain(Full(in)) openOr defaultValue
-  
+
   def setBoxPlain(in: Box[String]): Box[String] = {
     if(!validatePassword(in)) {
       val hashed = in.map(s => PasswordField.hashpw(s) openOr s)
@@ -104,7 +104,7 @@ trait PasswordTypedField extends TypedField[String] {
   protected def validatePassword(pwdValue: Box[String]): Boolean = {
     pwdValue match {
       case Empty|Full(""|null) if !optional_? => { invalidPw = true ; invalidMsg = notOptionalErrorMessage }
-      case Full(s) if s == "" || s == PasswordField.blankPw || s.length < PasswordField.minPasswordLength => 
+      case Full(s) if s == "" || s == PasswordField.blankPw || s.length < PasswordField.minPasswordLength =>
         { invalidPw = true ; invalidMsg = S.?("password.too.short") }
       case _ => { invalidPw = false; invalidMsg = "" }
     }
@@ -116,14 +116,14 @@ trait PasswordTypedField extends TypedField[String] {
   def asJs = valueBox.map(Str) openOr JsNull
 
   def asJValue: JValue = valueBox.map(v => JString(v)) openOr (JNothing: JValue)
-  
+
   def setFromJValue(jvalue: JValue): Box[MyType] = jvalue match {
     case JNothing|JNull if optional_? => setBoxPlain(Empty)
     case JString(s)                   => setFromString(s)
     case other                        => setBoxPlain(FieldHelpers.expectedA("JString", other))
   }
-  
-  
+
+
 }
 
 class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
@@ -135,8 +135,8 @@ class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
   }
 
   def owner = rec
-  
-  override def apply(in: Box[String]): OwnerType = 
+
+  override def apply(in: Box[String]): OwnerType =
     if(owner.meta.mutable_?) {
       this.setBoxPlain(in)
       owner
@@ -155,8 +155,8 @@ class OptionalPasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
   }
 
   def owner = rec
-  
-  override def apply(in: Box[String]): OwnerType = 
+
+  override def apply(in: Box[String]): OwnerType =
     if(owner.meta.mutable_?) {
       this.setBoxPlain(in)
       owner

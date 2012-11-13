@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
+package net.liftweb
+package http
 
 import common._
 import java.util.Locale
@@ -67,7 +67,7 @@ object Templates {
    *
    * @return the template if it can be found
    */
-  def apply(places: List[String]): Box[NodeSeq] = 
+  def apply(places: List[String]): Box[NodeSeq] =
     apply(places, S.locale)
 
 
@@ -81,7 +81,7 @@ object Templates {
    *
    * @return the template if it can be found
    */
-  def apply(places: List[String], locale: Locale): Box[NodeSeq] = 
+  def apply(places: List[String], locale: Locale): Box[NodeSeq] =
     findRawTemplate(places, locale).map(checkForContentId)
 
   /**
@@ -114,19 +114,19 @@ object Templates {
   def checkForContentId(in: NodeSeq): NodeSeq = {
     def df(in: MetaData): Option[PrefixedAttribute] = in match {
       case Null => None
-      case p: PrefixedAttribute 
-      if (p.pre == "l" || p.pre == "lift") && 
+      case p: PrefixedAttribute
+      if (p.pre == "l" || p.pre == "lift") &&
       (p.key == "content_id") => Some(p)
       case n => df(n.next)
     }
-    
-    
+
+
     in.flatMap {
       case e: Elem if e.label == "html" => df(e.attributes)
       case _ => None
     }.flatMap {
       md => Helpers.findId(in, md.value.text)
-    }.headOption orElse 
+    }.headOption orElse
     in.flatMap {
       case e: Elem if e.label == "html" =>
         e.child.flatMap {
@@ -140,7 +140,7 @@ object Templates {
                     Some(urlDecode(s.substring("lift:content_id=".length)))
                   case _ => None
                 }.headOption
-                
+
               }
             }
           }
@@ -181,7 +181,7 @@ object Templates {
     val lrCache = LiftRules.templateCache
     val cache = if (lrCache.isDefined) lrCache.open_! else NoCache
 
-    val parserFunction: InputStream => Box[NodeSeq] = 
+    val parserFunction: InputStream => Box[NodeSeq] =
       S.htmlProperties.htmlParser
 
 
@@ -232,7 +232,7 @@ object Templates {
                 if (xmlb.isDefined) {
                   found = true
                   ret = (cache(key) = xmlb.open_!)
-                } else if (xmlb.isInstanceOf[Failure] && 
+                } else if (xmlb.isInstanceOf[Failure] &&
                            (Props.devMode | Props.testMode)) {
                   val msg = xmlb.asInstanceOf[Failure].msg
                   val e = xmlb.asInstanceOf[Failure].exception
@@ -291,7 +291,7 @@ object Templates {
                           }
                 }
               } catch {
-                case ite: java.lang.reflect.InvocationTargetException => 
+                case ite: java.lang.reflect.InvocationTargetException =>
                   throw ite.getCause
                 case e: NoClassDefFoundError => Empty
               }
@@ -313,7 +313,7 @@ final case class CometCreationInfo(contType: String,
  * a snippet
  */
 class SnippetExecutionException(msg: String) extends SnippetFailureException(msg) {
-  def snippetFailure = LiftRules.SnippetFailures.ExecutionFailure 
+  def snippetFailure = LiftRules.SnippetFailures.ExecutionFailure
 }
 
 /**
@@ -324,8 +324,8 @@ class SnippetExecutionException(msg: String) extends SnippetFailureException(msg
 abstract class SnippetFailureException(msg: String) extends LiftFlowOfControlException(msg) {
   def snippetFailure: LiftRules.SnippetFailures.Value
 
-  def buildStackTrace: NodeSeq = 
-    getStackTrace.toList.dropWhile 
+  def buildStackTrace: NodeSeq =
+    getStackTrace.toList.dropWhile
   {
     e => {
       val cn = e.getClassName
@@ -346,7 +346,7 @@ abstract class SnippetFailureException(msg: String) extends LiftFlowOfControlExc
 }
 
 class StateInStatelessException(msg: String) extends SnippetFailureException(msg) {
-  def snippetFailure: LiftRules.SnippetFailures.Value = 
+  def snippetFailure: LiftRules.SnippetFailures.Value =
     LiftRules.SnippetFailures.StateInStateless
 }
 
@@ -361,7 +361,7 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
    * a trait that defines some ways of constructing an instance
    */
   private sealed trait ConstructorType
-  
+
   /**
    * A unit constructor... just pass in null
    */
@@ -373,7 +373,7 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
    * A parameter and session constructor
    */
   private final case class PAndSessionConstructor(c: java.lang.reflect.Constructor[_]) extends ConstructorType {
-    def makeOne[T](p: Any, s: LiftSession): T = 
+    def makeOne[T](p: Any, s: LiftSession): T =
       c.newInstance(p.asInstanceOf[Object], s).asInstanceOf[T]
   }
 
@@ -381,7 +381,7 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
    * A parameter constructor
    */
   private final case class PConstructor(c: java.lang.reflect.Constructor[_]) extends ConstructorType {
-    def makeOne[T](p: Any): T = 
+    def makeOne[T](p: Any): T =
       c.newInstance(p.asInstanceOf[Object]).asInstanceOf[T]
   }
 

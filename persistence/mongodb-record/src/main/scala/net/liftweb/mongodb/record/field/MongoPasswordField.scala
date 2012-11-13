@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package mongodb 
-package record 
-package field 
+package net.liftweb
+package mongodb
+package record
+package field
 
 import scala.xml.{Node, NodeSeq, Text}
 

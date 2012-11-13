@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package rest 
+package net.liftweb
+package http
+package rest
 
 import scala.collection.mutable.{HashMap, ListBuffer}
 import net.liftweb.common._
@@ -79,7 +79,7 @@ object RestContinuation {
    *            takes one parameter which is the functino that must be invoked
    *            for returning the actual response to the client. Note that f function
    *            is invoked asynchronously in the context of a different thread.
-   * 
+   *
    */
   @deprecated("Use RestContinuation.async.  It provides much better resource management", "2.4")
   def respondAsync(req: Req)(f: => Box[LiftResponse]): () => Box[LiftResponse] = {
@@ -88,15 +88,15 @@ object RestContinuation {
 
     def handleNonContinuation: Continuation = {
       store.get(key) match {
-        case None => 
+        case None =>
           val cont = new Continuation {
           @volatile var timedOut = false
           val future = new LAFuture[Box[LiftResponse]]
 
           lazy val cometTimeout: Long = (LiftRules.cometRequestTimeout openOr 120) * 1000L
-          
+
           var cachedResp: Box[LiftResponse] = null
-          val resumeFunc: Box[LiftResponse] => Unit = { response => 
+          val resumeFunc: Box[LiftResponse] => Unit = { response =>
             if (timedOut){
               cachedResp = response
             } else {
@@ -104,7 +104,7 @@ object RestContinuation {
             }
             future.satisfy(response)
           }
-          
+
           LAScheduler.execute(() => resumeFunc(f))
 
           def tryRespond: Box[LiftResponse] = {
@@ -115,9 +115,9 @@ object RestContinuation {
                res
             } else {
               future.get(cometTimeout) match {
-                case Full(resp) => 
+                case Full(resp) =>
                   cachedResp = null
-                  store -= key; 
+                  store -= key;
                   resp
                 case _ => timedOut = true;
                   Full(EmptyResponse)
@@ -125,7 +125,7 @@ object RestContinuation {
             }
            }
         }
-      
+
         store += (key -> cont)
         cont
         case Some(cont) => cont
@@ -135,13 +135,13 @@ object RestContinuation {
 
     def handleContinuation: Continuation = {
       store.get(key) match {
-        case None => 
+        case None =>
           val cont = new Continuation {
 
             lazy val cometTimeout: Long = (LiftRules.cometRequestTimeout openOr 120) * 1000L
-          
+
             var cachedResp: Box[LiftResponse] = null
-            val resumeFunc: Box[LiftResponse] => Unit = { response => 
+            val resumeFunc: Box[LiftResponse] => Unit = { response =>
               val ok = req.request.resume(response.map((req, _)) openOr (req, EmptyResponse))
               if (!ok) {
                 cachedResp = response
@@ -149,7 +149,7 @@ object RestContinuation {
                 store -= key
               }
             }
-       
+
             def tryRespond: Box[LiftResponse] = {
               if (cachedResp != null){
                 val res = cachedResp
@@ -166,14 +166,14 @@ object RestContinuation {
               }
             }
         }
-      
+
         store += (key -> cont)
         cont
         case Some(cont) => cont
       }
    }
 
-   val continuation = if (req.request.suspendResumeSupport_?) 
+   val continuation = if (req.request.suspendResumeSupport_?)
      handleContinuation
    else
      handleNonContinuation
@@ -184,7 +184,7 @@ object RestContinuation {
 }
 
 
-object ContinuationsStore extends 
+object ContinuationsStore extends
   SessionVar[HashMap[ContinuationKey, Continuation]](new HashMap[ContinuationKey, Continuation])
 
 trait Continuation {

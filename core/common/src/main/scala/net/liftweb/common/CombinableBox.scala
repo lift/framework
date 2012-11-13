@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.liftweb 
+package net.liftweb
 package common
 
 /**
@@ -55,7 +55,7 @@ object CombinableBox {
                                      FailureList(f))
     case Right(x) => Full(x)
   }
- 
+
   /**
    * If the Failure is going to be condensed, generate a FailureList
    */
@@ -76,6 +76,6 @@ object CombinableBox {
         case (Full(success),     Right(successes)) => Right(success :+: successes)
       }
   }
-  
+
 }
 

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 trait ValueHolder {
   type ValueType

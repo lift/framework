@@ -42,7 +42,7 @@ object Examples extends Specification {
   "Transformation example" in {
     val uppercased = parse(person).transform { case JField(n, v) => JField(n.toUpperCase, v) }
     val rendered = compact(render(uppercased))
-    rendered mustEqual 
+    rendered mustEqual
       """{"PERSON":{"NAME":"Joe","AGE":35,"SPOUSE":{"PERSON":{"NAME":"Marilyn","AGE":33}}}}"""
   }
 
@@ -129,7 +129,7 @@ object Examples extends Specification {
   }
 
   "Generate JSON with DSL example" in {
-    val json: JValue = 
+    val json: JValue =
       ("id" -> 5) ~
       ("tags" -> Map("a" -> 5, "b" -> 7))
     compact(render(json)) mustEqual """{"id":5,"tags":{"a":5,"b":7}}"""
@@ -152,7 +152,7 @@ object Examples extends Specification {
 """
 
   val person = """
-{ 
+{
   "person": {
     "name": "Joe",
     "age": 35,
@@ -166,19 +166,19 @@ object Examples extends Specification {
 }
 """
 
-  val personDSL = 
+  val personDSL =
     ("person" ->
       ("name" -> "Joe") ~
       ("age" -> 35) ~
-      ("spouse" -> 
-        ("person" -> 
+      ("spouse" ->
+        ("person" ->
           ("name" -> "Marilyn") ~
           ("age" -> 33)
         )
       )
     )
 
-  val objArray = 
+  val objArray =
 """
 { "name": "joe",
   "address": {

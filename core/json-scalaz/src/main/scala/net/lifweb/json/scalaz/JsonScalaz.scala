@@ -29,10 +29,10 @@ trait Types {
   case class UncategorizedError(key: String, desc: String, args: List[Any]) extends Error
 
   case object Fail {
-    def apply[A](key: String, desc: String, args: List[Any]): Result[A] = 
+    def apply[A](key: String, desc: String, args: List[Any]): Result[A] =
       UncategorizedError(key, desc, args).fail.liftFailNel
 
-    def apply[A](key: String, desc: String): Result[A] = 
+    def apply[A](key: String, desc: String): Result[A] =
       UncategorizedError(key, desc, Nil).fail.liftFailNel
   }
 
@@ -62,7 +62,7 @@ trait Types {
   def toJSON[A: JSONW](value: A): JValue = implicitly[JSONW[A]].write(value)
 
   def field[A: JSONR](name: String)(json: JValue): Result[A] = json match {
-    case JObject(fs) => 
+    case JObject(fs) =>
       fs.find(_.name == name)
         .map(f => implicitly[JSONR[A]].read(f.value))
         .orElse(implicitly[JSONR[A]].read(JNothing).fold(_ => none, x => some(Success(x))))
@@ -72,7 +72,7 @@ trait Types {
 
   def validate[A: JSONR](name: String): Kleisli[Result, JValue, A] = kleisli(field[A](name))
 
-  def makeObj(fields: Traversable[(String, JValue)]): JObject = 
+  def makeObj(fields: Traversable[(String, JValue)]): JObject =
     JObject(fields.toList.map { case (n, v) => JField(n, v) })
 }
 

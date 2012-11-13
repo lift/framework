@@ -90,7 +90,7 @@ object XmlApiSpec extends Specification  {
          * new attributes makes comparison fail. Instead, we simply stringify and
          * reparse the response contents and that seems to fix the issue. */
         val converted = XML.loadString(x.xml.toString)
-        result(converted == expected, 
+        result(converted == expected,
          "%s matches %s".format(converted,expected),
          "%s does not match %s".format(converted, expected),
          response)
@@ -114,7 +114,7 @@ object XmlApiSpec extends Specification  {
     "Convert Boxed booleans to LiftResponses" in {
       produce("42") must matchXmlResponse(<api success="true"><xml:group/></api>)
       produce("1") must matchXmlResponse(<api success="false"><xml:group/></api>)
-      
+
       val failure = produce("invalidInt")
 
       failure must haveClass[XmlResponse]

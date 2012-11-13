@@ -22,7 +22,7 @@ import scala.util.parsing.combinator._
 
 /**
  * Parser a VCard entry such as
- * 
+ *
  * BEGIN:VCARD
  * VERSION:2.1
  * N:Gump;Forrest

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package provider 
-package servlet 
+package net.liftweb
+package http
+package provider
+package servlet
 
 import java.io.{InputStream}
 import java.util.{Locale}
@@ -157,14 +157,14 @@ class HTTPRequestServlet(val req: HttpServletRequest, val provider: HTTPProvider
 
   def resumeInfo : Option[(Req, LiftResponse)] = asyncProvider.flatMap(_.resumeInfo)
 
-  
+
   def suspend(timeout: Long): RetryState.Value = asyncProvider.open_!.suspend(timeout) // open_! is bad, but presumably, the suspendResume support was checked
 
   def resume(what: (Req, LiftResponse)): Boolean = asyncProvider.open_!.resume(what)
 
   lazy val suspendResumeSupport_? = {
     LiftRules.asyncProviderMeta.
-    map(_.suspendResumeSupport_? && 
+    map(_.suspendResumeSupport_? &&
         (asyncProvider.map(_.suspendResumeSupport_?) openOr
          false)) openOr false
   }

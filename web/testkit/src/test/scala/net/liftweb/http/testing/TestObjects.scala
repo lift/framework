@@ -39,11 +39,11 @@ object MyCode extends TestKit {
     println("Hello")
   }
 
-  
+
   for {
     login <- post("/whatever")
     next <- login.get("/bla")
-  } {} 
+  } {}
 }
 
 object MyBoxCode extends RequestKit {
@@ -56,11 +56,11 @@ object MyBoxCode extends RequestKit {
     println("Hello")
   }
 
-  
+
   for {
     login: TheResponse <- post("/whatever")
     next <- login.get("/bla")
-  } {} 
-  
+  } {}
+
 }
 

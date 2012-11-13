@@ -37,7 +37,7 @@ object CssSelectorSpec extends Specification   {
     }
 
     "select an id" in {
-      CssSelectorParser.parse("#foo").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse("#foo").openOrThrowException("If the box is empty, we want a failure") must_==
         IdSelector("foo", Empty)
     }
 
@@ -50,53 +50,53 @@ object CssSelectorSpec extends Specification   {
     }
 
     ":button must  parse" in {
-      CssSelectorParser.parse(":button").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":button").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "button", Empty)
     }
 
 
     ":checkbox must  parse" in {
-      CssSelectorParser.parse(":checkbox").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":checkbox").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "checkbox", Empty)
     }
 
     ":file must  parse" in {
-      CssSelectorParser.parse(":file").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":file").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "file", Empty)
     }
 
     ":password must  parse" in {
-      CssSelectorParser.parse(":password").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":password").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "password", Empty)
     }
 
     ":radio must  parse" in {
-      CssSelectorParser.parse(":radio").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":radio").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "radio", Empty)
     }
 
     ":reset must  parse" in {
-      CssSelectorParser.parse(":reset").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":reset").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "reset", Empty)
     }
 
     ":submit must  parse" in {
-      CssSelectorParser.parse(":submit").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":submit").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "submit", Empty)
     }
 
     ":text must  parse" in {
-      CssSelectorParser.parse(":text").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":text").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "text", Empty)
     }
 
     "select an id with attr subnodes" in {
-      CssSelectorParser.parse("#foo  *[dog] ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse("#foo  *[dog] ").openOrThrowException("If the box is empty, we want a failure") must_==
       IdSelector("foo", Full(AttrSubNode("dog")))
     }
 
     "select an id with no star attr subnodes" in {
-      CssSelectorParser.parse("#foo  [woof] ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse("#foo  [woof] ").openOrThrowException("If the box is empty, we want a failure") must_==
       IdSelector("foo", Full(AttrSubNode("woof")))
     }
 
@@ -184,27 +184,27 @@ object CssSelectorSpec extends Specification   {
     }
 
     "select a class with subnodes" in {
-      CssSelectorParser.parse(".foo  * ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(".foo  * ").openOrThrowException("If the box is empty, we want a failure") must_==
       ClassSelector("foo", Full(KidsSubNode()))
     }
 
     "Support selecting this node" in {
-      CssSelectorParser.parse(".foo  ^^ ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(".foo  ^^ ").openOrThrowException("If the box is empty, we want a failure") must_==
       ClassSelector("foo", Full(SelectThisNode(false)))
     }
 
     "Support selecting this node" in {
-      CssSelectorParser.parse(".foo  ^* ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(".foo  ^* ").openOrThrowException("If the box is empty, we want a failure") must_==
       ClassSelector("foo", Full(SelectThisNode(true)))
     }
 
     "select a class with attr subnodes" in {
-      CssSelectorParser.parse(".foo  *[dog] ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(".foo  *[dog] ").openOrThrowException("If the box is empty, we want a failure") must_==
       ClassSelector("foo", Full(AttrSubNode("dog")))
     }
 
     "select an id with no star attr subnodes" in {
-      CssSelectorParser.parse(".foo  [woof] ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(".foo  [woof] ").openOrThrowException("If the box is empty, we want a failure") must_==
       ClassSelector("foo", Full(AttrSubNode("woof")))
     }
 

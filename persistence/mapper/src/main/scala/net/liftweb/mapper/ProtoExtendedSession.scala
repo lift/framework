@@ -120,7 +120,7 @@ KeyedMetaMapper[Long, T] {
             case Full(es) => logUserIdIn(es.userId.get)
             case _ =>
           }
-        
+
         case _ =>
       }
     }

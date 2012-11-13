@@ -829,7 +829,7 @@ abstract class BaseResponse(override val baseUrl: String,
       case g: Group => unapply(g.nodes)
       case n: Text => None
       case sn: SpecialNode => None
-      case n: NodeSeq => 
+      case n: NodeSeq =>
        val ns: Seq[Node] = n
        val x: Seq[Elem] = ns.flatMap(v => unapply(v))
        x.headOption
@@ -875,7 +875,7 @@ abstract class BaseResponse(override val baseUrl: String,
 
   def xmlMatch(findFunc: Elem => NodeSeq, filterFunc: Node => Boolean): Boolean =
     xml.toList flatMap (theXml => findFunc(theXml)) exists ( n => filterFunc(trim(n)))
-      
+
   def getOrFail(success: Boolean, msg: String, errorFunc: ReportFailure) =
     if (success)
       this.asInstanceOf[SelfType]

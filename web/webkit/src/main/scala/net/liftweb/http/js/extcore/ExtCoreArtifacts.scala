@@ -155,7 +155,7 @@ object ExtCoreArtifacts extends JSArtifacts {
    "timeout : " + info.timeout ::
    "disableCaching : " + !info.cache ::
    "success: function(response, options) { res = Ext.lift.eval(response.responseText);" + info.successFunc.map(_ + "(res);").openOr("") + "}" ::
-   "failure: " + info.failFunc.openOr ("function(arg) {alert('Ajax request failed');}") :: 
+   "failure: " + info.failFunc.openOr ("function(arg) {alert('Ajax request failed');}") ::
    Nil) mkString("{ ", ", ", " }")
 }
 

@@ -64,7 +64,7 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
 
   protected def valueTypeToBoxString(in: String): Box[String] = Full(in)
   protected def boxStrToValType(in: Box[String]): String = in openOr ""
-  
+
 
   protected def real_i_set_!(value : String) : String = {
     if (!data.defined_? || value != data.get) {
@@ -120,7 +120,7 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
 
   override def setFromAny(in: Any): String = {
     in match {
-      case JsonAST.JNull => this.set(null) 
+      case JsonAST.JNull => this.set(null)
       case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny).apply(0)
       case (s: String) :: _ => this.set(s)
       case s :: _ => this.setFromAny(s)

@@ -39,7 +39,7 @@ object JsExpSpec extends Specification  {
       JE.JsArray(json, "dog").toJsCmd must_== (
         """[{"a":4,"b":44}, "dog"]""" + "\n")
 
-      
+
     }
 
     "Implicitly convert from Numeric types" in {
@@ -54,12 +54,12 @@ object JsExpSpec extends Specification  {
     "Correctly infer type" in {
       val l:List[Option[Double]] = List(Some(1), None)
 
-      import JsExp._ 
+      import JsExp._
 
       // Can't get this to work:  JE.JsArray(l map {d => (d.getOrElse(0.0)):JsExp}) must_== JE.JsArray(1.0, 0.0)
       JE.JsArray(l map {d => (d.getOrElse(0.0):Double):JsExp}) must_== JE.JsArray(1.0, 0.0)
     }
-  
+
   }
 
   "JsExp ~>" should {
@@ -84,7 +84,7 @@ object JsExpSpec extends Specification  {
     "work with varags" in {
       JE.JsArray(2, "x", 42.0).toJsCmd must_== "[2, \"x\", 42.0]\n"
     }
-    
+
     "work with lists" in {
       val l:List[JsExp] = List(2, "x", 42.0)
       JE.JsArray(l).toJsCmd must_== "[2, \"x\", 42.0]\n"

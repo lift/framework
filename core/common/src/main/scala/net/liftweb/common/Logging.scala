@@ -16,42 +16,42 @@
 
 package net.liftweb
 package common
-  
+
 import org.slf4j.{MDC => SLF4JMDC, Marker, Logger => SLF4JLogger, LoggerFactory}
 
 object Logger {
   private[common] lazy val checkConfig: Boolean = {
-    setup.foreach {_()}; 
+    setup.foreach {_()};
     true
   }
-  
+
   /**
    * This function, if set, will be called before any loggers are created
-   * 
+   *
    * Useful for initializing the logging backend with a non-default configuration
-   * 
+   *
    * Helpers exists for log4j & logback:
-   * 
+   *
    *   Logger.setup = Full(Log4j.withFile(url)
-   * 
+   *
    * or
-   * 
+   *
    *   Logger.setup = Full(Logback.withFile(url))
-   * 
+   *
    */
   var setup: Box[() => Unit] = Empty
-  
+
   def loggerNameFor(cls: Class[_]) = {
     val className = cls.getName
-    if (className endsWith "$") 
+    if (className endsWith "$")
       className.substring(0, className.length - 1)
-    else 
+    else
       className
   }
 
   def apply(cls: Class[_]): Logger = if (checkConfig) new WrappedLogger(LoggerFactory.getLogger(loggerNameFor(cls))) else null
   def apply(name: String): Logger = if (checkConfig) new WrappedLogger(LoggerFactory.getLogger(name)) else null
-  
+
  /**
    * Set the Mapped Diagnostic Context for the thread and execute
    * the function f
@@ -65,9 +65,9 @@ object Logger {
     try {
       f
     } finally {
-      if (old eq null) 
+      if (old eq null)
         MDC.clear
-      else  
+      else
         SLF4JMDC.setContextMap(old)
     }
   }
@@ -76,7 +76,7 @@ object Logger {
 /**
  * The Mapped Diagnostics Context can hold values per thread and output them
  * with each logged output.
- * 
+ *
  * The logging backend needs to be configured to log these values
  */
 object MDC {
@@ -104,23 +104,23 @@ object MDC {
  * Logger is a thin wrapper on top of an SLF4J Logger
  *
  * The main purpose is to utilize Scala features for logging
- * 
+ *
  * Note that the dynamic type of "this" is used when this trait is
- * mixed in. 
- * 
+ * mixed in.
+ *
  * This may not always be what you want. If you need the static type, you have to declare your
  * own Logger:
- * 
+ *
  * class MyClass {
  *   val logger = Logger(classOf[MyClass])
  * }
- * 
+ *
  */
 trait Logger  {
   private lazy val logger: SLF4JLogger = _logger // removed @transient 'cause there's no reason for transient on val
   // changed to lazy val so it only gets initialized on use rather than on instantiation
   protected def _logger = if (Logger.checkConfig) LoggerFactory.getLogger(Logger.loggerNameFor(this.getClass)) else null
-  
+
   def assertLog(assertion: Boolean, msg: => String) = if (assertion) info(msg)
 
   /**
@@ -130,7 +130,7 @@ trait Logger  {
     logger.trace(msg+": "+v.toString)
     v
   }
- 
+
   /**
    * Trace a Failure.  If the log level is trace and the Box is
    * a Failure, trace the message concatenated with the Failure's message.
@@ -169,14 +169,14 @@ trait Logger  {
       }
     }
   }
- 
-  
+
+
   def debug(msg: => AnyRef) = if (logger.isDebugEnabled) logger.debug(String.valueOf(msg))
   def debug(msg: => AnyRef, t:  Throwable) = if (logger.isDebugEnabled) logger.debug(String.valueOf(msg), t)
   def debug(msg: => AnyRef, marker: Marker) = if (logger.isDebugEnabled) logger.debug(marker, String.valueOf(msg))
   def debug(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isDebugEnabled) logger.debug(marker, String.valueOf(msg), t)
   def isDebugEnabled = logger.isDebugEnabled
-  
+
   /**
    * Info a Failure.  If the log level is info and the Box is
    * a Failure, info the message concatenated with the Failure's message.
@@ -197,7 +197,7 @@ trait Logger  {
   def info(msg: => AnyRef, marker: Marker) = if (logger.isInfoEnabled) logger.info(marker,String.valueOf(msg))
   def info(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isInfoEnabled) logger.info(marker,String.valueOf(msg), t)
   def isInfoEnabled = logger.isInfoEnabled
-  
+
   /**
    * Warn a Failure.  If the log level is warn and the Box is
    * a Failure, warn the message concatenated with the Failure's message.
@@ -218,7 +218,7 @@ trait Logger  {
   def warn(msg: => AnyRef, marker: Marker) = if (logger.isWarnEnabled) logger.warn(marker,String.valueOf(msg))
   def warn(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isWarnEnabled) logger.warn(marker,String.valueOf(msg), t)
   def isWarnEnabled = logger.isWarnEnabled
-  
+
   /**
    * Error a Failure.  If the log level is error and the Box is
    * a Failure, error the message concatenated with the Failure's message.
@@ -240,7 +240,7 @@ trait Logger  {
   def error(msg: => AnyRef, marker: Marker) = if (logger.isErrorEnabled) logger.error(marker,String.valueOf(msg))
   def error(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isErrorEnabled) logger.error(marker,String.valueOf(msg), t)
   def isErrorEnabled = logger.isErrorEnabled
-  
+
 }
 
 class WrappedLogger(l: SLF4JLogger) extends Logger {
@@ -256,7 +256,7 @@ trait Loggable {
 
 /**
  * Mixin with a nested lazy Logger
- * 
+ *
  * Useful for mixin to objects that are created before Lift has booted (and thus Logging is not yet configured)
  */
 trait LazyLoggable {
@@ -269,7 +269,7 @@ trait LazyLoggable {
 object Log4j {
   import org.apache.log4j.{LogManager,PropertyConfigurator}
   import org.apache.log4j.xml.DOMConfigurator
-  
+
   val defaultProps =
     """<?xml version="1.0" encoding="UTF-8" ?>
     <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
@@ -283,7 +283,7 @@ object Log4j {
     </root>
     </log4j:configuration>
     """
-  
+
   /**
    * Configure with contents of the specified filed (either .xml or .properties)
    */
@@ -291,7 +291,7 @@ object Log4j {
     if (url.getPath.endsWith(".xml")) {
       val domConf = new DOMConfigurator
       domConf.doConfigure(url, LogManager.getLoggerRepository())
-    } else 
+    } else
       PropertyConfigurator.configure(url)
   }
   /**
@@ -302,7 +302,7 @@ object Log4j {
     val is = new java.io.ByteArrayInputStream(config.getBytes("UTF-8"))
     domConf.doConfigure(is, LogManager.getLoggerRepository())
   }
-  
+
   /**
    * Configure with simple defaults
    */
@@ -318,14 +318,14 @@ object Logback  {
   import ch.qos.logback.classic.joran.JoranConfigurator;
 
   /**
-   * Configure with contents of the specified XML filed 
+   * Configure with contents of the specified XML filed
    */
   def withFile(url: java.net.URL)() = {
     val lc = LoggerFactory.getILoggerFactory().asInstanceOf[LoggerContext];
     val configurator = new JoranConfigurator();
     configurator.setContext(lc);
     // the context was probably already configured by default configuration rules
-    lc.reset(); 
+    lc.reset();
     configurator.doConfigure(url);
   }
 }

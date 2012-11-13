@@ -123,9 +123,9 @@ class LDAPVendor extends Loggable with SimpleInjector {
   def configure(stream : InputStream) {
     val p = new Properties()
     p.load(stream)
-    
+
     configure(propertiesToMap(p))
-  }    
+  }
 
   /**
    * Configure from the given Map[String,String]
@@ -192,7 +192,7 @@ class LDAPVendor extends Loggable with SimpleInjector {
    * that is used to refine searches on the provider.
    */
   val searchControls = new Inject[SearchControls](defaultSearchControls){}
-  
+
   /**
    * The default SearchControls to use: search the
    * base DN with a sub-tree scope, and return the
@@ -229,7 +229,7 @@ class LDAPVendor extends Loggable with SimpleInjector {
   def processConfig(input : Map[String,String]) : Map[String,String] = {
     var currentConfig = input
 
-    def setIfEmpty(name : String, newVal : String) = 
+    def setIfEmpty(name : String, newVal : String) =
       if (currentConfig.get(name).isEmpty) {
         currentConfig += (name -> newVal)
       }
@@ -251,18 +251,18 @@ class LDAPVendor extends Loggable with SimpleInjector {
     ldapFactory.default.set(currentConfig(KEY_FACTORY))
 
     // Process the optional configuration properties
-    currentConfig.get(KEY_LOOKUP).foreach{ 
+    currentConfig.get(KEY_LOOKUP).foreach{
       prop => testLookup.default.set(Full(prop))
     }
 
     ControlHelpers.tryo {
-      currentConfig.get(KEY_RETRY_INTERVAL).foreach{ 
+      currentConfig.get(KEY_RETRY_INTERVAL).foreach{
         prop => retryInterval.default.set(prop.toLong)
       }
     }
 
     ControlHelpers.tryo {
-      currentConfig.get(KEY_MAX_RETRIES).foreach{ 
+      currentConfig.get(KEY_MAX_RETRIES).foreach{
         prop => retryMaxCount.default.set(prop.toInt)
       }
     }
@@ -300,7 +300,7 @@ class LDAPVendor extends Loggable with SimpleInjector {
     while(searchResults.hasMore()) {
       resultList += searchResults.next().getName
     }
-  
+
     return resultList.reverse.toList
   }
 
@@ -313,7 +313,7 @@ class LDAPVendor extends Loggable with SimpleInjector {
 
     try {
       val username = dn + "," + ldapBaseDn.vend
-      
+
       ldapUser.doWith(username) {
         ldapPassword.doWith(password) {
           val ctx = openInitialContext()
@@ -395,7 +395,7 @@ class LDAPVendor extends Loggable with SimpleInjector {
    */
   protected def openInitialContext () : InitialLdapContext = {
     logger.debug("Obtaining an initial context from '%s'".format(ldapUrl.vend))
-            
+
     var env = new Hashtable[String, String]()
     env.put(Context.PROVIDER_URL, ldapUrl.vend)
     env.put(Context.SECURITY_AUTHENTICATION, ldapAuthType.vend)

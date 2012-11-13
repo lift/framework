@@ -66,14 +66,14 @@ object WiringUI {
    *
    * @param in the NodeSeq that contains the view markup
    * @param cell the cell to associate with
-   * 
+   *
    * @param jsEffect a function that wraps the SetHtml JsCmd so
    * you can, for example, fade out the old value, set the new value and
    * fade it in.  The first parameter is the id of the element, the
    * second is a flag that's true if this is the first time the element is
    * being rendered (you might want to skip effects for the inital page load),
    * and the third parameter is the SetHtml JavaScript code.
-   * 
+   *
    * @param f the function that performs the drawing
    *
    * @return the mutated NodeSeq (an id attribute may be added if
@@ -89,20 +89,20 @@ object WiringUI {
    * a new value.
    *
    * @param cell the cell to associate with
-   * 
+   *
    * @param jsEffect a function that wraps the SetHtml JsCmd so
    * you can, for example, fade out the old value, set the new value and
    * fade it in.  The first parameter is the id of the element, the
    * second is a flag that's true if this is the first time the element is
    * being rendered (you might want to skip effects for the inital page load),
    * and the third parameter is the SetHtml JavaScript code.
-   * 
+   *
    * @param f the function that performs the drawing
    *
    * @return the mutated NodeSeq (an id attribute may be added if
    * there's none already defined)
    */
-  def apply[T](cell: Cell[T], jsEffect: (String, Boolean, JsCmd) => JsCmd)(f: T => NodeSeq => NodeSeq): NodeSeq => NodeSeq = 
+  def apply[T](cell: Cell[T], jsEffect: (String, Boolean, JsCmd) => JsCmd)(f: T => NodeSeq => NodeSeq): NodeSeq => NodeSeq =
     in => toNode(in, cell, jsEffect)((t, ns) => f(t)(ns))
 
   /**
@@ -114,13 +114,13 @@ object WiringUI {
    * @param in the NodeSeq that contains the view markup
    * @param cell the cell to associate with
    * @param f the function that performs the drawing
-   * 
+   *
    * @return the mutated NodeSeq (an id attribute may be added if
    * there's none already defined)
    */
   def toNode[T](in: NodeSeq, cell: Cell[T])(f: (T, NodeSeq) => NodeSeq): NodeSeq = toNode(in, cell, (id, first, js) => js)(f)
 
-  def history[T](cell: Cell[T])(f: (Box[T], T, NodeSeq) => JsCmd): NodeSeq => NodeSeq = 
+  def history[T](cell: Cell[T])(f: (Box[T], T, NodeSeq) => JsCmd): NodeSeq => NodeSeq =
     in => {
     val myElem: Elem = in.find {
       case e: Elem => true
@@ -129,7 +129,7 @@ object WiringUI {
 
 
       addHistJsFunc(cell, (old: Box[T], nw: T) => f(old, nw, in))
-      
+
       new Elem(myElem.prefix,
                myElem.label,
                myElem.attributes,
@@ -146,7 +146,7 @@ object WiringUI {
    * @param in the NodeSeq that contains the view markup
    * @param cell the cell to associate with
    * @param f the function that performs the drawing
-   * 
+   *
    * @return the mutated NodeSeq (an id attribute may be added if
    * there's none already defined)
    */
@@ -159,11 +159,11 @@ object WiringUI {
    *
    * @param in the NodeSeq that contains the view markup
    * @param cell the cell to associate with
-   * 
+   *
    * @return the mutated NodeSeq (an id attribute may be added if
    * there's none already defined)
    */
-  def asText[T](in: NodeSeq, cell: Cell[T]): NodeSeq = 
+  def asText[T](in: NodeSeq, cell: Cell[T]): NodeSeq =
     toNode(in, cell, (id, first, js) => js)((t, ns) => Text(t.toString))
 
   /**
@@ -172,11 +172,11 @@ object WiringUI {
    * a new value.
    *
    * @param cell the cell to associate with
-   * 
+   *
    * @return a function that will mutate the NodeSeq (an id attribute may be added if
    * there's none already defined)
    */
-  def asText[T](cell: Cell[T]): NodeSeq => NodeSeq = 
+  def asText[T](cell: Cell[T]): NodeSeq => NodeSeq =
     in => toNode(in, cell, (id, first, js) => js)((t, ns) => Text(t.toString))
 
   /**
@@ -186,18 +186,18 @@ object WiringUI {
    *
    * @param in the NodeSeq that contains the view markup
    * @param cell the cell to associate with
-   * 
+   *
    * @param jsEffect a function that wraps the SetHtml JsCmd so
    * you can, for example, fade out the old value, set the new value and
    * fade it in.  The first parameter is the id of the element, the
    * second is a flag that's true if this is the first time the element is
    * being rendered (you might want to skip effects for the inital page load),
    * and the third parameter is the SetHtml JavaScript code.
-   * 
+   *
    * @return the mutated NodeSeq (an id attribute may be added if
    * there's none already defined)
    */
-  def asText[T](in: NodeSeq, cell: Cell[T], jsEffect: (String, Boolean, JsCmd) => JsCmd): NodeSeq = 
+  def asText[T](in: NodeSeq, cell: Cell[T], jsEffect: (String, Boolean, JsCmd) => JsCmd): NodeSeq =
     toNode(in, cell, jsEffect)((t, ns) => Text(t.toString))
 
   /**
@@ -207,18 +207,18 @@ object WiringUI {
    *
    * @param in the NodeSeq that contains the view markup
    * @param cell the cell to associate with
-   * 
+   *
    * @param jsEffect a function that wraps the SetHtml JsCmd so
    * you can, for example, fade out the old value, set the new value and
    * fade it in.  The first parameter is the id of the element, the
    * second is a flag that's true if this is the first time the element is
    * being rendered (you might want to skip effects for the inital page load),
    * and the third parameter is the SetHtml JavaScript code.
-   * 
+   *
    * @return a function that will mutate the NodeSeq (an id attribute may be added if
    * there's none already defined)
    */
-  def asText[T](cell: Cell[T], jsEffect: (String, Boolean, JsCmd) => JsCmd): NodeSeq => NodeSeq = 
+  def asText[T](cell: Cell[T], jsEffect: (String, Boolean, JsCmd) => JsCmd): NodeSeq => NodeSeq =
     in => toNode(in, cell, jsEffect)((t, ns) => Text(t.toString))
 
   /**
@@ -229,16 +229,16 @@ object WiringUI {
    *
    * @param in the NodeSeq that contains the view markup
    * @param cell the cell to associate with
-   * 
+   *
    * @param jsEffect a function that wraps the SetHtml JsCmd so
    * you can, for example, fade out the old value, set the new value and
    * fade it in.  The first parameter is the id of the element, the
    * second is a flag that's true if this is the first time the element is
    * being rendered (you might want to skip effects for the inital page load),
    * and the third parameter is the SetHtml JavaScript code.
-   * 
+   *
    * @param f the function that performs the drawing
-   * 
+   *
    * @return the mutated NodeSeq (an id attribute may be added if
    * there's none already defined)
    */
@@ -262,16 +262,16 @@ object WiringUI {
    * a new value.
    *
    * @param cell the cell to associate with
-   * 
+   *
    * @param jsEffect a function that wraps the SetHtml JsCmd so
    * you can, for example, fade out the old value, set the new value and
    * fade it in.  The first parameter is the id of the element, the
    * second is a flag that's true if this is the first time the element is
    * being rendered (you might want to skip effects for the inital page load),
    * and the third parameter is the SetHtml JavaScript code.
-   * 
+   *
    * @param f the function that performs the drawing
-   * 
+   *
    * @return the mutated NodeSeq (an id attribute may be added if
    * there's none already defined)
    */
@@ -281,7 +281,7 @@ object WiringUI {
         case e: Elem => true
         case _ => false
       }.map(_.asInstanceOf[Elem]).getOrElse(<span id={Helpers.nextFuncName}>{in}</span>)
-      
+
       val (elem: Elem, id: String) = Helpers.findOrAddId(myElem)
       addJsFunc(cell, (t: T, first: Boolean) => {
         jsEffect(id, first, SetHtml(id, f(t, elem.child)))
@@ -296,7 +296,7 @@ object WiringUI {
    *
    * @param cell the cell to associate the JavaScript to
    * @param f the function that takes the cell's value and a flag indicating
-   * if this is the first time 
+   * if this is the first time
    */
   def addJsFunc[T](cell: Cell[T], f: (T, Boolean) => JsCmd) {
     for {
@@ -327,7 +327,7 @@ object WiringUI {
    *
    * @param cell the cell to associate the JavaScript to
    * @param f the function that takes the cell's value and a flag indicating
-   * if this is the first time 
+   * if this is the first time
    */
   def addHistJsFunc[T](cell: Cell[T], f: (Box[T], T) => JsCmd) {
     for {

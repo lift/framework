@@ -20,7 +20,7 @@ package net.liftweb.sitemap;
  * The bridge from Java-land into SiteMap
  */
 public final class SiteMapJ {
-    private final static SiteMapSingleton j = 
+    private final static SiteMapSingleton j =
 	(new SiteMapJBridge()).siteMap();
 
     /**
@@ -37,5 +37,5 @@ public final class SiteMapJ {
     public static SiteMap build(ConvertableToMenu... m) {
 	return j().build(m);
     }
-				
+
 }

@@ -17,7 +17,7 @@
 package net.liftweb
 package json
 
-/** Use fundep encoding to improve return type of merge function 
+/** Use fundep encoding to improve return type of merge function
  *  (see: http://www.chuusai.com/2011/07/16/fundeps-in-scala/)
  *
  *  JObject merge JObject = JObject
@@ -71,7 +71,7 @@ object Merge {
     def mergeRec(xleft: List[JField], yleft: List[JField]): List[JField] = xleft match {
       case Nil => yleft
       case JField(xn, xv) :: xs => yleft find (_.name == xn) match {
-        case Some(y @ JField(yn, yv)) => 
+        case Some(y @ JField(yn, yv)) =>
           JField(xn, merge(xv, yv)) :: mergeRec(xs, yleft filterNot (_ == y))
         case None => JField(xn, xv) :: mergeRec(xs, yleft)
       }
@@ -92,14 +92,14 @@ object Merge {
     mergeRec(vs1, vs2)
   }
 
-  private[json] trait Mergeable extends MergeDeps { 
+  private[json] trait Mergeable extends MergeDeps {
     implicit def j2m[A <: JValue](json: A): MergeSyntax[A] = new MergeSyntax(json)
 
     class MergeSyntax[A <: JValue](json: A) {
       /** Return merged JSON.
        * @see net.liftweb.json.Merge#merge
        */
-      def merge[B <: JValue, R <: JValue](other: B)(implicit instance: MergeDep[A, B, R]): R = 
+      def merge[B <: JValue, R <: JValue](other: B)(implicit instance: MergeDep[A, B, R]): R =
         Merge.merge(json, other)(instance)
     }
   }

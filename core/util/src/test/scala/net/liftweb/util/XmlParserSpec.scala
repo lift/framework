@@ -70,7 +70,7 @@ object XmlParserSpec extends Specification  {
   }
 
   "XML cannot contain Control characters" in {
-     val data = 
+     val data =
      <foo>
       {
         '\u0085'

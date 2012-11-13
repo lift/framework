@@ -71,7 +71,7 @@ object MockHttpRequestSpec extends Specification  {
 
     "throw an IllegalArgumentException for an invalid query string" in {
       val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
-      
+
       (testRequest.queryString ="this=a&&that=b") must throwA[IllegalArgumentException]
       (testRequest.queryString = "foo") must throwA[IllegalArgumentException]
      }
@@ -106,7 +106,7 @@ object MockHttpRequestSpec extends Specification  {
 
       testRequest.body_=(<test/>, "application/xml")
 
-      testRequest.contentType must_== "application/xml"  
+      testRequest.contentType must_== "application/xml"
     }
 
     "properly set a default content type for a String" in {
@@ -124,6 +124,6 @@ object MockHttpRequestSpec extends Specification  {
 
       testRequest.contentType must_== "text/csv"
     }
-    
+
   }
 }

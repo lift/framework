@@ -30,7 +30,7 @@ object MappedBooleanSpec extends Specification  {
   sequential
 
   val provider = DbProviders.H2MemoryProvider
-  
+
   private def ignoreLogger(f: => AnyRef): Unit = ()
   def setupDB {
     provider.setupDB

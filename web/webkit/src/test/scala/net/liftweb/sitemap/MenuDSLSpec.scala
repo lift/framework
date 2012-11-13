@@ -29,7 +29,7 @@ object MenuDslSpec extends Specification  {
   "The Menu DSL" should {
     "allow basic menu definition via '/ path'" in {
       val menu = (Menu("Test") / "foo").toMenu
-      menu.loc.link.uriList mustEqual List("foo") 
+      menu.loc.link.uriList mustEqual List("foo")
       menu.loc.link.matchHead_? mustEqual false
     }
 
@@ -50,9 +50,9 @@ object MenuDslSpec extends Specification  {
       menu1.toMenu.loc.params.exists(_ == worthlessTest) mustEqual true
       menu2.toMenu.loc.params.exists(_ == worthlessTest) mustEqual true
     }
-    
+
     "handle submenus" in {
-      val menu = 
+      val menu =
         Menu("Foo") / "test" submenus (
           Menu("Bar") / "bar",
           Menu("Bat") / "bat"
@@ -62,7 +62,7 @@ object MenuDslSpec extends Specification  {
     }
 
     "handle sub-submenus" in {
-      val menu = 
+      val menu =
         Menu("Foo") / "test" submenus (
           Menu("Bar") / "bar" submenus (
             Menu("BarOne") / "bar" / "one",
@@ -83,7 +83,7 @@ object MenuDslSpec extends Specification  {
 
   "MenuItems" should {
     "support nesting deeper than two levels" in {
-      val menu = 
+      val menu =
         Menu("Foo") / "test" submenus (
           Menu("Bar") / "bar" submenus (
             Menu("BarOne") / "bar" / "one",

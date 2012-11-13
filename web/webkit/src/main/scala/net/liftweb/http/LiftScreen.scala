@@ -943,7 +943,7 @@ trait AbstractScreen extends Factory {
   }
 
   /**
-   * Grabs the FormFieldId and FormParam parameters 
+   * Grabs the FormFieldId and FormParam parameters
    */
   protected def grabParams(in: Seq[FilterOrValidate[_]]):
   List[SHtml.ElemAttr] = {
@@ -1484,7 +1484,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
       val localSnapshot = createSnapshot
       // val notices = S.getAllNotices
 
-      // if we're not Ajax, 
+      // if we're not Ajax,
       if (!ajaxForms_?) {
         S.seeOther(S.uri, () => {
           // S.appendNotices(notices)

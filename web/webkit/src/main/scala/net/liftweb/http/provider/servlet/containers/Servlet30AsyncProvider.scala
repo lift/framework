@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package provider 
-package servlet 
-package containers 
+package net.liftweb
+package http
+package provider
+package servlet
+package containers
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet._
@@ -32,11 +32,11 @@ import Helpers._
 
 
 object Servlet30AsyncProvider extends AsyncProviderMeta {
-  private lazy val (hasContinuations_?, 
-                    cc, 
-                    asyncClass, 
-                    startAsync, 
-                    getResponse, 
+  private lazy val (hasContinuations_?,
+                    cc,
+                    asyncClass,
+                    startAsync,
+                    getResponse,
                     complete,
                     isSupported) = {
     try {
@@ -49,11 +49,11 @@ object Servlet30AsyncProvider extends AsyncProviderMeta {
       (true, cc, asyncClass, startAsync, getResponse, complete, isSupported)
     } catch {
       case e =>
-        (false, 
-         null, 
-         null, 
-         null, 
-         null, 
+        (false,
+         null,
+         null,
+         null,
+         null,
          null,
          null)
     }
@@ -83,12 +83,12 @@ class Servlet30AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider with
   private var asyncCtx: Object = null
 
   type SetTimeout = {def setTimeout(timeout: Long): Unit;}
-  
+
   import Servlet30AsyncProvider._
 
   private lazy val servletReq = (req.asInstanceOf[HTTPRequestServlet]).req
 
-  def suspendResumeSupport_? : Boolean = hasContinuations_? && 
+  def suspendResumeSupport_? : Boolean = hasContinuations_? &&
   isSupported.invoke(servletReq).asInstanceOf[Boolean]
 
   def resumeInfo: Option[(Req, LiftResponse)] = None

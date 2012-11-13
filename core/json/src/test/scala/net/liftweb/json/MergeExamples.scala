@@ -35,7 +35,7 @@ object MergeExamples extends Specification  {
       "tags": ["fp", "oo"],
       "features": {
         "key1":"val1",
-        "key2":"val2" 
+        "key2":"val2"
       }
     }""")
 
@@ -81,7 +81,7 @@ object MergeExamples extends Specification  {
 
   val lotto2 = parse("""
     {
-      "lotto":{ 
+      "lotto":{
         "winners":[{
           "winner-id":54,
           "numbers":[52,3,12,11,18,22]

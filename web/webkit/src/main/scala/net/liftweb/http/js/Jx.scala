@@ -37,7 +37,7 @@ trait JxBase {
   private val logger = Logger(classOf[JxBase])
   def appendToParent(parentName: String): JsCmd
 
-  def label = "jx" 
+  def label = "jx"
 
   def addAttrs(varName: String, attrs: List[MetaData]): JsCmd = attrs.map {
     m =>

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.liftweb 
+package net.liftweb
 
 package object json {
   import java.io.Reader

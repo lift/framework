@@ -22,10 +22,10 @@ import common._
 
 /**
  * Function object that can be used in Logger.setup
- * 
+ *
  * Tries to determine which logging backend is available and configures it
  * by using either defaults or a mode-dependent configuration file.
- * 
+ *
  * To provide your own configuration, add either a log4j.props file or log4j.xml
  * file to your classpath. If using logback, name it logback.xml
  *
@@ -42,11 +42,11 @@ import common._
  * 'test', 'staging', 'production', 'pilot', 'profile', or 'default.
  * Thus, if you name your log4j config file 'default.log4j.xml' or
  * 'default.log4j.props' it will be picked up correctly.
- * 
+ *
  */
 object LoggingAutoConfigurer {
   import ClassHelpers._
-  
+
   private def findTheFile(files: String*): Box[(java.net.URL)] = {
     val namesToTry = Props.toTry.flatMap(f => files.toList.map(file => f()+file))
     first(namesToTry) (name => tryo(getClass.getResource(name)).filter(_ ne null).map(s => s))
@@ -61,7 +61,7 @@ object LoggingAutoConfigurer {
       }
     }
 
-    
+
     // Try to configure logback
     findClass("Logger", List("ch.qos.logback.classic")) map {_ =>
       findTheFile("logback.xml") map {url => Logback.withFile(url)()}

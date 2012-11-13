@@ -34,7 +34,7 @@ case class FieldSerializer[A: Manifest](
   serializer:   PartialFunction[(String, Any), Option[(String, Any)]] = Map(),
   deserializer: PartialFunction[JField, JField] = Map()
 )
- 
+
 object FieldSerializer {
   def renameFrom(name: String, newName: String): PartialFunction[JField, JField] = {
     case JField(`name`, x) => JField(newName, x)

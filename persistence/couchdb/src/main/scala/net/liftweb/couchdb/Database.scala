@@ -58,7 +58,7 @@ trait FetchableAsJObject {
 
   /** Fetch the document as a JObject */
   def fetch: Handler[JObject] = this ># (_.asInstanceOf[JObject])
-}  
+}
 
 /** Trait of requests that represent a document in a Couch database */
 trait Document extends Request with FetchableAsJObject {
@@ -76,7 +76,7 @@ trait Document extends Request with FetchableAsJObject {
 
   /** Store a new version of the document, returning the document with _id and _rev updated */
   def put(doc: JObject): Handler[Box[JObject]] = JSONRequest(this) <<<# doc ># handleUpdateResult(doc) _
-  
+
   /** Alias for put */
   def <<<# (doc: JObject): Handler[Box[JObject]] = put(doc)
 }
@@ -160,7 +160,7 @@ trait Queryable[SelfType <: Queryable[SelfType]] {
    * e.g. from=["foobar"]&to=["foobar",{}]
    */
   def arrayRange(prefix: List[JValue]): SelfType = from(JArray(prefix)) to(JArray(prefix ::: (JObject(Nil)::Nil)))
-}  
+}
 
 /** Specialization of dispatch's Request that provides Couch specific functionality */
 class Database(couch: Request, database: String) extends Request(couch / database) {
@@ -196,7 +196,7 @@ class Database(couch: Request, database: String) extends Request(couch / databas
 
   /** Access a particular document in the database by ID. */
   def apply(id: String): Document = new Request(this / id) with Document { }
-  
+
   /** Access a particular document in the database with _id from a given JObject */
   def apply(doc: JObject): Document = this(doc._id.open_!.s)
 

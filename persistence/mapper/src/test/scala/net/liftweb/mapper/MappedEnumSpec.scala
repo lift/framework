@@ -28,14 +28,14 @@ object MyEnum extends Enumeration {
   val d = Value
   val e = Value
 }
-  
+
 class EnumObj extends LongKeyedMapper[EnumObj] with IdPK {
   def getSingleton = EnumObj
 
   object enum extends MappedEnum(this, MyEnum)
 }
 
-object EnumObj extends EnumObj with LongKeyedMetaMapper[EnumObj] 
+object EnumObj extends EnumObj with LongKeyedMetaMapper[EnumObj]
 
 object MappedEnumSpec extends Specification  {
   "MappedEnum Specification".title

@@ -43,7 +43,7 @@ object JodaTimeSerializerSpec extends Specification  {
   }
 
   "DateTime and DateMidnight use configured date format" in {
-    implicit val formats = new net.liftweb.json.DefaultFormats {                      
+    implicit val formats = new net.liftweb.json.DefaultFormats {
       override def dateFormatter = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss'Z'")
     } ++ JodaTimeSerializers.all
 
@@ -59,7 +59,7 @@ object JodaTimeSerializerSpec extends Specification  {
   }
 }
 
-case class JodaTypes(duration: Duration, instant: Instant, dateTime: DateTime, 
+case class JodaTypes(duration: Duration, instant: Instant, dateTime: DateTime,
                      dateMidnight: DateMidnight, interval: Interval, localDate: LocalDate,
                      localTime: LocalTime, period: Period)
 

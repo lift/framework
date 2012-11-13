@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package common 
+package net.liftweb
+package common
 
 import scala.xml.NodeSeq
 
@@ -43,7 +43,7 @@ object StringOrNodeSeq {
   /**
    * Convert a String to a StringOrNodeSeq
    */
-  implicit def strTo[T <% String](str: T): StringOrNodeSeq = 
+  implicit def strTo[T <% String](str: T): StringOrNodeSeq =
     new StringOrNodeSeq {
       def nodeSeq: NodeSeq = Text(str)
     }
@@ -51,7 +51,7 @@ object StringOrNodeSeq {
   /**
    * Convert a NodeSeq (well, a Seq[Node]) to a StringOrNodeSeq
    */
-  implicit def nsTo(ns: Seq[Node]): StringOrNodeSeq = 
+  implicit def nsTo(ns: Seq[Node]): StringOrNodeSeq =
     new StringOrNodeSeq {
       def nodeSeq: NodeSeq = ns
     }
@@ -81,7 +81,7 @@ object StringFunc {
    * If you've got something that can be converted into a String (a constant)
    * but want a StringFunc, this implicit will do the conversion.
    */
-  implicit def strToStringFunc[T](str: T)(implicit f: T => String): StringFunc = 
+  implicit def strToStringFunc[T](str: T)(implicit f: T => String): StringFunc =
     ConstStringFunc(f(str))
 
   /**
@@ -123,7 +123,7 @@ object NodeSeqFunc {
    * If you've got something that can be converted into a NodeSeq (a constant)
    * but want a NodeSeqFunc, this implicit will do the conversion.
    */
-  implicit def nsToNodeSeqFunc[T](ns: T)(implicit f: T => NodeSeq): NodeSeqFunc = 
+  implicit def nsToNodeSeqFunc[T](ns: T)(implicit f: T => NodeSeq): NodeSeqFunc =
     ConstNodeSeqFunc(f(ns))
 
   /**

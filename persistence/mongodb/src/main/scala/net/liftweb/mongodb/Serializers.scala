@@ -11,8 +11,8 @@
 * limitations under the License.
 */
 
-package net.liftweb 
-package mongodb 
+package net.liftweb
+package mongodb
 
 import json.{Formats, MappingException, Serializer, TypeInfo}
 import json.JsonAST._

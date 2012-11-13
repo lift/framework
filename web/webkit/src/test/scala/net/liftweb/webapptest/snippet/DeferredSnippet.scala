@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package webapptest 
-package snippet 
+package net.liftweb
+package webapptest
+package snippet
 
 import net.liftweb.http._
 import scala.xml._

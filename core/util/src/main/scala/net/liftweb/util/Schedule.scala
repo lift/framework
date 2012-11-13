@@ -29,7 +29,7 @@ class ScheduleJBridge {
 /**
  * The Schedule object schedules an actor to be ping-ed with a given message after a specified
  * delay. If you need recurrent scheduled pings you will need to reschedule.
- * 
+ *
  * The schedule methods return a ScheduledFuture object which can be cancelled if necessary
  */
 object Schedule extends Schedule
@@ -37,7 +37,7 @@ object Schedule extends Schedule
 /**
  * The Schedule object schedules an actor to be ping-ed with a given message after a specified
  * delay. If you need recurrent scheduled pings you will need to reschedule.
- * 
+ *
  * The schedule methods return a ScheduledFuture object which can be cancelled if necessary
  */
 sealed trait Schedule extends Loggable {
@@ -55,19 +55,19 @@ sealed trait Schedule extends Loggable {
    * to Full(200000)
    */
   @volatile var blockingQueueSize: Box[Int] = Full(200000)
-  
+
   @volatile var buildExecutor: () => ThreadPoolExecutor =
-    () => new ThreadPoolExecutor(threadPoolSize, 
+    () => new ThreadPoolExecutor(threadPoolSize,
                                  maxThreadPoolSize,
                                  60,
                                  TimeUnit.SECONDS,
                                  blockingQueueSize match {
-                                   case Full(x) => 
+                                   case Full(x) =>
                                      new ArrayBlockingQueue(x)
                                    case _ => new LinkedBlockingQueue
                                  })
-  
-    
+
+
 
   /** The underlying <code>java.util.concurrent.ScheduledExecutor</code> */
   private var service: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor(TF)
@@ -79,7 +79,7 @@ sealed trait Schedule extends Loggable {
    */
   def restart: Unit = synchronized
   { if ((service eq null) || service.isShutdown)
-    service = Executors.newSingleThreadScheduledExecutor(TF) 
+    service = Executors.newSingleThreadScheduledExecutor(TF)
    if ((pool eq null) || pool.isShutdown)
      pool = buildExecutor()
  }
@@ -89,7 +89,7 @@ sealed trait Schedule extends Loggable {
    * Shut down the underlying <code>SingleThreadScheduledExecutor</code>
    */
   def shutdown(): Unit = synchronized {
-    service.shutdown 
+    service.shutdown
     pool.shutdown
   }
 
@@ -128,26 +128,26 @@ sealed trait Schedule extends Loggable {
    * immediately on a worker thread
    */
   def apply(f: () => Unit): ScheduledFuture[Unit] = schedule(f, 0)
-  
+
   /**
    * Schedules the application of a function
    *
    * @return a <code>ScheduledFuture</code> which executes the function f
    * after the delay
    */
-  def apply(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = 
+  def apply(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] =
     schedule(f, delay)
-  
+
   /**
    * Schedules the application of a function
    *
    * @return a <code>ScheduledFuture</code> which executes the function f
    * after the delay
    */
-  def schedule(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = 
+  def schedule(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] =
     synchronized {
       val r = new Runnable {
-        def run() { 
+        def run() {
           try {
             f.apply()
           } catch {
@@ -155,7 +155,7 @@ sealed trait Schedule extends Loggable {
           }
         }
       }
-      
+
       val fast = new java.util.concurrent.Callable[Unit] {
         def call(): Unit = {
           try {
@@ -166,7 +166,7 @@ sealed trait Schedule extends Loggable {
           }
         }
       }
-      
+
       try {
         this.restart
         service.schedule(fast, delay.millis, TimeUnit.MILLISECONDS)

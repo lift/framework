@@ -79,7 +79,7 @@ object Msgs extends DispatchSnippet {
         // so that people can localize, etc.
         val title : NodeSeq = (styles \\ noticeType.titleTag).
           filter(_.prefix == "lift").flatMap(_.child)
-  
+
         // Extract any provided classes for the messages
         val cssClasses = ((styles \\ noticeType.styleTag) ++
                           (styles \\ noticeType.titleTag \\ "@class")).
@@ -87,7 +87,7 @@ object Msgs extends DispatchSnippet {
             case Nil => Empty
             case classes => Full(classes.mkString(" "))
           }
-  
+
         // Save the settings for AJAX usage
         ajaxStorage(Full(AjaxMessageMeta(title,cssClasses)))
       }
@@ -110,7 +110,7 @@ object Msgs extends DispatchSnippet {
    */
   def renderNotices() : NodeSeq = {
     // Determine which formatting function to use based on tag usage
-    val f = 
+    val f =
       if (ShowAll.is) {
         S.messages _
       } else {
@@ -166,7 +166,7 @@ object Msgs extends DispatchSnippet {
    *
    * @see net.liftweb.http.LiftRules.noticesAutoFadeOut
    */
-  def noticesFadeOut(noticeType: NoticeType.Value): NodeSeq = 
+  def noticesFadeOut(noticeType: NoticeType.Value): NodeSeq =
     noticesFadeOut(noticeType, NodeSeq.Empty, tailScript)
 
   /**
@@ -177,7 +177,7 @@ object Msgs extends DispatchSnippet {
    *
    * @see net.liftweb.http.LiftRules.noticesEffects
    */
-  def effects[T](noticeType: Box[NoticeType.Value], id : String, default : T, wrap : JsCmd => T): T = 
+  def effects[T](noticeType: Box[NoticeType.Value], id : String, default : T, wrap : JsCmd => T): T =
     LiftRules.noticesEffects()(noticeType, id) match {
       case Full(jsCmd) => wrap(jsCmd)
       case _ => default

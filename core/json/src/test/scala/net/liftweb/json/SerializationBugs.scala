@@ -28,7 +28,7 @@ object SerializationBugs extends Specification {
   "plan1.Plan can be serialized (issue 341)" in {
     import plan1._
 
-    val game = Game(Map("a" -> Plan(Some(Action(1, None))))) 
+    val game = Game(Map("a" -> Plan(Some(Action(1, None)))))
     val ser = swrite(game)
     read[Game](ser) mustEqual game
   }
@@ -36,8 +36,8 @@ object SerializationBugs extends Specification {
   "plan2.Plan can be serialized (issue 341)" in {
     import plan2._
 
-    val g1 = Game(Map("a" -> Plan(Some(Action("f1", "s", Array(), None)), 
-                                  Some("A"), 
+    val g1 = Game(Map("a" -> Plan(Some(Action("f1", "s", Array(), None)),
+                                  Some("A"),
                                   Some(Action("f2", "s2", Array(0, 1, 2), None)))))
     val ser = swrite(g1)
     val g2 = read[Game](ser)
@@ -57,7 +57,7 @@ object SerializationBugs extends Specification {
   }
 
   "null serialization bug" in {
-    val x = new X(null) 
+    val x = new X(null)
     val ser = swrite(x)
     read[X](ser) mustEqual x
   }
@@ -97,7 +97,7 @@ object SerializationBugs extends Specification {
       }
 
       def deserialize(implicit format: Formats) = {
-        case (TypeInfo(SeqClass, parameterizedType), JArray(xs)) => 
+        case (TypeInfo(SeqClass, parameterizedType), JArray(xs)) =>
           val typeInfo = TypeInfo(parameterizedType
             .map(_.getActualTypeArguments()(0))
             .getOrElse(failure("No type parameter info for type Seq")).asInstanceOf[Class[_]], None)
@@ -176,11 +176,11 @@ package plan1 {
 }
 
 package plan2 {
-  case class Plan(leftOperand: Option[Action], operator: Option[String], 
+  case class Plan(leftOperand: Option[Action], operator: Option[String],
                   rightOperand: Option[Action])
   case class Game(buy: Map[String, Plan])
   case class Action(functionName: String, symbol: String,
-                    inParams: Array[Number], subOperand: Option[Action]) 
+                    inParams: Array[Number], subOperand: Option[Action])
 }
 
 case class Opaque(x: JValue)

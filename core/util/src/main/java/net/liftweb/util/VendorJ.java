@@ -24,7 +24,7 @@ import java.util.concurrent.Callable;
  */
 public final class VendorJ {
     private static VendorJBridge j = new VendorJBridge();
-    
+
     /**
      * Create a Vendor from a Func0
      */

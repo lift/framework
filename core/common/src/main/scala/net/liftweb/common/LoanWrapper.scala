@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package common 
+package net.liftweb
+package common
 
 /**
  * This trait defines the principle contract for function objects that

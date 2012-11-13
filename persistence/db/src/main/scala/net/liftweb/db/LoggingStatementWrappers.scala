@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.liftweb 
+package net.liftweb
 package db
 
 import java.lang.reflect.{InvocationHandler,Method,Proxy}
@@ -312,8 +312,8 @@ object DBLog {
       case "toString" => {
         // We'll call into our own representation here
         this.toString
-      }        
-        
+      }
+
       // These are from wrapper and are required
       case "isWrapperFor" => args(0).getClass match {
         case `representative` => Boolean.box(true)
@@ -359,15 +359,15 @@ object DBLog {
     private def paramified : String = {
       val sb = new StringBuilder(500)
       def substitute (in : String, index : Int): Unit = in.indexOf('?') match {
-        case -1 => 
+        case -1 =>
 	  sb.append(in)
 
-        case j => 
+        case j =>
 	  sb.append(in.substring(0,j))
 	  sb.append(paramMap(index))
 	  substitute(in.substring(j + 1), index + 1)
       }
-      
+
       substitute(stmt, 1)
       sb.toString
     }

@@ -72,7 +72,7 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
 
   def dbIncludeInForm_? = dbDisplay_?
 
-  def asJsonField: Box[JsonAST.JField] = 
+  def asJsonField: Box[JsonAST.JField] =
     asJsonValue.map(v => JsonAST.JField(name, v))
 
   def asJsonValue: Box[JsonAST.JValue]
@@ -427,7 +427,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
   /**
    * The display name of this field (e.g., "First Name")
    */
-  override def displayName: String = MapperRules.displayNameCalculator.vend(fieldOwner, S.locale, name) 
+  override def displayName: String = MapperRules.displayNameCalculator.vend(fieldOwner, S.locale, name)
 
   def resetDirty {
     if (safe_?) dirty_?(false)

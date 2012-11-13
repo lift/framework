@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package record 
-package field 
+package net.liftweb
+package record
+package field
 
 import scala.xml._
 import net.liftweb.common._
@@ -27,10 +27,10 @@ import Helpers._
 import S._
 
 trait LongTypedField extends NumericTypedField[Long] {
-  
+
   def setFromAny(in: Any): Box[Long] = setNumericFromAny(in, _.longValue)
 
-  def setFromString(s: String): Box[Long] = 
+  def setFromString(s: String): Box[Long] =
     if(s == null || s.isEmpty) {
       if(optional_?)
     	  setBox(Empty)

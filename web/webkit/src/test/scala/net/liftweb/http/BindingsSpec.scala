@@ -33,27 +33,27 @@ object BindingsSpec extends Specification  {
 
   case class MyClass(str: String, i: Int, other: MyOtherClass)
   case class MyOtherClass(foo: String)
-  
+
   trait MyClassBinding extends DataBinding[MyClass] {
     implicit val otherBinding: DataBinding[MyOtherClass]
-  
+
     override def apply(entity: MyClass) = (xhtml: NodeSeq) => {
       val otherTemplate = chooseTemplate("myclass", "other", xhtml)
       bind(
-        "myclass", xhtml, 
+        "myclass", xhtml,
         "str" -> Text("#" + entity.str + "#"),
         "i" -> Text(entity.i.toString),
         "other" -> entity.other.bind(otherTemplate)
       )
     }
   }
-  
+
   object myOtherClassBinding extends DataBinding[MyOtherClass] {
     override def apply(other: MyOtherClass) = (xhtml: NodeSeq) => {
       bind("other", xhtml, "foo" -> Text("%" + other.foo + "%"))
     }
   }
-  
+
   implicit object MyClassConcreteBinding extends MyClassBinding {
     override val otherBinding = myOtherClassBinding
   }
@@ -99,11 +99,11 @@ object BindingsSpec extends Specification  {
 
     S.initIfUninitted(session) {
       val org = <span><input id="frog" class="dog cat"/></span>
-      
+
       val res = ("#frog" #> SHtml.text("", s => ()) ).apply(org)
 
       (res \ "input" \ "@id").text must_== "frog"
-      
+
       (res \ "input" \ "@class").text must_== "dog cat"
     }
   }

@@ -67,7 +67,7 @@ object LazyLoad extends DispatchSnippet {
     (for {
       session <- S.session ?~ ("FIXME: Invalid session")
     } yield {
-      
+
       // if we haven't created the actor yet, register on this
       // thread to create the AsyncRenderComet actor
       if (myActor.isEmpty) {
@@ -83,22 +83,22 @@ object LazyLoad extends DispatchSnippet {
                 ret.initCometActor(session,
                                    Full(theType),
                                    name, defaultXml, attributes)
-                ret ! PerformSetupComet2(if (ret.sendInitialReq_?) 
+                ret ! PerformSetupComet2(if (ret.sendInitialReq_?)
        S.request.map(_.snapshot) else Empty)
-                
+
                 // and save it in the request var
                 myActor.set(Full(ret))
-                
+
                 Full(ret)
               }
-              
+
               case _ => Empty
             })
       }
 
       val id = Helpers.nextFuncName
 
-      val func: () => JsCmd = 
+      val func: () => JsCmd =
         session.buildDeferredFunction(() => Replace(id, xhtml))
 
       <div id={id}>
@@ -151,11 +151,11 @@ class AsyncRenderComet extends CometActor {
 
   override def lowPriority : PartialFunction[Any, Unit] = {
     // farm the request off to another thread
-    case Ready(js) => 
+    case Ready(js) =>
       Schedule.schedule(() => this ! Render(js()), 0 seconds)
 
     // render it
-    case Render(js) => 
+    case Render(js) =>
       partialUpdate(js)
   }
 }

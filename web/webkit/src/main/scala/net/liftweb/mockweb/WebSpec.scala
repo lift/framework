@@ -81,7 +81,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification {
     def withReqFor (url : String, contextPath : String = "") =
       new ReqSpecification(description, url, contextPath)
 
-    def withReqFor (req : HttpServletRequest) = 
+    def withReqFor (req : HttpServletRequest) =
       new ReqSpecification(description, req)
 
     def withTemplateFor (url : String, session : Box[LiftSession] = Empty, contextPath : String = "") =
@@ -138,7 +138,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification {
 
     /**
      * Modifies the request to POST the given request body XML.
-     */    
+     */
     def withPost (node : NodeSeq) = withMods { mockReq =>
       mockReq.body = node
       mockReq.method = "POST"
@@ -165,7 +165,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification {
 
     /**
      * Modifies the request to PUT the given request body XML.
-     */    
+     */
     def withPut (node : NodeSeq) = withMods { mockReq =>
       mockReq.body = node
       mockReq.method = "PUT"
@@ -185,8 +185,8 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification {
    * This class provides a wrapper to test methods that require an
    * initialized S.
    */
-  class SessionSpecification (description : String, 
-                              val req : HttpServletRequest, 
+  class SessionSpecification (description : String,
+                              val req : HttpServletRequest,
                               session : Box[LiftSession]) extends ModifiableRequest[SessionSpecification] {
     def this (description : String, url : String, session : Box[LiftSession], contextPath : String) =
       this(description, new MockHttpServletRequest(url, contextPath), session)
@@ -207,7 +207,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification {
    * This class provides a wrapper to test methods that require an
    * initialized Req.
    */
-  class ReqSpecification (description : String, 
+  class ReqSpecification (description : String,
                           val req : HttpServletRequest) extends ModifiableRequest[ReqSpecification] {
     def this (description : String, url : String, contextPath : String) =
       this(description, new MockHttpServletRequest(url, contextPath))
