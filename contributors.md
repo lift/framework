@@ -48,7 +48,6 @@ claims on this work including, but not limited to, any agreements I may have wit
 my employer or other contracts, and that I license this work under
 an [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html) license.
 
-
 ### Name: ###
 Gilberto T. Garcia Jr
 
@@ -60,4 +59,3 @@ Marko Elezović
 
 ### Email: ###
 marko at element dot hr
-
