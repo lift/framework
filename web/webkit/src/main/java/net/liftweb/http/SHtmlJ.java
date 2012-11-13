@@ -18,6 +18,6 @@ package net.liftweb.http;
 
 public class SHtmlJ {
     public static SHtml j() {
-	return (new SHtmlJBridge()).sHtml();
+        return (new SHtmlJBridge()).sHtml();
     }
 }

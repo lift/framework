@@ -25,7 +25,7 @@ import scala.collection.JavaConversions._
 
 /**
  * The bridge between Scala *Vars implementations and
- * the
+ * the 
  */
 class VarsJBridge {
   def vendSessionVar[T](default: T, e: Exception): SessionVar[T] = {

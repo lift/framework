@@ -76,7 +76,7 @@ object CalculatorApi extends XmlApiHelper {
 <pre name="code" class="xml">
 &lt;api operation="sum" success="true">&lt;result>15&lt;/result>&lt;/api>
 </pre>
-  *
+  * 
  */
 trait XMLApiHelper {
   /**

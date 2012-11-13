@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package mapper
-package view
+package net.liftweb 
+package mapper 
+package view 
 
 import net.liftweb.http.{StatefulSnippet, S}
 import S.?
@@ -61,7 +61,7 @@ trait ModelSnippet[T <: Mapper[T]] extends StatefulSnippet {
    * The edit snippet
    */
   def edit(ns: NodeSeq): NodeSeq
-
+  
   def load(entity: T) = view.entity = entity
 
   def dispatch = {
@@ -69,7 +69,7 @@ trait ModelSnippet[T <: Mapper[T]] extends StatefulSnippet {
     case "edit" =>       edit _
     case "newOrEdit" =>  view.newOrEdit _
   }
-
+  
   /**
    * An "edit" BindParam
   */
@@ -93,12 +93,12 @@ class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {
    * This var is used by ModelSnippet.onSave, which is a ModelView=>Unit
    */
   var redirectOnSave: Option[String] = Some("list")
-
+  
   /**
-   * Loads this entity into the snippet so it can be edited
+   * Loads this entity into the snippet so it can be edited 
    */
   def load = snippet.load(entity)
-
+  
   /**
    * Delete the entity
    */
@@ -114,7 +114,7 @@ class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {
     chooseTemplate("if",
                    if(entity.saved_?) "edit" else "new",
                    xhtml)
-
+  
   /**
    * This method checks whether the entity
    * validates; if so it saves it, and if
@@ -146,14 +146,14 @@ class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {
    */
   def idString = if(entity.saved_?)
     entity match {
-      case e: net.liftweb.mapper.KeyedMapper[_,T] =>
+      case e: net.liftweb.mapper.KeyedMapper[_,T] => 
         e.primaryKeyField.toString
       case _ => entity.fieldByName("id").toString
     }
   else
     "<new>"
-
-
+  
+  
   /**
    * Returns a BindParam that contains a link to load and edit this entity
    */

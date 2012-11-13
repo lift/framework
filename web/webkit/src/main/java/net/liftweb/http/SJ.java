@@ -18,6 +18,6 @@ package net.liftweb.http;
 
 public class SJ {
     public static S j() {
-	return (new SJBridge()).s();
+        return (new SJBridge()).s();
     }
 }

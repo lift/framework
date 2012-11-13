@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package json
+package net.liftweb 
+package json 
 
 object JsonAST {
   import scala.text.{Document, DocText}
@@ -411,7 +411,7 @@ object JsonAST {
   private def series(docs: List[Document]) = punctuate(text(","), docs)
   private def fields(docs: List[Document]) = punctuate(text(",") :: break, docs)
 
-  private def punctuate(p: Document, docs: List[Document]): Document =
+  private def punctuate(p: Document, docs: List[Document]): Document = 
     if (docs.length == 0) empty
     else docs.reduceLeft((d1, d2) => d1 :: p :: d2)
 
@@ -461,10 +461,10 @@ trait Implicits {
  */
 object JsonDSL extends JsonDSL
 trait JsonDSL extends Implicits {
-  implicit def seq2jvalue[A <% JValue](s: Traversable[A]) =
+  implicit def seq2jvalue[A <% JValue](s: Traversable[A]) = 
     JArray(s.toList.map { a => val v: JValue = a; v })
 
-  implicit def map2jvalue[A <% JValue](m: Map[String, A]) =
+  implicit def map2jvalue[A <% JValue](m: Map[String, A]) = 
     JObject(m.toList.map { case (k, v) => JField(k, v) })
 
   implicit def option2jvalue[A <% JValue](opt: Option[A]): JValue = opt match {

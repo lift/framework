@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package record
-package field
+package net.liftweb 
+package record 
+package field 
 
 import net.liftweb.http.{S}
 import net.liftweb.http.js._

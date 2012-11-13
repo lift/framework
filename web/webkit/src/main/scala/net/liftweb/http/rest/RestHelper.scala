@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package http
-package rest
+package net.liftweb 
+package http 
+package rest 
 
 
 import net.liftweb._
@@ -41,9 +41,9 @@ trait RestHelper extends LiftRules.DispatchPF {
    * flag
    */
   protected def jsonResponse_?(in: Req): Boolean = {
-    (in.acceptsJson_? && !in.acceptsStarStar) ||
+    (in.acceptsJson_? && !in.acceptsStarStar) || 
     ((in.weightedAccept.isEmpty ||
-      in.acceptsStarStar) &&
+      in.acceptsStarStar) && 
      (in.path.suffix.equalsIgnoreCase("json") ||
       in.json_? ||
       (in.path.suffix.length == 0 && defaultGetAsJson))) ||
@@ -72,14 +72,14 @@ trait RestHelper extends LiftRules.DispatchPF {
     implicit def formats = DefaultFormats
     Extraction.decompose(in)
   }
-
+  
   /**
    * If there are additional custom rules (e.g., looking at query parameters)
    * you can override this method which is consulted if the other rules
    * in jsonResponse_? fail
    */
   protected def suplimentalJsonResponse_?(in: Req): Boolean = false
-
+  
   /**
    * Will the request accept an XML response?  Yes if
    * the Accept header contains "application/xml" or "text/xml" or
@@ -90,22 +90,22 @@ trait RestHelper extends LiftRules.DispatchPF {
    * flag.
    */
   protected def xmlResponse_?(in: Req): Boolean = {
-    (in.acceptsXml_? && !in.acceptsStarStar) ||
+    (in.acceptsXml_? && !in.acceptsStarStar) || 
     ((in.weightedAccept.isEmpty ||
-      in.acceptsStarStar) &&
+      in.acceptsStarStar) && 
      (in.path.suffix.equalsIgnoreCase("xml") ||
       in.xml_? ||
       (in.path.suffix.length == 0 && defaultGetAsXml))) ||
     suplimentalXmlResponse_?(in)
   }
-
+  
   /**
    * If there are additional custom rules (e.g., looking at query parameters)
    * you can override this method which is consulted if the other rules
    * in xmlResponse_? fail
    */
   protected def suplimentalXmlResponse_?(in: Req): Boolean = false
-
+  
   /**
    * A trait that defines the TestReq extractor.  Is
    * the request something that expects JSON, XML in the response.
@@ -117,7 +117,7 @@ trait RestHelper extends LiftRules.DispatchPF {
      * The path and a Tuple2 representing RequestType and the Req
      * instance are extracted.
      */
-    def unapply(r: Req): Option[(List[String], (RequestType, Req))] =
+    def unapply(r: Req): Option[(List[String], (RequestType, Req))] = 
       if (testResponse_?(r))
         Some(r.path.partPath -> (r.requestType -> r)) else None
 
@@ -143,7 +143,7 @@ trait RestHelper extends LiftRules.DispatchPF {
    * as an extractor.
    */
   protected lazy val XmlReq = new TestReq with XmlTest
-
+  
 
   /**
    * A trait that defines the TestGet extractor.  Is
@@ -155,7 +155,7 @@ trait RestHelper extends LiftRules.DispatchPF {
      * Test to see if the request is a GET and expecting JSON in the response.
      * The path and the Req instance are extracted.
      */
-    def unapply(r: Req): Option[(List[String], Req)] =
+    def unapply(r: Req): Option[(List[String], Req)] = 
       if (r.get_? && testResponse_?(r))
         Some(r.path.partPath -> r) else None
 
@@ -189,7 +189,7 @@ trait RestHelper extends LiftRules.DispatchPF {
      * expecting JSON or XML in the response.
      * The path and the Req instance are extracted.
      */
-    def unapply(r: Req): Option[(List[String], Req)] =
+    def unapply(r: Req): Option[(List[String], Req)] = 
       if (r.requestType.delete_? && testResponse_?(r))
         Some(r.path.partPath -> r) else None
 
@@ -221,12 +221,12 @@ trait RestHelper extends LiftRules.DispatchPF {
      * body and expecting JSON in the response.
      * The path, JSON Data and the Req instance are extracted.
      */
-    def unapply(r: Req): Option[(List[String], (T, Req))] =
+    def unapply(r: Req): Option[(List[String], (T, Req))] = 
       if (r.post_? && testResponse_?(r))
-        body(r).toOption.map(t => (r.path.partPath -> (t -> r)))
+        body(r).toOption.map(t => (r.path.partPath -> (t -> r))) 
       else None
 
-
+    
     def testResponse_?(r: Req): Boolean
 
     def body(r: Req): Box[T]
@@ -254,12 +254,12 @@ trait RestHelper extends LiftRules.DispatchPF {
    * be used as:<br/>
    * <pre>case "api" :: id :: _ Get req => ...</pre><br/>
    * or<br/>
-   * <pre>case Get("api" :: id :: _, req) => ...</pre><br/>   *
+   * <pre>case Get("api" :: id :: _, req) => ...</pre><br/>   * 
    */
   protected object Get {
     def unapply(r: Req): Option[(List[String], Req)] =
       if (r.get_?) Some(r.path.partPath -> r) else None
-
+                                
   }
 
   /**
@@ -273,7 +273,7 @@ trait RestHelper extends LiftRules.DispatchPF {
   protected object Post {
     def unapply(r: Req): Option[(List[String], Req)] =
       if (r.post_?) Some(r.path.partPath -> r) else None
-
+                                
   }
 
   /**
@@ -287,7 +287,7 @@ trait RestHelper extends LiftRules.DispatchPF {
   protected object Put {
     def unapply(r: Req): Option[(List[String], Req)] =
       if (r.put_?) Some(r.path.partPath -> r) else None
-
+                                
   }
 
   /**
@@ -301,14 +301,14 @@ trait RestHelper extends LiftRules.DispatchPF {
   protected object Delete {
     def unapply(r: Req): Option[(List[String], Req)] =
       if (r.requestType.delete_?) Some(r.path.partPath -> r) else None
-
+                                
   }
 
   /**
    * A function that chooses JSON or XML based on the request..
    * Use with serveType
    */
-  implicit def jxSel(req: Req): BoxOrRaw[JsonXmlSelect] =
+  implicit def jxSel(req: Req): BoxOrRaw[JsonXmlSelect] = 
     if (jsonResponse_?(req)) JsonSelect
     else if (xmlResponse_?(req)) XmlSelect
     else None
@@ -329,17 +329,17 @@ trait RestHelper extends LiftRules.DispatchPF {
   (pf: PartialFunction[Req, BoxOrRaw[T]])
   (implicit cvt: PartialFunction[(SelectType, T, Req), LiftResponse]): Unit = {
     serve(new PartialFunction[Req, () => Box[LiftResponse]] {
-      def isDefinedAt(r: Req): Boolean =
+      def isDefinedAt(r: Req): Boolean = 
         selection(r).isDefined && pf.isDefinedAt(r)
-
-      def apply(r: Req): () => Box[LiftResponse] =
+   
+      def apply(r: Req): () => Box[LiftResponse] = 
         () => {
           pf(r).box match {
             case Full(resp) =>
               val selType = selection(r).open_! // Full because pass isDefinedAt
               if (cvt.isDefinedAt((selType, resp, r)))
                   Full(cvt((selType, resp, r)))
-              else emptyToResp(ParamFailure("Unabled to convert the message",
+              else emptyToResp(ParamFailure("Unabled to convert the message", 
                                             Empty, Empty, 500))
 
             case e: EmptyBox => emptyToResp(e)
@@ -365,7 +365,7 @@ trait RestHelper extends LiftRules.DispatchPF {
   (implicit cvt: JxCvtPF[T]): Unit =
     serveType(jxSel)(pf)(cvt)
 
-  protected type JxCvtPF[T] =
+  protected type JxCvtPF[T] = 
     PartialFunction[(JsonXmlSelect, T, Req), LiftResponse]
 
   /**
@@ -375,12 +375,12 @@ trait RestHelper extends LiftRules.DispatchPF {
    * Any (note that the response must be convertable into
    * JSON vis Lift JSON Extraction.decompose
    */
-  protected def serveJxa(pf: PartialFunction[Req, BoxOrRaw[Any]]): Unit =
+  protected def serveJxa(pf: PartialFunction[Req, BoxOrRaw[Any]]): Unit = 
     serveType(jxSel)(pf)(new PartialFunction[(JsonXmlSelect,
                                               Any, Req), LiftResponse] {
       def isDefinedAt(p: (JsonXmlSelect, Any, Req)) =
         convertAutoJsonXmlAble.isDefinedAt((p._1, AutoJsonXmlAble(p._2), p._3))
-
+      
       def apply(p: (JsonXmlSelect, Any, Req)) =
         convertAutoJsonXmlAble.apply((p._1, AutoJsonXmlAble(p._2), p._3))
     })
@@ -393,11 +393,11 @@ trait RestHelper extends LiftRules.DispatchPF {
   /**
    * The default way to convert a JsonXmlAble into JSON or XML
    */
-  protected implicit lazy val convertJsonXmlAble:
+  protected implicit lazy val convertJsonXmlAble: 
   PartialFunction[(JsonXmlSelect, JsonXmlAble, Req), LiftResponse] = {
     case (JsonSelect, obj, _) => Extraction.decompose(obj)
 
-    case (XmlSelect, obj, _) =>
+    case (XmlSelect, obj, _) => 
       Xml.toXml(Extraction.decompose(obj)).toList match {
         case x :: _ => x
         case _ => Text("")
@@ -412,7 +412,7 @@ trait RestHelper extends LiftRules.DispatchPF {
   /**
    * wrap anything for autoconversion to JSON or XML
    */
-  protected def auto(in: Any): Box[AutoJsonXmlAble] =
+  protected def auto(in: Any): Box[AutoJsonXmlAble] = 
     Full(new AutoJsonXmlAble(in))
 
   /**
@@ -425,11 +425,11 @@ trait RestHelper extends LiftRules.DispatchPF {
    * An implicit conversion that converts AutoJsonXmlAble into
    * JSON or XML
    */
-  protected implicit lazy val convertAutoJsonXmlAble:
+  protected implicit lazy val convertAutoJsonXmlAble: 
   PartialFunction[(JsonXmlSelect, AutoJsonXmlAble, Req), LiftResponse] = {
-    case (JsonSelect, AutoJsonXmlAble(obj), _) =>
+    case (JsonSelect, AutoJsonXmlAble(obj), _) => 
       Extraction.decompose(obj)
-    case (XmlSelect, AutoJsonXmlAble(obj), _) =>
+    case (XmlSelect, AutoJsonXmlAble(obj), _) => 
       Xml.toXml(Extraction.decompose(obj)).toList match {
         case x :: _ => x
         case _ => Text("")
@@ -460,11 +460,11 @@ trait RestHelper extends LiftRules.DispatchPF {
      * body and expecting JSON or XML in the response.
      * The path, Data and the Req instance are extracted.
      */
-    def unapply(r: Req): Option[(List[String], (T, Req))] =
+    def unapply(r: Req): Option[(List[String], (T, Req))] = 
       if (r.put_? && testResponse_?(r))
         body(r).toOption.map(b => (r.path.partPath -> (b -> r))) else None
 
-
+    
     def testResponse_?(r: Req): Boolean
 
     def body(r: Req): Box[T]
@@ -490,10 +490,10 @@ trait RestHelper extends LiftRules.DispatchPF {
   }
 
   @volatile private var _dispatch: List[LiftRules.DispatchPF] = Nil
-
+  
   private lazy val nonDevDispatch = _dispatch.reverse
 
-  private def dispatch: List[LiftRules.DispatchPF] =
+  private def dispatch: List[LiftRules.DispatchPF] = 
     if (Props.devMode) _dispatch.reverse else nonDevDispatch
 
   /**
@@ -504,15 +504,15 @@ trait RestHelper extends LiftRules.DispatchPF {
   /**
    * Apply the Rest helper
    */
-  def apply(in: Req): () => Box[LiftResponse] =
+  def apply(in: Req): () => Box[LiftResponse] = 
     dispatch.find(_.isDefinedAt(in)).get.apply(in)
 
   /**
    * Add request handlers
    */
-  protected def serve(handler: PartialFunction[Req, () => Box[LiftResponse]]):
-  Unit = _dispatch ::= handler
-
+  protected def serve(handler: PartialFunction[Req, () => Box[LiftResponse]]): 
+  Unit = _dispatch ::= handler 
+  
   /**
    * Turn T into the return type expected by DispatchPF as long
    * as we can convert T to a LiftResponse.
@@ -524,10 +524,10 @@ trait RestHelper extends LiftRules.DispatchPF {
    * Turn a Box[T] into the return type expected by
    * DispatchPF.  Note that this method will return
    * messages from Failure() and return codes and messages
-   * from ParamFailure[Int[(msg, _, _, code)
+   * from ParamFailure[Int[(msg, _, _, code) 
    */
   protected implicit def boxToResp[T](in: Box[T])
-  (implicit c: T => LiftResponse): () => Box[LiftResponse] =
+  (implicit c: T => LiftResponse): () => Box[LiftResponse] = 
     in match {
       case Full(v) => () => Full(c(v))
       case e: EmptyBox => () => emptyToResp(e)
@@ -536,12 +536,12 @@ trait RestHelper extends LiftRules.DispatchPF {
   protected def emptyToResp(eb: EmptyBox): Box[LiftResponse] =
     eb match {
       case ParamFailure(msg, _, _, code: Int) =>
-        Full(InMemoryResponse(msg.getBytes("UTF-8"),
+        Full(InMemoryResponse(msg.getBytes("UTF-8"), 
                               ("Content-Type" ->
                                "text/plain; charset=utf-8") ::
                               Nil, Nil, code))
-
-      case Failure(msg, _, _) =>
+      
+      case Failure(msg, _, _) => 
         Full(NotFoundResponse(msg))
 
       case _ => Empty
@@ -552,7 +552,7 @@ trait RestHelper extends LiftRules.DispatchPF {
    * DispatchPF.
    */
   protected implicit def optionToResp[T](in: Option[T])
-  (implicit c: T => LiftResponse): () => Box[LiftResponse] =
+  (implicit c: T => LiftResponse): () => Box[LiftResponse] = 
     in match {
       case Some(v) => () => Full(c(v))
       case _ => () => Empty
@@ -562,33 +562,33 @@ trait RestHelper extends LiftRules.DispatchPF {
    * Turn a () => Box[T] into the return type expected by
    * DispatchPF.  Note that this method will return
    * messages from Failure() and return codes and messages
-   * from ParamFailure[Int[(msg, _, _, code)
+   * from ParamFailure[Int[(msg, _, _, code) 
    */
   protected implicit def boxFuncToResp[T](in: () => Box[T])
-  (implicit c: T => LiftResponse): () => Box[LiftResponse] =
+  (implicit c: T => LiftResponse): () => Box[LiftResponse] = 
     () => {
       in() match {
         case ParamFailure(msg, _, _, code: Int) =>
-          Full(InMemoryResponse(msg.getBytes("UTF-8"),
+          Full(InMemoryResponse(msg.getBytes("UTF-8"), 
                                 ("Content-Type" ->
                                  "text/plain; charset=utf-8") ::
                                 Nil, Nil, code))
-
-        case Failure(msg, _, _) =>
+        
+        case Failure(msg, _, _) => 
           Full(NotFoundResponse(msg))
-
+        
         case Full(v) => Full(c(v))
         case _ => Empty
       }
     }
-
+    
   /**
    * Turn an Option[T] into the return type expected by
    * DispatchPF.
    */
   protected implicit def optionFuncToResp[T](in: () => Option[T])
-  (implicit c: T => LiftResponse): () => Box[LiftResponse] =
-    () =>
+  (implicit c: T => LiftResponse): () => Box[LiftResponse] = 
+    () => 
       in() match {
         case Some(v) => Full(c(v))
         case _ => Empty
@@ -605,19 +605,19 @@ trait RestHelper extends LiftRules.DispatchPF {
   /**
    * Convert a Node to an XmlResponse
    */
-  protected implicit def nodeToResp(in: scala.xml.Node): LiftResponse =
+  protected implicit def nodeToResp(in: scala.xml.Node): LiftResponse = 
     createXmlResponse(in)
 
   /**
    * Convert a JValue to a LiftResponse
    */
-  implicit def jsonToResp(in: JsonAST.JValue): LiftResponse =
+  implicit def jsonToResp(in: JsonAST.JValue): LiftResponse = 
     JsonResponse(in)
 
   /**
    * Convert a JsExp to a LiftResponse
    */
-  implicit def jsExpToResp(in: js.JsExp): LiftResponse =
+  implicit def jsExpToResp(in: js.JsExp): LiftResponse = 
     JavaScriptResponse(in.cmd)
 
     /**
@@ -627,7 +627,7 @@ trait RestHelper extends LiftRules.DispatchPF {
     JavaScriptResponse(in)
 
   /** @return a SuperString with more available methods such as roboSplit or commafy */
-  protected implicit def listStringToSuper(in: List[String]):
+  protected implicit def listStringToSuper(in: List[String]): 
   SuperListString = new SuperListString(in)
 
   /** @return a SuperString with more available methods such as roboSplit or commafy */
@@ -645,7 +645,7 @@ trait RestHelper extends LiftRules.DispatchPF {
    * })
    * </code>
    */
-  protected implicit def listToServeMagic(in: List[String]):
+  protected implicit def listToServeMagic(in: List[String]): 
   ListServeMagic = new ListServeMagic(in)
 
   /**
@@ -653,11 +653,11 @@ trait RestHelper extends LiftRules.DispatchPF {
    * and replace all the JFields with those in toMerge
    */
   protected def mergeJson(original: JValue, toMerge: JValue): JValue = {
-    def replace(lst: List[JField], f: JField): List[JField] =
+    def replace(lst: List[JField], f: JField): List[JField] = 
       f :: lst.filterNot(_.name == f.name)
 
     original match {
-      case JObject(fields) =>
+      case JObject(fields) => 
         toMerge match {
           case jf: JField => JObject(replace(fields, jf))
           case JObject(otherFields) =>
@@ -665,7 +665,7 @@ trait RestHelper extends LiftRules.DispatchPF {
           case _ => original
         }
 
-      case jf: JField =>
+      case jf: JField => 
         toMerge match {
           case jfMerge: JField => JObject(replace(List(jf), jfMerge))
           case JObject(otherFields) =>
@@ -693,14 +693,14 @@ final class ListServeMagic(list: List[String]) {
    * })
    * </code>
    */
-  def prefixJx[T](pf: PartialFunction[Req, BoxOrRaw[T]]): PartialFunction[Req, BoxOrRaw[T]] =
+  def prefixJx[T](pf: PartialFunction[Req, BoxOrRaw[T]]): PartialFunction[Req, BoxOrRaw[T]] = 
     new PartialFunction[Req, BoxOrRaw[T]] {
-      def isDefinedAt(req: Req): Boolean =
+      def isDefinedAt(req: Req): Boolean = 
         req.path.partPath.startsWith(list) && {
           pf.isDefinedAt(req.withNewPath(req.path.drop(listLen)))
         }
 
-      def apply(req: Req): BoxOrRaw[T] =
+      def apply(req: Req): BoxOrRaw[T] = 
         pf.apply(req.withNewPath(req.path.drop(listLen)))
     }
 
@@ -718,15 +718,15 @@ final class ListServeMagic(list: List[String]) {
   def prefix(pf: PartialFunction[Req, () => Box[LiftResponse]]):
   PartialFunction[Req, () => Box[LiftResponse]] =
     new PartialFunction[Req, () => Box[LiftResponse]] {
-      def isDefinedAt(req: Req): Boolean =
+      def isDefinedAt(req: Req): Boolean = 
         req.path.partPath.startsWith(list) && {
           pf.isDefinedAt(req.withNewPath(req.path.drop(listLen)))
         }
 
-      def apply(req: Req): () => Box[LiftResponse] =
+      def apply(req: Req): () => Box[LiftResponse] = 
         pf.apply(req.withNewPath(req.path.drop(listLen)))
     }
-
+ 
 }
 
 /**
@@ -736,7 +736,7 @@ final class ListServeMagic(list: List[String]) {
 trait JsonXmlAble
 
 /**
- * This trait is part of the ADT that allows the choice between
+ * This trait is part of the ADT that allows the choice between 
  */
 sealed trait JsonXmlSelect
 

@@ -35,7 +35,7 @@ public final class Func {
      * @returns the Scala function
      */
     public static<Z> Function0<Z> lift(Func0<Z> f) {
-	return bridge.lift(f);
+        return bridge.lift(f);
     }
 
     /**
@@ -46,7 +46,7 @@ public final class Func {
      * @returns the Scala function
      */
     public static<A, Z> Function1<A, Z> lift(Func1<A, Z> f) {
-	return bridge.lift(f);
+        return bridge.lift(f);
     }
 
     /**
@@ -57,7 +57,7 @@ public final class Func {
      * @returns the Scala function
      */
     public static<A, B, Z> Function2<A, B, Z> lift(Func2<A, B, Z> f) {
-	return bridge.lift(f);
+        return bridge.lift(f);
     }
 
     /**
@@ -68,7 +68,7 @@ public final class Func {
      * @returns the Scala function
      */
     public static<A, B, C, Z> Function3<A, B, C, Z> lift(Func3<A, B, C, Z> f) {
-	return bridge.lift(f);
+        return bridge.lift(f);
     }
 
     /**
@@ -79,7 +79,7 @@ public final class Func {
      * @returns the Scala function
      */
     public static<A, B, C, D, Z> Function4<A, B, C, D, Z> lift(Func4<A, B, C, D, Z> f) {
-	return bridge.lift(f);
+        return bridge.lift(f);
     }
 
     /**
@@ -90,6 +90,6 @@ public final class Func {
      * @returns the Scala function
      */
     public static<Z> Function0<Z> lift(Callable<Z> f) {
-	return bridge.lift(f);
+        return bridge.lift(f);
     }
 }

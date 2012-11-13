@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package util
+package net.liftweb 
+package util 
 
 /*
  A wrapper arround a Scala Enumeration Value that has a name, description for each object

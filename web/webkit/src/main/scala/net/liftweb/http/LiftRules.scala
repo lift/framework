@@ -1493,7 +1493,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @deprecated("Use autoIncludeAjaxCalc", "2.4")
   @volatile var autoIncludeAjax: LiftSession => Boolean = session => autoIncludeAjaxCalc.vend().apply(session)
 
-  val autoIncludeAjaxCalc: FactoryMaker[() => LiftSession => Boolean] =
+  val autoIncludeAjaxCalc: FactoryMaker[() => LiftSession => Boolean] = 
   new FactoryMaker(() => () => (session: LiftSession) => true) {}
 
   /**

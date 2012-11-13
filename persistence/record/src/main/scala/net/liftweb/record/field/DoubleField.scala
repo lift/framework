@@ -27,10 +27,10 @@ import Helpers._
 import S._
 
 trait DoubleTypedField extends NumericTypedField[Double] {
-
+  
   def setFromAny(in: Any): Box[Double] = setNumericFromAny(in, _.doubleValue)
 
-  def setFromString(s: String): Box[Double] =
+  def setFromString(s: String): Box[Double] = 
     if(s == null || s.isEmpty) {
       if(optional_?)
     	  setBox(Empty)
@@ -43,7 +43,7 @@ trait DoubleTypedField extends NumericTypedField[Double] {
   def defaultValue = 0.0
 
   def asJValue = valueBox.map(JDouble) openOr (JNothing: JValue)
-
+  
   def setFromJValue(jvalue: JValue) = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case JDouble(d)                   => setBox(Full(d))

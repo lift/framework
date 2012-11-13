@@ -36,7 +36,7 @@ object Mailer extends Mailer
  */
 trait Mailer extends SimpleInjector {
   private val logger = Logger(classOf[Mailer])
-
+  
   sealed abstract class MailTypes
   /**
    * Add message headers to outgoing messages
@@ -219,7 +219,7 @@ trait Mailer extends SimpleInjector {
   def blockingSendMail(from: From, subject: Subject, rest: MailTypes*) {
     msgSendImpl(from, subject, rest.toList)
   }
-
+  
   def msgSendImpl(from: From, subject: Subject, info: List[MailTypes]) {
     val session = authenticator match {
       case Full(a) => jndiSession openOr Session.getInstance(buildProps, a)
@@ -236,7 +236,7 @@ trait Mailer extends SimpleInjector {
     message.setSubject(subj)
     info.foreach {
       case MessageHeader(name, value) => message.addHeader(name, value)
-      case _ =>
+      case _ => 
     }
 
     val bodyTypes = info.flatMap {case x: MailBodyType => Some[MailBodyType](x); case _ => None}

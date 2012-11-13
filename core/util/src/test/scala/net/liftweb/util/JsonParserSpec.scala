@@ -141,7 +141,7 @@ object JsonParserSpec extends Specification  {
     """{"command":"setPoint","params":{"mf":
 51.3256123,"$a":-0.6379592,"x":-0.6379592,"y":51.3256123}}""")
       p2.isDefined must be_==(true)
-
+      
     }
   }
 }

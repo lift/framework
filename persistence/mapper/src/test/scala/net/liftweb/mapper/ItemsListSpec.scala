@@ -43,7 +43,7 @@ object ItemsListSpec extends Specification  {
       def metaMapper = SampleItem
     }
   }
-
+  
   "ItemsList" should {
     "buffer items to save" in {
       val il = init
@@ -76,7 +76,7 @@ object ItemsListSpec extends Specification  {
       il.removed.length must_== 0
     }
   }
-
+  
 }
 
 class SampleItem extends LongKeyedMapper[SampleItem] with IdPK {

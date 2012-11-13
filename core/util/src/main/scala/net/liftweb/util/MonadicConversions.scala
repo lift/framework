@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package util
+package net.liftweb 
+package util 
 
 /**
  * Holds the implicit conversions from/to MonadicCondition

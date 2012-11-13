@@ -208,7 +208,7 @@ object Props extends Logger {
    * <b>before</b> you call anything else in Props.
    */
   @volatile var whereToLook: () => List[(String, () => Box[InputStream])] = () => Nil
-
+  
 
   /**
    * The map of key/value pairs retrieved from the property file.
@@ -226,7 +226,7 @@ object Props extends Logger {
     toTry.map{
       f => {
         val name = f() + "props"
-        name -> {() =>
+        name -> {() => 
           val res = tryo{getClass.getResourceAsStream(name)}.filter(_ ne null)
           trace("Trying to open resource %s. Result=%s".format(name, res))
           res

@@ -45,7 +45,7 @@ import org.specs2.mutable._
  *   <li>statelessTest</li>
  *   <li>statefulRewrite</li>
  * </ul>
- *
+ *   
  */
 object MockWeb {
   /**
@@ -76,7 +76,7 @@ object MockWeb {
   def testReq [T](url : String, contextPath : String = "")(f : Req => T) : T = {
     testReq(new MockHttpServletRequest(url, contextPath))(f)
   }
-
+  
   /**
    * Executes a given function against a new Req constructed
    * from the given HttpServletRequest. If useLiftRules
@@ -86,7 +86,7 @@ object MockWeb {
   def testReq [T](request : HttpServletRequest)(f : Req => T) : T = {
     // TODO : Confirm that we can pass in a null provider without issue
     val req = new HTTPRequestServlet(request, null)
-
+    
     withLiftRules {
       tryo {
         LiftRules.early.toList.foreach(_(req))
@@ -102,7 +102,7 @@ object MockWeb {
       } else {
         Req(req, Nil, System.nanoTime)
       }
-
+    
     f(r)
   }
 
@@ -114,7 +114,7 @@ object MockWeb {
    *
    * <pre name="code" class="scala">
    * object testVar extends SessionVar[String]("Empty")
-   *
+   * 
    * val testSession = testS("http://foo.com/test") {
        testVar("Foo!")
        S.session // returns the current session
@@ -129,15 +129,15 @@ object MockWeb {
    * @param url The url to use for this request. Can either be a
    * full URL, or just the path and queryString. See MockHttpServletRequest.processUrl
    * for more details
-   *
+   * 
    * @param session The LiftSession to use for this request. If you don't provide
    * one a new one will be created for you
-   *
+   * 
    * @param contextPath The servlet context path for this request
-   *
+   * 
    * @param testFunc The function to be executed in the scope of a new S
    */
-  def testS [T](url : String,
+  def testS [T](url : String, 
                 session : Box[LiftSession] = Empty,
                 contextPath : String = "")(testFunc : => T) : T =
     testReq(url, contextPath)(realTestS(session)(() => testFunc))
@@ -164,14 +164,14 @@ object MockWeb {
    * @param testFunc The function to be executed in the scope of a new S
    */
   def testS [T](request : HttpServletRequest,
-                session : Box[LiftSession])(testFunc : => T) : T =
+                session : Box[LiftSession])(testFunc : => T) : T = 
     testReq(request)(realTestS(session)(() => testFunc))
 
   /**
    * Sets up S based on the provided request
    * and a new session.
    */
-  def testS [T](request : HttpServletRequest)(testFunc : => T) : T =
+  def testS [T](request : HttpServletRequest)(testFunc : => T) : T = 
     testReq(request)(realTestS(Empty)(() => testFunc))
 
   /**
@@ -182,7 +182,7 @@ object MockWeb {
     val session = newSession openOr LiftSession(req)
     S.init(req, session) {
       f()
-    }
+    }    
   }
 
   /**
@@ -197,7 +197,7 @@ object MockWeb {
    * for more details
    *
    * @param f The function to execute in the context of the emulated snippet
-   *
+   * 
    */
   def withSnippet[T](name : String, attrs : MetaData = Null)(f : => T) : T =
     S.withAttrs(attrs) {

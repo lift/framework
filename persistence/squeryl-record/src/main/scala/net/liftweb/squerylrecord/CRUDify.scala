@@ -47,7 +47,7 @@ trait CRUDify[K, T <: Record[T] with KeyedEntity[K]] extends Crudify {
 	  table.lookup(idFromString(in))
   	}
 
-  override def findForList(start: Long, count: Int) =
+  override def findForList(start: Long, count: Int) = 
     inTransaction{
 	  from(table)(t => select(t)).page(start.toInt, count).toList
   	}

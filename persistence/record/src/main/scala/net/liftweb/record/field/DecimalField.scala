@@ -37,7 +37,7 @@ trait DecimalTypedField extends NumericTypedField[BigDecimal] {
 
   def setFromAny(in : Any): Box[BigDecimal] = setNumericFromAny(in, n => BigDecimal(n.toString))
 
-  def setFromString (s : String) : Box[BigDecimal] =
+  def setFromString (s : String) : Box[BigDecimal] = 
     if(s == null || s.isEmpty) {
       if(optional_?)
     	  setBox(Empty)

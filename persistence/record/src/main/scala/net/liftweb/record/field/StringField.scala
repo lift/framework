@@ -34,7 +34,7 @@ trait StringTypedField extends TypedField[String] with StringValidators {
   val maxLength: Int
 
   def maxLen = maxLength
-
+  
   def setFromAny(in: Any): Box[String] = in match {
     case seq: Seq[_] if !seq.isEmpty => setFromAny(seq.head)
     case _ => genericSetFromAny(in)

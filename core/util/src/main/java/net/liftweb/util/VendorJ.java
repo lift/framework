@@ -29,20 +29,20 @@ public final class VendorJ {
      * Create a Vendor from a Func0
      */
     public static<T> Vendor<T> vendor(Func0<T> f) {
-	return j.vendor(f);
+        return j.vendor(f);
     }
 
     /**
      * Create a Vendor from a Callable
      */
     public static<T> Vendor<T> vendor(Callable<T> f) {
-	return j.vendor(f);
+        return j.vendor(f);
     }
 
     /**
      * Create a Vendor from a value
      */
     public static<T> Vendor<T> vendor(T v) {
-	return j.vendor(v);
+        return j.vendor(v);
     }
 }

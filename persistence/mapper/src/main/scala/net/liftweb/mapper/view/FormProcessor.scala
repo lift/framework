@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package mapper
-package view
+package net.liftweb 
+package mapper 
+package view 
 
 import scala.xml.{Group, Elem, NodeSeq}
 import scala.collection.mutable.{Map => mMap}

@@ -72,7 +72,7 @@ object Comet extends DispatchSnippet with LazyLoggable {
 
 
     (for {ctx <- S.session} yield {
-      if (!ctx.stateful_?)
+      if (!ctx.stateful_?) 
         throw new StateInStatelessException(
           "Lift does not support Comet for stateless requests")
 
@@ -84,14 +84,14 @@ object Comet extends DispatchSnippet with LazyLoggable {
              if (Props.devMode) {
                c ! UpdateDefaultXml(kids)
              }
-
+             
              (c.!?(c.cometRenderTimeout, AskRender)) match {
                case Full(AnswerRender(response, _, when, _)) if c.hasOuter =>
                  buildSpan(Empty, c.buildSpan(when, response.inSpan) ++ response.outSpan, c, c.uniqueId+"_outer")
-
+               
                case Full(AnswerRender(response, _, when, _)) =>
                  c.buildSpan(when, response.inSpan)
-
+               
                case e =>
                  if (c.cometRenderTimeoutHandler().isDefined) {
                    c.cometRenderTimeoutHandler().open_!
@@ -101,7 +101,7 @@ object Comet extends DispatchSnippet with LazyLoggable {
              }}} openOr {
                throw new CometNotFoundException("type: "+theType+" name: "+name)
              }
-
+         
        } catch {
          case e: SnippetFailureException => throw e
          case e: Exception => logger.error("Failed to find a comet actor", e); kids
@@ -116,14 +116,14 @@ abstract class CometFailureException(msg: String) extends SnippetFailureExceptio
    override def buildStackTrace: NodeSeq = <div>{msg}</div> ++ super.buildStackTrace
 }
 class CometTimeoutException(msg: String) extends CometFailureException(msg) {
-  def snippetFailure: LiftRules.SnippetFailures.Value =
+  def snippetFailure: LiftRules.SnippetFailures.Value = 
     LiftRules.SnippetFailures.CometTimeout
 
 
 }
 
 class CometNotFoundException(msg: String) extends CometFailureException(msg) {
-  def snippetFailure: LiftRules.SnippetFailures.Value =
+  def snippetFailure: LiftRules.SnippetFailures.Value = 
     LiftRules.SnippetFailures.CometNotFound
 }
 

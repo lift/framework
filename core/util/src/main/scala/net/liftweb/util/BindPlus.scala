@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package util
+package net.liftweb 
+package util 
 
 import scala.xml.{NodeSeq, PrefixedAttribute, MetaData}
 import Helpers.{bind, BindParam, FuncBindParam, TheBindParam}
 import common._
 
 object BindPlus {
-
+  
   class BindableNodeSeq(ns: NodeSeq) {
     def bind(prefix: String, bindParams: BindParam*) = Helpers.bind(prefix, ns, bindParams: _*)
     def bind(prefix: String, nodeFailureXform: Box[NodeSeq => NodeSeq],
              paramFailureXform: Box[PrefixedAttribute => MetaData], bindParams: BindParam*) =
       Helpers.bind(prefix, nodeFailureXform, paramFailureXform, ns, bindParams: _*)
-
+      
     def bindSwitch(prefix: String, choices: Seq[String])(choice: (Int, NodeSeq=>NodeSeq)) =
       BindPlus.bindSwitch(prefix, ns, choices)(choice)
   }
@@ -50,8 +50,8 @@ object BindPlus {
    * Just import this method, or Util._
    */
   implicit def nodeSeqToBindable(ns: NodeSeq): BindableNodeSeq = new BindableNodeSeq(ns)
-
-
+  
+  
   /**
     Allows one to have parts of the view that are alternatives to each other.
     For example:

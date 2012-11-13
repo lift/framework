@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package util
+package net.liftweb 
+package util 
 
 import java.util.concurrent.{ConcurrentHashMap => CHash, Callable}
 import java.lang.ThreadLocal

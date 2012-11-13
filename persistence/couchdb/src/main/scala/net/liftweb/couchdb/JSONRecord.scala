@@ -49,7 +49,7 @@ import JSONRecordHelpers._
 /** Specialized Record that can be encoded and decoded from JSON */
 trait JSONRecord[MyType <: JSONRecord[MyType]] extends Record[MyType] {
   self: MyType =>
-
+  
   private var _additionalJFields: List[JField] = Nil
 
   /** Refines meta to require a JSONMetaRecord */
@@ -127,7 +127,7 @@ trait JSONMetaRecord[BaseRecord <: JSONRecord[BaseRecord]] extends MetaRecord[Ba
       lazy val optionalFieldNames = TreeSet(flds.filter(_.optional_?).map(jsonName): _*)
       lazy val recordFieldsNotInJson = recordFieldNames -- jsonFieldNames -- optionalFieldNames
       lazy val jsonFieldsNotInRecord = jsonFieldNames -- recordFieldNames
-
+      
       // If this record type has been configured to be stricter about fields, check those first
       if ((overrideNeedAllJSONFields.box openOr needAllJSONFields) && !recordFieldsNotInJson.isEmpty) {
         Failure("The " + recordFieldsNotInJson.mkString(", ") + " field(s) were not found, but are required.")
@@ -150,10 +150,10 @@ trait JSONMetaRecord[BaseRecord <: JSONRecord[BaseRecord]] extends MetaRecord[Ba
     jvalue match {
       case JObject(jfields) => fromJFields(jfields)
       case other => expectedA("JObject", other)
-    }
+    }      
   }
 }
-
+ 
 /** Trait for fields with JSON-specific behavior */
 trait JSONField {
   /** Return Full(name) to use that name in the encoded JSON object, or Empty to use the same name as in Scala. Defaults to Empty */

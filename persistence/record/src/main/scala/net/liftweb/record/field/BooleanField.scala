@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package record
-package field
+package net.liftweb 
+package record 
+package field 
 
 import scala.xml._
 import net.liftweb.common._
@@ -29,7 +29,7 @@ import S._
 import JE._
 
 trait BooleanTypedField extends TypedField[Boolean] {
-
+  
   def setFromAny(in: Any): Box[Boolean] = in match{
       case b: java.lang.Boolean => setBox(Full(b.booleanValue))
       case Full(b: java.lang.Boolean) => setBox(Full(b.booleanValue))
@@ -38,7 +38,7 @@ trait BooleanTypedField extends TypedField[Boolean] {
       case _ => genericSetFromAny(in)
   }
 
-  def setFromString(s: String): Box[Boolean] =
+  def setFromString(s: String): Box[Boolean] = 
     if(s == null || s.isEmpty) {
       if(optional_?)
     	  setBox(Empty)

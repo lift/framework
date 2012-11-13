@@ -68,19 +68,19 @@ object MappedLongForeignKeySpec extends Specification with org.specs2.specificat
       dog.owner(user)
       dog.owner.obj.isDefined must beTrue
     }
-
+    
     "be primed after setting a Boxed reference" in {
       val dog = Dog.create
       val user = User.create
       dog.owner(Full(user))
       dog.owner.obj.isDefined must beTrue
     }
-
+    
     "be empty after setting an Empty" in {
       val user = User.create
       val dog = Dog.create.owner(user)
       dog.owner(Empty)
-
+      
       dog.owner.obj must_== Empty
       dog.owner.is must_== 0L
     }

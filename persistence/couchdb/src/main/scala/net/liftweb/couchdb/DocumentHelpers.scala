@@ -38,7 +38,7 @@ object DocumentHelpers {
   /** Strip _id and _rev from an object */
   def stripIdAndRev(in: JObject): JObject =
     JObject(in.obj.filter { case JField("_id"|"_rev", _) => false; case _ => true })
-
+  
   /** Update a JObject with new _id and _rev fields */
   def updateIdAndRev(in: JObject, id: String, rev: String): JObject =
     JObject(JField("_id", id) :: JField("_rev", rev) ::
@@ -51,7 +51,7 @@ object DocumentHelpers {
   /** Extension of JObject that has field accessing functions */
   class JObjectExtension(obj: JObject) {
     /** Full(_id) from the named field _id if present, Empty or Failure if not present */
-    def _id: Box[String] = get[JString]("_id").map(_.s)
+    def _id: Box[String] = get[JString]("_id").map(_.s) 
 
     /** Full(_rev) from the named field _rev if present, Empty or Failure if not present */
     def _rev: Box[String] = get[JString]("_rev").map(_.s)
@@ -94,7 +94,7 @@ object DocumentHelpers {
     /** Construct a version of the input JObject with all the given fields removed (if present) */
     def remove(fields: String*): JObject =
       JObject(obj.obj.filter { case JField(key, _) if !(fields contains key) => true; case _ => false })
-
+    
     /** Clean out the usual couch fields of "_id", "_rev", and "type", if present. */
     def clean: JObject = remove("_id", "_rev", "type")
   }

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package http
-package js
-package yui
+package net.liftweb 
+package http 
+package js 
+package yui 
 
 import scala.xml.{Elem, NodeSeq}
 

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package record
-package field
+package net.liftweb 
+package record 
+package field 
 
 import scala.xml._
 import net.liftweb.util._

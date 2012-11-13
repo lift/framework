@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package common
+package net.liftweb 
+package common 
 
 /**
  * The simple definition of an actor.  Something that

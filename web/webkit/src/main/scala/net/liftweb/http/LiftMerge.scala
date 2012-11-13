@@ -112,22 +112,22 @@ private[http] trait LiftMerge {
                 var bodyTail = false
 
                 v match {
-                  case e: Elem if e.label == "html" &&
+                  case e: Elem if e.label == "html" && 
                   !inHtml => htmlTag = e; inHtml = true && doMergy
 
-                  case e: Elem if e.label == "head" && inHtml &&
-                  !inBody => headTag = e;
+                  case e: Elem if e.label == "head" && inHtml && 
+                  !inBody => headTag = e; 
                   inHead = true && doMergy; justHead = true && doMergy
 
-                  case e: Elem if (e.label == "head" ||
-                                   e.label.startsWith("head_")) &&
+                  case e: Elem if (e.label == "head" || 
+                                   e.label.startsWith("head_")) && 
                   inHtml && inBody => bodyHead = true && doMergy
 
-                  case e: Elem if e.label == "tail" && inHtml &&
+                  case e: Elem if e.label == "tail" && inHtml && 
                   inBody => bodyTail = true && doMergy
 
                   case e: Elem if e.label == "body" && inHtml =>
-                    bodyTag = e; inBody = true && doMergy;
+                    bodyTag = e; inBody = true && doMergy; 
                   justBody = true && doMergy
 
                   case _ =>
@@ -207,7 +207,7 @@ private[http] trait LiftMerge {
       }
 
       S.jsToAppend match {
-        case Nil =>
+        case Nil => 
         case x :: Nil => addlTail += js.JsCmds.Script(x)
         case xs => addlTail += js.JsCmds.Script(xs.foldLeft(js.JsCmds.Noop)(_ & _))
       }

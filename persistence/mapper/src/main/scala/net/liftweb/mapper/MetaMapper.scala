@@ -787,7 +787,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     // We generally use setObject for everything, but we've found some broken JDBC drivers
     // which has prompted us to use type-specific handling for certain types
     mappedColumnType match {
-      case Types.VARCHAR =>
+      case Types.VARCHAR => 
         // Set a string with a simple guard for null values
         st.setString(index, if (value ne null) value.toString else value.asInstanceOf[String])
 
@@ -796,7 +796,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
         case intData : java.lang.Integer => st.setBoolean(index, intData.intValue != 0)
         case b : java.lang.Boolean => st.setBoolean(index, b.booleanValue)
         // If we can't figure it out, maybe the driver can
-        case other => setObj(st, index, other, mappedColumnType)
+        case other => setObj(st, index, other, mappedColumnType) 
       }
 
       // In all other cases, delegate to the driver

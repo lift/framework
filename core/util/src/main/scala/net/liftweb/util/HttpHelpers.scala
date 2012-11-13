@@ -27,9 +27,9 @@ import common._
 
 object HttpHelpers extends ListHelpers with StringHelpers
 
-trait HttpHelpers {
+trait HttpHelpers { 
   self: ListHelpers with StringHelpers  =>
-
+    
     /**
      * The list of known suffixes used to split the URI into path parts and suffixes.
      */
@@ -206,13 +206,13 @@ trait HttpHelpers {
       case x => x
     }
   }
-
+  
   /**
    * Given a URL and a Lift function String, append the function
    * even if the URL has query params and a #
    */
   def appendFuncToURL(url: String, funcStr: String): String =
-  splitAtHash(url){to => to +
+  splitAtHash(url){to => to + 
                    (if (to.indexOf("?") >= 0) "&" else "?") + funcStr}
 
   /**
@@ -234,7 +234,7 @@ trait HttpHelpers {
     params match {
       case Nil => url
       case ps => splitAtHash(url) {
-        to => to +
+        to => to + 
         (if (to.indexOf("?") >= 0) "&" else "?") +
         ps.map{case (n, v) => urlEncode(n) + "=" + urlEncode(v)}.
         mkString("&")

@@ -43,7 +43,7 @@ case class JSONRequest(req: Request) {
     m.setEntity(jvalueToStringEntity(jvalue))
     HttpProtocolParams.setUseExpectContinue(m.getParams, false)
     Request.mimic(m) _
-  }
+  } 
 
   /** Alias for put */
   def <<<# (jvalue: JValue): Request = put(jvalue)

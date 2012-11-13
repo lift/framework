@@ -30,7 +30,7 @@ import util._
  */
 object DefaultRoutines {
   private val resourceMap: LRUMap[(String, List[String]),
-                                  Box[ResourceBundle]] =
+                                  Box[ResourceBundle]] = 
                                     new LRUMap(2000)
 
   private def rawResBundle(loc: Locale, path: List[String]): Box[ResourceBundle] = {
@@ -60,10 +60,10 @@ object DefaultRoutines {
           if (!Props.devMode) resourceMap(key) = res
           res
         }
-
+          
       }
     }
-
+    
   /**
    * Returns the resources for the current request.  In development
    * mode, these resources will be reloaded on each request.  In
@@ -92,7 +92,7 @@ object DefaultRoutines {
    * @see S.locale
    * @see Templates.apply
    * @see BundleBuilder.convert
-   *
+   * 
    */
   def resourceForCurrentReq(): List[ResourceBundle] = {
     val loc = S.locale

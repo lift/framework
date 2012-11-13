@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package actor
+package net.liftweb 
+package actor 
 
 import common._
 
@@ -141,7 +141,7 @@ object LAFuture {
     val ret = new LAFuture[List[T]]
 
     future.toList.zipWithIndex.foreach {
-      case (f, idx) =>
+      case (f, idx) => 
         f.foreach {
           v => sync.synchronized {
             vals.insert(idx, v)
@@ -171,7 +171,7 @@ object LAFuture {
     val ret = new LAFuture[Box[List[T]]]
 
     future.toList.zipWithIndex.foreach {
-      case (f, idx) =>
+      case (f, idx) => 
         f.foreach {
           vb => sync.synchronized {
             vb match {
@@ -182,7 +182,7 @@ object LAFuture {
                   ret.satisfy(Full(vals.toList))
                 }
               }
-
+              
               case eb: EmptyBox => {
                 ret.satisfy(eb)
               }

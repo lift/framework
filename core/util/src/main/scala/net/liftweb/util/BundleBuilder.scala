@@ -65,7 +65,7 @@ object BundleBuilder {
                                       e.attribute("default").map(_.text).
                                       flatMap(Helpers.asBoolean) getOrElse false) -> (e.child: NodeSeq))
               }
-
+              
               case _ => Nil
             }
 
@@ -79,8 +79,8 @@ object BundleBuilder {
             (if (i.country == country) 2 else 0) +
             (if (i.default) 1 else 0)
           }
-
-          def choose(lst: List[(EntryInfo, NodeSeq)]): NodeSeq =
+          
+          def choose(lst: List[(EntryInfo, NodeSeq)]): NodeSeq = 
             lst.reduceLeft{
               (a, b) => {
                 val ap = points(a._1)
@@ -97,7 +97,7 @@ object BundleBuilder {
           val res: Map[String, NodeSeq] = Map(map.map {
             case (name, lst) => name -> choose(lst)
           }.toSeq :_*)
-
+          
           List(new ResourceBundle {
             def getKeys(): Enumeration[String] = {
               val it = res.keys.iterator
@@ -106,8 +106,8 @@ object BundleBuilder {
                 def nextElement() = it.next
               }
             }
-
-            def handleGetObject(key: String): Object =
+            
+            def handleGetObject(key: String): Object = 
               res.get(key) match {
                 case Some(IsText(str)) => str
                 case Some(ns) => ns

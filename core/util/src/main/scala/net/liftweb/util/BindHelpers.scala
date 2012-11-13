@@ -122,7 +122,7 @@ object BindHelpers extends BindHelpers {
 trait BindHelpers {
   private lazy val logger = Logger(classOf[BindHelpers])
 
-  def errorDiv(body: NodeSeq): Box[NodeSeq] =
+  def errorDiv(body: NodeSeq): Box[NodeSeq] = 
     Props.mode match {
       case Props.RunModes.Development | Props.RunModes.Test =>
         Full(<div class="snippeterror" style="display: block; padding: 4px; margin: 8px; border: 2px solid red">
@@ -141,7 +141,7 @@ trait BindHelpers {
    * Adds a css class to the existing class tag of an Elem or create
    * the class attribute
    */
-  def addCssClass(cssClass: Box[String], elem: Elem): Elem =
+  def addCssClass(cssClass: Box[String], elem: Elem): Elem = 
     cssClass match {
       case Full(css) => addCssClass(css, elem)
       case _ => elem
@@ -155,7 +155,7 @@ trait BindHelpers {
     elem.attribute("class") match {
       case Some(clz) => {
         def fix(in: MetaData) =
-          new UnprefixedAttribute("class", clz.text.trim + " " + cssClass.trim,
+          new UnprefixedAttribute("class", clz.text.trim + " " + cssClass.trim, 
                                   in.filter{
                                     case p: UnprefixedAttribute =>
                                       p.key != "class"
@@ -328,10 +328,10 @@ trait BindHelpers {
     def calcValue(in: NodeSeq): Option[NodeSeq] = Some(myValue)
   }
 
-
+ 
   /**
    * BindParam that binds a given value into a new attribute.
-   *
+   *   
    * This object provides factory methods for convenience.
    */
   object AttrBindParam {
@@ -342,7 +342,7 @@ trait BindHelpers {
      * @param myValue The value to place in the new attribute
      * @param newAttr The new attribute label
      */
-    def apply(name: String, myValue: => NodeSeq, newAttr: String) =
+    def apply(name: String, myValue: => NodeSeq, newAttr: String) = 
       new AttrBindParam(name, myValue, newAttr)
 
     /**
@@ -353,28 +353,28 @@ trait BindHelpers {
      * @param myValue The value to place in the new attribute
      * @param newAttr The new attribute label
      */
-    def apply(name: String, myValue: String, newAttr: String) =
+    def apply(name: String, myValue: String, newAttr: String) = 
       new AttrBindParam(name, if (null eq myValue) NodeSeq.Empty else Text(myValue), newAttr)
 
     /**
      * Returns a prefixed attribute binding containing the specified NodeSeq
-     *
+     * 
      * @param name The name to bind against
      * @param myValue The value to place in the new attribute
      * @param newAttr The new attribute in the form (prefix,label)
      */
-    def apply(name: String, myValue: => NodeSeq, newAttr: Pair[String,String]) =
+    def apply(name: String, myValue: => NodeSeq, newAttr: Pair[String,String]) = 
       PrefixedBindWithAttr(newAttr._1, new AttrBindParam(name, myValue, newAttr._2))
 
     /**
      * Returns a prefixed attribute binding containing the specified String
      * wrapped in a Text() element
-     *
+     * 
      * @param name The name to bind against
      * @param myValue The value to place in the new attribute
      * @param newAttr The new attribute in the form (prefix,label)
      */
-    def apply(name: String, myValue: String, newAttr: Pair[String,String]) =
+    def apply(name: String, myValue: String, newAttr: Pair[String,String]) = 
       PrefixedBindWithAttr(newAttr._1, new AttrBindParam(name,
         if (null eq myValue) NodeSeq.Empty else Text(myValue), newAttr._2))
   }
@@ -419,7 +419,7 @@ trait BindHelpers {
    *   &lt;div id="FOOX" /&gt;
    *   &lt;div lift:calcId="3Y" /&gt;
    * </pre>
-   *
+   *   
    * @param name The name to bind against
    * @param value A function that takes the current attribute's value and computes
    * the new attribute value
@@ -432,7 +432,7 @@ trait BindHelpers {
 
   /**
    * BindParam using a function to calculate its value.
-   *
+   * 
    * This object provides factory methods for convenience.
    *
    */
@@ -449,13 +449,13 @@ trait BindHelpers {
 
     /**
      * Returns a prefixed attribute binding computed by the provided function
-     *
+     * 
      * @param name The name to bind against
      * @param value The function that will transform the original attribute value
      * into the new attribute value
      * @param newAttr The new attribute name in the form (prefix,label)
      */
-    def apply(name: String, value: => NodeSeq => NodeSeq, newAttr: Pair[String,String]) =
+    def apply(name: String, value: => NodeSeq => NodeSeq, newAttr: Pair[String,String]) = 
       PrefixedBindWithAttr(newAttr._1, new FuncAttrBindParam(name, value, newAttr._2))
   }
 
@@ -520,7 +520,7 @@ trait BindHelpers {
    * into the new attribute value. Returning None will cause this attribute to
    * be omitted.
    * @param newAttr The new attribute label
-   *
+   *   
    */
   final class FuncAttrOptionBindParam(val name: String, func: => NodeSeq => Option[NodeSeq], val newAttr: String)
           extends BindParam with BindWithAttr {
@@ -550,7 +550,7 @@ trait BindHelpers {
 
     /**
      * Returns a prefixed attribute binding computed by the provided function
-     *
+     * 
      * @param name The name to bind against
      * @param value The function that will transform the original attribute value
      * into the new attribute value. Returning None will cause this attribute to
@@ -596,7 +596,7 @@ trait BindHelpers {
    *   &lt;div lift:calcId="FOOX" />
    *   &lt;div />
    * </pre>
-   *
+   *   
    * @param name The name to bind against
    * @param value The function that will transform the original attribute value
    * into the new attribute value. Returning Empty will cause this attribute to
@@ -631,7 +631,7 @@ trait BindHelpers {
 
     /**
      * Returns a prefixed attribute binding computed by the provided function
-     *
+     * 
      * @param name The name to bind against
      * @param value The function that will transform the original attribute value
      * into the new attribute value. Returning Empty will cause this attribute to
@@ -761,15 +761,15 @@ trait BindHelpers {
     def ->[T](in: T) = Tuple2[String, T](name, in)
 
     def -%>(in: NodeSeq) = FuncBindParam(name, old => addAttributes(in , (BindHelpers.currentNode.map(_.attributes) openOr Null)))
-    def -%>(in: Box[NodeSeq]) = FuncBindParam(name,
-                                              old => in.map(a => addAttributes(a,
+    def -%>(in: Box[NodeSeq]) = FuncBindParam(name, 
+                                              old => in.map(a => addAttributes(a, 
                                                                                (BindHelpers.currentNode.map(_.attributes) openOr Null))) openOr
                                               NodeSeq.Empty)
-
+    
     def -%>(in: Option[NodeSeq]) = FuncBindParam(name, old => in.map(a => addAttributes(a,
                                                                                         (BindHelpers.currentNode.map(_.attributes) openOr
                                                                                          Null))) getOrElse NodeSeq.Empty)
-
+                                                 
     def -%>(in: NodeSeq => NodeSeq) = FuncBindParam(name, old => addAttributes(in(old),
                                                                                (BindHelpers.currentNode.map(_.attributes) openOr Null)))
 
@@ -968,7 +968,7 @@ trait BindHelpers {
               map.get(fake.label) match {
                 case None =>
                   nodeFailureXform.map(_(fake)) openOr fake
-
+                
                 case Some(ns) =>
                   ns.calcValue(fake.child) getOrElse NodeSeq.Empty
               }
@@ -1016,14 +1016,14 @@ trait BindHelpers {
               pa.pre == "lift" && pa.key == "bind" && (null ne pa.value)
             case _ => false
           }
-
+          
           bound.iterator.toList match {
             case xs :: _ => Some(e -> xs.value.text)
             case _ => None
           }
         }
-
-        case _ => None
+        
+        case _ => None 
       }
     }
   }
@@ -1046,13 +1046,13 @@ trait BindHelpers {
    *
    * @return the NodeSeq that results from the specified transforms
    */
-  def bind(vals: Map[String, NodeSeq], xml: NodeSeq): NodeSeq =
+  def bind(vals: Map[String, NodeSeq], xml: NodeSeq): NodeSeq = 
     bind(vals,xml,true,scala.collection.mutable.Set(vals.keySet.toSeq : _*))
 
   /**
    * This method exists so that we can do recursive binding with only root-node
    * error reporting.
-   *
+   * 
    * Replace the content of lift:bind nodes with the corresponding nodes found in a map,
    * according to the value of the "name" attribute.<p/>
    * Usage: <pre name="code" class="scala">
@@ -1230,7 +1230,7 @@ trait BindHelpers {
       f(id openOr Helpers.nextFuncName)(realNs)
     }
 
-
+    
   /**
    * Finds the first Element in the NodeSeq (or any children)
    * that has an ID attribute
@@ -1242,7 +1242,7 @@ trait BindHelpers {
    */
   def ensureId(ns: NodeSeq, id: String): NodeSeq = {
     var found = false
-
+    
     ns.map {
       case x if found => x
       case e: Elem => {
@@ -1257,7 +1257,7 @@ trait BindHelpers {
                  e.label, new UnprefixedAttribute("id", id, meta),
                  e.scope, e.child :_*)
       }
-
+ 
       case x => x
     }
   }
@@ -1339,7 +1339,7 @@ trait BindHelpers {
             in
           }
         }
-
+          
         case _ => in
       }
     }
@@ -1363,7 +1363,7 @@ trait BindHelpers {
 
     def ensure(node: Node): Node = node match {
       case Group(ns) => Group(ns.map(ensure))
-      case in: Elem =>
+      case in: Elem => 
         in.attribute("id") match {
           case Some(id) => {
             if (ids.contains(id.text)) {
@@ -1378,15 +1378,15 @@ trait BindHelpers {
                        in.label, in.attributes,
                        in.scope, in.child.map(ensure) :_*)
             }
-
+            
           }
-
-          case _ =>
+          
+          case _ => 
             new Elem(in.prefix,
                      in.label, in.attributes,
                      in.scope, in.child.map(ensure) :_*)
         }
-
+      
       case x => x
     }
 
