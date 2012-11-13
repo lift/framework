@@ -822,6 +822,10 @@ object JsCmds {
     def toJsCmd = "alert(" + text.encJs + ");"
   }
 
+  case class Prompt(text: String, default: String = "") extends JsExp {
+    def toJsCmd = "prompt(" + text.encJs + "," + default.encJs + ")"
+  }
+
   case class Confirm(text: String, yes: JsCmd) extends JsCmd {
     def toJsCmd = "if (confirm(" + text.encJs + ")) {" + yes.toJsCmd + "}"
   }
