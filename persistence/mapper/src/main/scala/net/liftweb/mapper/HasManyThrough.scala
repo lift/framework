@@ -108,4 +108,3 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
     super.afterCreate
   }
 }
-

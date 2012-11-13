@@ -188,4 +188,3 @@ trait KeyedRecord[MyType <: KeyedRecord[MyType, KeyType], KeyType] extends Recor
 
   def comparePrimaryKeys(other: MyType) = primaryKey === other.primaryKey
 }
-

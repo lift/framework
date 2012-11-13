@@ -73,4 +73,3 @@ object MsgsSpec extends Specification  {
     }
   }
 }
-

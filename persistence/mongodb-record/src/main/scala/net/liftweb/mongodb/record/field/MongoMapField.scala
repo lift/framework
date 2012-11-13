@@ -104,4 +104,3 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
     ))
   }
 }
-

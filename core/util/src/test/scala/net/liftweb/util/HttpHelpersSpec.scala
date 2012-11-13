@@ -96,4 +96,3 @@ object HttpHelpersSpec extends Specification with HttpHelpers with ListHelpers w
   }
  // currentSus is no longer part of Specification in 1.6  def provide(e: =>Example) = { currentSus.verb += " provide"; e }
 }
-

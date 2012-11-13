@@ -118,4 +118,3 @@ abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedFiel
    */
   override def _toForm: Box[NodeSeq] = Full(SHtml.checkbox(is,this.apply _))
 }
-

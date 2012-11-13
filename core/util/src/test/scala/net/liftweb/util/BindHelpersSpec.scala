@@ -318,7 +318,7 @@ object BindHelpersSpec extends Specification  {
 
   "Binding attributes" should {
     "handle static, unprefixed attributes" in {
-      BindHelpers.bind("test", 
+      BindHelpers.bind("test",
                        <div><div test:x="replace" /></div>,
                        AttrBindParam("x", "staticUnprefixed", "id")) must ==/(<div><div id="staticUnprefixed" /></div>)
     }
@@ -327,23 +327,21 @@ object BindHelpersSpec extends Specification  {
       // The Unprefixed attributes that Lift merges in cause the XML equals comparison to fail
       // stringifying and then reparsing fixes it.
       XML.loadString(
-        BindHelpers.bind("test", 
+        BindHelpers.bind("test",
                          <div><div test:x="dynamicUnprefixed" /></div>,
                          FuncAttrBindParam("x", {ns : NodeSeq => ns }, "id")).toString) must ==/(<div><div id="dynamicUnprefixed" /></div>)
     }
 
     "handle static, prefixed attributes" in {
-      BindHelpers.bind("test", 
+      BindHelpers.bind("test",
                        <div><div test:x="replace" /></div>,
                        AttrBindParam("x", "staticPrefixed", ("result","id"))) must ==/(<div><div result:id="staticPrefixed" /></div>)
     }
 
     "handle dynamic, prefixed attributes" in {
-      BindHelpers.bind("test", 
+      BindHelpers.bind("test",
                        <div><div test:x="dynamicPrefixed" /></div>,
                        FuncAttrBindParam("x", {ns : NodeSeq => ns}, ("result","id"))) must ==/(<div><div result:id="dynamicPrefixed" /></div>)
     }
   }
 }
-
-

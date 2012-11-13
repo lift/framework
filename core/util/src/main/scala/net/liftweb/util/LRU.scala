@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 import common._
 
@@ -51,4 +51,3 @@ class LRU[KeyType, ValueType](size: Int, loadFactor: Box[Float]) extends net.lif
   def keys: List[KeyType] = map.keySet().toList.map(_.asInstanceOf[KeyType])
   */
 }
-

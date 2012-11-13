@@ -72,4 +72,3 @@ trait MongoTestKit extends Specification with BeforeAfterExample {
     MongoDB.close
   }
 }
-

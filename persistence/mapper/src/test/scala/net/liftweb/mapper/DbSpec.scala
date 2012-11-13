@@ -32,22 +32,22 @@ object DbSpec extends Specification  {
 
   val provider = DbProviders.H2MemoryProvider
   val logF = Schemifier.infoF _
-  
+
   def cleanup() {
     provider.setupDB
     Schemifier.destroyTables_!!(DefaultConnectionIdentifier, logF ,  User)
     Schemifier.schemify(true, logF, DefaultConnectionIdentifier, User)
   }
- 
+
   "DB" should {
     "collect queries when queryCollector is added as logFunc" in {
       cleanup()
       DB.addLogFunc(DB.queryCollector)
-      
+
       var statements: List[(String, Long)] = Nil
-                           
+
       S.addAnalyzer((r,t,ss) => statements=ss)
-      
+
       val session = new LiftSession("hello", "", Empty)
       val elwood = S.initIfUninitted(session) {
         val r = User.find(By(User.firstName, "Elwood")).open_!
@@ -59,4 +59,3 @@ object DbSpec extends Specification  {
     }
   }
 }
-

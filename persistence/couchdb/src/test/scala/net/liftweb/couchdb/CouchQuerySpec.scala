@@ -190,4 +190,3 @@ object CouchQuerySpec extends Specification  {
     }
   }
 }
-

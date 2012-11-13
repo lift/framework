@@ -200,4 +200,3 @@ trait LDAPProtoUser[T <: LDAPProtoUser[T]] extends MegaProtoUser[T] {
         groups foreach { g => ldapRoles.set(ldapRoles.get :+ getGroupNameFromDn(g)) }
     }
 }
-

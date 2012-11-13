@@ -25,7 +25,7 @@ import scala.collection.JavaConversions._
 
 /**
  * The bridge between Scala *Vars implementations and
- * the 
+ * the
  */
 class VarsJBridge {
   def vendSessionVar[T](default: T, e: Exception): SessionVar[T] = {
@@ -677,5 +677,4 @@ abstract class TransientRequestMemoize[K, V] extends MemoizeVar[K, V] {
   protected object coreVar extends TransientRequestVar[LRU[K, Box[V]]](buildLRU) {
     override def __nameSalt = TransientRequestMemoize.this.__nameSalt
   }
-
 }

@@ -89,6 +89,4 @@ object CurrencyZoneSpec extends Specification  {
       auBoolean mustEqual true
     }
   }
-
 }
-

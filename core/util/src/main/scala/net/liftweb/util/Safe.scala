@@ -38,4 +38,3 @@ object Safe {
 
   def randomString(len: Int): String = StringHelpers.randomString(len)
 }
-

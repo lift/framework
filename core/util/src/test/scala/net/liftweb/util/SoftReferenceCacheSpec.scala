@@ -5,11 +5,11 @@ import net.liftweb.common._
 import org.specs2.specification.AroundExample
 
 object SoftReferenceCacheSpec extends Specification {
-  
+
   sequential
 
   object cache extends SoftReferenceCache[String, String](1)
-  
+
   "SoftReferenceCache " should {
     "Accept additions" in {
       cache += ("test" -> "test")
@@ -24,5 +24,4 @@ object SoftReferenceCacheSpec extends Specification {
       cache("test") must_== Empty
     }
   }
-
 }

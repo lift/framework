@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package record 
-package field 
+package net.liftweb
+package record
+package field
 
 import scala.xml._
 import net.liftweb.util._
@@ -55,4 +55,3 @@ class TextareaField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: I
 
 class OptionalTextareaField[OwnerType <: Record[OwnerType]](rec: OwnerType, maxLength: Int)
   extends OptionalStringField(rec, maxLength) with TextareaTypedField
-

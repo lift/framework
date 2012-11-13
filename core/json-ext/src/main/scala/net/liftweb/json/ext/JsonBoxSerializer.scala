@@ -98,4 +98,3 @@ class JsonBoxSerializer extends Serializer[Box[_]] {
     in.readObject
   }
 }
-

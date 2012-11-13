@@ -84,4 +84,3 @@ abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <
   def setFromDBObject(dbo: DBObject): Box[JObjectType] =
     setFromJValue(JObjectParser.serialize(dbo).asInstanceOf[JObject])
 }
-

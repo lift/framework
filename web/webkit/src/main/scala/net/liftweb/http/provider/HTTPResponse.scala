@@ -73,4 +73,3 @@ trait HTTPResponse {
    */
   def outputStream: OutputStream
 }
-

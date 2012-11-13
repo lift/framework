@@ -32,7 +32,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       net.liftweb.common.Logger(classOf[OneToMany[K,T]])
     ).accessorMethods map (_.invoke(this).asInstanceOf[MappedOneToManyBase[_]])
   }
-  
+
   /**
    * An override for save to propagate the save to all children
    * of this parent.
@@ -275,4 +275,3 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
     }
   }
 }
-

@@ -115,6 +115,3 @@ object ExcludeThisType {
     type other[U] = U ExcludeThisType T
   }
 }
-
-
-

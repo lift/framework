@@ -283,4 +283,3 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
   */
   def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.binaryColumnType + notNullAppender()
 }
-

@@ -457,6 +457,4 @@ object AltXML {
       toXML(it.next, pscope, sb, stripComment, convertAmp)
     }
   }
-
 }
-

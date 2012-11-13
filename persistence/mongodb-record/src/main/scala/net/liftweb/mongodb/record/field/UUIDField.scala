@@ -11,10 +11,10 @@
 * limitations under the License.
 */
 
-package net.liftweb 
-package mongodb 
-package record 
-package field 
+package net.liftweb
+package mongodb
+package record
+package field
 
 import java.util.UUID
 
@@ -83,6 +83,4 @@ class UUIDField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
   }
 
   def asJValue: JValue = valueBox.map(v => Meta.uuidAsJValue(v)) openOr (JNothing: JValue)
-
 }
-

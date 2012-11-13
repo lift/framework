@@ -70,6 +70,4 @@ object Embed extends DispatchSnippet {
       logger.error("'embed' snippet failed because it was invoked outside session context")
       throw new SnippetExecutionException("session is invalid")
   }
-
 }
-

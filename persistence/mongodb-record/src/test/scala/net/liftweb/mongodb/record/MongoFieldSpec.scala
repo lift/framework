@@ -518,4 +518,3 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
     }
   }
 }
-

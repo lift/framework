@@ -155,4 +155,3 @@ class REMatcher(val str: String, val compiled: Pattern) {
     ret.toList
   }
 }
-

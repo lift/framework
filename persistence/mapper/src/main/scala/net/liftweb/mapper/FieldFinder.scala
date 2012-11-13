@@ -105,4 +105,3 @@ class FieldFinder[T: ClassManifest](metaMapper: AnyRef, logger: net.liftweb.comm
 
   lazy val accessorMethods = findMagicFields(metaMapper, metaMapper.getClass.getSuperclass)
 }
-

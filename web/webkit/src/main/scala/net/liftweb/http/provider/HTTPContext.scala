@@ -93,4 +93,3 @@ trait HTTPContext {
    */
   def removeAttribute(name: String): Unit
 }
-

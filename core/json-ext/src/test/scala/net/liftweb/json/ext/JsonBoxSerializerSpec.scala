@@ -70,4 +70,3 @@ object JsonBoxSerializerSpec extends Specification  {
 case class SomeException(msg: String) extends Exception
 
 case class Person(name: String, age: Box[Int], mother: Box[Person], thing: Box[String] = Empty)
-

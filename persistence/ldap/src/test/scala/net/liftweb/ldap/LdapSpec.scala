@@ -174,4 +174,3 @@ object LdapSpec extends Specification with AfterExample with BeforeExample {
     }
   }
 }
-

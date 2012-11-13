@@ -903,4 +903,3 @@ class MongoRecordSpec extends Specification with MongoTestKit {
     }
   }
 }
-

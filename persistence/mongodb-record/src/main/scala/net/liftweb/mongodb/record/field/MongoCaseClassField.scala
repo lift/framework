@@ -127,4 +127,3 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
     setFromJValue(JsonParser.parse(in))
   }
 }
-

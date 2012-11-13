@@ -69,4 +69,3 @@ object ControlHelpersSpec extends Specification  {
     }
   }
 }
-

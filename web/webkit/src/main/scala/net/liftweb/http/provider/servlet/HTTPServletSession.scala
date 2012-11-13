@@ -70,6 +70,4 @@ case class SessionToServletBridge(uniqueId: String) extends HttpSessionBindingLi
   def valueUnbound(event: HttpSessionBindingEvent) {
     SessionMaster.sendMsg(RemoveSession(uniqueId))
   }
-
 }
-

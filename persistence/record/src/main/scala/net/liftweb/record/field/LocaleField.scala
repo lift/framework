@@ -71,4 +71,3 @@ class OptionalLocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
 
   def buildDisplayList: List[(String, String)] = ("", emptyOptionLabel)::LocaleField.localeList
 }
-

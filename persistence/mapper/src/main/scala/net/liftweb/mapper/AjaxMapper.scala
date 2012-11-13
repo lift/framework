@@ -43,4 +43,3 @@ trait AjaxEditableField[FieldType,OwnerType <: Mapper[OwnerType]] extends Mapped
    *  as editable. The default is true */
   def editableField = true
 }
-

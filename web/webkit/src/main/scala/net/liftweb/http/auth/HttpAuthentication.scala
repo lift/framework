@@ -218,4 +218,3 @@ case object MD5Session extends AuthenticationAlgorithm {
 case object MD5 extends AuthenticationAlgorithm {
   def code: String = "MD5"
 }
-

@@ -84,4 +84,3 @@ object MemoizeSpec extends Specification  {
 
   }
 }
-

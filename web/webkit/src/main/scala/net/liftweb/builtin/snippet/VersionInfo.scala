@@ -34,4 +34,3 @@ object VersionInfo extends DispatchSnippet {
   private def buildDate(ignore: NodeSeq): NodeSeq =
   Text(LiftRules.liftBuildDate.toString)
 }
-

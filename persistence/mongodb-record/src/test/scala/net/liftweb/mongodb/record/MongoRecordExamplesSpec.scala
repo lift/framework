@@ -48,7 +48,7 @@ package mongotestrecords {
     object _id extends UUIDField(this)
 
     //object binaryfield extends BinaryField(this)
-    object booleanfield	extends BooleanField(this)
+    object booleanfield extends BooleanField(this)
     //object countryfield extends CountryField(this)
     object datetimefield extends DateTimeField(this)
     //object decimalfield extends DecimalField(this)

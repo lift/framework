@@ -119,7 +119,7 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
     val dbl = new BasicDBList
 
     value.foreach {
-      case f =>	f.asInstanceOf[AnyRef] match {
+      case f => f.asInstanceOf[AnyRef] match {
         case x if primitive_?(x.getClass) => dbl.add(x)
         case x if mongotype_?(x.getClass) => dbl.add(x)
         case x if datetype_?(x.getClass) => dbl.add(datetype2dbovalue(x))

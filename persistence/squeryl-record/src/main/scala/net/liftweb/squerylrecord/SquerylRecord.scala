@@ -31,7 +31,7 @@ object SquerylRecord extends Loggable {
    * the original factory for non-record classes.
    */
   private[squerylrecord] val posoMetaDataFactory = FieldMetaData.factory
-  
+
 
   /**
    * Initialize the Squeryl/Record integration. This must be called somewhere during your Boot before you use any
@@ -49,34 +49,34 @@ object SquerylRecord extends Loggable {
     init()
     SessionFactory.concreteFactory = Some(() => sessionFactory)
   }
-  
+
   def buildLoanWrapper() = new LoanWrapper {
     override def apply[T](f: => T): T = inTransaction {
       f
     }
   }
-  
-  /** 
-   * 
+
+  /**
+   *
    * NOTE: Remove this along with the deprecated method below
-   * Keep track of the current Squeryl Session we've created using DB 
+   * Keep track of the current Squeryl Session we've created using DB
    * */
   private object currentSession extends DynoVar[Session]
-  
+
   @deprecated(message = "Lift DB.use style transactions do not properly clean up Squeryl resources.  Please use initWithSquerylSession instead.", "2.5")
   def init(mkAdapter: () => DatabaseAdapter) = {
     FieldMetaData.factory = new RecordMetaDataFactory
-    SessionFactory.externalTransactionManagementAdapter = Some(() => 
+    SessionFactory.externalTransactionManagementAdapter = Some(() =>
       currentSession.get orElse {
-    	  DB.currentConnection match {
-    		  case Full(superConn) =>
-    		  	val sess: Session = Session.create(superConn.connection, mkAdapter())
-    		  	sess.setLogger(s => logger.info(s))
-    		  	currentSession.set(sess)
-    		  	Some(sess)
-    		  case _ => None
-    	  }
+        DB.currentConnection match {
+          case Full(superConn) =>
+            val sess: Session = Session.create(superConn.connection, mkAdapter())
+            sess.setLogger(s => logger.info(s))
+            currentSession.set(sess)
+            Some(sess)
+          case _ => None
+        }
       })
   }
-  
+
 }

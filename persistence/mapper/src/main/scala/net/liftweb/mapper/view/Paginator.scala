@@ -99,4 +99,3 @@ class SortedMapperPaginatorSnippet[T <: Mapper[T]](
   headers: (String, MappedField[_, T])*
 ) extends SortedMapperPaginator[T](meta, initialSort, headers: _*)
   with SortedPaginatorSnippet[T, MappedField[_, T]]
-

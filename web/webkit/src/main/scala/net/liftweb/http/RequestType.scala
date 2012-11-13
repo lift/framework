@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
+package net.liftweb
+package http
 
 import provider._
 
@@ -67,4 +67,3 @@ object RequestType {
     }
   }
 }
-

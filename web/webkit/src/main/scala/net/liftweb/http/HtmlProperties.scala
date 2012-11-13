@@ -381,4 +381,3 @@ final case class XHtmlInHtml5OutProperties(userAgent: Box[String]) extends HtmlP
   val maxOpenRequests: Int =
     LiftRules.maxConcurrentRequests.vend(S.request openOr Req.nil)
 }
-

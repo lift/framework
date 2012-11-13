@@ -98,6 +98,4 @@ object Html5ParserSpec extends Specification with PendingUntilFixed with Html5Pa
       (parsed.open_! \ "@with").text must_== "dog"
     }
   }
-
 }
-

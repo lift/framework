@@ -40,4 +40,3 @@ object XmlMenu {
       Menu(Loc(name, link, text), apply(m \ "menu") : _*)
   }
 }
-

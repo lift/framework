@@ -97,4 +97,3 @@ class OptionalDateTimeField[OwnerType <: Record[OwnerType]](rec: OwnerType)
     setBox(value)
   }
 }
-

@@ -658,9 +658,9 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   protected def encodeAsJSON_! (toEncode: A): JsonAST.JObject = {
     toEncode.runSafe {
       JsonAST.JObject(JsonAST.JField("$persisted",
-				     JsonAST.JBool(toEncode.persisted_?)) ::
-		      this.mappedFieldList.
-		      flatMap(fh => ??(fh.method, toEncode).asJsonField))
+                                     JsonAST.JBool(toEncode.persisted_?)) ::
+                      this.mappedFieldList.
+                      flatMap(fh => ??(fh.method, toEncode).asJsonField))
     }
   }
 
@@ -787,7 +787,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     // We generally use setObject for everything, but we've found some broken JDBC drivers
     // which has prompted us to use type-specific handling for certain types
     mappedColumnType match {
-      case Types.VARCHAR => 
+      case Types.VARCHAR =>
         // Set a string with a simple guard for null values
         st.setString(index, if (value ne null) value.toString else value.asInstanceOf[String])
 
@@ -796,7 +796,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
         case intData : java.lang.Integer => st.setBoolean(index, intData.intValue != 0)
         case b : java.lang.Boolean => st.setBoolean(index, b.booleanValue)
         // If we can't figure it out, maybe the driver can
-        case other => setObj(st, index, other, mappedColumnType) 
+        case other => setObj(st, index, other, mappedColumnType)
       }
 
       // In all other cases, delegate to the driver
@@ -1884,13 +1884,13 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
                         mkString(", ")+
                         " FROM "+MapperRules.quoteTableName.vend(_dbTableNameLC)+" WHERE "+MapperRules.quoteColumnName.vend(field._dbColumnNameLC)+" = ?", conn) {
       st =>
-	if (field.dbIgnoreSQLType_?)
-	  st.setObject(1, field.makeKeyJDBCFriendly(key))
-	else
-	  st.setObject(1, field.makeKeyJDBCFriendly(key),
-		       conn.driverType.
-		       columnTypeMap(field.
-				     targetSQLType(field._dbColumnNameLC)))
+        if (field.dbIgnoreSQLType_?)
+          st.setObject(1, field.makeKeyJDBCFriendly(key))
+        else
+          st.setObject(1, field.makeKeyJDBCFriendly(key),
+                       conn.driverType.
+                       columnTypeMap(field.
+                                     targetSQLType(field._dbColumnNameLC)))
       DB.exec(st) {
         rs =>
         val mi = buildMapper(rs)
@@ -2118,4 +2118,3 @@ trait SelectableField {
 }
 
 class MapperException(msg: String) extends Exception(msg)
-

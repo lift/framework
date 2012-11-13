@@ -50,11 +50,11 @@ object FieldSpec extends Specification {
 
     def commonBehaviorsForMandatory(in: MandatoryTypedField[A]): Unit = {
 
-		if (canCheckDefaultValues) {
-			"which have the correct initial value" in S.initIfUninitted(session) {
-				in.get must_== in.defaultValue
-			}
-		}
+        if (canCheckDefaultValues) {
+            "which have the correct initial value" in S.initIfUninitted(session) {
+                in.get must_== in.defaultValue
+            }
+        }
 
         "which are readable and writable" in {
           in.set(example)
@@ -68,26 +68,26 @@ object FieldSpec extends Specification {
         }
 
         if (canCheckDefaultValues) {
-	        "which correctly clear back to the default value" in {
-	          in.set(example)
-	          in.clear
-	          in.get must_== in.defaultValue
-	        }
+            "which correctly clear back to the default value" in {
+              in.set(example)
+              in.clear
+              in.get must_== in.defaultValue
+            }
         }
 
         if(!in.optional_?) {
-        	"which fail when set with an empty string when not optional" in {
-        	  in.setFromString(null)
-        	  in.valueBox must beLike { case f: Failure => ok }
-        	  in.setFromString("")
-        	  in.valueBox must beLike { case f: Failure => ok }
-        	}
+            "which fail when set with an empty string when not optional" in {
+              in.setFromString(null)
+              in.valueBox must beLike { case f: Failure => ok }
+              in.setFromString("")
+              in.valueBox must beLike { case f: Failure => ok }
+            }
         } else {
           "which don't fail when set with an empty string when optional" in {
-        	  in.setFromString(null)
-        	  in.valueBox must_== Empty
-        	  in.setFromString("")
-        	  in.valueBox must_== Empty
+              in.setFromString(null)
+              in.valueBox must_== Empty
+              in.setFromString("")
+              in.valueBox must_== Empty
           }
         }
     }
@@ -97,7 +97,7 @@ object FieldSpec extends Specification {
         "which have the correct initial boxed value" in {
           in match {
             case mandatory: MandatoryTypedField[_] =>
-            	mandatory.value must_== mandatory.defaultValue
+                mandatory.value must_== mandatory.defaultValue
             case _ => ()
           }
           in.valueBox must_== in.defaultValueBox
@@ -688,4 +688,3 @@ object FieldSpec extends Specification {
     )
   }
 }
-

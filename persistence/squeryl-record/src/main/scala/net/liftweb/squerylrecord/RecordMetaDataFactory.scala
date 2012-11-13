@@ -60,7 +60,7 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
     property: (Option[Field], Option[Method], Option[Method], Set[Annotation]),
     sampleInstance4OptionTypeDeduction: AnyRef, isOptimisticCounter: Boolean): FieldMetaData = {
     if (!isRecord(parentMetaData.clasz) || isOptimisticCounter) {
-      // Either this is not a Record class, in which case we'll 
+      // Either this is not a Record class, in which case we'll
       //treat it as a normal class in primitive type mode, or the field
       //was mixed in by the Optimisitic trait and is not a Record field.
       return SquerylRecord.posoMetaDataFactory.build(parentMetaData, name, property,
@@ -152,9 +152,9 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
       override def set(target: AnyRef, value: AnyRef) = target match {
           case record: Record[_] =>
             record.runSafe {
-            	val typedField: TypedField[_] = fieldFor(target)
-            	typedField.setFromAny(Box !! value)
-            	typedField.resetDirty
+              val typedField: TypedField[_] = fieldFor(target)
+              typedField.setFromAny(Box !! value)
+              typedField.resetDirty
             }
           case other =>
             org.squeryl.internals.Utils.throwError("RecordMetaDataFactory can not set fields on non Record objects : " + other)

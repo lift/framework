@@ -124,4 +124,3 @@ private[mongodb] object Meta {
 
   private val objectIdSerializerClass = classOf[net.liftweb.mongodb.ObjectIdSerializer]
 }
-

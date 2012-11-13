@@ -63,6 +63,4 @@ object JqSHtml {
   def fadeOutNotices(): JsCmd = {
     FadeOut(LiftRules.noticesContainerId + "_notice", JsRules.prefadeDuration, JsRules.fadeTime)
   }
-
 }
-

@@ -150,4 +150,3 @@ object ToHeadSpec extends Specification  {
    }
 */
 }
-

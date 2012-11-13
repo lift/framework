@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package mongodb 
+package net.liftweb
+package mongodb
 
 import json.JsonAST.JObject
 
@@ -105,8 +105,8 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
     import scala.collection.JavaConversions._
 
     MongoDB.useCollection(mongoIdentifier, collectionName)(coll => {
-      /** Mongo Cursors are both Iterable and Iterator, 
-       * so we need to reduce ambiguity for implicits 
+      /** Mongo Cursors are both Iterable and Iterator,
+       * so we need to reduce ambiguity for implicits
        */
       (coll.find: Iterator[DBObject]).map(create).toList
     })
@@ -127,8 +127,8 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
         findOpts.find(_.isInstanceOf[Skip]).map(x => x.value).getOrElse(0)
       )
       sort.foreach( s => cur.sort(s))
-      /** Mongo Cursors are both Iterable and Iterator, 
-       * so we need to reduce ambiguity for implicits 
+      /** Mongo Cursors are both Iterable and Iterator,
+       * so we need to reduce ambiguity for implicits
        */
       (cur: Iterator[DBObject]).map(create).toList
     })
@@ -201,6 +201,4 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
       update(qry, newbd, db, opts :_*)
     })
   }
-
 }
-

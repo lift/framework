@@ -137,4 +137,3 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
   def getContentType(): String = contentType
   def getCharacterEncoding(): String = charEncoding
 }
-

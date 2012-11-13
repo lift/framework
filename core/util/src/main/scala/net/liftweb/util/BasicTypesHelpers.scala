@@ -400,4 +400,3 @@ final class PartialFunctionWrapper[A](around: PartialFunction[A, _]) {
     }
 
 }
-

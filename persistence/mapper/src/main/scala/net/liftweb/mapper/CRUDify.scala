@@ -35,7 +35,7 @@ import scala.xml._
  * Note: Compilation will fail if you try to mix this into a Mapper instead of the
  * associated MetaMapper. You have been warned.
  */
-trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] extends 
+trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] extends
   net.liftweb.proto.Crudify {
   self: CrudType with KeyedMetaMapper[KeyType, CrudType] =>
 
@@ -78,7 +78,7 @@ trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] extends
   * but this list
   * can be shortened.
   */
-  def fieldsForDisplay: List[MappedField[_, CrudType]] = 
+  def fieldsForDisplay: List[MappedField[_, CrudType]] =
     mappedFieldsForModel.filter(_.dbDisplay_?)
 
   /**
@@ -140,4 +140,3 @@ trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] extends
 trait LongCRUDify[CrudType <: KeyedMapper[Long, CrudType]] extends CRUDify[Long, CrudType] {
   self: CrudType with KeyedMetaMapper[Long, CrudType] =>
 }
-

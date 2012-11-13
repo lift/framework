@@ -235,4 +235,3 @@ trait SafeSeqParser extends Parsers {
     }
   }
 }
-

@@ -36,28 +36,28 @@ object ExtCoreArtifacts extends JSArtifacts {
    * Toggles between current JS object and the object denominated by id
    */
   def toggle(id: String) = new JsExp {
-  	def toJsCmd = "Ext.fly(" + id.encJs + ").toggle()"
+    def toJsCmd = "Ext.fly(" + id.encJs + ").toggle()"
   }
 
   /**
    * Hides the element denominated by id
    */
   def hide(id: String) = new JsExp {
-  	def toJsCmd = "Ext.fly(" + id.encJs + ").hide()"
+    def toJsCmd = "Ext.fly(" + id.encJs + ").hide()"
   }
 
   /**
    * Shows the element denominated by this id
    */
   def show(id: String) = new JsExp {
-  	def toJsCmd = "Ext.fly(" + id.encJs + ").show()"
+    def toJsCmd = "Ext.fly(" + id.encJs + ").show()"
   }
 
   /**
    * Shows the element denoinated by id and puts the focus on it
    */
   def showAndFocus(id: String) = new JsExp {
-  	def toJsCmd = "Ext.fly(" + id.encJs + ").show().focus(200)"
+    def toJsCmd = "Ext.fly(" + id.encJs + ").show().focus(200)"
   }
 
   /**
@@ -65,7 +65,7 @@ object ExtCoreArtifacts extends JSArtifacts {
    * containing the fields that are to be submitted
    */
   def serialize(id: String) = new JsExp {
-  	def toJsCmd = "Ext.Ajax.serializeForm(" + id.encJs + ")"
+    def toJsCmd = "Ext.Ajax.serializeForm(" + id.encJs + ")"
   }
 
   /**
@@ -77,18 +77,18 @@ object ExtCoreArtifacts extends JSArtifacts {
 
       val ret =
         """
-	  try {
-	  var parent1 = document.getElementById(""" + id.encJs + """);
-	  parent1.innerHTML = """ + html + """;
-	  for (var i = 0; i < parent1.childNodes.length; i++) {
-	    var node = parent1.childNodes[i];
-	    parent1.parentNode.insertBefore(node.cloneNode(true), parent1);
-	  }
-	  parent1.parentNode.removeChild(parent1);
-	  } catch (e) {
-	    // if the node doesn't exist or something else bad happens
-	  }
-	"""
+    try {
+    var parent1 = document.getElementById(""" + id.encJs + """);
+    parent1.innerHTML = """ + html + """;
+    for (var i = 0; i < parent1.childNodes.length; i++) {
+      var node = parent1.childNodes[i];
+      parent1.parentNode.insertBefore(node.cloneNode(true), parent1);
+    }
+    parent1.parentNode.removeChild(parent1);
+    } catch (e) {
+      // if the node doesn't exist or something else bad happens
+    }
+  """
       if (js.isEmpty) ret else ret + " "+js.toJsCmd
 
     }
@@ -98,7 +98,7 @@ object ExtCoreArtifacts extends JSArtifacts {
    * Sets the inner HTML of the element denominated by the id
    */
   def setHtml(id: String, xml: NodeSeq): JsCmd = new JsCmd {
-  	def toJsCmd = fixHtmlCmdFunc(id, xml){s => "try { Ext.fly(" + id.encJs + ").dom.innerHTML = " + s + "; } catch (e) {}"}
+    def toJsCmd = fixHtmlCmdFunc(id, xml){s => "try { Ext.fly(" + id.encJs + ").dom.innerHTML = " + s + "; } catch (e) {}"}
   }
 
   /**
@@ -106,8 +106,8 @@ object ExtCoreArtifacts extends JSArtifacts {
    * for processing
    */
   def onLoad(cmd: JsCmd): JsCmd = new JsCmd {
-  	def toJsCmd = "Ext.onReady(function() {" + cmd.toJsCmd + "})"
-	}
+    def toJsCmd = "Ext.onReady(function() {" + cmd.toJsCmd + "})"
+  }
 
   /**
    * Fades out the element having the provided id, by waiting
@@ -155,7 +155,6 @@ object ExtCoreArtifacts extends JSArtifacts {
    "timeout : " + info.timeout ::
    "disableCaching : " + !info.cache ::
    "success: function(response, options) { res = Ext.lift.eval(response.responseText);" + info.successFunc.map(_ + "(res);").openOr("") + "}" ::
-   "failure: " + info.failFunc.openOr ("function(arg) {alert('Ajax request failed');}") :: 
+   "failure: " + info.failFunc.openOr ("function(arg) {alert('Ajax request failed');}") ::
    Nil) mkString("{ ", ", ", " }")
 }
-

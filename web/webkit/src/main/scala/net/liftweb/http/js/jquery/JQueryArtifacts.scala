@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package js 
-package jquery 
+package net.liftweb
+package http
+package js
+package jquery
 
 import scala.xml.{Elem, NodeSeq}
 
@@ -87,7 +87,7 @@ trait JQueryArtifacts extends JSArtifacts {
    * Fades out the element having the provided id, by waiting
    * for the given duration and fades out during fadeTime
    */
-  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) = 
+  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) =
     FadeOut(id, duration, fadeTime)
 
   /**
@@ -150,5 +150,3 @@ case object JQuery14Artifacts extends JQueryArtifacts {
 }
 
 case object JQueryArtifacts extends JQueryArtifacts
-
-

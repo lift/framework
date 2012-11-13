@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 trait ValueHolder {
   type ValueType
@@ -84,4 +84,3 @@ trait PSettableValueHolder[T] extends PValueHolder[T] with SettableValueHolder
 trait LiftValue[T] extends PSettableValueHolder[T] {
   def is: T = get
 }
-

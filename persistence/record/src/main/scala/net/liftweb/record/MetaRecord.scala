@@ -64,9 +64,9 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    *
    * class MyRecord extends Record[MyRecord] {
    *
-   * 	def meta = MyRecordMeta
+   *   def meta = MyRecordMeta
    *
-   * 	object firstName extends StringField(this, "John")
+   *   object firstName extends StringField(this, "John")
    *
    * }
    *
@@ -80,11 +80,11 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    *
    * val template =
    * &lt;div&gt;
-   * 	&lt;div&gt;
-   * 		&lt;div&gt;&lt;lift:field_label name="firstName"/&gt;&lt;/div&gt;
-   * 		&lt;div&gt;&lt;lift:field name="firstName"/&gt;&lt;/div&gt;
-   * 		&lt;div&gt;&lt;lift:field_msg name="firstName"/&gt;&lt;/div&gt;
-   * 	&lt;/div&gt;
+   *   &lt;div&gt;
+   *     &lt;div&gt;&lt;lift:field_label name="firstName"/&gt;&lt;/div&gt;
+   *     &lt;div&gt;&lt;lift:field name="firstName"/&gt;&lt;/div&gt;
+   *     &lt;div&gt;&lt;lift:field_msg name="firstName"/&gt;&lt;/div&gt;
+   *   &lt;/div&gt;
    * &lt;/div&gt;
    *
    * MyRecordMeta.formTemplate = Full(template)
@@ -212,7 +212,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   def validate(inst: BaseRecord): List[FieldError] = {
     foreachCallback(inst, _.beforeValidation)
     try{
-	    fieldList.flatMap(_.field(inst).validate)
+      fieldList.flatMap(_.field(inst).validate)
     } finally {
       foreachCallback(inst, _.afterValidation)
     }
@@ -488,4 +488,3 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     def field(inst: BaseRecord): Field[_, BaseRecord] = method.invoke(inst).asInstanceOf[Field[_, BaseRecord]]
   }
 }
-

@@ -29,4 +29,3 @@ object Ignore extends DispatchSnippet {
 
   def render(kids: NodeSeq) : NodeSeq = NodeSeq.Empty
 }
-

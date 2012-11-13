@@ -148,4 +148,3 @@ object MsgWarningMeta extends SessionVar[HashMap[String, String]](new HashMap) {
 object MsgNoticeMeta extends SessionVar[HashMap[String, String]](new HashMap) {
     override private[liftweb] def magicSessionVar_? = true
 }
-

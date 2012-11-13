@@ -474,4 +474,3 @@ object SnippetSpec extends Specification  {
     }
   }
 }
-

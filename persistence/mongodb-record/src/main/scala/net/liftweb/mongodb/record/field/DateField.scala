@@ -11,10 +11,10 @@
 * limitations under the License.
 */
 
-package net.liftweb 
-package mongodb 
-package record 
-package field 
+package net.liftweb
+package mongodb
+package record
+package field
 
 import java.util.Date
 
@@ -93,4 +93,3 @@ class DateField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
 
   def asJValue: JValue = valueBox.map(v => Meta.dateAsJValue(v, owner.meta.formats)) openOr (JNothing: JValue)
 }
-

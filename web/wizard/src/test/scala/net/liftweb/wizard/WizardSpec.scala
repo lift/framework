@@ -157,4 +157,3 @@ object WizardSpec extends Specification  {
     }
   }
 }
-

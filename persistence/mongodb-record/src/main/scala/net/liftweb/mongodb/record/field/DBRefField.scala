@@ -94,4 +94,3 @@ class DBRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefT
 
   def owner = rec
 }
-

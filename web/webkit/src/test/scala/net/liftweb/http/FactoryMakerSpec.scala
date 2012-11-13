@@ -48,4 +48,3 @@ object FactoryMakerSpec extends Specification  {
     }
   }
 }
-

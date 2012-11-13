@@ -37,4 +37,3 @@ object TestCond extends DispatchSnippet {
   def loggedOut(xhtml: NodeSeq): NodeSeq =
   if (S.loggedIn_?) NodeSeq.Empty else xhtml
 }
-

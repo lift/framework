@@ -91,7 +91,4 @@ case class HTTPCookie(name: String,
    * @return HTTPCookie
    */
   def setSecure(newSecure: Boolean): HTTPCookie = copy(secure_? = Box !! newSecure)
-
-
 }
-

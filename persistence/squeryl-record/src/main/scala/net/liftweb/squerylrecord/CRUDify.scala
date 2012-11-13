@@ -44,13 +44,13 @@ trait CRUDify[K, T <: Record[T] with KeyedEntity[K]] extends Crudify {
 
   override def findForParam(in: String): Box[TheCrudType] =
     inTransaction{
-	  table.lookup(idFromString(in))
-  	}
+      table.lookup(idFromString(in))
+    }
 
-  override def findForList(start: Long, count: Int) = 
+  override def findForList(start: Long, count: Int) =
     inTransaction{
-	  from(table)(t => select(t)).page(start.toInt, count).toList
-  	}
+      from(table)(t => select(t)).page(start.toInt, count).toList
+    }
 
   override def create = createRecord
 
@@ -65,12 +65,12 @@ trait CRUDify[K, T <: Record[T] with KeyedEntity[K]] extends Crudify {
     def save = {
       if (in.isPersisted) {
         inTransaction{
-        	table.update(in)
+            table.update(in)
         }
       }
       else {
         inTransaction {
-        	table.insert(in)
+            table.insert(in)
         }
       }
       true

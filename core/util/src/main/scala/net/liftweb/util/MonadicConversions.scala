@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 /**
  * Holds the implicit conversions from/to MonadicCondition
@@ -76,4 +76,3 @@ case class False(msgs: List[String]) extends MonadicCondition {
   }
   def ~ (msg: String): MonadicCondition = False(msg :: msgs)
 }
-
