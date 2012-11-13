@@ -27,7 +27,7 @@ trait JsonFormats {
 
   implicit lazy val _formats: Formats = formats
 
-  lazy val allFormats = DefaultFormats.lossless + new ObjectIdSerializer + new DateSerializer + new PatternSerializer + new UUIDSerializer
+  lazy val allFormats = DefaultFormats.lossless + new ObjectIdSerializer + new DateSerializer + new DateTimeSerializer + new PatternSerializer + new UUIDSerializer
 }
 
 /*
