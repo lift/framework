@@ -31,20 +31,20 @@ You can create a new Lift project using your favorite build system by adding Lif
 
 Create or update your `project/plugins.sbt` file with the `xsbt-web-plugin`:
 
-	libraryDependencies <+= sbtVersion(v => "com.github.siasia" %% "xsbt-web-plugin" % (v+"-0.2.7"))
+    libraryDependencies <+= sbtVersion(v => "com.github.siasia" %% "xsbt-web-plugin" % (v+"-0.2.7"))
 
 Then, add the plugin and Lift to your `build.sbt` file:
 
-	seq(webSettings :_*)
-	
-	libraryDependencies ++= {
-		val liftVersion = "2.4"
-		Seq(
-		  "net.liftweb" %% "lift-webkit" % liftVersion % "compile",
-		  "org.mortbay.jetty" % "jetty" % "6.1.22" % "container",
-		  "ch.qos.logback" % "logback-classic" % "0.9.26"
-		)
-	}
+    seq(webSettings :_*)
+
+    libraryDependencies ++= {
+        val liftVersion = "2.4"
+        Seq(
+          "net.liftweb" %% "lift-webkit" % liftVersion % "compile",
+          "org.mortbay.jetty" % "jetty" % "6.1.22" % "container",
+          "ch.qos.logback" % "logback-classic" % "0.9.26"
+        )
+    }
 
 You can [learn more on the wiki](http://www.assembla.com/wiki/show/liftweb/Using_SBT).
 
