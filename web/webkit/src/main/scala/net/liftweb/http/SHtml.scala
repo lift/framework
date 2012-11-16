@@ -377,7 +377,7 @@ trait SHtml {
   }
 
   /**
-   * Create an Ajax buttun that when it's pressed it submits an Ajax request and expects back a JSON
+   * Create an Ajax button that when pressed, submits an Ajax request and expects back a JSON
    * construct which will be passed to the <i>success</i> function
    *
    * @param text -- the name/text of the button
@@ -395,7 +395,7 @@ trait SHtml {
   }
 
   /**
-   * Create an Ajax button. When it's pressed, the function is executed
+   * Create an Ajax button that when pressed, executes the function
    *
    * @param text -- the name/text of the button
    * @param func -- the function to execute when the button is pushed.  Return Noop if nothing changes on the browser.
@@ -410,7 +410,7 @@ trait SHtml {
   }
 
   /**
-   * Create an Ajax buttun that when it's pressed it submits an Ajax request and expects back a JSON
+   * Create an Ajax button that when pressed, submits an Ajax request and expects back a JSON
    * construct which will be passed to the <i>success</i> function
    *
    * @param text -- the name/text of the button
@@ -428,7 +428,7 @@ trait SHtml {
   }
 
   /**
-   * Create an Ajax button. When it's pressed, the function is executed
+   * Create an Ajax button that when pressed, executes the function
    *
    * @param text -- the name/text of the button
    * @param jsFunc -- the user function that will be executed. This function will receive as last parameter
@@ -444,7 +444,7 @@ trait SHtml {
   }
 
   /**
-   * Create an Ajax button. When it's pressed, the function is executed
+   * Create an Ajax button that when pressed, executes the function
    *
    * @param text -- the name/text of the button
    * @param jsFunc -- the user function that will be executed. This function will receive as last parameter
@@ -458,7 +458,7 @@ trait SHtml {
     ajaxButton(Text(text), func, attrs: _*)
 
   /**
-   * Create an Ajax button. When it's pressed, the function is executed
+   * Create an Ajax button that when pressed, executes the function
    *
    * @param text -- the name/text of the button
    * @param func -- the function to execute when the button is pushed.  Return Noop if nothing changes on the browser.
