@@ -242,24 +242,24 @@ object Menu extends DispatchSnippet {
    * automatically set the title for your page based on your SiteMap:</p>
    *
    * <pre>
-   * ...
+   * ⋮
    * &lt;head&gt;
    *   &lt;title&gt;&lt;lift:Menu.title /&gt;&lt;/title&gt;
    * &lt;/head&gt;
-   * ...
+   * ⋮
    * </pre>
    * <p>HTML5 does not support tags inside the &lt;title&gt; tag,
    * so you must do:
    * </p>
    *
    * <pre>
-   *    * &lt;head&gt;
+   * &lt;head&gt;
    *   &lt;title class=&quot;lift:Menu.title&quote;&gt;The page named %*% is being displayed&lt;/title&gt;
    * &lt;/head&gt;
    * </pre>
    * <p>
-   * And Lift will substitute the title at the %*% marker, alternative, Lift
-   * will append the Menu.title to the contents of the &lt;title&gt; tag.
+   * And Lift will substitute the title at the %*% marker if the marker exists, otherwise
+   * append the title to the contents of the &lt;title&gt; tag.
    * </p>
    */
   def title(text: NodeSeq): NodeSeq = {
