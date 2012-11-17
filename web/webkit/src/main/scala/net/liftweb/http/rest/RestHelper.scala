@@ -336,7 +336,7 @@ trait RestHelper extends LiftRules.DispatchPF {
         () => {
           pf(r).box match {
             case Full(resp) =>
-              val selType = selection(r).open_! // Full because pass isDefinedAt
+              val selType = selection(r).openOrThrowException("Full because pass isDefinedAt")
               if (cvt.isDefinedAt((selType, resp, r)))
                   Full(cvt((selType, resp, r)))
               else emptyToResp(ParamFailure("Unabled to convert the message", 

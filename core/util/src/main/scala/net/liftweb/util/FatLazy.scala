@@ -48,7 +48,7 @@ class FatLazy[T](f: => T) {
     value match {
       case Full(v) => v
       case _ => value = Full(f)
-      value.open_!
+      value.openOrThrowException("We just checked that this is a Full box.")
     }
   }
 

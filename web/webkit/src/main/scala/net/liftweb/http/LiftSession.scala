@@ -136,8 +136,8 @@ object LiftSession {
       }
     }).map {
       case uc: UnitConstructor => uc.makeOne
-      case pc: PConstructor => pc.makeOne(pp.open_!.v) // open_! okay
-      case psc: PAndSessionConstructor => psc.makeOne(pp.open_!.v, session)
+      case pc: PConstructor => pc.makeOne(pp.openOrThrowException("It's ok").v)
+      case psc: PAndSessionConstructor => psc.makeOne(pp.openOrThrowException("It's ok").v, session)
     }
   }
 

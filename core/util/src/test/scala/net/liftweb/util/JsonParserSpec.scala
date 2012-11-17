@@ -95,26 +95,26 @@ object JsonParserSpec extends Specification  {
     "Parse doubles" in {
       val p2 = JSONParser.parse("51.348484")
       p2.isDefined must be_==(true)
-      p2.open_! must_== 51.348484
+      p2.openOrThrowException("Test") must_== 51.348484
     }
 
     "Parse negative doubles" in {
       val p2 = JSONParser.parse("-51.348484")
       p2.isDefined must be_==(true)
-      p2.open_! must_== -51.348484
+      p2.openOrThrowException("Test") must_== -51.348484
     }
 
     "Parse negative longs" in {
       val p2 = JSONParser.parse("-517272833222")
       p2.isDefined must be_==(true)
-      p2.open_! must_== -517272833222L
+      p2.openOrThrowException("Test") must_== -517272833222L
     }
 
     "complex JSON objects #2" in {
       val p2 = JSONParser.parse(
     """{"command":"setPoint","params":{"mf":51.3256123,"$a":-0.6379592,"x":-0.6379592,"y":51.3256123}}""")
       p2.isDefined must be_==(true)
-      val params = p2.open_!.asInstanceOf[Map[String, Map[String, Any]]].apply("params")
+      val params = p2.openOrThrowException("Test").asInstanceOf[Map[String, Map[String, Any]]].apply("params")
       params("mf") must_== 51.3256123D
       params("$a") must_== -0.6379592D
       params("y") must_== 51.3256123D
@@ -132,7 +132,7 @@ object JsonParserSpec extends Specification  {
       val p2 = JSONParser.parse(
     """-0.5033""")
       p2.isDefined must be_==(true)
-      p2.open_! must_== -0.5033
+      p2.openOrThrowException("Test") must_== -0.5033
 
     }
 

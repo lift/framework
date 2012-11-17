@@ -238,7 +238,7 @@ trait Crudify {
         Full(NamedPF(name) {
             case RewriteRequest(pp , _, _) if hasParamFor(pp, viewPath) =>
               (RewriteResponse(viewPath),
-               findForParam(pp.wholePath.last).open_!)
+               findForParam(pp.wholePath.last).openOrThrowException("legacy code, it was open_!"))
           })
 
         override def calcTemplate = Full(viewTemplate)
@@ -285,7 +285,7 @@ trait Crudify {
           Full(NamedPF(name) {
               case RewriteRequest(pp , _, _) if hasParamFor(pp, editPath) =>
                 (RewriteResponse(editPath),
-                 findForParam(pp.wholePath.last).open_!)
+                 findForParam(pp.wholePath.last).openOrThrowException("legacy code, it was open_!"))
             })
 
           override def calcTemplate = Full(editTemplate)
@@ -415,7 +415,7 @@ trait Crudify {
           Full(NamedPF(name) {
             case RewriteRequest(pp , _, _) if hasParamFor(pp, deletePath) =>
                 (RewriteResponse(deletePath),
-                 findForParam(pp.wholePath.last).open_!)
+                 findForParam(pp.wholePath.last).openOrThrowException("legacy code, it was open_!"))
             })
 
           override def calcTemplate = Full(deleteTemplate)

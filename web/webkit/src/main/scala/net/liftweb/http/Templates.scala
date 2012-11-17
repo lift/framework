@@ -179,7 +179,7 @@ object Templates {
       resolver(key)
       } else {
     val lrCache = LiftRules.templateCache
-    val cache = if (lrCache.isDefined) lrCache.open_! else NoCache
+    val cache = if (lrCache.isDefined) lrCache.openOrThrowException("passes isDefined") else NoCache
 
     val parserFunction: InputStream => Box[NodeSeq] = 
       S.htmlProperties.htmlParser
@@ -231,7 +231,7 @@ object Templates {
                 }
                 if (xmlb.isDefined) {
                   found = true
-                  ret = (cache(key) = xmlb.open_!)
+                  ret = (cache(key) = xmlb.openOrThrowException("passes isDefined"))
                 } else if (xmlb.isInstanceOf[Failure] && 
                            (Props.devMode | Props.testMode)) {
                   val msg = xmlb.asInstanceOf[Failure].msg

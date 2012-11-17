@@ -43,7 +43,7 @@ object XmlParserSpec extends Specification  {
       </lift:surround>
 
       val bis = new ByteArrayInputStream(actual.toString.getBytes("UTF-8"))
-      val parsed = PCDataXmlParser(bis).open_!
+      val parsed = PCDataXmlParser(bis).openOrThrowException("Test")
       parsed must ==/(expected)
     }
 

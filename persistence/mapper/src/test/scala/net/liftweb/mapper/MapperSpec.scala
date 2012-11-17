@@ -67,10 +67,10 @@ class MapperSpec extends Specification with BeforeExample {
     ("Mapper for " + provider.name) should {
 
       "schemify" in {
-        val elwood = SampleModel.find(By(SampleModel.firstName, "Elwood")).open_!
-        val madeline = SampleModel.find(By(SampleModel.firstName, "Madeline")).open_!
-        val archer = SampleModel.find(By(SampleModel.firstName, "Archer")).open_!
-        val notNull = SampleModel.find(By(SampleModel.firstName, "NotNull")).open_!
+        val elwood = SampleModel.find(By(SampleModel.firstName, "Elwood")).openOrThrowException("Test")
+        val madeline = SampleModel.find(By(SampleModel.firstName, "Madeline")).openOrThrowException("Test")
+        val archer = SampleModel.find(By(SampleModel.firstName, "Archer")).openOrThrowException("Test")
+        val notNull = SampleModel.find(By(SampleModel.firstName, "NotNull")).openOrThrowException("Test")
 
         elwood.firstName.is must_== "Elwood"
         madeline.firstName.is must_== "Madeline"
@@ -81,7 +81,7 @@ class MapperSpec extends Specification with BeforeExample {
 
         val disabled = SampleModel.find(By(SampleModel.status, SampleStatus.Disabled))
 
-        val meow = SampleTag.find(By(SampleTag.tag, "Meow")).open_!
+        val meow = SampleTag.find(By(SampleTag.tag, "Meow")).openOrThrowException("Test")
 
         meow.tag.is must_== "Meow"
 
@@ -133,17 +133,17 @@ class MapperSpec extends Specification with BeforeExample {
       }
 
       "Can JSON decode and write back" in {
-        val m = SampleModel.find(2).open_!
+        val m = SampleModel.find(2).openOrThrowException("Test")
         val json = m.encodeAsJson()
         val rebuilt = SampleModel.buildFromJson(json)
         rebuilt.firstName("yak").save
-        val recalled = SampleModel.find(2).open_!
+        val recalled = SampleModel.find(2).openOrThrowException("Test")
         recalled.firstName.is must_== "yak"
       }
 
       "You can put stuff in a Set" in {
-        val m1 = SampleModel.find(1).open_!
-        val m2 = SampleModel.find(1).open_!
+        val m1 = SampleModel.find(1).openOrThrowException("Test")
+        val m2 = SampleModel.find(1).openOrThrowException("Test")
 
         (m1 == m2) must_== true
 
@@ -245,9 +245,9 @@ class MapperSpec extends Specification with BeforeExample {
       }
 
       "work with Mixed case" in {
-        val elwood = Mixer.find(By(Mixer.name, "Elwood")).open_!
-        val madeline = Mixer.find(By(Mixer.name, "Madeline")).open_!
-        val archer = Mixer.find(By(Mixer.name, "Archer")).open_!
+        val elwood = Mixer.find(By(Mixer.name, "Elwood")).openOrThrowException("Test")
+        val madeline = Mixer.find(By(Mixer.name, "Madeline")).openOrThrowException("Test")
+        val archer = Mixer.find(By(Mixer.name, "Archer")).openOrThrowException("Test")
 
         elwood.name.is must_== "Elwood"
         madeline.name.is must_== "Madeline"
@@ -259,11 +259,11 @@ class MapperSpec extends Specification with BeforeExample {
       }
 
       "work with Mixed case update and delete" in {
-        val elwood = Mixer.find(By(Mixer.name, "Elwood")).open_!
+        val elwood = Mixer.find(By(Mixer.name, "Elwood")).openOrThrowException("Test")
         elwood.name.is must_== "Elwood"
         elwood.name("FruitBar").weight(966).save
 
-        val fb = Mixer.find(By(Mixer.weight, 966)).open_!
+        val fb = Mixer.find(By(Mixer.weight, 966)).openOrThrowException("Test")
 
         fb.name.is must_== "FruitBar"
         fb.weight.is must_== 966
@@ -276,11 +276,11 @@ class MapperSpec extends Specification with BeforeExample {
       }
 
       "work with Mixed case update and delete for Dog2" in {
-        val elwood = Dog2.find(By(Dog2.name, "Elwood")).open_!
+        val elwood = Dog2.find(By(Dog2.name, "Elwood")).openOrThrowException("Test")
         elwood.name.is must_== "Elwood"
         elwood.name("FruitBar").actualAge(966).save
 
-        val fb = Dog2.find(By(Dog2.actualAge, 966)).open_!
+        val fb = Dog2.find(By(Dog2.actualAge, 966)).openOrThrowException("Test")
 
         fb.name.is must_== "FruitBar"
         fb.actualAge.is must_== 966
@@ -300,8 +300,8 @@ class MapperSpec extends Specification with BeforeExample {
         val i1 = Thing.create.name("frog").saveMe
         val i2 = Thing.create.name("dog").saveMe
 
-        Thing.find(By(Thing.thing_id, i1.thing_id.is)).open_!.name.is must_== "frog"
-        Thing.find(By(Thing.thing_id, i2.thing_id.is)).open_!.name.is must_== "dog"
+        Thing.find(By(Thing.thing_id, i1.thing_id.is)).openOrThrowException("Test").name.is must_== "frog"
+        Thing.find(By(Thing.thing_id, i2.thing_id.is)).openOrThrowException("Test").name.is must_== "dog"
       }
 
 
@@ -331,7 +331,7 @@ class MapperSpec extends Specification with BeforeExample {
 
       "CreatedAt and UpdatedAt work" in {
         val now = Helpers.now
-        val dog = Dog2.find().open_!
+        val dog = Dog2.find().openOrThrowException("Test")
 
         val oldUpdate = dog.updatedAt.is
 
@@ -343,7 +343,7 @@ class MapperSpec extends Specification with BeforeExample {
 
         dog.name("ralph").save
 
-        val dog2 = Dog2.find(dog.dog2id.is).open_!
+        val dog2 = Dog2.find(dog.dog2id.is).openOrThrowException("Test")
 
         dog.createdAt.is.getTime must_== dog2.createdAt.is.getTime
         oldUpdate.getTime must_!= dog2.updatedAt.is.getTime
@@ -359,11 +359,11 @@ class MapperSpec extends Specification with BeforeExample {
       }
 
       "Save flag results in update rather than insert" in {
-        val elwood = SampleModel.find(By(SampleModel.firstName, "Elwood")).open_!
+        val elwood = SampleModel.find(By(SampleModel.firstName, "Elwood")).openOrThrowException("Test")
         elwood.firstName.is must_== "Elwood"
         elwood.firstName("Frog").save
 
-        val frog = SampleModel.find(By(SampleModel.firstName, "Frog")).open_!
+        val frog = SampleModel.find(By(SampleModel.firstName, "Frog")).openOrThrowException("Test")
         frog.firstName.is must_== "Frog"
 
         SampleModel.findAll().length must_== 4

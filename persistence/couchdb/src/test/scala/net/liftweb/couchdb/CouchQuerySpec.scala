@@ -43,7 +43,7 @@ object CouchQuerySpec extends Specification  {
 
   private def verifyAndOpen[A](b: Box[A]): A = {
     b.isDefined must_== true
-    b.open_!
+    b.openOrThrowException("This is a test")
   }
 
   "Queries" should {
@@ -98,7 +98,11 @@ object CouchQuerySpec extends Specification  {
       val (design, docs) = prep(http, database)
       val students = findStudents(docs)
 
-      verifyAndOpen(http(database(List(students(0)._id.open_!, students(3)._id.open_!, students(5)._id.open_!)) query)) must beLike {
+      verifyAndOpen(http(database(List(
+        students(0)._id.openOrThrowException("This is a test"),
+        students(3)._id.openOrThrowException("This is a test"),
+        students(5)._id.openOrThrowException("This is a test"))
+      ) query)) must beLike {
         case QueryResults(Full(count), Full(offset), rows) =>
           sortedAndPrintedValues(rows.flatMap(_.doc).toList) must_== sortedAndPrintedValues(students(0)::students(3)::students(5)::Nil)
       }
@@ -125,7 +129,7 @@ object CouchQuerySpec extends Specification  {
       verifyAndOpen(http(database.design("test").view("students_by_age").from(11) query)) must beLike {
         case QueryResults(_, _, rows) =>
           (rows.flatMap(_.value.asA[JObject]).toList.sortWith(compareName) must_==
-           students.filter(_.getInt("age").map(_ >= 11).open_!).sortWith(compareName))
+           students.filter(_.getInt("age").map(_ >= 11).openOrThrowException("This is a test")).sortWith(compareName))
       }
     }
 
@@ -137,7 +141,7 @@ object CouchQuerySpec extends Specification  {
       verifyAndOpen(http(database.design("test").view("students_by_age").to(12) query)) must beLike {
         case QueryResults(_, _, rows) =>
           (rows.flatMap(_.value.asA[JObject]).toList.sortWith(compareName) must_==
-           students.filter(_.getInt("age").map(_ <= 12).open_!).sortWith(compareName))
+           students.filter(_.getInt("age").map(_ <= 12).openOrThrowException("This is a test")).sortWith(compareName))
       }
     }
 
@@ -150,7 +154,7 @@ object CouchQuerySpec extends Specification  {
         case QueryResults(_, _, rows) =>
           rows.length must_== 2
           (rows.flatMap(_.value.asA[JObject]).toList.sortWith(compareName) must_==
-           students.filter(_.getInt("age").map(_ == 11).open_!))
+           students.filter(_.getInt("age").map(_ == 11).openOrThrowException("This is a test")))
       }
     }
 
@@ -172,7 +176,7 @@ object CouchQuerySpec extends Specification  {
         case QueryResults(_, _, rows) =>
           rows.length must_== 3
           (rows.flatMap(_.value.asA[JObject]).toList.sortWith(compareName) must_==
-           students.filter(_.getInt("age").map(_ <= 11).open_!))
+           students.filter(_.getInt("age").map(_ <= 11).openOrThrowException("This is a test")))
       }
     }
 
@@ -185,7 +189,7 @@ object CouchQuerySpec extends Specification  {
         case QueryResults(_, _, rows) =>
           rows.length must_== 4
           (rows.flatMap(_.value.asA[JObject]).toList must_==
-            students.filter(_.getInt("age").map(age => age >= 11 && age <= 12).open_!))
+            students.filter(_.getInt("age").map(age => age >= 11 && age <= 12).openOrThrowException("This is a test")))
       }
     }
   }

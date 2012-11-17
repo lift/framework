@@ -50,12 +50,12 @@ object DbSpec extends Specification  {
       
       val session = new LiftSession("hello", "", Empty)
       val elwood = S.initIfUninitted(session) {
-        val r = User.find(By(User.firstName, "Elwood")).open_!
+        val r = User.find(By(User.firstName, "Elwood"))
         S.queryLog.size must_== 1
         r
       }
-      statements.size must_==1
-      elwood.firstName.is must_== "Elwood"
+      statements.size must_== 1
+      elwood.map( _.firstName.is) must_== Full("Elwood")
     }
   }
 }

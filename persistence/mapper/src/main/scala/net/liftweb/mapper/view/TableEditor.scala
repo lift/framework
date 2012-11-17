@@ -207,7 +207,7 @@ package snippet {
     private def getInstance: Box[TableEditorImpl[_]] = S.attr("table").map(TableEditor.map(_))
     def dispatch = {
       case "edit" =>
-        val o = getInstance.open_!
+        val o = getInstance.openOrThrowException("if we don't have the table attr, we want the dev to know about it.")
         o.edit _
     }
   }

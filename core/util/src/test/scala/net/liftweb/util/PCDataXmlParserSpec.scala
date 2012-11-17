@@ -65,15 +65,15 @@ val data3 = """<?xml version="1.0" encoding="UTF-8"?>
 
    "PCDataMarkupParser" should {
      "Parse a document with whitespace" in {
-       PCDataXmlParser(data1).open_! must ==/ (<html>dude</html>)
+       PCDataXmlParser(data1).openOrThrowException("Test") must ==/ (<html>dude</html>)
      }
 
      "Parse a document with doctype" in {
-       PCDataXmlParser(data2).open_! must ==/ (<html>dude</html>)
+       PCDataXmlParser(data2).openOrThrowException("Test") must ==/ (<html>dude</html>)
      }
 
      "Parse a document with xml and doctype" in {
-       PCDataXmlParser(data3).open_!.apply(0).label must_== "html"
+       PCDataXmlParser(data3).openOrThrowException("Test").apply(0).label must_== "html"
      }
 
    }

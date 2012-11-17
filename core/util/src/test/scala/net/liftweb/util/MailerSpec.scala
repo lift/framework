@@ -44,7 +44,7 @@ object MailerSpec extends Specification {
       while (lastMessage.isEmpty) {
         MailerSpec.this.wait(100)
       }
-      lastMessage.open_!
+      lastMessage.openOrThrowException("Test")
     }
   }
 
