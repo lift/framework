@@ -89,11 +89,11 @@ trait AbstractScreen extends Factory {
 
   def screenBottom: Box[Elem] = Empty
 
-  // an implicit coversion so we don't have to put Full around every Elem
+  // An implicit conversion so we don't have to put Full around every Elem
   protected implicit def elemInABox(in: Elem): Box[Elem] = Box !! in
 
   /**
-   * The name of the screen.  Override this to change the screen name
+   * The name of the screen.  Override this to change the screen name.
    */
   def screenName: String = "Screen"
 
@@ -448,7 +448,7 @@ trait AbstractScreen extends Factory {
         underlying.toForm.map(ns => SHtml.ElemAttr.applyToAllElems(ns, formElemAttrs))
 
       /**
-       * Give the current state of things, should the this field be shown
+       * Given the current state of things, should this field be shown
        */
       override def show_? = newShow map (_()) openOr underlying.show_?
 
@@ -552,7 +552,7 @@ trait AbstractScreen extends Factory {
           .map(ns => SHtml.ElemAttr.applyToAllElems(ns, formElemAttrs))
 
       /**
-       * Give the current state of things, should the this field be shown
+       * Given the current state of things, should this field be shown
        */
       override def show_? = newShow map (_()) openOr (underlying.map(_.show_?) openOr false)
 
@@ -650,7 +650,7 @@ trait AbstractScreen extends Factory {
 
   /**
    * A validation helper.  Make sure the string is at least a particular
-   * length and generate a validation issue if not
+   * length and generate a validation issue if not.
    */
   protected def valMinLen(len: => Int, msg: => String): String => List[FieldError] =
     s => s match {
@@ -661,7 +661,7 @@ trait AbstractScreen extends Factory {
 
   /**
    * A validation helper.  Make sure the string is no more than a particular
-   * length and generate a validation issue if not
+   * length and generate a validation issue if not.
    */
   protected def valMaxLen(len: => Int, msg: => String): String => List[FieldError] =
     s => s match {
@@ -1283,8 +1283,8 @@ trait ScreenWizardRendered {
   }
 
   /**
-   * Should all instances of this Wizard or Screen unless
-   * they are explicitly set to Ajax
+   * Should all instances of this Wizard or Screen default to Ajax
+   * when not explicitly set
    */
   protected def defaultToAjax_? : Boolean = false
 
@@ -1564,7 +1564,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
   }
 
   /**
-   * What additional attributes should be put on the
+   * What additional attributes should be put on
    */
   protected def formAttrs: MetaData = scala.xml.Null
 
