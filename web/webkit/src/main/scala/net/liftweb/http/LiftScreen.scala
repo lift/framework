@@ -39,7 +39,7 @@ trait AbstractScreen extends Factory {
   @volatile private[this] var _fieldList: List[() => FieldContainer] = Nil
 
   /**
-   * any additional parameters that need to be put in the on the form (e.g., mime type)
+   * Any additional parameters that need to be put on the form (e.g., mime type)
    */
   def additionalAttributes: MetaData =
     if (hasUploadField) new UnprefixedAttribute("enctype", Text("multipart/form-data"), Null) else Null
@@ -350,9 +350,9 @@ trait AbstractScreen extends Factory {
    * the returned FieldBuilder to convert it into a field
    *
    * @param name - the name of the field.  This is a call-by-name parameter, so you can dynamically calculate
-   * the name of the fiels (e.g., localize its name)
+   * the name of the field (e.g., localize its name)
    * @param default - the default value of the field
-   * @param validate - any validation functions
+   * @param stuff - any filter or validation functions
    */
   protected def builder[T](name: => String, default: => T, stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): FieldBuilder[T] =
     new FieldBuilder[T](name, default, man, Empty,
@@ -851,7 +851,7 @@ trait AbstractScreen extends Factory {
 
 
   /**
-   * Create a textarea Field with 80 columns and 5 rows
+   * Create a textarea field with 80 columns and 5 rows
    *
    * @param name the name of the field (call-by-name)
    * @param defaultValue the starting value of the field (call-by-name)
@@ -865,7 +865,7 @@ trait AbstractScreen extends Factory {
 
 
   /**
-   * Create a textarea Field
+   * Create a textarea field
    *
    * @param name the name of the field (call-by-name)
    * @param defaultValue the starting value of the field (call-by-name)
@@ -963,9 +963,7 @@ trait AbstractScreen extends Factory {
    * @param name the name of the field (call-by-name)
    * @param default the starting value of the field (call-by-name)
    * @param choices the possible choices for the select
-   *
    * @param stuff - a list of filters and validations for the field
-   * @param f a PairStringPromoter (a wrapper around a function) that converts T => display String
    *
    * @return a newly minted Field{type ValueType = String}
    */

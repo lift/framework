@@ -54,7 +54,7 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
   }
 
   /**
-   * Returns the HTML representation ofthis Record
+   * Returns the HTML representation of this Record
    */
   def toXHtml: NodeSeq = {
     meta.toXHtml(this)
@@ -72,7 +72,7 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
   }
 
   /**
-   * Retuns the JSON representation of this record
+   * Returns the JSON representation of this record
    *
    * @return a JsObj
    */
@@ -84,7 +84,7 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
   def saveTheRecord(): Box[MyType] = throw new BackingStoreException("Raw Records don't save themselves")
 
   /**
-   * Retuns the JSON representation of this record, converts asJValue to JsObj
+   * Returns the JSON representation of this record, converts asJValue to JsObj
    *
    * @return a JsObj
    */

@@ -54,7 +54,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    *
    * &lt;lift:field_label name="firstName"/&gt; - the label for firstName field will be rendered here
    * &lt;lift:field name="firstName"/&gt; - the firstName field will be rendered here (typically an input field)
-   * &lt;lift:field_msg name="firstName"/&gt; - the <lift:msg> will be rendered here hafing the id given by
+   * &lt;lift:field_msg name="firstName"/&gt; - the <lift:msg> will be rendered here having the id given by
    *                                             uniqueFieldId of the firstName field.
    *
    *
@@ -171,8 +171,8 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   protected def instantiateRecord: BaseRecord = rootClass.newInstance.asInstanceOf[BaseRecord]
 
   /**
-   * Creates a new record setting the value of the fields from the original object but
-   * apply the new value for the specific field
+   * Creates a new record, setting the value of the fields from the original object but
+   * applying the new value for the specific field
    *
    * @param - original the initial record
    * @param - field the new mutated field
@@ -206,13 +206,13 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   /**
    * Validates the inst Record by calling validators for each field
    *
-   * @pram inst - the Record tobe validated
+   * @param inst - the Record to be validated
    * @return a List of FieldError. If this list is empty you can assume that record was validated successfully
    */
   def validate(inst: BaseRecord): List[FieldError] = {
     foreachCallback(inst, _.beforeValidation)
     try{
-	    fieldList.flatMap(_.field(inst).validate)
+      fieldList.flatMap(_.field(inst).validate)
     } finally {
       foreachCallback(inst, _.afterValidation)
     }
@@ -233,7 +233,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   }
 
   /**
-   * Retuns the JSON representation of <i>inst</i> record, converts asJValue to JsObj
+   * Returns the JSON representation of <i>inst</i> record, converts asJValue to JsObj
    *
    * @return a JsObj
    */
@@ -384,22 +384,22 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   }
 
   /**
-   * Prepend a DispatchPF function to LiftRules.dispatch. If the partial function id defined for a give Req
+   * Prepend a DispatchPF function to LiftRules.dispatch. If the partial function is defined for a give Req
    * it will construct a new Record based on the HTTP query string parameters
    * and will pass this Record to the function returned by func parameter.
    *
-   * @param func - a PartialFunction for associating a request with a user provided function and the proper Record
+   * @param func - a PartialFunction for associating a request with a user-provided function and the proper Record
    */
   def prependDispatch(func: PartialFunction[Req, BaseRecord => Box[LiftResponse]])= {
     LiftRules.dispatch.prepend (makeFunc(func))
   }
 
   /**
-   * Append a DispatchPF function to LiftRules.dispatch. If the partial function id defined for a give Req
+   * Append a DispatchPF function to LiftRules.dispatch. If the partial function is defined for a give Req
    * it will construct a new Record based on the HTTP query string parameters
    * and will pass this Record to the function returned by func parameter.
    *
-   * @param func - a PartialFunction for associating a request with a user provided function and the proper Record
+   * @param func - a PartialFunction for associating a request with a user-provided function and the proper Record
    */
   def appendDispatch(func: PartialFunction[Req, BaseRecord => Box[LiftResponse]])= {
     LiftRules.dispatch.append (makeFunc(func))
@@ -462,7 +462,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   }
 
   /**
-   * Defined the order of the fields in this record
+   * Defines the order of the fields in this record
    *
    * @return a List of Field
    */
@@ -478,7 +478,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   def metaFields() : List[Field[_, BaseRecord]] = fieldList.map(_.metaField)
 
   /**
-   * Obtain the fields for a particlar Record or subclass instance by passing
+   * Obtain the fields for a particular Record or subclass instance by passing
    * the instance itself.
    * (added 14th August 2009, Tim Perrett)
    */

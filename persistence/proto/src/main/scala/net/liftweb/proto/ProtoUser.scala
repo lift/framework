@@ -1049,7 +1049,7 @@ trait ProtoUser {
 
   /**
    * If there's any mutation to do to the user on retrieval for
-   * editting, override this method and mutate the user.  This can
+   * editing, override this method and mutate the user.  This can
    * be used to pull query parameters from the request and assign
    * certain fields. Issue #722
    *

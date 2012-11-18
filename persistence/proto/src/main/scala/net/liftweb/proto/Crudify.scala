@@ -104,7 +104,7 @@ trait Crudify {
   lazy val DeleteItem = calcDeleteItem
 
   /**
-   * What's the prefix for this CRUD.  Typically the table name
+   * What's the prefix for this CRUD.  Typically the table name.
    */
   def calcPrefix: List[String]
 
@@ -140,7 +140,7 @@ trait Crudify {
   def fieldsForDisplay: List[FieldPointerType]
 
   /**
-   * The list of fields to present on a form form editting
+   * The list of fields to present on a form form editing
    */
   def fieldsForEditing: List[FieldPointerType] = fieldsForDisplay
 
@@ -320,8 +320,8 @@ trait Crudify {
   def editErrorClass = "edit_error_class"
 
   /**
-   * The core template for editting.  Does not include any
-   * page wrapping
+   * The core template for editing.  Does not include any
+   * page wrapping.
    */
   protected def _editTemplate = {
   <lift:crud.edit form="post">
@@ -453,7 +453,7 @@ trait Crudify {
 
   /**
    * The core template for deleting.  Does not include any
-   * page wrapping
+   * page wrapping.
    */
   def _deleteTemplate =
   <lift:crud.delete form="post">
@@ -483,7 +483,7 @@ trait Crudify {
 
   /**
    * This is the template that's used to render the page after the
-   * optional wrapping of the template in the page wrapper
+   * optional wrapping of the template in the page wrapper.
    */
   def createTemplate(): NodeSeq = pageWrapper(_createTemplate)
 
@@ -492,7 +492,7 @@ trait Crudify {
 
   /**
    * The core template for creating.  Does not include any
-   * page wrapping
+   * page wrapping.
    */
   def _createTemplate =
   <lift:crud.create form="post">
@@ -530,7 +530,7 @@ trait Crudify {
 
   /**
    * The core template for viewing.  Does not include any
-   * page wrapping
+   * page wrapping.
    */
   def _viewTemplate =
   <lift:crud.view>
@@ -620,7 +620,7 @@ trait Crudify {
 
   /**
    * Given a range, find the records.  Your implementation of this
-   * method should enforce ordering (e.g., on primary key)
+   * method should enforce ordering (e.g., on primary key).
    */
   def findForList(start: Long, count: Int): List[TheCrudType] 
 
@@ -639,7 +639,7 @@ trait Crudify {
   /**
    * This method defines how many rows are displayed per page.  By
    * default, it's hard coded at 20, but you can make it session specific
-   * or change the default by overriding this method
+   * or change the default by overriding this method.
    */
   protected def rowsPerPage: Int = 20
 
@@ -748,14 +748,14 @@ trait Crudify {
   def referer: String = S.referer openOr listPathString
 
   /**
-   * As the field names are being displayed for editting, this method
+   * As the field names are being displayed for editing, this method
    * is called with the XHTML that will be displayed as the field name
-   * an a flag indicating that the field is required (or not).  You
+   * and a flag indicating whether the field is required.  You
    * can wrap the fieldName in a span with a css class indicating that
    * the field is required or otherwise do something to update the field
-   * name indiciating to the user that the field is required.  By default
+   * name indicating to the user that the field is required.  By default
    * the method wraps the fieldName in a span with the class attribute set
-   * to "required_field"
+   * to "required_field".
    */
   def wrapNameInRequired(fieldName: NodeSeq, required: Boolean): NodeSeq = {
     if (required) {
