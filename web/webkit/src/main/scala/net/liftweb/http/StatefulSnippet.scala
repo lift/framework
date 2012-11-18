@@ -21,7 +21,7 @@ import net.liftweb.common._
 import net.liftweb._
 import util._
 import Helpers._
-import xml.{Text, NodeSeq, Elem}
+import xml.{NodeSeq, Elem}
 
 /**
  * The same StatefulSnippet instance is used across a given page rendering.
@@ -81,10 +81,10 @@ trait StatefulSnippet extends DispatchSnippet {
   /**
    * create an anchor tag around a body
    *
-   * @to - the target
+   * @param to - the target
    * @param func - the function to invoke when the link is clicked
    * @param body - the NodeSeq to wrap in the anchor tag
-   * @attrs - the (optional) attributes for the HTML element
+   * @param attrs - the (optional) attributes for the HTML element
    */
   def link(to: String, func: () => Any, body: NodeSeq, attrs: SHtml.ElemAttr*): Elem =
     SHtml.link(to, () => { registerThisSnippet(); func() }, body, attrs: _*)
@@ -128,7 +128,7 @@ trait StatefulSnippet extends DispatchSnippet {
  */
 trait RenderDispatch {
   /**
-   * The pre-defined dispatch
+   * The predefined dispatch
    */
   def dispatch: PartialFunction[String, NodeSeq => NodeSeq] = Map("render" -> render _)
 
@@ -145,7 +145,7 @@ trait RenderDispatch {
  */
 trait RenderFuncDispatch {
   /**
-   * The pre-defined dispatch
+   * The predefined dispatch
    */
   def dispatch: PartialFunction[String, NodeSeq => NodeSeq] = Map("render" -> render)
 
@@ -217,7 +217,7 @@ trait SimpleStatelessBehavior extends StatelessBehavior {
 }
 
 /**
- * A "default" implementation of StatelessBehavior.  Just ignore everything and return a zero-length Text.
+ * A "default" implementation of StatelessBehavior.  Just ignore everything and return an empty NodeSeq.
  */
 trait BlankStatelessBehavior extends StatelessBehavior {
   def statelessDispatch: PartialFunction[String, NodeSeq => NodeSeq] = {

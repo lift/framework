@@ -153,10 +153,10 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends BaseField {
 trait TypedField[ThisType] extends BaseField {
 
   /*
-   * Unless overriden, MyType is equal to ThisType.  Available for
+   * Unless overridden, MyType is equal to ThisType.  Available for
    * backwards compatibility
    */
-  type MyType = ThisType // For backwards compatability
+  type MyType = ThisType // For backwards compatibility
 
   type ValidationFunction = ValueType => List[FieldError]
 
