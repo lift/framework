@@ -21,7 +21,7 @@ import common._
 import xml.NodeSeq
 
 /**
- * Defines the association of this reference with an markup tag ID
+ * Defines the association of this reference with a markup tag ID
  */
 trait FieldIdentifier {
   def uniqueFieldId: Box[String] = Empty
