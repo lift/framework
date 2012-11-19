@@ -169,13 +169,16 @@ object JsonParser {
     }
 
     def newValue(v: JValue) {
-      vals.peek(classOf[JValue]) match {
-        case f: JField =>
+      vals.peekOption match {
+        case Some(f: JField) =>
           vals.pop(classOf[JField])
           val newField = JField(f.name, v)
           val obj = vals.peek(classOf[JObject])
           vals.replace(JObject(newField :: obj.obj))
-        case a: JArray => vals.replace(JArray(v :: a.arr))
+        case Some(a: JArray) => vals.replace(JArray(v :: a.arr))
+        case None =>
+          vals.push(v)
+          root = Some(v)
         case _ => p.fail("expected field or array")
       }
     }
