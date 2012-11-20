@@ -20,6 +20,7 @@ package js
 
 import net.liftweb.http._
 import net.liftweb.common._
+import net.liftweb.util.Props
 
 /**
  * the default mechanisms for doing Ajax and Comet in Lift
@@ -150,9 +151,18 @@ object ScriptRenderer {
 
              var failureFunc = function() {
                liftAjax.lift_ajaxInProcess = null;
-               var cnt = aboutToSend.retryCnt;
+               var cnt = aboutToSend.retryCnt;""" +
+               (if (!Props.devMode) "" else 
+  """
+               if (arguments.length == 3 && arguments[1] == 'parsererror') {
+                 alert('The server call succeeded, but the returned Javascript contains an error: '+
+                  arguments[2] + '\n(This message is displayed in development mode only)');
+               } else
+  """) + 
+
+            """
                if (cnt < liftAjax.lift_ajaxRetryCount) {
-               aboutToSend.retryCnt = cnt + 1;
+                 aboutToSend.retryCnt = cnt + 1;
                  var now = (new Date()).getTime();
                  aboutToSend.when = now + (1000 * Math.pow(2, cnt));
                  queue.push(aboutToSend);
