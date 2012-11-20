@@ -169,14 +169,19 @@ object JsonParser {
     }
 
     def newValue(v: JValue) {
-      vals.peek(classOf[JValue]) match {
-        case f: JField =>
-          vals.pop(classOf[JField])
-          val newField = JField(f.name, v)
-          val obj = vals.peek(classOf[JObject])
-          vals.replace(JObject(newField :: obj.obj))
-        case a: JArray => vals.replace(JArray(v :: a.arr))
-        case _ => p.fail("expected field or array")
+      if(!vals.isEmpty)
+        vals.peek(classOf[JValue]) match {
+          case f: JField =>
+            vals.pop(classOf[JField])
+            val newField = JField(f.name, v)
+            val obj = vals.peek(classOf[JObject])
+            vals.replace(JObject(newField :: obj.obj))
+          case a: JArray => vals.replace(JArray(v :: a.arr))
+          case _ => p.fail("expected field or array")
+        }
+      else {
+        vals.push(v)
+        root = Some(v)
       }
     }
 
@@ -217,6 +222,7 @@ object JsonParser {
     }
 
     def peekOption = if (stack isEmpty) None else Some(stack.peek)
+    def isEmpty = stack.isEmpty
   }
 
   class Parser(buf: Buffer) {
