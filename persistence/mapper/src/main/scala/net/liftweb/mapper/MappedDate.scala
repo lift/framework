@@ -64,7 +64,7 @@ abstract class MappedDate[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
 
   def dbFieldClass = classOf[Date]
 
-
+  /** Returns the date as the number of seconds (not milliseconds) since January 1, 1970 */
   def toLong: Long = is match {
     case null => 0L
     case d: Date => d.getTime / 1000L
