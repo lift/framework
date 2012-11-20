@@ -757,8 +757,8 @@ class Req(val path: ParsePath,
                                                    _addlParams)
 
   /**
-   * Build a new Req, except it has a different path.
-   * Useful for creating Reqs with sub-paths
+   * Build a new Req, the same except with a different path.
+   * Useful for creating Reqs with sub-paths.
    */
   def withNewPath(newPath: ParsePath): Req = {
     val outer = this
@@ -787,7 +787,7 @@ class Req(val path: ParsePath,
       override lazy val accepts: Box[String] = outer.accepts
     
       /**
-       * What is the content type in order of preference by the requestor
+       * What is the content type in order of preference by the requester
        * calculated via the Accept header
        */
       override lazy val weightedAccept: List[ContentType] = 
@@ -1058,7 +1058,7 @@ class Req(val path: ParsePath,
 
 
   /**
-   * Computer the Not Found via a Template
+   * Compute the Not Found via a Template
    */
   private def notFoundViaTemplate(path: ParsePath): LiftResponse = {
     this.initIfUnitted {
@@ -1189,7 +1189,7 @@ class Req(val path: ParsePath,
   }
     
   /**
-   * What is the content type in order of preference by the requestor
+   * What is the content type in order of preference by the requester
    * calculated via the Accept header
    */
   lazy val weightedAccept: List[ContentType] = accepts match {
@@ -1255,7 +1255,7 @@ final case class RewriteResponse(path: ParsePath,
 /**
  * Maintains the context of resolving the URL when cookies are disabled from container. It maintains
  * low coupling such as code within request processing is not aware of the actual response that
- * ancodes the URL.
+ * encodes the URL.
  */
 object RewriteResponse {
   def apply(path: List[String], params: Map[String, String]) = new RewriteResponse(ParsePath(path, "", true, false), params, false)
