@@ -74,11 +74,11 @@ This repository, `framework`, contains the following components:
 
 #### core
 
-Core elements used by Lift projects. If you wish to reuse some of Lift's helpers and constructs, such as `Box`, this compenent may be all you need. However, a web application will most likely require one or more of Lift's components.
+Core elements used by Lift projects. If you wish to reuse some of Lift's helpers and constructs, such as `Box`, this component may be all you need. However, a web application will most likely require one or more of Lift's components.
 
 #### web
 
-This component included all of Lift's core HTTP and web handling. Including `lift-webkit` in your build process should be sufficient for basic applications and will include `lift-core` as a transative dependency.
+This component includes all of Lift's core HTTP and web handling. Including `lift-webkit` in your build process should be sufficient for basic applications and will include `lift-core` as a transitive dependency.
 
 #### persistence
 
@@ -102,7 +102,7 @@ The [examples](https://github.com/lift/examples) repository contains the source 
 
 If you simply want to use Lift in your project, add Lift as a dependency to your build system or [download the JAR files directly](www.liftweb.net/download).
 
-If you wish to build Lift from source, checkout this repository and use the included `liftsh` script to build some or all of the components you want.
+If you wish to build Lift from source, check out this repository and use the included `liftsh` script to build some or all of the components you want.
 
     git clone https://github.com/lift/framework.git
     cd framework
@@ -122,11 +122,11 @@ The Lift Google Group is the official place for support and is an active, friend
 
 ### Wiki
 
-The Lift wiki is hosted on Assembla and can be found at [http://www.assembla.com/spaces/liftweb/wiki/](http://www.assembla.com/spaces/liftweb/wiki/). Anyone is welcome to contributed to the wiki; you must create an account and watch the Lift project in order to create or edit wiki pages.
+The Lift wiki is hosted on Assembla and can be found at [http://www.assembla.com/spaces/liftweb/wiki/](http://www.assembla.com/spaces/liftweb/wiki/). Anyone is welcome to contribute to the wiki; you must create an account and watch the Lift project in order to create or edit wiki pages.
 
 ### ScalaDocs
 
-The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on ScalaTools. You can access the source code-based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 2.4 release can be accessed at [http://scala-tools.org/mvnsites/liftweb-2.4/](http://scala-tools.org/mvnsites/liftweb-2.4/).
+The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on ScalaTools. You can access the source code–based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 2.4 release can be accessed at [http://scala-tools.org/mvnsites/liftweb-2.4/](http://scala-tools.org/mvnsites/liftweb-2.4/).
 
 ## License
 
