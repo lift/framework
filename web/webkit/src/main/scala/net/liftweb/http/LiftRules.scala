@@ -754,6 +754,22 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
           r.isIE8) openOr true
 
   /**
+   * The JavaScript to execute to log a message on the client side when
+   * liftAjax.lift_logError is called.
+   *
+   * If Empty no logging is performed
+   * The default when running in DevMode is to call lift_defaultLogError which
+   * will use JavaScript console if available or alert otherwise.
+   * 
+   * To always use alert set:
+   *
+   *   LiftRules.jsLogFunc = Full(v => JE.Call("alert",v).cmd)
+   */
+  @volatile var jsLogFunc: Box[JsVar => JsCmd] =
+    if (Props.devMode) Full(v => JE.Call("liftAjax.lift_defaultLogError", v))
+    else Empty
+
+  /**
    * The JavaScript to execute at the end of an
    * Ajax request (for example, removing the spinning working thingy)
    */
