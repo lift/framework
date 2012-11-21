@@ -21,6 +21,7 @@ package js
 import net.liftweb.http._
 import net.liftweb.common._
 import net.liftweb.util.Props
+import net.liftweb.http.js.JE.JsVar
 
 /**
  * the default mechanisms for doing Ajax and Comet in Lift
@@ -70,6 +71,17 @@ object ScriptRenderer {
 
     lift_uriSuffix: undefined,
 
+    lift_logError: function(msg) {
+      """ + (LiftRules.jsLogFunc.map(_(JsVar("msg")).toJsCmd) openOr "") + """
+    },
+
+    lift_defaultLogError: function(msg) {
+      if (console && typeof console.error == 'function')
+        console.error(msg);
+      else
+        alert(msg);
+    },
+    
     lift_ajaxQueueSort: function() {
       liftAjax.lift_ajaxQueue.sort(function (a, b) {return a.when - b.when;});
     },
@@ -155,8 +167,7 @@ object ScriptRenderer {
                (if (!Props.devMode) "" else 
   """
                if (arguments.length == 3 && arguments[1] == 'parsererror') {
-                 alert('The server call succeeded, but the returned Javascript contains an error: '+
-                  arguments[2] + '\n(This message is displayed in development mode only)');
+                 liftAjax.lift_logError('The server call succeeded, but the returned Javascript contains an error: '+arguments[2])
                } else
   """) + 
 
