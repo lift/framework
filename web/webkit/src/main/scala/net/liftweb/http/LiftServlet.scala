@@ -28,6 +28,18 @@ import auth._
 import provider._
 import json.JsonAST.JValue
 
+/**
+ * Wrap a LiftResponse and cache the result to avoid computing the actual response
+ * more than once
+ */
+private [http] case class CachedResponse(wrapped: LiftResponse) extends LiftResponse {
+  private val _cachedResponse = wrapped.toResponse
+
+  def toResponse = _cachedResponse
+
+  // Should we retry request processing
+  def failed_? = _cachedResponse.code >= 500 && _cachedResponse.code < 600
+}
 
 class LiftServlet extends Loggable {
   private var servletContext: HTTPContext = null
@@ -619,8 +631,20 @@ class LiftServlet extends Loggable {
       val ret:Box[LiftResponse] =
         nextAction match {
           case Left(future) =>
-            val result = runAjax(liftSession, requestState)
-            future.satisfy(result)
+            val result = runAjax(liftSession, requestState) map CachedResponse
+            
+            result foreach {resp =>
+              if (resp.failed_?) {
+                // The request failed. The client will retry it, so
+                // remove it from the list of current Ajax requests that
+                // needs to be satisfied so we process the next request
+                // from scratch
+                liftSession.withAjaxRequests { currentAjaxRequests =>
+                  currentAjaxRequests.remove(RenderVersion.get)
+                }
+              }
+              else future.satisfy(result)
+            }
 
             result
 
