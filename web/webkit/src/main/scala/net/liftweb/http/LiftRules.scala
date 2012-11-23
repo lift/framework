@@ -192,7 +192,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Use this to apply various effects to the notices. The user function receives the NoticeType
-   * and the id of the element containing the specific notice. Thus it is the function's responsability to form
+   * and the id of the element containing the specific notice. Thus it is the function's responsibility to form
    * the javascript code for the visual effects. This is applicable for both ajax and non ajax contexts.
    * For notices associated with ID's the user type will receive an Empty notice type. That's because the effect
    * is applied on the real estate holding the notices for this ID. Typically this contains a single message.
@@ -201,7 +201,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
 
   /**
-   * Holds user functions that willbe executed very early in the request processing. The functions'
+   * Holds user functions that will be executed very early in the request processing. The functions'
    * result will be ignored.
    */
   val early = RulesSeq[(HTTPRequest) => Any]
@@ -216,7 +216,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * Defines the resources that are protected by authentication and authorization. If this function
    * is not defined for the input data, the resource is considered unprotected ergo no authentication
    * is performed. If this function is defined and returns a Full box, it means that this resource
-   * is protected by authentication,and authenticated subjed must be assigned to the role returned by
+   * is protected by authentication, and authenticated subjed must be assigned to the role returned by
    * this function or to a role that is child-of this role. If this function returns Empty it means that
    * this resource is protected by authentication but no authorization is performed meaning that roles are
    * not verified.
@@ -224,7 +224,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val httpAuthProtectedResource = RulesSeq[HttpAuthProtectedResourcePF]
 
   /**
-   * The HTTP authentication mechanism that ift will perform. See <i>LiftRules.protectedResource</i>
+   * The HTTP authentication mechanism that Lift will perform. See <i>LiftRules.protectedResource</i>
    */
   @volatile var authentication: HttpAuthentication = NoAuthentication
 
@@ -250,7 +250,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var getLiftSession: (Req) => LiftSession = (req) => _getLiftSession(req)
 
   /**
-   * Attached an ID entity for resource URI specified in
+   * Attaches an ID entity for resource URI specified in
    * link or script tags. This allows controlling browser
    * resource caching. By default this just adds a query string
    * parameter unique per application lifetime. More complex
@@ -386,7 +386,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
 
   /**
-   * Holds user functions that are executed after the response was sent to client. The functions' result
+   * Holds user functions that are executed after the response is sent to client. The functions' result
    * will be ignored.
    */
   val afterSend = RulesSeq[(BasicResponse, HTTPResponse, List[(String, String)], Box[Req]) => Any]
@@ -512,11 +512,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Allows user adding additional Lift tags (the tags must be prefixed by lift namespace such as <lift:xxxx/>).
-   * Each LiftTagPF function will be called with the folowing parameters:
+   * Each LiftTagPF function will be called with the following parameters:
    * <pre>
    *  - Element label,
    *  - The Element itselft,
-   *  - The attrbutes
+   *  - The attributes
    *  - The child nodes
    *  - The page name
    * </pre>
@@ -729,7 +729,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var ajaxRetryCount: Box[Int] = Empty
 
   /**
-   * The JavaScript to execute at the begining of an
+   * The JavaScript to execute at the beginning of an
    * Ajax request (for example, showing the spinning working thingy)
    */
   @volatile var ajaxStart: Box[() => JsCmd] = Empty
@@ -738,7 +738,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Set the Ajax end JavaScript function.  The
-   * Java calable alternative to assigning the var ajaxStart
+   * Java-callable alternative to assigning the var ajaxStart
    */
   def setAjaxStart(f: Func0[JsCmd]): Unit = {
     ajaxStart = Full(f: () => JsCmd)
@@ -761,7 +761,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Set the Ajax end JavaScript function.  The
-   * Java calable alternative to assigning the var ajaxEnd
+   * Java-callable alternative to assigning the var ajaxEnd
    */
   def setAjaxEnd(f: Func0[JsCmd]): Unit = {
     ajaxEnd = Full(f: () => JsCmd)
@@ -951,7 +951,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Update the function here that calculates particular paths to
-   * exclused from context path rewriting
+   * excluded from context path rewriting
    */
   val excludePathFromContextPathRewriting: FactoryMaker[String => Boolean] =
   new FactoryMaker(() => ((s: String) => false)) {}
@@ -1039,9 +1039,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Add functionality around all of the HTTP request/response cycle.
    * This is an optimal place to get a database connection.  Note that whatever
-   * is loaned at the begining of the request will not be returned until the end
+   * is loaned at the beginning of the request will not be returned until the end
    * of the request.  It's super-important to (1) not do anything related
-   * to state or touch the request objects or anything else at the begining or
+   * to state or touch the request objects or anything else at the beginning or
    * end of the loan wrapper phase; (2) make sure that your code does not throw
    * exceptions as exceptions can cause major problems.
    */
@@ -1104,7 +1104,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * In Dev mode and Test mode, return a non-200 response code
    * if there is an error on the page (one that would result in
    * the red box with the error message being displayed).  This
-   * helps in automate testing
+   * helps in testing automation.
    */
   @volatile var devModeFailureResponseCodeOverride: Box[Int] = Empty
 
@@ -1125,7 +1125,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   private var otherPackages: List[String] = Nil
 
   /**
-   * Used by Lift to construct full pacakge names fromthe packages provided to addToPackages function
+   * Used by Lift to construct full package names from the packages provided to addToPackages function
    */
   def buildPackage(end: String) = otherPackages.map(_ + "." + end)
 
@@ -1138,7 +1138,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   }
 
   /**
-   * Tells Lift where to find Snippets,Views, Comet Actors and Lift ORM Model object
+   * Tells Lift where to find Snippets, Views, Comet Actors and Lift ORM Model object
    */
   def addToPackages(what: Package) {
     if (doneBoot) throw new IllegalStateException("Cannot modify after boot.");
@@ -1365,7 +1365,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * be sent to the browser depending on the current RunMode (development, etc.)
    *
    * By default it returns an XhtmlResponse containing a predefined markup. You can overwrite this by calling
-   * LiftRules.exceptionHandler.prepend(...). If you are calling append then your code will not be calle since
+   * LiftRules.exceptionHandler.prepend(...). If you are calling append then your code will not be called since
    * a default implementation is already appended.
    *
    */
@@ -1483,12 +1483,12 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val onEndServicing = RulesSeq[(Req, Box[LiftResponse]) => Unit]
 
   /**
-   * Tells Lift if the Comet JavaScript shoukd be included. By default it is set to true.
+   * Tells Lift if the Comet JavaScript should be included. By default it is set to true.
    */
   @volatile var autoIncludeComet: LiftSession => Boolean = session => true
 
   /**
-   * Tells Lift if the Ajax JavaScript shoukd be included. By default it is set to true.
+   * Tells Lift if the Ajax JavaScript should be included. By default it is set to true.
    */
   @deprecated("Use autoIncludeAjaxCalc", "2.4")
   @volatile var autoIncludeAjax: LiftSession => Boolean = session => autoIncludeAjaxCalc.vend().apply(session)
@@ -1518,13 +1518,13 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * By default lift uses a garbage-collection mechanism of removing unused bound functions from LiftSesssion.
-   * Setting this to false will disable this mechanims and there will be no Ajax polling requests attempted.
+   * Setting this to false will disable this mechanisms and there will be no Ajax polling requests attempted.
    */
   @volatile var enableLiftGC = true;
 
   /**
    * If Lift garbage collection is enabled, functions that are not seen in the page for this period of time
-   * (given in milliseonds) will be discarded, hence eligibe for garbage collection.
+   * (given in milliseconds) will be discarded, hence eligible for garbage collection.
    * The default value is 10 minutes.
    */
   @volatile var unusedFunctionsLifeTime: Long = 10 minutes
@@ -1554,7 +1554,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * If this is Full, comet updates (partialUpdates or reRenders) are
    * wrapped in a try/catch statement. The provided JsCmd is the body of
-   * the catch statement. Within that JsCmd, the varibale "e" refers to the
+   * the catch statement. Within that JsCmd, the variable "e" refers to the
    * caught exception.
    *
    * In development mode, this defaults to Full and the command within
@@ -1587,7 +1587,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     )
 
   /**
-   * Holds the last update time of the Ajax request. Based on this server mayreturn HTTP 304 status
+   * Holds the last update time of the Ajax request. Based on this server may return HTTP 304 status
    * indicating the client to used the cached information.
    */
   @volatile var ajaxScriptUpdateTime: LiftSession => Long = session => {
@@ -1596,7 +1596,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   }
 
   /**
-   * Determins the path parts and suffix from given path parts
+   * Determines the path parts and suffix from given path parts
    */
   val suffixSplitters = RulesSeq[SplitSuffixPF].append {
     case parts =>
@@ -1661,7 +1661,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   private[http] def withMimeHeaders[T](map: Map[String, List[String]])(f: => T): T = _mimeHeaders.doWith(Full(map))(f)
 
   /**
-   * Holds the last update time of the Comet request. Based on this server mayreturn HTTP 304 status
+   * Holds the last update time of the Comet request. Based on this server may return HTTP 304 status
    * indicating the client to used the cached information.
    */
   @volatile var cometScriptUpdateTime: LiftSession => Long = session => {
