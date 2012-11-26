@@ -1642,10 +1642,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
     val ret: NodeSeq =
       try {
-
         snippetName.map{snippet =>
           val (cls, method) = splitColonPair(snippet)
-          S.doSnippet(snippet)(
+          val snippetTimer = SnippetTimer.evaluate(snippet)
+
+          snippetTimer apply S.doSnippet(snippet)(
             runWhitelist(snippet, cls, method, kids){(S.locateMappedSnippet(snippet).map(_(kids)) or
               locSnippet(snippet)).openOr(
               S.locateSnippet(snippet).map(_(kids)) openOr {
