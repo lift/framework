@@ -37,8 +37,6 @@ object MailerSpec extends Specification {
     testModeSend.default.set((msg: MimeMessage) => {
       lastMessage = Full(msg)
     })
-
-    assert(Props.testMode)
   }
 
   import myMailer._
