@@ -2876,42 +2876,42 @@ for {
   def error(id: String, n: String) {error(id, Text(n))}
 
   /**
-   * Sets an NOTICE notice as plain text
+   * Sets a NOTICE notice as plain text
    */
   def notice(n: String) {notice(Text(n))}
 
   /**
-   * Sets an NOTICE notice as an XML sequence
+   * Sets a NOTICE notice as an XML sequence
    */
   def notice(n: NodeSeq) {p_notice.is += ((NoticeType.Notice, n, Empty))}
 
   /**
-   * Sets an NOTICE notice as and XML sequence and associates it with an id
+   * Sets a NOTICE notice as and XML sequence and associates it with an id
    */
   def notice(id: String, n: NodeSeq) {p_notice.is += ((NoticeType.Notice, n, Full(id)))}
 
   /**
-   * Sets an NOTICE notice as plai text and associates it with an id
+   * Sets a NOTICE notice as plai text and associates it with an id
    */
   def notice(id: String, n: String) {notice(id, Text(n))}
 
   /**
-   * Sets an WARNING notice as plain text
+   * Sets a WARNING notice as plain text
    */
   def warning(n: String) {warning(Text(n))}
 
   /**
-   * Sets an WARNING notice as an XML sequence
+   * Sets a WARNING notice as an XML sequence
    */
   def warning(n: NodeSeq) {p_notice += ((NoticeType.Warning, n, Empty))}
 
   /**
-   * Sets an WARNING notice as an XML sequence and associates it with an id
+   * Sets a WARNING notice as an XML sequence and associates it with an id
    */
   def warning(id: String, n: NodeSeq) {p_notice += ((NoticeType.Warning, n, Full(id)))}
 
   /**
-   * Sets an WARNING notice as plain text and associates it with an id
+   * Sets a WARNING notice as plain text and associates it with an id
    */
   def warning(id: String, n: String) {warning(id, Text(n))}
 
