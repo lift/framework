@@ -516,6 +516,26 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       }
       success
     }
+    "get set from JValue after BSON roundtrip" in {
+      val fromJsonBox = JObjectFieldTestRecord.fromJValue(json)
+
+      fromJsonBox.isDefined must_== true
+
+
+      fromJsonBox foreach { fromJson =>
+
+        //Convert the test record, make a DBObject out of it, and make a record from that DBObject
+        val fromBson = JObjectFieldTestRecord.fromDBObject( fromJson.asDBObject )
+
+        fromBson.asJValue must_== fromJson.asJValue
+
+      }
+
+
+
+
+      success
+    }
   }
 }
 
