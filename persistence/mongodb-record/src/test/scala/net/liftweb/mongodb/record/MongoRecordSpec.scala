@@ -334,6 +334,11 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       JField("legacyOptionalBsonRecordListField", JArray(List()))
     ))
 
+    // JObjectField
+    val joftrFieldJObject: JObject = ("minutes" -> 59)
+    val joftr = JObjectFieldTestRecord.createRecord.mandatoryJObjectField(joftrFieldJObject)
+    val joftrJson: JValue = ("_id" -> ("$oid" -> joftr.id.toString)) ~ ("mandatoryJObjectField" -> ("minutes" -> 59))
+
     "save and retrieve 'standard' type fields" in {
       checkMongoIsRunning
 
@@ -407,6 +412,15 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       srtrFromDb.toList map { tr =>
         tr mustEqual srtr
       }
+
+      joftr.save
+
+      val joftrFromDb = JObjectFieldTestRecord.find(joftr.id.is)
+      joftrFromDb.isDefined must_== true
+      joftrFromDb foreach { tr =>
+        tr must_== joftr
+      }
+      success
     }
 
     "save and retrieve Mongo type fields with default values" in {
@@ -454,6 +468,16 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       srtrFromDb.toList map { tr =>
         tr mustEqual srtrDef
       }
+
+      val joftrDef = JObjectFieldTestRecord.createRecord
+      joftrDef.save
+
+      val joftrFromDb = JObjectFieldTestRecord.find(joftrDef.id.value)
+      joftrFromDb.isDefined must_== true
+      joftrFromDb foreach { tr =>
+        tr mustEqual joftrDef
+      }
+      success
     }
 
     "convert Mongo type fields to JValue" in {
@@ -471,6 +495,8 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       srtrAsJValue \\ "legacyOptionalBsonRecordField" mustEqual srtrJson \\ "legacyOptionalBsonRecordField"
       srtrAsJValue \\ "mandatoryBsonRecordListField" mustEqual srtrJson \\ "mandatoryBsonRecordListField"
       srtrAsJValue \\ "legacyOptionalBsonRecordListField" mustEqual srtrJson \\ "legacyOptionalBsonRecordListField"
+
+      joftr.asJValue mustEqual joftrJson
     }
 
     "get set from json string using lift-json parser" in {
@@ -496,6 +522,12 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       mtrFromJson.isDefined must_== true
       mtrFromJson.toList map { tr =>
         tr mustEqual mtr
+      }
+
+      val joftrFromJson = JObjectFieldTestRecord.fromJsonString(compact(render(joftrJson)))
+      joftrFromJson.isDefined must_== true
+      joftrFromJson.toList map { tr =>
+        tr mustEqual joftr
       }
     }
 
@@ -799,7 +831,6 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       }
     }
 
-    /* save throws an exception here but not above ???
     "update dirty fields for a PatternFieldTestRecord" in {
       val pftrd = PatternFieldTestRecord.createRecord.save
 
@@ -816,7 +847,8 @@ class MongoRecordSpec extends Specification with MongoTestKit {
         rec must_== pftrd
         rec.dirtyFields.length must_== 0
       }
-    }*/
+      success
+    }
 
     "update dirty fields for a ListTestRecord" in {
       val ltr = ListTestRecord.createRecord.save

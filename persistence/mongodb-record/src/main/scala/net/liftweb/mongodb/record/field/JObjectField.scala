@@ -23,16 +23,18 @@ import common._
 import http.js.JE._
 import json._
 import util.Helpers.tryo
-import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
+import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
 
 import scala.xml.NodeSeq
 
-class JObjectField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[JObject, OwnerType] with MandatoryTypedField[JObject] {
+import com.mongodb._
 
-  def asJs = asJValue match {
-    case JNothing => JsNull
-    case jv => JsRaw(compact(render(jv)))
-  }
+abstract class JObjectField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
+extends Field[JObject, OwnerType]
+with MandatoryTypedField[JObject]
+with MongoFieldFlavor[JObject] {
+
+  def owner = rec
 
   def asJValue = valueBox openOr (JNothing: JValue)
 
@@ -45,14 +47,15 @@ class JObjectField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field
   def defaultValue = JObject(List())
 
   def setFromAny(in: Any): Box[JObject] = in match {
-    case jv: JObject => Full(set(jv))
-    case Some(jv: JObject) => Full(set(jv))
-    case Full(jv: JObject) => Full(set(jv))
+    case dbo: DBObject => setBox(setFromDBObject(dbo))
+    case jv: JObject => setBox(Full(jv))
+    case Some(jv: JObject) => setBox(Full(jv))
+    case Full(jv: JObject) => setBox(Full(jv))
     case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny).apply(0)
     case (s: String) :: _ => setFromString(s)
-    case null => Full(set(null))
+    case null => setBox(Full(null))
     case s: String => setFromString(s)
-    case None | Empty | Failure(_, _, _) => Full(set(null))
+    case None | Empty | Failure(_, _, _) => setBox(Full(null))
     case o => setFromString(o.toString)
   }
 
@@ -64,5 +67,10 @@ class JObjectField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field
 
   def toForm: Box[NodeSeq] = Empty
 
-  def owner = rec
+  def asDBObject: DBObject = valueBox
+    .map { v => JObjectParser.parse(v)(owner.meta.formats) }
+    .openOr(new BasicDBObject)
+
+  def setFromDBObject(obj: DBObject): Box[JObject] =
+    Full(JObjectParser.serialize(obj)(owner.meta.formats).asInstanceOf[JObject])
 }
