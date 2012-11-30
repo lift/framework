@@ -39,6 +39,8 @@ import xml.{Elem, NodeSeq, Text}
 import util.{Helpers, FieldError}
 import Helpers._
 
+import org.bson.types.ObjectId
+
 /**
  * Systems under specification for MongoField.
  */
@@ -508,11 +510,25 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
 
     }
     "get set from JValue" in {
-      val fromJson = JObjectFieldTestRecord.fromJValue(json)
+      val rec = JObjectFieldTestRecord.createRecord
+      val recFromJson = rec.mandatoryJObjectField.setFromJValue(json)
 
-      fromJson.isDefined must_== true
-      fromJson foreach { r =>
-        r.asJValue must_== json
+      recFromJson.isDefined must_== true
+      recFromJson foreach { r =>
+        r must_== json
+      }
+      success
+    }
+    "get set from JValue after BSON roundtrip" in {
+      val joftrJson: JObject = ("_id" -> ("$oid" -> ObjectId.get.toString)) ~ ("mandatoryJObjectField" -> ("minutes" -> 59))
+      val fromJsonBox = JObjectFieldTestRecord.fromJValue(joftrJson)
+
+      fromJsonBox.isDefined must_== true
+
+      fromJsonBox foreach { fromJson =>
+        //Convert the test record, make a DBObject out of it, and make a record from that DBObject
+        val fromBson = JObjectFieldTestRecord.fromDBObject(fromJson.asDBObject)
+        fromBson.asJValue must_== fromJson.asJValue
       }
       success
     }
