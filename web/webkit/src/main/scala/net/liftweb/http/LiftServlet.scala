@@ -633,19 +633,17 @@ class LiftServlet extends Loggable {
           case Left(future) =>
             val result = runAjax(liftSession, requestState) map CachedResponse
             
-            result foreach {resp =>
-              if (resp.failed_?) {
-                // The request failed. The client will retry it, so
-                // remove it from the list of current Ajax requests that
-                // needs to be satisfied so we process the next request
-                // from scratch
-                liftSession.withAjaxRequests { currentAjaxRequests =>
-                  currentAjaxRequests.remove(RenderVersion.get)
-                }
+            if (result.exists(_.failed_?)) {
+              // The request failed. The client will retry it, so
+              // remove it from the list of current Ajax requests that
+              // needs to be satisfied so we re-process the next request
+              // from scratch
+              liftSession.withAjaxRequests { currentAjaxRequests =>
+                currentAjaxRequests.remove(RenderVersion.get)
               }
-              else future.satisfy(result)
             }
 
+            future.satisfy(result)
             result
 
           case Right(future) =>
