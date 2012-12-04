@@ -962,6 +962,25 @@ trait SHtml {
     }
       
     ajaxSelect(options, deflt, func, attributes: _*)
+=======
+    val id = nextFuncName
+    val textOpt = nextFuncName
+    val idAttr = Seq(ElemAttr.pairToBasic("id", id))
+    val options = opts :+  (textOpt , "New Element")
+    var _options = options 
+    
+    def addId(elem: Elem) = (idAttr.foldLeft(elem)(_ % _))
+
+    lazy val func: (String) => JsCmd = (select: String) => {
+      def text(in: String): JsCmd = {
+        _options = (in, in) +: _options
+        Replace(id, addId({ajaxSelect(_options, Some(in), func, attrs: _*)}))
+      }
+      if (select == textOpt) Replace(id, addId({ajaxText("", text(_), attrs: _*)})) & Focus(id) else f(select)
+    }
+      
+    addId({ajaxSelect(options, deflt, func, attrs: _*)})
+>>>>>>> Adding ajaxEditableSelect to SHtml. Allows users to dynamically add new selections into an ajaxSelect.
   }
 
   def ajaxSelect(opts: Seq[(String, String)], deflt: Box[String],
