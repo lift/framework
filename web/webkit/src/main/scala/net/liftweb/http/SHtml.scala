@@ -939,7 +939,6 @@ trait SHtml {
    * Create a select box based on the list with a default value and the function
    * to be executed on form submission with an additional selection that 
    * transforms select into an ajaxText allowing the user to add a new select option 
-   * Warning: id attribute in attrs will get clobbered 
    *
    * @param options -- a list of value and text pairs (value, text to display)
    * @param default -- the default value (or Empty if no default value)
@@ -948,23 +947,21 @@ trait SHtml {
   def ajaxEditableSelect(opts: Seq[(String, String)], deflt: Box[String], 
     f: String => JsCmd, attrs: ElemAttr*): Elem = {
     
-    val id = nextFuncName
+    val id = attrs.collectFirst { case BasicElemAttr(name, value) if name == "id" => value } getOrElse nextFuncName
+    val attributes = if(attrs.contains(BasicElemAttr("id", id))) attrs else BasicElemAttr("id", id) +: attrs
     val textOpt = nextFuncName
-    val idAttr = Seq(ElemAttr.pairToBasic("id", id))
-    val options = opts :+  (textOpt , "New Element")
+    val options = opts :+ (textOpt , "New Element")
     var _options = options 
     
-    def addId(elem: Elem) = (idAttr.foldLeft(elem)(_ % _))
-
     lazy val func: (String) => JsCmd = (select: String) => {
       def text(in: String): JsCmd = {
         _options = (in, in) +: _options
-        Replace(id, addId({ajaxSelect(_options, Some(in), func, attrs: _*)}))
+        Replace(id, ajaxSelect(_options, Some(in), func, attributes: _*))
       }
-      if (select == textOpt) Replace(id, addId({ajaxText("", text(_), attrs: _*)})) & Focus(id) else f(select)
+      if (select == textOpt) Replace(id, ajaxText("", text(_), attributes: _*)) & Focus(id) else f(select)
     }
       
-    addId({ajaxSelect(options, deflt, func, attrs: _*)})
+    ajaxSelect(options, deflt, func, attributes: _*)
   }
 
   def ajaxSelect(opts: Seq[(String, String)], deflt: Box[String],
