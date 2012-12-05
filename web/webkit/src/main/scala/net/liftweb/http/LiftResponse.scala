@@ -49,7 +49,7 @@ case class CreatedResponse(xml: Node, mime: String, addlHeaders: List[(String, S
 
   def code = 201
 
-  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
+  val headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
 
@@ -674,7 +674,7 @@ case class XmlMimeResponse(xml: Node, mime: String, addlHeaders: List[(String, S
 
   def code = 200
 
-  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
+  val headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
 
@@ -685,7 +685,7 @@ class XmlResponse(val xml: Node, val code: Int, val mime: String, val cookies: L
                   val addlHeaders: List[(String, String)] = XmlResponse.addlHeaders) extends XmlNodeResponse {
   def docType = Empty
 
-  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
+  val headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
 
   def out: Node = xml
 }
@@ -758,7 +758,7 @@ case class AtomResponse(xml: Node, addlHeaders: List[(String, String)] = XmlResp
 
   def code = 200
 
-  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> "application/atom+xml; charset=utf-8") :: addlHeaders)
+  val headers: List[(String, String)] = S.getHeaders(("Content-Type" -> "application/atom+xml; charset=utf-8") :: addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
 
@@ -773,7 +773,7 @@ case class OpenSearchResponse(xml: Node, addlHeaders: List[(String, String)] = X
 
   def code = 200
 
-  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> "application/opensearchdescription+xml; charset=utf-8") ::
+  val headers: List[(String, String)] = S.getHeaders(("Content-Type" -> "application/opensearchdescription+xml; charset=utf-8") ::
   addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
