@@ -1260,6 +1260,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Execute certain functions early in a Stateful Request
+   * This is called early in a stateful request (one that's not serviced by a stateless REST request and
+   * one that's not marked as a stateless HTML page request).
+   * @dpp strongly recommends that everything that you do related to user state is done with earlyInStateful,
+   * instead of using onBeginServicing.
    */
   val earlyInStateful = RulesSeq[Box[Req] => Unit]
 
@@ -1486,6 +1490,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Holds user function hooks when the request is about to be processed
+   * It's legacy from when Lift was a lot more Rails-like. It's called literally at the very
+   * beginning of the servicing of the HTTP request.
+   * The S scope is not available nor is the DB connection available in onBeginServicing.
+   * We recommend using earlyInStateful.
    */
   val onBeginServicing = RulesSeq[Req => Unit]
 
