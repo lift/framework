@@ -36,9 +36,9 @@ object LAScheduler extends Loggable {
   @volatile var maxThreadPoolSize = threadPoolSize * 25
 
   /**
-   * If it's Full, then create a ArrayBlockingQueue
-   * otherwith create a LinkedBlockingQueue.  Default
-   * to Full(200000)
+   * If it's Full, then create an ArrayBlockingQueue,
+   * otherwise create a LinkedBlockingQueue.  Default
+   * to Full(200000).
    */
   @volatile var blockingQueueSize: Box[Int] = Full(200000)
 
@@ -181,9 +181,9 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
   }
 
   /**
-   * This method inserts the message at the head of the mailbox
+   * This method inserts the message at the head of the mailbox.
    * It's protected because this functionality may or may not want
-   * to be exposed'
+   * to be exposed.
    */
   protected def insertMsgAtHeadOfQueue_!(msg: T): Unit = {
      val toDo: () => Unit = baseMailbox.synchronized {
@@ -218,7 +218,7 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
 
   /**
    * You can wrap calls around the evaluation of the mailbox.  This allows you to set up
-   * the environment
+   * the environment.
    */
   protected def around[R](f: => R): R = aroundLoans match {
     case Nil => f
@@ -354,7 +354,7 @@ with ForwardableActor[Any, Any] {
   /**
   * Send a message to the Actor and get an LAFuture
   * that will contain the reply (if any) from the message.
-  * This method calls !&lt; and is here for Java compatibility
+  * This method calls !&lt; and is here for Java compatibility.
   */
   def sendAndGetFuture(msg: Any): LAFuture[Any] = this !< msg
 
