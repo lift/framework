@@ -34,8 +34,8 @@ import java.util.Locale
 
 /**
  * An actor that monitors other actors that are linked with it. If a watched
- * actor terminates,this actor captures the Exit messag, executes failureFuncs
- * and resurects the actor.
+ * actor terminates, this actor captures the Exit message, executes failureFuncs
+ * and resurrects the actor.
  */
 object ActorWatcher extends scala.actors.Actor with Loggable {
 
@@ -118,7 +118,7 @@ trait StatefulComet extends CometActor {
   protected var state: State = emptyState
 
   /**
-   * If there's some ThreadLocal variable that needs to be setup up
+   * If there's some ThreadLocal variable that needs to be set up
    * before processing the state deltas, set it up here.
    */
   protected def setupLocalState[T](f: => T): T = f
@@ -159,7 +159,7 @@ object AddAListener {
  * This is a message class for use with ListenerManager and CometListener
  * instances. The use of the shouldUpdate function is deprecated, and
  * should instead be handled by the message processing partial functions
- * on the CometListner instances themselves.
+ * on the CometListener instances themselves.
  *
  * @see CometListener
  * @see ListenerManager
@@ -209,7 +209,7 @@ object ListenerManager {
  *
  *   override def mediumPriority = {
  *     case Tick => {
- *       updateListeneres(Tick)
+ *       updateListeners(Tick)
  *       ActorPing.schedule(this, Tick, 1000L)
  * }
  * }
@@ -337,7 +337,7 @@ trait CometListenee extends CometListener {
 
 /**
  * A LiftActorJ with ListenerManager.  Subclass this class
- * to get a Java-useable LiftActorJ with ListenerManager
+ * to get a Java-usable LiftActorJ with ListenerManager
  */
 abstract class LiftActorJWithListenerManager extends LiftActorJ with ListenerManager {
   protected override def messageHandler: PartialFunction[Any, Unit] =
@@ -368,7 +368,7 @@ trait CometListener extends CometActor {
 
   /**
    * Override this in order to selectively update listeners based on the given message.
-   * This method has been deprecated because it's executed in a seperate context from
+   * This method has been deprecated because it's executed in a separate context from
    * the session's context.  This causes problems.  Accept/reject logic should be done
    * in the partial function that handles the message.
    */
@@ -699,7 +699,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   /**
    * Override this method to deal with JSON sent from the browser via the sendJson function.  This
    * is based on the Lift JSON package rather than the handleJson stuff based on the older util.JsonParser.  This
-   * is the prefered mechanism.  If you use the jsonSend call, you will get a JObject(JField("command", cmd), JField("param", params))
+   * is the preferred mechanism.  If you use the jsonSend call, you will get a JObject(JField("command", cmd), JField("param", params))
    */
   def receiveJson: PartialFunction[JsonAST.JValue, JsCmd] = Map()
 
@@ -723,7 +723,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   def autoIncludeJsonCode: Boolean = false
 
   /**
-   * Creates the span element acting as the real estate for commet rendering.
+   * Creates the span element acting as the real estate for comet rendering.
    */
   def buildSpan(time: Long, xml: NodeSeq): NodeSeq = {
     Elem(parentTag.prefix, parentTag.label, parentTag.attributes,
@@ -811,7 +811,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
   /**
    * We have to cache fixedRender and only change it if
-   * the tempalte changes or we get a reRender(true)
+   * the template changes or we get a reRender(true)
    */
   private def internalFixedRender: Box[NodeSeq] =
     if (!cacheFixedRender) {
@@ -824,9 +824,9 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
   /**
    * By default, we do not cache the value of fixedRender.  If it's
-   * expensive to recompute it each time there's a convertion
+   * expensive to recompute it each time there's a conversion
    * of something to a RenderOut, override this method if you
-   * want to cache fixedRender
+   * want to cache fixedRender.
    */
   protected def cacheFixedRender = false
 
@@ -1027,7 +1027,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * There are implicit conversions for a bunch of stuff to
    * RenderOut (including NodeSeq).  Thus, if you don't declare the return
    * turn to be something other than RenderOut and return something that's
-   * coersable into RenderOut, the compiler "does the right thing"(tm) for you.
+   * coercible into RenderOut, the compiler "does the right thing"(tm) for you.
    * <br/>
    * There are implicit conversions for NodeSeq, so you can return a pile of
    * XML right here.  There's an implicit conversion for NodeSeq => NodeSeq,
@@ -1038,7 +1038,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * Note that the render method will be called each time a new browser tab
    * is opened to the comet component or the comet component is otherwise
    * accessed during a full page load (this is true if a partialUpdate
-   * has occured.)  You may want to look at the fixedRender method which is
+   * has occurred.)  You may want to look at the fixedRender method which is
    * only called once and sets up a stable rendering state.
    */
   def render: RenderOut
@@ -1197,10 +1197,10 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
   /**
    * Compose the Message Handler function. By default,
-   * composes highPriority orElse mediumePriority orElse internalHandler orElse
+   * composes highPriority orElse mediumPriority orElse internalHandler orElse
    * lowPriority orElse internalHandler.  But you can change how
    * the handler works if doing stuff in highPriority, mediumPriority and
-   * lowPriority is not enough
+   * lowPriority is not enough.
    */
   protected def composeFunction: PartialFunction[Any, Unit] = composeFunction_i
 
@@ -1250,7 +1250,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * Convert a NodeSeq => NodeSeq to a RenderOut.  The render method
    * returns a RenderOut.  This method implicitly (in Scala) or explicitly
    * (in Java) will convert a NodeSeq => NodeSeq to a RenderOut.  This
-   * is helpful if you use Lift's CSS Seletor Transforms to define
+   * is helpful if you use Lift's CSS Selector Transforms to define
    * rendering.
    */
   protected implicit def nsToNsFuncToRenderOut(f: NodeSeq => NodeSeq) =
