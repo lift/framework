@@ -70,4 +70,4 @@ francis.rhys-jones at guardian dot co dot uk
 Noel Kennedy
 
 ### Email: ###
-nkennedy@rvc.ac.uk
+nkennedy at rvc dot ac dot  uk
