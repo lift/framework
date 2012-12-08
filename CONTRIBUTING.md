@@ -1,3 +1,6 @@
+Ticket and Pull Request Guidelines
+==================================
+
 The policy on issues is:
 * Non-committers should discuss issues on the Lift mailing list before opening
   a issue.
