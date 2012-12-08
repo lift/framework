@@ -26,7 +26,7 @@ object SnippetTimer {
    * @return NodeSeq The result of evaluating f
    */
   def timeSnippet(snippetName:String)(f: => NodeSeq) = {
-    logTime("Snippet %s (and children) evaluation" format snippetName, f)
+    logTime("Snippet %s evaluation" format snippetName, f)
   }
 
   /**
