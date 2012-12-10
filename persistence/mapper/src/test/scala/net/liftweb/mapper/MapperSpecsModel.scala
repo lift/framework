@@ -50,7 +50,7 @@ object MapperSpecsModel {
     val mapperName = bm.dbName
     val displayName = name match {
       case "firstName" if l == Locale.getDefault()    => "DEFAULT:" + mapperName + "." + name
-      case "firstName" if l == new Locale("da", "DK") => "da_DK:" + mapperName + "." + name
+      case "firstName" if l == new Locale("xx", "YY") => "xx_YY:" + mapperName + "." + name
       case _                                          => name
     }
     displayName

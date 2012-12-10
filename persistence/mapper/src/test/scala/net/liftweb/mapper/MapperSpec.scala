@@ -99,8 +99,8 @@ class MapperSpec extends Specification with BeforeExample {
         SampleModel.firstName.displayName must_== "DEFAULT:SampleModel.firstName"
 
         LiftRules.localeCalculator = (request: Box[HTTPRequest]) => request.flatMap(_.locale)
-          .openOr(new Locale("da", "DK"))
-        SampleModel.firstName.displayName must_== "da_DK:SampleModel.firstName"
+          .openOr(new Locale("xx", "YY"))
+        SampleModel.firstName.displayName must_== "xx_YY:SampleModel.firstName"
 
         LiftRules.localeCalculator = localeCalculator
         success
