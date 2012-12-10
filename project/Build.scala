@@ -63,14 +63,14 @@ object BuildDef extends Build {
     coreProject("json-ext")
         .dependsOn(common, json)
         .settings(description := "Extentions to JSON Library",
-                  libraryDependencies ++= Seq(commons_codec, joda_time))
+                  libraryDependencies ++= Seq(commons_codec, joda_time, joda_convert))
 
   lazy val util =
     coreProject("util")
         .dependsOn(actor, json)
         .settings(description := "Utilities Library",
                   parallelExecution in Test := false,
-                  libraryDependencies <++= scalaVersion {sv =>  Seq(scala_compiler(sv), joda_time, commons_codec, javamail, log4j, htmlparser)})
+                  libraryDependencies <++= scalaVersion {sv =>  Seq(scala_compiler(sv), joda_time, joda_convert, commons_codec, javamail, log4j, htmlparser)})
 
 
   // Web Projects

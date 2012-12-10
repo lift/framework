@@ -27,7 +27,7 @@ object Dependencies {
   lazy val CVMapping29   = crossMapped("2.9.1-1" -> "2.9.2", "2.9.1" -> "2.9.2")
   lazy val CVMappingAll  = crossMapped("2.9.2" -> "2.9.1", "2.9.1-1" -> "2.9.1")
 
-  lazy val slf4jVersion = "1.6.4"
+  lazy val slf4jVersion = "1.7.2"
 
   lazy val scalazGroup       = defaultOrMapped("org.scalaz")
   lazy val scalazVersion     = defaultOrMapped("6.0.4", "2.9.0" -> "6.0.RC2")
@@ -39,7 +39,8 @@ object Dependencies {
   lazy val commons_httpclient     = "commons-httpclient"         % "commons-httpclient" % "3.1"
   lazy val dispatch_http          = "net.databinder"             % "dispatch-http"      % "0.7.8"   cross CVMappingAll
   lazy val javamail               = "javax.mail"                 % "mail"               % "1.4.4"
-  lazy val joda_time              = "joda-time"                  % "joda-time"          % "1.6.2" // TODO: 2.1
+  lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.1"
+  lazy val joda_convert           = "org.joda"                   % "joda-convert"       % "1.2"
   lazy val htmlparser             = "nu.validator.htmlparser"    % "htmlparser"         % "1.4"
   lazy val mongo_java_driver      = "org.mongodb"                % "mongo-java-driver"  % "2.7.3"
   lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.4.1"
@@ -57,7 +58,7 @@ object Dependencies {
 
   // Provided scope:
   // Scope provided by container, available only in compile and test classpath, non-transitive by default.
-  lazy val logback         = "ch.qos.logback"    % "logback-classic" % "1.0.1"      % "provided"
+  lazy val logback         = "ch.qos.logback"    % "logback-classic" % "1.0.9"      % "provided"
   lazy val log4j           = "log4j"             % "log4j"           % "1.2.16"     % "provided"
   lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"   % slf4jVersion % "provided"
   lazy val persistence_api = "javax.persistence" % "persistence-api" % "1.0"        % "provided"
