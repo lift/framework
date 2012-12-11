@@ -933,18 +933,10 @@ trait S extends HasParams with Loggable {
    * If you do not define an entry for a particular key, we fall back to using
    * Lift's core entries.
    *
-   * We cache the values in modes other than DevMode
-   *
    * @see LiftRules.resourceNames
    * @see LiftRules.resourceBundleFactories
    */
-  def _resourceBundles: List[ResourceBundle] = resourceBundles(locale) ++ liftCoreResourceBundle.toList
-
-  private lazy val cachedResourceBundles = _resourceBundles
-
-  private def resourceBundles: List[ResourceBundle] =
-    if (Props.devMode) _resourceBundles else cachedResourceBundles
-
+  def resourceBundles: List[ResourceBundle] = resourceBundles(locale) ++ liftCoreResourceBundle.toList
 
   def resourceBundles(loc: Locale): List[ResourceBundle] = {
     _resBundle.box match {
@@ -985,6 +977,9 @@ trait S extends HasParams with Loggable {
    */
   def liftCoreResourceBundle: Box[ResourceBundle] = _liftCoreResBundle.is
 
+
+  private object resourceValueCache extends TransientRequestMemoize[(String, Locale), String]
+  
   /**
    * Get a localized string or return the original string.
    * We first try your own bundle resources, if that fails, we try
@@ -996,7 +991,7 @@ trait S extends HasParams with Loggable {
    *
    * @see # resourceBundles
    */
-  def ?(str: String): String = ?!(str, resourceBundles)
+  def ?(str: String): String = resourceValueCache.get(str -> locale, ?!(str, resourceBundles))
 
   /**
    * Get a localized string or return the original string.
@@ -1011,7 +1006,8 @@ trait S extends HasParams with Loggable {
    *
    * @see # resourceBundles
    */
-  def ?(str: String, locale: Locale): String = ?!(str, resourceBundles(locale))
+  def ?(str: String, locale: Locale): String = resourceValueCache.get(str -> locale, ?!(str, resourceBundles(locale)))
+  
   /**
    * Attempt to localize and then format the given string. This uses the String.format method
    * to format the localized string.
