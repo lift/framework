@@ -1117,20 +1117,31 @@ trait S extends HasParams with Loggable {
    */
   def uri: String = request.map(_.uri).openOr("/")
 
-/**
-* Returns the query string for the current request
-*/
-def queryString: Box[String] =
-for {
-  req <- request
-  queryString <- req.request.queryString
-} yield queryString
+  /**
+   * Returns the query string for the current request
+   */
+  def queryString: Box[String] = for {
+    req <- request
+    queryString <- req.request.queryString
+  } yield queryString
+    
+    
+  def uriAndQueryString: Box[String] = for {
+    req <- this.request
+  } yield req.uri + (queryString.map(s => "?"+s) openOr "")
 
-
-def uriAndQueryString: Box[String] =
-for {
-  req <- this.request
-} yield req.uri + (queryString.map(s => "?"+s) openOr "")
+  /**
+   * Run any configured exception handlers and make sure errors in
+   * the handlers are ignored
+   */
+  def runExceptionHandlers(req: Req, orig: Throwable): Box[LiftResponse] = {
+    S.assertExceptionThrown() 
+    tryo{(t: Throwable) => 
+      logger.error("An error occurred while running error handlers", t)
+      logger.error("Original error causing error handlers to be run", orig)} {
+      NamedPF.applyBox((Props.mode, req, orig), LiftRules.exceptionHandler.toList);
+    } openOr Empty
+  }
 
   private object _skipXmlHeader extends TransientRequestVar(false)
 
@@ -2526,8 +2537,6 @@ for {
       }
     }
   }
-
-  private def booster(lst: List[String], func: String => Any): Unit = lst.foreach(v => func(v))
 
   /**
    * Decorates an URL with jsessionid parameter in case cookies are disabled from the container. Also
