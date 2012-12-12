@@ -310,11 +310,7 @@ class LiftServlet extends Loggable {
       }
     } catch {
       case foc: LiftFlowOfControlException => throw foc
-      case e: Exception if !e.getClass.getName.endsWith("RetryRequest") => {
-        val bundle = (Props.mode, req, e)
-        S.assertExceptionThrown()
-        NamedPF.applyBox(bundle, LiftRules.exceptionHandler.toList)
-      }
+      case e: Exception if !e.getClass.getName.endsWith("RetryRequest") => S.runExceptionHandlers(req, e)
     }
 
     tryo {
@@ -535,7 +531,7 @@ class LiftServlet extends Loggable {
       }
     } catch {
       case foc: LiftFlowOfControlException => throw foc
-      case e => S.assertExceptionThrown() ; NamedPF.applyBox((Props.mode, requestState, e), LiftRules.exceptionHandler.toList);
+      case e => S.runExceptionHandlers(requestState, e)
     }
   }
 
