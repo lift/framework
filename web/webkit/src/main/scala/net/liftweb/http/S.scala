@@ -1136,7 +1136,7 @@ trait S extends HasParams with Loggable {
       logger.error("An error occurred while running error handlers", t)
       logger.error("Original error causing error handlers to be run", orig)} {
       NamedPF.applyBox((Props.mode, req, orig), LiftRules.exceptionHandler.toList);
-    } openOr Empty
+    } openOr Full(PlainTextResponse("An error has occurred while processing an error using the functions in LiftRules.exceptionHandler. Check the log for details.", 500))
   }
 
   private object _skipXmlHeader extends TransientRequestVar(false)
