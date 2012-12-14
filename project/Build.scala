@@ -106,7 +106,7 @@ object BuildDef extends Build {
   // Persistence Projects
   // --------------------
   lazy val persistence: Seq[ProjectReference] =
-    Seq(db, proto, jpa, mapper, record, couchdb, squeryl_record, mongodb, mongodb_record, ldap)
+    Seq(db, proto, jpa, mapper, record, squeryl_record, mongodb, mongodb_record, ldap)
 
   lazy val db =
     persistenceProject("db")
@@ -135,12 +135,6 @@ object BuildDef extends Build {
   lazy val record =
     persistenceProject("record")
         .dependsOn(proto)
-
-  lazy val couchdb =
-    persistenceProject("couchdb")
-        .dependsOn(record)
-        .settings(libraryDependencies += dispatch_http,
-                  parallelExecution in Test := false)
 
   lazy val squeryl_record =
     persistenceProject("squeryl-record")
