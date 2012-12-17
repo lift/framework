@@ -31,7 +31,7 @@ object JsonParserSpec extends Specification with JValueGen with ScalaCheck {
 
   "Any valid json can be parsed" in {
     val parsing = (json: JValue) => { parse(Printer.pretty(render(json))); true }
-    check(forAll(parsing))
+    check(forAll(genJValue)(parsing))
   }
 
   "Buffer size does not change parsing result" in {

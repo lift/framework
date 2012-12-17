@@ -169,7 +169,7 @@ object JsonParser {
     }
 
     def newValue(v: JValue) {
-      if(!vals.isEmpty)
+      if (!vals.isEmpty)
         vals.peek(classOf[JValue]) match {
           case f: JField =>
             vals.pop(classOf[JField])
@@ -253,7 +253,9 @@ object JsonParser {
         s.append(first)
         while (wasInt) {
           val c = buf.next
-          if (c == '.' || c == 'e' || c == 'E') {
+          if (c == EOF) {
+            wasInt = false
+          } else if (c == '.' || c == 'e' || c == 'E') {
             doubleVal = true
             s.append(c)
           } else if (!(Character.isDigit(c) || c == '.' || c == 'e' || c == 'E' || c == '-')) {
@@ -345,7 +347,7 @@ object JsonParser {
     def back = cur = cur-1
 
     def next: Char = {
-      if (cur == offset && read < 0) {
+      if (cur >= offset && read < 0) {
         if (eofIsFailure) throw new ParseException("unexpected eof", null) else EOF
       } else {
         val c = segment(cur)
@@ -398,9 +400,11 @@ object JsonParser {
       }
 
       val length = in.read(segment, offset, segment.length-offset)
-      cur = offset
-      offset += length
-      length
+      if (length != -1) {
+        cur = offset
+        offset += length
+        length
+      } else -1
     }
   }
 
