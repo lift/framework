@@ -19,6 +19,7 @@ package util
 
 import scala.util.parsing.combinator.{Parsers, ImplicitConversions}
 import common._
+@deprecated("Use lift-json instead", "2.5")
 object JSONParser extends SafeSeqParser with ImplicitConversions {
   implicit def strToInput(in: String): Input = new scala.util.parsing.input.CharArrayReader(in.toCharArray)
   type Elem = Char
