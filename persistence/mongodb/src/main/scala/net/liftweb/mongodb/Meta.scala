@@ -41,7 +41,7 @@ private[mongodb] object Meta {
                                   classOf[Short], classOf[java.lang.Integer], classOf[java.lang.Long],
                                   classOf[java.lang.Double], classOf[java.lang.Float],
                                   classOf[java.lang.Byte], classOf[java.lang.Boolean],
-                                  classOf[java.lang.Short])
+                                  classOf[java.lang.Short], classOf[scala.Array[Byte]])
 
     def primitive_?(clazz: Class[_]) = primitives contains clazz
 
