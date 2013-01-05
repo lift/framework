@@ -188,9 +188,13 @@ trait PaginatorSnippet[T] extends Paginator[T] {
    */
   def first_=(f: Long) = _first = f max 0 min (count-1)
   /**
+   * Set base URI for pagination when snippet loads
+   */
+  val paginationBaseUri = S.uri
+  /**
    * Returns a URL used to link to a page starting at the given record offset.
    */
-  def pageUrl(offset: Long): String = appendParams(S.uri, List(offsetParam -> offset.toString))
+  def pageUrl(offset: Long): String = appendParams(paginationBaseUri, List(offsetParam -> offset.toString))
   /**
    * Returns XML that links to a page starting at the given record offset, if the offset is valid and not the current one.
    * @param ns The link text, if the offset is valid and not the current offset; or, if that is not the case, the static unlinked text to display
