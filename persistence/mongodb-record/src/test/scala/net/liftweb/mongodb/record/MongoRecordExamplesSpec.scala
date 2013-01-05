@@ -156,6 +156,7 @@ package mongotestrecords {
     object objidlist extends MongoListField[ListDoc, ObjectId](this)
     object dtlist extends MongoListField[ListDoc, Date](this)
     object patternlist extends MongoListField[ListDoc, Pattern](this)
+    object binarylist extends MongoListField[ListDoc, Array[Byte]](this)
 
     // specialized list types
     object jsonobjlist extends MongoJsonObjectListField(this, JsonDoc)
@@ -489,6 +490,7 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
     ld1.jsonobjlist.set(List(jd1, JsonDoc("2", "jsondoc2"), jd1))
     ld1.patternlist.set(List(Pattern.compile("^Mongo"), Pattern.compile("^Mongo2")))
     ld1.maplist.set(List(Map("name" -> "map1", "type" -> "map"), Map("name" -> "map2", "type" -> "map")))
+    ld1.binarylist.set(List[Array[Byte]]("foo".getBytes(), "bar".getBytes()))
 
     ld1.save must_== ld1
 
@@ -513,6 +515,8 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
         l.jsonobjlist.value(i).id must_== ld1.jsonobjlist.value(i).id
         l.jsonobjlist.value(i).name must_== ld1.jsonobjlist.value(i).name
       }
+      //using view allows to transform to Seq to make a deep equals
+      l.binarylist.value.view must_== ld1.binarylist.value.view
     }
 
     if (!debug) {
