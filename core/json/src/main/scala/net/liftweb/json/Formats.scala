@@ -157,7 +157,7 @@ trait TypeHints {
   /**
    * Adds the specified type hints to this type hints.
    */
-  def + (hints: TypeHints): TypeHints = CompositeTypeHints(hints.components ::: components)
+  def + (hints: TypeHints): TypeHints = CompositeTypeHints(components ::: hints.components)
 
   private[TypeHints] case class CompositeTypeHints(override val components: List[TypeHints]) extends TypeHints {
     val hints: List[Class[_]] = components.flatMap(_.hints)
@@ -167,7 +167,7 @@ trait TypeHints {
      */
     def hintFor(clazz: Class[_]): String = components.filter(_.containsHint_?(clazz))
         .map(th => (th.hintFor(clazz), th.classFor(th.hintFor(clazz)).getOrElse(sys.error("hintFor/classFor not invertible for " + th))))
-        .sort((x, y) => (delta(x._2, clazz) - delta(y._2, clazz)) < 0).head._1
+        .sortWith((x, y) => (delta(x._2, clazz) - delta(y._2, clazz)) < 0).head._1
 
     def classFor(hint: String): Option[Class[_]] = {
       def hasClass(h: TypeHints) =

@@ -45,7 +45,7 @@ object SerializationExamples extends Specification {
   }
 
   case class Nullable(name: String)
-  
+
   "Lotto serialization example" in {
     import LottoExample.{Lotto, lotto}
 
@@ -80,22 +80,22 @@ object SerializationExamples extends Specification {
     val ser = swrite(r3)
     read[Rec](ser) mustEqual r3
   }
-  
+
   "Set serialization example" in {
-    val s = SetContainer(Set("foo", "bar"))    
+    val s = SetContainer(Set("foo", "bar"))
     val ser = swrite(s)
     read[SetContainer](ser) mustEqual s
   }
-  
+
   "Array serialization example" in {
-    val s = ArrayContainer(Array("foo", "bar"))    
+    val s = ArrayContainer(Array("foo", "bar"))
     val ser = swrite(s);
-    val unser = read[ArrayContainer](ser)    
+    val unser = read[ArrayContainer](ser)
     s.array.toList mustEqual unser.array.toList
   }
-  
+
   "Seq serialization example" in {
-    val s = SeqContainer(List("foo", "bar"))    
+    val s = SeqContainer(List("foo", "bar"))
     val ser = swrite(s)
     read[SeqContainer](ser) mustEqual s
   }
@@ -108,7 +108,7 @@ object SerializationExamples extends Specification {
 
   "None Option of tuple serialization example" in {
     // This is a regression test case, failed in lift json
-    val s = OptionOfTupleOfDouble(None)    
+    val s = OptionOfTupleOfDouble(None)
     val ser = swrite(s)
     read[OptionOfTupleOfDouble](ser) mustEqual s
   }
@@ -121,7 +121,7 @@ object SerializationExamples extends Specification {
   }
 
   "Case class from type constructors example" in {
-    val p = ProperType(TypeConstructor(Chicken(10)), (25, Player("joe")))
+    val p = ProperType(TypeConstructor(Chicken(10)), Pair(25, Player("joe")))
     val ser = swrite(p)
     read[ProperType](ser) mustEqual p
   }
@@ -147,34 +147,34 @@ object ShortTypeHintExamples extends TypeHintExamples {
 
 object FullTypeHintExamples extends TypeHintExamples {
   import Serialization.{read, write => swrite}
-  
+
   implicit val formats = Serialization.formats(FullTypeHints(List[Class[_]](classOf[Animal], classOf[True], classOf[False], classOf[Falcon], classOf[Chicken])))
-  
+
   "Ambiguous field decomposition example" in {
     val a = Ambiguous(False())
-    
-    val ser = swrite(a)    
+
+    val ser = swrite(a)
     read[Ambiguous](ser) mustEqual a
   }
-  
+
   "Ambiguous parameterized field decomposition example" in {
     val o = AmbiguousP(Chicken(23))
-    
-    val ser = swrite(o)    
+
+    val ser = swrite(o)
     read[AmbiguousP](ser) mustEqual o
   }
-  
+
   "Option of ambiguous field decomposition example" in {
     val o = OptionOfAmbiguous(Some(True()))
-    
-    val ser = swrite(o)    
+
+    val ser = swrite(o)
     read[OptionOfAmbiguous](ser) mustEqual o
   }
-  
+
   "Option of ambiguous parameterized field decomposition example" in {
     val o = OptionOfAmbiguousP(Some(Falcon(200.0)))
-    
-    val ser = swrite(o)    
+
+    val ser = swrite(o)
     read[OptionOfAmbiguousP](ser) mustEqual o
   }
 }
@@ -233,28 +233,28 @@ object CustomSerializerExamples extends Specification {
   import java.util.regex.Pattern
 
   class IntervalSerializer extends CustomSerializer[Interval](format => (
-    { 
-      case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) => 
-        new Interval(s.longValue, e.longValue) 
+    {
+      case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) =>
+        new Interval(s.longValue, e.longValue)
     },
-    { 
+    {
       case x: Interval =>
-        JObject(JField("start", JInt(BigInt(x.startTime))) :: 
-                JField("end",   JInt(BigInt(x.endTime))) :: Nil) 
+        JObject(JField("start", JInt(BigInt(x.startTime))) ::
+                JField("end",   JInt(BigInt(x.endTime))) :: Nil)
     }
   ))
 
   class PatternSerializer extends CustomSerializer[Pattern](format => (
-    { 
-      case JObject(JField("$pattern", JString(s)) :: Nil) => Pattern.compile(s) 
+    {
+      case JObject(JField("$pattern", JString(s)) :: Nil) => Pattern.compile(s)
     },
-    { 
-      case x: Pattern => JObject(JField("$pattern", JString(x.pattern)) :: Nil) 
+    {
+      case x: Pattern => JObject(JField("$pattern", JString(x.pattern)) :: Nil)
     }
   ))
 
   class DateSerializer extends CustomSerializer[Date](format => (
-    { 
+    {
       case JObject(List(JField("$dt", JString(s)))) =>
         format.dateFormat.parse(s).getOrElse(throw new MappingException("Can't parse "+ s + " to Date"))
     },
@@ -264,27 +264,27 @@ object CustomSerializerExamples extends Specification {
   ))
 
   class IndexedSeqSerializer extends Serializer[IndexedSeq[_]] {
-    def deserialize(implicit format: Formats) = {
+    def deserialize(implicit formats: Formats) = {
       case (TypeInfo(clazz, ptype), json) if classOf[IndexedSeq[_]].isAssignableFrom(clazz) => json match {
-        case JArray(xs) => 
+        case JArray(xs) =>
           val t = ptype.getOrElse(throw new MappingException("parameterized type not known"))
           xs.map(x => Extraction.extract(x, TypeInfo(t.getActualTypeArguments()(0).asInstanceOf[Class[_]], None))).toIndexedSeq
         case x => throw new MappingException("Can't convert " + x + " to IndexedSeq")
       }
     }
 
-    def serialize(implicit format: Formats) = {
+    def serialize(implicit formats: Formats) = {
       case i: IndexedSeq[_] => JArray(i.map(Extraction.decompose).toList)
     }
   }
 
-  implicit val formats =  Serialization.formats(NoTypeHints) + 
+  implicit val formats =  Serialization.formats(NoTypeHints) +
     new IntervalSerializer + new PatternSerializer + new DateSerializer + new IndexedSeqSerializer
 
   val i = new Interval(1, 4)
   val ser = swrite(i)
   ser mustEqual """{"start":1,"end":4}"""
-  val i2 = read[Interval](ser) 
+  val i2 = read[Interval](ser)
   i2.startTime mustEqual i.startTime
   i2.endTime mustEqual i.endTime
 
@@ -301,7 +301,7 @@ object CustomSerializerExamples extends Specification {
   val xs = Indexed(Vector("a", "b", "c"))
   val iser = swrite(xs)
   iser mustEqual """{"xs":["a","b","c"]}"""
-  read[Indexed](iser).xs.toList mustEqual List("a","b","c") 
+  read[Indexed](iser).xs.toList mustEqual List("a","b","c")
 }
 
 case class Indexed(xs: IndexedSeq[String])
@@ -374,4 +374,5 @@ case class OptionOfTupleOfDouble(position: Option[Tuple2[Double, Double]])
 
 case class Player(name: String)
 case class TypeConstructor[A](x: A)
-case class ProperType(x: TypeConstructor[Chicken], t: (Int, Player))
+case class Pair[A, B](fst: A, snd: B)
+case class ProperType(x: TypeConstructor[Chicken], t: Pair[Int, Player])
