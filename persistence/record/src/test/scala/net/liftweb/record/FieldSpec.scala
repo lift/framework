@@ -469,6 +469,18 @@ object FieldSpec extends Specification {
       Full(<input name=".*" type="text" tabindex="1" value={num.toString} id="mandatoryIntField_id"></input>)
     )
   }
+  
+  "IntField with custom HTML5 type" should {
+    val rec = CustomTypeIntFieldRecord.createRecord
+    val num = 123
+    passConversionTests(
+      num,
+      rec.customIntField,
+      JsRaw(num.toString),
+      JInt(num),
+      Full(<input name=".*" type="number" tabindex="1" value={num.toString} id="customIntField_id"></input>)
+    )
+  }
 
   "LocaleField" should {
     val rec = FieldTypeTestRecord.createRecord
