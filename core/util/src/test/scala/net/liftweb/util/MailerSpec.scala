@@ -31,6 +31,8 @@ object MailerSpec extends Specification {
   "Mailer Specification".title
   sequential
 
+  Props.mode // touch the lazy val so it's detected correctly
+
   val myMailer = new Mailer {
     @volatile var lastMessage: Box[MimeMessage] = Empty
 
