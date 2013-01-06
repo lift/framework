@@ -77,3 +77,9 @@ Ali Salim Rashid
 
 ### Email: ###
 a.rashid at zantekk dot com
+
+### Name: ###
+Jakub Czuchnowski
+
+### Email: ###
+jakub.czuchnowski at gmail dot com
