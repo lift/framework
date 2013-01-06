@@ -421,7 +421,7 @@ object Menu extends DispatchSnippet {
       }
 
       (S.request.flatMap(_.location), S.attr("param"), SiteMap.findAndTestLoc(name)) match {
-         case (_, Full(param), Full(loc: ConvertableLoc[T])) => {
+         case (_, Full(param), Full(loc: Loc[T] with ConvertableLoc[T])) => {
            (for {
              pv <- loc.convert(param)
              link <- loc.createLink(pv)
