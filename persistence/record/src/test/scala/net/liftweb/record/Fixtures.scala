@@ -260,3 +260,15 @@ class CustomFormatDateTimeRecord private () extends Record[CustomFormatDateTimeR
 }
 
 object CustomFormatDateTimeRecord extends CustomFormatDateTimeRecord with MetaRecord[CustomFormatDateTimeRecord]
+
+class CustomTypeIntFieldRecord private () extends Record[CustomTypeIntFieldRecord] {
+
+  def meta = CustomTypeIntFieldRecord
+
+  object customIntField extends IntField(this) {
+    override def formInputType = "number"
+  }
+
+}
+
+object CustomTypeIntFieldRecord extends CustomTypeIntFieldRecord with MetaRecord[CustomTypeIntFieldRecord]

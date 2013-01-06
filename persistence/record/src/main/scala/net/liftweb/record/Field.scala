@@ -121,6 +121,11 @@ trait BaseField extends FieldIdentifier with util.BaseField {
    */
   def notOptionalErrorMessage : String = "Value required"
 
+  /**
+   * Form field's type.
+   * Defaults to 'text', but you may want to change it to other HTML5 values.
+   */
+  def formInputType = "text"
 
   def tabIndex: Int = 1
 
