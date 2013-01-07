@@ -30,22 +30,28 @@ import common._
 object MailerSpec extends Specification {
   "Mailer Specification".title
   sequential
-  
-  MyMailer.touch()
 
-  import MyMailer._
-  
-  private def doNewMessage(f: => Unit): MimeMessage = {
+  Props.mode // touch the lazy val so it's detected correctly
+
+  val myMailer = new Mailer {
+    @volatile var lastMessage: Box[MimeMessage] = Empty
+
+    testModeSend.default.set((msg: MimeMessage) => {
+      lastMessage = Full(msg)
+    })
+  }
+
+  import myMailer._
+
+  private def doNewMessage(send: => Unit): MimeMessage = {
     lastMessage = Empty
 
-    val ignore = f
+    send
 
-    MailerSpec.this.synchronized {
-      while (lastMessage.isEmpty) {
-        MailerSpec.this.wait(100)
-      }
-      lastMessage.openOrThrowException("Test")
+    eventually {
+      lastMessage.isEmpty must_== false
     }
+    lastMessage openOrThrowException("Checked")
   }
 
   "A Mailer" should {
@@ -100,18 +106,3 @@ object MailerSpec extends Specification {
     }
   }
 }
-
-object MyMailer extends Mailer {
-    @volatile var lastMessage: Box[MimeMessage] = Empty
-
-   testModeSend.default.set((msg: MimeMessage) => {
-     lastMessage = Full(msg)
-//     MailerSpec.this.notifyAll()
-   })
-
-  def touch() {
-    Props.testMode
-    Thread.sleep(10)
-  } // do nothing, but force initialization of this class
-}
-

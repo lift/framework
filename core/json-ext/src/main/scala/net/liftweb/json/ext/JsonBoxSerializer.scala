@@ -34,9 +34,9 @@ class JsonBoxSerializer extends Serializer[Box[_]] {
       case JNull | JNothing => Empty
       case JObject(JField("box_failure", JString("Failure")) ::
                    JField("msg", JString(msg)) ::
-                   JField("exception", exn) ::
+                   JField("exception", exception) ::
                    JField("chain", chain) :: Nil) =>
-                     Failure(msg, deserializeException(exn),
+                     Failure(msg, deserializeException(exception),
                              extract(chain, TypeInfo(BoxClass, Some(typeHoldingFailure))).asInstanceOf[Box[Failure]])
       case JObject(JField("box_failure", JString("ParamFailure")) ::
                    JField("msg", JString(msg)) ::
@@ -45,7 +45,9 @@ class JsonBoxSerializer extends Serializer[Box[_]] {
                    JField("paramType", JString(paramType)) ::
                    JField("param", param) :: Nil) =>
                      val clazz = Thread.currentThread.getContextClassLoader.loadClass(paramType)
-                     ParamFailure(msg, extract(param, TypeInfo(clazz, None)))
+                     ParamFailure(msg, deserializeException(exception),
+                                  extract(chain, TypeInfo(BoxClass, Some(typeHoldingFailure))).asInstanceOf[Box[Failure]],
+                                  extract(param, TypeInfo(clazz, None)))
       case x =>
         val t = ptype.getOrElse(throw new MappingException("parameterized type not known for Box"))
         Full(extract(x, TypeInfo(t.getActualTypeArguments()(0).asInstanceOf[Class[_]], None)))
@@ -55,18 +57,18 @@ class JsonBoxSerializer extends Serializer[Box[_]] {
   def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
     case Full(x) => decompose(x)
     case Empty => JNull
-    case Failure(msg, exn, chain) =>
-      JObject(JField("box_failure", JString("Failure")) ::
-              JField("msg", JString(msg)) ::
-              JField("exception", serializeException(exn)) ::
-              JField("chain", decompose(chain)) :: Nil)
-    case ParamFailure(msg, exn, chain, param) =>
+    case ParamFailure(msg, exception, chain, param) =>
       JObject(JField("box_failure", JString("ParamFailure")) ::
               JField("msg", JString(msg)) ::
-              JField("exception", serializeException(exn)) ::
+              JField("exception", serializeException(exception)) ::
               JField("chain", decompose(chain)) ::
               JField("paramType", JString(param.asInstanceOf[AnyRef].getClass.getName)) ::
               JField("param", decompose(param)) :: Nil)
+    case Failure(msg, exception, chain) =>
+      JObject(JField("box_failure", JString("Failure")) ::
+              JField("msg", JString(msg)) ::
+              JField("exception", serializeException(exception)) ::
+              JField("chain", decompose(chain)) :: Nil)
   }
 
   private val typeHoldingFailure = new ParameterizedType {
@@ -75,7 +77,7 @@ class JsonBoxSerializer extends Serializer[Box[_]] {
     def getRawType = classOf[Box[Failure]]
   }
 
-  private def serializeException(exn: Box[Throwable]) = exn match {
+  private def serializeException(exception: Box[Throwable]) = exception match {
     case Full(x) => JString(javaSerialize(x))
     case _ => JNull
   }

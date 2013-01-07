@@ -120,7 +120,9 @@ object Props extends Logger {
         val names = List(
           "org.apache.maven.surefire.booter.SurefireBooter",
           "sbt.TestRunner",
-          "org.specs2.runner.TestInterfaceRunner"  // sometimes specs2 runs tests on another thread
+          "org.specs2.runner.TestInterfaceRunner",  // sometimes specs2 runs tests on another thread
+          "org.specs2.runner.TestInterfaceConsoleReporter",
+          "org.specs2.specification.FragmentExecution"
         )
         if(st.exists(e => names.exists(e.getClassName.startsWith)))
           Test
@@ -208,7 +210,7 @@ object Props extends Logger {
    * <b>before</b> you call anything else in Props.
    */
   @volatile var whereToLook: () => List[(String, () => Box[InputStream])] = () => Nil
-  
+
 
   /**
    * The map of key/value pairs retrieved from the property file.
@@ -226,7 +228,7 @@ object Props extends Logger {
     toTry.map{
       f => {
         val name = f() + "props"
-        name -> {() => 
+        name -> {() =>
           val res = tryo{getClass.getResourceAsStream(name)}.filter(_ ne null)
           trace("Trying to open resource %s. Result=%s".format(name, res))
           res
