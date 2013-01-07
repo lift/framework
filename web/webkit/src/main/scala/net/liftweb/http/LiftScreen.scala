@@ -354,15 +354,16 @@ trait AbstractScreen extends Factory {
    * @param default - the default value of the field
    * @param stuff - any filter or validation functions
    */
-  protected def builder[T](name: => String, default: => T, stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): FieldBuilder[T] =
+  protected def builder[T](name: => String, default: => T, stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): FieldBuilder[T] = {
     new FieldBuilder[T](name, default, man, Empty,
       stuff.toList.collect {
-        case AVal(v) => v
+        case AVal(v: (T => List[FieldError])) => v
       },
       stuff.toList.collect {
         case AFilter(v) => v
       },
       stuff)
+  }
 
   protected object FilterOrValidate {
     implicit def promoteFilter[T](f: T => T): FilterOrValidate[T] = AFilter(f)
@@ -611,7 +612,7 @@ trait AbstractScreen extends Factory {
    */
   protected def field[T](name: => String, default: => T, stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): Field {type ValueType = T} =
     new FieldBuilder[T](name, default, man, Empty, stuff.toList.flatMap {
-      case AVal(v) => List(v)
+      case AVal(v: (T => List[FieldError])) => List(v)
       case _ => Nil
     }, stuff.toList.flatMap {
       case AFilter(v) => List(v)
@@ -756,7 +757,7 @@ trait AbstractScreen extends Factory {
             case _ => Nil
           }.toList
           override val validations = stuff.flatMap {
-            case AVal(v) => List(v)
+            case AVal(v: (T => List[FieldError])) => List(v)
             case _ => Nil
           }.toList
 
@@ -793,7 +794,7 @@ trait AbstractScreen extends Factory {
             case _ => Nil
           }.toList
           override val validations = stuff.flatMap {
-            case AVal(v) => List(v)
+            case AVal(v: (T => List[FieldError])) => List(v)
             case _ => Nil
           }.toList
 
@@ -943,7 +944,7 @@ trait AbstractScreen extends Factory {
   }
 
   /**
-   * Grabs the FormFieldId and FormParam parameters 
+   * Grabs the FormFieldId and FormParam parameters
    */
   protected def grabParams(in: Seq[FilterOrValidate[_]]):
   List[SHtml.ElemAttr] = {
@@ -1482,7 +1483,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
       val localSnapshot = createSnapshot
       // val notices = S.getAllNotices
 
-      // if we're not Ajax, 
+      // if we're not Ajax,
       if (!ajaxForms_?) {
         S.seeOther(S.uri, () => {
           // S.appendNotices(notices)

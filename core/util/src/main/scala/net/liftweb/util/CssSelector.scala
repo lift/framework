@@ -177,9 +177,10 @@ object CssSelectorParser extends PackratParsers with ImplicitConversions {
     }
   }
 
+  private val atEnd = Parser { in => if(in.atEnd) Success(CharSequenceReader.EofCh, in) else Failure("", in)}
   private lazy val topParser: Parser[CssSelector] =
     phrase(rep1((_idMatch | _nameMatch | _classMatch | _attrMatch | _elemMatch |
-      _colonMatch | _starMatch) <~ (rep1(' ') | 26.toChar)) ~ opt(subNode)) ^^ {
+      _colonMatch | _starMatch) <~ (rep1(' ') | atEnd)) ~ opt(subNode)) ^^ {
       case (one :: Nil) ~ sn => fixAll(List(one), sn)
     case all ~ None if all.takeRight(1).head == StarSelector(Empty) =>
       fixAll(all.dropRight(1), Some(KidsSubNode()))

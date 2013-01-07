@@ -245,6 +245,7 @@ object FieldSpec extends Specification {
         optional.valueBox must_== Empty
       }
     }
+    success
   }
 
   def passConversionTests[A](example: A, mandatory: MandatoryTypedField[A], jsexp: JsExp, jvalue: JValue, formPattern: Box[NodeSeq]): Fragment = {
