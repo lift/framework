@@ -77,9 +77,3 @@ Ali Salim Rashid
 
 ### Email: ###
 a.rashid at zantekk dot com
-
-### Name: ###
-Kristof Jozsa
-
-### Email: ###
-kristof.jozsa at gmail dot com
