@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ import net.liftweb.util.Helpers.tryo
 
 import com.mongodb._
 
+/**
+  * Note: setting optional_? = false will result in incorrect equals behavior when using setFromJValue
+  */
 class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: OwnerType)
   extends Field[Map[String, MapValueType], OwnerType] with MandatoryTypedField[Map[String, MapValueType]]
   with MongoFieldFlavor[Map[String, MapValueType]] {

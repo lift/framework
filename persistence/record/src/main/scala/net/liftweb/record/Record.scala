@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2012 WorldWide Conferencing, LLC
+ * Copyright 2007-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
           case Full(c: java.util.Calendar) => c.getTime().toString()
           case Full(null) => "null"
           case Full(v) => v.toString
-          case _ => ""
+          case x => x.toString
         }))
 
     "%s={%s}" format (this.getClass.toString, fieldList.mkString(", "))

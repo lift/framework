@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 WorldWide Conferencing, LLC
+ * Copyright 2010-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package fixtures
 
 import field._
 
-import common.{Box, Empty, Failure, Full}
+import common._
 import json._
 import json.ext.{EnumSerializer, JsonBoxSerializer}
 import http.SHtml
@@ -197,7 +197,7 @@ case class TypeTestJsonObject(
 }
 object TypeTestJsonObject extends JsonObjectMeta[TypeTestJsonObject]
 
-class DBRefTestRecord private () extends MongoRecord[DBRefTestRecord] with MongoId[DBRefTestRecord] {
+class DBRefTestRecord private () extends MongoRecord[DBRefTestRecord] with ObjectIdPk[DBRefTestRecord] {
   def meta = DBRefTestRecord
 }
 object DBRefTestRecord extends DBRefTestRecord with MongoMetaRecord[DBRefTestRecord]
@@ -241,22 +241,7 @@ class PatternFieldTestRecord private () extends MongoRecord[PatternFieldTestReco
   object mandatoryPatternField extends PatternField(this)
   object legacyOptionalPatternField extends PatternField(this) { override def optional_? = true }
 
-  /**
-    * Pattern.equals doesn't work properly, so a custom equals is required with PatternField
-    */
-  override def equals(other: Any): Boolean = {
-    other match {
-      case that: PatternFieldTestRecord =>
-        that.fields.corresponds(this.fields) { (a,b) =>
-          (a.name == b.name) && ((a.valueBox, b.valueBox) match {
-            case (Full(ap: Pattern), Full(bp: Pattern)) =>
-              ap.pattern == bp.pattern && ap.flags == bp.flags
-            case _ => a.valueBox == b.valueBox
-          })
-        }
-      case _ => false
-    }
-  }
+  override def equals(other: Any): Boolean = equalsWithPatternCheck(other)
 
   def dirtyFields = this.allFields.filter(_.dirty_?)
 }
@@ -278,29 +263,13 @@ class ListTestRecord private () extends MongoRecord[ListTestRecord] with UUIDPk[
   def meta = ListTestRecord
 
   object mandatoryStringListField extends MongoListField[ListTestRecord, String](this)
-  object legacyOptionalStringListField extends MongoListField[ListTestRecord, String](this) { override def optional_? = true }
-
   object mandatoryIntListField extends MongoListField[ListTestRecord, Int](this)
-  object legacyOptionalIntListField extends MongoListField[ListTestRecord, Int](this) { override def optional_? = true }
-
   object mandatoryMongoJsonObjectListField extends MongoJsonObjectListField(this, TypeTestJsonObject)
-  object legacyOptionalMongoJsonObjectListField extends MongoJsonObjectListField(this, TypeTestJsonObject) { override def optional_? = true }
-
   object mongoCaseClassListField extends MongoCaseClassListField[ListTestRecord, MongoCaseClassTestObject](this) {
     override def formats = owner.meta.formats
   }
 
   // TODO: More List types
-
-  override def equals(other: Any): Boolean = other match {
-    case that: ListTestRecord =>
-      this.id.value == that.id.value &&
-      this.mandatoryStringListField.value == that.mandatoryStringListField.value &&
-      this.mandatoryIntListField.value == that.mandatoryIntListField.value &&
-      this.mandatoryMongoJsonObjectListField.value == that.mandatoryMongoJsonObjectListField.value &&
-      this.mongoCaseClassListField.value == that.mongoCaseClassListField.value
-    case _ => false
-  }
 
   def dirtyFields = this.allFields.filter(_.dirty_?)
 }
@@ -312,20 +281,9 @@ class MapTestRecord private () extends MongoRecord[MapTestRecord] with StringPk[
   def meta = MapTestRecord
 
   object mandatoryStringMapField extends MongoMapField[MapTestRecord, String](this)
-  object legacyOptionalStringMapField extends MongoMapField[MapTestRecord, String](this) { override def optional_? = true }
-
   object mandatoryIntMapField extends MongoMapField[MapTestRecord, Int](this)
-  object legacyOptionalIntMapField extends MongoMapField[MapTestRecord, Int](this) { override def optional_? = true }
 
   // TODO: More Map types, including JsonObject (will require a new Field type)
-
-  override def equals(other: Any): Boolean = other match {
-    case that: MapTestRecord =>
-      this.id.value == that.id.value &&
-      this.mandatoryStringMapField.value == that.mandatoryStringMapField.value &&
-      this.mandatoryIntMapField.value == that.mandatoryIntMapField.value
-    case _ => false
-  }
 
   def dirtyFields = this.allFields.filter(_.dirty_?)
 }
@@ -335,7 +293,7 @@ object MapTestRecord extends MapTestRecord with MongoMetaRecord[MapTestRecord] {
 
 class LifecycleTestRecord private ()
   extends MongoRecord[LifecycleTestRecord]
-  with MongoId[LifecycleTestRecord]
+  with ObjectIdPk[LifecycleTestRecord]
 {
   def meta = LifecycleTestRecord
 
@@ -363,10 +321,7 @@ class SubRecord private () extends BsonRecord[SubRecord] {
   object pattern extends PatternField(this)
   object uuid extends UUIDField(this)
 
-  override def equals(other: Any): Boolean = other match {
-    case that: SubRecord => this.toString == that.toString
-    case _ => false
-  }
+  override def equals(other: Any): Boolean = equalsWithPatternCheck(other)
 }
 object SubRecord extends SubRecord with BsonMetaRecord[SubRecord] {
   override def formats = allFormats
@@ -392,11 +347,6 @@ class SubRecordTestRecord private () extends MongoRecord[SubRecordTestRecord] wi
   object mandatoryBsonRecordListField extends BsonRecordListField(this, SubRecord)
   object legacyOptionalBsonRecordListField extends BsonRecordListField(this, SubRecord) {
     override def optional_? = true
-  }
-
-  override def equals(other: Any): Boolean = other match {
-    case that: SubRecordTestRecord => this.toString == that.toString
-    case _ => false
   }
 
   def dirtyFields = this.allFields.filter(_.dirty_?)
