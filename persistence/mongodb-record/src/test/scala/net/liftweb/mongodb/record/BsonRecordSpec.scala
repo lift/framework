@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 WorldWide Conferencing, LLC
+ * Copyright 2010-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ class BsonRecordSpec extends Specification with MongoTestKit {
   }
 
   "BsonRecord" should {
-    "compare properly" in {
+    "compare properly with set values" in {
 
       val subRec = SubSubRecord.createRecord.name("subrecord")
       val subRec2 = SubSubRecord.createRecord.name("subrecord")
@@ -41,6 +41,13 @@ class BsonRecordSpec extends Specification with MongoTestKit {
 
       (subRec == subRec2) must_== false
 
+    }
+
+    "compare properly with default values" in {
+      val subRec = SubSubRecord.createRecord
+      val subRec2 = SubSubRecord.createRecord
+
+      (subRec == subRec2) must_== true
     }
   }
 }

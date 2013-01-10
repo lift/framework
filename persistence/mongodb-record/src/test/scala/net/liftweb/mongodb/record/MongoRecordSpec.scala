@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 WorldWide Conferencing, LLC
+ * Copyright 2010-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,14 +228,11 @@ class MongoRecordSpec extends Specification with MongoTestKit {
     val ltrJson =
       ("_id" -> ("$uuid" -> ltr.id.toString)) ~
       ("mandatoryStringListField" -> List("abc", "def", "ghi")) ~
-      ("legacyOptionalStringListField" -> List[String]()) ~
       ("mandatoryIntListField" -> List(4, 5, 6)) ~
-      ("legacyOptionalIntListField" -> List[Int]()) ~
       ("mandatoryMongoJsonObjectListField" -> List(
         (("intField" -> 1) ~ ("stringField" -> "jsonobj1") ~ ("mapField" -> ("x" -> "1"))),
         (("intField" -> 2) ~ ("stringField" -> "jsonobj2") ~ ("mapField" -> ("x" -> "2")))
       )) ~
-      ("legacyOptionalMongoJsonObjectListField" -> List[JObject]()) ~
       ("mongoCaseClassListField" -> List(
         ("intField" -> 1) ~ ("stringField" -> "str") ~ ("enum" -> 1)
       ))
@@ -251,13 +248,11 @@ class MongoRecordSpec extends Specification with MongoTestKit {
         ("b" -> "def") ~
         ("c" -> "ghi")
       )) ~
-      ("legacyOptionalStringMapField" -> JObject(Nil)) ~
       ("mandatoryIntMapField" -> (
         ("a" -> 4) ~
         ("b" -> 5) ~
         ("c" -> 6)
-      )) ~
-      ("legacyOptionalIntMapField" -> JObject(Nil))
+      ))
 
     // SubRecord
     val ssr1 = SubSubRecord.createRecord.name("SubSubRecord1")
@@ -278,61 +273,36 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       .mandatoryBsonRecordListField(List(sr1,sr2))
 
     val sr1Json =
-      JObject(List(
-        JField("name", JString("SubRecord1")),
-        JField("subsub", JObject(List(
-          JField("name", JString("SubSubRecord1"))
-        ))),
-        JField("subsublist", JArray(List(
-          JObject(List(JField("name", JString("SubSubRecord1")))),
-          JObject(List(JField("name", JString("SubSubRecord2"))))
-        ))),
-        JField("when", JObject(List(
-          JField("$dt", JString(srtr.meta.formats.dateFormat.format(sr1.when.value)))
-        ))),
-        JField("slist", JArray(List(JString("s1"), JString("s2")))),
-        JField("smap", JObject(List(
-          JField("a", JString("s1")),
-          JField("b", JString("s2"))
-        ))),
-        JField("oid", JObject(List(JField("$oid", JString(sr1.oid.value.toString))))),
-        JField("pattern", JObject(List(
-          JField("$regex", JString(sr1.pattern.value.pattern)),
-          JField("$flags", JInt(sr1.pattern.value.flags))
-        ))),
-        JField("uuid", JObject(List(JField("$uuid", JString(sr1.uuid.value.toString)))))
-      ))
+      ("name" -> "SubRecord1") ~
+      ("subsub" -> ("name" -> "SubSubRecord1")) ~
+      ("subsublist" -> List(
+        ("name" -> "SubSubRecord1"),
+        ("name" -> "SubSubRecord2")
+      )) ~
+      ("when" -> ("$dt" -> srtr.meta.formats.dateFormat.format(sr1.when.value))) ~
+      ("slist" -> List("s1", "s2")) ~
+      ("smap" -> (("a" -> "s1") ~ ("b" -> "s2"))) ~
+      ("oid" -> ("$oid" -> sr1.oid.value.toString)) ~
+      ("pattern" -> (("$regex" -> sr1.pattern.value.pattern) ~ ("$flags" -> sr1.pattern.value.flags))) ~
+      ("uuid" -> ("$uuid" -> sr1.uuid.value.toString))
 
     val sr2Json =
-      JObject(List(
-        JField("name", JString("SubRecord2")),
-        JField("subsub", JObject(List(
-          JField("name", JString(""))
-        ))),
-        JField("subsublist", JArray(List())),
-        JField("when", JObject(List(
-          JField("$dt", JString(srtr.meta.formats.dateFormat.format(sr2.when.value)))
-        ))),
-        JField("slist", JArray(List())),
-        JField("smap", JObject(List())),
-        JField("oid", JObject(List(JField("$oid", JString(sr2.oid.value.toString))))),
-        JField("pattern", JObject(List(
-          JField("$regex", JString(sr2.pattern.value.pattern)),
-          JField("$flags", JInt(sr2.pattern.value.flags))
-        ))),
-        JField("uuid", JObject(List(JField("$uuid", JString(sr2.uuid.value.toString)))))
-      ))
+      ("name" -> "SubRecord2") ~
+      ("subsub" -> ("name" -> "")) ~
+      ("subsublist" -> JArray(Nil)) ~
+      ("when" -> ("$dt" -> srtr.meta.formats.dateFormat.format(sr2.when.value))) ~
+      ("slist" -> JArray(Nil)) ~
+      ("smap" -> JObject(Nil)) ~
+      ("oid" -> ("$oid" -> sr2.oid.value.toString)) ~
+      ("pattern" -> (("$regex" -> sr2.pattern.value.pattern) ~ ("$flags" -> sr2.pattern.value.flags))) ~
+      ("uuid" -> ("$uuid" -> sr2.uuid.value.toString))
 
-    val srtrJson = JObject(List(
-      JField("_id", JObject(List(JField("$oid", JString(srtr.id.toString))))),
-      JField("mandatoryBsonRecordField", sr1Json),
-      JField("legacyOptionalBsonRecordField", JNothing),
-      JField("mandatoryBsonRecordListField", JArray(List(
-        sr1Json,
-        sr2Json
-      ))),
-      JField("legacyOptionalBsonRecordListField", JArray(List()))
-    ))
+    val srtrJson =
+      ("_id" -> ("$oid" -> srtr.id.toString)) ~
+      ("mandatoryBsonRecordField" -> sr1Json) ~
+      ("legacyOptionalBsonRecordField" -> JNothing) ~
+      ("mandatoryBsonRecordListField" -> List(sr1Json, sr2Json)) ~
+      ("legacyOptionalBsonRecordListField", JArray(Nil))
 
     // JObjectField
     val joftrFieldJObject: JObject = ("minutes" -> 59)
@@ -409,7 +379,7 @@ class MongoRecordSpec extends Specification with MongoTestKit {
 
       val srtrFromDb = SubRecordTestRecord.find(srtr.id.value)
       srtrFromDb.isDefined must_== true
-      srtrFromDb.toList map { tr =>
+      srtrFromDb foreach { tr =>
         tr mustEqual srtr
       }
 
@@ -482,21 +452,31 @@ class MongoRecordSpec extends Specification with MongoTestKit {
 
     "convert Mongo type fields to JValue" in {
       mfttr.asJValue mustEqual mfttrJson
+    }
 
+    "convert pattern field to JValue" in {
       pftr.asJValue mustEqual pftrJson
+    }
 
+    "convert list fields to JValue" in {
       ltr.asJValue mustEqual ltrJson
+    }
 
+    "convert map fields to JValue" in {
       mtr.asJValue mustEqual mtrJson
+    }
 
+    "convert JObject fields to JValue" in {
+      joftr.asJValue mustEqual joftrJson
+    }
+
+    "convert BsonRecord fields to JValue" in {
       val srtrAsJValue = srtr.asJValue
       srtrAsJValue \\ "_id" mustEqual srtrJson \\ "_id"
       srtrAsJValue \\ "mandatoryBsonRecordField" mustEqual srtrJson \\ "mandatoryBsonRecordField"
       srtrAsJValue \\ "legacyOptionalBsonRecordField" mustEqual srtrJson \\ "legacyOptionalBsonRecordField"
       srtrAsJValue \\ "mandatoryBsonRecordListField" mustEqual srtrJson \\ "mandatoryBsonRecordListField"
       srtrAsJValue \\ "legacyOptionalBsonRecordListField" mustEqual srtrJson \\ "legacyOptionalBsonRecordListField"
-
-      joftr.asJValue mustEqual joftrJson
     }
 
     "get set from json string using lift-json parser" in {

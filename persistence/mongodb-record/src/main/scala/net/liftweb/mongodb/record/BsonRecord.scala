@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2012 WorldWide Conferencing, LLC
+ * Copyright 2011-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ package record
 
 import common._
 
+import java.util.regex.Pattern
 import scala.collection.JavaConversions._
 
 import net.liftweb.record.{Field, MetaRecord, Record}
@@ -49,6 +50,22 @@ trait BsonRecord[MyType <: BsonRecord[MyType]] extends Record[MyType] {
    * Save the instance and return the instance
    */
   override def saveTheRecord(): Box[MyType] = throw new BackingStoreException("BSON Records don't save themselves")
+
+  /**
+    * Pattern.equals doesn't work properly so it needs a special check. If you use PatternField, be sure to override equals with this.
+    */
+  protected def equalsWithPatternCheck(other: Any): Boolean = {
+    other match {
+      case that: BsonRecord[MyType] =>
+        that.fields.corresponds(this.fields) { (a,b) =>
+          (a.name == b.name) && ((a.valueBox, b.valueBox) match {
+            case (Full(ap: Pattern), Full(bp: Pattern)) => ap.pattern == bp.pattern && ap.flags == bp.flags
+            case _ => a.valueBox == b.valueBox
+          })
+        }
+      case _ => false
+    }
+  }
 }
 
 /** Specialized MetaRecord that deals with BsonRecords */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 WorldWide Conferencing, LLC
+ * Copyright 2010-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,11 @@ import com.mongodb._
 import org.bson.types.ObjectId
 
 /**
-* List field. Compatible with most object types,
-* including Pattern, ObjectId, Date, and UUID.
-*/
+  * List field. Compatible with most object types,
+  * including Pattern, ObjectId, Date, and UUID.
+  *
+  * Note: setting optional_? = false will result in incorrect equals behavior when using setFromJValue
+  */
 class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec: OwnerType)
   extends Field[List[ListType], OwnerType]
   with MandatoryTypedField[List[ListType]]
@@ -81,11 +83,6 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
     case f: Failure => setBox(f)
     case other => setBox(Failure("Error parsing String into a JValue: "+in))
   }
-
-  /*
-   * MongoListField is built on MandatoryField, so optional_? is always false. It would be nice to use optional to differentiate
-   * between a list that requires at least one item and a list that can be empty.
-   */
 
   /** Options for select list **/
   def options: List[(ListType, String)] = Nil
