@@ -217,7 +217,7 @@ object Menu extends MenuSingleton {
 
   /**
    * An intermediate class that holds the basic stuff that's needed to make a Menu item for SiteMap.
-   * You must include at least one URI path element by calling the / method
+   * You must include at least one URI path element by calling the / method.
    */
   class PreParamsMenu[T<:AnyRef](name: String, linkText: Loc.LinkText[T],
                          parser: List[String] => Box[T],
@@ -335,7 +335,7 @@ object Menu extends MenuSingleton {
 
   /**
    * An intermediate class that holds the basic stuff that's needed to make a Menu item for SiteMap.
-   * You must include at least one URI path element by calling the / method
+   * You must include at least one URI path element by calling the / method.
    */
   class PreMenu(name: String, linkText: Loc.LinkText[Unit]) {
     /**
@@ -554,7 +554,7 @@ sealed trait MenuSingleton {
   def apply(name: String,linkText: Loc.LinkText[Unit]): PreMenu = new PreMenu(name, linkText)
 
   /**
-   * A convenient way to define a Menu items that's got the same name as it does it's localized LinkText.
+   * A convenient way to define a Menu item that has the same name as its localized LinkText.
    * <pre>Menu.i("Home") / "index"</pre> is short-hand for <pre>Menu("Home", S.loc("Home", Text("Home")) / "index"</pre>
    */
   def i(nameAndLink: String): PreMenu = Menu.apply(nameAndLink, S.loc(nameAndLink, scala.xml.Text(nameAndLink)))
