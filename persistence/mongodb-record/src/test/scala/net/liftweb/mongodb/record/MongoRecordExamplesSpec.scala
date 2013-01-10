@@ -515,8 +515,10 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
         l.jsonobjlist.value(i).id must_== ld1.jsonobjlist.value(i).id
         l.jsonobjlist.value(i).name must_== ld1.jsonobjlist.value(i).name
       }
-      //using view allows to transform to Seq to make a deep equals
-      l.binarylist.value.view must_== ld1.binarylist.value.view
+      for {
+        orig <- ld1.binarylist.value.headOption
+        queried <- l.binarylist.value.headOption
+      } new String(orig) must_== new String(queried)
     }
 
     if (!debug) {
