@@ -1894,7 +1894,7 @@ trait SHtml {
    * For use with DHTML form updating.
    *
    * @param opts -- the options.  A list of value and text pairs
-   * @poram jsFunc -- user provided function
+   * @param jsFunc -- user provided function
    * @param deflt -- the default value (or Empty if no default value)
    * @param func -- the function to execute on form submission
    * @param attrs -- select box attributes
@@ -1913,7 +1913,7 @@ trait SHtml {
    *
    * @param opts -- the options.  A list of value and text pairs
    * @param deflt -- the default value (or Empty if no default value)
-   * @poram jsFunc -- user provided function
+   * @param jsFunc -- user provided function
    * @param func -- the function to execute on form submission
    * @param attrs -- select box attributes
    */
