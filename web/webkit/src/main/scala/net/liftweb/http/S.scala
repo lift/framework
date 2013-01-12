@@ -3016,7 +3016,7 @@ trait S extends HasParams with Loggable {
    *
    */
   def respondAsync(f: => Box[LiftResponse]): () => Box[LiftResponse] = {
-    RestContinuation.async {reply => f}
+    RestContinuation.async {reply => reply(f.openOr(EmptyResponse))}
   }
 
 
