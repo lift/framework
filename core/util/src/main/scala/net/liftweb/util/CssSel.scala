@@ -749,6 +749,9 @@ object ComputeTransformRules {
     }
   }
 
+  implicit def doubleTRansform: ComputeTransformRules[Double] = new ComputeTransformRules[Double] {
+    def computeTransform(str: => Double, ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toString))
+  }
 
   implicit def jsCmdTransform: ComputeTransformRules[ToJsCmd] = new ComputeTransformRules[ToJsCmd] {
     def computeTransform(str: => ToJsCmd, ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toJsCmd))
@@ -820,6 +823,7 @@ object ComputeTransformRules {
       def computeTransform(info: => Option[NST], ns: NodeSeq): Seq[NodeSeq] = info.toList.map(f2)
     }
 
+
   implicit def iterableStringTransform[T[_]](implicit f: T[String] => Iterable[String]): ComputeTransformRules[T[String]] =
     new ComputeTransformRules[T[String]] {
       def computeTransform(info: => T[String], ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.map(a => Text(a))
@@ -829,6 +833,12 @@ object ComputeTransformRules {
     new ComputeTransformRules[T[N]] {
       def computeTransform(info: => T[N], ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a =>
         if (a eq null) Nil else List(Text(a.toString)))
+    }
+
+  implicit def iterableDouble[T[Double]](implicit f: T[Double] => Iterable[Double]): ComputeTransformRules[T[Double]] =
+    new ComputeTransformRules[T[Double]] {
+      def computeTransform(info: => T[Double], ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a =>
+        if (a equals null) Nil else List(Text(a.toString)))
     }
 
   implicit def iterableBindableTransform[T[_]](implicit f: T[Bindable] => Iterable[Bindable]): ComputeTransformRules[T[Bindable]] =

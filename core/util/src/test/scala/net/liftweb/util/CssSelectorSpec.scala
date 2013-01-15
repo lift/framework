@@ -897,14 +897,22 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
   bog #> 1
   bog #> 'foo
   bog #> 44L
+  bog #> 1.22
   bog #> false
 
   bog #> List(<span/>)
   bog #> Full(<span/>)
+  val e: Box[String] = Empty
+  bog #> e
   bog #> Some(<span/>)
+  val n: Option[String] = None
+  bog #> n
 
 
   bog #> List("Hello")
+  bog #> List(1.22)
+  bog #> List(44L)
+  bog #> List(1)
   bog #> Full("Dog")
   bog #> Some("Moo")
 
