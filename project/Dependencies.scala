@@ -83,6 +83,6 @@ object Dependencies {
   lazy val mockito_all = "org.mockito"                 % "mockito-all"              % "1.9.0"      % "test"
   lazy val scalacheck  = "org.scalacheck"             %% "scalacheck"               % "1.10.0"     % "test"
   lazy val specs2: ModuleMap =
-                         "org.specs2"                 %% "specs2"                   % defaultOrMapped("1.12.3")(_)
+                         "org.specs2"                 %% "specs2"                   % defaultOrMapped("1.12.3")(_) % "test"
 
 }
