@@ -21,10 +21,12 @@ package field
 import scala.xml._
 import net.liftweb.common._
 import net.liftweb.http.S
-import net.liftweb.json.JsonAST.{JInt, JNothing, JNull, JValue}
+import json.JsonAST._
 import net.liftweb.util._
 import Helpers._
 import S._
+import common.Full
+import json.JsonAST.JInt
 
 trait IntTypedField extends NumericTypedField[Int] {
   
@@ -43,6 +45,7 @@ trait IntTypedField extends NumericTypedField[Int] {
   def setFromJValue(jvalue: JValue): Box[Int] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case JInt(i)                      => setBox(Full(i.intValue))
+    case JDouble(d)                   => setBox(Full(d.toInt))
     case other                        => setBox(FieldHelpers.expectedA("JInt", other))
   }
 }
