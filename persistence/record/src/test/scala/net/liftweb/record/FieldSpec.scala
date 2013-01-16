@@ -472,6 +472,11 @@ object FieldSpec extends Specification {
       JInt(num),
       Full(<input name=".*" type="text" tabindex="1" value={num.toString} id="mandatoryIntField_id"></input>)
     )
+
+    "get set from JDouble" in {
+      rec.mandatoryIntField.setFromJValue( JDouble(num) ) mustEqual Full( num )
+      rec.mandatoryIntField.value mustEqual num
+    }
   }
 
   "LocaleField" should {
@@ -499,6 +504,11 @@ object FieldSpec extends Specification {
       JInt(lng),
       Full(<input name=".*" type="text" tabindex="1" value={lng.toString} id="mandatoryLongField_id"></input>)
     )
+
+    "get set from JDouble" in {
+      rec.mandatoryLongField.setFromJValue( JDouble(lng) ) mustEqual Full( lng )
+      rec.mandatoryLongField.value mustEqual lng
+    }
   }
 
   "PasswordField" should {
