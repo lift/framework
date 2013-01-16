@@ -392,7 +392,7 @@ object FieldSpec extends Specification {
   "DoubleField" should {
     val rec = FieldTypeTestRecord.createRecord
     val d = 12.34
-    val d2 = 1.22
+    val d2 = 1.00
     passBasicTests(d, d2, rec.mandatoryDoubleField, rec.legacyOptionalDoubleField, rec.optionalDoubleField)
     passConversionTests(
       d,
@@ -401,6 +401,11 @@ object FieldSpec extends Specification {
       JDouble(d),
       Full(<input name=".*" type="text" tabindex="1" value={d.toString} id="mandatoryDoubleField_id"></input>)
     )
+
+    "get set from JInt" in {
+      rec.mandatoryDoubleField.setFromJValue( JInt(1) ) mustEqual Full( d2 )
+      rec.mandatoryDoubleField.value mustEqual d2
+    }
   }
 
   "EmailField" should {
