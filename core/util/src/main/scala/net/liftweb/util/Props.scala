@@ -133,13 +133,13 @@ object Props extends Logger {
   }
 
   /**
-   * Is the system in production mode (apply full optimizations)
+   * Is the system running in production mode (apply full optimizations)
    */
   lazy val productionMode: Boolean = mode == RunModes.Production ||
   mode == RunModes.Pilot || mode == RunModes.Staging
 
   /**
-   * Is the system in production mode (apply full optimizations)
+   * Is the system running in development mode
    */
   lazy val devMode: Boolean = mode == RunModes.Development
 
