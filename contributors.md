@@ -67,6 +67,7 @@ Francis Rhys-Jones
 francis.rhys-jones at guardian dot co dot uk
 
 ### Name: ###
+<<<<<<< HEAD
 Gregory Flanagan
 
 ### Email: ###
@@ -107,3 +108,9 @@ Matt Farmer
 
 ### Email: ###
 matt at frmr dot me
+
+### Name: ###
+Chris Williams
+
+### Email: ###
+chris dot williams @ joulebug dot com
