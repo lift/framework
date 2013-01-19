@@ -72,7 +72,7 @@ trait SecurityHelpers {
   def md5(in: Array[Byte]): Array[Byte] = (MessageDigest.getInstance("MD5")).digest(in)
 
   /** create a MD5 digest from a String */
-  def md5(in: String): String = new String(cleanArray((new Base64) encode md5(in.getBytes("UTF-8"))))
+  def md5(in: String): String = base64Encode(md5(in.getBytes("UTF-8")))
 
   /** create a SHA hash from a Byte array */
   def hash(in : Array[Byte]) : Array[Byte] = {
@@ -81,7 +81,7 @@ trait SecurityHelpers {
 
   /** create a SHA hash from a String */
   def hash(in: String) : String = {
-    new String(cleanArray((new Base64) encode (MessageDigest.getInstance("SHA")).digest(in.getBytes("UTF-8"))))
+    base64Encode(MessageDigest.getInstance("SHA").digest(in.getBytes("UTF-8")))
   }
 
    /** create a SHA hash from a String */
@@ -127,7 +127,7 @@ trait SecurityHelpers {
 
   /** create a SHA-256 hash from a String */
   def hash256(in : String): String = {
-    new String(cleanArray((new Base64) encode (MessageDigest.getInstance("SHA-256")).digest(in.getBytes("UTF-8"))))
+    base64Encode(MessageDigest.getInstance("SHA-256").digest(in.getBytes("UTF-8")))
   }
 
   /** create an hex encoded SHA hash from a Byte array */
