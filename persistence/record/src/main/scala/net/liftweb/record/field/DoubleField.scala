@@ -21,12 +21,10 @@ package field
 import scala.xml._
 import net.liftweb.common._
 import net.liftweb.http.{S}
-import json.JsonAST._
+import json._
 import net.liftweb.util._
 import Helpers._
 import S._
-import json.JsonAST.JDouble
-import common.Full
 
 trait DoubleTypedField extends NumericTypedField[Double] {
   

@@ -21,12 +21,10 @@ package field
 import scala.xml._
 import net.liftweb.common._
 import net.liftweb.http.S
-import json.JsonAST._
+import json._
 import net.liftweb.util._
 import Helpers._
 import S._
-import common.Full
-import json.JsonAST.JInt
 
 trait IntTypedField extends NumericTypedField[Int] {
   
