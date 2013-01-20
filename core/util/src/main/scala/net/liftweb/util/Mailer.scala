@@ -286,7 +286,7 @@ trait Mailer extends SimpleInjector {
             case XHTMLMailBodyType(html) => bp.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
 
             case XHTMLPlusImages(html, img@_*) =>
-              val html_mp = new MimeMultipart("related")
+              val html_mp = new MimeMultipart(if (img.exists(_.attachment)) "mixed" else "related")
               val bp2 = new MimeBodyPart
               bp2.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
               html_mp.addBodyPart(bp2)
@@ -295,7 +295,7 @@ trait Mailer extends SimpleInjector {
                 val rel_bpi = new MimeBodyPart
                 rel_bpi.setFileName(i.name)
                 rel_bpi.setContentID(i.name)
-                rel_bpi.setDisposition(if (!i.attachment) "inline" else "attachment")
+                rel_bpi.setDisposition(if (!i.attachment) Part.INLINE else Part.ATTACHMENT)
                 rel_bpi.setDataHandler(new javax.activation.DataHandler(new javax.activation.DataSource {
                       def getContentType = i.mimeType
 
