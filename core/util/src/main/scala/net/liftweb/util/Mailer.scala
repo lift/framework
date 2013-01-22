@@ -290,28 +290,43 @@ trait Mailer extends SimpleInjector {
             case XHTMLPlusImages(html, img@_*) =>
               val html_mp = new MimeMultipart("related")
               val bp2 = new MimeBodyPart
+              val (attachs, images) = img.partition(_.attachment)
               bp2.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
               html_mp.addBodyPart(bp2)
-              img.foreach {
-                i =>
-                val rel_bpi = new MimeBodyPart
-                rel_bpi.setFileName(i.name)
-                rel_bpi.setContentID(i.name)
-                rel_bpi.setDisposition(if (!i.attachment) "inline" else "attachment")
-                rel_bpi.setDataHandler(new javax.activation.DataHandler(new javax.activation.DataSource {
-                      def getContentType = i.mimeType
-
-                      def getInputStream = new java.io.ByteArrayInputStream(i.bytes)
-
-                      def getName = i.name
-
-                      def getOutputStream = throw new java.io.IOException("Unable to write to item")
-                    }))
-                html_mp.addBodyPart(rel_bpi)
+              images.foreach {
+                i => html_mp.addBodyPart(buildAttachment(i))
               }
-              bp.setContent(html_mp)
+              if (attachs.isEmpty) {
+                bp.setContent(html_mp)
+              } else {
+                val mixed_mp = new MimeMultipart("mixed")
+                val html_p = new MimeBodyPart
+                html_p.setContent(html_mp)
+                mixed_mp.addBodyPart(html_p)
+                attachs.foreach {
+                  i => mixed_mp.addBodyPart(buildAttachment(i))
+                }
+                bp.setContent(mixed_mp)
+              }
           }
     bp
+  }
+
+  private def buildAttachment(holder: PlusImageHolder) = {
+    val part = new MimeBodyPart
+    part.setFileName(holder.name)
+    part.setContentID(holder.name)
+    part.setDisposition(if (holder.attachment) Part.ATTACHMENT else Part.INLINE)
+    part.setDataHandler(new javax.activation.DataHandler(new javax.activation.DataSource {
+          def getContentType = holder.mimeType
+
+          def getInputStream = new java.io.ByteArrayInputStream(holder.bytes)
+
+          def getName = holder.name
+
+          def getOutputStream = throw new java.io.IOException("Unable to write to item")
+        }))
+    part
   }
 
 
