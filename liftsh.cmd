@@ -17,4 +17,4 @@ if "%LIFTSH_OPTS%"=="" (
 )
 
 @REM Call with INTERNAL_OPTS followed by LIFTSH_OPTS (or DEFAULT_OPTS). java always takes the last option when duplicate.
-java %INTERNAL_OPTS% %LIFTSH_OPTS% -jar "%~dp0\project\sbt-launch-0.12.0-RC2.jar" %*
+java %INTERNAL_OPTS% %LIFTSH_OPTS% -jar "%~dp0\project\sbt-launch-0.12.1.jar" %*
