@@ -944,15 +944,15 @@ trait SHtml {
    * @param default -- the default value (or Empty if no default value)
    * @param func -- the function to execute when a new selection is made 
    */
-  def ajaxEditableSelect(opts: Seq[(String, String)], deflt: Box[String], 
-    f: String => JsCmd, attrs: ElemAttr*): Elem = {
-    
+  def ajaxEditableSelect(opts: Seq[(String, String)], deflt: Box[String],
+                         f: String => JsCmd, attrs: ElemAttr*): Elem = {
+
     val id = attrs.collectFirst { case BasicElemAttr(name, value) if name == "id" => value } getOrElse nextFuncName
     val attributes = if(attrs.contains(BasicElemAttr("id", id))) attrs else BasicElemAttr("id", id) +: attrs
     val textOpt = nextFuncName
     val options = opts :+ (textOpt , "New Element")
-    var _options = options 
-    
+    var _options = options
+
     lazy val func: (String) => JsCmd = (select: String) => {
       def text(in: String): JsCmd = {
         _options = (in, in) +: _options
@@ -960,27 +960,8 @@ trait SHtml {
       }
       if (select == textOpt) Replace(id, ajaxText("", text(_), attributes: _*)) & Focus(id) else f(select)
     }
-      
-    ajaxSelect(options, deflt, func, attributes: _*)
-=======
-    val id = nextFuncName
-    val textOpt = nextFuncName
-    val idAttr = Seq(ElemAttr.pairToBasic("id", id))
-    val options = opts :+  (textOpt , "New Element")
-    var _options = options 
-    
-    def addId(elem: Elem) = (idAttr.foldLeft(elem)(_ % _))
 
-    lazy val func: (String) => JsCmd = (select: String) => {
-      def text(in: String): JsCmd = {
-        _options = (in, in) +: _options
-        Replace(id, addId({ajaxSelect(_options, Some(in), func, attrs: _*)}))
-      }
-      if (select == textOpt) Replace(id, addId({ajaxText("", text(_), attrs: _*)})) & Focus(id) else f(select)
-    }
-      
-    addId({ajaxSelect(options, deflt, func, attrs: _*)})
->>>>>>> Adding ajaxEditableSelect to SHtml. Allows users to dynamically add new selections into an ajaxSelect.
+    ajaxSelect(options, deflt, func, attributes: _*)
   }
 
   def ajaxSelect(opts: Seq[(String, String)], deflt: Box[String],
