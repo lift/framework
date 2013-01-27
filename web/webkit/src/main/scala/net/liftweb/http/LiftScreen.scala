@@ -477,13 +477,11 @@ trait AbstractScreen extends Factory {
 
       override def helpAsHtml = newHelp or underlying.helpAsHtml
 
-      override def validate: List[FieldError] = underlying.validate
+      override def validate = underlying.validate ::: super.validate
 
-      /*
       override def validations = stuff.collect {
-        case AVal(f) => f
-      }.toList ::: underlying.validations
-      */
+        case AVal(f) => f.asInstanceOf[ValueType => List[FieldError]]
+      }.toList
 
       override def setFilter = stuff.collect {
         case AFilter(f) => f
@@ -581,7 +579,11 @@ trait AbstractScreen extends Factory {
 
       override def helpAsHtml = newHelp or underlying.flatMap(_.helpAsHtml)
 
-      override def validate: List[FieldError] = underlying.toList.flatMap(_.validate)
+      override def validate = underlying.toList.flatMap(_.validate) ::: super.validate
+
+      override def validations = stuff.collect {
+        case AVal(f) => f.asInstanceOf[ValueType => List[FieldError]]
+      }.toList
 
       override def setFilter = stuff.collect {
         case AFilter(f) => f
