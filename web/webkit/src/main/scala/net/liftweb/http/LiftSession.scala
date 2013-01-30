@@ -1815,7 +1815,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                     (gotIt or nodeSeqFunc) openOr {
 
                       val ar: Array[AnyRef] = List(Group(kids)).toArray
-                      ((Helpers.invokeMethod(inst.getClass, inst, method, ar)) or
+                      ((Helpers.invokeMethod(inst.getClass, inst, method, ar, Array(classOf[NodeSeq]))) or
                         Helpers.invokeMethod(inst.getClass, inst, method)) match {
                         case CheckNodeSeq(md) => md
                         case it =>
