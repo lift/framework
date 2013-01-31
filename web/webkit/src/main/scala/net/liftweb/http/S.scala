@@ -2038,6 +2038,20 @@ trait S extends HasParams with Loggable {
   }
 
   /**
+   * Sometimes, in the course of eager evaluation, it becomes necessary
+   * to clear attribtues so they do not polute the eagerly evaluated stuff.
+   * When you need to clear the attributes, wrap your code block in clearAttrs
+   * and have fun.
+   *
+   * @param f the call-by-name code block to run where the attributes are clear
+   * @tparam T the return type of the code block
+   * @return the return value of the code block
+   */
+  def clearAttrs[T](f: => T):T = {
+    _attrs.doWith((Null, Nil))(f)
+  }
+
+  /**
    * Temporarily adds the given attributes to the current set, then executes the given function.
    *
    * @param attr The attributes to set temporarily
