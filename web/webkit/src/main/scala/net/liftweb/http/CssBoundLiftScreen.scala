@@ -23,6 +23,8 @@ import util._
 
 import xml._
 
+import collection.mutable.{Map => MutableMap}
+
 trait CssBoundLiftScreen extends LiftScreen with CssBoundScreen {
   protected object SavedDefaultXml extends ScreenVar[NodeSeq](defaultXml) {
     override lazy val __nameSalt = Helpers.nextFuncName
@@ -44,7 +46,7 @@ trait CssBoundLiftScreen extends LiftScreen with CssBoundScreen {
     override lazy val __nameSalt = Helpers.nextFuncName
   }
 
-  protected object LocalActions extends ScreenVar[Map[String, () => JsCmd]](Map[String, () => JsCmd]()) {
+  protected object LocalActions extends ScreenVar[MutableMap[String, () => JsCmd]](MutableMap[String, () => JsCmd]()) {
     override lazy val __nameSalt = Helpers.nextFuncName
   }
 
@@ -56,7 +58,7 @@ trait CssBoundLiftScreen extends LiftScreen with CssBoundScreen {
   protected def savedDefaultXml = SavedDefaultXml.get
 
   override protected def doFinish(): JsCmd= {
-    val fMap: Map[String, () => JsCmd] = LocalActions.get
+    val fMap: MutableMap[String, () => JsCmd] = LocalActions.get
     if (! LocalAction.get.isEmpty)
       fMap.get(LocalAction.get) map (_()) getOrElse (
         throw new IllegalArgumentException("No local action available with that binding"))
