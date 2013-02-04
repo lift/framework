@@ -28,6 +28,8 @@ import xml._
 
 import FieldBinding._
 
+import collection.mutable.{Map => MutableMap}
+
 trait CssBoundScreen extends ScreenWizardRendered with Loggable {
   self: AbstractScreen =>
 
@@ -39,7 +41,7 @@ trait CssBoundScreen extends ScreenWizardRendered with Loggable {
 
   protected val LocalActionRef: AnyVar[String, _]
   protected val LocalAction: AnyVar[String, _]
-  protected val LocalActions: AnyVar[Map[String, () => JsCmd], _]
+  protected val LocalActions: AnyVar[MutableMap[String, () => JsCmd], _]
 
   val NextId: AnyVar[String, _]
 
@@ -97,7 +99,7 @@ trait CssBoundScreen extends ScreenWizardRendered with Loggable {
 
   protected def mapLocalAction[T](func: () => JsCmd)(f: String => T): T = {
     val name = randomString(20)
-    LocalActions.set(LocalActions.is + (name -> func))
+    LocalActions.get += (name -> func)
     f(name)
   }
 
