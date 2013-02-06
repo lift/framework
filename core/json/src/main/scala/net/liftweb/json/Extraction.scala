@@ -79,7 +79,11 @@ object Extraction {
         case null => JNull
         case x: JValue => x
         case x if primitive_?(x.getClass) => primitive2jvalue(x)(formats)
-        case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
+        case x: Map[_, _] => JObject((x map { 
+            case (k: String, v) => JField(k, decompose(v)) 
+            case (k: Int, v) => JField(k.toString, decompose(v))
+            case (k: Long, v) => JField(k.toString, decompose(v))
+        }).toList)
         case x: Iterable[_] => JArray(x.toList map decompose)
         case x if (x.getClass.isArray) => JArray(x.asInstanceOf[Array[_]].toList map decompose)
         case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)

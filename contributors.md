@@ -120,3 +120,9 @@ Gregory Flanagan
 
 ### Email: ###
 gregmflanagan at gmail dot com
+
+### Name: ###
+Joseph Price
+
+### Email: ###
+pricejosephd at gmail dot com
