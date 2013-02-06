@@ -25,6 +25,23 @@ object SerializationExamples extends Specification {
 
   implicit val formats = Serialization.formats(NoTypeHints)
 
+  "Numerical keys" in {
+    val data = Map[Int, Composer] (
+      18838 -> Composer("Mussorgsky"),
+      18839 -> Composer("Prokofiev"),
+      18840 -> Composer("Rimsky-Korsakov")
+    )
+
+    val written = swrite(data)
+
+    val data2:Map[Int, Composer] = read[Map[Int, Composer]](written)
+
+    swrite(data) mustEqual swrite(data2)
+  }
+
+  case class Composer(name:String)
+  case class ComposersFromCountry(name: String, composers: Map[Int, Composer])
+
   val project = Project("test", new Date, Some(Language("Scala", 2.75)), List(
     Team("QA", List(Employee("John Doe", 5), Employee("Mike", 3))),
     Team("Impl", List(Employee("Mark", 4), Employee("Mary", 5), Employee("Nick Noob", 1)))))
