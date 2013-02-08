@@ -724,86 +724,84 @@ final class CssJBridge {
 
 }
 
-trait ComputeTransformRules[-T] {
-  def name: String = "ComputeTransformRule"
-  def computeTransform(it: => T, ns: NodeSeq): Seq[NodeSeq]
+trait CanBind[-T] {
+  def apply(it: => T)(ns: NodeSeq): Seq[NodeSeq]
 }
 
-object ComputeTransformRules {
-  implicit def stringTransform: ComputeTransformRules[String] = new ComputeTransformRules[String] {
-    def computeTransform(str: => String, ns: NodeSeq): Seq[NodeSeq] = {
+object CanBind {
+  implicit def stringTransform: CanBind[String] = new CanBind[String] {
+    def apply(str: => String)(ns: NodeSeq): Seq[NodeSeq] = {
       val s = str
       List(if (null eq s) NodeSeq.Empty else Text(s))
     }
   }
 
-  implicit def bindableTransform: ComputeTransformRules[Bindable] = new ComputeTransformRules[Bindable] {
-    def computeTransform(str: => Bindable, ns: NodeSeq): Seq[NodeSeq] = List(str.asHtml)
+  implicit def bindableTransform: CanBind[Bindable] = new CanBind[Bindable] {
+    def apply(str: => Bindable)(ns: NodeSeq): Seq[NodeSeq] = List(str.asHtml)
   }
 
 
-  implicit def numberTransform[T <: java.lang.Number]: ComputeTransformRules[T] = new ComputeTransformRules[java.lang.Number] {
-    def computeTransform(str: => java.lang.Number, ns: NodeSeq): Seq[NodeSeq] = {
+  implicit def numberTransform[T <: java.lang.Number]: CanBind[T] = new CanBind[java.lang.Number] {
+    def apply(str: => java.lang.Number)(ns: NodeSeq): Seq[NodeSeq] = {
       val num = str
       List(if (null eq num) NodeSeq.Empty else Text(num.toString))
     }
   }
 
-  implicit def doubleTRansform: ComputeTransformRules[Double] = new ComputeTransformRules[Double] {
-    def computeTransform(str: => Double, ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toString))
+  implicit def doubleTRansform: CanBind[Double] = new CanBind[Double] {
+    def apply(str: => Double)(ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toString))
   }
 
-  implicit def jsCmdTransform: ComputeTransformRules[ToJsCmd] = new ComputeTransformRules[ToJsCmd] {
-    def computeTransform(str: => ToJsCmd, ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toJsCmd))
-  }
-
-
-  implicit def jsCmdPairTransform: ComputeTransformRules[(_, ToJsCmd)] = new ComputeTransformRules[(_, ToJsCmd)] {
-    def computeTransform(str: => (_, ToJsCmd), ns: NodeSeq): Seq[NodeSeq] = List(Text(str._2.toJsCmd))
-  }
-
-  implicit def intTransform: ComputeTransformRules[Int] = new ComputeTransformRules[Int] {
-    def computeTransform(str: => Int, ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toString))
-  }
-
-  implicit def stringPromoteTransform: ComputeTransformRules[StringPromotable] = new ComputeTransformRules[StringPromotable] {
-    def computeTransform(str: => StringPromotable, ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toString))
-  }
-
-  implicit def symbolTransform: ComputeTransformRules[Symbol] = new ComputeTransformRules[Symbol] {
-    def computeTransform(str: => Symbol, ns: NodeSeq): Seq[NodeSeq] = List(Text(str.name))
-  }
-
-  implicit def longTransform: ComputeTransformRules[Long] = new ComputeTransformRules[Long] {
-    def computeTransform(str: => Long, ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toString))
-  }
-
-  implicit def boolTransform: ComputeTransformRules[Boolean] = new ComputeTransformRules[Boolean] {
-    def computeTransform(str: => Boolean, ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toString))
+  implicit def jsCmdTransform: CanBind[ToJsCmd] = new CanBind[ToJsCmd] {
+    def apply(str: => ToJsCmd)(ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toJsCmd))
   }
 
 
-  implicit def toNodeSeqTransform[T](implicit f: T => NodeSeq): ComputeTransformRules[T] = new ComputeTransformRules[T] {
-    override def name: String = "def toNodeSeqTransform[T]"
-    def computeTransform(param: => T, ns: NodeSeq): Seq[NodeSeq] = List(f(param))
+  implicit def jsCmdPairTransform: CanBind[(_, ToJsCmd)] = new CanBind[(_, ToJsCmd)] {
+    def apply(str: => (_, ToJsCmd))(ns: NodeSeq): Seq[NodeSeq] = List(Text(str._2.toJsCmd))
   }
 
-  implicit def nodeSeqFuncTransform[A](implicit view: A => NodeSeq => NodeSeq): ComputeTransformRules[A] = new ComputeTransformRules[A] {
-    def computeTransform(func: =>A, ns: NodeSeq): Seq[NodeSeq] = List(view(func)(ns))
+  implicit def intTransform: CanBind[Int] = new CanBind[Int] {
+    def apply(str: => Int)(ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toString))
   }
 
-  implicit def nodeSeqSeqFuncTransform: ComputeTransformRules[NodeSeq => Seq[Node]] = new ComputeTransformRules[NodeSeq => Seq[Node]] {
-    def computeTransform(func: => NodeSeq => Seq[Node], ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(List(func(ns)))
+  implicit def stringPromoteTransform: CanBind[StringPromotable] = new CanBind[StringPromotable] {
+    def apply(str: => StringPromotable)(ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toString))
   }
 
-  implicit def nodeFuncTransform: ComputeTransformRules[NodeSeq => Node] = new ComputeTransformRules[NodeSeq => Node] {
-    def computeTransform(func: => NodeSeq => Node, ns: NodeSeq): Seq[NodeSeq] = List(func(ns))
+  implicit def symbolTransform: CanBind[Symbol] = new CanBind[Symbol] {
+    def apply(str: => Symbol)(ns: NodeSeq): Seq[NodeSeq] = List(Text(str.name))
+  }
+
+  implicit def longTransform: CanBind[Long] = new CanBind[Long] {
+    def apply(str: => Long)(ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toString))
+  }
+
+  implicit def boolTransform: CanBind[Boolean] = new CanBind[Boolean] {
+    def apply(str: => Boolean)(ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toString))
+  }
+
+  class CanBindNodeSeqTransform[T](f: T => NodeSeq) extends CanBind[T] {
+    def apply(param: => T)(ns: NodeSeq): Seq[NodeSeq] = List(f(param))
+  }
+  implicit def toNodeSeqTransform[T](implicit f: T => NodeSeq): CanBind[T] = new CanBindNodeSeqTransform[T](f)
+
+  implicit def nodeSeqFuncTransform[A](implicit view: A => NodeSeq => NodeSeq): CanBind[A] = new CanBind[A] {
+    def apply(func: =>A)(ns: NodeSeq): Seq[NodeSeq] = List(view(func)(ns))
+  }
+
+  implicit def nodeSeqSeqFuncTransform: CanBind[NodeSeq => Seq[Node]] = new CanBind[NodeSeq => Seq[Node]] {
+    def apply(func: => NodeSeq => Seq[Node])(ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(List(func(ns)))
+  }
+
+  implicit def nodeFuncTransform: CanBind[NodeSeq => Node] = new CanBind[NodeSeq => Node] {
+    def apply(func: => NodeSeq => Node)(ns: NodeSeq): Seq[NodeSeq] = List(func(ns))
   }
 
 
-  implicit def iterableNodeTransform[NST](implicit f2: NST => NodeSeq): ComputeTransformRules[Iterable[NST]] =
-    new ComputeTransformRules[Iterable[NST]] {
-      def computeTransform(info: => Iterable[NST], ns: NodeSeq): Seq[NodeSeq] =
+  implicit def iterableNodeTransform[NST](implicit f2: NST => NodeSeq): CanBind[Iterable[NST]] =
+    new CanBind[Iterable[NST]] {
+      def apply(info: => Iterable[NST])(ns: NodeSeq): Seq[NodeSeq] =
       {
         val i = info
         i match {
@@ -813,71 +811,69 @@ object ComputeTransformRules {
       }
     }
 
-  implicit def boxNodeTransform[NST](implicit f2: NST => NodeSeq): ComputeTransformRules[Box[NST]] =
-    new ComputeTransformRules[Box[NST]] {
-      def computeTransform(info: => Box[NST], ns: NodeSeq): Seq[NodeSeq] = info.toList.map(f2)
+  implicit def boxNodeTransform[NST](implicit f2: NST => NodeSeq): CanBind[Box[NST]] =
+    new CanBind[Box[NST]] {
+      def apply(info: => Box[NST])(ns: NodeSeq): Seq[NodeSeq] = info.toList.map(f2)
     }
 
-  implicit def optionNodeTransform[NST](implicit f2: NST => NodeSeq): ComputeTransformRules[Option[NST]] =
-    new ComputeTransformRules[Option[NST]] {
-      def computeTransform(info: => Option[NST], ns: NodeSeq): Seq[NodeSeq] = info.toList.map(f2)
+  implicit def optionNodeTransform[NST](implicit f2: NST => NodeSeq): CanBind[Option[NST]] =
+    new CanBind[Option[NST]] {
+      def apply(info: => Option[NST])(ns: NodeSeq): Seq[NodeSeq] = info.toList.map(f2)
     }
 
-
-  implicit def iterableStringTransform[T[_]](implicit f: T[String] => Iterable[String]): ComputeTransformRules[T[String]] =
-    new ComputeTransformRules[T[String]] {
-      def computeTransform(info: => T[String], ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.map(a => Text(a))
+  implicit def iterableStringTransform[T[_]](implicit f: T[String] => Iterable[String]): CanBind[T[String]] =
+    new CanBind[T[String]] {
+      def apply(info: => T[String])(ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.map(a => Text(a))
     }
 
-  implicit def iterableNumberTransform[T[_], N <: java.lang.Number](implicit f: T[N] => Iterable[N]): ComputeTransformRules[T[N]] =
-    new ComputeTransformRules[T[N]] {
-      def computeTransform(info: => T[N], ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a =>
+  implicit def iterableNumberTransform[T[_], N <: java.lang.Number](implicit f: T[N] => Iterable[N]): CanBind[T[N]] =
+    new CanBind[T[N]] {
+      def apply(info: => T[N])(ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a =>
         if (a eq null) Nil else List(Text(a.toString)))
     }
 
-  implicit def iterableDouble[T[Double]](implicit f: T[Double] => Iterable[Double]): ComputeTransformRules[T[Double]] =
-    new ComputeTransformRules[T[Double]] {
-      def computeTransform(info: => T[Double], ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a =>
+  implicit def iterableDouble[T[Double]](implicit f: T[Double] => Iterable[Double]): CanBind[T[Double]] =
+    new CanBind[T[Double]] {
+      def apply(info: => T[Double])(ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a =>
         if (a equals null) Nil else List(Text(a.toString)))
     }
 
-  implicit def iterableBindableTransform[T[_]](implicit f: T[Bindable] => Iterable[Bindable]): ComputeTransformRules[T[Bindable]] =
-    new ComputeTransformRules[T[Bindable]] {
-      def computeTransform(info: => T[Bindable], ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info).toSeq.map(_.asHtml))
+  implicit def iterableBindableTransform[T[_]](implicit f: T[Bindable] => Iterable[Bindable]): CanBind[T[Bindable]] =
+    new CanBind[T[Bindable]] {
+      def apply(info: => T[Bindable])(ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info).toSeq.map(_.asHtml))
     }
 
 
   implicit def iterableStringPromotableTransform[T[_], PM](implicit f: T[PM] => Iterable[PM],
-                                                           prom: PM => StringPromotable):
-  ComputeTransformRules[T[PM]] =
-    new ComputeTransformRules[T[PM]] {
-      def computeTransform(info: => T[PM], ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.map(a => Text(prom(a).toString))
+                                                           prom: PM => StringPromotable): CanBind[T[PM]] =
+    new CanBind[T[PM]] {
+      def apply(info: => T[PM])(ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.map(a => Text(prom(a).toString))
     }
 
-  implicit def iterableNodeFuncTransform[T[_], F <: NodeSeq => NodeSeq](implicit f: T[F] => Iterable[F]): ComputeTransformRules[T[F]] =
-    new ComputeTransformRules[T[F]] {
-      def computeTransform(info: => T[F], ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info).toSeq.map(_.apply(ns)))
+  implicit def iterableNodeFuncTransform[T[_], F <: NodeSeq => NodeSeq](implicit f: T[F] => Iterable[F]): CanBind[T[F]] =
+    new CanBind[T[F]] {
+      def apply(info: => T[F])(ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info).toSeq.map(_.apply(ns)))
     }
 
-  implicit def funcIterableTransform[T[_], F <: NodeSeq](implicit f: T[F] => Iterable[F]): ComputeTransformRules[NodeSeq => T[F]] =
-    new ComputeTransformRules[NodeSeq => T[F]] {
-      def computeTransform(info: => NodeSeq => T[F], ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info(ns)).toSeq)
+  implicit def funcIterableTransform[T[_], F <: NodeSeq](implicit f: T[F] => Iterable[F]): CanBind[NodeSeq => T[F]] =
+    new CanBind[NodeSeq => T[F]] {
+      def apply(info: => NodeSeq => T[F])(ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info(ns)).toSeq)
     }
 
-  implicit def stringFuncTransform: ComputeTransformRules[NodeSeq => String] =
-    new ComputeTransformRules[NodeSeq => String] {
-      def computeTransform(info: => NodeSeq => String, ns: NodeSeq): Seq[NodeSeq] = List(Text(info(ns)))
+  implicit def stringFuncTransform: CanBind[NodeSeq => String] =
+    new CanBind[NodeSeq => String] {
+      def apply(info: => NodeSeq => String)(ns: NodeSeq): Seq[NodeSeq] = List(Text(info(ns)))
     }
 
-  implicit def stringIterFuncTransform[T[_]](implicit f: T[String] => Iterable[String]): ComputeTransformRules[NodeSeq => T[String]] =
-    new ComputeTransformRules[NodeSeq => T[String]] {
-      def computeTransform(info: => NodeSeq => T[String], ns: NodeSeq): Seq[NodeSeq] = f(info(ns)).toSeq.map(Text(_))
+  implicit def stringIterFuncTransform[T[_]](implicit f: T[String] => Iterable[String]): CanBind[NodeSeq => T[String]] =
+    new CanBind[NodeSeq => T[String]] {
+      def apply(info: => NodeSeq => T[String])(ns: NodeSeq): Seq[NodeSeq] = f(info(ns)).toSeq.map(Text(_))
     }
 
 
-  implicit def iterableConstFuncTransform: ComputeTransformRules[IterableConst] =
-    new ComputeTransformRules[IterableConst] {
-      def computeTransform(info: => IterableConst, ns: NodeSeq): Seq[NodeSeq] = info.constList(ns)
+  implicit def iterableConstFuncTransform: CanBind[IterableConst] =
+    new CanBind[IterableConst] {
+      def apply(info: => IterableConst)(ns: NodeSeq): Seq[NodeSeq] = info.constList(ns)
     }
 }
 
@@ -896,15 +892,15 @@ final case class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSele
    * @tparam T the type of it
    * @return the function that will transform an incoming DOM based on the transform rules
    */
-  def #>[T](it: => T)(implicit computer: ComputeTransformRules[T]): CssSel = {
+  def #>[T](it: => T)(implicit computer: CanBind[T]): CssSel = {
     css match {
     case Full(EnclosedSelector(a, b)) => null
     (ToCssBindPromoter(stringSelector, Full(a))).#>(nsFunc(ns => {
       ToCssBindPromoter(stringSelector, Full(b)).#>(it)(computer)(ns)
-    })) // (ComputeTransformRules.nodeSeqFuncTransform)
+    })) // (CanBind.nodeSeqFuncTransform)
     case _ =>
       new CssBindImpl(stringSelector, css) {
-        def calculate(in: NodeSeq): Seq[NodeSeq] = computer.computeTransform(it, in)
+        def calculate(in: NodeSeq): Seq[NodeSeq] = computer(it)(in)
       }
   }
   }
@@ -917,5 +913,5 @@ final case class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSele
    * @tparam T the type of it
    * @return the function that will transform an incoming DOM based on the transform rules
    */
-  def replaceWith[T](it: => T)(implicit computer: ComputeTransformRules[T]): CssSel = this.#>(it)(computer)
+  def replaceWith[T](it: => T)(implicit computer: CanBind[T]): CssSel = this.#>(it)(computer)
 }
