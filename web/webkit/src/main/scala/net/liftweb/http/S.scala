@@ -1482,17 +1482,28 @@ trait S extends HasParams with Loggable {
               rh.headers = rh.headers + (name -> value)
       )
   }
+  /**
+   * Synonym for S.setHeader. Exists to provide the converse to
+   * S.getResponseHeader.
+   */
+  def setResponseHeader(name: String, value: String) {
+    setHeader(name, value)
+  }
 
+
+  @deprecated("2.5", "Use S.getResponseHeaders instead for clarity.")
+  def getHeaders(in: List[(String, String)]): List[(String, String)] = {
   /**
    * Returns the currently set HTTP response headers as a List[(String, String)]. To retrieve
-   * a specific response header, use S.getHeader. If you want to get request headers (those
-   * sent by the client), use Req.getHeaders or S.getRequestHeader.
+   * a specific response header, use S.getResponseHeader. If you want to
+   * get request headers (those sent by the client), use Req.getHeaders
+   * or S.getRequestHeader.
    *
    * @see # setHeader ( String, String )
-   * @see # getHeader ( String )
+   * @see # getResponseHeader ( String )
    * @see # getRequestHeader ( String )
    */
-  def getHeaders(in: List[(String, String)]): List[(String, String)] = {
+  def getResponseHeaders(in: List[(String, String)]): List[(String, String)] = {
     Box.legacyNullTest(_responseHeaders.value).map(
       rh =>
               rh.headers.iterator.toList :::
@@ -1500,6 +1511,10 @@ trait S extends HasParams with Loggable {
       ).openOr(Nil)
   }
 
+  @deprecated("2.5", "Use S.getResponseHeader instead for clarity.")
+  def getHeader(name: String): Box[String] = {
+    getResponseHeader(name)
+  }
   /**
    * Returns the current set value of the given HTTP response header as a Box. If
    * you want a request header, use Req.getHeader or S.getRequestHeader.
@@ -1508,10 +1523,10 @@ trait S extends HasParams with Loggable {
    * @return A Full(value) or Empty if the header isn't set
    *
    * @see # setHeader ( String, String )
-   * @see # getHeaders ( List[ ( String, String ) ] )
+   * @see # getResponseHeaders ( List[ ( String, String ) ] )
    * @see # getRequestHeader ( String )
    */
-  def getHeader(name: String): Box[String] = {
+  def getResponseHeader(name: String): Box[String] = {
     Box.legacyNullTest(_responseHeaders.value).map(
       rh => Box(rh.headers.get(name))
       ).openOr(Empty)
