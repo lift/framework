@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 WorldWide Conferencing, LLC
+ * Copyright 2009-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 package net.liftweb
-package wizard
+package http
 
 import net.liftweb._
 import http._
@@ -24,14 +24,13 @@ import JsCmds._
 
 import common._
 import util._
-import db._
 import Helpers._
 import scala.xml._
 import scala.reflect.Manifest
 
 object WizardRules extends Factory with FormVendor {
-  val dbConnectionsForTransaction: FactoryMaker[List[ConnectionIdentifier]] =
-    new FactoryMaker[List[ConnectionIdentifier]](() => Nil) {}
+  val dbConnectionsForTransaction: FactoryMaker[List[LoanWrapper]] =
+    new FactoryMaker[List[LoanWrapper]](() => Nil) {}
 
   private def m[T](implicit man: Manifest[T]): Manifest[T] = man
 
@@ -39,7 +38,7 @@ object WizardRules extends Factory with FormVendor {
 
   private object currentWizards extends SessionVar[Set[String]](Set())
 
-  private[wizard] def registerWizardSession(): String = {
+  private[http] def registerWizardSession(): String = {
     S.synchronizeForSession {
       val ret = Helpers.nextFuncName
       currentWizards.set(currentWizards.is + ret)
@@ -47,12 +46,12 @@ object WizardRules extends Factory with FormVendor {
     }
   }
 
-  private[wizard] def isValidWizardSession(id: String): Boolean =
+  private[http] def isValidWizardSession(id: String): Boolean =
     S.synchronizeForSession {
       currentWizards.is.contains(id)
     }
 
-  private[wizard] def deregisterWizardSession(id: String) {
+  private[http] def deregisterWizardSession(id: String) {
     S.synchronizeForSession {
       currentWizards.set(currentWizards.is - id)
     }
@@ -295,9 +294,9 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
     }
   }
 
-  class WizardSnapshot(private[wizard] val screenVars: Map[String, (NonCleanAnyVar[_], Any)],
+  class WizardSnapshot(private[http] val screenVars: Map[String, (NonCleanAnyVar[_], Any)],
                        val currentScreen: Box[Screen],
-                       private[wizard] val snapshot: Box[WizardSnapshot],
+                       private[http] val snapshot: Box[WizardSnapshot],
                        private val firstScreen: Boolean) extends Snapshot {
     def restore() {
       registerThisSnippet();
@@ -322,7 +321,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
     _screenList = _screenList ::: List(screen)
   }
 
-  def dbConnections: List[ConnectionIdentifier] = WizardRules.dbConnectionsForTransaction.vend
+  def dbConnections: List[LoanWrapper] = WizardRules.dbConnectionsForTransaction.vend
 
   /**
    * The ordered list of Screens
@@ -394,7 +393,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
 
           nextScreen match {
             case Empty =>
-              def useAndFinish(in: List[ConnectionIdentifier]) {
+              def useAndFinish(in: List[LoanWrapper]) {
                 in match {
                   case Nil => {
                     WizardRules.deregisterWizardSession(CurrentSession.is)
@@ -407,8 +406,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
                     }
                   }
 
-                  case x :: xs => DB.use(x) {
-                    conn =>
+                  case x :: xs => x.apply {
                       useAndFinish(xs)
                   }
                 }
@@ -546,7 +544,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
     def postFinish() {
     }
 
-    private[wizard] def enterScreen() {
+    private[http] def enterScreen() {
       if (!_touched) {
         _touched.set(true)
         localSetup()
@@ -599,7 +597,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
   }
 
 
-  private[wizard] object WizardVarHandler {
+  private[http] object WizardVarHandler {
     def get[T](name: String): Box[T] =
       ScreenVars.is.get(name).map(_._2.asInstanceOf[T])
 
