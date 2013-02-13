@@ -2206,14 +2206,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         case Group(nodes) =>
           Group(processSurroundAndInclude(page, nodes))
 
-        case elem@TagProcessingNode(toDo) => toDo match {
-          case DataAttributeProcessorAnswerNodes(nodes) => nodes
-          case DataAttributeProcessorAnswerFork(nodeFunc) =>
-            processOrDefer(true)(nodeFunc())
-          case DataAttributeProcessorAnswerFuture(nodeFuture) =>
-            processOrDefer(true)(nodeFuture.get(15000).openOr(NodeSeq.Empty))
-        }
-
         case elem@DataAttrNode(toDo) => toDo match {
           case DataAttributeProcessorAnswerNodes(nodes) =>
             processSurroundAndInclude(page, nodes)
@@ -2240,6 +2232,14 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
               }
             }
           }
+
+        case elem@TagProcessingNode(toDo) => toDo match {
+          case DataAttributeProcessorAnswerNodes(nodes) => nodes
+          case DataAttributeProcessorAnswerFork(nodeFunc) =>
+            processOrDefer(true)(nodeFunc())
+          case DataAttributeProcessorAnswerFuture(nodeFuture) =>
+            processOrDefer(true)(nodeFuture.get(15000).openOr(NodeSeq.Empty))
+        }
 
         case v: Elem =>
           Elem(v.prefix, v.label, processAttributes(v.attributes, this.allowAttributeProcessing.is),
