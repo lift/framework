@@ -36,6 +36,7 @@ import java.util.concurrent.{ConcurrentHashMap => CHash}
 import scala.reflect.Manifest
 
 import java.util.concurrent.atomic.AtomicInteger
+import actor.LAFuture
 
 class LiftRulesJBridge {
   def liftRules: LiftRules = LiftRules
@@ -71,6 +72,42 @@ object LiftRulesMocker {
 final case class StatelessReqTest(path: List[String], httpReq: HTTPRequest)
 
 /**
+ * Sometimes we're going to have to surface more data from one of these requests
+ * than we might like (for example, extra info about continuing the computation on
+ * a different thread), so we'll start off right by having an Answer trait
+ * that will have some subclasses and implicit conversions
+ */
+sealed trait DataAttributeProcessorAnswer
+
+/**
+ * The companion object that has the implicit conversions
+ */
+object DataAttributeProcessorAnswer {
+  implicit def nodesToAnswer(in: NodeSeq): DataAttributeProcessorAnswer = DataAttributeProcessorAnswerNodes(in)
+  implicit def nodeFuncToAnswer(in: () => NodeSeq): DataAttributeProcessorAnswer = DataAttributeProcessorAnswerFork(in)
+  implicit def nodeFutureToAnswer(in: LAFuture[NodeSeq]): DataAttributeProcessorAnswer = DataAttributeProcessorAnswerFuture(in)
+  implicit def setNodeToAnswer(in: Seq[Node]): DataAttributeProcessorAnswer = DataAttributeProcessorAnswerNodes(in)
+}
+
+/**
+ * Yep... just a bunch of nodes.
+ * @param nodes
+ */
+final case class DataAttributeProcessorAnswerNodes(nodes: NodeSeq) extends DataAttributeProcessorAnswer
+
+/**
+ * A function that returns a bunch of nodes... run it on a different thread
+ * @param nodeFunc
+ */
+final case class DataAttributeProcessorAnswerFork(nodeFunc: () => NodeSeq) extends DataAttributeProcessorAnswer
+
+/**
+ * A future that returns nodes... run them on a different thread
+ * @param nodeFuture the future of the NodeSeq
+ */
+final case class DataAttributeProcessorAnswerFuture(nodeFuture: LAFuture[NodeSeq]) extends DataAttributeProcessorAnswer
+
+/**
  * The Lift configuration singleton
  */
 object LiftRules extends LiftRulesMocker {
@@ -86,6 +123,12 @@ object LiftRules extends LiftRulesMocker {
   } else prodInstance
 
   type DispatchPF = PartialFunction[Req, () => Box[LiftResponse]];
+
+  /**
+   * A partial function that allows processing of any attribute on an Elem
+   * if the attribute begins with "data-"
+   */
+  type DataAttributeProcessor = PartialFunction[(String, String, Elem), DataAttributeProcessorAnswer]
 
   /**
    * The test between the path of a request and whether that path
@@ -423,7 +466,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     val ret: Box[String] =
     for{
       url <- Box !! LiftRules.getClass.getResource("/" + cn + ".class")
-      val newUrl = new java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
+      newUrl = new java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
       str <- tryo(new String(readWholeStream(newUrl.openConnection.getInputStream), "UTF-8"))
       ma <- """Implementation-Version: (.*)""".r.findFirstMatchIn(str)
     } yield ma.group(1)
@@ -436,7 +479,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     val ret: Box[Date] =
     for{
       url <- Box !! LiftRules.getClass.getResource("/" + cn + ".class")
-      val newUrl = new java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
+      newUrl = new java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
       str <- tryo(new String(readWholeStream(newUrl.openConnection.getInputStream), "UTF-8"))
       ma <- """Built-Time: (.*)""".r.findFirstMatchIn(str)
       asLong <- asLong(ma.group(1))
@@ -837,6 +880,14 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
 
   /**
+   * Ever wanted to add custom attribute processing to Lift? Here's your chance.
+   * Every attribute with the data- prefix will be tested against this
+   * RulesSeq and if there's a match, then use the rule process. Simple, easy, cool.
+   */
+  val dataAttributeProcessor: RulesSeq[DataAttributeProcessor] = new RulesSeq()
+
+
+  /**
   * There may be times when you want to entirely control the templating process.  You can insert
   * a function to this factory that will do your custom template resolution.  If the PartialFunction
   * isDefinedAt the given locale/path, then that's the template returned.  In this way, you can
@@ -925,7 +976,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
           val sm = smf()
           _sitemap = Full(sm)
           for (menu <- sm.menus;
-               val loc = menu.loc;
+               loc = menu.loc;
                rewrite <- loc.rewritePF) LiftRules.statefulRewrite.append(PerRequestPF(rewrite))
 
           _sitemap

@@ -60,7 +60,7 @@ object Comet extends DispatchSnippet with LazyLoggable {
 
   private def buildSpan(timeb: Box[Long], xml: NodeSeq, cometActor: LiftCometActor, spanId: String): NodeSeq =
   Elem(cometActor.parentTag.prefix, cometActor.parentTag.label, cometActor.parentTag.attributes,
-       cometActor.parentTag.scope, Group(xml)) %
+       cometActor.parentTag.scope, cometActor.parentTag.minimizeEmpty, xml :_*) %
   (new UnprefixedAttribute("id", Text(spanId), Null)) %
   (timeb.filter(_ > 0L).map(time => (new PrefixedAttribute("lift", "when", Text(time.toString), Null))) openOr Null)
 

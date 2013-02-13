@@ -48,7 +48,7 @@ object Servlet30AsyncProvider extends AsyncProviderMeta {
       val isSupported = cc.getMethod("isAsyncSupported")
       (true, cc, asyncClass, startAsync, getResponse, complete, isSupported)
     } catch {
-      case e =>
+      case e: Exception =>
         (false, 
          null, 
          null, 

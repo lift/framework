@@ -54,7 +54,7 @@ object Jetty7AsyncProvider extends AsyncProviderMeta {
       val isResumed = cci.getMethod("isResumed")
       (true, (cc), (meth), (getAttribute), (setAttribute), (suspend), setTimeout, resume, isExpired, isResumed)
     } catch {
-      case e =>
+      case e: Exception =>
         (false, null, null, null, null, null, null, null, null, null)
     }
   }
@@ -128,7 +128,7 @@ class Jetty7AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
       resumeMeth.invoke(cont)
       true
     } catch {
-      case e => setAttribute.invoke(cont, "__liftCometState", null)
+      case e: Exception => setAttribute.invoke(cont, "__liftCometState", null)
                 false
     }
   }

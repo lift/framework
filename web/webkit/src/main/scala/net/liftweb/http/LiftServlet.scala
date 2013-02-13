@@ -81,7 +81,7 @@ class LiftServlet extends Loggable {
       logger.debug("Destroyed Lift handler.")
       // super.destroy
     } catch {
-      case e => logger.error("Destruction failure", e)
+      case e: Exception => logger.error("Destruction failure", e)
     }
   }
 
@@ -162,7 +162,7 @@ class LiftServlet extends Loggable {
         handleGenericContinuation(theReq, resp, sesBox, func); true // we have to return true to hold onto the request
 
       case e if e.getClass.getName.endsWith("RetryRequest") => throw e
-      case e => logger.info("Request for " + req.request.uri + " failed " + e.getMessage, e); throw e
+      case e: Throwable => logger.info("Request for " + req.request.uri + " failed " + e.getMessage, e); throw e
     }
   }
 
@@ -531,7 +531,7 @@ class LiftServlet extends Loggable {
       }
     } catch {
       case foc: LiftFlowOfControlException => throw foc
-      case e => S.runExceptionHandlers(requestState, e)
+      case e: Exception => S.runExceptionHandlers(requestState, e)
     }
   }
 

@@ -526,13 +526,19 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   private val logger = Logger(classOf[CometActor])
   val uniqueId = Helpers.nextFuncName
   private var spanId = uniqueId
-  private var lastRenderTime = Helpers.nextNum
+  @volatile private var lastRenderTime = Helpers.nextNum
 
   /**
    * If we're going to cache the last rendering, here's the
    * private cache
    */
   private[this] var _realLastRendering: RenderOut = _
+
+  /**
+   * Get the current render clock for the CometActor
+   * @return
+   */
+  def renderClock: Long = lastRenderTime
 
   /**
    * The last rendering (cached or not)
@@ -725,9 +731,9 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   /**
    * Creates the span element acting as the real estate for comet rendering.
    */
-  def buildSpan(time: Long, xml: NodeSeq): NodeSeq = {
+  def buildSpan(time: Long, xml: NodeSeq): Elem = {
     Elem(parentTag.prefix, parentTag.label, parentTag.attributes,
-      parentTag.scope, Group(xml)) %
+      parentTag.scope, parentTag.minimizeEmpty, xml :_*) %
       new UnprefixedAttribute("id",
         Text(spanId),
         if (time > 0L) {

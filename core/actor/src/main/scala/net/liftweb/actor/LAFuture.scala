@@ -129,6 +129,25 @@ final class AbortedFutureException() extends Exception("Aborted Future")
 
 object LAFuture {
   /**
+   * Create an LAFuture from a function that
+   * will be applied on a separate thread. The LAFuture
+   * is returned immediately and the value may be obtained
+   * by calling `get`
+   *
+   * @param f the function that computes the value of the future
+   * @tparam T the type
+   * @return an LAFuture that will yield its value when the value has been computed
+   */
+  def apply[T](f: () => T): LAFuture[T] = {
+    val ret = new LAFuture[T]
+    LAScheduler.execute(() => {
+      ret.satisfy(f())
+    })
+    ret
+  }
+
+
+  /**
    * Collect all the future values into the aggregate future
    * The returned future will be satisfied when all the
    * collected futures are satisfied

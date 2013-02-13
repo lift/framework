@@ -20,6 +20,7 @@ package http
 import java.lang.reflect.{Method}
 
 import collection.mutable.{HashMap, ListBuffer}
+import js.JE.{JsRaw, AnonFunc}
 import xml._
 
 import common._
@@ -31,6 +32,7 @@ import http.js.{JsCmd, AjaxInfo}
 import builtin.snippet._
 import js._
 import provider._
+import json.JsonAST
 
 
 object LiftSession {
@@ -669,7 +671,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
               else
                 soFar
             } catch {
-              case exception =>
+              case exception: Exception =>
                 (valid, pair :: invalid)
             }
         }
@@ -1228,7 +1230,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
       case e: LiftFlowOfControlException => throw e
 
-      case e => S.runExceptionHandlers(request, e)
+      case e: Exception => S.runExceptionHandlers(request, e)
 
     }
 
@@ -1994,6 +1996,192 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   private object _lastFoundSnippet extends ThreadGlobal[String]
 
+  private object DataAttrNode {
+    def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
+      in match {
+        case e: Elem =>
+
+          val attrs = e.attributes
+
+          val rules = LiftRules.dataAttributeProcessor.toList
+
+          e.attributes.toStream.flatMap {
+            case UnprefixedAttribute(key, value, _) if key.toLowerCase().startsWith("data-") =>
+              val nk = key.substring(5).toLowerCase()
+              val vs = value.text
+              val a2 = attrs.filter{
+                case UnprefixedAttribute(k2, _, _) => k2 != key
+                case _ => true
+              }
+
+              NamedPF.applyBox((nk, vs, new Elem(e.prefix, e.label, a2, e.scope, e.minimizeEmpty, e.child :_*)), rules)
+            case _ => None
+          }.headOption
+
+        case _ => None
+      }
+    }
+  }
+
+  /**
+   * Pass in a LiftActor and get a JavaScript expression (function(x) {...}) that
+   * represents an asynchronous Actor message from the client to the server.
+   *
+   * The Actor should respond to a message in the form of a JsonAST.JValue.
+   *
+   * This method requires the session be stateful
+   *
+   * In general, your Actor should be a subclass of ScopedLiftActor because
+   * that way you'll have the scope of the current session.
+   *
+   * @param in the Actor to send messages to.
+   *
+   * @return a JsExp that contains a function that can be called with a parameter
+   *         and when the function is called, the parameter is JSON serialized and sent to
+   *         the server
+   */
+  def clientActorFor(in: LiftActor): JsExp = {
+    testStatefulFeature{
+      AnonFunc("x",
+       SHtml.jsonCall(JsRaw("x"), (p: JsonAST.JValue) => {
+        in ! p
+        JsCmds.Noop
+      }).cmd)
+
+    }
+  }
+
+  /**
+   * Pass in a LiftActor and get a JavaScript expression (function(x) {...}) that
+   * represents an asynchronous Actor message from the client to the server.
+   *
+   * The Actor should respond to a message in the form of a JsonAST.JValue.
+   *
+   * This method requires the session be stateful
+   *
+   * In general, your Actor should be a subclass of ScopedLiftActor because
+   * that way you'll have the scope of the current session.
+   *
+   * @param in the Actor to send messages to.
+   * @param xlate a function that will take the JsonAST.JValue and convert it
+   *              into a representation that can be sent to the Actor (probably
+   *              deserialize it into a case class.) If the translation succeeds,
+   *              the translated message will be sent to the actor. If the
+   *              translation fails, an error will be logged and the raw
+   *              JsonAST.JValue will be sent to the actor
+   *
+   *
+   * @return a JsExp that contains a function that can be called with a parameter
+   *         and when the function is called, the parameter is JSON serialized and sent to
+   *         the server
+   */
+  def clientActorFor(in: LiftActor, xlate: JsonAST.JValue => Box[Any]): JsExp = {
+    testStatefulFeature{
+      AnonFunc("x",
+        SHtml.jsonCall(JsRaw("x"), (p: JsonAST.JValue) => {
+          in.!(xlate(p) match {
+            case Full(v) => v
+            case Empty => logger.error("Failed to deserialize JSON message "+p); p
+            case Failure(msg, _, _) => logger.error("Failed to deserialize JSON message "+p+". Error "+msg); p
+          })
+          JsCmds.Noop
+        }).cmd)
+
+    }
+  }
+
+
+  /**
+   * Create a Actor that will take messages on the server and then send them to the client. So, from the
+   * server perspective, it's just an Async message send. From the client perspective, they get a function
+   * called each time the message is sent to the server.
+   *
+   * If the message sent to the LiftActor is a JsCmd or JsExp, then the code is sent directly to the
+   * client and executed on the client.
+   *
+   * If the message is a JsonAST.JValue, it's turned into a JSON string, sent to the client and
+   * the client calls the function named in the `toCall` parameter with the value.
+   *
+   * If the message is anything else, we attempt to JSON serialize the message and if it
+   * can be JSON serialized, it's sent over the wire and passed to the `toCall` function on the server
+   * @return
+   */
+  def serverActorForClient(toCall: String): LiftActor = {
+    testStatefulFeature{
+      val ca = new CometActor {
+        /**
+         * It's the main method to override, to define what is rendered by the CometActor
+         *
+         * There are implicit conversions for a bunch of stuff to
+         * RenderOut (including NodeSeq).  Thus, if you don't declare the return
+         * turn to be something other than RenderOut and return something that's
+         * coercible into RenderOut, the compiler "does the right thing"(tm) for you.
+         * <br/>
+         * There are implicit conversions for NodeSeq, so you can return a pile of
+         * XML right here.  There's an implicit conversion for NodeSeq => NodeSeq,
+         * so you can return a function (e.g., a CssBindFunc) that will convert
+         * the defaultHtml to the correct output.  There's an implicit conversion
+         * from JsCmd, so you can return a pile of JavaScript that'll be shipped
+         * to the browser.<br/>
+         * Note that the render method will be called each time a new browser tab
+         * is opened to the comet component or the comet component is otherwise
+         * accessed during a full page load (this is true if a partialUpdate
+         * has occurred.)  You may want to look at the fixedRender method which is
+         * only called once and sets up a stable rendering state.
+         */
+        def render: RenderOut = NodeSeq.Empty
+
+
+
+        override def lifespan = Full(120)
+
+        override def hasOuter = false
+
+        override def parentTag = <div style="display: none"/>
+
+        override def lowPriority: PartialFunction[Any, Unit] = {
+          case jsCmd: JsCmd => partialUpdate(JsCmds.JsTry(jsCmd, false))
+          case jsExp: JsExp => partialUpdate(JsCmds.JsTry(jsExp.cmd, false))
+          case jv: JsonAST.JValue => {
+            val s: String = json.pretty(json.render(jv))
+            partialUpdate(JsCmds.JsTry(JsRaw(toCall+"("+s+")").cmd, false))
+          }
+          case x: AnyRef => {
+            println("Hey we got the message "+x)
+            import json._
+            implicit val formats = Serialization.formats(NoTypeHints)
+
+            val ser: Box[String] = Helpers.tryo(Serialization.write(x))
+
+            ser.foreach(s => partialUpdate(JsCmds.JsTry(JsRaw(toCall+"("+s+")").cmd, false)))
+
+          }
+
+          case _ => // this will never happen because the message is boxed
+
+        }
+      }
+
+        synchronized {
+          asyncComponents(ca.theType -> ca.name) = ca
+          asyncById(ca.uniqueId) = ca
+        }
+
+      ca.callInitCometActor(this, Full(Helpers.nextFuncName), Full(Helpers.nextFuncName), NodeSeq.Empty, Map.empty)
+
+
+
+      ca ! PerformSetupComet2(Empty)
+
+      val node: Elem = ca.buildSpan(ca.renderClock, NodeSeq.Empty)
+
+      S.addCometAtEnd(node)
+
+      ca
+    }
+  }
+
+
   /**
    * Processes the surround tag and other lift tags
    *
@@ -2005,6 +2193,18 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       in.flatMap {
         case Group(nodes) =>
           Group(processSurroundAndInclude(page, nodes))
+
+
+        case elem@DataAttrNode(toDo) => toDo match {
+          case DataAttributeProcessorAnswerNodes(nodes) =>
+            processSurroundAndInclude(page, nodes)
+
+          case DataAttributeProcessorAnswerFork(nodeFunc) =>
+            processOrDefer(true)(processSurroundAndInclude(page, nodeFunc()))
+          case DataAttributeProcessorAnswerFuture(nodeFuture) =>
+            processOrDefer(true)(processSurroundAndInclude(page,
+              nodeFuture.get(15000).openOr(NodeSeq.Empty)))
+        }
 
         case elem @ SnippetNode(element, kids, isLazy, attrs, snippetName) if snippetName != _lastFoundSnippet.value =>
           processOrDefer(isLazy) {
@@ -2024,7 +2224,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
         case v: Elem =>
           Elem(v.prefix, v.label, processAttributes(v.attributes, this.allowAttributeProcessing.is),
-            v.scope, processSurroundAndInclude(page, v.child): _*)
+            v.scope, v.minimizeEmpty, processSurroundAndInclude(page, v.child): _*)
 
         case pcd: scala.xml.PCData => pcd
         case text: Text => text
@@ -2425,7 +2625,7 @@ private object SnippetNode {
         } yield {
           val (par, nonLift) = liftAttrsAndParallel(elm.attributes)
           val newElm = new Elem(elm.prefix, elm.label,
-            nonLift, elm.scope, elm.child: _*)
+            nonLift, elm.scope, elm.minimizeEmpty, elm.child: _*)
           (newElm, newElm, par ||
             (lift.find {
               case up: UnprefixedAttribute if up.key == "parallel" => true
@@ -2441,4 +2641,109 @@ private object SnippetNode {
         None
       }
     }
+}
+
+/**
+ * A LiftActor that runs in the scope of the current Session, repleat with SessionVars, etc.
+ * In general, you'll want to use a ScopedLiftActor when you do stuff with clientActorFor, etc.
+ * so that you have the session scope
+ *
+ */
+trait ScopedLiftActor extends LiftActor with LazyLoggable {
+  /**
+   * The session captured when the instance is created. It should be correct if the instance is created
+   * in the scope of a request
+   */
+  protected val _session: LiftSession = S.session openOr new LiftSession("", Helpers.nextFuncName, Empty)
+
+  /**
+   * The render version of the page that this was created in the scope of
+   */
+  protected val _uniqueId: String = RenderVersion.get
+
+  /**
+   * The session associated with this actor. By default it's captured at the time of instantiation, but
+   * that doesn't always work, so you might have to override this method
+   * @return
+   */
+  def session: LiftSession = _session
+
+
+  /**
+   * The unique page ID of the page that this Actor was created in the scope of
+   * @return
+   */
+  def uniqueId: String = _uniqueId
+
+  /**
+   * Compose the Message Handler function. By default,
+   * composes highPriority orElse mediumPriority orElse internalHandler orElse
+   * lowPriority orElse internalHandler.  But you can change how
+   * the handler works if doing stuff in highPriority, mediumPriority and
+   * lowPriority is not enough.
+   */
+  protected def composeFunction: PartialFunction[Any, Unit] = composeFunction_i
+
+  private def composeFunction_i: PartialFunction[Any, Unit] = {
+    // if we're no longer running don't pass messages to the other handlers
+    // just pass them to our handlers
+    highPriority orElse mediumPriority orElse
+      lowPriority
+  }
+
+  /**
+   * Handle messages sent to this Actor before the
+   */
+  def highPriority: PartialFunction[Any, Unit] = Map.empty
+
+  def lowPriority: PartialFunction[Any, Unit] = Map.empty
+
+  def mediumPriority: PartialFunction[Any, Unit] = Map.empty
+
+  protected override def messageHandler = {
+    val what = composeFunction
+    val myPf: PartialFunction[Any, Unit] = new PartialFunction[Any, Unit] {
+      def apply(in: Any): Unit =
+        S.initIfUninitted(session) {
+          RenderVersion.doWith(uniqueId) {
+            S.functionLifespan(true) {
+              try {
+                what.apply(in)
+              } catch {
+                case e if exceptionHandler.isDefinedAt(e) => exceptionHandler(e)
+                case e: Exception => reportError("Message dispatch for " + in, e)
+              }
+              if (S.functionMap.size > 0) {
+                session.updateFunctionMap(S.functionMap, uniqueId, millis)
+                S.clearFunctionMap
+              }
+            }
+          }
+        }
+
+      def isDefinedAt(in: Any): Boolean =
+        S.initIfUninitted(session) {
+          RenderVersion.doWith(uniqueId) {
+            S.functionLifespan(true) {
+              try {
+                what.isDefinedAt(in)
+              } catch {
+                case e if exceptionHandler.isDefinedAt(e) => exceptionHandler(e); false
+                case e: Exception => reportError("Message test for " + in, e); false
+              }
+            }
+          }
+        }
+    }
+
+    myPf
+  }
+
+  /**
+   * How to report an error that occurs during message dispatch
+   */
+  protected def reportError(msg: String, exception: Exception) {
+    logger.error(msg, exception)
+  }
+
 }

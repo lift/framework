@@ -261,9 +261,9 @@ object JE {
   /**
    * gets the element by ID
    */
-  case class ElemById(id: String, then: String*) extends JsExp {
+  case class ElemById(id: String, thenStr: String*) extends JsExp {
     override def toJsCmd = "document.getElementById(" + id.encJs + ")" + (
-      if (then.isEmpty) "" else then.mkString(".", ".", "")
+      if (thenStr.isEmpty) "" else thenStr.mkString(".", ".", "")
     )
   }
 
@@ -781,9 +781,9 @@ object JsCmds {
    * Assigns the value of 'right' to the members of the element
    * having this 'id', chained by 'then' sequences
    */
-  case class SetElemById(id: String, right: JsExp, then: String*) extends JsCmd {
+  case class SetElemById(id: String, right: JsExp, thenStr: String*) extends JsCmd {
     def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ")" + (
-      if (then.isEmpty) "" else then.mkString(".", ".", "")
+      if (thenStr.isEmpty) "" else thenStr.mkString(".", ".", "")
     ) + " = " + right.toJsCmd + ";};"
   }
 
