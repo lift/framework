@@ -1997,13 +1997,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private object _lastFoundSnippet extends ThreadGlobal[String]
 
   private object DataAttrNode {
+    val rules = LiftRules.dataAttributeProcessor.toList
+
     def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
       in match {
-        case e: Elem =>
+        case e: Elem if !rules.isEmpty =>
 
           val attrs = e.attributes
-
-          val rules = LiftRules.dataAttributeProcessor.toList
 
           e.attributes.toStream.flatMap {
             case UnprefixedAttribute(key, value, _) if key.toLowerCase().startsWith("data-") =>
@@ -2014,10 +2014,22 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                 case _ => true
               }
 
-              NamedPF.applyBox((nk, vs, new Elem(e.prefix, e.label, a2, e.scope, e.minimizeEmpty, e.child :_*)), rules)
-            case _ => None
+              NamedPF.applyBox((nk, vs, new Elem(e.prefix, e.label, a2, e.scope, e.minimizeEmpty, e.child :_*), LiftSession.this), rules)
+            case _ => Empty
           }.headOption
 
+        case _ => None
+      }
+    }
+  }
+
+  private object TagProcessingNode {
+    val rules = LiftRules.tagProcessor.toList
+
+    def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
+      in match {
+        case e: Elem if !rules.isEmpty =>
+          NamedPF.applyBox((e.label, e, LiftSession.this), rules)
         case _ => None
       }
     }
@@ -2194,6 +2206,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         case Group(nodes) =>
           Group(processSurroundAndInclude(page, nodes))
 
+        case elem@TagProcessingNode(toDo) => toDo match {
+          case DataAttributeProcessorAnswerNodes(nodes) => nodes
+          case DataAttributeProcessorAnswerFork(nodeFunc) =>
+            processOrDefer(true)(nodeFunc())
+          case DataAttributeProcessorAnswerFuture(nodeFuture) =>
+            processOrDefer(true)(nodeFuture.get(15000).openOr(NodeSeq.Empty))
+        }
 
         case elem@DataAttrNode(toDo) => toDo match {
           case DataAttributeProcessorAnswerNodes(nodes) =>

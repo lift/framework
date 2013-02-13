@@ -128,7 +128,12 @@ object LiftRules extends LiftRulesMocker {
    * A partial function that allows processing of any attribute on an Elem
    * if the attribute begins with "data-"
    */
-  type DataAttributeProcessor = PartialFunction[(String, String, Elem), DataAttributeProcessorAnswer]
+  type DataAttributeProcessor = PartialFunction[(String, String, Elem, LiftSession), DataAttributeProcessorAnswer]
+
+  /**
+   * The pattern/PartialFunction for matching tags in Lift
+   */
+  type TagProcessor = PartialFunction[(String, Elem, LiftSession), DataAttributeProcessorAnswer]
 
   /**
    * The test between the path of a request and whether that path
@@ -885,6 +890,28 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * RulesSeq and if there's a match, then use the rule process. Simple, easy, cool.
    */
   val dataAttributeProcessor: RulesSeq[DataAttributeProcessor] = new RulesSeq()
+
+  /**
+   * Ever wanted to match on *any* arbitrary tag in your HTML and process it
+   * any way you wanted? Well, here's your chance, dude. You can capture any
+   * tag and do anything you want with it.
+   *
+   * Note that this set of PartialFunctions is run for **EVERY** node
+   * in the DOM so make sure it runs *FAST*.
+   *
+   * Also, no subsequent processing of the returned NodeSeq is done (no
+   * LiftSession.processSurroundAndInclude()) so evaluate everything
+   * you want to.
+   *
+   * But do avoid infinite loops, so make sure the PartialFunction actually
+   * returns true *only* when you're going to return a modified node.
+   *
+   * An example might be:
+   *
+   *
+   *    case ("script", e, session) if e.getAttribute("data-serverscript").isDefined => ...
+   */
+  val tagProcessor: RulesSeq[TagProcessor] = new RulesSeq()
 
 
   /**
