@@ -147,6 +147,23 @@ trait BindHelpers {
       case _ => elem
     }
 
+
+  /**
+   * Remove an attribute from the element
+   *
+   * @param name the name of the attribute to remove
+   * @param elem the element
+   * @return the element sans the named attribute
+   */
+  def removeAttribute(name: String, elem: Elem): Elem = {
+    val a = elem.attributes.filter{
+      case up: UnprefixedAttribute => up.key != name
+      case _ => true
+    }
+
+    elem.copy(attributes = a)
+  }
+
   /**
    * Adds a css class to the existing class tag of an Elem or create
    * the class attribute
@@ -1255,7 +1272,7 @@ trait BindHelpers {
 
         new Elem(e.prefix,
                  e.label, new UnprefixedAttribute("id", id, meta),
-                 e.scope, e.child :_*)
+                 e.scope, e.minimizeEmpty, e.child :_*)
       }
  
       case x => x
