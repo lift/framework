@@ -306,6 +306,12 @@ object CssBindHelpersSpec extends Specification  {
       success
     }
 
+    "data-name selector works" in {
+      val xf = ";frog" #> <b>hi</b>
+
+      xf(<div><span data-name="frog">Moose</span></div>) must ==/ (<div><b data-name="frog">hi</b></div>)
+    }
+
     "support modifying attributes along with body" in {
       val org = <a>foo</a>
       val func = "a [href]" #> "dog" & "a *" #> "bar"
@@ -330,6 +336,13 @@ object CssBindHelpersSpec extends Specification  {
     "insert a String by deep nested class" in {
       ("#baz div .foo *" #> "hello").apply(
         <b><span id="baz"><div><span class="foo"/></div></span><span><div><span class="foo"/></div></span></b>) must ==/ (<b><span id="baz"><div><span class="foo">hello</span></div></span><span><div><span class="foo"/></div></span></b>)
+    }
+
+
+    "Only apply to the top elem" in {
+      val xf = "1 [href]" #> "wombat"
+
+      xf(<a><b>stuff</b></a>) must ==/ (<a href="wombat"><b>stuff</b></a>)
     }
 
 
