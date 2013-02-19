@@ -768,22 +768,22 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
  */
 final class ParamFailure[T](override val msg: String,
 		            override val exception: Box[Throwable],
-		            override val chain: Box[Failure], val param: T) extends
-  Failure(msg, exception, chain) with Serializable{
-    override def toString(): String = "ParamFailure("+msg+", "+exception+
-    ", "+chain+", "+param+")"
+		            override val chain: Box[Failure], val param: T) extends 
+    Failure(msg, exception, chain) with Serializable{
+  override def toString(): String = "ParamFailure("+msg+", "+exception+
+  ", "+chain+", "+param+")"
 
-    override def equals(that: Any): Boolean = that match {
-      case ParamFailure(m, e, c, p) =>
-        m == msg && e == exception && c == chain && p == param
-      case _ => false
-    }
-
-    override def hashCode(): Int = super.hashCode() + (param match {
-      case null => 0
-      case x => x.hashCode()
-    })
+  override def equals(that: Any): Boolean = that match {
+    case ParamFailure(m, e, c, p) =>
+      m == msg && e == exception && c == chain && p == param
+    case _ => false
   }
+
+  override def hashCode(): Int = super.hashCode() + (param match {
+    case null => 0
+    case x => x.hashCode()
+  })
+}
 
 /**
  * A trait that a class can mix into itself to convert itself into a Box
