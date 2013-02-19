@@ -204,7 +204,7 @@ object CssSelectorParser extends PackratParsers with ImplicitConversions {
   private lazy val _starMatch: Parser[CssSelector] =  ('*' ^^ {
     case sn => StarSelector(Empty, false)
   }) | (
-    '1' ^^ {
+    '^' ^^ {
       case sn => StarSelector(Empty, true)
     }
     )
