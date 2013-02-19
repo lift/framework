@@ -306,6 +306,13 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
   }
 
+  "A ParamFailure is a Failure which" should {
+    "return itself when ~> is called on it" in {
+      val paramFailure = ParamFailure("some failure", Empty, Empty, 404)
+      paramFailure ~> 401 must_== paramFailure
+    }
+  }
+
   "A Box equals method" should {
 
     "return true with comparing two identical Box messages" in check {
