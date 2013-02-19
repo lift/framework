@@ -153,6 +153,11 @@ object Templates {
     }.headOption getOrElse in
   }
 
+  private def parseMarkdown(is: InputStream): Box[NodeSeq] =
+  for {
+    bytes <- Helpers.tryo(Helpers.readWholeStream(is))
+    elems <- MarkdownParser.parse(new String(bytes, "UTF-8"))
+  } yield elems
 
   /**
    * Given a list of paths (e.g. List("foo", "index")),
@@ -214,7 +219,9 @@ object Templates {
                 val name = pls + p + (if (s.length > 0) "." + s else "")
                 import scala.xml.dtd.ValidationException
                 val xmlb = try {
-                  LiftRules.doWithResource(name) { parserFunction } match {
+                  LiftRules.doWithResource(name) {
+                    if (s == "md") {parseMarkdown} else
+                    parserFunction } match {
                     case Full(seq) => seq
                     case _ => Empty
                   }

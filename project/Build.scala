@@ -70,7 +70,8 @@ object BuildDef extends Build {
         .dependsOn(actor, json)
         .settings(description := "Utilities Library",
                   parallelExecution in Test := false,
-                  libraryDependencies <++= scalaVersion {sv =>  Seq(scala_compiler(sv), joda_time, joda_convert, commons_codec, javamail, log4j, htmlparser)})
+                  libraryDependencies <++= scalaVersion {sv =>  Seq(scala_compiler(sv), markdown, joda_time,
+                    joda_convert, commons_codec, javamail, log4j, htmlparser)})
 
 
   // Web Projects
@@ -91,9 +92,10 @@ object BuildDef extends Build {
         .settings(description := "Webkit Library",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv =>
-                    Seq(commons_fileupload, servlet_api, specs2(sv).copy(configurations = Some("provided")), jetty6, jwebunit)
+                    Seq(commons_fileupload, servlet_api, specs2(sv).copy(configurations = Some("provided")), jetty6,
+                    rhino,
+                      jwebunit)
                   },
-                  libraryDependencies <++= scalaVersion { case "2.10.0" => scalaactors::Nil  case _ => Nil },
                   initialize in Test <<= (sourceDirectory in Test) { src =>
                     System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
                   })

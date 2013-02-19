@@ -1727,7 +1727,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * The list of suffixes that Lift looks for in templates.
    * By default, html, xhtml, and htm
    */
-  @volatile var templateSuffixes: List[String] = List("html", "xhtml", "htm")
+  @volatile var templateSuffixes: List[String] = List("html", "xhtml", "htm", "md")
 
   /**
    * When a request is parsed into a Req object, certain suffixes are explicitly split from

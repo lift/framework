@@ -32,43 +32,6 @@ import JE._
 import java.util.concurrent.atomic.AtomicLong
 import java.util.Locale
 
-/**
- * An actor that monitors other actors that are linked with it. If a watched
- * actor terminates, this actor captures the Exit message, executes failureFuncs
- * and resurrects the actor.
- */
-object ActorWatcher extends scala.actors.Actor with Loggable {
-
-  import scala.actors.Actor._
-
-  def act = loop {
-    react {
-      case scala.actors.Exit(actor: scala.actors.Actor, why: Throwable) =>
-        failureFuncs.foreach(f => tryo(f(actor, why)))
-
-      case _ =>
-    }
-  }
-
-  private def startAgain(a: scala.actors.Actor, ignore: Throwable) {
-    a.start
-    a ! RelinkToActorWatcher
-  }
-
-  private def logActorFailure(actor: scala.actors.Actor, why: Throwable) {
-    logger.warn("The ActorWatcher restarted " + actor + " because " + why, why)
-  }
-
-  /**
-   * If there's something to do in addition to starting the actor up, pre-pend the
-   * actor to this List
-   */
-  @volatile var failureFuncs: List[(scala.actors.Actor, Throwable) => Unit] = logActorFailure _ ::
-    startAgain _ :: Nil
-
-  this.trapExit = true
-  this.start
-}
 
 /**
  * This is used as an indicator message for linked actors.

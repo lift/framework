@@ -49,7 +49,9 @@ object Dependencies {
   lazy val scalaz_core: ModuleMap = sv => scalazGroup(sv)        % "scalaz-core"        % scalazVersion(sv) cross crossMapped("2.10.0" -> "2.10.0-RC5", "2.9.2" -> "2.9.1", "2.9.1-1" -> "2.9.1")
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
   lazy val squeryl                = "org.squeryl"                % "squeryl"           % "0.9.5-6" cross CVMapping29
-  @deprecated lazy val scalaactors= "org.scala-lang"             % "scala-actors"       % "2.10.0"
+  lazy val markdown =               "org.hoisted"                %% "actuarius"         %  "0.2.5-SNAPSHOT"
+  lazy val rhino                  = "rhino"                      % "js"                 % "1.7R2"
+//  @deprecated lazy val scalaactors= "org.scala-lang"             % "scala-actors"       % "2.10.0"
 
   // Aliases
   lazy val mongo_driver = mongo_java_driver
@@ -72,6 +74,7 @@ object Dependencies {
 
   // Aliases
   lazy val h2 = h2database
+
 
 
   // Test scope:

@@ -142,16 +142,6 @@ object LiftSession {
       case psc: PAndSessionConstructor => psc.makeOne(pp.openOrThrowException("It's ok").v, session)
     }
   }
-
-  /**
-   * Check to see if the template is marked designer friendly
-   * and lop off the stuff before the first surround
-   */
-  @deprecated("Use Templates.checkForContentId", "2.3")
-  def checkForContentId(in: NodeSeq): NodeSeq =
-    Templates.checkForContentId(in)
-
-
 }
 
 
@@ -1336,8 +1326,17 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case s@_ if (!s.isEmpty) => s
       case _ => List("index")
     }
-    Templates(splits, S.locale)
+    Templates(splits, S.locale).map {
+      case e: Elem if e.label == "html" => e
+      case e: Elem if hasSurround(e) => e
+      case x => <lift:surround with="default" at="content">{x}</lift:surround>
+    }
   }
+
+  private def hasSurround(e: Elem): Boolean =
+  (e.attribute("data-lift").map(_.text.startsWith("surround")) getOrElse false) ||
+  (e.label == "surround") ||
+  (e.attribute("class").map(_.text.contains("surround")) getOrElse false)
 
   private[liftweb] def findTemplate(name: String): Box[NodeSeq] = {
     val splits = (if (name.startsWith("/")) name else "/" + name).split("/").toList.drop(1) match {
@@ -2159,7 +2158,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
             partialUpdate(JsCmds.JsTry(JsRaw(toCall+"("+s+")").cmd, false))
           }
           case x: AnyRef => {
-            println("Hey we got the message "+x)
             import json._
             implicit val formats = Serialization.formats(NoTypeHints)
 
