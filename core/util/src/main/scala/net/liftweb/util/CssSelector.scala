@@ -32,7 +32,7 @@ final case class ElemSelector(elem: String, subNodes: Box[SubNode]) extends
   def withSubnode(sn: SubNode): CssSelector = this.copy(subNodes = Full(sn))
 }
 
-final case class StarSelector(subNodes: Box[SubNode]) extends CssSelector {
+final case class StarSelector(subNodes: Box[SubNode], singleDepth: Boolean) extends CssSelector {
   def withSubnode(sn: SubNode): CssSelector = this.copy(subNodes = Full(sn))
 }
 
@@ -157,16 +157,6 @@ object CssSelectorParser extends PackratParsers with ImplicitConversions {
 
   private implicit def str2chars(s: String): List[Char] = new scala.collection.immutable.WrappedString(s).toList
 
-  private lazy val _topParser: Parser[CssSelector] = {
-    phrase(idMatch |
-           nameMatch |
-           classMatch |
-           attrMatch |
-           elemMatch |
-           starMatch |
-           colonMatch)
-  }
-
   private def fixAll(all: List[CssSelector], sn: Option[SubNode]): CssSelector = {
     (all, sn) match {
       // case (Nil, Some())
@@ -179,10 +169,10 @@ object CssSelectorParser extends PackratParsers with ImplicitConversions {
 
   private val atEnd = Parser { in => if(in.atEnd) Success(CharSequenceReader.EofCh, in) else Failure("", in)}
   private lazy val topParser: Parser[CssSelector] =
-    phrase(rep1((_idMatch | _nameMatch | _classMatch | _attrMatch | _elemMatch |
+    phrase(rep1((_idMatch | _dataNameMatch | _nameMatch | _classMatch | _attrMatch | _elemMatch |
       _colonMatch | _starMatch) <~ (rep1(' ') | atEnd)) ~ opt(subNode)) ^^ {
       case (one :: Nil) ~ sn => fixAll(List(one), sn)
-    case all ~ None if all.takeRight(1).head == StarSelector(Empty) =>
+    case all ~ None if all.takeRight(1).head == StarSelector(Empty, false) =>
       fixAll(all.dropRight(1), Some(KidsSubNode()))
     case all ~ sn => fixAll(all, sn)
   }
@@ -198,63 +188,31 @@ object CssSelectorParser extends PackratParsers with ImplicitConversions {
     case "submit" => AttrSelector("type", "submit", Empty)
     case "text" => AttrSelector("type", "text", Empty)
   }
-    
-  private lazy val colonMatch: Parser[CssSelector] =
-    ':' ~> id ~ opt(subNode) ^? {
-      case "button" ~ sn => AttrSelector("type", "button", sn)
-      case "checkbox" ~ sn => AttrSelector("type", "checkbox", sn)
-      case "file" ~ sn => AttrSelector("type", "file", sn)
-      case "password" ~ sn => AttrSelector("type", "password", sn)
-      case "radio" ~ sn => AttrSelector("type", "radio", sn)
-      case "reset" ~ sn => AttrSelector("type", "reset", sn)
-      case "submit" ~ sn => AttrSelector("type", "submit", sn)
-      case "text" ~ sn => AttrSelector("type", "text", sn)
-    }
-
-
-  private lazy val idMatch: Parser[CssSelector] = '#' ~> id ~ opt(subNode) ^^ {
-    case id ~ sn => IdSelector(id, sn)
-  }
 
   private lazy val _idMatch: Parser[CssSelector] = '#' ~> id ^^ {
     case id => IdSelector(id, Empty)
-  }
-
-  private lazy val nameMatch: Parser[CssSelector] = '@' ~> id ~ opt(subNode) ^^ {
-    case name ~ sn => NameSelector(name, sn)
   }
 
   private lazy val _nameMatch: Parser[CssSelector] = '@' ~> id ^^ {
     case name => NameSelector(name, Empty)
   }
 
-  private lazy val elemMatch: Parser[CssSelector] =  id ~ opt(subNode) ^^ {
-    case elem ~ sn => ElemSelector(elem, sn)
-  }
-
   private lazy val _elemMatch: Parser[CssSelector] =  id ^^ {
     case elem => ElemSelector(elem, Empty)
   }
 
-  private lazy val starMatch: Parser[CssSelector] =  '*' ~> opt(subNode) ^^ {
-    case sn => StarSelector(sn)
+  private lazy val _starMatch: Parser[CssSelector] =  ('*' ^^ {
+    case sn => StarSelector(Empty, false)
+  }) | (
+    '1' ^^ {
+      case sn => StarSelector(Empty, true)
+    }
+    )
+
+  private lazy val _dataNameMatch: Parser[CssSelector] = ';' ~> id ^^ {
+    case name => AttrSelector("data-name", name, Empty)
   }
 
-  private lazy val _starMatch: Parser[CssSelector] =  '*' ^^ {
-    case sn => StarSelector(Empty)
-  }
-
-  private lazy val classMatch: Parser[CssSelector] =
-    '.' ~> attrName ~ opt(subNode) ^^ {
-      case cls ~ sn => ClassSelector(cls, sn)
-    }
-
-  private lazy val attrMatch: Parser[CssSelector] =
-    attrName ~ '=' ~ attrConst ~ opt(subNode) ^^ {
-      case "id" ~ _ ~ const ~ sn => IdSelector(const, sn)
-      case "name" ~ _ ~ const ~ sn => NameSelector(const, sn)
-      case n ~ _  ~ v ~ sn => AttrSelector(n, v, sn)
-    }
 
   private lazy val _classMatch: Parser[CssSelector] =
     '.' ~> attrName ^^ {

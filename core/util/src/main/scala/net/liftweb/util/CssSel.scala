@@ -136,7 +136,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         elemMap += (id -> sortBinds(i :: elemMap.getOrElse(id, Nil)))
 
 
-      case i@CssBind(StarSelector(_)) => starFunc = Full(sortBinds(i :: starFunc.openOr(Nil)))
+      case i@CssBind(StarSelector(_, _)) => starFunc = Full(sortBinds(i :: starFunc.openOr(Nil)))
 
       case i@CssBind(NameSelector(name, _)) =>
         nameMap += (name -> sortBinds(i :: nameMap.getOrElse(name, Nil)))
@@ -175,18 +175,18 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         case _ => false
       }
 
-    final def applyRule(bindList: List[CssBind], realE: Elem, onlySelThis: Boolean): NodeSeq =
+    final def applyRule(bindList: List[CssBind], realE: Elem, onlySelThis: Boolean, depth: Int): NodeSeq =
       bindList match {
         case Nil => realE
 
         // ignore selectThis commands outside the
         // select context
         case bind :: xs
-          if onlySelThis && isSelThis(bind) => applyRule(xs, realE, onlySelThis)
+          if onlySelThis && isSelThis(bind) => applyRule(xs, realE, onlySelThis, depth)
 
         case bind :: xs => {
-          applyRule(bind, realE) flatMap {
-            case e: Elem => applyRule(xs, e, onlySelThis)
+          applyRule(bind, realE, depth) flatMap {
+            case e: Elem => applyRule(xs, e, onlySelThis, depth + 1)
             case x => x
           }
         }
@@ -210,9 +210,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             new UnprefixedAttribute(attr, flat, filtered)
           }
 
-          new Elem(elem.prefix,
-            elem.label, newAttr,
-            elem.scope, elem.child: _*)
+          elem.copy(attributes = newAttr)
         }
 
         case (elem, (bind, AttrAppendSubNode(attr))) => {
@@ -290,7 +288,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
 
     // This is where the rules are applied
-    final def applyRule(bind: CssBind, realE: Elem): NodeSeq = {
+    final def applyRule(bind: CssBind, realE: Elem, depth: Int): NodeSeq = {
       def uniqueClasses(cv: String*): String = {
         import Helpers._
 
@@ -460,10 +458,14 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       } buff ++= bind
     }
 
-    final def forStar(buff: ListBuffer[CssBind]) {
+    final def forStar(buff: ListBuffer[CssBind], depth: Int) {
       for {
-        bind <- starFunc
-      } buff ++= bind
+        binds <- starFunc
+        bind <- binds if (bind match {
+        case CssBind(StarSelector(_, topOnly)) => !topOnly || (depth == 0)
+        case _ => true
+      })
+      } buff += bind
     }
 
     final def forName(in: Elem, buff: ListBuffer[CssBind]) {
@@ -542,7 +544,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     }
   }
 
-  final private def treatElem(e: Elem, onlySel: Boolean): NodeSeq = {
+  final private def treatElem(e: Elem, onlySel: Boolean, depth: Int): NodeSeq = {
     val slurp = slurpAttrs(e.attributes)
     val lb = new ListBuffer[CssBind]
 
@@ -551,12 +553,12 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     slurp.forClass(e, lb)
     slurp.forElem(e, lb)
     slurp.forAttr(e, lb)
-    slurp.forStar(lb)
+    slurp.forStar(lb, depth)
 
     if (onlySel) {
       lb.toList.filter(_.selectThis_?) match {
         case Nil => {
-          run(e.child, onlySel)
+          run(e.child, onlySel, depth + 1)
           NodeSeq.Empty
         }
 
@@ -568,21 +570,21 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     } else {
       lb.toList.filterNot(_.selectThis_?) match {
         case Nil => new Elem(e.prefix, e.label,
-          e.attributes, e.scope, run(e.child, onlySel): _*)
+          e.attributes, e.scope, run(e.child, onlySel, depth + 1): _*)
         case csb =>
           // do attributes first, then the body
           csb.partition(_.attrSel_?) match {
-            case (Nil, rules) => slurp.applyRule(rules, e, onlySel)
+            case (Nil, rules) => slurp.applyRule(rules, e, onlySel, depth)
             case (attrs, Nil) => {
               val elem = slurp.applyAttributeRules(attrs, e)
               new Elem(elem.prefix, elem.label,
-                elem.attributes, elem.scope, run(elem.child, onlySel): _*)
+                elem.attributes, elem.scope, run(elem.child, onlySel, depth + 1): _*)
             }
 
             case (attrs, rules) => {
               slurp.applyRule(rules,
                 slurp.applyAttributeRules(attrs, e),
-                onlySel)
+                onlySel, depth)
             }
           }
         // slurp.applyRule(csb, e, onlySel)
@@ -593,20 +595,20 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
   final def apply(in: NodeSeq): NodeSeq = selectThis match {
     case Full(_) => {
       try {
-        run(in, true)
+        run(in, true, 0)
       } catch {
         case RetryWithException(newElem) =>
-          run(newElem, false)
+          run(newElem, false, 0)
       }
     }
 
-    case _ => run(in, false)
+    case _ => run(in, false, 0)
   }
 
-  final private def run(in: NodeSeq, onlyRunSel: Boolean): NodeSeq =
+  final private def run(in: NodeSeq, onlyRunSel: Boolean, depth: Int): NodeSeq =
     in flatMap {
-      case Group(g) => run(g, onlyRunSel)
-      case e: Elem => treatElem(e, onlyRunSel)
+      case Group(g) => run(g, onlyRunSel, depth)
+      case e: Elem => treatElem(e, onlyRunSel, depth)
       case x => x
     }
 }
