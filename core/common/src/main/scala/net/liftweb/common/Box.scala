@@ -783,6 +783,8 @@ final class ParamFailure[T](override val msg: String,
     case null => 0
     case x => x.hashCode()
   })
+
+  def ~>(errorCode: Any) = this
 }
 
 /**
