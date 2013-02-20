@@ -33,6 +33,8 @@ import builtin.snippet._
 import js._
 import provider._
 import json.JsonAST
+import org.mozilla.javascript.Scriptable
+import org.mozilla.javascript.UniqueTag
 
 
 object LiftSession {
@@ -1318,6 +1320,105 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     lb.toList
   }
 
+
+  object currentSourceContext extends TransientRequestVar[Any](Empty)
+
+  def runSourceContext(value: Any, xform: NodeSeq => NodeSeq, ns: NodeSeq): NodeSeq = {
+    import scala.collection.JavaConversions._
+    value match {
+      case null => NodeSeq.Empty
+      case None => NodeSeq.Empty
+      case _: EmptyBox => NodeSeq.Empty
+      case b: Box[_] => runSourceContext(b.toList, xform, ns)
+      case b: Option[_] => runSourceContext(b.toList, xform, ns)
+      case fut: LAFuture[_] => runSourceContext(fut.get(5 seconds).openOr(Empty), xform, ns)
+      case node: scala.xml.Node => currentSourceContext.doWith(node)(processSurroundAndInclude("Source", xform(ns)))
+      case n: java.lang.Iterable[_] => runSourceContext(n.iterator(), xform, ns)
+      case n: java.util.Iterator[_] =>
+        for {i <- n.toSeq; nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))} yield nodes
+      case en: java.util.Enumeration[_] =>
+      for {i <- en.toSeq; nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))} yield nodes
+      case se: scala.collection.Iterable[_] => runSourceContext(se.iterator,xform, ns)
+      case se: scala.collection.Iterator[_] =>
+        for {i <- se.toSeq; nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))} yield nodes
+      case a: Array[_] => runSourceContext(a.toList, xform, ns)
+      case na: org.mozilla.javascript.NativeArray =>
+        val len = na.getLength.toInt
+        val ar = new Array[Object](len)
+        var pos = 0
+        while (pos < len) {
+          ar(pos) = na.get(pos, na)
+          pos += 1
+        }
+        runSourceContext(ar.toList, xform, ns)
+      case x =>
+        currentSourceContext.doWith(x)(processSurroundAndInclude("Source", xform(ns)))
+    }
+  }
+
+  def buildXformer(xformRule: String, field: List[String]): NodeSeq => NodeSeq = {
+    def retFunc(ns: NodeSeq): NodeSeq = {
+      val cur = currentSourceContext.get
+      val value = field match {
+        case Nil => cur
+        case x => findField(x, cur)
+      }
+
+      val func: NodeSeq => NodeSeq =
+        value match {
+          case n: scala.xml.Node => xformRule #> n
+          case n: String => xformRule #> n
+          case b: Bindable => xformRule #> b
+          case n: java.lang.Number => xformRule #> n
+          case d: Double => xformRule #> d
+          case jc: ToJsCmd => xformRule #> jc
+          case i: Int => xformRule #> i
+          case sb: StringPromotable => xformRule #> sb
+          case sym: Symbol => xformRule #> sym
+          case lng: Long => xformRule #> lng
+          case b: Boolean => xformRule #> b
+          case b: Box[_] => runSourceContext(b.toList, retFunc _, _)
+          case b: Option[_] => runSourceContext(b.toList, retFunc _, _)
+          case fut: LAFuture[_] => runSourceContext(fut.get(5 seconds).openOr(Empty), retFunc _, _)
+          case n: java.lang.Iterable[_] => runSourceContext(n.iterator(), retFunc _, _)
+          case n: java.util.Iterator[_] => runSourceContext(n, retFunc _, _)
+          case en: java.util.Enumeration[_] => runSourceContext(en, retFunc _, _)
+          case se: scala.collection.Iterable[_] => runSourceContext(se, retFunc _, _)
+          case se: scala.collection.Iterator[_] => runSourceContext(se, retFunc _, _)
+          case x => xformRule #> x.toString
+        }
+
+      func(ns)
+    }
+
+    retFunc _
+  }
+
+  private def fixScriptableObject(in: Any): Any = in match {
+    case UniqueTag.NOT_FOUND => Empty
+    case UniqueTag.NULL_VALUE => Empty
+    case x => x
+  }
+
+  def findField(name: List[String], cur: Any): Any =
+    name.foldLeft(cur) {
+      case (null, _) => Empty
+      case (so: Scriptable, name) =>
+        fixScriptableObject(so.get(name, so))
+      case (m: java.util.Map[_, _], name) => m.get(name)
+      case (m: PartialFunction[String, Any], name) => m.applyOrElse(name, null)
+      case (Full(so: Scriptable), name) => fixScriptableObject(so.get(name, so))
+      case (Full(m: java.util.Map[_, _]), name) => m.get(name)
+      case (Full(m: PartialFunction[String, Any]), name) => m.applyOrElse(name, null)
+      case (Some(so: Scriptable), name) => fixScriptableObject(so.get(name, so))
+      case (Some(m: java.util.Map[_, _]), name) => m.get(name)
+      case (Some(m: PartialFunction[String, Any]), name) => m.applyOrElse(name, null)
+      case _ => Empty
+    } match {
+      case null => Empty
+      case x => x
+    }
+
   private def findVisibleTemplate(path: ParsePath, session: Req): Box[NodeSeq] = {
     val tpath = path.partPath
     val splits = tpath.toList.filter {
@@ -1329,7 +1430,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     Templates(splits, S.locale).map {
       case e: Elem if e.label == "html" => e
       case e: Elem if hasSurround(e) => e
-      case x => <lift:surround with="default" at="content">{x}</lift:surround>
+      case x => <lift:surround with="default" at="content">
+        {x}
+      </lift:surround>
     }
   }
 

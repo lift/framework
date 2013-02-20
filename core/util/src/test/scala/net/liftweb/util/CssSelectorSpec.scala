@@ -340,7 +340,7 @@ object CssBindHelpersSpec extends Specification  {
 
 
     "Only apply to the top elem" in {
-      val xf = "1 [href]" #> "wombat"
+      val xf = "^ [href]" #> "wombat"
 
       xf(<a><b>stuff</b></a>) must ==/ (<a href="wombat"><b>stuff</b></a>)
     }
