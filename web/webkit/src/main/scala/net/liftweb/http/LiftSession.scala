@@ -1427,13 +1427,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case s@_ if (!s.isEmpty) => s
       case _ => List("index")
     }
-    Templates(splits, S.locale).map {
+    Templates(splits, S.locale) /*.map {
       case e: Elem if e.label == "html" => e
       case e: Elem if hasSurround(e) => e
       case x => <lift:surround with="default" at="content">
         {x}
       </lift:surround>
-    }
+    }*/
   }
 
   private def hasSurround(e: Elem): Boolean =
