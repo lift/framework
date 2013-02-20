@@ -391,6 +391,15 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def ~>[T](errorCode: => T): Box[A] = this
 
   /**
+   * Transform any EmptyBox (Empty, Failure, or ParamFailure) into a ParamFailure with the
+   * specified typesafe parameter. When called on a ParamFailure, this method will overwrite
+   * the error type from the current instance with errorCode.
+   * @param errorCode a value indicating the error
+   * @return a ParamFailure with the specified value
+   */
+  def ~>![T](errorCode: => T): Box[A] = this
+
+  /**
    * Alias for ?~
    */
   def failMsg(msg: => String): Box[A] = ?~(msg)
@@ -653,6 +662,9 @@ sealed abstract class EmptyBox extends Box[Nothing] with Serializable {
 
   override def ~>[T](errorCode: => T): ParamFailure[T] =
     ParamFailure("", Empty, Empty, errorCode)
+
+  override def ~>![T](errorCode: => T): ParamFailure[T] =
+    ~>(errorCode)
 }
 
 /**
@@ -760,6 +772,8 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
   override def ?~!(msg: => String): Failure = Failure(msg, Empty, Full(this))
 
   override def ~>[T](errorCode: => T): ParamFailure[T] = ParamFailure(msg, exception, chain, errorCode)
+
+  override def ~>![T](errorCode: => T): ParamFailure[T] = ~>(errorCode)
 }
 
 /**
