@@ -408,10 +408,13 @@ trait Loc[T] {
   def breadCrumbs: List[Loc[_]] = _menu.breadCrumbs ::: List(this)
 
   def buildKidMenuItems(kids: Seq[Menu]): List[MenuItem] = {
-    kids.toList.flatMap(_.loc.buildItem(Nil, false, false)) ::: supplimentalKidMenuItems
+    kids.toList.flatMap(_.loc.buildItem(Nil, false, false)) ::: supplementalKidMenuItems
   }
 
-  def supplimentalKidMenuItems: List[MenuItem] =
+  @deprecated("Use supplementalKidMenuItems with an 'e'", "2.5")
+  final def supplimentalKidMenuItems = supplementalKidMenuItems
+
+  def supplementalKidMenuItems: List[MenuItem] =
     for {
       p <- childValues
       l <- link.createLink(p).map(appendQueryParams(p))
