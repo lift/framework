@@ -383,10 +383,10 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def ?~(msg: => String): Box[A] = this
 
   /**
-   * Transform an Empty to a ParamFailure with the specified typesafe
-   * parameter.
+   * Transform an Empty or a Failure to a ParamFailure with the specified typesafe
+   * parameter. A Full or a ParamFailure will return itself.
    * @param errorCode a value indicating the error
-   * @return a ParamFailure with the specified value
+   * @return a ParamFailure with the specified value if the instance was an Empty or a Failure
    */
   def ~>[T](errorCode: => T): Box[A] = this
 
