@@ -2208,7 +2208,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   /**
    * Create a Actor that will take messages on the server and then send them to the client. So, from the
    * server perspective, it's just an Async message send. From the client perspective, they get a function
-   * called each time the message is sent to the server.
+   * called each time the message is sent from the server.
    *
    * If the message sent to the LiftActor is a JsCmd or JsExp, then the code is sent directly to the
    * client and executed on the client.
