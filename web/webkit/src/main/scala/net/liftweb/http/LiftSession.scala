@@ -1117,7 +1117,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
             notices = Nil
             // Phase 3: Response conversion including fixHtml
             LiftRules.convertResponse((xml, overrideResponseCode.is openOr code),
-              S.getHeaders(LiftRules.defaultHeaders((xml, request))),
+              S.getResponseHeaders(LiftRules.defaultHeaders((xml, request))),
               S.responseCookies,
               request)
           }
