@@ -1079,7 +1079,7 @@ class Req(val path: ParsePath,
       case NotFoundAsTemplate(path) => notFoundViaTemplate(path)
       case NotFoundAsResponse(resp) => resp
       case NotFoundAsNode(node) => LiftRules.convertResponse((node, 404),
-        S.getHeaders(LiftRules.defaultHeaders((node, this))),
+        S.getResponseHeaders(LiftRules.defaultHeaders((node, this))),
         S.responseCookies,
         this)
     }
@@ -1090,7 +1090,7 @@ class Req(val path: ParsePath,
       case NotFoundAsTemplate(path) => notFoundViaTemplate(path)
       case NotFoundAsResponse(resp) => resp
       case NotFoundAsNode(node) => LiftRules.convertResponse((node, 404),
-        S.getHeaders(LiftRules.defaultHeaders((node, this))),
+        S.getResponseHeaders(LiftRules.defaultHeaders((node, this))),
         S.responseCookies,
         this)
     }
@@ -1115,7 +1115,7 @@ class Req(val path: ParsePath,
           f(path)
          }
       case NotFoundAsNode(node) => Full(LiftRules.convertResponse((node, 404),
-        S.getHeaders(LiftRules.defaultHeaders((node, this))),
+        S.getResponseHeaders(LiftRules.defaultHeaders((node, this))),
         S.responseCookies,
         this))
     }

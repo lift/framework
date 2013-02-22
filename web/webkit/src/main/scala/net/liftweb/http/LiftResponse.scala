@@ -34,7 +34,7 @@ case class OkResponse() extends LiftResponse with HeaderDefaults {
 }
 
 trait HeaderDefaults {
-  val headers: List[(String, String)] = S.getHeaders(Nil)
+  val headers: List[(String, String)] = S.getResponseHeaders(Nil)
   val cookies: List[HTTPCookie] = S.responseCookies
 }
 
@@ -49,7 +49,7 @@ case class CreatedResponse(xml: Node, mime: String, addlHeaders: List[(String, S
 
   def code = 201
 
-  val headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
+  val headers: List[(String, String)] = S.getResponseHeaders(("Content-Type" -> mime) :: addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
 
@@ -237,7 +237,7 @@ case class ServiceUnavailableResponse(retryAfter: Long) extends LiftResponse {
 }
 
 object JavaScriptResponse {
-  def apply(js: JsCmd): LiftResponse = JavaScriptResponse(js, S.getHeaders(Nil), S.responseCookies, 200)
+  def apply(js: JsCmd): LiftResponse = JavaScriptResponse(js, S.getResponseHeaders(Nil), S.responseCookies, 200)
 }
 
 /**
@@ -255,7 +255,7 @@ trait LiftResponse {
 }
 
 object JsonResponse {
-  def headers: List[(String, String)] = S.getHeaders(Nil)
+  def headers: List[(String, String)] = S.getResponseHeaders(Nil)
   def cookies: List[HTTPCookie] = S.responseCookies
 
   def apply(json: JsExp): LiftResponse = 
@@ -674,7 +674,7 @@ case class XmlMimeResponse(xml: Node, mime: String, addlHeaders: List[(String, S
 
   def code = 200
 
-  val headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
+  val headers: List[(String, String)] = S.getResponseHeaders(("Content-Type" -> mime) :: addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
 
@@ -685,7 +685,7 @@ class XmlResponse(val xml: Node, val code: Int, val mime: String, val cookies: L
                   val addlHeaders: List[(String, String)] = XmlResponse.addlHeaders) extends XmlNodeResponse {
   def docType = Empty
 
-  val headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
+  val headers: List[(String, String)] = S.getResponseHeaders(("Content-Type" -> mime) :: addlHeaders)
 
   def out: Node = xml
 }
@@ -758,7 +758,7 @@ case class AtomResponse(xml: Node, addlHeaders: List[(String, String)] = XmlResp
 
   def code = 200
 
-  val headers: List[(String, String)] = S.getHeaders(("Content-Type" -> "application/atom+xml; charset=utf-8") :: addlHeaders)
+  val headers: List[(String, String)] = S.getResponseHeaders(("Content-Type" -> "application/atom+xml; charset=utf-8") :: addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
 
@@ -773,7 +773,7 @@ case class OpenSearchResponse(xml: Node, addlHeaders: List[(String, String)] = X
 
   def code = 200
 
-  val headers: List[(String, String)] = S.getHeaders(("Content-Type" -> "application/opensearchdescription+xml; charset=utf-8") ::
+  val headers: List[(String, String)] = S.getResponseHeaders(("Content-Type" -> "application/opensearchdescription+xml; charset=utf-8") ::
   addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
