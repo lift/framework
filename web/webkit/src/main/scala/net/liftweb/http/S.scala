@@ -1498,7 +1498,7 @@ trait S extends HasParams with Loggable {
   }
 
 
-  @deprecated("2.5", "Use S.getResponseHeaders instead for clarity.")
+  @deprecated("Use S.getResponseHeaders instead for clarity.", "2.5")
   def getHeaders(in: List[(String, String)]): List[(String, String)] = {
     getResponseHeaders(in)
   }
@@ -1520,7 +1520,7 @@ trait S extends HasParams with Loggable {
       ).openOr(Nil)
   }
 
-  @deprecated("2.5", "Use S.getResponseHeader instead for clarity.")
+  @deprecated("Use S.getResponseHeader instead for clarity.", "2.5")
   def getHeader(name: String): Box[String] = {
     getResponseHeader(name)
   }
