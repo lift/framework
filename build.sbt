@@ -12,7 +12,7 @@ startYear in ThisBuild             := Some(2006)
 
 organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
 
-scalaVersion                       := "2.10.0"
+scalaVersion in ThisBuild          := "2.10.0"
 
 crossScalaVersions in ThisBuild    := Seq("2.10.0")
 
