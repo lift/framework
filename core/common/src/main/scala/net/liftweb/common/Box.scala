@@ -383,12 +383,21 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def ?~(msg: => String): Box[A] = this
 
   /**
-   * Transform an Empty to a ParamFailure with the specified typesafe
-   * parameter.
+   * Transform an Empty or a Failure to a ParamFailure with the specified typesafe
+   * parameter. A Full or a ParamFailure will return itself.
+   * @param errorCode a value indicating the error
+   * @return a ParamFailure with the specified value if the instance was an Empty or a Failure
+   */
+  def ~>[T](errorCode: => T): Box[A] = this
+
+  /**
+   * Transform any EmptyBox (Empty, Failure, or ParamFailure) into a ParamFailure with the
+   * specified typesafe parameter. When called on a ParamFailure, this method will overwrite
+   * the error type from the current instance with errorCode.
    * @param errorCode a value indicating the error
    * @return a ParamFailure with the specified value
    */
-  def ~>[T](errorCode: => T): Box[A] = this
+  def ~>![T](errorCode: => T): Box[A] = this
 
   /**
    * Alias for ?~
@@ -653,6 +662,9 @@ sealed abstract class EmptyBox extends Box[Nothing] with Serializable {
 
   override def ~>[T](errorCode: => T): ParamFailure[T] =
     ParamFailure("", Empty, Empty, errorCode)
+
+  override def ~>![T](errorCode: => T): ParamFailure[T] =
+    ~>(errorCode)
 }
 
 /**
@@ -760,6 +772,8 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
   override def ?~!(msg: => String): Failure = Failure(msg, Empty, Full(this))
 
   override def ~>[T](errorCode: => T): ParamFailure[T] = ParamFailure(msg, exception, chain, errorCode)
+
+  override def ~>![T](errorCode: => T): ParamFailure[T] = ~>(errorCode)
 }
 
 /**
@@ -768,22 +782,24 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
  */
 final class ParamFailure[T](override val msg: String,
 		            override val exception: Box[Throwable],
-		            override val chain: Box[Failure], val param: T) extends
-  Failure(msg, exception, chain) with Serializable{
-    override def toString(): String = "ParamFailure("+msg+", "+exception+
-    ", "+chain+", "+param+")"
+		            override val chain: Box[Failure], val param: T) extends 
+    Failure(msg, exception, chain) with Serializable{
+  override def toString(): String = "ParamFailure("+msg+", "+exception+
+  ", "+chain+", "+param+")"
 
-    override def equals(that: Any): Boolean = that match {
-      case ParamFailure(m, e, c, p) =>
-        m == msg && e == exception && c == chain && p == param
-      case _ => false
-    }
-
-    override def hashCode(): Int = super.hashCode() + (param match {
-      case null => 0
-      case x => x.hashCode()
-    })
+  override def equals(that: Any): Boolean = that match {
+    case ParamFailure(m, e, c, p) =>
+      m == msg && e == exception && c == chain && p == param
+    case _ => false
   }
+
+  override def hashCode(): Int = super.hashCode() + (param match {
+    case null => 0
+    case x => x.hashCode()
+  })
+
+  def ~>(errorCode: Any) = this
+}
 
 /**
  * A trait that a class can mix into itself to convert itself into a Box
