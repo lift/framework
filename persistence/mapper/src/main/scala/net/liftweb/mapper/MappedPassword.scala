@@ -32,6 +32,12 @@ import net.liftweb.http.js._
 
 object MappedPassword {
   val blankPw = "*******"
+
+  /**
+   * Set this in boot if you want Bcrypt salt strength to be
+   * something more than the default
+   */
+  var bcryptStrength: Box[Int] = None
 }
 
 abstract class MappedPassword[T<:Mapper[T]](val fieldOwner: T)
@@ -56,11 +62,15 @@ extends MappedField[String, T] {
   private var invalidMsg = ""
 
   protected def real_i_set_!(value : String) : String = {
-    password() = value match {
-      case "*" | null | MappedPassword.blankPw if (value.length < 3) => {invalidPw = true ; invalidMsg = S.?("password.must.be.set") ; "*"}
-      case MappedPassword.blankPw => {return "*"}
-      case _ if (value.length > 4) => {invalidPw = false; hash("{"+value+"} salt={"+salt_i.get+"}")}
-      case _ => {invalidPw = true ; invalidMsg = S.?("password.too.short"); "*"}
+    value match {
+      case "*" | null | MappedPassword.blankPw if (value.length < 3) =>
+       invalidPw = true ; invalidMsg = S.?("password.must.be.set") ; password.set("*")
+      case MappedPassword.blankPw => return "*"
+      case _ if (value.length > 4) => invalidPw = false;
+      val bcrypted = BCrypt.hashpw(value, MappedPassword.bcryptStrength.map(BCrypt.gensalt(_)) openOr BCrypt.gensalt())
+      password.set("b;"+bcrypted.substring(0,44))
+      salt_i.set(bcrypted.substring(44))
+      case _ => invalidPw = true ; invalidMsg = S.?("password.too.short"); password.set("*")
     }
     this.dirty_?( true)
     "*"
@@ -86,7 +96,15 @@ extends MappedField[String, T] {
 
   def asJsExp: JsExp = throw new NullPointerException("No way")
 
-  def match_?(toMatch : String) = {
+  /**
+   * Test to see if an incoming password matches
+   * @param toMatch the password to test
+   * @return the matched value
+   */
+  def match_?(toMatch : String): Boolean = {
+    if (password.get.startsWith("b;")) {
+      BCrypt.checkpw(toMatch, password.get.substring(2)+salt_i.get)
+    } else
     hash("{"+toMatch+"} salt={"+salt_i.get+"}") == password.get
   }
 
@@ -96,7 +114,8 @@ extends MappedField[String, T] {
     else List(FieldError(this, Text(S.?("password.must.be.set"))))
   }
 
-  def real_convertToJDBCFriendly(value: String): Object = hash("{"+value+"} salt={"+salt_i.get+"}")
+  def real_convertToJDBCFriendly(value: String): Object =
+    BCrypt.hashpw(value, MappedPassword.bcryptStrength.map(BCrypt.gensalt(_)) openOr BCrypt.gensalt())
 
   /**
    * Get the JDBC SQL Type for this field
