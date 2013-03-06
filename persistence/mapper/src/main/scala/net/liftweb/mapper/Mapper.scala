@@ -17,13 +17,15 @@
 package net.liftweb
 package mapper
 
-import scala.collection.mutable._
 import scala.xml.{Elem, NodeSeq}
 import net.liftweb.http.S
-import S._
 import net.liftweb.http.js._
-import net.liftweb.util.{FieldError, FieldContainer, BaseField}
+import util._
 import net.liftweb.common.{Box, Empty, Full, ParamFailure}
+import collection.mutable.StringBuilder
+import net.liftweb.util
+import common.Full
+import common.Full
 
 trait BaseMapper extends FieldContainer {
   type MapperType <: Mapper[MapperType]
@@ -32,7 +34,7 @@ trait BaseMapper extends FieldContainer {
   def save: Boolean
 }
 
-trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable{
+trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo {
   self: A =>
   type MapperType = A
 
@@ -123,6 +125,24 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable{
    * Convert the model to a JavaScript object
    */
   def asJs: JsExp = getSingleton.asJs(this)
+
+
+  /**
+   * Given a name, look up the field
+   * @param name the name of the field
+   * @return the metadata
+   */
+  def findSourceField(name: String): Box[SourceFieldInfo] =
+  for {
+    mf <- getSingleton.fieldNamesAsMap.get(name.toLowerCase)
+    f <- fieldByName[mf.ST](name)
+  } yield SourceFieldInfoRep[mf.ST](f.get.asInstanceOf[mf.ST], mf).asInstanceOf[SourceFieldInfo]
+
+  /**
+   * Get a list of all the fields
+   * @return a list of all the fields
+   */
+  def allFieldNames(): Seq[(String, SourceFieldMetadata)] = getSingleton.doAllFieldNames
 
   /**
    * Delete the model from the RDBMS

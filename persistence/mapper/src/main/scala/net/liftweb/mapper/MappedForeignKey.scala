@@ -226,9 +226,6 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
 
   def foreignMeta = _foreignMeta
 
-  @deprecated("Use 'box' instead", "2.4")
-  def can: Box[Long] = if (defined_?) Full(is) else Empty
-
   def box: Box[Long] = if (defined_?) Full(is) else Empty
 
   type KeyType = Long

@@ -23,7 +23,7 @@ import net.liftweb.util.Helpers._
 import net.liftweb.util._
 import net.liftweb.common._
 import java.util.Date
-import scala.xml.NodeSeq
+import xml.{Text, NodeSeq}
 import net.liftweb.http.{S, SHtml}
 import net.liftweb.http.js._
 import net.liftweb.json._
@@ -70,7 +70,9 @@ abstract class MappedLongIndex[T<:Mapper[T]](theOwner: T) extends MappedLong[T](
 
 }
 
-abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, val enum: ENUM) extends MappedField[Seq[ENUM#Value], T] {
+import scala.reflect.runtime.universe._
+
+abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, val enum: ENUM)(implicit val manifest: TypeTag[Seq[ENUM#Value]]) extends MappedField[Seq[ENUM#Value], T] {
   type MyElem = ENUM#Value
   type MyType = Seq[MyElem]
 
@@ -93,6 +95,47 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
   override protected[mapper] def doneWithSave() {
     orgData = data
   }
+
+  /**
+   * Get the source field metadata for the field
+   * @return the source field metadata for the field
+   */
+  def sourceInfoMetadata(): SourceFieldMetadata{type ST = Seq[ENUM#Value]} =
+    SourceFieldMetadataRep(name, manifest, new FieldConverter {
+      /**
+       * The type of the field
+       */
+      type T = Seq[ENUM#Value]
+
+      /**
+       * Convert the field to a String
+       * @param v the field value
+       * @return the string representation of the field value
+       */
+      def asString(v: T): String = v.map(_.toString).mkString(", ")
+
+      /**
+       * Convert the field into NodeSeq, if possible
+       * @param v the field value
+       * @return a NodeSeq if the field can be represented as one
+       */
+      def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(asString(v)))
+
+      /**
+       * Convert the field into a JSON value
+       * @param v the field value
+       * @return the JSON representation of the field
+       */
+      def asJson(v: T): Box[JValue] = Full(JArray(v.toList.map(x => JsonAST.JInt(x.id))))
+
+      /**
+       * If the field can represent a sequence of SourceFields,
+       * get that
+       * @param v the field value
+       * @return the field as a sequence of SourceFields
+       */
+      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+    })
 
   protected def real_i_set_!(value: Seq[ENUM#Value]): Seq[ENUM#Value] = {
     if (value != data) {
@@ -192,6 +235,51 @@ abstract class MappedNullableLong[T<:Mapper[T]](val fieldOwner: T) extends Mappe
    */
   def targetSQLType = Types.BIGINT
 
+  import scala.reflect.runtime.universe._
+  def manifest: TypeTag[Box[Long]] = typeTag[Box[Long]]
+
+  /**
+   * Get the source field metadata for the field
+   * @return the source field metadata for the field
+   */
+  def sourceInfoMetadata(): SourceFieldMetadata{type ST = Box[Long]} =
+    SourceFieldMetadataRep(name, manifest, new FieldConverter {
+      /**
+       * The type of the field
+       */
+      type T = Box[Long]
+
+      /**
+       * Convert the field to a String
+       * @param v the field value
+       * @return the string representation of the field value
+       */
+      def asString(v: T): String = v.map(_.toString) openOr ""
+
+      /**
+       * Convert the field into NodeSeq, if possible
+       * @param v the field value
+       * @return a NodeSeq if the field can be represented as one
+       */
+      def asNodeSeq(v: T): Box[NodeSeq] = v.map(x => Text(x.toString))
+
+      /**
+       * Convert the field into a JSON value
+       * @param v the field value
+       * @return the JSON representation of the field
+       */
+      def asJson(v: T): Box[JValue] = v.map(JsonAST.JInt(_))
+
+      /**
+       * If the field can represent a sequence of SourceFields,
+       * get that
+       * @param v the field value
+       * @return the field as a sequence of SourceFields
+       */
+      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+    })
+
+
   protected def i_is_! = data
   protected def i_was_! = orgData
   /**
@@ -276,6 +364,50 @@ abstract class MappedNullableLong[T<:Mapper[T]](val fieldOwner: T) extends Mappe
 abstract class MappedLong[T<:Mapper[T]](val fieldOwner: T) extends MappedField[Long, T] {
   private var data: Long = defaultValue
   private var orgData: Long = defaultValue
+
+  import scala.reflect.runtime.universe._
+  def manifest: TypeTag[Long] = typeTag[Long]
+
+  /**
+   * Get the source field metadata for the field
+   * @return the source field metadata for the field
+   */
+  def sourceInfoMetadata(): SourceFieldMetadata{type ST = Long} =
+    SourceFieldMetadataRep(name, manifest, new FieldConverter {
+      /**
+       * The type of the field
+       */
+      type T = Long
+
+      /**
+       * Convert the field to a String
+       * @param v the field value
+       * @return the string representation of the field value
+       */
+      def asString(v: T): String = v.toString
+
+      /**
+       * Convert the field into NodeSeq, if possible
+       * @param v the field value
+       * @return a NodeSeq if the field can be represented as one
+       */
+      def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(asString(v)))
+
+      /**
+       * Convert the field into a JSON value
+       * @param v the field value
+       * @return the JSON representation of the field
+       */
+      def asJson(v: T): Box[JValue] = Full(JsonAST.JInt(v))
+
+      /**
+       * If the field can represent a sequence of SourceFields,
+       * get that
+       * @param v the field value
+       * @return the field as a sequence of SourceFields
+       */
+      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+    })
 
   def defaultValue: Long = 0L
   def dbFieldClass = classOf[Long]

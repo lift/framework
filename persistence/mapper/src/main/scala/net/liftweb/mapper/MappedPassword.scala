@@ -56,6 +56,51 @@ extends MappedField[String, T] {
 
   def salt = this.salt_i
 
+  import scala.reflect.runtime.universe._
+  def manifest: TypeTag[String] = typeTag[String]
+
+  /**
+   * Get the source field metadata for the field
+   * @return the source field metadata for the field
+   */
+  def sourceInfoMetadata(): SourceFieldMetadata{type ST = String} =
+    SourceFieldMetadataRep(name, manifest, new FieldConverter {
+      /**
+       * The type of the field
+       */
+      type T = String
+
+      /**
+       * Convert the field to a String
+       * @param v the field value
+       * @return the string representation of the field value
+       */
+      def asString(v: T): String = ""
+
+      /**
+       * Convert the field into NodeSeq, if possible
+       * @param v the field value
+       * @return a NodeSeq if the field can be represented as one
+       */
+      def asNodeSeq(v: T): Box[NodeSeq] = Empty
+
+      /**
+       * Convert the field into a JSON value
+       * @param v the field value
+       * @return the JSON representation of the field
+       */
+      def asJson(v: T): Box[JValue] = Empty
+
+      /**
+       * If the field can represent a sequence of SourceFields,
+       * get that
+       * @param v the field value
+       * @return the field as a sequence of SourceFields
+       */
+      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+    })
+
+
   private var password = FatLazy(defaultValue)
   private val salt_i = FatLazy(util.Safe.randomString(16))
   private var invalidPw = false

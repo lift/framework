@@ -17,6 +17,8 @@
 package net.liftweb
 package mapper
 
+
+
 import java.sql.{ResultSet, Types}
 import java.util.Date
 import java.lang.reflect.Method
@@ -30,7 +32,7 @@ import json._
 import S._
 import js._
 
-import scala.xml.{NodeSeq}
+import xml.{Text, NodeSeq}
 
 abstract class MappedDateTime[T<:Mapper[T]](val fieldOwner: T) extends MappedField[Date, T] {
   private val data = FatLazy(defaultValue)
@@ -46,6 +48,50 @@ abstract class MappedDateTime[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
    * By default uses LiftRules.dateTimeConverter's formatDateTime; override for field-specific behavior
    */
   def format(d: Date): String = LiftRules.dateTimeConverter().formatDateTime(d)
+
+  import scala.reflect.runtime.universe._
+  def manifest: TypeTag[Date] = typeTag[Date]
+
+  /**
+   * Get the source field metadata for the field
+   * @return the source field metadata for the field
+   */
+  def sourceInfoMetadata(): SourceFieldMetadata{type ST = Date} =
+    SourceFieldMetadataRep(name, manifest, new FieldConverter {
+      /**
+       * The type of the field
+       */
+      type T = Date
+
+      /**
+       * Convert the field to a String
+       * @param v the field value
+       * @return the string representation of the field value
+       */
+      def asString(v: T): String = format(v)
+
+      /**
+       * Convert the field into NodeSeq, if possible
+       * @param v the field value
+       * @return a NodeSeq if the field can be represented as one
+       */
+      def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(asString(v)))
+
+      /**
+       * Convert the field into a JSON value
+       * @param v the field value
+       * @return the JSON representation of the field
+       */
+      def asJson(v: T): Box[JValue] = Full(JInt(v.getTime))
+
+      /**
+       * If the field can represent a sequence of SourceFields,
+       * get that
+       * @param v the field value
+       * @return the field as a sequence of SourceFields
+       */
+      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+    })
 
   protected def real_i_set_!(value: Date): Date = {
     if (value != data.get) {
