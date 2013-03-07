@@ -184,14 +184,6 @@ trait JsExp extends HtmlFixer with ToJsCmd {
 
   def ~>(right: Box[JsMember]): JsExp = right.dmap(this)(r => ~>(r))
 
-  /**
-   * This exists for backward compatibility reasons for JQueryLeft and JQueryRight
-   * which are now deprecated. Use ~> whenever possible as this will be removed soon.
-   */
-  @deprecated("Use `~>` instead", "2.3")
-  def >>(right: JsMember): JsExp = ~>(right)
-
-
   def cmd: JsCmd = JsCmds.Run(toJsCmd + ";")
 
 
