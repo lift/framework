@@ -181,6 +181,7 @@ case class JxIfElse(toTest: JsExp, ifTrue: NodeSeq, ifFalse: NodeSeq) extends No
 
 
 
+
 case class Jx(child: NodeSeq) extends Node with JxBase with JxYieldFunc {
   def appendToParent(parentName: String): JsCmd =
     addToDocFrag(parentName, child.toList)
