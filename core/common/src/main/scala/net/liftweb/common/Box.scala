@@ -500,6 +500,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
     if (pf.isDefinedAt(value)) Full(pf(value))
     else Empty)
   }
+
 }
 
 /**
