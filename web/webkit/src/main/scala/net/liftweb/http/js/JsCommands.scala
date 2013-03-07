@@ -159,13 +159,6 @@ trait JsExp extends HtmlFixer with ToJsCmd {
 
   override def toString = "JsExp("+toJsCmd+")"
 
-  // def label: String = "#JS"
-
-  /*
-  override def buildString(sb: StringBuilder) = {
-    (new Text(toJsCmd)).buildString(sb)
-  }*/
-
   def appendToParent(parentName: String): JsCmd = {
     val ran = "v" + Helpers.nextFuncName
     JsCmds.JsCrVar(ran, this) &
@@ -540,25 +533,6 @@ object JE {
 }
 
 trait HtmlFixer {
-  /**
-   * Super important... call fixHtml at instance creation time and only once
-   * This method must be run in the context of the thing creating the XHTML
-   * to capture the bound functions
-   */
-  @deprecated("Use fixHtmlAndJs or fixHtmlFunc", "2.4")
-  protected def fixHtml(uid: String, content: NodeSeq): String = {
-    val w = new java.io.StringWriter
-
-    S.htmlProperties.
-    htmlWriter(Group(S.session.
-                     map(s =>
-                       s.fixHtml(s.processSurroundAndInclude("JS SetHTML id: "
-                                                             + uid,
-                                                             content))).
-                     openOr(content)),
-               w)
-    w.toString.encJs
-  }
 
   /**
    * Calls fixHtmlAndJs and if there's embedded script tags,
