@@ -631,14 +631,5 @@ object JqJsCmds {
     def toJsCmd = "jQuery.unblockUI();"
   }
 
-  /**
-   * Use SetValueAndFocus from JsCmds
-   */
-  @deprecated("Use SetValueAndFocus from JsCmds", "2.3")
-  case class SetValueAndFocus(id: String, value: String) extends JsCmd {
-    def toJsCmd = "document.getElementById(" + id.encJs + ").value = " +
-            value.encJs +
-            "; document.getElementById(" + id.encJs + ").focus();"
-  }
 
 }
