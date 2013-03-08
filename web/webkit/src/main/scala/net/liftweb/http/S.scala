@@ -1497,11 +1497,6 @@ trait S extends HasParams with Loggable {
     setHeader(name, value)
   }
 
-
-  @deprecated("Use S.getResponseHeaders instead for clarity.", "2.5")
-  def getHeaders(in: List[(String, String)]): List[(String, String)] = {
-    getResponseHeaders(in)
-  }
   /**
    * Returns the currently set HTTP response headers as a List[(String, String)]. To retrieve
    * a specific response header, use S.getResponseHeader. If you want to
@@ -1520,10 +1515,7 @@ trait S extends HasParams with Loggable {
       ).openOr(Nil)
   }
 
-  @deprecated("Use S.getResponseHeader instead for clarity.", "2.5")
-  def getHeader(name: String): Box[String] = {
-    getResponseHeader(name)
-  }
+
   /**
    * Returns the current set value of the given HTTP response header as a Box. If
    * you want a request header, use Req.getHeader or S.getRequestHeader.
@@ -2074,14 +2066,6 @@ trait S extends HasParams with Loggable {
   def clearAttrs[T](f: => T):T = {
     _attrs.doWith((Null, Nil))(f)
   }
-
-  /**
-   * Temporarily adds the given attributes to the current set, then executes the given function.
-   *
-   * @param attr The attributes to set temporarily
-   */
-  @deprecated("Use the S.withAttrs method instead", "2.4")
-  def setVars[T](attr: MetaData)(f: => T): T = withAttrs(attr)(f)
 
   /**
    * A function that will eagerly evaluate a template.
@@ -2761,12 +2745,6 @@ trait S extends HasParams with Loggable {
    */
   private[http] def noticesToJsCmd: JsCmd = LiftRules.noticesToJsCmd()
 
-  @deprecated("Use AFuncHolder.listStrToAF", "2.4")
-  def toLFunc(in: List[String] => Any): AFuncHolder = LFuncHolder(in, Empty)
-
-  @deprecated("Use AFuncHolder.unitToAF", "2.4")
-  def toNFunc(in: () => Any): AFuncHolder = NFuncHolder(in, Empty)
-
   implicit def stuff2ToUnpref(in: (Symbol, Any)): UnprefixedAttribute = new UnprefixedAttribute(in._1.name, Text(in._2.toString), Null)
 
   /**
@@ -2853,29 +2831,6 @@ trait S extends HasParams with Loggable {
     addFunctionMap(name, SFuncHolder((s: String) => JSONParser.parse(s).map(in) openOr js.JE.JsObj()))
     f(name)
   }
-
-
-  /**
-   * Similar with addFunctionMap but also returns the name.
-   *
-   * Use fmapFunc(AFuncHolder)(String => T)
-   */
-  @deprecated("Use fmapFunc(AFuncHolder)(String => T)", "2.4")
-  def mapFunc(in: AFuncHolder): String = {
-    mapFunc(formFuncName, in)
-  }
-
-  /**
-   * Similar with addFunctionMap but also returns the name.
-   *
-   * Use fmapFunc(AFuncHolder)(String => T)
-   */
-  @deprecated("Use fmapFunc(AFuncHolder)(String => T)", "2.4")
-  def mapFunc(name: String, inf: AFuncHolder): String = {
-    addFunctionMap(name, inf)
-    name
-  }
-
 
   /**
    * Returns all the HTTP parameters having 'n' name

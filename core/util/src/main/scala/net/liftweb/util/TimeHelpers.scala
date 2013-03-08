@@ -70,16 +70,6 @@ trait TimeHelpers { self: ControlHelpers =>
     def year = years
   }
 
-  /*
-  /**
-   * transforms a TimeSpan to a date by converting the TimeSpan expressed as millis and creating
-   * a Date lasting that number of millis from the Epoch time (see the documentation for java.util.Date)
-   */
-  implicit def timeSpanToDate(in: TimeSpan): Date = in.date
-
-  /** transforms a TimeSpan to its long value as millis */
-  implicit def timeSpanToLong(in: TimeSpan): Long = in.millis
-  */
 
   /**
    * The TimeSpan class represents an amount of time.
@@ -294,17 +284,6 @@ trait TimeHelpers { self: ControlHelpers =>
   /** @return the current year */
   def currentYear: Int = Calendar.getInstance.get(Calendar.YEAR)
 
-  /**
-   * @return the current time as a Date object
-   */
-  @deprecated("use now instead", "2.4")
-  def timeNow = new Date
-
-  /**
-   * @deprecated use today instead
-   * @return the current Day as a Date object
-   */
-  def dayNow: Date = 0.seconds.later.noTime
 
   /** alias for new Date(millis) */
   def time(when: Long) = new Date(when)

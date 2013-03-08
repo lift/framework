@@ -286,19 +286,6 @@ trait ListenerManager {
 }
 
 /**
- * This is a legacy trait, left over from Lift's
- * Scala 2.7 support. You should use or migrate to
- * CometListener instead.
- *
- * @see CometListener
- */
-@deprecated("Use the CometListener trait instead.", "2.4")
-trait CometListenee extends CometListener {
-  self: CometActor =>
-}
-
-
-/**
  * A LiftActorJ with ListenerManager.  Subclass this class
  * to get a Java-usable LiftActorJ with ListenerManager
  */
@@ -540,9 +527,6 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   def theSession = _theSession
 
   @volatile private var _defaultHtml: NodeSeq = _
-
-  @deprecated("Use defaultHtml", "2.3")
-  def defaultXml = _defaultHtml
 
   /**
    * The template that was passed to this component during comet

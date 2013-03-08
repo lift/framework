@@ -26,11 +26,6 @@ import xml.NodeSeq
 package object util {
   type CssBindFunc = CssSel
 
-  /**
-   * Changed the name ActorPing to Schedule
-   */
-  @deprecated("Use Schedule", "2.3")
-  val ActorPing = Schedule
 
   /**
    * Wrap a function and make sure it's a NodeSeq => NodeSeq.  Much easier

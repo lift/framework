@@ -151,12 +151,6 @@ trait ClassHelpers { self: ControlHelpers =>
   def findClass(where: List[(String, List[String])]): Box[Class[AnyRef]] =
   findType[AnyRef](where)
 
-  @deprecated("Use StringHelpers.camelify", "2.3")
-  def camelCase(name : String): String = StringHelpers.camelify(name)
-  @deprecated("Use StringHelpers.camelifyMethod", "2.3")
-  def camelCaseMethod(name: String): String = StringHelpers.camelifyMethod(name)
-  @deprecated("Use StringHelpers.snakify", "2.3")
-  def unCamelCase(name : String) = StringHelpers.snakify(name)
 
   /**
    * @return true if the method is public and has no parameters

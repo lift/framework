@@ -22,7 +22,18 @@ import xml.{Elem, MetaData, NodeSeq}
 import java.util.{ResourceBundle, Locale, Date}
 
 package object http {
-  @deprecated("Use Templates", "2.3")
-  lazy val TemplateFinder = Templates
+
+  /*
+  type CssBoundLiftScreen = screen.CssBoundLiftScreen
+  type CssBoundScreen = screen.CssBoundScreen
+
+  type LiftScreen = screen.LiftScreen
+  type LiftScreenRules = screen.LiftScreenRules
+
+  type Wizard = screen.Wizard
+  type WizardRules = screen.WizardRules
+
+  type WiringUI = wiring.WiringUI
+  */
 }
 
