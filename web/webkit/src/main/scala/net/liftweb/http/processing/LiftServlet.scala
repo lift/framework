@@ -14,44 +14,21 @@
  * limitations under the License.
  */
 
-package net.liftweb.http.processing
+package net.liftweb
+package http
+package processing
 
-import scala.xml.{Node, NodeSeq, Group}
+import xml.{Node, NodeSeq, Group}
 
-import net.liftweb.common._
-import net.liftweb.http._
-import net.liftweb.http.js.JsCmds.RedirectTo
-import net.liftweb.http.js.{JsCmds, JsObj, JsCmd, JsCommands}
-import net.liftweb.http.auth.{userRoles, Role}
-import net.liftweb.util.Helpers._
 
-import provider.{HTTPContext, HTTPResponse, HTTPParam}
-import net.liftweb.http.processing.CachedResponse
-import net.liftweb.http.processing.CachedResponse
-import processing.CachedResponse
-import scala._
-import scala.util.Left
-import scala.xml.Group
-import scala.util.Right
-import net.liftweb.http.processing.CachedResponse
-import net.liftweb.util._
-import net.liftweb.actor.{LiftActor, LAFuture, LAPinger, LAScheduler}
-
-import net.liftweb.json.JsonAST.JValue
-
-import net.liftweb.util.TimeHelpers.TimeSpan
-import net.liftweb.http.StreamingResponse
-import net.liftweb.http.AnswerRender
-import scala.Some
-import net.liftweb.common.Full
-import net.liftweb.http.ListenerId
-import xml.Group
-import net.liftweb.http.ResponseWithReason
-import net.liftweb.http.Listen
-import net.liftweb.http.Unlisten
-import net.liftweb.http.AjaxRequestInfo
-import net.liftweb.http.InMemoryResponse
-import net.liftweb.http.BreakOut
+import common._
+import actor._
+import util._
+import util.Helpers._
+import js._
+import auth._
+import provider._
+import net.liftweb.json._
 
 /**
  * Wrap a LiftResponse and cache the result to avoid computing the actual response
@@ -233,76 +210,62 @@ class LiftServlet extends Loggable {
     id.flatMap(recent.get).openOr(0)
   }
 
-  trait ProcessingStep {
-    def process(req: Req): Box[LiftResponse]
+  /**
+   * Service the HTTP request
+   */
+  def doService(req: Req, response: HTTPResponse): Boolean = {
+    var tmpStatelessHolder: Box[Box[LiftResponse]] = Empty
 
-    def processFunc: (Req) => Box[LiftResponse] = process _
-  }
+    tryo {
+      LiftRules.onBeginServicing.toList.foreach(_(req))
+    }
 
-  /** To save memory these are only created once and should just be holders for functions **/
+    def hasSession(idb: Box[String]): Boolean = {
+      idb.flatMap {
+        id =>
+          registerRecentlyChecked(id)
+          SessionMaster.getSession(id, Empty)
+      }.isDefined
+    }
 
-  object ShuttingDown extends ProcessingStep {
+    val wp = req.path.wholePath
+    val pathLen = wp.length
+    def isComet: Boolean = {
+      if (pathLen < 2) false
+      else {
+        val kindaComet = wp.head == LiftRules.cometPath
+        val cometScript = (pathLen >= 3 && kindaComet &&
+          wp(2) == LiftRules.cometScriptName())
 
-    def notFoundOrIgnore(req: Req, session: Box[LiftSession]): Box[LiftResponse] = {
-      if (LiftRules.passNotFoundToChain) {
-        net.liftweb.common.Failure("Not found")
-      } else {
-        Full(
-          session.map(_.checkRedirect(req.createNotFound))
-            .getOrElse(req.createNotFound)
-        )
+        (kindaComet && !cometScript) && req.acceptsJavaScript_?
+      }
+    }
+    def isAjax: Boolean = {
+      if (pathLen < 2) false
+      else {
+        val kindaAjax = wp.head == LiftRules.ajaxPath
+        val ajaxScript = kindaAjax &&
+          wp(1) == LiftRules.ajaxScriptName()
+
+        (kindaAjax && !ajaxScript) && req.acceptsJavaScript_?
       }
     }
 
-    def process(req: Req) = {
-      if(LiftRules.ending)
-        notFoundOrIgnore(req,Empty)
-      else
-        Empty
-    }
+    val sessionIdCalc = new SessionIdCalc(req)
 
-  }
-
-  object CheckAuth extends ProcessingStep {
-
-    def authPassed_?(req: Req): Boolean = {
-
-      val checkRoles: (Role, List[Role]) => Boolean = {
-        case (resRole, roles) => (false /: roles)((l, r) => l || resRole.isChildOf(r.name))
-      }
-
-      val role = NamedPF.applyBox(req, LiftRules.httpAuthProtectedResource.toList)
-      role.map(_ match {
-        case Full(r) =>
-          LiftRules.authentication.verified_?(req) match {
-            case true => checkRoles(r, userRoles.get)
-            case _ => false
-          }
-        case _ => LiftRules.authentication.verified_?(req)
-      }) openOr true
-    }
-
-    def process(req: Req) =
-      if(!authPassed_?(req))
+    val resp: Box[LiftResponse] = try {
+      // if the application is shutting down, return a 404
+      if (LiftRules.ending) {
+        LiftRules.notFoundOrIgnore(req, Empty)
+      } else if (!authPassed_?(req)) {
         Full(LiftRules.authentication.unauthorizedResponse)
-      else
-        Empty
-
-  }
-
-  object SessionLossCheck extends ProcessingStep {
-
-    def process(req: Req): Box[LiftResponse] = {
-      val (isComet, isAjax) = cometOrAjax_?(req)
-      val sessionIdCalc = new SessionIdCalc(req)
-
-      if (LiftRules.redirectAsyncOnSessionLoss && !sessionExists_?(sessionIdCalc.id) && (isComet || isAjax)) {
+      } else if (LiftRules.redirectAsyncOnSessionLoss && !hasSession(sessionIdCalc.id) && (isComet || isAjax)) {
         val theId = sessionIdCalc.id
 
         // okay after 2 attempts to redirect, just ignore calls to the
         // async URL
         if (recentlyChecked(theId) > 1) {
-          net.liftweb.common.Failure("Too many attempts")
+          Empty
         } else {
           val cmd =
             if (isComet)
@@ -312,60 +275,7 @@ class LiftServlet extends Loggable {
 
           Full(new JsCommands(cmd :: Nil).toResponse)
         }
-      } else {
-        Empty
-      }
-    }
-
-    def reqHasSession(req: Req): Boolean = {
-      val sessionIdCalc = new SessionIdCalc(req)
-      !sessionExists_?(sessionIdCalc.id)
-    }
-
-    def sessionExists_?(idb: Box[String]): Boolean = {
-      idb.flatMap {
-        id =>
-          registerRecentlyChecked(id)
-          SessionMaster.getSession(id, Empty)
-      }.isDefined
-    }
-
-    def cometOrAjax_?(req: Req): (Boolean, Boolean) = {
-
-      val wp = req.path.wholePath
-      val pathLen = wp.length
-
-      def isComet: Boolean = {
-        if (pathLen < 2) false
-        else {
-          val kindaComet = wp.head == LiftRules.cometPath
-          val cometScript = (pathLen >= 3 && kindaComet &&
-            wp(2) == LiftRules.cometScriptName())
-
-          (kindaComet && !cometScript) && req.acceptsJavaScript_?
-        }
-      }
-      def isAjax: Boolean = {
-        if (pathLen < 2) false
-        else {
-          val kindaAjax = wp.head == LiftRules.ajaxPath
-          val ajaxScript = kindaAjax &&
-            wp(1) == LiftRules.ajaxScriptName()
-
-          (kindaAjax && !ajaxScript) && req.acceptsJavaScript_?
-        }
-      }
-      (isComet, isAjax)
-    }
-
-  }
-
-  object StatelessResponse extends ProcessingStep {
-
-    def process(req: Req): Box[LiftResponse] = {
-      var tmpStatelessHolder: Box[Box[LiftResponse]] = Empty
-
-      if(S.statelessInit(req) {
+      } else if (S.statelessInit(req) {
         // if the request is matched is defined in the stateless table, dispatch
         tmpStatelessHolder = NamedPF.applyBox(req,
           LiftRules.statelessDispatch.toList).map(_.apply() match {
@@ -378,75 +288,28 @@ class LiftServlet extends Loggable {
         f match {
           case Full(v) => Full(v)
           case Empty => LiftRules.notFoundOrIgnore(req, Empty)
-          case f: net.liftweb.common.Failure => Full(req.createNotFound(f))
+          case f: Failure => Full(req.createNotFound(f))
         }
       } else {
-        Empty
-      }
-    }
-  }
+        // otherwise do a stateful response
+        val liftSession = getLiftSession(req)
 
-  object StatefulResponse extends ProcessingStep {
-
-    def process(req: Req) = {
-      // otherwise do a stateful response
-      val liftSession = getLiftSession(req)
-
-      def doSession(r2: Req, s2: LiftSession, continue: Box[() => Nothing]): () => Box[LiftResponse] = {
-        try {
-          S.init(r2, s2) {
-            dispatchStatefulRequest(S.request.openOrThrowException("I'm pretty sure this is a full box here"), liftSession, r2, continue)
+        def doSession(r2: Req, s2: LiftSession, continue: Box[() => Nothing]): () => Box[LiftResponse] = {
+          try {
+            S.init(r2, s2) {
+              dispatchStatefulRequest(S.request.openOrThrowException("I'm pretty sure this is a full box here"), liftSession, r2, continue)
+            }
+          } catch {
+            case cre: ContinueResponseException =>
+              r2.destroyServletSession()
+              doSession(r2, getLiftSession(r2), Full(cre.continue))
           }
-        } catch {
-          case cre: ContinueResponseException =>
-            r2.destroyServletSession()
-            doSession(r2, getLiftSession(r2), Full(cre.continue))
         }
+
+        val lzy: () => Box[LiftResponse] = doSession(req, liftSession, Empty)
+
+        lzy()
       }
-
-      val lzy: () => Box[LiftResponse] = doSession(req, liftSession, Empty)
-
-      lzy()
-    }
-  }
-
-  /**
-   * This is the processing pipeline for all lift requests.
-    * Basically each of these takes a Req and returns either a
-    * Full(Response) - in which case  return
-    * Empty - Go to the next handler
-    * Failure - short circuit and return
-    *
-    */
-  val processingPipeline: Seq[ProcessingStep] =
-    Seq(
-      ShuttingDown,
-      CheckAuth,
-      SessionLossCheck,
-      StatelessResponse,
-      StatefulResponse
-    )
-
-  /**
-   * Service the HTTP request
-   */
-  def doService(req: Req, response: HTTPResponse): Boolean = {
-
-    tryo {
-      LiftRules.onBeginServicing.toList.foreach(_(req))
-    }
-
-    def stepThroughPipeline(steps: Seq[ProcessingStep]): Box[LiftResponse] = {
-      //Seems broken but last step always hits
-      steps.head.process(req) match {
-        case Empty => stepThroughPipeline(steps.tail)
-        case a@_   => a
-      }
-    }
-
-    /* Go through the pipeline and send response if full **/
-    val resp: Box[LiftResponse] = try {
-      stepThroughPipeline(processingPipeline)
     } catch {
       case foc: LiftFlowOfControlException => throw foc
       case e: Exception if !e.getClass.getName.endsWith("RetryRequest") => S.runExceptionHandlers(req, e)
@@ -503,8 +366,8 @@ class LiftServlet extends Loggable {
                     case Empty =>
                       (true, LiftRules.notFoundOrIgnore(req, Full(liftSession)))
 
-                    case f: net.liftweb.common.Failure =>
-                      (true, net.liftweb.common.Full(liftSession.checkRedirect(req.createNotFound(f))))
+                    case f: Failure =>
+                      (true, Full(liftSession.checkRedirect(req.createNotFound(f))))
                   }
                 }
               } catch {
@@ -627,7 +490,7 @@ class LiftServlet extends Loggable {
               liftSession.runParams(requestState)
             } catch {
               case ResponseShortcutException(_, Full(to), _) =>
-                import net.liftweb.http.js.JsCmds._
+                import js.JsCmds._
                 List(RedirectTo(to))
             })
 
@@ -705,9 +568,9 @@ class LiftServlet extends Loggable {
             val renderVersion = RenderVersion.get
 
             liftSession.withAjaxRequests { currentAjaxRequests =>
-              // Create a new future, put it in the request list, and return
-              // the associated info with the future that needs to be
-              // satisfied by the current request handler.
+            // Create a new future, put it in the request list, and return
+            // the associated info with the future that needs to be
+            // satisfied by the current request handler.
               def newRequestInfo = {
                 val info = AjaxRequestInfo(handlerVersion, new LAFuture[Box[LiftResponse]], millis)
 
@@ -721,17 +584,17 @@ class LiftServlet extends Loggable {
               val (requestInfo, result) =
                 infoList
                   .flatMap { entries =>
-                    entries
-                      .find(_.requestVersion == handlerVersion)
-                      .map { entry =>
-                        (entry, Right(entry.responseFuture))
-                      }
+                  entries
+                    .find(_.requestVersion == handlerVersion)
+                    .map { entry =>
+                    (entry, Right(entry.responseFuture))
                   }
+                }
                   .getOrElse {
-                    val entry = newRequestInfo
+                  val entry = newRequestInfo
 
-                    (entry, Left(entry.responseFuture))
-                  }
+                  (entry, Left(entry.responseFuture))
+                }
 
               // If there are no other pending requests, we can
               // invalidate all the render version's AJAX entries except
@@ -744,7 +607,7 @@ class LiftServlet extends Loggable {
                   list <- infoList
                   entry <- list if entry.requestVersion != handlerVersion
                 } {
-                  entry.responseFuture.satisfy(net.liftweb.common.Failure("Request no longer pending."))
+                  entry.responseFuture.satisfy(Failure("Request no longer pending."))
                 }
 
                 currentAjaxRequests += (renderVersion -> List(requestInfo))
@@ -767,7 +630,7 @@ class LiftServlet extends Loggable {
         nextAction match {
           case Left(future) =>
             val result = runAjax(liftSession, requestState) map CachedResponse
-            
+
             if (result.exists(_.failed_?)) {
               // The request failed. The client will retry it, so
               // remove it from the list of current Ajax requests that
@@ -782,7 +645,7 @@ class LiftServlet extends Loggable {
             result
 
           case Right(future) =>
-            val ret = future.get(ajaxPostTimeout) openOr net.liftweb.common.Failure("AJAX retry timeout.")
+            val ret = future.get(ajaxPostTimeout) openOr Failure("AJAX retry timeout.")
 
             ret
         }
@@ -795,7 +658,7 @@ class LiftServlet extends Loggable {
     }
   }
 
-/**
+  /**
    * An actor that manages continuations from container (Jetty style)
    */
   class ContinuationActor(request: Req, session: LiftSession,
@@ -1056,7 +919,9 @@ class LiftServlet extends Loggable {
   }
 }
 
-import net.liftweb.http.provider.servlet._
+import provider.servlet._
+
+class LiftFilter extends ServletFilterProvider
 
 private class SessionIdCalc(req: Req) {
   private val CometPath = LiftRules.cometPath

@@ -122,7 +122,7 @@ object LiftRules extends LiftRulesMocker {
     LiftRulesMocker.calcLiftRulesInstance()
   } else prodInstance
 
-  type DispatchPF = PartialFunction[Req, () => Box[LiftResponse]];
+  type DispatchPF = PartialFunction[Req, () => Box[LiftResponse]]
 
   /**
    * A partial function that allows processing of any attribute on an Elem
@@ -141,7 +141,6 @@ object LiftRules extends LiftRulesMocker {
    */
   type StatelessTestPF = PartialFunction[List[String], Boolean]
 
-
   /**
    * The test between the path of a request, the HTTP request, and whether that path
    * should result in stateless servicing of that path
@@ -149,30 +148,33 @@ object LiftRules extends LiftRulesMocker {
   type StatelessReqTestPF = PartialFunction[StatelessReqTest, Boolean]
 
   type RewritePF = PartialFunction[RewriteRequest, RewriteResponse]
+
   type SnippetPF = PartialFunction[List[String], NodeSeq => NodeSeq]
+
   type LiftTagPF = PartialFunction[(String, Elem, MetaData, NodeSeq, String), NodeSeq]
+
   type URINotFoundPF = PartialFunction[(Req, Box[Failure]), NotFound]
+
   type URLDecoratorPF = PartialFunction[String, String]
+
   type SnippetDispatchPF = PartialFunction[String, DispatchSnippet]
+
   type ViewDispatchPF = PartialFunction[List[String], Either[() => Box[NodeSeq], LiftView]]
+
   type HttpAuthProtectedResourcePF = PartialFunction[Req, Box[Role]]
+
   type ExceptionHandlerPF = PartialFunction[(Props.RunModes.Value, Req, Throwable), LiftResponse]
+
   type ResourceBundleFactoryPF = PartialFunction[(String, Locale), ResourceBundle]
+
   type SplitSuffixPF = PartialFunction[List[String], (List[String], String)]
+
   type CometCreationPF = PartialFunction[CometCreationInfo, LiftCometActor]
   /**
    * A partial function that allows the application to define requests that should be
    * handled by lift rather than the default handler
    */
   type LiftRequestPF = PartialFunction[Req, Boolean]
-
-  /*
-  private[this] var _doneBoot = false
-  private[http] def doneBoot = _doneBoot
-
-  private[http] def doneBoot_=(in: Boolean) {_doneBoot = in}
-*/
-
 
   /**
    * Holds the failure information when a snippet can not be executed.
