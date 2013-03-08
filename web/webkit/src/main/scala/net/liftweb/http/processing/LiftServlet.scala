@@ -410,7 +410,8 @@ class LiftServlet extends Loggable {
     }
   }
 
-  /** This is the processing pipeline for all lift requests.
+  /**
+   * This is the processing pipeline for all lift requests.
     * Basically each of these takes a Req and returns either a
     * Full(Response) - in which case  return
     * Empty - Go to the next handler
