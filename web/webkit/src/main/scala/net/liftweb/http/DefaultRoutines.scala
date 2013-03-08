@@ -53,16 +53,12 @@ object DefaultRoutines {
   private def resBundleFor(loc: Locale, path: List[String]): Box[ResourceBundle] =
     resourceMap.synchronized {
       val key = loc.toString -> path
-      resourceMap.get(key) match {
-        case Full(x) => x
-        case _ => {
+      resourceMap.get(key).getOrElse {
           val res = rawResBundle(loc, path)
           if (!Props.devMode) resourceMap(key) = res
           res
         }
-          
       }
-    }
     
   /**
    * Returns the resources for the current request.  In development
@@ -99,8 +95,7 @@ object DefaultRoutines {
     val cb =
       for {
         req <- S.originalRequest
-        path = req.path.partPath.dropRight(1) :::
-        req.path.partPath.takeRight(1).map(s => "_resources_"+s)
+        path = req.path.partPath.dropRight(1) ::: req.path.partPath.takeRight(1).map(s => "_resources_"+s)
         bundle <- resBundleFor(loc, path)
       } yield bundle
 

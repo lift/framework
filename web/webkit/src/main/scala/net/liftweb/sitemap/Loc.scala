@@ -863,9 +863,6 @@ object Loc {
     }
   }
 
-  // @deprecated def alwaysTrue(a: Req) = true
-  // @deprecated def retString(toRet: String)(other: Seq[(String, String)]) = Full(toRet)
-
   implicit def strToFailMsg(in: => String): FailMsg = () => {
     RedirectWithState(
       LiftRules.siteMapFailRedirectLocation.mkString("/", "/", ""),
