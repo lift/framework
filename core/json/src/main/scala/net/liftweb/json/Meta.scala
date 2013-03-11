@@ -80,7 +80,7 @@ private[json] object Meta {
   // Current constructor parsing context. (containingClass + allArgs could be replaced with Constructor)
   case class Context(argName: String, containingClass: Class[_], allArgs: List[(String, Type)])
 
-  private val mappings = new Memo[Type, Mapping]
+  private val mappings = new Memo[(Type, Seq[Class[_]]), Mapping]
   private val unmangledNames = new Memo[String, String]
   private val paranamer = new CachingParanamer(new BytecodeReadingParanamer)
 
@@ -158,7 +158,7 @@ private[json] object Meta {
 
     if (primitive_?(clazz)) Value(rawClassOf(clazz))
     else {
-      mappings.memoize(clazz, t => {
+      mappings.memoize((clazz, typeArgs), { case (t, _) => 
         val c = rawClassOf(t)
         val (pt, typeInfo) = 
           if (typeArgs.isEmpty) (t, TypeInfo(c, None))

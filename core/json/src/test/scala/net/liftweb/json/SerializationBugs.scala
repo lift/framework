@@ -155,7 +155,18 @@ object SerializationBugs extends Specification {
     val ser = swrite(MapHolder(Map("hello" -> SingleValue(2.0))))
     read[MapHolder](ser) mustEqual MapHolder(Map("hello" -> SingleValue(2.0)))
   }
+
+  "Constructor memoization should not ignore type parameters" in {
+    val jsonA = """ { "data": { "foo": "string" }, "success": true } """
+    read[SomeContainer[TypeA]](jsonA) mustEqual SomeContainer(TypeA("string"))
+    val jsonB = """ { "data": { "bar": "string" }, "success": true } """
+    read[SomeContainer[TypeB]](jsonB) mustEqual SomeContainer(TypeB("string"))
+  }
 }
+
+case class TypeA(foo: String)
+case class TypeB(bar: String)
+case class SomeContainer[D](data: D)
 
 case class Eith(x: Either[String, Int])
 
