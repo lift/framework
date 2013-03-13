@@ -1877,11 +1877,18 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
             case x => x
           }
 
+        case Some("ajax") =>
+          net.liftweb.builtin.snippet.Form.render(ret) match {
+            case e: Elem => e % LiftRules.formAttrs.vend.foldLeft[MetaData](Null)((base, name) => checkAttr(name, attrs, base))
+            case x => x
+          }
+
         case Some(ft) =>
           <form action={S.uri} method={ft}>
             {ret}
           </form> %
             checkMultiPart(attrs) % LiftRules.formAttrs.vend.foldLeft[MetaData](Null)((base, name) => checkAttr(name, attrs, base))
+
         case _ => ret
       }
 
