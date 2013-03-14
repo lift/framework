@@ -24,7 +24,19 @@ trait ILAExecute {
   def shutdown(): Unit
 }
 
-object LAScheduler extends Loggable {
+/**
+ * The definition of a scheduler
+ */
+trait LAScheduler {
+  /**
+   * Execute some code on another thread
+   *
+   * @param f the function to execute on another thread
+   */
+  def execute(f: () => Unit): Unit
+}
+
+object LAScheduler extends LAScheduler with Loggable {
   @volatile
   var onSameThread = false
 
@@ -76,6 +88,11 @@ object LAScheduler extends Loggable {
   @volatile
   var exec: ILAExecute = _
 
+  /**
+   * Execute some code on another thread
+   *
+   * @param f the function to execute on another thread
+   */
   def execute(f: () => Unit) {
     synchronized {
       if (exec eq null) {
