@@ -256,7 +256,7 @@ object LAFuture {
    */
   def apply[T](f: () => T, scheduler: LAScheduler = LAScheduler): LAFuture[T] = {
     val ret = new LAFuture[T](scheduler)
-    LAScheduler.execute(() => {
+    scheduler.execute(() => {
       try {
       ret.satisfy(f())
       } catch {
