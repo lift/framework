@@ -1427,19 +1427,21 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case s@_ if (!s.isEmpty) => s
       case _ => List("index")
     }
-    Templates(splits, S.locale) /*.map {
+    Templates(splits, S.locale).map {
       case e: Elem if e.label == "html" => e
       case e: Elem if hasSurround(e) => e
       case x => <lift:surround with="default" at="content">
         {x}
       </lift:surround>
-    }*/
+    }
   }
 
   private def hasSurround(e: Elem): Boolean =
-  (e.attribute("data-lift").map(_.text.startsWith("surround")) getOrElse false) ||
+  (S.location.isDefined) &&
+  (S.request.map(!_.ajax_?) openOr false) &&
+  ((e.attribute("data-lift").map(_.text.startsWith("surround")) getOrElse false) ||
   (e.label == "surround") ||
-  (e.attribute("class").map(_.text.contains("surround")) getOrElse false)
+  (e.attribute("class").map(_.text.contains("surround")) getOrElse false))
 
   private[liftweb] def findTemplate(name: String): Box[NodeSeq] = {
     val splits = (if (name.startsWith("/")) name else "/" + name).split("/").toList.drop(1) match {

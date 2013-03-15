@@ -166,7 +166,7 @@ object OneShot extends Specification with RequestKit {
       }
 
 
-      Counter.x must be_==(2).when(jetty.running)
+      Counter.x must be_>=(2).when(jetty.running)
     }
   }
 
