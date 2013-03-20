@@ -1,7 +1,7 @@
 package net.liftweb.json.scalaz
 
 import scalaz._
-import Scalaz._
+import scalaz.syntax.validation._
 import JsonScalaz._
 import net.liftweb.json._
 
@@ -17,22 +17,30 @@ object LottoExample extends Specification {
   def len(x: Int) = (xs: List[Int]) => 
     if (xs.length != x) Fail("len", xs.length + " != " + x) else xs.success
 
-  // FIXME enable when 2.8 no longer supported, 2.9 needs: import Validation.Monad._
-/*
-  // Note 'apply _' is not needed on Scala 2.8.1 >=
-  implicit def winnerJSON: JSONR[Winner] =
-    Winner.applyJSON(field("winner-id"), validate[List[Int]]("numbers") >=> len(6) apply _)
+  implicit def winnerJSON: JSONR[Winner] = {
+    val numbersResult = (jValue: JValue) => for {
+      numbers <- field[List[Int]]("numbers")(jValue)
+      _ <- len(6)(numbers)
+    } yield numbers
+    Winner.applyJSON(field[Long]("winner-id"), numbersResult)
+  }
 
-  implicit def lottoJSON: JSONR[Lotto] =
-    Lotto.applyJSON(field("id")
-                  , validate[List[Int]]("winning-numbers") >=> len(6) apply _
-                  , field("winners")
-                  , field("draw-date"))
+  implicit def lottoJSON: JSONR[Lotto] = {
+    val winningNumbersResult = (jValue: JValue) => for {
+      winningNumbers <- field[List[Int]]("winning-numbers")(jValue)
+      _ <- len(6)(winningNumbers)
+    } yield winningNumbers
+    Lotto.applyJSON(field[Long]("id")
+                  , winningNumbersResult
+                  , field[List[Winner]]("winners")
+                  , field[Option[String]]("draw-date"))
+  }
   
   val winners = List(Winner(23, List(2, 45, 34, 23, 3, 5)), Winner(54, List(52, 3, 12, 11, 18, 22)))
   val lotto = Lotto(5, List(2, 45, 34, 23, 7, 5), winners, None)
 
-  fromJSON[Lotto](json) mustEqual Success(lotto)
-  */
-}
+  "Parse Lotto" in {
+    fromJSON[Lotto](json) mustEqual Success(lotto)
+  }
 
+}

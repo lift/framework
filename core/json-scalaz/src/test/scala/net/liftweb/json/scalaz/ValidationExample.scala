@@ -1,7 +1,9 @@
 package net.liftweb.json.scalaz
 
 import scalaz._
-import Scalaz._
+import scalaz.std.list._
+import scalaz.syntax.traverse._
+import scalaz.syntax.validation._
 import JsonScalaz._
 import net.liftweb.json._
 
@@ -20,18 +22,25 @@ object ValidationExample extends Specification {
 
     val json = JsonParser.parse(""" {"name":"joe","age":17} """)
 
-    // Note 'apply _' is not needed on Scala 2.8.1 >=
     "fail when age is less than min age" in {
       // Age must be between 18 an 60
-// FIXME enable when 2.8 no longer supported, 2.9 needs: import Validation.Monad._
-//      val person = Person.applyJSON(field("name"), validate[Int]("age") >=> min(18) >=> max(60) apply _)
-//      person(json).fail.toOption.get.list mustEqual List(UncategorizedError("min", "17 < 18", Nil))
+      val ageResult = (jValue: JValue) => for {
+        age <- field[Int]("age")(jValue)
+        _ <- min(18)(age)
+        _ <- max(60)(age)
+      } yield age
+      val person = Person.applyJSON(field[String]("name"), ageResult)
+      person(json) mustEqual Failure(NonEmptyList(UncategorizedError("min", "17 < 18", Nil)))
     }
 
     "pass when age within limits" in {
       // Age must be between 16 an 60
-      import Validation.Monad._
-      val person = Person.applyJSON(field("name"), validate[Int]("age") >=> min(16) >=> max(60) apply _)
+      val ageResult = (jValue: JValue) => for {
+        age <- field[Int]("age")(jValue)
+        _ <- min(16)(age)
+        _ <- max(60)(age)
+      } yield age
+      val person = Person.applyJSON(field[String]("name"), ageResult)
       person(json) mustEqual Success(Person("joe", 17))
     }
   }
@@ -41,8 +50,7 @@ object ValidationExample extends Specification {
   // This example shows:
   // * a validation where result depends on more than one value
   // * parse a List with invalid values
-// FIXME enable when 2.8 no longer supported, 2.9 needs: import Validation.Monad._
-/*
+
   "Range filtering" should {
     val json = JsonParser.parse(""" [{"s":10,"e":17},{"s":12,"e":13},{"s":11,"e":8}] """)
 
@@ -51,19 +59,24 @@ object ValidationExample extends Specification {
 
     // Valid range is a range having start <= end
     implicit def rangeJSON: JSONR[Range] = new JSONR[Range] {
-      def read(json: JValue) = 
-        ((field[Int]("s")(json) |@| field[Int]("e")(json)) apply ascending).join map Range.tupled
+      def read(json: JValue) = {
+        for {
+          s <- field[Int]("s")(json)
+          e <- field[Int]("e")(json)
+          r <- ascending(s, e)
+        } yield Range.tupled(r)
+      }
     }
 
     "fail if lists contains invalid ranges" in {
       val r = fromJSON[List[Range]](json)
-      r.fail.toOption.get.list mustEqual List(UncategorizedError("asc", "11 > 8", Nil))
+      r mustEqual Failure(NonEmptyList(UncategorizedError("asc", "11 > 8", Nil)))
     }
  
     "optionally return only valid ranges" in {
-      val ranges = json.children.map(fromJSON[Range]).filter(_.isSuccess).sequence[PartialApply1Of2[ValidationNEL, Error]#Apply, Range]
+      val ranges = json.children.map(fromJSON[Range]).filter(_.isSuccess).sequence[({type λ[α]=ValidationNel[Error, α]})#λ, Range]
       ranges mustEqual Success(List(Range(10, 17), Range(12, 13)))
     }
   }
-  */
+
 }

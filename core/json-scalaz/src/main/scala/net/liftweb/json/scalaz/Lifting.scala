@@ -16,8 +16,7 @@
 
 package net.liftweb.json.scalaz
 
-import scalaz._
-import Scalaz._
+import scalaz.syntax.apply._
 import net.liftweb.json._
 
 trait Lifting { this: Types =>

@@ -1,7 +1,8 @@
 package net.liftweb.json.scalaz
 
 import scalaz._
-import Scalaz._
+import scalaz.syntax.applicative._
+import scalaz.syntax.show._
 import JsonScalaz._
 import net.liftweb.json._
 
@@ -16,7 +17,7 @@ object Example extends Specification {
     val json = parse(""" {"street": "Manhattan 2", "zip": "00223" } """)
     val a1 = field[String]("zip")(json) <*> (field[String]("street")(json) map Address.curried)
     val a2 = (field[String]("street")(json) |@| field[String]("zip")(json)) { Address }
-    val a3 = Address.applyJSON(field("street"), field("zip"))(json)
+    val a3 = Address.applyJSON(field[String]("street"), field[String]("zip"))(json)
     a1 mustEqual Success(Address("Manhattan 2", "00223"))
     a2 mustEqual a1
     a3 mustEqual a1
@@ -25,16 +26,16 @@ object Example extends Specification {
   "Failed address parsing" in {
     val json = parse(""" {"street": "Manhattan 2", "zip": "00223" } """)
     val a = (field[String]("streets")(json) |@| field[String]("zip")(json)) { Address }
-    a.fail.toOption.get.list mustEqual List(NoSuchFieldError("streets", json))
+    a mustEqual Failure(NonEmptyList(NoSuchFieldError("streets", json)))
   }
 
   "Parse Person with Address" in {
     implicit def addrJSON: JSONR[Address] = new JSONR[Address] {
-      def read(json: JValue) = Address.applyJSON(field("street"), field("zip"))(json)
+      def read(json: JValue) = Address.applyJSON(field[String]("street"), field[String]("zip"))(json)
     }
 
     val p = parse(""" {"name":"joe","age":34,"address":{"street": "Manhattan 2", "zip": "00223" }} """)
-    val person = Person.applyJSON(field("name"), field("age"), field("address"))(p)
+    val person = Person.applyJSON(field[String]("name"), field[Int]("age"), field[Address]("address"))(p)
     person mustEqual Success(Person("joe", 34, Address("Manhattan 2", "00223")))
   }
 
