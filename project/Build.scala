@@ -34,7 +34,7 @@ object BuildDef extends Build {
   // Core Projects
   // -------------
   lazy val core: Seq[ProjectReference] =
-    Seq(common, actor, json, json_scalaz, json_ext, util)
+    Seq(common, actor, json, json_scalaz, json_scalaz7, json_ext, util)
 
   lazy val common =
     coreProject("common")
@@ -56,8 +56,14 @@ object BuildDef extends Build {
   lazy val json_scalaz =
     coreProject("json-scalaz")
         .dependsOn(json)
-        .settings(description := "JSON Library based on Scalaz",
+        .settings(description := "JSON Library based on Scalaz 6",
                   libraryDependencies <+= scalaVersion(scalaz))
+
+  lazy val json_scalaz7 =
+    coreProject("json-scalaz7")
+        .dependsOn(json)
+        .settings(description := "JSON Library based on Scalaz 7",
+                  libraryDependencies <+= scalaVersion(scalaz7))
 
   lazy val json_ext =
     coreProject("json-ext")
