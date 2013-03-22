@@ -67,7 +67,6 @@ Francis Rhys-Jones
 francis.rhys-jones at guardian dot co dot uk
 
 ### Name: ###
-<<<<<<< HEAD
 Gregory Flanagan
 
 ### Email: ###
@@ -132,3 +131,9 @@ Olivier Bruchez
 
 ### Email: ###
 olivier at bruchez dot org
+
+### Name: ###
+Taylor Leese
+
+### Email: ###
+tleese22 at gmail dot com
