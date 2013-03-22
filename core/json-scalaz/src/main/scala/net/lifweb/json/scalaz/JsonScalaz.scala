@@ -16,13 +16,12 @@
 
 package net.liftweb.json.scalaz
 
-import scalaz.{Equal, Kleisli, Monoid, Semigroup, Show, ValidationNel}
-import scalaz.Validation._
-import scalaz.std.option._
+import scalaz._
+import Scalaz._
 import net.liftweb.json._
 
 trait Types {
-  type Result[+A] = ValidationNel[Error, A]
+  type Result[A] = ValidationNEL[Error, A]
 
   sealed trait Error
   case class UnexpectedJSONError(was: JValue, expected: Class[_ <: JValue]) extends Error
@@ -31,19 +30,19 @@ trait Types {
 
   case object Fail {
     def apply[A](key: String, desc: String, args: List[Any]): Result[A] = 
-      failure(UncategorizedError(key, desc, args)).toValidationNel
+      UncategorizedError(key, desc, args).fail.liftFailNel
 
     def apply[A](key: String, desc: String): Result[A] = 
-      failure(UncategorizedError(key, desc, Nil)).toValidationNel
+      UncategorizedError(key, desc, Nil).fail.liftFailNel
   }
 
   implicit def JValueShow[A <: JValue]: Show[A] = new Show[A] {
-    override def shows(json: A): String = compact(render(json))
+    def show(json: A) = compact(render(json)).toList
   }
 
-  implicit def JValueMonoid: Monoid[JValue] = Monoid.instance(_ ++ _, JNothing)
-  implicit def JValueSemigroup: Semigroup[JValue] = Semigroup.instance(_ ++ _)
-  implicit def JValueEqual: Equal[JValue] = Equal.equalA
+  implicit def JValueZero: Zero[JValue] = zero(JNothing)
+  implicit def JValueSemigroup: Semigroup[JValue] = semigroup(_ ++ _)
+  implicit def JValueEqual: Equal[JValue] = equalA
 
   trait JSONR[A] {
     def read(json: JValue): Result[A]
@@ -66,12 +65,12 @@ trait Types {
     case JObject(fs) => 
       fs.find(_.name == name)
         .map(f => implicitly[JSONR[A]].read(f.value))
-        .orElse(implicitly[JSONR[A]].read(JNothing).fold(_ => none, x => some(success(x))))
-        .getOrElse(failure(NoSuchFieldError(name, json)).toValidationNel)
-    case x => failure(UnexpectedJSONError(x, classOf[JObject])).toValidationNel
+        .orElse(implicitly[JSONR[A]].read(JNothing).fold(_ => none, x => some(Success(x))))
+        .getOrElse(NoSuchFieldError(name, json).fail.liftFailNel)
+    case x => UnexpectedJSONError(x, classOf[JObject]).fail.liftFailNel
   }
 
-  def validate[A: JSONR](name: String): Kleisli[Result, JValue, A] = Kleisli(field[A](name))
+  def validate[A: JSONR](name: String): Kleisli[Result, JValue, A] = kleisli(field[A](name))
 
   def makeObj(fields: Traversable[(String, JValue)]): JObject = 
     JObject(fields.toList.map { case (n, v) => JField(n, v) })

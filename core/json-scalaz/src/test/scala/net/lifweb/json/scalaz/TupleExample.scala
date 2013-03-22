@@ -1,6 +1,7 @@
 package net.liftweb.json.scalaz
 
 import scalaz._
+import Scalaz._
 import JsonScalaz._
 import net.liftweb.json._
 
