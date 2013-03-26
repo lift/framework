@@ -1998,15 +1998,25 @@ trait SHtml {
   }
 
   private[http] def secureMultiOptions[T](options: Seq[SelectableOption[T]], default: Seq[T],
-                                          onSubmit: List[T] => Any): (Seq[SelectableOption[String]],
-          Seq[String], AFuncHolder) =
-    {
+                                          onSubmit: List[T] => Any): (Seq[SelectableOption[String]], Seq[String], AFuncHolder) = {
       val o2 = options.toList
 
-      val secure: List[(T, String, String)] = o2.map {case SelectableOption(obj, txt) => (obj, randomString(20), txt)}
+      val secure: List[(T, String, String)] = o2.map {
+        case SelectableOption(obj, txt) =>
+          (obj, randomString(20), txt)
+      }
+
       val sm: Map[String, T] = Map(secure.map(v => (v._2, v._1)): _*)
-      val defaultNonce: Seq[String] = default.flatMap(d => secure.find(_._1 == d).map(_._2))
-      val nonces: List[SelectableOption[String]] = secure.map {case (obj, nonce, txt) => SelectableOption(nonce, txt)}.toList
+
+      val defaultNonce: Seq[String] = default.flatMap { d =>
+        secure.find(_._1 == d).map(_._2)
+      }
+
+      val nonces: List[SelectableOption[String]] = secure.map {
+        case (obj, nonce, txt) =>
+          SelectableOption(nonce, txt)
+      }.toList
+
       def process(info: List[String]): Unit = onSubmit(info.flatMap(sm.get))
 
       (nonces, defaultNonce, LFuncHolder(process))
