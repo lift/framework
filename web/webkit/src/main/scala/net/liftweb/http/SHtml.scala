@@ -1860,8 +1860,13 @@ trait SHtml {
    */
   def untrustedSelect_*(opts: Seq[SelectableOption[String]], deflt: Box[String],
                         func: AFuncHolder, attrs: ElemAttr*): Elem =
-    fmapFunc(func)(funcName =>
-            attrs.foldLeft(<select name={funcName}>{opts.flatMap {case SelectableOption(value, text, _) => (<option value={value}>{text}</option>) % selected(deflt.exists(_ == value))}}</select>)(_ % _))
+    fmapFunc(func) { funcName =>
+      attrs.foldLeft(<select name={funcName}>{opts.flatMap {
+        case option =>
+          option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _) %
+          selected(deflt.exists(_ == option.value))
+      }}</select>)(_ % _)
+    }
 
   /**
    * Create a multiple select box based on the list with a default value and the function to be executed on
