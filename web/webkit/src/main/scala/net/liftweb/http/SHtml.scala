@@ -1729,8 +1729,8 @@ trait SHtml {
     }
 
     val nonces = secure.map {
-      case SelectableOptionWithNonce(obj, nonce, txt, attrs) =>
-        SelectableOption(nonce, txt, attrs)
+      case selectableOptionWithNonce =>
+        SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
     }
 
     def process(nonce: String): Unit = secure.find(_.nonce == nonce).map(x => onSubmit(x.value))
