@@ -873,14 +873,25 @@ trait SHtml {
    * @param default -- the default value (or Empty if no default value)
    * @param onSubmit -- the function to execute on form submission
    */
-  def ajaxSelectObj[T](options: Seq[(T, String)], default: Box[T],
+  def ajaxSelectObj[T](options: Seq[SelectableOption[T]], default: Box[T],
                        onSubmit: T => JsCmd, attrs: ElemAttr*): Elem = {
 
-    val secure = options.map {case (obj, txt) => (obj, randomString(20), txt)}
-    val defaultNonce = default.flatMap(d => secure.find(_._1 == d).map(_._2))
-    val nonces = secure.map {case (obj, nonce, txt) => (nonce, txt)}
+    val secure = options.map {
+      case selectableOption =>
+        SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
+    }
+
+    val defaultNonce = default.flatMap { d =>
+      secure.find(_.value == d).map(_.nonce)
+    }
+
+    val nonces = secure.map {
+      case selectableOptionWithNonce =>
+        SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
+    }
+
     def process(nonce: String): JsCmd =
-      secure.find(_._2 == nonce).map(x => onSubmit(x._1)) getOrElse Noop
+      secure.find(_.nonce == nonce).map(x => onSubmit(x.value)) getOrElse Noop
     //  (nonces, defaultNonce, SFuncHolder(process))
 
     ajaxSelect_*(nonces,
@@ -917,15 +928,26 @@ trait SHtml {
    * @param default -- the default value (or Empty if no default value)
    * @param onSubmit -- the function to execute on form submission
    */
-  def ajaxSelectObj[T](options: Seq[(T, String)], default: Box[T],
+  def ajaxSelectObj[T](options: Seq[SelectableOption[T]], default: Box[T],
                        jsFunc: Call,
                        onSubmit: T => JsCmd, attrs: ElemAttr*): Elem = {
 
-    val secure = options.map {case (obj, txt) => (obj, randomString(20), txt)}
-    val defaultNonce = default.flatMap(d => secure.find(_._1 == d).map(_._2))
-    val nonces = secure.map {case (obj, nonce, txt) => (nonce, txt)}
+    val secure = options.map {
+      case selectableOption =>
+        SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
+    }
+
+    val defaultNonce = default.flatMap { d =>
+      secure.find(_.value == d).map(_.nonce)
+    }
+
+    val nonces = secure.map {
+      case selectableOptionWithNonce =>
+        SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
+    }
+
     def process(nonce: String): JsCmd =
-      secure.find(_._2 == nonce).map(x => onSubmit(x._1)) getOrElse Noop
+      secure.find(_.nonce == nonce).map(x => onSubmit(x.value)) getOrElse Noop
     //  (nonces, defaultNonce, SFuncHolder(process))
 
     ajaxSelect_*(nonces,
@@ -944,18 +966,18 @@ trait SHtml {
    * @param default -- the default value (or Empty if no default value)
    * @param func -- the function to execute when a new selection is made 
    */
-  def ajaxEditableSelect(opts: Seq[(String, String)], deflt: Box[String],
+  def ajaxEditableSelect(opts: Seq[SelectableOption[String]], deflt: Box[String],
                          f: String => JsCmd, attrs: ElemAttr*): Elem = {
 
     val id = attrs.collectFirst { case BasicElemAttr(name, value) if name == "id" => value } getOrElse nextFuncName
     val attributes = if(attrs.contains(BasicElemAttr("id", id))) attrs else BasicElemAttr("id", id) +: attrs
     val textOpt = nextFuncName
-    val options = opts :+ (textOpt , "New Element")
+    val options = opts :+ SelectableOption(textOpt , "New Element")
     var _options = options
 
     lazy val func: (String) => JsCmd = (select: String) => {
       def text(in: String): JsCmd = {
-        _options = (in, in) +: _options
+        _options = SelectableOption(in, in) +: _options
         Replace(id, ajaxSelect(_options, Some(in), func, attributes: _*))
       }
       if (select == textOpt) Replace(id, ajaxText("", text(_), attributes: _*)) & Focus(id) else f(select)
@@ -964,28 +986,31 @@ trait SHtml {
     ajaxSelect(options, deflt, func, attributes: _*)
   }
 
-  def ajaxSelect(opts: Seq[(String, String)], deflt: Box[String],
+  def ajaxSelect(opts: Seq[SelectableOption[String]], deflt: Box[String],
                  func: String => JsCmd, attrs: ElemAttr*): Elem =
     ajaxSelect_*(opts, deflt, Empty, SFuncHolder(func), attrs: _*)
 
-  def ajaxSelect(opts: Seq[(String, String)], deflt: Box[String],
+  def ajaxSelect(opts: Seq[SelectableOption[String]], deflt: Box[String],
                  jsFunc: Call, func: String => JsCmd, attrs: ElemAttr*): Elem =
     ajaxSelect_*(opts, deflt, Full(jsFunc), SFuncHolder(func), attrs: _*)
 
-  private def ajaxSelect_*(opts: Seq[(String, String)], deflt: Box[String],
+  private def ajaxSelect_*(opts: Seq[SelectableOption[String]], deflt: Box[String],
                            jsFunc: Box[Call], func: AFuncHolder, attrs: ElemAttr*): Elem = {
     val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + " + value + ".options[" + value + ".selectedIndex].value")
     val key = formFuncName
 
-    val vals = opts.map(_._1)
+    val vals = opts.map(_.value)
     val testFunc = LFuncHolder(in => in.filter(v => vals.contains(v)) match {case Nil => false case xs => func(xs)}, func.owner)
-    fmapFunc((testFunc)) {
-      funcName =>
-              (attrs.foldLeft(<select>{opts.flatMap {case (value, text) => (<option value={value}>{text}</option>) % selected(deflt.exists(_ == value))}}</select>)(_ % _)) %
-                      ("onchange" -> (jsFunc match {
-                        case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
-                        case _ => makeAjaxCall(raw(funcName, "this"))
-                      }))
+    fmapFunc((testFunc)) { funcName =>
+      (attrs.foldLeft(<select>{opts.flatMap {
+        case option =>
+          option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _) %
+          selected(deflt.exists(_ == option.value))
+      }}</select>)(_ % _)) %
+      ("onchange" -> (jsFunc match {
+        case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
+        case _ => makeAjaxCall(raw(funcName, "this"))
+      }))
     }
   }
 
