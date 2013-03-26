@@ -1967,11 +1967,15 @@ trait SHtml {
       fmapFunc(contextFuncBuilder(testFunc)) {
         import net.liftweb.http.js.JsCmds.JsCrVar
         funcName =>
-          (attrs.foldLeft(<select>{ opts.flatMap { case SelectableOption(value, text, _) => (<option value={ value }>{ text }</option>) % selected(deflt.exists(_ == value)) } }</select>)(_ % _)) %
-            ("onchange" -> (jsFunc match {
-              case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
-              case _ => makeAjaxCall(raw(funcName, "this"))
-            }))
+          (attrs.foldLeft(<select>{ opts.flatMap {
+            case option =>
+              option.attrs.foldLeft(<option value={ option.value }>{ option.label }</option>)(_ % _) %
+              selected(deflt.exists(_ == option.value))
+          } }</select>)(_ % _)) %
+          ("onchange" -> (jsFunc match {
+            case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
+            case _ => makeAjaxCall(raw(funcName, "this"))
+          }))
       }
     }
 
