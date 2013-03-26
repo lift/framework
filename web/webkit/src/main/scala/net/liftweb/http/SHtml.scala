@@ -1728,6 +1728,12 @@ trait SHtml {
   }
 
   final case class SelectableOption[T](value: T, label: String, attrs: ElemAttr*)
+  object SelectableOption {
+    implicit def tupleSeqToSelectableOptionSeq[T](seq: Seq[(T, String)]): Seq[SelectableOption[T]] =
+      seq.collect {
+        case (value, label) => SelectableOption(value, label)
+      }
+  }
 
   /**
    * Create a select box based on the list with a default value and the function to be executed on
