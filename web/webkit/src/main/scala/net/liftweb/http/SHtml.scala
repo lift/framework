@@ -1827,7 +1827,13 @@ trait SHtml {
     val vals = opts.map(_.value)
     val testFunc = LFuncHolder(in => in.filter(v => vals.contains(v)) match {case Nil => false case xs => func(xs)}, func.owner)
 
-    attrs.foldLeft(fmapFunc(testFunc)(fn => <select name={fn}>{opts.flatMap {case SelectableOption(value, text, _) => (<option value={value}>{text}</option>) % selected(deflt.exists(_ == value))}}</select>))(_ % _)
+    attrs.foldLeft(fmapFunc(testFunc) { fn =>
+      <select name={fn}>{opts.flatMap {
+        case option =>
+          option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _) %
+          selected(deflt.exists(_ == option.value))
+      }}</select>
+    })(_ % _)
   }
 
   /**
