@@ -1721,19 +1721,19 @@ trait SHtml {
                                onSubmit: T => Any): (Seq[SelectableOption[String]], Box[String], AFuncHolder) = {
     val secure = options.map {
       case selectableOption =>
-        (selectableOption.value, randomString(20), selectableOption.label)
+        SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
     }
 
-    val defaultNonce = default.flatMap {d =>
-      secure.find(_._1 == d).map(_._2)
+    val defaultNonce = default.flatMap { default =>
+      secure.find(_.value == default).map(_.nonce)
     }
 
     val nonces = secure.map {
-      case (obj, nonce, txt) =>
-        SelectableOption(nonce, txt)
+      case SelectableOptionWithNonce(obj, nonce, txt, attrs) =>
+        SelectableOption(nonce, txt, attrs)
     }
 
-    def process(nonce: String): Unit = secure.find(_._2 == nonce).map(x => onSubmit(x._1))
+    def process(nonce: String): Unit = secure.find(_.nonce == nonce).map(x => onSubmit(x.value))
 
     (nonces, defaultNonce, SFuncHolder(process))
   }
@@ -1745,6 +1745,8 @@ trait SHtml {
         case (value, label) => SelectableOption(value, label)
       }
   }
+
+  private final case class SelectableOptionWithNonce[T](value: T, nonce: String, label: String, attrs: ElemAttr*)
 
   /**
    * Create a select box based on the list with a default value and the function to be executed on
