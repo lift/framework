@@ -1896,7 +1896,11 @@ trait SHtml {
     fmapFunc(LFuncHolder(l => lf(l.filter(_ != hiddenId)))) {
       funcName => NodeSeq.fromSeq(
         List(
-          attrs.foldLeft(<select multiple="true" name={funcName}>{opts.flatMap {case SelectableOption(value, text, _) => (<option value={value}>{text}</option>) % selected(deflt.contains(value))}}</select>)(_ % _),
+          attrs.foldLeft(<select multiple="true" name={funcName}>{opts.flatMap {
+            case option =>
+              option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _) %
+              selected(deflt.contains(option.value))
+          }}</select>)(_ % _),
           <input type="hidden" value={hiddenId} name={funcName}/>
         )
       )
