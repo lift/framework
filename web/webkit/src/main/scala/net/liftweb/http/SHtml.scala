@@ -1719,11 +1719,22 @@ trait SHtml {
 
   private def secureOptions[T](options: Seq[SelectableOption[T]], default: Box[T],
                                onSubmit: T => Any): (Seq[SelectableOption[String]], Box[String], AFuncHolder) = {
-    val secure = options.map {case selectableOption => (selectableOption.value, randomString(20), selectableOption.label)}
-    val defaultNonce = default.flatMap(d => secure.find(_._1 == d).map(_._2))
-    val nonces = secure.map {case (obj, nonce, txt) => SelectableOption(nonce, txt)}
-    def process(nonce: String): Unit =
-      secure.find(_._2 == nonce).map(x => onSubmit(x._1))
+    val secure = options.map {
+      case selectableOption =>
+        (selectableOption.value, randomString(20), selectableOption.label)
+    }
+
+    val defaultNonce = default.flatMap {d =>
+      secure.find(_._1 == d).map(_._2)
+    }
+
+    val nonces = secure.map {
+      case (obj, nonce, txt) =>
+        SelectableOption(nonce, txt)
+    }
+
+    def process(nonce: String): Unit = secure.find(_._2 == nonce).map(x => onSubmit(x._1))
+
     (nonces, defaultNonce, SFuncHolder(process))
   }
 
