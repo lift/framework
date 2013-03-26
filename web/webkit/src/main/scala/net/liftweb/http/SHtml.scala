@@ -2001,20 +2001,20 @@ trait SHtml {
                                           onSubmit: List[T] => Any): (Seq[SelectableOption[String]], Seq[String], AFuncHolder) = {
       val o2 = options.toList
 
-      val secure: List[(T, String, String)] = o2.map {
-        case SelectableOption(obj, txt) =>
-          (obj, randomString(20), txt)
+      val secure: List[SelectableOptionWithNonce[T]] = o2.map {
+        case selectableOption =>
+          SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
       }
 
-      val sm: Map[String, T] = Map(secure.map(v => (v._2, v._1)): _*)
+      val sm: Map[String, T] = Map(secure.map(v => (v.label, v.value)): _*)
 
-      val defaultNonce: Seq[String] = default.flatMap { d =>
-        secure.find(_._1 == d).map(_._2)
+      val defaultNonce: Seq[String] = default.flatMap { defaultOption =>
+        secure.find(_.value == defaultOption).map(_.label)
       }
 
       val nonces: List[SelectableOption[String]] = secure.map {
-        case (obj, nonce, txt) =>
-          SelectableOption(nonce, txt)
+        case selectableOptionWithNonce =>
+          SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
       }.toList
 
       def process(info: List[String]): Unit = onSubmit(info.flatMap(sm.get))
