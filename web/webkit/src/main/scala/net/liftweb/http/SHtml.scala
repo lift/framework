@@ -2134,13 +2134,27 @@ trait SHtml {
    * @return ChoiceHolder containing the checkboxes and values in order
    */
   def checkbox[T](possible: Seq[T], actual: Seq[T], func: Seq[T] => Any, attrs: ElemAttr*): ChoiceHolder[T] = {
-    val len = possible.length
-    fmapFunc(LFuncHolder((strl: List[String]) => {func(strl.map(toInt(_)).filter(x => x >= 0 && x < len).map(possible(_))); true})) {
-      name =>
-              ChoiceHolder(possible.toList.zipWithIndex.map(p =>
-                      ChoiceItem(p._1,
-                        attrs.foldLeft(<input type="checkbox" name={name} value={p._2.toString}/>)(_ % _) %
-                                checked(actual.contains(p._1)) ++ (if (p._2 == 0) (<input type="hidden" name={name} value="-1"/>) else Nil))))
+    fmapFunc {
+      LFuncHolder((selectedChoiceValues: List[String]) => {
+        val validSelectedIndicies = selectedChoiceValues.map(_.toInt).filter(possible.isDefinedAt(_))
+        val selectedValues = validSelectedIndicies.map(possible(_))
+
+        func(selectedValues)
+        true
+      })
+    } { name =>
+      ChoiceHolder(possible.toList.zipWithIndex.map { possibleChoice =>
+        ChoiceItem(
+          possibleChoice._1,
+          attrs.foldLeft(<input type="checkbox" name={name} value={possibleChoice._2.toString}/>)(_ % _) %
+          checked(actual.contains(possibleChoice._1)) ++ {
+            if (possibleChoice._2 == 0)
+              <input type="hidden" name={name} value="-1"/>
+            else
+              Nil
+          }
+        )
+      })
     }
   }
 
