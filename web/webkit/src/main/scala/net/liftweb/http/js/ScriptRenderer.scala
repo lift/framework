@@ -69,10 +69,55 @@ object ScriptRenderer {
 
     },
 
+    knownPromises: {},
+
+    randStr: function() {
+           return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);},
+
+     makeGuid: function() {return this.randStr() + this.randStr() + '-' + this.randStr() + '-' + this.randStr() + '-' +
+                       this.randStr() + '-' + this.randStr() + this.randStr() + this.randStr();},
+
+    Promise: function() {
+      return {
+        guid: liftAjax.makeGuid(),
+        "_values": [],
+        '_events': [],
+        '_failMsg': "",
+        '_valueFuncs': [],
+        '_doneFuncs': [],
+        '_failureFuncs': [],
+        '_eventFuncs': [],
+        '_done': false,
+        '_failed': false,
+        process: function(evt) {if (this._done || this._failed) return;
+                                this._events.push(evt);
+                                for (var v in this._eventFuncs) {try {this._eventFuncs[v](evt);} catch (e) {console.log(e);}};
+                                if (evt.done) {this.done();} else if (evt.success) {this.success(evt.success);} else if (evt.failure) {this.fail(evt.failure);}},
+        success: function(value) {if (this._done || this._failed) return; this._values.push(value); for (var f in this._valueFuncs) {this._valueFuncs[f](value);}},
+        fail: function(msg) {if (this._done || this._failed) return; liftAjax._removeIt(this.guid); this._failed = true; this._failMsg = msg; for (var f in this._failureFuncs) {this._failureFuncs[f](msg);}},
+        done: function() {if (this._done || this._failed) return; liftAjax._removeIt(this.guid); this._done = true; for (var f in this._doneFuncs) {this._doneFuncs[f]();}},
+        onSuccess: function(f) {this._valueFuncs.push(f); for (var v in this._values) {try {f(this._values[v]);} catch (e) {console.log(e);}}},
+        onFailure: function(f) {this._failureFuncs.push(f); if (this._failed) {try {f(this._failMsg);} catch (e) {console.log(e);}}},
+        onDone: function(f) {this._doneFuncs.push(f); if (this._done) {try {f();} catch (e) {console.log(e);}}},
+        onEvent: function(f) {this._eventFuncs.push(f); for (var v in this._events) {try {f(this._events[v]);} catch (e) {console.log(e);}}}
+      };
+    },
+
+    _removeIt: function(g) {this.knownPromises[g] = undefined;},
+
+    sendEvent: function(g, evt) {
+      var p = this.knownPromises[g];
+      if (p) {
+        p.process(evt);
+      }
+    },
+
+    associate: function(promise) {this.knownPromises[promise.guid] = promise;},
+
     lift_uriSuffix: undefined,
 
     lift_logError: function(msg) {
-      """ + (LiftRules.jsLogFunc.map(_(JsVar("msg")).toJsCmd) openOr "") + """
+                                                                     """ + (LiftRules.jsLogFunc.map(_(JsVar("msg")).toJsCmd) openOr "") + """
     },
 
     lift_defaultLogError: function(msg) {

@@ -20,7 +20,8 @@ package http
 import java.lang.reflect.{Method}
 
 import collection.mutable.{HashMap, ListBuffer}
-import js.JE.{JsRaw, AnonFunc}
+import js.JE.{JsObj, JsRaw, AnonFunc}
+import js.JsCmds._Noop
 import xml._
 
 import common._
@@ -28,14 +29,14 @@ import Box._
 import actor._
 import util._
 import Helpers._
-import http.js.{JsCmd, AjaxInfo}
 import builtin.snippet._
 import js._
 import provider._
-import json.JsonAST
+import json._
 import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.UniqueTag
-
+import json.JsonAST.{JString, JValue}
+import xml.Group
 
 object LiftSession {
 
@@ -2624,6 +2625,175 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
+  /**
+   * Build a bunch of round-trip calls between the client and the server.
+   * The client calls the server with a parameter and the parameter gets
+   * marshalled to the server and the code is executed on the server.
+   * The result can be an item (JValue) or a Stream of Items.
+   *
+   * If the
+   * The // HERE
+   */
+  def buildRoundtrip(info: Seq[RoundTripInfo]): JsExp = {
+    testStatefulFeature{
+
+
+      val ca = new CometActor {
+        /**
+         * It's the main method to override, to define what is rendered by the CometActor
+         *
+         * There are implicit conversions for a bunch of stuff to
+         * RenderOut (including NodeSeq).  Thus, if you don't declare the return
+         * turn to be something other than RenderOut and return something that's
+         * coercible into RenderOut, the compiler "does the right thing"(tm) for you.
+         * <br/>
+         * There are implicit conversions for NodeSeq, so you can return a pile of
+         * XML right here.  There's an implicit conversion for NodeSeq => NodeSeq,
+         * so you can return a function (e.g., a CssBindFunc) that will convert
+         * the defaultHtml to the correct output.  There's an implicit conversion
+         * from JsCmd, so you can return a pile of JavaScript that'll be shipped
+         * to the browser.<br/>
+         * Note that the render method will be called each time a new browser tab
+         * is opened to the comet component or the comet component is otherwise
+         * accessed during a full page load (this is true if a partialUpdate
+         * has occurred.)  You may want to look at the fixedRender method which is
+         * only called once and sets up a stable rendering state.
+         */
+        def render: RenderOut = NodeSeq.Empty
+
+
+
+        override def lifespan = Full(120)
+
+        override def hasOuter = false
+
+        override def parentTag = <div style="display: none"/>
+
+        override def lowPriority: PartialFunction[Any, Unit] = {
+          case ItemMsg(guid, value) =>
+            partialUpdate(JsRaw(s"liftAjax.sendEvent(${guid.encJs}, {'success': ${Printer.compact(JsonAST.render(value))}} )").cmd)
+          case DoneMsg(guid) =>
+            partialUpdate(JsRaw(s"liftAjax.sendEvent(${guid.encJs}, {'done': true} )").cmd)
+
+          case FailMsg(guid, msg) =>
+            partialUpdate(JsRaw(s"liftAjax.sendEvent(${guid.encJs}, {'failure': ${msg.encJs} })").cmd)
+          case _ =>
+
+        }
+      }
+
+      synchronized {
+        asyncComponents(ca.theType -> ca.name) = ca
+        asyncById(ca.uniqueId) = ca
+      }
+
+      ca.callInitCometActor(this, Full(Helpers.nextFuncName), Full(Helpers.nextFuncName), NodeSeq.Empty, Map.empty)
+
+      implicit val defaultFormats = DefaultFormats
+
+      ca ! PerformSetupComet2(Empty)
+
+      val node: Elem = ca.buildSpan(ca.renderClock, NodeSeq.Empty)
+
+      S.addCometAtEnd(node)
+
+      val currentReq: Box[Req] = S.request.map(_.snapshot)
+
+      val renderVersion = RenderVersion.get
+
+      val jvmanifest: Manifest[JValue] = implicitly
+
+      val map = Map(info.map(i => i.name -> i) :_*)
+
+      def fixIt(in: Any): JValue = {
+        in match {
+          case jv: JValue => jv
+          case a => Extraction.decompose(a)
+        }
+      }
+
+      def localFunc(in: JValue): JsCmd = {
+        LAScheduler.execute(() => {
+          executeInScope(currentReq, renderVersion)(
+            for {
+              JString(guid) <- in \ "guid"
+              JString(name) <- in \ "name"
+              func <- map.get(name)
+              payload = in \ "payload"
+              reified <- if (func.manifest == jvmanifest) Some(payload) else {
+                try {Some(payload.extract(defaultFormats, func.manifest))} catch {
+                  case e: Exception =>
+                    logger.error("Failed to extract "+payload+" as "+func.manifest, e)
+                    ca ! FailMsg(guid, "Failed to extract payload as "+func.manifest+" exception "+ e.getMessage)
+                    None
+
+                }
+              }
+            } {
+              func match {
+                case StreamRoundTrip(_, func) =>
+                  try {
+                    for (v <- func.asInstanceOf[Function1[Any, Stream[Any]]](reified)) ca ! ItemMsg(guid,fixIt(v))
+                    ca ! DoneMsg(guid)
+                  } catch {
+                    case e: Exception => ca ! FailMsg(guid, e.getMessage)
+                  }
+
+                case SimpleRoundTrip(_, func) =>
+                  try {
+                    ca ! ItemMsg(guid, fixIt(func.asInstanceOf[Function1[Any, Any]](reified )))
+                    ca ! DoneMsg(guid)
+                  } catch {
+                    case e: Exception => ca ! FailMsg(guid, e.getMessage)
+                  }
+
+                case HandledRoundTrip(_, func) =>
+                  try {
+                    func.asInstanceOf[Function2[Any, RoundTripHandlerFunc, Unit]](reified, new RoundTripHandlerFunc {
+                      def done() {
+                        ca ! DoneMsg(guid)
+                      }
+
+                      def failure(msg: String) {
+                        ca ! FailMsg(guid, msg)
+                      }
+
+                      def send(value: JValue) {
+                        ca ! ItemMsg(guid, value)
+                      }
+                    })
+                  } catch {
+                    case e: Exception => ca ! FailMsg(guid, e.getMessage)
+                  }
+
+              }
+            })
+        })
+
+        _Noop
+      }
+
+
+      lazy val theFunc = JsRaw(s"""function(v) {${SHtml.jsonCall(JsRaw("v"), localFunc(_)).toJsCmd}}""")
+
+      lazy val build: (String, JsExp) = "_call_server" -> theFunc
+
+      JsObj(build :: info.map(info => info.name -> JsRaw(
+        s"""
+          |function(param) {
+          |  var promise = new liftAjax.Promise();
+          |  liftAjax.associate(promise);
+          |  this._call_server({guid: promise.guid, name: ${info.name.encJs}, payload: param});
+          |  return promise;
+          |}
+          |""".stripMargin)).toList :_*)
+    }
+  }
+
+  private case class ItemMsg(guid: String, item: JValue)
+  private case class DoneMsg(guid: String)
+  private case class FailMsg(guid: String, msg: String)
+
 }
 
 
@@ -2676,6 +2846,7 @@ private object SnippetNode {
       }
     }
   }
+
 
   private def isLiftClass(s: String): Boolean =
     s.startsWith("lift:") || s.startsWith("l:")
@@ -2867,5 +3038,54 @@ trait ScopedLiftActor extends LiftActor with LazyLoggable {
   protected def reportError(msg: String, exception: Exception) {
     logger.error(msg, exception)
   }
-
 }
+
+/**
+ * Stuff related to round trip messages
+ */
+sealed trait RoundTripInfo {
+  def name: String
+  def manifest: Manifest[_]
+}
+
+/**
+ * The companion objects. Has tasty implicits
+ */
+object RoundTripInfo {
+  implicit def streamBuilder[T](in: (String, T => Stream[Any]))(implicit m: Manifest[T]): RoundTripInfo =
+  StreamRoundTrip(in._1, in._2)(m)
+
+  implicit def simpleBuilder[T](in: (String, T => Any))(implicit m: Manifest[T]): RoundTripInfo =
+    SimpleRoundTrip(in._1, in._2)(m)
+
+  implicit def handledBuilder[T](in: (String, (T, RoundTripHandlerFunc) => Unit))(implicit m: Manifest[T]): RoundTripInfo =
+    HandledRoundTrip(in._1, in._2)(m)
+}
+
+/**
+ * A function (well, an interface with a bunch of methods on it) to call
+ * depending on the state of the round trip function.
+ */
+trait RoundTripHandlerFunc {
+  /**
+   * Send data back to the client. This may be called
+   * many times and each time, more data gets sent back to the client.
+   * @param value the data to send back.
+   */
+  def send(value: JValue): Unit
+
+  /**
+   * When you are done sending data back to the client, call this method
+   */
+  def done(): Unit
+
+  /**
+   * If there's a failure related to the computation, call this method.
+   * @param msg
+   */
+  def failure(msg: String): Unit
+}
+
+final case class StreamRoundTrip[T](name: String, func: T => Stream[Any])(implicit val manifest: Manifest[T]) extends RoundTripInfo
+final case class SimpleRoundTrip[T](name: String, func: T => Any)(implicit val manifest: Manifest[T]) extends RoundTripInfo
+final case class HandledRoundTrip[T](name: String, func: (T, RoundTripHandlerFunc) => Unit)(implicit val manifest: Manifest[T]) extends RoundTripInfo
