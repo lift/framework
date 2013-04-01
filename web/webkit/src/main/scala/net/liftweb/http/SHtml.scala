@@ -1763,7 +1763,7 @@ trait SHtml {
     (nonces, defaultNonce, SFuncHolder(process))
   }
 
-  final case class SelectableOption[T](value: T, label: String, attrs: ElemAttr*)
+  final case class SelectableOption[+T](value: T, label: String, attrs: ElemAttr*)
   object SelectableOption {
     implicit def tupleSeqToSelectableOptionSeq[T](seq: Seq[(T, String)]): Seq[SelectableOption[T]] =
       seq.collect {
@@ -1771,7 +1771,7 @@ trait SHtml {
       }
   }
 
-  private final case class SelectableOptionWithNonce[T](value: T, nonce: String, label: String, attrs: ElemAttr*)
+  private final case class SelectableOptionWithNonce[+T](value: T, nonce: String, label: String, attrs: ElemAttr*)
 
   /**
    * Create a select box based on the list with a default value and the function to be executed on
