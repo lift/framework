@@ -89,17 +89,17 @@ object ScriptRenderer {
         '_eventFuncs': [],
         '_done': false,
         '_failed': false,
-        process: function(evt) {if (this._done || this._failed) return;
+        processMsg: function(evt) {if (this._done || this._failed) return;
                                 this._events.push(evt);
                                 for (var v in this._eventFuncs) {try {this._eventFuncs[v](evt);} catch (e) {console.log(e);}};
-                                if (evt.done) {this.done();} else if (evt.success) {this.success(evt.success);} else if (evt.failure) {this.fail(evt.failure);}},
-        success: function(value) {if (this._done || this._failed) return; this._values.push(value); for (var f in this._valueFuncs) {this._valueFuncs[f](value);}},
-        fail: function(msg) {if (this._done || this._failed) return; liftAjax._removeIt(this.guid); this._failed = true; this._failMsg = msg; for (var f in this._failureFuncs) {this._failureFuncs[f](msg);}},
-        done: function() {if (this._done || this._failed) return; liftAjax._removeIt(this.guid); this._done = true; for (var f in this._doneFuncs) {this._doneFuncs[f]();}},
-        onSuccess: function(f) {this._valueFuncs.push(f); for (var v in this._values) {try {f(this._values[v]);} catch (e) {console.log(e);}}},
-        onFailure: function(f) {this._failureFuncs.push(f); if (this._failed) {try {f(this._failMsg);} catch (e) {console.log(e);}}},
-        onDone: function(f) {this._doneFuncs.push(f); if (this._done) {try {f();} catch (e) {console.log(e);}}},
-        onEvent: function(f) {this._eventFuncs.push(f); for (var v in this._events) {try {f(this._events[v]);} catch (e) {console.log(e);}}}
+                                if (evt.done) {this.doneMsg();} else if (evt.success) {this.successMsg(evt.success);} else if (evt.failure) {this.failMsg(evt.failure);}},
+        successMsg: function(value) {if (this._done || this._failed) return; this._values.push(value); for (var f in this._valueFuncs) {this._valueFuncs[f](value);}},
+        failMsg: function(msg) {if (this._done || this._failed) return; liftAjax._removeIt(this.guid); this._failed = true; this._failMsg = msg; for (var f in this._failureFuncs) {this._failureFuncs[f](msg);}},
+        doneMsg: function() {if (this._done || this._failed) return; liftAjax._removeIt(this.guid); this._done = true; for (var f in this._doneFuncs) {this._doneFuncs[f]();}},
+        then: function(f) {this._valueFuncs.push(f); for (var v in this._values) {try {f(this._values[v]);} catch (e) {console.log(e);}} return this;},
+        fail: function(f) {this._failureFuncs.push(f); if (this._failed) {try {f(this._failMsg);} catch (e) {console.log(e);}}; return this;},
+        done: function(f) {this._doneFuncs.push(f); if (this._done) {try {f();} catch (e) {console.log(e);}} return this;},
+        onEvent: function(f) {this._eventFuncs.push(f); for (var v in this._events) {try {f(this._events[v]);} catch (e) {console.log(e);}}; return this;}
       };
     },
 
@@ -108,7 +108,7 @@ object ScriptRenderer {
     sendEvent: function(g, evt) {
       var p = this.knownPromises[g];
       if (p) {
-        p.process(evt);
+        p.processMsg(evt);
       }
     },
 
