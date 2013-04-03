@@ -99,7 +99,7 @@ object ScriptRenderer {
         then: function(f) {this._valueFuncs.push(f); for (var v in this._values) {try {f(this._values[v]);} catch (e) {console.log(e);}} return this;},
         fail: function(f) {this._failureFuncs.push(f); if (this._failed) {try {f(this._failMsg);} catch (e) {console.log(e);}}; return this;},
         done: function(f) {this._doneFuncs.push(f); if (this._done) {try {f();} catch (e) {console.log(e);}} return this;},
-        onEvent: function(f) {this._eventFuncs.push(f); for (var v in this._events) {try {f(this._events[v]);} catch (e) {console.log(e);}}; return this;}
+        onEvent: function(f) {this._eventFuncs.push(f); for (var v in this._events) {try {f(this._events[v]);} catch (e) {console.log(e);}}; return this;},
         map: function(f) {var ret = new liftAjax.Promise(); this.done(function() {ret.doneMsg();}); this.fail(function (m) {ret.failMsg(m);}); this.then(function (v) {ret.successMsg(f(v));}); return ret;}
       };
     },
