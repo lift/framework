@@ -262,9 +262,10 @@ class LiftServlet extends Loggable {
       } else if (LiftRules.redirectAsyncOnSessionLoss && !hasSession(sessionIdCalc.id) && (isComet || isAjax)) {
         val theId = sessionIdCalc.id
 
-        // okay after 2 attempts to redirect, just ignore calls to the
-        // async URL
-        if (recentlyChecked(theId) > 1) {
+        // okay after 24 attempts to redirect, just ignore calls to the
+        // async URL. Why? Because there might be more than 1
+        // async window open and we want to make sure they all close
+        if (recentlyChecked(theId) > 25) {
           Empty
         } else {
           val cmd =
