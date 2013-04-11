@@ -102,8 +102,8 @@ object SerializationExamples extends Specification {
 
   "Option serialization example" in {
     val ser = swrite(Some(List(1, 2)))
-    read[Option[List[Int]]](ser) mustEqual Some(List(1, 2))
-    read[Option[List[Int]]]("") mustEqual None
+    (read[Option[List[Int]]](ser) mustEqual Some(List(1, 2))) and
+      (read[Option[List[Int]]]("") mustEqual None)
   }
 
   "None Option of tuple serialization example" in {
@@ -116,8 +116,8 @@ object SerializationExamples extends Specification {
   "Case class with internal state example" in {
     val m = Members("s", 1)
     val ser = swrite(m)
-    ser mustEqual """{"x":"s","y":1}"""
-    read[Members](ser) mustEqual m
+    (ser mustEqual """{"x":"s","y":1}""") and
+      (read[Members](ser) mustEqual m)
   }
 
   "Case class from type constructors example" in {
@@ -281,27 +281,35 @@ object CustomSerializerExamples extends Specification {
   implicit val formats =  Serialization.formats(NoTypeHints) +
     new IntervalSerializer + new PatternSerializer + new DateSerializer + new IndexedSeqSerializer
 
-  val i = new Interval(1, 4)
-  val ser = swrite(i)
-  ser mustEqual """{"start":1,"end":4}"""
-  val i2 = read[Interval](ser)
-  i2.startTime mustEqual i.startTime
-  i2.endTime mustEqual i.endTime
+  "Interval serialization example" in {
+    val i = new Interval(1, 4)
+    val ser = swrite(i)
+    ser mustEqual """{"start":1,"end":4}"""
+    val i2 = read[Interval](ser)
+    i2.startTime mustEqual i.startTime
+    i2.endTime mustEqual i.endTime
+  }
 
-  val pat = Pattern.compile("^Curly")
-  val pser = swrite(pat)
-  pser mustEqual """{"$pattern":"^Curly"}"""
-  read[Pattern](pser).pattern mustEqual pat.pattern
+  "Pattern serialization example" in {
+    val pat = Pattern.compile("^Curly")
+    val pser = swrite(pat)
+    pser mustEqual """{"$pattern":"^Curly"}"""
+    read[Pattern](pser).pattern mustEqual pat.pattern
+  }
 
-  val d = new Date(0)
-  val dser = swrite(d)
-  dser mustEqual """{"$dt":"1970-01-01T00:00:00.000Z"}"""
-  read[Date](dser) mustEqual d
+  "Date serialization example" in {
+    val d = new Date(0)
+    val dser = swrite(d)
+    dser mustEqual """{"$dt":"1970-01-01T00:00:00.000Z"}"""
+    read[Date](dser) mustEqual d
+  }
 
-  val xs = Indexed(Vector("a", "b", "c"))
-  val iser = swrite(xs)
-  iser mustEqual """{"xs":["a","b","c"]}"""
-  read[Indexed](iser).xs.toList mustEqual List("a","b","c")
+  "Indexed serialization example" in {
+    val xs = Indexed(Vector("a", "b", "c"))
+    val iser = swrite(xs)
+    iser mustEqual """{"xs":["a","b","c"]}"""
+    read[Indexed](iser).xs.toList mustEqual List("a","b","c")
+  }
 }
 
 case class Indexed(xs: IndexedSeq[String])

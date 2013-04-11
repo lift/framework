@@ -39,8 +39,8 @@ object FieldSerializerBugs extends Specification {
 
     val s = WithSymbol(5)
     val str = Serialization.write(s)
-    str mustEqual """{"a-b*c":5}"""
-    read[WithSymbol](str) mustEqual s
+    (str mustEqual """{"a-b*c":5}""") and
+      (read[WithSymbol](str) mustEqual s)
   }
 
   "FieldSerialization should work with Options" in {

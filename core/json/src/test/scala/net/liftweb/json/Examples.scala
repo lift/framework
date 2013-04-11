@@ -33,10 +33,10 @@ object Examples extends Specification {
   "Person example" in {
     val json = parse(person)
     val renderedPerson = Printer.pretty(render(json))
-    json mustEqual parse(renderedPerson)
-    render(json) mustEqual render(personDSL)
-    compact(render(json \\ "name")) mustEqual """{"name":"Joe","name":"Marilyn"}"""
-    compact(render(json \ "person" \ "name")) mustEqual "\"Joe\""
+    (json mustEqual parse(renderedPerson)) and
+      (render(json) mustEqual render(personDSL)) and
+      (compact(render(json \\ "name")) mustEqual """{"name":"Joe","name":"Marilyn"}""") and
+      (compact(render(json \ "person" \ "name")) mustEqual "\"Joe\"")
   }
 
   "Transformation example" in {
@@ -68,16 +68,16 @@ object Examples extends Specification {
 
   "Object array example" in {
     val json = parse(objArray)
-    compact(render(json \ "children" \ "name")) mustEqual """["name":"Mary","name":"Mazy"]"""
-    compact(render((json \ "children")(0) \ "name")) mustEqual "\"Mary\""
-    compact(render((json \ "children")(1) \ "name")) mustEqual "\"Mazy\""
-    (for { JField("name", JString(y)) <- json } yield y) mustEqual List("joe", "Mary", "Mazy")
+    (compact(render(json \ "children" \ "name")) mustEqual """["name":"Mary","name":"Mazy"]""") and
+      (compact(render((json \ "children")(0) \ "name")) mustEqual "\"Mary\"") and
+      (compact(render((json \ "children")(1) \ "name")) mustEqual "\"Mazy\"") and
+      ((for { JField("name", JString(y)) <- json } yield y) mustEqual List("joe", "Mary", "Mazy"))
   }
 
   "Unbox values using XPath-like type expression" in {
-    parse(objArray) \ "children" \\ classOf[JInt] mustEqual List(5, 3)
-    parse(lotto) \ "lotto" \ "winning-numbers" \ classOf[JInt] mustEqual List(2, 45, 34, 23, 7, 5, 3)
-    parse(lotto) \\ "winning-numbers" \ classOf[JInt] mustEqual List(2, 45, 34, 23, 7, 5, 3)
+    (parse(objArray) \ "children" \\ classOf[JInt] mustEqual List(5, 3)) and
+      (parse(lotto) \ "lotto" \ "winning-numbers" \ classOf[JInt] mustEqual List(2, 45, 34, 23, 7, 5, 3)) and
+      (parse(lotto) \\ "winning-numbers" \ classOf[JInt] mustEqual List(2, 45, 34, 23, 7, 5, 3))
   }
 
   "Quoted example" in {
@@ -102,14 +102,15 @@ object Examples extends Specification {
   }
 
   "Exponent example" in {
-    parse("""{"num": 2e5 }""") mustEqual JObject(List(JField("num", JDouble(200000.0))))
-    parse("""{"num": -2E5 }""") mustEqual JObject(List(JField("num", JDouble(-200000.0))))
-    parse("""{"num": 2.5e5 }""") mustEqual JObject(List(JField("num", JDouble(250000.0))))
-    parse("""{"num": 2.5e-5 }""") mustEqual JObject(List(JField("num", JDouble(2.5e-5))))
+    (parse("""{"num": 2e5 }""") mustEqual JObject(List(JField("num", JDouble(200000.0))))) and
+      (parse("""{"num": -2E5 }""") mustEqual JObject(List(JField("num", JDouble(-200000.0))))) and
+      (parse("""{"num": 2.5e5 }""") mustEqual JObject(List(JField("num", JDouble(250000.0))))) and
+      (parse("""{"num": 2.5e-5 }""") mustEqual JObject(List(JField("num", JDouble(2.5e-5)))))
   }
 
   "JSON building example" in {
-    val json = concat(JField("name", JString("joe")), JField("age", JInt(34))) ++ concat(JField("name", JString("mazy")), JField("age", JInt(31)))
+    val json = concat(JField("name", JString("joe")), JField("age", JInt(34))) ++
+               concat(JField("name", JString("mazy")), JField("age", JInt(31)))
     compact(render(json)) mustEqual """[{"name":"joe","age":34},{"name":"mazy","age":31}]"""
   }
 
