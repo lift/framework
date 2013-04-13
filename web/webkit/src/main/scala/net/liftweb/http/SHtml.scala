@@ -885,9 +885,8 @@ trait SHtml {
       secure.find(_.value == d).map(_.nonce)
     }
 
-    val nonces = secure.map {
-      case selectableOptionWithNonce =>
-        SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
+    val nonces = secure.map { selectableOptionWithNonce =>
+      SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
     }
 
     def process(nonce: String): JsCmd =
