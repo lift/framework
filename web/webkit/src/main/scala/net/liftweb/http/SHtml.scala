@@ -1744,18 +1744,16 @@ trait SHtml {
 
   private def secureOptions[T](options: Seq[SelectableOption[T]], default: Box[T],
                                onSubmit: T => Any): (Seq[SelectableOption[String]], Box[String], AFuncHolder) = {
-    val secure = options.map {
-      case selectableOption =>
-        SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
+    val secure = options.map { selectableOption =>
+      SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
     }
 
     val defaultNonce = default.flatMap { default =>
       secure.find(_.value == default).map(_.nonce)
     }
 
-    val nonces = secure.map {
-      case selectableOptionWithNonce =>
-        SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
+    val nonces = secure.map { selectableOptionWithNonce =>
+      SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
     }
 
     def process(nonce: String): Unit = secure.find(_.nonce == nonce).map(x => onSubmit(x.value))
