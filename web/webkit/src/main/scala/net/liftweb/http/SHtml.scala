@@ -940,8 +940,7 @@ trait SHtml {
       secure.find(_.value == d).map(_.nonce)
     }
 
-    val nonces = secure.map {
-      case selectableOptionWithNonce =>
+    val nonces = secure.map { selectableOptionWithNonce =>
         SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
     }
 
