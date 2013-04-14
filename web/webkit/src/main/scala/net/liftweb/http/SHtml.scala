@@ -1582,7 +1582,10 @@ trait SHtml {
   /**
    * Add appropriate attributes to an input type="submit" or button
    * element to make it submit an ajaxForm correctly and return a JsCmd
-   * to the client.
+   * to the client. Note that the key difference between this and ajaxSubmit
+   * is that ajaxSubmit returns a complete input type="submit" element, while
+   * ajaxOnSubmit applies the right attributes to any input type="submit" *or*
+   * button element.
    *
    * Example:
    *
