@@ -876,9 +876,8 @@ trait SHtml {
   def ajaxSelectObj[T](options: Seq[SelectableOption[T]], default: Box[T],
                        onSubmit: T => JsCmd, attrs: ElemAttr*): Elem = {
 
-    val secure = options.map {
-      case selectableOption =>
-        SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
+    val secure = options.map { selectableOption =>
+      SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
     }
 
     val defaultNonce = default.flatMap { d =>
@@ -931,9 +930,8 @@ trait SHtml {
                        jsFunc: Call,
                        onSubmit: T => JsCmd, attrs: ElemAttr*): Elem = {
 
-    val secure = options.map {
-      case selectableOption =>
-        SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
+    val secure = options.map { selectableOption =>
+      SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
     }
 
     val defaultNonce = default.flatMap { d =>
@@ -2041,9 +2039,8 @@ trait SHtml {
                                           onSubmit: List[T] => Any): (Seq[SelectableOption[String]], Seq[String], AFuncHolder) = {
       val o2 = options.toList
 
-      val secure: List[SelectableOptionWithNonce[T]] = o2.map {
-        case selectableOption =>
-          SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
+      val secure: List[SelectableOptionWithNonce[T]] = o2.map { selectableOption =>
+        SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
       }
 
       val sm: Map[String, T] = Map(secure.map(v => (v.label, v.value)): _*)
@@ -2052,9 +2049,8 @@ trait SHtml {
         secure.find(_.value == defaultOption).map(_.label)
       }
 
-      val nonces: List[SelectableOption[String]] = secure.map {
-        case selectableOptionWithNonce =>
-          SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
+      val nonces: List[SelectableOption[String]] = secure.map { selectableOptionWithNonce =>
+        SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
       }.toList
 
       def process(info: List[String]): Unit = onSubmit(info.flatMap(sm.get))
