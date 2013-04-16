@@ -551,6 +551,7 @@ object Req {
              !updated.startsWith("javascript:") &&
              !updated.startsWith("http://") &&
              !updated.startsWith("https://") &&
+             !updated.startsWith("//") &&
              !updated.startsWith("#"))
          rewrite.openOrThrowException("legacy code").apply(updated) else updated)
   }
