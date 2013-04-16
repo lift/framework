@@ -544,6 +544,7 @@ object Req {
   private def _fixHref(contextPath: String, v: Seq[Node], fixURL: Boolean, rewrite: Box[String => String]): Text = {
     val hv = v.text
     val updated = if (hv.startsWith("/") &&
+                      !hv.startsWith("//") &&
                       !LiftRules.excludePathFromContextPathRewriting.vend(hv)) contextPath + hv else hv
 
     Text(if (fixURL && rewrite.isDefined &&
