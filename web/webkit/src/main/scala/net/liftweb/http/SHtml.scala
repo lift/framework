@@ -1580,6 +1580,46 @@ trait SHtml {
   }
 
   /**
+   * Add appropriate attributes to an input type="submit" or button
+   * element to make it submit an ajaxForm correctly and return a JsCmd
+   * to the client. Note that the key difference between this and ajaxSubmit
+   * is that ajaxSubmit returns a complete input type="submit" element, while
+   * ajaxOnSubmit applies the right attributes to any input type="submit" *or*
+   * button element.
+   *
+   * Example:
+   *
+   *  <pre>"type=submit" #> ajaxOnSubmit(() => Alert("Done!"))</pre>
+   */
+  def ajaxOnSubmit(func: () => JsCmd): (NodeSeq)=>NodeSeq = {
+    val fgSnap = S._formGroup.get
+
+    (in: NodeSeq) => S._formGroup.doWith(fgSnap) {
+      def runNodes(ns: NodeSeq): NodeSeq = {
+        def addAttributes(elem: Elem, name: String) = {
+          val clickJs = "liftAjax.lift_uriSuffix = '" + name + "=_'; return true;"
+
+          elem % ("name" -> name) % ("onclick" -> clickJs)
+        }
+
+        ns.flatMap {
+          case Group(nodes) => runNodes(nodes)
+
+          case e: Elem if (e.label == "button") ||
+                          (e.label == "input" && e.attribute("type").map(_.text) == Some("submit")) =>
+            _formGroup.is match {
+              case Empty =>
+                formGroup(1)(fmapFunc(func)(addAttributes(e, _)))
+              case _ => fmapFunc(func)(addAttributes(e, _))
+            }
+        }
+      }
+
+      runNodes(in)
+    }
+  }
+
+  /**
    * Generates a form submission button with a default label.
    *
    * @param func The function that will be executed on form submission
