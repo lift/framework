@@ -137,3 +137,9 @@ Taylor Leese
 
 ### Email: ###
 tleese22 at gmail dot com
+
+### Name: ###
+Jon Hoffman
+
+### Email: ###
+jonhoffman at gmail dot com
