@@ -17,9 +17,12 @@
 package net.liftweb
 package http
 
-import java.lang.reflect.{Method}
+import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
 
-import collection.mutable.{HashMap, ListBuffer}
+import collection.mutable.{ConcurrentMap, HashMap, ListBuffer}
+import collection.JavaConversions
+
 import xml._
 
 import common._
@@ -149,6 +152,29 @@ object LiftSession {
   def checkForContentId(in: NodeSeq): NodeSeq =
     Templates.checkForContentId(in)
 
+  /**
+   * Cache for findSnippetClass lookups.
+   */
+  private val snippetClassMap: ConcurrentMap[String, Box[Class[AnyRef]]] = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap())
+  
+  /*
+   * Given a Snippet name, try to determine the fully-qualified Class
+   * so that we can instantiate it via reflection.
+   */
+  def findSnippetClass(name: String): Box[Class[AnyRef]] = {
+    if (name == null) Empty
+    else {
+      snippetClassMap.getOrElseUpdate(name,{
+        // Name might contain some relative packages, so split them out and put them in the proper argument of findClass
+        val (packageSuffix, terminal) = name.lastIndexOf('.') match {
+          case -1 => ("", name)
+          case i => ("." + name.substring(0, i), name.substring(i + 1))
+        }
+        findClass(terminal, LiftRules.buildPackage("snippet").map(_ + packageSuffix) :::
+          (("lift.app.snippet" + packageSuffix) :: ("net.liftweb.builtin.snippet" + packageSuffix) :: Nil))
+      })
+    }
+  }
 
 }
 
@@ -1350,23 +1376,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
-  /*
-   * Given a Snippet name, try to determine the fully-qualified Class
-   * so that we can instantiate it via reflection.
-   */
-  private def findSnippetClass(name: String): Box[Class[AnyRef]] = {
-    if (name == null) Empty
-    else {
-      // Name might contain some relative packages, so split them out and put them in the proper argument of findClass
-      val (packageSuffix, terminal) = name.lastIndexOf('.') match {
-        case -1 => ("", name)
-        case i => ("." + name.substring(0, i), name.substring(i + 1))
-      }
-      findClass(terminal, LiftRules.buildPackage("snippet").map(_ + packageSuffix) :::
-        (("lift.app.snippet" + packageSuffix) :: ("net.liftweb.builtin.snippet" + packageSuffix) :: Nil))
-    }
-  }
-
   private def instantiateOrRedirect[T](c: Class[T]): Box[T] = {
     try {
       LiftSession.constructFrom(this,
@@ -1386,7 +1395,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
       first(LiftRules.snippetNamesToSearch.vend(cls)) {
         nameToTry =>
-          findSnippetClass(nameToTry) flatMap {
+          LiftSession.findSnippetClass(nameToTry) flatMap {
             clz =>
               instantiateOrRedirect(clz) flatMap {
                 inst =>
@@ -1479,7 +1488,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * See if there's a object singleton with the right name
    */
   private def findSnippetObject(cls: String): Box[AnyRef] =
-    findSnippetClass(cls + "$").flatMap {
+    LiftSession.findSnippetClass(cls + "$").flatMap {
       c =>
         tryo {
           val field = c.getField("MODULE$")
@@ -1501,7 +1510,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private def findSnippetInstance(cls: String): Box[AnyRef] =
     S.snippetForClass(cls) or
       (LiftRules.snippet(cls) or
-        findSnippetClass(cls).flatMap(c => instantiateOrRedirect(c) or findSnippetObject(cls))) match {
+        LiftSession.findSnippetClass(cls).flatMap(c => instantiateOrRedirect(c) or findSnippetObject(cls))) match {
       case Full(inst: StatefulSnippet) =>
         inst.addName(cls); S.overrideSnippetForClass(cls, inst); Full(inst)
       case Full(ret) => Full(ret)
