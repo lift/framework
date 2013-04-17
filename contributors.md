@@ -137,3 +137,10 @@ Taylor Leese
 
 ### Email: ###
 tleese22 at gmail dot com
+
+### Name: ###
+Will Palmeri
+
+### Email: ###
+wpalmeri at gmail dot com
+

@@ -433,6 +433,86 @@ object JsonAST {
     }
     buf.toString
   }
+
+  /** Renders JSON directly to string in compact format.
+   * This is an optimized version of compact(render(value))
+   * when the intermediate Document is not needed.
+   */
+  def compactRender(value: JValue): String = {
+    bufRender(value, new StringBuilder).toString()
+  }
+
+  /**
+   *
+   * @param value the JSON to render
+   * @param buf the buffer to render the JSON into. may not be empty
+   */
+  private def bufRender(value: JValue, buf: StringBuilder): StringBuilder = value match {
+    case null          => buf.append("null")
+    case JBool(true)   => buf.append("true")
+    case JBool(false)  => buf.append("false")
+    case JDouble(n)    => buf.append(n.toString)
+    case JInt(n)       => buf.append(n.toString)
+    case JNull         => buf.append("null")
+    case JNothing      => sys.error("can't render 'nothing'")
+    case JString(null) => buf.append("null")
+    case JString(s)    => bufQuote(s, buf)
+    case JArray(arr)   => bufRenderArr(arr, buf)
+    case JField(k, v)  => bufQuote(k, buf).append(":"); bufRender(v, buf)
+    case JObject(obj)  => bufRenderObj(obj, buf)
+  }
+
+  private def bufRenderArr(xs: List[JValue], buf: StringBuilder): StringBuilder = {
+    buf.append("[") //open array
+    if (!xs.isEmpty) {
+      xs.foreach(elem => if (elem.values != JNothing) {
+        bufRender(elem, buf)
+        buf.append(",")
+      })
+      if (buf.last == ',')
+        buf.deleteCharAt(buf.length - 1) //delete last comma
+    }
+    buf.append("]")
+    buf
+  }
+
+  private def bufRenderObj(xs: List[JField], buf: StringBuilder): StringBuilder = {
+    buf.append("{") //open bracket
+    if (!xs.isEmpty) {
+      xs.foreach(elem => if (elem.value != JNothing) {
+        bufQuote(elem.name, buf)
+        buf.append(":")
+        bufRender(elem.value, buf)
+        buf.append(",")
+      })
+      if (buf.last == ',')
+        buf.deleteCharAt(buf.length - 1) //delete last comma
+    }
+    buf.append("}") //close bracket
+    buf
+  }
+
+  private def bufQuote(s: String, buf: StringBuilder): StringBuilder = {
+    buf.append("\"") //open quote
+    for (i <- 0 until s.length) {
+      buf.append(s.charAt(i) match {
+        case '"'  => "\\\""
+        case '\\' => "\\\\"
+        case '\b' => "\\b"
+        case '\f' => "\\f"
+        case '\n' => "\\n"
+        case '\r' => "\\r"
+        case '\t' => "\\t"
+        case c if ((c >= '\u0000' && c < '\u0020')) => "\\u%04x".format(c: Int)
+        case c => c
+      })
+    }
+    buf.append("\"") //close quote
+    buf
+  }
+
+
+
 }
 
 /** Basic implicit conversions from primitive types into JSON.
