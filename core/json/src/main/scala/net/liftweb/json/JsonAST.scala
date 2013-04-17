@@ -396,7 +396,6 @@ object JsonAST {
     case JDouble(n)    => text(n.toString)
     case JInt(n)       => text(n.toString)
     case JNull         => text("null")
-    case JNothing      => sys.error("can't render 'nothing'")
     case JString(null) => text("null")
     case JString(s)    => text("\"" + quote(s) + "\"")
     case JArray(arr)   => text("[") :: series(trimArr(arr).map(render)) :: text("]")
@@ -404,6 +403,7 @@ object JsonAST {
     case JObject(obj)  =>
       val nested = break :: fields(trimObj(obj).map(f => text("\"" + quote(f.name) + "\":") :: render(f.value)))
       text("{") :: nest(2, nested) :: break :: text("}")
+    case JNothing      => sys.error("can't render 'nothing'") //TODO: this should not throw an exception
   }
 
   private def trimArr(xs: List[JValue]) = xs.filter(_ != JNothing)
@@ -417,6 +417,11 @@ object JsonAST {
 
   private[json] def quote(s: String): String = {
     val buf = new StringBuilder
+    appendEscapedString(buf, s)
+    buf.toString
+  }
+
+  private def appendEscapedString(buf: StringBuilder, s: String) {
     for (i <- 0 until s.length) {
       val c = s.charAt(i)
       buf.append(c match {
@@ -431,8 +436,73 @@ object JsonAST {
         case c => c
       })
     }
-    buf.toString
   }
+
+  /** Renders JSON directly to string in compact format.
+   * This is an optimized version of compact(render(value))
+   * when the intermediate Document is not needed.
+   */
+  def compactRender(value: JValue): String = {
+    bufRender(value, new StringBuilder).toString()
+  }
+
+  /**
+   *
+   * @param value the JSON to render
+   * @param buf the buffer to render the JSON into. may not be empty
+   */
+  private def bufRender(value: JValue, buf: StringBuilder): StringBuilder = value match {
+    case null          => buf.append("null")
+    case JBool(true)   => buf.append("true")
+    case JBool(false)  => buf.append("false")
+    case JDouble(n)    => buf.append(n.toString)
+    case JInt(n)       => buf.append(n.toString)
+    case JNull         => buf.append("null")
+    case JString(null) => buf.append("null")
+    case JString(s)    => bufQuote(s, buf)
+    case JArray(arr)   => bufRenderArr(arr, buf)
+    case JField(k, v)  => bufQuote(k, buf).append(":"); bufRender(v, buf)
+    case JObject(obj)  => bufRenderObj(obj, buf)
+    case JNothing      => sys.error("can't render 'nothing'") //TODO: this should not throw an exception
+  }
+
+  private def bufRenderArr(xs: List[JValue], buf: StringBuilder): StringBuilder = {
+    buf.append("[") //open array
+    if (!xs.isEmpty) {
+      xs.foreach(elem => if (elem.values != JNothing) {
+        bufRender(elem, buf)
+        buf.append(",")
+      })
+      if (buf.last == ',')
+        buf.deleteCharAt(buf.length - 1) //delete last comma
+    }
+    buf.append("]")
+    buf
+  }
+
+  private def bufRenderObj(xs: List[JField], buf: StringBuilder): StringBuilder = {
+    buf.append("{") //open bracket
+    if (!xs.isEmpty) {
+      xs.foreach(elem => if (elem.value != JNothing) {
+        bufQuote(elem.name, buf)
+        buf.append(":")
+        bufRender(elem.value, buf)
+        buf.append(",")
+      })
+      if (buf.last == ',')
+        buf.deleteCharAt(buf.length - 1) //delete last comma
+    }
+    buf.append("}") //close bracket
+    buf
+  }
+
+  private def bufQuote(s: String, buf: StringBuilder): StringBuilder = {
+    buf.append("\"") //open quote
+    appendEscapedString(buf, s)
+    buf.append("\"") //close quote
+    buf
+  }
+
 }
 
 /** Basic implicit conversions from primitive types into JSON.
