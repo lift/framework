@@ -41,12 +41,12 @@ object Serbench extends Benchmark {
   }
 
   def main(args: Array[String]) = {
-    //    println("** No type hints")
-    //    new Bench()(Serialization.formats(NoTypeHints))
-    //    println("** Short type hints")
-    //    new Bench()(Serialization.formats(ShortTypeHints(classes)))
-    //    println("** Full type hints")
-    //    new Bench()(Serialization.formats(FullTypeHints(classes)))
+    println("** No type hints")
+    new Bench()(Serialization.formats(NoTypeHints))
+    println("** Short type hints")
+    new Bench()(Serialization.formats(ShortTypeHints(classes)))
+    println("** Full type hints")
+    new Bench()(Serialization.formats(FullTypeHints(classes)))
     println("** JValue Serialization")
     new JValueBench()
   }
