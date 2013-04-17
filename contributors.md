@@ -161,3 +161,10 @@ Jon Hoffman
 
 ### Email: ###
 jonhoffman at gmail dot com
+
+###Name: ###
+Will Palmeri
+
+### Email: ###
+wpalmeri at gmail dot com
+
