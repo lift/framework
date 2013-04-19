@@ -35,7 +35,7 @@ object Serialization {
   /** Serialize to String.
    */
   def write[A <: AnyRef](a: A)(implicit formats: Formats): String =
-    (write(a, new StringWriter)(formats)).toString
+    compactRender(Extraction.decompose(a)(formats))
 
   /** Serialize to Writer.
    */
