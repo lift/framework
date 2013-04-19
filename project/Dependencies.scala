@@ -31,7 +31,7 @@ object Dependencies {
 
   lazy val scalazGroup       = defaultOrMapped("org.scalaz")
   lazy val scalazVersion     = defaultOrMapped("6.0.4", "2.9.0" -> "6.0.RC2")
-  lazy val scalaz7Version    = defaultOrMapped("7.0.0-M9")
+  lazy val scalaz7Version    = defaultOrMapped("7.0.0-RC2")
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
