@@ -813,6 +813,17 @@ object JsCmds {
   }
 
   /**
+   * JsSchedule the execution of the JsCmd using setTimeout()
+   * @param what the code to execute
+   */
+  case class JsSchedule(what: JsCmd) extends JsCmd {
+    def toJsCmd = s"""setTimeout(function()
+    {
+      ${what.toJsCmd}
+    } , 0);"""
+  }
+
+  /**
    * A companion object with a helpful alternative constructor
    */
   object RedirectTo {

@@ -729,8 +729,9 @@ class LiftServlet extends Loggable {
           sessionActor.getAsyncComponent(name).toList.map(c => (c, toLong(when)))
       }
 
-    if (actors.isEmpty) Left(Full(new JsCommands(LiftRules.noCometSessionCmd.vend :: js.JE.JsRaw("lift_toWatch = {};").cmd :: Nil).toResponse))
-    else requestState.request.suspendResumeSupport_? match {
+    if (actors.isEmpty) {
+      Left(Full(JsCommands(List(LiftRules.noCometSessionCmd.vend, js.JE.JsRaw("lift_toWatch = {};").cmd)).toResponse))
+    } else requestState.request.suspendResumeSupport_? match {
       case true => {
         setupContinuation(requestState, sessionActor, actors)
         Left(Full(EmptyResponse))

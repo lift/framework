@@ -320,11 +320,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   private def _getLiftSession(req: Req): LiftSession = {
     val wp = req.path.wholePath
-    val cometSessionId =
-    if (wp.length >= 3 && wp.head == LiftRules.cometPath)
-      Full(wp(2))
-    else
-      Empty
+    val CP = LiftRules.cometPath
+    val cometSessionId = wp match {
+      case CP :: _ :: session :: _ => Full(session)
+      case _ => Empty
+    }
 
     val ret = SessionMaster.getSession(req, cometSessionId) match {
       case Full(ret) =>
@@ -658,7 +658,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * default of reloading the current page.
    */
   val noCometSessionCmd = new FactoryMaker[JsCmd](
-    () => JsCmds.Run("liftComet.lift_sessionLost()")
+    () => {
+      JsCmds.Run("liftComet.lift_sessionLost();")
+    }
   ) {}
 
   /**
@@ -671,7 +673,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * liftAjax.lift_sessionLost reloads the page by default.
    */
   val noAjaxSessionCmd = new FactoryMaker[JsCmd](
-    () => JsCmds.Run("liftAjax.lift_sessionLost()")
+    () => {
+      JsCmds.Run("liftAjax.lift_sessionLost();")
+    }
   ) {}
 
   /**
