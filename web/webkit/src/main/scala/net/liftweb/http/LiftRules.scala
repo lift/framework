@@ -36,7 +36,7 @@ import java.util.concurrent.{ConcurrentHashMap => CHash}
 import scala.reflect.Manifest
 
 import java.util.concurrent.atomic.AtomicInteger
-import actor.LAFuture
+import net.liftweb.actor.{LiftActor, LAFuture}
 
 class LiftRulesJBridge {
   def liftRules: LiftRules = LiftRules
@@ -677,6 +677,18 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
       JsCmds.Run("liftAjax.lift_sessionLost();")
     }
   ) {}
+
+  /**
+   * Server-side actors that represent client-side
+   * actor endpoints (client actors, Round Trips) need
+   * a lifespan. By default, it's 60 seconds, but you might
+   * want to make it longer if the client is going to get
+   * delayed by long computations that bar it from re-establishing
+   * the long polling connection
+   */
+  val clientActorLifespan = new FactoryMaker[LiftActor => Long](
+    () => (actor: LiftActor) => (60 seconds): Long
+  ){}
 
   /**
    * Put a function that will calculate the request timeout based on the

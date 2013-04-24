@@ -2259,7 +2259,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
 
 
-        override def lifespan = Full(60 seconds)
+        override def lifespan = Full(LiftRules.clientActorLifespan.vend.apply(this))
 
         override def hasOuter = false
 
@@ -2674,7 +2674,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
 
 
-        override def lifespan = Full(60 seconds)
+        override def lifespan = Full(LiftRules.clientActorLifespan.vend.apply(this))
 
         override def hasOuter = false
 
