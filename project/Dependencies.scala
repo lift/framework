@@ -30,8 +30,8 @@ object Dependencies {
   lazy val slf4jVersion = "1.7.2"
 
   lazy val scalazGroup       = defaultOrMapped("org.scalaz")
-  lazy val scalazVersion     = defaultOrMapped("6.0.4", "2.9.0" -> "6.0.RC2")
-  lazy val scalaz7Version    = defaultOrMapped("7.0.0-RC2")
+  lazy val scalazVersion     = defaultOrMapped("6.0.4")
+  lazy val scalaz7Version    = defaultOrMapped("7.0.0")
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
@@ -47,7 +47,7 @@ object Dependencies {
   lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.4"     cross CVMapping29
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _
   lazy val scala_compiler: ModuleMap = "org.scala-lang"          % "scala-compiler"     % _
-  lazy val scalaz_core: ModuleMap = sv => scalazGroup(sv)        % "scalaz-core"        % scalazVersion(sv) cross crossMapped("2.10.0" -> "2.10.0-RC5", "2.9.2" -> "2.9.1", "2.9.1-1" -> "2.9.1")
+  lazy val scalaz_core: ModuleMap = sv => scalazGroup(sv)        % "scalaz-core"        % scalazVersion(sv) cross CVMappingAll
   lazy val scalaz7_core: ModuleMap = sv => scalazGroup(sv)       % "scalaz-core"        % scalaz7Version(sv) cross CVMapping29
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
   lazy val squeryl                = "org.squeryl"                % "squeryl"            % "0.9.5-6" cross CVMapping29
