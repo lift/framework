@@ -2759,16 +2759,25 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                 case HandledRoundTrip(_, func) =>
                   try {
                     func.asInstanceOf[Function2[Any, RoundTripHandlerFunc, Unit]](reified, new RoundTripHandlerFunc {
+                      @volatile private var done_? = false
                       def done() {
-                        ca ! DoneMsg(guid)
+                        if (!done_?) {
+                          done_? = true
+                          ca ! DoneMsg(guid)
+                        }
                       }
 
                       def failure(msg: String) {
-                        ca ! FailMsg(guid, msg)
+                        if (!done_?) {
+                          done_? = true
+                          ca ! FailMsg(guid, msg)
+                        }
                       }
 
                       def send(value: JValue) {
-                        ca ! ItemMsg(guid, value)
+                        if (!done_?) {
+                          ca ! ItemMsg(guid, value)
+                        }
                       }
                     })
                   } catch {
