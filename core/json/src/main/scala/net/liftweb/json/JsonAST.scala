@@ -246,6 +246,14 @@ object JsonAST {
     def filter(p: JValue => Boolean): List[JValue] =
       fold(List[JValue]())((acc, e) => if (p(e)) e :: acc else acc).reverse
 
+    /**
+     * Satisfy ScalaC's insistance on withFilter. Just calls filter
+     *
+     * @param p the filter
+     * @return a List of JValue
+     */
+    def withFilter(p: JValue => Boolean): List[JValue] = filter(p)
+
     /** Concatenate with another JSON.
      * This is a concatenation monoid: (JValue, ++, JNothing)
      * <p>
