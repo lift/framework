@@ -66,7 +66,7 @@ trait Dependent {
   /**
    * Remove from all dependencies
    */
-  protected def unregisterFromAllDepenencies(): Unit = {
+  protected def unregisterFromAllDependencies(): Unit = {
     whoDoIDependOn.foreach(_.removeDependent(this))
   }
 }
