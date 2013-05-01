@@ -654,7 +654,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   // HttpServletRequests that have expired; these will then throw
   // NullPointerExceptions when their server name or otherwise are
   // accessed.
-  private[http] def cometForHost(hostAndPath: String): (List[(LiftActor, Req)], List[(LiftActor, Req)]) =
+  def cometForHost(hostAndPath: String): (List[(LiftActor, Req)], List[(LiftActor, Req)]) =
     synchronized {
       cometList
     }.foldLeft((List[(LiftActor, Req)](), List[(LiftActor, Req)]())) {
@@ -674,6 +674,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
 
   private[http] def enterComet(what: (LiftActor, Req)): Unit = synchronized {
+    LiftRules.makeCometBreakoutDecision(this, what._2)
     cometList = what :: cometList
   }
 
@@ -785,7 +786,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     sessionRewriter = HashMap.empty
   }
 
-  private[http] def fixSessionTime(): Unit = synchronized {
+  def fixSessionTime(): Unit = synchronized {
     for (httpSession <- this.httpSession) {
       lastServiceTime = millis // DO NOT REMOVE THIS LINE!!!!!
       val diff = lastServiceTime - httpSession.lastAccessedTime
@@ -800,7 +801,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
-  private[http] def doCometActorCleanup(): Unit = {
+  def doCometActorCleanup(): Unit = {
     import scala.collection.JavaConversions._
     val acl =
       this.nasyncComponents.values.toList
@@ -849,7 +850,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
-  private[http] def cleanupUnseenFuncs(): Unit = {
+  def cleanupUnseenFuncs(): Unit = {
     if (LiftRules.enableLiftGC && stateful_?) {
       val now = millis
 
