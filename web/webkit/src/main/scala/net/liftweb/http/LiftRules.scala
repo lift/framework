@@ -404,7 +404,8 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * will be sent to all Comet requests to terminate
    */
   val maxConcurrentRequests: FactoryMaker[Req => Int] = new FactoryMaker((x: Req) => x match {
-    case r if r.isFirefox35_+ || r.isIE8 || r.isIE9 || r.isChrome3_+ || r.isOpera9 || r.isSafari3_+ => 5
+    case r if r.isIPad || r.isIPhone => 1
+    case r if r.isFirefox35_+ || r.isIE8 || r.isIE9 || r.isChrome3_+ || r.isOpera9 || r.isSafari3_+ => 4
     case _ => 2
   }) {}
 
@@ -1801,6 +1802,12 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   def addSyncProvider(asyncMeta: AsyncProviderMeta) {
     if (doneBoot) throw new IllegalStateException("Cannot modify after boot.")
     asyncMetaList ::= asyncMeta
+  }
+
+  def updateAsyncMetaList(f: List[AsyncProviderMeta] => List[AsyncProviderMeta]) {
+    if (doneBoot) throw new IllegalStateException("Cannot modify after boot.")
+    asyncMetaList = f(asyncMetaList)
+
   }
 
 

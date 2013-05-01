@@ -27,6 +27,9 @@ import js._
 import auth._
 import provider._
 import json.JsonAST.JValue
+import net.liftweb.json._
+import java.util.concurrent.atomic.AtomicInteger
+
 
 /**
  * Wrap a LiftResponse and cache the result to avoid computing the actual response
@@ -555,6 +558,8 @@ class LiftServlet extends Loggable {
         LiftSession.onBeginServicing.foreach(_(liftSession, requestState))
       }
 
+      LiftRules.makeCometBreakoutDecision(liftSession, requestState)
+
       // Here, a Left[LAFuture] indicates a future that needs to be
       // *satisfied*, meaning we will run the request processing.
       // A Right[LAFuture] indicates a future we need to *wait* on,
@@ -675,7 +680,7 @@ class LiftServlet extends Loggable {
         }
 
       case ar: AnswerRender =>
-        answers = ar :: answers
+        answers ::= ar
         LAPinger.schedule(this, BreakOut(), 5 millis)
 
       case BreakOut() if !done =>
@@ -689,7 +694,7 @@ class LiftServlet extends Loggable {
       case _ =>
     }
 
-    override def toString = "Actor dude " + seqId
+    // override def toString = "Actor dude " + seqId
   }
 
   private object BeginContinuation
@@ -698,11 +703,12 @@ class LiftServlet extends Loggable {
 
   private def setupContinuation(request: Req, session: LiftSession, actors: List[(LiftCometActor, Long)]): Any = {
     val cont = new ContinuationActor(request, session, actors,
-      answers => request.request.resume(
+      answers => {
+        request.request.resume(
         (request, S.init(request, session)
           (LiftRules.performTransform(
             convertAnswersToCometResponse(session,
-              answers.toList, actors))))))
+              answers.toList, actors)))))})
 
 
     try {
@@ -784,7 +790,7 @@ class LiftServlet extends Loggable {
 
       LAPinger.schedule(cont, BreakOut(), TimeSpan(cometTimeout))
 
-      val ret2 = f.get(cometTimeout) openOr Nil
+      val ret2 = f.get(cometTimeout + 50L) openOr Nil
 
       Full(S.init(originalRequest, session) {
         convertAnswersToCometResponse(session, ret2, actors)
