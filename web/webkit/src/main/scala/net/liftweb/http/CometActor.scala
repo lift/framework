@@ -1086,7 +1086,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   protected def clearWiringDependencies() {
     if (!manualWiringDependencyManagement) {
       theSession.clearPostPageJavaScriptForThisPage()
-      unregisterFromAllDepenencies()
+      unregisterFromAllDependencies()
     }
   }
 
