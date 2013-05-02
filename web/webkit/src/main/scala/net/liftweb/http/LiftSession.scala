@@ -700,6 +700,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   private[http] def enterComet(what: (LiftActor, Req)): Unit = synchronized {
     LiftRules.makeCometBreakoutDecision(this, what._2)
+    if (!running_?) what._1 ! BreakOut()
     cometList = cometList :+ what
   }
 
