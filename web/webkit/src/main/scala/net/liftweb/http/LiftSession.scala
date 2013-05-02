@@ -165,7 +165,8 @@ case class SessionInfo(session: LiftSession, userAgent: Box[String], ipAddress: 
  * timing sessions out.
  */
 object SessionMaster extends LiftActor with Loggable {
-  private var sessions: Map[String, SessionInfo] = Map.empty
+  private val nsessions: ConcurrentHashMap[String, SessionInfo] = new ConcurrentHashMap()
+  private val killedSessions: ConcurrentHashMap[String, Long] = new ConcurrentHashMap()
 
   private object CheckAndPurge
 
@@ -196,19 +197,23 @@ object SessionMaster extends LiftActor with Loggable {
     }) :: Nil
 
   def getSession(req: Req, otherId: Box[String]): Box[LiftSession] = {
+    val dead = otherId.map(killedSessions.containsKey(_)) openOr false
+
+    if (dead) Failure("dead session", Empty, Empty) else {
     val ret = this.synchronized {
-      otherId.flatMap(sessions.get) match {
+      otherId.flatMap(a => Box !! nsessions.get(a)) match {
         case Full(session) => lockAndBump(Full(session))
         // for stateless requests, vend a stateless session if none is found
         case _ if req.stateless_? =>
           lockAndBump {
-            req.sessionId.flatMap(sessions.get)
+            req.sessionId.flatMap(a => Box !! nsessions.get(a))
           } or Full(LiftRules.statelessSession.vend.apply(req))
         case _ => getSession(req.request, otherId)
       }
     }
 
     ret
+    }
   }
 
 
@@ -217,14 +222,20 @@ object SessionMaster extends LiftActor with Loggable {
    * because Nginx children stick around for long polling.
    */
   def breakOutAllComet() {
-    val ses = lockRead(sessions)
+    import scala.collection.JavaConversions._
+
+    val ses = lockRead(nsessions)
     ses.valuesIterator.foreach {
       _.session.breakOutComet()
     }
   }
 
   def getSession(id: String, otherId: Box[String]): Box[LiftSession] = lockAndBump {
-    otherId.flatMap(sessions.get) or Box(sessions.get(id))
+    val dead = killedSessions.containsKey(id) || (otherId.map(killedSessions.containsKey(_)) openOr false)
+
+    if (dead) (Failure("Dead session", Empty, Empty)) else {
+    otherId.flatMap(a => Box !! nsessions.get(a)) or (Box !! nsessions.get(id))
+    }
   }
 
   /**
@@ -239,7 +250,7 @@ object SessionMaster extends LiftActor with Loggable {
    */
   def getSession(httpSession: => HTTPSession, otherId: Box[String]): Box[LiftSession] =
     lockAndBump {
-      otherId.flatMap(sessions.get) or Box(sessions.get(httpSession.sessionId))
+      otherId.flatMap(a => Box !! nsessions.get(a)) or (Box !! nsessions.get(httpSession.sessionId))
     }
 
   /**
@@ -247,7 +258,7 @@ object SessionMaster extends LiftActor with Loggable {
    */
   def getSession(req: HTTPRequest, otherId: Box[String]): Box[LiftSession] =
     lockAndBump {
-      otherId.flatMap(sessions.get) or req.sessionId.flatMap(id => sessions.get(id))
+      otherId.flatMap(a => Box !! nsessions.get(a)) or req.sessionId.flatMap(id => Box !! nsessions.get(id))
     }
 
   /**
@@ -256,7 +267,7 @@ object SessionMaster extends LiftActor with Loggable {
   private def lockAndBump(f: => Box[SessionInfo]): Box[LiftSession] = this.synchronized {
     f.map {
       s =>
-        sessions += s.session.uniqueId -> SessionInfo(s.session, s.userAgent, s.ipAddress, s.requestCnt + 1, millis)
+        nsessions.put(s.session.uniqueId, SessionInfo(s.session, s.userAgent, s.ipAddress, s.requestCnt + 1, millis))
 
         s.session
     }
@@ -292,7 +303,9 @@ object SessionMaster extends LiftActor with Loggable {
    * Shut down all sessions
    */
   private[http] def shutDownAllSessions() {
-    val ses = lockRead(sessions)
+    import scala.collection.JavaConversions._
+
+    val ses = lockRead(nsessions)
     ses.foreach {
       case (key, sess) =>
         if (!sess.session.markedForShutDown_?) {
@@ -302,17 +315,21 @@ object SessionMaster extends LiftActor with Loggable {
     }
 
     while (true) {
-      val s2 = lockRead(sessions)
+      val s2 = lockRead(nsessions)
       if (s2.size == 0) return
       Thread.sleep(50)
     }
   }
 
+  def isDead(sessionId: String): Boolean = killedSessions.containsKey(sessionId)
+
   private val reaction: PartialFunction[Any, Unit] = {
     case RemoveSession(sessionId) =>
-      val ses = lockRead(sessions)
-      ses.get(sessionId).foreach {
+
+      val ses = lockRead(nsessions)
+      (Box !! ses.get(sessionId)).foreach {
         case SessionInfo(s, _, _, _, _) =>
+          killedSessions.put(s.uniqueId, Helpers.millis)
           s.markedForShutDown_? = true
           Schedule.schedule(() => {
             try {
@@ -328,14 +345,22 @@ object SessionMaster extends LiftActor with Loggable {
             }
           }, 0 seconds)
           lockWrite {
-            sessions = sessions - sessionId
+            nsessions.remove(sessionId)
           }
       }
 
     case CheckAndPurge =>
-      val ses = lockRead {
-        sessions
-      }
+      import scala.collection.JavaConversions._
+
+    /* remove dead sessions that are more than 45 minutes old */
+    val now = Helpers.millis - 45 minutes
+
+    val removeKeys: Iterable[String] = killedSessions.filter(_._2 < now).map(_._1)
+    removeKeys.foreach(s => killedSessions.remove(s))
+
+      val ses = Map(lockRead {
+        nsessions
+      }.toList :_*)
 
       for {
         f <- sessionCheckFuncs
@@ -635,7 +660,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   def running_? = _running_?
 
-  private var cometList: List[(LiftActor, Req)] = Nil
+  private var cometList: Vector[(LiftActor, Req)] = Vector.empty
 
   private[http] def breakOutComet(): Unit = {
     val cl = synchronized {
@@ -654,28 +679,28 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   // HttpServletRequests that have expired; these will then throw
   // NullPointerExceptions when their server name or otherwise are
   // accessed.
-  def cometForHost(hostAndPath: String): (List[(LiftActor, Req)], List[(LiftActor, Req)]) =
+  def cometForHost(hostAndPath: String): (Vector[(LiftActor, Req)], Vector[(LiftActor, Req)]) =
     synchronized {
       cometList
-    }.foldLeft((List[(LiftActor, Req)](), List[(LiftActor, Req)]())) {
+    }.foldLeft((Vector[(LiftActor, Req)](), Vector[(LiftActor, Req)]())) {
       (soFar, current) =>
         (soFar, current) match {
           case ((valid, invalid), pair @ (_, r)) =>
             try {
               if (r.hostAndPath == hostAndPath)
-                (pair :: valid, invalid)
+                (valid :+ pair, invalid)
               else
                 soFar
             } catch {
               case exception: Exception =>
-                (valid, pair :: invalid)
+                (valid,  invalid :+ pair)
             }
         }
     }
 
   private[http] def enterComet(what: (LiftActor, Req)): Unit = synchronized {
     LiftRules.makeCometBreakoutDecision(this, what._2)
-    cometList = what :: cometList
+    cometList = cometList :+ what
   }
 
   private[http] def exitComet(what: LiftActor): Unit = synchronized {
@@ -820,6 +845,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * Destroy this session and the underlying container session.
    */
   def destroySession() {
+    SessionMaster ! RemoveSession(this.uniqueId)
+
     S.request.foreach(_.request.session.terminate)
     this.doShutDown()
   }

@@ -331,6 +331,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
         ret.fixSessionTime()
         ret
 
+      case Failure(_, _, _) =>
+        LiftRules.statelessSession.vend.apply(req)
+
       case _ =>
         val ret = LiftSession(req)
         ret.fixSessionTime()

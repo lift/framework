@@ -266,7 +266,7 @@ class LiftServlet extends Loggable {
         // okay after 250 attempts to redirect, just ignore calls to the
         // async URL. Why? Because there might be more than 1
         // async window open and we want to make sure they all close
-        if (recentlyChecked(theId) > 250) {
+        if (recentlyChecked(theId) > 2500) {
           Empty
         } else {
           val cmd = {
@@ -676,7 +676,8 @@ class LiftServlet extends Loggable {
     val seqId = Helpers.nextNum
 
     def messageHandler = {
-      case BeginContinuation =>
+      case BeginContinuation if !done =>
+
         val sendItToMe: AnswerRender => Unit = ah => this ! ah
 
         actors.foreach {
@@ -733,7 +734,7 @@ class LiftServlet extends Loggable {
           sessionActor.getAsyncComponent(name).toList.map(c => (c, toLong(when)))
       }
 
-    if (actors.isEmpty) {
+    if (SessionMaster.isDead(sessionActor.uniqueId) || !sessionActor.stateful_? || actors.isEmpty) {
       Left(Full(JsCommands(List(LiftRules.noCometSessionCmd.vend, js.JE.JsRaw("lift_toWatch = {};").cmd)).toResponse))
     } else requestState.request.suspendResumeSupport_? match {
       case true => {
@@ -934,11 +935,17 @@ class LiftFilter extends ServletFilterProvider
 
 private class SessionIdCalc(req: Req) {
   private val CometPath = LiftRules.cometPath
-  lazy val id: Box[String] = req.request.sessionId match {
-    case Full(id) => Full(id)
-    case _ => req.path.wholePath match {
-      case CometPath :: _ :: id :: _ if id != LiftRules.cometScriptName() => Full(id)
-      case _ => Empty
+  lazy val id: Box[String] = {
+    val cometId = req.path.wholePath match {
+      case CometPath :: _ :: id :: _ if id != LiftRules.cometScriptName() =>
+        req.request.sessionId match {
+          case Full(id2) if id2 == id => Full(id)
+          case eb: EmptyBox => Full(id)
+          case _ => Empty
+        }
+
+      case _ => req.request.sessionId
     }
+    cometId
   }
 }
