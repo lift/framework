@@ -688,7 +688,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * the long polling connection
    */
   val clientActorLifespan = new FactoryMaker[LiftActor => Long](
-    () => (actor: LiftActor) => (60 seconds): Long
+    () => (actor: LiftActor) => (30 minutes): Long
   ){}
 
   /**

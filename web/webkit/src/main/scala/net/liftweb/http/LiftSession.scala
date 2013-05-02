@@ -2682,6 +2682,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         override def parentTag = <div style="display: none"/>
 
         override def lowPriority: PartialFunction[Any, Unit] = {
+          case jsCmd: JsCmd => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsCmd, false)))
+          case jsExp: JsExp => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsExp.cmd, false)))
+
           case ItemMsg(guid, value) =>
             partialUpdate(JsCmds.JsSchedule(JsRaw(s"liftAjax.sendEvent(${guid.encJs}, {'success': ${Printer.compact(JsonAST.render(value))}} )").cmd))
           case DoneMsg(guid) =>
@@ -2743,7 +2746,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
               func match {
                 case StreamRoundTrip(_, func) =>
                   try {
-                    for (v <- func.asInstanceOf[Function1[Any, Stream[Any]]](reified)) ca ! ItemMsg(guid,fixIt(v))
+                    for (v <- func.asInstanceOf[Function1[Any, Stream[Any]]](reified)) {
+                      v match {
+                        case jsCmd: JsCmd => ca ! jsCmd
+                        case jsExp: JsExp => ca ! jsExp
+                        case v => ca ! ItemMsg(guid,fixIt(v))
+                      }
+                    }
                     ca ! DoneMsg(guid)
                   } catch {
                     case e: Exception => ca ! FailMsg(guid, e.getMessage)
@@ -2751,7 +2760,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
                 case SimpleRoundTrip(_, func) =>
                   try {
-                    ca ! ItemMsg(guid, fixIt(func.asInstanceOf[Function1[Any, Any]](reified )))
+                    func.asInstanceOf[Function1[Any, Any]](reified ) match {
+                      case jsCmd: JsCmd => ca ! jsCmd
+                      case jsExp: JsExp => ca ! jsExp
+                      case v => ca ! ItemMsg(guid, fixIt(v))
+                    }
                     ca ! DoneMsg(guid)
                   } catch {
                     case e: Exception => ca ! FailMsg(guid, e.getMessage)
@@ -2773,6 +2786,30 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                           done_? = true
                           ca ! FailMsg(guid, msg)
                         }
+                      }
+
+
+                      /**
+                       * Send some JavaScript to execute on the client side
+                       * @param value
+                       */
+                      def send(value: JsCmd): Unit = {
+                        if (!done_?) {
+                        ca ! value
+                      }
+
+                      }
+
+
+                      /**
+                       * Send some javascript to execute on the client side
+                       * @param value
+                       */
+                      def send(value: JsExp): Unit = {
+                        if (!done_?) {
+                          ca ! value
+                        }
+
                       }
 
                       def send(value: JValue) {
@@ -3092,6 +3129,18 @@ trait RoundTripHandlerFunc {
    * @param value the data to send back.
    */
   def send(value: JValue): Unit
+
+  /**
+   * Send some JavaScript to execute on the client side
+   * @param value
+   */
+  def send(value: JsCmd): Unit
+
+  /**
+   * Send some javascript to execute on the client side
+   * @param value
+   */
+  def send(value: JsExp): Unit
 
   /**
    * When you are done sending data back to the client, call this method
