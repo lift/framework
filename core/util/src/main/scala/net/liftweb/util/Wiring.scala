@@ -63,6 +63,8 @@ trait Dependent {
 
   private var _iDependOn: List[WeakReference[Object]] = Nil
 
+  protected def unregisterFromAllDepenencies() = unregisterFromAllDependencies()
+
   /**
    * Remove from all dependencies
    */
