@@ -118,3 +118,23 @@ trait IoHelpers {
     }
   }
 }
+
+/**
+ * A trait that defines an Automatic Resource Manager. The ARM
+ * allocates a resource (connection to a DB, etc.) when the `exec`
+ * method is invoked and releases the resource before the exec method terminates
+ *
+ * @tparam ResourceType the type of resource allocated
+ */
+trait AutoResourceManager[ResourceType] {
+
+  /**
+   * Execute a block of code with the allocated resource
+   *
+   * @param f the function that takes the resource and returns a value
+   * @tparam T the type of the value returned by the function
+   *@return the value returned from the function
+   *
+   */
+  def exec[T](f: ResourceType => T): T
+}
