@@ -63,6 +63,7 @@ trait Dependent {
 
   private var _iDependOn: List[WeakReference[Object]] = Nil
 
+  @deprecated("please used the correctly spelled unregisterFromAllDependencies", "2.5")
   protected def unregisterFromAllDepenencies() = unregisterFromAllDependencies()
 
   /**
