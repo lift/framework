@@ -339,6 +339,8 @@ sealed abstract class Box[+A] extends Product with Serializable{
    */
   def ?~(msg: => String): Box[A] = this
 
+
+
   /**
    * Transform an Empty to a ParamFailure with the specified typesafe
    * parameter.
@@ -432,6 +434,18 @@ sealed abstract class Box[+A] extends Product with Serializable{
    */
   def dmap[B](dflt: => B)(f: A => B): B = dflt
 
+
+  /**
+   * If the Box is Full, apply the transform function on the
+   * value, otherwise just return the value untransformed
+   *
+   * @param v the value
+   * @param f the transformation function
+   * @tparam T the type of the value
+   * @return the value or the transformed value is the Box is Full
+   */
+  def fullXform[T](v: T)(f: T => A => T): T = v
+
   /**
    * An <code>Either</code> that is a <code>Left</code> with the given argument
    * <code>left</code> if this is empty, or a <code>Right</code> if this
@@ -519,6 +533,18 @@ final case class Full[+A](value: A) extends Box[A]{
   override def toOption: Option[A] = Some(value)
 
   override def run[T](in: => T)(f: (T, A) => T) = f(in, value)
+
+  /**
+   * If the Box is Full, apply the transform function on the
+   * value, otherwise just return the value untransformed
+   *
+   * @param v the value
+   * @param f the transformation function
+   * @tparam T the type of the value
+   * @return the value or the transformed value is the Box is Full
+   */
+  override def fullXform[T](v: T)(f: T => A => T): T = f(v)(value)
+
 
   /**
    * An <code>Either</code> that is a <code>Left</code> with the given argument
