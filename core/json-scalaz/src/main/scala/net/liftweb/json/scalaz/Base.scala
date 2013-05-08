@@ -99,7 +99,7 @@ trait Base { this: Types =>
     }
   }
   implicit def optionJSONW[A: JSONW]: JSONW[Option[A]] = new JSONW[Option[A]] {
-    def write(value: Option[A]) = value.map(x => toJSON(x)).getOrElse(JNull)
+    def write(value: Option[A]) = value.map(x => toJSON(x)).getOrElse(JNothing)
   }
 
   implicit def mapJSONR[A: JSONR]: JSONR[Map[String, A]] = new JSONR[Map[String, A]] {
