@@ -1478,7 +1478,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private def hasSurround(e: Elem): Boolean =
   (S.location.isDefined) &&
   (S.request.map(!_.ajax_?) openOr false) &&
-  ((e.attribute("data-lift").map(_.text.startsWith("surround")) getOrElse false) ||
+    ((e.attribute("data-lift").map(_.text.startsWith("surround")) getOrElse false) ||
+      (e.attribute("lift").map(_.text.startsWith("surround")) getOrElse false) ||
   (e.label == "surround") ||
   (e.attribute("class").map(_.text.contains("surround")) getOrElse false))
 
