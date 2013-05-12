@@ -101,9 +101,8 @@ trait SHtml {
     def applyToAllElems(in: Seq[Node], elemAttrs: Seq[ElemAttr]): Seq[Node] = in map {
       case Group(ns) => Group(applyToAllElems(ns, elemAttrs))
       case e: Elem => val updated = elemAttrs.foldLeft(e)((e, f) => f(e))
-
         new Elem(updated.prefix, updated.label,
-                               updated.attributes, updated.scope,
+                               updated.attributes, updated.scope, updated.minimizeEmpty,
                                applyToAllElems(updated.child, elemAttrs) :_*)
       case n => n
     }
@@ -370,6 +369,7 @@ trait SHtml {
                  latestElem.label,
                  latestElem.attributes,
                  latestElem.scope,
+                 latestElem.minimizeEmpty,
                  f(this)(latestKids) :_*)
 
       def setHtml(): JsCmd = SetHtml(latestId, f(this)(latestKids))
@@ -1017,7 +1017,7 @@ trait SHtml {
     (elem \ "@onblur").toList match {
       case Nil => elem % ("onblur" -> blurCmd)
       case x :: xs => val attrs = elem.attributes.filter(_.key != "onblur")
-      Elem(elem.prefix, elem.label, new UnprefixedAttribute("onblur", Text(blurCmd + x.text), attrs), elem.scope, elem.child: _*)
+      Elem(elem.prefix, elem.label, new UnprefixedAttribute("onblur", Text(blurCmd + x.text), attrs), elem.scope, elem.minimizeEmpty, elem.child: _*)
     }
   }
 
@@ -1088,6 +1088,7 @@ trait SHtml {
                                        case _ => true
                                      }),
              elem.scope,
+             elem.minimizeEmpty,
              elem.child :_*)
   }
 
@@ -1138,7 +1139,7 @@ trait SHtml {
                                                                      funcName+"=_"),
                                                      meta)
 
-                         }, e.scope, e.child :_*)
+                         }, e.scope, e.minimizeEmpty, e.child :_*)
             }
           }
 
@@ -1198,7 +1199,7 @@ trait SHtml {
                                                  cmd,
                                                  meta)
 
-                     }, e.scope, e.child :_*)
+                     }, e.scope, e.minimizeEmpty, e.child :_*)
           }
 
 
@@ -1685,7 +1686,7 @@ trait SHtml {
         }
 
         new Elem(e.prefix, e.label,
-                 newMeta, e.scope, e.child :_*) % ("id" -> id) %
+                 newMeta, e.scope, e.minimizeEmpty, e.child :_*) % ("id" -> id) %
         ("action" -> "javascript://") %
         ("onsubmit" ->
          (SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(id)).toJsCmd +
