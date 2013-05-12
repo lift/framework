@@ -58,7 +58,7 @@ object Loc extends DispatchSnippet {
 
   def i(ns: NodeSeq): NodeSeq = {
     ns match {
-      case Elem(prefix, label, attribs, scope, child @ _*) => Elem(prefix, label, attribs, scope, S.loc(ns.text, Text(ns.text)): _*)
+      case e: Elem => e.copy(child = S.loc(ns.text, Text(ns.text)))
       case _ => render("i", ns)
     }
   }

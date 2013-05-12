@@ -168,8 +168,6 @@ object Menu extends MenuSingleton {
      * the well typed currentValue
      */
     lazy val toLoc: Loc[T] = new Loc[T] with ParamExtractor[String, T] {
-      import scala.xml._
-
       def headMatch: Boolean = ParamMenuable.this.headMatch
       
       // the name of the page
