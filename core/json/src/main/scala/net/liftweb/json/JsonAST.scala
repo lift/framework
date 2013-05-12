@@ -469,9 +469,13 @@ object JsonAST {
   private def bufRenderArr(xs: List[JValue], buf: StringBuilder): StringBuilder = {
     buf.append("[") //open array
     if (!xs.isEmpty) {
-      xs.foreach(elem => if (elem.values != JNothing) {
-        bufRender(elem, buf)
-        buf.append(",")
+      xs.foreach(elem => Option(elem) match {
+        case Some(e) =>
+          if (e != JNothing) {
+            bufRender(e, buf)
+            buf.append(",")
+          }
+        case None => buf.append("null,")
       })
       if (buf.last == ',')
         buf.deleteCharAt(buf.length - 1) //delete last comma

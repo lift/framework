@@ -147,6 +147,11 @@ trait AbstractExamples extends Specification {
     print(json) mustEqual """{"id":5,"tags":{"a":5,"b":7}}"""
   }
 
+  "Naked JArray with null values" in {
+    val json = JArray(List(null))
+    print(json) mustEqual """[null]"""
+  }
+
 }
 
 object Examples {
