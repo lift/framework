@@ -31,6 +31,7 @@ import scala.xml.NodeSeq
  *
  * @author nafg
  */
+@deprecated("Will be removed", "2.5")
 object XmlMenu {
   def apply(xml: NodeSeq): Seq[Menu] = for(node<-xml) yield node match {
     case m @ <menu>{ children @ _* }</menu> =>
