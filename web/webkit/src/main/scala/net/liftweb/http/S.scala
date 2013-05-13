@@ -1497,6 +1497,11 @@ trait S extends HasParams with Loggable {
     setHeader(name, value)
   }
 
+
+  @deprecated("Use S.getResponseHeaders instead for clarity.", "2.5")
+  def getHeaders(in: List[(String, String)]): List[(String, String)] = {
+    getResponseHeaders(in)
+  }
   /**
    * Returns the currently set HTTP response headers as a List[(String, String)]. To retrieve
    * a specific response header, use S.getResponseHeader. If you want to

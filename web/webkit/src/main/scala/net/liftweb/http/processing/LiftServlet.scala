@@ -20,7 +20,6 @@ package processing
 
 import xml.{Node, NodeSeq, Group}
 
-
 import common._
 import actor._
 import util._
@@ -29,7 +28,7 @@ import js._
 import auth._
 import provider._
 import net.liftweb.json._
-import java.util.concurrent.atomic.AtomicInteger
+
 
 /**
  * Wrap a LiftResponse and cache the result to avoid computing the actual response

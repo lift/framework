@@ -142,6 +142,12 @@ object ExtractionExamples extends Specification {
     
     Extraction.unflatten(m) mustEqual JObject(List(JField("foo", JArray(List(JInt(0), JInt(1), JInt(2))))))
   }
+
+  "Unflatten example with common prefixes" in {
+    val m = Map(".photo" -> "\"photo string\"", ".photographer" -> "\"photographer string\"", ".other" -> "\"other string\"")
+
+    Extraction.unflatten(m) mustEqual JObject(List(JField("photo", JString("photo string")), JField("photographer", JString("photographer string")), JField("other", JString("other string"))))
+  }
   
   "Flatten and unflatten are symmetric" in {
     val parsed = parse(testJson)

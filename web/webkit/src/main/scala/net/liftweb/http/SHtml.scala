@@ -873,14 +873,23 @@ trait SHtml {
    * @param default -- the default value (or Empty if no default value)
    * @param onSubmit -- the function to execute on form submission
    */
-  def ajaxSelectObj[T](options: Seq[(T, String)], default: Box[T],
+  def ajaxSelectObj[T](options: Seq[SelectableOption[T]], default: Box[T],
                        onSubmit: T => JsCmd, attrs: ElemAttr*): Elem = {
 
-    val secure = options.map {case (obj, txt) => (obj, randomString(20), txt)}
-    val defaultNonce = default.flatMap(d => secure.find(_._1 == d).map(_._2))
-    val nonces = secure.map {case (obj, nonce, txt) => (nonce, txt)}
+    val secure = options.map { selectableOption =>
+      SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
+    }
+
+    val defaultNonce = default.flatMap { d =>
+      secure.find(_.value == d).map(_.nonce)
+    }
+
+    val nonces = secure.map { selectableOptionWithNonce =>
+      SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
+    }
+
     def process(nonce: String): JsCmd =
-      secure.find(_._2 == nonce).map(x => onSubmit(x._1)) getOrElse Noop
+      secure.find(_.nonce == nonce).map(x => onSubmit(x.value)) getOrElse Noop
     //  (nonces, defaultNonce, SFuncHolder(process))
 
     ajaxSelect_*(nonces,
@@ -917,15 +926,24 @@ trait SHtml {
    * @param default -- the default value (or Empty if no default value)
    * @param onSubmit -- the function to execute on form submission
    */
-  def ajaxSelectObj[T](options: Seq[(T, String)], default: Box[T],
+  def ajaxSelectObj[T](options: Seq[SelectableOption[T]], default: Box[T],
                        jsFunc: Call,
                        onSubmit: T => JsCmd, attrs: ElemAttr*): Elem = {
 
-    val secure = options.map {case (obj, txt) => (obj, randomString(20), txt)}
-    val defaultNonce = default.flatMap(d => secure.find(_._1 == d).map(_._2))
-    val nonces = secure.map {case (obj, nonce, txt) => (nonce, txt)}
+    val secure = options.map { selectableOption =>
+      SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
+    }
+
+    val defaultNonce = default.flatMap { d =>
+      secure.find(_.value == d).map(_.nonce)
+    }
+
+    val nonces = secure.map { selectableOptionWithNonce =>
+        SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
+    }
+
     def process(nonce: String): JsCmd =
-      secure.find(_._2 == nonce).map(x => onSubmit(x._1)) getOrElse Noop
+      secure.find(_.nonce == nonce).map(x => onSubmit(x.value)) getOrElse Noop
     //  (nonces, defaultNonce, SFuncHolder(process))
 
     ajaxSelect_*(nonces,
@@ -944,18 +962,18 @@ trait SHtml {
    * @param default -- the default value (or Empty if no default value)
    * @param func -- the function to execute when a new selection is made 
    */
-  def ajaxEditableSelect(opts: Seq[(String, String)], deflt: Box[String],
+  def ajaxEditableSelect(opts: Seq[SelectableOption[String]], deflt: Box[String],
                          f: String => JsCmd, attrs: ElemAttr*): Elem = {
 
     val id = attrs.collectFirst { case BasicElemAttr(name, value) if name == "id" => value } getOrElse nextFuncName
     val attributes = if(attrs.contains(BasicElemAttr("id", id))) attrs else BasicElemAttr("id", id) +: attrs
     val textOpt = nextFuncName
-    val options = opts :+ (textOpt , "New Element")
+    val options = opts :+ SelectableOption(textOpt , "New Element")
     var _options = options
 
     lazy val func: (String) => JsCmd = (select: String) => {
       def text(in: String): JsCmd = {
-        _options = (in, in) +: _options
+        _options = SelectableOption(in, in) +: _options
         Replace(id, ajaxSelect(_options, Some(in), func, attributes: _*))
       }
       if (select == textOpt) Replace(id, ajaxText("", text(_), attributes: _*)) & Focus(id) else f(select)
@@ -964,28 +982,31 @@ trait SHtml {
     ajaxSelect(options, deflt, func, attributes: _*)
   }
 
-  def ajaxSelect(opts: Seq[(String, String)], deflt: Box[String],
+  def ajaxSelect(opts: Seq[SelectableOption[String]], deflt: Box[String],
                  func: String => JsCmd, attrs: ElemAttr*): Elem =
     ajaxSelect_*(opts, deflt, Empty, SFuncHolder(func), attrs: _*)
 
-  def ajaxSelect(opts: Seq[(String, String)], deflt: Box[String],
+  def ajaxSelect(opts: Seq[SelectableOption[String]], deflt: Box[String],
                  jsFunc: Call, func: String => JsCmd, attrs: ElemAttr*): Elem =
     ajaxSelect_*(opts, deflt, Full(jsFunc), SFuncHolder(func), attrs: _*)
 
-  private def ajaxSelect_*(opts: Seq[(String, String)], deflt: Box[String],
+  private def ajaxSelect_*(opts: Seq[SelectableOption[String]], deflt: Box[String],
                            jsFunc: Box[Call], func: AFuncHolder, attrs: ElemAttr*): Elem = {
     val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + " + value + ".options[" + value + ".selectedIndex].value")
     val key = formFuncName
 
-    val vals = opts.map(_._1)
+    val vals = opts.map(_.value)
     val testFunc = LFuncHolder(in => in.filter(v => vals.contains(v)) match {case Nil => false case xs => func(xs)}, func.owner)
-    fmapFunc((testFunc)) {
-      funcName =>
-              (attrs.foldLeft(<select>{opts.flatMap {case (value, text) => (<option value={value}>{text}</option>) % selected(deflt.exists(_ == value))}}</select>)(_ % _)) %
-                      ("onchange" -> (jsFunc match {
-                        case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
-                        case _ => makeAjaxCall(raw(funcName, "this"))
-                      }))
+    fmapFunc((testFunc)) { funcName =>
+      (attrs.foldLeft(<select>{opts.flatMap {
+        case option =>
+          option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _) %
+          selected(deflt.exists(_ == option.value))
+      }}</select>)(_ % _)) %
+      ("onchange" -> (jsFunc match {
+        case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
+        case _ => makeAjaxCall(raw(funcName, "this"))
+      }))
     }
   }
 
@@ -1580,6 +1601,46 @@ trait SHtml {
   }
 
   /**
+   * Add appropriate attributes to an input type="submit" or button
+   * element to make it submit an ajaxForm correctly and return a JsCmd
+   * to the client. Note that the key difference between this and ajaxSubmit
+   * is that ajaxSubmit returns a complete input type="submit" element, while
+   * ajaxOnSubmit applies the right attributes to any input type="submit" *or*
+   * button element.
+   *
+   * Example:
+   *
+   *  <pre>"type=submit" #> ajaxOnSubmit(() => Alert("Done!"))</pre>
+   */
+  def ajaxOnSubmit(func: () => JsCmd): (NodeSeq)=>NodeSeq = {
+    val fgSnap = S._formGroup.get
+
+    (in: NodeSeq) => S._formGroup.doWith(fgSnap) {
+      def runNodes(ns: NodeSeq): NodeSeq = {
+        def addAttributes(elem: Elem, name: String) = {
+          val clickJs = "liftAjax.lift_uriSuffix = '" + name + "=_'; return true;"
+
+          elem % ("name" -> name) % ("onclick" -> clickJs)
+        }
+
+        ns.flatMap {
+          case Group(nodes) => runNodes(nodes)
+
+          case e: Elem if (e.label == "button") ||
+                          (e.label == "input" && e.attribute("type").map(_.text) == Some("submit")) =>
+            _formGroup.is match {
+              case Empty =>
+                formGroup(1)(fmapFunc(func)(addAttributes(e, _)))
+              case _ => fmapFunc(func)(addAttributes(e, _))
+            }
+        }
+      }
+
+      runNodes(in)
+    }
+  }
+
+  /**
    * Generates a form submission button with a default label.
    *
    * @param func The function that will be executed on form submission
@@ -1717,15 +1778,34 @@ trait SHtml {
     SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(formId), AjaxContext.js(Full(postSubmit.toJsCmd)))
 
 
-  private def secureOptions[T](options: Seq[(T, String)], default: Box[T],
-                               onSubmit: T => Any): (Seq[(String, String)], Box[String], AFuncHolder) = {
-    val secure = options.map {case (obj, txt) => (obj, randomString(20), txt)}
-    val defaultNonce = default.flatMap(d => secure.find(_._1 == d).map(_._2))
-    val nonces = secure.map {case (obj, nonce, txt) => (nonce, txt)}
-    def process(nonce: String): Unit =
-      secure.find(_._2 == nonce).map(x => onSubmit(x._1))
+  private def secureOptions[T](options: Seq[SelectableOption[T]], default: Box[T],
+                               onSubmit: T => Any): (Seq[SelectableOption[String]], Box[String], AFuncHolder) = {
+    val secure = options.map { selectableOption =>
+      SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
+    }
+
+    val defaultNonce = default.flatMap { default =>
+      secure.find(_.value == default).map(_.nonce)
+    }
+
+    val nonces = secure.map { selectableOptionWithNonce =>
+      SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
+    }
+
+    def process(nonce: String): Unit = secure.find(_.nonce == nonce).map(x => onSubmit(x.value))
+
     (nonces, defaultNonce, SFuncHolder(process))
   }
+
+  final case class SelectableOption[+T](value: T, label: String, attrs: ElemAttr*)
+  object SelectableOption {
+    implicit def tupleSeqToSelectableOptionSeq[T](seq: Seq[(T, String)]): Seq[SelectableOption[T]] =
+      seq.collect {
+        case (value, label) => SelectableOption(value, label)
+      }
+  }
+
+  private final case class SelectableOptionWithNonce[+T](value: T, nonce: String, label: String, attrs: ElemAttr*)
 
   /**
    * Create a select box based on the list with a default value and the function to be executed on
@@ -1735,7 +1815,7 @@ trait SHtml {
    * @param deflt -- the default value (or Empty if no default value)
    * @param func -- the function to execute on form submission
    */
-  def select(opts: Seq[(String, String)], deflt: Box[String], func: String => Any, attrs: ElemAttr*): Elem =
+  def select(opts: Seq[SelectableOption[String]], deflt: Box[String], func: String => Any, attrs: ElemAttr*): Elem =
     select_*(opts, deflt, SFuncHolder(func), attrs: _*)
 
   /**
@@ -1754,7 +1834,7 @@ trait SHtml {
   (onSubmit: T => Any)
   (implicit f: PairStringPromoter[T]):
   Elem = {
-    selectObj[T](options.map(v => (v, f(v))), default, onSubmit, attrs :_*)
+    selectObj[T](options.map(v => SelectableOption(v, f(v))), default, onSubmit, attrs :_*)
   }
 
   /**
@@ -1774,7 +1854,7 @@ trait SHtml {
                     attrs: ElemAttr*)
   (implicit f: PairStringPromoter[T]):
   Elem = {
-    selectObj[T](options.map(v => (v, f(v))), Full(settable.get),
+    selectObj[T](options.map(v => SelectableOption(v, f(v))), Full(settable.get),
                  s => settable.set(s), attrs :_*)
   }
 
@@ -1786,10 +1866,9 @@ trait SHtml {
    * @param default -- the default value (or Empty if no default value)
    * @param onSubmit -- the function to execute on form submission
    */
-  def selectObj[T](options: Seq[(T, String)], default: Box[T],
+  def selectObj[T](options: Seq[SelectableOption[T]], default: Box[T],
                    onSubmit: T => Any, attrs: ElemAttr*): Elem = {
-    val (nonces, defaultNonce, secureOnSubmit) =
-    secureOptions(options, default, onSubmit)
+    val (nonces, defaultNonce, secureOnSubmit) = secureOptions(options, default, onSubmit)
 
     select_*(nonces, defaultNonce, secureOnSubmit, attrs: _*)
   }
@@ -1802,12 +1881,18 @@ trait SHtml {
    * @param deflt -- the default value (or Empty if no default value)
    * @param func -- the function to execute on form submission
    */
-  def select_*(opts: Seq[(String, String)], deflt: Box[String],
+  def select_*(opts: Seq[SelectableOption[String]], deflt: Box[String],
                func: AFuncHolder, attrs: ElemAttr*): Elem = {
-    val vals = opts.map(_._1)
+    val vals = opts.map(_.value)
     val testFunc = LFuncHolder(in => in.filter(v => vals.contains(v)) match {case Nil => false case xs => func(xs)}, func.owner)
 
-    attrs.foldLeft(fmapFunc(testFunc)(fn => <select name={fn}>{opts.flatMap {case (value, text) => (<option value={value}>{text}</option>) % selected(deflt.exists(_ == value))}}</select>))(_ % _)
+    attrs.foldLeft(fmapFunc(testFunc) { fn =>
+      <select name={fn}>{opts.flatMap {
+        case option =>
+          option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _) %
+          selected(deflt.exists(_ == option.value))
+      }}</select>
+    })(_ % _)
   }
 
   /**
@@ -1819,7 +1904,7 @@ trait SHtml {
    * @param deflt -- the default value (or Empty if no default value)
    * @param func -- the function to execute on form submission
    */
-  def untrustedSelect(opts: Seq[(String, String)], deflt: Box[String],
+  def untrustedSelect(opts: Seq[SelectableOption[String]], deflt: Box[String],
                       func: String => Any, attrs: ElemAttr*): Elem =
     untrustedSelect_*(opts, deflt, SFuncHolder(func), attrs: _*)
 
@@ -1832,10 +1917,15 @@ trait SHtml {
    * @param deflt -- the default value (or Empty if no default value)
    * @param func -- the function to execute on form submission
    */
-  def untrustedSelect_*(opts: Seq[(String, String)], deflt: Box[String],
+  def untrustedSelect_*(opts: Seq[SelectableOption[String]], deflt: Box[String],
                         func: AFuncHolder, attrs: ElemAttr*): Elem =
-    fmapFunc(func)(funcName =>
-            attrs.foldLeft(<select name={funcName}>{opts.flatMap {case (value, text) => (<option value={value}>{text}</option>) % selected(deflt.exists(_ == value))}}</select>)(_ % _))
+    fmapFunc(func) { funcName =>
+      attrs.foldLeft(<select name={funcName}>{opts.flatMap {
+        case option =>
+          option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _) %
+          selected(deflt.exists(_ == option.value))
+      }}</select>)(_ % _)
+    }
 
   /**
    * Create a multiple select box based on the list with a default value and the function to be executed on
@@ -1846,7 +1936,7 @@ trait SHtml {
    * @param deflt -- the default value (or Empty if no default value)
    * @param func -- the function to execute on form submission
    */
-  def untrustedMultiSelect(opts: Seq[(String, String)], deflt: Seq[String],
+  def untrustedMultiSelect(opts: Seq[SelectableOption[String]], deflt: Seq[String],
                       func: List[String] => Any, attrs: ElemAttr*): NodeSeq =
     untrustedMultiSelect_*(opts, deflt, LFuncHolder(func), attrs: _*)
 
@@ -1859,13 +1949,17 @@ trait SHtml {
    * @param deflt -- the default value (or Empty if no default value)
    * @param func -- the function to execute on form submission
    */
-  def untrustedMultiSelect_*(opts: Seq[(String, String)], deflt: Seq[String],
+  def untrustedMultiSelect_*(opts: Seq[SelectableOption[String]], deflt: Seq[String],
                         lf: AFuncHolder, attrs: ElemAttr*): NodeSeq = {
     val hiddenId = Helpers.nextFuncName
     fmapFunc(LFuncHolder(l => lf(l.filter(_ != hiddenId)))) {
       funcName => NodeSeq.fromSeq(
         List(
-          attrs.foldLeft(<select multiple="true" name={funcName}>{opts.flatMap {case (value, text) => (<option value={value}>{text}</option>) % selected(deflt.contains(value))}}</select>)(_ % _),
+          attrs.foldLeft(<select multiple="true" name={funcName}>{opts.flatMap {
+            case option =>
+              option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _) %
+              selected(deflt.contains(option.value))
+          }}</select>)(_ % _),
           <input type="hidden" value={hiddenId} name={funcName}/>
         )
       )
@@ -1882,7 +1976,7 @@ trait SHtml {
    * @param func -- the function to execute on form submission
    * @param attrs -- select box attributes
    */
-  def ajaxUntrustedSelect(opts: Seq[(String, String)],
+  def ajaxUntrustedSelect(opts: Seq[SelectableOption[String]],
     deflt: Box[String],
     func: String => JsCmd,
     attrs: (String, String)*): Elem =
@@ -1899,7 +1993,7 @@ trait SHtml {
    * @param func -- the function to execute on form submission
    * @param attrs -- select box attributes
    */
-  def ajaxUntrustedSelect(opts: Seq[(String, String)],
+  def ajaxUntrustedSelect(opts: Seq[SelectableOption[String]],
     deflt: Box[String],
     jsFunc: Call,
     func: String => JsCmd,
@@ -1917,7 +2011,7 @@ trait SHtml {
    * @param func -- the function to execute on form submission
    * @param attrs -- select box attributes
    */
-  private def ajaxUntrustedSelect_*(opts: Seq[(String, String)],
+  private def ajaxUntrustedSelect_*(opts: Seq[SelectableOption[String]],
     deflt: Box[String],
     jsFunc: Box[Call],
     func: AFuncHolder,
@@ -1926,23 +2020,27 @@ trait SHtml {
       val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + this.options[" + value + ".selectedIndex].value")
       val key = formFuncName
 
-      val vals = opts.map(_._1)
+      val vals = opts.map(_.value)
 
       val testFunc = LFuncHolder(in => in match { case Nil => false case xs => func(xs) }, func.owner)
       fmapFunc(contextFuncBuilder(testFunc)) {
         import net.liftweb.http.js.JsCmds.JsCrVar
         funcName =>
-          (attrs.foldLeft(<select>{ opts.flatMap { case (value, text) => (<option value={ value }>{ text }</option>) % selected(deflt.exists(_ == value)) } }</select>)(_ % _)) %
-            ("onchange" -> (jsFunc match {
-              case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
-              case _ => makeAjaxCall(raw(funcName, "this"))
-            }))
+          (attrs.foldLeft(<select>{ opts.flatMap {
+            case option =>
+              option.attrs.foldLeft(<option value={ option.value }>{ option.label }</option>)(_ % _) %
+              selected(deflt.exists(_ == option.value))
+          } }</select>)(_ % _)) %
+          ("onchange" -> (jsFunc match {
+            case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
+            case _ => makeAjaxCall(raw(funcName, "this"))
+          }))
       }
     }
 
   private def selected(in: Boolean) = if (in) new UnprefixedAttribute("selected", "selected", Null) else Null
 
-  def multiSelect(opts: Seq[(String, String)], deflt: Seq[String],
+  def multiSelect(opts: Seq[SelectableOption[String]], deflt: Seq[String],
                   func: List[String] => Any, attrs: ElemAttr*): Elem =
     multiSelect_*(opts, deflt, LFuncHolder(func), attrs: _*)
 
@@ -1957,7 +2055,7 @@ trait SHtml {
   def multiSelectElem[T](options: Seq[T], default: Seq[T], attrs: ElemAttr*)
   (onSubmit: List[T] => Any)
   (implicit f: PairStringPromoter[T]): Elem = {
-    multiSelectObj[T](options.map(v => (v, f(v))), default,
+    multiSelectObj[T](options.map(v => SelectableOption(v, f(v))), default,
                       onSubmit, attrs :_*)
   }
 
@@ -1969,7 +2067,7 @@ trait SHtml {
    * @param default -- the default value (or Empty if no default value)
    * @param onSubmit -- the function to execute on form submission
    */
-  def multiSelectObj[T](options: Seq[(T, String)], default: Seq[T],
+  def multiSelectObj[T](options: Seq[SelectableOption[T]], default: Seq[T],
                         onSubmit: List[T] => Any, attrs: ElemAttr*): Elem = {
     val (nonces, defaultNonce, secureOnSubmit) =
     secureMultiOptions(options, default, onSubmit)
@@ -1977,26 +2075,34 @@ trait SHtml {
     multiSelect_*(nonces, defaultNonce, secureOnSubmit, attrs: _*)
   }
 
-  private[http] def secureMultiOptions[T](options: Seq[(T, String)], default: Seq[T],
-                                          onSubmit: List[T] => Any): (Seq[(String, String)],
-          Seq[String], AFuncHolder) =
-    {
+  private[http] def secureMultiOptions[T](options: Seq[SelectableOption[T]], default: Seq[T],
+                                          onSubmit: List[T] => Any): (Seq[SelectableOption[String]], Seq[String], AFuncHolder) = {
       val o2 = options.toList
 
-      val secure: List[(T, String, String)] = o2.map {case (obj, txt) => (obj, randomString(20), txt)}
-      val sm: Map[String, T] = Map(secure.map(v => (v._2, v._1)): _*)
-      val defaultNonce: Seq[String] = default.flatMap(d => secure.find(_._1 == d).map(_._2))
-      val nonces: List[(String, String)] = secure.map {case (obj, nonce, txt) => (nonce, txt)}.toList
+      val secure: List[SelectableOptionWithNonce[T]] = o2.map { selectableOption =>
+        SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
+      }
+
+      val sm: Map[String, T] = Map(secure.map(v => (v.label, v.value)): _*)
+
+      val defaultNonce: Seq[String] = default.flatMap { defaultOption =>
+        secure.find(_.value == defaultOption).map(_.label)
+      }
+
+      val nonces: List[SelectableOption[String]] = secure.map { selectableOptionWithNonce =>
+        SelectableOption(selectableOptionWithNonce.nonce, selectableOptionWithNonce.label, selectableOptionWithNonce.attrs: _*)
+      }.toList
+
       def process(info: List[String]): Unit = onSubmit(info.flatMap(sm.get))
 
       (nonces, defaultNonce, LFuncHolder(process))
     }
 
-  def multiSelect_*(opts: Seq[(String, String)],
+  def multiSelect_*(opts: Seq[SelectableOption[String]],
                     deflt: Seq[String],
                     func: AFuncHolder, attrs: ElemAttr*): Elem =
     fmapFunc(func)(funcName =>
-            attrs.foldLeft(<select multiple="true" name={funcName}>{opts.flatMap(o => (<option value={o._1}>{o._2}</option>) % selected(deflt.contains(o._1)))}</select>)(_ % _))
+            attrs.foldLeft(<select multiple="true" name={funcName}>{opts.flatMap(o => (<option value={o.value}>{o.label}</option>) % selected(deflt.contains(o.value)))}</select>)(_ % _))
 
 
   def textarea(value: String, func: String => Any, attrs: ElemAttr*): Elem =
@@ -2127,13 +2233,27 @@ trait SHtml {
    * @return ChoiceHolder containing the checkboxes and values in order
    */
   def checkbox[T](possible: Seq[T], actual: Seq[T], func: Seq[T] => Any, attrs: ElemAttr*): ChoiceHolder[T] = {
-    val len = possible.length
-    fmapFunc(LFuncHolder((strl: List[String]) => {func(strl.map(toInt(_)).filter(x => x >= 0 && x < len).map(possible(_))); true})) {
-      name =>
-              ChoiceHolder(possible.toList.zipWithIndex.map(p =>
-                      ChoiceItem(p._1,
-                        attrs.foldLeft(<input type="checkbox" name={name} value={p._2.toString}/>)(_ % _) %
-                                checked(actual.contains(p._1)) ++ (if (p._2 == 0) (<input type="hidden" name={name} value="-1"/>) else Nil))))
+    fmapFunc {
+      LFuncHolder((selectedChoiceValues: List[String]) => {
+        val validSelectedIndicies = selectedChoiceValues.map(_.toInt).filter(possible.isDefinedAt(_))
+        val selectedValues = validSelectedIndicies.map(possible(_))
+
+        func(selectedValues)
+        true
+      })
+    } { name =>
+      ChoiceHolder(possible.toList.zipWithIndex.map { possibleChoice =>
+        ChoiceItem(
+          possibleChoice._1,
+          attrs.foldLeft(<input type="checkbox" name={name} value={possibleChoice._2.toString}/>)(_ % _) %
+          checked(actual.contains(possibleChoice._1)) ++ {
+            if (possibleChoice._2 == 0)
+              <input type="hidden" name={name} value="-1"/>
+            else
+              Nil
+          }
+        )
+      })
     }
   }
 

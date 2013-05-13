@@ -384,7 +384,11 @@ object JsonParser {
       }
     }
 
-    def near = new String(segment, (cur-20) max 0, (cur + 1) min Segments.segmentSize)
+    def near = {
+      val start = (cur - 20) max 0
+      val len = ((cur + 1) min Segments.segmentSize) - start
+      new String(segment, start, len)
+    }
 
     def release = segments.foreach(Segments.release)
 

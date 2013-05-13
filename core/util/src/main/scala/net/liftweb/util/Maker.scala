@@ -207,8 +207,13 @@ object Vendor {
     implicit def make: Box[T] = Full(f)
   }
 
-  implicit def valToVender[T](value: T): Vendor[T] = apply(value)
-  implicit def funcToVender[T](f: () => T): Vendor[T] = apply(f)
+  @deprecated("This function name was misspelled. Please use the correctly spelled alternative if you need to call it explicitly.", "2.6")
+  def valToVender[T](value: T): Vendor[T] = apply(value)
+  @deprecated("This function name was misspelled. Please use the correctly spelled alternative if you need to call it explicitly.", "2.6")
+  def funcToVender[T](f: () => T): Vendor[T] = apply(f)
+
+  implicit def valToVendor[T](value: T): Vendor[T] = apply(value)
+  implicit def funcToVendor[T](f: () => T): Vendor[T] = apply(f)
 }
 
 

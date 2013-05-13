@@ -27,26 +27,28 @@ if the pull requests meet the following criteria:
 
 You can create a new Lift project using your favorite build system by adding Lift as a dependency:
 
-#### sbt 0.11
+#### sbt 0.12.1
 
 Create or update your `project/plugins.sbt` file with the `xsbt-web-plugin`:
 
-	libraryDependencies <+= sbtVersion(v => "com.github.siasia" %% "xsbt-web-plugin" % (v+"-0.2.7"))
+	libraryDependencies <+= sbtVersion(v => "com.github.siasia" %% "xsbt-web-plugin" % ("0.12.0-0.2.11.1"))
 
 Then, add the plugin and Lift to your `build.sbt` file:
 
 	seq(webSettings :_*)
 	
 	libraryDependencies ++= {
-		val liftVersion = "2.4"
+		val liftVersion = "2.5-RC1"
 		Seq(
-		  "net.liftweb" %% "lift-webkit" % liftVersion % "compile",
-		  "org.mortbay.jetty" % "jetty" % "6.1.22" % "container",
-		  "ch.qos.logback" % "logback-classic" % "0.9.26"
+                  "net.liftweb"       %% "lift-webkit" % liftVersion % "compile",
+                  "net.liftmodules"   %% "lift-jquery-module" % (liftVersion + "-2.2"),
+                  "org.eclipse.jetty" % "jetty-webapp"        % "8.1.7.v20120910"  % "container,test",
+                  "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container,test" artifacts Artifact("javax.servlet", "jar", "jar"),
+                  "ch.qos.logback" % "logback-classic" % "1.0.6"
 		)
 	}
 
-You can [learn more on the wiki](http://www.assembla.com/wiki/show/liftweb/Using_SBT).
+You can [learn more on the cookbook](http://cookbook.liftweb.net/#LiftFromScratch).
 
 #### Maven:
 
@@ -127,6 +129,10 @@ The Lift wiki is hosted on Assembla and can be found at [http://www.assembla.com
 ### ScalaDocs
 
 The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on ScalaTools. You can access the source code–based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 2.4 release can be accessed at [http://scala-tools.org/mvnsites/liftweb-2.4/](http://scala-tools.org/mvnsites/liftweb-2.4/).
+
+### Cookbook
+
+You can find up-to-date information on the [Lift Cookbook](http://cookbook.liftweb.net/)
 
 ## License
 

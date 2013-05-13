@@ -22,6 +22,7 @@ import net.liftweb.common._
 import util._
 
 import xml._
+import java.util.concurrent.atomic.AtomicReference
 
 trait CssBoundLiftScreen extends LiftScreen with CssBoundScreen {
   protected object SavedDefaultXml extends ScreenVar[NodeSeq](defaultXml) {
@@ -32,7 +33,7 @@ trait CssBoundLiftScreen extends LiftScreen with CssBoundScreen {
     override lazy val __nameSalt = Helpers.nextFuncName
   }
 
-  protected object LocalActionRef extends ScreenVar[String](S.fmapFunc(setLocalAction _)(s => s)) {
+  protected object LocalActionRef extends RequestVar[String](S.fmapFunc(setLocalAction _)(s => s)) {
     override lazy val __nameSalt = Helpers.nextFuncName
   }
 
@@ -44,7 +45,8 @@ trait CssBoundLiftScreen extends LiftScreen with CssBoundScreen {
     override lazy val __nameSalt = Helpers.nextFuncName
   }
 
-  protected object LocalActions extends ScreenVar[Map[String, () => JsCmd]](Map[String, () => JsCmd]()) {
+  protected object LocalActions extends ScreenVar[AtomicReference[Map[String, () => JsCmd]]](
+      new AtomicReference[Map[String, () => JsCmd]](Map.empty)) {
     override lazy val __nameSalt = Helpers.nextFuncName
   }
 
@@ -56,7 +58,7 @@ trait CssBoundLiftScreen extends LiftScreen with CssBoundScreen {
   protected def savedDefaultXml = SavedDefaultXml.get
 
   override protected def doFinish(): JsCmd= {
-    val fMap: Map[String, () => JsCmd] = LocalActions.get
+    val fMap: Map[String, () => JsCmd] = LocalActions.get.get
     if (! LocalAction.get.isEmpty)
       fMap.get(LocalAction.get) map (_()) getOrElse (
         throw new IllegalArgumentException("No local action available with that binding"))

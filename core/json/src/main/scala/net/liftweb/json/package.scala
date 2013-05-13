@@ -44,4 +44,5 @@ package object json {
   def render(value: JValue): Document = JsonAST.render(value)
   def compact(d: Document): String = Printer.compact(d)
   def pretty(d: Document): String = Printer.pretty(d)
+  def compactRender(value: JValue): String = JsonAST.compactRender(value)
 }

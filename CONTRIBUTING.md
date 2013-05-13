@@ -11,7 +11,7 @@ The policy on issues is:
   normal (or lower) priority unless a committer explicitly asked for assignment
   (that means they agreed to do the work).
 * A committer may open a issue at whatever priority for whatever milestone and
-  assign it to himself.
+  assign it to themselves.
 * There should be very little discussion about issue in the issuing system.
   The discussion should take place on the Lift list so the discussion is
   available to a broader audience.
