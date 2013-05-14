@@ -1182,6 +1182,22 @@ trait SHtml {
     ajaxCall(JsRaw("this.value"), func)
 
   /**
+   * Create something that's bindable to an event attribute and
+   * guarded by a confirm dialog. The fn passed in will only execute if
+   * the user clicks the "OK" button in the confirm dialog. Useful for
+   * things like delete buttons that you want a confirmation on.
+   *
+   * <code>
+   * ".deleteBtn [onclick]" #> SHtml.onEventIf("Are you sure you want to do that?", s => deleteUser())
+   * </code>
+   */
+  def onEventIf(question:String, fn:(String)=>JsCmd) : GUIDJsExp = {
+    val eventExp = onEvent(fn)
+
+    new GUIDJsExp(eventExp.guid, JsRaw(Confirm(question, eventExp.exp).toJsCmd))
+  }
+
+  /**
    * Specify the events (e.g., onblur, onchange, etc.)
    * and the function to execute on those events.  Returns
    * a NodeSeq => NodeSeq that will add the events to all
