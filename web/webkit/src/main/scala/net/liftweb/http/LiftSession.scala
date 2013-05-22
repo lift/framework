@@ -2669,7 +2669,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       </body>
     </html>
 
-  private[liftweb] def findAndMerge(templateName: Box[String], atWhat: Map[String, NodeSeq]): NodeSeq = {
+  private[liftweb] def findAndMerge(templateName: Box[String], atWhat: =>  Map[String, NodeSeq]): NodeSeq = {
     val name: String = templateName.map(s => if (s.startsWith("/")) s else "/" + s).openOr("/templates-hidden/default")
 
     def hasLiftBind(s: NodeSeq): Boolean =
