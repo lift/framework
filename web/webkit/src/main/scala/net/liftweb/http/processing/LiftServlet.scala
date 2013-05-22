@@ -525,7 +525,8 @@ class LiftServlet extends Loggable {
               case _ => JsCommands(S.noticesToJsCmd :: JsCmds.Noop :: S.jsToAppend).toResponse
             }
 
-            LiftRules.cometLogger.debug("AJAX Response: " + liftSession.uniqueId + " " + ret)
+            LiftRules.cometLogger.debug("AJAX Response: " + liftSession.uniqueId + " " +
+              LiftRules.cometLoggerStringSecurer(ret.toString))
 
             Full(ret)
           } finally {
@@ -556,7 +557,8 @@ class LiftServlet extends Loggable {
   private def handleAjax(liftSession: LiftSession,
                          requestState: Req): Box[LiftResponse] = {
     extractVersions(requestState.path.partPath) { versionInfo =>
-      LiftRules.cometLogger.debug("AJAX Request: " + liftSession.uniqueId + " " + requestState.params)
+      LiftRules.cometLogger.debug("AJAX Request: " + liftSession.uniqueId + " " +
+        LiftRules.cometLoggerStringSecurer(requestState.params.toString))
       tryo {
         LiftSession.onBeginServicing.foreach(_(liftSession, requestState))
       }
@@ -810,11 +812,12 @@ class LiftServlet extends Loggable {
   private def logIfDump(request: Req, response: BasicResponse) {
     if (dumpRequestResponse) {
       val toDump = request.uri + "\n" +
-        request.params + "\n" +
+        LiftRules.cometLoggerStringSecurer(request.params.toString) + "\n" +
         response.headers + "\n" +
         (
           response match {
-            case InMemoryResponse(data, _, _, _) => new String(data, "UTF-8")
+            case InMemoryResponse(data, _, _, _) =>
+              LiftRules.cometLoggerStringSecurer(new String(data, "UTF-8"))
             case _ => "data"
           }
           )

@@ -1379,6 +1379,14 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   def cometLogger_=(newLogger: Logger): Unit = _cometLogger.set(newLogger)
 
+
+  /**
+   * Sometimes the comet logger (which is really the Ajax logger)
+   * needs to have the string cleaned up to remove stuff like passwords. That's
+   * done by this function.
+   */
+  @volatile var cometLoggerStringSecurer: String => String = s => s
+
   /**
    * Takes a Node, headers, cookies, and a session and turns it into an XhtmlResponse.
    */
