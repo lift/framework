@@ -136,7 +136,9 @@ object LAFuture {
   def collect[T](future: LAFuture[T]*): LAFuture[List[T]] = {
     val sync = new Object
     val len = future.length
-    val vals = new collection.mutable.ArrayBuffer[T](len)
+    val vals = new collection.mutable.ArrayBuffer[Box[T]](len)
+     // pad array so inserts at random places are possible
+    for (i <- 0 to len) { vals.insert(i, Empty) }
     var gotCnt = 0
     val ret = new LAFuture[List[T]]
 
@@ -144,10 +146,10 @@ object LAFuture {
       case (f, idx) => 
         f.foreach {
           v => sync.synchronized {
-            vals.insert(idx, v)
+            vals.insert(idx, Full(v))
             gotCnt += 1
             if (gotCnt >= len) {
-              ret.satisfy(vals.toList)
+              ret.satisfy(vals.toList.flatten)
             }
           }
         }
@@ -166,7 +168,9 @@ object LAFuture {
   def collectAll[T](future: LAFuture[Box[T]]*): LAFuture[Box[List[T]]] = {
     val sync = new Object
     val len = future.length
-    val vals = new collection.mutable.ArrayBuffer[T](len)
+    val vals = new collection.mutable.ArrayBuffer[Box[T]](len)
+    // pad array so inserts at random places are possible
+    for (i <- 0 to len) { vals.insert(i, Empty) }
     var gotCnt = 0
     val ret = new LAFuture[Box[List[T]]]
 
@@ -176,10 +180,10 @@ object LAFuture {
           vb => sync.synchronized {
             vb match {
               case Full(v) => {
-                vals.insert(idx, v)
+                vals.insert(idx, Full(v))
                 gotCnt += 1
                 if (gotCnt >= len) {
-                  ret.satisfy(Full(vals.toList))
+                  ret.satisfy(Full(vals.toList.flatten))
                 }
               }
               
