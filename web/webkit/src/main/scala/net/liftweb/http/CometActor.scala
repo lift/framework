@@ -341,6 +341,12 @@ trait CometListener extends CometActor {
 trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any] with Dependent {
   def uniqueId: String
 
+  /**
+   * The last "when" sent from the listener
+   * @return the last when sent from the listener
+   */
+  def lastListenerTime: Long
+
   private[http] def callInitCometActor(theSession: LiftSession,
                                        theType: Box[String],
                                        name: Box[String],
@@ -490,6 +496,15 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    */
   def renderClock: Long = lastRenderTime
 
+  @volatile
+  private var _lastListenerTime: Long = 0
+
+  /**
+   * The last "when" sent from the listener
+   * @return the last when sent from the listener
+   */
+  def lastListenerTime: Long = _lastListenerTime
+
   /**
    * The last rendering (cached or not)
    */
@@ -521,6 +536,12 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   private var jsonHandlerChain: PartialFunction[Any, JsCmd] = Map.empty
   private val notices = new ListBuffer[(NoticeType.Value, NodeSeq, Box[String])]
   private var lastListenTime = millis
+
+  private var _deltaPruner: (CometActor, List[Delta]) => List[Delta] =
+    (actor, d) => {
+      val m = Helpers.millis
+      d.filter(d => (m - d.timestamp) < 120000L)
+    }
 
   private var _theSession: LiftSession = _
 
@@ -826,6 +847,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
               whosAsking openOr this, lastRenderTime, wasLastFullRender))
             clearNotices
           } else {
+            lastRenderTime = when
             deltas.filter(_.when > when) match {
               case Nil => listeners = (seqId, toDo) :: listeners
 
@@ -834,6 +856,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
                   Full(all.reverse.foldLeft(Noop)(_ & _.js)), Empty, buildSpan, false, notices toList),
                   whosAsking openOr this, hd.when, false))
                 clearNotices
+                deltas = _deltaPruner(this, deltas)
             }
           }
       }
@@ -935,6 +958,10 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
     case ReRender(all) => performReRender(all)
 
+    case SetDeltaPruner(f) =>
+      _deltaPruner = f
+      deltas = f(this, deltas)
+
     case Error(id, node) => notices += ((NoticeType.Error, node, id))
 
     case Warning(id, node) => notices += ((NoticeType.Warning, node, id))
@@ -955,8 +982,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       val delta = JsDelta(time, cmd)
       theSession.updateFunctionMap(S.functionMap, uniqueId, time)
       S.clearFunctionMap
-      val m = millis
-      deltas = (delta :: deltas).filter(d => (m - d.timestamp) < 120000L)
+      deltas = _deltaPruner(this,  (delta :: deltas))
       if (!listeners.isEmpty) {
         val postPage = theSession.postPageJavaScript()
         val rendered =
@@ -1437,6 +1463,8 @@ case class Warning(id: Box[String], msg: NodeSeq) extends CometMessage
 case class Notice(id: Box[String], msg: NodeSeq) extends CometMessage
 
 case object ClearNotices extends CometMessage
+
+case class SetDeltaPruner(f: (LiftCometActor, List[Delta]) => List[Delta]) extends CometMessage
 
 object Error {
   def apply(node: NodeSeq): Error = Error(Empty, node)

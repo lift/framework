@@ -2357,9 +2357,18 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
       S.addCometAtEnd(node)
 
+      ca ! SetDeltaPruner(lastWhenDeltaPruner)
+
       ca
     }
   }
+
+
+  private def lastWhenDeltaPruner: (LiftCometActor, List[Delta]) => List[Delta] =
+    (ca, dl) => {
+      val when = ca.lastListenerTime
+      dl.filter(d => when <= d.when)
+    }
 
 
   /**
@@ -2761,6 +2770,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       implicit val defaultFormats = DefaultFormats
 
       ca ! PerformSetupComet2(Empty)
+
+      ca ! SetDeltaPruner(lastWhenDeltaPruner)
 
       val node: Elem = ca.buildSpan(ca.renderClock, NodeSeq.Empty)
 
