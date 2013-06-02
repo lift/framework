@@ -2208,15 +2208,17 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   /**
    * Remove a Comet actor
    */
-  private[http] def removeCometActor(act: LiftCometActor): Unit = asyncSync.synchronized {
+  private[http] def removeCometActor(act: LiftCometActor): Unit =  {
     testStatefulFeature {
+      asyncSync.synchronized {
       asyncById -= act.uniqueId
-      messageCallback -= act.jsonCall.funcId
       asyncComponents -= (act.theType -> act.name)
+      }
 
       val toCmp = Full(act.uniqueId)
 
       msgCallbackSync.synchronized {
+        messageCallback -= act.jsonCall.funcId
         messageCallback.foreach {
           case (k, f) =>
             if (f.owner == toCmp) messageCallback -= k
