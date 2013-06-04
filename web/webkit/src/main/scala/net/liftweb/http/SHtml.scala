@@ -2099,10 +2099,10 @@ trait SHtml {
         SelectableOptionWithNonce(selectableOption.value, randomString(20), selectableOption.label, selectableOption.attrs: _*)
       }
 
-      val sm: Map[String, T] = Map(secure.map(v => (v.label, v.value)): _*)
+      val sm: Map[String, T] = Map(secure.map(v => (v.nonce, v.value)): _*)
 
       val defaultNonce: Seq[String] = default.flatMap { defaultOption =>
-        secure.find(_.value == defaultOption).map(_.label)
+        secure.find(_.value == defaultOption).map(_.nonce)
       }
 
       val nonces: List[SelectableOption[String]] = secure.map { selectableOptionWithNonce =>
@@ -2110,6 +2110,7 @@ trait SHtml {
       }.toList
 
       def process(info: List[String]): Unit = onSubmit(info.flatMap(sm.get))
+
 
       (nonces, defaultNonce, LFuncHolder(process))
     }
