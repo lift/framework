@@ -411,7 +411,7 @@ trait Loc[T] {
     kids.toList.flatMap(_.loc.buildItem(Nil, false, false)) ::: supplementalKidMenuItems
   }
 
-  @deprecated("Use supplementalKidMenuItems with an 'e'", "2.5")
+  @deprecated("Use supplementalKidMenuItems with an 'e'. This misspelled variant will be removed in Lift 3.0.", "2.6")
   final def supplimentalKidMenuItems = supplementalKidMenuItems
 
   def supplementalKidMenuItems: List[MenuItem] =
