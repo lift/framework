@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2012 WorldWide Conferencing, LLC
+ * Copyright 2007-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -578,15 +578,15 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    *  ****IMPORTANT**** when you access messageCallback, it *MUST*
    * be in a block that's synchronized on the owner LiftSession
    */
-  private var messageCallback: HashMap[String, S.AFuncHolder] = new HashMap
+  private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = new ConcurrentHashMap
 
   private val msgCallbackSync = new Object
 
   private[http] var notices: Seq[(NoticeType.Value, NodeSeq, Box[String])] = Nil
 
-  private var asyncComponents = new HashMap[(Box[String], Box[String]), LiftCometActor]()
+  private val nasyncComponents = new ConcurrentHashMap[(Box[String], Box[String]), LiftCometActor]()
 
-  private var asyncById = new HashMap[String, LiftCometActor]()
+  private val nasyncById = new ConcurrentHashMap[String, LiftCometActor]()
 
   private val asyncSync = new Object
 
@@ -605,6 +605,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * A mapping between pages denoted by RenderVersion and
    * functions to execute at the end of the page rendering
    */
+  @volatile
   private var postPageFunctions: Map[String, PostPageFunctions] = Map()
 
   /**
@@ -732,9 +733,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * well, you can look them up.
    */
   def findFunc(funcName: String): Option[S.AFuncHolder] =
-  msgCallbackSync.synchronized {
-    messageCallback.get(funcName)
-  }
+    Option(nmessageCallback.get(funcName))
+
 
   /**
    * Executes the user's functions based on the query parameters
@@ -745,9 +745,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       // get all the commands, sorted by owner,
       (state.uploadedFiles.map(_.name) ::: state.paramNames).distinct.
         flatMap {
-        n => msgCallbackSync.synchronized {
-          messageCallback.get(n)
-        }.map(mcb => RunnerHolder(n, mcb, mcb.owner))
+        n => Box.legacyNullTest(nmessageCallback.get(n)).map(mcb => RunnerHolder(n, mcb, mcb.owner)).toList
       }.
         sortWith {
         case (RunnerHolder(_, _, Full(a)), RunnerHolder(_, _, Full(b))) if a < b => true
@@ -773,7 +771,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         val f = toRun.filter(_.owner == w)
         w match {
           // if it's going to a CometActor, batch up the commands
-          case Full(id) if asyncById.contains(id) => asyncById.get(id).toList.flatMap(a =>
+          case Full(id) if nasyncById.containsKey(id) => Option(nasyncById.get(id)).toList.flatMap(a =>
             a.!?(ActionMessageSet(f.map(i => buildFunc(i)), state)) match {
               case li: List[_] => li
               case other => Nil
@@ -792,13 +790,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     msgCallbackSync.synchronized {
     funcs.foreach {
       case (name, func) =>
-        messageCallback(name) =
-          if (func.owner == Full(uniqueId)) func else func.duplicate(uniqueId)
+        nmessageCallback.put(name,
+          if (func.owner == Full(uniqueId)) func else func.duplicate(uniqueId))
     }
   }
 
-  def removeFunction(name: String) = msgCallbackSync.synchronized {
-    messageCallback -= name
+  def removeFunction(name: String) = {
+    nmessageCallback.remove(name)
   }
 
   /**
@@ -813,10 +811,10 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * Called just before the session exits.  If there's clean-up work, override this method
    */
   private[http] def cleanUpSession() {
-    messageCallback = HashMap.empty
+    nmessageCallback.clear()
     notices = Nil
-    asyncComponents.clear
-    asyncById = HashMap.empty
+    nasyncComponents.clear
+    nasyncById.clear()
     myVariables = Map.empty
     onSessionEnd = Nil
     postPageFunctions = Map()
@@ -840,11 +838,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   }
 
   def doCometActorCleanup(): Unit = {
-    val acl = asyncSync.synchronized {
-      this.asyncComponents.values.toList
-    }
-
-    acl.foreach(_ ! ShutdownIfPastLifespan)
+    import scala.collection.JavaConversions._
+    this.nasyncComponents.values.foreach(_ ! ShutdownIfPastLifespan)
   }
 
   /**
@@ -917,15 +912,15 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         }
       }
 
-      msgCallbackSync.synchronized {
-        messageCallback.foreach {
-          case (k, f) =>
-            if (!f.sessionLife &&
-              f.owner.isDefined &&
-              (now - f.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
-              messageCallback -= k
-            }
-        }
+
+      import scala.collection.JavaConversions._
+      nmessageCallback.foreach {
+        case (k, f) =>
+          if (!f.sessionLife &&
+            f.owner.isDefined &&
+            (now - f.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
+            nmessageCallback.remove(k)
+          }
       }
     }
   }
@@ -1052,8 +1047,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       }
     }
 
-    msgCallbackSync.synchronized {
-      (0 /: messageCallback)((l, v) => l + (v._2.owner match {
+      import scala.collection.JavaConversions._
+      (0 /: nmessageCallback)((l, v) => l + (v._2.owner match {
         case Full(owner) if (owner == ownerName) =>
           v._2.lastSeen = time
           1
@@ -1061,14 +1056,14 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         1
         case _ => 0
       }))
-    }
   }
 
   /**
    * Returns true if there are functions bound for this owner
    */
-  private[http] def hasFuncsForOwner(owner: String): Boolean = msgCallbackSync.synchronized {
-    !messageCallback.find(_._2.owner == owner).isEmpty
+  private[http] def hasFuncsForOwner(owner: String): Boolean = {
+    import scala.collection.JavaConversions._
+    !nmessageCallback.find(_._2.owner == owner).isEmpty
   }
 
   private def shutDown() = {
@@ -1083,10 +1078,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
         SessionMaster.sendMsg(RemoveSession(this.uniqueId))
 
-        asyncSync.synchronized{
-        asyncComponents.foreach {
+        import scala.collection.JavaConversions._
+        nasyncComponents.foreach {
           case (_, comp) => done ::= (() => tryo(comp ! ShutDown))
-        }
         }
         cleanUpSession()
         LiftSession.onShutdownSession.foreach(f => done ::= (() => f(this)))
@@ -1142,7 +1136,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
             val xml = merge(rawXml, request)
 
             // snapshot for ajax calls
-            messageCallback(S.renderVersion) = S.PageStateHolder(Full(S.renderVersion), this)
+            nmessageCallback.put(S.renderVersion,
+              S.PageStateHolder(Full(S.renderVersion), this))
 
             // But we need to update the function map because there
             // may be addition functions created during the JsToAppend processing
@@ -1324,11 +1319,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private[http] def attachRedirectFunc(uri: String, f: Box[() => Unit]) = {
     f map {
       fnc =>
-        val func: String = msgCallbackSync.synchronized {
+        val func: String = {
           val funcName = Helpers.nextFuncName
-          messageCallback(funcName) = S.NFuncHolder(() => {
+          nmessageCallback.put(funcName, S.NFuncHolder(() => {
             fnc()
-          })
+          }))
           funcName
         }
         Helpers.appendFuncToURL(uri, func + "=_")
@@ -2080,9 +2075,10 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   /**
    * Finds all Comet actors by type
    */
-  def findComet(theType: String): List[LiftCometActor] = asyncSync.synchronized {
+  def findComet(theType: String): List[LiftCometActor] = {
     testStatefulFeature {
-      asyncComponents.flatMap {
+      import scala.collection.JavaConversions._
+      nasyncComponents.flatMap {
         case ((Full(name), _), value) if name == theType => Full(value)
         case _ => Empty
       }.toList
@@ -2093,12 +2089,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * Find the comet actor by type and name
    */
   def findComet(theType: String, name: Box[String]): Box[LiftCometActor] =
-    asyncSync.synchronized {
     testStatefulFeature {
-      asyncComponents.get(Full(theType) -> name)
+      Box.legacyNullTest(nasyncComponents.get(Full(theType) -> name))
     }
-  }
-
 
   /**
    * This method will send a message to a CometActor, whether or not
@@ -2137,14 +2130,14 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       val what = (theType -> name)
       val ret = asyncSync.synchronized {
 
-        val ret = Box(asyncComponents.get(what)).or({
+        val ret = Box.legacyNullTest(nasyncComponents.get(what)).or({
           theType.flatMap {
             tpe =>
               val ret = findCometByType(tpe, name, defaultXml, attributes)
               ret.foreach(r =>
                 asyncSync.synchronized {
-                  asyncComponents(what) = r
-                  asyncById(r.uniqueId) = r
+                  nasyncComponents.put(what, r)
+                  nasyncById.put(r.uniqueId, r)
                 })
               ret
           }
@@ -2168,15 +2161,15 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   /**
    * Finds a Comet actor by ID
    */
-  def getAsyncComponent(id: String): Box[LiftCometActor] = asyncSync.synchronized(
-    testStatefulFeature(asyncById.get(id)))
+  def getAsyncComponent(id: String): Box[LiftCometActor] =
+    testStatefulFeature(Box.legacyNullTest(nasyncById.get(id)))
 
   /**
    * Adds a new Comet actor to this session
    */
-  private[http] def addCometActor(act: LiftCometActor): Unit = asyncSync.synchronized {
+  private[http] def addCometActor(act: LiftCometActor): Unit = {
     testStatefulFeature {
-      asyncById(act.uniqueId) = act
+      nasyncById.put(act.uniqueId, act)
     }
   }
 
@@ -2187,10 +2180,10 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
                                             attributes: Map[String, String]) = {
     testStatefulFeature {
       val what = (theType -> name)
-      asyncSync.synchronized {
-        asyncById(act.uniqueId) = act
-        asyncComponents(what) = act
-      }
+
+      nasyncById.put(act.uniqueId, act)
+      nasyncComponents.put(what, act)
+
       act.callInitCometActor(this, theType, name, defaultXml, attributes)
       act ! PerformSetupComet2(if (act.sendInitialReq_?)
         S.request.map(_.snapshot)
@@ -2203,36 +2196,33 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    */
   private[http] def removeCometActor(act: LiftCometActor): Unit =  {
     testStatefulFeature {
-      asyncSync.synchronized {
-      asyncById -= act.uniqueId
-      asyncComponents -= (act.theType -> act.name)
-      }
+      nasyncById.remove(act.uniqueId)
+      nasyncComponents.remove(act.theType -> act.name)
 
       val toCmp = Full(act.uniqueId)
 
-      msgCallbackSync.synchronized {
-        messageCallback -= act.jsonCall.funcId
-        messageCallback.foreach {
-          case (k, f) =>
-            if (f.owner == toCmp) messageCallback -= k
-        }
+      import scala.collection.JavaConversions._
+      nmessageCallback.remove(act.jsonCall.funcId)
+      nmessageCallback.foreach {
+        case (k, f) =>
+          if (f.owner == toCmp) nmessageCallback.remove(k)
       }
 
-      synchronized {
+      LiftSession.this.synchronized {
         accessPostPageFuncs {
           postPageFunctions -= act.uniqueId
         }
       }
 
-      msgCallbackSync.synchronized {
-        val id = Full(act.uniqueId)
-        messageCallback.keysIterator.foreach {
-          k =>
-            val f = messageCallback(k)
-            if (f.owner == id) {
-              messageCallback -= k
-            }
-        }
+
+      val id = Full(act.uniqueId)
+
+      nmessageCallback.foreach {
+        case (k, f) =>
+
+          if (f.owner == id) {
+            nmessageCallback.remove(k)
+          }
       }
     }
   }
