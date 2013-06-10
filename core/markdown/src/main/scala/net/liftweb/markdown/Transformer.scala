@@ -59,41 +59,15 @@ class SingleThreadedTransformer extends Transformer
  * val input:String = ...
  * val xhtml:String = new ActuariusTransformer()(input)
  *
- * Note that Actuarius isn't inherantly thread-safe, as Scala Parser Combinators isn't, so this
+ * Note that this markdown parser isn't inherantly thread-safe, as Scala Parser Combinators isn't, so this
  * class instantiates a SingleThreadedTransformer for each thread.
  * You'll need to write your own pooled implementation if this isn't efficient for your usage.
  */
-class ActuariusTransformer extends Transformer {
+class ThreadLocalTransformer extends Transformer {
 
     private[this] val threadLocalTransformer = new ThreadLocal[SingleThreadedTransformer] {
         override def initialValue = new SingleThreadedTransformer
     }
 
     override def apply(s: String) = threadLocalTransformer.get()(s)
-}
-
-/**
- * Contains a main methdod that simply reads everything from stdin, parses it as markdown and
- * prints the result to stdout.
- */
-object ActuariusApp extends Transformer {
-
-
-    def main(args:Array[String]) = {
-        //read from system input stream
-        val reader = new InputStreamReader(System.in)
-        val writer = new StringWriter()
-        val buffer = new Array[Char](1024)
-		var read = reader.read(buffer)
-		while (read != -1) {
-			writer.write(buffer, 0, read)
-			read = reader.read(buffer)
-		}
-        //turn read input into a string
-        val input = writer.toString
-        //run that string through the transformer trait's apply method
-        val output = apply(input)
-        //print result to stdout
-        print(output)
-    }
 }
