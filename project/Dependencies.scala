@@ -49,7 +49,6 @@ object Dependencies {
   lazy val scalaz7_core: ModuleMap = sv => scalazGroup(sv)       % "scalaz-core"        % scalaz7Version(sv) cross CVMapping210
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
   lazy val squeryl                = "org.squeryl"                % "squeryl"            % "0.9.5-6" cross CVMapping210
-  lazy val markdown               = "org.hoisted"                %% "actuarius"         %  "0.2.5-SNAPSHOT"
   lazy val rhino                  = "org.mozilla"                      % "rhino"                 % "1.7R4"
 
   // Aliases

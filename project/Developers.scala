@@ -46,7 +46,8 @@ object Developers {
     "timperrett" -> "Timothy Perrett",
     "tjweir" -> "Tyler Weir",
     "tuhlmann" -> "Torsten Uhlmann",
-    "vdichev" -> "Vassil Dichev"
+    "vdichev" -> "Vassil Dichev",
+    "chenkelmann" -> "Christoph Henkelmann"
   )
 
   def toXml =
