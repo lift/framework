@@ -34,7 +34,7 @@ object BuildDef extends Build {
   // Core Projects
   // -------------
   lazy val core: Seq[ProjectReference] =
-    Seq(common, actor, json, json_scalaz, json_scalaz7, json_ext, util)
+    Seq(common, actor, markdown, json, json_scalaz, json_scalaz7, json_ext, util)
 
   lazy val common =
     coreProject("common")
@@ -46,6 +46,15 @@ object BuildDef extends Build {
         .dependsOn(common)
         .settings(description := "Simple Actor",
                   parallelExecution in Test := false)
+                  
+  lazy val markdown =
+    coreProject("markdown")
+        .settings(description := "Markdown Parser",
+                  parallelExecution in Test := false,
+                  libraryDependencies ++= Seq(
+                     "org.scalatest" %% "scalatest" % "1.9.1" % "test" withSources(),
+                     "junit" % "junit" % "4.8.2" % "test"
+                   ))                  
 
   lazy val json =
     coreProject("json")
@@ -73,10 +82,11 @@ object BuildDef extends Build {
 
   lazy val util =
     coreProject("util")
-        .dependsOn(actor, json)
+        .dependsOn(actor, json, markdown)
         .settings(description := "Utilities Library",
                   parallelExecution in Test := false,
-                  libraryDependencies <++= scalaVersion {sv =>  Seq(scala_compiler(sv), joda_time, joda_convert, commons_codec, javamail, log4j, htmlparser)})
+                  libraryDependencies <++= scalaVersion {sv =>  Seq(scala_compiler(sv), joda_time,
+                    joda_convert, commons_codec, javamail, log4j, htmlparser)})
 
 
   // Web Projects
