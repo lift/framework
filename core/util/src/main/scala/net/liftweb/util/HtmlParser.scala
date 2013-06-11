@@ -52,6 +52,7 @@ trait Html5Writer {
           str.charAt(pos) match {
             case '"' => writer.append("&quot;")
             case '<' => writer.append("&lt;")
+            case '&' if str.indexOf(';', pos) >= 0 => writer.append("&amp;")
             case c if c >= ' ' && c.toInt <= 127 => writer.append(c)
             case c if c == '\u0085' =>
             case c => {
@@ -86,6 +87,7 @@ trait Html5Writer {
             str.charAt(pos) match {
               case '"' => writer.append("&quot;")
               case '<' => writer.append("&lt;")
+              case '&' if str.indexOf(';', pos) >= 0 => writer.append("&amp;")
               case c if c >= ' ' && c.toInt <= 127 => writer.append(c)
               case c if c == '\u0085' =>
               case c => {
