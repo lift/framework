@@ -26,6 +26,7 @@ import util.{FieldError, Helpers}
 import org.specs2.mutable._
 
 import field._
+import field.joda._
 
 class BasicTestRecord private () extends Record[BasicTestRecord] {
   def meta = BasicTestRecord
@@ -212,6 +213,9 @@ class FieldTypeTestRecord private () extends Record[FieldTypeTestRecord] {
   object legacyOptionalTimeZoneField extends TimeZoneField(this) { override def optional_? = true }
   object optionalTimeZoneField extends OptionalTimeZoneField(this)
 
+  object mandatoryJodaTimeField extends JodaTimeField(this)
+  object legacyOptionalJodaTimeField extends JodaTimeField(this) { override def optional_? = true }
+  object optionalJodaTimeField extends OptionalJodaTimeField(this)
 
   def fieldsToCompare = {
     fields

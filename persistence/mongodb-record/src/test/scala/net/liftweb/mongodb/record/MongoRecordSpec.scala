@@ -22,10 +22,12 @@ import java.util.{Date, Locale, UUID}
 import java.util.regex.Pattern
 
 import org.bson.types.ObjectId
+import org.joda.time.DateTime
 import org.specs2.mutable.Specification
 import org.specs2.specification.Fragment
 
 import common._
+import http.{S, LiftSession}
 import http.js.JsExp
 import json._
 import JsonDSL._
@@ -33,7 +35,7 @@ import JsonDSL._
 import net.liftweb.record.field.Countries
 
 import com.mongodb._
-import http.{S, LiftSession}
+
 
 /**
  * Systems under specification for MongoRecord.
@@ -174,6 +176,8 @@ class MongoRecordSpec extends Specification with MongoTestKit {
   "MongoRecord" should {
     val binData: Array[Byte] = Array(18, 19, 20)
 
+    val dt = DateTime.now.plusHours(1)
+
     val fttr = FieldTypeTestRecord.createRecord
       .mandatoryBooleanField(false)
       .mandatoryCountryField(Countries.USA)
@@ -188,6 +192,7 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       .mandatoryStringField("string")
       .mandatoryTextareaField("string")
       .mandatoryTimeZoneField("America/Chicago")
+      .mandatoryJodaTimeField(dt)
 
     val bftr = BinaryFieldTestRecord.createRecord
       .mandatoryBinaryField(binData)
