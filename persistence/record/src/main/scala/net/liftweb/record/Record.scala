@@ -165,6 +165,8 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
   }
 
   def copy: MyType = meta.copy(this)
+
+  def dirty_? : Boolean = meta.dirty_?(this)
 }
 
 trait ExpandoRecord[MyType <: Record[MyType] with ExpandoRecord[MyType]] {

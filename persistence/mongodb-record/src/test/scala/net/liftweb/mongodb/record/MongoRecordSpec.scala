@@ -688,9 +688,9 @@ class MongoRecordSpec extends Specification with MongoTestKit {
     "reset dirty flags on save" in {
       val fttr = FieldTypeTestRecord.createRecord.save
       fttr.mandatoryDecimalField(BigDecimal("3.14"))
-      fttr.dirtyFields.length must_== 1
+      fttr.dirty_? must_== true
       fttr.save
-      fttr.dirtyFields.length must_== 0
+      fttr.dirty_? must_== false
     }
 
     "update dirty fields for a FieldTypeTestRecord" in {
@@ -727,15 +727,15 @@ class MongoRecordSpec extends Specification with MongoTestKit {
         fttr.legacyOptionalStringField(Empty)
         fttr.legacyOptionalStringField.dirty_? must_== true
 
-        fttr.dirtyFields.length must_== 9
+        fttr.dirty_? must_== true
         fttr.update
-        fttr.dirtyFields.length must_== 0
+        fttr.dirty_? must_== false
 
         val fromDb = FieldTypeTestRecord.find(fttr.id.is)
         fromDb.isDefined must_== true
         fromDb foreach { rec =>
           rec must_== fttr
-          rec.dirtyFields.length must_== 0
+          rec.dirty_? must_== false
         }
 
         val fttr2 = FieldTypeTestRecord.createRecord.save
@@ -746,15 +746,15 @@ class MongoRecordSpec extends Specification with MongoTestKit {
         fttr2.optionalStringField("optional string")
         fttr2.optionalStringField.dirty_? must_== true
 
-        fttr2.dirtyFields.length must_== 2
+        fttr2.dirty_? must_== true
         fttr2.update
-        fttr2.dirtyFields.length must_== 0
+        fttr2.dirty_? must_== false
 
         val fromDb2 = FieldTypeTestRecord.find(fttr2.id.is)
         fromDb2.isDefined must_== true
         fromDb2.toList map { rec =>
           rec must_== fttr2
-          rec.dirtyFields.length must_== 0
+          rec.dirty_? must_== false
         }
       }
     }
@@ -785,15 +785,15 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       mfttr.legacyOptionalObjectIdField(Empty)
       mfttr.legacyOptionalObjectIdField.dirty_? must_== true
 
-      mfttr.dirtyFields.length must_== 6
+      mfttr.dirty_? must_== true
       mfttr.update
-      mfttr.dirtyFields.length must_== 0
+      mfttr.dirty_? must_== false
 
       val fromDb = MongoFieldTypeTestRecord.find(mfttr.id.is)
       fromDb.isDefined must_== true
       fromDb foreach { rec =>
         rec must_== mfttr
-        rec.dirtyFields.length must_== 0
+        rec.dirty_? must_== false
       }
 
       val mfttr2 = MongoFieldTypeTestRecord.createRecord.save
@@ -804,15 +804,15 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       mfttr2.legacyOptionalObjectIdField(ObjectId.get)
       mfttr2.legacyOptionalObjectIdField.dirty_? must_== true
 
-      mfttr2.dirtyFields.length must_== 2
+      mfttr2.dirty_? must_== true
       mfttr2.update
-      mfttr2.dirtyFields.length must_== 0
+      mfttr2.dirty_? must_== false
 
       val fromDb2 = MongoFieldTypeTestRecord.find(mfttr2.id.is)
       fromDb2.isDefined must_== true
       fromDb2.toList map { rec =>
         rec must_== mfttr2
-        rec.dirtyFields.length must_== 0
+        rec.dirty_? must_== false
       }
     }
 
@@ -822,15 +822,15 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       pftrd.mandatoryPatternField(Pattern.compile("^Mon", Pattern.CASE_INSENSITIVE))
       pftrd.mandatoryPatternField.dirty_? must_== true
 
-      pftrd.dirtyFields.length must_== 1
+      pftrd.dirty_? must_== true
       pftrd.update
-      pftrd.dirtyFields.length must_== 0
+      pftrd.dirty_? must_== false
 
       val fromDb = PatternFieldTestRecord.find(pftrd.id.is)
       fromDb.isDefined must_== true
       fromDb foreach { rec =>
         rec must_== pftrd
-        rec.dirtyFields.length must_== 0
+        rec.dirty_? must_== false
       }
       success
     }
@@ -850,15 +850,15 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       ltr.mongoCaseClassListField(List(MongoCaseClassTestObject(1,"str",MyTestEnum.TWO)))
       ltr.mongoCaseClassListField.dirty_? must_== true
 
-      ltr.dirtyFields.length must_== 4
+      ltr.dirty_? must_== true
       ltr.update
-      ltr.dirtyFields.length must_== 0
+      ltr.dirty_? must_== false
 
       val fromDb = ListTestRecord.find(ltr.id.is)
       fromDb.isDefined must_== true
       fromDb.toList map { rec =>
         rec must_== ltr
-        rec.dirtyFields.length must_== 0
+        rec.dirty_? must_== false
       }
     }
 
@@ -871,15 +871,15 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       mtr.mandatoryIntMapField(Map("a" -> 4, "b" -> 5, "c" -> 6))
       mtr.mandatoryIntMapField.dirty_? must_== true
 
-      mtr.dirtyFields.length must_== 2
+      mtr.dirty_? must_== true
       mtr.update
-      mtr.dirtyFields.length must_== 0
+      mtr.dirty_? must_== false
 
       val fromDb = MapTestRecord.find(mtr.id.is)
       fromDb.isDefined must_== true
       fromDb.toList map { rec =>
         rec must_== mtr
-        rec.dirtyFields.length must_== 0
+        rec.dirty_? must_== false
       }
     }
 
@@ -907,15 +907,15 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       srtr.mandatoryBsonRecordListField(List(sr1,sr2))
       srtr.mandatoryBsonRecordListField.dirty_? must_== true
 
-      srtr.dirtyFields.length must_== 2
+      srtr.dirty_? must_== true
       srtr.update
-      srtr.dirtyFields.length must_== 0
+      srtr.dirty_? must_== false
 
       val fromDb = SubRecordTestRecord.find(srtr.id.is)
       fromDb.isDefined must_== true
       fromDb.toList map { rec =>
         rec must_== srtr
-        rec.dirtyFields.length must_== 0
+        rec.dirty_? must_== false
       }
     }
   }
