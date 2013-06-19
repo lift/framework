@@ -236,6 +236,13 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     true
   }
 
+  protected def updateOp(inst: BaseRecord)(f: => Unit): Unit = {
+    foreachCallback(inst, _.beforeUpdate)
+    f
+    foreachCallback(inst, _.afterUpdate)
+    inst.allFields.foreach { _.resetDirty }
+  }
+
   /**
   * Save the instance in the appropriate backing store
   */
@@ -266,14 +273,14 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /*
   * Update records with a JObject query using the given Mongo instance
   */
-  def update(qry: JObject, newbr: BaseRecord, db: DB, opts: UpdateOption*) {
+  def update(qry: JObject, newbr: BaseRecord, db: DB, opts: UpdateOption*): Unit = {
     update(JObjectParser.parse(qry), newbr.asDBObject, db, opts :_*)
   }
 
   /*
   * Update records with a JObject query
   */
-  def update(qry: JObject, newbr: BaseRecord, opts: UpdateOption*) {
+  def update(qry: JObject, newbr: BaseRecord, opts: UpdateOption*): Unit =  {
     useDb ( db =>
       update(qry, newbr, db, opts :_*)
     )
@@ -321,7 +328,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     *
     * Note: PatternField will always set the dirty flag when set.
     */
-  def update(inst: BaseRecord): Unit = {
+  def update(inst: BaseRecord): Unit = updateOp(inst) {
     val dirtyFields = fields(inst).filter(_.dirty_?)
     if (dirtyFields.length > 0) {
       val (fullFields, otherFields) = dirtyFields
@@ -359,7 +366,6 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
         }
 
         update(inst, dbo.get)
-        dirtyFields.foreach { _.resetDirty }
       }
     }
   }
