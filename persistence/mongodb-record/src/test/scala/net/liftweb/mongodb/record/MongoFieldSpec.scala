@@ -261,6 +261,8 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       JObject(List(JField("$oid", JString(oid.toString)))),
       Full(<input name=".*" type="text" tabindex="1" value={oid.toString} id="mandatoryObjectIdField_id"></input>)
     )
+    rec.mandatoryObjectIdField(oid)
+    new Date(oid.getTime) mustEqual rec.mandatoryObjectIdField.createdAt
   }
 
   "PatternField" should {
