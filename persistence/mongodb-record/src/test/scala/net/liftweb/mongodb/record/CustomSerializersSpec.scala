@@ -33,6 +33,7 @@ import org.specs2.mutable.Specification
 import net.liftweb.record.field._
 import xml.{Elem, NodeSeq}
 import util.Helpers
+
 package customserializersspecs {
 
 case class Child(name: String, birthdate: Date) extends JsonObject[Child] {
@@ -305,7 +306,7 @@ object CustomSerializersSpec extends Specification  with MongoTestKit {
       }
 
       // check the conversion functions
-      // nfl._id.asJs mustEqual Str(nfl._id.value.toString)
+      nfl.id.asJs mustEqual Str(nfl.id.value.toString)
       nfl.id.asJValue mustEqual JString(nfl.id.value.toString)
       val session = new LiftSession("", randomString(20), Empty)
       val formPattern = <input name=".*" type="text" tabindex="1" value={nfl.id.value.toString} id="_id_id"></input>
@@ -376,7 +377,7 @@ object CustomSerializersSpec extends Specification  with MongoTestKit {
       }
 
       // check the conversion functions
-      // nfl._id.asJs mustEqual JsObj(("$oid", Str(nfl._id.value.toString)))
+      nfl.id.asJs.toJsCmd mustEqual """{"$oid":"%s"}""".format(nfl.id.value.toString)
       nfl.id.asJValue mustEqual JObject(List(JField("$oid", JString(nfl.id.value.toString))))
       val session = new LiftSession("", randomString(20), Empty)
       val formPattern = <input name=".*" type="text" tabindex="1" value={nfl.id.value.toString} id="_id_id"></input>
@@ -389,7 +390,6 @@ object CustomSerializersSpec extends Specification  with MongoTestKit {
               case e: Elem => e.attribute("selected").map(_.text) == Some("selected")
               case _ => false
             }) andThen "* [value]" #> ".*"))(fprime)
-            println(f)
             val ret: Boolean = Helpers.compareXml(f, formPattern)
             ret must_== true
         }
