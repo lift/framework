@@ -40,29 +40,19 @@ package mongotestrecords {
 
   import field._
 
-  class TstRecord private () extends MongoRecord[TstRecord] {
+  class TstRecord private () extends MongoRecord[TstRecord] with UUIDPk[TstRecord] {
 
     def meta = TstRecord
 
-    def id = _id.value
-
-    object _id extends UUIDField(this)
-
-    //object binaryfield extends BinaryField(this)
     object booleanfield	extends BooleanField(this)
-    //object countryfield extends CountryField(this)
     object datetimefield extends DateTimeField(this)
-    //object decimalfield extends DecimalField(this)
     object doublefield extends DoubleField(this)
     object emailfield extends EmailField(this, 220)
-    //object enumfield extends EnumField(this)
     object intfield extends IntField(this)
     object localefield extends LocaleField(this)
     object longfield extends LongField(this)
     object passwordfield extends MongoPasswordField(this)
-    //object postalcodefield extends PostalCodeField(this, countryfield)
     object stringfield extends StringField(this, 32)
-    //object textareafield extends TextareaField(this, 200)
     object timezonefield extends TimeZoneField(this)
     object patternfield extends PatternField(this)
     object datefield extends DateField(this)
@@ -101,13 +91,12 @@ package mongotestrecords {
   object RefDoc extends RefDoc with MongoMetaRecord[RefDoc]
 
   // uuid as id
-  class RefUuidDoc extends MongoRecord[RefUuidDoc] with UUIDPk[RefUuidDoc] {
+  class RefUuidDoc private () extends MongoRecord[RefUuidDoc] with UUIDPk[RefUuidDoc] {
     def meta = RefUuidDoc
   }
   object RefUuidDoc extends RefUuidDoc with MongoMetaRecord[RefUuidDoc]
 
-  //class ListDoc private () extends MongoRecord[ListDoc] with ObjectIdPk[ListDoc] {
-  class ListDoc extends MongoRecord[ListDoc] with ObjectIdPk[ListDoc] {
+  class ListDoc private () extends MongoRecord[ListDoc] with ObjectIdPk[ListDoc] {
     def meta = ListDoc
 
     import scala.collection.JavaConversions._
@@ -167,8 +156,7 @@ package mongotestrecords {
   }
   object JsonDoc extends JsonObjectMeta[JsonDoc]
 
-  //class MapDoc private () extends MongoRecord[MapDoc] with ObjectIdPk[MapDoc] {
-  class MapDoc extends MongoRecord[MapDoc] with ObjectIdPk[MapDoc] {
+  class MapDoc private () extends MongoRecord[MapDoc] with ObjectIdPk[MapDoc] {
     def meta = MapDoc
 
     object stringmap extends MongoMapField[MapDoc, String](this)
@@ -239,12 +227,12 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
       tr.save
 
       // retrieve from db
-      def fromDb = TstRecord.find("_id", tr.id)
+      def fromDb = TstRecord.find("_id", tr.id.value)
 
       fromDb.isDefined must_== true
 
       for (t <- fromDb) {
-        t._id.value must_== tr._id.value
+        t.id.value must_== tr.id.value
         t.booleanfield.value must_== tr.booleanfield.value
         TstRecord.formats.dateFormat.format(t.datetimefield.value.getTime) must_==
         TstRecord.formats.dateFormat.format(tr.datetimefield.value.getTime)
