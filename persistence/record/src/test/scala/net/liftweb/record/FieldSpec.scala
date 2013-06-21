@@ -29,9 +29,10 @@ import util.Helpers._
 import java.util.Calendar
 import org.specs2.mutable._
 import org.specs2.specification.Fragment
+import org.joda.time.DateTime
 
 import fixtures._
-import net.liftweb.util.{Helpers, FieldError}
+import net.liftweb.util.{Helpers, FieldError, JodaHelpers}
 import scala.xml.{NodeSeq, Elem, Node, Text}
 
 
@@ -44,10 +45,7 @@ object FieldSpec extends Specification {
 
   lazy val session = new LiftSession("", randomString(20), Empty)
 
-  def passBasicTests[A](example: A, example2: A, mandatory: MandatoryTypedField[A], legacyOptional: MandatoryTypedField[A], optional: OptionalTypedField[A])(implicit m: scala.reflect.Manifest[A]): Fragment = {
-    val canCheckDefaultValues =
-      !mandatory.defaultValue.isInstanceOf[Calendar] // don't try to use the default value of date/time typed fields, because it changes from moment to moment!
-
+  def passBasicTests[A](example: A, example2: A, mandatory: MandatoryTypedField[A], legacyOptional: MandatoryTypedField[A], optional: OptionalTypedField[A], canCheckDefaultValues: Boolean = true)(implicit m: scala.reflect.Manifest[A]): Fragment = {
     def commonBehaviorsForMandatory(in: MandatoryTypedField[A]): Unit = {
 
 		if (canCheckDefaultValues) {
@@ -352,7 +350,8 @@ object FieldSpec extends Specification {
     val dt2 = Calendar.getInstance
     dt2.add(Calendar.DATE, 1)
     val dtStr = toInternetDate(dt.getTime)
-    passBasicTests(dt, dt2, rec.mandatoryDateTimeField, rec.legacyOptionalDateTimeField, rec.optionalDateTimeField)
+    // don't try to use the default value of date/time typed fields, because it changes from moment to moment!
+    passBasicTests(dt, dt2, rec.mandatoryDateTimeField, rec.legacyOptionalDateTimeField, rec.optionalDateTimeField, false)
     passConversionTests(
       dt,
       rec.mandatoryDateTimeField,
@@ -479,7 +478,7 @@ object FieldSpec extends Specification {
       rec.mandatoryIntField.value mustEqual num
     }
   }
-  
+
   "IntField with custom HTML5 type" should {
     val rec = CustomTypeIntFieldRecord.createRecord
     val num = 123
@@ -713,6 +712,21 @@ object FieldSpec extends Specification {
       Str(example),
       JString(example),
       Full(<select tabindex="1" name=".*" id="mandatoryTimeZoneField_id"><option value=".*" selected="selected">{example}</option></select>)
+    )
+  }
+
+  "JodaTimeField" should {
+    val rec = FieldTypeTestRecord.createRecord
+    val dt = DateTime.now
+    val dt2 = DateTime.now.plusDays(1)
+    val dtStr = JodaHelpers.dateTimeFormatter.print(dt)
+    passBasicTests(dt, dt2, rec.mandatoryJodaTimeField, rec.legacyOptionalJodaTimeField, rec.optionalJodaTimeField, false)
+    passConversionTests(
+      dt,
+      rec.mandatoryJodaTimeField,
+      Num(dt.getMillis),
+      JInt(dt.getMillis),
+      Full(<input name=".*" type="text" tabindex="1" value={dtStr} id="mandatoryJodaTimeField_id"></input>)
     )
   }
 }

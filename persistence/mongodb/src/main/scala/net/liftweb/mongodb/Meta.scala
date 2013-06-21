@@ -18,11 +18,17 @@ package net.liftweb
 package mongodb
 
 import json._
+import util.JodaHelpers
 
 import java.util.{Calendar, Date, GregorianCalendar, UUID}
 import java.util.regex.Pattern
 
 import org.bson.types.ObjectId
+import org.joda.time._
+
+import com.mongodb._
+
+import JsonDSL._
 
 private[mongodb] object Meta {
 
@@ -31,7 +37,6 @@ private[mongodb] object Meta {
   */
   object Reflection {
     import java.lang.reflect._
-    import com.mongodb.{BasicDBObject, DBRef}
 
     /*
     * These don't require a conversion and can be put directly into a DBObject
@@ -71,18 +76,20 @@ private[mongodb] object Meta {
     /*
     * Date types require formatting
     */
-    val datetypes = Set[Class[_]](classOf[Calendar], classOf[Date], classOf[GregorianCalendar])
+    val datetypes = Set[Class[_]](classOf[Calendar], classOf[Date], classOf[GregorianCalendar], classOf[DateTime])
 
     def datetype_?(clazz: Class[_]) = datetypes contains clazz
 
     def datetype2jvalue(a: Any)(implicit formats: Formats) = a match {
       case x: Calendar => dateAsJValue(x.getTime, formats)
       case x: Date => dateAsJValue(x, formats)
+      case x: DateTime => dateAsJValue(x.toDate, formats)
     }
 
     def datetype2dbovalue(a: Any) = a match {
       case x: Calendar => x.getTime
       case x: Date => x
+      case x: DateTime => x.toDate
     }
 
     /*
@@ -105,10 +112,10 @@ private[mongodb] object Meta {
     }
   }
 
-  def dateAsJValue(d: Date, formats: Formats) = JObject(JField("$dt", JString(formats.dateFormat.format(d))) :: Nil)
-  def objectIdAsJValue(oid: ObjectId): JValue = JObject(JField("$oid", JString(oid.toString)) :: Nil)
-  def patternAsJValue(p: Pattern): JValue = JObject(JField("$regex", JString(p.pattern)) :: JField("$flags", JInt(p.flags)) :: Nil)
-  def uuidAsJValue(u: UUID): JValue = JObject(JField("$uuid", JString(u.toString)) :: Nil)
+  def dateAsJValue(d: Date, formats: Formats): JValue = ("$dt" -> formats.dateFormat.format(d))
+  def objectIdAsJValue(oid: ObjectId): JValue = ("$oid" -> oid.toString)
+  def patternAsJValue(p: Pattern): JValue = ("$regex" -> p.pattern) ~ ("$flags" -> p.flags)
+  def uuidAsJValue(u: UUID): JValue = ("$uuid" -> u.toString)
 
   def objectIdAsJValue(oid: ObjectId, formats: Formats): JValue =
     if (isObjectIdSerializerUsed(formats))

@@ -32,6 +32,7 @@ import scala.xml.Text
 
 import net.liftweb.record._
 import net.liftweb.record.field._
+import net.liftweb.record.field.joda._
 
 import org.bson.types.ObjectId
 
@@ -131,6 +132,10 @@ class FieldTypeTestRecord private () extends MongoRecord[FieldTypeTestRecord] wi
   object mandatoryTimeZoneField extends TimeZoneField(this)
   object legacyOptionalTimeZoneField extends TimeZoneField(this) { override def optional_? = true }
   object optionalTimeZoneField extends OptionalTimeZoneField(this)
+
+  object mandatoryJodaTimeField extends JodaTimeField(this)
+  object legacyOptionalJodaTimeField extends JodaTimeField(this) { override def optional_? = true }
+  object optionalJodaTimeField extends OptionalJodaTimeField(this)
 
   def dirtyFields = this.allFields.filter(_.dirty_?)
 }
