@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 WorldWide Conferencing, LLC
+ * Copyright 2010-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ package enumnamefieldspecs {
   }
   object JsonObj extends JsonObjectMeta[JsonObj]
 
-  class EnumNameRec extends MongoRecord[EnumNameRec] with MongoId[EnumNameRec] {
+  class EnumNameRec extends MongoRecord[EnumNameRec] with ObjectIdPk[EnumNameRec] {
     def meta = EnumNameRec
 
     object dow extends EnumNameField(this, WeekDay)
@@ -51,7 +51,7 @@ package enumnamefieldspecs {
 
     override def equals(other: Any): Boolean = other match {
       case that: EnumNameRec =>
-        this.id == that.id &&
+        this.id.get == that.id.get &&
         this.dow.value == that.dow.value &&
         this.dowOptional.valueBox == that.dowOptional.valueBox &&
         this.jsonobj.value == that.jsonobj.value
@@ -80,7 +80,7 @@ object EnumNameFieldSpec extends Specification with MongoTestKit {
 
       val er = EnumNameRec.createRecord.save
 
-      val erFromDb = EnumNameRec.find(er.id)
+      val erFromDb = EnumNameRec.find(er.id.get)
       erFromDb.isDefined must_== true
       erFromDb.toList map { er2 =>
         er2 mustEqual er
@@ -98,7 +98,7 @@ object EnumNameFieldSpec extends Specification with MongoTestKit {
         .jsonobj(JsonObj(WeekDay.Sun))
         .save
 
-      val erFromDb = EnumNameRec.find(er.id)
+      val erFromDb = EnumNameRec.find(er.id.get)
       erFromDb.isDefined must_== true
       erFromDb.toList map { er2 =>
         er2 mustEqual er
@@ -114,7 +114,7 @@ object EnumNameFieldSpec extends Specification with MongoTestKit {
       er.dowOptional.setBox(Empty)
       er.save
 
-      val erFromDb = EnumNameRec.find(er.id)
+      val erFromDb = EnumNameRec.find(er.id.get)
       erFromDb.isDefined must_== true
       erFromDb.toList map { er2 =>
         er2 mustEqual er
@@ -129,7 +129,7 @@ object EnumNameFieldSpec extends Specification with MongoTestKit {
       er.dowOptional.setBox(Full(WeekDay.Sat))
       er.save
 
-      val erFromDb = EnumNameRec.find(er.id)
+      val erFromDb = EnumNameRec.find(er.id.get)
       erFromDb.isDefined must_== true
       erFromDb.toList map { er2 =>
         er2 mustEqual er

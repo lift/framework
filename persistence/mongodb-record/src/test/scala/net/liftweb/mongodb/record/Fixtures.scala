@@ -136,8 +136,6 @@ class FieldTypeTestRecord private () extends MongoRecord[FieldTypeTestRecord] wi
   object mandatoryJodaTimeField extends JodaTimeField(this)
   object legacyOptionalJodaTimeField extends JodaTimeField(this) { override def optional_? = true }
   object optionalJodaTimeField extends OptionalJodaTimeField(this)
-
-  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 
 object FieldTypeTestRecord extends FieldTypeTestRecord with MongoMetaRecord[FieldTypeTestRecord]
@@ -230,8 +228,6 @@ class MongoFieldTypeTestRecord private () extends MongoRecord[MongoFieldTypeTest
   object mandatoryMongoCaseClassField extends MongoCaseClassField[MongoFieldTypeTestRecord, MongoCaseClassTestObject](this) {
     override def formats = owner.meta.formats
   }
-
-  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 
 object MongoFieldTypeTestRecord extends MongoFieldTypeTestRecord with MongoMetaRecord[MongoFieldTypeTestRecord] {
@@ -247,8 +243,6 @@ class PatternFieldTestRecord private () extends MongoRecord[PatternFieldTestReco
   object legacyOptionalPatternField extends PatternField(this) { override def optional_? = true }
 
   override def equals(other: Any): Boolean = equalsWithPatternCheck(other)
-
-  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 
 object PatternFieldTestRecord extends PatternFieldTestRecord with MongoMetaRecord[PatternFieldTestRecord] {
@@ -275,8 +269,6 @@ class ListTestRecord private () extends MongoRecord[ListTestRecord] with UUIDPk[
   }
 
   // TODO: More List types
-
-  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 object ListTestRecord extends ListTestRecord with MongoMetaRecord[ListTestRecord] {
   override def formats = allFormats + new EnumSerializer(MyTestEnum)
@@ -289,8 +281,6 @@ class MapTestRecord private () extends MongoRecord[MapTestRecord] with StringPk[
   object mandatoryIntMapField extends MongoMapField[MapTestRecord, Int](this)
 
   // TODO: More Map types, including JsonObject (will require a new Field type)
-
-  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 object MapTestRecord extends MapTestRecord with MongoMetaRecord[MapTestRecord] {
   override def formats = allFormats
@@ -353,8 +343,6 @@ class SubRecordTestRecord private () extends MongoRecord[SubRecordTestRecord] wi
   object legacyOptionalBsonRecordListField extends BsonRecordListField(this, SubRecord) {
     override def optional_? = true
   }
-
-  def dirtyFields = this.allFields.filter(_.dirty_?)
 }
 object SubRecordTestRecord extends SubRecordTestRecord with MongoMetaRecord[SubRecordTestRecord] {
   override def formats = allFormats
