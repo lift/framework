@@ -487,5 +487,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   case class FieldHolder(name: String, method: Method, metaField: Field[_, BaseRecord]) {
     def field(inst: BaseRecord): Field[_, BaseRecord] = method.invoke(inst).asInstanceOf[Field[_, BaseRecord]]
   }
+
+  def dirty_?(inst: BaseRecord): Boolean = !fields(inst).filter(_.dirty_?).isEmpty
 }
 
