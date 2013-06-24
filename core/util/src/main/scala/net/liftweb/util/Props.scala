@@ -27,7 +27,7 @@ import common._
  * Configuration management utilities.
  *
  * If you want to provide a configuration file for a subset of your application
- * or for a specifig environment, Lift expects configuration files to be named
+ * or for a specific environment, Lift expects configuration files to be named
  * in a manner relating to the context in which they are being used. The standard
  * name format is:
  *
@@ -107,7 +107,8 @@ object Props extends Logger {
    * Recognized modes are "development", "test", "profile", "pilot", "staging" and "production"
    * with the default run mode being development.
    */
-  lazy val mode = {
+  lazy val mode: RunModes.Value = {
+    runModeInitialised = true
     Box.legacyNullTest((System.getProperty("run.mode"))).map(_.toLowerCase) match {
       case Full("test") => Test
       case Full("production") => Production
@@ -115,22 +116,57 @@ object Props extends Logger {
       case Full("pilot") => Pilot
       case Full("profile") => Profile
       case Full("development") => Development
-      case _ => {
-        val st = Thread.currentThread.getStackTrace
-        val names = List(
-          "org.apache.maven.surefire.booter.SurefireBooter",
-          "sbt.TestRunner",
-          "org.specs2.runner.TestInterfaceRunner",  // sometimes specs2 runs tests on another thread
-          "org.specs2.runner.TestInterfaceConsoleReporter",
-          "org.specs2.specification.FragmentExecution"
-        )
-        if(st.exists(e => names.exists(e.getClassName.startsWith)))
-          Test
-        else
-          Development
-      }
+      case _ => (autoDetectRunModeFn.get)()
     }
   }
+
+  @volatile private var runModeInitialised: Boolean = false
+
+  /**
+   * Exposes a property affecting run-mode determination, for customisation. If the property is modified
+   * after the run-mode is realised, then it will have no effect and will instead log a warning indicating thus.
+   *
+   * @param name The property name (used to make logging messages clearer, no functional impact).
+   */
+  class RunModeProperty[T](name: String, initialValue: T) extends PropertyWithModificationCondition[T](initialValue) with Logger {
+    override def allowModification = !runModeInitialised
+    override def onModificationProhibited() {
+      warn("Setting property " + name + " has no effect. Run mode already initialised and set to " + mode + ".")
+    }
+  }
+
+  /**
+   * The default run-mode auto-detection routine uses this function to infer whether Lift is being run in a test.
+   *
+   * This routine can be customised by calling `set` before the run-mode is referenced. (An attempt to customise this
+   * after the run-mode is realised will have no effect and will instead log a warning.)
+   */
+  val doesStackTraceContainKnownTestRunner = new RunModeProperty[Array[StackTraceElement] => Boolean]("doesStackTraceContainKnownTestRunner",
+    (st: Array[StackTraceElement]) => {
+      val names = List(
+        "org.apache.maven.surefire.booter.SurefireBooter",
+        "sbt.TestRunner",
+        "org.specs2.runner.TestInterfaceRunner", // sometimes specs2 runs tests on another thread
+        "org.specs2.runner.TestInterfaceConsoleReporter",
+        "org.specs2.specification.FragmentExecution"
+      )
+      st.exists(e => names.exists(e.getClassName.startsWith))
+    })
+
+  /**
+   * When the `run.mode` environment variable isn't set or recognised, this function is invoked to determine the
+   * appropriate mode to use.
+   *
+   * This logic can be customised by calling `set` before the run-mode is referenced. (An attempt to customise this
+   * after the run-mode is realised will have no effect and will instead log a warning.)
+   */
+  val autoDetectRunModeFn = new RunModeProperty[() => RunModes.Value]("autoDetectRunModeFn", () => {
+    val st = Thread.currentThread.getStackTrace
+    if ((doesStackTraceContainKnownTestRunner.get)(st))
+      Test
+    else
+      Development
+  })
 
   /**
    * Is the system running in production mode (apply full optimizations)
