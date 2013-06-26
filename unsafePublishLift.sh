@@ -120,8 +120,8 @@ for MODULE in framework ; do
     CURRENT_BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`
     debug "Current branch for $MODULE is $CURRENT_BRANCH"
 
-    if [ "${CURRENT_BRANCH}" != "2.5-RC6" ]; then
-        echo "Currently releases can only be built from the last RC, 2.5-RC6. $MODULE is on branch $CURRENT_BRANCH. Aborting build."
+    if [ "${CURRENT_BRANCH}" != "2.5.1" ]; then
+        echo "Fixed branch to 2.5.1, master has a different line here. $MODULE is on branch $CURRENT_BRANCH. Aborting build."
         exit
     fi
 
@@ -141,7 +141,8 @@ for MODULE in framework ; do
     echo -e "\nStarting build on $MODULE module"
     cd ${SCRIPT_DIR}/${MODULE} || die "Could not change to $MODULE directory!"
 
-    git checkout -b ${RELEASE_VERSION} >> ${BUILDLOG} || die "Error creating work branch!"
+    #commented out because we are already on the branch that will be used to publish 2.5.1
+    #git checkout -b ${RELEASE_VERSION} >> ${BUILDLOG} || die "Error creating work branch!"
 
 
     ./liftsh ";set version in ThisBuild :=  \"${RELEASE_VERSION}\" ; session save  " >> ${BUILDLOG} || die "Could not update project version in SBT!"
