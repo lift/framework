@@ -146,6 +146,11 @@ object Props extends Logger {
       val names = List(
         "org.apache.maven.surefire.booter.SurefireBooter",
         "sbt.TestRunner",
+        "org.jetbrains.plugins.scala.testingSupport.scalaTest.ScalaTestRunner",
+        "org.scalatest.tools.Runner",
+        "org.scalatest.tools.ScalaTestFramework$ScalaTestRunner",
+        "org.scalatools.testing.Runner",
+        "org.scalatools.testing.Runner2",
         "org.specs2.runner.TestInterfaceRunner", // sometimes specs2 runs tests on another thread
         "org.specs2.runner.TestInterfaceConsoleReporter",
         "org.specs2.specification.FragmentExecution"
