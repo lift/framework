@@ -345,6 +345,46 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
   }
 }
 
+/**
+ * A SpecializedLiftActor designed for use in unit testing of other components.
+ *
+ * Messages sent to an actor extending this interface are not processed, but are instead
+ * recorded in a List. The intent is that when you are testing some other component (say, a snippet)
+ * that should send a message to an actor, the test for that snippet should simply test that
+ * the actor received the message, not what the actor does with that message. If an actor
+ * implementing this trait is injected into the component you're testing (in place of the
+ * real actor) you gain the ability to run these kinds of tests.
+**/
+class MockSpecializedLiftActor[T] extends SpecializedLiftActor[T] {
+  private[this] var messagesReceived: List[T] = Nil
+
+  /**
+   * Send a message to the mock actor, which will be recorded and not processed by the
+   * message handler.
+  **/
+  override def !(msg: T): Unit = {
+    messagesReceived.synchronized {
+      messagesReceived ::= msg
+    }
+  }
+
+  // We aren't required to implement a real message handler for the Mock actor
+  // since the message handler never runs.
+  override def messageHandler: PartialFunction[T, Unit] = {
+    case _ =>
+  }
+
+  /**
+   * Test to see if this actor has received a particular message.
+  **/
+  def hasReceivedMessage_?(msg: T): Boolean = messagesReceived.contains(msg)
+
+  /**
+   * Return the number of messages this mock actor has received.
+  **/
+  def messageCount: Int = messagesReceived.size
+}
+
 object ActorLogger extends Logger {
 }
 
@@ -467,6 +507,17 @@ with ForwardableActor[Any, Any] {
     }
   }
 }
+
+/**
+ * A MockLiftActor for use in testing other compnents that talk to actors.
+ *
+ * Much like MockSpecializedLiftActor, this class is intended to be injected into other
+ * components, such as snippets, during testing. Whereas these components would normally
+ * talk to a real actor that would process their message, this mock actor simply
+ * records them and exposes methods the unit test can use to investigate what messages
+ * have been received by the actor.
+**/
+class MockLiftActor extends MockSpecializedLiftActor[Any] with LiftActor
 
 import java.lang.reflect._
 
