@@ -24,19 +24,13 @@ import java.util.Properties
 import common._
 import actor._
 import xml.{Text, Elem, Node, NodeSeq}
+import Mailer._
 
 /**
  * Utilities for sending email.
  */
-object Mailer extends Mailer
+object Mailer extends Mailer {
 
-/**
- * This trait implmenets the mail sending.  You can create subclasses of this class/trait and
- * implement your own mailer functionality
- */
-trait Mailer extends SimpleInjector {
-  private val logger = Logger(classOf[Mailer])
-  
   sealed abstract class MailTypes
   /**
    * Add message headers to outgoing messages
@@ -73,9 +67,17 @@ trait Mailer extends SimpleInjector {
   final case class BCC(address: String, name: Box[String] = Empty) extends AddressType
   final case class ReplyTo(address: String, name: Box[String] = Empty) extends AddressType
 
-  implicit def xmlToMailBodyType(html: NodeSeq): MailBodyType = XHTMLMailBodyType(html)
-
   final case class MessageInfo(from: From, subject: Subject, info: List[MailTypes])
+}
+
+/**
+ * This trait implmenets the mail sending.  You can create subclasses of this class/trait and
+ * implement your own mailer functionality
+ */
+trait Mailer extends SimpleInjector {
+  private val logger = Logger(classOf[Mailer])
+
+  implicit def xmlToMailBodyType(html: NodeSeq): MailBodyType = XHTMLMailBodyType(html)
 
   implicit def addressToAddress(in: AddressType): Address = {
     val ret = new InternetAddress(in.address)
