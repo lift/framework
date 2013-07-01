@@ -55,6 +55,20 @@ class MockLiftActorSpec extends Specification {
 
       mockActor.messageCount must_== 3
     }
+
+    "correctly list the messages it has received" in {
+      val mockActor = new MockSpecializedLiftActor[MockSpecActorMessage]
+
+      mockActor ! MockSpecActorMessage1
+      mockActor ! MockSpecActorMessage2
+      mockActor ! MockSpecActorMessage3
+
+      mockActor.messages must_== List(
+        MockSpecActorMessage3,
+        MockSpecActorMessage2,
+        MockSpecActorMessage1
+      )
+    }
   }
 
   "A MockLiftActor" should {
@@ -84,6 +98,20 @@ class MockLiftActorSpec extends Specification {
       mockActor ! MockSpecActorMessage3
 
       mockActor.messageCount must_== 3
+    }
+
+    "correctly list the messages it has received" in {
+      val mockActor = new MockLiftActor
+
+      mockActor ! MockSpecActorMessage1
+      mockActor ! MockSpecActorMessage2
+      mockActor ! MockSpecActorMessage3
+
+      mockActor.messages must_== List(
+        MockSpecActorMessage3,
+        MockSpecActorMessage2,
+        MockSpecActorMessage1
+      )
     }
   }
 }

@@ -380,6 +380,11 @@ class MockSpecializedLiftActor[T] extends SpecializedLiftActor[T] {
   def hasReceivedMessage_?(msg: T): Boolean = messagesReceived.contains(msg)
 
   /**
+   * Returns the list of messages the mock actor has received.
+  **/
+  def messages: List[T] = messagesReceived
+
+  /**
    * Return the number of messages this mock actor has received.
   **/
   def messageCount: Int = messagesReceived.size
