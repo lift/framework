@@ -120,7 +120,7 @@ object Props extends Logger {
     }
   }
 
-  @volatile private var runModeInitialised: Boolean = false
+  @volatile private[util] var runModeInitialised: Boolean = false
 
   /**
    * Exposes a property affecting run-mode determination, for customisation. If the property is modified
