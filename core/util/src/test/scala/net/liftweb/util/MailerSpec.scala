@@ -23,6 +23,7 @@ import org.specs2.mutable.Specification
 
 import common._
 
+import Mailer._
 
 /**
  * Systems under specification for Lift Mailer.
