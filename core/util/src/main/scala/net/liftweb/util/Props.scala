@@ -128,10 +128,29 @@ object Props extends Logger {
    *
    * @param name The property name (used to make logging messages clearer, no functional impact).
    */
-  class RunModeProperty[T](name: String, initialValue: T) extends PropertyWithModificationCondition[T](initialValue) with Logger {
-    override def allowModification = !runModeInitialised
-    override def onModificationProhibited() {
-      warn("Setting property " + name + " has no effect. Run mode already initialised and set to " + mode + ".")
+  class RunModeProperty[T](name: String, initialValue: T) extends Logger {
+    @volatile private[this] var value = initialValue
+
+    def get = value
+
+    /**
+     * Attempts to set the property to a new value.
+     *
+     * @return Whether the new property was installed. `false` means modification is no longer allowed.
+     */
+    def set(newValue: T): Boolean =
+      if (allowModification) {
+        value = newValue
+        true
+      } else {
+        onModificationProhibited()
+        false
+      }
+
+    def allowModification = !runModeInitialised
+
+    def onModificationProhibited() {
+      warn("Setting property " + name + " has no effect. Run mode already initialised to " + mode + ".")
     }
   }
 
