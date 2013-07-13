@@ -76,8 +76,11 @@ class LAFuture[T](val scheduler: LAScheduler) {
 
   /**
    * Get the future value
+   * 2.9.2 gives a compiler error if we try to use the tailrec annotation
+   * Once we drop 2.9.x, enable the annotation again
+   *
    */
-  @scala.annotation.tailrec
+  //@scala.annotation.tailrec
   final def get: T = synchronized {
     if (satisfied) item
     else if (aborted) throw new AbortedFutureException(failure)
