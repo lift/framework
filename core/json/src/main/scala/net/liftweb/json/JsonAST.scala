@@ -246,6 +246,18 @@ object JsonAST {
     def filter(p: JValue => Boolean): List[JValue] =
       fold(List[JValue]())((acc, e) => if (p(e)) e :: acc else acc).reverse
 
+    /** 
+      * To make 2.10 happy
+      */
+    def withFilter(p: JValue => Boolean) = new WithFilter(this, p)
+    
+    final class WithFilter(self: JValue, p: JValue => Boolean) {
+      def map[A](f: JValue => A): List[A] = self filter p map f
+      def flatMap[A](f: JValue => List[A]) = self filter p flatMap f
+      def withFilter(q: JValue => Boolean): WithFilter = new WithFilter(self, x => p(x) && q(x))
+      def foreach[U](f: JValue => U): Unit = self filter p foreach f
+    }
+    
     /** Concatenate with another JSON.
       * This is a concatenation monoid: (JValue, ++, JNothing)
       * <p>
