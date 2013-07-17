@@ -171,7 +171,12 @@ object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen
       formattedDateNow must beMatching("\\d\\d\\d\\d/\\d\\d/\\d\\d")
     }
     "provide a formattedTimeNow function to format now's time with the TimeZone" in {
-      formattedTimeNow must beMatching("\\d\\d:\\d\\d ...(\\+|\\-\\d\\d:00)?")
+      val regex = "\\d\\d:\\d\\d (....?|GMT((\\+|\\-)\\d\\d:00)?)"
+      "10:00 CEST" must beMatching(regex)
+      "10:00 GMT+02:00" must beMatching(regex)
+      "10:00 GMT" must beMatching(regex)
+      "10:00 XXX" must beMatching(regex)
+      formattedTimeNow must beMatching(regex)
     }
 
     "provide a parseInternetDate function to parse a string formatted using the internet format" in {
