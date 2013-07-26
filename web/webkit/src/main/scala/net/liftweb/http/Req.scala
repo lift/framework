@@ -1128,6 +1128,8 @@ class Req(val path: ParsePath,
 
   def put_? = requestType.put_?
 
+  def options_? = requestType.options_?
+
   def fixHtml(in: NodeSeq): NodeSeq = Req.fixHtml(contextPath, in)
 
   lazy val uri: String = request match {
