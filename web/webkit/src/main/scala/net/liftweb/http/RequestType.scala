@@ -30,6 +30,8 @@ abstract class RequestType extends Serializable{
 
   def delete_? : Boolean = false
 
+  def options_? : Boolean = false
+
   def method: String
 }
 
@@ -53,7 +55,11 @@ case object DeleteRequest extends RequestType {
   override def delete_? = true
   def method = "DELETE"
 }
-case class UnknownRequest(val method: String) extends RequestType
+case object OptionsRequest extends RequestType {
+  override def options_? = true
+  def method = "OPTIONS"
+}
+case class UnknownRequest(method: String) extends RequestType
 
 object RequestType {
   def apply(req: HTTPRequest): RequestType = {
@@ -63,6 +69,7 @@ object RequestType {
       case "HEAD" => HeadRequest
       case "PUT" => PutRequest
       case "DELETE" => DeleteRequest
+      case "OPTIONS" => OptionsRequest
       case meth => UnknownRequest(meth)
     }
   }
