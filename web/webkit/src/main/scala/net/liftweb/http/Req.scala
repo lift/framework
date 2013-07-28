@@ -1122,11 +1122,13 @@ class Req(val path: ParsePath,
         this))
     }
   
-  def post_? = requestType.post_?
+  val post_? = requestType.post_?
 
-  def get_? = requestType.get_?
+  val get_? = requestType.get_?
 
-  def put_? = requestType.put_?
+  val put_? = requestType.put_?
+
+  val options_? = requestType.options_?
 
   def fixHtml(in: NodeSeq): NodeSeq = Req.fixHtml(contextPath, in)
 

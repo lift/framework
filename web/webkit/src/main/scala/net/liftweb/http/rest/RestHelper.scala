@@ -305,6 +305,20 @@ trait RestHelper extends LiftRules.DispatchPF {
   }
 
   /**
+   * An extractor that tests the request to see if it's an OPTIONS and
+   * if it is, the path and the request are extracted.  It can
+   * be used as:<br/>
+   * <pre>case "api" :: id :: _ Options req => ...</pre><br/>
+   * or<br/>
+   * <pre>case Options("api" :: id :: _, req) => ...</pre><br/>   *
+   */
+  protected object Options {
+    def unapply(r: Req): Option[(List[String], Req)] =
+      if (r.requestType.options_?) Some(r.path.partPath -> r) else None
+
+  }
+
+  /**
    * A function that chooses JSON or XML based on the request..
    * Use with serveType
    */
