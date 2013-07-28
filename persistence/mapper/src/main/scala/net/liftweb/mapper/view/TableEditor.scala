@@ -88,7 +88,7 @@ trait ItemsList[T <: Mapper[T]] {
         unsorted
       case Some(field) =>
         unsorted.sortWith {
-          (a, b) => ((field.actualField(a).is: Any, field.actualField(b).is: Any) match {
+          (a, b) => ((field.actualField(a).get: Any, field.actualField(b).get: Any) match {
             case (aval: String, bval: String) => aval.toLowerCase < bval.toLowerCase
             case (aval: Ordered[Any], bval: Ordered[Any]) => aval < bval
             case (aval: java.lang.Comparable[Any], bval: java.lang.Comparable[Any]) => (aval compareTo bval) < 0

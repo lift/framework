@@ -147,7 +147,7 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
   override def readPermission_? = true
   override def writePermission_? = true
 
-  def asJsExp: JsExp = JE.JsArray(is.map(v => JE.Num(v.id)) :_*)
+  def asJsExp: JsExp = JE.JsArray(get.map(v => JE.Num(v.id)) :_*)
 
   def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(toLong))
 
@@ -155,7 +155,7 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
 
   private def rot(in: Int): Long = 1L << in
 
-  private def toLong: Long = is.foldLeft(0L)((a,b) => a + rot(b.id))
+  private def toLong: Long = get.foldLeft(0L)((a,b) => a + rot(b.id))
 
   def fromLong(in: Long): Seq[ENUM#Value] =
     enum.values.iterator.toList.filter(v => (in & rot(v.id)) != 0)
@@ -212,7 +212,7 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
    * Create an input field for the item
    */
   override def _toForm: Box[NodeSeq] =
-  Full(SHtml.checkbox[ENUM#Value](enum.values.iterator.toList, is,this(_)).toForm)
+  Full(SHtml.checkbox[ENUM#Value](enum.values.iterator.toList, get,this(_)).toForm)
 }
 
 /**
@@ -297,10 +297,10 @@ abstract class MappedNullableLong[T<:Mapper[T]](val fieldOwner: T) extends Mappe
     data
   }
 
-  def asJsExp: JsExp = is.map(v => JE.Num(v)) openOr JE.JsNull
+  def asJsExp: JsExp = get.map(v => JE.Num(v)) openOr JE.JsNull
 
   def asJsonValue: Box[JsonAST.JValue] =
-    Full(is.map(v => JsonAST.JInt(v)) openOr JsonAST.JNull)
+    Full(get.map(v => JsonAST.JInt(v)) openOr JsonAST.JNull)
 
   override def readPermission_? = true
   override def writePermission_? = true
@@ -434,9 +434,9 @@ abstract class MappedLong[T<:Mapper[T]](val fieldOwner: T) extends MappedField[L
     data
   }
 
-  def asJsExp: JsExp = JE.Num(is)
+  def asJsExp: JsExp = JE.Num(get)
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(is))
+  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(get))
 
   override def readPermission_? = true
   override def writePermission_? = true

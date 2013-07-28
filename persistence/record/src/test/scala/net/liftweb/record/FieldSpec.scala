@@ -313,17 +313,17 @@ object FieldSpec extends Specification {
     "support java.lang.Boolean" in {
       rec.mandatoryBooleanField.setFromAny(java.lang.Boolean.TRUE)
       rec.optionalBooleanField.setFromAny(java.lang.Boolean.TRUE)
-      (rec.mandatoryBooleanField.is && (rec.optionalBooleanField.is getOrElse false)) must_== true
+      (rec.mandatoryBooleanField.get && (rec.optionalBooleanField.get getOrElse false)) must_== true
     }
     "support Full(java.lang.Boolean)" in {
       rec.mandatoryBooleanField.setFromAny(Full(java.lang.Boolean.TRUE))
       rec.optionalBooleanField.setFromAny(Full(java.lang.Boolean.TRUE))
-      (rec.mandatoryBooleanField.is && (rec.optionalBooleanField.is getOrElse false)) must_== true
+      (rec.mandatoryBooleanField.get && (rec.optionalBooleanField.get getOrElse false)) must_== true
     }
     "support Some(java.lang.Boolean)" in {
        rec.mandatoryBooleanField.setFromAny(Some(java.lang.Boolean.TRUE))
        rec.optionalBooleanField.setFromAny(Some(java.lang.Boolean.TRUE))
-       (rec.mandatoryBooleanField.is && (rec.optionalBooleanField.is getOrElse false)) must_== true
+       (rec.mandatoryBooleanField.get && (rec.optionalBooleanField.get getOrElse false)) must_== true
     }
   }
 

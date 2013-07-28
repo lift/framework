@@ -49,7 +49,7 @@ object MappedLongForeignKeySpec extends Specification with org.specs2.specificat
       val user = {
         def ret: User = {
           val r = User.create.saveMe
-          if (r.id.is >= dog.id.is) r
+          if (r.id.get >= dog.id.get) r
           else ret
         }
 
@@ -57,7 +57,7 @@ object MappedLongForeignKeySpec extends Specification with org.specs2.specificat
       }
       dog.owner(user).save
       val d2 = Dog.find(dog.id).openOrThrowException("Test")
-      d2.id.is must_== user.id.is
+      d2.id.get must_== user.id.get
       (d2.owner == user) must_== true
       (d2.owner == d2) must_== false
     }
@@ -82,7 +82,7 @@ object MappedLongForeignKeySpec extends Specification with org.specs2.specificat
       dog.owner(Empty)
       
       dog.owner.obj must_== Empty
-      dog.owner.is must_== 0L
+      dog.owner.get must_== 0L
     }
   }
 }

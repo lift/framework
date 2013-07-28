@@ -72,20 +72,20 @@ class MapperSpec extends Specification with BeforeExample {
         val archer = SampleModel.find(By(SampleModel.firstName, "Archer")).openOrThrowException("Test")
         val notNull = SampleModel.find(By(SampleModel.firstName, "NotNull")).openOrThrowException("Test")
 
-        elwood.firstName.is must_== "Elwood"
-        madeline.firstName.is must_== "Madeline"
-        archer.firstName.is must_== "Archer"
+        elwood.firstName.get must_== "Elwood"
+        madeline.firstName.get must_== "Madeline"
+        archer.firstName.get must_== "Archer"
 
-        archer.moose.is must_== Empty
-        notNull.moose.is must_== Full(99L)
+        archer.moose.get must_== Empty
+        notNull.moose.get must_== Full(99L)
 
         val disabled = SampleModel.find(By(SampleModel.status, SampleStatus.Disabled))
 
         val meow = SampleTag.find(By(SampleTag.tag, "Meow")).openOrThrowException("Test")
 
-        meow.tag.is must_== "Meow"
+        meow.tag.get must_== "Meow"
 
-        elwood.id.is must be_<(madeline.id.is).eventually
+        elwood.id.get must be_<(madeline.id.get).eventually
       }
 
       "non-snake connection should lower case default table & column names" in {
@@ -138,7 +138,7 @@ class MapperSpec extends Specification with BeforeExample {
         val rebuilt = SampleModel.buildFromJson(json)
         rebuilt.firstName("yak").save
         val recalled = SampleModel.find(2).openOrThrowException("Test")
-        recalled.firstName.is must_== "yak"
+        recalled.firstName.get must_== "yak"
       }
 
       "You can put stuff in a Set" in {
@@ -162,7 +162,7 @@ class MapperSpec extends Specification with BeforeExample {
         (oo.length > 0) must beTrue
 
         for (t <- oo)
-          (t.tag.is.indexOf("oo") >= 0) must beTrue
+          (t.tag.get.indexOf("oo") >= 0) must beTrue
 
         for (t <- oo)
           t.model.cached_? must beFalse
@@ -172,7 +172,7 @@ class MapperSpec extends Specification with BeforeExample {
         (mm.length > 0) must beTrue
 
         for (t <- mm)
-          (t.tag.is.startsWith("M")) must beTrue
+          (t.tag.get.startsWith("M")) must beTrue
 
         for (t <- mm) yield {
           t.model.cached_? must beFalse
@@ -249,24 +249,24 @@ class MapperSpec extends Specification with BeforeExample {
         val madeline = Mixer.find(By(Mixer.name, "Madeline")).openOrThrowException("Test")
         val archer = Mixer.find(By(Mixer.name, "Archer")).openOrThrowException("Test")
 
-        elwood.name.is must_== "Elwood"
-        madeline.name.is must_== "Madeline"
-        archer.name.is must_== "Archer"
+        elwood.name.get must_== "Elwood"
+        madeline.name.get must_== "Madeline"
+        archer.name.get must_== "Archer"
 
-        elwood.weight.is must_== 33
-        madeline.weight.is must_== 44
-        archer.weight.is must_== 105
+        elwood.weight.get must_== 33
+        madeline.weight.get must_== 44
+        archer.weight.get must_== 105
       }
 
       "work with Mixed case update and delete" in {
         val elwood = Mixer.find(By(Mixer.name, "Elwood")).openOrThrowException("Test")
-        elwood.name.is must_== "Elwood"
+        elwood.name.get must_== "Elwood"
         elwood.name("FruitBar").weight(966).save
 
         val fb = Mixer.find(By(Mixer.weight, 966)).openOrThrowException("Test")
 
-        fb.name.is must_== "FruitBar"
-        fb.weight.is must_== 966
+        fb.name.get must_== "FruitBar"
+        fb.weight.get must_== 966
         fb.delete_!
 
         Mixer.find(By(Mixer.weight, 966)).isDefined must_== false
@@ -277,13 +277,13 @@ class MapperSpec extends Specification with BeforeExample {
 
       "work with Mixed case update and delete for Dog2" in {
         val elwood = Dog2.find(By(Dog2.name, "Elwood")).openOrThrowException("Test")
-        elwood.name.is must_== "Elwood"
+        elwood.name.get must_== "Elwood"
         elwood.name("FruitBar").actualAge(966).save
 
         val fb = Dog2.find(By(Dog2.actualAge, 966)).openOrThrowException("Test")
 
-        fb.name.is must_== "FruitBar"
-        fb.actualAge.is must_== 966
+        fb.name.get must_== "FruitBar"
+        fb.actualAge.get must_== 966
         fb.delete_!
 
         Dog2.find(By(Dog2.actualAge, 966)).isDefined must_== false
@@ -300,8 +300,8 @@ class MapperSpec extends Specification with BeforeExample {
         val i1 = Thing.create.name("frog").saveMe
         val i2 = Thing.create.name("dog").saveMe
 
-        Thing.find(By(Thing.thing_id, i1.thing_id.is)).openOrThrowException("Test").name.is must_== "frog"
-        Thing.find(By(Thing.thing_id, i2.thing_id.is)).openOrThrowException("Test").name.is must_== "dog"
+        Thing.find(By(Thing.thing_id, i1.thing_id.get)).openOrThrowException("Test").name.get must_== "frog"
+        Thing.find(By(Thing.thing_id, i2.thing_id.get)).openOrThrowException("Test").name.get must_== "dog"
       }
 
 
@@ -333,7 +333,7 @@ class MapperSpec extends Specification with BeforeExample {
         val now = Helpers.now
         val dog = Dog2.find().openOrThrowException("Test")
 
-        val oldUpdate = dog.updatedAt.is
+        val oldUpdate = dog.updatedAt.get
 
         val d1 = (now.getTime - dog.createdAt.get.getTime) / 100000L
         d1 must_== 0L
@@ -343,10 +343,10 @@ class MapperSpec extends Specification with BeforeExample {
 
         dog.name("ralph").save
 
-        val dog2 = Dog2.find(dog.dog2id.is).openOrThrowException("Test")
+        val dog2 = Dog2.find(dog.dog2id.get).openOrThrowException("Test")
 
-        dog.createdAt.is.getTime must_== dog2.createdAt.is.getTime
-        oldUpdate.getTime must_!= dog2.updatedAt.is.getTime
+        dog.createdAt.get.getTime must_== dog2.createdAt.get.getTime
+        oldUpdate.getTime must_!= dog2.updatedAt.get.getTime
       }
 
       "Non-deterministic Precache works with OrderBy with Mixed Case" in {
@@ -360,11 +360,11 @@ class MapperSpec extends Specification with BeforeExample {
 
       "Save flag results in update rather than insert" in {
         val elwood = SampleModel.find(By(SampleModel.firstName, "Elwood")).openOrThrowException("Test")
-        elwood.firstName.is must_== "Elwood"
+        elwood.firstName.get must_== "Elwood"
         elwood.firstName("Frog").save
 
         val frog = SampleModel.find(By(SampleModel.firstName, "Frog")).openOrThrowException("Test")
-        frog.firstName.is must_== "Frog"
+        frog.firstName.get must_== "Frog"
 
         SampleModel.findAll().length must_== 4
         SampleModel.find(By(SampleModel.firstName, "Elwood")).isEmpty must_== true
