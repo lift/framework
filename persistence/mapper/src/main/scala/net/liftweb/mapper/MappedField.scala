@@ -538,19 +538,18 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
     val f = getField(inst, meth)
     if (func.isDefinedAt(f)) func(f)
   }
+
+  @deprecated("Use get instead", "2.6")
+  def is: FieldType = get
+
   /**
    * Convert the field to its "context free" type (e.g., String, Int, Long, etc.)
    * If there are no read permissions, the value will be obscured
    */
-  def is: FieldType = {
+  def get: FieldType = {
     if (safe_? || readPermission_?) i_is_!
     else i_obscure_!(i_is_!)
   }
-
-  /**
-   * An alternative getter
-   */
-  def get: FieldType = is
 
   /**
    * What value was the field's value when it was pulled from the DB?
