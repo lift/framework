@@ -16,9 +16,8 @@
 package net.liftweb
 package mockweb
 
-import scala.xml.NodeSeq
 
-import common.{Box,Empty,Full}
+import common.Full
 import http._
 import http.rest._
 import json._
@@ -31,8 +30,6 @@ import mocks.MockHttpServletRequest
 */
 object WebSpecSpecBoot {
   def boot() {
-    println("WebSpecSpec Booting up")
-
     // Add this so that withTemplateFor test works
     LiftRules.addToPackages("net.liftweb.mockweb")
 
@@ -48,8 +45,6 @@ object WebSpecSpecBoot {
         RewriteResponse(List("stateful", "works"))
       }
     }
-
-    println("WebSpecSpec Boot complete")
   }
 }
 
