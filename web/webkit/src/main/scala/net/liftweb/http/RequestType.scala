@@ -37,23 +37,23 @@ abstract class RequestType extends Serializable{
 
 case object GetRequest extends RequestType {
   override def get_? = true
-  def method = "GET"
+  val method = "GET"
 }
 case object PostRequest extends RequestType {
   override def post_? = true
-  def method = "POST"
+  val method = "POST"
 }
 case object HeadRequest extends RequestType {
   override def head_? = true
-  def method = "HEAD"
+  val method = "HEAD"
 }
 case object PutRequest extends RequestType {
   override def put_? = true
-  def method = "PUT"
+  val method = "PUT"
 }
 case object DeleteRequest extends RequestType {
   override def delete_? = true
-  def method = "DELETE"
+  val method = "DELETE"
 }
 case object OptionsRequest extends RequestType {
   override def options_? = true
