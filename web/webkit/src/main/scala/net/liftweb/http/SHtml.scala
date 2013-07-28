@@ -992,7 +992,7 @@ trait SHtml {
 
   private def ajaxSelect_*(opts: Seq[SelectableOption[String]], deflt: Box[String],
                            jsFunc: Box[Call], func: AFuncHolder, attrs: ElemAttr*): Elem = {
-    val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + " + value + ".options[" + value + ".selectedIndex].value")
+    val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + encodeURIComponent(" + value + ".options[" + value + ".selectedIndex].value)")
     val key = formFuncName
 
     val vals = opts.map(_.value)
