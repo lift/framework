@@ -57,7 +57,7 @@ case object DeleteRequest extends RequestType {
 }
 case object OptionsRequest extends RequestType {
   override def options_? = true
-  def method = "OPTIONS"
+  val method = "OPTIONS"
 }
 case class UnknownRequest(method: String) extends RequestType
 
