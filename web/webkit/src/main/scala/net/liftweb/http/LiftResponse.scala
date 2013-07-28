@@ -18,12 +18,12 @@ package net.liftweb
 package http
 
 import net.liftweb.common._
-import scala.xml.{Node, Group, NodeSeq}
+import scala.xml.Node
 import net.liftweb.util._
 import net.liftweb.http.provider._
 import js._
 import net.liftweb.util.Helpers._
-import net.liftweb.json.{JsonAST, Printer}
+import net.liftweb.json.JsonAST
 import java.io.{OutputStream, OutputStreamWriter, Writer, ByteArrayOutputStream}
 
 /**
@@ -55,6 +55,29 @@ case class CreatedResponse(xml: Node, mime: String, addlHeaders: List[(String, S
 
   def out = xml
 }
+
+/**
+ * 201 Created Response
+ *
+ * The Json Resource was created. We then return the resource, post-processing, to
+ * the client. Usually used with HTTP PUT.
+ */
+object CreatedResponse {
+
+  lazy val jsonPrinter: scala.text.Document => String =
+    LiftRules.jsonOutputConverter.vend
+
+  def apply(json: JsonAST.JValue, addlHeaders: List[(String, String)]): LiftResponse = {
+    val headers: List[(String, String)] = S.getResponseHeaders( Nil ) ++  addlHeaders
+
+    new JsonResponse(new JsExp {
+      lazy val toJsCmd = jsonPrinter(JsonAST.render(json))
+    }, headers, Nil, 201)
+  }
+
+}
+
+
 
 /**
  * 202 response but without body.
