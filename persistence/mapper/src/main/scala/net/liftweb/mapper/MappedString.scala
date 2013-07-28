@@ -87,7 +87,7 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
   protected def i_is_! = data.get
   protected def i_was_! = orgData.get
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(is match {
+  def asJsonValue: Box[JsonAST.JValue] = Full(get match {
     case null => JsonAST.JNull
     case str => JsonAST.JString(str)
   })
@@ -103,7 +103,7 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
   fmapFunc({s: List[String] => this.setFromAny(s)}){name =>
     Full(appendFieldId(<input type={formInputType} maxlength={maxLen.toString}
                        name={name}
-                       value={is match {case null => "" case s => s.toString}}/>))}
+                       value={get match {case null => "" case s => s.toString}}/>))}
 
   protected def i_obscure_!(in : String) : String = {
     ""
@@ -136,7 +136,7 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
 
   override def apply(v: String): T = super.apply(v)
 
-  def asJsExp: JsExp = JE.Str(is)
+  def asJsExp: JsExp = JE.Str(get)
 
   def jdbcFriendly(field : String): String = data.get
 

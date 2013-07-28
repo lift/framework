@@ -55,7 +55,7 @@ object DbSpec extends Specification  {
         r
       }
       statements.size must_== 1
-      elwood.map( _.firstName.is) must_== Full("Elwood")
+      elwood.map( _.firstName.get) must_== Full("Elwood")
     }
   }
 }

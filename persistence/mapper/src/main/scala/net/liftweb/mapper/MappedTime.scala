@@ -67,14 +67,14 @@ abstract class MappedTime[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
 
   def dbFieldClass = classOf[Date]
 
-  def toLong: Long = is match {
+  def toLong: Long = get match {
     case null => 0L
     case d: Date => d.getTime / 1000L
   }
 
   def asJsExp: JsExp = JE.Num(toLong)
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(is match {
+  def asJsonValue: Box[JsonAST.JValue] = Full(get match {
     case null => JsonAST.JNull
     case x => JsonAST.JInt(x.getTime)
   })
@@ -105,23 +105,23 @@ abstract class MappedTime[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
   S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
   Full(appendFieldId(<input type={formInputType}
                      name={funcName}
-                     value={is match {case null => "" case s => format(s)}}/>))
+                     value={get match {case null => "" case s => format(s)}}/>))
   }
 
   override def setFromAny(f : Any): Date = f match {
     case JsonAST.JNull => this.set(null)
     case JsonAST.JInt(v) => this.set(new Date(v.longValue))
     case "" | null => this.set(null)
-    case s: String => parse(s).map(s => this.set(s)).openOr(this.is)
+    case s: String => parse(s).map(s => this.set(s)).openOr(this.get)
     case x :: _ => setFromAny(x)
     case d: Date => this.set(d)
     case Some(d: Date) => this.set(d)
     case Full(d: Date) => this.set(d)
     case None | Empty | Failure(_, _, _) => this.set(null)
-    case f => toDate(f).map(d => this.set(d)).openOr(this.is)
+    case f => toDate(f).map(d => this.set(d)).openOr(this.get)
   }
 
-  def jdbcFriendly(field : String) : Object = is match {
+  def jdbcFriendly(field : String) : Object = get match {
     case null => null
     case d => new java.sql.Time(d.getTime)
   }
@@ -155,6 +155,6 @@ abstract class MappedTime[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
   def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.timeColumnType + notNullAppender()
   
   
-  override def toString = if(is==null) "NULL" else format(is)
+  override def toString = if(get==null) "NULL" else format(get)
 }
 

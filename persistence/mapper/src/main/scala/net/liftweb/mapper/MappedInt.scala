@@ -68,15 +68,15 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
 
   def real_convertToJDBCFriendly(value: ENUM#Value): Object = new java.lang.Integer(value.id)
 
-  def toInt = is.id
+  def toInt = get.id
   def fromInt(in: Int): ENUM#Value = enum(in)
 
   def jdbcFriendly(field: String) = new java.lang.Integer(toInt)
   override def jdbcFriendly = new java.lang.Integer(toInt)
 
-  def asJsExp: JsExp = JE.Num(is.id)
+  def asJsExp: JsExp = JE.Num(get.id)
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(is.id))
+  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(get.id))
 
 
   override def setFromAny(in: Any): ENUM#Value = {
@@ -225,9 +225,9 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
     orgData = data
   }
 
-  def asJsExp: JsExp = JE.Num(is)
+  def asJsExp: JsExp = JE.Num(get)
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(is))
+  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(get))
 
   protected def real_i_set_!(value : Int) : Int = {
     if (value != data) {
@@ -239,11 +239,11 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
   override def readPermission_? = true
   override def writePermission_? = true
 
-  def +(in: Int): Int = is + in
+  def +(in: Int): Int = get + in
 
   def real_convertToJDBCFriendly(value: Int): Object = new java.lang.Integer(value)
 
-  def jdbcFriendly(field : String) = new java.lang.Integer(is)
+  def jdbcFriendly(field : String) = new java.lang.Integer(get)
 
   override def setFromAny(in: Any): Int = {
     in match {

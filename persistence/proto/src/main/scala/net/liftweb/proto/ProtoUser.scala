@@ -622,7 +622,7 @@ trait ProtoUser {
   }
 
 
-  def currentUserId: Box[String] = curUserId.is
+  def currentUserId: Box[String] = curUserId.get
 
   private object curUser extends RequestVar[Box[TheUserType]](currentUserId.flatMap(userFromStringId))  with CleanRequestVarOnSessionTransition  {
     override lazy val __nameSalt = Helpers.nextFuncName
@@ -634,7 +634,7 @@ trait ProtoUser {
    */
   protected def userFromStringId(id: String): Box[TheUserType]
 
-  def currentUser: Box[TheUserType] = curUser.is
+  def currentUser: Box[TheUserType] = curUser.get
 
   def signupXhtml(user: TheUserType) = {
     (<form method="post" action={S.uri}><table><tr><td
@@ -840,7 +840,7 @@ trait ProtoUser {
         case Full(user) if user.validated_? &&
           user.testPassword(S.param("password")) => {
             val preLoginState = capturePreLoginState()
-            val redir = loginRedirect.is match {
+            val redir = loginRedirect.get match {
               case Full(url) =>
                 loginRedirect(Empty)
               url

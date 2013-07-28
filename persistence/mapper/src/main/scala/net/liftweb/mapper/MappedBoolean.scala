@@ -56,13 +56,13 @@ abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedFiel
   override def readPermission_? = true
   override def writePermission_? = true
 
-     def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JBool(is))
+     def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JBool(get))
 
   def real_convertToJDBCFriendly(value: Boolean): Object = new java.lang.Integer(if (value) 1 else 0)
 
   def jdbcFriendly(field : String) = data.map(v => new java.lang.Integer(if(v) 1 else 0)) openOr null
 
-  def asJsExp: JsExp = if (is) JE.JsTrue else JE.JsFalse
+  def asJsExp: JsExp = if (get) JE.JsTrue else JE.JsFalse
 
   override def setFromAny(in: Any): Boolean = {
     in match {
@@ -116,6 +116,6 @@ abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedFiel
   /**
    * Create an input field for the item
    */
-  override def _toForm: Box[NodeSeq] = Full(SHtml.checkbox(is,this.apply _))
+  override def _toForm: Box[NodeSeq] = Full(SHtml.checkbox(get,this.apply _))
 }
 

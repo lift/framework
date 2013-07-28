@@ -242,7 +242,7 @@ trait MappedNullableField[NullableFieldType <: Any,OwnerType <: Mapper[OwnerType
   */
   override final def dbNotNull_? : Boolean = false
 
-  override def toString = is.map(_.toString) openOr ""
+  override def toString = get.map(_.toString) openOr ""
 
   /**
    * Create an input field for the item
@@ -251,7 +251,7 @@ trait MappedNullableField[NullableFieldType <: Any,OwnerType <: Mapper[OwnerType
   S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
     Full(appendFieldId(<input type={formInputType}
                        name={funcName}
-                       value={is match {
+                       value={get match {
                          case null => ""
                          case Full(null) => ""
                          case Full(s) => s.toString
@@ -465,7 +465,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
   S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
     Full(appendFieldId(<input type={formInputType}
                        name={funcName}
-                       value={is match {case null => "" case s => s.toString}}/>))
+                       value={get match {case null => "" case s => s.toString}}/>))
   }
 
   /**
@@ -614,7 +614,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
   def targetSQLType: Int
 
   override def toString : String =
-  is match {
+  get match {
     case null => ""
     case v => v.toString
   }
@@ -622,7 +622,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
   def validations: List[FieldType => List[FieldError]] = Nil
 
   def validate: List[FieldError] = {
-    val cv = is
+    val cv = get
     val errorRet: ListBuffer[FieldError] = new ListBuffer
 
     /*
@@ -678,8 +678,8 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
     ) && (
       other match {
         case mapped: MappedField[_, _] => this.i_is_! == mapped.i_is_!
-        case ov: AnyRef if (ov ne null) && dbFieldClass.isAssignableFrom(ov.getClass) => this.is == runFilters(ov.asInstanceOf[FieldType], setFilter)
-        case ov => this.is == ov
+        case ov: AnyRef if (ov ne null) && dbFieldClass.isAssignableFrom(ov.getClass) => this.get == runFilters(ov.asInstanceOf[FieldType], setFilter)
+        case ov => this.get == ov
       }
     )
   }
@@ -694,7 +694,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
 
 object MappedField {
   @deprecated("Automatic conversion to the field's type is not safe and will be removed. Please use field.get instead", "2.5")
-  implicit def mapToType[T, A<:Mapper[A]](in : MappedField[T, A]): T = in.is
+  implicit def mapToType[T, A<:Mapper[A]](in : MappedField[T, A]): T = in.get
 }
 
 trait IndexedField[O] extends BaseIndexedField {

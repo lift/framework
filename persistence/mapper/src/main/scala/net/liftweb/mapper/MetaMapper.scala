@@ -248,7 +248,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   def countDb(dbId: ConnectionIdentifier, by: QueryParam[A]*): Long = {
     DB.use(dbId) {
       conn =>
-      val bl = by.toList ::: addlQueryParams.is
+      val bl = by.toList ::: addlQueryParams.get
       val (query, start, max) = addEndStuffs(addFields("SELECT COUNT(*) FROM "+MapperRules.quoteTableName.vend(_dbTableNameLC)+"  ", false, bl, conn), bl, conn)
 
       DB.prepareStatement(query, conn) {
@@ -294,7 +294,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
           case x => List(x)
         }
 
-        val lst: Set[FT] = Set(filter(ret.map(v => v.getSingleton.getActualField(v, j.field).is.asInstanceOf[FT])) :_*)
+        val lst: Set[FT] = Set(filter(ret.map(v => v.getSingleton.getActualField(v, j.field).get.asInstanceOf[FT])) :_*)
 
         j.field.dbKeyToTable.
         asInstanceOf[MetaMapper[A]].
@@ -319,16 +319,16 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       }
 
       val map: Map[FT, MT] =
-      Map(ol.map(v => (v.primaryKeyField.is, v)) :_*)
+      Map(ol.map(v => (v.primaryKeyField.get, v)) :_*)
 
       for (i <- ret) {
         val field: MappedForeignKey[FT, A, _] =
         getActualField(i, j.field).asInstanceOf[MappedForeignKey[FT, A, _]]
 
-        map.get(field.is) match {
+        map.get(field.get) match {
           case v => field._primeObj(Box(v))
         }
-        //field.primeObj(Box(map.get(field.is).map(_.asInstanceOf[QQ])))
+        //field.primeObj(Box(map.get(field.get).map(_.asInstanceOf[QQ])))
       }
     }
 
@@ -347,7 +347,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   def bulkDelete_!!(dbId: ConnectionIdentifier, by: QueryParam[A]*): Boolean = {
     DB.use(dbId) {
       conn =>
-      val bl = by.toList ::: addlQueryParams.is
+      val bl = by.toList ::: addlQueryParams.get
       val (query, start, max) = addEndStuffs(addFields("DELETE FROM "+MapperRules.quoteTableName.vend(_dbTableNameLC)+" ", false, bl, conn), bl, conn)
 
       DB.prepareStatement(query, conn) {
@@ -387,7 +387,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    */
   def buildSelectString(fields: Seq[SelectableField], conn: SuperConnection, by: QueryParam[A]*):
   (String, Box[Long], Box[Long], List[QueryParam[A]]) = {
-    val bl = by.toList ::: addlQueryParams.is
+    val bl = by.toList ::: addlQueryParams.get
     val selectStatement = "SELECT "+
     distinct(by)+
     fields.map(_.dbSelectString).
@@ -1676,11 +1676,11 @@ object By {
     case _ => NullRef(field)
   }
   def apply[O <: Mapper[O],T,  Q <: KeyedMapper[T, Q]](field: MappedForeignKey[T, O, Q], value: Q) =
-  Cmp[O,T](field, Eql, Full(value.primaryKeyField.is), Empty, Empty)
+  Cmp[O,T](field, Eql, Full(value.primaryKeyField.get), Empty, Empty)
 
   def apply[O <: Mapper[O],T, Q <: KeyedMapper[T, Q]](field: MappedForeignKey[T, O, Q], value: Box[Q]) =
   value match {
-    case Full(v) => Cmp[O,T](field, Eql, Full(v.primaryKeyField.is), Empty, Empty)
+    case Full(v) => Cmp[O,T](field, Eql, Full(v.primaryKeyField.get), Empty, Empty)
     case _ => Cmp(field, IsNull, Empty, Empty, Empty)
   }
 }
@@ -1720,10 +1720,10 @@ object NotBy {
   }
 
   def apply[O <: Mapper[O],T,  Q <: KeyedMapper[T, Q]](field: MappedForeignKey[T, O, Q], value: Q) =
-  Cmp[O,T](field, <>, Full(value.primaryKeyField.is), Empty, Empty)
+  Cmp[O,T](field, <>, Full(value.primaryKeyField.get), Empty, Empty)
   def apply[O <: Mapper[O],T, Q <: KeyedMapper[T, Q]](field: MappedForeignKey[T, O, Q], value: Box[Q]) =
   value match {
-    case Full(v) => Cmp[O,T](field, <>, Full(v.primaryKeyField.is), Empty, Empty)
+    case Full(v) => Cmp[O,T](field, <>, Full(v.primaryKeyField.get), Empty, Empty)
     case _ => Cmp(field, IsNotNull, Empty, Empty, Empty)
   }
 }
@@ -1784,7 +1784,7 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
 
   def asSafeJs(actual: A, f: KeyObfuscator): JsExp = {
     val pk = actual.primaryKeyField
-    val first = (pk.name, JE.Str(f.obscure(self, pk.is)))
+    val first = (pk.name, JE.Str(f.obscure(self, pk.get)))
     JE.JsObj(
       first ::
         ("$lift_class", JE.Str(dbTableName)) ::
@@ -1794,7 +1794,7 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
           .flatMap{
             case fk0: MappedForeignKey[_, _, _] with MappedField[_, _] =>
               val fk = fk0.asInstanceOf[Q]
-              val key = f.obscure(fk.dbKeyToTable, fk.is)
+              val key = f.obscure(fk.dbKeyToTable, fk.get)
               List(
                 (fk.name, JE.Str(key)),
                 (fk.name+"_obj", JE.AnonFunc("index", JE.JsRaw("return index["+key.encJs+"];").cmd))
@@ -2095,7 +2095,7 @@ class KeyObfuscator {
 
   def obscure[KeyType, MetaType <: KeyedMapper[KeyType, MetaType]](what: KeyedMapper[KeyType, MetaType]): String =
   {
-    obscure(what.getSingleton, what.primaryKeyField.is)
+    obscure(what.getSingleton, what.primaryKeyField.get)
   }
 
   def apply[KeyType, MetaType <: KeyedMapper[KeyType, MetaType], Q <% KeyType](theType:

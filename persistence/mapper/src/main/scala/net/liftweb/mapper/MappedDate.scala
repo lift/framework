@@ -65,14 +65,14 @@ abstract class MappedDate[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
   def dbFieldClass = classOf[Date]
 
   /** Returns the date as the number of seconds (not milliseconds) since January 1, 1970 */
-  def toLong: Long = is match {
+  def toLong: Long = get match {
     case null => 0L
     case d: Date => d.getTime / 1000L
   }
 
   def asJsExp: JsExp = JE.Num(toLong)
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(is match {
+  def asJsonValue: Box[JsonAST.JValue] = Full(get match {
     case null => JsonAST.JNull
     case v => JsonAST.JInt(v.getTime)
   })
@@ -103,7 +103,7 @@ abstract class MappedDate[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
   S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
   Full(appendFieldId(<input type={formInputType}
                      name={funcName}
-                     value={is match {case null => "" case s => format(s)}}/>))
+                     value={get match {case null => "" case s => format(s)}}/>))
   }
 
   override def setFromAny(f : Any): Date = f match {
@@ -111,16 +111,16 @@ abstract class MappedDate[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
     case JsonAST.JInt(v) => this.set(new Date(v.longValue))
     case n: Number => this.set(new Date(n.longValue))
     case "" | null => this.set(null)
-    case s: String => parse(s).map(d => this.set(d)).openOr(this.is)
-    case (s: String) :: _ => parse(s).map(d => this.set(d)).openOr(this.is)
+    case s: String => parse(s).map(d => this.set(d)).openOr(this.get)
+    case (s: String) :: _ => parse(s).map(d => this.set(d)).openOr(this.get)
     case d: Date => this.set(d)
     case Some(d: Date) => this.set(d)
     case Full(d: Date) => this.set(d)
     case None | Empty | Failure(_, _, _) => this.set(null)
-    case _ => this.is
+    case _ => this.get
   }
 
-  def jdbcFriendly(field : String) : Object = is match {
+  def jdbcFriendly(field : String) : Object = get match {
     case null => null
     case d => new java.sql.Date(d.getTime)
   }
@@ -162,5 +162,5 @@ abstract class MappedDate[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
     case d => d.getTime < millis
   }
 
-  override def toString: String = if(is==null) "NULL" else format(is)
+  override def toString: String = if(get == null) "NULL" else format(get)
 }

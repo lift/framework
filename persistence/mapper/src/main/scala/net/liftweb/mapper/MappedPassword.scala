@@ -89,7 +89,7 @@ extends MappedField[String, T] {
       case l : List[String] if (l.length == 2 && l.head == l(1)) => {this.set(l.head)}
       case _ => {invalidPw = true; invalidMsg = S.?("passwords.do.not.match")}
     }
-    is
+    get
   }
 
   override def renderJs_? = false
@@ -143,9 +143,9 @@ extends MappedField[String, T] {
   override def _toForm: Box[NodeSeq] = {
     S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
       Full(<span>{appendFieldId(<input type={formInputType} name={funcName}
-            value={is.toString}/>)}&nbsp;{S.?("repeat")}&nbsp;<input
+            value={get.toString}/>)}&nbsp;{S.?("repeat")}&nbsp;<input
             type={formInputType} name={funcName}
-            value={is.toString}/></span>)
+            value={get.toString}/></span>)
     }
   }
 

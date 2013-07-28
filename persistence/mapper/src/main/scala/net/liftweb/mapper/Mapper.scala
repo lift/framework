@@ -401,13 +401,13 @@ trait KeyedMapper[KeyType, OwnerType<:KeyedMapper[KeyType, OwnerType]] extends M
   def primaryKeyField: MappedField[KeyType, OwnerType] with IndexedField[KeyType]
   def getSingleton: KeyedMetaMapper[KeyType, OwnerType];
 
-  override def comparePrimaryKeys(other: OwnerType) = primaryKeyField.is == other.primaryKeyField.is
+  override def comparePrimaryKeys(other: OwnerType) = primaryKeyField.get == other.primaryKeyField.get
 
   def reload: OwnerType = getSingleton.find(By(primaryKeyField, primaryKeyField.get)) openOr this
 
   def asSafeJs(f: KeyObfuscator): JsExp = getSingleton.asSafeJs(this, f)
 
-  override def hashCode(): Int = primaryKeyField.is.hashCode
+  override def hashCode(): Int = primaryKeyField.get.hashCode
 
   override def equals(other: Any): Boolean = {
     other match {
