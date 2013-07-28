@@ -62,7 +62,7 @@ abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 
   def asJsExp: JsExp = throw new NullPointerException("No way")
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(is match {
+  def asJsonValue: Box[JsonAST.JValue] = Full(get match {
     case null => JsonAST.JNull
     case value => JsonAST.JString(base64Encode(value))
   })
@@ -74,7 +74,7 @@ abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField
     case s => this.set(s.toString.getBytes("UTF-8"))
   }
 
-  def jdbcFriendly(field : String) : Object = is
+  def jdbcFriendly(field : String) : Object = get
 
   def real_convertToJDBCFriendly(value: Array[Byte]): Object = value
 
@@ -128,9 +128,9 @@ abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[S
 
   protected[mapper] def doneWithSave() {orgData.setFrom(data)}
 
-  def asJsExp: JsExp = JE.Str(is)
+  def asJsExp: JsExp = JE.Str(get)
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(is match {
+  def asJsonValue: Box[JsonAST.JValue] = Full(get match {
     case null => JsonAST.JNull
     case str => JsonAST.JString(str)
   })
@@ -222,9 +222,9 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
 
   protected def i_obscure_!(in: String): String = ""
 
-  def asJsExp: JsExp = JE.Str(is)
+  def asJsExp: JsExp = JE.Str(get)
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(is match {
+  def asJsonValue: Box[JsonAST.JValue] = Full(get match {
     case null => JsonAST.JNull
     case str => JsonAST.JString(str)
   })

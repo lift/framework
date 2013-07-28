@@ -32,13 +32,13 @@ abstract class MappedTextarea[T<:Mapper[T]](owner : T, maxLen: Int) extends Mapp
     Full(appendFieldId(<textarea name={funcName}
 	               rows={textareaRows.toString}
 	               cols={textareaCols.toString}>{
-	   is match {
+	   get match {
 	     case null => ""
 	     case s => s}}</textarea>))}
   }
 
   override def toString = {
-    val v = is
+    val v = get
     if (v == null || v.length < 100) super.toString
     else v.substring(0,40)+" ... "+v.substring(v.length - 40)
   }

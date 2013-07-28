@@ -96,7 +96,7 @@ with LifecycleCallbacks {
     km.getSingleton eq foreignMeta
 
   override def equals(other: Any) = other match {
-    case km: KeyedMapper[KeyType, Other] if checkTypes(km) => this.is == km.primaryKeyField.is
+    case km: KeyedMapper[KeyType, Other] if checkTypes(km) => this.get == km.primaryKeyField.get
     case _ => super.equals(other)
   }
 
@@ -111,7 +111,7 @@ with LifecycleCallbacks {
       case Nil => Empty
 
       case xs =>
-        Full(SHtml.selectObj(xs, Full(this.is), this.set))
+        Full(SHtml.selectObj(xs, Full(this.get), this.set))
     }.openOr(<span>{immutableMsg}</span>))
 
   /**
@@ -127,7 +127,7 @@ with LifecycleCallbacks {
   override protected def dirty_?(b: Boolean) = synchronized { // issue 165
     // invalidate if the primary key has changed Issue 370
     if (_obj.isEmpty || (_calcedObj && _obj.isDefined &&
-       _obj.openOrThrowException("_obj was just checked as full.").primaryKeyField.is != this.i_is_!)) {
+       _obj.openOrThrowException("_obj was just checked as full.").primaryKeyField.get != this.i_is_!)) {
       _obj = Empty
       _calcedObj = false
     }
@@ -173,7 +173,7 @@ with LifecycleCallbacks {
    * @return the Mapper containing this field
    */
   def apply(v: Box[Other]): MyOwner = {
-    apply(v.dmap(defaultValue)(_.primaryKeyField.is))
+    apply(v.dmap(defaultValue)(_.primaryKeyField.get))
     primeObj(v)
     fieldOwner
   }
@@ -184,7 +184,7 @@ with LifecycleCallbacks {
    * @return the Mapper containing this field
    */
   def apply(v: Other): MyOwner = {
-    apply(v.primaryKeyField.is)
+    apply(v.primaryKeyField.get)
     primeObj(Full(v))
     fieldOwner
   }
@@ -197,7 +197,7 @@ with LifecycleCallbacks {
   override def beforeSave {
     if(!defined_?)
       for(o <- obj)
-        set(o.primaryKeyField.is)
+        set(o.primaryKeyField.get)
     super.beforeSave
   }
 
@@ -227,9 +227,9 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
   def foreignMeta = _foreignMeta
 
   @deprecated("Use 'box' instead", "2.4")
-  def can: Box[Long] = if (defined_?) Full(is) else Empty
+  def can: Box[Long] = if (defined_?) Full(get) else Empty
 
-  def box: Box[Long] = if (defined_?) Full(is) else Empty
+  def box: Box[Long] = if (defined_?) Full(get) else Empty
 
   type KeyType = Long
   type KeyedForeignType = O
@@ -248,7 +248,7 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
 
 
   def asSafeJs(obs: Box[KeyObfuscator]): JsExp =
-  obs.map(o => JE.Str(o.obscure(dbKeyToTable, is))).openOr(JE.Num(is))
+  obs.map(o => JE.Str(o.obscure(dbKeyToTable, get))).openOr(JE.Num(get))
 
   override def asJsExp: JsExp = if (defined_?) super.asJsExp else JE.JsNull
 
@@ -302,7 +302,7 @@ extends MappedString[T](fieldOwner, maxLen) with MappedForeignKey[String,T,O] wi
   override def dbForeignKey_? = true
 
   def asSafeJs(obs: Box[KeyObfuscator]): JsExp =
-    obs.map(o => JE.Str(o.obscure(dbKeyToTable, is))).openOr(JE.Str(is))
+    obs.map(o => JE.Str(o.obscure(dbKeyToTable, get))).openOr(JE.Str(get))
 
   /**
    * Called when Schemifier adds a foreign key.  Return a function that will be called when Schemifier
@@ -314,7 +314,7 @@ extends MappedString[T](fieldOwner, maxLen) with MappedForeignKey[String,T,O] wi
 
   def set(v: Box[O]): T = {
     val toSet: String = v match {
-      case Full(i) => i.primaryKeyField.is
+      case Full(i) => i.primaryKeyField.get
       case _ => null
     }
 

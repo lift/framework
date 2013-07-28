@@ -54,7 +54,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends Record[T] {
   /**
    * Convert the id to a String
    */
-  def userIdAsString: String = id.is.toString
+  def userIdAsString: String = id.get.toString
   
   /**
    * The first name field for the User.  You can override the behavior
@@ -158,21 +158,21 @@ trait ProtoUser[T <: ProtoUser[T]] extends Record[T] {
     override def defaultValue = false
   }
 
-  def niceName: String = (firstName.is, lastName.is, email.is) match {
+  def niceName: String = (firstName.get, lastName.get, email.get) match {
     case (f, l, e) if f.length > 1 && l.length > 1 => f+" "+l+" ("+e+")"
     case (f, _, e) if f.length > 1 => f+" ("+e+")"
     case (_, l, e) if l.length > 1 => l+" ("+e+")"
     case (_, _, e) => e
   }
 
-  def shortName: String = (firstName.is, lastName.is) match {
+  def shortName: String = (firstName.get, lastName.get) match {
     case (f, l) if f.length > 1 && l.length > 1 => f+" "+l
     case (f, _) if f.length > 1 => f
     case (_, l) if l.length > 1 => l
-    case _ => email.is
+    case _ => email.get
   }
 
-  def niceNameWEmailLink = <a href={"mailto:"+email.is}>{niceName}</a>
+  def niceNameWEmailLink = <a href={"mailto:"+email.get}>{niceName}</a>
 }
 
 /**
@@ -228,27 +228,27 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends MetaRecor
     /**
      * Return the user's first name
      */
-    def getFirstName: String = in.firstName.is
+    def getFirstName: String = in.firstName.get
 
     /**
      * Return the user's last name
      */
-    def getLastName: String = in.lastName.is
+    def getLastName: String = in.lastName.get
 
     /**
      * Get the user's email
      */
-    def getEmail: String = in.email.is
+    def getEmail: String = in.email.get
 
     /**
      * Is the user a superuser
      */
-    def superUser_? : Boolean = in.superUser.is
+    def superUser_? : Boolean = in.superUser.get
 
     /**
      * Has the user been validated?
      */
-    def validated_? : Boolean = in.validated.is
+    def validated_? : Boolean = in.validated.get
 
     /**
      * Does the supplied password match the actual password?
@@ -272,7 +272,7 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends MetaRecor
     /**
      * Return the unique ID for the user
      */
-    def getUniqueId(): String = in.uniqueId.is
+    def getUniqueId(): String = in.uniqueId.get
 
     /**
      * Validate the user

@@ -44,13 +44,13 @@ trait RequestVarEM extends ScalaEntityManager with ScalaEMFactory {
    * for each request.
    */
   object emVar extends TransientRequestVar[EntityManager](openEM()) {
-    this.registerGlobalCleanupFunc(ignore => closeEM(this.is))
+    this.registerGlobalCleanupFunc(ignore => closeEM(this.get))
 
     override def __nameSalt = net.liftweb.util.Helpers.randomString(10)
   }
 
   // Must be provided to properly implement ScalaEntityManager
-  protected def em = emVar.is
+  protected def em = emVar.get
   val factory = this
 
   /**

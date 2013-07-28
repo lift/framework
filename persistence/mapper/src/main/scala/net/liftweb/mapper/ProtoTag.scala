@@ -79,6 +79,6 @@ abstract class ProtoTag[MyType <: ProtoTag[MyType]] extends KeyedMapper[Long, My
     override def dbIndexed_? = true
   }
 
-  def compare(other: MyType): Int = name.is.compare(other.name.is)
+  def compare(other: MyType): Int = name.get.compare(other.name.get)
 }
 

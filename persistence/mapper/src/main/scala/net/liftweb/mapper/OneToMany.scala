@@ -231,7 +231,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       }
       unlinked = Nil
       delegate = delegate.filter {e =>
-          foreign(e).is == OneToMany.this.primaryKeyField.is ||
+          foreign(e).get == OneToMany.this.primaryKeyField.get ||
             foreign(e).obj.map(_ eq OneToMany.this).openOr(false) // obj is this but not Empty
       }
       delegate.forall(_.save)
@@ -260,7 +260,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
     override def save = {
       val unowned = removed.filter{ e =>
         val f = foreign(e)
-        f.is == f.defaultValue
+        f.get == f.defaultValue
       }
       unowned foreach {_.delete_!}
       super.save
@@ -274,8 +274,8 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
   trait Cascade[O<:Mapper[_]] extends MappedOneToManyBase[O] {
     def delete_! = {
       delegate.forall { e =>
-          if(foreign(e).is ==
-            OneToMany.this.primaryKeyField.is) {
+          if(foreign(e).get ==
+            OneToMany.this.primaryKeyField.get) {
               e.delete_!
             }
           else
