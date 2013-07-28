@@ -367,6 +367,7 @@ trait MandatoryTypedField[ThisType] extends TypedField[ThisType] with Product1[T
 
   def get: MyType = value
 
+  @deprecated("Use get", "2.6")
   def is: MyType = value
 
   protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType] = in.map(v => setFilter.foldLeft(v)((prev, f) => f(prev)))
@@ -415,6 +416,7 @@ trait OptionalTypedField[ThisType] extends TypedField[ThisType] with Product1[Bo
 
   def get: Option[MyType] = value
 
+  @deprecated("Use get", "2.6")
   def is: Option[MyType] = value
 
   protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType] =  setFilter.foldLeft(in){ (prev, f) =>
