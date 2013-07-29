@@ -315,7 +315,7 @@ trait BaseLongKeyedMapper extends BaseKeyedMapper {
 
 trait IdPK /* extends BaseLongKeyedMapper */ {
   self: BaseLongKeyedMapper =>
-  def primaryKeyField = id
+  def primaryKeyField: MappedLongIndex[MapperType] = id
   object id extends MappedLongIndex[MapperType](this.asInstanceOf[MapperType])
 }
 

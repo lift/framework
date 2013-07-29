@@ -72,7 +72,7 @@ abstract class ProtoTag[MyType <: ProtoTag[MyType]] extends KeyedMapper[Long, My
   // the primary key for the database
   object id extends MappedLongIndex(this)
 
-  def primaryKeyField = id
+  def primaryKeyField: MappedLongIndex[MyType] = id
 
   object name extends MappedPoliteString(this, 256) {
     override def setFilter = getSingleton.capify :: super.setFilter
