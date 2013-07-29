@@ -29,7 +29,7 @@ trait ProtoExtendedSession[T <: ProtoExtendedSession[T]] extends
 KeyedMapper[Long, T] {
   self: T =>
 
-  override def primaryKeyField = id
+  override def primaryKeyField: MappedLongIndex[T] = id
 
   // the primary key for the database
   object id extends MappedLongIndex(this)

@@ -129,7 +129,7 @@ class SampleModel extends KeyedMapper[Long, SampleModel] {
   def getSingleton = SampleModel
 
   // what's the "meta" server
-  def primaryKeyField = id
+  def primaryKeyField: MappedLongIndex[SampleModel] = id
 
   object id extends MappedLongIndex(this)
 
