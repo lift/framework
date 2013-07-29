@@ -1041,7 +1041,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * LiftRules.htmlProperties.default.set((r: Req) => new Html5Properties(r.userAgent))
    */
   val htmlProperties: FactoryMaker[Req => HtmlProperties] =
-    new FactoryMaker(() => (r: Req) => (new OldHtmlProperties(r.userAgent): HtmlProperties)) {}
+    new FactoryMaker(() => (r: Req) => new Html5Properties(r.userAgent): HtmlProperties) {}
 
   /**
    * How long should we wait for all the lazy snippets to render
