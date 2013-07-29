@@ -26,8 +26,8 @@ import Helpers._
 
 import java.net.{URL, InetAddress}
 
-import common.Full
 import snippet.Counter
+import net.liftweb.common.Full
 
 
 object OneShot extends Specification with RequestKit {
@@ -139,7 +139,7 @@ object OneShot extends Specification with RequestKit {
 
       for {
         resp <- get("/oneshot")
-        xml <- resp.xml
+        xml <- resp.html5AsXml
         span <- (xml \\ "span").filter(x => (x \ "@id").text == "one")
         in <- (span \\ "input")
         name <- in \ "@name"
@@ -156,7 +156,7 @@ object OneShot extends Specification with RequestKit {
 
       for {
         resp <- get("/oneshot")
-        xml <- resp.xml
+        xml <- resp.html5AsXml
         span <- (xml \\ "span").filter(x => (x \ "@id").text == "two")
         in <- (span \\ "input")
         name <- in \ "@name"
