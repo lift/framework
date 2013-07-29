@@ -55,7 +55,8 @@ object ToHeadUsages extends Specification  {
     "merge <head> from html fragment" in {
       jetty.browse(
         "/htmlFragmentWithHead", html =>
-          html.getElementByXPath("/html/head/script[@id='fromFrag']") must not(beNull when jetty.running))
+          html.getElementByXPath("/html/head/script[@id='fromFrag']") must not(beNull when jetty.running)
+        )
     }
 
     "merge <head> from html fragment does not include head element in body" in {
@@ -135,8 +136,8 @@ object ToHeadUsages extends Specification  {
           (idx >= 0) must_== true
         }
       )
-    }
-    */
+    }*/
+
   }
 
   "deferred snippets" should {
