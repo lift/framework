@@ -38,7 +38,7 @@ import net.liftweb.proto.{ProtoUser => GenProtoUser}
 trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsString {
   self: T =>
 
-  override def primaryKeyField = id
+  override def primaryKeyField: MappedLongIndex[T] = id
 
   /**
    * The primary key field for the User.  You can override the behavior
