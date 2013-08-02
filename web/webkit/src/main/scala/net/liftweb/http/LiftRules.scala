@@ -1535,7 +1535,12 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   @volatile var cometGetTimeout = 140000
 
-  @volatile var supplimentalHeaders: HTTPResponse => Unit = s => s.addHeaders(List(HTTPParam("X-Lift-Version", liftVersion)))
+  /**
+   * Compute the headers to be sent to the browser in addition to anything else that's sent
+   */
+  val listOfSupplimentalHeaders: FactoryMaker[List[(String, String)]] = new FactoryMaker(() => List(("X-Lift-Version", liftVersion), ("X-Frame-Options", "SAMEORIGIN"))) {}
+
+  @volatile var supplimentalHeaders: HTTPResponse => Unit = s => listOfSupplimentalHeaders.vend.foreach{case (k, v) => s.addHeaders(List(HTTPParam(k, v)))}
 
   @volatile var calcIE6ForResponse: () => Boolean = () => S.request.map(_.isIE6) openOr false
 
