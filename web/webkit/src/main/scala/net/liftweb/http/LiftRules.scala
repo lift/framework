@@ -1536,9 +1536,32 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var cometGetTimeout = 140000
 
   /**
+   * Set to false if you are using some other way to prevent the BREACH attack
+   */
+  val breachMitigation: FactoryMaker[Boolean] = new FactoryMaker(() => true) {}
+
+  /**
    * Compute the headers to be sent to the browser in addition to anything else that's sent
    */
-  val listOfSupplimentalHeaders: FactoryMaker[List[(String, String)]] = new FactoryMaker(() => List(("X-Lift-Version", liftVersion), ("X-Frame-Options", "SAMEORIGIN"))) {}
+  val listOfSupplimentalHeaders: FactoryMaker[List[(String, String)]] = {
+    import scala.util.Random
+    /**
+     * We add 10 fake JSESSIONID strings to the header
+     * Each sessionid has a random string and random length between 10 and 25 character long
+     *
+     */
+    val numberOfFakeSessionIds = 1 to 10
+    def length = (10 to 25)(Random.nextInt(15))
+
+    def noBreachSessionIds = numberOfFakeSessionIds.foldLeft(new StringBuilder){
+      case (acc, _ ) =>
+        acc.append ( ("JSESSIONID=" + randomString(length)) + "; " + ("JSESSIONID=" + randomString(length) + "; ") ) }
+
+    new FactoryMaker(() => List(
+      ("X-Lift-Version", liftVersion), ("X-Frame-Options", "SAMEORIGIN"), ("X-NO-BREACH", noBreachSessionIds.toString())
+    )) {}
+
+  }
 
   @volatile var supplimentalHeaders: HTTPResponse => Unit = s => listOfSupplimentalHeaders.vend.foreach{case (k, v) => s.addHeaders(List(HTTPParam(k, v)))}
 
