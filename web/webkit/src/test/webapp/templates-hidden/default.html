@@ -1,15 +1,17 @@
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:lift="http://liftweb.net/">
-	<head>
-		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-		<meta name="description" content="" />
-		<meta name="keywords" content="" />
-		
+  <head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8" >
+		<meta name="description" content="" >
+		<meta name="keywords" content="" >
+
 		<title>Lift webapptest</title>
 		<script id="jquery" src="/classpath/jquery.js" type="text/javascript"></script>
 	</head>
 	<body>
-		<lift:bind name="content" />
-		<lift:Menu.builder />
-		<lift:msgs />
+    <lift:Menu.builder></lift:Menu.builder>
+    <lift:msgs></lift:msgs>
+    <div id="content">The main content will get bound here</div>
+
 	</body>
 </html>

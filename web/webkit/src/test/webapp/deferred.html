@@ -1,10 +1,10 @@
 <lift:surround with="default" at="content">
-<lift:DeferredSnippet.first/>
-<lift:DeferredSnippet.secondLazy lift:parallel="true"/>
-<lift:DeferredSnippet.third/>
+  <div data-lift="DeferredSnippet.first"></div>
+  <div data-lift="DeferredSnippet.secondLazy?parallel=true"></div>
+  <div data-lift="DeferredSnippet.third"></div>
 
-<span id="whack1"><lift:DeferredSnippet.stackWhack/></span>
+  <span id="whack1"><div data-lift="DeferredSnippet.stackWhack"></div></span>
 
-<span id="whack2"><lift:DeferredSnippet.stackWhack lift:parallel="true"/></span>
+  <span id="whack2"><div data-lift="DeferredSnippet.stackWhack?parallel=true"></div></span>
 </lift:surround>
 
