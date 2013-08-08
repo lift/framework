@@ -748,11 +748,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * The function that calculates if the response should be rendered in
-   * IE6/7 compatibility mode
+   * IE compatibility mode
    */
   @volatile var calcIEMode: () => Boolean =
-  () => (for (r <- S.request) yield r.isIE6 || r.isIE7 ||
-          r.isIE8) openOr true
+  () => (for (r <- S.request) yield r.isIE) openOr true
 
   /**
    * The JavaScript to execute to log a message on the client side when
