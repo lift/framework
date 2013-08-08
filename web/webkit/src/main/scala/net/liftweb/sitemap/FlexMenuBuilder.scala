@@ -23,9 +23,6 @@ import net.liftweb.util.Helpers
 
 
 trait FlexMenuBuilder {
-  // a hack to use structural typing to get around the private[http] on Loc.buildItem
-  type StructBuildItem = {def buildItem(kids: List[MenuItem], current: Boolean, path: Boolean): Box[MenuItem]}
-
   /**
    * Override if you want a link to the current page
    */
@@ -51,7 +48,7 @@ trait FlexMenuBuilder {
     } openOr false
 
     val kids: List[MenuItem] = if (expandAll) loc.buildKidMenuItems(loc.menu.kids) else Nil
-    loc.asInstanceOf[StructBuildItem].buildItem(kids, currLoc == Full(loc), isInPath).toList
+    loc.buildItem(kids, currLoc == Full(loc), isInPath).toList
   }
 
 
