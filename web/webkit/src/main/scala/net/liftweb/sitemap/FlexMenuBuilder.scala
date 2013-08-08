@@ -46,12 +46,7 @@ trait FlexMenuBuilder {
    */
   protected def buildItemMenu[A](loc: Loc[A], currLoc: Box[Loc[_]], expandAll: Boolean): List[MenuItem] = {
     val isInPath = currLoc.map { cur =>
-      def isInPath(loc: Loc[_]): Boolean = {
-        if(cur == loc) true else {
-          val kids = loc.menu.kids
-          if(kids.isEmpty) false else kids.exists(k => isInPath(k.loc))
-        }
-      }
+      def isInPath(loc: Loc[_]): Boolean = (cur == loc) || loc.menu.kids.exists(k => isInPath(k.loc))
       isInPath(loc)
     } openOr false
 
