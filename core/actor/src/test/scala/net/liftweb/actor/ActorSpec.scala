@@ -39,6 +39,7 @@ class ActorSpec extends Specification {
   }
 
   private def commonFeatures(actor: LiftActor) = {
+    sequential
 
     "allow setting and getting of a value" in {
       val a = actor
@@ -57,7 +58,7 @@ class ActorSpec extends Specification {
     "allow adding of a value" in {
       val a = actor
       a ! Set(33)
-      (a !< Add(44)).get(50) must be_==(Full(Answer(77))).eventually(900, 100.milliseconds)
+      (a !< Add(44)).get(500) must be_==(Full(Answer(77)))
     }
 
     "allow subtracting of a value" in {
