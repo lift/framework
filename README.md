@@ -59,10 +59,10 @@ Or, you can add Lift to your `pom.xml` like so:
     <dependency>
       <groupId>net.liftweb</groupId>
       <artifactId>lift-mapper_${scala.version}</artifactId>
-      <version>2.4</version>
+      <version>2.5.1</version>
     </dependency>
 
-Where `${scala.version}` is `2.8.0`, `2.8.1`, `2.9.1` etc.
+Where `${scala.version}` is `2.9.1` etc. For scala 2.10.x, which is binary compatible, you just use `2.10`, and that will work for `2.10.0` ,`2.10.1` ,`2.10.2`
 
 You can [learn more on the wiki](http://www.assembla.com/wiki/show/liftweb/Using_Maven).
 
@@ -128,7 +128,7 @@ The Lift wiki is hosted on Assembla and can be found at [http://www.assembla.com
 
 ### ScalaDocs
 
-The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on ScalaTools. You can access the source code–based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 2.4 release can be accessed at [http://scala-tools.org/mvnsites/liftweb-2.4/](http://scala-tools.org/mvnsites/liftweb-2.4/).
+The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on the Liftweb.net site. You can access the source code–based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 2.5 release can be accessed at [http://liftweb.net/api/25/api/](http://liftweb.net/api/25/api/).
 
 ### Cookbook
 
