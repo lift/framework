@@ -200,15 +200,7 @@ trait BasicTypesHelpers { self: StringHelpers with ControlHelpers =>
       case i: Int => i != 0
       case lo: Long => lo != 0
       case n : Number => n.intValue != 0
-      case s : String => {
-        val sl = s.toLowerCase
-        if (sl.length == 0) false
-        else {
-          if (sl.charAt(0) == 't') true
-          else if (sl == "yes") true
-          else toInt(s) != 0
-        }
-      }
+      case s : String =>  asBoolean(s) openOr false
       case None => false
       case Empty | Failure(_, _, _) => false
       case Full(n) => toBoolean(n)
@@ -231,8 +223,8 @@ object AsBoolean {
   def unapply(in: String): Option[Boolean] =
   if (null eq in) None else
   in.toLowerCase match {
-    case "t" | "true" | "yes" | "1" => Full(true)
-    case "f" | "false" | "no" | "0" => Full(false)
+    case "t" | "true"  | "yes" | "1" | "on"  => Full(true)
+    case "f" | "false" | "no"  | "0" | "off" => Full(false)
     case _ => None
   }
 }
