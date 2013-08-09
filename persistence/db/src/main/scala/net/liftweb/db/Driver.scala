@@ -364,6 +364,8 @@ abstract class SqlServerBaseDriver extends DriverType("Microsoft SQL Server") {
   // Microsoft doesn't use "COLUMN" syntax when adding a column to a table
   override def alterAddColumn = "ADD"
 
+  override def brokenLimit_? = true
+
 }
 
 /**
