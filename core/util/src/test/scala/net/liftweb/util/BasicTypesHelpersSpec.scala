@@ -58,10 +58,11 @@ object BasicTypesHelpersSpec extends Specification  with DataTables {
       ""              !!false            |
       "string"        !!false            |
       "t"             !!true             |
-      "total"         !!true             |
+      "total"         !!false            |
       "T"             !!true             |
-      "This"          !!true             |
+      "This"          !!false            |
       "0"             !!false            |
+      "on"            !!true             |
       None            !!false            |
       Some("t")       !!true             |
       Empty           !!false            |
