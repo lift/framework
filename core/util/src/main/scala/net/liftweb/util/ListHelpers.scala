@@ -107,9 +107,9 @@ trait ListHelpers {
   }
 
   /**
-   * Returns a Full can with the first element x of the list in
+   * Returns a Full Box with the first element x of the list in
    * for which f(x) evaluates to true. If f(x) evaluates to false
-   * for every x, then an Empty can is returned.
+   * for every x, then an Empty Box is returned.
    *
    * @param in  a list of elements to which f can be applied
    * @param f   a function that can be applied to elements of in
@@ -121,15 +121,15 @@ trait ListHelpers {
 
   /**
    * Returns the first application of f to an element of in that
-   * results in a Full can. If f applied to an element of in results
-   * in an Empty can, then f will be applied to the rest of the
-   * elements of in until a Full can results. If the list runs out
-   * then an Empty can is returned.
+   * results in a Full Box. If f applied to an element of in results
+   * in an Empty Box, then f will be applied to the rest of the
+   * elements of in until a Full Box results. If the list runs out
+   * then an Empty Box is returned.
    *
    * @param in  a list of elements to which f can be applied
    * @param f   a function that can be applied to elements of in
    *
-   * @return a Box containing the first Full can or Empty if f never returns a Full can
+   * @return a Box containing the first Full Box or Empty if f never returns a Full Box
    */
   def first[B, C](in: Seq[B])(_f: B => Box[C]): Box[C] = {
     val f: B => Iterable[C] = _f andThen Box.box2Iterable[C]
@@ -147,7 +147,7 @@ trait ListHelpers {
      *
      * @param key the string to find
      *
-     * @return a Full can containing the found value or Empty
+     * @return a Full Box containing the found value or Empty
      */
     def ciGet(swhat: String): Box[String] = {
       val what = swhat.toLowerCase
