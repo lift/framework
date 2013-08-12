@@ -19,7 +19,6 @@ package util
 
 import java.security.SecureRandom
 import java.util.regex._
-import java.util.Random
 import java.lang.Character._
 import java.lang.{StringBuilder => GoodSB}
 import scala.xml.NodeSeq
@@ -33,23 +32,7 @@ object StringHelpers extends StringHelpers
 trait StringHelpers {
 
   /** random numbers generator */
-  private lazy val _slowRandom = new SecureRandom
-  private lazy val _currentTlrMethod = {
-    try {
-      val tlr = Class.forName("java.util.concurrent.ThreadLocalRandom")
-      Full(tlr.getMethod("current"))
-    } catch {
-      case e =>
-      Failure("ThreadLocalRandom is not available.", Full(e), Empty)
-    }
-  }
-  private def withRng[T](block: (Random)=>T) = {
-    _currentTlrMethod.map { meth =>
-      block(meth.invoke(null).asInstanceOf[Random])
-    } openOr {
-      _slowRandom.synchronized(block(_slowRandom))
-    }
-  }
+  private val _random = new SecureRandom
 
   /**
    * If str is surrounded by quotes it return the content between the quotes
@@ -193,7 +176,7 @@ trait StringHelpers {
       if (pos >= size) sb
       else {
         val randNum = if ((pos % 6) == 0) {
-          withRng(_.nextInt)
+          _random.synchronized(_random.nextInt)
         } else {
           lastRand
         }
