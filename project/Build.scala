@@ -52,7 +52,7 @@ object BuildDef extends Build {
         .settings(description := "Markdown Parser",
                   parallelExecution in Test := false,
                   libraryDependencies ++= Seq(
-                     "org.scalatest" %% "scalatest" % "1.9.1" % "test" withSources(),
+                     "org.scalatest" %% "scalatest" % "1.9.1" % "test",
                      "junit" % "junit" % "4.8.2" % "test"
                    ))                  
 
