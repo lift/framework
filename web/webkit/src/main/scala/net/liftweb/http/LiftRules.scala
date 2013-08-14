@@ -493,6 +493,21 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var localizationLookupFailureNotice: Box[(String, Locale) => Unit] = Empty
 
   /**
+   * When a parameter is received either via POST or GET and does not have a
+   * corresponding mapping on the server, the function provided by this
+   * FactoryMaker will be called with the req and parameter name.
+   *
+   * By default, if the parameter looks Lift-like (i.e., it starts with an F),
+   * then we log a warning with the given parameter name and URI.
+   */
+  val handleUnmappedParameter = new FactoryMaker[(Req,String)=>Unit](
+    () => { (req: Req, parameterName: String) =>
+      if (parameterName.startsWith("F"))
+        logger.warn("Unmapped Lift-like parameter seen in request [%s]: %s".format(req.uri, parameterName))
+    }
+  ) {}
+
+  /**
    * Set to false if you want to have 404's handled the same way in dev and production mode
    */
   @volatile var displayHelpfulSiteMapMessages_? = true
