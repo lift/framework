@@ -608,10 +608,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     def ? = this.box openOr false
   }
 
-  /**
-   *  ****IMPORTANT**** when you access messageCallback, it *MUST*
-   * be in a block that's synchronized on the owner LiftSession
-   */
   private var nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = new ConcurrentHashMap()
 
   @volatile private[http]  var notices: Seq[(NoticeType.Value, NodeSeq, Box[String])] = Nil
@@ -628,7 +624,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   @volatile private var onSessionEnd: List[LiftSession => Unit] = Nil
 
-  //private val sessionVarSync = new Object
 
   /**
   * Cache the value of allowing snippet attribute processing
