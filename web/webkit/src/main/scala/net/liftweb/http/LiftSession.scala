@@ -574,10 +574,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     def ? = this.box openOr false
   }
 
-  /**
-   *  ****IMPORTANT**** when you access messageCallback, it *MUST*
-   * be in a block that's synchronized on the owner LiftSession
-   */
   private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = new ConcurrentHashMap
 
   private val msgCallbackSync = new Object
