@@ -778,25 +778,32 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * Executes the user's functions based on the query parameters
    */
   def runParams(state: Req): List[Any] = {
-
+  
+  
     val toRun = {
       // get all the commands, sorted by owner,
-      (state.uploadedFiles.map(_.name) ::: state.paramNames).distinct.
-        flatMap { n =>
+      (state.uploadedFiles.map(_.name) ::: state.paramNames)
+        .distinct
+        .flatMap { parameterName =>
           msgCallbackSync.synchronized {
-            (Box !! nmessageCallback.get(n))
-          }.map(mcb => RunnerHolder(n, mcb, mcb.owner))
-      }.
-        sortWith {
-        case (RunnerHolder(_, _, Full(a)), RunnerHolder(_, _, Full(b))) if a < b => true
-        case (RunnerHolder(_, _, Full(a)), RunnerHolder(_, _, Full(b))) if a > b => false
-        case (RunnerHolder(an, _, Full(a)), RunnerHolder(bn, _, Full(b))) if a == b => an < bn
-        case (RunnerHolder(_, _, Full(_)), _) => false
-        case (_, RunnerHolder(_, _, Full(_))) => true
-        case (RunnerHolder(a, _, _), RunnerHolder(b, _, _)) => a < b
-        case _ => false
+            val callback = Box.legacyNullTest(nmessageCallback.get(parameterName))
+
+            if (callback.isEmpty)
+              LiftRules.handleUnmappedParameter.vend(state, parameterName)
+              
+            callback
+          }.map(funcHolder => RunnerHolder(parameterName, funcHolder, funcHolder.owner))
+        }
+        .sortWith {
+          case (RunnerHolder(_, _, Full(a)), RunnerHolder(_, _, Full(b))) if a < b => true
+          case (RunnerHolder(_, _, Full(a)), RunnerHolder(_, _, Full(b))) if a > b => false
+          case (RunnerHolder(an, _, Full(a)), RunnerHolder(bn, _, Full(b))) if a == b => an < bn
+          case (RunnerHolder(_, _, Full(_)), _) => false
+          case (_, RunnerHolder(_, _, Full(_))) => true
+          case (RunnerHolder(a, _, _), RunnerHolder(b, _, _)) => a < b
+          case _ => false
+        }
       }
-    }
 
     def buildFunc(i: RunnerHolder): () => Any = i.func match {
       case bfh if bfh.supportsFileParams_? =>
