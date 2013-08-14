@@ -744,8 +744,13 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     val toRun = {
       // get all the commands, sorted by owner,
       (state.uploadedFiles.map(_.name) ::: state.paramNames).distinct.
-        flatMap {
-        n => Box.legacyNullTest(nmessageCallback.get(n)).map(mcb => RunnerHolder(n, mcb, mcb.owner)).toList
+        flatMap { parameterName =>
+          val callback = Box.legacyNullTest(nmessageCallback.get(parameterName))
+
+          if (callback.isEmpty)
+              LiftRules.handleUnmappedParameter.vend(state, parameterName)
+
+          callback.map(funcHolder => RunnerHolder(parameterName, funcHolder, funcHolder.owner)).toList
       }.
         sortWith {
         case (RunnerHolder(_, _, Full(a)), RunnerHolder(_, _, Full(b))) if a < b => true
