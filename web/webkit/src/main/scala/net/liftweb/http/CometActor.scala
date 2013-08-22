@@ -160,7 +160,7 @@ object ListenerManager {
  * <pre name="code" class="scala">
  * case object Tick
  *
- * object Ticker extends ListenerManager {
+ * object Ticker extends ListenerManager with LiftActor {
  *   import net.liftweb.util.ActorPing
  *
  *   // Set up the initial tick
