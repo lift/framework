@@ -33,15 +33,13 @@ trait PropsDriver {
    */
   def get(name: String): Box[String]
 
-  // def apply(name: String): String = props(name)
-
   def getInt(name: String): Box[Int]
   def getInt(name: String, defVal: Int): Int
   def getLong(name: String): Box[Long]
   def getLong(name: String, defVal: Long): Long
   def getBool(name: String): Box[Boolean]
   def getBool(name: String, defVal: Boolean): Boolean
-  def get(name: String, defVal: String)
+  def get(name: String, defVal: String) : String
 
   /**
    * Determine whether the specified properties exist.
@@ -312,7 +310,7 @@ object Props extends Logger with PropsDriver {
      * The map of key/value pairs retrieved from the property file.
      */
     lazy val props: Map[String, String] = {
-      import java.io.{ByteArrayInputStream}
+      import java.io.ByteArrayInputStream
       import java.util.InvalidPropertiesFormatException
       import java.util.{Map => JMap}
 
@@ -371,8 +369,6 @@ object Props extends Logger with PropsDriver {
      * @return the value of the property if defined
      */
     def get(name: String): Box[String] = Box(props.get(name))
-
-    // def apply(name: String): String = props(name)
 
     def getInt(name: String): Box[Int] = get(name).map(toInt) // toInt(props.get(name))
     def getInt(name: String, defVal: Int): Int = getInt(name) openOr defVal // props.get(name).map(toInt(_)) getOrElse defVal
