@@ -265,6 +265,8 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
     new Date(oid.getTime) mustEqual rec.mandatoryObjectIdField.createdAt
   }
 
+  import http.js.JE.Num
+
   "PatternField" should {
     val rec = PatternFieldTestRecord.createRecord
     val ptrn = Pattern.compile("^Mo", Pattern.CASE_INSENSITIVE)

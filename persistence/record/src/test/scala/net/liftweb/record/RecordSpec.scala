@@ -173,7 +173,7 @@ object RecordSpec extends Specification  {
     S.initIfUninitted(session){
       val gu: Array[Byte] = Array(18, 19, 20)
       val cal = Calendar.getInstance
-      val dt: DateTime = DateTime.now
+      val dt: org.joda.time.DateTime = DateTime.now
 
       val fttr = FieldTypeTestRecord.createRecord
         .mandatoryBinaryField(gu)
@@ -213,6 +213,7 @@ object RecordSpec extends Specification  {
 
       val fttrJson: String = compact(render(fttrJValue))
 
+      import http.js.JE.Num
       val fttrAsJsObj = JsObj(
         ("mandatoryBooleanField", JsFalse),
         ("mandatoryCountryField", Str(Countries.USA.toString)),
