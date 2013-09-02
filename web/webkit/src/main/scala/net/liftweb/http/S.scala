@@ -258,7 +258,7 @@ object S extends S {
  * @see LiftSession
  * @see LiftFilter
  */
-trait S extends HasParams with Loggable {
+trait S extends HasParams with Loggable with UserAgentCalculator {
   import S._
 
   /*
@@ -396,6 +396,10 @@ trait S extends HasParams with Loggable {
     request flatMap { r => CurrentLocation(r.location) }
   }
 
+  /**
+   * The user agent of the current request, if any.
+  **/
+  def userAgent = request.flatMap(_.userAgent)
 
   /**
    * An exception was thrown during the processing of this request.
