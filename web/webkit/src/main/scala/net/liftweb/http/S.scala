@@ -571,7 +571,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
 
   /**
    * A boolean indicating whether or not the response should be rendered with
-   * special accomodations for IE 6 / 7 compatibility.
+   * special accomodations for IE 6 / 7 / 8 compatibility.
    *
    * @return <code>true</code> if this response should be rendered in
    * IE6/IE7 compatibility mode.
