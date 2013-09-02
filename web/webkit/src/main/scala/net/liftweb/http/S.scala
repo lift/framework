@@ -258,7 +258,7 @@ object S extends S {
  * @see LiftSession
  * @see LiftFilter
  */
-trait S extends HasParams with Loggable {
+trait S extends HasParams with Loggable with UserAgentCalculator {
   import S._
 
   /*
@@ -396,6 +396,10 @@ trait S extends HasParams with Loggable {
     request flatMap { r => CurrentLocation(r.location) }
   }
 
+  /**
+   * The user agent of the current request, if any.
+  **/
+  def userAgent = request.flatMap(_.userAgent)
 
   /**
    * An exception was thrown during the processing of this request.
@@ -566,6 +570,9 @@ trait S extends HasParams with Loggable {
     LiftRules.timeZoneCalculator(containerRequest)
 
   /**
+   * A boolean indicating whether or not the response should be rendered with
+   * special accomodations for IE 6 / 7 / 8 compatibility.
+   *
    * @return <code>true</code> if this response should be rendered in
    * IE6/IE7 compatibility mode.
    *
@@ -576,7 +583,10 @@ trait S extends HasParams with Loggable {
    * @see Req.isIE8
    * @see Req.isIE
    */
-  def ieMode: Boolean = session.map(_.ieMode.is) openOr false // LiftRules.calcIEMode()
+  def legacyIeCompatibilityMode: Boolean = session.map(_.legacyIeCompatibilityMode.is) openOr false // LiftRules.calcIEMode()
+
+  @deprecated("Use legacyIeCompatibilityMode for legacy IE detection instead, or use S.isIE* for general IE detection. This will be removed in Lift 3.0.", "2.6")
+  def ieMode = legacyIeCompatibilityMode
 
   /**
    * Get the current instance of HtmlProperties
