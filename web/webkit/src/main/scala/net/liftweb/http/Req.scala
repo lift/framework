@@ -145,7 +145,7 @@ trait UserAgentCalculator {
   lazy val isIE9: Boolean = ieVersion.map(_ == 9) openOr false
   lazy val ieIE10: Boolean = ieVersion.map(_ == 10) openOr false
   lazy val isIE11: Boolean = ieVersion.map(_ == 11) openOr false
-  lazy val isIE = ieVersion.map(_ >= 6) openOr false
+  lazy val isIE = ieVersion.isDefined
 
   lazy val safariVersion: Box[Int] = 
     UserAgentCalculator.safariCalcFunction.vend.apply(userAgent).map(_.toInt)
