@@ -290,7 +290,7 @@ final case class OldHtmlProperties(userAgent: Box[String]) extends HtmlPropertie
       val sb = new StringBuilder(64000)
       AltXML.toXML(n, scala.xml.TopScope,
                    sb, false, !LiftRules.convertToEntity.vend,
-                   S.ieMode)
+                   S.legacyIeCompatibilityMode)
       w.append(sb)
       w.flush()
     }
