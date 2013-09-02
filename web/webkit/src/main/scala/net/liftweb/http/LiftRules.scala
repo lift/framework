@@ -1395,7 +1395,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
       val ret = XhtmlResponse(ns,
         /*LiftRules.docType.vend(req)*/S.htmlProperties.docType,
         headers, cookies, code,
-        S.ieMode)
+        S.legacyIeCompatibilityMode)
       ret._includeXmlVersion = !S.skipDocType
       ret
     }, headers, cookies, req)
@@ -1474,11 +1474,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val exceptionHandler = RulesSeq[ExceptionHandlerPF].append {
     case (Props.RunModes.Development, r, e) =>
       logger.error("Exception being returned to browser when processing " + r.uri.toString, e)
-      XhtmlResponse((<html> <body>Exception occured while processing {r.uri}<pre>{showException(e)}</pre> </body> </html>), S.htmlProperties.docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.ieMode)
+      XhtmlResponse((<html> <body>Exception occured while processing {r.uri}<pre>{showException(e)}</pre> </body> </html>), S.htmlProperties.docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.legacyIeCompatibilityMode)
 
     case (_, r, e) =>
       logger.error("Exception being returned to browser when processing " + r.uri.toString, e)
-      XhtmlResponse((<html> <body>Something unexpected happened while serving the page at {r.uri}</body> </html>), S.htmlProperties.docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.ieMode)
+      XhtmlResponse((<html> <body>Something unexpected happened while serving the page at {r.uri}</body> </html>), S.htmlProperties.docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.legacyIeCompatibilityMode)
   }
 
   /**

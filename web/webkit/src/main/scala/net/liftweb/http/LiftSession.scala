@@ -751,9 +751,12 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   private case class RunnerHolder(name: String, func: S.AFuncHolder, owner: Box[String])
 
-  object ieMode extends SessionVar[Boolean](LiftRules.calcIEMode()) {
+  object legacyIeCompatibilityMode extends SessionVar[Boolean](LiftRules.calcIEMode()) {
     override private[liftweb] def magicSessionVar_? = true
   }
+
+  @deprecated("Use legacyIeCompatibilityMode for legacy IE detection instead. This will be removed in Lift 3.0.", "2.6")
+  val ieMode = legacyIeCompatibilityMode
 
   def terminateHint {
     if (_running_?) {
@@ -1236,7 +1239,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   private[http] def processRequest(request: Req,
                                    continuation: Box[() => Nothing]): Box[LiftResponse] = {
-    ieMode.is // make sure this is primed
+    legacyIeCompatibilityMode.is // make sure this is primed
     S.oldNotices(notices)
     LiftSession.onBeginServicing.foreach(f => tryo(f(this, request)))
     val ret = try {

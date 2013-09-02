@@ -255,9 +255,9 @@ object AltXML {
                                     "param", "img", "area", "input", "col" )
 
   def toXML(n: Node, stripComment: Boolean, convertAmp: Boolean,
-            ieMode: Boolean): String = {
+            legacyIeCompatibilityMode: Boolean): String = {
     val sb = new StringBuilder(50000)
-    toXML(n, TopScope, sb, stripComment, convertAmp, ieMode)
+    toXML(n, TopScope, sb, stripComment, convertAmp, legacyIeCompatibilityMode)
     sb.toString()
   }
 
@@ -367,7 +367,7 @@ object AltXML {
    */
   def toXML(x: Node, pscope: NamespaceBinding, sb: StringBuilder,
             stripComment: Boolean, convertAmp: Boolean,
-            ieMode: Boolean): Unit =
+            legacyIeCompatibilityMode: Boolean): Unit =
   x match {
     case Text(str) => escape(str, sb, !convertAmp)
 
@@ -394,9 +394,9 @@ object AltXML {
 
     case g: Group =>
       for (c <- g.nodes)
-      toXML(c, x.scope, sb, stripComment, convertAmp, ieMode)
+      toXML(c, x.scope, sb, stripComment, convertAmp, legacyIeCompatibilityMode)
 
-    case e: Elem if !ieMode && ((e.child eq null) || e.child.isEmpty)
+    case e: Elem if !legacyIeCompatibilityMode && ((e.child eq null) || e.child.isEmpty)
       && inlineTags.contains(e.label) =>
       sb.append('<')
       e.nameToString(sb)
@@ -404,7 +404,7 @@ object AltXML {
       e.scope.buildString(sb, pscope)
       sb.append(" />")
 
-    case e: Elem if ieMode && ((e.child eq null) || e.child.isEmpty) &&
+    case e: Elem if legacyIeCompatibilityMode && ((e.child eq null) || e.child.isEmpty) &&
       ieBadTags.contains(e.label) =>
       sb.append('<')
       e.nameToString(sb)
@@ -419,7 +419,7 @@ object AltXML {
       if (e.attributes ne null) e.attributes.buildString(sb)
       e.scope.buildString(sb, pscope)
       sb.append('>')
-      sequenceToXML(e.child, e.scope, sb, stripComment, convertAmp, ieMode)
+      sequenceToXML(e.child, e.scope, sb, stripComment, convertAmp, legacyIeCompatibilityMode)
       sb.append("</")
       e.nameToString(sb)
       sb.append('>')
@@ -436,10 +436,10 @@ object AltXML {
    */
   def sequenceToXML(children: Seq[Node], pscope: NamespaceBinding,
                     sb: StringBuilder, stripComment: Boolean,
-                    convertAmp: Boolean, ieMode: Boolean): Unit = {
+                    convertAmp: Boolean, legacyIeCompatibilityMode: Boolean): Unit = {
     val it = children.iterator
     while (it.hasNext) {
-      toXML(it.next, pscope, sb, stripComment, convertAmp, ieMode)
+      toXML(it.next, pscope, sb, stripComment, convertAmp, legacyIeCompatibilityMode)
     }
   }
 
