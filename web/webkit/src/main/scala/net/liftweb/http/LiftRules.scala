@@ -156,6 +156,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   private var _doneBoot = false
 
+  def setPropsDriverImpl(driverImpl: PropsDriver) {
+    Props.setConfigDriver(driverImpl)
+  }
+
   /**
    * Does the LiftRules instance think it's done booting?
    */

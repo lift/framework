@@ -93,35 +93,36 @@ trait PropsDriver {
  */
 object Props extends Logger with PropsDriver {
 
-  lazy val driverImpl: PropsDriver = {
-    sys.props.get("lift.props.driver") match {
-      case Some(classname) =>
-        try {
-          Class.forName(classname).newInstance().asInstanceOf[PropsDriver]
-        } catch {
-          case e: Exception =>
-            error("Can not instantiate class: '" + classname + "', falling back to default Props implementation")
-            new DefaultPropsDriver
-        }
-      case None => new DefaultPropsDriver
-    }
+  @volatile private var driverImpl : PropsDriver = new DefaultPropsDriver
+
+  @volatile private var driverSet = false
+
+  def setConfigDriver(driver: PropsDriver) {
+    assert(!driverSet,"Props driver already set!")
+    driverImpl = driver
+    driverSet = true
   }
 
-  def get(name: String): Box[String] = driverImpl.get(name)
+  def getConfigDriver = {
+    driverImpl
+  }
+
+
+  override def get(name: String): Box[String] = driverImpl.get(name)
 
   // def apply(name: String): String = props(name)
 
-  def getInt(name: String): Box[Int] = driverImpl.getInt(name)
-  def getInt(name: String, defVal: Int): Int = driverImpl.getInt(name,defVal)
-  def getLong(name: String): Box[Long] = driverImpl.getLong(name)
-  def getLong(name: String, defVal: Long): Long = driverImpl.getLong(name,defVal)
-  def getBool(name: String): Box[Boolean] = driverImpl.getBool(name)
-  def getBool(name: String, defVal: Boolean): Boolean = driverImpl.getBool(name,defVal)
-  def get(name: String, defVal: String) = driverImpl.get(name,defVal)
+  override def getInt(name: String): Box[Int] = driverImpl.getInt(name)
+  override def getInt(name: String, defVal: Int): Int = driverImpl.getInt(name,defVal)
+  override def getLong(name: String): Box[Long] = driverImpl.getLong(name)
+  override def getLong(name: String, defVal: Long): Long = driverImpl.getLong(name,defVal)
+  override def getBool(name: String): Box[Boolean] = driverImpl.getBool(name)
+  override def getBool(name: String, defVal: Boolean): Boolean = driverImpl.getBool(name,defVal)
+  override def get(name: String, defVal: String) = driverImpl.get(name,defVal)
 
-  lazy val props = driverImpl.props
+  override lazy val toTry = driverImpl.toTry
 
-  lazy val toTry = driverImpl.toTry
+  override def props = driverImpl.props
 
   /**
    * Determine whether the specified properties exist.
