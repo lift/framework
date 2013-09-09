@@ -747,7 +747,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
           val callback = Box.legacyNullTest(nmessageCallback.get(parameterName))
 
           if (callback.isEmpty)
-              LiftRules.handleUnmappedParameter.vend(state, parameterName)
+            LiftRules.handleUnmappedParameter.vend(state, parameterName)
 
           callback.map(funcHolder => RunnerHolder(parameterName, funcHolder, funcHolder.owner)).toList
       }.
