@@ -250,7 +250,7 @@ object JsonParser {
           if (c == '.' || c == 'e' || c == 'E') {
             doubleVal = true
             s.append(c)
-          } else if (!(Character.isDigit(c) || c == '.' || c == 'e' || c == 'E' || c == '-')) {
+          } else if (!(Character.isDigit(c) || c == '.' || c == 'e' || c == 'E' || c == '-' || c == '+')) {
             wasInt = false
             buf.back
           } else s.append(c)
