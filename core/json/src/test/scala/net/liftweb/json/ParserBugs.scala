@@ -52,6 +52,12 @@ object ParserBugs extends Specification {
       (parse(s) mustEqual json)
   }
 
+  "Double in scientific notation with + can be parsed" in {
+    val json = JObject(List(JField("t", JDouble(12.3))))
+    val s = """{"t" : 1.23e+1}"""
+    parse(s) mustEqual json
+  }
+
   private val discardParser = (p : JsonParser.Parser) => {
      var token: JsonParser.Token = null
      do {
