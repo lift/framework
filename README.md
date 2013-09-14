@@ -136,7 +136,8 @@ You can find up-to-date information on the [Lift Cookbook](http://cookbook.liftw
 
 ## License
 
-Lift is open source software released under the **Apache 2.0 license**. You must be a committer with signed committer agreement to submit patches. You can learn more about Lift's committer policy on the Lift website.
+Lift is open source software released under the **Apache 2.0 license**. Generally speaking, you must be a committer with signed committer agreement to submit significant
+changes to Lift. We do, however, accept some small changes and bugfixes into Lift from non-committers as outlined above in the Pull Requests section.
 
 ## Continuous Integration
 
