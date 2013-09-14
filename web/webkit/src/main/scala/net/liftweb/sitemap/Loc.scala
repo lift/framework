@@ -385,7 +385,10 @@ trait Loc[T] {
   def doesMatch_?(req: Req): Boolean = {
     link.isDefinedAt(req) &&
     testAllParams(allParams, req) &&
-    currentValue.isDefined
+    (
+      currentValue.isDefined ||
+      params.contains(Loc.MatchWithoutCurrentValue)
+    )
   }
 
   def breadCrumbs: List[Loc[_]] = _menu.breadCrumbs ::: List(this)
@@ -730,6 +733,18 @@ object Loc {
    * will still be accessable.
    */
   case object Hidden extends AnyLocParam
+
+  /**
+   * If this parameter is included, the Loc will continue to execute even if
+   * currentValue is not defined.
+   *
+   * By default, Lift will determine that a Loc does not match a given request
+   * if its currentValue comes up Empty, and as a result will return an HTTP 404.
+   * For situations where this is not the desired, "Not Found" behavior, you can
+   * add the MatchWithoutCurrentValue LocParam to a Loc, then use the IfValue
+   * LocParam to define what should happen when the currentValue is Empty.
+   */
+  case object MatchWithoutCurrentValue extends AnyLocParam
 
   /**
    * If this is a submenu, use the parent Loc's params
