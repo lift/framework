@@ -743,6 +743,15 @@ object Loc {
    * For situations where this is not the desired, "Not Found" behavior, you can
    * add the MatchWithoutCurrentValue LocParam to a Loc, then use the IfValue
    * LocParam to define what should happen when the currentValue is Empty.
+   *
+   * For example, given some class Thing, you could do the following to trigger
+   * a redirect when a Thing with a particular ID isn't found.
+   *
+   * {{{
+   * Menu.param[Thing]("Thing", "Thing", Thing.find(_), _.id) >>
+   *   MatchWithoutCurrentValue >>
+   *   IfValue(_.isDefined, () => RedirectResponse("/page/to/redirect/to"))
+   * }}}
    */
   case object MatchWithoutCurrentValue extends AnyLocParam
 
