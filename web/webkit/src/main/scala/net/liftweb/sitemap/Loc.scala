@@ -383,14 +383,9 @@ trait Loc[T] {
   }
 
   def doesMatch_?(req: Req): Boolean = {
-    (if (link.isDefinedAt(req)) {
-      link(req) match {
-        case Full(x) if testAllParams(allParams, req) => x
-        case Full(x) => false
-        case x => x.openOr(false)
-      }
-    } else false) && currentValue.isDefined
-    // the loc only matches if we've got a current value
+    link.isDefinedAt(req) &&
+    testAllParams(allParams, req) &&
+    currentValue.isDefined
   }
 
   def breadCrumbs: List[Loc[_]] = _menu.breadCrumbs ::: List(this)
