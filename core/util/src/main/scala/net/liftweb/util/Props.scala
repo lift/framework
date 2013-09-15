@@ -20,8 +20,52 @@ package util
 import java.net.InetAddress
 import java.util.Properties
 import java.io.InputStream
-import Helpers._
+import net.liftweb.util.Helpers._
 import common._
+import net.liftweb.common.Full
+
+trait PropsDriver {
+
+  /**
+   * Get the configuration property value for the specified key.
+   * @param name key for the property to get
+   * @return the value of the property if defined
+   */
+  def get(name: String): Box[String]
+
+  def getInt(name: String): Box[Int]
+  def getInt(name: String, defVal: Int): Int
+  def getLong(name: String): Box[Long]
+  def getLong(name: String, defVal: Long): Long
+  def getBool(name: String): Box[Boolean]
+  def getBool(name: String, defVal: Boolean): Boolean
+  def get(name: String, defVal: String) : String
+
+  /**
+   * Determine whether the specified properties exist.
+   * @param what the properties to test
+   * @return the subset of strings in 'what' that do not correspond to
+   * keys for available properties.
+   */
+  def require(what: String*) : Seq[String]
+
+  /**
+   * Ensure that all of the specified properties exist; throw an exception if
+   * any of the specified values are not keys for available properties.
+   */
+  def requireOrDie(what: String*) {
+    require(what :_*).toList match {
+      case Nil =>
+      case bad => throw new Exception("The following required properties are not defined: "+bad.mkString(","))
+    }
+  }
+
+  def toTry: List[() => String]
+
+  def props: Map[String, String]
+
+}
+
 
 /**
  * Configuration management utilities.
@@ -47,23 +91,38 @@ import common._
  * "test", "staging", "production", "pilot", "profile", or "default".
  * The standard Lift properties file extension is "props".
  */
-object Props extends Logger {
-  /**
-   * Get the configuration property value for the specified key.
-   * @param name key for the property to get
-   * @return the value of the property if defined
-   */
-  def get(name: String): Box[String] = Box(props.get(name))
+object Props extends Logger with PropsDriver {
+
+  @volatile private var driverImpl : PropsDriver = new DefaultPropsDriver
+
+  @volatile private var driverSet = false
+
+  def setConfigDriver(driver: PropsDriver) {
+    assert(!driverSet,"Props driver already set!")
+    driverImpl = driver
+    driverSet = true
+  }
+
+  def getConfigDriver = {
+    driverImpl
+  }
+
+
+  override def get(name: String): Box[String] = driverImpl.get(name)
 
   // def apply(name: String): String = props(name)
 
-  def getInt(name: String): Box[Int] = get(name).map(toInt) // toInt(props.get(name))
-  def getInt(name: String, defVal: Int): Int = getInt(name) openOr defVal // props.get(name).map(toInt(_)) getOrElse defVal
-  def getLong(name: String): Box[Long] = props.get(name).flatMap(asLong)
-  def getLong(name: String, defVal: Long): Long = getLong(name) openOr defVal // props.get(name).map(toLong(_)) getOrElse defVal
-  def getBool(name: String): Box[Boolean] = props.get(name).map(toBoolean) // (props.get(name))
-  def getBool(name: String, defVal: Boolean): Boolean = getBool(name) openOr defVal // props.get(name).map(toBoolean(_)) getOrElse defVal
-  def get(name: String, defVal: String) = props.get(name) getOrElse defVal
+  override def getInt(name: String): Box[Int] = driverImpl.getInt(name)
+  override def getInt(name: String, defVal: Int): Int = driverImpl.getInt(name,defVal)
+  override def getLong(name: String): Box[Long] = driverImpl.getLong(name)
+  override def getLong(name: String, defVal: Long): Long = driverImpl.getLong(name,defVal)
+  override def getBool(name: String): Box[Boolean] = driverImpl.getBool(name)
+  override def getBool(name: String, defVal: Boolean): Boolean = driverImpl.getBool(name,defVal)
+  override def get(name: String, defVal: String) = driverImpl.get(name,defVal)
+
+  override lazy val toTry = driverImpl.toTry
+
+  override def props = driverImpl.props
 
   /**
    * Determine whether the specified properties exist.
@@ -71,18 +130,7 @@ object Props extends Logger {
    * @return the subset of strings in 'what' that do not correspond to
    * keys for available properties.
    */
-  def require(what: String*) = what.filter(!props.contains(_))
-
-  /**
-   * Ensure that all of the specified properties exist; throw an exception if
-   * any of the specified values are not keys for available properties.
-   */
-  def requireOrDie(what: String*) {
-    require(what :_*).toList match {
-      case Nil =>
-      case bad => throw new Exception("The following required properties are not defined: "+bad.mkString(","))
-    }
-  }
+  def require(what: String*) = driverImpl.require(what: _*)
 
   /**
    * Enumeration of available run modes.
@@ -220,40 +268,132 @@ object Props extends Logger {
     case _ => ""
   }
 
-  private lazy val _modeName = dotLen(modeName)
-
-  private def dotLen(in: String): String = in match {
-    case null | "" => in
-    case x => x+"."
-  }
-
-  /**
-   * The resource path segment corresponding to the current system user
-   * (from System.getProperty("user.name"))
-   */
-  lazy val userName = System.getProperty("user.name")
-
-  private lazy val _userName = dotLen(userName)
-
   /**
    * Is the app running in the Google App engine (the System property in.gae.j is set)
    */
   lazy val inGAE: Boolean = System.getProperty("in.gae.j") != null
 
-  /**
-   * The resource path segment corresponding to the system hostname.
-   */
-  lazy val hostName: String = (if (inGAE) "GAE" else InetAddress.getLocalHost.getHostName)
 
-  private lazy val _hostName = dotLen(hostName)
+  private class DefaultPropsDriver extends PropsDriver {
 
-  /**
-   * The list of paths to search for property file resources.
-   * Properties files may be found at either the classpath root or
-   * in /props
-   */
-  lazy val toTry: List[() => String] = List(
-    () => "/props/" + _modeName + _userName + _hostName,
+    private lazy val _modeName = dotLen(modeName)
+
+    private def dotLen(in: String): String = in match {
+      case null | "" => in
+      case x => x+"."
+    }
+
+    /**
+     * The resource path segment corresponding to the current system user
+     * (from System.getProperty("user.name"))
+     */
+    lazy val userName = System.getProperty("user.name")
+
+    private lazy val _userName = dotLen(userName)
+
+    /**
+     * The resource path segment corresponding to the system hostname.
+     */
+    lazy val hostName: String = (if (inGAE) "GAE" else InetAddress.getLocalHost.getHostName)
+
+    private lazy val _hostName = dotLen(hostName)
+
+    /**
+     * This is a function that returns the first places to look for a props file.
+     * The function returns a List of String -> () => Box[InputStream].
+     * So, if you want to consult System.getProperties to look for a properties file or
+     * some such, you can set the whereToLook function in your Boot.scala file
+     * <b>before</b> you call anything else in Props.
+     */
+    @volatile var whereToLook: () => List[(String, () => Box[InputStream])] = () => Nil
+
+    /**
+     * The map of key/value pairs retrieved from the property file.
+     */
+    lazy val props: Map[String, String] = {
+      import java.io.ByteArrayInputStream
+      import java.util.InvalidPropertiesFormatException
+      import java.util.{Map => JMap}
+
+      var tried: List[String] = Nil
+
+      trace("Loading properties. Active run.mode is %s".format(if (modeName=="") "(Development)" else modeName))
+
+      def vendStreams: List[(String, () => Box[InputStream])] = whereToLook() :::
+        toTry.map{
+          f => {
+            val name = f() + "props"
+            name -> {() =>
+              val res = tryo{getClass.getResourceAsStream(name)}.filter(_ ne null)
+              trace("Trying to open resource %s. Result=%s".format(name, res))
+              res
+            }
+          }
+        }
+
+      // find the first property file that is available
+      first(vendStreams){
+        case (str, streamBox) =>
+          tried ::= str
+          for {
+            stream <- streamBox()
+          } yield {
+            val ret = new Properties
+            val ba = Helpers.readWholeStream(stream)
+            try {
+              ret.loadFromXML(new ByteArrayInputStream(ba))
+              debug("Loaded XML properties from resource %s".format(str))
+            } catch {
+              case _: InvalidPropertiesFormatException =>
+                ret.load(new ByteArrayInputStream(ba))
+                debug("Loaded key/value properties from resource %s".format(str))
+            }
+            ret
+          }
+      } match {
+        // if we've got a propety file, create name/value pairs and turn them into a Map
+        case Full(prop) =>
+          Map(prop.entrySet.toArray.flatMap{
+            case s: JMap.Entry[_, _] => List((s.getKey.toString, s.getValue.toString))
+            case _ => Nil
+          } :_*)
+
+        case _ =>
+          error("Failed to find a properties file (but properties were accessed).  Searched: "+tried.reverse.mkString(", "))
+          Map()
+      }
+    }
+
+    /**
+     * Get the configuration property value for the specified key.
+     * @param name key for the property to get
+     * @return the value of the property if defined
+     */
+    def get(name: String): Box[String] = Box(props.get(name))
+
+    def getInt(name: String): Box[Int] = get(name).map(toInt) // toInt(props.get(name))
+    def getInt(name: String, defVal: Int): Int = getInt(name) openOr defVal // props.get(name).map(toInt(_)) getOrElse defVal
+    def getLong(name: String): Box[Long] = props.get(name).flatMap(asLong)
+    def getLong(name: String, defVal: Long): Long = getLong(name) openOr defVal // props.get(name).map(toLong(_)) getOrElse defVal
+    def getBool(name: String): Box[Boolean] = props.get(name).map(toBoolean) // (props.get(name))
+    def getBool(name: String, defVal: Boolean): Boolean = getBool(name) openOr defVal // props.get(name).map(toBoolean(_)) getOrElse defVal
+    def get(name: String, defVal: String) = props.get(name) getOrElse defVal
+
+    /**
+     * Determine whether the specified properties exist.
+     * @param what the properties to test
+     * @return the subset of strings in 'what' that do not correspond to
+     * keys for available properties.
+     */
+    def require(what: String*) = what.filter(!props.contains(_))
+
+    /**
+     * The list of paths to search for property file resources.
+     * Properties files may be found at either the classpath root or
+     * in /props
+     */
+    override def toTry: List[() => String] = List(
+      () => "/props/" + _modeName + _userName + _hostName,
       () => "/props/" + _modeName + _userName,
       () => "/props/" + _modeName + _hostName,
       () => "/props/" + _modeName + "default.",
@@ -262,71 +402,6 @@ object Props extends Logger {
       () => "/" + _modeName + _hostName,
       () => "/" + _modeName + "default.")
 
-  /**
-   * This is a function that returns the first places to look for a props file.
-   * The function returns a List of String -> () => Box[InputStream].
-   * So, if you want to consult System.getProperties to look for a properties file or
-   * some such, you can set the whereToLook function in your Boot.scala file
-   * <b>before</b> you call anything else in Props.
-   */
-  @volatile var whereToLook: () => List[(String, () => Box[InputStream])] = () => Nil
-
-
-  /**
-   * The map of key/value pairs retrieved from the property file.
-   */
-  lazy val props: Map[String, String] = {
-    import java.io.{ByteArrayInputStream}
-    import java.util.InvalidPropertiesFormatException
-    import java.util.{Map => JMap}
-
-    var tried: List[String] = Nil
-
-    trace("Loading properties. Active run.mode is %s".format(if (modeName=="") "(Development)" else modeName))
-
-    def vendStreams: List[(String, () => Box[InputStream])] = whereToLook() :::
-    toTry.map{
-      f => {
-        val name = f() + "props"
-        name -> {() =>
-          val res = tryo{getClass.getResourceAsStream(name)}.filter(_ ne null)
-          trace("Trying to open resource %s. Result=%s".format(name, res))
-          res
-        }
-      }
-    }
-
-    // find the first property file that is available
-    first(vendStreams){
-      case (str, streamBox) =>
-        tried ::= str
-        for {
-          stream <- streamBox()
-        } yield {
-          val ret = new Properties
-          val ba = Helpers.readWholeStream(stream)
-          try {
-            ret.loadFromXML(new ByteArrayInputStream(ba))
-            debug("Loaded XML properties from resource %s".format(str))
-          } catch {
-            case _: InvalidPropertiesFormatException =>
-              ret.load(new ByteArrayInputStream(ba))
-              debug("Loaded key/value properties from resource %s".format(str))
-          }
-          ret
-        }
-    } match {
-      // if we've got a propety file, create name/value pairs and turn them into a Map
-      case Full(prop) =>
-        Map(prop.entrySet.toArray.flatMap{
-          case s: JMap.Entry[_, _] => List((s.getKey.toString, s.getValue.toString))
-          case _ => Nil
-        } :_*)
-
-      case _ =>
-        error("Failed to find a properties file (but properties were accessed).  Searched: "+tried.reverse.mkString(", "))
-        Map()
-    }
   }
-}
 
+}
