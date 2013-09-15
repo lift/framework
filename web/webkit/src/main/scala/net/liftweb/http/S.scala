@@ -587,9 +587,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    */
   def legacyIeCompatibilityMode: Boolean = session.map(_.legacyIeCompatibilityMode.is) openOr false // LiftRules.calcIEMode()
 
-  @deprecated("Use legacyIeCompatibilityMode for legacy IE detection instead, or use S.isIE* for general IE detection. This will be removed in Lift 3.0.", "2.6")
-  def ieMode = legacyIeCompatibilityMode
-
   /**
    * Get the current instance of HtmlProperties
    */
