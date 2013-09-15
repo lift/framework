@@ -41,7 +41,7 @@ import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.UniqueTag
 import json.JsonAST.{JString, JValue}
 import xml.Group
-import java.util.concurrent.ConcurrentHashMap
+
 
 object LiftSession {
 
@@ -612,8 +612,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   @volatile private[http]  var notices: Seq[(NoticeType.Value, NodeSeq, Box[String])] = Nil
 
-  private val msgCallbackSync = new Object
-
   private val nasyncComponents: ConcurrentHashMap[(Box[String], Box[String]), LiftCometActor] = new ConcurrentHashMap()
 
   private val nasyncById: ConcurrentHashMap[String, LiftCometActor] = new ConcurrentHashMap()
@@ -765,9 +763,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * well, you can look them up.
    */
   def findFunc(funcName: String): Option[S.AFuncHolder] =
-    msgCallbackSync.synchronized {
-      Box !! nmessageCallback.get(funcName)
-    }
+    Box !! nmessageCallback.get(funcName)
 
   /**
    * Executes the user's functions based on the query parameters
@@ -780,14 +776,12 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       (state.uploadedFiles.map(_.name) ::: state.paramNames)
         .distinct
         .flatMap { parameterName =>
-          msgCallbackSync.synchronized {
-            val callback = Box.legacyNullTest(nmessageCallback.get(parameterName))
+          val callback = Box.legacyNullTest(nmessageCallback.get(parameterName))
 
-            if (callback.isEmpty)
-              LiftRules.handleUnmappedParameter.vend(state, parameterName)
-              
-            callback
-          }.map(funcHolder => RunnerHolder(parameterName, funcHolder, funcHolder.owner))
+          if (callback.isEmpty)
+            LiftRules.handleUnmappedParameter.vend(state, parameterName)
+            
+          callback.map(funcHolder => RunnerHolder(parameterName, funcHolder, funcHolder.owner))
         }
         .sortWith {
           case (RunnerHolder(_, _, Full(a)), RunnerHolder(_, _, Full(b))) if a < b => true
@@ -829,19 +823,14 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * Updates the internal functions mapping
    */
   def updateFunctionMap(funcs: Map[String, S.AFuncHolder], uniqueId: String, when: Long): Unit =
-    msgCallbackSync.synchronized {
-      funcs.foreach {
-        case (name, func) =>
-          nmessageCallback.put(name,
-            if (func.owner == Full(uniqueId)) func else func.duplicate(uniqueId))
-      }
+    funcs.foreach {
+      case (name, func) =>
+        nmessageCallback.put(name,
+          if (func.owner == Full(uniqueId)) func else func.duplicate(uniqueId))
     }
 
-  def removeFunction(name: String) = {
-    msgCallbackSync.synchronized{
-      nmessageCallback.remove(name)
-    }
-  }
+  def removeFunction(name: String) =
+    nmessageCallback.remove(name)
 
   /**
    * Set your session-specific progress listener for mime uploads
@@ -963,17 +952,15 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       }
 
       import scala.collection.JavaConversions._
-      msgCallbackSync.synchronized {
-        nmessageCallback.entrySet().  foreach {
-          case s =>
-            val k = s.getKey
-            val f = s.getValue
-            if (!f.sessionLife &&
-              f.owner.isDefined &&
-              (now - f.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
-              nmessageCallback.remove(k)
-            }
-        }
+      nmessageCallback.entrySet().foreach {
+        case s =>
+          val k = s.getKey
+          val f = s.getValue
+          if (!f.sessionLife &&
+            f.owner.isDefined &&
+            (now - f.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
+            nmessageCallback.remove(k)
+          }
       }
     }
   }
@@ -1101,22 +1088,20 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
 
     import scala.collection.JavaConversions._
-    msgCallbackSync.synchronized {
-      (0 /: nmessageCallback.entrySet())((l, v) => l + (v.getValue.owner match {
-        case Full(owner) if (owner == ownerName) =>
-          v.getValue.lastSeen = time
-          1
-        case Empty => v.getValue.lastSeen = time
+    (0 /: nmessageCallback.entrySet())((l, v) => l + (v.getValue.owner match {
+      case Full(owner) if (owner == ownerName) =>
+        v.getValue.lastSeen = time
         1
-        case _ => 0
-      }))
-    }
+      case Empty => v.getValue.lastSeen = time
+      1
+      case _ => 0
+    }))
   }
 
   /**
    * Returns true if there are functions bound for this owner
    */
-  private[http] def hasFuncsForOwner(owner: String): Boolean = msgCallbackSync.synchronized {
+  private[http] def hasFuncsForOwner(owner: String): Boolean = {
    import scala.collection.JavaConversions._
 
     !nmessageCallback.values().find(_.owner == owner).isEmpty
@@ -1379,7 +1364,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private[http] def attachRedirectFunc(uri: String, f: Box[() => Unit]) = {
     f map {
       fnc =>
-        val func: String = msgCallbackSync.synchronized {
+        val func: String = {
           val funcName = Helpers.nextFuncName
           nmessageCallback.put(funcName, S.NFuncHolder(() => {
             fnc()
@@ -2610,30 +2595,25 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
       val toCmp = Full(act.uniqueId)
 
-      msgCallbackSync.synchronized {
-        import scala.collection.JavaConversions._
-        nmessageCallback.foreach {v => v match {
-          case (k, f) =>
-            if (f.owner == toCmp) nmessageCallback.remove(k)
-        }}
-      }
-
-      synchronized {
+      import scala.collection.JavaConversions._
+      nmessageCallback.foreach {v => v match {
+        case (k, f) =>
+          if (f.owner == toCmp) nmessageCallback.remove(k)
+      }}
+      LiftSession.this.synchronized {
         accessPostPageFuncs {
           postPageFunctions -= act.uniqueId
         }
       }
 
-      msgCallbackSync.synchronized {
-        import scala.collection.JavaConversions._
-        val id = Full(act.uniqueId)
-        nmessageCallback.keys().foreach {
-          k =>
-            val f = nmessageCallback.get(k)
-            if (f.owner == id) {
-              nmessageCallback.remove(k)
-            }
-        }
+      import scala.collection.JavaConversions._
+      val id = Full(act.uniqueId)
+      nmessageCallback.keys().foreach {
+        k =>
+          val f = nmessageCallback.get(k)
+          if (f.owner == id) {
+            nmessageCallback.remove(k)
+          }
       }
     }
   }
