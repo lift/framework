@@ -281,7 +281,7 @@ class LiftServlet extends Loggable {
         } else {
           val cmd =
             if (isComet)
-              js.JE.JsRaw(LiftRules.noCometSessionCmd.vend.toJsCmd + ";lift_toWatch = {};").cmd
+              js.JE.JsRaw(LiftRules.noCometSessionCmd.vend.toJsCmd + ";lift.setToWatch({});").cmd
             else
               js.JE.JsRaw(LiftRules.noAjaxSessionCmd.vend.toJsCmd).cmd
 
@@ -742,7 +742,7 @@ class LiftServlet extends Loggable {
         nextAction match {
           case Left(future) =>
             val result = runAjax(liftSession, requestState) map CachedResponse
-            
+
             if (result.exists(_.failed_?)) {
               // The request failed. The client will retry it, so
               // remove it from the list of current Ajax requests that
@@ -837,7 +837,7 @@ class LiftServlet extends Loggable {
           sessionActor.getAsyncComponent(name).toList.map(c => (c, toLong(when)))
       }
 
-    if (actors.isEmpty) Left(Full(new JsCommands(LiftRules.noCometSessionCmd.vend :: js.JE.JsRaw("lift_toWatch = {};").cmd :: Nil).toResponse))
+    if (actors.isEmpty) Left(Full(new JsCommands(LiftRules.noCometSessionCmd.vend :: js.JE.JsRaw("lift.setToWatch({});").cmd :: Nil).toResponse))
     else requestState.request.suspendResumeSupport_? match {
       case true => {
         setupContinuation(requestState, sessionActor, actors)
@@ -852,7 +852,7 @@ class LiftServlet extends Loggable {
 
   private def convertAnswersToCometResponse(session: LiftSession, ret: Seq[AnswerRender], actors: List[(LiftCometActor, Long)]): LiftResponse = {
     val ret2: List[AnswerRender] = ret.toList
-    val jsUpdateTime = ret2.map(ar => "if (lift_toWatch['" + ar.who.uniqueId + "'] !== undefined) lift_toWatch['" + ar.who.uniqueId + "'] = '" + ar.when + "';").mkString("\n")
+    val jsUpdateTime = ret2.map(ar => "lift.updWatch('" + ar.who.uniqueId + "', '" + ar.when + "');").mkString("\n")
     val jsUpdateStuff = ret2.map {
       ar => {
         val ret = ar.response.toJavaScript(session, ar.displayAll)

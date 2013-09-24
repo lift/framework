@@ -112,6 +112,22 @@ trait JsObj extends JsExp {
       def props = np
     }
   }
+
+  /**
+    * Overwrites any existing keys and adds the rest.
+    */
+  def extend(other: JsObj) = {
+    // existing, non-existing props
+    val (ep, nep) = other.props.partition { case (key, exp) => props.exists { case (k, e) => k == key }}
+    // replaced props
+    val rp = props.map { case (key, exp) =>
+      ep.find { case (k, e) => k == key }.getOrElse(key -> exp)
+    }
+
+    new JsObj {
+      def props = rp ::: nep
+    }
+  }
 }
 
 /**

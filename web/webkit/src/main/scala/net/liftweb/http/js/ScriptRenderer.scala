@@ -26,6 +26,7 @@ import net.liftweb.http.js.JE.JsVar
 /**
  * the default mechanisms for doing Ajax and Comet in Lift
  */
+@deprecated("See LiftJavaScript", "2.6")
 object ScriptRenderer {
   /**
    * Renders the default ajax script use by lift
@@ -127,7 +128,7 @@ object ScriptRenderer {
       else
         alert(msg);
     },
-    
+
     lift_ajaxQueueSort: function() {
       liftAjax.lift_ajaxQueue.sort(function (a, b) {return a.when - b.when;});
     },
@@ -210,12 +211,12 @@ object ScriptRenderer {
              var failureFunc = function() {
                liftAjax.lift_ajaxInProcess = null;
                var cnt = aboutToSend.retryCnt;""" +
-               (if (!Props.devMode) "" else 
+               (if (!Props.devMode) "" else
   """
                if (arguments.length == 3 && arguments[1] == 'parsererror') {
                  liftAjax.lift_logError('The server call succeeded, but the returned Javascript contains an error: '+arguments[2])
                } else
-  """) + 
+  """) +
 
             """
                if (cnt < liftAjax.lift_ajaxRetryCount) {

@@ -112,22 +112,22 @@ private[http] trait LiftMerge {
                 var bodyTail = false
 
                 v match {
-                  case e: Elem if e.label == "html" && 
+                  case e: Elem if e.label == "html" &&
                   !inHtml => htmlTag = e; inHtml = true && doMergy
 
-                  case e: Elem if e.label == "head" && inHtml && 
-                  !inBody => headTag = e; 
+                  case e: Elem if e.label == "head" && inHtml &&
+                  !inBody => headTag = e;
                   inHead = true && doMergy; justHead = true && doMergy
 
-                  case e: Elem if (e.label == "head" || 
-                                   e.label.startsWith("head_")) && 
+                  case e: Elem if (e.label == "head" ||
+                                   e.label.startsWith("head_")) &&
                   inHtml && inBody => bodyHead = true && doMergy
 
-                  case e: Elem if e.label == "tail" && inHtml && 
+                  case e: Elem if e.label == "tail" && inHtml &&
                   inBody => bodyTail = true && doMergy
 
                   case e: Elem if e.label == "body" && inHtml =>
-                    bodyTag = e; inBody = true && doMergy; 
+                    bodyTag = e; inBody = true && doMergy;
                   justBody = true && doMergy
 
                   case _ =>
@@ -189,54 +189,44 @@ private[http] trait LiftMerge {
         _fixHtml(e, true, false, false, true, false, false, true, false)
       }
 
-      // Appends ajax stript to body
+      // Appends ajax script to body
       if (LiftRules.autoIncludeAjaxCalc.vend().apply(this)) {
         bodyChildren +=
-                <script src={S.encodeURL(contextPath + "/" +
-                        LiftRules.ajaxPath +
-                        "/" + LiftRules.ajaxScriptName())}
+                <script src={S.encodeURL(contextPath + "/classpath/lift.js")}
                 type="text/javascript"/>
         bodyChildren += nl
       }
 
       val cometList = cometTimes.toList
 
-      // Appends comet stript reference to head
+      if (LiftRules.autoIncludeJSSettings.vend().apply(this)) {
+        S.appendJs(LiftJavaScript.initCmd(LiftRules.javascriptSettings.vend().apply(this)))
+      }
+
       if (!cometList.isEmpty && LiftRules.autoIncludeComet(this)) {
-        bodyChildren +=
-                <script src={S.encodeURL(contextPath + "/" +
-                        LiftRules.cometPath +
-                        "/" + urlEncode(this.uniqueId) +
-                        "/" + LiftRules.cometScriptName())}
-                type="text/javascript"/>
-        bodyChildren += nl
+        S.appendJs(LiftRules.renderCometPageContents(this, cometList))
+      }
+
+      if (LiftRules.enableLiftGC && stateful_?) {
+        import js.JsCmds._
+
+        S.appendJs(JE.Call("window.lift.setPageId", RenderVersion.get))
+
+        if (!cometList.isEmpty || hasFuncsForOwner(RenderVersion.get))
+          S.appendJs(JE.Call("window.lift.register"))
       }
 
       S.jsToAppend match {
-        case Nil => 
+        case Nil =>
         case x :: Nil => addlTail += js.JsCmds.Script(x)
         case xs => addlTail += js.JsCmds.Script(xs.foldLeft(js.JsCmds.Noop)(_ & _))
       }
 
-      for{
+      for {
         node <- HeadHelper.removeHtmlDuplicates(addlTail.toList)
       } bodyChildren += node
 
       bodyChildren += nl
-
-      if (!cometList.isEmpty && LiftRules.autoIncludeComet(this)) {
-        bodyChildren += JsCmds.Script(LiftRules.renderCometPageContents(this, cometList))
-        bodyChildren += nl
-      }
-
-      if (LiftRules.enableLiftGC && stateful_?) {
-        import js._
-        import JsCmds._
-        import JE._
-
-        bodyChildren += JsCmds.Script((if (!cometList.isEmpty || hasFuncsForOwner(RenderVersion.get)) OnLoad(JsRaw("liftAjax.lift_successRegisterGC()")) else Noop) &
-                JsCrVar("lift_page", RenderVersion.get))
-      }
 
       htmlKids += nl
       htmlKids += Elem(headTag.prefix, headTag.label, headTag.attributes, headTag.scope, headTag.minimizeEmpty, headChildren.toList: _*)
