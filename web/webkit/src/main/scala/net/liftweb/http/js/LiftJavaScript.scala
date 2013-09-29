@@ -18,8 +18,6 @@ package net.liftweb
 package http
 package js
 
-// import scala.collection.mutable.ListBuffer
-
 import common._
 import util.Props
 import http.js._
@@ -30,8 +28,6 @@ import JE._
 
 /**
   * Create a javascript command that will initialize lift.js using LiftRules.
-  *
-  * This is
   */
 object LiftJavaScript {
 
@@ -63,8 +59,3 @@ object LiftJavaScript {
     Call("window.lift.init", JsRaw("lift_settings"))
   }
 }
-
-// Overridable is js code
-// ajaxOnSessionLost
-// cometOnSessionLost
-// cometOnError

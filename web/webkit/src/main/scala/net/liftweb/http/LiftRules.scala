@@ -1582,7 +1582,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Tells Lift if the Comet JavaScript should be included. By default it is set to true.
    */
-  @deprecated("Not used anymore. See LiftJavaScript.scala", "2.6")
   @volatile var autoIncludeComet: LiftSession => Boolean = session => true
 
   val autoIncludeAjaxCalc: FactoryMaker[() => LiftSession => Boolean] =

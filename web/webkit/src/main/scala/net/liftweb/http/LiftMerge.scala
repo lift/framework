@@ -192,7 +192,7 @@ private[http] trait LiftMerge {
       // Appends ajax script to body
       if (LiftRules.autoIncludeAjaxCalc.vend().apply(this)) {
         bodyChildren +=
-                <script src={S.encodeURL(contextPath + "/classpath/lift.js")}
+                <script src={S.encodeURL(contextPath + "/"+LiftRules.resourceServerPath+"/lift.js")}
                 type="text/javascript"/>
         bodyChildren += nl
       }
