@@ -748,9 +748,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     override private[liftweb] def magicSessionVar_? = true
   }
 
-  @deprecated("Use legacyIeCompatibilityMode for legacy IE detection instead. This will be removed in Lift 3.0.", "2.6")
-  val ieMode = legacyIeCompatibilityMode
-
   def terminateHint {
     if (_running_?) {
       markedForTermination = true;
