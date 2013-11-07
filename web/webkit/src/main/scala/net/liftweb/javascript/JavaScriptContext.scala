@@ -17,7 +17,6 @@ import net.liftweb.common._
  * and you get a JavaScript execution context around
  * all HTTP requests.
  */
-
 object JavaScriptContext {
   /**
    * Hook into LiftRules to put a JavaScript
