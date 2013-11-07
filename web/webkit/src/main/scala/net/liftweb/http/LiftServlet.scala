@@ -1043,3 +1043,5 @@ private class SessionIdCalc(req: Req) {
     }
   }
 }
+
+class LiftFilter extends ServletFilterProvider
