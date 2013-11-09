@@ -13,7 +13,8 @@
         pageId = "",
         uriSuffix,
         sessionId = "",
-        toWatch = {};
+        toWatch = {},
+        knownPromises = {};
 
     // default settings
     var settings = {
@@ -356,7 +357,161 @@
       }
     }
 
-    // public object
+
+    ////////////////////////////////////////////////
+    ///// Promises /////////////////////////////////
+    ////////////////////////////////////////////////
+    function randStr() {
+      return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+    }
+
+    function makeGuid() {
+      return randStr() + randStr() + '-' + randStr() + '-' + randStr() + '-' +
+             randStr() + '-' + randStr() + randStr() + randStr();
+    }
+
+    function removePromise(g) {
+      knownPromises[g] = undefined;
+    }
+
+    function Promise() {
+      // "private" vars
+      var self = this,
+          _values = [],
+          _events = [],
+          _failMsg = "",
+          _valueFuncs = [],
+          _doneFuncs = [],
+          _failureFuncs = [],
+          _eventFuncs = [],
+          _done = false,
+          _failed = false;
+
+      // "private" funcs
+      function successMsg(value) {
+        if (_done || _failed) return;
+        _values.push(value);
+        for (var f in _valueFuncs) {
+          _valueFuncs[f](value);
+        }
+      }
+
+      function failMsg(msg) {
+        if (_done || _failed) return;
+        removePromise(self.guid);
+        _failed = true;
+        _failMsg = msg;
+
+        for (var f in _failureFuncs) {
+          _failureFuncs[f](msg);
+        }
+      }
+
+      function doneMsg() {
+        if (_done || _failed) return;
+        removePromise(self.guid);
+        _done = true;
+
+        for (var f in _doneFuncs) {
+          _doneFuncs[f]();
+        }
+      }
+
+      // public funcs
+      self.guid = makeGuid();
+
+      self.processMsg = function(evt) {
+        if (_done || _failed) return;
+        _events.push(evt);
+        for (var v in _eventFuncs) {
+          try { _eventFuncs[v](evt); }
+          catch (e) {
+            settings.logError(e);
+          }
+        };
+
+        if (evt.done) {
+          doneMsg();
+        }
+        else if (evt.success) {
+          successMsg(evt.success);
+        }
+        else if (evt.failure) {
+          failMsg(evt.failure);
+        }
+      };
+
+      self.then = function(f) {
+        _valueFuncs.push(f);
+
+        for (var v in _values) {
+          try { f(_values[v]); }
+          catch (e) {
+            settings.logError(e);
+          }
+        }
+
+        return self;
+      };
+
+      self.fail = function(f) {
+        _failureFuncs.push(f);
+        if (_failed) {
+          try { f(_failMsg); }
+          catch (e) {
+            settings.logError(e);
+          }
+        };
+
+        return self;
+      };
+
+      self.done = function(f) {
+        _doneFuncs.push(f);
+        if (_done) {
+          try { f(); }
+          catch (e) {
+            settings.logError(e);
+          }
+        }
+
+        return this;
+      };
+
+      self.onEvent = function(f) {
+        _eventFuncs.push(f);
+        for (var v in _events) {
+          try { f(_events[v]); }
+          catch (e) {
+            settings.logError(e);
+          }
+        };
+
+        return this;
+      };
+
+      self.map = function(f) {
+        var ret = new Promise();
+
+        done(function() {
+          ret.doneMsg();
+        });
+
+        fail(function (m) {
+          ret.failMsg(m);
+        });
+
+        then(function (v) {
+          ret.successMsg(f(v));
+        });
+
+        return ret;
+      };
+    }
+
+    ////////////////////////////////////////////////
+    ///// Public Object /////////////////////////////////
+    ////////////////////////////////////////////////
     return {
       init: function(options) {
         // override default settings
@@ -427,6 +582,17 @@
           if (obj2.hasOwnProperty(item)) {
             obj1[item] = obj2[item];
           }
+        }
+      },
+      createPromise: function() {
+        var promise = new Promise();
+        knownPromises[promise.guid] = promise;
+        return promise;
+      },
+      sendEvent: function(g, evt) {
+        var p = knownPromises[g];
+        if (p) {
+          p.processMsg(evt);
         }
       }
     };
@@ -577,12 +743,12 @@
   };
 
   // legacy
-  /*window.liftAjax = {
+  window.liftAjax = {
     lift_successRegisterGC: window.lift.register,
     lift_ajaxHandler: window.lift.ajax,
     lift_sessionLost: window.lift.ajaxOnSessionLost,
     addPageNameAndVersion: window.lift.calcAjaxUrl
-  };*/
+  };
 
   window.liftUtils = {
     lift_blurIfReturn: function(e) {

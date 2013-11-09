@@ -761,8 +761,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * Executes the user's functions based on the query parameters
    */
   def runParams(state: Req): List[Any] = {
-  
-  
+
+
     val toRun = {
       // get all the commands, sorted by owner,
       (state.uploadedFiles.map(_.name) ::: state.paramNames)
@@ -2754,12 +2754,12 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
           case jsExp: JsExp => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsExp.cmd, false)))
 
           case ItemMsg(guid, value) =>
-            partialUpdate(JsCmds.JsSchedule(JsRaw(s"liftAjax.sendEvent(${guid.encJs}, {'success': ${Printer.compact(JsonAST.render(value))}} )").cmd))
+            partialUpdate(JsCmds.JsSchedule(JsRaw(s"lift.sendEvent(${guid.encJs}, {'success': ${Printer.compact(JsonAST.render(value))}} )").cmd))
           case DoneMsg(guid) =>
-            partialUpdate(JsCmds.JsSchedule(JsRaw(s"liftAjax.sendEvent(${guid.encJs}, {'done': true} )").cmd))
+            partialUpdate(JsCmds.JsSchedule(JsRaw(s"lift.sendEvent(${guid.encJs}, {'done': true} )").cmd))
 
           case FailMsg(guid, msg) =>
-            partialUpdate(JsCmds.JsSchedule(JsRaw(s"liftAjax.sendEvent(${guid.encJs}, {'failure': ${msg.encJs} })").cmd))
+            partialUpdate(JsCmds.JsSchedule(JsRaw(s"lift.sendEvent(${guid.encJs}, {'failure': ${msg.encJs} })").cmd))
           case _ =>
 
         }
@@ -2907,8 +2907,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       JsObj(build :: info.map(info => info.name -> JsRaw(
         s"""
           |function(param) {
-          |  var promise = new liftAjax.Promise();
-          |  liftAjax.associate(promise);
+          |  var promise = lift.createPromise();
           |  this._call_server({guid: promise.guid, name: ${info.name.encJs}, payload: param});
           |  return promise;
           |}

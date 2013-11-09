@@ -48,12 +48,19 @@ object LiftJavaScript {
 
   def initCmd(settings: JsObj): JsCmd = {
     val extendCmd = LiftRules.jsArtifacts match {
-      case jsa: JQueryArtifacts => Call("window.lift.extend", JsRaw("lift_settings"), JsRaw("window.liftJQuery"))
-      case _ => Call("window.lift.extend", JsRaw("lift_settings"), JsRaw("window.liftVanilla"))
+      case jsa: JQueryArtifacts => Call("window.lift.extend", JsVar("window", "lift_settings"), JsVar("window", "liftJQuery"))
+      case _ => Call("window.lift.extend", JsVar("window", "lift_settings"), JsVar("window", "liftVanilla"))
     }
 
-    JsCrVar("lift_settings", settings) &
+    SetExp(JsVar("window", "lift_settings"), settings) &
     extendCmd &
-    Call("window.lift.init", JsRaw("lift_settings"))
+    Call("window.lift.init", JsVar("window", "lift_settings"))
+
+    /*val extendCmd = LiftRules.jsArtifacts match {
+      case jsa: JQueryArtifacts => Call("window.lift.extend", settings, JsVar("window.liftJQuery"))
+      case _ => Call("window.lift.extend", settings, JsVar("window.liftVanilla"))
+    }
+
+    Call("window.lift.init", extendCmd)*/
   }
 }
