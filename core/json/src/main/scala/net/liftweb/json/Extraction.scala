@@ -84,9 +84,9 @@ object Extraction {
         case x if (x.getClass.isArray) => JArray(x.asInstanceOf[Array[_]].toList map decompose)
         case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
         case x => 
-          val constructorArgs = primaryConstructorArgs(x.getClass)
-          constructorArgs.collect { case (name, _) if Reflection.hasDeclaredField(x.getClass, name) =>
-            val f = x.getClass.getDeclaredField(name)
+          val fields = x.getClass.getDeclaredFields.map(field => (field.getName, field)).toMap
+          val constructorArgs = primaryConstructorArgs(x.getClass).map{ case (name, _) => (name,fields.get(name)) }
+          constructorArgs.collect { case (name, Some(f)) =>
             f.setAccessible(true)
             JField(unmangleName(name), decompose(f get x))
           } match {
