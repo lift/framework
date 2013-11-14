@@ -122,7 +122,7 @@ object LiftRules extends LiftRulesMocker {
     LiftRulesMocker.calcLiftRulesInstance()
   } else prodInstance
 
-  type DispatchPF = PartialFunction[Req, () => Box[LiftResponse]]
+  type DispatchPF = PartialFunction[Req, () => Box[LiftResponse]];
 
   /**
    * A partial function that allows processing of any attribute on an Elem
@@ -141,6 +141,7 @@ object LiftRules extends LiftRulesMocker {
    */
   type StatelessTestPF = PartialFunction[List[String], Boolean]
 
+
   /**
    * The test between the path of a request, the HTTP request, and whether that path
    * should result in stateless servicing of that path
@@ -148,33 +149,30 @@ object LiftRules extends LiftRulesMocker {
   type StatelessReqTestPF = PartialFunction[StatelessReqTest, Boolean]
 
   type RewritePF = PartialFunction[RewriteRequest, RewriteResponse]
-
   type SnippetPF = PartialFunction[List[String], NodeSeq => NodeSeq]
-
   type LiftTagPF = PartialFunction[(String, Elem, MetaData, NodeSeq, String), NodeSeq]
-
   type URINotFoundPF = PartialFunction[(Req, Box[Failure]), NotFound]
-
   type URLDecoratorPF = PartialFunction[String, String]
-
   type SnippetDispatchPF = PartialFunction[String, DispatchSnippet]
-
   type ViewDispatchPF = PartialFunction[List[String], Either[() => Box[NodeSeq], LiftView]]
-
   type HttpAuthProtectedResourcePF = PartialFunction[Req, Box[Role]]
-
   type ExceptionHandlerPF = PartialFunction[(Props.RunModes.Value, Req, Throwable), LiftResponse]
-
   type ResourceBundleFactoryPF = PartialFunction[(String, Locale), ResourceBundle]
-
   type SplitSuffixPF = PartialFunction[List[String], (List[String], String)]
-
   type CometCreationPF = PartialFunction[CometCreationInfo, LiftCometActor]
   /**
    * A partial function that allows the application to define requests that should be
    * handled by lift rather than the default handler
    */
   type LiftRequestPF = PartialFunction[Req, Boolean]
+
+  /*
+  private[this] var _doneBoot = false
+  private[http] def doneBoot = _doneBoot
+
+  private[http] def doneBoot_=(in: Boolean) {_doneBoot = in}
+*/
+
 
   /**
    * Holds the failure information when a snippet can not be executed.
@@ -410,6 +408,18 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * entities when rendered?
    */
   val convertToEntity: FactoryMaker[Boolean] = new FactoryMaker(false) {}
+
+  /**
+   * Certain paths within your application can be marked as stateless
+   * and if there is access to Lift's stateful facilities (setting
+   * SessionVars, updating function tables, etc.) the developer will
+   * receive a notice and the operation will not complete.  This test
+   * has been deprecated in favor of statelessReqTest which also passes
+   * the HTTPRequest instance for testing of the user agent and other stuff.
+   */
+  @deprecated("Use statelessReqTest", "2.4")
+  val statelessTest = RulesSeq[StatelessTestPF]
+
 
   /**
    * Certain paths and requests within your application can be marked as stateless
@@ -1142,6 +1152,14 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * Holds user's DispatchPF functions that will be executed in a stateless context. This means that
    * no session will be created and no JSESSIONID cookie will be presented to the user (unless
    * the user has presented a JSESSIONID cookie).
+   */
+  @deprecated("Use statelessDispatch", "2.4")
+  def statelessDispatchTable = statelessDispatch
+
+  /**
+   * Holds user's DispatchPF functions that will be executed in a stateless context. This means that
+   * no session will be created and no JSESSIONID cookie will be presented to the user (unless
+   * the user has presented a JSESSIONID cookie).
    *
    * This is the way to do stateless REST in Lift
    */
@@ -1328,6 +1346,12 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * in a rewrite.
    */
   val statelessRewrite = RulesSeq[RewritePF]
+
+  /**
+   * Use statelessRewrite or statefuleRewrite
+   */
+  @deprecated("Use statelessRewrite or statefuleRewrite", "2.3")
+  val rewrite = statelessRewrite
 
   /**
    *  Holds the user's rewrite functions that can alter the URI parts and query parameters.
@@ -1837,6 +1861,26 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   }
 
   @volatile var templateCache: Box[TemplateCache[(Locale, List[String]), NodeSeq]] = Empty
+
+  /**
+   * A function to format a Date... can be replaced by a function that is user-specific
+   Replaced by dateTimeConverter
+   */
+  @deprecated("Replaced by dateTimeConverter", "2.3")
+  @volatile var formatDate: Date => String = date => date match {
+    case null => LiftRules.dateTimeConverter.vend.formatDate(new Date(0L))
+    case s    => toInternetDate(s)
+  }
+
+  /**
+   * A function that parses a String into a Date... can be replaced by something that's user-specific
+   Replaced by dateTimeConverter
+   */
+  @deprecated("Replaced by dateTimeConverter", "2.3")
+  @volatile var parseDate: String => Box[Date] = str => str match {
+    case null => Empty
+    case s => Helpers.toDate(s)
+  }
 
   val dateTimeConverter: FactoryMaker[DateTimeConverter] = new FactoryMaker[DateTimeConverter]( () => DefaultDateTimeConverter ) {}
 

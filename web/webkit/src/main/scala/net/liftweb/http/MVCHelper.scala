@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb.http.mvc
+package net.liftweb
+package http
 
 import net.liftweb.common._
 import net.liftweb.util._
 import scala.xml.{NodeSeq, Node}
-import net.liftweb.http._
-import net.liftweb.common.Full
-import net.liftweb.common.Full
-import net.liftweb.common.Full
-import net.liftweb.common.Full
-import net.liftweb.http.InMemoryResponse
-import net.liftweb.common.Full
 
 /**
  * Mix this trait into a class to provide support for

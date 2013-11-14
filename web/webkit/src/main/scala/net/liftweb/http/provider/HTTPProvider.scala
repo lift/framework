@@ -22,7 +22,6 @@ import net.liftweb.common._
 import net.liftweb.util._
 import java.util.{Locale, ResourceBundle}
 import Helpers._
-import processing.LiftServlet
 
 /**
  * Implement this trait in order to integrate Lift with other underlaying web containers. Not necessarily JEE containers.

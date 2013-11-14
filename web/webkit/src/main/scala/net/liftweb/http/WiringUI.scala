@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-package net.liftweb.http.wiring
+package net.liftweb
+package http
 
+import common._
 import util._
 
+import js._
+import JsCmds._
 import scala.xml.{NodeSeq, Elem, Text}
-import net.liftweb.util.{Helpers, Cell}
-import net.liftweb.http.js.JsCmd
-import net.liftweb.common.{Full, Empty, Box}
-import net.liftweb.http.js.JsCmds._
-import net.liftweb.http.{TransientRequestVar, S}
-import net.liftweb.http.wiring.TransientRequestCell
-import net.liftweb.http.js.JsCmds.SetHtml
 
 /**
  * Surface a user interface on top of Wiring
  */
-trait WiringUI {
+object WiringUI {
   /**
    * Given a NodeSeq, a Cell and a function that can generate
    * a NodeSeq => NodeSeq from the cell's value, register the

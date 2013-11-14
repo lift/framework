@@ -23,7 +23,17 @@ import java.util.{ResourceBundle, Locale, Date}
 
 package object http {
 
-  object WiringUI extends net.liftweb.http.wiring.WiringUI
+  /*
+  type CssBoundLiftScreen = screen.CssBoundLiftScreen
+  type CssBoundScreen = screen.CssBoundScreen
 
+  type LiftScreen = screen.LiftScreen
+  type LiftScreenRules = screen.LiftScreenRules
+
+  type Wizard = screen.Wizard
+  type WizardRules = screen.WizardRules
+
+  type WiringUI = wiring.WiringUI
+  */
 }
 

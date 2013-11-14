@@ -619,6 +619,21 @@ object JqJsCmds {
    * Requires the jQuery blockUI plugin
    */
   class ModalDialog(html: NodeSeq, css: Box[JsObj]) extends JsCmd {
+    /*
+    private def contentAsJsStr = {
+    val w = new java.io.StringWriter
+    
+    S.htmlProperties.
+    htmlWriter(Group(S.session.
+                     map(s =>
+                       s.fixHtml(s.processSurroundAndInclude("Modal Dialog",
+                                                             html))).
+                     openOr(html)),
+               w)
+    w.toString.encJs
+    }
+*/
+
     val toJsCmd = fixHtmlCmdFunc("inline", html){str => 
       "jQuery.blockUI({ message: " + str +
       (css.map(",  css: " + _.toJsCmd + " ").openOr("")) + "});"}
