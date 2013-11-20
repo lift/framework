@@ -36,6 +36,8 @@ import util.Helpers
 
 package customserializersspecs {
 
+import net.liftweb.record.ObjectIdSerializer
+
 case class Child(name: String, birthdate: Date) extends JsonObject[Child] {
   def meta = Child
 }

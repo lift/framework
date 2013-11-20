@@ -27,7 +27,10 @@ import json.ext._
 
 
 package mongodocumentspecs {
-  case class Primitives(
+
+import net.liftweb.record.{DateTimeSerializer, ObjectIdSerializer}
+
+case class Primitives(
     _id: ObjectId,
     s: String,
     i: Int,

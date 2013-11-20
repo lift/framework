@@ -21,7 +21,7 @@ package field
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, JsRaw}
-import net.liftweb.json.Printer
+import net.liftweb.json.{DefaultFormats, Formats, Printer}
 import net.liftweb.json.JsonAST._
 
 import com.mongodb.DBObject
@@ -42,13 +42,13 @@ trait MongoFieldFlavor[MyType] {
   /**
   * Returns the field's value as a valid JavaScript expression
   */
-  def asJs = asJValue match {
+  def asJs = asJValue(DefaultFormats.lossless) match {
     case JNothing => JsNull
     case jv => JsRaw(Printer.compact(render(jv)))
   }
 
   /** Encode the field value into a JValue */
-  def asJValue: JValue
+  def asJValue(implicit formats: Formats): JValue
 
 }
 

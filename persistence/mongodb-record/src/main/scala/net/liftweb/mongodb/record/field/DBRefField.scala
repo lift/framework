@@ -28,6 +28,7 @@ import scala.xml.NodeSeq
 import com.mongodb.{BasicDBObject, BasicDBObjectBuilder, DBObject, DBRef}
 import com.mongodb.util.JSON
 import org.bson.types.ObjectId
+import net.liftweb.json.Formats
 
 /*
 * Field for storing a DBRef
@@ -58,7 +59,7 @@ class DBRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefT
 
   def asJs = Str(toString)
 
-  def asJValue = (JNothing: JValue) // not implemented
+  def asJValue(implicit formats: Formats) = (JNothing: JValue) // not implemented
 
   def setFromJValue(jvalue: JValue) = Empty // not implemented
 

@@ -28,10 +28,15 @@ import net.liftweb.http.js.JE.{JsNull, JsObj, JsRaw, Str}
 import net.liftweb.http.S
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.Printer
-import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
+import net.liftweb.record._
 import net.liftweb.util.Helpers._
 
 import org.bson.types.ObjectId
+import net.liftweb.json.JsonAST.{JObject, JField, JString}
+import net.liftweb.json.Formats
+import net.liftweb.common.Full
+import scala.Some
+import net.liftweb.http.js.JE.JsRaw
 
 /*
 * Field for storing an ObjectId
@@ -85,12 +90,12 @@ class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
       case _ => Full(elem)
     }
 
-  def asJs = asJValue match {
+  def asJs = asJValue(owner.meta.formats) match {
     case JNothing => JsNull
     case jv => JsRaw(Printer.compact(render(jv)))
   }
 
-  def asJValue: JValue = valueBox.map(v => Meta.objectIdAsJValue(v, owner.meta.formats)) openOr (JNothing: JValue)
+  def asJValue(implicit formats: Formats): JValue = valueBox.map(v => Meta.objectIdAsJValue(v)(formats)) openOr (JNothing: JValue)
 
   def createdAt: Date = new Date(this.get.getTime)
 }

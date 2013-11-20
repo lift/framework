@@ -26,8 +26,9 @@ import field._
 
 import scala.xml._
 import java.util.prefs.BackingStoreException
+import net.liftweb.json.{DefaultFormats, Formats}
 
-trait Record[MyType <: Record[MyType]] extends FieldContainer {
+trait Record[MyType <: Record[MyType]] extends FieldContainer with JsonFormats {
   self: MyType =>
 
   /**
@@ -84,6 +85,11 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
   def saveTheRecord(): Box[MyType] = throw new BackingStoreException("Raw Records don't save themselves")
 
   /**
+   * Provide way to serialize/deserialize to/from jsons. You can override that on the function level
+   */
+//  implicit val formats = DefaultFormats.lossless
+
+  /**
    * Returns the JSON representation of this record, converts asJValue to JsObj
    *
    * @return a JsObj
@@ -96,7 +102,7 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
   def setFieldsFromJSON(json: String): Box[Unit] = meta.setFieldsFromJSON(this, json)
 
   /** Encode this record instance as a JObject */
-  def asJValue: JObject = meta.asJValue(this)
+  def asJValue(implicit formats: Formats) : JObject = meta.asJValue(this)(formats)
 
   /** Set the fields of this record from the given JValue */
   def setFieldsFromJValue(jvalue: JValue): Box[Unit] = meta.setFieldsFromJValue(this, jvalue)

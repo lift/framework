@@ -24,9 +24,9 @@ import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, JsRaw}
 import net.liftweb.http.S
 import net.liftweb.json.JsonAST._
-import net.liftweb.json.Printer
+import net.liftweb.json.{Formats, Printer}
 import net.liftweb.mongodb.record._
-import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
+import net.liftweb.record.{SerializationFunctions, Field, FieldHelpers, MandatoryTypedField}
 import net.liftweb.util.Helpers._
 
 class UUIDField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
@@ -77,12 +77,12 @@ class UUIDField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
       case _ => Full(elem)
     }
 
-  def asJs = asJValue match {
+  def asJs = asJValue(owner.meta.formats) match {
     case JNothing => JsNull
     case jv => JsRaw(Printer.compact(render(jv)))
   }
 
-  def asJValue: JValue = valueBox.map(v => Meta.uuidAsJValue(v)) openOr (JNothing: JValue)
+  def asJValue(implicit formats: Formats): JValue = valueBox.map(SerializationFunctions.uuidAsJValue) openOr (JNothing: JValue)
 
 }
 

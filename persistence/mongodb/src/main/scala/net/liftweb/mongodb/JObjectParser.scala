@@ -28,6 +28,7 @@ import net.liftweb.util.SimpleInjector
 
 import com.mongodb.{BasicDBObject, BasicDBList, DBObject}
 import org.bson.types.ObjectId
+import net.liftweb.record
 
 object JObjectParser extends SimpleInjector {
   /**

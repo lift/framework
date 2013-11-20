@@ -42,7 +42,8 @@ trait LongTypedField extends NumericTypedField[Long] {
 
   def defaultValue = 0L
 
-  def asJValue: JValue = valueBox.map(l => JInt(BigInt(l))) openOr (JNothing: JValue)
+  def asJValue(implicit formats: Formats): JValue = valueBox.map(l => JInt(BigInt(l))) openOr (JNothing: JValue)
+
   def setFromJValue(jvalue: JValue): Box[Long] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case JInt(i)                      => setBox(Full(i.longValue))

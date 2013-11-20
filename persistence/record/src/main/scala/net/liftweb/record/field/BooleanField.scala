@@ -27,6 +27,7 @@ import net.liftweb.util._
 import Helpers._
 import S._
 import JE._
+import net.liftweb.json.Formats
 
 trait BooleanTypedField extends TypedField[Boolean] {
   
@@ -60,7 +61,7 @@ trait BooleanTypedField extends TypedField[Boolean] {
 
   def asJs: JsExp = valueBox.map(boolToJsExp) openOr JsNull
 
-  def asJValue = valueBox.map(JBool) openOr (JNothing: JValue)
+  def asJValue(implicit formats: Formats) = valueBox.map(JBool) openOr (JNothing: JValue)
   def setFromJValue(jvalue: JValue) = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case JBool(b)                     => setBox(Full(b))

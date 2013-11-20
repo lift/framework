@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package mongodb
-
-import json._
-import util.JodaHelpers
+package net.liftweb.mongodb
 
 import java.util.{Calendar, Date, GregorianCalendar, UUID}
 import java.util.regex.Pattern
 
-import org.bson.types.ObjectId
 import org.joda.time._
 
 import com.mongodb._
-
-import JsonDSL._
+import org.bson.types.ObjectId
+import net.liftweb.json._
+import net.liftweb.record.SerializationFunctions._
 
 private[mongodb] object Meta {
 
@@ -104,7 +100,7 @@ private[mongodb] object Meta {
     * Definitive place for JValue conversion of mongo types
     */
     def mongotype2jvalue(a: Any)(implicit formats: Formats) = a match {
-      case x: ObjectId => objectIdAsJValue(x, formats)
+      case x: ObjectId => objectIdAsJValue(x)
       case x: Pattern => patternAsJValue(x)
       case x: UUID => uuidAsJValue(x)
       case x: DBRef => sys.error("DBRefs are not supported.")
@@ -112,12 +108,7 @@ private[mongodb] object Meta {
     }
   }
 
-  def dateAsJValue(d: Date, formats: Formats): JValue = ("$dt" -> formats.dateFormat.format(d))
-  def objectIdAsJValue(oid: ObjectId): JValue = ("$oid" -> oid.toString)
-  def patternAsJValue(p: Pattern): JValue = ("$regex" -> p.pattern) ~ ("$flags" -> p.flags)
-  def uuidAsJValue(u: UUID): JValue = ("$uuid" -> u.toString)
-
-  def objectIdAsJValue(oid: ObjectId, formats: Formats): JValue =
+  def objectIdAsJValue(oid: ObjectId)(implicit formats: Formats): JValue =
     if (isObjectIdSerializerUsed(formats))
       objectIdAsJValue(oid)
     else
@@ -129,6 +120,28 @@ private[mongodb] object Meta {
   private def isObjectIdSerializerUsed(formats: Formats): Boolean =
     formats.customSerializers.exists(_.getClass == objectIdSerializerClass)
 
-  private val objectIdSerializerClass = classOf[net.liftweb.mongodb.ObjectIdSerializer]
+  private val objectIdSerializerClass = classOf[ObjectIdSerializer]
+}
+
+/*
+* Provides a way to serialize/de-serialize ObjectIds.
+*
+* Queries for a ObjectId (oid) using the lift-json DSL look like:
+* ("_id" -> ("$oid" -> oid.toString))
+*/
+class ObjectIdSerializer extends Serializer[ObjectId] {
+  private val ObjectIdClass = classOf[ObjectId]
+
+  def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), ObjectId] = {
+    case (TypeInfo(ObjectIdClass, _), json) => json match {
+      case JObject(JField("$oid", JString(s)) :: Nil) if (ObjectId.isValid(s)) =>
+        new ObjectId(s)
+      case x => throw new MappingException("Can't convert " + x + " to ObjectId")
+    }
+  }
+
+  def serialize(implicit formats: Formats): PartialFunction[Any, JValue] = {
+    case x: ObjectId => Meta.objectIdAsJValue(x)
+  }
 }
 

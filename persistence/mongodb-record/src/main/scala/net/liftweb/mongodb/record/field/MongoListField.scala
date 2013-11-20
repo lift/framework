@@ -29,11 +29,16 @@ import json.JsonAST._
 import json.JsonParser
 import http.SHtml
 import http.js.JE.{JsNull, JsRaw}
-import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
+import net.liftweb.record._
 import util.Helpers._
 
 import com.mongodb._
 import org.bson.types.ObjectId
+import net.liftweb.json.JsonAST.JObject
+import net.liftweb.json.Formats
+import net.liftweb.common.Full
+import scala.Some
+import net.liftweb.json.JsonAST.JArray
 
 /**
   * List field. Compatible with most object types,
@@ -102,7 +107,7 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
     else
       Empty
 
-  def asJValue = JArray(value.map(li => li.asInstanceOf[AnyRef] match {
+  def asJValue(implicit formats: Formats) = JArray(value.map(li => li.asInstanceOf[AnyRef] match {
     case x if primitive_?(x.getClass) => primitive2jvalue(x)
     case x if mongotype_?(x.getClass) => mongotype2jvalue(x)(owner.meta.formats)
     case x if datetype_?(x.getClass) => datetype2jvalue(x)(owner.meta.formats)
@@ -149,7 +154,7 @@ class MongoJsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <
       valueMeta.create(JObjectParser.serialize(dbo.get(k.toString))(owner.meta.formats).asInstanceOf[JObject])(owner.meta.formats)
     })))
 
-  override def asJValue = JArray(value.map(_.asJObject()(owner.meta.formats)))
+  override def asJValue(implicit formats: Formats) = JArray(value.map(_.asJObject()(owner.meta.formats)))
 
   override def setFromJValue(jvalue: JValue) = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
