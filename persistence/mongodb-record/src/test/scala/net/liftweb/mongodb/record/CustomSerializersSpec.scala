@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,7 +174,7 @@ object CustomSerializersSpec extends Specification  with MongoTestKit {
       val mother = Person.createRecord
       mother.children(List(jack, jill))
       mother.firstBorn(jack)
-      mother.save
+      mother.save()
 
       // retrieve it and compare
       val mother2 = Person.find(mother.id.get)
@@ -229,7 +229,7 @@ object CustomSerializersSpec extends Specification  with MongoTestKit {
       val mother = Person2.createRecord
       mother.children(List(jack, jill))
       mother.firstBorn(jack)
-      mother.save
+      mother.save()
 
       // retrieve it and compare
       val mother2 = Person2.find(mother.id.get)
@@ -276,8 +276,8 @@ object CustomSerializersSpec extends Specification  with MongoTestKit {
       checkMongoIsRunning
 
       // test data
-      val rmoss = Player.createRecord.name("Randy Moss").save
-      val bfavre = Player.createRecord.name("Brett Favre").save
+      val rmoss = Player.createRecord.name("Randy Moss").save()
+      val bfavre = Player.createRecord.name("Brett Favre").save()
       val vikes = Team(ObjectId.get.toString, "Vikings", bfavre.id.toString)
       val jets = Team(ObjectId.get.toString, "Jets", "")
       val saints = Team(ObjectId.get.toString, "Saints", "")
@@ -286,7 +286,7 @@ object CustomSerializersSpec extends Specification  with MongoTestKit {
       val nfl = League.createRecord
       nfl.teams(List(vikes, jets, saints))
       nfl.champion(saints)
-      nfl.save
+      nfl.save()
 
       // retrieve it and compare
       val nfl2 = League.find(nfl.id.get)
@@ -347,8 +347,8 @@ object CustomSerializersSpec extends Specification  with MongoTestKit {
       checkMongoIsRunning
 
       // test data
-      val rmoss = Player.createRecord.name("Randy Moss").save
-      val bfavre = Player.createRecord.name("Brett Favre").save
+      val rmoss = Player.createRecord.name("Randy Moss").save()
+      val bfavre = Player.createRecord.name("Brett Favre").save()
       val vikes = Team2(ObjectId.get, "Vikings", bfavre.id.get)
       val jets = Team2(ObjectId.get, "Jets", bfavre.id.get)
       val saints = Team2(ObjectId.get, "Saints", bfavre.id.get)
@@ -357,7 +357,7 @@ object CustomSerializersSpec extends Specification  with MongoTestKit {
       val nfl = League2.createRecord
       nfl.teams(List(vikes, jets, saints))
       nfl.champion(saints)
-      nfl.save
+      nfl.save()
 
       // retrieve it and compare
       val nfl2 = League2.find(nfl.id.toString)
