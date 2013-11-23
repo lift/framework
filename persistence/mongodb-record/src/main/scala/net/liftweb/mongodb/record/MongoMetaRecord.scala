@@ -53,6 +53,17 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     case x => x
   }
 
+  /*
+   * Use the collection associated with this Meta.
+   */
+  def useColl[T](f: DBCollection => T): T =
+    MongoDB.useCollection(connectionIdentifier, collectionName)(f)
+
+  /*
+   * Use the db associated with this Meta.
+   */
+  def useDb[T](f: DB => T): T = MongoDB.use(connectionIdentifier)(f)
+
   /**
   * Delete the instance from backing store
   */
