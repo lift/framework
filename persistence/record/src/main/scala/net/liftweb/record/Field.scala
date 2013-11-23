@@ -54,11 +54,6 @@ trait BaseField extends FieldIdentifier with util.BaseField {
   def optional_? = false
 
   /**
-   * The text name of this field
-   */
-  def name: String = fieldName
-
-  /**
    * Can the value of this field be read without obscuring the result?
    */
   def canRead_? : Boolean = safe_? || checkCanRead_?
@@ -147,6 +142,11 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends BaseField {
    * Return the owner of this field
    */
   def owner: OwnerType
+
+  /**
+   * The text name of this field
+   */
+  def name: String = RecordRules.fieldName.vend.apply(owner.meta.connectionIdentifier, fieldName)
 
   /**
    * Are we in "safe" mode (i.e., the value of the field can be read or written without any security checks.)
