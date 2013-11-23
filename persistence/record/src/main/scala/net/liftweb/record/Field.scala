@@ -56,7 +56,7 @@ trait BaseField extends FieldIdentifier with util.BaseField {
   /**
    * The text name of this field
    */
-  def name: String = fieldName
+  def name: String = RecordRules.fieldName.vend.apply(fieldName)
 
   /**
    * Can the value of this field be read without obscuring the result?

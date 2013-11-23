@@ -918,6 +918,17 @@ class MongoRecordSpec extends Specification with MongoTestKit {
         rec.dirty_? must_== false
       }
     }
+
+    "support custom field name" in {
+      val rec = CustomFieldName.createRecord
+      rec.customField.name must_== "custom_field"
+
+      val fromDb = CustomFieldName.find(rec.id.get)
+      fromDb.isDefined must_== true
+      fromDb foreach { tr =>
+        tr mustEqual rec
+      }
+    }
   }
 }
 

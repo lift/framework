@@ -276,3 +276,22 @@ class CustomTypeIntFieldRecord private () extends Record[CustomTypeIntFieldRecor
 }
 
 object CustomTypeIntFieldRecord extends CustomTypeIntFieldRecord with MetaRecord[CustomTypeIntFieldRecord]
+
+class CustomFieldName private () extends Record[CustomFieldName] {
+  def meta = CustomFieldName
+
+  object customField extends StringField(this, 256)
+}
+
+object CustomFieldName extends CustomFieldName with MetaRecord[CustomFieldName] {
+
+  // These rules are common to all Record specs
+  def snakify(name: String): String = {
+    if (name == "customField")
+      Helpers.snakify(name)
+    else
+      name
+  }
+
+  RecordRules.fieldName.default.set(snakify _)
+}
