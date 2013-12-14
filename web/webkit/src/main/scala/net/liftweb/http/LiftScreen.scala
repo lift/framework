@@ -360,7 +360,7 @@ trait AbstractScreen extends Factory {
         case AVal(v: (T => List[FieldError])) => v
       },
       stuff.toList.collect {
-        case AFilter(v) => v
+        case filter: AFilter[T] => filter.f
       },
       stuff)
   }
@@ -484,7 +484,7 @@ trait AbstractScreen extends Factory {
       }.toList
 
       override def setFilter = stuff.collect {
-        case AFilter(f) => f
+        case filter: AFilter[T] => filter.f
       }.toList
 
       override def is = underlying.get
@@ -586,7 +586,7 @@ trait AbstractScreen extends Factory {
       }.toList
 
       override def setFilter = stuff.collect {
-        case AFilter(f) => f
+        case filter: AFilter[T] => filter.f
       }.toList
 
       override def is = underlying.openOrThrowException("Legacy code").get
@@ -617,7 +617,7 @@ trait AbstractScreen extends Factory {
       case AVal(v: (T => List[FieldError])) => List(v)
       case _ => Nil
     }, stuff.toList.flatMap {
-      case AFilter(v) => List(v)
+      case filter: AFilter[T] => List(filter.f)
       case _ => Nil
     }, stuff).make
 
@@ -755,7 +755,7 @@ trait AbstractScreen extends Factory {
           override lazy val formElemAttrs: Seq[SHtml.ElemAttr] = grabParams(stuff)
 
           override val setFilter = stuff.flatMap {
-            case AFilter(f) => List(f)
+            case filter: AFilter[T] => List(filter.f)
             case _ => Nil
           }.toList
           override val validations = stuff.flatMap {
@@ -792,7 +792,7 @@ trait AbstractScreen extends Factory {
           override lazy val formElemAttrs: Seq[SHtml.ElemAttr] = grabParams(stuff)
 
           override val setFilter = stuff.flatMap {
-            case AFilter(f) => List(f)
+            case filter: AFilter[T] => List(filter.f)
             case _ => Nil
           }.toList
           override val validations = stuff.flatMap {
