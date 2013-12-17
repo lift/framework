@@ -178,6 +178,10 @@ trait AbstractScreen extends Factory with Loggable {
 
     def set(v: ValueType) = _currentValue.set(setFilter.foldLeft(v)((nv, f) => f(nv)))
 
+    def set_? : Boolean = _currentValue.set_?
+
+    def otherValueSet_? : Boolean = _otherValue.set_?
+
     implicit def manifest: Manifest[ValueType]
 
     protected def buildIt[T](implicit man: Manifest[T]): Manifest[T] = man
@@ -282,7 +286,7 @@ trait AbstractScreen extends Factory with Loggable {
         case FieldTransform(func) => func
       }).toList
 
-      val newShow: Box[() => Boolean] = (stuff.collect {
+      val newShow: Box[BaseField => Boolean] = (stuff.collect {
         case DisplayIf(func) => func
       }).headOption
 
@@ -321,7 +325,7 @@ trait AbstractScreen extends Factory with Loggable {
 
         override def transforms = newTransforms
 
-        override def show_? = newShow map (_()) openOr (super.show_?)
+        override def show_? = newShow map (_(this)) openOr (super.show_?)
       }
     }
   }
@@ -351,7 +355,7 @@ trait AbstractScreen extends Factory with Loggable {
   protected def builder[T](name: => String, default: => T, stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): FieldBuilder[T] = {
     new FieldBuilder[T](name, default, man, Empty,
       stuff.toList.collect {
-        case AVal(v: (T => List[FieldError])) => v
+        case AVal(v: Function1[_, _]) => v.asInstanceOf[T => List[FieldError]]
       },
       stuff.toList.collect {
         case AFilter(v) => v.asInstanceOf[T => T]
@@ -400,7 +404,7 @@ trait AbstractScreen extends Factory with Loggable {
 
   protected final case class FieldTransform(func: BaseField => NodeSeq => NodeSeq) extends FilterOrValidate[Nothing]
 
-  protected final case class DisplayIf(func: () => Boolean) extends FilterOrValidate[Nothing]
+  protected final case class DisplayIf(func: BaseField => Boolean) extends FilterOrValidate[Nothing]
 
   protected def field[T](underlying: => BaseField {type ValueType = T},
                          stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): Field {type ValueType = T} = {
@@ -427,7 +431,7 @@ trait AbstractScreen extends Factory with Loggable {
       case FieldTransform(func) => func
     }).toList
 
-    val newShow: Box[() => Boolean] = (stuff.collect {
+    val newShow: Box[BaseField => Boolean] = (stuff.collect {
       case DisplayIf(func) => func
     }).headOption
 
@@ -445,7 +449,7 @@ trait AbstractScreen extends Factory with Loggable {
       /**
        * Given the current state of things, should this field be shown
        */
-      override def show_? = newShow map (_()) openOr underlying.show_?
+      override def show_? = newShow map (_(this)) openOr underlying.show_?
 
       /**
        * What form elements are we going to add to this field?
@@ -521,7 +525,7 @@ trait AbstractScreen extends Factory with Loggable {
       case FieldTransform(func) => func
     }).toList
 
-    val newShow: Box[() => Boolean] = (stuff.collect {
+    val newShow: Box[BaseField => Boolean] = (stuff.collect {
       case DisplayIf(func) => func
     }).headOption
 
@@ -547,7 +551,7 @@ trait AbstractScreen extends Factory with Loggable {
       /**
        * Given the current state of things, should this field be shown
        */
-      override def show_? = newShow map (_()) openOr (underlying.map(_.show_?) openOr false)
+      override def show_? = newShow map (_(this)) openOr (underlying.map(_.show_?) openOr false)
 
       /**
        * What form elements are we going to add to this field?
@@ -608,7 +612,7 @@ trait AbstractScreen extends Factory with Loggable {
    */
   protected def field[T](name: => String, default: => T, stuff: FilterOrValidate[T]*)(implicit man: Manifest[T]): Field {type ValueType = T} =
     new FieldBuilder[T](name, default, man, Empty, stuff.toList.flatMap {
-      case AVal(v: (T => List[FieldError])) => List(v)
+      case AVal(v: Function1[_, _]) => List(v.asInstanceOf[T => List[FieldError]])
       case _ => Nil
     }, stuff.toList.flatMap {
       case AFilter(v) => List(v.asInstanceOf[T => T])
@@ -725,7 +729,7 @@ trait AbstractScreen extends Factory with Loggable {
       case FieldTransform(func) => func
     }).toList
 
-    val newShow: Box[() => Boolean] = (stuff.collect {
+    val newShow: Box[BaseField => Boolean] = (stuff.collect {
       case DisplayIf(func) => func
     }).headOption
 
@@ -753,7 +757,7 @@ trait AbstractScreen extends Factory with Loggable {
             case _ => Nil
           }.toList
           override val validations = stuff.flatMap {
-            case AVal(v: (T => List[FieldError])) => List(v)
+            case AVal(v: Function1[_, _]) => List(v.asInstanceOf[T => List[FieldError]])
             case _ => Nil
           }.toList
 
@@ -765,7 +769,7 @@ trait AbstractScreen extends Factory with Loggable {
 
           override def transforms = newTransforms
 
-          override def show_? = newShow map (_()) openOr (super.show_?)
+          override def show_? = newShow map (_(this)) openOr (super.show_?)
         }
       }
 
@@ -790,7 +794,7 @@ trait AbstractScreen extends Factory with Loggable {
             case _ => Nil
           }.toList
           override val validations = stuff.flatMap {
-            case AVal(v: (T => List[FieldError])) => List(v)
+            case AVal(v: Function1[_, _]) => List(v.asInstanceOf[T => List[FieldError]])
             case _ => Nil
           }.toList
 
@@ -802,7 +806,7 @@ trait AbstractScreen extends Factory with Loggable {
 
           override def transforms = newTransforms
 
-          override def show_? = newShow map (_()) openOr (super.show_?)
+          override def show_? = newShow map (_(this)) openOr (super.show_?)
         }
       }
     }
