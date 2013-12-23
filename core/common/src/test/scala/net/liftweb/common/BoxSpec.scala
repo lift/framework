@@ -106,11 +106,17 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "return itself when or'ed with another Box" in {
       Full(1) or Full(2) must_== Full(1)
     }
-    "define an 'exists' method returning true if the Box value verifies the function" in {
+    "define an 'exists' method returning true if the Box value satisfies the function" in {
       Full(1) exists {_ > 0} must beTrue
     }
-    "define an exists method returning false if the Box value doesn't verify the function" in {
+    "define an exists method returning false if the Box value doesn't satisfy the function" in {
       Full(0) exists {_ > 0} must beFalse
+    }
+    "define a forall method returning true if the Box value satisfies the function" in {
+      Full(1) forall {_ > 0} must beTrue
+    }
+    "define a forall method returning false if the Box value doesn't satisfy the function" in {
+      Full(0) forall {_ > 0} must beFalse
     }
     "define a 'filter' method, returning a Full Box if the filter is satisfied" in {
       Full(1) filter {_ > 0} must_== Full(1)
@@ -238,6 +244,10 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define an 'exists' method returning false" in {
       val empty: Box[Int] = Empty
       empty exists {_ > 0} must beFalse
+    }
+    "define a 'forall' method returning false" in {
+      val empty: Box[Int] = Empty
+      empty forall {_ > 0} must beTrue
     }
     "define a 'filter' method, returning Empty" in {
       val empty: Box[Int] = Empty
