@@ -245,7 +245,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       val empty: Box[Int] = Empty
       empty exists {_ > 0} must beFalse
     }
-    "define a 'forall' method returning false" in {
+    "define a 'forall' method returning true" in {
       val empty: Box[Int] = Empty
       empty forall {_ > 0} must beTrue
     }
@@ -313,6 +313,12 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
     "create a new failure with a chained message if asked for its status with the operator ?~!" in {
       Failure("error", Empty, Empty) ?~! "error2" must_== Failure("error2", Empty, Full(Failure("error", Empty, Empty)))
+    }
+    "return false for exist method" in {
+      Failure("error", Empty, Empty) exists {_ => true } must beFalse
+    }
+    "return true for forall method" in {
+      Failure("error", Empty, Empty) forall {_ => false } must beTrue
     }
   }
 
