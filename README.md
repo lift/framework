@@ -16,12 +16,15 @@ Because Lift applications are written in [Scala](http://www.scala-lang.org), an 
 We will accept pull requests into the [Lift codebase](https://github.com/lift)
 if the pull requests meet the following criteria:
 
+* Before creating a pull request, non-committers must discuss it on the [Lift mailing list](http://groups.google.com/forum/#!forum/liftweb).
 * One or more of the following:
     * Documentation including ScalaDoc comments in code
     * Example code
     * Small changes, enhancements, or bug fixes to Lift's code
 * Each pull request must include a signature at the bottom of the
   `/contributors.md` file.
+
+For more details, see [CONTRIBUTING.md](https://github.com/lift/framework/blob/master/CONTRIBUTING.md).
 
 ## Getting Started
 
