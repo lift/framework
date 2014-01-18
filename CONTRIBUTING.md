@@ -18,6 +18,9 @@ The policy on issues is:
 
 We will accept pull requests into the Lift codebase if the pull requests meet
 the following criteria:
+* The request handles an issue that has been discussed on the Lift mailing list
+  and whose solution has been requested (and in general adheres to the spirit of
+  the issue guidelines above).
 * The request represents one or more of the following:
   * Documentation including ScalaDoc comments in code
   * Example code

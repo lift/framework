@@ -120,8 +120,6 @@ trait InlineParsers extends BaseParsers {
         }
     }
 
-
-
     /**
      *  all markdown inline element parsers or'ed together
      */

@@ -1597,8 +1597,8 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
           css.map(str => CSSHelpers.fixCSS(new BufferedReader(
             new StringReader(str)), prefix openOr (S.contextPath)) match {
             case (Full(c), _) => CSSResponse(c)
-            case (_, input) => {
-              logger.info("Fixing " + cssPath + " failed");
+            case (x, input) => {
+              logger.info("Fixing " + cssPath + " failed with result %s".format(x));
               CSSResponse(input)
             }
           })
