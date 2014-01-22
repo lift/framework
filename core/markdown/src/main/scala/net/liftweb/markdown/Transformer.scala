@@ -59,7 +59,7 @@ class SingleThreadedTransformer extends Transformer
  * val input:String = ...
  * val xhtml:String = new ActuariusTransformer()(input)
  *
- * Note that this markdown parser isn't inherantly thread-safe, as Scala Parser Combinators isn't, so this
+ * Note that this markdown parser isn't inherently thread-safe, as Scala Parser Combinators aren't, so this
  * class instantiates a SingleThreadedTransformer for each thread.
  * You'll need to write your own pooled implementation if this isn't efficient for your usage.
  */

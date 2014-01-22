@@ -19,26 +19,16 @@ package http
 
 import net.liftweb.common._
 import net.liftweb.actor._
-import scala.collection.mutable.{ListBuffer}
 import net.liftweb.util.Helpers._
 import net.liftweb.util._
 import net.liftweb.json._
 import scala.xml.{NodeSeq, Text, Elem, Node, Group, Null, PrefixedAttribute, UnprefixedAttribute}
-import scala.collection.immutable.TreeMap
-import scala.collection.mutable.{HashSet, ListBuffer}
+import scala.collection.mutable.ListBuffer
 import net.liftweb.http.js._
 import JsCmds._
 import JE._
-import java.util.concurrent.atomic.AtomicLong
 import java.util.Locale
 
-
-/**
- * This is used as an indicator message for linked actors.
- *
- * @see ActorWatcher
- */
-case object RelinkToActorWatcher
 
 trait DeltaTrait {
   def toJs: JsCmd
@@ -881,7 +871,6 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
 
     case PerformSetupComet2(initialReq) => {
-      // this ! RelinkToActorWatcher
       localSetup()
       captureInitialReq(initialReq)
       performReRender(true)

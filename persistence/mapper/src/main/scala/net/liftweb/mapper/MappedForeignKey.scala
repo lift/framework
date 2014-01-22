@@ -226,7 +226,7 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
 
   def foreignMeta = _foreignMeta
 
-  def box: Box[Long] = if (defined_?) Full(is) else Empty
+  def box: Box[Long] = if (defined_?) Full(get) else Empty
 
   type KeyType = Long
   type KeyedForeignType = O

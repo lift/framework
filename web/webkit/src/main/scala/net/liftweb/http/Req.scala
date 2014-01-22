@@ -33,7 +33,7 @@ object UserAgentCalculator extends Factory {
   /**
    * The default regular expression for IE
    */
-  val iePattern = """MSIE ([0-9]+)""".r
+  val iePattern = """(MSIE ([0-9]+)|Trident/7.*rv:([0-9]+))""".r
 
   /**
    * You can change the mechanism by which the user agent for IE
@@ -47,9 +47,11 @@ object UserAgentCalculator extends Factory {
    */
   def defaultIeCalcFunction(userAgent: Box[String]): Box[Double] = 
     for {
-      ua <- userAgent
-      m = iePattern.pattern.matcher(ua)
-      ver <- if (m.find) Helpers.asDouble(m.group(1)) else Empty
+      userAgent <- userAgent
+      ieMatch = iePattern.pattern.matcher(userAgent)
+      findResult = ieMatch.find if findResult
+      ieVersionString <- Box.legacyNullTest(ieMatch.group(2)) or Box.legacyNullTest(ieMatch.group(3))
+      ver <- Helpers.asDouble(ieVersionString)
     } yield ver
 
   /**

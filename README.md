@@ -16,12 +16,16 @@ Because Lift applications are written in [Scala](http://www.scala-lang.org), an 
 We will accept pull requests into the [Lift codebase](https://github.com/lift)
 if the pull requests meet the following criteria:
 
-* One or more of the following:
-    * Documentation including ScalaDoc comments in code
-    * Example code
-    * Small changes, enhancements, or bug fixes to Lift's code
-* Each pull request must include a signature at the bottom of the
-  `/contributors.md` file.
+* The request handles an issue that has been discussed on the [Lift mailing list](http://groups.google.com/forum/#!forum/liftweb)
+  and whose solution has been requested (and in general adheres to the spirit of
+  the issue guidelines outlined in [CONTRIBUTING.md](https://github.com/lift/framework/blob/master/CONTRIBUTING.md)).
+* The request represents one or more of the following:
+  * Documentation including ScalaDoc comments in code
+  * Example code
+  * Small changes, enhancements, or bug fixes to Lift’s code
+* The request includes a signature at the bottom of the `/contributors.md` file.
+
+For more details, see [CONTRIBUTING.md](https://github.com/lift/framework/blob/master/CONTRIBUTING.md).
 
 ## Getting Started
 
@@ -59,10 +63,10 @@ Or, you can add Lift to your `pom.xml` like so:
     <dependency>
       <groupId>net.liftweb</groupId>
       <artifactId>lift-mapper_${scala.version}</artifactId>
-      <version>2.4</version>
+      <version>2.5.1</version>
     </dependency>
 
-Where `${scala.version}` is `2.8.0`, `2.8.1`, `2.9.1` etc.
+Where `${scala.version}` is `2.9.1` etc. For scala 2.10.x, which is binary compatible, you just use `2.10`, and that will work for `2.10.0` ,`2.10.1` ,`2.10.2`
 
 You can [learn more on the wiki](http://www.assembla.com/wiki/show/liftweb/Using_Maven).
 
@@ -128,7 +132,7 @@ The Lift wiki is hosted on Assembla and can be found at [http://www.assembla.com
 
 ### ScalaDocs
 
-The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on ScalaTools. You can access the source code–based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 2.4 release can be accessed at [http://scala-tools.org/mvnsites/liftweb-2.4/](http://scala-tools.org/mvnsites/liftweb-2.4/).
+The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on the Liftweb.net site. You can access the source code–based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 2.5 release can be accessed at [http://liftweb.net/api/25/api/](http://liftweb.net/api/25/api/).
 
 ### Cookbook
 

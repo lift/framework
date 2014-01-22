@@ -383,23 +383,24 @@ trait Loc[T] {
   }
 
   def doesMatch_?(req: Req): Boolean = {
-    (if (link.isDefinedAt(req)) {
-      link(req) match {
-        case Full(x) if testAllParams(allParams, req) => x
-        case Full(x) => false
-        case x => x.openOr(false)
-      }
-    } else false) && currentValue.isDefined
-    // the loc only matches if we've got a current value
+    link.isDefinedAt(req) &&
+    testAllParams(allParams, req) &&
+    (
+      currentValue.isDefined ||
+      params.contains(Loc.MatchWithoutCurrentValue)
+    )
   }
 
   def breadCrumbs: List[Loc[_]] = _menu.breadCrumbs ::: List(this)
 
   def buildKidMenuItems(kids: Seq[Menu]): List[MenuItem] = {
-    kids.toList.flatMap(_.loc.buildItem(Nil, false, false)) ::: supplimentalKidMenuItems
+    kids.toList.flatMap(_.loc.buildItem(Nil, false, false)) ::: supplementalKidMenuItems
   }
 
-  def supplimentalKidMenuItems: List[MenuItem] =
+  @deprecated("Use supplementalKidMenuItems with an 'e'. This misspelled variant will be removed in Lift 3.0.", "2.6")
+  final def supplimentalKidMenuItems = supplementalKidMenuItems
+
+  def supplementalKidMenuItems: List[MenuItem] =
     for {
       p <- childValues
       l <- link.createLink(p).map(appendQueryParams(p))
@@ -732,6 +733,27 @@ object Loc {
    * will still be accessable.
    */
   case object Hidden extends AnyLocParam
+
+  /**
+   * If this parameter is included, the Loc will continue to execute even if
+   * currentValue is not defined.
+   *
+   * By default, Lift will determine that a Loc does not match a given request
+   * if its currentValue comes up Empty, and as a result will return an HTTP 404.
+   * For situations where this is not the desired, "Not Found" behavior, you can
+   * add the MatchWithoutCurrentValue LocParam to a Loc, then use the IfValue
+   * LocParam to define what should happen when the currentValue is Empty.
+   *
+   * For example, given some class Thing, you could do the following to trigger
+   * a redirect when a Thing with a particular ID isn't found.
+   *
+   * {{{
+   * Menu.param[Thing]("Thing", "Thing", Thing.find(_), _.id) >>
+   *   MatchWithoutCurrentValue >>
+   *   IfValue(_.isDefined, () => RedirectResponse("/page/to/redirect/to"))
+   * }}}
+   */
+  case object MatchWithoutCurrentValue extends AnyLocParam
 
   /**
    * If this is a submenu, use the parent Loc's params

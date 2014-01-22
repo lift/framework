@@ -65,19 +65,18 @@ class InlineParsersTest extends FlatSpec with ShouldMatchers with InlineParsers{
         ("``code ` code``", "<code>code ` code</code>")
     )
 
-  val entityTest = List("Hello &nbsp; World" -> "Hello &nbsp; World",
-    "Hello & World" -> "Hello &amp; World",
-    ("test &egrave; text" ->"test &egrave; text"),
-    "test  &egrave; text" ->"test  &egrave; text",
-      "test&egrave; text" -> "test&egrave; text",
-      "test &egrave;" -> "test &egrave;",
-      "test &omega;" -> "test &omega;",
-      "test &unknown;" -> "test &amp;unknown;",
-      "AT&T" -> "AT&amp;T",
-      "<ATT" -> "&lt;ATT",
-      "test&nbsp;hello" -> "test&nbsp;hello",
-      "test &nbsp; hello&nbsp;;" -> "test &nbsp; hello&nbsp;;")
-
+    val entityTest = List("Hello &nbsp; World" -> "Hello &nbsp; World",
+      "Hello & World" -> "Hello &amp; World",
+      ("test &egrave; text" ->"test &egrave; text"),
+      "test  &egrave; text" ->"test  &egrave; text",
+        "test&egrave; text" -> "test&egrave; text",
+        "test &egrave;" -> "test &egrave;",
+        "test &omega;" -> "test &omega;",
+        "test &unknown;" -> "test &amp;unknown;",
+        "AT&T" -> "AT&amp;T",
+        "<ATT" -> "&lt;ATT",
+        "test&nbsp;hello" -> "test&nbsp;hello",
+        "test &nbsp; hello&nbsp;;" -> "test &nbsp; hello&nbsp;;")
 
     val linkTests = List(
         ("""[link text](http://example.com "link title")""",
@@ -173,7 +172,7 @@ class InlineParsersTest extends FlatSpec with ShouldMatchers with InlineParsers{
 
     val allInlineTests = italicTests ++ boldTests ++ entityTest ++
       codeTests ++ linkTests ++ fastLinkTests ++ imageTests ++ brTests ++
-                         xmlStartTagTests ++ xmlEndTagTests ++ xmlInlineTests ++ dummyTests
+      xmlStartTagTests ++ xmlEndTagTests ++ xmlInlineTests ++ dummyTests
 
     it should "create italic text" in {
         runSucceedingParsingTests(emAsterisk(new InlineContext())|emUnderscore(new InlineContext()) , italicTests)
