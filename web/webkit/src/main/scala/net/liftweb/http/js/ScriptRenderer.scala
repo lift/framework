@@ -92,7 +92,7 @@ object ScriptRenderer {
         processMsg: function(evt) {if (this._done || this._failed) return;
                                 this._events.push(evt);
                                 for (var v in this._eventFuncs) {try {this._eventFuncs[v](evt);} catch (e) {""" + (LiftRules.jsLogFunc.map(_(JsVar("e")).toJsCmd) openOr "") + """}};
-                                if (evt.done) {this.doneMsg();} else if (evt.success) {this.successMsg(evt.success);} else if (evt.failure) {this.failMsg(evt.failure);}},
+                                if (evt.done != null) {this.doneMsg();} else if (evt.success != null) {this.successMsg(evt.success);} else if (evt.failure != null) {this.failMsg(evt.failure);}},
         successMsg: function(value) {if (this._done || this._failed) return; this._values.push(value); for (var f in this._valueFuncs) {this._valueFuncs[f](value);}},
         failMsg: function(msg) {if (this._done || this._failed) return; liftAjax._removeIt(this.guid); this._failed = true; this._failMsg = msg; for (var f in this._failureFuncs) {this._failureFuncs[f](msg);}},
         doneMsg: function() {if (this._done || this._failed) return; liftAjax._removeIt(this.guid); this._done = true; for (var f in this._doneFuncs) {this._doneFuncs[f]();}},
