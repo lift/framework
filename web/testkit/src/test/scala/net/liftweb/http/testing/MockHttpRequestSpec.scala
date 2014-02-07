@@ -55,8 +55,8 @@ object MockHttpRequestSpec extends Specification  {
       testRequest.getServerName must_== "foo.com"
       testRequest.getContextPath must_== "/test"
       testRequest.getRequestURI must_== "/test/this/page"
-      testRequest.getRequestURL.toString must_== TEST_URL
-      testRequest.getQueryString must_== "a=b&b=a&a=c"
+      testRequest.getRequestURL.toString must_== TEST_URL_BP
+      testRequest.getQueryString must_== "a=b&b=a&c=&d"
       testRequest.getParameter("c") must_== ""
       testRequest.getParameter("d") must_== ""
     }
