@@ -2600,7 +2600,17 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
       f
     }
 
-  def formFuncName: String = if (Props.testMode && !disableTestFuncNames_?) {
+  def formFuncName: String = LiftRules.funcNameGenerator()
+
+  /** Default func-name logic during test-mode. */
+  def generateTestFuncName: String =
+    if (disableTestFuncNames_?)
+      generateFuncName
+    else
+      generatePredictableFuncName
+
+  /** Generates a func-name based on the location in the call-site source code. */
+  def generatePredictableFuncName: String = {
     val bump: Long = ((_formGroup.is openOr 0) + 1000L) * 100000L
     val num: Int = formItemNumber.is
     formItemNumber.set(num + 1)
@@ -2608,12 +2618,14 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     val prefix: String = new DecimalFormat("00000000000000000").format(bump + num)
     // take the first 2 non-Lift/non-Scala stack frames for use as hash issue 174
     "f" + prefix + "_" + Helpers.hashHex((new Exception).getStackTrace.toList.filter(notLiftOrScala).take(2).map(_.toString).mkString(","))
-  } else {
+  }
+
+  /** Standard func-name logic. This is the default routine. */
+  def generateFuncName: String =
     _formGroup.is match {
       case Full(x) => Helpers.nextFuncName(x.toLong * 100000L)
-      case _ => Helpers.nextFuncName
+      case       _ => Helpers.nextFuncName
     }
-  }
 
   def formGroup[T](group: Int)(f: => T): T = {
     val x = _formGroup.is
