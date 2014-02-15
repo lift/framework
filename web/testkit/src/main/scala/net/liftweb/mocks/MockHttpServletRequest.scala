@@ -216,6 +216,11 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
             // Append to the current key's value
             newParams += key -> value
           }
+          case Array("") => throw new IllegalArgumentException("Invalid query string: \"" + q + "\"")
+          case Array(key) => {
+            // Append to the current key's value
+            newParams += key -> ""
+          }
           case invalid => throw new IllegalArgumentException("Invalid query string: \"" + q + "\"")
         }
       }
