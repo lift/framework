@@ -84,7 +84,7 @@ object Extraction {
         case x if (x.getClass.isArray) => JArray(x.asInstanceOf[Array[_]].toList map decompose)
         case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
         case x => 
-          val fields = x.getClass.getDeclaredFields.map(field => (field.getName, field)).toMap
+          val fields = getDeclaredFields(x.getClass)
           val constructorArgs = primaryConstructorArgs(x.getClass).map{ case (name, _) => (name,fields.get(name)) }
           constructorArgs.collect { case (name, Some(f)) =>
             f.setAccessible(true)
