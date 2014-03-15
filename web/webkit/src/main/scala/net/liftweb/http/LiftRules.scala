@@ -254,7 +254,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   // Unique identifier for this particular instance of Lift, used for
   // tagging resources below in attachResourceId.
-  private val instanceResourceId = Helpers.nextFuncName
+  private val instanceResourceId = "instance-" + Helpers.nextFuncName
 
   /**
    * Attaches an ID entity for resource URI specified in
