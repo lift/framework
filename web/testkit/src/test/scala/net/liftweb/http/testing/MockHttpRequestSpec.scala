@@ -89,7 +89,6 @@ object MockHttpRequestSpec extends Specification  {
       val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
       
       (testRequest.queryString ="this=a&&that=b") must throwA[IllegalArgumentException]
-      (testRequest.queryString = "foo") must throwA[IllegalArgumentException]
      }
 
 
