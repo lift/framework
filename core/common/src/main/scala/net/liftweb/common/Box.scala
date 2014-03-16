@@ -310,9 +310,15 @@ sealed abstract class Box[+A] extends Product with Serializable{
 
   /**
    * Determine whether this Box contains a value which satisfies the specified predicate
-   * @return true if this Box's value satisfies the specified predicate
+   * @return true if this Box does contain a value and it satisfies the predicate
    */
   def exists(func: A => Boolean): Boolean = false
+
+  /**
+   * Determine whether all Box values satisfy the predicate
+   * @return true if the Box is empty, or if Box's value satisfies the predicate
+   */
+  def forall(func: A => Boolean): Boolean = true
 
   /**
    * Creates a Box if the current Box is Full and the value does not satisfy the predicate, f.
@@ -545,6 +551,8 @@ final case class Full[+A](value: A) extends Box[A]{
   override def or[B >: A](alternative: => Box[B]): Box[B] = this
 
   override def exists(func: A => Boolean): Boolean = func(value)
+
+  override def forall(func: A => Boolean): Boolean = func(value)
 
   override def filter(p: A => Boolean): Box[A] = if (p(value)) this else Empty
 
