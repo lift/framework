@@ -29,7 +29,8 @@ object MockHttpRequestSpec extends Specification  {
 
   val IF_MODIFIED_HEADER = "If-Modified-Since"
   val TEST_URL = "https://foo.com/test/this/page?a=b&b=a&a=c"
-  val TEST_URL_BP = "https://foo.com/test/this/page?a=b&b=a&c=&d"
+  val TEST_URL_BLANK_PARAMETER = "https://foo.com/test/this/page?a=b&b=a&c=&d"
+  val TEST_URL_BLANK_PARAMETER_SERIALIZED = "https://foo.com/test/this/page?a=b&b=a&c=&d="
 
   "MockHttpRequest" should {
 
@@ -48,15 +49,15 @@ object MockHttpRequestSpec extends Specification  {
     }
 
     "parse parameters with empty values" in {
-      val testRequest = new MockHttpServletRequest(TEST_URL_BP, "/test")
+      val testRequest = new MockHttpServletRequest(TEST_URL_BLANK_PARAMETER, "/test")
 
       testRequest.getScheme must_== "https"
       testRequest.isSecure must_== true
       testRequest.getServerName must_== "foo.com"
       testRequest.getContextPath must_== "/test"
       testRequest.getRequestURI must_== "/test/this/page"
-      testRequest.getRequestURL.toString must_== TEST_URL_BP
-      testRequest.getQueryString must_== "a=b&b=a&c=&d"
+      testRequest.getRequestURL.toString must_== TEST_URL_BLANK_PARAMETER_SERIALIZED
+      testRequest.getQueryString must_== "a=b&b=a&c=&d="
       testRequest.getParameter("c") must_== ""
       testRequest.getParameter("d") must_== ""
     }
