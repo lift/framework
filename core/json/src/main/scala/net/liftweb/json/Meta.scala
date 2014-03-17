@@ -221,7 +221,6 @@ private[json] object Meta {
       classOf[JObject], classOf[JArray]).map((_, ())))
 
     private val primaryConstructorArgumentsMemo = new Memo[Class[_], List[(String, Type)]]
-    private val hasDeclaredFieldsMemo = new Memo[(Class[_], String), Boolean]
     private val declaredFieldsMemo = new Memo[Class[_], Map[String,Field]]
 
     def constructors(t: Type, names: ParameterNameReader, context: Option[Context]): List[(JConstructor[_], List[(String, Type)])] =
@@ -361,17 +360,6 @@ private[json] object Meta {
       declaredFieldsMemo.memoize(clazz, _ => extractDeclaredFields)
     }
     
-    def hasDeclaredField(clazz: Class[_], name: String): Boolean = {
-      def declaredField = try {
-        clazz.getDeclaredField(name)
-        true
-      } catch {
-        case e: NoSuchFieldException => false
-      }
-
-      hasDeclaredFieldsMemo.memoize((clazz, name), _ => declaredField)
-    }
-
     def mkJavaArray(x: Any, componentType: Class[_]) = {
       val arr = x.asInstanceOf[scala.Array[_]]
       val a = java.lang.reflect.Array.newInstance(componentType, arr.size)
