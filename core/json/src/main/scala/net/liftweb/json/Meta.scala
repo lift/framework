@@ -220,9 +220,8 @@ private[json] object Meta {
       classOf[java.lang.Short], classOf[Date], classOf[Timestamp], classOf[Symbol], classOf[JValue],
       classOf[JObject], classOf[JArray]).map((_, ())))
 
-    private val primaryConstructors = new Memo[Class[_], List[(String, Type)]]
-    private val declaredFields = new Memo[(Class[_], String), Boolean]
-    private val declaredFieldsMap = new Memo[Class[_], Map[String,Field]]
+    private val primaryConstructorArgumentsMemo = new Memo[Class[_], List[(String, Type)]]
+    private val declaredFieldsMemo = new Memo[Class[_], Map[String,Field]]
 
     def constructors(t: Type, names: ParameterNameReader, context: Option[Context]): List[(JConstructor[_], List[(String, Type)])] =
       rawClassOf(t).getDeclaredConstructors.map(c => (c, constructorArgs(t, c, names, context))).toList
@@ -267,7 +266,7 @@ private[json] object Meta {
         constructorArgs(c, primary, formats.parameterNameReader, None)
       }
 
-      primaryConstructors.memoize(c, findMostComprehensive(_))
+      primaryConstructorArgumentsMemo.memoize(c, findMostComprehensive(_))
     }
 
     def typeParameters(t: Type, k: Kind, context: Context): List[Class[_]] = {
@@ -358,20 +357,9 @@ private[json] object Meta {
 
     def getDeclaredFields(clazz: Class[_]) : Map[String,Field] = {
       def extractDeclaredFields = clazz.getDeclaredFields.map(field => (field.getName, field)).toMap
-      declaredFieldsMap.memoize(clazz, _ => extractDeclaredFields)
+      declaredFieldsMemo.memoize(clazz, _ => extractDeclaredFields)
     }
     
-    def hasDeclaredField(clazz: Class[_], name: String): Boolean = {
-      def declaredField = try {
-        clazz.getDeclaredField(name)
-        true
-      } catch {
-        case e: NoSuchFieldException => false
-      }
-
-      declaredFields.memoize((clazz, name), _ => declaredField)
-    }
-
     def mkJavaArray(x: Any, componentType: Class[_]) = {
       val arr = x.asInstanceOf[scala.Array[_]]
       val a = java.lang.reflect.Array.newInstance(componentType, arr.size)
