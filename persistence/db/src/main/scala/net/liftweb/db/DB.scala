@@ -306,9 +306,15 @@ trait DB extends Loggable {
 
     (info.get(name): @unchecked) match {
       case Some(ConnectionHolder(c, 1, post, manualRollback)) => {
-        if (! (c.getAutoCommit() || manualRollback)) {
-          if (rollback) tryo{c.rollback}
-          else c.commit
+        // stale and unexpectedly closed connections may throw here
+        try {
+          if (! (c.getAutoCommit() || manualRollback)) {
+            if (rollback) c.rollback
+            else c.commit
+          }
+        } catch {
+          case e: Exception =>
+            logger.debug("Swallowed exception during connection release. ", e)
         }
         tryo(c.releaseFunc())
         info -= name
