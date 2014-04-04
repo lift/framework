@@ -31,7 +31,7 @@ object Dependencies {
 
   lazy val scalazGroup       = defaultOrMapped("org.scalaz")
   lazy val scalazVersion     = defaultOrMapped("6.0.4")
-  lazy val scalaz7Version    = defaultOrMapped("7.0.0")
+  lazy val scalaz7Version    = defaultOrMapped("7.0.0", "2.11.0-RC3" -> "7.0.6")
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
@@ -85,6 +85,6 @@ object Dependencies {
   lazy val mockito_all = "org.mockito"                 % "mockito-all"              % "1.9.0"      % "test"
   lazy val scalacheck  = "org.scalacheck"             %% "scalacheck"               % "1.10.0"     % "test"
   lazy val specs2: ModuleMap =
-                         "org.specs2"                 %% "specs2"                   % defaultOrMapped("1.12.3")(_) % "test"
+                         "org.specs2"                 %% "specs2"                   % defaultOrMapped("1.12.3", "2.11.0-RC3" -> "2.3.10")(_) % "test"
 
 }

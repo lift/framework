@@ -117,8 +117,10 @@ case class UnauthorizedResponse(realm: String) extends LiftResponse {
   def toResponse = InMemoryResponse(Array(), List("WWW-Authenticate" -> ("Basic realm=\"" + realm + "\"")), Nil, 401)
 }
 
-object Qop extends Enumeration(0, "auth", "auth-int", "auth,auth-int") {
-  val AUTH, AUTH_INT, AUTH_AND_AUTH_INT = Value
+object Qop extends Enumeration(0) {
+  val AUTH = Value("auth")
+  val AUTH_INT = Value("auth-int")
+  val AUTH_AND_AUTH_INT = Value("auth,auth-int")
 }
 
 /**

@@ -307,7 +307,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # attrs
    * @see # attr
    */
-  private val _attrs = new ThreadGlobal[(MetaData,List[(Either[String, (String, String)], String)])]
+  private[S] val _attrs = new ThreadGlobal[(MetaData,List[(Either[String, (String, String)], String)])]
 
   /**
    * Holds the per-request LiftSession instance.
