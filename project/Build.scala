@@ -38,8 +38,15 @@ object BuildDef extends Build {
 
   lazy val common =
     coreProject("common")
-      .settings(description := "Common Libraties and Utilities",
-                libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12))
+      .settings(description := "Common Libraries and Utilities",
+                libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12),
+                libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+                    case Some((2, scalaMajor)) if scalaMajor >= 11 =>
+                      List("org.scala-lang.modules" %% "scala-xml" % "1.0.1")
+                    case _ =>
+                      Nil
+                  })
+                )
 
   lazy val actor =
     coreProject("actor")
@@ -51,10 +58,20 @@ object BuildDef extends Build {
     coreProject("markdown")
         .settings(description := "Markdown Parser",
                   parallelExecution in Test := false,
-                  libraryDependencies ++= Seq(
-                     "org.scalatest" %% "scalatest" % "1.9.1" % "test",
+                  libraryDependencies <++= scalaVersion { sv => Seq(
+                     "org.scalatest" %% "scalatest" % (if(sv=="2.11.0-RC3") "2.1.2" else "1.9.1") % "test",
                      "junit" % "junit" % "4.8.2" % "test"
-                   ))                  
+                   ) },
+                  libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+                    case Some((2, scalaMajor)) if scalaMajor >= 11 =>
+                      List(
+                        "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.1",
+                        "org.scala-lang.modules" %% "scala-xml" % "1.0.1"
+                      )
+                    case _ =>
+                      Nil
+                  })
+                  )
 
   lazy val json =
     coreProject("json")
@@ -85,8 +102,18 @@ object BuildDef extends Build {
         .dependsOn(actor, json, markdown)
         .settings(description := "Utilities Library",
                   parallelExecution in Test := false,
-                  libraryDependencies <++= scalaVersion {sv =>  Seq(scala_compiler(sv), joda_time,
-                    joda_convert, commons_codec, javamail, log4j, htmlparser)})
+                  libraryDependencies <++= scalaVersion {sv =>
+                    Seq(
+                      scala_compiler(sv),
+                      joda_time,
+                      joda_convert,
+                      commons_codec,
+                      javamail,
+                      log4j,
+                      htmlparser
+                    )
+                  }
+        )
 
 
   // Web Projects
