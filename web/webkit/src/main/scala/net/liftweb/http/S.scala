@@ -545,7 +545,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   // TODO: Is this used anywhere? - DCB
   def templateFromTemplateAttr: Box[NodeSeq] =
     for (templateName <- attr("template") ?~ "Template Attribute missing";
-         val tmplList = templateName.roboSplit("/");
+         tmplList = templateName.roboSplit("/");
          template <- Templates(tmplList) ?~
                  "couldn't find template") yield template
 
