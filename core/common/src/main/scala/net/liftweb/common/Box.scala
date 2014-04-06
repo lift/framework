@@ -234,6 +234,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
    */
   def openOrThrowException(justification: String): A
 
+
   /**
    * Return the value contained in this Box if it is Full;
    * throw an exception otherwise.
@@ -251,6 +252,17 @@ sealed abstract class Box[+A] extends Product with Serializable{
    */
   @deprecated("use openOrThrowException, or better yet, do the right thing with your code and use map, flatMap or foreach", "2.4")
   final def open_! : A = openOrThrowException("Legacy method implementation")
+
+  /**
+   * Return the value contained in this Box if it is Full; throw an
+   * exception otherwise.  Please use openOrThrowException instead. In
+   * the past, this method triggered an implicit conversion to Option
+   * and could throw an unintended NullPointerException. That is no longer
+   * the case, and in Lift 3 this method will be changed to return
+   * a useless type so that the compiler will break attempts to use it.
+   */
+  @deprecated("use map/flatMap/foreach if possible, or openOrThrowException if you must", "2.6")
+  final def get: A = open_!
 
   /**
    * Return the value contained in this Box if it is Full;

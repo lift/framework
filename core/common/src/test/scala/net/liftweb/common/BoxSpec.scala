@@ -79,6 +79,11 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "be defined from some legacy code (possibly passing null values). If the passed value is null, an Empty is returned" in {
       Box.legacyNullTest(null) must_== Empty
     }
+
+    "have get defined in a way compatible with Option" in {
+      Full(1).get must_== 1
+      (Empty: Box[Int]).get must throwA[NullPointerException]
+    }
   }
 
   "A Box" should {
