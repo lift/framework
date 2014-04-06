@@ -70,7 +70,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(1) orElse Some(2) must_== Some(1)
       Empty orElse Some(2) must_== Some(2)
     }
-    "be implicitly defined from an Option. The open_! method can be used on an Option for example" in {
+    "be implicitly defined from an Option. The openOrThrowException method can be used on an Option for example" in {
       Some(1).openOrThrowException("This is a test") must_== 1
     }
     "be defined from some legacy code (possibly passing null values). If the passed value is not null, a Full(value) is returned" in {
