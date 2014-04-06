@@ -79,11 +79,6 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "be defined from some legacy code (possibly passing null values). If the passed value is null, an Empty is returned" in {
       Box.legacyNullTest(null) must_== Empty
     }
-
-    "have get defined in a way compatible with Option" in {
-      Full(1).get must_== 1
-      (Empty: Box[Int]).get must throwA[NullPointerException]
-    }
   }
 
   "A Box" should {
@@ -299,7 +294,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
   "A Failure is an Empty Box which" can {
     "return its cause as an exception" in {
       case class LiftException(m: String) extends Exception
-      Failure("error", Full(new LiftException("broken")), Empty).exception.get must_== new LiftException("broken")
+      Failure("error", Full(new LiftException("broken")), Empty).exception must_== Full(new LiftException("broken"))
     }
     "return a chained list of causes" in {
       Failure("error",
