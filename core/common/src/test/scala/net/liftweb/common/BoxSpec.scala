@@ -67,10 +67,10 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(1) reduceLeft {(x: Int, y: Int) => x + y} must_== 1
     }
     "be used as an Option" in {
-      Full(1).get must_== 1
-      Empty.isDefined must beFalse
+      Full(1) orElse Some(2) must_== Some(1)
+      Empty orElse Some(2) must_== Some(2)
     }
-    "be implicitly defined from an Option. The open_! method can be used on an Option for example" in {
+    "be implicitly defined from an Option. The openOrThrowException method can be used on an Option for example" in {
       Some(1).openOrThrowException("This is a test") must_== 1
     }
     "be defined from some legacy code (possibly passing null values). If the passed value is not null, a Full(value) is returned" in {
@@ -78,6 +78,11 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
     "be defined from some legacy code (possibly passing null values). If the passed value is null, an Empty is returned" in {
       Box.legacyNullTest(null) must_== Empty
+    }
+
+    "have get defined in a way compatible with Option" in {
+      Full(1).get must_== 1
+      (Empty: Box[Int]).get must throwA[NullPointerException]
     }
   }
 
