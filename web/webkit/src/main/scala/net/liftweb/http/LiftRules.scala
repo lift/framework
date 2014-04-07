@@ -194,6 +194,11 @@ object LiftRules extends LiftRulesMocker {
     val ExecutionFailure = Value(11, "Execution Failure")
   }
 
+  def defaultFuncNameGenerator(runMode: Props.RunModes.Value): () => String =
+    runMode match {
+      case Props.RunModes.Test => S.generateTestFuncName _
+      case _                   => S.generateFuncName _
+    }
 }
 
 /**
@@ -210,8 +215,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   def doneBoot = _doneBoot
 
   def noticesContainerId = "lift__noticesContainer__"
-  private val pageResourceId = Helpers.nextFuncName
-
 
   /**
    * If you want to make the Lift inactivity timeout shorter than
@@ -297,6 +300,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   @volatile var getLiftSession: (Req) => LiftSession = (req) => _getLiftSession(req)
 
+  // Unique identifier for this particular instance of Lift, used for
+  // tagging resources below in attachResourceId.
+  private val instanceResourceId = "instance-" + Helpers.nextFuncName
+
   /**
    * Attaches an ID entity for resource URI specified in
    * link or script tags. This allows controlling browser
@@ -306,11 +313,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * "forcing" browsers to refresh the resource only when the resource
    * file changes. Users can define other rules as well. Inside user's
    * function it is safe to use S context as attachResourceId is called
-   * from inside the &lt;lift:with-resource-id> snippet
+   * from inside the &lt;lift:with-resource-id&gt; snippet
    *
    */
   @volatile var attachResourceId: (String) => String = (name) => {
-    name + (if (name contains ("?")) "&" else "?") + pageResourceId + "=_"
+    name + (if (name contains ("?")) "&" else "?") + instanceResourceId + "=_"
   }
 
   /**
@@ -1895,6 +1902,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /** Controls whether or not the service handling timing messages (Service request (GET) ... took ... Milliseconds) are logged. Defaults to true. */
   @volatile var logServiceRequestTiming = true
+
+  /** Provides a function that returns random names for form variables, page ids, callbacks, etc. */
+  @volatile var funcNameGenerator: () => String = defaultFuncNameGenerator(Props.mode)
 
   import provider.servlet._
   import containers._

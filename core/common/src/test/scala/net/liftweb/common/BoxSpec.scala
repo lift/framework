@@ -67,10 +67,10 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(1) reduceLeft {(x: Int, y: Int) => x + y} must_== 1
     }
     "be used as an Option" in {
-      Full(1).get must_== 1
-      Empty.isDefined must beFalse
+      Full(1) orElse Some(2) must_== Some(1)
+      Empty orElse Some(2) must_== Some(2)
     }
-    "be implicitly defined from an Option. The open_! method can be used on an Option for example" in {
+    "be implicitly defined from an Option. The openOrThrowException method can be used on an Option for example" in {
       Some(1).openOrThrowException("This is a test") must_== 1
     }
     "be defined from some legacy code (possibly passing null values). If the passed value is not null, a Full(value) is returned" in {
@@ -78,6 +78,11 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
     "be defined from some legacy code (possibly passing null values). If the passed value is null, an Empty is returned" in {
       Box.legacyNullTest(null) must_== Empty
+    }
+
+    "have get defined in a way compatible with Option" in {
+      Full(1).get must_== 1
+      (Empty: Box[Int]).get must throwA[NullPointerException]
     }
   }
 
@@ -106,11 +111,17 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "return itself when or'ed with another Box" in {
       Full(1) or Full(2) must_== Full(1)
     }
-    "define an 'exists' method returning true if the Box value verifies the function" in {
+    "define an 'exists' method returning true if the Box value satisfies the function" in {
       Full(1) exists {_ > 0} must beTrue
     }
-    "define an exists method returning false if the Box value doesn't verify the function" in {
+    "define an exists method returning false if the Box value doesn't satisfy the function" in {
       Full(0) exists {_ > 0} must beFalse
+    }
+    "define a forall method returning true if the Box value satisfies the function" in {
+      Full(1) forall {_ > 0} must beTrue
+    }
+    "define a forall method returning false if the Box value doesn't satisfy the function" in {
+      Full(0) forall {_ > 0} must beFalse
     }
     "define a 'filter' method, returning a Full Box if the filter is satisfied" in {
       Full(1) filter {_ > 0} must_== Full(1)
@@ -239,6 +250,10 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       val empty: Box[Int] = Empty
       empty exists {_ > 0} must beFalse
     }
+    "define a 'forall' method returning true" in {
+      val empty: Box[Int] = Empty
+      empty forall {_ > 0} must beTrue
+    }
     "define a 'filter' method, returning Empty" in {
       val empty: Box[Int] = Empty
       empty filter {_ > 0} must beEmpty
@@ -303,6 +318,12 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
     "create a new failure with a chained message if asked for its status with the operator ?~!" in {
       Failure("error", Empty, Empty) ?~! "error2" must_== Failure("error2", Empty, Full(Failure("error", Empty, Empty)))
+    }
+    "return false for exist method" in {
+      Failure("error", Empty, Empty) exists {_ => true } must beFalse
+    }
+    "return true for forall method" in {
+      Failure("error", Empty, Empty) forall {_ => false } must beTrue
     }
   }
 
