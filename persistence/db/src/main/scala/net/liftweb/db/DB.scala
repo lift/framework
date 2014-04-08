@@ -24,7 +24,7 @@ import Helpers._
 import net.liftweb.http.S
 
 import javax.sql.{DataSource}
-import java.sql.ResultSetMetaData
+import java.sql.{ResultSetMetaData, SQLException}
 import java.sql.{Statement, ResultSet, Types, PreparedStatement, Connection, DriverManager}
 import scala.collection.mutable.{HashMap, ListBuffer}
 import javax.naming.{Context, InitialContext}
@@ -306,16 +306,23 @@ trait DB extends Loggable {
 
     (info.get(name): @unchecked) match {
       case Some(ConnectionHolder(c, 1, post, manualRollback)) => {
-        if (! (c.getAutoCommit() || manualRollback)) {
-          if (rollback) tryo{c.rollback}
-          else c.commit
+        // stale and unexpectedly closed connections may throw here
+        try {
+          if (! (c.getAutoCommit() || manualRollback)) {
+            if (rollback) c.rollback
+            else c.commit
+          }
+        } catch {
+          case e: SQLException =>
+            logger.error("Swallowed exception during connection release. ", e)
+        } finally {
+          tryo(c.releaseFunc())
+          info -= name
+          val rolledback = rollback | manualRollback
+          logger.trace("Invoking %d postTransaction functions. rollback=%s".format(post.size, rolledback))
+          post.reverse.foreach(f => tryo(f(!rolledback)))
+          logger.trace("Released %s on thread %s".format(name,Thread.currentThread))
         }
-        tryo(c.releaseFunc())
-        info -= name
-        val rolledback = rollback | manualRollback
-        logger.trace("Invoking %d postTransaction functions. rollback=%s".format(post.size, rolledback))
-        post.reverse.foreach(f => tryo(f(!rolledback)))
-        logger.trace("Released %s on thread %s".format(name,Thread.currentThread))
       }
       case Some(ConnectionHolder(c, n, post, rb)) =>
         logger.trace("Did not release " + name + " on thread " + Thread.currentThread + " count " + (n - 1))
