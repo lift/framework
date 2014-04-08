@@ -22,6 +22,41 @@ import scala.reflect.Manifest
 import java.util.{Iterator => JavaIterator, ArrayList => JavaArrayList}
 
 /**
+ * Helper class to provide an easy way for converting Lists of Boxes[T] into
+ * a Box of List[T].
+**/
+case class ListOfBoxes[T](theListOfBoxes: List[Box[T]]) {
+  /**
+   * Convert a List of Boxes into a single Box containting a List[T], where T is
+   * the parameterized type of the Boxes.
+   *
+   * This method is useful for those cases where you have a lot of operations being
+   * executed that all return some Box[T]. You want just a List[T] if all of those
+   * operations succeeded, but you don't want to have Failures disappear if any were
+   * present in the list.
+   *
+   * If all of the Boxes in the List are Full or Empty, we return a Full box containing
+   * a List of all of the Full Box values that were present. If any of the Boxes contain
+   * a Failure, a ParamFailure is returned, containing the original List[Box[T]] as the
+   * param.
+   *
+   * It is worth noting that the size of the list in the resulting Box[List[T]] may not be equal
+   * to the size of the List[Box[T]] that is fed as Empty values will disappear altogether in the
+   * conversion.
+   *
+   * @param failureErrorMessage The string that should be placed in the message for the Failure.
+   * @return A Full[List[T]] if no Failures were present. ParamFailure[List[Box[T]]] otherwise.
+  **/
+  def toSingleBox(failureErrorMessage: String): Box[List[T]] = {
+    if (theListOfBoxes.exists(_.isInstanceOf[Failure])) {
+      Failure(failureErrorMessage) ~> theListOfBoxes
+    } else {
+      Full(theListOfBoxes.flatten)
+    }
+  }
+}
+
+/**
  * The bridge from Java to Scala Box
  */
 class BoxJBridge {
@@ -46,7 +81,9 @@ class BoxJBridge {
  *
  * It also provides implicit methods to transform Option to Box, Box to Iterable, and Box to Option
  */
-object Box extends BoxTrait
+object Box extends BoxTrait {
+  implicit def listToListOfBoxes[T](boxes: List[Box[T]]) = ListOfBoxes(boxes)
+}
 
 /**
  * The Box companion object provides methods to create a Box from:
