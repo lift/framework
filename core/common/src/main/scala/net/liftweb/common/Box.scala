@@ -40,6 +40,10 @@ case class ListOfBoxes[T](theListOfBoxes: List[Box[T]]) {
    * a Failure, a ParamFailure is returned, containing the original List[Box[T]] as the
    * param.
    *
+   * It is worth noting that the size of the list in the resulting Box[List[T]] may not be equal
+   * to the size of the List[Box[T]] that is fed as Empty values will disappear altogether in the
+   * conversion.
+   *
    * @param failureErrorMessage The string that should be placed in the message for the Failure.
    * @return A Full[List[T]] if no Failures were present. ParamFailure[List[Box[T]]] otherwise.
   **/
