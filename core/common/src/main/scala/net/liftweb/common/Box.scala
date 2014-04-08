@@ -234,52 +234,14 @@ sealed abstract class Box[+A] extends Product with Serializable{
    */
   def openOrThrowException(justification: String): A
 
+  /**
+   * Exists to avoid the implicit conversion from Box to Option. Opening a Box
+   * unsafely should be done using openOrThrowException.
+   */
+  final def get: Nothing = {
+    throw new Exception("Attempted to open a Box incorrectly. Please use openOrThrowException.")
+  }
 
-  /**
-   * Return the value contained in this Box if it is Full;
-   * throw an exception otherwise.
-   *
-   * Using open_! in an example posted to the Lift mailing list
-   * may disqualify you for a helpful response.
-   *
-   * The method has a '!' in its name.  This means "don't use it unless
-   * you are 100% sure that the Box is Full and you should probably
-   * comment your code with the explanation of the guaranty."
-   * The better case for extracting the value out of a Box can
-   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
-   *
-   * @return the value contained in this Box if it is full; throw an exception otherwise
-   */
-  /*
-  @deprecated("use openOrThrowException, or better yet, do the right thing with your code and use map, flatMap or foreach", "2.4")
-  final def open_! : A = openOrThrowException("Legacy method implementation")
-  */
-  /**
-   * Return the value contained in this Box if it is Full; throw an
-   * exception otherwise.  Please use openOrThrowException instead. In
-   * the past, this method triggered an implicit conversion to Option
-   * and could throw an unintended NullPointerException. That is no longer
-   * the case, and in Lift 3 this method will be changed to return
-   * a useless type so that the compiler will break attempts to use it.
-   */
-  @deprecated("use map/flatMap/foreach if possible, or openOrThrowException if you must", "2.6")
-  final def get: A = open_!
-
-  /**
-   * Return the value contained in this Box if it is Full;
-   * throw an exception otherwise.
-   * This means "don't use it unless
-   * you are 100% sure that the Box is Full and you should probably
-   * comment your code with the explanation of the guaranty.
-   * The better case for extracting the value out of a Box can
-   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
-   *
-   * @return the value contained in this Box if it is full; throw an exception otherwise
-   */
-  /*
-  @deprecated("use openOrThrowException, or better yet, do the right thing with your code and use map, flatMap or foreach", "2.4")
-  final def openTheBox: A = openOrThrowException("Legacy method implementation")
-  */
   /**
    * Return the value contained in this Box if it is full; otherwise return the specified default
    * @return the value contained in this Box if it is full; otherwise return the specified default
