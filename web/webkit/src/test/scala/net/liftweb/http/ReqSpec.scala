@@ -17,10 +17,15 @@
 package net.liftweb
 package http
 
+import java.io.ByteArrayInputStream
+
 import org.specs2.mutable.Specification
+
+import org.mockito.Mockito._
 
 import common._
 
+import provider._
 
 /**
  * System under specification for Req.
@@ -87,6 +92,26 @@ object ReqSpec extends Specification  {
       }
 
       ieVersions must_== List(6, 7, 8, 9, 10, 11)
+    }
+
+    "when trying to JSON parse the request body" in {
+      "with an invalid Content-Type should return a Failure" in {
+        val testJson = """{ "booyan": "shazam", "booyak": 5, "bazam": 2.5 }"""
+        val mockHttpRequest = mock(classOf[HTTPRequest])
+        var paramCalcInfo = ParamCalcInfo(Nil, Map.empty, Nil, Full(BodyOrInputStream(new ByteArrayInputStream(testJson.getBytes("UTF-8")))))
+
+        val req =
+          new Req(
+            Req.NilPath, "/", GetRequest,
+            Full("text/plain"),
+            mockHttpRequest,
+            nanoStart = 0l, nanoEnd = 1l, _stateless_? = true,
+            () => paramCalcInfo,
+            addlParams = Map.empty
+          )
+
+        req.json should beAnInstanceOf[Failure]
+      }
     }
   }
 }

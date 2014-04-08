@@ -984,24 +984,37 @@ class Req(val path: ParsePath,
       sid <- httpRequest.sessionId
     } yield sid
 
-  lazy val json: Box[JsonAST.JValue] = 
-    if (!json_?) Empty
-    else try {
-      import java.io._
+  /**
+   * The JValue representation of this Req's body, if the body is JSON-parsable
+   * AND the content-type of the request is JSON. Returns a Failure if
+   * the request is not considered a JSON request (see json_?), or if
+   * there was an error parsing the JSON.
+   *
+   * If you want to forcibly evaluate the request body as JSON, ignoring
+   * content type, see bodyAsJson.
+   */
+  lazy val json: Box[JsonAST.JValue] = {
+    if (!json_?) {
+      Failure("Cannot parse non-JSON request as JSON; please check content-type.")
+    } else {
+      try {
+        import java.io._
 
-      def r = """; *charset=(.*)""".r
-      def r2 = """[^=]*$""".r
+        def r = """; *charset=(.*)""".r
+        def r2 = """[^=]*$""".r
 
-      def charSet: String = contentType.flatMap(ct => r.findFirstIn(ct).flatMap(r2.findFirstIn)).getOrElse("UTF-8")
+        def charSet: String = contentType.flatMap(ct => r.findFirstIn(ct).flatMap(r2.findFirstIn)).getOrElse("UTF-8")
       
-      body.map(b => 
-        JsonParser.parse(new 
-                         InputStreamReader(new 
-                                           ByteArrayInputStream(b), charSet)))
-    } catch {
-      case e: LiftFlowOfControlException => throw e
-      case e: Exception => Failure(e.getMessage, Full(e), Empty)
+        body.map(b => 
+          JsonParser.parse(new 
+                           InputStreamReader(new 
+                                             ByteArrayInputStream(b), charSet)))
+      } catch {
+        case e: LiftFlowOfControlException => throw e
+        case e: Exception => Failure(e.getMessage, Full(e), Empty)
+      }
     }
+  }
 
   private def containerRequest = Box !! request
     /**
