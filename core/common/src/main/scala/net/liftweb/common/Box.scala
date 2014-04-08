@@ -44,18 +44,10 @@ case class ListOfBoxes[T](theListOfBoxes: List[Box[T]]) {
    * @return A Full[List[T]] if no Failures were present. ParamFailure[List[Box[T]]] otherwise.
   **/
   def toSingleBox(failureErrorMessage: String): Box[List[T]] = {
-    val fulls = theListOfBoxes.collect {
-      case aFull: Full[T] => aFull
-    }
-
-    val failures = theListOfBoxes.collect {
-      case failureBox: Failure => failureBox
-    }
-
-    if (failures.isEmpty) {
-      Full(fulls.map(_.value))
-    } else {
+    if (theListOfBoxes.exists(_.isInstanceOf[Failure])) {
       Failure(failureErrorMessage) ~> theListOfBoxes
+    } else {
+      Full(theListOfBoxes.flatten)
     }
   }
 }
