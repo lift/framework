@@ -118,6 +118,25 @@ object ReqSpec extends Specification with Mockito {
       "with an invalid Content-Type should return a Failure" in new mockReq {
         req("text/plain").json should beAnInstanceOf[Failure]
       }
+
+      "with an application/json Content-Type should return the result of parsing the JSON" in new mockReq {
+        req("application/json").json should_==
+          Full(
+            ("booyan" -> "shazam") ~
+            ("booyak" -> 5) ~
+            ("bazam" -> 2.5)
+          )
+      }
+
+      "with a text/json Content-Type should return the result of parsing the JSON" in new mockReq {
+        req("text/json").json should_==
+          Full(
+            ("booyan" -> "shazam") ~
+            ("booyak" -> 5) ~
+            ("bazam" -> 2.5)
+          )
+      }
+    }
       }
     }
   }
