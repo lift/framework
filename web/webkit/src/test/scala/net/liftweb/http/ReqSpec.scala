@@ -132,6 +132,18 @@ object ReqSpec extends Specification with Mockito {
         req("text/json").json should_== Full(parsedJson)
       }
     }
+
+    "when forcing a request body JSON parse with bodyAsJson" in {
+      "with an invalid Content-Type should return the result of parsing the JSON" in new mockJsonReq {
+        req("text/plain").bodyAsJson should_== Full(parsedJson)
+      }
+
+      "with an application/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
+        req("application/json").bodyAsJson should_== Full(parsedJson)
+      }
+
+      "with a text/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
+        req("text/json").bodyAsJson should_== Full(parsedJson)
       }
     }
   }

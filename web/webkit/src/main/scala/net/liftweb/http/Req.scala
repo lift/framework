@@ -997,22 +997,30 @@ class Req(val path: ParsePath,
     if (!json_?) {
       Failure("Cannot parse non-JSON request as JSON; please check content-type.")
     } else {
-      try {
-        import java.io._
+      bodyAsJson
+    }
+  }
 
-        def r = """; *charset=(.*)""".r
-        def r2 = """[^=]*$""".r
+  /**
+   * Forcibly tries to parse the request body as JSON. Does not perform any
+   * content type checks, unlike the json method.
+   */
+  lazy val bodyAsJson: Box[JsonAST.JValue] = {
+    try {
+      import java.io._
 
-        def charSet: String = contentType.flatMap(ct => r.findFirstIn(ct).flatMap(r2.findFirstIn)).getOrElse("UTF-8")
+      def r = """; *charset=(.*)""".r
+      def r2 = """[^=]*$""".r
+
+      def charSet: String = contentType.flatMap(ct => r.findFirstIn(ct).flatMap(r2.findFirstIn)).getOrElse("UTF-8")
       
-        body.map(b => 
-          JsonParser.parse(new 
-                           InputStreamReader(new 
-                                             ByteArrayInputStream(b), charSet)))
-      } catch {
-        case e: LiftFlowOfControlException => throw e
-        case e: Exception => Failure(e.getMessage, Full(e), Empty)
-      }
+      body.map(b => 
+        JsonParser.parse(new 
+                         InputStreamReader(new 
+                                           ByteArrayInputStream(b), charSet)))
+    } catch {
+      case e: LiftFlowOfControlException => throw e
+      case e: Exception => Failure(e.getMessage, Full(e), Empty)
     }
   }
 
