@@ -1043,18 +1043,34 @@ class Req(val path: ParsePath,
       case (sch, port) => sch + "://" + r.serverName + ":" + port + contextPath
     }) openOr ""
 
-
+  /**
+   * The Elem representation of this Req's body, if the body is XML-parsable
+   * AND the content-type of the request is XML. Returns a Failure if
+   * the request is not considered a XML request (see xml_?), or if
+   * there was an error parsing the XML.
+   *
+   * If you want to forcibly evaluate the request body as XML, ignoring
+   * content type, see bodyAsXml.
+   */
   lazy val xml: Box[Elem] = {
     if (!xml_?) {
       Failure("Cannot parse non-XML request as XML; please check content-type.")
     } else  {
-      try {
-        import java.io._
-        body.map(b => XML.load(new ByteArrayInputStream(b)))
-      } catch {
-        case e: LiftFlowOfControlException => throw e
-        case e: Exception => Failure(e.getMessage, Full(e), Empty)
-      }
+      bodyAsXml
+    }
+  }
+
+  /**
+   * Forcibly tries to parse the request body as XML. Does not perform any
+   * content type checks, unlike the xml method.
+   */
+  lazy val bodyAsXml: Box[Elem] = {
+    try {
+      import java.io._
+      body.map(b => XML.load(new ByteArrayInputStream(b)))
+    } catch {
+      case e: LiftFlowOfControlException => throw e
+      case e: Exception => Failure(e.getMessage, Full(e), Empty)
     }
   }
 

@@ -177,6 +177,20 @@ object ReqSpec extends Specification with Mockito {
         req("text/xml").xml should_== Full(parsedXml)
       }
     }
+
+    "when forcing a request body XML parse with bodyAsXml" in {
+      "with an invalid Content-Type should return the result of parsing the JSON" in new mockXmlReq {
+        req("text/plain").bodyAsXml should_== Full(parsedXml)
+      }
+
+      "with an application/json Content-Type should return the result of parsing the JSON" in new mockXmlReq {
+        req("application/xml").bodyAsXml should_== Full(parsedXml)
+      }
+
+      "with a text/json Content-Type should return the result of parsing the JSON" in new mockXmlReq {
+        req("text/xml").bodyAsXml should_== Full(parsedXml)
+      }
+    }
   }
 }
 
