@@ -99,6 +99,10 @@ object ReqSpec extends Specification with Mockito {
 
     class mockJsonReq extends Scope {
       val testJson = """{ "booyan": "shazam", "booyak": 5, "bazam": 2.5 }"""
+      val parsedJson =
+        ("booyan" -> "shazam") ~
+        ("booyak" -> 5) ~
+        ("bazam" -> 2.5)
 
       val mockHttpRequest = mock[HTTPRequest]
       var paramCalcInfo = ParamCalcInfo(Nil, Map.empty, Nil, Full(BodyOrInputStream(new ByteArrayInputStream(testJson.getBytes("UTF-8")))))
@@ -121,21 +125,11 @@ object ReqSpec extends Specification with Mockito {
       }
 
       "with an application/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
-        req("application/json").json should_==
-          Full(
-            ("booyan" -> "shazam") ~
-            ("booyak" -> 5) ~
-            ("bazam" -> 2.5)
-          )
+        req("application/json").json should_== Full(parsedJson)
       }
 
       "with a text/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
-        req("text/json").json should_==
-          Full(
-            ("booyan" -> "shazam") ~
-            ("booyak" -> 5) ~
-            ("bazam" -> 2.5)
-          )
+        req("text/json").json should_== Full(parsedJson)
       }
     }
       }
