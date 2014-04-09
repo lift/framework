@@ -97,15 +97,11 @@ object ReqSpec extends Specification with Mockito {
       ieVersions must_== List(6, 7, 8, 9, 10, 11)
     }
 
-    class mockJsonReq extends Scope {
-      val testJson = """{ "booyan": "shazam", "booyak": 5, "bazam": 2.5 }"""
-      val parsedJson =
-        ("booyan" -> "shazam") ~
-        ("booyak" -> 5) ~
-        ("bazam" -> 2.5)
-
+    trait mockReq extends Scope {
       val mockHttpRequest = mock[HTTPRequest]
-      var paramCalcInfo = ParamCalcInfo(Nil, Map.empty, Nil, Full(BodyOrInputStream(new ByteArrayInputStream(testJson.getBytes("UTF-8")))))
+      def paramCalcInfo = ParamCalcInfo(Nil, Map.empty, Nil, Full(BodyOrInputStream(new ByteArrayInputStream(bodyBytes))))
+
+      def bodyBytes: Array[Byte]
 
       def req(contentType: String) = {
         new Req(
@@ -119,6 +115,17 @@ object ReqSpec extends Specification with Mockito {
       }
     }
 
+    trait mockJsonReq extends mockReq {
+      val testJson = """{ "booyan": "shazam", "booyak": 5, "bazam": 2.5 }"""
+      val parsedJson =
+        ("booyan" -> "shazam") ~
+        ("booyak" -> 5) ~
+        ("bazam" -> 2.5)
+
+      def bodyBytes = {
+        testJson.getBytes("UTF-8")
+      }
+    }
     "when trying to JSON parse the request body" in {
       "with an invalid Content-Type should return a Failure" in new mockJsonReq {
         req("text/plain").json should beAnInstanceOf[Failure]
