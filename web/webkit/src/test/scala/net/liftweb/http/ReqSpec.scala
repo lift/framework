@@ -126,6 +126,16 @@ object ReqSpec extends Specification with Mockito {
         testJson.getBytes("UTF-8")
       }
     }
+
+    trait mockXmlReq extends mockReq {
+      val testXml = """<boom><slam attribute="do it">Oh yeah</slam></boom>"""
+      val parsedXml = <boom><slam attribute="do it">Oh yeah</slam></boom>
+
+      def bodyBytes = {
+        testXml.getBytes("UTF-8")
+      }
+    }
+
     "when trying to JSON parse the request body" in {
       "with an invalid Content-Type should return a Failure" in new mockJsonReq {
         req("text/plain").json should beAnInstanceOf[Failure]
@@ -151,6 +161,20 @@ object ReqSpec extends Specification with Mockito {
 
       "with a text/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
         req("text/json").bodyAsJson should_== Full(parsedJson)
+      }
+    }
+
+    "when trying to XML parse the request body" in {
+      "with an invalid Content-Type should return a Failure" in new mockXmlReq {
+        req("text/plain").xml should beAnInstanceOf[Failure]
+      }
+
+      "with an application/xml Content-Type should return the result of parsing the JSON" in new mockXmlReq {
+        req("application/xml").xml should_== Full(parsedXml)
+      }
+
+      "with a text/xml Content-Type should return the result of parsing the JSON" in new mockXmlReq {
+        req("text/xml").xml should_== Full(parsedXml)
       }
     }
   }

@@ -1044,15 +1044,19 @@ class Req(val path: ParsePath,
     }) openOr ""
 
 
-  lazy val xml: Box[Elem] = if (!xml_?) Empty
-  else 
-    try {
-      import java.io._
-      body.map(b => XML.load(new ByteArrayInputStream(b)))
-    } catch {
-      case e: LiftFlowOfControlException => throw e
-      case e: Exception => Failure(e.getMessage, Full(e), Empty)
+  lazy val xml: Box[Elem] = {
+    if (!xml_?) {
+      Failure("Cannot parse non-XML request as XML; please check content-type.")
+    } else  {
+      try {
+        import java.io._
+        body.map(b => XML.load(new ByteArrayInputStream(b)))
+      } catch {
+        case e: LiftFlowOfControlException => throw e
+        case e: Exception => Failure(e.getMessage, Full(e), Empty)
+      }
     }
+  }
 
   /**
    * The SiteMap Loc associated with this Req
