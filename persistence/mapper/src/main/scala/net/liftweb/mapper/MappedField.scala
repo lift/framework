@@ -27,7 +27,7 @@ import net.liftweb.http.js._
 import net.liftweb.common._
 import net.liftweb.json._
 import net.liftweb.util._
-
+import scala.reflect.runtime.universe._
 
 /**
  * This is the supertrait of all traits that can be mixed into a MappedField.
@@ -280,6 +280,17 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
    * Should the field be ignored by the OR Mapper?
    */
   def ignoreField_? = false
+
+
+  def manifest: TypeTag[FieldType]
+
+  /**
+   * Get the source field metadata for the field
+   * @return the source field metadata for the field
+   */
+  def sourceInfoMetadata(): SourceFieldMetadata{type ST = FieldType}
+
+  def sourceFieldInfo(): SourceFieldInfo{type T = FieldType} = SourceFieldInfoRep(get, sourceInfoMetadata())
 
 
 

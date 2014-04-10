@@ -31,7 +31,8 @@ import scala.xml.NodeSeq
  *
  * @author nafg
  */
-@deprecated("Will be removed", "2.5")
+
+/*
 object XmlMenu {
   def apply(xml: NodeSeq): Seq[Menu] = for(node<-xml) yield node match {
     case m @ <menu>{ children @ _* }</menu> =>
@@ -40,5 +41,5 @@ object XmlMenu {
       val link = util.JSONParser.parse(m \ "link" text).get.asInstanceOf[List[Any]].map(_.asInstanceOf[String])
       Menu(Loc(name, link, text), apply(m \ "menu") : _*)
   }
-}
+}*/
 

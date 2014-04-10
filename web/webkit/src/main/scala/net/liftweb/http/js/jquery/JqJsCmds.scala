@@ -29,25 +29,6 @@ import net.liftweb.http.js.{JsExp, JE}
 import JE._
 import JsCmds._
 
-/**
- * Classes mixing JQueryRight are also mixing JsMember. As JQueryRight
- * is deprecated clases mixing this trait with stop doing so soon and they
- * will mixin JsMember instead.
- */
-@deprecated(""" As JQueryRight
-is deprecated clases mixing this trait with stop doing so soon and they
-will mixin JsMember instead.""", "2.3")
-trait JQueryRight {
-  this: JsExp =>
-  def toJsCmd: String
-}
-/**
- * Classes mixing JQuryLeft will soon stop doing so. Extending/Mixing JsExp will be enough
- */ 
-@deprecated("Classes mixing JQuryLeft will soon stop doing so. Extending/Mixing JsExp will be enough", "2.3")
-trait JQueryLeft {
-  this: JsExp =>
-}
 
 /**
  * A singleton that vends various different functions for WiringUI support
@@ -665,14 +646,5 @@ object JqJsCmds {
     def toJsCmd = "jQuery.unblockUI();"
   }
 
-  /**
-   * Use SetValueAndFocus from JsCmds
-   */
-  @deprecated("Use SetValueAndFocus from JsCmds", "2.3")
-  case class SetValueAndFocus(id: String, value: String) extends JsCmd {
-    def toJsCmd = "document.getElementById(" + id.encJs + ").value = " +
-            value.encJs +
-            "; document.getElementById(" + id.encJs + ").focus();"
-  }
 
 }

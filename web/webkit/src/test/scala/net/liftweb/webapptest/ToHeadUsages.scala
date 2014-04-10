@@ -90,6 +90,7 @@ object ToHeadUsages extends Specification  {
       )
     }
 
+    /*
     "not merge for headless body html" in {
       jetty.browse(
         "/body_no_head", html => {
@@ -99,7 +100,7 @@ object ToHeadUsages extends Specification  {
           html.getElementsByXPath("/html/body//div").size must be_==(1).when(jetty.running)
         }
       )
-    }
+    }*/
 
     "not merge non-html" in {
       jetty.browse(

@@ -103,10 +103,48 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
   protected def findFunc(name: String): Box[T]
   protected def setFunc(name: String, value: T): Unit
   protected def clearFunc(name: String): Unit
-  protected def wasInitialized(name: String): Boolean
 
+  private def _setFunc(name: String, value: T) {
+    setFunc(name, value)
+
+    val sd = settingDefault_?
+    changeFuncs.foreach(f => Helpers.tryo(f(Full(value), sd)))
+  }
+
+  private def _clearFunc(name: String) {
+    clearFunc(name)
+    changeFuncs.foreach(f => Helpers.tryo(f(Empty, false)))
+  }
+
+  protected def wasInitialized(name: String): Boolean
+  private var changeFuncs: List[FuncType] = Nil
+
+  /**
+   * The function takes a `Box[T]` (Full if the Var is being set, Empty if it's being cleared) and
+   * a Boolean indicating that the set function is setting to the default value.
+   *
+   */
+  type FuncType = (Box[T], Boolean) => Unit
 
   protected def calcDefaultValue: T
+
+
+  /**
+   * On any change to this Var, invoke the function. Changes are setting the value, clearing the value.
+   * There may not be a call if the Var goes out of scope (e.g., a RequestVar at the end of the Request).
+   *
+   * The function takes a `Box[T]` (Full if the Var is being set, Empty if it's being cleared) and
+   * a Boolean indicating that the set function is setting to the default value.
+   *
+   * The function should execute *very* quickly (e.g., Schedule a function to be executed on a different thread).
+   *
+   * The function should generally be set in Boot or when a singleton is created.
+   *
+   * @param f the function to execute on change
+   */
+  def onChange(f: FuncType) {
+    changeFuncs ::= f
+  }
 
   /**
    * A non-side-effecting test if the value was initialized
@@ -173,12 +211,18 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
   /**
    * Set the Var if it has not been calculated
    */
-  def setIsUnset(value: => T): T = doSync {
+  def setIfUnset(value: => T): T = doSync {
     if (!set_?) {
       set(value)
     }
     this.is
   }
+
+  /**
+   * Set the Var if it has not been calculated
+   */
+  @deprecated("use setIfUnset")
+  def setIsUnset(value: => T): T = setIfUnset(value)
 
   /**
    * Set the session variable
@@ -187,7 +231,8 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
    */
   def apply(what: T): T = {
     testInitialized
-    setFunc(name, what)
+    _setFunc(name, what)
+
     what
   }
 
@@ -202,7 +247,10 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
     is
   }
 
-  def remove(): Unit = clearFunc(name)
+  def remove(): Unit = {
+    _clearFunc(name)
+
+  }
 
   //def cleanupFunc: Box[() => Unit] = Empty
 
@@ -228,13 +276,13 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
    */
   def doWith[F](newVal: T)(f: => F): F = {
     val old = findFunc(name)
-    setFunc(name, newVal)
+    _setFunc(name, newVal)
     try {
       f
     } finally {
       old match {
-        case Full(t) => setFunc(name, t)
-        case _ => clearFunc(name)
+        case Full(t) => _setFunc(name, t)
+        case _ => _clearFunc(name)
       }
     }
   }

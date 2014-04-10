@@ -36,6 +36,7 @@ import java.util.concurrent.{ConcurrentHashMap => CHash}
 import scala.reflect.Manifest
 
 import java.util.concurrent.atomic.AtomicInteger
+import net.liftweb.actor.{LiftActor, LAFuture}
 
 class LiftRulesJBridge {
   def liftRules: LiftRules = LiftRules
@@ -71,6 +72,42 @@ object LiftRulesMocker {
 final case class StatelessReqTest(path: List[String], httpReq: HTTPRequest)
 
 /**
+ * Sometimes we're going to have to surface more data from one of these requests
+ * than we might like (for example, extra info about continuing the computation on
+ * a different thread), so we'll start off right by having an Answer trait
+ * that will have some subclasses and implicit conversions
+ */
+sealed trait DataAttributeProcessorAnswer
+
+/**
+ * The companion object that has the implicit conversions
+ */
+object DataAttributeProcessorAnswer {
+  implicit def nodesToAnswer(in: NodeSeq): DataAttributeProcessorAnswer = DataAttributeProcessorAnswerNodes(in)
+  implicit def nodeFuncToAnswer(in: () => NodeSeq): DataAttributeProcessorAnswer = DataAttributeProcessorAnswerFork(in)
+  implicit def nodeFutureToAnswer(in: LAFuture[NodeSeq]): DataAttributeProcessorAnswer = DataAttributeProcessorAnswerFuture(in)
+  implicit def setNodeToAnswer(in: Seq[Node]): DataAttributeProcessorAnswer = DataAttributeProcessorAnswerNodes(in)
+}
+
+/**
+ * Yep... just a bunch of nodes.
+ * @param nodes
+ */
+final case class DataAttributeProcessorAnswerNodes(nodes: NodeSeq) extends DataAttributeProcessorAnswer
+
+/**
+ * A function that returns a bunch of nodes... run it on a different thread
+ * @param nodeFunc
+ */
+final case class DataAttributeProcessorAnswerFork(nodeFunc: () => NodeSeq) extends DataAttributeProcessorAnswer
+
+/**
+ * A future that returns nodes... run them on a different thread
+ * @param nodeFuture the future of the NodeSeq
+ */
+final case class DataAttributeProcessorAnswerFuture(nodeFuture: LAFuture[NodeSeq]) extends DataAttributeProcessorAnswer
+
+/**
  * The Lift configuration singleton
  */
 object LiftRules extends LiftRulesMocker {
@@ -86,6 +123,17 @@ object LiftRules extends LiftRulesMocker {
   } else prodInstance
 
   type DispatchPF = PartialFunction[Req, () => Box[LiftResponse]];
+
+  /**
+   * A partial function that allows processing of any attribute on an Elem
+   * if the attribute begins with "data-"
+   */
+  type DataAttributeProcessor = PartialFunction[(String, String, Elem, LiftSession), DataAttributeProcessorAnswer]
+
+  /**
+   * The pattern/PartialFunction for matching tags in Lift
+   */
+  type TagProcessor = PartialFunction[(String, Elem, LiftSession), DataAttributeProcessorAnswer]
 
   /**
    * The test between the path of a request and whether that path
@@ -277,16 +325,19 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   private def _getLiftSession(req: Req): LiftSession = {
     val wp = req.path.wholePath
-    val cometSessionId =
-    if (wp.length >= 3 && wp.head == LiftRules.cometPath)
-      Full(wp(2))
-    else
-      Empty
+    val CP = LiftRules.cometPath
+    val cometSessionId = wp match {
+      case CP :: _ :: session :: _ => Full(session)
+      case _ => Empty
+    }
 
     val ret = SessionMaster.getSession(req, cometSessionId) match {
       case Full(ret) =>
         ret.fixSessionTime()
         ret
+
+      case Failure(_, _, _) =>
+        LiftRules.statelessSession.vend.apply(req)
 
       case _ =>
         val ret = LiftSession(req)
@@ -431,7 +482,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     val ret: Box[String] =
     for{
       url <- Box !! LiftRules.getClass.getResource("/" + cn + ".class")
-      val newUrl = new java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
+      newUrl = new java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
       str <- tryo(new String(readWholeStream(newUrl.openConnection.getInputStream), "UTF-8"))
       ma <- """Implementation-Version: (.*)""".r.findFirstMatchIn(str)
     } yield ma.group(1)
@@ -444,7 +495,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     val ret: Box[Date] =
     for{
       url <- Box !! LiftRules.getClass.getResource("/" + cn + ".class")
-      val newUrl = new java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
+      newUrl = new java.net.URL(url.toExternalForm.split("!")(0) + "!" + "/META-INF/MANIFEST.MF")
       str <- tryo(new String(readWholeStream(newUrl.openConnection.getInputStream), "UTF-8"))
       ma <- """Built-Time: (.*)""".r.findFirstMatchIn(str)
       asLong <- asLong(ma.group(1))
@@ -643,7 +694,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * default of reloading the current page.
    */
   val noCometSessionCmd = new FactoryMaker[JsCmd](
-    () => JsCmds.Run("liftComet.lift_sessionLost()")
+    () => {
+      JsCmds.Run("liftComet.lift_sessionLost();")
+    }
   ) {}
 
   /**
@@ -656,8 +709,22 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * liftAjax.lift_sessionLost reloads the page by default.
    */
   val noAjaxSessionCmd = new FactoryMaker[JsCmd](
-    () => JsCmds.Run("liftAjax.lift_sessionLost()")
+    () => {
+      JsCmds.Run("liftAjax.lift_sessionLost();")
+    }
   ) {}
+
+  /**
+   * Server-side actors that represent client-side
+   * actor endpoints (client actors, Round Trips) need
+   * a lifespan. By default, it's 60 seconds, but you might
+   * want to make it longer if the client is going to get
+   * delayed by long computations that bar it from re-establishing
+   * the long polling connection
+   */
+  val clientActorLifespan = new FactoryMaker[LiftActor => Long](
+    () => (actor: LiftActor) => (30 minutes): Long
+  ){}
 
   /**
    * Put a function that will calculate the request timeout based on the
@@ -860,6 +927,36 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
 
   /**
+   * Ever wanted to add custom attribute processing to Lift? Here's your chance.
+   * Every attribute with the data- prefix will be tested against this
+   * RulesSeq and if there's a match, then use the rule process. Simple, easy, cool.
+   */
+  val dataAttributeProcessor: RulesSeq[DataAttributeProcessor] = new RulesSeq()
+
+  /**
+   * Ever wanted to match on *any* arbitrary tag in your HTML and process it
+   * any way you wanted? Well, here's your chance, dude. You can capture any
+   * tag and do anything you want with it.
+   *
+   * Note that this set of PartialFunctions is run for **EVERY** node
+   * in the DOM so make sure it runs *FAST*.
+   *
+   * Also, no subsequent processing of the returned NodeSeq is done (no
+   * LiftSession.processSurroundAndInclude()) so evaluate everything
+   * you want to.
+   *
+   * But do avoid infinite loops, so make sure the PartialFunction actually
+   * returns true *only* when you're going to return a modified node.
+   *
+   * An example might be:
+   *
+   *
+   *    case ("script", e, session) if e.getAttribute("data-serverscript").isDefined => ...
+   */
+  val tagProcessor: RulesSeq[TagProcessor] = new RulesSeq()
+
+
+  /**
   * There may be times when you want to entirely control the templating process.  You can insert
   * a function to this factory that will do your custom template resolution.  If the PartialFunction
   * isDefinedAt the given locale/path, then that's the template returned.  In this way, you can
@@ -948,7 +1045,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
           val sm = smf()
           _sitemap = Full(sm)
           for (menu <- sm.menus;
-               val loc = menu.loc;
+               loc = menu.loc;
                rewrite <- loc.rewritePF) LiftRules.statefulRewrite.append(PerRequestPF(rewrite))
 
           _sitemap
@@ -1328,6 +1425,14 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   def cometLogger_=(newLogger: Logger): Unit = _cometLogger.set(newLogger)
 
+
+  /**
+   * Sometimes the comet logger (which is really the Ajax logger)
+   * needs to have the string cleaned up to remove stuff like passwords. That's
+   * done by this function.
+   */
+  @volatile var cometLoggerStringSecurer: String => String = s => s
+
   /**
    * Takes a Node, headers, cookies, and a session and turns it into an XhtmlResponse.
    */
@@ -1677,7 +1782,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * The list of suffixes that Lift looks for in templates.
    * By default, html, xhtml, and htm
    */
-  @volatile var templateSuffixes: List[String] = List("html", "xhtml", "htm")
+  @volatile var templateSuffixes: List[String] = List("html", "xhtml", "htm", "md")
 
   /**
    * When a request is parsed into a Req object, certain suffixes are explicitly split from

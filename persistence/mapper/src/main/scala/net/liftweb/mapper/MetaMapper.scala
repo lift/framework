@@ -28,7 +28,7 @@ import xml._
 import common._
 import json._
 import util.Helpers._
-import util.{NamedPF, FieldError, Helpers}
+import util.{SourceFieldMetadata, NamedPF, FieldError, Helpers}
 import http.{LiftRules, S, SHtml, RequestMemoize, Factory}
 import http.js._
 
@@ -731,7 +731,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   Elem(null,elemName,
        mappedFieldList.foldRight[MetaData](Null) {(p, md) => val fld = ??(p.method, what)
                                                   new UnprefixedAttribute(p.name, Text(fld.toString), md)}
-       ,TopScope)
+       ,TopScope, true)
 
   /**
    * Returns true if none of the fields are dirty
@@ -1224,7 +1224,18 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
              actual.suplementalJs(Empty) :_*)
   }
 
+  /**
+   * Get a list of all the fields
+   * @return a list of all the fields
+   */
+  lazy val doAllFieldNames: Seq[(String, SourceFieldMetadata)] =
+  mappedFieldList.map(fh => fh.name.toLowerCase -> fh.field.sourceInfoMetadata())
 
+  /**
+   * Get a list of all the fields as a map
+   * @return a list of all the fields
+   */
+  lazy val fieldNamesAsMap: Map[String, SourceFieldMetadata] = Map(doAllFieldNames :_*)
 
   def asHtml(toLine: A): NodeSeq =
   Text(internalTableName_$_$) :: Text("={ ") ::

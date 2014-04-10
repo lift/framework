@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 WorldWide Conferencing, LLC
+ * Copyright 2012-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ object BuildDef extends Build {
   // Web Projects
   // ------------
   lazy val web: Seq[ProjectReference] =
-    Seq(testkit, webkit, wizard)
+    Seq(testkit, webkit)
 
   lazy val testkit =
     webProject("testkit")
@@ -107,22 +107,19 @@ object BuildDef extends Build {
         .settings(description := "Webkit Library",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv =>
-                    Seq(commons_fileupload, servlet_api, specs2(sv).copy(configurations = Some("provided")), jetty6, jwebunit)
+                    Seq(commons_fileupload, rhino, servlet_api, specs2(sv).copy(configurations = Some("provided")), jetty6,
+                      jwebunit)
                   },
                   initialize in Test <<= (sourceDirectory in Test) { src =>
                     System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
                   })
 
-  lazy val wizard =
-    webProject("wizard")
-        .dependsOn(webkit, db)
-        .settings(description := "Wizard Library")
 
 
   // Persistence Projects
   // --------------------
   lazy val persistence: Seq[ProjectReference] =
-    Seq(db, proto, jpa, mapper, record, squeryl_record, mongodb, mongodb_record, ldap)
+    Seq(db, proto, mapper, record, squeryl_record, mongodb, mongodb_record)
 
   lazy val db =
     persistenceProject("db")
@@ -132,11 +129,6 @@ object BuildDef extends Build {
   lazy val proto =
     persistenceProject("proto")
         .dependsOn(webkit)
-
-  lazy val jpa =
-    persistenceProject("jpa")
-        .dependsOn(webkit)
-        .settings(libraryDependencies ++= Seq(scalajpa, persistence_api))
 
   lazy val mapper =
     persistenceProject("mapper")
@@ -171,13 +163,6 @@ object BuildDef extends Build {
         .dependsOn(record, mongodb)
         .settings(parallelExecution in Test := false)
 
-  lazy val ldap =
-    persistenceProject("ldap")
-        .dependsOn(mapper)
-        .settings(libraryDependencies += apacheds,
-                  initialize in Test <<= (crossTarget in Test) { ct =>
-                    System.setProperty("apacheds.working.dir", (ct / "apacheds").absolutePath)
-                  })
 
   def coreProject = liftProject("core") _
   def webProject = liftProject("web") _

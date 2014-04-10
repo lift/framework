@@ -43,7 +43,7 @@ class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
           val cook30 = cookie.asInstanceOf[{def setHttpOnly(b: Boolean): Unit}]
           cook30.setHttpOnly(bv)
         } catch {
-          case e => // swallow.. the exception will be thrown for Servlet 2.5 containers but work for servlet
+          case e: Exception => // swallow.. the exception will be thrown for Servlet 2.5 containers but work for servlet
           // 3.0 containers
         }
       }

@@ -61,27 +61,6 @@ class NamedCometDispatcher(name: Box[String]) extends LiftActor with Loggable {
       }
     }
   }
-
-  /**
-   * Vector.par was introduced in 2.9.x , so to be able to use it in Lift builds for scala 2.8.x
-   * I am using this implicit conversion to avoid a compiler error.
-   * I fake the par method to return a simple Vector
-   *
-   */
-  implicit def fakeParFor2_8_x(v: Vector[CometActor]): VectorPar2_8_x = {
-    new VectorPar2_8_x(v)
-  }
-}
-
-/**
- * Vector.par was introduced in 2.9.x , so to be able to use it in Lift builds for scala 2.8.x
- * I am using this implicit conversion to avoid a compiler error.
- * I fake the par method to return a simple Vector
- *
- * TODO: Remove after we no longer build for 2.8.x
- */
-class VectorPar2_8_x(v: Vector[CometActor]) {
-  def par = v
 }
 
 

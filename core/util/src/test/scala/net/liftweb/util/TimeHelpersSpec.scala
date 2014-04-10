@@ -128,7 +128,7 @@ object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen
       weeks(3) must_== 3 * 7 * 24 * 60 * 60 * 1000
     }
     "provide a noTime function on Date objects to transform a date into a date at the same day but at 00:00" in {
-      hourFormat(timeNow.noTime) must_== "00:00:00"
+      hourFormat(now.noTime) must_== "00:00:00"
     }
 
     "make sure noTime does not change the day" in {
@@ -192,7 +192,11 @@ object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen
       val d = now
       List(null, Nil, None, Failure("", Empty, Empty)) forall { toDate(_) must_== Empty }
       List(Full(d), Some(d), List(d)) forall { toDate(_) must_== Full(d) }
-      toDate(internetDateFormatter.format(d)).get.getTime.toLong must beCloseTo(d.getTime.toLong, 1000L)
+
+      toDate(internetDateFormatter.format(d)) must beLike {
+        case Full(converted) =>
+          converted.getTime.toLong must beCloseTo(d.getTime.toLong, 1000L)
+      }
     }
   }
 

@@ -22,41 +22,6 @@ import scala.reflect.Manifest
 import java.util.{Iterator => JavaIterator, ArrayList => JavaArrayList}
 
 /**
- * Helper class to provide an easy way for converting Lists of Boxes[T] into
- * a Box of List[T].
-**/
-case class ListOfBoxes[T](theListOfBoxes: List[Box[T]]) {
-  /**
-   * Convert a List of Boxes into a single Box containting a List[T], where T is
-   * the parameterized type of the Boxes.
-   *
-   * This method is useful for those cases where you have a lot of operations being
-   * executed that all return some Box[T]. You want just a List[T] if all of those
-   * operations succeeded, but you don't want to have Failures disappear if any were
-   * present in the list.
-   *
-   * If all of the Boxes in the List are Full or Empty, we return a Full box containing
-   * a List of all of the Full Box values that were present. If any of the Boxes contain
-   * a Failure, a ParamFailure is returned, containing the original List[Box[T]] as the
-   * param.
-   *
-   * It is worth noting that the size of the list in the resulting Box[List[T]] may not be equal
-   * to the size of the List[Box[T]] that is fed as Empty values will disappear altogether in the
-   * conversion.
-   *
-   * @param failureErrorMessage The string that should be placed in the message for the Failure.
-   * @return A Full[List[T]] if no Failures were present. ParamFailure[List[Box[T]]] otherwise.
-  **/
-  def toSingleBox(failureErrorMessage: String): Box[List[T]] = {
-    if (theListOfBoxes.exists(_.isInstanceOf[Failure])) {
-      Failure(failureErrorMessage) ~> theListOfBoxes
-    } else {
-      Full(theListOfBoxes.flatten)
-    }
-  }
-}
-
-/**
  * The bridge from Java to Scala Box
  */
 class BoxJBridge {
@@ -82,7 +47,41 @@ class BoxJBridge {
  * It also provides implicit methods to transform Option to Box, Box to Iterable, and Box to Option
  */
 object Box extends BoxTrait {
-  implicit def listToListOfBoxes[T](boxes: List[Box[T]]) = ListOfBoxes(boxes)
+  /**
+   * Helper class to provide an easy way for converting Lists of Boxes[T] into
+   * a Box of List[T].
+  **/
+  implicit class ListOfBoxes[T](val theListOfBoxes: List[Box[T]]) extends AnyVal {
+    /**
+     * Convert a List of Boxes into a single Box containting a List[T], where T is
+     * the parameterized type of the Boxes.
+     *
+     * This method is useful for those cases where you have a lot of operations being
+     * executed that all return some Box[T]. You want just a List[T] if all of those
+     * operations succeeded, but you don't want to have Failures disappear if any were
+     * present in the list.
+     *
+     * If all of the Boxes in the List are Full or Empty, we return a Full box containing
+     * a List of all of the Full Box values that were present. If any of the Boxes contain
+     * a Failure, a ParamFailure is returned, containing the original List[Box[T]] as the
+     * param.
+     *
+     * It is worth noting that the size of the list in the resulting Box[List[T]] may not be equal
+     * to the size of the List[Box[T]] that is fed as Empty values will disappear altogether in the
+     * conversion.
+     *
+     * @param failureErrorMessage The string that should be placed in the message for the Failure.
+     * @return A Full[List[T]] if no Failures were present. ParamFailure[List[Box[T]]] otherwise.
+    **/
+    def toSingleBox(failureErrorMessage: String): Box[List[T]] = {
+      if (theListOfBoxes.exists(_.isInstanceOf[Failure])) {
+        Failure(failureErrorMessage) ~> theListOfBoxes
+      } else {
+        Full(theListOfBoxes.flatten)
+      }
+    }
+  }
+
 }
 
 /**
@@ -271,49 +270,13 @@ sealed abstract class Box[+A] extends Product with Serializable{
    */
   def openOrThrowException(justification: String): A
 
-
   /**
-   * Return the value contained in this Box if it is Full;
-   * throw an exception otherwise.
-   *
-   * Using open_! in an example posted to the Lift mailing list
-   * may disqualify you for a helpful response.
-   *
-   * The method has a '!' in its name.  This means "don't use it unless
-   * you are 100% sure that the Box is Full and you should probably
-   * comment your code with the explanation of the guaranty."
-   * The better case for extracting the value out of a Box can
-   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
-   *
-   * @return the value contained in this Box if it is full; throw an exception otherwise
+   * Exists to avoid the implicit conversion from Box to Option. Opening a Box
+   * unsafely should be done using openOrThrowException.
    */
-  @deprecated("use openOrThrowException, or better yet, do the right thing with your code and use map, flatMap or foreach", "2.4")
-  final def open_! : A = openOrThrowException("Legacy method implementation")
-
-  /**
-   * Return the value contained in this Box if it is Full; throw an
-   * exception otherwise.  Please use openOrThrowException instead. In
-   * the past, this method triggered an implicit conversion to Option
-   * and could throw an unintended NullPointerException. That is no longer
-   * the case, and in Lift 3 this method will be changed to return
-   * a useless type so that the compiler will break attempts to use it.
-   */
-  @deprecated("use map/flatMap/foreach if possible, or openOrThrowException if you must", "2.6")
-  final def get: A = open_!
-
-  /**
-   * Return the value contained in this Box if it is Full;
-   * throw an exception otherwise.
-   * This means "don't use it unless
-   * you are 100% sure that the Box is Full and you should probably
-   * comment your code with the explanation of the guaranty.
-   * The better case for extracting the value out of a Box can
-   * be found at http://lift.la/scala-option-lift-box-and-how-to-make-your-co
-   *
-   * @return the value contained in this Box if it is full; throw an exception otherwise
-   */
-  @deprecated("use openOrThrowException, or better yet, do the right thing with your code and use map, flatMap or foreach", "2.4")
-  final def openTheBox: A = openOrThrowException("Legacy method implementation")
+  final def get: Nothing = {
+    throw new Exception("Attempted to open a Box incorrectly. Please use openOrThrowException.")
+  }
 
   /**
    * Return the value contained in this Box if it is full; otherwise return the specified default
@@ -437,6 +400,8 @@ sealed abstract class Box[+A] extends Product with Serializable{
    */
   def ?~(msg: => String): Box[A] = this
 
+
+
   /**
    * Transform an Empty to a ParamFailure with the specified typesafe
    * parameter.
@@ -530,6 +495,18 @@ sealed abstract class Box[+A] extends Product with Serializable{
    */
   def dmap[B](dflt: => B)(f: A => B): B = dflt
 
+
+  /**
+   * If the Box is Full, apply the transform function on the
+   * value, otherwise just return the value untransformed
+   *
+   * @param v the value
+   * @param f the transformation function
+   * @tparam T the type of the value
+   * @return the value or the transformed value is the Box is Full
+   */
+  def fullXform[T](v: T)(f: T => A => T): T = v
+
   /**
    * An <code>Either</code> that is a <code>Left</code> with the given argument
    * <code>left</code> if this is empty, or a <code>Right</code> if this
@@ -555,6 +532,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
     if (pf.isDefinedAt(value)) Full(pf(value))
     else Empty)
   }
+
 }
 
 /**
@@ -618,6 +596,18 @@ final case class Full[+A](value: A) extends Box[A]{
   override def toOption: Option[A] = Some(value)
 
   override def run[T](in: => T)(f: (T, A) => T) = f(in, value)
+
+  /**
+   * If the Box is Full, apply the transform function on the
+   * value, otherwise just return the value untransformed
+   *
+   * @param v the value
+   * @param f the transformation function
+   * @tparam T the type of the value
+   * @return the value or the transformed value is the Box is Full
+   */
+  override def fullXform[T](v: T)(f: T => A => T): T = f(v)(value)
+
 
   /**
    * An <code>Either</code> that is a <code>Left</code> with the given argument

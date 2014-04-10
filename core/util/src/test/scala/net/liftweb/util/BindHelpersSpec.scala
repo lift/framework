@@ -87,7 +87,10 @@ object BindHelpersSpec extends Specification  {
       val liftbind = <body>
         <lift:bind name="hello">changethis</lift:bind>
                      </body>
-      bindlist(maps, liftbind).get must ==/(<body><h1></h1></body>)
+      bindlist(maps, liftbind) must beLike {
+        case Full(result) =>
+          result must ==/(<body><h1></h1></body>)
+      }
     }
   }
   "the bind(namespace, NodeSeq, BindParams*) function" should {

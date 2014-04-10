@@ -19,16 +19,20 @@ package mapper
 
 import java.sql.{ResultSet, Types}
 import java.lang.reflect.Method
-import net.liftweb.util.{FatLazy}
+import util._
 import net.liftweb.common.{Box, Full, Empty, Failure}
 import java.util.Date
 import java.util.regex._
 import scala.xml.{NodeSeq, Text, Elem}
 import net.liftweb.http.{S}
-import net.liftweb.util.{FieldError}
 import net.liftweb.http.js._
 import net.liftweb.json._
 import S._
+import common.Full
+import scala.Some
+import common.Full
+import scala.Some
+import util.SourceFieldMetadataRep
 
 /**
  * Just like MappedString, except it's defaultValue is "" and the length is auto-cropped to
@@ -61,6 +65,50 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
   private val orgData: FatLazy[String] =  FatLazy(defaultValue) // defaultValue
 
   def dbFieldClass = classOf[String]
+
+  import scala.reflect.runtime.universe._
+  def manifest: TypeTag[String] = typeTag[String]
+
+  /**
+   * Get the source field metadata for the field
+   * @return the source field metadata for the field
+   */
+  def sourceInfoMetadata(): SourceFieldMetadata{type ST = String} =
+    SourceFieldMetadataRep(name, manifest, new FieldConverter {
+      /**
+       * The type of the field
+       */
+      type T = String
+
+      /**
+       * Convert the field to a String
+       * @param v the field value
+       * @return the string representation of the field value
+       */
+      def asString(v: T): String = v
+
+      /**
+       * Convert the field into NodeSeq, if possible
+       * @param v the field value
+       * @return a NodeSeq if the field can be represented as one
+       */
+      def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(v))
+
+      /**
+       * Convert the field into a JSON value
+       * @param v the field value
+       * @return the JSON representation of the field
+       */
+      def asJson(v: T): Box[JValue] = Full(JsonAST.JString(v))
+
+      /**
+       * If the field can represent a sequence of SourceFields,
+       * get that
+       * @param v the field value
+       * @return the field as a sequence of SourceFields
+       */
+      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+    })
 
   protected def valueTypeToBoxString(in: String): Box[String] = Full(in)
   protected def boxStrToValType(in: Box[String]): String = in openOr ""

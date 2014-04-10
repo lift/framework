@@ -20,6 +20,7 @@ package rest
 
 
 import net.liftweb._
+import actor.LAFuture
 import json._
 import common._
 import util._
@@ -533,6 +534,37 @@ trait RestHelper extends LiftRules.DispatchPF {
    */
   protected implicit def thingToResp[T](in: T)(implicit c: T => LiftResponse):
   () => Box[LiftResponse] = () => Full(c(in))
+
+
+  /**
+   * If we're returning a future, then automatically turn the request into an Async request
+   * @param in the LAFuture of the response type
+   * @param c the implicit conversion from T to LiftResponse
+   * @tparam T the type
+   * @return Nothing
+   */
+  protected implicit def futureToResponse[T](in: LAFuture[T])(implicit c: T => LiftResponse):
+  () => Box[LiftResponse] = () => {
+    RestContinuation.async(reply => {
+      in.foreach(t => reply.apply(c(t)))
+    })
+  }
+
+  /**
+   * If we're returning a future, then automatically turn the request into an Async request
+   * @param in the LAFuture of the response type
+   * @param c the implicit conversion from T to LiftResponse
+   * @tparam T the type
+   * @return Nothing
+   */
+  protected implicit def futureBoxToResponse[T](in: LAFuture[Box[T]])(implicit c: T => LiftResponse):
+  () => Box[LiftResponse] = () => {
+    RestContinuation.async(reply => {
+      in.foreach(t => reply.apply{
+        boxToResp(t).apply() openOr NotFoundResponse()
+      })
+    })
+  }
 
   /**
    * Turn a Box[T] into the return type expected by

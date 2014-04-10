@@ -243,7 +243,7 @@ object Props extends Logger {
   /**
    * The resource path segment corresponding to the system hostname.
    */
-  lazy val hostName: String = (if (inGAE) "GAE" else InetAddress.getLocalHost.getHostName)
+  lazy val hostName: String = (if (inGAE) "GAE" else Helpers.tryo(InetAddress.getLocalHost.getHostName).openOr("localhost"))
 
   private lazy val _hostName = dotLen(hostName)
 

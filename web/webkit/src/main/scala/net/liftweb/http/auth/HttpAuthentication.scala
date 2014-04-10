@@ -112,7 +112,7 @@ case class HttpDigestAuthentication(realmName: String)(func: PartialFunction[(St
       try {
         Schedule.schedule (this, CheckAndPurge, 5 seconds)
       } catch {
-        case e => logger.error("Couldn't start NonceWatcher ping", e)
+        case e: Exception => logger.error("Couldn't start NonceWatcher ping", e)
       }
     }
 

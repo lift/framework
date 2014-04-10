@@ -362,6 +362,8 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    */
   private object _tailTags extends TransientRequestVar(new ListBuffer[Elem])
 
+  private object _cometTags extends TransientRequestVar(new ListBuffer[Elem])
+
   private object p_queryLog extends TransientRequestVar(new ListBuffer[(String, Long)])
   private object p_notice extends TransientRequestVar(new ListBuffer[(NoticeType.Value, NodeSeq, Box[String])])
 
@@ -545,7 +547,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   // TODO: Is this used anywhere? - DCB
   def templateFromTemplateAttr: Box[NodeSeq] =
     for (templateName <- attr("template") ?~ "Template Attribute missing";
-         val tmplList = templateName.roboSplit("/");
+         tmplList = templateName.roboSplit("/");
          template <- Templates(tmplList) ?~
                  "couldn't find template") yield template
 
@@ -574,9 +576,9 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * special accomodations for IE 6 / 7 / 8 compatibility.
    *
    * @return <code>true</code> if this response should be rendered in
-   * IE6/IE7 compatibility mode.
+   * IE 6/7/8 compatibility mode.
    *
-   * @see LiftSession.ieMode
+   * @see LiftSession.legacyIeCompatibilityMode
    * @see LiftRules.calcIEMode
    * @see Req.isIE6
    * @see Req.isIE7
@@ -584,9 +586,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see Req.isIE
    */
   def legacyIeCompatibilityMode: Boolean = session.map(_.legacyIeCompatibilityMode.is) openOr false // LiftRules.calcIEMode()
-
-  @deprecated("Use legacyIeCompatibilityMode for legacy IE detection instead, or use S.isIE* for general IE detection. This will be removed in Lift 3.0.", "2.6")
-  def ieMode = legacyIeCompatibilityMode
 
   /**
    * Get the current instance of HtmlProperties
@@ -797,6 +796,11 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see putAtEndOfBody
    */
   def atEndOfBody(): List[Elem] = _tailTags.is.toList
+
+
+  def addCometAtEnd(elem: Elem): Unit = _cometTags.is += elem
+
+  def cometAtEnd(): List[Elem] = _cometTags.is.toList
 
   /**
    * Sometimes it's helpful to accumute JavaScript as part of servicing
