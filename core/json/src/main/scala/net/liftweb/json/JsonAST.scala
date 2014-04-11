@@ -17,6 +17,8 @@
 package net.liftweb
 package json
 
+import scala.language.implicitConversions
+
 object JsonAST {
   import scala.text.{Document, DocText}
   import scala.text.Document._
