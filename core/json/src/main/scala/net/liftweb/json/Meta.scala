@@ -93,7 +93,7 @@ private[json] object Meta {
                              (implicit formats: Formats): Mapping = {
     import Reflection._
 
-    def constructors(t: Type, visited: Set[Type], context: Option[Context]) = {
+    def constructors(t: Type, visited: Set[Type], context: Option[Context]): List[DeclaredConstructor] = {
       Reflection.constructors(t, formats.parameterNameReader, context).map { case (c, args) =>
         DeclaredConstructor(c, args.map { case (name, t) =>
           toArg(unmangleName(name), t, visited, Context(name, c.getDeclaringClass, args)) })

@@ -80,7 +80,7 @@ trait Formats { self: Formats =>
     override val parameterNameReader = self.parameterNameReader
     override val typeHints = self.typeHints
     override val customSerializers = self.customSerializers
-    override val fieldSerializers = (mf.erasure, newSerializer) :: self.fieldSerializers
+    override val fieldSerializers: List[(Class[_], FieldSerializer[_])] = (mf.runtimeClass, newSerializer) :: self.fieldSerializers
   }
 
   private[json] def fieldSerializer(clazz: Class[_]): Option[FieldSerializer[_]] = {
@@ -220,7 +220,9 @@ case class ShortTypeHints(hints: List[Class[_]]) extends TypeHints {
  */
 case class FullTypeHints(hints: List[Class[_]]) extends TypeHints {
   def hintFor(clazz: Class[_]) = clazz.getName
-  def classFor(hint: String) = Some(Thread.currentThread.getContextClassLoader.loadClass(hint))
+  def classFor(hint: String): Option[Class[_]] = {
+    Some(Thread.currentThread.getContextClassLoader.loadClass(hint))
+  }
 }
 
 /** Default date format is UTC time.
