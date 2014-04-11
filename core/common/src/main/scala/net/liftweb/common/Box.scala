@@ -211,7 +211,16 @@ sealed trait BoxTrait {
   def isA[A, B](in: A, clz: Class[B]): Box[B] =
   (Box !! in).isA(clz)
 
-  // FIXME Why do we need an existential type here?
+  // NOTE: We use an existential type here so that you can invoke asA with
+  // just one type parameter. To wit, this lets you do:
+  //
+  //   Box.asA[Int](myVariableWithDifferentType)
+  //
+  // If instead asA was defined as asA[T, B], you would have to do:
+  //
+  //   Box.asA[DifferentType, Int](myVariableWithDifferentType)
+  //
+  // Uglier, and generally not as nice.
   /**
    * Create a Full box containing the specified value if <code>in</code> is of
    * type <code>B</code>; Empty otherwise.
