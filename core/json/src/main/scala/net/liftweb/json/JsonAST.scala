@@ -614,6 +614,7 @@ trait Printer {
       case DocNest(_, d) :: rs   => layout(d :: rs)
       case DocGroup(d) :: rs     => layout(d :: rs)
       case DocNil :: rs          => layout(rs)
+      case _ :: rs               => layout(rs)
     }
 
     layout(List(d))
