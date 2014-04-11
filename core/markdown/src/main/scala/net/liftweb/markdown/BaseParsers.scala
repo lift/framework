@@ -19,10 +19,11 @@ package net.liftweb.markdown
  * Christoph Henkelmann http://henkelmann.eu/
  */
 
+import scala.language.postfixOps
+
 import util.parsing.json.Parser
 import util.parsing.combinator.RegexParsers
 import collection.SortedMap
-
 
 /**
  * Basic parsers for Markdown Source.
