@@ -17,6 +17,8 @@
 package net.liftweb
 package common
 
+import scala.language.implicitConversions
+import scala.language.existentials
 import scala.reflect.Manifest
 
 import java.util.{Iterator => JavaIterator, ArrayList => JavaArrayList}
@@ -209,11 +211,12 @@ sealed trait BoxTrait {
   def isA[A, B](in: A, clz: Class[B]): Box[B] =
   (Box !! in).isA(clz)
 
+  // FIXME Why do we need an existential type here?
   /**
    * Create a Full box containing the specified value if <code>in</code> is of
    * type <code>B</code>; Empty otherwise.
    */
-  def asA[B](in: T forSome {type T})(implicit m: Manifest[B]): Box[B] =
+  def asA[B](in: T forSome { type T })(implicit m: Manifest[B]): Box[B] =
   (Box !! in).asA[B]
 }
 
