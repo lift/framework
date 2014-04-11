@@ -638,7 +638,7 @@ final case class Full[+A](value: A) extends Box[A]{
     case _ => Empty
   }
 
-  override def asA[B](implicit m: Manifest[B]): Box[B] = this.isA(m.erasure).asInstanceOf[Box[B]]
+  override def asA[B](implicit m: Manifest[B]): Box[B] = this.isA(m.runtimeClass).asInstanceOf[Box[B]]
 
   override def ===[B >: A](to: B): Boolean = value == to
 
