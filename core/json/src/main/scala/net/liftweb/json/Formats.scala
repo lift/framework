@@ -80,7 +80,10 @@ trait Formats { self: Formats =>
     override val parameterNameReader = self.parameterNameReader
     override val typeHints = self.typeHints
     override val customSerializers = self.customSerializers
-    override val fieldSerializers: List[(Class[_], FieldSerializer[_])] = (mf.runtimeClass, newSerializer) :: self.fieldSerializers
+    // The type inferencer infers an existential type below if we use
+    // value :: list instead of list.::(value), and we get a feature
+    // warning.
+    override val fieldSerializers: List[(Class[_], FieldSerializer[_])] = self.fieldSerializers.::((mf.runtimeClass: Class[_], newSerializer))
   }
 
   private[json] def fieldSerializer(clazz: Class[_]): Option[FieldSerializer[_]] = {
