@@ -229,7 +229,7 @@ private[json] object Meta {
     def constructorArgs(t: Type, constructor: JConstructor[_], 
                         nameReader: ParameterNameReader, context: Option[Context]): List[(String, Type)] = {
       def argsInfo(c: JConstructor[_], typeArgs: Map[TypeVariable[_], Type]) = {
-        val Name = """^((?:[^$]|[$][^0-9]+)+)([$][0-9]+)?$"""r
+        val Name = """^((?:[^$]|[$][^0-9]+)+)([$][0-9]+)?$""".r
         def clean(name: String) = name match {
           case Name(text, junk) => text
         }
