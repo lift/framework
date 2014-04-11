@@ -274,7 +274,7 @@ private[json] class ThreadLocal[A](init: => A) extends java.lang.ThreadLocal[A] 
 class CustomSerializer[A: Manifest](
   ser: Formats => (PartialFunction[JValue, A], PartialFunction[Any, JValue])) extends Serializer[A] {
 
-  val Class = implicitly[Manifest[A]].erasure
+  val Class = implicitly[Manifest[A]].runtimeClass
 
   def deserialize(implicit format: Formats) = {
     case (TypeInfo(Class, _), json) =>
