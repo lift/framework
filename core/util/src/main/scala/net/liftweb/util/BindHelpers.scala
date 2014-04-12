@@ -184,6 +184,7 @@ trait BindHelpers {
                  elem.label,
                  fix(elem.attributes),
                  elem.scope,
+                 elem.minimizeEmpty,
                  elem.child :_*)
       }
       case _ => elem % new UnprefixedAttribute("class", cssClass, Null)
@@ -859,7 +860,7 @@ trait BindHelpers {
             else
               Text("FIX"+"ME failed to bind <"+namespace+":"+node.label+" />")
           case Group(nodes) => Group(rec_xbind(nodes))
-          case s: Elem => Elem(node.prefix, node.label, node.attributes, node.scope, rec_xbind(node.child): _*)
+          case s: Elem => Elem(node.prefix, node.label, node.attributes, node.scope, s.minimizeEmpty, rec_xbind(node.child): _*)
           case n => node
         }
       }
@@ -976,10 +977,12 @@ trait BindHelpers {
             val fixedLabel = av.substring(nsColon.length)
 
             val fake = new Elem(namespace, fixedLabel, fixedAttrs,
-                                e.scope, new Elem(e.namespace,
+                                e.scope, e.minimizeEmpty,
+                                         new Elem(e.namespace,
                                                   e.label,
                                                   fixedAttrs,
                                                   e.scope,
+                                                  e.minimizeEmpty,
                                                   e.child :_*))
 
             BindHelpers._currentNode.doWith(fake) {
@@ -1014,7 +1017,7 @@ trait BindHelpers {
             }
           }
           case Group(nodes) => Group(in_bind(nodes))
-          case s: Elem => Elem(s.prefix, s.label, attrBind(s.attributes), if (preserveScope) s.scope else TopScope,
+          case s: Elem => Elem(s.prefix, s.label, attrBind(s.attributes), if (preserveScope) s.scope else TopScope, s.minimizeEmpty,
                                in_bind(s.child): _*)
           case n => n
         }
@@ -1118,7 +1121,7 @@ trait BindHelpers {
           }
         }
         case Group(nodes) => Group(bind(vals, nodes))
-        case s: Elem => Elem(node.prefix, node.label, node.attributes, node.scope, bind(vals, node.child, false, unusedBindings): _*)
+        case s: Elem => Elem(node.prefix, node.label, node.attributes, node.scope, true, bind(vals, node.child, s.minimizeEmpty, unusedBindings): _*)
         case n => node
       }
     }
@@ -1167,7 +1170,7 @@ trait BindHelpers {
               case _ => None
             }.getOrElse(processBind(v.asInstanceOf[Elem].child, atWhat))
 
-          case e: Elem => {Elem(e.prefix, e.label, e.attributes, e.scope, processBind(e.child, atWhat): _*)}
+          case e: Elem => {Elem(e.prefix, e.label, e.attributes, e.scope, e.minimizeEmpty, processBind(e.child, atWhat): _*)}
           case _ => {v}
         }
 
@@ -1351,7 +1354,7 @@ trait BindHelpers {
                    in.label, in.attributes.filter {
                      case up: UnprefixedAttribute => up.key != "id"
                      case _ => true
-                   }, in.scope, in.child :_*)
+                   }, in.scope, in.minimizeEmpty, in.child :_*)
           } else {
             ids += id.text
             in
@@ -1389,12 +1392,12 @@ trait BindHelpers {
                        in.label, in.attributes.filter {
                          case up: UnprefixedAttribute => up.key != "id"
                          case _ => true
-                       }, in.scope, in.child.map(ensure) :_*)
+                       }, in.scope, in.minimizeEmpty, in.child.map(ensure) :_*)
             } else {
               ids += id.text
               new Elem(in.prefix,
                        in.label, in.attributes,
-                       in.scope, in.child.map(ensure) :_*)
+                       in.scope, in.minimizeEmpty, in.child.map(ensure) :_*)
             }
             
           }
@@ -1402,7 +1405,7 @@ trait BindHelpers {
           case _ => 
             new Elem(in.prefix,
                      in.label, in.attributes,
-                     in.scope, in.child.map(ensure) :_*)
+                     in.scope, in.minimizeEmpty, in.child.map(ensure) :_*)
         }
       
       case x => x

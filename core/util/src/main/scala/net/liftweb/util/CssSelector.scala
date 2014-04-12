@@ -17,9 +17,9 @@
 package net.liftweb
 package util
 
-
 import scala.util.parsing.combinator.{PackratParsers, Parsers, ImplicitConversions}
-import xml.{Elem, NodeSeq}
+import scala.xml.{Elem, NodeSeq}
+
 import net.liftweb.common._
 
 sealed trait CssSelector {
@@ -92,7 +92,7 @@ final case class SurroundKids() extends SubNode with WithKids {
         changed = true
         new Elem(e.prefix,
           e.label, e.attributes,
-          e.scope, e.child ++ original :_*)
+          e.scope, e.minimizeEmpty, e.child ++ original :_*)
       case x => x
     }
 
