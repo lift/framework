@@ -724,20 +724,6 @@ trait BindHelpers {
   }
 
   /**
-   *  transforms a Box into a Text node
-   */
-  @deprecated("use -> instead", "2.4")
-  object BindParamAssoc {
-    implicit def canStrBoxNodeSeq(in: Box[Any]): Box[NodeSeq] = in.map(_ match {
-      case null => Text("null")
-      case v => v.toString match {
-        case null => NodeSeq.Empty
-        case str => Text(str)
-      }
-    })
-  }
-
-  /**
    * takes a NodeSeq and applies all the attributes to all the Elems at the top level of the
    * NodeSeq.  The id attribute is applied to the first-found Elem only
    */
@@ -801,7 +787,6 @@ trait BindHelpers {
 
   implicit def strToSuperArrowAssoc(in: String): SuperArrowAssoc = new SuperArrowAssoc(in)
 
-
   /**
    * This class creates a BindParam from an input value
    *
@@ -822,26 +807,6 @@ trait BindHelpers {
     def -->(func: NodeSeq => NodeSeq): BindParam = FuncBindParam(name, func)
     def -->(value: Box[NodeSeq]): BindParam = TheBindParam(name, value.openOr(Text("Empty")))
   }
-
-  /**
-   * transforms a String to a BindParamAssoc object which can be associated to a BindParam object
-   * using the --> operator.<p/>
-   * Usage: <code>"David" --> "name"</code>
-   *
-   * @deprecated use -> instead
-   */
-  @deprecated("use -> instead", "2.4")
-  implicit def strToBPAssoc(in: String): BindParamAssoc = new BindParamAssoc(in)
-
-  /**
-   * transforms a Symbol to a SuperArrowAssoc object which can be associated to a BindParam object
-   * using the -> operator.<p/>
-   * Usage: <code>'David -> "name"</code>
-   *
-   * @deprecated use -> instead
-   */
-  @deprecated("use -> instead", "2.4")
-  implicit def symToSAAssoc(in: Symbol): SuperArrowAssoc = new SuperArrowAssoc(in.name)
 
   /**
    * Experimental extension to bind which passes in an additional "parameter" from the XHTML to the transform
