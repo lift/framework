@@ -378,7 +378,7 @@ trait ClassHelpers { self: ControlHelpers =>
     var c: Class[_] = in
     ret += c
     while (c.getSuperclass != null) {
-      val sc = c.getSuperclass
+      val sc: Class[_] = c.getSuperclass
       ret += sc
       c = sc
     }
