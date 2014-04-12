@@ -900,15 +900,16 @@ final case class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSele
    */
   def #>[T](it: => T)(implicit computer: CanBind[T]): CssSel = {
     css match {
-    case Full(EnclosedSelector(a, b)) => null
-    (ToCssBindPromoter(stringSelector, Full(a))).#>(nsFunc(ns => {
-      ToCssBindPromoter(stringSelector, Full(b)).#>(it)(computer)(ns)
-    })) // (CanBind.nodeSeqFuncTransform)
-    case _ =>
-      new CssBindImpl(stringSelector, css) {
-        def calculate(in: NodeSeq): Seq[NodeSeq] = computer(it)(in)
-      }
-  }
+      case Full(EnclosedSelector(a, b)) =>
+        ToCssBindPromoter(stringSelector, Full(a)) #> nsFunc({ ns =>
+          ToCssBindPromoter(stringSelector, Full(b)).#>(it)(computer)(ns)
+        }) // (CanBind.nodeSeqFuncTransform)
+
+      case _ =>
+        new CssBindImpl(stringSelector, css) {
+          def calculate(in: NodeSeq): Seq[NodeSeq] = computer(it)(in)
+        }
+    }
   }
 
   /**
