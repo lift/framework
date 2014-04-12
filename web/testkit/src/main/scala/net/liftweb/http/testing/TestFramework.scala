@@ -566,11 +566,15 @@ object TestHelpers {
     val rp = new REMatcher(body, p)
     val p2 = Pattern.compile("""'([^']*)'\: ([0-9]*)""")
 
-    for (it <- rp.capture;
-         val _ = println("Captured: " + it);
-         val _ = println("Does match: " + p2.matcher(it).find);
-         val q = new REMatcher(it, p2);
-         em <- q.eachFound) yield (em(1), em(2))
+    for {
+      it <- rp.capture;
+      _ = println("Captured: " + it);
+      _ = println("Does match: " + p2.matcher(it).find);
+      q = new REMatcher(it, p2);
+      em <- q.eachFound
+    } yield {
+      (em(1), em(2))
+    }
   }
 
   /**
