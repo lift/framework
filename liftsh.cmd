@@ -1,5 +1,10 @@
 @echo off
 
+set SBT_LAUNCHER_PATH="project\sbt-launch-0.13.1.jar"
+set SBT_LAUNCHER_SOURCE="http://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.1/sbt-launch.jar"
+
+if not exist %SBT_LAUNCHER_PATH% powershell -Command "(New-Object Net.WebClient).DownloadFile('%SBT_LAUNCHER_SOURCE%', '%SBT_LAUNCHER_PATH%')"
+
 @REM Internal options, always specified
 set INTERNAL_OPTS=-Dfile.encoding=UTF-8 -Xmx768m -noverify -XX:ReservedCodeCacheSize=256m -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=512m
 
@@ -17,4 +22,4 @@ if "%LIFTSH_OPTS%"=="" (
 )
 
 @REM Call with INTERNAL_OPTS followed by LIFTSH_OPTS (or DEFAULT_OPTS). java always takes the last option when duplicate.
-java %INTERNAL_OPTS% %LIFTSH_OPTS% -jar "%~dp0\project\sbt-launch-0.12.1.jar" %*
+java %INTERNAL_OPTS% %LIFTSH_OPTS% -jar "%~dp0\%SBT_LAUNCHER_PATH%" %*
