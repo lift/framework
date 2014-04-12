@@ -84,9 +84,19 @@ trait Loc[T] {
   */
   def paramValue: Box[T] = calcValue.flatMap(f => f()) or staticValue
 
-  private lazy val staticValue: Box[T] = allParams.collect{case Loc.Value(v: T) => v}.headOption
+  private lazy val staticValue: Box[T] = {
+    allParams.collectFirst {
+      case Loc.Value(v) =>
+        v.asInstanceOf[T]
+    }
+  }
   
-  private lazy val calcValue: Box[() => Box[T]] = params.collect{case Loc.CalcValue(f: Function0[Box[T]]) => f}.headOption
+  private lazy val calcValue: Box[() => Box[T]] = {
+    params.collectFirst {
+      case Loc.CalcValue(f: Function0[_]) =>
+        f.asInstanceOf[()=>Box[T]]
+    }
+  }
 
   /**
    * Calculate the Query parameters

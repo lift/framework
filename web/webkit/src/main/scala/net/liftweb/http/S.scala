@@ -2731,7 +2731,8 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
       val key = formFuncName
 
       def checkCmd(in: Any) = in match {
-        case v2: scala.collection.Map[Any, _] if v2.isDefinedAt("command") =>
+        case v2: scala.collection.Map[_, _]
+            if v2.asInstanceOf[scala.collection.Map[String,Any]].isDefinedAt("command") =>
           // ugly code to avoid type erasure warning
           val v = v2.asInstanceOf[scala.collection.Map[String, Any]]
           JsonCmd(v("command").toString, v.get("target").

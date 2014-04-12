@@ -1483,13 +1483,16 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case (so: Scriptable, name) =>
         fixScriptableObject(so.get(name, so))
       case (m: java.util.Map[_, _], name) => m.get(name)
-      case (m: PartialFunction[String, Any], name) => m.applyOrElse(name, null)
+      case (m: PartialFunction[_, _] /* expect String,Any */, name) =>
+        (m.asInstanceOf[PartialFunction[String, Any]]).applyOrElse(name, null)
       case (Full(so: Scriptable), name) => fixScriptableObject(so.get(name, so))
       case (Full(m: java.util.Map[_, _]), name) => m.get(name)
-      case (Full(m: PartialFunction[String, Any]), name) => m.applyOrElse(name, null)
+      case (Full(m: PartialFunction[_, _] /* expect String,Any */), name) =>
+        (m.asInstanceOf[PartialFunction[String, Any]]).applyOrElse(name, null)
       case (Some(so: Scriptable), name) => fixScriptableObject(so.get(name, so))
       case (Some(m: java.util.Map[_, _]), name) => m.get(name)
-      case (Some(m: PartialFunction[String, Any]), name) => m.applyOrElse(name, null)
+      case (Some(m: PartialFunction[_, _] /* expect String,Any */), name) =>
+        (m.asInstanceOf[PartialFunction[String, Any]]).applyOrElse(name, null)
       case _ => Empty
     } match {
       case null => Empty
