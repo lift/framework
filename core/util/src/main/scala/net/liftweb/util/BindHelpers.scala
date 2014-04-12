@@ -17,8 +17,10 @@
 package net.liftweb
 package util
 
+import scala.language.higherKinds
 import scala.language.implicitConversions
 import scala.xml._
+
 import common._
 
 
