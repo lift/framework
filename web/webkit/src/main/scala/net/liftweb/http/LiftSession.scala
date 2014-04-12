@@ -20,7 +20,8 @@ package http
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
-import collection.mutable.{ConcurrentMap, HashMap, ListBuffer}
+import collection.mutable.{HashMap, ListBuffer}
+import collection.concurrent.{Map=>ConcurrentMap}
 import collection.JavaConversions
 
 import collection.mutable.{HashMap, ListBuffer}
@@ -162,7 +163,7 @@ object LiftSession {
   /**
    * Cache for findSnippetClass lookups.
    */
-  private val snippetClassMap: ConcurrentMap[String, Box[Class[AnyRef]]] = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap())
+  private val snippetClassMap: ConcurrentMap[String, Box[Class[AnyRef]]] = JavaConversions.mapAsScalaConcurrentMap(new ConcurrentHashMap())
   
   /*
    * Given a Snippet name, try to determine the fully-qualified Class
