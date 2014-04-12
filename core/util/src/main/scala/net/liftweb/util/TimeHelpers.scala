@@ -19,8 +19,12 @@ package util
 
 import java.text.SimpleDateFormat
 import java.util.{TimeZone, Calendar, Date, Locale}
-import common._
+
+import scala.language.implicitConversions
+
 import org.joda.time.{DateTime, Duration, Period, PeriodType}
+
+import common._
 
 /**
  * The TimeHelpers object extends the TimeHelpers. It can be imported to access all of the trait functions.

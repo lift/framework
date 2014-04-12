@@ -695,6 +695,8 @@ abstract class CssBindImpl(val stringSelector: Box[String], val css: Box[CssSele
  */
 
 final class CssJBridge {
+  import scala.language.implicitConversions
+
   /**
    * promote a String to a ToCssBindPromotor
    */
@@ -731,6 +733,8 @@ trait CanBind[-T] {
 }
 
 object CanBind {
+  import scala.language.higherKinds
+
   implicit def stringTransform: CanBind[String] = new CanBind[String] {
     def apply(str: => String)(ns: NodeSeq): Seq[NodeSeq] = {
       val s = str

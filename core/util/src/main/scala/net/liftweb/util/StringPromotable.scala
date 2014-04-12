@@ -1,5 +1,7 @@
 package net.liftweb.util
 
+import scala.language.implicitConversions
+
 /**
  * This trait marks something that can be promoted into a String.
  * The companion object has helpful conversions from Int,
