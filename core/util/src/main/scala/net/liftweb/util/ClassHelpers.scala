@@ -71,7 +71,7 @@ trait ClassHelpers { self: ControlHelpers =>
    * @return a Box, either containing the found class or an Empty can.
    */
   def findType[C <: AnyRef](name: String, where: List[String], modifiers: List[String => String])(implicit m: Manifest[C]): Box[Class[C]] =
-  findClass(name, where, modifiers, m.erasure.asInstanceOf[Class[C]])
+  findClass(name, where, modifiers, m.runtimeClass.asInstanceOf[Class[C]])
 
   /**
    * General method to in find a class according to its name, a list of possible packages and a
