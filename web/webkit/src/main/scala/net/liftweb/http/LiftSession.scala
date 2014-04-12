@@ -380,7 +380,7 @@ object SessionMaster extends LiftActor with Loggable {
               case e: Exception => logger.warn("Failure in remove session", e)
 
             }
-          }, 0 seconds)
+          }, 0.seconds)
           lockWrite {
             nsessions.remove(sessionId)
           }
@@ -390,7 +390,7 @@ object SessionMaster extends LiftActor with Loggable {
       import scala.collection.JavaConversions._
 
     /* remove dead sessions that are more than 45 minutes old */
-    val now = Helpers.millis - 45 minutes
+    val now = Helpers.millis - 45.minutes
 
     val removeKeys: Iterable[String] = killedSessions.filter(_._2 < now).map(_._1)
     removeKeys.foreach(s => killedSessions.remove(s))
@@ -421,7 +421,7 @@ object SessionMaster extends LiftActor with Loggable {
                   uniqueId)
               }
             }
-          ), 0 seconds)
+          ), 0.seconds)
         }
       }
 
@@ -445,7 +445,7 @@ object SessionMaster extends LiftActor with Loggable {
   private def doPing() {
     if (!Props.inGAE) {
       try {
-        Schedule.schedule(this, CheckAndPurge, 10 seconds)
+        Schedule.schedule(this, CheckAndPurge, 10.seconds)
       } catch {
         case e: Exception => logger.error("Couldn't start SessionMaster ping", e)
       }
@@ -658,7 +658,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   @volatile
   private[http] var inactivityLength: Long =
-    LiftRules.sessionInactivityTimeout.vend openOr ((30 minutes): Long)
+    LiftRules.sessionInactivityTimeout.vend openOr ((30.minutes): Long)
 
   private[http] var highLevelSessionDispatcher = new HashMap[String, LiftRules.DispatchPF]()
   private[http] var sessionRewriter = new HashMap[String, LiftRules.RewritePF]()
@@ -1162,12 +1162,12 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
           fullPageLoad.doWith(true) {
             // allow parallel snippets
             // Phase 1: snippets & templates processing
-            val rawXml: NodeSeq = processSurroundAndInclude(PageName get, xhtml)
+            val rawXml: NodeSeq = processSurroundAndInclude(PageName.get, xhtml)
 
             // Make sure that functions have the right owner. It is important for this to
             // happen before the merge phase so that in merge to have a correct view of
             // mapped functions and their owners.
-            updateFunctionMap(S.functionMap, RenderVersion get, millis)
+            updateFunctionMap(S.functionMap, RenderVersion.get, millis)
 
             // Clear the function map after copying it... but it
             // might get some nifty new functions during the merge phase
@@ -1183,7 +1183,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
             // But we need to update the function map because there
             // may be addition functions created during the JsToAppend processing
             // See issue #983
-            updateFunctionMap(S.functionMap, RenderVersion get, millis)
+            updateFunctionMap(S.functionMap, RenderVersion.get, millis)
 
             notices = Nil
             // Phase 3: Response conversion including fixHtml
@@ -1408,7 +1408,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case _: EmptyBox => NodeSeq.Empty
       case b: Box[_] => runSourceContext(b.toList, xform, ns)
       case b: Option[_] => runSourceContext(b.toList, xform, ns)
-      case fut: LAFuture[_] => runSourceContext(fut.get(5 seconds).openOr(Empty), xform, ns)
+      case fut: LAFuture[_] => runSourceContext(fut.get(5.seconds).openOr(Empty), xform, ns)
       case node: scala.xml.Node => currentSourceContext.doWith(node)(processSurroundAndInclude("Source", xform(ns)))
       case n: java.lang.Iterable[_] => runSourceContext(n.iterator(), xform, ns)
       case n: java.util.Iterator[_] =>
@@ -1456,7 +1456,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
           case b: Boolean => xformRule #> b
           case b: Box[_] => runSourceContext(b.toList, retFunc _, _)
           case b: Option[_] => runSourceContext(b.toList, retFunc _, _)
-          case fut: LAFuture[_] => runSourceContext(fut.get(5 seconds).openOr(Empty), retFunc _, _)
+          case fut: LAFuture[_] => runSourceContext(fut.get(5.seconds).openOr(Empty), retFunc _, _)
           case n: java.lang.Iterable[_] => runSourceContext(n.iterator(), retFunc _, _)
           case n: java.util.Iterator[_] => runSourceContext(n, retFunc _, _)
           case en: java.util.Enumeration[_] => runSourceContext(en, retFunc _, _)
@@ -1618,7 +1618,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       in.toList.flatMap {
         case e: Elem => Some(e)
         case _ => None
-      } headOption
+      }.headOption
 
     for {
       template <- Templates(name, S.locale) ?~ ("Template " + name + " not found")

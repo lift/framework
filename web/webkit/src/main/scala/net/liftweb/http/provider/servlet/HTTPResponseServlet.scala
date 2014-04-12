@@ -84,6 +84,6 @@ class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
     resp sendError  (status, reason)
   }
 
-  def outputStream: OutputStream = resp getOutputStream
+  def outputStream: OutputStream = resp.getOutputStream
 }
 

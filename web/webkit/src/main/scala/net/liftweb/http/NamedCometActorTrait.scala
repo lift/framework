@@ -45,6 +45,6 @@ trait NamedCometActorTrait extends CometActor with Loggable {
   }
 
   // time out the comet actor if it hasn't been on a page for 2 minutes
-  override def lifespan = Full(120 seconds)
+  override def lifespan = Full(120.seconds)
 
 }

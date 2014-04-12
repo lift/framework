@@ -465,8 +465,8 @@ object Req {
                       Nil, 
                       Full(BodyOrInputStream(request.inputStream)))
         // it's multipart
-      } else if (request multipartContent_?) {
-        val allInfo = request extractFiles
+      } else if (request.multipartContent_?) {
+        val allInfo = request.extractFiles
         
         val normal: List[NormalParamHolder] = 
           allInfo.flatMap {
@@ -493,11 +493,11 @@ object Req {
         val params = localParams ++ (request.params.sortWith
                                      {(s1, s2) => s1.name < s2.name}).
                                            map(n => (n.name, n.values))
-        ParamCalcInfo(request paramNames, params, Nil, Empty)
+        ParamCalcInfo(request.paramNames, params, Nil, Empty)
       } else {
         ParamCalcInfo(queryStringParam._1, 
                       queryStringParam._2 ++ localParams, 
-                      Nil, Full(BodyOrInputStream(request inputStream)))
+                      Nil, Full(BodyOrInputStream(request.inputStream)))
       }
     })
 
@@ -918,7 +918,7 @@ class Req(val path: ParsePath,
   lazy val headers: List[(String, String)] =
   for (h <- request.headers;
        p <- h.values
-  ) yield (h name, p)
+  ) yield (h.name, p)
 
 
   def headers(name: String): List[String] = headers.filter(_._1.equalsIgnoreCase(name)).map(_._2)
@@ -1288,5 +1288,5 @@ object URLRewriter {
     }
   }
 
-  def rewriteFunc: Box[(String) => String] = Box.legacyNullTest(funcHolder value)
+  def rewriteFunc: Box[(String) => String] = Box.legacyNullTest(funcHolder.value)
 }

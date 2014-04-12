@@ -154,11 +154,11 @@ trait PaginatorSnippet[T] extends Paginator[T] {
   /**
    * How to display the page's starting record
    */
-  def recordsFrom: String = (first+1 min count) toString
+  def recordsFrom: String = (first+1 min count).toString
   /**
    * How to display the page's ending record
    */
-  def recordsTo: String = ((first+itemsPerPage) min count) toString
+  def recordsTo: String = ((first+itemsPerPage) min count).toString
   /**
    * The status displayed when using &lt;nav:records/&gt; in the template.
    */
@@ -209,7 +209,7 @@ trait PaginatorSnippet[T] extends Paginator[T] {
    */
   def pagesXml(pages: Seq[Int], sep: NodeSeq): NodeSeq =
     pages.toList map {n =>
-      pageXml(n*itemsPerPage, Text(n+1 toString))
+      pageXml(n*itemsPerPage, Text((n+1).toString))
                     } match {
                       case one :: Nil => one
                       case first :: rest => rest.foldLeft(first) {

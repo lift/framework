@@ -422,7 +422,7 @@ object RedirectResponse {
 case class RedirectResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
   def toResponse = InMemoryResponse(Array(), List("Location" -> uri,
-    "Content-Type" -> "text/plain"), cookies toList, 302)
+    "Content-Type" -> "text/plain"), cookies.toList, 302)
 }
 
 
@@ -444,7 +444,7 @@ object SeeOtherResponse {
 case class SeeOtherResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
   def toResponse = InMemoryResponse(Array(), List("Location" -> uri,
-    "Content-Type" -> "text/plain"), cookies toList, 303)
+    "Content-Type" -> "text/plain"), cookies.toList, 303)
 }
 
 object DoRedirectResponse {
