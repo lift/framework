@@ -583,6 +583,10 @@ private[http] final case class AjaxRequestInfo(requestVersion: Long,
                                                responseFuture: LAFuture[Box[LiftResponse]],
                                                lastSeen: Long)
 
+private[http] class BooleanThreadGlobal extends ThreadGlobal[Boolean] {
+  def ? = this.box openOr false
+}
+
 /**
  * The LiftSession class containg the session state information
  */
@@ -605,9 +609,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    */
   @volatile private[http] var markedForShutDown_? = false
 
-  private val fullPageLoad = new ThreadGlobal[Boolean] {
-    def ? = this.box openOr false
-  }
+  private val fullPageLoad = new BooleanThreadGlobal
 
   private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = new ConcurrentHashMap
 
