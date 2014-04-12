@@ -1413,15 +1413,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case b: Option[_] => runSourceContext(b.toList, xform, ns)
       case fut: LAFuture[_] => runSourceContext(fut.get(5.seconds).openOr(Empty), xform, ns)
       case node: scala.xml.Node => currentSourceContext.doWith(node)(processSurroundAndInclude("Source", xform(ns)))
-      case n: java.lang.Iterable[_] => runSourceContext(n.iterator(), xform, ns)
-      case n: java.util.Iterator[_] =>
-        for {i <- n.toSeq; nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))} yield nodes
-      case en: java.util.Enumeration[_] =>
-      for {i <- en.toSeq; nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))} yield nodes
-      case se: scala.collection.Iterable[_] => runSourceContext(se.iterator,xform, ns)
-      case se: scala.collection.Iterator[_] =>
-        for {i <- se.toSeq; nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))} yield nodes
-      case a: Array[_] => runSourceContext(a.toList, xform, ns)
       case na: org.mozilla.javascript.NativeArray =>
         val len = na.getLength.toInt
         val ar = new Array[Object](len)
@@ -1431,6 +1422,15 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
           pos += 1
         }
         runSourceContext(ar.toList, xform, ns)
+      case n: java.lang.Iterable[_] => runSourceContext(n.iterator(), xform, ns)
+      case n: java.util.Iterator[_] =>
+        for {i <- n.toSeq; nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))} yield nodes
+      case en: java.util.Enumeration[_] =>
+      for {i <- en.toSeq; nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))} yield nodes
+      case se: scala.collection.Iterable[_] => runSourceContext(se.iterator,xform, ns)
+      case se: scala.collection.Iterator[_] =>
+        for {i <- se.toSeq; nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))} yield nodes
+      case a: Array[_] => runSourceContext(a.toList, xform, ns)
       case x =>
         currentSourceContext.doWith(x)(processSurroundAndInclude("Source", xform(ns)))
     }
