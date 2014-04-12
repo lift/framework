@@ -2315,8 +2315,9 @@ trait SHtml {
 
 }
 
-object AjaxType extends Enumeration("javascript", "json") {
-  val JavaScript, JSON = Value
+object AjaxType extends Enumeration {
+  val JavaScript = Value("javascript")
+  val JSON = Value("json")
 }
 
 object AjaxContext {
