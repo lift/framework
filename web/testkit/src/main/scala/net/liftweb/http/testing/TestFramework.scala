@@ -18,6 +18,8 @@ package net.liftweb
 package http
 package testing
 
+import scala.language.implicitConversions
+
 import net.liftweb.util.Helpers._
 import net.liftweb.util._
 import net.liftweb.json._

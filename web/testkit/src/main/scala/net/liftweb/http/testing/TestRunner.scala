@@ -18,6 +18,8 @@ package net.liftweb
 package http
 package testing
 
+import scala.language.implicitConversions
+
 import net.liftweb.util.Helpers._
 import net.liftweb.common.{ Box, Full, Empty, Failure}
 import net.liftweb.util.{Helpers}
