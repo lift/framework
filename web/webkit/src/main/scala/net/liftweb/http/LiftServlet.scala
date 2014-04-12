@@ -999,6 +999,8 @@ class LiftServlet extends Loggable {
           response.outputStream.flush()
 
         case StreamingResponse(stream, endFunc, _, _, _, _) =>
+          import scala.language.reflectiveCalls
+
           try {
             var len = 0
             val ba = new Array[Byte](8192)
