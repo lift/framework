@@ -65,7 +65,7 @@ object Form extends DispatchSnippet {
                                             up.key != "method" && up.key != "action"
                                           case x => true
                                         }))
-            new Elem(null, "form", meta , e.scope, e.child :_*)
+            new Elem(null, "form", meta , e.scope, e.minimizeEmpty, e.child :_*)
           } else {
             <form method="post" action={S.uri}>{kids}</form>
           }
@@ -85,9 +85,9 @@ object Form extends DispatchSnippet {
         kids(0).isInstanceOf[Elem] && 
         (kids(0).prefix eq null) &&
         kids(0).label == "form") {
-      new Elem(null, "form", addAjaxForm , TopScope, kids(0).child :_*)
+      new Elem(null, "form", addAjaxForm , TopScope, true, kids(0).child :_*)
     } else {
-      Elem(null, "form", addAjaxForm, TopScope, kids : _*)
+      Elem(null, "form", addAjaxForm, TopScope, true, kids : _*)
     }
   }
 

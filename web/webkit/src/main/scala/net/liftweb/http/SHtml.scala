@@ -100,11 +100,9 @@ trait SHtml {
 
     def applyToAllElems(in: Seq[Node], elemAttrs: Seq[ElemAttr]): Seq[Node] = in map {
       case Group(ns) => Group(applyToAllElems(ns, elemAttrs))
-      case e: Elem => val updated = elemAttrs.foldLeft(e)((e, f) => f(e))
-
-        new Elem(updated.prefix, updated.label,
-                               updated.attributes, updated.scope,
-                               applyToAllElems(updated.child, elemAttrs) :_*)
+      case e: Elem =>
+        val updated = elemAttrs.foldLeft(e)((e, f) => f(e))
+        updated.copy(child = applyToAllElems(updated.child, elemAttrs))
       case n => n
     }
   }
@@ -366,11 +364,7 @@ trait SHtml {
       map(ignore => applyAgain()).openOr(NodeSeq.Empty)
 
       def applyAgain(): NodeSeq =
-        new Elem(latestElem.prefix,
-                 latestElem.label,
-                 latestElem.attributes,
-                 latestElem.scope,
-                 f(this)(latestKids) :_*)
+        latestElem.copy(child = f(this)(latestKids))
 
       def setHtml(): JsCmd = SetHtml(latestId, f(this)(latestKids))
     }
@@ -1037,8 +1031,9 @@ trait SHtml {
   private def dealWithBlur(elem: Elem, blurCmd: String): Elem = {
     (elem \ "@onblur").toList match {
       case Nil => elem % ("onblur" -> blurCmd)
-      case x :: xs => val attrs = elem.attributes.filter(_.key != "onblur")
-      Elem(elem.prefix, elem.label, new UnprefixedAttribute("onblur", Text(blurCmd + x.text), attrs), elem.scope, elem.child: _*)
+      case x :: xs =>
+        val attrs = elem.attributes.filter(_.key != "onblur")
+        elem.copy(attributes = new UnprefixedAttribute("onblur", Text(blurCmd + x.text), attrs))
     }
   }
 
@@ -1100,16 +1095,14 @@ trait SHtml {
     }
 
   private def dupWithName(elem: Elem, name: String): Elem = {
-    new Elem(elem.prefix,
-             elem.label,
-             new UnprefixedAttribute("name", name,
-                                     elem.attributes.filter {
-                                       case up: UnprefixedAttribute =>
-                                         up.key != "name"
-                                       case _ => true
-                                     }),
-             elem.scope,
-             elem.child :_*)
+    elem.copy(attributes =
+      new UnprefixedAttribute("name", name,
+                              elem.attributes.filter {
+                                case up: UnprefixedAttribute =>
+                                  up.key != "name"
+                                case _ => true
+                              })
+    )
   }
 
   private def isRadio(in: MetaData): Boolean =
@@ -1149,17 +1142,16 @@ trait SHtml {
 
             fmapFunc(func) {
               funcName =>
-                new Elem(e.prefix, e.label,
-                         allEvent.foldLeft(newAttr){
-                           case (meta, attr) =>
-                             new UnprefixedAttribute(attr,
-                                                     Helpers.
-                                                     appendFuncToURL(oldAttr.
-                                                                     getOrElse(attr, ""),
-                                                                     funcName+"=_"),
-                                                     meta)
-
-                         }, e.scope, e.child :_*)
+                e.copy(attributes =
+                  allEvent.foldLeft(newAttr){
+                    case (meta, attr) =>
+                      new UnprefixedAttribute(attr,
+                                              Helpers.
+                                              appendFuncToURL(oldAttr.getOrElse(attr, ""),
+                                                              funcName+"=_"),
+                                              meta)
+                  }
+                )
             }
           }
 
@@ -1227,15 +1219,15 @@ trait SHtml {
 
             val cmd = ajaxCall(JsRaw("this.value"), func)._2.toJsCmd
 
-            new Elem(e.prefix, e.label,
-                     allEvent.foldLeft(newAttr){
-                       case (meta, attr) =>
-                         new UnprefixedAttribute(attr,
-                                                 oldAttr.getOrElse(attr, "") +
-                                                 cmd,
-                                                 meta)
+            e.copy(attributes =
+              allEvent.foldLeft(newAttr) {
+                case (meta, attr) =>
+                  new UnprefixedAttribute(attr,
+                                          oldAttr.getOrElse(attr, "") + cmd,
+                                          meta)
 
-                     }, e.scope, e.child :_*)
+              }
+            )
           }
 
 
@@ -1761,8 +1753,7 @@ trait SHtml {
           case _ => true
         }
 
-        new Elem(e.prefix, e.label,
-                 newMeta, e.scope, e.child :_*) % ("id" -> id) %
+        e.copy(attributes = newMeta) % ("id" -> id) %
         ("action" -> "javascript://") %
         ("onsubmit" ->
          (SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(id)).toJsCmd +

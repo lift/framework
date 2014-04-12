@@ -579,11 +579,11 @@ object Req {
         v =>
         v match {
           case Group(nodes) => Group(_fixHtml(contextPath, nodes))
-          case e: Elem if e.label == "form" => Elem(v.prefix, v.label, fixAttrs("action", v.attributes, true), v.scope, _fixHtml(contextPath, v.child): _*)
-          case e: Elem if e.label == "script" => Elem(v.prefix, v.label, fixAttrs("src", v.attributes, false), v.scope, _fixHtml(contextPath, v.child): _*)
-          case e: Elem if e.label == "a" => Elem(v.prefix, v.label, fixAttrs("href", v.attributes, true), v.scope, _fixHtml(contextPath, v.child): _*)
-          case e: Elem if e.label == "link" => Elem(v.prefix, v.label, fixAttrs("href", v.attributes, false), v.scope, _fixHtml(contextPath, v.child): _*)
-          case e: Elem => Elem(v.prefix, v.label, fixAttrs("src", v.attributes, true), v.scope, _fixHtml(contextPath, v.child): _*)
+          case e: Elem if e.label == "form" => Elem(v.prefix, v.label, fixAttrs("action", v.attributes, true), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
+          case e: Elem if e.label == "script" => Elem(v.prefix, v.label, fixAttrs("src", v.attributes, false), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
+          case e: Elem if e.label == "a" => Elem(v.prefix, v.label, fixAttrs("href", v.attributes, true), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
+          case e: Elem if e.label == "link" => Elem(v.prefix, v.label, fixAttrs("href", v.attributes, false), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
+          case e: Elem => Elem(v.prefix, v.label, fixAttrs("src", v.attributes, true), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
           case _ => v
         }
       }
