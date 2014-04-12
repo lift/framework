@@ -414,7 +414,9 @@ object Menu extends DispatchSnippet {
     for {
       name <- S.attr("name").toList
     } yield {
-      type T = Q forSome {type Q}
+      import scala.language.existentials
+
+      type T = Q forSome { type Q }
 
       // Builds a link for the given loc
       def buildLink[T](loc : Loc[T]) = {

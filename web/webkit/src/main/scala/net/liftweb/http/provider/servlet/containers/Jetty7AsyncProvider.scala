@@ -31,6 +31,9 @@ import Helpers._
 
 
 object Jetty7AsyncProvider extends AsyncProviderMeta {
+  // contSupport below gets inferred as a Class[?0] existential.
+  import scala.language.existentials
+
   private val (hasContinuations_?,
                contSupport,
                getContinuation,
