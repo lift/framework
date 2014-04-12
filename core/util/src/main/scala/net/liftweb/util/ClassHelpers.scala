@@ -53,8 +53,8 @@ trait ClassHelpers { self: ControlHelpers =>
   (for (
       place <- where.view;
       mod <- modifiers.view;
-      val fullName = place + "." + mod(name);
-      val ignore = List(classOf[ClassNotFoundException], classOf[ClassCastException], classOf[NoClassDefFoundError]);
+      fullName = place + "." + mod(name);
+      ignore = List(classOf[ClassNotFoundException], classOf[ClassCastException], classOf[NoClassDefFoundError]);
       klass <- tryo(ignore)(Class.forName(fullName).asSubclass(targetType).asInstanceOf[Class[C]])
     ) yield klass).headOption
 
