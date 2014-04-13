@@ -1126,7 +1126,9 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
     for (v <- mapperAccessMethods) {
       v.invoke(this) match {
-        case mf: MappedField[AnyRef, A] if !mf.ignoreField_? =>
+        case untypedMf: MappedField[_, _] if !untypedMf.ignoreField_? =>
+          val mf = untypedMf.asInstanceOf[MappedField[AnyRef,A]]
+
           mf.setName_!(v.getName)
           tArray += FieldHolder(mf.name, v, mf)
           for (colName <- mf.dbColumnNames(v.getName).map(MapperRules.quoteColumnName.vend).map(_.toLowerCase)) {
