@@ -17,6 +17,8 @@
 package net.liftweb
 package record
 
+import scala.language.existentials
+
 import java.lang.reflect.Modifier
 import net.liftweb._
 import util._
