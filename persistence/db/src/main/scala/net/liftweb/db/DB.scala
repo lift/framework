@@ -1224,13 +1224,13 @@ trait ProtoDBVendor extends ConnectionManager {
             this.testConnection(x)
             Full(x)
           } catch {
-            case e => try {
+            case e: Exception => try {
               logger.debug("Test connection failed, removing connection from pool, name=%s".format(name))
               poolSize = poolSize - 1
               tryo(x.close)
               newConnection(name)
             } catch {
-              case e => newConnection(name)
+              case e: Exception => newConnection(name)
             }
           }
       }
