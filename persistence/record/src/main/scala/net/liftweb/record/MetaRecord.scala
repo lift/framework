@@ -366,12 +366,13 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
           case _ => NodeSeq.Empty
         }
 
-      case Elem(namespace, label, attrs, scp, ns @ _*) =>
-        Elem(namespace, label, attrs, scp, toForm(inst, ns.flatMap(n => toForm(inst, n))):_* )
+      case elem: Elem =>
+        elem.copy(child = toForm(inst, elem.child.flatMap(n => toForm(inst, n))))
 
       case s : Seq[_] => s.flatMap(e => e match {
-            case Elem(namespace, label, attrs, scp, ns @ _*) =>
-              Elem(namespace, label, attrs, scp, toForm(inst, ns.flatMap(n => toForm(inst, n))):_* )
+            case elem: Elem =>
+              elem.copy(child = toForm(inst, elem.child.flatMap(n => toForm(inst, n))))
+
             case x => x
           })
 
