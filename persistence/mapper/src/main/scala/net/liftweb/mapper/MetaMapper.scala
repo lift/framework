@@ -1241,10 +1241,12 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
   def asHtml(toLine: A): NodeSeq =
   Text(internalTableName_$_$) :: Text("={ ") ::
-  (for (mft <- mappedFieldList if mft.field.dbDisplay_? ;
-        val field = ??(mft.method, toLine)) yield
-   <span>{field.displayName}={field.asHtml}&nbsp;</span>
-  ) :::List(Text(" }"))
+    (for {
+      mft <- mappedFieldList if mft.field.dbDisplay_?
+      field = ??(mft.method, toLine)
+    } yield {
+     <span>{field.displayName}={field.asHtml}&nbsp;</span>
+    }) ::: List(Text(" }"))
 
 
   /**
