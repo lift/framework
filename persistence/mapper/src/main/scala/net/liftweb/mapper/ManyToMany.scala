@@ -17,6 +17,8 @@
 package net.liftweb
 package mapper
 
+import scala.language.existentials
+
 import net.liftweb.util._
 import net.liftweb.common._
 
