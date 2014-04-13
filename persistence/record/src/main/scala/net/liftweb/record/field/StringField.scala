@@ -51,7 +51,7 @@ trait StringTypedField extends TypedField[String] with StringValidators {
     <input type={formInputType} maxlength={maxLength.toString}
       name={funcName}
       value={valueBox openOr ""}
-      tabindex={tabIndex toString}/>
+      tabindex={tabIndex.toString}/>
   }
 
   def toForm: Box[NodeSeq] =
