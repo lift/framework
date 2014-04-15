@@ -56,13 +56,13 @@ case class MongoAddress(host: MongoHostBase, name: String) {
 abstract class MongoHostBase {
   def mongo: Mongo
 }
-case class MongoHost(server: ServerAddress = new ServerAddress, options: MongoOptions = new MongoOptions) extends MongoHostBase {
-  lazy val mongo = new Mongo(server, options)
+case class MongoHost(server: ServerAddress = new ServerAddress, options: MongoClientOptions = new MongoClientOptions.Builder().build()) extends MongoHostBase {
+  lazy val mongo = new MongoClient(server, options)
 }
 object MongoHost {
   def apply(host: String): MongoHost = MongoHost(new ServerAddress(host, 27017))
   def apply(host: String, port: Int): MongoHost = MongoHost(new ServerAddress(host, port))
-  def apply(host: String, port: Int, options: MongoOptions): MongoHost = MongoHost(new ServerAddress(host, port), options)
+  def apply(host: String, port: Int, options: MongoClientOptions): MongoHost = MongoHost(new ServerAddress(host, port), options)
 }
 
 /*
@@ -76,9 +76,9 @@ case class MongoPair(left: ServerAddress, right: ServerAddress, options: MongoOp
 /*
  * Wrapper for creating a Replica Set
  */
-case class MongoSet(dbs: List[ServerAddress], options: MongoOptions = new MongoOptions) extends MongoHostBase {
+case class MongoSet(dbs: List[ServerAddress], options: MongoClientOptions = new MongoClientOptions.Builder().build()) extends MongoHostBase {
   import scala.collection.JavaConversions._
-  lazy val mongo = new Mongo(dbs, options)
+  lazy val mongo = new MongoClient(dbs, options)
 }
 
 /*
