@@ -159,7 +159,7 @@ trait RecordTypeMode extends PrimitiveTypeMode {
   }
   
   def reifySingleton[T](m: Manifest[T]) = {
-    val cls = m.erasure
+    val cls = m.runtimeClass
     val field = cls.getField("MODULE$")
     field.get(null).asInstanceOf[T]
   }
