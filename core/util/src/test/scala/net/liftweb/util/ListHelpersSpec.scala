@@ -127,7 +127,7 @@ object ListHelpersSpec extends Specification  with ListHelpers {
       head(Nil, 2) must_== 2
     }
     "not evaluate the default valueif list is not empty" in {
-      head(List(1), {error("stop"); 2}) must_== 1
+      head(List(1), {sys.error("stop"); 2}) must_== 1
     }
   }
 
@@ -139,7 +139,7 @@ object ListHelpersSpec extends Specification  with ListHelpers {
       listIf(false)(1) must_== Nil
     }
     "not evaluate its argument if the predicate is false" in {
-      listIf(false)({error("stop"); 1}) must_== Nil
+      listIf(false)({sys.error("stop"); 1}) must_== Nil
     }
   }
 
