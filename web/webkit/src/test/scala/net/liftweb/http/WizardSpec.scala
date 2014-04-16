@@ -31,8 +31,7 @@ object WizardSpec extends Specification  {
 
   val session: LiftSession = new LiftSession("", Helpers.randomString(20), Empty)
 
-  val MyWizard = new Wizard {
-
+  class WizardForTesting extends Wizard {
     object completeInfo extends WizardVar(false)
 
     def finish() {
@@ -40,7 +39,7 @@ object WizardSpec extends Specification  {
       completeInfo.set(true)
     }
 
-    val nameAndAge = new Screen {
+    class NameAndAgeScreen extends Screen {
       val name = field(S ? "First Name", "",
                        valMinLen(2, S ? "Name Too Short"))
 
@@ -50,19 +49,23 @@ object WizardSpec extends Specification  {
 
       override def nextScreen = if (age.is < 18) parentName else favoritePet
     }
-
-    val parentName = new Screen {
+    class ParentNameScreen extends Screen {
       val parentName = field(S ? "Mom or Dad's name", "",
                              valMinLen(2, S ? "Name Too Short"),
                              valMaxLen(40, S ? "Name Too Long"))
     }
-
-    val favoritePet = new Screen {
+    class FavoritePetScreen extends Screen {
       val petName = field(S ? "Pet's name", "",
                           valMinLen(2, S ? "Name Too Short"),
                           valMaxLen(40, S ? "Name Too Long"))
     }
+
+    def nameAndAge = new NameAndAgeScreen
+    def parentName = new ParentNameScreen
+    def favoritePet = new FavoritePetScreen
   }
+
+  val MyWizard = new WizardForTesting
 
   "A Wizard can be defined" in {
     MyWizard.nameAndAge.screenName must_== "Screen 1"
