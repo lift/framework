@@ -73,7 +73,7 @@ object WizardSpec extends Specification  {
   }
 
   "A field must have a correct Manifest" in {
-    MyWizard.nameAndAge.age.manifest.erasure.getName must_== classOf[Int].getName
+    MyWizard.nameAndAge.age.manifest.runtimeClass.getName must_== classOf[Int].getName
   }
 
   "A wizard must transition from first screen to second screen" in {
