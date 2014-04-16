@@ -44,6 +44,7 @@ object ListHelpersSpec extends Specification  with ListHelpers {
         case RemoveDelta(99)        => "99"
         case InsertAtStartDelta(1)  => "1"
         case InsertAfterDelta(5, 4) => "ok5"
+        case _ => "fail"
       }
       ret must_== List("1", "ok", "ok5", "99")
     }
@@ -57,6 +58,7 @@ object ListHelpersSpec extends Specification  with ListHelpers {
         case RemoveDelta(99)        => "99"
         case InsertAtStartDelta(1)  => "1"
         case InsertAfterDelta(5, 4) => "ok5"
+        case _ => "fail"
       }
       ret must_== List("1", "r4", "ok", "ok3", "ok5", "99")
     }
