@@ -42,7 +42,7 @@ class MapperSpec extends Specification with BeforeExample {
   // Make sure we have everything configured first
   MapperSpecsModel.setup()
 
-  def providers = DbProviders.H2MemoryProvider :: Nil
+  def providers: List[DbProviders.Provider] = DbProviders.H2MemoryProvider :: Nil
 
   /*
    private def logDBStuff(log: DBLog, len: Long) {
