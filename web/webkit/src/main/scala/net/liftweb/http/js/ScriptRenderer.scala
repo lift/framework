@@ -347,9 +347,9 @@ object ScriptRenderer {
         throw e;
       },
 
-      lift_sessionLost: function() { """ +
-        JsCmds.RedirectTo(LiftRules.noCometSessionPage).toJsCmd +
-      """},
+      lift_sessionLost: function() {
+        window.reload();
+      },
 
       lift_cometEntry: function() {
         var isEmpty = function(){for (var i in lift_toWatch) {return false} return true}();

@@ -650,14 +650,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var liftCoreResourceName = "i18n.lift-core"
 
   /**
-   * Where to send the user if there's no comet session. Note that this is
-   * contingent on an unchanged LiftRules.noCometSessionCommand and on
-   * liftComet.lift_sessionLost not being overridden client-side.
-   */
-  @deprecated("Use LiftRules.noCometSessionCmd.", "2.5")
-  @volatile var noCometSessionPage = "/"
-
-  /**
    * The JsCmd to execute when the comet session is lost. The comet
    * session is considered lost when either (a) a comet request comes
    * in for a session that does not exist on the server or (b) a comet
@@ -666,10 +658,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    *
    * By default, we invoke liftComet.lift_sessionLost, which can be
    * overridden client-side for more complex work.
-   * liftComet.lift_sessionLost redirects to
-   * LiftRules.noCometSessionPage by default for now, though
-   * noCometSessionPage is deprecated and will be replaced by a
-   * default of reloading the current page.
+   * liftComet.lift_sessionLost reloads the current page by default.
    */
   val noCometSessionCmd = new FactoryMaker[JsCmd](
     () => {
