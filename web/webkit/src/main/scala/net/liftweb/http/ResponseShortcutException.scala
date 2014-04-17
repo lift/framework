@@ -51,7 +51,7 @@ object ResponseShortcutException {
     new ResponseShortcutException(responseIt, true)
 
   def redirect(to: String): ResponseShortcutException =
-    new ResponseShortcutException(() => RedirectResponse(to, S responseCookies: _*), Full(to), true)
+    new ResponseShortcutException(() => RedirectResponse(to, S.responseCookies: _*), Full(to), true)
 
   def redirect(to: String, func: () => Unit): ResponseShortcutException =
     S.session match {
@@ -60,7 +60,7 @@ object ResponseShortcutException {
     }
 
   def seeOther(to: String): ResponseShortcutException =
-    new ResponseShortcutException(() => SeeOtherResponse(to, S responseCookies: _*), Full(to), true)
+    new ResponseShortcutException(() => SeeOtherResponse(to, S.responseCookies: _*), Full(to), true)
 
   def seeOther(to: String, func: () => Unit): ResponseShortcutException =
     S.session match {

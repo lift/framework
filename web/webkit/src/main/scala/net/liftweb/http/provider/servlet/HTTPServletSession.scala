@@ -26,25 +26,25 @@ import net.liftweb.util._
 class HTTPServletSession(session: HttpSession) extends HTTPSession {
   private val LiftMagicID = "$lift_magic_session_thingy$"
 
-  def sessionId: String = session getId
+  def sessionId: String = session.getId
 
   def link(liftSession: LiftSession) = session.setAttribute(LiftMagicID, SessionToServletBridge(liftSession.uniqueId))
 
   def unlink(liftSession: LiftSession) = session.removeAttribute(LiftMagicID)
 
-  def maxInactiveInterval: Long = session getMaxInactiveInterval
+  def maxInactiveInterval: Long = session.getMaxInactiveInterval
 
-  def setMaxInactiveInterval(interval: Long) = session setMaxInactiveInterval (interval.toInt)
+  def setMaxInactiveInterval(interval: Long) = session.setMaxInactiveInterval (interval.toInt)
 
-  def lastAccessedTime: Long = session getLastAccessedTime
+  def lastAccessedTime: Long = session.getLastAccessedTime
 
-  def setAttribute(name: String, value: Any) = session setAttribute (name, value)
+  def setAttribute(name: String, value: Any) = session.setAttribute(name, value)
 
-  def attribute(name: String): Any = session getAttribute name
+  def attribute(name: String): Any = session.getAttribute(name)
 
-  def removeAttribute(name: String) = session removeAttribute name
+  def removeAttribute(name: String) = session.removeAttribute(name)
 
-  def terminate = session invalidate
+  def terminate = session.invalidate
 }
 
 /**

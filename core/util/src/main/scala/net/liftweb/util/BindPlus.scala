@@ -17,7 +17,9 @@
 package net.liftweb 
 package util 
 
+import scala.language.implicitConversions
 import scala.xml.{NodeSeq, PrefixedAttribute, MetaData}
+
 import Helpers.{bind, BindParam, FuncBindParam, TheBindParam}
 import common._
 

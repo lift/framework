@@ -17,6 +17,9 @@
 package net.liftweb
 package util
 
+import scala.language.postfixOps
+import scala.language.implicitConversions
+
 import scala.util.parsing.combinator._
 import common._
 import java.io._
