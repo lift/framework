@@ -374,8 +374,6 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
                                defaultHtml: NodeSeq,
                                attributes: Map[String, String]): Unit
 
-  def jsonCall: JsonCall
-
   def theType: Box[String]
 
   def name: Box[String]
@@ -481,7 +479,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    */
   private def lastRendering: RenderOut =
     if (dontCacheRendering) {
-      val ret = (render ++ jsonInCode): RenderOut
+      val ret = render
       theSession.updateFunctionMap(S.functionMap, uniqueId, lastRenderTime)
       ret
     } else {
@@ -614,12 +612,6 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    */
   protected def listenerTransition(): Unit = {}
 
-  private def _handleJson(in: Any): JsCmd =
-    if (jsonHandlerChain.isDefinedAt(in))
-      jsonHandlerChain(in)
-    else handleJson(in)
-
-
   /**
    * Prepends the handler to the Json Handlers.  Should only be used
    * during instantiation
@@ -631,15 +623,11 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   }
 
 
-  def handleJson(in: Any): JsCmd = Noop
-
   /**
    * If there's actor-specific JSON behavior on failure to make the JSON
    * call, include the JavaScript here.
    */
   def onJsonError: Box[JsCmd] = Empty
-
-  lazy val (jsonCall, jsonInCode) = S.buildJsonFunc(Full(_defaultPrefix), onJsonError, _handleJson)
 
   /**
    * Override this method to deal with JSON sent from the browser via the sendJson function.  This
@@ -1064,7 +1052,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     deltas = Nil
 
     if (!dontCacheRendering) {
-      lastRendering = render ++ jsonInCode
+      lastRendering = render
     }
 
     theSession.updateFunctionMap(S.functionMap, uniqueId, lastRenderTime)

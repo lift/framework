@@ -369,24 +369,6 @@ trait SHtml {
   }
 
   /**
-   * Create an Ajax button that when pressed, submits an Ajax request and expects back a JSON
-   * construct which will be passed to the <i>success</i> function
-   *
-   * @param text -- the name/text of the button
-   * @param func -- the function to execute when the button is pushed.  Return Noop if nothing changes on the browser.
-   * @param ajaxContext -- defines the callback functions and the JSON response type
-   * @param attrs -- the list of node attributes
-   *
-   * @return a button to put on your page
-   *
-   */
-  def jsonButton(text: NodeSeq, jsExp: JsExp, func: Any => JsObj, ajaxContext: JsonContext, attrs: ElemAttr*): Elem = {
-    attrs.foldLeft(jsonFmapFunc(func)(name =>
-            <button onclick={makeAjaxCall(JsRaw(name.encJs + "+'='+ encodeURIComponent(JSON.stringify(" + jsExp.toJsCmd + "))"), ajaxContext).toJsCmd +
-                    "; return false;"}>{text}</button>))(_ % _)
-  }
-
-  /**
    * Create an Ajax button that when pressed, executes the function
    *
    * @param text -- the name/text of the button
@@ -1654,40 +1636,6 @@ trait SHtml {
    * @param postSubmit Code that should be executed after a successful submission
    */
   def ajaxForm(body : NodeSeq, onSubmit : JsCmd, postSubmit : JsCmd) = (<lift:form onsubmit={onSubmit.toJsCmd} postsubmit={postSubmit.toJsCmd}>{body}</lift:form>)
-
-  /**
-   * Takes a form and wraps it so that it will be submitted via AJAX and processed by
-   * a JSON handler. This can be useful if you may have dynamic client-side modification
-   * of the form (addition or removal).
-   *
-   * @param jsonHandler The handler that will process the form
-   * @param body The form body. This should not include the &lt;form&gt; tag.
-   */
-  def jsonForm(jsonHandler: JsonHandler, body: NodeSeq): NodeSeq = jsonForm(jsonHandler, Noop, body)
-
-  /**
-   * Takes a form and wraps it so that it will be submitted via AJAX and processed by
-   * a JSON handler. This can be useful if you may have dynamic client-side modification
-   * of the form (addition or removal).
-   *
-   * @param jsonHandler The handler that will process the form
-   * @param onSubmit JavaScript code that will be executed on the client prior to submitting
-   * the form
-   * @param body The form body. This should not include the &lt;form&gt; tag.
-   */
-  def jsonForm(jsonHandler: JsonHandler, onSubmit: JsCmd, body: NodeSeq): NodeSeq = {
-    val id = formFuncName
-    <form onsubmit={(onSubmit & jsonHandler.call("processForm", FormToJSON(id)) & JsReturn(false)).toJsCmd} id={id}>{body}</form>
-  }
-
-  /**
-   * Having a regular form, this method can be used to send the content of the form as JSON.
-   * the request will be processed by the jsonHandler
-   *
-   * @param jsonHandler - the handler that process this request
-   * @param formId - the id of the form
-   */
-  def submitJsonForm(jsonHandler: JsonHandler, formId: String):JsCmd = jsonHandler.call("processForm", FormToJSON(formId))
 
   /**
    * Having a regular form, this method can be used to send the serialized content of the form.

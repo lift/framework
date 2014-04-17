@@ -2589,7 +2589,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       val toCmp = Full(act.uniqueId)
 
       import scala.collection.JavaConversions._
-      nmessageCallback.remove(act.jsonCall.funcId)
       nmessageCallback.foreach {
         case (k, f) =>
           if (f.owner == toCmp) nmessageCallback.remove(k)
