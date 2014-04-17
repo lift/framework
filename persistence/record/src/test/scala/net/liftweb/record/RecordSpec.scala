@@ -337,16 +337,6 @@ object RecordSpec extends Specification  {
           }
         }
       }
-
-      "get set from json string using util.JSONParser" in {
-        S.initIfUninitted(new LiftSession("", randomString(20), Empty)) {
-          val fttrFromJSON = FieldTypeTestRecord.fromJSON(fttrJson)
-          fttrFromJSON.isDefined must_== true
-          fttrFromJSON.toList map { r =>
-            r mustEqual fttr
-          }
-        }
-      }
     }
   }
 
