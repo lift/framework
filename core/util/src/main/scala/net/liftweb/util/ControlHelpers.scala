@@ -69,7 +69,7 @@ trait ControlHelpers extends ClassHelpers {
       Full(f)
     } catch {
       case t if handler.isDefinedAt(t) => Full(handler(t))
-      case e => Failure(e.getMessage, Full(e), Empty)
+      case e: Throwable => Failure(e.getMessage, Full(e), Empty)
     }
   }
 
