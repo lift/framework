@@ -117,8 +117,10 @@ case class UnauthorizedResponse(realm: String) extends LiftResponse {
   def toResponse = InMemoryResponse(Array(), List("WWW-Authenticate" -> ("Basic realm=\"" + realm + "\"")), Nil, 401)
 }
 
-object Qop extends Enumeration(0, "auth", "auth-int", "auth,auth-int") {
-  val AUTH, AUTH_INT, AUTH_AND_AUTH_INT = Value
+object Qop extends Enumeration {
+  val AUTH = Value("auth")
+  val AUTH_INT = Value("auth-int")
+  val AUTH_AND_AUTH_INT = Value("auth,auth-int")
 }
 
 /**
@@ -422,7 +424,7 @@ object RedirectResponse {
 case class RedirectResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
   def toResponse = InMemoryResponse(Array(), List("Location" -> uri,
-    "Content-Type" -> "text/plain"), cookies toList, 302)
+    "Content-Type" -> "text/plain"), cookies.toList, 302)
 }
 
 
@@ -444,7 +446,7 @@ object SeeOtherResponse {
 case class SeeOtherResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
   def toResponse = InMemoryResponse(Array(), List("Location" -> uri,
-    "Content-Type" -> "text/plain"), cookies toList, 303)
+    "Content-Type" -> "text/plain"), cookies.toList, 303)
 }
 
 object DoRedirectResponse {

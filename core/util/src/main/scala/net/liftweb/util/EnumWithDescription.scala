@@ -17,6 +17,8 @@
 package net.liftweb 
 package util 
 
+
+
 /*
  A wrapper arround a Scala Enumeration Value that has a name, description for each object
  */
@@ -26,6 +28,8 @@ trait ValueWithDescription  {
 }
 
 abstract class EnumWithDescription  {
+  import scala.language.reflectiveCalls
+
     type Value = enum.Value with ValueWithDescription
 
     private var _values: List[Value] = Nil
