@@ -18,6 +18,8 @@ package net.liftweb
 package http
 package testing
 
+import scala.language.implicitConversions
+
 import net.liftweb.util.Helpers._
 import net.liftweb.common.{ Box, Full, Empty, Failure}
 import net.liftweb.util.{Helpers}
@@ -77,16 +79,22 @@ class TestRunner(clearDB: Box[() => Any], setupDB: Box[() => Any],beforeAssertLi
     def runASingleTest(testItem: Item) {
       beforeTest(testItem.name)
 
-      val myTrace = (try{throw new Exception("")} catch {case e => e}).getStackTrace.toList.tail.head
+      val myTrace =
+        try {
+          throw new Exception("")
+        } catch {
+          case e: Exception => e.getStackTrace.toList.tail.head
+        }
+
       if (testItem.resetDB) doResetDB
       val (success, trace, excp) = try {
         testItem.getFunc(0)()
         (true, Nil, Empty)
       } catch {
-        case e =>
+        case e: Throwable =>
         def combineStack(ex: Throwable,base: List[StackTraceElement]): List[StackTraceElement] = ex match {
           case null => base
-          case e => combineStack(e.getCause,e.getStackTrace.toList ::: base)
+          case _ => combineStack(ex.getCause, ex.getStackTrace.toList ::: base)
         }
         val trace = combineStack(e, Nil).takeWhile(e => e.getClassName != myTrace.getClassName || e.getFileName != myTrace.getFileName || e.getMethodName != myTrace.getMethodName).dropRight(2)
         (false, trace, Full(e))
@@ -100,16 +108,22 @@ class TestRunner(clearDB: Box[() => Any], setupDB: Box[() => Any],beforeAssertLi
         val thread = new Thread(new Runnable {def run {
       beforeTest(testItem.name+" thread "+n)
 
-      val myTrace = (try{throw new Exception("")} catch {case e => e}).getStackTrace.toList.tail.head
+      val myTrace =
+        try {
+          throw new Exception("")
+        } catch {
+          case e: Exception => e.getStackTrace.toList.tail.head
+        }
+
       if (testItem.resetDB) doResetDB
       val (success, trace, excp) = try {
         testItem.getFunc(n)()
         (true, Nil, Empty)
       } catch {
-        case e =>
+        case e: Throwable =>
         def combineStack(ex: Throwable,base: List[StackTraceElement]): List[StackTraceElement] = ex match {
           case null => base
-          case e => combineStack(e.getCause,e.getStackTrace.toList ::: base)
+          case _ => combineStack(ex.getCause, ex.getStackTrace.toList ::: base)
         }
         val trace = combineStack(e, Nil).takeWhile(e => e.getClassName != myTrace.getClassName || e.getFileName != myTrace.getFileName || e.getMethodName != myTrace.getMethodName).dropRight(2)
         (false, trace, Full(e))

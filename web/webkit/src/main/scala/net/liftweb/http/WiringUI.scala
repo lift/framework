@@ -133,7 +133,8 @@ object WiringUI {
       new Elem(myElem.prefix,
                myElem.label,
                myElem.attributes,
-               myElem.scope)
+               myElem.scope,
+               myElem.minimizeEmpty)
     }
 
 

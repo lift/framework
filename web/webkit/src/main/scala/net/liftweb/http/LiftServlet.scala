@@ -109,7 +109,7 @@ class LiftServlet extends Loggable {
 
         func(answerFunc)
 
-      }, 5 millis)
+      }, 5.millis)
     }
 
     if (reqOrg.request.suspendResumeSupport_?) {
@@ -117,7 +117,7 @@ class LiftServlet extends Loggable {
         // do the actual write on a separate thread
         Schedule.schedule(() => {
           reqOrg.request.resume(reqOrg, liftResponse)
-        }, 0 seconds)
+        }, 0.seconds)
       })
 
       reqOrg.request.suspend(cometTimeout)
@@ -790,7 +790,7 @@ class LiftServlet extends Loggable {
 
       case ar: AnswerRender =>
         answers = ar :: answers
-        LAPinger.schedule(this, BreakOut(), 5 millis)
+        LAPinger.schedule(this, BreakOut(), 5.millis)
 
       case BreakOut() if !done =>
         done = true
@@ -999,6 +999,8 @@ class LiftServlet extends Loggable {
           response.outputStream.flush()
 
         case StreamingResponse(stream, endFunc, _, _, _, _) =>
+          import scala.language.reflectiveCalls
+
           try {
             var len = 0
             val ba = new Array[Byte](8192)
