@@ -507,16 +507,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   }
 
   /**
-   * Set the doc type used.  Use the HtmlProperties
-   */
-  @deprecated("Use the HtmlProperties", "2.4")
-  val docType: FactoryMaker[Req => Box[String]] = new FactoryMaker( (r: Req) => r  match {
-    case _ if S.skipDocType => Empty
-    case _ if S.getDocType._1 => S.getDocType._2
-    case _ => Full(DocType.xhtmlTransitional)
-  }){}
-
-  /**
    * The maximum allowed size of a complete mime multi-part POST.  Default 8MB
    */
   @volatile var maxMimeSize: Long = 8 * 1024 * 1024
