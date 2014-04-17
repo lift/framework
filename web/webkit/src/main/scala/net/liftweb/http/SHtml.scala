@@ -269,7 +269,7 @@ trait SHtml {
     f(name, js)
   }
 
-  @deprecated("Use jsonCall with a function that takes JValue => JValue", "2.5")
+  @deprecated("Use jsonCall with a function that takes JValue => JsCmd", "2.5")
   def jsonCall(jsCalcValue: JsExp, jsonContext: JsonContext, func: String => JsObj)(implicit d: AvoidTypeErasureIssues1): GUIDJsExp = 
     ajaxCall_*(jsCalcValue, jsonContext, SFuncHolder(func))
 
