@@ -217,7 +217,7 @@ trait Crudify {
         def name = "View "+Prefix
 
         override val snippets: SnippetTest = {
-          case ("crud.view", Full(wp: TheCrudType)) => displayRecord(wp) _
+          case ("crud.view", Full(wp)) => displayRecord(wp.asInstanceOf[TheCrudType]) _
         }
 
         def defaultValue = Empty
@@ -264,7 +264,7 @@ trait Crudify {
           def name = "Edit "+Prefix
 
           override val snippets: SnippetTest = {
-            case ("crud.edit", Full(wp: TheCrudType)) => crudDoForm(wp, S.?("Save"))
+            case ("crud.edit", Full(wp)) => crudDoForm(wp.asInstanceOf[TheCrudType], S.?("Save"))
           }
 
           def defaultValue = Empty
@@ -394,7 +394,7 @@ trait Crudify {
           def name = "Delete "+Prefix
 
           override val snippets: SnippetTest = {
-            case ("crud.delete", Full(wp: TheCrudType)) => crudyDelete(wp)
+            case ("crud.delete", Full(wp)) => crudyDelete(wp.asInstanceOf[TheCrudType])
           }
 
           def defaultValue = Empty

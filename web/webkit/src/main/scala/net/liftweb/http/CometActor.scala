@@ -849,7 +849,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
         case _ =>
           if (when < lastRenderTime) {
             toDo(AnswerRender(new XmlOrJsCmd(spanId, lastRendering,
-              buildSpan _, notices toList),
+              buildSpan _, notices.toList),
               whosAsking openOr this, lastRenderTime, wasLastFullRender))
             clearNotices
           } else {
@@ -859,7 +859,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
               case all@(hd :: xs) =>
                 toDo(AnswerRender(new XmlOrJsCmd(spanId, Empty, Empty,
-                  Full(all.reverse.foldLeft(Noop)(_ & _.js)), Empty, buildSpan, false, notices toList),
+                  Full(all.reverse.foldLeft(Noop)(_ & _.js)), Empty, buildSpan, false, notices.toList),
                   whosAsking openOr this, hd.when, false))
                 clearNotices
                 deltas = _deltaPruner(this, deltas)
@@ -902,7 +902,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
             }
 
           reply(AnswerRender(new XmlOrJsCmd(spanId, lastRendering,
-            buildSpan _, notices toList),
+            buildSpan _, notices.toList),
             whosAsking openOr this, lastRenderTime, true))
           clearNotices
         }
@@ -994,7 +994,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
           AnswerRender(new XmlOrJsCmd(spanId, Empty, Empty,
             Full(cmd & postPage),
             Empty, buildSpan, false,
-            notices toList),
+            notices.toList),
             whosAsking openOr this, time, false)
         clearNotices
         listeners.foreach(_._2(rendered))
@@ -1105,7 +1105,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     theSession.updateFunctionMap(S.functionMap, uniqueId, lastRenderTime)
 
     val rendered: AnswerRender =
-      AnswerRender(new XmlOrJsCmd(spanId, lastRendering, buildSpan _, notices toList),
+      AnswerRender(new XmlOrJsCmd(spanId, lastRendering, buildSpan _, notices.toList),
         this, lastRenderTime, sendAll)
 
     clearNotices
@@ -1359,7 +1359,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   }
 
   private def clearNotices {
-    notices clear
+    notices.clear
   }
 
 }

@@ -938,13 +938,13 @@ object JsRules {
   * messages.
   */
   //@deprecated
-  @volatile var prefadeDuration: Helpers.TimeSpan = 5 seconds
+  @volatile var prefadeDuration: Helpers.TimeSpan = 5.seconds
 
   /**
   * The default fade time for fading FadeOut and FadeIn
   * messages.
   */
   //@deprecated
-  @volatile var fadeTime: Helpers.TimeSpan = 1 second
+  @volatile var fadeTime: Helpers.TimeSpan = 1.second
 }
 

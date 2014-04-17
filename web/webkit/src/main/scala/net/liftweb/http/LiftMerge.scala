@@ -258,7 +258,7 @@ private[http] trait LiftMerge {
             val rule = new RewriteRule {
               override def transform(n: Node) = n match {
                 case e: Elem if e.label == "body" =>
-                  Elem(e.prefix, e.label, e.attributes, e.scope, e.child ++ errors: _*)
+                  e.copy(child = e.child ++ errors)
 
                 case x => super.transform(x)
               }

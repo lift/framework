@@ -53,7 +53,7 @@ trait DateTimeTypedField extends TypedField[Calendar] {
       <input type={formInputType}
         name={funcName}
         value={valueBox.map(s => toInternetDate(s.getTime)) openOr ""}
-        tabindex={tabIndex toString}/>
+        tabindex={tabIndex.toString}/>
     }
 
   def toForm: Box[NodeSeq] =

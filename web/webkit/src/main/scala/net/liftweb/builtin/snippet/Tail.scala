@@ -54,6 +54,7 @@ object Head extends DispatchSnippet {
                     e.label,
                     e.attributes,
                     e.scope,
+                    e.minimizeEmpty,
                     validHeadTagsOnly(e.child) :_*)
          }
          case e: Elem if (null eq e.prefix) => NodeSeq.Empty

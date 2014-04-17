@@ -174,7 +174,7 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
       case Some(n: Number) => this.set(fromLong(n.longValue))
       case None => this.set(Nil)
       case (s: String) :: _ => this.set(fromLong(Helpers.toLong(s)))
-      case vs: List[ENUM#Value] => this.set(vs)
+      case vs: List[_] => this.set(vs.asInstanceOf[List[ENUM#Value]])
       case null => this.set(Nil)
       case s: String => this.set(fromLong(Helpers.toLong(s)))
       case o => this.set(fromLong(Helpers.toLong(o)))

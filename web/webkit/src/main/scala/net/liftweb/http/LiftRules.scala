@@ -723,7 +723,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * the long polling connection
    */
   val clientActorLifespan = new FactoryMaker[LiftActor => Long](
-    () => (actor: LiftActor) => (30 minutes): Long
+    () => (actor: LiftActor) => (30.minutes): Long
   ){}
 
   /**
@@ -746,17 +746,17 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * If a Comet request fails timeout for this period of time. Default value is 10 seconds
    */
-  @volatile var cometFailureRetryTimeout: Long = 10 seconds
+  @volatile var cometFailureRetryTimeout: Long = 10.seconds
 
   /**
    * The timeout in milliseconds of a comet ajax-request. Defaults to 5000 ms.
    */
-  @volatile var cometProcessingTimeout: Long = 5 seconds
+  @volatile var cometProcessingTimeout: Long = 5.seconds
 
   /**
    * The timeout in milliseconds of a comet render-request. Defaults to 30000 ms.
    */
-  @volatile var cometRenderTimeout: Long = 30 seconds
+  @volatile var cometRenderTimeout: Long = 30.seconds
 
   /**
    * The dispatcher that takes a Snippet and converts it to a
@@ -1078,7 +1078,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * How long should we wait for all the lazy snippets to render
    */
-  val lazySnippetTimeout: FactoryMaker[TimeSpan] = new FactoryMaker(() => 30 seconds) {}
+  val lazySnippetTimeout: FactoryMaker[TimeSpan] = new FactoryMaker(() => 30.seconds) {}
 
   /**
    * Does the current context support parallel snippet execution
@@ -1684,13 +1684,13 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * (given in milliseconds) will be discarded, hence eligible for garbage collection.
    * The default value is 10 minutes.
    */
-  @volatile var unusedFunctionsLifeTime: Long = 10 minutes
+  @volatile var unusedFunctionsLifeTime: Long = 10.minutes
 
   /**
    * The polling interval for background Ajax requests to prevent functions of being garbage collected.
    * Default value is set to 75 seconds.
    */
-  @volatile var liftGCPollingInterval: Long = 75 seconds
+  @volatile var liftGCPollingInterval: Long = 75.seconds
 
   /**
    * Put a test for being logged in into this function
@@ -1701,7 +1701,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * The polling interval for background Ajax requests to keep functions to not be garbage collected.
    * This will be applied if the Ajax request will fail. Default value is set to 15 seconds.
    */
-  @volatile var liftGCFailureRetryTimeout: Long = 15 seconds
+  @volatile var liftGCFailureRetryTimeout: Long = 15.seconds
 
   /**
    * Returns the JavaScript that manages Comet requests.

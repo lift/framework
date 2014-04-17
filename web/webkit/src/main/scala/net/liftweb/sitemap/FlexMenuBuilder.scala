@@ -51,7 +51,7 @@ trait FlexMenuBuilder {
     } openOr false
 
     val kids: List[MenuItem] = if (expandAll) loc.buildKidMenuItems(loc.menu.kids) else Nil
-    loc.asInstanceOf[StructBuildItem].buildItem(kids, currLoc == Full(loc), isInPath).toList
+    loc.buildItem(kids, currLoc == Full(loc), isInPath).toList
   }
 
 

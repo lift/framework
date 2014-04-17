@@ -134,7 +134,7 @@ private case class Render(js: JsCmd)
  */
 class AsyncRenderComet extends CometActor {
 
-  override def lifespan: Box[TimeSpan] = Full(90 seconds)
+  override def lifespan: Box[TimeSpan] = Full(90.seconds)
 
   def render = NodeSeq.Empty
 
@@ -152,7 +152,7 @@ class AsyncRenderComet extends CometActor {
   override def lowPriority : PartialFunction[Any, Unit] = {
     // farm the request off to another thread
     case Ready(js) => 
-      Schedule.schedule(() => this ! Render(js()), 0 seconds)
+      Schedule.schedule(() => this ! Render(js()), 0.seconds)
 
     // render it
     case Render(js) => 

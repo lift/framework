@@ -182,5 +182,5 @@ object BuildDef extends Build {
                 base = file(base) / module.stripPrefix(prefix))
 
   def liftProject(id: String, base: File): Project =
-    Project(id, base).settings(liftBuildSettings: _*)
+    Project(id, base).settings(liftBuildSettings: _*).settings(scalacOptions ++= List("-feature", "-language:implicitConversions"))
 }
