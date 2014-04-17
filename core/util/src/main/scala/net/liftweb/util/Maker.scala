@@ -19,9 +19,12 @@ package util
 
 import java.util.concurrent.{ConcurrentHashMap => CHash, Callable}
 import java.lang.ThreadLocal
+
+import scala.language.implicitConversions
 import scala.reflect.Manifest
+import scala.xml.NodeSeq
+
 import common._
-import xml.NodeSeq
 
 /**
  * A trait that does basic dependency injection.

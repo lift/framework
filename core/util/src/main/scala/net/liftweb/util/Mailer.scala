@@ -21,9 +21,13 @@ import javax.mail._
 import javax.mail.internet._
 import javax.naming.{Context, InitialContext}
 import java.util.Properties
+
+import scala.language.implicitConversions
+import scala.xml.{Text, Elem, Node, NodeSeq}
+
 import common._
 import actor._
-import xml.{Text, Elem, Node, NodeSeq}
+
 import Mailer._
 
 /**
