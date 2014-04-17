@@ -649,7 +649,7 @@ trait SHtml {
    *
    * @param value - the initial value of the text field
    * @param cmd - the json command name
-   * @param json - the JsonCall returned from S.buildJsonFunc
+   * @param json - the JsonCall returned from S.createJsonFunc
    *
    * @return a text field
    */
@@ -712,7 +712,7 @@ trait SHtml {
    *
    * @param value - the initial value of the text field
    * @param cmd - the json command name
-   * @param json - the JsonCall returned from S.buildJsonFunc
+   * @param json - the JsonCall returned from S.createJsonFunc
    *
    * @return a text field
    */
@@ -1707,6 +1707,7 @@ trait SHtml {
    * @param jsonHandler The handler that will process the form
    * @param body The form body. This should not include the &lt;form&gt; tag.
    */
+  @deprecated("Use JValue=>JsCmd bindings in SHtml (such as jsonCall) and SHtml.makeFormsAjax instead of this.", "2.6")
   def jsonForm(jsonHandler: JsonHandler, body: NodeSeq): NodeSeq = jsonForm(jsonHandler, Noop, body)
 
   /**
@@ -1719,6 +1720,7 @@ trait SHtml {
    * the form
    * @param body The form body. This should not include the &lt;form&gt; tag.
    */
+  @deprecated("Use JValue=>JsCmd bindings in SHtml (such as jsonCall) and SHtml.makeFormsAjax instead of this.", "2.6")
   def jsonForm(jsonHandler: JsonHandler, onSubmit: JsCmd, body: NodeSeq): NodeSeq = {
     val id = formFuncName
     <form onsubmit={(onSubmit & jsonHandler.call("processForm", FormToJSON(id)) & JsReturn(false)).toJsCmd} id={id}>{body}</form>
@@ -1731,6 +1733,7 @@ trait SHtml {
    * @param jsonHandler - the handler that process this request
    * @param formId - the id of the form
    */
+  @deprecated("Use JValue=>JsCmd bindings in SHtml (such as jsonCall) and SHtml.submitAjaxForm instead of this.", "2.6")
   def submitJsonForm(jsonHandler: JsonHandler, formId: String):JsCmd = jsonHandler.call("processForm", FormToJSON(formId))
 
   /**

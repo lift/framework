@@ -2709,8 +2709,10 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @param f - function returning a JsCmds
    * @return ( JsonCall, JsCmd )
    */
+  @deprecated("Use createJsonFunc and deal in JValues instead of Anys.", "2.6")
   def buildJsonFunc(f: Any => JsCmd): (JsonCall, JsCmd) = buildJsonFunc(Empty, Empty, f)
 
+  @deprecated("Use createJsonFunc and deal in JValues instead of Anys.", "2.6")
   def buildJsonFunc(onError: JsCmd, f: Any => JsCmd): (JsonCall, JsCmd) =
     buildJsonFunc(Empty, Full(onError), f)
 
@@ -2722,6 +2724,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @param f - function returning a JsCmds
    * @return ( JsonCall, JsCmd )
    */
+  @deprecated("Use createJsonFunc and deal in JValues instead of Anys.", "2.6")
   def buildJsonFunc(name: Box[String], onError: Box[JsCmd], f: Any => JsCmd): (JsonCall, JsCmd) = {
     functionLifespan(true) {
       val key = formFuncName
@@ -3121,6 +3124,7 @@ object NoticeType extends Serializable{
 /**
  * Used to handles JSON requests
  */
+@deprecated("Use JValue=>JsCmd bindings in SHtml (such as jsonCall) instead of this.", "2.6")
 abstract class JsonHandler {
   private val name = "_lift_json_" + getClass.getName
 
