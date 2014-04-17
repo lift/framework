@@ -1042,27 +1042,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     else
       String.format(locale, ?(str), params.flatMap {case s: AnyRef => List(s) case _ => Nil}.toArray: _*)
 
-  /**
-   * Get a core lift localized string or return the original string
-   *
-   * @param str the string to localize
-   *
-   * @return the localized version of the string
-   */
-  @deprecated("Use S.?() instead. S.?? will be removed in 2.6", "2.5")
-  def ??(str: String): String = ?(str)
-
-  /**
-   * Get a core lift localized and formatted string or return the original string.
-   *
-   * @param str the string to localize
-   * @param params the var-arg parameters applied for string formatting
-   *
-   * @return the localized version of the string
-   */
-  @deprecated("Use S.?() instead. S.?? will be removed in 2.6", "2.5")
-  def ??(str: String, params: AnyRef*): String = String.format(locale, ?(str), params: _*)
-
   private def ?!(str: String, resBundle: List[ResourceBundle]): String = resBundle.flatMap(r => tryo(r.getObject(str) match {
     case s: String => Full(s)
     case n: Node => Full(n.text)
