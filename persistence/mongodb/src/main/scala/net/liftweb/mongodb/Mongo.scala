@@ -66,14 +66,6 @@ object MongoHost {
 }
 
 /*
-* Wrapper for creating a Replica Pair
-*/
-@deprecated("Use `MongoSet` with `List[ServerAddress]` as argument instead", "2.5")
-case class MongoPair(left: ServerAddress, right: ServerAddress, options: MongoOptions = new MongoOptions) extends MongoHostBase {
-  lazy val mongo = new Mongo(left, right, options)
-}
-
-/*
  * Wrapper for creating a Replica Set
  */
 case class MongoSet(dbs: List[ServerAddress], options: MongoOptions = new MongoOptions) extends MongoHostBase {

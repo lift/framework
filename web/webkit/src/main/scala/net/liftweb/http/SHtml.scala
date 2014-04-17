@@ -212,32 +212,6 @@ trait SHtml {
     jsonCall_*(jsCalcValue, jsonContext, S.SFuncHolder(s => parseOpt(s).map(func) getOrElse JsonAST.JNothing))
 
   /**
-   * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript
-   *
-   * @param jsCalcValue the JavaScript to calculate the value to be sent to the server
-   * @param func the function to call when the data is sent
-   *
-   * @return the function ID and JavaScript that makes the call
-   */
-  @deprecated("Use jsonCall with a function that takes JValue => JsCmd", "2.5")
-  def jsonCall(jsCalcValue: JsExp, func: Any => JsCmd)(implicit d: AvoidTypeErasureIssues1): GUIDJsExp =
-    jsonCall_*(jsCalcValue, SFuncHolder(s => JSONParser.parse(s).map(func) openOr Noop))
-
-  /**
-   * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript
-   *
-   * @param jsCalcValue the JavaScript to calculate the value to be sent to the server
-   * @param jsContext the context instance that defines JavaScript to be executed on call success or failure
-   * @param func the function to call when the data is sent
-   *
-   * @return the function ID and JavaScript that makes the call
-   */
-  @deprecated("Use jsonCall with a function that takes JValue => JsCmd", "2.5")
-  def jsonCall(jsCalcValue: JsExp, jsContext: JsContext, func: Any => JsCmd)(implicit d: AvoidTypeErasureIssues1): GUIDJsExp =
-    jsonCall_*(jsCalcValue, jsContext, SFuncHolder(s => JSONParser.parse(s).map(func) openOr Noop))
-
-
-  /**
    * Build a JavaScript function that will perform an AJAX call based on a value calculated in JavaScript
    * @param jsCalcValue -- the JavaScript to calculate the value to be sent to the server
    * @param func -- the function to call when the data is sent
@@ -264,15 +238,6 @@ trait SHtml {
 
   def fajaxCall[T](jsCalcValue: JsExp, func: String => JsCmd)(f: (String, JsExp) => T): T = {
     val (name, js) = ajaxCall(jsCalcValue, func).product
-    f(name, js)
-  }
-
-  @deprecated("Use jsonCall with a function that takes JValue => JValue", "2.5")
-  def jsonCall(jsCalcValue: JsExp, jsonContext: JsonContext, func: String => JsObj)(implicit d: AvoidTypeErasureIssues1): GUIDJsExp = 
-    ajaxCall_*(jsCalcValue, jsonContext, SFuncHolder(func))
-
-  def fjsonCall[T](jsCalcValue: JsExp, jsonContext: JsonContext, func: String => JsObj)(f: (String, JsExp) => T): T = {
-    val (name, js) = jsonCall(jsCalcValue, jsonContext, func).product
     f(name, js)
   }
 

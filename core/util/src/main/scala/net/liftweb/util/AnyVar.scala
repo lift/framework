@@ -221,12 +221,6 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
   }
 
   /**
-   * Set the Var if it has not been calculated
-   */
-  @deprecated("use setIfUnset")
-  def setIsUnset(value: => T): T = setIfUnset(value)
-
-  /**
    * Set the session variable
    *
    * @param what -- the value to set the session variable to

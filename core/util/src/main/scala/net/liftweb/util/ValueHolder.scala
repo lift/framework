@@ -23,14 +23,6 @@ trait ValueHolder {
   type ValueType
 
   /**
-   * Get the value.  Use get.
-   *
-   * @deprecated
-   */
-  @deprecated("Use get", "2.4")
-  def is: ValueType
-
-  /**
    * get the value
    */
   def get: ValueType

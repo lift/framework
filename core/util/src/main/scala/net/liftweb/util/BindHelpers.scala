@@ -790,27 +790,6 @@ trait BindHelpers {
   implicit def strToSuperArrowAssoc(in: String): SuperArrowAssoc = new SuperArrowAssoc(in)
 
   /**
-   * This class creates a BindParam from an input value
-   *
-   * @deprecated use -> instead
-   */
-  @deprecated("use -> instead", "2.4")
-  class BindParamAssoc(val name: String) {
-    def -->(value: String): BindParam = TheBindParam(name, if (null eq value) NodeSeq.Empty else Text(value))
-    def -->(value: NodeSeq): BindParam = TheBindParam(name, value)
-    def -->(value: Symbol): BindParam = TheBindParam(name, Text(value.name))
-    def -->(value: Any): BindParam = TheBindParam(name, Text(value match {
-      case null => "null"
-      case v => v.toString match {
-        case null => ""
-        case str => str
-      }
-    }))
-    def -->(func: NodeSeq => NodeSeq): BindParam = FuncBindParam(name, func)
-    def -->(value: Box[NodeSeq]): BindParam = TheBindParam(name, value.openOr(Text("Empty")))
-  }
-
-  /**
    * Experimental extension to bind which passes in an additional "parameter" from the XHTML to the transform
    * function, which can be used to format the returned NodeSeq.
    *

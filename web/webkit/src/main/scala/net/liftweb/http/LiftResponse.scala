@@ -502,28 +502,6 @@ object DocType {
   val html5 = "<!DOCTYPE html>"
 }
 
-/**
- * Avoid using this in favor of LiftRules.docType
- *
- */
-@deprecated("Avoid using this in favor of LiftRules.docType", "2.3")
-object ResponseInfo {
-
-   def docType: PartialFunction[Req, Box[String]] = new PartialFunction[Req, Box[String]](){
-     def isDefinedAt(req: Req): Boolean  = true
-
-     def apply(req: Req): Box[String] = LiftRules.docType.vend(req)
-   }
-
-   def docType_=(f: PartialFunction[Req, Box[String]]) = LiftRules.docType.default.set { (req: Req) => 
-     if (f.isDefinedAt(req))
-       f(req)
-     else
-       Full(DocType.xhtmlTransitional)
-   }
-}
-
-
 object PlainTextResponse {
   def apply(text: String): PlainTextResponse = PlainTextResponse(text, Nil, 200)
 
