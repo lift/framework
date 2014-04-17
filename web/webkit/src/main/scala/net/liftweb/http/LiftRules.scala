@@ -1833,12 +1833,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   import containers._
 
   /**
-   * Provides the async provider instance responsible for suspending/resuming requests
-   */
-  @deprecated("Register your povider via addSyncProvider", "2.4")
-  var servletAsyncProvider: (HTTPRequest) => ServletAsyncProvider = null // (req) => new Jetty6AsyncProvider(req)
-
-  /**
    * The meta for the detected AsyncProvider given the container we're running in
    */
   lazy val asyncProviderMeta: Box[AsyncProviderMeta] =
@@ -1848,7 +1842,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * A function that converts the current Request into an AsyncProvider.
    */
   lazy val theServletAsyncProvider: Box[HTTPRequest => ServletAsyncProvider] =
-    (Box !! servletAsyncProvider) or asyncProviderMeta.flatMap(_.providerFunction)
+    asyncProviderMeta.flatMap(_.providerFunction)
 
   private var asyncMetaList: List[AsyncProviderMeta] =
     List(Servlet30AsyncProvider, Jetty6AsyncProvider, Jetty7AsyncProvider)
