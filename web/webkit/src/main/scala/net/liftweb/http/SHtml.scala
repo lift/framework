@@ -273,6 +273,7 @@ trait SHtml {
   def jsonCall(jsCalcValue: JsExp, jsonContext: JsonContext, func: String => JsObj)(implicit d: AvoidTypeErasureIssues1): GUIDJsExp = 
     ajaxCall_*(jsCalcValue, jsonContext, SFuncHolder(func))
 
+  @deprecated("Use jsonCall with a function that takes JValue => JValue and its GUIDJsExp to manipulate the guid and JsExp it produces. This function will go away altogether in Lift 3.", "2.6")
   def fjsonCall[T](jsCalcValue: JsExp, jsonContext: JsonContext, func: String => JsObj)(f: (String, JsExp) => T): T = {
     val (name, js) = jsonCall(jsCalcValue, jsonContext, func).product
     f(name, js)
