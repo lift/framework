@@ -195,7 +195,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
 
     def remove(n: Int) = {
       val e = unown(delegate(n))
-      delegate = delegate.filterNot(e eq)
+      delegate = delegate.filterNot(e.eq)
       e
     }
 
@@ -254,7 +254,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       super.unown(e)
     }
     override def own(e: O) = {
-      removed = removed filter {e ne}
+      removed = removed filter {e.ne}
       super.own(e)
     }
     override def save = {
