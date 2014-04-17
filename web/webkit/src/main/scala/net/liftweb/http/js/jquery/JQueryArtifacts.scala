@@ -133,22 +133,4 @@ trait JQueryArtifacts extends JSArtifacts {
             info.failFunc.map("error : " + _).toList mkString ("{ ", ", ", " }")
 }
 
-@deprecated("Use JQueryArtifacts in LiftRules and see http://liftweb.net/jquery for more information", "2.5")
-case object JQuery13Artifacts extends JQueryArtifacts {
-  override def pathRewriter: PartialFunction[List[String], List[String]] = {
-    case "jquery.js" :: Nil if Props.devMode => List("jquery-1.3.2.js")
-    case "jquery.js" :: Nil => List("jquery-1.3.2-min.js")
-  }
-}
-
-@deprecated("Use JQueryArtifacts in LiftRules and see http://liftweb.net/jquery for more information", "2.5")
-case object JQuery14Artifacts extends JQueryArtifacts {
-  override def pathRewriter: PartialFunction[List[String], List[String]] = {
-    case "jquery.js" :: Nil if Props.devMode => List("jquery-1.4.4.js")
-    case "jquery.js" :: Nil => List("jquery-1.4.4-min.js")
-  }
-}
-
 case object JQueryArtifacts extends JQueryArtifacts
-
-
