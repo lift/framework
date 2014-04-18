@@ -790,32 +790,6 @@ trait BindHelpers {
   implicit def strToSuperArrowAssoc(in: String): SuperArrowAssoc = new SuperArrowAssoc(in)
 
   /**
-   * Experimental extension to bind which passes in an additional "parameter" from the XHTML to the transform
-   * function, which can be used to format the returned NodeSeq.
-   *
-   * @deprecated use bind instead
-   */
-  @deprecated("use bind instead", "2.4")
-  def xbind(namespace: String, xml: NodeSeq)(transform: PartialFunction[String, NodeSeq => NodeSeq]): NodeSeq = {
-    def rec_xbind(xml: NodeSeq): NodeSeq = {
-      xml.flatMap {
-        node => node match {
-          case s: Elem if (node.prefix == namespace) =>
-            if (transform.isDefinedAt(node.label))
-              transform(node.label)(node)
-            else
-              Text("FIX"+"ME failed to bind <"+namespace+":"+node.label+" />")
-          case Group(nodes) => Group(rec_xbind(nodes))
-          case s: Elem => Elem(node.prefix, node.label, node.attributes, node.scope, s.minimizeEmpty, rec_xbind(node.child): _*)
-          case n => node
-        }
-      }
-    }
-
-    rec_xbind(xml)
-  }
-
-  /**
    * Bind a set of values to parameters and attributes in a block of XML.<p/>
    *
    * For example: <pre name="code" class="scala">
