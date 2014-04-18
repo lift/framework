@@ -2185,20 +2185,20 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
     def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
       in match {
-        case e: Elem if !rules.isEmpty =>
-
-          val attrs = e.attributes
-
-          e.attributes.toStream.flatMap {
+        case element: Elem if ! rules.isEmpty =>
+          element.attributes.toStream.flatMap {
             case UnprefixedAttribute(key, value, _) if key.toLowerCase().startsWith("data-") =>
-              val nk = key.substring(5).toLowerCase()
-              val vs = value.text
-              val a2 = attrs.filter{
+              val dataProcessorName = key.substring(5).toLowerCase()
+              val dataProcessorInputValue = value.text
+              val filteredAttributes = element.attributes.filter{
                 case UnprefixedAttribute(k2, _, _) => k2 != key
                 case _ => true
               }
 
-              NamedPF.applyBox((nk, vs, new Elem(e.prefix, e.label, a2, e.scope, e.minimizeEmpty, e.child :_*), LiftSession.this), rules)
+              NamedPF.applyBox(
+                (dataProcessorName, dataProcessorInputValue, element.copy(attributes = filteredAttributes), LiftSession.this),
+                rules
+              )
             case _ => Empty
           }.headOption
 
