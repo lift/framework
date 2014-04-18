@@ -1679,6 +1679,7 @@ trait SHtml {
    *
    * @deprecated Use ajaxForm(NodeSeq,JsCmd) instead
    */
+  @deprecated("Use ajaxForm(NodeSeq, JsCmd) instead.", "2.6")
   def ajaxForm(onSubmit: JsCmd, body: NodeSeq) = (<lift:form onsubmit={onSubmit.toJsCmd}>{body}</lift:form>)
 
   /**
