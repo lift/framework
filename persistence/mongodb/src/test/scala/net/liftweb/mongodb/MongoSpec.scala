@@ -64,14 +64,16 @@ class MongoSpec extends Specification  {
       passDefinitionTests(TestMongoIdentifier, MongoAddress(MongoHost("127.0.0.1", 27017), "test_default"))
     }
     "Define DB with ServerAddress and MongoOptions" in {
-      passDefinitionTests(TestMongoIdentifier, MongoAddress(MongoHost(new ServerAddress, new MongoOptions), "test_default"))
+      passDefinitionTests(TestMongoIdentifier, MongoAddress(MongoHost(new ServerAddress, new MongoClientOptions.Builder().build), "test_default"))
     }
     "Define DB with ServerAddress" in {
       passDefinitionTests(TestMongoIdentifier, MongoAddress(MongoHost(new ServerAddress), "test_default"))
     }
     "Define DB with MongoOptions" in {
-      val mo = new MongoOptions
-      mo.connectionsPerHost = 12
+      val mo =
+        new MongoClientOptions.Builder()
+          .connectionsPerHost(12)
+          .build()
       passDefinitionTests(TestMongoIdentifier, MongoAddress(MongoHost(options=mo), "test_default"))
     }
     /* These need all of the Mongo instances to be running to be useful.
@@ -95,7 +97,7 @@ class MongoSpec extends Specification  {
     "Define DB with Mongo instance" in {
       // define the db
       MongoDB.close
-      MongoDB.defineDb(TestMongoIdentifier, new Mongo, "test_default")
+      MongoDB.defineDb(TestMongoIdentifier, new MongoClient, "test_default")
 
       // make sure mongo is running
       try {
