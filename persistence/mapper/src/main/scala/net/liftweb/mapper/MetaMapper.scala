@@ -1076,7 +1076,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    */
   def fieldMapperTransforms(fieldHtml: (BaseOwnedMappedField[A]=>NodeSeq), mappedObject: A): Seq[CssSel] = {
     mappedFieldList.map { field =>
-      ("." + "${field.name}") #> fieldHtml(??(field.method, mappedObject))
+      ("." + field.name) #> fieldHtml(??(field.method, mappedObject))
     }
   }
 
