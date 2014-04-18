@@ -76,7 +76,7 @@ class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
       <input type="text"
         name={funcName}
         value={valueBox.map(s => s.toString) openOr ""}
-        tabindex={tabIndex toString}/>
+        tabindex={tabIndex.toString}/>
     }
 
   def toForm =

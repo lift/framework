@@ -69,8 +69,8 @@ class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerTyp
 
   def setFromAny(in: Any): Box[CaseType] = in match {
     case dbo: DBObject => setFromDBObject(dbo)
-    case c if mf.erasure.isInstance(c) => setBox(Full(c.asInstanceOf[CaseType]))
-    case Full(c) if mf.erasure.isInstance(c) => setBox(Full(c.asInstanceOf[CaseType]))
+    case c if mf.runtimeClass.isInstance(c) => setBox(Full(c.asInstanceOf[CaseType]))
+    case Full(c) if mf.runtimeClass.isInstance(c) => setBox(Full(c.asInstanceOf[CaseType]))
     case null|None|Empty     => setBox(defaultValueBox)
     case (failure: Failure)  => setBox(failure)
     case _ => setBox(defaultValueBox)
@@ -119,7 +119,7 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
 
   def setFromAny(in: Any): Box[MyType] = in match {
     case dbo: DBObject => setFromDBObject(dbo)
-    case list@c::xs if mf.erasure.isInstance(c) =>  setBox(Full(list.asInstanceOf[MyType]))
+    case list@c::xs if mf.runtimeClass.isInstance(c) =>  setBox(Full(list.asInstanceOf[MyType]))
     case _ => setBox(Empty)
   }
 
