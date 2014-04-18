@@ -3026,19 +3026,24 @@ private object SnippetNode {
   private def isLiftClass(s: String): Boolean =
     s.startsWith("lift:") || s.startsWith("l:")
 
-  private def snippy(in: Elem): Option[(String, MetaData)] =
-    ((for {
-      cls <- in.attribute("class")
-      snip <- cls.text.charSplit(' ').find(isLiftClass)
-    } yield snip) orElse in.attribute("lift").map(_.text)
-      orElse in.attribute("data-lift").map(_.text)).map {
-      snip =>
-        snip.charSplit('?') match {
-          case Nil => "this should never happen" -> Null
-          case x :: Nil => urlDecode(removeLift(x)) -> Null
-          case x :: xs => urlDecode(removeLift(x)) -> pairsToMetaData(xs.flatMap(_.roboSplit("[;&]")))
-        }
+  private def snippy(in: Elem): Option[(String, MetaData)] = {
+    val snippetContents = {
+      for {
+        cls <- in.attribute("class")
+        snip <- cls.text.charSplit(' ').find(isLiftClass)
+      } yield {
+        snip
+      }
+    } orElse in.attribute("lift").map(_.text)
+
+    snippetContents.map { snip =>
+      snip.charSplit('?') match {
+        case Nil => "this should never happen" -> Null
+        case x :: Nil => urlDecode(removeLift(x)) -> Null
+        case x :: xs => urlDecode(removeLift(x)) -> pairsToMetaData(xs.flatMap(_.roboSplit("[;&]")))
+      }
     }
+  }
 
   private def liftAttrsAndParallel(in: MetaData): (Boolean, MetaData) = {
     var next = in
