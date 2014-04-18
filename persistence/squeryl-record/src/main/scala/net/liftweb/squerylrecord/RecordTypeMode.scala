@@ -159,7 +159,7 @@ trait RecordTypeMode extends PrimitiveTypeMode {
   }
   
   def reifySingleton[T](m: Manifest[T]) = {
-    val cls = m.erasure
+    val cls = m.runtimeClass
     val field = cls.getField("MODULE$")
     field.get(null).asInstanceOf[T]
   }
@@ -170,7 +170,7 @@ trait RecordTypeMode extends PrimitiveTypeMode {
     	case Some(e) =>
     	  new SelectElementReference[Option[Enumeration#Value]](e)(e.createEnumerationOptionMapper(Some(reifySingleton(m).values.iterator.next))) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
     	case None => 
-    	  new ConstantExpressionNode[Option[Enumeration#Value]](f.get)(outMapperOptionFromOptionEnumValue(f.get) orNull) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
+    	  new ConstantExpressionNode[Option[Enumeration#Value]](f.get)(outMapperOptionFromOptionEnumValue(f.get).orNull) with EnumExpression[Option[Enumeration#Value]] with SquerylRecordNonNumericalExpression[Option[Enumeration#Value]]
   	}
   
   /** Needed for outer joins. */
@@ -180,7 +180,7 @@ trait RecordTypeMode extends PrimitiveTypeMode {
     case None => new ConstantExpressionNode[Enumeration#Value](getValue(f).orNull)({
       val enumOption = f flatMap { f1: TypedField[EnumType#Value] => f1.valueBox.toOption } 
       val outMapperOption: Option[OutMapper[Enumeration#Value]] = enumOption map { e: EnumType#Value => outMapperFromEnumValue(e) : OutMapper[Enumeration#Value] /*crashes scala 2.9.1 without explicit type */ } 
-      outMapperOption orNull
+      outMapperOption.orNull
     }) with EnumExpression[Enumeration#Value] with SquerylRecordNonNumericalExpression[Enumeration#Value]
   }
   

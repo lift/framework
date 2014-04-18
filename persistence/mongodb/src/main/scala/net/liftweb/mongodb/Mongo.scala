@@ -54,23 +54,23 @@ case class MongoAddress(host: MongoHostBase, name: String) {
 * Wrapper for creating a Mongo instance
 */
 abstract class MongoHostBase {
-  def mongo: Mongo
+  def mongo: MongoClient
 }
-case class MongoHost(server: ServerAddress = new ServerAddress, options: MongoOptions = new MongoOptions) extends MongoHostBase {
-  lazy val mongo = new Mongo(server, options)
+case class MongoHost(server: ServerAddress = new ServerAddress, options: MongoClientOptions = new MongoClientOptions.Builder().build()) extends MongoHostBase {
+  lazy val mongo = new MongoClient(server, options)
 }
 object MongoHost {
   def apply(host: String): MongoHost = MongoHost(new ServerAddress(host, 27017))
   def apply(host: String, port: Int): MongoHost = MongoHost(new ServerAddress(host, port))
-  def apply(host: String, port: Int, options: MongoOptions): MongoHost = MongoHost(new ServerAddress(host, port), options)
+  def apply(host: String, port: Int, options: MongoClientOptions): MongoHost = MongoHost(new ServerAddress(host, port), options)
 }
 
 /*
  * Wrapper for creating a Replica Set
  */
-case class MongoSet(dbs: List[ServerAddress], options: MongoOptions = new MongoOptions) extends MongoHostBase {
+case class MongoSet(dbs: List[ServerAddress], options: MongoClientOptions = new MongoClientOptions.Builder().build()) extends MongoHostBase {
   import scala.collection.JavaConversions._
-  lazy val mongo = new Mongo(dbs, options)
+  lazy val mongo = new MongoClient(dbs, options)
 }
 
 /*
@@ -92,7 +92,7 @@ object MongoDB {
   /*
    * Define a Mongo db using a standard Mongo instance.
    */
-  def defineDb(name: MongoIdentifier, mngo: Mongo, dbName: String) {
+  def defineDb(name: MongoIdentifier, mngo: MongoClient, dbName: String) {
     dbs.put(name, MongoAddress(new MongoHostBase { def mongo = mngo }, dbName))
   }
 
@@ -109,7 +109,7 @@ object MongoDB {
   /*
   * Define and authenticate a Mongo db using a standard Mongo instance.
   */
-  def defineDbAuth(name: MongoIdentifier, mngo: Mongo, dbName: String, username: String, password: String) {
+  def defineDbAuth(name: MongoIdentifier, mngo: MongoClient, dbName: String, username: String, password: String) {
     if (!mngo.getDB(dbName).authenticate(username, password.toCharArray))
       throw new MongoException("Authorization failed: "+mngo.toString)
 
