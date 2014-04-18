@@ -58,7 +58,7 @@ trait MongoTestKit extends Specification with BeforeAfterExample {
         true
       }
     } catch {
-      case _ => false
+      case _: Exception => false
     }
 
   def checkMongoIsRunning =
