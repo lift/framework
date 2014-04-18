@@ -42,7 +42,7 @@ class MapperSpec extends Specification with BeforeExample {
   // Make sure we have everything configured first
   MapperSpecsModel.setup()
 
-  def providers = DbProviders.H2MemoryProvider :: Nil
+  def providers: List[DbProviders.Provider] = DbProviders.H2MemoryProvider :: Nil
 
   /*
    private def logDBStuff(log: DBLog, len: Long) {
@@ -379,7 +379,7 @@ class MapperSpec extends Specification with BeforeExample {
     }
    } catch {
      case e if !provider.required_? => skipped("Provider %s not available: %s".format(provider, e))
-     case _ => skipped
+     case _: Exception => skipped
    }
   })
 }

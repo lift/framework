@@ -96,7 +96,7 @@ object DbProviders {
       try {
         conn.close
       } catch {
-        case e => Empty //ignore
+        case e: Exception => Empty //ignore
       }
     }
 
