@@ -17,6 +17,8 @@
 package net.liftweb
 package http
 
+import scala.language.reflectiveCalls
+
 import net.liftweb.common._
 import net.liftweb.util._
 import scala.xml.{NodeSeq, Node}

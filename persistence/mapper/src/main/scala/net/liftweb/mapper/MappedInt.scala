@@ -217,7 +217,7 @@ abstract class MappedIntIndex[T<:Mapper[T]](owner : T) extends MappedInt[T](owne
       val what = if (in.startsWith(name + "=")) in.substring((name + "=").length) else in
       Full(Integer.parseInt(what))
     } catch {
-      case _ => Empty
+      case _: Exception => Empty
     }
   }
 
@@ -238,7 +238,7 @@ abstract class MappedIntIndex[T<:Mapper[T]](owner : T) extends MappedInt[T](owne
     try {
       convertKey(in.toString)
     } catch {
-      case _ => Empty
+      case _: Exception => Empty
     }
   }
 

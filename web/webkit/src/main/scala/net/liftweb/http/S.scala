@@ -2731,7 +2731,8 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
       val key = formFuncName
 
       def checkCmd(in: Any) = in match {
-        case v2: scala.collection.Map[Any, _] if v2.isDefinedAt("command") =>
+        case v2: scala.collection.Map[_, _]
+            if v2.asInstanceOf[scala.collection.Map[String,Any]].isDefinedAt("command") =>
           // ugly code to avoid type erasure warning
           val v = v2.asInstanceOf[scala.collection.Map[String, Any]]
           JsonCmd(v("command").toString, v.get("target").
@@ -3043,7 +3044,11 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    *
    * @param f - the function that returns the messages
    */
-  def noIdMessages(f: => List[(NodeSeq, Box[String])]): List[NodeSeq] = f filter (_._2 isEmpty) map (_._1)
+  def noIdMessages(f: => List[(NodeSeq, Box[String])]): List[NodeSeq] = {
+    f.collect {
+      case (message, Empty) => message
+    }
+  }
 
   /**
    * Returns the messages that are associated with any id.
@@ -3053,11 +3058,13 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    */
   def idMessages(f: => List[(NodeSeq, Box[String])]): List[(String, List[NodeSeq])] = {
     val res = new HashMap[String, List[NodeSeq]]
-    f filter (_._2.isEmpty == false) foreach (_ match {
-      case (node, id) => val key = id openOrThrowException("legacy code"); res += (key -> (res.getOrElseUpdate(key, Nil) ::: List(node)))
+    f.filter(_._2.isEmpty == false).foreach(_ match {
+      case (node, id) =>
+        val key = id openOrThrowException("legacy code")
+        res += (key -> (res.getOrElseUpdate(key, Nil) ::: List(node)))
     })
 
-    res toList
+    res.toList
   }
 
   implicit def tuple2FieldError(t: (FieldIdentifier, NodeSeq)) = FieldError(t._1, t._2)

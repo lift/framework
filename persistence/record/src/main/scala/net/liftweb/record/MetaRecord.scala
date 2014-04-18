@@ -17,6 +17,8 @@
 package net.liftweb
 package record
 
+import scala.language.existentials
+
 import java.lang.reflect.Modifier
 import net.liftweb._
 import util._
@@ -259,15 +261,21 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    * @param json - The stringified JSON object
    * @return - Full(()) on success, other on failure
    */
-  def setFieldsFromJSON(inst: BaseRecord, json: String): Box[Unit] =
+  def setFieldsFromJSON(inst: BaseRecord, json: String): Box[Unit] = {
     JSONParser.parse(json) match {
       case Full(nvp : Map[_, _]) =>
-        for ((k, v) <- nvp;
-             field <- inst.fieldByName(k.toString)) yield field.setFromAny(v)
-        Full(inst)
+        for {
+          (k, v) <- nvp
+          field <- inst.fieldByName(k.toString)
+        } {
+          field.setFromAny(v)
+        }
+
+        Full(())
       case Full(_) => Empty
       case failure => failure.asA[Unit]
     }
+  }
 
   /** Encode a record instance into a JValue */
   def asJValue(rec: BaseRecord): JObject = {
@@ -360,12 +368,13 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
           case _ => NodeSeq.Empty
         }
 
-      case Elem(namespace, label, attrs, scp, ns @ _*) =>
-        Elem(namespace, label, attrs, scp, toForm(inst, ns.flatMap(n => toForm(inst, n))):_* )
+      case elem: Elem =>
+        elem.copy(child = toForm(inst, elem.child.flatMap(n => toForm(inst, n))))
 
       case s : Seq[_] => s.flatMap(e => e match {
-            case Elem(namespace, label, attrs, scp, ns @ _*) =>
-              Elem(namespace, label, attrs, scp, toForm(inst, ns.flatMap(n => toForm(inst, n))):_* )
+            case elem: Elem =>
+              elem.copy(child = toForm(inst, elem.child.flatMap(n => toForm(inst, n))))
+
             case x => x
           })
 

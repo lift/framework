@@ -21,6 +21,8 @@ import java.lang.reflect.Method
 import java.sql.{ResultSet, Types, PreparedStatement}
 import java.util.{Date, Locale}
 
+import scala.language.existentials
+
 import collection.mutable.{ListBuffer, HashMap}
 import collection.immutable.{SortedMap, TreeMap}
 import xml._
@@ -1126,7 +1128,9 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
     for (v <- mapperAccessMethods) {
       v.invoke(this) match {
-        case mf: MappedField[AnyRef, A] if !mf.ignoreField_? =>
+        case untypedMf: MappedField[_, _] if !untypedMf.ignoreField_? =>
+          val mf = untypedMf.asInstanceOf[MappedField[AnyRef,A]]
+
           mf.setName_!(v.getName)
           tArray += FieldHolder(mf.name, v, mf)
           for (colName <- mf.dbColumnNames(v.getName).map(MapperRules.quoteColumnName.vend).map(_.toLowerCase)) {
@@ -1239,10 +1243,12 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
   def asHtml(toLine: A): NodeSeq =
   Text(internalTableName_$_$) :: Text("={ ") ::
-  (for (mft <- mappedFieldList if mft.field.dbDisplay_? ;
-        val field = ??(mft.method, toLine)) yield
-   <span>{field.displayName}={field.asHtml}&nbsp;</span>
-  ) :::List(Text(" }"))
+    (for {
+      mft <- mappedFieldList if mft.field.dbDisplay_?
+      field = ??(mft.method, toLine)
+    } yield {
+     <span>{field.displayName}={field.asHtml}&nbsp;</span>
+    }) ::: List(Text(" }"))
 
 
   /**

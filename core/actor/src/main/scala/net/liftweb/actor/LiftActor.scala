@@ -320,9 +320,11 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
         }
       }
     } catch {
-      case e =>
-        if (eh.isDefinedAt(e)) eh(e)
-        throw e
+      case exception: Throwable =>
+        if (eh.isDefinedAt(exception))
+          eh(exception)
+
+        throw exception
     } finally {
       if (clearProcessing) {
         baseMailbox.synchronized {

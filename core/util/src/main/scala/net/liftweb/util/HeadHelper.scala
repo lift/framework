@@ -85,16 +85,16 @@ object HeadHelper {
     } else {
       def xform(in: NodeSeq, inBody: Boolean): NodeSeq = in flatMap {
         case e: Elem if !inBody && e.label == "body" =>
-          Elem(e.prefix, e.label, e.attributes, e.scope, xform(e.child, true) :_*)
+          Elem(e.prefix, e.label, e.attributes, e.scope, e.minimizeEmpty, xform(e.child, true) :_*)
 
         case e: Elem if inBody && e.label == "head" => NodeSeq.Empty
 
         case e: Elem if e.label == "head" =>
           Elem(e.prefix, e.label, e.attributes,
-               e.scope, removeHtmlDuplicates(e.child ++ headInBody) :_*)
+               e.scope, e.minimizeEmpty, removeHtmlDuplicates(e.child ++ headInBody) :_*)
 
         case e: Elem =>
-          Elem(e.prefix, e.label, e.attributes, e.scope, xform(e.child, inBody) :_*)
+          Elem(e.prefix, e.label, e.attributes, e.scope, e.minimizeEmpty, xform(e.child, inBody) :_*)
 
         case g: Group =>
           xform(g.child, inBody)
