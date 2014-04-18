@@ -897,6 +897,42 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val dataAttributeProcessor: RulesSeq[DataAttributeProcessor] = new RulesSeq()
 
+  private def makeMetaData(key: String, value: String, rest: MetaData): MetaData = key.indexOf(":") match {
+    case x if x > 0 => new PrefixedAttribute(key.substring(0, x),
+      key.substring(x + 1),
+      value, rest)
+
+    case _ => new UnprefixedAttribute(key, value, rest)
+  }
+
+  private def pairsToMetaData(in: List[String]): MetaData = in match {
+    case Nil => Null
+    case x :: xs => {
+      val rest = pairsToMetaData(xs)
+      x.charSplit('=').map(Helpers.urlDecode) match {
+        case Nil => rest
+        case x :: Nil => makeMetaData(x, "", rest)
+        case x :: y :: _ => makeMetaData(x, y, rest)
+      }
+    }
+  }
+
+  dataAttributeProcessor.append {
+    case ("lift", dataLiftContents, element, liftSession) =>
+      dataLiftContents.charSplit('?') match {
+        case Nil =>
+          // This shouldn't ever happen.
+          NodeSeq.Empty
+
+        case snippetName :: Nil =>
+          new Elem("lift", snippetName, Null, element.scope, false, element)
+
+        case snippetName :: encodedArguments =>
+          val decodedMetaData = pairsToMetaData(encodedArguments.flatMap(_.roboSplit("[;&]")))
+          new Elem("lift", snippetName, decodedMetaData, element.scope, false, element)
+      }
+  }
+
   /**
    * Ever wanted to match on *any* arbitrary tag in your HTML and process it
    * any way you wanted? Well, here's your chance, dude. You can capture any
