@@ -298,12 +298,6 @@ trait TimeHelpers { self: ControlHelpers =>
   /** @return the current year */
   def currentYear: Int = Calendar.getInstance.get(Calendar.YEAR)
 
-  /**
-   * @deprecated use today instead
-   * @return the current Day as a Date object
-   */
-  def dayNow: Date = 0.seconds.later.noTime
-
   /** alias for new Date(millis) */
   def time(when: Long) = new Date(when)
 

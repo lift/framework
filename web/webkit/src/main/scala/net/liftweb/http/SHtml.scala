@@ -1615,16 +1615,6 @@ trait SHtml {
    *
    * @param body The form body. This should not include the &lt;form&gt; tag.
    * @param onSubmit JavaScript code to execute on the client prior to submission
-   *
-   * @deprecated Use ajaxForm(NodeSeq,JsCmd) instead
-   */
-  def ajaxForm(onSubmit: JsCmd, body: NodeSeq) = (<lift:form onsubmit={onSubmit.toJsCmd}>{body}</lift:form>)
-
-  /**
-   * Takes a form and wraps it so that it will be submitted via AJAX.
-   *
-   * @param body The form body. This should not include the &lt;form&gt; tag.
-   * @param onSubmit JavaScript code to execute on the client prior to submission
    */
   def ajaxForm(body: NodeSeq, onSubmit: JsCmd) = (<lift:form onsubmit={onSubmit.toJsCmd}>{body}</lift:form>)
 
