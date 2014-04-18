@@ -92,27 +92,3 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
     }
   }
 }
-
-/**
-* Mix this into a Record to add an ObjectIdField
-*/
-@deprecated("Use one of the MongoPK traits instead", "2.5")
-trait MongoId[OwnerType <: MongoRecord[OwnerType]] {
-  self: OwnerType =>
-
-  import field.ObjectIdField
-
-  object _id extends ObjectIdField(this.asInstanceOf[OwnerType])
-
-  // convenience method that returns the value of _id
-  def id = _id.value
-
-  /*
-  * Get the DBRef for this record
-  */
-  def getRef: DBRef = {
-    MongoDB.use(meta.mongoIdentifier) ( db =>
-      new DBRef(db, meta.collectionName, _id.value)
-    )
-  }
-}

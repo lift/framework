@@ -56,8 +56,6 @@ trait ValidateLength extends MixableMappedField {
 }
 
 trait HasApplyBoxString[T] {
-  @deprecated("Just use apply(x openOr null). Will be removed in 2.5.", "2.4")
-  def apply(ov: Box[String])(implicit disambiguateFromApplyBoxedForeign: BoxedStringToken): T = apply(ov openOr null)
   def apply(x: String): T
 }
 abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) extends MappedField[String, T] with net.liftweb.util.StringValidators with HasApplyBoxString[T] {

@@ -143,15 +143,6 @@ trait DB extends Loggable {
 
   private def postCommit_=(lst: List[() => Unit]): Unit = _postCommitFuncs.set(lst)
 
-  /**
-   * perform this function after transaction has ended.  This is helpful for sending messages to Actors after we know
-   * a transaction has been either committed or rolled back
-   */
-  @deprecated("Use appendPostTransaction {committed => ...}", "2.4")
-  def performPostCommit(f: => Unit) {
-    postCommit = (() => f) :: postCommit
-  }
-
   // remove thread-local association
   private def clearThread(success: Boolean): Unit = {
     val ks = info.keySet
@@ -330,14 +321,6 @@ trait DB extends Loggable {
       case x =>
         // ignore
     }
-  }
-
-  /**
-   *  Append a function to be invoked after the transaction has ended for the given connection identifier
-   */
-  @deprecated("Use appendPostTransaction (name, {committed => ...})", "2.4")
-  def appendPostFunc(name: ConnectionIdentifier, func: () => Unit) {
-    appendPostTransaction(name, dontUse => func())
   }
 
   /**

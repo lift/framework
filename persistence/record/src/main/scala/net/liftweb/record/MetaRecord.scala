@@ -27,8 +27,7 @@ import scala.collection.mutable.{ListBuffer}
 import scala.xml._
 import net.liftweb.http.js.{JsExp, JE, JsObj}
 import net.liftweb.http.{SHtml, Req, LiftResponse, LiftRules}
-import net.liftweb.json.{JsonParser, Printer}
-import net.liftweb.json.JsonAST._
+import net.liftweb.json._
 import net.liftweb.record.FieldHelpers.expectedA
 import java.lang.reflect.Method
 import field._
@@ -241,40 +240,6 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    */
   def asJsExp(inst: BaseRecord): JsExp = new JsExp {
     lazy val toJsCmd = Printer.compact(render(asJValue(inst)))
-  }
-
-  /**
-   * Create a record with fields populated with values from the JSON construct
-   *
-   * @param json - The stringified JSON object
-   * @return Box[BaseRecord]
-   */
-  def fromJSON(json: String): Box[BaseRecord] = {
-    val inst = createRecord
-    setFieldsFromJSON(inst, json) map (_ => inst)
-  }
-
-  /**
-   * Populate the fields of the record instance with values from the JSON construct
-   *
-   * @param inst - The record to populate
-   * @param json - The stringified JSON object
-   * @return - Full(()) on success, other on failure
-   */
-  def setFieldsFromJSON(inst: BaseRecord, json: String): Box[Unit] = {
-    JSONParser.parse(json) match {
-      case Full(nvp : Map[_, _]) =>
-        for {
-          (k, v) <- nvp
-          field <- inst.fieldByName(k.toString)
-        } {
-          field.setFromAny(v)
-        }
-
-        Full(())
-      case Full(_) => Empty
-      case failure => failure.asA[Unit]
-    }
   }
 
   /** Encode a record instance into a JValue */

@@ -153,14 +153,6 @@ object LiftSession {
   }
 
   /**
-   * Check to see if the template is marked designer friendly
-   * and lop off the stuff before the first surround
-   */
-  @deprecated("Use Templates.checkForContentId", "2.3")
-  def checkForContentId(in: NodeSeq): NodeSeq =
-    Templates.checkForContentId(in)
-
-  /**
    * Cache for findSnippetClass lookups.
    */
   private val snippetClassMap: ConcurrentMap[String, Box[Class[AnyRef]]] = JavaConversions.mapAsScalaConcurrentMap(new ConcurrentHashMap())
@@ -2597,7 +2589,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       val toCmp = Full(act.uniqueId)
 
       import scala.collection.JavaConversions._
-      nmessageCallback.remove(act.jsonCall.funcId)
       nmessageCallback.foreach {
         case (k, f) =>
           if (f.owner == toCmp) nmessageCallback.remove(k)

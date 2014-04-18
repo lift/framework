@@ -138,17 +138,6 @@ sealed trait BoxTrait {
   }
 
   /**
-   * This method allows one to encapsulate any object in a Box in a null-safe manner,
-   * treating null values to Empty.  This is a parallel method to
-   * the Scala Option's apply method.  Note that the apply method is overloaded
-   * and it's much, much better to use legacyNullTest in this case.
-   * 
-   * @return <code>Full(in)</code> if <code>in</code> is not null; Empty otherwise
-   */
-  @deprecated("Use legacyNullTest", "2.5")
-  def apply[T](in: T): Box[T] = legacyNullTest(in)
-
-  /**
    * Apply the specified PartialFunction to the specified value and return the result
    * in a Full Box; if the pf is undefined at that point return Empty.
    * @param pf the partial function to use to transform the value

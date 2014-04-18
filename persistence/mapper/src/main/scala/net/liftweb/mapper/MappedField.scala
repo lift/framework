@@ -539,9 +539,6 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
     if (func.isDefinedAt(f)) func(f)
   }
 
-  @deprecated("Use get instead", "2.6")
-  def is: FieldType = get
-
   /**
    * Convert the field to its "context free" type (e.g., String, Int, Long, etc.)
    * If there are no read permissions, the value will be obscured
@@ -701,11 +698,6 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
   }
 
   override def asHtml: scala.xml.Node = Text(toString)
-}
-
-object MappedField {
-  @deprecated("Automatic conversion to the field's type is not safe and will be removed. Please use field.get instead", "2.5")
-  implicit def mapToType[T, A<:Mapper[A]](in : MappedField[T, A]): T = in.get
 }
 
 trait IndexedField[O] extends BaseIndexedField {

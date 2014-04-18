@@ -984,7 +984,11 @@ class LiftServlet extends Loggable {
     response.addHeaders(header.map {
       case (name, value) => HTTPParam(name, value)
     })
-    LiftRules.supplimentalHeaders(response)
+    response.addHeaders(
+      LiftRules.supplementalHeaders.vend.map {
+        case (name, value) => HTTPParam(name, value)
+      }
+    )
 
     liftResp match {
       case ResponseWithReason(_, reason) => response setStatusWithReason (resp.code, reason)

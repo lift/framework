@@ -1042,27 +1042,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     else
       String.format(locale, ?(str), params.flatMap {case s: AnyRef => List(s) case _ => Nil}.toArray: _*)
 
-  /**
-   * Get a core lift localized string or return the original string
-   *
-   * @param str the string to localize
-   *
-   * @return the localized version of the string
-   */
-  @deprecated("Use S.?() instead. S.?? will be removed in 2.6", "2.5")
-  def ??(str: String): String = ?(str)
-
-  /**
-   * Get a core lift localized and formatted string or return the original string.
-   *
-   * @param str the string to localize
-   * @param params the var-arg parameters applied for string formatting
-   *
-   * @return the localized version of the string
-   */
-  @deprecated("Use S.?() instead. S.?? will be removed in 2.6", "2.5")
-  def ??(str: String, params: AnyRef*): String = String.format(locale, ?(str), params: _*)
-
   private def ?!(str: String, resBundle: List[ResourceBundle]): String = resBundle.flatMap(r => tryo(r.getObject(str) match {
     case s: String => Full(s)
     case n: Node => Full(n.text)
@@ -1504,11 +1483,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     setHeader(name, value)
   }
 
-
-  @deprecated("Use S.getResponseHeaders instead for clarity.", "2.5")
-  def getHeaders(in: List[(String, String)]): List[(String, String)] = {
-    getResponseHeaders(in)
-  }
   /**
    * Returns the currently set HTTP response headers as a List[(String, String)]. To retrieve
    * a specific response header, use S.getResponseHeader. If you want to
@@ -1527,10 +1501,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
       ).openOr(Nil)
   }
 
-  @deprecated("Use S.getResponseHeader instead for clarity.", "2.5")
-  def getHeader(name: String): Box[String] = {
-    getResponseHeader(name)
-  }
   /**
    * Returns the current set value of the given HTTP response header as a Box. If
    * you want a request header, use Req.getHeader or S.getRequestHeader.
@@ -2081,14 +2051,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   def clearAttrs[T](f: => T):T = {
     _attrs.doWith((Null, Nil))(f)
   }
-
-  /**
-   * Temporarily adds the given attributes to the current set, then executes the given function.
-   *
-   * @param attr The attributes to set temporarily
-   */
-  @deprecated("Use the S.withAttrs method instead", "2.4")
-  def setVars[T](attr: MetaData)(f: => T): T = withAttrs(attr)(f)
 
   /**
    * A function that will eagerly evaluate a template.
@@ -2708,84 +2670,10 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   }
 
   /**
-   * Build a handler for incoming JSON commands
-   *
-   * @param f - function returning a JsCmds
-   * @return ( JsonCall, JsCmd )
-   */
-  def buildJsonFunc(f: Any => JsCmd): (JsonCall, JsCmd) = buildJsonFunc(Empty, Empty, f)
-
-  def buildJsonFunc(onError: JsCmd, f: Any => JsCmd): (JsonCall, JsCmd) =
-    buildJsonFunc(Empty, Full(onError), f)
-
-  /**
-   * Build a handler for incoming JSON commands
-   *
-   * @param name -- the optional name of the command (placed in a comment for testing)
-   *
-   * @param f - function returning a JsCmds
-   * @return ( JsonCall, JsCmd )
-   */
-  def buildJsonFunc(name: Box[String], onError: Box[JsCmd], f: Any => JsCmd): (JsonCall, JsCmd) = {
-    functionLifespan(true) {
-      val key = formFuncName
-
-      def checkCmd(in: Any) = in match {
-        case v2: scala.collection.Map[_, _]
-            if v2.asInstanceOf[scala.collection.Map[String,Any]].isDefinedAt("command") =>
-          // ugly code to avoid type erasure warning
-          val v = v2.asInstanceOf[scala.collection.Map[String, Any]]
-          JsonCmd(v("command").toString, v.get("target").
-                  map {
-            case null => null
-            case x => x.toString
-          } getOrElse (null), v.get("params").getOrElse(None), v)
-
-        case v => v
-      }
-
-      def jsonCallback(in: List[String]): JsCmd = {
-        in.headOption.toList.flatMap {
-          s =>
-                  val parsed = JSONParser.parse(s.trim).toList
-                  val cmds = parsed.map(checkCmd)
-                  val ret = cmds.map(f)
-                  ret
-        }.foldLeft(JsCmds.Noop)(_ & _)
-      }
-
-      val onErrorFunc: String =
-      onError.map(f => JsCmds.Run("function onError_" + key + "() {" + f.toJsCmd + """
-}
-
- """).toJsCmd) openOr ""
-
-      val onErrorParam = onError.map(f => "onError_" + key) openOr "null"
-
-      val af: AFuncHolder = jsonCallback _
-      addFunctionMap(key, af)
-
-      (JsonCall(key), JsCmds.Run(name.map(n => onErrorFunc +
-              "/* JSON Func " + n + " $$ " + key + " */").openOr("") +
-              "function " + key + "(obj) {liftAjax.lift_ajaxHandler(" +
-              "'" + key + "='+ encodeURIComponent(" +
-              LiftRules.jsArtifacts.
-                      jsonStringify(JE.JsRaw("obj")).
-                      toJsCmd + "), null," + onErrorParam + ");}"))
-    }
-  }
-
-  /**
    * Returns the JsCmd that holds the notices markup
    *
    */
   private[http] def noticesToJsCmd: JsCmd = LiftRules.noticesToJsCmd()
-
-  @deprecated("Use AFuncHolder.listStrToAF", "2.4")
-  def toLFunc(in: List[String] => Any): AFuncHolder = LFuncHolder(in, Empty)
-
-  @deprecated("Use AFuncHolder.unitToAF", "2.4")
-  def toNFunc(in: () => Any): AFuncHolder = NFuncHolder(in, Empty)
 
   implicit def stuff2ToUnpref(in: (Symbol, Any)): UnprefixedAttribute = new UnprefixedAttribute(in._1.name, Text(in._2.toString), Null)
 
@@ -2864,38 +2752,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
       }
     }
   }
-
-  /**
-   * Maps a function with an random generated and name
-   */
-  def jsonFmapFunc[T](in: Any => JsObj)(f: String => T): T = {
-    val name = formFuncName
-    addFunctionMap(name, SFuncHolder((s: String) => JSONParser.parse(s).map(in) openOr js.JE.JsObj()))
-    f(name)
-  }
-
-
-  /**
-   * Similar with addFunctionMap but also returns the name.
-   *
-   * Use fmapFunc(AFuncHolder)(String => T)
-   */
-  @deprecated("Use fmapFunc(AFuncHolder)(String => T)", "2.4")
-  def mapFunc(in: AFuncHolder): String = {
-    mapFunc(formFuncName, in)
-  }
-
-  /**
-   * Similar with addFunctionMap but also returns the name.
-   *
-   * Use fmapFunc(AFuncHolder)(String => T)
-   */
-  @deprecated("Use fmapFunc(AFuncHolder)(String => T)", "2.4")
-  def mapFunc(name: String, inf: AFuncHolder): String = {
-    addFunctionMap(name, inf)
-    name
-  }
-
 
   /**
    * Returns all the HTTP parameters having 'n' name
@@ -3128,28 +2984,3 @@ object NoticeType extends Serializable{
   object Warning extends Value("Warning")
   object Error extends Value("Error")
 }
-
-/**
- * Used to handles JSON requests
- */
-abstract class JsonHandler {
-  private val name = "_lift_json_" + getClass.getName
-
-  private def handlers: (JsonCall, JsCmd) =
-    S.session.map(s => s.get[Any](name) match {
-      case Full((x: JsonCall, y: JsCmd)) => (x, y)
-
-      case _ =>
-        val ret: (JsonCall, JsCmd) = S.buildJsonFunc(this.apply)
-        s.set(name, ret)
-        ret
-    }
-      ).openOr((JsonCall(""), JsCmds.Noop))
-
-  def call: JsonCall = handlers._1
-
-  def jsCmd: JsCmd = handlers._2
-
-  def apply(in: Any): JsCmd
-}
-
