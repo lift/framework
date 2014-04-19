@@ -114,6 +114,13 @@ trait AttrHelper[+Holder[X]] {
 
 trait HtmlHelpers extends CssBindImplicits {
   /**
+   * Remove all the <head> elements, just leaving their child elements.
+   */
+  def stripHead(in: NodeSeq): NodeSeq = {
+    ("head" #> ((ns: NodeSeq) => ns.asInstanceOf[Elem].child)).apply(in)
+  }
+
+  /**
    * Remove an attribute from the specified element.
    *
    * @param name the name of the attribute to remove
