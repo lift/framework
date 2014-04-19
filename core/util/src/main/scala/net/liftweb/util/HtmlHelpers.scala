@@ -29,6 +29,85 @@ trait Bindable {
   def asHtml: NodeSeq
 }
 
+/**
+ * A common function-like interface for accessing information about
+ * attributes, based on the two core <code>findAttr</code> and
+ * <code>convert</code> methods.
+ *
+ * Extenders can be fairly flexible. The value of an attribute is
+ * specified by the extender as type <code>Info</code>. Possibly-missing
+ * attributes are returned in type Holder, which should be
+ * parametrizable.  For example, you could create an AttrHelper that
+ * deals in String attribute values (<code>type Info = String</code>)
+ * and returns <code>Option</code>s in cases where the attribute may not
+ * be found.
+ *
+ * Note that you can invoke an <code>AttrHelper</code> with conversion
+ * functions to turn an <code>Info</code> into an arbitrary type.
+ *
+ * A sample implementation:
+ * {{{
+ * case class HtmlAttributes(in: Elem) extends AttrHelper[Box] {
+ *   type Info = String
+ *
+ *   def findAttr(key: String): Option[Info] = {
+ *     in.attribute(key).map(_.text)
+ *   }
+ *
+ *   def findAttr(prefix: String, key: String): Option[Info] = {
+ *     in.attribute(prefix, key).map(_.text)
+ *   }
+ *
+ *   def convert[T](in: Option[T]): Box[T] = Box(in)
+ * }
+ * }}}
+ *
+ * The helper above takes a scala <code>Elem</code> and provides a
+ * series of ways to access the values of its elements. For example:
+ *
+ * {{{
+ * val attributes = HtmlAttributes(elem)
+ *
+ * attributes("class") // class attribute as String, Empty if absent
+ * attributes("lift", "bind") // as above with lift:bind attribute
+ * attributes("class", "nothing") // class attribute, "nothing" if absent
+ * attributes("lift", "bind", "nothing") // as above with lift:bind attribute
+ * attributes("class", _.split(" ")) // class attribute as array, Empty if absent
+ * attributes("lift", "bind", _.split(" ")) // as above with lift:bind attribute
+ * attributes("class", _.split(" "), Array()) // class attribute as array, Array() if absent
+ * attributes("lift", "bind", _.split(" "), Array()) // as above with lift:bind attribute
+ * }}}
+ */
+trait AttrHelper[+Holder[X]] {
+  type Info
+
+  def apply(key: String): Holder[Info] = convert(findAttr(key))
+  def apply(prefix: String, key: String): Holder[Info] =
+    convert(findAttr(prefix, key))
+
+  def apply(key: String, default: => Info): Info =
+    findAttr(key) getOrElse default
+
+  def apply(prefix: String, key: String, default: => Info): Info =
+    findAttr(prefix, key) getOrElse default
+
+  def apply[T](key: String, f: Info => T): Holder[T] =
+    convert(findAttr(key).map(f))
+
+  def apply[T](prefix: String, key: String, f: Info => T): Holder[T] =
+    convert(findAttr(prefix, key).map(f))
+
+  def apply[T](key: String, f: Info => T, default: => T): T =
+    findAttr(key).map(f) getOrElse default
+
+  def apply[T](prefix: String, key: String, f: Info => T, default: => T): T =
+    findAttr(prefix, key).map(f) getOrElse default
+
+  protected def findAttr(key: String): Option[Info]
+  protected def findAttr(prefix: String, key: String): Option[Info]
+  protected def convert[T](in: Option[T]): Holder[T]
+}
+
 trait HtmlHelpers {
   /**
    * Remove an attribute from the specified element.
