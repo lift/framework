@@ -108,7 +108,7 @@ trait AttrHelper[+Holder[X]] {
   protected def convert[T](in: Option[T]): Holder[T]
 }
 
-trait HtmlHelpers {
+trait HtmlHelpers extends CssBindImplicits {
   /**
    * Remove an attribute from the specified element.
    *
