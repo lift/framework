@@ -21,6 +21,10 @@ import scala.xml._
 
 import common._
 
+/**
+ * This trait is used to identify an object that is representable as a
+ * {@link NodeSeq}.
+ */
 trait Bindable {
   def asHtml: NodeSeq
 }
