@@ -17,6 +17,8 @@
 package net.liftweb
 package util
 
+import scala.language.higherKinds
+
 import scala.xml._
 
 import common._
@@ -79,6 +81,8 @@ trait Bindable {
  * }}}
  */
 trait AttrHelper[+Holder[X]] {
+  // FIXME do we really need this Holder stuff?
+
   type Info
 
   def apply(key: String): Holder[Info] = convert(findAttr(key))
