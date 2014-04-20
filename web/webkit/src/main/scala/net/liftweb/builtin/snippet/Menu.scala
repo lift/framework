@@ -224,7 +224,7 @@ object Menu extends DispatchSnippet {
               "uri" -> uri.toString,
               "children" -> buildItems(kids),
               "current" -> current,
-              "cssClass" -> (in.cssClass openOr ""),
+              "cssClass" -> Str(in.cssClass openOr ""),
               "placeholder" -> in.placeholder_?,
               "path" -> path)
     }
