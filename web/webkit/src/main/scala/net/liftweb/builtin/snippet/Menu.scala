@@ -351,7 +351,7 @@ object Menu extends DispatchSnippet {
    * }
    * }}}
    */
-  def group: (NodeSeq)=>NodeSeq = {
+  def group: CssSel = {
     val repeatedSelector = S.attr("repeatedSelector") openOr "li"
     val linkSelector = S.attr("linkSelector") openOr "a"
     val hrefSelector = S.attr("hrefSelector") openOr "[href]"
