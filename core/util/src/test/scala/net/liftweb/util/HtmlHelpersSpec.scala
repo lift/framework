@@ -90,6 +90,33 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers {
     }
   }
 
+  "findId" should {
+    val xml =
+      <whoa>
+        <thing id="boom">Boom</thing>
+        <other-thing id="other-boom">Other boom</other-thing>
+      </whoa>
+
+    "find the element with a requested id in a NodeSeq" in {
+      findId(xml, "boom") must beLike {
+        case Some(element) =>
+          element must ==/(<thing id="boom">Boom</thing>)
+      }
+    }
+
+    "provide a None if a requested id is not found in the NodeSeq" in {
+      findId(xml, "explode") must beNone
+    }
+
+    "find the first id in a NodeSeq when no id is requested" in {
+      findId(xml) must_== Full("boom")
+    }
+
+    "provide an Empty if no ide is foud in a NodeSeq when no id is requested" in {
+      findId(<test />) must_== Empty
+    }
+  }
+
   "head removal" should {
     "remove <head>" in {
       Helpers.stripHead(<head><i>hello</i></head>) must ==/(<i>hello</i>)
