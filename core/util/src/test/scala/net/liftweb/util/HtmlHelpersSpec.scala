@@ -29,36 +29,6 @@ import common._
 object HtmlHelpersSpec extends Specification with HtmlHelpers {
   "HtmlHelpers Specification".title
 
-  "findOption" should {
-    "find an id" in {
-      val xml = <foo><bar/>Dog<b><woof id="3"/></b></foo>
-
-      findOption(xml) {
-        e => e.attribute("id").
-        filter(_.text == "3").map(i => e)
-      }.get must ==/ (<woof id="3"/>)
-    }
-
-    "not find an ide" in {
-      val xml = <foo><bar/>Dog<b><woof ide="3"/></b></foo>
-
-      findOption(xml) {
-        e => e.attribute("id").
-        filter(_.text == "3").map(i => e)
-      } must_== None
-    }
-
-
-    "not find a the wrong id" in {
-      val xml = <foo><bar/>Dog<b><woof ide="4"/></b></foo>
-
-      findOption(xml) {
-        e => e.attribute("id").
-        filter(_.text == "3").map(i => e)
-      } must_== None
-    }
-  }
-
   "findBox" should {
     "find an id" in {
       val xml = <foo><bar/>Dog<b><woof id="3"/></b></foo>
@@ -90,15 +60,34 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers {
     }
   }
 
-  "Add CSS Class" should {
-    "add a new attribute" in {
-      (addCssClass("foo", <b/>) \ "@class").text must_== "foo"
+  "findOption" should {
+    "find an id" in {
+      val xml = <foo><bar/>Dog<b><woof id="3"/></b></foo>
+
+      findOption(xml) {
+        e => e.attribute("id").
+        filter(_.text == "3").map(i => e)
+      }.get must ==/ (<woof id="3"/>)
     }
 
-    "append an existing attribute" in {
-      (addCssClass("foo", <b class="dog"/>) \ "@class").text must_== "dog foo"
+    "not find an ide" in {
+      val xml = <foo><bar/>Dog<b><woof ide="3"/></b></foo>
+
+      findOption(xml) {
+        e => e.attribute("id").
+        filter(_.text == "3").map(i => e)
+      } must_== None
     }
 
+
+    "not find a the wrong id" in {
+      val xml = <foo><bar/>Dog<b><woof ide="4"/></b></foo>
+
+      findOption(xml) {
+        e => e.attribute("id").
+        filter(_.text == "3").map(i => e)
+      } must_== None
+    }
   }
 
   "head removal" should {
@@ -114,6 +103,18 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers {
       Helpers.stripHead(<head3><i><head>hello</head></i></head3>) must ==/(<head3><i>hello</i></head3>)
     }
   }
+
+  "Add CSS Class" should {
+    "add a new attribute" in {
+      (addCssClass("foo", <b/>) \ "@class").text must_== "foo"
+    }
+
+    "append an existing attribute" in {
+      (addCssClass("foo", <b class="dog"/>) \ "@class").text must_== "dog foo"
+    }
+
+  }
+
 }
 
 
