@@ -113,6 +113,53 @@ trait AttrHelper[+Holder[X]] {
 }
 
 trait HtmlHelpers extends CssBindImplicits {
+  // Finding things
+
+  /**
+   * Given a NodeSeq and a function that returns a Box[T],
+   * return the first value found in which the function evaluates
+   * to Full
+   */
+  def findBox[T](nodes: Seq[Node])(f: Elem => Box[T]): Box[T] = {
+    nodes.view.flatMap {
+      case Group(g) => findBox(g)(f)
+      case e: Elem => f(e) or findBox(e.child)(f)
+      case _ => Empty
+    }.headOption
+  }
+
+  /**
+   * Given a NodeSeq and a function that returns an Option[T],
+   * return the first value found in which the function evaluates
+   * to Some
+   */
+  def findOption[T](nodes: Seq[Node])(f: Elem => Option[T]): Option[T] = {
+    nodes.view.flatMap {
+      case Group(g) => findOption(g)(f)
+      case e: Elem => f(e) orElse findOption(e.child)(f)
+      case _ => None
+    }.headOption
+  }
+
+  /**
+   * Given an id value, find the Elem with the specified id
+   */
+  def findId(nodes: Seq[Node], id: String): Option[Elem] = {
+    findOption(nodes) {
+      e => e.attribute("id").filter(_.text == id).map(i => e)
+    }
+  }
+
+  /**
+   * Finds the first `Elem` in the NodeSeq (or any children)
+   * that has an ID attribute and return the value of that attribute.
+   */
+  def findId(ns: NodeSeq): Box[String] = {
+    findBox(ns)(_.attribute("id").map(_.text))
+  }
+
+  // Modifying things
+
   /**
    * Remove all the <head> elements, just leaving their child elements.
    */
