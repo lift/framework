@@ -229,42 +229,82 @@ trait HtmlHelpers extends CssBindImplicits {
     }
   }
 
+  // Ensures unique ids, but provides a way to selectively recurse through
+  // subelements or not by invoking a `processElement` function when an
+  // element is found. `processElement` is given the element that was
+  // found as well as the duplicate id stripping function, and the
+  // caller can decide whether to ensure uniqueness at only one level or
+  // whether to recurse through children.
+  private def ensureUniqueIdHelper(in: NodeSeq, processElement: (Elem, (Node)=>Node)=>Elem): NodeSeq = {
+    var ids: Set[String] = Set()
+
+    def stripDuplicateId(node: Node): Node = node match {
+      case Group(ns) => Group(ns.map(stripDuplicateId))
+      case element: Elem =>
+        element.attribute("id") match {
+          case Some(id) => {
+            if (ids.contains(id.text)) {
+              processElement(
+                element.copy(attributes = removeAttribute("id", element.attributes)),
+                stripDuplicateId _
+              )
+            } else {
+              ids += id.text
+
+              processElement(element, stripDuplicateId _)
+            }
+          }
+
+          case _ => element
+        }
+
+      case other => other
+    }
+
+    in.map(stripDuplicateId)
+  }
+
   /**
    * For a list of NodeSeq, ensure that the the id of the root Elems
    * are unique.  If there's a duplicate, that Elem will be returned
    * without an id
    */
   def ensureUniqueId(in: Seq[NodeSeq]): Seq[NodeSeq] = {
-    var ids: Set[String] = Set()
+    in.map(ensureUniqueIdHelper(_, (element, _) => element))
+  }
 
-    def stripDuplicateId(element: Elem): Elem = {
-      element.attribute("id") match {
-        case Some(id) => {
-          if (ids.contains(id.text)) {
-            element.copy(attributes =
-              element.attributes.filter {
-                case attribute: UnprefixedAttribute => attribute.key != "id"
-                case _ => true
-              }
-            )
-          } else {
-            ids += id.text
-            element
-          }
-        }
+  /**
+   * For a list of NodeSeq, ensure that the the id of all Elems are
+   * unique, recursively.  If there's a duplicate, that Elem will be
+   * returned without an id.
+   */
+  def deepEnsureUniqueId(in: NodeSeq): NodeSeq = {
+    ensureUniqueIdHelper(in, { (element, stripUniqueId) =>
+      element.copy(child = element.child.map(stripUniqueId))
+    })
+  }
 
-        case _ => element
+  /**
+   * Ensure that the first Element has the specified ID
+   */
+  def ensureId(ns: NodeSeq, id: String): NodeSeq = {
+    var found = false
+    
+    ns.map {
+      case x if found => x
+      case element: Elem => {
+        val meta = removeAttribute("id", element.attributes)
+
+        found = true
+
+        element.copy(attributes = new UnprefixedAttribute("id", id, meta))
       }
-    }
-
-    in.map {
-      case e: Elem => stripDuplicateId(e)
-      case x => x.map {
-        case e: Elem => stripDuplicateId(e)
-        case x => x
-      }
+ 
+      case x => x
     }
   }
+
+  // Misc
 
   def errorDiv(body: NodeSeq): Box[NodeSeq] = {
     Props.mode match {
