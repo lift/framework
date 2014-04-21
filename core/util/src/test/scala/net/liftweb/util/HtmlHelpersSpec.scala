@@ -261,5 +261,54 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers {
       )
     }
   }
+
+  "ensureId" should {
+    "if the first element has an id, replace it with the specified one" in {
+      val xml =
+        <boom id="thing">
+          <hello id="thing" />
+          <good id="other-thing">Boom</good>
+          <bye id="other-thing">
+            <other id="other-thing" />
+          </bye>
+        </boom>
+
+      val uniqued = <wrapper>{ensureId(xml, "other-thinger").head}</wrapper>
+
+      uniqued must \("boom", "id" -> "other-thinger")
+    }
+
+    "if the first element has no id, give it the specified one" in {
+      val xml =
+        <boom>
+          <hello id="thing" />
+          <good id="other-thing">Boom</good>
+          <bye id="other-thing">
+            <other id="other-thing" />
+          </bye>
+        </boom>
+
+      val uniqued = <wrapper>{ensureId(xml, "other-thinger").head}</wrapper>
+
+      uniqued must \("boom", "id" -> "other-thinger")
+    }
+
+    "not affect other elements" in {
+      val xml =
+        Group(
+          <boom id="thing" />
+          <hello id="thing" />
+          <bye id="thing" />
+        )
+
+      val uniqued = NodeSeq.seqToNodeSeq(ensureId(xml, "other-thinger").flatten)
+
+      uniqued must ==/(
+        <boom id="other-thinger" />
+        <hello id="thing" />
+        <bye id="thing" />
+      )
+    }
+  }
 }
 
