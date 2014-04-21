@@ -131,12 +131,29 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers {
     }
   }
 
-  "Add CSS Class" should {
-    "add a new attribute" in {
+  "removeAttribute" should {
+    val element = <boom attribute="hello" otherAttribute="good-bye" />
+
+    "remove the specified attribute from a provided element" in {
+      val removed = removeAttribute("attribute", element)
+
+      removed must ==/(<boom otherAttribute="good-bye" />)
+    }
+
+    "remove the specified attribute from a provided MetaData list" in {
+      val removed = removeAttribute("attribute", element.attributes)
+
+      (removed("attribute") must_== null) and
+      (removed("otherAttribute") must_== Text("good-bye"))
+    }
+  }
+
+  "addCssClass" should {
+    "add a new attribute if no class attribute exists" in {
       (addCssClass("foo", <b/>) \ "@class").text must_== "foo"
     }
 
-    "append an existing attribute" in {
+    "append to an existing class attribute if it already exists" in {
       (addCssClass("foo", <b class="dog"/>) \ "@class").text must_== "dog foo"
     }
 
