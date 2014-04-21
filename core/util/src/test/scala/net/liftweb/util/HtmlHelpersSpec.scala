@@ -156,9 +156,110 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers {
     "append to an existing class attribute if it already exists" in {
       (addCssClass("foo", <b class="dog"/>) \ "@class").text must_== "dog foo"
     }
-
   }
 
-}
+  "ensureUniqueId" should {
+    "leave things unchanged if no ids collide" in {
+      val xml =
+        <boom id="thing">
+          <hello id="other-thing" />
+          <bye id="third-thing" />
+        </boom>
 
+      val uniqued = <wrapper>{ensureUniqueId(xml).head}</wrapper>
+
+      (uniqued must \("boom", "id" -> "thing")) and
+      (uniqued must \\("hello", "id" -> "other-thing")) and
+      (uniqued must \\("bye", "id" -> "third-thing"))
+    }
+
+    "strip the ids if elements have an id matching a previous one" in {
+      val xml =
+        Group(
+          <boom id="thing" />
+          <hello id="thing" />
+          <bye id="thing" />
+        )
+
+      val uniqued = NodeSeq.seqToNodeSeq(ensureUniqueId(xml).flatten)
+
+      uniqued must ==/(
+        <boom id="thing" />
+        <hello />
+        <bye />
+      )
+    }
+
+    "leave child element ids alone even if they match the ids of the root element or each other" in {
+      val xml =
+        <boom id="thing">
+          <hello id="thing" />
+          <bye id="thing" />
+        </boom>
+
+      val uniqued = <wrapper>{ensureUniqueId(xml).head}</wrapper>
+
+      (uniqued must \\("hello", "id" -> "thing")) and
+      (uniqued must \\("bye", "id" -> "thing"))
+    }
+  }
+
+  "deepEnsureUniqueId" should {
+    "leave things unchanged if no ids collide" in {
+      val xml =
+        <boom id="thing">
+          <hello id="other-thing" />
+          <bye id="third-thing" />
+        </boom>
+
+      val uniqued = <wrapper>{deepEnsureUniqueId(xml).head}</wrapper>
+
+      (uniqued must \("boom", "id" -> "thing")) and
+      (uniqued must \\("hello", "id" -> "other-thing")) and
+      (uniqued must \\("bye", "id" -> "third-thing"))
+    }
+
+    "strip the ids if elements have an id matching a previous one" in {
+      val xml =
+        Group(
+          <boom id="thing" />
+          <hello id="thing" />
+          <bye id="thing" />
+        )
+
+      val uniqued = NodeSeq.seqToNodeSeq(deepEnsureUniqueId(xml).flatten)
+
+      uniqued must ==/(
+        <boom id="thing" />
+        <hello />
+        <bye />
+      )
+    }
+
+    "strip child element ids alone if they match the ids of the root element or each other" in {
+      val xml =
+        <boom id="thing">
+          <hello id="thing" />
+          <good id="other-thing">Boom</good>
+          <bye id="other-thing">
+            <other id="other-thing" />
+          </bye>
+        </boom>
+
+      val uniqued = <wrapper>{deepEnsureUniqueId(xml).head}</wrapper>
+
+      uniqued must ==/(
+        <wrapper>
+          <boom id="thing">
+            <hello />
+            <good id="other-thing">Boom</good>
+            <bye>
+              <other />
+            </bye>
+          </boom>
+        </wrapper>
+      )
+    }
+  }
+}
 
