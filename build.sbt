@@ -14,7 +14,7 @@ organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
 
 crossScalaVersions in ThisBuild    := Seq("2.10.0", "2.9.2", "2.9.1-1", "2.9.1")
 
-libraryDependencies in ThisBuild <++= scalaVersion {sv => Seq(specs2(sv), scalacheck) }
+libraryDependencies in ThisBuild <++= scalaVersion {sv => Seq(specs2(sv), scalacheck, scalatest(sv)) }
 
 // Settings for Sonatype compliance
 pomIncludeRepository in ThisBuild  := { _ => false }

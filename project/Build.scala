@@ -51,10 +51,7 @@ object BuildDef extends Build {
     coreProject("markdown")
         .settings(description := "Markdown Parser",
                   parallelExecution in Test := false,
-                  libraryDependencies ++= Seq(
-                     "org.scalatest" %% "scalatest" % "1.9.1" % "test",
-                     "junit" % "junit" % "4.8.2" % "test"
-                   ))                  
+                  libraryDependencies <++= scalaVersion { sv => Seq(scalatest(sv), junit) })
 
   lazy val json =
     coreProject("json")
