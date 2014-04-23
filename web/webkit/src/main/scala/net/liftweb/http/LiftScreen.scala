@@ -1438,15 +1438,13 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
 
     override protected def clearFunc(name: String): Unit = ScreenVarHandler.clear(name)
 
-    override protected def wasInitialized(name: String): Boolean = {
-      val bn = name + "_inited_?"
+    override protected def wasInitialized(name: String, bn: String): Boolean = {
       val old: Boolean = ScreenVarHandler.get(bn) openOr false
       ScreenVarHandler.set(bn, this, true)
       old
     }
 
-    override protected def testWasSet(name: String): Boolean = {
-      val bn = name + "_inited_?"
+    override protected def testWasSet(name: String, bn: String): Boolean = {
       ScreenVarHandler.get(name).isDefined || (ScreenVarHandler.get(bn) openOr false)
     }
 

@@ -100,10 +100,11 @@ abstract class AnyVar[T, MyType <: AnyVar[T, MyType]](dflt: => T) extends AnyVar
 trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHolder[T] with HasCalcDefaultValue[T] {
   self: MyType =>
   protected lazy val name = VarConstants.varPrefix+getClass.getName+"_"+__nameSalt
+  private lazy val initedKey = name + VarConstants.initedSuffix
   protected def findFunc(name: String): Box[T]
   protected def setFunc(name: String, value: T): Unit
   protected def clearFunc(name: String): Unit
-  protected def wasInitialized(name: String): Boolean
+  protected def wasInitialized(name: String, initedKey: String): Boolean
 
 
   protected def calcDefaultValue: T
@@ -111,7 +112,7 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
   /**
    * A non-side-effecting test if the value was initialized
    */
-  protected def testWasSet(name: String): Boolean
+  protected def testWasSet(name: String, initedKey: String): Boolean
 
   protected def __nameSalt = ""
 
@@ -150,7 +151,7 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
   }
 
   private def testInitialized: Unit = doSync {
-    if (!wasInitialized(name)) {
+    if (!wasInitialized(name, initedKey)) {
       registerCleanupFunc(_onShutdown _)
     }
   }
@@ -168,7 +169,7 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
   /**
    * Has this Var been set or accessed and had its default value calculated
    */
-  def set_? : Boolean = testWasSet(name)
+  def set_? : Boolean = testWasSet(name, initedKey)
 
   /**
    * Set the Var if it has not been calculated
