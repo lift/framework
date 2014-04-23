@@ -203,19 +203,6 @@ private[http] trait LiftMerge {
         S.appendJs(LiftJavaScript.initCmd(LiftRules.javascriptSettings.vend().apply(this)))
       }
 
-      if (!cometList.isEmpty && LiftRules.autoIncludeComet(this)) {
-        S.appendJs(LiftRules.renderCometPageContents(this, cometList))
-      }
-
-      if (LiftRules.enableLiftGC && stateful_?) {
-        import js.JsCmds._
-
-        S.appendJs(JE.Call("window.lift.setPageId", RenderVersion.get))
-
-        if (!cometList.isEmpty || hasFuncsForOwner(RenderVersion.get))
-          S.appendJs(JE.Call("window.lift.register"))
-      }
-
       S.jsToAppend match {
         case Nil =>
         case x :: Nil => addlTail += js.JsCmds.Script(x)
@@ -228,10 +215,34 @@ private[http] trait LiftMerge {
 
       bodyChildren += nl
 
+      val bodyAttributes: List[(String, Option[String])] =
+        ("data-lift-gc" ->
+          Some(RenderVersion.get).filter { _ =>
+            LiftRules.enableLiftGC && stateful_?
+          }
+        ) ::
+        (
+          if (LiftRules.autoIncludeComet(this)) {
+            ("data-lift-session-id" -> Some(S.session.map(_.uniqueId) openOr "xx")) ::
+            cometList.map {
+              case CometVersionPair(guid, version) =>
+                (s"data-lift-comet-$guid" -> Some(version.toString))
+            }
+          } else {
+            Nil
+          }
+        )
+
       htmlKids += nl
       htmlKids += Elem(headTag.prefix, headTag.label, headTag.attributes, headTag.scope, headTag.minimizeEmpty, headChildren.toList: _*)
       htmlKids += nl
-      htmlKids += Elem(bodyTag.prefix, bodyTag.label, bodyTag.attributes, bodyTag.scope, bodyTag.minimizeEmpty, bodyChildren.toList: _*)
+      htmlKids +=
+        bodyAttributes.foldLeft(bodyTag.copy(child = bodyChildren.toList)) { (element, attribute) =>
+          attribute match {
+            case (name, Some(value)) => element % (name -> value)
+            case _ => element
+          }
+        }
       htmlKids += nl
 
       val tmpRet = Elem(htmlTag.prefix, htmlTag.label, htmlTag.attributes, htmlTag.scope, htmlTag.minimizeEmpty, htmlKids.toList: _*)

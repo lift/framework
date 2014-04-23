@@ -342,11 +342,17 @@
     }
 
     // Call on page load
-    function registerComet(tw, sessId) {
+    function registerComet(cometGuid, cometVersion, startComet) {
+      if (typeof startComet == 'undefined') {
+        startComet = true;
+      }
+
       toWatch = tw;
       sessionId = sessId;
 
-      cometSuccessFunc();
+      if (startComet === true) {
+        cometSuccessFunc();
+      }
     }
 
     // public object
@@ -354,12 +360,41 @@
       init: function(options) {
         // override default settings
         this.extend(settings, options);
+
+        var lift = this;
+        $(document).ready(function() {
+          var gc = document.body.getAttribute('data-lift-gc');
+          if (gc) {
+            lift.startGc();
+          }
+
+          var attributes = document.body.attributes,
+              cometGuid, cometVersion;
+          for (var i = 0; i < attributes.length; ++i) {
+            if (attributes[i].name == 'data-lift-gc') {
+              pageId = attributes[i].value;
+              lift.startGc();
+            } else if (attributes[i].name.match(/^data-lift-comet-/)) {
+              cometGuid = attributes[i].name.substring('data-lift-comet-'.length);
+              cometVersion = parseInt(attributes[i].value)
+
+              registerComet(cometGuid, cometVersion, false);
+            } else if (attributes[i].name == 'data-lift-session-id') {
+              sessionId = attributes[i].value
+            }
+          }
+
+          if (typeof cometGuid != 'undefined') {
+            cometSuccessFunc(); // we saw a comet, so start the comet cycle
+          }
+        });
+
         // start the cycle
         doCycleIn200();
       },
       logError: settings.logError,
       ajax: appendToQueue,
-      register: successRegisterGC,
+      startGc: successRegisterGC,
       ajaxOnSessionLost: function() {
         settings.ajaxOnSessionLost();
       },

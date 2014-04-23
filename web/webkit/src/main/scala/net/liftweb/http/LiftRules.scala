@@ -1685,14 +1685,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     } ) {}
 
   /**
-   * Renders that JavaScript that holds Comet identification information
-   */
-  @volatile var renderCometPageContents: (LiftSession, Seq[CometVersionPair]) => JsCmd =
-  (session, vp) => JsCmds.Run(
-    "window.lift.registerComet(" + vp.map(p => p.guid.encJs + ": " + p.version).mkString("{", " , ", "}") + ", '"+S.encodeURL(session.uniqueId)+"');"
-    )
-
-  /**
    * Holds the last update time of the Ajax request. Based on this server may return HTTP 304 status
    * indicating the client to used the cached information.
    */
@@ -2072,6 +2064,11 @@ trait CometVersionPair {
   def guid: String
 
   def version: Long
+}
+object CometVersionPair {
+  def unapply(pair: CometVersionPair): Option[(String, Long)] = {
+    Some((pair.guid, pair.version))
+  }
 }
 
 case class CVP(guid: String, version: Long) extends CometVersionPair
