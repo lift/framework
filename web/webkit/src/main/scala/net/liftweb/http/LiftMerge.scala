@@ -215,23 +215,24 @@ private[http] trait LiftMerge {
 
       bodyChildren += nl
 
+      val autoIncludeComet = LiftRules.autoIncludeComet(this)
       val bodyAttributes: List[(String, Option[String])] =
-        ("data-lift-gc" ->
-          Some(RenderVersion.get).filter { _ =>
-            LiftRules.enableLiftGC && stateful_?
-          }
-        ) ::
-        (
-          if (LiftRules.autoIncludeComet(this)) {
-            ("data-lift-session-id" -> Some(S.session.map(_.uniqueId) openOr "xx")) ::
-            cometList.map {
-              case CometVersionPair(guid, version) =>
-                (s"data-lift-comet-$guid" -> Some(version.toString))
+        if (stateful_? && (autoIncludeComet || LiftRules.enableLiftGC)) {
+          ("data-lift-gc" -> RenderVersion.get) ::
+          (
+            if (autoIncludeComet) {
+              ("data-lift-session-id" -> Some(S.session.map(_.uniqueId) openOr "xx")) ::
+              cometList.map {
+                case CometVersionPair(guid, version) =>
+                  (s"data-lift-comet-$guid" -> Some(version.toString))
+              }
+            } else {
+              Nil
             }
-          } else {
-            Nil
-          }
-        )
+          )
+        } else {
+          Nil
+        }
 
       htmlKids += nl
       htmlKids += Elem(headTag.prefix, headTag.label, headTag.attributes, headTag.scope, headTag.minimizeEmpty, headChildren.toList: _*)
