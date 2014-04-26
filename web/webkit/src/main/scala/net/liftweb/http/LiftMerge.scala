@@ -24,9 +24,33 @@ import net.liftweb.common._
 import net.liftweb.http.js._
 import Helpers._
 
+// Script file for the current page.
+private[http] object pageScript extends RequestVar[Box[JavaScriptResponse]](Empty)
 
 private[http] trait LiftMerge {
   self: LiftSession =>
+
+  private def scriptUrl(scriptFile: String) = {
+    s"/lift/$scriptFile"
+  }
+
+  // Gather all page-specific JS into one JsCmd.
+  private def assemblePageSpecificJavaScript: JsCmd = {
+    val allJs =
+      Some(LiftRules.autoIncludeJSSettings.vend().apply(this)).collect {
+        case true =>
+          LiftJavaScript.initCmd(LiftRules.javascriptSettings.vend().apply(this))
+      } ++
+      S.jsToAppend
+
+    allJs.foldLeft(js.JsCmds.Noop)(_ & _)
+  }
+
+  private def pageScopedScriptFileWith(cmd: JsCmd) = {
+    pageScript(Full(JavaScriptResponse(cmd, Nil, Nil, 200)))
+
+    <script type="text/javascript" src={scriptUrl(RenderVersion.get)}></script>
+  }
 
   /**
    * Manages the merge phase of the rendering pipeline
@@ -199,14 +223,9 @@ private[http] trait LiftMerge {
 
       val cometList = cometTimes.toList
 
-      if (LiftRules.autoIncludeJSSettings.vend().apply(this)) {
-        S.appendJs(LiftJavaScript.initCmd(LiftRules.javascriptSettings.vend().apply(this)))
-      }
-
-      S.jsToAppend match {
-        case Nil =>
-        case x :: Nil => addlTail += js.JsCmds.Script(x)
-        case xs => addlTail += js.JsCmds.Script(xs.foldLeft(js.JsCmds.Noop)(_ & _))
+      val pageJs = assemblePageSpecificJavaScript.toJsCmd
+      if (pageJs.strip.nonEmpty) {
+        addlTail += pageScopedScriptFileWith(pageJs)
       }
 
       for {
