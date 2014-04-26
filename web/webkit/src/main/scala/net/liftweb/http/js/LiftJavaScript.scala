@@ -35,7 +35,6 @@ object LiftJavaScript {
     "ajaxPath" -> LiftRules.ajaxPath,
     "ajaxRetryCount" -> Num(LiftRules.ajaxRetryCount.openOr(3)),
     "ajaxPostTimeout" -> LiftRules.ajaxPostTimeout,
-    "enableGc" -> LiftRules.enableLiftGC,
     "gcPollingInterval" -> LiftRules.liftGCPollingInterval,
     "gcFailureRetryTimeout" -> LiftRules.liftGCFailureRetryTimeout,
     "cometPath" -> LiftRules.cometPath,
