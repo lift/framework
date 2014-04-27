@@ -31,7 +31,9 @@ import http.{S, LiftSession}
 import http.js.JsExp
 import json._
 import JsonDSL._
+import util.Helpers.snakify
 
+import net.liftweb.record.RecordRules
 import net.liftweb.record.field.Countries
 
 import com.mongodb._
@@ -920,11 +922,13 @@ class MongoRecordSpec extends Specification with MongoTestKit {
     }
 
     "support custom field name" in {
-      val rec = CustomFieldName.createRecord
-      rec.customField.name must_== "custom_field"
-      rec.save
+      RecordRules.fieldName.doWith(snakify _) {
+        val rec = CustomFieldName.createRecord
+        rec.customField.name must_== "custom_field"
+        rec.save
 
-      CustomFieldName.find(rec.id.get).toOption must beSome(rec)
+        CustomFieldName.find(rec.id.get) must_== Full(rec)
+      }
     }
   }
 }

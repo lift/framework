@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 WorldWide Conferencing, LLC
+ * Copyright 2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,11 @@ object RecordRulesSpec extends Specification {
 
   "RecordRules" should {
     "snakify custom field name" in {
-      val rec = CustomFieldName.createRecord
-      rec.customField.name must_== "custom_field"
+      RecordRules.fieldName.doWith(snakify _) {
+        val rec = BasicTestRecord.createRecord
+
+        rec.fieldThree.name must_== "field_three"
+      }
     }
   }
 }

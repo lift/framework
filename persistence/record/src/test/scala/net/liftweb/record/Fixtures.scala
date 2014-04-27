@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ class BasicTestRecord private () extends Record[BasicTestRecord] {
 
   object field1 extends StringField(this,10)
   object field2 extends StringField(this,10)
-  object field3 extends StringField(this,10)
+  object fieldThree extends StringField(this,10)
 }
 
 object BasicTestRecord extends BasicTestRecord with MetaRecord[BasicTestRecord] {
@@ -276,22 +276,3 @@ class CustomTypeIntFieldRecord private () extends Record[CustomTypeIntFieldRecor
 }
 
 object CustomTypeIntFieldRecord extends CustomTypeIntFieldRecord with MetaRecord[CustomTypeIntFieldRecord]
-
-class CustomFieldName private () extends Record[CustomFieldName] {
-  def meta = CustomFieldName
-
-  object customField extends StringField(this, 256)
-}
-
-object CustomFieldName extends CustomFieldName with MetaRecord[CustomFieldName] {
-
-  // These rules are common to all Record specs
-  def snakify(name: String): String = {
-    if (name == "customField")
-      Helpers.snakify(name)
-    else
-      name
-  }
-
-  RecordRules.fieldName.default.set(snakify _)
-}
