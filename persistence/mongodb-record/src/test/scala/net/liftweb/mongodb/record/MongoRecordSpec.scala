@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -922,13 +922,9 @@ class MongoRecordSpec extends Specification with MongoTestKit {
     "support custom field name" in {
       val rec = CustomFieldName.createRecord
       rec.customField.name must_== "custom_field"
+      rec.save
 
-      val fromDb = CustomFieldName.find(rec.id.get)
-      fromDb.isDefined must_== true
-      fromDb foreach { tr =>
-        tr mustEqual rec
-      }
+      CustomFieldName.find(rec.id.get).toOption must beSome(rec)
     }
   }
 }
-
