@@ -12,8 +12,6 @@ startYear in ThisBuild             := Some(2006)
 
 organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
 
-scalaVersion in ThisBuild          := "2.10.4"
-
 crossScalaVersions in ThisBuild    := Seq("2.10.4", "2.9.2", "2.9.1-1", "2.9.1")
 
 libraryDependencies in ThisBuild <++= scalaVersion {sv => Seq(specs2(sv), scalacheck) }
