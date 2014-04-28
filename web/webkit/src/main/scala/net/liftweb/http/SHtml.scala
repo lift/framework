@@ -269,10 +269,11 @@ trait SHtml {
     f(name, js)
   }
 
-  @deprecated("Use jsonCall with a function that takes JValue => JValue", "2.5")
+  @deprecated("Use jsonCall with a function that takes JValue => JsCmd", "2.5")
   def jsonCall(jsCalcValue: JsExp, jsonContext: JsonContext, func: String => JsObj)(implicit d: AvoidTypeErasureIssues1): GUIDJsExp = 
     ajaxCall_*(jsCalcValue, jsonContext, SFuncHolder(func))
 
+  @deprecated("Use jsonCall with a function that takes JValue => JValue and its GUIDJsExp to manipulate the guid and JsExp it produces. This function will go away altogether in Lift 3.", "2.6")
   def fjsonCall[T](jsCalcValue: JsExp, jsonContext: JsonContext, func: String => JsObj)(f: (String, JsExp) => T): T = {
     val (name, js) = jsonCall(jsCalcValue, jsonContext, func).product
     f(name, js)
@@ -421,7 +422,26 @@ trait SHtml {
    * @return a button to put on your page
    *
    */
+  @deprecated("Use jsonButton with a function that takes JValue => JsCmd", "2.6")
   def jsonButton(text: NodeSeq, jsExp: JsExp, func: Any => JsObj, ajaxContext: JsonContext, attrs: ElemAttr*): Elem = {
+    attrs.foldLeft(jsonFmapFunc(func)(name =>
+            <button onclick={makeAjaxCall(JsRaw(name.encJs + "+'='+ encodeURIComponent(JSON.stringify(" + jsExp.toJsCmd + "))"), ajaxContext).toJsCmd +
+                    "; return false;"}>{text}</button>))(_ % _)
+  }
+
+  /**
+   * Create an Ajax button that when pressed, submits an Ajax request and expects back a JSON
+   * construct which will be passed to the <i>success</i> function
+   *
+   * @param text -- the name/text of the button
+   * @param func -- the function to execute when the button is pushed.  Return Noop if nothing changes on the browser.
+   * @param ajaxContext -- defines the callback functions and the JSON response type
+   * @param attrs -- the list of node attributes
+   *
+   * @return a button to put on your page
+   *
+   */
+  def jsonButton(text: NodeSeq, jsExp: JsExp, func: JValue => JsCmd, ajaxContext: JsonContext, attrs: ElemAttr*)(implicit dummy: AvoidTypeErasureIssues1): Elem = {
     attrs.foldLeft(jsonFmapFunc(func)(name =>
             <button onclick={makeAjaxCall(JsRaw(name.encJs + "+'='+ encodeURIComponent(JSON.stringify(" + jsExp.toJsCmd + "))"), ajaxContext).toJsCmd +
                     "; return false;"}>{text}</button>))(_ % _)
@@ -648,7 +668,7 @@ trait SHtml {
    *
    * @param value - the initial value of the text field
    * @param cmd - the json command name
-   * @param json - the JsonCall returned from S.buildJsonFunc
+   * @param json - the JsonCall returned from S.createJsonFunc
    *
    * @return a text field
    */
@@ -711,7 +731,7 @@ trait SHtml {
    *
    * @param value - the initial value of the text field
    * @param cmd - the json command name
-   * @param json - the JsonCall returned from S.buildJsonFunc
+   * @param json - the JsonCall returned from S.createJsonFunc
    *
    * @return a text field
    */
@@ -1707,6 +1727,7 @@ trait SHtml {
    * @param jsonHandler The handler that will process the form
    * @param body The form body. This should not include the &lt;form&gt; tag.
    */
+  @deprecated("Use JValue=>JsCmd bindings in SHtml (such as jsonCall) and SHtml.makeFormsAjax instead of this.", "2.6")
   def jsonForm(jsonHandler: JsonHandler, body: NodeSeq): NodeSeq = jsonForm(jsonHandler, Noop, body)
 
   /**
@@ -1719,6 +1740,7 @@ trait SHtml {
    * the form
    * @param body The form body. This should not include the &lt;form&gt; tag.
    */
+  @deprecated("Use JValue=>JsCmd bindings in SHtml (such as jsonCall) and SHtml.makeFormsAjax instead of this.", "2.6")
   def jsonForm(jsonHandler: JsonHandler, onSubmit: JsCmd, body: NodeSeq): NodeSeq = {
     val id = formFuncName
     <form onsubmit={(onSubmit & jsonHandler.call("processForm", FormToJSON(id)) & JsReturn(false)).toJsCmd} id={id}>{body}</form>
@@ -1731,6 +1753,7 @@ trait SHtml {
    * @param jsonHandler - the handler that process this request
    * @param formId - the id of the form
    */
+  @deprecated("Use JValue=>JsCmd bindings in SHtml (such as jsonCall) and SHtml.submitAjaxForm instead of this.", "2.6")
   def submitJsonForm(jsonHandler: JsonHandler, formId: String):JsCmd = jsonHandler.call("processForm", FormToJSON(formId))
 
   /**

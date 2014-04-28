@@ -247,6 +247,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    * @param json - The stringified JSON object
    * @return Box[BaseRecord]
    */
+  @deprecated("Use fromJValue with lift-json", "2.6")
   def fromJSON(json: String): Box[BaseRecord] = {
     val inst = createRecord
     setFieldsFromJSON(inst, json) map (_ => inst)
@@ -259,6 +260,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    * @param json - The stringified JSON object
    * @return - Full(()) on success, other on failure
    */
+  @deprecated("Use setFieldsFromJValue with lift-json", "2.6")
   def setFieldsFromJSON(inst: BaseRecord, json: String): Box[Unit] =
     JSONParser.parse(json) match {
       case Full(nvp : Map[_, _]) =>
