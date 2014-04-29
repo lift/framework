@@ -31,7 +31,7 @@ private[http] trait LiftMerge {
   self: LiftSession =>
 
   private def scriptUrl(scriptFile: String) = {
-    s"/lift/$scriptFile"
+    s"/${LiftRules.liftPath}/$scriptFile"
   }
 
   // Gather all page-specific JS into one JsCmd.
