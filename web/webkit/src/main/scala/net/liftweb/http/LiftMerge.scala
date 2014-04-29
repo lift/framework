@@ -223,8 +223,8 @@ private[http] trait LiftMerge {
 
       val cometList = cometTimes.toList
 
-      val pageJs = assemblePageSpecificJavaScript.toJsCmd
-      if (pageJs.strip.nonEmpty) {
+      val pageJs = assemblePageSpecificJavaScript
+      if (pageJs.toJsCmd.trim.nonEmpty) {
         addlTail += pageScopedScriptFileWith(pageJs)
       }
 
