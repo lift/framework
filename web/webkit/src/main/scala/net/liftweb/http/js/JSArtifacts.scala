@@ -76,18 +76,6 @@ trait JSArtifacts {
   def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan): JsCmd
 
   /**
-   * Makes an Ajax request using lift's Ajax path and the request
-   * attributes described by data parameter
-   */
-  def ajax(data: AjaxInfo): String
-
-  /**
-   * Makes a Ajax comet request using lift's Comet path and the request
-   * attributes described by data parameter
-   */
-  def comet(data: AjaxInfo): String
-
-  /**
    * Transforms a JSON object into its string representation
    */
   def jsonStringify(in: JsExp): JsExp

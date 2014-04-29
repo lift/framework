@@ -32,12 +32,11 @@ import JE._
 object LiftJavaScript {
 
   def settings: JsObj = JsObj(
-    "ajaxPath" -> LiftRules.ajaxPath,
+    "liftPath" -> LiftRules.liftPath,
     "ajaxRetryCount" -> Num(LiftRules.ajaxRetryCount.openOr(3)),
     "ajaxPostTimeout" -> LiftRules.ajaxPostTimeout,
     "gcPollingInterval" -> LiftRules.liftGCPollingInterval,
     "gcFailureRetryTimeout" -> LiftRules.liftGCFailureRetryTimeout,
-    "cometPath" -> LiftRules.cometPath,
     "cometGetTimeout" -> LiftRules.cometGetTimeout,
     "cometFailureRetryTimeout" -> LiftRules.cometFailureRetryTimeout,
     "cometServer" -> LiftRules.cometServer(),

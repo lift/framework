@@ -91,24 +91,6 @@ trait JQueryArtifacts extends JSArtifacts {
     FadeOut(id, duration, fadeTime)
 
   /**
-   * Makes an Ajax request using lift's Ajax path and the request
-   * attributes described by data parameter
-   */
-  def ajax(data: AjaxInfo): String = {
-    "jQuery.ajax(" + toJson(data, S.contextPath,
-      prefix =>
-              JsRaw("window.lift.calcAjaxUrl(" + S.encodeURL(prefix + "/" + LiftRules.ajaxPath + "/").encJs + ", version)")) + ");"
-  }
-
-  /**
-   * Makes a Ajax comet request using lift's Comet path and the request
-   * attributes described by data parameter
-   */
-  def comet(data: AjaxInfo): String = {
-    "jQuery.ajax(" + toJson(data, LiftRules.cometServer(), LiftRules.calcCometPath) + ");"
-  }
-
-  /**
    * Transforms a JSON object in to its string representation
    */
   def jsonStringify(in: JsExp): JsExp = new JsExp {

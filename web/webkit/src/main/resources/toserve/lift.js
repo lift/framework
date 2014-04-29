@@ -3,9 +3,11 @@
 
   window.lift = (function() {
     // "private" vars
-    var ajaxQueue = [],
+    var ajaxPath = function() { return settings.liftPath + '/ajax' },
+        ajaxQueue = [],
         ajaxInProcess = null,
         ajaxVersion = 0,
+        cometPath = function() { return settings.liftPath + '/comet' },
         doCycleQueueCnt = 0,
         ajaxShowing = false,
         pageId = "",
@@ -18,7 +20,7 @@
       /**
         * Contains the Ajax URI path used by Lift to process Ajax requests.
         */
-      ajaxPath: "ajax_request",
+      liftPath: "lift",
       ajaxRetryCount: 3,
       ajaxPostTimeout: 5000,
 
@@ -66,7 +68,6 @@
       cometOnSessionLost: function() {
         window.location.href = "/";
       },
-      cometPath: "comet_request",
       cometServer: "",
       cometOnError: function(e) {
         if (window.console && typeof window.console.error === 'function') {
@@ -160,11 +161,11 @@
 
     function calcAjaxUrl(url, version) {
       if (settings.enableGc) {
-        var replacement = settings.ajaxPath+'/'+pageId;
+        var replacement = ajaxPath()+'/'+pageId;
         if (version !== null) {
           replacement += ('-'+version.toString(36)) + (ajaxQueue.length > 35 ? 35 : ajaxQueue.length).toString(36);
         }
-        return url.replace(settings.ajaxPath, replacement);
+        return url.replace(ajaxPath(), replacement);
       }
       else {
         return url;
@@ -175,7 +176,7 @@
       var data = "__lift__GC=_";
 
       settings.ajaxPost(
-        calcAjaxUrl("/"+settings.ajaxPath+"/", null),
+        calcAjaxUrl("/"+ajaxPath()+"/", null),
         data,
         "script",
         successRegisterGC,
@@ -250,7 +251,7 @@
               aboutToSend.responseType.toLowerCase() === "json")
           {
             settings.ajaxPost(
-              calcAjaxUrl("/"+settings.ajaxPath+"/", null),
+              calcAjaxUrl("/"+ajaxPath()+"/", null),
               aboutToSend.data,
               "json",
               successFunc,
@@ -260,7 +261,7 @@
           }
           else {
             settings.ajaxPost(
-              calcAjaxUrl("/"+settings.ajaxPath+"/", aboutToSend.version),
+              calcAjaxUrl("/"+ajaxPath()+"/", aboutToSend.version),
               aboutToSend.data,
               "script",
               successFunc,
@@ -314,7 +315,7 @@
     }
 
     function calcCometPath() {
-      return settings.cometServer+"/"+settings.cometPath+"/" + Math.floor(Math.random() * 100000000000) + "/" + sessionId + "/" + pageId;
+      return settings.cometServer+"/"+cometPath()+"/" + Math.floor(Math.random() * 100000000000) + "/" + sessionId + "/" + pageId;
     }
 
     function cometEntry() {

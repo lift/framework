@@ -325,9 +325,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   private def _getLiftSession(req: Req): LiftSession = {
     val wp = req.path.wholePath
-    val CP = LiftRules.cometPath
+    val LiftPath = LiftRules.liftPath
     val cometSessionId = wp match {
-      case CP :: _ :: session :: _ => Full(session)
+      case LiftPath :: "comet" :: _ :: session :: _ => Full(session)
       case _ => Empty
     }
 
@@ -1152,26 +1152,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     }
   }
 
-
   /**
-   * Contains the Ajax URI path used by Lift to process Ajax requests.
+   * Contains the URI path under which all built-in Lift-handled
+   * requests are scoped.
    */
-  @volatile var ajaxPath = "ajax_request"
-
-  /**
-   * Contains the Comet URI path used by Lift to process Comet requests.
-   */
-  @volatile var cometPath = "comet_request"
-
-  /**
-   * Computes the Comet path by adding additional tokens on top of cometPath
-   */
-  @volatile var calcCometPath: String => JsExp = prefix => {
-    Str(prefix + "/" + cometPath + "/") +
-            JsRaw("Math.floor(Math.random() * 100000000000)") +
-            Str(S.session.map(session => S.encodeURL("/" + session.uniqueId)) openOr "xx") + Str("/") + JsRaw("lift_page")
-  }
-
+  @volatile var liftPath = "lift"
 
   /**
    * If there is an alternative way of calculating the context path
@@ -1604,11 +1589,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   @volatile var xhtmlValidator: Box[XHtmlValidator] = Empty // Full(TransitionalXHTML1_0Validator)
 
-  /**
-   * Returns the JavaScript that manages Ajax requests.
-   */
-  @volatile var renderAjaxScript: LiftSession => JsCmd = session => ScriptRenderer.ajaxScript
-
   @volatile var ajaxPostTimeout = 5000
 
   @volatile var cometGetTimeout = 140000
@@ -1651,11 +1631,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * This will be applied if the Ajax request will fail. Default value is set to 15 seconds.
    */
   @volatile var liftGCFailureRetryTimeout: Long = 15.seconds
-
-  /**
-   * Returns the JavaScript that manages Comet requests.
-   */
-  @volatile var renderCometScript: LiftSession => JsCmd = session => ScriptRenderer.cometScript
 
   /**
    * If this is Full, comet updates (partialUpdates or reRenders) are
@@ -1757,56 +1732,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   def mimeHeaders = _mimeHeaders.get
 
   private[http] def withMimeHeaders[T](map: Map[String, List[String]])(f: => T): T = _mimeHeaders.doWith(Full(map))(f)
-
-  /**
-   * Holds the last update time of the Comet request. Based on this server may return HTTP 304 status
-   * indicating the client to used the cached information.
-   */
-  @volatile var cometScriptUpdateTime: LiftSession => Long = session => {
-    object when extends SessionVar[Long](millis)
-    when.is
-  }
-
-  /**
-   * The name of the Ajax script that manages Ajax requests.
-   */
-  @volatile var ajaxScriptName: () => String = () => "lift.js"
-
-  /**
-   * The name of the Comet script that manages Comet requests.
-   */
-  @volatile var cometScriptName: () => String = () => "cometAjax.js"
-
-  /**
-   * Returns the Comet script as a JavaScript response
-   */
-  @volatile var serveCometScript: (LiftSession, Req) => Box[LiftResponse] =
-  (liftSession, requestState) => {
-    val modTime = cometScriptUpdateTime(liftSession)
-
-    requestState.testFor304(modTime) or
-            Full(JavaScriptResponse(renderCometScript(liftSession),
-              List("Last-Modified" -> toInternetDate(modTime),
-                   "Expires" -> toInternetDate(modTime + 10.minutes),
-                   "Date" -> Helpers.nowAsInternetDate,
-                   "Pragma" -> "",
-                   "Cache-Control" -> ""),
-              Nil, 200))
-  }
-
-  /**
-   * Returns the Ajax script as a JavaScript response
-   */
-  @volatile var serveAjaxScript: (LiftSession, Req) => Box[LiftResponse] =
-  (liftSession, requestState) => {
-    val modTime = ajaxScriptUpdateTime(liftSession)
-
-    requestState.testFor304(modTime) or
-            Full(JavaScriptResponse(renderAjaxScript(liftSession),
-              List("Last-Modified" -> toInternetDate(modTime),
-                "Expires" -> toInternetDate(modTime + 10.minutes)),
-              Nil, 200))
-  }
 
   @volatile var templateCache: Box[TemplateCache[(Locale, List[String]), NodeSeq]] = Empty
 
