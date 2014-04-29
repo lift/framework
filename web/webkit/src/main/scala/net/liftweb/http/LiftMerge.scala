@@ -235,15 +235,15 @@ private[http] trait LiftMerge {
       bodyChildren += nl
 
       val autoIncludeComet = LiftRules.autoIncludeComet(this)
-      val bodyAttributes: List[(String, Option[String])] =
+      val bodyAttributes: List[(String, String)] =
         if (stateful_? && (autoIncludeComet || LiftRules.enableLiftGC)) {
           ("data-lift-gc" -> RenderVersion.get) ::
           (
             if (autoIncludeComet) {
-              ("data-lift-session-id" -> Some(S.session.map(_.uniqueId) openOr "xx")) ::
+              ("data-lift-session-id" -> (S.session.map(_.uniqueId) openOr "xx")) ::
               cometList.map {
                 case CometVersionPair(guid, version) =>
-                  (s"data-lift-comet-$guid" -> Some(version.toString))
+                  (s"data-lift-comet-$guid" -> version.toString)
               }
             } else {
               Nil
@@ -254,15 +254,9 @@ private[http] trait LiftMerge {
         }
 
       htmlKids += nl
-      htmlKids += Elem(headTag.prefix, headTag.label, headTag.attributes, headTag.scope, headTag.minimizeEmpty, headChildren.toList: _*)
+      htmlKids += headTag.copy(child = headChildren.toList)
       htmlKids += nl
-      htmlKids +=
-        bodyAttributes.foldLeft(bodyTag.copy(child = bodyChildren.toList)) { (element, attribute) =>
-          attribute match {
-            case (name, Some(value)) => element % (name -> value)
-            case _ => element
-          }
-        }
+      htmlKids += bodyAttributes.foldLeft(bodyTag.copy(child = bodyChildren.toList))(_ % _)
       htmlKids += nl
 
       val tmpRet = Elem(htmlTag.prefix, htmlTag.label, htmlTag.attributes, htmlTag.scope, htmlTag.minimizeEmpty, htmlKids.toList: _*)
