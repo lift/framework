@@ -49,7 +49,7 @@ private[http] trait LiftMerge {
   private def pageScopedScriptFileWith(cmd: JsCmd) = {
     pageScript(Full(JavaScriptResponse(cmd, Nil, Nil, 200)))
 
-    <script type="text/javascript" src={scriptUrl(RenderVersion.get)}></script>
+    <script type="text/javascript" src={scriptUrl(s"page/${RenderVersion.get}")}></script>
   }
 
   /**
