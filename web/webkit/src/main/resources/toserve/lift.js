@@ -531,7 +531,7 @@
               pageId = attributes[i].value;
               lift.startGc();
             } else if (attributes[i].name.match(/^data-lift-comet-/)) {
-              cometGuid = attributes[i].name.substring('data-lift-comet-'.length);
+              cometGuid = attributes[i].name.substring('data-lift-comet-'.length).toUpperCase();
               cometVersion = parseInt(attributes[i].value)
 
               registerComet(cometGuid, cometVersion, false);
