@@ -343,14 +343,22 @@
       toWatch = ret;
     }
 
-    // Call on page load
-    function registerComet(cometGuid, cometVersion, startComet) {
+    // Called to register a comet; if cometGuidOrToWatchList is a
+    // string, expect cometVersion to be set, and set the comet with
+    // that guid to that version.
+    //
+    // If startComet is passed and true, the comet request cycle is
+    // kicked off.
+    function registerComet(cometGuidOrToWatchList, cometVersion, startComet) {
       if (typeof startComet == 'undefined') {
         startComet = true;
       }
 
-      toWatch = tw;
-      sessionId = sessId;
+      if (typeof cometGuidOrToWatchList == 'string') {
+        toWatch[cometGuidOrToWatchList] = cometVersion;
+      } else {
+        toWatch = cometGuidOrToWatchList;
+      }
 
       if (startComet === true) {
         cometSuccessFunc();
@@ -525,7 +533,8 @@
           }
 
           var attributes = document.body.attributes,
-              cometGuid, cometVersion;
+              cometGuid, cometVersion,
+              comets = {};
           for (var i = 0; i < attributes.length; ++i) {
             if (attributes[i].name == 'data-lift-gc') {
               pageId = attributes[i].value;
@@ -534,14 +543,14 @@
               cometGuid = attributes[i].name.substring('data-lift-comet-'.length).toUpperCase();
               cometVersion = parseInt(attributes[i].value)
 
-              registerComet(cometGuid, cometVersion, false);
+              comets[cometGuid] = cometVersion;
             } else if (attributes[i].name == 'data-lift-session-id') {
               sessionId = attributes[i].value
             }
           }
 
           if (typeof cometGuid != 'undefined') {
-            cometSuccessFunc(); // we saw a comet, so start the comet cycle
+            registerComet(comets, null, true);
           }
         });
 
