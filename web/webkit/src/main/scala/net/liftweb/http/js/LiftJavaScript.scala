@@ -26,10 +26,35 @@ import http.js.jquery.JQueryArtifacts
 import JsCmds._
 import JE._
 
+// Script file for the current page.
+private[http] object pageScript extends RequestVar[Box[JavaScriptResponse]](Empty)
+
 /**
   * Create a javascript command that will initialize lift.js using LiftRules.
   */
 object LiftJavaScript {
+
+  object PageJs {
+    def unapply(req: Req): Option[JavaScriptResponse] = {
+      val suffixedPath = req.path.wholePath
+      val LiftPath = LiftRules.liftPath
+      val renderVersion = "([^.]+)\\.js".r
+
+      suffixedPath match {
+        case LiftPath :: "page" :: renderVersion(version) :: Nil =>
+          RenderVersion.doWith(version) {
+            pageScript.is.toOption
+          }
+        case other =>
+          None
+      }
+    }
+  }
+
+  def servePageJs: LiftRules.DispatchPF = {
+    case PageJs(response) =>
+      () => Full(response)
+  }
 
   def settings: JsObj = JsObj(
     "liftPath" -> LiftRules.liftPath,

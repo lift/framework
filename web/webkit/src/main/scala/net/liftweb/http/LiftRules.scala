@@ -1282,7 +1282,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Holds the user's DispatchPF functions that will be executed in stateful context
    */
-  val dispatch = RulesSeq[DispatchPF]
+  val dispatch = RulesSeq[DispatchPF].append(LiftJavaScript.servePageJs)
 
   /**
    * Holds the user's rewrite functions that can alter the URI parts and query parameters.  This rewrite

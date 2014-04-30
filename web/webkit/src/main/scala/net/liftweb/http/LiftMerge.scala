@@ -24,9 +24,6 @@ import net.liftweb.common._
 import net.liftweb.http.js._
 import Helpers._
 
-// Script file for the current page.
-private[http] object pageScript extends RequestVar[Box[JavaScriptResponse]](Empty)
-
 private[http] trait LiftMerge {
   self: LiftSession =>
 
@@ -49,7 +46,7 @@ private[http] trait LiftMerge {
   private def pageScopedScriptFileWith(cmd: JsCmd) = {
     pageScript(Full(JavaScriptResponse(cmd, Nil, Nil, 200)))
 
-    <script type="text/javascript" src={scriptUrl(s"page/${RenderVersion.get}")}></script>
+    <script type="text/javascript" src={scriptUrl(s"page/${RenderVersion.get}.js")}></script>
   }
 
   /**
