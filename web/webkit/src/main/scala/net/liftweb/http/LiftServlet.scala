@@ -578,12 +578,10 @@ class LiftServlet extends Loggable {
 
   /**
    * Runs the actual AJAX processing. This includes handling __lift__GC,
-   * or running the parameters in the session. onComplete is run when the
-   * AJAX request has completed with a response that is meant for the
-   * user. In cases where the request is taking too long to respond,
-   * an LAFuture may be used to delay the real response (and thus the
-   * invocation of onComplete) while this function returns an empty
-   * response.
+   * or running the parameters in the session. It returns once the AJAX
+   * request has completed with a response meant for the user. In cases
+   * where the request is taking to respond, an LAFuture may be wrapped
+   * around the execution; see `handleAjax` for more.
    */
   private def runAjax(liftSession: LiftSession,
                       requestState: Req): Box[LiftResponse] = {
