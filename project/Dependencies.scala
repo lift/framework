@@ -23,7 +23,7 @@ object Dependencies {
 
   type ModuleMap = String => ModuleID
 
-  lazy val CVMapping210  = crossMapped("2.10.0" -> "2.10", "2.10.1" -> "2.10")
+  lazy val CVMapping210  = crossMapped("2.10.0" -> "2.10", "2.10.1" -> "2.10", "2.10.2" -> "2.10", "2.10.3" -> "2.10", "2.10.4" -> "2.10")
 
   lazy val slf4jVersion = "1.7.2"
 
@@ -40,7 +40,7 @@ object Dependencies {
   lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.1"
   lazy val joda_convert           = "org.joda"                   % "joda-convert"       % "1.2"
   lazy val htmlparser             = "nu.validator.htmlparser"    % "htmlparser"         % "1.4"
-  lazy val mongo_java_driver      = "org.mongodb"                % "mongo-java-driver"  % "2.11.2"
+  lazy val mongo_java_driver      = "org.mongodb"                % "mongo-java-driver"  % "2.11.3"
   lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.4.1"
   lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.4"
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _

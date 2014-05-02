@@ -304,6 +304,7 @@ trait TimeHelpers { self: ControlHelpers =>
    * @deprecated use today instead
    * @return the current Day as a Date object
    */
+  @deprecated("use today instead", "2.6")
   def dayNow: Date = 0.seconds.later.noTime
 
   /** alias for new Date(millis) */

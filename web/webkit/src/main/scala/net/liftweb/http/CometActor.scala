@@ -665,7 +665,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     jsonHandlerChain = h orElse jsonHandlerChain
   }
 
-
+  @deprecated("Use receiveJson and deal in JValues instead of Anys.", "2.6")
   def handleJson(in: Any): JsCmd = Noop
 
   /**
@@ -674,6 +674,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    */
   def onJsonError: Box[JsCmd] = Empty
 
+  @deprecated("Use jsonSend and deal in JValues instead of Anys.", "2.6")
   lazy val (jsonCall, jsonInCode) = S.buildJsonFunc(Full(_defaultPrefix), onJsonError, _handleJson)
 
   /**
