@@ -577,6 +577,46 @@ class LiftServlet extends Loggable {
   }
 
   /**
+   * Extracts a `CometVersionPair` from an `Elem` corresponding to a
+   * comet. If the `Elem` doesn't correspond to a comet, the match
+   * fails.
+   */
+  private object CometElement {
+    def unapply(element: scala.xml.Elem): Option[CometVersionPair] = {
+      element.attributes.collect {
+        case scala.xml.PrefixedAttribute("lift", "when", whenNodes, _) =>
+          ("when" -> whenNodes.text): (String,String)
+        case scala.xml.UnprefixedAttribute("id", idNodes, _) =>
+          ("id" -> idNodes.text): (String,String)
+      } match {
+        case List(("when", whenText), ("id", idText)) =>
+          Some(CVP(idText, whenText.toLong))
+        case List(("id", idText), ("when", whenText)) =>
+          Some(CVP(idText, whenText.toLong))
+
+        case _ =>
+          None
+      }
+    }
+  }
+  /**
+   * Given a list of comet elements (from `S.comatAtEnd`, for example),
+   * generates the JsCmd needed to initialize those on the client.
+   */
+  private def commandForComets(cometElements: List[scala.xml.Elem]): JsCmd = {
+    js.JE.Call(
+      "lift.registerComets",
+      js.JE.JsObj(
+        cometElements.collect {
+          case CometElement(CometVersionPair(guid, version)) =>
+            (guid, js.JE.Num(version))
+        }: _*
+      ),
+      true
+    ).cmd
+  }
+
+  /**
    * Runs the actual AJAX processing. This includes handling __lift__GC,
    * or running the parameters in the session. It returns once the AJAX
    * request has completed with a response meant for the user. In cases
@@ -615,11 +655,12 @@ class LiftServlet extends Loggable {
               case (jv: JValue) :: Nil => JsonResponse(jv)
               case (js: JsCmd) :: xs => {
                 (JsCommands(S.noticesToJsCmd :: Nil) &
-                  ((js :: xs).flatMap {
-                    case js: JsCmd => List(js)
-                    case _ => Nil
-                  }.reverse) &
-                  S.jsToAppend).toResponse
+                  (js :: (xs.collect {
+                    case js: JsCmd => js
+                  }).reverse) &
+                  S.jsToAppend &
+                  commandForComets(S.cometAtEnd)
+                ).toResponse
               }
 
               case (n: Node) :: _ => XmlResponse(n)
