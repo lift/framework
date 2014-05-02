@@ -283,6 +283,8 @@
     ///// Comet ////////////////////////////////////
     ////////////////////////////////////////////////
 
+    var currentCometRequest = null;
+
     // http://stackoverflow.com/questions/4994201/is-object-empty
     function is_empty(obj) {
       // null and undefined are empty
@@ -319,17 +321,27 @@
       return settings.cometServer+"/"+cometPath()+"/" + Math.floor(Math.random() * 100000000000) + "/" + sessionId + "/" + pageId;
     }
 
+    // Forcibly restart the comet cycle; use this, for example, when a
+    // new comet has been received.
+    function restartComet() {
+      if (currentCometRequest)
+        currentCometRequest.abort();
+
+      cometSuccessFunc();
+    }
+
     function cometEntry() {
       var isEmpty = is_empty(toWatch);
 
       if (!isEmpty) {
         uriSuffix = undefined;
-        settings.ajaxGet(
-          calcCometPath(),
-          toWatch,
-          cometSuccessFunc,
-          cometFailureFunc
-        );
+        currentCometRequest =
+          settings.ajaxGet(
+            calcCometPath(),
+            toWatch,
+            cometSuccessFunc,
+            cometFailureFunc
+          );
       }
     }
 
