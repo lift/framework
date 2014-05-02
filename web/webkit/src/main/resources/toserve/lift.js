@@ -355,25 +355,29 @@
       toWatch = ret;
     }
 
-    // Called to register a comet; if cometGuidOrToWatchList is a
-    // string, expect cometVersion to be set, and set the comet with
-    // that guid to that version.
+    // Called to register a comet. Sets the comet with guid `cometGuid`
+    // to have the version `cometVersion`. If `startComet` is set to
+    // `true`, restarts the comet request cycle.
+    function registerComet(cometGuid, cometVersion, restartComet) {
+      toWatch[cometGuid] = cometVersion;
+
+      if (startComet) {
+        restartComet();
+      }
+    }
+
+    // Called to register comets in bulk. `cometInfo` should be
+    // an object of comet ids associated with comet versions.
     //
-    // If startComet is passed and true, the comet request cycle is
-    // kicked off.
-    function registerComet(cometGuidOrToWatchList, cometVersion, startComet) {
-      if (typeof startComet == 'undefined') {
-        startComet = true;
+    // If startComet is passed and true, restarts the comet request
+    // cycle.
+    function registerComets(cometInfo, startComet) {
+      for (var cometGuid in cometInfo) {
+        toWatch[cometGuid] = cometInfo[cometGuid];
       }
 
-      if (typeof cometGuidOrToWatchList == 'string') {
-        toWatch[cometGuidOrToWatchList] = cometVersion;
-      } else {
-        toWatch = cometGuidOrToWatchList;
-      }
-
-      if (startComet === true) {
-        cometSuccessFunc();
+      if (startComet) {
+        restartComet();
       }
     }
 
@@ -562,7 +566,7 @@
           }
 
           if (typeof cometGuid != 'undefined') {
-            registerComet(comets, null, true);
+            registerComets(comets, true);
           }
         });
 
@@ -576,7 +580,7 @@
         settings.ajaxOnSessionLost();
       },
       calcAjaxUrl: calcAjaxUrl,
-      registerComet: registerComet,
+      registerComets: registerComets,
       cometOnSessionLost: function() {
         settings.cometOnSessionLost();
       },
