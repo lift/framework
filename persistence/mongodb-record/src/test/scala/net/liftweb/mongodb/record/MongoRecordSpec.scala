@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,9 @@ import http.{S, LiftSession}
 import http.js.JsExp
 import json._
 import JsonDSL._
+import util.Helpers.snakify
 
+import net.liftweb.record.RecordRules
 import net.liftweb.record.field.Countries
 
 import com.mongodb._
@@ -918,6 +920,15 @@ class MongoRecordSpec extends Specification with MongoTestKit {
         rec.dirty_? must_== false
       }
     }
+
+    "support custom field name" in {
+      RecordRules.fieldName.doWith(snakify _) {
+        val rec = CustomFieldName.createRecord
+        rec.customField.name must_== "custom_field"
+        rec.save
+
+        CustomFieldName.find(rec.id.get) must_== Full(rec)
+      }
+    }
   }
 }
-
