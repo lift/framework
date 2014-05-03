@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 WorldWide Conferencing, LLC
+ * Copyright 2009-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import JsCmds._
 
 import common._
 import util._
-import db._
+import db.{ConnectionIdentifier, DB}
 import Helpers._
 import scala.xml._
 import scala.reflect.Manifest
