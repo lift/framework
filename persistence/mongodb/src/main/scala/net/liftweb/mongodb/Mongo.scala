@@ -17,31 +17,13 @@
 package net.liftweb
 package mongodb
 
+import util.{ConnectionIdentifier, DefaultConnectionIdentifier}
+
 import java.util.concurrent.ConcurrentHashMap
 
 import scala.collection.immutable.HashSet
 
-import com.mongodb.{DB, DBCollection, MongoClient, MongoException}
-
-/*
-* A trait for identfying Mongo instances
-*/
-trait MongoIdentifier {
-  def jndiName: String
-  override def toString() = "MongoIdentifier("+jndiName+")"
-  override def hashCode() = jndiName.hashCode()
-  override def equals(other: Any): Boolean = other match {
-    case mi: MongoIdentifier => mi.jndiName == this.jndiName
-    case _ => false
-  }
-}
-
-/*
-* The default MongoIdentifier
-*/
-case object DefaultMongoIdentifier extends MongoIdentifier {
-  val jndiName = "test"
-}
+import com.mongodb.{DB, DBCollection, Mongo, MongoClient, MongoException, MongoOptions, ServerAddress}
 
 /*
 * Main Mongo object
@@ -49,21 +31,58 @@ case object DefaultMongoIdentifier extends MongoIdentifier {
 object MongoDB {
 
   /*
-  * HashMap of MongoClient instance and db name tuples, keyed by MongoIdentifier
+  * HashMap of Mongo instance and db name tuples, keyed by ConnectionIdentifier
   */
-  private val dbs = new ConcurrentHashMap[MongoIdentifier, (MongoClient, String)]
+  private val dbs = new ConcurrentHashMap[ConnectionIdentifier, (Mongo, String)]
+
+  /*
+  * Define a Mongo db
+  */
+  @deprecated("Use defineDb that takes a MongoClient instance.", "2.6")
+  def defineDb(name: ConnectionIdentifier, address: MongoAddress) {
+    dbs.put(name, (address.host.mongo, address.name))
+  }
+  /*
+   * Define a Mongo db using a Mongo instance.
+   */
+  @deprecated("Use defineDb that takes a MongoClient instance.", "2.6")
+  def defineDb(name: ConnectionIdentifier, mngo: Mongo, dbName: String) {
+    dbs.put(name, (mngo, dbName))
+  }
 
   /**
     * Define a MongoClient db using a MongoClient instance.
     */
-  def defineDb(name: MongoIdentifier, mngo: MongoClient, dbName: String) {
+  def defineDb(name: ConnectionIdentifier, mngo: MongoClient, dbName: String) {
+    dbs.put(name, (mngo, dbName))
+  }
+
+  /*
+  * Define and authenticate a Mongo db
+  */
+  @deprecated("Use defineDbAuth that takes a MongoClient instance.", "2.6")
+  def defineDbAuth(name: ConnectionIdentifier, address: MongoAddress, username: String, password: String) {
+    if (!address.db.authenticate(username, password.toCharArray))
+      throw new MongoException("Authorization failed: "+address.toString)
+
+    dbs.put(name, (address.host.mongo, address.name))
+  }
+
+  /*
+  * Define and authenticate a Mongo db using a Mongo instance.
+  */
+  @deprecated("Use defineDbAuth that takes a MongoClient instance.", "2.6")
+  def defineDbAuth(name: ConnectionIdentifier, mngo: Mongo, dbName: String, username: String, password: String) {
+    if (!mngo.getDB(dbName).authenticate(username, password.toCharArray))
+      throw new MongoException("Authorization failed: "+mngo.toString)
+
     dbs.put(name, (mngo, dbName))
   }
 
   /**
     * Define and authenticate a Mongo db using a MongoClient instance.
     */
-  def defineDbAuth(name: MongoIdentifier, mngo: MongoClient, dbName: String, username: String, password: String) {
+  def defineDbAuth(name: ConnectionIdentifier, mngo: MongoClient, dbName: String, username: String, password: String) {
     if (!mngo.getDB(dbName).authenticate(username, password.toCharArray))
       throw new MongoException("Authorization failed: "+mngo.toString)
 
@@ -73,7 +92,7 @@ object MongoDB {
   /*
   * Get a DB reference
   */
-  def getDb(name: MongoIdentifier): Option[DB] = dbs.get(name) match {
+  def getDb(name: ConnectionIdentifier): Option[DB] = dbs.get(name) match {
     case null => None
     case (mngo, db) => Some(mngo.getDB(db))
   }
@@ -81,7 +100,7 @@ object MongoDB {
   /*
   * Get a Mongo collection. Gets a Mongo db first.
   */
-  private def getCollection(name: MongoIdentifier, collectionName: String): Option[DBCollection] = getDb(name) match {
+  private def getCollection(name: ConnectionIdentifier, collectionName: String): Option[DBCollection] = getDb(name) match {
     case Some(mongo) if mongo != null => Some(mongo.getCollection(collectionName))
     case _ => None
   }
@@ -89,7 +108,7 @@ object MongoDB {
   /**
   * Executes function {@code f} with the mongo db named {@code name}.
   */
-  def use[T](name: MongoIdentifier)(f: (DB) => T): T = {
+  def use[T](name: ConnectionIdentifier)(f: (DB) => T): T = {
 
     val db = getDb(name) match {
       case Some(mongo) => mongo
@@ -100,13 +119,13 @@ object MongoDB {
   }
 
   /**
-  * Executes function {@code f} with the mongo named {@code name}. Uses the default mongoIdentifier
+  * Executes function {@code f} with the mongo named {@code name}. Uses the default ConnectionIdentifier
   */
   def use[T](f: (DB) => T): T = {
 
-    val db = getDb(DefaultMongoIdentifier) match {
+    val db = getDb(DefaultConnectionIdentifier) match {
       case Some(mongo) => mongo
-      case _ => throw new MongoException("Mongo not found: "+DefaultMongoIdentifier.toString)
+      case _ => throw new MongoException("Mongo not found: "+DefaultConnectionIdentifier.toString)
     }
 
     f(db)
@@ -116,22 +135,22 @@ object MongoDB {
   * Executes function {@code f} with the mongo named {@code name} and collection names {@code collectionName}.
   * Gets a collection for you.
   */
-  def useCollection[T](name: MongoIdentifier, collectionName: String)(f: (DBCollection) => T): T = {
+  def useCollection[T](name: ConnectionIdentifier, collectionName: String)(f: (DBCollection) => T): T = {
     val coll = getCollection(name, collectionName) match {
       case Some(collection) => collection
-      case _ => throw new MongoException("Collection not found: "+collectionName+". MongoIdentifier: "+name.toString)
+      case _ => throw new MongoException("Mongo not found: "+collectionName+". ConnectionIdentifier: "+name.toString)
     }
 
     f(coll)
   }
 
   /**
-  * Same as above except uses DefaultMongoIdentifier
+  * Same as above except uses DefaultConnectionIdentifier
   */
   def useCollection[T](collectionName: String)(f: (DBCollection) => T): T = {
-    val coll = getCollection(DefaultMongoIdentifier, collectionName) match {
+    val coll = getCollection(DefaultConnectionIdentifier, collectionName) match {
       case Some(collection) => collection
-      case _ => throw new MongoException("Collection not found: "+collectionName+". MongoIdentifier: "+DefaultMongoIdentifier.toString)
+      case _ => throw new MongoException("Mongo not found: "+collectionName+". ConnectionIdentifier: "+DefaultConnectionIdentifier.toString)
     }
 
     f(coll)
@@ -143,7 +162,7 @@ object MongoDB {
   * and the use of getLastError.
   * See: http://docs.mongodb.org/ecosystem/drivers/java-concurrency/
   */
-  def useSession[T](name: MongoIdentifier)(f: (DB) => T): T = {
+  def useSession[T](name: ConnectionIdentifier)(f: (DB) => T): T = {
 
     val db = getDb(name) match {
       case Some(mongo) => mongo
@@ -162,13 +181,13 @@ object MongoDB {
   }
 
   /**
-  * Same as above except uses DefaultMongoIdentifier
+  * Same as above except uses DefaultConnectionIdentifier
   */
   def useSession[T](f: (DB) => T): T = {
 
-    val db = getDb(DefaultMongoIdentifier) match {
+    val db = getDb(DefaultConnectionIdentifier) match {
       case Some(mongo) => mongo
-      case _ => throw new MongoException("Mongo not found: "+DefaultMongoIdentifier.toString)
+      case _ => throw new MongoException("Mongo not found: "+DefaultConnectionIdentifier.toString)
     }
 
     // start the request

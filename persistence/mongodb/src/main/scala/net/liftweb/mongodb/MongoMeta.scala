@@ -14,6 +14,8 @@
 package net.liftweb
 package mongodb
 
+import util.ConnectionIdentifier
+
 import org.bson.types.ObjectId
 
 import json.{DefaultFormats, Formats}
@@ -62,18 +64,24 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   def collectionName: String = fixCollectionName
 
   // override this to specify a MongoIdentifier for this MongoDocument type
+  @deprecated("use connectionIdentifier instead", "2.6")
   def mongoIdentifier: MongoIdentifier = DefaultMongoIdentifier
+
+  /**
+    * Override this to specify a ConnectionIdentifier.
+    */
+  def connectionIdentifier: ConnectionIdentifier = mongoIdentifier
 
   /*
    * Use the collection associated with this Meta.
    */
   def useColl[T](f: DBCollection => T) =
-    MongoDB.useCollection(mongoIdentifier, collectionName)(f)
+    MongoDB.useCollection(connectionIdentifier, collectionName)(f)
 
   /*
    * Use the db associated with this Meta.
    */
-  def useDb[T](f: DB => T) = MongoDB.use(mongoIdentifier)(f)
+  def useDb[T](f: DB => T) = MongoDB.use(connectionIdentifier)(f)
 
   /*
   * Count all documents
