@@ -16,10 +16,10 @@
 
 package net.liftweb
 
-package object db {
-  @deprecated("moved to package util", "2.6")
-  type ConnectionIdentifier = util.ConnectionIdentifier
+package object mongodb {
+  @deprecated("use util.ConnectionIdentifier instead", "2.6")
+  type MongoIdentifier = util.ConnectionIdentifier
 
-  @deprecated("moved to package util", "2.6")
-  val DefaultConnectionIdentifier = util.DefaultConnectionIdentifier
+  @deprecated("use util.DefaultConnectionIdentifier instead", "2.6")
+  val DefaultMongoIdentifier = util.DefaultConnectionIdentifier
 }
