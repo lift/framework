@@ -20,7 +20,7 @@ package mongodb
 import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeAfterExample
 
-import com.mongodb.Mongo
+import com.mongodb.MongoClient
 
 trait MongoTestKit extends Specification with BeforeAfterExample {
   sequential
@@ -31,7 +31,7 @@ trait MongoTestKit extends Specification with BeforeAfterExample {
     .replace(".", "_")
     .toLowerCase
 
-  def mongo = new Mongo("127.0.0.1", 27017)
+  def mongo = new MongoClient("127.0.0.1", 27017)
 
   // If you need more than one db, override this
   def dbs: List[(MongoIdentifier, String)] = List((DefaultMongoIdentifier, dbName))

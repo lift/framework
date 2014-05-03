@@ -51,8 +51,6 @@ class MongoClientSaveSpec extends Specification with MongoTestKit {
 
   import mongoclientsaverecords._
 
-  override def mongo = new MongoClient("127.0.0.1", 27017)
-
   "MongoMetaRecord with Mongo save" in {
 
     checkMongoIsRunning

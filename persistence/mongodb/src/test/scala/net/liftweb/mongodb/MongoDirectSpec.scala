@@ -20,7 +20,7 @@ package mongodb
 import java.util.UUID
 import java.util.regex.Pattern
 
-import com.mongodb.{BasicDBObject, BasicDBObjectBuilder}
+import com.mongodb.{BasicDBObject, BasicDBObjectBuilder, MongoException}
 
 import org.specs2.mutable.Specification
 
@@ -228,7 +228,7 @@ class MongoDirectSpec extends Specification with MongoTestKit {
       // save the docs to the db
       coll.save(doc)
       db.getLastError.get("err") must beNull
-      coll.save(doc2)
+      coll.save(doc2) must throwA[MongoException]
       db.getLastError.get("err").toString must startWith("E11000 duplicate key error index")
       coll.save(doc3)
       db.getLastError.get("err") must beNull

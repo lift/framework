@@ -32,7 +32,7 @@ trait MongoTestKit extends Specification with BeforeAfterExample {
     .replace(".", "_")
     .toLowerCase
 
-  def mongo = new Mongo("127.0.0.1", 27017)
+  def mongo = new MongoClient("127.0.0.1", 27017)
 
   // If you need more than one db, override this
   def dbs: List[(MongoIdentifier, String)] = List((DefaultMongoIdentifier, dbName))
@@ -57,7 +57,7 @@ trait MongoTestKit extends Specification with BeforeAfterExample {
         true
       }
     } catch {
-      case _ => false
+      case e: Exception => false
     }
 
   def checkMongoIsRunning =
