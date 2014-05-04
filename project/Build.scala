@@ -34,7 +34,7 @@ object BuildDef extends Build {
   // Core Projects
   // -------------
   lazy val core: Seq[ProjectReference] =
-    Seq(common, actor, markdown, json, json_scalaz, json_scalaz7, json_ext, util)
+    Seq(common, actor, markdown, json, json_scalaz7, json_ext, util, json_scalaz)
 
   lazy val common =
     coreProject("common")
