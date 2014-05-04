@@ -26,7 +26,7 @@ object Dependencies {
   lazy val CVMapping2911 = crossMapped("2.9.1-1" -> "2.9.1")
   lazy val CVMapping29   = crossMapped("2.10.0" -> "2.10", "2.9.1-1" -> "2.9.2", "2.9.1" -> "2.9.2")
   lazy val CVMappingAll  = crossMapped("2.11.0" -> "2.11", "2.10.4" -> "2.10", "2.10.0" -> "2.10", "2.9.2" -> "2.9.1", "2.9.1-1" -> "2.9.1")
-  lazy val CVMappingScalaz = crossMapped("2.10.4" -> "2.10", "2.10.0" -> "2.10", "2.9.1-1" -> "2.9.2", "2.9.1" -> "2.9.2")
+  lazy val CVMappingScalaz = crossMapped("2.11.0" -> "2.11", "2.10.4" -> "2.10", "2.10.0" -> "2.10", "2.9.1-1" -> "2.9.2", "2.9.1" -> "2.9.2")
 
   lazy val slf4jVersion = "1.7.2"
 
