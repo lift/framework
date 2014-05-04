@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ object EnumNameFieldSpec extends Specification with MongoTestKit {
     "work with default values" in {
       checkMongoIsRunning
 
-      val er = EnumNameRec.createRecord.save
+      val er = EnumNameRec.createRecord.save()
 
       val erFromDb = EnumNameRec.find(er.id.get)
       erFromDb.isDefined must_== true
@@ -96,7 +96,7 @@ object EnumNameFieldSpec extends Specification with MongoTestKit {
       val er = EnumNameRec.createRecord
         .dow(WeekDay.Tue)
         .jsonobj(JsonObj(WeekDay.Sun))
-        .save
+        .save()
 
       val erFromDb = EnumNameRec.find(er.id.get)
       erFromDb.isDefined must_== true
@@ -112,7 +112,7 @@ object EnumNameFieldSpec extends Specification with MongoTestKit {
 
       val er = EnumNameRec.createRecord
       er.dowOptional.setBox(Empty)
-      er.save
+      er.save()
 
       val erFromDb = EnumNameRec.find(er.id.get)
       erFromDb.isDefined must_== true
@@ -127,7 +127,7 @@ object EnumNameFieldSpec extends Specification with MongoTestKit {
 
       val er = EnumNameRec.createRecord
       er.dowOptional.setBox(Full(WeekDay.Sat))
-      er.save
+      er.save()
 
       val erFromDb = EnumNameRec.find(er.id.get)
       erFromDb.isDefined must_== true

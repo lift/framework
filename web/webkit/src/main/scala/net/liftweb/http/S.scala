@@ -2709,8 +2709,10 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @param f - function returning a JsCmds
    * @return ( JsonCall, JsCmd )
    */
+  @deprecated("Use createJsonFunc and deal in JValues instead of Anys.", "2.6")
   def buildJsonFunc(f: Any => JsCmd): (JsonCall, JsCmd) = buildJsonFunc(Empty, Empty, f)
 
+  @deprecated("Use createJsonFunc and deal in JValues instead of Anys.", "2.6")
   def buildJsonFunc(onError: JsCmd, f: Any => JsCmd): (JsonCall, JsCmd) =
     buildJsonFunc(Empty, Full(onError), f)
 
@@ -2722,6 +2724,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @param f - function returning a JsCmds
    * @return ( JsonCall, JsCmd )
    */
+  @deprecated("Use createJsonFunc and deal in JValues instead of Anys.", "2.6")
   def buildJsonFunc(name: Box[String], onError: Box[JsCmd], f: Any => JsCmd): (JsonCall, JsCmd) = {
     functionLifespan(true) {
       val key = formFuncName
@@ -2863,9 +2866,23 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   /**
    * Maps a function with an random generated and name
    */
+  @deprecated("Use jsonFmapFunc with a function that takes JValue => JsCmd", "2.6")
   def jsonFmapFunc[T](in: Any => JsObj)(f: String => T): T = {
     val name = formFuncName
     addFunctionMap(name, SFuncHolder((s: String) => JSONParser.parse(s).map(in) openOr js.JE.JsObj()))
+    f(name)
+  }
+
+  /**
+   * Maps a function that will be called with a parsed JValue and should
+   * return a JsCmd to be sent back to the browser. Note that if the
+   * passed JSON does not parse, the function will not be invoked.
+   */
+  def jsonFmapFunc[T](in: JValue => JsCmd)(f: String => T)(implicit dummy: AvoidTypeErasureIssues1): T = {
+    import json._
+
+    val name = formFuncName
+    addFunctionMap(name, SFuncHolder((s: String) => JsonParser.parseOpt(s).map(in) getOrElse JsCmds.Noop))
     f(name)
   }
 
@@ -3121,6 +3138,7 @@ object NoticeType extends Serializable{
 /**
  * Used to handles JSON requests
  */
+@deprecated("Use JValue=>JsCmd bindings in SHtml (such as jsonCall) instead of this.", "2.6")
 abstract class JsonHandler {
   private val name = "_lift_json_" + getClass.getName
 

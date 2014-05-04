@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,18 +32,17 @@ trait MongoTestKit extends Specification with BeforeAfterExample {
     .replace(".", "_")
     .toLowerCase
 
-  val defaultHost = MongoHost("127.0.0.1", 27017)
+  def mongo = new Mongo("127.0.0.1", 27017)
 
   // If you need more than one db, override this
-  def dbs: List[(MongoIdentifier, MongoHost, String)] =
-    List((DefaultMongoIdentifier, defaultHost, dbName))
+  def dbs: List[(MongoIdentifier, String)] = List((DefaultMongoIdentifier, dbName))
 
   def debug = false
 
   def before = {
     // define the dbs
-    dbs foreach { dbtuple =>
-      MongoDB.defineDb(dbtuple._1, MongoAddress(dbtuple._2, dbtuple._3))
+    dbs foreach { case (id, db) =>
+      MongoDB.defineDb(id, mongo, db)
     }
   }
 
@@ -52,8 +51,8 @@ trait MongoTestKit extends Specification with BeforeAfterExample {
       if (dbs.length < 1)
         false
       else {
-        dbs foreach { dbtuple =>
-          MongoDB.use(dbtuple._1) ( db => { db.getLastError } )
+        dbs foreach { case (id, _) =>
+          MongoDB.use(id) ( db => { db.getLastError } )
         }
         true
       }
@@ -67,13 +66,13 @@ trait MongoTestKit extends Specification with BeforeAfterExample {
   def after = {
     if (!debug && isMongoRunning) {
       // drop the databases
-      dbs foreach { dbtuple =>
-        MongoDB.use(dbtuple._1) { db => db.dropDatabase }
+      dbs foreach { case (id, _) =>
+        MongoDB.use(id) { db => db.dropDatabase }
       }
     }
 
     // clear the mongo instances
-    MongoDB.close
+    MongoDB.closeAll()
   }
 }
 
