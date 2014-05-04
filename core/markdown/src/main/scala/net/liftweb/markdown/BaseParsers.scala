@@ -19,7 +19,6 @@ package net.liftweb.markdown
  * Christoph Henkelmann http://henkelmann.eu/
  */
 
-import util.parsing.json.Parser
 import util.parsing.combinator.RegexParsers
 import collection.SortedMap
 

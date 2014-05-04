@@ -41,7 +41,7 @@ object BuildDef extends Build {
       .settings(description := "Common Libraties and Utilities",
                 libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12),
                 libraryDependencies <++= scalaVersion {
-                  case "2.11.0" => Seq(scala_xml)
+                  case "2.11.0" => Seq(scala_xml, scala_parser)
                   case _ => Seq()
                 }
       )
@@ -56,7 +56,12 @@ object BuildDef extends Build {
     coreProject("markdown")
         .settings(description := "Markdown Parser",
                   parallelExecution in Test := false,
-                  libraryDependencies <++= scalaVersion { sv => Seq(scalatest(sv), junit) })
+                  libraryDependencies <++= scalaVersion { sv => Seq(scalatest(sv), junit) },
+                  libraryDependencies <++= scalaVersion {
+                    case "2.11.0" => Seq(scala_xml, scala_parser)
+                    case _ => Seq()
+                  }
+      )
 
   lazy val json =
     coreProject("json")
