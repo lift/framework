@@ -25,7 +25,8 @@ object Dependencies {
 
   lazy val CVMapping2911 = crossMapped("2.9.1-1" -> "2.9.1")
   lazy val CVMapping29   = crossMapped("2.10.0" -> "2.10", "2.9.1-1" -> "2.9.2", "2.9.1" -> "2.9.2")
-  lazy val CVMappingAll  = crossMapped("2.11.0" -> "2.11", "2.10.0" -> "2.10", "2.9.2" -> "2.9.1", "2.9.1-1" -> "2.9.1")
+  lazy val CVMappingAll  = crossMapped("2.11.0" -> "2.11", "2.10.4" -> "2.10", "2.10.0" -> "2.10", "2.9.2" -> "2.9.1", "2.9.1-1" -> "2.9.1")
+  lazy val CVMappingScalaz = crossMapped("2.10.4" -> "2.10", "2.10.0" -> "2.10", "2.9.1-1" -> "2.9.2", "2.9.1" -> "2.9.2")
 
   lazy val slf4jVersion = "1.7.2"
 
@@ -51,9 +52,9 @@ object Dependencies {
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _
   lazy val scala_compiler: ModuleMap = "org.scala-lang"          % "scala-compiler"     % _
   lazy val scalaz_core: ModuleMap = sv => scalazGroup(sv)        % "scalaz-core"        % scalazVersion(sv) cross CVMappingAll
-  lazy val scalaz7_core: ModuleMap = sv => scalazGroup(sv)       % "scalaz-core"        % scalaz7Version(sv) cross CVMappingAll
+  lazy val scalaz7_core: ModuleMap = sv => scalazGroup(sv)       % "scalaz-core"        % scalaz7Version(sv) cross CVMappingScalaz
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
-  lazy val squeryl                = "org.squeryl"                % "squeryl"            % "0.9.5-6" cross CVMapping29
+  lazy val squeryl                = "org.squeryl"                % "squeryl"            % "0.9.5-6" cross CVMappingAll
   lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.0.1"
   lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.0.1"
 

@@ -28,3 +28,8 @@ pomExtra in ThisBuild              ~= (_ ++ {Developers.toXml})
 credentials in ThisBuild <+= state map { s => Credentials(BuildPaths.getGlobalSettingsDirectory(s, BuildPaths.getGlobalBase(s)) / ".credentials") }
 
 initialize <<= (name, version, scalaVersion) apply printLogo
+
+resolvers  in ThisBuild           ++= Seq(
+  "snapshots"     at "http://oss.sonatype.org/content/repositories/snapshots",
+  "releases"      at "http://oss.sonatype.org/content/repositories/releases"
+)

@@ -31,10 +31,23 @@ object BuildDef extends Build {
                 aggregatedSetting(dependencyClasspath in(Compile, doc)),
                 publishArtifact := false)
 
+  lazy val frameworkScalaz6 =
+    liftProject("lift-framework-with-scalaz6", file("."))
+      .aggregate(liftProjects ++ json_scalaz_project : _*)
+      .settings(aggregatedSetting(sources in(Compile, doc)),
+        aggregatedSetting(dependencyClasspath in(Compile, doc)),
+        publishArtifact := false)
+
+
+
+
   // Core Projects
   // -------------
   lazy val core: Seq[ProjectReference] =
-    Seq(common, actor, markdown, json, json_scalaz7, json_ext, util, json_scalaz)
+    Seq(common, actor, markdown, json, json_scalaz7, json_ext, util)
+
+  lazy val json_scalaz_project: Seq[ProjectReference] = Seq(json_scalaz)
+
 
   lazy val common =
     coreProject("common")
