@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 WorldWide Conferencing, LLC
+ * Copyright 2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,11 @@
  */
 
 package net.liftweb
-package object mapper {
-  type SuperConnection = db.SuperConnection
-  type ConnectionIdentifier = util.ConnectionIdentifier
-  type DriverType = db.DriverType
-  type ConnectionManager = db.ConnectionManager
-  type DBLogEntry = db.DBLogEntry
-  type StandardDBVendor = db.StandardDBVendor
 
-  def DBLogEntry = db.DBLogEntry
-  def DefaultConnectionIdentifier = util.DefaultConnectionIdentifier
-  def DriverType = db.DriverType
+package object mongodb {
+  @deprecated("use util.ConnectionIdentifier instead", "2.6")
+  type MongoIdentifier = util.ConnectionIdentifier
 
-  @deprecated("Use util.Safe instead.", "2.4")
-  def Safe = util.Safe
+  @deprecated("use util.DefaultConnectionIdentifier instead", "2.6")
+  val DefaultMongoIdentifier = util.DefaultConnectionIdentifier
 }

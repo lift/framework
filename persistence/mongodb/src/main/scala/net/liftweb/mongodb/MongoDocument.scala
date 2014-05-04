@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package mongodb 
+package net.liftweb
+package mongodb
+
+import util.ConnectionIdentifier
 
 import json.JsonAST.JObject
 
@@ -50,6 +52,22 @@ trait MongoDocument[BaseDocument] extends JsonObject[BaseDocument] {
 * extend case class companion objects with this trait
 */
 trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with MongoMeta[BaseDocument] {
+
+  /**
+    * Override this to specify a ConnectionIdentifier.
+    */
+  def connectionIdentifier: ConnectionIdentifier = mongoIdentifier
+
+  /*
+   * Use the collection associated with this Meta.
+   */
+  def useColl[T](f: DBCollection => T): T =
+    MongoDB.useCollection(connectionIdentifier, collectionName)(f)
+
+  /*
+   * Use the db associated with this Meta.
+   */
+  def useDb[T](f: DB => T): T = MongoDB.use(connectionIdentifier)(f)
 
   def create(dbo: DBObject): BaseDocument = {
     create(JObjectParser.serialize(dbo).asInstanceOf[JObject])
@@ -105,8 +123,8 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
     import scala.collection.JavaConversions._
 
     MongoDB.useCollection(mongoIdentifier, collectionName)(coll => {
-      /** Mongo Cursors are both Iterable and Iterator, 
-       * so we need to reduce ambiguity for implicits 
+      /** Mongo Cursors are both Iterable and Iterator,
+       * so we need to reduce ambiguity for implicits
        */
       (coll.find: Iterator[DBObject]).map(create).toList
     })
@@ -127,8 +145,8 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
         findOpts.find(_.isInstanceOf[Skip]).map(x => x.value).getOrElse(0)
       )
       sort.foreach( s => cur.sort(s))
-      /** Mongo Cursors are both Iterable and Iterator, 
-       * so we need to reduce ambiguity for implicits 
+      /** Mongo Cursors are both Iterable and Iterator,
+       * so we need to reduce ambiguity for implicits
        */
       (cur: Iterator[DBObject]).map(create).toList
     })
