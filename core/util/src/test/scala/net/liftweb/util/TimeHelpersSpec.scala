@@ -91,7 +91,7 @@ object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen
     "have a later method returning a date relative to now plus the time span" in {
       val expectedTime = new Date().getTime + 3.seconds.millis
 
-      3.seconds.later.getTime must beCloseTo(expectedTime, 500L)
+      3.seconds.later.getTime must beCloseTo(expectedTime, 700L)
     }
     "have an ago method returning a date relative to now minus the time span" in {
       val expectedTime = new Date().getTime - 3.seconds.millis
