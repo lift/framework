@@ -607,7 +607,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   @volatile private[http] var notices: Seq[(NoticeType.Value, NodeSeq, Box[String])] = Nil
 
-  private val nasyncComponents = new ConcurrentHashMap[(Box[String], Box[String]), LiftCometActor]
+  private case class CometId(cometType: String, cometName: Box[String])
+
+  private val nasyncComponents = new ConcurrentHashMap[CometId, LiftCometActor]
 
   private val nasyncById = new ConcurrentHashMap[String, LiftCometActor]
 
@@ -663,7 +665,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   private[http] object deferredSnippets extends RequestVar[HashMap[String, Box[NodeSeq]]](new HashMap)
 
-  private object cometSetup extends SessionVar[List[((Box[String], Box[String]), Any)]](Nil)
+  private object cometSetup extends SessionVar[List[(CometId, Any)]](Nil)
 
 
   private[http] def startSession(): Unit = {
@@ -2343,7 +2345,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         }
       }
 
-          nasyncComponents.put(ca.theType -> ca.name, ca)
+          nasyncComponents.put(CometId("Server Push Actor", ca.name), ca)
           nasyncById.put(ca.uniqueId, ca)
 
       ca.callInitCometActor(CometCreationInfo(Helpers.nextFuncName, Full(Helpers.nextFuncName), NodeSeq.Empty, Map.empty, this))
@@ -2463,7 +2465,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     testStatefulFeature {
       import scala.collection.JavaConversions._
       nasyncComponents.flatMap {
-        case ((Full(name), _), value) if name == theType => Full(value)
+        case (CometId(name, _), value) if name == theType => Full(value)
         case _ => Empty
       }.toList
     }
@@ -2475,7 +2477,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   def findComet(theType: String, name: Box[String]): Box[LiftCometActor] = {
     asyncSync.synchronized {
       testStatefulFeature {
-        Box !! nasyncComponents.get(Full(theType) -> name)
+        Box !! nasyncComponents.get(CometId(theType, name))
       }
     }
   }
@@ -2765,7 +2767,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         }
       }
 
-        nasyncComponents.put(ca.theType -> ca.name, ca)
+        nasyncComponents.put(CometId(ca.theType openOr "Roundtrip Comet Actor", ca.name), ca)
         nasyncById.put(ca.uniqueId, ca)
 
       ca.callInitCometActor(CometCreationInfo(Helpers.nextFuncName, Full(Helpers.nextFuncName), NodeSeq.Empty, Map.empty, this))
