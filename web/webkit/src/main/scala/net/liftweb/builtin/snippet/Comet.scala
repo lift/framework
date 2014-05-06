@@ -58,6 +58,7 @@ object Comet extends DispatchSnippet with LazyLoggable {
     }
   }
 
+  // FIXME Rewrite all of the things.
   private def buildSpan(timeb: Box[Long], xml: NodeSeq, cometActor: LiftCometActor, spanId: String): NodeSeq =
   Elem(cometActor.parentTag.prefix, cometActor.parentTag.label, cometActor.parentTag.attributes,
        cometActor.parentTag.scope, cometActor.parentTag.minimizeEmpty, xml :_*) %
@@ -70,42 +71,35 @@ object Comet extends DispatchSnippet with LazyLoggable {
     S.currentAttr("metaname").flatMap(S.param) or
     S.currentAttr("randomname").map(ignore => Helpers.nextFuncName)
 
-
-    (for {ctx <- S.session} yield {
-      if (!ctx.stateful_?) 
+    try {
+      S.findOrCreateComet(theType openOrThrowException "Comets with no type are no longer supported.", name, kids, S.attrsFlattenToMap).map {
+        c => {
+          // Update the view on each page load in dev mode
+          // this make development easier
+          if (Props.devMode) {
+            c ! UpdateDefaultXml(kids)
+          }
+             
+          (c.!?(c.cometRenderTimeout, AskRender)) match {
+            case Full(AnswerRender(response, _, when, _)) if c.hasOuter =>
+              buildSpan(Empty, c.buildSpan(when, response.inSpan) ++ response.outSpan, c, c.uniqueId+"_outer")
+                
+            case Full(AnswerRender(response, _, when, _)) =>
+              c.buildSpan(when, response.inSpan)
+               
+            case e =>
+              c.cometRenderTimeoutHandler().openOr{
+                throw new CometTimeoutException("type: "+theType+" name: "+name)
+              }
+          }}} openOr {
+            throw new CometNotFoundException("type: "+theType+" name: "+name)
+          }
+    } catch {
+      case _: StateInStatelessException =>
         throw new StateInStatelessException(
           "Lift does not support Comet for stateless requests")
-
-       try {
-         ctx.findComet(theType, name, kids, S.attrsFlattenToMap).map {
-           c => {
-             // Update the view on each page load in dev mode
-             // this make development easier
-             if (Props.devMode) {
-               c ! UpdateDefaultXml(kids)
-             }
-             
-             (c.!?(c.cometRenderTimeout, AskRender)) match {
-               case Full(AnswerRender(response, _, when, _)) if c.hasOuter =>
-                 buildSpan(Empty, c.buildSpan(when, response.inSpan) ++ response.outSpan, c, c.uniqueId+"_outer")
-               
-               case Full(AnswerRender(response, _, when, _)) =>
-                 c.buildSpan(when, response.inSpan)
-               
-               case e =>
-                 c.cometRenderTimeoutHandler().openOr{
-                   throw new CometTimeoutException("type: "+theType+" name: "+name)
-                 }
-             }}} openOr {
-               throw new CometNotFoundException("type: "+theType+" name: "+name)
-             }
-         
-       } catch {
-         case e: SnippetFailureException => throw e
-         case e: Exception => logger.error("Failed to find a comet actor", e); kids
-       }
-    }) openOr {
-      throw new CometNotFoundException("Session not found. type: "+theType+" name: "+name)
+      case e: SnippetFailureException => throw e
+      case e: Exception => logger.error("Failed to find a comet actor", e); kids
     }
   }
 }
