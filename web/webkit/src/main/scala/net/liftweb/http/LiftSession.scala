@@ -2346,7 +2346,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
           nasyncComponents.put(ca.theType -> ca.name, ca)
           nasyncById.put(ca.uniqueId, ca)
 
-      ca.callInitCometActor(this, Full(Helpers.nextFuncName), Full(Helpers.nextFuncName), NodeSeq.Empty, Map.empty)
+      ca.callInitCometActor(CometCreationInfo(Helpers.nextFuncName, Full(Helpers.nextFuncName), NodeSeq.Empty, Map.empty, this))
 
 
 
@@ -2768,7 +2768,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         nasyncComponents.put(ca.theType -> ca.name, ca)
         nasyncById.put(ca.uniqueId, ca)
 
-      ca.callInitCometActor(this, Full(Helpers.nextFuncName), Full(Helpers.nextFuncName), NodeSeq.Empty, Map.empty)
+      ca.callInitCometActor(CometCreationInfo(Helpers.nextFuncName, Full(Helpers.nextFuncName), NodeSeq.Empty, Map.empty, this))
 
       implicit val defaultFormats = DefaultFormats
 

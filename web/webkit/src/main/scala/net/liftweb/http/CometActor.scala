@@ -32,11 +32,12 @@ import java.util.Locale
 /**
 * A case class that contains the information necessary to set up a CometActor
 */
-final case class CometCreationInfo(contType: String,
-                                   name: Box[String],
-                                   defaultXml: NodeSeq,
-                                   attributes: Map[String, String],
+final case class CometCreationInfo(cometType: String,
+                                   cometName: Box[String],
+                                   cometHtml: NodeSeq,
+                                   cometAttributes: Map[String, String],
                                    session: LiftSession)
+
 trait DeltaTrait {
   def toJs: JsCmd
 }
@@ -325,12 +326,16 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
    */
   def lastListenerTime: Long
 
+  private[http] def callInitCometActor(creationInfo: CometCreationInfo) {
+    initCometActor(creationInfo)
+  }
+
   private[http] def callInitCometActor(theSession: LiftSession,
-                                       theType: Box[String],
-                                       name: Box[String],
-                                       defaultHtml: NodeSeq,
-                                       attributes: Map[String, String]) {
-    initCometActor(theSession, theType, name, defaultHtml, attributes)
+                                     theType: Box[String],
+                                     name: Box[String],
+                                     defaultHtml: NodeSeq,
+                                     attributes: Map[String, String]) {
+    initCometActor(CometCreationInfo(theType openOrThrowException "Comets without types are no longer supported.", name, defaultHtml, attributes, theSession))
   }
 
   /**
@@ -375,11 +380,7 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
    */
   def cometRenderTimeoutHandler(): Box[NodeSeq] = Empty
 
-  protected def initCometActor(theSession: LiftSession,
-                               theType: Box[String],
-                               name: Box[String],
-                               defaultHtml: NodeSeq,
-                               attributes: Map[String, String]): Unit
+  protected def initCometActor(creationInfo: CometCreationInfo): Unit
 
   def theType: Box[String]
 
@@ -572,21 +573,17 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * It's seriously suboptimal to override this method.  Instead
    * use localSetup()
    */
-  protected def initCometActor(theSession: LiftSession,
-                               theType: Box[String],
-                               name: Box[String],
-                               defaultHtml: NodeSeq,
-                               attributes: Map[String, String]) {
+  protected def initCometActor(creationInfo: CometCreationInfo) {
     if (!dontCacheRendering) {
       lastRendering = RenderOut(Full(defaultHtml),
         Empty, Empty, Empty, false)
     }
 
-    this._theType = theType
-    this._theSession = theSession
-    this._defaultHtml = defaultHtml
-    this._name = name
-    this._attributes = attributes
+    _theType = Full(creationInfo.cometType)
+    _name = creationInfo.cometName
+    _defaultHtml = creationInfo.cometHtml
+    _attributes = creationInfo.cometAttributes
+    _theSession = creationInfo.session
   }
 
   def defaultPrefix: Box[String] = Empty
@@ -1174,14 +1171,13 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * take over the screen real estate until the question is answered.
    */
   protected def ask(who: LiftCometActor, what: Any)(answerWith: Any => Unit) {
-    who.callInitCometActor(theSession, Full(who.uniqueId), name, defaultHtml, attributes)
+    who.callInitCometActor(CometCreationInfo(who.uniqueId, name, defaultHtml, attributes, theSession))
     theSession.addCometActor(who)
-    // who.link(this)
+
     who ! PerformSetupComet2(Empty)
     askingWho = Full(who)
     this.answerWith = Full(answerWith)
     who ! AskQuestion(what, this, listeners)
-    // this ! AskRender
   }
 
   protected def answer(answer: Any) {

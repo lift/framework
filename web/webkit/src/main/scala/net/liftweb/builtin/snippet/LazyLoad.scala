@@ -80,9 +80,7 @@ object LazyLoad extends DispatchSnippet {
                                      attributes,
                                      session) => {
                 val ret = new AsyncRenderComet()
-                ret.initCometActor(session,
-                                   Full(theType),
-                                   name, defaultXml, attributes)
+                ret.initCometActor(ccinfo)
                 ret ! PerformSetupComet2(if (ret.sendInitialReq_?) 
        S.request.map(_.snapshot) else Empty)
                 
@@ -139,13 +137,8 @@ class AsyncRenderComet extends CometActor {
   def render = NodeSeq.Empty
 
   // make this method visible so that we can initialize the actor
-  override def initCometActor(theSession: LiftSession,
-                               theType: Box[String],
-                               name: Box[String],
-                               defaultXml: NodeSeq,
-                               attributes: Map[String, String]) {
-    super.initCometActor(theSession, theType, name, defaultXml,
-                         attributes)
+  override def initCometActor(creationInfo: CometCreationInfo) {
+    super.initCometActor(creationInfo)
   }
 
 
