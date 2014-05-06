@@ -330,14 +330,6 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
     initCometActor(creationInfo)
   }
 
-  private[http] def callInitCometActor(theSession: LiftSession,
-                                     theType: Box[String],
-                                     name: Box[String],
-                                     defaultHtml: NodeSeq,
-                                     attributes: Map[String, String]) {
-    initCometActor(CometCreationInfo(theType openOrThrowException "Comets without types are no longer supported.", name, defaultHtml, attributes, theSession))
-  }
-
   /**
    * Override in sub-class to customise timeout for the render()-method for the specific comet
    */
