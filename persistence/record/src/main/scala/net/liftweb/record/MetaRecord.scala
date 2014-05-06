@@ -242,6 +242,18 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     lazy val toJsCmd = Printer.compact(render(asJValue(inst)))
   }
 
+  /**
+   * Create a record with fields populated with values from the JSON construct
+   *
+   * @param json - The stringified JSON object
+   * @return Box[BaseRecord]
+   */
+  @deprecated("Use fromJValue with lift-json", "2.6")
+  def fromJSON(json: String): Box[BaseRecord] = {
+    val inst = createRecord
+    setFieldsFromJSON(inst, json) map (_ => inst)
+  }
+
   /** Encode a record instance into a JValue */
   def asJValue(rec: BaseRecord): JObject = {
     JObject(fields(rec).map(f => JField(f.name, f.asJValue)))

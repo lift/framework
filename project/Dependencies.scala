@@ -23,7 +23,7 @@ object Dependencies {
 
   type ModuleMap = String => ModuleID
 
-  lazy val CVMapping210  = crossMapped("2.10.0" -> "2.10", "2.10.1" -> "2.10")
+  lazy val CVMapping210  = crossMapped("2.10.0" -> "2.10", "2.10.1" -> "2.10", "2.10.2" -> "2.10", "2.10.3" -> "2.10", "2.10.4" -> "2.10")
 
   lazy val slf4jVersion = "1.7.2"
 

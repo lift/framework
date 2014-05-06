@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,7 +183,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
 
   override def dbName = "lift_mongodocumentexamples"
 
-  override def dbs = (TstDBa, defaultHost, "lift_mongodocumentexamples_a") :: super.dbs
+  override def dbs = (TstDBa, "lift_mongodocumentexamples_a") :: super.dbs
 
   "Simple Person example" in {
 
@@ -486,7 +486,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     val tc3 = SessCollection(ObjectId.get, "MongoDB", "db", 1)
 
     // use a Mongo instance directly with a session
-    MongoDB.useSession(DefaultMongoIdentifier) ( db => {
+    MongoDB.useSession( db => {
 
       // save to db
       SessCollection.save(tc, db)

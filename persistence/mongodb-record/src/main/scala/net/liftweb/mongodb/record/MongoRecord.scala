@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package mongodb
 package record
 
 import net.liftweb.record.{MetaRecord, Record}
+import net.liftweb.util.Helpers.tryo
 
 import com.mongodb.{BasicDBObject, DBObject, DBRef, WriteConcern}
 
@@ -52,26 +53,28 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
     this
   }
 
-
  /**
   * Save the instance and return the instance
   */
-  override def saveTheRecord(): Box[MyType] = {save; Full(this)}
+  override def saveTheRecord(): Box[MyType] = saveBox()
 
   /**
   * Save the instance and return the instance
-  * @param safe - if true will use WriteConcern SAFE else NORMAL
+  * @param safe - if true will use WriteConcern ACKNOWLEDGED else UNACKNOWLEDGED
   */
-  def save(safe: Boolean): MyType = {
-    save(if (safe) WriteConcern.SAFE else WriteConcern.NORMAL)
+  def save(safe: Boolean = true): MyType = {
+    save(if (safe) WriteConcern.ACKNOWLEDGED else WriteConcern.UNACKNOWLEDGED)
   }
 
   /**
-  * Save the instance and return the instance
-  * WILL NOT RAISE MONGO SERVER ERRORS.
-  * Use save(Boolean) or save(WriteConcern) to control error behavior
-  */
-  def save: MyType = save(false)
+    * Try to save the instance and return the instance in a Box.
+    */
+  def saveBox(): Box[MyType] = tryo {
+    runSafe {
+      meta.save(this)
+    }
+    this
+  }
 
   /**
     * Update only the dirty fields
@@ -84,9 +87,28 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   }
 
   /**
-  * Delete the instance from backing store
-  */
+    * Try to update only the dirty fields
+    */
+  def updateBox: Box[MyType] = tryo {
+    runSafe {
+      meta.update(this)
+    }
+    this
+  }
+
+  /**
+    * Delete the instance from backing store
+    */
   def delete_! : Boolean = {
+    runSafe {
+      meta.delete_!(this)
+    }
+  }
+
+  /**
+    * Try to delete the instance from backing store
+    */
+  def deleteBox_! : Box[Boolean] = tryo {
     runSafe {
       meta.delete_!(this)
     }

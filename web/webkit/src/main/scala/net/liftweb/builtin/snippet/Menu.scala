@@ -18,6 +18,8 @@ package net.liftweb
 package builtin
 package snippet
 
+import scala.language.existentials
+
 import http.{S, DispatchSnippet, LiftRules}
 import http.js._
 import sitemap._
@@ -414,8 +416,6 @@ object Menu extends DispatchSnippet {
     for {
       name <- S.attr("name").toList
     } yield {
-      import scala.language.existentials
-
       type T = Q forSome { type Q }
 
       // Builds a link for the given loc

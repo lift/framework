@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 WorldWide Conferencing, LLC
+ * Copyright 2011-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,23 +78,23 @@ object QueryExamplesSpec extends Specification with MongoTestKit {
       .birthDate(fredsBirthDate.getTime)
       .childId(pebblesId)
       .petId(dinoId)
-      .save
+      .save()
     val wilma = Person.createRecord
       .name("Flinstone, Wilma")
       .birthDate(wilmasBirthDate.getTime)
       .childId(pebblesId)
       .petId(dinoId)
-      .save
+      .save()
     val barney = Person.createRecord
       .name("Rubble, Barney")
       .birthDate(barneysBirthDate.getTime)
       .childId(bammbammId)
-      .save
+      .save()
     val betty = Person.createRecord
       .name("Rubble, Betty")
       .birthDate(bettysBirthDate.getTime)
       .childId(bammbammId)
-      .save
+      .save()
 
     val flinstonesIds = List(fred.id.get, wilma.id.get)
     val rubblesIds = List(barney.id.get, betty.id.get)

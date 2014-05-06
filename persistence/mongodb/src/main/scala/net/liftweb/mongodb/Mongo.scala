@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import scala.collection.immutable.HashSet
 
-import com.mongodb._
+import com.mongodb.{DB, DBCollection, MongoClient, MongoException}
 
 /*
 * A trait for identfying Mongo instances
@@ -44,76 +44,30 @@ case object DefaultMongoIdentifier extends MongoIdentifier {
 }
 
 /*
-* Wrapper for getting a reference to a db from the given Mongo instance
-*/
-case class MongoAddress(host: MongoHostBase, name: String) {
-  def db = host.mongo.getDB(name)
-}
-
-/*
-* Wrapper for creating a Mongo instance
-*/
-abstract class MongoHostBase {
-  def mongo: MongoClient
-}
-case class MongoHost(server: ServerAddress = new ServerAddress, options: MongoClientOptions = new MongoClientOptions.Builder().build()) extends MongoHostBase {
-  lazy val mongo = new MongoClient(server, options)
-}
-object MongoHost {
-  def apply(host: String): MongoHost = MongoHost(new ServerAddress(host, 27017))
-  def apply(host: String, port: Int): MongoHost = MongoHost(new ServerAddress(host, port))
-  def apply(host: String, port: Int, options: MongoClientOptions): MongoHost = MongoHost(new ServerAddress(host, port), options)
-}
-
-/*
- * Wrapper for creating a Replica Set
- */
-case class MongoSet(dbs: List[ServerAddress], options: MongoClientOptions = new MongoClientOptions.Builder().build()) extends MongoHostBase {
-  import scala.collection.JavaConversions._
-  lazy val mongo = new MongoClient(dbs, options)
-}
-
-/*
 * Main Mongo object
 */
 object MongoDB {
 
   /*
-  * HashMap of MongoAddresses, keyed by MongoIdentifier
+  * HashMap of MongoClient instance and db name tuples, keyed by MongoIdentifier
   */
-  private val dbs = new ConcurrentHashMap[MongoIdentifier, MongoAddress]
+  private val dbs = new ConcurrentHashMap[MongoIdentifier, (MongoClient, String)]
 
-  /*
-  * Define a Mongo db
-  */
-  def defineDb(name: MongoIdentifier, address: MongoAddress) {
-    dbs.put(name, address)
-  }
-  /*
-   * Define a Mongo db using a standard Mongo instance.
-   */
+  /**
+    * Define a MongoClient db using a MongoClient instance.
+    */
   def defineDb(name: MongoIdentifier, mngo: MongoClient, dbName: String) {
-    dbs.put(name, MongoAddress(new MongoHostBase { def mongo = mngo }, dbName))
+    dbs.put(name, (mngo, dbName))
   }
 
-  /*
-  * Define and authenticate a Mongo db
-  */
-  def defineDbAuth(name: MongoIdentifier, address: MongoAddress, username: String, password: String) {
-    if (!address.db.authenticate(username, password.toCharArray))
-      throw new MongoException("Authorization failed: "+address.toString)
-
-    dbs.put(name, address)
-  }
-
-  /*
-  * Define and authenticate a Mongo db using a standard Mongo instance.
-  */
+  /**
+    * Define and authenticate a Mongo db using a MongoClient instance.
+    */
   def defineDbAuth(name: MongoIdentifier, mngo: MongoClient, dbName: String, username: String, password: String) {
     if (!mngo.getDB(dbName).authenticate(username, password.toCharArray))
       throw new MongoException("Authorization failed: "+mngo.toString)
 
-    dbs.put(name, MongoAddress(new MongoHostBase { def mongo = mngo }, dbName))
+    dbs.put(name, (mngo, dbName))
   }
 
   /*
@@ -121,7 +75,7 @@ object MongoDB {
   */
   def getDb(name: MongoIdentifier): Option[DB] = dbs.get(name) match {
     case null => None
-    case ma: MongoAddress => Some(ma.db)
+    case (mngo, db) => Some(mngo.getDB(db))
   }
 
   /*
@@ -187,7 +141,7 @@ object MongoDB {
   * Executes function {@code f} with the mongo db named {@code name}. Uses the same socket
   * for the entire function block. Allows multiple operations on the same thread/socket connection
   * and the use of getLastError.
-  * See: http://www.mongodb.org/display/DOCS/Java+Driver+Concurrency
+  * See: http://docs.mongodb.org/ecosystem/drivers/java-concurrency/
   */
   def useSession[T](name: MongoIdentifier)(f: (DB) => T): T = {
 
@@ -228,8 +182,14 @@ object MongoDB {
     }
   }
 
-  //
-  def close {
-    dbs.clear
+  /**
+    * Calls close on each MongoClient instance and clears the HashMap.
+    */
+  def closeAll(): Unit = {
+    import scala.collection.JavaConversions._
+    dbs.values.foreach { case (mngo, _) =>
+      mngo.close()
+    }
+    dbs.clear()
   }
 }
