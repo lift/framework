@@ -29,7 +29,14 @@ import JsCmds._
 import JE._
 import java.util.Locale
 
-
+/**
+* A case class that contains the information necessary to set up a CometActor
+*/
+final case class CometCreationInfo(contType: String,
+                                   name: Box[String],
+                                   defaultXml: NodeSeq,
+                                   attributes: Map[String, String],
+                                   session: LiftSession)
 trait DeltaTrait {
   def toJs: JsCmd
 }

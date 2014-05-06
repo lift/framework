@@ -284,15 +284,6 @@ object Templates {
 }
 
 /**
-* A case class that contains the information necessary to set up a CometActor
-*/
-final case class CometCreationInfo(contType: String,
-                                   name: Box[String],
-                                   defaultXml: NodeSeq,
-                                   attributes: Map[String, String],
-                                   session: LiftSession)
-
-/**
  * Throw this exception if there's a catostrophic failure executing
  * a snippet
  */
