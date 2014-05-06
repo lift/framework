@@ -29,9 +29,8 @@ class MongoSpec extends Specification  {
     val jndiName = "test_a"
   }
 
-  def passDefinitionTests(id: MongoIdentifier, mc: Mongo, db: String): Result = {
+  def passDefinitionTests(id: MongoIdentifier, mc: MongoClient, db: String): Result = {
     // define the db
-    //MongoDB.closeAll()
     MongoDB.defineDb(id, mc, db)
 
     // make sure mongo is running
@@ -54,10 +53,6 @@ class MongoSpec extends Specification  {
   }
 
   "Mongo" should {
-
-    "Define DB with Mongo instance" in {
-      passDefinitionTests(TestMongoIdentifier, new Mongo, "test_default_a")
-    }
 
     "Define DB with MongoClient instance" in {
       val opts = MongoClientOptions.builder

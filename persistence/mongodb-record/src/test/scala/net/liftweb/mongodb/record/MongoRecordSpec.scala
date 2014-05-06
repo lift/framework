@@ -836,7 +836,7 @@ class MongoRecordSpec extends Specification with MongoTestKit {
     }
 
     "update dirty fields for a ListTestRecord" in {
-      val ltr = ListTestRecord.createRecord.save
+      val ltr = ListTestRecord.createRecord.save()
 
       ltr.mandatoryStringListField(List("abc", "def", "ghi"))
       ltr.mandatoryStringListField.dirty_? must_== true
