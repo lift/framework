@@ -665,6 +665,8 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   private[http] object deferredSnippets extends RequestVar[HashMap[String, Box[NodeSeq]]](new HashMap)
 
+  // List of `CometId`s associated with messages that a comet of that
+  // `CometId` should get when instantiated.
   private object cometSetup extends SessionVar[List[(CometId, Any)]](Nil)
 
 
