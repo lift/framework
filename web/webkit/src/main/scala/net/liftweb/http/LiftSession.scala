@@ -2573,34 +2573,23 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     cometHtml: NodeSeq,
     cometAttributes: Map[String, String]
   )(implicit cometManifest: Manifest[T]): Box[T] = {
-    val typeName = cometManifest.runtimeClass.getSimpleName
+    val castClass = cometManifest.runtimeClass.asInstanceOf[Class[T]]
+    val typeName = castClass.getSimpleName
 
-    val cometInfo = CometId(typeName, cometName) // capitalized for match below
+    val creationInfo =
+      CometCreationInfo(typeName, cometName, cometHtml, cometAttributes, this)
 
-    testStatefulFeature {
-      val existingComet = Box.legacyNullTest(nasyncComponents.get(cometInfo))
-
-      for {
-        comet <- existingComet.asA[T] or buildAndStoreComet(cometManifest.runtimeClass.asInstanceOf[Class[T]], cometName, cometHtml, cometAttributes)
-      } yield {
-        cometSetup.atomicUpdate(setupMessages =>
-          setupMessages.filter {
-            case (info, message) if info == cometInfo =>
-              comet ! message
-              false
-
-            case _ =>
-              true
-          }
-        )
-
-        comet
-      }
-    }
+    findOrBuildComet(
+      creationInfo,
+      buildAndStoreComet(buildCometByClass(castClass))
+    )
   }
 
-  /*
-   * As with `findOrBuildComet[T]`, but specify the type as a `String`.
+  /**
+   * As with `findOrBuildComet[T]`, but specify the type as a `String`. The
+   * comet type is looked up, if the comet doesn't already exist, first via
+   * `LiftRules.cometCreationFactory`, and then as a class name in comet
+   * package designated by `LiftRules.buildPackage("comet")`.
    */
   private[http] def findOrBuildComet(
     cometType: String,
@@ -2608,20 +2597,33 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     cometHtml: NodeSeq = NodeSeq.Empty,
     cometAttributes: Map[String, String] = Map.empty
   ): Box[LiftCometActor] = {
-    val cometInfo = CometId(cometType, cometName) // capitalized for match below
+    val creationInfo =
+      CometCreationInfo(cometType, cometName, cometHtml, cometAttributes, this)
+
+    findOrBuildComet(
+      creationInfo,
+      buildAndStoreComet(buildCometByCreationInfo) _
+    )
+  }
+
+  // Private helper function to do common comet setup handling for
+  // `findOrBuildComet` overloads.
+  private def findOrBuildComet[T <: LiftCometActor](
+    creationInfo: CometCreationInfo,
+    newCometFn: (CometCreationInfo)=>Box[T]
+  )(implicit cometManifest: Manifest[T]): Box[T] = {
+    val cometInfo = CometId(creationInfo.cometType, creationInfo.cometName)
 
     testStatefulFeature {
       val existingComet = Box.legacyNullTest(nasyncComponents.get(cometInfo))
 
-      for {
-        comet <- existingComet or buildAndStoreComet(cometType, cometName, cometHtml, cometAttributes)
-      } yield {
+      (existingComet.asA[T] or newCometFn(creationInfo)).map { comet =>
         cometSetup.atomicUpdate(setupMessages =>
           setupMessages.filter {
+            // Pass messages for this comet on and remove them from pending list.
             case (info, message) if info == cometInfo =>
               comet ! message
               false
-
             case _ =>
               true
           }
@@ -2632,14 +2634,18 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
-  // Build a comet corresponding to the given parameters and store it in the
-  // session.
-  private def buildAndStoreComet(cometType: String, cometName: Box[String], cometHtml: NodeSeq, cometAttributes: Map[String, String]): Box[LiftCometActor] = {
-    for {
-      comet <- buildCometByType(cometType, cometName, cometHtml, cometAttributes)
-    } yield {
+  private def buildAndStoreComet[T <: LiftCometActor](newCometFn: (CometCreationInfo)=>Box[T])(creationInfo: CometCreationInfo): Box[T] = {
+    newCometFn(creationInfo).map { comet =>
+      val initialRequest =
+        S.request
+          .filter(_ => comet.sendInitialReq_?)
+          .map(_.snapshot)
+
+      comet ! PerformSetupComet2(initialRequest)
+      comet.setCometActorLocale(S.locale)
+
       asyncSync.synchronized {
-        nasyncComponents.put(CometId(cometType, cometName), comet)
+        nasyncComponents.put(CometId(creationInfo.cometType, creationInfo.cometName), comet)
         nasyncById.put(comet.uniqueId, comet)
       }
 
@@ -2647,93 +2653,29 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
   }
 
-  private def buildAndStoreComet[T <: LiftCometActor](cometType: Class[T], cometName: Box[String], cometHtml: NodeSeq, cometAttributes: Map[String, String]): Box[T] = {
-    for {
-      comet <- buildCometByClass[T](cometType, cometName, cometHtml, cometAttributes)
-    } yield {
-      asyncSync.synchronized {
-        nasyncComponents.put(CometId(cometType.getSimpleName, cometName), comet)
-        nasyncById.put(comet.uniqueId, comet)
-      }
-
-      comet
-    }
-  }
-
-  // Given a comet type string and requested name, HTML, and attributes, build
-  // a comet, first attempting to use LiftRules.cometCreationFactory and
-  // then building it by class name.
+  // Given a comet creation info, build a comet based on the comet type, first
+  // attempting to use LiftRules.cometCreationFactory and then building it by
+  // class name. Return a descriptive Failure if it's all gone sideways.
   //
   // Runs some base setup tasks before returning the comet.
-  private[http] def buildCometByType(
-    cometType: String,
-    cometName: Box[String],
-    cometHtml: NodeSeq,
-    cometAttributes: Map[String, String]
-  ): Box[LiftCometActor] = {
-    testStatefulFeature {
-      val creationInfo =
-        CometCreationInfo(cometType, cometName, cometHtml, cometAttributes, this)
+  private def buildCometByCreationInfo(creationInfo: CometCreationInfo): Box[LiftCometActor] = {
+    LiftRules.cometCreationFactory.vend.apply(creationInfo) or {
+      val cometType =
+        findType[LiftCometActor](
+          creationInfo.cometType,
+          LiftRules.buildPackage("comet") ::: ("lift.app.comet" :: Nil)
+        )
 
-      for {
-        comet <-
-          LiftRules.cometCreationFactory.vend.apply(creationInfo) or
-            buildCometByClassName(cometType, creationInfo)
-      } yield {
-        val initialRequest =
-          S.request
-            .filter(_ => comet.sendInitialReq_?)
-            .map(_.snapshot)
-
-        comet ! PerformSetupComet2(initialRequest)
-        comet.setCometActorLocale(S.locale)
-
-        comet
-      }
+      cometType.flatMap { cometClass =>
+        buildCometByClass(cometClass)(creationInfo)
+      } ?~ s"Failed to find specified comet class ${creationInfo.cometType}."
     }
-  }
-
-  private[http] def buildCometByClass[T <: LiftCometActor](
-    cometClass: Class[T],
-    cometName: Box[String],
-    cometHtml: NodeSeq,
-    cometAttributes: Map[String, String]
-  ): Box[T] = {
-    testStatefulFeature {
-      val creationInfo =
-        CometCreationInfo(cometClass.getSimpleName, cometName, cometHtml, cometAttributes, this)
-
-      for {
-        comet <- initCometByClass[T](cometClass, creationInfo)
-      } yield {
-        val initialRequest =
-          S.request
-            .filter(_ => comet.sendInitialReq_?)
-            .map(_.snapshot)
-
-        comet ! PerformSetupComet2(initialRequest)
-        comet.setCometActorLocale(S.locale)
-
-        comet
-      }
-    }
-  }
-
-  // Given a class name and CometCreationInfo, instantiate the given
-  // comet and run setup tasks. Return a descriptive Failure if it's all
-  // gone sideways.
-  private[http] def buildCometByClassName(className: String, creationInfo: CometCreationInfo): Box[LiftCometActor] = {
-    val cometType = findType[LiftCometActor](className, LiftRules.buildPackage("comet") ::: ("lift.app.comet" :: Nil))
-
-    cometType.flatMap { cometClass =>
-      initCometByClass(cometClass, creationInfo)
-    } ?~ s"Failed to find specified comet class $className."
   }
 
   // Given a comet Class and CometCreationInfo, instantiate the given
   // comet and run setup tasks. Return a descriptive Failure if it's all
   // gone sideways.
-  private[http] def initCometByClass[T <: LiftCometActor](cometClass: Class[T], creationInfo: CometCreationInfo): Box[T] = {
+  private def buildCometByClass[T <: LiftCometActor](cometClass: Class[T])(creationInfo: CometCreationInfo): Box[T] = {
     def buildWithNoArgConstructor = {
       val constructor = cometClass.getConstructor()
 
