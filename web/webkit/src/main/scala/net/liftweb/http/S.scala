@@ -799,6 +799,12 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
 
   def addCometAtEnd(elem: Elem): Unit = _cometTags.is += elem
 
+  /**
+   * As with `findOrBuildComet[T]`, but specify the type as a `String`. If the
+   * comet doesn't already exist, the comet type is first looked up via
+   * `LiftRules.cometCreationFactory`, and then as a class name in the comet
+   * packages designated by `LiftRules.buildPackage("comet")`.
+   */
   def findOrCreateComet(
     cometType: String,
     cometName: Box[String] = Empty,
@@ -808,6 +814,12 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     session.flatMap(_.findOrCreateComet(cometType, cometName, cometHtml, cometAttributes))
   }
 
+  /**
+   * Find or build a comet actor of the given type `T` with the given
+   * configuration parameters. If a comet of that type with that name already
+   * exists, it is returned; otherwise, a new one of that type is created and
+   * set up, then returned.
+   */
   def findOrCreateComet[T <: LiftCometActor](
     cometName: Box[String],
     cometHtml: NodeSeq = NodeSeq.Empty,

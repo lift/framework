@@ -2588,10 +2588,10 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   }
 
   /**
-   * As with `findOrBuildComet[T]`, but specify the type as a `String`. The
-   * comet type is looked up, if the comet doesn't already exist, first via
-   * `LiftRules.cometCreationFactory`, and then as a class name in comet
-   * package designated by `LiftRules.buildPackage("comet")`.
+   * As with `findOrBuildComet[T]`, but specify the type as a `String`. If the
+   * comet doesn't already exist, the comet type is first looked up via
+   * `LiftRules.cometCreationFactory`, and then as a class name in the comet
+   * packages designated by `LiftRules.buildPackage("comet")`.
    */
   private[http] def findOrCreateComet(
     cometType: String,
