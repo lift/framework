@@ -2570,7 +2570,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * exists, it is returned; otherwise, a new one of that type is created and
    * set up, then returned.
    */
-  private[http] def findOrBuildComet[T <: LiftCometActor](
+  private[http] def findOrCreateComet[T <: LiftCometActor](
     cometName: Box[String],
     cometHtml: NodeSeq,
     cometAttributes: Map[String, String]
@@ -2593,7 +2593,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * `LiftRules.cometCreationFactory`, and then as a class name in comet
    * package designated by `LiftRules.buildPackage("comet")`.
    */
-  private[http] def findOrBuildComet(
+  private[http] def findOrCreateComet(
     cometType: String,
     cometName: Box[String] = Empty,
     cometHtml: NodeSeq = NodeSeq.Empty,

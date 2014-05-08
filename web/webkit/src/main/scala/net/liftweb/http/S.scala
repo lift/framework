@@ -805,7 +805,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     cometHtml: NodeSeq = NodeSeq.Empty,
     cometAttributes: Map[String, String] = Map.empty
   ): Box[LiftCometActor] = {
-    session.flatMap(_.findOrBuildComet(cometType, cometName, cometHtml, cometAttributes))
+    session.flatMap(_.findOrCreateComet(cometType, cometName, cometHtml, cometAttributes))
   }
 
   def findOrCreateComet[T <: LiftCometActor](
@@ -813,20 +813,8 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     cometHtml: NodeSeq = NodeSeq.Empty,
     cometAttributes: Map[String, String] = Map.empty
   )(implicit cometManifest: Manifest[T]): Box[T] = {
-    session.flatMap(_.findOrBuildComet[T](cometName, cometHtml, cometAttributes))
+    session.flatMap(_.findOrCreateComet[T](cometName, cometHtml, cometAttributes))
   }
-
-  /*def findOrCreateComet[T <: LiftCometActor](
-    creator: =>Box[T],
-    name: Box[String],
-    defaultXml: NodeSeq = NodeSeq.Empty,
-    attributes: Map[String, String] = Map.empty
-  ): Box[T] = {
-    // install comet directly into LiftSession
-    // do setup messages from Comet.buildComet
-    // add to cometAtEnd, which shouldn't be a List[Elem] anymore
-    // return T instance
-  }*/
 
   def cometAtEnd(): List[Elem] = _cometTags.is.toList
 
