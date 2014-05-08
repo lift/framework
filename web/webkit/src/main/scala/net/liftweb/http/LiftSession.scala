@@ -2532,7 +2532,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   /**
    * Remove a Comet actor
    */
-  private[http] def removeCometActor(act: LiftCometActor): Unit =  {
+  private[http] def removeCometActor(act: LiftCometActor): Unit = {
     testStatefulFeature {
       nasyncById.remove(act.uniqueId)
       nasyncComponents.remove(act.theType -> act.name)
@@ -2566,7 +2566,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
   /**
    * Find or build a comet actor of the given type `T` with the given
-   * configurations parameters. If a comet of that type with that name already
+   * configuration parameters. If a comet of that type with that name already
    * exists, it is returned; otherwise, a new one of that type is created and
    * set up, then returned.
    */
