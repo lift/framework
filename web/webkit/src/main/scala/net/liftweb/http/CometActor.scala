@@ -828,10 +828,10 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     /**
      * Update the defaultHtml... sent in dev mode
      */
-    case UpdateDefaultXml(xml) => {
-      val redo = xml != _defaultHtml
+    case UpdateDefaultHtml(html) => {
+      val redo = html != _defaultHtml
 
-      _defaultHtml = xml
+      _defaultHtml = html
 
       if (redo) {
         performReRender(false)
@@ -1383,7 +1383,7 @@ private[http] class XmlOrJsCmd(val id: String,
 /**
  * Update the comet XML on each page reload in dev mode
  */
-case class UpdateDefaultXml(xml: NodeSeq) extends CometMessage
+case class UpdateDefaultHtml(html: NodeSeq) extends CometMessage
 
 case class PartialUpdateMsg(cmd: () => JsCmd) extends CometMessage
 
