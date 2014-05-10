@@ -581,16 +581,22 @@ class LiftServlet extends Loggable {
    * `S.requestCometVersions` on the client.
    */
   private def commandForComets: JsCmd = {
-    js.JE.Call(
-      "lift.registerComets",
-      js.JE.JsObj(
-        S.requestCometVersions.is.toList.map {
-          case CometVersionPair(guid, version) =>
-            (guid, js.JE.Num(version))
-        }: _*
-      ),
-      true
-    ).cmd
+    val cometVersions = S.requestCometVersions.is
+
+    if (cometVersions.nonEmpty) {
+      js.JE.Call(
+        "lift.registerComets",
+        js.JE.JsObj(
+          S.requestCometVersions.is.toList.map {
+            case CometVersionPair(guid, version) =>
+              (guid, js.JE.Num(version))
+          }: _*
+        ),
+        true
+      ).cmd
+    } else {
+      js.JsCmds.Noop
+    }
   }
 
   /**
