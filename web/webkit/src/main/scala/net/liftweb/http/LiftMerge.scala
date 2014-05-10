@@ -196,12 +196,6 @@ private[http] trait LiftMerge {
         headChildren += nl
       }
 
-      for {
-        e <- S.cometAtEnd()
-      } {
-        _fixHtml(e, true, false, false, true, false, false, true, false)
-      }
-
       // Appends ajax script to body
       if (LiftRules.autoIncludeAjaxCalc.vend().apply(this)) {
         bodyChildren +=
