@@ -272,14 +272,14 @@ object FieldSpec extends Specification {
         val session = new LiftSession("", randomString(20), Empty)
         S.initIfUninitted(session) {
           val formXml = mandatory.toForm
-          formXml.isDefined must_== true
-          formXml.toList map { fprime =>
-            val f = ("* [name]" #> ".*" & "select *" #> (((ns: NodeSeq) => ns.filter {
-              case e: Elem => e.attribute("selected").map(_.text) == Some("selected")
-              case _ => false
-            }) andThen "* [value]" #> ".*"))(fprime)
-            val ret: Boolean = Helpers.compareXml(f, fp)
-            ret must_== true
+          formXml must beLike {
+            case Full(fprime) =>
+              val f = ("* [name]" #> ".*" & "select *" #> (((ns: NodeSeq) => ns.filter {
+                case e: Elem => e.attribute("selected").map(_.text) == Some("selected")
+                case _ => false
+              }) andThen "* [value]" #> ".*"))(fprime)
+              val ret: Boolean = Helpers.compareXml(f, fp)
+              ret must_== true
           }
         }
       }
