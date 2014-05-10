@@ -577,38 +577,15 @@ class LiftServlet extends Loggable {
   }
 
   /**
-   * Extracts a `CometVersionPair` from an `Elem` corresponding to a
-   * comet. If the `Elem` doesn't correspond to a comet, the match
-   * fails.
+   * Generates the JsCmd needed to initialize comets in
+   * `S.requestCometVersions` on the client.
    */
-  private object CometElement {
-    def unapply(element: scala.xml.Elem): Option[CometVersionPair] = {
-      element.attributes.collect {
-        case scala.xml.PrefixedAttribute("lift", "when", whenNodes, _) =>
-          ("when" -> whenNodes.text): (String,String)
-        case scala.xml.UnprefixedAttribute("id", idNodes, _) =>
-          ("id" -> idNodes.text): (String,String)
-      } match {
-        case List(("when", whenText), ("id", idText)) =>
-          Some(CVP(idText, whenText.toLong))
-        case List(("id", idText), ("when", whenText)) =>
-          Some(CVP(idText, whenText.toLong))
-
-        case _ =>
-          None
-      }
-    }
-  }
-  /**
-   * Given a list of comet elements (from `S.comatAtEnd`, for example),
-   * generates the JsCmd needed to initialize those on the client.
-   */
-  private def commandForComets(cometElements: List[scala.xml.Elem]): JsCmd = {
+  private def commandForComets: JsCmd = {
     js.JE.Call(
       "lift.registerComets",
       js.JE.JsObj(
-        cometElements.collect {
-          case CometElement(CometVersionPair(guid, version)) =>
+        S.requestCometVersions.is.toList.map {
+          case CometVersionPair(guid, version) =>
             (guid, js.JE.Num(version))
         }: _*
       ),
@@ -659,7 +636,7 @@ class LiftServlet extends Loggable {
                     case js: JsCmd => js
                   }).reverse) &
                   S.jsToAppend &
-                  commandForComets(S.cometAtEnd)
+                  commandForComets
                 ).toResponse
               }
 
