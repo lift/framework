@@ -27,8 +27,8 @@ import net.liftweb.common._
 trait ManyToMany extends BaseKeyedMapper {
   this: KeyedMapper[_, _] =>
 
-  type K = TheKeyType
-  type T = KeyedMapperType
+  private[this] type K = TheKeyType
+  private[this] type T = KeyedMapperType
 
   private var manyToManyFields: List[MappedManyToMany[_,_,_]] = Nil
 
