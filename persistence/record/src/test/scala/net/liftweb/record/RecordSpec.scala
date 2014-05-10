@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -349,7 +349,7 @@ object RecordSpec extends Specification  {
 
   "basic record" should {
     "order fields according to fieldOrder" in {
-      BasicTestRecord.metaFields must_==  List(BasicTestRecord.field2, BasicTestRecord.field1, BasicTestRecord.field3)
+      BasicTestRecord.metaFields must_==  List(BasicTestRecord.field2, BasicTestRecord.field1, BasicTestRecord.fieldThree)
     }
   }
 }

@@ -45,6 +45,8 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
 
   private var lifecycleCallbacks: List[(String, Method)] = Nil
 
+  def connectionIdentifier: ConnectionIdentifier = DefaultConnectionIdentifier
+
   /**
    * Set this to use your own form template when rendering a Record to a form.
    *
