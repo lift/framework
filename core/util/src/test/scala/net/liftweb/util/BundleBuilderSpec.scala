@@ -21,13 +21,14 @@ import java.util.Locale
 
 import xml.NodeSeq
 
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for BundleBuilder.
  */
-object BundleBuilderSpec extends Specification  {
+object BundleBuilderSpec extends Specification with XmlMatchers {
   "BundleBuilder Specification".title
 
   "BundleBuilder" should {

@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import common._
@@ -25,7 +26,7 @@ import common._
 /**
  * System under specification for Req.
  */
-object ReqSpec extends Specification  {
+object ReqSpec extends Specification with XmlMatchers {
   "Req Specification".title
 
   private val iPhoneUserAgents = 
@@ -63,6 +64,8 @@ object ReqSpec extends Specification  {
           uac.isIPad must_== false
         }
       }
+
+      success
     }
 
     "Do the right thing with iPad" in {
@@ -75,6 +78,8 @@ object ReqSpec extends Specification  {
           uac.isIPad must_== true
         }
       }
+
+      success
     }
 
     "Correctly recognize IE versions 6-11" in {
