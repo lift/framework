@@ -813,21 +813,22 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   }
 
   /**
-   * As with `findOrBuildComet[T]`, but specify the type as a `String`. If the
+   * As with {findOrBuildComet[T]}, but specify the type as a `String`. If the
    * comet doesn't already exist, the comet type is first looked up via
    * `LiftRules.cometCreationFactory`, and then as a class name in the comet
    * packages designated by `LiftRules.buildPackage("comet")`.
    *
    * If `receiveUpdates` is `true`, updates to this comet will be pushed to
    * the page currently being rendered or to the page that is currently
-   * invoking an AJAX callback.
+   * invoking an AJAX callback. You can also separately register a comet to
+   * receive updates like this using {S.addComet}.
    */
   def findOrCreateComet(
     cometType: String,
     cometName: Box[String] = Empty,
     cometHtml: NodeSeq = NodeSeq.Empty,
     cometAttributes: Map[String, String] = Map.empty,
-    receiveUpdatesOnPage: Boolean = true
+    receiveUpdatesOnPage: Boolean = false
   ): Box[LiftCometActor] = {
     for {
       session <- session
@@ -848,13 +849,14 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    *
    * If `receiveUpdates` is `true`, updates to this comet will be pushed to
    * the page currently being rendered or to the page that is currently
-   * invoking an AJAX callback.
+   * invoking an AJAX callback. You can also separately register a comet to
+   * receive updates like this using {S.addComet}.
    */
   def findOrCreateComet[T <: LiftCometActor](
     cometName: Box[String],
     cometHtml: NodeSeq = NodeSeq.Empty,
     cometAttributes: Map[String, String] = Map.empty,
-    receiveUpdatesOnPage: Boolean = true
+    receiveUpdatesOnPage: Boolean = false
   )(implicit cometManifest: Manifest[T]): Box[T] = {
     for {
       session <- session
