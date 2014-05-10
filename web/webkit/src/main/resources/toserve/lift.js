@@ -655,7 +655,10 @@
         timeout: this.cometGetTimeout,
         cache: false,
         success: onSuccess,
-        error: onFailure
+        error: function(_, status) {
+          if (status != 'abort')
+            return onFailure.apply(this, arguments)
+        }
       });
     }
   };
@@ -749,8 +752,12 @@
             finally {
               onSuccess();
             }
-          }
-          else {
+          // done + 0 status = aborted, or at least it's the most
+          // straightforward proxy that we have; ready state = 0 is
+          // supposed to be aborted, but that's all kinds of not
+          // working, unfortunately. jQuery's approach is better,
+          // but they have a lot more state tracking to achieve it.
+          } else if (xhr.status !== 0) {
             onFailure();
           }
         }
