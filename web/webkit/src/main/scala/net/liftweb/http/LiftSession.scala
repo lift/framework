@@ -20,7 +20,7 @@ package http
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
-import collection.mutable.{HashMap, ListBuffer}
+import scala.collection.mutable.{HashMap, ListBuffer}
 import collection.concurrent.{Map=>ConcurrentMap}
 import collection.JavaConversions
 

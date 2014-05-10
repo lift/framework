@@ -19,7 +19,7 @@ package http
 
 import java.util.{Locale, TimeZone, ResourceBundle}
 
-import collection.mutable.{HashMap, ListBuffer}
+import scala.collection.mutable.{HashMap, ListBuffer}
 import xml._
 
 import common._
