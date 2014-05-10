@@ -380,7 +380,7 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
 
   def hasOuter: Boolean
 
-  def buildSpan(time: Long, xml: NodeSeq): NodeSeq
+  def buildSpan(xml: NodeSeq): NodeSeq
 
   def parentTag: Elem
 
@@ -654,18 +654,8 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   /**
    * Creates the span element acting as the real estate for comet rendering.
    */
-  def buildSpan(time: Long, xml: NodeSeq): Elem = {
-    Elem(parentTag.prefix, parentTag.label, parentTag.attributes,
-      parentTag.scope, parentTag.minimizeEmpty, xml :_*) %
-      new UnprefixedAttribute("id",
-        Text(spanId),
-        if (time > 0L) {
-          new PrefixedAttribute("lift", "when",
-            time.toString,
-            Null)
-        } else {
-          Null
-        })
+  def buildSpan(xml: NodeSeq): Elem = {
+    parentTag.copy(child = xml) % ("id" -> spanId)
   }
 
   /**
@@ -1330,10 +1320,10 @@ private[http] class XmlOrJsCmd(val id: String,
                                _fixedXhtml: Box[NodeSeq],
                                val javaScript: Box[JsCmd],
                                val destroy: Box[JsCmd],
-                               spanFunc: (Long, NodeSeq) => NodeSeq,
+                               spanFunc: (NodeSeq) => NodeSeq,
                                ignoreHtmlOnJs: Boolean,
                                notices: List[(NoticeType.Value, NodeSeq, Box[String])]) {
-  def this(id: String, ro: RenderOut, spanFunc: (Long, NodeSeq) => NodeSeq, notices: List[(NoticeType.Value, NodeSeq, Box[String])]) =
+  def this(id: String, ro: RenderOut, spanFunc: (NodeSeq) => NodeSeq, notices: List[(NoticeType.Value, NodeSeq, Box[String])]) =
     this (id, ro.xhtml, ro.fixedXhtml, ro.script, ro.destroyScript, spanFunc, ro.ignoreHtmlOnJs, notices)
 
   val xml = _xml.flatMap(content => S.session.map(s => s.processSurroundAndInclude("JS SetHTML id: " + id, content)))
@@ -1348,9 +1338,9 @@ private[http] class XmlOrJsCmd(val id: String,
         case (Full(xml), Full(js), false) => LiftRules.jsArtifacts.setHtml(id, Helpers.stripHead(xml)) & JsCmds.JsTry(js, false)
         case (Full(xml), _, false) => LiftRules.jsArtifacts.setHtml(id, Helpers.stripHead(xml))
         case (Full(xml), Full(js), true) => LiftRules.jsArtifacts.setHtml(id + "_outer", (
-          spanFunc(0, Helpers.stripHead(xml)) ++ fixedXhtml.openOr(Text("")))) & JsCmds.JsTry(js, false)
+          spanFunc(Helpers.stripHead(xml)) ++ fixedXhtml.openOr(Text("")))) & JsCmds.JsTry(js, false)
         case (Full(xml), _, true) => LiftRules.jsArtifacts.setHtml(id + "_outer", (
-          spanFunc(0, Helpers.stripHead(xml)) ++ fixedXhtml.openOr(Text(""))))
+          spanFunc(Helpers.stripHead(xml)) ++ fixedXhtml.openOr(Text(""))))
         case (_, Full(js), _) => js
         case _ => JsCmds.Noop
       }

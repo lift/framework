@@ -2356,7 +2356,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
       ca ! PerformSetupComet2(Empty)
 
-      val node: Elem = ca.buildSpan(ca.renderClock, NodeSeq.Empty)
+      val node: Elem = ca.buildSpan(NodeSeq.Empty)
 
       S.addCometAtEnd(node)
 
@@ -2828,7 +2828,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
       ca ! SetDeltaPruner(lastWhenDeltaPruner)
 
-      val node: Elem = ca.buildSpan(ca.renderClock, NodeSeq.Empty)
+      val node: Elem = ca.buildSpan(NodeSeq.Empty)
 
       S.addCometAtEnd(node)
 

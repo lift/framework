@@ -30,15 +30,10 @@ object Comet extends DispatchSnippet with LazyLoggable {
     case _ => render _
   }
 
-  // Take the comet's internal container and annotate it with the unique `containerId`
-  // as well as, if necessary, a lift:when attribute.
-  private def buildContainer(cometHtml: NodeSeq, cometActor: LiftCometActor, containerId: String, renderTime: Box[Long]): NodeSeq = {
-    val baseElement = cometActor.parentTag.copy(child = cometHtml) % ("id" -> containerId)
-
-    renderTime
-      .filter(_ > 0L)
-      .map(time => new PrefixedAttribute("lift", "when", Text(time.toString), Null))
-      .foldLeft(baseElement)(_ % _)
+  // Take the comet's internal container and annotate it with the unique
+  // `containerId`.
+  private def buildContainer(cometHtml: NodeSeq, cometActor: LiftCometActor, containerId: String): NodeSeq = {
+    cometActor.parentTag.copy(child = cometHtml) % ("id" -> containerId)
   }
 
   /**
@@ -53,16 +48,15 @@ object Comet extends DispatchSnippet with LazyLoggable {
     }
 
     cometActor !? (cometActor.cometRenderTimeout, AskRender) match {
-      case Full(AnswerRender(response, _, when, _)) if cometActor.hasOuter =>
+      case Full(AnswerRender(response, _, _, _)) if cometActor.hasOuter =>
         buildContainer(
-          cometActor.buildSpan(when, response.inSpan) ++ response.outSpan,
+          cometActor.buildSpan(response.inSpan) ++ response.outSpan,
           cometActor,
-          s"${cometActor.uniqueId}_outer",
-          Empty
+          s"${cometActor.uniqueId}_outer"
         )
 
-      case Full(AnswerRender(response, _, when, _)) =>
-        cometActor.buildSpan(when, response.inSpan)
+      case Full(AnswerRender(response, _, _, _)) =>
+        cometActor.buildSpan(response.inSpan)
 
       case failedResult =>
         cometActor.cometRenderTimeoutHandler openOr {
