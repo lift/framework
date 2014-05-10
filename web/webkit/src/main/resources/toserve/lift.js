@@ -647,7 +647,7 @@
       });
     },
     ajaxGet: function(url, data, onSuccess, onFailure) {
-      jQuery.ajax({
+      return jQuery.ajax({
         url: url,
         data: data,
         type: "GET",
@@ -764,6 +764,8 @@
       xhr.timeout = settings.cometGetTimeout;
       xhr.setRequestHeader("Accept", "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01");
       xhr.send();
+
+      return xhr;
     }
   };
 
