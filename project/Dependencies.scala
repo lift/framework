@@ -35,7 +35,6 @@ object Dependencies {
   lazy val scalaz7Version     = defaultOrMapped("7.0.0",  "2.11.0" -> "7.0.6")
   lazy val specs2Version      = defaultOrMapped("1.12.3", "2.11.0" -> "2.3.11")
   lazy val scalatestVersion   = defaultOrMapped("1.9.1",  "2.11.0" -> "2.1.3")
-  lazy val scalaParserVersion = defaultOrMapped("2.11.0-20130906.012530-56")
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
