@@ -33,10 +33,7 @@ object BuildDef extends Build {
 
   lazy val frameworkPre211 =
     liftProject("lift-framework-pre-211", file("."))
-      .aggregate((liftProjects.collect {
-        case thing if thing == webkit => webkit_pre_211: ProjectReference
-        case other => other: ProjectReference
-      }: Seq[ProjectReference]) ++ pre_211_project : _*)
+      .aggregate(liftProjects ++ pre_211_project : _*)
       .settings(aggregatedSetting(sources in(Compile, doc)),
         aggregatedSetting(dependencyClasspath in(Compile, doc)),
         publishArtifact := false)
@@ -126,32 +123,6 @@ object BuildDef extends Build {
         .dependsOn(util, testkit % "provided")
         .settings(yuiCompressor.Plugin.yuiSettings: _*)
         .settings(description := "Webkit Library",
-                  parallelExecution in Test := false,
-                  libraryDependencies <++= scalaVersion { sv =>
-                    Seq(commons_fileupload, servlet_api, specs2(sv).copy(configurations = Some("provided")), jetty6, jwebunit)
-                  },
-                  initialize in Test <<= (sourceDirectory in Test) { src =>
-                    System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
-                  })
-
-  lazy val webkit_pre_211 =
-    webProject("webkit")
-        .dependsOn(webkit_compat, util, testkit % "provided")
-        .settings(yuiCompressor.Plugin.yuiSettings: _*)
-        .settings(description := "Webkit Library",
-                  parallelExecution in Test := false,
-                  libraryDependencies <++= scalaVersion { sv =>
-                    Seq(commons_fileupload, servlet_api, specs2(sv).copy(configurations = Some("provided")), jetty6, jwebunit)
-                  },
-                  initialize in Test <<= (sourceDirectory in Test) { src =>
-                    System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
-                  })
-
-
-  lazy val webkit_compat =
-    webProject("webkit_compat")
-        .dependsOn(util, testkit % "provided")
-        .settings(description := "Webkit Compat Layer for 2.9.x",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv =>
                     Seq(commons_fileupload, servlet_api, specs2(sv).copy(configurations = Some("provided")), jetty6, jwebunit)
