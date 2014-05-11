@@ -21,7 +21,6 @@ import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
 import scala.collection.mutable.{HashMap, ListBuffer}
-import collection.concurrent.{Map=>ConcurrentMap}
 import collection.JavaConversions
 
 import xml._
@@ -156,24 +155,38 @@ object LiftSession {
   /**
    * Cache for findSnippetClass lookups.
    */
-  private val snippetClassMap: ConcurrentMap[String, Box[Class[AnyRef]]] = JavaConversions.mapAsScalaConcurrentMap(new ConcurrentHashMap())
+  private val snippetClassMap = new ConcurrentHashMap[String, Box[Class[AnyRef]]]()
   
   /*
    * Given a Snippet name, try to determine the fully-qualified Class
    * so that we can instantiate it via reflection.
    */
   def findSnippetClass(name: String): Box[Class[AnyRef]] = {
-    if (name == null) Empty
-    else {
-      snippetClassMap.getOrElseUpdate(name,{
-        // Name might contain some relative packages, so split them out and put them in the proper argument of findClass
-        val (packageSuffix, terminal) = name.lastIndexOf('.') match {
-          case -1 => ("", name)
-          case i => ("." + name.substring(0, i), name.substring(i + 1))
-        }
-        findClass(terminal, LiftRules.buildPackage("snippet").map(_ + packageSuffix) :::
-          (("lift.app.snippet" + packageSuffix) :: ("net.liftweb.builtin.snippet" + packageSuffix) :: Nil))
-      })
+    if (name == null) {
+      Empty
+    } else {
+      // putIfAbsent isn't lazy, so we pay the price of checking for the
+      // absence twice when the snippet hasn't been initialized to avoid
+      // the cost of computing the snippet class every time.
+      //
+      // We're using ConcurrentHashMap, so no `getOrElseUpdate` here (and
+      // `getOrElseUpdate` isn't atomic anyway).
+      if (! snippetClassMap.contains(name)) {
+        snippetClassMap.putIfAbsent(name, {
+          // Name might contain some relative packages, so split them out and put them in the proper argument of findClass
+          val (packageSuffix, terminal) = name.lastIndexOf('.') match {
+            case -1 => ("", name)
+            case i => ("." + name.substring(0, i), name.substring(i + 1))
+          }
+          findClass(terminal, LiftRules.buildPackage("snippet").map(_ + packageSuffix) :::
+            (("lift.app.snippet" + packageSuffix) :: ("net.liftweb.builtin.snippet" + packageSuffix) :: Nil))
+        })
+      }
+
+      // We don't test for null because we never remove an item from the
+      // map. If I'm wrong about this and you're seeing null pointers,
+      // add a legacyNullTest openOr Empty.
+      snippetClassMap.get(name)
     }
   }
 
