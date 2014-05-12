@@ -18,7 +18,10 @@ package net.liftweb
 package util
 
 import java.util.regex.Pattern
+
 import scala.collection.mutable.ListBuffer
+import scala.language.implicitConversions
+
 import common._
 
 /**

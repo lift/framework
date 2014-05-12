@@ -17,6 +17,8 @@
 package net.liftweb
 package common
 
+import scala.language.implicitConversions
+import scala.language.existentials
 import scala.reflect.Manifest
 
 import java.util.{Iterator => JavaIterator, ArrayList => JavaArrayList}
@@ -135,17 +137,6 @@ sealed trait BoxTrait {
   }
 
   /**
-   * This method allows one to encapsulate any object in a Box in a null-safe manner,
-   * treating null values to Empty.  This is a parallel method to
-   * the Scala Option's apply method.  Note that the apply method is overloaded
-   * and it's much, much better to use legacyNullTest in this case.
-   * 
-   * @return <code>Full(in)</code> if <code>in</code> is not null; Empty otherwise
-   */
-  @deprecated("Use legacyNullTest", "2.5")
-  def apply[T](in: T): Box[T] = legacyNullTest(in)
-
-  /**
    * Apply the specified PartialFunction to the specified value and return the result
    * in a Full Box; if the pf is undefined at that point return Empty.
    * @param pf the partial function to use to transform the value
@@ -208,11 +199,21 @@ sealed trait BoxTrait {
   def isA[A, B](in: A, clz: Class[B]): Box[B] =
   (Box !! in).isA(clz)
 
+  // NOTE: We use an existential type here so that you can invoke asA with
+  // just one type parameter. To wit, this lets you do:
+  //
+  //   Box.asA[Int](myVariableWithDifferentType)
+  //
+  // If instead asA was defined as asA[T, B], you would have to do:
+  //
+  //   Box.asA[DifferentType, Int](myVariableWithDifferentType)
+  //
+  // Uglier, and generally not as nice.
   /**
    * Create a Full box containing the specified value if <code>in</code> is of
    * type <code>B</code>; Empty otherwise.
    */
-  def asA[B](in: T forSome {type T})(implicit m: Manifest[B]): Box[B] =
+  def asA[B](in: T forSome { type T })(implicit m: Manifest[B]): Box[B] =
   (Box !! in).asA[B]
 }
 
@@ -637,7 +638,7 @@ final case class Full[+A](value: A) extends Box[A]{
     case _ => Empty
   }
 
-  override def asA[B](implicit m: Manifest[B]): Box[B] = this.isA(m.erasure).asInstanceOf[Box[B]]
+  override def asA[B](implicit m: Manifest[B]): Box[B] = this.isA(m.runtimeClass).asInstanceOf[Box[B]]
 
   override def ===[B >: A](to: B): Boolean = value == to
 

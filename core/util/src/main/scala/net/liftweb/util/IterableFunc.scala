@@ -1,8 +1,10 @@
 package net.liftweb
 package util
 
+import scala.language.implicitConversions
+import scala.xml.{Text, NodeSeq}
+
 import common._
-import xml.{Text, NodeSeq}
 
 sealed trait IterableFunc extends Function1[NodeSeq, Seq[NodeSeq]] {
   def apply(ns: NodeSeq): Seq[NodeSeq]

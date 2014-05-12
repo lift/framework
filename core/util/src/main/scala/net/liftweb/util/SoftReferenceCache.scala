@@ -104,11 +104,12 @@ class SoftReferenceCache[K, V](cacheSize: Int) {
   val writeLock = rwl.writeLock
 
   private def lock[T](l: Lock)(block: => T): T = {
-    l lock;
+    l.lock
+
     try {
       block
     } finally {
-      l unlock
+      l.unlock
     }
   }
 

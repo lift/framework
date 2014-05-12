@@ -383,7 +383,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Holds the JS library specific UI artifacts. By default it uses JQuery's artifacts
    */
-  @volatile var jsArtifacts: JSArtifacts = JQuery13Artifacts
+  @volatile var jsArtifacts: JSArtifacts = JQueryArtifacts
 
   /**
    * Use this PartialFunction to to automatically add static URL parameters
@@ -415,18 +415,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * entities when rendered?
    */
   val convertToEntity: FactoryMaker[Boolean] = new FactoryMaker(false) {}
-
-  /**
-   * Certain paths within your application can be marked as stateless
-   * and if there is access to Lift's stateful facilities (setting
-   * SessionVars, updating function tables, etc.) the developer will
-   * receive a notice and the operation will not complete.  This test
-   * has been deprecated in favor of statelessReqTest which also passes
-   * the HTTPRequest instance for testing of the user agent and other stuff.
-   */
-  @deprecated("Use statelessReqTest", "2.4")
-  val statelessTest = RulesSeq[StatelessTestPF]
-
 
   /**
    * Certain paths and requests within your application can be marked as stateless
@@ -517,16 +505,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
       tryo{f()}
     }
   }
-
-  /**
-   * Set the doc type used.  Use the HtmlProperties
-   */
-  @deprecated("Use the HtmlProperties", "2.4")
-  val docType: FactoryMaker[Req => Box[String]] = new FactoryMaker( (r: Req) => r  match {
-    case _ if S.skipDocType => Empty
-    case _ if S.getDocType._1 => S.getDocType._2
-    case _ => Full(DocType.xhtmlTransitional)
-  }){}
 
   /**
    * The maximum allowed size of a complete mime multi-part POST.  Default 8MB
@@ -672,14 +650,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var liftCoreResourceName = "i18n.lift-core"
 
   /**
-   * Where to send the user if there's no comet session. Note that this is
-   * contingent on an unchanged LiftRules.noCometSessionCommand and on
-   * liftComet.lift_sessionLost not being overridden client-side.
-   */
-  @deprecated("Use LiftRules.noCometSessionCmd.", "2.5")
-  @volatile var noCometSessionPage = "/"
-
-  /**
    * The JsCmd to execute when the comet session is lost. The comet
    * session is considered lost when either (a) a comet request comes
    * in for a session that does not exist on the server or (b) a comet
@@ -688,10 +658,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    *
    * By default, we invoke liftComet.lift_sessionLost, which can be
    * overridden client-side for more complex work.
-   * liftComet.lift_sessionLost redirects to
-   * LiftRules.noCometSessionPage by default for now, though
-   * noCometSessionPage is deprecated and will be replaced by a
-   * default of reloading the current page.
+   * liftComet.lift_sessionLost reloads the current page by default.
    */
   val noCometSessionCmd = new FactoryMaker[JsCmd](
     () => {
@@ -723,7 +690,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * the long polling connection
    */
   val clientActorLifespan = new FactoryMaker[LiftActor => Long](
-    () => (actor: LiftActor) => (30 minutes): Long
+    () => (actor: LiftActor) => (30.minutes): Long
   ){}
 
   /**
@@ -746,17 +713,17 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * If a Comet request fails timeout for this period of time. Default value is 10 seconds
    */
-  @volatile var cometFailureRetryTimeout: Long = 10 seconds
+  @volatile var cometFailureRetryTimeout: Long = 10.seconds
 
   /**
    * The timeout in milliseconds of a comet ajax-request. Defaults to 5000 ms.
    */
-  @volatile var cometProcessingTimeout: Long = 5 seconds
+  @volatile var cometProcessingTimeout: Long = 5.seconds
 
   /**
    * The timeout in milliseconds of a comet render-request. Defaults to 30000 ms.
    */
-  @volatile var cometRenderTimeout: Long = 30 seconds
+  @volatile var cometRenderTimeout: Long = 30.seconds
 
   /**
    * The dispatcher that takes a Snippet and converts it to a
@@ -1078,7 +1045,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * How long should we wait for all the lazy snippets to render
    */
-  val lazySnippetTimeout: FactoryMaker[TimeSpan] = new FactoryMaker(() => 30 seconds) {}
+  val lazySnippetTimeout: FactoryMaker[TimeSpan] = new FactoryMaker(() => 30.seconds) {}
 
   /**
    * Does the current context support parallel snippet execution
@@ -1154,14 +1121,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   private[http] def bootFinished() {
     _doneBoot = true
   }
-
-  /**
-   * Holds user's DispatchPF functions that will be executed in a stateless context. This means that
-   * no session will be created and no JSESSIONID cookie will be presented to the user (unless
-   * the user has presented a JSESSIONID cookie).
-   */
-  @deprecated("Use statelessDispatch", "2.4")
-  def statelessDispatchTable = statelessDispatch
 
   /**
    * Holds user's DispatchPF functions that will be executed in a stateless context. This means that
@@ -1355,12 +1314,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val statelessRewrite = RulesSeq[RewritePF]
 
   /**
-   * Use statelessRewrite or statefuleRewrite
-   */
-  @deprecated("Use statelessRewrite or statefuleRewrite", "2.3")
-  val rewrite = statelessRewrite
-
-  /**
    *  Holds the user's rewrite functions that can alter the URI parts and query parameters.
    * This rewrite takes place within the scope of the S state so SessionVars and other session-related
    * information is available. <br/>
@@ -1503,10 +1456,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * LiftRules.noCometSessionCmd).
    */
   @volatile var redirectAsyncOnSessionLoss = true
-  @deprecated("Use redirectAsyncOnSessionLoss instead.", "2.5")
-  def redirectAjaxOnSessionLoss = redirectAsyncOnSessionLoss
-  @deprecated("Use redirectAsyncOnSessionLoss instead.", "2.5")
-  def redirectAjaxOnSessionLoss_=(updated:Boolean) = redirectAsyncOnSessionLoss = updated
 
   /**
    * The sequence of partial functions (pattern matching) for handling converting an exception to something to
@@ -1639,12 +1588,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   @volatile var autoIncludeComet: LiftSession => Boolean = session => true
 
-  /**
-   * Tells Lift if the Ajax JavaScript should be included. By default it is set to true.
-   */
-  @deprecated("Use autoIncludeAjaxCalc", "2.4")
-  @volatile var autoIncludeAjax: LiftSession => Boolean = session => autoIncludeAjaxCalc.vend().apply(session)
-
   val autoIncludeAjaxCalc: FactoryMaker[() => LiftSession => Boolean] = 
   new FactoryMaker(() => () => (session: LiftSession) => true) {}
 
@@ -1665,9 +1608,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Compute the headers to be sent to the browser in addition to anything else that's sent
    */
-  val listOfSupplimentalHeaders: FactoryMaker[List[(String, String)]] = new FactoryMaker(() => List(("X-Lift-Version", liftVersion), ("X-Frame-Options", "SAMEORIGIN"))) {}
-
-  @volatile var supplimentalHeaders: HTTPResponse => Unit = s => listOfSupplimentalHeaders.vend.foreach{case (k, v) => s.addHeaders(List(HTTPParam(k, v)))}
+  val supplementalHeaders: FactoryMaker[List[(String, String)]] = new FactoryMaker(() => List(("X-Lift-Version", liftVersion), ("X-Frame-Options", "SAMEORIGIN"))) {}
 
   @volatile var calcIE6ForResponse: () => Boolean = () => S.request.map(_.isIE6) openOr false
 
@@ -1684,13 +1625,13 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * (given in milliseconds) will be discarded, hence eligible for garbage collection.
    * The default value is 10 minutes.
    */
-  @volatile var unusedFunctionsLifeTime: Long = 10 minutes
+  @volatile var unusedFunctionsLifeTime: Long = 10.minutes
 
   /**
    * The polling interval for background Ajax requests to prevent functions of being garbage collected.
    * Default value is set to 75 seconds.
    */
-  @volatile var liftGCPollingInterval: Long = 75 seconds
+  @volatile var liftGCPollingInterval: Long = 75.seconds
 
   /**
    * Put a test for being logged in into this function
@@ -1701,7 +1642,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * The polling interval for background Ajax requests to keep functions to not be garbage collected.
    * This will be applied if the Ajax request will fail. Default value is set to 15 seconds.
    */
-  @volatile var liftGCFailureRetryTimeout: Long = 15 seconds
+  @volatile var liftGCFailureRetryTimeout: Long = 15.seconds
 
   /**
    * Returns the JavaScript that manages Comet requests.
@@ -1869,26 +1810,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   @volatile var templateCache: Box[TemplateCache[(Locale, List[String]), NodeSeq]] = Empty
 
-  /**
-   * A function to format a Date... can be replaced by a function that is user-specific
-   Replaced by dateTimeConverter
-   */
-  @deprecated("Replaced by dateTimeConverter", "2.3")
-  @volatile var formatDate: Date => String = date => date match {
-    case null => LiftRules.dateTimeConverter.vend.formatDate(new Date(0L))
-    case s    => toInternetDate(s)
-  }
-
-  /**
-   * A function that parses a String into a Date... can be replaced by something that's user-specific
-   Replaced by dateTimeConverter
-   */
-  @deprecated("Replaced by dateTimeConverter", "2.3")
-  @volatile var parseDate: String => Box[Date] = str => str match {
-    case null => Empty
-    case s => Helpers.toDate(s)
-  }
-
   val dateTimeConverter: FactoryMaker[DateTimeConverter] = new FactoryMaker[DateTimeConverter]( () => DefaultDateTimeConverter ) {}
 
   /**
@@ -1910,12 +1831,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   import containers._
 
   /**
-   * Provides the async provider instance responsible for suspending/resuming requests
-   */
-  @deprecated("Register your povider via addSyncProvider", "2.4")
-  var servletAsyncProvider: (HTTPRequest) => ServletAsyncProvider = null // (req) => new Jetty6AsyncProvider(req)
-
-  /**
    * The meta for the detected AsyncProvider given the container we're running in
    */
   lazy val asyncProviderMeta: Box[AsyncProviderMeta] =
@@ -1925,7 +1840,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * A function that converts the current Request into an AsyncProvider.
    */
   lazy val theServletAsyncProvider: Box[HTTPRequest => ServletAsyncProvider] =
-    (Box !! servletAsyncProvider) or asyncProviderMeta.flatMap(_.providerFunction)
+    asyncProviderMeta.flatMap(_.providerFunction)
 
   private var asyncMetaList: List[AsyncProviderMeta] =
     List(Servlet30AsyncProvider, Jetty6AsyncProvider, Jetty7AsyncProvider)

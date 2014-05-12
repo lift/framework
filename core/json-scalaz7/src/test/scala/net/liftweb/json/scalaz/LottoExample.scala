@@ -1,5 +1,7 @@
 package net.liftweb.json.scalaz
 
+import scala.language.reflectiveCalls
+
 import scalaz._
 import scalaz.syntax.validation._
 import JsonScalaz._

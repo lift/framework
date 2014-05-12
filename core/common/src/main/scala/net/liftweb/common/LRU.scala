@@ -34,7 +34,6 @@ private[common] trait LinkedListElem[T1, T2] {
     what._prev = this
     _next._prev = what
     this._next = what
-    what
   }
 
   private[common] def addAtTail(what: LinkedListElem[T1, T2]) {
@@ -42,7 +41,6 @@ private[common] trait LinkedListElem[T1, T2] {
     what._next = this
     _prev._next = what
     this._prev = what
-    what
   }
 }
 

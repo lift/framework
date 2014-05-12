@@ -268,7 +268,15 @@ final case class OldHtmlProperties(userAgent: Box[String]) extends HtmlPropertie
    * If you want to change the DocType header, override this method rather than using
    * setDocType.
    */
-  def docType: Box[String] = LiftRules.docType.vend.apply(S.request openOr Req.nil)
+  def docType: Box[String] = {
+    if (S.skipDocType) {
+      Empty
+    } else if (S.getDocType._1) {
+      S.getDocType._2
+    } else {
+      Full(DocType.xhtmlTransitional)
+    }
+  }
   def encoding: Box[String] =
     Full(LiftRules.calculateXmlHeader(null, <ignore/>, contentType))
 

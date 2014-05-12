@@ -25,6 +25,11 @@ import common._
 
 import Mailer._
 
+trait MailerForTesting {
+  def lastMessage_=(message: Box[MimeMessage]): Unit
+  def lastMessage: Box[MimeMessage]
+}
+
 /**
  * Systems under specification for Lift Mailer.
  */
@@ -34,7 +39,7 @@ object MailerSpec extends Specification {
 
   Props.mode // touch the lazy val so it's detected correctly
 
-  val myMailer = new Mailer {
+  val myMailer = new Mailer with MailerForTesting {
     @volatile var lastMessage: Box[MimeMessage] = Empty
 
     testModeSend.default.set((msg: MimeMessage) => {

@@ -85,29 +85,6 @@ object Templates {
     findRawTemplate(places, locale).map(checkForContentId)
 
   /**
-   * Given a list of paths (e.g. List("foo", "index")),
-   * find the template.
-   * @param places - the path to look in
-   *
-   * @return the template if it can be found
-   */
-  @deprecated("use apply", "2.4")
-  def findAnyTemplate(places: List[String]): Box[NodeSeq] =
-    findRawTemplate(places, S.locale)
-
-  /**
-   * Given a list of paths (e.g. List("foo", "index")),
-   * find the template.
-   * @param places - the path to look in
-   * @param locale - the locale of the template to search for
-   *
-   * @return the template if it can be found
-   */
-  @deprecated("use apply", "2.4")
-  def findAnyTemplate(places: List[String], locale: Locale): Box[NodeSeq] = findRawTemplate(places, locale)
-
-
-  /**
    * Check to see if the template is marked designer friendly
    * and lop off the stuff before the first surround
    */
@@ -358,6 +335,12 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
 }
 
 
+  // FIXME Needed to due to https://issues.scala-lang.org/browse/SI-6541,
+  // which causes existential types to be inferred for the generated
+  // unapply of a case class with a wildcard parameterized type.
+  // Ostensibly should be fixed in 2.12, which means we're a ways away
+  // from being able to remove this, though.
+  import scala.language.existentials
 
   /**
    * Holds a pair of parameters

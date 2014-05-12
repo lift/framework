@@ -17,6 +17,8 @@
 package net.liftweb
 package json
 
+import scala.language.implicitConversions
+
 object JsonAST {
   import scala.text.{Document, DocText}
   import scala.text.Document._
@@ -614,6 +616,7 @@ trait Printer {
       case DocNest(_, d) :: rs   => layout(d :: rs)
       case DocGroup(d) :: rs     => layout(d :: rs)
       case DocNil :: rs          => layout(rs)
+      case _ :: rs               => layout(rs)
     }
 
     layout(List(d))

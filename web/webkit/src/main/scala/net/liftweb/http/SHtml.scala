@@ -100,11 +100,9 @@ trait SHtml {
 
     def applyToAllElems(in: Seq[Node], elemAttrs: Seq[ElemAttr]): Seq[Node] = in map {
       case Group(ns) => Group(applyToAllElems(ns, elemAttrs))
-      case e: Elem => val updated = elemAttrs.foldLeft(e)((e, f) => f(e))
-
-        new Elem(updated.prefix, updated.label,
-                               updated.attributes, updated.scope,
-                               applyToAllElems(updated.child, elemAttrs) :_*)
+      case e: Elem =>
+        val updated = elemAttrs.foldLeft(e)((e, f) => f(e))
+        updated.copy(child = applyToAllElems(updated.child, elemAttrs))
       case n => n
     }
   }
@@ -214,32 +212,6 @@ trait SHtml {
     jsonCall_*(jsCalcValue, jsonContext, S.SFuncHolder(s => parseOpt(s).map(func) getOrElse JsonAST.JNothing))
 
   /**
-   * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript
-   *
-   * @param jsCalcValue the JavaScript to calculate the value to be sent to the server
-   * @param func the function to call when the data is sent
-   *
-   * @return the function ID and JavaScript that makes the call
-   */
-  @deprecated("Use jsonCall with a function that takes JValue => JsCmd", "2.5")
-  def jsonCall(jsCalcValue: JsExp, func: Any => JsCmd)(implicit d: AvoidTypeErasureIssues1): GUIDJsExp =
-    jsonCall_*(jsCalcValue, SFuncHolder(s => JSONParser.parse(s).map(func) openOr Noop))
-
-  /**
-   * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript
-   *
-   * @param jsCalcValue the JavaScript to calculate the value to be sent to the server
-   * @param jsContext the context instance that defines JavaScript to be executed on call success or failure
-   * @param func the function to call when the data is sent
-   *
-   * @return the function ID and JavaScript that makes the call
-   */
-  @deprecated("Use jsonCall with a function that takes JValue => JsCmd", "2.5")
-  def jsonCall(jsCalcValue: JsExp, jsContext: JsContext, func: Any => JsCmd)(implicit d: AvoidTypeErasureIssues1): GUIDJsExp =
-    jsonCall_*(jsCalcValue, jsContext, SFuncHolder(s => JSONParser.parse(s).map(func) openOr Noop))
-
-
-  /**
    * Build a JavaScript function that will perform an AJAX call based on a value calculated in JavaScript
    * @param jsCalcValue -- the JavaScript to calculate the value to be sent to the server
    * @param func -- the function to call when the data is sent
@@ -266,16 +238,6 @@ trait SHtml {
 
   def fajaxCall[T](jsCalcValue: JsExp, func: String => JsCmd)(f: (String, JsExp) => T): T = {
     val (name, js) = ajaxCall(jsCalcValue, func).product
-    f(name, js)
-  }
-
-  @deprecated("Use jsonCall with a function that takes JValue => JsCmd", "2.5")
-  def jsonCall(jsCalcValue: JsExp, jsonContext: JsonContext, func: String => JsObj)(implicit d: AvoidTypeErasureIssues1): GUIDJsExp = 
-    ajaxCall_*(jsCalcValue, jsonContext, SFuncHolder(func))
-
-  @deprecated("Use jsonCall with a function that takes JValue => JValue and its GUIDJsExp to manipulate the guid and JsExp it produces. This function will go away altogether in Lift 3.", "2.6")
-  def fjsonCall[T](jsCalcValue: JsExp, jsonContext: JsonContext, func: String => JsObj)(f: (String, JsExp) => T): T = {
-    val (name, js) = jsonCall(jsCalcValue, jsonContext, func).product
     f(name, js)
   }
 
@@ -367,11 +329,7 @@ trait SHtml {
       map(ignore => applyAgain()).openOr(NodeSeq.Empty)
 
       def applyAgain(): NodeSeq =
-        new Elem(latestElem.prefix,
-                 latestElem.label,
-                 latestElem.attributes,
-                 latestElem.scope,
-                 f(this)(latestKids) :_*)
+        latestElem.copy(child = f(this)(latestKids))
 
       def setHtml(): JsCmd = SetHtml(latestId, f(this)(latestKids))
     }
@@ -408,25 +366,6 @@ trait SHtml {
     attrs.foldLeft(fmapFunc((SFuncHolder(func)))(name =>
             <button onclick={makeAjaxCall(JsRaw(name.encJs + "+'='+encodeURIComponent(" + jsExp.toJsCmd + ")")).toJsCmd +
                     "; return false;"}>{text}</button>))((e, f) => f(e))
-  }
-
-  /**
-   * Create an Ajax button that when pressed, submits an Ajax request and expects back a JSON
-   * construct which will be passed to the <i>success</i> function
-   *
-   * @param text -- the name/text of the button
-   * @param func -- the function to execute when the button is pushed.  Return Noop if nothing changes on the browser.
-   * @param ajaxContext -- defines the callback functions and the JSON response type
-   * @param attrs -- the list of node attributes
-   *
-   * @return a button to put on your page
-   *
-   */
-  @deprecated("Use jsonButton with a function that takes JValue => JsCmd", "2.6")
-  def jsonButton(text: NodeSeq, jsExp: JsExp, func: Any => JsObj, ajaxContext: JsonContext, attrs: ElemAttr*): Elem = {
-    attrs.foldLeft(jsonFmapFunc(func)(name =>
-            <button onclick={makeAjaxCall(JsRaw(name.encJs + "+'='+ encodeURIComponent(JSON.stringify(" + jsExp.toJsCmd + "))"), ajaxContext).toJsCmd +
-                    "; return false;"}>{text}</button>))(_ % _)
   }
 
   /**
@@ -1057,8 +996,9 @@ trait SHtml {
   private def dealWithBlur(elem: Elem, blurCmd: String): Elem = {
     (elem \ "@onblur").toList match {
       case Nil => elem % ("onblur" -> blurCmd)
-      case x :: xs => val attrs = elem.attributes.filter(_.key != "onblur")
-      Elem(elem.prefix, elem.label, new UnprefixedAttribute("onblur", Text(blurCmd + x.text), attrs), elem.scope, elem.child: _*)
+      case x :: xs =>
+        val attrs = elem.attributes.filter(_.key != "onblur")
+        elem.copy(attributes = new UnprefixedAttribute("onblur", Text(blurCmd + x.text), attrs))
     }
   }
 
@@ -1120,16 +1060,14 @@ trait SHtml {
     }
 
   private def dupWithName(elem: Elem, name: String): Elem = {
-    new Elem(elem.prefix,
-             elem.label,
-             new UnprefixedAttribute("name", name,
-                                     elem.attributes.filter {
-                                       case up: UnprefixedAttribute =>
-                                         up.key != "name"
-                                       case _ => true
-                                     }),
-             elem.scope,
-             elem.child :_*)
+    elem.copy(attributes =
+      new UnprefixedAttribute("name", name,
+                              elem.attributes.filter {
+                                case up: UnprefixedAttribute =>
+                                  up.key != "name"
+                                case _ => true
+                              })
+    )
   }
 
   private def isRadio(in: MetaData): Boolean =
@@ -1169,17 +1107,16 @@ trait SHtml {
 
             fmapFunc(func) {
               funcName =>
-                new Elem(e.prefix, e.label,
-                         allEvent.foldLeft(newAttr){
-                           case (meta, attr) =>
-                             new UnprefixedAttribute(attr,
-                                                     Helpers.
-                                                     appendFuncToURL(oldAttr.
-                                                                     getOrElse(attr, ""),
-                                                                     funcName+"=_"),
-                                                     meta)
-
-                         }, e.scope, e.child :_*)
+                e.copy(attributes =
+                  allEvent.foldLeft(newAttr){
+                    case (meta, attr) =>
+                      new UnprefixedAttribute(attr,
+                                              Helpers.
+                                              appendFuncToURL(oldAttr.getOrElse(attr, ""),
+                                                              funcName+"=_"),
+                                              meta)
+                  }
+                )
             }
           }
 
@@ -1247,15 +1184,15 @@ trait SHtml {
 
             val cmd = ajaxCall(JsRaw("this.value"), func)._2.toJsCmd
 
-            new Elem(e.prefix, e.label,
-                     allEvent.foldLeft(newAttr){
-                       case (meta, attr) =>
-                         new UnprefixedAttribute(attr,
-                                                 oldAttr.getOrElse(attr, "") +
-                                                 cmd,
-                                                 meta)
+            e.copy(attributes =
+              allEvent.foldLeft(newAttr) {
+                case (meta, attr) =>
+                  new UnprefixedAttribute(attr,
+                                          oldAttr.getOrElse(attr, "") + cmd,
+                                          meta)
 
-                     }, e.scope, e.child :_*)
+              }
+            )
           }
 
 
@@ -1696,17 +1633,6 @@ trait SHtml {
    *
    * @param body The form body. This should not include the &lt;form&gt; tag.
    * @param onSubmit JavaScript code to execute on the client prior to submission
-   *
-   * @deprecated Use ajaxForm(NodeSeq,JsCmd) instead
-   */
-  @deprecated("Use ajaxForm(NodeSeq, JsCmd) instead.", "2.6")
-  def ajaxForm(onSubmit: JsCmd, body: NodeSeq) = (<lift:form onsubmit={onSubmit.toJsCmd}>{body}</lift:form>)
-
-  /**
-   * Takes a form and wraps it so that it will be submitted via AJAX.
-   *
-   * @param body The form body. This should not include the &lt;form&gt; tag.
-   * @param onSubmit JavaScript code to execute on the client prior to submission
    */
   def ajaxForm(body: NodeSeq, onSubmit: JsCmd) = (<lift:form onsubmit={onSubmit.toJsCmd}>{body}</lift:form>)
 
@@ -1718,43 +1644,6 @@ trait SHtml {
    * @param postSubmit Code that should be executed after a successful submission
    */
   def ajaxForm(body : NodeSeq, onSubmit : JsCmd, postSubmit : JsCmd) = (<lift:form onsubmit={onSubmit.toJsCmd} postsubmit={postSubmit.toJsCmd}>{body}</lift:form>)
-
-  /**
-   * Takes a form and wraps it so that it will be submitted via AJAX and processed by
-   * a JSON handler. This can be useful if you may have dynamic client-side modification
-   * of the form (addition or removal).
-   *
-   * @param jsonHandler The handler that will process the form
-   * @param body The form body. This should not include the &lt;form&gt; tag.
-   */
-  @deprecated("Use JValue=>JsCmd bindings in SHtml (such as jsonCall) and SHtml.makeFormsAjax instead of this.", "2.6")
-  def jsonForm(jsonHandler: JsonHandler, body: NodeSeq): NodeSeq = jsonForm(jsonHandler, Noop, body)
-
-  /**
-   * Takes a form and wraps it so that it will be submitted via AJAX and processed by
-   * a JSON handler. This can be useful if you may have dynamic client-side modification
-   * of the form (addition or removal).
-   *
-   * @param jsonHandler The handler that will process the form
-   * @param onSubmit JavaScript code that will be executed on the client prior to submitting
-   * the form
-   * @param body The form body. This should not include the &lt;form&gt; tag.
-   */
-  @deprecated("Use JValue=>JsCmd bindings in SHtml (such as jsonCall) and SHtml.makeFormsAjax instead of this.", "2.6")
-  def jsonForm(jsonHandler: JsonHandler, onSubmit: JsCmd, body: NodeSeq): NodeSeq = {
-    val id = formFuncName
-    <form onsubmit={(onSubmit & jsonHandler.call("processForm", FormToJSON(id)) & JsReturn(false)).toJsCmd} id={id}>{body}</form>
-  }
-
-  /**
-   * Having a regular form, this method can be used to send the content of the form as JSON.
-   * the request will be processed by the jsonHandler
-   *
-   * @param jsonHandler - the handler that process this request
-   * @param formId - the id of the form
-   */
-  @deprecated("Use JValue=>JsCmd bindings in SHtml (such as jsonCall) and SHtml.submitAjaxForm instead of this.", "2.6")
-  def submitJsonForm(jsonHandler: JsonHandler, formId: String):JsCmd = jsonHandler.call("processForm", FormToJSON(formId))
 
   /**
    * Having a regular form, this method can be used to send the serialized content of the form.
@@ -1785,8 +1674,7 @@ trait SHtml {
           case _ => true
         }
 
-        new Elem(e.prefix, e.label,
-                 newMeta, e.scope, e.child :_*) % ("id" -> id) %
+        e.copy(attributes = newMeta) % ("id" -> id) %
         ("action" -> "javascript://") %
         ("onsubmit" ->
          (SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(id)).toJsCmd +
@@ -2348,8 +2236,9 @@ trait SHtml {
 
 }
 
-object AjaxType extends Enumeration("javascript", "json") {
-  val JavaScript, JSON = Value
+object AjaxType extends Enumeration {
+  val JavaScript = Value("javascript")
+  val JSON = Value("json")
 }
 
 object AjaxContext {

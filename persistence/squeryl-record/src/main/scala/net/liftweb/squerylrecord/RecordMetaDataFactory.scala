@@ -174,7 +174,7 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
           case Full(enum: Enumeration#Value) => enum.id: java.lang.Integer
           case _ => null
         }
-        case enumNameField: EnumNameTypedField[_] => enumNameField valueBox match {
+        case enumNameField: EnumNameTypedField[_] => enumNameField.valueBox match {
           case Full(enum: Enumeration#Value) => enum.toString
           case _ => null
         }

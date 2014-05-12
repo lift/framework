@@ -17,16 +17,10 @@
 package net.liftweb 
 package util 
 
+import scala.language.implicitConversions
+
 trait ValueHolder {
   type ValueType
-
-  /**
-   * Get the value.  Use get.
-   *
-   * @deprecated
-   */
-  @deprecated("Use get", "2.4")
-  def is: ValueType
 
   /**
    * get the value

@@ -90,11 +90,6 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
    */
   def asJsExp: JsExp = meta.asJsExp(this)
 
-  /**
-   * Sets the fields of this Record from the given JSON.
-   */
-  def setFieldsFromJSON(json: String): Box[Unit] = meta.setFieldsFromJSON(this, json)
-
   /** Encode this record instance as a JObject */
   def asJValue: JObject = meta.asJValue(this)
 

@@ -17,6 +17,8 @@
 package net.liftweb 
 package util 
 
+import scala.language.implicitConversions
+
 import Helpers._
 import common._
 
@@ -217,12 +219,6 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
     }
     this.is
   }
-
-  /**
-   * Set the Var if it has not been calculated
-   */
-  @deprecated("use setIfUnset")
-  def setIsUnset(value: => T): T = setIfUnset(value)
 
   /**
    * Set the session variable

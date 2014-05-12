@@ -30,7 +30,7 @@ trait TextareaTypedField extends StringTypedField {
     funcName => <textarea name={funcName}
       rows={textareaRows.toString}
       cols={textareaCols.toString}
-      tabindex={tabIndex toString}>{valueBox openOr ""}</textarea>
+      tabindex={tabIndex.toString}>{valueBox openOr ""}</textarea>
   }
 
   override def toForm: Box[NodeSeq] =

@@ -62,21 +62,4 @@ object SquerylRecord extends Loggable {
    * Keep track of the current Squeryl Session we've created using DB 
    * */
   private object currentSession extends DynoVar[Session]
-  
-  @deprecated(message = "Lift DB.use style transactions do not properly clean up Squeryl resources.  Please use initWithSquerylSession instead.", "2.5")
-  def init(mkAdapter: () => DatabaseAdapter) = {
-    FieldMetaData.factory = new RecordMetaDataFactory
-    SessionFactory.externalTransactionManagementAdapter = Some(() => 
-      currentSession.get orElse {
-    	  DB.currentConnection match {
-    		  case Full(superConn) =>
-    		  	val sess: Session = Session.create(superConn.connection, mkAdapter())
-    		  	sess.setLogger(s => logger.info(s))
-    		  	currentSession.set(sess)
-    		  	Some(sess)
-    		  case _ => None
-    	  }
-      })
-  }
-  
 }

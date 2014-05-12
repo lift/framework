@@ -17,7 +17,10 @@
 package net.liftweb
 package util
 
+import scala.language.higherKinds
+import scala.language.implicitConversions
 import scala.xml._
+
 import common._
 
 
@@ -183,6 +186,7 @@ trait BindHelpers {
                  elem.label,
                  fix(elem.attributes),
                  elem.scope,
+                 elem.minimizeEmpty,
                  elem.child :_*)
       }
       case _ => elem % new UnprefixedAttribute("class", cssClass, Null)
@@ -722,20 +726,6 @@ trait BindHelpers {
   }
 
   /**
-   *  transforms a Box into a Text node
-   */
-  @deprecated("use -> instead", "2.4")
-  object BindParamAssoc {
-    implicit def canStrBoxNodeSeq(in: Box[Any]): Box[NodeSeq] = in.map(_ match {
-      case null => Text("null")
-      case v => v.toString match {
-        case null => NodeSeq.Empty
-        case str => Text(str)
-      }
-    })
-  }
-
-  /**
    * takes a NodeSeq and applies all the attributes to all the Elems at the top level of the
    * NodeSeq.  The id attribute is applied to the first-found Elem only
    */
@@ -798,74 +788,6 @@ trait BindHelpers {
   }
 
   implicit def strToSuperArrowAssoc(in: String): SuperArrowAssoc = new SuperArrowAssoc(in)
-
-
-  /**
-   * This class creates a BindParam from an input value
-   *
-   * @deprecated use -> instead
-   */
-  @deprecated("use -> instead", "2.4")
-  class BindParamAssoc(val name: String) {
-    def -->(value: String): BindParam = TheBindParam(name, if (null eq value) NodeSeq.Empty else Text(value))
-    def -->(value: NodeSeq): BindParam = TheBindParam(name, value)
-    def -->(value: Symbol): BindParam = TheBindParam(name, Text(value.name))
-    def -->(value: Any): BindParam = TheBindParam(name, Text(value match {
-      case null => "null"
-      case v => v.toString match {
-        case null => ""
-        case str => str
-      }
-    }))
-    def -->(func: NodeSeq => NodeSeq): BindParam = FuncBindParam(name, func)
-    def -->(value: Box[NodeSeq]): BindParam = TheBindParam(name, value.openOr(Text("Empty")))
-  }
-
-  /**
-   * transforms a String to a BindParamAssoc object which can be associated to a BindParam object
-   * using the --> operator.<p/>
-   * Usage: <code>"David" --> "name"</code>
-   *
-   * @deprecated use -> instead
-   */
-  @deprecated("use -> instead", "2.4")
-  implicit def strToBPAssoc(in: String): BindParamAssoc = new BindParamAssoc(in)
-
-  /**
-   * transforms a Symbol to a SuperArrowAssoc object which can be associated to a BindParam object
-   * using the -> operator.<p/>
-   * Usage: <code>'David -> "name"</code>
-   *
-   * @deprecated use -> instead
-   */
-  @deprecated("use -> instead", "2.4")
-  implicit def symToSAAssoc(in: Symbol): SuperArrowAssoc = new SuperArrowAssoc(in.name)
-
-  /**
-   * Experimental extension to bind which passes in an additional "parameter" from the XHTML to the transform
-   * function, which can be used to format the returned NodeSeq.
-   *
-   * @deprecated use bind instead
-   */
-  @deprecated("use bind instead", "2.4")
-  def xbind(namespace: String, xml: NodeSeq)(transform: PartialFunction[String, NodeSeq => NodeSeq]): NodeSeq = {
-    def rec_xbind(xml: NodeSeq): NodeSeq = {
-      xml.flatMap {
-        node => node match {
-          case s: Elem if (node.prefix == namespace) =>
-            if (transform.isDefinedAt(node.label))
-              transform(node.label)(node)
-            else
-              Text("FIX"+"ME failed to bind <"+namespace+":"+node.label+" />")
-          case Group(nodes) => Group(rec_xbind(nodes))
-          case s: Elem => Elem(node.prefix, node.label, node.attributes, node.scope, rec_xbind(node.child): _*)
-          case n => node
-        }
-      }
-    }
-
-    rec_xbind(xml)
-  }
 
   /**
    * Bind a set of values to parameters and attributes in a block of XML.<p/>
@@ -975,10 +897,12 @@ trait BindHelpers {
             val fixedLabel = av.substring(nsColon.length)
 
             val fake = new Elem(namespace, fixedLabel, fixedAttrs,
-                                e.scope, new Elem(e.namespace,
+                                e.scope, e.minimizeEmpty,
+                                         new Elem(e.namespace,
                                                   e.label,
                                                   fixedAttrs,
                                                   e.scope,
+                                                  e.minimizeEmpty,
                                                   e.child :_*))
 
             BindHelpers._currentNode.doWith(fake) {
@@ -1013,7 +937,7 @@ trait BindHelpers {
             }
           }
           case Group(nodes) => Group(in_bind(nodes))
-          case s: Elem => Elem(s.prefix, s.label, attrBind(s.attributes), if (preserveScope) s.scope else TopScope,
+          case s: Elem => Elem(s.prefix, s.label, attrBind(s.attributes), if (preserveScope) s.scope else TopScope, s.minimizeEmpty,
                                in_bind(s.child): _*)
           case n => n
         }
@@ -1117,7 +1041,7 @@ trait BindHelpers {
           }
         }
         case Group(nodes) => Group(bind(vals, nodes))
-        case s: Elem => Elem(node.prefix, node.label, node.attributes, node.scope, bind(vals, node.child, false, unusedBindings): _*)
+        case s: Elem => Elem(node.prefix, node.label, node.attributes, node.scope, true, bind(vals, node.child, s.minimizeEmpty, unusedBindings): _*)
         case n => node
       }
     }
@@ -1166,7 +1090,7 @@ trait BindHelpers {
               case _ => None
             }.getOrElse(processBind(v.asInstanceOf[Elem].child, atWhat))
 
-          case e: Elem => {Elem(e.prefix, e.label, e.attributes, e.scope, processBind(e.child, atWhat): _*)}
+          case e: Elem => {Elem(e.prefix, e.label, e.attributes, e.scope, e.minimizeEmpty, processBind(e.child, atWhat): _*)}
           case _ => {v}
         }
 
@@ -1350,7 +1274,7 @@ trait BindHelpers {
                    in.label, in.attributes.filter {
                      case up: UnprefixedAttribute => up.key != "id"
                      case _ => true
-                   }, in.scope, in.child :_*)
+                   }, in.scope, in.minimizeEmpty, in.child :_*)
           } else {
             ids += id.text
             in
@@ -1388,12 +1312,12 @@ trait BindHelpers {
                        in.label, in.attributes.filter {
                          case up: UnprefixedAttribute => up.key != "id"
                          case _ => true
-                       }, in.scope, in.child.map(ensure) :_*)
+                       }, in.scope, in.minimizeEmpty, in.child.map(ensure) :_*)
             } else {
               ids += id.text
               new Elem(in.prefix,
                        in.label, in.attributes,
-                       in.scope, in.child.map(ensure) :_*)
+                       in.scope, in.minimizeEmpty, in.child.map(ensure) :_*)
             }
             
           }
@@ -1401,7 +1325,7 @@ trait BindHelpers {
           case _ => 
             new Elem(in.prefix,
                      in.label, in.attributes,
-                     in.scope, in.child.map(ensure) :_*)
+                     in.scope, in.minimizeEmpty, in.child.map(ensure) :_*)
         }
       
       case x => x

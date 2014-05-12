@@ -17,6 +17,13 @@
 package net.liftweb
 package json
 
+// FIXME Needed to due to https://issues.scala-lang.org/browse/SI-6541,
+// which causes existential types to be inferred for the generated
+// unapply of a case class with a wildcard parameterized type.
+// Ostensibly should be fixed in 2.12, which means we're a ways away
+// from being able to remove this, though.
+import scala.language.existentials
+
 import java.lang.reflect.{Constructor => JConstructor, Field, Type, ParameterizedType, GenericArrayType}
 import java.util.Date
 import java.sql.Timestamp
@@ -93,7 +100,7 @@ private[json] object Meta {
                              (implicit formats: Formats): Mapping = {
     import Reflection._
 
-    def constructors(t: Type, visited: Set[Type], context: Option[Context]) = {
+    def constructors(t: Type, visited: Set[Type], context: Option[Context]): List[DeclaredConstructor] = {
       Reflection.constructors(t, formats.parameterNameReader, context).map { case (c, args) =>
         DeclaredConstructor(c, args.map { case (name, t) =>
           toArg(unmangleName(name), t, visited, Context(name, c.getDeclaringClass, args)) })
@@ -229,7 +236,7 @@ private[json] object Meta {
     def constructorArgs(t: Type, constructor: JConstructor[_], 
                         nameReader: ParameterNameReader, context: Option[Context]): List[(String, Type)] = {
       def argsInfo(c: JConstructor[_], typeArgs: Map[TypeVariable[_], Type]) = {
-        val Name = """^((?:[^$]|[$][^0-9]+)+)([$][0-9]+)?$"""r
+        val Name = """^((?:[^$]|[$][^0-9]+)+)([$][0-9]+)?$""".r
         def clean(name: String) = name match {
           case Name(text, junk) => text
         }

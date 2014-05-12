@@ -221,7 +221,7 @@ object JsonParser {
       try { x.asInstanceOf[A] } catch { case _: ClassCastException => parser.fail("unexpected " + x) }
     }
 
-    def peekOption = if (stack isEmpty) None else Some(stack.peek)
+    def peekOption = if (stack.isEmpty) None else Some(stack.peek)
     def isEmpty = stack.isEmpty
   }
 

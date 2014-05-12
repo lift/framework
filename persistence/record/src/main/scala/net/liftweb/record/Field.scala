@@ -295,10 +295,10 @@ trait TypedField[ThisType] extends BaseField {
 
   /** Generic implementation of setFromAny that implements exactly what the doc for setFromAny specifies, using a Manifest to check types */
   protected final def genericSetFromAny(in: Any)(implicit m: Manifest[MyType]): Box[MyType] = in match {
-    case value       if m.erasure.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
-    case Some(value) if m.erasure.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
-    case Full(value) if m.erasure.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
-    case (value)::_  if m.erasure.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
+    case value       if m.runtimeClass.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
+    case Some(value) if m.runtimeClass.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
+    case Full(value) if m.runtimeClass.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
+    case (value)::_  if m.runtimeClass.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
     case     (value: String) => setFromString(value)
     case Some(value: String) => setFromString(value)
     case Full(value: String) => setFromString(value)
@@ -367,9 +367,6 @@ trait MandatoryTypedField[ThisType] extends TypedField[ThisType] with Product1[T
 
   def get: MyType = value
 
-  @deprecated("Use get", "2.6")
-  def is: MyType = value
-
   protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType] = in.map(v => setFilter.foldLeft(v)((prev, f) => f(prev)))
 
   /**
@@ -415,9 +412,6 @@ trait OptionalTypedField[ThisType] extends TypedField[ThisType] with Product1[Bo
   def value: Option[MyType] = valueBox
 
   def get: Option[MyType] = value
-
-  @deprecated("Use get", "2.6")
-  def is: Option[MyType] = value
 
   protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType] =  setFilter.foldLeft(in){ (prev, f) =>
 	prev match {

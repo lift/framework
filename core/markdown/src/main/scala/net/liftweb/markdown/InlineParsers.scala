@@ -19,6 +19,8 @@ package net.liftweb.markdown
  * Christoph Henkelmann http://henkelmann.eu/
  */
 
+import scala.language.postfixOps
+
 /**
  * A parser for inline markdown, markdown escapes and XML escapes.
  * This is used by the result classes of the block parsers to handle

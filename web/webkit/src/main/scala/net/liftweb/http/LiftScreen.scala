@@ -62,14 +62,6 @@ trait AbstractScreen extends Factory {
     _fieldList = _fieldList ::: List(fields)
   }
 
-  /**
-   * Use addFields
-   *
-   * @deprecated
-   */
-  @deprecated("use addFields()", "2.4")
-  protected def _register(field: () => FieldContainer) = addFields(field)
-
   protected def hasUploadField: Boolean = screenFields.foldLeft(false)(_ | _.uploadField_?)
 
   /**

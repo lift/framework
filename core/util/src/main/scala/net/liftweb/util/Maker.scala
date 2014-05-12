@@ -19,9 +19,12 @@ package util
 
 import java.util.concurrent.{ConcurrentHashMap => CHash, Callable}
 import java.lang.ThreadLocal
+
+import scala.language.implicitConversions
 import scala.reflect.Manifest
+import scala.xml.NodeSeq
+
 import common._
-import xml.NodeSeq
 
 /**
  * A trait that does basic dependency injection.
@@ -206,11 +209,6 @@ object Vendor {
     implicit def vend: T = f
     implicit def make: Box[T] = Full(f)
   }
-
-  @deprecated("This function name was misspelled. Please use the correctly spelled alternative if you need to call it explicitly.", "2.6")
-  def valToVender[T](value: T): Vendor[T] = apply(value)
-  @deprecated("This function name was misspelled. Please use the correctly spelled alternative if you need to call it explicitly.", "2.6")
-  def funcToVender[T](f: () => T): Vendor[T] = apply(f)
 
   implicit def valToVendor[T](value: T): Vendor[T] = apply(value)
   implicit def funcToVendor[T](f: () => T): Vendor[T] = apply(f)

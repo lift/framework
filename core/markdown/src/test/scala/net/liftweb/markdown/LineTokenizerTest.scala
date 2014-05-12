@@ -28,7 +28,7 @@ import org.scalatest.junit.JUnitRunner
  * Tests the Line Tokenizer that prepares input for parsing.
  */
 @RunWith(classOf[JUnitRunner])
-class LineTokenizerTest extends LineTokenizer with FlatSpec with ShouldMatchers{
+class LineTokenizerTest extends LineTokenizer with FlatSpec with ShouldMatchers {
 
     "The LineTokenizer" should "split input lines correctly" in {
         splitLines("line1\nline2\n") should equal (List("line1", "line2"))
@@ -70,6 +70,7 @@ new OtherLine("more text")
         def p(line:String) = {
             lineToken(new LineReader(Seq(line))) match {
                 case Success(result, _) => result
+                case _ => fail("Line tokenization failed.")
             }
         }
         p("a line")          should equal (new OtherLine("a line"))

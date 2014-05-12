@@ -63,9 +63,6 @@ trait Dependent {
 
   private var _iDependOn: List[WeakReference[Object]] = Nil
 
-  @deprecated("please used the correctly spelled unregisterFromAllDependencies", "2.5")
-  protected def unregisterFromAllDepenencies() = unregisterFromAllDependencies()
-
   /**
    * Remove from all dependencies
    */
@@ -191,6 +188,8 @@ final case class DynamicCell[T](f: () => T) extends Cell[T] {
  * The companion object that has a helpful constructor
  */
 object ValueCell {
+  import scala.language.implicitConversions
+
   def apply[A](value: A): ValueCell[A] = new ValueCell(value)
 
   implicit def vcToT[T](in: ValueCell[T]): T = in.get

@@ -70,7 +70,7 @@ class MongoPasswordField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType, min
     funcName => <input type="password"
       name={funcName}
       value=""
-      tabindex={tabIndex toString}/>}
+      tabindex={tabIndex.toString}/>}
 
   override def toForm: Box[NodeSeq] =
     uniqueFieldId match {

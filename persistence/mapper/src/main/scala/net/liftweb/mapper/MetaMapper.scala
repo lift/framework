@@ -21,6 +21,8 @@ import java.lang.reflect.Method
 import java.sql.{ResultSet, Types, PreparedStatement}
 import java.util.{Date, Locale}
 
+import scala.language.existentials
+
 import collection.mutable.{ListBuffer, HashMap}
 import collection.immutable.{SortedMap, TreeMap}
 import xml._
@@ -28,7 +30,7 @@ import xml._
 import common._
 import json._
 import util.Helpers._
-import util.{SourceFieldMetadata, NamedPF, FieldError, Helpers}
+import util.{SourceFieldMetadata, NamedPF, FieldError, Helpers,CssSel,PassThru}
 import http.{LiftRules, S, SHtml, RequestMemoize, Factory}
 import http.js._
 
@@ -1054,10 +1056,31 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     }
   }
 
-  def fieldMapperPF(transform: (BaseOwnedMappedField[A] => NodeSeq), actual: A): PartialFunction[String, NodeSeq => NodeSeq] = {
-    Map.empty ++ mappedFieldList.map ( mf =>
-      (mf.name, ((ignore: NodeSeq) => transform(??(mf.method, actual))))
-    )
+  
+  /**
+   * A set of CssSels that can be used to bind this MetaMapper's fields.
+   *
+   * Elements with a class matching the field name are mapped to the NodeSeq
+   * produced by the fieldHtml function that is passed in.
+   *
+   * So, with a MetaMapper that has three fields, name, date, and description,
+   * the resulting CSS selector transforms are:
+   *
+   * {{{
+   * Seq(
+   *   ".name" #> fieldHtml(-name field-),
+   *   ".date" #> fieldHtml(-date field-),
+   *   ".description" #> fieldHtml(-description field-)
+   * )
+   * }}}
+   *
+   * Above, -name field-, -date field-, and -description field- refer to the
+   * actual MappedField objects for those fields.
+   */
+  def fieldMapperTransforms(fieldHtml: (BaseOwnedMappedField[A]=>NodeSeq), mappedObject: A): Seq[CssSel] = {
+    mappedFieldList.map { field =>
+      s".${field.name}" #> fieldHtml(??(field.method, mappedObject))
+    }
   }
 
   private[mapper] def checkFieldNames(in: A): Unit = {
@@ -1126,7 +1149,9 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
     for (v <- mapperAccessMethods) {
       v.invoke(this) match {
-        case mf: MappedField[AnyRef, A] if !mf.ignoreField_? =>
+        case untypedMf: MappedField[_, _] if !untypedMf.ignoreField_? =>
+          val mf = untypedMf.asInstanceOf[MappedField[AnyRef,A]]
+
           mf.setName_!(v.getName)
           tArray += FieldHolder(mf.name, v, mf)
           for (colName <- mf.dbColumnNames(v.getName).map(MapperRules.quoteColumnName.vend).map(_.toLowerCase)) {
@@ -1239,10 +1264,12 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
   def asHtml(toLine: A): NodeSeq =
   Text(internalTableName_$_$) :: Text("={ ") ::
-  (for (mft <- mappedFieldList if mft.field.dbDisplay_? ;
-        val field = ??(mft.method, toLine)) yield
-   <span>{field.displayName}={field.asHtml}&nbsp;</span>
-  ) :::List(Text(" }"))
+    (for {
+      mft <- mappedFieldList if mft.field.dbDisplay_?
+      field = ??(mft.method, toLine)
+    } yield {
+     <span>{field.displayName}={field.asHtml}&nbsp;</span>
+    }) ::: List(Text(" }"))
 
 
   /**
@@ -1972,49 +1999,65 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
     val Name = internal_dbTableName
 
     NamedPF("crud "+Name) {
-      case Name :: "add"  :: _ => addSnippet
-      case Name :: "edit" :: _ => editSnippet
-      case Name :: "view" :: _ => viewSnippet
+      case Name :: "addForm"  :: _ => addFormSnippet
+      case Name :: "editForm" :: _ => editFormSnippet
+      case Name :: "viewTransform" :: _ => viewTransform
     }
   }
 
-  /**
-   * Default snippet for modification. Used by the default add and edit snippets.
+   /**
+   * Provides basic transformation of <code>html</code> to a form for the
+   * given <code>obj</code>. When the form is submitted, <code>cleanup</code>
+   * is run.
    */
-  def modSnippet(xhtml: NodeSeq, obj: A, cleanup: (A => Unit)): NodeSeq = {
+  def formSnippet(html: NodeSeq, obj: A, cleanup: (A => Unit)): NodeSeq = {
     val name = internal_dbTableName
 
     def callback() {
       cleanup(obj)
     }
 
-    xbind(name, xhtml)(obj.fieldPF orElse obj.fieldMapperPF(_.toForm.openOr(Text(""))) orElse {
-        case "submit" => label => SHtml.submit(label.text, callback _)
-      })
+    val submitTransform: (NodeSeq)=>NodeSeq =
+      "type=submit" #> SHtml.onSubmitUnit(callback _)
+
+    val otherTransforms =
+      obj.fieldMapperTransforms(_.toForm openOr Text("")).reverse ++
+      obj.fieldTransforms.reverse
+
+    otherTransforms.foldRight(submitTransform)(_ andThen _) apply html
   }
 
   /**
-   * Default add snippet. Override to change behavior of the add snippet.
+   * Base add form snippet. Fetches object from
+   * <code>addSnippetSetup</code> and invokes
+   * <code>addSnippetCallback</code> when the form is submitted.
    */
-  def addSnippet(xhtml: NodeSeq): NodeSeq = {
-    modSnippet(xhtml, addSnippetSetup, addSnippetCallback _)
+  def addFormSnippet(html: NodeSeq): NodeSeq = {
+    formSnippet(html, addSnippetSetup, addSnippetCallback _)
+  }
+
+ /**
+   * Base edit form snippet. Fetches object from
+   * <code>editSnippetSetup</code> and invokes
+   * <code>editSnippetCallback</code> when the form is submitted.
+   */
+  def editFormSnippet(html: NodeSeq): NodeSeq = {
+    formSnippet(html, editSnippetSetup, editSnippetCallback _)
   }
 
   /**
-   * Default edit snippet. Override to change behavior of the edit snippet.
+   * Basic transformation of <code>html</code> to HTML for displaying
+   * the object from <code>viewSnippetSetup</code>.
    */
-  def editSnippet(xhtml: NodeSeq): NodeSeq = {
-    modSnippet(xhtml, editSnippetSetup, editSnippetCallback _)
-  }
-
-  /**
-   * Default view snippet. Override to change behavior of the view snippet.
-   */
-  def viewSnippet(xhtml: NodeSeq): NodeSeq = {
-    val Name = internal_dbTableName
+  def viewTransform(html: NodeSeq): NodeSeq = {
+    val name = internal_dbTableName
     val obj: A = viewSnippetSetup
 
-    xbind(Name, xhtml)(obj.fieldPF orElse obj.fieldMapperPF(_.asHtml))
+    val otherTransforms =
+      obj.fieldMapperTransforms(_.asHtml).reverse ++
+      obj.fieldTransforms.reverse
+
+    otherTransforms.foldRight(PassThru: (NodeSeq)=>NodeSeq)(_ andThen _) apply html
   }
 
   /**

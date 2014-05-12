@@ -46,10 +46,10 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
   def setFromAny(in: Any): Box[Map[String, MapValueType]] = {
     in match {
       case dbo: DBObject => setFromDBObject(dbo)
-      case map: Map[String, MapValueType] => setBox(Full(map))
-      case Some(map: Map[String, MapValueType]) => setBox(Full(map))
-      case Full(map: Map[String, MapValueType]) => setBox(Full(map))
-      case (map: Map[String, MapValueType]) :: _ => setBox(Full(map))
+      case map: Map[_, _] => setBox(Full(map.asInstanceOf[Map[String, MapValueType]]))
+      case Some(map: Map[_, _]) => setBox(Full(map.asInstanceOf[Map[String, MapValueType]]))
+      case Full(map: Map[_, _]) => setBox(Full(map.asInstanceOf[Map[String, MapValueType]]))
+      case (map: Map[_, _]) :: _ => setBox(Full(map.asInstanceOf[Map[String, MapValueType]]))
       case s: String => setFromString(s)
       case Some(s: String) => setFromString(s)
       case Full(s: String) => setFromString(s)
