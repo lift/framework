@@ -64,6 +64,9 @@
       ajaxGet: function() {
         consoleOrAlert("ajaxGet function must be defined in settings");
       },
+      onDocumentReady: function(fn) {
+        consoleOrAlert("documentReady function must be defined in settings");
+      },
       cometGetTimeout: 140000,
       cometFailureRetryTimeout: 10000,
       cometOnSessionLost: function() {
@@ -526,7 +529,7 @@
         this.extend(settings, options);
 
         var lift = this;
-        $(document).ready(function() {
+        options.onDocumentReady(function() {
           var gc = document.body.getAttribute('data-lift-gc');
           if (gc) {
             lift.startGc();
@@ -608,6 +611,7 @@
   })();
 
   window.liftJQuery = {
+    onDocumentReady: jQuery(document).ready,
     ajaxPost: function(url, data, dataType, onSuccess, onFailure) {
       var processData = true,
           contentType = 'application/x-www-form-urlencoded; charset=UTF-8';
@@ -645,6 +649,40 @@
   };
 
   window.liftVanilla = {
+    onDocumentReady: function(fn) {
+      // Taken from https://github.com/dperini/ContentLoaded/blob/master/src/contentloaded.js,
+      // as also used (with modifications) in jQuery.
+      var done = false, top = true,
+
+      win = window, doc = win.document, root = doc.documentElement,
+
+      add = doc.addEventListener ? 'addEventListener' : 'attachEvent',
+      rem = doc.addEventListener ? 'removeEventListener' : 'detachEvent',
+      pre = doc.addEventListener ? '' : 'on',
+
+      init = function(e) {
+        if (e.type == 'readystatechange' && doc.readyState != 'complete') return;
+        (e.type == 'load' ? win : doc)[rem](pre + e.type, init, false);
+        if (!done && (done = true)) fn.call(win, e.type || e);
+      },
+
+      poll = function() {
+        try { root.doScroll('left'); } catch(e) { setTimeout(poll, 50); return; }
+        init('poll');
+      };
+
+      if (doc.readyState == 'complete') {
+        fn.call(win, 'lazy');
+      } else {
+        if (doc.createEventObject && root.doScroll) {
+            try { top = !win.frameElement; } catch(e) { }
+            if (top) poll();
+        }
+        doc[add](pre + 'DOMContentLoaded', init, false);
+        doc[add](pre + 'readystatechange', init, false);
+        win[add](pre + 'load', init, false);
+      }
+    },
     ajaxPost: function(url, data, dataType, onSuccess, onFailure, onUploadProgress) {
       var settings = this;
 
