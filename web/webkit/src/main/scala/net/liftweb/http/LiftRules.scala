@@ -1573,16 +1573,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   new FactoryMaker(() => () => (session: LiftSession) => true) {}
 
   /**
-   * Tells Lift if the Ajax/Comet JavaScript should be initialized with LiftRules via LiftJavaScript
+   * Tells Lift which JavaScript settings to use. If Empty, does not
+   * include the JS settings.
    */
-  val autoIncludeJSSettings: FactoryMaker[() => LiftSession => Boolean] =
-  new FactoryMaker(() => () => (session: LiftSession) => true) {}
-
-  /**
-   * Tells Lift which JavaScript settings to use.
-   */
-  val javascriptSettings: FactoryMaker[() => LiftSession => JsObj] =
-  new FactoryMaker(() => () => (session: LiftSession) => LiftJavaScript.settings) {}
+  val javaScriptSettings: FactoryMaker[() => Box[LiftSession => JsObj]] =
+  new FactoryMaker(() => () => (Full((session: LiftSession) => LiftJavaScript.settings): Box[LiftSession => JsObj])) {}
 
   /**
    * Define the XHTML validator
