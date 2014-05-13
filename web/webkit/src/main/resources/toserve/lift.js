@@ -789,14 +789,6 @@
     }
   };
 
-  // legacy
-  window.liftAjax = {
-    lift_successRegisterGC: window.lift.register,
-    lift_ajaxHandler: window.lift.ajax,
-    lift_sessionLost: window.lift.ajaxOnSessionLost,
-    addPageNameAndVersion: window.lift.calcAjaxUrl
-  };
-
   window.liftUtils = {
     lift_blurIfReturn: function(e) {
       var code;
