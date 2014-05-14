@@ -24,7 +24,6 @@ import JsCmds._
 
 import common._
 import util._
-import db.{ConnectionIdentifier, DB}
 import Helpers._
 import scala.xml._
 import scala.reflect.Manifest

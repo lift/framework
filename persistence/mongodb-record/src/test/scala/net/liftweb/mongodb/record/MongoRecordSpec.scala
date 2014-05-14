@@ -925,7 +925,7 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       RecordRules.fieldName.doWith((_, name) => snakify(name)) {
         val rec = CustomFieldName.createRecord
         rec.customField.name must_== "custom_field"
-        rec.save
+        rec.save()
 
         CustomFieldName.find(rec.id.get) must_== Full(rec)
       }
