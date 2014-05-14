@@ -17,6 +17,8 @@
 package net.liftweb
 package mongodb
 
+import util.DefaultConnectionIdentifier
+
 import java.util.UUID
 import java.util.regex.Pattern
 
@@ -54,7 +56,7 @@ class MongoDirectSpec extends Specification with MongoTestKit {
     doc.put("info", info)
 
     // use the Mongo instance directly
-    MongoDB.use(DefaultMongoIdentifier) ( db => {
+    MongoDB.use(DefaultConnectionIdentifier) ( db => {
       val coll = db.getCollection("testCollection")
 
       // save the doc to the db
