@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 WorldWide Conferencing, LLC
+ * Copyright 2006-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package db
 
 import java.sql.Connection
 import net.liftweb.common._
+import net.liftweb.util.ConnectionIdentifier
 
 /**
  * Vend JDBC connections

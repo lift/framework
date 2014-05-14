@@ -61,10 +61,6 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   */
   def collectionName: String = fixCollectionName
 
-  // override this to specify a MongoIdentifier for this MongoDocument type
-  @deprecated("use connectionIdentifier instead", "2.6")
-  def mongoIdentifier: MongoIdentifier = DefaultMongoIdentifier
-
   /*
    * Use the collection associated with this Meta.
    */
