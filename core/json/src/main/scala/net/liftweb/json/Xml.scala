@@ -111,7 +111,7 @@ object Xml {
       }
       case XNode(xs) => JObject(mkFields(xs))
       case XArray(elems) => JArray(elems.map(toJValue))
-    } 
+    }
 
     def mkFields(xs: List[(String, XElem)]) = 
       xs.flatMap { case (name, value) => (value, toJValue(value)) match {
@@ -145,7 +145,7 @@ object Xml {
       case List(x @ XLeaf(_, _ :: _)) => toJValue(x)
       case List(x) => JObject(JField(nameOf(xml.head), toJValue(x)) :: Nil)
       case x => JArray(x.map(toJValue))
-    } 
+    }
   }
 
   /** Convert given JSON to XML.
