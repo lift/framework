@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ class BasicTestRecord private () extends Record[BasicTestRecord] {
 
   object field1 extends StringField(this,10)
   object field2 extends StringField(this,10)
-  object field3 extends StringField(this,10)
+  object fieldThree extends StringField(this,10)
 }
 
 object BasicTestRecord extends BasicTestRecord with MetaRecord[BasicTestRecord] {

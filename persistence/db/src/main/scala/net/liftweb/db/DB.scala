@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 WorldWide Conferencing, LLC
+ * Copyright 2006-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1092,24 +1092,6 @@ class SuperConnection(val connection: Connection, val releaseFunc: () => Unit, v
 object SuperConnection {
   implicit def superToConn(in: SuperConnection): Connection = in.connection
 }
-
-trait ConnectionIdentifier {
-  def jndiName: String
-
-  override def toString() = "ConnectionIdentifier(" + jndiName + ")"
-
-  override def hashCode() = jndiName.hashCode()
-
-  override def equals(other: Any): Boolean = other match {
-    case ci: ConnectionIdentifier => ci.jndiName == this.jndiName
-    case _ => false
-  }
-}
-
-case object DefaultConnectionIdentifier extends ConnectionIdentifier {
-  var jndiName = "lift"
-}
-
 
 /**
  * The standard DB vendor.
