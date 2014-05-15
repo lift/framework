@@ -78,7 +78,7 @@ Applicative style parsing with Scalaz
 Migration from older versions
 =============================
 
-2.x (FIXME: add correct version once released) -> 
+2.6 ->
 -------------------------------------------------
 
 JField is no longer a JValue. This means more type safety since it is no longer possible
