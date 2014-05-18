@@ -18,6 +18,7 @@ package net.liftweb
 package mongodb
 
 import BsonDSL._
+import util.{ConnectionIdentifier, DefaultConnectionIdentifier}
 
 import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
@@ -33,12 +34,12 @@ import json.JsonParser._
 
 package mongotestdocs {
   /*
-  * MongoIdentifiers
+  * ConnectionIdentifiers
   */
-  object TstDBa extends MongoIdentifier {
+  object TstDBa extends ConnectionIdentifier {
     val jndiName = "test_a"
   }
-  object TstDBb extends MongoIdentifier {
+  object TstDBb extends ConnectionIdentifier {
     val jndiName = "test_b"
   }
 
@@ -50,7 +51,7 @@ package mongotestdocs {
   }
   object SimplePerson extends MongoDocumentMeta[SimplePerson] {
     override val collectionName = "simplepersons"
-    override def mongoIdentifier = DefaultMongoIdentifier
+    override def connectionIdentifier = DefaultConnectionIdentifier
     override def formats = super.formats + new ObjectIdSerializer
     // index name
     ensureIndex(("name" -> 1))
@@ -69,7 +70,7 @@ package mongotestdocs {
   }
 
   object Person extends MongoDocumentMeta[Person] {
-    override def mongoIdentifier = TstDBa
+    override def connectionIdentifier = TstDBa
     override def collectionName = "mypersons"
     override def formats = super.formats + new UUIDSerializer
   }

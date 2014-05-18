@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package mongodb 
+package net.liftweb
+package mongodb
+
+import util.{ConnectionIdentifier, DefaultConnectionIdentifier}
 
 import json.JsonAST.JObject
 
@@ -51,6 +53,22 @@ trait MongoDocument[BaseDocument] extends JsonObject[BaseDocument] {
 */
 trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with MongoMeta[BaseDocument] {
 
+  /**
+    * Override this to specify a ConnectionIdentifier.
+    */
+  def connectionIdentifier: ConnectionIdentifier = DefaultConnectionIdentifier
+
+  /*
+   * Use the collection associated with this Meta.
+   */
+  def useColl[T](f: DBCollection => T): T =
+    MongoDB.useCollection(connectionIdentifier, collectionName)(f)
+
+  /*
+   * Use the db associated with this Meta.
+   */
+  def useDb[T](f: DB => T): T = MongoDB.use(connectionIdentifier)(f)
+
   def create(dbo: DBObject): BaseDocument = {
     create(JObjectParser.serialize(dbo).asInstanceOf[JObject])
   }
@@ -59,7 +77,7 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   * Find a single row by a qry, using a DBObject.
   */
   def find(qry: DBObject): Option[BaseDocument] = {
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
+    MongoDB.useCollection(connectionIdentifier, collectionName) ( coll =>
       coll.findOne(qry) match {
         case null => None
         case dbo => {
@@ -104,9 +122,9 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   def findAll: List[BaseDocument] = {
     import scala.collection.JavaConversions._
 
-    MongoDB.useCollection(mongoIdentifier, collectionName)(coll => {
-      /** Mongo Cursors are both Iterable and Iterator, 
-       * so we need to reduce ambiguity for implicits 
+    MongoDB.useCollection(connectionIdentifier, collectionName)(coll => {
+      /** Mongo Cursors are both Iterable and Iterator,
+       * so we need to reduce ambiguity for implicits
        */
       (coll.find: Iterator[DBObject]).map(create).toList
     })
@@ -120,15 +138,15 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
 
     val findOpts = opts.toList
 
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll => {
+    MongoDB.useCollection(connectionIdentifier, collectionName) ( coll => {
       val cur = coll.find(qry).limit(
         findOpts.find(_.isInstanceOf[Limit]).map(x => x.value).getOrElse(0)
       ).skip(
         findOpts.find(_.isInstanceOf[Skip]).map(x => x.value).getOrElse(0)
       )
       sort.foreach( s => cur.sort(s))
-      /** Mongo Cursors are both Iterable and Iterator, 
-       * so we need to reduce ambiguity for implicits 
+      /** Mongo Cursors are both Iterable and Iterator,
+       * so we need to reduce ambiguity for implicits
        */
       (cur: Iterator[DBObject]).map(create).toList
     })
@@ -174,7 +192,7 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   * Save a document to the db
   */
   def save(in: BaseDocument) {
-    MongoDB.use(mongoIdentifier) ( db => {
+    MongoDB.use(connectionIdentifier) ( db => {
       save(in, db)
     })
   }
@@ -197,7 +215,7 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   * Update document with a JObject query
   */
   def update(qry: JObject, newbd: BaseDocument, opts: UpdateOption*) {
-    MongoDB.use(mongoIdentifier) ( db => {
+    MongoDB.use(connectionIdentifier) ( db => {
       update(qry, newbd, db, opts :_*)
     })
   }

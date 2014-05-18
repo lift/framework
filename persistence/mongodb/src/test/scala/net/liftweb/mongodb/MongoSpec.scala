@@ -17,6 +17,8 @@
 package net.liftweb
 package mongodb
 
+import util.{ConnectionIdentifier, DefaultConnectionIdentifier}
+
 import org.specs2.mutable.Specification
 import org.specs2.execute.Result
 
@@ -25,11 +27,11 @@ import com.mongodb._
 class MongoSpec extends Specification  {
   "Mongo Specification".title
 
-  case object TestMongoIdentifier extends MongoIdentifier {
+  case object TestMongoIdentifier extends ConnectionIdentifier {
     val jndiName = "test_a"
   }
 
-  def passDefinitionTests(id: MongoIdentifier, mc: MongoClient, db: String): Result = {
+  def passDefinitionTests(id: ConnectionIdentifier, mc: MongoClient, db: String): Result = {
     // define the db
     MongoDB.defineDb(id, mc, db)
 
@@ -44,9 +46,9 @@ class MongoSpec extends Specification  {
     }
 
     // using an undefined identifier throws an exception
-    MongoDB.use(DefaultMongoIdentifier) { db =>
+    MongoDB.use(DefaultConnectionIdentifier) { db =>
       db.getLastError.ok must beEqualTo(true)
-    } must throwA(new MongoException("Mongo not found: MongoIdentifier(test)"))
+    } must throwA(new MongoException("Mongo not found: ConnectionIdentifier(lift)"))
     // remove defined db
     MongoDB.closeAll()
     success
