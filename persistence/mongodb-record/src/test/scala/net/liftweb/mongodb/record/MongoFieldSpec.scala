@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 WorldWide Conferencing, LLC
+ * Copyright 2006-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 
 package net.liftweb
-package mongodb
-package record
+package mongodb.record
 
 import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
@@ -26,9 +25,12 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.Fragment
 import org.specs2.specification.AroundExample
 
+import org.joda.time.DateTime
+
 import common._
 import json._
-import BsonDSL._
+import mongodb.{Meta => DBOMeta}
+import mongodb.BsonDSL._
 import util.Helpers.randomString
 import http.{LiftSession, S}
 import http.js.JE._
@@ -341,6 +343,134 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
         rec.mandatoryIntListField,
         JsArray(Num(4), Num(5), Num(6)),
         JArray(List(JInt(4), JInt(5), JInt(6))),
+        Empty
+      )
+    }
+  }
+
+  "MongoListField (ObjectId)" should {
+    "function correctly" in {
+      val rec = MongoListTestRecord.createRecord
+      val oid1 = ObjectId.get
+      val oid2 = ObjectId.get
+      val oid3 = ObjectId.get
+      val oid4 = ObjectId.get
+      val oid5 = ObjectId.get
+      val oid6 = ObjectId.get
+      val lst = List(oid1, oid2, oid3)
+      val lst2 = List(oid4, oid5, oid6)
+      passBasicTests(lst, lst2, rec.objectIdRefListField, Empty)
+      passConversionTests(
+        lst,
+        rec.objectIdRefListField,
+        JsArray(Str(oid1.toString), Str(oid2.toString), Str(oid3.toString)),
+        JArray(List(
+          JObject(List(JField("$oid", JString(oid1.toString)))),
+          JObject(List(JField("$oid", JString(oid2.toString)))),
+          JObject(List(JField("$oid", JString(oid3.toString))))
+        )),
+        Empty
+      )
+    }
+  }
+
+  "MongoListField (Pattern)" should {
+    "function correctly" in {
+      val rec = MongoListTestRecord.createRecord
+      val ptrn1 = Pattern.compile("^Mo", Pattern.CASE_INSENSITIVE)
+      val ptrn2 = Pattern.compile("^MON", Pattern.CASE_INSENSITIVE)
+      val ptrn3 = Pattern.compile("^TUE")
+      val ptrn4 = Pattern.compile("^WED")
+      val lst1 = List(ptrn1, ptrn2)
+      val lst2 = List(ptrn3, ptrn4)
+      passBasicTests(lst1, lst2, rec.patternListField, Empty)
+      passConversionTests(
+        lst1,
+        rec.patternListField,
+        JsArray(Str(ptrn1.toString), Str(ptrn2.toString)),
+        JArray(List(
+          DBOMeta.patternAsJValue(ptrn1),
+          DBOMeta.patternAsJValue(ptrn2)
+        )),
+        Empty,
+        false
+      )
+    }
+  }
+
+  "MongoListField (Date)" should {
+    "function correctly" in {
+      val rec = MongoListTestRecord.createRecord
+      val dt1 = new Date
+      val dt2 = new Date
+      val dt3 = new Date
+      val dt4 = new Date
+      val dt5 = new Date
+      val dt6 = new Date
+      val lst = List(dt1, dt2, dt3)
+      val lst2 = List(dt4, dt5, dt6)
+      passBasicTests(lst, lst2, rec.dateListField, Empty)
+      passConversionTests(
+        lst,
+        rec.dateListField,
+        JsArray(Str(dt1.toString), Str(dt2.toString), Str(dt3.toString)),
+        JArray(List(
+          DBOMeta.dateAsJValue(dt1, MongoListTestRecord.formats),
+          DBOMeta.dateAsJValue(dt2, MongoListTestRecord.formats),
+          DBOMeta.dateAsJValue(dt3, MongoListTestRecord.formats)
+        )),
+        Empty
+      )
+    }
+  }
+
+  "MongoListField (UUID)" should {
+    "function correctly" in {
+      val rec = MongoListTestRecord.createRecord
+      val uuid1 = UUID.randomUUID
+      val uuid2 = UUID.randomUUID
+      val uuid3 = UUID.randomUUID
+      val uuid4 = UUID.randomUUID
+      val uuid5 = UUID.randomUUID
+      val uuid6 = UUID.randomUUID
+      val lst = List(uuid1, uuid2, uuid3)
+      val lst2 = List(uuid4, uuid5, uuid6)
+      passBasicTests(lst, lst2, rec.uuidListField, Empty)
+      passConversionTests(
+        lst,
+        rec.uuidListField,
+        JsArray(Str(uuid1.toString), Str(uuid2.toString), Str(uuid3.toString)),
+        JArray(List(
+          DBOMeta.uuidAsJValue(uuid1),
+          DBOMeta.uuidAsJValue(uuid2),
+          DBOMeta.uuidAsJValue(uuid3)
+        )),
+        Empty
+      )
+    }
+  }
+
+  "MongoListField (DateTime)" should {
+    "function correctly" in {
+      val rec = MongoJodaListTestRecord.createRecord
+      val dt1 = new DateTime
+      val dt2 = new DateTime
+      val dt3 = new DateTime
+      val dt4 = new DateTime
+      val dt5 = new DateTime
+      val dt6 = new DateTime
+      val lst = List(dt1, dt2, dt3)
+      val lst2 = List(dt4, dt5, dt6)
+      passBasicTests(lst, lst2, rec.dateTimeListField, Empty)
+      passConversionTests(
+        lst,
+        rec.dateTimeListField,
+        JsArray(Str(dt1.toString), Str(dt2.toString), Str(dt3.toString)),
+        JArray(List(
+          DBOMeta.dateAsJValue(dt1.toDate, MongoListTestRecord.formats),
+          DBOMeta.dateAsJValue(dt2.toDate, MongoListTestRecord.formats),
+          DBOMeta.dateAsJValue(dt3.toDate, MongoListTestRecord.formats)
+        )),
         Empty
       )
     }

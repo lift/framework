@@ -19,21 +19,22 @@ package mongodb
 package record
 package field
 
-import java.util.Date
+import java.util.{Date, UUID}
+import java.util.regex.Pattern
 
 import scala.collection.JavaConversions._
 import scala.xml.NodeSeq
 
 import common.{Box, Empty, Failure, Full}
-import json.JsonAST._
-import json.JsonParser
 import http.SHtml
 import http.js.JE.{JsNull, JsRaw}
+import json._
 import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
 import util.Helpers._
 
 import com.mongodb._
 import org.bson.types.ObjectId
+import org.joda.time.DateTime
 
 /**
   * List field.
@@ -41,7 +42,7 @@ import org.bson.types.ObjectId
   * Supported types:
   * primitives - String, Int, Long, Double, Float, Byte, BigInt,
   * Boolean (and their Java equivalents)
-  * date types - java.util.Date, Calendar, org.joda.time.DateTime
+  * date types - java.util.Date, org.joda.time.DateTime
   * mongo types - ObjectId, Pattern, UUID
   *
   * If you need to support other types, you will need to override the
@@ -55,7 +56,7 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
   with MandatoryTypedField[List[ListType]]
   with MongoFieldFlavor[List[ListType]]
 {
-  import Meta.Reflection._
+  import mongodb.Meta.Reflection._
 
   lazy val mf = manifest[ListType]
 
@@ -80,9 +81,20 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
     }
   }
 
-  def setFromJValue(jvalue: JValue) = jvalue match {
+  def setFromJValue(jvalue: JValue): Box[MyType] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
-    case JArray(arr) => setBox(Full(arr.map(_.values.asInstanceOf[ListType])))
+    case JArray(arr) => setBox(Full((arr.map { jv => (jv match {
+      case JObject(JField("$oid", JString(s)) :: Nil) if (ObjectId.isValid(s)) =>
+        new ObjectId(s)
+      case JObject(JField("$regex", JString(s)) :: JField("$flags", JInt(f)) :: Nil) =>
+        Pattern.compile(s, f.intValue)
+      case JObject(JField("$dt", JString(s)) :: Nil) =>
+        val dt = owner.meta.formats.dateFormat.parse(s).getOrElse(throw new MongoException("Can't parse "+ s + " to Date"))
+        if (owner.meta.formats.customSerializers.exists { _.isInstanceOf[DateTimeSerializer] }) new DateTime(dt)
+        else dt
+      case JObject(JField("$uuid", JString(s)) :: Nil) => UUID.fromString(s)
+      case other => other.values
+    }).asInstanceOf[ListType]})))
     case other => setBox(FieldHelpers.expectedA("JArray", other))
   }
 
