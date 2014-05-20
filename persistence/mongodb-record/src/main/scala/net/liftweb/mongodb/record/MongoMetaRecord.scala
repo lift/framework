@@ -31,6 +31,7 @@ import net.liftweb.mongodb.record.field._
 import net.liftweb.record.{MandatoryTypedField, MetaRecord, Record}
 import net.liftweb.record.FieldHelpers.expectedA
 import net.liftweb.record.field._
+import net.liftweb.util.ConnectionIdentifier
 
 import com.mongodb._
 import com.mongodb.util.JSON
@@ -40,6 +41,11 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   extends BsonMetaRecord[BaseRecord] with MongoMeta[BaseRecord] {
 
   self: BaseRecord =>
+
+  /**
+    * Override this to specify a ConnectionIdentifier.
+    */
+  override def connectionIdentifier: ConnectionIdentifier = mongoIdentifier
 
   /*
    * Utility method for determining the value of _id.
