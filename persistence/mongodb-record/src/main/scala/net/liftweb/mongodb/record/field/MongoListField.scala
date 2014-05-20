@@ -36,8 +36,17 @@ import com.mongodb._
 import org.bson.types.ObjectId
 
 /**
-  * List field. Compatible with most object types,
-  * including Pattern, ObjectId, Date, and UUID.
+  * List field.
+  *
+  * Supported types:
+  * primitives - String, Int, Long, Double, Float, Byte, BigInt,
+  * Boolean (and their Java equivalents)
+  * date types - java.util.Date, Calendar, org.joda.time.DateTime
+  * mongo types - ObjectId, Pattern, UUID
+  *
+  * If you need to support other types, you will need to override the
+  * asDBObject and setFromDBObject functions accordingly. And the
+  * asJValue and setFromJValue functions if you will be using them.
   *
   * Note: setting optional_? = false will result in incorrect equals behavior when using setFromJValue
   */
