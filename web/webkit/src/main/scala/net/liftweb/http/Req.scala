@@ -868,7 +868,7 @@ class Req(val path: ParsePath,
    * A request that is neither Ajax or Comet
    */
   lazy val standardRequest_? : Boolean = path.partPath match {
-    case x :: _ if x == LiftRules.ajaxPath || x == LiftRules.cometPath => false
+    case x :: _ if x == LiftRules.liftPath => false
     case _ => true
   }
 

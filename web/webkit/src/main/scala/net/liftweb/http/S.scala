@@ -993,7 +993,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
 
 
   private object resourceValueCache extends TransientRequestMemoize[(String, Locale), String]
-  
+
   /**
    * Get a localized string or return the original string.
    * We first try your own bundle resources, if that fails, we try
@@ -1021,7 +1021,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # resourceBundles
    */
   def ?(str: String, locale: Locale): String = resourceValueCache.get(str -> locale, ?!(str, resourceBundles(locale)))
-  
+
   /**
    * Attempt to localize and then format the given string. This uses the String.format method
    * to format the localized string.
@@ -1113,8 +1113,8 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     req <- request
     queryString <- req.request.queryString
   } yield queryString
-    
-    
+
+
   def uriAndQueryString: Box[String] = for {
     req <- this.request
   } yield req.uri + (queryString.map(s => "?"+s) openOr "")
@@ -1124,8 +1124,8 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * the handlers are ignored
    */
   def runExceptionHandlers(req: Req, orig: Throwable): Box[LiftResponse] = {
-    S.assertExceptionThrown() 
-    tryo{(t: Throwable) => 
+    S.assertExceptionThrown()
+    tryo{(t: Throwable) =>
       logger.error("An error occurred while running error handlers", t)
       logger.error("Original error causing error handlers to be run", orig)} {
       NamedPF.applyBox((Props.mode, req, orig), LiftRules.exceptionHandler.toList);
@@ -2661,7 +2661,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
 
       (JsonCall(key), JsCmds.Run(name.map(n => onErrorFunc +
                                           "/* JSON Func " + n + " $$ " + key + " */").openOr("") +
-                                 "function " + key + "(obj) {liftAjax.lift_ajaxHandler(" +
+                                 "function " + key + "(obj) {lift.ajax(" +
                                  "'" + key + "='+ encodeURIComponent(" +
                                  LiftRules.jsArtifacts.
                                  jsonStringify(JE.JsRaw("obj")).
