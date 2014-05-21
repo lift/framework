@@ -25,7 +25,7 @@ import org.bson.types.ObjectId
 object AsObjectId {
   def unapply(in: String): Option[ObjectId] = asObjectId(in)
 
-  private def asObjectId(in: String): Option[ObjectId] =
+  def asObjectId(in: String): Option[ObjectId] =
     if (ObjectId.isValid(in)) Some(new ObjectId(in))
     else None
 }
