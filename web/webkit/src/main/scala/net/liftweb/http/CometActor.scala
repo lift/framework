@@ -201,7 +201,7 @@ trait ListenerManager {
       val pair = (who, wantsMessage)
       listeners ::= pair
 
-      updateListeners(who :: Nil)
+      updateListeners(pair :: Nil)
 
     case RemoveAListener(who) =>
       listeners = listeners.filter(_._1 ne who)
