@@ -640,7 +640,7 @@ trait ProtoUser {
     (<form method="post" action={S.uri}><table><tr><td
               colspan="2">{ S.?("sign.up") }</td></tr>
           {localForm(user, false, signupFields)}
-          <tr><td>&nbsp;</td><td><user:submit/></td></tr>
+          <tr><td>&nbsp;</td><td><input type="submit" /></td></tr>
                                         </table></form>)
   }
 
@@ -752,9 +752,9 @@ trait ProtoUser {
       }
     }
 
-    def innerSignup = bind("user",
-                           signupXhtml(theUser),
-                           "submit" -> signupSubmitButton(S.?("sign.up"), testSignup _))
+    def innerSignup = {
+      ("type=submit" #> signupSubmitButton(S ? "sign.up", testSignup _)) apply signupXhtml(theUser)
+    }
 
     innerSignup
   }
@@ -800,10 +800,10 @@ trait ProtoUser {
   def loginXhtml = {
     (<form method="post" action={S.uri}><table><tr><td
               colspan="2">{S.?("log.in")}</td></tr>
-          <tr><td>{userNameFieldString}</td><td><user:email /></td></tr>
-          <tr><td>{S.?("password")}</td><td><user:password /></td></tr>
+          <tr><td>{userNameFieldString}</td><td><input type="text" class="email" /></td></tr>
+          <tr><td>{S.?("password")}</td><td><input type="password" class="password" /></td></tr>
           <tr><td><a href={lostPasswordPath.mkString("/", "/", "")}
-                >{S.?("recover.password")}</a></td><td><user:submit /></td></tr></table>
+                >{S.?("recover.password")}</a></td><td><input type="submit" /></td></tr></table>
      </form>)
   }
   
@@ -864,10 +864,12 @@ trait ProtoUser {
       }
     }
 
-    bind("user", loginXhtml,
-         "email" -> (FocusOnLoad(<input type="text" name="username"/>)),
-         "password" -> (<input type="password" name="password"/>),
-         "submit" -> loginSubmitButton(S.?("log.in")))
+    val bind =
+      ".email" #> FocusOnLoad(<input type="text" name="username"/>) &
+      ".password" #> <input type="password" name="password"/> &
+      "type=submit" #> loginSubmitButton(S.?("log.in"))
+
+    bind(loginXhtml)
   }
 
   def loginSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
@@ -882,8 +884,8 @@ trait ProtoUser {
     (<form method="post" action={S.uri}>
         <table><tr><td
               colspan="2">{S.?("enter.email")}</td></tr>
-          <tr><td>{userNameFieldString}</td><td><user:email /></td></tr>
-          <tr><td>&nbsp;</td><td><user:submit /></td></tr>
+          <tr><td>{userNameFieldString}</td><td><input type="text" class="email" /></td></tr>
+          <tr><td>&nbsp;</td><td><input type="submit" /></td></tr>
         </table>
      </form>)
   }
@@ -954,9 +956,11 @@ trait ProtoUser {
   }
 
   def lostPassword = {
-    bind("user", lostPasswordXhtml,
-         "email" -> SHtml.text("", sendPasswordReset _),
-         "submit" -> lostPasswordSubmitButton(S.?("send.it")))
+    val bind =
+      ".email" #> SHtml.text("", sendPasswordReset _) &
+      "type=submit" #> lostPasswordSubmitButton(S.?("send.it"))
+
+    bind(lostPasswordXhtml)
   }
 
   def lostPasswordSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
@@ -966,9 +970,9 @@ trait ProtoUser {
   def passwordResetXhtml = {
     (<form method="post" action={S.uri}>
         <table><tr><td colspan="2">{S.?("reset.your.password")}</td></tr>
-          <tr><td>{S.?("enter.your.new.password")}</td><td><user:pwd/></td></tr>
-          <tr><td>{S.?("repeat.your.new.password")}</td><td><user:pwd/></td></tr>
-          <tr><td>&nbsp;</td><td><user:submit/></td></tr>
+          <tr><td>{S.?("enter.your.new.password")}</td><td><input type="password" /></td></tr>
+          <tr><td>{S.?("repeat.your.new.password")}</td><td><input type="password" /></td></tr>
+          <tr><td>&nbsp;</td><td><input type="submit" /></td></tr>
         </table>
      </form>)
   }
@@ -985,10 +989,15 @@ trait ProtoUser {
           case xs => S.error(xs)
         }
       }
-      bind("user", passwordResetXhtml,
-           "pwd" -> SHtml.password_*("",(p: List[String]) =>
-          user.setPasswordFromListString(p)),
-           "submit" -> resetPasswordSubmitButton(S.?("set.password"), finishSet _))
+
+      val bind = {
+        "type=password" #> SHtml.password_*("", { p: List[String] =>
+          user.setPasswordFromListString(p)
+        }) &
+        "type=submit" #> resetPasswordSubmitButton(S.?("set.password"), finishSet _)
+      }
+
+      bind(passwordResetXhtml)
     case _ => S.error(S.?("password.link.invalid")); S.redirectTo(homePage)
   }
 
@@ -999,10 +1008,10 @@ trait ProtoUser {
   def changePasswordXhtml = {
     (<form method="post" action={S.uri}>
         <table><tr><td colspan="2">{S.?("change.password")}</td></tr>
-          <tr><td>{S.?("old.password")}</td><td><user:old_pwd /></td></tr>
-          <tr><td>{S.?("new.password")}</td><td><user:new_pwd /></td></tr>
-          <tr><td>{S.?("repeat.password")}</td><td><user:new_pwd /></td></tr>
-          <tr><td>&nbsp;</td><td><user:submit /></td></tr>
+          <tr><td>{S.?("old.password")}</td><td><input type="password" class="old-password" /></td></tr>
+          <tr><td>{S.?("new.password")}</td><td><input type="password" class="new-password" /></td></tr>
+          <tr><td>{S.?("repeat.password")}</td><td><input type="password" class="new-password" /></td></tr>
+          <tr><td>&nbsp;</td><td><input type="submit" /></td></tr>
         </table>
      </form>)
   }
@@ -1023,10 +1032,13 @@ trait ProtoUser {
       }
     }
 
-    bind("user", changePasswordXhtml,
-         "old_pwd" -> SHtml.password("", s => oldPassword = s),
-         "new_pwd" -> SHtml.password_*("", LFuncHolder(s => newPassword = s)),
-         "submit" -> changePasswordSubmitButton(S.?("change"), testAndSet _))
+    val bind = {
+      ".old-password" #> SHtml.password("", s => oldPassword = s) &
+      ".new-password" #> SHtml.password_*("", LFuncHolder(s => newPassword = s)) &
+      "type=submit" #> changePasswordSubmitButton(S.?("change"), testAndSet _)
+    }
+
+    bind(changePasswordXhtml)
   }
 
   def changePasswordSubmitButton(name: String, func: () => Any = () => {}): NodeSeq = {
@@ -1037,7 +1049,7 @@ trait ProtoUser {
     (<form method="post" action={S.uri}>
         <table><tr><td colspan="2">{S.?("edit")}</td></tr>
           {localForm(user, true, editFields)}
-          <tr><td>&nbsp;</td><td><user:submit/></td></tr>
+          <tr><td>&nbsp;</td><td><input type="submit" /></td></tr>
         </table>
      </form>)
   }
@@ -1075,8 +1087,9 @@ trait ProtoUser {
       }
     }
 
-    def innerEdit = bind("user", editXhtml(theUser),
-                         "submit" -> editSubmitButton(S.?("save"), testEdit _))
+    def innerEdit = {
+      ("type=submit" #> editSubmitButton(S.?("save"), testEdit _)) apply editXhtml(theUser)
+    }
 
     innerEdit
   }
