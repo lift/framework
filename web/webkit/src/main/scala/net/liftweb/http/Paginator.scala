@@ -218,7 +218,7 @@ trait PaginatorSnippet[T] extends Paginator[T] {
                       case Nil => Nil
                     }
   }
-  def pagesXml(pages: Seq[Int], sep: NodeSeq): NodeSeq = pagesXml(pages)(sep)
+  // def pagesXml(pages: Seq[Int], sep: NodeSeq): NodeSeq = pagesXml(pages)(sep)
 
   /**
    * This method binds template HTML based according to the specified
