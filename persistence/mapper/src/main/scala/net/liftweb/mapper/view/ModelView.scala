@@ -67,17 +67,17 @@ trait ModelSnippet[T <: Mapper[T]] extends StatefulSnippet {
   def dispatch: DispatchIt = {
     case "list" =>       list _
     case "edit" =>       edit _
-    case "newOrEdit" =>  view.newOrEdit _
+    case "newOrEdit" =>  view.newOrEdit
   }
   
   /**
-   * An "edit" BindParam
+   * A ".edit" CssSel
   */
-  def editAction(e: T) = TheBindParam("edit", link("edit", ()=>load(e), Text(?("Edit"))))
+  def editAction(e: T) = ".edit" #> link("edit", ()=>load(e), Text(?("Edit")))
   /**
-   * A "remove" BindParam
+   * A ".remove" CssSel
   */
-  def removeAction(e: T) = TheBindParam("remove", link("list", ()=>e.delete_!, Text(?("Remove"))))
+  def removeAction(e: T) = ".remove" #> link("list", ()=>e.delete_!, Text(?("Remove")))
 }
 
 
@@ -110,10 +110,12 @@ class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {
    * existing entity is being edited or a new one is being
    * created.
    */
-  def newOrEdit(xhtml: NodeSeq) =
-    chooseTemplate("if",
-                   if(entity.saved_?) "edit" else "new",
-                   xhtml)
+  def newOrEdit = {
+    if (entity.saved_?)
+      ".edit ^^" #> "ignored"
+    else
+      ".new ^^" #> "ignored"
+  }
   
   /**
    * This method checks whether the entity
@@ -155,23 +157,23 @@ class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {
   
   
   /**
-   * Returns a BindParam that contains a link to load and edit this entity
+   * Returns a CssSel that binds a link to ".edit" to load and edit this entity
    */
-  lazy val editAction = TheBindParam("edit", snippet.link("edit", ()=>load, Text(?("Edit"))))
+  lazy val editAction = ".edit" #> snippet.link("edit", ()=>load, Text(?("Edit")))
   /**
-   * Returns a BindParam that contains a link to delete this entity
+   * Returns a CssSel that binds a link to ".remove" that contains a link to delete this entity
    */
-  lazy val removeAction = TheBindParam("remove", snippet.link("list", ()=>remove, Text(?("Remove"))))
+  lazy val removeAction = ".remove" #> snippet.link("list", ()=>remove, Text(?("Remove")))
   /**
-   * Returns a BindParam that binds "name" to the field named "name."
+   * Returns a CssSel that binds the contents of an element with class ".<name>"
+   * to the field named `name`.
    * If the field has a Full toForm implementation then that is used;
    * otherwise its asHtml is called.
    */
   def edit(name: String) = {
     entity.fieldByName(name).map { (field: net.liftweb.mapper.MappedField[_,_]) =>
-      TheBindParam(name, field.toForm.openOr(field.asHtml))
+      s".$name *" #> field.toForm.openOr(field.asHtml)
     }.openOrThrowException("If nobody has complained about this giving a NPE, I'll assume it is safe")
-
   }
 }
 
