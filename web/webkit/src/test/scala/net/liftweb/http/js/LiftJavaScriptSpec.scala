@@ -66,11 +66,11 @@ object LiftJavaScriptSpec extends Specification  {
     }
     "create init command" in {
       S.initIfUninitted(session) {
-        val init = LiftJavaScript.initCmd(LiftRules.javascriptSettings.vend().apply(session))
-        init.toJsCmd must_==
-          """var lift_settings = {"ajaxPath": "ajax_request", "ajaxRetryCount": 4, "ajaxPostTimeout": 5000, "enableGc": true, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometPath": "comet_request", "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": "srvr1", "logError": function(msg) {lift.logError(msg);}, "ajaxOnFailure": function() {alert("The server cannot be contacted at this time");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}};
+        val init = LiftRules.javaScriptSettings.vend().map(_.apply(session)).map(LiftJavaScript.initCmd(_).toJsCmd)
+        init must_==
+          Full("""var lift_settings = {"ajaxPath": "ajax_request", "ajaxRetryCount": 4, "ajaxPostTimeout": 5000, "enableGc": true, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometPath": "comet_request", "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": "srvr1", "logError": function(msg) {lift.logError(msg);}, "ajaxOnFailure": function() {alert("The server cannot be contacted at this time");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}};
             |window.lift.extend(lift_settings,window.liftJQuery);
-            |window.lift.init(lift_settings);""".stripMargin
+            |window.lift.init(lift_settings);""".stripMargin)
       }
     }
     "create init command with custom setting" in {
