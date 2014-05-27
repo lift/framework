@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package net.liftweb
 package mongodb
 
 import BsonDSL._
+import util.{ConnectionIdentifier, DefaultConnectionIdentifier}
 
 import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
@@ -33,12 +34,12 @@ import json.JsonParser._
 
 package mongotestdocs {
   /*
-  * MongoIdentifiers
+  * ConnectionIdentifiers
   */
-  object TstDBa extends MongoIdentifier {
+  object TstDBa extends ConnectionIdentifier {
     val jndiName = "test_a"
   }
-  object TstDBb extends MongoIdentifier {
+  object TstDBb extends ConnectionIdentifier {
     val jndiName = "test_b"
   }
 
@@ -50,7 +51,7 @@ package mongotestdocs {
   }
   object SimplePerson extends MongoDocumentMeta[SimplePerson] {
     override val collectionName = "simplepersons"
-    override def mongoIdentifier = DefaultMongoIdentifier
+    override def connectionIdentifier = DefaultConnectionIdentifier
     override def formats = super.formats + new ObjectIdSerializer
     // index name
     ensureIndex(("name" -> 1))
@@ -69,7 +70,7 @@ package mongotestdocs {
   }
 
   object Person extends MongoDocumentMeta[Person] {
-    override def mongoIdentifier = TstDBa
+    override def connectionIdentifier = TstDBa
     override def collectionName = "mypersons"
     override def formats = super.formats + new UUIDSerializer
   }
@@ -183,7 +184,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
 
   override def dbName = "lift_mongodocumentexamples"
 
-  override def dbs = (TstDBa, defaultHost, "lift_mongodocumentexamples_a") :: super.dbs
+  override def dbs = (TstDBa, "lift_mongodocumentexamples_a") :: super.dbs
 
   "Simple Person example" in {
 
@@ -486,7 +487,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     val tc3 = SessCollection(ObjectId.get, "MongoDB", "db", 1)
 
     // use a Mongo instance directly with a session
-    MongoDB.useSession(DefaultMongoIdentifier) ( db => {
+    MongoDB.useSession( db => {
 
       // save to db
       SessCollection.save(tc, db)

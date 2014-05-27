@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 WorldWide Conferencing, LLC
+ * Copyright 2011-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.mockito.Matchers._
 
 import net.liftweb.common._
 import net.liftweb.db._
+import net.liftweb.util.DefaultConnectionIdentifier
 import net.liftweb.util.ControlHelpers._
 
 import java.sql._

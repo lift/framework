@@ -325,9 +325,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   private def _getLiftSession(req: Req): LiftSession = {
     val wp = req.path.wholePath
-    val CP = LiftRules.cometPath
+    val LiftPath = LiftRules.liftPath
     val cometSessionId = wp match {
-      case CP :: _ :: session :: _ => Full(session)
+      case LiftPath :: "comet" :: _ :: session :: _ => Full(session)
       case _ => Empty
     }
 
@@ -656,14 +656,12 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * request comes in for a session that has no associated comet actors
    * (this typically happens when the server restarts).
    *
-   * By default, we invoke liftComet.lift_sessionLost, which can be
+   * By default, we invoke lift.cometOnSessionLost, which can be
    * overridden client-side for more complex work.
-   * liftComet.lift_sessionLost reloads the current page by default.
+   * lift.cometOnSessionLost reloads the current page by default.
    */
   val noCometSessionCmd = new FactoryMaker[JsCmd](
-    () => {
-      JsCmds.Run("liftComet.lift_sessionLost();")
-    }
+    () => JsCmds.Run("lift.cometOnSessionLost()")
   ) {}
 
   /**
@@ -671,14 +669,12 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * session is considered lost when either an ajax request comes in for
    * a session that does not exist on the server.
    *
-   * By default, we invoke liftAjax.lift_sessionLost, which can be
+   * By default, we invoke lift.ajaxOnSessionLost, which can be
    * overridden client-side for more complex work.
-   * liftAjax.lift_sessionLost reloads the page by default.
+   * lift.ajaxOnSessionLost reloads the page by default.
    */
   val noAjaxSessionCmd = new FactoryMaker[JsCmd](
-    () => {
-      JsCmds.Run("liftAjax.lift_sessionLost();")
-    }
+    () => JsCmds.Run("lift.ajaxOnSessionLost()")
   ) {}
 
   /**
@@ -812,18 +808,18 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * The JavaScript to execute to log a message on the client side when
-   * liftAjax.lift_logError is called.
+   * lift.logError is called.
    *
    * If Empty no logging is performed
-   * The default when running in DevMode is to call lift_defaultLogError which
+   * The default when running in DevMode is to call lift.logError which
    * will use JavaScript console if available or alert otherwise.
-   * 
+   *
    * To always use alert set:
    *
    *   LiftRules.jsLogFunc = Full(v => JE.Call("alert",v).cmd)
    */
   @volatile var jsLogFunc: Box[JsVar => JsCmd] =
-    if (Props.devMode) Full(v => JE.Call("liftAjax.lift_defaultLogError", v))
+    if (Props.devMode) Full(v => JE.Call("lift.logError", v))
     else Empty
 
   /**
@@ -1156,26 +1152,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     }
   }
 
-
   /**
-   * Contains the Ajax URI path used by Lift to process Ajax requests.
+   * Contains the URI path under which all built-in Lift-handled
+   * requests are scoped.
    */
-  @volatile var ajaxPath = "ajax_request"
-
-  /**
-   * Contains the Comet URI path used by Lift to process Comet requests.
-   */
-  @volatile var cometPath = "comet_request"
-
-  /**
-   * Computes the Comet path by adding additional tokens on top of cometPath
-   */
-  @volatile var calcCometPath: String => JsExp = prefix => {
-    Str(prefix + "/" + cometPath + "/") +
-            JsRaw("Math.floor(Math.random() * 100000000000)") +
-            Str(S.session.map(session => S.encodeURL("/" + session.uniqueId)) openOr "xx") + Str("/") + JsRaw("lift_page")
-  }
-
+  @volatile var liftPath = "lift"
 
   /**
    * If there is an alternative way of calculating the context path
@@ -1301,7 +1282,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Holds the user's DispatchPF functions that will be executed in stateful context
    */
-  val dispatch = RulesSeq[DispatchPF]
+  val dispatch = RulesSeq[DispatchPF].append(LiftJavaScript.servePageJs)
 
   /**
    * Holds the user's rewrite functions that can alter the URI parts and query parameters.  This rewrite
@@ -1588,18 +1569,20 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   @volatile var autoIncludeComet: LiftSession => Boolean = session => true
 
-  val autoIncludeAjaxCalc: FactoryMaker[() => LiftSession => Boolean] = 
+  val autoIncludeAjaxCalc: FactoryMaker[() => LiftSession => Boolean] =
   new FactoryMaker(() => () => (session: LiftSession) => true) {}
+
+  /**
+   * Tells Lift which JavaScript settings to use. If Empty, does not
+   * include the JS settings.
+   */
+  val javaScriptSettings: FactoryMaker[() => Box[LiftSession => JsObj]] =
+  new FactoryMaker(() => () => (Full((session: LiftSession) => LiftJavaScript.settings): Box[LiftSession => JsObj])) {}
 
   /**
    * Define the XHTML validator
    */
   @volatile var xhtmlValidator: Box[XHtmlValidator] = Empty // Full(TransitionalXHTML1_0Validator)
-
-  /**
-   * Returns the JavaScript that manages Ajax requests.
-   */
-  @volatile var renderAjaxScript: LiftSession => JsCmd = session => ScriptRenderer.ajaxScript
 
   @volatile var ajaxPostTimeout = 5000
 
@@ -1645,19 +1628,14 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var liftGCFailureRetryTimeout: Long = 15.seconds
 
   /**
-   * Returns the JavaScript that manages Comet requests.
-   */
-  @volatile var renderCometScript: LiftSession => JsCmd = session => ScriptRenderer.cometScript
-
-  /**
    * If this is Full, comet updates (partialUpdates or reRenders) are
    * wrapped in a try/catch statement. The provided JsCmd is the body of
    * the catch statement. Within that JsCmd, the variable "e" refers to the
    * caught exception.
    *
    * In development mode, this defaults to Full and the command within
-   * invokes liftComet.lift_cometError with the exception;
-   * lift_cometError rethrows the exception by default. In production
+   * invokes lift.cometOnError with the exception;
+   * lift.cometOnError rethrows the exception by default. In production
    * mode, this defaults to Empty.
    *
    * Note that if you set this to Full, it is highly advised that you
@@ -1671,18 +1649,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val cometUpdateExceptionHandler: FactoryMaker[Box[JsCmd]] =
     new FactoryMaker[Box[JsCmd]]( () => {
       if (Props.devMode)
-        Full(JE.Call("liftComet.lift_cometError", JE.JsVar("e")).cmd)
+        Full(JE.Call("lift.cometOnError", JE.JsVar("e")).cmd)
       else
         Empty
     } ) {}
-
-  /**
-   * Renders that JavaScript that holds Comet identification information
-   */
-  @volatile var renderCometPageContents: (LiftSession, Seq[CometVersionPair]) => JsCmd =
-  (session, vp) => JsCmds.Run(
-    "var lift_toWatch = " + vp.map(p => p.guid.encJs + ": " + p.version).mkString("{", " , ", "}") + ";"
-    )
 
   /**
    * Holds the last update time of the Ajax request. Based on this server may return HTTP 304 status
@@ -1757,56 +1727,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   def mimeHeaders = _mimeHeaders.get
 
   private[http] def withMimeHeaders[T](map: Map[String, List[String]])(f: => T): T = _mimeHeaders.doWith(Full(map))(f)
-
-  /**
-   * Holds the last update time of the Comet request. Based on this server may return HTTP 304 status
-   * indicating the client to used the cached information.
-   */
-  @volatile var cometScriptUpdateTime: LiftSession => Long = session => {
-    object when extends SessionVar[Long](millis)
-    when.is
-  }
-
-  /**
-   * The name of the Ajax script that manages Ajax requests.
-   */
-  @volatile var ajaxScriptName: () => String = () => "liftAjax.js"
-
-  /**
-   * The name of the Comet script that manages Comet requests.
-   */
-  @volatile var cometScriptName: () => String = () => "cometAjax.js"
-
-  /**
-   * Returns the Comet script as a JavaScript response
-   */
-  @volatile var serveCometScript: (LiftSession, Req) => Box[LiftResponse] =
-  (liftSession, requestState) => {
-    val modTime = cometScriptUpdateTime(liftSession)
-
-    requestState.testFor304(modTime) or
-            Full(JavaScriptResponse(renderCometScript(liftSession),
-              List("Last-Modified" -> toInternetDate(modTime),
-                   "Expires" -> toInternetDate(modTime + 10.minutes),
-                   "Date" -> Helpers.nowAsInternetDate,
-                   "Pragma" -> "",
-                   "Cache-Control" -> ""),
-              Nil, 200))
-  }
-
-  /**
-   * Returns the Ajax script as a JavaScript response
-   */
-  @volatile var serveAjaxScript: (LiftSession, Req) => Box[LiftResponse] =
-  (liftSession, requestState) => {
-    val modTime = ajaxScriptUpdateTime(liftSession)
-
-    requestState.testFor304(modTime) or
-            Full(JavaScriptResponse(renderAjaxScript(liftSession),
-              List("Last-Modified" -> toInternetDate(modTime),
-                "Expires" -> toInternetDate(modTime + 10.minutes)),
-              Nil, 200))
-  }
 
   @volatile var templateCache: Box[TemplateCache[(Locale, List[String]), NodeSeq]] = Empty
 
@@ -2064,6 +1984,11 @@ trait CometVersionPair {
   def guid: String
 
   def version: Long
+}
+object CometVersionPair {
+  def unapply(pair: CometVersionPair): Option[(String, Long)] = {
+    Some((pair.guid, pair.version))
+  }
 }
 
 case class CVP(guid: String, version: Long) extends CometVersionPair

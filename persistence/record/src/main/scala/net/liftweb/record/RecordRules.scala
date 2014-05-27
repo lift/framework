@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 WorldWide Conferencing, LLC
+ * Copyright 2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,21 @@
  */
 
 package net.liftweb
-package db
+package record
 
-import java.sql.Connection
-import net.liftweb.common._
-import net.liftweb.util.ConnectionIdentifier
+import http.Factory
+import util.ConnectionIdentifier
+import util.Helpers._
 
-/**
- * Vend JDBC connections
- */
-trait ConnectionManager {
-  def newConnection(name: ConnectionIdentifier): Box[Connection]
-  def releaseConnection(conn: Connection)
-  def newSuperConnection(name: ConnectionIdentifier): Box[SuperConnection] = Empty
+object RecordRules extends Factory {
+  /**
+    * Calculate the name of a field based on the name
+    * of the Field. Must be set in Boot before any code
+    * that touches the MetaRecord.
+    *
+    * To get snake_case, use this:
+    *
+    *  RecordRules.fieldName.default.set((_, name) => StringHelpers.snakify(name))
+    */
+  val fieldName = new FactoryMaker[(ConnectionIdentifier, String) => String]((_: ConnectionIdentifier, name: String) => name) {}
 }
-

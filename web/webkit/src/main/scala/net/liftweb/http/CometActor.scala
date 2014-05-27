@@ -201,7 +201,7 @@ trait ListenerManager {
       val pair = (who, wantsMessage)
       listeners ::= pair
 
-      updateListeners(who :: Nil)
+      updateListeners(pair :: Nil)
 
     case RemoveAListener(who) =>
       listeners = listeners.filter(_._1 ne who)
@@ -772,7 +772,7 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   Box[NodeSeq] = Full(f(defaultHtml))
 
   /**
-   * Handle messages sent to this Actor before the 
+   * Handle messages sent to this Actor before the
    */
   def highPriority: PartialFunction[Any, Unit] = Map.empty
 
@@ -1066,7 +1066,7 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
     listeners = Nil
   }
 
-  def unWatch = partialUpdate(Call("liftComet.lift_unlistWatch", uniqueId))
+  def unWatch = partialUpdate(Call("lift.unlistWatch", uniqueId))
 
   /**
    * Poke the CometActor and cause it to do a partial update Noop which
@@ -1445,7 +1445,7 @@ object Notice {
 
 /**
  * The RenderOut case class contains the rendering for the CometActor.
- * Because of the implicit conversions, RenderOut can come from 
+ * Because of the implicit conversions, RenderOut can come from
  * <br/>
  * @param xhtml is the "normal" render body
  * @param fixedXhtml is the "fixed" part of the body.  This is ignored unless reRender(true)

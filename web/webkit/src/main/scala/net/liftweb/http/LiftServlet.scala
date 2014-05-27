@@ -281,7 +281,7 @@ class LiftServlet extends Loggable {
         } else {
           val cmd =
             if (isComet)
-              js.JE.JsRaw(LiftRules.noCometSessionCmd.vend.toJsCmd + ";lift_toWatch = {};").cmd
+              js.JE.JsRaw(LiftRules.noCometSessionCmd.vend.toJsCmd + ";lift.setToWatch({});").cmd
             else
               js.JE.JsRaw(LiftRules.noAjaxSessionCmd.vend.toJsCmd).cmd
 
@@ -306,28 +306,28 @@ class LiftServlet extends Loggable {
     }
 
     def cometOrAjax_?(req: Req): (Boolean, Boolean) = {
+      lazy val ajaxPath = LiftRules.liftPath :: "ajax" :: Nil
+      lazy val cometPath = LiftRules.liftPath :: "comet" :: Nil
 
       val wp = req.path.wholePath
       val pathLen = wp.length
 
       def isComet: Boolean = {
-        if (pathLen < 2) false
-        else {
-          val kindaComet = wp.head == LiftRules.cometPath
-          val cometScript = (pathLen >= 3 && kindaComet &&
-            wp(2) == LiftRules.cometScriptName())
+        if (pathLen < 3) {
+          false
+        } else {
+          val kindaComet = wp.take(2) == cometPath
 
-          (kindaComet && !cometScript) && req.acceptsJavaScript_?
+          kindaComet && req.acceptsJavaScript_?
         }
       }
       def isAjax: Boolean = {
-        if (pathLen < 2) false
-        else {
-          val kindaAjax = wp.head == LiftRules.ajaxPath
-          val ajaxScript = kindaAjax &&
-            wp(1) == LiftRules.ajaxScriptName()
+        if (pathLen < 3) {
+          false
+        } else {
+          val kindaAjax = wp.take(2) == ajaxPath
 
-          (kindaAjax && !ajaxScript) && req.acceptsJavaScript_?
+          kindaAjax && req.acceptsJavaScript_?
         }
       }
       (isComet, isAjax)
@@ -514,21 +514,18 @@ class LiftServlet extends Loggable {
       () => ret
     }
 
+    // FIXME Make comet and ajax into pipelining steps.
+    val (comet_?, ajax_?) = SessionLossCheck.cometOrAjax_?(req)
+
     val toReturn: () => Box[LiftResponse] =
       if (dispatch._1) {
         respToFunc(dispatch._2)
-      } else if (wp.length == 3 && wp.head == LiftRules.cometPath &&
-        wp(2) == LiftRules.cometScriptName()) {
-        respToFunc(LiftRules.serveCometScript(liftSession, req))
-      } else if ((wp.length >= 1) && wp.head == LiftRules.cometPath) {
+      } else if (comet_?) {
         handleComet(req, liftSession, originalRequest) match {
           case Left(x) => respToFunc(x)
           case Right(x) => x
         }
-      } else if (wp.length == 2 && wp.head == LiftRules.ajaxPath &&
-        wp(1) == LiftRules.ajaxScriptName()) {
-        respToFunc(LiftRules.serveAjaxScript(liftSession, req))
-      } else if (wp.length >= 1 && wp.head == LiftRules.ajaxPath) {
+      } else if (ajax_?) {
         respToFunc(handleAjax(liftSession, req))
       } else {
         respToFunc(liftSession.processRequest(req, continuation))
@@ -742,7 +739,7 @@ class LiftServlet extends Loggable {
         nextAction match {
           case Left(future) =>
             val result = runAjax(liftSession, requestState) map CachedResponse
-            
+
             if (result.exists(_.failed_?)) {
               // The request failed. The client will retry it, so
               // remove it from the list of current Ajax requests that
@@ -837,7 +834,7 @@ class LiftServlet extends Loggable {
           sessionActor.getAsyncComponent(name).toList.map(c => (c, toLong(when)))
       }
 
-    if (actors.isEmpty) Left(Full(new JsCommands(LiftRules.noCometSessionCmd.vend :: js.JE.JsRaw("lift_toWatch = {};").cmd :: Nil).toResponse))
+    if (actors.isEmpty) Left(Full(new JsCommands(LiftRules.noCometSessionCmd.vend :: js.JE.JsRaw("lift.setToWatch({});").cmd :: Nil).toResponse))
     else requestState.request.suspendResumeSupport_? match {
       case true => {
         setupContinuation(requestState, sessionActor, actors)
@@ -852,7 +849,7 @@ class LiftServlet extends Loggable {
 
   private def convertAnswersToCometResponse(session: LiftSession, ret: Seq[AnswerRender], actors: List[(LiftCometActor, Long)]): LiftResponse = {
     val ret2: List[AnswerRender] = ret.toList
-    val jsUpdateTime = ret2.map(ar => "if (lift_toWatch['" + ar.who.uniqueId + "'] !== undefined) lift_toWatch['" + ar.who.uniqueId + "'] = '" + ar.when + "';").mkString("\n")
+    val jsUpdateTime = ret2.map(ar => "lift.updWatch('" + ar.who.uniqueId + "', '" + ar.when + "');").mkString("\n")
     val jsUpdateStuff = ret2.map {
       ar => {
         val ret = ar.response.toJavaScript(session, ar.displayAll)
@@ -1040,11 +1037,11 @@ class LiftServlet extends Loggable {
 import net.liftweb.http.provider.servlet._
 
 private class SessionIdCalc(req: Req) {
-  private val CometPath = LiftRules.cometPath
+  private val LiftPath = LiftRules.liftPath
   lazy val id: Box[String] = req.request.sessionId match {
     case Full(id) => Full(id)
     case _ => req.path.wholePath match {
-      case CometPath :: _ :: id :: _ if id != LiftRules.cometScriptName() => Full(id)
+      case LiftPath :: "comet" :: _ :: id :: _ :: _ => Full(id)
       case _ => Empty
     }
   }

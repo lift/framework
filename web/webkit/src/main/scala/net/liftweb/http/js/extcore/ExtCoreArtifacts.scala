@@ -116,24 +116,6 @@ object ExtCoreArtifacts extends JSArtifacts {
   def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) = Noop
 
   /**
-   * Makes an Ajax request using lift's Ajax path and the request
-   * attributes described by data parameter
-   */
-  def ajax(data: AjaxInfo): String = {
-    "Ext.Ajax.request(" + toJson(data, S.contextPath,
-                            prefix =>
-                            JsRaw(S.encodeURL(prefix + "/" +LiftRules.ajaxPath + "/").encJs))+");"
-  }
-
-  /**
-   * Makes a Ajax comet request using lift's Comet path and the request
-   * attributes described by data parameter
-   */
-  def comet(data: AjaxInfo): String = {
-    "Ext.Ajax.request(" + toJson(data, LiftRules.cometServer(), LiftRules.calcCometPath) + ");"
-  }
-
-  /**
    * Trabsforms a JSON object intoits string representation
    */
   def jsonStringify(in: JsExp) : JsExp = new JsExp {

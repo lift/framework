@@ -60,9 +60,9 @@ object WizardSpec extends Specification  {
                           valMaxLen(40, S ? "Name Too Long"))
     }
 
-    def nameAndAge = new NameAndAgeScreen
-    def parentName = new ParentNameScreen
-    def favoritePet = new FavoritePetScreen
+    val nameAndAge = new NameAndAgeScreen
+    val parentName = new ParentNameScreen
+    val favoritePet = new FavoritePetScreen
   }
 
   val MyWizard = new WizardForTesting
