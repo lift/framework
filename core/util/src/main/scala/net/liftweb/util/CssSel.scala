@@ -33,13 +33,6 @@ trait CssSel extends Function1[NodeSeq, NodeSeq] {
    * A Java callable aggregator
    */
   def and(that: CssSel): CssSel = this & that
-
-  /**
-   * promote a String to a ToCssBindPromotor
-   */
-  /*
-  private implicit def strToCssBindPromoter(str: String): ToCssBindPromoter =
-    new ToCssBindPromoter(Full(str), CssSelectorParser.parse(str)) */
 }
 
 /**
@@ -615,6 +608,46 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
 private case class RetryWithException(e: NodeSeq) extends Exception()
 
+trait CssBindImplicits {
+  class CssBindPromoter(stringSelector: Box[String], cssSelector: Box[CssSelector]) {
+    /**
+     * Transform a DOM (NodeSeq) based on rules
+     *
+     * @param it the thing to use in the replacement rules
+     * @param converter the implicit parameter that transforms T into a
+     *        NodeSeq=>NodeSeq that will update things matched by the selector
+     * @tparam T the type of it
+     * @return the function that will transform an incoming DOM based on the transform rules
+     */
+    def #>[T](replacement: => T)(implicit converter: CanBind[T]): CssSel = {
+      cssSelector.collect {
+        case EnclosedSelector(a, b) =>
+          new CssBindPromoter(stringSelector, Full(a)) #> nsFunc({ ns =>
+            new CssBindPromoter(stringSelector, Full(b)).#>(replacement)(converter)(ns)
+          }) // (CanBind.nodeSeqFuncTransform)
+      } openOr {
+        new CssBindImpl(stringSelector, cssSelector) {
+          def calculate(in: NodeSeq): Seq[NodeSeq] = converter(replacement)(in)
+        }
+      }
+    }
+
+    /**
+     * Transform a DOM (NodeSeq) based on rules
+     *
+     * @param it the thing to use in the replacement rules
+     * @param computer the implicit parameter that transforms T into something that will make the correct changes
+     * @tparam T the type of it
+     * @return the function that will transform an incoming DOM based on the transform rules
+     */
+    def replaceWith[T](it: => T)(implicit computer: CanBind[T]): CssSel = {
+      this.#>(it)(computer)
+    }
+  }
+  implicit class StringToCssBindPromoter(stringSelector: String) extends CssBindPromoter(Full(stringSelector), CssSelectorParser.parse(stringSelector))
+  implicit class CssSelectorToCssBindPromoter(cssSelector: CssSelector) extends CssBindPromoter(Empty, Full(cssSelector))
+}
+
 object CssBind {
   def unapply(in: CssBind): Option[CssSelector] = in.css
 }
@@ -694,15 +727,7 @@ abstract class CssBindImpl(val stringSelector: Box[String], val css: Box[CssSele
  * Bridge from Java-land to Scala
  */
 
-final class CssJBridge {
-  import scala.language.implicitConversions
-
-  /**
-   * promote a String to a ToCssBindPromotor
-   */
-  private implicit def strToCssBindPromoter(str: String): ToCssBindPromoter =
-    new ToCssBindPromoter(Full(str), CssSelectorParser.parse(str))
-
+final class CssJBridge extends CssBindImplicits {
   def sel(selector: String, value: String): CssSel = selector #> value
 
   def sel(selector: String, value: NodeSeq): CssSel = selector #> value
@@ -732,7 +757,7 @@ trait CanBind[-T] {
   def apply(it: => T)(ns: NodeSeq): Seq[NodeSeq]
 }
 
-object CanBind {
+object CanBind extends CssBindImplicits {
   import scala.language.higherKinds
 
   implicit def stringTransform: CanBind[String] = new CanBind[String] {
@@ -881,44 +906,4 @@ object CanBind {
     new CanBind[IterableConst] {
       def apply(info: => IterableConst)(ns: NodeSeq): Seq[NodeSeq] = info.constList(ns)
     }
-}
-
-
-/**
- * An intermediate class used to promote a String or a CssSelector to
- * something that can be associated with a value to apply to the selector
- */
-final case class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]) {
-
-  /**
-   * Transform a DOM (NodeSeq) based on rules
-   *
-   * @param it the thing to use in the replacement rules
-   * @param computer the implicit parameter that transforms T into something that will make the correct changes
-   * @tparam T the type of it
-   * @return the function that will transform an incoming DOM based on the transform rules
-   */
-  def #>[T](it: => T)(implicit computer: CanBind[T]): CssSel = {
-    css match {
-      case Full(EnclosedSelector(a, b)) =>
-        ToCssBindPromoter(stringSelector, Full(a)) #> nsFunc({ ns =>
-          ToCssBindPromoter(stringSelector, Full(b)).#>(it)(computer)(ns)
-        }) // (CanBind.nodeSeqFuncTransform)
-
-      case _ =>
-        new CssBindImpl(stringSelector, css) {
-          def calculate(in: NodeSeq): Seq[NodeSeq] = computer(it)(in)
-        }
-    }
-  }
-
-  /**
-   * Transform a DOM (NodeSeq) based on rules
-   *
-   * @param it the thing to use in the replacement rules
-   * @param computer the implicit parameter that transforms T into something that will make the correct changes
-   * @tparam T the type of it
-   * @return the function that will transform an incoming DOM based on the transform rules
-   */
-  def replaceWith[T](it: => T)(implicit computer: CanBind[T]): CssSel = this.#>(it)(computer)
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,17 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     case f: MandatoryTypedField[_] => f.value
     case x => x
   }
+
+  /*
+   * Use the collection associated with this Meta.
+   */
+  def useColl[T](f: DBCollection => T): T =
+    MongoDB.useCollection(connectionIdentifier, collectionName)(f)
+
+  /*
+   * Use the db associated with this Meta.
+   */
+  def useDb[T](f: DB => T): T = MongoDB.use(connectionIdentifier)(f)
 
   /**
   * Delete the instance from backing store
@@ -241,6 +252,15 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     f
     foreachCallback(inst, _.afterUpdate)
     inst.allFields.foreach { _.resetDirty }
+  }
+
+  /**
+    * Save the instance in the appropriate backing store. Uses the WriteConcern set on the MongoClient instance.
+    */
+  def save(inst: BaseRecord): Boolean = saveOp(inst) {
+    useColl { coll =>
+      coll.save(inst.asDBObject)
+    }
   }
 
   /**

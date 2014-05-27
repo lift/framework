@@ -201,7 +201,7 @@ trait ListenerManager {
       val pair = (who, wantsMessage)
       listeners ::= pair
 
-      updateListeners(who :: Nil)
+      updateListeners(pair :: Nil)
 
     case RemoveAListener(who) =>
       listeners = listeners.filter(_._1 ne who)
@@ -447,7 +447,7 @@ abstract class CometActorJWithCometListener extends CometActorJ with CometListen
 /**
  * Takes care of the plumbing for building Comet-based Web Apps
  */
-trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
+trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   private val logger = Logger(classOf[CometActor])
   val uniqueId = Helpers.nextFuncName
   private var spanId = uniqueId
@@ -772,7 +772,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   Box[NodeSeq] = Full(f(defaultHtml))
 
   /**
-   * Handle messages sent to this Actor before the 
+   * Handle messages sent to this Actor before the
    */
   def highPriority: PartialFunction[Any, Unit] = Map.empty
 
@@ -1066,7 +1066,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     listeners = Nil
   }
 
-  def unWatch = partialUpdate(Call("liftComet.lift_unlistWatch", uniqueId))
+  def unWatch = partialUpdate(Call("lift.unlistWatch", uniqueId))
 
   /**
    * Poke the CometActor and cause it to do a partial update Noop which
@@ -1150,17 +1150,6 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       highPriority orElse mediumPriority orElse
         _mediumPriority orElse lowPriority orElse _lowPriority
   }
-
-  /**
-   * A helper for binding which uses the defaultHtml property.
-   */
-  def bind(prefix: String, vals: BindParam*): NodeSeq = bind(prefix, _defaultHtml, vals: _*)
-
-  /**
-   * A helper for binding which uses the defaultHtml property and the
-   * default prefix.
-   */
-  def bind(vals: BindParam*): NodeSeq = bind(_defaultPrefix, vals: _*)
 
   /**
    * Ask another CometActor a question.  That other CometActor will
@@ -1456,7 +1445,7 @@ object Notice {
 
 /**
  * The RenderOut case class contains the rendering for the CometActor.
- * Because of the implicit conversions, RenderOut can come from 
+ * Because of the implicit conversions, RenderOut can come from
  * <br/>
  * @param xhtml is the "normal" render body
  * @param fixedXhtml is the "fixed" part of the body.  This is ignored unless reRender(true)

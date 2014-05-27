@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -224,7 +224,7 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
       tr.person(per)
 
       // save the record in the db
-      tr.save
+      tr.save()
 
       // retrieve from db
       def fromDb = TstRecord.find("_id", tr.id.value)
@@ -272,14 +272,14 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
     val ref1 = RefDoc.createRecord
     val ref2 = RefDoc.createRecord
 
-    ref1.save must_== ref1
-    ref2.save must_== ref2
+    ref1.save() must_== ref1
+    ref2.save() must_== ref2
 
     val refUuid1 = RefUuidDoc.createRecord
     val refUuid2 = RefUuidDoc.createRecord
 
-    refUuid1.save must_== refUuid1
-    refUuid2.save must_== refUuid2
+    refUuid1.save() must_== refUuid1
+    refUuid2.save() must_== refUuid2
 
     val md1 = MainDoc.createRecord
     val md2 = MainDoc.createRecord
@@ -301,10 +301,10 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
     md3.refuuid.set(refUuid2.id.get)
     md4.refuuid.set(refUuid2.id.get)
 
-    md1.save must_== md1
-    md2.save must_== md2
-    md3.save must_== md3
-    md4.save must_== md4
+    md1.save() must_== md1
+    md2.save() must_== md2
+    md3.save() must_== md3
+    md4.save() must_== md4
 
     MainDoc.count must_== 4
     RefDoc.count must_== 2
@@ -402,8 +402,8 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
     val ref1 = RefDoc.createRecord
     val ref2 = RefDoc.createRecord
 
-    ref1.save must_== ref1
-    ref2.save must_== ref2
+    ref1.save() must_== ref1
+    ref2.save() must_== ref2
 
     val name = "ld1"
     val strlist = List("string1", "string2", "string3", "string1")
@@ -422,7 +422,7 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
     ld1.maplist.set(List(Map("name" -> "map1", "type" -> "map"), Map("name" -> "map2", "type" -> "map")))
     ld1.binarylist.set(List[Array[Byte]]("foo".getBytes(), "bar".getBytes()))
 
-    ld1.save must_== ld1
+    ld1.save() must_== ld1
 
     val qld1 = ListDoc.find(ld1.id.get)
 
@@ -466,7 +466,7 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
     val md1 = MapDoc.createRecord
     md1.stringmap.set(Map("h" -> "hola"))
 
-    md1.save must_== md1
+    md1.save() must_== md1
 
     md1.delete_!
 
@@ -481,7 +481,7 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
 
     val od1 = OptionalDoc.createRecord
     od1.stringbox.valueBox must_== Empty
-    od1.save must_== od1
+    od1.save() must_== od1
 
     OptionalDoc.find(od1.id.get).foreach {
       od1FromDB =>
@@ -492,7 +492,7 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
     val od2 = OptionalDoc.createRecord
     od1.stringbox.valueBox must_== Empty
     od2.stringbox.set("aloha")
-    od2.save must_== od2
+    od2.save() must_== od2
 
     OptionalDoc.find(od2.id.get).foreach {
       od2FromDB =>
@@ -514,7 +514,7 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
     sd1.save(true) must_== sd1
     sd2.save(true) must throwA[MongoException]
 
-    sd1.save
+    sd1.save()
 
     sd2.name("sd2")
     sd2.save(true) must_== sd2

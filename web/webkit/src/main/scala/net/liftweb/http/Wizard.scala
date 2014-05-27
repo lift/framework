@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 WorldWide Conferencing, LLC
+ * Copyright 2009-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,6 +161,8 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
   protected def localSetup() {
 
   }
+
+  override def formName: String = "wizard"
 
   def toForm: NodeSeq = {
     ScreenVars.is // initialize

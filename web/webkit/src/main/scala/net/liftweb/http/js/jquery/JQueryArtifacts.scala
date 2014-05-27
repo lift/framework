@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package js 
-package jquery 
+package net.liftweb
+package http
+package js
+package jquery
 
 import scala.xml.{Elem, NodeSeq}
 
@@ -87,26 +87,8 @@ trait JQueryArtifacts extends JSArtifacts {
    * Fades out the element having the provided id, by waiting
    * for the given duration and fades out during fadeTime
    */
-  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) = 
+  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) =
     FadeOut(id, duration, fadeTime)
-
-  /**
-   * Makes an Ajax request using lift's Ajax path and the request
-   * attributes described by data parameter
-   */
-  def ajax(data: AjaxInfo): String = {
-    "jQuery.ajax(" + toJson(data, S.contextPath,
-      prefix =>
-              JsRaw("liftAjax.addPageNameAndVersion(" + S.encodeURL(prefix + "/" + LiftRules.ajaxPath + "/").encJs + ", version)")) + ");"
-  }
-
-  /**
-   * Makes a Ajax comet request using lift's Comet path and the request
-   * attributes described by data parameter
-   */
-  def comet(data: AjaxInfo): String = {
-    "jQuery.ajax(" + toJson(data, LiftRules.cometServer(), LiftRules.calcCometPath) + ");"
-  }
 
   /**
    * Transforms a JSON object in to its string representation

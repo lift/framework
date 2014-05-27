@@ -81,7 +81,7 @@ class DBRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefT
   // assume string is json
   def setFromString(in: String): Box[DBRef] = {
     val dbo = JSON.parse(in).asInstanceOf[BasicDBObject]
-    MongoDB.use(ref.meta.mongoIdentifier) ( db => {
+    MongoDB.use(ref.meta.connectionIdentifier) ( db => {
       val id = dbo.get("$id").toString
       ObjectId.isValid(id) match {
         case true => Full(set(new DBRef(db, dbo.get("$ref").toString, new ObjectId(id))))

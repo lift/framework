@@ -25,7 +25,7 @@ import common._
 import json._
 import json.ext.{EnumSerializer, JsonBoxSerializer}
 import http.SHtml
-import util.FieldError
+import util.{FieldError, Helpers}
 
 import java.math.MathContext
 import scala.xml.Text
@@ -421,3 +421,11 @@ class JObjectFieldTestRecord private () extends MongoRecord[JObjectFieldTestReco
 object JObjectFieldTestRecord extends JObjectFieldTestRecord with MongoMetaRecord[JObjectFieldTestRecord] {
   override def formats = allFormats
 }
+
+class CustomFieldName private () extends MongoRecord[CustomFieldName] with ObjectIdPk[CustomFieldName] {
+  def meta = CustomFieldName
+
+  object customField extends StringField(this, 256)
+}
+
+object CustomFieldName extends CustomFieldName with MongoMetaRecord[CustomFieldName]

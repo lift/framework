@@ -1056,7 +1056,6 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     }
   }
 
-  
   /**
    * A set of CssSels that can be used to bind this MetaMapper's fields.
    *

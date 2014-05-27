@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 WorldWide Conferencing, LLC
+ * Copyright 2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,24 @@
  */
 
 package net.liftweb
-package db
+package util
 
-import java.sql.Connection
-import net.liftweb.common._
-import net.liftweb.util.ConnectionIdentifier
+import Helpers._
+import common._
 
-/**
- * Vend JDBC connections
- */
-trait ConnectionManager {
-  def newConnection(name: ConnectionIdentifier): Box[Connection]
-  def releaseConnection(conn: Connection)
-  def newSuperConnection(name: ConnectionIdentifier): Box[SuperConnection] = Empty
+trait ConnectionIdentifier {
+  def jndiName: String
+
+  override def toString() = "ConnectionIdentifier(" + jndiName + ")"
+
+  override def hashCode() = jndiName.hashCode()
+
+  override def equals(other: Any): Boolean = other match {
+    case ci: ConnectionIdentifier => ci.jndiName == this.jndiName
+    case _ => false
+  }
 }
 
+case object DefaultConnectionIdentifier extends ConnectionIdentifier {
+  val jndiName = "lift"
+}
