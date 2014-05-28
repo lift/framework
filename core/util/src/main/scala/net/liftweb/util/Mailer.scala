@@ -294,31 +294,31 @@ trait Mailer extends SimpleInjector {
         bp.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
 
       case XHTMLPlusImages(html, img@_*) =>
-        val html_mp = new MimeMultipart("related")
-        val bp2 = new MimeBodyPart
         val (attachments, images) = img.partition(_.attachment)
+        val relatedMultipart = new MimeMultipart("related")
 
-        bp2.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
-        html_mp.addBodyPart(bp2)
+        val htmlBodyPart = new MimeBodyPart
+        htmlBodyPart.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
+        relatedMultipart.addBodyPart(htmlBodyPart)
 
         images.foreach { image =>
-          html_mp.addBodyPart(buildAttachment(image))
+          relatedMultipart.addBodyPart(buildAttachment(image))
         }
 
         if (attachments.isEmpty) {
-          bp.setContent(html_mp)
+          bp.setContent(relatedMultipart)
         } else {
-          val mixed_mp = new MimeMultipart("mixed")
-          val html_p = new MimeBodyPart
+          val mixedMultipart = new MimeMultipart("mixed")
 
-          html_p.setContent(html_mp)
-          mixed_mp.addBodyPart(html_p)
+          val relatedMultipartBodypart = new MimeBodyPart
+          relatedMultipartBodypart.setContent(relatedMultipart)
+          mixedMultipart.addBodyPart(relatedMultipartBodypart)
 
           attachments.foreach { attachment =>
-            mixed_mp.addBodyPart(buildAttachment(attachment))
+            mixedMultipart.addBodyPart(buildAttachment(attachment))
           }
 
-          bp.setContent(mixed_mp)
+          bp.setContent(mixedMultipart)
         }
     }
 
