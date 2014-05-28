@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,20 +87,22 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
   /** Options for select list **/
   def options: List[(ListType, String)] = Nil
 
-  private def elem = SHtml.multiSelectObj[ListType](
-    options,
-    value,
-    set(_)
-  ) % ("tabindex" -> tabIndex.toString)
+  private def elem = {
+    def elem0 = SHtml.multiSelectObj[ListType](
+      options,
+      value,
+      set(_)
+    ) % ("tabindex" -> tabIndex.toString)
+
+    SHtml.hidden(() => set(Nil)) ++ (uniqueFieldId match {
+      case Full(id) => (elem0 % ("id" -> id))
+      case _ => elem0
+    })
+  }
 
   def toForm: Box[NodeSeq] =
-    if (options.length > 0)
-      uniqueFieldId match {
-        case Full(id) => Full(elem % ("id" -> id))
-        case _ => Full(elem)
-      }
-    else
-      Empty
+    if (options.length > 0) Full(elem)
+    else Empty
 
   def asJValue = JArray(value.map(li => li.asInstanceOf[AnyRef] match {
     case x if primitive_?(x.getClass) => primitive2jvalue(x)
