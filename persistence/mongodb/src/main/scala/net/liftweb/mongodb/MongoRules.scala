@@ -19,7 +19,7 @@ import util.Helpers._
 
 object MongoRules extends SimpleInjector {
   private def defaultCollectionNameFunc(conn: ConnectionIdentifier, name: String): String = {
-    name.split("\\.").toList.last.toLowerCase+"s"
+    charSplit(name, '.').last.toLowerCase+"s"
   }
 
   /**
