@@ -308,6 +308,10 @@ trait Mailer extends SimpleInjector {
         if (attachments.isEmpty) {
           bp.setContent(relatedMultipart)
         } else {
+          // Some old versions of Exchange server will not behave correclty without
+          // a mixed multipart wrapping file attachments. This appears to be linked to
+          // specific versions of Exchange and Outlook. See the discussion at
+          // https://github.com/lift/framework/pull/1569 for more details.
           val mixedMultipart = new MimeMultipart("mixed")
 
           val relatedMultipartBodypart = new MimeBodyPart
