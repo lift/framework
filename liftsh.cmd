@@ -1,7 +1,7 @@
 @echo off
 
-set SBT_LAUNCHER_PATH="project\sbt-launch-0.13.1.jar"
-set SBT_LAUNCHER_SOURCE="http://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.1/sbt-launch.jar"
+set SBT_LAUNCHER_PATH="project\sbt-launch-0.13.5.jar"
+set SBT_LAUNCHER_SOURCE="http://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.5/sbt-launch.jar"
 
 if not exist %SBT_LAUNCHER_PATH% powershell -Command "(New-Object Net.WebClient).DownloadFile('%SBT_LAUNCHER_SOURCE%', '%SBT_LAUNCHER_PATH%')"
 
