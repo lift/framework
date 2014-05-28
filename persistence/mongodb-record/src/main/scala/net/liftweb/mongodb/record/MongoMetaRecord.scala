@@ -141,15 +141,14 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   def find(k: String, o: Any): Box[BaseRecord] = find(new BasicDBObject(k, o))
 
   /**
-  * Find all rows in this collection
-  */
-  def findAll: List[BaseRecord] = {
-    /*
-    * The call to toArray retrieves all documents and puts them in memory.
+    * Find all rows in this collection.
+    * Retrieves all documents and puts them in memory.
     */
-    useColl( coll => {
-      coll.find.toArray.map(dbo => fromDBObject(dbo)).toList
-    })
+  def findAll: List[BaseRecord] = useColl { coll =>
+    /** Mongo Cursors are both Iterable and Iterator,
+      * so we need to reduce ambiguity for implicits
+      */
+    (coll.find: Iterator[DBObject]).map(fromDBObject).toList
   }
 
   /**
@@ -169,16 +168,16 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   protected def findAll(sort: Option[DBObject], opts: FindOption*)(f: (DBCollection) => DBCursor): List[BaseRecord] = {
     val findOpts = opts.toList
 
-    useColl( coll => {
+    useColl { coll =>
       val cur = f(coll).limit(
-        findOpts.find(_.isInstanceOf[Limit]).map(x => x.value).getOrElse(0)
+        findOpts.find(_.isInstanceOf[Limit]).map(_.value).getOrElse(0)
       ).skip(
-        findOpts.find(_.isInstanceOf[Skip]).map(x => x.value).getOrElse(0)
+        findOpts.find(_.isInstanceOf[Skip]).map(_.value).getOrElse(0)
       )
-      sort.foreach( s => cur.sort(s))
-      // The call to toArray retrieves all documents and puts them in memory.
-      cur.toArray.map(dbo => fromDBObject(dbo)).toList
-    })
+      sort.foreach(s => cur.sort(s))
+      // This retrieves all documents and puts them in memory.
+      (cur: Iterator[DBObject]).map(fromDBObject).toList
+    }
   }
 
   /**
