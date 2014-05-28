@@ -124,7 +124,6 @@ object MailerSpec extends Specification {
         )
       }
 
-      println(msg.getContentType)
       msg.getContent match {
         case mp: MimeMultipart =>
           mp.getContentType.substring(0, 21) must_== "multipart/alternative"
