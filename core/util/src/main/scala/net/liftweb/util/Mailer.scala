@@ -282,50 +282,62 @@ trait Mailer extends SimpleInjector {
    */
   protected def buildMailBody(tab: MailBodyType): BodyPart = {
     val bp = new MimeBodyPart
-          tab match {
-            case PlainMailBodyType(txt) => bp.setText(txt, "UTF-8")
-            case PlainPlusBodyType(txt, charset) => bp.setText(txt, charset)
-            case XHTMLMailBodyType(html) => bp.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
 
-            case XHTMLPlusImages(html, img@_*) =>
-              val html_mp = new MimeMultipart("related")
-              val bp2 = new MimeBodyPart
-              val (attachs, images) = img.partition(_.attachment)
-              bp2.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
-              html_mp.addBodyPart(bp2)
-              images.foreach {
-                i => html_mp.addBodyPart(buildAttachment(i))
-              }
-              if (attachs.isEmpty) {
-                bp.setContent(html_mp)
-              } else {
-                val mixed_mp = new MimeMultipart("mixed")
-                val html_p = new MimeBodyPart
-                html_p.setContent(html_mp)
-                mixed_mp.addBodyPart(html_p)
-                attachs.foreach {
-                  i => mixed_mp.addBodyPart(buildAttachment(i))
-                }
-                bp.setContent(mixed_mp)
-              }
+    tab match {
+      case PlainMailBodyType(txt) =>
+        bp.setText(txt, "UTF-8")
+
+      case PlainPlusBodyType(txt, charset) =>
+        bp.setText(txt, charset)
+
+      case XHTMLMailBodyType(html) =>
+        bp.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
+
+      case XHTMLPlusImages(html, img@_*) =>
+        val html_mp = new MimeMultipart("related")
+        val bp2 = new MimeBodyPart
+        val (attachments, images) = img.partition(_.attachment)
+
+        bp2.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
+        html_mp.addBodyPart(bp2)
+
+        images.foreach { image =>
+          html_mp.addBodyPart(buildAttachment(image))
+        }
+
+        if (attachments.isEmpty) {
+          bp.setContent(html_mp)
+        } else {
+          val mixed_mp = new MimeMultipart("mixed")
+          val html_p = new MimeBodyPart
+
+          html_p.setContent(html_mp)
+          mixed_mp.addBodyPart(html_p)
+
+          attachments.foreach { attachment =>
+            mixed_mp.addBodyPart(buildAttachment(attachment))
           }
+
+          bp.setContent(mixed_mp)
+        }
+    }
+
     bp
   }
 
   private def buildAttachment(holder: PlusImageHolder) = {
     val part = new MimeBodyPart
+
     part.setFileName(holder.name)
     part.setContentID(holder.name)
     part.setDisposition(if (holder.attachment) Part.ATTACHMENT else Part.INLINE)
     part.setDataHandler(new javax.activation.DataHandler(new javax.activation.DataSource {
-          def getContentType = holder.mimeType
+      def getContentType = holder.mimeType
+      def getInputStream = new java.io.ByteArrayInputStream(holder.bytes)
+      def getName = holder.name
+      def getOutputStream = throw new java.io.IOException("Unable to write to item")
+    }))
 
-          def getInputStream = new java.io.ByteArrayInputStream(holder.bytes)
-
-          def getName = holder.name
-
-          def getOutputStream = throw new java.io.IOException("Unable to write to item")
-        }))
     part
   }
 
