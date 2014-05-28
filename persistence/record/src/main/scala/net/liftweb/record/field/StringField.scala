@@ -65,7 +65,7 @@ trait StringTypedField extends TypedField[String] with StringValidators {
 
   def asJs = valueBox.map(Str) openOr JsNull
 
-  def asJValue: JValue = valueBox.map(v => JString(v)) openOr (JNothing: JValue)
+  def asJValue(implicit formats: Formats): JValue = valueBox.map(v => JString(v)) openOr (JNothing: JValue)
   def setFromJValue(jvalue: JValue): Box[MyType] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case JString(s)                   => setFromString(s)

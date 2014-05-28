@@ -24,6 +24,7 @@ import net.liftweb.util._
 import scala.reflect.Manifest
 import scala.xml._
 import http.SHtml
+import net.liftweb.json.Formats
 
 /** Base trait of record fields, with functionality common to any type of field owned by any type of record */
 trait BaseField extends FieldIdentifier with util.BaseField {
@@ -91,7 +92,7 @@ trait BaseField extends FieldIdentifier with util.BaseField {
   def asJs: JsExp
 
   /** Encode the field value into a JValue */
-  def asJValue: JValue
+  def asJValue(implicit formats: Formats): JValue
 
   /**
    * What form elements are we going to add to this field?

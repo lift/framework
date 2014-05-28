@@ -22,9 +22,9 @@ import scala.xml.NodeSeq
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, Str}
 import net.liftweb.json.JsonAST._
-import net.liftweb.json.{JsonParser, Printer}
+import net.liftweb.json.{Formats, JsonParser, Printer}
 import net.liftweb.mongodb.record._
-import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
+import net.liftweb.record.{SerializationFunctions, Field, FieldHelpers, MandatoryTypedField}
 import net.liftweb.util.Helpers.tryo
 
 class PatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
@@ -65,11 +65,11 @@ class PatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
 
   def toForm: Box[NodeSeq] = Empty
 
-  def asJs = asJValue match {
+  def asJs = asJValue(owner.meta.formats) match {
     case JNothing => JsNull
     case jv => Str(Printer.compact(render(jv)))
   }
 
-  def asJValue: JValue = valueBox.map(v => Meta.patternAsJValue(v)) openOr (JNothing: JValue)
+  def asJValue(implicit formats: Formats): JValue = valueBox.map(SerializationFunctions.patternAsJValue) openOr (JNothing: JValue)
 }
 

@@ -101,7 +101,7 @@ trait EnumTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Value]
     case other                        => setBox(FieldHelpers.expectedA("JString", other))
   }
 
-  def asJValue: JValue = asJIntOrdinal
+  def asJValue(implicit formats: Formats): JValue = asJIntOrdinal
   def setFromJValue(jvalue: JValue): Box[EnumType#Value] = setFromJIntOrdinal(jvalue)
 }
 

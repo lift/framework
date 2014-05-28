@@ -32,9 +32,12 @@ import json.JsonParser._
 
 
 package mongotestdocs {
-  /*
-  * MongoIdentifiers
-  */
+
+import net.liftweb.record.{UUIDSerializer, DateSerializer, PatternSerializer, ObjectIdSerializer}
+
+/*
+* MongoIdentifiers
+*/
   object TstDBa extends MongoIdentifier {
     val jndiName = "test_a"
   }

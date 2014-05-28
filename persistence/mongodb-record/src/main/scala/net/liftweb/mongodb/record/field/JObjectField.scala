@@ -36,7 +36,7 @@ with MongoFieldFlavor[JObject] {
 
   def owner = rec
 
-  def asJValue = valueBox openOr (JNothing: JValue)
+  def asJValue(implicit formats: Formats) = valueBox openOr (JNothing: JValue)
 
   def setFromJValue(jvalue: JValue): Box[JObject] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)

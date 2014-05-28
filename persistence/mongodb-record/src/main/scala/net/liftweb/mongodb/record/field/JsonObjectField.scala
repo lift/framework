@@ -22,7 +22,7 @@ import net.liftweb.common.{Box, Empty, Failure, Full}
 
 import net.liftweb.http.js.JE.{JsNull, Str}
 import net.liftweb.json.JsonAST._
-import net.liftweb.json.{JsonParser, Printer}
+import net.liftweb.json.{Formats, JsonParser, Printer}
 import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
 import net.liftweb.util.Helpers.tryo
 
@@ -42,7 +42,7 @@ abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <
   override def toForm: Box[NodeSeq] = Empty // FIXME
 
   /** Encode the field value into a JValue */
-  def asJValue: JValue = valueBox.map(_.asJObject) openOr (JNothing: JValue)
+  def asJValue(implicit formats: Formats): JValue = valueBox.map(_.asJObject) openOr (JNothing: JValue)
 
   /*
   * Decode the JValue and set the field to the decoded value.

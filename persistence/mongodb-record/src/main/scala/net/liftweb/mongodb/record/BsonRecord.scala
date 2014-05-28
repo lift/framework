@@ -23,7 +23,7 @@ import common._
 import java.util.regex.Pattern
 import scala.collection.JavaConversions._
 
-import net.liftweb.record.{Field, MetaRecord, Record}
+import net.liftweb.record.{Field, MetaRecord, Record, JsonFormats}
 import net.liftweb.record.field._
 
 import com.mongodb._

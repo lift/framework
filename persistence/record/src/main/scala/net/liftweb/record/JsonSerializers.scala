@@ -11,41 +11,28 @@
 * limitations under the License.
 */
 
-package net.liftweb 
-package mongodb 
-
-import json.{Formats, MappingException, Serializer, TypeInfo}
-import json.JsonAST._
-
+package net.liftweb.record
 
 import java.util.{Date, UUID}
 import java.util.regex.{Pattern, PatternSyntaxException}
 
-import org.bson.types.ObjectId
 
 import org.joda.time.DateTime
+import net.liftweb.json.{MappingException, TypeInfo, Formats, Serializer}
+import net.liftweb.json.JsonDSL._
+import net.liftweb.json.JsonAST.{JString, JField, JObject, JValue, JInt}
 
-/*
-* Provides a way to serialize/de-serialize ObjectIds.
-*
-* Queries for a ObjectId (oid) using the lift-json DSL look like:
-* ("_id" -> ("$oid" -> oid.toString))
-*/
-class ObjectIdSerializer extends Serializer[ObjectId] {
-  private val ObjectIdClass = classOf[ObjectId]
-
-  def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), ObjectId] = {
-    case (TypeInfo(ObjectIdClass, _), json) => json match {
-      case JObject(JField("$oid", JString(s)) :: Nil) if (ObjectId.isValid(s)) =>
-        new ObjectId(s)
-      case x => throw new MappingException("Can't convert " + x + " to ObjectId")
-    }
-  }
-
-  def serialize(implicit formats: Formats): PartialFunction[Any, JValue] = {
-    case x: ObjectId => Meta.objectIdAsJValue(x)
-  }
+/**
+ * How should serialized type look like in json. Preferably this should be implemented by serializers, but other parts
+ * of the framework rely directly on those functions so they are kept for consistency.
+ */
+object SerializationFunctions {
+  def dateAsJValue(d: Date, formats: Formats): JValue = ("$dt" -> formats.dateFormat.format(d))
+  def patternAsJValue(p: Pattern): JValue = ("$regex" -> p.pattern) ~ ("$flags" -> p.flags)
+  def uuidAsJValue(u: UUID): JValue = ("$uuid" -> u.toString)
 }
+
+
 
 /*
 * Provides a way to serialize/de-serialize Patterns.
@@ -66,7 +53,7 @@ class PatternSerializer extends Serializer[Pattern] {
   }
 
   def serialize(implicit formats: Formats): PartialFunction[Any, JValue] = {
-    case x: Pattern => Meta.patternAsJValue(x)
+    case x: Pattern => SerializationFunctions.patternAsJValue(x)
   }
 }
 
@@ -88,7 +75,7 @@ class DateSerializer extends Serializer[Date] {
   }
 
   def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
-    case x: Date => Meta.dateAsJValue(x, format)
+    case x: Date => SerializationFunctions.dateAsJValue(x, format)
   }
 }
 
@@ -110,7 +97,7 @@ class DateTimeSerializer extends Serializer[DateTime] {
   }
 
   def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {  
-    case x: DateTime => Meta.dateAsJValue(x.toDate, format)
+    case x: DateTime => SerializationFunctions.dateAsJValue(x.toDate, format)
   }
 }
 
@@ -131,7 +118,7 @@ class UUIDSerializer extends Serializer[UUID] {
   }
 
   def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
-    case x: UUID => Meta.uuidAsJValue(x)
+    case x: UUID => SerializationFunctions.uuidAsJValue(x)
   }
 }
 

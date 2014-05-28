@@ -27,7 +27,6 @@ import json.Printer
 
 import net.liftweb.record._
 import com.mongodb._
-
 import scala.xml._
 
 /** Field that contains an entire record represented as an inline object value. Inspired by JSONSubRecordField */
@@ -49,7 +48,7 @@ class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonR
   }
 
   def owner = rec
-  def asJs = asJValue match {
+  def asJs = asJValue(valueMeta.formats) match {
     case JNothing => JsNull
     case jv => new JsExp {
       lazy val toJsCmd = Printer.compact(render(jv))
@@ -65,7 +64,8 @@ class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonR
     case _ => genericSetFromAny(in)
   }
 
-  def asJValue: JValue = valueBox.map(_.asJValue) openOr (JNothing: JValue)
+  def asJValue(implicit formats: net.liftweb.json.Formats): JValue = valueBox.map(_.asJValue(formats)) openOr (JNothing: JValue)
+
   def setFromJValue(jvalue: JValue): Box[SubRecordType] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case _ => setBox(valueMeta.fromJValue(jvalue))
@@ -92,7 +92,7 @@ class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: B
       valueMeta.fromDBObject(dbo.get(k.toString).asInstanceOf[DBObject])
     })))
 
-  override def asJValue = JArray(value.map(_.asJValue))
+  override def asJValue(implicit formats: net.liftweb.json.Formats) = JArray(value.map(_.asJValue))
 
   override def setFromJValue(jvalue: JValue) = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)

@@ -28,6 +28,9 @@ import mongodb.record._
 import net.liftweb.record._
 import net.liftweb.record.field._
 import util.Helpers._
+import net.liftweb.record
+import net.liftweb.mongodb.Meta
+import com.mongodb.util.JSONSerializers
 
 trait DateTypedField extends TypedField[Date] {
 
@@ -71,12 +74,12 @@ trait DateTypedField extends TypedField[Date] {
       case _ => Full(elem)
     }
 
-  def asJs = asJValue match {
+  def asJs = asJValue(formats) match {
     case JNothing => JsNull
     case jv => JsRaw(Printer.compact(render(jv)))
   }
 
-  def asJValue: JValue = valueBox.map(v => mongodb.Meta.dateAsJValue(v, formats)) openOr (JNothing: JValue)
+  def asJValue(implicit formats: Formats): JValue = valueBox.map(v => SerializationFunctions.dateAsJValue(v, formats)) openOr (JNothing: JValue)
 }
 
 class DateField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)

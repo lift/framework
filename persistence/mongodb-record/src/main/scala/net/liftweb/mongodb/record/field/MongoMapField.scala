@@ -24,7 +24,7 @@ import scala.xml.NodeSeq
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, JsRaw}
 import net.liftweb.json.JsonAST._
-import net.liftweb.json.{JsonParser, Printer}
+import net.liftweb.json.{JsonParser, Printer, Formats}
 import net.liftweb.record._
 import net.liftweb.util.Helpers.tryo
 
@@ -75,7 +75,7 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
 
   def toForm: Box[NodeSeq] = Empty
 
-  def asJValue = JObject(value.keys.map {
+  def asJValue(implicit formats: Formats) = JObject(value.keys.map {
     k =>
       JField(k, value(k).asInstanceOf[AnyRef] match {
         case x if primitive_?(x.getClass) => primitive2jvalue(x)

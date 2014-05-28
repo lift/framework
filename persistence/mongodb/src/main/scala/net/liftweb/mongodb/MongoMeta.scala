@@ -15,20 +15,12 @@ package net.liftweb
 package mongodb
 
 import org.bson.types.ObjectId
-
+import net.liftweb.record.JsonFormats
 import json.{DefaultFormats, Formats}
 import json.JsonAST.JObject
 
 import com.mongodb.{BasicDBObject, DB, DBCollection, DBObject}
 
-trait JsonFormats {
-  // override this for custom Formats
-  def formats: Formats = DefaultFormats.lossless
-
-  implicit lazy val _formats: Formats = formats
-
-  lazy val allFormats = DefaultFormats.lossless + new ObjectIdSerializer + new DateSerializer + new DateTimeSerializer + new PatternSerializer + new UUIDSerializer
-}
 
 /*
 * This is used by both MongoDocumentMeta and MongoMetaRecord

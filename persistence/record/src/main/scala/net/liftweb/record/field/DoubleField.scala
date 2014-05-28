@@ -42,7 +42,7 @@ trait DoubleTypedField extends NumericTypedField[Double] {
 
   def defaultValue = 0.0
 
-  def asJValue = valueBox.map(JDouble) openOr (JNothing: JValue)
+  def asJValue(implicit formats: Formats) = valueBox.map(JDouble) openOr (JNothing: JValue)
   
   def setFromJValue(jvalue: JValue) = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)

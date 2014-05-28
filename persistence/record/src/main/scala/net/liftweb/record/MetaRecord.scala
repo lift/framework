@@ -25,7 +25,7 @@ import scala.collection.mutable.{ListBuffer}
 import scala.xml._
 import net.liftweb.http.js.{JsExp, JE, JsObj}
 import net.liftweb.http.{SHtml, Req, LiftResponse, LiftRules}
-import net.liftweb.json.{JsonParser, Printer}
+import net.liftweb.json.{DefaultFormats, Formats, JsonParser, Printer}
 import net.liftweb.json.JsonAST._
 import net.liftweb.record.FieldHelpers.expectedA
 import java.lang.reflect.Method
@@ -235,12 +235,17 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   }
 
   /**
+   * Provide way to serialize/deserialize to/from jsons. You can override that on the function level
+   */
+//  implicit val formats = DefaultFormats.lossless
+
+  /**
    * Returns the JSON representation of <i>inst</i> record, converts asJValue to JsObj
    *
    * @return a JsObj
    */
-  def asJsExp(inst: BaseRecord): JsExp = new JsExp {
-    lazy val toJsCmd = Printer.compact(render(asJValue(inst)))
+  def asJsExp(inst: BaseRecord)(implicit formats: Formats): JsExp = new JsExp {
+    lazy val toJsCmd = Printer.compact(render(asJValue(inst)(formats)))
   }
 
   /**
@@ -274,8 +279,8 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
     }
 
   /** Encode a record instance into a JValue */
-  def asJValue(rec: BaseRecord): JObject = {
-    JObject(fields(rec).map(f => JField(f.name, f.asJValue)))
+  def asJValue(rec: BaseRecord)(implicit formats: Formats): JObject = {
+    JObject(fields(rec).map(f => JField(f.name, f.asJValue(formats))))
   }
 
   /** Create a record by decoding a JValue which must be a JObject */

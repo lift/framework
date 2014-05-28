@@ -26,6 +26,7 @@ import net.liftweb.json.JsonAST.JValue
 import net.liftweb.util._
 import Helpers._
 import S._
+import net.liftweb.json.Formats
 
 
 trait DecimalTypedField extends NumericTypedField[BigDecimal] {
@@ -49,7 +50,7 @@ trait DecimalTypedField extends NumericTypedField[BigDecimal] {
 
   def set_!(in: BigDecimal): BigDecimal = new BigDecimal(in.bigDecimal.setScale(scale, context.getRoundingMode))
 
-  def asJValue = asJString(_.toString)
+  def asJValue(implicit formats: Formats) = asJString(_.toString)
   def setFromJValue(jvalue: JValue) = setFromJString(jvalue)(s => tryo(BigDecimal(s)))
 }
 

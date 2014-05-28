@@ -75,7 +75,7 @@ trait EnumNameTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Va
     case other                        => setBox(FieldHelpers.expectedA("JString", other))
   }
 
-  def asJValue: JValue = asJStringName
+  def asJValue(implicit formats: Formats): JValue = asJStringName
   def setFromJValue(jvalue: JValue): Box[EnumType#Value] = setFromJStringName(jvalue)
 }
 

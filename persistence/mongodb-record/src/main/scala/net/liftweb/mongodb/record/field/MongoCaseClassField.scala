@@ -30,7 +30,8 @@ import reflect.Manifest
 import net.liftweb.http.js.JsExp
 
 
-class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerType)( implicit mf: Manifest[CaseType]) extends Field[CaseType, OwnerType] with MandatoryTypedField[CaseType] with MongoFieldFlavor[CaseType] {
+class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerType)( implicit mf: Manifest[CaseType])
+  extends Field[CaseType, OwnerType] with MandatoryTypedField[CaseType] with MongoFieldFlavor[CaseType] {
 
   // override this for custom formats
   def formats: Formats = DefaultFormats
@@ -47,7 +48,12 @@ class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerTyp
   override def defaultValue = null.asInstanceOf[MyType]
   override def optional_? = true
 
-  def asJValue = valueBox.map(v => Extraction.decompose(v)) openOr (JNothing: JValue)
+  /**
+   * Serialize to json
+   * @param formats - this not implicit because of conflict with already implicit value defined
+   * @return
+   */
+  def asJValue(implicit formatz: Formats) = valueBox.map(v => Extraction.decompose(v)(formatz)) openOr (JNothing: JValue)
 
   def setFromJValue(jvalue: JValue): Box[CaseType] = jvalue match {
     case JNothing|JNull => setBox(Empty)
@@ -94,7 +100,7 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
   override def defaultValue: MyType = Nil
   override def optional_? = true
 
-  def asJValue = JArray(value.map(v => Extraction.decompose(v)))
+  def asJValue(implicit formatz: Formats) = JArray(value.map(v => Extraction.decompose(v)(formatz)))
 
   def setFromJValue(jvalue: JValue): Box[MyType] = jvalue match {
     case JArray(contents) => setBox(Full(contents.flatMap(s => Helpers.tryo[CaseType]{ s.extract[CaseType] })))

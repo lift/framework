@@ -27,6 +27,7 @@ import net.liftweb.util._
 import Helpers._
 import S._
 import JE._
+import net.liftweb.json.Formats
 
 
 trait BinaryTypedField extends TypedField[Array[Byte]] {
@@ -43,7 +44,7 @@ trait BinaryTypedField extends TypedField[Array[Byte]] {
 
   def asJs = valueBox.map(v => Str(hexEncode(v))) openOr JsNull
 
-  def asJValue = asJString(base64Encode _)
+  def asJValue(implicit formats: Formats) = asJString(base64Encode _)
   def setFromJValue(jvalue: JValue) = setFromJString(jvalue)(s => tryo(base64Decode(s)))
 }
   

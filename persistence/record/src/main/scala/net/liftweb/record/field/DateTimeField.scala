@@ -36,7 +36,10 @@ trait DateTimeTypedField extends TypedField[Calendar] {
     cal
   }
 
-  val formats = new DefaultFormats {
+  /**
+   * Left for the compatibility reasons, asJValue takes implicit parameter while asJs has to use it explicitly
+   */
+  implicit val _formats = new DefaultFormats {
     override def dateFormatter = Helpers.internetDateFormatter
   }
 
@@ -62,11 +65,12 @@ trait DateTimeTypedField extends TypedField[Calendar] {
       case _        => Full(elem)
     }
 
-  def asJs = valueBox.map(v => Str(formats.dateFormat.format(v.getTime))) openOr JsNull
+  def asJs = valueBox.map(v => Str(_formats.dateFormat.format(v.getTime))) openOr JsNull
 
-  def asJValue = asJString(v => formats.dateFormat.format(v.getTime))
+  def asJValue(implicit formats: Formats) = asJString(v => formats.dateFormat.format(v.getTime))
+
   def setFromJValue(jvalue: JValue) = setFromJString(jvalue) {
-    v => formats.dateFormat.parse(v).map(d => {
+    v => _formats.dateFormat.parse(v).map(d => {
       val cal = Calendar.getInstance
       cal.setTime(d)
       cal
