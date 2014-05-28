@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 WorldWide Conferencing, LLC
+ * Copyright 2011-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,10 @@ class DBSpec extends Specification with Mockito {
     "call postTransaction functions with true if transaction is committed" in {
       val m = mock[CommitFunc]
       val activeConnection = mock[Connection]
-      DB.defineConnectionManager(DefaultConnectionIdentifier, dBVendor(activeConnection))
+      DB.defineConnectionManager(util.DefaultConnectionIdentifier, dBVendor(activeConnection))
 
       DB.buildLoanWrapper(true) {
-        DB.appendPostTransaction(DefaultConnectionIdentifier, m.f _)
+        DB.appendPostTransaction(util.DefaultConnectionIdentifier, m.f _)
         DB.currentConnection.map{c => DB.exec(c, "stuff") {dummy => }}
       }
       there was one(activeConnection).commit
@@ -58,12 +58,12 @@ class DBSpec extends Specification with Mockito {
     "call postTransaction functions with false if transaction is rolled back" in {
       val m = mock[CommitFunc]
       val activeConnection = mock[Connection]
-      DB.defineConnectionManager(DefaultConnectionIdentifier, dBVendor(activeConnection))
+      DB.defineConnectionManager(util.DefaultConnectionIdentifier, dBVendor(activeConnection))
 
       val lw = DB.buildLoanWrapper(true)
 
       tryo(lw.apply {
-        DB.appendPostTransaction(DefaultConnectionIdentifier, m.f _)
+        DB.appendPostTransaction(util.DefaultConnectionIdentifier, m.f _)
         DB.currentConnection.map{c => DB.exec(c, "stuff") {dummy => }}
         throw new RuntimeException("oh no")
         42
@@ -77,16 +77,16 @@ class DBSpec extends Specification with Mockito {
     "call postTransaction functions with true if transaction is committed" in {
       val m = mock[CommitFunc]
       val activeConnection = mock[Connection]
-      DB.defineConnectionManager(DefaultConnectionIdentifier, dBVendor(activeConnection))
+      DB.defineConnectionManager(util.DefaultConnectionIdentifier, dBVendor(activeConnection))
 
       DB.buildLoanWrapper(false) {
-        DB.use(DefaultConnectionIdentifier) {c =>
-          DB.appendPostTransaction(DefaultConnectionIdentifier, m.f _)
+        DB.use(util.DefaultConnectionIdentifier) {c =>
+          DB.appendPostTransaction(util.DefaultConnectionIdentifier, m.f _)
           DB.exec(c, "stuff") {
             dummy =>
           }
         }
-        DB.use(DefaultConnectionIdentifier) {c =>
+        DB.use(util.DefaultConnectionIdentifier) {c =>
           DB.exec(c, "more stuff") { dummy => }
         }
       }
@@ -97,15 +97,15 @@ class DBSpec extends Specification with Mockito {
     "call postTransaction functions with false if transaction is rolled back" in {
       val m = mock[CommitFunc]
       val activeConnection = mock[Connection]
-      DB.defineConnectionManager(DefaultConnectionIdentifier, dBVendor(activeConnection))
+      DB.defineConnectionManager(util.DefaultConnectionIdentifier, dBVendor(activeConnection))
 
       val lw = DB.buildLoanWrapper(false)
 
       tryo(lw.apply {
-        DB.use(DefaultConnectionIdentifier) {c =>
+        DB.use(util.DefaultConnectionIdentifier) {c =>
           DB.exec(c, "more stuff") { dummy => }
         }
-        DB.use(DefaultConnectionIdentifier) {c =>
+        DB.use(util.DefaultConnectionIdentifier) {c =>
           DB.appendPostTransaction (m.f _)
           DB.exec(c, "stuff") {dummy => throw new RuntimeException("oh no")}
         }
@@ -120,10 +120,10 @@ class DBSpec extends Specification with Mockito {
     "call postTransaction functions with true if transaction is committed" in {
       val m = mock[CommitFunc]
       val activeConnection = mock[Connection]
-      DB.defineConnectionManager(DefaultConnectionIdentifier, dBVendor(activeConnection))
+      DB.defineConnectionManager(util.DefaultConnectionIdentifier, dBVendor(activeConnection))
 
-      DB.use(DefaultConnectionIdentifier) {c =>
-        DB.appendPostTransaction(DefaultConnectionIdentifier, m.f _)
+      DB.use(util.DefaultConnectionIdentifier) {c =>
+        DB.appendPostTransaction(util.DefaultConnectionIdentifier, m.f _)
         DB.exec(c, "stuff") {dummy => }
       }
 
@@ -134,10 +134,10 @@ class DBSpec extends Specification with Mockito {
     "call postTransaction functions with false if transaction is rolled back" in {
       val m = mock[CommitFunc]
       val activeConnection = mock[Connection]
-      DB.defineConnectionManager(DefaultConnectionIdentifier, dBVendor(activeConnection))
+      DB.defineConnectionManager(util.DefaultConnectionIdentifier, dBVendor(activeConnection))
 
-      tryo(DB.use(DefaultConnectionIdentifier) {c =>
-        DB.appendPostTransaction(DefaultConnectionIdentifier, m.f _)
+      tryo(DB.use(util.DefaultConnectionIdentifier) {c =>
+        DB.appendPostTransaction(util.DefaultConnectionIdentifier, m.f _)
         DB.exec(c, "stuff") {dummy => throw new RuntimeException("Oh no")}
         42
       })
@@ -158,11 +158,11 @@ class DBSpec extends Specification with Mockito {
     "call postTransaction functions with false" in {
       val m = mock[CommitFunc]
       val activeConnection = mock[Connection]
-      DB.defineConnectionManager(DefaultConnectionIdentifier, dBVendor(activeConnection))
+      DB.defineConnectionManager(util.DefaultConnectionIdentifier, dBVendor(activeConnection))
 
-      tryo(DB.use(DefaultConnectionIdentifier) {c =>
-        DB.appendPostTransaction(DefaultConnectionIdentifier, m.f _)
-        DB.rollback(DefaultConnectionIdentifier)
+      tryo(DB.use(util.DefaultConnectionIdentifier) {c =>
+        DB.appendPostTransaction(util.DefaultConnectionIdentifier, m.f _)
+        DB.rollback(util.DefaultConnectionIdentifier)
         42
       })
 

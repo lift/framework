@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 WorldWide Conferencing, LLC
+ * Copyright 2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,21 @@
  */
 
 package net.liftweb
-package object mapper {
-  type SuperConnection = db.SuperConnection
-  type ConnectionIdentifier = util.ConnectionIdentifier
-  type DriverType = db.DriverType
-  type ConnectionManager = db.ConnectionManager
-  type DBLogEntry = db.DBLogEntry
-  type StandardDBVendor = db.StandardDBVendor
+package record
 
-  def DBLogEntry = db.DBLogEntry
-  def DefaultConnectionIdentifier = util.DefaultConnectionIdentifier
-  def DriverType = db.DriverType
+import http.Factory
+import util.ConnectionIdentifier
+import util.Helpers._
 
-  @deprecated("Use util.Safe instead.", "2.4")
-  def Safe = util.Safe
+object RecordRules extends Factory {
+  /**
+    * Calculate the name of a field based on the name
+    * of the Field. Must be set in Boot before any code
+    * that touches the MetaRecord.
+    *
+    * To get snake_case, use this:
+    *
+    *  RecordRules.fieldName.default.set((_, name) => StringHelpers.snakify(name))
+    */
+  val fieldName = new FactoryMaker[(ConnectionIdentifier, String) => String]((_: ConnectionIdentifier, name: String) => name) {}
 }

@@ -22,7 +22,7 @@ import scala.xml.{Elem, NodeSeq}
 import net.liftweb.http.S
 import S._
 import net.liftweb.http.js._
-import net.liftweb.util.{FieldError, FieldContainer, BaseField}
+import net.liftweb.util.{FieldError, FieldContainer, BaseField,CssSel}
 import net.liftweb.common.{Box, Empty, Full, ParamFailure}
 
 trait BaseMapper extends FieldContainer {
@@ -264,24 +264,44 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable{
    */
   def fieldByName[T](fieldName: String): Box[MappedField[T, A]] = getSingleton.fieldByName[T](fieldName, this)
 
+  def fieldMapperTransforms(fieldTransform: (BaseOwnedMappedField[A] => NodeSeq)): scala.collection.Seq[CssSel] = {
+    getSingleton.fieldMapperTransforms(fieldTransform, this)
+  }
+
   type FieldPF = PartialFunction[String, NodeSeq => NodeSeq]
 
+  @deprecated("Use fieldMapperTransforms with CssSels instead.", "2.6")
   def fieldMapperPF(transform: (BaseOwnedMappedField[A] => NodeSeq)): FieldPF = {
     getSingleton.fieldMapperPF(transform, this)
   }
 
   private var fieldPF_i: FieldPF = Map.empty
 
+  @deprecated("Use fieldTransforms with CssSels instead.", "2.6")
   def fieldPF = fieldPF_i
 
+  @deprecated("Use appendFieldTransform with CssSels instead.", "2.6")
   def appendField(pf: FieldPF) {
     fieldPF_i = fieldPF_i orElse pf
     fieldPF_i
   }
 
+  @deprecated("Use prependFieldTransform with CssSels instead.", "2.6")
   def prependField(pf: FieldPF) {
     fieldPF_i = pf orElse fieldPF_i
     fieldPF_i
+  }
+
+  private var fieldTransforms_i: scala.collection.Seq[CssSel] = Vector()
+
+  def fieldTransforms = fieldTransforms_i
+
+  def appendFieldTransform(transform: CssSel) {
+    fieldTransforms_i = fieldTransforms_i :+ transform
+  }
+
+  def prependFieldTransform(transform: CssSel) {
+    fieldTransforms_i = transform +: fieldTransforms_i
   }
 
   /**

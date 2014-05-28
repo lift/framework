@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 WorldWide Conferencing, LLC
+ * Copyright 2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,11 @@
  */
 
 package net.liftweb
-package object mapper {
-  type SuperConnection = db.SuperConnection
+
+package object db {
+  @deprecated("moved to package util", "2.6")
   type ConnectionIdentifier = util.ConnectionIdentifier
-  type DriverType = db.DriverType
-  type ConnectionManager = db.ConnectionManager
-  type DBLogEntry = db.DBLogEntry
-  type StandardDBVendor = db.StandardDBVendor
 
-  def DBLogEntry = db.DBLogEntry
-  def DefaultConnectionIdentifier = util.DefaultConnectionIdentifier
-  def DriverType = db.DriverType
-
-  @deprecated("Use util.Safe instead.", "2.4")
-  def Safe = util.Safe
+  @deprecated("moved to package util", "2.6")
+  val DefaultConnectionIdentifier = util.DefaultConnectionIdentifier
 }
