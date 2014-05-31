@@ -1560,9 +1560,13 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Compute the headers to be sent to the browser in addition to anything else that's sent
    */
-  val listOfSupplimentalHeaders: FactoryMaker[List[(String, String)]] = new FactoryMaker(() => List(("X-Lift-Version", liftVersion), ("X-Frame-Options", "SAMEORIGIN"))) {}
+  val supplementalHeaders: FactoryMaker[List[(String, String)]] = new FactoryMaker(() => List(("X-Lift-Version", liftVersion), ("X-Frame-Options", "SAMEORIGIN"))) {}
 
-  @volatile var supplimentalHeaders: HTTPResponse => Unit = s => listOfSupplimentalHeaders.vend.foreach{case (k, v) => s.addHeaders(List(HTTPParam(k, v)))}
+  @deprecated("Use supplementalHeaders with an 'e'. This misspelled variant will be removed in Lift 3.0.", "2.6")
+  final val listOfSupplimentalHeaders = supplementalHeaders
+
+  @deprecated("Use the supplementalHeaders (with an 'e') FactoryMaker. This misspelled variant will be removed in Lift 3.0.", "2.6")
+  @volatile var supplimentalHeaders: HTTPResponse => Unit = s => supplementalHeaders.vend.foreach{case (k, v) => s.addHeaders(List(HTTPParam(k, v)))}
 
   @volatile var calcIE6ForResponse: () => Boolean = () => S.request.map(_.isIE6) openOr false
 
