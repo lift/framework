@@ -19,9 +19,6 @@ package mongodb
 package record
 package field
 
-import java.util.{Date, UUID}
-import java.util.regex.Pattern
-
 import scala.collection.JavaConversions._
 import scala.xml.NodeSeq
 
@@ -66,6 +63,8 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
 
   def defaultValue = List[ListType]()
 
+  implicit def formats = owner.meta.formats
+
   def setFromAny(in: Any): Box[MyType] = {
     in match {
       case dbo: DBObject => setFromDBObject(dbo)
@@ -83,18 +82,14 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
 
   def setFromJValue(jvalue: JValue): Box[MyType] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
-    case JArray(arr) => setBox(Full((arr.map { jv => (jv match {
-      case JObject(JField("$oid", JString(s)) :: Nil) if (ObjectId.isValid(s)) =>
-        new ObjectId(s)
-      case JObject(JField("$regex", JString(s)) :: JField("$flags", JInt(f)) :: Nil) =>
-        Pattern.compile(s, f.intValue)
-      case JObject(JField("$dt", JString(s)) :: Nil) =>
-        val dt = owner.meta.formats.dateFormat.parse(s).getOrElse(throw new MongoException("Can't parse "+ s + " to Date"))
-        if (owner.meta.formats.customSerializers.exists { _.isInstanceOf[DateTimeSerializer] }) new DateTime(dt)
-        else dt
-      case JObject(JField("$uuid", JString(s)) :: Nil) => UUID.fromString(s)
+    case JArray(array) => setBox(Full((array.map {
+      case JsonObjectId(objectId) => objectId
+      case JsonRegex(regex) => regex
+      case JsonUUID(uuid) => uuid
+      case JsonDateTime(dt) if (mf.toString == "org.joda.time.DateTime") => dt
+      case JsonDate(date) => date
       case other => other.values
-    }).asInstanceOf[ListType]})))
+    }).asInstanceOf[MyType]))
     case other => setBox(FieldHelpers.expectedA("JArray", other))
   }
 

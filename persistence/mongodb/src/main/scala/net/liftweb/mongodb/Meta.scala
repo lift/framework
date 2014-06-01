@@ -81,9 +81,9 @@ private[mongodb] object Meta {
     def datetype_?(clazz: Class[_]) = datetypes contains clazz
 
     def datetype2jvalue(a: Any)(implicit formats: Formats) = a match {
-      case x: Calendar => dateAsJValue(x.getTime, formats)
-      case x: Date => dateAsJValue(x, formats)
-      case x: DateTime => dateAsJValue(x.toDate, formats)
+      case x: Calendar => JsonDate(x.getTime)(formats)
+      case x: Date => JsonDate(x)(formats)
+      case x: DateTime => JsonDateTime(x)(formats)
     }
 
     def datetype2dbovalue(a: Any) = a match {
@@ -104,31 +104,27 @@ private[mongodb] object Meta {
     * Definitive place for JValue conversion of mongo types
     */
     def mongotype2jvalue(a: Any)(implicit formats: Formats) = a match {
-      case x: ObjectId => objectIdAsJValue(x, formats)
-      case x: Pattern => patternAsJValue(x)
-      case x: UUID => uuidAsJValue(x)
+      case x: ObjectId => JsonObjectId.asJValue(x, formats)
+      case x: Pattern => JsonRegex(x)
+      case x: UUID => JsonUUID(x)
       case x: DBRef => sys.error("DBRefs are not supported.")
       case _ => sys.error("not a mongotype " + a.asInstanceOf[AnyRef].getClass)
     }
   }
 
+  @deprecated("use JsonDate.apply", "2.6")
   def dateAsJValue(d: Date, formats: Formats): JValue = ("$dt" -> formats.dateFormat.format(d))
-  def objectIdAsJValue(oid: ObjectId): JValue = ("$oid" -> oid.toString)
-  def patternAsJValue(p: Pattern): JValue = ("$regex" -> p.pattern) ~ ("$flags" -> p.flags)
-  def uuidAsJValue(u: UUID): JValue = ("$uuid" -> u.toString)
+  @deprecated("use JsonObjectId.apply", "2.6")
+  def objectIdAsJValue(oid: ObjectId): JValue = JsonObjectId(oid)
+  @deprecated("use JsonRegex.apply", "2.6")
+  def patternAsJValue(p: Pattern): JValue = JsonRegex(p)
+  @deprecated("use JsonUUID.apply", "2.6")
+  def uuidAsJValue(u: UUID): JValue = JsonUUID(u)
 
+  @deprecated("use JsonObjectId.asJValue", "2.6")
   def objectIdAsJValue(oid: ObjectId, formats: Formats): JValue =
-    if (isObjectIdSerializerUsed(formats))
-      objectIdAsJValue(oid)
-    else
-      JString(oid.toString)
+    JsonObjectId.asJValue(oid, formats)
 
-  /*
-  * Check to see if the ObjectIdSerializer is being used.
-  */
-  private def isObjectIdSerializerUsed(formats: Formats): Boolean =
-    formats.customSerializers.exists(_.getClass == objectIdSerializerClass)
 
-  private val objectIdSerializerClass = classOf[net.liftweb.mongodb.ObjectIdSerializer]
 }
 

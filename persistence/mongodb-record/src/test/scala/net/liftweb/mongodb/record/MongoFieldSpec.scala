@@ -15,7 +15,8 @@
  */
 
 package net.liftweb
-package mongodb.record
+package mongodb
+package record
 
 import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
@@ -29,7 +30,6 @@ import org.joda.time.DateTime
 
 import common._
 import json._
-import mongodb.{Meta => DBOMeta}
 import mongodb.BsonDSL._
 import util.Helpers.randomString
 import http.{LiftSession, S}
@@ -264,7 +264,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       Full(<input name=".*" type="text" tabindex="1" value={oid.toString} id="mandatoryObjectIdField_id"></input>)
     )
     rec.mandatoryObjectIdField(oid)
-    new Date(oid.getTime) mustEqual rec.mandatoryObjectIdField.createdAt
+    oid.getDate mustEqual rec.mandatoryObjectIdField.createdAt
   }
 
   "PatternField" should {
@@ -389,8 +389,8 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
         rec.patternListField,
         JsArray(Str(ptrn1.toString), Str(ptrn2.toString)),
         JArray(List(
-          DBOMeta.patternAsJValue(ptrn1),
-          DBOMeta.patternAsJValue(ptrn2)
+          JsonRegex(ptrn1),
+          JsonRegex(ptrn2)
         )),
         Empty,
         false
@@ -415,9 +415,9 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
         rec.dateListField,
         JsArray(Str(dt1.toString), Str(dt2.toString), Str(dt3.toString)),
         JArray(List(
-          DBOMeta.dateAsJValue(dt1, MongoListTestRecord.formats),
-          DBOMeta.dateAsJValue(dt2, MongoListTestRecord.formats),
-          DBOMeta.dateAsJValue(dt3, MongoListTestRecord.formats)
+          JsonDate(dt1)(MongoListTestRecord.formats),
+          JsonDate(dt2)(MongoListTestRecord.formats),
+          JsonDate(dt3)(MongoListTestRecord.formats)
         )),
         Empty
       )
@@ -441,9 +441,9 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
         rec.uuidListField,
         JsArray(Str(uuid1.toString), Str(uuid2.toString), Str(uuid3.toString)),
         JArray(List(
-          DBOMeta.uuidAsJValue(uuid1),
-          DBOMeta.uuidAsJValue(uuid2),
-          DBOMeta.uuidAsJValue(uuid3)
+          JsonUUID(uuid1),
+          JsonUUID(uuid2),
+          JsonUUID(uuid3)
         )),
         Empty
       )
@@ -467,9 +467,9 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
         rec.dateTimeListField,
         JsArray(Str(dt1.toString), Str(dt2.toString), Str(dt3.toString)),
         JArray(List(
-          DBOMeta.dateAsJValue(dt1.toDate, MongoListTestRecord.formats),
-          DBOMeta.dateAsJValue(dt2.toDate, MongoListTestRecord.formats),
-          DBOMeta.dateAsJValue(dt3.toDate, MongoListTestRecord.formats)
+          JsonDate(dt1.toDate)(MongoListTestRecord.formats),
+          JsonDate(dt2.toDate)(MongoListTestRecord.formats),
+          JsonDate(dt3.toDate)(MongoListTestRecord.formats)
         )),
         Empty
       )
