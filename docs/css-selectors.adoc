@@ -1,0 +1,83 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+= CSS Selector Transforms
+
+Lift's templating strategy is much simpler than most systems, and is aimed at
+cleanly and completely separating business logic from markup. Many a framework
+has made this claim, but Lift is one of the few to have achieved this break
+completely, using only HTML annotations with `data-` attributes. You can find
+an overview of the full Lift CSS templating strategy in the [Lift templating
+guide]().
+
+This document is a reference on the underpinnings of Lift templating, the CSS
+Selector Transforms. These are used in Lift code to transform a block of HTML
+by enriching it with data from the system and filtering it based on business
+rules.
+
+== Selectors and Replacement Rules
+
+CSS Selector Transforms consist of three main components:
+ - The selector
+ - The subnode modification rule
+ - The transformation function
+
+///
+  Nice to have: graphic that shows a selector transform pointing to each
+///
+
+The details of each are provided below, but first here ere are some simple
+examples of transforms that you can write with links:
+
+.Replace the contents of all `a` elements with the text "Mozilla"
+====
+```scala
+"a *" #> "Mozilla"
+```
+====
+
+.Make all links point to Mozilla
+====
+```scala
+"a [href]" #> "http://mozilla.org"
+```
+====
+
+.Replace all elements with class `name` with a user's name
+====
+```scala
+".name" #> user.name
+```
+====
+
+.Do all three of the previous things at once
+====
+"a *" #> "Mozilla" &
+"a [href]" #> "http://mozilla.org" &
+".name" #> user.name
+====
+
+These examples show a few options:
+ - You can select by element name or by class name. More available selectors are
+   in the section below on <<available-selectors>>.
+ - You can set the body of an element, an attribute of an element, or even
+   replace the element altogether. More subnode modification rules are in the
+   section below on <<available-modification-rules>>.
+ - You can combine multiple CSS selector transforms using the `&` operator. This
+   is subject to some limitations detailed in the section below on <<combining-transforms>>.
+
+== Available Selectors
+
+== Available Modification Rules
+
+== Transformation Functions
+
+== Combining Transforms
+
+== Macros and Strings
+
+Lift's CSS Selector Transforms can be used in two modes. Most basically, you
+can create a `String` with the appropriate selector and then specify the
+transformation you want to apply to matching blocks
