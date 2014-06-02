@@ -231,6 +231,7 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       .mandatoryIntListField(List(4, 5, 6))
       .mandatoryMongoJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
       .mongoCaseClassListField(List(MongoCaseClassTestObject(1,"str",MyTestEnum.TWO)))
+      .mandatoryMongoRefListField(Nil)
 
     val ltrJson =
       ("_id" -> ("$uuid" -> ltr.id.toString)) ~
@@ -242,7 +243,8 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       )) ~
       ("mongoCaseClassListField" -> List(
         ("intField" -> 1) ~ ("stringField" -> "str") ~ ("enum" -> 1)
-      ))
+      )) ~
+      ("mandatoryMongoRefListField" -> JArray(Nil))
 
     val mtr = MapTestRecord.createRecord
       .mandatoryStringMapField(Map("a" -> "abc", "b" -> "def", "c" -> "ghi"))
