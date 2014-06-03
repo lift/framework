@@ -66,15 +66,77 @@ These examples show a few options:
    replace the element altogether. More subnode modification rules are in the
    section below on <<available-modification-rules>>.
  - You can combine multiple CSS selector transforms using the `&` operator. This
-   is subject to some limitations detailed in the section below on <<combining-transforms>>.
+   is subject to some limitations detailed in the section below on <<combining-selectors-and-transforms>>.
 
 == Available Selectors
+
+NOTE: You cannot chain these in the standard CSS way (e.g., `input.class-name` is not
+valid). Instead, you must always put spaces between the selectors. More on this
+in the section below on <<combining-selectors-and-transforms>>.
+
+Class selector: `.class-name`::
+  The class selector matches any element that has `class-name` as one of its
+  classes. For example, you can use `.item` to match an element `<li
+  class="item selected">...</li>`.
+
+Id selector: `#element-id`::
+  The id selector matches any element that has `element-id` as the value of its
+  `id` attribute. For example, you can use `#page-header` to match an element
+  `<header id="page-header">...</header>`.
+
+Name selector: `@field-name`::
+  The name selector matches any element that has `field-name` as the value of
+  its `name` attribute. For example, you can use `@username` to match an element
+  `<input name="username">`.
+
+Element selector: `element-name`::
+  The element selector matches any element of type `element-name`. For example,
+  you can use `input` to match an element `<input type="text">`.
+
+Attribute selector: `an-attribute=a-value`::
+  The attribute selector matches any element whose attribute named
+  `an-attribute` has the value `a-value`. For example, you can use
+  `ng-model=user` to match an element `<ul ng-model="user">...</ul>`.
+
+Universal selector: `*`::
+  The universal selector matches any element.
+
+Root selector: `^`::
+  The root selector matches elements at the root level of the NodeSeq being
+  transformed. For example, you can use `^` to match both the `header`
+  and `ul` elements in the HTML `<header id="page-header">...</header><ul
+  ng-model="user">...</ul>`.
+
+=== Shortened Attribute Selectors
+
+In addition to the above base selectors, a few selectors are provided that are
+useful shortcuts for special attributes:
+
+Data name attribute selector: `;name-data`::
+  The data name attribute selector matches any element that has `name-data` as
+  the value of its `data-name` attribute. For example, you can use `;user-info`
+  to match an element `<ul data-name="user-info">...</ul>`.
+
+Field type selectors: `:button`, `:checkbox`, `:file`, `:password`, `:radio`, `:reset`, `:submit`, `:text`::
+  The field type selectors match elements whose `type` attribute is set to a
+  particular type. For example, `:button` will match an element `<input
+  type="button">`. `:checkbox` will match an element `<input
+  type="checkbox">`. Note that this is _not_ generalized. So, for example,
+  `:custom-field` will _not_ match `<input type="custom-field">`. Only the above
+  values are supported.
 
 == Available Modification Rules
 
 == Transformation Functions
 
-== Combining Transforms
+== Combining Selectors and Transforms
+
+Lift's selectors are not identical to CSS selectors. They're designed for speed
+rather than for being featureful, and designed in the context of a full-featured
+language rather than a limited language like CSS. One key difference is in how
+you combine them. In CSS, you can use `>` to select direct children, `+` for
+direct siblings, etc. Lift only provides one combinator, the space: ` `. It
+works just like in CSS, applying to all descendants. Com
 
 == Macros and Strings
 
