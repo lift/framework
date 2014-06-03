@@ -18,6 +18,7 @@ package net.liftweb
 package record
 
 import net.liftweb.common._
+import net.liftweb.http.S
 import net.liftweb.http.js.{JsExp}
 import net.liftweb.json.JsonAST.{JNothing, JNull, JString, JValue}
 import net.liftweb.util._
@@ -147,6 +148,11 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends BaseField {
    * The text name of this field
    */
   def name: String = RecordRules.fieldName.vend.apply(owner.meta.connectionIdentifier, fieldName)
+
+  /**
+    * The display name of this field (e.g., "First Name")
+    */
+  override def displayName: String = RecordRules.displayName.vend.apply(owner, S.locale, name)
 
   /**
    * Are we in "safe" mode (i.e., the value of the field can be read or written without any security checks.)

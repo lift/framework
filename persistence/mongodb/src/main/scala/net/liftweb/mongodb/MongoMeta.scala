@@ -18,6 +18,7 @@ import org.bson.types.ObjectId
 
 import json.{DefaultFormats, Formats}
 import json.JsonAST.JObject
+import util.ConnectionIdentifier
 
 import com.mongodb.{BasicDBObject, DB, DBCollection, DBObject}
 
@@ -35,10 +36,10 @@ trait JsonFormats {
 */
 trait MongoMeta[BaseDocument] extends JsonFormats {
 
+  def connectionIdentifier: ConnectionIdentifier
+
   // class name has a $ at the end.
-  private lazy val _collectionName = {
-    getClass.getName.split("\\.").toList.last.replace("$", "")+"s"
-  }
+  private lazy val _collectionName = getClass.getName.replaceAllLiterally("$", "")
 
   /*
   * Collection names should begin with letters or an underscore and may include
@@ -49,9 +50,11 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   * -- the collection namespace is flat from the database's perspective.
   * From: http://www.mongodb.org/display/DOCS/Collections
   */
-  def fixCollectionName = _collectionName.toLowerCase match {
-    case name if (name.contains("$")) => name.replace("$", "_d_")
-    case name => name
+  def fixCollectionName = {
+    val colName = MongoRules.collectionName.vend.apply(connectionIdentifier, _collectionName)
+
+    if (colName.contains("$")) colName.replaceAllLiterally("$", "_d_")
+    else colName
   }
 
   /**
