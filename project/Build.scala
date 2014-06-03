@@ -35,11 +35,9 @@ object BuildDef extends Build {
     liftProject("lift-framework-pre-211", file("."))
       .aggregate(liftProjects ++ pre_211_project : _*)
       .settings(aggregatedSetting(sources in(Compile, doc)),
-        aggregatedSetting(dependencyClasspath in(Compile, doc)),
-        publishArtifact := false)
-
-
-
+                aggregatedSetting(dependencyClasspath in(Compile, doc)),
+                publishArtifact := false,
+                target <<= baseDirectory / "target-pre-211")
 
   // Core Projects
   // -------------
