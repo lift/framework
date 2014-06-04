@@ -127,6 +127,62 @@ Field type selectors: `:button`, `:checkbox`, `:file`, `:password`, `:radio`, `:
 
 == Available Modification Rules
 
+Subnode modification rules indicate what the result of the transformation
+function will do to the element matched by the selector.
+
+Set children rule: `*`::
+  The transformation result will set the children of the matched element(s). For
+  example, `^ *` will set the children of all root elements to the results of
+  the transformation.
+
+Append to children rule: `*<` or `*+`::
+  The transformation result will be appended to the children of the matched
+  element(s). For example, `^ *+` will append the results of the transformation
+  to the end of the content of all root elements.
+
+Prepend to children rule: `>*` or `-*`::
+  The transformation result will be prepended to the children of the matched
+  element(s). For example, `^ *+` will prepend the results of the transformation
+  to the beginning of the content of all root elements.
+
+Surround children rule: `<*>`::
+  The transformation result will produce a single element, whose children will
+  be set to the children of the matched element(s). For example, `^ <*>` will
+  take the element produced by the transformation function and copy it once for
+  every root element, wrapping the new element around the children of the root
+  elements.
+
+Set attribute rule: `[attribute-name]`::
+  The attribute with name `attribute-name` on the matched element will have its
+  value set to the transformation result. For example, `^ [data-user-id]` will
+  set the `data-user-id` attribute of all root elements to the transformation
+  result.
+
+Append to attribute rule: `[attribute-name+]`::
+  The transformation result will be appended to the end of the value of the
+  attribute with name `attribute-name` on the matched element with a prepended
+  space. For example, `^ [class+]` will append a space and then the
+  transformation result to the `class` attribute of all root elements.
+
+Remove from attribute rule: `[attribute-name!]`::
+  The transformation result will be filtered from the value of the attribute
+  with name `attribute-name` on the matched element, provided it can be found on
+  its own separated by a space. For example, `^ [class!]` will remove the
+  class named by the transformation result from all root elements.
+
+Don't merge attributes rule: `!!`::
+  By default, if the transformation yields a single element and the element
+  matched by the selector is being replaced by that result, the attributes from
+  the matched element are merged into the attributes of the transformation's
+  element. This modifier prevents that from happening. For example, by default
+  doing `"input" #> <div />` and applying it to `<input type="text">` would
+  yield `<div type="text" />`. Doing `"input !!" #> <div />` would instead yield
+  `<div />`.
+
+Lift node rule:: `^^`::
+
+Lift node's children rule: `^*`::
+
 == Transformation Functions
 
 == Combining Selectors and Transforms
