@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 import org.apache.commons.codec.binary.Base64
 import java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, File, FileInputStream, BufferedReader}
@@ -35,20 +35,20 @@ object SecurityHelpers extends StringHelpers with IoHelpers with SecurityHelpers
  * <li> create SHA, SHA-256, MD5 hashs (can be hex encoded)
  * </ul>
  */
-trait SecurityHelpers { 
-  self: StringHelpers with IoHelpers => 
+trait SecurityHelpers {
+  self: StringHelpers with IoHelpers =>
 
   /** short alias for java.security.SecureRandom */
   private val _random = new SecureRandom
 
-  private def withRandom[T](f: SecureRandom => T): T = 
+  private def withRandom[T](f: SecureRandom => T): T =
     _random.synchronized(f(_random))
 
   /** return a random Long modulo a number */
-  def randomLong(mod: Long): Long = withRandom(random => Math.abs(random.nextLong) % mod)
+  def randomLong(mod: Long): Long = withRandom(random => math.abs(random.nextLong) % mod)
 
   /** return a random int modulo a number */
-  def randomInt(mod: Int): Int = withRandom(random => Math.abs(random.nextInt) % mod)
+  def randomInt(mod: Int): Int = withRandom(random => math.abs(random.nextInt) % mod)
 
   /**
    * return true only 'percent' times when asked repeatedly.
@@ -69,19 +69,19 @@ trait SecurityHelpers {
   def base64Decode(in: String): Array[Byte] = (new Base64).decode(in.getBytes("UTF-8"))
 
   /** create a MD5 digest from a Byte array */
-  def md5(in: Array[Byte]): Array[Byte] = (MessageDigest.getInstance("MD5")).digest(in)
+  def md5(in: Array[Byte]): Array[Byte] = MessageDigest.getInstance("MD5").digest(in)
 
   /** create a MD5 digest from a String */
-  def md5(in: String): String = new String(cleanArray((new Base64) encode md5(in.getBytes("UTF-8"))))
+  def md5(in: String): String = base64Encode(md5(in.getBytes("UTF-8")))
 
   /** create a SHA hash from a Byte array */
   def hash(in : Array[Byte]) : Array[Byte] = {
-    (MessageDigest.getInstance("SHA")).digest(in)
+    MessageDigest.getInstance("SHA").digest(in)
   }
 
   /** create a SHA hash from a String */
   def hash(in: String) : String = {
-    new String(cleanArray((new Base64) encode (MessageDigest.getInstance("SHA")).digest(in.getBytes("UTF-8"))))
+    base64Encode(MessageDigest.getInstance("SHA").digest(in.getBytes("UTF-8")))
   }
 
    /** create a SHA hash from a String */
@@ -98,7 +98,7 @@ trait SecurityHelpers {
     case (_, null) => false
     case (a, b) => secureEquals(a.getBytes("UTF-8"), b.getBytes("UTF-8"))
   }
-    
+
   /** Compare two byte arrays in a way that does not vary if the arrays
    * are determined to be not equal early (test every byte... avoids
    * timing attackes */
@@ -118,27 +118,27 @@ trait SecurityHelpers {
       ret && la == lb
     }
   }
-    
+
 
   /** create a SHA-256 hash from a Byte array */
   def hash256(in : Array[Byte]) : Array[Byte] = {
-    (MessageDigest.getInstance("SHA-256")).digest(in)
+    MessageDigest.getInstance("SHA-256").digest(in)
   }
 
   /** create a SHA-256 hash from a String */
   def hash256(in : String): String = {
-    new String(cleanArray((new Base64) encode (MessageDigest.getInstance("SHA-256")).digest(in.getBytes("UTF-8"))))
+    base64Encode(MessageDigest.getInstance("SHA-256").digest(in.getBytes("UTF-8")))
   }
 
   /** create an hex encoded SHA hash from a Byte array */
   def hexDigest(in: Array[Byte]): String = {
-    val binHash = (MessageDigest.getInstance("SHA")).digest(in)
+    val binHash = MessageDigest.getInstance("SHA").digest(in)
     hexEncode(binHash)
   }
 
   /** create an hex encoded SHA-256 hash from a Byte array */
   def hexDigest256(in: Array[Byte]): String = {
-    val binHash = (MessageDigest.getInstance("SHA-256")).digest(in)
+    val binHash = MessageDigest.getInstance("SHA-256").digest(in)
     hexEncode(binHash)
   }
 

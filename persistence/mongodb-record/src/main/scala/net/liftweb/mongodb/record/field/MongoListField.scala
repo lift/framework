@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,11 @@ import com.mongodb._
 import org.bson.types.ObjectId
 
 /**
-* List field. Compatible with most object types,
-* including Pattern, ObjectId, Date, and UUID.
-*/
+  * List field. Compatible with most object types,
+  * including Pattern, ObjectId, Date, and UUID.
+  *
+  * Note: setting optional_? = false will result in incorrect equals behavior when using setFromJValue
+  */
 class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec: OwnerType)
   extends Field[List[ListType], OwnerType]
   with MandatoryTypedField[List[ListType]]
@@ -57,9 +59,9 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
   def setFromAny(in: Any): Box[MyType] = {
     in match {
       case dbo: DBObject => setFromDBObject(dbo)
-      case list@c::xs if mf.erasure.isInstance(c) => setBox(Full(list.asInstanceOf[MyType]))
-      case Some(list@c::xs) if mf.erasure.isInstance(c) => setBox(Full(list.asInstanceOf[MyType]))
-      case Full(list@c::xs) if mf.erasure.isInstance(c) => setBox(Full(list.asInstanceOf[MyType]))
+      case list@c::xs if mf.runtimeClass.isInstance(c) => setBox(Full(list.asInstanceOf[MyType]))
+      case Some(list@c::xs) if mf.runtimeClass.isInstance(c) => setBox(Full(list.asInstanceOf[MyType]))
+      case Full(list@c::xs) if mf.runtimeClass.isInstance(c) => setBox(Full(list.asInstanceOf[MyType]))
       case s: String => setFromString(s)
       case Some(s: String) => setFromString(s)
       case Full(s: String) => setFromString(s)
@@ -81,11 +83,6 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
     case f: Failure => setBox(f)
     case other => setBox(Failure("Error parsing String into a JValue: "+in))
   }
-
-  /*
-   * MongoListField is built on MandatoryField, so optional_? is always false. It would be nice to use optional to differentiate
-   * between a list that requires at least one item and a list that can be empty.
-   */
 
   /** Options for select list **/
   def options: List[(ListType, String)] = Nil
@@ -132,14 +129,6 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
   // set this field's value using a DBObject returned from Mongo.
   def setFromDBObject(dbo: DBObject): Box[MyType] =
     setBox(Full(dbo.asInstanceOf[BasicDBList].toList.asInstanceOf[MyType]))
-}
-
-/*
-* List of Dates. Use MongListField[OwnerType, Date] instead.
-*/
-@deprecated("Use MongListField[OwnerType, Date] instead")
-class MongoDateListField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
-  extends MongoListField[OwnerType, Date](rec: OwnerType) {
 }
 
 /*

@@ -134,7 +134,7 @@ object JsonParser {
   private val BrokenDouble = BigDecimal("2.2250738585072012e-308")
   private[json] def parseDouble(s: String) = {
     val d = BigDecimal(s)
-    if (d == BrokenDouble) error("Error parsing 2.2250738585072012e-308")
+    if (d == BrokenDouble) sys.error("Error parsing 2.2250738585072012e-308")
     else d.doubleValue
   }
 
@@ -170,13 +170,17 @@ object JsonParser {
     }
 
     def newValue(v: JValue) {
-      vals.peekAny match {
-        case (name: String, value) =>
-          vals.pop(classOf[JField])
-          val obj = vals.peek(classOf[JObject])
-          vals.replace(JObject((name, v) :: obj.obj))
-        case a: JArray => vals.replace(JArray(v :: a.arr))
-        case _ => p.fail("expected field or array")
+      if (!vals.isEmpty)
+        vals.peekAny match {
+          case (name: String, value) =>
+            vals.pop(classOf[JField])
+            val obj = vals.peek(classOf[JObject])
+            vals.replace(JObject((name, v) :: obj.obj))
+          case a: JArray => vals.replace(JArray(v :: a.arr))
+          case _ => p.fail("expected field or array")
+      } else {
+        vals.push(v)
+        root = Some(v)
       }
     }
 
@@ -218,7 +222,8 @@ object JsonParser {
       try { x.asInstanceOf[A] } catch { case _: ClassCastException => parser.fail("unexpected " + x) }
     }
 
-    def peekOption = if (stack isEmpty) None else Some(stack.peek)
+    def peekOption = if (stack.isEmpty) None else Some(stack.peek)
+    def isEmpty = stack.isEmpty
   }
 
   class Parser(buf: Buffer) {
@@ -234,22 +239,12 @@ object JsonParser {
     def nextToken: Token = {
       def isDelimiter(c: Char) = c == ' ' || c == '\n' || c == ',' || c == '\r' || c == '\t' || c == '}' || c == ']'
 
-      def parseFieldName: String = {
-        buf.mark
-        var c = buf.next
-        while (c != EOF) {
-          if (c == '"') return buf.substring
-          c = buf.next
-        }
-        fail("expected string end")
-      }
-
       def parseString: String = 
         try {
           unquote(buf)
         } catch {
           case p: ParseException => throw p
-          case _ => fail("unexpected string end")
+          case _: Exception => fail("unexpected string end")
         }
 
       def parseValue(first: Char) = {
@@ -259,10 +254,12 @@ object JsonParser {
         s.append(first)
         while (wasInt) {
           val c = buf.next
-          if (c == '.' || c == 'e' || c == 'E') {
+          if (c == EOF) {
+            wasInt = false
+          } else if (c == '.' || c == 'e' || c == 'E') {
             doubleVal = true
             s.append(c)
-          } else if (!(Character.isDigit(c) || c == '.' || c == 'e' || c == 'E' || c == '-')) {
+          } else if (!(Character.isDigit(c) || c == '.' || c == 'e' || c == 'E' || c == '-' || c == '+')) {
             wasInt = false
             buf.back
           } else s.append(c)
@@ -285,7 +282,7 @@ object JsonParser {
             blocks.poll
             return CloseObj
           case '"' =>
-            if (fieldNameMode && blocks.peek == OBJECT) return FieldStart(parseFieldName)
+            if (fieldNameMode && blocks.peek == OBJECT) return FieldStart(parseString)
             else {
               fieldNameMode = true
               return StringVal(parseString)
@@ -351,7 +348,7 @@ object JsonParser {
     def back = cur = cur-1
 
     def next: Char = {
-      if (cur == offset && read < 0) {
+      if (cur >= offset && read < 0) {
         if (eofIsFailure) throw new ParseException("unexpected eof", null) else EOF
       } else {
         val c = segment(cur)
@@ -388,7 +385,11 @@ object JsonParser {
       }
     }
 
-    def near = new String(segment, (cur-20) max 0, (cur + 1) min Segments.segmentSize)
+    def near = {
+      val start = (cur - 20) max 0
+      val len = ((cur + 1) min Segments.segmentSize) - start
+      new String(segment, start, len)
+    }
 
     def release = segments.foreach(Segments.release)
 
@@ -404,9 +405,11 @@ object JsonParser {
       }
 
       val length = in.read(segment, offset, segment.length-offset)
-      cur = offset
-      offset += length
-      length
+      if (length != -1) {
+        cur = offset
+        offset += length
+        length
+      } else -1
     }
   }
 

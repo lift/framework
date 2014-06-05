@@ -17,7 +17,7 @@
 package net.liftweb
 package mapper
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 
@@ -25,7 +25,10 @@ import common._
 /**
  * Systems under specification for MappedDate.
  */
-object MappedBooleanSpec extends Specification("MappedBoolean Specification") {
+object MappedBooleanSpec extends Specification  {
+  "MappedBoolean Specification".title
+  sequential
+
   val provider = DbProviders.H2MemoryProvider
   
   private def ignoreLogger(f: => AnyRef): Unit = ()
@@ -41,8 +44,8 @@ object MappedBooleanSpec extends Specification("MappedBoolean Specification") {
       val charlie = Dog2.create
       charlie.isDog(true).save
 
-      val read = Dog2.find(charlie.dog2id).open_!
-      read.dirty_? must_== false
+      val read = Dog2.find(charlie.dog2id)
+      read.map(_.dirty_?) must_== Full(false)
     }
 
     "be marked dirty on update if value has changed" in {
@@ -50,7 +53,7 @@ object MappedBooleanSpec extends Specification("MappedBoolean Specification") {
       val charlie = Dog2.create
       charlie.save
 
-      val read = Dog2.find(charlie.dog2id).open_!
+      val read = Dog2.find(charlie.dog2id).openOrThrowException("This is a test")
       read.dirty_? must_== false
       read.isDog(false)
       read.dirty_? must_== false

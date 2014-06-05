@@ -21,13 +21,14 @@ import java.util.Locale
 
 import xml.NodeSeq
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for BundleBuilder.
  */
-object BundleBuilderSpec extends Specification("BundleBuilder Specification") {
+object BundleBuilderSpec extends Specification  {
+  "BundleBuilder Specification".title
 
   "BundleBuilder" should {
     "Build a Bundle" in {
@@ -35,7 +36,7 @@ object BundleBuilderSpec extends Specification("BundleBuilder Specification") {
                                     <div name="dog" lang="en">Dog</div>
                                     <div name="dog" lang="fr">Chien</div>
                                     <div name="cat"><div>hi</div></div>
-                                    </div>, Locale.US).open_!
+                                    </div>, Locale.US).openOrThrowException("Test")
 
       b.getObject("dog") must_== "Dog"
       b.getObject("cat").asInstanceOf[NodeSeq] must ==/ (<div>hi</div>)
@@ -46,7 +47,7 @@ object BundleBuilderSpec extends Specification("BundleBuilder Specification") {
                                     <div name="dog" lang="zz">Dog</div>
                                     <div name="dog" lang="fr" default="true" >Chien</div>
                                     <div name="cat"><div>hi</div></div>
-                                    </div>, Locale.US).open_!
+                                    </div>, Locale.US).openOrThrowException("Test")
 
       b.getObject("dog") must_== "Chien"
       b.getObject("cat").asInstanceOf[NodeSeq] must ==/ (<div>hi</div>)

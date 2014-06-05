@@ -101,7 +101,7 @@ sealed trait ExcludeThisType[A, B]
  * that a type is not a subtype of another type
  */
 object ExcludeThisType {
-  def unexpected: Nothing = error("Unexpected invocation")
+  def unexpected: Nothing = sys.error("Unexpected invocation")
 
   // Uses ambiguity to rule out the cases we're trying to exclude
   implicit def nsub[A, B]: A ExcludeThisType B = null

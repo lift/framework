@@ -24,18 +24,20 @@ import net.liftweb.util._
 import Helpers._
 import java.util.Date
 import net.liftweb.http._
-// import net.liftweb.widgets.autocomplete._
+import reflect.runtime.universe._
 import net.liftweb.json._
 import net.liftweb.http.jquery.{JqSHtml}
-import scala.xml.NodeSeq
+import xml.{Text, NodeSeq}
 import js._
+
+
 
 /**
  * Warning: Do not use unnamed Enumerations with 2.8.1 as this will cause too many items to be displayed in the dropdown.
  *
  * See https://issues.scala-lang.org/browse/SI-3687 for details
  */ 
-abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, val enum: ENUM) extends MappedField[ENUM#Value, T] {
+abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, val enum: ENUM)(implicit val manifest: TypeTag[ENUM#Value]) extends MappedField[ENUM#Value, T] {
   private var data: ENUM#Value = defaultValue
   private var orgData: ENUM#Value = defaultValue
   def defaultValue: ENUM#Value = enum.values.iterator.next
@@ -55,6 +57,47 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
     orgData = data
   }
 
+  /**
+   * Get the source field metadata for the field
+   * @return the source field metadata for the field
+   */
+  def sourceInfoMetadata(): SourceFieldMetadata{type ST = ENUM#Value} =
+    SourceFieldMetadataRep(name, manifest, new FieldConverter {
+      /**
+       * The type of the field
+       */
+      type T = ENUM#Value
+
+      /**
+       * Convert the field to a String
+       * @param v the field value
+       * @return the string representation of the field value
+       */
+      def asString(v: T): String = v.toString
+
+      /**
+       * Convert the field into NodeSeq, if possible
+       * @param v the field value
+       * @return a NodeSeq if the field can be represented as one
+       */
+      def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(asString(v)))
+
+      /**
+       * Convert the field into a JSON value
+       * @param v the field value
+       * @return the JSON representation of the field
+       */
+      def asJson(v: T): Box[JValue] = Full(JsonAST.JInt(v.id))
+
+      /**
+       * If the field can represent a sequence of SourceFields,
+       * get that
+       * @param v the field value
+       * @return the field as a sequence of SourceFields
+       */
+      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+    })
+
   protected def real_i_set_!(value: ENUM#Value): ENUM#Value = {
     if (value != data) {
       data = value
@@ -68,15 +111,15 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
 
   def real_convertToJDBCFriendly(value: ENUM#Value): Object = new java.lang.Integer(value.id)
 
-  def toInt = is.id
+  def toInt = get.id
   def fromInt(in: Int): ENUM#Value = enum(in)
 
   def jdbcFriendly(field: String) = new java.lang.Integer(toInt)
   override def jdbcFriendly = new java.lang.Integer(toInt)
 
-  def asJsExp: JsExp = JE.Num(is.id)
+  def asJsExp: JsExp = JE.Num(get.id)
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(is.id))
+  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(get.id))
 
 
   override def setFromAny(in: Any): ENUM#Value = {
@@ -174,7 +217,7 @@ abstract class MappedIntIndex[T<:Mapper[T]](owner : T) extends MappedInt[T](owne
       val what = if (in.startsWith(name + "=")) in.substring((name + "=").length) else in
       Full(Integer.parseInt(what))
     } catch {
-      case _ => Empty
+      case _: Exception => Empty
     }
   }
 
@@ -195,7 +238,7 @@ abstract class MappedIntIndex[T<:Mapper[T]](owner : T) extends MappedInt[T](owne
     try {
       convertKey(in.toString)
     } catch {
-      case _ => Empty
+      case _: Exception => Empty
     }
   }
 
@@ -216,6 +259,50 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
    */
   def targetSQLType = Types.INTEGER
 
+  import scala.reflect.runtime.universe._
+  def manifest: TypeTag[Int] = typeTag[Int]
+
+  /**
+   * Get the source field metadata for the field
+   * @return the source field metadata for the field
+   */
+  def sourceInfoMetadata(): SourceFieldMetadata{type ST = Int} =
+    SourceFieldMetadataRep(name, manifest, new FieldConverter {
+      /**
+       * The type of the field
+       */
+      type T = Int
+
+      /**
+       * Convert the field to a String
+       * @param v the field value
+       * @return the string representation of the field value
+       */
+      def asString(v: T): String = v.toString
+
+      /**
+       * Convert the field into NodeSeq, if possible
+       * @param v the field value
+       * @return a NodeSeq if the field can be represented as one
+       */
+      def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(asString(v)))
+
+      /**
+       * Convert the field into a JSON value
+       * @param v the field value
+       * @return the JSON representation of the field
+       */
+      def asJson(v: T): Box[JValue] = Full(JsonAST.JInt(v))
+
+      /**
+       * If the field can represent a sequence of SourceFields,
+       * get that
+       * @param v the field value
+       * @return the field as a sequence of SourceFields
+       */
+      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+    })
+
   protected def i_is_! = data
   protected def i_was_! = orgData
   /**
@@ -225,9 +312,9 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
     orgData = data
   }
 
-  def asJsExp: JsExp = JE.Num(is)
+  def asJsExp: JsExp = JE.Num(get)
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(is))
+  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(get))
 
   protected def real_i_set_!(value : Int) : Int = {
     if (value != data) {
@@ -239,11 +326,11 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
   override def readPermission_? = true
   override def writePermission_? = true
 
-  def +(in: Int): Int = is + in
+  def +(in: Int): Int = get + in
 
   def real_convertToJDBCFriendly(value: Int): Object = new java.lang.Integer(value)
 
-  def jdbcFriendly(field : String) = new java.lang.Integer(is)
+  def jdbcFriendly(field : String) = new java.lang.Integer(get)
 
   override def setFromAny(in: Any): Int = {
     in match {

@@ -17,15 +17,17 @@
 package net.liftweb
 package mapper
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 /**
  * Systems under specification for ManyToMany.
  */
-object ManyToManySpec extends Specification("ManyToMany Specification") {
+object ManyToManySpec extends Specification  {
+  "ManyToMany Specification".title
+  sequential
 
   val provider = DbProviders.H2MemoryProvider
-  
+
   private def ignoreLogger(f: => AnyRef): Unit = ()
   def setupDB {
     MapperRules.createForeignKeys_? = c => false
@@ -65,7 +67,7 @@ object ManyToManySpec extends Specification("ManyToMany Specification") {
       c.name ()= "new"
       c.save
       person.companies.insertAll(7, Seq(c))
-      person.companies(7).name.is must_== "new"
+      person.companies(7).name.get must_== "new"
     }
 
 
@@ -137,7 +139,7 @@ class PersonCompany extends Mapper[PersonCompany] {
   object person extends MappedLongForeignKey(this, Person)
   object company extends MappedLongForeignKey(this, Company)
 
-  override def toString = "PersonCompany(person.is=%s, person.obj=%s, company.is=%s, company.obj=%s)".format(person.is,person.obj,company.is,company.obj)
+  override def toString = "PersonCompany(person.is=%s, person.obj=%s, company.is=%s, company.obj=%s)".format(person.get,person.obj,company.get,company.obj)
 }
 object PersonCompany extends PersonCompany with MetaMapper[PersonCompany]
 

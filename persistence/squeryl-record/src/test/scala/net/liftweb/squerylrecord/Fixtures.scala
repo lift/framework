@@ -115,9 +115,9 @@ class SpecialField[OwnerType <: Record[OwnerType]](rec: OwnerType)
     case v => setBox(Full(v.toString))
   }
   override def setFromJValue(jValue: JValue) = setBox(Full(jValue.toString))
-  override def asJValue = JString(is)
-  override def asJs = Str(is)
-  override def toForm = Full(scala.xml.Text(is))
+  override def asJValue = JString(get)
+  override def asJs = Str(get)
+  override def toForm = Full(scala.xml.Text(get))
 }
 
 /**
@@ -233,7 +233,7 @@ object MySchema extends Schema {
 
     val allCompanies = List(c1, c2, c3)
 
-    lazy val e1 = Employee.createRecord.companyId(c1.idField.is).
+    lazy val e1 = Employee.createRecord.companyId(c1.idField.get).
       name("Peter Example").
       email("peter@example.com").salary(BigDecimal(345)).
       locale(java.util.Locale.GERMAN.toString()).
@@ -241,7 +241,7 @@ object MySchema extends Schema {
       admin(false).departmentNumber(2).role(EmployeeRole.Programmer).
       photo(Array[Byte](0, 1, 2, 3, 4))
 
-    lazy val e2 = Employee.createRecord.companyId(c2.idField.is).
+    lazy val e2 = Employee.createRecord.companyId(c2.idField.get).
       name("Company or Employee").
       email("test@example.com").salary(BigDecimal("123.123")).
       locale(java.util.Locale.US.toString()).
@@ -249,7 +249,7 @@ object MySchema extends Schema {
       admin(true).departmentNumber(1).role(EmployeeRole.Manager).
       photo(Array[Byte](1))
 
-    lazy val e3 = Employee.createRecord.companyId(c2.idField.is).
+    lazy val e3 = Employee.createRecord.companyId(c2.idField.get).
       name("Joe Shmo").
       email("joe@shmo.com").salary(BigDecimal("100000.00")).
       locale(java.util.Locale.US.toString()).

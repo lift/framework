@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 WorldWide Conferencing, LLC
+ * Copyright 2009-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,37 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
-object Examples extends Specification {
+class Examples extends AbstractExamples {
+  override def print(value: JValue): String = compact(render(value))
+}
+
+class CompactRenderExamples extends AbstractExamples {
+  override def print(value: JValue): String = compactRender(value)
+}
+
+
+trait AbstractExamples extends Specification {
+  import Examples._
   import JsonAST.concat
   import JsonDSL._
 
+  def print(value: JValue): String
+
   "Lotto example" in {
     val json = parse(lotto)
-    val renderedLotto = compact(render(json))
+    val renderedLotto = print(json)
     json mustEqual parse(renderedLotto)
   }
 
   "Person example" in {
     val json = parse(person)
     val renderedPerson = Printer.pretty(render(json))
-    json mustEqual parse(renderedPerson)
-    render(json) mustEqual render(personDSL)
-    compact(render(json \\ "name")) mustEqual """{"name":"Joe","name":"Marilyn"}"""
-    compact(render(json \ "person" \ "name")) mustEqual "\"Joe\""
+    (json mustEqual parse(renderedPerson)) and
+      (render(json) mustEqual render(personDSL)) and
+      (print(json \\ "name") mustEqual """{"name":"Joe","name":"Marilyn"}""") and
+      (print(json \ "person" \ "name") mustEqual "\"Joe\"")
   }
 
   "Transformation example" in {
@@ -67,16 +79,16 @@ object Examples extends Specification {
 
   "Object array example" in {
     val json = parse(objArray)
-    compact(render(json \ "children" \ "name")) mustEqual """["Mary","Mazy"]"""
-    compact(render((json \ "children")(0) \ "name")) mustEqual "\"Mary\""
-    compact(render((json \ "children")(1) \ "name")) mustEqual "\"Mazy\""
-    (for { JObject(o) <- json; JField("name", JString(y)) <- o } yield y) mustEqual List("joe", "Mary", "Mazy")
+    (print(json \ "children" \ "name") mustEqual """["Mary","Mazy"]""") and
+    (print((json \ "children")(0) \ "name") mustEqual "\"Mary\"") and
+    (print((json \ "children")(1) \ "name") mustEqual "\"Mazy\"") and
+    ((for { JObject(o) <- json; JField("name", JString(y)) <- o } yield y) mustEqual List("joe", "Mary", "Mazy"))
   }
 
   "Unbox values using XPath-like type expression" in {
-    parse(objArray) \ "children" \\ classOf[JInt] mustEqual List(5, 3)
-    parse(lotto) \ "lotto" \ "winning-numbers" \ classOf[JInt] mustEqual List(2, 45, 34, 23, 7, 5, 3)
-    parse(lotto) \\ "winning-numbers" \ classOf[JInt] mustEqual List(2, 45, 34, 23, 7, 5, 3)
+    (parse(objArray) \ "children" \\ classOf[JInt] mustEqual List(5, 3)) and
+      (parse(lotto) \ "lotto" \ "winning-numbers" \ classOf[JInt] mustEqual List(2, 45, 34, 23, 7, 5, 3)) and
+      (parse(lotto) \\ "winning-numbers" \ classOf[JInt] mustEqual List(2, 45, 34, 23, 7, 5, 3))
   }
 
   "Quoted example" in {
@@ -85,15 +97,15 @@ object Examples extends Specification {
   }
 
   "Null example" in {
-    compact(render(parse(""" {"name": null} """))) mustEqual """{"name":null}"""
+    print(parse(""" {"name": null} """)) mustEqual """{"name":null}"""
   }
 
   "Null rendering example" in {
-    compact(render(nulls)) mustEqual """{"f1":null,"f2":[null,"s"]}"""
+    print(nulls) mustEqual """{"f1":null,"f2":[null,"s"]}"""
   }
 
   "Symbol example" in {
-    compact(render(symbols)) mustEqual """{"f1":"foo","f2":"bar"}"""
+    print(symbols) mustEqual """{"f1":"foo","f2":"bar"}"""
   }
 
   "Unicode example" in {
@@ -101,21 +113,21 @@ object Examples extends Specification {
   }
 
   "Exponent example" in {
-    parse("""{"num": 2e5 }""") mustEqual JObject(List(JField("num", JDouble(200000.0))))
-    parse("""{"num": -2E5 }""") mustEqual JObject(List(JField("num", JDouble(-200000.0))))
-    parse("""{"num": 2.5e5 }""") mustEqual JObject(List(JField("num", JDouble(250000.0))))
-    parse("""{"num": 2.5e-5 }""") mustEqual JObject(List(JField("num", JDouble(2.5e-5))))
+    (parse("""{"num": 2e5 }""") mustEqual JObject(List(JField("num", JDouble(200000.0))))) and
+      (parse("""{"num": -2E5 }""") mustEqual JObject(List(JField("num", JDouble(-200000.0))))) and
+      (parse("""{"num": 2.5e5 }""") mustEqual JObject(List(JField("num", JDouble(250000.0))))) and
+      (parse("""{"num": 2.5e-5 }""") mustEqual JObject(List(JField("num", JDouble(2.5e-5)))))
   }
 
   "JSON building example" in {
     val json = JObject(("name", JString("joe")), ("age", JInt(34))) ++ JObject(("name", ("mazy")), ("age", JInt(31)))
-    compact(render(json)) mustEqual """[{"name":"joe","age":34},{"name":"mazy","age":31}]"""
+    print(json) mustEqual """[{"name":"joe","age":34},{"name":"mazy","age":31}]"""
   }
 
   "JSON building with implicit primitive conversions example" in {
     import Implicits._
     val json = JObject(("name", "joe"), ("age", 34)) ++ JObject(("name", "mazy"), ("age", 31))
-    compact(render(json)) mustEqual """[{"name":"joe","age":34},{"name":"mazy","age":31}]"""
+    print(json) mustEqual """[{"name":"joe","age":34},{"name":"mazy","age":31}]"""
   }
 
   "Example which collects all integers and forms a new JSON" in {
@@ -124,15 +136,25 @@ object Examples extends Specification {
       case x: JInt => a ++ x
       case _ => a
     }}
-    compact(render(ints)) mustEqual """[35,33]"""
+    print(ints) mustEqual """[35,33]"""
   }
 
   "Generate JSON with DSL example" in {
     val json: JValue = 
       ("id" -> 5) ~
       ("tags" -> Map("a" -> 5, "b" -> 7))
-    compact(render(json)) mustEqual """{"id":5,"tags":{"a":5,"b":7}}"""
+    print(json) mustEqual """{"id":5,"tags":{"a":5,"b":7}}"""
   }
+
+  "Naked JArray with null values" in {
+    val json = JArray(List(null))
+    print(json) mustEqual """[null]"""
+  }
+
+}
+
+object Examples {
+  import JsonDSL._
 
   val lotto = """
 {

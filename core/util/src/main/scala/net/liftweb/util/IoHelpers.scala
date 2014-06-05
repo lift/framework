@@ -58,7 +58,7 @@ trait IoHelpers {
       if (res == 0) Full(stdOut)
       else Failure(stdErr, Empty, Empty)
     } catch {
-      case e => Failure(e.getMessage, Full(e), Empty)
+      case e: Throwable => Failure(e.getMessage, Full(e), Empty)
     }
   }
 
@@ -117,4 +117,24 @@ trait IoHelpers {
       is.foreach(stream => tryo{ stream.close })
     }
   }
+}
+
+/**
+ * A trait that defines an Automatic Resource Manager. The ARM
+ * allocates a resource (connection to a DB, etc.) when the `exec`
+ * method is invoked and releases the resource before the exec method terminates
+ *
+ * @tparam ResourceType the type of resource allocated
+ */
+trait AutoResourceManager[ResourceType] {
+
+  /**
+   * Execute a block of code with the allocated resource
+   *
+   * @param f the function that takes the resource and returns a value
+   * @tparam T the type of the value returned by the function
+   *@return the value returned from the function
+   *
+   */
+  def exec[T](f: ResourceType => T): T
 }

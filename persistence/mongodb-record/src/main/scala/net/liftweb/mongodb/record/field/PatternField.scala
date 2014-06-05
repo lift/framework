@@ -11,10 +11,10 @@
 * limitations under the License.
 */
 
-package net.liftweb 
-package mongodb 
-package record 
-package field 
+package net.liftweb
+package mongodb
+package record
+package field
 
 import java.util.regex.Pattern
 import scala.xml.NodeSeq

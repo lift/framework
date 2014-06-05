@@ -25,6 +25,10 @@ import Helpers._
 import net.liftweb.common._
 import net.liftweb.http.js._
 import net.liftweb.json._
+import scala.reflect.runtime.universe._
+import xml.{Text, NodeSeq}
+import json.JsonAST.JValue
+
 
 abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField[Array[Byte], T] {
   private val data : FatLazy[Array[Byte]] =  FatLazy(defaultValue)
@@ -35,6 +39,50 @@ abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField
     this.dirty_?( true)
     value
   }
+
+
+  def manifest: TypeTag[Array[Byte]] = typeTag[Array[Byte]]
+
+  /**
+   * Get the source field metadata for the field
+   * @return the source field metadata for the field
+   */
+  def sourceInfoMetadata(): SourceFieldMetadata{type ST = Array[Byte]} =
+    SourceFieldMetadataRep(name, manifest, new FieldConverter {
+    /**
+     * The type of the field
+     */
+    type T = Array[Byte]
+
+    /**
+     * Convert the field to a String
+     * @param v the field value
+     * @return the string representation of the field value
+     */
+    def asString(v: T): String = ""
+
+    /**
+     * Convert the field into NodeSeq, if possible
+     * @param v the field value
+     * @return a NodeSeq if the field can be represented as one
+     */
+    def asNodeSeq(v: T): Box[NodeSeq] = Empty
+
+    /**
+     * Convert the field into a JSON value
+     * @param v the field value
+     * @return the JSON representation of the field
+     */
+    def asJson(v: T): Box[JValue] = Empty
+
+    /**
+     * If the field can represent a sequence of SourceFields,
+     * get that
+     * @param v the field value
+     * @return the field as a sequence of SourceFields
+     */
+    def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+  })
 
   def dbFieldClass = classOf[Array[Byte]]
 
@@ -62,7 +110,7 @@ abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 
   def asJsExp: JsExp = throw new NullPointerException("No way")
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(is match {
+  def asJsonValue: Box[JsonAST.JValue] = Full(get match {
     case null => JsonAST.JNull
     case value => JsonAST.JString(base64Encode(value))
   })
@@ -74,7 +122,7 @@ abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField
     case s => this.set(s.toString.getBytes("UTF-8"))
   }
 
-  def jdbcFriendly(field : String) : Object = is
+  def jdbcFriendly(field : String) : Object = get
 
   def real_convertToJDBCFriendly(value: Array[Byte]): Object = value
 
@@ -110,6 +158,50 @@ abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[S
     value
   }
 
+
+  def manifest: TypeTag[String] = typeTag[String]
+
+  /**
+   * Get the source field metadata for the field
+   * @return the source field metadata for the field
+   */
+  def sourceInfoMetadata(): SourceFieldMetadata{type ST = String} =
+    SourceFieldMetadataRep(name, manifest, new FieldConverter {
+      /**
+       * The type of the field
+       */
+      type T = String
+
+      /**
+       * Convert the field to a String
+       * @param v the field value
+       * @return the string representation of the field value
+       */
+      def asString(v: T): String = v
+
+      /**
+       * Convert the field into NodeSeq, if possible
+       * @param v the field value
+       * @return a NodeSeq if the field can be represented as one
+       */
+      def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(v))
+
+      /**
+       * Convert the field into a JSON value
+       * @param v the field value
+       * @return the JSON representation of the field
+       */
+      def asJson(v: T): Box[JValue] = Full(JString(v))
+
+      /**
+       * If the field can represent a sequence of SourceFields,
+       * get that
+       * @param v the field value
+       * @return the field as a sequence of SourceFields
+       */
+      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+    })
+
   def dbFieldClass = classOf[String]
 
   /**
@@ -128,9 +220,9 @@ abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[S
 
   protected[mapper] def doneWithSave() {orgData.setFrom(data)}
 
-  def asJsExp: JsExp = JE.Str(is)
+  def asJsExp: JsExp = JE.Str(get)
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(is match {
+  def asJsonValue: Box[JsonAST.JValue] = Full(get match {
     case null => JsonAST.JNull
     case str => JsonAST.JString(str)
   })
@@ -204,6 +296,50 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
 
   def dbFieldClass = classOf[String]
 
+  def manifest: TypeTag[String] = typeTag[String]
+
+  /**
+   * Get the source field metadata for the field
+   * @return the source field metadata for the field
+   */
+  def sourceInfoMetadata(): SourceFieldMetadata{type ST = String} =
+    SourceFieldMetadataRep(name, manifest, new FieldConverter {
+      /**
+       * The type of the field
+       */
+      type T = String
+
+      /**
+       * Convert the field to a String
+       * @param v the field value
+       * @return the string representation of the field value
+       */
+      def asString(v: T): String = v
+
+      /**
+       * Convert the field into NodeSeq, if possible
+       * @param v the field value
+       * @return a NodeSeq if the field can be represented as one
+       */
+      def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(v))
+
+      /**
+       * Convert the field into a JSON value
+       * @param v the field value
+       * @return the JSON representation of the field
+       */
+      def asJson(v: T): Box[JValue] = Full(JString(v))
+
+      /**
+       * If the field can represent a sequence of SourceFields,
+       * get that
+       * @param v the field value
+       * @return the field as a sequence of SourceFields
+       */
+      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+    })
+
+
   /**
   * Get the JDBC SQL Type for this field
   */
@@ -222,9 +358,9 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
 
   protected def i_obscure_!(in: String): String = ""
 
-  def asJsExp: JsExp = JE.Str(is)
+  def asJsExp: JsExp = JE.Str(get)
 
-  def asJsonValue: Box[JsonAST.JValue] = Full(is match {
+  def asJsonValue: Box[JsonAST.JValue] = Full(get match {
     case null => JsonAST.JNull
     case str => JsonAST.JString(str)
   })

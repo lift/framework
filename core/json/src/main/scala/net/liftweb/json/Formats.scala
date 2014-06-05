@@ -80,7 +80,10 @@ trait Formats { self: Formats =>
     override val parameterNameReader = self.parameterNameReader
     override val typeHints = self.typeHints
     override val customSerializers = self.customSerializers
-    override val fieldSerializers = (mf.erasure, newSerializer) :: self.fieldSerializers
+    // The type inferencer infers an existential type below if we use
+    // value :: list instead of list.::(value), and we get a feature
+    // warning.
+    override val fieldSerializers: List[(Class[_], FieldSerializer[_])] = self.fieldSerializers.::((mf.runtimeClass: Class[_], newSerializer))
   }
 
   private[json] def fieldSerializer(clazz: Class[_]): Option[FieldSerializer[_]] = {
@@ -157,7 +160,7 @@ trait TypeHints {
   /**
    * Adds the specified type hints to this type hints.
    */
-  def + (hints: TypeHints): TypeHints = CompositeTypeHints(hints.components ::: components)
+  def + (hints: TypeHints): TypeHints = CompositeTypeHints(components ::: hints.components)
 
   private[TypeHints] case class CompositeTypeHints(override val components: List[TypeHints]) extends TypeHints {
     val hints: List[Class[_]] = components.flatMap(_.hints)
@@ -166,8 +169,8 @@ trait TypeHints {
      * Chooses most specific class.
      */
     def hintFor(clazz: Class[_]): String = components.filter(_.containsHint_?(clazz))
-      .map(th => (th.hintFor(clazz), th.classFor(th.hintFor(clazz)).getOrElse(error("hintFor/classFor not invertible for " + th))))
-      .sort((x, y) => delta(x._2, clazz) - delta(y._2, clazz) < 0).head._1
+        .map(th => (th.hintFor(clazz), th.classFor(th.hintFor(clazz)).getOrElse(sys.error("hintFor/classFor not invertible for " + th))))
+        .sortWith((x, y) => (delta(x._2, clazz) - delta(y._2, clazz)) < 0).head._1
 
     def classFor(hint: String): Option[Class[_]] = {
       def hasClass(h: TypeHints) =
@@ -197,7 +200,7 @@ private[json] object ClassDelta {
     else if (class2.isAssignableFrom(class1)) {
       1 + delta(class1.getSuperclass, class2)
     }
-    else error("Don't call delta unless one class is assignable from the other")
+    else sys.error("Don't call delta unless one class is assignable from the other")
   }
 }
 
@@ -205,7 +208,7 @@ private[json] object ClassDelta {
  */
 case object NoTypeHints extends TypeHints {
   val hints = Nil
-  def hintFor(clazz: Class[_]) = error("NoTypeHints does not provide any type hints.")
+  def hintFor(clazz: Class[_]) = sys.error("NoTypeHints does not provide any type hints.")
   def classFor(hint: String) = None
 }
 
@@ -220,7 +223,9 @@ case class ShortTypeHints(hints: List[Class[_]]) extends TypeHints {
  */
 case class FullTypeHints(hints: List[Class[_]]) extends TypeHints {
   def hintFor(clazz: Class[_]) = clazz.getName
-  def classFor(hint: String) = Some(Thread.currentThread.getContextClassLoader.loadClass(hint))
+  def classFor(hint: String): Option[Class[_]] = {
+    Some(Thread.currentThread.getContextClassLoader.loadClass(hint))
+  }
 }
 
 /** Default date format is UTC time.
@@ -272,10 +277,10 @@ private[json] class ThreadLocal[A](init: => A) extends java.lang.ThreadLocal[A] 
 class CustomSerializer[A: Manifest](
   ser: Formats => (PartialFunction[JValue, A], PartialFunction[Any, JValue])) extends Serializer[A] {
 
-  val Class = implicitly[Manifest[A]].erasure
+  val Class = implicitly[Manifest[A]].runtimeClass
 
   def deserialize(implicit format: Formats) = {
-    case (TypeInfo(Class, _), json) => 
+    case (TypeInfo(Class, _), json) =>
       if (ser(format)._1.isDefinedAt(json)) ser(format)._1(json)
       else throw new MappingException("Can't convert " + json + " to " + Class)
   }

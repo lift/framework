@@ -1,5 +1,5 @@
 /*
-* Copyright 2010-2011 WorldWide Conferencing, LLC
+* Copyright 2010-2012 WorldWide Conferencing, LLC
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <
   override def toForm: Box[NodeSeq] = Empty // FIXME
 
   /** Encode the field value into a JValue */
-  def asJValue: JValue = value.asJObject
+  def asJValue: JValue = valueBox.map(_.asJObject) openOr (JNothing: JValue)
 
   /*
   * Decode the JValue and set the field to the decoded value.
@@ -56,10 +56,10 @@ abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <
 
   def setFromAny(in: Any): Box[JObjectType] = in match {
     case dbo: DBObject => setFromDBObject(dbo)
-    case value: JObjectType => setBox(Full(value))
-    case Some(value: JObjectType) => setBox(Full(value))
-    case Full(value: JObjectType) => setBox(Full(value))
-    case (value: JObjectType) :: _ => setBox(Full(value))
+    case value: JsonObject[_] => setBox(Full(value.asInstanceOf[JObjectType]))
+    case Some(value: JsonObject[_]) => setBox(Full(value.asInstanceOf[JObjectType]))
+    case Full(value: JsonObject[_]) => setBox(Full(value.asInstanceOf[JObjectType]))
+    case (value: JsonObject[_]) :: _ => setBox(Full(value.asInstanceOf[JObjectType]))
     case s: String => setFromString(s)
     case Some(s: String) => setFromString(s)
     case Full(s: String) => setFromString(s)

@@ -29,28 +29,32 @@ import net.liftweb.record.OptionalTypedField
 
 /** FieldMetaDataFactory that allows Squeryl to use Records as model objects. */
 class RecordMetaDataFactory extends FieldMetaDataFactory {
+  private val rec: { type R0 <: Record[R0] } = null
+  private type Rec = rec.R0
+
   /** Cache MetaRecords by the model object class (Record class) */
-  private var metaRecordsByClass: Map[Class[_], MetaRecord[_]] = Map.empty
+  private var metaRecordsByClass: Map[Class[Rec], MetaRecord[Rec]] = Map.empty
+
 
   /** Given a model object class (Record class) and field name, return the BaseField from the meta record */
-  private def findMetaField(clasz: Class[_], name: String): BaseField = {
-    def fieldFrom(mr: MetaRecord[_]): BaseField =
-      mr.asInstanceOf[Record[_]].fieldByName(name) match {
+  private def findMetaField(clasz: Class[Rec], name: String): BaseField = {
+    def fieldFrom(mr: MetaRecord[Rec]): BaseField =
+      mr.asInstanceOf[Record[Rec]].fieldByName(name) match {
         case Full(f: BaseField) => f
-        case Full(_) => error("field " + name + " in Record metadata for " + clasz + " is not a TypedField")
-        case _ => error("failed to find field " + name + " in Record metadata for " + clasz)
+        case Full(_) => org.squeryl.internals.Utils.throwError("field " + name + " in Record metadata for " + clasz + " is not a TypedField")
+        case _ => org.squeryl.internals.Utils.throwError("failed to find field " + name + " in Record metadata for " + clasz)
       }
 
     metaRecordsByClass get clasz match {
       case Some(mr) => fieldFrom(mr)
       case None =>
         try {
-          val rec = clasz.newInstance.asInstanceOf[Record[_]]
+          val rec = clasz.newInstance.asInstanceOf[Record[Rec]]
           val mr = rec.meta
           metaRecordsByClass = metaRecordsByClass updated (clasz, mr)
           fieldFrom(mr)
         } catch {
-          case ex => error("failed to find MetaRecord for " + clasz + " due to exception " + ex.toString)
+          case ex: Exception => org.squeryl.internals.Utils.throwError("failed to find MetaRecord for " + clasz + " due to exception " + ex.toString)
         }
     }
   }
@@ -60,14 +64,14 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
     property: (Option[Field], Option[Method], Option[Method], Set[Annotation]),
     sampleInstance4OptionTypeDeduction: AnyRef, isOptimisticCounter: Boolean): FieldMetaData = {
     if (!isRecord(parentMetaData.clasz) || isOptimisticCounter) {
-      // Either this is not a Record class, in which case we'll 
+      // Either this is not a Record class, in which case we'll
       //treat it as a normal class in primitive type mode, or the field
       //was mixed in by the Optimisitic trait and is not a Record field.
       return SquerylRecord.posoMetaDataFactory.build(parentMetaData, name, property,
         sampleInstance4OptionTypeDeduction, isOptimisticCounter)
     }
 
-    val metaField = findMetaField(parentMetaData.clasz, name)
+    val metaField = findMetaField(parentMetaData.clasz.asInstanceOf[Class[Rec]], name)
 
     val (field, getter, setter, annotations) = property
 
@@ -88,7 +92,7 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
       case (_: LocaleTypedField) => classOf[String]
       case (_: EnumTypedField[_]) => classOf[Int]
       case (_: EnumNameTypedField[_]) => classOf[String]
-      case _ => error("Unsupported field type. Consider implementing " +
+      case _ => org.squeryl.internals.Utils.throwError("Unsupported field type. Consider implementing " +
         "SquerylRecordField for defining the persistent class." +
         "Field: " + metaField)
     }
@@ -141,27 +145,42 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
         fieldScale getOrElse super.scale
       }
 
-      private def fieldFor(o: AnyRef) = getter.get.invoke(o).asInstanceOf[TypedField[_ <: AnyRef]]
+      private def fieldFor(o: AnyRef) = getter.get.invoke(o) match {
+        case tf: TypedField[_] => tf
+        case other => org.squeryl.internals.Utils.throwError("Field's used with Squeryl must inherit from net.liftweb.record.TypedField : " + other )
+      }
 
-      override def set(target: AnyRef, value: AnyRef) = {
-        val typedField: TypedField[_] = fieldFor(target)
-        typedField.setFromAny(Box !! value)
+      /**
+       * Sets the value which was retrieved from the DB into the appropriate Record field
+       */
+      override def set(target: AnyRef, value: AnyRef) = target match {
+          case record: Record[_] =>
+            record.runSafe {
+            	val typedField: TypedField[_] = fieldFor(target)
+            	typedField.setFromAny(Box !! value)
+            	typedField.resetDirty
+            }
+          case other =>
+            org.squeryl.internals.Utils.throwError("RecordMetaDataFactory can not set fields on non Record objects : " + other)
       }
 
       override def setFromResultSet(target: AnyRef, rs: ResultSet, index: Int) = set(target, resultSetHandler(rs, index))
 
+      /**
+       * Extracts the value from the field referenced by o that will be stored in the DB
+       */
       override def get(o: AnyRef) = fieldFor(o) match {
         case enumField: EnumTypedField[_] => enumField.valueBox match {
           case Full(enum: Enumeration#Value) => enum.id: java.lang.Integer
           case _ => null
         }
-        case enumNameField: EnumNameTypedField[_] => enumNameField valueBox match {
+        case enumNameField: EnumNameTypedField[_] => enumNameField.valueBox match {
           case Full(enum: Enumeration#Value) => enum.toString
           case _ => null
         }
         case other => other.valueBox match {
           case Full(c: Calendar) => new Timestamp(c.getTime.getTime)
-          case Full(other) => other
+          case Full(other: AnyRef) => other
           case _ => null
         }
       }

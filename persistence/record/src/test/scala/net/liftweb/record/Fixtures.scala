@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package record 
-package fixtures 
+package net.liftweb
+package record
+package fixtures
 
 import java.math.MathContext
 import scala.xml.Text
 import common.{Box, Empty, Full}
+import json._
 import util.{FieldError, Helpers}
-import org.specs._
-import org.specs.runner.{ConsoleRunner, JUnit3}
+import org.specs2.mutable._
 
 import field._
+import field.joda._
 
 class BasicTestRecord private () extends Record[BasicTestRecord] {
   def meta = BasicTestRecord
 
   object field1 extends StringField(this,10)
   object field2 extends StringField(this,10)
-  object field3 extends StringField(this,10)
+  object fieldThree extends StringField(this,10)
 }
 
 object BasicTestRecord extends BasicTestRecord with MetaRecord[BasicTestRecord] {
@@ -46,7 +47,7 @@ class PasswordTestRecord private () extends Record[PasswordTestRecord] {
     override def validations = validateNonEmptyPassword _ ::
     super.validations
 
-    def validateNonEmptyPassword(v: String): List[FieldError] = 
+    def validateNonEmptyPassword(v: String): List[FieldError] =
       v match {
         case "testvalue" => Text("no way!")
         case _ => Nil
@@ -212,24 +213,21 @@ class FieldTypeTestRecord private () extends Record[FieldTypeTestRecord] {
   object legacyOptionalTimeZoneField extends TimeZoneField(this) { override def optional_? = true }
   object optionalTimeZoneField extends OptionalTimeZoneField(this)
 
+  object mandatoryJodaTimeField extends JodaTimeField(this)
+  object legacyOptionalJodaTimeField extends JodaTimeField(this) { override def optional_? = true }
+  object optionalJodaTimeField extends OptionalJodaTimeField(this)
+
+  def fieldsToCompare = {
+    fields
+      .filterNot(_.name == "mandatoryBinaryField") // binarys don't compare
+      .filterNot(_.name == "mandatoryDateTimeField") // toInternetDate is lossy (doesn't retain time to ms precision)
+  }
+
   override def equals(other: Any): Boolean = other match {
-    case that:FieldTypeTestRecord =>
-      //this.mandatoryBinaryField.value mustEqual that.mandatoryBinaryField.value
-      this.mandatoryBooleanField.value == that.mandatoryBooleanField.value &&
-      this.mandatoryCountryField.value == that.mandatoryCountryField.value &&
-      Helpers.toInternetDate(this.mandatoryDateTimeField.value.getTime) ==
-        Helpers.toInternetDate(that.mandatoryDateTimeField.value.getTime) &&
-      //this.mandatoryDecimalField.value == that.mandatoryDecimalField.value &&
-      this.mandatoryDoubleField.value == that.mandatoryDoubleField.value &&
-      this.mandatoryEmailField.value == that.mandatoryEmailField.value &&
-      this.mandatoryEnumField.value == that.mandatoryEnumField.value &&
-      this.mandatoryIntField.value == that.mandatoryIntField.value &&
-      this.mandatoryLocaleField.value == that.mandatoryLocaleField.value &&
-      this.mandatoryLongField.value == that.mandatoryLongField.value &&
-      this.mandatoryPostalCodeField.value == that.mandatoryPostalCodeField.value &&
-      this.mandatoryStringField.value == that.mandatoryStringField.value &&
-      this.mandatoryTextareaField.value == that.mandatoryTextareaField.value &&
-      this.mandatoryTimeZoneField.value == that.mandatoryTimeZoneField.value
+    case that: FieldTypeTestRecord =>
+      that.fieldsToCompare.corresponds(this.fieldsToCompare) { (a,b) =>
+        a.name == b.name && a.valueBox == b.valueBox
+      }
     case _ => false
   }
 }
@@ -239,7 +237,7 @@ object FieldTypeTestRecord extends FieldTypeTestRecord with MetaRecord[FieldType
 trait SyntheticTestTrait{
 
   val genericField: StringField[_]
-  
+
 }
 
 class SyntheticTestRecord extends Record[SyntheticTestRecord] with SyntheticTestTrait{
@@ -252,3 +250,29 @@ class SyntheticTestRecord extends Record[SyntheticTestRecord] with SyntheticTest
 
 object SyntheticTestRecord extends SyntheticTestRecord with MetaRecord[SyntheticTestRecord]
 
+class CustomFormatDateTimeRecord private () extends Record[CustomFormatDateTimeRecord] {
+  import java.text.SimpleDateFormat
+
+  def meta = CustomFormatDateTimeRecord
+
+  object customFormatDateTimeField extends DateTimeField(this) {
+    override val formats = new DefaultFormats {
+      override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+    }
+  }
+
+}
+
+object CustomFormatDateTimeRecord extends CustomFormatDateTimeRecord with MetaRecord[CustomFormatDateTimeRecord]
+
+class CustomTypeIntFieldRecord private () extends Record[CustomTypeIntFieldRecord] {
+
+  def meta = CustomTypeIntFieldRecord
+
+  object customIntField extends IntField(this) {
+    override def formInputType = "number"
+  }
+
+}
+
+object CustomTypeIntFieldRecord extends CustomTypeIntFieldRecord with MetaRecord[CustomTypeIntFieldRecord]

@@ -34,7 +34,6 @@ private[common] trait LinkedListElem[T1, T2] {
     what._prev = this
     _next._prev = what
     this._next = what
-    what
   }
 
   private[common] def addAtTail(what: LinkedListElem[T1, T2]) {
@@ -42,7 +41,6 @@ private[common] trait LinkedListElem[T1, T2] {
     what._next = this
     _prev._next = what
     this._prev = what
-    what
   }
 }
 
@@ -85,7 +83,7 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
     Full(v.value2)
   }
 
-  def apply(key: K) = get(key).open_!
+  def apply(key: K) = get(key).openOrThrowException("Simulating what happens with a regular Map, use contains(key) to check if it is present or not.")
 
   def contains(key: K): Boolean = localMap.containsKey(key)
 

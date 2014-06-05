@@ -17,13 +17,14 @@
 package net.liftweb
 package sitemap
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for Menu DSL.
  */
-object MenuDslSpec extends Specification("Menu DSL Specification") {
+object MenuDslSpec extends Specification  {
+  "Menu DSL Specification".title
 
   "The Menu DSL" should {
     "allow basic menu definition via '/ path'" in {
@@ -93,7 +94,7 @@ object MenuDslSpec extends Specification("Menu DSL Specification") {
         )
 
 
-      val complete = SiteMap(menu).kids(0).makeMenuItem(List()).open_!
+      val complete = SiteMap(menu).kids(0).makeMenuItem(List()).openOrThrowException("legacy code")
 
       complete.kids.size must_== 2
       complete.kids(0).kids.size must_== 3

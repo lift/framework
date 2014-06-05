@@ -1,5 +1,5 @@
 /*
-* Copyright 2010-2011 WorldWide Conferencing, LLC
+* Copyright 2010-2013 WorldWide Conferencing, LLC
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -11,42 +11,27 @@
 * limitations under the License.
 */
 
-package net.liftweb 
-package mongodb 
-package record 
-package field 
+package net.liftweb
+package mongodb
+package record
+package field
 
 import java.util.Date
 
 import scala.xml.NodeSeq
 
-import net.liftweb.common.{Box, Empty, Failure, Full}
-import net.liftweb.http.js.JE.{JsNull, JsRaw}
-import net.liftweb.http.S
-import net.liftweb.json.JsonAST._
-import net.liftweb.json.Printer
-import net.liftweb.mongodb.record._
-import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
-import net.liftweb.util.Helpers._
+import common._
+import http.js.JE.{JsNull, JsRaw}
+import http.S
+import json._
+import mongodb.record._
+import net.liftweb.record._
+import net.liftweb.record.field._
+import util.Helpers._
 
-/*
-* Since MongoDB only stores UTC dates, Calendar data is not necessary.
-*/
-class DateField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
-  extends Field[Date, OwnerType]
-  with MandatoryTypedField[Date]
-{
+trait DateTypedField extends TypedField[Date] {
 
-  def owner = rec
-
-  def defaultValue = new Date
-
-  override def toString = value match {
-    case null => "null"
-    case d => valueBox.map {
-      v => owner.meta.formats.dateFormat.format(v)
-    } openOr ""
-  }
+  def formats: Formats
 
   def setFromAny(in: Any): Box[Date] = in match {
     case d: Date => setBox(Full(d))
@@ -61,7 +46,7 @@ class DateField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
     case o => setFromString(o.toString)
   }
 
-  def setFromString(in: String): Box[Date] = owner.meta.formats.dateFormat.parse(in) match {
+  def setFromString(in: String): Box[Date] = formats.dateFormat.parse(in) match {
     case Some(d: Date) => setBox(Full(d))
     case other => setBox(Failure("Invalid Date string: "+in))
   }
@@ -76,7 +61,7 @@ class DateField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
     S.fmapFunc(S.SFuncHolder(this.setFromAny(_))){funcName =>
       <input type="text"
         name={funcName}
-        value={valueBox.map(v => owner.meta.formats.dateFormat.format(v)) openOr ""}
+        value={valueBox.map(v => formats.dateFormat.format(v)) openOr ""}
         tabindex={tabIndex.toString}/>
     }
 
@@ -91,6 +76,40 @@ class DateField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
     case jv => JsRaw(Printer.compact(render(jv)))
   }
 
-  def asJValue: JValue = valueBox.map(v => Meta.dateAsJValue(v, owner.meta.formats)) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(v => mongodb.Meta.dateAsJValue(v, formats)) openOr (JNothing: JValue)
 }
 
+class DateField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
+  extends Field[Date, OwnerType] with MandatoryTypedField[Date] with DateTypedField {
+
+  def owner = rec
+
+  def formats = owner.meta.formats
+
+  def this(rec: OwnerType, value: Date) = {
+    this(rec)
+    setBox(Full(value))
+  }
+
+  def defaultValue = new Date
+
+  override def toString = value match {
+    case null => "null"
+    case d => valueBox.map {
+      v => formats.dateFormat.format(v)
+    } openOr ""
+  }
+}
+
+class OptionalDateField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
+  extends Field[Date, OwnerType] with OptionalTypedField[Date] with DateTypedField {
+
+  def owner = rec
+
+  def formats = owner.meta.formats
+
+  def this(rec: OwnerType, value: Box[Date]) = {
+    this(rec)
+    setBox(value)
+  }
+}

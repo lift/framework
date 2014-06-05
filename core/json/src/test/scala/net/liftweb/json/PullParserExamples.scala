@@ -17,13 +17,14 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * System under specification for JSON Pull Parser.
  */
-object PullParserExamples extends Specification("JSON Pull Parser Examples") {
+object PullParserExamples extends Specification  {
+  "JSON Pull Parser Examples".title
   import JsonParser._
 
   "Pull parsing example" in {

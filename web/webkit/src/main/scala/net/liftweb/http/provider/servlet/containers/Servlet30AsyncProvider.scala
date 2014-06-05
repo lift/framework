@@ -32,6 +32,9 @@ import Helpers._
 
 
 object Servlet30AsyncProvider extends AsyncProviderMeta {
+  // cc below gets inferred as a Class[?0] existential.
+  import scala.language.existentials
+
   private lazy val (hasContinuations_?, 
                     cc, 
                     asyncClass, 
@@ -48,7 +51,7 @@ object Servlet30AsyncProvider extends AsyncProviderMeta {
       val isSupported = cc.getMethod("isAsyncSupported")
       (true, cc, asyncClass, startAsync, getResponse, complete, isSupported)
     } catch {
-      case e =>
+      case e: Exception =>
         (false, 
          null, 
          null, 
@@ -80,8 +83,12 @@ object Servlet30AsyncProvider extends AsyncProviderMeta {
  *
  */
 class Servlet30AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider with Loggable {
+  import scala.language.reflectiveCalls
+
   private var asyncCtx: Object = null
 
+  type SetTimeout = {def setTimeout(timeout: Long): Unit;}
+  
   import Servlet30AsyncProvider._
 
   private lazy val servletReq = (req.asInstanceOf[HTTPRequestServlet]).req
@@ -93,6 +100,12 @@ class Servlet30AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider with
 
   def suspend(timeout: Long): RetryState.Value = {
     asyncCtx = startAsync.invoke(servletReq)
+    try {
+    	val st = asyncCtx.asInstanceOf[SetTimeout]
+    	st.setTimeout(0l)
+    } catch {
+    case e: Exception => logger.error("Servlet 3.0 Async: Failed to set timeout", e)
+    }
     logger.trace("Servlet 3.0 suspend")
     RetryState.SUSPENDED
   }
@@ -102,8 +115,12 @@ class Servlet30AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider with
     val httpRes = getResponse.invoke(asyncCtx).asInstanceOf[javax.servlet.http.HttpServletResponse]
     val httpResponse = new HTTPResponseServlet(httpRes)
     val liftServlet = req.provider.liftServlet
-    liftServlet.sendResponse(what._2, httpResponse, what._1)
-    complete.invoke(asyncCtx)
+    try {
+    	liftServlet.sendResponse(what._2, httpResponse, what._1)
+    	complete.invoke(asyncCtx)
+    } catch {
+    case e: Exception => logger.error("Servlet 3.0 Async: Couldn't resume thread", e)
+    }
     logger.trace("Servlet 3.0 resume")
     true
   }

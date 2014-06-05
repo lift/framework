@@ -84,9 +84,19 @@ trait Loc[T] {
   */
   def paramValue: Box[T] = calcValue.flatMap(f => f()) or staticValue
 
-  private lazy val staticValue: Box[T] = allParams.collect{case Loc.Value(v: T) => v}.headOption
+  private lazy val staticValue: Box[T] = {
+    allParams.collectFirst {
+      case Loc.Value(v) =>
+        v.asInstanceOf[T]
+    }
+  }
   
-  private lazy val calcValue: Box[() => Box[T]] = params.collect{case Loc.CalcValue(f: Function0[Box[T]]) => f}.headOption
+  private lazy val calcValue: Box[() => Box[T]] = {
+    params.collectFirst {
+      case Loc.CalcValue(f: Function0[_]) =>
+        f.asInstanceOf[()=>Box[T]]
+    }
+  }
 
   /**
    * Calculate the Query parameters
@@ -178,8 +188,16 @@ trait Loc[T] {
     }
   )
 
+  /**
+   * A `PartialFunction` that maps a snippet name, and an optional `Loc` value, in a `Tuple2`,
+   * to a snippet function (`NodeSeq` => `NodeSeq`).
+   */
   type SnippetTest = PartialFunction[(String, Box[T]), NodeSeq => NodeSeq]
 
+  /**
+   * The snippets defined by the `Loc` class itself, as opposed to those
+   * provided by its `LocParams`.
+   */
   def snippets: SnippetTest = Map.empty
 
   /**
@@ -231,41 +249,21 @@ trait Loc[T] {
     (np.map(_.f()) or param.map(_.f(currentValue))) openOr false
   }
 
-  lazy val calcSnippets: SnippetTest = {
-    def buildPF(in: Loc.Snippet): PartialFunction[String, NodeSeq => NodeSeq] = {
-      new PartialFunction[String, NodeSeq => NodeSeq] {
-        def isDefinedAt(s: String) = s == in.name
-        def apply(s: String): NodeSeq => NodeSeq = {
-          if (isDefinedAt(s)) in.func
-          else throw new MatchError()
-        }
-      }
-    }
+  /**
+   * The snippets provided by `LocParam`s
+   */
+  lazy val calcSnippets: SnippetTest =
+    allParams
+      .collect { case v: Loc.ValueSnippets[T] => v.snippets }
+      .reduceLeftOption(_ orElse _)
+      .getOrElse(Map.empty)
 
-    val singles = (
-      allParams.flatMap{ case v: Loc.Snippet => Some(v);     case _ => None }.toList.map(buildPF) :::
-      allParams.flatMap{ case v: Loc.LocSnippets => Some(v); case _ => None }.toList
-    )
-
-    if (singles.isEmpty) Map.empty
-    else {
-      val func: PartialFunction[String, NodeSeq => NodeSeq] = singles match {
-        case pf :: Nil => pf
-        case pfs => pfs.reduceLeft[PartialFunction[String, NodeSeq => NodeSeq]](_ orElse _)
-      }
-
-      new SnippetTest {
-        def isDefinedAt(in: (String, Box[T])): Boolean = func.isDefinedAt(in._1)
-        def apply(in: (String, Box[T])): NodeSeq => NodeSeq = func.apply(in._1)
-      }
-    }
-  }
-
+  /**
+   * Look up a snippet by name, taking into account the current
+   * `Loc` value.
+   */
   def snippet(name: String): Box[NodeSeq => NodeSeq] = {
-    val test = (name, currentValue)
-
-    if ((snippets orElse calcSnippets).isDefinedAt(test)) Full((snippets orElse calcSnippets)(test))
-    else Empty
+    snippets orElse calcSnippets lift (name, currentValue)
   }
 
   protected object accessTestRes extends RequestVar[Either[Boolean, Box[() => LiftResponse]]](_testAccess) {
@@ -395,23 +393,21 @@ trait Loc[T] {
   }
 
   def doesMatch_?(req: Req): Boolean = {
-    (if (link.isDefinedAt(req)) {
-      link(req) match {
-        case Full(x) if testAllParams(allParams, req) => x
-        case Full(x) => false
-        case x => x.openOr(false)
-      }
-    } else false) && currentValue.isDefined
-    // the loc only matches if we've got a current value
+    link.isDefinedAt(req) &&
+    testAllParams(allParams, req) &&
+    (
+      currentValue.isDefined ||
+      params.contains(Loc.MatchWithoutCurrentValue)
+    )
   }
 
   def breadCrumbs: List[Loc[_]] = _menu.breadCrumbs ::: List(this)
 
   def buildKidMenuItems(kids: Seq[Menu]): List[MenuItem] = {
-    kids.toList.flatMap(_.loc.buildItem(Nil, false, false)) ::: supplimentalKidMenuItems
+    kids.toList.flatMap(_.loc.buildItem(Nil, false, false)) ::: supplementalKidMenuItems
   }
 
-  def supplimentalKidMenuItems: List[MenuItem] =
+  def supplementalKidMenuItems: List[MenuItem] =
     for {
       p <- childValues
       l <- link.createLink(p).map(appendQueryParams(p))
@@ -654,35 +650,54 @@ object Loc {
   }
 
   /**
-   * A single snippet that's assocaited with a given location... the snippet
-   * name and the snippet function'
+   * The common interface for `LocParam`s that provide snippet functions,
+   * which can be aware of the `Loc` value.
+   * @tparam A The type with which the `Loc` is parameterized.
    */
-  class Snippet(val name: String, _func: => NodeSeq => NodeSeq) extends AnyLocParam {
+  trait ValueSnippets[A] extends LocParam[A] {
+    /**
+     * Provides snippets for the `Loc`.
+     * @return a `PartialFunction` that maps a snippet name, and an optional `Loc` value, in a `Tuple2`,
+     * to a snippet function (`NodeSeq` => `NodeSeq`).
+     */
+    def snippets: PartialFunction[(String, Box[A]), NodeSeq => NodeSeq]
+  }
+  object ValueSnippets {
+    /**
+     * Factory for general `ValueSnippets` instances by wrapping an existing `PartialFunction`.
+     * @tparam A the type of the `Loc`'s value
+     * @param pf a `PartialFunction` that maps a snippet name, and an optional `Loc` value, in a `Tuple2`,
+     * to a snippet function (`NodeSeq` => `NodeSeq`).
+     */
+    def apply[A](pf: PartialFunction[(String, Box[A]), NodeSeq => NodeSeq]): ValueSnippets[A] = new ValueSnippets[A] {
+      def snippets = pf
+    }
+  }
+
+  /**
+   * A single snippet that's associated with a `Loc`, but is
+   * not directly aware of the `Loc` value.
+   * @see ValueSnippets
+   * @param name the snippet name
+   * @param _func the snippet function. Note that this is a call-by-name parameter;
+   * that is, the function expression passed in will be evaluated each time
+   * the function is invoked.
+   */
+  class Snippet(val name: String, _func: => NodeSeq => NodeSeq) extends ValueSnippets[Any] with AnyLocParam {
     /**
      * The NodeSeq => NodeSeq function 
      */
     def func: NodeSeq => NodeSeq = _func
+
+    def snippets = { case (`name`, _) => func }
   }
 
   object Snippet {
-
-    /**
-     * A trait that does nothing other than allow the disabiguation of two different call-by-name parameters
-     * for apply()
-     */
-    trait CallByNameDispatchSnippet
-
-    /**
-     * Vend the trait that does nothing other than allow the disabiguation of two different call-by-name parameters
-     * for apply()
-     */
-    implicit def vendCallByNameDispatchSnippet: CallByNameDispatchSnippet = new CallByNameDispatchSnippet {}
-
     /**
      * Build a Loc.Snippet instance out of a name and a DispatchSnippet (or StatefulSnippet, LiftScreen or Wizard).
      * The "render" method will be invoked on the Dispatch snippet
      */
-    def apply(name: String, snippet: => DispatchSnippet)(implicit disambiguate: CallByNameDispatchSnippet): Snippet =
+    def apply(name: String, snippet: => DispatchSnippet)(implicit disambiguate: DummyImplicit): Snippet =
       new Snippet(name, ns => snippet.dispatch("render")(ns)) // Issue #919
 
     /**
@@ -695,15 +710,57 @@ object Loc {
 
   /**
    * Allows you to create a handler for many snippets that are associated with
-   * a Loc
+   * a Loc, but agnostic to the `Loc`'s value.
+   * @see ValueSnippets
+   * @see ValueSnippets.apply
    */
-  trait LocSnippets extends PartialFunction[String, NodeSeq => NodeSeq] with AnyLocParam
+  trait LocSnippets extends PartialFunction[String, NodeSeq => NodeSeq] with ValueSnippets[Any] with AnyLocParam {
+    def snippets = {
+      case (s, _) if isDefinedAt(s) => apply(s)
+    }
+  }
+
+  /**
+   * A subclass of LocSnippets with a built in dispatch method (no need to
+   * implement isDefinedAt or apply... just
+   * def dispatch: PartialFunction[String, NodeSeq => NodeSeq].
+   * @see ValueSnippets
+   * @see ValueSnippets.apply
+   */
+  trait DispatchLocSnippets extends LocSnippets {
+    def dispatch: PartialFunction[String, NodeSeq => NodeSeq]
+
+    def isDefinedAt(n: String) = dispatch.isDefinedAt(n)
+
+    def apply(n: String) = dispatch.apply(n)
+  }
 
   /**
    * If this parameter is included, the item will not be visible in the menu, but
    * will still be accessable.
    */
   case object Hidden extends AnyLocParam
+
+  /**
+   * If this parameter is included, the Loc will continue to execute even if
+   * currentValue is not defined.
+   *
+   * By default, Lift will determine that a Loc does not match a given request
+   * if its currentValue comes up Empty, and as a result will return an HTTP 404.
+   * For situations where this is not the desired, "Not Found" behavior, you can
+   * add the MatchWithoutCurrentValue LocParam to a Loc, then use the IfValue
+   * LocParam to define what should happen when the currentValue is Empty.
+   *
+   * For example, given some class Thing, you could do the following to trigger
+   * a redirect when a Thing with a particular ID isn't found.
+   *
+   * {{{
+   * Menu.param[Thing]("Thing", "Thing", Thing.find(_), _.id) >>
+   *   MatchWithoutCurrentValue >>
+   *   IfValue(_.isDefined, () => RedirectResponse("/page/to/redirect/to"))
+   * }}}
+   */
+  case object MatchWithoutCurrentValue extends AnyLocParam
 
   /**
    * If this is a submenu, use the parent Loc's params
@@ -757,19 +814,6 @@ object Loc {
    * with the parameterized type passed into the function
    */
   case class CalcParamStateless[-T](f: Box[T] => Boolean) extends LocParam[T]
-
-  /**
-   * A subclass of LocSnippets with a built in dispatch method (no need to
-   * implement isDefinedAt or apply... just
-   * def dispatch: PartialFunction[String, NodeSeq => NodeSeq]
-   */
-  trait DispatchLocSnippets extends LocSnippets {
-    def dispatch: PartialFunction[String, NodeSeq => NodeSeq]
-
-    def isDefinedAt(n: String) = dispatch.isDefinedAt(n)
-
-    def apply(n: String) = dispatch.apply(n)
-  }
 
   /**
    * A function that can be used to calculate the link text from the current
@@ -862,9 +906,6 @@ object Loc {
       override def external_? = true
     }
   }
-
-  // @deprecated def alwaysTrue(a: Req) = true
-  // @deprecated def retString(toRet: String)(other: Seq[(String, String)]) = Full(toRet)
 
   implicit def strToFailMsg(in: => String): FailMsg = () => {
     RedirectWithState(

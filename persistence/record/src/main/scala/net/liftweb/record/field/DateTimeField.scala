@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 WorldWide Conferencing, LLC
+ * Copyright 2007-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import scala.xml._
 import net.liftweb.common._
 import net.liftweb.http.{S}
 import net.liftweb.http.js._
-import net.liftweb.json.JsonAST.JValue
+import net.liftweb.json._
 import net.liftweb.util._
 import java.util.{Calendar, Date}
 import Helpers._
@@ -36,19 +36,24 @@ trait DateTimeTypedField extends TypedField[Calendar] {
     cal
   }
 
+  val formats = new DefaultFormats {
+    override def dateFormatter = Helpers.internetDateFormatter
+  }
+
   def setFromAny(in : Any): Box[Calendar] = toDate(in).flatMap(d => setBox(Full(dateToCal(d)))) or genericSetFromAny(in)
 
   def setFromString(s: String): Box[Calendar] = s match {
-    case "" if optional_? => setBox(Empty)
-    case other            => setBox(tryo(dateToCal(parseInternetDate(s))))
+    case null|"" if optional_? => setBox(Empty)
+    case null|"" => setBox(Failure(notOptionalErrorMessage))
+    case other => setBox(tryo(dateToCal(parseInternetDate(s))))
   }
 
   private def elem =
     S.fmapFunc(SFuncHolder(this.setFromAny(_))){funcName =>
-      <input type="text"
+      <input type={formInputType}
         name={funcName}
         value={valueBox.map(s => toInternetDate(s.getTime)) openOr ""}
-        tabindex={tabIndex toString}/>
+        tabindex={tabIndex.toString}/>
     }
 
   def toForm: Box[NodeSeq] =
@@ -57,11 +62,11 @@ trait DateTimeTypedField extends TypedField[Calendar] {
       case _        => Full(elem)
     }
 
-  def asJs = valueBox.map(v => Str(toInternetDate(v.getTime))) openOr JsNull
+  def asJs = valueBox.map(v => Str(formats.dateFormat.format(v.getTime))) openOr JsNull
 
-  def asJValue = asJString(v => toInternetDate(v.getTime))
+  def asJValue = asJString(v => formats.dateFormat.format(v.getTime))
   def setFromJValue(jvalue: JValue) = setFromJString(jvalue) {
-    v => boxParseInternetDate(v).map(d => {
+    v => formats.dateFormat.parse(v).map(d => {
       val cal = Calendar.getInstance
       cal.setTime(d)
       cal

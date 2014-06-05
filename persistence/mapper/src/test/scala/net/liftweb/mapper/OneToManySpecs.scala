@@ -17,9 +17,11 @@
 package net.liftweb {
 package mapper {
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
-object OneToManySpecs extends Specification("One to Many Specification") {
+object OneToManySpecs extends Specification  {
+  "One to Many Specification".title
+  sequential
 
   val provider = DbProviders.H2MemoryProvider
 

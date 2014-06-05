@@ -1,0 +1,7 @@
+- Decorator for whole output (default: <div>)
+- fast links (<foo>) evaluated too eagerly
+- simple java wrapper
+- speedup of br, em and strong
+- speedup by referencing (start, stop) indices when tokenizing lines
+  (CharSequence based on index pairs)
+- if xml is disabled, turn elements into plain text instead of turning them into links

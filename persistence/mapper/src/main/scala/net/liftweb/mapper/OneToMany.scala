@@ -18,6 +18,12 @@ package net.liftweb
 package mapper
 
 
+private[mapper] object RecursiveType {
+  val rec: { type R0 <: Mapper[R0] } = null
+  type Rec = rec.R0
+}
+import RecursiveType._
+
 /**
  * Add this trait to a Mapper for managed one-to-many support
  * For example: class Contact extends LongKeyedMapper[Contact] with OneToMany[Long, Contact] { ... }
@@ -26,13 +32,14 @@ package mapper
  * @author nafg
  */
 trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
-  private[mapper] lazy val oneToManyFields: List[MappedOneToManyBase[_]] = {
-    new FieldFinder[MappedOneToManyBase[_]](
+
+  private[mapper] lazy val oneToManyFields: List[MappedOneToManyBase[Rec]] = {
+    new FieldFinder[MappedOneToManyBase[Rec]](
       getSingleton,
       net.liftweb.common.Logger(classOf[OneToMany[K,T]])
-    ).accessorMethods map (_.invoke(this).asInstanceOf[MappedOneToManyBase[_]])
+    ).accessorMethods map (_.invoke(this).asInstanceOf[MappedOneToManyBase[Rec]])
   }
-  
+
   /**
    * An override for save to propagate the save to all children
    * of this parent.
@@ -52,9 +59,10 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
    * If they are all successful returns true.
    */
   override def delete_! = DB.use(connectionIdentifier){_ =>
-    if(oneToManyFields.forall{
-      case f: Cascade[_] => f.delete_!
-      case _ => true
+    if(oneToManyFields.forall{(_: MappedOneToManyBase[_ <: Mapper[_]]) match {
+        case f: Cascade[_] => f.delete_!
+        case _ => true
+      }
     })
       super.delete_!
     else {
@@ -77,7 +85,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
   class MappedOneToMany[O <: Mapper[O]](meta: MetaMapper[O], foreign: MappedForeignKey[K,O,T], qp: QueryParam[O]*)
     extends MappedOneToManyBase[O](
       ()=>{
-        val ret = meta.findAll(By(foreign, primaryKeyField) :: qp.toList : _*)
+        val ret = meta.findAll(By(foreign, primaryKeyField.get) :: qp.toList : _*)
         for(child <- ret) {
           foreign.actualField(child).asInstanceOf[MappedForeignKey[K,O,T]].primeObj(net.liftweb.common.Full(OneToMany.this : T))
         }
@@ -97,7 +105,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
    * @param foreign A function that gets the MappedForeignKey on the child that refers to this parent
    */
   class MappedOneToManyBase[O <: Mapper[_]](val reloadFunc: ()=>Seq[O],
-                                      val foreign: O => MappedForeignKey[K,_,T]) extends scala.collection.mutable.Buffer[O] {
+                                      val foreign: O => MappedForeignKey[K,_,T] /*forSome { type X <: Mapper[X] }*/) extends scala.collection.mutable.Buffer[O] {
     private var inited = false
     private var _delegate: List[O] = _
     /**
@@ -117,11 +125,12 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
      * Takes ownership of e. Sets e's foreign key to our primary key
      */
     protected def own(e: O) = {
-      foreign(e) match {
-        case f: MappedLongForeignKey[O,T] with MappedForeignKey[_,_,T] =>
+      val f0 = foreign(e).asInstanceOf[Any]
+      f0 match {
+        case f: MappedLongForeignKey[O,T] with MappedForeignKey[K,_,T] =>
           f.apply(OneToMany.this)
-        case f =>
-          f.set(OneToMany.this.primaryKeyField)
+        case f: MappedForeignKey[K,_,T] =>
+          f.set(OneToMany.this.primaryKeyField.get)
       }
       if(!OneToMany.this.saved_?)
          unlinked ::= e
@@ -186,7 +195,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
 
     def remove(n: Int) = {
       val e = unown(delegate(n))
-      delegate = delegate.filterNot(e eq)
+      delegate = delegate.filterNot(e.eq)
       e
     }
 
@@ -222,7 +231,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       }
       unlinked = Nil
       delegate = delegate.filter {e =>
-          foreign(e).is == OneToMany.this.primaryKeyField.is ||
+          foreign(e).get == OneToMany.this.primaryKeyField.get ||
             foreign(e).obj.map(_ eq OneToMany.this).openOr(false) // obj is this but not Empty
       }
       delegate.forall(_.save)
@@ -245,13 +254,13 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       super.unown(e)
     }
     override def own(e: O) = {
-      removed = removed filter {e ne}
+      removed = removed filter {e.ne}
       super.own(e)
     }
     override def save = {
       val unowned = removed.filter{ e =>
         val f = foreign(e)
-        f.is == f.defaultValue
+        f.get == f.defaultValue
       }
       unowned foreach {_.delete_!}
       super.save
@@ -265,8 +274,8 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
   trait Cascade[O<:Mapper[_]] extends MappedOneToManyBase[O] {
     def delete_! = {
       delegate.forall { e =>
-          if(foreign(e).is ==
-            OneToMany.this.primaryKeyField.is) {
+          if(foreign(e).get ==
+            OneToMany.this.primaryKeyField.get) {
               e.delete_!
             }
           else

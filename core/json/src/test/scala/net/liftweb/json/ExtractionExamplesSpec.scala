@@ -18,9 +18,11 @@ package net.liftweb
 package json
 
 import java.util.Date
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
-object ExtractionExamples extends Specification("Extraction Examples Specification") {
+object ExtractionExamples extends Specification {
+  "Extraction Examples Specification".title
+
   implicit val formats = DefaultFormats
 
   "Extraction example" in {
@@ -89,6 +91,11 @@ object ExtractionExamples extends Specification("Extraction Examples Specificati
     json.extract[Event] mustEqual Event("e1", date("2009-09-04T18:06:22Z"))
   }
 
+  "Timestamp extraction example" in {
+    val json = parse("""{"timestamp":"2009-09-04T18:06:22Z"}""")
+    new Date((json \ "timestamp").extract[java.sql.Timestamp].getTime) mustEqual date("2009-09-04T18:06:22Z")
+  }
+
   "Option extraction example" in {
     val json = parse("""{ "name": null, "age": 5, "mother":{"name":"Marilyn"}}""")
     json.extract[OChild] mustEqual OChild(None, 5, Some(Parent("Marilyn")), None)
@@ -133,6 +140,12 @@ object ExtractionExamples extends Specification("Extraction Examples Specificati
     val m = Map(".foo[2]" -> "2", ".foo[0]" -> "0", ".foo[1]" -> "1")
     
     Extraction.unflatten(m) mustEqual JObject(List(JField("foo", JArray(List(JInt(0), JInt(1), JInt(2))))))
+  }
+
+  "Unflatten example with common prefixes" in {
+    val m = Map(".photo" -> "\"photo string\"", ".photographer" -> "\"photographer string\"", ".other" -> "\"other string\"")
+
+    Extraction.unflatten(m) mustEqual JObject(List(JField("photo", JString("photo string")), JField("photographer", JString("photographer string")), JField("other", JString("other string"))))
   }
   
   "Flatten and unflatten are symmetric" in {

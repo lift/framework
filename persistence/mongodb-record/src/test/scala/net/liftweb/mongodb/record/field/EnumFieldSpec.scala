@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package record
 package field
 
 import org.bson.types.ObjectId
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import net.liftweb.common._
 import net.liftweb.json.ext.EnumSerializer
@@ -40,7 +40,7 @@ package enumfieldspecs {
   }
   object JsonObj extends JsonObjectMeta[JsonObj]
 
-  class EnumRec extends MongoRecord[EnumRec] with MongoId[EnumRec] {
+  class EnumRec extends MongoRecord[EnumRec] with ObjectIdPk[EnumRec] {
     def meta = EnumRec
 
     object dow extends EnumField(this, WeekDay)
@@ -51,7 +51,7 @@ package enumfieldspecs {
 
     override def equals(other: Any): Boolean = other match {
       case that: EnumRec =>
-        this.id == that.id &&
+        this.id.get == that.id.get &&
         this.dow.value == that.dow.value &&
         this.dowOptional.valueBox == that.dowOptional.valueBox &&
         this.jsonobj.value == that.jsonobj.value
@@ -68,7 +68,8 @@ package enumfieldspecs {
 /**
  * Systems under specification for EnumField.
  */
-object EnumFieldSpec extends Specification("EnumField Specification") with MongoTestKit {
+class EnumFieldSpec extends Specification  with MongoTestKit {
+  "EnumField Specification".title
 
   import enumfieldspecs._
 
@@ -77,11 +78,11 @@ object EnumFieldSpec extends Specification("EnumField Specification") with Mongo
     "work with default values" in {
       checkMongoIsRunning
 
-      val er = EnumRec.createRecord.save
+      val er = EnumRec.createRecord.save()
 
-      val erFromDb = EnumRec.find(er.id)
-      erFromDb must notBeEmpty
-      erFromDb foreach { er2 =>
+      val erFromDb = EnumRec.find(er.id.get)
+      erFromDb.isDefined must_== true
+      erFromDb.toList map { er2 =>
         er2 mustEqual er
         er2.dow.value mustEqual WeekDay.Mon
         er2.dowOptional.valueBox mustEqual Empty
@@ -95,11 +96,11 @@ object EnumFieldSpec extends Specification("EnumField Specification") with Mongo
       val er = EnumRec.createRecord
         .dow(WeekDay.Tue)
         .jsonobj(JsonObj(WeekDay.Sun))
-        .save
+        .save()
 
-      val erFromDb = EnumRec.find(er.id)
-      erFromDb must notBeEmpty
-      erFromDb foreach { er2 =>
+      val erFromDb = EnumRec.find(er.id.get)
+      erFromDb.isDefined must_== true
+      erFromDb.toList map { er2 =>
         er2 mustEqual er
         er2.dow.value mustEqual WeekDay.Tue
         er2.jsonobj.value mustEqual JsonObj(WeekDay.Sun)
@@ -111,11 +112,11 @@ object EnumFieldSpec extends Specification("EnumField Specification") with Mongo
 
       val er = EnumRec.createRecord
       er.dowOptional.setBox(Empty)
-      er.save
+      er.save()
 
-      val erFromDb = EnumRec.find(er.id)
-      erFromDb must notBeEmpty
-      erFromDb foreach { er2 =>
+      val erFromDb = EnumRec.find(er.id.get)
+      erFromDb.isDefined must_== true
+      erFromDb.toList map { er2 =>
         er2 mustEqual er
         er2.dowOptional.valueBox mustEqual Empty
       }
@@ -126,11 +127,11 @@ object EnumFieldSpec extends Specification("EnumField Specification") with Mongo
 
       val er = EnumRec.createRecord
       er.dowOptional.setBox(Full(WeekDay.Sat))
-      er.save
+      er.save()
 
-      val erFromDb = EnumRec.find(er.id)
-      erFromDb must notBeEmpty
-      erFromDb foreach { er2 =>
+      val erFromDb = EnumRec.find(er.id.get)
+      erFromDb.isDefined must_== true
+      erFromDb.toList map { er2 =>
         er2 mustEqual er
         er2.dowOptional.valueBox mustEqual Full(WeekDay.Sat)
       }

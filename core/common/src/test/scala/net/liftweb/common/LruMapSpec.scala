@@ -17,13 +17,13 @@
 package net.liftweb
 package common
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for LRU Map.
  */
-object LruMapSpec extends Specification("LRU Map Specification") {
+object LruMapSpec extends Specification {
 
   "An LRU Map" should {
 
@@ -39,7 +39,7 @@ object LruMapSpec extends Specification("LRU Map Specification") {
       for (i <- 1 to 20) lru(i) = i
 
       lru.size must_== 10
-      for (i <- 11 to 20) lru(i) must_== i
+      ((i:Int) => lru(i) must_== i).forall(11 to 20)
     }
 
     "expire elements to func" in {
@@ -49,7 +49,7 @@ object LruMapSpec extends Specification("LRU Map Specification") {
 
       lru.size must_== 10
       expCnt must_== 10
-      for (i <- 11 to 20) lru(i) must_== i
+      ((i:Int) => lru(i) must_== i).forall(11 to 20)
     }
 
     "not expire the recently accessed elements" in {

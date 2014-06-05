@@ -33,7 +33,7 @@ object UserAgentCalculator extends Factory {
   /**
    * The default regular expression for IE
    */
-  val iePattern = """MSIE ([0-9]+)""".r
+  val iePattern = """(MSIE ([0-9]+)|Trident/7.*rv:([0-9]+))""".r
 
   /**
    * You can change the mechanism by which the user agent for IE
@@ -47,9 +47,11 @@ object UserAgentCalculator extends Factory {
    */
   def defaultIeCalcFunction(userAgent: Box[String]): Box[Double] = 
     for {
-      ua <- userAgent
-      m = iePattern.pattern.matcher(ua)
-      ver <- if (m.find) Helpers.asDouble(m.group(1)) else Empty
+      userAgent <- userAgent
+      ieMatch = iePattern.pattern.matcher(userAgent)
+      findResult = ieMatch.find if findResult
+      ieVersionString <- Box.legacyNullTest(ieMatch.group(2)) or Box.legacyNullTest(ieMatch.group(3))
+      ver <- Helpers.asDouble(ieVersionString)
     } yield ver
 
   /**
@@ -143,7 +145,9 @@ trait UserAgentCalculator {
   lazy val isIE7: Boolean = ieVersion.map(_ == 7) openOr false
   lazy val isIE8: Boolean = ieVersion.map(_ == 8) openOr false
   lazy val isIE9: Boolean = ieVersion.map(_ == 9) openOr false
-  lazy val isIE = ieVersion.map(_ >= 6) openOr false
+  lazy val ieIE10: Boolean = ieVersion.map(_ == 10) openOr false
+  lazy val isIE11: Boolean = ieVersion.map(_ == 11) openOr false
+  lazy val isIE = ieVersion.isDefined
 
   lazy val safariVersion: Box[Int] = 
     UserAgentCalculator.safariCalcFunction.vend.apply(userAgent).map(_.toInt)
@@ -212,11 +216,10 @@ trait UserAgentCalculator {
   def userAgent: Box[String]
 }
 
-@serializable
-sealed trait ParamHolder {
+sealed trait ParamHolder extends Serializable{
   def name: String
 }
-@serializable
+
 final case class NormalParamHolder(name: String, value: String) extends ParamHolder
 
 /**
@@ -227,9 +230,8 @@ final case class NormalParamHolder(name: String, value: String) extends ParamHol
  * @param mimeType the mime type, as specified in the Content-Type field
  * @param fileName The local filename on the client
  */
-@serializable
 abstract class FileParamHolder(val name: String, val mimeType: String,
-                               val fileName: String) extends ParamHolder
+                               val fileName: String) extends ParamHolder with Serializable
 {
   /**
    * Returns the contents of the uploaded file as a Byte array.
@@ -463,8 +465,8 @@ object Req {
                       Nil, 
                       Full(BodyOrInputStream(request.inputStream)))
         // it's multipart
-      } else if (request multipartContent_?) {
-        val allInfo = request extractFiles
+      } else if (request.multipartContent_?) {
+        val allInfo = request.extractFiles
         
         val normal: List[NormalParamHolder] = 
           allInfo.flatMap {
@@ -491,11 +493,11 @@ object Req {
         val params = localParams ++ (request.params.sortWith
                                      {(s1, s2) => s1.name < s2.name}).
                                            map(n => (n.name, n.values))
-        ParamCalcInfo(request paramNames, params, Nil, Empty)
+        ParamCalcInfo(request.paramNames, params, Nil, Empty)
       } else {
         ParamCalcInfo(queryStringParam._1, 
                       queryStringParam._2 ++ localParams, 
-                      Nil, Full(BodyOrInputStream(request inputStream)))
+                      Nil, Full(BodyOrInputStream(request.inputStream)))
       }
     })
 
@@ -524,7 +526,9 @@ object Req {
    */
   def nil = new Req(NilPath, "", GetRequest, Empty, null,
                     System.nanoTime, System.nanoTime, false,
-                    () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map())
+                    () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map()) {
+    override lazy val standardRequest_? = false
+  }
 
   def parsePath(in: String): ParsePath = {
     val p1 = fixURI((in match {case null => "/"; case s if s.length == 0 => "/"; case s => s}).replaceAll("/+", "/"))
@@ -544,6 +548,7 @@ object Req {
   private def _fixHref(contextPath: String, v: Seq[Node], fixURL: Boolean, rewrite: Box[String => String]): Text = {
     val hv = v.text
     val updated = if (hv.startsWith("/") &&
+                      !hv.startsWith("//") &&
                       !LiftRules.excludePathFromContextPathRewriting.vend(hv)) contextPath + hv else hv
 
     Text(if (fixURL && rewrite.isDefined &&
@@ -551,8 +556,9 @@ object Req {
              !updated.startsWith("javascript:") &&
              !updated.startsWith("http://") &&
              !updated.startsWith("https://") &&
+             !updated.startsWith("//") &&
              !updated.startsWith("#"))
-         rewrite.open_!.apply(updated) else updated)
+         rewrite.openOrThrowException("legacy code").apply(updated) else updated)
   }
 
   /**
@@ -573,11 +579,11 @@ object Req {
         v =>
         v match {
           case Group(nodes) => Group(_fixHtml(contextPath, nodes))
-          case e: Elem if e.label == "form" => Elem(v.prefix, v.label, fixAttrs("action", v.attributes, true), v.scope, _fixHtml(contextPath, v.child): _*)
-          case e: Elem if e.label == "script" => Elem(v.prefix, v.label, fixAttrs("src", v.attributes, false), v.scope, _fixHtml(contextPath, v.child): _*)
-          case e: Elem if e.label == "a" => Elem(v.prefix, v.label, fixAttrs("href", v.attributes, true), v.scope, _fixHtml(contextPath, v.child): _*)
-          case e: Elem if e.label == "link" => Elem(v.prefix, v.label, fixAttrs("href", v.attributes, false), v.scope, _fixHtml(contextPath, v.child): _*)
-          case e: Elem => Elem(v.prefix, v.label, fixAttrs("src", v.attributes, true), v.scope, _fixHtml(contextPath, v.child): _*)
+          case e: Elem if e.label == "form" => Elem(v.prefix, v.label, fixAttrs("action", v.attributes, true), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
+          case e: Elem if e.label == "script" => Elem(v.prefix, v.label, fixAttrs("src", v.attributes, false), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
+          case e: Elem if e.label == "a" => Elem(v.prefix, v.label, fixAttrs("href", v.attributes, true), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
+          case e: Elem if e.label == "link" => Elem(v.prefix, v.label, fixAttrs("href", v.attributes, false), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
+          case e: Elem => Elem(v.prefix, v.label, fixAttrs("src", v.attributes, true), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
           case _ => v
         }
       }
@@ -587,7 +593,7 @@ object Req {
 
   private[liftweb] def defaultCreateNotFound(in: Req) =
   XhtmlResponse((<html> <body>The Requested URL {in.contextPath + in.uri} was not found on this server</body> </html>),
-                LiftRules.docType.vend(in), List("Content-Type" -> "text/html; charset=utf-8"), Nil, 404, S.ieMode)
+                LiftRules.htmlProperties.vend(in).docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 404, S.legacyIeCompatibilityMode)
 
   def unapply(in: Req): Option[(List[String], String, RequestType)] = Some((in.path.partPath, in.path.suffix, in.requestType))
 }
@@ -757,8 +763,8 @@ class Req(val path: ParsePath,
                                                    _addlParams)
 
   /**
-   * Build a new Req, except it has a different path.
-   * Useful for creating Reqs with sub-paths
+   * Build a new Req, the same except with a different path.
+   * Useful for creating Reqs with sub-paths.
    */
   def withNewPath(newPath: ParsePath): Req = {
     val outer = this
@@ -787,7 +793,7 @@ class Req(val path: ParsePath,
       override lazy val accepts: Box[String] = outer.accepts
     
       /**
-       * What is the content type in order of preference by the requestor
+       * What is the content type in order of preference by the requester
        * calculated via the Accept header
        */
       override lazy val weightedAccept: List[ContentType] = 
@@ -847,6 +853,26 @@ class Req(val path: ParsePath,
   }
 
   /**
+   * Returns true if the X-Requested-With header is set to XMLHttpRequest.
+   *
+   * Most ajax frameworks, including jQuery and Prototype, set this header
+   * when doing any ajax request.
+   */
+  def ajax_? =
+    request.headers.toList.exists { header =>
+      (header.name equalsIgnoreCase "x-requested-with") &&
+      (header.values.exists(_ equalsIgnoreCase "xmlhttprequest"))
+    }
+
+  /**
+   * A request that is neither Ajax or Comet
+   */
+  lazy val standardRequest_? : Boolean = path.partPath match {
+    case x :: _ if x == LiftRules.liftPath => false
+    case _ => true
+  }
+
+  /**
    * Make the servlet session go away
    */
   def destroyServletSession() {
@@ -855,7 +881,12 @@ class Req(val path: ParsePath,
     } httpReq.destroyServletSession()
   }
 
-  def snapshot = {
+  /**
+   * A snapshot of the request that can be passed off the current thread
+   *
+   * @return a copy of the Req
+   */
+  def snapshot: Req = {
     val paramCalc = paramCalculator()
     paramCalc.body.map(_.body) // make sure we grab the body
     new Req(path,
@@ -887,7 +918,7 @@ class Req(val path: ParsePath,
   lazy val headers: List[(String, String)] =
   for (h <- request.headers;
        p <- h.values
-  ) yield (h name, p)
+  ) yield (h.name, p)
 
 
   def headers(name: String): List[String] = headers.filter(_._1.equalsIgnoreCase(name)).map(_._2)
@@ -985,6 +1016,7 @@ class Req(val path: ParsePath,
    */
   lazy val hostAndPath: String =
     containerRequest.map(r => (r.scheme, r.serverPort) match {
+      case ("http", 80) if r.header("X-SSL").isDefined => "https://" + r.serverName + contextPath
       case ("http", 80) => "http://" + r.serverName + contextPath
       case ("https", 443) => "https://" + r.serverName + contextPath
       case (sch, port) => sch + "://" + r.serverName + ":" + port + contextPath
@@ -1032,7 +1064,7 @@ class Req(val path: ParsePath,
 
 
   /**
-   * Computer the Not Found via a Template
+   * Compute the Not Found via a Template
    */
   private def notFoundViaTemplate(path: ParsePath): LiftResponse = {
     this.initIfUnitted {
@@ -1053,7 +1085,7 @@ class Req(val path: ParsePath,
       case NotFoundAsTemplate(path) => notFoundViaTemplate(path)
       case NotFoundAsResponse(resp) => resp
       case NotFoundAsNode(node) => LiftRules.convertResponse((node, 404),
-        S.getHeaders(LiftRules.defaultHeaders((node, this))),
+        S.getResponseHeaders(LiftRules.defaultHeaders((node, this))),
         S.responseCookies,
         this)
     }
@@ -1064,7 +1096,7 @@ class Req(val path: ParsePath,
       case NotFoundAsTemplate(path) => notFoundViaTemplate(path)
       case NotFoundAsResponse(resp) => resp
       case NotFoundAsNode(node) => LiftRules.convertResponse((node, 404),
-        S.getHeaders(LiftRules.defaultHeaders((node, this))),
+        S.getResponseHeaders(LiftRules.defaultHeaders((node, this))),
         S.responseCookies,
         this)
     }
@@ -1089,16 +1121,18 @@ class Req(val path: ParsePath,
           f(path)
          }
       case NotFoundAsNode(node) => Full(LiftRules.convertResponse((node, 404),
-        S.getHeaders(LiftRules.defaultHeaders((node, this))),
+        S.getResponseHeaders(LiftRules.defaultHeaders((node, this))),
         S.responseCookies,
         this))
     }
   
-  def post_? = requestType.post_?
+  val post_? = requestType.post_?
 
-  def get_? = requestType.get_?
+  val get_? = requestType.get_?
 
-  def put_? = requestType.put_?
+  val put_? = requestType.put_?
+
+  val options_? = requestType.options_?
 
   def fixHtml(in: NodeSeq): NodeSeq = Req.fixHtml(contextPath, in)
 
@@ -1163,7 +1197,7 @@ class Req(val path: ParsePath,
   }
     
   /**
-   * What is the content type in order of preference by the requestor
+   * What is the content type in order of preference by the requester
    * calculated via the Accept header
    */
   lazy val weightedAccept: List[ContentType] = accepts match {
@@ -1209,7 +1243,6 @@ final case class RewriteRequest(path: ParsePath, requestType: RequestType, httpR
 /**
  * The representation of an URI path
  */
-@serializable
 case class ParsePath(partPath: List[String], suffix: String, absolute: Boolean, endSlash: Boolean) {
   def drop(cnt: Int) = ParsePath(partPath.drop(cnt), suffix, absolute, endSlash)
 
@@ -1230,7 +1263,7 @@ final case class RewriteResponse(path: ParsePath,
 /**
  * Maintains the context of resolving the URL when cookies are disabled from container. It maintains
  * low coupling such as code within request processing is not aware of the actual response that
- * ancodes the URL.
+ * encodes the URL.
  */
 object RewriteResponse {
   def apply(path: List[String], params: Map[String, String]) = new RewriteResponse(ParsePath(path, "", true, false), params, false)
@@ -1255,5 +1288,5 @@ object URLRewriter {
     }
   }
 
-  def rewriteFunc: Box[(String) => String] = Box.legacyNullTest(funcHolder value)
+  def rewriteFunc: Box[(String) => String] = Box.legacyNullTest(funcHolder.value)
 }

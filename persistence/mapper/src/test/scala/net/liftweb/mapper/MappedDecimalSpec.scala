@@ -17,7 +17,7 @@
 package net.liftweb
 package mapper
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 
@@ -25,9 +25,12 @@ import common._
 /**
  * Systems under specification for MappedDate.
  */
-object MappedDecimalSpec extends Specification("MappedDecimal Specification") {
+object MappedDecimalSpec extends Specification  {
+  "MappedDecimal Specification".title
+  sequential
+
   val provider = DbProviders.H2MemoryProvider
-  
+
   private def ignoreLogger(f: => AnyRef): Unit = ()
   def setupDB {
     provider.setupDB
@@ -41,8 +44,8 @@ object MappedDecimalSpec extends Specification("MappedDecimal Specification") {
       val charlie = Dog.create
       charlie.price(42.42).save
 
-      val read = Dog.find(charlie.id).open_!
-      read.dirty_? must_== false
+      val read = Dog.find(charlie.id)
+      read.map(_.dirty_?) must_== Full(false)
     }
 
     "be marked dirty on update" in {
@@ -50,7 +53,7 @@ object MappedDecimalSpec extends Specification("MappedDecimal Specification") {
       val charlie = Dog.create
       charlie.price(42.42).save
 
-      val read = Dog.find(charlie.id).open_!
+      val read = Dog.find(charlie.id).openOrThrowException("This is a test")
       read.dirty_? must_== false
       read.price(100.42)
       read.price(100.42)

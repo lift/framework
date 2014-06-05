@@ -46,10 +46,18 @@ class HTTPRequestServlet(val req: HttpServletRequest, val provider: HTTPProvider
 
   lazy val authType: Box[String] = Box !! req.getAuthType
 
-  def headers(name: String): List[String] = enumToList[String](req.getHeaders(name).asInstanceOf[java.util.Enumeration[String]])
+  def headers(name: String): List[String] =
+    for {
+      h <- (Box !! req.getHeaders(name)).asA[java.util.Enumeration[String]].toList
+      li <- enumToList[String](h) if null != li
+    } yield li
 
-  lazy val headers: List[HTTPParam] = enumToList[String](req.getHeaderNames.asInstanceOf[java.util.Enumeration[String]]).
-          map(n => HTTPParam(n, headers(n)))
+  lazy val headers: List[HTTPParam] =
+    for {
+      hne <- (Box !! req.getHeaderNames).asA[java.util.Enumeration[String]].toList
+      n <- enumToList[String](hne) if null != n
+      hl <- Full(headers(n)) if !hl.isEmpty
+    } yield HTTPParam(n, hl)
 
   def contextPath: String = req.getContextPath
 
@@ -59,7 +67,7 @@ class HTTPRequestServlet(val req: HttpServletRequest, val provider: HTTPProvider
 
   // don't cache... allow multiple sessions for the request
   // necessary for session destruction on login
-  def session = new HTTPServletSession(req getSession)
+  def session = new HTTPServletSession(req.getSession)
 
   def uri = req.getRequestURI
 
@@ -85,11 +93,11 @@ class HTTPRequestServlet(val req: HttpServletRequest, val provider: HTTPProvider
 
   def remoteHost: String = req.getRemoteHost
 
-  def serverName = req getServerName
+  def serverName = req.getServerName
 
-  def scheme: String = req getScheme
+  def scheme: String = req.getScheme
 
-  def serverPort = req getServerPort
+  def serverPort = req.getServerPort
 
   def method: String = req.getMethod
 
@@ -158,9 +166,9 @@ class HTTPRequestServlet(val req: HttpServletRequest, val provider: HTTPProvider
   def resumeInfo : Option[(Req, LiftResponse)] = asyncProvider.flatMap(_.resumeInfo)
 
   
-  def suspend(timeout: Long): RetryState.Value = asyncProvider.open_!.suspend(timeout) // open_! is bad, but presumably, the suspendResume support was checked
+  def suspend(timeout: Long): RetryState.Value = asyncProvider.openOrThrowException("open_! is bad, but presumably, the suspendResume support was checked").suspend(timeout)
 
-  def resume(what: (Req, LiftResponse)): Boolean = asyncProvider.open_!.resume(what)
+  def resume(what: (Req, LiftResponse)): Boolean = asyncProvider.openOrThrowException("open_! is bad, but presumably, the suspendResume support was checked").resume(what)
 
   lazy val suspendResumeSupport_? = {
     LiftRules.asyncProviderMeta.
@@ -226,11 +234,14 @@ private class OfflineRequestSnapshot(req: HTTPRequest, val provider: HTTPProvide
 
   val scheme: String = req.scheme
 
-  val serverPort: Int = req.serverPort
+  lazy val serverPort: Int = req.serverPort match {
+    case 80 => headers("X-SSL").flatMap(Helpers.asBoolean _).filter(a => a).map(a => 443).headOption getOrElse 80
+    case x => x
+  }
 
   val method: String = req.method
 
-  val resumeInfo : Option[(Req, LiftResponse)] = req resumeInfo
+  val resumeInfo : Option[(Req, LiftResponse)] = req.resumeInfo
 
   def suspend(timeout: Long): RetryState.Value =
     throw new UnsupportedOperationException("Cannot suspend a snapshot")

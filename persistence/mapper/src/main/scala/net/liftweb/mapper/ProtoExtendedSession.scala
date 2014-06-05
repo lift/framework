@@ -29,7 +29,7 @@ trait ProtoExtendedSession[T <: ProtoExtendedSession[T]] extends
 KeyedMapper[Long, T] {
   self: T =>
 
-  override def primaryKeyField = id
+  override def primaryKeyField: MappedLongIndex[T] = id
 
   // the primary key for the database
   object id extends MappedLongIndex(this)
@@ -90,8 +90,8 @@ KeyedMetaMapper[Long, T] {
   def userDidLogin(uid: UserType) {
     userDidLogout(Full(uid))
     val inst = create.userId(uid.userIdAsString).saveMe
-    val cookie = HTTPCookie(CookieName, inst.cookieId).
-    setMaxAge(((inst.expiration.is - millis) / 1000L).toInt).
+    val cookie = HTTPCookie(CookieName, inst.cookieId.get).
+    setMaxAge(((inst.expiration.get - millis) / 1000L).toInt).
     setPath("/")
     S.addCookie(cookie)
   }
@@ -116,8 +116,8 @@ KeyedMetaMapper[Long, T] {
       (recoverUserId, S.findCookie(CookieName)) match {
         case (Empty, Full(c)) =>
           find(By(cookieId, c.value openOr "")) match {
-            case Full(es) if es.expiration.is < millis => es.delete_!
-            case Full(es) => logUserIdIn(es.userId)
+            case Full(es) if es.expiration.get < millis => es.delete_!
+            case Full(es) => logUserIdIn(es.userId.get)
             case _ =>
           }
         

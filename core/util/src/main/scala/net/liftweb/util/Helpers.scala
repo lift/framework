@@ -57,4 +57,6 @@ object SafeNodeSeq {
 /**
  * The superclass for all Lift flow of control exceptions
  */
-class LiftFlowOfControlException(msg: String) extends RuntimeException(msg)
+class LiftFlowOfControlException(msg: String) extends RuntimeException(msg) {
+  override def fillInStackTrace = this
+}

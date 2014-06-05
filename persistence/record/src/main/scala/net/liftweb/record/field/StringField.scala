@@ -41,16 +41,17 @@ trait StringTypedField extends TypedField[String] with StringValidators {
   }
 
   def setFromString(s: String): Box[String] = s match {
-    case "" if optional_? => setBox(Empty)
-    case _                => setBox(Full(s))
+    case null|"" if optional_? => setBox(Empty)
+    case null|"" => setBox(Failure(notOptionalErrorMessage))
+    case _ => setBox(Full(s))
   }
 
   private def elem = S.fmapFunc(SFuncHolder(this.setFromAny(_))) {
     funcName =>
-    <input type="text" maxlength={maxLength.toString}
+    <input type={formInputType} maxlength={maxLength.toString}
       name={funcName}
       value={valueBox openOr ""}
-      tabindex={tabIndex toString}/>
+      tabindex={tabIndex.toString}/>
   }
 
   def toForm: Box[NodeSeq] =

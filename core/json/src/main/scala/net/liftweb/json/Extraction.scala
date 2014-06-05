@@ -20,6 +20,7 @@ package json
 import java.lang.reflect.{Constructor => JConstructor, Type}
 import java.lang.{Integer => JavaInteger, Long => JavaLong, Short => JavaShort, Byte => JavaByte, Boolean => JavaBoolean, Double => JavaDouble, Float => JavaFloat}
 import java.util.Date
+import java.sql.Timestamp
 import scala.reflect.Manifest
 
 /** Function to extract values from JSON AST using case classes.
@@ -35,7 +36,7 @@ object Extraction {
    * @throws MappingException is thrown if extraction fails
    */
   def extract[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): A = {
-    def allTypes(mf: Manifest[_]): List[Class[_]] = mf.erasure :: (mf.typeArguments flatMap allTypes)
+    def allTypes(mf: Manifest[_]): List[Class[_]] = mf.runtimeClass :: (mf.typeArguments flatMap allTypes)
 
     try {
       val types = allTypes(mf)
@@ -79,13 +80,13 @@ object Extraction {
         case x: JValue => x
         case x if primitive_?(x.getClass) => primitive2jvalue(x)(formats)
         case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
-        case x: Collection[_] => JArray(x.toList map decompose)
+        case x: Iterable[_] => JArray(x.toList map decompose)
         case x if (x.getClass.isArray) => JArray(x.asInstanceOf[Array[_]].toList map decompose)
         case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
         case x => 
-          val constructorArgs = primaryConstructorArgs(x.getClass)
-          constructorArgs.collect { case (name, _) if Reflection.hasDeclaredField(x.getClass, name) =>
-            val f = x.getClass.getDeclaredField(name)
+          val fields = getDeclaredFields(x.getClass)
+          val constructorArgs = primaryConstructorArgs(x.getClass).map{ case (name, _) => (name,fields.get(name)) }
+          constructorArgs.collect { case (name, Some(f)) =>
             f.setAccessible(true)
             JField(unmangleName(name), decompose(f get x))
           } match {
@@ -155,7 +156,7 @@ object Extraction {
   
     def submap(prefix: String): Map[String, String] = 
       Map(
-        map.filter(t => t._1.startsWith(prefix)).map(
+        map.filter(t => t._1 == prefix || t._1.startsWith(prefix + ".") || t._1.startsWith(prefix + "[")).map(
           t => (t._1.substring(prefix.length), t._2)
         ).toList.toArray: _*
       )
@@ -386,6 +387,7 @@ object Extraction {
     case JString(s) if (targetType == classOf[String]) => s
     case JString(s) if (targetType == classOf[Symbol]) => Symbol(s)
     case JString(s) if (targetType == classOf[Date]) => formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'"))
+    case JString(s) if (targetType == classOf[Timestamp]) => new Timestamp(formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'")).getTime)
     case JBool(x) if (targetType == classOf[Boolean]) => x
     case JBool(x) if (targetType == classOf[JavaBoolean]) => new JavaBoolean(x)
     case j: JValue if (targetType == classOf[JValue]) => j

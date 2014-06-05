@@ -18,7 +18,7 @@ package net.liftweb
 package builtin.snippet
 
 import xml.XML
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import http._
@@ -27,7 +27,8 @@ import http._
 /**
  * System under specification for Msgs.
  */
-object MsgsSpec extends Specification("Msgs Specification") {
+object MsgsSpec extends Specification  {
+  "Msgs Specification".title
 
   def withSession[T](f: => T) : T =
     S.initIfUninitted(new LiftSession("test", "", Empty))(f)
@@ -68,6 +69,7 @@ object MsgsSpec extends Specification("Msgs Specification") {
 
     "Properly render AJAX content" in {
       // TODO : Figure out how to test this
+      pending
     }
   }
 }

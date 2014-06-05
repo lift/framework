@@ -88,10 +88,12 @@ trait ItemsList[T <: Mapper[T]] {
         unsorted
       case Some(field) =>
         unsorted.sortWith {
-          (a, b) => ((field.actualField(a).is: Any, field.actualField(b).is: Any) match {
+          (a, b) => ((field.actualField(a).get: Any, field.actualField(b).get: Any) match {
             case (aval: String, bval: String) => aval.toLowerCase < bval.toLowerCase
-            case (aval: Ordered[Any], bval: Ordered[Any]) => aval < bval
-            case (aval: java.lang.Comparable[Any], bval: java.lang.Comparable[Any]) => (aval compareTo bval) < 0
+            case (aval: Ordered[_], bval: Ordered[_]) =>
+              aval.asInstanceOf[Ordered[Any]] < bval.asInstanceOf[Ordered[Any]]
+            case (aval: java.lang.Comparable[_], bval: java.lang.Comparable[_]) =>
+              (aval.asInstanceOf[java.lang.Comparable[Any]] compareTo bval.asInstanceOf[java.lang.Comparable[Any]]) < 0
             case (null, _) => sortNullFirst
             case (_, null) => !sortNullFirst
             case (aval, bval) => aval.toString < bval.toString
@@ -207,7 +209,7 @@ package snippet {
     private def getInstance: Box[TableEditorImpl[_]] = S.attr("table").map(TableEditor.map(_))
     def dispatch = {
       case "edit" =>
-        val o = getInstance.open_!
+        val o = getInstance.openOrThrowException("if we don't have the table attr, we want the dev to know about it.")
         o.edit _
     }
   }

@@ -19,8 +19,12 @@ package util
 
 import java.text.SimpleDateFormat
 import java.util.{TimeZone, Calendar, Date, Locale}
-import common._
+
+import scala.language.implicitConversions
+
 import org.joda.time.{DateTime, Duration, Period, PeriodType}
+
+import common._
 
 /**
  * The TimeHelpers object extends the TimeHelpers. It can be imported to access all of the trait functions.
@@ -89,7 +93,7 @@ trait TimeHelpers { self: ControlHelpers =>
   class TimeSpan(private val dt: Either[DateTime, Period]) extends ConvertableToDate {
     /** @return a Date as the amount of time represented by the TimeSpan after the Epoch date */
 
-    def this(ms: Long) = 
+    def this(ms: Long) =
       this(if (ms < 52L * 7L * 24L * 60L * 60L * 1000L) Right(new Period(ms))
            else Left(new DateTime(ms)))
 
@@ -102,7 +106,7 @@ trait TimeHelpers { self: ControlHelpers =>
      * Convert to a Date
      */
     def toDate: Date = date
-    
+
     /**
      * Convert to a JodaTime DateTime
      */
@@ -117,7 +121,7 @@ trait TimeHelpers { self: ControlHelpers =>
       case Left(datetime) => datetime.getMillis()
       case Right(duration) => duration.toStandardDuration.getMillis()
     }
-    
+
 
     /** @return a Date as the amount of time represented by the TimeSpan after now */
     def later: TimeSpan = dt match {
@@ -252,9 +256,10 @@ trait TimeHelpers { self: ControlHelpers =>
 
   /** This class adds a noTime method the Date class, in order to get at Date object starting at 00:00 */
   class DateExtension(date: Date) {
-    /** @returns a Date object starting at 00:00 from date */
+    /** @return a Date object starting at 00:00 from date */
     def noTime = {
       val calendar = Calendar.getInstance
+      calendar.setTime(date)
       calendar.set(Calendar.HOUR_OF_DAY, 0)
       calendar.set(Calendar.MINUTE, 0)
       calendar.set(Calendar.SECOND, 0)
@@ -292,18 +297,6 @@ trait TimeHelpers { self: ControlHelpers =>
 
   /** @return the current year */
   def currentYear: Int = Calendar.getInstance.get(Calendar.YEAR)
-
-  /**
-   * @deprecated use now instead
-   * @return the current time as a Date object
-   */
-  def timeNow = new Date
-
-  /**
-   * @deprecated use today instead
-   * @return the current Day as a Date object
-   */
-  def dayNow: Date = 0.seconds.later.noTime
 
   /** alias for new Date(millis) */
   def time(when: Long) = new Date(when)
@@ -396,12 +389,12 @@ trait TimeHelpers { self: ControlHelpers =>
     ret
   }
 
-  /** @return a date from a string using the internet format. Return the Epoch date if the parse is unsuccesfull */
+  /** @return a Box[date] from a string using the internet format. */
   def boxParseInternetDate(dateString: String): Box[Date] = tryo {
     internetDateFormatter.parse(dateString)
   }
 
-  /** @return a date from a string using the internet format. Return the Epoch date if the parse is unsuccesfull */
+  /** @return a date from a string using the internet format. Return the Epoch date if the parse is unsuccesful */
   def parseInternetDate(dateString: String): Date = tryo {
     internetDateFormatter.parse(dateString)
   } openOr new Date(0L)
@@ -431,7 +424,7 @@ trait TimeHelpers { self: ControlHelpers =>
         case o => toDate(o.toString)
       }
     } catch {
-      case e => logger.debug("Error parsing date "+in, e); Failure("Bad date: "+in, Full(e), Empty)
+      case e: Exception => logger.debug("Error parsing date "+in, e); Failure("Bad date: "+in, Full(e), Empty)
     }
   }
 }
@@ -446,6 +439,6 @@ object ConvertableToDate {
   implicit def toDate(in: ConvertableToDate): Date = in.toDate
   implicit def toDateTime(in: ConvertableToDate): DateTime = in.toDateTime
   implicit def toMillis(in: ConvertableToDate): Long = in.millis
-  
+
 }
 

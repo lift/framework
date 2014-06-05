@@ -17,6 +17,8 @@
 package net.liftweb
 package record
 
+import scala.language.existentials
+
 import java.lang.reflect.Modifier
 import net.liftweb._
 import util._
@@ -25,8 +27,7 @@ import scala.collection.mutable.{ListBuffer}
 import scala.xml._
 import net.liftweb.http.js.{JsExp, JE, JsObj}
 import net.liftweb.http.{SHtml, Req, LiftResponse, LiftRules}
-import net.liftweb.json.{JsonParser, Printer}
-import net.liftweb.json.JsonAST._
+import net.liftweb.json._
 import net.liftweb.record.FieldHelpers.expectedA
 import java.lang.reflect.Method
 import field._
@@ -45,6 +46,8 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
 
   private var lifecycleCallbacks: List[(String, Method)] = Nil
 
+  def connectionIdentifier: ConnectionIdentifier = DefaultConnectionIdentifier
+
   /**
    * Set this to use your own form template when rendering a Record to a form.
    *
@@ -54,7 +57,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    *
    * &lt;lift:field_label name="firstName"/&gt; - the label for firstName field will be rendered here
    * &lt;lift:field name="firstName"/&gt; - the firstName field will be rendered here (typically an input field)
-   * &lt;lift:field_msg name="firstName"/&gt; - the <lift:msg> will be rendered here hafing the id given by
+   * &lt;lift:field_msg name="firstName"/&gt; - the <lift:msg> will be rendered here having the id given by
    *                                             uniqueFieldId of the firstName field.
    *
    *
@@ -171,8 +174,8 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   protected def instantiateRecord: BaseRecord = rootClass.newInstance.asInstanceOf[BaseRecord]
 
   /**
-   * Creates a new record setting the value of the fields from the original object but
-   * apply the new value for the specific field
+   * Creates a new record, setting the value of the fields from the original object but
+   * applying the new value for the specific field
    *
    * @param - original the initial record
    * @param - field the new mutated field
@@ -206,13 +209,13 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   /**
    * Validates the inst Record by calling validators for each field
    *
-   * @pram inst - the Record tobe validated
+   * @param inst - the Record to be validated
    * @return a List of FieldError. If this list is empty you can assume that record was validated successfully
    */
   def validate(inst: BaseRecord): List[FieldError] = {
     foreachCallback(inst, _.beforeValidation)
     try{
-	    fieldList.flatMap(_.field(inst).validate)
+      fieldList.flatMap(_.field(inst).validate)
     } finally {
       foreachCallback(inst, _.afterValidation)
     }
@@ -233,41 +236,13 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   }
 
   /**
-   * Retuns the JSON representation of <i>inst</i> record, converts asJValue to JsObj
+   * Returns the JSON representation of <i>inst</i> record, converts asJValue to JsObj
    *
    * @return a JsObj
    */
   def asJsExp(inst: BaseRecord): JsExp = new JsExp {
     lazy val toJsCmd = Printer.compact(render(asJValue(inst)))
   }
-
-  /**
-   * Create a record with fields populated with values from the JSON construct
-   *
-   * @param json - The stringified JSON object
-   * @return Box[BaseRecord]
-   */
-  def fromJSON(json: String): Box[BaseRecord] = {
-    val inst = createRecord
-    setFieldsFromJSON(inst, json) map (_ => inst)
-  }
-
-  /**
-   * Populate the fields of the record instance with values from the JSON construct
-   *
-   * @param inst - The record to populate
-   * @param json - The stringified JSON object
-   * @return - Full(()) on success, other on failure
-   */
-  def setFieldsFromJSON(inst: BaseRecord, json: String): Box[Unit] =
-    JSONParser.parse(json) match {
-      case Full(nvp : Map[_, _]) =>
-        for ((k, v) <- nvp;
-             field <- inst.fieldByName(k.toString)) yield field.setFromAny(v)
-        Full(inst)
-      case Full(_) => Empty
-      case failure => failure.asA[Unit]
-    }
 
   /** Encode a record instance into a JValue */
   def asJValue(rec: BaseRecord): JObject = {
@@ -360,12 +335,13 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
           case _ => NodeSeq.Empty
         }
 
-      case Elem(namespace, label, attrs, scp, ns @ _*) =>
-        Elem(namespace, label, attrs, scp, toForm(inst, ns.flatMap(n => toForm(inst, n))):_* )
+      case elem: Elem =>
+        elem.copy(child = toForm(inst, elem.child.flatMap(n => toForm(inst, n))))
 
       case s : Seq[_] => s.flatMap(e => e match {
-            case Elem(namespace, label, attrs, scp, ns @ _*) =>
-              Elem(namespace, label, attrs, scp, toForm(inst, ns.flatMap(n => toForm(inst, n))):_* )
+            case elem: Elem =>
+              elem.copy(child = toForm(inst, elem.child.flatMap(n => toForm(inst, n))))
+
             case x => x
           })
 
@@ -384,22 +360,22 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   }
 
   /**
-   * Prepend a DispatchPF function to LiftRules.dispatch. If the partial function id defined for a give Req
+   * Prepend a DispatchPF function to LiftRules.dispatch. If the partial function is defined for a give Req
    * it will construct a new Record based on the HTTP query string parameters
    * and will pass this Record to the function returned by func parameter.
    *
-   * @param func - a PartialFunction for associating a request with a user provided function and the proper Record
+   * @param func - a PartialFunction for associating a request with a user-provided function and the proper Record
    */
   def prependDispatch(func: PartialFunction[Req, BaseRecord => Box[LiftResponse]])= {
     LiftRules.dispatch.prepend (makeFunc(func))
   }
 
   /**
-   * Append a DispatchPF function to LiftRules.dispatch. If the partial function id defined for a give Req
+   * Append a DispatchPF function to LiftRules.dispatch. If the partial function is defined for a give Req
    * it will construct a new Record based on the HTTP query string parameters
    * and will pass this Record to the function returned by func parameter.
    *
-   * @param func - a PartialFunction for associating a request with a user provided function and the proper Record
+   * @param func - a PartialFunction for associating a request with a user-provided function and the proper Record
    */
   def appendDispatch(func: PartialFunction[Req, BaseRecord => Box[LiftResponse]])= {
     LiftRules.dispatch.append (makeFunc(func))
@@ -441,7 +417,28 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   }
 
   /**
-   * Defined the order of the fields in this record
+   * Populate the fields of the record with values from an existing record
+   *
+   * @param inst - The record to populate
+   * @param rec - The Record to read from
+   */
+  def setFieldsFromRecord(inst: BaseRecord, rec: BaseRecord) {
+    for {
+      fh <- fieldList
+      fld <- rec.fieldByName(fh.name)
+    } {
+      fh.field(inst).setFromAny(fld.valueBox)
+    }
+  }
+
+  def copy(rec: BaseRecord): BaseRecord = {
+    val inst = createRecord
+    setFieldsFromRecord(inst, rec)
+    inst
+  }
+
+  /**
+   * Defines the order of the fields in this record
    *
    * @return a List of Field
    */
@@ -457,7 +454,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   def metaFields() : List[Field[_, BaseRecord]] = fieldList.map(_.metaField)
 
   /**
-   * Obtain the fields for a particlar Record or subclass instance by passing
+   * Obtain the fields for a particular Record or subclass instance by passing
    * the instance itself.
    * (added 14th August 2009, Tim Perrett)
    */
@@ -466,5 +463,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   case class FieldHolder(name: String, method: Method, metaField: Field[_, BaseRecord]) {
     def field(inst: BaseRecord): Field[_, BaseRecord] = method.invoke(inst).asInstanceOf[Field[_, BaseRecord]]
   }
+
+  def dirty_?(inst: BaseRecord): Boolean = !fields(inst).filter(_.dirty_?).isEmpty
 }
 

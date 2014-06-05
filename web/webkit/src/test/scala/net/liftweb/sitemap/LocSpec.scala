@@ -18,13 +18,18 @@ package net.liftweb
 package sitemap
 
 import common._
-import org.specs.Specification
+import mockweb._
+  import MockWeb._
+import mocks._
+
+import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for Loc.
  */
-object LocSpec extends Specification("Loc Specification") {
+object LocSpec extends Specification  {
+  "Loc Specification".title
 
   case class Param(s: String)
 
@@ -38,6 +43,34 @@ object LocSpec extends Specification("Loc Specification") {
     "calculate href for menu with parameters" in {
       val loc = (Menu.param[Param]("Test", "Test", s => Full(Param(s)), p => p.s) / "foo" / "bar" / *).toLoc
       loc.calcHref(Param("myparam")) mustEqual "/foo/bar/myparam"
+    }
+
+    "should not match a Req matching its Link when currentValue is Empty" in {
+      val testMenu = Menu.param[Param]("Test", "Test", s => Empty, p => "bacon") / "foo" / "bar" / *
+      val testSiteMap = SiteMap(testMenu)
+
+      val testLoc = testMenu.toLoc
+      val mockReq = new MockHttpServletRequest("http://test/foo/bar/123")
+
+      testS(mockReq) {
+        testReq(mockReq) { req =>
+          testLoc.doesMatch_?(req) mustEqual false
+        }
+      }
+    }
+
+    "should match a Req matching its Link when currentValue is Empty and MatchWithoutCurrentValue is a param" in {
+      val testMenu = Menu.param[Param]("Test", "Test", s => Empty, p => "bacon") / "foo" / "bar" / * >> Loc.MatchWithoutCurrentValue
+      val testSiteMap = SiteMap(testMenu)
+
+      val testLoc = testMenu.toLoc
+      val mockReq = new MockHttpServletRequest("http://test/foo/bar/123")
+
+      testS(mockReq) {
+        testReq(mockReq) { req =>
+          testLoc.doesMatch_?(req) mustEqual true
+        }
+      }
     }
   }
 }

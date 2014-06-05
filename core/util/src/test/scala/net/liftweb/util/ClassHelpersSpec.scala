@@ -17,7 +17,7 @@
 package net.liftweb
 package util
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import ClassHelpers._
@@ -26,7 +26,8 @@ import ClassHelpers._
 /**
  * Systems under specification for ClassHelpers.
  */
-object ClassHelpersSpec extends Specification("ClassHelpers Specification") {
+object ClassHelpersSpec extends Specification  {
+  "ClassHelpers Specification".title
 
   "The findType function" should {
     "return a Full can with the found class when given the type, the name, and a list of packages to conform to" in {
@@ -125,16 +126,16 @@ object ClassHelpersSpec extends Specification("ClassHelpers Specification") {
 
   "The invokeMethod function" should {
     "return a Failure if the class is null" in {
-      invokeMethod(null, "", "length") must beLike { case Failure(_, _, _) => true }
+      invokeMethod(null, "", "length") must beLike { case Failure(_, _, _) => 1 must_== 1 }
     }
     "return a Failure if the instance is null" in {
-      invokeMethod(classOf[String], null, "length") must beLike { case Failure(_, _, _) => true }
+      invokeMethod(classOf[String], null, "length") must beLike { case Failure(_, _, _) => 1 must_== 1 }
     }
     "return a Failure if the method name is null" in {
-      invokeMethod(classOf[String], "", null) must beLike { case Failure(_, _, _) => true }
+      invokeMethod(classOf[String], "", null) must beLike { case Failure(_, _, _) => 1 must_== 1 }
     }
     "return a Failure if the method doesnt exist on the class" in {
-      invokeMethod(classOf[String], "", "isNotEmpty") must beLike { case Failure(_, _, _) => true }
+      invokeMethod(classOf[String], "", "isNotEmpty") must beLike { case Failure(_, _, _) => 1 must_== 1 }
     }
     "return a Full can with the result if the method exist on the class" in {
       invokeMethod(classOf[String], "", "length") must_== Full(0)
@@ -164,7 +165,7 @@ object ClassHelpersSpec extends Specification("ClassHelpers Specification") {
       instantiate(classOf[String]) must_== Full("")
     }
     "return a failure if a class can not be instantiated with a new instance" in {
-      instantiate(classOf[java.util.Calendar]) must beLike { case Failure(_, _, _) => true }
+      instantiate(classOf[java.util.Calendar]) must beLike { case Failure(_, _, _) => 1 must_== 1 }
     }
   }
 
@@ -172,11 +173,11 @@ object ClassHelpersSpec extends Specification("ClassHelpers Specification") {
     "return Empty if the instance is null" in {
       createInvoker("length", null) must_== Empty
     }
-    "return a Full can with the function from Unit to a can containing the result of the method to invoke" in {
-      createInvoker("length", "").open_!.apply().get must_== 0
+    "return a Full Box with the function from Unit to a Box containing the result of the method to invoke" in {
+      createInvoker("length", "").openOrThrowException("Test").apply() must_== Full(0)
     }
     "The invoker function will throw the cause exception if the method can't be called" in {
-      createInvoker("get", "").open_!.apply must throwA[Exception]
+      (() => createInvoker("get", "").openOrThrowException("Test").apply)() must throwA[Exception]
     }
   }
 

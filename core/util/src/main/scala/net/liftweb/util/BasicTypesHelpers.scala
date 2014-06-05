@@ -22,6 +22,25 @@ import scala.xml._
 import common._
 
 /**
+ * Generics on the JVM have an issues with Type Erasure. Basically, Generic types (e.g.,
+ * Function1[String, Int] and Function1[Double, Bool]) look like the same type to the JVM
+ * so that methods cannot be overloaded with generic types. This "marker" trait is used as
+ * a work-around to the issue.  The marker is implicitly passed as a parameter to some overloaded
+ * methods.  If you see this as an implicit parameter to an overloaded method, just ignore it.
+ */
+trait AvoidTypeErasureIssues1
+
+/**
+ * The companion object that does the implicit vending of AvoidTypeErasureIssues1
+ */
+object AvoidTypeErasureIssues1 {
+  /**
+   * Automagically vend a AvoidTypeErasureIssues1
+   */
+  implicit val vendOne: AvoidTypeErasureIssues1 = new AvoidTypeErasureIssues1 {}
+}
+
+/**
  * This object adds functionality to Scala standard types.
  */
 object BasicTypesHelpers extends BasicTypesHelpers with StringHelpers with ControlHelpers
@@ -30,22 +49,14 @@ object BasicTypesHelpers extends BasicTypesHelpers with StringHelpers with Contr
  * This trait adds functionality to Scala standard types
  */
 trait BasicTypesHelpers { self: StringHelpers with ControlHelpers =>
-
-  /**
-   * Allows an implicit transform from a Boolean to a Boolean2, allowing expressions such as:
-   * <code>(1 == 2) ? "a" | "b"</code> (This expression will return "b")
-   * @param b the predicate to be tested by the ternary operator.
-   */
-  implicit def boolean2(b: => Boolean) = new Boolean2(b)
-
   /**
    * This decorator class adds a ternary operator to a Boolean value
    * @param b the predicate to be tested by the ternary operator.
    */
-  class Boolean2(b: => Boolean) {
+  implicit class Boolean2(b: => Boolean) {
     /**
      * Ternary operator.
-     * @returns a BooleanSome containing the specified value
+     * @return a BooleanSome containing the specified value
      * if the decorated boolean is true, or a BooleanNone otherwise.
      */
     def ? [A](first: => A): BooleanOption[A] = {
@@ -158,18 +169,33 @@ trait BasicTypesHelpers { self: StringHelpers with ControlHelpers =>
   }
 
   /**
-   * Implicit transformation from a Boolean expression to an OptionalCons object so
-   * that an element can be added to a list if the expression is true
+   * Optional cons that implements the expression: <code>expr ?> value ::: List</code>
+   * @param expr the predicate to evaluate
    */
-  implicit def toOptiCons(expr: => Boolean): OptionalCons = new OptionalCons(expr)
+  final implicit class OptionalCons(expr: => Boolean) {
+    /**
+     * Return the specified value in a single-element list if the predicate
+     * evaluates to true.
+     */
+    def ?>[T](f: => T): List[T] = if (expr) List(f) else Nil
+  }
 
   /**
-   * promote a partial function such that we can invoke the guard method
-   * to wrap the guarded partial function with a guard
+   * A helper class that facilitates wrapping of one PartialFunction
+   * around another
    */
-  implicit def pfToGuardable[A](in: PartialFunction[A, _]):
-                         PartialFunctionWrapper[A] =
-                           new PartialFunctionWrapper[A](in)
+  final implicit class PartialFunctionWrapper[A](around: PartialFunction[A, _]) {
+    /**
+     * Allows you to put a guard around a partial function
+     * such that the around's isDefinedAt method must return true
+     * before the other's isDefinedAt method is tested
+     */
+    def guard[B](other: PartialFunction[A, B]): PartialFunction[A,B] =
+      new PartialFunction[A, B] {
+        def isDefinedAt(a: A) = around.isDefinedAt(a) && other.isDefinedAt(a)
+        def apply(a: A): B = other.apply(a)
+      }
+  }
 
   /**
    * Convert any object to an "equivalent" Boolean depending on its value
@@ -181,15 +207,7 @@ trait BasicTypesHelpers { self: StringHelpers with ControlHelpers =>
       case i: Int => i != 0
       case lo: Long => lo != 0
       case n : Number => n.intValue != 0
-      case s : String => {
-        val sl = s.toLowerCase
-        if (sl.length == 0) false
-        else {
-          if (sl.charAt(0) == 't') true
-          else if (sl == "yes") true
-          else toInt(s) != 0
-        }
-      }
+      case s : String =>  asBoolean(s) openOr false
       case None => false
       case Empty | Failure(_, _, _) => false
       case Full(n) => toBoolean(n)
@@ -212,8 +230,8 @@ object AsBoolean {
   def unapply(in: String): Option[Boolean] =
   if (null eq in) None else
   in.toLowerCase match {
-    case "t" | "true" | "yes" | "1" => Full(true)
-    case "f" | "false" | "no" | "0" => Full(false)
+    case "t" | "true"  | "yes" | "1" | "on"  => Full(true)
+    case "f" | "false" | "no"  | "0" | "off" => Full(false)
     case _ => None
   }
 }
@@ -231,12 +249,12 @@ object AsInt {
 }
 
   /**
-   * Safely convert the specified String to an Int.
+   * Safely convert the specified String to a Double.
    */
   def asDouble(in: String): Box[Double] = tryo{in.trim.toDouble}
 
 /**
-* A helpful Int extractor
+* A helpful Double extractor
 */
 object AsDouble {
   def unapply(in: String): Option[Double] = asDouble(in)
@@ -350,35 +368,5 @@ object AsLong {
     }
     a.length == b.length && eq(a, b, 0, a.length)
   }
-}
-
-/**
- * Optional cons that implements the expression: <code>expr ?> value ::: List</code>
- * @param expr the predicate to evaluate
- */
-final class OptionalCons(expr: => Boolean) {
-  /**
-   * Return the specified value in a single-element list if the predicate
-   * evaluates to true.
-   */
-  def ?>[T](f: => T): List[T] = if (expr) List(f) else Nil
-}
-
-/**
- * The helper class that facilitates wrapping of one PartialFunction
- * around another
- */
-final class PartialFunctionWrapper[A](around: PartialFunction[A, _]) {
-  /**
-   * Allows you to put a guard around a partial function
-   * such that the around's isDefinedMethod must return true
-   * before the other's isDefinedAt method is tested
-   */
-  def guard[B](other: PartialFunction[A, B]): PartialFunction[A,B] =
-    new PartialFunction[A, B] {
-      def isDefinedAt(a: A) = around.isDefinedAt(a) && other.isDefinedAt(a)
-      def apply(a: A): B = other.apply(a)
-    }
-
 }
 

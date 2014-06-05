@@ -98,7 +98,7 @@ object DefaultRoutines {
     val loc = S.locale
     val cb =
       for {
-        req <- S.request
+        req <- S.originalRequest
         path = req.path.partPath.dropRight(1) :::
         req.path.partPath.takeRight(1).map(s => "_resources_"+s)
         bundle <- resBundleFor(loc, path)

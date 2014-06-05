@@ -85,29 +85,6 @@ object Templates {
     findRawTemplate(places, locale).map(checkForContentId)
 
   /**
-   * Given a list of paths (e.g. List("foo", "index")),
-   * find the template.
-   * @param places - the path to look in
-   *
-   * @return the template if it can be found
-   */
-  @deprecated("use apply")
-  def findAnyTemplate(places: List[String]): Box[NodeSeq] =
-    findRawTemplate(places, S.locale)
-
-  /**
-   * Given a list of paths (e.g. List("foo", "index")),
-   * find the template.
-   * @param places - the path to look in
-   * @param locale - the locale of the template to search for
-   *
-   * @return the template if it can be found
-   */
-  @deprecated("use apply")
-  def findAnyTemplate(places: List[String], locale: Locale): Box[NodeSeq] = findRawTemplate(places, locale)
-
-
-  /**
    * Check to see if the template is marked designer friendly
    * and lop off the stuff before the first surround
    */
@@ -131,6 +108,7 @@ object Templates {
       case e: Elem if e.label == "html" =>
         e.child.flatMap {
           case e: Elem if e.label == "body" => {
+            e.attribute("data-lift-content-id").headOption.map(_.text) orElse
             e.attribute("class").flatMap {
               ns => {
                 val clz = ns.text.charSplit(' ')
@@ -152,6 +130,11 @@ object Templates {
     }.headOption getOrElse in
   }
 
+  private def parseMarkdown(is: InputStream): Box[NodeSeq] =
+  for {
+    bytes <- Helpers.tryo(Helpers.readWholeStream(is))
+    elems <- MarkdownParser.parse(new String(bytes, "UTF-8"))
+  } yield elems
 
   /**
    * Given a list of paths (e.g. List("foo", "index")),
@@ -170,13 +153,20 @@ object Templates {
      yield better performance.  Please don't change this method without chatting with
      me first.  Thanks!  DPP
      */
+
+     val resolver = LiftRules.externalTemplateResolver.vend()
+    val key = (locale, places)
+
+     if (resolver.isDefinedAt(key)) {
+      resolver(key)
+      } else {
     val lrCache = LiftRules.templateCache
-    val cache = if (lrCache.isDefined) lrCache.open_! else NoCache
+    val cache = if (lrCache.isDefined) lrCache.openOrThrowException("passes isDefined") else NoCache
 
     val parserFunction: InputStream => Box[NodeSeq] = 
       S.htmlProperties.htmlParser
 
-    val key = (locale, places)
+
     val tr = cache.get(key)
 
     if (tr.isDefined) tr
@@ -206,7 +196,9 @@ object Templates {
                 val name = pls + p + (if (s.length > 0) "." + s else "")
                 import scala.xml.dtd.ValidationException
                 val xmlb = try {
-                  LiftRules.doWithResource(name) { parserFunction } match {
+                  LiftRules.doWithResource(name) {
+                    if (s == "md") {parseMarkdown} else
+                    parserFunction } match {
                     case Full(seq) => seq
                     case _ => Empty
                   }
@@ -223,7 +215,7 @@ object Templates {
                 }
                 if (xmlb.isDefined) {
                   found = true
-                  ret = (cache(key) = xmlb.open_!)
+                  ret = (cache(key) = xmlb.openOrThrowException("passes isDefined"))
                 } else if (xmlb.isInstanceOf[Failure] && 
                            (Props.devMode | Props.testMode)) {
                   val msg = xmlb.asInstanceOf[Failure].msg
@@ -246,6 +238,7 @@ object Templates {
         }
       }
   }
+}
 
   private def lookForClasses(places: List[String]): Box[NodeSeq] = {
     val (controller, action) = places match {
@@ -342,6 +335,12 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
 }
 
 
+  // FIXME Needed to due to https://issues.scala-lang.org/browse/SI-6541,
+  // which causes existential types to be inferred for the generated
+  // unapply of a case class with a wildcard parameterized type.
+  // Ostensibly should be fixed in 2.12, which means we're a ways away
+  // from being able to remove this, though.
+  import scala.language.existentials
 
   /**
    * Holds a pair of parameters

@@ -17,16 +17,13 @@
 package net.liftweb
 package object mapper {
   type SuperConnection = db.SuperConnection
-  type ConnectionIdentifier = db.ConnectionIdentifier
+  type ConnectionIdentifier = util.ConnectionIdentifier
   type DriverType = db.DriverType
   type ConnectionManager = db.ConnectionManager
   type DBLogEntry = db.DBLogEntry
   type StandardDBVendor = db.StandardDBVendor
 
   def DBLogEntry = db.DBLogEntry
-  def DefaultConnectionIdentifier = db.DefaultConnectionIdentifier
+  def DefaultConnectionIdentifier = util.DefaultConnectionIdentifier
   def DriverType = db.DriverType
-
-  @deprecated("Use util.Safe instead.")
-  def Safe = util.Safe
 }

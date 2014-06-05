@@ -27,7 +27,7 @@ trait JsonFormats {
 
   implicit lazy val _formats: Formats = formats
 
-  lazy val allFormats = DefaultFormats.lossless + new ObjectIdSerializer + new DateSerializer + new PatternSerializer + new UUIDSerializer
+  lazy val allFormats = DefaultFormats.lossless + new ObjectIdSerializer + new DateSerializer + new DateTimeSerializer + new PatternSerializer + new UUIDSerializer
 }
 
 /*
@@ -61,19 +61,15 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   */
   def collectionName: String = fixCollectionName
 
-  // override this to specify a MongoIdentifier for this MongoDocument type
-  def mongoIdentifier: MongoIdentifier = DefaultMongoIdentifier
-
   /*
    * Use the collection associated with this Meta.
    */
-  def useColl[T](f: DBCollection => T) =
-    MongoDB.useCollection(mongoIdentifier, collectionName)(f)
+  def useColl[T](f: DBCollection => T): T
 
   /*
    * Use the db associated with this Meta.
    */
-  def useDb[T](f: DB => T) = MongoDB.use(mongoIdentifier)(f)
+  def useDb[T](f: DB => T): T
 
   /*
   * Count all documents

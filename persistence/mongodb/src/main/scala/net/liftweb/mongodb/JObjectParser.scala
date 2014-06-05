@@ -24,11 +24,24 @@ import java.util.regex.Pattern
 
 import net.liftweb.json._
 import net.liftweb.common.Box
+import net.liftweb.util.SimpleInjector
 
 import com.mongodb.{BasicDBObject, BasicDBList, DBObject}
 import org.bson.types.ObjectId
 
-object JObjectParser {
+object JObjectParser extends SimpleInjector {
+  /**
+    * Set this to override JObjectParser turning strings that are valid
+    * ObjectIds into actual ObjectIds. For example, place the following in Boot.boot:
+    *
+    * <code>JObjectParser.stringProcessor.default.set((s: String) => s)</code>
+    */
+  val stringProcessor = new Inject(() => defaultStringProcessor _) {}
+
+  def defaultStringProcessor(s: String): Object = {
+    if (ObjectId.isValid(s)) new ObjectId(s)
+    else s
+  }
 
   /*
   * Parse a JObject into a DBObject
@@ -111,10 +124,9 @@ object JObjectParser {
       case JInt(n) => renderInteger(n)
       case JDouble(n) => new java.lang.Double(n)
       case JNull => null
-      case JNothing => error("can't render 'nothing'")
+      case JNothing => sys.error("can't render 'nothing'")
       case JString(null) => "null"
-      case JString(s) if (ObjectId.isValid(s)) => new ObjectId(s)
-      case JString(s) => s
+      case JString(s) => stringProcessor.vend(s)
       case _ =>  ""
     }
 

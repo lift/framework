@@ -31,6 +31,9 @@ import Helpers._
 
 
 object Jetty6AsyncProvider extends AsyncProviderMeta {
+  // contSupport below gets inferred as a Class[?0] existential.
+  import scala.language.existentials
+
   private lazy val (hasContinuations_?,
                     contSupport,
                     getContinuation,
@@ -50,7 +53,7 @@ object Jetty6AsyncProvider extends AsyncProviderMeta {
       val isPending = cci.getMethod("isPending")
       (true, (cc), (meth), (getObj), (setObj), (suspend), resume, isPending)
     } catch {
-      case e => (false, null, null, null, null, null, null, null)
+      case e: Exception => (false, null, null, null, null, null, null, null)
     }
   }
 

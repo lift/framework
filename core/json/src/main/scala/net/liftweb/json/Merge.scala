@@ -91,9 +91,7 @@ object Merge {
   }
 
   private[json] trait Mergeable extends MergeDeps { 
-    implicit def j2m[A <: JValue](json: A): MergeSyntax[A] = new MergeSyntax(json)
-
-    class MergeSyntax[A <: JValue](json: A) {
+    implicit class MergeSyntax[A <: JValue](val json: A) {
       /** Return merged JSON.
        * @see net.liftweb.json.Merge#merge
        */

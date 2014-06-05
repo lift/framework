@@ -20,7 +20,7 @@ package ext
 
 import org.joda.time._
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import json.Serialization.{read, write => swrite}
@@ -29,7 +29,8 @@ import json.Serialization.{read, write => swrite}
 /**
  * System under specification for JodaTimeSerializer.
  */
-object JodaTimeSerializerSpec extends Specification("JodaTimeSerializer Specification") {
+object JodaTimeSerializerSpec extends Specification  {
+  "JodaTimeSerializer Specification".title
 
   implicit val formats = Serialization.formats(NoTypeHints) ++ JodaTimeSerializers.all
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,17 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     case f: MandatoryTypedField[_] => f.value
     case x => x
   }
+
+  /*
+   * Use the collection associated with this Meta.
+   */
+  def useColl[T](f: DBCollection => T): T =
+    MongoDB.useCollection(connectionIdentifier, collectionName)(f)
+
+  /*
+   * Use the db associated with this Meta.
+   */
+  def useDb[T](f: DB => T): T = MongoDB.use(connectionIdentifier)(f)
 
   /**
   * Delete the instance from backing store
@@ -236,6 +247,22 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     true
   }
 
+  protected def updateOp(inst: BaseRecord)(f: => Unit): Unit = {
+    foreachCallback(inst, _.beforeUpdate)
+    f
+    foreachCallback(inst, _.afterUpdate)
+    inst.allFields.foreach { _.resetDirty }
+  }
+
+  /**
+    * Save the instance in the appropriate backing store. Uses the WriteConcern set on the MongoClient instance.
+    */
+  def save(inst: BaseRecord): Boolean = saveOp(inst) {
+    useColl { coll =>
+      coll.save(inst.asDBObject)
+    }
+  }
+
   /**
   * Save the instance in the appropriate backing store
   */
@@ -266,14 +293,14 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /*
   * Update records with a JObject query using the given Mongo instance
   */
-  def update(qry: JObject, newbr: BaseRecord, db: DB, opts: UpdateOption*) {
+  def update(qry: JObject, newbr: BaseRecord, db: DB, opts: UpdateOption*): Unit = {
     update(JObjectParser.parse(qry), newbr.asDBObject, db, opts :_*)
   }
 
   /*
   * Update records with a JObject query
   */
-  def update(qry: JObject, newbr: BaseRecord, opts: UpdateOption*) {
+  def update(qry: JObject, newbr: BaseRecord, opts: UpdateOption*): Unit =  {
     useDb ( db =>
       update(qry, newbr, db, opts :_*)
     )
@@ -317,16 +344,18 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   }
 
   /**
-    * Update only the dirty fields
+    * Update only the dirty fields.
+    *
+    * Note: PatternField will always set the dirty flag when set.
     */
-  def update(inst: BaseRecord): Unit = {
+  def update(inst: BaseRecord): Unit = updateOp(inst) {
     val dirtyFields = fields(inst).filter(_.dirty_?)
     if (dirtyFields.length > 0) {
       val (fullFields, otherFields) = dirtyFields
         .map(field => (field.name, fieldDbValue(field)))
         .partition(pair => pair._2.isDefined)
 
-      val fieldsToSet = fullFields.map(pair => (pair._1, pair._2.open_!)) // these are all Full
+      val fieldsToSet = fullFields.map(pair => (pair._1, pair._2.openOrThrowException("these are all Full")))
 
       val fieldsToUnset: List[String] = otherFields.filter(
         pair => pair._2 match {
@@ -357,7 +386,6 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
         }
 
         update(inst, dbo.get)
-        dirtyFields.foreach { _.resetDirty }
       }
     }
   }

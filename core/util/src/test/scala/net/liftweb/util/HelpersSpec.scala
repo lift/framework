@@ -17,7 +17,7 @@
 package net.liftweb
 package util
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 import common._
 
 

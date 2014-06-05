@@ -45,7 +45,7 @@ import JsCmds._
  *   <li>warningClass</li>
  *   <li>noticeClass</li>
  * </ul>
- * 
+ *
  * <pre name="code" class="xml">
  *   &lt;input type="text" value="" name="132746123548765"/&gt;&lt;lift:msg id="user_msg"
  *                                                        errorClass="error_class"
@@ -54,7 +54,7 @@ import JsCmds._
  * </pre>
  *
  * Notices for specific ids are set via the S.error(String,String) or S.error(String,NodeSeq)
- * methods. Global (non-id) notices are rendered via the Msgs snippet. 
+ * methods. Global (non-id) notices are rendered via the Msgs snippet.
  *
  * @see net.liftweb.builtin.snippet.Msgs
  * @see net.liftweb.http.S#error(String,String)
@@ -78,7 +78,7 @@ object Msg extends DispatchSnippet {
         (attr("warningClass") or attr("warningclass")).map(cls => MsgWarningMeta += (id -> cls))
         (attr("noticeClass") or attr("noticeclass")).map(cls => MsgNoticeMeta += (id -> cls))
 
-        renderIdMsgs(id) ++ effects(id)
+        <span id={id}>{renderIdMsgs(id)}</span> ++ effects(id)
       }
       case _ => NodeSeq.Empty
     }
@@ -107,14 +107,12 @@ object Msg extends DispatchSnippet {
     }
 
     // Join multiple messages together with a comma
-    val commafied = msgs match {
+    msgs match {
       case Nil => Text("")
       case spans => spans.reduceLeft {
         (output,span) => output ++ Text(", ") ++ span
       }
     }
-
-    <span>{commafied}</span> % ("id" -> id)
   }
 
   /**
@@ -123,7 +121,7 @@ object Msg extends DispatchSnippet {
    *
    * @see net.liftweb.builtin.snippet.Msgs#effects[T](Box[NoticeType.Value],String,T,Box[JsCmd => T])
    */
-  def effects(id: String): NodeSeq = 
+  def effects(id: String): NodeSeq =
     Msgs.effects(Empty, id, NodeSeq.Empty, Msgs.tailScript)
 }
 

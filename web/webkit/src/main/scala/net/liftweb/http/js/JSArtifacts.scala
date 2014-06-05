@@ -19,8 +19,7 @@ package http
 package js
 
 import net.liftweb.common.{Box, Full, Empty}
-import net.liftweb.http.NoticeType
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.NodeSeq
 import net.liftweb.util.Helpers._
 
 /**
@@ -29,7 +28,7 @@ import net.liftweb.util.Helpers._
 trait JSArtifacts {
 
   /**
-   * Toggles between current JS object and the object denominated by id
+   * Toggles the visibility of the element denomiated by id
    */
   def toggle(id: String): JsExp
 
@@ -39,57 +38,45 @@ trait JSArtifacts {
   def hide(id: String): JsExp
 
   /**
-   * SHows the element denominated by this id
+   * Shows the element denominated by id
    */
   def show(id: String): JsExp
 
   /**
-   * Shows the element denoinated by id and puts the focus on it
+   * Shows the element denominated by id and puts the focus on it
    */
   def showAndFocus(id: String): JsExp
 
   /**
-   * Serializes a form denominated by the id. It returns a query string
+   * Serializes a form denominated by id. It returns a query string
    * containing the fields that are to be submitted
    */
   def serialize(id: String): JsExp
 
   /**
-   * Replaces the content of the node with the provided id with the markup given by content
+   * Replaces the content of the node denominated by id with the markup given by content
    */
   def replace(id: String, content: NodeSeq): JsCmd
 
   /**
-   * Sets the inner HTML of the element denominated by the id
+   * Sets the inner HTML of the element denominated by id
    */
   def setHtml(id: String, content: NodeSeq): JsCmd
 
   /**
-   * Sets the JavScript that willbe executed when document is ready
-   * for processing
+   * Queues the JavaScript in cmd for execution when the document is
+   * ready for processing
    */
   def onLoad(cmd: JsCmd): JsCmd
 
   /**
-   * Fades out the element having the provided id, by waiting
-   * for the given duration and fades out during fadeTime
+   * Fades out the element denominated by id, by waiting
+   * for duration milliseconds and fading out for fadeTime milliseconds
    */
   def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan): JsCmd
 
   /**
-   * Makes an Ajax request using lift's Ajax path and the request
-   * attributes described by data parameter
-   */
-  def ajax(data: AjaxInfo): String
-
-  /**
-   * Makes a Ajax comet request using lift's Comet path and the request
-   * attributes described by data parameter
-   */
-  def comet(data: AjaxInfo): String
-
-  /**
-   * Trabsforms a JSON object intoits string representation
+   * Transforms a JSON object into its string representation
    */
   def jsonStringify(in: JsExp): JsExp
 
@@ -147,7 +134,7 @@ object AjaxInfo {
 }
 
 /**
- * Represents the meta data of an AJax request.
+ * Represents the meta data of an Ajax request.
  */
 case class AjaxInfo(data: JsExp, action: String, timeout: Long,
                     cache: Boolean, dataType: String,

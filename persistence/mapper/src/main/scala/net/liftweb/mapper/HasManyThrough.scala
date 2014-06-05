@@ -37,7 +37,7 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
     DB.use(owner.connectionIdentifier) { conn =>
       val query = "SELECT DISTINCT "+otherSingleton._dbTableNameLC+".* FROM "+otherSingleton._dbTableNameLC+","+
       through._dbTableNameLC+" WHERE "+
-      otherSingleton._dbTableNameLC+"."+otherSingleton.indexedField(otherSingleton.asInstanceOf[To]).open_!._dbColumnNameLC+" = "+
+      otherSingleton._dbTableNameLC+"."+otherSingleton.indexedField(otherSingleton.asInstanceOf[To]).openOrThrowException("legacy code")._dbColumnNameLC+" = "+
       through._dbTableNameLC+"."+throughToField._dbColumnNameLC+" AND "+
       through._dbTableNameLC+"."+throughFromField._dbColumnNameLC+" = ?"
       DB.prepareStatement(query, conn) { st =>
@@ -67,26 +67,26 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
   }
 
   override def beforeDelete {
-    through.findAll(By(throughFromField, owner.primaryKeyField)).foreach {
+    through.findAll(By(throughFromField, owner.primaryKeyField.get)).foreach {
       toDelete => toDelete.delete_!
     }
   }
 
   override def afterUpdate {
-    val current = through.findAll(By(throughFromField,owner.primaryKeyField))
+    val current = through.findAll(By(throughFromField, owner.primaryKeyField.get))
 
     val newKeys = new HashSet[ThroughType];
 
     theSetList.foreach(i => newKeys += i)
-    val toDelete = current.filter(c => !newKeys.contains(throughToField.actualField(c).is))
+    val toDelete = current.filter(c => !newKeys.contains(throughToField.actualField(c).get))
     toDelete.foreach(_.delete_!)
 
     val oldKeys = new HashSet[ThroughType];
-    current.foreach(i => oldKeys += throughToField.actualField(i))
+    current.foreach(i => oldKeys += throughToField.actualField(i).get)
 
     theSetList.toList.distinct.filter(i => !oldKeys.contains(i)).foreach { i =>
       val toCreate = through.createInstance
-      throughFromField.actualField(toCreate).set(owner.primaryKeyField)
+      throughFromField.actualField(toCreate).set(owner.primaryKeyField.get)
       throughToField.actualField(toCreate).set(i)
       toCreate.save
     }
@@ -99,7 +99,7 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
   override def afterCreate {
     theSetList.toList.distinct.foreach { i =>
       val toCreate = through.createInstance
-      throughFromField.actualField(toCreate)(owner.primaryKeyField)
+      throughFromField.actualField(toCreate)(owner.primaryKeyField.get)
       throughToField.actualField(toCreate)(i)
       toCreate.save
     }

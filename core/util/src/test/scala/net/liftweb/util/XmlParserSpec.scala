@@ -21,13 +21,14 @@ import java.io.ByteArrayInputStream
 
 import xml.{Text, Unparsed}
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for XmlParser, specifically PCDataMarkupParser.
  */
-object XmlParserSpec extends Specification("Xml Parser Specification") {
+object XmlParserSpec extends Specification  {
+  "Xml Parser Specification".title
 
   "Multiple attributes with same name, but different namespace" should {
     "parse correctly" >> {
@@ -42,7 +43,7 @@ object XmlParserSpec extends Specification("Xml Parser Specification") {
       </lift:surround>
 
       val bis = new ByteArrayInputStream(actual.toString.getBytes("UTF-8"))
-      val parsed = PCDataXmlParser(bis).open_!
+      val parsed = PCDataXmlParser(bis).openOrThrowException("Test")
       parsed must ==/(expected)
     }
 

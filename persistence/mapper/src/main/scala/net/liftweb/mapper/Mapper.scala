@@ -17,13 +17,15 @@
 package net.liftweb
 package mapper
 
-import scala.collection.mutable._
 import scala.xml.{Elem, NodeSeq}
 import net.liftweb.http.S
-import S._
 import net.liftweb.http.js._
-import net.liftweb.util.{FieldError, FieldContainer, BaseField}
+import util._
 import net.liftweb.common.{Box, Empty, Full, ParamFailure}
+import collection.mutable.StringBuilder
+import net.liftweb.util
+import common.Full
+import common.Full
 
 trait BaseMapper extends FieldContainer {
   type MapperType <: Mapper[MapperType]
@@ -32,12 +34,10 @@ trait BaseMapper extends FieldContainer {
   def save: Boolean
 }
 
-@serializable
-trait Mapper[A<:Mapper[A]] extends BaseMapper {
+trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo {
   self: A =>
   type MapperType = A
 
-  private val secure_# = Safe.next
   private var was_deleted_? = false
   private var dbConnectionIdentifier: Box[ConnectionIdentifier] = Empty
   private[mapper] var addedPostCommit = false
@@ -45,7 +45,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
 
   def getSingleton : MetaMapper[A];
   final def safe_? : Boolean = {
-    Safe.safe_?(secure_#)
+    util.Safe.safe_?(System.identityHashCode(this))
   }
 
   def dbName:String = getSingleton.dbName
@@ -53,7 +53,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
   implicit def thisToMappee(in: Mapper[A]): A = this.asInstanceOf[A]
 
   def runSafe[T](f : => T) : T = {
-    Safe.runSafe(secure_#)(f)
+    util.Safe.runSafe(System.identityHashCode(this))(f)
   }
 
   def connectionIdentifier(id: ConnectionIdentifier): A = {
@@ -73,7 +73,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
    * @param func - the function to perform after the commit happens
    */
   def doPostCommit(func: () => Unit): A = {
-    DB.appendPostFunc(connectionIdentifier, func)
+    DB.appendPostTransaction(connectionIdentifier, dontUse => func())
     this
   }
 
@@ -125,6 +125,24 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
    * Convert the model to a JavaScript object
    */
   def asJs: JsExp = getSingleton.asJs(this)
+
+
+  /**
+   * Given a name, look up the field
+   * @param name the name of the field
+   * @return the metadata
+   */
+  def findSourceField(name: String): Box[SourceFieldInfo] =
+  for {
+    mf <- getSingleton.fieldNamesAsMap.get(name.toLowerCase)
+    f <- fieldByName[mf.ST](name)
+  } yield SourceFieldInfoRep[mf.ST](f.get.asInstanceOf[mf.ST], mf).asInstanceOf[SourceFieldInfo]
+
+  /**
+   * Get a list of all the fields
+   * @return a list of all the fields
+   */
+  def allFieldNames(): Seq[(String, SourceFieldMetadata)] = getSingleton.doAllFieldNames
 
   /**
    * Delete the model from the RDBMS
@@ -268,22 +286,30 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper {
 
   type FieldPF = PartialFunction[String, NodeSeq => NodeSeq]
 
-  def fieldMapperPF(transform: (BaseOwnedMappedField[A] => NodeSeq)): FieldPF = {
-    getSingleton.fieldMapperPF(transform, this)
+  /**
+   * Given a function that takes a mapper field and returns a NodeSeq
+   * for the field, return, for this mapper instance, a set of CSS
+   * selector transforms that will transform a form for those fields
+   * into a fully-bound form that will interact with this instance.
+   */
+  def fieldMapperTransforms(fieldTransform: (BaseOwnedMappedField[A] => NodeSeq)): scala.collection.Seq[CssSel] = {
+    getSingleton.fieldMapperTransforms(fieldTransform, this)
+  }
+  
+  private var fieldTransforms_i: scala.collection.Seq[CssSel] = Vector()
+
+  /**
+   * A list of CSS selector transforms that will help render the fields
+   * of this mapper object.
+   */
+  def fieldTransforms = fieldTransforms_i
+
+  def appendFieldTransform(transform: CssSel) {
+    fieldTransforms_i = fieldTransforms_i :+ transform
   }
 
-  private var fieldPF_i: FieldPF = Map.empty
-
-  def fieldPF = fieldPF_i
-
-  def appendField(pf: FieldPF) {
-    fieldPF_i = fieldPF_i orElse pf
-    fieldPF_i
-  }
-
-  def prependField(pf: FieldPF) {
-    fieldPF_i = pf orElse fieldPF_i
-    fieldPF_i
+  def prependFieldTransform(transform: CssSel) {
+    fieldTransforms_i = transform +: fieldTransforms_i
   }
 
   /**
@@ -317,7 +343,7 @@ trait BaseLongKeyedMapper extends BaseKeyedMapper {
 
 trait IdPK /* extends BaseLongKeyedMapper */ {
   self: BaseLongKeyedMapper =>
-  def primaryKeyField = id
+  def primaryKeyField: MappedLongIndex[MapperType] = id
   object id extends MappedLongIndex[MapperType](this.asInstanceOf[MapperType])
 }
 
@@ -403,19 +429,20 @@ trait KeyedMapper[KeyType, OwnerType<:KeyedMapper[KeyType, OwnerType]] extends M
   def primaryKeyField: MappedField[KeyType, OwnerType] with IndexedField[KeyType]
   def getSingleton: KeyedMetaMapper[KeyType, OwnerType];
 
-  override def comparePrimaryKeys(other: OwnerType) = primaryKeyField.is == other.primaryKeyField.is
+  override def comparePrimaryKeys(other: OwnerType) = primaryKeyField.get == other.primaryKeyField.get
 
-  def reload: OwnerType = getSingleton.find(By(primaryKeyField, primaryKeyField)) openOr this
+  def reload: OwnerType = getSingleton.find(By(primaryKeyField, primaryKeyField.get)) openOr this
 
   def asSafeJs(f: KeyObfuscator): JsExp = getSingleton.asSafeJs(this, f)
 
-  override def hashCode(): Int = primaryKeyField.is.hashCode
+  override def hashCode(): Int = primaryKeyField.get.hashCode
 
   override def equals(other: Any): Boolean = {
     other match {
       case null => false
-      case km: KeyedMapper[Nothing, Nothing] if this.getClass.isAssignableFrom(km.getClass) ||
-        km.getClass.isAssignableFrom(this.getClass) => this.primaryKeyField == km.primaryKeyField
+      case km: KeyedMapper[_, _] if this.getClass.isAssignableFrom(km.getClass) ||
+                                    km.getClass.isAssignableFrom(this.getClass) =>
+        this.primaryKeyField == km.primaryKeyField
       case k => super.equals(k)
     }
   }

@@ -18,12 +18,12 @@ package net.liftweb
 package http
 
 import net.liftweb.common._
-import scala.xml.{Node, Group, NodeSeq}
+import scala.xml.Node
 import net.liftweb.util._
 import net.liftweb.http.provider._
 import js._
 import net.liftweb.util.Helpers._
-import net.liftweb.json.{JsonAST, Printer}
+import net.liftweb.json.JsonAST
 import java.io.{OutputStream, OutputStreamWriter, Writer, ByteArrayOutputStream}
 
 /**
@@ -34,7 +34,7 @@ case class OkResponse() extends LiftResponse with HeaderDefaults {
 }
 
 trait HeaderDefaults {
-  val headers: List[(String, String)] = S.getHeaders(Nil)
+  val headers: List[(String, String)] = S.getResponseHeaders(Nil)
   val cookies: List[HTTPCookie] = S.responseCookies
 }
 
@@ -49,12 +49,35 @@ case class CreatedResponse(xml: Node, mime: String, addlHeaders: List[(String, S
 
   def code = 201
 
-  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
+  val headers: List[(String, String)] = S.getResponseHeaders(("Content-Type" -> mime) :: addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
 
   def out = xml
 }
+
+/**
+ * 201 Created Response
+ *
+ * The Json Resource was created. We then return the resource, post-processing, to
+ * the client. Usually used with HTTP PUT.
+ */
+object CreatedResponse {
+
+  lazy val jsonPrinter: scala.text.Document => String =
+    LiftRules.jsonOutputConverter.vend
+
+  def apply(json: JsonAST.JValue, addlHeaders: List[(String, String)]): LiftResponse = {
+    val headers: List[(String, String)] = S.getResponseHeaders( Nil ) ++  addlHeaders
+
+    new JsonResponse(new JsExp {
+      lazy val toJsCmd = jsonPrinter(JsonAST.render(json))
+    }, headers, Nil, 201)
+  }
+
+}
+
+
 
 /**
  * 202 response but without body.
@@ -94,8 +117,10 @@ case class UnauthorizedResponse(realm: String) extends LiftResponse {
   def toResponse = InMemoryResponse(Array(), List("WWW-Authenticate" -> ("Basic realm=\"" + realm + "\"")), Nil, 401)
 }
 
-object Qop extends Enumeration(0, "auth", "auth-int", "auth,auth-int") {
-  val AUTH, AUTH_INT, AUTH_AND_AUTH_INT = Value
+object Qop extends Enumeration {
+  val AUTH = Value("auth")
+  val AUTH_INT = Value("auth-int")
+  val AUTH_AND_AUTH_INT = Value("auth,auth-int")
 }
 
 /**
@@ -237,7 +262,7 @@ case class ServiceUnavailableResponse(retryAfter: Long) extends LiftResponse {
 }
 
 object JavaScriptResponse {
-  def apply(js: JsCmd): LiftResponse = JavaScriptResponse(js, S.getHeaders(Nil), S.responseCookies, 200)
+  def apply(js: JsCmd): LiftResponse = JavaScriptResponse(js, S.getResponseHeaders(Nil), S.responseCookies, 200)
 }
 
 /**
@@ -255,7 +280,7 @@ trait LiftResponse {
 }
 
 object JsonResponse {
-  def headers: List[(String, String)] = S.getHeaders(Nil)
+  def headers: List[(String, String)] = S.getResponseHeaders(Nil)
   def cookies: List[HTTPCookie] = S.responseCookies
 
   def apply(json: JsExp): LiftResponse = 
@@ -353,7 +378,7 @@ object OutputStreamResponse {
 
 /**
  * Use this response to write your data directly to the response pipe. Along with StreamingResponse
- * you have an aternative to send data to the client.
+ * you have an alternative to send data to the client.
  */
 case class OutputStreamResponse(out: (OutputStream) => Unit,  
   size: Long, 
@@ -399,7 +424,7 @@ object RedirectResponse {
 case class RedirectResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
   def toResponse = InMemoryResponse(Array(), List("Location" -> uri,
-    "Content-Type" -> "text/plain"), cookies toList, 302)
+    "Content-Type" -> "text/plain"), cookies.toList, 302)
 }
 
 
@@ -421,7 +446,7 @@ object SeeOtherResponse {
 case class SeeOtherResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
   def toResponse = InMemoryResponse(Array(), List("Location" -> uri,
-    "Content-Type" -> "text/plain"), cookies toList, 303)
+    "Content-Type" -> "text/plain"), cookies.toList, 303)
 }
 
 object DoRedirectResponse {
@@ -476,28 +501,6 @@ object DocType {
 
   val html5 = "<!DOCTYPE html>"
 }
-
-/**
- * Avoid using this in favor of LiftRules.docType
- *
- */
-@deprecated("Avoid using this in favor of LiftRules.docType")
-object ResponseInfo {
-
-   def docType: PartialFunction[Req, Box[String]] = new PartialFunction[Req, Box[String]](){
-     def isDefinedAt(req: Req): Boolean  = true
-
-     def apply(req: Req): Box[String] = LiftRules.docType.vend(req)
-   }
-
-   def docType_=(f: PartialFunction[Req, Box[String]]) = LiftRules.docType.default.set { (req: Req) => 
-     if (f.isDefinedAt(req))
-       f(req)
-     else
-       Full(DocType.xhtmlTransitional)
-   }
-}
-
 
 object PlainTextResponse {
   def apply(text: String): PlainTextResponse = PlainTextResponse(text, Nil, 200)
@@ -674,7 +677,7 @@ case class XmlMimeResponse(xml: Node, mime: String, addlHeaders: List[(String, S
 
   def code = 200
 
-  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
+  val headers: List[(String, String)] = S.getResponseHeaders(("Content-Type" -> mime) :: addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
 
@@ -685,7 +688,7 @@ class XmlResponse(val xml: Node, val code: Int, val mime: String, val cookies: L
                   val addlHeaders: List[(String, String)] = XmlResponse.addlHeaders) extends XmlNodeResponse {
   def docType = Empty
 
-  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> mime) :: addlHeaders)
+  val headers: List[(String, String)] = S.getResponseHeaders(("Content-Type" -> mime) :: addlHeaders)
 
   def out: Node = xml
 }
@@ -758,7 +761,7 @@ case class AtomResponse(xml: Node, addlHeaders: List[(String, String)] = XmlResp
 
   def code = 200
 
-  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> "application/atom+xml; charset=utf-8") :: addlHeaders)
+  val headers: List[(String, String)] = S.getResponseHeaders(("Content-Type" -> "application/atom+xml; charset=utf-8") :: addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil
 
@@ -773,7 +776,7 @@ case class OpenSearchResponse(xml: Node, addlHeaders: List[(String, String)] = X
 
   def code = 200
 
-  def headers: List[(String, String)] = S.getHeaders(("Content-Type" -> "application/opensearchdescription+xml; charset=utf-8") ::
+  val headers: List[(String, String)] = S.getResponseHeaders(("Content-Type" -> "application/opensearchdescription+xml; charset=utf-8") ::
   addlHeaders)
 
   def cookies: List[HTTPCookie] = Nil

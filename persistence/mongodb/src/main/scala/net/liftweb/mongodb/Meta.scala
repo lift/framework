@@ -18,11 +18,17 @@ package net.liftweb
 package mongodb
 
 import json._
+import util.JodaHelpers
 
 import java.util.{Calendar, Date, GregorianCalendar, UUID}
 import java.util.regex.Pattern
 
 import org.bson.types.ObjectId
+import org.joda.time._
+
+import com.mongodb._
+
+import JsonDSL._
 
 private[mongodb] object Meta {
 
@@ -31,7 +37,6 @@ private[mongodb] object Meta {
   */
   object Reflection {
     import java.lang.reflect._
-    import com.mongodb.{BasicDBObject, DBRef}
 
     /*
     * These don't require a conversion and can be put directly into a DBObject
@@ -41,7 +46,7 @@ private[mongodb] object Meta {
                                   classOf[Short], classOf[java.lang.Integer], classOf[java.lang.Long],
                                   classOf[java.lang.Double], classOf[java.lang.Float],
                                   classOf[java.lang.Byte], classOf[java.lang.Boolean],
-                                  classOf[java.lang.Short])
+                                  classOf[java.lang.Short], classOf[scala.Array[Byte]])
 
     def primitive_?(clazz: Class[_]) = primitives contains clazz
 
@@ -65,24 +70,26 @@ private[mongodb] object Meta {
       case x: java.lang.Byte => JInt(BigInt(x.asInstanceOf[Byte]))
       case x: java.lang.Boolean => JBool(x.asInstanceOf[Boolean])
       case x: java.lang.Short => JInt(BigInt(x.asInstanceOf[Short]))
-      case _ => error("not a primitive " + a.asInstanceOf[AnyRef].getClass)
+      case _ => sys.error("not a primitive " + a.asInstanceOf[AnyRef].getClass)
     }
 
     /*
     * Date types require formatting
     */
-    val datetypes = Set[Class[_]](classOf[Calendar], classOf[Date], classOf[GregorianCalendar])
+    val datetypes = Set[Class[_]](classOf[Calendar], classOf[Date], classOf[GregorianCalendar], classOf[DateTime])
 
     def datetype_?(clazz: Class[_]) = datetypes contains clazz
 
     def datetype2jvalue(a: Any)(implicit formats: Formats) = a match {
       case x: Calendar => dateAsJValue(x.getTime, formats)
       case x: Date => dateAsJValue(x, formats)
+      case x: DateTime => dateAsJValue(x.toDate, formats)
     }
 
     def datetype2dbovalue(a: Any) = a match {
       case x: Calendar => x.getTime
       case x: Date => x
+      case x: DateTime => x.toDate
     }
 
     /*
@@ -100,15 +107,15 @@ private[mongodb] object Meta {
       case x: ObjectId => objectIdAsJValue(x, formats)
       case x: Pattern => patternAsJValue(x)
       case x: UUID => uuidAsJValue(x)
-      case x: DBRef => error("DBRefs are not supported.")
-      case _ => error("not a mongotype " + a.asInstanceOf[AnyRef].getClass)
+      case x: DBRef => sys.error("DBRefs are not supported.")
+      case _ => sys.error("not a mongotype " + a.asInstanceOf[AnyRef].getClass)
     }
   }
 
-  def dateAsJValue(d: Date, formats: Formats) = JObject(JField("$dt", JString(formats.dateFormat.format(d))) :: Nil)
-  def objectIdAsJValue(oid: ObjectId): JValue = JObject(JField("$oid", JString(oid.toString)) :: Nil)
-  def patternAsJValue(p: Pattern): JValue = JObject(JField("$regex", JString(p.pattern)) :: JField("$flags", JInt(p.flags)) :: Nil)
-  def uuidAsJValue(u: UUID): JValue = JObject(JField("$uuid", JString(u.toString)) :: Nil)
+  def dateAsJValue(d: Date, formats: Formats): JValue = ("$dt" -> formats.dateFormat.format(d))
+  def objectIdAsJValue(oid: ObjectId): JValue = ("$oid" -> oid.toString)
+  def patternAsJValue(p: Pattern): JValue = ("$regex" -> p.pattern) ~ ("$flags" -> p.flags)
+  def uuidAsJValue(u: UUID): JValue = ("$uuid" -> u.toString)
 
   def objectIdAsJValue(oid: ObjectId, formats: Formats): JValue =
     if (isObjectIdSerializerUsed(formats))

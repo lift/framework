@@ -19,7 +19,8 @@ package mapper
 
 import java.util.Locale
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
+import org.specs2.specification.BeforeExample
 
 import common._
 import json._
@@ -33,14 +34,15 @@ import http.provider.HTTPRequest
  * Systems under specification for Mapper. The model classes here are
  * defined in MapperSpecsModel.scala
  */
-object MapperSpec extends Specification("Mapper Specification") {
+class MapperSpec extends Specification with BeforeExample {
+  "Mapper Specification".title
   // Do everything in order.
-  setSequential()
+  sequential
 
   // Make sure we have everything configured first
   MapperSpecsModel.setup()
 
-  def providers = DbProviders.H2MemoryProvider :: Nil
+  def providers: List[DbProviders.Provider] = DbProviders.H2MemoryProvider :: Nil
 
   /*
    private def logDBStuff(log: DBLog, len: Long) {
@@ -56,39 +58,34 @@ object MapperSpec extends Specification("Mapper Specification") {
 
 //  if (!DB.loggingEnabled_? && doLog) DB.addLogFunc(logDBStuff)
 
+  def before = MapperSpecsModel.cleanup()  // before each example
+
   providers.foreach(provider => {
+   try {
+    provider.setupDB
 
     ("Mapper for " + provider.name) should {
 
-      doBefore {
-        (try {
-          provider.setupDB
-          MapperSpecsModel.cleanup()
-        } catch {
-          case e if !provider.required_? => skip("Provider %s not available: %s".format(provider, e))
-        }) must not(throwAnException[Exception]).orSkipExample
-      }
-
       "schemify" in {
-        val elwood = SampleModel.find(By(SampleModel.firstName, "Elwood")).open_!
-        val madeline = SampleModel.find(By(SampleModel.firstName, "Madeline")).open_!
-        val archer = SampleModel.find(By(SampleModel.firstName, "Archer")).open_!
-        val notNull = SampleModel.find(By(SampleModel.firstName, "NotNull")).open_!
+        val elwood = SampleModel.find(By(SampleModel.firstName, "Elwood")).openOrThrowException("Test")
+        val madeline = SampleModel.find(By(SampleModel.firstName, "Madeline")).openOrThrowException("Test")
+        val archer = SampleModel.find(By(SampleModel.firstName, "Archer")).openOrThrowException("Test")
+        val notNull = SampleModel.find(By(SampleModel.firstName, "NotNull")).openOrThrowException("Test")
 
-        elwood.firstName.is must_== "Elwood"
-        madeline.firstName.is must_== "Madeline"
-        archer.firstName.is must_== "Archer"
+        elwood.firstName.get must_== "Elwood"
+        madeline.firstName.get must_== "Madeline"
+        archer.firstName.get must_== "Archer"
 
-        archer.moose.is must_== Empty
-        notNull.moose.is must_== Full(99L)
+        archer.moose.get must_== Empty
+        notNull.moose.get must_== Full(99L)
 
         val disabled = SampleModel.find(By(SampleModel.status, SampleStatus.Disabled))
 
-        val meow = SampleTag.find(By(SampleTag.tag, "Meow")).open_!
+        val meow = SampleTag.find(By(SampleTag.tag, "Meow")).openOrThrowException("Test")
 
-        meow.tag.is must_== "Meow"
+        meow.tag.get must_== "Meow"
 
-        elwood.id.is must be_<(madeline.id.is).eventually
+        elwood.id.get must be_<(madeline.id.get).eventually
       }
 
       "non-snake connection should lower case default table & column names" in {
@@ -102,10 +99,11 @@ object MapperSpec extends Specification("Mapper Specification") {
         SampleModel.firstName.displayName must_== "DEFAULT:SampleModel.firstName"
 
         LiftRules.localeCalculator = (request: Box[HTTPRequest]) => request.flatMap(_.locale)
-          .openOr(new Locale("da", "DK"))
-        SampleModel.firstName.displayName must_== "da_DK:SampleModel.firstName"
+          .openOr(new Locale("xx", "YY"))
+        SampleModel.firstName.displayName must_== "xx_YY:SampleModel.firstName"
 
         LiftRules.localeCalculator = localeCalculator
+        success
       }
 
       "snake connection should snakify default table & column names" in {
@@ -135,17 +133,17 @@ object MapperSpec extends Specification("Mapper Specification") {
       }
 
       "Can JSON decode and write back" in {
-        val m = SampleModel.find(2).open_!
+        val m = SampleModel.find(2).openOrThrowException("Test")
         val json = m.encodeAsJson()
         val rebuilt = SampleModel.buildFromJson(json)
         rebuilt.firstName("yak").save
-        val recalled = SampleModel.find(2).open_!
-        recalled.firstName.is must_== "yak"
+        val recalled = SampleModel.find(2).openOrThrowException("Test")
+        recalled.firstName.get must_== "yak"
       }
 
       "You can put stuff in a Set" in {
-        val m1 = SampleModel.find(1).open_!
-        val m2 = SampleModel.find(1).open_!
+        val m1 = SampleModel.find(1).openOrThrowException("Test")
+        val m2 = SampleModel.find(1).openOrThrowException("Test")
 
         (m1 == m2) must_== true
 
@@ -164,7 +162,7 @@ object MapperSpec extends Specification("Mapper Specification") {
         (oo.length > 0) must beTrue
 
         for (t <- oo)
-          (t.tag.is.indexOf("oo") >= 0) must beTrue
+          (t.tag.get.indexOf("oo") >= 0) must beTrue
 
         for (t <- oo)
           t.model.cached_? must beFalse
@@ -174,9 +172,9 @@ object MapperSpec extends Specification("Mapper Specification") {
         (mm.length > 0) must beTrue
 
         for (t <- mm)
-          (t.tag.is.startsWith("M")) must beTrue
+          (t.tag.get.startsWith("M")) must beTrue
 
-        for (t <- mm) {
+        for (t <- mm) yield {
           t.model.cached_? must beFalse
           t.model.obj
           t.model.cached_? must beTrue
@@ -199,8 +197,8 @@ object MapperSpec extends Specification("Mapper Specification") {
 
       "enforce FK constraint on DefaultConnection" in {
         val supportsFK = DB.use(DefaultConnectionIdentifier) { conn => conn.driverType.supportsForeignKeys_? }
-        if (!supportsFK) skip("Driver %s does not support FK constraints".format(provider))
-        
+        if (!supportsFK) skipped("Driver %s does not support FK constraints".format(provider))
+
         SampleTag.create.model(42).save must throwA[java.sql.SQLException]
       }
 
@@ -212,7 +210,7 @@ object MapperSpec extends Specification("Mapper Specification") {
         val oo = SampleTag.findAll(By(SampleTag.tag, "Meow"), PreCache(SampleTag.model))
 
         (oo.length > 0) must beTrue
-        for (t <- oo) t.model.cached_? must beTrue
+        for (t <- oo) yield t.model.cached_? must beTrue
       }
 
       "Precache works with OrderBy" in {
@@ -227,6 +225,7 @@ object MapperSpec extends Specification("Mapper Specification") {
           (oo.length > 0) must beTrue
           for (t <- oo) t.model.cached_? must beTrue
         }
+        success
       }
 
       "Non-deterministic Precache works" in {
@@ -234,7 +233,7 @@ object MapperSpec extends Specification("Mapper Specification") {
         val oo = SampleTag.findAll(By(SampleTag.tag, "Meow"), PreCache(SampleTag.model, false))
 
         (oo.length > 0) must beTrue
-        for (t <- oo) t.model.cached_? must beTrue
+        for (t <- oo) yield t.model.cached_? must beTrue
       }
 
       "Non-deterministic Precache works with OrderBy" in {
@@ -242,32 +241,32 @@ object MapperSpec extends Specification("Mapper Specification") {
         val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model, false))
 
         (oo.length > 0) must beTrue
-        for (t <- oo) t.model.cached_? must beTrue
+        for (t <- oo) yield t.model.cached_? must beTrue
       }
 
       "work with Mixed case" in {
-        val elwood = Mixer.find(By(Mixer.name, "Elwood")).open_!
-        val madeline = Mixer.find(By(Mixer.name, "Madeline")).open_!
-        val archer = Mixer.find(By(Mixer.name, "Archer")).open_!
+        val elwood = Mixer.find(By(Mixer.name, "Elwood")).openOrThrowException("Test")
+        val madeline = Mixer.find(By(Mixer.name, "Madeline")).openOrThrowException("Test")
+        val archer = Mixer.find(By(Mixer.name, "Archer")).openOrThrowException("Test")
 
-        elwood.name.is must_== "Elwood"
-        madeline.name.is must_== "Madeline"
-        archer.name.is must_== "Archer"
+        elwood.name.get must_== "Elwood"
+        madeline.name.get must_== "Madeline"
+        archer.name.get must_== "Archer"
 
-        elwood.weight.is must_== 33
-        madeline.weight.is must_== 44
-        archer.weight.is must_== 105
+        elwood.weight.get must_== 33
+        madeline.weight.get must_== 44
+        archer.weight.get must_== 105
       }
 
       "work with Mixed case update and delete" in {
-        val elwood = Mixer.find(By(Mixer.name, "Elwood")).open_!
-        elwood.name.is must_== "Elwood"
+        val elwood = Mixer.find(By(Mixer.name, "Elwood")).openOrThrowException("Test")
+        elwood.name.get must_== "Elwood"
         elwood.name("FruitBar").weight(966).save
 
-        val fb = Mixer.find(By(Mixer.weight, 966)).open_!
+        val fb = Mixer.find(By(Mixer.weight, 966)).openOrThrowException("Test")
 
-        fb.name.is must_== "FruitBar"
-        fb.weight.is must_== 966
+        fb.name.get must_== "FruitBar"
+        fb.weight.get must_== 966
         fb.delete_!
 
         Mixer.find(By(Mixer.weight, 966)).isDefined must_== false
@@ -277,14 +276,14 @@ object MapperSpec extends Specification("Mapper Specification") {
       }
 
       "work with Mixed case update and delete for Dog2" in {
-        val elwood = Dog2.find(By(Dog2.name, "Elwood")).open_!
-        elwood.name.is must_== "Elwood"
+        val elwood = Dog2.find(By(Dog2.name, "Elwood")).openOrThrowException("Test")
+        elwood.name.get must_== "Elwood"
         elwood.name("FruitBar").actualAge(966).save
 
-        val fb = Dog2.find(By(Dog2.actualAge, 966)).open_!
+        val fb = Dog2.find(By(Dog2.actualAge, 966)).openOrThrowException("Test")
 
-        fb.name.is must_== "FruitBar"
-        fb.actualAge.is must_== 966
+        fb.name.get must_== "FruitBar"
+        fb.actualAge.get must_== 966
         fb.delete_!
 
         Dog2.find(By(Dog2.actualAge, 966)).isDefined must_== false
@@ -301,8 +300,8 @@ object MapperSpec extends Specification("Mapper Specification") {
         val i1 = Thing.create.name("frog").saveMe
         val i2 = Thing.create.name("dog").saveMe
 
-        Thing.find(By(Thing.thing_id, i1.thing_id.is)).open_!.name.is must_== "frog"
-        Thing.find(By(Thing.thing_id, i2.thing_id.is)).open_!.name.is must_== "dog"
+        Thing.find(By(Thing.thing_id, i1.thing_id.get)).openOrThrowException("Test").name.get must_== "frog"
+        Thing.find(By(Thing.thing_id, i2.thing_id.get)).openOrThrowException("Test").name.get must_== "dog"
       }
 
 
@@ -316,8 +315,9 @@ object MapperSpec extends Specification("Mapper Specification") {
           val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model))
 
           (oo.length > 0) must beTrue
-          for (t <- oo) t.model.cached_? must beTrue
+          for (t <- oo) yield t.model.cached_? must beTrue
         }
+        success
       }
 
       "Non-deterministic Precache works with Mixed Case" in {
@@ -325,28 +325,28 @@ object MapperSpec extends Specification("Mapper Specification") {
         val oo = SampleTag.findAll(By(SampleTag.tag, "Meow"), PreCache(SampleTag.model, false))
 
         (oo.length > 0) must beTrue
-        for (t <- oo) t.model.cached_? must beTrue
+        for (t <- oo) yield t.model.cached_? must beTrue
       }
 
 
-      "Createdat and updated at work" in {
+      "CreatedAt and UpdatedAt work" in {
         val now = Helpers.now
-        val dog = Dog2.find().open_!
+        val dog = Dog2.find().openOrThrowException("Test")
 
-        val oldUpdate = dog.updatedAt.is
+        val oldUpdate = dog.updatedAt.get
 
-        val d1 = (now.getTime - dog.createdAt.getTime) / 100000L
+        val d1 = (now.getTime - dog.createdAt.get.getTime) / 100000L
         d1 must_== 0L
 
-        val d2 = (now.getTime - dog.updatedAt.getTime) / 100000L
+        val d2 = (now.getTime - dog.updatedAt.get.getTime) / 100000L
         d2 must_== 0L
 
         dog.name("ralph").save
 
-        val dog2 = Dog2.find(dog.dog2id.is).open_!
+        val dog2 = Dog2.find(dog.dog2id.get).openOrThrowException("Test")
 
-        dog.createdAt.is.getTime must_== dog2.createdAt.is.getTime
-        oldUpdate.getTime must_!= dog2.updatedAt.is.getTime
+        dog.createdAt.get.getTime must_== dog2.createdAt.get.getTime
+        oldUpdate.getTime must_!= dog2.updatedAt.get.getTime
       }
 
       "Non-deterministic Precache works with OrderBy with Mixed Case" in {
@@ -355,16 +355,16 @@ object MapperSpec extends Specification("Mapper Specification") {
         val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model, false))
 
         (oo.length > 0) must beTrue
-        for (t <- oo) t.model.cached_? must beTrue
+        for (t <- oo) yield t.model.cached_? must beTrue
       }
 
-      "Save flag works" in {
-        val elwood = SampleModel.find(By(SampleModel.firstName, "Elwood")).open_!
-        elwood.firstName.is must_== "Elwood"
+      "Save flag results in update rather than insert" in {
+        val elwood = SampleModel.find(By(SampleModel.firstName, "Elwood")).openOrThrowException("Test")
+        elwood.firstName.get must_== "Elwood"
         elwood.firstName("Frog").save
 
-        val frog = SampleModel.find(By(SampleModel.firstName, "Frog")).open_!
-        frog.firstName.is must_== "Frog"
+        val frog = SampleModel.find(By(SampleModel.firstName, "Frog")).openOrThrowException("Test")
+        frog.firstName.get must_== "Frog"
 
         SampleModel.findAll().length must_== 4
         SampleModel.find(By(SampleModel.firstName, "Elwood")).isEmpty must_== true
@@ -377,6 +377,10 @@ object MapperSpec extends Specification("Mapper Specification") {
         result.length must_== 2
       }
     }
+   } catch {
+     case e if !provider.required_? => skipped("Provider %s not available: %s".format(provider, e))
+     case _: Exception => skipped
+   }
   })
 }
 

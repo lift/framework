@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,12 @@ import util.Helpers._
 import java.util.{Calendar, Date}
 
 import org.bson.types.ObjectId
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import net.liftweb.record.field._
 import xml.{Elem, NodeSeq}
 import util.Helpers
+
 package customserializersspecs {
 
 case class Child(name: String, birthdate: Date) extends JsonObject[Child] {
@@ -44,7 +45,7 @@ object Child extends JsonObjectMeta[Child]
 /*
 * Date as String
 */
-class Person extends MongoRecord[Person] with MongoId[Person] {
+class Person extends MongoRecord[Person] with ObjectIdPk[Person] {
   def meta = Person
 
   object children extends MongoJsonObjectListField(this, Child)
@@ -60,7 +61,7 @@ object Person extends Person with MongoMetaRecord[Person]
 /*
 * Date as Date
 */
-class Person2 extends MongoRecord[Person2] with MongoId[Person2] {
+class Person2 extends MongoRecord[Person2] with ObjectIdPk[Person2] {
   def meta = Person2
 
   object children extends MongoJsonObjectListField(this, Child)
@@ -75,7 +76,7 @@ object Person2 extends Person2 with MongoMetaRecord[Person2] {
   override def formats = allFormats
 }
 
-class Player extends MongoRecord[Player] with MongoId[Player] {
+class Player extends MongoRecord[Player] with ObjectIdPk[Player] {
   def meta = Player
 
   object name extends StringField(this, 256)
@@ -93,7 +94,7 @@ case class Team(id: String, name: String, qb: String) extends JsonObject[Team] {
 
 object Team extends JsonObjectMeta[Team]
 
-class League extends MongoRecord[League] with MongoId[League] {
+class League extends MongoRecord[League] with ObjectIdPk[League] {
   def meta = League
 
   object teams extends MongoJsonObjectListField(this, Team)
@@ -115,7 +116,7 @@ case class Team2(id: ObjectId, name: String, qb: ObjectId) extends JsonObject[Te
 
 object Team2 extends JsonObjectMeta[Team2]
 
-class League2 extends MongoRecord[League2] with MongoId[League2] {
+class League2 extends MongoRecord[League2] with ObjectIdPk[League2] {
   def meta = League2
 
   object teams extends MongoJsonObjectListField(this, Team2)
@@ -135,7 +136,7 @@ object WeekDay extends Enumeration {
   val Mon, Tue, Wed, Thu, Fri, Sat, Sun = Value
 }
 
-class EnumRec extends MongoRecord[EnumRec] with MongoId[EnumRec] {
+class EnumRec extends MongoRecord[EnumRec] with ObjectIdPk[EnumRec] {
   def meta = EnumRec
 
   object dow extends EnumField(this, WeekDay)
@@ -152,7 +153,8 @@ object EnumRec extends EnumRec with MongoMetaRecord[EnumRec] {
 /**
  * Systems under specification for CustomSerializers.
  */
-object CustomSerializersSpec extends Specification("CustomSerializers Specification") with MongoTestKit {
+object CustomSerializersSpec extends Specification  with MongoTestKit {
+  "CustomSerializers Specification".title
 
   import customserializersspecs._
 
@@ -172,11 +174,11 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
       val mother = Person.createRecord
       mother.children(List(jack, jill))
       mother.firstBorn(jack)
-      mother.save
+      mother.save()
 
       // retrieve it and compare
-      val mother2 = Person.find(mother.id)
-      mother2 must notBeEmpty
+      val mother2 = Person.find(mother.id.get)
+      mother2.isDefined must_== true
       mother2 foreach {
         m =>
           m.children.value mustEqual mother.children.value
@@ -227,11 +229,11 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
       val mother = Person2.createRecord
       mother.children(List(jack, jill))
       mother.firstBorn(jack)
-      mother.save
+      mother.save()
 
       // retrieve it and compare
-      val mother2 = Person2.find(mother.id)
-      mother2 must notBeEmpty
+      val mother2 = Person2.find(mother.id.get)
+      mother2.isDefined must_== true
       mother2 foreach {
         m =>
           m.children.value mustEqual mother.children.value
@@ -274,8 +276,8 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
       checkMongoIsRunning
 
       // test data
-      val rmoss = Player.createRecord.name("Randy Moss").save
-      val bfavre = Player.createRecord.name("Brett Favre").save
+      val rmoss = Player.createRecord.name("Randy Moss").save()
+      val bfavre = Player.createRecord.name("Brett Favre").save()
       val vikes = Team(ObjectId.get.toString, "Vikings", bfavre.id.toString)
       val jets = Team(ObjectId.get.toString, "Jets", "")
       val saints = Team(ObjectId.get.toString, "Saints", "")
@@ -284,11 +286,11 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
       val nfl = League.createRecord
       nfl.teams(List(vikes, jets, saints))
       nfl.champion(saints)
-      nfl.save
+      nfl.save()
 
       // retrieve it and compare
-      val nfl2 = League.find(nfl.id)
-      nfl2 must notBeEmpty
+      val nfl2 = League.find(nfl.id.get)
+      nfl2.isDefined must_== true
       nfl2 foreach {
         l =>
           l.teams.value mustEqual nfl.teams.value
@@ -297,20 +299,20 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
 
       // find a player
       val vqb = Player.find(vikes.qb)
-      vqb must notBeEmpty
+      vqb.isDefined must_== true
       vqb foreach {
         p =>
           p.name.value mustEqual "Brett Favre"
       }
 
       // check the conversion functions
-      // nfl._id.asJs mustEqual Str(nfl._id.value.toString)
-      nfl._id.asJValue mustEqual JString(nfl._id.value.toString)
+      nfl.id.asJs mustEqual Str(nfl.id.value.toString)
+      nfl.id.asJValue mustEqual JString(nfl.id.value.toString)
       val session = new LiftSession("", randomString(20), Empty)
-      val formPattern = <input name=".*" type="text" tabindex="1" value={nfl._id.value.toString} id="_id_id"></input>
+      val formPattern = <input name=".*" type="text" tabindex="1" value={nfl.id.value.toString} id="_id_id"></input>
       S.initIfUninitted(session) {
-        val form = nfl._id.toForm
-        form must notBeEmpty
+        val form = nfl.id.toForm
+        form.isDefined must_== true
         form foreach {
           fprime =>
             val f = ("* [name]" #> ".*" & "select *" #> (((ns: NodeSeq) => ns.filter {
@@ -324,20 +326,20 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
 
       // check the setFrom* functions
       val nflid = ObjectId.get
-      nfl._id.setFromString(nflid.toString)
-      nfl._id.value mustEqual nflid
+      nfl.id.setFromString(nflid.toString)
+      nfl.id.value mustEqual nflid
 
-      nfl._id.setFromString("garbage")
-      nfl._id.valueBox mustEqual Failure("Invalid ObjectId string: garbage")
+      nfl.id.setFromString("garbage")
+      nfl.id.valueBox mustEqual Failure("Invalid ObjectId string: garbage")
 
-      nfl._id.setFromJValue(JString(nflid.toString))
-      nfl._id.value mustEqual nflid
+      nfl.id.setFromJValue(JString(nflid.toString))
+      nfl.id.value mustEqual nflid
 
-      nfl._id.setFromAny(nflid)
-      nfl._id.value mustEqual nflid
+      nfl.id.setFromAny(nflid)
+      nfl.id.value mustEqual nflid
 
-      nfl._id.setFromAny(nflid.toString)
-      nfl._id.value mustEqual nflid
+      nfl.id.setFromAny(nflid.toString)
+      nfl.id.value mustEqual nflid
 
     }
 
@@ -345,21 +347,21 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
       checkMongoIsRunning
 
       // test data
-      val rmoss = Player.createRecord.name("Randy Moss").save
-      val bfavre = Player.createRecord.name("Brett Favre").save
-      val vikes = Team2(ObjectId.get, "Vikings", bfavre.id)
-      val jets = Team2(ObjectId.get, "Jets", bfavre.id)
-      val saints = Team2(ObjectId.get, "Saints", bfavre.id)
+      val rmoss = Player.createRecord.name("Randy Moss").save()
+      val bfavre = Player.createRecord.name("Brett Favre").save()
+      val vikes = Team2(ObjectId.get, "Vikings", bfavre.id.get)
+      val jets = Team2(ObjectId.get, "Jets", bfavre.id.get)
+      val saints = Team2(ObjectId.get, "Saints", bfavre.id.get)
 
       // create and save a League record
       val nfl = League2.createRecord
       nfl.teams(List(vikes, jets, saints))
       nfl.champion(saints)
-      nfl.save
+      nfl.save()
 
       // retrieve it and compare
       val nfl2 = League2.find(nfl.id.toString)
-      nfl2 must notBeEmpty
+      nfl2.isDefined must_== true
       nfl2 foreach {
         l =>
           l.teams.value mustEqual nfl.teams.value
@@ -368,20 +370,20 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
 
       // find a player
       val vqb = Player.find(vikes.qb)
-      vqb must notBeEmpty
+      vqb.isDefined must_== true
       vqb foreach {
         p =>
           p.name.value mustEqual "Brett Favre"
       }
 
       // check the conversion functions
-      // nfl._id.asJs mustEqual JsObj(("$oid", Str(nfl._id.value.toString)))
-      nfl._id.asJValue mustEqual JObject(List(JField("$oid", JString(nfl._id.value.toString))))
+      nfl.id.asJs.toJsCmd mustEqual """{"$oid":"%s"}""".format(nfl.id.value.toString)
+      nfl.id.asJValue mustEqual JObject(List(JField("$oid", JString(nfl.id.value.toString))))
       val session = new LiftSession("", randomString(20), Empty)
-      val formPattern = <input name=".*" type="text" tabindex="1" value={nfl._id.value.toString} id="_id_id"></input>
+      val formPattern = <input name=".*" type="text" tabindex="1" value={nfl.id.value.toString} id="_id_id"></input>
       S.initIfUninitted(session) {
-        val form = nfl._id.toForm
-        form must notBeEmpty
+        val form = nfl.id.toForm
+        form.isDefined must_== true
         form foreach {
           fprime =>
             val f = ("* [name]" #> ".*" & "select *" #> (((ns: NodeSeq) => ns.filter {
@@ -395,20 +397,20 @@ object CustomSerializersSpec extends Specification("CustomSerializers Specificat
 
       // check the setFrom* functions
       val nflid = ObjectId.get
-      nfl._id.setFromString(nflid.toString)
-      nfl._id.value mustEqual nflid
+      nfl.id.setFromString(nflid.toString)
+      nfl.id.value mustEqual nflid
 
-      nfl._id.setFromString("garbage")
-      nfl._id.valueBox mustEqual Failure("Invalid ObjectId string: garbage")
+      nfl.id.setFromString("garbage")
+      nfl.id.valueBox mustEqual Failure("Invalid ObjectId string: garbage")
 
-      nfl._id.setFromJValue(JObject(List(JField("$oid", JString(nflid.toString)))))
-      nfl._id.value mustEqual nflid
+      nfl.id.setFromJValue(JObject(List(JField("$oid", JString(nflid.toString)))))
+      nfl.id.value mustEqual nflid
 
-      nfl._id.setFromAny(nflid)
-      nfl._id.value mustEqual nflid
+      nfl.id.setFromAny(nflid)
+      nfl.id.value mustEqual nflid
 
-      nfl._id.setFromAny(nflid.toString)
-      nfl._id.value mustEqual nflid
+      nfl.id.setFromAny(nflid.toString)
+      nfl.id.value mustEqual nflid
     }
   }
 }

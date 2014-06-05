@@ -17,13 +17,15 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
-object ExtractionBugs extends Specification("Extraction bugs Specification") {
+object ExtractionBugs extends Specification {
+  "Extraction bugs Specification".title
+
   implicit val formats = DefaultFormats
-  
+
   "ClassCastException (BigInt) regression 2 must pass" in {
-    val opt = OptionOfInt(Some(39))    
+    val opt = OptionOfInt(Some(39))
     Extraction.decompose(opt).extract[OptionOfInt].opt.get mustEqual 39
   }
 
@@ -51,6 +53,13 @@ object ExtractionBugs extends Specification("Extraction bugs Specification") {
   "Extraction should not fail if case class has a companion object" in {
     parse("""{"nums":[10]}""").extract[HasCompanion] mustEqual HasCompanion(List(10))
   }
+
+  "Issue 1169" in {
+    val json = JsonParser.parse("""{"data":[{"one":1, "two":2}]}""")
+    json.extract[Response] mustEqual Response(List(Map("one" -> 1, "two" -> 2)))
+  }
+
+  case class Response(data: List[Map[String, Int]])
 
   case class OptionOfInt(opt: Option[Int])
 

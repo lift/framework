@@ -17,6 +17,13 @@
 package net.liftweb 
 package sitemap 
 
+// FIXME Needed to due to https://issues.scala-lang.org/browse/SI-6541,
+// which causes existential types to be inferred for the generated
+// unapply of a case class with a wildcard parameterized type.
+// Ostensibly should be fixed in 2.12, which means we're a ways away
+// from being able to remove this, though.
+import scala.language.existentials
+
 import scala.annotation._
 import net.liftweb.http._
 import net.liftweb.common._
@@ -168,8 +175,6 @@ object Menu extends MenuSingleton {
      * the well typed currentValue
      */
     lazy val toLoc: Loc[T] = new Loc[T] with ParamExtractor[String, T] {
-      import scala.xml._
-
       def headMatch: Boolean = ParamMenuable.this.headMatch
       
       // the name of the page
@@ -217,7 +222,7 @@ object Menu extends MenuSingleton {
 
   /**
    * An intermediate class that holds the basic stuff that's needed to make a Menu item for SiteMap.
-   * You must include at least one URI path element by calling the / method
+   * You must include at least one URI path element by calling the / method.
    */
   class PreParamsMenu[T<:AnyRef](name: String, linkText: Loc.LinkText[T],
                          parser: List[String] => Box[T],
@@ -335,7 +340,7 @@ object Menu extends MenuSingleton {
 
   /**
    * An intermediate class that holds the basic stuff that's needed to make a Menu item for SiteMap.
-   * You must include at least one URI path element by calling the / method
+   * You must include at least one URI path element by calling the / method.
    */
   class PreMenu(name: String, linkText: Loc.LinkText[Unit]) {
     /**
@@ -554,10 +559,10 @@ sealed trait MenuSingleton {
   def apply(name: String,linkText: Loc.LinkText[Unit]): PreMenu = new PreMenu(name, linkText)
 
   /**
-   * A convenient way to define a Menu items that's got the same name as it does it's localized LinkText.
-   * <pre>Menu.i("Home") / "index"</pre> is short-hand for <pre>Menu("Home", S ? "Home") / "index"</pre>
+   * A convenient way to define a Menu item that has the same name as its localized LinkText.
+   * <pre>Menu.i("Home") / "index"</pre> is short-hand for <pre>Menu("Home", S.loc("Home", Text("Home")) / "index"</pre>
    */
-  def i(nameAndLink: String): PreMenu = Menu.apply(nameAndLink, S ? nameAndLink)
+  def i(nameAndLink: String): PreMenu = Menu.apply(nameAndLink, S.loc(nameAndLink, scala.xml.Text(nameAndLink)))
 
   def param[T<:AnyRef](name: String, linkText: Loc.LinkText[T], parser: String => Box[T],
                encoder: T => String): PreParamMenu[T] =
@@ -621,7 +626,7 @@ case class Menu(loc: Loc[_], private val convertableKids: ConvertableToMenu*) ex
   }
 
   def makeMenuItem(path: List[Loc[_]]): Box[MenuItem] =
-    loc.buildItem(kids.toList.flatMap(_.makeMenuItem(path)) ::: loc.supplimentalKidMenuItems, _lastInPath(path), _inPath(path))
+    loc.buildItem(kids.toList.flatMap(_.makeMenuItem(path)) ::: loc.supplementalKidMenuItems, _lastInPath(path), _inPath(path))
 
   /**
    * Make a menu item only of the current loc is in the given group

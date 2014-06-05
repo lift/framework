@@ -104,7 +104,7 @@ trait Crudify {
   lazy val DeleteItem = calcDeleteItem
 
   /**
-   * What's the prefix for this CRUD.  Typically the table name
+   * What's the prefix for this CRUD.  Typically the table name.
    */
   def calcPrefix: List[String]
 
@@ -140,7 +140,7 @@ trait Crudify {
   def fieldsForDisplay: List[FieldPointerType]
 
   /**
-   * The list of fields to present on a form form editting
+   * The list of fields to present on a form form editing
    */
   def fieldsForEditing: List[FieldPointerType] = fieldsForDisplay
 
@@ -217,7 +217,7 @@ trait Crudify {
         def name = "View "+Prefix
 
         override val snippets: SnippetTest = {
-          case ("crud.view", Full(wp: TheCrudType)) => displayRecord(wp) _
+          case ("crud.view", Full(wp)) => displayRecord(wp.asInstanceOf[TheCrudType]) _
         }
 
         def defaultValue = Empty
@@ -229,7 +229,7 @@ trait Crudify {
          */
         val text = new Loc.LinkText(calcLinkText _)
 
-        def calcLinkText(in: TheCrudType): NodeSeq = Text(S.??("crudify.menu.view.displayName", displayName))
+        def calcLinkText(in: TheCrudType): NodeSeq = Text(S.?("crudify.menu.view.displayName", displayName))
 
         /**
          * Rewrite the request and emit the type-safe parameter
@@ -238,7 +238,7 @@ trait Crudify {
         Full(NamedPF(name) {
             case RewriteRequest(pp , _, _) if hasParamFor(pp, viewPath) =>
               (RewriteResponse(viewPath),
-               findForParam(pp.wholePath.last).open_!)
+               findForParam(pp.wholePath.last).openOrThrowException("legacy code, it was open_!"))
           })
 
         override def calcTemplate = Full(viewTemplate)
@@ -264,7 +264,7 @@ trait Crudify {
           def name = "Edit "+Prefix
 
           override val snippets: SnippetTest = {
-            case ("crud.edit", Full(wp: TheCrudType)) => crudDoForm(wp, S.??("Save"))
+            case ("crud.edit", Full(wp)) => crudDoForm(wp.asInstanceOf[TheCrudType], S.?("Save"))
           }
 
           def defaultValue = Empty
@@ -276,7 +276,7 @@ trait Crudify {
            */
           val text = new Loc.LinkText(calcLinkText _)
 
-          def calcLinkText(in: TheCrudType): NodeSeq = Text(S.??("crudify.menu.edit.displayName", displayName))
+          def calcLinkText(in: TheCrudType): NodeSeq = Text(S.?("crudify.menu.edit.displayName", displayName))
 
           /**
            * Rewrite the request and emit the type-safe parameter
@@ -285,7 +285,7 @@ trait Crudify {
           Full(NamedPF(name) {
               case RewriteRequest(pp , _, _) if hasParamFor(pp, editPath) =>
                 (RewriteResponse(editPath),
-                 findForParam(pp.wholePath.last).open_!)
+                 findForParam(pp.wholePath.last).openOrThrowException("legacy code, it was open_!"))
             })
 
           override def calcTemplate = Full(editTemplate)
@@ -307,7 +307,7 @@ trait Crudify {
   /**
    * The String displayed for menu editing
    */
-  def editMenuName = S.??("Edit")+" "+displayName
+  def editMenuName = S.?("Edit")+" "+displayName
 
   /**
    * This is the template that's used to render the page after the
@@ -320,8 +320,8 @@ trait Crudify {
   def editErrorClass = "edit_error_class"
 
   /**
-   * The core template for editting.  Does not include any
-   * page wrapping
+   * The core template for editing.  Does not include any
+   * page wrapping.
    */
   protected def _editTemplate = {
   <lift:crud.edit form="post">
@@ -345,7 +345,7 @@ trait Crudify {
   </lift:crud.edit>
   }
 
-  def editButton = S.??("Save")
+  def editButton = S.?("Save")
 
   /**
    * Override this method to change how fields are displayed for delete
@@ -394,7 +394,7 @@ trait Crudify {
           def name = "Delete "+Prefix
 
           override val snippets: SnippetTest = {
-            case ("crud.delete", Full(wp: TheCrudType)) => crudyDelete(wp)
+            case ("crud.delete", Full(wp)) => crudyDelete(wp.asInstanceOf[TheCrudType])
           }
 
           def defaultValue = Empty
@@ -406,7 +406,7 @@ trait Crudify {
            */
           val text = new Loc.LinkText(calcLinkText _)
 
-          def calcLinkText(in: TheCrudType): NodeSeq = Text(S.??("crudify.menu.delete.displayName", displayName))
+          def calcLinkText(in: TheCrudType): NodeSeq = Text(S.?("crudify.menu.delete.displayName", displayName))
 
           /**
            * Rewrite the request and emit the type-safe parameter
@@ -415,7 +415,7 @@ trait Crudify {
           Full(NamedPF(name) {
             case RewriteRequest(pp , _, _) if hasParamFor(pp, deletePath) =>
                 (RewriteResponse(deletePath),
-                 findForParam(pp.wholePath.last).open_!)
+                 findForParam(pp.wholePath.last).openOrThrowException("legacy code, it was open_!"))
             })
 
           override def calcTemplate = Full(deleteTemplate)
@@ -440,7 +440,7 @@ trait Crudify {
   def deleteMenuLocParams: List[Loc.LocParam[TheCrudType]] = Nil
 
 
-  def deleteMenuName = S.??("Delete")+" "+displayName
+  def deleteMenuName = S.?("Delete")+" "+displayName
 
   /**
    * This is the template that's used to render the page after the
@@ -453,7 +453,7 @@ trait Crudify {
 
   /**
    * The core template for deleting.  Does not include any
-   * page wrapping
+   * page wrapping.
    */
   def _deleteTemplate =
   <lift:crud.delete form="post">
@@ -476,14 +476,14 @@ trait Crudify {
     </table>
   </lift:crud.delete>
 
-  def deleteButton = S.??("Delete")
+  def deleteButton = S.?("Delete")
 
 
-  def createMenuName = S.??("Create")+" "+displayName
+  def createMenuName = S.?("Create")+" "+displayName
 
   /**
    * This is the template that's used to render the page after the
-   * optional wrapping of the template in the page wrapper
+   * optional wrapping of the template in the page wrapper.
    */
   def createTemplate(): NodeSeq = pageWrapper(_createTemplate)
 
@@ -492,7 +492,7 @@ trait Crudify {
 
   /**
    * The core template for creating.  Does not include any
-   * page wrapping
+   * page wrapping.
    */
   def _createTemplate =
   <lift:crud.create form="post">
@@ -515,9 +515,9 @@ trait Crudify {
     </table>
   </lift:crud.create>
 
-  def createButton = S.??("Create")
+  def createButton = S.?("Create")
 
-  def viewMenuName = S.??("View")+" "+displayName
+  def viewMenuName = S.?("View")+" "+displayName
 
   /**
    * This is the template that's used to render the page after the
@@ -530,7 +530,7 @@ trait Crudify {
 
   /**
    * The core template for viewing.  Does not include any
-   * page wrapping
+   * page wrapping.
    */
   def _viewTemplate =
   <lift:crud.view>
@@ -544,7 +544,7 @@ trait Crudify {
     </table>
   </lift:crud.view>
 
-  def showAllMenuName = S.??("List")+" "+displayName
+  def showAllMenuName = S.?("List", displayName)
 
   /**
    * This is the template that's used to render the page after the
@@ -574,9 +574,9 @@ trait Crudify {
         <crud:row>
           <tr>
             <crud:row_item><td><crud:value/></td></crud:row_item>
-            <td><a crud:view_href="">{S.??("View")}</a></td>
-            <td><a crud:edit_href="">{S.??("Edit")}</a></td>
-            <td><a crud:delete_href="">{S.??("Delete")}</a></td>
+            <td><a crud:view_href="">{S.?("View")}</a></td>
+            <td><a crud:edit_href="">{S.?("Edit")}</a></td>
+            <td><a crud:delete_href="">{S.?("Delete")}</a></td>
           </tr>
         </crud:row>
       </tbody>
@@ -589,8 +589,8 @@ trait Crudify {
     </table>
   </lift:crud.all>
 
-  def nextWord = S.??("Next")
-  def previousWord = S.??("Previous")
+  def nextWord = S.?("Next")
+  def previousWord = S.?("Previous")
 
   lazy val listPath = Prefix ::: List(ListItems)
 
@@ -620,7 +620,7 @@ trait Crudify {
 
   /**
    * Given a range, find the records.  Your implementation of this
-   * method should enforce ordering (e.g., on primary key)
+   * method should enforce ordering (e.g., on primary key).
    */
   def findForList(start: Long, count: Int): List[TheCrudType] 
 
@@ -639,7 +639,7 @@ trait Crudify {
   /**
    * This method defines how many rows are displayed per page.  By
    * default, it's hard coded at 20, but you can make it session specific
-   * or change the default by overriding this method
+   * or change the default by overriding this method.
    */
   protected def rowsPerPage: Int = 20
 
@@ -721,7 +721,7 @@ trait Crudify {
   lazy val locSnippets = new DispatchLocSnippets {
     val dispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
       case "crud.all" => doCrudAll
-      case "crud.create" => crudDoForm(create, S.??("Created"))
+      case "crud.create" => crudDoForm(create, S.?("Created"))
     }
 
   }
@@ -748,14 +748,14 @@ trait Crudify {
   def referer: String = S.referer openOr listPathString
 
   /**
-   * As the field names are being displayed for editting, this method
+   * As the field names are being displayed for editing, this method
    * is called with the XHTML that will be displayed as the field name
-   * an a flag indicating that the field is required (or not).  You
+   * and a flag indicating whether the field is required.  You
    * can wrap the fieldName in a span with a css class indicating that
    * the field is required or otherwise do something to update the field
-   * name indiciating to the user that the field is required.  By default
+   * name indicating to the user that the field is required.  By default
    * the method wraps the fieldName in a span with the class attribute set
-   * to "required_field"
+   * to "required_field".
    */
   def wrapNameInRequired(fieldName: NodeSeq, required: Boolean): NodeSeq = {
     if (required) {

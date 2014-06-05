@@ -20,7 +20,7 @@ import xml.{NodeSeq, Text}
 
 import common.Loggable
 import util.Helpers._
-import S.{?, ??}
+import S.?
 
 
 /**
@@ -154,19 +154,19 @@ trait PaginatorSnippet[T] extends Paginator[T] {
   /**
    * How to display the page's starting record
    */
-  def recordsFrom: String = (first+1 min count) toString
+  def recordsFrom: String = (first+1 min count).toString
   /**
    * How to display the page's ending record
    */
-  def recordsTo: String = ((first+itemsPerPage) min count) toString
+  def recordsTo: String = ((first+itemsPerPage) min count).toString
   /**
    * The status displayed when using &lt;nav:records/&gt; in the template.
    */
   def currentXml: NodeSeq = 
     if(count==0)
-      Text(??("paginator.norecords"))
+      Text(S.?("paginator.norecords"))
     else
-      Text(??("paginator.displayingrecords", 
+      Text(S.?("paginator.displayingrecords",
               Array(recordsFrom, recordsTo, count).map(_.asInstanceOf[AnyRef]) : _*))
 
   /**
@@ -190,7 +190,10 @@ trait PaginatorSnippet[T] extends Paginator[T] {
   /**
    * Returns a URL used to link to a page starting at the given record offset.
    */
-  def pageUrl(offset: Long): String = appendParams(S.uri, List(offsetParam -> offset.toString))
+  def pageUrl(offset: Long): String = {
+    def originalUri = S.originalRequest.map(_.uri).openOr(sys.error("No request"))
+    appendParams(originalUri, List(offsetParam -> offset.toString))
+  }
   /**
    * Returns XML that links to a page starting at the given record offset, if the offset is valid and not the current one.
    * @param ns The link text, if the offset is valid and not the current offset; or, if that is not the case, the static unlinked text to display
@@ -206,7 +209,7 @@ trait PaginatorSnippet[T] extends Paginator[T] {
    */
   def pagesXml(pages: Seq[Int], sep: NodeSeq): NodeSeq =
     pages.toList map {n =>
-      pageXml(n*itemsPerPage, Text(n+1 toString))
+      pageXml(n*itemsPerPage, Text((n+1).toString))
                     } match {
                       case one :: Nil => one
                       case first :: rest => rest.foldLeft(first) {

@@ -21,14 +21,14 @@ import common._
 import xml.NodeSeq
 
 /**
- * Defines the association of this reference with an markup tag ID
+ * Defines the association of this reference with a markup tag ID
  */
 trait FieldIdentifier {
   def uniqueFieldId: Box[String] = Empty
 }
 
 /**
- * Associate a FieldIdentifier with an NodeSeq
+ * Associate a FieldIdentifier with a NodeSeq
  */
 case class FieldError(field: FieldIdentifier, msg: NodeSeq) {
   override def toString = field.uniqueFieldId + " : " + msg
@@ -114,7 +114,7 @@ trait SettableField extends ReadableField with SettableValueHolder {
   def toForm: Box[NodeSeq]
 
  /**
-  * Give the current state of things, should the this field be shown
+  * Given the current state of things, should this field be shown
   */
   def show_? = true
 }
@@ -174,7 +174,7 @@ trait StringValidators {
 
   /**
    * A validation helper.  Make sure the string is at least a particular
-   * length and generate a validation issue if not
+   * length and generate a validation issue if not.
    */
   def valMinLen(len: Int, msg: => String)(value: ValueType): List[FieldError] = 
     valueTypeToBoxString(value) match {
@@ -185,7 +185,7 @@ trait StringValidators {
 
   /**
    * A validation helper.  Make sure the string is no more than a particular
-   * length and generate a validation issue if not
+   * length and generate a validation issue if not.
    */
   def valMaxLen(len: Int, msg: => String)(value: ValueType): List[FieldError] =
     valueTypeToBoxString(value) match {

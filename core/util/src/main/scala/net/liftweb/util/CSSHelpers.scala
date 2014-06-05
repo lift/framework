@@ -17,6 +17,9 @@
 package net.liftweb
 package util
 
+import scala.language.postfixOps
+import scala.language.implicitConversions
+
 import scala.util.parsing.combinator._
 import common._
 import java.io._
@@ -76,9 +79,11 @@ case class CSSParser(prefix: String) extends Parsers  {
             case 'u' if (seqDone == 0) => seqDone = 1;
             case 'r' if (seqDone == 1) => seqDone = 2;
             case 'l' if (seqDone == 2) => seqDone = 3;
+            case ' ' | '\t' | '\n' | '\r' if (seqDone == 3 || seqDone == 4) => seqDone = 4
+            case '(' if (seqDone == 3 || seqDone == 4) => seqDone = 5
             case _ => seqDone = 0
           }
-          seqDone == 3;
+          seqDone == 5;
       }
 
       Success(content toString, rest);
@@ -94,15 +99,16 @@ case class CSSParser(prefix: String) extends Parsers  {
                          c == ';' || c == '.' ||
                          c == '+' || c == '-' ||
                          c == '=' || c == ':' ||
-                         c == ' ' || c == '_').+ ^^ {case l => l.mkString("")}
+                         c == ' ' || c == '_' ||
+                         c == '#').+ ^^ {case l => l.mkString("")}
 
   // the URL might be wrapped in simple quotes
   lazy val seq1 = elem('\'') ~> path <~ elem('\'')
   // the URL might be wrapped in double quotes
   lazy val seq2 = elem('\"') ~> path <~ elem('\"')
   // do the parsing per CSS spec http://www.w3.org/TR/REC-CSS2/syndata.html#uri section 4.3.4
-  lazy val expr = (spaces ~ elem('(') ~ spaces) ~> ( seq1 | seq2 | path ) <~ (spaces <~ elem(')')) ^^ {case s => {
-      "('" + (s.trim.startsWith("/") match {
+  lazy val expr = spaces ~> ( seq1 | seq2 | path ) <~ (spaces <~ elem(')')) ^^ {case s => {
+      "'" + (s.trim.startsWith("/") match {
         case true => prefix + s.trim
         case _ => s.trim
       }) + "')"
@@ -114,9 +120,9 @@ case class CSSParser(prefix: String) extends Parsers  {
   def fixCSS(in: String): Box[String] = phrase(in) match {
     case Success(v, r) => (r atEnd) match {
       case true => Full(v)
-      case _ => Empty // return Empty if the reader is not at end as it implies that parsing ended due to a parser error
+      case _ => common.Failure("Parser did not consume all input.  Parser error?") // return Failure if the reader is not at end as it implies that parsing ended due to a parser error
       }
-    case _ => Empty
+    case x => common.Failure("Parse failed with result %s".format(x))
   }
 
 }

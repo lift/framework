@@ -38,6 +38,8 @@ import net.liftweb.json.JsonAST._
 * make some sense of it.
 */
 object JsonCommand {
+  import scala.language.implicitConversions
+
   implicit def iterableToOption[X](in: Iterable[X]): Option[X] = in.toSeq.headOption
 
   def unapply(in: JValue): Option[(String, Option[String], JValue)] =

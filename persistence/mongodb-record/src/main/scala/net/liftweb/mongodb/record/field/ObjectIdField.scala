@@ -21,6 +21,8 @@ package field
 
 import scala.xml.NodeSeq
 
+import java.util.Date
+
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, JsObj, JsRaw, Str}
 import net.liftweb.http.S
@@ -74,7 +76,7 @@ class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
       <input type="text"
         name={funcName}
         value={valueBox.map(s => s.toString) openOr ""}
-        tabindex={tabIndex toString}/>
+        tabindex={tabIndex.toString}/>
     }
 
   def toForm =
@@ -89,5 +91,7 @@ class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
   }
 
   def asJValue: JValue = valueBox.map(v => Meta.objectIdAsJValue(v, owner.meta.formats)) openOr (JNothing: JValue)
+
+  def createdAt: Date = new Date(this.get.getTime)
 }
 

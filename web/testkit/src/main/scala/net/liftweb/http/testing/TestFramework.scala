@@ -18,6 +18,8 @@ package net.liftweb
 package http
 package testing
 
+import scala.language.implicitConversions
+
 import net.liftweb.util.Helpers._
 import net.liftweb.util._
 import net.liftweb.json._
@@ -566,11 +568,15 @@ object TestHelpers {
     val rp = new REMatcher(body, p)
     val p2 = Pattern.compile("""'([^']*)'\: ([0-9]*)""")
 
-    for (it <- rp.capture;
-         val _ = println("Captured: " + it);
-         val _ = println("Does match: " + p2.matcher(it).find);
-         val q = new REMatcher(it, p2);
-         em <- q.eachFound) yield (em(1), em(2))
+    for {
+      it <- rp.capture;
+      _ = println("Captured: " + it);
+      _ = println("Does match: " + p2.matcher(it).find);
+      q = new REMatcher(it, p2);
+      em <- q.eachFound
+    } yield {
+      (em(1), em(2))
+    }
   }
 
   /**
@@ -844,11 +850,23 @@ abstract class BaseResponse(override val baseUrl: String,
     for {
       b <- body
       nodeSeq <- PCDataXmlParser(new java.io.ByteArrayInputStream(b))
-      xml <- (nodeSeq.toList match {
+      xml <- nodeSeq.toList match {
         case (x: Elem) :: _ => Full(x)
         case _ => Empty
-      })
+      }
     } yield xml
+
+  lazy val html5AsXml: Box[Elem] =
+    for {
+      b <- body
+      nodeSeq <- Html5.parse(new java.io.ByteArrayInputStream(b))
+      xml <- nodeSeq.toList match {
+        case (x: Elem) :: _ => Full(x)
+        case _ => Empty
+      }
+    } yield xml
+
+
 
   /**
    * The content type header of the response

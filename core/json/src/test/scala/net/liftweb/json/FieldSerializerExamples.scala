@@ -17,9 +17,9 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
-object FieldSerializerExamples extends Specification {  
+object FieldSerializerExamples extends Specification {
   import Serialization.{read, write => swrite}
   import FieldSerializer._
 
@@ -33,11 +33,11 @@ object FieldSerializerExamples extends Specification {
   "All fields are serialized by default" in {
     implicit val formats = DefaultFormats + FieldSerializer[WildDog]()
     val ser = swrite(dog)
-    val dog2 = read[WildDog](ser) 
-    dog2.name mustEqual dog.name
-    dog2.color mustEqual dog.color
-    dog2.owner mustEqual dog.owner
-    dog2.size mustEqual dog.size
+    val dog2 = read[WildDog](ser)
+    (dog2.name mustEqual dog.name) and
+      (dog2.color mustEqual dog.color) and
+      (dog2.owner mustEqual dog.owner) and
+      (dog2.size mustEqual dog.size)
   }
 
   "Fields can be ignored and renamed" in {
@@ -49,12 +49,12 @@ object FieldSerializerExamples extends Specification {
     implicit val formats = DefaultFormats + dogSerializer
 
     val ser = swrite(dog)
-    val dog2 = read[WildDog](ser) 
-    dog2.name mustEqual dog.name
-    dog2.color mustEqual dog.color
-    dog2.owner must beNull
-    dog2.size mustEqual dog.size
-    (parse(ser) \ "animalname") mustEqual JString("pluto")
+    val dog2 = read[WildDog](ser)
+    (dog2.name mustEqual dog.name)
+      (dog2.color mustEqual dog.color)
+      (dog2.owner must beNull)
+      (dog2.size mustEqual dog.size)
+      ((parse(ser) \ "animalname") mustEqual JString("pluto"))
   }
 
   "Selects best matching serializer" in {
@@ -64,8 +64,8 @@ object FieldSerializerExamples extends Specification {
     val dog2 = read[WildDog](swrite(dog))
     val cat2 = read[WildCat](swrite(cat))
 
-    dog2.name mustEqual ""
-    cat2.name mustEqual "tommy"
+    (dog2.name mustEqual "") and
+      (cat2.name mustEqual "tommy")
   }
 }
 

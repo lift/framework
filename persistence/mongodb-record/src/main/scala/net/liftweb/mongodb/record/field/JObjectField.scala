@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2012 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,46 +19,58 @@ package mongodb
 package record
 package field
 
-import common.{Box, Empty, Failure, Full}
-import http.js.JE.Str
-import json.JsonAST.{JNothing, JObject, JValue}
-import json.JsonParser
-import net.liftweb.record.{Field, MandatoryTypedField, Record}
+import common._
+import http.js.JE._
+import json._
+import util.Helpers.tryo
+import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
 
 import scala.xml.NodeSeq
 
-@deprecated("Use JsonObjectField instead.")
-class JObjectField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends Field[JObject, OwnerType] with MandatoryTypedField[JObject] {
+import com.mongodb._
 
-  def asJs = Str(toString)
+class JObjectField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
+extends Field[JObject, OwnerType]
+with MandatoryTypedField[JObject]
+with MongoFieldFlavor[JObject] {
 
-  def asJValue = (JNothing: JValue) // not implemented
+  def owner = rec
 
-  def setFromJValue(jvalue: JValue) = Empty // not implemented
+  def asJValue = valueBox openOr (JNothing: JValue)
 
-  def asXHtml = <div></div>
+  def setFromJValue(jvalue: JValue): Box[JObject] = jvalue match {
+    case JNothing|JNull if optional_? => setBox(Empty)
+    case jo: JObject => setBox(Full(jo))
+    case other => setBox(FieldHelpers.expectedA("JObject", other))
+  }
 
   def defaultValue = JObject(List())
 
   def setFromAny(in: Any): Box[JObject] = in match {
-    case jv: JObject => Full(set(jv))
-    case Some(jv: JObject) => Full(set(jv))
-    case Full(jv: JObject) => Full(set(jv))
+    case dbo: DBObject => setBox(setFromDBObject(dbo))
+    case jv: JObject => setBox(Full(jv))
+    case Some(jv: JObject) => setBox(Full(jv))
+    case Full(jv: JObject) => setBox(Full(jv))
     case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny).apply(0)
     case (s: String) :: _ => setFromString(s)
-    case null => Full(set(null))
+    case null => setBox(Full(null))
     case s: String => setFromString(s)
-    case None | Empty | Failure(_, _, _) => Full(set(null))
+    case None | Empty | Failure(_, _, _) => setBox(Full(null))
     case o => setFromString(o.toString)
   }
 
   // assume string is json
   def setFromString(in: String): Box[JObject] = {
     // use lift-json to parse string into a JObject
-    Full(set(JsonParser.parse(in).asInstanceOf[JObject]))
+    setBox(tryo(JsonParser.parse(in).asInstanceOf[JObject]))
   }
 
   def toForm: Box[NodeSeq] = Empty
 
-  def owner = rec
+  def asDBObject: DBObject = valueBox
+    .map { v => JObjectParser.parse(v)(owner.meta.formats) }
+    .openOr(new BasicDBObject)
+
+  def setFromDBObject(obj: DBObject): Box[JObject] =
+    Full(JObjectParser.serialize(obj)(owner.meta.formats).asInstanceOf[JObject])
 }

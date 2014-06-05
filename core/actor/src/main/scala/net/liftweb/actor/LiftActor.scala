@@ -24,7 +24,19 @@ trait ILAExecute {
   def shutdown(): Unit
 }
 
-object LAScheduler extends Loggable {
+/**
+ * The definition of a scheduler
+ */
+trait LAScheduler {
+  /**
+   * Execute some code on another thread
+   *
+   * @param f the function to execute on another thread
+   */
+  def execute(f: () => Unit): Unit
+}
+
+object LAScheduler extends LAScheduler with Loggable {
   @volatile
   var onSameThread = false
 
@@ -36,9 +48,9 @@ object LAScheduler extends Loggable {
   @volatile var maxThreadPoolSize = threadPoolSize * 25
 
   /**
-   * If it's Full, then create a ArrayBlockingQueue
-   * otherwith create a LinkedBlockingQueue.  Default
-   * to Full(200000)
+   * If it's Full, then create an ArrayBlockingQueue,
+   * otherwise create a LinkedBlockingQueue.  Default
+   * to Full(200000).
    */
   @volatile var blockingQueueSize: Box[Int] = Full(200000)
 
@@ -76,6 +88,11 @@ object LAScheduler extends Loggable {
   @volatile
   var exec: ILAExecute = _
 
+  /**
+   * Execute some code on another thread
+   *
+   * @param f the function to execute on another thread
+   */
   def execute(f: () => Unit) {
     synchronized {
       if (exec eq null) {
@@ -181,9 +198,9 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
   }
 
   /**
-   * This method inserts the message at the head of the mailbox
+   * This method inserts the message at the head of the mailbox.
    * It's protected because this functionality may or may not want
-   * to be exposed'
+   * to be exposed.
    */
   protected def insertMsgAtHeadOfQueue_!(msg: T): Unit = {
      val toDo: () => Unit = baseMailbox.synchronized {
@@ -211,20 +228,19 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
     }
   }
 
-/**
- * A list of LoanWrappers that will be executed around the evaluation of mailboxes
- */
-protected def aroundLoans: List[CommonLoanWrapper] = Nil
+  /**
+   * A list of LoanWrappers that will be executed around the evaluation of mailboxes
+   */
+  protected def aroundLoans: List[CommonLoanWrapper] = Nil
 
-/**
- * You can wrap calls around the evaluation of the mailbox.  This allows you to set up
- * the environment
- */
-protected def around[R](f: => R): R = aroundLoans match {
-  case Nil => f
-  case xs => CommonLoanWrapper(xs)(f)
-}
-
+  /**
+   * You can wrap calls around the evaluation of the mailbox.  This allows you to set up
+   * the environment.
+   */
+  protected def around[R](f: => R): R = aroundLoans match {
+    case Nil => f
+    case xs => CommonLoanWrapper(xs)(f)
+  }
   private def proc2(ignoreProcessing: Boolean) {
     var clearProcessing = true
     baseMailbox.synchronized {
@@ -257,27 +273,27 @@ protected def around[R](f: => R): R = aroundLoans match {
 
             while (keepOnDoingHighPriory) {
               val hiPriPfBox = highPriorityReceive
-              if (hiPriPfBox.isDefined) {
-                val hiPriPf = hiPriPfBox.open_!
-                findMailboxItem(baseMailbox.next, mb => testTranslate(hiPriPf.isDefinedAt)(mb.item)) match {
-                  case Full(mb) =>
-                    mb.remove()
-                    try {
-                      execTranslate(hiPriPf)(mb.item)
-                    } catch {
-                      case e: Exception => if (eh.isDefinedAt(e)) eh(e)
-                    }
-                  case _ =>
-                    baseMailbox.synchronized {
-                      if (msgList.isEmpty) {
-                        keepOnDoingHighPriory = false
+              hiPriPfBox.map{
+                hiPriPf =>
+                  findMailboxItem(baseMailbox.next, mb => testTranslate(hiPriPf.isDefinedAt)(mb.item)) match {
+                    case Full(mb) =>
+                      mb.remove()
+                      try {
+                        execTranslate(hiPriPf)(mb.item)
+                      } catch {
+                        case e: Exception => if (eh.isDefinedAt(e)) eh(e)
                       }
-                      else {
-                        putListIntoMB()
+                    case _ =>
+                      baseMailbox.synchronized {
+                        if (msgList.isEmpty) {
+                          keepOnDoingHighPriory = false
+                        }
+                        else {
+                          putListIntoMB()
+                        }
                       }
-                    }
-                } }
-              else {keepOnDoingHighPriory = false}
+                  }
+              }.openOr{keepOnDoingHighPriory = false}
             }
 
             val pf = messageHandler
@@ -304,9 +320,11 @@ protected def around[R](f: => R): R = aroundLoans match {
         }
       }
     } catch {
-      case e =>
-        if (eh.isDefinedAt(e)) eh(e)
-        throw e
+      case exception: Throwable =>
+        if (eh.isDefinedAt(exception))
+          eh(exception)
+
+        throw exception
     } finally {
       if (clearProcessing) {
         baseMailbox.synchronized {
@@ -327,6 +345,51 @@ protected def around[R](f: => R): R = aroundLoans match {
   protected def exceptionHandler: PartialFunction[Throwable, Unit] = {
     case e => ActorLogger.error("Actor threw an exception", e)
   }
+}
+
+/**
+ * A SpecializedLiftActor designed for use in unit testing of other components.
+ *
+ * Messages sent to an actor extending this interface are not processed, but are instead
+ * recorded in a List. The intent is that when you are testing some other component (say, a snippet)
+ * that should send a message to an actor, the test for that snippet should simply test that
+ * the actor received the message, not what the actor does with that message. If an actor
+ * implementing this trait is injected into the component you're testing (in place of the
+ * real actor) you gain the ability to run these kinds of tests.
+**/
+class MockSpecializedLiftActor[T] extends SpecializedLiftActor[T] {
+  private[this] var messagesReceived: List[T] = Nil
+
+  /**
+   * Send a message to the mock actor, which will be recorded and not processed by the
+   * message handler.
+  **/
+  override def !(msg: T): Unit = {
+    messagesReceived.synchronized {
+      messagesReceived ::= msg
+    }
+  }
+
+  // We aren't required to implement a real message handler for the Mock actor
+  // since the message handler never runs.
+  override def messageHandler: PartialFunction[T, Unit] = {
+    case _ =>
+  }
+
+  /**
+   * Test to see if this actor has received a particular message.
+  **/
+  def hasReceivedMessage_?(msg: T): Boolean = messagesReceived.contains(msg)
+
+  /**
+   * Returns the list of messages the mock actor has received.
+  **/
+  def messages: List[T] = messagesReceived
+
+  /**
+   * Return the number of messages this mock actor has received.
+  **/
+  def messageCount: Int = messagesReceived.size
 }
 
 object ActorLogger extends Logger {
@@ -355,7 +418,7 @@ with ForwardableActor[Any, Any] {
   /**
   * Send a message to the Actor and get an LAFuture
   * that will contain the reply (if any) from the message.
-  * This method calls !&lt; and is here for Java compatibility
+  * This method calls !&lt; and is here for Java compatibility.
   */
   def sendAndGetFuture(msg: Any): LAFuture[Any] = this !< msg
 
@@ -451,6 +514,17 @@ with ForwardableActor[Any, Any] {
     }
   }
 }
+
+/**
+ * A MockLiftActor for use in testing other compnents that talk to actors.
+ *
+ * Much like MockSpecializedLiftActor, this class is intended to be injected into other
+ * components, such as snippets, during testing. Whereas these components would normally
+ * talk to a real actor that would process their message, this mock actor simply
+ * records them and exposes methods the unit test can use to investigate what messages
+ * have been received by the actor.
+**/
+class MockLiftActor extends MockSpecializedLiftActor[Any] with LiftActor
 
 import java.lang.reflect._
 

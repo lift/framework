@@ -17,7 +17,7 @@
 package net.liftweb
 package http
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 
@@ -25,7 +25,8 @@ import common._
 /**
  * System under specification for Req.
  */
-object ReqSpec extends Specification("Req Specification") {
+object ReqSpec extends Specification  {
+  "Req Specification".title
 
   private val iPhoneUserAgents = 
     List("Mozilla/5.0 (iPhone Simulator; U; CPU iPhone OS 3_0 like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Version/4.0 Mobile/7A341 Safari/528.16",
@@ -35,22 +36,29 @@ object ReqSpec extends Specification("Req Specification") {
     List("Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B367 Safari/531.21.10",
          "Mozilla/5.0 (iPad; U; CPU OS 4_2_1 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8C148 Safari/6533.18.5")
 
+  private val ieUserAgents =
+    "Mozilla/5.0 (Windows; U; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 2.0.50727)" ::
+    "Mozilla/5.0 (Windows; U; MSIE 7.0; Windows NT 6.0; en-US)" ::
+    "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)" ::
+    "Mozilla/5.0 (Windows; U; MSIE 9.0; WIndows NT 9.0; en-US))" ::
+    "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)" ::
+    "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko" ::
+    Nil
+
   "Req" should {
     "recognize safari 5" in {
       val uac = new UserAgentCalculator {
         def userAgent = Full("Mozilla/5.0 (Windows; U; Windows NT 6.1; zh-HK) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5")
       }
-      
-      uac.safariVersion.open_! must_== 5
+      uac.safariVersion.openOrThrowException("legacy code") must_== 5
     }
 
     "Do the right thing with iPhone" in {
-      iPhoneUserAgents.foreach {
+      iPhoneUserAgents map {
         agent => {
           val uac = new UserAgentCalculator {
             def userAgent = Full(agent)
           }
-
           uac.isIPhone must_== true
           uac.isIPad must_== false
         }
@@ -58,16 +66,27 @@ object ReqSpec extends Specification("Req Specification") {
     }
 
     "Do the right thing with iPad" in {
-      iPadUserAgents.foreach {
+      iPadUserAgents map {
         agent => {
           val uac = new UserAgentCalculator {
             def userAgent = Full(agent)
           }
-
           uac.isIPhone must_== false
           uac.isIPad must_== true
         }
       }
+    }
+
+    "Correctly recognize IE versions 6-11" in {
+      val ieVersions = ieUserAgents.flatMap { ieUserAgent =>
+        val userAgentCalculator = new UserAgentCalculator {
+          def userAgent = Full(ieUserAgent)
+        }
+
+        userAgentCalculator.ieVersion
+      }
+
+      ieVersions must_== List(6, 7, 8, 9, 10, 11)
     }
   }
 }

@@ -11,10 +11,10 @@
 * limitations under the License.
 */
 
-package net.liftweb 
-package mongodb 
-package record 
-package field 
+package net.liftweb
+package mongodb
+package record
+package field
 
 import net.liftweb.record._
 import net.liftweb.record.RecordHelpers.jvalueToJsExp
@@ -31,8 +31,10 @@ import net.liftweb.http.js.JsExp
 
 
 class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerType)( implicit mf: Manifest[CaseType]) extends Field[CaseType, OwnerType] with MandatoryTypedField[CaseType] with MongoFieldFlavor[CaseType] {
-  
-  implicit val formats = net.liftweb.json.DefaultFormats
+
+  // override this for custom formats
+  def formats: Formats = DefaultFormats
+  implicit lazy val _formats = formats
 
   override type MyType = CaseType
 
@@ -60,15 +62,15 @@ class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerTyp
     val jvalue = JObjectParser.serialize(dbo)
     setFromJValue(jvalue)
   }
-  
+
   override def setFromString(in: String): Box[CaseType] = {
     Helpers.tryo{ JsonParser.parse(in).extract[CaseType] }
   }
 
   def setFromAny(in: Any): Box[CaseType] = in match {
     case dbo: DBObject => setFromDBObject(dbo)
-    case c if mf.erasure.isInstance(c) => setBox(Full(c.asInstanceOf[CaseType]))
-    case Full(c) if mf.erasure.isInstance(c) => setBox(Full(c.asInstanceOf[CaseType]))
+    case c if mf.runtimeClass.isInstance(c) => setBox(Full(c.asInstanceOf[CaseType]))
+    case Full(c) if mf.runtimeClass.isInstance(c) => setBox(Full(c.asInstanceOf[CaseType]))
     case null|None|Empty     => setBox(defaultValueBox)
     case (failure: Failure)  => setBox(failure)
     case _ => setBox(defaultValueBox)
@@ -76,22 +78,24 @@ class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerTyp
 }
 
 class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerType)( implicit mf: Manifest[CaseType]) extends Field[List[CaseType], OwnerType] with MandatoryTypedField[List[CaseType]] with MongoFieldFlavor[List[CaseType]] {
-  
-  implicit val formats = net.liftweb.json.DefaultFormats
-  
+
+  // override this for custom formats
+  def formats: Formats = DefaultFormats
+  implicit lazy val _formats = formats
+
   override type MyType = List[CaseType]
-  
+
   def owner = rec
 
   def asXHtml = Text(value.toString)
-  
+
   def toForm: Box[NodeSeq] = Empty
 
   override def defaultValue: MyType = Nil
   override def optional_? = true
-  
+
   def asJValue = JArray(value.map(v => Extraction.decompose(v)))
-  
+
   def setFromJValue(jvalue: JValue): Box[MyType] = jvalue match {
     case JArray(contents) => setBox(Full(contents.flatMap(s => Helpers.tryo[CaseType]{ s.extract[CaseType] })))
     case _ => setBox(Empty)
@@ -99,12 +103,12 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
 
   def asDBObject: DBObject = {
     val dbl = new BasicDBList
-    
+
     asJValue match {
-      case JArray(list) => 
+      case JArray(list) =>
         list.foreach(v => dbl.add(JObjectParser.parse(v.asInstanceOf[JObject])))
     }
-    
+
     dbl
   }
 
@@ -115,7 +119,7 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
 
   def setFromAny(in: Any): Box[MyType] = in match {
     case dbo: DBObject => setFromDBObject(dbo)
-    case list@c::xs if mf.erasure.isInstance(c) =>  setBox(Full(list.asInstanceOf[MyType]))
+    case list@c::xs if mf.runtimeClass.isInstance(c) =>  setBox(Full(list.asInstanceOf[MyType]))
     case _ => setBox(Empty)
   }
 

@@ -27,7 +27,7 @@ import net.liftweb.util._
 import net.liftweb.common._
 import net.liftweb.json._
 import net.liftweb.http.js._
-import scala.xml.NodeSeq
+import xml.{Text, NodeSeq}
 
 /**
  * <p>
@@ -91,6 +91,50 @@ abstract class MappedDecimal[T <: Mapper[T]] (val fieldOwner : T, val context : 
     orgData = in
   }
 
+  import scala.reflect.runtime.universe._
+  def manifest: TypeTag[BigDecimal] = typeTag[BigDecimal]
+
+  /**
+   * Get the source field metadata for the field
+   * @return the source field metadata for the field
+   */
+  def sourceInfoMetadata(): SourceFieldMetadata{type ST = BigDecimal} =
+    SourceFieldMetadataRep(name, manifest, new FieldConverter {
+      /**
+       * The type of the field
+       */
+      type T = BigDecimal
+
+      /**
+       * Convert the field to a String
+       * @param v the field value
+       * @return the string representation of the field value
+       */
+      def asString(v: T): String = v.toString()
+
+      /**
+       * Convert the field into NodeSeq, if possible
+       * @param v the field value
+       * @return a NodeSeq if the field can be represented as one
+       */
+      def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(asString(v)))
+
+      /**
+       * Convert the field into a JSON value
+       * @param v the field value
+       * @return the JSON representation of the field
+       */
+      def asJson(v: T): Box[JValue] = Full(JDouble(v.toDouble))
+
+      /**
+       * If the field can represent a sequence of SourceFields,
+       * get that
+       * @param v the field value
+       * @return the field as a sequence of SourceFields
+       */
+      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+    })
+
   protected def i_is_! = data
   protected def i_was_! = orgData
 
@@ -111,8 +155,8 @@ abstract class MappedDecimal[T <: Mapper[T]] (val fieldOwner : T, val context : 
     data
   }
 
-  def asJsExp: JsExp = JE.Num(is)
-  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JDouble(is.doubleValue))
+  def asJsExp: JsExp = JE.Num(get)
+  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JDouble(get.doubleValue))
 
   def setFromAny (in : Any) : BigDecimal =
     in match {

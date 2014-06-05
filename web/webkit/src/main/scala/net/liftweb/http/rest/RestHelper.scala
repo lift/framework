@@ -20,6 +20,7 @@ package rest
 
 
 import net.liftweb._
+import actor.LAFuture
 import json._
 import common._
 import util._
@@ -305,6 +306,20 @@ trait RestHelper extends LiftRules.DispatchPF {
   }
 
   /**
+   * An extractor that tests the request to see if it's an OPTIONS and
+   * if it is, the path and the request are extracted.  It can
+   * be used as:<br/>
+   * <pre>case "api" :: id :: _ Options req => ...</pre><br/>
+   * or<br/>
+   * <pre>case Options("api" :: id :: _, req) => ...</pre><br/>   *
+   */
+  protected object Options {
+    def unapply(r: Req): Option[(List[String], Req)] =
+      if (r.requestType.options_?) Some(r.path.partPath -> r) else None
+
+  }
+
+  /**
    * A function that chooses JSON or XML based on the request..
    * Use with serveType
    */
@@ -319,7 +334,7 @@ trait RestHelper extends LiftRules.DispatchPF {
    * type (e.g., JSON or XML).<br/><br/>
    * @param selection -- a function that determines the response type
    * based on the Req.
-   * @parama pf -- a PartialFunction that converts the request to a
+   * @param pf -- a PartialFunction that converts the request to a
    * response type (e.g., a case class that contains the response).
    * @param cvt -- a function that converts from the response type
    * to a the appropriate LiftResponse based on the selected response
@@ -336,7 +351,7 @@ trait RestHelper extends LiftRules.DispatchPF {
         () => {
           pf(r).box match {
             case Full(resp) =>
-              val selType = selection(r).open_! // Full because pass isDefinedAt
+              val selType = selection(r).openOrThrowException("Full because pass isDefinedAt")
               if (cvt.isDefinedAt((selType, resp, r)))
                   Full(cvt((selType, resp, r)))
               else emptyToResp(ParamFailure("Unabled to convert the message", 
@@ -352,7 +367,7 @@ trait RestHelper extends LiftRules.DispatchPF {
   /**
    * Serve a request returning either JSON or XML.
    *
-   * @parama pf -- a Partial Function that converts the request into
+   * @param pf -- a Partial Function that converts the request into
    * an intermediate response.
    * @param cvt -- convert the intermediate response to a LiftResponse
    * based on the request being for XML or JSON.  If T is JsonXmlAble,
@@ -519,6 +534,37 @@ trait RestHelper extends LiftRules.DispatchPF {
    */
   protected implicit def thingToResp[T](in: T)(implicit c: T => LiftResponse):
   () => Box[LiftResponse] = () => Full(c(in))
+
+
+  /**
+   * If we're returning a future, then automatically turn the request into an Async request
+   * @param in the LAFuture of the response type
+   * @param c the implicit conversion from T to LiftResponse
+   * @tparam T the type
+   * @return Nothing
+   */
+  protected implicit def futureToResponse[T](in: LAFuture[T])(implicit c: T => LiftResponse):
+  () => Box[LiftResponse] = () => {
+    RestContinuation.async(reply => {
+      in.foreach(t => reply.apply(c(t)))
+    })
+  }
+
+  /**
+   * If we're returning a future, then automatically turn the request into an Async request
+   * @param in the LAFuture of the response type
+   * @param c the implicit conversion from T to LiftResponse
+   * @tparam T the type
+   * @return Nothing
+   */
+  protected implicit def futureBoxToResponse[T](in: LAFuture[Box[T]])(implicit c: T => LiftResponse):
+  () => Box[LiftResponse] = () => {
+    RestContinuation.async(reply => {
+      in.foreach(t => reply.apply{
+        boxToResp(t).apply() openOr NotFoundResponse()
+      })
+    })
+  }
 
   /**
    * Turn a Box[T] into the return type expected by

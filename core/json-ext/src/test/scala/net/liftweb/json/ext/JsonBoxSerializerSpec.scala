@@ -18,7 +18,7 @@ package net.liftweb
 package json
 package ext
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 import json.Serialization.{read, write => swrite}
@@ -27,7 +27,8 @@ import json.Serialization.{read, write => swrite}
 /**
  * System under specification for JsonBoxSerializer.
  */
-object JsonBoxSerializerSpec extends Specification("JsonBoxSerializer Specification") {
+object JsonBoxSerializerSpec extends Specification  {
+  "JsonBoxSerializer Specification".title
 
   implicit val formats = net.liftweb.json.DefaultFormats + new JsonBoxSerializer
 

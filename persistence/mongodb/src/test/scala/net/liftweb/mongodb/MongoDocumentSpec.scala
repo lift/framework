@@ -18,10 +18,12 @@ package net.liftweb
 package mongodb
 
 import org.bson.types.ObjectId
-import org.specs.Specification
+import org.joda.time._
+import org.specs2.mutable.Specification
+import org.specs2.execute.Result
 
 import common._
-import json.ext.JsonBoxSerializer
+import json.ext._
 
 
 package mongodocumentspecs {
@@ -85,14 +87,29 @@ package mongodocumentspecs {
   object MapTestDoc extends MongoDocumentMeta[MapTestDoc] {
     override def formats = super.formats + new ObjectIdSerializer
   }
+
+  case class DateTimeTestDoc(_id: ObjectId, dt: DateTime) extends MongoDocument[DateTimeTestDoc] {
+    def meta = DateTimeTestDoc
+  }
+  object DateTimeTestDoc extends MongoDocumentMeta[DateTimeTestDoc] {
+    override def formats = super.formats + new ObjectIdSerializer + new DateTimeSerializer
+  }
+
+  case class LocalDateTestDoc(_id: ObjectId, ld: LocalDate) extends MongoDocument[LocalDateTestDoc] {
+    def meta = LocalDateTestDoc
+  }
+  object LocalDateTestDoc extends MongoDocumentMeta[LocalDateTestDoc] {
+    override def formats = super.formats + new ObjectIdSerializer + LocalDateSerializer()
+  }
 }
 
 /**
  * System specification for MongoDocument
  */
-object MongoDocumentSpec extends Specification("MongoDocument Specification") with MongoTestKit {
+class MongoDocumentSpec extends Specification with MongoTestKit {
+  "MongoDocument Specification".title
 
-  def passSaveAndRetrieveTests(obj: MongoDocument[_], meta: MongoDocumentMeta[_]): Unit = {
+  def passSaveAndRetrieveTests(obj: MongoDocument[_], meta: MongoDocumentMeta[_]): Result = {
     obj.save
     val objFromDb = meta.find(obj._id.asInstanceOf[ObjectId])
     objFromDb.isDefined must_== true
@@ -161,6 +178,26 @@ object MongoDocumentSpec extends Specification("MongoDocument Specification") wi
       // empty map
       val mtd2 = MapTestDoc(ObjectId.get, Map[String, String]())
       passSaveAndRetrieveTests(mtd2, MapTestDoc)
+    }
+
+    "handle DateTime properly" in {
+      checkMongoIsRunning
+      import mongodocumentspecs._
+
+      val dt = DateTime.now.plusMinutes(10)
+
+      val dttd = DateTimeTestDoc(ObjectId.get, dt)
+      passSaveAndRetrieveTests(dttd, DateTimeTestDoc)
+    }
+
+    "handle LocalDate properly" in {
+      checkMongoIsRunning
+      import mongodocumentspecs._
+
+      val ld = LocalDate.now
+
+      val dttd = LocalDateTestDoc(ObjectId.get, ld)
+      passSaveAndRetrieveTests(dttd, LocalDateTestDoc)
     }
   }
 }

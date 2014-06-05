@@ -19,8 +19,7 @@ package http
 
 import provider._
 
-@serializable
-abstract class RequestType {
+abstract class RequestType extends Serializable{
   def post_? : Boolean = false
 
   def get_? : Boolean = false
@@ -31,36 +30,36 @@ abstract class RequestType {
 
   def delete_? : Boolean = false
 
+  def options_? : Boolean = false
+
   def method: String
 }
 
-@serializable
 case object GetRequest extends RequestType {
   override def get_? = true
-  def method = "GET"
+  val method = "GET"
 }
-@serializable
 case object PostRequest extends RequestType {
   override def post_? = true
-  def method = "POST"
+  val method = "POST"
 }
-@serializable
 case object HeadRequest extends RequestType {
   override def head_? = true
-  def method = "HEAD"
+  val method = "HEAD"
 }
-@serializable
 case object PutRequest extends RequestType {
   override def put_? = true
-  def method = "PUT"
+  val method = "PUT"
 }
-@serializable
 case object DeleteRequest extends RequestType {
   override def delete_? = true
-  def method = "DELETE"
+  val method = "DELETE"
 }
-@serializable
-case class UnknownRequest(val method: String) extends RequestType
+case object OptionsRequest extends RequestType {
+  override def options_? = true
+  val method = "OPTIONS"
+}
+case class UnknownRequest(method: String) extends RequestType
 
 object RequestType {
   def apply(req: HTTPRequest): RequestType = {
@@ -70,6 +69,7 @@ object RequestType {
       case "HEAD" => HeadRequest
       case "PUT" => PutRequest
       case "DELETE" => DeleteRequest
+      case "OPTIONS" => OptionsRequest
       case meth => UnknownRequest(meth)
     }
   }

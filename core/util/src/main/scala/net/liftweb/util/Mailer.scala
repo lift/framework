@@ -21,29 +21,27 @@ import javax.mail._
 import javax.mail.internet._
 import javax.naming.{Context, InitialContext}
 import java.util.Properties
+
+import scala.language.implicitConversions
+import scala.xml.{Text, Elem, Node, NodeSeq}
+
 import common._
 import actor._
-import xml.{Text, Elem, Node, NodeSeq}
+
+import Mailer._
 
 /**
  * Utilities for sending email.
  */
-object Mailer extends Mailer
+object Mailer extends Mailer {
 
-/**
- * This trait implmenets the mail sending.  You can create subclasses of this class/trait and
- * implement your own mailer functionality
- */
-trait Mailer extends SimpleInjector {
-  private val logger = Logger(classOf[Mailer])
-  
   sealed abstract class MailTypes
   /**
    * Add message headers to outgoing messages
    */
   final case class MessageHeader(name: String, value: String) extends MailTypes
   abstract class MailBodyType extends MailTypes
-  final case class PlusImageHolder(name: String, mimeType: String, bytes: Array[Byte])
+  final case class PlusImageHolder(name: String, mimeType: String, bytes: Array[Byte], attachment: Boolean = false)
 
   /**
    * Represents a text/plain mail body. The given text will
@@ -60,6 +58,7 @@ trait Mailer extends SimpleInjector {
   final case class XHTMLMailBodyType(text: NodeSeq) extends MailBodyType
   final case class XHTMLPlusImages(text: NodeSeq, items: PlusImageHolder*) extends MailBodyType
 
+
   sealed abstract class RoutingType extends MailTypes
   sealed abstract class AddressType extends RoutingType {
     def address: String
@@ -72,9 +71,17 @@ trait Mailer extends SimpleInjector {
   final case class BCC(address: String, name: Box[String] = Empty) extends AddressType
   final case class ReplyTo(address: String, name: Box[String] = Empty) extends AddressType
 
-  implicit def xmlToMailBodyType(html: NodeSeq): MailBodyType = XHTMLMailBodyType(html)
-
   final case class MessageInfo(from: From, subject: Subject, info: List[MailTypes])
+}
+
+/**
+ * This trait implmenets the mail sending.  You can create subclasses of this class/trait and
+ * implement your own mailer functionality
+ */
+trait Mailer extends SimpleInjector {
+  private val logger = Logger(classOf[Mailer])
+
+  implicit def xmlToMailBodyType(html: NodeSeq): MailBodyType = XHTMLMailBodyType(html)
 
   implicit def addressToAddress(in: AddressType): Address = {
     val ret = new InternetAddress(in.address)
@@ -224,7 +231,7 @@ trait Mailer extends SimpleInjector {
       case Full(a) => jndiSession openOr Session.getInstance(buildProps, a)
       case _ => jndiSession openOr Session.getInstance(buildProps)
     }
-
+    val subj = MimeUtility.encodeText(subject.subject, "utf-8", "Q")
     val message = new MimeMessage(session)
     message.setFrom(from)
     message.setRecipients(Message.RecipientType.TO, info.flatMap {case x: To => Some[To](x) case _ => None})
@@ -232,7 +239,7 @@ trait Mailer extends SimpleInjector {
     message.setRecipients(Message.RecipientType.BCC, info.flatMap {case x: BCC => Some[BCC](x) case _ => None})
     // message.setReplyTo(filter[MailTypes, ReplyTo](info, {case x @ ReplyTo(_) => Some(x); case _ => None}))
     message.setReplyTo(info.flatMap {case x: ReplyTo => Some[ReplyTo](x) case _ => None})
-    message.setSubject(subject.subject)
+    message.setSubject(subj)
     info.foreach {
       case MessageHeader(name, value) => message.addHeader(name, value)
       case _ => 
@@ -283,6 +290,7 @@ trait Mailer extends SimpleInjector {
             case PlainMailBodyType(txt) => bp.setText(txt, "UTF-8")
             case PlainPlusBodyType(txt, charset) => bp.setText(txt, charset)
             case XHTMLMailBodyType(html) => bp.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
+
             case XHTMLPlusImages(html, img@_*) =>
               val html_mp = new MimeMultipart("related")
               val bp2 = new MimeBodyPart
@@ -293,7 +301,7 @@ trait Mailer extends SimpleInjector {
                 val rel_bpi = new MimeBodyPart
                 rel_bpi.setFileName(i.name)
                 rel_bpi.setContentID(i.name)
-                rel_bpi.setDisposition("inline")
+                rel_bpi.setDisposition(if (!i.attachment) "inline" else "attachment")
                 rel_bpi.setDataHandler(new javax.activation.DataHandler(new javax.activation.DataSource {
                       def getContentType = i.mimeType
 

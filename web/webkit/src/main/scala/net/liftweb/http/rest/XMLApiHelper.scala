@@ -143,7 +143,7 @@ trait XMLApiHelper {
     (for (req <- S.request) yield req.path.partPath match {
       case _ :: name :: _ => name
       case _ => ""
-    }).map(Text)
+    }).map(Text(_))
 
   /**
    * The method that wraps the outer-most tag around the body. The success,

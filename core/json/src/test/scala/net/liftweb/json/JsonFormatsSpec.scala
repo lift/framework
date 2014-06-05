@@ -17,12 +17,14 @@
 package net.liftweb
 package json
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 /**
  * System under specification for JSON Formats.
  */
-object JsonFormatsSpec extends Specification("JsonFormats Specification") with TypeHintExamples {
+object JsonFormatsSpec extends Specification with TypeHintExamples {
+  "JsonFormats Specification".title
+
   implicit val formats = ShortTypeHintExamples.formats + FullTypeHintExamples.formats.typeHints
 
   val hintsForFish   = ShortTypeHintExamples.formats.typeHints.hintFor(classOf[Fish])
@@ -30,15 +32,15 @@ object JsonFormatsSpec extends Specification("JsonFormats Specification") with T
   val hintsForAnimal = FullTypeHintExamples.formats.typeHints.hintFor(classOf[Animal])
 
   "hintsFor across composite formats" in {
-    formats.typeHints.hintFor(classOf[Fish])   mustEqual (hintsForFish)
-    formats.typeHints.hintFor(classOf[Dog])    mustEqual (hintsForDog)
-    formats.typeHints.hintFor(classOf[Animal]) mustEqual (hintsForAnimal)
+    (formats.typeHints.hintFor(classOf[Fish])   mustEqual (hintsForFish)) and
+    (formats.typeHints.hintFor(classOf[Dog])    mustEqual (hintsForDog))  and
+    (formats.typeHints.hintFor(classOf[Animal]) mustEqual (hintsForAnimal))
   }
 
   "classFor across composite formats" in {
-    formats.typeHints.classFor(hintsForFish)   mustEqual (ShortTypeHintExamples.formats.typeHints.classFor(hintsForFish))
-    formats.typeHints.classFor(hintsForDog)    mustEqual (ShortTypeHintExamples.formats.typeHints.classFor(hintsForDog))
-    formats.typeHints.classFor(hintsForAnimal) mustEqual (FullTypeHintExamples.formats.typeHints.classFor(hintsForAnimal))
+    (formats.typeHints.classFor(hintsForFish)   mustEqual (ShortTypeHintExamples.formats.typeHints.classFor(hintsForFish))) and
+    (formats.typeHints.classFor(hintsForDog)    mustEqual (ShortTypeHintExamples.formats.typeHints.classFor(hintsForDog))) and
+    (formats.typeHints.classFor(hintsForAnimal) mustEqual (FullTypeHintExamples.formats.typeHints.classFor(hintsForAnimal)))
   }
 
   "parameter name reading strategy can be changed" in {

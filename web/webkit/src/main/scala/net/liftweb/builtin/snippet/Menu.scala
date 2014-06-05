@@ -18,6 +18,8 @@ package net.liftweb
 package builtin
 package snippet
 
+import scala.language.existentials
+
 import http.{S, DispatchSnippet, LiftRules}
 import http.js._
 import sitemap._
@@ -141,7 +143,7 @@ object Menu extends DispatchSnippet {
 
             case m@MenuItem(text, uri, kids, _, _, _) if m.placeholder_? =>
               Helpers.addCssClass(i.cssClass,
-                                  Elem(null, innerTag, Null, TopScope,
+                                  Elem(null, innerTag, Null, TopScope, true,
                                        // Is a placeholder useful if we don't display the kids? I say no (DCB, 20101108)
                                        <xml:group> <span>{text}</span>{buildUlLine(kids)}</xml:group>) %
                                   (if (m.path) S.prefixedAttrsToMetaData("li_path", liMap) else Null) %
@@ -149,26 +151,26 @@ object Menu extends DispatchSnippet {
 
             case MenuItem(text, uri, kids, true, _, _) if linkToSelf =>
               Helpers.addCssClass(i.cssClass,
-                                  Elem(null, innerTag, Null, TopScope,
+                                  Elem(null, innerTag, Null, TopScope, true,
                                        <xml:group> <a href={uri}>{text}</a>{ifExpandCurrent(buildUlLine(kids))}</xml:group>) %
                                   S.prefixedAttrsToMetaData("li_item", liMap))
 
             case MenuItem(text, uri, kids, true, _, _) =>
               Helpers.addCssClass(i.cssClass,
-                                  Elem(null, innerTag, Null, TopScope,
+                                  Elem(null, innerTag, Null, TopScope, true,
                                        <xml:group> <span>{text}</span>{ifExpandCurrent(buildUlLine(kids))}</xml:group>) %
                                   S.prefixedAttrsToMetaData("li_item", liMap))
 
             // Not current, but on the path, so we need to expand children to show the current one
             case MenuItem(text, uri, kids, _, true, _) =>
               Helpers.addCssClass(i.cssClass,
-                                  Elem(null, innerTag, Null, TopScope,
+                                  Elem(null, innerTag, Null, TopScope, true,
                                        <xml:group> <a href={uri}>{text}</a>{buildUlLine(kids)}</xml:group>) %
                                   S.prefixedAttrsToMetaData("li_path", liMap))
 
             case MenuItem(text, uri, kids, _, _, _) =>
               Helpers.addCssClass(i.cssClass,
-                                  Elem(null, innerTag, Null, TopScope,
+                                  Elem(null, innerTag, Null, TopScope, true,
                                        <xml:group> <a href={uri}>{text}</a>{ifExpandAll(buildUlLine(kids))}</xml:group>) % li)
           }
         }
@@ -178,7 +180,7 @@ object Menu extends DispatchSnippet {
             NodeSeq.Empty
           } else {
             if (outerTag.length > 0) {
-              Elem(null, outerTag, Null, TopScope,
+              Elem(null, outerTag, Null, TopScope, true,
                 <xml:group>{in.flatMap(buildANavItem)}</xml:group>) %
                   S.prefixedAttrsToMetaData("ul")
             } else {
@@ -242,24 +244,24 @@ object Menu extends DispatchSnippet {
    * automatically set the title for your page based on your SiteMap:</p>
    *
    * <pre>
-   * ...
+   * ⋮
    * &lt;head&gt;
    *   &lt;title&gt;&lt;lift:Menu.title /&gt;&lt;/title&gt;
    * &lt;/head&gt;
-   * ...
+   * ⋮
    * </pre>
    * <p>HTML5 does not support tags inside the &lt;title&gt; tag,
    * so you must do:
    * </p>
    *
    * <pre>
-   *    * &lt;head&gt;
+   * &lt;head&gt;
    *   &lt;title class=&quot;lift:Menu.title&quote;&gt;The page named %*% is being displayed&lt;/title&gt;
    * &lt;/head&gt;
    * </pre>
    * <p>
-   * And Lift will substitute the title at the %*% marker, alternative, Lift
-   * will append the Menu.title to the contents of the &lt;title&gt; tag.
+   * And Lift will substitute the title at the %*% marker if the marker exists, otherwise
+   * append the title to the contents of the &lt;title&gt; tag.
    * </p>
    */
   def title(text: NodeSeq): NodeSeq = {
@@ -396,19 +398,25 @@ object Menu extends DispatchSnippet {
    * set the "donthide" attribute on the tag to force it to show text only (same text as normal,
    * but not in an anchor tag)</p>
    *
+   *
    * <p>Alternatively, you can set the "linkToSelf" attribute to "true" to force a link. You
    * can specify your own link text with the tag's contents. Note that <b>case is significant</b>, so
    * make sure you specify "linkToSelf" and not "linktoself".</p>
    *
    */
-  def item(text: NodeSeq): NodeSeq = {
+  def item(_text: NodeSeq): NodeSeq = {
     val donthide = S.attr("donthide").map(Helpers.toBoolean) openOr false
     val linkToSelf = (S.attr("linkToSelf") or S.attr("linktoself")).map(Helpers.toBoolean) openOr false
+
+    val text = ("a" #> ((n: NodeSeq) => n match {
+      case e: Elem => e.child
+      case xs => xs
+    })).apply(_text)
 
     for {
       name <- S.attr("name").toList
     } yield {
-      type T = Q forSome {type Q}
+      type T = Q forSome { type Q }
 
       // Builds a link for the given loc
       def buildLink[T](loc : Loc[T]) = {
@@ -421,7 +429,7 @@ object Menu extends DispatchSnippet {
       }
 
       (S.request.flatMap(_.location), S.attr("param"), SiteMap.findAndTestLoc(name)) match {
-         case (_, Full(param), Full(loc: ConvertableLoc[T])) => {
+         case (_, Full(param), Full(loc: Loc[T] with ConvertableLoc[T])) => {
            (for {
              pv <- loc.convert(param)
              link <- loc.createLink(pv)

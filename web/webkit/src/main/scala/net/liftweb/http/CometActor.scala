@@ -19,61 +19,16 @@ package http
 
 import net.liftweb.common._
 import net.liftweb.actor._
-import scala.collection.mutable.{ListBuffer}
 import net.liftweb.util.Helpers._
 import net.liftweb.util._
 import net.liftweb.json._
 import scala.xml.{NodeSeq, Text, Elem, Node, Group, Null, PrefixedAttribute, UnprefixedAttribute}
-import scala.collection.immutable.TreeMap
-import scala.collection.mutable.{HashSet, ListBuffer}
+import scala.collection.mutable.ListBuffer
 import net.liftweb.http.js._
 import JsCmds._
 import JE._
-import java.util.concurrent.atomic.AtomicLong
 import java.util.Locale
 
-/**
- * An actor that monitors other actors that are linked with it. If a watched
- * actor terminates,this actor captures the Exit messag, executes failureFuncs
- * and resurects the actor.
- */
-object ActorWatcher extends scala.actors.Actor with Loggable {
-  import scala.actors.Actor._
-  def act = loop {
-    react {
-      case scala.actors.Exit(actor: scala.actors.Actor, why: Throwable) =>
-        failureFuncs.foreach(f => tryo(f(actor, why)))
-
-      case _ =>
-    }
-  }
-
-  private def startAgain(a: scala.actors.Actor, ignore: Throwable) {
-    a.start
-    a ! RelinkToActorWatcher
-  }
-
-  private def logActorFailure(actor: scala.actors.Actor, why: Throwable) {
-    logger.warn("The ActorWatcher restarted " + actor + " because " + why, why)
-  }
-
-  /**
-   * If there's something to do in addition to starting the actor up, pre-pend the
-   * actor to this List
-   */
-  @volatile var failureFuncs: List[(scala.actors.Actor, Throwable) => Unit] = logActorFailure _ ::
-          startAgain _ :: Nil
-
-  this.trapExit = true
-  this.start
-}
-
-/**
- * This is used as an indicator message for linked actors.
- *
- * @see ActorWatcher
- */
-case object RelinkToActorWatcher
 
 trait DeltaTrait {
   def toJs: JsCmd
@@ -90,9 +45,8 @@ MyType <: CometState[DeltaType, MyType]] {
 
 trait CometStateWithUpdate[UpdateType, DeltaType <: DeltaTrait,
 MyType <: CometStateWithUpdate[UpdateType,
-        DeltaType, MyType]]
-        extends CometState[DeltaType, MyType]
-{
+  DeltaType, MyType]]
+  extends CometState[DeltaType, MyType] {
   self: MyType =>
   def process(in: UpdateType): MyType
 }
@@ -117,7 +71,7 @@ trait StatefulComet extends CometActor {
   protected var state: State = emptyState
 
   /**
-   * If there's some ThreadLocal variable that needs to be setup up
+   * If there's some ThreadLocal variable that needs to be set up
    * before processing the state deltas, set it up here.
    */
   protected def setupLocalState[T](f: => T): T = f
@@ -127,11 +81,13 @@ trait StatefulComet extends CometActor {
       case v if testState(v).isDefined =>
         testState(v).foreach {
           ns =>
-                  if (ns ne state) {
-                    val diff = ns - state
-                    state = ns
-                    partialUpdate(setupLocalState {diff.map(_.toJs).foldLeft(Noop)(_ & _)})
-                  }
+            if (ns ne state) {
+              val diff = ns - state
+              state = ns
+              partialUpdate(setupLocalState {
+                diff.map(_.toJs).foldLeft(Noop)(_ & _)
+              })
+            }
         }
     }
 
@@ -147,14 +103,16 @@ trait StatefulComet extends CometActor {
 object CurrentCometActor extends ThreadGlobal[LiftCometActor]
 
 object AddAListener {
-  def apply(who: SimpleActor[Any]) = new AddAListener(who, { case _ => true } )
+  def apply(who: SimpleActor[Any]) = new AddAListener(who, {
+    case _ => true
+  })
 }
 
 /**
  * This is a message class for use with ListenerManager and CometListener
  * instances. The use of the shouldUpdate function is deprecated, and
  * should instead be handled by the message processing partial functions
- * on the CometListner instances themselves.
+ * on the CometListener instances themselves.
  *
  * @see CometListener
  * @see ListenerManager
@@ -191,23 +149,23 @@ object ListenerManager {
  *
  * <pre name="code" class="scala">
  * case object Tick
- * 
- * object Ticker extends ListenerManager {
+ *
+ * object Ticker extends ListenerManager with LiftActor {
  *   import net.liftweb.util.ActorPing
- * 
+ *
  *   // Set up the initial tick
  *   ActorPing.schedule(this, Tick, 1000L)
  *
  *   // This is a placeholder, since we're only interested
  *   // in Ticks
  *   def createUpdate = "Registered"
- * 
+ *
  *   override def mediumPriority = {
  *     case Tick => {
- *       updateListeneres(Tick)
+ *       updateListeners(Tick)
  *       ActorPing.schedule(this, Tick, 1000L)
- *     }
- *   }
+ * }
+ * }
  * }
  * </pre>
  *
@@ -222,7 +180,7 @@ object ListenerManager {
  * </pre>
  *
  * @see CometListener
- *   
+ *
  */
 trait ListenerManager {
   self: SimpleActor[Any] =>
@@ -236,21 +194,21 @@ trait ListenerManager {
 
   protected def messageHandler: PartialFunction[Any, Unit] =
     highPriority orElse mediumPriority orElse
-            listenerService orElse lowPriority
+      listenerService orElse lowPriority
 
-  protected def listenerService: PartialFunction[Any, Unit] =
-    {
-      case AddAListener(who, shouldUpdate) =>
-        val pair = (who, shouldUpdate)
-        listeners ::= pair
-        updateIfPassesTest(createUpdate)(pair)
+  protected def listenerService: PartialFunction[Any, Unit] = {
+    case AddAListener(who, wantsMessage) =>
+      val pair = (who, wantsMessage)
+      listeners ::= pair
 
-      case RemoveAListener(who) =>
-        listeners = listeners.filter(_._1 ne who)
-        if (listeners.isEmpty) {
-          onListenersListEmptied()
-        }
-    }
+      updateListeners(pair :: Nil)
+
+    case RemoveAListener(who) =>
+      listeners = listeners.filter(_._1 ne who)
+      if (listeners.isEmpty) {
+        onListenersListEmptied()
+      }
+  }
 
   /**
    * Called after RemoveAListener-message is processed and no more listeners exist.
@@ -262,9 +220,13 @@ trait ListenerManager {
   /**
    * Update the listeners with the message generated by createUpdate
    */
-  protected def updateListeners() {
-    val update = updateIfPassesTest(createUpdate) _
-    listeners foreach update
+  protected def updateListeners(listeners: List[ActorTest] = listeners) {
+    val update = createUpdate
+
+    listeners foreach {
+      case (who, wantsMessage) if wantsMessage.isDefinedAt(update) && wantsMessage(update) =>
+        who ! update
+    }
   }
 
   /**
@@ -273,19 +235,6 @@ trait ListenerManager {
    */
   protected def updateListeners(msg: Any) {
     listeners foreach (_._1 ! msg)
-  }
-
-  /**
-   * This method provides legacy functionality for filtering messages
-   * before sending to each registered actor. It is deprecated in
-   * favor of doing the filtering in the registered Actor's
-   * message handling partial functions instead.
-   */
-  @deprecated("Accept/reject logic should be done in the partial function that handles the message.")
-  protected def updateIfPassesTest(update: Any)(info: ActorTest) {
-    info match {
-      case (who, test) => if (test.isDefinedAt(update) && test(update)) who ! update
-    }
   }
 
   /**
@@ -319,26 +268,13 @@ trait ListenerManager {
 }
 
 /**
- * This is a legacy trait, left over from Lift's
- * Scala 2.7 support. You should use or migrate to
- * CometListener instead.
- *
- * @see CometListener
- */
-@deprecated("Use the CometListener trait instead.")
-trait CometListenee extends CometListener {
-  self: CometActor =>
-}
-
-
-/**
  * A LiftActorJ with ListenerManager.  Subclass this class
- * to get a Java-useable LiftActorJ with ListenerManager
+ * to get a Java-usable LiftActorJ with ListenerManager
  */
 abstract class LiftActorJWithListenerManager extends LiftActorJ with ListenerManager {
-  protected override def messageHandler: PartialFunction[Any, Unit] = 
-        highPriority orElse mediumPriority orElse
-            listenerService orElse lowPriority orElse _messageHandler
+  protected override def messageHandler: PartialFunction[Any, Unit] =
+    highPriority orElse mediumPriority orElse
+      listenerService orElse lowPriority orElse _messageHandler
 }
 
 /**
@@ -362,17 +298,8 @@ trait CometListener extends CometActor {
    */
   protected def registerWith: SimpleActor[Any]
 
-  /**
-   * Override this in order to selectively update listeners based on the given message.
-   * This method has been deprecated because it's executed in a seperate context from
-   * the session's context.  This causes problems.  Accept/reject logic should be done
-   * in the partial function that handles the message.
-   */
-  @deprecated("Accept/reject logic should be done in the partial function that handles the message.")
-  protected def shouldUpdate: PartialFunction[Any, Boolean] = { case _ => true}
-
   abstract override protected def localSetup() {
-    registerWith ! AddAListener(this, shouldUpdate)
+    registerWith ! AddAListener(this,  { case _ => true })
     super.localSetup()
   }
 
@@ -385,6 +312,12 @@ trait CometListener extends CometActor {
 trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any] with Dependent {
   def uniqueId: String
 
+  /**
+   * The last "when" sent from the listener
+   * @return the last when sent from the listener
+   */
+  def lastListenerTime: Long
+
   private[http] def callInitCometActor(theSession: LiftSession,
                                        theType: Box[String],
                                        name: Box[String],
@@ -393,13 +326,53 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
     initCometActor(theSession, theType, name, defaultHtml, attributes)
   }
 
+  /**
+   * Override in sub-class to customise timeout for the render()-method for the specific comet
+   */
+  def cometRenderTimeout = LiftRules.cometRenderTimeout
+
+  /**
+   * Override in sub-class to customise timeout for AJAX-requests to the comet-component for the specific comet
+   */
+  def cometProcessingTimeout = LiftRules.cometProcessingTimeout
+
+  /**
+   * This is to react to comet-requests timing out.
+   * When the timeout specified in {@link LiftRules#cometProcessingTimeout} occurs one may override
+   * this to send a message to the user informing of the timeout.
+   * <p/><p/>
+   * Do NOT manipulate actor-state here. If you want to manipulate state, send the actor a new message.
+   * <p/><p/>
+   * Typical example would be:
+   * <pre>
+   *   override def cometTimeoutHandler(): JsCmd = {
+   *     Alert("Timeout processing comet-request, timeout is: " + cometProcessingTimeout + "ms")
+   * }
+   * </pre>
+   */
+  def cometProcessingTimeoutHandler(): JsCmd = Noop
+
+  /**
+   * This is to react to comet-actors timing out while initial rendering, calls to render().
+   * When the timeout specified in {@link LiftRules#cometRenderTimeout} occurs one may override
+   * this to customise the output.
+   * <p/><p/>
+   * Do NOT manipulate actor-state here. If you want to manipulate state, send the actor a new message.
+   * <p/><p/>
+   * Typical example would be:
+   * <pre>
+   *   override def renderTimeoutHandler(): Box[NodeSeq] = {
+   *     Full(&lt;div&gt;Comet {this.getClass} timed out, timeout is {cometRenderTimeout}ms&lt;/div&gt;)
+   * }
+   * </pre>
+   */
+  def cometRenderTimeoutHandler(): Box[NodeSeq] = Empty
+
   protected def initCometActor(theSession: LiftSession,
                                theType: Box[String],
                                name: Box[String],
                                defaultHtml: NodeSeq,
                                attributes: Map[String, String]): Unit
-
-  def jsonCall: JsonCall
 
   def theType: Box[String]
 
@@ -436,15 +409,18 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
   /**
    * If the predicate cell changes, the Dependent will be notified
    */
-  def predicateChanged(which: Cell[_]): Unit = {poke()}
+  def predicateChanged(which: Cell[_]): Unit = {
+    poke()
+  }
 
 
   /**
    * The locale for the session that created the CometActor
    */
   def cometActorLocale: Locale = _myLocale
+
   private var _myLocale = Locale.getDefault()
-  
+
   private[http] def setCometActorLocale(loc: Locale) {
     _myLocale = loc
   }
@@ -475,7 +451,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   private val logger = Logger(classOf[CometActor])
   val uniqueId = Helpers.nextFuncName
   private var spanId = uniqueId
-  private var lastRenderTime = Helpers.nextNum
+  @volatile private var lastRenderTime = Helpers.nextNum
 
   /**
    * If we're going to cache the last rendering, here's the
@@ -484,12 +460,27 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   private[this] var _realLastRendering: RenderOut = _
 
   /**
+   * Get the current render clock for the CometActor
+   * @return
+   */
+  def renderClock: Long = lastRenderTime
+
+  @volatile
+  private var _lastListenerTime: Long = 0
+
+  /**
+   * The last "when" sent from the listener
+   * @return the last when sent from the listener
+   */
+  def lastListenerTime: Long = _lastListenerTime
+
+  /**
    * The last rendering (cached or not)
    */
-  private def lastRendering: RenderOut = 
+  private def lastRendering: RenderOut =
     if (dontCacheRendering) {
-      val ret = (render ++ jsonInCode): RenderOut
-      theSession.updateFunctionMap(S.functionMap, spanId, lastRenderTime)
+      val ret = render
+      theSession.updateFunctionMap(S.functionMap, uniqueId, lastRenderTime)
       ret
     } else {
       _realLastRendering
@@ -503,7 +494,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       _realLastRendering = last
     }
   }
-  
+
   private var wasLastFullRender = false
   @transient
   private var listeners: List[(ListenerId, AnswerRender => Unit)] = Nil
@@ -515,14 +506,17 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   private val notices = new ListBuffer[(NoticeType.Value, NodeSeq, Box[String])]
   private var lastListenTime = millis
 
+  private var _deltaPruner: (CometActor, List[Delta]) => List[Delta] =
+    (actor, d) => {
+      val m = Helpers.millis
+      d.filter(d => (m - d.timestamp) < 120000L)
+    }
+
   private var _theSession: LiftSession = _
 
   def theSession = _theSession
 
   @volatile private var _defaultHtml: NodeSeq = _
-
-  @deprecated("Use defaultHtml")
-  def defaultXml = _defaultHtml
 
   /**
    * The template that was passed to this component during comet
@@ -578,7 +572,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
                                attributes: Map[String, String]) {
     if (!dontCacheRendering) {
       lastRendering = RenderOut(Full(defaultHtml),
-                                Empty, Empty, Empty, false)
+        Empty, Empty, Empty, false)
     }
 
     this._theType = theType
@@ -618,12 +612,6 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    */
   protected def listenerTransition(): Unit = {}
 
-  private def _handleJson(in: Any): JsCmd =
-    if (jsonHandlerChain.isDefinedAt(in))
-      jsonHandlerChain(in)
-    else handleJson(in)
-
-
   /**
    * Prepends the handler to the Json Handlers.  Should only be used
    * during instantiation
@@ -635,55 +623,60 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   }
 
 
-  def handleJson(in: Any): JsCmd = Noop
-
   /**
    * If there's actor-specific JSON behavior on failure to make the JSON
    * call, include the JavaScript here.
    */
   def onJsonError: Box[JsCmd] = Empty
 
-  lazy val (jsonCall, jsonInCode) = S.buildJsonFunc(Full(_defaultPrefix), onJsonError, _handleJson)
-  
   /**
-  * Override this method to deal with JSON sent from the browser via the sendJson function.  This
-  * is based on the Lift JSON package rather than the handleJson stuff based on the older util.JsonParser.  This
-  * is the prefered mechanism.  If you use the jsonSend call, you will get a JObject(JField("command", cmd), JField("param", params))
-  */
+   * Override this method to deal with JSON sent from the browser via the sendJson function.  This
+   * is based on the Lift JSON package rather than the handleJson stuff based on the older util.JsonParser.  This
+   * is the preferred mechanism.  If you use the jsonSend call, you will get a JObject(JField("command", cmd), JField("param", params))
+   */
   def receiveJson: PartialFunction[JsonAST.JValue, JsCmd] = Map()
 
   /**
-  * The JavaScript call that you use to send the data to the server. For example:
-  * &lt;button onclick={jsonSend("Hello", JsRaw("Dude".encJs))}&gt;Click&lt;/button&gt;
-  */
+   * The JavaScript call that you use to send the data to the server. For example:
+   * &lt;button onclick={jsonSend("Hello", JsRaw("Dude".encJs))}&gt;Click&lt;/button&gt;
+   */
   def jsonSend: JsonCall = _sendJson
 
   /**
-  * The call that packages up the JSON and tosses it to the server.  If you set autoIncludeJsonCode to true,
-  * then this will be included in the stuff sent to the server.
-  */
+   * The call that packages up the JSON and tosses it to the server.  If you set autoIncludeJsonCode to true,
+   * then this will be included in the stuff sent to the server.
+   */
   def jsonToIncludeInCode: JsCmd = _jsonToIncludeCode
 
   private lazy val (_sendJson, _jsonToIncludeCode) = S.createJsonFunc(Full(_defaultPrefix), onJsonError, receiveJson _)
 
   /**
-  * Set this method to true to have the Json call code included in the Comet output
-  */
+   * Set this method to true to have the Json call code included in the Comet output
+   */
   def autoIncludeJsonCode: Boolean = false
 
   /**
-   * Creates the span element acting as the real estate for commet rendering.
+   * Creates the span element acting as the real estate for comet rendering.
    */
-  def buildSpan(time: Long, xml: NodeSeq): NodeSeq = {
+  def buildSpan(time: Long, xml: NodeSeq): Elem = {
     Elem(parentTag.prefix, parentTag.label, parentTag.attributes,
-         parentTag.scope, Group(xml)) %
-    new UnprefixedAttribute("id", 
-                            Text(spanId), 
-                            if (time > 0L) {
-                              new PrefixedAttribute("lift", "when", 
-                                                    time.toString, 
-                                                    Null)
-                            } else {Null})
+      parentTag.scope, parentTag.minimizeEmpty, xml :_*) %
+      new UnprefixedAttribute("id",
+        Text(spanId),
+        if (time > 0L) {
+          new PrefixedAttribute("lift", "when",
+            time.toString,
+            Null)
+        } else {
+          Null
+        })
+  }
+
+  /**
+   * How to report an error that occurs during message dispatch
+   */
+  protected def reportError(msg: String, exception: Exception) {
+    logger.error(msg, exception)
   }
 
   protected override def messageHandler = {
@@ -694,29 +687,39 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
           S.initIfUninitted(theSession) {
             RenderVersion.doWith(uniqueId) {
               S.functionLifespan(true) {
-                what.apply(in)
+                try {
+                  what.apply(in)
+                } catch {
+                  case e if exceptionHandler.isDefinedAt(e) => exceptionHandler(e)
+                  case e: Exception => reportError("Message dispatch for " + in, e)
+                }
                 if (S.functionMap.size > 0) {
                   theSession.updateFunctionMap(S.functionMap,
-                                               uniqueId, lastRenderTime)
+                    uniqueId, lastRenderTime)
                   S.clearFunctionMap
                 }
               }
             }
           }
         }
-      
+
       def isDefinedAt(in: Any): Boolean =
         CurrentCometActor.doWith(CometActor.this) {
           S.initIfUninitted(theSession) {
             RenderVersion.doWith(uniqueId) {
               S.functionLifespan(true) {
-                what.isDefinedAt(in)
+                try {
+                  what.isDefinedAt(in)
+                } catch {
+                  case e if exceptionHandler.isDefinedAt(e) => exceptionHandler(e); false
+                  case e: Exception => reportError("Message test for " + in, e); false
+                }
               }
             }
           }
         }
     }
-    
+
     myPf
   }
 
@@ -731,7 +734,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   /**
    * Calculate fixedRender and capture the postpage javascript
    */
-  protected def calcFixedRender: Box[NodeSeq] = 
+  protected def calcFixedRender: Box[NodeSeq] =
     fixedRender.map(ns => theSession.postPageJavaScript() match {
       case Nil => ns
       case xs => {
@@ -741,9 +744,9 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
   /**
    * We have to cache fixedRender and only change it if
-   * the tempalte changes or we get a reRender(true)
+   * the template changes or we get a reRender(true)
    */
-  private def internalFixedRender: Box[NodeSeq] = 
+  private def internalFixedRender: Box[NodeSeq] =
     if (!cacheFixedRender) {
       calcFixedRender
     } else {
@@ -754,9 +757,9 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
   /**
    * By default, we do not cache the value of fixedRender.  If it's
-   * expensive to recompute it each time there's a convertion
+   * expensive to recompute it each time there's a conversion
    * of something to a RenderOut, override this method if you
-   * want to cache fixedRender
+   * want to cache fixedRender.
    */
   protected def cacheFixedRender = false
 
@@ -769,7 +772,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   Box[NodeSeq] = Full(f(defaultHtml))
 
   /**
-   * Handle messages sent to this Actor before the 
+   * Handle messages sent to this Actor before the
    */
   def highPriority: PartialFunction[Any, Unit] = Map.empty
 
@@ -799,18 +802,20 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
         case _ =>
           if (when < lastRenderTime) {
             toDo(AnswerRender(new XmlOrJsCmd(spanId, lastRendering,
-              buildSpan _, notices toList),
+              buildSpan _, notices.toList),
               whosAsking openOr this, lastRenderTime, wasLastFullRender))
             clearNotices
           } else {
+            lastRenderTime = when
             deltas.filter(_.when > when) match {
               case Nil => listeners = (seqId, toDo) :: listeners
 
               case all@(hd :: xs) =>
                 toDo(AnswerRender(new XmlOrJsCmd(spanId, Empty, Empty,
-                  Full(all.reverse.foldLeft(Noop)(_ & _.js)), Empty, buildSpan, false, notices toList),
+                  Full(all.reverse.foldLeft(Noop)(_ & _.js)), Empty, buildSpan, false, notices.toList),
                   whosAsking openOr this, hd.when, false))
                 clearNotices
+                deltas = _deltaPruner(this, deltas)
             }
           }
       }
@@ -819,7 +824,6 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
 
 
     case PerformSetupComet2(initialReq) => {
-      // this ! RelinkToActorWatcher
       localSetup()
       captureInitialReq(initialReq)
       performReRender(true)
@@ -830,7 +834,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
      */
     case UpdateDefaultXml(xml) => {
       val redo = xml != _defaultHtml
-      
+
       _defaultHtml = xml
 
       if (redo) {
@@ -842,14 +846,21 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       askingWho match {
         case Full(who) => forwardMessageTo(AskRender, who) //  forward AskRender
         case _ => {
-          if (!deltas.isEmpty || devMode) performReRender(false)
-          
-          reply(AnswerRender(new XmlOrJsCmd(spanId, lastRendering, 
-                                            buildSpan _, notices toList),
-                             whosAsking openOr this, lastRenderTime, true))
+          if (!deltas.isEmpty || devMode)
+            try {
+              performReRender(false)
+            } catch {
+              case e if exceptionHandler.isDefinedAt(e) => exceptionHandler(e)
+              case e: Exception => reportError("Failed performReRender", e)
+            }
+
+          reply(AnswerRender(new XmlOrJsCmd(spanId, lastRendering,
+            buildSpan _, notices.toList),
+            whosAsking openOr this, lastRenderTime, true))
           clearNotices
         }
       }
+
 
     case ActionMessageSet(msgs, req) =>
       S.doCometParams(req.params) {
@@ -858,7 +869,17 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
           case js => partialUpdate(js)
         }
 
-        reply(msgs.map(_()) ::: List(S.noticesToJsCmd))
+        val computed: List[Any] =
+          msgs.flatMap {
+            f => try {
+              List(f())
+            } catch {
+              case e if exceptionHandler.isDefinedAt(e) => exceptionHandler(e); Nil
+              case e: Exception => reportError("Ajax function dispatch", e); Nil
+            }
+          }
+
+        reply(computed ::: List(S.noticesToJsCmd))
       }
 
     case AskQuestion(what, who, otherlisteners) => {
@@ -887,13 +908,17 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       }
 
     case ShutdownIfPastLifespan =>
-      for{
-        ls <- lifespan if listeners.isEmpty && (lastListenTime + ls.millis) < millis
+      for {
+        ls <- lifespan if listeners.isEmpty && (lastListenTime + ls.millis + 1000l) < millis
       } {
         this ! ShutDown
       }
 
     case ReRender(all) => performReRender(all)
+
+    case SetDeltaPruner(f) =>
+      _deltaPruner = f
+      deltas = f(this, deltas)
 
     case Error(id, node) => notices += ((NoticeType.Error, node, id))
 
@@ -915,16 +940,15 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       val delta = JsDelta(time, cmd)
       theSession.updateFunctionMap(S.functionMap, uniqueId, time)
       S.clearFunctionMap
-      val m = millis
-      deltas = (delta :: deltas).filter(d => (m - d.timestamp) < 120000L)
+      deltas = _deltaPruner(this,  (delta :: deltas))
       if (!listeners.isEmpty) {
         val postPage = theSession.postPageJavaScript()
-        val rendered = 
+        val rendered =
           AnswerRender(new XmlOrJsCmd(spanId, Empty, Empty,
-                                      Full(cmd & postPage),
-                                      Empty, buildSpan, false,
-                                      notices toList),
-                       whosAsking openOr this, time, false)
+            Full(cmd & postPage),
+            Empty, buildSpan, false,
+            notices.toList),
+            whosAsking openOr this, time, false)
         clearNotices
         listeners.foreach(_._2(rendered))
         listeners = Nil
@@ -940,7 +964,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * There are implicit conversions for a bunch of stuff to
    * RenderOut (including NodeSeq).  Thus, if you don't declare the return
    * turn to be something other than RenderOut and return something that's
-   * coersable into RenderOut, the compiler "does the right thing"(tm) for you.
+   * coercible into RenderOut, the compiler "does the right thing"(tm) for you.
    * <br/>
    * There are implicit conversions for NodeSeq, so you can return a pile of
    * XML right here.  There's an implicit conversion for NodeSeq => NodeSeq,
@@ -951,7 +975,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * Note that the render method will be called each time a new browser tab
    * is opened to the comet component or the comet component is otherwise
    * accessed during a full page load (this is true if a partialUpdate
-   * has occured.)  You may want to look at the fixedRender method which is
+   * has occurred.)  You may want to look at the fixedRender method which is
    * only called once and sets up a stable rendering state.
    */
   def render: RenderOut
@@ -977,7 +1001,9 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * be sent to the client.  It's a much better practice to use
    * partialUpdate for non-trivial CometActor components.
    */
-  def reRender() {reRender(false)}
+  def reRender() {
+    reRender(false)
+  }
 
 
   /**
@@ -997,7 +1023,7 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   protected def clearWiringDependencies() {
     if (!manualWiringDependencyManagement) {
       theSession.clearPostPageJavaScriptForThisPage()
-      unregisterFromAllDepenencies()
+      unregisterFromAllDependencies()
     }
   }
 
@@ -1026,21 +1052,21 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     deltas = Nil
 
     if (!dontCacheRendering) {
-      lastRendering = render ++ jsonInCode
+      lastRendering = render
     }
 
-    theSession.updateFunctionMap(S.functionMap, spanId, lastRenderTime)
+    theSession.updateFunctionMap(S.functionMap, uniqueId, lastRenderTime)
 
     val rendered: AnswerRender =
-    AnswerRender(new XmlOrJsCmd(spanId, lastRendering, buildSpan _, notices toList),
-      this, lastRenderTime, sendAll)
+      AnswerRender(new XmlOrJsCmd(spanId, lastRendering, buildSpan _, notices.toList),
+        this, lastRenderTime, sendAll)
 
     clearNotices
     listeners.foreach(_._2(rendered))
     listeners = Nil
   }
 
-  def unWatch = partialUpdate(Call("liftComet.lift_unlistWatch", uniqueId))
+  def unWatch = partialUpdate(Call("lift.unlistWatch", uniqueId))
 
   /**
    * Poke the CometActor and cause it to do a partial update Noop which
@@ -1065,13 +1091,15 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
     this ! PartialUpdateMsg(() => cmd)
   }
 
-  protected def startQuestion(what: Any) {}
+  protected def startQuestion(what: Any) {
+  }
 
   /**
    * This method will be called after the Actor has started.  Do any setup here.
    * DO NOT do initialization in the constructor or in initCometActor... do it here.
    */
-  protected def localSetup(): Unit = {}
+  protected def localSetup(): Unit = {
+  }
 
   /**
    * Comet Actors live outside the HTTP request/response cycle.
@@ -1083,7 +1111,8 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * or capture any request parameters that you care about rather
    * the keeping the whole Req reference.
    */
-  protected def captureInitialReq(initialReq: Box[Req]) {}
+  protected def captureInitialReq(initialReq: Box[Req]) {
+  }
 
   private def _localShutdown() {
     localShutdown()
@@ -1100,25 +1129,26 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   /**
    * This method will be called as part of the shut-down of the actor.  Release any resources here.
    */
-  protected def localShutdown(): Unit = {}
+  protected def localShutdown(): Unit = {
+  }
 
   /**
    * Compose the Message Handler function. By default,
-   * composes highPriority orElse mediumePriority orElse internalHandler orElse
+   * composes highPriority orElse mediumPriority orElse internalHandler orElse
    * lowPriority orElse internalHandler.  But you can change how
    * the handler works if doing stuff in highPriority, mediumPriority and
-   * lowPriority is not enough
+   * lowPriority is not enough.
    */
   protected def composeFunction: PartialFunction[Any, Unit] = composeFunction_i
 
   private def composeFunction_i: PartialFunction[Any, Unit] = {
     // if we're no longer running don't pass messages to the other handlers
     // just pass them to our handlers
-    if (!_running && (millis - 20000L) > _shutDownAt) 
+    if (!_running && (millis - 20000L) > _shutDownAt)
       _mediumPriority orElse _lowPriority
-    else 
-      highPriority orElse mediumPriority orElse 
-    _mediumPriority orElse lowPriority orElse _lowPriority
+    else
+      highPriority orElse mediumPriority orElse
+        _mediumPriority orElse lowPriority orElse _lowPriority
   }
 
   /**
@@ -1157,17 +1187,18 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * Convert a NodeSeq => NodeSeq to a RenderOut.  The render method
    * returns a RenderOut.  This method implicitly (in Scala) or explicitly
    * (in Java) will convert a NodeSeq => NodeSeq to a RenderOut.  This
-   * is helpful if you use Lift's CSS Seletor Transforms to define
+   * is helpful if you use Lift's CSS Selector Transforms to define
    * rendering.
    */
   protected implicit def nsToNsFuncToRenderOut(f: NodeSeq => NodeSeq) =
-    new RenderOut((Box !! defaultHtml).map(f), internalFixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend()) else {
+    new RenderOut((Box !! defaultHtml).map(f), internalFixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend())
+    else {
       S.jsToAppend match {
         case Nil => Empty
         case x :: Nil => Full(x)
         case xs => Full(xs.reduceLeft(_ & _))
       }
-      }, Empty, false)
+    }, Empty, false)
 
   /**
    * Convert a Seq[Node] (the superclass of NodeSeq) to a RenderOut.
@@ -1176,17 +1207,21 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    * (in Java) will convert a NodeSeq to a RenderOut.  This
    * is helpful if you return a NodeSeq from your render method.
    */
-  protected implicit def arrayToRenderOut(in: Seq[Node]): RenderOut = new RenderOut(Full(in: NodeSeq), internalFixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend()) else {
-      S.jsToAppend match {
-        case Nil => Empty
-        case x :: Nil => Full(x)
-        case xs => Full(xs.reduceLeft(_ & _))
-      }
-      }, Empty, false)
+  protected implicit def arrayToRenderOut(in: Seq[Node]): RenderOut = new RenderOut(Full(in: NodeSeq), internalFixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend())
+  else {
+    S.jsToAppend match {
+      case Nil => Empty
+      case x :: Nil => Full(x)
+      case xs => Full(xs.reduceLeft(_ & _))
+    }
+  }, Empty, false)
 
   protected implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = new RenderOut(Empty, internalFixedRender, if (autoIncludeJsonCode) Full(in & jsonToIncludeInCode & S.jsToAppend()) else Full(in & S.jsToAppend()), Empty, false)
 
-  implicit def pairToPair(in: (String, Any)): (String, NodeSeq) = (in._1, Text(in._2 match {case null => "null" case s => s.toString}))
+  implicit def pairToPair(in: (String, Any)): (String, NodeSeq) = (in._1, Text(in._2 match {
+    case null => "null"
+    case s => s.toString
+  }))
 
   implicit def nodeSeqToFull(in: NodeSeq): Box[NodeSeq] = Full(in)
 
@@ -1195,64 +1230,90 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   /**
    * Similar with S.error
    */
-  def error(n: String) {error(Text(n))}
+  def error(n: String) {
+    error(Text(n))
+  }
 
   /**
    * Similar with S.error
    */
-  def error(n: NodeSeq) {notices += ((NoticeType.Error, n, Empty))}
+  def error(n: NodeSeq) {
+    notices += ((NoticeType.Error, n, Empty))
+  }
 
   /**
    * Similar with S.error
    */
-  def error(id: String, n: NodeSeq) {notices += ((NoticeType.Error, n, Full(id)))}
+  def error(id: String, n: NodeSeq) {
+    notices += ((NoticeType.Error, n, Full(id)))
+  }
 
   /**
    * Similar with S.error
    */
-  def error(id: String, n: String) {error(id, Text(n))}
+  def error(id: String, n: String) {
+    error(id, Text(n))
+  }
 
   /**
    * Similar with S.notice
    */
-  def notice(n: String) {notice(Text(n))}
+  def notice(n: String) {
+    notice(Text(n))
+  }
 
   /**
    * Similar with S.notice
    */
-  def notice(n: NodeSeq) {notices += ((NoticeType.Notice, n, Empty))}
+  def notice(n: NodeSeq) {
+    notices += ((NoticeType.Notice, n, Empty))
+  }
 
   /**
    * Similar with S.notice
    */
-  def notice(id: String, n: NodeSeq) {notices += ((NoticeType.Notice, n, Full(id)))}
+  def notice(id: String, n: NodeSeq) {
+    notices += ((NoticeType.Notice, n, Full(id)))
+  }
 
   /**
    * Similar with S.notice
    */
-  def notice(id: String, n: String) {notice(id, Text(n))}
+  def notice(id: String, n: String) {
+    notice(id, Text(n))
+  }
 
   /**
    * Similar with S.warning
    */
-  def warning(n: String) {warning(Text(n))}
+  def warning(n: String) {
+    warning(Text(n))
+  }
 
   /**
    * Similar with S.warning
    */
-  def warning(n: NodeSeq) {notices += ((NoticeType.Warning, n, Empty))}
+  def warning(n: NodeSeq) {
+    notices += ((NoticeType.Warning, n, Empty))
+  }
 
   /**
    * Similar with S.warning
    */
-  def warning(id: String, n: NodeSeq) {notices += ((NoticeType.Warning, n, Full(id)))}
+  def warning(id: String, n: NodeSeq) {
+    notices += ((NoticeType.Warning, n, Full(id)))
+  }
 
   /**
    * Similar with S.warning
    */
-  def warning(id: String, n: String) {warning(id, Text(n))}
+  def warning(id: String, n: String) {
+    warning(id, Text(n))
+  }
 
-  private def clearNotices {notices clear}
+  private def clearNotices {
+    notices.clear
+  }
 
 }
 
@@ -1287,17 +1348,31 @@ private[http] class XmlOrJsCmd(val id: String,
    * Returns the JsCmd that will be sent to client
    */
   def toJavaScript(session: LiftSession, displayAll: Boolean): JsCmd = {
+    val updateJs =
+      (if (ignoreHtmlOnJs) Empty else xml, javaScript, displayAll) match {
+        case (Full(xml), Full(js), false) => LiftRules.jsArtifacts.setHtml(id, Helpers.stripHead(xml)) & JsCmds.JsTry(js, false)
+        case (Full(xml), _, false) => LiftRules.jsArtifacts.setHtml(id, Helpers.stripHead(xml))
+        case (Full(xml), Full(js), true) => LiftRules.jsArtifacts.setHtml(id + "_outer", (
+          spanFunc(0, Helpers.stripHead(xml)) ++ fixedXhtml.openOr(Text("")))) & JsCmds.JsTry(js, false)
+        case (Full(xml), _, true) => LiftRules.jsArtifacts.setHtml(id + "_outer", (
+          spanFunc(0, Helpers.stripHead(xml)) ++ fixedXhtml.openOr(Text(""))))
+        case (_, Full(js), _) => js
+        case _ => JsCmds.Noop
+      }
+    val fullUpdateJs =
+      LiftRules.cometUpdateExceptionHandler.vend.foldLeft(updateJs) { (commands, catchHandler) =>
+        JsCmds.Run(
+          "try{" +
+            commands.toJsCmd +
+          "}catch(e){" +
+            catchHandler.toJsCmd +
+          "}"
+        )
+      }
+
     var ret: JsCmd = JsCmds.JsTry(JsCmds.Run("destroy_" + id + "();"), false) &
-            ((if (ignoreHtmlOnJs) Empty else xml, javaScript, displayAll) match {
-              case (Full(xml), Full(js), false) => LiftRules.jsArtifacts.setHtml(id, Helpers.stripHead(xml)) & JsCmds.JsTry(js, false)
-              case (Full(xml), _, false) => LiftRules.jsArtifacts.setHtml(id, Helpers.stripHead(xml))
-              case (Full(xml), Full(js), true) => LiftRules.jsArtifacts.setHtml(id + "_outer", ( 
-                spanFunc(0, Helpers.stripHead(xml)) ++ fixedXhtml.openOr(Text("")))) & JsCmds.JsTry(js, false)
-              case (Full(xml), _, true) => LiftRules.jsArtifacts.setHtml(id + "_outer", ( 
-                spanFunc(0, Helpers.stripHead(xml)) ++ fixedXhtml.openOr(Text(""))))
-              case (_, Full(js), _) => js
-              case _ => JsCmds.Noop
-            }) & JsCmds.JsTry(JsCmds.Run("destroy_" + id + " = function() {" + (destroy.openOr(JsCmds.Noop).toJsCmd) + "};"), false)
+       fullUpdateJs &
+       JsCmds.JsTry(JsCmds.Run("destroy_" + id + " = function() {" + (destroy.openOr(JsCmds.Noop).toJsCmd) + "};"), false)
 
     S.appendNotices(notices)
     ret = S.noticesToJsCmd & ret
@@ -1307,7 +1382,7 @@ private[http] class XmlOrJsCmd(val id: String,
   def inSpan: NodeSeq = xml.openOr(Text("")) ++ javaScript.map(s => Script(s)).openOr(Text(""))
 
   def outSpan: NodeSeq = Script(Run("var destroy_" + id + " = function() {" + (destroy.openOr(JsCmds.Noop).toJsCmd) + "}")) ++
-          fixedXhtml.openOr(Text(""))
+    fixedXhtml.openOr(Text(""))
 }
 
 /**
@@ -1316,21 +1391,38 @@ private[http] class XmlOrJsCmd(val id: String,
 case class UpdateDefaultXml(xml: NodeSeq) extends CometMessage
 
 case class PartialUpdateMsg(cmd: () => JsCmd) extends CometMessage
+
 case object AskRender extends CometMessage
+
 case class AnswerRender(response: XmlOrJsCmd, who: LiftCometActor, when: Long, displayAll: Boolean) extends CometMessage
+
 case class PerformSetupComet2(initialReq: Box[Req]) extends CometMessage
+
 case object ShutdownIfPastLifespan extends CometMessage
+
 case class AskQuestion(what: Any, who: LiftCometActor, listeners: List[(ListenerId, AnswerRender => Unit)]) extends CometMessage
+
 case class AnswerQuestion(what: Any, listeners: List[(ListenerId, AnswerRender => Unit)]) extends CometMessage
+
 case class Listen(when: Long, uniqueId: ListenerId, action: AnswerRender => Unit) extends CometMessage
+
 case class Unlisten(uniqueId: ListenerId) extends CometMessage
+
 case class ActionMessageSet(msg: List[() => Any], req: Req) extends CometMessage
+
 case class ReRender(doAll: Boolean) extends CometMessage
+
 case class ListenerId(id: Long)
+
 case class Error(id: Box[String], msg: NodeSeq) extends CometMessage
+
 case class Warning(id: Box[String], msg: NodeSeq) extends CometMessage
+
 case class Notice(id: Box[String], msg: NodeSeq) extends CometMessage
+
 case object ClearNotices extends CometMessage
+
+case class SetDeltaPruner(f: (LiftCometActor, List[Delta]) => List[Delta]) extends CometMessage
 
 object Error {
   def apply(node: NodeSeq): Error = Error(Empty, node)
@@ -1341,6 +1433,7 @@ object Error {
 
   def apply(id: String, node: NodeSeq): Error = Error(Full(id), node)
 }
+
 object Warning {
   def apply(node: NodeSeq): Warning = Warning(Empty, node)
 
@@ -1350,6 +1443,7 @@ object Warning {
 
   def apply(id: String, node: NodeSeq): Warning = Warning(Full(id), node)
 }
+
 object Notice {
   def apply(node: NodeSeq): Notice = Notice(Empty, node)
 
@@ -1362,7 +1456,7 @@ object Notice {
 
 /**
  * The RenderOut case class contains the rendering for the CometActor.
- * Because of the implicit conversions, RenderOut can come from 
+ * Because of the implicit conversions, RenderOut can come from
  * <br/>
  * @param xhtml is the "normal" render body
  * @param fixedXhtml is the "fixed" part of the body.  This is ignored unless reRender(true)
@@ -1370,7 +1464,6 @@ object Notice {
  * @param destroyScript is executed when the comet widget is redrawn ( e.g., if you register drag or mouse-over or some events, you unregister them here so the page doesn't leak resources.)
  * @param ignoreHtmlOnJs -- if the reason for sending the render is a Comet update, ignore the xhtml part and just run the JS commands.  This is useful in IE when you need to redraw the stuff inside <table><tr><td>... just doing innerHtml on <tr> is broken in IE
  */
-@serializable
 case class RenderOut(xhtml: Box[NodeSeq], fixedXhtml: Box[NodeSeq], script: Box[JsCmd], destroyScript: Box[JsCmd], ignoreHtmlOnJs: Boolean) {
   def this(xhtml: NodeSeq) = this (Full(xhtml), Empty, Empty, Empty, false)
 
@@ -1383,6 +1476,5 @@ case class RenderOut(xhtml: Box[NodeSeq], fixedXhtml: Box[NodeSeq], script: Box[
       destroyScript, ignoreHtmlOnJs)
 }
 
-@serializable
-private[http] object Never
+private[http] object Never extends Serializable
 

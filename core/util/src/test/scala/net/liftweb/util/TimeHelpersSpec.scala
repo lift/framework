@@ -19,8 +19,9 @@ package util
 
 import java.util.{Calendar, Date}
 
-import org.specs.{ScalaCheck, Specification}
-import org.specs.util.Products._
+import org.specs2.mutable.Specification
+import org.specs2.ScalaCheck
+import org.specs2.time.NoTimeConversions
 import org.scalacheck.Gen._
 import org.scalacheck.Prop._
 
@@ -32,7 +33,8 @@ import TimeHelpers._
 /**
  * Systems under specification for TimeHelpers.
  */
-object TimeHelpersSpec extends Specification("TimeHelpers Specification") with ScalaCheck with TimeAmountsGen {
+object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen with NoTimeConversions {
+  "TimeHelpers Specification".title
 
   "A TimeSpan" can {
     "be created from a number of milliseconds" in {
@@ -87,10 +89,14 @@ object TimeHelpersSpec extends Specification("TimeHelpers Specification") with S
       3.seconds - 4.seconds must_== (-1).seconds
     }
     "have a later method returning a date relative to now plus the time span" in {
-      3.seconds.later.getTime must beCloseTo(new Date().getTime + 3.seconds.millis, 500L)
+      val expectedTime = new Date().getTime + 3.seconds.millis
+
+      3.seconds.later.getTime must beCloseTo(expectedTime, 700L)
     }
     "have an ago method returning a date relative to now minus the time span" in {
-      3.seconds.ago.getTime must beCloseTo(new Date().getTime - 3.seconds.millis, 500L)
+      val expectedTime = new Date().getTime - 3.seconds.millis
+
+      3.seconds.ago.getTime must beCloseTo(expectedTime, 500L)
     }
     "have a toString method returning the relevant number of weeks, days, hours, minutes, seconds, millis" in {
       val conversionIsOk = forAll(timeAmounts)((t: TimeAmounts) => { val (timeSpanToString, timeSpanAmounts) = t
@@ -105,7 +111,7 @@ object TimeHelpersSpec extends Specification("TimeHelpers Specification") with S
                amount == 0 && !timeSpanToString.contains(unit)
         }
       })
-      conversionIsOk && timeSpanStringIsPluralized must pass
+      check(conversionIsOk && timeSpanStringIsPluralized)
     }
   }
 
@@ -126,8 +132,14 @@ object TimeHelpersSpec extends Specification("TimeHelpers Specification") with S
       weeks(3) must_== 3 * 7 * 24 * 60 * 60 * 1000
     }
     "provide a noTime function on Date objects to transform a date into a date at the same day but at 00:00" in {
-      hourFormat(timeNow.noTime) must_== "00:00:00"
+      hourFormat(now.noTime) must_== "00:00:00"
     }
+
+    "make sure noTime does not change the day" in {
+      dateFormatter.format(0.days.ago.noTime) must_== dateFormatter.format(new Date())
+      dateFormatter.format(3.days.ago.noTime) must_== dateFormatter.format(new Date(millis - (3 * 24 * 60 * 60 * 1000)))
+    }
+
     "provide a day function returning the day of month corresponding to a given date (relative to UTC)" in {
       day(today.setTimezone(utc).setDay(3).getTime) must_== 3
     }
@@ -163,7 +175,12 @@ object TimeHelpersSpec extends Specification("TimeHelpers Specification") with S
       formattedDateNow must beMatching("\\d\\d\\d\\d/\\d\\d/\\d\\d")
     }
     "provide a formattedTimeNow function to format now's time with the TimeZone" in {
-      formattedTimeNow must beMatching("\\d\\d:\\d\\d ...(\\+|\\-\\d\\d:00)?")
+      val regex = "\\d\\d:\\d\\d (....?|GMT((\\+|\\-)\\d\\d:00)?)"
+      "10:00 CEST" must beMatching(regex)
+      "10:00 GMT+02:00" must beMatching(regex)
+      "10:00 GMT" must beMatching(regex)
+      "10:00 XXX" must beMatching(regex)
+      formattedTimeNow must beMatching(regex)
     }
 
     "provide a parseInternetDate function to parse a string formatted using the internet format" in {
@@ -177,9 +194,13 @@ object TimeHelpersSpec extends Specification("TimeHelpers Specification") with S
     }
     "provide a toDate returning a Full(date) from many kinds of objects" in {
       val d = now
-      (null, Nil, None, Failure("", Empty, Empty)).toList forall { toDate(_) must_== Empty }
-      (Full(d), Some(d), d :: d).toList forall { toDate(_) must_== Full(d) }
-      toDate(internetDateFormatter.format(d)).get.getTime.toLong must beCloseTo(d.getTime.toLong, 1000L)
+      List(null, Nil, None, Failure("", Empty, Empty)) forall { toDate(_) must_== Empty }
+      List(Full(d), Some(d), List(d)) forall { toDate(_) must_== Full(d) }
+
+      toDate(internetDateFormatter.format(d)) must beLike {
+        case Full(converted) =>
+          converted.getTime.toLong must beCloseTo(d.getTime.toLong, 1000L)
+      }
     }
   }
 
@@ -205,7 +226,8 @@ object TimeHelpersSpec extends Specification("TimeHelpers Specification") with S
 
 trait TimeAmountsGen {
 
-  type TimeAmounts = Tuple2[String, Tuple6[(Int, String), (Int, String), (Int, String), (Int, String), (Int, String), (Int, String)]]
+  type TimeAmounts = (String, List[(Int, String)])
+
   val timeAmounts =
     for {
       w <- choose(0, 2)
@@ -215,7 +237,9 @@ trait TimeAmountsGen {
       s <- choose(0, 59)
       ml <- choose(0, 999)
     }
-    yield (TimeSpan(weeks(w) + days(d) + hours(h) + minutes(m) + seconds(s) + ml).toString,
-      ((w, "week"), (d, "day"), (h, "hour"), (m, "minute"), (s, "second"), (ml, "milli")))
+    yield (
+      TimeSpan(weeks(w) + days(d) + hours(h) + minutes(m) + seconds(s) + ml).toString,
+      (w, "week") :: (d, "day") :: (h, "hour") :: (m, "minute") :: (s, "second") :: (ml, "milli") :: Nil
+    )
 }
 

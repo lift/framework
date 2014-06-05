@@ -65,6 +65,7 @@ private[json] object ScalaSigReader {
       case TypeRefType(ThisType(_), symbol, _) if isPrimitive(symbol) => symbol
       case TypeRefType(_, _, TypeRefType(ThisType(_), symbol, _) :: xs) => symbol
       case TypeRefType(_, symbol, Nil) => symbol
+      case TypeRefType(_, _, args) if typeArgIndex >= args.length => findPrimitive(args(0))
       case TypeRefType(_, _, args) =>
         args(typeArgIndex) match {
           case ref @ TypeRefType(_, _, _) => findPrimitive(ref)
@@ -76,18 +77,12 @@ private[json] object ScalaSigReader {
   }
 
   private def findArgTypeForField(s: MethodSymbol, typeArgIdx: Int): Class[_] = {
-    // FIXME can be removed when 2.8 no longer needs to be supported.
-    // 2.8 does not have NullaryMethodType, work around that.
-    /*
     val t = s.infoType match {
       case NullaryMethodType(TypeRefType(_, _, args)) => args(typeArgIdx)
     }
-    */
-    val t = s.infoType.asInstanceOf[{ def resultType: Type }].resultType match {
-      case TypeRefType(_, _, args) => args(typeArgIdx)
-    }
 
-    def findPrimitive(t: Type): Symbol = t match { 
+    @scala.annotation.tailrec
+    def findPrimitive(t: Type): Symbol = t match {
       case TypeRefType(ThisType(_), symbol, _) => symbol
       case ref @ TypeRefType(_, _, _) => findPrimitive(ref)
       case x => Meta.fail("Unexpected type info " + x)

@@ -38,7 +38,7 @@ import net.liftweb.proto.{ProtoUser => GenProtoUser}
 trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsString {
   self: T =>
 
-  override def primaryKeyField = id
+  override def primaryKeyField: MappedLongIndex[T] = id
 
   /**
    * The primary key field for the User.  You can override the behavior
@@ -56,7 +56,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   /**
    * Convert the id to a String
    */
-  def userIdAsString: String = id.is.toString
+  def userIdAsString: String = id.get.toString
   
   /**
    * The first name field for the User.  You can override the behavior
@@ -78,7 +78,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   /**
    * The string name for the first name field
    */
-  def firstNameDisplayName = ??("first.name")
+  def firstNameDisplayName = S.?("first.name")
 
   /**
    * The last field for the User.  You can override the behavior
@@ -99,7 +99,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   /**
    * The last name string
    */
-  def lastNameDisplayName = ??("last.name")
+  def lastNameDisplayName = S.?("last.name")
 
   /**
    * The email field for the User.  You can override the behavior
@@ -114,7 +114,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
 
   protected class MyEmail(obj: T, size: Int) extends MappedEmail(obj, size) {
     override def dbIndexed_? = true
-    override def validations = valUnique(S.??("unique.email.address")) _ :: super.validations
+    override def validations = valUnique(S.?("unique.email.address")) _ :: super.validations
     override def displayName = fieldOwner.emailDisplayName
     override val fieldId = Some(Text("txtEmail"))
   }
@@ -122,7 +122,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   /**
    * The email first name
    */
-  def emailDisplayName = ??("email.address")
+  def emailDisplayName = S.?("email.address")
 
   /**
    * The password field for the User.  You can override the behavior
@@ -142,7 +142,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   /**
    * The display name for the password field
    */
-  def passwordDisplayName = ??("password")
+  def passwordDisplayName = S.?("password")
 
   /**
    * The superuser field for the User.  You can override the behavior
@@ -159,21 +159,21 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
     override def defaultValue = false
   }
 
-  def niceName: String = (firstName.is, lastName.is, email.is) match {
+  def niceName: String = (firstName.get, lastName.get, email.get) match {
     case (f, l, e) if f.length > 1 && l.length > 1 => f+" "+l+" ("+e+")"
     case (f, _, e) if f.length > 1 => f+" ("+e+")"
     case (_, l, e) if l.length > 1 => l+" ("+e+")"
     case (_, _, e) => e
   }
 
-  def shortName: String = (firstName.is, lastName.is) match {
+  def shortName: String = (firstName.get, lastName.get) match {
     case (f, l) if f.length > 1 && l.length > 1 => f+" "+l
     case (f, _) if f.length > 1 => f
     case (_, l) if l.length > 1 => l
-    case _ => email.is
+    case _ => email.get
   }
 
-  def niceNameWEmailLink = <a href={"mailto:"+email.is}>{niceName}</a>
+  def niceNameWEmailLink = <a href={"mailto:"+email.get}>{niceName}</a>
 }
 
 /**
@@ -229,27 +229,27 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
     /**
      * Return the user's first name
      */
-    def getFirstName: String = in.firstName
+    def getFirstName: String = in.firstName.get
 
     /**
      * Return the user's last name
      */
-    def getLastName: String = in.lastName
+    def getLastName: String = in.lastName.get
 
     /**
      * Get the user's email
      */
-    def getEmail: String = in.email
+    def getEmail: String = in.email.get
 
     /**
      * Is the user a superuser
      */
-    def superUser_? : Boolean = in.superUser
+    def superUser_? : Boolean = in.superUser.get
 
     /**
      * Has the user been validated?
      */
-    def validated_? : Boolean = in.validated
+    def validated_? : Boolean = in.validated.get
 
     /**
      * Does the supplied password match the actual password?
@@ -273,7 +273,7 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
     /**
      * Return the unique ID for the user
      */
-    def getUniqueId(): String = in.uniqueId
+    def getUniqueId(): String = in.uniqueId.get
 
     /**
      * Validate the user
@@ -422,12 +422,12 @@ trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
   /**
    * The string for the timezone field
    */
-  def timezoneDisplayName = ??("time.zone")
+  def timezoneDisplayName = S.?("time.zone")
 
   /**
    * The string for the locale field
    */
-  def localeDisplayName = ??("locale")
+  def localeDisplayName = S.?("locale")
 
 }
 

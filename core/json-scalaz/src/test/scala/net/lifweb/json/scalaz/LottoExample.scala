@@ -5,7 +5,7 @@ import Scalaz._
 import JsonScalaz._
 import net.liftweb.json._
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 object LottoExample extends Specification {
   case class Winner(winnerId: Long, numbers: List[Int])

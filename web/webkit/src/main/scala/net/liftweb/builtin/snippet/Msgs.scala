@@ -18,12 +18,14 @@ package net.liftweb
 package builtin
 package snippet
 
-import net.liftweb.http.{DispatchSnippet,LiftRules,NoticeType,S,SessionVar}
+import http._
 import scala.xml._
 import net.liftweb.util.Helpers._
 import net.liftweb.http.js._
 import JsCmds._
-import net.liftweb.common.{Box, Full, Empty}
+import net.liftweb.common.{Box, Empty}
+import common.Full
+import xml.Text
 
 
 /**
@@ -219,8 +221,8 @@ object MsgsErrorMeta extends SessionVar[Box[AjaxMessageMeta]](Empty) {
  * This SessionVar records whether to show id-based messages in
  * addition to non-id messages.
  */
-object ShowAll extends SessionVar[Boolean](false) {
-    override private[liftweb] def magicSessionVar_? = true
+object ShowAll extends RequestVar[Boolean](false) {
+    //override private[liftweb] def magicSessionVar_? = true
 }
 
 /**

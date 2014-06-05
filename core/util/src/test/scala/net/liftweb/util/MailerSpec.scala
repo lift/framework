@@ -19,31 +19,45 @@ package util
 
 import javax.mail.internet.{MimeMessage, MimeMultipart}
 
-import org.specs.Specification
+import org.specs2.mutable.Specification
 
 import common._
 
+import Mailer._
+
+trait MailerForTesting {
+  def lastMessage_=(message: Box[MimeMessage]): Unit
+  def lastMessage: Box[MimeMessage]
+}
 
 /**
  * Systems under specification for Lift Mailer.
  */
-object MailerSpec extends Specification("Mailer Specification") {
-  
-  MyMailer.touch()
+object MailerSpec extends Specification {
+  "Mailer Specification".title
+  sequential
 
-  import MyMailer._
-  
-  private def doNewMessage(f: => Unit): MimeMessage = {
+  Props.mode // touch the lazy val so it's detected correctly
+
+  val myMailer = new Mailer with MailerForTesting {
+    @volatile var lastMessage: Box[MimeMessage] = Empty
+
+    testModeSend.default.set((msg: MimeMessage) => {
+      lastMessage = Full(msg)
+    })
+  }
+
+  import myMailer._
+
+  private def doNewMessage(send: => Unit): MimeMessage = {
     lastMessage = Empty
 
-    val ignore = f
+    send
 
-    MailerSpec.this.synchronized {
-      while (lastMessage.isEmpty) {
-        MailerSpec.this.wait(100)
-      }
-      lastMessage.open_!
+    eventually {
+      lastMessage.isEmpty must_== false
     }
+    lastMessage openOrThrowException("Checked")
   }
 
   "A Mailer" should {
@@ -60,7 +74,7 @@ object MailerSpec extends Specification("Mailer Specification") {
 
       msg.getContent match {
         case s: String => true must_== true
-        case x => fail("The simple message has content type of " + x.getClass.getName)
+        case x => failure("The simple message has content type of " + x.getClass.getName)
       }
     }
 
@@ -77,7 +91,7 @@ object MailerSpec extends Specification("Mailer Specification") {
 
       msg.getContent match {
         case mp: MimeMultipart => true must_== true
-        case x => fail("The complex message has content type of " + x.getClass.getName)
+        case x => failure("The complex message has content type of " + x.getClass.getName)
       }
     }
 
@@ -93,23 +107,8 @@ object MailerSpec extends Specification("Mailer Specification") {
 
       msg.getContent match {
         case mp: MimeMultipart => true must_== true
-        case x => fail("The complex message has content type of " + x.getClass.getName)
+        case x => failure("The complex message has content type of " + x.getClass.getName)
       }
     }
   }
 }
-
-object MyMailer extends Mailer {
-    @volatile var lastMessage: Box[MimeMessage] = Empty
-
-   testModeSend.default.set((msg: MimeMessage) => {
-     lastMessage = Full(msg)
-//     MailerSpec.this.notifyAll()
-   })
-
-  def touch() {
-    Props.testMode
-    Thread.sleep(10)
-  } // do nothing, but force initialization of this class
-}
-

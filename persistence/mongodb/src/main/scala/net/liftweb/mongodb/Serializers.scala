@@ -23,6 +23,8 @@ import java.util.regex.{Pattern, PatternSyntaxException}
 
 import org.bson.types.ObjectId
 
+import org.joda.time.DateTime
+
 /*
 * Provides a way to serialize/de-serialize ObjectIds.
 *
@@ -87,6 +89,28 @@ class DateSerializer extends Serializer[Date] {
 
   def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
     case x: Date => Meta.dateAsJValue(x, format)
+  }
+}
+
+/*
+* Provides a way to serialize/de-serialize joda time DateTimes.
+*
+* Queries for a Date (dt) using the lift-json DSL look like:
+* ("dt" -> ("$dt" -> formats.dateFormat.format(dt)))
+*/
+class DateTimeSerializer extends Serializer[DateTime] {
+  private val DateTimeClass = classOf[DateTime]
+
+  def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), DateTime] = {
+    case (TypeInfo(DateTimeClass, _), json) => json match {
+      case JObject(JField("$dt", JString(s)) :: Nil) =>
+        new DateTime(format.dateFormat.parse(s).getOrElse(throw new MappingException("Can't parse "+ s + " to DateTime")))
+      case x => throw new MappingException("Can't convert " + x + " to Date")
+    }
+  }
+
+  def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {  
+    case x: DateTime => Meta.dateAsJValue(x.toDate, format)
   }
 }
 

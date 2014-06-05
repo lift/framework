@@ -59,7 +59,7 @@ trait HTTPProvider {
 
     CurrentHTTPReqResp.doWith(req -> resp) {
       val newReq = Req(req, LiftRules.statelessRewrite.toList,
-        LiftRules.statelessTest.toList,
+        Nil,
         LiftRules.statelessReqTest.toList,
         System.nanoTime)
 
@@ -87,8 +87,17 @@ trait HTTPProvider {
         preBoot
         b.boot
       } catch {
-        case e =>
-            logger.error("Failed to Boot! Your application may not run properly", e);
+        case e: Exception =>
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
+            logger.error("********** Failed to Boot! Your application may not run properly", e);
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
       } finally {
         postBoot
 
@@ -99,7 +108,7 @@ trait HTTPProvider {
 
   private def preBoot() {
     // do this stateless
-    LiftRules.statelessDispatchTable.prepend(NamedPF("Classpath service") {
+    LiftRules.statelessDispatch.prepend(NamedPF("Classpath service") {
       case r@Req(mainPath :: subPath, suffx, _) if (mainPath == LiftRules.resourceServerPath) =>
         ResourceServer.findResourceInClasspath(r, r.path.wholePath.drop(1))
     })
@@ -114,7 +123,7 @@ trait HTTPProvider {
         LiftRules.templateCache = Full(InMemoryCache(500))
       }
     } catch {
-      case _ => logger.error("LiftWeb core resource bundle for locale " + Locale.getDefault() + ", was not found ! ")
+      case _: Exception => logger.error("LiftWeb core resource bundle for locale " + Locale.getDefault() + ", was not found ! ")
     } finally {
       LiftRules.bootFinished()
     }

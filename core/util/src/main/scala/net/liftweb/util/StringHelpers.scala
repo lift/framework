@@ -21,7 +21,10 @@ import java.security.SecureRandom
 import java.util.regex._
 import java.lang.Character._
 import java.lang.{StringBuilder => GoodSB}
+
+import scala.language.implicitConversions
 import scala.xml.NodeSeq
+
 import common._
 
 object StringHelpers extends StringHelpers
@@ -363,9 +366,6 @@ trait StringHelpers {
 
   /** @return a SuperString with more available methods such as roboSplit or commafy */
   implicit def listStringToSuper(in: List[String]): SuperListString = new SuperListString(in)
-
-  @deprecated("Use blankForNull instead")
-  def emptyForNull(s: String) = blankForNull(s)
 
   /**
    * Test for null and return either the given String if not null or the blank String.
