@@ -19,7 +19,11 @@ rules.
 
 == Selectors and Replacement Rules
 
-CSS Selector Transforms consist of three main components:
+CSS Selector Transforms generate a function that takes in a `NodeSeq` and
+transforms it according to a set of rules, producing a final `NodeSeq` with all
+of the transformations applied. This means a CSS Selector Transform is
+ultimately simply a function with signature `(NodeSeq)=>NodeSeq`. CSS Selector
+Transforms consist of three main components:
  - The selector
  - The subnode modification rule
  - The transformation function
