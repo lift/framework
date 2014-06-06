@@ -179,9 +179,30 @@ Don't merge attributes rule: `!!`::
   yield `<div type="text" />`. Doing `"input !!" #> <div />` would instead yield
   `<div />`.
 
-Lift node rule:: `^^`::
+Lift node rule: `^^`::
+  This rule will lift the first selected element all the way to the root of the
+  `NodeSeq` it's being applied to. Note that the transformation result is
+  irrelevant in this case. Additionally, note that this only applies to the
+  _first_ element that matches the selector, and that it lifts it all the way to
+  the root of the `NodeSeq` being transformed. For example,
+  `".admin-user ^^" #> "ignored"`, when applied to the
+  markup `<div><form><fieldset class=".admin-user">...</fieldset>
+  <fieldset class="power-user">...</fieldset></div>`, will
+  produce `<fieldset class="admin-user">...</fieldset>`. This is useful for
+  selecting among a set of template elements based on some external condition
+  (e.g., one template for one type of user, another template for another type of
+  user, etc).
 
 Lift node's children rule: `^*`::
+  This rule will lift the _children_ of the first selected element all the way
+  to the root of the `NodeSeq` it's being applied to. As above, the
+  transformation result is irrelevant, only the _first_ matched element's
+  children are lifted, and the children are lifted all the way to the root of
+  the `NodeSeq` being transformed. For example, `"#power-user ^*" #> "ignored"`,
+  when applied to the markup
+  `<section id="admin-user"><h3>Admin</h3></section>
+  <section id="power-user"><h3>Power User</h3></section>`,
+  will produce `<h3>Power User</h3>`.
 
 == Transformation Functions
 
