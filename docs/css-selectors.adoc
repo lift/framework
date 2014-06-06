@@ -9,8 +9,8 @@ Lift's templating strategy is much simpler than most systems, and is aimed at
 cleanly and completely separating business logic from markup. Many a framework
 has made this claim, but Lift is one of the few to have achieved this break
 completely, using only HTML annotations with `data-` attributes. You can find
-an overview of the full Lift CSS templating strategy in the [Lift templating
-guide]().
+an overview of the full Lift CSS templating strategy in the
+link:templating-guide[Lift templating guide].
 
 This document is a reference on the underpinnings of Lift templating, the CSS
 Selector Transforms. These are used in Lift code to transform a block of HTML
@@ -254,7 +254,7 @@ box by Lift:
   This lets you use a full-blown transformation function. This function will
   take in the element that matched the selector and provide the modification
   rule with the results of the function. For example, you could clear an
-  element by saying `".user" #> { ns: NodeSeq => NodeSeq.Empty }`footnote:[In
+  element by saying `".user" #> { ns: NodeSeq => NodeSeq.Empty }` footnote:[In
   fact, there is a `ClearNodes` function defined in `net.liftweb.util` that does
   exactly this.]. Because CSS Selector Transforms are themselves
   `NodeSeq=>NodeSeq` functions, you can nest them this way. For example, you
