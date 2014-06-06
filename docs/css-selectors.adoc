@@ -210,6 +210,77 @@ Lift node's children rule: `^*`::
 
 == Transformation Functions
 
+Transformation functions specify the contents used by the modification rules to
+update the `NodeSeq` that is being transformed. Note that these are always
+lazily computed, so if a selector doesn't match, then its transformation
+function will not be run. Strictly speaking, a transformation function need
+not be a _function_---sometimes it will just be a static value. More details
+below.
+
+NOTE: Two of the modification rules, `^^` and `^*`, ignore the result of the
+transformation function; usually `"ignored"` is passed as the transformation
+function in these cases.
+
+The transformation function can be any type `T` that has an implicit
+`CanBind[T]` available. `CanBind` requires a single `apply` method with two
+parameter lists, one for the `T` value and one that is the `NodeSeq` that was
+matched by the selector. For example, if you invoke `"input" #> "Hello"` with
+the HTML `<div class="inputs"><input type="text"><input type="date"></div>`,
+an instance of `CanBind[String]` is used, and is called twice; first as
+`stringBind("Hello")(<input type="text" />)` and then as
+`stringBind("Hello")(<input type="date" />)`. Note that a `CanBind[String]` is
+already provided by default.
+
+Here are a few of the more interesting `CanBind` s that are supported out of the
+box by Lift:
+
+`CanBind[Bindable]`::
+  This allows you to directly use a `Mapper` or `Record` instance on the right
+  hand side of the transform to put its HTML representation somewhere (as
+  returned by `asHtml`).
+
+`CanBind[StringPromotable]`::
+  Lift has a `StringPromotable` trait that can be used to mark objects that can
+  be straightforwardly promoted to a `String`. Amongst other things, by default
+  this includes `JsCmd` s. This allows those types of objects to be put on the
+  right hand side of a transform.
+
+`CanBind[Box[T]]` and `CanBind[Option[T]]`::
+  Defined for a few types, the most important characteristic of these is that
+  they will return a `NodeSeq.Empty` if the `Option` or `Box` is `Empty`/`None`
+  or `Failure`.
+
+`CanBind[NodeSeq=>NodeSeq]`::
+  This lets you use a full-blown transformation function. This function will
+  take in the element that matched the selector and provide the modification
+  rule with the results of the function. For example, you could clear an
+  element by saying `".user" #> { ns: NodeSeq => NodeSeq.Empty }`footnote:[In
+  fact, there is a `ClearNodes` function defined in `net.liftweb.util` that does
+  exactly this.]. Because CSS Selector Transforms are themselves
+  `NodeSeq=>NodeSeq` functions, you can nest them this way. For example, you
+  can say `".user" #> { ".name *" #> user.name }`. With the markup
+  `<li class="user"><p class="name">Person</p></li>`, this will first select
+  the `li`, then pass it to the second transform which will select the `p`
+  and set its value to the user's name. Then the second transform will return
+  the `li` with the user's name set up, and the top-level transform will replace
+  the original, unbound `li` with the new one.
+
+`CanBind[Iterable[T]]`::
+  This is defined for most `T` values that `CanBind` is also defined for, and
+  in fact it's recommended that if you provide a `CanBind` for a type `T`, you
+  also provide it for `Iterable[T]`. This will repeatedly run the transform
+  function that you specify for each `T` in the `Iterable`, concatenate the
+  resulting `NodeSeq` s, and return that. This makes it trivial to deal with
+  lists, so you can simply do something like
+  `".user" #> users.map { user => ".name" #> user.name }`
+  to map the names for all users. This will create a copy of the `.user` element
+  for each user, and bind their name correctly. It will also ensure that if
+  the matched `.user` instance has an id, only the first copy of the elements
+  will have that id after the transform is finished.
+
+There are a lot more `CanBind` s, and you can find them at the
+link:docs/for/net.liftweb.util.CanBind[docs for `CanBind`].
+
 == Combining Selectors and Transforms
 
 Lift's selectors are not identical to CSS selectors. They're designed for speed
