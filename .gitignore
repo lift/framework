@@ -56,3 +56,5 @@ project/plugins/project
 # Pax Runner (for easy OSGi launching)
 runner
 
+# Generated docs
+docs/*.html
