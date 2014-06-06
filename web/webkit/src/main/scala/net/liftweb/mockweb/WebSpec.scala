@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest
 
 import scala.xml.NodeSeq
 
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable._
 import org.specs2.execute.Result
 
@@ -43,7 +44,7 @@ import mocks.MockHttpServletRequest
  * initialize LiftRules, Mapper, etc. The simplest approach
  * is to just point this at your Boostrap.boot method.
  */
-abstract class WebSpec(boot : () => Any = () => {}) extends Specification {
+abstract class WebSpec(boot : () => Any = () => {}) extends Specification with XmlMatchers {
   /**
    * This is our private spec instance of Liftrules. Everything we run will
    * use this instance instead of the global instance

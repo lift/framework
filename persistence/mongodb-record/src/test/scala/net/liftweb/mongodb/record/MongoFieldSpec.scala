@@ -22,9 +22,9 @@ import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
 
 import org.bson.types.ObjectId
-import org.specs2.mutable.Specification
-import org.specs2.specification.Fragment
-import org.specs2.specification.AroundExample
+import org.specs2.mutable._
+import org.specs2.specification._
+import org.specs2.execute.AsResult
 
 import org.joda.time.DateTime
 
@@ -54,6 +54,8 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
 
   lazy val session = new LiftSession("", randomString(20), Empty)
 
+  // One of these is for specs2 2.x, the other for specs2 1.x
+  protected def around[T : AsResult](t: =>T) = S.initIfUninitted(session) { AsResult(t) }
   protected def around[T <% org.specs2.execute.Result](t: =>T) = S.initIfUninitted(session) { t }
 
   def passBasicTests[A](
@@ -64,7 +66,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
     canCheckDefaultValues: Boolean = true
   )(implicit m: scala.reflect.Manifest[A]): Unit = {
 
-    def commonBehaviorsForAllFlavors(field: MandatoryTypedField[A]): Unit = {
+    def commonBehaviorsForAllFlavors(field: MandatoryTypedField[A]) = {
 
       "which have the correct initial value" in {
         field.value must be_==(field.defaultValue).when(canCheckDefaultValues)

@@ -18,6 +18,7 @@ package net.liftweb
 package http
 
 import xml.{NodeSeq, Text}
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import common._
@@ -25,10 +26,11 @@ import util.Helpers._
 import Bindings._
 
 
+
 /**
  * System under specification for Bindings.
  */
-object BindingsSpec extends Specification  {
+object BindingsSpec extends Specification with XmlMatchers {
   "Bindings Bindings".title
 
   case class MyClass(str: String, i: Int, other: MyOtherClass)

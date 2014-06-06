@@ -169,8 +169,6 @@ class MapperSpec extends Specification with BeforeExample {
 
         val mm = SampleTag.findAll(Like(SampleTag.tag, "M%"))
 
-        (mm.length > 0) must beTrue
-
         for (t <- mm)
           (t.tag.get.startsWith("M")) must beTrue
 
@@ -179,6 +177,8 @@ class MapperSpec extends Specification with BeforeExample {
           t.model.obj
           t.model.cached_? must beTrue
         }
+
+        (mm.length > 0) must beTrue
       }
 
       "Nullable Long works" in {
@@ -209,8 +209,9 @@ class MapperSpec extends Specification with BeforeExample {
       "Precache works" in {
         val oo = SampleTag.findAll(By(SampleTag.tag, "Meow"), PreCache(SampleTag.model))
 
-        (oo.length > 0) must beTrue
         for (t <- oo) yield t.model.cached_? must beTrue
+
+        (oo.length > 0) must beTrue
       }
 
       "Precache works with OrderBy" in {
@@ -232,16 +233,18 @@ class MapperSpec extends Specification with BeforeExample {
         val dogs = Dog.findAll(By(Dog.name, "fido"), PreCache(Dog.owner, false))
         val oo = SampleTag.findAll(By(SampleTag.tag, "Meow"), PreCache(SampleTag.model, false))
 
-        (oo.length > 0) must beTrue
         for (t <- oo) yield t.model.cached_? must beTrue
+
+        (oo.length > 0) must beTrue
       }
 
       "Non-deterministic Precache works with OrderBy" in {
         val dogs = Dog.findAll(By(Dog.name, "fido"), OrderBy(Dog.name, Ascending), PreCache(Dog.owner, false))
         val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model, false))
 
-        (oo.length > 0) must beTrue
         for (t <- oo) yield t.model.cached_? must beTrue
+
+        (oo.length > 0) must beTrue
       }
 
       "work with Mixed case" in {
@@ -324,8 +327,9 @@ class MapperSpec extends Specification with BeforeExample {
         val dogs = Dog2.findAll(By(Dog2.name, "fido"), PreCache(Dog2.owner, false))
         val oo = SampleTag.findAll(By(SampleTag.tag, "Meow"), PreCache(SampleTag.model, false))
 
-        (oo.length > 0) must beTrue
         for (t <- oo) yield t.model.cached_? must beTrue
+
+        (oo.length > 0) must beTrue
       }
 
 
@@ -354,8 +358,9 @@ class MapperSpec extends Specification with BeforeExample {
 
         val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model, false))
 
-        (oo.length > 0) must beTrue
         for (t <- oo) yield t.model.cached_? must beTrue
+
+        (oo.length > 0) must beTrue
       }
 
       "Save flag results in update rather than insert" in {

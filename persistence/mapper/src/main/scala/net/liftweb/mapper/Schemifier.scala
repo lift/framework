@@ -19,7 +19,7 @@ package mapper
 
 import java.sql.{Connection, ResultSet, DatabaseMetaData}
 
-import collection.mutable.{HashMap, ListBuffer}
+import scala.collection.mutable.{HashMap, ListBuffer}
 
 import common.{Full, Box, Loggable}
 import util.Helpers

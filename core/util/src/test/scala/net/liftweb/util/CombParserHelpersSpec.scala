@@ -106,6 +106,8 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
           result.get.toString must_== "()"
           result.next.atEnd must beTrue
       }
+
+      success
     }
     val parserA = elem("a", (c: Char) => c == 'a')
     val parserB = elem("b", (c: Char) => c == 'b')

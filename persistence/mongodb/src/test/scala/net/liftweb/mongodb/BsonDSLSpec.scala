@@ -76,6 +76,8 @@ object BsonDSLSpec extends Specification  {
         ptrnList(i).pattern must_== ptrnList2(i).pattern
         ptrnList(i).flags must_== ptrnList2(i).flags
       }
+
+      ptrnList2.length must_== ptrnList.length
     }
 
     "Convert Regex properly" in {

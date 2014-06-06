@@ -17,13 +17,14 @@
 package net.liftweb
 package util
 
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 
 /**
  * Systems under specification for VCardParser.
  */
-object VCardParserSpec extends Specification  {
+object VCardParserSpec extends Specification with XmlMatchers {
   "VCardParser Specification".title
 
   "VCard" should {
@@ -41,7 +42,7 @@ object VCardParserSpec extends Specification  {
         |END:VCARD""".stripMargin
 
       val list = VCardParser.parse(vcard)
-      list match {
+      list must beLike {
         case Left(l)  => {
           import VCardParser._
           l must_==
@@ -56,7 +57,6 @@ object VCardParserSpec extends Specification  {
               VCardEntry(VCardKey("TEL", List(("HOME", ""), ("VOICE", ""))), List("(404) 555-1212")),
               VCardEntry(VCardKey("END", List()), List("VCARD")))
         }
-        case Right(r) => failure(r toString)
       }
 
     }

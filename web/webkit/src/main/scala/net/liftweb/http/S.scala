@@ -19,7 +19,7 @@ package http
 
 import java.util.{Locale, TimeZone, ResourceBundle}
 
-import collection.mutable.{HashMap, ListBuffer}
+import scala.collection.mutable.{HashMap, ListBuffer}
 import xml._
 
 import common._
@@ -1783,7 +1783,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # prefixedAttrsToMetaData ( String )
    * @see # prefixedAttrsToMetaData ( String, Map )
    */
-  def attrs: List[(Either[String, (String, String)], String)] = S._attrs.value match {
+  def attrs: List[(Either[String, (String, String)], String)] = _attrs.value match {
     case null => Nil
     case (current,full) => full
   }

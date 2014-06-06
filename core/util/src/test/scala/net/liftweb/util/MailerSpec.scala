@@ -69,10 +69,7 @@ object MailerSpec extends Specification {
         )
       }
 
-      msg.getContent match {
-        case s: String => true must_== true
-        case x => failure("The simple message has content type of " + x.getClass.getName)
-      }
+      msg.getContent must beAnInstanceOf[String]
     }
 
     "deliver multipart messages as multipart" in {
@@ -86,10 +83,7 @@ object MailerSpec extends Specification {
         )
       }
 
-      msg.getContent match {
-        case mp: MimeMultipart => true must_== true
-        case x => failure("The complex message has content type of " + x.getClass.getName)
-      }
+      msg.getContent must beAnInstanceOf[MimeMultipart]
     }
 
     "deliver rich messages as multipart" in {
@@ -102,10 +96,7 @@ object MailerSpec extends Specification {
         )
       }
 
-      msg.getContent match {
-        case mp: MimeMultipart => true must_== true
-        case x => failure("The complex message has content type of " + x.getClass.getName)
-      }
+      msg.getContent must beAnInstanceOf[MimeMultipart]
     }
 
     "deliver emails with attachments as mixed multipart" in {
