@@ -991,13 +991,13 @@ class Req(val path: ParsePath,
    * there was an error parsing the JSON.
    *
    * If you want to forcibly evaluate the request body as JSON, ignoring
-   * content type, see bodyAsJson.
+   * content type, see `forcedBodyAsJson`.
    */
   lazy val json: Box[JsonAST.JValue] = {
     if (!json_?) {
       Failure("Cannot parse non-JSON request as JSON; please check content-type.")
     } else {
-      bodyAsJson
+      forcedBodyAsJson
     }
   }
 
@@ -1005,7 +1005,7 @@ class Req(val path: ParsePath,
    * Forcibly tries to parse the request body as JSON. Does not perform any
    * content type checks, unlike the json method.
    */
-  lazy val bodyAsJson: Box[JsonAST.JValue] = {
+  lazy val forcedBodyAsJson: Box[JsonAST.JValue] = {
     try {
       import java.io._
 
@@ -1050,13 +1050,13 @@ class Req(val path: ParsePath,
    * there was an error parsing the XML.
    *
    * If you want to forcibly evaluate the request body as XML, ignoring
-   * content type, see bodyAsXml.
+   * content type, see `forcedBodyAsXml`.
    */
   lazy val xml: Box[Elem] = {
     if (!xml_?) {
       Failure("Cannot parse non-XML request as XML; please check content-type.")
     } else  {
-      bodyAsXml
+      forcedBodyAsXml
     }
   }
 
@@ -1064,7 +1064,7 @@ class Req(val path: ParsePath,
    * Forcibly tries to parse the request body as XML. Does not perform any
    * content type checks, unlike the xml method.
    */
-  lazy val bodyAsXml: Box[Elem] = {
+  lazy val forcedBodyAsXml: Box[Elem] = {
     try {
       import java.io._
       body.map(b => XML.load(new ByteArrayInputStream(b)))

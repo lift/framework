@@ -156,17 +156,17 @@ object ReqSpec extends Specification with XmlMatchers with Mockito {
       }
     }
 
-    "when forcing a request body JSON parse with bodyAsJson" in {
+    "when forcing a request body JSON parse with forcedBodyAsJson" in {
       "with an invalid Content-Type should return the result of parsing the JSON" in new mockJsonReq {
-        req("text/plain").bodyAsJson should_== Full(parsedJson)
+        req("text/plain").forcedBodyAsJson should_== Full(parsedJson)
       }
 
       "with an application/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
-        req("application/json").bodyAsJson should_== Full(parsedJson)
+        req("application/json").forcedBodyAsJson should_== Full(parsedJson)
       }
 
       "with a text/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
-        req("text/json").bodyAsJson should_== Full(parsedJson)
+        req("text/json").forcedBodyAsJson should_== Full(parsedJson)
       }
     }
 
@@ -184,17 +184,17 @@ object ReqSpec extends Specification with XmlMatchers with Mockito {
       }
     }
 
-    "when forcing a request body XML parse with bodyAsXml" in {
+    "when forcing a request body XML parse with forcedBodyAsXml" in {
       "with an invalid Content-Type should return the result of parsing the JSON" in new mockXmlReq {
-        req("text/plain").bodyAsXml should_== Full(parsedXml)
+        req("text/plain").forcedBodyAsXml should_== Full(parsedXml)
       }
 
       "with an application/json Content-Type should return the result of parsing the JSON" in new mockXmlReq {
-        req("application/xml").bodyAsXml should_== Full(parsedXml)
+        req("application/xml").forcedBodyAsXml should_== Full(parsedXml)
       }
 
       "with a text/json Content-Type should return the result of parsing the JSON" in new mockXmlReq {
-        req("text/xml").bodyAsXml should_== Full(parsedXml)
+        req("text/xml").forcedBodyAsXml should_== Full(parsedXml)
       }
     }
   }
