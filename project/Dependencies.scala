@@ -25,16 +25,16 @@ object Dependencies {
 
   lazy val CVMapping2911 = crossMapped("2.9.1-1" -> "2.9.1")
   lazy val CVMapping29   = crossMapped("2.10.4" -> "2.10", "2.10.0" -> "2.10", "2.9.1-1" -> "2.9.2", "2.9.1" -> "2.9.2")
-  lazy val CVMappingAll  = crossMapped("2.11.0" -> "2.11", "2.10.4" -> "2.10", "2.10.0" -> "2.10", "2.9.2" -> "2.9.1", "2.9.1-1" -> "2.9.1")
-  lazy val CVMappingScalaz = crossMapped("2.11.0" -> "2.11", "2.10.4" -> "2.10", "2.10.0" -> "2.10", "2.9.1-1" -> "2.9.2", "2.9.1" -> "2.9.2")
+  lazy val CVMappingAll  = crossMapped("2.11.1" -> "2.11", "2.11.0" -> "2.11", "2.10.4" -> "2.10", "2.10.0" -> "2.10", "2.9.2" -> "2.9.1", "2.9.1-1" -> "2.9.1")
+  lazy val CVMappingScalaz = crossMapped("2.11.1" ->"2.11", "2.11.0" -> "2.11", "2.10.4" -> "2.10", "2.10.0" -> "2.10", "2.9.1-1" -> "2.9.2", "2.9.1" -> "2.9.2")
 
   lazy val slf4jVersion = "1.7.2"
 
   lazy val scalazGroup        = defaultOrMapped("org.scalaz")
   lazy val scalazVersion      = defaultOrMapped("6.0.4")
-  lazy val scalaz7Version     = defaultOrMapped("7.0.0",  "2.11.0" -> "7.0.6")
-  lazy val specs2Version      = defaultOrMapped("1.12.3", "2.11.0" -> "2.3.11")
-  lazy val scalatestVersion   = defaultOrMapped("1.9.1",  "2.11.0" -> "2.1.3")
+  lazy val scalaz7Version     = defaultOrMapped("7.0.0",  "2.11.0" -> "7.0.6", "2.11.1" -> "7.0.6")
+  lazy val specs2Version      = defaultOrMapped("1.12.3", "2.11.0" -> "2.3.11", "2.11.1" -> "2.3.11")
+  lazy val scalatestVersion   = defaultOrMapped("1.9.1",  "2.11.0" -> "2.1.3", "2.11.1" -> "2.1.3")
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
