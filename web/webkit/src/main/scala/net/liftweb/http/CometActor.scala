@@ -793,6 +793,21 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
   Box[NodeSeq] = Full(f(defaultHtml))
 
   /**
+   * By default, `CometActor` handles `RedirectShortcutException`, which is
+   * used to handle many types of redirects in Lift. If you override this
+   * `PartialFunction` to do your own exception handling and want redirects
+   * from e.g. `S.redirectTo` to continue working correctly, make sure you
+   * chain back to this implementation.
+   */
+  override def exceptionHandler : PartialFunction[Throwable, Unit] = {
+    case  ResponseShortcutException(_, Full(redirectUri), _) =>
+      partialUpdate(RedirectTo(redirectUri))
+
+    case other if super.exceptionHandler.isDefinedAt(other) =>
+      super.exceptionHandler(other)
+  }
+
+  /**
    * Handle messages sent to this Actor before the 
    */
   def highPriority: PartialFunction[Any, Unit] = Map.empty
