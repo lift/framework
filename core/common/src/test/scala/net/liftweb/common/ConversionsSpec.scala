@@ -19,13 +19,14 @@ package common
 
 import xml.{NodeSeq, Text}
 
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 
 /**
  * System under specification for Conversions.
  */
-class ConversionsSpec extends Specification {
+class ConversionsSpec extends Specification with XmlMatchers {
 
   "A StringOrNodeSeq" should {
 

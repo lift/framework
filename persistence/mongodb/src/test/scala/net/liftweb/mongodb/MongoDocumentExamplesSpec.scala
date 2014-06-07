@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,7 +183,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
 
   override def dbName = "lift_mongodocumentexamples"
 
-  override def dbs = (TstDBa, defaultHost, "lift_mongodocumentexamples_a") :: super.dbs
+  override def dbs = (TstDBa, "lift_mongodocumentexamples_a") :: super.dbs
 
   "Simple Person example" in {
 
@@ -486,12 +486,12 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     val tc3 = SessCollection(ObjectId.get, "MongoDB", "db", 1)
 
     // use a Mongo instance directly with a session
-    MongoDB.useSession(DefaultMongoIdentifier) ( db => {
+    MongoDB.useSession( db => {
 
       // save to db
       SessCollection.save(tc, db)
       db.getLastError.get("err") must beNull
-      SessCollection.save(tc2, db) // this should return an error
+      SessCollection.save(tc2, db)
       db.getLastError.get("err").toString must startWith("E11000 duplicate key error index")
       SessCollection.save(tc3, db)
       db.getLastError.get("err") must beNull
@@ -634,8 +634,8 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     val pdoc1 = PatternDoc(ObjectId.get, Pattern.compile("^Mo", Pattern.CASE_INSENSITIVE))
     pdoc1.save
 
-    PatternDoc.find(pdoc1._id).toList map {
-      pdoc =>
+    PatternDoc.find(pdoc1._id) must beLike {
+      case Some(pdoc) =>
         pdoc._id must_== pdoc1._id
         pdoc.regx.pattern must_== pdoc1.regx.pattern
         pdoc.regx.flags must_== pdoc1.regx.flags
@@ -658,15 +658,14 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     }
 
     val fromDb = StringDateDoc.find(newId)
-    fromDb.isDefined must_== true
-    fromDb.toList flatMap {
-      sdd =>
+    fromDb must beLike {
+      case Some(sdd) =>
         sdd._id must_== newId
         sdd.dt must_== newDt
         sdd.save
 
-        StringDateDoc.find(newId) map {
-          sdd2 =>
+        StringDateDoc.find(newId) must beLike {
+          case Some(sdd2) =>
             sdd2.dt must_== sdd.dt
         }
     }

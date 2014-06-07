@@ -18,6 +18,7 @@ package net.liftweb
 package record
 
 import net.liftweb.common._
+import net.liftweb.http.S
 import net.liftweb.http.js.{JsExp}
 import net.liftweb.json.JsonAST.{JNothing, JNull, JString, JValue}
 import net.liftweb.util._
@@ -52,11 +53,6 @@ trait BaseField extends FieldIdentifier with util.BaseField {
    * Is the value of this field optional (e.g. NULLable)?
    */
   def optional_? = false
-
-  /**
-   * The text name of this field
-   */
-  def name: String = fieldName
 
   /**
    * Can the value of this field be read without obscuring the result?
@@ -147,6 +143,16 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends BaseField {
    * Return the owner of this field
    */
   def owner: OwnerType
+
+  /**
+   * The text name of this field
+   */
+  def name: String = RecordRules.fieldName.vend.apply(owner.meta.connectionIdentifier, fieldName)
+
+  /**
+    * The display name of this field (e.g., "First Name")
+    */
+  override def displayName: String = RecordRules.displayName.vend.apply(owner, S.locale, name)
 
   /**
    * Are we in "safe" mode (i.e., the value of the field can be read or written without any security checks.)

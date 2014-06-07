@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,8 +90,8 @@ class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
     case jv => JsRaw(Printer.compact(render(jv)))
   }
 
-  def asJValue: JValue = valueBox.map(v => Meta.objectIdAsJValue(v, owner.meta.formats)) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(v => JsonObjectId.asJValue(v, owner.meta.formats)) openOr (JNothing: JValue)
 
-  def createdAt: Date = new Date(this.get.getTime)
+  def createdAt: Date = this.get.getDate
 }
 

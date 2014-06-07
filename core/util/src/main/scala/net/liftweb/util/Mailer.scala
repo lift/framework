@@ -282,36 +282,67 @@ trait Mailer extends SimpleInjector {
    */
   protected def buildMailBody(tab: MailBodyType): BodyPart = {
     val bp = new MimeBodyPart
-          tab match {
-            case PlainMailBodyType(txt) => bp.setText(txt, "UTF-8")
-            case PlainPlusBodyType(txt, charset) => bp.setText(txt, charset)
-            case XHTMLMailBodyType(html) => bp.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
 
-            case XHTMLPlusImages(html, img@_*) =>
-              val html_mp = new MimeMultipart("related")
-              val bp2 = new MimeBodyPart
-              bp2.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
-              html_mp.addBodyPart(bp2)
-              img.foreach {
-                i =>
-                val rel_bpi = new MimeBodyPart
-                rel_bpi.setFileName(i.name)
-                rel_bpi.setContentID(i.name)
-                rel_bpi.setDisposition(if (!i.attachment) "inline" else "attachment")
-                rel_bpi.setDataHandler(new javax.activation.DataHandler(new javax.activation.DataSource {
-                      def getContentType = i.mimeType
+    tab match {
+      case PlainMailBodyType(txt) =>
+        bp.setText(txt, "UTF-8")
 
-                      def getInputStream = new java.io.ByteArrayInputStream(i.bytes)
+      case PlainPlusBodyType(txt, charset) =>
+        bp.setText(txt, charset)
 
-                      def getName = i.name
+      case XHTMLMailBodyType(html) =>
+        bp.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
 
-                      def getOutputStream = throw new java.io.IOException("Unable to write to item")
-                    }))
-                html_mp.addBodyPart(rel_bpi)
-              }
-              bp.setContent(html_mp)
+      case XHTMLPlusImages(html, img@_*) =>
+        val (attachments, images) = img.partition(_.attachment)
+        val relatedMultipart = new MimeMultipart("related")
+
+        val htmlBodyPart = new MimeBodyPart
+        htmlBodyPart.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
+        relatedMultipart.addBodyPart(htmlBodyPart)
+
+        images.foreach { image =>
+          relatedMultipart.addBodyPart(buildAttachment(image))
+        }
+
+        if (attachments.isEmpty) {
+          bp.setContent(relatedMultipart)
+        } else {
+          // Some old versions of Exchange server will not behave correclty without
+          // a mixed multipart wrapping file attachments. This appears to be linked to
+          // specific versions of Exchange and Outlook. See the discussion at
+          // https://github.com/lift/framework/pull/1569 for more details.
+          val mixedMultipart = new MimeMultipart("mixed")
+
+          val relatedMultipartBodypart = new MimeBodyPart
+          relatedMultipartBodypart.setContent(relatedMultipart)
+          mixedMultipart.addBodyPart(relatedMultipartBodypart)
+
+          attachments.foreach { attachment =>
+            mixedMultipart.addBodyPart(buildAttachment(attachment))
           }
+
+          bp.setContent(mixedMultipart)
+        }
+    }
+
     bp
+  }
+
+  private def buildAttachment(holder: PlusImageHolder) = {
+    val part = new MimeBodyPart
+
+    part.setFileName(holder.name)
+    part.setContentID(holder.name)
+    part.setDisposition(if (holder.attachment) Part.ATTACHMENT else Part.INLINE)
+    part.setDataHandler(new javax.activation.DataHandler(new javax.activation.DataSource {
+      def getContentType = holder.mimeType
+      def getInputStream = new java.io.ByteArrayInputStream(holder.bytes)
+      def getName = holder.name
+      def getOutputStream = throw new java.io.IOException("Unable to write to item")
+    }))
+
+    part
   }
 
 

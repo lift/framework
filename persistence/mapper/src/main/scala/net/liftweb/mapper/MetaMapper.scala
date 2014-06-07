@@ -21,14 +21,14 @@ import java.lang.reflect.Method
 import java.sql.{ResultSet, Types, PreparedStatement}
 import java.util.{Date, Locale}
 
-import collection.mutable.{ListBuffer, HashMap}
-import collection.immutable.{SortedMap, TreeMap}
+import scala.collection.mutable.{ListBuffer, HashMap}
+import scala.collection.immutable.{SortedMap, TreeMap}
 import xml._
 
 import common._
 import json._
 import util.Helpers._
-import util.{NamedPF, FieldError, Helpers}
+import util.{NamedPF, FieldError, Helpers,PassThru,CssSel}
 import http.{LiftRules, S, SHtml, RequestMemoize, Factory}
 import http.js._
 
@@ -1054,6 +1054,33 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     }
   }
 
+  /**
+   * A set of CssSels that can be used to bind this MetaMapper's fields.
+   *
+   * Elements with a class matching the field name are mapped to the NodeSeq
+   * produced by the fieldHtml function that is passed in.
+   *
+   * So, with a MetaMapper that has three fields, name, date, and description,
+   * the resulting CSS selector transforms are:
+   *
+   * {{{
+   * Seq(
+   *   ".name" #> fieldHtml(-name field-),
+   *   ".date" #> fieldHtml(-date field-),
+   *   ".description" #> fieldHtml(-description field-)
+   * )
+   * }}}
+   *
+   * Above, -name field-, -date field-, and -description field- refer to the
+   * actual MappedField objects for those fields.
+   */
+  def fieldMapperTransforms(fieldHtml: (BaseOwnedMappedField[A]=>NodeSeq), mappedObject: A): Seq[CssSel] = {
+    mappedFieldList.map { field =>
+      ("." + field.name) #> fieldHtml(??(field.method, mappedObject))
+    }
+  }
+
+  @deprecated("Use fieldMapperTransforms with CssSels instead.", "2.6")
   def fieldMapperPF(transform: (BaseOwnedMappedField[A] => NodeSeq), actual: A): PartialFunction[String, NodeSeq => NodeSeq] = {
     Map.empty ++ mappedFieldList.map ( mf =>
       (mf.name, ((ignore: NodeSeq) => transform(??(mf.method, actual))))
@@ -1962,14 +1989,18 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
 
     NamedPF("crud "+Name) {
       case Name :: "add"  :: _ => addSnippet
+      case Name :: "addForm"  :: _ => addFormSnippet
       case Name :: "edit" :: _ => editSnippet
+      case Name :: "editForm" :: _ => editFormSnippet
       case Name :: "view" :: _ => viewSnippet
+      case Name :: "viewTransform" :: _ => viewTransform
     }
   }
 
   /**
    * Default snippet for modification. Used by the default add and edit snippets.
    */
+  @deprecated("Use formSnippet instead.", "2.6")
   def modSnippet(xhtml: NodeSeq, obj: A, cleanup: (A => Unit)): NodeSeq = {
     val name = internal_dbTableName
 
@@ -1983,27 +2014,83 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
   }
 
   /**
+   * Provides basic transformation of <code>html</code> to a form for the
+   * given <code>obj</code>. When the form is submitted, <code>cleanup</code>
+   * is run.
+   */
+  def formSnippet(html: NodeSeq, obj: A, cleanup: (A => Unit)): NodeSeq = {
+    val name = internal_dbTableName
+
+    def callback() {
+      cleanup(obj)
+    }
+
+    val submitTransform: (NodeSeq)=>NodeSeq =
+      "type=submit" #> SHtml.onSubmitUnit(callback _)
+
+    val otherTransforms =
+      obj.fieldMapperTransforms(_.toForm openOr Text("")).reverse ++
+      obj.fieldTransforms.reverse
+
+    otherTransforms.foldRight(submitTransform)(_ andThen _) apply html
+  }
+
+  /**
    * Default add snippet. Override to change behavior of the add snippet.
    */
+  @deprecated("Use addFormSnippet instead.", "2.6")
   def addSnippet(xhtml: NodeSeq): NodeSeq = {
     modSnippet(xhtml, addSnippetSetup, addSnippetCallback _)
+  }
+  /**
+   * Base add form snippet. Fetches object from
+   * <code>addSnippetSetup</code> and invokes
+   * <code>addSnippetCallback</code> when the form is submitted.
+   */
+  def addFormSnippet(html: NodeSeq): NodeSeq = {
+    formSnippet(html, addSnippetSetup, addSnippetCallback _)
   }
 
   /**
    * Default edit snippet. Override to change behavior of the edit snippet.
    */
+  @deprecated("Use editFormSnippet instead.", "2.6")
   def editSnippet(xhtml: NodeSeq): NodeSeq = {
     modSnippet(xhtml, editSnippetSetup, editSnippetCallback _)
+  }
+  /**
+   * Base edit form snippet. Fetches object from
+   * <code>editSnippetSetup</code> and invokes
+   * <code>editSnippetCallback</code> when the form is submitted.
+   */
+  def editFormSnippet(html: NodeSeq): NodeSeq = {
+    formSnippet(html, editSnippetSetup, editSnippetCallback _)
   }
 
   /**
    * Default view snippet. Override to change behavior of the view snippet.
    */
+  @deprecated("Use viewTransform instead.", "2.6")
   def viewSnippet(xhtml: NodeSeq): NodeSeq = {
     val Name = internal_dbTableName
     val obj: A = viewSnippetSetup
 
     xbind(Name, xhtml)(obj.fieldPF orElse obj.fieldMapperPF(_.asHtml))
+  }
+
+  /**
+   * Basic transformation of <code>html</code> to HTML for displaying
+   * the object from <code>viewSnippetSetup</code>.
+   */
+  def viewTransform(html: NodeSeq): NodeSeq = {
+    val name = internal_dbTableName
+    val obj: A = viewSnippetSetup
+
+    val otherTransforms =
+      obj.fieldMapperTransforms(_.asHtml).reverse ++
+      obj.fieldTransforms.reverse
+
+    otherTransforms.foldRight(PassThru: (NodeSeq)=>NodeSeq)(_ andThen _) apply html
   }
 
   /**

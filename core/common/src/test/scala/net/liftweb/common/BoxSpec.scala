@@ -351,6 +351,29 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
   }
 
+  "A List[Box[T]]" should {
+    "be convertable to a Box[List[T]] when all are Full" in {
+      val someBoxes: List[Box[String]] = List(Full("bacon"), Full("sammich"))
+      val singleBox = someBoxes.toSingleBox("Box failed!")
+
+      singleBox must_== Full(List("bacon", "sammich"))
+    }
+
+    "be convertable to a Box[List[T]] when some are Full and some are Empty" in {
+      val someBoxes: List[Box[String]] = List(Full("bacon"), Full("sammich"), Empty)
+      val singleBox = someBoxes.toSingleBox("Box failed!")
+
+      singleBox must_== Full(List("bacon", "sammich"))
+    }
+
+    "be convertable to a ParamFailure[Box[List[T]]] when any are Failure" in {
+      val someBoxes: List[Box[String]] = List(Full("bacon"), Full("sammich"), Failure("I HATE BACON"))
+      val singleBox = someBoxes.toSingleBox("This should be in the param failure.")
+
+      singleBox must_== ParamFailure("This should be in the param failure.", None, None, someBoxes)
+    }
+  }
+
 }
 
 

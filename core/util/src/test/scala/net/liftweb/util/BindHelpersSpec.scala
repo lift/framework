@@ -19,6 +19,7 @@ package util
 
 import xml._
 
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import common._
@@ -28,7 +29,7 @@ import BindHelpers._
 /**
  * Systems under specification for BindHelpers.
  */
-object BindHelpersSpec extends Specification  {
+object BindHelpersSpec extends Specification with XmlMatchers {
   "BindHelpers Specification".title
 
   "the mixinAttributes function" should {

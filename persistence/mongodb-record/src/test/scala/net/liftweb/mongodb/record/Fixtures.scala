@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,11 @@ import common._
 import json._
 import json.ext.{EnumSerializer, JsonBoxSerializer}
 import http.SHtml
-import util.FieldError
+import util.{FieldError, Helpers}
 
 import java.math.MathContext
+import java.util.{Date, UUID}
+import java.util.regex.Pattern
 import scala.xml.Text
 
 import net.liftweb.record._
@@ -35,6 +37,7 @@ import net.liftweb.record.field._
 import net.liftweb.record.field.joda._
 
 import org.bson.types.ObjectId
+import org.joda.time.DateTime
 
 object MyTestEnum extends Enumeration {
   val ONE = Value("ONE")
@@ -262,16 +265,36 @@ class ListTestRecord private () extends MongoRecord[ListTestRecord] with UUIDPk[
   def meta = ListTestRecord
 
   object mandatoryStringListField extends MongoListField[ListTestRecord, String](this)
+  object mandatoryMongoRefListField extends ObjectIdRefListField(this, FieldTypeTestRecord)
   object mandatoryIntListField extends MongoListField[ListTestRecord, Int](this)
   object mandatoryMongoJsonObjectListField extends MongoJsonObjectListField(this, TypeTestJsonObject)
   object mongoCaseClassListField extends MongoCaseClassListField[ListTestRecord, MongoCaseClassTestObject](this) {
     override def formats = owner.meta.formats
   }
-
-  // TODO: More List types
 }
 object ListTestRecord extends ListTestRecord with MongoMetaRecord[ListTestRecord] {
   override def formats = allFormats + new EnumSerializer(MyTestEnum)
+}
+
+class MongoListTestRecord private () extends MongoRecord[MongoListTestRecord] with UUIDPk[MongoListTestRecord] {
+  def meta = MongoListTestRecord
+
+  object objectIdRefListField extends ObjectIdRefListField(this, FieldTypeTestRecord)
+  object patternListField extends MongoListField[MongoListTestRecord, Pattern](this)
+  object dateListField extends MongoListField[MongoListTestRecord, Date](this)
+  object uuidListField extends MongoListField[MongoListTestRecord, UUID](this)
+}
+object MongoListTestRecord extends MongoListTestRecord with MongoMetaRecord[MongoListTestRecord] {
+  override def formats = DefaultFormats.lossless + new ObjectIdSerializer + new PatternSerializer + new DateSerializer
+}
+
+class MongoJodaListTestRecord private () extends MongoRecord[MongoJodaListTestRecord] with UUIDPk[MongoJodaListTestRecord] {
+  def meta = MongoJodaListTestRecord
+
+  object dateTimeListField extends MongoListField[MongoJodaListTestRecord, DateTime](this)
+}
+object MongoJodaListTestRecord extends MongoJodaListTestRecord with MongoMetaRecord[MongoJodaListTestRecord] {
+  override def formats = DefaultFormats.lossless + new DateTimeSerializer
 }
 
 class MapTestRecord private () extends MongoRecord[MapTestRecord] with StringPk[MapTestRecord] {
@@ -421,3 +444,11 @@ class JObjectFieldTestRecord private () extends MongoRecord[JObjectFieldTestReco
 object JObjectFieldTestRecord extends JObjectFieldTestRecord with MongoMetaRecord[JObjectFieldTestRecord] {
   override def formats = allFormats
 }
+
+class CustomFieldName private () extends MongoRecord[CustomFieldName] with ObjectIdPk[CustomFieldName] {
+  def meta = CustomFieldName
+
+  object customField extends StringField(this, 256)
+}
+
+object CustomFieldName extends CustomFieldName with MongoMetaRecord[CustomFieldName]

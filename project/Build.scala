@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 WorldWide Conferencing, LLC
+ * Copyright 2012-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,30 @@ object BuildDef extends Build {
                 aggregatedSetting(dependencyClasspath in(Compile, doc)),
                 publishArtifact := false)
 
+  lazy val frameworkPre211 =
+    liftProject("lift-framework-pre-211", file("."))
+      .aggregate(liftProjects ++ pre_211_project : _*)
+      .settings(aggregatedSetting(sources in(Compile, doc)),
+                aggregatedSetting(dependencyClasspath in(Compile, doc)),
+                publishArtifact := false,
+                target <<= baseDirectory / "target-pre-211")
+
   // Core Projects
   // -------------
   lazy val core: Seq[ProjectReference] =
-    Seq(common, actor, markdown, json, json_scalaz, json_scalaz7, json_ext, util)
+    Seq(common, actor, markdown, json, json_scalaz7, json_ext, util)
+
+  lazy val pre_211_project: Seq[ProjectReference] = Seq(json_scalaz, squeryl_record)
 
   lazy val common =
     coreProject("common")
       .settings(description := "Common Libraties and Utilities",
-                libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12))
+                libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12),
+                libraryDependencies <++= scalaVersion {
+                  case "2.11.0" | "2.11.1" => Seq(scala_xml, scala_parser)
+                  case _ => Seq()
+                }
+      )
 
   lazy val actor =
     coreProject("actor")
@@ -51,10 +66,12 @@ object BuildDef extends Build {
     coreProject("markdown")
         .settings(description := "Markdown Parser",
                   parallelExecution in Test := false,
-                  libraryDependencies ++= Seq(
-                     "org.scalatest" %% "scalatest" % "1.9.1" % "test",
-                     "junit" % "junit" % "4.8.2" % "test"
-                   ))                  
+                  libraryDependencies <++= scalaVersion { sv => Seq(scalatest(sv), junit) },
+                  libraryDependencies <++= scalaVersion {
+                    case "2.11.0" | "2.11.1" => Seq(scala_xml, scala_parser)
+                    case _ => Seq()
+                  }
+      )
 
   lazy val json =
     coreProject("json")
@@ -99,7 +116,6 @@ object BuildDef extends Build {
         .dependsOn(util)
         .settings(description := "Testkit for Webkit Library",
                   libraryDependencies ++= Seq(commons_httpclient, servlet_api))
-
   lazy val webkit =
     webProject("webkit")
         .dependsOn(util, testkit % "provided")
@@ -123,7 +139,7 @@ object BuildDef extends Build {
   // Persistence Projects
   // --------------------
   lazy val persistence: Seq[ProjectReference] =
-    Seq(db, proto, jpa, mapper, record, squeryl_record, mongodb, mongodb_record, ldap)
+    Seq(db, proto, jpa, mapper, record, mongodb, mongodb_record, ldap)
 
   lazy val db =
     persistenceProject("db")

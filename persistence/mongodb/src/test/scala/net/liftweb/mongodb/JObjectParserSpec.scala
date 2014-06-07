@@ -40,20 +40,22 @@ object JObjectParserSpec extends Specification  {
       val (oid, dbo) = buildTestData
       val xval = tryo(dbo.get("x").asInstanceOf[ObjectId])
 
-      xval.isDefined must_== true
       xval.toList map { x =>
         x must_== oid
       }
+
+      xval.isDefined must_== true
     }
     "not convert strings to ObjectId when configured not to" in {
       JObjectParser.stringProcessor.doWith((s: String) => s) {
         val (oid, dbo) = buildTestData
         val xval = tryo(dbo.get("x").asInstanceOf[String])
 
-        xval.isDefined must_== true
         xval.toList map { x =>
           x must_== oid.toString
         }
+
+        xval.isDefined must_== true
       }
     }
   }

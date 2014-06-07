@@ -19,6 +19,7 @@ package util
 
 import xml.XML._
 
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import common._
@@ -29,7 +30,7 @@ import HeadHelper._
 /**
  * Systems under specification for ToHead.
  */
-object ToHeadSpec extends Specification  {
+object ToHeadSpec extends Specification with XmlMatchers {
   "ToHead Specification".title
 
   "lift <head> merger" should {
@@ -39,14 +40,12 @@ object ToHeadSpec extends Specification  {
         exp <- tryo(getClass.getResource("ToHeadSpec.expected1.html")).filter(_ ne null)
       } yield (act, exp)
 
-      susfiles match {
+      susfiles must beLike {
         case Full(sus) =>
           val actual = load(sus._1)
           val expected = load(sus._2)
           mergeToHtmlHead(actual).toString.replaceAll("\\s", "") must_==
           (expected.toString.replaceAll("\\s", ""))
-        case _         =>
-          failure("Failed loading test files") // TODO: Improve error message
       }
     }
 
@@ -56,13 +55,11 @@ object ToHeadSpec extends Specification  {
         exp <- tryo(getClass.getResource("ToHeadSpec.expected2.html")).filter(_ ne null)
       } yield (act, exp)
 
-      susfiles match {
+      susfiles must beLike {
         case Full(sus) =>
           val actual = load(sus._1)
           val expected = load(sus._2)
           mergeToHtmlHead(actual) must ==/(expected)
-        case _         =>
-          failure("Failed loading test files") // TODO: Improve error message
       }
     }
 
@@ -72,14 +69,12 @@ object ToHeadSpec extends Specification  {
         exp <- tryo(getClass.getResource("ToHeadSpec.expected3.html")).filter(_ ne null)
       } yield (act, exp)
 
-      susfiles match {
+      susfiles must beLike {
         case Full(sus) =>
           val actual = load(sus._1)
           val expected = load(sus._2)
           mergeToHtmlHead(actual).toString.replaceAll("\\s", "") must_==
           (expected.toString.replaceAll("\\s", ""))
-        case _         =>
-          failure("Failed loading test files") // TODO: Improve error message
       }
     }
    }

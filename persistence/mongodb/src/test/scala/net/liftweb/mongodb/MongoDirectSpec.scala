@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2014 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,7 +228,7 @@ class MongoDirectSpec extends Specification with MongoTestKit {
       // save the docs to the db
       coll.save(doc)
       db.getLastError.get("err") must beNull
-      coll.save(doc2) // this should return an error
+      coll.save(doc2)
       db.getLastError.get("err").toString must startWith("E11000 duplicate key error index")
       coll.save(doc3)
       db.getLastError.get("err") must beNull

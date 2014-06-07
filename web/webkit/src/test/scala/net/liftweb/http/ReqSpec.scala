@@ -19,6 +19,8 @@ package http
 
 import java.io.ByteArrayInputStream
 
+import org.specs2.matcher.XmlMatchers
+
 import org.mockito.Mockito._
 
 import org.specs2.mutable.Specification
@@ -33,7 +35,7 @@ import provider._
 /**
  * System under specification for Req.
  */
-object ReqSpec extends Specification with Mockito {
+object ReqSpec extends Specification with XmlMatchers with Mockito {
   "Req Specification".title
 
   private val iPhoneUserAgents = 
@@ -71,6 +73,8 @@ object ReqSpec extends Specification with Mockito {
           uac.isIPad must_== false
         }
       }
+
+      success
     }
 
     "Do the right thing with iPad" in {
@@ -83,6 +87,8 @@ object ReqSpec extends Specification with Mockito {
           uac.isIPad must_== true
         }
       }
+
+      success
     }
 
     "Correctly recognize IE versions 6-11" in {
