@@ -254,19 +254,23 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
   }
 
   "ObjectIdField" should {
-    val rec = MongoFieldTypeTestRecord.createRecord
-    val oid = ObjectId.get
-    val oid2 = ObjectId.get
-    passBasicTests(oid, oid2, rec.mandatoryObjectIdField, Full(rec.legacyOptionalObjectIdField), false)
-    passConversionTests(
-      oid,
-      rec.mandatoryObjectIdField,
-      JsObj(("$oid", oid.toString)),
-      JObject(List(JField("$oid", JString(oid.toString)))),
-      Full(<input name=".*" type="text" tabindex="1" value={oid.toString} id="mandatoryObjectIdField_id"></input>)
-    )
-    rec.mandatoryObjectIdField(oid)
-    oid.getDate mustEqual rec.mandatoryObjectIdField.createdAt
+    // The extra `in` here is required for compilation, or we get a strange ambiguous overload warning.
+    "work and provide the appropriate date" in {
+      val rec = MongoFieldTypeTestRecord.createRecord
+      val oid = ObjectId.get
+      val oid2 = ObjectId.get
+      passBasicTests(oid, oid2, rec.mandatoryObjectIdField, Full(rec.legacyOptionalObjectIdField), false)
+      passConversionTests(
+        oid,
+        rec.mandatoryObjectIdField,
+        JsObj(("$oid", oid.toString)),
+        JObject(List(JField("$oid", JString(oid.toString)))),
+        Full(<input name=".*" type="text" tabindex="1" value={oid.toString} id="mandatoryObjectIdField_id"></input>)
+      )
+      rec.mandatoryObjectIdField(oid)
+
+      oid.getDate must_== rec.mandatoryObjectIdField.createdAt
+    }
   }
 
   "PatternField" should {
