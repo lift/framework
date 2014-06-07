@@ -115,20 +115,14 @@ object MailerSpec extends Specification {
         )
       }
 
-      msg.getContent match {
+      msg.getContent must beLike {
         case mp: MimeMultipart =>
           mp.getContentType.substring(0, 21) must_== "multipart/alternative"
 
-          mp.getBodyPart(0).getContent match {
+          mp.getBodyPart(0).getContent must beLike {
             case mp2: MimeMultipart =>
               mp2.getContentType.substring(0, 15) must_== "multipart/mixed"
-
-            case somethingElse =>
-              failure("The message's multipart's first body part wasn't a MimeMultipart")
           }
-
-        case somethingElse =>
-          failure("The complex message has content type of " + somethingElse.getClass.getName)
       }
     }
   }
