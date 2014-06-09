@@ -34,7 +34,7 @@ case class Diff(changed: JValue, added: JValue, deleted: JValue) {
   private[json] def toField(name: String): Diff = {
     def applyTo(x: JValue) = x match {
       case JNothing => JNothing
-      case _ => JObject((name, x))
+      case _ => JObject(JField(name, x))
     }
     Diff(applyTo(changed), applyTo(added), applyTo(deleted))
   }
@@ -66,9 +66,9 @@ object Diff {
   private def diffFields(vs1: List[JField], vs2: List[JField]) = {
     def diffRec(xleft: List[JField], yleft: List[JField]): Diff = xleft match {
       case Nil => Diff(JNothing, if (yleft.isEmpty) JNothing else JObject(yleft), JNothing)
-      case x :: xs => yleft find (_._1 == x._1) match {
+      case x :: xs => yleft find (_.name == x.name) match {
         case Some(y) =>
-          val Diff(c1, a1, d1) = diff(x._2, y._2).toField(y._1)
+          val Diff(c1, a1, d1) = diff(x.value, y.value).toField(y.name)
           val Diff(c2, a2, d2) = diffRec(xs, yleft filterNot (_ == y))
           Diff(c1 merge c2, a1 merge a2, d1 merge d2)
         case None =>

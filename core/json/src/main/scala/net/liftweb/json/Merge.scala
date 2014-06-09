@@ -68,9 +68,9 @@ object Merge {
   private[json] def mergeFields(vs1: List[JField], vs2: List[JField]): List[JField] = {
     def mergeRec(xleft: List[JField], yleft: List[JField]): List[JField] = xleft match {
       case Nil => yleft
-      case (xn, xv) :: xs => yleft find (_._1 == xn) match {
-        case Some(y @ (yn, yv)) => 
-          (xn, merge(xv, yv)) :: mergeRec(xs, yleft filterNot (_ == y))
+      case JField(xn, xv) :: xs => yleft find (_.name == xn) match {
+        case Some(y @ JField(yn, yv)) => 
+          JField(xn, merge(xv, yv)) :: mergeRec(xs, yleft filterNot (_ == y))
         case None => JField(xn, xv) :: mergeRec(xs, yleft)
       }
     }

@@ -120,13 +120,13 @@ trait AbstractExamples extends Specification {
   }
 
   "JSON building example" in {
-    val json = JObject(("name", JString("joe")), ("age", JInt(34))) ++ JObject(("name", ("mazy")), ("age", JInt(31)))
+    val json = JObject(JField("name", JString("joe")), JField("age", JInt(34))) ++ JObject(JField("name", ("mazy")), JField("age", JInt(31)))
     print(json) mustEqual """[{"name":"joe","age":34},{"name":"mazy","age":31}]"""
   }
 
   "JSON building with implicit primitive conversions example" in {
     import Implicits._
-    val json = JObject(("name", "joe"), ("age", 34)) ++ JObject(("name", "mazy"), ("age", 31))
+    val json = JObject(JField("name", "joe"), JField("age", 34)) ++ JObject(JField("name", "mazy"), JField("age", 31))
     print(json) mustEqual """[{"name":"joe","age":34},{"name":"mazy","age":31}]"""
   }
 

@@ -55,19 +55,19 @@ object JsonAST {
     }
 
     private def findDirectByName(xs: List[JValue], name: String): List[JValue] = xs.flatMap {
-      case JObject(l) => l.filter {
-        case (n, _) if n == name => true
-        case _ => false
-      } map (_._2)
+      case JObject(l) =>
+        l.collect {
+          case JField(n, value) if n == name => value
+        }
       case JArray(l) => findDirectByName(l, name)
       case _ => Nil
     }
 
     private def findDirect(xs: List[JValue], p: JValue => Boolean): List[JValue] = xs.flatMap {
-      case JObject(l) => l.filter {
-        case (n, x) if p(x) => true
-        case _ => false
-      } map (_._2)
+      case JObject(l) =>
+        l.collect {
+          case JField(n, x) if p(x) => x
+        }
       case JArray(l) => findDirect(l, p)
       case x if p(x) => x :: Nil
       case _ => Nil
@@ -82,9 +82,9 @@ object JsonAST {
     def \\(nameToFind: String): JValue = {
       def find(json: JValue): List[JField] = json match {
         case JObject(l) => l.foldLeft(List[JField]()) { 
-          case (a, (name, value)) => 
+          case (a, JField(name, value)) => 
             if (name == nameToFind) {
-              a ::: List((name, value)) ::: find(value)
+              a ::: List(JField(name, value)) ::: find(value)
             } else {
               a ::: find(value)
             }
@@ -93,7 +93,7 @@ object JsonAST {
         case _ => Nil
       }
       find(this) match {
-        case (_, x) :: Nil => x
+        case JField(_, x) :: Nil => x
         case xs => JObject(xs)
       }
     }
@@ -146,7 +146,7 @@ object JsonAST {
      * </pre>
      */
     def children: List[JValue] = this match {
-      case JObject(l) => l map (_._2)
+      case JObject(l) => l map (_.value)
       case JArray(l) => l
       case _ => Nil
     }
@@ -160,7 +160,7 @@ object JsonAST {
         v match {
           case JObject(l) =>
             l.foldLeft(newAcc) {
-              case (a, (name, value)) => value.fold(a)(f)
+              case (a, JField(name, value)) => value.fold(a)(f)
             }
           case JArray(l) =>
             l.foldLeft(newAcc) { (a, e) =>
@@ -179,7 +179,7 @@ object JsonAST {
       def rec(acc: A, v: JValue) = {
         v match {
           case JObject(l) => l.foldLeft(acc) { 
-            case (a, field@(name, value)) => value.foldField(f(a, field))(f) 
+            case (a, field@JField(name, value)) => value.foldField(f(a, field))(f) 
           }
           case JArray(l) => l.foldLeft(acc)((a, e) => e.foldField(a)(f))
           case _ => acc
@@ -200,7 +200,7 @@ object JsonAST {
      */
     def map(f: JValue => JValue): JValue = {
       def rec(v: JValue): JValue = v match {
-        case JObject(l) => f(JObject(l.map { case (n, v) => (n, rec(v)) }))
+        case JObject(l) => f(JObject(l.map { field => field.copy(value = rec(field.value)) }))
         case JArray(l) => f(JArray(l.map(rec)))
         case x => f(x)
       }
@@ -219,7 +219,7 @@ object JsonAST {
      */
     def mapField(f: JField => JField): JValue = {
       def rec(v: JValue): JValue = v match {
-        case JObject(l) => JObject(l.map { case (n, v) => f(n, rec(v)) })
+        case JObject(l) => JObject(l.map { field => f(field.copy(value = rec(field.value))) })
         case JArray(l) => JArray(l.map(rec))
         case x => x
       }
@@ -288,7 +288,7 @@ object JsonAST {
     def findField(p: JField => Boolean): Option[JField] = {
       def find(json: JValue): Option[JField] = json match {
         case JObject(fs) if (fs find p).isDefined => return fs find p
-        case JObject(fs) => fs.flatMap { case (n, v) => find(v) }.headOption
+        case JObject(fs) => fs.flatMap { case JField(n, v) => find(v) }.headOption
         case JArray(l) => l.flatMap(find _).headOption
         case _ => None
       }
@@ -305,7 +305,7 @@ object JsonAST {
       def find(json: JValue): Option[JValue] = {
         if (p(json)) return Some(json)
         json match {
-          case JObject(fs) => fs.flatMap { case (n, v) => find(v) }.headOption
+          case JObject(fs) => fs.flatMap { case JField(n, v) => find(v) }.headOption
           case JArray(l) => l.flatMap(find _).headOption
           case _ => None
         }
@@ -376,7 +376,7 @@ object JsonAST {
      * </pre>
      */
     def removeField(p: JField => Boolean): JValue = this mapField {
-      case x if p(x) => (x._1, JNothing)
+      case x if p(x) => JField(x.name, JNothing)
       case x => x
     }
 
@@ -478,11 +478,12 @@ object JsonAST {
   
   case class JObject(obj: List[JField]) extends JValue {
     type Values = Map[String, Any]
-    def values =
+    def values = {
       obj.map {
-        case (n, v) =>
-          (n, v.values)
+        case JField(name, value) =>
+          (name, value.values): (String, Any)
       }.toMap
+    }
 
     override def equals(that: Any): Boolean = that match {
       case o: JObject => obj.toSet == o.obj.toSet
@@ -501,11 +502,7 @@ object JsonAST {
     override def apply(i: Int): JValue = arr(i)
   }
 
-  type JField = (String, JValue)
-  object JField {
-    def apply(name: String, value: JValue) = (name, value)
-    def unapply(f: JField): Option[(String, JValue)] = Some(f)
-  }
+  case class JField(name: String, value: JValue)
 
   /** Renders JSON.
     * @see Printer#compact
@@ -522,13 +519,13 @@ object JsonAST {
     case JString(s)    => text("\"" + quote(s) + "\"")
     case JArray(arr)   => text("[") :: series(trimArr(arr).map(render)) :: text("]")
     case JObject(obj)  =>
-      val nested = break :: fields(trimObj(obj).map { case (name, value) => text("\"" + quote(name) + "\":") :: render(value) })
+      val nested = break :: fields(trimObj(obj).map { case JField(name, value) => text("\"" + quote(name) + "\":") :: render(value) })
       text("{") :: nest(2, nested) :: break :: text("}")
     case JNothing      => sys.error("can't render 'nothing'") //TODO: this should not throw an exception
   }
 
   private def trimArr(xs: List[JValue]) = xs.filter(_ != JNothing)
-  private def trimObj(xs: List[JField]) = xs.filter(_._2 != JNothing)
+  private def trimObj(xs: List[JField]) = xs.filter(_.value != JNothing)
   private def series(docs: List[Document]) = punctuate(text(","), docs)
   private def fields(docs: List[Document]) = punctuate(text(",") :: break, docs)
 
@@ -608,7 +605,7 @@ object JsonAST {
     buf.append("{") //open bracket
     if (!xs.isEmpty) {
       xs.foreach {
-        case (name, value) if value != JNothing =>
+        case JField(name, value) if value != JNothing =>
           bufQuote(name, buf)
           buf.append(":")
           bufRender(value, buf)
