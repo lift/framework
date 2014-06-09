@@ -13,7 +13,7 @@ a JSON document as a syntax tree.
     case class JObject(obj: List[JField]) extends JValue 
     case class JArray(arr: List[JValue]) extends JValue
 
-    type JField = (String, JValue)
+    case class JField(String, JValue)
 
 All features are implemented in terms of above AST. Functions are used to transform
 the AST itself, or to transform the AST between different formats. Common transformations
@@ -118,7 +118,7 @@ Any valid json can be parsed into internal AST format.
     scala> import net.liftweb.json._
     scala> parse(""" { "numbers" : [1, 2, 3, 4] } """)
     res0: net.liftweb.json.JsonAST.JValue = 
-          JObject(List((numbers,JArray(List(JInt(1), JInt(2), JInt(3), JInt(4))))))
+          JObject(List(JField(numbers,JArray(List(JInt(1), JInt(2), JInt(3), JInt(4))))))
 
 Producing JSON
 ==============
@@ -262,7 +262,7 @@ Please see more examples in src/test/scala/net/liftweb/json/MergeExamples.scala 
     changed: net.liftweb.json.JsonAST.JValue = JNothing
     added: net.liftweb.json.JsonAST.JValue = JNothing
     deleted: net.liftweb.json.JsonAST.JValue = JObject(List((lotto,JObject(List((winners,
-    JArray(List(JObject(List((winner-id,JInt(54)), (numbers,JArray(
+    JArray(List(JObject(List(JField(winner-id,JInt(54)), JField(numbers,JArray(
     List(JInt(52), JInt(3), JInt(12), JInt(11), JInt(18), JInt(22))))))))))))))
 
 
@@ -342,7 +342,7 @@ Json AST can be queried using XPath like functions. Following REPL session shows
 
     scala> json \\ "spouse"
     res0: net.liftweb.json.JsonAST.JValue = JObject(List(
-          (person,JObject(List((name,JString(Marilyn)), (age,JInt(33)))))))
+          JField(person,JObject(List((name,JString(Marilyn)), (age,JInt(33)))))))
 
     scala> compact(render(res0))
     res1: String = {"person":{"name":"Marilyn","age":33}}
@@ -363,20 +363,20 @@ Json AST can be queried using XPath like functions. Following REPL session shows
              case JField("name", _) => true
              case _ => false
            }
-    res6: Option[net.liftweb.json.JsonAST.JValue] = Some((name,JString(Joe)))
+    res6: Option[net.liftweb.json.JsonAST.JField] = Some(JField(name,JString(Joe)))
 
     scala> json filterField {
              case JField("name", _) => true
              case _ => false
            }
-    res7: List[net.liftweb.json.JsonAST.JValue] = List(JField(name,JString(Joe)), JField(name,JString(Marilyn)))
+    res7: List[net.liftweb.json.JsonAST.JField] = List(JField(name,JString(Joe)), JField(name,JString(Marilyn)))
 
     scala> json transformField {
              case ("name", JString(s)) => ("NAME", JString(s.toUpperCase))
            }
-    res8: net.liftweb.json.JsonAST.JValue = JObject(List((person,JObject(List(
-    (NAME,JString(JOE)), (age,JInt(35)), (spouse,JObject(List(
-    (person,JObject(List((NAME,JString(MARILYN)), (age,JInt(33)))))))))))))
+    res8: net.liftweb.json.JsonAST.JValue = JObject(List(JField(person,JObject(List(
+    JField(NAME,JString(JOE)), JField(age,JInt(35)), JField(spouse,JObject(List(
+    JField(person,JObject(List(JField(NAME,JString(MARILYN)), JField(age,JInt(33)))))))))))))
 
     scala> json.values
     res8: scala.collection.immutable.Map[String,Any] = Map(person -> Map(name -> Joe, age -> 35, spouse -> Map(person -> Map(name -> Marilyn, age -> 33))))
@@ -399,7 +399,7 @@ Indexed path expressions work too and values can be unboxed using type expressio
            """)
 
     scala> (json \ "children")(0)
-    res0: net.liftweb.json.JsonAST.JValue = JObject(List((name,JString(Mary)), (age,JInt(5))))
+    res0: net.liftweb.json.JsonAST.JValue = JObject(List(JField(name,JString(Mary)), JField(age,JInt(5))))
 
     scala> (json \ "children")(1) \ "name"
     res1: net.liftweb.json.JsonAST.JValue = JString(Mazy)
@@ -459,7 +459,7 @@ Use transform function to postprocess AST.
 
     scala> case class Person(firstname: String)
     scala> json transformField {
-             case ("first-name", x) => ("firstname", x)
+             case JField("first-name", x) => ("firstname", x)
            }
 
 Extraction function tries to find the best matching constructor when case class has auxiliary
@@ -664,8 +664,8 @@ XML document which happens to have just one user-element will generate a JSON do
 is rarely a desired outcome. These both problems can be fixed by following transformation function.
 
     scala> json transformField {
-             case ("id", JString(s))   => ("id", JInt(s.toInt))
-             case ("user", x: JObject) => ("user", JArray(x :: Nil))
+             case JField("id", JString(s))   => ("id", JInt(s.toInt))
+             case JField("user", x: JObject) => ("user", JArray(x :: Nil))
            }
 
 Other direction is supported too. Converting JSON to XML:
