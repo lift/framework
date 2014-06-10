@@ -225,12 +225,15 @@ trait ListenerManager {
   }
 
   /**
-   * Update the listeners with a message that we create. Note that
-   * with this invocation the createUpdate method is not used.
+   * Send a message we create to all of the listeners. Note that with this
+   * invocation the createUpdate method is not used.
    */
-  protected def updateListeners(msg: Any) {
+  protected def sendListenersMessage(msg: Any) {
     listeners foreach (_._1 ! msg)
   }
+
+  @deprecated("Use sendListenersMessage instead.", "2.6")
+  protected def updateListeners(msg: Any) { sendListenersMessage(msg) }
 
   /**
    * This method provides legacy functionality for filtering messages
