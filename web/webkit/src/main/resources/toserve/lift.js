@@ -441,13 +441,13 @@
           }
         };
 
-        if (evt.done) {
+        if (evt.done != null) {
           doneMsg();
         }
-        else if (evt.success) {
+        else if (evt.success != null) {
           successMsg(evt.success);
         }
-        else if (evt.failure) {
+        else if (evt.failure != null) {
           failMsg(evt.failure);
         }
       };
