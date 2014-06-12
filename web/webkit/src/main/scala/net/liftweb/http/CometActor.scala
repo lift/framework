@@ -162,7 +162,7 @@ object ListenerManager {
  *
  *   override def mediumPriority = {
  *     case Tick => {
- *       updateListeners(Tick)
+ *       sendListenersMessage(Tick)
  *       ActorPing.schedule(this, Tick, 1000L)
  * }
  * }
@@ -230,10 +230,10 @@ trait ListenerManager {
   }
 
   /**
-   * Update the listeners with a message that we create. Note that
-   * with this invocation the createUpdate method is not used.
+   * Send a message we create to all of the listeners. Note that with this
+   * invocation the createUpdate method is not used.
    */
-  protected def updateListeners(msg: Any) {
+  protected def sendListenersMessage(msg: Any) {
     listeners foreach (_._1 ! msg)
   }
 
