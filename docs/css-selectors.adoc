@@ -35,32 +35,111 @@ Transforms consist of three main components:
 The details of each are provided below, but first here ere are some simple
 examples of transforms that you can write with links:
 
+[.interactive.selectors]
 .Replace the contents of all `a` elements with the text "Mozilla"
 ====
+[.input]
+```html
+<div class="name">John Doe</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://google.com">Google</a></li>
+  <li><a href="http://apple.com">Apple</a></li>
+</ul>
+```
+[.selector]
 ```scala
 "a *" #> "Mozilla"
 ```
+[.output]
+```html
+<div class="name">John Doe</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://google.com">Mozilla</a></li>
+  <li><a href="http://apple.com">Mozilla</a></li>
+</ul>
+```
 ====
 
+[.interactive.selectors]
 .Make all links point to Mozilla
 ====
+[.input]
+```html
+<div class="name">John Doe</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://google.com">Google</a></li>
+  <li><a href="http://apple.com">Apple</a></li>
+</ul>
+```
 ```scala
 "a [href]" #> "http://mozilla.org"
 ```
-====
-
-.Replace all elements with class `name` with a user's name
-====
-```scala
-".name" #> user.name
+[.output]
+```html
+<div class="name">John Doe</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://mozilla.org">Google</a></li>
+  <li><a href="http://mozilla.org">Apple</a></li>
+</ul>
 ```
 ====
 
+[.interactive.selectors]
+.Replace all elements with class `name` with a user's name
+====
+[.input]
+```html
+<div class="name">John Doe</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://google.com">Google</a></li>
+  <li><a href="http://apple.com">Apple</a></li>
+</ul>
+```
+```scala
+".name" #> user.name
+```
+[.output]
+```html
+<div class="name">Antonio Salazar Cardozo</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://google.com">Google</a></li>
+  <li><a href="http://apple.com">Apple</a></li>
+</ul>
+```
+====
+
+[.interactive.selectors]
 .Do all three of the previous things at once
 ====
+[.input]
+```html
+<div class="name">John Doe</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://google.com">Google</a></li>
+  <li><a href="http://apple.com">Apple</a></li>
+</ul>
+```
+```scala
 "a *" #> "Mozilla" &
 "a [href]" #> "http://mozilla.org" &
 ".name" #> user.name
+```
+[.output]
+```html
+<div class="name">Antonio Salazar Cardozo</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+</ul>
+```
 ====
 
 These examples show a few options:
