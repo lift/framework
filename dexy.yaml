@@ -1,1 +1,8 @@
-docs/*.adoc|asciidoctor
+ - html-docs:
+   - docs/*.adoc|asciidoctor
+
+ - example-verification:
+   - docs/scripts/extract-contents.rb|rb:
+     - rb:
+         timeout: 500
+     - html-docs
