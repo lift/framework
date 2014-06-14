@@ -229,7 +229,7 @@ class MongoDirectSpec extends Specification with MongoTestKit {
       coll.save(doc)
       db.getLastError.get("err") must beNull
       coll.save(doc2)
-      db.getLastError.get("err").toString must startWith("E11000 duplicate key error index")
+      db.getLastError.get("err").toString must contain("E11000 duplicate key error index")
       coll.save(doc3)
       db.getLastError.get("err") must beNull
 
