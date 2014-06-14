@@ -367,7 +367,63 @@ rather than for being featureful, and designed in the context of a full-featured
 language rather than a limited language like CSS. One key difference is in how
 you combine them. In CSS, you can use `>` to select direct children, `+` for
 direct siblings, etc. Lift only provides one combinator, the space: ` `. It
-works just like in CSS, applying to all descendants. Com
+works just like in CSS, applying to all descendants. So you can set up a selector
+`.user-form input [value]` and it will for setting the `href` attribute of all
+`input` elements that have some ancestorwith class  `user-form` .
+
+Notably, you cannot select `form.user input [href]`, because you cannot check
+multiple selectors on a single element. In practice, this is rarely needed for
+snippets because the snippet itself will typically be attached to the element
+that you would usually use a more complex selector to identify.
+
+=== Combining Transforms
+
+You may want to apply more than one transform to a single `NodeSeq`. Indeed,
+this is a fairly common thing to do in snippets. The simplest way of doing this
+is to pass the result of each transformation in turn through the next
+transform. For example, if you wanted to do both `"a *" #> "Mozilla"` and
+`"a [href]" #> "https://mozilla.org"`, you could do:
+
+```scala
+val textReplaced = ("a *" #> "Mozilla") apply nodes
+val final result = ("a [href]" #> "https://mozilla.org") apply textReplaced
+```
+
+Scala itself provides a function composition helper that lets us chain a set
+of functions into a single function that runs through all of them: `andThen`.
+With this, we can do:
+
+```scala
+("a *" #> "Mozilla" andThen
+ "a [href]" #> "https://mozilla.org") apply nodes
+```
+
+And get the same result.
+
+However, Lift provides one more little trick, the `&` operator. When CSS
+Selector Transforms are combined via `andThen`, each transform that runs
+potentially has to go through the entire set of input nodes to see where its
+transformations should apply. `&` does something a little different: instead of
+chaining the functions, it creates one big function that goes through the input
+nodes a single time, checking at each point which of the combined transforms
+should be applied and then applying them. So, you can do:
+
+```scala
+("a *" #> "Mozilla" &
+ "a [href]" #> "https://mozilla.org") apply nodes
+```
+
+Beware, however, as `&` is not the same as `andThen`. To do this trickery, Lift
+will only transform a part of a node once, and it won't revisit it. Two
+transformations that apply to the same attribute for the same element, for
+example, will not both be applied. Additionally, if your transformation applies
+to the body of an element, like `a *`, the new children of the element will
+_not_ be transformed. Additionally, if you replace the element itself, e.g.
+with the selector `a`, none of the other transforms for that element will run.
+
+Thus, you will occasionally find yourself using `&` together with `andThen`; in
+general you should default to `&` and switch to `andThen` when you need to in
+order to apply a transform to the results of the previous one.
 
 == Macros and Strings
 
