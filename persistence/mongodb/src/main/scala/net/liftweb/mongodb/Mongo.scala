@@ -97,7 +97,7 @@ object MongoDB {
   /*
   * Define and authenticate a Mongo db
   */
-  @deprecated("Use defineDbAuth that takes a MongoClient instance.", "2.6")
+  @deprecated("use MongoClient to supply credentials.", "2.6")
   def defineDbAuth(name: ConnectionIdentifier, address: MongoAddress, username: String, password: String) {
     if (!address.db.authenticate(username, password.toCharArray))
       throw new MongoException("Authorization failed: "+address.toString)
@@ -108,18 +108,8 @@ object MongoDB {
   /*
   * Define and authenticate a Mongo db using a Mongo instance.
   */
-  @deprecated("Use defineDbAuth that takes a MongoClient instance.", "2.6")
+  @deprecated("use MongoClient to supply credentials.", "2.6")
   def defineDbAuth(name: ConnectionIdentifier, mngo: Mongo, dbName: String, username: String, password: String) {
-    if (!mngo.getDB(dbName).authenticate(username, password.toCharArray))
-      throw new MongoException("Authorization failed: "+mngo.toString)
-
-    dbs.put(name, (mngo, dbName))
-  }
-
-  /**
-    * Define and authenticate a Mongo db using a MongoClient instance.
-    */
-  def defineDbAuth(name: ConnectionIdentifier, mngo: MongoClient, dbName: String, username: String, password: String) {
     if (!mngo.getDB(dbName).authenticate(username, password.toCharArray))
       throw new MongoException("Authorization failed: "+mngo.toString)
 
