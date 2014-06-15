@@ -62,6 +62,11 @@ object BuildDef extends Build {
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv => Seq(scalap(sv), paranamer) })
 
+  lazy val documentationHelpers =
+    coreProject("documentation-helpers")
+        .settings(description := "Documentation Helpers")
+        .dependsOn(util)
+
   lazy val json_scalaz =
     coreProject("json-scalaz")
         .dependsOn(json)
