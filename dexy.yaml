@@ -2,7 +2,7 @@
    - docs/*.adoc|asciidoctor
 
  - example-verification:
-   - docs/scripts/extract-contents.rb|rb:
-     - rb:
+   - docs/scripts/extract-css-selector-examples.sh|bash:
+     - sh:
          timeout: 500
      - html-docs
