@@ -1,15 +1,15 @@
 WORK_DIR=`pwd`
+HTML_DIR="$WORK_DIR"
 
-# If we're running in dexy, take us to the project top-level.
-if [[ "$WORK_DIR" == *.dexy* ]]
+if [[ ! -z "$DEXY_ROOT" ]]
 then
-  until [ "$(basename $WORK_DIR)" == ".dexy" ]
+  cd $DEXY_ROOT
+
+  until [ "$(basename $HTML_DIR)" == "docs" ]
   do
-    WORK_DIR=$(dirname $WORK_DIR)
+    HTML_DIR=$(dirname $HTML_DIR)
   done
 fi
 
-cd $(dirname $WORK_DIR)
-
-sbt "project lift-documentation-helpers" \
-    "run-main net.liftweb.documentation.ExtractCssSelectorExamples"
+sbt -Dsbt.log.noformat=true "project lift-documentation-helpers" \
+    "run-main net.liftweb.documentation.ExtractCssSelectorExamples \"$HTML_DIR\""
