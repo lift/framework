@@ -74,6 +74,7 @@ examples of transforms that you can write with links:
   <li><a href="http://apple.com">Apple</a></li>
 </ul>
 ```
+[.selector]
 ```scala
 "a [href]" #> "http://mozilla.org"
 ```
@@ -100,6 +101,7 @@ examples of transforms that you can write with links:
   <li><a href="http://apple.com">Apple</a></li>
 </ul>
 ```
+[.selector]
 ```scala
 ".name" #> user.name
 ```
@@ -126,6 +128,7 @@ examples of transforms that you can write with links:
   <li><a href="http://apple.com">Apple</a></li>
 </ul>
 ```
+[.selector]
 ```scala
 "a *" #> "Mozilla" &
 "a [href]" #> "http://mozilla.org" &
