@@ -1,7 +1,7 @@
 package net.liftweb
 package documentation
 
-import java.io.File
+import java.io.{File,PrintStream}
 
 import scala.io.Source
 import scala.xml.{Elem,NodeSeq}
@@ -33,7 +33,7 @@ object ExtractCssSelectorExamples extends App {
           if file.getName.endsWith(".html")
         fileContents <- tryo(Source.fromFile(file).mkString)
       } yield {
-        FileContents(file.getName, fileContents)
+        FileContents(file.getName.replace('.', '-'), fileContents)
       }
     }
   }
@@ -116,21 +116,74 @@ object ExtractCssSelectorExamples extends App {
     }
   }
 
-  if (args.length < 1) {
+  if (args.length < 2) {
     Console.err.println(
-      "Expected one argument: the base directory of the Lift project."
+      "Expected two arguments: the base directory of generated HTML and the base directory of the Lift project."
     )
   } else {
-    val thingies =
+    val examples =
       for {
         extractedContents <- contentsToProcess(args(0))
       } yield {
-        extractedContents.map(extractExamplesFromContents _)
+        extractedContents.flatMap(extractExamplesFromContents _)
       }
 
-    thingies match {
+    examples match {
+      case Full(exampleContents) =>
+        val testPath = s"${args(1)}/core/documentation-helpers/src/test/scala/net/liftweb/documentation"
+        (new File(testPath)).mkdirs
+
+        for {
+          (normalizedFilename, contents) <- exampleContents.groupBy(_.filename)
+        } {
+          val filename = camelify(normalizedFilename.replace('-','_'))
+
+          val examples =
+            for {
+              ExampleContents(_, exampleLabel, exampleParts) <- contents
+              i <- (0 to (exampleParts.length / 3))
+              ExampleInput(input) <- exampleParts.lift(i)
+              ExampleFunction(function) <- exampleParts.lift(i + 1)
+              ExampleOutput(output) <- exampleParts.lift(i + 2)
+            } yield {
+              s"""
+              |    ""\"$exampleLabel""\" in {
+              |      val input = Html5.parse(""\"$input""\")
+              |      val function = $function
+              |      val output = Html5.parse(""\"$output""\")
+              |
+              |      input.map(function) must_== output
+              |    }""".stripMargin('|')
+            }
+
+          val file = new File(s"$testPath/${filename}Test.scala")
+
+          var stream: PrintStream = null
+          try {
+            stream = new PrintStream(file)
+            stream.println(s"""
+            |package net.liftweb
+            |package documentation
+            |
+            |import scala.xml._
+            |
+            |import org.specs2.mutable.Specification
+            |
+            |import common._
+            |import util.Html5
+            |import util.Helpers._
+            |
+            |object $filename extends Specification {
+            |  ""\"${filename} examples""\" should {
+            |${examples.mkString("\n")}
+            |  }
+            |}""".stripMargin('|'))
+          } finally {
+            Option(stream).map(_.close)
+          }
+        }
+
       case Failure(message, _, _) => Console.err.println(message)
-      case Full(thingie) => println(thingie)
       case _ => Console.err.println("Unknown error.")
     }
   }

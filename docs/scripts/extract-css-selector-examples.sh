@@ -12,4 +12,4 @@ then
 fi
 
 sbt -Dsbt.log.noformat=true "project lift-documentation-helpers" \
-    "run-main net.liftweb.documentation.ExtractCssSelectorExamples \"$HTML_DIR\""
+    "run-main net.liftweb.documentation.ExtractCssSelectorExamples \"$HTML_DIR\" \"$DEXY_ROOT\""
