@@ -44,7 +44,7 @@ object BuildDef extends Build {
   lazy val core: Seq[ProjectReference] =
     Seq(common, actor, markdown, json, json_scalaz7, json_ext, util)
 
-  lazy val pre_211_project: Seq[ProjectReference] = Seq(json_scalaz, squeryl_record)
+  lazy val pre_211_project: Seq[ProjectReference] = Seq(json_scalaz)
 
   lazy val common =
     coreProject("common")
@@ -139,7 +139,7 @@ object BuildDef extends Build {
   // Persistence Projects
   // --------------------
   lazy val persistence: Seq[ProjectReference] =
-    Seq(db, proto, jpa, mapper, record, mongodb, mongodb_record, ldap)
+    Seq(db, proto, jpa, mapper, record, mongodb, mongodb_record, ldap, squeryl_record)
 
   lazy val db =
     persistenceProject("db")

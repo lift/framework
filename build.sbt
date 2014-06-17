@@ -14,7 +14,7 @@ organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
 
 scalaVersion in ThisBuild          := "2.10.4"
 
-crossScalaVersions in ThisBuild    := Seq("2.11.0", "2.10.4", "2.9.2", "2.9.1-1", "2.9.1")
+crossScalaVersions in ThisBuild    := Seq("2.11.1", "2.10.4", "2.9.2", "2.9.1-1", "2.9.1")
 
 libraryDependencies in ThisBuild <++= scalaVersion {sv => Seq(specs2(sv), scalacheck, scalatest(sv)) }
 
@@ -32,6 +32,6 @@ credentials in ThisBuild <+= state map { s => Credentials(BuildPaths.getGlobalSe
 initialize <<= (name, version, scalaVersion) apply printLogo
 
 resolvers  in ThisBuild           ++= Seq(
-  "snapshots"     at "http://oss.sonatype.org/content/repositories/snapshots",
-  "releases"      at "http://oss.sonatype.org/content/repositories/releases"
+  "snapshots"     at "https://oss.sonatype.org/content/repositories/snapshots",
+  "releases"      at "https://oss.sonatype.org/content/repositories/releases"
 )
