@@ -5,4 +5,4 @@ then
   cd $DEXY_ROOT
 fi
 
-sbt -Dsbt.log.noformat=true "project lift-documentation-helpers" "test"
+sbt -Dsbt.log.noformat=true -Dspecs2.color=false "project lift-documentation-helpers" "test"
