@@ -16,7 +16,7 @@ case class ExampleFunction(function: String) extends ExamplePart
 case class ExampleOutput(output: String) extends ExamplePart
 
 case class FileContents(filename: String, contents: String)
-case class ExampleContents(filename: String, exampleLabel: String, exampleParts: List[ExamplePart])
+case class ExampleContents(filename: String, exampleLabel: String, setupCode: String, exampleParts: List[ExamplePart])
 
 object ExtractCssSelectorExamples extends App {
   private def contentsToProcess(basePath: String): Box[List[FileContents]] = {
@@ -65,6 +65,17 @@ object ExtractCssSelectorExamples extends App {
 
   private def extractExamplesFromContents(fileContents: FileContents): List[ExampleContents] = {
     Html5.parse(fileContents.contents).toList.flatMap { html =>
+      var setupCode: String = ""
+
+      val setupExtractor =
+        ".setup" #> {
+          "code *" #> { codeContents: NodeSeq =>
+            setupCode = codeContents.text
+
+            codeContents
+          }
+        }
+
       var exampleContents = List[ExampleContents]()
 
       val contentExtractor =
@@ -105,11 +116,12 @@ object ExtractCssSelectorExamples extends App {
 
           (labelExtractor & partExtractor)(exampleNodes)
 
-          exampleContents ::= ExampleContents(fileContents.filename, exampleLabel, parts.reverse)
+          exampleContents ::= ExampleContents(fileContents.filename, exampleLabel, setupCode, parts.reverse)
 
           exampleNodes
         }
 
+      setupExtractor(html)
       contentExtractor(html)
 
       exampleContents.reverse
@@ -140,7 +152,7 @@ object ExtractCssSelectorExamples extends App {
 
           val examples =
             for {
-              ExampleContents(_, exampleLabel, exampleParts) <- contents
+              ExampleContents(_, exampleLabel, setupCode, exampleParts) <- contents
               i <- (0 to (exampleParts.length / 3))
               ExampleInput(input) <- exampleParts.lift(i)
               ExampleFunction(function) <- exampleParts.lift(i + 1)
@@ -148,6 +160,8 @@ object ExtractCssSelectorExamples extends App {
             } yield {
               s"""
               |    ""\"$exampleLabel""\" in {
+              |      $setupCode
+              |
               |      val input = Html5.parse(""\"$input""\")
               |      val function = $function
               |      val output = Html5.parse(""\"$output""\")
