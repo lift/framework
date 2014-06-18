@@ -115,7 +115,7 @@ val user = User("Benedict Cumberbatch")
 ```
 [.output]
 ```html
-<div class="name">Antonio Salazar Cardozo</div>
+Benedict Cumberbatch
 <ul>
   <li><a href="http://mozilla.org">Mozilla</a></li>
   <li><a href="http://google.com">Google</a></li>
@@ -144,7 +144,7 @@ val user = User("Benedict Cumberbatch")
 ```
 [.output]
 ```html
-<div class="name">Antonio Salazar Cardozo</div>
+Benedict Cumberbatch
 <ul>
   <li><a href="http://mozilla.org">Mozilla</a></li>
   <li><a href="http://mozilla.org">Mozilla</a></li>
