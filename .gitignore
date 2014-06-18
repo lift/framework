@@ -59,3 +59,4 @@ runner
 
 # Doc generation
 .dexy
+core/documentation-helpers/src/test/**Test.scala
