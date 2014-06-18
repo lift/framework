@@ -32,8 +32,16 @@ Transforms consist of three main components:
   Nice to have: graphic that shows a selector transform pointing to each
 ///
 
-The details of each are provided below, but first here ere are some simple
-examples of transforms that you can write with links:
+The details of each are provided below, but first let's look at some simple
+examples of transforms that you can write with links. For all of these examples,
+we'll be using this sample data:
+
+[.setup]
+```scala
+case class User(name: String)
+
+val user = User("Benedict Cumberbatch")
+```
 
 [.interactive.selectors]
 .Replace the contents of all `a` elements with the text "Mozilla"
