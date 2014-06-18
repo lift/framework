@@ -25,7 +25,7 @@ publishTo in ThisBuild            <<= isSnapshot(if (_) Some(Opts.resolver.sonat
 
 scmInfo in ThisBuild               := Some(ScmInfo(url("https://github.com/lift/framework"), "scm:git:https://github.com/lift/framework.git"))
 
-pomExtra in ThisBuild              ~= (_ ++ {Developers.toXml})
+pomExtra in ThisBuild              :=  Developers.toXml
 
 credentials in ThisBuild <+= state map { s => Credentials(BuildPaths.getGlobalSettingsDirectory(s, BuildPaths.getGlobalBase(s)) / ".credentials") }
 
