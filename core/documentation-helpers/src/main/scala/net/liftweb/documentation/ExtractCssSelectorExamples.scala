@@ -162,11 +162,16 @@ object ExtractCssSelectorExamples extends App {
               |    ""\"$exampleLabel""\" in {
               |      $setupCode
               |
-              |      val input = Html5.parse(""\"$input""\")
-              |      val function = $function
-              |      val output = Html5.parse(""\"$output""\")
+              |      val input = Html5.parse(""\"<div>$input</div>""\")
+              |      val function: (NodeSeq)=>NodeSeq = $function
+              |      val output = Html5.parse(""\"<div>$output</div>""\")
               |
-              |      input.map(function) must_== output
+              |      // The function returns a NodeSeq; we assume it will
+              |      // contain a single element and unwrap it.
+              |      input.map { html => function(html) } must beLike {
+              |       case Full(rendered) =>
+              |         rendered must ==/(output.toOption.get)
+              |      }
               |    }""".stripMargin('|')
             }
 
