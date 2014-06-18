@@ -162,6 +162,8 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
 
   }
 
+  override def formName: String = "wizard"
+
   def toForm: NodeSeq = {
     ScreenVars.is // initialize
     Referer.is // touch to capture the referer

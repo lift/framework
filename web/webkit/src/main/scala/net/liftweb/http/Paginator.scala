@@ -19,9 +19,9 @@ package http
 import xml.{NodeSeq, Text}
 
 import common.Loggable
-import util.Helpers._
+import util._
+  import Helpers._
 import S.?
-
 
 /**
  * Base class for things that require pagination. Implements a contract 
@@ -207,7 +207,7 @@ trait PaginatorSnippet[T] extends Paginator[T] {
   /**
    * Generates links to multiple pages with arbitrary XML delimiting them.
    */
-  def pagesXml(pages: Seq[Int], sep: NodeSeq): NodeSeq =
+  def pagesXml(pages: Seq[Int])(sep: NodeSeq): NodeSeq = {
     pages.toList map {n =>
       pageXml(n*itemsPerPage, Text((n+1).toString))
                     } match {
@@ -217,25 +217,43 @@ trait PaginatorSnippet[T] extends Paginator[T] {
                       }
                       case Nil => Nil
                     }
-  
+  }
+
   /**
-   * This is the method that binds template XML according according to the specified configuration.
-   * You can reference this as a snippet method directly in your template; or you can call it directly
-   * as part of your binding code.
+   * This method binds template HTML based according to the specified
+   * configuration. You can reference this as a snippet method directly
+   * in your template; or you can call it directly as part of your binding
+   * code.
+   *
+   * Classes used to bind:
+   *  - `first`: link to go back to the first page (populated by `firstXml`)
+   *  - `prev`: link to go to previous page (populated by `prevXml`)
+   *  - `all-pages`: container for all pages (populated by `pagesXml`)
+   *  - `zoomed-pages`: container for `zoomedPages` (populated by `pagesXml`)
+   *  - `next`: link to go to next page (populated by `nextXml`)
+   *  - `last`: link to go to last page (populated by `lastXml`)
+   *  - `records`: currently visible records + total count (populated by
+   *    `currentXml`)
+   *  - `records-start`: start of currently visible records
+   *  - `records-end`: end of currently visible records
+   *  - `records-count`: total records count
    */
-  def paginate(xhtml: NodeSeq) = {
-    bind(navPrefix, xhtml,
-         "first" -> pageXml(0, firstXml),
-         "prev" -> pageXml(first-itemsPerPage max 0, prevXml),
-         "allpages" -> {(n:NodeSeq) => pagesXml(0 until numPages, n)},
-         "zoomedpages" -> {(ns: NodeSeq) => pagesXml(zoomedPages, ns)},
-         "next" -> pageXml(first+itemsPerPage min itemsPerPage*(numPages-1) max 0, nextXml),
-         "last" -> pageXml(itemsPerPage*(numPages-1), lastXml),
-         "records" -> currentXml,
-         "recordsFrom" -> Text(recordsFrom),
-         "recordsTo" -> Text(recordsTo),
-         "recordsCount" -> Text(count.toString)
-       )
+  def paginate: CssSel = {
+    import scala.math._
+
+    ".first *" #> pageXml(0, firstXml) &
+    ".prev *" #> pageXml(max(first - itemsPerPage, 0), prevXml) &
+    ".all-pages *" #> pagesXml(0 until numPages) _ &
+    ".zoomed-pages *" #> pagesXml(zoomedPages) _ &
+    ".next *" #> pageXml(
+      max(0, min(first + itemsPerPage, itemsPerPage * (numPages - 1))),
+      nextXml
+    ) &
+    ".last *" #> pageXml(itemsPerPage * (numPages - 1), lastXml) &
+    ".records *" #> currentXml &
+    ".records-start *" #> recordsFrom &
+    ".records-end *" #> recordsTo &
+    ".records-count *" #> count
   }
 }
 
@@ -279,15 +297,31 @@ trait SortedPaginatorSnippet[T, C] extends SortedPaginator[T, C] with PaginatorS
     )
   }
   /**
-   * This is the snippet method, which you can reference in your template or call directly.
+   * This method binds template HTML based according to the specified
+   * configuration. You can reference this as a snippet method directly
+   * in your template; or you can call it directly as part of your binding
+   * code.
+   *
+   * In addition to the classes bound in {@link PaginatorSnippet}, for
+   * each header in the `headers` list, this will bind elements with that
+   * class name and put a link in them with their contents.
+   *
+   * For example, with a list of headers `List("foo", "bar")`, this would
+   * bind the `.foo` element's contents to contain a link to a page that
+   * renders that column sorted, as well as the `.bar` element's contents
+   * to contain a link to a page that renders that column sorted.
    */
-  override def paginate(xhtml: NodeSeq): NodeSeq =
-    bind(sortPrefix, super.paginate(xhtml),
-         headers.zipWithIndex.map {
-           case ((binding, _), colIndex) =>
-             FuncBindParam(binding, (ns:NodeSeq) => <a href={sortedPageUrl(first, sortedBy(colIndex))}>{ns}</a> )
-         }.toSeq : _*
-       )
+  override def paginate: CssSel = {
+    val headerTransforms =
+      headers.zipWithIndex.map {
+        case ((binding, _), colIndex) =>
+          ".$binding *" #> { ns: NodeSeq =>
+            <a href={sortedPageUrl(first, sortedBy(colIndex))}>{ns}</a>
+          }
+      }
+
+    headerTransforms.foldLeft(super.paginate)(_ & _)
+  }
 }
 
 /**

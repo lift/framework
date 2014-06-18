@@ -447,7 +447,7 @@ abstract class CometActorJWithCometListener extends CometActorJ with CometListen
 /**
  * Takes care of the plumbing for building Comet-based Web Apps
  */
-trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
+trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   private val logger = Logger(classOf[CometActor])
   val uniqueId = Helpers.nextFuncName
   private var spanId = uniqueId
@@ -1150,17 +1150,6 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       highPriority orElse mediumPriority orElse
         _mediumPriority orElse lowPriority orElse _lowPriority
   }
-
-  /**
-   * A helper for binding which uses the defaultHtml property.
-   */
-  def bind(prefix: String, vals: BindParam*): NodeSeq = bind(prefix, _defaultHtml, vals: _*)
-
-  /**
-   * A helper for binding which uses the defaultHtml property and the
-   * default prefix.
-   */
-  def bind(vals: BindParam*): NodeSeq = bind(_defaultPrefix, vals: _*)
 
   /**
    * Ask another CometActor a question.  That other CometActor will

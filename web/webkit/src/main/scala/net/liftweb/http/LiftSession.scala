@@ -2684,18 +2684,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private[liftweb] def findAndMerge(templateName: Box[String], atWhat: =>  Map[String, NodeSeq]): NodeSeq = {
     val name: String = templateName.map(s => if (s.startsWith("/")) s else "/" + s).openOr("/templates-hidden/default")
 
-    def hasLiftBind(s: NodeSeq): Boolean =
-      (Helpers.findOption(s) {
-        case e if "lift" == e.prefix && "bind" == e.label => Some(true)
-        case _ => None
-      }).isDefined
-
     findTemplate(name) match {
       case f@Failure(msg, be, _) if Props.devMode =>
         failedFind(f)
       case Full(s) =>
-        if (hasLiftBind(s)) Helpers.bind(atWhat, s)
-        else atWhat.toList match {
+        atWhat.toList match {
           case Nil => s
           case xs => xs.map {
             case (id, replacement) => (("#" + id) #> replacement)

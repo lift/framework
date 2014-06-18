@@ -26,12 +26,14 @@ import Helpers._
 import js._
 import JsCmds._
 
+import java.util.concurrent.atomic.AtomicReference
+
 
 /**
  * The trait that forms the basis for LiftScreen and the
  * Screen instances in Wizard
  */
-trait AbstractScreen extends Factory {
+trait AbstractScreen extends Factory with Loggable {
   override def toString = screenName
 
   protected type Errors = List[FieldError]
@@ -979,11 +981,59 @@ trait AbstractScreen extends Factory {
 }
 
 
-trait ScreenWizardRendered {
+trait ScreenWizardRendered extends Loggable {
   protected def wrapInDiv(in: NodeSeq): Elem =
     <div style="display: inline" id={FormGUID.get}>
       {in}
     </div>
+
+  def formName: String
+
+  def labelSuffix: NodeSeq = Text(":")
+
+  protected def additionalFormBindings: Box[CssSel] = Empty
+
+  protected lazy val cssClassBinding = new CssClassBinding
+
+  private def traceInline[T](msg: => String, v: T): T = {
+    logger.trace(msg)
+    v
+  }
+
+  private object FieldBindingUtils {
+    def sel(f: CssClassBinding => String, sel: String) = sel format (f(cssClassBinding))
+    def replace(f: CssClassBinding => String) = ".%s" format (f(cssClassBinding))
+    def replaceChildren(f: CssClassBinding => String) = ".%s *" format (f(cssClassBinding))
+
+    def remove(f: CssClassBinding => String) =
+      traceInline("Removing %s".format(f(cssClassBinding)), ".%s".format(f(cssClassBinding))) #> NodeSeq.Empty
+
+    def nsSetChildren(f: CssClassBinding => String, value: NodeSeq) =
+      traceInline("Binding %s to %s".format(replaceChildren(f), value), replaceChildren(f) #> value)
+
+    def funcSetChildren(f: CssClassBinding => String, value: NodeSeq => NodeSeq) =
+      traceInline("Binding %s to function".format(replaceChildren(f)), replaceChildren(f) #> value)
+
+    def optSetChildren(f: CssClassBinding => String, value: Box[NodeSeq]) =
+      traceInline("Binding %s to %s".format(replaceChildren(f), value), replaceChildren(f) #> value)
+
+    def nsReplace(f: CssClassBinding=>String, value: NodeSeq) =
+      traceInline("Binding %s to %s".format(replace(f), value), replace(f) #> value)
+
+    def funcReplace(f: CssClassBinding=>String, value: NodeSeq => NodeSeq) =
+      traceInline("Binding %s to function".format(replace(f)), replace(f) #> value)
+
+    def optReplace(f: CssClassBinding=>String, value: Box[NodeSeq]) =
+      traceInline("Binding %s to %s".format(replace(f), value), replace(f) #> value)
+
+    def updateAttrs(metaData: MetaData): NodeSeq => NodeSeq = {
+      case e:Elem => e % metaData
+    }
+
+    def update(f: CssClassBinding => String, metaData: MetaData) =
+      traceInline("Update %s with %s".format(f(cssClassBinding), metaData),
+        ".%s".format(f(cssClassBinding)) #> updateAttrs(metaData))
+  }
 
   protected def renderAll(currentScreenNumber: Box[NodeSeq],
                           screenCount: Box[NodeSeq],
@@ -1002,133 +1052,174 @@ trait ScreenWizardRendered {
                           theScreen: AbstractScreen,
                           ajax_? : Boolean): NodeSeq = {
 
+    import FieldBindingUtils._
+    import FieldBinding._
+
     val notices: List[(NoticeType.Value, NodeSeq, Box[String])] = S.getAllNotices
 
-    def bindFieldLine(xhtml: NodeSeq): NodeSeq = {
-      fields.flatMap {
-        f =>
-          val theFormEarly = f.input
-          val curId = theFormEarly.flatMap(Helpers.findId) or
-            f.field.uniqueFieldId openOr Helpers.nextFuncName
+    def fieldsWithStyle(style: BindingStyle, includeMissing: Boolean) =
+      logger.trace("Looking for fields with style %s, includeMissing = %s".format(style, includeMissing),
+        fields filter (field => field.binding map (_.bindingStyle == style) openOr (includeMissing)))
 
-          val theForm = theFormEarly.map {
-            fe => {
-              val f = Helpers.deepEnsureUniqueId(fe)
-              val id = Helpers.findBox(f)(_.attribute("id").
-                map(_.text).
-                filter(_ == curId))
-              if (id.isEmpty) {
-                Helpers.ensureId(f, curId)
-              } else {
-                f
-              }
-            }
-          }
+    def bindingInfoWithFields(style: BindingStyle) =
+      logger.trace("Looking for fields with style %s".format(style),
+        (for {
+          field <- fields;
+          bindingInfo <- field.binding if bindingInfo.bindingStyle == style
+        } yield (bindingInfo, field)).toList)
 
-          val myNotices = notices.filter(fi => fi._3.isDefined && fi._3 == curId)
-          def doLabel(in: NodeSeq): NodeSeq =
-            myNotices match {
-              case Nil => bind("wizard", in, AttrBindParam("for", curId, "for"), "bind" -%> f.text)
-              case _ =>
-                val maxN = myNotices.map(_._1).sortWith {
-                  _.id > _.id
-                }.head // get the maximum type of notice (Error > Warning > Notice)
-                val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(maxN)) openOr Null
-                bind("wizard", in, AttrBindParam("for", curId, "for"), "bind" -%> f.text).map {
-                  case e: Elem => e % metaData
-                  case x => x
-                }
-            }
-          bind("wizard", xhtml,
-            "label" -%> doLabel _,
-            "form" -%> theForm,
-            FuncBindParam("help", xml => {
-              f.help match {
-                case Full(hlp) => bind("wizard", xml, "bind" -%> hlp)
-                case _ => NodeSeq.Empty
-              }
-            }),
-            FuncBindParam("field_errors", xml => {
-              myNotices match {
-                case Nil => NodeSeq.Empty
-                case xs => bind("wizard", xml, "error" -%>
-                  (innerXml => xs.flatMap {
-                    case (noticeType, msg, _) =>
-                      val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(noticeType)) openOr Null
-                      bind("wizard", innerXml, "bind" -%> msg).map {
-                        case e: Elem => e % metaData
-                        case x => x
-                      }
-                  }))
-              }
-            }))
+    def templateFields: List[CssBindFunc] = List(sel(_.fieldContainer, ".%s") #> (fieldsWithStyle(Template, true) map (field => bindField(field))))
+
+    def selfFields: List[CssBindFunc] =
+      for ((bindingInfo, field) <- bindingInfoWithFields(Self))
+      yield traceInline("Binding self field %s".format(bindingInfo.selector(formName)),
+        bindingInfo.selector(formName) #> bindField(field))
+
+    def defaultFields: List[CssBindFunc] =
+      for ((bindingInfo, field) <- bindingInfoWithFields(Default))
+      yield traceInline("Binding default field %s to %s".format(bindingInfo.selector(formName), defaultFieldNodeSeq),
+        bindingInfo.selector(formName) #> bindField(field)(defaultFieldNodeSeq))
+
+    def customFields: List[CssBindFunc] =
+      for {
+        field <- fields
+        bindingInfo <- field.binding
+        custom <- Some(bindingInfo.bindingStyle) collect { case c:Custom => c }
+      } yield traceInline("Binding custom field %s to %s".format(bindingInfo.selector(formName), custom.template),
+        bindingInfo.selector(formName) #> bindField(field)(custom.template))
+
+    def dynamicFields: List[CssBindFunc] =
+      for {
+        field <- fields
+        bindingInfo <- field.binding
+        dynamic <- Some(bindingInfo.bindingStyle) collect { case d:Dynamic => d }
+      } yield {
+        val template = dynamic.func()
+        traceInline("Binding dynamic field %s to %s".format(bindingInfo.selector(formName), template),
+          bindingInfo.selector(formName) #> bindField(field)(template))
       }
+
+    def bindFields: CssBindFunc = {
+      logger.trace("Binding fields", fields)
+      List(templateFields, selfFields, defaultFields, customFields, dynamicFields).flatten.reduceLeft(_ & _)
+    }
+
+    def bindField(f: ScreenFieldInfo): NodeSeq => NodeSeq = {
+      val theFormEarly = f.input
+      val curId = theFormEarly.flatMap(Helpers.findId) or
+        f.field.uniqueFieldId openOr Helpers.nextFuncName
+
+      val theForm = theFormEarly.map{
+        fe => {
+          val f = Helpers.deepEnsureUniqueId(fe)
+          val id = Helpers.findBox(f)(_.attribute("id").
+            map(_.text).
+            filter(_ == curId))
+          if (id.isEmpty) {
+            Helpers.ensureId(f, curId)
+          } else {
+            f
+          }
+        }
+      }
+
+      val myNotices = notices.filter(fi => fi._3.isDefined && fi._3 == curId)
+
+      def bindLabel(): CssBindFunc = {
+        val basicLabel = sel(_.label, ".%s [for]") #> curId & nsSetChildren(_.label, f.text ++ labelSuffix)
+        myNotices match {
+          case Nil => basicLabel
+          case _ =>
+            val maxN = myNotices.map(_._1).sortWith{_.id > _.id}.head // get the maximum type of notice (Error > Warning > Notice)
+            val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(maxN)) openOr Null
+            basicLabel & update(_.label, metaData)
+        }
+      }
+
+      def bindForm(): CssBindFunc =
+        traceInline("Replacing %s with %s".format(replace(_.value), theForm),
+          replace(_.value) #> theForm)
+
+      def bindHelp(): CssBindFunc =
+        f.help match {
+          case Full(hlp) => nsSetChildren(_.help, hlp)
+          case _ => remove(_.help)
+        }
+
+      def bindErrors(): CssBindFunc =
+        myNotices match {
+          case Nil => remove(_.errors)
+          case xs => replaceChildren(_.errors) #> xs.map { case(noticeType, msg, _) =>
+            val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(noticeType)) openOr Null
+            nsSetChildren(_.error, msg) & update(_.error, metaData)
+          }
+        }
+
+      def bindAll() = bindLabel() & bindForm() & bindHelp() & bindErrors()
+
+      if (f.transforms.isEmpty)
+        bindAll()
+      else
+        (bindAll() :: f.transforms.map(_ apply (f.field))).reduceLeft(_ andThen _)
     }
 
     def url = S.uri
 
-    val snapshot = createSnapshot
+    val savAdditionalFormBindings = additionalFormBindings
 
-    def bindErrors(xhtml: NodeSeq): NodeSeq = notices.filter(_._3.isEmpty) match {
-      case Nil => NodeSeq.Empty
-      case xs =>
-        def doErrors(in: NodeSeq): NodeSeq = xs.flatMap {
-          case (noticeType, msg, _) =>
-            val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(noticeType)) openOr Null
-            bind("wizard", in, "bind" -%>
-              (msg)).map {
-              case e: Elem => e % metaData
-              case x => x
-            }
-        }
-
-        bind("wizard", xhtml,
-          "item" -%> doErrors _)
+    def bindErrors: CssBindFunc = notices.filter(_._3.isEmpty) match {
+      case Nil => remove(_.globalErrors)
+      case xs => replaceChildren(_.globalErrors) #> xs.map { case(noticeType, msg, _) =>
+        val metaData: MetaData = noticeTypeToAttr(theScreen).map(_(noticeType)) openOr Null
+        nsSetChildren(_.error, msg) & update(_.error, metaData)
+      }
     }
 
-    def bindFields(xhtml: NodeSeq): NodeSeq = {
+    def bindFieldsWithAdditional(xhtml: NodeSeq) =
+      (savAdditionalFormBindings map (bindFields & _) openOr (bindFields))(xhtml)
+
+    def liftScreenAttr(s: String) =
+      new UnprefixedAttribute("data-lift-screen-control", Text(s), Null)
+
+    def bindForm(xhtml: NodeSeq): NodeSeq = {
+      val fields = bindFieldsWithAdditional(xhtml)
+
+      val snapshot = createSnapshot
+
       val ret =
         (<form id={nextId._1} action={url}
-               method="post">
-          {S.formGroup(-1)(SHtml.hidden(() =>
-            snapshot.restore()))}{bind("wizard", xhtml,
-            "line" -%> bindFieldLine _)}{S.formGroup(4)(
-            SHtml.hidden(() => {
-              val res = nextId._2();
+               method="post">{S.formGroup(-1)(SHtml.hidden(() =>
+          snapshot.restore()) % liftScreenAttr("restoreAction"))}{fields}{
+          S.formGroup(4)(
+            SHtml.hidden(() =>
+            {val res = nextId._2();
               if (!ajax_?) {
                 val localSnapshot = createSnapshot
                 S.seeOther(url, () => {
                   localSnapshot.restore
-                })
-              }
+                })}
               res
-            }))}
-        </form> %
+            })) % liftScreenAttr("nextAction") }</form> %
           theScreen.additionalAttributes) ++
-          prevId.toList.map {
-            case (id, func) =>
-              <form id={id} action={url} method="post">
-                {SHtml.hidden(() => {
-                snapshot.restore();
+          prevId.toList.map{case (id, func) =>
+            <form id={id} action={url} method="post">{
+              SHtml.hidden(() => {snapshot.restore();
                 val res = func();
                 if (!ajax_?) {
                   val localSnapshot = createSnapshot;
                   S.seeOther(url, () => localSnapshot.restore)
                 }
                 res
-              })}
-              </form>
+              }) % liftScreenAttr("restoreAction")}</form>
           } ++
-          <form id={cancelId._1} action={url} method="post">
-            {SHtml.hidden(() => {
+          <form id={cancelId._1} action={url} method="post">{SHtml.hidden(() => {
             snapshot.restore();
             val res = cancelId._2() // WizardRules.deregisterWizardSession(CurrentSession.is)
             if (!ajax_?) {
               S.seeOther(Referer.get)
             }
             res
-          })}
-          </form>
+          }) % liftScreenAttr("restoreAction")}</form>
 
       if (ajax_?) {
         SHtml.makeFormsAjax(ret)
@@ -1137,117 +1228,94 @@ trait ScreenWizardRendered {
       }
     }
 
-    def bindScreenInfo(xhtml: NodeSeq): NodeSeq = (currentScreenNumber, screenCount) match {
+    def bindScreenInfo: CssBindFunc = (currentScreenNumber, screenCount) match {
       case (Full(num), Full(cnt)) =>
-        bind("wizard", xhtml, "screen_number" -%> num /*Text(CurrentScreen.is.map(s => (s.myScreenNum + 1).toString) openOr "")*/ ,
-          "total_screens" -%> cnt /*Text(screenCount.toString)*/)
-      case _ => NodeSeq.Empty
+        replaceChildren(_.screenInfo) #> (nsSetChildren(_.screenNumber, num) & nsSetChildren(_.totalScreens, cnt))
+      case _ => remove(_.screenInfo)
     }
 
-    Helpers.bind("wizard", allTemplate,
-      "screen_info" -%> bindScreenInfo _,
-      FuncBindParam("wizard_top", xml => (wizardTop.map(top => bind("wizard", xml, "bind" -%> top)) openOr NodeSeq.Empty)),
-      FuncBindParam("screen_top", xml => (screenTop.map(top => bind("wizard", xml, "bind" -%> top)) openOr NodeSeq.Empty)),
-      FuncBindParam("wizard_bottom", xml => (wizardBottom.map(bottom => bind("wizard", xml, "bind" -%> bottom)) openOr NodeSeq.Empty)),
-      FuncBindParam("screen_bottom", xml => (screenBottom.map(bottom => bind("wizard", xml, "bind" -%> bottom)) openOr NodeSeq.Empty)),
-      "prev" -%> (prev openOr EntityRef("nbsp")),
-      "next" -%> ((next or finish) openOr EntityRef("nbsp")),
-      "cancel" -%> (cancel openOr EntityRef("nbsp")),
-      "errors" -%> bindErrors _,
-      FuncBindParam("fields", bindFields _))
+    logger.trace("Preparing to bind", fields)
 
+    val bindingFunc: CssBindFunc =
+      bindScreenInfo &
+      optSetChildren(_.wizardTop, wizardTop) &
+      optSetChildren(_.screenTop, screenTop) &
+      optSetChildren(_.wizardBottom, wizardBottom) &
+      optSetChildren(_.screenBottom, screenBottom) &
+      nsReplace(_.prev, prev openOr EntityRef("nbsp")) &
+      nsReplace(_.next, ((next or finish) openOr EntityRef("nbsp"))) &
+      nsReplace(_.cancel, cancel openOr EntityRef("nbsp")) &
+      bindErrors &
+      funcSetChildren(_.fields, bindForm _)
+
+    val processed = S.session map (_.runTemplate("css-bound-screen", allTemplate)) openOr (allTemplate)
+
+    (savAdditionalFormBindings map (bindingFunc & _) openOr (bindingFunc))(processed)
+  }
+
+  def defaultFieldNodeSeq: NodeSeq = NodeSeq.Empty
+
+  class CssClassBinding {
+    def screenInfo = "screenInfo"
+    def wizardTop = "wizardTop"
+    def screenTop = "screenTop"
+    def globalErrors = "globalErrors"
+    def fields = "fields"
+    def fieldContainer = "fieldContainer"
+    def label = "label"
+    def help = "help"
+    def errors = "errors"
+    def error = "error"
+    def value = "value"
+    def prev = "prev"
+    def cancel = "cancel"
+    def next = "next"
+    def screenBottom = "screenBottom"
+    def wizardBottom = "wizardBottom"
+    def screenNumber = "screenNumber"
+    def totalScreens = "totalScreens"
   }
 
   protected def allTemplate: NodeSeq
 
   protected def allTemplateNodeSeq: NodeSeq = {
     <div>
-      <wizard:screen_info>
-        <div>Page
-            <wizard:screen_number/>
-          of
-            <wizard:total_screens/>
-        </div>
-      </wizard:screen_info>
-      <wizard:wizard_top>
-        <div>
-            <wizard:bind/>
-        </div>
-      </wizard:wizard_top>
-      <wizard:screen_top>
-        <div>
-            <wizard:bind/>
-        </div>
-      </wizard:screen_top>
-      <wizard:errors>
-        <div>
-          <ul>
-            <wizard:item>
-              <li>
-                  <wizard:bind/>
-              </li>
-            </wizard:item>
-          </ul>
-        </div>
-      </wizard:errors>
-      <div>
-        <wizard:fields>
-          <table>
-            <wizard:line>
-              <tr>
-                <td>
-                  <wizard:label>
-                    <label wizard:for=" ">
-                        <wizard:bind/>
-                    </label>
-                  </wizard:label>
-                  <wizard:help>
-                    <span>
-                        <wizard:bind/>
-                    </span>
-                  </wizard:help> <wizard:field_errors>
-                  <ul>
-                    <wizard:error>
-                      <li>
-                          <wizard:bind/>
-                      </li>
-                    </wizard:error>
-                  </ul>
-                </wizard:field_errors>
-                </td>
-                <td>
-                    <wizard:form/>
-                </td>
-              </tr>
-            </wizard:line>
-          </table>
-        </wizard:fields>
+      <div class="screenInfo">
+        Page <span class="screenNumber"></span> of <span class="totalScreens"></span>
+      </div>
+      <div class="wizardTop"></div>
+      <div class="screenTop"></div>
+      <div class="globalErrors">
+        <div class="error"></div>
+      </div>
+      <div class="fields">
+        <table>
+          <tr class="fieldContainer">
+            <td>
+              <label class="label field"></label>
+              <span class="help"></span>
+              <div class="errors">
+                <div class="error"></div>
+              </div>
+            </td>
+            <td><span class="value fieldValue"></span></td>
+          </tr>
+        </table>
       </div>
       <div>
         <table>
           <tr>
-            <td>
-                <wizard:prev/>
-            </td> <td>
-              <wizard:cancel/>
-          </td> <td>
-              <wizard:next/>
-          </td>
+            <td><button class="prev"></button></td>
+            <td><button class="cancel"></button></td>
+            <td><button class="next"></button> </td>
           </tr>
         </table>
       </div>
-      <wizard:screen_bottom>
-        <div>
-            <wizard:bind/>
-        </div>
-      </wizard:screen_bottom>
-      <wizard:wizard_bottom>
-        <div>
-            <wizard:bind/>
-        </div>
-      </wizard:wizard_bottom>
+      <div class="screenBottom"></div>
+      <div class="wizardBottom"></div>
     </div>
   }
+
 
   protected trait Snapshot {
     def restore(): Unit
@@ -1333,6 +1401,27 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
       _defaultXml.set(template)
       this.toForm
     }
+  }
+
+  protected object SavedDefaultXml extends ScreenVar[NodeSeq](defaultXml) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
+
+  protected object LocalAction extends TransientRequestVar[String]("") {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
+
+  protected object LocalActionRef extends RequestVar[String](S.fmapFunc(setLocalAction _)(s => s)) {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
+
+  protected object CancelId extends TransientRequestVar[String]("") {
+    override lazy val __nameSalt = Helpers.nextFuncName
+  }
+
+  protected object LocalActions extends ScreenVar[AtomicReference[Map[String, () => JsCmd]]](
+      new AtomicReference[Map[String, () => JsCmd]](Map.empty)) {
+    override lazy val __nameSalt = Helpers.nextFuncName
   }
 
   /**
@@ -1464,11 +1553,36 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
       ScreenVars.set(ScreenVars.get - name)
   }
 
+  protected def bindLocalAction(selector: String, func: () => JsCmd): CssSel = {
+    mapLocalAction(func)(name =>
+      selector #> (
+        SHtml.makeAjaxCall(LiftRules.jsArtifacts.serialize(NextId.get) + ("&" + LocalActionRef.get + "=" + name)).cmd
+      ).toJsCmd)
+  }
+
+  protected def mapLocalAction[T](func: () => JsCmd)(f: String => T): T = {
+    val name = randomString(20)
+    val ref = LocalActions.get
+    ref.synchronized {
+      ref.set(ref.get + (name -> func))
+    }
+    f(name)
+  }
+
+  protected def setLocalAction(s: String) {
+    logger.trace("Setting LocalAction (%s) to %s".format(
+      Integer.toString(System.identityHashCode(LocalAction), 16), s))
+    LocalAction.set(s)
+  }
+
+
   def toForm: NodeSeq = {
     Referer.get // touch to capture the referer
     Ajax_?.get // capture the ajaxiness of these forms
     FormGUID.get
     NextId.get
+    SavedDefaultXml.get
+    LocalActionRef.get
 
     if (FirstTime) {
       FirstTime.set(false)
@@ -1526,6 +1640,8 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
         case _ => Nil
       }
 
+    CancelId.set(cancelId)
+
     renderAll(
       Empty, //currentScreenNumber: Box[NodeSeq],
       Empty, //screenCount: Box[NodeSeq],
@@ -1563,24 +1679,40 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
 
   protected def finish(): Unit
 
-  protected def doFinish(): JsCmd = {
-    validate match {
-      case Nil =>
-        val snapshot = createSnapshot
-        PrevSnapshot.set(Full(snapshot))
-        finish()
-        redirectBack()
+  protected def savedDefaultXml = SavedDefaultXml.get
 
-      case xs => {
-        S.error(xs)
-        if (ajaxForms_?) {
-          SetHtml(FormGUID, renderHtml())
-        } else {
-          Noop
+  protected def doFinish(): JsCmd= {
+    val fMap: Map[String, () => JsCmd] = LocalActions.get.get
+    if (! LocalAction.get.isEmpty)
+      fMap.get(LocalAction.get) map (_()) getOrElse (
+        throw new IllegalArgumentException("No local action available with that binding"))
+    else {
+      validate match {
+        case Nil =>
+          val snapshot = createSnapshot
+          PrevSnapshot.set(Full(snapshot))
+          finish()
+          redirectBack()
+        case xs => {
+          S.error(xs)
+          if (ajaxForms_?) {
+            replayForm
+          } else {
+            Noop
+          }
         }
       }
     }
   }
+
+  protected def renderWithErrors(errors: List[FieldError]) {
+    S.error(errors)
+    AjaxOnDone.set(replayForm)
+  }
+
+  protected def renderFormCmd: JsCmd = SetHtml(FormGUID, renderHtml())
+
+  protected def replayForm: JsCmd = renderFormCmd
 }
 
 

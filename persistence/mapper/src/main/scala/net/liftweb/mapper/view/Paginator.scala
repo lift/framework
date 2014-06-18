@@ -32,7 +32,7 @@ import net.liftweb.mapper.{Mapper, MetaMapper, MappedField,
  * @author nafg and Timothy Perrett
  */
 trait PaginatedModelSnippet[T <: Mapper[T]] extends ModelSnippet[T] {
-  abstract override def dispatch: DispatchIt = super.dispatch orElse Map("paginate" -> paginator.paginate _ )
+  abstract override def dispatch: DispatchIt = super.dispatch orElse Map("paginate" -> paginator.paginate)
   /**
    * The paginator to delegate to
    */
