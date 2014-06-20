@@ -30,6 +30,14 @@ case class Diff(changed: JValue, added: JValue, deleted: JValue) {
     }
     Diff(applyTo(changed), applyTo(added), applyTo(deleted))
   }
+
+  private[json] def toField(name: String): Diff = {
+    def applyTo(x: JValue) = x match {
+      case JNothing => JNothing
+      case _ => JObject(JField(name, x))
+    }
+    Diff(applyTo(changed), applyTo(added), applyTo(deleted))
+  }
 }
 
 /** Computes a diff between two JSONs.
@@ -39,17 +47,15 @@ object Diff {
    * <p>
    * Example:<pre>
    * val Diff(c, a, d) = ("name", "joe") ~ ("age", 10) diff ("fname", "joe") ~ ("age", 11)
-   * c = JObject(JField("age",JInt(11)) :: Nil)
-   * a = JObject(JField("fname",JString("joe")) :: Nil)
-   * d = JObject(JField("name",JString("joe")) :: Nil)
+   * c = JObject(("age",JInt(11)) :: Nil)
+   * a = JObject(("fname",JString("joe")) :: Nil)
+   * d = JObject(("name",JString("joe")) :: Nil)
    * </pre>
    */
   def diff(val1: JValue, val2: JValue): Diff = (val1, val2) match {
     case (x, y) if x == y => Diff(JNothing, JNothing, JNothing)
     case (JObject(xs), JObject(ys)) => diffFields(xs, ys)
     case (JArray(xs), JArray(ys)) => diffVals(xs, ys)
-    case (JField(xn, xv), JField(yn, yv)) if (xn == yn) => diff(xv, yv) map (JField(xn, _))
-    case (x @ JField(xn, xv), y @ JField(yn, yv)) if (xn != yn) => Diff(JNothing, y, x)
     case (JInt(x), JInt(y)) if (x != y) => Diff(JInt(y), JNothing, JNothing)
     case (JDouble(x), JDouble(y)) if (x != y) => Diff(JDouble(y), JNothing, JNothing)
     case (JString(x), JString(y)) if (x != y) => Diff(JString(y), JNothing, JNothing)
@@ -62,12 +68,9 @@ object Diff {
       case Nil => Diff(JNothing, if (yleft.isEmpty) JNothing else JObject(yleft), JNothing)
       case x :: xs => yleft find (_.name == x.name) match {
         case Some(y) =>
-          val Diff(c1, a1, d1) = diff(x, y)
+          val Diff(c1, a1, d1) = diff(x.value, y.value).toField(y.name)
           val Diff(c2, a2, d2) = diffRec(xs, yleft filterNot (_ == y))
-          Diff(c1 ++ c2, a1 ++ a2, d1 ++ d2) map {
-            case f: JField => JObject(f :: Nil)
-            case x => x
-          }
+          Diff(c1 merge c2, a1 merge a2, d1 merge d2)
         case None =>
           val Diff(c, a, d) = diffRec(xs, yleft)
           Diff(c, a, JObject(x :: Nil) merge d)

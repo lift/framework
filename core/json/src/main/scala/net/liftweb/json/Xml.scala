@@ -169,9 +169,8 @@ object Xml {
    */
   def toXml(json: JValue): NodeSeq = {
     def toXml(name: String, json: JValue): NodeSeq = json match {
-      case JObject(fields) => new XmlNode(name, fields flatMap { f => toXml(f.name, f.value) })
+      case JObject(fields) => new XmlNode(name, fields flatMap { case JField(n, v) => toXml(n, v) })
       case JArray(xs) => xs flatMap { v => toXml(name, v) }
-      case JField(n, v) => new XmlNode(name, toXml(n, v))
       case JInt(x) => new XmlElem(name, x.toString)
       case JDouble(x) => new XmlElem(name, x.toString)
       case JString(x) => new XmlElem(name, x)
@@ -181,8 +180,7 @@ object Xml {
     }
 
     json match {
-      case JField(n, v) => toXml(n, v)
-      case JObject(fields) => fields flatMap { f => toXml(f.name, f.value) }
+      case JObject(fields) => fields flatMap { case JField(name, value) => toXml(name, value) }
       case x => toXml("root", x)
     }
   }

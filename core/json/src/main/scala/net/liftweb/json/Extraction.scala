@@ -63,7 +63,7 @@ object Extraction {
    */
   def decompose(a: Any)(implicit formats: Formats): JValue = {
     def prependTypeHint(clazz: Class[_], o: JObject) = 
-      JField(formats.typeHintFieldName, JString(formats.typeHints.hintFor(clazz))) ++ o
+      JObject(JField(formats.typeHintFieldName, JString(formats.typeHints.hintFor(clazz))) :: o.obj)
 
     def mkObject(clazz: Class[_], fields: List[JField]) = formats.typeHints.containsHint_?(clazz) match {
       case true  => prependTypeHint(clazz, JObject(fields))
@@ -120,8 +120,9 @@ object Extraction {
         case JDouble(num)        => Map(path -> num.toString)
         case JInt(num)           => Map(path -> num.toString)
         case JBool(value)        => Map(path -> value.toString)
-        case JField(name, value) => flatten0(path + escapePath(name), value)
-        case JObject(obj)        => obj.foldLeft(Map[String, String]()) { (map, field) => map ++ flatten0(path + ".", field) }
+        case JObject(obj)        => obj.foldLeft(Map[String, String]()) { case (map, JField(name, value)) => 
+          map ++ flatten0(path + "." + escapePath(name), value) 
+        }
         case JArray(arr)         => arr.length match {
           case 0 => Map(path -> "[]")
           case _ => arr.foldLeft((Map[String, String](), 0)) { 
@@ -209,7 +210,6 @@ object Extraction {
         else {
           val argNames = json match {
             case JObject(fs) => fs.map(_.name)
-            case JField(name, _) => List(name)
             case x => Nil
           }
           constructor.bestMatching(argNames)
@@ -282,7 +282,6 @@ object Extraction {
       else json match {
         case JNull => null
         case JObject(TypeHint(t, fs)) => mkWithTypeHint(t, fs, constructor.targetType)
-        case JField(_, JObject(TypeHint(t, fs))) => mkWithTypeHint(t, fs, constructor.targetType)
         case _ => instantiate
       }
     }
@@ -314,7 +313,7 @@ object Extraction {
       case Value(targetType) => convert(root, targetType, formats)
       case c: Constructor => newInstance(c, root)
       case Cycle(targetType) => build(root, mappingOf(targetType))
-      case Arg(path, m, optional) => mkValue(fieldValue(root), m, path, optional)
+      case Arg(path, m, optional) => mkValue(root, m, path, optional)
       case Col(targetType, m) =>
         val custom = formats.customDeserializer(formats)
         val c = targetType.clazz
@@ -358,11 +357,6 @@ object Extraction {
         }
       }
 
-    def fieldValue(json: JValue): JValue = json match {
-      case JField(_, value) => value
-      case x => x
-    }
-
     build(json, mapping)
   }
 
@@ -401,7 +395,6 @@ object Extraction {
     case j: JArray if (targetType == classOf[JArray]) => j
     case JNull => null
     case JNothing => fail("Did not find value which can be converted into " + targetType.getName)
-    case JField(_, x) => convert(x, targetType, formats)
     case _ => 
       val custom = formats.customDeserializer(formats)
       val typeInfo = TypeInfo(targetType, None)

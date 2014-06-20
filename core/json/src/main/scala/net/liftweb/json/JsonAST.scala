@@ -34,36 +34,40 @@ object JsonAST {
   object JValue extends Merge.Mergeable
 
   /**
-   * Data type for Json AST.
+   * Data type for JSON AST.
    */
   sealed abstract class JValue extends Diff.Diffable {
     type Values
 
     /** XPath-like expression to query JSON fields by name. Matches only fields on
-      * next level.
-      * <p>
-      * Example:<pre>
-      * json \ "name"
-      * </pre>
-      */
+     * next level.
+     * <p>
+     * Example:<pre>
+     * json \ "name"
+     * </pre>
+     */
     def \(nameToFind: String): JValue = {
-      val p = (json: JValue) => json match {
-        case JField(name, value) if name == nameToFind => true
-        case _ => false
-      }
-      findDirect(children, p) match {
+      findDirectByName(List(this), nameToFind) match {
         case Nil => JNothing
-        case JField(_, x) :: Nil => x
         case x :: Nil => x
         case x => JArray(x)
       }
     }
 
+    private def findDirectByName(xs: List[JValue], name: String): List[JValue] = xs.flatMap {
+      case JObject(l) =>
+        l.collect {
+          case JField(n, value) if n == name => value
+        }
+      case JArray(l) => findDirectByName(l, name)
+      case _ => Nil
+    }
+
     private def findDirect(xs: List[JValue], p: JValue => Boolean): List[JValue] = xs.flatMap {
-      case JObject(l) => l.filter {
-        case x if p(x) => true
-        case _ => false
-      }
+      case JObject(l) =>
+        l.collect {
+          case JField(n, x) if p(x) => x
+        }
       case JArray(l) => findDirect(l, p)
       case x if p(x) => x :: Nil
       case _ => Nil
@@ -77,16 +81,20 @@ object JsonAST {
       */
     def \\(nameToFind: String): JValue = {
       def find(json: JValue): List[JField] = json match {
-        case JObject(l) => l.foldLeft(List[JField]())((a, e) => a ::: find(e))
-        case JArray(l) => l.foldLeft(List[JField]())((a, e) => a ::: find(e))
-        case field @ JField(name, value) if name == nameToFind => field :: find(value)
-        case JField(_, value) => find(value)
+        case JObject(l) => l.foldLeft(List[JField]()) { 
+          case (a, JField(name, value)) => 
+            if (name == nameToFind) {
+              a ::: List(JField(name, value)) ::: find(value)
+            } else {
+              a ::: find(value)
+            }
+        }
+        case JArray(l) => l.foldLeft(List[JField]())((a, json) => a ::: find(json))
         case _ => Nil
       }
       find(this) match {
         case JField(_, x) :: Nil => x
-        case x :: Nil => x
-        case x => JObject(x)
+        case xs => JObject(xs)
       }
     }
 
@@ -132,15 +140,14 @@ object JsonAST {
     def values: Values
 
     /** Return direct child elements.
-      * <p>
-      * Example:<pre>
-      * JArray(JInt(1) :: JInt(2) :: Nil).children == List(JInt(1), JInt(2))
-      * </pre>
-      */
-    def children = this match {
-      case JObject(l) => l
+     * <p>
+     * Example:<pre>
+     * JArray(JInt(1) :: JInt(2) :: Nil).children == List(JInt(1), JInt(2))
+     * </pre>
+     */
+    def children: List[JValue] = this match {
+      case JObject(l) => l map (_.value)
       case JArray(l) => l
-      case JField(n, v) => List(v)
       case _ => Nil
     }
 
@@ -151,39 +158,91 @@ object JsonAST {
       def rec(acc: A, v: JValue) = {
         val newAcc = f(acc, v)
         v match {
-          case JObject(l) => l.foldLeft(newAcc)((a, e) => e.fold(a)(f))
-          case JArray(l) => l.foldLeft(newAcc)((a, e) => e.fold(a)(f))
-          case JField(_, value) => value.fold(newAcc)(f)
+          case JObject(l) =>
+            l.foldLeft(newAcc) {
+              case (a, JField(name, value)) => value.fold(a)(f)
+            }
+          case JArray(l) =>
+            l.foldLeft(newAcc) { (a, e) =>
+              e.fold(a)(f)
+            }
           case _ => newAcc
         }
       }
       rec(z, this)
     }
 
+    /** Return a combined value by folding over JSON by applying a function <code>f</code>
+     * for each field. The initial value is <code>z</code>.
+     */
+    def foldField[A](z: A)(f: (A, JField) => A): A = {
+      def rec(acc: A, v: JValue) = {
+        v match {
+          case JObject(l) => l.foldLeft(acc) { 
+            case (a, field@JField(name, value)) => value.foldField(f(a, field))(f) 
+          }
+          case JArray(l) => l.foldLeft(acc)((a, e) => e.foldField(a)(f))
+          case _ => acc
+        }
+      }
+      rec(z, this)
+    }
+
     /** Return a new JValue resulting from applying the given function <code>f</code>
-      * to each element in JSON.
-      * <p>
-      * Example:<pre>
-      * JArray(JInt(1) :: JInt(2) :: Nil) map { case JInt(x) => JInt(x+1); case x => x }
-      * </pre>
-      */
+     * to each value in JSON.
+     * <p>
+     * Example:<pre>
+     * JArray(JInt(1) :: JInt(2) :: Nil) map {
+     *   case JInt(x) => JInt(x+1)
+     *   case x => x
+     * }
+     * </pre>
+     */
     def map(f: JValue => JValue): JValue = {
       def rec(v: JValue): JValue = v match {
-        case JObject(l) => f(JObject(l.map(f => rec(f) match {
-          case x: JField => x
-          case x => JField(f.name, x)
-        })))
+        case JObject(l) => f(JObject(l.map { field => field.copy(value = rec(field.value)) }))
         case JArray(l) => f(JArray(l.map(rec)))
-        case JField(name, value) => f(JField(name, rec(value)))
         case x => f(x)
       }
       rec(this)
     }
 
+    /** Return a new JValue resulting from applying the given function <code>f</code>
+     * to each field in JSON.
+     * <p>
+     * Example:<pre>
+     * JObject(("age", JInt(10)) :: Nil) map {
+     *   case ("age", JInt(x)) => ("age", JInt(x+1))
+     *   case x => x
+     * }
+     * </pre>
+     */
+    def mapField(f: JField => JField): JValue = {
+      def rec(v: JValue): JValue = v match {
+        case JObject(l) => JObject(l.map { field => f(field.copy(value = rec(field.value))) })
+        case JArray(l) => JArray(l.map(rec))
+        case x => x
+      }
+      rec(this)
+    }
+
     /** Return a new JValue resulting from applying the given partial function <code>f</code>
-      * to each element in JSON.
-      * <p>
-      * Example:<pre>
+     * to each field in JSON.
+     * <p>
+     * Example:<pre>
+     * JObject(("age", JInt(10)) :: Nil) transformField {
+     *   case ("age", JInt(x)) => ("age", JInt(x+1))
+     * }
+     * </pre>
+     */
+    def transformField(f: PartialFunction[JField, JField]): JValue = mapField { x =>
+      if (f.isDefinedAt(x)) f(x) else x
+    }
+
+    /** Return a new JValue resulting from applying the given partial function <code>f</code>
+     * to each value in JSON.
+     * <p>
+     * Example:<pre>
       * JArray(JInt(1) :: JInt(2) :: Nil) transform { case JInt(x) => JInt(x+1) }
       * </pre>
       */
@@ -220,6 +279,22 @@ object JsonAST {
       rep(l, this)
     }
 
+    /** Return the first field from JSON which matches the given predicate.
+     * <p>
+     * Example:<pre>
+     * JObject(("age", JInt(2))) findField { case (n, v) => n == "age" }
+     * </pre>
+     */
+    def findField(p: JField => Boolean): Option[JField] = {
+      def find(json: JValue): Option[JField] = json match {
+        case JObject(fs) if (fs find p).isDefined => return fs find p
+        case JObject(fs) => fs.flatMap { case JField(n, v) => find(v) }.headOption
+        case JArray(l) => l.flatMap(find _).headOption
+        case _ => None
+      }
+      find(this)
+    }
+
     /** Return the first element from JSON which matches the given predicate.
       * <p>
       * Example:<pre>
@@ -230,17 +305,28 @@ object JsonAST {
       def find(json: JValue): Option[JValue] = {
         if (p(json)) return Some(json)
         json match {
-          case JObject(l) => l.flatMap(find _).headOption
+          case JObject(fs) => fs.flatMap { case JField(n, v) => find(v) }.headOption
           case JArray(l) => l.flatMap(find _).headOption
-          case JField(_, value) => find(value)
           case _ => None
         }
       }
       find(this)
     }
 
-    /** Return a List of all elements which matches the given predicate.
-      * <p>
+    /** Return a List of all fields that match the given predicate.
+     * <p>
+     * Example:<pre>
+     * JObject(("age", JInt(10)) :: Nil) filterField {
+     *   case ("age", JInt(x)) if x > 18 => true
+     *   case _          => false
+     * }
+     * </pre>
+     */
+    def filterField(p: JField => Boolean): List[JField] = 
+      foldField(List[JField]())((acc, e) => if (p(e)) e :: acc else acc).reverse
+
+    /** Return a List of all values which matches the given predicate.
+     * <p>
       * Example:<pre>
       * JArray(JInt(1) :: JInt(2) :: Nil) filter { case JInt(x) => x > 1; case _ => false }
       * </pre>
@@ -272,20 +358,30 @@ object JsonAST {
       def append(value1: JValue, value2: JValue): JValue = (value1, value2) match {
         case (JNothing, x) => x
         case (x, JNothing) => x
-        case (JObject(xs), x: JField) => JObject(xs ::: List(x))
-        case (x: JField, JObject(xs)) => JObject(x :: xs)
         case (JArray(xs), JArray(ys)) => JArray(xs ::: ys)
         case (JArray(xs), v: JValue) => JArray(xs ::: List(v))
         case (v: JValue, JArray(xs)) => JArray(v :: xs)
-        case (f1: JField, f2: JField) => JObject(f1 :: f2 :: Nil)
-        case (JField(n, v1), v2: JValue) => JField(n, append(v1, v2))
         case (x, y) => JArray(x :: y :: Nil)
       }
       append(this, other)
     }
 
-    /** Return a JSON where all elements matching the given predicate are removed.
-      * <p>
+    /** Return a JSON where all fields matching the given predicate are removed.
+     * <p>
+     * Example:<pre>
+     * JObject(("age", JInt(10)) :: Nil) removeField {
+     *   case ("age", _) => true
+     *   case _          => false
+     * }
+     * </pre>
+     */
+    def removeField(p: JField => Boolean): JValue = this mapField {
+      case x if p(x) => JField(x.name, JNothing)
+      case x => x
+    }
+
+    /** Return a JSON where all values matching the given predicate are removed.
+     * <p>
       * Example:<pre>
       * JArray(JInt(1) :: JInt(2) :: JNull :: Nil) remove { _ == JNull }
       * </pre>
@@ -379,14 +475,15 @@ object JsonAST {
     type Values = Boolean
     def values = value
   }
-  case class JField(name: String, value: JValue) extends JValue {
-    type Values = (String, value.Values)
-    def values = (name, value.values)
-    override def apply(i: Int): JValue = value(i)
-  }
+  
   case class JObject(obj: List[JField]) extends JValue {
     type Values = Map[String, Any]
-    def values = Map() ++ obj.map(_.values : (String, Any))
+    def values = {
+      obj.map {
+        case JField(name, value) =>
+          (name, value.values): (String, Any)
+      }.toMap
+    }
 
     override def equals(that: Any): Boolean = that match {
       case o: JObject => obj.toSet == o.obj.toSet
@@ -395,11 +492,17 @@ object JsonAST {
 
     override def hashCode = obj.toSet[JField].hashCode
   }
+  case object JObject {
+    def apply(fs: JField*): JObject = JObject(fs.toList)
+  }
+
   case class JArray(arr: List[JValue]) extends JValue {
     type Values = List[Any]
     def values = arr.map(_.values)
     override def apply(i: Int): JValue = arr(i)
   }
+
+  case class JField(name: String, value: JValue)
 
   /** Renders JSON.
     * @see Printer#compact
@@ -415,9 +518,8 @@ object JsonAST {
     case JString(null) => text("null")
     case JString(s)    => text("\"" + quote(s) + "\"")
     case JArray(arr)   => text("[") :: series(trimArr(arr).map(render)) :: text("]")
-    case JField(n, v)  => text("\"" + quote(n) + "\":") :: render(v)
     case JObject(obj)  =>
-      val nested = break :: fields(trimObj(obj).map(f => text("\"" + quote(f.name) + "\":") :: render(f.value)))
+      val nested = break :: fields(trimObj(obj).map { case JField(name, value) => text("\"" + quote(name) + "\":") :: render(value) })
       text("{") :: nest(2, nested) :: break :: text("}")
     case JNothing      => sys.error("can't render 'nothing'") //TODO: this should not throw an exception
   }
@@ -477,7 +579,6 @@ object JsonAST {
     case JString(null) => buf.append("null")
     case JString(s)    => bufQuote(s, buf)
     case JArray(arr)   => bufRenderArr(arr, buf)
-    case JField(k, v)  => bufQuote(k, buf).append(":"); bufRender(v, buf)
     case JObject(obj)  => bufRenderObj(obj, buf)
     case JNothing      => sys.error("can't render 'nothing'") //TODO: this should not throw an exception
   }
@@ -503,12 +604,15 @@ object JsonAST {
   private def bufRenderObj(xs: List[JField], buf: StringBuilder): StringBuilder = {
     buf.append("{") //open bracket
     if (!xs.isEmpty) {
-      xs.foreach(elem => if (elem.value != JNothing) {
-        bufQuote(elem.name, buf)
-        buf.append(":")
-        bufRender(elem.value, buf)
-        buf.append(",")
-      })
+      xs.foreach {
+        case JField(name, value) if value != JNothing =>
+          bufQuote(name, buf)
+          buf.append(":")
+          bufRender(value, buf)
+          buf.append(",")
+
+        case _ => // omit fields with value of JNothing
+      }
       if (buf.last == ',')
         buf.deleteCharAt(buf.length - 1) //delete last comma
     }
