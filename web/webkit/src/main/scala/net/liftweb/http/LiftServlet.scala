@@ -577,13 +577,34 @@ class LiftServlet extends Loggable {
   }
 
   /**
+   * Generates the JsCmd needed to initialize comets in
+   * `S.requestCometVersions` on the client.
+   */
+  private def commandForComets: JsCmd = {
+    val cometVersions = S.requestCometVersions.is
+
+    if (cometVersions.nonEmpty) {
+      js.JE.Call(
+        "lift.registerComets",
+        js.JE.JsObj(
+          S.requestCometVersions.is.toList.map {
+            case CometVersionPair(guid, version) =>
+              (guid, js.JE.Num(version))
+          }: _*
+        ),
+        true
+      ).cmd
+    } else {
+      js.JsCmds.Noop
+    }
+  }
+
+  /**
    * Runs the actual AJAX processing. This includes handling __lift__GC,
-   * or running the parameters in the session. onComplete is run when the
-   * AJAX request has completed with a response that is meant for the
-   * user. In cases where the request is taking too long to respond,
-   * an LAFuture may be used to delay the real response (and thus the
-   * invocation of onComplete) while this function returns an empty
-   * response.
+   * or running the parameters in the session. It returns once the AJAX
+   * request has completed with a response meant for the user. In cases
+   * where the request is taking to respond, an LAFuture may be wrapped
+   * around the execution; see `handleAjax` for more.
    */
   private def runAjax(liftSession: LiftSession,
                       requestState: Req): Box[LiftResponse] = {
@@ -617,11 +638,12 @@ class LiftServlet extends Loggable {
               case (jv: JValue) :: Nil => JsonResponse(jv)
               case (js: JsCmd) :: xs => {
                 (JsCommands(S.noticesToJsCmd :: Nil) &
-                  ((js :: xs).flatMap {
-                    case js: JsCmd => List(js)
-                    case _ => Nil
-                  }.reverse) &
-                  S.jsToAppend).toResponse
+                  (js :: (xs.collect {
+                    case js: JsCmd => js
+                  }).reverse) &
+                  S.jsToAppend &
+                  commandForComets
+                ).toResponse
               }
 
               case (n: Node) :: _ => XmlResponse(n)

@@ -362,7 +362,11 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    */
   private object _tailTags extends TransientRequestVar(new ListBuffer[Elem])
 
-  private object _cometTags extends TransientRequestVar(new ListBuffer[Elem])
+  // Set of CometVersionPairs for comets that should be tracked on
+  // the page that is currently being rendered or that called this AJAX
+  // callback.
+  private[http] object requestCometVersions extends TransientRequestVar[Set[CometVersionPair]](Set.empty)
+
 
   private object p_queryLog extends TransientRequestVar(new ListBuffer[(String, Long)])
   private object p_notice extends TransientRequestVar(new ListBuffer[(NoticeType.Value, NodeSeq, Box[String])])
@@ -797,10 +801,73 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    */
   def atEndOfBody(): List[Elem] = _tailTags.is.toList
 
+  /**
+   * Add a comet to the list of comets that should be registered to
+   * receive updates on the page currently being rendered or on the page
+   * that invoked the currently running callback.
+   */
+  def addComet(cometActor: LiftCometActor): Unit = {
+    requestCometVersions.set(
+      requestCometVersions.is + CVP(cometActor.uniqueId, cometActor.lastListenerTime)
+    )
+  }
 
-  def addCometAtEnd(elem: Elem): Unit = _cometTags.is += elem
+  /**
+   * As with {findOrBuildComet[T]}, but specify the type as a `String`. If the
+   * comet doesn't already exist, the comet type is first looked up via
+   * `LiftRules.cometCreationFactory`, and then as a class name in the comet
+   * packages designated by `LiftRules.buildPackage("comet")`.
+   *
+   * If `receiveUpdates` is `true`, updates to this comet will be pushed to
+   * the page currently being rendered or to the page that is currently
+   * invoking an AJAX callback. You can also separately register a comet to
+   * receive updates like this using {S.addComet}.
+   */
+  def findOrCreateComet(
+    cometType: String,
+    cometName: Box[String] = Empty,
+    cometHtml: NodeSeq = NodeSeq.Empty,
+    cometAttributes: Map[String, String] = Map.empty,
+    receiveUpdatesOnPage: Boolean = false
+  ): Box[LiftCometActor] = {
+    for {
+      session <- session
+      cometActor <- session.findOrCreateComet(cometType, cometName, cometHtml, cometAttributes)
+    } yield {
+      if (receiveUpdatesOnPage)
+        addComet(cometActor)
 
-  def cometAtEnd(): List[Elem] = _cometTags.is.toList
+      cometActor
+    }
+  }
+
+  /**
+   * Find or build a comet actor of the given type `T` with the given
+   * configuration parameters. If a comet of that type with that name already
+   * exists, it is returned; otherwise, a new one of that type is created and
+   * set up, then returned.
+   *
+   * If `receiveUpdates` is `true`, updates to this comet will be pushed to
+   * the page currently being rendered or to the page that is currently
+   * invoking an AJAX callback. You can also separately register a comet to
+   * receive updates like this using {S.addComet}.
+   */
+  def findOrCreateComet[T <: LiftCometActor](
+    cometName: Box[String] = Empty,
+    cometHtml: NodeSeq = NodeSeq.Empty,
+    cometAttributes: Map[String, String] = Map.empty,
+    receiveUpdatesOnPage: Boolean = false
+  )(implicit cometManifest: Manifest[T]): Box[T] = {
+    for {
+      session <- session
+      cometActor <- session.findOrCreateComet[T](cometName, cometHtml, cometAttributes)
+    } yield {
+      if (receiveUpdatesOnPage)
+        addComet(cometActor)
+
+      cometActor
+    }
+  }
 
   /**
    * Sometimes it's helpful to accumute JavaScript as part of servicing

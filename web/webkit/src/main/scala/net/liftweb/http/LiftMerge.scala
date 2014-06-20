@@ -99,7 +99,6 @@ private[http] trait LiftMerge {
     addlHead ++= S.forHead()
     val addlTail = new ListBuffer[Node]
     addlTail ++= S.atEndOfBody()
-    val cometTimes = new ListBuffer[CometVersionPair]
     val rewrite = URLRewriter.rewriteFunc
     val fixHref = Req.fixHref
 
@@ -107,13 +106,6 @@ private[http] trait LiftMerge {
 
     def fixAttrs(original: MetaData, toFix: String, attrs: MetaData, fixURL: Boolean): MetaData = attrs match {
       case Null => Null
-      case p: PrefixedAttribute if p.key == "when" && p.pre == "lift" =>
-        val when = p.value.text
-        original.find(a => !a.isPrefixed && a.key == "id").map {
-          id =>
-                  cometTimes += CVP(id.value.text, when.toLong)
-        }
-        fixAttrs(original, toFix, p.next, fixURL)
       case u: UnprefixedAttribute if u.key == toFix =>
         new UnprefixedAttribute(toFix, fixHref(contextPath, attrs.value, fixURL, rewrite), fixAttrs(original, toFix, attrs.next, fixURL))
       case _ => attrs.copy(fixAttrs(original, toFix, attrs.next, fixURL))
@@ -203,12 +195,6 @@ private[http] trait LiftMerge {
         headChildren += nl
       }
 
-      for {
-        e <- S.cometAtEnd()
-      } {
-        _fixHtml(e, true, false, false, true, false, false, true, false)
-      }
-
       // Appends ajax script to body
       if (LiftRules.autoIncludeAjaxCalc.vend().apply(this)) {
         bodyChildren +=
@@ -216,8 +202,6 @@ private[http] trait LiftMerge {
                 type="text/javascript"/>
         bodyChildren += nl
       }
-
-      val cometList = cometTimes.toList
 
       val pageJs = assemblePageSpecificJavaScript
       if (pageJs.toJsCmd.trim.nonEmpty) {
@@ -237,7 +221,7 @@ private[http] trait LiftMerge {
           (
             if (autoIncludeComet) {
               ("data-lift-session-id" -> (S.session.map(_.uniqueId) openOr "xx")) ::
-              cometList.map {
+              S.requestCometVersions.is.toList.map {
                 case CometVersionPair(guid, version) =>
                   (s"data-lift-comet-$guid" -> version.toString)
               }
