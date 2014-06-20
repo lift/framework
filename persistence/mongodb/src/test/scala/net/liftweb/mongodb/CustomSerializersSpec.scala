@@ -114,10 +114,9 @@ class CustomSerializersSpec extends Specification with MongoTestKit {
       jack.save
 
       // retrieve it and compare
-      val jack2 = Person.find(jack._id)
-      jack2.isDefined must_== true
-      jack2.toList map { j =>
-        j._id mustEqual jack._id
+      Person.find(jack._id) must beLike {
+        case Some(j) =>
+          j._id mustEqual jack._id
       }
     }
 
@@ -131,10 +130,9 @@ class CustomSerializersSpec extends Specification with MongoTestKit {
       jack.save
 
       // retrieve it and compare
-      val jack2 = PersonWithObjectId.find(jack._id)
-      jack2.isDefined must_== true
-      jack2.toList map { j =>
-        j._id mustEqual jack._id
+      PersonWithObjectId.find(jack._id) must beLike {
+        case Some(j) =>
+          j._id mustEqual jack._id
       }
     }
 
@@ -149,11 +147,10 @@ class CustomSerializersSpec extends Specification with MongoTestKit {
       jack.save
 
       // retrieve it and compare
-      val jack2 = PersonWithPattern.find(jack._id)
-      jack2.isDefined must_== true
-      jack2.toList map { j =>
-        j.pattern.pattern mustEqual jack.pattern.pattern
-        j.pattern.flags mustEqual jack.pattern.flags
+      PersonWithPattern.find(jack._id) must beLike {
+        case Some(j) =>
+          j.pattern.pattern mustEqual jack.pattern.pattern
+          j.pattern.flags mustEqual jack.pattern.flags
       }
     }
 
@@ -168,10 +165,9 @@ class CustomSerializersSpec extends Specification with MongoTestKit {
       jack.save
 
       // retrieve it and compare
-      val findJack = PersonWithDateTime.find(jack._id)
-      findJack.isDefined must_== true
-      findJack.toList map { j =>
-        j.birthDate mustEqual jack.birthDate
+      PersonWithDateTime.find(jack._id) must beLike {
+        case Some(j) =>
+          j.birthDate mustEqual jack.birthDate
       }
     }
 
@@ -188,10 +184,9 @@ class CustomSerializersSpec extends Specification with MongoTestKit {
       jack.save
 
       // retrieve it and compare
-      val findJack = PersonWithDate.find(jack._id)
-      findJack.isDefined must_== true
-      findJack.toList map { j =>
-        j.birthDate mustEqual jack.birthDate
+      PersonWithDate.find(jack._id) must beLike {
+        case Some(j) =>
+          j.birthDate mustEqual jack.birthDate
       }
     }
 
@@ -206,10 +201,9 @@ class CustomSerializersSpec extends Specification with MongoTestKit {
       jack.save
 
       // retrieve it and compare
-      val findJack = PersonWithUUID.find(jack._id)
-      findJack.isDefined must_== true
-      findJack.toList map { j =>
-        j._id mustEqual jack._id
+      PersonWithUUID.find(jack._id) must beLike {
+        case Some(j) =>
+          j._id mustEqual jack._id
       }
     }
   }

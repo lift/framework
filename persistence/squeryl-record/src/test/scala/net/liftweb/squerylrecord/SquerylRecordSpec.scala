@@ -22,7 +22,7 @@ import org.squeryl.dsl.DateExpression
 
 import org.specs2.mutable.Specification
 import org.specs2.specification.AroundExample
-import org.specs2.execute.Result
+import org.specs2.execute.{ AsResult , Result }
 
 import record.{ BaseField, Record }
 import record.field._
@@ -44,11 +44,20 @@ class SquerylRecordSpec extends Specification with AroundExample {
   sequential
 
   lazy val session = new LiftSession("", Helpers.randomString(20), Empty)
+  // One of these is for specs2 2.x, the other for specs2 1.x
   protected def around[T <% Result](t: =>T) = {
     S.initIfUninitted(session) {
       DBHelper.initSquerylRecordWithInMemoryDB()
       DBHelper.createSchema()
       t
+    }
+  }
+
+  protected def around[T : AsResult](t: =>T) = {
+    S.initIfUninitted(session) {
+      DBHelper.initSquerylRecordWithInMemoryDB()
+      DBHelper.createSchema()
+      AsResult(t)
     }
   }
 
@@ -379,6 +388,7 @@ class SquerylRecordSpec extends Specification with AroundExample {
       val company = from(companies)(company =>
         select(company)).page(0, 1).single
       company.allFields map { f => f.dirty_? must_== false }
+      success
     }
   }
   class ToChar(d: DateExpression[Timestamp], e: StringExpression[String], m: OutMapper[String])

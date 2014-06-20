@@ -17,7 +17,7 @@
 package net.liftweb
 package mapper
 
-import collection.mutable.HashSet
+import scala.collection.mutable.HashSet
 import util.FatLazy
 import common._
 

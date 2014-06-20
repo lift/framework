@@ -18,6 +18,7 @@ package net.liftweb
 package builtin.snippet
 
 import xml.XML
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import common._
@@ -27,7 +28,7 @@ import http._
 /**
  * System under specification for Msgs.
  */
-object MsgsSpec extends Specification  {
+object MsgsSpec extends Specification with XmlMatchers {
   "Msgs Specification".title
 
   def withSession[T](f: => T) : T =

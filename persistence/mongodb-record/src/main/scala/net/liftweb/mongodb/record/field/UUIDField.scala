@@ -1,5 +1,5 @@
 /*
-* Copyright 2010-2011 WorldWide Conferencing, LLC
+* Copyright 2010-2014 WorldWide Conferencing, LLC
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -11,10 +11,10 @@
 * limitations under the License.
 */
 
-package net.liftweb 
-package mongodb 
-package record 
-package field 
+package net.liftweb
+package mongodb
+package record
+package field
 
 import java.util.UUID
 
@@ -82,7 +82,7 @@ class UUIDField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
     case jv => JsRaw(Printer.compact(render(jv)))
   }
 
-  def asJValue: JValue = valueBox.map(v => Meta.uuidAsJValue(v)) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(v => JsonUUID(v)) openOr (JNothing: JValue)
 
 }
 

@@ -57,6 +57,9 @@ project/plugins/project
 # Pax Runner (for easy OSGi launching)
 runner
 
+# ignore the sbt launcher
+project/sbt-launch*
+
 # Doc generation
 .dexy
 core/documentation-helpers/src/test/**Test.scala

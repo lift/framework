@@ -162,7 +162,7 @@ object ListenerManager {
  *
  *   override def mediumPriority = {
  *     case Tick => {
- *       updateListeners(Tick)
+ *       sendListenersMessage(Tick)
  *       ActorPing.schedule(this, Tick, 1000L)
  * }
  * }
@@ -230,10 +230,10 @@ trait ListenerManager {
   }
 
   /**
-   * Update the listeners with a message that we create. Note that
-   * with this invocation the createUpdate method is not used.
+   * Send a message we create to all of the listeners. Note that with this
+   * invocation the createUpdate method is not used.
    */
-  protected def updateListeners(msg: Any) {
+  protected def sendListenersMessage(msg: Any) {
     listeners foreach (_._1 ! msg)
   }
 
@@ -447,7 +447,7 @@ abstract class CometActorJWithCometListener extends CometActorJ with CometListen
 /**
  * Takes care of the plumbing for building Comet-based Web Apps
  */
-trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
+trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   private val logger = Logger(classOf[CometActor])
   val uniqueId = Helpers.nextFuncName
   private var spanId = uniqueId
@@ -770,6 +770,21 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
    */
   protected implicit def nodeSeqFuncToBoxNodeSeq(f: NodeSeq => NodeSeq):
   Box[NodeSeq] = Full(f(defaultHtml))
+
+  /**
+   * By default, `CometActor` handles `RedirectShortcutException`, which is
+   * used to handle many types of redirects in Lift. If you override this
+   * `PartialFunction` to do your own exception handling and want redirects
+   * from e.g. `S.redirectTo` to continue working correctly, make sure you
+   * chain back to this implementation.
+   */
+  override def exceptionHandler : PartialFunction[Throwable, Unit] = {
+    case  ResponseShortcutException(_, Full(redirectUri), _) =>
+      partialUpdate(RedirectTo(redirectUri))
+
+    case other if super.exceptionHandler.isDefinedAt(other) =>
+      super.exceptionHandler(other)
+  }
 
   /**
    * Handle messages sent to this Actor before the
@@ -1150,17 +1165,6 @@ trait CometActor extends LiftActor with LiftCometActor with BindHelpers {
       highPriority orElse mediumPriority orElse
         _mediumPriority orElse lowPriority orElse _lowPriority
   }
-
-  /**
-   * A helper for binding which uses the defaultHtml property.
-   */
-  def bind(prefix: String, vals: BindParam*): NodeSeq = bind(prefix, _defaultHtml, vals: _*)
-
-  /**
-   * A helper for binding which uses the defaultHtml property and the
-   * default prefix.
-   */
-  def bind(vals: BindParam*): NodeSeq = bind(_defaultPrefix, vals: _*)
 
   /**
    * Ask another CometActor a question.  That other CometActor will

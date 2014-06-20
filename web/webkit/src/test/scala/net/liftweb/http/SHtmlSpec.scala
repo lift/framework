@@ -17,12 +17,13 @@
 package net.liftweb
 package http
 
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 import util._
 import Helpers._
 import net.liftweb.mockweb.MockWeb._
 
-object SHtmlSpec extends Specification  {
+object SHtmlSpec extends Specification with XmlMatchers {
   "NamedCometPerTabSpec Specification".title
 
   val html1= <span><input id="number"></input></span>

@@ -226,7 +226,7 @@ object Menu extends DispatchSnippet {
               "uri" -> uri.toString,
               "children" -> buildItems(kids),
               "current" -> current,
-              "cssClass" -> (in.cssClass openOr ""),
+              "cssClass" -> Str(in.cssClass openOr ""),
               "placeholder" -> in.placeholder_?,
               "path" -> path)
     }
@@ -307,56 +307,68 @@ object Menu extends DispatchSnippet {
   }
 
   /**
-   * <p>Renders a group of menu items. You specify a group using the LocGroup LocItem
-   * case class on your Menu Loc:</p>
+   * Renders a group of menu items. You specify a group using the LocGroup LocItem
+   * case class on your Menu Loc:
    *
-   * <pre>
+   * {{{
    * val menus =
    *   Menu(Loc("a",...,...,LocGroup("test"))) ::
    *   Menu(Loc("b",...,...,LocGroup("test"))) ::
    *   Menu(Loc("c",...,...,LocGroup("test"))) :: Nil
-   * </pre>
+   * }}}
    *
-   * <p>You can then render with the group snippet:</p>
+   * You can then render with the group snippet:
    *
-   * <pre>
-   * &lt;lift:Menu.group group="test" /&gt;
-   * </pre>
+   * {{{
+   * <nav data-lift="Menu.group?group=test">
+   *   <ul>
+   *     <li>
+   *       <a href="/sample/link">Bound menu item</a>
+   *     </li>
+   *   </ul>
+   * </nav>
+   * }}}
    *
-   * <p>Each menu item is rendered as an anchor tag (&lta /&gt;), and you can customize
-   * the tag using attributes prefixed with "a":</p>
+   * By default, menu items bind the href and text of an `a` element in
+   * the template, and iterates over `li` elements. You can customize
+   * these settings using the `repeatedSelector`, `linkSelector`, and
+   * `hrefSelector` parameters; for example:
+   *.
+   * {{{
+   * <p data-lift="Menu.group?group=test&repeatedSelector=p&linkSelector=p&hrefSelector=[data-link]"
+   *    data-link="/sample/link">
+   *   Bound menu item
+   * </p>
+   * }}}
    *
-   * <pre>
-   * &lt;lift:Menu.group group="test" a:class="menulink" /&gt;
-   * </pre>
+   * These selectors are CSS selector transform selectors. `repeatedSelector`
+   * and `linkSelector` are the left-hand-side, while `hrefSelector` is the
+   * second part, which indicates what will be replaced by the href text.
+   * For example, the above would roughly yield a transform that looks like:
    *
-   * <p>You can also specify your own template within the Menu.group snippet tag, as long as
-   * you provide a &lt;menu:bind /&gt; element where the snippet can place each menu item:</p>
-   *
-   * <pre>
-   * &lt;ul&gt;
-   * &lt;lift:Menu.group group="test" &gt;
-   *   &lt;li&gt;&lt;menu:bind /&gt;&lt;/li&gt;
-   * &lt;/lift:Menu.group&gt;
-   * </pre>
-   *
+   * {{{
+   * "p" #> {
+   *   "p [data-link]" #> <menu href> &
+   *   "p *" #> <menu text> &
+   * }
+   * }}}
    */
-  def group(template: NodeSeq): NodeSeq = {
-    val toBind = if ((template \ "bind").filter(_.prefix == "menu").isEmpty)
-    <xml:group><menu:bind/> </xml:group>
-    else template
+  def group: CssSel = {
+    val repeatedSelector = S.attr("repeatedSelector") openOr "li"
+    val linkSelector = S.attr("linkSelector") openOr "a"
+    val hrefSelector = S.attr("hrefSelector") openOr "[href]"
 
-    val attrs = S.prefixedAttrsToMetaData("a")
-
-    for (group <- S.attr("group").toList;
-         siteMap <- LiftRules.siteMap.toList;
-         loc <- siteMap.locForGroup(group);
-         link <- loc.createDefaultLink;
-         linkText <- loc.linkText) yield {
-      val a = Helpers.addCssClass(loc.cssClassForMenuItem,
-                                  <a href={link}>{linkText}</a> % attrs)
-
-      Group(bind("menu", toBind, "bind" -> a))
+    repeatedSelector #> {
+      for {
+        group <- S.attr("group").toList
+        siteMap <- LiftRules.siteMap.toList
+        loc <- siteMap.locForGroup(group)
+        link <- loc.createDefaultLink
+        linkText <- loc.linkText
+      } yield {
+        s"$linkSelector $hrefSelector" #> link &
+        s"$linkSelector *" #> linkText
+      }
     }
   }
 

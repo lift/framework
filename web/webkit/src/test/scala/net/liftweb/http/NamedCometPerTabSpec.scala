@@ -17,11 +17,12 @@
 package net.liftweb
 package http
 
-import js.JsCmds
-import xml._
+import scala.xml._
+
 import org.specs2.mutable.Specification
 
 import common._
+import js.JsCmds
 
 /**
  * System under specification for NamedComet* files.

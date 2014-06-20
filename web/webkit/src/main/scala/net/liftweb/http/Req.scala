@@ -984,9 +984,29 @@ class Req(val path: ParsePath,
       sid <- httpRequest.sessionId
     } yield sid
 
-  lazy val json: Box[JsonAST.JValue] = 
-    if (!json_?) Empty
-    else try {
+  /**
+   * The JValue representation of this Req's body, if the body is JSON-parsable
+   * AND the content-type of the request is JSON. Returns a Failure if
+   * the request is not considered a JSON request (see json_?), or if
+   * there was an error parsing the JSON.
+   *
+   * If you want to forcibly evaluate the request body as JSON, ignoring
+   * content type, see `forcedBodyAsJson`.
+   */
+  lazy val json: Box[JsonAST.JValue] = {
+    if (!json_?) {
+      Failure("Cannot parse non-JSON request as JSON; please check content-type.")
+    } else {
+      forcedBodyAsJson
+    }
+  }
+
+  /**
+   * Forcibly tries to parse the request body as JSON. Does not perform any
+   * content type checks, unlike the json method.
+   */
+  lazy val forcedBodyAsJson: Box[JsonAST.JValue] = {
+    try {
       import java.io._
 
       def r = """; *charset=(.*)""".r
@@ -1002,6 +1022,7 @@ class Req(val path: ParsePath,
       case e: LiftFlowOfControlException => throw e
       case e: Exception => Failure(e.getMessage, Full(e), Empty)
     }
+  }
 
   private def containerRequest = Box !! request
     /**
@@ -1022,9 +1043,28 @@ class Req(val path: ParsePath,
       case (sch, port) => sch + "://" + r.serverName + ":" + port + contextPath
     }) openOr ""
 
+  /**
+   * The Elem representation of this Req's body, if the body is XML-parsable
+   * AND the content-type of the request is XML. Returns a Failure if
+   * the request is not considered a XML request (see xml_?), or if
+   * there was an error parsing the XML.
+   *
+   * If you want to forcibly evaluate the request body as XML, ignoring
+   * content type, see `forcedBodyAsXml`.
+   */
+  lazy val xml: Box[Elem] = {
+    if (!xml_?) {
+      Failure("Cannot parse non-XML request as XML; please check content-type.")
+    } else  {
+      forcedBodyAsXml
+    }
+  }
 
-  lazy val xml: Box[Elem] = if (!xml_?) Empty
-  else 
+  /**
+   * Forcibly tries to parse the request body as XML. Does not perform any
+   * content type checks, unlike the xml method.
+   */
+  lazy val forcedBodyAsXml: Box[Elem] = {
     try {
       import java.io._
       body.map(b => XML.load(new ByteArrayInputStream(b)))
@@ -1032,6 +1072,7 @@ class Req(val path: ParsePath,
       case e: LiftFlowOfControlException => throw e
       case e: Exception => Failure(e.getMessage, Full(e), Empty)
     }
+  }
 
   /**
    * The SiteMap Loc associated with this Req
