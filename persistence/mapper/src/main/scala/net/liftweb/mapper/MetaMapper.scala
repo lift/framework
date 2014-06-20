@@ -23,8 +23,8 @@ import java.util.{Date, Locale}
 
 import scala.language.existentials
 
-import collection.mutable.{ListBuffer, HashMap}
-import collection.immutable.{SortedMap, TreeMap}
+import scala.collection.mutable.{ListBuffer, HashMap}
+import scala.collection.immutable.{SortedMap, TreeMap}
 import xml._
 
 import common._

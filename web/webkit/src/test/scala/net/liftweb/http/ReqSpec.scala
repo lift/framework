@@ -17,15 +17,29 @@
 package net.liftweb
 package http
 
+import java.io.ByteArrayInputStream
+
+import scala.xml.XML
+
+import org.specs2.matcher.XmlMatchers
+
+import org.mockito.Mockito._
+
 import org.specs2.mutable.Specification
+import org.specs2.mock.Mockito
+import org.specs2.specification.Scope
 
 import common._
+import json.JsonDSL._
+import json.JsonParser
+import util.Helpers.tryo
 
+import provider._
 
 /**
  * System under specification for Req.
  */
-object ReqSpec extends Specification  {
+object ReqSpec extends Specification with XmlMatchers with Mockito {
   "Req Specification".title
 
   private val iPhoneUserAgents = 
@@ -63,6 +77,8 @@ object ReqSpec extends Specification  {
           uac.isIPad must_== false
         }
       }
+
+      success
     }
 
     "Do the right thing with iPad" in {
@@ -75,6 +91,8 @@ object ReqSpec extends Specification  {
           uac.isIPad must_== true
         }
       }
+
+      success
     }
 
     "Correctly recognize IE versions 6-11" in {
@@ -87,6 +105,115 @@ object ReqSpec extends Specification  {
       }
 
       ieVersions must_== List(6, 7, 8, 9, 10, 11)
+    }
+
+    trait mockReq extends Scope {
+      val mockHttpRequest = mock[HTTPRequest]
+      def paramCalcInfo = ParamCalcInfo(Nil, Map.empty, Nil, Full(BodyOrInputStream(new ByteArrayInputStream(bodyBytes))))
+
+      def bodyBytes: Array[Byte]
+
+      def req(contentType: String) = {
+        new Req(
+          Req.NilPath, "/", GetRequest,
+          Full(contentType),
+          mockHttpRequest,
+          0l, 1l, true,
+          () => paramCalcInfo,
+          Map.empty
+        )
+      }
+    }
+
+    class mockJsonReq(jsonString: String = """{ "booyan": "shazam", "booyak": 5, "bazam": 2.5 }""") extends mockReq {
+      val testJson = jsonString
+      val parsedJson = tryo(JsonParser.parse(jsonString)) openOr json.JsonAST.JNothing
+
+      def bodyBytes = {
+        testJson.getBytes("UTF-8")
+      }
+    }
+
+    class mockXmlReq(xmlString: String = """<boom><slam attribute="do it">Oh yeah</slam></boom>""") extends mockReq {
+      val testXml = xmlString
+      val parsedXml = tryo(XML.loadString(xmlString)) openOr "totally failed"
+
+      def bodyBytes = {
+        testXml.getBytes("UTF-8")
+      }
+    }
+
+    "when trying to JSON parse the request body" in {
+      "with an invalid Content-Type should return a Failure" in new mockJsonReq {
+        req("text/plain").json should beAnInstanceOf[Failure]
+      }
+
+      "with an application/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
+        req("application/json").json should_== Full(parsedJson)
+      }
+
+      "with a text/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
+        req("text/json").json should_== Full(parsedJson)
+      }
+
+      "with invalid JSON and a text/json Content-Type should return a Failure" in new mockJsonReq("epic fail") {
+        req("text/json").json should beAnInstanceOf[Failure]
+      }
+    }
+
+    "when forcing a request body JSON parse with forcedBodyAsJson" in {
+      "with an invalid Content-Type should return the result of parsing the JSON" in new mockJsonReq {
+        req("text/plain").forcedBodyAsJson should_== Full(parsedJson)
+      }
+
+      "with an application/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
+        req("application/json").forcedBodyAsJson should_== Full(parsedJson)
+      }
+
+      "with a text/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
+        req("text/json").forcedBodyAsJson should_== Full(parsedJson)
+      }
+
+      "with invalid JSON should return a Failure" in new mockJsonReq("epic fail") {
+        req("text/json").json should beAnInstanceOf[Failure]
+      }
+    }
+
+    "when trying to XML parse the request body" in {
+      "with an invalid Content-Type should return a Failure" in new mockXmlReq {
+        req("text/plain").xml should beAnInstanceOf[Failure]
+      }
+
+      "with an application/xml Content-Type should return the result of parsing the JSON" in new mockXmlReq {
+        req("application/xml").xml should_== Full(parsedXml)
+      }
+
+      "with a text/xml Content-Type should return the result of parsing the JSON" in new mockXmlReq {
+        req("text/xml").xml should_== Full(parsedXml)
+      }
+
+      "with invalid XML and a text/xml Content-Type should return a Failure" in new mockXmlReq("epic fail") {
+        req("text/xml").forcedBodyAsXml should beAnInstanceOf[Failure]
+      }
+    }
+
+    "when forcing a request body XML parse with forcedBodyAsXml" in {
+      "with an invalid Content-Type should return the result of parsing the JSON" in new mockXmlReq {
+        req("text/plain").forcedBodyAsXml should_== Full(parsedXml)
+      }
+
+      "with an application/json Content-Type should return the result of parsing the JSON" in new mockXmlReq {
+        req("application/xml").forcedBodyAsXml should_== Full(parsedXml)
+      }
+
+      "with a text/json Content-Type should return the result of parsing the JSON" in new mockXmlReq {
+        req("text/xml").forcedBodyAsXml should_== Full(parsedXml)
+      }
+
+      "with invalid XML should return a Failure" in new mockXmlReq("epic fail") {
+        req("text/palin").forcedBodyAsXml should beAnInstanceOf[Failure]
+        req("text/xml").forcedBodyAsXml should beAnInstanceOf[Failure]
+      }
     }
   }
 }

@@ -131,12 +131,21 @@ trait StackableMaker[T] extends Maker[T] {
     case x => x
   }
 
+  /**
+   * Changes to the stack of Makers made by this method are thread-local!
+   */
   def doWith[F](value: T)(f: => F): F =
   doWith(PValueHolder(Maker(value)))(f)
 
+  /**
+   * Changes to the stack of Makers made by this method are thread-local!
+   */
   def doWith[F](vFunc: () => T)(f: => F): F =
   doWith(PValueHolder(Maker(vFunc)))(f)
 
+  /**
+   * Changes to the stack of Makers made by this method are thread-local!
+   */
   def doWith[F](addl: PValueHolder[Maker[T]])(f: => F): F = {
     val old = _stack.get()
     _stack.set(addl :: stack)

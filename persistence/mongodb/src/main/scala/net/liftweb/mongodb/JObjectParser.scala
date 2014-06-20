@@ -76,50 +76,42 @@ object JObjectParser extends SimpleInjector {
   object Parser {
 
     def parse(jo: JObject, formats: Formats): DBObject = {
-      parseObject(jo.obj, formats)
+      parseObject(jo.obj)(formats)
     }
 
-    private def parseArray(arr: List[JValue], formats: Formats): BasicDBList = {
+    private def parseArray(arr: List[JValue])(implicit formats: Formats): BasicDBList = {
       val dbl = new BasicDBList
       trimArr(arr).foreach { a =>
         a match {
-          case JObject(JField("$oid", JString(s)) :: Nil) if (ObjectId.isValid(s)) =>
-            dbl.add(new ObjectId(s))
-          case JObject(JField("$regex", JString(s)) :: JField("$flags", JInt(f)) :: Nil) =>
-            dbl.add(Pattern.compile(s, f.intValue))
-          case JObject(JField("$dt", JString(s)) :: Nil) =>
-            formats.dateFormat.parse(s) foreach { d => dbl.add(d) }
-          case JObject(JField("$uuid", JString(s)) :: Nil) =>
-            dbl.add(UUID.fromString(s))
-          case JArray(arr) => dbl.add(parseArray(arr, formats))
-          case JObject(jo) => dbl.add(parseObject(jo, formats))
-          case jv: JValue => dbl.add(renderValue(jv, formats))
+          case JsonObjectId(objectId) => dbl.add(objectId)
+          case JsonRegex(regex) => dbl.add(regex)
+          case JsonUUID(uuid) => dbl.add(uuid)
+          case JsonDate(date) => dbl.add(date)
+          case JArray(arr) => dbl.add(parseArray(arr))
+          case JObject(jo) => dbl.add(parseObject(jo))
+          case jv: JValue => dbl.add(renderValue(jv))
         }
       }
       dbl
     }
 
-    private def parseObject(obj: List[JField], formats: Formats): BasicDBObject = {
+    private def parseObject(obj: List[JField])(implicit formats: Formats): BasicDBObject = {
       val dbo = new BasicDBObject
       trimObj(obj).foreach { jf =>
         jf.value match {
-          case JObject(JField("$oid", JString(s)) :: Nil) if (ObjectId.isValid(s)) =>
-            dbo.put(jf.name, new ObjectId(s))
-          case JObject(JField("$regex", JString(s)) :: JField("$flags", JInt(f)) :: Nil) =>
-            dbo.put(jf.name, Pattern.compile(s, f.intValue))
-          case JObject(JField("$dt", JString(s)) :: Nil) =>
-            formats.dateFormat.parse(s) foreach { d => dbo.put(jf.name, d) }
-          case JObject(JField("$uuid", JString(s)) :: Nil) =>
-            dbo.put(jf.name, UUID.fromString(s))
-          case JArray(arr) => dbo.put(jf.name, parseArray(arr, formats))
-          case JObject(jo) => dbo.put(jf.name, parseObject(jo, formats))
-          case jv: JValue => dbo.put(jf.name, renderValue(jv, formats))
+          case JsonObjectId(objectId) => dbo.put(jf.name, objectId)
+          case JsonRegex(regex) => dbo.put(jf.name, regex)
+          case JsonUUID(uuid) => dbo.put(jf.name, uuid)
+          case JsonDate(date) => dbo.put(jf.name, date)
+          case JArray(arr) => dbo.put(jf.name, parseArray(arr))
+          case JObject(jo) => dbo.put(jf.name, parseObject(jo))
+          case jv: JValue => dbo.put(jf.name, renderValue(jv))
         }
       }
       dbo
     }
 
-    private def renderValue(jv: JValue, formats: Formats): Object = jv match {
+    private def renderValue(jv: JValue)(implicit formats: Formats): Object = jv match {
       case JBool(b) => java.lang.Boolean.valueOf(b)
       case JInt(n) => renderInteger(n)
       case JDouble(n) => new java.lang.Double(n)

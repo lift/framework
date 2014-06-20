@@ -42,5 +42,12 @@ object RecordRulesSpec extends Specification {
         rec.fieldThree.name must_== "field_three"
       }
     }
+    "camelify custom field display name" in {
+      RecordRules.displayName.doWith((_, _, name) => camelify(name)) {
+        val rec = BasicTestRecord.createRecord
+
+        rec.fieldThree.displayName must_== "FieldThree"
+      }
+    }
   }
 }

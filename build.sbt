@@ -14,9 +14,9 @@ organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
 
 scalaVersion in ThisBuild          := "2.10.4"
 
-crossScalaVersions in ThisBuild    := Seq("2.10.0")
+crossScalaVersions in ThisBuild    := Seq("2.10.4")
 
-libraryDependencies in ThisBuild <++= scalaVersion {sv => Seq(specs2(sv), scalacheck) }
+libraryDependencies in ThisBuild <++= scalaVersion {sv => Seq(specs2(sv), scalacheck, scalatest(sv)) }
 
 // Settings for Sonatype compliance
 pomIncludeRepository in ThisBuild  := { _ => false }
@@ -25,8 +25,13 @@ publishTo in ThisBuild            <<= isSnapshot(if (_) Some(Opts.resolver.sonat
 
 scmInfo in ThisBuild               := Some(ScmInfo(url("https://github.com/lift/framework"), "scm:git:https://github.com/lift/framework.git"))
 
-pomExtra in ThisBuild              ~= (_ ++ {Developers.toXml})
+pomExtra in ThisBuild              :=  Developers.toXml
 
 credentials in ThisBuild <+= state map { s => Credentials(BuildPaths.getGlobalSettingsDirectory(s, BuildPaths.getGlobalBase(s)) / ".credentials") }
 
 initialize <<= (name, version, scalaVersion) apply printLogo
+
+resolvers  in ThisBuild           ++= Seq(
+  "snapshots"     at "https://oss.sonatype.org/content/repositories/snapshots",
+  "releases"      at "https://oss.sonatype.org/content/repositories/releases"
+)

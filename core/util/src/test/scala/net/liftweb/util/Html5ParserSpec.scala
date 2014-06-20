@@ -65,10 +65,7 @@ object Html5ParserSpec extends Specification with PendingUntilFixed with Html5Pa
 
         "fail to parse invalid page type3" in {
           val parsed = parse(page3)
-          parsed match {
-            case _: Failure => true must_== true
-            case _          => failure("succeeded parsing invalid page")
-          }
+          parsed must beAnInstanceOf[Failure]
         }.pendingUntilFixed
 
       case _ =>

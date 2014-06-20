@@ -20,8 +20,7 @@ package http
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
-import collection.mutable.{HashMap, ListBuffer}
-import collection.concurrent.{Map=>ConcurrentMap}
+import scala.collection.mutable.{HashMap, ListBuffer}
 import collection.JavaConversions
 
 import collection.mutable.{HashMap, ListBuffer}
@@ -155,24 +154,38 @@ object LiftSession {
   /**
    * Cache for findSnippetClass lookups.
    */
-  private val snippetClassMap: ConcurrentMap[String, Box[Class[AnyRef]]] = JavaConversions.mapAsScalaConcurrentMap(new ConcurrentHashMap())
+  private val snippetClassMap = new ConcurrentHashMap[String, Box[Class[AnyRef]]]()
   
   /*
    * Given a Snippet name, try to determine the fully-qualified Class
    * so that we can instantiate it via reflection.
    */
   def findSnippetClass(name: String): Box[Class[AnyRef]] = {
-    if (name == null) Empty
-    else {
-      snippetClassMap.getOrElseUpdate(name,{
-        // Name might contain some relative packages, so split them out and put them in the proper argument of findClass
-        val (packageSuffix, terminal) = name.lastIndexOf('.') match {
-          case -1 => ("", name)
-          case i => ("." + name.substring(0, i), name.substring(i + 1))
-        }
-        findClass(terminal, LiftRules.buildPackage("snippet").map(_ + packageSuffix) :::
-          (("lift.app.snippet" + packageSuffix) :: ("net.liftweb.builtin.snippet" + packageSuffix) :: Nil))
-      })
+    if (name == null) {
+      Empty
+    } else {
+      // putIfAbsent isn't lazy, so we pay the price of checking for the
+      // absence twice when the snippet hasn't been initialized to avoid
+      // the cost of computing the snippet class every time.
+      //
+      // We're using ConcurrentHashMap, so no `getOrElseUpdate` here (and
+      // `getOrElseUpdate` isn't atomic anyway).
+      if (! snippetClassMap.contains(name)) {
+        snippetClassMap.putIfAbsent(name, {
+          // Name might contain some relative packages, so split them out and put them in the proper argument of findClass
+          val (packageSuffix, terminal) = name.lastIndexOf('.') match {
+            case -1 => ("", name)
+            case i => ("." + name.substring(0, i), name.substring(i + 1))
+          }
+          findClass(terminal, LiftRules.buildPackage("snippet").map(_ + packageSuffix) :::
+            (("lift.app.snippet" + packageSuffix) :: ("net.liftweb.builtin.snippet" + packageSuffix) :: Nil))
+        })
+      }
+
+      // We don't test for null because we never remove an item from the
+      // map. If I'm wrong about this and you're seeing null pointers,
+      // add a legacyNullTest openOr Empty.
+      snippetClassMap.get(name)
     }
   }
 
@@ -762,7 +775,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    */
   def runParams(state: Req): List[Any] = {
 
-
     val toRun = {
       // get all the commands, sorted by owner,
       (state.uploadedFiles.map(_.name) ::: state.paramNames)
@@ -1098,7 +1110,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     !nmessageCallback.find(_._2.owner == owner).isEmpty
   }
 
-
   private def shutDown() = {
     import scala.collection.JavaConversions._
 
@@ -1112,7 +1123,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         _running_? = false
 
         SessionMaster.sendMsg(RemoveSession(this.uniqueId))
-
 
         import scala.collection.JavaConversions._
         nasyncComponents.foreach {
@@ -2964,7 +2974,6 @@ private object SnippetNode {
       }
     }
   }
-
 
   private def isLiftClass(s: String): Boolean =
     s.startsWith("lift:") || s.startsWith("l:")

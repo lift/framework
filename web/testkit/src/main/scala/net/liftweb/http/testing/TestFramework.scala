@@ -931,6 +931,8 @@ abstract class BaseResponse(override val baseUrl: String,
     f(st)
     st
   }
+
+  def withFilter(f: FuncType => Unit): FuncType = this.filter(f)
 }
 
 class CompleteFailure(val serverName: String, val exception: Box[Throwable]) extends TestResponse {

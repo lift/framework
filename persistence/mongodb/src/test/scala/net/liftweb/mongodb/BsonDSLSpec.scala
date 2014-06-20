@@ -27,6 +27,7 @@ import java.util.{Date, UUID}
 import java.util.regex.Pattern
 
 import org.bson.types.ObjectId
+import org.joda.time.DateTime
 import org.specs2.mutable.Specification
 
 import com.mongodb.{BasicDBList, DBObject}
@@ -75,6 +76,8 @@ object BsonDSLSpec extends Specification  {
         ptrnList(i).pattern must_== ptrnList2(i).pattern
         ptrnList(i).flags must_== ptrnList2(i).flags
       }
+
+      ptrnList2.length must_== ptrnList.length
     }
 
     "Convert Regex properly" in {
@@ -119,6 +122,25 @@ object BsonDSLSpec extends Specification  {
       val qry: JObject = ("dts" -> dateList)
       val dbo: DBObject = JObjectParser.parse(qry)
       val dateList2: List[Date] = dbo.get("dts").asInstanceOf[BasicDBList].toList.map(_.asInstanceOf[Date])
+
+      dateList2 must_== dateList
+    }
+
+    "Convert DateTime properly" in {
+      implicit val formats = DefaultFormats.lossless
+      val dt: DateTime = new DateTime
+      val qry: JObject = ("now" -> dt)
+      val dbo: DBObject = JObjectParser.parse(qry)
+
+      new DateTime(dbo.get("now")) must_== dt
+    }
+
+    "Convert List[DateTime] properly" in {
+      implicit val formats = DefaultFormats.lossless
+      val dateList = new DateTime :: new DateTime :: new DateTime :: Nil
+      val qry: JObject = ("dts" -> dateList)
+      val dbo: DBObject = JObjectParser.parse(qry)
+      val dateList2: List[DateTime] = dbo.get("dts").asInstanceOf[BasicDBList].toList.map(_.asInstanceOf[Date]).map(d => new DateTime(d))
 
       dateList2 must_== dateList
     }
