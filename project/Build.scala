@@ -69,12 +69,6 @@ object BuildDef extends Build {
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv => Seq(scalap(sv), paranamer) })
 
-  lazy val json_scalaz =
-    coreProject("json-scalaz")
-        .dependsOn(json)
-        .settings(description := "JSON Library based on Scalaz 6",
-                  libraryDependencies <+= scalaVersion(scalaz))
-
   lazy val json_scalaz7 =
     coreProject("json-scalaz7")
         .dependsOn(json)
