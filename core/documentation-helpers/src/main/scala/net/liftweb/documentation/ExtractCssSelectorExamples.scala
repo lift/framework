@@ -186,13 +186,14 @@ object ExtractCssSelectorExamples extends App {
             |
             |import scala.xml._
             |
+            |import org.specs2.matcher.XmlMatchers
             |import org.specs2.mutable.Specification
             |
             |import common._
             |import util.Html5
             |import util.Helpers._
             |
-            |object $filename extends Specification {
+            |object $filename extends Specification with XmlMatchers {
             |  ""\"${filename} examples""\" should {
             |${examples.mkString("\n")}
             |  }
