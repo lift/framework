@@ -34,10 +34,10 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
 
   "The parser helpers" should {
     "provide an isEof function returning true iff a char is end of file" in {
-      isEof('\032') must beTrue
+      isEof('\u001a') must beTrue
     }
     "provide an notEof function returning true iff a char is not end of file" in {
-      notEof('\032') must beFalse
+      notEof('\u001a') must beFalse
     }
     "provide an isNum function returning true iff a char is a digit" in {
       isNum('0') must beTrue

@@ -19,6 +19,7 @@ package util
 
 import xml._
 
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import common._
@@ -26,7 +27,7 @@ import common._
 /**
  * Systems under specification for HtmlHelpers.
  */
-object HtmlHelpersSpec extends Specification with HtmlHelpers {
+object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
   "HtmlHelpers Specification".title
 
   "findBox" should {
