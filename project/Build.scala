@@ -103,8 +103,14 @@ object BuildDef extends Build {
         .settings(description := "Utilities Library",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion {sv =>  Seq(scala_compiler(sv), joda_time,
-                    joda_convert, commons_codec, javamail, log4j, htmlparser)})
-
+                    joda_convert, commons_codec, javamail, log4j, htmlparser)},
+                  excludeFilter <<= scalaVersion { scalaVersion =>
+                    if (scalaVersion.startsWith("2.11")) {
+                      HiddenFileFilter
+                    } else {
+                      HiddenFileFilter || "Position.scala"
+                    }
+                  })
 
   // Web Projects
   // ------------
