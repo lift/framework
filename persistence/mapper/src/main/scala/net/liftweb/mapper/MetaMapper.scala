@@ -674,10 +674,11 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     import JsonAST._
 
     ret.runSafe {
-      for {
-        field <- json.obj
-        JField("$persisted", JBool(per)) <- field
-      } ret.persisted_? = per
+      json.findField {
+        case JField("$persisted", JBool(per)) =>
+          ret.persisted_? = per
+          true
+      }
 
       for {
         field <- json.obj

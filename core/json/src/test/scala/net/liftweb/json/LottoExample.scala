@@ -20,12 +20,7 @@ package json
 import org.specs2.mutable.Specification
 
 
-/**
- * System under specification for Lotto Examples.
- */
-object LottoExample extends Specification  {
-  "Lotto Examples".title
-
+object LottoExample extends Specification {
   import JsonDSL._
 
   implicit val formats = DefaultFormats

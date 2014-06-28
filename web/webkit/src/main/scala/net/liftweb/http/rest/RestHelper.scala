@@ -705,19 +705,11 @@ trait RestHelper extends LiftRules.DispatchPF {
     original match {
       case JObject(fields) => 
         toMerge match {
-          case jf: JField => JObject(replace(fields, jf))
           case JObject(otherFields) =>
             JObject(otherFields.foldLeft(fields)(replace(_, _)))
           case _ => original
         }
 
-      case jf: JField => 
-        toMerge match {
-          case jfMerge: JField => JObject(replace(List(jf), jfMerge))
-          case JObject(otherFields) =>
-            JObject(otherFields.foldLeft(List(jf))(replace(_, _)))
-          case _ => original
-        }
       case _ => original // can't merge
     }
   }

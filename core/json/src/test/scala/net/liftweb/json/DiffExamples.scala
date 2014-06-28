@@ -20,12 +20,7 @@ package json
 import org.specs2.mutable.Specification
 
 
-/**
- * System under specification for Diff Examples.
- */
 object DiffExamples extends Specification {
-  "Diff Examples".title
-
   import MergeExamples.{scala1, scala2, lotto1, lotto2, mergedLottoResult}
 
   "Diff example" in {
