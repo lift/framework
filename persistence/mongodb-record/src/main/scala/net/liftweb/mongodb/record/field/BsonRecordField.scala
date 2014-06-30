@@ -81,6 +81,8 @@ class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: B
 
   import scala.collection.JavaConversions._
 
+  override def validations = ((elems: ValueType) => elems.flatMap(_.validate)) :: super.validations
+
   override def asDBObject: DBObject = {
     val dbl = new BasicDBList
     value.foreach { v => dbl.add(v.asDBObject) }
