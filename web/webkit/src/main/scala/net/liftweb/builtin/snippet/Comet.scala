@@ -6,7 +6,7 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ *m
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,13 +70,13 @@ object Comet extends DispatchSnippet with LazyLoggable {
    * A typical comet tag could look like:
    *
    * {{{
-   *   <lift:comet type="MyCometClass"> name="Optional, the name of this comet instance">{xhtml}</lift:comet>
+   *   <div data-lift="comet?type="MyCometClass&name=optional-name-of-comet-instance">{xhtml}</div>
    * }}}
    *
    * For the name, you have three options
-   *  - You can set a fixed name using `name="MyComet"`
+   *  - You can set a fixed name using `name=MyComet`
    *  - You can use a query parameter using `metaname`; e.g., for a url
-   *    like foo?=id=122, your comet could take the name "122" if you use:
+   *    like `foo?id=122`, your comet could take the name "122" if you use:
    *    `metaname=id`
    *  - You could assign a random name by using `randomname=true`
    *
