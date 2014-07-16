@@ -959,8 +959,7 @@ trait SHtml {
     fmapFunc((testFunc)) { funcName =>
       (attrs.foldLeft(<select>{opts.flatMap {
         case option =>
-          option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _) %
-          selected(deflt.exists(_ == option.value))
+          optionToElem(option) % selected(deflt.exists(_ == option.value))
       }}</select>)(_ % _)) %
       ("onchange" -> (jsFunc match {
         case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
@@ -1733,6 +1732,10 @@ trait SHtml {
       }
   }
 
+  private def optionToElem(option: SelectableOption[String]): Elem =
+    option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _)
+
+
   private final case class SelectableOptionWithNonce[+T](value: T, nonce: String, label: String, attrs: ElemAttr*)
 
   /**
@@ -1817,8 +1820,7 @@ trait SHtml {
     attrs.foldLeft(fmapFunc(testFunc) { fn =>
       <select name={fn}>{opts.flatMap {
         case option =>
-          option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _) %
-          selected(deflt.exists(_ == option.value))
+          optionToElem(option) % selected(deflt.exists(_ == option.value))
       }}</select>
     })(_ % _)
   }
@@ -1850,8 +1852,7 @@ trait SHtml {
     fmapFunc(func) { funcName =>
       attrs.foldLeft(<select name={funcName}>{opts.flatMap {
         case option =>
-          option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _) %
-          selected(deflt.exists(_ == option.value))
+          optionToElem(option) % selected(deflt.exists(_ == option.value))
       }}</select>)(_ % _)
     }
 
@@ -1885,8 +1886,7 @@ trait SHtml {
         List(
           attrs.foldLeft(<select multiple="true" name={funcName}>{opts.flatMap {
             case option =>
-              option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _) %
-              selected(deflt.contains(option.value))
+              optionToElem(option) % selected(deflt.contains(option.value))
           }}</select>)(_ % _),
           <input type="hidden" value={hiddenId} name={funcName}/>
         )
@@ -1956,8 +1956,7 @@ trait SHtml {
         funcName =>
           (attrs.foldLeft(<select>{ opts.flatMap {
             case option =>
-              option.attrs.foldLeft(<option value={ option.value }>{ option.label }</option>)(_ % _) %
-              selected(deflt.exists(_ == option.value))
+              optionToElem(option) % selected(deflt.exists(_ == option.value))
           } }</select>)(_ % _)) %
           ("onchange" -> (jsFunc match {
             case Full(f) => JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
@@ -2031,7 +2030,7 @@ trait SHtml {
                     deflt: Seq[String],
                     func: AFuncHolder, attrs: ElemAttr*): Elem =
     fmapFunc(func)(funcName =>
-            attrs.foldLeft(<select multiple="true" name={funcName}>{opts.flatMap(o => (<option value={o.value}>{o.label}</option>) % selected(deflt.contains(o.value)))}</select>)(_ % _))
+            attrs.foldLeft(<select multiple="true" name={funcName}>{opts.flatMap(o => optionToElem(o) % selected(deflt.contains(o.value)))}</select>)(_ % _))
 
 
   def textarea(value: String, func: String => Any, attrs: ElemAttr*): Elem =

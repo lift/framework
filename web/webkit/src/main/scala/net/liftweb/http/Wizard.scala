@@ -577,15 +577,13 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
 
     override protected def clearFunc(name: String): Unit = WizardVarHandler.clear(name)
 
-    override protected def wasInitialized(name: String): Boolean = {
-      val bn = name + "_inited_?"
+    override protected def wasInitialized(name: String, bn: String): Boolean = {
       val old: Boolean = WizardVarHandler.get(bn) openOr false
       WizardVarHandler.set(bn, this, true)
       old
     }
 
-    override protected def testWasSet(name: String): Boolean = {
-      val bn = name + "_inited_?"
+    override protected def testWasSet(name: String, bn: String): Boolean = {
       WizardVarHandler.get(name).isDefined || (WizardVarHandler.get(bn) openOr false)
     }
 

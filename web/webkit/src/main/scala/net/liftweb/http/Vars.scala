@@ -131,15 +131,13 @@ abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) 
 
   override protected def clearFunc(name: String): Unit = S.session.foreach(_.unset(name))
 
-  override protected def wasInitialized(name: String): Boolean = {
-    val bn = name + VarConstants.initedSuffix
+  override protected def wasInitialized(name: String, bn: String): Boolean = {
     val old: Boolean = S.session.flatMap(_.get(bn)) openOr false
     S.session.foreach(_.set(bn, true))
     old
   }
 
-  override protected def testWasSet(name: String): Boolean = {
-    val bn = name + VarConstants.initedSuffix
+  override protected def testWasSet(name: String, bn: String): Boolean = {
     S.session.flatMap(_.get(name)).isDefined || (S.session.flatMap(_.get(bn)) openOr false)
   }
 
@@ -245,8 +243,7 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
       httpSession <- session.httpSession
     } httpSession.removeAttribute(name)
 
-  override protected def wasInitialized(name: String): Boolean = {
-    val bn = name + VarConstants.initedSuffix
+  override protected def wasInitialized(name: String, bn: String): Boolean = {
     val old: Boolean = S.session.flatMap(s => localGet(s, bn) match {
       case Full(b: Boolean) => Full(b)
       case _ => Empty
@@ -255,8 +252,7 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
     old
   }
 
-  override protected def testWasSet(name: String): Boolean = {
-    val bn = name + VarConstants.initedSuffix
+  override protected def testWasSet(name: String, bn: String): Boolean = {
     S.session.flatMap(s => localGet(s, name)).isDefined ||
       (S.session.flatMap(s => localGet(s, bn) match {
         case Full(b: Boolean) => Full(b)
@@ -415,8 +411,7 @@ abstract class RequestVar[T](dflt: => T) extends AnyVar[T, RequestVar[T]](dflt) 
 
   override protected def clearFunc(name: String): Unit = RequestVarHandler.clear(name)
 
-  override protected def wasInitialized(name: String): Boolean = {
-    val bn = name + VarConstants.initedSuffix
+  override protected def wasInitialized(name: String, bn: String): Boolean = {
     val old: Boolean = RequestVarHandler.get(bn) openOr false
     RequestVarHandler.set(bn, this, true)
     old
@@ -430,8 +425,7 @@ abstract class RequestVar[T](dflt: => T) extends AnyVar[T, RequestVar[T]](dflt) 
 
   // no sync necessary for RequestVars... always on the same thread
 
-  override protected def testWasSet(name: String): Boolean = {
-    val bn = name + VarConstants.initedSuffix
+  override protected def testWasSet(name: String, bn: String): Boolean = {
     RequestVarHandler.get(name).isDefined || (RequestVarHandler.get(bn) openOr false)
   }
 
@@ -475,15 +469,13 @@ abstract class TransientRequestVar[T](dflt: => T) extends AnyVar[T, TransientReq
 
   override protected def clearFunc(name: String): Unit = TransientRequestVarHandler.clear(name)
 
-  override protected def wasInitialized(name: String): Boolean = {
-    val bn = name + VarConstants.initedSuffix
+  override protected def wasInitialized(name: String, bn: String): Boolean = {
     val old: Boolean = TransientRequestVarHandler.get(bn) openOr false
     TransientRequestVarHandler.set(bn, this, true)
     old
   }
 
-  protected override def testWasSet(name: String): Boolean = {
-    val bn = name + VarConstants.initedSuffix
+  protected override def testWasSet(name: String, bn: String): Boolean = {
     TransientRequestVarHandler.get(name).isDefined || (TransientRequestVarHandler.get(bn) openOr false)
   }
 
