@@ -1,0 +1,3 @@
+reporter:output:
+    dir: target/docs
+    readme-filename: None

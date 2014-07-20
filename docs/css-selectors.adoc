@@ -1,0 +1,443 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+= CSS Selector Transforms
+
+Lift's templating strategy is much simpler than most systems, and is aimed at
+cleanly and completely separating business logic from markup. Many a framework
+has made this claim, but Lift is one of the few to have achieved this break
+completely, using only HTML annotations with `data-` attributes. You can find
+an overview of the full Lift CSS templating strategy in the
+link:templating-guide[Lift templating guide].
+
+This document is a reference on the underpinnings of Lift templating, the CSS
+Selector Transforms. These are used in Lift code to transform a block of HTML
+by enriching it with data from the system and filtering it based on business
+rules.
+
+== Selectors and Replacement Rules
+
+CSS Selector Transforms generate a function that takes in a `NodeSeq` and
+transforms it according to a set of rules, producing a final `NodeSeq` with all
+of the transformations applied. This means a CSS Selector Transform is
+ultimately simply a function with signature `(NodeSeq)=>NodeSeq`. CSS Selector
+Transforms consist of three main components:
+ - The selector
+ - The subnode modification rule
+ - The transformation function
+
+///
+  Nice to have: graphic that shows a selector transform pointing to each
+///
+
+The details of each are provided below, but first let's look at some simple
+examples of transforms that you can write with links. For all of these examples,
+we'll be using this sample data:
+
+[.setup]
+```scala
+case class User(name: String)
+
+val user = User("Benedict Cumberbatch")
+```
+
+[.interactive.selectors]
+.Replace the contents of all `a` elements with the text "Mozilla"
+====
+[.input]
+```html
+<div class="name">John Doe</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://google.com">Google</a></li>
+  <li><a href="http://apple.com">Apple</a></li>
+</ul>
+```
+[.selector]
+```scala
+"a *" #> "Mozilla"
+```
+[.output]
+```html
+<div class="name">John Doe</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://google.com">Mozilla</a></li>
+  <li><a href="http://apple.com">Mozilla</a></li>
+</ul>
+```
+====
+
+[.interactive.selectors]
+.Make all links point to Mozilla
+====
+[.input]
+```html
+<div class="name">John Doe</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://google.com">Google</a></li>
+  <li><a href="http://apple.com">Apple</a></li>
+</ul>
+```
+[.selector]
+```scala
+"a [href]" #> "http://mozilla.org"
+```
+[.output]
+```html
+<div class="name">John Doe</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://mozilla.org">Google</a></li>
+  <li><a href="http://mozilla.org">Apple</a></li>
+</ul>
+```
+====
+
+[.interactive.selectors]
+.Replace all elements with class `name` with a user's name
+====
+[.input]
+```html
+<div class="name">John Doe</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://google.com">Google</a></li>
+  <li><a href="http://apple.com">Apple</a></li>
+</ul>
+```
+[.selector]
+```scala
+".name" #> user.name
+```
+[.output]
+```html
+Benedict Cumberbatch
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://google.com">Google</a></li>
+  <li><a href="http://apple.com">Apple</a></li>
+</ul>
+```
+====
+
+[.interactive.selectors]
+.Do all three of the previous things at once
+====
+[.input]
+```html
+<div class="name">John Doe</div>
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://google.com">Google</a></li>
+  <li><a href="http://apple.com">Apple</a></li>
+</ul>
+```
+[.selector]
+```scala
+"a *" #> "Mozilla" &
+"a [href]" #> "http://mozilla.org" &
+".name" #> user.name
+```
+[.output]
+```html
+Benedict Cumberbatch
+<ul>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+  <li><a href="http://mozilla.org">Mozilla</a></li>
+</ul>
+```
+====
+
+These examples show a few options:
+ - You can select by element name or by class name. More available selectors are
+   in the section below on <<available-selectors>>.
+ - You can set the body of an element, an attribute of an element, or even
+   replace the element altogether. More subnode modification rules are in the
+   section below on <<available-modification-rules>>.
+ - You can combine multiple CSS selector transforms using the `&` operator. This
+   is subject to some limitations detailed in the section below on <<combining-selectors-and-transforms>>.
+
+== Available Selectors
+
+NOTE: You cannot chain these in the standard CSS way (e.g., `input.class-name` is not
+valid). Instead, you must always put spaces between the selectors. More on this
+in the section below on <<combining-selectors-and-transforms>>.
+
+Class selector: `.class-name`::
+  The class selector matches any element that has `class-name` as one of its
+  classes. For example, you can use `.item` to match an element `<li
+  class="item selected">...</li>`.
+
+Id selector: `#element-id`::
+  The id selector matches any element that has `element-id` as the value of its
+  `id` attribute. For example, you can use `#page-header` to match an element
+  `<header id="page-header">...</header>`.
+
+Name selector: `@field-name`::
+  The name selector matches any element that has `field-name` as the value of
+  its `name` attribute. For example, you can use `@username` to match an element
+  `<input name="username">`.
+
+Element selector: `element-name`::
+  The element selector matches any element of type `element-name`. For example,
+  you can use `input` to match an element `<input type="text">`.
+
+Attribute selector: `an-attribute=a-value`::
+  The attribute selector matches any element whose attribute named
+  `an-attribute` has the value `a-value`. For example, you can use
+  `ng-model=user` to match an element `<ul ng-model="user">...</ul>`.
+
+Universal selector: `*`::
+  The universal selector matches any element.
+
+Root selector: `^`::
+  The root selector matches elements at the root level of the NodeSeq being
+  transformed. For example, you can use `^` to match both the `header`
+  and `ul` elements in the HTML `<header id="page-header">...</header><ul
+  ng-model="user">...</ul>`.
+
+=== Shortened Attribute Selectors
+
+In addition to the above base selectors, a few selectors are provided that are
+useful shortcuts for special attributes:
+
+Data name attribute selector: `;name-data`::
+  The data name attribute selector matches any element that has `name-data` as
+  the value of its `data-name` attribute. For example, you can use `;user-info`
+  to match an element `<ul data-name="user-info">...</ul>`.
+
+Field type selectors: `:button`, `:checkbox`, `:file`, `:password`, `:radio`, `:reset`, `:submit`, `:text`::
+  The field type selectors match elements whose `type` attribute is set to a
+  particular type. For example, `:button` will match an element `<input
+  type="button">`. `:checkbox` will match an element `<input
+  type="checkbox">`. Note that this is _not_ generalized. So, for example,
+  `:custom-field` will _not_ match `<input type="custom-field">`. Only the above
+  values are supported.
+
+== Available Modification Rules
+
+Subnode modification rules indicate what the result of the transformation
+function will do to the element matched by the selector.
+
+Set children rule: `*`::
+  The transformation result will set the children of the matched element(s). For
+  example, `^ *` will set the children of all root elements to the results of
+  the transformation.
+
+Append to children rule: `*<` or `*+`::
+  The transformation result will be appended to the children of the matched
+  element(s). For example, `^ *+` will append the results of the transformation
+  to the end of the content of all root elements.
+
+Prepend to children rule: `>*` or `-*`::
+  The transformation result will be prepended to the children of the matched
+  element(s). For example, `^ *+` will prepend the results of the transformation
+  to the beginning of the content of all root elements.
+
+Surround children rule: `<*>`::
+  The transformation result will produce a single element, whose children will
+  be set to the children of the matched element(s). For example, `^ <*>` will
+  take the element produced by the transformation function and copy it once for
+  every root element, wrapping the new element around the children of the root
+  elements.
+
+Set attribute rule: `[attribute-name]`::
+  The attribute with name `attribute-name` on the matched element will have its
+  value set to the transformation result. For example, `^ [data-user-id]` will
+  set the `data-user-id` attribute of all root elements to the transformation
+  result.
+
+Append to attribute rule: `[attribute-name+]`::
+  The transformation result will be appended to the end of the value of the
+  attribute with name `attribute-name` on the matched element with a prepended
+  space. For example, `^ [class+]` will append a space and then the
+  transformation result to the `class` attribute of all root elements.
+
+Remove from attribute rule: `[attribute-name!]`::
+  The transformation result will be filtered from the value of the attribute
+  with name `attribute-name` on the matched element, provided it can be found on
+  its own separated by a space. For example, `^ [class!]` will remove the
+  class named by the transformation result from all root elements.
+
+Don't merge attributes rule: `!!`::
+  By default, if the transformation yields a single element and the element
+  matched by the selector is being replaced by that result, the attributes from
+  the matched element are merged into the attributes of the transformation's
+  element. This modifier prevents that from happening. For example, by default
+  doing `"input" #> <div />` and applying it to `<input type="text">` would
+  yield `<div type="text" />`. Doing `"input !!" #> <div />` would instead yield
+  `<div />`.
+
+Lift node rule: `^^`::
+  This rule will lift the first selected element all the way to the root of the
+  `NodeSeq` it's being applied to. Note that the transformation result is
+  irrelevant in this case. Additionally, note that this only applies to the
+  _first_ element that matches the selector, and that it lifts it all the way to
+  the root of the `NodeSeq` being transformed. For example,
+  `".admin-user ^^" #> "ignored"`, when applied to the
+  markup `<div><form><fieldset class=".admin-user">...</fieldset>
+  <fieldset class="power-user">...</fieldset></div>`, will
+  produce `<fieldset class="admin-user">...</fieldset>`. This is useful for
+  selecting among a set of template elements based on some external condition
+  (e.g., one template for one type of user, another template for another type of
+  user, etc).
+
+Lift node's children rule: `^*`::
+  This rule will lift the _children_ of the first selected element all the way
+  to the root of the `NodeSeq` it's being applied to. As above, the
+  transformation result is irrelevant, only the _first_ matched element's
+  children are lifted, and the children are lifted all the way to the root of
+  the `NodeSeq` being transformed. For example, `"#power-user ^*" #> "ignored"`,
+  when applied to the markup
+  `<section id="admin-user"><h3>Admin</h3></section>
+  <section id="power-user"><h3>Power User</h3></section>`,
+  will produce `<h3>Power User</h3>`.
+
+== Transformation Functions
+
+Transformation functions specify the contents used by the modification rules to
+update the `NodeSeq` that is being transformed. Note that these are always
+lazily computed, so if a selector doesn't match, then its transformation
+function will not be run. Strictly speaking, a transformation function need
+not be a _function_---sometimes it will just be a static value. More details
+below.
+
+NOTE: Two of the modification rules, `^^` and `^*`, ignore the result of the
+transformation function; usually `"ignored"` is passed as the transformation
+function in these cases.
+
+The transformation function can be any type `T` that has an implicit
+`CanBind[T]` available. `CanBind` requires a single `apply` method with two
+parameter lists, one for the `T` value and one that is the `NodeSeq` that was
+matched by the selector. For example, if you invoke `"input" #> "Hello"` with
+the HTML `<div class="inputs"><input type="text"><input type="date"></div>`,
+an instance of `CanBind[String]` is used, and is called twice; first as
+`stringBind("Hello")(<input type="text" />)` and then as
+`stringBind("Hello")(<input type="date" />)`. Note that a `CanBind[String]` is
+already provided by default.
+
+Here are a few of the more interesting `CanBind` s that are supported out of the
+box by Lift:
+
+`CanBind[Bindable]`::
+  This allows you to directly use a `Mapper` or `Record` instance on the right
+  hand side of the transform to put its HTML representation somewhere (as
+  returned by `asHtml`).
+
+`CanBind[StringPromotable]`::
+  Lift has a `StringPromotable` trait that can be used to mark objects that can
+  be straightforwardly promoted to a `String`. Amongst other things, by default
+  this includes `JsCmd` s. This allows those types of objects to be put on the
+  right hand side of a transform.
+
+`CanBind[Box[T]]` and `CanBind[Option[T]]`::
+  Defined for a few types, the most important characteristic of these is that
+  they will return a `NodeSeq.Empty` if the `Option` or `Box` is `Empty`/`None`
+  or `Failure`.
+
+`CanBind[NodeSeq=>NodeSeq]`::
+  This lets you use a full-blown transformation function. This function will
+  take in the element that matched the selector and provide the modification
+  rule with the results of the function. For example, you could clear an
+  element by saying `".user" #> { ns: NodeSeq => NodeSeq.Empty }` footnote:[In
+  fact, there is a `ClearNodes` function defined in `net.liftweb.util` that does
+  exactly this.]. Because CSS Selector Transforms are themselves
+  `NodeSeq=>NodeSeq` functions, you can nest them this way. For example, you
+  can say `".user" #> { ".name *" #> user.name }`. With the markup
+  `<li class="user"><p class="name">Person</p></li>`, this will first select
+  the `li`, then pass it to the second transform which will select the `p`
+  and set its value to the user's name. Then the second transform will return
+  the `li` with the user's name set up, and the top-level transform will replace
+  the original, unbound `li` with the new one.
+
+`CanBind[Iterable[T]]`::
+  This is defined for most `T` values that `CanBind` is also defined for, and
+  in fact it's recommended that if you provide a `CanBind` for a type `T`, you
+  also provide it for `Iterable[T]`. This will repeatedly run the transform
+  function that you specify for each `T` in the `Iterable`, concatenate the
+  resulting `NodeSeq` s, and return that. This makes it trivial to deal with
+  lists, so you can simply do something like
+  `".user" #> users.map { user => ".name" #> user.name }`
+  to map the names for all users. This will create a copy of the `.user` element
+  for each user, and bind their name correctly. It will also ensure that if
+  the matched `.user` instance has an id, only the first copy of the elements
+  will have that id after the transform is finished.
+
+There are a lot more `CanBind` s, and you can find them at the
+link:docs/for/net.liftweb.util.CanBind[docs for `CanBind`].
+
+== Combining Selectors and Transforms
+
+Lift's selectors are not identical to CSS selectors. They're designed for speed
+rather than for being featureful, and designed in the context of a full-featured
+language rather than a limited language like CSS. One key difference is in how
+you combine them. In CSS, you can use `>` to select direct children, `+` for
+direct siblings, etc. Lift only provides one combinator, the space: ` `. It
+works just like in CSS, applying to all descendants. So you can set up a selector
+`.user-form input [value]` and it will for setting the `href` attribute of all
+`input` elements that have some ancestorwith class  `user-form` .
+
+Notably, you cannot select `form.user input [href]`, because you cannot check
+multiple selectors on a single element. In practice, this is rarely needed for
+snippets because the snippet itself will typically be attached to the element
+that you would usually use a more complex selector to identify.
+
+=== Combining Transforms
+
+You may want to apply more than one transform to a single `NodeSeq`. Indeed,
+this is a fairly common thing to do in snippets. The simplest way of doing this
+is to pass the result of each transformation in turn through the next
+transform. For example, if you wanted to do both `"a *" #> "Mozilla"` and
+`"a [href]" #> "https://mozilla.org"`, you could do:
+
+```scala
+val textReplaced = ("a *" #> "Mozilla") apply nodes
+val final result = ("a [href]" #> "https://mozilla.org") apply textReplaced
+```
+
+Scala itself provides a function composition helper that lets us chain a set
+of functions into a single function that runs through all of them: `andThen`.
+With this, we can do:
+
+```scala
+("a *" #> "Mozilla" andThen
+ "a [href]" #> "https://mozilla.org") apply nodes
+```
+
+And get the same result.
+
+However, Lift provides one more little trick, the `&` operator. When CSS
+Selector Transforms are combined via `andThen`, each transform that runs
+potentially has to go through the entire set of input nodes to see where its
+transformations should apply. `&` does something a little different: instead of
+chaining the functions, it creates one big function that goes through the input
+nodes a single time, checking at each point which of the combined transforms
+should be applied and then applying them. So, you can do:
+
+```scala
+("a *" #> "Mozilla" &
+ "a [href]" #> "https://mozilla.org") apply nodes
+```
+
+Beware, however, as `&` is not the same as `andThen`. To do this trickery, Lift
+will only transform a part of a node once, and it won't revisit it. Two
+transformations that apply to the same attribute for the same element, for
+example, will not both be applied. Additionally, if your transformation applies
+to the body of an element, like `a *`, the new children of the element will
+_not_ be transformed. Additionally, if you replace the element itself, e.g.
+with the selector `a`, none of the other transforms for that element will run.
+
+Thus, you will occasionally find yourself using `&` together with `andThen`; in
+general you should default to `&` and switch to `andThen` when you need to in
+order to apply a transform to the results of the previous one.
+
+== Macros and Strings
+
+Lift's CSS Selector Transforms can be used in two modes. Most basically, you
+can create a `String` with the appropriate selector and then specify the
+transformation you want to apply to matching blocks
