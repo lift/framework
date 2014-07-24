@@ -29,6 +29,14 @@ import JsCmds._
 import JE._
 import java.util.Locale
 
+/**
+* A case class that contains the information necessary to set up a CometActor
+*/
+final case class CometCreationInfo(cometType: String,
+                                   cometName: Box[String],
+                                   cometHtml: NodeSeq,
+                                   cometAttributes: Map[String, String],
+                                   session: LiftSession)
 
 trait DeltaTrait {
   def toJs: JsCmd
@@ -318,12 +326,8 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
    */
   def lastListenerTime: Long
 
-  private[http] def callInitCometActor(theSession: LiftSession,
-                                       theType: Box[String],
-                                       name: Box[String],
-                                       defaultHtml: NodeSeq,
-                                       attributes: Map[String, String]) {
-    initCometActor(theSession, theType, name, defaultHtml, attributes)
+  private[http] def callInitCometActor(creationInfo: CometCreationInfo) {
+    initCometActor(creationInfo)
   }
 
   /**
@@ -368,11 +372,7 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
    */
   def cometRenderTimeoutHandler(): Box[NodeSeq] = Empty
 
-  protected def initCometActor(theSession: LiftSession,
-                               theType: Box[String],
-                               name: Box[String],
-                               defaultHtml: NodeSeq,
-                               attributes: Map[String, String]): Unit
+  protected def initCometActor(creationInfo: CometCreationInfo): Unit
 
   def theType: Box[String]
 
@@ -380,7 +380,7 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
 
   def hasOuter: Boolean
 
-  def buildSpan(time: Long, xml: NodeSeq): NodeSeq
+  def buildSpan(xml: NodeSeq): NodeSeq
 
   def parentTag: Elem
 
@@ -565,21 +565,17 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
    * It's seriously suboptimal to override this method.  Instead
    * use localSetup()
    */
-  protected def initCometActor(theSession: LiftSession,
-                               theType: Box[String],
-                               name: Box[String],
-                               defaultHtml: NodeSeq,
-                               attributes: Map[String, String]) {
+  protected def initCometActor(creationInfo: CometCreationInfo) {
     if (!dontCacheRendering) {
       lastRendering = RenderOut(Full(defaultHtml),
         Empty, Empty, Empty, false)
     }
 
-    this._theType = theType
-    this._theSession = theSession
-    this._defaultHtml = defaultHtml
-    this._name = name
-    this._attributes = attributes
+    _theType = Full(creationInfo.cometType)
+    _name = creationInfo.cometName
+    _defaultHtml = creationInfo.cometHtml
+    _attributes = creationInfo.cometAttributes
+    _theSession = creationInfo.session
   }
 
   def defaultPrefix: Box[String] = Empty
@@ -658,18 +654,8 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   /**
    * Creates the span element acting as the real estate for comet rendering.
    */
-  def buildSpan(time: Long, xml: NodeSeq): Elem = {
-    Elem(parentTag.prefix, parentTag.label, parentTag.attributes,
-      parentTag.scope, parentTag.minimizeEmpty, xml :_*) %
-      new UnprefixedAttribute("id",
-        Text(spanId),
-        if (time > 0L) {
-          new PrefixedAttribute("lift", "when",
-            time.toString,
-            Null)
-        } else {
-          Null
-        })
+  def buildSpan(xml: NodeSeq): Elem = {
+    parentTag.copy(child = xml) % ("id" -> spanId)
   }
 
   /**
@@ -847,10 +833,10 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
     /**
      * Update the defaultHtml... sent in dev mode
      */
-    case UpdateDefaultXml(xml) => {
-      val redo = xml != _defaultHtml
+    case UpdateDefaultHtml(html) => {
+      val redo = html != _defaultHtml
 
-      _defaultHtml = xml
+      _defaultHtml = html
 
       if (redo) {
         performReRender(false)
@@ -1171,14 +1157,13 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
    * take over the screen real estate until the question is answered.
    */
   protected def ask(who: LiftCometActor, what: Any)(answerWith: Any => Unit) {
-    who.callInitCometActor(theSession, Full(who.uniqueId), name, defaultHtml, attributes)
+    who.callInitCometActor(CometCreationInfo(who.uniqueId, name, defaultHtml, attributes, theSession))
     theSession.addCometActor(who)
-    // who.link(this)
+
     who ! PerformSetupComet2(Empty)
     askingWho = Full(who)
     this.answerWith = Full(answerWith)
     who ! AskQuestion(what, this, listeners)
-    // this ! AskRender
   }
 
   protected def answer(answer: Any) {
@@ -1339,10 +1324,10 @@ private[http] class XmlOrJsCmd(val id: String,
                                _fixedXhtml: Box[NodeSeq],
                                val javaScript: Box[JsCmd],
                                val destroy: Box[JsCmd],
-                               spanFunc: (Long, NodeSeq) => NodeSeq,
+                               spanFunc: (NodeSeq) => NodeSeq,
                                ignoreHtmlOnJs: Boolean,
                                notices: List[(NoticeType.Value, NodeSeq, Box[String])]) {
-  def this(id: String, ro: RenderOut, spanFunc: (Long, NodeSeq) => NodeSeq, notices: List[(NoticeType.Value, NodeSeq, Box[String])]) =
+  def this(id: String, ro: RenderOut, spanFunc: (NodeSeq) => NodeSeq, notices: List[(NoticeType.Value, NodeSeq, Box[String])]) =
     this (id, ro.xhtml, ro.fixedXhtml, ro.script, ro.destroyScript, spanFunc, ro.ignoreHtmlOnJs, notices)
 
   val xml = _xml.flatMap(content => S.session.map(s => s.processSurroundAndInclude("JS SetHTML id: " + id, content)))
@@ -1357,9 +1342,9 @@ private[http] class XmlOrJsCmd(val id: String,
         case (Full(xml), Full(js), false) => LiftRules.jsArtifacts.setHtml(id, Helpers.stripHead(xml)) & JsCmds.JsTry(js, false)
         case (Full(xml), _, false) => LiftRules.jsArtifacts.setHtml(id, Helpers.stripHead(xml))
         case (Full(xml), Full(js), true) => LiftRules.jsArtifacts.setHtml(id + "_outer", (
-          spanFunc(0, Helpers.stripHead(xml)) ++ fixedXhtml.openOr(Text("")))) & JsCmds.JsTry(js, false)
+          spanFunc(Helpers.stripHead(xml)) ++ fixedXhtml.openOr(Text("")))) & JsCmds.JsTry(js, false)
         case (Full(xml), _, true) => LiftRules.jsArtifacts.setHtml(id + "_outer", (
-          spanFunc(0, Helpers.stripHead(xml)) ++ fixedXhtml.openOr(Text(""))))
+          spanFunc(Helpers.stripHead(xml)) ++ fixedXhtml.openOr(Text(""))))
         case (_, Full(js), _) => js
         case _ => JsCmds.Noop
       }
@@ -1392,7 +1377,7 @@ private[http] class XmlOrJsCmd(val id: String,
 /**
  * Update the comet XML on each page reload in dev mode
  */
-case class UpdateDefaultXml(xml: NodeSeq) extends CometMessage
+case class UpdateDefaultHtml(html: NodeSeq) extends CometMessage
 
 case class PartialUpdateMsg(cmd: () => JsCmd) extends CometMessage
 

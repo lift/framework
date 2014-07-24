@@ -286,6 +286,8 @@
     ///// Comet ////////////////////////////////////
     ////////////////////////////////////////////////
 
+    var currentCometRequest = null;
+
     // http://stackoverflow.com/questions/4994201/is-object-empty
     function is_empty(obj) {
       // null and undefined are empty
@@ -322,17 +324,27 @@
       return settings.cometServer+"/"+cometPath()+"/" + Math.floor(Math.random() * 100000000000) + "/" + sessionId + "/" + pageId;
     }
 
+    // Forcibly restart the comet cycle; use this, for example, when a
+    // new comet has been received.
+    function restartComet() {
+      if (currentCometRequest)
+        currentCometRequest.abort();
+
+      cometSuccessFunc();
+    }
+
     function cometEntry() {
       var isEmpty = is_empty(toWatch);
 
       if (!isEmpty) {
         uriSuffix = undefined;
-        settings.ajaxGet(
-          calcCometPath(),
-          toWatch,
-          cometSuccessFunc,
-          cometFailureFunc
-        );
+        currentCometRequest =
+          settings.ajaxGet(
+            calcCometPath(),
+            toWatch,
+            cometSuccessFunc,
+            cometFailureFunc
+          );
       }
     }
 
@@ -346,25 +358,29 @@
       toWatch = ret;
     }
 
-    // Called to register a comet; if cometGuidOrToWatchList is a
-    // string, expect cometVersion to be set, and set the comet with
-    // that guid to that version.
+    // Called to register a comet. Sets the comet with guid `cometGuid`
+    // to have the version `cometVersion`. If `startComet` is set to
+    // `true`, restarts the comet request cycle.
+    function registerComet(cometGuid, cometVersion, restartComet) {
+      toWatch[cometGuid] = cometVersion;
+
+      if (startComet) {
+        restartComet();
+      }
+    }
+
+    // Called to register comets in bulk. `cometInfo` should be
+    // an object of comet ids associated with comet versions.
     //
-    // If startComet is passed and true, the comet request cycle is
-    // kicked off.
-    function registerComet(cometGuidOrToWatchList, cometVersion, startComet) {
-      if (typeof startComet == 'undefined') {
-        startComet = true;
+    // If startComet is passed and true, restarts the comet request
+    // cycle.
+    function registerComets(cometInfo, startComet) {
+      for (var cometGuid in cometInfo) {
+        toWatch[cometGuid] = cometInfo[cometGuid];
       }
 
-      if (typeof cometGuidOrToWatchList == 'string') {
-        toWatch[cometGuidOrToWatchList] = cometVersion;
-      } else {
-        toWatch = cometGuidOrToWatchList;
-      }
-
-      if (startComet === true) {
-        cometSuccessFunc();
+      if (startComet) {
+        restartComet();
       }
     }
 
@@ -553,7 +569,7 @@
           }
 
           if (typeof cometGuid != 'undefined') {
-            registerComet(comets, null, true);
+            registerComets(comets, true);
           }
         });
 
@@ -567,7 +583,7 @@
         settings.ajaxOnSessionLost();
       },
       calcAjaxUrl: calcAjaxUrl,
-      registerComet: registerComet,
+      registerComets: registerComets,
       cometOnSessionLost: function() {
         settings.cometOnSessionLost();
       },
@@ -635,7 +651,7 @@
       });
     },
     ajaxGet: function(url, data, onSuccess, onFailure) {
-      jQuery.ajax({
+      return jQuery.ajax({
         url: url,
         data: data,
         type: "GET",
@@ -643,7 +659,10 @@
         timeout: this.cometGetTimeout,
         cache: false,
         success: onSuccess,
-        error: onFailure
+        error: function(_, status) {
+          if (status != 'abort')
+            return onFailure.apply(this, arguments)
+        }
       });
     }
   };
@@ -771,8 +790,12 @@
             finally {
               onSuccess();
             }
-          }
-          else {
+          // done + 0 status = aborted, or at least it's the most
+          // straightforward proxy that we have; ready state = 0 is
+          // supposed to be aborted, but that's all kinds of not
+          // working, unfortunately. jQuery's approach is better,
+          // but they have a lot more state tracking to achieve it.
+          } else if (xhr.status !== 0) {
             onFailure();
           }
         }
@@ -786,6 +809,8 @@
       xhr.timeout = settings.cometGetTimeout;
       xhr.setRequestHeader("Accept", "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01");
       xhr.send();
+
+      return xhr;
     }
   };
 
