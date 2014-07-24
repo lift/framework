@@ -2697,7 +2697,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
     attemptedComet match {
       case fail @ Failure(_, Full(e: java.lang.NoSuchMethodException), _) => 
-        val message = s"Failed to find appropriate comet constructor for ${cometClass.getCanonicalName}. Tried no arguments and (LiftSession, Box[String], NodeSeq, Map[String,String])"
+        val message = s"Couldn't find valid comet constructor for ${cometClass.getCanonicalName}. Comets should have a no argument constructor or one that takes the following arguments: (LiftSession, Box[String], NodeSeq, Map[String,String])."
 
         logger.info(message, e)
         fail ?~! message
