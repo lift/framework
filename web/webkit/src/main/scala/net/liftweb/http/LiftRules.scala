@@ -445,6 +445,13 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var cometServer: () => String = () => S.contextPath
 
   /**
+   * Calculate the Ajax Server (by default, the server that
+   * the request was made on, but can do the multi-server thing
+   * as well)
+   */
+  @volatile var ajaxServer: () => String = () => S.contextPath
+
+  /**
    * The maximum concurrent requests.  If this number of
    * requests are being serviced for a given session, messages
    * will be sent to all Comet requests to terminate

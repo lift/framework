@@ -73,6 +73,7 @@
         window.location.href = "/";
       },
       cometServer: "",
+      ajaxServer: "",
       cometOnError: function(e) {
         if (window.console && typeof window.console.error === 'function') {
           window.console.error(e.stack || e);
@@ -164,15 +165,16 @@
     }*/
 
     function calcAjaxUrl(url, version) {
+      var serverUrl = settings.ajaxServer + url;
       if (settings.enableGc) {
         var replacement = ajaxPath()+'/'+pageId;
         if (version !== null) {
           replacement += ('-'+version.toString(36)) + (ajaxQueue.length > 35 ? 35 : ajaxQueue.length).toString(36);
         }
-        return url.replace(ajaxPath(), replacement);
+        return serverUrl.replace(ajaxPath(), replacement);
       }
       else {
-        return url;
+        return serverUrl;
       }
     }
 

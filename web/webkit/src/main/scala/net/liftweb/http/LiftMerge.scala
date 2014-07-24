@@ -28,7 +28,7 @@ private[http] trait LiftMerge {
   self: LiftSession =>
 
   private def scriptUrl(scriptFile: String) = {
-    s"/${LiftRules.liftPath}/$scriptFile"
+    S.encodeURL(s"${S.contextPath}/${LiftRules.liftPath}/$scriptFile")
   }
 
   // Gather all page-specific JS into one JsCmd.
