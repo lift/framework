@@ -853,10 +853,10 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * receive updates like this using {S.addComet}.
    */
   def findOrCreateComet[T <: LiftCometActor](
-    cometName: Box[String] = Empty,
-    cometHtml: NodeSeq = NodeSeq.Empty,
-    cometAttributes: Map[String, String] = Map.empty,
-    receiveUpdatesOnPage: Boolean = false
+    cometName: Box[String],
+    cometHtml: NodeSeq,
+    cometAttributes: Map[String, String],
+    receiveUpdatesOnPage: Boolean
   )(implicit cometManifest: Manifest[T]): Box[T] = {
     for {
       session <- session
