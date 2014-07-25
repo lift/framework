@@ -493,7 +493,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
       SessCollection.save(tc, db)
       db.getLastError.get("err") must beNull
       SessCollection.save(tc2, db) must throwA[MongoException]
-      db.getLastError.get("err").toString must startWith("E11000 duplicate key error index")
+      db.getLastError.get("err").toString must contain("E11000 duplicate key error index")
       SessCollection.save(tc3, db)
       db.getLastError.get("err") must beNull
 
