@@ -192,7 +192,7 @@ object LiftRules extends LiftRulesMocker {
     val CometTimeout = Value(9, "Comet Component did not response to requests")
     val CometNotFound = Value(10, "Comet Component not found")
     val ExecutionFailure = Value(11, "Execution Failure")
-    val NoCometType = Value(10, "Comet Type not specified")
+    val NoCometType = Value(12, "Comet Type not specified")
   }
 
   def defaultFuncNameGenerator(runMode: Props.RunModes.Value): () => String =
