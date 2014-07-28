@@ -583,6 +583,9 @@
       setPageId: function(pgId) {
         pageId = pgId;
       },
+      getPageId: function() {
+        return pageId;
+      },
       setUriSuffix: function(suffix) {
         uriSuffix = suffix;
       },
