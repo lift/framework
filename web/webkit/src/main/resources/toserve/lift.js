@@ -73,7 +73,7 @@
         window.location.href = "/";
       },
       cometServer: "",
-      ajaxServer: "",
+      contextPath: "",
       cometOnError: function(e) {
         if (window.console && typeof window.console.error === 'function') {
           window.console.error(e.stack || e);
@@ -165,7 +165,7 @@
     }*/
 
     function calcAjaxUrl(url, version) {
-      var serverUrl = settings.ajaxServer + url;
+      var serverUrl = settings.contextPath + url;
       if (settings.enableGc) {
         var replacement = ajaxPath()+'/'+pageId;
         if (version !== null) {
