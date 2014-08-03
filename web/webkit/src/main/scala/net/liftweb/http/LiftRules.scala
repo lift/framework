@@ -929,7 +929,14 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
         case snippetName :: encodedArguments =>
           val decodedMetaData = pairsToMetaData(encodedArguments.flatMap(_.roboSplit("[;&]")))
-          new Elem("lift", snippetName, decodedMetaData, element.scope, false, element)
+
+          if (decodedMetaData("parallel").headOption == Some(Text("true"))) {
+            DataAttributeProcessorAnswerFuture(LAFuture(() =>
+              new Elem("lift", snippetName, decodedMetaData, element.scope, false, element)
+            ))
+          } else {
+            new Elem("lift", snippetName, decodedMetaData, element.scope, false, element)
+          }
       }
   }
 
