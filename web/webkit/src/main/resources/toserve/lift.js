@@ -21,7 +21,7 @@
       /**
         * Contains the Ajax URI path used by Lift to process Ajax requests.
         */
-      liftPath: "lift",
+      liftPath: "/lift",
       ajaxRetryCount: 3,
       ajaxPostTimeout: 5000,
 
@@ -72,8 +72,7 @@
       cometOnSessionLost: function() {
         window.location.href = "/";
       },
-      cometServer: "",
-      contextPath: "",
+      cometServer: null,
       cometOnError: function(e) {
         if (window.console && typeof window.console.error === 'function') {
           window.console.error(e.stack || e);
@@ -165,16 +164,15 @@
     }*/
 
     function calcAjaxUrl(url, version) {
-      var serverUrl = settings.contextPath + url;
       if (settings.enableGc) {
         var replacement = ajaxPath()+'/'+pageId;
         if (version !== null) {
           replacement += ('-'+version.toString(36)) + (ajaxQueue.length > 35 ? 35 : ajaxQueue.length).toString(36);
         }
-        return serverUrl.replace(ajaxPath(), replacement);
+        return url.replace(ajaxPath(), replacement);
       }
       else {
-        return serverUrl;
+        return url;
       }
     }
 
@@ -182,7 +180,7 @@
       var data = "__lift__GC=_";
 
       settings.ajaxPost(
-        calcAjaxUrl("/"+ajaxPath()+"/", null),
+        calcAjaxUrl(ajaxPath()+"/", null),
         data,
         "script",
         successRegisterGC,
@@ -257,7 +255,7 @@
               aboutToSend.responseType.toLowerCase() === "json")
           {
             settings.ajaxPost(
-              calcAjaxUrl("/"+ajaxPath()+"/", null),
+              calcAjaxUrl(ajaxPath()+"/", null),
               aboutToSend.data,
               "json",
               successFunc,
@@ -267,7 +265,7 @@
           }
           else {
             settings.ajaxPost(
-              calcAjaxUrl("/"+ajaxPath()+"/", aboutToSend.version),
+              calcAjaxUrl(ajaxPath()+"/", aboutToSend.version),
               aboutToSend.data,
               "script",
               successFunc,
@@ -321,7 +319,12 @@
     }
 
     function calcCometPath() {
-      return settings.cometServer+"/"+cometPath()+"/" + Math.floor(Math.random() * 100000000000) + "/" + sessionId + "/" + pageId;
+      var fullPath = cometPath()+ "/" + Math.floor(Math.random() * 100000000000) + "/" + sessionId + "/" + pageId;
+      if (settings.cometServer) {
+        return settings.cometServer + fullPath;
+      } else {
+        return fullPath;
+      }
     }
 
     function cometEntry() {
