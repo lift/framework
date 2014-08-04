@@ -569,9 +569,9 @@ class LiftServlet extends Loggable {
   private def extractVersions[T](path: List[String])(f: (Box[AjaxVersionInfo]) => T): T = {
     val liftPath = LiftRules.liftPath
     path match {
-      case liftPath :: "ajax" :: AjaxVersions(versionInfo @ AjaxVersionInfo(renderVersion, _, _)) :: _ =>
+      case `liftPath` :: "ajax" :: AjaxVersions(versionInfo @ AjaxVersionInfo(renderVersion, _, _)) :: _ =>
         RenderVersion.doWith(renderVersion)(f(Full(versionInfo)))
-      case liftPath :: "ajax" :: renderVersion :: _ =>
+      case `liftPath` :: "ajax" :: renderVersion :: _ =>
         RenderVersion.doWith(renderVersion)(f(Empty))
       case _ => f(Empty)
     }
