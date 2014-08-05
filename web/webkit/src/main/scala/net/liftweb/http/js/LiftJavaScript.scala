@@ -37,7 +37,7 @@ object LiftJavaScript {
   object PageJs {
     def unapply(req: Req): Option[JavaScriptResponse] = {
       val suffixedPath = req.path.wholePath
-      val LiftPath = LiftRules.liftUriPath
+      val LiftPath = LiftRules.liftContextRelativePath
       val renderVersion = "([^.]+)\\.js".r
 
       suffixedPath match {
