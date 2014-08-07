@@ -21,7 +21,7 @@
       /**
         * Contains the Ajax URI path used by Lift to process Ajax requests.
         */
-      liftPath: "lift",
+      liftPath: "/lift",
       ajaxRetryCount: 3,
       ajaxPostTimeout: 5000,
 
@@ -72,7 +72,7 @@
       cometOnSessionLost: function() {
         window.location.href = "/";
       },
-      cometServer: "",
+      cometServer: null,
       cometOnError: function(e) {
         if (window.console && typeof window.console.error === 'function') {
           window.console.error(e.stack || e);
@@ -180,7 +180,7 @@
       var data = "__lift__GC=_";
 
       settings.ajaxPost(
-        calcAjaxUrl("/"+ajaxPath()+"/", null),
+        calcAjaxUrl(ajaxPath()+"/", null),
         data,
         "script",
         successRegisterGC,
@@ -255,7 +255,7 @@
               aboutToSend.responseType.toLowerCase() === "json")
           {
             settings.ajaxPost(
-              calcAjaxUrl("/"+ajaxPath()+"/", null),
+              calcAjaxUrl(ajaxPath()+"/", null),
               aboutToSend.data,
               "json",
               successFunc,
@@ -265,7 +265,7 @@
           }
           else {
             settings.ajaxPost(
-              calcAjaxUrl("/"+ajaxPath()+"/", aboutToSend.version),
+              calcAjaxUrl(ajaxPath()+"/", aboutToSend.version),
               aboutToSend.data,
               "script",
               successFunc,
@@ -321,7 +321,12 @@
     }
 
     function calcCometPath() {
-      return settings.cometServer+"/"+cometPath()+"/" + Math.floor(Math.random() * 100000000000) + "/" + sessionId + "/" + pageId;
+      var fullPath = cometPath()+ "/" + Math.floor(Math.random() * 100000000000) + "/" + sessionId + "/" + pageId;
+      if (settings.cometServer) {
+        return settings.cometServer + fullPath;
+      } else {
+        return fullPath;
+      }
     }
 
     // Forcibly restart the comet cycle; use this, for example, when a
@@ -596,6 +601,9 @@
       },
       setPageId: function(pgId) {
         pageId = pgId;
+      },
+      getPageId: function() {
+        return pageId;
       },
       setUriSuffix: function(suffix) {
         uriSuffix = suffix;
