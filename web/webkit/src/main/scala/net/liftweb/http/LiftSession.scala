@@ -1516,7 +1516,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case s@_ if !s.isEmpty => s
       case _ => List("index")
     }
-    Templates.findTopLevelTemplate(splits, S.locale)
+    Templates.findTopLevelTemplate(
+      splits,
+      S.locale,
+      S.location.isDefined && S.request.exists(!_.ajax_?)
+    )
   }
 
   private[liftweb] def findTemplate(name: String): Box[NodeSeq] = {

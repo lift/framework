@@ -58,8 +58,8 @@ object Templates {
         }
     }
 
-  private [http] def findTopLevelTemplate(places: List[String], locale: Locale) = {
-    findRawTemplate0(places, locale, true).map(checkForContentId)
+  private [http] def findTopLevelTemplate(places: List[String], locale: Locale, needAutoSurround: Boolean) = {
+    findRawTemplate0(places, locale, needAutoSurround).map(checkForContentId)
   }
 
   /**
@@ -134,13 +134,13 @@ object Templates {
     }.headOption getOrElse in
   }
 
-  private def parseMarkdown(is: InputStream, topLevel: Boolean): Box[NodeSeq] =
+  private def parseMarkdown(is: InputStream, needAutoSurround: Boolean): Box[NodeSeq] =
   for {
     bytes <- Helpers.tryo(Helpers.readWholeStream(is))
     elems <- MarkdownParser.parse(new String(bytes, "UTF-8"))
   } yield {
-    if (topLevel && elems.length > 1 && ! elems.exists(_.label == "html"))
-      <html>{elems}</html>
+    if (needAutoSurround)
+      <lift:surround with="default" at="content">{elems}</lift:surround>
     else
       elems
   }
@@ -157,7 +157,7 @@ object Templates {
     findRawTemplate0(places, locale, false)
   }
 
-  private def findRawTemplate0(places: List[String], locale: Locale, topLevel: Boolean): Box[NodeSeq] = {
+  private def findRawTemplate0(places: List[String], locale: Locale, needAutoSurround: Boolean): Box[NodeSeq] = {
     /*
      From a Scala coding standpoint, this method is ugly.  It's also a performance
      hotspot that needed some tuning.  I've made the code very imperative and
@@ -210,7 +210,7 @@ object Templates {
                 import scala.xml.dtd.ValidationException
                 val xmlb = try {
                   LiftRules.doWithResource(name) { is =>
-                    if (s == "md") {parseMarkdown(is, topLevel)} else
+                    if (s == "md") {parseMarkdown(is, needAutoSurround)} else
                     parserFunction(is) } match {
                     case Full(seq) => seq
                     case _ => Empty
