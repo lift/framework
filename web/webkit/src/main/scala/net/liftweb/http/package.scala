@@ -16,24 +16,69 @@
 
 package net.liftweb
 
-import common._
+import scala.concurrent.{ExecutionContext,Future}
+import scala.xml.{Comment,NodeSeq}
+
+import actor.LAFuture
+import builtin.comet.AsyncRenderComet
+import http.js.JsCmds.Replace
 import util._
-import xml.{Elem, MetaData, NodeSeq}
-import java.util.{ResourceBundle, Locale, Date}
 
 package object http {
+  implicit def futureTransform[T](implicit innerTransform: CanBind[T], executionContext: ExecutionContext): CanBind[Future[T]] = {
+    new CanBind[Future[T]] {
+      def apply(future: =>Future[T])(ns: NodeSeq): Seq[NodeSeq] = {
+        val placeholderId = Helpers.nextFuncName
+        AsyncRenderComet.setupAsync
 
-  /*
-  type CssBoundLiftScreen = screen.CssBoundLiftScreen
-  type CssBoundScreen = screen.CssBoundScreen
+        val concreteFuture: Future[T] = future
 
-  type LiftScreen = screen.LiftScreen
-  type LiftScreenRules = screen.LiftScreenRules
+        S.session.map { session =>
+          // Capture context now.
+          val deferredRender =
+            session.buildDeferredFunction((futureResult: T) => {
+              AsyncRenderComet.completeAsyncRender(
+                Replace(placeholderId, innerTransform(futureResult)(ns).flatten)
+              )
+            })
 
-  type Wizard = screen.Wizard
-  type WizardRules = screen.WizardRules
+          // Actually complete the render once the future is fulfilled.
+          concreteFuture.foreach { result => deferredRender(result) }
 
-  type WiringUI = wiring.WiringUI
-  */
+          <div id={placeholderId}><img src="/images/ajax-loader.gif" alt="Loading..." /></div>
+        } openOr {
+          Comment("FIX"+"ME: Asynchronous rendering failed for unknown reason.")
+        }
+      }
+    }
+  }
+
+  implicit def lafutureTransform[T](implicit innerTransform: CanBind[T]): CanBind[LAFuture[T]] = {
+    new CanBind[LAFuture[T]] {
+      def apply(future: =>LAFuture[T])(ns: NodeSeq): Seq[NodeSeq] = {
+        val placeholderId = Helpers.nextFuncName
+        AsyncRenderComet.setupAsync
+
+        val concreteFuture: LAFuture[T] = future
+
+        S.session.map { session =>
+          // Capture context now.
+          val deferredRender =
+            session.buildDeferredFunction((futureResult: T) => {
+              AsyncRenderComet.completeAsyncRender(
+                Replace(placeholderId, innerTransform(futureResult)(ns).flatten)
+              )
+            })
+
+          // Actually complete the render once the future is fulfilled.
+          concreteFuture.onSuccess { result => deferredRender(result) }
+
+          <div id={placeholderId}><img src="/images/ajax-loader.gif" alt="Loading..." /></div>
+        } openOr {
+          Comment("FIX"+"ME: Asynchronous rendering failed for unknown reason.")
+        }
+      }
+    }
+  }
 }
 
