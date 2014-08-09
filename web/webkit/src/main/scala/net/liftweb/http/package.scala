@@ -25,7 +25,45 @@ import http.js.JsCmds.Replace
 import util._
 
 package object http {
-  private def bindResolvable[ResolvableType, ResolvedType](asyncResolver: (ResolvableType, (ResolvedType)=>Unit)=>Unit)(implicit innerTransform: CanBind[ResolvedType]) = {
+  trait CanResolveAsync[ResolvableType, ResolvedType] {
+    /**
+     * Should return a function that, when given the resolvable and a function
+     * that takes the resolved value, attaches the function to the resolvable
+     * so that it will asynchronously execute it when its value is resolved.
+     *
+     * See `CanResolveFuture` and `CanResolveLAFuture` for examples.
+     */
+    def resolveAsync(resolvable: ResolvableType, onResolved: (ResolvedType)=>Unit): Unit
+  }
+  object CanResolveAsync {
+    implicit def resolveFuture[T](implicit executionContext: ExecutionContext) = {
+      new CanResolveAsync[Future[T],T] {
+        def resolveAsync(future: Future[T], onResolved: (T)=>Unit) = {
+          future.foreach(onResolved)
+        }
+      }
+    }
+
+    implicit def resolveLaFuture[T] = {
+      new CanResolveAsync[LAFuture[T],T] {
+        def resolveAsync(future: LAFuture[T], onResolved: (T)=>Unit) = {
+          future.onSuccess(onResolved)
+        }
+      }
+    }
+  }
+
+  /**
+   * Provides support for binding anything that has a `CanResolveAsync`
+   * implementation. Out of the box, that's just Scala `Future`s and
+   * `LAFuture`s, but it could just as easily be, for example, Twitter `Future`s
+   * if you're using Finagle; all you have to do is add a `CanResolveAsync`
+   * implicit for it.
+   */
+  implicit def asyncResolvableTransform[ResolvableType, ResolvedType](
+    implicit asyncResolveProvider: CanResolveAsync[ResolvableType,ResolvedType],
+             innerTransform: CanBind[ResolvedType]
+  ) = {
     new CanBind[ResolvableType] {
       def apply(resolvable: =>ResolvableType)(ns: NodeSeq): Seq[NodeSeq] = {
         val placeholderId = Helpers.nextFuncName
@@ -43,7 +81,7 @@ package object http {
             })
 
           // Actually complete the render once the future is fulfilled.
-          asyncResolver(concreteResolvable, resolvedResult => deferredRender(resolvedResult))
+          asyncResolveProvider.resolveAsync(concreteResolvable, resolvedResult => deferredRender(resolvedResult))
 
           <div id={placeholderId}><img src="/images/ajax-loader.gif" alt="Loading..." /></div>
         } openOr {
@@ -51,18 +89,6 @@ package object http {
         }
       }
     }
-  }
-
-  implicit def futureTransform[T](implicit innerTransform: CanBind[T], executionContext: ExecutionContext): CanBind[Future[T]] = {
-    bindResolvable[Future[T],T]({ (future, onResolved) =>
-      future.foreach(onResolved)
-    })
-  }
-
-  implicit def lafutureTransform[T](implicit innerTransform: CanBind[T]): CanBind[LAFuture[T]] = {
-    bindResolvable[LAFuture[T],T]({ (future, onResolved) =>
-      future.onSuccess(onResolved)
-    })
   }
 }
 
