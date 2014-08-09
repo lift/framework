@@ -25,25 +25,25 @@ import http.js.JsCmds.Replace
 import util._
 
 package object http {
-  implicit def futureTransform[T](implicit innerTransform: CanBind[T], executionContext: ExecutionContext): CanBind[Future[T]] = {
-    new CanBind[Future[T]] {
-      def apply(future: =>Future[T])(ns: NodeSeq): Seq[NodeSeq] = {
+  private def bindResolvable[ResolvableType, ResolvedType](asyncResolver: (ResolvableType, (ResolvedType)=>Unit)=>Unit)(implicit innerTransform: CanBind[ResolvedType]) = {
+    new CanBind[ResolvableType] {
+      def apply(resolvable: =>ResolvableType)(ns: NodeSeq): Seq[NodeSeq] = {
         val placeholderId = Helpers.nextFuncName
         AsyncRenderComet.setupAsync
 
-        val concreteFuture: Future[T] = future
+        val concreteResolvable: ResolvableType = resolvable
 
         S.session.map { session =>
           // Capture context now.
           val deferredRender =
-            session.buildDeferredFunction((futureResult: T) => {
+            session.buildDeferredFunction((resolved: ResolvedType) => {
               AsyncRenderComet.completeAsyncRender(
-                Replace(placeholderId, innerTransform(futureResult)(ns).flatten)
+                Replace(placeholderId, innerTransform(resolved)(ns).flatten)
               )
             })
 
           // Actually complete the render once the future is fulfilled.
-          concreteFuture.foreach { result => deferredRender(result) }
+          asyncResolver(concreteResolvable, resolvedResult => deferredRender(resolvedResult))
 
           <div id={placeholderId}><img src="/images/ajax-loader.gif" alt="Loading..." /></div>
         } openOr {
@@ -53,32 +53,16 @@ package object http {
     }
   }
 
+  implicit def futureTransform[T](implicit innerTransform: CanBind[T], executionContext: ExecutionContext): CanBind[Future[T]] = {
+    bindResolvable[Future[T],T]({ (future, onResolved) =>
+      future.foreach(onResolved)
+    })
+  }
+
   implicit def lafutureTransform[T](implicit innerTransform: CanBind[T]): CanBind[LAFuture[T]] = {
-    new CanBind[LAFuture[T]] {
-      def apply(future: =>LAFuture[T])(ns: NodeSeq): Seq[NodeSeq] = {
-        val placeholderId = Helpers.nextFuncName
-        AsyncRenderComet.setupAsync
-
-        val concreteFuture: LAFuture[T] = future
-
-        S.session.map { session =>
-          // Capture context now.
-          val deferredRender =
-            session.buildDeferredFunction((futureResult: T) => {
-              AsyncRenderComet.completeAsyncRender(
-                Replace(placeholderId, innerTransform(futureResult)(ns).flatten)
-              )
-            })
-
-          // Actually complete the render once the future is fulfilled.
-          concreteFuture.onSuccess { result => deferredRender(result) }
-
-          <div id={placeholderId}><img src="/images/ajax-loader.gif" alt="Loading..." /></div>
-        } openOr {
-          Comment("FIX"+"ME: Asynchronous rendering failed for unknown reason.")
-        }
-      }
-    }
+    bindResolvable[LAFuture[T],T]({ (future, onResolved) =>
+      future.onSuccess(onResolved)
+    })
   }
 }
 
