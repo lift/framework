@@ -1783,19 +1783,33 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * it look to those threads as if the scope was the same as if it
    * had been executed on the thread that created the function.
    */
-  def buildDeferredFunction[T](f: () => T): () => T = {
-    val currentReq: Box[Req] = S.request.map(_.snapshot)
-
+  def buildDeferredFunction[T](deferredFunction: () => T): () => T = {
+    val currentReq = S.request.map(_.snapshot)
     val renderVersion = RenderVersion.get
-
-    val currentMap = snippetMap.is
-    val curLoc = S.location
-
     val requestVarFunc = RequestVarHandler.generateSnapshotRestorer[T]()
 
     () => {
       requestVarFunc(() =>
-        executeInScope(currentReq, renderVersion)(f()))
+        executeInScope(currentReq, renderVersion)(deferredFunction()))
+    }
+  }
+
+  /**
+   * Overload of `buildDeferredFunction` for functions that take a parameter.
+   *
+   * The returned function, when invoked with a parameter of type `A`, will
+   * invoke the passed `deferredFunction` with that parameter in the original
+   * request and session context.
+   */
+  def buildDeferredFunction[A,T](deferredFunction: (A)=>T): (A)=>T = {
+    val currentReq = S.request.map(_.snapshot)
+    val renderVersion = RenderVersion.get
+    val requestVarFunc = RequestVarHandler.generateSnapshotRestorer[T]()
+
+    (in: A) => {
+      requestVarFunc(() =>
+        executeInScope(currentReq, renderVersion)(deferredFunction(in))
+      )
     }
   }
 
