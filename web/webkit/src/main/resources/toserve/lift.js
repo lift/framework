@@ -581,7 +581,7 @@
         // start the cycle
         doCycleIn200();
       },
-      logError: settings.logError,
+      logError: function() { settings.logError.apply(this, arguments) },
       ajax: appendToQueue,
       startGc: successRegisterGC,
       ajaxOnSessionLost: function() {
