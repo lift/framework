@@ -17,12 +17,22 @@
 package net.liftweb
 package http
 
+import scala.collection.Map
 import scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
 import scala.xml._
+
 import net.liftweb.util._
 import net.liftweb.common._
 import net.liftweb.http.js._
+  import JsCmds.Noop
+  import JE.{AnonFunc,Call,JsRaw}
 import Helpers._
+
+/**
+ * Represents an HTML attribute for an event handler. Carries the event name and
+ * the JS that should run when that event is triggered as a String.
+ */
+private case class EventAttribute(eventName: String, jsString: String)
 
 private[http] trait LiftMerge {
   self: LiftSession =>
@@ -32,12 +42,21 @@ private[http] trait LiftMerge {
   }
 
   // Gather all page-specific JS into one JsCmd.
-  private def assemblePageSpecificJavaScript: JsCmd = {
+  private def assemblePageSpecificJavaScript(eventAttributesByElementId: Map[String,List[EventAttribute]]): JsCmd = {
+    val eventJs =
+      for {
+        (elementId, eventAttributes) <- eventAttributesByElementId
+        EventAttribute(eventName, jsString) <- eventAttributes
+      } yield {
+        Call("lift.onEvent", elementId, eventName, AnonFunc(JsRaw(jsString).cmd)).cmd
+      }
+
     val allJs =
       LiftRules.javaScriptSettings.vend().map { settingsFn =>
         LiftJavaScript.initCmd(settingsFn(this))
       }.toList ++
-      S.jsToAppend
+      S.jsToAppend ++
+      eventJs
 
     allJs.foldLeft(js.JsCmds.Noop)(_ & _)
   }
@@ -99,17 +118,66 @@ private[http] trait LiftMerge {
     addlHead ++= S.forHead()
     val addlTail = new ListBuffer[Node]
     addlTail ++= S.atEndOfBody()
+    val eventAttributesByElementId = new HashMap[String,List[EventAttribute]]
     val rewrite = URLRewriter.rewriteFunc
     val fixHref = Req.fixHref
 
     val contextPath: String = S.contextPath
 
-    def fixAttrs(original: MetaData, toFix: String, attrs: MetaData, fixURL: Boolean): MetaData = attrs match {
-      case Null => Null
-      case u: UnprefixedAttribute if u.key == toFix =>
-        new UnprefixedAttribute(toFix, fixHref(contextPath, attrs.value, fixURL, rewrite), fixAttrs(original, toFix, attrs.next, fixURL))
-      case _ => attrs.copy(fixAttrs(original, toFix, attrs.next, fixURL))
+    // Fix URLs using Req.fixHref and extract JS event attributes for putting
+    // into page JS.
+    def fixAttrs(original: MetaData, toFix: String, attrs: MetaData, fixURL: Boolean, eventAttributes: List[EventAttribute] = Nil): (Option[String], MetaData, List[EventAttribute]) = {
+      attrs match {
+        case Null => (None, Null, eventAttributes)
+        case u: UnprefixedAttribute if u.key == toFix =>
+          val (id, remainingAttributes, updatedEventAttributes) = fixAttrs(original, toFix, attrs.next, fixURL)
 
+          (id, new UnprefixedAttribute(toFix, fixHref(contextPath, attrs.value, fixURL, rewrite), remainingAttributes), updatedEventAttributes)
+
+        case u: UnprefixedAttribute if u.key.startsWith("on") =>
+          fixAttrs(original, toFix, attrs.next, fixURL, EventAttribute(u.key.substring(2), u.value.text) :: eventAttributes)
+
+        case u: UnprefixedAttribute if u.key == "id" =>
+          val (_, remainingAttributes, updatedEventAttributes) = fixAttrs(original, toFix, attrs.next, fixURL)
+
+          (Option(u.value.text).filter(_.nonEmpty), remainingAttributes, updatedEventAttributes)
+
+        case _ =>
+          val (id, remainingAttributes, updatedEventAttributes) = fixAttrs(original, toFix, attrs.next, fixURL, eventAttributes)
+          
+          (id, attrs.copy(remainingAttributes), updatedEventAttributes)
+      }
+    }
+
+    // Fix the element's `attributeToFix` using `fixAttrs` and extract JS event
+    // attributes for putting into page JS. Return a fixed version of this
+    // element with fixed children.
+    def fixElementAndAttributes(element: Elem, attributeToFix: String, fixURL: Boolean, fixedChildren: NodeSeq) = {
+      val (id, fixedAttributes, eventAttributes) = fixAttrs(element.attributes, attributeToFix, element.attributes, fixURL)
+
+      id.map { foundId =>
+        eventAttributesByElementId += (foundId -> eventAttributes)
+
+        element.copy(
+          attributes = fixedAttributes,
+          child = fixedChildren
+        )
+      } getOrElse {
+        if (eventAttributes.nonEmpty) {
+          val generatedId = s"lift-event-js-$nextFuncName"
+          eventAttributesByElementId += (generatedId -> eventAttributes)
+
+          element.copy(
+            attributes = new UnprefixedAttribute("id", generatedId, fixedAttributes),
+            child = fixedChildren
+          )
+        } else {
+          element.copy(
+            attributes = fixedAttributes,
+            child = fixedChildren
+          )
+        }
+      }
     }
 
     def _fixHtml(in: NodeSeq, _inHtml: Boolean, _inHead: Boolean, _justHead: Boolean, _inBody: Boolean, _justBody: Boolean, _bodyHead: Boolean, _bodyTail: Boolean, doMergy: Boolean): NodeSeq = {
@@ -156,11 +224,36 @@ private[http] trait LiftMerge {
                       node <- _fixHtml(nodes, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
                     } yield node
 
-                  case e: Elem if e.label == "form" => Elem(v.prefix, v.label, fixAttrs(v.attributes, "action", v.attributes, true), v.scope, e.minimizeEmpty, _fixHtml(v.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy): _*)
-                  case e: Elem if e.label == "script" => Elem(v.prefix, v.label, fixAttrs(v.attributes, "src", v.attributes, false), v.scope,  e.minimizeEmpty, _fixHtml(v.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy): _*)
-                  case e: Elem if e.label == "a" => Elem(v.prefix, v.label, fixAttrs(v.attributes, "href", v.attributes, true), v.scope,  e.minimizeEmpty, _fixHtml(v.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy): _*)
-                  case e: Elem if e.label == "link" => Elem(v.prefix, v.label, fixAttrs(v.attributes, "href", v.attributes, false), v.scope,  e.minimizeEmpty,_fixHtml(v.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy): _*)
-                  case e: Elem => Elem(v.prefix, v.label, fixAttrs(v.attributes, "src", v.attributes, true), v.scope,  e.minimizeEmpty, _fixHtml(v.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy): _*)
+                  case e: Elem if e.label == "form" =>
+                    fixElementAndAttributes(
+                      e, "action", fixURL = true,
+                      _fixHtml(e.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
+                    )
+
+                  case e: Elem if e.label == "script" =>
+                    fixElementAndAttributes(
+                      e, "src", fixURL = false,
+                      _fixHtml(e.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
+                    )
+
+                  case e: Elem if e.label == "a" =>
+                    fixElementAndAttributes(
+                      e, "href", fixURL = true,
+                      _fixHtml(e.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
+                    )
+
+                  case e: Elem if e.label == "link" =>
+                    fixElementAndAttributes(
+                      e, "href", fixURL = false,
+                      _fixHtml(e.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
+                    )
+
+                  case e: Elem =>
+                    fixElementAndAttributes(
+                      e, "src", fixURL = true,
+                      _fixHtml(e.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
+                    )
+
                   case c: Comment if stripComments => NodeSeq.Empty
                   case _ => v
                 }
@@ -203,7 +296,7 @@ private[http] trait LiftMerge {
         bodyChildren += nl
       }
 
-      val pageJs = assemblePageSpecificJavaScript
+      val pageJs = assemblePageSpecificJavaScript(eventAttributesByElementId)
       if (pageJs.toJsCmd.trim.nonEmpty) {
         addlTail += pageScopedScriptFileWith(pageJs)
       }
