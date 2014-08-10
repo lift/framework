@@ -550,7 +550,7 @@
         this.extend(settings, options);
 
         var lift = this;
-        options.onDocumentReady(function() {
+        settings.onDocumentReady(function() {
           var gc = document.body.getAttribute('data-lift-gc');
           if (gc) {
             lift.startGc();
