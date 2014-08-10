@@ -65,7 +65,7 @@
         consoleOrAlert("ajaxGet function must be defined in settings");
       },
       onDocumentReady: function(fn) {
-        consoleOrAlert("documentReady function must be defined in settings");
+        consoleOrAlert("onDocumentReady function must be defined in settings");
       },
       cometGetTimeout: 140000,
       cometFailureRetryTimeout: 10000,
