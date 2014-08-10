@@ -64,6 +64,9 @@
       ajaxGet: function() {
         consoleOrAlert("ajaxGet function must be defined in settings");
       },
+      onEvent: function(elementOrId, eventName, fn) {
+        consoleOrAlert("onEvent function must be defined in settings");
+      },
       onDocumentReady: function(fn) {
         consoleOrAlert("onDocumentReady function must be defined in settings");
       },
@@ -582,6 +585,7 @@
         doCycleIn200();
       },
       logError: function() { settings.logError.apply(this, arguments) },
+      onEvent: function() { settings.onEvent.apply(this, arguments) },
       ajax: appendToQueue,
       startGc: successRegisterGC,
       ajaxOnSessionLost: function() {
@@ -635,6 +639,12 @@
   })();
 
   window.liftJQuery = {
+    onEvent: function(elementOrId, eventName, fn) {
+      if (typeof elementOrId == 'string')
+        elementOrId = '#' + elementOrId;
+
+      jQuery(elementOrId).on(eventName, fn);
+    },
     onDocumentReady: jQuery(document).ready,
     ajaxPost: function(url, data, dataType, onSuccess, onFailure) {
       var processData = true,
@@ -676,16 +686,26 @@
   };
 
   window.liftVanilla = {
+    // This and onDocumentReady adapted from https://github.com/dperini/ContentLoaded/blob/master/src/contentloaded.js,
+    // as also used (with modifications) in jQuery.
+    onEvent: function(elementOrId, eventName, fn) {
+      var win = window,
+          doc = win.document,
+          add = doc.addEventListener ? 'addEventListener' : 'attachEvent',
+          pre = doc.addEventListener ? '' : 'on';
+
+      var element = elementOrId;
+      if (typeof elementOrId == 'string') {
+        element = document.getElementById(elementOrId);
+      }
+
+      element[add](pre + eventName, fn, false);
+    },
     onDocumentReady: function(fn) {
-      // Taken from https://github.com/dperini/ContentLoaded/blob/master/src/contentloaded.js,
-      // as also used (with modifications) in jQuery.
       var done = false, top = true,
-
       win = window, doc = win.document, root = doc.documentElement,
-
-      add = doc.addEventListener ? 'addEventListener' : 'attachEvent',
+      pre = doc.addEventListener ? '' : 'on';
       rem = doc.addEventListener ? 'removeEventListener' : 'detachEvent',
-      pre = doc.addEventListener ? '' : 'on',
 
       init = function(e) {
         if (e.type == 'readystatechange' && doc.readyState != 'complete') return;
@@ -705,9 +725,9 @@
             try { top = !win.frameElement; } catch(e) { }
             if (top) poll();
         }
-        doc[add](pre + 'DOMContentLoaded', init, false);
-        doc[add](pre + 'readystatechange', init, false);
-        win[add](pre + 'load', init, false);
+        liftVanilla.onEvent(doc, 'DOMContentLoaded', init);
+        liftVanilla.onEvent(doc, 'readystatechange', init);
+        liftVanilla.onEvent(win, 'load', init);
       }
     },
     ajaxPost: function(url, data, dataType, onSuccess, onFailure, onUploadProgress) {
