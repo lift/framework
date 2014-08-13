@@ -55,29 +55,43 @@ object Box extends BoxTrait {
   **/
   implicit class ListOfBoxes[T](val theListOfBoxes: List[Box[T]]) extends AnyVal {
     /**
-     * Convert a List of Boxes into a single Box containting a List[T], where T is
-     * the parameterized type of the Boxes.
+     * Convert a `List` of `Box`es into a single `Box` containting a `List[T]`,
+     * where `T` is the parameterized type of the `Box`es.
      *
-     * This method is useful for those cases where you have a lot of operations being
-     * executed that all return some Box[T]. You want just a List[T] if all of those
-     * operations succeeded, but you don't want to have Failures disappear if any were
-     * present in the list.
+     * This method is useful for those cases where you have a lot of operations
+     * being executed that all return some `Box[T]`. You want just a `List[T]`
+     * if all of those operations succeeded, but you don't want to have
+     * Failures disappear if any were present in the list.
      *
-     * If all of the Boxes in the List are Full or Empty, we return a Full box containing
-     * a List of all of the Full Box values that were present. If any of the Boxes contain
-     * a Failure, a ParamFailure is returned, containing the original List[Box[T]] as the
-     * param.
+     * If all of the `Box`es in the `List` are `Full` or `Empty`, we return a
+     * `Full` box containing a `List` of all of the `Full` `Box` values that
+     * were present. If any of the `Box`es contain a `Failure`, a
+     * `ParamFailure` is returned, containing the original `List[Box[T]]` as
+     * the param. The `ParamFailure` itself is chained to a `Failure` chain
+     * containing all of the `Failure` boxes in the list.
      *
-     * It is worth noting that the size of the list in the resulting Box[List[T]] may not be equal
-     * to the size of the List[Box[T]] that is fed as Empty values will disappear altogether in the
-     * conversion.
+     * It is worth noting that the size of the list in the resulting
+     * `Box[List[T]]` may not be equal to the size of the `List[Box[T]]` that
+     * is fed as `Empty` values will disappear altogether in the conversion.
      *
      * @param failureErrorMessage The string that should be placed in the message for the Failure.
-     * @return A Full[List[T]] if no Failures were present. ParamFailure[List[Box[T]]] otherwise.
+     * @return A `Full[List[T]]` if no `Failure`s were present. `ParamFailure[List[Box[T]]]` otherwise.
     **/
     def toSingleBox(failureErrorMessage: String): Box[List[T]] = {
       if (theListOfBoxes.exists(_.isInstanceOf[Failure])) {
-        Failure(failureErrorMessage) ~> theListOfBoxes
+        val failureChain =
+          theListOfBoxes.collect {
+            case fail: Failure => fail
+          }.reduceRight { (topmostFailure, latestFailure) =>
+            topmostFailure.copy(chain = Full(latestFailure))
+          }
+
+        ParamFailure(
+          failureErrorMessage,
+          Empty,
+          Full(failureChain),
+          theListOfBoxes
+        )
       } else {
         Full(theListOfBoxes.flatten)
       }

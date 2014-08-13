@@ -365,7 +365,26 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       val someBoxes: List[Box[String]] = List(Full("bacon"), Full("sammich"), Failure("I HATE BACON"))
       val singleBox = someBoxes.toSingleBox("This should be in the param failure.")
 
-      singleBox must_== ParamFailure("This should be in the param failure.", None, None, someBoxes)
+      singleBox must beLike {
+        case ParamFailure(message, _, _, _) =>
+          message must_== "This should be in the param failure."
+      }
+    }
+
+    "chain the ParamFailure to the failures in the list when any are Failure" in {
+      val someBoxes: List[Box[String]] = List(Full("bacon"), Failure("I HATE BACON"), Full("sammich"), Failure("MORE BACON FAIL"), Failure("BACON WHY U BACON"))
+
+      val singleBox = someBoxes.toSingleBox("Failure.")
+
+      val expectedChain =
+        Failure("I HATE BACON", Empty,
+          Full(Failure("MORE BACON FAIL", Empty,
+            Full(Failure("BACON WHY U BACON")))))
+
+      singleBox must beLike {
+        case ParamFailure(_, _, chain, _) =>
+          chain must_== Full(expectedChain)
+      }
     }
   }
 
