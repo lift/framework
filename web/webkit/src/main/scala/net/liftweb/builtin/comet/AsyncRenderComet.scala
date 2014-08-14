@@ -116,4 +116,15 @@ object AsyncRenderComet {
       renderer ! Compute(session.buildDeferredFunction(renderFunction))
     }
   }
+
+  /**
+   * Similar to `asyncRender`, but any wrapping of the function in a request
+   * context is expected to be done before `renderFunction` is passed to this,
+   * while `asyncRender` takes care of the wrapping for you.
+   */
+  def asyncRenderDeferred(renderFunction: ()=>JsCmd): Box[Unit] = {
+    pageAsyncRenderer.is.map { renderer =>
+      renderer ! Compute(renderFunction)
+    } ?~! "Failed to create async renderer."
+  }
 }
