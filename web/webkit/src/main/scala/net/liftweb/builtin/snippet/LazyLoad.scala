@@ -41,6 +41,46 @@ object LazyLoad extends DispatchSnippet {
   }
 
   /**
+   * If you need to provide a custom `renderer` function, perhaps because you
+   * need to do further wrapping than what `buildDeferredFunction` gives you,
+   * then you can invoke this `render` method directly and pass it a function
+   * that will take the id of the placeholder container and render whatever
+   * needs to be rendered to a `JsCmd`. The snippet will:
+   *  - Set up the placeholder markup with a unique id.
+   *  - If the placeholder template `NodeSeq` isn't specified, first see if
+   *    `S.attr("template")` is set and use that template if avilable, and then
+   *    fall back on the default placeholder template.
+   *  - Handle invoking the `AsyncRenderComet` correctly.
+   *
+   * Notably, the `renderer` function will *not* be wrapped in current request
+   * state; instead, you must do this manually using `buildDeferredFunction`.
+   * This method is for advanced use; most folks will probably want to interact
+   * with the snippet by just wrapping their snippet invocation in a
+   * `data-lift="lazy-load"` snippet.
+   */
+  def render(renderer: (String)=>JsCmd, placeholderTemplate: Box[NodeSeq] = Empty): NodeSeq = {
+    val placeholderId = Helpers.nextFuncName
+
+    handleMarkupBox(
+      AsyncRenderComet.asyncRenderDeferred(()=>renderer(placeholderId)).map { _ =>
+        ("^ [id]" #> placeholderId).apply(
+          placeholderTemplate or
+          {
+            for {
+              templatePath <- S.attr("template")
+              renderedTemplate <- S.eval(<lift:embed what={templatePath} />)
+            } yield {
+              renderedTemplate
+            }
+          } openOr {
+            <div><img src="/images/ajax-loader.gif" alt="Loading"/></div>
+          }
+        )
+      }
+    )
+  }
+
+  /**
    * Enclose your snippet like this:
    *
    * {{{
@@ -60,25 +100,29 @@ object LazyLoad extends DispatchSnippet {
    *
    * Note that this must be a single element that will be replaced when the lazy
    * content is loaded. By default, an AJAX spinner is displayed inside a `div`.
+   *
+   * If you invoke this from Scala rather than markup, you can optionally
+   * provide a `placeholderTemplate` that is a `NodeSeq` that should be used
+   * while the async rendering takes place.
    */
-  def render(xhtml: NodeSeq): NodeSeq = {
-    val placeholderId = Helpers.nextFuncName
+  def render(xhtml: NodeSeq, placeholderTemplate: Box[NodeSeq]): NodeSeq = {
+    handleMarkupBox(
+      S.session.map { session =>
+        render(session.buildDeferredFunction({ placeholderId: String =>
+          Replace(placeholderId, xhtml)
+        }), placeholderTemplate)
+      } ?~ "Asynchronous rendering requires a session context."
+    )
+  }
 
-    AsyncRenderComet.asyncRender(()=>Replace(placeholderId, xhtml)).map { _ =>
-      ("^ [id]" #> placeholderId).apply(
-        {
-          for {
-            templatePath <- S.attr("template")
-            renderedTemplate <- S.eval(<lift:embed what={templatePath} />)
-          } yield {
-            renderedTemplate
-          }
-        } openOr {
-          <div><img src="/images/ajax-loader.gif" alt="Loading"/></div>
-        }
-      )
-    } match {
-      case Full(placeholderHtml) => placeholderHtml
+  def render(xhtml: NodeSeq): NodeSeq = {
+    render(xhtml, Empty)
+  }
+
+  // Helper to deal with Boxed markup.
+  private def handleMarkupBox(markup: Box[NodeSeq]): NodeSeq = {
+    markup match {
+      case Full(html) => html
       case Failure(msg, _, _) => Comment(msg)
       case Empty => Comment("FIX"+"ME: Asynchronous rendering failed for unknown reason.")
     }
