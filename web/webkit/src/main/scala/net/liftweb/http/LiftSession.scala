@@ -1519,7 +1519,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     Templates.findTopLevelTemplate(
       splits,
       S.locale,
-      S.location.isDefined && S.request.exists(!_.ajax_?)
+      needAutoSurround = S.location.isDefined && S.request.exists(!_.ajax_?)
     )
   }
 
