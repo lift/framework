@@ -42,7 +42,7 @@ object LazyLoad extends DispatchSnippet {
 
   /**
    * If you need to provide a custom `renderer` function, perhaps because you
-   * need to do further wrapping than what `buildDeferredFunction` gives you,
+   * need to do further wrapping beyond what `buildDeferredFunction` gives you,
    * then you can invoke this `render` method directly and pass it a function
    * that will take the id of the placeholder container and render whatever
    * needs to be rendered to a `JsCmd`. The snippet will:
@@ -52,17 +52,16 @@ object LazyLoad extends DispatchSnippet {
    *    fall back on the default placeholder template.
    *  - Handle invoking the `AsyncRenderComet` correctly.
    *
-   * Notably, the `renderer` function will *not* be wrapped in current request
-   * state; instead, you must do this manually using `buildDeferredFunction`.
-   * This method is for advanced use; most folks will probably want to interact
-   * with the snippet by just wrapping their snippet invocation in a
-   * `data-lift="lazy-load"` snippet.
+   * The `renderer` function will be wrapped in current request state you must
+   * do this manually using `buildDeferredFunction`. This method is for advanced
+   * use; most folks will probably want to interact with the snippet by just
+   * wrapping their snippet invocation in a `data-lift="lazy-load"` snippet.
    */
   def render(renderer: (String)=>JsCmd, placeholderTemplate: Box[NodeSeq] = Empty): NodeSeq = {
     val placeholderId = Helpers.nextFuncName
 
     handleMarkupBox(
-      AsyncRenderComet.asyncRenderDeferred(()=>renderer(placeholderId)).map { _ =>
+      AsyncRenderComet.asyncRender(()=>renderer(placeholderId)).map { _ =>
         ("^ [id]" #> placeholderId).apply(
           placeholderTemplate or
           {
@@ -106,13 +105,7 @@ object LazyLoad extends DispatchSnippet {
    * while the async rendering takes place.
    */
   def render(xhtml: NodeSeq, placeholderTemplate: Box[NodeSeq]): NodeSeq = {
-    handleMarkupBox(
-      S.session.map { session =>
-        render(session.buildDeferredFunction({ placeholderId: String =>
-          Replace(placeholderId, xhtml)
-        }), placeholderTemplate)
-      } ?~ "Asynchronous rendering requires a session context."
-    )
+    render(Replace(_, xhtml), placeholderTemplate)
   }
 
   def render(xhtml: NodeSeq): NodeSeq = {
