@@ -52,7 +52,7 @@ object BuildDef extends Build {
     coreProject("markdown")
         .settings(description := "Markdown Parser",
                   parallelExecution in Test := false,
-                  libraryDependencies <++= scalaVersion { sv => Seq(scalatest(sv), junit, scala_xml, scala_parser) }
+                  libraryDependencies <++= scalaVersion { sv => Seq(scalatest, junit, scala_xml, scala_parser) }
       )
 
   lazy val json =
@@ -70,7 +70,7 @@ object BuildDef extends Build {
     coreProject("json-scalaz7")
         .dependsOn(json)
         .settings(description := "JSON Library based on Scalaz 7",
-                  libraryDependencies <+= scalaVersion(scalaz7))
+                  libraryDependencies ++= Seq(scalaz7))
 
   lazy val json_ext =
     coreProject("json-ext")
@@ -84,14 +84,8 @@ object BuildDef extends Build {
         .settings(description := "Utilities Library",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion {sv =>  Seq(scala_compiler(sv), joda_time,
-                    joda_convert, commons_codec, javamail, log4j, htmlparser)},
-                  excludeFilter <<= scalaVersion { scalaVersion =>
-                    if (scalaVersion.startsWith("2.11")) {
-                      HiddenFileFilter
-                    } else {
-                      HiddenFileFilter || "Position.scala"
-                    }
-                  })
+                    joda_convert, commons_codec, javamail, log4j, htmlparser)}
+                  )
 
   // Web Projects
   // ------------
@@ -111,7 +105,7 @@ object BuildDef extends Build {
         .settings(description := "Webkit Library",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv =>
-                    Seq(commons_fileupload, rhino, servlet_api, specs2(sv).copy(configurations = Some("provided")), jetty6,
+                    Seq(commons_fileupload, rhino, servlet_api, specs2.copy(configurations = Some("provided")), jetty6,
                       jwebunit)
                   },
                   initialize in Test <<= (sourceDirectory in Test) { src =>
