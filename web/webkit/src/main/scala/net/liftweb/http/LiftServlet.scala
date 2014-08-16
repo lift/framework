@@ -93,7 +93,7 @@ class LiftServlet extends Loggable {
 
   private def wrapState[T](req: Req, session: Box[LiftSession])(f: => T): T = {
     session match {
-      case Full(ses) => S.init(req, ses)(f)
+      case Full(ses) => S.init(Box !! req, ses)(f)
       case _ => CurrentReq.doWith(req)(f)
     }
   }
@@ -369,7 +369,7 @@ class LiftServlet extends Loggable {
 
       def doSession(r2: Req, s2: LiftSession, continue: Box[() => Nothing]): () => Box[LiftResponse] = {
         try {
-          S.init(r2, s2) {
+          S.init(Box !! r2, s2) {
             dispatchStatefulRequest(S.request.openOrThrowException("I'm pretty sure this is a full box here"), liftSession, r2, continue)
           }
         } catch {
@@ -833,7 +833,7 @@ class LiftServlet extends Loggable {
   private def setupContinuation(request: Req, session: LiftSession, actors: List[(LiftCometActor, Long)]): Any = {
     val cont = new ContinuationActor(request, session, actors,
       answers => request.request.resume(
-        (request, S.init(request, session)
+        (request, S.init(Box !! request, session)
           (LiftRules.performTransform(
             convertAnswersToCometResponse(session,
               answers.toList, actors))))))
@@ -920,7 +920,7 @@ class LiftServlet extends Loggable {
 
       val ret2 = f.get(cometTimeout) openOr Nil
 
-      Full(S.init(originalRequest, session) {
+      Full(S.init(Box !! originalRequest, session) {
         convertAnswersToCometResponse(session, ret2, actors)
       })
     } finally {

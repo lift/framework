@@ -332,7 +332,7 @@ object SessionMaster extends LiftActor with Loggable {
     lockAndBump {
       Full(SessionInfo(liftSession, userAgent, ipAddress, -1, 0L)) // bumped twice during session creation.  Ticket #529 DPP
     }
-    S.init(req, liftSession) {
+    S.init(Box !! req, liftSession) {
       liftSession.startSession()
       LiftSession.afterSessionCreate.foreach(_(liftSession, req))
     }
@@ -1805,7 +1805,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
 
     req match {
-      case Full(r) => S.init(r, this)(doExec())
+      case r@Full(_) => S.init(r, this)(doExec())
       case _ => S.initIfUninitted(this)(doExec())
     }
   }
@@ -2640,7 +2640,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         S.request
           .filter(_ => comet.sendInitialReq_?)
           .map(_.snapshot)
-
       comet ! PerformSetupComet2(initialRequest)
       comet.setCometActorLocale(S.locale)
 
