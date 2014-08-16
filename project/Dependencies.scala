@@ -23,15 +23,15 @@ object Dependencies {
 
   type ModuleMap = String => ModuleID
 
-  lazy val CVMappingAll  = crossMapped("2.10.0" -> "2.10", "2.10.1" -> "2.10", "2.10.2" -> "2.10", "2.10.3" -> "2.10", "2.10.4" -> "2.10", "2.11.0" -> "2.11", "2.11.1" -> "2.11")
+  lazy val CVMappingAll  = crossMapped("2.10.0" -> "2.10", "2.10.1" -> "2.10", "2.10.2" -> "2.10", "2.10.3" -> "2.10", "2.10.4" -> "2.10", "2.11.0" -> "2.11", "2.11.1" -> "2.11", "2.11.2" -> "2.11")
 
   lazy val slf4jVersion = "1.7.2"
 
   lazy val scalazGroup        = defaultOrMapped("org.scalaz")
   lazy val scalazVersion      = defaultOrMapped("6.0.4")
-  lazy val scalaz7Version     = defaultOrMapped("7.0.0",  "2.11.0" -> "7.0.6", "2.11.1" -> "7.0.6")
-  lazy val specs2Version      = defaultOrMapped("1.12.3", "2.11.0" -> "2.3.11", "2.11.1" -> "2.3.11")
-  lazy val scalatestVersion   = defaultOrMapped("1.9.1",  "2.11.0" -> "2.1.3", "2.11.1" -> "2.1.3")
+  lazy val scalaz7Version     = defaultOrMapped("7.0.0",  "2.11.2" -> "7.0.6")
+  lazy val specs2Version      = defaultOrMapped("1.12.3", "2.11.2" -> "2.3.11")
+  lazy val scalatestVersion   = defaultOrMapped("1.9.1",  "2.11.2" -> "2.1.3")
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
