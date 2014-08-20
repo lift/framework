@@ -831,7 +831,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     receiveUpdatesOnPage: Boolean = false
   ): Box[LiftCometActor] = {
     for {
-      session <- session
+      session <- session ?~ "Comet lookup and creation requires a session."
       cometActor <- session.findOrCreateComet(cometType, cometName, cometHtml, cometAttributes)
     } yield {
       if (receiveUpdatesOnPage)
@@ -859,7 +859,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     receiveUpdatesOnPage: Boolean
   )(implicit cometManifest: Manifest[T]): Box[T] = {
     for {
-      session <- session
+      session <- session ?~ "Comet lookup and creation requires a session."
       cometActor <- session.findOrCreateComet[T](cometName, cometHtml, cometAttributes)
     } yield {
       if (receiveUpdatesOnPage)
