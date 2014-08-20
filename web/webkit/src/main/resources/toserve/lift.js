@@ -10,6 +10,7 @@
         cometPath = function() { return settings.liftPath + '/comet' },
         doCycleQueueCnt = 0,
         ajaxShowing = false,
+        initialized = false,
         pageId = "",
         uriSuffix,
         sessionId = "",
@@ -122,8 +123,11 @@
 
       ajaxQueue.push(toSend);
       ajaxQueueSort();
-      doCycleQueueCnt++;
-      doAjaxCycle();
+
+      if (initialized) {
+        doCycleQueueCnt++;
+        doAjaxCycle();
+      }
 
       return false; // buttons in forms don't trigger the form
     }
@@ -551,11 +555,6 @@
 
         var lift = this;
         options.onDocumentReady(function() {
-          var gc = document.body.getAttribute('data-lift-gc');
-          if (gc) {
-            lift.startGc();
-          }
-
           var attributes = document.body.attributes,
               cometGuid, cometVersion,
               comets = {};
@@ -576,10 +575,12 @@
           if (typeof cometGuid != 'undefined') {
             registerComets(comets, true);
           }
-        });
 
-        // start the cycle
-        doCycleIn200();
+          initialized = true;
+
+          // start the cycle
+          doCycleIn200();
+        });
       },
       logError: settings.logError,
       ajax: appendToQueue,
