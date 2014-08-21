@@ -561,7 +561,9 @@
           for (var i = 0; i < attributes.length; ++i) {
             if (attributes[i].name == 'data-lift-gc') {
               pageId = attributes[i].value;
-              lift.startGc();
+              if (settings.enableGc) {
+                lift.startGc();
+              }
             } else if (attributes[i].name.match(/^data-lift-comet-/)) {
               cometGuid = attributes[i].name.substring('data-lift-comet-'.length).toUpperCase();
               cometVersion = parseInt(attributes[i].value)
