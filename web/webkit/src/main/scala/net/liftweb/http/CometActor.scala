@@ -505,7 +505,6 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   private var deltas: List[Delta] = Nil
   private var jsonHandlerChain: PartialFunction[Any, JsCmd] = Map.empty
   private val notices = new ListBuffer[(NoticeType.Value, NodeSeq, Box[String])]
-  private var initialRenderPending = true
 
   private var _deltaPruner: (CometActor, List[Delta]) => List[Delta] =
     (actor, d) => {
@@ -848,15 +847,25 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
       askingWho match {
         case Full(who) => forwardMessageTo(AskRender, who) //  forward AskRender
         case _ => {
-          if (receivedDelta || alwaysReRenderOnPageLoad)
-            try {
-              performReRender(false)
-            } catch {
-              case e if exceptionHandler.isDefinedAt(e) => exceptionHandler(e)
-              case e: Exception => reportError("Failed performReRender", e)
+          val out =
+            if (receivedDelta || alwaysReRenderOnPageLoad) {
+              try {
+                Full(performReRender(false))
+              } catch {
+                case e if exceptionHandler.isDefinedAt(e) => {
+                  exceptionHandler(e)
+                  Empty
+                }
+                case e: Exception => {
+                  reportError("Failed performReRender", e)
+                  Empty
+                }
+              }
+            } else {
+              Empty
             }
 
-          reply(AnswerRender(new XmlOrJsCmd(spanId, lastRendering,
+          reply(AnswerRender(new XmlOrJsCmd(spanId, out.openOr(lastRendering),
             buildSpan _, notices.toList),
             whosAsking openOr this, lastRenderTime, true))
           clearNotices
@@ -1040,13 +1049,8 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
    */
   protected def manualWiringDependencyManagement = false
 
-  private def performReRender(sendAll: Boolean) {
-    // Pretend initial render happened at creation time
-    if (initialRenderPending) {
-      initialRenderPending = false
-    } else {
-      lastRenderTime = millis
-    }
+  private def performReRender(sendAll: Boolean): RenderOut = {
+    lastRenderTime = millis
 
     if (sendAll) {
       cachedFixedRender.reset
@@ -1066,13 +1070,17 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
 
     theSession.updateFunctionMap(S.functionMap, uniqueId, lastRenderTime)
 
+    val out = lastRendering
+
     val rendered: AnswerRender =
-      AnswerRender(new XmlOrJsCmd(spanId, lastRendering, buildSpan _, notices.toList),
+      AnswerRender(new XmlOrJsCmd(spanId, out, buildSpan _, notices.toList),
         this, lastRenderTime, sendAll)
 
     clearNotices
     listeners.foreach(_._2(rendered))
     listeners = Nil
+
+    out
   }
 
   def unWatch = partialUpdate(Call("lift.unlistWatch", uniqueId))
