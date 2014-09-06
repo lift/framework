@@ -180,7 +180,7 @@ object MockWeb {
    */
   private def realTestS [T](newSession : Box[LiftSession])(f : () => T)(req : Req) : T = {
     val session = newSession openOr LiftSession(req)
-    S.init(req, session) {
+    S.init(Box !! req, session) {
       f()
     }    
   }

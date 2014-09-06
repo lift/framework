@@ -384,7 +384,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    *
    * @see Req
    */
-  def request: Box[Req] = (Box !! _request.value) or CurrentReq.box
+  def request: Box[Req] = _request.box or CurrentReq.box
 
 
   /**
@@ -1326,12 +1326,14 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @param session the LiftSession for this request
    * @param f Function to execute within the scope of the request and session
    */
-  def init[B](request: Req, session: LiftSession)(f: => B): B = {
+  def init[B](request: Box[Req], session: LiftSession)(f: => B): B = {
     if (inS.value) f
     else {
-      if (request.stateless_?)
+      if (request.map(_.stateless_?).openOr(false) ){
         session.doAsStateless(_init(request, session)(() => f))
-      else _init(request, session)(() => f)
+      } else {
+        _init(request, session)(() => f)
+      }
     }
   }
 
@@ -1348,8 +1350,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
       case _ => {
         val fakeSess = LiftRules.statelessSession.vend.apply(request)
         try {
-          _init(request,
-                fakeSess)(() => f)
+          _init(Box !! request, fakeSess)(() => f)
         } finally {
           // ActorPing.schedule(() => fakeSess.doShutDown(), 0 seconds)
         }
@@ -1693,18 +1694,20 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     }
   }
 
-  private def doStatefulRewrite(old: Req): Req = {
+  private def doStatefulRewrite(old: Box[Req]): Box[Req] = {
     // Don't even try to rewrite Req.nil
-    if (statefulRequest_? &&
-        !old.path.partPath.isEmpty &&
-        (old.request ne null))
-      Req(old, S.sessionRewriter.map(_.rewrite) :::
+    old.map { req =>
+      if (statefulRequest_? && req.path.partPath.nonEmpty && (req.request ne null) ) {
+        Req(req, S.sessionRewriter.map(_.rewrite) :::
           LiftRules.statefulRewrite.toList, Nil,
-      LiftRules.statelessReqTest.toList)
-    else old
+          LiftRules.statelessReqTest.toList)
+      } else {
+        req
+      }
+    }
   }
 
-  private def _innerInit[B](request: Req, f: () => B): B = {
+  private def _innerInit[B](request: Box[Req], f: () => B): B = {
     _lifeTime.doWith(false) {
       _attrs.doWith((Null,Nil)) {
           _resBundle.doWith(Nil) {
@@ -1712,7 +1715,8 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
               val statefulRequest = doStatefulRewrite(request)
               withReq(statefulRequest) {
                 // set the request for standard requests
-                if (statefulRequest.standardRequest_?) _originalRequest.set(Full(statefulRequest))
+                if (statefulRequest.map(_.standardRequest_?).openOr(false))
+                  _originalRequest.set(statefulRequest)
 
                 _nest2InnerInit(f)
               }
@@ -1722,9 +1726,9 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     }
   }
 
-  private[http] def withReq[T](req: Req)(f: => T): T = {
-    CurrentReq.doWith(req) {
-      _request.doWith(req) {
+  private[http] def withReq[T](req: Box[Req])(f: => T): T = {
+    CurrentReq.doWith(req openOr null) {
+      _request.doWith(req openOr null) {
         f
       }
     }
@@ -1739,8 +1743,8 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
          c <- ca) yield c
 
 
-  private def _init[B](request: Req, session: LiftSession)(f: () => B): B =
-    this._request.doWith(request) {
+  private def _init[B](request: Box[Req], session: LiftSession)(f: () => B): B = {
+    this._request.doWith(request.openOr(null)) {
       _sessionInfo.doWith(session) {
         _responseHeaders.doWith(new ResponseInfoHolder) {
           TransientRequestVarHandler(Full(session),
@@ -1754,6 +1758,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
         }
       }
     }
+  }
 
   /**
    * This method is a convenience accessor for LiftRules.loggedInTest. You can define your own
@@ -2140,7 +2145,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    */
   def initIfUninitted[B](session: LiftSession)(f: => B): B = {
     if (inS.value) f
-    else init(Req.nil, session)(f)
+    else init(Empty, session)(f)
   }
 
   /**
@@ -2813,7 +2818,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
           ret
         }
 
-        init(req, ses) {
+        init(Box !! req, ses) {
           doRender(ses)
         }
       }
