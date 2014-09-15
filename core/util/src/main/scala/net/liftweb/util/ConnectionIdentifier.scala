@@ -34,5 +34,5 @@ trait ConnectionIdentifier {
 }
 
 case object DefaultConnectionIdentifier extends ConnectionIdentifier {
-  val jndiName = "lift"
+  var jndiName = "lift"
 }
