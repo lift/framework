@@ -325,6 +325,7 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
    * @return the last when sent from the listener
    */
   def lastListenerTime: Long
+  def lastRenderTime: Long
 
   private[http] def callInitCometActor(creationInfo: CometCreationInfo) {
     initCometActor(creationInfo)
@@ -451,7 +452,7 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   private val logger = Logger(classOf[CometActor])
   val uniqueId = Helpers.nextFuncName
   private var spanId = uniqueId
-  @volatile private var lastRenderTime = millis
+  @volatile private var _lastRenderTime = Helpers.nextNum
 
   /**
    * If we're going to cache the last rendering, here's the
@@ -466,13 +467,15 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   def renderClock: Long = lastRenderTime
 
   @volatile
-  private var _lastListenerTime: Long = lastRenderTime
+  private var _lastListenerTime: Long = millis
 
   /**
    * The last "when" sent from the listener
    * @return the last when sent from the listener
    */
   def lastListenerTime: Long = _lastListenerTime
+
+  def lastRenderTime: Long =  _lastRenderTime
 
   /**
    * The last rendering (cached or not)
@@ -509,7 +512,7 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   private var _deltaPruner: (CometActor, List[Delta]) => List[Delta] =
     (actor, d) => {
       val m = Helpers.millis
-      d.filter(d => (m - d.when) < 120000L)
+      d.filter(d => (m - d.timestamp) < 120000L)
     }
 
   private var _theSession: LiftSession = _
@@ -807,16 +810,17 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
               whosAsking openOr this, lastRenderTime, wasLastFullRender))
             clearNotices
           } else {
-            lastRenderTime = when
+            _lastRenderTime = when
             deltas.filter(_.when > when) match {
               case Nil => listeners = (seqId, toDo) :: listeners
 
-              case all@(hd :: xs) =>
+              case all@(hd :: xs) => {
                 toDo(AnswerRender(new XmlOrJsCmd(spanId, Empty, Empty,
                   Full(all.reverse.foldLeft(Noop)(_ & _.js)), Empty, buildSpan, false, notices.toList),
                   whosAsking openOr this, hd.when, false))
                 clearNotices
                 deltas = _deltaPruner(this, deltas)
+              }
             }
           }
       }
@@ -947,7 +951,7 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
 
     case PartialUpdateMsg(cmdF) => {
       val cmd: JsCmd = cmdF.apply
-      val time = millis
+      val time = Helpers.nextNum
       val delta = JsDelta(time, cmd)
       receivedDelta = true
       theSession.updateFunctionMap(S.functionMap, uniqueId, time)
@@ -1050,7 +1054,7 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   protected def manualWiringDependencyManagement = false
 
   private def performReRender(sendAll: Boolean): RenderOut = {
-    lastRenderTime = millis
+    _lastRenderTime = Helpers.nextNum
 
     if (sendAll) {
       cachedFixedRender.reset
@@ -1325,6 +1329,8 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
 
 abstract class Delta(val when: Long) {
   def js: JsCmd
+
+  val timestamp = millis
 }
 
 case class JsDelta(override val when: Long, js: JsCmd) extends Delta(when)

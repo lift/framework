@@ -2382,7 +2382,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private def lastWhenDeltaPruner: (LiftCometActor, List[Delta]) => List[Delta] =
     (ca, dl) => {
       val when = ca.lastListenerTime
-      dl.filter(d => when <= d.when)
+      dl.filter(d => when <= d.timestamp)
     }
 
 
