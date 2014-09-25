@@ -2372,19 +2372,9 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
       S.addComet(ca)
 
-      ca ! SetDeltaPruner(lastWhenDeltaPruner)
-
       ca
     }
   }
-
-
-  private def lastWhenDeltaPruner: (LiftCometActor, List[Delta]) => List[Delta] =
-    (ca, dl) => {
-      val when = ca.lastListenerTime
-      dl.filter(d => when <= d.timestamp)
-    }
-
 
   /**
    * Processes the surround tag and other lift tags
@@ -2830,8 +2820,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       implicit val defaultFormats = DefaultFormats
 
       ca ! PerformSetupComet2(Empty)
-
-      ca ! SetDeltaPruner(lastWhenDeltaPruner)
 
       S.addComet(ca)
 
