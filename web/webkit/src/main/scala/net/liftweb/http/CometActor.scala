@@ -452,7 +452,11 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   private val logger = Logger(classOf[CometActor])
   val uniqueId = Helpers.nextFuncName
   private var spanId = uniqueId
-  @volatile private var _lastRenderTime = Helpers.nextNum
+  @volatile private var _lastRenderTime =
+    if (partialUpdateStream_?)
+      0
+    else
+      Helpers.nextNum
 
   /**
    * If we're going to cache the last rendering, here's the
@@ -478,11 +482,29 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   def lastRenderTime: Long =  _lastRenderTime
 
   /**
+    * If this method returns true, this CometActor will be treated as a source
+    * of continuous partial updates. Usually the basic assumption of a Lift
+    * Comet Actor is that render will display the current state of the actor.
+    * Partial updates may modify that display, but it is always possible to
+    * recreate the complete display by calling render again (in which case
+    * pending partial updates can be safely discarded). If this method
+    * returns true, render will not be called, but partial updates are
+    * guaranteed to always be sent to the client. This is useful as a means to
+    * push arbitrary JavaScript to the client without a distinct UI for the
+    * comet actor itself.
+    */
+  protected def partialUpdateStream_? : Boolean = false
+
+  /**
    * The last rendering (cached or not)
    */
   private def lastRendering: RenderOut =
     if (dontCacheRendering) {
-      val ret = render
+      val ret =
+        if (partialUpdateStream_?)
+          nsToNsFuncToRenderOut(_ => NodeSeq.Empty)
+        else
+          render
       theSession.updateFunctionMap(S.functionMap, uniqueId, lastRenderTime)
       ret
     } else {
@@ -804,7 +826,7 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
       askingWho match {
         case Full(who) => forwardMessageTo(l, who) // who forward l
         case _ =>
-          if (when < lastRenderTime) {
+          if (when < lastRenderTime && ! partialUpdateStream_?) {
             toDo(AnswerRender(new XmlOrJsCmd(spanId, lastRendering,
               buildSpan _, notices.toList),
               whosAsking openOr this, lastRenderTime, wasLastFullRender))
@@ -819,9 +841,9 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
                   Full(all.reverse.foldLeft(Noop)(_ & _.js)), Empty, buildSpan, false, notices.toList),
                   whosAsking openOr this, hd.when, false))
                 clearNotices
-                deltas = _deltaPruner(this, deltas)
               }
             }
+            deltas = _deltaPruner(this, deltas)
           }
       }
       listenerTransition()
@@ -1054,7 +1076,9 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   protected def manualWiringDependencyManagement = false
 
   private def performReRender(sendAll: Boolean): RenderOut = {
-    _lastRenderTime = Helpers.nextNum
+    if (! partialUpdateStream_?) {
+      _lastRenderTime = Helpers.nextNum
+    }
 
     if (sendAll) {
       cachedFixedRender.reset
@@ -1065,7 +1089,9 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
     }
 
     wasLastFullRender = sendAll & hasOuter
-    deltas = Nil
+    if (! partialUpdateStream_?) {
+      deltas = Nil
+    }
     receivedDelta = false
 
     if (!dontCacheRendering) {
