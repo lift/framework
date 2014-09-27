@@ -17,22 +17,18 @@
 package net.liftweb
 package util
 
-import Helpers._
-import common._
+import org.specs2.mutable.Specification
 
-trait ConnectionIdentifier {
-  def jndiName: String
+/**
+ * Systems under specification for ConnectionIdentifier.
+ */
+object ConnectionIdentifierSpec extends Specification {
+  "ConnectionIdentifier Specification".title
 
-  override def toString() = "ConnectionIdentifier(" + jndiName + ")"
+  "Connection identifier" should {
 
-  override def hashCode() = jndiName.hashCode()
-
-  override def equals(other: Any): Boolean = other match {
-    case ci: ConnectionIdentifier => ci.jndiName == this.jndiName
-    case _ => false
+    "be set by property" in {
+      DefaultConnectionIdentifier.jndiName must_== "from_props"
+    }
   }
-}
-
-case object DefaultConnectionIdentifier extends ConnectionIdentifier {
-  val jndiName = Props.get("default.jndi.name", "lift")
 }
