@@ -75,7 +75,7 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
 
   def toForm: Box[NodeSeq] = Empty
 
-  def asJValue = JObject(value.keys.map {
+  def asJValue: JValue = JObject(value.keys.map {
     k =>
       JField(k, value(k).asInstanceOf[AnyRef] match {
         case x if primitive_?(x.getClass) => primitive2jvalue(x)

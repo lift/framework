@@ -64,7 +64,7 @@ trait DateTimeTypedField extends TypedField[Calendar] {
 
   def asJs = valueBox.map(v => Str(formats.dateFormat.format(v.getTime))) openOr JsNull
 
-  def asJValue = asJString(v => formats.dateFormat.format(v.getTime))
+  def asJValue: JValue = asJString(v => formats.dateFormat.format(v.getTime))
   def setFromJValue(jvalue: JValue) = setFromJString(jvalue) {
     v => formats.dateFormat.parse(v).map(d => {
       val cal = Calendar.getInstance

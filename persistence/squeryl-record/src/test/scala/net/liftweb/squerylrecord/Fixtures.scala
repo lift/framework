@@ -115,7 +115,7 @@ class SpecialField[OwnerType <: Record[OwnerType]](rec: OwnerType)
     case v => setBox(Full(v.toString))
   }
   override def setFromJValue(jValue: JValue) = setBox(Full(jValue.toString))
-  override def asJValue = JString(get)
+  override def asJValue: JValue = JString(get)
   override def asJs = Str(get)
   override def toForm = Full(scala.xml.Text(get))
 }
