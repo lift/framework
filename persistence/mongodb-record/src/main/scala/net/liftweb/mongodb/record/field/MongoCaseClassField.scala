@@ -47,7 +47,7 @@ class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerTyp
   override def defaultValue = null.asInstanceOf[MyType]
   override def optional_? = true
 
-  def asJValue = valueBox.map(v => Extraction.decompose(v)) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(v => Extraction.decompose(v)) openOr (JNothing: JValue)
 
   def setFromJValue(jvalue: JValue): Box[CaseType] = jvalue match {
     case JNothing|JNull => setBox(Empty)
@@ -94,7 +94,7 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
   override def defaultValue: MyType = Nil
   override def optional_? = true
 
-  def asJValue = JArray(value.map(v => Extraction.decompose(v)))
+  def asJValue: JValue = JArray(value.map(v => Extraction.decompose(v)))
 
   def setFromJValue(jvalue: JValue): Box[MyType] = jvalue match {
     case JArray(contents) => setBox(Full(contents.flatMap(s => Helpers.tryo[CaseType]{ s.extract[CaseType] })))

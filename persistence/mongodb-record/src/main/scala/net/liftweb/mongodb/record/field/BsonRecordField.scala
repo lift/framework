@@ -94,7 +94,7 @@ class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: B
       valueMeta.fromDBObject(dbo.get(k.toString).asInstanceOf[DBObject])
     })))
 
-  override def asJValue = JArray(value.map(_.asJValue))
+  override def asJValue: JValue = JArray(value.map(_.asJValue))
 
   override def setFromJValue(jvalue: JValue) = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
