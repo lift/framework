@@ -230,8 +230,8 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
    * Different Vars require different mechanisms for synchronization.  This method implements
    * the Var specific synchronization mechanism.
    *
-   * In the case of ContainerVar, we synchronize on the ContainerVar
-   * instance itself.
+   * In the case of ContainerVar, we don't need to do any explicit synchronization.  Values are
+   * stored in the HttpSession, which already gives us atomic get and set operations.
    */
   def doSync[F](f: => F): F = f
 
