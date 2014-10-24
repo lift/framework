@@ -24,7 +24,7 @@ import Helpers._
 import net.liftweb.mockweb.MockWeb._
 
 object SHtmlSpec extends Specification with XmlMatchers {
-  "NamedCometPerTabSpec Specification".title
+  "SHtmlSpec Specification".title
 
   val html1= <span><input id="number"></input></span>
 
@@ -48,6 +48,10 @@ object SHtmlSpec extends Specification with XmlMatchers {
     "create a number input field with step='1.0'" in {
       inputField3 must \("input", "step" -> "1.0")
     }
-
+    "Use the implicit from tuple to SelectableOption" in {
+      testS("/")( ("#number" #> SHtml.select(Seq("Yes" -> "Yes" , "No" -> "No"), Some("value"), s => println(s) , "class" -> "form-control")).apply(html1)  )
+      //compiling is enough for this test
+      1 must_== 1
+    }
   }
 }
