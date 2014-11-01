@@ -36,10 +36,11 @@ package io
 
 /**
  * This was made private in scala 2.11.0 but there is no alternative for us to use, so here, copy/paste for now.
+ * We renamed it because having a private vs public class with the same name causes errors with the assembly plugin
+ * and may/(will?) cause errors at runtime.
  */
 
-@deprecated("This class will be removed.", "2.10.0")
-abstract class Position {
+abstract class ScalaPosition {
   /** Definable behavior for overflow conditions.
     */
   def checkInput(line: Int, column: Int): Unit
@@ -73,7 +74,7 @@ abstract class Position {
   def toString(pos: Int): String = line(pos) + ":" + column(pos)
 }
 
-object Position extends Position {
+object ScalaPosition extends ScalaPosition {
   def checkInput(line: Int, column: Int) {
     if (line < 0)
       throw new IllegalArgumentException(line + " < 0")

@@ -157,8 +157,8 @@ class PCDataXmlParser(val input: Source) extends ConstructingHandler with PCData
     import scala.io._
 
 
-    val line = Position.line(pos)
-    val col = Position.column(pos)
+    val line = ScalaPosition.line(pos)
+    val col = ScalaPosition.column(pos)
     val report = curInput.descr + ":" + line + ":" + col + ": " + msg
     System.err.println(report)
     try {
