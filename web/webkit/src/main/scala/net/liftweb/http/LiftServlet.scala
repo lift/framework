@@ -543,7 +543,7 @@ class LiftServlet extends Loggable {
   // we want the original thread to complete so that it can provide an
   // answer for future retries, we don't want retries tying up resources
   // when the client won't receive the response anyway.
-  private lazy val ajaxPostTimeout: Long = LiftRules.ajaxPostTimeout * 1000L + 500L
+  private lazy val ajaxPostTimeout: Long = LiftRules.ajaxPostTimeout + 500L
   /**
    * Kick off AJAX handling. Extracts relevant versions and handles the
    * begin/end servicing requests. Then checks whether to wait on an
