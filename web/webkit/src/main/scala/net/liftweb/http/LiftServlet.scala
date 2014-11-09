@@ -623,6 +623,8 @@ class LiftServlet extends Loggable {
               case ResponseShortcutException(_, Full(to), _) =>
                 import net.liftweb.http.js.JsCmds._
                 List(RedirectTo(to))
+              case responseShortcut: ResponseShortcutException =>
+                List(responseShortcut.response)
             })
 
             val what2 = what.flatMap {
