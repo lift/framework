@@ -34,6 +34,5 @@ trait ConnectionIdentifier {
 }
 
 case object DefaultConnectionIdentifier extends ConnectionIdentifier {
-  @deprecated("will become a read-only val. It can be modified by setting 'default.jndi.name' in the props file", "2.6")
-  var jndiName = Props.get("default.jndi.name", "lift")
+  val jndiName = Props.get("default.jndi.name", "lift")
 }
