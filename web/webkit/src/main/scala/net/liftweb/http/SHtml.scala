@@ -1730,6 +1730,8 @@ trait SHtml {
       seq.collect {
         case (value, label) => SelectableOption(value, label)
       }
+    implicit def tupleToSelectableOption[T](tuple: (T, String)): SelectableOption[T] =
+      SelectableOption(tuple._1, tuple._2)
   }
 
   private def optionToElem(option: SelectableOption[String]): Elem =

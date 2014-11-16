@@ -120,8 +120,8 @@ for MODULE in framework ; do
     CURRENT_BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`
     debug "Current branch for $MODULE is $CURRENT_BRANCH"
 
-    if [ "${CURRENT_BRANCH}" != "master" ]; then
-        echo "Currently releases can only be built from master. $MODULE is on branch $CURRENT_BRANCH. Aborting build."
+    if [ "${CURRENT_BRANCH}" != "lift_26" ]; then
+        echo "Currently releases can only be built from lift_26. $MODULE is on branch $CURRENT_BRANCH. Aborting build."
         exit
     fi
 
@@ -155,7 +155,18 @@ for MODULE in framework ; do
 #git push origin ${RELEASE_VERSION}-release >> ${BUILDLOG} || die "Could not push release tag!"
 
     # Do a separate build for each configured Scala version so we don't blow the heap
-    for SCALA_VERSION in $(grep crossScalaVersions build.sbt | cut -d '(' -f 2 |  sed s/[,\)\"]//g ); do
+    # We have one project for scala versions pre 2.11.x
+    for SCALA_VERSION in 2.9.1 2.9.1-1 2.9.2 2.10.4 ; do
+        echo -n "  Building against Scala ${SCALA_VERSION}..."
+        if ! ./liftsh ++${SCALA_VERSION} "project lift-framework-pre-211" clean update test publishSigned >> ${BUILDLOG} ; then
+            echo "failed! See build log for details"
+            exit
+        fi
+        echo "complete"
+    done
+
+    #and we have another for >= 2.11.x    
+    for SCALA_VERSION in 2.11.1; do
         echo -n "  Building against Scala ${SCALA_VERSION}..."
         if ! ./liftsh ++${SCALA_VERSION} clean update test publishSigned >> ${BUILDLOG} ; then
             echo "failed! See build log for details"
@@ -163,6 +174,7 @@ for MODULE in framework ; do
         fi
         echo "complete"
     done
+
 
     echo "Build complete for module ${MODULE}"
 

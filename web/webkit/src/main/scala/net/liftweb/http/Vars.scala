@@ -181,6 +181,7 @@ private[http] trait HasLogUnreadVal {
  * provides a subset of these.
  */
 abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: ContainerSerializer[T]) extends AnyVar[T, ContainerVar[T]](dflt) with LazyLoggable {
+
   override protected def findFunc(name: String): Box[T] = S.session match {
     case Full(session) => {
       localGet(session, name) match {
@@ -188,7 +189,6 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
         case _ => Empty
       }
     }
-
     case _ => {
       if (showWarningWhenAccessedOutOfSessionScope_?)
         logger.warn("Getting a SessionVar " + name + " outside session scope") // added warning per issue 188
@@ -230,10 +230,10 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
    * Different Vars require different mechanisms for synchronization.  This method implements
    * the Var specific synchronization mechanism.
    *
-   * In the case of ContainerVar, we synchronize on the ContainerVar
-   * instance itself.
+   * In the case of ContainerVar, we don't need to do any explicit synchronization.  Values are
+   * stored in the HttpSession, which already gives us atomic get and set operations.
    */
-  def doSync[F](f: => F): F = this.synchronized(f)
+  def doSync[F](f: => F): F = f
 
   def showWarningWhenAccessedOutOfSessionScope_? = false
 
