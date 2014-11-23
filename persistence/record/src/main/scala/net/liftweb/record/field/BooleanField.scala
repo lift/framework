@@ -60,7 +60,7 @@ trait BooleanTypedField extends TypedField[Boolean] {
 
   def asJs: JsExp = valueBox.map(boolToJsExp) openOr JsNull
 
-  def asJValue = valueBox.map(JBool) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(JBool) openOr (JNothing: JValue)
   def setFromJValue(jvalue: JValue) = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case JBool(b)                     => setBox(Full(b))

@@ -326,7 +326,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   private def _getLiftSession(req: Req): LiftSession = {
     val wp = req.path.wholePath
-    val LiftPath = LiftRules.liftPath
+    val LiftPath = LiftRules.liftContextRelativePath
     val cometSessionId = wp match {
       case LiftPath :: "comet" :: _ :: session :: _ => Full(session)
       case _ => Empty
@@ -443,7 +443,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * the request was made on, but can do the multi-server thing
    * as well)
    */
-  @volatile var cometServer: () => String = () => S.contextPath
+  @volatile var cometServer: () => Option[String] = () => None
 
   /**
    * The maximum concurrent requests.  If this number of
@@ -1197,10 +1197,17 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   }
 
   /**
-   * Contains the URI path under which all built-in Lift-handled
-   * requests are scoped.
+   * Contains the URI path under which all built-in Lift-handled requests are
+   * scoped. It does not include the context path and should not begin with a
+   * /.
    */
-  @volatile var liftPath = "lift"
+  @volatile var liftContextRelativePath = "lift"
+
+  /**
+    * Returns a complete URI, including the context path, under which all
+    * built-in Lift-handled requests are scoped.
+    */
+  def liftPath: String = S.contextPath + "/" + liftContextRelativePath
 
   /**
    * If there is an alternative way of calculating the context path

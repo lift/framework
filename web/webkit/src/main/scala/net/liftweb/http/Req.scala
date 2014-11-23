@@ -868,7 +868,7 @@ class Req(val path: ParsePath,
    * A request that is neither Ajax or Comet
    */
   lazy val standardRequest_? : Boolean = path.partPath match {
-    case x :: _ if x == LiftRules.liftPath => false
+    case x :: _ if x == LiftRules.liftContextRelativePath => false
     case _ => true
   }
 
@@ -1158,7 +1158,7 @@ class Req(val path: ParsePath,
                               true,
                               this.paramCalculator, 
                               this.addlParams)
-         S.withReq(newReq) {
+         S.withReq(Full(newReq)) {
           f(path)
          }
       case NotFoundAsNode(node) => Full(LiftRules.convertResponse((node, 404),

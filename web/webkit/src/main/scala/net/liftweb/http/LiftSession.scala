@@ -332,7 +332,7 @@ object SessionMaster extends LiftActor with Loggable {
     lockAndBump {
       Full(SessionInfo(liftSession, userAgent, ipAddress, -1, 0L)) // bumped twice during session creation.  Ticket #529 DPP
     }
-    S.init(req, liftSession) {
+    S.init(Box !! req, liftSession) {
       liftSession.startSession()
       LiftSession.afterSessionCreate.foreach(_(liftSession, req))
     }
@@ -1516,22 +1516,12 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
       case s@_ if !s.isEmpty => s
       case _ => List("index")
     }
-    Templates(splits, S.locale).map {
-      case e: Elem if e.label == "html" => e
-      case e: Elem if hasSurround(e) => e
-      case x => <lift:surround with="default" at="content">
-        {x}
-      </lift:surround>
-    }
+    Templates.findTopLevelTemplate(
+      splits,
+      S.locale,
+      needAutoSurround = S.location.isDefined && S.request.exists(!_.ajax_?)
+    )
   }
-
-  private def hasSurround(e: Elem): Boolean =
-  (S.location.isDefined) &&
-  (S.request.map(!_.ajax_?) openOr false) &&
-    ((e.attribute("data-lift").map(_.text.startsWith("surround")) getOrElse false) ||
-      (e.attribute("lift").map(_.text.startsWith("surround")) getOrElse false) ||
-  (e.label == "surround") ||
-  (e.attribute("class").map(_.text.contains("surround")) getOrElse false))
 
   private[liftweb] def findTemplate(name: String): Box[NodeSeq] = {
     val splits = (if (name.startsWith("/")) name else "/" + name).split("/").toList.drop(1) match {
@@ -1783,19 +1773,33 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * it look to those threads as if the scope was the same as if it
    * had been executed on the thread that created the function.
    */
-  def buildDeferredFunction[T](f: () => T): () => T = {
-    val currentReq: Box[Req] = S.request.map(_.snapshot)
-
+  def buildDeferredFunction[T](deferredFunction: () => T): () => T = {
+    val currentReq = S.request.map(_.snapshot)
     val renderVersion = RenderVersion.get
-
-    val currentMap = snippetMap.is
-    val curLoc = S.location
-
     val requestVarFunc = RequestVarHandler.generateSnapshotRestorer[T]()
 
     () => {
       requestVarFunc(() =>
-        executeInScope(currentReq, renderVersion)(f()))
+        executeInScope(currentReq, renderVersion)(deferredFunction()))
+    }
+  }
+
+  /**
+   * Overload of `buildDeferredFunction` for functions that take a parameter.
+   *
+   * The returned function, when invoked with a parameter of type `A`, will
+   * invoke the passed `deferredFunction` with that parameter in the original
+   * request and session context.
+   */
+  def buildDeferredFunction[A,T](deferredFunction: (A)=>T): (A)=>T = {
+    val currentReq = S.request.map(_.snapshot)
+    val renderVersion = RenderVersion.get
+    val requestVarFunc = RequestVarHandler.generateSnapshotRestorer[T]()
+
+    (in: A) => {
+      requestVarFunc(() =>
+        executeInScope(currentReq, renderVersion)(deferredFunction(in))
+      )
     }
   }
 
@@ -1815,7 +1819,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
     }
 
     req match {
-      case Full(r) => S.init(r, this)(doExec())
+      case r@Full(_) => S.init(r, this)(doExec())
       case _ => S.initIfUninitted(this)(doExec())
     }
   }
@@ -2650,7 +2654,6 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
         S.request
           .filter(_ => comet.sendInitialReq_?)
           .map(_.snapshot)
-
       comet ! PerformSetupComet2(initialRequest)
       comet.setCometActorLocale(S.locale)
 
