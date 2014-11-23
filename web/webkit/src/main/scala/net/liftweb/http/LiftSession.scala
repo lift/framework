@@ -3026,8 +3026,10 @@ private object SnippetNode {
   private def isLiftClass(s: String): Boolean =
     s.startsWith("lift:") || s.startsWith("l:")
 
-  private def snippy(in: Elem): Option[(String, MetaData)] = {
-    val snippetContents = {
+  case class SnippetInformation(name: String, attributes: MetaData)
+
+  private def snippetInformationForElement(in: Elem): Option[SnippetInformation] = {
+    val snippetInvocation = {
       for {
         cls <- in.attribute("class")
         snip <- cls.text.charSplit(' ').find(isLiftClass)
@@ -3036,11 +3038,16 @@ private object SnippetNode {
       }
     } orElse in.attribute("lift").map(_.text)
 
-    snippetContents.map { snip =>
+    snippetInvocation.map { snip =>
       snip.charSplit('?') match {
-        case Nil => "this should never happen" -> Null
-        case x :: Nil => urlDecode(removeLift(x)) -> Null
-        case x :: xs => urlDecode(removeLift(x)) -> pairsToMetaData(xs.flatMap(_.roboSplit("[;&]")))
+        case Nil =>
+          SnippetInformation("this should never happen", Null)
+
+        case snippetName :: Nil =>
+          SnippetInformation(urlDecode(removeLift(snippetName)), Null)
+
+        case snippetName :: snippetArguments =>
+          SnippetInformation(urlDecode(removeLift(snippetName)), pairsToMetaData(snippetArguments.flatMap(_.roboSplit("[;&]"))))
       }
     }
   }
@@ -3094,7 +3101,7 @@ private object SnippetNode {
 
       case elm: Elem => {
         for {
-          (snippetName, lift) <- snippy(elm)
+          SnippetInformation(snippetName, lift) <- snippetInformationForElement(elm)
         } yield {
           val (par, nonLift) = liftAttrsAndParallel(elm.attributes)
           val newElm = new Elem(elm.prefix, elm.label,
