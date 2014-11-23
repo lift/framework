@@ -3003,26 +3003,6 @@ private object SnippetNode {
       case _ => str
     }
 
-  private def makeMetaData(key: String, value: String, rest: MetaData): MetaData = key.indexOf(":") match {
-    case x if x > 0 => new PrefixedAttribute(key.substring(0, x),
-      key.substring(x + 1),
-      value, rest)
-
-    case _ => new UnprefixedAttribute(key, value, rest)
-  }
-
-  private def pairsToMetaData(in: List[String]): MetaData = in match {
-    case Nil => Null
-    case x :: xs => {
-      val rest = pairsToMetaData(xs)
-      x.charSplit('=').map(Helpers.urlDecode) match {
-        case Nil => rest
-        case x :: Nil => makeMetaData(x, "", rest)
-        case x :: y :: _ => makeMetaData(x, y, rest)
-      }
-    }
-  }
-
   private def isLiftClass(s: String): Boolean =
     s.startsWith("lift:") || s.startsWith("l:")
 

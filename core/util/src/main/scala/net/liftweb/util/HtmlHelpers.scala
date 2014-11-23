@@ -19,6 +19,8 @@ package util
 
 import scala.language.higherKinds
 
+import StringHelpers._
+
 import scala.xml._
 
 import common._
@@ -319,6 +321,36 @@ trait HtmlHelpers extends CssBindImplicits {
           </div>)
 
         case _ => Empty
+    }
+  }
+
+  /**
+   * Make a MetaData instance from a key and a value. If key contains a colon, this
+   * method will generate a PrefixedAttribute with the text before the colon used as
+   * the prefix. Otherwise, it will produce an UnprefixedAttribute.
+  **/
+  def makeMetaData(key: String, value: String, rest: MetaData): MetaData = key.indexOf(":") match {
+    case x if x > 0 => new PrefixedAttribute(key.substring(0, x),
+      key.substring(x + 1),
+      value, rest)
+
+    case _ => new UnprefixedAttribute(key, value, rest)
+  }
+
+  /**
+   * Convert a list of strings into a MetaData of attributes.
+   *
+   * The strings in the list must be in the format of key=value.
+  **/
+  def pairsToMetaData(in: List[String]): MetaData = in match {
+    case Nil => Null
+    case x :: xs => {
+      val rest = pairsToMetaData(xs)
+      x.charSplit('=').map(Helpers.urlDecode) match {
+        case Nil => rest
+        case x :: Nil => makeMetaData(x, "", rest)
+        case x :: y :: _ => makeMetaData(x, y, rest)
+      }
     }
   }
 }
