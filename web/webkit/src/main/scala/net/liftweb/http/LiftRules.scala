@@ -918,8 +918,8 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   }
 
   dataAttributeProcessor.append {
-    case ("lift", dataLiftContents, element, liftSession) =>
-      dataLiftContents.charSplit('?') match {
+    case ("lift", snippetInvocation, element, liftSession) =>
+      snippetInvocation.charSplit('?') match {
         case Nil =>
           // This shouldn't ever happen.
           NodeSeq.Empty

@@ -2185,11 +2185,11 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
   private object _lastFoundSnippet extends ThreadGlobal[String]
 
   private object DataAttrNode {
-    val rules = LiftRules.dataAttributeProcessor.toList
+    val dataAttributeProcessors = LiftRules.dataAttributeProcessor.toList
 
     def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
       in match {
-        case element: Elem if ! rules.isEmpty =>
+        case element: Elem if dataAttributeProcessors.nonEmpty =>
           element.attributes.toStream.flatMap {
             case UnprefixedAttribute(key, value, _) if key.toLowerCase().startsWith("data-") =>
               val dataProcessorName = key.substring(5).toLowerCase()
@@ -2201,7 +2201,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
               NamedPF.applyBox(
                 (dataProcessorName, dataProcessorInputValue, element.copy(attributes = filteredAttributes), LiftSession.this),
-                rules
+                dataAttributeProcessors
               )
             case _ => Empty
           }.headOption
