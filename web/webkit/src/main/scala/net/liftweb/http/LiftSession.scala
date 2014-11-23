@@ -2194,13 +2194,10 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
             case UnprefixedAttribute(key, value, _) if key.toLowerCase().startsWith("data-") =>
               val dataProcessorName = key.substring(5).toLowerCase()
               val dataProcessorInputValue = value.text
-              val filteredAttributes = element.attributes.filter{
-                case UnprefixedAttribute(k2, _, _) => k2 != key
-                case _ => true
-              }
+              val filteredElement = removeAttribute(key, element)
 
               NamedPF.applyBox(
-                (dataProcessorName, dataProcessorInputValue, element.copy(attributes = filteredAttributes), LiftSession.this),
+                (dataProcessorName, dataProcessorInputValue, filteredElement, LiftSession.this),
                 dataAttributeProcessors
               )
             case _ => Empty
