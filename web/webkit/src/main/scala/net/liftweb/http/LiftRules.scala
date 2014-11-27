@@ -1752,8 +1752,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /** Controls whether or not the service handling timing messages (Service request (GET) ... took ... Milliseconds) are logged. Defaults to true. */
   @volatile var logServiceRequestTiming = true
 
-  /** Provides a function that returns random names for form variables, page ids, callbacks, etc. */
-  @volatile var funcNameGenerator: () => String = defaultFuncNameGenerator(Props.mode)
+  /**
+   * Provides a function that returns random names for form variables, page ids, callbacks, etc.
+   */
+  val funcNameGenerator: FactoryMaker[() => String] =
+    new FactoryMaker[() => String](defaultFuncNameGenerator(Props.mode)) {}
 
   import provider.servlet._
   import containers._

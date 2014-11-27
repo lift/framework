@@ -2638,7 +2638,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
       f
     }
 
-  def formFuncName: String = LiftRules.funcNameGenerator()
+  def formFuncName: String = LiftRules.funcNameGenerator.vend()
 
   /** Default func-name logic during test-mode. */
   def generateTestFuncName: String =
