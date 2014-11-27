@@ -29,10 +29,9 @@ import java.util.regex.Pattern
  */
 object ProtoRules extends Factory with LazyLoggable {
   /**
-   * The regular expression pattern for matching email addresses.  This
-   * assumes that the email address has been converted to lower case.
+   * The regular expression pattern for matching email addresses.
    */
-  val emailRegexPattern = new FactoryMaker(Pattern.compile("^[a-z0-9._%\\-+]+@(?:[a-z0-9\\-]+\\.)+[a-z]{2,4}$")) {}
+  val emailRegexPattern = new FactoryMaker(Pattern.compile("^[a-z0-9._%\\-+]+@(?:[a-z0-9\\-]+\\.)+[a-z]{2,}$", Pattern.CASE_INSENSITIVE)) {}
   
 }
 
