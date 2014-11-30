@@ -328,7 +328,7 @@ trait HtmlHelpers extends CssBindImplicits {
    * Make a MetaData instance from a key and a value. If key contains a colon, this
    * method will generate a PrefixedAttribute with the text before the colon used as
    * the prefix. Otherwise, it will produce an UnprefixedAttribute.
-  **/
+   */
   def makeMetaData(key: String, value: String, rest: MetaData): MetaData = key.indexOf(":") match {
     case x if x > 0 => new PrefixedAttribute(key.substring(0, x),
       key.substring(x + 1),
@@ -341,7 +341,7 @@ trait HtmlHelpers extends CssBindImplicits {
    * Convert a list of strings into a MetaData of attributes.
    *
    * The strings in the list must be in the format of key=value.
-  **/
+   */
   def pairsToMetaData(in: List[String]): MetaData = in match {
     case Nil => Null
     case x :: xs => {
