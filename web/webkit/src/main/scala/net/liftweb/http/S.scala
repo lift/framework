@@ -905,24 +905,54 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   def appendGlobalJs(js: JsCmd*): Unit = _globalJsToAppend.is ++= js
 
   /**
+   * Generates the JsCmd needed to initialize comets in
+   * `S.requestCometVersions` on the client.
+   */
+  private def commandsForComets: List[JsCmd] = {
+    val cometVersions = requestCometVersions.is
+    requestCometVersions.set(Set())
+
+    if (cometVersions.nonEmpty) {
+      List(
+        js.JE.Call(
+          "lift.registerComets",
+          js.JE.JsObj(
+            cometVersions.toList.map {
+              case CometVersionPair(guid, version) =>
+                (guid, js.JE.Num(version))
+            }: _*
+          ),
+          true
+        ).cmd
+      )
+    } else {
+      Nil
+    }
+  }
+
+  /**
    * Get the accumulated JavaScript
    *
    * @see appendJs
    */
   def jsToAppend(): List[JsCmd] = {
     import js.JsCmds._
-    _globalJsToAppend.is.toList ::: (
-      S.session.map( sess =>
-        sess.postPageJavaScript(RenderVersion.get ::
-                                S.currentCometActor.map(_.uniqueId).toList)
-      ) match {
-        case Full(xs) if !xs.isEmpty => List(OnLoad(_jsToAppend.is.toList ::: xs))
-        case _ => _jsToAppend.is.toList match {
-          case Nil => Nil
-          case xs => List(OnLoad(xs))
-        }
+
+    val globalJs = _globalJsToAppend.is.toList
+    val postPageJs =
+      S.session.toList.flatMap { session =>
+        session.postPageJavaScript(RenderVersion.get ::
+                                   currentCometActor.map(_.uniqueId).toList)
       }
-    )
+    val cometJs = commandsForComets
+
+    globalJs ::: {
+      postPageJs ::: cometJs ::: _jsToAppend.is.toList match {
+        case Nil => Nil
+        case loadJs =>
+          List(OnLoad(loadJs))
+      }
+    }
   }
 
   /**
