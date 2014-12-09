@@ -865,11 +865,6 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
 
     case ActionMessageSet(msgs, req) =>
       S.doCometParams(req.params) {
-        S.jsToAppend() match {
-          case Nil =>
-          case js => partialUpdate(js)
-        }
-
         val computed: List[Any] =
           msgs.flatMap {
             f => try {
@@ -879,6 +874,11 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
               case e: Exception => reportError("Ajax function dispatch", e); Nil
             }
           }
+
+        S.jsToAppend() match {
+          case Nil =>
+          case js => partialUpdate(js)
+        }
 
         reply(computed ::: List(S.noticesToJsCmd))
       }
