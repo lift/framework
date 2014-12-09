@@ -679,6 +679,12 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
                   case e if exceptionHandler.isDefinedAt(e) => exceptionHandler(e)
                   case e: Exception => reportError("Message dispatch for " + in, e)
                 }
+
+                val updatedJs = S.jsToAppend
+                if (updatedJs.nonEmpty) {
+                  partialUpdate(updatedJs)
+                }
+
                 if (S.functionMap.size > 0) {
                   theSession.updateFunctionMap(S.functionMap,
                     uniqueId, lastRenderTime)
@@ -874,11 +880,6 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
               case e: Exception => reportError("Ajax function dispatch", e); Nil
             }
           }
-
-        S.jsToAppend() match {
-          case Nil =>
-          case js => partialUpdate(js)
-        }
 
         reply(computed ::: List(S.noticesToJsCmd))
       }
@@ -1179,15 +1180,16 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
    * is helpful if you use Lift's CSS Selector Transforms to define
    * rendering.
    */
-  protected implicit def nsToNsFuncToRenderOut(f: NodeSeq => NodeSeq) =
-    new RenderOut((Box !! defaultHtml).map(f), internalFixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend())
-    else {
-      S.jsToAppend match {
-        case Nil => Empty
-        case x :: Nil => Full(x)
-        case xs => Full(xs.reduceLeft(_ & _))
+  protected implicit def nsToNsFuncToRenderOut(f: NodeSeq => NodeSeq) = {
+    val additionalJs =
+      if (autoIncludeJsonCode) {
+        Full(jsonToIncludeInCode)
+      } else {
+        Empty
       }
-    }, Empty, false)
+
+    new RenderOut((Box !! defaultHtml).map(f), internalFixedRender, additionalJs, Empty, false)
+  }
 
   /**
    * Convert a Seq[Node] (the superclass of NodeSeq) to a RenderOut.
@@ -1196,16 +1198,27 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
    * (in Java) will convert a NodeSeq to a RenderOut.  This
    * is helpful if you return a NodeSeq from your render method.
    */
-  protected implicit def arrayToRenderOut(in: Seq[Node]): RenderOut = new RenderOut(Full(in: NodeSeq), internalFixedRender, if (autoIncludeJsonCode) Full(jsonToIncludeInCode & S.jsToAppend())
-  else {
-    S.jsToAppend match {
-      case Nil => Empty
-      case x :: Nil => Full(x)
-      case xs => Full(xs.reduceLeft(_ & _))
-    }
-  }, Empty, false)
+  protected implicit def arrayToRenderOut(in: Seq[Node]): RenderOut = {
+    val additionalJs =
+      if (autoIncludeJsonCode) {
+        Full(jsonToIncludeInCode)
+      } else {
+        Empty
+      }
 
-  protected implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = new RenderOut(Empty, internalFixedRender, if (autoIncludeJsonCode) Full(in & jsonToIncludeInCode & S.jsToAppend()) else Full(in & S.jsToAppend()), Empty, false)
+      new RenderOut(Full(in: NodeSeq), internalFixedRender, additionalJs, Empty, false)
+  }
+
+  protected implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = {
+    val additionalJs =
+      if (autoIncludeJsonCode) {
+        Full(in & jsonToIncludeInCode)
+      } else {
+        Full(in)
+      }
+
+    new RenderOut(Empty, internalFixedRender, additionalJs, Empty, false)
+  }
 
   implicit def pairToPair(in: (String, Any)): (String, NodeSeq) = (in._1, Text(in._2 match {
     case null => "null"
