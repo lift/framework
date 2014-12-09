@@ -922,7 +922,9 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
                 (guid, js.JE.Num(version))
             }: _*
           ),
-          true
+          // Don't kick off a new comet request client-side if we're responding
+          // to a comet request right now.
+          ! currentCometActor.isDefined
         ).cmd
       )
     } else {
