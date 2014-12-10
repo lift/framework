@@ -1585,9 +1585,14 @@ trait SHtml {
    *  <pre>"type=submit" #> ajaxOnSubmit(() => Alert("Done!"))</pre>
    */
   def ajaxOnSubmit(func: () => JsCmd): (NodeSeq)=>NodeSeq = {
-    val fgSnap = S._formGroup.get
+    val functionId =
+      _formGroup.is match {
+        case Empty =>
+          formGroup(1)(fmapFunc(func)(id => id))
+        case _ => fmapFunc(func)(id => id)
+      }
 
-    (in: NodeSeq) => S._formGroup.doWith(fgSnap) {
+    (in: NodeSeq) => {
       def runNodes(ns: NodeSeq): NodeSeq = {
         def addAttributes(elem: Elem, name: String) = {
           val clickJs = "lift.setUriSuffix('" + name + "=_'); return true;"
@@ -1600,11 +1605,7 @@ trait SHtml {
 
           case e: Elem if (e.label == "button") ||
                           (e.label == "input" && e.attribute("type").map(_.text) == Some("submit")) =>
-            _formGroup.is match {
-              case Empty =>
-                formGroup(1)(fmapFunc(func)(addAttributes(e, _)))
-              case _ => fmapFunc(func)(addAttributes(e, _))
-            }
+            addAttributes(e, functionId)
         }
       }
 
