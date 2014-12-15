@@ -18,7 +18,7 @@ package net.liftweb
 package common 
 
 import scala.language.implicitConversions
-import scala.xml.NodeSeq
+import scala.xml._
 
 /*
  * This file contains common conversions and other utilities to make
@@ -48,7 +48,6 @@ sealed trait StringOrNodeSeq {
  * their needs dictate.
  */
 object StringOrNodeSeq {
-  import scala.xml._
 
   /**
    * Convert a String to a StringOrNodeSeq
