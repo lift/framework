@@ -101,9 +101,6 @@ object HLists {
 
     override def toString = "HNil"
 
-    /**
-     * The length of the HList
-     */
     def length = 0
   }
 
@@ -143,9 +140,6 @@ object HLists {
 
     override def toString = head + " :+: " + tail
 
-    /**
-     * The length of the HList
-     */
     def length = 1 + tail.length
   }
 

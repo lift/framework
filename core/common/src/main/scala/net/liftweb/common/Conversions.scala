@@ -48,10 +48,6 @@ sealed trait StringOrNodeSeq {
  * their needs dictate.
  */
 object StringOrNodeSeq {
-
-  /**
-   * Convert a String to a StringOrNodeSeq
-   */
   implicit def strTo[T <% String](str: T): StringOrNodeSeq = 
     new StringOrNodeSeq {
       def nodeSeq: NodeSeq = Text(str)
@@ -66,9 +62,6 @@ object StringOrNodeSeq {
       def nodeSeq: NodeSeq = ns
     }
 
-  /**
-   * Convert a StringOrNodeSeq into a NodeSeq
-   */
   implicit def toNodeSeq(sns: StringOrNodeSeq): NodeSeq = sns.nodeSeq
 }
 
@@ -93,29 +86,15 @@ sealed trait StringFunc {
  * while the former is simpler to use.
  */
 object StringFunc {
-  /**
-   * If you've got something that can be converted into a String (a constant)
-   * but want a StringFunc, this implicit will do the conversion.
-   */
   implicit def strToStringFunc[T](str: T)(implicit f: T => String): StringFunc = 
     ConstStringFunc(f(str))
 
-  /**
-   * If you've got something that can be converted into a String Function
-   * but want a StringFunc, this implicit will do the conversion.
-   */
   implicit def funcToStringFunc[T](func: () => T)(implicit f: T => String): StringFunc =
     RealStringFunc(() => f(func()))
 }
 
-/**
- * The case class that holds a String function.
- */
 final case class RealStringFunc(func: () => String) extends StringFunc
 
-/**
- * The case class that holds the String constant.
- */
 final case class ConstStringFunc(str: String) extends StringFunc {
   lazy val func = () => str
 }

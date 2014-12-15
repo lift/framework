@@ -62,14 +62,8 @@ final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
 
   def tail(): SimpleList[T] = SimpleList(underlying.tail)
 
-  /**
-   * The size of the List
-   */
   def size(): Int = underlying.length
 
-  /**
-   * Is the List Empty
-   */
   def isEmpty(): Boolean = underlying.isEmpty
 
   /**
@@ -221,14 +215,8 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
 
   def tail(): SimpleVector[T] = SimpleVector(underlying.tail)
 
-  /**
-   * The size of the List
-   */
   def size(): Int = underlying.length
 
-  /**
-   * Is the List Empty
-   */
   def isEmpty(): Boolean = underlying.isEmpty
 
   /**
