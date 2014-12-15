@@ -76,7 +76,7 @@ final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
     new JavaIterator[T] {
       def hasNext() = it.hasNext
       def next(): T = it.next()
-      def remove() = throw new Exception("Does not support")
+      def remove() = throw new UnsupportedOperationException()
     }
   }
 
@@ -95,17 +95,17 @@ final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
   def lastIndexOf(obj: Object): Int = 
     underlying.lastIndexOf(obj)
 
-  def add(x: T): Boolean = throw new Exception("Does not support")
+  def add(x: T): Boolean = throw new UnsupportedOperationException()
 
-  def add(after: Int, x: T): Unit = throw new Exception("Does not support")
+  def add(after: Int, x: T): Unit = throw new UnsupportedOperationException()
 
-  def set(after: Int, x: T): T = throw new Exception("Does not support")
+  def set(after: Int, x: T): T = throw new UnsupportedOperationException()
 
-  def clear(): Unit = throw new Exception("Does not support")
+  def clear(): Unit = throw new UnsupportedOperationException()
 
-  def remove(pos: Int): T = throw new Exception("Does not support")
+  def remove(pos: Int): T = throw new UnsupportedOperationException()
 
-  def remove(obj: Object): Boolean = throw new Exception("Does not support")
+  def remove(obj: Object): Boolean = throw new UnsupportedOperationException()
 
   def get(pos: Int): T = underlying(pos)
 
@@ -142,13 +142,13 @@ final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
     ret
   }
 
-  def retainAll(jc: JavaCollection[_]): Boolean = throw new Exception("Does not support")
+  def retainAll(jc: JavaCollection[_]): Boolean = throw new UnsupportedOperationException()
 
-  def removeAll(jc: JavaCollection[_]): Boolean = throw new Exception("Does not support")
+  def removeAll(jc: JavaCollection[_]): Boolean = throw new UnsupportedOperationException()
 
-  def addAll(jc: JavaCollection[_ <: T]): Boolean = throw new Exception("Does not support")
+  def addAll(jc: JavaCollection[_ <: T]): Boolean = throw new UnsupportedOperationException()
 
-  def addAll(index: Int, jc: JavaCollection[_ <: T]): Boolean = throw new Exception("Does not support")
+  def addAll(index: Int, jc: JavaCollection[_ <: T]): Boolean = throw new UnsupportedOperationException()
 
   def containsAll(jc: JavaCollection[_]): Boolean = {
     val it = jc.iterator()
@@ -229,7 +229,7 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
     new JavaIterator[T] {
       def hasNext() = it.hasNext
       def next(): T = it.next()
-      def remove() = throw new Exception("Does not support")
+      def remove() = throw new UnsupportedOperationException()
     }
   }
 
@@ -248,17 +248,17 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
   def lastIndexOf(obj: Object): Int = 
     underlying.lastIndexOf(obj)
 
-  def add(x: T): Boolean = throw new Exception("Does not support")
+  def add(x: T): Boolean = throw new UnsupportedOperationException()
 
-  def add(after: Int, x: T): Unit = throw new Exception("Does not support")
+  def add(after: Int, x: T): Unit = throw new UnsupportedOperationException()
 
-  def set(after: Int, x: T): T = throw new Exception("Does not support")
+  def set(after: Int, x: T): T = throw new UnsupportedOperationException()
 
-  def clear(): Unit = throw new Exception("Does not support")
+  def clear(): Unit = throw new UnsupportedOperationException()
 
-  def remove(pos: Int): T = throw new Exception("Does not support")
+  def remove(pos: Int): T = throw new UnsupportedOperationException()
 
-  def remove(obj: Object): Boolean = throw new Exception("Does not support")
+  def remove(obj: Object): Boolean = throw new UnsupportedOperationException()
 
   def get(pos: Int): T = underlying(pos)
 
@@ -290,13 +290,13 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
     ret
   }
 
-  def retainAll(jc: JavaCollection[_]): Boolean = throw new Exception("Does not support")
+  def retainAll(jc: JavaCollection[_]): Boolean = throw new UnsupportedOperationException()
 
-  def removeAll(jc: JavaCollection[_]): Boolean = throw new Exception("Does not support")
+  def removeAll(jc: JavaCollection[_]): Boolean = throw new UnsupportedOperationException()
 
-  def addAll(jc: JavaCollection[_ <: T]): Boolean = throw new Exception("Does not support")
+  def addAll(jc: JavaCollection[_ <: T]): Boolean = throw new UnsupportedOperationException()
 
-  def addAll(index: Int, jc: JavaCollection[_ <: T]): Boolean = throw new Exception("Does not support")
+  def addAll(index: Int, jc: JavaCollection[_ <: T]): Boolean = throw new UnsupportedOperationException()
 
   def containsAll(jc: JavaCollection[_]): Boolean = {
     val it = jc.iterator()
