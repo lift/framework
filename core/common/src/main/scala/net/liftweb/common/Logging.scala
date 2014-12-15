@@ -52,8 +52,8 @@ import org.slf4j.{MDC => SLF4JMDC, Marker, Logger => SLF4JLogger, LoggerFactory}
  * }}}
  */
 object Logger {
-  private[common] lazy val checkConfig: Boolean = {
-    setup.foreach {_()}; 
+  private[common] lazy val ranSetup: Boolean = {
+    setup.foreach { _() }
     true
   }
   
@@ -85,8 +85,8 @@ object Logger {
       className
   }
 
-  def apply(cls: Class[_]): Logger = if (checkConfig) new WrappedLogger(LoggerFactory.getLogger(loggerNameFor(cls))) else null
-  def apply(name: String): Logger = if (checkConfig) new WrappedLogger(LoggerFactory.getLogger(name)) else null
+  def apply(cls: Class[_]): Logger = if (ranSetup) new WrappedLogger(LoggerFactory.getLogger(loggerNameFor(cls))) else null
+  def apply(name: String): Logger = if (ranSetup) new WrappedLogger(LoggerFactory.getLogger(name)) else null
   
  /**
    * Set the [[http://www.slf4j.org/manual.html#mdc Mapped Diagnostic Context]]
@@ -153,9 +153,9 @@ object MDC {
  * }}}
  */
 trait Logger  {
-  private lazy val logger: SLF4JLogger = _logger // removed @transient 'cause there's no reason for transient on val
-  // changed to lazy val so it only gets initialized on use rather than on instantiation
-  protected def _logger = if (Logger.checkConfig) LoggerFactory.getLogger(Logger.loggerNameFor(this.getClass)) else null
+  private lazy val logger: SLF4JLogger = _logger
+
+  protected def _logger = if (Logger.ranSetup) LoggerFactory.getLogger(Logger.loggerNameFor(this.getClass)) else null
   
   def assertLog(assertion: Boolean, msg: => String) = if (assertion) info(msg)
 
