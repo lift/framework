@@ -22,7 +22,11 @@ import scala.language.implicitConversions
 object FuncJBridge extends FuncJBridge
 
 /**
- * Bridge from Java functions to Scala functions
+ * Bridges from Java functions to Scala functions.
+ *
+ * The implicits defined here allow Scala code to interact seamlessly between
+ * the Java function-like interfaces and the Scala function interfaces for
+ * various function arities.
  */
 class FuncJBridge {
   /**

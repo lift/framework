@@ -26,17 +26,26 @@ import scala.xml.NodeSeq
  */
 
 /**
- * A helpful trait that will accept either a String or a NodeSeq via
- * an implicit conversion.  So, all you need to do is put in a String or
- * a NodeSeq and the right thing will happen.
+ * This trait is used to unify `String`s and `[[scala.xml.NodeSeq NodeSeq]]`s
+ * into one type. It is used in conjuction with the implicit conversions defined
+ * in its companion object.
  */
 sealed trait StringOrNodeSeq {
   def nodeSeq: scala.xml.NodeSeq
 }
 
 /**
- * The companion object that has helpful
- * implicit conversions from String and NodeSeq
+ * Provides implicit conversions to the `StringOrNodeSeq` trait, which can in
+ * turn be implicitly converted to `[[scala.xml.NodeSeq NodeSeq]]`. This allows
+ * using a `String` as a natural part of `NodeSeq` APIs without having to
+ * explicitly wrap it in `scala.xml.Text` or having to write overloads for all
+ * methods that should accept both.
+ *
+ * This is used in certain Lift APIs, for example, to accept either a `String`
+ * or more complex content. For example, a `button` can have either a simple
+ * label or complex HTML content. HTML APIs that can do this can accept a
+ * parameter of type `StringOrNodeSeq` to allow the user to pass either in as
+ * their needs dictate.
  */
 object StringOrNodeSeq {
   import scala.xml._
@@ -50,7 +59,8 @@ object StringOrNodeSeq {
     }
 
   /**
-   * Convert a NodeSeq (well, a Seq[Node]) to a StringOrNodeSeq
+   * This is written in terms of a `Seq[Node]` to make sure Scala converts
+   * everything it should to a `StringOrNodeSeq`. `NodeSeq` is a `Seq[Node]`.`
    */
   implicit def nsTo(ns: Seq[Node]): StringOrNodeSeq = 
     new StringOrNodeSeq {
@@ -64,18 +74,24 @@ object StringOrNodeSeq {
 }
 
 /**
- * Sometimes you want a function that returns a String as a parameter,
- * but many times, you'll just want to pass a String constant.  In
- * those cases, this trait and it's implicit conversions come in really
- * handy.  Basically, a String constant or a String function can be passed and
- * either will be implicitly converted into a StringFunc.
+ * This trait is used to unify `()=>String` and `String` into one type. It is
+ * used in conjunction with the implicit conversions defined in its companion
+ * object.
  */
 sealed trait StringFunc {
   def func: () => String
 }
 
 /**
- * The companion object to StringFunc with helpful implicit conversions
+ * Provides implicit conversions to the `StringFunc` trait. This allows using a
+ * `String` as a natural part of APIs that want to allow the flexibility of a
+ * `()=>String` without having to write overloads for all methods that should
+ * accept both.
+ *
+ * Lift's Menu API, for example, allows CSS classes to be defined either as
+ * a `String` or a `()=>String`. The latter could use the current request and
+ * session state to do more interesting things than a hard-coded `String` would,
+ * while the former is simpler to use.
  */
 object StringFunc {
   /**
@@ -106,18 +122,20 @@ final case class ConstStringFunc(str: String) extends StringFunc {
 }
 
 /**
- * Sometimes you want a function that returns a NodeSeq as a parameter,
- * but many times, you'll just want to pass a NodeSeq constant.  In
- * those cases, this trait and it's implicit conversions come in really
- * handy.  Basically, a NodeSeq constant or a NodeSeq function can be passed and
- * either will be implicitly converted into a NodeSeqFunc.
+ * This trait is used to unify `()=>[[scala.xml.NodeSeq NodeSeq]]` and
+ * `[[scala.xml.NodeSeq NodeSeq]]` into one type. It is used in conjunction
+ * with the implicit conversions defined in its [[NodeSeqFunc$ companion
+ * object]].
  */
 sealed trait NodeSeqFunc {
   def func: () => NodeSeq
 }
 
 /**
- * The companion object to NodeSeqFunc with helpful implicit conversions
+ * Provides implicit conversions to the `NodeSeqFunc` trait. This allows using a
+ * `[[scala.xml.NodeSeq NodeSeq]]` as a natural part of APIs that want to allow
+ * the flexibility of a `()=>[[scala.xml.NodeSeq NodeSeq]]` without having to
+ * write overloads for all methods that should accept both.
  */
 object NodeSeqFunc {
   /**
@@ -136,12 +154,12 @@ object NodeSeqFunc {
 }
 
 /**
- * The case class that holds a NodeSeq function.
+ * The case class that holds a `[[scala.xml.NodeSeq NodeSeq]]` function.
  */
 final case class RealNodeSeqFunc(func: () => NodeSeq) extends NodeSeqFunc
 
 /**
- * The case class that holds the NodeSeq constant.
+ * The case class that holds the `[[scala.xml.NodeSeq NodeSeq]]` constant.
  */
 final case class ConstNodeSeqFunc(ns: NodeSeq) extends NodeSeqFunc {
   lazy val func = () => ns
