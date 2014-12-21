@@ -407,7 +407,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
    * Exists to avoid the implicit conversion from `Box` to `Option`. Opening a
    * `Box` unsafely should be done using `openOrThrowException`.
    *
-   * This method *always* throws an exception.
+   * This method '''always''' throws an exception.
    */
   final def get: DoNotCallThisMethod = {
     throw new Exception("Attempted to open a Box incorrectly. Please use openOrThrowException.")
@@ -480,7 +480,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
 
   /**
    * 
-   * If this `Box` contains a value and it does *not* satisfy the specified
+   * If this `Box` contains a value and it does '''not''' satisfy the specified
    * `predicate`, return the `Box` unchanged. Otherwise, return an `Empty`.
    */
   def filterNot(f: A => Boolean): Box[A] = filter(a => !f(a))

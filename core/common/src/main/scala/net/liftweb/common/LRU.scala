@@ -50,7 +50,7 @@ private[common] trait LinkedListElem[T1, T2] {
  * Implements an LRU Hashmap. Given a size, this map will evict the least
  * recently used item(s) when new items are added.
  *
- * Note that `LRUMap` is *not* thread-safe.
+ * Note that `LRUMap` is '''not''' thread-safe.
  *
  * @param initmaxSize The initial max size. This can be updated using
  *        `[[updateMaxSize]]`.
