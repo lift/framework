@@ -27,6 +27,11 @@ object FuncJBridge extends FuncJBridge
  * The implicits defined here allow Scala code to interact seamlessly between
  * the Java function-like interfaces and the Scala function interfaces for
  * various function arities.
+ *
+ * In particular, there is a pair of implicits for each arity of function from 0
+ * to 4. There is one implicit (called `lift`) from the Java function type to
+ * the corresponding Scala function type and one (called `drop`) from the Scala
+ * function type to the corresponding Java function type.
  */
 class FuncJBridge {
   implicit def lift[Z](f: Func0[Z]): Function0[Z] = new Function0[Z] {
