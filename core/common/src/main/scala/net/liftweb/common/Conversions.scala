@@ -86,9 +86,23 @@ sealed trait StringFunc {
  * while the former is simpler to use.
  */
 object StringFunc {
+  /**
+   * Implicit conversion from any type that in turn has an implicit conversion
+   * to a `String`, to a `StringFunc`. In particular, this means that if a given
+   * method takes a `StringFunc` as a parameter, it can accept either a `String`
+   * and any type that has an implicit conversion to `String` in scope.
+   */
   implicit def strToStringFunc[T](str: T)(implicit f: T => String): StringFunc = 
     ConstStringFunc(f(str))
 
+  /**
+   * Implicit conversion from any function that produces a type that in turn has
+   * an implicit conversion to a `String`, to a `StringFunc`. In particular,
+   * this means that if a given method takes a `StringFunc` as a parameter, it
+   * can accept either a function that returns a `String` and a function that
+   * returns any other type that has an implicit conversion to `String` in
+   * scope.
+   */
   implicit def funcToStringFunc[T](func: () => T)(implicit f: T => String): StringFunc =
     RealStringFunc(() => f(func()))
 }
