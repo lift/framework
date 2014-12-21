@@ -35,7 +35,7 @@ import org.slf4j.{MDC => SLF4JMDC, Marker, Logger => SLF4JLogger, LoggerFactory}
  * Logger.setup = Full(Logback.withFile(new URL("file:///path/to/config.xml")))
  *
  * class MyClass {
- *   val logger = Loger(classOf[MyClass])
+ *   val logger = Logger(classOf[MyClass])
  *
  *   logger.debug("Hello") // uses the above configuration
  * }
