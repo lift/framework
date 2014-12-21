@@ -92,7 +92,7 @@ object Box extends BoxTrait {
 }
 
 /**
- * Implementation for the `[[Box$]]` singleton.
+ * Implementation for the `[[Box$ Box]]` singleton.
  */
 sealed trait BoxTrait {
   val primitiveMap: Map[Class[_], Class[_]] = Map(
@@ -122,7 +122,8 @@ sealed trait BoxTrait {
   /**
    * Create a `Box` from the specified `Box`, checking for `null`.
    *
-   * @return `Full(in)` if `in` is non-null, `Empty` otherwise.
+   * @return `Full(in)` if `in` is a `Full` box and its value is non-null,
+   *         `Empty` otherwise.
    */
   def apply[T](in: Box[T]) = in match {
     case Full(x) => legacyNullTest(x)
@@ -131,9 +132,8 @@ sealed trait BoxTrait {
   }
 
   /**
-   * Transform a `List` with zero or one elements to a `Box`.
-   *
-   * Note that any elements past the head of the list are lost!
+   * Transform a `List` with zero or more elements to a `Box`, losing all but
+   * the first element if there are more than one.
    *
    * @return `Full(x)` with the head of the list if it contains at least one
    *         element and `Empty` otherwise.
@@ -272,10 +272,11 @@ final class DoNotCallThisMethod
 
 /**
  * The `Box` class is a container which is able to declare if it is `Full`
- * (containing a single non-null value) or `EmptyBox`. An EmptyBox, or empty,
- * can be the `Empty` singleton, `Failure` or `ParamFailure`. `Failure` and
- * `ParamFailure` contain information about why the `Box` is empty including
- * exception information, possibly chained `Failures` and a `String` message.
+ * (containing a single non-null value) or `[[EmptyBox]]`. An `EmptyBox`,
+ * or empty, can be the `[[Empty]]` singleton, `[[Failure]]` or
+ * `[[ParamFailure]]`. `Failure` and `ParamFailure` contain information about
+ * why the `Box` is empty including exception information, possibly chained
+ * `Failure`s and a `String` message.
  *
  * This serves a similar purpose to the `[[scala.Option Option]]` class from
  * Scala standard library but adds several features:
@@ -283,8 +284,8 @@ final class DoNotCallThisMethod
  *    `[[?~]]` or `[[failMsg]]` method).
  *  - You can chain failure messages on `Failure`s (with the `?~!` or
  *    `[[compoundFailMsg]]` method).
- *  - You "run" a function on a `Box`, with a default to return if the box is
- *    `Empty`:
+ *  - You can "run" a function on a `Box`, with a default to return if the box
+ *    is `Empty`:
  *    {{{
  *    val littleTeddyBears: Box[Int] = Full(10)
  *    littleTeddyBears.run("and then there were none") { (default: String, teddyBears: Int) =>
@@ -308,7 +309,9 @@ final class DoNotCallThisMethod
  *    ) // doSomething gets a Box[Int] as well
  *    }}}
  *
- * If you grew up on Java, you're used to `Exceptions` as part of your program
+ * === Exceptions and Empty Box Handling ===
+ *
+ * If you grew up on Java, you're used to `Exception`s as part of your program
  * logic.  The Scala philosophy and the Lift philosophy is that exceptions are
  * for exceptional conditions such as failure of an external resource (e.g.,
  * your database goes offline) rather than simply indicating that a parameter
@@ -383,8 +386,8 @@ sealed abstract class Box[+A] extends Product with Serializable{
    * The only time when you should be using this method is if the value is
    * guaranteed to be available based on a guard outside of the method. In these
    * cases, please provide that information in the justification `String`.
-   * For example, User.currentUser.openOrThrowException("This snippet is only
-   * used on pages where the user is logged in"). For tests, use `[[==]]` or
+   * For example, `User.currentUser.openOrThrowException("This snippet is only
+   * used on pages where the user is logged in")`. For tests, use `[[==]]` or
    * `[[===]]` instead. See the class documentation for more information.
    *
    * A valid justification for using this method should not be "I want my code
@@ -432,9 +435,9 @@ sealed abstract class Box[+A] extends Product with Serializable{
   /**
    * Apply a function returning a `Box` to the value contained in this `Box` if
    * it exists and return the resulting `Box`. If this `Box` is not already
-   * `Full`, return the unchanged box.
+   * `Full`, return this box unchanged.
    *
-   * @note This means that using `map` with a `Failure` will preserve the
+   * @note This means that using `flatMap` with a `Failure` will preserve the
    *       `Failure.`
    */
   def flatMap[B](f: A => Box[B]): Box[B] = Empty
@@ -462,16 +465,17 @@ sealed abstract class Box[+A] extends Product with Serializable{
   }
 
   /**
-   * If this `Box` contains a value and it satisfies the specified `predicate`,
+   * If this `Box` contains a value and it satisfies the specified `func`,
    * return `true`. Otherwise, return `false`.
    *
-   * @return true if this Box does contain a value and it satisfies the predicate
+   * @return `true` if this Box does contain a value and it satisfies the
+   *         predicate.
    */
   def exists(func: A => Boolean): Boolean = false
 
   /**
    * If this `Box` contains a value and it does not satisfy the specified
-   * `predicate`, return `false`. Otherwise, return `true`.
+   * `func`, return `false`. Otherwise, return `true`.
    *
    * @return true If the `Box` is empty, or if its value satisfies the
    *         predicate.
@@ -481,7 +485,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
   /**
    * 
    * If this `Box` contains a value and it does '''not''' satisfy the specified
-   * `predicate`, return the `Box` unchanged. Otherwise, return an `Empty`.
+   * `f`, return the `Box` unchanged. Otherwise, return an `Empty`.
    */
   def filterNot(f: A => Boolean): Box[A] = filter(a => !f(a))
 
@@ -492,8 +496,8 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def foreach[U](f: A => U): Unit = {}
 
   /**
-   * Create a `Full` box containing the specified value if `in` is an instance of
-   * the specified class `clz` and `Empty` otherwise.
+   * If this box is `Full` and contains an object of type `B`, returns a `Full`
+   * of type `Box[B]`. Otherwise, returns `Empty`.
    *
    * This is basically a Java-friendly version of `[[asA]]`, which you should
    * prefer when using Scala.
@@ -510,8 +514,8 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def isA[B](cls: Class[B]): Box[B] = Empty
 
   /**
-   * Create a `Full` box containing the specified value if `in` is of type
-   * `B` and `Empty` otherwise.
+   * Create a `Full` box containing the specified value if this box's value is
+   * of type `B` and `Empty` otherwise.
    *
    * For example:
    * {{{
@@ -525,7 +529,8 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def asA[B](implicit m: Manifest[B]): Box[B] = Empty
 
   /**
-   * Return this Box if `Full`, or the specified alternative if it is empty.
+   * Return this Box if `Full`, or the specified alternative if it is
+   * empty. Equivalent to `Option`'s `[[scala.Option.orElse orElse]]`.
    */
   def or[B >: A](alternative: => Box[B]): Box[B] = alternative
 
@@ -559,20 +564,19 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def toList: List[A] = Nil
 
   /**
-   * Returns the contents of this box wrapped in `Some` if this is Full, or
-   * `None` if this is a empty (meaning an `Empty`, `Failure` or
-   * `ParamFailure`).
+   * Returns the contents of this box wrapped in `Some` if this is `Full`, or
+   * `None` if this is empty (meaning an `Empty`, `Failure` or ParamFailure`).
    */
   def toOption: Option[A] = None
 
   /**
-   * Transform an Empty to a Failure with the specified message. Otherwise
-   * leaves returns the same box.
+   * Transform an `Empty` to a `Failure` with the specified message. Otherwise
+   * returns the same box.
    *
    * @note This means a `Failure` will also remain unchanged; see `?~!` to
    *       change these.
    *
-   * @return A Failure with the message if this `Box` is `Empty`, this box
+   * @return A `Failure` with the message if this `Box` is `Empty`, this box
    *         otherwise.
    */
   def ?~(msg: => String): Box[A] = this
@@ -603,9 +607,9 @@ sealed abstract class Box[+A] extends Product with Serializable{
    *
    * As with `[[?~]]`, if this is a `Full`, we return it unchanged.
    *
-   * @return A Failure with the message if this Box is an Empty Box. Chain this
-   *         box to the new `Failure` if this is a `Failure`. The unchanged box
-   *         if it is a `Full`.
+   * @return A `Failure` with the message if this `Box` is an `Empty` box. Chain
+   *         this box to the new `Failure` if this is a `Failure`. The unchanged
+   *         box if it is a `Full`.
    */
   def ?~!(msg: => String): Box[A] = ?~(msg)
 
@@ -636,8 +640,8 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def run[T](in: => T)(f: (T, A) => T) = in
 
   /**
-   * Perform a side effect by passing this Box to the specified function and
-   * return this Box unmodified. Similar to `foreach`, except that `foreach`
+   * Perform a side effect by passing this `Box` to the specified function and
+   * return this `Box` unmodified. Similar to `foreach`, except that `foreach`
    * returns `Unit`, while this method allows chained use of the `Box`.
    *
    * @return This box.
@@ -700,7 +704,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def ===[B >: A](to: B): Boolean = false
 
   /**
-   * Equivalent to `map(f).openOr(Full(dflt))`.
+   * Equivalent to `map(f).openOr(dflt)`.
    */
   def dmap[B](dflt: => B)(f: A => B): B = dflt
 
@@ -731,14 +735,16 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def fullXform[T](v: T)(f: T => A => T): T = v
 
   /**
-   * An `Either` that is a `Left` with the given argument `left` if this is
-   * empty, or a `Right` with the boxed value if this is `Full`.
+   * An `[[scala.util.Either Either]]` that is a `Left` with the given argument
+   * `left` if this is empty, or a `Right` with the boxed value if this is
+   * `Full`.
    */
   def toRight[B](left: => B): Either[B, A] = Left(left)
 
   /**
-   * An `Either` that is a `Right` with the given argument `right` if this is
-   * empty, or a `Left` with the boxed value if this is `Full`.
+   * An `[[scala.util.Either Either]]` that is a `Right` with the given argument
+   * `right` if this is empty, or a `Left` with the boxed value if this is
+   * `Full`.
    */
   def toLeft[B](right: => B): Either[A, B] = Right(right)
 
@@ -972,8 +978,9 @@ object ParamFailure {
 }
 
 /**
- * A `ParamFailure` is a `Failure` with an additional type-safe parameter that
- * can allow an application to store other information related to the failure.
+ * A `ParamFailure` is a `[[Failure]]` with an additional type-safe parameter
+ * that can allow an application to store other information related to the
+ * failure.
  *
  * For example:
  * {{{
@@ -1027,9 +1034,9 @@ trait Boxable[T] {
 }
 
 /**
- * Sometimes it's convenient to access either a Box[T] or a T.  If you specify
- * BoxOrRaw[T], the either a T or a Box[T] can be passed and the "right thing"
- * will happen, including nulls being treated as `Empty`.
+ * Sometimes it's convenient to access either a `[[Box]][T]` or a `T`.  If you
+ * specify `BoxOrRaw[T]`, either a `T` or a `Box[T]` can be passed and the
+ * "right thing" will happen, including `null`s being treated as `Empty`.
  */
 sealed trait BoxOrRaw[T] {
   def box: Box[T]
@@ -1055,12 +1062,12 @@ object BoxOrRaw {
 }
 
 /**
- * The BoxOrRaw that represents a boxed value.
+ * The `[[BoxOrRaw]]` that represents a boxed value.
  */
 final case class BoxedBoxOrRaw[T](box: Box[T]) extends BoxOrRaw[T]
 
 /**
- * The BoxOrRaw that represents a raw value.
+ * The `[[BoxOrRaw]]` that represents a raw value.
  */
 final case class RawBoxOrRaw[T](raw: T) extends BoxOrRaw[T] {
   def box: Box[T] = 

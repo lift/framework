@@ -29,8 +29,8 @@ package common
  */
 trait CommonLoanWrapper {
   /**
-   * Implementations of this method may either call f to continue processing
-   * the wrapped call as normal, or may ignore f to entirely replace the
+   * Implementations of this method may either call `f` to continue processing
+   * the wrapped call as normal, or may ignore `f` to entirely replace the
    * wrapped call with a custom implementation.
    *
    * @param f the delegate which provides processing by the underlying framework
@@ -40,8 +40,8 @@ trait CommonLoanWrapper {
 
 object CommonLoanWrapper {
   /**
-  * If you have a List of LoanWrappers, apply them and then the functions. For
-  * example:
+  * If you have a `List` of `LoanWrapper`s, apply them and then the
+  * functions. For example:
   *
   * {{{
   * val firstWrapper = new TimerWrapper()
