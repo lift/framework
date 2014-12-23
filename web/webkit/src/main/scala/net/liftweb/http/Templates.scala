@@ -134,10 +134,10 @@ object Templates {
     }.headOption getOrElse in
   }
 
-  private def parseContent(is: InputStream, parser:ContentParser, needAutoSurround: Boolean): Box[NodeSeq] =
+  private def parseContent(is: InputStream, parser:LiftRules.ContentParser, needAutoSurround: Boolean): Box[NodeSeq] =
   for {
     bytes <- Helpers.tryo(Helpers.readWholeStream(is))
-    elems <- parser.parse(new String(bytes, "UTF-8"))
+    elems <- parser(new String(bytes, "UTF-8"))
   } yield {
     if (needAutoSurround)
       <lift:surround with="default" at="content">{elems}</lift:surround>

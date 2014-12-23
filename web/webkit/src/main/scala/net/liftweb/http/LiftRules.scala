@@ -166,6 +166,8 @@ object LiftRules extends LiftRulesMocker {
    */
   type LiftRequestPF = PartialFunction[Req, Boolean]
 
+  type ContentParser = String => Box[NodeSeq]
+
   /*
   private[this] var _doneBoot = false
   private[http] def doneBoot = _doneBoot
@@ -1320,7 +1322,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val snippets = RulesSeq[SnippetPF]
 
-  private var contentParsers:Map[String, ContentParser] = Map("md" -> MarkdownParser)
+  private var contentParsers:Map[String, ContentParser] = Map("md" -> MarkdownParser.parse)
   def addContentParser(suffix:String, parser:ContentParser) = {
     templateSuffixes = templateSuffixes :+ suffix
     contentParsers += suffix -> parser
