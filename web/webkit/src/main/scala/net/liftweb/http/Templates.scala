@@ -28,7 +28,7 @@ import java.io.InputStream
  * Contains functions for obtaining templates
  */
 object Templates {
-  private val suffixes = LiftRules.templateSuffixes
+  private val parsers = LiftRules.contentParsers
 
   private def checkForLiftView(part: List[String], last: String, what: LiftRules.ViewDispatchPF): Box[NodeSeq] = {
     if (what.isDefinedAt(part)) {
@@ -134,17 +134,6 @@ object Templates {
     }.headOption getOrElse in
   }
 
-  private def parseContent(is: InputStream, parser:LiftRules.ContentParser, needAutoSurround: Boolean): Box[NodeSeq] =
-  for {
-    bytes <- Helpers.tryo(Helpers.readWholeStream(is))
-    elems <- parser(new String(bytes, "UTF-8"))
-  } yield {
-    if (needAutoSurround)
-      <lift:surround with="default" at="content">{elems}</lift:surround>
-    else
-      elems
-  }
-
   /**
    * Given a list of paths (e.g. List("foo", "index")),
    * find the template.
@@ -176,10 +165,6 @@ object Templates {
     val lrCache = LiftRules.templateCache
     val cache = if (lrCache.isDefined) lrCache.openOrThrowException("passes isDefined") else NoCache
 
-    val parserFunction: InputStream => Box[NodeSeq] = 
-      S.htmlProperties.htmlParser
-
-
     val tr = cache.get(key)
 
     if (tr.isDefined) tr
@@ -195,22 +180,26 @@ object Templates {
           case _ =>
             val pls = places.mkString("/", "/", "")
 
-            val se = suffixes.iterator
+            val se = parsers.iterator
             val sl = List("_" + locale.toString, "_" + locale.getLanguage, "")
 
             var found = false
             var ret: NodeSeq = null
 
             while (!found && se.hasNext) {
-              val s = se.next
+              val (suffix, parserFactory) = se.next
+              val parse = parserFactory()
               val le = sl.iterator
               while (!found && le.hasNext) {
                 val p = le.next
-                val name = pls + p + (if (s.length > 0) "." + s else "")
+                val name = pls + p + (if (suffix.length > 0) "." + suffix else "")
                 import scala.xml.dtd.ValidationException
                 val xmlb = try {
                   LiftRules.doWithResource(name) { is =>
-                    LiftRules.getContentParsers.get(s).map(parseContent(is, _, needAutoSurround)).getOrElse(parserFunction(is))
+                    parse(is).map { elems =>
+                      if (!needAutoSurround || LiftRules.dontAutoSurround.contains(suffix)) elems
+                      else <lift:surround with="default" at="content">{elems}</lift:surround>
+                    }
                   } match {
                     case Full(seq) => seq
                     case _ => Empty

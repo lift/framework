@@ -166,7 +166,15 @@ object LiftRules extends LiftRulesMocker {
    */
   type LiftRequestPF = PartialFunction[Req, Boolean]
 
-  type ContentParser = String => Box[NodeSeq]
+  type ContentParser = InputStream => Box[NodeSeq]
+
+  def toContentParser(f:String => Box[NodeSeq]):ContentParser = {
+    is:InputStream =>
+      for {
+        bytes <- Helpers.tryo(Helpers.readWholeStream(is))
+        elems <- f(new String(bytes, "UTF-8"))
+      } yield { elems }
+  }
 
   /*
   private[this] var _doneBoot = false
@@ -1322,12 +1330,14 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val snippets = RulesSeq[SnippetPF]
 
-  private var contentParsers:Map[String, ContentParser] = Map("md" -> MarkdownParser.parse)
-  def addContentParser(suffix:String, parser:ContentParser) = {
-    templateSuffixes = templateSuffixes :+ suffix
-    contentParsers += suffix -> parser
-  }
-  def getContentParsers = contentParsers
+  @volatile var contentParsers:Map[String, () => ContentParser] = Map(
+    "html" -> (() => S.htmlProperties.htmlParser),
+    "xhtml" -> (() => S.htmlProperties.htmlParser),
+    "htm" -> (() => S.htmlProperties.htmlParser),
+    "md" -> (() => toContentParser(MarkdownParser.parse))
+  )
+
+  @volatile var dontAutoSurround = Seq("html", "xhtml", "htm")
 
   /**
    * Execute certain functions early in a Stateful Request
@@ -1705,12 +1715,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
       else (parts.dropRight(1) ::: List(last.substring(0, idx)), last.substring(idx + 1))
 
   }
-
-  /**
-   * The list of suffixes that Lift looks for in templates.
-   * By default, html, xhtml, htm, and md
-   */
-  @volatile var templateSuffixes: List[String] = List("html", "xhtml", "htm", "md")
 
   /**
    * When a request is parsed into a Req object, certain suffixes are explicitly split from
