@@ -210,7 +210,7 @@ object Templates {
                 import scala.xml.dtd.ValidationException
                 val xmlb = try {
                   LiftRules.doWithResource(name) { is =>
-                    LiftRules.contentParsers.get(s).map(parseContent(is, _, needAutoSurround)).getOrElse(parserFunction(is))
+                    LiftRules.getContentParsers.get(s).map(parseContent(is, _, needAutoSurround)).getOrElse(parserFunction(is))
                   } match {
                     case Full(seq) => seq
                     case _ => Empty

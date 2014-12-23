@@ -1320,7 +1320,12 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val snippets = RulesSeq[SnippetPF]
 
-  var contentParsers:Map[String, ContentParser] = Map("md" -> MarkdownParser)
+  private var contentParsers:Map[String, ContentParser] = Map("md" -> MarkdownParser)
+  def addContentParser(suffix:String, parser:ContentParser) = {
+    templateSuffixes = templateSuffixes :+ suffix
+    contentParsers += suffix -> parser
+  }
+  def getContentParsers = contentParsers
 
   /**
    * Execute certain functions early in a Stateful Request
@@ -1701,7 +1706,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * The list of suffixes that Lift looks for in templates.
-   * By default, html, xhtml, and htm
+   * By default, html, xhtml, htm, and md
    */
   @volatile var templateSuffixes: List[String] = List("html", "xhtml", "htm", "md")
 
