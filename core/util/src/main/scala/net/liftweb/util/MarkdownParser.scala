@@ -4,7 +4,11 @@ import xml.{Elem, NodeSeq}
 import net.liftweb.common.Box
 import net.liftweb.markdown.ThreadLocalTransformer
 
-object MarkdownParser {
+trait ContentParser {
+  def parse(in: String): Box[NodeSeq]
+}
+
+object MarkdownParser extends ContentParser {
   lazy val matchMetadata = """(?m)\A(:?[ \t]*\n)?(?:-{3,}+\n)?(^([a-zA-Z0-9 _\-]+)[=:]([^\n]*)\n+(:?[ \t]*\n)?)+(:?-{3,}+\n)?""".r
 
   lazy val topMetadata = """(?m)^([^:]+):[ \t]*(.*)$""".r

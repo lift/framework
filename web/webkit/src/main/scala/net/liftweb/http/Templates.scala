@@ -134,10 +134,10 @@ object Templates {
     }.headOption getOrElse in
   }
 
-  private def parseMarkdown(is: InputStream, needAutoSurround: Boolean): Box[NodeSeq] =
+  private def parseContent(is: InputStream, parser:ContentParser, needAutoSurround: Boolean): Box[NodeSeq] =
   for {
     bytes <- Helpers.tryo(Helpers.readWholeStream(is))
-    elems <- MarkdownParser.parse(new String(bytes, "UTF-8"))
+    elems <- parser.parse(new String(bytes, "UTF-8"))
   } yield {
     if (needAutoSurround)
       <lift:surround with="default" at="content">{elems}</lift:surround>
@@ -210,8 +210,8 @@ object Templates {
                 import scala.xml.dtd.ValidationException
                 val xmlb = try {
                   LiftRules.doWithResource(name) { is =>
-                    if (s == "md") {parseMarkdown(is, needAutoSurround)} else
-                    parserFunction(is) } match {
+                    LiftRules.contentParsers.get(s).map(parseContent(is, _, needAutoSurround)).getOrElse(parserFunction(is))
+                  } match {
                     case Full(seq) => seq
                     case _ => Empty
                   }

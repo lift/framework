@@ -1320,6 +1320,8 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val snippets = RulesSeq[SnippetPF]
 
+  var contentParsers:Map[String, ContentParser] = Map("md" -> MarkdownParser)
+
   /**
    * Execute certain functions early in a Stateful Request
    * This is called early in a stateful request (one that's not serviced by a stateless REST request and
