@@ -166,16 +166,6 @@ object LiftRules extends LiftRulesMocker {
    */
   type LiftRequestPF = PartialFunction[Req, Boolean]
 
-  type ContentParser = InputStream => Box[NodeSeq]
-
-  def toContentParser(f:String => Box[NodeSeq]):ContentParser = {
-    is:InputStream =>
-      for {
-        bytes <- Helpers.tryo(Helpers.readWholeStream(is))
-        elems <- f(new String(bytes, "UTF-8"))
-      } yield { elems }
-  }
-
   /*
   private[this] var _doneBoot = false
   private[http] def doneBoot = _doneBoot
@@ -1330,14 +1320,17 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val snippets = RulesSeq[SnippetPF]
 
-  @volatile var contentParsers:Map[String, () => ContentParser] = Map(
-    "html" -> (() => S.htmlProperties.htmlParser),
-    "xhtml" -> (() => S.htmlProperties.htmlParser),
-    "htm" -> (() => S.htmlProperties.htmlParser),
-    "md" -> (() => toContentParser(MarkdownParser.parse))
+  /**
+   * Handles the parsing of template content into NodeSeqs.
+   */
+  @volatile var contentParsers:Seq[ContentParser] = Seq(
+    new ContentParser {
+      override def templateSuffixes = Seq("html", "xhtml", "htm")
+      override def parse(content:InputStream): Box[NodeSeq] = S.htmlProperties.htmlParser(content)
+      override def surround(content:NodeSeq):NodeSeq = content
+    },
+    ContentParser.basic("md", MarkdownParser.parse)
   )
-
-  @volatile var dontAutoSurround = Seq("html", "xhtml", "htm")
 
   /**
    * Execute certain functions early in a Stateful Request
