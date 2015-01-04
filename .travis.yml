@@ -1,4 +1,7 @@
 services:
   - mongodb
 
+jdk:
+  - oraclejdk7
+
 script: ./liftsh test
