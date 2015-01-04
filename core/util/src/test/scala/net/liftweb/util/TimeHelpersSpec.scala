@@ -19,6 +19,7 @@ package util
 
 import java.util.{Calendar, Date}
 
+import org.joda.time.{PeriodType, Period, Duration, DateTime}
 import org.specs2.mutable.Specification
 import org.specs2.ScalaCheck
 import org.specs2.time.NoTimeConversions
@@ -50,10 +51,16 @@ object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen
       3.hours must_== TimeSpan(3 * 60 * 60 * 1000)
     }
     "be created from a number of days" in {
-      3.days must_== TimeSpan(3 * 24 * 60 * 60 * 1000)
+      val given: TimeHelpers.TimeSpan = 3.days
+      val expected: TimeHelpers.TimeSpan = TimeSpan(3 * 24 * 60 * 60 * 1000)
+      given.dt must_== expected.dt
+      given must_== expected
     }
     "be created from a number of weeks" in {
-      3.weeks must_== TimeSpan(3 * 7 * 24 * 60 * 60 * 1000)
+      val given = 3.weeks
+      val expected = TimeSpan(3 * 7 * 24 * 60 * 60 * 1000)
+      given.dt must_== expected.dt
+      given must_== expected
     }
     "be converted implicitly to a date starting from the epoch time" in {
       3.seconds.after(new Date(0)) must beTrue
