@@ -4,4 +4,9 @@ services:
 jdk:
   - oraclejdk7
 
+language: scala
+
+scala:
+   - 2.11.2
+
 script: ./liftsh test
