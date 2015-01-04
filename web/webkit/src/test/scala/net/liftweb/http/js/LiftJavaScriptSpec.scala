@@ -18,6 +18,8 @@ package net.liftweb
 package http
 package js
 
+import java.util.ResourceBundle
+
 import org.specs2.mutable.Specification
 
 import common._
@@ -36,41 +38,51 @@ object LiftJavaScriptSpec extends Specification  {
 
   private def session = new LiftSession("", randomString(20), Empty)
 
+  private val cannotBeContacted = localizedMessage("ajax.error")
+
+  private def localizedMessage(key: String): String = {
+    val unicodeString = ResourceBundle.getBundle("i18n.lift-core").getString(key)
+    native2ascii(unicodeString)
+  }
+
+  private def native2ascii(unicodeString: String): String =
+    "([^\\p{ASCII}])".r.replaceAllIn(unicodeString, m => String.format("\\\\u%04x", m.group(1).head.toInt.underlying()))
+
   "LiftJavaScript" should {
     "create default settings" in {
       S.initIfUninitted(session) {
         val settings = LiftJavaScript.settings
-        settings.toJsCmd must_== """{"liftPath": "/lift", "ajaxRetryCount": 3, "ajaxPostTimeout": 5000, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": null, "logError": function(msg) {}, "ajaxOnFailure": function() {alert("The server cannot be contacted at this time");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}}"""
+        settings.toJsCmd must_== s"""{"liftPath": "/lift", "ajaxRetryCount": 3, "ajaxPostTimeout": 5000, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": null, "logError": function(msg) {}, "ajaxOnFailure": function() {alert("$cannotBeContacted");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}}"""
       }
     }
     "create custom static settings" in {
       S.initIfUninitted(session) {
         LiftRules.ajaxRetryCount = Full(4)
         val settings = LiftJavaScript.settings
-        settings.toJsCmd must_== """{"liftPath": "/lift", "ajaxRetryCount": 4, "ajaxPostTimeout": 5000, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": null, "logError": function(msg) {}, "ajaxOnFailure": function() {alert("The server cannot be contacted at this time");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}}"""
+        settings.toJsCmd must_== s"""{"liftPath": "/lift", "ajaxRetryCount": 4, "ajaxPostTimeout": 5000, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": null, "logError": function(msg) {}, "ajaxOnFailure": function() {alert("$cannotBeContacted");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}}"""
       }
     }
     "create custom dynamic settings" in {
       S.initIfUninitted(session) {
         LiftRules.cometServer = () => Some("srvr1")
         val settings = LiftJavaScript.settings
-        settings.toJsCmd must_== """{"liftPath": "/lift", "ajaxRetryCount": 4, "ajaxPostTimeout": 5000, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": "srvr1", "logError": function(msg) {}, "ajaxOnFailure": function() {alert("The server cannot be contacted at this time");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}}"""
+        settings.toJsCmd must_== s"""{"liftPath": "/lift", "ajaxRetryCount": 4, "ajaxPostTimeout": 5000, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": "srvr1", "logError": function(msg) {}, "ajaxOnFailure": function() {alert("$cannotBeContacted");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}}"""
       }
     }
     "create custom function settings" in {
       S.initIfUninitted(session) {
         LiftRules.jsLogFunc = Full(v => JE.Call("lift.logError", v))
         val settings = LiftJavaScript.settings
-        settings.toJsCmd must_== """{"liftPath": "/lift", "ajaxRetryCount": 4, "ajaxPostTimeout": 5000, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": "srvr1", "logError": function(msg) {lift.logError(msg);}, "ajaxOnFailure": function() {alert("The server cannot be contacted at this time");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}}"""
+        settings.toJsCmd must_== s"""{"liftPath": "/lift", "ajaxRetryCount": 4, "ajaxPostTimeout": 5000, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": "srvr1", "logError": function(msg) {lift.logError(msg);}, "ajaxOnFailure": function() {alert("$cannotBeContacted");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}}"""
       }
     }
     "create init command" in {
       S.initIfUninitted(session) {
         val init = LiftRules.javaScriptSettings.vend().map(_.apply(session)).map(LiftJavaScript.initCmd(_).toJsCmd)
         init must_==
-          Full("""var lift_settings = {"liftPath": "/lift", "ajaxRetryCount": 4, "ajaxPostTimeout": 5000, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": "srvr1", "logError": function(msg) {lift.logError(msg);}, "ajaxOnFailure": function() {alert("The server cannot be contacted at this time");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}};
-            |window.lift.extend(lift_settings,window.liftJQuery);
-            |window.lift.init(lift_settings);""".stripMargin)
+          Full(s"""var lift_settings = {"liftPath": "/lift", "ajaxRetryCount": 4, "ajaxPostTimeout": 5000, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": "srvr1", "logError": function(msg) {lift.logError(msg);}, "ajaxOnFailure": function() {alert("$cannotBeContacted");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}};
+                  |window.lift.extend(lift_settings,window.liftJQuery);
+                  |window.lift.init(lift_settings);""".stripMargin)
       }
     }
     "create init command with custom setting" in {
@@ -79,9 +91,9 @@ object LiftJavaScriptSpec extends Specification  {
         val init = LiftJavaScript.initCmd(settings)
         println(init.toJsCmd)
         init.toJsCmd must_==
-          """var lift_settings = {"liftPath": "liftyStuff", "ajaxRetryCount": 4, "ajaxPostTimeout": 5000, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": "srvr1", "logError": function(msg) {lift.logError(msg);}, "ajaxOnFailure": function() {alert("The server cannot be contacted at this time");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}, "mysetting": 99};
-            |window.lift.extend(lift_settings,window.liftJQuery);
-            |window.lift.init(lift_settings);""".stripMargin
+          s"""var lift_settings = {"liftPath": "liftyStuff", "ajaxRetryCount": 4, "ajaxPostTimeout": 5000, "gcPollingInterval": 75000, "gcFailureRetryTimeout": 15000, "cometGetTimeout": 140000, "cometFailureRetryTimeout": 10000, "cometServer": "srvr1", "logError": function(msg) {lift.logError(msg);}, "ajaxOnFailure": function() {alert("$cannotBeContacted");}, "ajaxOnStart": function() {}, "ajaxOnEnd": function() {}, "mysetting": 99};
+             |window.lift.extend(lift_settings,window.liftJQuery);
+             |window.lift.init(lift_settings);""".stripMargin
       }
     }
   }
