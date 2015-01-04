@@ -197,7 +197,7 @@ object Templates {
                 val name = pls + p + (if (suffix.length > 0) "." + suffix else "")
                 import scala.xml.dtd.ValidationException
                 val xmlb = try {
-                  LiftRules.doWithResource(name) { parser.parse } match {
+                  LiftRules.doWithResource(name)(parser.parse) match {
                     case Full(seq) => seq
                     case _ => Empty
                   }

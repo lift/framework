@@ -24,59 +24,79 @@ import net.liftweb.util.Helpers
 
 import scala.xml.NodeSeq
 
-/** Objects which can parse content should implement this trait. See LiftRules.contentParsers */
+/**
+ * Objects which can parse content should implement this trait. See [[LiftRules.contentParsers]]
+ */
 trait ContentParser {
-  /** The template filename suffixes this parser is for, e.g. "html", "md", "adoc", etc. */
+  /**
+   * The template filename suffixes this parser is for, e.g. "html", "md", "adoc", etc.
+   */
   def templateSuffixes: Seq[String]
 
-  /** Given an InputStream to a resource with a matching suffix, this function should provide the corresponding
-    * NodeSeq ready to serve
-    * @return
-    */
+  /**
+   * Given an InputStream to a resource with a matching suffix, this function should provide the corresponding
+   * NodeSeq ready to serve
+   * @return
+   */
   def parse(content:InputStream): Box[NodeSeq]
 
-  /** Called to auto-surround the content when needed, i.e. when this content is a top-level template */
+  /**
+   * Called to auto-surround the content when needed, i.e. when this content is a top-level template
+   */
   def surround(content:NodeSeq): NodeSeq
 }
 
 object ContentParser {
-  /** Convenience function to convert a simple String => Box[NodeSeq] content parser function into a
-    * InputStream => Box[NodeSeq] function for satisfying the ContentParser contract.
-    * @param f your String => Box[NodeSeq] content parser
-    * @return your parser wrapped up to handle an InputStream
-    */
-  def toInputStreamParser(f:String => Box[NodeSeq]):InputStream => Box[NodeSeq] = {
+  /**
+   * Convenience function to convert a simple `String => Box[NodeSeq]` content parser function into a
+   * `InputStream => Box[NodeSeq]` function for satisfying the `ContentParser` contract.
+   * @param simpleParser your `String => Box[NodeSeq]` content parser
+   * @return your parser wrapped up to handle an `InputStream`
+   */
+  def toInputStreamParser(simpleParser: String=>Box[NodeSeq]): InputStream=>Box[NodeSeq] = {
     is:InputStream =>
       for {
         bytes <- Helpers.tryo(Helpers.readWholeStream(is))
-        elems <- f(new String(bytes, "UTF-8"))
-      } yield { elems }
+        elems <- simpleParser(new String(bytes, "UTF-8"))
+      } yield {
+        elems
+      }
   }
 
-  val defaultSurround:NodeSeq => NodeSeq =
+  /**
+   * Default surround function used by `ContentParser.basic` and the built-it markdown parser which results in the
+   * template being surrounded by `default.html` with the content located at `id=content`.
+   */
+  val defaultSurround: NodeSeq=>NodeSeq =
     { elems => <lift:surround with="default" at="content">{elems}</lift:surround> }
 
-  /** A basic ContentParser which handles one template filename suffix, operates on a string, and surrounds the
-    * top-level templates with the default surround
-    */
-  def basic(templateSuffix:String,
-            parseF:String => Box[NodeSeq],
-            surroundF:NodeSeq => NodeSeq = defaultSurround):ContentParser =
+  /**
+   * A basic `ContentParser` which handles one template filename suffix, operates on a string, and surrounds the
+   * top-level templates with the default surround.
+   * @param templateSuffix the template filename suffix for which this parser will be utilized.
+   * @param parseFunction the parse function for converting the template as a string into a `NodeSeq`.
+   * @param surroundFunction the function for surrounding the content returned by the `parseFunction`.
+   *                         See [[defaultSurround]].
+   */
+  def basic(templateSuffix: String,
+            parseFunction: String=>Box[NodeSeq],
+            surroundFunction: NodeSeq=>NodeSeq = defaultSurround):ContentParser =
     new ContentParser {
       override def templateSuffixes: Seq[String] = Seq(templateSuffix)
-      override def parse(content:InputStream): Box[NodeSeq] = toInputStreamParser(parseF)(content)
-      override def surround(content:NodeSeq):NodeSeq = surroundF(content)
+      override def parse(content: InputStream): Box[NodeSeq] = toInputStreamParser(parseFunction)(content)
+      override def surround(content: NodeSeq): NodeSeq = surroundFunction(content)
     }
 
-  /** A full ContentParser which handles multiple filename suffixes, operates on an InputStream, and surrounds the
-    * top-level templates with the default surround
-    */
-  def full(templateSuffixesSeq:Seq[String],
-           parseF:InputStream => Box[NodeSeq],
-           surroundF:NodeSeq => NodeSeq = defaultSurround):ContentParser =
+  /**
+   * A full `ContentParser` which handles multiple filename suffixes, operates on an `InputStream`, and surrounds the
+   * top-level templates with the default surround
+   */
+  def full(templateSuffixesSeq: Seq[String],
+           parseF: InputStream=>Box[NodeSeq],
+           surroundF: NodeSeq=>NodeSeq = defaultSurround):ContentParser =
     new ContentParser {    
       override def templateSuffixes: Seq[String] = templateSuffixesSeq
-      override def parse(content:InputStream): Box[NodeSeq] = parseF(content)
-      override def surround(content:NodeSeq):NodeSeq = surroundF(content)
+      override def parse(content: InputStream): Box[NodeSeq] = parseF(content)
+      override def surround(content: NodeSeq): NodeSeq = surroundF(content)
     }
 }

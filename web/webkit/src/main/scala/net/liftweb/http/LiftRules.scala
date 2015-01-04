@@ -1323,12 +1323,12 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Handles the parsing of template content into NodeSeqs.
    */
-  @volatile var contentParsers:Seq[ContentParser] = Seq(
-    new ContentParser {
-      override def templateSuffixes = Seq("html", "xhtml", "htm")
-      override def parse(content:InputStream): Box[NodeSeq] = S.htmlProperties.htmlParser(content)
-      override def surround(content:NodeSeq):NodeSeq = content
-    },
+  @volatile var contentParsers: Seq[ContentParser] = Seq(
+    ContentParser.full(
+      Seq("html", "xhtml", "htm"),
+      S.htmlProperties.htmlParser,
+      content => content // These templates are not surrounded  by default
+    ),
     ContentParser.basic("md", MarkdownParser.parse)
   )
 
