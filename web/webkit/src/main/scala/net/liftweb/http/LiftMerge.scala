@@ -170,7 +170,7 @@ private[http] trait LiftMerge {
               Nil
             } else {
               // When using javascript:-style URIs, return false is implied.
-              List(strippedJs + "; return false;")
+              List(strippedJs + "; event.preventDefault();")
             }
           }
 
