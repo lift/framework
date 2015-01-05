@@ -1,5 +1,7 @@
 # The Lift Web Framework
 
+[![Build Status](https://travis-ci.org/lift/framework.svg?branch=master)](https://travis-ci.org/lift/framework)
+
 Lift is the most powerful, most secure web framework available today. There are [Seven Things](http://seventhings.liftweb.net/) that distinguish Lift from other web frameworks.
 
 Lift applications are:
