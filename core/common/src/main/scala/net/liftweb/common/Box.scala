@@ -24,7 +24,12 @@ import scala.reflect.Manifest
 import java.util.{Iterator => JavaIterator, ArrayList => JavaArrayList}
 
 /**
- * The bridge from Java to Scala Box
+ * A bridge to make using Lift `[[Box]]` from Java easier.
+ *
+ * In particular, provides access to the `Box` companion object so that
+ * functions like `[[Box$.legacyNullTest legacyNullTest]]` can be used easily
+ * from Java, as well as access to the `[[Empty]]` singleton so that empty
+ * values can be created easily from Java.
  */
 class BoxJBridge {
   /**
@@ -33,25 +38,25 @@ class BoxJBridge {
   def box: BoxTrait = Box
 
   /**
-   * Get the None singleton
+   * Get the `[[Empty]]` singleton.
    */
   def empty: EmptyBox = Empty
 }
 
 /**
  * The Box companion object provides methods to create a Box from:
- * <ul>
- *   <li>an Option</li>
- *   <li>a List</li>
- *   <li>any AnyRef object</li>
- * </ul>
+ *  - an `[[scala.Option Option]]`
+ *  - a `[[scala.collection.immutable.List List]]`
+ *  - any `[[scala.AnyRef AnyRef]]` object, converting `null` to `[[Empty]]` and
+ *    anything else to a `[[Full]]` with the given object
  *
- * It also provides implicit methods to transform Option to Box, Box to Iterable, and Box to Option
+ * It also provides implicit methods to transform `Option` to `Box`, `Box` to
+ * `[[scala.collection.Iterable Iterable]]`, and `Box` to `Option`.
  */
 object Box extends BoxTrait {
   /**
-   * Helper class to provide an easy way for converting Lists of Boxes[T] into
-   * a Box of List[T].
+   * Helper class to provide an easy way for converting a `List[Box[T]]` into
+   * a `Box[List[T]]`.
   **/
   implicit class ListOfBoxes[T](val theListOfBoxes: List[Box[T]]) extends AnyVal {
     /**
@@ -101,17 +106,10 @@ object Box extends BoxTrait {
 }
 
 /**
- * The Box companion object provides methods to create a Box from:
- * <ul>
- *   <li>an Option</li>
- *   <li>a List</li>
- *   <li>any AnyRef object</li>
- * </ul>
- *
- * It also provides implicit methods to transform Option to Box, Box to Iterable, and Box to Option
+ * Implementation for the `[[Box$ Box]]` singleton.
  */
 sealed trait BoxTrait {
-  val primativeMap: Map[Class[_], Class[_]] = Map(
+  val primitiveMap: Map[Class[_], Class[_]] = Map(
     java.lang.Boolean.TYPE -> classOf[java.lang.Boolean],
     java.lang.Character.TYPE -> classOf[java.lang.Character],
     java.lang.Byte.TYPE -> classOf[java.lang.Byte],
@@ -121,9 +119,14 @@ sealed trait BoxTrait {
     java.lang.Long.TYPE -> classOf[java.lang.Long],
     java.lang.Short.TYPE -> classOf[java.lang.Short])
 
+  @deprecated("Use the correctly-spelled primitiveMap instead.","3.0")
+  val primativeMap = primitiveMap
+
   /**
-   * Create a Box from the specified Option.
-   * @return a Box created from an Option. Full(x) if the Option is Some(x) and Empty otherwise
+   * Create a `Box` from the specified `Option`.
+   *
+   * @return `Full` with the contents if the `Option` is `Some`
+   *         and `Empty` otherwise.
    */
   def apply[T](in: Option[T]) = in match {
     case Some(x) => Full(x)
@@ -131,9 +134,10 @@ sealed trait BoxTrait {
   }
 
   /**
-   * Create a Box from the specified Box, checking for null.
-   * @return Full(x) if in is Full(x) and x is not null
-   * Empty otherwise
+   * Create a `Box` from the specified `Box`, checking for `null`.
+   *
+   * @return `Full(in)` if `in` is a `Full` box and its value is non-null,
+   *         `Empty` otherwise.
    */
   def apply[T](in: Box[T]) = in match {
     case Full(x) => legacyNullTest(x)
@@ -142,8 +146,11 @@ sealed trait BoxTrait {
   }
 
   /**
-   * Transform a List with zero or one elements to a Box.
-   * @return a Box object containing the head of a List. Full(x) if the List contains at least one element and Empty otherwise.
+   * Transform a `List` with zero or more elements to a `Box`, losing all but
+   * the first element if there are more than one.
+   *
+   * @return `Full(x)` with the head of the list if it contains at least one
+   *         element and `Empty` otherwise.
    */
   def apply[T](in: List[T]) = in match {
     case x :: _ => Full(x)
@@ -151,47 +158,65 @@ sealed trait BoxTrait {
   }
 
   /**
-   * Apply the specified PartialFunction to the specified value and return the result
-   * in a Full Box; if the pf is undefined at that point return Empty.
-   * @param pf the partial function to use to transform the value
-   * @param value the value to transform
-   * @return a Full box containing the transformed value if pf.isDefinedAt(value); Empty otherwise
+   * Apply the specified `PartialFunction` to the specified `value` and return the result
+   * in a `Full`; if the `pf`` is not defined at that point return `Empty`.
+   *
+   * @param pf The partial function to use to transform the value.
+   * @param value The value to transform.
+   *
+   * @return A `Full` containing the transformed value if
+   *         `pf.isDefinedAt(value)` and `Empty` otherwise.
    */
   def apply[InType, OutType](pf: PartialFunction[InType, OutType])(value: InType): Box[OutType] =
   if (pf.isDefinedAt(value)) Full(pf(value)) else Empty
 
   /**
-   * Apply the specified PartialFunction to the specified value and return the result
-   * in a Full Box; if the pf is undefined at that point return Empty.
-   * @param pf the partial function to use to transform the value
-   * @param value the value to transform
-   * @return a Full box containing the transformed value if pf.isDefinedAt(value); Empty otherwise
+   * Apply the specified `PartialFunction` to the specified `value` and return
+   * the result in a `Full`; if the `pf`` is not defined at that point return
+   * `Empty`.
+   *
+   * @param pf The partial function to use to transform the value.
+   * @param value The value to transform.
+   * @return A `Full` containing the transformed value if
+   *         `pf.isDefinedAt(value)` and `Empty` otherwise.
    */
   def apply[InType, OutType](value: InType)(pf: PartialFunction[InType, OutType]): Box[OutType] =
   if (pf.isDefinedAt(value)) Full(pf(value)) else Empty
 
   /**
-   * This implicit transformation allows one to use a Box as an Iterable
-   * @return List(in) if this Box is Full(in); Nil otherwise
+   * This implicit transformation allows one to use a `Box` as an `Iterable` of
+   * zero or one elements.
+   *
+   * @return A single-element `List` with the contents if the box is `Full`
+   *         and `[[scala.collection.immutable.Nil Nil]]` otherwise.
    */
   implicit def box2Iterable[T](in: Box[T]): Iterable[T] = in.toList
 
   /**
-   * This implicit transformation allows one to use an Option as a Box.
-   * @return a Box object from an Option. Full(in) if the Option is Some(in); Empty otherwise
+   * This implicit transformation allows one to use an `Option` as a `Box`.
+   *
+   * @return `Full` with the contents if the `Option` is `Some` and `Empty`
+   *         otherwise.
    */
   implicit def option2Box[T](in: Option[T]): Box[T] = Box(in)
 
   /**
-   * This implicit transformation allows one to use a Box as an Option.
-   * @return <code>Some(in)</code> if this Box is <code>Full(in)</code>; None otherwise
+   * This implicit transformation allows one to use a `Box` as an `Option`.
+   *
+   * Note that `Box` implements `get` specifically to avoid usage of `.get` on
+   * `Box` instances. Boxes should be opened using `openOrThrowException` and
+   * their contents compared using `== Full(expectedValue)`.
+   *
+   * @return `Some` with the contents if the box is `Full` and `[[scala.None None]]`
+   *         otherwise.
    */
   implicit def box2Option[T](in: Box[T]): Option[T] = in.toOption
 
   /**
-   * This method allows one to encapsulate any object in a Box in a null-safe manner,
-   * treating null values to Empty
-   * @return <code>Full(in)</code> if <code>in</code> is not null; Empty otherwise
+   * This method allows one to encapsulate any object in a Box in a null-safe
+   * manner, converting `null` values to `Empty`.
+   *
+   * @return `Full` if `in` is not null and `Empty` otherwise.
    */
   def legacyNullTest[T](in: T): Box[T] = in match {
     case null => Empty
@@ -199,19 +224,29 @@ sealed trait BoxTrait {
   }
 
   /**
-   * Alias for legacyNullTest.
-   * This method allows one to encapsulate any object in a Box in a null-safe manner,
-   * returning Empty if the specified value is null.
-   * @return Full(in) if <code>in</code> is not null Empty otherwise
+   * Alias for `[[legacyNullTest]]`.
    */
   def !![T](in: T): Box[T] = legacyNullTest(in)
 
   /**
-   * Create a Full box containing the specified value if "in" is an instance
-   * of the specified class, or Empty otherwise.
+   * Create a `Full` box containing the specified value if `in` is an instance of
+   * the specified class `clz` and `Empty` otherwise.
+   *
+   * This is basically a Java-friendly version of `[[asA]]`, which you should
+   * prefer when using Scala.
+   *
+   * For example:
+   * {{{
+   * scala> Box.isA("boom", classOf[Int])
+   * res0: net.liftweb.common.Box[Int] = Empty
+   *
+   * scala> Box.isA(5, classOf[Int])
+   * res1: net.liftweb.common.Box[Int] = Full(5)
+   * }}}
    */
-  def isA[A, B](in: A, clz: Class[B]): Box[B] =
-  (Box !! in).isA(clz)
+  def isA[A, B](in: A, clz: Class[B]): Box[B] = {
+    (Box !! in).isA(clz)
+  }
 
   // NOTE: We use an existential type here so that you can invoke asA with
   // just one type parameter. To wit, this lets you do:
@@ -224,108 +259,216 @@ sealed trait BoxTrait {
   //
   // Uglier, and generally not as nice.
   /**
-   * Create a Full box containing the specified value if <code>in</code> is of
-   * type <code>B</code>; Empty otherwise.
+   * Create a `Full` box containing the specified value if `in` is of type
+   * `B` and `Empty` otherwise.
+   *
+   * For example:
+   * {{{
+   * scala> Box.asA[Int]("boom")
+   * res0: net.liftweb.common.Box[Int] = Empty
+   *
+   * scala> Box.asA[Int](5)
+   * res1: net.liftweb.common.Box[Int] = Full(5)
+   * }}}
    */
-  def asA[B](in: T forSome { type T })(implicit m: Manifest[B]): Box[B] =
-  (Box !! in).asA[B]
+  def asA[B](in: T forSome { type T })(implicit m: Manifest[B]): Box[B] = {
+    (Box !! in).asA[B]
+  }
 }
 
 /**
- * The Box class is a container which is able to declare if it is Full (containing a single non-null value) or EmptyBox. An EmptyBox, or empty, can be the Empty singleton, Failure or ParamFailure.
- * Failure and ParamFailure contain information about why the Box is empty including
- * exception information, chained Failures and a String.
- * It serves a similar purpose to the Option class from Scala standard library but adds several features:
- * <ul>
- *   <li> you can transform it to a Failure object if it is Empty (with the ?~ method)</li>
- *   <li> you can chain failure messages on Failure Boxes</li>
- *   <li> you "run" a function on your Box, with a default value: <code>Full(1).run("zero") { (x: String, y: Int) => y.toString }</code></li>
- *   <li> you can "pass" a Box to a function for side effects: <code>Full(1) $ { x: Box[Int] => println(x openOr 0) }</code></li>
- * </ul>
+ * Used as a return type for certain methods that should not be called. One
+ * example is the `get` method on a Lift `Box`. It exists to prevent client
+ * code from using `.get` as an easy way to open a `Box`, so it needs a return
+ * type that will match no valid client return types.
+ */
+final class DoNotCallThisMethod
+
+/**
+ * The `Box` class is a container which is able to declare if it is `Full`
+ * (containing a single non-null value) or `[[EmptyBox]]`. An `EmptyBox`,
+ * or empty, can be the `[[Empty]]` singleton, `[[Failure]]` or
+ * `[[ParamFailure]]`. `Failure` and `ParamFailure` contain information about
+ * why the `Box` is empty including exception information, possibly chained
+ * `Failure`s and a `String` message.
+ *
+ * This serves a similar purpose to the `[[scala.Option Option]]` class from
+ * Scala standard library but adds several features:
+ *  - You can transform it to a `Failure` object if it is `Empty` (with the
+ *    `[[?~]]` or `[[failMsg]]` method).
+ *  - You can chain failure messages on `Failure`s (with the `?~!` or
+ *    `[[compoundFailMsg]]` method).
+ *  - You can "run" a function on a `Box`, with a default to return if the box
+ *    is `Empty`:
+ *    {{{
+ *    val littleTeddyBears: Box[Int] = Full(10)
+ *    littleTeddyBears.run("and then there were none") { (default: String, teddyBears: Int) =>
+ *      s"\$teddyBears little teddy bears"
+ *    } // => 10 little teddy bears
+ *
+ *    val updatedTeddyBears: Box[Int] = Empty
+ *    littleTeddyBears.run("and then there were none") { (default: String, teddyBears: Int) =>
+ *      s"\$teddyBears little teddy bears"
+ *    } // => and then there were none
+ *    }}}
+ *  - You can "pass" a `Box` to a function for side effects:
+ *    {{{
+ *    val littleTeddyBears: Box[Int] = Full(10)
+ *
+ *    doSomething(
+ *      littleTeddyBears $ { teddyBears: Box[Int] =>
+ *        println("Are there any?")
+ *        println(teddyBears openOr 0)
+ *      }
+ *    ) // doSomething gets a Box[Int] as well
+ *    }}}
+ *
+ * === Exceptions and Empty Box Handling ===
+ *
+ * If you grew up on Java, you're used to `Exception`s as part of your program
+ * logic.  The Scala philosophy and the Lift philosophy is that exceptions are
+ * for exceptional conditions such as failure of an external resource (e.g.,
+ * your database goes offline) rather than simply indicating that a parameter
+ * wasn't supplied or couldn't be parsed.
+ *
+ * Lift's `Box` and Scala's `Option` provide mechanisms for being explicit
+ * about a value existing or not existing rather than relying on a reference
+ * being not-null.  However, extracting a value from a `Box` should be done
+ * correctly. Available options are:
+ *  - Using a `for` comprehension, especially for multiple boxes:
+ *    {{{
+ *    val loggedInUser: Box[User] =
+ *      for {
+ *        username <- possibleUsername
+ *        password <- possiblePassword
+ *        user <- User.find("username" -> username)
+ *        if User.checkPassword(password, user.password)
+ *      } yield {
+ *        user
+ *      }
+ *    }}}
+ *  - Using `map`, `flatMap`, `filter`, and `foreach` (`for` comprehensions
+ *    use these under the covers):
+ *    {{{
+ *    val fullName: Box[String] =
+ *      loggedInUser.map { user =>
+ *        user.name + " (" + user.nickname + ")"
+ *      }
+ *    val bestFriend: Box[User] =
+ *      loggedInUser.flatMap { user =>
+ *        UserFriends.find(user.bestFriend.id)
+ *      }
+ *    val allowedUser: Box[User] =
+ *      loggedInUser.filter(_.canAccess_?(currentPage))
+ *
+ *    fullName.foreach { name =>
+ *      logger.info(s"User \$name is in the building.")
+ *    }
+ *    }}}
+ *  - Using pattern-matching (a good way to deal with `Failure`s):
+ *    {{{
+ *    val loginMessage: String =
+ *      loggedInUser match {
+ *        case Full(user) =>
+ *          "Login successful!"
+ *        case Failure(message, _, _) =>
+ *          s"Login failed: \$message"
+ *        case Empty =>
+ *          s"Unknown failure logging in."
+ *      }
+ *    }}}
+ *  - For comparisons (e.g., in tests), use `==` and `===`:
+ *    {{{
+ *    loggedInUser must_== Full(mockUser)
+ *    (loggedInUser === mockUser) must beTrue
+ *    }}}
  */
 sealed abstract class Box[+A] extends Product with Serializable{
   self =>
   /**
-   * Returns true if this Box contains no value (is Empty or Failure or ParamFailure)
-   * @return true if this Box contains no value
+   * Returns `true` if this `Box` contains no value (i.e., it is `Empty` or
+   * `Failure` or `ParamFailure`).
    */
   def isEmpty: Boolean
 
   /**
    * Returns true if the box contains a value.
-   * @return true if this Box contains a value
    */
   def isDefined: Boolean = !isEmpty
 
   /**
-   * If you grew up on Java, you're used to Exceptions as part of your program logic.
-   * The Scala philosophy and the Lift philosophy is that exceptions are for exceptional
-   * conditions such as failure of an external resource (e.g., your database goes offline)
-   * rather than simply indicating that a parameter wasn't supplied or couldn't be parsed.
+   * The only time when you should be using this method is if the value is
+   * guaranteed to be available based on a guard outside of the method. In these
+   * cases, please provide that information in the justification `String`.
+   * For example, `User.currentUser.openOrThrowException("This snippet is only
+   * used on pages where the user is logged in")`. For tests, use `[[==]]` or
+   * `[[===]]` instead. See the class documentation for more information.
    *
-   * Lift's Box and Scala's Option provide a mechanism for being explicit about a value
-   * existing or not existing rather than relying on a reference being not-null.  However,
-   * extracting a value from a Box should be done correctly.  Correctly can be (in order of use
-   * in David Pollak's code): a for comprehension; using map, flatMap or foreach; or using pattern matching.
+   * A valid justification for using this method should not be "I want my code
+   * to fail fast when I call it."  Using exceptions in the core logic of your
+   * application should be strongly discouraged.
    *
-   * The only times when you should be using this method are: the value is guaranteed to be available based
-   * on a guard outside of the method using the Box or in tests.  For example,
-   * User.currentUser.openOrThrowException("This snippet is used on pages where the user is logged in")
+   * @param justification Justify why calling this method is okay and why it
+   *        will not result in an exception being thrown. This serves both as
+   *        mandatory documentation and as a very clear indication of what
+   *        unexpected thing happened in the event you were wrong about the
+   *        guard.
    *
-   * A valid justification for using this method should not be "I want my code to fail fast when I call it."
-   * Using exceptions in the core logic of your application should be strongly discouraged.
-   *
-   * This method replaces open_! because people used open_! and generally ignored the reason for the "!",
-   * so we're making it more explicit that this method should not commonly be used and should be justified
-   * when used.
-   *
-   * @param justification Justify why calling this method is okay and why it will not result in an Exception
-   *
-   * @return The contents of the Box if it has one or an exception if not
+   * @return The contents of the `Box` if it is `Full`.
+   * @throws NullPointerException If you attempt to call it on an `EmptyBox`,
+   *         with a message that includes the provided `justification`.
    */
   def openOrThrowException(justification: String): A
 
   /**
-   * Exists to avoid the implicit conversion from Box to Option. Opening a Box
-   * unsafely should be done using openOrThrowException.
+   * Exists to avoid the implicit conversion from `Box` to `Option`. Opening a
+   * `Box` unsafely should be done using `openOrThrowException`.
+   *
+   * This method '''always''' throws an exception.
    */
-  final def get: Nothing = {
+  final def get: DoNotCallThisMethod = {
     throw new Exception("Attempted to open a Box incorrectly. Please use openOrThrowException.")
   }
 
   /**
-   * Return the value contained in this Box if it is full; otherwise return the specified default
-   * @return the value contained in this Box if it is full; otherwise return the specified default
+   * Return the value contained in this `Box` if it is full; otherwise return
+   * the specified default. Equivalent to `Option`'s `[[scala.Option.getOrElse getOrElse]]`.
    */
   def openOr[B >: A](default: => B): B = default
 
   /**
-   * Apply a function to the value contained in this Box if it exists and return
-   * a new Box containing the result, or empty otherwise.
-   * @return the modified Box or empty
+   * Apply a function to the value contained in this `Box` if it exists and return
+   * a `Full` containing the result. If this `Box` is not already `Full`, return
+   * the unchanged box.
+   *
+   * @note This means that using `map` with a `Failure` will preserve the
+   *       `Failure.`
    */
   def map[B](f: A => B): Box[B] = Empty
 
   /**
-   * Apply a function returning a Box to the value contained in this Box if it exists
-   * and return the result, or empty otherwise.
-   * @return the modified Box or empty
+   * Apply a function returning a `Box` to the value contained in this `Box` if
+   * it exists and return the resulting `Box`. If this `Box` is not already
+   * `Full`, return this box unchanged.
+   *
+   * @note This means that using `flatMap` with a `Failure` will preserve the
+   *       `Failure.`
    */
   def flatMap[B](f: A => Box[B]): Box[B] = Empty
 
   /**
-   * Return this Box if it contains a value satisfying the specified predicate; Empty otherwise
-   * @return this Box if it contains a value satisfying the specified predicate; Empty otherwise
+   * If this `Box` contains a value and it satisfies the specified `predicate`,
+   * return the `Box` unchanged. Otherwise, return an `Empty`.
    */
   def filter(p: A => Boolean): Box[A] = this
 
   /**
-   * Makes Box play better with Scala 2.8 for comprehensions
+   * Makes `Box` play better with Scala `for` comprehensions.
    */
   def withFilter(p: A => Boolean): WithFilter = new WithFilter(p)
 
   /**
-   * Play NiceLike with the Scala 2.8 for comprehension
+   * Makes `Box` play better with Scala `for` comprehensions.
    */
   class WithFilter(p: A => Boolean) {
     def map[B](f: A => B): Box[B] = self.filter(p).map(f)
@@ -336,55 +479,83 @@ sealed abstract class Box[+A] extends Product with Serializable{
   }
 
   /**
-   * Determine whether this Box contains a value which satisfies the specified predicate
-   * @return true if this Box does contain a value and it satisfies the predicate
+   * If this `Box` contains a value and it satisfies the specified `func`,
+   * return `true`. Otherwise, return `false`.
+   *
+   * @return `true` if this Box does contain a value and it satisfies the
+   *         predicate.
    */
   def exists(func: A => Boolean): Boolean = false
 
   /**
-   * Determine whether all Box values satisfy the predicate
-   * @return true if the Box is empty, or if Box's value satisfies the predicate
+   * If this `Box` contains a value and it does not satisfy the specified
+   * `func`, return `false`. Otherwise, return `true`.
+   *
+   * @return true If the `Box` is empty, or if its value satisfies the
+   *         predicate.
    */
   def forall(func: A => Boolean): Boolean = true
 
   /**
-   * Creates a Box if the current Box is Full and the value does not satisfy the predicate, f.
-   *
-   * @param f the predicate used to test value.
-   *
-   * @return a Box
+   * 
+   * If this `Box` contains a value and it does '''not''' satisfy the specified
+   * `f`, return the `Box` unchanged. Otherwise, return an `Empty`.
    */
   def filterNot(f: A => Boolean): Box[A] = filter(a => !f(a))
 
   /**
-   * Perform a side effect by calling the specified function
-   * with the value contained in this box.
+   * Perform a side effect by calling the specified function with the value
+   * contained in this box. The function does not run if this `Box` is empty.
    */
   def foreach[U](f: A => U): Unit = {}
 
   /**
-   * Return a Full[B] if the contents of this Box is an instance of the specified class,
-  * otherwise return Empty
+   * If this box is `Full` and contains an object of type `B`, returns a `Full`
+   * of type `Box[B]`. Otherwise, returns `Empty`.
+   *
+   * This is basically a Java-friendly version of `[[asA]]`, which you should
+   * prefer when using Scala.
+   *
+   * For example:
+   * {{{
+   * scala> Full("boom").isA(classOf[Int])
+   * res0: net.liftweb.common.Box[Int] = Empty
+   *
+   * scala> Full(5).isA(classOf[Int])
+   * res1: net.liftweb.common.Box[Int] = Full(5)
+   * }}}
    */
   def isA[B](cls: Class[B]): Box[B] = Empty
 
   /**
-   * Return a Full[B] if the contents of this Box is of type <code>B</code>, otherwise return Empty
+   * Create a `Full` box containing the specified value if this box's value is
+   * of type `B` and `Empty` otherwise.
+   *
+   * For example:
+   * {{{
+   * scala> Full("boom").asA[Int]
+   * res0: net.liftweb.common.Box[Int] = Empty
+   *
+   * scala> Full(5).asA[Int]
+   * res1: net.liftweb.common.Box[Int] = Full(5)
+   * }}}
    */
   def asA[B](implicit m: Manifest[B]): Box[B] = Empty
 
   /**
-   * Return this Box if Full, or the specified alternative if this is empty
+   * Return this Box if `Full`, or the specified alternative if it is
+   * empty. Equivalent to `Option`'s `[[scala.Option.orElse orElse]]`.
    */
   def or[B >: A](alternative: => Box[B]): Box[B] = alternative
 
   /**
-   * Returns an Iterator over the value contained in this Box
+   * Returns an `[[scala.collection.Iterator Iterator]]` over the value
+   * contained in this `Box`, if any.
    */
   def elements: Iterator[A] = Iterator.empty
 
   /**
-   * Get a Java Iterator from the Box
+   * Get a `java.util.Iterator` from the Box.
    */
   def javaIterator[B >: A]: JavaIterator[B] = {
     val ar = new JavaArrayList[B]()
@@ -393,96 +564,135 @@ sealed abstract class Box[+A] extends Product with Serializable{
   }
 
   /**
-   * Returns an Iterator over the value contained in this Box
+   * Returns an `[[scala.collection.Iterator Iterator]]` over the value
+   * contained in this `Box`, if any.
+   *
+   * Synonym for `[[elements]]`.
    */
   def iterator: Iterator[A] = this.elements
 
   /**
-   * Returns a List of one element if this is Full, or an empty list if empty.
+   * Returns a `[[scala.collection.immutable.List List]]` of one element if this
+   * is Full, or an empty list if empty.
    */
   def toList: List[A] = Nil
 
   /**
-   * Returns the contents of this box in an Option if this is Full, or
-   * None if this is a empty (Empty, Failure or ParamFailure)
+   * Returns the contents of this box wrapped in `Some` if this is `Full`, or
+   * `None` if this is empty (meaning an `Empty`, `Failure` or ParamFailure`).
    */
   def toOption: Option[A] = None
 
   /**
-   * Transform an Empty to a Failure with the specified message.
-   * @param msg the failure message
-   * @return a Failure with the message if this Box is Empty
+   * Transform an `Empty` to a `Failure` with the specified message. Otherwise
+   * returns the same box.
+   *
+   * @note This means a `Failure` will also remain unchanged; see `?~!` to
+   *       change these.
+   *
+   * @return A `Failure` with the message if this `Box` is `Empty`, this box
+   *         otherwise.
    */
   def ?~(msg: => String): Box[A] = this
 
-
-
   /**
-   * Transform an Empty to a ParamFailure with the specified typesafe
-   * parameter.
-   * @param errorCode a value indicating the error
-   * @return a ParamFailure with the specified value
+   * Transform an `Empty` or `Failure` to a `ParamFailure` with the specified
+   * type-safe parameter.
+   *
+   * @param errorCode A value indicating the error.
+   * @return A `ParamFailure` with the specified value, unless this is already a
+   *         `ParamFailure` or a `Full`. If this is a `Failure`, the
+   *         `ParamFailure` will preserve the message of the `Failure`.
    */
   def ~>[T](errorCode: => T): Box[A] = this
 
   /**
-   * Alias for ?~
+   * Alias for `[[?~]]`.
    */
   def failMsg(msg: => String): Box[A] = ?~(msg)
 
   /**
-   * Transform an EmptyBox to a Failure with the specified message and chain
-   * the new Failure to any previous Failure represented by this Box.
-   * @param msg the failure message
-   * @return a Failure with the message if this Box is an Empty Box. Chain the messages if it is already a Failure
+   * Chain the given `msg` as a `Failure` ahead of any failures this `Box` may
+   * represent.
+   *
+   * If this is an `Empty`, this method behaves like `[[?~]]`. If it is a `Failure`,
+   * however, this method returns a new `Failure` with the given `msg` and with its
+   * `[[Failure.chain chain]]` set to this `Failure`.
+   *
+   * As with `[[?~]]`, if this is a `Full`, we return it unchanged.
+   *
+   * @return A `Failure` with the message if this `Box` is an `Empty` box. Chain
+   *         this box to the new `Failure` if this is a `Failure`. The unchanged
+   *         box if it is a `Full`.
    */
   def ?~!(msg: => String): Box[A] = ?~(msg)
 
   /**
-   * Alias for ?~!
+   * Alias for `?~!`.
    */
   def compoundFailMsg(msg: => String): Box[A] = ?~!(msg)
 
   /**
-   * Filter this box on the specified predicate, returning a Failure with the specified
-   * message if the predicate is not satisfied.
-   * @param msg the failure message
-   * @param p a predicate
-   * @return a Failure with the message if the predicate is not satisfied by the value contained in this Box
+   * If this `Box` contains a value and it satisfies the specified `predicate`,
+   * return the `Box` unchanged. Otherwise, return a `Failure` with the given
+   * `msg`.
+   *
+   * @see [[filter]]
+   *
+   * @return A `Failure` with the message if the box is empty or the predicate
+   *         is not satisfied by the value contained in this Box.
    */
   def filterMsg(msg: String)(p: A => Boolean): Box[A] = filter(p) ?~ msg
 
   /**
-   * This method calls the specified function with the value contained in this Box
-   * @return the result of the function or a default value
+   * This method calls the specified function with the specified `in` value and
+   * the value contained in this `Box`. If this box is empty, returns the `in`
+   * value directly.
+   * 
+   * @return The result of the function or the `in` value.
    */
   def run[T](in: => T)(f: (T, A) => T) = in
 
   /**
-   * Perform a side effect by passing this Box to the specified function
-   * and return this Box unmodified.
-   * @return this Box
+   * Perform a side effect by passing this `Box` to the specified function and
+   * return this `Box` unmodified. Similar to `foreach`, except that `foreach`
+   * returns `Unit`, while this method allows chained use of the `Box`.
+   *
+   * @return This box.
    */
   def pass(f: Box[A] => Unit): Box[A] = {f(this) ; this}
 
   /**
-   * Alias for pass
+   * Alias for `[[pass]]`.
    */
   def $(f: Box[A] => Unit): Box[A] = pass(f)
 
   /**
-   * Determines equality based upon the contents of this Box instead of the box itself.
-   * As a result, it is not symmetric. Which means that for
+   * For `Full` and `Empty`, this has the expected behavior. Equality in terms
+   * of Failure checks for equivalence of failure causes:
+   * {{{
+   * Failure("boom") == Failure("boom")
+   * Failure("bam") != Failure("boom")
+   * Failure("boom", Full(someException), Empty) != Failure("boom")
+   * }}}
    *
-   * <pre name="code" class="scala">
-   *     val foo = "foo"
-   *     val boxedFoo = Full(foo)
-   *     foo == boxedFoo //is false
-   *     boxedFoo == foo //is true
-   * </pre>
+   * For other values, determines equality based upon the contents of this `Box`
+   * instead of the box itself. As a result, it is not symmetric. As an example:
+   * {{{
+   * val foo = "foo"
+   * val boxedFoo = Full(foo)
+   * foo == boxedFoo //is false
+   * boxedFoo == foo //is true
+   * }}}
    *
-   * For Full and Empty, this has the expected behavior. Equality in terms of Failure
-   * checks for equivalence of failure causes.
+   * It is safest to use `===` explicitly when you're looking for this behavior,
+   * and use `==` only for box-to-box comparisons:
+   * {{{
+   * Full("magic") == Full("magic")
+   * Full("magic") != Full("another")
+   * Full("magic") != Empty
+   * Full("magic") != Failure("something's gone wrong")
+   * }}}
    */
   override def equals(other: Any): Boolean = (this, other) match {
     case (Full(x), Full(y)) => x == y
@@ -492,8 +702,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
   }
 
   /**
-   * Apply the function f1 to the contents of this Box if available; if this
-   * is empty return the specified alternative.
+   * Equivalent to `flatMap(f1).or(alternative)`.
    */
   def choice[B](f1: A => Box[B])(alternative: => Box[B]): Box[B] = this match {
     case Full(x) => f1(x)
@@ -501,46 +710,61 @@ sealed abstract class Box[+A] extends Product with Serializable{
   }
 
   /**
-   * Returns true if the value contained in this box is equal to the specified value.
+   * Returns true if the value contained in this box is equal to the specified
+   * value. This is the same thing that `==` does when it's handed a value that
+   * isn't a `Box`, but using this is recommended because it's clearer that the
+   * behavior will be different than the usual expectation.
    */
   def ===[B >: A](to: B): Boolean = false
 
   /**
-   * Equivalent to map(f).openOr(Full(dflt))
+   * Equivalent to `map(f).openOr(dflt)`.
    */
   def dmap[B](dflt: => B)(f: A => B): B = dflt
 
 
   /**
-   * If the Box is Full, apply the transform function on the
-   * value, otherwise just return the value untransformed
+   * If the `Box` is `Full`, apply the transform function `f` on the value `v`;
+   * otherwise, just return the value untransformed.
    *
-   * @param v the value
-   * @param f the transformation function
-   * @tparam T the type of the value
-   * @return the value or the transformed value is the Box is Full
+   * The transform function is expected to be a function that will take the
+   * value `v` and produce a function from the value in the box to a new value
+   * of the same type as `v`.
+   *
+   * For example:
+   * {{{
+   * val myBox = Full(10)
+   * myBox.fullXForm("No teddy bears left.")({ message =>
+   *   { teddyBears: Int =>
+   *     s"\$message Oh wait, there are \$teddyBears left!"
+   *   }
+   * })
+   * }}}
+   *
+   * @tparam T The type of the initial value, default value, and transformed
+   *         value.
+   * @return If the `Box` is `Full`, the value once transformed by the function
+   *         returned by `f`. Otherwise, the initial value `v`.
    */
   def fullXform[T](v: T)(f: T => A => T): T = v
 
   /**
-   * An <code>Either</code> that is a <code>Left</code> with the given argument
-   * <code>left</code> if this is empty, or a <code>Right</code> if this
-   * Full with the Box's value.
+   * An `[[scala.util.Either Either]]` that is a `Left` with the given argument
+   * `left` if this is empty, or a `Right` with the boxed value if this is
+   * `Full`.
    */
   def toRight[B](left: => B): Either[B, A] = Left(left)
 
   /**
-   * An <code>Either</code> that is a <code>Right</code> with the given
-   * argument
-   * <code>right</code> if this is empty, or a <code>Left</code> if this is
-   * Fill with the Box's value
+   * An `[[scala.util.Either Either]]` that is a `Right` with the given argument
+   * `right` if this is empty, or a `Left` with the boxed value if this is
+   * `Full`.
    */
   def toLeft[B](right: => B): Either[A, B] = Right(right)
 
-
   /**
-   * If the partial function is defined at the current Box's value
-   * apply the partial function.
+   * If the partial function is defined at the current Box's value, apply the
+   * partial function.
    */
   final def collect[B](pf: PartialFunction[A, B]): Box[B] = {
     flatMap(value =>
@@ -548,45 +772,24 @@ sealed abstract class Box[+A] extends Product with Serializable{
     else Empty)
   }
 
+  /**
+   * An alias for `collect`.
+   *
+   * Although this function is different for true collections, because `Box` is
+   * really a collection of 1, the two functions are identical.
+   */
+  final def collectFirst[B](pf: PartialFunction[A, B]): Box[B] = {
+    collect(pf)
+  }
 }
 
 /**
- * Full is a Box containing a value.
+ * `Full` is a `[[Box]]` that contains a value.
  */
-final case class Full[+A](value: A) extends Box[A]{
-
+final case class Full[+A](value: A) extends Box[A] {
   def isEmpty: Boolean = false
 
-
-
-  /**
-   * If you grew up on Java, you're used to Exceptions as part of your program logic.
-   * The Scala philosophy and the Lift philosophy is that exceptions are for exceptional
-   * conditions such as failure of an external resource (e.g., your database goes offline)
-   * rather than simply indicating that a parameter wasn't supplied or couldn't be parsed.
-   *
-   * Lift's Box and Scala's Option provide a mechanism for being explicit about a value
-   * existing or not existing rather than relying on a reference being not-null.  However,
-   * extracting a value from a Box should be done correctly.  Correctly can be (in order of use
-   * in David Pollak's code): a for comprehension; using map, flatMap or foreach; or using pattern matching.
-   *
-   * The only times when you should be using this method are: the value is guaranteed to be available based
-   * on a guard outside of the method using the Box or in tests.  For example,
-   * User.currentUser.openOrThrowException("This snippet is used on pages where the user is logged in")
-   *
-   * A valid justification for using this method should not be "I want my code to fail fast when I call it."
-   * Using exceptions in the core logic of your application should be strongly discouraged.
-   *
-   * This method replaces open_! because people used open_! and generally ignored the reason for the "!",
-   * so we're making it more explicit that this method should not commonly be used and should be justified
-   * when used.
-   *
-   * @param justification Justify why calling this method is okay and why it will not result in an Exception
-   *
-   * @return The contents of the Box if it has one or an exception if not
-   */
   def openOrThrowException(justification: String): A = value
-
 
   override def openOr[B >: A](default: => B): B = value
 
@@ -612,37 +815,17 @@ final case class Full[+A](value: A) extends Box[A]{
 
   override def run[T](in: => T)(f: (T, A) => T) = f(in, value)
 
-  /**
-   * If the Box is Full, apply the transform function on the
-   * value, otherwise just return the value untransformed
-   *
-   * @param v the value
-   * @param f the transformation function
-   * @tparam T the type of the value
-   * @return the value or the transformed value is the Box is Full
-   */
   override def fullXform[T](v: T)(f: T => A => T): T = f(v)(value)
 
 
-  /**
-   * An <code>Either</code> that is a <code>Left</code> with the given argument
-   * <code>left</code> if this is empty, or a <code>Right</code> if this
-   * Full with the Box's value.
-   */
   override def toRight[B](left: => B): Either[B, A] = Right(value)
 
-  /**
-   * An <code>Either</code> that is a <code>Right</code> with the given
-   * argument
-   * <code>right</code> if this is empty, or a <code>Left</code> if this is
-   * Fill with the Box's value
-   */
   override def toLeft[B](right: => B): Either[A, B] = Left(value)
 
 
   override def isA[B](clsOrg: Class[B]): Box[B] = value match {
     case value: AnyRef =>
-      val cls = Box.primativeMap.get(clsOrg) match {
+      val cls = Box.primitiveMap.get(clsOrg) match {
         case Some(c) => c
         case _ => clsOrg
       }
@@ -660,48 +843,21 @@ final case class Full[+A](value: A) extends Box[A]{
 }
 
 /**
- * Singleton object representing an Empty Box
+ * Singleton object representing a completely empty `Box` with no value or
+ * failure information.
  */
 case object Empty extends EmptyBox
 
 /**
- * The EmptyBox is a Box containing no value.
+ * An `EmptyBox` is a `Box` containing no value. It can sometimes carry
+ * additional failure information, as in `[[Failure]]` and `[[ParamFailure]]`.
  */
 sealed abstract class EmptyBox extends Box[Nothing] with Serializable {
 
   def isEmpty: Boolean = true
 
-
-  /**
-   * If you grew up on Java, you're used to Exceptions as part of your program logic.
-   * The Scala philosophy and the Lift philosophy is that exceptions are for exceptional
-   * conditions such as failure of an external resource (e.g., your database goes offline)
-   * rather than simply indicating that a parameter wasn't supplied or couldn't be parsed.
-   *
-   * Lift's Box and Scala's Option provide a mechanism for being explicit about a value
-   * existing or not existing rather than relying on a reference being not-null.  However,
-   * extracting a value from a Box should be done correctly.  Correctly can be (in order of use
-   * in David Pollak's code): a for comprehension; using map, flatMap or foreach; or using pattern matching.
-   *
-   * The only times when you should be using this method are: the value is guaranteed to be available based
-   * on a guard outside of the method using the Box or in tests.  For example,
-   * User.currentUser.openOrThrowException("This snippet is used on pages where the user is logged in")
-   *
-   * A valid justification for using this method should not be "I want my code to fail fast when I call it."
-   * Using exceptions in the core logic of your application should be strongly discouraged.
-   *
-   * This method replaces open_! because people used open_! and generally ignored the reason for the "!",
-   * so we're making it more explicit that this method should not commonly be used and should be justified
-   * when used.
-   *
-   * @param justification Justify why calling this method is okay and why it will not result in an Exception
-   *
-   * @return The contents of the Box if it has one or an exception if not
-   */
   def openOrThrowException(justification: String) =
   throw new NullPointerException("An Empty Box was opened.  The justification for allowing the openOrThrowException was "+justification)
-
-
 
   override def openOr[B >: Nothing](default: => B): B = default
 
@@ -713,51 +869,26 @@ sealed abstract class EmptyBox extends Box[Nothing] with Serializable {
 
   override def ?~!(msg: => String): Failure = Failure(msg, Empty, Empty)
 
-  override def ~>[T](errorCode: => T): ParamFailure[T] =
-    ParamFailure("", Empty, Empty, errorCode)
+  override def ~>[T](errorCode: => T): ParamFailure[T] = ParamFailure("", Empty, Empty, errorCode)
 }
 
 /**
- * Companion object used to simplify the creation of a simple Failure.
+ * Companion object used to simplify the creation of a simple `Failure` with
+ * just a message.
  */
 object Failure {
   def apply(msg: String) = new Failure(msg, Empty, Empty)
 }
 
 /**
- * A Failure is an EmptyBox with an additional failure message explaining the reason for its being empty.
- * It can also optionally provide an exception or a chain of causes represented as a list of other Failure objects
+ * A `Failure` is an `[[EmptyBox]]` with an additional failure message
+ * explaining the reason for its being empty.  It can also optionally provide an
+ * exception and/or a chain of previous `Failure`s that may have caused this
+ * one.
  */
-sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Failure]) extends EmptyBox{
+sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Failure]) extends EmptyBox {
   type A = Nothing
 
-
-  /**
-   * If you grew up on Java, you're used to Exceptions as part of your program logic.
-   * The Scala philosophy and the Lift philosophy is that exceptions are for exceptional
-   * conditions such as failure of an external resource (e.g., your database goes offline)
-   * rather than simply indicating that a parameter wasn't supplied or couldn't be parsed.
-   *
-   * Lift's Box and Scala's Option provide a mechanism for being explicit about a value
-   * existing or not existing rather than relying on a reference being not-null.  However,
-   * extracting a value from a Box should be done correctly.  Correctly can be (in order of use
-   * in David Pollak's code): a for comprehension; using map, flatMap or foreach; or using pattern matching.
-   *
-   * The only times when you should be using this method are: the value is guaranteed to be available based
-   * on a guard outside of the method using the Box or in tests.  For example,
-   * User.currentUser.openOrThrowException("This snippet is used on pages where the user is logged in")
-   *
-   * A valid justification for using this method should not be "I want my code to fail fast when I call it."
-   * Using exceptions in the core logic of your application should be strongly discouraged.
-   *
-   * This method replaces open_! because people used open_! and generally ignored the reason for the "!",
-   * so we're making it more explicit that this method should not commonly be used and should be justified
-   * when used.
-   *
-   * @param justification Justify why calling this method is okay and why it will not result in an Exception
-   *
-   * @return The contents of the Box if it has one or an exception if not
-   */
   override def openOrThrowException(justification: String) =
     throw new NullPointerException("An Failure Box was opened.  Failure Message: "+msg+
       ".  The justification for allowing the openOrThrowException was "+justification)  {
@@ -778,8 +909,13 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
   }
 
   /**
-   * Get the exception chain along with the exception chain of any
-   * chained failures
+   * Return a list of the exceptions that led to this `Failure`. First, unflattens
+   * the list of causes of this `Failure`'s `exception`. Then, if this `Failure`
+   * has a `chain`, walks down it and concatenates their `exceptionChain` to the
+   * end of this one's.
+   *
+   * @return A single list of `Throwable`s from the most direct cause to the
+   *         least direct cause of this `Failure`.
    */
   def exceptionChain: List[Throwable] = {
     import scala.collection.mutable.ListBuffer
@@ -796,19 +932,34 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
   }
 
   /**
-   * Gets the deepest exception cause
+   * Gets the deepest exception cause, if any, which is ostensibly the root
+   * cause of this `Failure`.
    */
   def rootExceptionCause: Box[Throwable] = {
     exceptionChain.lastOption
   }
 
   /**
-   * Flatten the Failure chain to a List where this
-   * Failure is at the head
+   * Flatten the `Failure` chain to a List where this Failure is at the head.
    */
   def failureChain: List[Failure] = 
     this :: chain.toList.flatMap(_.failureChain)
 
+  /**
+   * Reduce this `Failure`'s message and the messages of all chained failures a
+   * to a single `String`. The resulting string links each step in the failure
+   * chain with <-, and this `Failure`'s message is last.
+   *
+   * For example:
+   * {{{
+   * scala> Failure("It's all gone wrong.") ?~! "Something's gone wrong." ?~! "It's all sideways"
+   * res0: net.liftweb.common.Failure = Failure(It's all sideways,Empty,
+   *         Full(Failure(Something's gone wrong.,Empty,
+   *           Full(Failure(It's all gone wrong.,Empty,Empty)))))
+   * scala> res0.messageChain
+   * res1: String = It's all sideways <- Something's gone wrong. <- It's all gone wrong.
+   * }}}
+   */
   def messageChain: String = (this :: chainList).map(_.msg).mkString(" <- ")
 
   override def equals(other: Any): Boolean = (this, other) match {
@@ -825,8 +976,49 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
 }
 
 /**
- * A ParamFailure is a Failure with an additional typesafe parameter that can
- * allow an application to store other information related to the failure.
+ * Companion object used to simplify the creation of simple `ParamFailure`s, as
+ * well as allow pattern-matching on the `ParamFailure`.
+ */
+object ParamFailure {
+  def apply[T](msg: String, exception: Box[Throwable], chain: Box[Failure], param: T) =
+    new ParamFailure(msg, exception, chain, param)
+
+  def apply[T](msg: String, param: T) = new ParamFailure(msg, Empty, Empty, param)
+
+  def unapply(in: Box[_]): Option[(String, Box[Throwable], Box[Failure], Any)] = in match {
+    case pf: ParamFailure[_] => Some((pf.msg, pf.exception, pf.chain, pf.param))
+    case _ => None
+  }
+}
+
+/**
+ * A `ParamFailure` is a `[[Failure]]` with an additional type-safe parameter
+ * that can allow an application to store other information related to the
+ * failure.
+ *
+ * For example:
+ * {{{
+ * val loggedInUser =
+ *   for {
+ *     username ?~ "Missing username" ~> "error.missingUser"
+ *     password ?~! "Missing password" ~> "error.missingPassword"
+ *     user <- User.find("username" -> username)
+ *     if User.checkPassword(password, user.password)
+ *   } yield {
+ *     user
+ *   }
+ *
+ * loggedInUser match {
+ *   case ParamFailure(message, _, _, i18nKey: String) =>
+ *     tellUser(i18n(i18nKey))
+ *   case Failure(message, _, _) =>
+ *     tellUser(failureMessage)
+ *   case Empty =>
+ *     tellUser("Unknown login failure.")
+ *   case _ =>
+ *     tellUser("You're in!")
+ * }
+ * }}}
  */
 final class ParamFailure[T](override val msg: String,
 		            override val exception: Box[Throwable],
@@ -848,71 +1040,48 @@ final class ParamFailure[T](override val msg: String,
   }
 
 /**
- * A trait that a class can mix into itself to convert itself into a Box
+ * A trait that a class can mix into itself to indicate that it can convert
+ * itself into a `Box`.
  */
 trait Boxable[T] {
   def asBox: Box[T]
 }
 
-object ParamFailure {
-  def apply[T](msg: String, exception: Box[Throwable], chain: Box[Failure], param: T) =
-    new ParamFailure(msg, exception, chain, param)
-
-  def apply[T](msg: String, param: T) = new ParamFailure(msg, Empty, Empty, param)
-
-  def unapply(in: Box[_]): Option[(String, Box[Throwable], Box[Failure], Any)] = in match {
-    case pf: ParamFailure[_] => Some((pf.msg, pf.exception, pf.chain, pf.param))
-    case _ => None
-  }
-}
-
 /**
- * Sometimes it's convenient to access either a Box[T]
- * or a T.  If you specify BoxOrRaw[T], the
- * either a T or a Box[T] can be passed and the "right thing"
- * will happen
+ * Sometimes it's convenient to access either a `[[Box]][T]` or a `T`.  If you
+ * specify `BoxOrRaw[T]`, either a `T` or a `Box[T]` can be passed and the
+ * "right thing" will happen, including `null`s being treated as `Empty`.
  */
 sealed trait BoxOrRaw[T] {
   def box: Box[T]
 }
 
 /**
- * The companion object that has helpful conversions
+ * Companion object with implicit conversions to allow `BoxOrRaw[T]` to
+ * masquerade as the appropriate types.
  */
 object BoxOrRaw {
-  /**
-   * Convert a T to a BoxOrRaw[T]
-   */
   implicit def rawToBoxOrRaw[T, Q <: T](r: Q): BoxOrRaw[T] =
     RawBoxOrRaw(r: T)
 
-  /**
-   * Convert a Box[T] to a BoxOrRaw[T]
-   */
   implicit def boxToBoxOrRaw[T, Q <% T](r: Box[Q]): BoxOrRaw[T] = {
     BoxedBoxOrRaw(r.map(v => v: T))
   }
 
-  /**
-   * Convert an Option[T] to a BoxOrRaw[T]
-   */
   implicit def optionToBoxOrRaw[T, Q <% T](r: Option[Q]): BoxOrRaw[T] = {
     BoxedBoxOrRaw(r.map(v => v: T))
   }
 
-  /**
-   * Convert a BoxOrRaw[T] to a Box[T]
-   */
   implicit def borToBox[T](in: BoxOrRaw[T]): Box[T] = in.box
 }
 
 /**
- * The Boxed up BoxOrRaw
+ * The `[[BoxOrRaw]]` that represents a boxed value.
  */
 final case class BoxedBoxOrRaw[T](box: Box[T]) extends BoxOrRaw[T]
 
 /**
- * The raw version of BoxOrRaw
+ * The `[[BoxOrRaw]]` that represents a raw value.
  */
 final case class RawBoxOrRaw[T](raw: T) extends BoxOrRaw[T] {
   def box: Box[T] = 

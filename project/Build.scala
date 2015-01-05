@@ -19,8 +19,34 @@ import Keys._
 import net.liftweb.sbt.LiftBuildPlugin._
 import Dependencies._
 
+/**
+ * Pattern-matches an attributed file, extracting its module organization,
+ * name, and revision if available in its attributes.
+ */
+object MatchingModule {
+  def unapply(file: Attributed[File]): Option[(String,String,String)] = {
+    file.get(moduleID.key).map { moduleInfo =>
+      (moduleInfo.organization, moduleInfo.name, moduleInfo.revision)
+    }
+  }
+}
 
 object BuildDef extends Build {
+
+  /**
+   * A helper that returns the revision and JAR file for a given dependency.
+   * Useful when trying to attach API doc URI information.
+   */
+  def findManagedDependency(classpath: Seq[Attributed[File]],
+                            organization: String,
+                            name: String): Option[(String,File)] = {
+    classpath.collectFirst {
+      case entry @ MatchingModule(moduleOrganization, moduleName, revision)
+          if moduleOrganization == organization &&
+             moduleName.startsWith(name) =>
+        (revision, entry.data)
+    }
+  }
 
   lazy val liftProjects = core ++ web ++ persistence
 
@@ -179,6 +205,20 @@ object BuildDef extends Build {
     liftProject(id = if (module.startsWith(prefix)) module else prefix + module,
                 base = file(base) / module.stripPrefix(prefix))
 
-  def liftProject(id: String, base: File): Project =
-    Project(id, base).settings(liftBuildSettings: _*).settings(scalacOptions ++= List("-feature", "-language:implicitConversions"))
+  def liftProject(id: String, base: File): Project = {
+    Project(id, base)
+      .settings(liftBuildSettings: _*)
+      .settings(scalacOptions ++= List("-feature", "-language:implicitConversions"))
+      .settings(
+        autoAPIMappings := true,
+        apiMappings ++= {
+          val cp: Seq[Attributed[File]] = (fullClasspath in Compile).value
+
+          findManagedDependency(cp, "org.scala-lang.modules", "scala-xml").map {
+            case (revision, file)  =>
+              (file -> url("http://www.scala-lang.org/api/" + version))
+          }.toMap
+        }
+      )
+  }
 }
