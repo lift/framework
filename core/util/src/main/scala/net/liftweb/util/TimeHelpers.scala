@@ -163,14 +163,43 @@ trait TimeHelpers { self: ControlHelpers =>
       cmp match {
         case lo: Long => lo == this.millis
         case i: Int => i == this.millis
-        case ti: TimeSpan => ti.dt == this.dt
+        case ts: TimeSpan => timeSpanEquals(ts)
         case d: Date => d.getTime() == this.millis
         case dt: DateTime => Left(dt) == this.dt
-        case dur: Duration => Right(dur: Period) == this.dt
-        case dur: Period => Right(dur) == this.dt
+        case dur: Duration => durationEquals(dur)
+        case period: Period => periodEquals(period)
         case _ => false
       }
     }
+
+    private def timeSpanEquals(ts: TimeSpan) = {
+      if (ts.periodContainsMonthOrYear || this.periodContainsMonthOrYear) // if period has month or year, cannot be converted to standar duration
+        ts.dt == this.dt
+      else
+        ts.periodToStandardDuration == this.periodToStandardDuration
+    }
+
+    private def durationEquals(dur: Duration) = {
+      if (this.periodContainsMonthOrYear) // if period has month or year, cannot be converted to standar duration
+        Right(dur: Period) == this.dt
+      else
+        Some(dur) == periodOpt.map(_.toStandardDuration)
+    }
+
+    private def periodEquals(period: Period) = {
+      if (containsMonthOrYear(period) || this.periodContainsMonthOrYear) // if period has month or year, cannot be converted to standar duration
+        Some(period) == periodOpt
+      else
+        Some(period.toStandardDuration) == periodOpt.map(_.toStandardDuration)
+    }
+
+    private def periodToStandardDuration: Either[DateTime, Duration] = dt.right.map(_.toStandardDuration)
+
+    private def periodContainsMonthOrYear = periodOpt.exists(containsMonthOrYear)
+
+    private def periodOpt: Option[Period] = this.dt.right.toOption
+
+    private def containsMonthOrYear(period: Period) = period.getMonths > 0 || period.getYears > 0
 
     /** override the toString method to display a readable amount of time */
     override def toString = dt match {

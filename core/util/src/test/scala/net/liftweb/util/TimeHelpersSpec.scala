@@ -57,6 +57,12 @@ object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen
     "be created from a number of weeks" in {
       forAllTimeZones(3.weeks must_== TimeSpan(3 * 7 * 24 * 60 * 60 * 1000))
     }
+    "be created from a number of months" in {
+      forAllTimeZones(3.months must_== 3.months)
+    }
+    "be created from a number of years" in {
+      forAllTimeZones(3.years must_== 3.years)
+    }
     "be converted implicitly to a date starting from the epoch time" in {
       forAllTimeZones(3.seconds.after(new Date(0)) must beTrue)
     }
