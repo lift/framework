@@ -138,9 +138,9 @@ private[http] trait LiftMerge {
           fixAttrs(original, toFix, attrs.next, fixURL, EventAttribute(u.key.substring(2), u.value.text) :: eventAttributes)
 
         case u: UnprefixedAttribute if u.key == "id" =>
-          val (_, remainingAttributes, updatedEventAttributes) = fixAttrs(original, toFix, attrs.next, fixURL)
+          val (_, fixedAttributes, updatedEventAttributes) = fixAttrs(original, toFix, attrs.next, fixURL, eventAttributes)
 
-          (Option(u.value.text).filter(_.nonEmpty), remainingAttributes, updatedEventAttributes)
+          (Option(u.value.text).filter(_.nonEmpty), attrs.copy(fixedAttributes), updatedEventAttributes)
 
         case _ =>
           val (id, remainingAttributes, updatedEventAttributes) = fixAttrs(original, toFix, attrs.next, fixURL, eventAttributes)
