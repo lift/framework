@@ -33,6 +33,25 @@ import Helpers._
  * the JS that should run when that event is triggered as a String.
  */
 private case class EventAttribute(eventName: String, jsString: String)
+private object EventAttribute {
+  /**
+   * A map from attribute name to event name for attributes that support being
+   * set to javascript:(//)-style values in order to invoke JS. For example, you
+   * can (and Lift does) set a form's action attribute to javascript://(some JS)
+   * instead of setting onsubmit to (someJS); return false.
+   */
+  val eventsByAttributeName =
+    Map(
+      "action" -> "submit",
+      "href" -> "click"
+    )
+
+  object EventForAttribute {
+    def unapply(attributeName: String): Option[String] = {
+      eventsByAttributeName.get(attributeName)
+    }
+  }
+}
 
 private[http] trait LiftMerge {
   self: LiftSession =>
@@ -125,14 +144,43 @@ private[http] trait LiftMerge {
     val contextPath: String = S.contextPath
 
     // Fix URLs using Req.fixHref and extract JS event attributes for putting
-    // into page JS.
+    // into page JS. Returns a triple of:
+    //  - The optional id that was found in this set of attributes.
+    //  - The fixed metadata.
+    //  - A list of extracted `EventAttribute`s.
     def fixAttrs(original: MetaData, toFix: String, attrs: MetaData, fixURL: Boolean, eventAttributes: List[EventAttribute] = Nil): (Option[String], MetaData, List[EventAttribute]) = {
       attrs match {
         case Null => (None, Null, eventAttributes)
-        case u: UnprefixedAttribute if u.key == toFix =>
-          val (id, remainingAttributes, updatedEventAttributes) = fixAttrs(original, toFix, attrs.next, fixURL)
 
-          (id, new UnprefixedAttribute(toFix, fixHref(contextPath, attrs.value, fixURL, rewrite), remainingAttributes), updatedEventAttributes)
+        case attribute @ UnprefixedAttribute(
+               EventAttribute.EventForAttribute(eventName),
+               attributeValue,
+               remainingAttributes
+             ) if attributeValue.text.startsWith("javascript:") =>
+          val attributeJavaScript = {
+            // Could be javascript: or javascript://.
+            val base = attributeValue.text.substring(11)
+            val strippedJs =
+              if (base.startsWith("//"))
+                base.substring(2)
+              else
+                base
+
+            if (strippedJs.trim.isEmpty) {
+              Nil
+            } else {
+              // When using javascript:-style URIs, return false is implied.
+              List(strippedJs + "; return false;")
+            }
+          }
+
+          val updatedEventAttributes = attributeJavaScript.map(EventAttribute(eventName, _)) ::: eventAttributes
+          fixAttrs(original, toFix, remainingAttributes, fixURL, updatedEventAttributes)
+
+        case u: UnprefixedAttribute if u.key == toFix =>
+          val (id, fixedAttributes, updatedEventAttributes) = fixAttrs(original, toFix, attrs.next, fixURL)
+
+          (id, new UnprefixedAttribute(toFix, fixHref(contextPath, attrs.value, fixURL, rewrite), fixedAttributes), updatedEventAttributes)
 
         case u: UnprefixedAttribute if u.key.startsWith("on") =>
           fixAttrs(original, toFix, attrs.next, fixURL, EventAttribute(u.key.substring(2), u.value.text) :: eventAttributes)
@@ -143,15 +191,17 @@ private[http] trait LiftMerge {
           (Option(u.value.text).filter(_.nonEmpty), attrs.copy(fixedAttributes), updatedEventAttributes)
 
         case _ =>
-          val (id, remainingAttributes, updatedEventAttributes) = fixAttrs(original, toFix, attrs.next, fixURL, eventAttributes)
+          val (id, fixedAttributes, updatedEventAttributes) = fixAttrs(original, toFix, attrs.next, fixURL, eventAttributes)
           
-          (id, attrs.copy(remainingAttributes), updatedEventAttributes)
+          (id, attrs.copy(fixedAttributes), updatedEventAttributes)
       }
     }
 
     // Fix the element's `attributeToFix` using `fixAttrs` and extract JS event
     // attributes for putting into page JS. Return a fixed version of this
-    // element with fixed children.
+    // element with fixed children. Adds a lift-generated id if the given
+    // element needs to have event handlers attached but doesn't already have an
+    // id.
     def fixElementAndAttributes(element: Elem, attributeToFix: String, fixURL: Boolean, fixedChildren: NodeSeq) = {
       val (id, fixedAttributes, eventAttributes) = fixAttrs(element.attributes, attributeToFix, element.attributes, fixURL)
 
