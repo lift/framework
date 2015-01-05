@@ -33,7 +33,7 @@ object Dependencies {
   lazy val commons_fileupload     = "commons-fileupload"         % "commons-fileupload" % "1.2.2"
   lazy val commons_httpclient     = "commons-httpclient"         % "commons-httpclient" % "3.1"
   lazy val javamail               = "javax.mail"                 % "mail"               % "1.4.4"
-  lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.1"
+  lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.6"
   lazy val joda_convert           = "org.joda"                   % "joda-convert"       % "1.2"
   lazy val htmlparser             = "nu.validator.htmlparser"    % "htmlparser"         % "1.4"
   lazy val mongo_java_driver      = "org.mongodb"                % "mongo-java-driver"  % "2.12.2"
