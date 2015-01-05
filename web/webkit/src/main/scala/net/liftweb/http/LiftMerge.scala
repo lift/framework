@@ -67,7 +67,7 @@ private[http] trait LiftMerge {
         (elementId, eventAttributes) <- eventAttributesByElementId
         EventAttribute(eventName, jsString) <- eventAttributes
       } yield {
-        Call("lift.onEvent", elementId, eventName, AnonFunc(JsRaw(jsString).cmd)).cmd
+        Call("lift.onEvent", elementId, eventName, AnonFunc("event", JsRaw(jsString).cmd)).cmd
       }
 
     val allJs =
