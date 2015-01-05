@@ -90,7 +90,7 @@ trait TimeHelpers { self: ControlHelpers =>
    * It can be translated to a date with the date method. In that case, the number of millis seconds will be used to create a Date
    * object starting from the Epoch time (see the documentation for java.util.Date)
    */
-  class TimeSpan(private[util] val dt: Either[DateTime, Period]) extends ConvertableToDate {
+  class TimeSpan(private val dt: Either[DateTime, Period]) extends ConvertableToDate {
     /** @return a Date as the amount of time represented by the TimeSpan after the Epoch date */
 
     def this(ms: Long) =
