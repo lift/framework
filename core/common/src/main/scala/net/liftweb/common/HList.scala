@@ -69,19 +69,11 @@ object HLists {
    * }
    * }}}
    */
-  sealed trait HList {
-    type Head
-    type Tail <: HList
-
-    /**
-     * The length of the HList
-     */
-    def length: Int
-  }
+  sealed trait HList
 
   /**
    * The last element of an `HList`. This is the starting point for an `HList`,
-   * and carries a `:+:` method to start one:
+   * and you can use `[[HListMethods.:+: :+:]]` to start one based on it:
    *
    * {{{
    * scala> Type1("Value") :+: HNil
@@ -89,23 +81,11 @@ object HLists {
    * }}}
    */
   final class HNil extends HList {
-    type Head = Nothing
-    type Tail = HNil
-
-    /**
-     * Chains the given value to the front of an `HList`.
-     *
-     * Produces a `T :+: HNil`.
-     */
-    def :+:[T](v: T) = HCons(v, this)
-
     override def toString = "HNil"
-
-    def length = 0
   }
 
   /**
-   * The HNil singleton
+   * The HNil singleton.
    */
   val HNil = new HNil()
 
@@ -116,7 +96,7 @@ object HLists {
    * Carries the information about the type of this element, plus the `HList`
    * type of the rest of the list.
    *
-   * You can use `:+:` to make this `HList` longer:
+   * You can use `[[HListMethods.:+: :+:]]` to make this `HList` longer:
    *
    * {{{
    * scala> val first = Type1("Value") :+: HNil
@@ -128,30 +108,32 @@ object HLists {
    *       Type2(Other Value) :+: Type1(Value) :+: HNil
    * }}}
    */
-  final case class HCons[H, T <: HList](head: H, tail: T) extends HList {
-    type This = HCons[H, T]
-    type Head = H
-    type Tail = T
-
-    /**
-     * Chains the given value to the front of this `HList`.
-     */
-    def :+:[T](v: T) = HCons(v, this)
-
+  final case class :+:[+H, +T <: HList](head: H, tail: T) extends HList {
     override def toString = head + " :+: " + tail
-
-    def length = 1 + tail.length
   }
-
-  type :+:[H, T <: HList] = HCons[H, T]
 
   /**
-   * Provides the support needed to be able to pattern-match an `HList`.
+   * Provides the methods that can be used on an `HList`. These are set apart
+   * here due to certain issues we can experience otherwise with the type variance
+   * on the `:+:` class.
    */
-  object :+: {
-    def unapply[H, T <: HList](in: HCons[H, T]): Option[(H, T)] = Some(in.head, in.tail)
-  }
+  implicit final class HListMethods[ListSoFar <: HList](hlist: ListSoFar) extends AnyRef {
+    def :+:[T](v: T): :+:[T, ListSoFar] = {
+      HLists.:+:(v, hlist)
+    }
 
+    /**
+     * The length of this HList; note that this is O(n) in the list of elements.
+     */
+    def length: Int = {
+      hlist match {
+        case HNil =>
+          0
+        case head :+: rest =>
+          1 + rest.length
+      }
+    }
+  }
 }
 
 /**
