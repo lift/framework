@@ -1033,8 +1033,11 @@ trait ProtoUser {
     }
 
     val bind = {
+      // Use the same password input for both new password fields.
+      val passwordInput = SHtml.password_*("", LFuncHolder(s => newPassword = s))
+
       ".old-password" #> SHtml.password("", s => oldPassword = s) &
-      ".new-password" #> SHtml.password_*("", LFuncHolder(s => newPassword = s)) &
+      ".new-password" #> passwordInput &
       "type=submit" #> changePasswordSubmitButton(S.?("change"), testAndSet _)
     }
 

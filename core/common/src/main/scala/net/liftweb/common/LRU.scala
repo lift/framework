@@ -47,7 +47,18 @@ private[common] trait LinkedListElem[T1, T2] {
 
 
 /**
- * Implements an LRU Hashmap
+ * Implements an LRU Hashmap. Given a size, this map will evict the least
+ * recently used item(s) when new items are added.
+ *
+ * Note that `LRUMap` is '''not''' thread-safe.
+ *
+ * @param initmaxSize The initial max size. This can be updated using
+ *        `[[updateMaxSize]]`.
+ * @param loadFactor If non-`Empty`, specifies the load factor for the
+ *        backing `java.util.HashMap`.
+ * @param expiredFunc When a key-value pair is removed, the last thing that
+ *        happens is that these functions are invoked. Note that this happens
+ *        after `[[expired]]` is invoked.
  */
 class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V) => Unit)*) extends LinkedListElem[K, V] {
   import java.util.HashMap
@@ -58,6 +69,10 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
 
   def maxSize = _maxSize
 
+  /**
+   * Updates the `LRUMap`'s current max size to `newMaxSize`, evicting the
+   * oldest entries if the size has shrunk.
+   */
   def updateMaxSize(newMaxSize: Int) {
     val oldMaxSize = _maxSize
     _maxSize = newMaxSize
@@ -75,6 +90,13 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
 
   private[this] val localMap = new HashMap[K, LinkedListElem[K, V]](maxSize / 4, loadFactor openOr 0.75f)
 
+  /**
+   * Fetches the given key, returning `[[Empty]]` if the key does not exist in
+   * the map. A key may not be in the map either if it was never added or if it
+   * has been expired.
+   *
+   * Accessing a key this way will mark its value as most-recently-used.
+   */
   def get(key: K): Box[V] = localMap.get(key) match {
     case null => Empty
     case v =>
@@ -83,12 +105,29 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
     Full(v.value2)
   }
 
+  /**
+   * Unsafe version of `[[get]]`.
+   *
+   * @throws NullPointerException If the key does not exist in the map. Use `get`
+   *         instead to get a safe `[[Box]]` result that can be checked for
+   *         existence, or use `[[contains]]` before calling this.
+   */
   def apply(key: K) = get(key).openOrThrowException("Simulating what happens with a regular Map, use contains(key) to check if it is present or not.")
 
+  /**
+   * Check if the given `key` exists in the map. A key may not be in the map
+   * either if it was never added or if it has been expired.
+   */
   def contains(key: K): Boolean = localMap.containsKey(key)
 
+  /**
+   * Remove the given `key` and its associated value from the map.
+   */
   def -(key: K) = remove(key)
 
+  /**
+   * Alias for `[[-]]`.
+   */
   def remove(key: K) {
     localMap.get(key) match {
       case null =>
@@ -98,6 +137,13 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
     }
   }
 
+  /**
+   * Set the `value` for the given `key` in the map.
+   *
+   * Marks the given `value` as the most recently used, and, if this `key` is
+   * new in the map and the map has grown beyond the specifiex `[[maxSize]]`,
+   * evicts the least-recently-used entries.
+   */
   def update(key: K, value: V) {
     localMap.get(key) match {
       case null =>
@@ -117,16 +163,15 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
 
   /**
    * Override this method to implement a test to see if a particular
-   * element can be expired from the cache
+   * element can be expired from the cache.
    */
   protected def canExpire(k: K, v: V): Boolean = {
     true
   }
 
   /**
-   * A mechanism for expiring elements from cache.  This method
-   * can devolve into O(n ^ 2) if lots of elements can't be
-   * expired
+   * A mechanism for expiring elements from cache. This method can devolve into
+   * O(n ^ 2) if lots of elements can't be expired.
    */
   private def doRemoveIfTooMany() {
     while (localMap.size > maxSize) {
@@ -143,7 +188,9 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
   }
 
   /**
-   * Called when a key/value pair is removed
+   * Called when a key/value pair is removed, before the `expiredFunc`.
+   *
+   * Does nothing by default, override for custom functionality.
    */
   protected def expired(key: K, value: V) {
 
@@ -163,6 +210,5 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
   }
 
   def size: Int = localMap.size
-
 }
 

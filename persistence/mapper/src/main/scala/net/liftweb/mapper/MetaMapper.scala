@@ -678,6 +678,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
         case JField("$persisted", JBool(per)) =>
           ret.persisted_? = per
           true
+        case _ => false
       }
 
       for {

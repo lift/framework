@@ -58,6 +58,10 @@ object Templates {
         }
     }
 
+  private [http] def findTopLevelTemplate(places: List[String], locale: Locale, needAutoSurround: Boolean) = {
+    findRawTemplate0(places, locale, needAutoSurround).map(checkForContentId)
+  }
+
   /**
    * Given a list of paths (e.g. List("foo", "index")),
    * find the template.  This method runs checkForContentId
@@ -130,11 +134,16 @@ object Templates {
     }.headOption getOrElse in
   }
 
-  private def parseMarkdown(is: InputStream): Box[NodeSeq] =
+  private def parseMarkdown(is: InputStream, needAutoSurround: Boolean): Box[NodeSeq] =
   for {
     bytes <- Helpers.tryo(Helpers.readWholeStream(is))
     elems <- MarkdownParser.parse(new String(bytes, "UTF-8"))
-  } yield elems
+  } yield {
+    if (needAutoSurround)
+      <lift:surround with="default" at="content">{elems}</lift:surround>
+    else
+      elems
+  }
 
   /**
    * Given a list of paths (e.g. List("foo", "index")),
@@ -145,6 +154,10 @@ object Templates {
    * @return the template if it can be found
    */
   def findRawTemplate(places: List[String], locale: Locale): Box[NodeSeq] = {
+    findRawTemplate0(places, locale, false)
+  }
+
+  private def findRawTemplate0(places: List[String], locale: Locale, needAutoSurround: Boolean): Box[NodeSeq] = {
     /*
      From a Scala coding standpoint, this method is ugly.  It's also a performance
      hotspot that needed some tuning.  I've made the code very imperative and
@@ -196,9 +209,9 @@ object Templates {
                 val name = pls + p + (if (s.length > 0) "." + s else "")
                 import scala.xml.dtd.ValidationException
                 val xmlb = try {
-                  LiftRules.doWithResource(name) {
-                    if (s == "md") {parseMarkdown} else
-                    parserFunction } match {
+                  LiftRules.doWithResource(name) { is =>
+                    if (s == "md") {parseMarkdown(is, needAutoSurround)} else
+                    parserFunction(is) } match {
                     case Full(seq) => seq
                     case _ => Empty
                   }

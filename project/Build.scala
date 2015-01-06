@@ -19,8 +19,34 @@ import Keys._
 import net.liftweb.sbt.LiftBuildPlugin._
 import Dependencies._
 
+/**
+ * Pattern-matches an attributed file, extracting its module organization,
+ * name, and revision if available in its attributes.
+ */
+object MatchingModule {
+  def unapply(file: Attributed[File]): Option[(String,String,String)] = {
+    file.get(moduleID.key).map { moduleInfo =>
+      (moduleInfo.organization, moduleInfo.name, moduleInfo.revision)
+    }
+  }
+}
 
 object BuildDef extends Build {
+
+  /**
+   * A helper that returns the revision and JAR file for a given dependency.
+   * Useful when trying to attach API doc URI information.
+   */
+  def findManagedDependency(classpath: Seq[Attributed[File]],
+                            organization: String,
+                            name: String): Option[(String,File)] = {
+    classpath.collectFirst {
+      case entry @ MatchingModule(moduleOrganization, moduleName, revision)
+          if moduleOrganization == organization &&
+             moduleName.startsWith(name) =>
+        (revision, entry.data)
+    }
+  }
 
   lazy val liftProjects = core ++ web ++ persistence
 
@@ -39,11 +65,7 @@ object BuildDef extends Build {
   lazy val common =
     coreProject("common")
       .settings(description := "Common Libraties and Utilities",
-                libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12),
-                libraryDependencies <++= scalaVersion {
-                  case "2.11.0" | "2.11.1" => Seq(scala_xml, scala_parser)
-                  case _ => Seq()
-                }
+                libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser)
       )
 
   lazy val actor =
@@ -56,11 +78,7 @@ object BuildDef extends Build {
     coreProject("markdown")
         .settings(description := "Markdown Parser",
                   parallelExecution in Test := false,
-                  libraryDependencies <++= scalaVersion { sv => Seq(scalatest(sv), junit) },
-                  libraryDependencies <++= scalaVersion {
-                    case "2.11.0" | "2.11.1" => Seq(scala_xml, scala_parser)
-                    case _ => Seq()
-                  }
+                  libraryDependencies <++= scalaVersion { sv => Seq(scalatest, junit, scala_xml, scala_parser) }
       )
 
   lazy val json =
@@ -78,7 +96,7 @@ object BuildDef extends Build {
     coreProject("json-scalaz7")
         .dependsOn(json)
         .settings(description := "JSON Library based on Scalaz 7",
-                  libraryDependencies <+= scalaVersion(scalaz7))
+                  libraryDependencies ++= Seq(scalaz7))
 
   lazy val json_ext =
     coreProject("json-ext")
@@ -92,14 +110,8 @@ object BuildDef extends Build {
         .settings(description := "Utilities Library",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion {sv =>  Seq(scala_compiler(sv), joda_time,
-                    joda_convert, commons_codec, javamail, log4j, htmlparser)},
-                  excludeFilter <<= scalaVersion { scalaVersion =>
-                    if (scalaVersion.startsWith("2.11")) {
-                      HiddenFileFilter
-                    } else {
-                      HiddenFileFilter || "Position.scala"
-                    }
-                  })
+                    joda_convert, commons_codec, javamail, log4j, htmlparser)}
+                  )
 
   // Web Projects
   // ------------
@@ -119,7 +131,7 @@ object BuildDef extends Build {
         .settings(description := "Webkit Library",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv =>
-                    Seq(commons_fileupload, rhino, servlet_api, specs2(sv).copy(configurations = Some("provided")), jetty6,
+                    Seq(commons_fileupload, rhino, servlet_api, specs2.copy(configurations = Some("provided")), jetty6,
                       jwebunit)
                   },
                   initialize in Test <<= (sourceDirectory in Test) { src =>
@@ -193,6 +205,20 @@ object BuildDef extends Build {
     liftProject(id = if (module.startsWith(prefix)) module else prefix + module,
                 base = file(base) / module.stripPrefix(prefix))
 
-  def liftProject(id: String, base: File): Project =
-    Project(id, base).settings(liftBuildSettings: _*).settings(scalacOptions ++= List("-feature", "-language:implicitConversions"))
+  def liftProject(id: String, base: File): Project = {
+    Project(id, base)
+      .settings(liftBuildSettings: _*)
+      .settings(scalacOptions ++= List("-feature", "-language:implicitConversions"))
+      .settings(
+        autoAPIMappings := true,
+        apiMappings ++= {
+          val cp: Seq[Attributed[File]] = (fullClasspath in Compile).value
+
+          findManagedDependency(cp, "org.scala-lang.modules", "scala-xml").map {
+            case (revision, file)  =>
+              (file -> url("http://www.scala-lang.org/api/" + version))
+          }.toMap
+        }
+      )
+  }
 }

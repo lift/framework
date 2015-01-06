@@ -1158,7 +1158,7 @@ class Req(val path: ParsePath,
                               true,
                               this.paramCalculator, 
                               this.addlParams)
-         S.withReq(newReq) {
+         S.withReq(Full(newReq)) {
           f(path)
          }
       case NotFoundAsNode(node) => Full(LiftRules.convertResponse((node, 404),

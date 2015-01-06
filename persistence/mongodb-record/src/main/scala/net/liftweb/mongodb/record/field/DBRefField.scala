@@ -58,7 +58,7 @@ class DBRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefT
 
   def asJs = Str(toString)
 
-  def asJValue = (JNothing: JValue) // not implemented
+  def asJValue: JValue = (JNothing: JValue) // not implemented
 
   def setFromJValue(jvalue: JValue) = Empty // not implemented
 

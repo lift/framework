@@ -17,7 +17,7 @@ The policy on issues is:
   available to a broader audience.
 
 We will accept pull requests into the Lift codebase if the pull requests meet
-the following criteria:
+all of the following criteria:
 * The request handles an issue that has been discussed on the Lift mailing list
   and whose solution has been requested (and in general adheres to the spirit of
   the issue guidelines above).

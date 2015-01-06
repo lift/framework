@@ -120,7 +120,7 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
     if (options.length > 0) Full(elem)
     else Empty
 
-  def asJValue = JArray(value.map(li => li.asInstanceOf[AnyRef] match {
+  def asJValue: JValue = JArray(value.map(li => li.asInstanceOf[AnyRef] match {
     case x if primitive_?(x.getClass) => primitive2jvalue(x)
     case x if mongotype_?(x.getClass) => mongotype2jvalue(x)(owner.meta.formats)
     case x if datetype_?(x.getClass) => datetype2jvalue(x)(owner.meta.formats)
@@ -167,7 +167,7 @@ class MongoJsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <
       valueMeta.create(JObjectParser.serialize(dbo.get(k.toString))(owner.meta.formats).asInstanceOf[JObject])(owner.meta.formats)
     })))
 
-  override def asJValue = JArray(value.map(_.asJObject()(owner.meta.formats)))
+  override def asJValue: JValue = JArray(value.map(_.asJObject()(owner.meta.formats)))
 
   override def setFromJValue(jvalue: JValue) = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
