@@ -19,6 +19,8 @@ package util
 
 import java.util.{Calendar, Date}
 
+import org.joda.time.DateTimeZone
+import org.specs2.execute.AsResult
 import org.specs2.mutable.Specification
 import org.specs2.ScalaCheck
 import org.specs2.time.NoTimeConversions
@@ -38,46 +40,68 @@ object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen
 
   "A TimeSpan" can {
     "be created from a number of milliseconds" in {
-      TimeSpan(3000) must_== TimeSpan(3 * 1000)
+      forAllTimeZones(TimeSpan(3000) must_== TimeSpan(3 * 1000))
     }
     "be created from a number of seconds" in {
-      3.seconds must_== TimeSpan(3 * 1000)
+      forAllTimeZones(3.seconds must_== TimeSpan(3 * 1000))
     }
     "be created from a number of minutes" in {
-      3.minutes must_== TimeSpan(3 * 60 * 1000)
+      forAllTimeZones(3.minutes must_== TimeSpan(3 * 60 * 1000))
     }
     "be created from a number of hours" in {
-      3.hours must_== TimeSpan(3 * 60 * 60 * 1000)
+      forAllTimeZones(3.hours must_== TimeSpan(3 * 60 * 60 * 1000))
     }
     "be created from a number of days" in {
-      3.days must_== TimeSpan(3 * 24 * 60 * 60 * 1000)
+      forAllTimeZones(3.days must_== TimeSpan(3 * 24 * 60 * 60 * 1000))
     }
     "be created from a number of weeks" in {
-      3.weeks must_== TimeSpan(3 * 7 * 24 * 60 * 60 * 1000)
+      forAllTimeZones(3.weeks must_== TimeSpan(3 * 7 * 24 * 60 * 60 * 1000))
+    }
+    "be created from a number of months" in {
+      forAllTimeZones(3.months must_== 3.months)
+    }
+    "be created from a number of years" in {
+      forAllTimeZones(3.years must_== 3.years)
     }
     "be converted implicitly to a date starting from the epoch time" in {
-      3.seconds.after(new Date(0)) must beTrue
+      forAllTimeZones(3.seconds.after(new Date(0)) must beTrue)
     }
     "be converted to a date starting from the epoch time, using the date method" in {
-      3.seconds.after(new Date(0)) must beTrue
+      forAllTimeZones(3.seconds.after(new Date(0)) must beTrue)
     }
     "be implicitly converted to a Long" in {
-      (3.seconds == 3000L) must_== true
+      forAllTimeZones((3.seconds == 3000L) must_== true)
     }
     "be compared to an int" in {
-      (3.seconds == 3000) must_== true
-      (3.seconds != 2000) must_== true
+      forAllTimeZones {
+        (3.seconds == 3000) must_== true
+        (3.seconds != 2000) must_== true
+      }
     }
     "be compared to a long" in {
-      (3.seconds == 3000L) must_== true
-      (3.seconds != 2000L) must_== true
+      forAllTimeZones {
+        (3.seconds == 3000L) must_== true
+        (3.seconds != 2000L) must_== true
+      }
     }
     "be compared to another TimeSpan" in {
-      3.seconds must_== 3.seconds
-      3.seconds must_!= 2.seconds
+      forAllTimeZones {
+        3.seconds must_== 3.seconds
+        3.seconds must_!= 2.seconds
+      }
     }
     "be compared to another object" in {
-      3.seconds must_!= "string"
+      forAllTimeZones(3.seconds must_!= "string")
+    }
+  }
+
+  def forAllTimeZones[T: AsResult](f: => T) = {
+    import collection.convert.wrapAsScala._
+    for {
+      timeZoneId <- DateTimeZone.getAvailableIDs.toSeq
+    } yield {
+      DateTimeZone.setDefault(DateTimeZone.forID(timeZoneId))
+      f
     }
   }
 
