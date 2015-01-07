@@ -643,8 +643,9 @@
 
   window.liftJQuery = {
     onEvent: function(elementOrId, eventName, fn) {
-      if (typeof elementOrId == 'string')
+      if (typeof elementOrId == 'string') {
         elementOrId = '#' + elementOrId;
+      }
 
       jQuery(elementOrId).on(eventName, fn);
     },
