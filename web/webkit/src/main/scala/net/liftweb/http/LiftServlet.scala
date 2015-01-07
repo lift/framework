@@ -655,7 +655,7 @@ class LiftServlet extends Loggable {
               case _ => JsCommands(S.noticesToJsCmd :: JsCmds.Noop :: S.jsToAppend).toResponse
             }
 
-            LiftRules.cometLogger.debug("AJAX Response: " + liftSession.uniqueId + " " + ret)
+            LiftRules.cometLogger.debug("AJAX Response: " + liftSession.underlyingId + " " + ret)
 
             Full(ret)
           } finally {
@@ -686,7 +686,7 @@ class LiftServlet extends Loggable {
   private def handleAjax(liftSession: LiftSession,
                          requestState: Req): Box[LiftResponse] = {
     extractVersions(requestState.path.partPath) { versionInfo =>
-      LiftRules.cometLogger.debug("AJAX Request: " + liftSession.uniqueId + " " + requestState.params)
+      LiftRules.cometLogger.debug("AJAX Request: " + liftSession.underlyingId + " " + requestState.params)
       tryo {
         LiftSession.onBeginServicing.foreach(_(liftSession, requestState))
       }

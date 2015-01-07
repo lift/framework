@@ -310,7 +310,7 @@ object SessionMaster extends LiftActor with Loggable {
   private def lockAndBump(f: => Box[SessionInfo]): Box[LiftSession] = this.synchronized {
     f.map {
       s =>
-        nsessions.put(s.session.uniqueId, SessionInfo(s.session, s.userAgent, s.ipAddress, s.requestCnt + 1, millis))
+        nsessions.put(s.session.underlyingId, SessionInfo(s.session, s.userAgent, s.ipAddress, s.requestCnt + 1, millis))
 
         s.session
     }
@@ -372,7 +372,7 @@ object SessionMaster extends LiftActor with Loggable {
       val ses = lockRead(nsessions)
       (Box !! ses.get(sessionId)).foreach {
         case SessionInfo(s, _, _, _, _) =>
-          killedSessions.put(s.uniqueId, Helpers.millis)
+          killedSessions.put(s.underlyingId, Helpers.millis)
           s.markedForShutDown_? = true
           Schedule.schedule(() => {
             try {
@@ -412,7 +412,7 @@ object SessionMaster extends LiftActor with Loggable {
           f(ses, shutDown => {
             if (!shutDown.session.markedForShutDown_?) {
               shutDown.session.markedForShutDown_? = true
-              this.sendMsg(RemoveSession(shutDown.session.uniqueId))
+              this.sendMsg(RemoveSession(shutDown.session.underlyingId))
             }
           })
         } else {
@@ -424,7 +424,7 @@ object SessionMaster extends LiftActor with Loggable {
 
                 this ! RemoveSession(shutDown.
                   session.
-                  uniqueId)
+                  underlyingId)
               }
             }
           ), 0.seconds)
@@ -595,12 +595,21 @@ private[http] class BooleanThreadGlobal extends ThreadGlobal[Boolean] {
 /**
  * The LiftSession class containg the session state information
  */
-class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
+class LiftSession(private[http] val _contextPath: String, val underlyingId: String,
                   val httpSession: Box[HTTPSession]) extends LiftMerge with Loggable with HowStateful {
   def sessionHtmlProperties = LiftRules.htmlProperties.session.is.make openOr LiftRules.htmlProperties.default.is.vend
 
   val requestHtmlProperties: TransientRequestVar[HtmlProperties] =
     new TransientRequestVar[HtmlProperties](sessionHtmlProperties(S.request openOr Req.nil)) {}
+
+  /**
+   * The unique id of this session. Can be used to securely and uniquely
+   * identify the session, unlike underlyingId which is tied to the host
+   * session id. This id should be secure to emit into a page as needed (for
+   * example, it is used to provide randomness/cache-busting to the comet
+   * request path).
+   */
+  val uniqueId: String = nextFuncName
 
   @volatile
   private[http] var markedForTermination = false
@@ -897,7 +906,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
    * Destroy this session and the underlying container session.
    */
   def destroySession() {
-    SessionMaster ! RemoveSession(this.uniqueId)
+    SessionMaster ! RemoveSession(this.underlyingId)
 
     S.request.foreach(_.request.session.terminate)
     this.doShutDown()
@@ -1126,7 +1135,7 @@ class LiftSession(private[http] val _contextPath: String, val uniqueId: String,
 
         _running_? = false
 
-        SessionMaster.sendMsg(RemoveSession(this.uniqueId))
+        SessionMaster.sendMsg(RemoveSession(this.underlyingId))
 
         import scala.collection.JavaConversions._
         nasyncComponents.foreach {
