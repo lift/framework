@@ -17,7 +17,7 @@
 package net.liftweb
 package http
 
-import util.Helpers._
+import scala.concurrent.duration._
 import common.{Loggable, Full}
 
 

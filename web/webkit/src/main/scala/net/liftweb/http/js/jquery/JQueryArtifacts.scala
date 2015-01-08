@@ -29,6 +29,7 @@ import JqJE._
 import JqJsCmds._
 import util.Helpers._
 import util.Props
+import scala.concurrent.duration._
 
 trait JQueryArtifacts extends JSArtifacts {
   /**
@@ -87,7 +88,7 @@ trait JQueryArtifacts extends JSArtifacts {
    * Fades out the element having the provided id, by waiting
    * for the given duration and fades out during fadeTime
    */
-  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) =
+  def fadeOut(id: String, duration: Duration, fadeTime: Duration) =
     FadeOut(id, duration, fadeTime)
 
   /**

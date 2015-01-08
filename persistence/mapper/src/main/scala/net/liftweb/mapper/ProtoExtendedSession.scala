@@ -23,6 +23,7 @@ import common._
 import util._
 import http._
 import Helpers._
+import scala.concurrent.duration._
 
 
 trait ProtoExtendedSession[T <: ProtoExtendedSession[T]] extends
@@ -52,7 +53,7 @@ KeyedMapper[Long, T] {
    */
   protected def expirationColumnName = "expiration"
 
-  def expirationTime: Long = millis + 180.days
+  def expirationTime: Long = millis + 180.days.toMillis
 }
 
 trait UserIdAsString {

@@ -18,9 +18,10 @@ package net.liftweb
 package util
 
 import java.util.concurrent._
-import Helpers.TimeSpan
 import common._
 import actor.ThreadPoolRules
+import net.liftweb.util.TimeSpanHelpers.TimeSpan
+import scala.concurrent.duration._
 
 class ScheduleJBridge {
   def schedule: Schedule = Schedule
@@ -99,8 +100,18 @@ sealed trait Schedule extends Loggable {
    * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
    * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
    */
+  @deprecated("Use scala.concurrent.duration.Duration instead of TimeSpan")
   def schedule[T](to: SimpleActor[T], msg: T, delay: TimeSpan): ScheduledFuture[Unit] =
-  this.schedule(() => Helpers.tryo( to ! msg ), delay)
+    this.schedule(to, msg, delay.toScalaDuration)
+
+  /**
+   * Schedules the sending of a message to occur after the specified delay.
+   *
+   * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
+   * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
+   */
+  def schedule[T](to: SimpleActor[T], msg: T, delay: Duration): ScheduledFuture[Unit] =
+    this.schedule(() => Helpers.tryo( to ! msg ), delay)
 
   /**
    * Schedules the sending of a message to occur after the specified delay.
@@ -109,7 +120,7 @@ sealed trait Schedule extends Loggable {
    * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
    */
   def perform[T](to: SimpleActor[T], msg: T, delay: Long): ScheduledFuture[Unit] =
-  this.schedule(() => Helpers.tryo( to ! msg ), delay: TimeSpan)
+    this.schedule(() => Helpers.tryo( to ! msg ), delay.millis)
 
    /**
    * Schedules the sending of a message to occur after the specified delay.
@@ -118,7 +129,7 @@ sealed trait Schedule extends Loggable {
    * after delay
    */
   def perform(f: () => Unit, delay: Long): ScheduledFuture[Unit] =
-    schedule(f, delay: TimeSpan)
+    schedule(f, delay.millis)
 
 
   /**
@@ -127,24 +138,46 @@ sealed trait Schedule extends Loggable {
    * @return a <code>ScheduledFuture</code> which executes the function f
    * immediately on a worker thread
    */
-  def apply(f: () => Unit): ScheduledFuture[Unit] = schedule(f, 0)
-  
+  def apply(f: () => Unit): ScheduledFuture[Unit] = schedule(f, 0.millis)
+
   /**
    * Schedules the application of a function
    *
    * @return a <code>ScheduledFuture</code> which executes the function f
    * after the delay
    */
-  def apply(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = 
+  @deprecated("Use scala.concurrent.duration.Duration instead of TimeSpan")
+  def apply(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] =
+    apply(f, delay.toScalaDuration)
+
+  /**
+   * Schedules the application of a function
+   *
+   * @return a <code>ScheduledFuture</code> which executes the function f
+   * after the delay
+   */
+  def apply(f: () => Unit, delay: Duration): ScheduledFuture[Unit] =
     schedule(f, delay)
-  
+
   /**
    * Schedules the application of a function
    *
    * @return a <code>ScheduledFuture</code> which executes the function f
    * after the delay
    */
-  def schedule(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = 
+  @deprecated("Use scala.concurrent.duration.Duration instead of TimeSpan")
+  def schedule(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = {
+    schedule(f, delay.toScalaDuration)
+  }
+
+  /**
+   * Schedules the application of a function.
+   *
+   * @return a <code>ScheduledFuture</code> which executes the function f
+   * after the delay
+   */
+  def schedule(f: () => Any, delay: Duration): ScheduledFuture[Unit] =
+    // after TimeSpan remove, f: () => Any will be replaced by () => Unit - for now it cause overload usage problems
     synchronized {
       val r = new Runnable {
         def run() { 
@@ -169,7 +202,7 @@ sealed trait Schedule extends Loggable {
       
       try {
         this.restart
-        service.schedule(fast, delay.millis, TimeUnit.MILLISECONDS)
+        service.schedule(fast, delay.toMillis, TimeUnit.MILLISECONDS)
       } catch {
         case e: RejectedExecutionException => throw ActorPingException("ping could not be scheduled", e)
       }

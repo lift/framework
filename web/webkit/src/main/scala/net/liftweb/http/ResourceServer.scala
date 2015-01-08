@@ -22,6 +22,7 @@ import net.liftweb.util._
 import Helpers._
 import java.net.{URL, URLConnection, JarURLConnection}
 import java.util.concurrent.{ConcurrentHashMap => CHash}
+import scala.concurrent.duration._
 
 object ResourceServer {
   var allowedPaths: PartialFunction[List[String], Boolean] = {
@@ -93,13 +94,13 @@ object ResourceServer {
       url <- LiftRules.getResource(path)
       lastModified = calcLastModified(url)
     } yield
-      request.testFor304(lastModified, "Expires" -> toInternetDate(millis + 30.days)) openOr {
+      request.testFor304(lastModified, "Expires" -> toInternetDate(millis + 30.days.toMillis)) openOr {
         val stream = url.openStream
         val uc = url.openConnection
         StreamingResponse(stream, () => stream.close, uc.getContentLength,
           (if (lastModified == 0L) Nil else
             List("Last-Modified" -> toInternetDate(lastModified))) :::
-                  List("Expires" -> toInternetDate(millis + 30.days),
+                  List("Expires" -> toInternetDate(millis + 30.days.toMillis),
                        "Date" -> Helpers.nowAsInternetDate,
                        "Pragma" -> "",
                        "Cache-Control" -> "",

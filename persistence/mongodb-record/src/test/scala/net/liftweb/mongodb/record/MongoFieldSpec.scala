@@ -33,8 +33,7 @@ import json._
 import mongodb.BsonDSL._
 import util.Helpers.randomString
 import http.{LiftSession, S}
-import http.js.JE._
-import http.js.JsExp
+import http.js._
 import net.liftweb.record._
 import common.Box._
 import xml.{Elem, NodeSeq, Text}
@@ -230,7 +229,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
     passConversionTests(
       now,
       rec.mandatoryDateField,
-      JsObj(("$dt", Str(nowStr))),
+      JE.JsObj(("$dt", JE.Str(nowStr))),
       JObject(List(JField("$dt", JString(nowStr)))),
       Full(<input name=".*" type="text" tabindex="1" value={nowStr} id="mandatoryDateField_id"></input>)
     )
@@ -263,7 +262,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       passConversionTests(
         oid,
         rec.mandatoryObjectIdField,
-        JsObj(("$oid", oid.toString)),
+        JE.JsObj(("$oid", oid.toString)),
         JObject(List(JField("$oid", JString(oid.toString)))),
         Full(<input name=".*" type="text" tabindex="1" value={oid.toString} id="mandatoryObjectIdField_id"></input>)
       )
@@ -281,7 +280,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
     passConversionTests(
       ptrn,
       rec.mandatoryPatternField,
-      JsObj(("$regex", Str(ptrn.toString)), ("$flags", Num(2))),
+      JE.JsObj(("$regex", JE.Str(ptrn.toString)), ("$flags", JE.Num(2))),
       JObject(List(JField("$regex", JString(ptrn.toString)), JField("$flags", JInt(2)))),
       Empty,
       false
@@ -296,7 +295,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
     passConversionTests(
       uuid,
       rec.mandatoryUUIDField,
-      JsObj(("$uuid", Str(uuid.toString))),
+      JE.JsObj(("$uuid", JE.Str(uuid.toString))),
       JObject(List(JField("$uuid", JString(uuid.toString)))),
       Full(<input name=".*" type="text" tabindex="1" value={uuid.toString} id="mandatoryUUIDField_id"></input>)
     )
@@ -331,7 +330,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       passConversionTests(
         lst,
         rec.mandatoryStringListField,
-        JsArray(Str("abc"), Str("def"), Str("ghi")),
+        JE.JsArray(JE.Str("abc"), JE.Str("def"), JE.Str("ghi")),
         JArray(List(JString("abc"), JString("def"), JString("ghi"))),
         Empty
       )
@@ -347,7 +346,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       passConversionTests(
         lst,
         rec.mandatoryIntListField,
-        JsArray(Num(4), Num(5), Num(6)),
+        JE.JsArray(JE.Num(4), JE.Num(5), JE.Num(6)),
         JArray(List(JInt(4), JInt(5), JInt(6))),
         Empty
       )
@@ -369,7 +368,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       passConversionTests(
         lst,
         rec.objectIdRefListField,
-        JsArray(Str(oid1.toString), Str(oid2.toString), Str(oid3.toString)),
+        JE.JsArray(JE.Str(oid1.toString), JE.Str(oid2.toString), JE.Str(oid3.toString)),
         JArray(List(
           JObject(List(JField("$oid", JString(oid1.toString)))),
           JObject(List(JField("$oid", JString(oid2.toString)))),
@@ -393,7 +392,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       passConversionTests(
         lst1,
         rec.patternListField,
-        JsArray(Str(ptrn1.toString), Str(ptrn2.toString)),
+        JE.JsArray(JE.Str(ptrn1.toString), JE.Str(ptrn2.toString)),
         JArray(List(
           JsonRegex(ptrn1),
           JsonRegex(ptrn2)
@@ -419,7 +418,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       passConversionTests(
         lst,
         rec.dateListField,
-        JsArray(Str(dt1.toString), Str(dt2.toString), Str(dt3.toString)),
+        JE.JsArray(JE.Str(dt1.toString), JE.Str(dt2.toString), JE.Str(dt3.toString)),
         JArray(List(
           JsonDate(dt1)(MongoListTestRecord.formats),
           JsonDate(dt2)(MongoListTestRecord.formats),
@@ -445,7 +444,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       passConversionTests(
         lst,
         rec.uuidListField,
-        JsArray(Str(uuid1.toString), Str(uuid2.toString), Str(uuid3.toString)),
+        JE.JsArray(JE.Str(uuid1.toString), JE.Str(uuid2.toString), JE.Str(uuid3.toString)),
         JArray(List(
           JsonUUID(uuid1),
           JsonUUID(uuid2),
@@ -471,7 +470,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       passConversionTests(
         lst,
         rec.dateTimeListField,
-        JsArray(Str(dt1.toString), Str(dt2.toString), Str(dt3.toString)),
+        JE.JsArray(JE.Str(dt1.toString), JE.Str(dt2.toString), JE.Str(dt3.toString)),
         JArray(List(
           JsonDate(dt1.toDate)(MongoListTestRecord.formats),
           JsonDate(dt2.toDate)(MongoListTestRecord.formats),
@@ -522,7 +521,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       passConversionTests(
         map,
         rec.mandatoryStringMapField,
-        JsObj(("a", Str("abc")), ("b", Str("def")), ("c", Str("ghi"))),
+        JE.JsObj(("a", JE.Str("abc")), ("b", JE.Str("def")), ("c", JE.Str("ghi"))),
         JObject(List(
           JField("a", JString("abc")),
           JField("b", JString("def")),
@@ -542,7 +541,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       passConversionTests(
         map,
         rec.mandatoryIntMapField,
-        JsObj(("a", Num(4)), ("b", Num(5)), ("c", Num(6))),
+        JE.JsObj(("a", JE.Num(4)), ("b", JE.Num(5)), ("c", JE.Num(6))),
         JObject(List(
           JField("a", JInt(4)),
           JField("b", JInt(5)),
@@ -634,7 +633,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       passConversionTests(
         lst,
         rec.mandatoryBsonRecordListField,
-        JsArray(sr1JsExp, sr2JsExp),
+        JE.JsArray(sr1JsExp, sr2JsExp),
         JArray(List(sr1Json, sr2Json)),
         Empty
       )

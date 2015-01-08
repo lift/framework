@@ -18,6 +18,7 @@ package net.liftweb
 package actor 
 
 import common._
+import scala.concurrent.duration._
 
 
 /**
@@ -126,6 +127,10 @@ class LAFuture[T](val scheduler: LAScheduler) {
   }
 
   def withFilter(f: T => Boolean): LAFuture[T] = filter(f)
+
+  def get(timeout: Duration): Box[T] = {
+    get(timeout.toMillis)
+  }
 
   /**
    * Get the future value or if the value is not

@@ -22,7 +22,7 @@ import org.specs2.specification.BeforeExample
 import org.specs2.execute.PendingUntilFixed
 
 import actor._
-import Helpers._
+import scala.concurrent.duration._
 
 
 /**
@@ -35,20 +35,20 @@ object ScheduleSpec extends Specification with PendingUntilFixed with PingedServ
 
   "The Schedule object" should {
     "provide a schedule method to ping an actor regularly" in {
-      Schedule.schedule(service, Alive, TimeSpan(10))
+      Schedule.schedule(service, Alive, 10.milli)
       service.pinged must eventually(beTrue)
     }
     "honor multiple restarts" in {
       Schedule.restart
       Schedule.restart
       Schedule.restart
-      Schedule.schedule(service, Alive, TimeSpan(10))
+      Schedule.schedule(service, Alive, 10.milli)
       service.pinged must eventually(beTrue)
     }
     "honor shutdown followed by restart" in {
       Schedule.shutdown
       Schedule.restart
-      Schedule.schedule(service, Alive, TimeSpan(10))
+      Schedule.schedule(service, Alive, 10.milli)
       service.pinged must eventually(beTrue)
     }
     "not honor multiple shutdowns" in {

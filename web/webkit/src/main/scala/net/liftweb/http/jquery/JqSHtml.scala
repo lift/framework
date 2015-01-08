@@ -18,25 +18,42 @@ package net.liftweb
 package http
 package jquery
 
-import net.liftweb.util.Helpers._
 import net.liftweb.http.js._
 import net.liftweb.http.js.jquery._
 import JqJsCmds._
+import net.liftweb.util.TimeSpanHelpers.TimeSpan
+
+import scala.concurrent.duration.Duration
 
 /**
  * This contains Html artifacts that are heavily relying on JQuery
  */
 @deprecated("This contains Html artifacts that are heavily relying on JQuery", "2.3")
 object JqSHtml {
+  @deprecated("Use scala.concurrent.duration.Duration instead of TimeSpan")
   def fadeOutErrors(duration: TimeSpan, fadeTime: TimeSpan): JsCmd = {
+    fadeOutErrors(duration.toScalaDuration, fadeTime.toScalaDuration)
+  }
+
+  @deprecated("Use scala.concurrent.duration.Duration instead of TimeSpan")
+  def fadeOutWarnings(duration: TimeSpan, fadeTime: TimeSpan): JsCmd = {
+    fadeOutWarnings(duration.toScalaDuration, fadeTime.toScalaDuration)
+  }
+
+  @deprecated("Use scala.concurrent.duration.Duration instead of TimeSpan")
+  def fadeOutNotices(duration: TimeSpan, fadeTime: TimeSpan): JsCmd = {
+    fadeOutNotices(duration.toScalaDuration, fadeTime.toScalaDuration)
+  }
+
+  def fadeOutErrors(duration: Duration, fadeTime: Duration): JsCmd = {
     FadeOut(LiftRules.noticesContainerId + "_error", duration, fadeTime)
   }
 
-  def fadeOutWarnings(duration: TimeSpan, fadeTime: TimeSpan): JsCmd = {
+  def fadeOutWarnings(duration: Duration, fadeTime: Duration): JsCmd = {
     FadeOut(LiftRules.noticesContainerId + "_warn", duration, fadeTime)
   }
 
-  def fadeOutNotices(duration: TimeSpan, fadeTime: TimeSpan): JsCmd = {
+  def fadeOutNotices(duration: Duration, fadeTime: Duration): JsCmd = {
     FadeOut(LiftRules.noticesContainerId + "_notice", duration, fadeTime)
   }
 

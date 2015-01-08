@@ -2,13 +2,13 @@ package net.liftweb
 package builtin
 package comet
 
+import scala.concurrent.duration._
 import scala.xml.NodeSeq
 
 import common._
 import http._
   import js._
 import util._
-  import Helpers._
 
 case class Compute(js: () => JsCmd)
 private case class Render(js: JsCmd)
@@ -37,7 +37,7 @@ private case class Render(js: JsCmd)
  */
 class AsyncRenderComet extends CometActor {
 
-  override def lifespan: Box[TimeSpan] = Full(90.seconds)
+  override def lifespan: Box[Duration] = Full(90.seconds)
 
   def render = NodeSeq.Empty
 

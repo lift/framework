@@ -17,6 +17,7 @@
 package net.liftweb
 package util
 
+import scala.concurrent.duration.{TimeUnit, Duration, FiniteDuration, DurationConversions}
 import scala.xml._
 
 /**
