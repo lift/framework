@@ -330,25 +330,29 @@ object LAFuture {
    * collected futures are satisfied
    */
   def collect[T](future: LAFuture[T]*): LAFuture[List[T]] = {
-    val sync = new Object
-    val len = future.length
-    val vals = new collection.mutable.ArrayBuffer[Box[T]](len)
-     // pad array so inserts at random places are possible
-    for (i <- 0 to len) { vals.insert(i, Empty) }
-    var gotCnt = 0
     val ret = new LAFuture[List[T]]
+    if (future.isEmpty) {
+      ret.satisfy(Nil)
+    } else {
+      val sync = new Object
+      val len = future.length
+      val vals = new collection.mutable.ArrayBuffer[Box[T]](len)
+       // pad array so inserts at random places are possible
+      for (i <- 0 to len) { vals.insert(i, Empty) }
+      var gotCnt = 0
 
-    future.toList.zipWithIndex.foreach {
-      case (f, idx) => 
-        f.foreach {
-          v => sync.synchronized {
-            vals.insert(idx, Full(v))
-            gotCnt += 1
-            if (gotCnt >= len) {
-              ret.satisfy(vals.toList.flatten)
+      future.toList.zipWithIndex.foreach {
+        case (f, idx) =>
+          f.foreach {
+            v => sync.synchronized {
+              vals.insert(idx, Full(v))
+              gotCnt += 1
+              if (gotCnt >= len) {
+                ret.satisfy(vals.toList.flatten)
+              }
             }
           }
-        }
+      }
     }
 
     ret
@@ -362,33 +366,37 @@ object LAFuture {
    * returned future with an Empty
    */
   def collectAll[T](future: LAFuture[Box[T]]*): LAFuture[Box[List[T]]] = {
-    val sync = new Object
-    val len = future.length
-    val vals = new collection.mutable.ArrayBuffer[Box[T]](len)
-    // pad array so inserts at random places are possible
-    for (i <- 0 to len) { vals.insert(i, Empty) }
-    var gotCnt = 0
     val ret = new LAFuture[Box[List[T]]]
+    if (future.isEmpty) {
+      ret.satisfy(Full(Nil))
+    } else {
+      val sync = new Object
+      val len = future.length
+      val vals = new collection.mutable.ArrayBuffer[Box[T]](len)
+      // pad array so inserts at random places are possible
+      for (i <- 0 to len) { vals.insert(i, Empty) }
+      var gotCnt = 0
 
-    future.toList.zipWithIndex.foreach {
-      case (f, idx) => 
-        f.foreach {
-          vb => sync.synchronized {
-            vb match {
-              case Full(v) => {
-                vals.insert(idx, Full(v))
-                gotCnt += 1
-                if (gotCnt >= len) {
-                  ret.satisfy(Full(vals.toList.flatten))
+      future.toList.zipWithIndex.foreach {
+        case (f, idx) =>
+          f.foreach {
+            vb => sync.synchronized {
+              vb match {
+                case Full(v) => {
+                  vals.insert(idx, Full(v))
+                  gotCnt += 1
+                  if (gotCnt >= len) {
+                    ret.satisfy(Full(vals.toList.flatten))
+                  }
                 }
-              }
-              
-              case eb: EmptyBox => {
-                ret.satisfy(eb)
+
+                case eb: EmptyBox => {
+                  ret.satisfy(eb)
+                }
               }
             }
           }
-        }
+      }
     }
 
     ret
