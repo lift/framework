@@ -22,6 +22,7 @@ import net.liftweb.actor._
 import net.liftweb.util.Helpers._
 import net.liftweb.util._
 import net.liftweb.json._
+import scala.concurrent.duration.Duration
 import scala.xml.{NodeSeq, Text, Elem, Node, Group, Null, PrefixedAttribute, UnprefixedAttribute}
 import scala.collection.mutable.ListBuffer
 import net.liftweb.http.js._
@@ -550,7 +551,7 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
    * isn't visible on any page for some period after its lifespan
    * the CometActor will be shut down.
    */
-  def lifespan: Box[TimeSpan] = Empty
+  def lifespan: Box[Duration] = Empty
 
   private var _running = true
 
@@ -910,7 +911,7 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
 
     case ShutdownIfPastLifespan =>
       for {
-        ls <- lifespan if listeners.isEmpty && (lastListenTime + ls.millis + 1000l) < millis
+        ls <- lifespan if listeners.isEmpty && (lastListenTime + ls.toMillis + 1000l) < millis
       } {
         this ! ShutDown
       }

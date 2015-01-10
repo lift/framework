@@ -27,6 +27,7 @@ import js._
 import auth._
 import provider._
 import json.JsonAST.JValue
+import scala.concurrent.duration._
 
 /**
  * Wrap a LiftResponse and cache the result to avoid computing the actual response
@@ -812,7 +813,7 @@ class LiftServlet extends Loggable {
 
       case ar: AnswerRender =>
         answers = ar :: answers
-        LAPinger.schedule(this, BreakOut(), 5.millis)
+        LAPinger.schedule(this, BreakOut(), 5L)
 
       case BreakOut() if !done =>
         done = true
@@ -844,7 +845,7 @@ class LiftServlet extends Loggable {
     try {
       session.enterComet(cont -> request)
 
-      LAPinger.schedule(cont, BreakOut(), TimeSpan(cometTimeout))
+      LAPinger.schedule(cont, BreakOut(), cometTimeout)
 
       request.request.suspend(cometTimeout + 2000L)
     } finally {
@@ -918,7 +919,7 @@ class LiftServlet extends Loggable {
 
       session.enterComet(cont -> request)
 
-      LAPinger.schedule(cont, BreakOut(), TimeSpan(cometTimeout))
+      LAPinger.schedule(cont, BreakOut(), cometTimeout)
 
       val ret2 = f.get(cometTimeout) openOr Nil
 

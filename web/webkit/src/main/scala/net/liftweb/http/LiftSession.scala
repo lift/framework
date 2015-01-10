@@ -21,6 +21,7 @@ import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
 import scala.collection.mutable.{HashMap, ListBuffer}
+import scala.concurrent.duration._
 import collection.JavaConversions
 
 import collection.mutable.{HashMap, ListBuffer}
@@ -396,7 +397,7 @@ object SessionMaster extends LiftActor with Loggable {
       import scala.collection.JavaConversions._
 
     /* remove dead sessions that are more than 45 minutes old */
-    val now = Helpers.millis - 45.minutes
+    val now = Helpers.millis - 45.minutes.toMillis
 
     val removeKeys: Iterable[String] = killedSessions.filter(_._2 < now).map(_._1)
     removeKeys.foreach(s => killedSessions.remove(s))
@@ -677,7 +678,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   @volatile
   private[http] var inactivityLength: Long =
-    LiftRules.sessionInactivityTimeout.vend openOr ((30.minutes): Long)
+    LiftRules.sessionInactivityTimeout.vend openOr (30.minutes.toMillis)
 
   private[http] var highLevelSessionDispatcher = new HashMap[String, LiftRules.DispatchPF]()
   private[http] var sessionRewriter = new HashMap[String, LiftRules.RewritePF]()
@@ -2342,7 +2343,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
 
 
-        override def lifespan = Full(LiftRules.clientActorLifespan.vend.apply(this))
+        override def lifespan = Full(LiftRules.clientActorLifespan.vend.apply(this).millis)
 
         override def hasOuter = false
 
@@ -2808,7 +2809,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
 
 
-        override def lifespan = Full(LiftRules.clientActorLifespan.vend.apply(this))
+        override def lifespan = Full(LiftRules.clientActorLifespan.vend.apply(this).millis)
 
         override def hasOuter = false
 

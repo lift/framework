@@ -17,6 +17,9 @@ package net.liftweb
 package http
 package js
 
+import net.liftweb.util.TimeSpanHelpers.TimeSpan
+
+import scala.concurrent.duration._
 import scala.xml.{NodeSeq, Group, Unparsed, Elem}
 import net.liftweb.util.Helpers._
 import net.liftweb.common._
@@ -790,13 +793,20 @@ object JsCmds {
   }
 
   trait HasTime {
-    def time: Box[TimeSpan]
+    def time: Box[Duration]
 
-    def timeStr = time.map(_.millis.toString) openOr ""
+    def timeStr = time.map(_.toMillis.toString) openOr ""
   }
 
-  case class After(time: TimeSpan, toDo: JsCmd) extends JsCmd {
-    def toJsCmd = "setTimeout(function() {" + toDo.toJsCmd + "}, " + time.millis + ");"
+  object After {
+    @deprecated("Use scala.concurrent.duration.Duration instead of TimeSpan")
+    def apply(time: TimeSpan, toDo: JsCmd): After = {
+      new After(time.toScalaDuration, toDo)
+    }
+  }
+
+  case class After(time: Duration, toDo: JsCmd) extends JsCmd {
+    def toJsCmd = "setTimeout(function() {" + toDo.toJsCmd + "}, " + time.toMillis + ");"
   }
 
   case class Alert(text: String) extends JsCmd {
@@ -954,13 +964,13 @@ object JsRules {
   * messages.
   */
   //@deprecated
-  @volatile var prefadeDuration: Helpers.TimeSpan = 5.seconds
+  @volatile var prefadeDuration: Duration = 5.seconds
 
   /**
   * The default fade time for fading FadeOut and FadeIn
   * messages.
   */
   //@deprecated
-  @volatile var fadeTime: Helpers.TimeSpan = 1.second
+  @volatile var fadeTime: Duration = 1.second
 }
 

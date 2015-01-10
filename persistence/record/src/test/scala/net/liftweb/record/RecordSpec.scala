@@ -26,14 +26,13 @@ import org.joda.time._
 import http.js.JE._
 import common._
 import http.{S, LiftSession}
-import json._
 import util._
 import util.Helpers._
 
 import field.Countries
 import fixtures._
 
-import JsonDSL._
+import json.JsonDSL._
 
 
 /**
@@ -174,7 +173,7 @@ object RecordSpec extends Specification {
   "Record" should {
     val session = new LiftSession("", randomString(20), Empty)
     S.initIfUninitted(session){
-      val gu: Array[Byte] = Array(18, 19, 20)
+      val gu = Array[Byte](18, 19, 20)
       val cal = Calendar.getInstance
       val dt: DateTime = DateTime.now
 
@@ -196,7 +195,7 @@ object RecordSpec extends Specification {
         .mandatoryTimeZoneField("America/Chicago")
         .mandatoryJodaTimeField(dt)
 
-      val fttrJValue: JValue =
+      val fttrJValue: json.JValue =
         ("mandatoryBooleanField" -> false) ~
         ("mandatoryCountryField" -> 1) ~
         ("mandatoryDateTimeField" -> Helpers.toInternetDate(cal.getTime)) ~
@@ -214,7 +213,7 @@ object RecordSpec extends Specification {
         ("mandatoryBinaryField" -> "EhMU") ~
         ("mandatoryJodaTimeField" -> dt.getMillis)
 
-      val fttrJson: String = compact(render(fttrJValue))
+      val fttrJson: String = json.compact(json.render(fttrJValue))
 
       val fttrAsJsObj = JsObj(
         ("mandatoryBooleanField", JsFalse),
@@ -279,6 +278,8 @@ object RecordSpec extends Specification {
       }*/
 
       "convert to JValue" in {
+        import json._
+
         fttr.asJValue mustEqual JObject(List(
           JField("mandatoryBooleanField", JBool(false)),
           JField("legacyOptionalBooleanField", JNothing),

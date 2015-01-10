@@ -17,8 +17,9 @@
 package net.liftweb 
 package http 
 package js 
-package yui 
+package yui
 
+import scala.concurrent.duration.Duration
 import scala.xml.{Elem, NodeSeq}
 
 import net.liftweb.http.S
@@ -119,7 +120,7 @@ object YUIArtifacts extends JSArtifacts {
    * Fades out the element having the provided id, by waiting
    * for the given duration and fades out during fadeTime
    */
-  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) = Noop
+  def fadeOut(id: String, duration: Duration, fadeTime: Duration) = Noop
 
   /**
    * Trabsforms a JSON object intoits string representation

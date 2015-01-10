@@ -19,6 +19,7 @@ package http
 package js
 package extcore
 
+import scala.concurrent.duration.Duration
 import scala.xml.NodeSeq
 
 import net.liftweb.http.S
@@ -113,7 +114,7 @@ object ExtCoreArtifacts extends JSArtifacts {
    * Fades out the element having the provided id, by waiting
    * for the given duration and fades out during fadeTime
    */
-  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) = Noop
+  def fadeOut(id: String, duration: Duration, fadeTime: Duration) = Noop
 
   /**
    * Trabsforms a JSON object intoits string representation

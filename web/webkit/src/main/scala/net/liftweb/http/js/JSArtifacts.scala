@@ -19,8 +19,9 @@ package http
 package js
 
 import net.liftweb.common.{Box, Full, Empty}
+import net.liftweb.util.TimeSpanHelpers.TimeSpan
+import scala.concurrent.duration._
 import scala.xml.NodeSeq
-import net.liftweb.util.Helpers._
 
 /**
  * Abstracted JavaScript artifacts used by lift core.
@@ -73,7 +74,16 @@ trait JSArtifacts {
    * Fades out the element denominated by id, by waiting
    * for duration milliseconds and fading out for fadeTime milliseconds
    */
-  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan): JsCmd
+  @deprecated("Use scala.concurrent.duration.Duration instead of TimeSpan")
+  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan): JsCmd = {
+    fadeOut(id, duration.toScalaDuration, fadeTime.toScalaDuration)
+  }
+
+  /**
+   * Fades out the element denominated by id, by waiting
+   * for duration milliseconds and fading out for fadeTime milliseconds
+   */
+  def fadeOut(id: String, duration: Duration, fadeTime: Duration): JsCmd
 
   /**
    * Transforms a JSON object into its string representation
