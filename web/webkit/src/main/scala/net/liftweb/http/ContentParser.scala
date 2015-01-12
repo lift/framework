@@ -78,7 +78,7 @@ object ContentParser {
    * @param surroundFunction the function for surrounding the content returned by the `parseFunction`.
    *                         See [[defaultSurround]].
    */
-  def basic(templateSuffix: String,
+  def apply(templateSuffix: String,
             parseFunction: String=>Box[NodeSeq],
             surroundFunction: NodeSeq=>NodeSeq = defaultSurround):ContentParser =
     new ContentParser {
@@ -88,12 +88,12 @@ object ContentParser {
     }
 
   /**
-   * A full `ContentParser` which handles multiple filename suffixes, operates on an `InputStream`, and surrounds the
-   * top-level templates with the default surround
+   * A fully-specified `ContentParser` which handles multiple filename suffixes, operates on an `InputStream`, and
+   * surrounds the top-level templates with the default surround
    */
-  def full(templateSuffixesSeq: Seq[String],
+  def apply(templateSuffixesSeq: Seq[String],
            parseF: InputStream=>Box[NodeSeq],
-           surroundF: NodeSeq=>NodeSeq = defaultSurround):ContentParser =
+           surroundF: NodeSeq=>NodeSeq):ContentParser =
     new ContentParser {    
       override def templateSuffixes: Seq[String] = templateSuffixesSeq
       override def parse(content: InputStream): Box[NodeSeq] = parseF(content)
