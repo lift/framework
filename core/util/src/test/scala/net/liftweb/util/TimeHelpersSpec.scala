@@ -91,12 +91,12 @@ object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen
     "have a later method returning a date relative to now plus the time span" in {
       val expectedTime = new Date().getTime + 3.seconds.millis
 
-      3.seconds.later.getTime must beCloseTo(expectedTime, 1000L)
+      3.seconds.later.getMillis must beCloseTo(expectedTime, 1000L)
     }
     "have an ago method returning a date relative to now minus the time span" in {
       val expectedTime = new Date().getTime - 3.seconds.millis
 
-      3.seconds.ago.getTime must beCloseTo(expectedTime, 1000L)
+      3.seconds.ago.getMillis must beCloseTo(expectedTime, 1000L)
     }
     "have a toString method returning the relevant number of weeks, days, hours, minutes, seconds, millis" in {
       val conversionIsOk = forAll(timeAmounts)((t: TimeAmounts) => { val (timeSpanToString, timeSpanAmounts) = t
@@ -136,8 +136,8 @@ object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen
     }
 
     "make sure noTime does not change the day" in {
-      dateFormatter.format(0.days.ago.noTime) must_== dateFormatter.format(new Date())
-      dateFormatter.format(3.days.ago.noTime) must_== dateFormatter.format(new Date(millis - (3 * 24 * 60 * 60 * 1000)))
+      dateFormatter.format(0.days.ago.noTime.toDate) must_== dateFormatter.format(new Date())
+      dateFormatter.format(3.days.ago.noTime.toDate) must_== dateFormatter.format(new Date(millis - (3 * 24 * 60 * 60 * 1000)))
     }
 
     "provide a day function returning the day of month corresponding to a given date (relative to UTC)" in {
