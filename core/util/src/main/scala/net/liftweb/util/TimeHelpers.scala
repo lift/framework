@@ -104,7 +104,7 @@ trait TimeHelpers { self: ControlHelpers =>
     def toDateTime = new DateTime(millis)
 
     @deprecated("TimeSpan will not support operations on non-millis periods in future")
-    private[util] def toPeriod: Period = dt match {
+    private[util] def toPeriod: Period = dt match { // package protected because of view bound usage in tsToPeriod
       case Left(duration) => duration.toPeriod
       case Right(period) => period
     }

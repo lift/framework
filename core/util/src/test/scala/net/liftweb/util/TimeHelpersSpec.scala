@@ -236,10 +236,17 @@ object forAllTimeZones extends Around with MatchersImplicits {
     val commonJavaAndJodaTimeZones = (TimeZone.getAvailableIDs.toSet & DateTimeZone.getAvailableIDs.toSet).filter { timeZoneId =>
       TimeZone.getTimeZone(timeZoneId).getOffset(millis) == DateTimeZone.forID(timeZoneId).getOffset(millis)
     }
-    forall(commonJavaAndJodaTimeZones) { timeZoneId =>
-      TimeZone.setDefault(TimeZone.getTimeZone(timeZoneId))
-      DateTimeZone.setDefault(DateTimeZone.forID(timeZoneId))
-      f
+    val tzBefore = TimeZone.getDefault
+    val dtzBefore = DateTimeZone.getDefault
+    try {
+      forall(commonJavaAndJodaTimeZones) { timeZoneId =>
+        TimeZone.setDefault(TimeZone.getTimeZone(timeZoneId))
+        DateTimeZone.setDefault(DateTimeZone.forID(timeZoneId))
+        f
+      }
+    } finally {
+      TimeZone.setDefault(tzBefore)
+      DateTimeZone.setDefault(dtzBefore)
     }
   }
 }
