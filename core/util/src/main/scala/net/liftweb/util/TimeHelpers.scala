@@ -46,11 +46,11 @@ trait TimeHelpers { self: ControlHelpers =>
   implicit def intToTimeSpanBuilder(in: Int): TimeSpanBuilder = TimeSpanBuilder(in)
 
   /** transforms a long to a TimeSpan object. Usage: 3000L returns a TimeSpan of 3000L millis  */
-  @deprecated("Long to TimeSpan conversion will be removed for possibility of of ambiguous behaviours", "3.0.0")
+  @deprecated("Long to TimeSpan conversion will be removed for possibility of ambiguous behaviours", "3.0.0")
   implicit def longToTimeSpan(in: Long): TimeSpan = TimeSpan(in)
 
   /** transforms an int to a TimeSpan object. Usage: 3000 returns a TimeSpan of 3000L millis  */
-  @deprecated("Int to TimeSpan conversion will be removed for possibility of of ambiguous behaviours", "3.0.0")
+  @deprecated("Int to TimeSpan conversion will be removed for possibility of ambiguous behaviours", "3.0.0")
   implicit def intToTimeSpan(in: Int): TimeSpan = TimeSpan(in)
 
   /** class building TimeSpans given an amount (len) and a method specify the time unit  */
@@ -441,7 +441,7 @@ trait ConvertableToDate {
   def toDate: Date
   @deprecated("TimeSpan to DateTime conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
   def toDateTime: DateTime
-  @deprecated("TimeSpan to Long conversion will be removed for possibility of of ambiguous behaviours", "3.0.0")
+  @deprecated("TimeSpan to Long conversion will be removed for possibility of ambiguous behaviours", "3.0.0")
   def millis: Long
 }
 
@@ -451,6 +451,6 @@ object ConvertableToDate {
   implicit def toDate(in: ConvertableToDate): Date = in.toDate
   @deprecated("TimeSpan to DateTime conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
   implicit def toDateTime(in: ConvertableToDate): DateTime = in.toDateTime
-  @deprecated("TimeSpan to Long conversion will be removed for possibility of of ambiguous behaviours", "3.0.0")
+  @deprecated("TimeSpan to Long conversion will be removed for possibility of ambiguous behaviours", "3.0.0")
   implicit def toMillis(in: ConvertableToDate): Long = in.millis
 }
