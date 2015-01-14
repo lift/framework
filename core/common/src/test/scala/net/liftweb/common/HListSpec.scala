@@ -38,6 +38,16 @@ object HListSpec extends Specification {
       x.head must_== 1
       x.tail.head must_== "Foo"
     }
+
+    "properly report its length" in {
+      import HLists._
+
+      val x = 1 :+: "Foo" :+: HNil
+
+      HNil.length must_== 0
+      x.length must_== 2
+      ("Bam" :+: x).length must_== 3
+    }
   }
 
   "A combinable box" should {
