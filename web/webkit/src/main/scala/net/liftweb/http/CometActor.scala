@@ -445,10 +445,24 @@ abstract class CometActorJWithCometListener extends CometActorJ with CometListen
   override def lowPriority = _messageHandler
 }
 
+trait CometActor extends BaseCometActor {
+  override final private[http] def partialUpdateStream_? = false
+}
+
+trait MessageCometActor extends BaseCometActor {
+  override final private[http] def partialUpdateStream_? = true
+
+  override final def render = NodeSeq.Empty
+
+  protected def pushMessage(cmd: => JsCmd) {
+    partialUpdate(cmd)
+  }
+}
+
 /**
  * Takes care of the plumbing for building Comet-based Web Apps
  */
-trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
+trait BaseCometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   private val logger = Logger(classOf[CometActor])
   val uniqueId = Helpers.nextFuncName
   private var spanId = uniqueId
@@ -493,7 +507,7 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
     * push arbitrary JavaScript to the client without a distinct UI for the
     * comet actor itself.
     */
-  protected def partialUpdateStream_? : Boolean = false
+  private[http] def partialUpdateStream_? : Boolean = false
 
   /**
    * The last rendering (cached or not)
@@ -531,7 +545,7 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
   private var jsonHandlerChain: PartialFunction[Any, JsCmd] = Map.empty
   private val notices = new ListBuffer[(NoticeType.Value, NodeSeq, Box[String])]
 
-  private var _deltaPruner: (CometActor, List[Delta]) => List[Delta] =
+  private var _deltaPruner: (BaseCometActor, List[Delta]) => List[Delta] =
     (actor, d) => {
       val m = Helpers.millis
       d.filter(d => (m - d.timestamp) < 120000L)
@@ -694,7 +708,7 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
     val what = composeFunction
     val myPf: PartialFunction[Any, Unit] = new PartialFunction[Any, Unit] {
       def apply(in: Any): Unit =
-        CurrentCometActor.doWith(CometActor.this) {
+        CurrentCometActor.doWith(BaseCometActor.this) {
           S.initIfUninitted(theSession) {
             RenderVersion.doWith(uniqueId) {
               S.functionLifespan(true) {
@@ -715,7 +729,7 @@ trait CometActor extends LiftActor with LiftCometActor with CssBindImplicits {
         }
 
       def isDefinedAt(in: Any): Boolean =
-        CurrentCometActor.doWith(CometActor.this) {
+        CurrentCometActor.doWith(BaseCometActor.this) {
           S.initIfUninitted(theSession) {
             RenderVersion.doWith(uniqueId) {
               S.functionLifespan(true) {
