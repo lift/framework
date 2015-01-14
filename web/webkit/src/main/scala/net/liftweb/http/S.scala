@@ -950,7 +950,8 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
 
     globalJs ::: {
       postPageJs ::: cometJs ::: _jsToAppend.is.toList match {
-        case Nil => Nil
+        case Nil =>
+          Nil
         case loadJs =>
           List(OnLoad(loadJs))
       }
