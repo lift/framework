@@ -46,9 +46,11 @@ trait TimeHelpers { self: ControlHelpers =>
   implicit def intToTimeSpanBuilder(in: Int): TimeSpanBuilder = TimeSpanBuilder(in)
 
   /** transforms a long to a TimeSpan object. Usage: 3000L returns a TimeSpan of 3000L millis  */
+  @deprecated("Long to TimeSpan conversion will be removed for possibility of of ambiguous behaviours", "3.0.0")
   implicit def longToTimeSpan(in: Long): TimeSpan = TimeSpan(in)
 
   /** transforms an int to a TimeSpan object. Usage: 3000 returns a TimeSpan of 3000L millis  */
+  @deprecated("Int to TimeSpan conversion will be removed for possibility of of ambiguous behaviours", "3.0.0")
   implicit def intToTimeSpan(in: Int): TimeSpan = TimeSpan(in)
 
   /** class building TimeSpans given an amount (len) and a method specify the time unit  */
@@ -63,13 +65,13 @@ trait TimeHelpers { self: ControlHelpers =>
     def day = days
     def weeks = new TimeSpan(Left(Duration.standardDays(len * 7L)))
     def week = weeks
-    @deprecated("TimeSpan will not support operations on non-millis periods in future")
+    @deprecated("TimeSpan will not support operations on non-millis periods in future", "3.0.0")
     def months = new TimeSpan(Right(new Period().plusMonths(len.toInt)))
-    @deprecated("TimeSpan will not support operations on non-millis periods in future")
+    @deprecated("TimeSpan will not support operations on non-millis periods in future", "3.0.0")
     def month = months
-    @deprecated("TimeSpan will not support operations on non-millis periods in future")
+    @deprecated("TimeSpan will not support operations on non-millis periods in future", "3.0.0")
     def years = new TimeSpan(Right(new Period().plusYears(len.toInt)))
-    @deprecated("TimeSpan will not support operations on non-millis periods in future")
+    @deprecated("TimeSpan will not support operations on non-millis periods in future", "3.0.0")
     def year = years
   }
 
@@ -88,22 +90,22 @@ trait TimeHelpers { self: ControlHelpers =>
     /**
      * Convert to a Date. The number of millis seconds will be used to create a Date object starting from the Epoch time.
      */
-    @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations")
+    @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
     def date: Date = new Date(millis)
 
     /**
      * Convert to a Date. The number of millis seconds will be used to create a Date object starting from the Epoch time.
      */
-    @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations")
+    @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
     def toDate: Date = date
 
     /**
      * Convert to a JodaTime DateTime. The number of millis seconds will be used to create a Date object starting from the Epoch time.
      */
-    @deprecated("TimeSpan to DateTime conversion will be removed for possibility of mistakes in on-duration operations")
+    @deprecated("TimeSpan to DateTime conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
     def toDateTime = new DateTime(millis)
 
-    @deprecated("TimeSpan will not support operations on non-millis periods in future")
+    @deprecated("TimeSpan will not support operations on non-millis periods in future", "3.0.0")
     private[util] def toPeriod: Period = dt match { // package protected because of view bound usage in tsToPeriod
       case Left(duration) => duration.toPeriod
       case Right(period) => period
@@ -190,7 +192,7 @@ trait TimeHelpers { self: ControlHelpers =>
     /**
      * Convert a Date to a TimeSpan
      */
-    @deprecated("Date to TimeSpan conversion will be removed for possibility of mistakes in on-duration operations")
+    @deprecated("Date to TimeSpan conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
     implicit def dateToTS(in: Date): TimeSpan =
       new TimeSpan(Left(new Duration(in.getTime)))
 
@@ -204,20 +206,20 @@ trait TimeHelpers { self: ControlHelpers =>
     /**
      * Convert a Period to a TimeSpan
      */
-    @deprecated("Period to TimeSpan conversion will be removed for possibility of mistakes in on-duration operations")
+    @deprecated("Period to TimeSpan conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
     implicit def periodToTS(in: Period): TimeSpan =
       new TimeSpan(Right(in))
 
     /**
      * Convert a TimeSpan to a Period
      */
-    @deprecated("TimeSpan to Period conversion will be removed for possibility of mistakes in on-duration operations")
+    @deprecated("TimeSpan to Period conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
     implicit def tsToPeriod[TS <% TimeSpan](in: TS): Period = in.toPeriod
 
     /**
      * Convert a DateTime to a TimeSpan
      */
-    @deprecated("DateTime to TimeSpan conversion will be removed for possibility of mistakes in on-duration operations")
+    @deprecated("DateTime to TimeSpan conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
     implicit def dateTimeToTS(in: DateTime): TimeSpan =
       new TimeSpan(Left(new Duration(in.getMillis)))
   }
@@ -433,20 +435,22 @@ trait TimeHelpers { self: ControlHelpers =>
 
 }
 
-@deprecated("TimeSpan to Date/DateTime conversion will be removed for possibility of mistakes in on-duration operations")
+@deprecated("TimeSpan to Date/DateTime conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
 trait ConvertableToDate {
-  @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations")
+  @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
   def toDate: Date
-  @deprecated("TimeSpan to DateTime conversion will be removed for possibility of mistakes in on-duration operations")
+  @deprecated("TimeSpan to DateTime conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
   def toDateTime: DateTime
+  @deprecated("TimeSpan to Long conversion will be removed for possibility of of ambiguous behaviours", "3.0.0")
   def millis: Long
 }
 
-@deprecated("TimeSpan to Date/DateTime conversion will be removed for possibility of mistakes in on-duration operations")
+@deprecated("TimeSpan to Date/DateTime conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
 object ConvertableToDate {
-  @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations")
+  @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
   implicit def toDate(in: ConvertableToDate): Date = in.toDate
-  @deprecated("TimeSpan to DateTime conversion will be removed for possibility of mistakes in on-duration operations")
+  @deprecated("TimeSpan to DateTime conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
   implicit def toDateTime(in: ConvertableToDate): DateTime = in.toDateTime
+  @deprecated("TimeSpan to Long conversion will be removed for possibility of of ambiguous behaviours", "3.0.0")
   implicit def toMillis(in: ConvertableToDate): Long = in.millis
 }
