@@ -578,29 +578,6 @@ class LiftServlet extends Loggable {
   }
 
   /**
-   * Generates the JsCmd needed to initialize comets in
-   * `S.requestCometVersions` on the client.
-   */
-  private def commandForComets: JsCmd = {
-    val cometVersions = S.requestCometVersions.is
-
-    if (cometVersions.nonEmpty) {
-      js.JE.Call(
-        "lift.registerComets",
-        js.JE.JsObj(
-          S.requestCometVersions.is.toList.map {
-            case CometVersionPair(guid, version) =>
-              (guid, js.JE.Num(version))
-          }: _*
-        ),
-        true
-      ).cmd
-    } else {
-      js.JsCmds.Noop
-    }
-  }
-
-  /**
    * Runs the actual AJAX processing. This includes handling __lift__GC,
    * or running the parameters in the session. It returns once the AJAX
    * request has completed with a response meant for the user. In cases
@@ -644,8 +621,7 @@ class LiftServlet extends Loggable {
                   (js :: (xs.collect {
                     case js: JsCmd => js
                   }).reverse) &
-                  S.jsToAppend &
-                  commandForComets
+                  S.jsToAppend
                 ).toResponse
               }
 
