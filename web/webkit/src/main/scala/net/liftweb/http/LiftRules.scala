@@ -1325,7 +1325,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * template suffix, the first matching parser is used.  This intended to be set in in `Boot` as it is read only
    * once during the processing of the first template.
    */
-  @volatile var contentParsers: Seq[ContentParser] = Seq(
+  @volatile var contentParsers: List[ContentParser] = List(
     ContentParser(
       Seq("html", "xhtml", "htm"),
       (content:InputStream) => S.htmlProperties.htmlParser(content),
