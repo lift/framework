@@ -1321,7 +1321,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val snippets = RulesSeq[SnippetPF]
 
   /**
-   * Handles the parsing of template content into NodeSeqs.
+   * Handles the parsing of template content into NodeSeqs.  If multiple parsers are registered for the same
+   * template suffix, the first matching parser is used.  This intended to be set in in `Boot` as it is read only
+   * once during the processing of the first template.
    */
   @volatile var contentParsers: Seq[ContentParser] = Seq(
     ContentParser(
