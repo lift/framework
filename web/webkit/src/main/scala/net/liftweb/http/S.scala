@@ -808,7 +808,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    */
   def addComet(cometActor: LiftCometActor): Unit = {
     requestCometVersions.set(
-      requestCometVersions.is + CVP(cometActor.uniqueId, cometActor.lastListenerTime)
+      requestCometVersions.is + CVP(cometActor.uniqueId, cometActor.lastRenderTime)
     )
   }
 
