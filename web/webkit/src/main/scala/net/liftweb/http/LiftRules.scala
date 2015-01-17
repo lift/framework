@@ -1321,6 +1321,20 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val snippets = RulesSeq[SnippetPF]
 
   /**
+   * Handles the parsing of template content into NodeSeqs.  If multiple parsers are registered for the same
+   * template suffix, the first matching parser is used.  This intended to be set in in `Boot` as it is read only
+   * once during the processing of the first template.
+   */
+  @volatile var contentParsers: List[ContentParser] = List(
+    ContentParser(
+      Seq("html", "xhtml", "htm"),
+      (content:InputStream) => S.htmlProperties.htmlParser(content),
+      identity[NodeSeq](_) // These templates are not surrounded  by default
+    ),
+    ContentParser("md", MarkdownParser.parse)
+  )
+
+  /**
    * Execute certain functions early in a Stateful Request
    * This is called early in a stateful request (one that's not serviced by a stateless REST request and
    * one that's not marked as a stateless HTML page request).
@@ -1696,12 +1710,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
       else (parts.dropRight(1) ::: List(last.substring(0, idx)), last.substring(idx + 1))
 
   }
-
-  /**
-   * The list of suffixes that Lift looks for in templates.
-   * By default, html, xhtml, and htm
-   */
-  @volatile var templateSuffixes: List[String] = List("html", "xhtml", "htm", "md")
 
   /**
    * When a request is parsed into a Req object, certain suffixes are explicitly split from
