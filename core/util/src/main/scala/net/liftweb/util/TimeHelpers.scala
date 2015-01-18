@@ -65,13 +65,13 @@ trait TimeHelpers { self: ControlHelpers =>
     def day = days
     def weeks = new TimeSpan(Left(Duration.standardDays(len * 7L)))
     def week = weeks
-    @deprecated("TimeSpan will not support operations on non-millis periods in future", "3.0.0")
+    @deprecated("This builder will be removed due to its unclear behavior; use Joda-Time `Period.months` and convert to `TimeSpan` manually instead.", "3.0.0")
     def months = new TimeSpan(Right(new Period().plusMonths(len.toInt)))
-    @deprecated("TimeSpan will not support operations on non-millis periods in future", "3.0.0")
+    @deprecated("This builder will be removed due to its unclear behavior; use Joda-Time `Period.months` and convert to `TimeSpan` manually instead.", "3.0.0")
     def month = months
-    @deprecated("TimeSpan will not support operations on non-millis periods in future", "3.0.0")
+    @deprecated("This builder will be removed due to its unclear behavior; use Joda-Time `Period.years` and convert to `TimeSpan` manually instead.", "3.0.0")
     def years = new TimeSpan(Right(new Period().plusYears(len.toInt)))
-    @deprecated("TimeSpan will not support operations on non-millis periods in future", "3.0.0")
+    @deprecated("This builder will be removed due to its unclear behavior; use Joda-Time `Period.years` and convert to `TimeSpan` manually instead.", "3.0.0")
     def year = years
   }
 
@@ -109,23 +109,23 @@ trait TimeHelpers { self: ControlHelpers =>
      * Convert to a Java `Date`. The number of milliseconds in the `Duration`
      * will be added to the UNIX epoch to create a `Date` object.
      */
-    @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
+    @deprecated("This method will be removed due to its unclear behavior; use new Date(timeSpan.millis) instead.", "3.0.0")
     def date: Date = new Date(millis)
 
     /**
      * Convert to a Java `Date`. Synonym of `[[date]]`.
      */
-    @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
+    @deprecated("This method will be removed due to its unclear behavior; use new Date(timeSpan.millis) instead.", "3.0.0")
     def toDate: Date = date
 
     /**
      * Convert to a Joda-Time `DateTime`. The number of milliseconds in the `Duration`
      * will be added to the UNIX epoch to create a `DateTime` object.
      */
-    @deprecated("TimeSpan to DateTime conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
+    @deprecated("This method will be removed due to its unclear behavior; use new DateTime(timeSpan.millis) instead.", "3.0.0")
     def toDateTime = new DateTime(millis)
 
-    @deprecated("TimeSpan will not support operations on non-millis periods in future", "3.0.0")
+    @deprecated("TimeSpan will not support operations on Joda-Time `Period`s in the future; use new Period(timeSpan.millis) instead.", "3.0.0")
     private[util] def toPeriod: Period = dt match { // package protected because of view bound usage in tsToPeriod
       case Left(duration) => duration.toPeriod
       case Right(period) => period
@@ -297,20 +297,20 @@ trait TimeHelpers { self: ControlHelpers =>
     /**
      * Convert a Period to a TimeSpan
      */
-    @deprecated("Period to TimeSpan conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
+    @deprecated("Implicit conversion from Period to TimeSpan will be removed due to its unclear behavior; use new Period(timeSpan.millis) instead.", "3.0.0")
     implicit def periodToTS(in: Period): TimeSpan =
       new TimeSpan(Right(in))
 
     /**
      * Convert a TimeSpan to a Period
      */
-    @deprecated("TimeSpan to Period conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
+    @deprecated("Implicit conversion from TimeSpan to Period will be removed due to its unclear behavior; use new TimeSpan(period.toDurationFrom(startDateTime)) instead.", "3.0.0")
     implicit def tsToPeriod[TS <% TimeSpan](in: TS): Period = in.toPeriod
 
     /**
      * Convert a DateTime to a TimeSpan
      */
-    @deprecated("DateTime to TimeSpan conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
+    @deprecated("Implicit conversion from DateTime to TimeSpan will be removed due to its unclear behavior; use new TimeSpan(dateTime.getMillis) instead.", "3.0.0")
     implicit def dateTimeToTS(in: DateTime): TimeSpan =
       new TimeSpan(Left(new Duration(in.getMillis)))
   }
