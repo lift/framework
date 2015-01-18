@@ -76,31 +76,51 @@ trait TimeHelpers { self: ControlHelpers =>
   }
 
   /**
-   * The TimeSpan class represents Duration of time in milliseconds.
+   * The `TimeSpan` class represents a duration of time in milliseconds. In this
+   * way, it is similar to the `[[scala.concurrent.Duration]]` class. It is
+   * mostly used in Lift APIs in similar positions as the Scala `Duration`
+   * class (for example, in event scheduling).
    *
-   * For deprecated years and month builders it handle an operations on duration field values. Then it could be
-   * used only in to-period implicit conversion.
+   * Unlike in the Lift 2.x series, building a `TimeSpan` with a `Long` will not
+   * have different behavior depending on the value passed. Any passed `Long`
+   * will be used as a duration.
+   *
+   * Prior to Lift 3.0, `TimeSpan` was an amalgam of duration and joda
+   * `DateTime`, and allowed conversions between the two. As a result,
+   * operational semantics were poorly defined and it was easy to call a method
+   * that seemed like it should have simple duration semantics but run into
+   * `DateTime` semantics that made things more complicated instead.
+   *
+   * Lift 3.0 mostly maintains API compatibility with the Lift 2.x series, but
+   * introduces a series of deprecations to indicate places where dangerous
+   * and potentially unclear behavior may occur. Lift 3.1 will maintain API
+   * compatibility with all non-deprecated parts of the `TimeSpan` API, but will
+   * remove the deprecated aspects.
+   *
+   * For deprecated years and month builders it handle an operations on duration
+   * field values. Then it could be used only in to-period implicit conversion.
    */
   class TimeSpan(private val dt: Either[Duration, Period]) extends ConvertableToDate {
-
 
     def this(ms: Long) =
       this(Left(new Duration(ms)))
 
     /**
-     * Convert to a Date. The number of millis seconds will be used to create a Date object starting from the Epoch time.
+     * Convert to a Java `Date`. The number of milliseconds in the `Duration`
+     * will be added to the UNIX epoch to create a `Date` object.
      */
     @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
     def date: Date = new Date(millis)
 
     /**
-     * Convert to a Date. The number of millis seconds will be used to create a Date object starting from the Epoch time.
+     * Convert to a Java `Date`. Synonym of `[[date]]`.
      */
     @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
     def toDate: Date = date
 
     /**
-     * Convert to a JodaTime DateTime. The number of millis seconds will be used to create a Date object starting from the Epoch time.
+     * Convert to a Joda-Time `DateTime`. The number of milliseconds in the `Duration`
+     * will be added to the UNIX epoch to create a `DateTime` object.
      */
     @deprecated("TimeSpan to DateTime conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
     def toDateTime = new DateTime(millis)
@@ -112,21 +132,53 @@ trait TimeHelpers { self: ControlHelpers =>
     }
 
     /**
-     * @return amount of milliseconds in duration
-     * @throws UnsupportedOperationException if was created by deprecated months/years builder
+     * @return The amount of milliseconds this `TimeSpan` represents.
+     * @throws UnsupportedOperationException When created by the deprecated
+     *         months/years builder (month and year lengths in milliseconds
+     *         are only defined with respect to a reference point, since the
+     *         length of a month or year can vary).
      */
     def toMillis = millis
 
     /**
-     * @return amount of milliseconds in duration
-     * @throws UnsupportedOperationException if was created by deprecated months/years builder
+     * @return The amount of milliseconds this `TimeSpan` represents.
+     * @throws UnsupportedOperationException When created by the deprecated months/years builder (
+     *     month and year lengths in milliseconds are only defined with respect to a reference point,
+     *     since the length of a month or year can vary).
      */
     def millis = dt match {
       case Left(duration) => duration.getMillis
       case Right(period) => period.toStandardDuration.getMillis // will throw exception because it holds month or year
     }
 
-    /** @return a TimeSpan representing the addition of 2 TimeSpans */
+    // TODO If we choose to move away from TimeSpan, we'll need to take into
+    // TODO account the fact that this method can take anything convertible to
+    // TODO a TimeSpan, so we'll need at least one release where TimeSpan is
+    // TODO around for the purposes of these implicit conversions in case client
+    // TODO code defines one.
+    /**
+     * Sums this `TimeSpan` with an object that can be converted to a
+     * `TimeSpan`. If either `TimeSpan` represents a `Duration`, add the
+     * `Duration`s directly. If both `TimeSpan`s represents a `Period` (which is
+     * deprecated behavior), adds them using `Period` addition.
+     *
+     * @note Adding two `TimeSpan`s where one of the two was constructed using the
+     *       deprecated `months` or `years` builders will throw an exception.
+     * @note Adding two `TimeSpan`s where both were constructed using the
+     *       deprecated `months` or `years` builders will result in a `TimeSpan`
+     *       representing a `Period`. These `TimeSpan`s can behave in unexpected
+     *       ways, including throwing exceptions when their millisecond duration
+     *       is required.
+     *
+     * @return A `TimeSpan` representing the sum of this span and `in`'s
+     *         `TimeSpan` representation.
+     * @throws UnsupportedOperationException If only one of the two `TimeSpan`s
+     *         represents a `Period` and that `Period` has a year or month
+     *          component (this only occurs if the deprecated `months` or
+     *          `years` builders are used, as month and year lengths in
+     *          milliseconds are only defined with respect to a reference point,
+     *          since the length of a month or year can vary)
+     */
     def +[B](in: B)(implicit f: B => TimeSpan): TimeSpan =
       (this.dt, f(in).dt) match {
         case (Right(p1), Right(p2)) => new TimeSpan(Right(p1.plus(p2)))
@@ -135,10 +187,40 @@ trait TimeHelpers { self: ControlHelpers =>
         case (Left(d1), Left(d2)) => new TimeSpan(Left(d1.plus(d2)))
       }
 
-    /** @return a TimeSpan representing the addition of 2 TimeSpans */
+    /**
+     * Alias for `[[+]]`.
+     */
     def plus[B](in: B)(implicit f: B => TimeSpan): TimeSpan = this.+(in)(f)
 
-    /** @return a TimeSpan representing the substraction of 2 TimeSpans */
+    // TODO If we choose to move away from TimeSpan, we'll need to take into
+    // TODO account the fact that this method can take anything convertible to
+    // TODO a TimeSpan, so we'll need at least one release where TimeSpan is
+    // TODO around for the purposes of these implicit conversions in case client
+    // TODO code defines one.
+    /**
+     * Subtracts an object that can be converted to a `TimeSpan` from this
+     * `TimeSpan`. If either `TimeSpan` represents a `Duration`, subtracts the
+     * `Duration`s directly. If both `TimeSpan`s represents a `Period` (which is
+     * deprecated behavior), subtracts them using `Period` subtraction.
+     *
+     * @note Subtracting two `TimeSpan`s where one of the two was constructed
+     *       using the deprecated `months` or `years` builders will throw an
+     *       exception.
+     * @note Subtracting two `TimeSpan`s where both were constructed using the
+     *       deprecated `months` or `years` builders will result in a `TimeSpan`
+     *       representing a `Period`. These `TimeSpan`s can behave in unexpected
+     *       ways, including throwing exceptions when their millisecond duration
+     *       is required.
+     *
+     * @return A `TimeSpan` representing the sum of this span and `in`'s
+     *         `TimeSpan` representation.
+     * @throws UnsupportedOperationException If only one of the two `TimeSpan`s
+     *         represents a `Period` and that `Period` has a year or month
+     *          component (this only occurs if the deprecated `months` or
+     *          `years` builders are used, as month and year lengths in
+     *          milliseconds are only defined with respect to a reference point,
+     *          since the length of a month or year can vary)
+     */
     def -[B](in: B)(implicit f: B => TimeSpan): TimeSpan =
       (this.dt, f(in).dt) match {
         case (Right(p1), Right(p2)) => new TimeSpan(Right(p1.minus(p2)))
@@ -147,7 +229,13 @@ trait TimeHelpers { self: ControlHelpers =>
         case (Left(d1), Left(d2)) => new TimeSpan(Left(d1.minus(d2)))
       }
 
-    /** override the equals method so that TimeSpans can be compared to long, int and TimeSpan */
+    /**
+     * Override the equals method so that `TimeSpan`s can be compared to long, int,
+     * Joda-Time `Duration`, and `TimeSpan`.
+     *
+     * @note Comparing to a Joda-Time `Period` is also done correctly, but is
+     *       deprecated.
+     */
     override def equals(cmp: Any) = {
       cmp match {
         case lo: Long => lo == this.millis
@@ -159,7 +247,10 @@ trait TimeHelpers { self: ControlHelpers =>
       }
     }
 
-    /** override the toString method to display a readable amount of time */
+    /**
+     * Override the toString method to display a readable amount of time using
+     * `[[TimeSpan.format]]``
+     */
     override def toString = TimeSpan.format(millis)
   }
 
