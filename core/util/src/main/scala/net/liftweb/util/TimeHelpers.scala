@@ -526,22 +526,14 @@ trait TimeHelpers { self: ControlHelpers =>
 
 }
 
-@deprecated("TimeSpan to Date/DateTime conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
 trait ConvertableToDate {
-  @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
   def toDate: Date
-  @deprecated("TimeSpan to DateTime conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
   def toDateTime: DateTime
-  @deprecated("TimeSpan to Long conversion will be removed for possibility of ambiguous behaviours", "3.0.0")
   def millis: Long
 }
 
-@deprecated("TimeSpan to Date/DateTime conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
 object ConvertableToDate {
-  @deprecated("TimeSpan to Date conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
   implicit def toDate(in: ConvertableToDate): Date = in.toDate
-  @deprecated("TimeSpan to DateTime conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
   implicit def toDateTime(in: ConvertableToDate): DateTime = in.toDateTime
-  @deprecated("TimeSpan to Long conversion will be removed for possibility of ambiguous behaviours", "3.0.0")
   implicit def toMillis(in: ConvertableToDate): Long = in.millis
 }
