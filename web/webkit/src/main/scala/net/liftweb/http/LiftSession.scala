@@ -2194,24 +2194,21 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   private object _lastFoundSnippet extends ThreadGlobal[String]
 
   private object DataAttrNode {
-    val rules = LiftRules.dataAttributeProcessor.toList
+    val dataAttributeProcessors = LiftRules.dataAttributeProcessor.toList
 
     def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
       in match {
-        case e: Elem if !rules.isEmpty =>
-
-          val attrs = e.attributes
-
-          e.attributes.toStream.flatMap {
+        case element: Elem if dataAttributeProcessors.nonEmpty =>
+          element.attributes.toStream.flatMap {
             case UnprefixedAttribute(key, value, _) if key.toLowerCase().startsWith("data-") =>
-              val nk = key.substring(5).toLowerCase()
-              val vs = value.text
-              val a2 = attrs.filter{
-                case UnprefixedAttribute(k2, _, _) => k2 != key
-                case _ => true
-              }
+              val dataProcessorName = key.substring(5).toLowerCase()
+              val dataProcessorInputValue = value.text
+              val filteredElement = removeAttribute(key, element)
 
-              NamedPF.applyBox((nk, vs, new Elem(e.prefix, e.label, a2, e.scope, e.minimizeEmpty, e.child :_*), LiftSession.this), rules)
+              NamedPF.applyBox(
+                (dataProcessorName, dataProcessorInputValue, filteredElement, LiftSession.this),
+                dataAttributeProcessors
+              )
             case _ => Empty
           }.headOption
 
@@ -3003,42 +3000,34 @@ private object SnippetNode {
       case _ => str
     }
 
-  private def makeMetaData(key: String, value: String, rest: MetaData): MetaData = key.indexOf(":") match {
-    case x if x > 0 => new PrefixedAttribute(key.substring(0, x),
-      key.substring(x + 1),
-      value, rest)
-
-    case _ => new UnprefixedAttribute(key, value, rest)
-  }
-
-  private def pairsToMetaData(in: List[String]): MetaData = in match {
-    case Nil => Null
-    case x :: xs => {
-      val rest = pairsToMetaData(xs)
-      x.charSplit('=').map(Helpers.urlDecode) match {
-        case Nil => rest
-        case x :: Nil => makeMetaData(x, "", rest)
-        case x :: y :: _ => makeMetaData(x, y, rest)
-      }
-    }
-  }
-
   private def isLiftClass(s: String): Boolean =
     s.startsWith("lift:") || s.startsWith("l:")
 
-  private def snippy(in: Elem): Option[(String, MetaData)] =
-    ((for {
-      cls <- in.attribute("class")
-      snip <- cls.text.charSplit(' ').find(isLiftClass)
-    } yield snip) orElse in.attribute("lift").map(_.text)
-      orElse in.attribute("data-lift").map(_.text)).map {
-      snip =>
-        snip.charSplit('?') match {
-          case Nil => "this should never happen" -> Null
-          case x :: Nil => urlDecode(removeLift(x)) -> Null
-          case x :: xs => urlDecode(removeLift(x)) -> pairsToMetaData(xs.flatMap(_.roboSplit("[;&]")))
-        }
+  case class SnippetInformation(name: String, attributes: MetaData)
+
+  private def snippetInformationForElement(in: Elem): Option[SnippetInformation] = {
+    val snippetInvocation = {
+      for {
+        cls <- in.attribute("class")
+        snip <- cls.text.charSplit(' ').find(isLiftClass)
+      } yield {
+        snip
+      }
+    } orElse in.attribute("lift").map(_.text)
+
+    snippetInvocation.map { snip =>
+      snip.charSplit('?') match {
+        case Nil =>
+          SnippetInformation("this should never happen", Null)
+
+        case snippetName :: Nil =>
+          SnippetInformation(urlDecode(removeLift(snippetName)), Null)
+
+        case snippetName :: snippetArguments =>
+          SnippetInformation(urlDecode(removeLift(snippetName)), pairsToMetaData(snippetArguments.flatMap(_.roboSplit("[;&]"))))
+      }
     }
+  }
 
   private def liftAttrsAndParallel(in: MetaData): (Boolean, MetaData) = {
     var next = in
@@ -3089,7 +3078,7 @@ private object SnippetNode {
 
       case elm: Elem => {
         for {
-          (snippetName, lift) <- snippy(elm)
+          SnippetInformation(snippetName, lift) <- snippetInformationForElement(elm)
         } yield {
           val (par, nonLift) = liftAttrsAndParallel(elm.attributes)
           val newElm = new Elem(elm.prefix, elm.label,
