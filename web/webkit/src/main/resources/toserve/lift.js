@@ -378,7 +378,7 @@
     // Called to register a comet. Sets the comet with guid `cometGuid`
     // to have the version `cometVersion`. If `startComet` is set to
     // `true`, restarts the comet request cycle.
-    function registerComet(cometGuid, cometVersion, restartComet) {
+    function registerComet(cometGuid, cometVersion, startComet) {
       toWatch[cometGuid] = cometVersion;
 
       if (startComet) {
