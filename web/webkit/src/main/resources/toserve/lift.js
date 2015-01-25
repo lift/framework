@@ -702,7 +702,7 @@
     onDocumentReady: function(fn) {
       var done = false, top = true,
       win = window, doc = win.document, root = doc.documentElement,
-      pre = doc.addEventListener ? '' : 'on';
+      pre = doc.addEventListener ? '' : 'on',
       rem = doc.addEventListener ? 'removeEventListener' : 'detachEvent',
 
       init = function(e) {
