@@ -291,8 +291,8 @@ final case class ContentSecurityPolicy(
   /**
    * Returns the headers implied by this content security policy.
    */
-  def headers(reportOnlyInDev: Boolean = true): List[(String, String)] = {
-    if (reportOnlyInDev && Props.devMode) {
+  def headers(enforceInDevMode: Boolean = true): List[(String, String)] = {
+    if (! enforceInDevMode && Props.devMode) {
       reportOnlyHeaders
     } else {
       enforcedHeaders
