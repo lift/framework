@@ -1157,7 +1157,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    *
    * This is the way to do stateless REST in Lift
    */
-  val statelessDispatch = RulesSeq[DispatchPF]
+  val statelessDispatch =
+    RulesSeq[DispatchPF]
+      .append(ContentSecurityPolicyViolation.defaultViolationHandler)
 
   /**
    * Add functionality around all of the HTTP request/response cycle.
@@ -1655,6 +1657,26 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     ("X-Frame-Options", "SAMEORIGIN") ::
     securityRules().headers
   }) {}
+
+  /**
+   * Handles content security policy violation reports reported to the default
+   * reporting endpoint (see `[[ContentSecurityPolicy.defaultReportUri]]`).
+   *
+   * If an `Empty` is returned from this function, a default 200 response will
+   * be returned. The default implementation simply logs the violation at WARN
+   * level.
+   */
+  @volatile var contentSecurityPolicyViolationReport: (ContentSecurityPolicyViolation)=>Box[LiftResponse] = { violation =>
+    logger.warn(
+      s"""Content security policy violation reported on page
+       | '${violation.documentUri}' from referrer '${violation.referrer}':
+       | '${violation.blockedUri}' was blocked because it violated the
+       | directive '${violation.violatedDirective}'. The policy that specified
+       | this directive is: '${violation.originalPolicy}'.""".trim
+     )
+
+     Empty
+  }
 
   @volatile var calcIE6ForResponse: () => Boolean = () => S.request.map(_.isIE6) openOr false
 

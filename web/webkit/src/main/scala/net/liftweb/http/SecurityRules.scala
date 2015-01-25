@@ -21,7 +21,12 @@ import java.net.URI
 
 import scala.concurrent.duration._
 
+import common._
+import json._
 import util.Props
+import util.Helpers.tryo
+
+import LiftRules._
 
 // TODO Set it up so we can redirect HTTP->HTTPS but not send Strict-Transport-Security.
 /**
@@ -320,6 +325,65 @@ object ContentSecurityPolicy {
     ContentSecurityPolicy(imageSources = Nil, reportUri = reportUri)
   }
   def secure: ContentSecurityPolicy = secure(Some(defaultReportUri))
+}
+
+/**
+ * The expected payload of a content security policy violation report.
+ *
+ * Parsable from the JSON POST that a browser should send when a violation
+ * occurs.
+ */
+case class ContentSecurityPolicyViolation(
+  documentUri: String,
+  referrer: String,
+  blockedUri: String,
+  violatedDirective: String,
+  originalPolicy: String
+)
+object ContentSecurityPolicyViolation extends LazyLoggable {
+  private implicit val formats = DefaultFormats
+
+  def printIt(thing: Req) = {
+    println(thing)
+    false
+  }
+
+  def defaultViolationHandler: DispatchPF = {
+    case request @ Req(start :: "content-security-policy-report" :: Nil, _, _) if start == LiftRules.liftContextRelativePath =>
+      val violation =
+        for {
+          requestJson <- request.json
+          camelCasedJson = requestJson.transformField {
+            case JField("document-uri", content) =>
+              JField("documentUri", content)
+            case JField("blocked-uri", content) =>
+              JField("blockedUri", content)
+            case JField("violated-directive", content) =>
+              JField("violatedDirective", content)
+            case JField("original-policy", content) =>
+              JField("originalPolicy", content)
+          }
+          violationJson = camelCasedJson \ "csp-report"
+          extractedViolation <- tryo(violationJson.extract[ContentSecurityPolicyViolation])
+        } yield {
+          extractedViolation
+        }
+
+      () => {
+        violation match {
+          case Full(violation) =>
+            LiftRules.contentSecurityPolicyViolationReport(violation) or
+              Full(OkResponse())
+
+          case _ =>
+            logger.warn(
+              s"Got a content security violation report we couldn't interpret: '${request.body.map(new String(_, "UTF-8"))}'."
+            )
+
+            Full(BadRequest("Unrecognized format for content security policy report."))
+        }
+      }
+  }
 }
 
 /**
