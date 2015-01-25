@@ -352,7 +352,7 @@
     function cometEntry(requestedCount) {
       var isEmpty = is_empty(toWatch);
 
-      if (!isEmpty && requestedCount == cometRequestCount) {
+      if (!isEmpty && requestedCount === cometRequestCount) {
         uriSuffix = undefined;
         cometRequestCount++;
         currentCometRequest =
