@@ -264,6 +264,14 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val beforeSend = RulesSeq[(BasicResponse, HTTPResponse, List[(String, String)], Box[Req]) => Any]
 
+  private lazy val defaultSecurityRules = SecurityRules()
+  /**
+   * The security rules used by Lift to secure this application. These mostly
+   * relate to HTTPS handling and HTTP `Content-Security-Policy`. See the
+   * `[[SecurityRules]]` documentation for more.
+   */
+  @volatile var securityRules: () => SecurityRules = () => defaultSecurityRules
+
   /**
    * Defines the resources that are protected by authentication and authorization. If this function
    * is not defined for the input data, the resource is considered unprotected ergo no authentication
@@ -1428,10 +1436,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var defaultHeaders: PartialFunction[(NodeSeq, Req), List[(String, String)]] = {
     case _ =>
       val d = Helpers.nowAsInternetDate
+
       List("Expires" -> d,
            "Date" -> d,
-           "Cache-Control" ->
-           "no-cache, private, no-store",
+           "Cache-Control" -> "no-cache, private, no-store",
            "Pragma" -> "no-cache" )
   }
 
@@ -1634,9 +1642,19 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var cometGetTimeout = 140000
 
   /**
-   * Compute the headers to be sent to the browser in addition to anything else that's sent
+   * Compute the headers to be sent to the browser in addition to anything else
+   * that's sent.
+   *
+   * Note that the headers for the applications `SecurityRules` are also set
+   * here, so if you override the supplemental headers, you should
+   * either refer back to the default set or make sure to include
+   * `LiftRules.securityRules.headers`.
    */
-  val supplementalHeaders: FactoryMaker[List[(String, String)]] = new FactoryMaker(() => List(("X-Lift-Version", liftVersion), ("X-Frame-Options", "SAMEORIGIN"))) {}
+  val supplementalHeaders: FactoryMaker[List[(String, String)]] = new FactoryMaker(() => {
+    ("X-Lift-Version", liftVersion) ::
+    ("X-Frame-Options", "SAMEORIGIN") ::
+    securityRules().headers
+  }) {}
 
   @volatile var calcIE6ForResponse: () => Boolean = () => S.request.map(_.isIE6) openOr false
 
