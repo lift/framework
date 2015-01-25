@@ -293,7 +293,9 @@
     ///// Comet ////////////////////////////////////
     ////////////////////////////////////////////////
 
-    var currentCometRequest = null;
+    var currentCometRequest = null,
+        // Used to ensure that we can only fire one comet request at a time.
+        cometRequestCount = 0;
 
     // http://stackoverflow.com/questions/4994201/is-object-empty
     function is_empty(obj) {
@@ -320,11 +322,13 @@
     }
 
     function cometFailureFunc() {
-      setTimeout(cometEntry, settings.cometFailureRetryTimeout);
+      var requestCount = cometRequestCount;
+      setTimeout(function() { cometEntry(requestCount) }, settings.cometFailureRetryTimeout);
     }
 
     function cometSuccessFunc() {
-      setTimeout(cometEntry, 100);
+      var requestCount = cometRequestCount;
+      setTimeout(function() { cometEntry(requestCount); }, 100);
     }
 
     function calcCometPath() {
@@ -345,11 +349,12 @@
       cometSuccessFunc();
     }
 
-    function cometEntry() {
+    function cometEntry(requestedCount) {
       var isEmpty = is_empty(toWatch);
 
-      if (!isEmpty) {
+      if (!isEmpty && requestedCount === cometRequestCount) {
         uriSuffix = undefined;
+        cometRequestCount++;
         currentCometRequest =
           settings.ajaxGet(
             calcCometPath(),
@@ -368,17 +373,6 @@
         }
       }
       toWatch = ret;
-    }
-
-    // Called to register a comet. Sets the comet with guid `cometGuid`
-    // to have the version `cometVersion`. If `startComet` is set to
-    // `true`, restarts the comet request cycle.
-    function registerComet(cometGuid, cometVersion, restartComet) {
-      toWatch[cometGuid] = cometVersion;
-
-      if (startComet) {
-        restartComet();
-      }
     }
 
     // Called to register comets in bulk. `cometInfo` should be
