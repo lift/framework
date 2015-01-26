@@ -32,8 +32,8 @@ import LiftRules._
 /**
  * Rules for HTTPS usage by a Lift application.
  *
- * Currently corresponds directly to the [[HTTP `Strict-Transport-Security`
- * header http://tools.ietf.org/html/rfc6797]].
+ * Currently corresponds directly to the [[http://tools.ietf.org/html/rfc6797
+ * HTTP `Strict-Transport-Security` header]].
  */
 final case class HttpsRules(
   /**
@@ -111,8 +111,8 @@ object ContentSourceRestriction {
   }
   /**
    * Indicates content from the given host path is allowed. See the
-   * `Content-Security-Policy` spec's [[matching rules for `host-source`
-   * http://www.w3.org/TR/CSP/#matching]] for more about what this can look
+   * `Content-Security-Policy` spec's [[http://www.w3.org/TR/CSP/#matching
+   * matching rules for `host-source`]] for more about what this can look
    * like.
    *
    * Example:
@@ -190,60 +190,47 @@ object ContentSourceRestriction {
  * Note that the `X-Webkit-CSP` header is NOT specified, due to
  * potentially-broken behavior in iOS 5 and 5.1. This means iOS 6/6.1 will not
  * receive a content security policy that it can
- * understand. See the [[caniuse page on content security policy
- * http://caniuse.com/#feat=contentsecuritypolicy]] for more.
+ * understand. See the [[http://caniuse.com/#feat=contentsecuritypolicy caniuse
+ * page on content security policy]] for more.
+ *
+ * @param defaultSources A list of default source restrictions; if one of the
+ *        other sources parameters is empty, the default sources will apply
+ *        instead.
+ * @param connectSources A list of source restrictions for `XmlHttpRequest`
+ *        (AJAX) connections.
+ * @param fontSources A list of source restrictions for loading fonts (e.g.,
+ *        from CSS `font-face` declarations).
+ * @param frameSources A list of source restrictions for loading frames and
+ *        iframes.
+ * @param imageSources A list of source restrictions for loading images.
+ * @param mediaSources A list of source restrictions for loading media (audio
+ *        and video).
+ * @param objectSources A list of source restrictions for loading `object`,
+ *        `embed`, `applet`, and related elements.
+ * @param scriptSources A list of source restrictions for loading scripts. Also
+ *        accepts the `[[ContentSourceRestriction.UnsafeInline UnsafeInline]]`
+ *        and `[[ContentSourceRestriction.UnsafeEval UnsafeEval]]` source
+ *        restrictions, though these are strongly discouraged.
+ * @param styleSources A list of source restrictions for loading styles. Also
+ *        accepts the `[[ContentSourceRestriction.UnsafeInline UnsafeInline]]`
+ *        source, though it is strongly discouraged.
+ * @param reportUri The URI where any violation of the security policy will be
+ *        reported. You can set the function that handles these violations in
+ *        `[[LiftRules.contentSecurityPolicyViolationReport]]`. By default,
+ *        reported to `[[ContentSecurityPolicy.defaultReportUri]]`.
+ *
+ *        If this is `None`, violations will not be reported.
  */
 final case class ContentSecurityPolicy(
-  /**
-   * A list of default source restrictions; if one of the other sources
-   * parameters is empty, the default sources will apply instead.
-   */
   defaultSources: List[ContentSourceRestriction] = List(ContentSourceRestriction.Self),
-  /**
-   * A list of source restrictions for `XmlHttpRequest` (AJAX) connections.
-   */
   connectSources: List[ContentSourceRestriction] = Nil,
-  /**
-   * A list of source restrictions for loading fonts (e.g., from CSS `font-face`
-   * declarations).
-   */
   fontSources: List[ContentSourceRestriction] = Nil,
-  /**
-   * A list of source restrictions for loading frames and iframes.
-   */
   frameSources: List[ContentSourceRestriction] = Nil,
-  /**
-   * A list of source restrictions for loading images.
-   */
   imageSources: List[ContentSourceRestriction] = List(ContentSourceRestriction.All),
-  /**
-   * A list of source restrictions for loading media (audio and video).
-   */
   mediaSources: List[ContentSourceRestriction] = Nil,
-  /**
-   * A list of source restrictions for loading `object`, `embed`, `applet`, and
-   * related elements.
-   */
   objectSources: List[ContentSourceRestriction] = Nil,
-  /**
-   * A list of source restrictions for loading scripts. Also accepts the
-   * `UnsafeInline` and `UnsafeEval` sources, though these are strongly
-   * discouraged.
-   */
   scriptSources: List[JavaScriptSourceRestriction] = Nil,
-  /**
-   * A list of source restrictions for loading styles. Also accepts the
-   * `UnsafeInline` source, though it is strongly discouraged.
-   */
   styleSources: List[StylesheetSourceRestriction] = Nil,
-  /**
-   * The URI where any violation of the security policy will be reported. You
-   * can set the function that handles these violations in
-   * `LiftRules.contentSecurityPolicyViolationReport`. By default, reported to
-   * `[[ContentSecurityPolicy.defaultReportUri]]`.
-   *
-   * If this is `None`, violations will not be reported.
-   */
   reportUri: Option[URI] = Some(ContentSecurityPolicy.defaultReportUri)
 ) {
   /**
@@ -390,7 +377,7 @@ object ContentSecurityPolicyViolation extends LazyLoggable {
  * required and `Content-Security-Policy` is restricted to the current domain
  * for everything except images, which are accepted from any domain.
  *
- * You can use `[[SecurityRules$.secure]]` to enable more restrictive, but
+ * You can use `[[SecurityRules.secure]]` to enable more restrictive, but
  * also more secure, defaults.
  */
 final case class SecurityRules(
