@@ -321,10 +321,9 @@ object ContentSecurityPolicy {
    * to the same origin, but allows images from any source; the secure one only
    * differs because it adds restrictions to the image sources.
    */
-  def secure(reportUri: Option[URI]): ContentSecurityPolicy = {
-    ContentSecurityPolicy(imageSources = Nil, reportUri = reportUri)
+  def secure: ContentSecurityPolicy = {
+    ContentSecurityPolicy(imageSources = Nil)
   }
-  def secure: ContentSecurityPolicy = secure(Some(defaultReportUri))
 }
 
 /**
