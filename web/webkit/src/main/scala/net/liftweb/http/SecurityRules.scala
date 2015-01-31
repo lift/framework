@@ -165,9 +165,10 @@ object ContentSourceRestriction {
     val sourceRestrictionString = "'unsafe-inline'"
   }
   /**
-   * Indicates `eval` and related functionality can be used. It is highly
-   * recommended that this not be used, as it exposes your application to code
-   * injection attacks.
+   * Indicates `eval` and related functionality can be used. Some of Lift's
+   * functionality, including `idMemoize` and comet handling, relies on eval,
+   * so not including this in your script sources will mean you won't be able to
+   * use those.
    *
    * If not specified for JavaScript, invoking `eval`, the `Function`
    * constructor, or `setTimeout`/`setInterval` with a string parameter will
@@ -230,7 +231,10 @@ final case class ContentSecurityPolicy(
   imageSources: List[ContentSourceRestriction] = List(ContentSourceRestriction.All),
   mediaSources: List[ContentSourceRestriction] = Nil,
   objectSources: List[ContentSourceRestriction] = Nil,
-  scriptSources: List[JavaScriptSourceRestriction] = Nil,
+  scriptSources: List[JavaScriptSourceRestriction] = List(
+    ContentSourceRestriction.UnsafeEval,
+    ContentSourceRestriction.Self
+  ),
   styleSources: List[StylesheetSourceRestriction] = Nil,
   reportUri: Option[URI] = Some(ContentSecurityPolicy.defaultReportUri)
 ) {
@@ -329,11 +333,6 @@ case class ContentSecurityPolicyViolation(
 )
 object ContentSecurityPolicyViolation extends LazyLoggable {
   private implicit val formats = DefaultFormats
-
-  def printIt(thing: Req) = {
-    println(thing)
-    false
-  }
 
   def defaultViolationHandler: DispatchPF = {
     case request @ Req(start :: "content-security-policy-report" :: Nil, _, _) if start == LiftRules.liftContextRelativePath =>
