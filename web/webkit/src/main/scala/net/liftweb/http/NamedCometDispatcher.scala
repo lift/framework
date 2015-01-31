@@ -27,7 +27,7 @@ class NamedCometDispatcher(name: Box[String]) extends LiftActor with Loggable {
 
   logger.debug("DispatcherActor got name: %s".format(name))
 
-  private var cometActorsToUpdate: Vector[CometActor]= Vector()
+  private var cometActorsToUpdate: Vector[BaseCometActor]= Vector()
 
   override def messageHandler  = {
     /**
@@ -69,6 +69,6 @@ class NamedCometDispatcher(name: Box[String]) extends LiftActor with Loggable {
  * register each named comet actor with a dispatcher that
  * only updates the specific version it monitors
  */
-case class registerCometActor(actor: CometActor, name: Box[String])
-case class unregisterCometActor(actor: CometActor)
+case class registerCometActor(actor: BaseCometActor, name: Box[String])
+case class unregisterCometActor(actor: BaseCometActor)
 case class CometName(name: String)

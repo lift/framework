@@ -296,8 +296,8 @@ abstract class LiftActorJWithListenerManager extends LiftActorJ with ListenerMan
  *
  * @see ListenerManager
  */
-trait CometListener extends CometActor {
-  self: CometActor =>
+trait CometListener extends BaseCometActor {
+  self: BaseCometActor =>
 
   /**
    * This controls which Actor to register with for updates. Typically

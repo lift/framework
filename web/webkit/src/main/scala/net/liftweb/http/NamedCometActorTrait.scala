@@ -21,7 +21,7 @@ import util.Helpers._
 import common.{Loggable, Full}
 
 
-trait NamedCometActorTrait extends CometActor with Loggable {
+trait NamedCometActorTrait extends BaseCometActor with Loggable {
 
   /**
    * First thing we do is registering this comet actor
