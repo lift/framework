@@ -1654,7 +1654,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val supplementalHeaders: FactoryMaker[List[(String, String)]] = new FactoryMaker(() => {
     ("X-Lift-Version", liftVersion) ::
-    ("X-Frame-Options", "SAMEORIGIN") ::
     securityRules().headers
   }) {}
 

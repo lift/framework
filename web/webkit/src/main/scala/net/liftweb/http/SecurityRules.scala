@@ -373,28 +373,62 @@ object ContentSecurityPolicyViolation extends LazyLoggable {
 }
 
 /**
+ * Defines restrictions on allowing served pages to be embedded in frames.
+ */
+sealed trait FrameRestrictions {
+  def headers: List[(String,String)]
+
+  /**
+   * Returns the headers implied by these frame restrictions.
+   *
+   * Because of how frame restrictions are handled, if enforcement in dev mode
+   * is turned off, no headers are generated in dev mode.
+   */
+  def headers(enforceInDevMode: Boolean = false): List[(String,String)] = {
+    if (! enforceInDevMode && Props.devMode) {
+      Nil
+    } else {
+      headers
+    }
+  }
+}
+object FrameRestrictions {
+  /**
+   * Allows other pages from the same origin as the one being served to embed
+   * this page in a frame.
+   */
+  case object SameOrigin extends FrameRestrictions {
+    val headers = List("X-Frame-Options" -> "SAMEORIGIN")
+  }
+  /**
+   * Does not allow embedding the page being served in a frame at all.
+   */
+  case object Deny extends FrameRestrictions {
+    val headers = List("X-Frame-Options" -> "DENY")
+  }
+}
+
+/**
  * Specifies security rules for a Lift application. By default, HTTPS is not
  * required and `Content-Security-Policy` is restricted to the current domain
  * for everything except images, which are accepted from any domain.
  *
  * You can use `[[SecurityRules.secure]]` to enable more restrictive, but
  * also more secure, defaults.
+ *
+ * @param enforceInDevMode If true, security policies and HTTPS rules are
+ *        enforced in dev mode in addition to staging/pilot/production/etc.
+ * @param logInDevMode If true, dev mode violations of security policies are
+ *        logged by default. Note that if you override
+ *        [[`LiftRules.contentSecurityPolicyViolationReport`]] or otherwise
+ *        change the default Lift policy violation handling behavior, it will
+ *        be up to you to handle this property as desired.
  */
 final case class SecurityRules(
   https: Option[HttpsRules] = None,
   content: Option[ContentSecurityPolicy] = Some(ContentSecurityPolicy()),
-  /**
-   * If true, security policies and HTTPS rules are enforced in dev mode in
-   * addition to staging/pilot/production/etc.
-   */
+  frameRestrictions: Option[FrameRestrictions] = Some(FrameRestrictions.SameOrigin),
   enforceInDevMode: Boolean = false,
-  /**
-   * If true, dev mode violations of security policies are logged by
-   * default. Note that if you override
-   * [[`LiftRules.contentSecurityPolicyViolationReport`]] or otherwise change
-   * the default Lift policy violation handling behavior, it will be up to you
-   * to handle this property as desired.
-   */
   logInDevMode: Boolean = true
 ) {
   /**
@@ -402,7 +436,8 @@ final case class SecurityRules(
    */
   lazy val headers: List[(String, String)] = {
     https.toList.flatMap(_.headers(enforceInDevMode)) :::
-      content.toList.flatMap(_.headers(enforceInDevMode))
+      content.toList.flatMap(_.headers(enforceInDevMode)) :::
+      frameRestrictions.toList.flatMap(_.headers(enforceInDevMode))
   }
 }
 object SecurityRules {
