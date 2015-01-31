@@ -101,12 +101,13 @@ sealed trait JavaScriptSourceRestriction extends ContentSourceRestriction
  * Marker trait for restrictions that only apply to stylesheets.
  */
 sealed trait StylesheetSourceRestriction extends ContentSourceRestriction
+sealed trait GeneralSourceRestriction extends JavaScriptSourceRestriction with StylesheetSourceRestriction
 
 object ContentSourceRestriction {
   /**
    * Indicates content from all sources is allowed.
    */
-  case object All extends ContentSourceRestriction {
+  case object All extends GeneralSourceRestriction {
     val sourceRestrictionString = "*"
   }
   /**
@@ -120,7 +121,7 @@ object ContentSourceRestriction {
    * Host("https://base.*.example.com")
    * }}}
    */
-  case class Host(hostAndPath: String) extends ContentSourceRestriction {
+  case class Host(hostAndPath: String) extends GeneralSourceRestriction {
     val sourceRestrictionString = hostAndPath
   }
   /**
@@ -132,19 +133,19 @@ object ContentSourceRestriction {
    * Scheme("data")
    * }}}
    */
-  case class Scheme(scheme: String) extends ContentSourceRestriction {
+  case class Scheme(scheme: String) extends GeneralSourceRestriction {
     val sourceRestrictionString = scheme + ":"
   }
   /**
    * Indicates content from no sources is allowed.
    */
-  case object None extends ContentSourceRestriction {
+  case object None extends GeneralSourceRestriction {
     val sourceRestrictionString = "'none'"
   }
   /**
    * Indicates content from the same origin as the content is allowed.
    */
-  case object Self extends ContentSourceRestriction {
+  case object Self extends GeneralSourceRestriction {
     val sourceRestrictionString = "'self'"
   }
   /**
