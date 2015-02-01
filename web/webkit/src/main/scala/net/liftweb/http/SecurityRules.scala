@@ -28,7 +28,6 @@ import util.Helpers.tryo
 
 import LiftRules._
 
-// TODO Set it up so we can redirect HTTP->HTTPS but not send Strict-Transport-Security.
 /**
  * Rules for HTTPS usage by a Lift application.
  *
