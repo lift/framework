@@ -269,8 +269,12 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * The security rules used by Lift to secure this application. These mostly
    * relate to HTTPS handling and HTTP `Content-Security-Policy`. See the
    * `[[SecurityRules]]` documentation for more.
+   *
+   * Once the application has started using these, they are locked in, so make
+   * sure to set them early in the boot process.
    */
   @volatile var securityRules: () => SecurityRules = () => defaultSecurityRules
+  private[http] lazy val lockedSecurityRules = securityRules()
 
   /**
    * Defines the resources that are protected by authentication and authorization. If this function
@@ -1654,7 +1658,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val supplementalHeaders: FactoryMaker[List[(String, String)]] = new FactoryMaker(() => {
     ("X-Lift-Version", liftVersion) ::
-    securityRules().headers
+    lockedSecurityRules.headers
   }) {}
 
   /**
