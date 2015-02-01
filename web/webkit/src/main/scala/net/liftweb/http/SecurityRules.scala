@@ -288,9 +288,11 @@ final case class ContentSecurityPolicy(
   /**
    * Returns the headers implied by this content security policy.
    */
-  def headers(enforceInDevMode: Boolean = true): List[(String, String)] = {
-    if (! enforceInDevMode && Props.devMode) {
+  def headers(enforceInDevMode: Boolean = true, logInDevMode: Boolean = true): List[(String, String)] = {
+    if (! enforceInDevMode && logInDevMode && Props.devMode) {
       reportOnlyHeaders
+    } else if (! enforceInDevMode && Props.devMode) {
+      Nil
     } else {
       enforcedHeaders
     }
@@ -436,7 +438,7 @@ final case class SecurityRules(
    */
   lazy val headers: List[(String, String)] = {
     https.toList.flatMap(_.headers(enforceInDevMode)) :::
-      content.toList.flatMap(_.headers(enforceInDevMode)) :::
+      content.toList.flatMap(_.headers(enforceInDevMode, logInDevMode)) :::
       frameRestrictions.toList.flatMap(_.headers(enforceInDevMode))
   }
 }
