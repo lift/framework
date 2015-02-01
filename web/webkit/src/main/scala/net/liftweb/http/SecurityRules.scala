@@ -413,6 +413,8 @@ object FrameRestrictions {
  * Specifies security rules for a Lift application. By default, HTTPS is not
  * required and `Content-Security-Policy` is restricted to the current domain
  * for everything except images, which are accepted from any domain.
+ * Additionally, served pages can only be embedded in other frames from
+ * the current domain.
  *
  * You can use `[[SecurityRules.secure]]` to enable more restrictive, but
  * also more secure, defaults.
@@ -421,7 +423,7 @@ object FrameRestrictions {
  *        enforced in dev mode in addition to staging/pilot/production/etc.
  * @param logInDevMode If true, dev mode violations of security policies are
  *        logged by default. Note that if you override
- *        [[`LiftRules.contentSecurityPolicyViolationReport`]] or otherwise
+ *        `[[LiftRules.contentSecurityPolicyViolationReport]]` or otherwise
  *        change the default Lift policy violation handling behavior, it will
  *        be up to you to handle this property as desired.
  */
