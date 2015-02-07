@@ -315,7 +315,7 @@ trait SortedPaginatorSnippet[T, C] extends SortedPaginator[T, C] with PaginatorS
     val headerTransforms =
       headers.zipWithIndex.map {
         case ((binding, _), colIndex) =>
-          ".$binding *" #> { ns: NodeSeq =>
+          s".$binding *" #> { ns: NodeSeq =>
             <a href={sortedPageUrl(first, sortedBy(colIndex))}>{ns}</a>
           }
       }
