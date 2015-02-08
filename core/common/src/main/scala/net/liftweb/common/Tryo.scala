@@ -1,5 +1,7 @@
 package net.liftweb.common
 
+object Tryo extends Tryo
+
 trait Tryo {
 
   /**
