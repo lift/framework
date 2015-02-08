@@ -106,7 +106,7 @@ class LAFuture[T](val scheduler: LAScheduler) {
    */
   def map[A](f: T => A): LAFuture[A] = {
     val ret = new LAFuture[A](scheduler)
-    onComplete(v => ret.complete(v.flatMap(wrapWithBox(f))))
+    onComplete(v => ret.complete(v.flatMap(n => Box.tryo(f(n)))))
     ret
   }
 
@@ -114,21 +114,13 @@ class LAFuture[T](val scheduler: LAScheduler) {
     val ret = new LAFuture[A](scheduler)
     onComplete(v => v match {
       case Full(v) =>
-        wrapWithBox(f)(v) match {
+        Box.tryo(f(v)) match {
           case Full(successfullyComputedFuture) => successfullyComputedFuture.onComplete(v2 => ret.complete(v2))
           case e: EmptyBox => ret.complete(e)
         }
       case e: EmptyBox => ret.complete(e)
     })
     ret
-  }
-
-  private def wrapWithBox[A](f: T => A)(t: T): Box[A] = {
-    try {
-      Full(f(t))
-    } catch {
-      case e: Exception => Failure(e.getMessage, Full(e), Empty)
-    }
   }
 
   def filter(f: T => Boolean): LAFuture[T] = {
