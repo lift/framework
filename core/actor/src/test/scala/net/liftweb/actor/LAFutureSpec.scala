@@ -4,7 +4,7 @@ import net.liftweb.common.{Failure, Box}
 import org.specs2.mutable.Specification
 
 class LAFutureSpec extends Specification {
-  val timeout = 1000L
+  val timeout = 5000L
 
   "LAFuture" should {
     "map to failing future if transforming function throws an Exception" in {
