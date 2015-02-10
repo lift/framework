@@ -2543,7 +2543,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   private[http] def removeCometActor(act: LiftCometActor): Unit = {
     testStatefulFeature {
       nasyncById.remove(act.uniqueId)
-      nasyncComponents.remove(act.theType -> act.name)
+      act.theType.foreach(t => nasyncComponents.remove(CometId(t, act.name)))
 
       val toCmp = Full(act.uniqueId)
 
