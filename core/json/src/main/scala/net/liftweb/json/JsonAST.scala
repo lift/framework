@@ -60,7 +60,7 @@ object JsonAST {
     * }}}
     *
     */
-  def concat(xs: JValue*) = xs.foldLeft(JNothing: JValue)(_ ++ _)
+  def concat(values: JValue*) = values.foldLeft(JNothing: JValue)(_ ++ _)
 
   object JValue extends Merge.Mergeable
 
