@@ -149,17 +149,23 @@ object JsonAST {
      */
     def \\(nameToFind: String): JValue = {
       def find(json: JValue): List[JField] = json match {
-        case JObject(l) => l.foldLeft(List[JField]()) { 
-          case (a, JField(name, value)) => 
-            if (name == nameToFind) {
-              a ::: List(JField(name, value)) ::: find(value)
-            } else {
-              a ::: find(value)
-            }
-        }
-        case JArray(l) => l.foldLeft(List[JField]())((a, json) => a ::: find(json))
-        case _ => Nil
+        case JObject(fields) =>
+          fields.foldLeft(List[JField]()) {
+            case (matchingFields, JField(name, value)) =>
+              matchingFields :::
+              List(JField(name, value)).filter(_.name == nameToFind) :::
+              find(value)
+          }
+
+        case JArray(fields) =>
+          fields.foldLeft(List[JField]()) { (matchingFields, children) =>
+            matchingFields ::: find(children)
+          }
+
+        case _ =>
+          Nil
       }
+
       find(this) match {
         case JField(_, x) :: Nil => x
         case xs => JObject(xs)
