@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 WorldWide Conferencing, LLC
+ * Copyright 2009-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,32 +19,97 @@ package json
 
 import scala.language.implicitConversions
 
+/**
+ * This object contains the abstract snytax tree (or AST) for working with JSON objects in lift-json.
+ *
+ * The purpose of the JsonAST is to represent and manipulate JSON by leveraging Scala language features like types,
+ * case classes, etc. The AST should allow you to represent anything you could imagine from JSON land using the Scala
+ * type system.
+ *
+ * Everything in the AST has a single root: JValue. A JValue could, quite literally, be anything. It could be an
+ * an object (represented by [[JObject]]), a string ([[JString]]), a null ([[JNull]]), and so on. So, when constructing
+ * a JSON object with the AST directly you might construct something like the following:
+ *
+ * {{{
+ * JObject(JField("bacon", JBool(true)) :: JField("spinach", JBool(false)))
+ * }}}
+ *
+ * Once serialized to the string representation of JSON you would end up with the following:
+ *
+ * {{{
+ * {
+ *   "bacon":true,
+ *   "spianch":false
+ * }
+ * }}}
+ */
 object JsonAST {
   import scala.text.{Document, DocText}
   import scala.text.Document._
 
-  /** Concatenates a sequence of <code>JValue</code>s.
-    * <p>
-    * Example:<pre>
+  /**
+    * Concatenate a sequence of `JValue`s together.
+    *
+    * This would be useful in the event that you have a handful of `JValue` instances that need to be
+    * smacked together into one unit.
+    *
+    * For example:
+    *
+    * {{{
     * concat(JInt(1), JInt(2)) == JArray(List(JInt(1), JInt(2)))
-    * </pre>
+    * }}}
+    *
     */
   def concat(xs: JValue*) = xs.foldLeft(JNothing: JValue)(_ ++ _)
 
   object JValue extends Merge.Mergeable
 
   /**
-   * Data type for JSON AST.
+   * The base type for all things that represent distinct JSON entities in the AST.
+   *
+   * Most members of the AST will extend this class. The one exception is [[JField]] which does not extend this class
+   * because it really <em>can't</em> properly exist as a first-class citizen of JSON.
    */
   sealed abstract class JValue extends Diff.Diffable {
     type Values
 
-    /** XPath-like expression to query JSON fields by name. Matches only fields on
-     * next level.
-     * <p>
-     * Example:<pre>
-     * json \ "name"
-     * </pre>
+    /**
+     * Find a child of a `JObject` or a `JArray` of `JObject` by name, and return `JNothing` for anything else.
+     *
+     * This method is most useful if you have an object that you need to dig into in order to retrieve a specific value.
+     * So, let's say that you had a JSON object that looked something like this:
+     *
+     * {{{
+     * {
+     *   "name": "Joe",
+     *   "profession": "Software Engineer",
+     *   "catchphrase": {
+     *     "name": "Alabama Cheer",
+     *     "value": "Roll tide"
+     *   }
+     * }
+     * }}}
+     *
+     * If for some reason you're interested in taking a look at Joe's catchphrase, you can query it using the `\` method
+     * to find it like so:
+     *
+     * Example:
+     *
+     * {{{
+     * > json \ "catchphrase"
+     * JObject(List(JField("name", JString("Alabama Cheer")), JField("value", JString("Roll tide"))))
+     * }}}
+     *
+     * Likewise, if you wanted to find Joe's name you could do the following:
+     *
+     * {{{
+     * > json \ "name"
+     * JString("Joe")
+     * }}}
+     *
+     * The result could be any kind of `JValue` that you could imagine.
+     * In the event that the `JValue` you're operating on is actually an array of objects, you'll get back a `JArray` of
+     * whatever the result of querying each of those object is. In the event nothing is found, you'll get a `JNothing`.
      */
     def \(nameToFind: String): JValue = {
       findDirectByName(List(this), nameToFind) match {
@@ -73,12 +138,15 @@ object JsonAST {
       case _ => Nil
     }
 
-    /** XPath-like expression to query JSON fields by name. Returns all matching fields.
-      * <p>
-      * Example:<pre>
-      * json \\ "name"
-      * </pre>
-      */
+    /**
+     * Find all children of a `JObject` with the matching name, returning an empty `JObject` is no matches are found.
+     *
+     * Example:
+     *
+     * {{{
+     * json \\ "name"
+     * }}}
+     */
     def \\(nameToFind: String): JValue = {
       def find(json: JValue): List[JField] = json match {
         case JObject(l) => l.foldLeft(List[JField]()) { 
