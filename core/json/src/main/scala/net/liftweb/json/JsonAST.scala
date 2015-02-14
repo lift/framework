@@ -454,30 +454,43 @@ object JsonAST {
       find(this)
     }
 
-    /** Return a List of all fields that match the given predicate.
-     * <p>
-     * Example:<pre>
+    /**
+     * Return a List of all fields that match the given predicate.
+     *
+     * Example:
+     *
+     * {{{
      * JObject(("age", JInt(10)) :: Nil) filterField {
-     *   case ("age", JInt(x)) if x > 18 => true
-     *   case _          => false
+     *   case ("age", JInt(x)) if x > 18 =>
+     *     true
+     *
+     *   case _ =>
+     *     false
      * }
-     * </pre>
+     * }}}
      */
     def filterField(p: JField => Boolean): List[JField] = 
       foldField(List[JField]())((acc, e) => if (p(e)) e :: acc else acc).reverse
 
-    /** Return a List of all values which matches the given predicate.
-     * <p>
-      * Example:<pre>
-      * JArray(JInt(1) :: JInt(2) :: Nil) filter { case JInt(x) => x > 1; case _ => false }
-      * </pre>
-      */
+    /**
+     * Return a List of all values which matches the given predicate.
+     *
+     * Example:
+     *
+     * {{{
+     * JArray(JInt(1) :: JInt(2) :: Nil) filter {
+     *   case JInt(x) => x > 1
+     *   case _ => false
+     * }
+     * }}}
+     */
     def filter(p: JValue => Boolean): List[JValue] =
       fold(List[JValue]())((acc, e) => if (p(e)) e :: acc else acc).reverse
 
     /** 
-      * To make 2.10 happy
-      */
+     * Create a new instance of [[WithFilter]] for Scala to use when using
+     * this `JValue` in a for comprehension.
+     */
     def withFilter(p: JValue => Boolean) = new WithFilter(this, p)
     
     final class WithFilter(self: JValue, p: JValue => Boolean) {
@@ -487,14 +500,16 @@ object JsonAST {
       def foreach[U](f: JValue => U): Unit = self filter p foreach f
     }
     
-    /** Concatenate with another JSON.
-      * This is a concatenation monoid: (JValue, ++, JNothing)
-      * <p>
-      * Example:<pre>
-      * JArray(JInt(1) :: JInt(2) :: Nil) ++ JArray(JInt(3) :: Nil) ==
-      * JArray(List(JInt(1), JInt(2), JInt(3)))
-      * </pre>
-      */
+    /**
+     * Concatenate this `JValue` with another `JValue`.
+     *
+     * Example:
+     *
+     * {{{
+     * > JArray(JInt(1) :: JInt(2) :: Nil) ++ JArray(JInt(3) :: Nil)
+     * JArray(List(JInt(1), JInt(2), JInt(3)))
+     * }}}
+     */
     def ++(other: JValue) = {
       def append(value1: JValue, value2: JValue): JValue = (value1, value2) match {
         case (JNothing, x) => x
@@ -507,82 +522,107 @@ object JsonAST {
       append(this, other)
     }
 
-    /** Return a JSON where all fields matching the given predicate are removed.
-     * <p>
-     * Example:<pre>
+    /**
+     * Return a `JValue` where all fields matching the given predicate are removed.
+     *
+     * Example:
+     *
+     * {{{
      * JObject(("age", JInt(10)) :: Nil) removeField {
      *   case ("age", _) => true
      *   case _          => false
      * }
-     * </pre>
+     * }}}
      */
     def removeField(p: JField => Boolean): JValue = this mapField {
       case x if p(x) => JField(x.name, JNothing)
       case x => x
     }
 
-    /** Return a JSON where all values matching the given predicate are removed.
-     * <p>
-      * Example:<pre>
-      * JArray(JInt(1) :: JInt(2) :: JNull :: Nil) remove { _ == JNull }
-      * </pre>
-      */
+    /**
+     * Return a JSON where all values matching the given predicate are removed.
+     *
+     * Example:
+     *
+     * {{{
+     * JArray(JInt(1) :: JInt(2) :: JNull :: Nil).remove(_ == JNull)
+     * }}}
+     */
     def remove(p: JValue => Boolean): JValue = this map {
       case x if p(x) => JNothing
       case x => x
     }
 
-    /** Extract a value from a JSON.
-      * <p>
-      * Value can be:
-      * <ul>
-      *   <li>case class</li>
-      *   <li>primitive (String, Boolean, Date, etc.)</li>
-      *   <li>supported collection type (List, Seq, Map[String, _], Set)</li>
-      *   <li>any type which has a configured custom deserializer</li>
-      * </ul>
-      * <p>
-      * Example:<pre>
-      * case class Person(name: String)
-      * JObject(JField("name", JString("joe")) :: Nil).extract[Person] == Person("joe")
-      * </pre>
-      */
+    /**
+     * Extract a value into a concrete Scala instance from its `JValue` representation.
+     *
+     * Value can be:
+     *
+     * <ul>
+     *   <li>case class</li>
+     *   <li>primitive (String, Boolean, Date, etc.)</li>
+     *   <li>supported collection type (List, Seq, Map[String, _], Set)</li>
+     *   <li>any type which has a configured custom deserializer</li>
+     * </ul>
+     *
+     *
+     * Example:
+     *
+     * {{{
+     * > case class Person(name: String)
+     * > JObject(JField("name", JString("joe")) :: Nil).extract[Person]
+     * Person("joe")
+     * }}}
+     */
     def extract[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): A =
       Extraction.extract(this)(formats, mf)
 
-    /** Extract a value from a JSON.
-      * <p>
-      * Value can be:
-      * <ul>
-      *   <li>case class</li>
-      *   <li>primitive (String, Boolean, Date, etc.)</li>
-      *   <li>supported collection type (List, Seq, Map[String, _], Set)</li>
-      *   <li>any type which has a configured custom deserializer</li>
-      * </ul>
-      * <p>
-      * Example:<pre>
-      * case class Person(name: String)
-      * JObject(JField("name", JString("joe")) :: Nil).extractOpt[Person] == Some(Person("joe"))
-      * </pre>
-      */
+    /**
+     * Optionally extract a value into a concrete Scala instance from its `JValue` representation.
+     *
+     * This method will attempt to extract a concrete Scala instance of type `A`, but if it fails it will return
+     * a `[[scala.None]]` instead.
+     *
+     * Value can be:
+     * <ul>
+     *   <li>case class</li>
+     *   <li>primitive (String, Boolean, Date, etc.)</li>
+     *   <li>supported collection type (List, Seq, Map[String, _], Set)</li>
+     *   <li>any type which has a configured custom deserializer</li>
+     * </ul>
+     *
+     * Example:
+     *
+     * {{{
+     * > case class Person(name: String)
+     * > JObject(JField("name", JString("joe")) :: Nil).extractOpt[Person]
+     * Some(Person("joe"))
+     * }}}
+     */
     def extractOpt[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): Option[A] =
       Extraction.extractOpt(this)(formats, mf)
 
-    /** Extract a value from a JSON using a default value.
-      * <p>
-      * Value can be:
-      * <ul>
-      *   <li>case class</li>
-      *   <li>primitive (String, Boolean, Date, etc.)</li>
-      *   <li>supported collection type (List, Seq, Map[String, _], Set)</li>
-      *   <li>any type which has a configured custom deserializer</li>
-      * </ul>
-      * <p>
-      * Example:<pre>
-      * case class Person(name: String)
-      * JNothing.extractOrElse(Person("joe")) == Person("joe")
-      * </pre>
-      */
+    /**
+     * Attempt to extract a concrete Scala instance of type `A` from this `JValue` and, on failing to do so, return
+     * the default value instead.
+     *
+     * Value can be:
+     *
+     * <ul>
+     *   <li>case class</li>
+     *   <li>primitive (String, Boolean, Date, etc.)</li>
+     *   <li>supported collection type (List, Seq, Map[String, _], Set)</li>
+     *   <li>any type which has a configured custom deserializer</li>
+     * </ul>
+     *
+     * Example:
+     *
+     * {{{
+     * > case class Person(name: String)
+     * > JNothing.extractOrElse(Person("joe"))
+     * Person("joe")
+     * }}}
+     */
     def extractOrElse[A](default: => A)(implicit formats: Formats, mf: scala.reflect.Manifest[A]): A =
       Extraction.extractOpt(this)(formats, mf).getOrElse(default)
 
