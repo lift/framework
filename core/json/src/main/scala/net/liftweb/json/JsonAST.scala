@@ -172,22 +172,34 @@ object JsonAST {
       }
     }
 
-    /** XPath-like expression to query JSON fields by type. Matches only fields on
-      * next level.
-      * <p>
-      * Example:<pre>
-      * json \ classOf[JInt]
-      * </pre>
-      */
+    /** 
+     * Find immediate children of this `JValue` that match the specific type.
+     *
+     * This is only particularly useful if you have a `JObject` and are interested in finding all children that are,
+     * say, integers. YOu might do so like this:
+     *
+     * {{{
+     * json \ classOf[JInt]
+     * }}}
+     *
+     * This method does require that whatever type you're searching for is subtype of `JValue`.
+     */
     def \[A <: JValue](clazz: Class[A]): List[A#Values] =
       findDirect(children, typePredicate(clazz) _).asInstanceOf[List[A]] map { _.values }
 
-    /** XPath-like expression to query JSON fields by type. Returns all matching fields.
-      * <p>
-      * Example:<pre>
-      * json \\ classOf[JInt]
-      * </pre>
-      */
+    /**
+     * Find all descendents of this `JValue` that match the specific type.
+     *
+     * This is only particularly useful if you have a `JObject` and are interested in finding all descendents that are
+     * of a particular type. This method functions a lot like its single-backslash cousin, excepting that it will
+     * dive deep into the `JObject` to find matches.
+     *
+     * You might use this as follows:
+     *
+     * {{{
+     * json \\ classOf[JInt]
+     * }}}
+     */
     def \\[A <: JValue](clazz: Class[A]): List[A#Values] =
       (this filter typePredicate(clazz) _).asInstanceOf[List[A]] map { _.values }
 
@@ -196,28 +208,44 @@ object JsonAST {
       case _ => false
     }
 
-    /** Return nth element from JSON.
-      * Meaningful only to JArray, JObject and JField. Returns JNothing for other types.
-      * <p>
-      * Example:<pre>
-      * JArray(JInt(1) :: JInt(2) :: Nil)(1) == JInt(2)
-      * </pre>
-      */
+    /**
+     * Return `n`th element from a `JArray` or `JObject` and return `JNothing` for any other kind of `JValue`.
+     *
+     * For example:
+     *
+     * {{{
+     * > val array = JArray(JInt(1) :: JInt(2) :: Nil)
+     * > array(1)
+     * JInt(1)
+     * }}}
+     */
     def apply(i: Int): JValue = JNothing
 
-    /** Return unboxed values from JSON
-      * <p>
-      * Example:<pre>
-      * JObject(JField("name", JString("joe")) :: Nil).values == Map("name" -> "joe")
-      * </pre>
-      */
+    /**
+     * Return unboxed values from JSON.
+     *
+     * For example:
+     *
+     * {{{
+     * > JObject(JField("name", JString("joe")) :: Nil).values
+     * Map("name" -> "joe")
+     * }}}
+     */
     def values: Values
 
-    /** Return direct child elements.
-     * <p>
-     * Example:<pre>
-     * JArray(JInt(1) :: JInt(2) :: Nil).children == List(JInt(1), JInt(2))
-     * </pre>
+    /**
+     * Return direct child elements of this `JValue`, if this `JValue` is a `[[JObject]]` or `[[JArray]]`.
+     *
+     * This method is useful for getting all the values of a `JObject` or `JArray` and will return them as a
+     * `List[JValue]`. If the `JValue` you invoke this method on is not a `JObject` or `JArray` you will instead
+     * get `Nil`.
+     *
+     * Example:
+     *
+     * {{{
+     * > JArray(JInt(1) :: JInt(2) :: Nil).children
+     * List(JInt(1), JInt(2))
+     * }}}
      */
     def children: List[JValue] = this match {
       case JObject(l) => l map (_.value)
@@ -225,9 +253,12 @@ object JsonAST {
       case _ => Nil
     }
 
-    /** Return a combined value by folding over JSON by applying a function <code>f</code>
-      * for each element. The initial value is <code>z</code>.
-      */
+    /**
+     * Fold over `JValue`s by applying a function to each element.
+     *
+     * @param f The function to apply, which takes an accumulator and the next item as paramaters.
+     * @param z The initial value for the fold.
+     */
     def fold[A](z: A)(f: (A, JValue) => A): A = {
       def rec(acc: A, v: JValue) = {
         val newAcc = f(acc, v)
@@ -246,8 +277,11 @@ object JsonAST {
       rec(z, this)
     }
 
-    /** Return a combined value by folding over JSON by applying a function <code>f</code>
-     * for each field. The initial value is <code>z</code>.
+    /**
+     * Fold over a sries of `JField`s applying a function to each one.
+     *
+     * @param z The initial value for the fold.
+     * @param f The Function to apply, which takes an accumulator as its first param and the next field as its second.
      */
     def foldField[A](z: A)(f: (A, JField) => A): A = {
       def rec(acc: A, v: JValue) = {
@@ -262,15 +296,22 @@ object JsonAST {
       rec(z, this)
     }
 
-    /** Return a new JValue resulting from applying the given function <code>f</code>
-     * to each value in JSON.
-     * <p>
-     * Example:<pre>
+    /**
+     * Return a new `JValue` resulting from applying the given function to each value.
+     *
+     * If this function is invoked on a `[[JObject]]`, it will iterate over the field values of that `JObject`.
+     * If this function is invoked on a `[[JArray]]`, it will iterate over the values of that `JArray`.
+     * If this function is invoked on any other kind of `JValue` it will simply pass that instance into the
+     * function you have provided.
+     *
+     * Example:
+     *
+     * {{{
      * JArray(JInt(1) :: JInt(2) :: Nil) map {
      *   case JInt(x) => JInt(x+1)
      *   case x => x
      * }
-     * </pre>
+     * }}}
      */
     def map(f: JValue => JValue): JValue = {
       def rec(v: JValue): JValue = v match {
@@ -281,15 +322,18 @@ object JsonAST {
       rec(this)
     }
 
-    /** Return a new JValue resulting from applying the given function <code>f</code>
-     * to each field in JSON.
-     * <p>
-     * Example:<pre>
+    /**
+     * Return a new `JValue` resulting from applying the given function to each `[[JField]]` in a `[[JObject]]` or a
+     * `[[JArray]]` of `JObject`.
+     *
+     * Example:
+     *
+     * {{{
      * JObject(("age", JInt(10)) :: Nil) map {
      *   case ("age", JInt(x)) => ("age", JInt(x+1))
      *   case x => x
      * }
-     * </pre>
+     * }}}
      */
     def mapField(f: JField => JField): JValue = {
       def rec(v: JValue): JValue = v match {
@@ -313,26 +357,34 @@ object JsonAST {
       if (f.isDefinedAt(x)) f(x) else x
     }
 
-    /** Return a new JValue resulting from applying the given partial function <code>f</code>
-     * to each value in JSON.
-     * <p>
-     * Example:<pre>
-      * JArray(JInt(1) :: JInt(2) :: Nil) transform { case JInt(x) => JInt(x+1) }
-      * </pre>
-      */
+    /**
+     * Return a new `JValue` resulting from applying the given partial function to each value.
+     *
+     * Example:
+     *
+     * {{{
+     * JArray(JInt(1) :: JInt(2) :: Nil) transform {
+     *   case JInt(x) =>
+     *     JInt(x+1)
+     * }
+     * }}}
+     */
     def transform(f: PartialFunction[JValue, JValue]): JValue = map { x =>
       if (f.isDefinedAt(x)) f(x) else x
     }
 
-    /** Return a new JValue resulting from replacing the value at the specified field
-      * path with the replacement value provided. This has no effect if the path is empty
-      * or if the value is not a JObject instance.
-      * <p>
-      * Example:<pre>
-      * JObject(List(JField("foo", JObject(List(JField("bar", JInt(1))))))).replace("foo" :: "bar" :: Nil, JString("baz"))
-      * // returns JObject(List(JField("foo", JObject(List(JField("bar", JString("baz")))))))
-      * </pre>
-      */
+    /**
+     * Return a new JValue resulting from replacing the value at the specified field
+     * path with the replacement value provided. This has no effect if the path is empty
+     * or if the value is not a `[[JObject]]` instance.
+     *
+     * Example:
+     *
+     * {{{
+     * > JObject(List(JField("foo", JObject(List(JField("bar", JInt(1))))))).replace("foo" :: "bar" :: Nil, JString("baz"))
+     * JObject(List(JField("foo", JObject(List(JField("bar", JString("baz")))))))
+     * }}}
+     */
     def replace(l: List[String], replacement: JValue): JValue = {
       def rep(l: List[String], in: JValue): JValue = {
         l match {
@@ -353,11 +405,22 @@ object JsonAST {
       rep(l, this)
     }
 
-    /** Return the first field from JSON which matches the given predicate.
-     * <p>
-     * Example:<pre>
-     * JObject(("age", JInt(2))) findField { case (n, v) => n == "age" }
-     * </pre>
+    /**
+     * Return the first field from this `JValue` which matches the given predicate.
+     *
+     * When invoked on a `[[JObject]]` it will first attempt to see if the `JObject` has the field defined on it.
+     * Not finding the field defined, this method will recurse into the fields of that object and search for the
+     * value there. When invoked on or enccountering a `[[JArray]]` during recursion this method will run its search
+     * on each member of the JArray.
+     *
+     * Example:
+     *
+     * {{{
+     * JObject(("age", JInt(2))) findField {
+     *   case (n, v) =>
+     *     n == "age"
+     * }
+     * }}}
      */
     def findField(p: JField => Boolean): Option[JField] = {
       def find(json: JValue): Option[JField] = json match {
@@ -369,12 +432,15 @@ object JsonAST {
       find(this)
     }
 
-    /** Return the first element from JSON which matches the given predicate.
-      * <p>
-      * Example:<pre>
-      * JArray(JInt(1) :: JInt(2) :: Nil) find { _ == JInt(2) } == Some(JInt(2))
-      * </pre>
-      */
+    /**
+     * Return the first element from a `JValue` which matches the given predicate.
+     *
+     * Example:
+     *
+     * {{{
+     * JArray(JInt(1) :: JInt(2) :: Nil) find { _ == JInt(2) } == Some(JInt(2))
+     * }}}
+     */
     def find(p: JValue => Boolean): Option[JValue] = {
       def find(json: JValue): Option[JValue] = {
         if (p(json)) return Some(json)
