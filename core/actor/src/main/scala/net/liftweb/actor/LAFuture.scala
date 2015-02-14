@@ -18,7 +18,6 @@ package net.liftweb
 package actor 
 
 import common._
-import Tryo._
 
 
 /**
@@ -107,7 +106,7 @@ class LAFuture[T](val scheduler: LAScheduler) {
    */
   def map[A](f: T => A): LAFuture[A] = {
     val ret = new LAFuture[A](scheduler)
-    onComplete(v => ret.complete(v.flatMap(n => tryo(f(n)))))
+    onComplete(v => ret.complete(v.flatMap(n => Box.tryo(f(n)))))
     ret
   }
 
@@ -115,7 +114,7 @@ class LAFuture[T](val scheduler: LAScheduler) {
     val ret = new LAFuture[A](scheduler)
     onComplete(v => v match {
       case Full(v) =>
-        tryo(f(v)) match {
+        Box.tryo(f(v)) match {
           case Full(successfullyComputedFuture) => successfullyComputedFuture.onComplete(v2 => ret.complete(v2))
           case e: EmptyBox => ret.complete(e)
         }

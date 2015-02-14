@@ -53,7 +53,7 @@ class BoxJBridge {
  * It also provides implicit methods to transform `Option` to `Box`, `Box` to
  * `[[scala.collection.Iterable Iterable]]`, and `Box` to `Option`.
  */
-object Box extends BoxTrait {
+object Box extends BoxTrait with Tryo {
   /**
    * Helper class to provide an easy way for converting a `List[Box[T]]` into
    * a `Box[List[T]]`.
