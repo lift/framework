@@ -443,13 +443,14 @@ object JsonAST {
      */
     def find(p: JValue => Boolean): Option[JValue] = {
       def find(json: JValue): Option[JValue] = {
-        if (p(json)) return Some(json)
         json match {
+          case _ if p(json) => Some(json)
           case JObject(fs) => fs.flatMap { case JField(n, v) => find(v) }.headOption
           case JArray(l) => l.flatMap(find _).headOption
           case _ => None
         }
       }
+
       find(this)
     }
 
