@@ -107,13 +107,13 @@ case class ResetContentResponse() extends LiftResponse with HeaderDefaults {
  * the request appears incorrect. Use the `message` to indicate what was wrong
  * with the request, if that does not leak important information.
  */
-case class BadRequest(message: String = "") extends LiftResponse with HeaderDefaults {
+case class BadRequestResponse(message: String = "") extends LiftResponse with HeaderDefaults {
   def toResponse = InMemoryResponse(message.getBytes("UTF-8"), headers, cookies, 400)
 }
 object BadResponse {
-  @deprecated("Use BadRequest instead, as that is the correct name for this response.", "3.0.0")
+  @deprecated("Use BadRequestResponse instead, as that is the correct name for this response.", "3.0.0")
   def apply() = {
-    BadRequest()
+    BadRequestResponse()
   }
 }
 
