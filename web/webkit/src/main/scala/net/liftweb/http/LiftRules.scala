@@ -264,7 +264,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val beforeSend = RulesSeq[(BasicResponse, HTTPResponse, List[(String, String)], Box[Req]) => Any]
 
-  private lazy val defaultSecurityRules = SecurityRules()
+  private[this] lazy val defaultSecurityRules = SecurityRules()
   /**
    * The security rules used by Lift to secure this application. These mostly
    * relate to HTTPS handling and HTTP `Content-Security-Policy`. See the
