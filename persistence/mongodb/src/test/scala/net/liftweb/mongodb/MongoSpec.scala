@@ -38,7 +38,7 @@ class MongoSpec extends Specification  {
     // make sure mongo is running
     try {
       MongoDB.use(id) { db =>
-        db.getLastError.ok must beEqualTo(true)
+        db.getCollectionNames
       }
     }
     catch {
@@ -47,7 +47,7 @@ class MongoSpec extends Specification  {
 
     // using an undefined identifier throws an exception
     MongoDB.use(DefaultConnectionIdentifier) { db =>
-      db.getLastError.ok must beEqualTo(true)
+      db.getCollectionNames
     } must throwA(new MongoException("Mongo not found: ConnectionIdentifier(lift)"))
     // remove defined db
     MongoDB.closeAll()

@@ -46,15 +46,15 @@ trait TimeHelpers { self: ControlHelpers =>
   implicit def intToTimeSpanBuilder(in: Int): TimeSpanBuilder = TimeSpanBuilder(in)
 
   /** transforms a long to a TimeSpan object. Usage: 3000L returns a TimeSpan of 3000L millis  */
-  @deprecated("Long to TimeSpan conversion will be removed for possibility of ambiguous behaviours", "3.0.0")
+  @deprecated("Long to TimeSpan conversion will be removed for possibility of ambiguous behaviours, use TimeSpan(in) instead if you are using in.millis", "3.0.0")
   implicit def longToTimeSpan(in: Long): TimeSpan = TimeSpan(in)
 
   /** transforms an int to a TimeSpan object. Usage: 3000 returns a TimeSpan of 3000L millis  */
-  @deprecated("Int to TimeSpan conversion will be removed for possibility of ambiguous behaviours", "3.0.0")
+  @deprecated("Int to TimeSpan conversion will be removed for possibility of ambiguous behaviours, use TimeSpan(in) instead if you are using in.millis", "3.0.0")
   implicit def intToTimeSpan(in: Int): TimeSpan = TimeSpan(in)
 
   /** class building TimeSpans given an amount (len) and a method specify the time unit  */
-  case class TimeSpanBuilder(val len: Long) {
+  case class TimeSpanBuilder(len: Long) {
     def seconds = new TimeSpan(Left(Duration.standardSeconds(len)))
     def second = seconds
     def minutes = new TimeSpan(Left(Duration.standardMinutes(len)))

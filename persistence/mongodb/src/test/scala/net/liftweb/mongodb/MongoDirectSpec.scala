@@ -17,16 +17,17 @@
 package net.liftweb
 package mongodb
 
-import util.DefaultConnectionIdentifier
+import net.liftweb.util.{Helpers, DefaultConnectionIdentifier}
 
 import java.util.UUID
 import java.util.regex.Pattern
 
-import com.mongodb.{BasicDBObject, BasicDBObjectBuilder, MongoException}
+import com.mongodb.{WriteConcern, BasicDBObject, BasicDBObjectBuilder, MongoException}
 
 import org.specs2.mutable.Specification
 
 import json.DefaultFormats
+import net.liftweb.common.Failure
 
 
 /**
@@ -208,7 +209,7 @@ class MongoDirectSpec extends Specification with MongoTestKit {
       val coll = db.getCollection("testCollection")
 
       // create a unique index on name
-      coll.ensureIndex(new BasicDBObject("name", 1), new BasicDBObject("unique", true))
+      coll.createIndex(new BasicDBObject("name", 1), new BasicDBObject("unique", true))
 
       // build the DBObjects
       val doc = new BasicDBObject
@@ -228,12 +229,13 @@ class MongoDirectSpec extends Specification with MongoTestKit {
       doc3.put("count", 1)
 
       // save the docs to the db
-      coll.save(doc)
-      db.getLastError.get("err") must beNull
-      coll.save(doc2) must throwA[MongoException]
-      db.getLastError.get("err").toString must contain("E11000 duplicate key error index")
-      coll.save(doc3)
-      db.getLastError.get("err") must beNull
+      Helpers.tryo(coll.save(doc, WriteConcern.SAFE)).toOption must beSome
+      coll.save(doc2, WriteConcern.SAFE) must throwA[MongoException]
+      Helpers.tryo(coll.save(doc2, WriteConcern.SAFE)) match {
+        case Failure(msg, _, _) => msg must contain("E11000 duplicate key error index")
+        case _ => failure
+      }
+      Helpers.tryo(coll.save(doc3, WriteConcern.SAFE)).toOption must beSome
 
       // query for the docs by type
       val qry = new BasicDBObject("type", "db")
@@ -243,17 +245,17 @@ class MongoDirectSpec extends Specification with MongoTestKit {
       val o2 = new BasicDBObject
       o2.put("$inc", new BasicDBObject("count", 1)) // increment count by 1
       //o2.put("$set", new BasicDBObject("type", "docdb")) // set type
-      coll.update(qry, o2, false, false)
-      db.getLastError.get("updatedExisting") must_== true
-      /* The update method only updates one document. see:
-      http://jira.mongodb.org/browse/SERVER-268
-      */
-      db.getLastError.get("n") must_== 1
+      /**
+       * The update method only updates one document. see:
+       * http://jira.mongodb.org/browse/SERVER-268
+       */
+      coll.update(qry, o2, false, false).getN must_== 1
+      coll.update(qry, o2, false, false).isUpdateOfExisting must_== true
+
 
       // this update query won't find any docs to update
-      coll.update(new BasicDBObject("name", "None"), o2, false, false)
+      coll.update(new BasicDBObject("name", "None"), o2, false, false).getN must_== 0
       db.getLastError.get("updatedExisting") must_== false
-      db.getLastError.get("n") must_== 0
 
       // regex query example
       val key = "name"
@@ -269,8 +271,7 @@ class MongoDirectSpec extends Specification with MongoTestKit {
 
       if (!debug) {
         // delete them
-        coll.remove(new BasicDBObject("type", "db"))
-        db.getLastError.get("n") must_== 2
+        coll.remove(new BasicDBObject("type", "db")).getN must_== 2
         coll.find.count must_== 0
         coll.drop
       }

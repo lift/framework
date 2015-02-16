@@ -41,7 +41,7 @@ class MongoDirectMongoClientSpec extends Specification with MongoTestKit {
       val coll = db.getCollection("testCollection")
 
       // create a unique index on name
-      coll.ensureIndex(new BasicDBObject("name", 1), new BasicDBObject("unique", true))
+      coll.createIndex(new BasicDBObject("name", 1), new BasicDBObject("unique", true))
 
       // build the DBObjects
       val doc = new BasicDBObject

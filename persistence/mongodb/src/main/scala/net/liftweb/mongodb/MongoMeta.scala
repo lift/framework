@@ -122,7 +122,7 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   */
   @deprecated("use createIndex(JObject) instead.", "2.6")
   def ensureIndex(keys: JObject): Unit =
-    useColl { coll => coll.ensureIndex(JObjectParser.parse(keys)) }
+    useColl { coll => coll.createIndex(JObjectParser.parse(keys)) }
 
   /*
   * Ensure an index exists and make unique
@@ -132,7 +132,7 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
     val options = new BasicDBObject
     if (unique) options.put("unique", true)
     useColl { coll =>
-      coll.ensureIndex(JObjectParser.parse(keys), options)
+      coll.createIndex(JObjectParser.parse(keys), options)
     }
   }
 
@@ -150,7 +150,7 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   @deprecated("use createIndex(JObject, JObject) instead.", "2.6")
   def ensureIndex(keys: JObject, opts: JObject): Unit =
     useColl { coll =>
-      coll.ensureIndex(JObjectParser.parse(keys), JObjectParser.parse(opts))
+      coll.createIndex(JObjectParser.parse(keys), JObjectParser.parse(opts))
     }
 
   def createIndex(keys: JObject, opts: JObject): Unit =

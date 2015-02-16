@@ -53,7 +53,7 @@ trait MongoTestKit extends Specification with BeforeAfterExample {
         false
       else {
         dbs foreach { case (id, _) =>
-          MongoDB.use(id) ( db => { db.getLastError } )
+          MongoDB.use(id) ( db => { db.getCollectionNames} )
         }
         true
       }

@@ -109,7 +109,7 @@ sealed trait Schedule extends Loggable {
    * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
    */
   def perform[T](to: SimpleActor[T], msg: T, delay: Long): ScheduledFuture[Unit] =
-  this.schedule(() => Helpers.tryo( to ! msg ), delay: TimeSpan)
+  this.schedule(() => Helpers.tryo( to ! msg ), TimeSpan(delay))
 
    /**
    * Schedules the sending of a message to occur after the specified delay.
@@ -118,7 +118,7 @@ sealed trait Schedule extends Loggable {
    * after delay
    */
   def perform(f: () => Unit, delay: Long): ScheduledFuture[Unit] =
-    schedule(f, delay: TimeSpan)
+    schedule(f, TimeSpan(delay))
 
 
   /**
@@ -127,7 +127,7 @@ sealed trait Schedule extends Loggable {
    * @return a <code>ScheduledFuture</code> which executes the function f
    * immediately on a worker thread
    */
-  def apply(f: () => Unit): ScheduledFuture[Unit] = schedule(f, 0)
+  def apply(f: () => Unit): ScheduledFuture[Unit] = schedule(f, TimeSpan(0))
   
   /**
    * Schedules the application of a function
