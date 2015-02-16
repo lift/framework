@@ -29,7 +29,6 @@ import js.JsCmds._Noop
 import xml._
 
 import common._
-import Box._
 import actor._
 import util._
 import Helpers._
@@ -1569,8 +1568,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     val isForm = !attrs.get("form").toList.isEmpty
 
     val eagerEval: Boolean =
-      (attrs.get("eager_eval").map(toBoolean) or
-        findNSAttr(attrs, "lift", "eager_eval").map(toBoolean) or
+      (attrs.get("eager_eval").map(toBoolean) orElse
+        findNSAttr(attrs, "lift", "eager_eval").map(toBoolean) orElse
         findNSAttr(attrs, "l", "eager_eval").map(toBoolean)
         ) getOrElse false
 
@@ -1582,7 +1581,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
            func <- loc.snippet(snippet)) yield func(kids)
 
     def locateAndCacheSnippet(tagName: String): Box[AnyRef] =
-      snippetMap.is.get(tagName) or {
+      snippetMap.is.get(tagName) orElse {
         first(LiftRules.snippetNamesToSearch.vend(tagName)) {
           nameToTry =>
             val ret = findSnippetInstance(nameToTry)

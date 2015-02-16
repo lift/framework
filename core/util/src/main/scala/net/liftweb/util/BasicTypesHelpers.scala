@@ -18,6 +18,7 @@ package net.liftweb
 package util
 
 import java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, File, FileInputStream, BufferedReader}
+import scala.util.Try
 import scala.xml._
 import common._
 
@@ -197,6 +198,20 @@ trait BasicTypesHelpers { self: StringHelpers with ControlHelpers =>
       }
   }
 
+  implicit class OptionExtension[T](option: Option[T]) {
+    def toBox: Box[T] = option match {
+      case Some(x) => Full(x)
+      case None => Empty
+    }
+  }
+
+  implicit class TryExtension[T](tryy: Try[T]) {
+    def toBox: Box[T] = tryy match {
+      case scala.util.Success(x) => Full(x)
+      case scala.util.Failure(ex) => Failure(ex.getMessage, Full(ex), Empty)
+    }
+  }
+
   /**
    * Convert any object to an "equivalent" Boolean depending on its value
    */
@@ -364,7 +379,7 @@ object AsLong {
     def eq(a: Array[Byte], b: Array[Byte], pos: Int, len: Int): Boolean = {
       if (pos == len) true
       else if (a(pos) != b(pos)) false
-      else eq(a , b, pos + 1, len)
+      else eq(a, b, pos + 1, len)
     }
     a.length == b.length && eq(a, b, 0, a.length)
   }

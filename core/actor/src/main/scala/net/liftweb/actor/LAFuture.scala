@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.liftweb 
+package net.liftweb
 package actor 
 
 import common._
@@ -106,14 +106,18 @@ class LAFuture[T](val scheduler: LAScheduler) {
    */
   def map[A](f: T => A): LAFuture[A] = {
     val ret = new LAFuture[A](scheduler)
-    onComplete(v => ret.complete(v.map(f)))
+    onComplete(v => ret.complete(v.flatMap(n => Box.tryo(f(n)))))
     ret
   }
 
   def flatMap[A](f: T => LAFuture[A]): LAFuture[A] = {
     val ret = new LAFuture[A](scheduler)
     onComplete(v => v match {
-      case Full(v) => f(v).onComplete(v2 => ret.complete(v2))
+      case Full(v) =>
+        Box.tryo(f(v)) match {
+          case Full(successfullyComputedFuture) => successfullyComputedFuture.onComplete(v2 => ret.complete(v2))
+          case e: EmptyBox => ret.complete(e)
+        }
       case e: EmptyBox => ret.complete(e)
     })
     ret
@@ -139,6 +143,7 @@ class LAFuture[T](val scheduler: LAScheduler) {
       try {
         wait(timeout)
         if (satisfied) Full(item)
+        else if (aborted) failure
         else Empty
       } catch {
         case _: InterruptedException => Empty
