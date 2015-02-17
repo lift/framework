@@ -29,8 +29,6 @@ import com.mongodb._
 import org.specs2.mutable.Specification
 
 import json.DefaultFormats
-import json.JsonParser._
-import scala.Some
 import net.liftweb.common.Failure
 
 
@@ -494,9 +492,9 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
       // save to db
       Helpers.tryo(SessCollection.save(tc, db)).toOption must beSome
       SessCollection.save(tc2, db) must throwA[MongoException]
-      Helpers.tryo(SessCollection.save(tc2, db)) match {
-        case Failure(msg, _, _) => msg must contain("E11000 duplicate key error index")
-        case _ => failure
+      Helpers.tryo(SessCollection.save(tc2, db)) must beLike {
+        case Failure(msg, _, _) =>
+          msg must contain("E11000 duplicate key error index")
       }
 
       Helpers.tryo(SessCollection.save(tc3, db)).toOption must beSome
