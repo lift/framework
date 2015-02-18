@@ -28,6 +28,8 @@ import Helpers._
 trait CombParserHelpers {
   self: Parsers =>
 
+  def EOF = '\u001a'
+
   /** the type of input elements defined in the Parsers trait is <code>Char</code>  */
   type Elem = Char
 
@@ -35,7 +37,7 @@ trait CombParserHelpers {
   implicit def strToInput(in: String): Input = new scala.util.parsing.input.CharArrayReader(in.toCharArray)
 
   /** @return true if the character is an end of file  */
-  def isEof(c: Char): Boolean = c == '\u001a'
+  def isEof(c: Char): Boolean = c == EOF
 
   /** @return true if the character is not an end of file  */
   def notEof(c: Char): Boolean = !isEof(c)
@@ -120,13 +122,13 @@ trait CombParserHelpers {
    * @return a parser discarding end of lines
    */
   def EOL: Parser[Unit] = (accept("\n\r") | accept("\r\n") | '\r' |
-                           '\n' | '\u001a' ) ^^^ ()
+                           '\n' | EOF ) ^^^ ()
 
   def notEOL: Parser[Elem] = (not(EOL) ~> anyChar)
 
-  def notEOF: Parser[Elem] = (not(accept('\u001a')) ~> anyChar)
+  def notEOF: Parser[Elem] = (not(accept(EOF)) ~> anyChar)
 
-  def anyChar: Parser[Elem] = elem("Any Char", c => c != '\u001a')
+  def anyChar: Parser[Elem] = elem("Any Char", c => c != EOF)
 
   /**
    * @return a parser returning an Int if succeeding
