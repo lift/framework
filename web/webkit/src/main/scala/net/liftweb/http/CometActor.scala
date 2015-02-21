@@ -42,6 +42,173 @@ trait DeltaTrait {
   def toJs: JsCmd
 }
 
+/**
+ * Base trait specifying the core interface for Lift's comet actors. The most
+ * interesting implementing classes are the `[[MessageCometActor]]` and
+ * `[[RenderingCometActor]]` classes, which provide simple message push and more
+ * complex component rendering and rerendering, respectively.
+ *
+ * The fundamental behavior of comet actors is as regular `[[LiftActor]]`s, with
+ * some helper functions to assist in sending updates to the client. The core
+ * interface also provides functions that give insight into the lifecycle of the
+ * actor, including information about the last time an update was sent to the
+ * client and various timeouts and error handlers.
+ *
+ * Note that like most actors, you should never interact with actor state
+ * directly; instead, _all_ actions should send a message to the actor, and
+ * state should be managed in the message handler. This avoids concurrency
+ * issues with simultaneous updaters of the actor's state.
+ *
+ * Functions invoked from the client via `[[S.fmapFunc]]`, including form field
+ * bindings, can interact with comet state directly as long as they are bound
+ * inside the comet actor's message handler. Lift transparently invokes these
+ * callbacks via a message sent to the actor so they are coherent with the rest
+ * of the actor's state.
+ */
+trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any] with Dependent {
+  /**
+   * An id that identifies this comet uniquely, preferably universally
+   * so. Typically generated at instantiation time via
+   * `[[HttpHelpers.nextFuncName]]`.
+   */
+  def uniqueId: String
+
+  /**
+   * The timestamp when we last saw a listener initiate or terminate a
+   * connection.
+   */
+  def lastListenerTime: Long
+
+  @deprecated("lastRenderTime only makes sense on MessageCometActors and will be removed from the LiftCometActor interface.", "3.1.0")
+  def lastRenderTime: Long
+
+  // Exposes initCometActor for internal invocation by Lift when external
+  // initialization is needed.
+  private[http] def callInitCometActor(creationInfo: CometCreationInfo) {
+    initCometActor(creationInfo)
+  }
+
+  /**
+   * Override in sub-class to customise timeout for the render()-method for the specific comet
+   */
+  @deprecated("cometRenderTimeout only makes sense on RenderingCometActors and will be removed from the LiftCometActor interface. It will also be made protected.", "3.1.0")
+  def cometRenderTimeout: Long = LiftRules.cometRenderTimeout
+
+  /**
+   * Provides the base rendering for a `RenderingCometActor` that failed to finish rendering
+   * within `[[cometRenderTimeout]]` milliseconds of being asked
+   * to. `RenderingCometActor`s have `cometRenderTimeout` milliseconds to finish
+   * their initial rendering; if they have not finished within that timeframe,
+   * this method provides the fallback content.
+   * 
+   * Do _not_ manipulate actor-state here. If you want to manipulate state, send
+   * the actor a new message from inside this method. Because it is called in
+   * reaction to a message taking too long to process, it is invoked outside of
+   * the usual message handling pipeline.
+   * 
+   * A possible render timeout handler:
+   * {{{
+   *   override def renderTimeoutHandler(): Box[NodeSeq] = {
+   *     Full(<div>Comet {this.getClass} timed out, timeout is {cometRenderTimeout}ms</div>)
+   *   }
+   * }}}
+   */
+  @deprecated("cometRenderTimeoutHandler only makes sense on RenderingCometActors and will be removed from the LiftCometActor interface. It will also be made protected.", "3.1.0")
+  def cometRenderTimeoutHandler(): Box[NodeSeq] = Empty
+
+  @deprecated("cometProcessingTimeout is no longer used and will be removed.", "3.1.0")
+  def cometProcessingTimeout = LiftRules.cometProcessingTimeout
+
+  @deprecated("cometProcessingTimeoutHandler is no longer used and will be removed.", "3.1.0")
+  def cometProcessingTimeoutHandler(): JsCmd = Noop
+
+  protected def initCometActor(creationInfo: CometCreationInfo): Unit
+
+  /**
+   * A `String` describing what type of comet this is. Comets without types are
+   * no longer well supported, and the ability to override `theType` will soon
+   * disappear, as a comet's type is used for internal tracking and lookup, and
+   * provided to the comet as part of its setup process.
+   */
+  def theType: Box[String]
+
+  /**
+   * A customizable name for this comet, possibly empty. The ability to override
+   * `name` will soon disappear, as the comet's name is used for internal
+   * tracking and lookup, and provided to the comet as part of its setup
+   * process.
+   */
+  def name: Box[String]
+
+  /**
+   * Indicates whether, when rendered, this comet's contents should be
+   * surrounded by a generated container.
+   */
+  @deprecated("hasOuter only makes sense on RenderingCometActors and will be removed from the LiftCometActor interface.", "3.1.0")
+  def hasOuter: Boolean
+
+  /**
+   * Builds a container for the rendered contents of this `RenderingCometActor`,
+   * based on the value of `[[parentTag]]`.
+   */
+  @deprecated("buildSpan only makes sense on RenderingCometActors and will be removed from the LiftCometActor interface and renamed to buildContainer.", "3.1.0")
+  def buildSpan(xml: NodeSeq): NodeSeq
+
+  /**
+   * A template `Elem` for the container this `RenderingCometActor`'s rendered
+   * contents will be wrapped in if `hasOuter` is `true`.
+   */
+  @deprecated("parentTag only makes sense on RenderingCometActors and will be removed from the LiftCometActor interface and renamed to containerElement.", "3.1.0")
+  def parentTag: Elem
+
+  /**
+   * Poke this actor to cause it to flush any `Wiring` updates in the component.
+   *
+   * This method is actor-safe and may be called from any thread, not just the
+   * Actor's message handler thread.
+   */
+  @deprecated("Use flushWiringUpdates on RenderingCometActor instead.","3.1.0")
+  def poke(): Unit = {}
+
+  /**
+   * Indicates whether this comet actor intends to capture the `[[Req]]`s that
+   * add the comet. Note that a single comet actor can exist on multiple pages,
+   * and that in these cases, only the first request that causes the comet to be
+   * created is made available for capture.
+   *
+   * Setting this to `true` ensures that the request that is handed to the
+   * `[[captureInitialReq]]` method is snapshotted, meaning that its body is
+   * fully read and stored. For performance reasons, this is only done when
+   * explicitly requested, so this flag will ensure that that step is performed
+   * before the comet gets an opportunity to read it.
+   *
+   * Note that you'll also have to override `captureInitialReq` to actually
+   * store the `Req`; by default, that method is a no-op.
+   */
+  def sendInitialReq_? : Boolean = false
+
+  // FIXME Does this only makes sense for RenderingCometActor?
+  /**
+   * Hook for `Wiring` to notify this comet actor when a `[[Cell]]` bound from
+   * within the actor was changed.
+   */
+  def predicateChanged(which: Cell[_]): Unit = {
+    poke()
+  }
+
+  /**
+   * The locale to be used for this comet actor. By default, this is set to the
+   * creating session's locale when the actor is initialized.
+   */
+  def cometActorLocale: Locale = _myLocale
+
+  private var _myLocale = Locale.getDefault()
+
+  private[http] def setCometActorLocale(loc: Locale) {
+    _myLocale = loc
+  }
+}
+
 trait CometState[DeltaType <: DeltaTrait,
 MyType <: CometState[DeltaType, MyType]] {
   self: MyType =>
@@ -314,116 +481,6 @@ trait CometListener extends BaseCometActor {
   abstract override protected def localShutdown() {
     registerWith ! RemoveAListener(this)
     super.localShutdown()
-  }
-}
-
-trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any] with Dependent {
-  def uniqueId: String
-
-  /**
-   * The last "when" sent from the listener
-   * @return the last when sent from the listener
-   */
-  def lastListenerTime: Long
-  def lastRenderTime: Long
-
-  private[http] def callInitCometActor(creationInfo: CometCreationInfo) {
-    initCometActor(creationInfo)
-  }
-
-  /**
-   * Override in sub-class to customise timeout for the render()-method for the specific comet
-   */
-  def cometRenderTimeout = LiftRules.cometRenderTimeout
-
-  /**
-   * Override in sub-class to customise timeout for AJAX-requests to the comet-component for the specific comet
-   */
-  def cometProcessingTimeout = LiftRules.cometProcessingTimeout
-
-  /**
-   * This is to react to comet-requests timing out.
-   * When the timeout specified in {@link LiftRules#cometProcessingTimeout} occurs one may override
-   * this to send a message to the user informing of the timeout.
-   * <p/><p/>
-   * Do NOT manipulate actor-state here. If you want to manipulate state, send the actor a new message.
-   * <p/><p/>
-   * Typical example would be:
-   * <pre>
-   *   override def cometTimeoutHandler(): JsCmd = {
-   *     Alert("Timeout processing comet-request, timeout is: " + cometProcessingTimeout + "ms")
-   * }
-   * </pre>
-   */
-  def cometProcessingTimeoutHandler(): JsCmd = Noop
-
-  /**
-   * This is to react to comet-actors timing out while initial rendering, calls to render().
-   * When the timeout specified in {@link LiftRules#cometRenderTimeout} occurs one may override
-   * this to customise the output.
-   * <p/><p/>
-   * Do NOT manipulate actor-state here. If you want to manipulate state, send the actor a new message.
-   * <p/><p/>
-   * Typical example would be:
-   * <pre>
-   *   override def renderTimeoutHandler(): Box[NodeSeq] = {
-   *     Full(&lt;div&gt;Comet {this.getClass} timed out, timeout is {cometRenderTimeout}ms&lt;/div&gt;)
-   * }
-   * </pre>
-   */
-  def cometRenderTimeoutHandler(): Box[NodeSeq] = Empty
-
-  protected def initCometActor(creationInfo: CometCreationInfo): Unit
-
-  def theType: Box[String]
-
-  def name: Box[String]
-
-  def hasOuter: Boolean
-
-  def buildSpan(xml: NodeSeq): NodeSeq
-
-  def parentTag: Elem
-
-  /**
-   * Poke the CometActor and cause it to do a partial update Noop which
-   * will have the effect of causing the component to redisplay any
-   * Wiring elements on the component.
-   * This method is Actor-safe and may be called from any thread, not
-   * just the Actor's message handler thread.
-   */
-  def poke(): Unit = {}
-
-  /**
-   * Is this CometActor going to capture the initial Req
-   * object?  If yes, override this method and return true
-   * and override captureInitialReq to capture the Req.  Why
-   * have to explicitly ask for the Req? In order to send Req
-   * instances across threads, the Req objects must be snapshotted
-   * which is the process of reading the POST or PUT body from the
-   * HTTP request stream.  We don't want to do this unless we
-   * have to, so by default the Req is not snapshotted/sent.  But
-   * if you want it, you can have it.
-   */
-  def sendInitialReq_? : Boolean = false
-
-  /**
-   * If the predicate cell changes, the Dependent will be notified
-   */
-  def predicateChanged(which: Cell[_]): Unit = {
-    poke()
-  }
-
-
-  /**
-   * The locale for the session that created the CometActor
-   */
-  def cometActorLocale: Locale = _myLocale
-
-  private var _myLocale = Locale.getDefault()
-
-  private[http] def setCometActorLocale(loc: Locale) {
-    _myLocale = loc
   }
 }
 
