@@ -19,6 +19,7 @@ package util
 
 import net.liftweb.common._
 import java.lang.ref.WeakReference
+import Helpers.TimeSpan
 
 /**
  * Something that depends on the values of other cells
@@ -142,8 +143,7 @@ trait Cell[T] extends Dependent {
    * will be performed on a separate thread asynchronously
    */
   def notifyDependents(): Unit = {
-    Schedule.schedule(() => dependents.foreach(_.predicateChanged(this)),
-                      0)
+    Schedule.schedule(() => dependents.foreach(_.predicateChanged(this)),TimeSpan(0))
   }
 
   /**

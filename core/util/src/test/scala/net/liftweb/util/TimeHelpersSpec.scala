@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 WorldWide Conferencing, LLC
+ * Copyright 2006-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import java.util.{Calendar, Date, TimeZone}
 
 import net.liftweb.common._
 import net.liftweb.util.TimeHelpers._
-import org.joda.time.{DateTimeZone, DateTime}
+import org.joda.time.{Period, DateTimeZone, DateTime}
 import org.scalacheck.Gen._
 import org.scalacheck.Prop._
 import org.specs2.ScalaCheck
@@ -56,10 +56,10 @@ object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen
       3.weeks must_== TimeSpan(3 * 7 * 24 * 60 * 60 * 1000)
     }
     "be created from a number of months" in forAllTimeZones {
-      3.months must_== 3.months
+      3.months must_== Period.months(3)
     }
     "be created from a number of years" in forAllTimeZones {
-      3.years must_== 3.years
+      3.years must_== Period.years(3)
     }
     "be converted implicitly to a date starting from the epoch time" in forAllTimeZones {
       3.seconds.after(new Date(0)) must beTrue

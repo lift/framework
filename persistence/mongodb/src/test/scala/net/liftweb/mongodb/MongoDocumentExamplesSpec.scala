@@ -18,18 +18,18 @@ package net.liftweb
 package mongodb
 
 import BsonDSL._
-import util.{ConnectionIdentifier, DefaultConnectionIdentifier}
+import net.liftweb.util.{Helpers, ConnectionIdentifier, DefaultConnectionIdentifier}
 
 import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
 
 import org.bson.types.ObjectId
-import com.mongodb.{BasicDBList, BasicDBObject, DBObject, MongoException}
+import com.mongodb._
 
 import org.specs2.mutable.Specification
 
 import json.DefaultFormats
-import json.JsonParser._
+import net.liftweb.common.Failure
 
 
 package mongotestdocs {
@@ -54,7 +54,7 @@ package mongotestdocs {
     override def connectionIdentifier = DefaultConnectionIdentifier
     override def formats = super.formats + new ObjectIdSerializer
     // index name
-    ensureIndex(("name" -> 1))
+    createIndex(("name" -> 1))
   }
 
   case class Address(street: String, city: String)
@@ -88,9 +88,9 @@ package mongotestdocs {
   object TstCollection extends MongoDocumentMeta[TstCollection] {
     override def formats = super.formats + new UUIDSerializer
     // create a unique index on name
-    ensureIndex(("name" -> 1), true)
+    createIndex(("name" -> 1), true)
     // create a non-unique index on dbtype passing unique = false.
-    ensureIndex(("dbtype" -> 1), false)
+    createIndex(("dbtype" -> 1), false)
   }
 
   case class IDoc(_id: ObjectId, i: Int) extends MongoDocument[IDoc] {
@@ -101,7 +101,7 @@ package mongotestdocs {
   object IDoc extends MongoDocumentMeta[IDoc] {
     override def formats = super.formats + new ObjectIdSerializer
     // create an index on "i", descending with custom name
-    ensureIndex(("i" -> -1), ("name" -> "i_ix1"))
+    createIndex(("i" -> -1), ("name" -> "i_ix1"))
   }
 
   case class SessCollection(_id: ObjectId, name: String, dbtype: String, count: Int)
@@ -113,7 +113,7 @@ package mongotestdocs {
   object SessCollection extends MongoDocumentMeta[SessCollection] {
     override def formats = super.formats + new ObjectIdSerializer
     // create a unique index on name
-    ensureIndex(("name" -> 1), true)
+    createIndex(("name" -> 1), true)
   }
 
   /*
@@ -490,12 +490,14 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     MongoDB.useSession( db => {
 
       // save to db
-      SessCollection.save(tc, db)
-      db.getLastError.get("err") must beNull
+      Helpers.tryo(SessCollection.save(tc, db)).toOption must beSome
       SessCollection.save(tc2, db) must throwA[MongoException]
-      db.getLastError.get("err").toString must contain("E11000 duplicate key error index")
-      SessCollection.save(tc3, db)
-      db.getLastError.get("err") must beNull
+      Helpers.tryo(SessCollection.save(tc2, db)) must beLike {
+        case Failure(msg, _, _) =>
+          msg must contain("E11000 duplicate key error index")
+      }
+
+      Helpers.tryo(SessCollection.save(tc3, db)).toOption must beSome
 
       // query for the docs by type
       val qry = ("dbtype" -> "db")

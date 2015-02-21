@@ -109,7 +109,8 @@ class LiftServlet extends Loggable {
 
         func(answerFunc)
 
-      }, 5.millis)
+      }, TimeSpan(5))
+
     }
 
     if (reqOrg.request.suspendResumeSupport_?) {
@@ -799,7 +800,7 @@ class LiftServlet extends Loggable {
 
       case ar: AnswerRender =>
         answers = ar :: answers
-        LAPinger.schedule(this, BreakOut(), 5.millis)
+        LAPinger.schedule(this, BreakOut(), 5)
 
       case BreakOut() if !done =>
         done = true

@@ -39,7 +39,7 @@ package mongoclienttestdocs {
   object SessCollection extends MongoDocumentMeta[SessCollection] {
     override def formats = super.formats + new ObjectIdSerializer
     // create a unique index on name
-    ensureIndex(("name" -> 1), true)
+    createIndex(("name" -> 1), true)
   }
 }
 
