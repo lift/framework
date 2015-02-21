@@ -264,6 +264,18 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val beforeSend = RulesSeq[(BasicResponse, HTTPResponse, List[(String, String)], Box[Req]) => Any]
 
+  private[this] lazy val defaultSecurityRules = SecurityRules()
+  /**
+   * The security rules used by Lift to secure this application. These mostly
+   * relate to HTTPS handling and HTTP `Content-Security-Policy`. See the
+   * `[[SecurityRules]]` documentation for more.
+   *
+   * Once the application has started using these, they are locked in, so make
+   * sure to set them early in the boot process.
+   */
+  @volatile var securityRules: () => SecurityRules = () => defaultSecurityRules
+  private[http] lazy val lockedSecurityRules = securityRules()
+
   /**
    * Defines the resources that are protected by authentication and authorization. If this function
    * is not defined for the input data, the resource is considered unprotected ergo no authentication
@@ -1149,7 +1161,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    *
    * This is the way to do stateless REST in Lift
    */
-  val statelessDispatch = RulesSeq[DispatchPF]
+  val statelessDispatch =
+    RulesSeq[DispatchPF]
+      .append(ContentSecurityPolicyViolation.defaultViolationHandler)
 
   /**
    * Add functionality around all of the HTTP request/response cycle.
@@ -1428,10 +1442,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var defaultHeaders: PartialFunction[(NodeSeq, Req), List[(String, String)]] = {
     case _ =>
       val d = Helpers.nowAsInternetDate
+
       List("Expires" -> d,
            "Date" -> d,
-           "Cache-Control" ->
-           "no-cache, private, no-store",
+           "Cache-Control" -> "no-cache, private, no-store",
            "Pragma" -> "no-cache" )
   }
 
@@ -1634,9 +1648,38 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var cometGetTimeout = 140000
 
   /**
-   * Compute the headers to be sent to the browser in addition to anything else that's sent
+   * Compute the headers to be sent to the browser in addition to anything else
+   * that's sent.
+   *
+   * Note that the headers for the applications `SecurityRules` are also set
+   * here, so if you override the supplemental headers, you should
+   * either refer back to the default set or make sure to include
+   * `LiftRules.securityRules.headers`.
    */
-  val supplementalHeaders: FactoryMaker[List[(String, String)]] = new FactoryMaker(() => List(("X-Lift-Version", liftVersion), ("X-Frame-Options", "SAMEORIGIN"))) {}
+  val supplementalHeaders: FactoryMaker[List[(String, String)]] = new FactoryMaker(() => {
+    ("X-Lift-Version", liftVersion) ::
+    lockedSecurityRules.headers
+  }) {}
+
+  /**
+   * Handles content security policy violation reports reported to the default
+   * reporting endpoint (see `[[ContentSecurityPolicy.defaultReportUri]]`).
+   *
+   * If an `Empty` is returned from this function, a default 200 response will
+   * be returned. The default implementation simply logs the violation at WARN
+   * level.
+   */
+  @volatile var contentSecurityPolicyViolationReport: (ContentSecurityPolicyViolation)=>Box[LiftResponse] = { violation =>
+    logger.warn(
+      s"""Content security policy violation reported on page
+       | '${violation.documentUri}' from referrer '${violation.referrer}':
+       | '${violation.blockedUri}' was blocked because it violated the
+       | directive '${violation.violatedDirective}'. The policy that specified
+       | this directive is: '${violation.originalPolicy}'.""".trim
+     )
+
+     Empty
+  }
 
   @volatile var calcIE6ForResponse: () => Boolean = () => S.request.map(_.isIE6) openOr false
 

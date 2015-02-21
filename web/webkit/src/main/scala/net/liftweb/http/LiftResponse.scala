@@ -104,10 +104,17 @@ case class ResetContentResponse() extends LiftResponse with HeaderDefaults {
  * 400 Bad Request
  *
  * Your Request was missing an important element. Use this as a last resort if
- * the request appears incorrect.
+ * the request appears incorrect. Use the `message` to indicate what was wrong
+ * with the request, if that does not leak important information.
  */
-case class BadResponse() extends LiftResponse with HeaderDefaults {
-  def toResponse = InMemoryResponse(Array(), headers, cookies, 400)
+case class BadRequestResponse(message: String = "") extends LiftResponse with HeaderDefaults {
+  def toResponse = InMemoryResponse(message.getBytes("UTF-8"), headers, cookies, 400)
+}
+object BadResponse {
+  @deprecated("Use BadRequestResponse instead, as that is the correct name for this response.", "3.0.0")
+  def apply() = {
+    BadRequestResponse()
+  }
 }
 
 /**

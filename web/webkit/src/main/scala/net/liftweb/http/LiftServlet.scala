@@ -140,6 +140,17 @@ class LiftServlet extends Loggable {
   def service(req: Req, resp: HTTPResponse): Boolean = {
     try {
       def doIt: Boolean = {
+        if (LiftRules.lockedSecurityRules.logInDevMode &&
+              Props.devMode &&
+              LiftRules.lockedSecurityRules.https.isDefined &&
+              ! req.hostAndPath.startsWith("https")) {
+          logger.warn(s"""
+            |Security rules require HTTPS, but request was for ${req.hostAndPath};
+            |in non-dev mode, this will result in the browser forcing
+            |HTTPS.""".stripMargin
+          )
+        }
+
         if (LiftRules.logServiceRequestTiming) {
           logTime {
             val ret = doService(req, resp)
