@@ -44,7 +44,7 @@ trait DeltaTrait {
 
 /**
  * Base trait specifying the core interface for Lift's comet actors. The most
- * interesting implementing classes are the `[[MessageCometActor]]` and
+ * interesting implementing classes are the `[[MessagingCometActor]]` and
  * `[[RenderingCometActor]]` classes, which provide simple message push and more
  * complex component rendering and rerendering, respectively.
  *
@@ -79,7 +79,7 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
    */
   def lastListenerTime: Long
 
-  @deprecated("lastRenderTime only makes sense on MessageCometActors and will be removed from the LiftCometActor interface.", "3.1.0")
+  @deprecated("lastRenderTime only makes sense on MessagingCometActors and will be removed from the LiftCometActor interface.", "3.1.0")
   def lastRenderTime: Long
 
   // Exposes initCometActor for internal invocation by Lift when external
@@ -506,7 +506,7 @@ trait CometActor extends BaseCometActor {
   override final private[http] def partialUpdateStream_? = false
 }
 
-trait MessageCometActor extends BaseCometActor {
+trait MessagingCometActor extends BaseCometActor {
   override final private[http] def partialUpdateStream_? = true
 
   override final def render = NodeSeq.Empty
