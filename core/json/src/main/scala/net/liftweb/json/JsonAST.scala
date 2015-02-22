@@ -20,15 +20,17 @@ package json
 import scala.language.implicitConversions
 
 /**
- * This object contains the abstract snytax tree (or AST) for working with JSON objects in lift-json.
+ * This object contains the abstract syntax tree (or AST) for working with JSON objects in
+ * lift-json.
  *
- * The purpose of the JsonAST is to represent and manipulate JSON by leveraging Scala language features like types,
- * case classes, etc. The AST should allow you to represent anything you could imagine from JSON land using the Scala
- * type system.
+ * The purpose of the JSON AST is to represent and manipulate JSON by leveraging Scala language
+ * features like types, case classes, etc. The AST should allow you to represent anything you
+ * could imagine from JSON land using the Scala type system.
  *
- * Everything in the AST has a single root: JValue. A JValue could, quite literally, be anything. It could be an
- * an object (represented by [[JObject]]), a string ([[JString]]), a null ([[JNull]]), and so on. So, when constructing
- * a JSON object with the AST directly you might construct something like the following:
+ * Everything in the AST has a single root: JValue. A JValue could, quite literally, be anything.
+ * It could be an an object (represented by `[[JObject]]`), a string (`[[JString]]`), a null
+ * (`[[JNull]]`), and so on. So, when constructing a JSON object with the AST directly you might
+ * construct something like the following:
  *
  * {{{
  * JObject(JField("bacon", JBool(true)) :: JField("spinach", JBool(false)))
@@ -39,7 +41,7 @@ import scala.language.implicitConversions
  * {{{
  * {
  *   "bacon":true,
- *   "spianch":false
+ *   "spinach":false
  * }
  * }}}
  */
@@ -48,7 +50,7 @@ object JsonAST {
   import scala.text.Document._
 
   /**
-    * Concatenate a sequence of `JValue`s together.
+    * Concatenate a sequence of `[[JValue]]`s together.
     *
     * This would be useful in the event that you have a handful of `JValue` instances that need to be
     * smacked together into one unit.
@@ -67,17 +69,21 @@ object JsonAST {
   /**
    * The base type for all things that represent distinct JSON entities in the AST.
    *
-   * Most members of the AST will extend this class. The one exception is [[JField]] which does not extend this class
-   * because it really <em>can't</em> properly exist as a first-class citizen of JSON.
+   * Most members of the AST will extend this class. The one exception is `[[JField]]` which does
+   * not extend this class because it really ''can't'' properly exist as a
+   * first-class citizen of JSON.
    */
   sealed abstract class JValue extends Diff.Diffable {
     type Values
 
     /**
-     * Find a child of a `JObject` or a `JArray` of `JObject` by name, and return `JNothing` for anything else.
+     * An XPath-like expression to find a child of a `[[JObject]]` or a `[[JArray]]` of `JObject`
+     * by name. If you call this method on anything other than a `JObject` or `JArray` of `JObject`s
+     * you'll get a `[[JNothing]]`.
      *
-     * This method is most useful if you have an object that you need to dig into in order to retrieve a specific value.
-     * So, let's say that you had a JSON object that looked something like this:
+     * This method is most useful if you have an object that you need to dig into in order to
+     * retrieve a specific value. So, let's say that you had a JSON object that looked
+     * something like this:
      *
      * {{{
      * {
@@ -90,26 +96,27 @@ object JsonAST {
      * }
      * }}}
      *
-     * If for some reason you're interested in taking a look at Joe's catchphrase, you can query it using the `\` method
-     * to find it like so:
+     * If for some reason you're interested in taking a look at Joe's catchphrase, you can
+     * query it using the `\` method to find it like so:
      *
      * Example:
      *
      * {{{
-     * > json \ "catchphrase"
-     * JObject(List(JField("name", JString("Alabama Cheer")), JField("value", JString("Roll tide"))))
+     * scala> json \ "catchphrase"
+     * res0: JValue = JObject(List(JField("name", JString("Alabama Cheer")), JField("value", JString("Roll tide"))))
      * }}}
      *
      * Likewise, if you wanted to find Joe's name you could do the following:
      *
      * {{{
-     * > json \ "name"
-     * JString("Joe")
+     * scala> json \ "name"
+     * res0: JValue = JString("Joe")
      * }}}
      *
-     * The result could be any kind of `JValue` that you could imagine.
-     * In the event that the `JValue` you're operating on is actually an array of objects, you'll get back a `JArray` of
-     * whatever the result of querying each of those object is. In the event nothing is found, you'll get a `JNothing`.
+     * The result could be any subclass of `JValue`.
+     * In the event that the `JValue` you're operating on is actually an array of objects, you'll
+     * get back a `JArray` of the result of executing `\` on each object in the array. In the event
+     * nothing is found, you'll get a `JNothing`.
      */
     def \(nameToFind: String): JValue = {
       findDirectByName(List(this), nameToFind) match {
@@ -139,12 +146,27 @@ object JsonAST {
     }
 
     /**
-     * Find all children of a `JObject` with the matching name, returning an empty `JObject` is no matches are found.
+     * Find all children of a `[[JObject]]` with the matching name, returning an empty `JObject` if
+     * no matches are found.
      *
-     * Example:
+     * For example given this example JSON:
      *
      * {{{
-     * json \\ "name"
+     * {
+     *   "name": "Joe",
+     *   "profession": "Software Engineer",
+     *   "catchphrase": {
+     *     "name": "Alabama Cheer",
+     *     "value": "Roll tide"
+     *   }
+     * }
+     * }}}
+     *
+     * We might do the following:
+     *
+     * {{{
+     * scala> json \\ "name"
+     * res2: JValue = JObject(List(JField(name,JString(Joe)), JField(name,JString(Alabama Cheer))))
      * }}}
      */
     def \\(nameToFind: String): JValue = {
@@ -153,8 +175,8 @@ object JsonAST {
           fields.foldLeft(List[JField]()) {
             case (matchingFields, JField(name, value)) =>
               matchingFields :::
-              List(JField(name, value)).filter(_.name == nameToFind) :::
-              find(value)
+                List(JField(name, value)).filter(_.name == nameToFind) :::
+                find(value)
           }
 
         case JArray(fields) =>
@@ -173,13 +195,35 @@ object JsonAST {
     }
 
     /** 
-     * Find immediate children of this `JValue` that match the specific type.
+     * Find immediate children of this `[[JValue]]` that match a specific `JValue` subclass.
      *
-     * This is only particularly useful if you have a `JObject` and are interested in finding all children that are,
-     * say, integers. YOu might do so like this:
+     * This methid will search a `[[JObject]]` or `[[JArray]]` for values of a specific type and
+     * return a `List` of those values if they any are found.
+     *
+     * So given some JSON like so:
      *
      * {{{
-     * json \ classOf[JInt]
+     *  [
+     *    {
+     *      "thinga":1,
+     *      "thingb":"bacon"
+     *    },{
+     *      "thingc":3,
+     *      "thingd":"Wakka"
+     *    },{
+     *      "thinge":{
+     *        "thingf":4
+     *      },
+     *      "thingg":true
+     *    }
+     *  ]
+     * }}}
+     *
+     * You would use this method like so:
+     *
+     * {{{
+     * scala> json \ classOf[JInt]
+     * res0: List[net.liftweb.json.JInt#Values] = List(1, 3)
      * }}}
      *
      * This method does require that whatever type you're searching for is subtype of `JValue`.
@@ -188,16 +232,36 @@ object JsonAST {
       findDirect(children, typePredicate(clazz) _).asInstanceOf[List[A]] map { _.values }
 
     /**
-     * Find all descendents of this `JValue` that match the specific type.
+     * Find all descendants of this `JValue` that match a specific `JValue` subclass.
      *
-     * This is only particularly useful if you have a `JObject` and are interested in finding all descendents that are
-     * of a particular type. This method functions a lot like its single-backslash cousin, excepting that it will
-     * dive deep into the `JObject` to find matches.
+     * Unlike its cousin `\`, this method will recurse down into all children looking for
+     * type matches searching a `[[JObject]]` or `[[JArray]]` for values of a specific type and
+     * return a `List` of those values if they are found.
      *
-     * You might use this as follows:
+     * So given some JSON like so:
      *
      * {{{
-     * json \\ classOf[JInt]
+     *  [
+     *    {
+     *      "thinga":1,
+     *      "thingb":"bacon"
+     *    },{
+     *      "thingc":3,
+     *      "thingd":"Wakka"
+     *    },{
+     *      "thinge":{
+     *        "thingf":4
+     *      },
+     *      "thingg":true
+     *    }
+     *  ]
+     * }}}
+     *
+     * You would use this method like so:
+     *
+     * {{{
+     * scala> json \\ classOf[JInt]
+     * res0: List[net.liftweb.json.JInt#Values] = List(1, 3, 4)
      * }}}
      */
     def \\[A <: JValue](clazz: Class[A]): List[A#Values] =
