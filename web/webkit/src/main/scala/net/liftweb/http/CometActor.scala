@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 WorldWide Conferencing, LLC
+ * Copyright 2007-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,6 @@ final case class CometCreationInfo(cometType: String,
                                    cometHtml: NodeSeq,
                                    cometAttributes: Map[String, String],
                                    session: LiftSession)
-
-trait DeltaTrait {
-  def toJs: JsCmd
-}
 
 /**
  * Base trait specifying the core interface for Lift's comet actors. The most
@@ -92,7 +88,7 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
    * Override in sub-class to customise timeout for the render()-method for the specific comet
    */
   @deprecated("cometRenderTimeout only makes sense on RenderingCometActors and will be removed from the LiftCometActor interface. It will also be made protected.", "3.1.0")
-  def cometRenderTimeout: Long = LiftRules.cometRenderTimeout
+  def cometRenderTimeout: Long // = LiftRules.cometRenderTimeout
 
   /**
    * Provides the base rendering for a `RenderingCometActor` that failed to finish rendering
@@ -207,72 +203,6 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
   private[http] def setCometActorLocale(loc: Locale) {
     _myLocale = loc
   }
-}
-
-trait CometState[DeltaType <: DeltaTrait,
-MyType <: CometState[DeltaType, MyType]] {
-  self: MyType =>
-
-  def -(other: MyType): Seq[DeltaType]
-
-  def render: NodeSeq
-}
-
-trait CometStateWithUpdate[UpdateType, DeltaType <: DeltaTrait,
-MyType <: CometStateWithUpdate[UpdateType,
-  DeltaType, MyType]]
-  extends CometState[DeltaType, MyType] {
-  self: MyType =>
-  def process(in: UpdateType): MyType
-}
-
-trait StatefulComet extends CometActor {
-  type Delta <: DeltaTrait
-  type State <: CometState[Delta, State]
-
-  /**
-   * Test the parameter to see if it's an updated state object
-   */
-  def testState(in: Any): Box[State]
-
-  /**
-   * Return the empty state object
-   */
-  def emptyState: State
-
-  /**
-   * The current state objects
-   */
-  protected var state: State = emptyState
-
-  /**
-   * If there's some ThreadLocal variable that needs to be set up
-   * before processing the state deltas, set it up here.
-   */
-  protected def setupLocalState[T](f: => T): T = f
-
-  private[http] override val _lowPriority = {
-    val pf: PartialFunction[Any, Unit] = {
-      case v if testState(v).isDefined =>
-        testState(v).foreach {
-          ns =>
-            if (ns ne state) {
-              val diff = ns - state
-              state = ns
-              partialUpdate(setupLocalState {
-                diff.map(_.toJs).foldLeft(Noop)(_ & _)
-              })
-            }
-        }
-    }
-
-    pf orElse super._lowPriority
-  }
-
-  /**
-   * The Render method
-   */
-  def render = state.render
 }
 
 object CurrentCometActor extends ThreadGlobal[LiftCometActor]
