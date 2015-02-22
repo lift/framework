@@ -273,26 +273,30 @@ object JsonAST {
     }
 
     /**
-     * Return `n`th element from a `JArray` or `JObject` and return `JNothing` for any other kind of `JValue`.
+     * Return the element in the `i`-th position from a `[[JArray]]`.
+     * Will return `JNothing` when invoked on any other kind of `JValue`.
      *
      * For example:
      *
      * {{{
-     * > val array = JArray(JInt(1) :: JInt(2) :: Nil)
-     * > array(1)
-     * JInt(1)
+     * scala> val array = JArray(JInt(1) :: JInt(2) :: Nil)
+     * array: net.liftweb.json.JsonAST.JArray = JArray(List(JInt(1), JInt(2)))
+     *
+     * scala> array(1)
+     * res0: net.liftweb.json.JsonAST.JValue = JInt(2)
      * }}}
      */
     def apply(i: Int): JValue = JNothing
 
     /**
-     * Return unboxed values from JSON.
+     * Return a representation of the values in this `[[JValue]]` in a native Scala structure.
      *
-     * For example:
+     * For example, you might invoke this on a `[[JObject]]` to have its fields returned
+     * as a `Map`.
      *
      * {{{
-     * > JObject(JField("name", JString("joe")) :: Nil).values
-     * Map("name" -> "joe")
+     * scala> JObject(JField("name", JString("joe")) :: Nil).values
+     * res0: scala.collection.immutable.Map[String,Any] = Map(name -> joe)
      * }}}
      */
     def values: Values
@@ -342,10 +346,11 @@ object JsonAST {
     }
 
     /**
-     * Fold over a sries of `JField`s applying a function to each one.
+     * Fold over a series of `JField`s applying a function to each one.
      *
      * @param z The initial value for the fold.
-     * @param f The Function to apply, which takes an accumulator as its first param and the next field as its second.
+     * @param f The function to apply, which takes an accumulator as its first parameter
+     *          and the next field as its second.
      */
     def foldField[A](z: A)(f: (A, JField) => A): A = {
       def rec(acc: A, v: JValue) = {
@@ -644,8 +649,8 @@ object JsonAST {
     /**
      * Optionally extract a value into a concrete Scala instance from its `JValue` representation.
      *
-     * This method will attempt to extract a concrete Scala instance of type `A`, but if it fails it will return
-     * a `[[scala.None]]` instead.
+     * This method will attempt to extract a concrete Scala instance of type `A`, but if it fails
+     * it will return a `[[scala.None]]` instead of throwing an exception as `[[extract]]` would.
      *
      * Value can be:
      * <ul>
@@ -658,9 +663,14 @@ object JsonAST {
      * Example:
      *
      * {{{
-     * > case class Person(name: String)
-     * > JObject(JField("name", JString("joe")) :: Nil).extractOpt[Person]
-     * Some(Person("joe"))
+     * scala> case class Person(name: String)
+     * defined class Person
+     *
+     * scala> implicit val formats = DefaultFormats
+     * formats: net.liftweb.json.DefaultFormats.type = net.liftweb.json.DefaultFormats$@39afbb7c
+     *
+     * scala> JObject(JField("name", JString("joe")) :: Nil).extractOpt[Person]
+     * res1: Option[Person] = Some(Person(joe))
      * }}}
      */
     def extractOpt[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): Option[A] =
