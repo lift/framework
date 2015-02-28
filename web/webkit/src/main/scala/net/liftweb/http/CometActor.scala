@@ -205,36 +205,11 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
   }
 }
 
+/**
+ * Provides access to the current comet actor, if we are currently handling
+ * messages for a comet actor. Usually accessed through `[[S.comet]]`.
+ */
 object CurrentCometActor extends ThreadGlobal[LiftCometActor]
-
-/**
- * A LiftActorJ with ListenerManager.  Subclass this class
- * to get a Java-usable LiftActorJ with ListenerManager
- */
-
-/**
- * Subclass from this class if you're in Java-land
- * and want a CometActor
- */
-abstract class CometActorJ extends LiftActorJ with CometActor {
-
-  override def lowPriority = _messageHandler
-
-}
-
-trait CometActor extends BaseCometActor {
-  override final private[http] def partialUpdateStream_? = false
-}
-
-trait MessagingCometActor extends BaseCometActor {
-  override final private[http] def partialUpdateStream_? = true
-
-  override final def render = NodeSeq.Empty
-
-  protected def pushMessage(cmd: => JsCmd) {
-    partialUpdate(cmd)
-  }
-}
 
 /**
  * Takes care of the plumbing for building Comet-based Web Apps
@@ -1157,6 +1132,35 @@ trait BaseCometActor extends LiftActor with LiftCometActor with CssBindImplicits
 
 }
 
+trait CometActor extends BaseCometActor {
+  override final private[http] def partialUpdateStream_? = false
+}
+
+trait MessagingCometActor extends BaseCometActor {
+  override final private[http] def partialUpdateStream_? = true
+
+  override final def render = NodeSeq.Empty
+
+  protected def pushMessage(cmd: => JsCmd) {
+    partialUpdate(cmd)
+  }
+}
+
+/**
+ * Subclass from this class if you're in Java-land and want a `[[CometActor]]`.
+ */
+abstract class CometActorJ extends LiftActorJ with CometActor {
+  override def lowPriority = _messageHandler
+}
+
+/**
+ * Subclass from this class if you want a `[[CometActorJ]]` with
+ * `[[CometListener]]` functionality.
+ */
+abstract class CometActorJWithCometListener extends CometActorJ with CometListener {
+  override def lowPriority = _messageHandler
+}
+
 abstract class Delta(val when: Long) {
   def js: JsCmd
 
@@ -1295,14 +1299,25 @@ object Notice {
 }
 
 /**
- * The RenderOut case class contains the rendering for the CometActor.
- * Because of the implicit conversions, RenderOut can come from
- * <br/>
- * @param xhtml is the "normal" render body
- * @param fixedXhtml is the "fixed" part of the body.  This is ignored unless reRender(true)
- * @param script is the script to be executed on render.  This is where you want to put your script
- * @param destroyScript is executed when the comet widget is redrawn ( e.g., if you register drag or mouse-over or some events, you unregister them here so the page doesn't leak resources.)
- * @param ignoreHtmlOnJs -- if the reason for sending the render is a Comet update, ignore the xhtml part and just run the JS commands.  This is useful in IE when you need to redraw the stuff inside <table><tr><td>... just doing innerHtml on <tr> is broken in IE
+ * The `RenderOut` case class encapsulates the data rendered for a
+ * `[[RenderingCometActor]]`'s rendering.
+ * Thanks to implicit conversions, a `RenderOut` in a comet can come from:
+ *  - `[[NodeSeq]]` or `[[Elem]]`
+ *  - `[[JsCmd]]`
+ *  - `(NodeSeq)=>NodeSeq` or `[[CssSel]]`
+ * 
+ * @param html The base HTML to display.
+ * @param fixedXhtml The "fixed" part of the body.  This is ignored unless
+ *        `[[reRender]]` is called with `true` as its first parameter.
+ * @param script Any JavaScript to be executed on render.
+ * @param destroyScript Executed when the comet widget is redrawn; useful to
+ *        clean up after setup that `script` does (e.g., if you register drag or
+ *        mouse-over or some events, you unregister them here so the page
+ *        doesn't leak resources.)
+ * @param ignoreHtmlOnJs If the reason for sending the render is a Comet update,
+ *        ignore the xhtml part and just run the JS commands.  This is useful
+ *        in IE when you need to redraw the stuff inside `<table><tr><td>...`,
+ *        since just using `innerHtml` on `<tr>` is broken in IE.
  */
 case class RenderOut(xhtml: Box[NodeSeq], fixedXhtml: Box[NodeSeq], script: Box[JsCmd], destroyScript: Box[JsCmd], ignoreHtmlOnJs: Boolean) {
   def this(xhtml: NodeSeq) = this (Full(xhtml), Empty, Empty, Empty, false)
