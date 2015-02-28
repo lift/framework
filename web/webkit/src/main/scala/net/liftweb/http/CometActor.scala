@@ -158,13 +158,18 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
   def parentTag: Elem
 
   /**
-   * Poke this actor to cause it to flush any `Wiring` updates in the component.
+   * See `[[flushWiringUpdates]]`.
+   */
+  @deprecated("Use flushWiringUpdates instead.","3.1.0")
+  def poke(): Unit = flushWiringUpdates
+
+  /**
+   * Make this actor flush any `Wiring` updates in the component.
    *
    * This method is actor-safe and may be called from any thread, not just the
    * Actor's message handler thread.
    */
-  @deprecated("Use flushWiringUpdates on RenderingCometActor instead.","3.1.0")
-  def poke(): Unit = {}
+  def flushWiringUpdates(): Unit = {}
 
   /**
    * Indicates whether this comet actor intends to capture the `[[Req]]`s that
@@ -189,7 +194,7 @@ trait LiftCometActor extends TypedActor[Any, Any] with ForwardableActor[Any, Any
    * within the actor was changed.
    */
   def predicateChanged(which: Cell[_]): Unit = {
-    poke()
+    flushWiringUpdates()
   }
 
   /**
@@ -1134,12 +1139,23 @@ trait BaseCometActor extends LiftActor with LiftCometActor with CssBindImplicits
 
 trait CometActor extends BaseCometActor {
   override final private[http] def partialUpdateStream_? = false
+
+  // Temporary placeholder until we can split out `BaseCometActor` stuff
+  // properly.
+  def cometRenderTimeout: Long = LiftRules.cometRenderTimeout
 }
+
+// Temporary placeholder until we can split out `BaseCometActor` stuff properly.
+trait RenderingCometActor extends CometActor
 
 trait MessagingCometActor extends BaseCometActor {
   override final private[http] def partialUpdateStream_? = true
 
   override final def render = NodeSeq.Empty
+
+  // Temporary placeholder until we can split out `BaseCometActor` stuff
+  // properly.
+  def cometRenderTimeout: Long = LiftRules.cometRenderTimeout
 
   protected def pushMessage(cmd: => JsCmd) {
     partialUpdate(cmd)

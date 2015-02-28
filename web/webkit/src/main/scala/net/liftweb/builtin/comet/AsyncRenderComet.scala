@@ -35,7 +35,7 @@ private case class Render(js: JsCmd)
  * 
  * None of these requires explicit use of `buildDeferredFunction`.
  */
-class AsyncRenderComet extends MessageCometActor {
+class AsyncRenderComet extends MessagingCometActor {
 
   override def lifespan: Box[TimeSpan] = Full(90.seconds)
 

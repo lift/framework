@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
+ package net.liftweb
+ package http
+
+ import scala.xml._
+
+ import common._
+ import js._
+
+ import JsCmds.Noop
+
 /**
  * A way to represent a delta between two component states so that the delta can
  * be applied to the client via a `[[JsCmd]]` returned from `[[toJs]]`.

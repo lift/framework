@@ -17,6 +17,9 @@
 package net.liftweb
 package http
 
+import actor._
+import common._
+
 /**
  * This is a message class for use with `[[ListenerManager]]` and
  * `[[CometListener]]` instances. The use of the `[[shouldUpdate]]` function is
