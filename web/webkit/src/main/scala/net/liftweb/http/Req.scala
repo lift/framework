@@ -1021,7 +1021,7 @@ class Req(val path: ParsePath,
   else 
     try {
       import java.io._
-      body.map(b => XML.load(new ByteArrayInputStream(b)))
+      body.map(b => Helpers.secureXML.load(new ByteArrayInputStream(b)))
     } catch {
       case e: LiftFlowOfControlException => throw e
       case e: Exception => Failure(e.getMessage, Full(e), Empty)

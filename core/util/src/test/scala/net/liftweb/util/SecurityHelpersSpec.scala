@@ -30,6 +30,24 @@ object SecurityHelpersSpec extends Specification  {
   "SecurityHelpers Specification".title
 
   "Security Helpers" should {
+    "Parse XML with nasty entity references" in {
+      secureXML.loadString("""<?xml version="1.0" encoding="ISO-8859-1"?>
+        <!DOCTYPE foo [
+          <!ELEMENT foo ANY >
+          <!ENTITY xxe SYSTEM "file:///etc/passwd" >]>
+        <foo>&xxe;</foo>"""
+      ) must_== <foo></foo>
+    }
+
+    "Parse XML with deal with nice entity references" in {
+      secureXML.loadString("""<?xml version="1.0" encoding="ISO-8859-1"?>
+        <!DOCTYPE foo [
+          <!ELEMENT foo ANY >
+          <!ENTITY xxe SYSTEM "file:///etc/passwd" >]>
+        <foo>&amp;</foo>
+      """).toString must_== "<foo>&amp;</foo>"
+   }
+
     "provide a randomLong method returning a random Long modulo a number" in {
       randomLong(7L) must be_<(7L)
     }

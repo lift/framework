@@ -17,6 +17,8 @@
 package net.liftweb
 package builtin.snippet
 
+import net.liftweb.util.Helpers
+
 import xml._
 import org.specs2.mutable.Specification
 
@@ -43,7 +45,7 @@ object MsgSpec extends Specification  {
 
         // We reparse due to inconsistencies with UnparsedAttributes
         val result = S.withAttrs(new UnprefixedAttribute("id", Text("foo"), new UnprefixedAttribute("noticeClass", Text("funky"), Null))) {
-          XML.loadString(Msg.render(<div/>).toString)
+          Helpers.secureXML.loadString(Msg.render(<div/>).toString)
         }
 
         result must ==/(<span id="foo">Error, <span class="funky">Notice</span></span>)

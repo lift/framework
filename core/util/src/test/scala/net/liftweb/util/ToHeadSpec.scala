@@ -17,14 +17,12 @@
 package net.liftweb
 package util
 
-import xml.XML._
-
 import org.specs2.mutable.Specification
 
 import common._
 import ControlHelpers._
 import HeadHelper._
-
+import Helpers.secureXML
 
 /**
  * Systems under specification for ToHead.
@@ -41,8 +39,8 @@ object ToHeadSpec extends Specification  {
 
       susfiles match {
         case Full(sus) =>
-          val actual = load(sus._1)
-          val expected = load(sus._2)
+          val actual = secureXML.load(sus._1)
+          val expected = secureXML.load(sus._2)
           mergeToHtmlHead(actual).toString.replaceAll("\\s", "") must_==
           (expected.toString.replaceAll("\\s", ""))
         case _         =>
@@ -58,8 +56,8 @@ object ToHeadSpec extends Specification  {
 
       susfiles match {
         case Full(sus) =>
-          val actual = load(sus._1)
-          val expected = load(sus._2)
+          val actual = secureXML.load(sus._1)
+          val expected = secureXML.load(sus._2)
           mergeToHtmlHead(actual) must ==/(expected)
         case _         =>
           failure("Failed loading test files") // TODO: Improve error message
@@ -74,8 +72,8 @@ object ToHeadSpec extends Specification  {
 
       susfiles match {
         case Full(sus) =>
-          val actual = load(sus._1)
-          val expected = load(sus._2)
+          val actual = secureXML.load(sus._1)
+          val expected = secureXML.load(sus._2)
           mergeToHtmlHead(actual).toString.replaceAll("\\s", "") must_==
           (expected.toString.replaceAll("\\s", ""))
         case _         =>

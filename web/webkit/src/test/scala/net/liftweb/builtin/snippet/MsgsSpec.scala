@@ -17,6 +17,8 @@
 package net.liftweb
 package builtin.snippet
 
+import net.liftweb.util.Helpers
+
 import xml.XML
 import org.specs2.mutable.Specification
 
@@ -42,7 +44,7 @@ object MsgsSpec extends Specification  {
         S.notice("Notice")
 
         // We reparse due to inconsistencies with UnparsedAttributes
-        XML.loadString(Msgs.render(
+        Helpers.secureXML.loadString(Msgs.render(
           <lift:warning_msg>Warning:</lift:warning_msg><lift:notice_class>funky</lift:notice_class>
         ).toString)
       }

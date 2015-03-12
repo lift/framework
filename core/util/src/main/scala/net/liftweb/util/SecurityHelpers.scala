@@ -17,12 +17,17 @@
 package net.liftweb
 package util
 
+import javax.xml.parsers.SAXParserFactory
+
 import org.apache.commons.codec.binary.Base64
-import java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, File, FileInputStream, BufferedReader}
-import java.security.{SecureRandom, MessageDigest}
+import java.io._
+import java.security._
 import javax.crypto._
 import javax.crypto.spec._
-import scala.xml.{Node, XML}
+
+import scala.xml.{Elem, XML}
+import scala.xml.factory.XMLLoader
+
 import common._
 
 object SecurityHelpers extends StringHelpers with IoHelpers with SecurityHelpers
@@ -197,5 +202,18 @@ trait SecurityHelpers {
     sb.toString
   }
 
-}
+  /**
+   * Provides a secure XML parser, similar to the one provided by
+   * `scala.xml.XML`, but with external entities disabled. This prevents
+   * prevents XXE (XML External Entities) attacks. It is used internally
+   * throughout Lift, and should be used by anyone who is parsing XML from
+   * an untrusted source.
+   */
+  def secureXML: XMLLoader[Elem] = {
+    val parserFactory = SAXParserFactory.newInstance()
+    parserFactory.setNamespaceAware(false)
+    parserFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+    parserFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
 
+    val saxParser = parserFactory.newSAXParser();
+    XML.withSAXParser(saxParser)

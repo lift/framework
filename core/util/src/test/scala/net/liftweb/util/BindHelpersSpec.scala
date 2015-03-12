@@ -326,7 +326,7 @@ object BindHelpersSpec extends Specification  {
     "handle dynamic, unprefixed attributes" in {
       // The Unprefixed attributes that Lift merges in cause the XML equals comparison to fail
       // stringifying and then reparsing fixes it.
-      XML.loadString(
+      Helpers.secureXML.loadString(
         BindHelpers.bind("test", 
                          <div><div test:x="dynamicUnprefixed" /></div>,
                          FuncAttrBindParam("x", {ns : NodeSeq => ns }, "id")).toString) must ==/(<div><div id="dynamicUnprefixed" /></div>)
