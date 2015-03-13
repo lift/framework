@@ -2209,7 +2209,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @param attrs The attributes to set temporarily
    */
   def withAttrs[T](attrs: MetaData)(f: => T): T = {
-    val currentStack = _attrs.value._2
+    val currentStack = this.attrs
     val newFrame = attrs.toList.map {
       case pa: PrefixedAttribute => (Right(pa.pre, pa.key), pa.value.text)
       case m => (Left(m.key), m.value.text)
