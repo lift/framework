@@ -212,8 +212,10 @@ trait SecurityHelpers {
   def secureXML: XMLLoader[Elem] = {
     val parserFactory = SAXParserFactory.newInstance()
     parserFactory.setNamespaceAware(false)
-    parserFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-    parserFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+    parserFactory.setFeature("http://xml.org/sax/features/external-general-entities", false)
+    parserFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
 
-    val saxParser = parserFactory.newSAXParser();
+    val saxParser = parserFactory.newSAXParser()
     XML.withSAXParser(saxParser)
+  }
+}

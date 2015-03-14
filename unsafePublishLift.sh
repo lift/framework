@@ -141,9 +141,7 @@ for MODULE in framework ; do
     echo -e "\nStarting build on $MODULE module"
     cd ${SCRIPT_DIR}/${MODULE} || die "Could not change to $MODULE directory!"
 
-    #commented out because we are already on the branch that will be used to publish 2.5.1
-    #git checkout -b ${RELEASE_VERSION} >> ${BUILDLOG} || die "Error creating work branch!"
-
+    git checkout -b ${RELEASE_VERSION} >> ${BUILDLOG} || die "Error creating work branch!"
 
     ./liftsh ";set version in ThisBuild :=  \"${RELEASE_VERSION}\" ; session save  " >> ${BUILDLOG} || die "Could not update project version in SBT!"
 
@@ -158,7 +156,8 @@ for MODULE in framework ; do
     # Do a separate build for each configured Scala version so we don't blow the heap
     for SCALA_VERSION in $(grep crossScalaVersions build.sbt | cut -d '(' -f 2 |  sed s/[,\)\"]//g ); do
         echo -n "  Building against Scala ${SCALA_VERSION}..."
-        if ! ./liftsh ++${SCALA_VERSION} clean update test publish >> ${BUILDLOG} ; then
+        #we run the tests before running the build, everything is ok, so skipping it here.
+        if ! ./liftsh ++${SCALA_VERSION} clean update publish >> ${BUILDLOG} ; then
             echo "failed! See build log for details"
             exit
         fi
