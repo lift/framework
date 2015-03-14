@@ -17,15 +17,13 @@
 package net.liftweb
 package util
 
-import xml.XML._
-
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import common._
 import ControlHelpers._
 import HeadHelper._
-
+import Helpers.secureXML
 
 /**
  * Systems under specification for ToHead.
@@ -42,8 +40,8 @@ object ToHeadSpec extends Specification with XmlMatchers {
 
       susfiles must beLike {
         case Full(sus) =>
-          val actual = load(sus._1)
-          val expected = load(sus._2)
+          val actual = secureXML.load(sus._1)
+          val expected = secureXML.load(sus._2)
           mergeToHtmlHead(actual).toString.replaceAll("\\s", "") must_==
           (expected.toString.replaceAll("\\s", ""))
       }
@@ -57,8 +55,8 @@ object ToHeadSpec extends Specification with XmlMatchers {
 
       susfiles must beLike {
         case Full(sus) =>
-          val actual = load(sus._1)
-          val expected = load(sus._2)
+          val actual = secureXML.load(sus._1)
+          val expected = secureXML.load(sus._2)
           mergeToHtmlHead(actual) must ==/(expected)
       }
     }
@@ -71,8 +69,8 @@ object ToHeadSpec extends Specification with XmlMatchers {
 
       susfiles must beLike {
         case Full(sus) =>
-          val actual = load(sus._1)
-          val expected = load(sus._2)
+          val actual = secureXML.load(sus._1)
+          val expected = secureXML.load(sus._2)
           mergeToHtmlHead(actual).toString.replaceAll("\\s", "") must_==
           (expected.toString.replaceAll("\\s", ""))
       }

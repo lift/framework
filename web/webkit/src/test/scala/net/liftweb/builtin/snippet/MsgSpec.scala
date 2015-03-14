@@ -23,6 +23,7 @@ import org.specs2.mutable.Specification
 
 import common._
 import http._
+import util.Helpers.secureXML
 
 /**
  * System under specification for Msg.
@@ -43,7 +44,7 @@ object MsgSpec extends Specification with XmlMatchers {
 
         // We reparse due to inconsistencies with UnparsedAttributes
         val result = S.withAttrs(new UnprefixedAttribute("id", Text("foo"), new UnprefixedAttribute("noticeClass", Text("funky"), Null))) {
-          XML.loadString(Msg.render(<div/>).toString)
+          secureXML.loadString(Msg.render(<div/>).toString)
         }
 
         result must ==/(<span id="foo">Error, <span class="funky">Notice</span></span>)

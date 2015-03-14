@@ -25,7 +25,6 @@ import org.specs2.mutable.Specification
 import common._
 import BindHelpers._
 
-
 /**
  * Systems under specification for BindHelpers.
  */
@@ -327,7 +326,7 @@ object BindHelpersSpec extends Specification with XmlMatchers {
     "handle dynamic, unprefixed attributes" in {
       // The Unprefixed attributes that Lift merges in cause the XML equals comparison to fail
       // stringifying and then reparsing fixes it.
-      XML.loadString(
+      Helpers.secureXML.loadString(
         BindHelpers.bind("test", 
                          <div><div test:x="dynamicUnprefixed" /></div>,
                          FuncAttrBindParam("x", {ns : NodeSeq => ns }, "id")).toString) must ==/(<div><div id="dynamicUnprefixed" /></div>)
