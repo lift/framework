@@ -1067,7 +1067,7 @@ class Req(val path: ParsePath,
   lazy val forcedBodyAsXml: Box[Elem] = {
     try {
       import java.io._
-      body.map(b => XML.load(new ByteArrayInputStream(b)))
+      body.map(b => secureXML.load(new ByteArrayInputStream(b)))
     } catch {
       case e: LiftFlowOfControlException => throw e
       case e: Exception => Failure(e.getMessage, Full(e), Empty)
