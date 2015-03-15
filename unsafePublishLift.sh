@@ -120,8 +120,8 @@ for MODULE in framework ; do
     CURRENT_BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`
     debug "Current branch for $MODULE is $CURRENT_BRANCH"
 
-    if [ "${CURRENT_BRANCH}" != "lift_26" ]; then
-        echo "Currently releases can only be built from lift_26. $MODULE is on branch $CURRENT_BRANCH. Aborting build."
+    if [ "${CURRENT_BRANCH}" != "2.6" ]; then
+        echo "Currently releases can only be built from 2.6. $MODULE is on branch $CURRENT_BRANCH. Aborting build."
         exit
     fi
 
