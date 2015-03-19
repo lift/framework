@@ -18,10 +18,11 @@
 package net.liftweb
 package util
 
+import org.xml.sax.SAXParseException
+
 import org.specs2.mutable.Specification
 
 import SecurityHelpers._
-
 
 /**
  * Systems under specification for SecurityHelpers.
@@ -30,20 +31,17 @@ object SecurityHelpersSpec extends Specification  {
   "SecurityHelpers Specification".title
 
   "Security Helpers" should {
-    "Parse XML with nasty entity references" in {
+    "not parse XML with a DOCTYPE" in {
       secureXML.loadString("""<?xml version="1.0" encoding="ISO-8859-1"?>
         <!DOCTYPE foo [
           <!ELEMENT foo ANY >
           <!ENTITY xxe SYSTEM "file:///etc/passwd" >]>
         <foo>&xxe;</foo>"""
-      ) must_== <foo></foo>
+      ) must throwA[SAXParseException]
     }
 
-    "Parse XML with deal with nice entity references" in {
+    "parse XML without a DOCTYPE" in {
       secureXML.loadString("""<?xml version="1.0" encoding="ISO-8859-1"?>
-        <!DOCTYPE foo [
-          <!ELEMENT foo ANY >
-          <!ENTITY xxe SYSTEM "file:///etc/passwd" >]>
         <foo>&amp;</foo>
       """).toString must_== "<foo>&amp;</foo>"
     }
