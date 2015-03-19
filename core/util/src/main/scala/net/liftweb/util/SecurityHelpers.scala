@@ -17,16 +17,18 @@
 package net.liftweb
 package util
 
-import javax.xml.parsers.SAXParserFactory
-
-import org.apache.commons.codec.binary.Base64
 import java.io._
 import java.security._
 import javax.crypto._
 import javax.crypto.spec._
+import javax.xml.parsers.SAXParserFactory
+import javax.xml.XMLConstants
 
 import scala.xml.{Elem, XML}
 import scala.xml.factory.XMLLoader
+
+import org.apache.commons.codec.binary.Base64
+import org.apache.xerces.impl.Constants
 
 import common._
 
@@ -204,16 +206,24 @@ trait SecurityHelpers {
 
   /**
    * Provides a secure XML parser, similar to the one provided by
-   * `scala.xml.XML`, but with external entities disabled. This prevents
-   * prevents XXE (XML External Entities) attacks. It is used internally
-   * throughout Lift, and should be used by anyone who is parsing XML from
-   * an untrusted source.
+   * `scala.xml.XML`, but with external entities and doctypes disabled and
+   * secure XML processing enabled. This prevents XXE (XML External Entities)
+   * attacks, billion laughs attacks, quadratic blowup attacks, and others. It
+   * is used internally throughout Lift, and should be used by anyone who is
+   * parsing XML from an untrusted source.
    */
   def secureXML: XMLLoader[Elem] = {
-    val parserFactory = SAXParserFactory.newInstance()
+    val parserFactory =
+      SAXParserFactory.newInstance(
+        "org.apache.xerces.jaxp.SAXParserFactoryImpl",
+        SecurityHelpers.getClass.getClassLoader
+      )
+
     parserFactory.setNamespaceAware(false)
-    parserFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-    parserFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+    parserFactory.setFeature(Constants.SAX_FEATURE_PREFIX + Constants.EXTERNAL_GENERAL_ENTITIES_FEATURE, false)
+    parserFactory.setFeature(Constants.SAX_FEATURE_PREFIX + Constants.EXTERNAL_PARAMETER_ENTITIES_FEATURE, false)
+    parserFactory.setFeature(Constants.XERCES_FEATURE_PREFIX + Constants.DISALLOW_DOCTYPE_DECL_FEATURE, true)
+    parserFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
 
     val saxParser = parserFactory.newSAXParser();
     XML.withSAXParser(saxParser)

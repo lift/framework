@@ -56,6 +56,7 @@ object Dependencies {
   lazy val squeryl                = "org.squeryl"                % "squeryl"            % "0.9.5-7" cross CVMappingAll
   lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.0.1"
   lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.0.1"
+  lazy val xerces                 = "xerces" % "xercesImpl" % "2.11.0"
 
   // Aliases
   lazy val mongo_driver = mongo_java_driver
