@@ -759,39 +759,35 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   def postPageJavaScript(rv: String): List[JsCmd] = {
-    def org = accessPostPageFuncs {
-      val ret = postPageFunctions.get(rv)
-      ret.foreach {
-        r => postPageFunctions += (rv -> r.updateLastSeen)
-      }
-      ret
-    }
+    val accumulatedJavaScript = new ListBuffer[JsCmd]
 
-    org match {
-      case None => Nil
-      case Some(ppf) => {
-        val lb = new ListBuffer[JsCmd]
-
-        def run(count: Int, funcs: List[() => JsCmd]) {
-          funcs.reverse.foreach(f => lb += f())
-          val next = org.get // safe to do get here because we know the
-          // postPageFunc is defined
-
-          val diff = next.functionCount - count
-
-          // if the function table is updated, make sure to get
-          // the additional functions
-          if (diff == 0) {} else {
-            run(next.functionCount, next.functions.take(diff))
-          }
+    def latestPostPageFunctions = {
+      accessPostPageFuncs {
+        val ret = postPageFunctions.get(rv)
+        ret.foreach {
+          r => postPageFunctions += (rv -> r.updateLastSeen)
         }
-
-        run(ppf.functionCount, ppf.functions)
-
-        lb.toList
-
+        ret
       }
     }
+
+    def run(count: Int, funcs: List[() => JsCmd]) {
+      funcs.reverse.foreach(f => accumulatedJavaScript += f())
+
+      latestPostPageFunctions.foreach { latest =>
+        val diff = latest.functionCount - count
+
+        // if the function table is updated, make sure to get
+        // the additional functions
+        if (diff > 0) {
+          run(latest.functionCount, latest.functions.take(diff))
+        }
+      }
+    }
+
+    run(0, Nil)
+
+    accumulatedJavaScript.toList
   }
 
   /**
