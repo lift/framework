@@ -301,6 +301,9 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
               Full(new Exception("broken")),
               Full(Failure("nested cause", Empty, Empty))).chain must_== Full(Failure("nested cause", Empty, Empty))
     }
+    "be converted to a ParamFailure" in {
+      Failure("hi mom") ~> 404 must_== ParamFailure("hi mom", Empty, Empty, 404)
+    }
   }
 
   "A Failure is an Empty Box which" should {
@@ -319,6 +322,15 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
     "return true for forall method" in {
       Failure("error", Empty, Empty) forall {_ => false } must beTrue
+    }
+  }
+
+  "A ParamFailure is a failure which" should {
+    "appear in the chain when ~> is invoked on it" in {
+      Failure("Apple") ~> 404 ~> "apple" must_==
+        ParamFailure("Apple", Empty, Full(
+          ParamFailure("Apple", Empty, Empty, 404)
+        ), "apple")
     }
   }
 
