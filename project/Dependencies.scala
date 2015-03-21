@@ -52,6 +52,7 @@ object Dependencies {
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
   lazy val squeryl                = "org.squeryl"                % "squeryl"            % "0.9.5-6" cross CVMapping29
   @deprecated lazy val scalaactors= "org.scala-lang"             % "scala-actors"       % "2.10.0"
+  lazy val xerces                 = "xerces" % "xercesImpl" % "2.11.0"
 
   // Aliases
   lazy val mongo_driver = mongo_java_driver
