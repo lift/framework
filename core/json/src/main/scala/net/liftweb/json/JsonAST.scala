@@ -314,6 +314,9 @@ object JsonAST {
      * > JArray(JInt(1) :: JInt(2) :: Nil).children
      * List(JInt(1), JInt(2))
      * }}}
+     *
+     * @return Direct children of this `JValue` if it is a `[[JObject]]` or
+     * `[[JArray]]`, or `[[JNothing]]` otherwise.
      */
     def children: List[JValue] = this match {
       case JObject(l) => l map (_.value)
@@ -366,7 +369,7 @@ object JsonAST {
     }
 
     /**
-     * Return a new `JValue` resulting from applying the given function to each value.
+     * Return a new `JValue` resulting from applying the given function to each value, recursively.
      *
      * If this function is invoked on a `[[JObject]]`, it will iterate over the field values of that `JObject`.
      * If this function is invoked on a `[[JArray]]`, it will iterate over the values of that `JArray`.
@@ -393,7 +396,7 @@ object JsonAST {
 
     /**
      * Return a new `JValue` resulting from applying the given function to each `[[JField]]` in a `[[JObject]]` or a
-     * `[[JArray]]` of `JObject`.
+     * `[[JArray]]` of `JObject`, recursively.
      *
      * Example:
      *
@@ -403,6 +406,8 @@ object JsonAST {
      *   case x => x
      * }
      * }}}
+     *
+     * @see transformField
      */
     def mapField(f: JField => JField): JValue = {
       def rec(v: JValue): JValue = v match {
@@ -413,39 +418,71 @@ object JsonAST {
       rec(this)
     }
 
-    /** Return a new JValue resulting from applying the given partial function <code>f</code>
+    /** Return a new `JValue` resulting from applying the given partial function `f``
      * to each field in JSON.
-     * <p>
-     * Example:<pre>
+     * 
+     * Example:
+     * {{{
      * JObject(("age", JInt(10)) :: Nil) transformField {
      *   case ("age", JInt(x)) => ("age", JInt(x+1))
      * }
-     * </pre>
+     * }}}
      */
     def transformField(f: PartialFunction[JField, JField]): JValue = mapField { x =>
       if (f.isDefinedAt(x)) f(x) else x
     }
 
     /**
-     * Return a new `JValue` resulting from applying the given partial function to each value.
+     * Return a new `JValue` resulting from applying the given partial function
+     * to each value within this `JValue`.
      *
-     * Example:
+     * If this is a `JArray`, this means we will transform each value in the
+     * array and return an updated array.
+     *
+     * If this is a `JObject`, this means we will transform the value of each
+     * field of the object and the object in turn and return an updated object.
+     * 
+     * If this is another type of `JValue`, the value is transformed directly.
+     *
+     * Note that this happens recursively, so you will receive both each value
+     * in an array ''and'' the array itself, or each field value in an object
+     * ''and'' the object itself. If an array contains arrays, we will recurse
+     * into them in turn.
+     *
+     * Examples:
      *
      * {{{
-     * JArray(JInt(1) :: JInt(2) :: Nil) transform {
+     * > JArray(JInt(1) :: JInt(2) :: Nil) transform {
      *   case JInt(x) =>
      *     JInt(x+1)
      * }
+     * res0: net.liftweb.json.JsonAST.JValue = JArray(List(JInt(2), JInt(3)))
      * }}}
+     *
+     * Without type matching, notice that we get the result of the transform
+     * replacing the array:
+     *
+     * {{{
+     * > JArray(JInt(1) :: JInt(2) :: Nil) transform {
+     *   case _ =>
+     *     JString("hello")
+     * }
+     * res0: net.liftweb.json.JsonAST.JValue = JString("hello")
+     * }}}
+     *
+     * @return This `JValue` with its child values recursively transformed by
+     *         the given `PartialFunction`, when defined. If the
+     *         `PartialFunction` is undefined, leaves the child values
+     *         untouched.
      */
     def transform(f: PartialFunction[JValue, JValue]): JValue = map { x =>
       if (f.isDefinedAt(x)) f(x) else x
     }
 
     /**
-     * Return a new JValue resulting from replacing the value at the specified field
-     * path with the replacement value provided. This has no effect if the path is empty
-     * or if the value is not a `[[JObject]]` instance.
+     * Return a new `JValue` resulting from replacing the value at the specified field
+     * path with the replacement value provided. This has no effect if the path
+     * is empty or if the value is not a `[[JObject]]` instance.
      *
      * Example:
      *
@@ -479,16 +516,17 @@ object JsonAST {
      *
      * When invoked on a `[[JObject]]` it will first attempt to see if the `JObject` has the field defined on it.
      * Not finding the field defined, this method will recurse into the fields of that object and search for the
-     * value there. When invoked on or enccountering a `[[JArray]]` during recursion this method will run its search
-     * on each member of the JArray.
+     * value there. When invoked on or encountering a `[[JArray]]` during recursion this method will run its search
+     * on each member of the `JArray`.
      *
      * Example:
      *
      * {{{
-     * JObject(("age", JInt(2))) findField {
-     *   case (n, v) =>
+     * > JObject(JField("age", JInt(2))) findField {
+     *   case JField(n, v) =>
      *     n == "age"
      * }
+     * res0: Option[net.liftweb.json.JsonAST.JField] = Some(JField(age,JInt(2))
      * }}}
      */
     def findField(p: JField => Boolean): Option[JField] = {
@@ -507,7 +545,8 @@ object JsonAST {
      * Example:
      *
      * {{{
-     * JArray(JInt(1) :: JInt(2) :: Nil) find { _ == JInt(2) } == Some(JInt(2))
+     * > JArray(JInt(1) :: JInt(2) :: Nil) find { _ == JInt(2) }
+     * res0: Option[net.liftweb.json.JsonAST.JValue] = Some(JInt(2))
      * }}}
      */
     def find(p: JValue => Boolean): Option[JValue] = {
@@ -524,40 +563,64 @@ object JsonAST {
     }
 
     /**
-     * Return a List of all fields that match the given predicate.
+     * Return a `List` of all fields that match the given predicate. Does not
+     * recurse into child elements, so this will only check a `JObject`'s field
+     * values.
      *
      * Example:
      *
      * {{{
-     * JObject(("age", JInt(10)) :: Nil) filterField {
-     *   case ("age", JInt(x)) if x > 18 =>
+     * > JObject(JField("age", JInt(10))) filterField {
+     *   case JField("age", JInt(x)) if x > 18 =>
      *     true
      *
      *   case _ =>
      *     false
      * }
+     * res0: List[net.liftweb.json.JsonAST.JField] = List()
+     * > JObject(JField("age", JInt(10))) filterField {
+     *   case JField("age", JInt(x)) if x < 18 =>
+     *     true
+     *
+     *   case _ =>
+     *     false
+     * }
+     * res1: List[net.liftweb.json.JsonAST.JField] = List(JField(age,JInt(10)))
      * }}}
+     *
+     * @return A `List` of `JField`s that match the given predicate `p`, or `Nil`
+     *         if this `JValue` is not a `JObject`.
      */
     def filterField(p: JField => Boolean): List[JField] = 
       foldField(List[JField]())((acc, e) => if (p(e)) e :: acc else acc).reverse
 
     /**
-     * Return a List of all values which matches the given predicate.
+     * Return a List of all values which matches the given predicate, recursively.
      *
      * Example:
      *
      * {{{
-     * JArray(JInt(1) :: JInt(2) :: Nil) filter {
+     * > JArray(JInt(1) :: JInt(2) :: Nil) filter {
      *   case JInt(x) => x > 1
      *   case _ => false
      * }
+     * res0: List[net.liftweb.json.JsonAST.JValue] = List(JInt(2))
+     * }}}
+     *
+     * This operates recursively, so nested objects work too:
+     * {{{
+     * > ((("boom" -> ("slam" -> "hello")) ~ ("shap" -> 3)): JObject) filter {
+     *   case JString("hello") => true
+     *   case _ => false
+     * }
+     * res0: List[net.liftweb.json.JsonAST.JValue] = List(JString(hello))
      * }}}
      */
     def filter(p: JValue => Boolean): List[JValue] =
       fold(List[JValue]())((acc, e) => if (p(e)) e :: acc else acc).reverse
 
     /** 
-     * Create a new instance of [[WithFilter]] for Scala to use when using
+     * Create a new instance of `[[WithFilter]]` for Scala to use when using
      * this `JValue` in a for comprehension.
      */
     def withFilter(p: JValue => Boolean) = new WithFilter(this, p)
@@ -576,7 +639,7 @@ object JsonAST {
      *
      * {{{
      * > JArray(JInt(1) :: JInt(2) :: Nil) ++ JArray(JInt(3) :: Nil)
-     * JArray(List(JInt(1), JInt(2), JInt(3)))
+     * res0: JArray(List(JInt(1), JInt(2), JInt(3)))
      * }}}
      */
     def ++(other: JValue) = {
@@ -597,8 +660,8 @@ object JsonAST {
      * Example:
      *
      * {{{
-     * JObject(("age", JInt(10)) :: Nil) removeField {
-     *   case ("age", _) => true
+     * > JObject(JField("age", JInt(10))) removeField {
+     *   case JField("age", _) => true
      *   case _          => false
      * }
      * }}}
@@ -614,7 +677,8 @@ object JsonAST {
      * Example:
      *
      * {{{
-     * JArray(JInt(1) :: JInt(2) :: JNull :: Nil).remove(_ == JNull)
+     * > JArray(JInt(1) :: JInt(2) :: JNull :: Nil).remove(_ == JNull)
+     * res0: net.liftweb.json.JsonAST.JValue = JArray(List(JInt(1), JInt(2), JNothing))
      * }}}
      */
     def remove(p: JValue => Boolean): JValue = this map {
@@ -626,21 +690,17 @@ object JsonAST {
      * Extract a value into a concrete Scala instance from its `JValue` representation.
      *
      * Value can be:
-     *
-     * <ul>
-     *   <li>case class</li>
-     *   <li>primitive (String, Boolean, Date, etc.)</li>
-     *   <li>supported collection type (List, Seq, Map[String, _], Set)</li>
-     *   <li>any type which has a configured custom deserializer</li>
-     * </ul>
-     *
+     *  - a case class
+     *  - a primitive (String, Boolean, Date, etc.)>
+     *  - any type which has a configured [[TypeHints custom deserializer]]
+     *  - a supported collection type of any of the above (List, Seq, Map[String, _], Set)
      *
      * Example:
      *
      * {{{
      * > case class Person(name: String)
      * > JObject(JField("name", JString("joe")) :: Nil).extract[Person]
-     * Person("joe")
+     * res0: Person("joe")
      * }}}
      */
     def extract[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): A =
@@ -653,12 +713,10 @@ object JsonAST {
      * it will return a `[[scala.None]]` instead of throwing an exception as `[[extract]]` would.
      *
      * Value can be:
-     * <ul>
-     *   <li>case class</li>
-     *   <li>primitive (String, Boolean, Date, etc.)</li>
-     *   <li>supported collection type (List, Seq, Map[String, _], Set)</li>
-     *   <li>any type which has a configured custom deserializer</li>
-     * </ul>
+     *  - a case class
+     *  - a primitive (String, Boolean, Date, etc.)>
+     *  - any type which has a configured [[TypeHints custom deserializer]]
+     *  - a supported collection type of any of the above (List, Seq, Map[String, _], Set)
      *
      * Example:
      *
@@ -681,20 +739,17 @@ object JsonAST {
      * the default value instead.
      *
      * Value can be:
-     *
-     * <ul>
-     *   <li>case class</li>
-     *   <li>primitive (String, Boolean, Date, etc.)</li>
-     *   <li>supported collection type (List, Seq, Map[String, _], Set)</li>
-     *   <li>any type which has a configured custom deserializer</li>
-     * </ul>
+     *  - a case class
+     *  - a primitive (String, Boolean, Date, etc.)>
+     *  - any type which has a configured [[TypeHints custom deserializer]]
+     *  - a supported collection type of any of the above (List, Seq, Map[String, _], Set)
      *
      * Example:
      *
      * {{{
      * > case class Person(name: String)
      * > JNothing.extractOrElse(Person("joe"))
-     * Person("joe")
+     * res0: Person("joe")
      * }}}
      */
     def extractOrElse[A](default: => A)(implicit formats: Formats, mf: scala.reflect.Manifest[A]): A =
