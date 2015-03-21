@@ -148,52 +148,50 @@ private[http] trait LiftMerge {
     //  - The optional id that was found in this set of attributes.
     //  - The fixed metadata.
     //  - A list of extracted `EventAttribute`s.
-    def fixAttrs(original: MetaData, toFix: String, attrs: MetaData, fixURL: Boolean, eventAttributes: List[EventAttribute] = Nil): (Option[String], MetaData, List[EventAttribute]) = {
-      attrs match {
-        case Null => (None, Null, eventAttributes)
+    def fixAttrs(toFix: String, attrs: MetaData, fixURL: Boolean, eventAttributes: List[EventAttribute] = Nil): (Option[String], MetaData, List[EventAttribute]) = {
+      if (attrs == Null) {
+        (None, Null, eventAttributes)
+      } else {
+        val (id, fixedRemainingAttributes, remainingEventAttributes) = fixAttrs(toFix, attrs.next, fixURL, eventAttributes)
 
-        case attribute @ UnprefixedAttribute(
-               EventAttribute.EventForAttribute(eventName),
-               attributeValue,
-               remainingAttributes
-             ) if attributeValue.text.startsWith("javascript:") =>
-          val attributeJavaScript = {
-            // Could be javascript: or javascript://.
-            val base = attributeValue.text.substring(11)
-            val strippedJs =
-              if (base.startsWith("//"))
-                base.substring(2)
-              else
-                base
+        attrs match {
+          case attribute @ UnprefixedAttribute(
+                 EventAttribute.EventForAttribute(eventName),
+                 attributeValue,
+                 remainingAttributes
+               ) if attributeValue.text.startsWith("javascript:") =>
+            val attributeJavaScript = {
+              // Could be javascript: or javascript://.
+              val base = attributeValue.text.substring(11)
+              val strippedJs =
+                if (base.startsWith("//"))
+                  base.substring(2)
+                else
+                  base
 
-            if (strippedJs.trim.isEmpty) {
-              Nil
-            } else {
-              // When using javascript:-style URIs, return false is implied.
-              List(strippedJs + "; event.preventDefault();")
+              if (strippedJs.trim.isEmpty) {
+                Nil
+              } else {
+                // When using javascript:-style URIs, return false is implied.
+                List(strippedJs + "; event.preventDefault();")
+              }
             }
-          }
 
-          val updatedEventAttributes = attributeJavaScript.map(EventAttribute(eventName, _)) ::: eventAttributes
-          fixAttrs(original, toFix, remainingAttributes, fixURL, updatedEventAttributes)
+            val updatedEventAttributes = attributeJavaScript.map(EventAttribute(eventName, _)) ::: remainingEventAttributes
+            (id, fixedRemainingAttributes, updatedEventAttributes)
 
-        case u: UnprefixedAttribute if u.key == toFix =>
-          val (id, fixedAttributes, updatedEventAttributes) = fixAttrs(original, toFix, attrs.next, fixURL, eventAttributes)
+          case u: UnprefixedAttribute if u.key == toFix =>
+            (id, new UnprefixedAttribute(toFix, fixHref(contextPath, attrs.value, fixURL, rewrite), fixedRemainingAttributes), remainingEventAttributes)
 
-          (id, new UnprefixedAttribute(toFix, fixHref(contextPath, attrs.value, fixURL, rewrite), fixedAttributes), updatedEventAttributes)
+          case u: UnprefixedAttribute if u.key.startsWith("on") =>
+            (id, fixedRemainingAttributes, EventAttribute(u.key.substring(2), u.value.text) :: remainingEventAttributes)
 
-        case u: UnprefixedAttribute if u.key.startsWith("on") =>
-          fixAttrs(original, toFix, attrs.next, fixURL, EventAttribute(u.key.substring(2), u.value.text) :: eventAttributes)
+          case u: UnprefixedAttribute if u.key == "id" =>
+            (Option(u.value.text).filter(_.nonEmpty), attrs.copy(fixedRemainingAttributes), remainingEventAttributes)
 
-        case u: UnprefixedAttribute if u.key == "id" =>
-          val (_, fixedAttributes, updatedEventAttributes) = fixAttrs(original, toFix, attrs.next, fixURL, eventAttributes)
-
-          (Option(u.value.text).filter(_.nonEmpty), attrs.copy(fixedAttributes), updatedEventAttributes)
-
-        case _ =>
-          val (id, fixedAttributes, updatedEventAttributes) = fixAttrs(original, toFix, attrs.next, fixURL, eventAttributes)
-          
-          (id, attrs.copy(fixedAttributes), updatedEventAttributes)
+          case _ =>
+            (id, attrs.copy(fixedRemainingAttributes), remainingEventAttributes)
+        }
       }
     }
 
@@ -203,7 +201,7 @@ private[http] trait LiftMerge {
     // element needs to have event handlers attached but doesn't already have an
     // id.
     def fixElementAndAttributes(element: Elem, attributeToFix: String, fixURL: Boolean, fixedChildren: NodeSeq) = {
-      val (id, fixedAttributes, eventAttributes) = fixAttrs(element.attributes, attributeToFix, element.attributes, fixURL)
+      val (id, fixedAttributes, eventAttributes) = fixAttrs(attributeToFix, element.attributes, fixURL)
 
       id.map { foundId =>
         eventAttributesByElementId += (foundId -> eventAttributes)
