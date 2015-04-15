@@ -870,7 +870,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   }
 
   /**
-   * Sometimes it's helpful to accumute JavaScript as part of servicing
+   * Sometimes it's helpful to accumulate JavaScript as part of servicing
    * a request.  For example, you may want to accumulate the JavaScript
    * as part of an Ajax response or a Comet Rendering or
    * as part of a regular HTML rendering.  Call `S.appendJs(jsCmd)`.
@@ -882,7 +882,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   def appendJs(js: JsCmd): Unit = _jsToAppend.is += js
 
   /**
-   * Sometimes it's helpful to accumute JavaScript as part of servicing
+   * Sometimes it's helpful to accumulate JavaScript as part of servicing
    * a request.  For example, you may want to accumulate the JavaScript
    * as part of an Ajax response or a Comet Rendering or
    * as part of a regular HTML rendering.  Call `S.appendJs(jsCmd)`.
