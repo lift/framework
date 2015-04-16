@@ -2077,12 +2077,12 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
         override def localSetup(): Unit = {
           super.localSetup()
-          Helpers.tryo(setupFunc.foreach(_()))
+          Helpers.tryo(setupFunc.foreach(_(this)))
         }
 
         override def localShutdown(): Unit = {
           super.localShutdown()
-          Helpers.tryo(shutdownFunc.foreach(_()))
+          Helpers.tryo(shutdownFunc.foreach(_(this)))
         }
 
         override def lifespan = Full(LiftRules.clientActorLifespan.vend.apply(this))
