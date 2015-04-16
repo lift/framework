@@ -2047,8 +2047,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * @return a server-side Actor that is a proxy for the client-side Actor/Function call
    *
    */
-  def serverActorForClient(toCall: String, setupFunc: Box[() => Unit] = Empty,
-                            shutdownFunc: Box[() => Unit] = Empty,
+  def serverActorForClient(toCall: String, setupFunc: Box[LiftActor => Unit] = Empty,
+                            shutdownFunc: Box[LiftActor => Unit] = Empty,
                             dataFilter: Any => Any = a => a): LiftActor = {
     testStatefulFeature{
       val ca = new CometActor {
