@@ -2038,9 +2038,18 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    *
    * If the message is anything else, we attempt to JSON serialize the message and if it
    * can be JSON serialized, it's sent over the wire and passed to the `toCall` function on the server
-   * @return
+   *
+   * @param toCall the name of the browser-side function that should be called when the data is delivered
+   * @param setupFunc called by `localSetup` in the CometActor
+   * @param shutdownFunc called by `localShutdown` in the CometActor
+   * @param dataFilter messages are passed through this function... it allows conversion of
+   *                   data from
+   * @return a server-side Actor that is a proxy for the client-side Actor/Function call
+   *
    */
-  def serverActorForClient(toCall: String): LiftActor = {
+  def serverActorForClient(toCall: String, setupFunc: Box[() => Unit] = Empty,
+                            shutdownFunc: Box[() => Unit] = Empty,
+                            dataFilter: Any => Any = a => a): LiftActor = {
     testStatefulFeature{
       val ca = new CometActor {
         /**
@@ -2066,6 +2075,15 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
         def render: RenderOut = NodeSeq.Empty
 
 
+        override def localSetup(): Unit = {
+          super.localSetup()
+          Helpers.tryo(setupFunc.foreach(_()))
+        }
+
+        override def localShutdown(): Unit = {
+          super.localShutdown()
+          Helpers.tryo(shutdownFunc.foreach(_()))
+        }
 
         override def lifespan = Full(LiftRules.clientActorLifespan.vend.apply(this))
 
@@ -2073,25 +2091,30 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
         override def parentTag = <div style="display: none"/>
 
-        override def lowPriority: PartialFunction[Any, Unit] = {
-          case jsCmd: JsCmd => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsCmd, false)))
-          case jsExp: JsExp => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsExp.cmd, false)))
-          case jv: JsonAST.JValue => {
-            val s: String = json.pretty(json.render(jv))
-            partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(JsRaw(toCall+"("+s+")").cmd, false)))
+        override def lowPriority: PartialFunction[Any, Unit] = new PartialFunction[Any, Unit] {
+          def isDefinedAt(x: Any) = true
+          def apply(x: Any): Unit = {
+            dataFilter(x) match {
+              case jsCmd: JsCmd => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsCmd, false)))
+              case jsExp: JsExp => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsExp.cmd, false)))
+              case jv: JsonAST.JValue => {
+                val s: String = json.pretty(json.render(jv))
+                partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(JsRaw(toCall+"("+s+")").cmd, false)))
+              }
+              case x: AnyRef => {
+                import json._
+                implicit val formats = Serialization.formats(NoTypeHints)
+
+                val ser: Box[String] = Helpers.tryo(Serialization.write(x))
+
+                ser.foreach(s => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(JsRaw(toCall+"("+s+")").cmd, false))))
+
+              }
+
+              case _ => // this will never happen because the message is boxed
+
+            }
           }
-          case x: AnyRef => {
-            import json._
-            implicit val formats = Serialization.formats(NoTypeHints)
-
-            val ser: Box[String] = Helpers.tryo(Serialization.write(x))
-
-            ser.foreach(s => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(JsRaw(toCall+"("+s+")").cmd, false))))
-
-          }
-
-          case _ => // this will never happen because the message is boxed
-
         }
       }
 
@@ -2372,7 +2395,20 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     }
   }
 
-  private def buildAndStoreComet[T <: LiftCometActor](newCometFn: (CometCreationInfo)=>Box[T])(creationInfo: CometCreationInfo): Box[T] = {
+  /**
+   * Need to add your own CometActor to a Session/Page? You might 'cause creating
+   * a CometActor programmatically within a snippet may be between that referring
+   * to a CometActor by class name.
+   *
+   * This is dangerous stuff, so use with caution.
+   *
+   * @param newCometFn a Function that takes `CometCreateInfo` and returns a CometActor
+   *                   instance
+   * @param creationInfo the info to send to the above function
+   * @tparam T A LiftCometActor or better
+   * @return The created, registered, etc. CometActor
+   */
+  def buildAndStoreComet[T <: LiftCometActor](newCometFn: (CometCreationInfo)=>Box[T])(creationInfo: CometCreationInfo): Box[T] = {
     newCometFn(creationInfo).map { comet =>
       val initialRequest =
         S.request
