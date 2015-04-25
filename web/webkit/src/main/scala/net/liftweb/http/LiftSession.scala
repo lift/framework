@@ -2265,7 +2265,12 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    */
   def setupComet(cometType: String, cometName: Box[String], msg: Any) {
     testStatefulFeature {
-      cometSetup.atomicUpdate(v => (CometId(cometType, cometName), msg) :: v)
+      cometSetup.atomicUpdate(v => {
+        val id = CometId(cometType, cometName)
+        logger.info(s"setupComet callback from atomicUpdate $cometType $cometName $v $msg $id")
+        (id, msg) :: v
+      })
+      logger.info("setupComet cometSetup: " + cometSetup.is)
     }
   }
 
@@ -2374,8 +2379,10 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     testStatefulFeature {
       val existingComet = Box.legacyNullTest(nasyncComponents.get(cometInfo))
 
+      logger.info("cometSetup: " + cometSetup)
       (existingComet.asA[T] or newCometFn(creationInfo)).map { comet =>
-        cometSetup.atomicUpdate(setupMessages =>
+        cometSetup.atomicUpdate(setupMessages => {
+          logger.info("setupMessages: " + setupMessages)
           setupMessages.filter {
             // Pass messages for this comet on and remove them from pending list.
             case (info, message) if info == cometInfo =>
@@ -2383,7 +2390,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
               false
             case _ =>
               true
-          }
+          }}
         )
 
         comet
