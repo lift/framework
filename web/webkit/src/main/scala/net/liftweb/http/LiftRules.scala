@@ -562,6 +562,44 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var displayHelpfulSiteMapMessages_? = true
 
   /**
+   * Set to true if you want to add an attribute of the form data-lift-fixedeventattribute-&lt;eventName&gt;
+   * for each even-attribute (on*) which is replaced as part of the CSP.
+   * <br/>
+   * Example for the onclick attribute.
+   *
+   * <pre>
+   * An element looking like this
+   *
+   * &lt;span onclick="someStuff"&gt;
+   *
+   * Will be re-written to:
+   *
+   * &lt;span id="lift-event-js-F827001738725NKMEQNf"&gt;
+   *
+   * by the CSP.
+   *
+   * When setting this value to <strong>true</strong> an extra attribute is added to indicate which events have been replaced
+   *
+   * &lt;span id="lift-event-js-F827001738725NKMEQNf" <strong>data-lift-fixedeventattribute-click="click"</strong>&gt;
+   *
+   * </pre>
+   *
+   * This makes it possible to replace old CSS matching the onclick:
+   * <pre>
+   * [onclick] {
+   *   text-decoration: underline;
+   * }
+   * </pre>
+   * with similar matching the data-lift-fixedeventattribute-click:
+   * <pre>
+   * [data-lift-fixedeventattribute-click] {
+   *   text-decoration: underline;
+   * }
+   * </pre>
+   */
+  @volatile var includeFixedEventAttributesAsDataAttributes_? = false
+
+  /**
    * The default location to send people if SiteMap access control fails. The path is
    * expressed a a List[String]
    */
