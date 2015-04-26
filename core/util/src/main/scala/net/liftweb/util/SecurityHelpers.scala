@@ -39,7 +39,7 @@ object SecurityHelpers extends StringHelpers with IoHelpers with SecurityHelpers
  * <li> generate random numbers
  * <li> generate keys
  * <li> encrypt/decrypt keys
- * <li> create SHA, SHA-256, MD5 hashs (can be hex encoded)
+ * <li> create SHA, SHA-256, MD5 hashes (can be hex encoded)
  * </ul>
  */
 trait SecurityHelpers {
@@ -98,7 +98,7 @@ trait SecurityHelpers {
 
   /** Compare two strings in a way that does not vary if the strings
    * are determined to be not equal early (test every byte... avoids
-   * timing attackes */
+   * timing attacks */
   def secureEquals(s1: String, s2: String): Boolean = (s1, s2) match {
     case (null, null) => true
     case (null, _) => false
@@ -108,7 +108,7 @@ trait SecurityHelpers {
 
   /** Compare two byte arrays in a way that does not vary if the arrays
    * are determined to be not equal early (test every byte... avoids
-   * timing attackes */
+   * timing attacks */
   def secureEquals(s1: Array[Byte], s2: Array[Byte]): Boolean = (s1, s2) match {
     case (null, null) => true
     case (null, _) => false
@@ -137,13 +137,13 @@ trait SecurityHelpers {
     base64Encode(MessageDigest.getInstance("SHA-256").digest(in.getBytes("UTF-8")))
   }
 
-  /** create an hex encoded SHA hash from a Byte array */
+  /** create a hex encoded SHA hash from a Byte array */
   def hexDigest(in: Array[Byte]): String = {
     val binHash = MessageDigest.getInstance("SHA").digest(in)
     hexEncode(binHash)
   }
 
-  /** create an hex encoded SHA-256 hash from a Byte array */
+  /** create a hex encoded SHA-256 hash from a Byte array */
   def hexDigest256(in: Array[Byte]): String = {
     val binHash = MessageDigest.getInstance("SHA-256").digest(in)
     hexEncode(binHash)

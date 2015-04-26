@@ -321,7 +321,7 @@ private[http] class BooleanThreadGlobal extends ThreadGlobal[Boolean] {
 }
 
 /**
- * The LiftSession class containg the session state information
+ * The LiftSession class containing the session state information
  */
 class LiftSession(private[http] val _contextPath: String, val underlyingId: String,
                   val httpSession: Box[HTTPSession]) extends LiftMerge with Loggable with HowStateful {
