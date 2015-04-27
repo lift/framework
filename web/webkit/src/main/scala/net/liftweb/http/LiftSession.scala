@@ -2374,16 +2374,14 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       val existingComet = Box.legacyNullTest(nasyncComponents.get(cometInfo))
 
       (existingComet.asA[T] or newCometFn(creationInfo)).map { comet =>
-        cometPreMessages.atomicUpdate(setupMessages => {
-          setupMessages.filter {
-            // Pass messages for this comet on and remove them from pending list.
-            case (info, message) if info == cometInfo =>
-              comet ! message
-              false
-            case _ =>
-              true
-          }}
-        )
+        cometPreMessages.atomicUpdate(_.filter {
+          // Pass messages for this comet on and remove them from pending list.
+          case (info, message) if info == cometInfo =>
+            comet ! message
+            false
+          case _ =>
+            true
+        })
 
         comet
       }
