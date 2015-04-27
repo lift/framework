@@ -18,16 +18,23 @@ package net.liftweb
 package http
 
 import scala.xml.NodeSeq
-import net.liftweb.common.{Loggable, Full, Empty}
+import net.liftweb.common.{Full, Empty}
 import org.specs2.mutable.Specification
 
-object LiftSessionSpec extends Specification with Loggable {
+object LiftSessionSpec extends Specification {
 
-  class TestComet extends CometActor with Loggable {
-    logger.info("TestComet created")
+  private var receivedMessages = Vector[Int]()
+  private object NoOp
+  
+  private class TestCometActor extends CometActor {
     def render = NodeSeq.Empty
-    override def !(msg: Any) = {
-      logger.info("Message received: " + msg)
+
+    override def lowPriority = {
+      case n: Int =>
+        receivedMessages :+= n
+      case NoOp =>
+        reply(NoOp)
+      case _ =>
     }
   }
 
@@ -35,19 +42,16 @@ object LiftSessionSpec extends Specification with Loggable {
 
     "Send accumulated messages to a newly-created comet actor in the order in which they arrived" in {
 
-      val testSession = new LiftSession("Test Session", "", Empty) {
-        override private[liftweb] def set[T](name: String, value: T) = {
-          logger.info(s"set called. $name $value")
-          super.set(name, value)
-        }
+      val session = new LiftSession("Test Session", "", Empty)
+      S.init(Empty, session) {
+        val cometName = "TestCometActor"
+        val sendingMessages = 1 to 20
+        sendingMessages foreach (message =>
+          session.sendCometActorMessage(cometName, Full(cometName), message))
+        session.findOrCreateComet[TestCometActor](Full(cometName), NodeSeq.Empty, Map.empty).map(comet =>
+          comet !? NoOp /* Block to allow time for all messages to be collected */)
+        receivedMessages mustEqual sendingMessages
       }
-
-      val cometName = "TestComet"
-      1 to 3 foreach(n => testSession.sendCometActorMessage("CometType", Full(cometName), n))
-      val bc = testSession.findOrCreateComet[TestComet](Empty, NodeSeq.Empty, Map.empty)
-      logger.info("Comet: " + bc)
-      bc.foreach(_.!(1))
-      bc.isDefined mustEqual true
     }
   }
 }

@@ -415,9 +415,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   private[http] object deferredSnippets extends RequestVar[HashMap[String, Box[NodeSeq]]](new HashMap)
 
-  // List of `CometId`s associated with messages that a comet of that
-  // `CometId` should get when instantiated.
-  private object cometSetup extends SessionVar[List[(CometId, Any)]](Nil)
+  /** Messages saved for CometActors prior to their creation */
+  private object cometPreMessages extends SessionVar[Vector[(CometId, Any)]](Vector.empty)
 
 
   private[http] def startSession(): Unit = {
@@ -2265,12 +2264,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    */
   def setupComet(cometType: String, cometName: Box[String], msg: Any) {
     testStatefulFeature {
-      cometSetup.atomicUpdate(v => {
-        val id = CometId(cometType, cometName)
-        logger.info(s"setupComet callback from atomicUpdate $cometType $cometName $v $msg $id")
-        (id, msg) :: v
-      })
-      logger.info("setupComet cometSetup: " + cometSetup.is)
+      cometPreMessages.atomicUpdate(_ :+ CometId(cometType, cometName) -> msg)
     }
   }
 
@@ -2379,10 +2373,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     testStatefulFeature {
       val existingComet = Box.legacyNullTest(nasyncComponents.get(cometInfo))
 
-      logger.info("cometSetup: " + cometSetup)
       (existingComet.asA[T] or newCometFn(creationInfo)).map { comet =>
-        cometSetup.atomicUpdate(setupMessages => {
-          logger.info("setupMessages: " + setupMessages)
+        cometPreMessages.atomicUpdate(setupMessages => {
           setupMessages.filter {
             // Pass messages for this comet on and remove them from pending list.
             case (info, message) if info == cometInfo =>
