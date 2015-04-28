@@ -990,10 +990,12 @@ trait ProtoUser {
         }
       }
 
+      val passwordInput = SHtml.password_*("",
+        (p: List[String]) => user.setPasswordFromListString(p))
+
+
       val bind = {
-        "type=password" #> SHtml.password_*("", { p: List[String] =>
-          user.setPasswordFromListString(p)
-        }) &
+        "type=password" #> passwordInput &
         "type=submit" #> resetPasswordSubmitButton(S.?("set.password"), finishSet _)
       }
 
