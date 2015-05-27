@@ -852,7 +852,7 @@ object JsonAST {
   private def appendEscapedString(buf: StringBuilder, s: String) {
     for (i <- 0 until s.length) {
       val c = s.charAt(i)
-      buf.append(c match {
+      val strReplacement = c match {
         case '"'  => "\\\""
         case '\\' => "\\\\"
         case '\b' => "\\b"
@@ -861,8 +861,9 @@ object JsonAST {
         case '\r' => "\\r"
         case '\t' => "\\t"
         case c if ((c >= '\u0000' && c < '\u0020')) => "\\u%04x".format(c: Int)
-        case c => c
-      })
+        case c => ""
+      }
+      if (strReplacement.isEmpty) buf.append(c) else buf.append(strReplacement)
     }
   }
 
