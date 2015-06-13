@@ -1,3 +1,5 @@
+@rem This script needs to be updated for 0.13.8. It probably isn't working.
+
 @echo off
 
 set SBT_LAUNCHER_PATH="project\sbt-launch-0.13.5.jar"
