@@ -7,5 +7,9 @@ services:
 jdk:
   - oraclejdk7
   - openjdk7
+branches:
+  only:
+    - master
+    - lift_26
 
 script: ./liftsh test
