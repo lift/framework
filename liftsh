@@ -2,13 +2,17 @@
 
 # Make sure to change the name of the launcher jar and the source when bumping sbt version
 # so that the existence test below fails and we download the new jar.
-SBT_LAUNCHER_PATH="project/sbt-launch-0.13.5.jar"
-SBT_LAUNCHER_SOURCE="http://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.5/sbt-launch.jar"
+SBT_LAUNCHER_PATH="project/sbt-launch-0.13.8.jar"
+SBT_LAUNCHER_SOURCE="https://dl.bintray.com/sbt/native-packages/sbt/0.13.8/sbt-0.13.8.tgz"
 
 # Download the sbt launcher on-the-fly if it's not already in the repository.
 if test ! -f $SBT_LAUNCHER_PATH; then
+  BASEDIR=$(dirname $SBT_LAUNCHER_PATH)
   echo "Downloading sbt launcher..."
-  curl -o ${SBT_LAUNCHER_PATH} ${SBT_LAUNCHER_SOURCE}
+  curl -L -o ${SBT_LAUNCHER_PATH}.tgz ${SBT_LAUNCHER_SOURCE}
+  tar xf $SBT_LAUNCHER_PATH.tgz -C $BASEDIR
+  mv $BASEDIR/sbt/bin/sbt-launch.jar $SBT_LAUNCHER_PATH
+  rm -rf $BASEDIR/sbt
 fi
 
 # Load custom liftsh config
