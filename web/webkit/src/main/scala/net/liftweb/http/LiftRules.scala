@@ -562,8 +562,8 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var displayHelpfulSiteMapMessages_? = true
 
   /**
-   * Set to true if you want to add an attribute of the form data-lift-fixedeventattribute-&lt;eventName&gt;
-   * for each even-attribute (on*) which is replaced as part of the CSP.
+   * Set to true if you want to add an attribute of the form data-lift-removed-attributes="removedattribute1 removedattribute2 ..."
+   * for each event-attribute (on*) which is replaced as part of the CSP.
    * <br/>
    * Example for the onclick attribute.
    *
@@ -580,7 +580,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    *
    * When setting this value to <strong>true</strong> an extra attribute is added to indicate which events have been replaced
    *
-   * &lt;span id="lift-event-js-F827001738725NKMEQNf" <strong>data-lift-fixedeventattribute-click="click"</strong>&gt;
+   * &lt;span id="lift-event-js-F827001738725NKMEQNf" <strong>data-lift-removed-attributes="onclick"</strong>&gt;
    *
    * </pre>
    *
@@ -590,9 +590,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    *   text-decoration: underline;
    * }
    * </pre>
-   * with similar matching the data-lift-fixedeventattribute-click:
+   * with similar matching the data-lift-removed-attributes="onclick":
    * <pre>
-   * [data-lift-fixedeventattribute-click] {
+   * [data-lift-removed-attributes~=onclick] {
    *   text-decoration: underline;
    * }
    * </pre>
