@@ -597,7 +597,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * }
    * </pre>
    */
-  @volatile var includeFixedEventAttributesAsDataAttributes_? = false
+  @volatile var includeRemovedEventAttributesAsDataAttributes_? = false
+
+  @volatile var removedEventAttributesAttributeName = "data-lift-removed-attributes"
 
   /**
    * The default location to send people if SiteMap access control fails. The path is
