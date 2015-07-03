@@ -42,7 +42,7 @@ object SHtml extends SHtml
  * The SHtml object defines a suite of XHTML element generator methods
  * to simplify the creation of markup, particularly with forms and AJAX.
  */
-trait SHtml {
+trait SHtml extends Loggable {
 
   /**
    * Convert a T to a String for display in Select, MultiSelect,
@@ -169,6 +169,21 @@ trait SHtml {
     ajaxCall_*(jsCalcValue, jsContext, SFuncHolder(func))
 
   /**
+   * A wrapper around parseOpt for use in the jsonCall variants that will notify the developer on the console when
+   * parseOpt is unsuccessful at parsing the JSON.
+  **/
+  private def parseOptOrLog(rawJsonText: String) = {
+    parseOpt(rawJsonText) match {
+      case None =>
+        logger.error(s"Browser sent back something that wasn't JSON to a jsonCall function: $rawJsonText")
+        None
+
+      case anythingElse =>
+        anythingElse
+    }
+  }
+
+  /**
    * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript.
    * This method uses the Lift-JSON package rather than the old, slow, not-typed JSONParser.  This is the preferred
    * way to do client to server JSON calls.
@@ -179,7 +194,7 @@ trait SHtml {
    * @return the function ID and JavaScript that makes the call
    */
   def jsonCall(jsCalcValue: JsExp, func: JsonAST.JValue => JsCmd): GUIDJsExp =
-    jsonCall_*(jsCalcValue, SFuncHolder(s => parseOpt(s).map(func) getOrElse Noop))
+    jsonCall_*(jsCalcValue, SFuncHolder(s => parseOptOrLog(s).map(func) getOrElse Noop))
 
   /**
    * Build a JavaScript function that will perform a JSON call based on a value calculated in JavaScript.
@@ -193,7 +208,7 @@ trait SHtml {
    * @return the function ID and JavaScript that makes the call
    */
   def jsonCall(jsCalcValue: JsExp, jsContext: JsContext, func: JsonAST.JValue => JsCmd): GUIDJsExp =
-    jsonCall_*(jsCalcValue, jsContext, SFuncHolder(s => parseOpt(s).map(func) getOrElse Noop))
+    jsonCall_*(jsCalcValue, jsContext, SFuncHolder(s => parseOptOrLog(s).map(func) getOrElse Noop))
 
 
   /**
@@ -209,7 +224,7 @@ trait SHtml {
    * @return the function ID and JavaScript that makes the call
    */
   def jsonCall(jsCalcValue: JsExp, jsonContext: JsonContext, func: JsonAST.JValue => JsonAST.JValue): GUIDJsExp =
-    jsonCall_*(jsCalcValue, jsonContext, S.SFuncHolder(s => parseOpt(s).map(func) getOrElse JsonAST.JNothing))
+    jsonCall_*(jsCalcValue, jsonContext, S.SFuncHolder(s => parseOptOrLog(s).map(func) getOrElse JsonAST.JNothing))
 
   /**
    * Build a JavaScript function that will perform an AJAX call based on a value calculated in JavaScript
