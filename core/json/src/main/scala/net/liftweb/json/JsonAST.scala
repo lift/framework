@@ -861,9 +861,16 @@ object JsonAST {
         case '\r' => "\\r"
         case '\t' => "\\t"
         case c if ((c >= '\u0000' && c < '\u0020')) => "\\u%04x".format(c: Int)
-        case c => ""
+
+        case _ => ""
       }
-      if (strReplacement.isEmpty) buf.append(c) else buf.append(strReplacement)
+
+      // Use Char version of append if we can, as it's cheaper.
+      if (strReplacement.isEmpty) {
+        buf.append(c)
+      } else {
+        buf.append(strReplacement)
+      }
     }
   }
 
