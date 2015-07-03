@@ -70,6 +70,17 @@ object LiftSession {
   var onSetupSession: List[LiftSession => Unit] = Nil
 
   /**
+   * Holds user's functions that will be called when a function owner is
+   * no longer has functions registered for callbacks.
+   *
+   * Note that owners are '''typically''', though not always, the
+   * [[S.renderVersion render version]] of a page, so this is a good way
+   * to find out when a page no longer has any client-side functions
+   * (e.g., form fields) bound on the server.
+   */
+  var onFunctionOwnersRemoved: List[Set[String] => Unit] = Nil
+
+  /**
    * Holds user's functions that will be called when the session is about to be terminated
    */
   var onAboutToShutdownSession: List[LiftSession => Unit] = Nil
@@ -354,6 +365,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   private val fullPageLoad = new BooleanThreadGlobal
 
   private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = new ConcurrentHashMap
+  private val functionOwnerRemovalListeners = LiftSession.onFunctionOwnersRemoved
 
   @volatile private[http] var notices: Seq[(NoticeType.Value, NodeSeq, Box[String])] = Nil
 
@@ -574,8 +586,41 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     }
   }
 
+  /**
+   * Removes the function with the given `name`. Note that this will
+   * '''not''' trigger `[[onFunctionOwnersRemoved]]` listeners.
+   */
   def removeFunction(name: String) = {
     nmessageCallback.remove(name)
+  }
+
+  /**
+   * Given a test that takes an [[S.AFuncHolder]] and produces a
+   * boolean, remove any bound function in the session that passes the
+   * test.
+   *
+   * If any function owner is completely absent after going through the
+   * functions, any function registered via `[[onFunctionOwnersRemoved]]`
+   * will be called with the list of removed owners.
+   */
+  private def removeFunctionsIf(test: (S.AFuncHolder)=>Boolean) = {
+    var availableOwners = Set[String]()
+    var removedOwners = Set[String]()
+
+    import scala.collection.JavaConversions._
+    nmessageCallback.foreach {
+      case (functionName, funcHolder) if test(funcHolder) =>
+        funcHolder.owner.foreach(removedOwners += _)
+        nmessageCallback.remove(functionName)
+
+      case (_, funcHolder) =>
+        funcHolder.owner.foreach(availableOwners += _)
+    }
+
+    val fullyRemovedOwners = removedOwners diff availableOwners
+    if (fullyRemovedOwners.nonEmpty) {
+      functionOwnerRemovalListeners.foreach(_(fullyRemovedOwners))
+    }
   }
 
   /**
@@ -590,7 +635,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Called just before the session exits.  If there's clean-up work, override this method
    */
   private[http] def cleanUpSession() {
-    nmessageCallback.clear()
+    removeFunctionsIf(_ => true)
     notices = Nil
     nasyncComponents.clear
     nasyncById.clear
@@ -694,15 +739,10 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
         }
       }
 
-
-      import scala.collection.JavaConversions._
-      nmessageCallback.foreach {
-        case (k, f) =>
-          if (!f.sessionLife &&
-            f.owner.isDefined &&
-            (now - f.lastSeen) > LiftRules.unusedFunctionsLifeTime) {
-            nmessageCallback.remove(k)
-          }
+      removeFunctionsIf { funcHolder =>
+        ! funcHolder.sessionLife &&
+        funcHolder.owner.isDefined &&
+        (now - funcHolder.lastSeen) > LiftRules.unusedFunctionsLifeTime
       }
     }
   }
@@ -2293,11 +2333,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
       val toCmp = Full(act.uniqueId)
 
-      import scala.collection.JavaConversions._
-      nmessageCallback.foreach {
-        case (k, f) =>
-          if (f.owner == toCmp) nmessageCallback.remove(k)
-      }
+      removeFunctionsIf(_.owner == toCmp)
 
       LiftSession.this.synchronized {
         accessPostPageFuncs {
@@ -2308,13 +2344,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       import scala.collection.JavaConversions._
       val id = Full(act.uniqueId)
 
-      nmessageCallback.foreach {
-        case (k, f) =>
-
-          if (f.owner == id) {
-            nmessageCallback.remove(k)
-          }
-      }
+      removeFunctionsIf(_.owner == id)
     }
   }
 
