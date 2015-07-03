@@ -203,11 +203,18 @@ private[http] trait LiftMerge {
     def fixElementAndAttributes(element: Elem, attributeToFix: String, fixURL: Boolean, fixedChildren: NodeSeq) = {
       val (id, fixedAttributes, eventAttributes) = fixAttrs(attributeToFix, element.attributes, fixURL)
 
-      val attributesIncludingEventsAsData = if (LiftRules.includeRemovedEventAttributesAsDataAttributes_? && eventAttributes.nonEmpty) {
-        new UnprefixedAttribute(LiftRules.removedEventAttributesAttributeName, eventAttributes.map(ea => s"on${ea.eventName}").join(" "), fixedAttributes)
-      } else {
-        fixedAttributes
-      }
+      val attributesIncludingEventsAsData =
+        LiftRules.attributeForRemovedEventAttributes match {
+          case Some(attribute) if eventAttributes.nonEmpty =>
+            val removedAttributes = eventAttributes.map {
+              case EventAttribute(event, _) =>
+                s"on$event"
+            }
+            new UnprefixedAttribute(attribute, removedAttributes.join(" "), fixedAttributes)
+
+          case _ =>
+            fixedAttributes
+        }
 
       id.map { foundId =>
         eventAttributesByElementId += (foundId -> eventAttributes)

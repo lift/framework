@@ -562,44 +562,63 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var displayHelpfulSiteMapMessages_? = true
 
   /**
-   * Set to true if you want to add an attribute of the form data-lift-removed-attributes="removedattribute1 removedattribute2 ..."
-   * for each event-attribute (on*) which is replaced as part of the CSP.
-   * <br/>
-   * Example for the onclick attribute.
+   * The attribute used to expose the names of event attributes that
+   * were removed from a given element for separate processing in JS.
+   * By default, Lift removes event attributes and attaches those
+   * behaviors via a separate JS file, to avoid inline JS invocations so
+   * that a restrictive Content-Security-Policy can be used.
    *
-   * <pre>
-   * An element looking like this
+   * You can set this variable so that the resulting HTML will have
+   * attribute information about the removed attributes, in case you
+   * need them for e.g. CSS selector matching. The attribute will
+   * contain a space-separated list of JS attributes that were removed
+   * by Lift's processing.
    *
-   * &lt;span onclick="someStuff"&gt;
+   * For example, if you needed to match elements with an `onclick`
+   * attribute in CSS, you would usually do:
    *
-   * Will be re-written to:
-   *
-   * &lt;span id="lift-event-js-F827001738725NKMEQNf"&gt;
-   *
-   * by the CSP.
-   *
-   * When setting this value to <strong>true</strong> an extra attribute is added to indicate which events have been replaced
-   *
-   * &lt;span id="lift-event-js-F827001738725NKMEQNf" <strong>data-lift-removed-attributes="onclick"</strong>&gt;
-   *
-   * </pre>
-   *
-   * This makes it possible to replace old CSS matching the onclick:
-   * <pre>
+   * {{{
    * [onclick] {
    *   text-decoration: underline;
    * }
-   * </pre>
-   * with similar matching the data-lift-removed-attributes="onclick":
-   * <pre>
+   * }}}
+   *
+   * And have an element:
+   *
+   * {{{
+   * <span onclick="jsCode()">Do something!</span>
+   * }}}
+   *
+   * In Lift 3, this would not work, as the onclick attribute would be
+   * removed before HTML serialization, so your HTML would be:
+   *
+   * {{{
+   * <span id="lift-event-js-F827001738725NKMEQNF">Do something!</span>
+   * }}}
+   *
+   * Instead, you could set:
+   *
+   * {{{
+   * LiftRules.attributeForRemovedEventAttributes = Some("data-lift-removed-attributes")
+   * }}}
+   *
+   * The HTML Lift emitted would then look like:
+   *
+   * {{{
+   * <span id="lift-event-js-F827001738725NKMEQNF"
+   *       data-lift=removed-attributes="onclick">Do something!</span>
+   * }}}
+   *
+   * This makes it possible to replace the old CSS with with similar
+   * matching for the `data-lift-removed-attributes` attribute:
+   *
+   * {{{
    * [data-lift-removed-attributes~=onclick] {
    *   text-decoration: underline;
    * }
-   * </pre>
+   * }}}
    */
-  @volatile var includeRemovedEventAttributesAsDataAttributes_? = false
-
-  @volatile var removedEventAttributesAttributeName = "data-lift-removed-attributes"
+  @volatile var attributeForRemovedEventAttributes: Option[String] = None
 
   /**
    * The default location to send people if SiteMap access control fails. The path is
