@@ -562,6 +562,65 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var displayHelpfulSiteMapMessages_? = true
 
   /**
+   * The attribute used to expose the names of event attributes that
+   * were removed from a given element for separate processing in JS.
+   * By default, Lift removes event attributes and attaches those
+   * behaviors via a separate JS file, to avoid inline JS invocations so
+   * that a restrictive Content-Security-Policy can be used.
+   *
+   * You can set this variable so that the resulting HTML will have
+   * attribute information about the removed attributes, in case you
+   * need them for e.g. CSS selector matching. The attribute will
+   * contain a space-separated list of JS attributes that were removed
+   * by Lift's processing.
+   *
+   * For example, if you needed to match elements with an `onclick`
+   * attribute in CSS, you would usually do:
+   *
+   * {{{
+   * [onclick] {
+   *   text-decoration: underline;
+   * }
+   * }}}
+   *
+   * And have an element:
+   *
+   * {{{
+   * <span onclick="jsCode()">Do something!</span>
+   * }}}
+   *
+   * In Lift 3, this would not work, as the onclick attribute would be
+   * removed before HTML serialization, so your HTML would be:
+   *
+   * {{{
+   * <span id="lift-event-js-F827001738725NKMEQNF">Do something!</span>
+   * }}}
+   *
+   * Instead, you could set:
+   *
+   * {{{
+   * LiftRules.attributeForRemovedEventAttributes = Some("data-lift-removed-attributes")
+   * }}}
+   *
+   * The HTML Lift emitted would then look like:
+   *
+   * {{{
+   * <span id="lift-event-js-F827001738725NKMEQNF"
+   *       data-lift=removed-attributes="onclick">Do something!</span>
+   * }}}
+   *
+   * This makes it possible to replace the old CSS with with similar
+   * matching for the `data-lift-removed-attributes` attribute:
+   *
+   * {{{
+   * [data-lift-removed-attributes~=onclick] {
+   *   text-decoration: underline;
+   * }
+   * }}}
+   */
+  @volatile var attributeForRemovedEventAttributes: Option[String] = None
+
+  /**
    * The default location to send people if SiteMap access control fails. The path is
    * expressed a a List[String]
    */
