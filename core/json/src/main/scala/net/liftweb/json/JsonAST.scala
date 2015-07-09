@@ -878,28 +878,36 @@ object JsonAST {
     case JNothing      => sys.error("can't render 'nothing'") //TODO: this should not throw an exception
   }
 
-  private def bufRenderArr(xs: List[JValue], buf: StringBuilder, settings: RenderSettings, indentLevel: Int): StringBuilder = {
+  private def bufRenderArr(values: List[JValue], buf: StringBuilder, settings: RenderSettings, indentLevel: Int): StringBuilder = {
     buf.append("[") //open array
-    if (!xs.isEmpty) {
-      xs.foreach(elem => Option(elem) match {
-        case Some(e) =>
-          if (e != JNothing) {
-            bufRender(e, buf, settings, indentLevel)
-            buf.append(",")
-          }
-        case None => buf.append("null,")
-      })
+
+    if (! values.isEmpty) {
+      values.foreach { elem =>
+        Option(elem) match {
+          case Some(elem) =>
+            if (elem != JNothing) {
+              bufRender(elem, buf, settings, indentLevel)
+              buf.append(",")
+            }
+
+          case None =>
+            buf.append("null,")
+        }
+      }
+
       if (buf.last == ',')
         buf.deleteCharAt(buf.length - 1) //delete last comma
     }
+
     buf.append("]")
     buf
   }
 
-  private def bufRenderObj(xs: List[JField], buf: StringBuilder, settings: RenderSettings, indentLevel: Int): StringBuilder = {
+  private def bufRenderObj(fields: List[JField], buf: StringBuilder, settings: RenderSettings, indentLevel: Int): StringBuilder = {
     buf.append("{") //open bracket
-    if (!xs.isEmpty) {
-      xs.foreach {
+
+    if (! fields.isEmpty) {
+      fields.foreach {
         case JField(name, value) if value != JNothing =>
           bufQuote(name, buf)
           buf.append(":")
@@ -908,9 +916,11 @@ object JsonAST {
 
         case _ => // omit fields with value of JNothing
       }
+
       if (buf.last == ',')
         buf.deleteCharAt(buf.length - 1) //delete last comma
     }
+
     buf.append("}") //close bracket
     buf
   }
