@@ -40,7 +40,8 @@ object Serialization {
   /** Serialize to Writer.
    */
   def write[A <: AnyRef, W <: Writer](a: A, out: W)(implicit formats: Formats): W =
-    Printer.compact(render(Extraction.decompose(a)(formats)), out)
+    //FIXME: Printer.compact(render(Extraction.decompose(a)(formats)), out)
+    out
 
   /** Serialize to String (pretty format).
    */
@@ -50,7 +51,8 @@ object Serialization {
   /** Serialize to Writer (pretty format).
    */
   def writePretty[A <: AnyRef, W <: Writer](a: A, out: W)(implicit formats: Formats): W = 
-    Printer.pretty(render(Extraction.decompose(a)(formats)), out)
+    //FIXME: Printer.pretty(render(Extraction.decompose(a)(formats)), out)
+    out
 
   /** Deserialize from a String.
    */

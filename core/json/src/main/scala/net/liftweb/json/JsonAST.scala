@@ -46,9 +46,6 @@ import scala.language.implicitConversions
  * }}}
  */
 object JsonAST {
-  import scala.text.{Document, DocText}
-  import scala.text.Document._
-
   /**
     * Concatenate a sequence of `[[JValue]]`s together.
     *
@@ -814,35 +811,6 @@ object JsonAST {
 
   case class JField(name: String, value: JValue)
 
-  /** Renders JSON.
-    * @see Printer#compact
-    * @see Printer#pretty
-    */
-  def render(value: JValue): Document = value match {
-    case null          => text("null")
-    case JBool(true)   => text("true")
-    case JBool(false)  => text("false")
-    case JDouble(n)    => text(n.toString)
-    case JInt(n)       => text(n.toString)
-    case JNull         => text("null")
-    case JString(null) => text("null")
-    case JString(s)    => text("\"" + quote(s) + "\"")
-    case JArray(arr)   => text("[") :: series(trimArr(arr).map(render)) :: text("]")
-    case JObject(obj)  =>
-      val nested = break :: fields(trimObj(obj).map { case JField(name, value) => text("\"" + quote(name) + "\":") :: render(value) })
-      text("{") :: nest(2, nested) :: break :: text("}")
-    case JNothing      => sys.error("can't render 'nothing'") //TODO: this should not throw an exception
-  }
-
-  private def trimArr(xs: List[JValue]) = xs.filter(_ != JNothing)
-  private def trimObj(xs: List[JField]) = xs.filter(_.value != JNothing)
-  private def series(docs: List[Document]) = punctuate(text(","), docs)
-  private def fields(docs: List[Document]) = punctuate(text(",") :: break, docs)
-
-  private def punctuate(p: Document, docs: List[Document]): Document =
-    if (docs.length == 0) empty
-    else docs.reduceLeft((d1, d2) => d1 :: p :: d2)
-
   private[json] def quote(s: String): String = {
     val buf = new StringBuilder
     appendEscapedString(buf, s)
@@ -1006,54 +974,5 @@ trait JsonDSL extends Implicits {
   class JsonListAssoc(left: List[JField]) {
     def ~(right: (String, JValue)) = JObject(left ::: List(JField(right._1, right._2)))
     def ~(right: JObject) = JObject(left ::: right.obj)
-  }
-}
-
-/** Printer converts JSON to String.
-  * Before printing a <code>JValue</code> needs to be rendered into scala.text.Document.
-  * <p>
-  * Example:<pre>
-  * pretty(render(json))
-  * </pre>
-  *
-  * @see net.liftweb.json.JsonAST#render
-  */
-object Printer extends Printer
-trait Printer {
-  import java.io._
-  import scala.text._
-
-  /** Compact printing (no whitespace etc.)
-    */
-  def compact(d: Document): String = compact(d, new StringWriter).toString
-
-  /** Compact printing (no whitespace etc.)
-    */
-  def compact[A <: Writer](d: Document, out: A): A = {
-    def layout(docs: List[Document]): Unit = docs match {
-      case Nil                   =>
-      case DocText(s) :: rs      => out.write(s); layout(rs)
-      case DocCons(d1, d2) :: rs => layout(d1 :: d2 :: rs)
-      case DocBreak :: rs        => layout(rs)
-      case DocNest(_, d) :: rs   => layout(d :: rs)
-      case DocGroup(d) :: rs     => layout(d :: rs)
-      case DocNil :: rs          => layout(rs)
-      case _ :: rs               => layout(rs)
-    }
-
-    layout(List(d))
-    out.flush
-    out
-  }
-
-  /** Pretty printing.
-    */
-  def pretty(d: Document): String = pretty(d, new StringWriter).toString
-
-  /** Pretty printing.
-    */
-  def pretty[A <: Writer](d: Document, out: A): A = {
-    d.format(0, out)
-    out
   }
 }
