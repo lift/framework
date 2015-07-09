@@ -888,10 +888,10 @@ object JsonAST {
 
     val currentIndent = indentLevel + settings.indent
 
-    if (settings.lineBreaks_?)
-      buf.append("\n")
-
     if (! values.isEmpty) {
+      if (settings.lineBreaks_?)
+        buf.append("\n")
+
       values.foreach { elem =>
         Option(elem) match {
           case Some(elem) =>
@@ -921,9 +921,10 @@ object JsonAST {
       } else if (settings.lineBreaks_? && buf.charAt(buf.length - 2) == ',') {
         buf.deleteCharAt(buf.length - 2)
       }
+
+      (0 until indentLevel).foreach(_ => buf.append(" "))
     }
 
-    (0 until indentLevel).foreach(_ => buf.append(" "))
     buf.append("]")
     buf
   }
