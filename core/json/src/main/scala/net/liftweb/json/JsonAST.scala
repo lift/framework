@@ -847,7 +847,8 @@ object JsonAST {
     val compact = RenderSettings(0)
   }
   case class RenderSettings(
-    indent: Int
+    indent: Int,
+    spaceAfterFieldName: Boolean = false
   ) {
     val lineBreaks_? = indent > 0
   }
@@ -944,6 +945,9 @@ object JsonAST {
 
           bufQuote(name, buf)
           buf.append(":")
+
+          if (settings.spaceAfterFieldName)
+            buf.append(" ")
 
           bufRender(value, buf, settings, currentIndent)
           buf.append(",")
