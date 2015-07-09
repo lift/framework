@@ -842,12 +842,21 @@ object JsonAST {
     }
   }
 
+  object RenderSettings {
+    val compact = RenderSettings(0)
+  }
+  case class RenderSettings(
+    indent: Int
+  ) {
+    val lineBreaks_? = indent > 0
+  }
+
   /** Renders JSON directly to string in compact format.
     * This is an optimized version of compact(render(value))
     * when the intermediate Document is not needed.
     */
   def compactRender(value: JValue): String = {
-    bufRender(value, new StringBuilder).toString()
+    bufRender(value, new StringBuilder, RenderSettings.compact).toString()
   }
 
   /**
@@ -855,7 +864,7 @@ object JsonAST {
    * @param value the JSON to render
    * @param buf the buffer to render the JSON into. may not be empty
    */
-  private def bufRender(value: JValue, buf: StringBuilder): StringBuilder = value match {
+  private def bufRender(value: JValue, buf: StringBuilder, settings: RenderSettings, indentLevel: Int = 0): StringBuilder = value match {
     case null          => buf.append("null")
     case JBool(true)   => buf.append("true")
     case JBool(false)  => buf.append("false")
@@ -864,18 +873,18 @@ object JsonAST {
     case JNull         => buf.append("null")
     case JString(null) => buf.append("null")
     case JString(s)    => bufQuote(s, buf)
-    case JArray(arr)   => bufRenderArr(arr, buf)
-    case JObject(obj)  => bufRenderObj(obj, buf)
+    case JArray(arr)   => bufRenderArr(arr, buf, settings, indentLevel)
+    case JObject(obj)  => bufRenderObj(obj, buf, settings, indentLevel)
     case JNothing      => sys.error("can't render 'nothing'") //TODO: this should not throw an exception
   }
 
-  private def bufRenderArr(xs: List[JValue], buf: StringBuilder): StringBuilder = {
+  private def bufRenderArr(xs: List[JValue], buf: StringBuilder, settings: RenderSettings, indentLevel: Int): StringBuilder = {
     buf.append("[") //open array
     if (!xs.isEmpty) {
       xs.foreach(elem => Option(elem) match {
         case Some(e) =>
           if (e != JNothing) {
-            bufRender(e, buf)
+            bufRender(e, buf, settings, indentLevel)
             buf.append(",")
           }
         case None => buf.append("null,")
@@ -887,14 +896,14 @@ object JsonAST {
     buf
   }
 
-  private def bufRenderObj(xs: List[JField], buf: StringBuilder): StringBuilder = {
+  private def bufRenderObj(xs: List[JField], buf: StringBuilder, settings: RenderSettings, indentLevel: Int): StringBuilder = {
     buf.append("{") //open bracket
     if (!xs.isEmpty) {
       xs.foreach {
         case JField(name, value) if value != JNothing =>
           bufQuote(name, buf)
           buf.append(":")
-          bufRender(value, buf)
+          bufRender(value, buf, settings, indentLevel)
           buf.append(",")
 
         case _ => // omit fields with value of JNothing
