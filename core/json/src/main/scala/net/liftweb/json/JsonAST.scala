@@ -843,12 +843,17 @@ object JsonAST {
   }
 
   object RenderSettings {
+    val pretty = RenderSettings(2)
     val compact = RenderSettings(0)
   }
   case class RenderSettings(
     indent: Int
   ) {
     val lineBreaks_? = indent > 0
+  }
+
+  def prettyRender(value: JValue): String = {
+    bufRender(value, new StringBuilder, RenderSettings.pretty).toString()
   }
 
   /** Renders JSON directly to string in compact format.
