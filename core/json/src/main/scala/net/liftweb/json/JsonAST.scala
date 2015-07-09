@@ -854,7 +854,7 @@ object JsonAST {
   }
 
   def prettyRender(value: JValue): String = {
-    bufRender(value, new StringBuilder, RenderSettings.pretty).toString()
+    render(value, RenderSettings.pretty)
   }
 
   /** Renders JSON directly to string in compact format.
@@ -862,7 +862,11 @@ object JsonAST {
     * when the intermediate Document is not needed.
     */
   def compactRender(value: JValue): String = {
-    bufRender(value, new StringBuilder, RenderSettings.compact).toString()
+    render(value, RenderSettings.compact)
+  }
+
+  def render(value: JValue, settings: RenderSettings): String = {
+    bufRender(value, new StringBuilder, settings).toString()
   }
 
   /**
