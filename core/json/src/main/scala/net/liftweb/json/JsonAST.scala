@@ -886,24 +886,44 @@ object JsonAST {
   private def bufRenderArr(values: List[JValue], buf: StringBuilder, settings: RenderSettings, indentLevel: Int): StringBuilder = {
     buf.append("[") //open array
 
+    val currentIndent = indentLevel + settings.indent
+
+    if (settings.lineBreaks_?)
+      buf.append("\n")
+
     if (! values.isEmpty) {
       values.foreach { elem =>
         Option(elem) match {
           case Some(elem) =>
             if (elem != JNothing) {
-              bufRender(elem, buf, settings, indentLevel)
+              (0 until currentIndent).foreach(_ => buf.append(" "))
+
+              bufRender(elem, buf, settings, currentIndent)
               buf.append(",")
+
+              if (settings.lineBreaks_?)
+                buf.append("\n")
             }
 
           case None =>
+            (0 until currentIndent).foreach(_ => buf.append(" "))
+
             buf.append("null,")
+
+            if (settings.lineBreaks_?)
+              buf.append("\n")
         }
       }
 
-      if (buf.last == ',')
-        buf.deleteCharAt(buf.length - 1) //delete last comma
+      // Detect and eliminate dangling commas.
+      if (! settings.lineBreaks_? && buf.last == ',') {
+        buf.deleteCharAt(buf.length - 1)
+      } else if (settings.lineBreaks_? && buf.charAt(buf.length - 2) == ',') {
+        buf.deleteCharAt(buf.length - 2)
+      }
     }
 
+    (0 until indentLevel).foreach(_ => buf.append(" "))
     buf.append("]")
     buf
   }
