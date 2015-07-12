@@ -899,35 +899,18 @@ object JsonAST {
         buf.append('\n')
 
       values.foreach { elem =>
-        Option(elem) match {
-          case Some(elem) if elem != JNothing =>
-            if (firstEntry) {
-              firstEntry = false
-            } else {
-              buf.append(',')
+        if (elem != JNothing) {
+          if (firstEntry) {
+            firstEntry = false
+          } else {
+            buf.append(',')
 
-              if (settings.lineBreaks_?)
-                buf.append('\n')
-            }
+            if (settings.lineBreaks_?)
+              buf.append('\n')
+          }
 
-            (0 until currentIndent).foreach(_ => buf.append(' '))
-            bufRender(elem, buf, settings, currentIndent)
-
-          case Some(_) =>
-            // Ignore JNothing.
-
-          case None =>
-            if (firstEntry) {
-              firstEntry = false
-            } else {
-              buf.append(',')
-
-              if (settings.lineBreaks_?)
-                buf.append('\n')
-            }
-
-            (0 until currentIndent).foreach(_ => buf.append(' '))
-            buf.append("null")
+          (0 until currentIndent).foreach(_ => buf.append(' '))
+          bufRender(elem, buf, settings, currentIndent)
         }
       }
 
