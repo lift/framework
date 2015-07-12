@@ -892,11 +892,11 @@ object JsonAST {
     var firstEntry = true
     val currentIndent = indentLevel + settings.indent
 
-    buf.append("[") //open array
+    buf.append('[') //open array
 
     if (! values.isEmpty) {
       if (settings.lineBreaks_?)
-        buf.append("\n")
+        buf.append('\n')
 
       values.foreach { elem =>
         Option(elem) match {
@@ -904,13 +904,13 @@ object JsonAST {
             if (firstEntry) {
               firstEntry = false
             } else {
-              buf.append(",")
+              buf.append(',')
 
               if (settings.lineBreaks_?)
-                buf.append("\n")
+                buf.append('\n')
             }
 
-            (0 until currentIndent).foreach(_ => buf.append(" "))
+            (0 until currentIndent).foreach(_ => buf.append(' '))
             bufRender(elem, buf, settings, currentIndent)
 
           case Some(_) =>
@@ -920,24 +920,24 @@ object JsonAST {
             if (firstEntry) {
               firstEntry = false
             } else {
-              buf.append(",")
+              buf.append(',')
 
               if (settings.lineBreaks_?)
-                buf.append("\n")
+                buf.append('\n')
             }
 
-            (0 until currentIndent).foreach(_ => buf.append(" "))
+            (0 until currentIndent).foreach(_ => buf.append(' '))
             buf.append("null")
         }
       }
 
       if (settings.lineBreaks_?)
-        buf.append("\n")
+        buf.append('\n')
 
-      (0 until indentLevel).foreach(_ => buf.append(" "))
+      (0 until indentLevel).foreach(_ => buf.append(' '))
     }
 
-    buf.append("]")
+    buf.append(']')
     buf
   }
 
@@ -945,29 +945,29 @@ object JsonAST {
     var firstEntry = true
     val currentIndent = indentLevel + settings.indent
 
-    buf.append("{") //open bracket
+    buf.append('{') //open bracket
 
     if (! fields.isEmpty) {
       if (settings.lineBreaks_?)
-        buf.append("\n")
+        buf.append('\n')
 
       fields.foreach {
         case JField(name, value) if value != JNothing =>
           if (firstEntry) {
             firstEntry = false
           } else {
-            buf.append(",")
+            buf.append(',')
 
             if (settings.lineBreaks_?)
-              buf.append("\n")
+              buf.append('\n')
           }
 
-          (0 until currentIndent).foreach(_ => buf.append(" "))
+          (0 until currentIndent).foreach(_ => buf.append(' '))
 
           bufQuote(name, buf)
-          buf.append(":")
+          buf.append(':')
           if (settings.spaceAfterFieldName)
-            buf.append(" ")
+            buf.append(' ')
           bufRender(value, buf, settings, currentIndent)
 
         case _ => // omit fields with value of JNothing
@@ -976,17 +976,17 @@ object JsonAST {
       if (settings.lineBreaks_?)
         buf.append('\n')
 
-      (0 until indentLevel).foreach(_ => buf.append(" "))
+      (0 until indentLevel).foreach(_ => buf.append(' '))
     }
 
-    buf.append("}") //close bracket
+    buf.append('}') //close bracket
     buf
   }
 
   private def bufQuote(s: String, buf: StringBuilder): StringBuilder = {
-    buf.append("\"") //open quote
+    buf.append('"') //open quote
     appendEscapedString(buf, s)
-    buf.append("\"") //close quote
+    buf.append('"') //close quote
     buf
   }
 
