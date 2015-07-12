@@ -812,12 +812,12 @@ object JsonAST {
   case class JField(name: String, value: JValue)
 
   private[json] def quote(s: String): String = {
-    val buf = new StringBuilder
+    val buf = StringBuilderAppendContainer(new StringBuilder)
     appendEscapedString(buf, s)
     buf.toString
   }
 
-  private def appendEscapedString(buf: StringBuilder, s: String) {
+  private def appendEscapedString(buf: AppendContainer[_], s: String) {
     for (i <- 0 until s.length) {
       val c = s.charAt(i)
       val strReplacement = c match {
@@ -843,16 +843,19 @@ object JsonAST {
   }
 
   sealed trait AppendContainer[T] {
-    def append(thing: Char): T
-    def append(thing: String): T
+    def append(thing: Char): AppendContainer[T]
+    def append(thing: String): AppendContainer[T]
+    def toString: String
   }
   case class StringBuilderAppendContainer(builder: StringBuilder) extends AppendContainer[StringBuilder] {
-    def append(thing: Char) = builder.append(thing)
-    def append(thing: String) = builder.append(thing)
+    override def append(thing: Char) = StringBuilderAppendContainer(builder.append(thing))
+    override def append(thing: String) = StringBuilderAppendContainer(builder.append(thing))
+    override def toString = builder.toString
   }
   case class AppendableAppendContainer(appendable: Appendable) extends AppendContainer[Appendable] {
-    def append(thing: Char) = appendable.append(thing)
-    def append(thing: String) = appendable.append(thing)
+    override def append(thing: Char) = AppendableAppendContainer(appendable.append(thing))
+    override def append(thing: String) = AppendableAppendContainer(appendable.append(thing))
+    override def toString = appendable.toString
   }
 
   object RenderSettings {
@@ -878,8 +881,8 @@ object JsonAST {
     render(value, RenderSettings.compact)
   }
 
-  def render(value: JValue, settings: RenderSettings): String = {
-    bufRender(value, new StringBuilder, settings).toString()
+  def render(value: JValue, settings: RenderSettings, appendContainer: AppendContainer[_] = StringBuilderAppendContainer(new StringBuilder())): String = {
+    bufRender(value, appendContainer, settings).toString()
   }
 
   /**
@@ -887,7 +890,7 @@ object JsonAST {
    * @param value the JSON to render
    * @param buf the buffer to render the JSON into. may not be empty
    */
-  private def bufRender(value: JValue, buf: StringBuilder, settings: RenderSettings, indentLevel: Int = 0): StringBuilder = value match {
+  private def bufRender(value: JValue, buf: AppendContainer[_], settings: RenderSettings, indentLevel: Int = 0): AppendContainer[_] = value match {
     case null          => buf.append("null")
     case JBool(true)   => buf.append("true")
     case JBool(false)  => buf.append("false")
@@ -901,7 +904,7 @@ object JsonAST {
     case JNothing      => sys.error("can't render 'nothing'") //TODO: this should not throw an exception
   }
 
-  private def bufRenderArr(values: List[JValue], buf: StringBuilder, settings: RenderSettings, indentLevel: Int): StringBuilder = {
+  private def bufRenderArr(values: List[JValue], buf: AppendContainer[_], settings: RenderSettings, indentLevel: Int): AppendContainer[_] = {
     var firstEntry = true
     val currentIndent = indentLevel + settings.indent
 
@@ -937,7 +940,7 @@ object JsonAST {
     buf
   }
 
-  private def bufRenderObj(fields: List[JField], buf: StringBuilder, settings: RenderSettings, indentLevel: Int): StringBuilder = {
+  private def bufRenderObj(fields: List[JField], buf: AppendContainer[_], settings: RenderSettings, indentLevel: Int): AppendContainer[_] = {
     var firstEntry = true
     val currentIndent = indentLevel + settings.indent
 
@@ -979,7 +982,7 @@ object JsonAST {
     buf
   }
 
-  private def bufQuote(s: String, buf: StringBuilder): StringBuilder = {
+  private def bufQuote(s: String, buf: AppendContainer[_]): AppendContainer[_] = {
     buf.append('"') //open quote
     appendEscapedString(buf, s)
     buf.append('"') //close quote
