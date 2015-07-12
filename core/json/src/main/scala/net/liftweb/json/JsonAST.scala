@@ -899,16 +899,17 @@ object JsonAST {
 
       values.foreach { elem =>
         Option(elem) match {
-          case Some(elem) =>
-            if (elem != JNothing) {
-              (0 until currentIndent).foreach(_ => buf.append(" "))
+          case Some(elem) if elem != JNothing =>
+            (0 until currentIndent).foreach(_ => buf.append(" "))
 
-              bufRender(elem, buf, settings, currentIndent)
-              buf.append(",")
+            bufRender(elem, buf, settings, currentIndent)
+            buf.append(",")
 
-              if (settings.lineBreaks_?)
-                buf.append("\n")
-            }
+            if (settings.lineBreaks_?)
+              buf.append("\n")
+
+          case Some(_) =>
+            // Ignore JNothing.
 
           case None =>
             (0 until currentIndent).foreach(_ => buf.append(" "))
