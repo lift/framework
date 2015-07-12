@@ -889,9 +889,10 @@ object JsonAST {
   }
 
   private def bufRenderArr(values: List[JValue], buf: StringBuilder, settings: RenderSettings, indentLevel: Int): StringBuilder = {
-    buf.append("[") //open array
-
+    var firstEntry = true
     val currentIndent = indentLevel + settings.indent
+
+    buf.append("[") //open array
 
     if (! values.isEmpty) {
       if (settings.lineBreaks_?)
@@ -900,33 +901,38 @@ object JsonAST {
       values.foreach { elem =>
         Option(elem) match {
           case Some(elem) if elem != JNothing =>
+            if (firstEntry) {
+              firstEntry = false
+            } else {
+              buf.append(",")
+
+              if (settings.lineBreaks_?)
+                buf.append("\n")
+            }
+
             (0 until currentIndent).foreach(_ => buf.append(" "))
-
             bufRender(elem, buf, settings, currentIndent)
-            buf.append(",")
-
-            if (settings.lineBreaks_?)
-              buf.append("\n")
 
           case Some(_) =>
             // Ignore JNothing.
 
           case None =>
+            if (firstEntry) {
+              firstEntry = false
+            } else {
+              buf.append(",")
+
+              if (settings.lineBreaks_?)
+                buf.append("\n")
+            }
+
             (0 until currentIndent).foreach(_ => buf.append(" "))
-
-            buf.append("null,")
-
-            if (settings.lineBreaks_?)
-              buf.append("\n")
+            buf.append("null")
         }
       }
 
-      // Detect and eliminate dangling commas.
-      if (! settings.lineBreaks_? && buf.last == ',') {
-        buf.deleteCharAt(buf.length - 1)
-      } else if (settings.lineBreaks_? && buf.charAt(buf.length - 2) == ',') {
-        buf.deleteCharAt(buf.length - 2)
-      }
+      if (settings.lineBreaks_?)
+        buf.append("\n")
 
       (0 until indentLevel).foreach(_ => buf.append(" "))
     }
