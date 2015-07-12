@@ -18,6 +18,7 @@ package net.liftweb
 package json
 
 import scala.language.implicitConversions
+import java.io.Writer
 
 /**
  * This object contains the abstract syntax tree (or AST) for working with JSON objects in
@@ -873,12 +874,24 @@ object JsonAST {
     render(value, RenderSettings.pretty)
   }
 
+  def prettyRender(value: JValue, appendable: Appendable): String = {
+    render(value, RenderSettings.pretty, appendable)
+  }
+
   /** Renders JSON directly to string in compact format.
     * This is an optimized version of compact(render(value))
     * when the intermediate Document is not needed.
     */
   def compactRender(value: JValue): String = {
     render(value, RenderSettings.compact)
+  }
+
+  def compactRender(value: JValue, appendable: Appendable): String = {
+    render(value, RenderSettings.compact, appendable)
+  }
+
+  def render(value: JValue, settings: RenderSettings, appendable: Appendable): String = {
+    render(value, settings, AppendableAppendContainer(appendable))
   }
 
   def render(value: JValue, settings: RenderSettings, appendContainer: AppendContainer[_] = StringBuilderAppendContainer(new StringBuilder())): String = {
