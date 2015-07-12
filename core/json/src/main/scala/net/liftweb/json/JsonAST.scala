@@ -842,6 +842,19 @@ object JsonAST {
     }
   }
 
+  sealed trait AppendContainer[T] {
+    def append(thing: Char): T
+    def append(thing: String): T
+  }
+  case class StringBuilderAppendContainer(builder: StringBuilder) extends AppendContainer[StringBuilder] {
+    def append(thing: Char) = builder.append(thing)
+    def append(thing: String) = builder.append(thing)
+  }
+  case class AppendableAppendContainer(appendable: Appendable) extends AppendContainer[Appendable] {
+    def append(thing: Char) = appendable.append(thing)
+    def append(thing: String) = appendable.append(thing)
+  }
+
   object RenderSettings {
     val pretty = RenderSettings(2)
     val compact = RenderSettings(0)
