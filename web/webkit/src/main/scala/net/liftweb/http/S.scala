@@ -937,7 +937,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    *
    * @see appendJs
    */
-  def jsToAppend(): List[JsCmd] = {
+  def jsToAppend(clearAfterReading: Boolean = false): List[JsCmd] = {
     import js.JsCmds._
 
     val globalJs = _globalJsToAppend.is.toList
@@ -948,14 +948,22 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
       }
     val cometJs = commandsForComets
 
-    globalJs ::: {
-      postPageJs ::: cometJs ::: _jsToAppend.is.toList match {
-        case Nil =>
-          Nil
-        case loadJs =>
-          List(OnLoad(loadJs))
+    val allJs =
+      globalJs ::: {
+        postPageJs ::: cometJs ::: _jsToAppend.is.toList match {
+          case Nil =>
+            Nil
+          case loadJs =>
+            List(OnLoad(loadJs))
+        }
       }
+
+    if (clearAfterReading) {
+      _globalJsToAppend(ListBuffer())
+      _jsToAppend(ListBuffer())
     }
+
+    allJs
   }
 
   /**
