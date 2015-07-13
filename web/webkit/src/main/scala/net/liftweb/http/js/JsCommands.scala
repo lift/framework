@@ -37,7 +37,13 @@ class JsCommands(val reverseList: List[JsCmd]) {
   def &(in: List[JsCmd]) = new JsCommands(in.reverse ::: reverseList)
 
   def toResponse = {
-    val data = reverseList.reverse.map(_.toJsCmd).mkString("\n").getBytes("UTF-8")
+    // Evaluate all toJsCmds, which may in turn call S.append[Global]Js.
+    val containedJs = reverseList.reverse.map(_.toJsCmd)
+
+    val toAppend = S.jsToAppend(clearAfterReading = true).map(_.toJsCmd)
+
+    val data = (containedJs ++ toAppend).mkString("\n").getBytes("UTF-8")
+
     InMemoryResponse(data, List("Content-Length" -> data.length.toString, "Content-Type" -> "text/javascript; charset=utf-8"), S.responseCookies, 200)
   }
 }

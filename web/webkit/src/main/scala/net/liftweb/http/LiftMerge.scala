@@ -74,7 +74,7 @@ private[http] trait LiftMerge {
       LiftRules.javaScriptSettings.vend().map { settingsFn =>
         LiftJavaScript.initCmd(settingsFn(this))
       }.toList ++
-      S.jsToAppend ++
+      S.jsToAppend() ++
       eventJs
 
     allJs.foldLeft(js.JsCmds.Noop)(_ & _)
