@@ -898,6 +898,9 @@ object JsonAST {
     bufRender(value, appendContainer, settings).toString()
   }
 
+  case class RenderIntermediaryDocument(value: JValue)
+  def render(value: JValue) = RenderIntermediaryDocument(value)
+
   /**
    *
    * @param value the JSON to render
@@ -1063,5 +1066,44 @@ trait JsonDSL extends Implicits {
   class JsonListAssoc(left: List[JField]) {
     def ~(right: (String, JValue)) = JObject(left ::: List(JField(right._1, right._2)))
     def ~(right: JObject) = JObject(left ::: right.obj)
+  }
+}
+
+/** Printer converts JSON to String.
+  * Before printing a <code>JValue</code> needs to be rendered into scala.text.Document.
+  * <p>
+  * Example:<pre>
+  * pretty(render(json))
+  * </pre>
+  */
+@deprecated("Please switch using JsonAST's render methods instead of relying on Printer.", "3.0")
+object Printer extends Printer
+@deprecated("Please switch using JsonAST's render methods instead of relying on Printer.", "3.0")
+trait Printer {
+  /** Compact printing (no whitespace etc.)
+    */
+  @deprecated("Please switch to using compactRender instead.", "3.0")
+  def compact(d: JsonAST.RenderIntermediaryDocument): String = JsonAST.compactRender(d.value)
+
+  /** Compact printing (no whitespace etc.)
+    */
+  @deprecated("Please switch to using compactRender instead.", "3.0")
+  def compact[A <: Writer](d: JsonAST.RenderIntermediaryDocument, out: A): A = {
+    JsonAST.compactRender(d.value, out)
+    out
+  }
+
+  /** Pretty printing.
+    */
+  @deprecated("Please switch to using prettyRender instead.", "3.0")
+  def pretty(d: JsonAST.RenderIntermediaryDocument): String =
+    JsonAST.prettyRender(d.value)
+
+  /** Pretty printing.
+    */
+  @deprecated("Please switch to using prettyRender instead.", "3.0")
+  def pretty[A <: Writer](d: JsonAST.RenderIntermediaryDocument, out: A): A = {
+    JsonAST.prettyRender(d.value, out)
+    out
   }
 }
