@@ -365,6 +365,8 @@ object Menu extends MenuSingleton {
      */
     def locPath: List[LocPath]
 
+    def params: List[Loc.LocParam[ConvertTo]]
+
     /**
      * A function to convert the ConvertFrom (a String or
      * List[String]) to the target type
@@ -379,13 +381,14 @@ object Menu extends MenuSingleton {
     def listToFrom(in: List[String]): Box[ConvertFrom]
 
     object ExtractSan {
-      def unapply(in: List[String]): Option[(List[String], ConvertTo)] 
+      def unapply(in: List[String]): Option[(List[String], Box[ConvertTo])] 
       = {
         for {
           (path, paramList) <- extractAndConvertPath(in)
           toConvert <- listToFrom(paramList)
-          param <- parser(toConvert)
-        } yield path -> param
+        } yield {
+          path -> parser(toConvert)
+        }
       }
     }
 
@@ -395,7 +398,7 @@ object Menu extends MenuSingleton {
     override lazy val rewrite: LocRewrite =
       Full(NamedPF(locPath.toString) {
         case RewriteRequest(ParsePath(ExtractSan(path, param),
-                                      _, _,_), _, _) => {
+                                      _, _,_), _, _) if param.isDefined || params.contains(Loc.MatchWithoutCurrentValue) => {
           RewriteResponse(path, true) -> param
         }})
 
