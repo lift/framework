@@ -214,7 +214,7 @@ object Examples {
 }
 """
 
-  val nulls = ("f1" -> null) ~ ("f2" -> List(null, "s"))
+  val nulls = ("f1" -> (null: String)) ~ ("f2" -> List(null, "s"))
   val quoted = """["foo \" \n \t \r bar"]"""
   val symbols = ("f1" -> 'foo) ~ ("f2" -> 'bar)
 }
