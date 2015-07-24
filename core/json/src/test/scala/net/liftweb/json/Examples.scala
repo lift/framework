@@ -20,10 +20,6 @@ package json
 import org.specs2.mutable.Specification
 
 class Examples extends AbstractExamples {
-  override def print(value: JValue): String = compact(render(value))
-}
-
-class CompactRenderExamples extends AbstractExamples {
   override def print(value: JValue): String = compactRender(value)
 }
 
@@ -43,23 +39,22 @@ trait AbstractExamples extends Specification {
 
   "Person example" in {
     val json = parse(person)
-    val renderedPerson = Printer.pretty(render(json))
+    val renderedPerson = prettyRender(json)
     (json mustEqual parse(renderedPerson)) and
-      (render(json) mustEqual render(personDSL)) and
       (print(json \\ "name") mustEqual """{"name":"Joe","name":"Marilyn"}""") and
       (print(json \ "person" \ "name") mustEqual "\"Joe\"")
   }
 
   "Transformation example" in {
     val uppercased = parse(person).transformField { case JField(n, v) => JField(n.toUpperCase, v) }
-    val rendered = compact(render(uppercased))
+    val rendered = compactRender(uppercased)
     rendered mustEqual 
       """{"PERSON":{"NAME":"Joe","AGE":35,"SPOUSE":{"PERSON":{"NAME":"Marilyn","AGE":33}}}}"""
   }
 
   "Remove example" in {
     val json = parse(person) removeField { _ == JField("name", "Marilyn") }
-    compact(render(json \\ "name")) mustEqual """{"name":"Joe"}"""
+    compactRender(json \\ "name") mustEqual """{"name":"Joe"}"""
   }
 
   "Queries on person example" in {
@@ -219,7 +214,7 @@ object Examples {
 }
 """
 
-  val nulls = ("f1" -> null) ~ ("f2" -> List(null, "s"))
+  val nulls = (("f1" -> null) ~ ("f2" -> List(null, "s")))
   val quoted = """["foo \" \n \t \r bar"]"""
   val symbols = ("f1" -> 'foo) ~ ("f2" -> 'bar)
 }
