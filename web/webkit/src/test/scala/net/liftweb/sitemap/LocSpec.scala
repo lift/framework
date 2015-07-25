@@ -18,6 +18,7 @@ package net.liftweb
 package sitemap
 
 import common._
+import http._
 import mockweb._
   import MockWeb._
 import mocks._
@@ -82,7 +83,11 @@ object LocSpec extends Specification  {
 
       testS(mockReq) {
         testReq(mockReq) { req =>
-          testLoc.doesMatch_?(req) mustEqual true
+          val rrq = new RewriteRequest(req.path, GetRequest, req.request)
+          val rewriteFn = testLoc.rewrite.openOrThrowException("No rewrite function")
+
+          rewriteFn(rrq) must not(throwA[Exception])
+          rewriteFn(rrq)._2 must_== Empty
         }
       }
     }
