@@ -233,10 +233,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val jsonOutputConverter = new FactoryMaker[JsonAST.JValue => String]({
     import json.{prettyRender, compactRender}
 
-    if (Props.devMode)
+    if (Props.devMode) {
       prettyRender _
-    else
+    } else {
       compactRender _
+    }
   }){}
 
 

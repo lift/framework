@@ -927,8 +927,9 @@ object JsonAST {
     buf.append('[') //open array
 
     if (! values.isEmpty) {
-      if (settings.lineBreaks_?)
+      if (settings.lineBreaks_?) {
         buf.append('\n')
+      }
 
       values.foreach { elem =>
         if (elem != JNothing) {
@@ -937,8 +938,9 @@ object JsonAST {
           } else {
             buf.append(',')
 
-            if (settings.lineBreaks_?)
+            if (settings.lineBreaks_?) {
               buf.append('\n')
+            }
           }
 
           (0 until currentIndent).foreach(_ => buf.append(' '))
@@ -946,8 +948,9 @@ object JsonAST {
         }
       }
 
-      if (settings.lineBreaks_?)
+      if (settings.lineBreaks_?) {
         buf.append('\n')
+      }
 
       (0 until indentLevel).foreach(_ => buf.append(' '))
     }
@@ -963,8 +966,9 @@ object JsonAST {
     buf.append('{') //open bracket
 
     if (! fields.isEmpty) {
-      if (settings.lineBreaks_?)
+      if (settings.lineBreaks_?) {
         buf.append('\n')
+      }
 
       fields.foreach {
         case JField(name, value) if value != JNothing =>
@@ -973,23 +977,26 @@ object JsonAST {
           } else {
             buf.append(',')
 
-            if (settings.lineBreaks_?)
+            if (settings.lineBreaks_?) {
               buf.append('\n')
+            }
           }
 
           (0 until currentIndent).foreach(_ => buf.append(' '))
 
           bufQuote(name, buf)
           buf.append(':')
-          if (settings.spaceAfterFieldName)
+          if (settings.spaceAfterFieldName) {
             buf.append(' ')
+          }
           bufRender(value, buf, settings, currentIndent)
 
         case _ => // omit fields with value of JNothing
       }
 
-      if (settings.lineBreaks_?)
+      if (settings.lineBreaks_?) {
         buf.append('\n')
+      }
 
       (0 until indentLevel).foreach(_ => buf.append(' '))
     }
