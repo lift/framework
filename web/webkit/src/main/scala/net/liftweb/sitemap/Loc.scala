@@ -166,7 +166,7 @@ trait Loc[T] {
 
   override def toString = "Loc("+name+", "+link+", "+text+", "+params+")"
 
-  type LocRewrite =  Box[PartialFunction[RewriteRequest, (RewriteResponse, T)]]
+  type LocRewrite =  Box[PartialFunction[RewriteRequest, (RewriteResponse, Box[T])]]
 
   def rewrite: LocRewrite = Empty
 
@@ -182,7 +182,7 @@ trait Loc[T] {
 
       def apply(in: RewriteRequest): RewriteResponse = {
         val (ret, param) = rw.apply(in)
-        requestValue.set(Full(param))
+        requestValue.set(param)
         ret
       }
     }

@@ -18,6 +18,7 @@ package net.liftweb
 package sitemap
 
 import common._
+import http._
 import mockweb._
   import MockWeb._
 import mocks._
@@ -59,7 +60,7 @@ object LocSpec extends Specification  {
       }
     }
 
-    "should match a Req matching its Link when currentValue is Empty and MatchWithoutCurrentValue is a param" in {
+    "matchs a Req when currentValue is Empty, a * was used, and MatchWithoutCurrentValue is a param" in {
       val testMenu = Menu.param[Param]("Test", "Test", s => Empty, p => "bacon") / "foo" / "bar" / * >> Loc.MatchWithoutCurrentValue
       val testSiteMap = SiteMap(testMenu)
 
@@ -69,6 +70,24 @@ object LocSpec extends Specification  {
       testS(mockReq) {
         testReq(mockReq) { req =>
           testLoc.doesMatch_?(req) mustEqual true
+        }
+      }
+    }
+
+    "matchs a Req when currentValue is Empty, and MatchWithoutCurrentValue is a param" in {
+      val testMenu = Menu.param[Param]("Test", "Test", s => Empty, p => "bacon") / "foo" / "bar" >> Loc.MatchWithoutCurrentValue
+      val testSiteMap = SiteMap(testMenu)
+
+      val testLoc = testMenu.toLoc
+      val mockReq = new MockHttpServletRequest("http://test/foo/bar/123")
+
+      testS(mockReq) {
+        testReq(mockReq) { req =>
+          val rrq = new RewriteRequest(req.path, GetRequest, req.request)
+          val rewriteFn = testLoc.rewrite.openOrThrowException("No rewrite function")
+
+          rewriteFn(rrq) must not(throwA[Exception])
+          rewriteFn(rrq)._2 must_== Empty
         }
       }
     }
