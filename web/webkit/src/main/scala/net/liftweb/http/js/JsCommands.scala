@@ -31,6 +31,16 @@ object JsCommands {
   def apply(in: JsExp) = new JsCommands(List(in.cmd))
 }
 
+/**
+ * A container for accumulating `[[JsCmd]]`s that need to be sent to the client.
+ * When `[[toResponse]]` is called to finalize the response, in addition to the
+ * JS passed directly to this instance, the commands in `[[S.jsToAppend]]` are
+ * also read and included in the response. Also in this process, all of the
+ * `JsCmd` instances have their `toJsCmd` methods called to convert them to a
+ * string.
+ * 
+ * @note The contents of `jsToAppend` are cleared in this process!
+ */
 class JsCommands(val reverseList: List[JsCmd]) {
   def &(in: JsCmd) = new JsCommands(in :: reverseList)
 
