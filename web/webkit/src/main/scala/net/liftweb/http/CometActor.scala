@@ -719,7 +719,7 @@ trait BaseCometActor extends LiftActor with LiftCometActor with CssBindImplicits
                   case e: Exception => reportError("Message dispatch for " + in, e)
                 }
 
-                val updatedJs = S.jsToAppend
+                val updatedJs = S.jsToAppend(clearAfterReading = true)
                 if (updatedJs.nonEmpty) {
                   partialUpdate(updatedJs)
                 }

@@ -632,15 +632,14 @@ class LiftServlet extends Loggable {
                 (JsCommands(S.noticesToJsCmd :: Nil) &
                   (js :: (xs.collect {
                     case js: JsCmd => js
-                  }).reverse) &
-                  S.jsToAppend
+                  }).reverse)
                 ).toResponse
               }
 
               case (n: Node) :: _ => XmlResponse(n)
               case (ns: NodeSeq) :: _ => XmlResponse(Group(ns))
               case (r: LiftResponse) :: _ => r
-              case _ => JsCommands(S.noticesToJsCmd :: JsCmds.Noop :: S.jsToAppend).toResponse
+              case _ => JsCommands(S.noticesToJsCmd :: JsCmds.Noop :: Nil).toResponse
             }
 
             LiftRules.cometLogger.debug("AJAX Response: " + liftSession.underlyingId + " " + ret)
@@ -879,15 +878,17 @@ class LiftServlet extends Loggable {
 
     actors foreach (_._1 ! ClearNotices)
 
-    val addl: List[JsCmd] =
-      (for {
-        req <- S.request
-        rendVer <- extractRenderVersion(req.path.partPath)
-      } yield RenderVersion.doWith(rendVer) {
-          S.jsToAppend
-        }) openOr Nil
-
-    (new JsCommands(JsCmds.Run(jsUpdateTime) :: jsUpdateStuff ::: addl)).toResponse
+    val jsCommands =
+      new JsCommands(JsCmds.Run(jsUpdateTime) :: jsUpdateStuff)
+    
+    // If we need to, ensure we capture JS from this request's render version.
+    // The comet actor will already have handled the comet's version.
+    S.request.flatMap(req => extractRenderVersion(req.path.partPath)) match {
+      case Full(additionalVersion) =>
+        RenderVersion.doWith(additionalVersion) { jsCommands.toResponse }
+      case _ =>
+        jsCommands.toResponse
+    }
   }
 
   private def extractRenderVersion(in: List[String]): Box[String] = in match {

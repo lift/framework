@@ -31,13 +31,29 @@ object JsCommands {
   def apply(in: JsExp) = new JsCommands(List(in.cmd))
 }
 
+/**
+ * A container for accumulating `[[JsCmd]]`s that need to be sent to the client.
+ * When `[[toResponse]]` is called to finalize the response, in addition to the
+ * JS passed directly to this instance, the commands in `[[S.jsToAppend]]` are
+ * also read and included in the response. Also in this process, all of the
+ * `JsCmd` instances have their `toJsCmd` methods called to convert them to a
+ * string.
+ * 
+ * @note The contents of `jsToAppend` are cleared in this process!
+ */
 class JsCommands(val reverseList: List[JsCmd]) {
   def &(in: JsCmd) = new JsCommands(in :: reverseList)
 
   def &(in: List[JsCmd]) = new JsCommands(in.reverse ::: reverseList)
 
   def toResponse = {
-    val data = reverseList.reverse.map(_.toJsCmd).mkString("\n").getBytes("UTF-8")
+    // Evaluate all toJsCmds, which may in turn call S.append[Global]Js.
+    val containedJs = reverseList.reverse.map(_.toJsCmd)
+
+    val toAppend = S.jsToAppend(clearAfterReading = true).map(_.toJsCmd)
+
+    val data = (containedJs ++ toAppend).mkString("\n").getBytes("UTF-8")
+
     InMemoryResponse(data, List("Content-Length" -> data.length.toString, "Content-Type" -> "text/javascript; charset=utf-8"), S.responseCookies, 200)
   }
 }
