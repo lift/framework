@@ -84,10 +84,6 @@ object SerializationExamples extends Specification {
     read[Symbol](swrite('j)) mustEqual 'j
   }
 
-  "Primitive Char serialization" in {
-    read[Char](swrite('j')) mustEqual 'j'
-  }
-
   "Primitive Short serialization" in {
     read[Short](swrite(88.shortValue)) mustEqual 88.shortValue
   }
@@ -98,6 +94,14 @@ object SerializationExamples extends Specification {
 
   "Primitive Boolean serialization" in {
     read[Boolean](swrite(false)) mustEqual false
+  }
+
+  "Primitive Char serialization" in {
+    read[Char](swrite('j')) mustEqual 'j'
+  }
+
+  "Primitive Unit serialization" in {
+    read[Unit](swrite( () )) mustEqual ()
   }
 
   "Multidimensional list example" in {
