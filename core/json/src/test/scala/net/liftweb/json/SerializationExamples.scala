@@ -104,6 +104,12 @@ object SerializationExamples extends Specification {
     read[Unit](swrite( () )) mustEqual ()
   }
 
+  case class CharUnit(c:Char, u:Unit)
+  "The CharUnit serialization" in {
+    val obj = CharUnit('j', ())
+    read[CharUnit](swrite(obj)) mustEqual obj
+  }
+
   "Multidimensional list example" in {
     val ints = Ints(List(List(1, 2), List(3), List(4, 5)))
     val ser = swrite(ints)
