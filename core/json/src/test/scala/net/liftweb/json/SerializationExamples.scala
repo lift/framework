@@ -75,15 +75,6 @@ object SerializationExamples extends Specification {
     read[Float](swrite(3.14.floatValue)) mustEqual 3.14.floatValue
   }
 
-  "Primitive String serialization" in {
-    val rt = "Roll Tide, Farmer!!"
-    read[String](swrite(rt)) mustEqual rt
-  }
-
-  "Symbol serialization" in {
-    read[Symbol](swrite('j)) mustEqual 'j
-  }
-
   "Primitive Short serialization" in {
     read[Short](swrite(88.shortValue)) mustEqual 88.shortValue
   }
@@ -96,18 +87,13 @@ object SerializationExamples extends Specification {
     read[Boolean](swrite(false)) mustEqual false
   }
 
-  "Primitive Char serialization" in {
-    read[Char](swrite('j')) mustEqual 'j'
+  "String serialization" in {
+    val rt = "Roll Tide, Farmer!!"
+    read[String](swrite(rt)) mustEqual rt
   }
 
-  "Primitive Unit serialization" in {
-    read[Unit](swrite( () )) mustEqual ()
-  }
-
-  case class CharUnit(c:Char, u:Unit)
-  "The CharUnit serialization" in {
-    val obj = CharUnit('j', ())
-    read[CharUnit](swrite(obj)) mustEqual obj
+  "Symbol serialization" in {
+    read[Symbol](swrite('j)) mustEqual 'j
   }
 
   "Multidimensional list example" in {
