@@ -19,6 +19,7 @@ package json
 
 import scala.language.implicitConversions
 import java.io.Writer
+import java.lang.StringBuilder
 
 /**
  * This object contains the abstract syntax tree (or AST) for working with JSON objects in
@@ -813,12 +814,12 @@ object JsonAST {
   case class JField(name: String, value: JValue)
 
   private[json] def quote(s: String): String = {
-    val buf = StringBuilderAppendContainer(new StringBuilder)
+    val buf = new StringBuilder
     appendEscapedString(buf, s)
     buf.toString
   }
 
-  private def appendEscapedString(buf: AppendContainer[_], s: String) {
+  private def appendEscapedString(buf: Appendable, s: String) {
     for (i <- 0 until s.length) {
       val c = s.charAt(i)
       val strReplacement = c match {
@@ -841,22 +842,6 @@ object JsonAST {
         buf.append(strReplacement)
       }
     }
-  }
-
-  sealed trait AppendContainer[T] {
-    def append(thing: Char): AppendContainer[T]
-    def append(thing: String): AppendContainer[T]
-    def toString: String
-  }
-  case class StringBuilderAppendContainer(builder: StringBuilder) extends AppendContainer[StringBuilder] {
-    override def append(thing: Char) = StringBuilderAppendContainer(builder.append(thing))
-    override def append(thing: String) = StringBuilderAppendContainer(builder.append(thing))
-    override def toString = builder.toString
-  }
-  case class AppendableAppendContainer(appendable: Appendable) extends AppendContainer[Appendable] {
-    override def append(thing: Char) = AppendableAppendContainer(appendable.append(thing))
-    override def append(thing: String) = AppendableAppendContainer(appendable.append(thing))
-    override def toString = appendable.toString
   }
 
   object RenderSettings {
@@ -890,12 +875,8 @@ object JsonAST {
     render(value, RenderSettings.compact, appendable)
   }
 
-  def render(value: JValue, settings: RenderSettings, appendable: Appendable): String = {
-    render(value, settings, AppendableAppendContainer(appendable))
-  }
-
-  def render(value: JValue, settings: RenderSettings, appendContainer: AppendContainer[_] = StringBuilderAppendContainer(new StringBuilder())): String = {
-    bufRender(value, appendContainer, settings).toString()
+  def render(value: JValue, settings: RenderSettings, appendable: Appendable = new StringBuilder()): String = {
+    bufRender(value, appendable, settings).toString()
   }
 
   case class RenderIntermediaryDocument(value: JValue)
@@ -906,7 +887,7 @@ object JsonAST {
    * @param value the JSON to render
    * @param buf the buffer to render the JSON into. may not be empty
    */
-  private def bufRender(value: JValue, buf: AppendContainer[_], settings: RenderSettings, indentLevel: Int = 0): AppendContainer[_] = value match {
+  private def bufRender(value: JValue, buf: Appendable, settings: RenderSettings, indentLevel: Int = 0): Appendable = value match {
     case null          => buf.append("null")
     case JBool(true)   => buf.append("true")
     case JBool(false)  => buf.append("false")
@@ -920,7 +901,7 @@ object JsonAST {
     case JNothing      => sys.error("can't render 'nothing'") //TODO: this should not throw an exception
   }
 
-  private def bufRenderArr(values: List[JValue], buf: AppendContainer[_], settings: RenderSettings, indentLevel: Int): AppendContainer[_] = {
+  private def bufRenderArr(values: List[JValue], buf: Appendable, settings: RenderSettings, indentLevel: Int): Appendable = {
     var firstEntry = true
     val currentIndent = indentLevel + settings.indent
 
@@ -959,7 +940,7 @@ object JsonAST {
     buf
   }
 
-  private def bufRenderObj(fields: List[JField], buf: AppendContainer[_], settings: RenderSettings, indentLevel: Int): AppendContainer[_] = {
+  private def bufRenderObj(fields: List[JField], buf: Appendable, settings: RenderSettings, indentLevel: Int): Appendable = {
     var firstEntry = true
     val currentIndent = indentLevel + settings.indent
 
@@ -1005,7 +986,7 @@ object JsonAST {
     buf
   }
 
-  private def bufQuote(s: String, buf: AppendContainer[_]): AppendContainer[_] = {
+  private def bufQuote(s: String, buf: Appendable): Appendable = {
     buf.append('"') //open quote
     appendEscapedString(buf, s)
     buf.append('"') //close quote
