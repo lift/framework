@@ -47,7 +47,7 @@ object ParserBugs extends Specification {
 
   "Field names must be quoted" in {
     val json = JObject(List(JField("foo\nbar", JInt(1))))
-    val s = compact(render(json))
+    val s = compactRender(json)
     (s mustEqual """{"foo\nbar":1}""") and
       (parse(s) mustEqual json)
   }

@@ -64,14 +64,14 @@ case class CreatedResponse(xml: Node, mime: String, addlHeaders: List[(String, S
  */
 object CreatedResponse {
 
-  lazy val jsonPrinter: scala.text.Document => String =
+  lazy val jsonPrinter: JsonAST.JValue => String =
     LiftRules.jsonOutputConverter.vend
 
   def apply(json: JsonAST.JValue, addlHeaders: List[(String, String)]): LiftResponse = {
     val headers: List[(String, String)] = S.getResponseHeaders( Nil ) ++  addlHeaders
 
     new JsonResponse(new JsExp {
-      lazy val toJsCmd = jsonPrinter(JsonAST.render(json))
+      lazy val toJsCmd = jsonPrinter(json)
     }, headers, Nil, 201)
   }
 
@@ -302,11 +302,11 @@ object JsonResponse {
 
   def apply(_json: JsonAST.JValue, _headers: List[(String, String)], _cookies: List[HTTPCookie], code: Int): LiftResponse = {
     new JsonResponse(new JsExp {
-      lazy val toJsCmd = jsonPrinter(JsonAST.render((_json)))
+      lazy val toJsCmd = jsonPrinter(_json)
     }, _headers, _cookies, code)
   }
 
-  lazy val jsonPrinter: scala.text.Document => String = 
+  lazy val jsonPrinter: JsonAST.JValue => String = 
     LiftRules.jsonOutputConverter.vend
 }
 

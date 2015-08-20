@@ -67,7 +67,7 @@ class PatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
 
   def asJs = asJValue match {
     case JNothing => JsNull
-    case jv => Str(Printer.compact(render(jv)))
+    case jv => Str(compactRender(jv))
   }
 
   def asJValue: JValue = valueBox.map(v => JsonRegex(v)) openOr (JNothing: JValue)

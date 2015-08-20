@@ -87,7 +87,7 @@ class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
 
   def asJs = asJValue match {
     case JNothing => JsNull
-    case jv => JsRaw(Printer.compact(render(jv)))
+    case jv => JsRaw(compactRender(jv))
   }
 
   def asJValue: JValue = valueBox.map(v => JsonObjectId.asJValue(v, owner.meta.formats)) openOr (JNothing: JValue)

@@ -18,6 +18,8 @@ package net.liftweb
 package json
 
 import scala.language.implicitConversions
+import java.io.Writer
+import java.lang.StringBuilder
 
 /**
  * This object contains the abstract syntax tree (or AST) for working with JSON objects in
@@ -46,9 +48,6 @@ import scala.language.implicitConversions
  * }}}
  */
 object JsonAST {
-  import scala.text.{Document, DocText}
-  import scala.text.Document._
-
   /**
     * Concatenate a sequence of `[[JValue]]`s together.
     *
@@ -814,42 +813,13 @@ object JsonAST {
 
   case class JField(name: String, value: JValue)
 
-  /** Renders JSON.
-    * @see Printer#compact
-    * @see Printer#pretty
-    */
-  def render(value: JValue): Document = value match {
-    case null          => text("null")
-    case JBool(true)   => text("true")
-    case JBool(false)  => text("false")
-    case JDouble(n)    => text(n.toString)
-    case JInt(n)       => text(n.toString)
-    case JNull         => text("null")
-    case JString(null) => text("null")
-    case JString(s)    => text("\"" + quote(s) + "\"")
-    case JArray(arr)   => text("[") :: series(trimArr(arr).map(render)) :: text("]")
-    case JObject(obj)  =>
-      val nested = break :: fields(trimObj(obj).map { case JField(name, value) => text("\"" + quote(name) + "\":") :: render(value) })
-      text("{") :: nest(2, nested) :: break :: text("}")
-    case JNothing      => sys.error("can't render 'nothing'") //TODO: this should not throw an exception
-  }
-
-  private def trimArr(xs: List[JValue]) = xs.filter(_ != JNothing)
-  private def trimObj(xs: List[JField]) = xs.filter(_.value != JNothing)
-  private def series(docs: List[Document]) = punctuate(text(","), docs)
-  private def fields(docs: List[Document]) = punctuate(text(",") :: break, docs)
-
-  private def punctuate(p: Document, docs: List[Document]): Document =
-    if (docs.length == 0) empty
-    else docs.reduceLeft((d1, d2) => d1 :: p :: d2)
-
   private[json] def quote(s: String): String = {
     val buf = new StringBuilder
     appendEscapedString(buf, s)
     buf.toString
   }
 
-  private def appendEscapedString(buf: StringBuilder, s: String) {
+  private def appendEscapedString(buf: Appendable, s: String) {
     for (i <- 0 until s.length) {
       val c = s.charAt(i)
       val strReplacement = c match {
@@ -874,20 +844,50 @@ object JsonAST {
     }
   }
 
+  object RenderSettings {
+    val pretty = RenderSettings(2)
+    val compact = RenderSettings(0)
+  }
+  case class RenderSettings(
+    indent: Int,
+    spaceAfterFieldName: Boolean = false
+  ) {
+    val lineBreaks_? = indent > 0
+  }
+
+  def prettyRender(value: JValue): String = {
+    render(value, RenderSettings.pretty)
+  }
+
+  def prettyRender(value: JValue, appendable: Appendable): String = {
+    render(value, RenderSettings.pretty, appendable)
+  }
+
   /** Renders JSON directly to string in compact format.
     * This is an optimized version of compact(render(value))
     * when the intermediate Document is not needed.
     */
   def compactRender(value: JValue): String = {
-    bufRender(value, new StringBuilder).toString()
+    render(value, RenderSettings.compact)
   }
+
+  def compactRender(value: JValue, appendable: Appendable): String = {
+    render(value, RenderSettings.compact, appendable)
+  }
+
+  def render(value: JValue, settings: RenderSettings, appendable: Appendable = new StringBuilder()): String = {
+    bufRender(value, appendable, settings).toString()
+  }
+
+  case class RenderIntermediaryDocument(value: JValue)
+  def render(value: JValue) = RenderIntermediaryDocument(value)
 
   /**
    *
    * @param value the JSON to render
    * @param buf the buffer to render the JSON into. may not be empty
    */
-  private def bufRender(value: JValue, buf: StringBuilder): StringBuilder = value match {
+  private def bufRender(value: JValue, buf: Appendable, settings: RenderSettings, indentLevel: Int = 0): Appendable = value match {
     case null          => buf.append("null")
     case JBool(true)   => buf.append("true")
     case JBool(false)  => buf.append("false")
@@ -896,52 +896,100 @@ object JsonAST {
     case JNull         => buf.append("null")
     case JString(null) => buf.append("null")
     case JString(s)    => bufQuote(s, buf)
-    case JArray(arr)   => bufRenderArr(arr, buf)
-    case JObject(obj)  => bufRenderObj(obj, buf)
+    case JArray(arr)   => bufRenderArr(arr, buf, settings, indentLevel)
+    case JObject(obj)  => bufRenderObj(obj, buf, settings, indentLevel)
     case JNothing      => sys.error("can't render 'nothing'") //TODO: this should not throw an exception
   }
 
-  private def bufRenderArr(xs: List[JValue], buf: StringBuilder): StringBuilder = {
-    buf.append("[") //open array
-    if (!xs.isEmpty) {
-      xs.foreach(elem => Option(elem) match {
-        case Some(e) =>
-          if (e != JNothing) {
-            bufRender(e, buf)
-            buf.append(",")
+  private def bufRenderArr(values: List[JValue], buf: Appendable, settings: RenderSettings, indentLevel: Int): Appendable = {
+    var firstEntry = true
+    val currentIndent = indentLevel + settings.indent
+
+    buf.append('[') //open array
+
+    if (! values.isEmpty) {
+      if (settings.lineBreaks_?) {
+        buf.append('\n')
+      }
+
+      values.foreach { elem =>
+        if (elem != JNothing) {
+          if (firstEntry) {
+            firstEntry = false
+          } else {
+            buf.append(',')
+
+            if (settings.lineBreaks_?) {
+              buf.append('\n')
+            }
           }
-        case None => buf.append("null,")
-      })
-      if (buf.last == ',')
-        buf.deleteCharAt(buf.length - 1) //delete last comma
+
+          (0 until currentIndent).foreach(_ => buf.append(' '))
+          bufRender(elem, buf, settings, currentIndent)
+        }
+      }
+
+      if (settings.lineBreaks_?) {
+        buf.append('\n')
+      }
+
+      (0 until indentLevel).foreach(_ => buf.append(' '))
     }
-    buf.append("]")
+
+    buf.append(']')
     buf
   }
 
-  private def bufRenderObj(xs: List[JField], buf: StringBuilder): StringBuilder = {
-    buf.append("{") //open bracket
-    if (!xs.isEmpty) {
-      xs.foreach {
+  private def bufRenderObj(fields: List[JField], buf: Appendable, settings: RenderSettings, indentLevel: Int): Appendable = {
+    var firstEntry = true
+    val currentIndent = indentLevel + settings.indent
+
+    buf.append('{') //open bracket
+
+    if (! fields.isEmpty) {
+      if (settings.lineBreaks_?) {
+        buf.append('\n')
+      }
+
+      fields.foreach {
         case JField(name, value) if value != JNothing =>
+          if (firstEntry) {
+            firstEntry = false
+          } else {
+            buf.append(',')
+
+            if (settings.lineBreaks_?) {
+              buf.append('\n')
+            }
+          }
+
+          (0 until currentIndent).foreach(_ => buf.append(' '))
+
           bufQuote(name, buf)
-          buf.append(":")
-          bufRender(value, buf)
-          buf.append(",")
+          buf.append(':')
+          if (settings.spaceAfterFieldName) {
+            buf.append(' ')
+          }
+          bufRender(value, buf, settings, currentIndent)
 
         case _ => // omit fields with value of JNothing
       }
-      if (buf.last == ',')
-        buf.deleteCharAt(buf.length - 1) //delete last comma
+
+      if (settings.lineBreaks_?) {
+        buf.append('\n')
+      }
+
+      (0 until indentLevel).foreach(_ => buf.append(' '))
     }
-    buf.append("}") //close bracket
+
+    buf.append('}') //close bracket
     buf
   }
 
-  private def bufQuote(s: String, buf: StringBuilder): StringBuilder = {
-    buf.append("\"") //open quote
+  private def bufQuote(s: String, buf: Appendable): Appendable = {
+    buf.append('"') //open quote
     appendEscapedString(buf, s)
-    buf.append("\"") //close quote
+    buf.append('"') //close quote
     buf
   }
 
@@ -1015,45 +1063,35 @@ trait JsonDSL extends Implicits {
   * Example:<pre>
   * pretty(render(json))
   * </pre>
-  *
-  * @see net.liftweb.json.JsonAST#render
   */
+@deprecated("Please switch using JsonAST's render methods instead of relying on Printer.", "3.0")
 object Printer extends Printer
+@deprecated("Please switch using JsonAST's render methods instead of relying on Printer.", "3.0")
 trait Printer {
-  import java.io._
-  import scala.text._
+  /** Compact printing (no whitespace etc.)
+    */
+  @deprecated("Please switch to using compactRender instead.", "3.0")
+  def compact(d: JsonAST.RenderIntermediaryDocument): String = JsonAST.compactRender(d.value)
 
   /** Compact printing (no whitespace etc.)
     */
-  def compact(d: Document): String = compact(d, new StringWriter).toString
-
-  /** Compact printing (no whitespace etc.)
-    */
-  def compact[A <: Writer](d: Document, out: A): A = {
-    def layout(docs: List[Document]): Unit = docs match {
-      case Nil                   =>
-      case DocText(s) :: rs      => out.write(s); layout(rs)
-      case DocCons(d1, d2) :: rs => layout(d1 :: d2 :: rs)
-      case DocBreak :: rs        => layout(rs)
-      case DocNest(_, d) :: rs   => layout(d :: rs)
-      case DocGroup(d) :: rs     => layout(d :: rs)
-      case DocNil :: rs          => layout(rs)
-      case _ :: rs               => layout(rs)
-    }
-
-    layout(List(d))
-    out.flush
+  @deprecated("Please switch to using compactRender instead.", "3.0")
+  def compact[A <: Writer](d: JsonAST.RenderIntermediaryDocument, out: A): A = {
+    JsonAST.compactRender(d.value, out)
     out
   }
 
   /** Pretty printing.
     */
-  def pretty(d: Document): String = pretty(d, new StringWriter).toString
+  @deprecated("Please switch to using prettyRender instead.", "3.0")
+  def pretty(d: JsonAST.RenderIntermediaryDocument): String =
+    JsonAST.prettyRender(d.value)
 
   /** Pretty printing.
     */
-  def pretty[A <: Writer](d: Document, out: A): A = {
-    d.format(0, out)
+  @deprecated("Please switch to using prettyRender instead.", "3.0")
+  def pretty[A <: Writer](d: JsonAST.RenderIntermediaryDocument, out: A): A = {
+    JsonAST.prettyRender(d.value, out)
     out
   }
 }

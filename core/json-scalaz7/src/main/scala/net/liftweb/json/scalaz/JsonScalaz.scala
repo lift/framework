@@ -45,7 +45,7 @@ trait Types {
   }
 
   implicit def JValueShow[A <: JValue]: Show[A] = new Show[A] {
-    override def shows(json: A): String = compact(render(json))
+    override def shows(json: A): String = compactRender(json)
   }
 
   implicit def JValueMonoid: Monoid[JValue] = Monoid.instance(_ ++ _, JNothing)

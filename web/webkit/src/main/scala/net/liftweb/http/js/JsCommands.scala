@@ -154,7 +154,7 @@ object JsExp {
   import json._
 
   implicit def jValueToJsExp(jv: JValue): JsExp = new JsExp {
-    lazy val toJsCmd = Printer.compact(JsonAST.render(jv))
+    lazy val toJsCmd = compactRender(jv)
   }
 
   implicit def strToJsExp(str: String): JE.Str = JE.Str(str)

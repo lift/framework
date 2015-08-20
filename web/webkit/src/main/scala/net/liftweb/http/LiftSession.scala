@@ -2133,7 +2133,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
               case jsCmd: JsCmd => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsCmd, false)))
               case jsExp: JsExp => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsExp.cmd, false)))
               case jv: JsonAST.JValue => {
-                val s: String = json.pretty(json.render(jv))
+                val s: String = json.prettyRender(jv)
                 partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(JsRaw(toCall+"("+s+")").cmd, false)))
               }
               case x: AnyRef => {
@@ -2593,7 +2593,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           case jsExp: JsExp => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsExp.cmd, false)))
 
           case ItemMsg(guid, value) =>
-            partialUpdate(JsCmds.JsSchedule(JsRaw(s"lift.sendEvent(${guid.encJs}, {'success': ${Printer.compact(JsonAST.render(value))}} )").cmd))
+            partialUpdate(JsCmds.JsSchedule(JsRaw(s"lift.sendEvent(${guid.encJs}, {'success': ${compactRender(value)}} )").cmd))
           case DoneMsg(guid) =>
             partialUpdate(JsCmds.JsSchedule(JsRaw(s"lift.sendEvent(${guid.encJs}, {'done': true} )").cmd))
 

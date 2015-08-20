@@ -52,7 +52,7 @@ class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonR
   def asJs = asJValue match {
     case JNothing => JsNull
     case jv => new JsExp {
-      lazy val toJsCmd = Printer.compact(render(jv))
+      lazy val toJsCmd = compactRender(jv)
     }
   }
   def toForm: Box[NodeSeq] = Empty
