@@ -282,11 +282,14 @@ object Extraction {
       }
 
       val custom = formats.customDeserializer(formats)
-      if (custom.isDefinedAt(constructor.targetType, json)) custom(constructor.targetType, json)
-      else json match {
-        case JNull => null
-        case JObject(TypeHint(t, fs)) => mkWithTypeHint(t, fs, constructor.targetType)
-        case _ => instantiate
+      if (custom.isDefinedAt(constructor.targetType, json)) {
+        custom(constructor.targetType, json)
+      } else {
+        json match {
+          case JNull => null
+          case JObject(TypeHint(t, fs)) => mkWithTypeHint(t, fs, constructor.targetType)
+          case _ => instantiate
+        }
       }
     }
 
