@@ -197,11 +197,7 @@ object Extraction {
       }
     }
 
-    if (clazz == classOf[Option[_]]) {
-      json.toOpt.map(extract0(_, mkMapping(typeArgs.head, typeArgs.tail)))
-    } else {
-      extract0(json, mkMapping(clazz, typeArgs))
-    }
+    extract0(json, mkMapping(clazz, typeArgs))
   }
 
   def extract(json: JValue, target: TypeInfo)(implicit formats: Formats): Any = 
@@ -358,19 +354,31 @@ object Extraction {
       case x => fail("Expected array but got " + x)
     }
 
-    def mkValue(root: JValue, mapping: Mapping, path: String, optional: Boolean) = 
-      if (optional && root == JNothing) None
-      else {
+    def mkValue(root: JValue, mapping: Mapping, path: String, optional: Boolean) = {
+      if (optional && root == JNothing) {
+        None
+      } else {
         try {
           val x = build(root, mapping)
           if (optional) {
-            if (x == null) None else Some(x) 
-          } else x
+            if (x == null) {
+              None
+            } else {
+              Some(x)
+            }
+          } else {
+            x
+          }
         } catch { 
           case e @ MappingException(msg, _) =>
-            if (optional) None else fail("No usable value for " + path + "\n" + msg, e)
+            if (optional) {
+              None
+            } else {
+              fail("No usable value for " + path + "\n" + msg, e)
+            }
         }
       }
+    }
 
     build(json, mapping)
   }
@@ -409,12 +417,17 @@ object Extraction {
     case j: JObject if (targetType == classOf[JObject]) => j
     case j: JArray if (targetType == classOf[JArray]) => j
     case JNull => null
-    case JNothing => fail("Did not find value which can be converted into " + targetType.getName)
+    case JNothing =>
+      fail("Did not find value which can be converted into " + targetType.getName)
     case _ => 
       val custom = formats.customDeserializer(formats)
       val typeInfo = TypeInfo(targetType, None)
-      if (custom.isDefinedAt(typeInfo, json)) custom(typeInfo, json)
-      else fail("Do not know how to convert " + json + " into " + targetType)
+
+      if (custom.isDefinedAt(typeInfo, json)) {
+        custom(typeInfo, json)
+      } else {
+        fail("Do not know how to convert " + json + " into " + targetType)
+      }
   }
 }
 
