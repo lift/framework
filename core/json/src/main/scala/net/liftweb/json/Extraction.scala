@@ -371,7 +371,7 @@ object Extraction {
           }
         } catch { 
           case e @ MappingException(msg, _) =>
-            if (optional) {
+            if (optional && (root == JNothing || root == JNull)) {
               None
             } else {
               fail("No usable value for " + path + "\n" + msg, e)
