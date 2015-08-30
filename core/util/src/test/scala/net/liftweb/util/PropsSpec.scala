@@ -20,9 +20,6 @@ package util
 import org.specs2.mutable.Specification
 import Props.RunModes._
 
-/**
- * Systems under specification for Lift Mailer.
- */
 object PropsSpec extends Specification {
   "Props Specification".title
   sequential
