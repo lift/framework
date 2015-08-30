@@ -57,6 +57,23 @@ object PropsSpec extends Specification {
       port must_== Full(8080)
     }
 
+    "Prefer prepended System.properties to the test.default.props" in {
+      System.setProperty("omniauth.baseurl", "http://google.com")
+      Props.prepend(System.getProperties)
+      val baseurl = Props.get("omniauth.baseurl")
+
+      baseurl must_== Full("http://google.com")
+    }
+
+    "Read through to System.properties, correctly handling mutation" in {
+      System.setProperty("omniauth.baseurl", "http://google.com")
+      Props.prepend(System.getProperties)
+      System.setProperty("omniauth.baseurl", "http://ebay.com")
+      val baseurl = Props.get("omniauth.baseurl")
+
+      baseurl must_== Full("http://ebay.com")
+    }
+
     "Find properties in appended maps when not defined in test.default.props" in {
       Props.append(Map("new.prop" -> "new.value"))
       val prop = Props.get("new.prop")
