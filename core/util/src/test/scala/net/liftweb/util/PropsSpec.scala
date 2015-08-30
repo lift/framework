@@ -20,10 +20,13 @@ package util
 import net.liftweb.common.Full
 import org.specs2.mutable.Specification
 import Props.RunModes._
+import org.specs2.specification.After
 
-object PropsSpec extends Specification {
+object PropsSpec extends Specification with After {
   "Props Specification".title
   sequential
+
+  def after = Props.testReset()
 
   "Props" should {
     "Detect test mode correctly" in {
