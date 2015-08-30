@@ -85,6 +85,24 @@ object Props extends Logger {
   }
 
   /**
+   * Updates Props to find property values in the argument BEFORE looking in the standard Lift prop files.
+   * @param props Arbitrary map of property key -> property value
+   */
+  def prepend(props:Map[String, String]):Unit = {}
+
+  /**
+   * Updates Props to find property values in the argument AFTER first looking in the standard Lift prop files.
+   * @param props Arbitrary map of property key -> property value
+   */
+  def append(props:Map[String, String]):Unit = {}
+
+  /**
+   * Updates Props to find interpolated values in the argument.
+   * @param props
+   */
+  def appendInterpolator(props:Map[String, String]):Unit = {}
+
+  /**
    * Enumeration of available run modes.
    */
   object RunModes extends Enumeration {
