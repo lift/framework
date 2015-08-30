@@ -17,6 +17,7 @@
 package net.liftweb
 package util
 
+import net.liftweb.common.Full
 import org.specs2.mutable.Specification
 import Props.RunModes._
 
@@ -47,6 +48,33 @@ object PropsSpec extends Specification {
       Props.autoDetectRunModeFn.allowModification must_== false
       Props.autoDetectRunModeFn.set(() => Test) must_== false
       Props.autoDetectRunModeFn.get must_== before
+    }
+
+    "Prefer prepended properties to the test.default.props" in {
+      Props.prepend(Map("jetty.port" -> "8080"))
+      val port = Props.getInt("jetty.port")
+
+      port must_== Full(8080)
+    }
+
+    "Find properties in appended maps when not defined in test.default.props" in {
+      Props.append(Map("new.prop" -> "new.value"))
+      val prop = Props.get("new.prop")
+
+      prop must_== Full("new.value")
+    }
+
+    "Not interpolate values when no interpolator is given" in {
+      val port = Props.get("jetty.port")
+
+      port must_== Full("${PORT}")
+    }
+
+    "Interpolate values from the given interpolator" in {
+      Props.appendInterpolator(Map("PORT" -> "8080"))
+      val port = Props.getInt("jetty.port")
+
+      port must_== Full(8080)
     }
   }
 }
