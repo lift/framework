@@ -20,6 +20,7 @@ package util
 import java.net.InetAddress
 import java.util.Properties
 import java.io.InputStream
+import scala.collection.JavaConverters._
 import Helpers._
 import common._
 
@@ -88,21 +89,21 @@ object Props extends Logger {
    * Updates Props to find property values in the argument BEFORE looking in the standard Lift prop files.
    * @param props Arbitrary map of property key -> property value
    */
-  def prepend(props:Map[String, String]):Unit = {}
+  def prepend(props:Map[String, String]):Unit = prepend(props.asJava.asInstanceOf[java.util.Map[Object, Object]])
   def prepend(props:java.util.Map[Object, Object]):Unit = {}
 
   /**
    * Updates Props to find property values in the argument AFTER first looking in the standard Lift prop files.
    * @param props Arbitrary map of property key -> property value
    */
-  def append(props:Map[String, String]):Unit = {}
+  def append(props:Map[String, String]):Unit = append(props.asJava.asInstanceOf[java.util.Map[Object, Object]])
   def append(props:java.util.Map[Object, Object]):Unit = {}
 
   /**
    * Updates Props to find interpolated values in the argument.
    * @param props
    */
-  def appendInterpolator(props:Map[String, String]):Unit = {}
+  def appendInterpolator(props:Map[String, String]):Unit = appendInterpolator(props.asJava.asInstanceOf[java.util.Map[Object, Object]])
   def appendInterpolator(props:java.util.Map[Object, Object]):Unit = {}
 
   /**
@@ -350,11 +351,17 @@ object Props extends Logger {
     }
   }
 
+  private var prepended:List[java.util.Map[Object, Object]] = Nil
+  private var appended:List[java.util.Map[Object, Object]] = Nil
+  private var interpolators:List[java.util.Map[Object, Object]] = Nil
+
   /**
    * Resets the Props stacks to allow for isolated unit tests
    */
   private [util] def testReset() = {
-
+    prepended = Nil
+    appended = Nil
+    interpolators = Nil
   }
 }
 
