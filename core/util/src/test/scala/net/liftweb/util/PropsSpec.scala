@@ -53,6 +53,18 @@ object PropsSpec extends Specification with After {
       Props.autoDetectRunModeFn.get must_== before
     }
 
+    "Parse and cast to int" in {
+      Props.getInt("an.int") must_== Full(42)
+    }
+
+    "Parse and cast to long" in {
+      Props.getLong("a.long") must_== Full(9223372036854775807L)
+    }
+
+    "Parse and cast to boolean" in {
+      Props.getBool("a.boolean") must_== Full(true)
+    }
+
     "Prefer prepended properties to the test.default.props" in {
       Props.prepend(Map("jetty.port" -> "8080"))
       val port = Props.getInt("jetty.port")
