@@ -54,7 +54,14 @@ object Props extends Logger {
    * @param name key for the property to get
    * @return the value of the property if defined
    */
-  def get(name: String): Box[String] = Box(props.get(name))
+  def get(name: String): Box[String] = {
+    val tries:List[Box[Object]] =
+      prepended.map(m => Box.legacyNullTest(m get name)) ++
+      (props.get(name).toBox ::
+      appended.map(m => Box.legacyNullTest(m get name)))
+
+    tries.find(_.isDefined).getOrElse(Empty).map(_.toString)
+  }
 
   // def apply(name: String): String = props(name)
 
@@ -72,7 +79,7 @@ object Props extends Logger {
    * @return the subset of strings in 'what' that do not correspond to
    * keys for available properties.
    */
-  def require(what: String*) = what.filter(!props.contains(_))
+  def require(what: String*) = what.filter(get(_).isEmpty)
 
   /**
    * Ensure that all of the specified properties exist; throw an exception if
