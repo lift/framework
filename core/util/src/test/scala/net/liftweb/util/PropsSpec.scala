@@ -108,5 +108,15 @@ object PropsSpec extends Specification with After {
 
       port must_== Full(8080)
     }
+
+    "Find properties in append for require()" in {
+      Props.append(Map("new.prop" -> "new.value"))
+      Props.require("new.prop") must_== Nil
+    }
+
+    "Find properties in prepend for require()" in {
+      Props.prepend(Map("new.prop" -> "new.value"))
+      Props.require("new.prop") must_== Nil
+    }
   }
 }
