@@ -349,5 +349,12 @@ object Props extends Logger {
         Map()
     }
   }
+
+  /**
+   * Resets the Props stacks to allow for isolated unit tests
+   */
+  private [util] def testReset() = {
+
+  }
 }
 
