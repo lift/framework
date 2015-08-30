@@ -60,11 +60,11 @@ object Props extends Logger {
 
   def getInt(name: String): Box[Int] = get(name).map(toInt) // toInt(props.get(name))
   def getInt(name: String, defVal: Int): Int = getInt(name) openOr defVal // props.get(name).map(toInt(_)) getOrElse defVal
-  def getLong(name: String): Box[Long] = props.get(name).flatMap(asLong)
+  def getLong(name: String): Box[Long] = get(name).flatMap(asLong)
   def getLong(name: String, defVal: Long): Long = getLong(name) openOr defVal // props.get(name).map(toLong(_)) getOrElse defVal
-  def getBool(name: String): Box[Boolean] = props.get(name).map(toBoolean) // (props.get(name))
+  def getBool(name: String): Box[Boolean] = get(name).map(toBoolean) // (props.get(name))
   def getBool(name: String, defVal: Boolean): Boolean = getBool(name) openOr defVal // props.get(name).map(toBoolean(_)) getOrElse defVal
-  def get(name: String, defVal: String) = props.get(name) getOrElse defVal
+  def get(name: String, defVal: String):String = get(name) getOrElse defVal
 
   /**
    * Determine whether the specified properties exist.
@@ -90,21 +90,21 @@ object Props extends Logger {
    * @param props Arbitrary map of property key -> property value
    */
   def prepend(props:Map[String, String]):Unit = prepend(props.asJava.asInstanceOf[java.util.Map[Object, Object]])
-  def prepend(props:java.util.Map[Object, Object]):Unit = {}
+  def prepend(props:java.util.Map[Object, Object]):Unit = prepended = props :: prepended
 
   /**
    * Updates Props to find property values in the argument AFTER first looking in the standard Lift prop files.
    * @param props Arbitrary map of property key -> property value
    */
   def append(props:Map[String, String]):Unit = append(props.asJava.asInstanceOf[java.util.Map[Object, Object]])
-  def append(props:java.util.Map[Object, Object]):Unit = {}
+  def append(props:java.util.Map[Object, Object]):Unit = appended = appended :+ props
 
   /**
    * Updates Props to find interpolated values in the argument.
    * @param props
    */
   def appendInterpolator(props:Map[String, String]):Unit = appendInterpolator(props.asJava.asInstanceOf[java.util.Map[Object, Object]])
-  def appendInterpolator(props:java.util.Map[Object, Object]):Unit = {}
+  def appendInterpolator(props:java.util.Map[Object, Object]):Unit = interpolators = interpolators :+ props
 
   /**
    * Enumeration of available run modes.
