@@ -119,6 +119,14 @@ object PropsSpec extends Specification with AfterEach {
       port must_== Full(8080)
     }
 
+    "Interpolate multiple values in a string from the given interpolator" in {
+      Props.testReset()
+      Props.appendInterpolator(Map("DB_HOST" -> "localhost", "DB_PORT" -> "3306"))
+      val url = Props.get("db.url")
+
+      url must_== Full("jdbc:mysql://localhost:3306/MYDB")
+    }
+
     "Find properties in append for require()" in {
       Props.testReset()
       Props.append(Map("new.prop" -> "new.value"))
