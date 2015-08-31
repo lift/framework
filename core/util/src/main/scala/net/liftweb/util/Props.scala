@@ -60,7 +60,28 @@ object Props extends Logger {
       (props.get(name).toBox ::
       appended.map(m => Box.legacyNullTest(m get name)))
 
-    tries.find(_.isDefined).getOrElse(Empty).map(_.toString)
+    tries.find(_.isDefined).getOrElse(Empty).map(interpolate)
+  }
+
+  private val INTERPOLATE = """(.*?)\Q${\E(.*?)\Q}\E([^$]*)""".r
+  private def interpolate(v:Object):String = {
+    def lookup(key:String) = {
+      val tries = interpolators.map(m => Box.legacyNullTest(m get key))
+      tries.find(_.isDefined).getOrElse(Empty)
+    }
+    val interpolated = for {
+      m <- INTERPOLATE findAllMatchIn v.toString
+    } yield {
+      val before = m group 1
+      val key    = m group 2
+      val after  = m group 3
+      val value  = lookup(key).openOr(v.toString)
+
+      before + value + after
+    }
+
+    if(interpolated.isEmpty) v.toString
+    else interpolated.mkString
   }
 
   // def apply(name: String): String = props(name)
