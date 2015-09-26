@@ -188,16 +188,20 @@ object Extraction {
   private def extract0(json: JValue, clazz: Class[_], typeArgs: Seq[Class[_]])
                       (implicit formats: Formats): Any = {
     def mkMapping(clazz: Class[_], typeArgs: Seq[Class[_]])(implicit formats: Formats): Meta.Mapping = {
-      if (clazz == classOf[List[_]] || clazz == classOf[Set[_]] || clazz.isArray)
+      if (clazz == classOf[Option[_]] || clazz == classOf[List[_]] || clazz == classOf[Set[_]] || clazz.isArray) {
         Col(TypeInfo(clazz, None), mkMapping(typeArgs.head, typeArgs.tail))
-      else if (clazz == classOf[Map[_, _]])
+      } else if (clazz == classOf[Map[_, _]]) {
         Dict(mkMapping(typeArgs.tail.head, typeArgs.tail.tail))
-      else mappingOf(clazz, typeArgs)
+      } else {
+        mappingOf(clazz, typeArgs)
+      }
     }
-    if (clazz == classOf[Option[_]])
+
+    if (clazz == classOf[Option[_]]) {
       json.toOpt.map(extract0(_, mkMapping(typeArgs.head, typeArgs.tail)))
-    else 
+    } else {
       extract0(json, mkMapping(clazz, typeArgs))
+    }
   }
 
   def extract(json: JValue, target: TypeInfo)(implicit formats: Formats): Any = 
@@ -278,11 +282,14 @@ object Extraction {
       }
 
       val custom = formats.customDeserializer(formats)
-      if (custom.isDefinedAt(constructor.targetType, json)) custom(constructor.targetType, json)
-      else json match {
-        case JNull => null
-        case JObject(TypeHint(t, fs)) => mkWithTypeHint(t, fs, constructor.targetType)
-        case _ => instantiate
+      if (custom.isDefinedAt(constructor.targetType, json)) {
+        custom(constructor.targetType, json)
+      } else {
+        json match {
+          case JNull => null
+          case JObject(TypeHint(t, fs)) => mkWithTypeHint(t, fs, constructor.targetType)
+          case _ => instantiate
+        }
       }
     }
 
@@ -309,6 +316,13 @@ object Extraction {
       constructor(array)
     }
 
+    def newOption(root: JValue, m: Mapping) = {
+      root match {
+        case JNothing | JNull => None
+        case x => Option(build(x, m))
+      }
+    }
+
     def build(root: JValue, mapping: Mapping): Any = mapping match {
       case Value(targetType) => convert(root, targetType, formats)
       case c: Constructor => newInstance(c, root)
@@ -322,6 +336,7 @@ object Extraction {
         else if (c == classOf[Set[_]]) newCollection(root, m, a => Set(a: _*))
         else if (c.isArray) newCollection(root, m, mkTypedArray(c))
         else if (classOf[Seq[_]].isAssignableFrom(c)) newCollection(root, m, a => List(a: _*))
+        else if (c == classOf[Option[_]]) newOption(root, m)
         else fail("Expected collection but got " + m + " for class " + c)
       case Dict(m) => root match {
         case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)

@@ -163,16 +163,19 @@ private[json] object Meta {
       Arg(name, mapping, optional)
     }
 
-    if (primitive_?(clazz)) Value(rawClassOf(clazz))
-    else {
+    if (primitive_?(clazz)) {
+      Value(rawClassOf(clazz))
+    } else {
       mappings.memoize((clazz, typeArgs), { case (t, _) => 
         val c = rawClassOf(t)
         val (pt, typeInfo) = 
-          if (typeArgs.isEmpty) (t, TypeInfo(c, None))
-          else {
+          if (typeArgs.isEmpty) {
+            (t, TypeInfo(c, None))
+          } else {
             val t = mkParameterizedType(c, typeArgs)
             (t, TypeInfo(c, Some(t)))
           }
+
         Constructor(typeInfo, constructors(pt, Set(), None))         
       })
     }

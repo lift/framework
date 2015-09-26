@@ -59,6 +59,11 @@ object ExtractionBugs extends Specification {
     json.extract[Response] mustEqual Response(List(Map("one" -> 1, "two" -> 2)))
   }
 
+  "Extraction should handle List[Option[String]]" in {
+    val json = JsonParser.parse("""["one", "two", null]""")
+    json.extract[List[Option[String]]] mustEqual List(Some("one"), Some("two"), None)
+  }
+
   case class Response(data: List[Map[String, Int]])
 
   case class OptionOfInt(opt: Option[Int])
