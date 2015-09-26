@@ -38,7 +38,7 @@ object JsonXmlSpec extends Specification  with NodeGen with JValueGen with Scala
   }
 
   "JSON can be converted to XML, and back to valid JSON (non symmetric op)" in {
-    val conversion = (json: JValue) => { parse(compact(render(toJson(toXml(json))))); true }
+    val conversion = (json: JValue) => { parse(compactRender(toJson(toXml(json)))); true }
     check(forAll(conversion))
   }
 

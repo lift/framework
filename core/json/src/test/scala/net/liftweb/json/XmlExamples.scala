@@ -27,14 +27,14 @@ object XmlExamples extends Specification  {
 
   "Basic conversion example" in {
     val json = toJson(users1) 
-    compact(render(json)) mustEqual """{"users":{"count":"2","user":[{"disabled":"true","id":"1","name":"Harry"},{"id":"2","name":"David","nickname":"Dave"}]}}"""
+    compactRender(json) mustEqual """{"users":{"count":"2","user":[{"disabled":"true","id":"1","name":"Harry"},{"id":"2","name":"David","nickname":"Dave"}]}}"""
   }
 
   "Conversion transformation example 1" in {
     val json = toJson(users1).transformField {
       case JField("id", JString(s)) => JField("id", JInt(s.toInt))
     }
-    compact(render(json)) mustEqual """{"users":{"count":"2","user":[{"disabled":"true","id":1,"name":"Harry"},{"id":2,"name":"David","nickname":"Dave"}]}}"""
+    compactRender(json) mustEqual """{"users":{"count":"2","user":[{"disabled":"true","id":1,"name":"Harry"},{"id":2,"name":"David","nickname":"Dave"}]}}"""
   }
 
   "Conversion transformation example 2" in {
@@ -42,12 +42,12 @@ object XmlExamples extends Specification  {
       case JField("id", JString(s)) => JField("id", JInt(s.toInt))
       case JField("user", x: JObject) => JField("user", JArray(x :: Nil))
     }
-    compact(render(json)) mustEqual """{"users":{"user":[{"id":1,"name":"Harry"}]}}"""
+    compactRender(json) mustEqual """{"users":{"user":[{"id":1,"name":"Harry"}]}}"""
   }
 
   "Primitive array example" in {
     val xml = <chars><char>a</char><char>b</char><char>c</char></chars>
-    compact(render(toJson(xml))) mustEqual """{"chars":{"char":["a","b","c"]}}"""
+    compactRender(toJson(xml)) mustEqual """{"chars":{"char":["a","b","c"]}}"""
   }
 
   "Lotto example which flattens number arrays into encoded string arrays" in {
@@ -114,7 +114,7 @@ object XmlExamples extends Specification  {
 
   "Grouped text example" in {
     val json = toJson(groupedText)
-    compact(render(json)) mustEqual """{"g":{"group":"foobar","url":"http://example.com/test"}}"""
+    compactRender(json) mustEqual """{"g":{"group":"foobar","url":"http://example.com/test"}}"""
   }
 
   val users1 =
@@ -165,8 +165,8 @@ object XmlExamples extends Specification  {
 
   "Example with one attribute, one nested element " in { 
     val a = attrToObject("stats", "count", s => JInt(s.s.toInt)) _
-    compact(render(a(toJson(messageXml2)))) mustEqual expected2
-    compact(render(a(toJson(messageXml3)))) mustEqual expected2
+    compactRender(a(toJson(messageXml2))) mustEqual expected2
+    compactRender(a(toJson(messageXml3))) mustEqual expected2
   }
 
   val messageXml1 = 

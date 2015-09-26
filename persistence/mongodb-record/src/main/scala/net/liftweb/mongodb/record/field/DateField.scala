@@ -73,7 +73,7 @@ trait DateTypedField extends TypedField[Date] {
 
   def asJs = asJValue match {
     case JNothing => JsNull
-    case jv => JsRaw(Printer.compact(render(jv)))
+    case jv => JsRaw(compactRender(jv))
   }
 
   def asJValue: JValue = valueBox.map(v => JsonDate(v)(formats)) openOr (JNothing: JValue)

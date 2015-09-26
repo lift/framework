@@ -241,7 +241,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    * @return a JsObj
    */
   def asJsExp(inst: BaseRecord): JsExp = new JsExp {
-    lazy val toJsCmd = Printer.compact(render(asJValue(inst)))
+    lazy val toJsCmd = compactRender(asJValue(inst))
   }
 
   /** Encode a record instance into a JValue */

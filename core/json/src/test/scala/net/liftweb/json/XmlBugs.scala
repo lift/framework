@@ -32,7 +32,7 @@ object XmlBugs extends Specification {
 
   "HarryH's XML with attributes parses correctly" in {
     val json = toJson(<tips><group type="Nearby"><tip><id>10</id></tip></group></tips>)
-    Printer.compact(render(json)) mustEqual """{"tips":{"group":{"type":"Nearby","tip":{"id":"10"}}}}"""
+    compactRender(json) mustEqual """{"tips":{"group":{"type":"Nearby","tip":{"id":"10"}}}}"""
   }
 
   "Jono's XML with attributes parses correctly" in {
@@ -54,7 +54,7 @@ object XmlBugs extends Specification {
       </root>
     val expected    = """{"root":{"n":[{"x":"abc","id":"10"},{"x":"bcd","id":"11"}]}}"""
     val expected210 = """{"root":{"n":[{"id":"10","x":"abc"},{"id":"11","x":"bcd"}]}}"""
-    val json = Printer.compact(render(toJson(xml)))
+    val json = compactRender(toJson(xml))
     (json == expected || json == expected210) mustEqual true
   }
 
@@ -62,6 +62,6 @@ object XmlBugs extends Specification {
     val xml =
       <tips><group type="Foo"></group><group type="Bar"><tip><text>xxx</text></tip><tip><text>yyy</text></tip></group></tips>
     val expected = """{"tips":{"group":[{"type":"Foo"},{"type":"Bar","tip":[{"text":"xxx"},{"text":"yyy"}]}]}}"""
-    Printer.compact(render(toJson(xml))) mustEqual expected
+    compactRender(toJson(xml)) mustEqual expected
   }
 }

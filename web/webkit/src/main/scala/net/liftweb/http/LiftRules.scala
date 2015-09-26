@@ -28,6 +28,7 @@ import js._
 import JE._
 import JsCmds._
 import auth._
+import json._
 
 import scala.xml._
 import java.util.{Locale, TimeZone, ResourceBundle, Date}
@@ -224,14 +225,20 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val sessionInactivityTimeout = new FactoryMaker[Box[Long]](Empty){}
 
   /**
-   * The function that converts a scala.text.Document to
-   * a String (used for JsonAST.JValue to text convertion.
-   * By default, use Printer.pretty for dev mode and
-   * Printer.compact for other modes
+   * The function that converts a JValue to
+   * a String.
+   *
+   * By default, use prettyRender for dev mode and compactRender for other modes.
    */
-  val jsonOutputConverter = new FactoryMaker[scala.text.Document => String]({
-    import json.Printer
-    if (Props.devMode) Printer.pretty _ else Printer.compact _}){}
+  val jsonOutputConverter = new FactoryMaker[JsonAST.JValue => String]({
+    import json.{prettyRender, compactRender}
+
+    if (Props.devMode) {
+      prettyRender _
+    } else {
+      compactRender _
+    }
+  }){}
 
 
   /**
