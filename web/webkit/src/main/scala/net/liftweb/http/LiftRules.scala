@@ -1713,6 +1713,8 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   @volatile var cometGetTimeout = 140000
 
+  @volatile var putAjaxFnsInContainerSession = false
+
   /**
    * Compute the headers to be sent to the browser in addition to anything else
    * that's sent.
