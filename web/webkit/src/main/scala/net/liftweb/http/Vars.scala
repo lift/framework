@@ -157,7 +157,7 @@ private[http] trait HasLogUnreadVal {
  * lifetime of HttpSession attributes.  This alternative to SessionVar
  * keeps data in the container's session and must be serializable to
  * support session migration.  Use SessionVars unless you are using
- * MigratoryLiftSessions.
+ * MigratorySessions.
  *
  * <code>
  * object MySnippetCompanion {
