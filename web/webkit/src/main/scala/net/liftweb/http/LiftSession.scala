@@ -382,9 +382,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       hs.setAttribute("ajaxFns", map)
     }
 
-  private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] =
-    if(LiftRules.putAjaxFnsInContainerSession) new ConcurrentHashMap(viewHttpSessionFns)
-    else new ConcurrentHashMap
+  private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = new ConcurrentHashMap(viewHttpSessionFns)
 
   private val functionOwnerRemovalListeners = LiftSession.onFunctionOwnersRemoved
 
