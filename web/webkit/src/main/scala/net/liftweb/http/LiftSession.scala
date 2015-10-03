@@ -364,18 +364,23 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   private val fullPageLoad = new BooleanThreadGlobal
 
-  private def viewHttpSessionFns:java.util.Map[String, S.AFuncHolder] = java.util.Collections.unmodifiableMap((for {
-    hs <- httpSession
-    map <- Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]])
-  } yield map).openOr(new java.util.HashMap[String, S.AFuncHolder]))
+  // Returns a view of the functions stored in the http session
+  private def viewHttpSessionFns:java.util.Map[String, S.AFuncHolder] = java.util.Collections.unmodifiableMap(
+    if(LiftRules.putAjaxFnsInContainerSession) (for {
+        hs <- httpSession
+        map <- Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]])
+      } yield map).openOr(new java.util.HashMap[String, S.AFuncHolder])
+    else new java.util.HashMap[String, S.AFuncHolder]
+  )
 
-  private def updateHttpSessionFns(f:ConcurrentHashMap[String, S.AFuncHolder]=>Unit):Unit = {
-    httpSession.foreach { hs =>
+  // Mutates the http session function map with the given argument and updates the container
+  private def updateHttpSessionFns(f:ConcurrentHashMap[String, S.AFuncHolder]=>Unit):Unit =
+    if(LiftRules.putAjaxFnsInContainerSession) httpSession.foreach { hs =>
       val map = Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]]).openOr(new ConcurrentHashMap[String, S.AFuncHolder])
       f(map)
+      // Now that the map has been mutated, must write to the session so the container can replicate
       hs.setAttribute("ajaxFns", map)
     }
-  }
 
   private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] =
     if(LiftRules.putAjaxFnsInContainerSession) new ConcurrentHashMap(viewHttpSessionFns)
@@ -614,6 +619,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    */
   def removeFunction(name: String) = {
     nmessageCallback.remove(name)
+    updateHttpSessionFns(_.remove(name))
   }
 
   /**
@@ -633,7 +639,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     nmessageCallback.foreach {
       case (functionName, funcHolder) if test(funcHolder) =>
         funcHolder.owner.foreach(removedOwners += _)
-        nmessageCallback.remove(functionName)
+        removeFunction(functionName)
 
       case (_, funcHolder) =>
         funcHolder.owner.foreach(availableOwners += _)
@@ -888,7 +894,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     }
 
       import scala.collection.JavaConversions._
-      (0 /: nmessageCallback)((l, v) => l + (v._2.owner match {
+    val numUpdated = (0 /: nmessageCallback)((l, v) => l + (v._2.owner match {
         case Full(owner) if (owner == ownerName) =>
           v._2.lastSeen = time
           1
@@ -897,6 +903,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           1
         case _ => 0
     }))
+
+    // Since some of the functions have been mutated, force a write of the fn map to the container.
+    if(numUpdated > 0) updateHttpSessionFns(_ => ())
+
+    numUpdated
   }
 
   /**
@@ -1164,6 +1175,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     f map {
       fnc =>
         val func: String = {
+          // TODO: Figure out if this needs to be in httpSession fn map
           val funcName = Helpers.nextFuncName
           nmessageCallback.put(funcName, S.NFuncHolder(() => {
             fnc()
