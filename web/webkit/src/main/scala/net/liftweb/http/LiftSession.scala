@@ -364,12 +364,22 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   private val fullPageLoad = new BooleanThreadGlobal
 
-  private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = if(LiftRules.putAjaxFnsInContainerSession) {
-    (for {
-      hs <- httpSession
-      map <- Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]])
-    } yield new ConcurrentHashMap[String, S.AFuncHolder](map)).openOr(new ConcurrentHashMap)
-  } else new ConcurrentHashMap
+  private def viewHttpSessionFns:java.util.Map[String, S.AFuncHolder] = java.util.Collections.unmodifiableMap((for {
+    hs <- httpSession
+    map <- Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]])
+  } yield map).openOr(new java.util.HashMap[String, S.AFuncHolder]))
+
+  private def updateHttpSessionFns(f:ConcurrentHashMap[String, S.AFuncHolder]=>Unit):Unit = {
+    httpSession.foreach { hs =>
+      val map = Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]]).openOr(new ConcurrentHashMap[String, S.AFuncHolder])
+      f(map)
+      hs.setAttribute("ajaxFns", map)
+    }
+  }
+
+  private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] =
+    if(LiftRules.putAjaxFnsInContainerSession) new ConcurrentHashMap(viewHttpSessionFns)
+    else new ConcurrentHashMap
 
   private val functionOwnerRemovalListeners = LiftSession.onFunctionOwnersRemoved
 
@@ -585,26 +595,18 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Updates the internal functions mapping
    */
   def updateFunctionMap(funcs: Map[String, S.AFuncHolder], uniqueId: String, when: Long): Unit = {
-    funcs.foreach {
+    copyFunctions(funcs, nmessageCallback)
+
+    if(LiftRules.putAjaxFnsInContainerSession)
+      updateHttpSessionFns(copyFunctions(funcs, _))
+  }
+
+  private def copyFunctions(from: Map[String, S.AFuncHolder], to:java.util.Map[String, S.AFuncHolder]):Unit =
+    from.foreach {
       case (name, func) =>
-        nmessageCallback.put(name,
+        to.put(name,
           if (func.owner == Full(uniqueId)) func else func.duplicate(uniqueId))
     }
-
-    if(LiftRules.putAjaxFnsInContainerSession) {
-      for {
-        hs <- httpSession
-      } {
-        val sessionFns = Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]]).openOr(new ConcurrentHashMap[String, S.AFuncHolder])
-        funcs.foreach {
-          case (name, func) =>
-            sessionFns.put(name,
-              if (func.owner == Full(uniqueId)) func else func.duplicate(uniqueId))
-        }
-        hs.setAttribute("ajaxFns", sessionFns)
-      }
-    }
-  }
 
   /**
    * Removes the function with the given `name`. Note that this will
