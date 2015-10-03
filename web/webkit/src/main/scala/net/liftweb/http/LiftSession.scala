@@ -364,7 +364,13 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   private val fullPageLoad = new BooleanThreadGlobal
 
-  private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = new ConcurrentHashMap
+  private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = if(LiftRules.putAjaxFnsInContainerSession) {
+    (for {
+      hs <- httpSession
+      map <- Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]])
+    } yield new ConcurrentHashMap[String, S.AFuncHolder](map)).openOr(new ConcurrentHashMap)
+  } else new ConcurrentHashMap
+
   private val functionOwnerRemovalListeners = LiftSession.onFunctionOwnersRemoved
 
   @volatile private[http] var notices: Seq[(NoticeType.Value, NodeSeq, Box[String])] = Nil
@@ -583,6 +589,21 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       case (name, func) =>
         nmessageCallback.put(name,
           if (func.owner == Full(uniqueId)) func else func.duplicate(uniqueId))
+    }
+
+    if(LiftRules.putAjaxFnsInContainerSession) {
+      for {
+        ls <- S.session
+        hs <- ls.httpSession
+      } {
+        val sessionFns = Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]]).openOr(new ConcurrentHashMap[String, S.AFuncHolder])
+        funcs.foreach {
+          case (name, func) =>
+            sessionFns.put(name,
+              if (func.owner == Full(uniqueId)) func else func.duplicate(uniqueId))
+        }
+        hs.setAttribute("ajaxFns", sessionFns)
+      }
     }
   }
 
