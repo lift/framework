@@ -593,8 +593,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
     if(LiftRules.putAjaxFnsInContainerSession) {
       for {
-        ls <- S.session
-        hs <- ls.httpSession
+        hs <- httpSession
       } {
         val sessionFns = Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]]).openOr(new ConcurrentHashMap[String, S.AFuncHolder])
         funcs.foreach {
