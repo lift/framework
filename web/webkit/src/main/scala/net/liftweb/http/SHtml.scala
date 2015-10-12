@@ -2116,6 +2116,61 @@ trait SHtml extends Loggable {
   }
 
   /**
+   * Generate a CSS transform that will bind to a template containing radio buttons without overwriting
+   * the radio buttons in the template with entirely new elements.
+   *
+   * This is a change in technique from the normal `radio` handlers in that it doesn't involve the
+   * creation of a new element or injection of hidden elements. That means that labels designed to
+   * target a partiular radio by ID and CSS styles that target elements following radios using the
+   * `+` CSS selector won't stop working once a form is bound by Lift.
+   *
+   * As an example, given the following template:
+   *
+   * {{{
+   * <input type="radio" id="all-emails">
+   * <label for="all-emails">All emails.</label>
+   *
+   * <input type="radio" id="some-emails">
+   * <label for="some-emails">Some emails.</label>
+   * }}}
+   *
+   * You might invoke this function like so:
+   *
+   * {{{
+   * def render = {
+   *   SHtml.radioCssSel[String](Empty, submitHandler) {
+   *     "all-emails" -> "All emails",
+   *     "some-emails" -> "Some emails"
+   *   }
+   * }
+   * }}}
+   *
+   * @param initialValue initial value or Empty if no initial value
+   * @param onSubmit function to execute on form submission
+   * @param cssSelToValue mapping between CSS selectors of radio input nodes and values assigned to them
+   */
+  def radioCssSel[T](initialValue: Box[T], onSubmit: Box[T] => Any)(cssSelToValue: (String, T)*): CssSel = {
+    val radioOptions = cssSelToValue.map(_._2 -> nextFuncName).toMap
+
+    def selectionHandler(selection: String) = {
+      onSubmit(radioOptions.find(_._2 == selection).map(_._1))
+    }
+
+    S.fmapFunc(selectionHandler _)(funcName => {
+      cssSelToValue.map { case (cssSel, value) =>
+        s"$cssSel [name]" #> funcName &
+        s"$cssSel [value]" #> radioOptions(value) &
+        s"$cssSel [checked]" #> {
+          if (initialValue === value)
+            Some("true")
+          else
+            None
+        }
+      }.reduceLeft(_ & _)
+    })
+  }
+
+  /**
    * Defines a form element for a file upload that will call the
    * specified function when the file is uploaded if the file size
    * is greater than zero. Note that in order to use the fileUpload
