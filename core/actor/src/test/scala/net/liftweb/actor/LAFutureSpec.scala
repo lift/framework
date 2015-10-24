@@ -2,15 +2,20 @@ package net.liftweb.actor
 
 import net.liftweb.common.{Failure, Box}
 import org.specs2.mutable.Specification
+import java.util.concurrent.atomic.AtomicBoolean
 
 class LAFutureSpec extends Specification {
-  val timeout = 5000L
+  sequential
+  val timeout = 20000L
+  LAScheduler
 
   "LAFuture" should {
+    val futureSpecScheduler = new LAScheduler {
+      override def execute(f: ()=>Unit): Unit = f()
+    }
+
     "map to failing future if transforming function throws an Exception" in {
-      val future = LAFuture { () =>
-        1
-      }
+      val future = LAFuture(() => 1, futureSpecScheduler)
       def tranformThrowingException(input: Int) = {
         throw new Exception("fail")
       }
@@ -27,9 +32,7 @@ class LAFutureSpec extends Specification {
     }
 
     "flatMap to failing future if transforming function throws an Exception" in {
-      val future = LAFuture { () =>
-        1
-      }
+      val future = LAFuture(() => 1, futureSpecScheduler)
       def tranformThrowingException(input: Int): LAFuture[Int] = {
         throw new Exception("fail")
       }
