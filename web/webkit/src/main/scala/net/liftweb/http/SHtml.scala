@@ -2143,6 +2143,10 @@ trait SHtml extends Loggable {
    *     "#some-emails" -> "Some emails"
    *   )
    * }
+   * 
+   * val submitHandler:Box[String] => Unit = { box =>
+   *   println("We got a box!! "+box)
+   * }
    * }}}
    *
    * @param initialValue initial value or Empty if no initial value
