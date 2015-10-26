@@ -360,15 +360,7 @@ object Extraction {
       } else {
         try {
           val x = build(root, mapping)
-          if (optional) {
-            if (x == null) {
-              None
-            } else {
-              Some(x)
-            }
-          } else {
-            x
-          }
+          if (optional) Option(x) else x 
         } catch { 
           case e @ MappingException(msg, _) =>
             if (optional && (root == JNothing || root == JNull)) {
