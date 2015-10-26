@@ -2139,8 +2139,8 @@ trait SHtml extends Loggable {
    * {{{
    * def render = {
    *   SHtml.radioCssSel[String](Empty, submitHandler) (
-   *     "all-emails" -> "All emails",
-   *     "some-emails" -> "Some emails"
+   *     "#all-emails" -> "All emails",
+   *     "#some-emails" -> "Some emails"
    *   )
    * }
    * }}}
