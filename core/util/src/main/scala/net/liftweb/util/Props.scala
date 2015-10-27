@@ -64,23 +64,23 @@ object Props extends Logger {
   }
 
   private val interpolateRegex = """(.*?)\Q${\E(.*?)\Q}\E([^$]*)""".r
-  private def interpolate(v:Object):String = {
+  private def interpolate(value:Object):String = {
     def lookup(key:String) = {
       val tries = interpolators.map(m => Box.legacyNullTest(m get key))
       tries.find(_.isDefined).getOrElse(Empty)
     }
     val interpolated = for {
-      m <- interpolateRegex findAllMatchIn v.toString
+      m <- interpolateRegex findAllMatchIn value.toString
     } yield {
-      val before = m group 1
-      val key    = m group 2
-      val after  = m group 3
-      val value  = lookup(key).openOr(v.toString)
+      val before   = m group 1
+      val key      = m group 2
+      val after    = m group 3
+      val lookedUp = lookup(key).openOr(value.toString)
 
-      before + value + after
+      before + lookedUp + after
     }
 
-    if(interpolated.isEmpty) v.toString
+    if(interpolated.isEmpty) value.toString
     else interpolated.mkString
   }
 
