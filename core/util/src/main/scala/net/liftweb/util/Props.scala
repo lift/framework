@@ -117,15 +117,15 @@ object Props extends Logger {
    * Updates Props to find property values in the argument BEFORE looking in the standard Lift prop files.
    * @param props Arbitrary map of property key -> property value
    */
-  def prepend(props:Map[String, String]):Unit = prepend(props.asJava.asInstanceOf[java.util.Map[Object, Object]])
-  def prepend(props:java.util.Map[Object, Object]):Unit = prepended = props :: prepended
+  def prependSource(props:Map[String, String]):Unit = prependSource(props.asJava.asInstanceOf[java.util.Map[Object, Object]])
+  def prependSource(props:java.util.Map[Object, Object]):Unit = prepended = props :: prepended
 
   /**
    * Updates Props to find property values in the argument AFTER first looking in the standard Lift prop files.
    * @param props Arbitrary map of property key -> property value
    */
-  def append(props:Map[String, String]):Unit = append(props.asJava.asInstanceOf[java.util.Map[Object, Object]])
-  def append(props:java.util.Map[Object, Object]):Unit = appended = appended :+ props
+  def appendSource(props:Map[String, String]):Unit = appendSource(props.asJava.asInstanceOf[java.util.Map[Object, Object]])
+  def appendSource(props:java.util.Map[Object, Object]):Unit = appended = appended :+ props
 
   /**
    * Updates Props to find interpolated values in the argument.
