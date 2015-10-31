@@ -1695,7 +1695,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var autoIncludeComet: LiftSession => Boolean = session => true
 
   val autoIncludeAjaxCalc: FactoryMaker[() => LiftSession => Boolean] =
-  new FactoryMaker(() => () => (session: LiftSession) => true) {}
+  new FactoryMaker(() => () => (session: LiftSession) => session.stateful_?) {}
 
   /**
    * Tells Lift which JavaScript settings to use. If Empty, does not
