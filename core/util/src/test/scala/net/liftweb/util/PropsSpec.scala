@@ -19,25 +19,19 @@ package util
 
 import net.liftweb.common.Full
 import org.specs2.mutable.Specification
-import org.specs2.specification.AfterEach
+import org.specs2.mutable.After
 import Props.RunModes._
 
-object PropsSpec extends Specification with AfterEach {
+object PropsSpec extends Specification {
   "Props Specification".title
   sequential
 
-  // TODO: Why doesn't this work??
-  def after = {
-    Props.removeSources(_ != Props.props)
-    Props.removeInterpolators(_ => true)
-  }
-
   "Props" should {
-    "Detect test mode correctly" in {
+    "Detect test mode correctly" in new props {
       Props.testMode must_== true
     }
 
-    "Allow modification of run-mode properties before the run-mode is set" in {
+    "Allow modification of run-mode properties before the run-mode is set" in new props {
       val before = Props.autoDetectRunModeFn.get
       try {
         Props.runModeInitialised = false
@@ -50,38 +44,33 @@ object PropsSpec extends Specification with AfterEach {
       }
     }
 
-    "Prohibit modification of run-mode properties when the run-mode is set" in {
+    "Prohibit modification of run-mode properties when the run-mode is set" in new props {
       val before = Props.autoDetectRunModeFn.get
       Props.autoDetectRunModeFn.allowModification must_== false
       Props.autoDetectRunModeFn.set(() => Test) must_== false
       Props.autoDetectRunModeFn.get must_== before
     }
 
-    "Parse and cast to int" in {
-      after
+    "Parse and cast to int" in new props {
       Props.getInt("an.int") must_== Full(42)
     }
 
-    "Parse and cast to long" in {
-      after
+    "Parse and cast to long" in new props {
       Props.getLong("a.long") must_== Full(9223372036854775807L)
     }
 
-    "Parse and cast to boolean" in {
-      after
+    "Parse and cast to boolean" in new props {
       Props.getBool("a.boolean") must_== Full(true)
     }
 
-    "Prefer prepended properties to the test.default.props" in {
-      after
+    "Prefer prepended properties to the test.default.props" in new props {
       Props.prependSource(Map("jetty.port" -> "8080"))
       val port = Props.getInt("jetty.port")
 
       port must_== Full(8080)
     }
 
-    "Prefer prepended System.properties to the test.default.props" in {
-      after
+    "Prefer prepended System.properties to the test.default.props" in new props {
       System.setProperty("omniauth.baseurl", "http://google.com")
       Props.prependSource(sys.props)
       val baseurl = Props.get("omniauth.baseurl")
@@ -89,8 +78,7 @@ object PropsSpec extends Specification with AfterEach {
       baseurl must_== Full("http://google.com")
     }
 
-    "Read through to System.properties, correctly handling mutation" in {
-      after
+    "Read through to System.properties, correctly handling mutation" in new props {
       System.setProperty("omniauth.baseurl", "http://google.com")
       Props.prependSource(sys.props)
       System.setProperty("omniauth.baseurl", "http://ebay.com")
@@ -99,47 +87,48 @@ object PropsSpec extends Specification with AfterEach {
       baseurl must_== Full("http://ebay.com")
     }
 
-    "Find properties in appended maps when not defined in test.default.props" in {
-      after
+    "Find properties in appended maps when not defined in test.default.props" in new props {
       Props.appendSource(Map("new.prop" -> "new.value"))
       val prop = Props.get("new.prop")
 
       prop must_== Full("new.value")
     }
 
-    "Not interpolate values when no interpolator is given" in {
-      after
+    "Not interpolate values when no interpolator is given" in new props {
       val port = Props.get("jetty.port")
 
       port must_== Full("${PORT}")
     }
 
-    "Interpolate values from the given interpolator" in {
-      after
+    "Interpolate values from the given interpolator" in new props {
       Props.appendInterpolator(Map("PORT" -> "8080"))
       val port = Props.getInt("jetty.port")
 
       port must_== Full(8080)
     }
 
-    "Interpolate multiple values in a string from the given interpolator" in {
-      after
+    "Interpolate multiple values in a string from the given interpolator" in new props {
       Props.appendInterpolator(Map("DB_HOST" -> "localhost", "DB_PORT" -> "3306"))
       val url = Props.get("db.url")
 
       url must_== Full("jdbc:mysql://localhost:3306/MYDB")
     }
 
-    "Find properties in append for require()" in {
-      after
+    "Find properties in append for require()" in new props {
       Props.appendSource(Map("new.prop" -> "new.value"))
       Props.require("new.prop") must_== Nil
     }
 
-    "Find properties in prepend for require()" in {
-      after
+    "Find properties in prepend for require()" in new props {
       Props.prependSource(Map("new.prop" -> "new.value"))
       Props.require("new.prop") must_== Nil
     }
+  }
+}
+
+trait props extends After {
+  def after = {
+    Props.removeSources(_ != Props.props)
+    Props.removeInterpolators(_ => true)
   }
 }
