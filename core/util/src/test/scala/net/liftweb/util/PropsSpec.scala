@@ -71,7 +71,7 @@ object PropsSpec extends Specification with AfterEach {
 
     "Prefer prepended properties to the test.default.props" in {
       Props.testReset()
-      Props.prepend(Map("jetty.port" -> "8080"))
+      Props.prependSource(Map("jetty.port" -> "8080"))
       val port = Props.getInt("jetty.port")
 
       port must_== Full(8080)
@@ -80,7 +80,7 @@ object PropsSpec extends Specification with AfterEach {
     "Prefer prepended System.properties to the test.default.props" in {
       Props.testReset()
       System.setProperty("omniauth.baseurl", "http://google.com")
-      Props.prepend(System.getProperties)
+      Props.prependSource(System.getProperties)
       val baseurl = Props.get("omniauth.baseurl")
 
       baseurl must_== Full("http://google.com")
@@ -89,7 +89,7 @@ object PropsSpec extends Specification with AfterEach {
     "Read through to System.properties, correctly handling mutation" in {
       Props.testReset()
       System.setProperty("omniauth.baseurl", "http://google.com")
-      Props.prepend(System.getProperties)
+      Props.prependSource(System.getProperties)
       System.setProperty("omniauth.baseurl", "http://ebay.com")
       val baseurl = Props.get("omniauth.baseurl")
 
@@ -98,7 +98,7 @@ object PropsSpec extends Specification with AfterEach {
 
     "Find properties in appended maps when not defined in test.default.props" in {
       Props.testReset()
-      Props.append(Map("new.prop" -> "new.value"))
+      Props.appendSource(Map("new.prop" -> "new.value"))
       val prop = Props.get("new.prop")
 
       prop must_== Full("new.value")
@@ -129,13 +129,13 @@ object PropsSpec extends Specification with AfterEach {
 
     "Find properties in append for require()" in {
       Props.testReset()
-      Props.append(Map("new.prop" -> "new.value"))
+      Props.appendSource(Map("new.prop" -> "new.value"))
       Props.require("new.prop") must_== Nil
     }
 
     "Find properties in prepend for require()" in {
       Props.testReset()
-      Props.prepend(Map("new.prop" -> "new.value"))
+      Props.prependSource(Map("new.prop" -> "new.value"))
       Props.require("new.prop") must_== Nil
     }
   }
