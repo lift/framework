@@ -49,16 +49,18 @@ import common._
  * The standard Lift properties file extension is "props".
  */
 object Props extends Logger {
+  type PropProvider = scala.collection.Map[String, String]
+
   /**
    * Get the configuration property value for the specified key.
    * @param name key for the property to get
    * @return the value of the property if defined
    */
   def get(name: String): Box[String] = {
-    val tries:List[Box[Object]] =
-      prepended.map(m => Box.legacyNullTest(m get name)) ++
-      (props.get(name).toBox ::
-      appended.map(m => Box.legacyNullTest(m get name)))
+    val tries:List[Box[String]] =
+      prepended.map(m => Box(m.get(name))) ++
+      (Box(props.get(name)) ::
+      appended.map(m => Box(m.get(name))))
 
     tries.find(_.isDefined).getOrElse(Empty).map(interpolate)
   }
@@ -66,7 +68,7 @@ object Props extends Logger {
   private val interpolateRegex = """(.*?)\Q${\E(.*?)\Q}\E([^$]*)""".r
   private def interpolate(value:Object):String = {
     def lookup(key:String) = {
-      val tries = interpolators.map(m => Box.legacyNullTest(m get key))
+      val tries = interpolators.map(m => Box(m.get(key)))
       tries.find(_.isDefined).getOrElse(Empty)
     }
     val interpolated = for {
@@ -115,24 +117,21 @@ object Props extends Logger {
 
   /**
    * Updates Props to find property values in the argument BEFORE looking in the standard Lift prop files.
-   * @param props Arbitrary map of property key -> property value
+   * @param provider Arbitrary map of property key -> property value
    */
-  def prependSource(props:Map[String, String]):Unit = prependSource(props.asJava.asInstanceOf[java.util.Map[Object, Object]])
-  def prependSource(props:java.util.Map[Object, Object]):Unit = prepended = props :: prepended
+  def prependSource(provider:PropProvider):Unit = prepended = provider :: prepended
 
   /**
    * Updates Props to find property values in the argument AFTER first looking in the standard Lift prop files.
-   * @param props Arbitrary map of property key -> property value
+   * @param provider Arbitrary map of property key -> property value
    */
-  def appendSource(props:Map[String, String]):Unit = appendSource(props.asJava.asInstanceOf[java.util.Map[Object, Object]])
-  def appendSource(props:java.util.Map[Object, Object]):Unit = appended = appended :+ props
+  def appendSource(provider:PropProvider):Unit = appended = appended :+ provider
 
   /**
    * Updates Props to find interpolated values in the argument.
-   * @param props
+   * @param provider Arbitrary map of property key -> property value
    */
-  def appendInterpolator(props:Map[String, String]):Unit = appendInterpolator(props.asJava.asInstanceOf[java.util.Map[Object, Object]])
-  def appendInterpolator(props:java.util.Map[Object, Object]):Unit = interpolators = interpolators :+ props
+  def appendInterpolator(provider:PropProvider):Unit = interpolators = interpolators :+ provider
 
   /**
    * Enumeration of available run modes.
@@ -379,9 +378,9 @@ object Props extends Logger {
     }
   }
 
-  private var prepended:List[java.util.Map[Object, Object]] = Nil
-  private var appended:List[java.util.Map[Object, Object]] = Nil
-  private var interpolators:List[java.util.Map[Object, Object]] = Nil
+  private var prepended:List[PropProvider] = Nil
+  private var appended:List[PropProvider] = Nil
+  private var interpolators:List[PropProvider] = Nil
 
   /**
    * Resets the Props stacks to allow for isolated unit tests
