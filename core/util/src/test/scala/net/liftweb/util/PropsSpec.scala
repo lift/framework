@@ -80,7 +80,7 @@ object PropsSpec extends Specification with AfterEach {
     "Prefer prepended System.properties to the test.default.props" in {
       Props.testReset()
       System.setProperty("omniauth.baseurl", "http://google.com")
-      Props.prependSource(System.getProperties)
+      Props.prependSource(sys.props)
       val baseurl = Props.get("omniauth.baseurl")
 
       baseurl must_== Full("http://google.com")
@@ -89,7 +89,7 @@ object PropsSpec extends Specification with AfterEach {
     "Read through to System.properties, correctly handling mutation" in {
       Props.testReset()
       System.setProperty("omniauth.baseurl", "http://google.com")
-      Props.prependSource(System.getProperties)
+      Props.prependSource(sys.props)
       System.setProperty("omniauth.baseurl", "http://ebay.com")
       val baseurl = Props.get("omniauth.baseurl")
 
