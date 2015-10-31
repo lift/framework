@@ -27,7 +27,10 @@ object PropsSpec extends Specification with AfterEach {
   sequential
 
   // TODO: Why doesn't this work??
-  def after = Props.testReset()
+  def after = {
+    Props.removeSources(_ != Props.props)
+    Props.removeInterpolators(_ => true)
+  }
 
   "Props" should {
     "Detect test mode correctly" in {
@@ -55,22 +58,22 @@ object PropsSpec extends Specification with AfterEach {
     }
 
     "Parse and cast to int" in {
-      Props.testReset()
+      after
       Props.getInt("an.int") must_== Full(42)
     }
 
     "Parse and cast to long" in {
-      Props.testReset()
+      after
       Props.getLong("a.long") must_== Full(9223372036854775807L)
     }
 
     "Parse and cast to boolean" in {
-      Props.testReset()
+      after
       Props.getBool("a.boolean") must_== Full(true)
     }
 
     "Prefer prepended properties to the test.default.props" in {
-      Props.testReset()
+      after
       Props.prependSource(Map("jetty.port" -> "8080"))
       val port = Props.getInt("jetty.port")
 
@@ -78,7 +81,7 @@ object PropsSpec extends Specification with AfterEach {
     }
 
     "Prefer prepended System.properties to the test.default.props" in {
-      Props.testReset()
+      after
       System.setProperty("omniauth.baseurl", "http://google.com")
       Props.prependSource(sys.props)
       val baseurl = Props.get("omniauth.baseurl")
@@ -87,7 +90,7 @@ object PropsSpec extends Specification with AfterEach {
     }
 
     "Read through to System.properties, correctly handling mutation" in {
-      Props.testReset()
+      after
       System.setProperty("omniauth.baseurl", "http://google.com")
       Props.prependSource(sys.props)
       System.setProperty("omniauth.baseurl", "http://ebay.com")
@@ -97,7 +100,7 @@ object PropsSpec extends Specification with AfterEach {
     }
 
     "Find properties in appended maps when not defined in test.default.props" in {
-      Props.testReset()
+      after
       Props.appendSource(Map("new.prop" -> "new.value"))
       val prop = Props.get("new.prop")
 
@@ -105,14 +108,14 @@ object PropsSpec extends Specification with AfterEach {
     }
 
     "Not interpolate values when no interpolator is given" in {
-      Props.testReset()
+      after
       val port = Props.get("jetty.port")
 
       port must_== Full("${PORT}")
     }
 
     "Interpolate values from the given interpolator" in {
-      Props.testReset()
+      after
       Props.appendInterpolator(Map("PORT" -> "8080"))
       val port = Props.getInt("jetty.port")
 
@@ -120,7 +123,7 @@ object PropsSpec extends Specification with AfterEach {
     }
 
     "Interpolate multiple values in a string from the given interpolator" in {
-      Props.testReset()
+      after
       Props.appendInterpolator(Map("DB_HOST" -> "localhost", "DB_PORT" -> "3306"))
       val url = Props.get("db.url")
 
@@ -128,13 +131,13 @@ object PropsSpec extends Specification with AfterEach {
     }
 
     "Find properties in append for require()" in {
-      Props.testReset()
+      after
       Props.appendSource(Map("new.prop" -> "new.value"))
       Props.require("new.prop") must_== Nil
     }
 
     "Find properties in prepend for require()" in {
-      Props.testReset()
+      after
       Props.prependSource(Map("new.prop" -> "new.value"))
       Props.require("new.prop") must_== Nil
     }

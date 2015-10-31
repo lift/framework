@@ -56,14 +56,11 @@ object Props extends Logger {
    * @param name key for the property to get
    * @return the value of the property if defined
    */
-  def get(name: String): Box[String] = {
-    val tries:List[Box[String]] =
-      prepended.map(m => Box(m.get(name))) ++
-      (Box(props.get(name)) ::
-      appended.map(m => Box(m.get(name))))
-
-    tries.find(_.isDefined).getOrElse(Empty).map(interpolate)
-  }
+  def get(name: String): Box[String] =
+    sources.map(src => Box(src.get(name)))
+      .find(_.isDefined)
+      .getOrElse(Empty)
+      .map(interpolate)
 
   private val interpolateRegex = """(.*?)\Q${\E(.*?)\Q}\E([^$]*)""".r
   private def interpolate(value:Object):String = {
@@ -119,19 +116,33 @@ object Props extends Logger {
    * Updates Props to find property values in the argument BEFORE looking in the standard Lift prop files.
    * @param provider Arbitrary map of property key -> property value
    */
-  def prependSource(provider:PropProvider):Unit = prepended = provider :: prepended
+  def prependSource(provider:PropProvider):Unit = sources = provider :: sources
 
   /**
    * Updates Props to find property values in the argument AFTER first looking in the standard Lift prop files.
    * @param provider Arbitrary map of property key -> property value
    */
-  def appendSource(provider:PropProvider):Unit = appended = appended :+ provider
+  def appendSource(provider:PropProvider):Unit = sources = sources :+ provider
 
   /**
-   * Updates Props to find interpolated values in the argument.
+   * Removes any PropProvider sources which match the predicate
+   * @param removeIf predicate for selecting PropProviders to remove
+   */
+  def removeSources(removeIf: PropProvider=>Boolean):Unit =
+    sources = sources.filterNot(removeIf)
+
+  /**
+   * Updates Props to find values in the argument when interpolating values found in sources.
    * @param provider Arbitrary map of property key -> property value
    */
   def appendInterpolator(provider:PropProvider):Unit = interpolators = interpolators :+ provider
+
+  /**
+   * Removes any PropProvider interpolators which match the predicate
+   * @param removeIf predicate for selecting PropProviders to remove
+   */
+  def removeInterpolators(removeIf: PropProvider=>Boolean):Unit =
+    interpolators = interpolators.filterNot(removeIf)
 
   /**
    * Enumeration of available run modes.
@@ -378,17 +389,7 @@ object Props extends Logger {
     }
   }
 
-  private var prepended:List[PropProvider] = Nil
-  private var appended:List[PropProvider] = Nil
+  private var sources:List[PropProvider] = List(props)
   private var interpolators:List[PropProvider] = Nil
-
-  /**
-   * Resets the Props stacks to allow for isolated unit tests
-   */
-  private [util] def testReset() = {
-    prepended = Nil
-    appended = Nil
-    interpolators = Nil
-  }
 }
 
