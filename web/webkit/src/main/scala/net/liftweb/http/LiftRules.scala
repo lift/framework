@@ -898,7 +898,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    *   LiftRules.jsLogFunc = Full(v => JE.Call("alert",v).cmd)
    */
   @volatile var jsLogFunc: Box[JsVar => JsCmd] =
-    if (Props.devMode) Full(v => JE.Call("lift.logError", v))
+    if (Props.devMode) Full(v => JE.Call("default.logError", v))
     else Empty
 
   /**
