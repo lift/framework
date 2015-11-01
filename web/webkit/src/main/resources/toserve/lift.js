@@ -546,7 +546,8 @@
     ///// Public Object /////////////////////////////////
     ////////////////////////////////////////////////
     return {
-      init: function(options) {
+      init: function(options, extendWith) {
+        this.extend(options, extendWith);
         // override default settings
         this.extend(settings, options);
 
