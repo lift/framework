@@ -546,7 +546,11 @@
     ///// Public Object /////////////////////////////////
     ////////////////////////////////////////////////
     return {
-      init: function(options, extendWith) {
+      init: function(optionFn, extendWith) {
+        // Pass the defaults settings to the option-producing function
+        var options = optionFn(settings);
+
+        // Add jQuery or Vanilla stuff
         this.extend(options, extendWith);
         // override default settings
         this.extend(settings, options);

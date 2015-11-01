@@ -80,7 +80,7 @@ object LiftJavaScript {
       case _ => "liftVanilla"
     }
 
-    JsCrVar("lift_settings", settings) &
-    Call("window.lift.init", JsVar("lift_settings"), JsVar("window", extendWith))
+    JsCrVar("lift_settingsFn", AnonFunc("defaults", JsReturn(settings))) &
+    Call("window.lift.init", JsVar("lift_settingsFn"), JsVar("window", extendWith))
   }
 }
