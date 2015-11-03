@@ -9,3 +9,7 @@ jdk:
   - openjdk7
 
 script: ./liftsh test
+
+branches:
+  only:
+    - master
