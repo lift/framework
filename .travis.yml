@@ -6,7 +6,6 @@ services:
   - mongodb
 jdk:
   - oraclejdk8
-  - openjdk8
 
 script: ./travis.sh
 
