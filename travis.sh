@@ -5,6 +5,8 @@ set -ev
 ./liftsh test
 
 if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
+  echo "Attempting publish!"
+
   if [ "${TRAVIS_BRANCH}" = "master" ]; then
     sbt publish
   fi
