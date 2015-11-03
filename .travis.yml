@@ -8,9 +8,7 @@ jdk:
   - oraclejdk7
   - openjdk7
 
-script:
-  - export TRAVIS_PULL_REQUEST="false"
-  - ./travis.sh
+script: ./travis.sh
 
 branches:
   only:
