@@ -7,18 +7,19 @@ import scala.util.Try
 
 object FutureWithSession {
   implicit class FutureDecorator[+T](future:Future[T]) {
-    val withSession:Future[T] = S.session.map(new FutureWithSession[T](future, _)).
+    val withCurrentSession:Future[T] = S.session.map(new FutureWithSession[T](future)(_)).
       openOr(Future.failed(new Exception("LiftSession not available in this thread context")))
+    def withImplicitSession(implicit session:LiftSession):Future[T] = new FutureWithSession[T](future)
   }
 }
 
-class FutureWithSession[+T](future:Future[T], session:LiftSession) extends Future[T] {
+class FutureWithSession[+T](future:Future[T])(implicit session:LiftSession) extends Future[T] {
   import FutureWithSession._
 
   override def map[S](f: (T) ⇒ S)(implicit executor: ExecutionContext): Future[S] =
-    future.map ( t => S.initIfUninitted(session) ( f(t) )).withSession
+    future.map ( t => S.initIfUninitted(session) ( f(t) )).withImplicitSession
   override def flatMap[S](f: (T) ⇒ Future[S])(implicit executor: ExecutionContext): Future[S] =
-    future.flatMap ( t => S.initIfUninitted(session) ( f(t) )).withSession
+    future.flatMap ( t => S.initIfUninitted(session) ( f(t) )).withImplicitSession
 
   // Override all of the abstract Future[T] stuff to pass thru
   override def isCompleted = future.isCompleted

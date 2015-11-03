@@ -14,7 +14,7 @@ object FutureWithSessionSpec extends Specification {
 
   "A FutureWithSession" should {
     "fail if session is not available" in {
-      val actual:Future[String] = Future("something").withSession
+      val actual:Future[String] = Future("something").withCurrentSession
 
       // TODO: Why the hell does this not work??
 //      val expected:Option[Try[String]] = Some(Failure(new Exception))
@@ -28,7 +28,7 @@ object FutureWithSessionSpec extends Specification {
       val session = new LiftSession("Test Session", "", Empty)
 
       S.initIfUninitted(session) {
-        val actual:Future[String] = Future("something").withSession
+        val actual:Future[String] = Future("something").withCurrentSession
         val expected:Option[Try[String]] = Some(Success("something"))
 
         actual.value must eventually(beEqualTo(expected))
@@ -41,7 +41,7 @@ object FutureWithSessionSpec extends Specification {
       val actual:Future[String] = S.initIfUninitted(session) {
         TestVar1("map1")
         TestVar2("map2")
-        Future("something").withSession
+        Future("something").withCurrentSession
           .map(_+"-"+TestVar1.get)
           .map(_+"-"+TestVar2.get)
       }
@@ -56,7 +56,7 @@ object FutureWithSessionSpec extends Specification {
       val actual:Future[String] = S.initIfUninitted(session) {
         TestVar1("map1")
         TestVar2("map2")
-        Future("something").withSession
+        Future("something").withCurrentSession
           .flatMap{in => val out = in+"-"+TestVar1.get; Future(out)}
           .flatMap{in => val out = in+"-"+TestVar2.get; Future(out)}
       }
@@ -64,5 +64,18 @@ object FutureWithSessionSpec extends Specification {
 
       actual.value must eventually(beEqualTo(expected))
     }
+
+    "initialize with an implicit LiftSession" in {
+      implicit val session = new LiftSession("Test Session", "", Empty)
+      S.initIfUninitted(session) {
+        TestVar1("map")
+      }
+
+      val actual:Future[String] = Future("something").withImplicitSession.map(_+"-"+TestVar1.get)
+      val expected:Option[Try[String]] = Some(Success("something-map"))
+
+      actual.value must eventually(beEqualTo(expected))
+    }
+
   }
 }
