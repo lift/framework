@@ -9,7 +9,8 @@ import scala.util.{Try, Success}
 
 object FutureWithSessionSpec extends Specification {
 
-  object TestVar extends SessionVar[String]("test")
+  object TestVar1 extends SessionVar[String]("test1")
+  object TestVar2 extends SessionVar[String]("test2")
 
   "A FutureWithSession" should {
     "fail if session is not available" in {
@@ -32,6 +33,36 @@ object FutureWithSessionSpec extends Specification {
 
         actual.value must eventually(beEqualTo(expected))
       }
+    }
+
+    "have access to session variables in map() chains" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      val actual:Future[String] = S.initIfUninitted(session) {
+        TestVar1("map1")
+        TestVar2("map2")
+        Future("something").withSession
+          .map(_+"-"+TestVar1.get)
+          .map(_+"-"+TestVar2.get)
+      }
+      val expected:Option[Try[String]] = Some(Success("something-map1-map2"))
+
+      actual.value must eventually(beEqualTo(expected))
+    }
+
+    "have access to session variables in flatMap() chains" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      val actual:Future[String] = S.initIfUninitted(session) {
+        TestVar1("map1")
+        TestVar2("map2")
+        Future("something").withSession
+          .flatMap{in => val out = in+"-"+TestVar1.get; Future(out)}
+          .flatMap{in => val out = in+"-"+TestVar2.get; Future(out)}
+      }
+      val expected:Option[Try[String]] = Some(Success("something-map1-map2"))
+
+      actual.value must eventually(beEqualTo(expected))
     }
   }
 }

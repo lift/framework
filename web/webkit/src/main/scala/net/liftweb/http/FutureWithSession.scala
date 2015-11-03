@@ -13,6 +13,13 @@ object FutureWithSession {
 }
 
 class FutureWithSession[+T](future:Future[T], session:LiftSession) extends Future[T] {
+  import FutureWithSession._
+
+  override def map[S](f: (T) ⇒ S)(implicit executor: ExecutionContext): Future[S] =
+    future.map ( t => S.initIfUninitted(session) ( f(t) )).withSession
+  override def flatMap[S](f: (T) ⇒ Future[S])(implicit executor: ExecutionContext): Future[S] =
+    future.flatMap ( t => S.initIfUninitted(session) ( f(t) )).withSession
+
   // Override all of the abstract Future[T] stuff to pass thru
   override def isCompleted = future.isCompleted
   override def value = future.value
