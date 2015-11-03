@@ -8,7 +8,7 @@ jdk:
   - oraclejdk7
   - openjdk7
 
-script: ./liftsh test
+script: ./travis.sh
 
 branches:
   only:
