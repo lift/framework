@@ -13,7 +13,7 @@ object FutureWithSessionSpec extends Specification {
 
   "A FutureWithSession" should {
     "fail if session is not available" in {
-      val actual = Future("something").withSession
+      val actual:Future[String] = Future("something").withSession
 
       // TODO: Why the hell does this not work??
 //      val expected:Option[Try[String]] = Some(Failure(new Exception))
@@ -27,7 +27,7 @@ object FutureWithSessionSpec extends Specification {
       val session = new LiftSession("Test Session", "", Empty)
 
       S.initIfUninitted(session) {
-        val actual = Future("something").withSession
+        val actual:Future[String] = Future("something").withSession
         val expected:Option[Try[String]] = Some(Success("something"))
 
         actual.value must eventually(beEqualTo(expected))
