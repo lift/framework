@@ -20,6 +20,10 @@ class FutureWithSession[+T](future:Future[T])(implicit session:LiftSession) exte
     future.map ( t => S.initIfUninitted(session) ( f(t) )).withImplicitSession
   override def flatMap[S](f: (T) ⇒ Future[S])(implicit executor: ExecutionContext): Future[S] =
     future.flatMap ( t => S.initIfUninitted(session) ( f(t) )).withImplicitSession
+  override def andThen[U](pf: PartialFunction[Try[T], U])(implicit executor: ExecutionContext): Future[T] =
+    future.andThen { case t => S.initIfUninitted(session) ( pf(t) ) }.withImplicitSession
+  override def failed: Future[Throwable] = future.failed.withImplicitSession
+//  override def fallbackTo[U >: T](that: Future[U]): Future[U] = future.fallbackTo(that)
 
   // Override all of the abstract Future[T] stuff to pass thru
   override def isCompleted = future.isCompleted

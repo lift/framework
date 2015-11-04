@@ -38,13 +38,14 @@ object FutureWithSessionSpec extends Specification {
     "have access to session variables in map() chains" in {
       val session = new LiftSession("Test Session", "", Empty)
 
-      val actual:Future[String] = S.initIfUninitted(session) {
+      val future:Future[String] = S.initIfUninitted(session) {
         TestVar1("map1")
         TestVar2("map2")
         Future("something").withCurrentSession
-          .map(_+"-"+TestVar1.get)
-          .map(_+"-"+TestVar2.get)
       }
+      val actual:Future[String] = future
+        .map(_+"-"+TestVar1.get)
+        .map(_+"-"+TestVar2.get)
       val expected:Option[Try[String]] = Some(Success("something-map1-map2"))
 
       actual.value must eventually(beEqualTo(expected))
@@ -53,17 +54,87 @@ object FutureWithSessionSpec extends Specification {
     "have access to session variables in flatMap() chains" in {
       val session = new LiftSession("Test Session", "", Empty)
 
-      val actual:Future[String] = S.initIfUninitted(session) {
+      val future:Future[String] = S.initIfUninitted(session) {
         TestVar1("map1")
         TestVar2("map2")
         Future("something").withCurrentSession
-          .flatMap{in => val out = in+"-"+TestVar1.get; Future(out)}
-          .flatMap{in => val out = in+"-"+TestVar2.get; Future(out)}
       }
+      val actual:Future[String] = future
+        .flatMap{in => val out = in+"-"+TestVar1.get; Future(out)}
+        .flatMap{in => val out = in+"-"+TestVar2.get; Future(out)}
       val expected:Option[Try[String]] = Some(Success("something-map1-map2"))
 
       actual.value must eventually(beEqualTo(expected))
     }
+
+    "have access to session variables in filter() chains" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      val future:Future[String] = S.initIfUninitted(session) {
+        TestVar1("map1")
+        TestVar2("map")
+        Future("has map1").withCurrentSession
+      }
+      val actual:Future[String] = future
+        .filter(_.contains(TestVar1.get))
+        .filter(_.contains(TestVar2.get))
+
+      val expected:Option[Try[String]] = Some(Success("has map1"))
+
+      actual.value must eventually(beEqualTo(expected))
+    }
+
+    "have access to session variables in andThen() chains" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      val future:Future[String] = S.initIfUninitted(session) {
+        TestVar1("val1")
+        TestVar2("val2")
+        Future("new value").withCurrentSession
+      }
+      val actual:Future[String] = future
+        .andThen { case Success(str) => TestVar1(str) }
+        .andThen { case Success(str) => TestVar2(str) }
+
+      val expected:Option[Try[String]] = Some(Success("new value"))
+
+      S.initIfUninitted(session) {
+        TestVar1.get must beEqualTo("new value")
+        TestVar2.get must beEqualTo("new value")
+        actual.value must eventually(beEqualTo(expected))
+      }
+    }
+
+    "have access to session variables in collect() chains" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      val future:Future[String] = S.initIfUninitted(session) {
+        TestVar1("collect1")
+        TestVar2("collect2")
+        Future("something").withCurrentSession
+      }
+      val actual:Future[String] = future
+        .collect { case s:String => s+"-"+TestVar1.get }
+        .collect { case s:String => s+"-"+TestVar2.get }
+      val expected:Option[Try[String]] = Some(Success("something-collect1-collect2"))
+
+      actual.value must eventually(beEqualTo(expected))
+    }
+
+    "have access to session variables in failed projection" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      val future:Future[String] = S.initIfUninitted(session) {
+        TestVar1("fail")
+        Future.failed[String](new Exception("failure")).withCurrentSession
+      }
+      val actual:Future[String] = future.failed
+        .collect { case e:Exception => e.getMessage+"-"+TestVar1.get }
+      val expected:Option[Try[String]] = Some(Success("failure-fail"))
+
+      actual.value must eventually(beEqualTo(expected))
+    }
+
 
     "initialize with an implicit LiftSession" in {
       implicit val session = new LiftSession("Test Session", "", Empty)
