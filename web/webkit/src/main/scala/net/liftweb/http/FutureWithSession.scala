@@ -31,15 +31,15 @@ class FutureWithSession[+T](future:Future[T])(implicit session:LiftSession) exte
     future.andThen { case t => S.initIfUninitted(session) ( pf(t) ) }.withImplicitSession
   override def failed: Future[Throwable] = future.failed.withImplicitSession
   override def fallbackTo[U >: T](that: Future[U]): Future[U] = future.fallbackTo(that).withImplicitSession
-  override def flatMap[S](f: (T) ⇒ Future[S])(implicit executor: ExecutionContext): Future[S] =
+  override def flatMap[S](f: (T) => Future[S])(implicit executor: ExecutionContext): Future[S] =
     future.flatMap ( t => S.initIfUninitted(session) ( f(t) )).withImplicitSession
-  override def map[S](f: (T) ⇒ S)(implicit executor: ExecutionContext): Future[S] =
+  override def map[S](f: (T) => S)(implicit executor: ExecutionContext): Future[S] =
     future.map ( t => S.initIfUninitted(session) ( f(t) )).withImplicitSession
   override def recover[U >: T](pf: PartialFunction[Throwable, U])(implicit executor: ExecutionContext): Future[U] =
     future.recover { case t => S.initIfUninitted(session) ( pf(t) ) }.withImplicitSession
   override def recoverWith[U >: T](pf: PartialFunction[Throwable, Future[U]])(implicit executor: ExecutionContext): Future[U] =
     future.recoverWith { case t => S.initIfUninitted(session) ( pf(t) ) }.withImplicitSession
-  override def transform[S](s: (T) ⇒ S, f: (Throwable) ⇒ Throwable)(implicit executor: ExecutionContext): Future[S] =
+  override def transform[S](s: (T) => S, f: (Throwable) => Throwable)(implicit executor: ExecutionContext): Future[S] =
     future.transform( t => S.initIfUninitted(session) ( s(t) ), t => S.initIfUninitted(session) ( f(t) ) ).withImplicitSession
   override def zip[U](that: Future[U]): Future[(T, U)] = future.zip(that).withImplicitSession
 
