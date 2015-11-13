@@ -39,9 +39,12 @@ object FutureWithSessionSpec extends Specification {
       implicit val session = new LiftSession("Test Session", "", Empty)
 
       val future:Future[String] = Future("onComplete").withImplicitSession
-      future.onComplete { case Success(s) => TestVar1.set(s) }
+      future.onComplete { 
+        case Success(s) => TestVar1.set(s) 
+        case _ => // Just to avoid the compiler warning
+      }
 
-      S.initIfUninitted(session) { TestVar1.get must beEqualTo("onComplete") }
+      S.initIfUninitted(session) { TestVar1.get must eventually(beEqualTo("onComplete")) }
     }
 
     "have access to session variables in andThen() chains" in {
@@ -59,8 +62,8 @@ object FutureWithSessionSpec extends Specification {
       val expected:Option[Try[String]] = Some(Success("new value"))
 
       S.initIfUninitted(session) {
-        TestVar1.get must beEqualTo("new value")
-        TestVar2.get must beEqualTo("new value")
+        TestVar1.get must eventually(beEqualTo("new value"))
+        TestVar2.get must eventually(beEqualTo("new value"))
         actual.value must eventually(beEqualTo(expected))
       }
     }
