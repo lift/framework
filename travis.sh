@@ -4,10 +4,10 @@ set -ev
 
 ./liftsh test
 
-if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
+#if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
   openssl aes-256-cbc -K $encrypted_a177bbd76133_key -iv $encrypted_a177bbd76133_iv -in .credentials.enc -out ~/.credentials -d
 
-  if [ "${TRAVIS_BRANCH}" = "master" ]; then
+  if [ "${TRAVIS_BRANCH}" = "publishable-by-travis" ]; then
     ./liftsh publish
   fi
 
@@ -17,4 +17,4 @@ if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
   fi
 
   rm ~/.credentials
-fi
+#fi
