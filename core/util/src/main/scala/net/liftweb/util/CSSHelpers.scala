@@ -102,26 +102,68 @@ case class CssUrlPrefixer(prefix: String) extends Parsers  {
 
 
   lazy val spaces = (elem(' ') | elem('\t') | elem('\n') | elem('\r')).*
+
+  def pathWith(additionalCharacters: Char*) = {
+    elem("path",
+      c => c.isLetterOrDigit ||
+           c == '?' || c == '/' ||
+           c == '&' || c == '@' ||
+           c == ';' || c == '.' ||
+           c == '+' || c == '-' ||
+           c == '=' || c == ':' ||
+           c == ' ' || c == '_' ||
+           c == '#' || c == ',' ||
+           c == '%' || additionalCharacters.contains(c)
+    ).+ ^^ {
+      case l =>
+        l.mkString("")
+    }
+  }
+
   // consider only root relative paths that start with /
-  lazy val path = elem("path", c => c.isLetterOrDigit ||
-                         c == '?' || c == '/' ||
-                         c == '&' || c == '@' ||
-                         c == ';' || c == '.' ||
-                         c == '+' || c == '-' ||
-                         c == '=' || c == ':' ||
-                         c == ' ' || c == '_' ||
-                         c == '#').+ ^^ {case l => l.mkString("")}
+  lazy val path = pathWith()
+
+  def fullUrl(innerUrl: Parser[String], quoteString: String): Parser[String] = {
+    val escapedPrefix =
+      if (quoteString.isEmpty) {
+        prefix
+      } else {
+        prefix.replace(quoteString, "\\" + quoteString)
+      }
+
+    // do the parsing per CSS spec http://www.w3.org/TR/REC-CSS2/syndata.html#uri section 4.3.4
+    spaces ~> innerUrl <~ (spaces <~ elem(')')) ^^ {
+      case urlPath => {
+        val trimmedPath = urlPath.trim
+
+        val updatedPath =
+          if (trimmedPath.charAt(0) == '/') {
+            escapedPrefix + trimmedPath
+          } else {
+            trimmedPath
+          }
+
+        quoteString + updatedPath + quoteString + ")"
+      }
+    }
+  }
 
   // the URL might be wrapped in simple quotes
-  lazy val seq1 = elem('\'') ~> path <~ elem('\'')
+  lazy val singleQuotedPath = fullUrl(elem('\'') ~> pathWith('"') <~ elem('\''), "'")
   // the URL might be wrapped in double quotes
-  lazy val seq2 = elem('\"') ~> path <~ elem('\"')
-  // do the parsing per CSS spec http://www.w3.org/TR/REC-CSS2/syndata.html#uri section 4.3.4
-  lazy val expr = spaces ~> ( seq1 | seq2 | path ) <~ (spaces <~ elem(')')) ^^ {case s => {
-      "'" + (s.trim.startsWith("/") match {
-        case true => prefix + s.trim
-        case _ => s.trim
-      }) + "')"
+  lazy val doubleQuotedPath = fullUrl(elem('\"') ~> pathWith('\'') <~ elem('\"'), "\"")
+  // the URL might not be wrapped at all
+  lazy val quotelessPath = fullUrl(path, "")
+
+  lazy val phrase =
+    (((contentParser ~ singleQuotedPath) |||
+      (contentParser ~ doubleQuotedPath) |||
+      (contentParser ~ quotelessPath)).* ^^ {
+      case l =>
+        l.flatMap(f => f._1 + f._2).mkString("")
+    }) ~ contentParser ^^ {
+      case a ~ b =>
+        a + b
     }
 
   def fixCss(cssString: String): Box[String] = {
