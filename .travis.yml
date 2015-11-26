@@ -5,7 +5,10 @@ cache:
 services:
   - mongodb
 jdk:
-  - oraclejdk7
-  - openjdk7
+  - oraclejdk8
 
-script: ./liftsh test
+script: ./travis.sh
+
+branches:
+  only:
+    - master
