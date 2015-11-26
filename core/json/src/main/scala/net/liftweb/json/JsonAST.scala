@@ -846,7 +846,13 @@ object JsonAST {
   }
 
   object RenderSettings {
+    /**
+     * Pretty-print JSON with 2-space indentation.
+     */
     val pretty = RenderSettings(2)
+    /**
+     * Compact print JSON on one line.
+     */
     val compact = RenderSettings(0)
 
     /**
@@ -878,6 +884,13 @@ object JsonAST {
      */
     val compactJs = RenderSettings(0, jsEscapeChars)
   }
+  /**
+   * RenderSettings allows for customizing how JSON is rendered to a String.
+   * At the moment, you can customize the indentation (if 0, all the JSON is
+   * printed on one line), the characters that should be escaped (in addition
+   * to a base set that will always be escaped for valid JSON), and whether or
+   * not a space should be included after a field name.
+   */
   case class RenderSettings(
     indent: Int,
     escapeChars: Set[Char] = Set(),
@@ -886,10 +899,16 @@ object JsonAST {
     val lineBreaks_? = indent > 0
   }
 
+  /**
+   * Render `value` using `RenderSettings.pretty`.
+   */
   def prettyRender(value: JValue): String = {
     render(value, RenderSettings.pretty)
   }
 
+  /**
+   * Render `value` to the given `appendable` using `RenderSettings.pretty`.
+   */
   def prettyRender(value: JValue, appendable: Appendable): String = {
     render(value, RenderSettings.pretty, appendable)
   }
@@ -902,10 +921,18 @@ object JsonAST {
     render(value, RenderSettings.compact)
   }
 
+  /**
+   * Render `value` to the given `appendable` using `RenderSettings.compact`.
+   */
   def compactRender(value: JValue, appendable: Appendable): String = {
     render(value, RenderSettings.compact, appendable)
   }
 
+  /**
+   * Render `value` to the given `appendable` (a `StringBuilder`, by default)
+   * using the given `settings`. The appendable's `toString` will be called and
+   * the result will be returned.
+   */
   def render(value: JValue, settings: RenderSettings, appendable: Appendable = new StringBuilder()): String = {
     bufRender(value, appendable, settings).toString()
   }
