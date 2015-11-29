@@ -900,14 +900,14 @@ object JsonAST {
   }
 
   /**
-   * Render `value` using `RenderSettings.pretty`.
+   * Render `value` using `[[RenderSettings.pretty]]`.
    */
   def prettyRender(value: JValue): String = {
     render(value, RenderSettings.pretty)
   }
 
   /**
-   * Render `value` to the given `appendable` using `RenderSettings.pretty`.
+   * Render `value` to the given `appendable` using `[[RenderSettings.pretty]]`.
    */
   def prettyRender(value: JValue, appendable: Appendable): String = {
     render(value, RenderSettings.pretty, appendable)
@@ -922,7 +922,7 @@ object JsonAST {
   }
 
   /**
-   * Render `value` to the given `appendable` using `RenderSettings.compact`.
+   * Render `value` to the given `appendable` using `[[RenderSettings.compact]]`.
    */
   def compactRender(value: JValue, appendable: Appendable): String = {
     render(value, RenderSettings.compact, appendable)
