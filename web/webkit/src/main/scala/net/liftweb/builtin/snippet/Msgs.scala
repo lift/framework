@@ -145,6 +145,12 @@ object Msgs extends DispatchSnippet {
   private[snippet] def tailScript (script : JsCmd) : NodeSeq =
     <lift:tail>{Script(OnLoad(script))}</lift:tail>
 
+  // This wraps the JavaScript fade and effect scripts into lift's page script that runs onLoad
+  private[snippet] def appendScript (script : JsCmd) : NodeSeq = { 
+    S.appendJs(script)
+    NodeSeq.Empty 
+  }
+
   /**
    * This method produces appropriate JavaScript to fade out the given
    * notice type. The caller must provide a default value for cases where
@@ -167,7 +173,7 @@ object Msgs extends DispatchSnippet {
    * @see net.liftweb.http.LiftRules.noticesAutoFadeOut
    */
   def noticesFadeOut(noticeType: NoticeType.Value): NodeSeq = 
-    noticesFadeOut(noticeType, NodeSeq.Empty, tailScript)
+    noticesFadeOut(noticeType, NodeSeq.Empty, appendScript)
 
   /**
    * This method produces appropriate JavaScript to apply effects to the given
@@ -190,7 +196,7 @@ object Msgs extends DispatchSnippet {
    * @see net.liftweb.http.LiftRules.noticesEffects
    */
   def effects(noticeType: NoticeType.Value): NodeSeq =
-    effects(Full(noticeType), noticeType.id, NodeSeq.Empty, tailScript)
+    effects(Full(noticeType), noticeType.id, NodeSeq.Empty, appendScript)
 }
 
 /**
