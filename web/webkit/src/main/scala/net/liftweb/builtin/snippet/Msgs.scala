@@ -141,10 +141,6 @@ object Msgs extends DispatchSnippet {
          (S.notices, NoticeType.Notice, MsgsNoticeMeta)).flatMap(computeMessageDiv)
   }
 
-  // This wraps the JavaScript fade and effect scripts into a script that runs onLoad
-  private[snippet] def tailScript (script : JsCmd) : NodeSeq =
-    <lift:tail>{Script(OnLoad(script))}</lift:tail>
-
   // This wraps the JavaScript fade and effect scripts into lift's page script that runs onLoad
   private[snippet] def appendScript (script : JsCmd) : NodeSeq = { 
     S.appendJs(script)
