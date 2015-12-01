@@ -5,7 +5,7 @@ cache:
 services:
   - mongodb
 jdk:
-  - oraclejdk8
+  - oraclejdk7
 
 script: ./travis.sh
 
