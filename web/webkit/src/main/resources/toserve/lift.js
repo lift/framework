@@ -17,8 +17,11 @@
         toWatch = {},
         knownPromises = {};
 
+    // The settings object which we build up
+    var settings = {};
+
     // default settings
-    var settings = {
+    var defaults = {
       /**
         * Contains the Ajax URI path used by Lift to process Ajax requests.
         */
@@ -546,7 +549,12 @@
     ///// Public Object /////////////////////////////////
     ////////////////////////////////////////////////
     return {
-      init: function(options) {
+      init: function(optionFn, extendWith) {
+        // Pass the defaults settings to the option-producing function
+        var options = optionFn(defaults);
+
+        // Add jQuery or Vanilla stuff
+        this.extend(options, extendWith);
         // override default settings
         this.extend(settings, options);
 
