@@ -30,15 +30,13 @@ object CanResolveAsyncSpec extends Specification {
 
       val resolver = implicitly[CanResolveAsync[Future[String], String]]
 
-      var receivedResolution: Option[String] = None
-      resolver.resolveAsync(
-        myPromise.future,
-        { resolution => receivedResolution = Some(resolution) }
-      )
+      val receivedResolution = new LAFuture[String]
+      resolver.resolveAsync(myPromise.future, receivedResolution.satisfy _)
 
       myPromise.success("All done!")
 
-      receivedResolution must_== Some("All done!")
+      receivedResolution.complete_? must_== true
+      receivedResolution.get must_== "All done!"
     }
 
     "resolve LAFutures" in {
@@ -46,15 +44,13 @@ object CanResolveAsyncSpec extends Specification {
 
       val resolver = implicitly[CanResolveAsync[LAFuture[String], String]]
 
-      var receivedResolution: Option[String] = None
-      resolver.resolveAsync(
-        myFuture,
-        { resolution => receivedResolution = Some(resolution) }
-      )
+      val receivedResolution = new LAFuture[String]
+      resolver.resolveAsync(myFuture, receivedResolution.satisfy _)
 
       myFuture.satisfy("Got it!")
 
-      receivedResolution must_== Some("Got it!")
+      receivedResolution.complete_? must_== true
+      receivedResolution.get must_== "Got it!"
     }
   }
 }
