@@ -25,34 +25,6 @@ import http.js.JsCmds.Replace
 import util._
 
 package object http {
-  trait CanResolveAsync[ResolvableType, ResolvedType] {
-    /**
-     * Should return a function that, when given the resolvable and a function
-     * that takes the resolved value, attaches the function to the resolvable
-     * so that it will asynchronously execute it when its value is resolved.
-     *
-     * See `CanResolveFuture` and `CanResolveLAFuture` for examples.
-     */
-    def resolveAsync(resolvable: ResolvableType, onResolved: (ResolvedType)=>Unit): Unit
-  }
-  object CanResolveAsync {
-    implicit def resolveFuture[T](implicit executionContext: ExecutionContext) = {
-      new CanResolveAsync[Future[T],T] {
-        def resolveAsync(future: Future[T], onResolved: (T)=>Unit) = {
-          future.foreach(onResolved)
-        }
-      }
-    }
-
-    implicit def resolveLaFuture[T] = {
-      new CanResolveAsync[LAFuture[T],T] {
-        def resolveAsync(future: LAFuture[T], onResolved: (T)=>Unit) = {
-          future.onSuccess(onResolved)
-        }
-      }
-    }
-  }
-
   /**
    * Provides support for binding anything that has a `CanResolveAsync`
    * implementation. Out of the box, that's just Scala `Future`s and
