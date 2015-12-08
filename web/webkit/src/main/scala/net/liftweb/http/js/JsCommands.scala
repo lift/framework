@@ -697,16 +697,19 @@ object JsCmds {
   }
 
   /**
-   * Makes the parameter the selected HTML element on load of the page
+   * Makes the parameter the selected HTML element on load of the page by appending 
+   * a script snippet to lifts page script that will give the element focus.
    *
    * @param in the element that should have focus
    *
-   * @return the element and a script that will give the element focus
+   * @return the element 
    */
   object FocusOnLoad {
     def apply(in: Elem): NodeSeq = {
       val (elem, id) = findOrAddId(in)
-      elem ++ Script(LiftRules.jsArtifacts.onLoad(Run("if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").focus();};")))
+      val focusJs = JE.JsRaw("""if (document.getElementById(%s)) {document.getElementById(%s).focus();};""".format(id.encJs,id.encJs)).cmd
+      S.appendJs(focusJs);
+      elem 
     }
   }
 
