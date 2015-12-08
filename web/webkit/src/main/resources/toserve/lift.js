@@ -581,6 +581,7 @@
           doCycleIn200();
         });
       },
+      defaultLogError: function(msg) { consoleOrAlert(msg) },
       logError: function() { settings.logError.apply(this, arguments) },
       onEvent: function() { settings.onEvent.apply(this, arguments) },
       ajax: appendToQueue,
