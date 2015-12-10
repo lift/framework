@@ -864,8 +864,10 @@ trait ProtoUser {
       }
     }
 
+    val (emailElem, id) = findOrAddId(<input type="text" name="username"/>)
+    FocusOnLoadAppendJs(id)
     val bind =
-      ".email" #> FocusOnLoad(<input type="text" name="username"/>) &
+      ".email" #> emailElem &
       ".password" #> <input type="password" name="password"/> &
       "type=submit" #> loginSubmitButton(S.?("log.in"))
 
