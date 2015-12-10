@@ -707,12 +707,26 @@ object JsCmds {
   object FocusOnLoad {
     def apply(in: Elem): NodeSeq = {
       val (elem, id) = findOrAddId(in)
-      val focusJs = JE.JsRaw("""if (document.getElementById(%s)) {document.getElementById(%s).focus();};""".format(id.encJs,id.encJs)).cmd
-      S.appendJs(focusJs);
+      FocusOnLoadAppendJs(id)
       elem 
     }
   }
 
+  /**
+   * Makes the element with the given id the selected HTML element on load of the page 
+   * by appending a script snippet to lifts page script that will give the element focus.
+   *
+   * @param in the id of the element that should have focus
+   *
+   * @return Unit 
+   */  
+  object FocusOnLoadAppendJs {
+    def apply(id: String): Unit = {
+      val focusJs = JE.JsRaw("""if (document.getElementById(%s)) {document.getElementById(%s).focus();};""".format(id.encJs,id.encJs)).cmd
+      S.appendJs(focusJs);
+    }    
+  }
+  
   /**
    * Sets the value of an element and sets the focus
    */
