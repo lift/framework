@@ -864,10 +864,10 @@ trait ProtoUser {
       }
     }
 
-    val (emailElem, id) = findOrAddId(<input type="text" name="username"/>)
-    FocusOnLoadAppendJs(id)
+    val emailElemId = nextFuncName
+    S.appendJs(Focus(emailElemId))
     val bind =
-      ".email" #> emailElem &
+      ".email" #> <input type="text" name="username" id={emailElemId}/> &
       ".password" #> <input type="password" name="password"/> &
       "type=submit" #> loginSubmitButton(S.?("log.in"))
 
