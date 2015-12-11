@@ -703,7 +703,7 @@ object JsCmds {
    *
    * @return the element and a script that will give the element focus
    */
-  @deprecated("Use S.appendJs(Focus(id))","Since v3.0")
+  @deprecated("Use S.appendJs(Focus(id))","3.0.0")
   object FocusOnLoad {
     def apply(in: Elem): NodeSeq = {
       val (elem, id) = findOrAddId(in)
