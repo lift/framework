@@ -18,7 +18,6 @@ package net.liftweb
 package http 
 package rest 
 
-
 import net.liftweb._
 import actor.LAFuture
 import json._
@@ -543,10 +542,17 @@ trait RestHelper extends LiftRules.DispatchPF {
    * @tparam T the type
    * @return Nothing
    */
-  protected implicit def futureToResponse[T](in: LAFuture[T])(implicit c: T => LiftResponse):
-  () => Box[LiftResponse] = () => {
+  protected implicit def asyncToResponse[AsyncResolvableType, T](
+    asyncContainer: AsyncResolvableType
+  )(
+    implicit asyncResolveProvider: CanResolveAsync[AsyncResolvableType, T],
+             responseCreator: T => LiftResponse
+  ): () => Box[LiftResponse] = () => {
     RestContinuation.async(reply => {
-      in.foreach(t => reply.apply(c(t)))
+      asyncResolveProvider.resolveAsync(
+        asyncContainer,
+        { resolved => reply(responseCreator(resolved)) }
+      )
     })
   }
 
@@ -557,12 +563,17 @@ trait RestHelper extends LiftRules.DispatchPF {
    * @tparam T the type
    * @return Nothing
    */
-  protected implicit def futureBoxToResponse[T](in: LAFuture[Box[T]])(implicit c: T => LiftResponse):
-  () => Box[LiftResponse] = () => {
+  protected implicit def asyncBoxToResponse[AsyncResolvableType, T](
+    asyncBoxContainer: AsyncResolvableType
+  )(
+    implicit asyncResolveProvider: CanResolveAsync[AsyncResolvableType, Box[T]],
+             responseCreator: T => LiftResponse
+  ): () => Box[LiftResponse] = () => {
     RestContinuation.async(reply => {
-      in.foreach(t => reply.apply{
-        boxToResp(t).apply() openOr NotFoundResponse()
-      })
+      asyncResolveProvider.resolveAsync(
+        asyncBoxContainer,
+        { resolvedBox => boxToResp(resolvedBox).apply() openOr NotFoundResponse() }
+      )
     })
   }
 
