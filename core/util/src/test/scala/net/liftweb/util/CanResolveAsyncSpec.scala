@@ -35,7 +35,6 @@ object CanResolveAsyncSpec extends Specification {
 
       myPromise.success("All done!")
 
-      receivedResolution.complete_? must_== true
       receivedResolution.get must_== "All done!"
     }
 
@@ -49,7 +48,6 @@ object CanResolveAsyncSpec extends Specification {
 
       myFuture.satisfy("Got it!")
 
-      receivedResolution.complete_? must_== true
       receivedResolution.get must_== "Got it!"
     }
   }
