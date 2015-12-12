@@ -796,7 +796,7 @@ trait ProtoUser {
    * default: S.?("email.address.not.found")
    */
   def userNameNotFoundString: String = S.?("email.address.not.found")
-
+ 
   def loginXhtml = {
     (<form method="post" action={S.uri}><table><tr><td
               colspan="2">{S.?("log.in")}</td></tr>
@@ -867,8 +867,9 @@ trait ProtoUser {
     val emailElemId = nextFuncName
     S.appendJs(Focus(emailElemId))
     val bind =
-      ".email" #> <input type="text" name="username" id={emailElemId}/> &
-      ".password" #> <input type="password" name="password"/> &
+      ".email [id]" #> emailElemId &
+      ".email [name]" #> "username" &
+      ".password [name]" #> "password" &
       "type=submit" #> loginSubmitButton(S.?("log.in"))
 
     bind(loginXhtml)
