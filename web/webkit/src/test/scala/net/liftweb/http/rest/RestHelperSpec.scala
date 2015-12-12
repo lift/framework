@@ -41,7 +41,7 @@ class RestHelperSpec extends WebSpec(RestHelperSpecBoot.boot _) {
       }
     }
 
-    "respond async with LAFutures" withReqFor testFutureReq in { req =>
+    "respond async with something that CanResolveAsync" withReqFor testFutureReq in { req =>
       val helper = FutureRestSpecHelper()
 
       try {
