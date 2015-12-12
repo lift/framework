@@ -619,7 +619,7 @@
       },
       extend: function(obj1, obj2) {
         for (var item in obj2) {
-          if (hasOwnProperty.call(obj2, item) {
+          if (hasOwnProperty.call(obj2, item)) {
             obj1[item] = obj2[item];
           }
         }
