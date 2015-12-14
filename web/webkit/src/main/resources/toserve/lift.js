@@ -1,6 +1,8 @@
 (function(window, undefined) {
   "use strict";
 
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
+
   window.lift = (function() {
     // "private" vars
     var ajaxPath = function() { return settings.liftPath + '/ajax' },
@@ -616,8 +618,8 @@
         }
       },
       extend: function(obj1, obj2) {
-        for(var item in obj2) {
-          if (obj2.hasOwnProperty(item)) {
+        for (var item in obj2) {
+          if (hasOwnProperty.call(obj2, item)) {
             obj1[item] = obj2[item];
           }
         }
