@@ -703,13 +703,14 @@ object JsCmds {
    *
    * @return the element and a script that will give the element focus
    */
+  @deprecated("Use S.appendJs(Focus(id))","3.0.0")
   object FocusOnLoad {
     def apply(in: Elem): NodeSeq = {
       val (elem, id) = findOrAddId(in)
       elem ++ Script(LiftRules.jsArtifacts.onLoad(Run("if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").focus();};")))
     }
   }
-
+  
   /**
    * Sets the value of an element and sets the focus
    */
