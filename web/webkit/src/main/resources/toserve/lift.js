@@ -5,11 +5,11 @@
 
   window.lift = (function() {
     // "private" vars
-    var ajaxPath = function() { return settings.liftPath + '/ajax' },
+    var ajaxPath = function() { return settings.liftPath + '/ajax'; },
         ajaxQueue = [],
         ajaxInProcess = null,
         ajaxVersion = 0,
-        cometPath = function() { return settings.liftPath + '/comet' },
+        cometPath = function() { return settings.liftPath + '/comet'; },
         doCycleQueueCnt = 0,
         ajaxShowing = false,
         initialized = false,
@@ -30,7 +30,7 @@
 
       /**
         * By default lift uses a garbage-collection mechanism of removing unused bound functions from LiftSesssion.
-        * Setting this to false will disable this mechanisms and there will be no Ajax polling requests attempted.
+        * Setting this to false will disable this mechanism and there will be no Ajax polling requests attempted.
         */
       enableGc: true,
 
@@ -302,9 +302,12 @@
     // http://stackoverflow.com/questions/4994201/is-object-empty
     function is_empty(obj) {
       // null and undefined are empty
+      /* jshint eqnull:true */
       if (obj == null) {
         return true;
       }
+      /* jshint eqnull:false */
+
       // Assume if it has a length property with a non-zero value
       // that that property is correct.
       if (obj.length && obj.length > 0) {
@@ -325,7 +328,7 @@
 
     function cometFailureFunc() {
       var requestCount = cometRequestCount;
-      setTimeout(function() { cometEntry(requestCount) }, settings.cometFailureRetryTimeout);
+      setTimeout(function() { cometEntry(requestCount); }, settings.cometFailureRetryTimeout);
     }
 
     function cometSuccessFunc() {
@@ -463,8 +466,9 @@
           catch (e) {
             settings.logError(e);
           }
-        };
+        }
 
+        /* jshint eqnull:true */
         if (evt.done != null) {
           doneMsg();
         }
@@ -474,6 +478,7 @@
         else if (evt.failure != null) {
           failMsg(evt.failure);
         }
+        /* jshint eqnull:false */
       };
 
       self.then = function(f) {
@@ -496,7 +501,7 @@
           catch (e) {
             settings.logError(e);
           }
-        };
+        }
 
         return self;
       };
@@ -520,7 +525,7 @@
           catch (e) {
             settings.logError(e);
           }
-        };
+        }
 
         return this;
       };
@@ -565,11 +570,11 @@
               }
             } else if (attributes[i].name.match(/^data-lift-comet-/)) {
               cometGuid = attributes[i].name.substring('data-lift-comet-'.length).toUpperCase();
-              cometVersion = parseInt(attributes[i].value)
+              cometVersion = parseInt(attributes[i].value);
 
               comets[cometGuid] = cometVersion;
             } else if (attributes[i].name == 'data-lift-session-id') {
-              sessionId = attributes[i].value
+              sessionId = attributes[i].value;
             }
           }
 
@@ -583,9 +588,9 @@
           doCycleIn200();
         });
       },
-      defaultLogError: function(msg) { consoleOrAlert(msg) },
-      logError: function() { settings.logError.apply(this, arguments) },
-      onEvent: function() { settings.onEvent.apply(this, arguments) },
+      defaultLogError: function(msg) { consoleOrAlert(msg); },
+      logError: function() { settings.logError.apply(this, arguments); },
+      onEvent: function() { settings.onEvent.apply(this, arguments); },
       ajax: appendToQueue,
       startGc: successRegisterGC,
       ajaxOnSessionLost: function() {
@@ -679,8 +684,9 @@
         cache: false,
         success: onSuccess,
         error: function(_, status) {
-          if (status != 'abort')
-            return onFailure.apply(this, arguments)
+          if (status != 'abort') {
+            return onFailure.apply(this, arguments);
+          }
         }
       });
     }
@@ -745,7 +751,7 @@
           if (xhr.status === 200) {
             if (dataType === "script") {
               try {
-                eval(xhr.responseText);
+                eval(xhr.responseText); // jshint ignore:line
               }
               catch (e) {
                 settings.logError('The server call succeeded, but the returned Javascript contains an error: '+e);
@@ -778,6 +784,7 @@
 
       xhr.open("POST", url, true);
       xhr.timeout = settings.ajaxPostTimeout;
+      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 
       // set content-type header if the form has been serialized into a string
       if (typeof data === "string") {
@@ -811,7 +818,7 @@
         if (xhr.readyState === 4) { // Done
           if (xhr.status === 200) {
             try {
-              eval(xhr.responseText);
+              eval(xhr.responseText); // jshint ignore:line
             }
             catch (e) {
               settings.logError('The server call succeeded, but the returned Javascript contains an error: '+e);
@@ -837,6 +844,7 @@
       xhr.open("GET", url, true);
       xhr.timeout = settings.cometGetTimeout;
       xhr.setRequestHeader("Accept", "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01");
+      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
       xhr.send();
 
       return xhr;

@@ -1,0 +1,31 @@
+{
+  "name": "lift",
+  "version": "3.0.0",
+  "description": "A JavaScript library for use with the Lift web framework",
+  "scripts": {
+    "test": "karma start karma.conf.js",
+    "lint": "jshint src/main/resources/toserve/lift.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lift/framework.git"
+  },
+  "keywords": [
+    "lift"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/lift/framework/issues"
+  },
+  "homepage": "https://github.com/lift/framework",
+  "devDependencies": {
+    "jasmine-core": "^2.4.0",
+    "jshint": "^2.8.0",
+    "karma": "^0.13.15",
+    "karma-jasmine": "^0.3.6",
+    "karma-mocha-reporter": "^1.1.3",
+    "karma-phantomjs-launcher": "^0.2.1",
+    "phantomjs": "^1.9.19"
+  }
+}
