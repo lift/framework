@@ -30,7 +30,7 @@
 
       /**
         * By default lift uses a garbage-collection mechanism of removing unused bound functions from LiftSesssion.
-        * Setting this to false will disable this mechanisms and there will be no Ajax polling requests attempted.
+        * Setting this to false will disable this mechanism and there will be no Ajax polling requests attempted.
         */
       enableGc: true,
 
@@ -779,6 +779,9 @@
       xhr.open("POST", url, true);
       xhr.timeout = settings.ajaxPostTimeout;
 
+      // So Req.ajax_? will return true
+      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
       // set content-type header if the form has been serialized into a string
       if (typeof data === "string") {
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
@@ -837,6 +840,7 @@
       xhr.open("GET", url, true);
       xhr.timeout = settings.cometGetTimeout;
       xhr.setRequestHeader("Accept", "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01");
+      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest"); // So Req.ajax_? will return true
       xhr.send();
 
       return xhr;
