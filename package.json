@@ -21,6 +21,7 @@
   "homepage": "https://github.com/lift/framework",
   "devDependencies": {
     "jasmine-core": "^2.4.0",
+    "jshint": "^2.8.0",
     "karma": "^0.13.15",
     "karma-jasmine": "^0.3.6",
     "karma-mocha-reporter": "^1.1.3",

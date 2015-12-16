@@ -2,10 +2,10 @@
 
 set -ev
 
-./liftsh test
-
 npm run lint
 npm run test
+
+./liftsh test
 
 if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
   mkdir -p ~/.sbt/0.13/
