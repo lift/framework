@@ -15,10 +15,10 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'src/test/javascript/lib/jquery-1.11.3.min.js',
-      'src/test/javascript/lib/mock-ajax.js',
-      'src/main/resources/toserve/lift.js',
-      'src/test/javascript/specs/**/*.js'
+      'web/webkit/src/test/javascript/lib/jquery-1.11.3.min.js',
+      'web/webkit/src/test/javascript/lib/mock-ajax.js',
+      'web/webkit/src/main/resources/toserve/lift.js',
+      'web/webkit/src/test/javascript/specs/**/*.js'
     ],
 
 

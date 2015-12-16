@@ -4,7 +4,7 @@
   "description": "A JavaScript library for use with the Lift web framework",
   "scripts": {
     "test": "karma start karma.conf.js",
-    "lint": "jshint src/main/resources/toserve/lift.js"
+    "lint": "jshint web/webkit/src/main/resources/toserve/lift.js"
   },
   "repository": {
     "type": "git",
