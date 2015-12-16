@@ -5,11 +5,11 @@
 
   window.lift = (function() {
     // "private" vars
-    var ajaxPath = function() { return settings.liftPath + '/ajax' },
+    var ajaxPath = function() { return settings.liftPath + '/ajax'; },
         ajaxQueue = [],
         ajaxInProcess = null,
         ajaxVersion = 0,
-        cometPath = function() { return settings.liftPath + '/comet' },
+        cometPath = function() { return settings.liftPath + '/comet'; },
         doCycleQueueCnt = 0,
         ajaxShowing = false,
         initialized = false,
@@ -302,7 +302,7 @@
     // http://stackoverflow.com/questions/4994201/is-object-empty
     function is_empty(obj) {
       // null and undefined are empty
-      if (obj == null) {
+      if (obj === null) {
         return true;
       }
       // Assume if it has a length property with a non-zero value
@@ -325,7 +325,7 @@
 
     function cometFailureFunc() {
       var requestCount = cometRequestCount;
-      setTimeout(function() { cometEntry(requestCount) }, settings.cometFailureRetryTimeout);
+      setTimeout(function() { cometEntry(requestCount); }, settings.cometFailureRetryTimeout);
     }
 
     function cometSuccessFunc() {
@@ -463,15 +463,15 @@
           catch (e) {
             settings.logError(e);
           }
-        };
+        }
 
-        if (evt.done != null) {
+        if (evt.done !== null) {
           doneMsg();
         }
-        else if (evt.success != null) {
+        else if (evt.success !== null) {
           successMsg(evt.success);
         }
-        else if (evt.failure != null) {
+        else if (evt.failure !== null) {
           failMsg(evt.failure);
         }
       };
@@ -496,7 +496,7 @@
           catch (e) {
             settings.logError(e);
           }
-        };
+        }
 
         return self;
       };
@@ -520,7 +520,7 @@
           catch (e) {
             settings.logError(e);
           }
-        };
+        }
 
         return this;
       };
@@ -565,11 +565,11 @@
               }
             } else if (attributes[i].name.match(/^data-lift-comet-/)) {
               cometGuid = attributes[i].name.substring('data-lift-comet-'.length).toUpperCase();
-              cometVersion = parseInt(attributes[i].value)
+              cometVersion = parseInt(attributes[i].value);
 
               comets[cometGuid] = cometVersion;
             } else if (attributes[i].name == 'data-lift-session-id') {
-              sessionId = attributes[i].value
+              sessionId = attributes[i].value;
             }
           }
 
@@ -583,9 +583,9 @@
           doCycleIn200();
         });
       },
-      defaultLogError: function(msg) { consoleOrAlert(msg) },
-      logError: function() { settings.logError.apply(this, arguments) },
-      onEvent: function() { settings.onEvent.apply(this, arguments) },
+      defaultLogError: function(msg) { consoleOrAlert(msg); },
+      logError: function() { settings.logError.apply(this, arguments); },
+      onEvent: function() { settings.onEvent.apply(this, arguments); },
       ajax: appendToQueue,
       startGc: successRegisterGC,
       ajaxOnSessionLost: function() {
@@ -680,7 +680,7 @@
         success: onSuccess,
         error: function(_, status) {
           if (status != 'abort')
-            return onFailure.apply(this, arguments)
+            return onFailure.apply(this, arguments);
         }
       });
     }
@@ -745,7 +745,9 @@
           if (xhr.status === 200) {
             if (dataType === "script") {
               try {
+                /* jshint ignore:start */
                 eval(xhr.responseText);
+                /* jshint ignore:end */
               }
               catch (e) {
                 settings.logError('The server call succeeded, but the returned Javascript contains an error: '+e);
@@ -814,7 +816,9 @@
         if (xhr.readyState === 4) { // Done
           if (xhr.status === 200) {
             try {
+              /* jshint ignore:start */
               eval(xhr.responseText);
+              /* jshint ignore:end */
             }
             catch (e) {
               settings.logError('The server call succeeded, but the returned Javascript contains an error: '+e);

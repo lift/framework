@@ -2,6 +2,7 @@ sudo: false
 cache:
   directories:
     - '$HOME/.m2/repository'
+    - '$HOME/node_modules'
 services:
   - mongodb
 jdk:
@@ -12,3 +13,6 @@ script: ./travis.sh
 branches:
   only:
     - master
+
+before_script:
+  - "npm install"
