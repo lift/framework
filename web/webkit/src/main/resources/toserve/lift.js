@@ -302,9 +302,12 @@
     // http://stackoverflow.com/questions/4994201/is-object-empty
     function is_empty(obj) {
       // null and undefined are empty
-      if (obj === null) {
+      /* jshint eqnull:true */
+      if (obj == null) {
         return true;
       }
+      /* jshint eqnull:false */
+
       // Assume if it has a length property with a non-zero value
       // that that property is correct.
       if (obj.length && obj.length > 0) {
@@ -465,15 +468,17 @@
           }
         }
 
-        if (evt.done !== null) {
+        /* jshint eqnull:true */
+        if (evt.done != null) {
           doneMsg();
         }
-        else if (evt.success !== null) {
+        else if (evt.success != null) {
           successMsg(evt.success);
         }
-        else if (evt.failure !== null) {
+        else if (evt.failure != null) {
           failMsg(evt.failure);
         }
+        /* jshint eqnull:false */
       };
 
       self.then = function(f) {
@@ -745,9 +750,7 @@
           if (xhr.status === 200) {
             if (dataType === "script") {
               try {
-                /* jshint ignore:start */
-                eval(xhr.responseText);
-                /* jshint ignore:end */
+                eval(xhr.responseText); // jshint ignore:line
               }
               catch (e) {
                 settings.logError('The server call succeeded, but the returned Javascript contains an error: '+e);
@@ -780,8 +783,6 @@
 
       xhr.open("POST", url, true);
       xhr.timeout = settings.ajaxPostTimeout;
-
-      // So Req.ajax_? will return true
       xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 
       // set content-type header if the form has been serialized into a string
@@ -816,9 +817,7 @@
         if (xhr.readyState === 4) { // Done
           if (xhr.status === 200) {
             try {
-              /* jshint ignore:start */
-              eval(xhr.responseText);
-              /* jshint ignore:end */
+              eval(xhr.responseText); // jshint ignore:line
             }
             catch (e) {
               settings.logError('The server call succeeded, but the returned Javascript contains an error: '+e);
@@ -844,7 +843,7 @@
       xhr.open("GET", url, true);
       xhr.timeout = settings.cometGetTimeout;
       xhr.setRequestHeader("Accept", "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01");
-      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest"); // So Req.ajax_? will return true
+      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
       xhr.send();
 
       return xhr;
