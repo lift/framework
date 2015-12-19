@@ -147,4 +147,4 @@ changes to Lift. We do, however, accept some small changes and bugfixes into Lif
 
 ## Continuous Integration
 
-SNAPSHOTs are built bt [Travis CI](https://travis-ci.org/lift/framework)
+SNAPSHOTs are built by [Travis CI](https://travis-ci.org/lift/framework)
