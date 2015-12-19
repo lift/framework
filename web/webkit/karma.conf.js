@@ -1,5 +1,4 @@
 // Karma configuration
-// Generated on Wed Dec 16 2015 12:29:52 GMT-0600 (CST)
 
 module.exports = function(config) {
   config.set({
@@ -15,10 +14,10 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'web/webkit/src/test/javascript/lib/jquery-1.11.3.min.js',
-      'web/webkit/src/test/javascript/lib/mock-ajax.js',
-      'web/webkit/src/main/resources/toserve/lift.js',
-      'web/webkit/src/test/javascript/specs/**/*.js'
+      'target/web/web-modules/main/webjars/lib/jquery/dist/jquery.min.js',
+      'target/web/web-modules/main/webjars/lib/jasmine-ajax/lib/mock-ajax.js',
+      'src/main/resources/toserve/lift.js',
+      'src/test/assets/js/**/*.js'
     ],
 
 

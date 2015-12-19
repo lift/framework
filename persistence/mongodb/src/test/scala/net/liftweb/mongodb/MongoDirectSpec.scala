@@ -233,7 +233,7 @@ class MongoDirectSpec extends Specification with MongoTestKit {
       coll.save(doc2, WriteConcern.SAFE) must throwA[MongoException]
       Helpers.tryo(coll.save(doc2, WriteConcern.SAFE)) must beLike {
         case Failure(msg, _, _) =>
-          msg must contain("E11000 duplicate key error index")
+          msg must contain("E11000 duplicate key error")
       }
       Helpers.tryo(coll.save(doc3, WriteConcern.SAFE)).toOption must beSome
 

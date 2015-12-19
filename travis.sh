@@ -2,10 +2,12 @@
 
 set -ev
 
+./liftsh test
+
+cd web/webkit
 npm run lint
 npm run test
-
-./liftsh test
+cd -
 
 if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
   mkdir -p ~/.sbt/0.13/

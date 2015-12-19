@@ -1,5 +1,7 @@
 # The Lift Web Framework
 
+[![Build Status](https://travis-ci.org/lift/framework.svg?branch=master)](https://travis-ci.org/lift/framework)
+
 Lift is the most powerful, most secure web framework available today. There are [Seven Things](http://seventhings.liftweb.net/) that distinguish Lift from other web frameworks.
 
 Lift applications are:
@@ -40,7 +42,7 @@ Create or update your `project/plugins.sbt` file with the `xsbt-web-plugin`:
 Then, add the plugin and Lift to your `build.sbt` file:
 
 	seq(webSettings :_*)
-	
+
 	libraryDependencies ++= {
 		val liftVersion = "2.5-RC1"
 		Seq(
@@ -145,4 +147,4 @@ changes to Lift. We do, however, accept some small changes and bugfixes into Lif
 
 ## Continuous Integration
 
-SNAPSHOTs are built at CloudBees: https://lift.ci.cloudbees.com/
+SNAPSHOTs are built bt [Travis CI](https://travis-ci.org/lift/framework)
