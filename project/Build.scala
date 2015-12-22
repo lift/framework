@@ -19,6 +19,9 @@ import Keys._
 import net.liftweb.sbt.LiftBuildPlugin._
 import Dependencies._
 
+import com.typesafe.sbt.web.SbtWeb
+import com.typesafe.sbt.web.SbtWeb.autoImport._
+
 /**
  * Pattern-matches an attributed file, extracting its module organization,
  * name, and revision if available in its attributes.
@@ -73,7 +76,7 @@ object BuildDef extends Build {
         .dependsOn(common)
         .settings(description := "Simple Actor",
                   parallelExecution in Test := false)
-                  
+
   lazy val markdown =
     coreProject("markdown")
         .settings(description := "Markdown Parser",
@@ -126,7 +129,7 @@ object BuildDef extends Build {
   lazy val webkit =
     webProject("webkit")
         .dependsOn(util, testkit % "provided")
-        .settings(libraryDependencies += mockito_all)
+        .settings(libraryDependencies ++= Seq(mockito_all, jquery, jasmineCore, jasmineAjax))
         .settings(yuiCompressor.Plugin.yuiSettings: _*)
         .settings(description := "Webkit Library",
                   parallelExecution in Test := false,
@@ -136,8 +139,9 @@ object BuildDef extends Build {
                   },
                   initialize in Test <<= (sourceDirectory in Test) { src =>
                     System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
-                  })
-
+                  },
+                  (compile in Compile) <<= (compile in Compile) dependsOn (WebKeys.assets))
+        .enablePlugins(SbtWeb)
 
 
   // Persistence Projects

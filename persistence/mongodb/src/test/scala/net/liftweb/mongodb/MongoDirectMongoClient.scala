@@ -28,7 +28,7 @@ import org.specs2.mutable.Specification
  * System under specification for MongoDirectMonoClient.
  */
 class MongoDirectMongoClientSpec extends Specification with MongoTestKit {
-  "MongoDirectMonoClient Specification".title
+  "MongoDirectMongoClient Specification".title
 
   override def mongo = new MongoClient("127.0.0.1", 27017)
 
