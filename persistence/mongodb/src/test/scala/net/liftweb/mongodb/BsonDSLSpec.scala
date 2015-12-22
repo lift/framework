@@ -41,7 +41,7 @@ object BsonDSLSpec extends Specification  {
       val qry: JObject = ("id" -> oid)
       val dbo: DBObject = JObjectParser.parse(qry)(DefaultFormats)
 
-      dbo.get("idx") must_== oid
+      dbo.get("id") must_== oid
     }
 
     "Convert List[ObjectId] properly" in {
