@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ object MongoDB {
   /**
     * Define and authenticate a Mongo db using a MongoClient instance.
     */
+  @deprecated("Credentials are now passed in via MongoClient", "3.0")
   def defineDbAuth(name: ConnectionIdentifier, mngo: MongoClient, dbName: String, username: String, password: String) {
     if (!mngo.getDB(dbName).authenticate(username, password.toCharArray))
       throw new MongoException("Authorization failed: "+mngo.toString)
@@ -126,6 +127,7 @@ object MongoDB {
     * and the use of getLastError.
     * See: http://docs.mongodb.org/ecosystem/drivers/java-concurrency/
     */
+  @deprecated("No longer relevant. See mongo-java-drivers's JavaDocs for details", "3.0")
   def useSession[T](name: ConnectionIdentifier)(f: (DB) => T): T = {
 
     val db = getDb(name) match {
@@ -147,6 +149,7 @@ object MongoDB {
   /**
     * Same as above except uses DefaultConnectionIdentifier
     */
+  @deprecated("No longer relevant. See mongo-java-drivers's JavaDocs for details", "3.0")
   def useSession[T](f: (DB) => T): T = {
 
     val db = getDb(DefaultConnectionIdentifier) match {

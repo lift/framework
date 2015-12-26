@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -495,31 +495,31 @@ class MongoRecordSpec extends Specification with MongoTestKit {
     }
 
     "get set from json string using lift-json parser" in {
-      val mfftrFromJson = MongoFieldTypeTestRecord.fromJsonString(compact(render(mfttrJson)))
+      val mfftrFromJson = MongoFieldTypeTestRecord.fromJsonString(compactRender(mfttrJson))
       mfftrFromJson.isDefined must_== true
       mfftrFromJson foreach { tr =>
         tr mustEqual mfttr
       }
 
-      val pftrFromJson = PatternFieldTestRecord.fromJsonString(compact(render(pftrJson)))
+      val pftrFromJson = PatternFieldTestRecord.fromJsonString(compactRender(pftrJson))
       pftrFromJson.isDefined must_== true
       pftrFromJson foreach { tr =>
         tr mustEqual pftr
       }
 
-      val ltrFromJson = ListTestRecord.fromJsonString(compact(render(ltrJson)))
+      val ltrFromJson = ListTestRecord.fromJsonString(compactRender(ltrJson))
       ltrFromJson.isDefined must_== true
       ltrFromJson foreach { tr =>
         tr mustEqual ltr
       }
 
-      val mtrFromJson = MapTestRecord.fromJsonString(compact(render(mtrJson)))
+      val mtrFromJson = MapTestRecord.fromJsonString(compactRender(mtrJson))
       mtrFromJson.isDefined must_== true
       mtrFromJson.toList map { tr =>
         tr mustEqual mtr
       }
 
-      val joftrFromJson = JObjectFieldTestRecord.fromJsonString(compact(render(joftrJson)))
+      val joftrFromJson = JObjectFieldTestRecord.fromJsonString(compactRender(joftrJson))
       joftrFromJson must_== Full(joftr)
     }
 

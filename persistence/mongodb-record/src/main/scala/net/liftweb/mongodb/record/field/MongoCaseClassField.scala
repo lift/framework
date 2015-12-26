@@ -1,5 +1,5 @@
 /*
-* Copyright 2010-2011 WorldWide Conferencing, LLC
+* Copyright 2010-2015 WorldWide Conferencing, LLC
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -107,6 +107,7 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
     asJValue match {
       case JArray(list) =>
         list.foreach(v => dbl.add(JObjectParser.parse(v.asInstanceOf[JObject])))
+      case _ =>
     }
 
     dbl
