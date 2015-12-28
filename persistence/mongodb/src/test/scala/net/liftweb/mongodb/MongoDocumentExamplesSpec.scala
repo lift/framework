@@ -494,7 +494,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
       SessCollection.save(tc2, db) must throwA[MongoException]
       Helpers.tryo(SessCollection.save(tc2, db)) must beLike {
         case Failure(msg, _, _) =>
-          msg must contain("E11000 duplicate key error")
+          msg must contain("E11000")
       }
 
       Helpers.tryo(SessCollection.save(tc3, db)).toOption must beSome
