@@ -684,7 +684,7 @@
         cache: false,
         success: onSuccess,
         error: function(_, status) {
-          if (status != 'abort') {
+          if (status !== 'abort') {
             return onFailure.apply(this, arguments);
           }
         }
