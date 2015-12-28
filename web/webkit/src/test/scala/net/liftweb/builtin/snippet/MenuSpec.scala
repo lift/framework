@@ -17,8 +17,7 @@
 package net.liftweb
 package builtin.snippet
 
-import xml._
-import org.specs2.matcher.XmlMatchers
+import scala.xml._
 import org.specs2.mutable.Specification
 
 import common._
@@ -27,12 +26,9 @@ import mockweb._
 import MockWeb._
 import mocks._
 import sitemap._
-import util.Helpers.{randomString, secureXML}
+import util.Helpers.randomString
 
-/**
- * System under specification for Menu.
- */
-object MenuSpec extends Specification with XmlMatchers {
+object MenuSpec extends Specification {
   "Menu Specification".title
 
   case class Param(s: String)
@@ -52,8 +48,11 @@ object MenuSpec extends Specification with XmlMatchers {
       val mockReq = new MockHttpServletRequest(uri)
 
       testS(mockReq) {
-        LiftRules.setSiteMap(siteMap)
-        f
+        val rules = new LiftRules()
+        rules.setSiteMap(siteMap)
+        LiftRulesMocker.devTestLiftRulesInstance.doWith(rules) {
+          f
+        }
       }
     }
   }

@@ -64,7 +64,7 @@ class MongoClientSaveSpec extends Specification with MongoTestKit {
     sd2.save(false) // no exception thrown
     sd2.save(true) must throwA[MongoException]
     sd2.saveBox() must beLike {
-      case Failure(msg, _, _) => msg must contain("E11000 duplicate key error index") // exception thrown
+      case Failure(msg, _, _) => msg must contain("E11000")
     }
     sd3.save()
 

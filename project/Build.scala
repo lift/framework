@@ -73,7 +73,7 @@ object BuildDef extends Build {
         .dependsOn(common)
         .settings(description := "Simple Actor",
                   parallelExecution in Test := false)
-                  
+
   lazy val markdown =
     coreProject("markdown")
         .settings(description := "Markdown Parser",
@@ -136,8 +136,24 @@ object BuildDef extends Build {
                   },
                   initialize in Test <<= (sourceDirectory in Test) { src =>
                     System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
-                  })
+                  },
+                  /**
+                    * This is to ensure that the tests in net.liftweb.webapptest run last
+                    * so that other tests (MenuSpec in particular) run before the SiteMap
+                    * is set.
+                    */
+                  testGrouping in Test <<= (definedTests in Test).map { tests =>
+                    import Tests._
 
+                    val (webapptests, others) = tests.partition { test =>
+                      test.name.startsWith("net.liftweb.webapptest")
+                    }
+
+                    Seq(
+                      new Group("others", others, InProcess),
+                      new Group("webapptests", webapptests, InProcess)
+                    )
+                  })
 
 
   // Persistence Projects
