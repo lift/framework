@@ -127,7 +127,7 @@ object MongoDB {
     * and the use of getLastError.
     * See: http://docs.mongodb.org/ecosystem/drivers/java-concurrency/
     */
-  @deprecated("No longer relevant. See mongo-java-drivers's JavaDocs for details", "3.0")
+  @deprecated("No longer needed. See mongo-java-drivers's JavaDocs for details", "3.0")
   def useSession[T](name: ConnectionIdentifier)(f: (DB) => T): T = {
 
     val db = getDb(name) match {
@@ -149,7 +149,7 @@ object MongoDB {
   /**
     * Same as above except uses DefaultConnectionIdentifier
     */
-  @deprecated("No longer relevant. See mongo-java-drivers's JavaDocs for details", "3.0")
+  @deprecated("No longer needed. See mongo-java-drivers's JavaDocs for details", "3.0")
   def useSession[T](f: (DB) => T): T = {
 
     val db = getDb(DefaultConnectionIdentifier) match {
