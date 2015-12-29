@@ -28,31 +28,6 @@ import net.liftweb.http.js._
   import JE.{AnonFunc,Call,JsRaw}
 import Helpers._
 
-/**
- * Represents an HTML attribute for an event handler. Carries the event name and
- * the JS that should run when that event is triggered as a String.
- */
-private case class EventAttribute(eventName: String, jsString: String)
-private object EventAttribute {
-  /**
-   * A map from attribute name to event name for attributes that support being
-   * set to javascript:(//)-style values in order to invoke JS. For example, you
-   * can (and Lift does) set a form's action attribute to javascript://(some JS)
-   * instead of setting onsubmit to (someJS); return false.
-   */
-  val eventsByAttributeName =
-    Map(
-      "action" -> "submit",
-      "href" -> "click"
-    )
-
-  object EventForAttribute {
-    def unapply(attributeName: String): Option[String] = {
-      eventsByAttributeName.get(attributeName)
-    }
-  }
-}
-
 private[http] trait LiftMerge {
   self: LiftSession =>
 
@@ -61,21 +36,13 @@ private[http] trait LiftMerge {
   }
 
   // Gather all page-specific JS into one JsCmd.
-  private def assemblePageSpecificJavaScript(eventAttributesByElementId: Map[String,List[EventAttribute]]): JsCmd = {
-    val eventJs =
-      for {
-        (elementId, eventAttributes) <- eventAttributesByElementId
-        EventAttribute(eventName, jsString) <- eventAttributes
-      } yield {
-        Call("lift.onEvent", elementId, eventName, AnonFunc("event", JsRaw(jsString).cmd)).cmd
-      }
-
+  private def assemblePageSpecificJavaScript(eventJs: JsCmd): JsCmd = {
     val allJs =
       LiftRules.javaScriptSettings.vend().map { settingsFn =>
         LiftJavaScript.initCmd(settingsFn(this))
       }.toList ++
       S.jsToAppend() ++
-      eventJs
+      List(eventJs)
 
     allJs.foldLeft(js.JsCmds.Noop)(_ & _)
   }
@@ -128,9 +95,9 @@ private[http] trait LiftMerge {
     }.isDefined
 
 
-    var htmlTag = <html xmlns="http://www.w3.org/1999/xhtml" xmlns:lift='http://liftweb.net'/>
-    var headTag = <head/>
-    var bodyTag = <body/>
+    var htmlElement = <html xmlns="http://www.w3.org/1999/xhtml" xmlns:lift='http://liftweb.net'/>
+    var headElement = <head/>
+    var bodyElement = <body/>
     val headChildren = new ListBuffer[Node]
     val bodyChildren = new ListBuffer[Node]
     val addlHead = new ListBuffer[Node]
@@ -139,204 +106,117 @@ private[http] trait LiftMerge {
     addlTail ++= S.atEndOfBody()
     val eventAttributesByElementId = new HashMap[String,List[EventAttribute]]
     val rewrite = URLRewriter.rewriteFunc
-    val fixHref = Req.fixHref
 
     val contextPath: String = S.contextPath
 
-    // Fix URLs using Req.fixHref and extract JS event attributes for putting
-    // into page JS. Returns a triple of:
-    //  - The optional id that was found in this set of attributes.
-    //  - The fixed metadata.
-    //  - A list of extracted `EventAttribute`s.
-    def fixAttrs(toFix: String, attrs: MetaData, fixURL: Boolean, eventAttributes: List[EventAttribute] = Nil): (Option[String], MetaData, List[EventAttribute]) = {
-      if (attrs == Null) {
-        (None, Null, eventAttributes)
-      } else {
-        val (id, fixedRemainingAttributes, remainingEventAttributes) = fixAttrs(toFix, attrs.next, fixURL, eventAttributes)
+    case class HtmlState(
+      inHtml: Boolean = false, // once we've seen HTML
+      inHead: Boolean = false, // once we've seen HEAD
+      inBody: Boolean = false, // once we've seen BODY
+      inHeadInBody: Boolean = false, // we've seen HEAD inside BODY
+      inTailInBody: Boolean = false, // we've seen TAIL inside BODY
+      justBody: Boolean = false, // we're in a descendant of BODY (not HEAD/TAIL)
+      justHead: Boolean = false, // we're in a descendant of HEAD (not inside BODY)
+      mergeHeadAndTail: Boolean = false
+    )
 
-        attrs match {
-          case attribute @ UnprefixedAttribute(
-                 EventAttribute.EventForAttribute(eventName),
-                 attributeValue,
-                 remainingAttributes
-               ) if attributeValue.text.startsWith("javascript:") =>
-            val attributeJavaScript = {
-              // Could be javascript: or javascript://.
-              val base = attributeValue.text.substring(11)
-              val strippedJs =
-                if (base.startsWith("//"))
-                  base.substring(2)
-                else
-                  base
+    def _fixHtml(in: NodeSeq, startingState: HtmlState = HtmlState()): (NodeSeq, JsCmd) = {
+      normalizeHtmlAndEventHandlers(
+        in,
+        startingState,
+        {
+          case (state @ HtmlState(_inHtml, _inHead, _inBody, _inHeadInBody, _inTailInBody, _justBody, _justHead, mergeHeadAndTail), element) =>
+            var inHtml = _inHtml
+            var inHead = _inHead
+            var enteredHead = false
+            var enteredBody = false
+            var inBody = _inBody
+            var bodyHead = false
+            var bodyTail = false
 
-              if (strippedJs.trim.isEmpty) {
-                Nil
-              } else {
-                // When using javascript:-style URIs, return false is implied.
-                List(strippedJs + "; event.preventDefault();")
+            val childInfo =
+              element.label match {
+                case "html" if ! inHtml =>
+                  htmlElement = element
+
+                  state.copy(inHtml = true && mergeHeadAndTail)
+
+                case "head" if inHtml && ! inBody =>
+                  enteredHead = true && mergeHeadAndTail
+                  headElement = element
+
+                  state.copy(inHead = enteredHead)
+
+                case label if mergeHeadAndTail && 
+                              (label == "head" || label.startsWith("head_")) &&
+                              inHtml &&
+                              inBody =>
+                  state.copy(inHeadInBody = true)
+
+                case label if mergeHeadAndTail &&
+                              label == "tail" &&
+                              inHtml &&
+                              inBody =>
+                  state.copy(inTailInBody = true)
+
+                case "body" if inHtml =>
+                  enteredBody = true && mergeHeadAndTail
+                  bodyElement = element
+
+                  state.copy(inBody = enteredBody)
+
+                case _ =>
+                  state
               }
-            }
 
-            val updatedEventAttributes = attributeJavaScript.map(EventAttribute(eventName, _)) ::: remainingEventAttributes
-            (id, fixedRemainingAttributes, updatedEventAttributes)
+            element match {
+              case e: Elem if e.label == "node" &&
+                              e.prefix == "lift_deferred" =>
+                val deferredNodes: Seq[(NodeSeq, JsCmd)] =
+                  for {
+                    idAttribute <- e.attributes("id").take(1)
+                    id = idAttribute.text
+                    nodes <- processedSnippets.get(id)
+                  } yield {
+                    _fixHtml(nodes, childInfo)
+                  }
 
-          case u: UnprefixedAttribute if u.key == toFix =>
-            (id, new UnprefixedAttribute(toFix, fixHref(contextPath, attrs.value, fixURL, rewrite), fixedRemainingAttributes), remainingEventAttributes)
+                (
+                  childInfo,
+                  deferredNodes.flatMap(_._1),
+                  deferredNodes.map(_._2).foldLeft(Noop)(_ & _)
+                )
 
-          case u: UnprefixedAttribute if u.key.startsWith("on") =>
-            (id, fixedRemainingAttributes, EventAttribute(u.key.substring(2), u.value.text) :: remainingEventAttributes)
-
-          case u: UnprefixedAttribute if u.key == "id" =>
-            (Option(u.value.text).filter(_.nonEmpty), attrs.copy(fixedRemainingAttributes), remainingEventAttributes)
-
-          case _ =>
-            (id, attrs.copy(fixedRemainingAttributes), remainingEventAttributes)
-        }
-      }
-    }
-
-    // Fix the element's `attributeToFix` using `fixAttrs` and extract JS event
-    // attributes for putting into page JS. Return a fixed version of this
-    // element with fixed children. Adds a lift-generated id if the given
-    // element needs to have event handlers attached but doesn't already have an
-    // id.
-    def fixElementAndAttributes(element: Elem, attributeToFix: String, fixURL: Boolean, fixedChildren: NodeSeq) = {
-      val (id, fixedAttributes, eventAttributes) = fixAttrs(attributeToFix, element.attributes, fixURL)
-
-      val attributesIncludingEventsAsData =
-        LiftRules.attributeForRemovedEventAttributes match {
-          case Some(attribute) if eventAttributes.nonEmpty =>
-            val removedAttributes = eventAttributes.map {
-              case EventAttribute(event, _) =>
-                s"on$event"
-            }
-            new UnprefixedAttribute(attribute, removedAttributes.join(" "), fixedAttributes)
-
-          case _ =>
-            fixedAttributes
-        }
-
-      id.map { foundId =>
-        eventAttributesByElementId += (foundId -> eventAttributes)
-
-        element.copy(
-          attributes = attributesIncludingEventsAsData,
-          child = fixedChildren
-        )
-      } getOrElse {
-        if (eventAttributes.nonEmpty) {
-          val generatedId = s"lift-event-js-$nextFuncName"
-          eventAttributesByElementId += (generatedId -> eventAttributes)
-
-          element.copy(
-            attributes = new UnprefixedAttribute("id", generatedId, attributesIncludingEventsAsData),
-            child = fixedChildren
-          )
-        } else {
-          element.copy(
-            attributes = attributesIncludingEventsAsData,
-            child = fixedChildren
-          )
-        }
-      }
-    }
-
-    def _fixHtml(in: NodeSeq, _inHtml: Boolean, _inHead: Boolean, _justHead: Boolean, _inBody: Boolean, _justBody: Boolean, _bodyHead: Boolean, _bodyTail: Boolean, doMergy: Boolean): NodeSeq = {
-      in.flatMap {
-        v =>
-                var inHtml = _inHtml
-                var inHead = _inHead
-                var justHead = false
-                var justBody = false
-                var inBody = _inBody
-                var bodyHead = false
-                var bodyTail = false
-
-                v match {
-                  case e: Elem if e.label == "html" &&
-                  !inHtml => htmlTag = e; inHtml = true && doMergy
-
-                  case e: Elem if e.label == "head" && inHtml &&
-                  !inBody => headTag = e;
-                  inHead = true && doMergy; justHead = true && doMergy
-
-                  case e: Elem if (e.label == "head" ||
-                                   e.label.startsWith("head_")) &&
-                  inHtml && inBody => bodyHead = true && doMergy
-
-                  case e: Elem if e.label == "tail" && inHtml &&
-                  inBody => bodyTail = true && doMergy
-
-                  case e: Elem if e.label == "body" && inHtml =>
-                    bodyTag = e; inBody = true && doMergy;
-                  justBody = true && doMergy
-
-                  case _ =>
+              case _ =>
+                if (_justHead) {
+                  headChildren ++= element
+                } else if (_justBody && !bodyHead && !bodyTail) {
+                  bodyChildren ++= element
+                } else if (_inHeadInBody) {
+                  addlHead ++= element
+                } else if (_inTailInBody) {
+                  addlTail ++= element
                 }
 
-                val ret: NodeSeq = v match {
-                  case Group(nodes) => Group(_fixHtml(nodes, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy))
-
-                  // if it's a deferred node, grab it from the deferred list
-                  case e: Elem if e.label == "node" && e.prefix == "lift_deferred" =>
-                    for{
-                      attr <- e.attributes("id").headOption.map(_.text).toList
-                      nodes <- processedSnippets.get(attr).toList
-                      node <- _fixHtml(nodes, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
-                    } yield node
-
-                  case e: Elem if e.label == "form" =>
-                    fixElementAndAttributes(
-                      e, "action", fixURL = true,
-                      _fixHtml(e.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
-                    )
-
-                  case e: Elem if e.label == "script" =>
-                    fixElementAndAttributes(
-                      e, "src", fixURL = false,
-                      _fixHtml(e.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
-                    )
-
-                  case e: Elem if e.label == "a" =>
-                    fixElementAndAttributes(
-                      e, "href", fixURL = true,
-                      _fixHtml(e.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
-                    )
-
-                  case e: Elem if e.label == "link" =>
-                    fixElementAndAttributes(
-                      e, "href", fixURL = false,
-                      _fixHtml(e.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
-                    )
-
-                  case e: Elem =>
-                    fixElementAndAttributes(
-                      e, "src", fixURL = true,
-                      _fixHtml(e.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
-                    )
-
-                  case c: Comment if stripComments => NodeSeq.Empty
-                  case _ => v
+                if (bodyHead || bodyTail) {
+                  (childInfo, NodeSeq.Empty, JsCmds.Noop)
+                } else {
+                  (childInfo, element, JsCmds.Noop)
                 }
-                if (_justHead) headChildren ++= ret
-                else if (_justBody && !bodyHead && !bodyTail) bodyChildren ++= ret
-                else if (_bodyHead) addlHead ++= ret
-                else if (_bodyTail) addlTail ++= ret
-
-                if (bodyHead || bodyTail) Text("")
-                else ret
-      }
+            }
+        }: (HtmlState, Elem)=>(HtmlState, NodeSeq, JsCmd)
+      )
     }
 
     if (!hasHtmlHeadAndBody) {
-      val fixedHtml = _fixHtml(xhtml, false, false, false, false, false, false, false, false)
+      val (fixedHtml, _) = _fixHtml(xhtml)
 
       fixedHtml.find {
         case e: Elem => true
         case _ => false
       } getOrElse Text("")
     } else {
-      _fixHtml(xhtml, false, false, false, false, false, false, false, true)
+      val (_, eventJs) = _fixHtml(xhtml, HtmlState(mergeHeadAndTail = true))
 
       val htmlKids = new ListBuffer[Node]
 
@@ -357,7 +237,7 @@ private[http] trait LiftMerge {
         bodyChildren += nl
       }
 
-      val pageJs = assemblePageSpecificJavaScript(eventAttributesByElementId)
+      val pageJs = assemblePageSpecificJavaScript(eventJs)
       if (pageJs.toJsCmd.trim.nonEmpty) {
         addlTail += pageScopedScriptFileWith(pageJs)
       }
@@ -388,12 +268,12 @@ private[http] trait LiftMerge {
         }
 
       htmlKids += nl
-      htmlKids += headTag.copy(child = headChildren.toList)
+      htmlKids += headElement.copy(child = headChildren.toList)
       htmlKids += nl
-      htmlKids += bodyAttributes.foldLeft(bodyTag.copy(child = bodyChildren.toList))(_ % _)
+      htmlKids += bodyAttributes.foldLeft(bodyElement.copy(child = bodyChildren.toList))(_ % _)
       htmlKids += nl
 
-      val tmpRet = Elem(htmlTag.prefix, htmlTag.label, htmlTag.attributes, htmlTag.scope, htmlTag.minimizeEmpty, htmlKids.toList: _*)
+      val tmpRet = Elem(htmlElement.prefix, htmlElement.label, htmlElement.attributes, htmlElement.scope, htmlElement.minimizeEmpty, htmlKids.toList: _*)
 
       val ret: Node = if (Props.devMode) {
         LiftRules.xhtmlValidator.toList.flatMap(_(tmpRet)) match {
