@@ -1320,6 +1320,12 @@ object RewriteResponse {
   def apply(path: ParsePath, params: Map[String, String]) = new RewriteResponse(path, params, false)
 }
 
+/**
+ * Provides access to a thread-local URL rewriter. Typically uses either an
+ * applicable entry in `[[LiftRules.decorateUrl]]` or the container's built-in
+ * URL decoration which may append the session id to the URL (dependent on
+ * `[[LiftRules.encodeJSessionIdInUrl_?]]`).
+ */
 object URLRewriter {
   private val funcHolder = new ThreadGlobal[(String) => String]
 
