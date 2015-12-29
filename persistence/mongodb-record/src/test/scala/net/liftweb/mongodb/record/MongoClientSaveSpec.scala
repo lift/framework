@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 WorldWide Conferencing, LLC
+ * Copyright 2014-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ package mongoclientsaverecords {
   object SaveDoc extends SaveDoc with MongoMetaRecord[SaveDoc] {
     import BsonDSL._
 
-    ensureIndex(("name" -> 1), true) // unique name
+    createIndex(("name" -> 1), true) // unique name
   }
 }
 
@@ -64,7 +64,7 @@ class MongoClientSaveSpec extends Specification with MongoTestKit {
     sd2.save(false) // no exception thrown
     sd2.save(true) must throwA[MongoException]
     sd2.saveBox() must beLike {
-      case Failure(msg, _, _) => msg must contain("E11000 duplicate key error index") // exception thrown
+      case Failure(msg, _, _) => msg must contain("E11000")
     }
     sd3.save()
 
