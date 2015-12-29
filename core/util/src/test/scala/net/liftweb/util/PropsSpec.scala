@@ -146,4 +146,17 @@ object PropsSpec extends Specification {
       testProps.require("new.prop") must_== Nil
     }
   }
+
+  "Props.isProductionMode" should {
+    "return true for Production, Staging, and Pilot" in {
+      Props.isProductionMode(Production) must_== true
+      Props.isProductionMode(Staging) must_== true
+      Props.isProductionMode(Pilot) must_== true
+    }
+    "return false for Development, Test, and Profile" in {
+      Props.isProductionMode(Test) must_== false
+      Props.isProductionMode(Development) must_== false
+      Props.isProductionMode(Profile) must_== false
+    }
+  }
 }

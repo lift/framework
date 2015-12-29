@@ -14,9 +14,9 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'target/web/web-modules/main/webjars/lib/jquery/dist/jquery.min.js',
-      'target/web/web-modules/main/webjars/lib/jasmine-ajax/lib/mock-ajax.js',
-      'src/main/resources/toserve/lift.js',
+      'target/web/web-modules/test/webjars/lib/jquery/dist/jquery.min.js',
+      'target/web/web-modules/test/webjars/lib/jasmine-ajax/lib/mock-ajax.js',
+      'src/main/assets/js/lift.js',
       'src/test/assets/js/**/*.js'
     ],
 

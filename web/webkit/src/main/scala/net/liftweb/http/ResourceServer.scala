@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 WorldWide Conferencing, LLC
+ * Copyright 2007-2016 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import Helpers._
 import java.net.{URL, URLConnection, JarURLConnection}
 import java.util.concurrent.{ConcurrentHashMap => CHash}
 
-object ResourceServer {
+object ResourceServer extends ResourceCache {
   var allowedPaths: PartialFunction[List[String], Boolean] = {
     case "lift.js" :: Nil => true
     case "jquery.js" :: Nil => true
@@ -58,35 +58,8 @@ object ResourceServer {
    */
   var baseResourceLocation = "toserve"
 
-  private val lastModCache: CHash[String, Long] = new CHash()
-
-  def calcLastModified(in: URL): Long = {
-    val str = in.toString
-    if (!Props.devMode && lastModCache.containsKey(str)) lastModCache.get(str)
-    else {
-      val ret: Long =
-      (for{
-        uc <- tryo(in.openConnection)
-      } yield {
-          uc.getLastModified match {
-            case 0L => uc match {
-              case jc: JarURLConnection => jc.getJarEntry() match {
-                case null => 0L
-                case e => e.getTime()
-              }
-              case _ => 0L
-            }
-            case x => x
-          }
-        }) openOr 0L
-      lastModCache.put(str, ret)
-      ret
-    }
-  }
-
-
   def findResourceInClasspath(request: Req, uri: List[String])(): Box[LiftResponse] =
-    for{
+    for {
       auri <- Full(uri.filter(!_.startsWith("."))).filter(auri => isAllowed(auri))
       rw = baseResourceLocation :: pathRewriter(auri)
       path = rw.mkString("/", "/", "")
@@ -106,25 +79,6 @@ object ResourceServer {
                        "Content-Type" -> detectContentType(rw.last)), Nil,
           200)
       }
-
-
-  /**
-   * detect the Content-Type of file (path) with context-defined content-types
-   * (application's web.xml or container's configuration), and fall
-   * back to system or JVM-defined (FileNameMap) content types.
-   * if no content-type found, then return "application/octet-stream"
-   *
-   * @param path Resource name to be analyzed to detect MIME type
-   *
-   * @see HTTPContext # mimeType ( String )
-   * @see URLConnection # getFileNameMap ( )
-   */
-  def detectContentType(path: String): String = {
-    // Configure response with content type of resource
-    (LiftRules.context.mimeType(path) or
-            (Box !! URLConnection.getFileNameMap().getContentTypeFor(path))) openOr
-            "application/octet-stream"
-  }
 
   private def isAllowed(path: List[String]) = allowedPaths.isDefinedAt(path) && allowedPaths(path)
 

@@ -138,7 +138,7 @@ private[http] trait LiftMerge {
 
                 startingState.copy(headChild = true && mergeHeadAndTail)
 
-              case element: Elem if mergeHeadAndTail && 
+              case element: Elem if mergeHeadAndTail &&
                                     (element.label == "head" ||
                                       element.label.startsWith("head_")) &&
                                     htmlDescendant &&
@@ -232,7 +232,7 @@ private[http] trait LiftMerge {
 
       val nl = Text("\n")
 
-      for{
+      for {
         node <- HeadHelper.removeHtmlDuplicates(addlHead.toList)
       } {
         headChildren += node
@@ -242,8 +242,8 @@ private[http] trait LiftMerge {
       // Appends ajax script to body
       if (LiftRules.autoIncludeAjaxCalc.vend().apply(this)) {
         bodyChildren +=
-                <script src={S.encodeURL(contextPath + "/"+LiftRules.resourceServerPath+"/lift.js")}
-                type="text/javascript"/>
+          <script src={S.encodeURL(contextPath + WebJarLocator.locateAsset("lift.js"))}
+          type="text/javascript"/>
         bodyChildren += nl
       }
 
