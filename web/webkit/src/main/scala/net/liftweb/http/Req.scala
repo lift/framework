@@ -543,7 +543,10 @@ object Req {
     ParsePath(lst.map(urlDecode), suffix, front, back)
   }
 
-  var fixHref = _fixHref _
+  @deprecated("Use normalizeHref instead.", "3.0.0")
+  def fixHref = normalizeHref
+
+  var normalizeHref = _fixHref _
 
   private def _fixHref(contextPath: String, v: Seq[Node], fixURL: Boolean, rewrite: Box[String => String]): Text = {
     val hv = v.text
@@ -561,16 +564,21 @@ object Req {
          rewrite.openOrThrowException("legacy code").apply(updated) else updated)
   }
 
+  @deprecated("Use normalizeHtml instead.", "3.0.0")
+  def fixHtml(contextPath: String, in: NodeSeq): NodeSeq = {
+    normalizeHtml(contextPath, in)
+  }
+
   /**
    * Corrects the HTML content,such as applying context path to URI's, session information if cookies are disabled etc.
    */
-  def fixHtml(contextPath: String, in: NodeSeq): NodeSeq = {
+  def normalizeHtml(contextPath: String, in: NodeSeq): NodeSeq = {
     val rewrite = URLRewriter.rewriteFunc
 
     def fixAttrs(toFix: String, attrs: MetaData, fixURL: Boolean): MetaData = {
       if (attrs == Null) Null
       else if (attrs.key == toFix) {
-        new UnprefixedAttribute(toFix, Req.fixHref(contextPath, attrs.value, fixURL, rewrite), fixAttrs(toFix, attrs.next, fixURL))
+        new UnprefixedAttribute(toFix, Req.normalizeHref(contextPath, attrs.value, fixURL, rewrite), fixAttrs(toFix, attrs.next, fixURL))
       } else attrs.copy(fixAttrs(toFix, attrs.next, fixURL))
     }
 
@@ -1175,7 +1183,10 @@ class Req(val path: ParsePath,
 
   val options_? = requestType.options_?
 
-  def fixHtml(in: NodeSeq): NodeSeq = Req.fixHtml(contextPath, in)
+  @deprecated("Use normalizeHtml instead.", "3.0.0")
+  def fixHtml(in: NodeSeq): NodeSeq = normalizeHtml(in)
+  
+  def normalizeHtml(in: NodeSeq): NodeSeq = Req.normalizeHtml(contextPath, in)
 
   lazy val uri: String = request match {
     case null => "Outside HTTP Request (e.g., on Actor)"
