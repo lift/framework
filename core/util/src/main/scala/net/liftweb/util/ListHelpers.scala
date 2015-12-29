@@ -238,10 +238,7 @@ trait ListHelpers {
   }
 
   /** Add utility methods to Lists */
-  implicit def toSuperList[T](in: List[T]): SuperList[T] = new SuperList(in)
-
-  /** Add utility methods to Lists */
-  class SuperList[T](val what: List[T]) {
+  implicit class SuperList[T](what: List[T]) extends AnyRef {
     /** permute the elements of a list */
     def permute = permuteList(what)
 
