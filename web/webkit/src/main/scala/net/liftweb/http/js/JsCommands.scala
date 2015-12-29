@@ -601,12 +601,17 @@ trait HtmlFixer {
 
     val w = new java.io.StringWriter
 
-    val xhtml = S.session.
-    map(s =>
-      s.fixHtml(s.processSurroundAndInclude("JS SetHTML id: "
-                                            + uid,
-                                            content))).
-    openOr(content)
+    val xhtml =
+      S.session.map { session =>
+        session.normalizeHtmlAndAppendEventHandlers(
+          session.processSurroundAndInclude(
+            s"JS SetHTML id: $uid",
+            content
+          )
+        )
+      } openOr {
+        content
+      }
 
     import scala.collection.mutable.ListBuffer
     val lb = new ListBuffer[JsCmd]
