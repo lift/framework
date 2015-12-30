@@ -67,10 +67,10 @@
       ajaxGet: function() {
         consoleOrAlert("ajaxGet function must be defined in settings");
       },
-      onEvent: function(elementOrId, eventName, fn) {
+      onEvent: function() {
         consoleOrAlert("onEvent function must be defined in settings");
       },
-      onDocumentReady: function(fn) {
+      onDocumentReady: function() {
         consoleOrAlert("onDocumentReady function must be defined in settings");
       },
       cometGetTimeout: 140000,
@@ -348,8 +348,9 @@
     // Forcibly restart the comet cycle; use this, for example, when a
     // new comet has been received.
     function restartComet() {
-      if (currentCometRequest)
+      if (currentCometRequest) {
         currentCometRequest.abort();
+      }
 
       cometSuccessFunc();
     }
@@ -427,7 +428,7 @@
 
       // "private" funcs
       function successMsg(value) {
-        if (_done || _failed) return;
+        if (_done || _failed) { return; }
         _values.push(value);
         for (var f in _valueFuncs) {
           _valueFuncs[f](value);
@@ -435,7 +436,7 @@
       }
 
       function failMsg(msg) {
-        if (_done || _failed) return;
+        if (_done || _failed) { return; }
         removePromise(self.guid);
         _failed = true;
         _failMsg = msg;
@@ -446,7 +447,7 @@
       }
 
       function doneMsg() {
-        if (_done || _failed) return;
+          if (_done || _failed) { return; }
         removePromise(self.guid);
         _done = true;
 
@@ -459,7 +460,7 @@
       self.guid = makeGuid();
 
       self.processMsg = function(evt) {
-        if (_done || _failed) return;
+        if (_done || _failed) { return; }
         _events.push(evt);
         for (var v in _eventFuncs) {
           try { _eventFuncs[v](evt); }
@@ -533,15 +534,15 @@
       self.map = function(f) {
         var ret = new Promise();
 
-        done(function() {
+        self.done(function() {
           ret.doneMsg();
         });
 
-        fail(function (m) {
+        self.fail(function (m) {
           ret.failMsg(m);
         });
 
-        then(function (v) {
+        self.then(function (v) {
           ret.successMsg(f(v));
         });
 
@@ -563,7 +564,7 @@
               cometGuid, cometVersion,
               comets = {};
           for (var i = 0; i < attributes.length; ++i) {
-            if (attributes[i].name == 'data-lift-gc') {
+            if (attributes[i].name === 'data-lift-gc') {
               pageId = attributes[i].value;
               if (settings.enableGc) {
                 lift.startGc();
@@ -573,12 +574,12 @@
               cometVersion = parseInt(attributes[i].value);
 
               comets[cometGuid] = cometVersion;
-            } else if (attributes[i].name == 'data-lift-session-id') {
+            } else if (attributes[i].name === 'data-lift-session-id') {
               sessionId = attributes[i].value;
             }
           }
 
-          if (typeof cometGuid != 'undefined') {
+          if (typeof cometGuid !== 'undefined') {
             registerComets(comets, true);
           }
 
@@ -645,7 +646,7 @@
 
   window.liftJQuery = {
     onEvent: function(elementOrId, eventName, fn) {
-      if (typeof elementOrId == 'string') {
+      if (typeof elementOrId === 'string') {
         elementOrId = '#' + elementOrId;
       }
 
@@ -702,22 +703,22 @@
           pre = doc.addEventListener ? '' : 'on';
 
       var element = elementOrId;
-      if (typeof elementOrId == 'string') {
+      if (typeof elementOrId === 'string') {
         element = document.getElementById(elementOrId);
       }
 
       element[add](pre + eventName, fn, false);
     },
     onDocumentReady: function(fn) {
-      var done = false, top = true,
+      var settings = this, done = false, top = true,
       win = window, doc = win.document, root = doc.documentElement,
       pre = doc.addEventListener ? '' : 'on',
       rem = doc.addEventListener ? 'removeEventListener' : 'detachEvent',
 
       init = function(e) {
-        if (e.type == 'readystatechange' && doc.readyState != 'complete') return;
-        (e.type == 'load' ? win : doc)[rem](pre + e.type, init, false);
-        if (!done && (done = true)) fn.call(win, e.type || e);
+        if (e.type === 'readystatechange' && doc.readyState !== 'complete') { return; }
+        (e.type === 'load' ? win : doc)[rem](pre + e.type, init, false);
+        if (!done && (done = true)) { fn.call(win, e.type || e); }
       },
 
       poll = function() {
@@ -725,16 +726,16 @@
         init('poll');
       };
 
-      if (doc.readyState == 'complete') {
+      if (doc.readyState === 'complete') {
         fn.call(win, 'lazy');
       } else {
         if (doc.createEventObject && root.doScroll) {
-            try { top = !win.frameElement; } catch(e) { }
-            if (top) poll();
+          try { top = !win.frameElement; } catch(e) { }
+          if (top) { poll(); }
         }
-        liftVanilla.onEvent(doc, 'DOMContentLoaded', init);
-        liftVanilla.onEvent(doc, 'readystatechange', init);
-        liftVanilla.onEvent(win, 'load', init);
+        settings.onEvent(doc, 'DOMContentLoaded', init);
+        settings.onEvent(doc, 'readystatechange', init);
+        settings.onEvent(win, 'load', init);
       }
     },
     ajaxPost: function(url, data, dataType, onSuccess, onFailure, onUploadProgress) {
