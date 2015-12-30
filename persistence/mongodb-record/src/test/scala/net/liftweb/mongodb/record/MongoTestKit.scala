@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ trait MongoTestKit extends Specification with BeforeAfterExample {
         false
       else {
         dbs foreach { case (id, _) =>
-          MongoDB.use(id) ( db => { db.getLastError } )
+          MongoDB.use(id) ( db => { db.getName } )
         }
         true
       }

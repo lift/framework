@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -478,7 +478,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     success
   }
 
-  "Mongo useSession example" in {
+  "Mongo examples" in {
 
     checkMongoIsRunning
 
@@ -486,15 +486,15 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     val tc2 = SessCollection(ObjectId.get, "MongoSession", "db", 1)
     val tc3 = SessCollection(ObjectId.get, "MongoDB", "db", 1)
 
-    // use a Mongo instance directly with a session
-    MongoDB.useSession( db => {
+    // use a Mongo instance directly
+    MongoDB.use( db => {
 
       // save to db
       Helpers.tryo(SessCollection.save(tc, db)).toOption must beSome
       SessCollection.save(tc2, db) must throwA[MongoException]
       Helpers.tryo(SessCollection.save(tc2, db)) must beLike {
         case Failure(msg, _, _) =>
-          msg must contain("E11000 duplicate key error index")
+          msg must contain("E11000")
       }
 
       Helpers.tryo(SessCollection.save(tc3, db)).toOption must beSome
@@ -505,16 +505,8 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
 
       // modifier operations $inc, $set, $push...
       val o2 = ("$inc" -> ("count" -> 1)) // increment count by 1
-      //("$set" -> ("dbtype" -> "docdb")) // set dbtype
       SessCollection.update(qry, o2, db)
-      db.getLastError.get("updatedExisting") must_== true
-      /* The update method only updates one document. */
-      db.getLastError.get("n") must_== 1
-
-      /* Multiple documents now supported */
       SessCollection.update(qry, o2, db, Multi)
-      db.getLastError.get("updatedExisting") must_== true
-      db.getLastError.get("n") must_== 2
 
       // regex query example
       val lst = SessCollection.findAll(new BasicDBObject("name", Pattern.compile("^Mongo")))
