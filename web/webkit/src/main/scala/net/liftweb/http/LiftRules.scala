@@ -1133,7 +1133,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * A unified set of properties for managing how to treat
    * HTML, XHTML, HTML5.  The default behavior is to return an
    * Html5Properties instance, but you can change this.
+   * {{{
    * LiftRules.htmlProperties.default.set((r: Req) => new XHtmlInHtml5OutProperties(r.userAgent))
+   * }}}
    */
   val htmlProperties: FactoryMaker[Req => HtmlProperties] =
     new FactoryMaker(() => (r: Req) => new Html5Properties(r.userAgent): HtmlProperties) {}
