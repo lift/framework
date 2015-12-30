@@ -257,7 +257,7 @@ private[http] final object HtmlNormalizer {
                     normalizeHtmlAndEventHandlers(element.child, contextPath, stripComments, nextState, additionalChanges)
 
                   (
-                    normalizedNodes.+:[Node,NodeSeq](element.copy(child = newChildren)),
+                    normalizedNodes.:+[Node,NodeSeq](element.copy(child = newChildren)),
                     extractedJs & elementJsCmds & additionalJsCmds & childJsCmds
                   )
 
@@ -277,13 +277,13 @@ private[http] final object HtmlNormalizer {
                   additionalChanges
                 )
 
-              (normalizedNodes.+:[Node,NodeSeq](Group(normalizedGroupNodes)), extractedJs & js)
+              (normalizedNodes.:+[Node,NodeSeq](Group(normalizedGroupNodes)), extractedJs & js)
 
             case c: Comment if stripComments =>
               (normalizedNodes, extractedJs)
 
             case _ =>
-              (normalizedNodes.+:[Node,NodeSeq](nodeToNormalize): NodeSeq, extractedJs)
+              (normalizedNodes.:+[Node,NodeSeq](nodeToNormalize): NodeSeq, extractedJs)
           }
       }): (NodeSeq, JsCmd)
     }
