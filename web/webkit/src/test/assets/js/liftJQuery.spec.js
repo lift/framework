@@ -7,7 +7,7 @@ describe("Lift jquery", function() {
 
     liftJQuery.logError = function(msg) {
       console.log(msg);
-    }
+    };
   });
 
   afterEach(function() {

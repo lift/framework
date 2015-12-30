@@ -1,22 +1,19 @@
 {
   "curly": true,
   "eqeqeq": true,
-  "immed": true,
+  "esversion": 3,
+  "futurehostile": true,
   "latedef": "nofunc",
-  "newcap": true,
   "noarg": true,
-  "sub": true,
+  "nocomma": true,
+  "nonbsp": true,
+  "nonew": true,
+  "strict": true,
   "undef": true,
   "unused": true,
-  "boss": true,
-  "eqnull": true,
   "browser": true,
-  "evil": true,
   "jquery": true,
-  "node": true,
-  "mocha": true,
-  "predef" : ["define"],
   "globals": {
-
+    "JSON": false
   }
 }

@@ -7,7 +7,7 @@ describe("Lift vanilla", function() {
 
     liftVanilla.logError = function(msg) {
       console.log(msg);
-    }
+    };
   });
 
   afterEach(function() {

@@ -5,7 +5,8 @@
 
   window.lift = (function() {
     // "private" vars
-    var ajaxPath = function() { return settings.liftPath + '/ajax'; },
+    var settings,
+        ajaxPath = function() { return settings.liftPath + '/ajax'; },
         ajaxQueue = [],
         ajaxInProcess = null,
         ajaxVersion = 0,
@@ -20,7 +21,7 @@
         knownPromises = {};
 
     // default settings
-    var settings = {
+    settings = {
       /**
         * Contains the Ajax URI path used by Lift to process Ajax requests.
         */
@@ -571,7 +572,7 @@
               }
             } else if (attributes[i].name.match(/^data-lift-comet-/)) {
               cometGuid = attributes[i].name.substring('data-lift-comet-'.length).toUpperCase();
-              cometVersion = parseInt(attributes[i].value);
+              cometVersion = parseInt(attributes[i].value, 10);
 
               comets[cometGuid] = cometVersion;
             } else if (attributes[i].name === 'data-lift-session-id') {

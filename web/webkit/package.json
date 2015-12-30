@@ -4,7 +4,9 @@
   "description": "A JavaScript library for use with the Lift web framework",
   "scripts": {
     "test": "karma start karma.conf.js",
-    "lint": "jshint src/main/resources/toserve/lift.js"
+    "lint": "npm run lint:main && npm run lint:test",
+    "lint:main": "jshint src/main/resources/toserve/lift.js",
+    "lint:test": "jshint --config src/test/assets/js/.jshintrc src/test/assets/js/*spec.js"
   },
   "repository": {
     "type": "git",
@@ -21,7 +23,7 @@
   "homepage": "https://github.com/lift/framework",
   "devDependencies": {
     "jasmine-core": "^2.4.0",
-    "jshint": "^2.8.0",
+    "jshint": "^2.9.1-rc2",
     "karma": "^0.13.15",
     "karma-jasmine": "^0.3.6",
     "karma-mocha-reporter": "^1.1.3",
