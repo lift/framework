@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 WorldWide Conferencing, LLC
+ * Copyright 2012-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,9 +140,25 @@ object BuildDef extends Build {
                   initialize in Test <<= (sourceDirectory in Test) { src =>
                     System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
                   },
-                  (compile in Compile) <<= (compile in Compile) dependsOn (WebKeys.assets))
-        .enablePlugins(SbtWeb)
+                  (compile in Compile) <<= (compile in Compile) dependsOn (WebKeys.assets),
+                  /**
+                    * This is to ensure that the tests in net.liftweb.webapptest run last
+                    * so that other tests (MenuSpec in particular) run before the SiteMap
+                    * is set.
+                    */
+                  testGrouping in Test <<= (definedTests in Test).map { tests =>
+                    import Tests._
 
+                    val (webapptests, others) = tests.partition { test =>
+                      test.name.startsWith("net.liftweb.webapptest")
+                    }
+
+                    Seq(
+                      new Group("others", others, InProcess),
+                      new Group("webapptests", webapptests, InProcess)
+                    )
+                  })
+        .enablePlugins(SbtWeb)
 
   // Persistence Projects
   // --------------------
