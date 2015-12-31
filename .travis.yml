@@ -1,7 +1,7 @@
-sudo: false
+language: scala
 cache:
   directories:
-    - '$HOME/.m2/repository'
+    - '$HOME/node_modules'
 services:
   - mongodb
 jdk:
@@ -12,3 +12,11 @@ script: ./travis.sh
 branches:
   only:
     - master
+
+node_js:
+  - "4.1"
+
+before_script:
+  - "cd web/webkit"
+  - "npm install"
+  - "cd -"

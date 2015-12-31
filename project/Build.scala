@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 WorldWide Conferencing, LLC
+ * Copyright 2012-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ import sbt._
 import Keys._
 import net.liftweb.sbt.LiftBuildPlugin._
 import Dependencies._
+
+import com.typesafe.sbt.web.SbtWeb
+import com.typesafe.sbt.web.SbtWeb.autoImport._
 
 /**
  * Pattern-matches an attributed file, extracting its module organization,
@@ -126,7 +129,7 @@ object BuildDef extends Build {
   lazy val webkit =
     webProject("webkit")
         .dependsOn(util, testkit % "provided")
-        .settings(libraryDependencies += mockito_all)
+        .settings(libraryDependencies ++= Seq(mockito_all, jquery, jasmineCore, jasmineAjax))
         .settings(yuiCompressor.Plugin.yuiSettings: _*)
         .settings(description := "Webkit Library",
                   parallelExecution in Test := false,
@@ -137,6 +140,7 @@ object BuildDef extends Build {
                   initialize in Test <<= (sourceDirectory in Test) { src =>
                     System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
                   },
+                  (compile in Compile) <<= (compile in Compile) dependsOn (WebKeys.assets),
                   /**
                     * This is to ensure that the tests in net.liftweb.webapptest run last
                     * so that other tests (MenuSpec in particular) run before the SiteMap
@@ -154,7 +158,7 @@ object BuildDef extends Build {
                       new Group("webapptests", webapptests, InProcess)
                     )
                   })
-
+        .enablePlugins(SbtWeb)
 
   // Persistence Projects
   // --------------------

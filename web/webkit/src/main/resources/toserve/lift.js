@@ -5,11 +5,12 @@
 
   window.lift = (function() {
     // "private" vars
-    var ajaxPath = function() { return settings.liftPath + '/ajax' },
+    var settings,
+        ajaxPath = function() { return settings.liftPath + '/ajax'; },
         ajaxQueue = [],
         ajaxInProcess = null,
         ajaxVersion = 0,
-        cometPath = function() { return settings.liftPath + '/comet' },
+        cometPath = function() { return settings.liftPath + '/comet'; },
         doCycleQueueCnt = 0,
         ajaxShowing = false,
         initialized = false,
@@ -20,7 +21,7 @@
         knownPromises = {};
 
     // default settings
-    var settings = {
+    settings = {
       /**
         * Contains the Ajax URI path used by Lift to process Ajax requests.
         */
@@ -30,7 +31,7 @@
 
       /**
         * By default lift uses a garbage-collection mechanism of removing unused bound functions from LiftSesssion.
-        * Setting this to false will disable this mechanisms and there will be no Ajax polling requests attempted.
+        * Setting this to false will disable this mechanism and there will be no Ajax polling requests attempted.
         */
       enableGc: true,
 
@@ -67,10 +68,10 @@
       ajaxGet: function() {
         consoleOrAlert("ajaxGet function must be defined in settings");
       },
-      onEvent: function(elementOrId, eventName, fn) {
+      onEvent: function() {
         consoleOrAlert("onEvent function must be defined in settings");
       },
-      onDocumentReady: function(fn) {
+      onDocumentReady: function() {
         consoleOrAlert("onDocumentReady function must be defined in settings");
       },
       cometGetTimeout: 140000,
@@ -302,9 +303,12 @@
     // http://stackoverflow.com/questions/4994201/is-object-empty
     function is_empty(obj) {
       // null and undefined are empty
+      /* jshint eqnull:true */
       if (obj == null) {
         return true;
       }
+      /* jshint eqnull:false */
+
       // Assume if it has a length property with a non-zero value
       // that that property is correct.
       if (obj.length && obj.length > 0) {
@@ -325,7 +329,7 @@
 
     function cometFailureFunc() {
       var requestCount = cometRequestCount;
-      setTimeout(function() { cometEntry(requestCount) }, settings.cometFailureRetryTimeout);
+      setTimeout(function() { cometEntry(requestCount); }, settings.cometFailureRetryTimeout);
     }
 
     function cometSuccessFunc() {
@@ -345,8 +349,9 @@
     // Forcibly restart the comet cycle; use this, for example, when a
     // new comet has been received.
     function restartComet() {
-      if (currentCometRequest)
+      if (currentCometRequest) {
         currentCometRequest.abort();
+      }
 
       cometSuccessFunc();
     }
@@ -424,7 +429,7 @@
 
       // "private" funcs
       function successMsg(value) {
-        if (_done || _failed) return;
+        if (_done || _failed) { return; }
         _values.push(value);
         for (var f in _valueFuncs) {
           _valueFuncs[f](value);
@@ -432,7 +437,7 @@
       }
 
       function failMsg(msg) {
-        if (_done || _failed) return;
+        if (_done || _failed) { return; }
         removePromise(self.guid);
         _failed = true;
         _failMsg = msg;
@@ -443,7 +448,7 @@
       }
 
       function doneMsg() {
-        if (_done || _failed) return;
+          if (_done || _failed) { return; }
         removePromise(self.guid);
         _done = true;
 
@@ -456,15 +461,16 @@
       self.guid = makeGuid();
 
       self.processMsg = function(evt) {
-        if (_done || _failed) return;
+        if (_done || _failed) { return; }
         _events.push(evt);
         for (var v in _eventFuncs) {
           try { _eventFuncs[v](evt); }
           catch (e) {
             settings.logError(e);
           }
-        };
+        }
 
+        /* jshint eqnull:true */
         if (evt.done != null) {
           doneMsg();
         }
@@ -474,6 +480,7 @@
         else if (evt.failure != null) {
           failMsg(evt.failure);
         }
+        /* jshint eqnull:false */
       };
 
       self.then = function(f) {
@@ -496,7 +503,7 @@
           catch (e) {
             settings.logError(e);
           }
-        };
+        }
 
         return self;
       };
@@ -520,7 +527,7 @@
           catch (e) {
             settings.logError(e);
           }
-        };
+        }
 
         return this;
       };
@@ -528,15 +535,15 @@
       self.map = function(f) {
         var ret = new Promise();
 
-        done(function() {
+        self.done(function() {
           ret.doneMsg();
         });
 
-        fail(function (m) {
+        self.fail(function (m) {
           ret.failMsg(m);
         });
 
-        then(function (v) {
+        self.then(function (v) {
           ret.successMsg(f(v));
         });
 
@@ -558,22 +565,22 @@
               cometGuid, cometVersion,
               comets = {};
           for (var i = 0; i < attributes.length; ++i) {
-            if (attributes[i].name == 'data-lift-gc') {
+            if (attributes[i].name === 'data-lift-gc') {
               pageId = attributes[i].value;
               if (settings.enableGc) {
                 lift.startGc();
               }
             } else if (attributes[i].name.match(/^data-lift-comet-/)) {
               cometGuid = attributes[i].name.substring('data-lift-comet-'.length).toUpperCase();
-              cometVersion = parseInt(attributes[i].value)
+              cometVersion = parseInt(attributes[i].value, 10);
 
               comets[cometGuid] = cometVersion;
-            } else if (attributes[i].name == 'data-lift-session-id') {
-              sessionId = attributes[i].value
+            } else if (attributes[i].name === 'data-lift-session-id') {
+              sessionId = attributes[i].value;
             }
           }
 
-          if (typeof cometGuid != 'undefined') {
+          if (typeof cometGuid !== 'undefined') {
             registerComets(comets, true);
           }
 
@@ -583,9 +590,9 @@
           doCycleIn200();
         });
       },
-      defaultLogError: function(msg) { consoleOrAlert(msg) },
-      logError: function() { settings.logError.apply(this, arguments) },
-      onEvent: function() { settings.onEvent.apply(this, arguments) },
+      defaultLogError: function(msg) { consoleOrAlert(msg); },
+      logError: function() { settings.logError.apply(this, arguments); },
+      onEvent: function() { settings.onEvent.apply(this, arguments); },
       ajax: appendToQueue,
       startGc: successRegisterGC,
       ajaxOnSessionLost: function() {
@@ -640,7 +647,7 @@
 
   window.liftJQuery = {
     onEvent: function(elementOrId, eventName, fn) {
-      if (typeof elementOrId == 'string') {
+      if (typeof elementOrId === 'string') {
         elementOrId = '#' + elementOrId;
       }
 
@@ -679,8 +686,9 @@
         cache: false,
         success: onSuccess,
         error: function(_, status) {
-          if (status != 'abort')
-            return onFailure.apply(this, arguments)
+          if (status !== 'abort') {
+            return onFailure.apply(this, arguments);
+          }
         }
       });
     }
@@ -696,22 +704,22 @@
           pre = doc.addEventListener ? '' : 'on';
 
       var element = elementOrId;
-      if (typeof elementOrId == 'string') {
+      if (typeof elementOrId === 'string') {
         element = document.getElementById(elementOrId);
       }
 
       element[add](pre + eventName, fn, false);
     },
     onDocumentReady: function(fn) {
-      var done = false, top = true,
+      var settings = this, done = false, top = true,
       win = window, doc = win.document, root = doc.documentElement,
       pre = doc.addEventListener ? '' : 'on',
       rem = doc.addEventListener ? 'removeEventListener' : 'detachEvent',
 
       init = function(e) {
-        if (e.type == 'readystatechange' && doc.readyState != 'complete') return;
-        (e.type == 'load' ? win : doc)[rem](pre + e.type, init, false);
-        if (!done && (done = true)) fn.call(win, e.type || e);
+        if (e.type === 'readystatechange' && doc.readyState !== 'complete') { return; }
+        (e.type === 'load' ? win : doc)[rem](pre + e.type, init, false);
+        if (!done && (done = true)) { fn.call(win, e.type || e); }
       },
 
       poll = function() {
@@ -719,16 +727,16 @@
         init('poll');
       };
 
-      if (doc.readyState == 'complete') {
+      if (doc.readyState === 'complete') {
         fn.call(win, 'lazy');
       } else {
         if (doc.createEventObject && root.doScroll) {
-            try { top = !win.frameElement; } catch(e) { }
-            if (top) poll();
+          try { top = !win.frameElement; } catch(e) { }
+          if (top) { poll(); }
         }
-        liftVanilla.onEvent(doc, 'DOMContentLoaded', init);
-        liftVanilla.onEvent(doc, 'readystatechange', init);
-        liftVanilla.onEvent(win, 'load', init);
+        settings.onEvent(doc, 'DOMContentLoaded', init);
+        settings.onEvent(doc, 'readystatechange', init);
+        settings.onEvent(win, 'load', init);
       }
     },
     ajaxPost: function(url, data, dataType, onSuccess, onFailure, onUploadProgress) {
@@ -745,7 +753,7 @@
           if (xhr.status === 200) {
             if (dataType === "script") {
               try {
-                eval(xhr.responseText);
+                eval(xhr.responseText); // jshint ignore:line
               }
               catch (e) {
                 settings.logError('The server call succeeded, but the returned Javascript contains an error: '+e);
@@ -778,6 +786,7 @@
 
       xhr.open("POST", url, true);
       xhr.timeout = settings.ajaxPostTimeout;
+      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 
       // set content-type header if the form has been serialized into a string
       if (typeof data === "string") {
@@ -811,7 +820,7 @@
         if (xhr.readyState === 4) { // Done
           if (xhr.status === 200) {
             try {
-              eval(xhr.responseText);
+              eval(xhr.responseText); // jshint ignore:line
             }
             catch (e) {
               settings.logError('The server call succeeded, but the returned Javascript contains an error: '+e);
@@ -837,6 +846,7 @@
       xhr.open("GET", url, true);
       xhr.timeout = settings.cometGetTimeout;
       xhr.setRequestHeader("Accept", "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01");
+      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
       xhr.send();
 
       return xhr;
