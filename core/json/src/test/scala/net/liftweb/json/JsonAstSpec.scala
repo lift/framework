@@ -187,6 +187,25 @@ object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
     x.## must_== y.##
   }
 
+  "find all children" in {
+    val subject = JObject(
+      JField("alpha", JString("apple")) ::
+      JField("beta", JObject(
+        JField("alpha", JString("bacon")) ::
+        JField("charlie", JString("i'm a masseuse")) ::
+        Nil
+      )) ::
+      Nil
+    )
+
+    subject \\ "alpha" must_== JObject(
+      JField("alpha", JString("apple")) ::
+      JField("alpha", JString("bacon")) ::
+      Nil
+    )
+    subject \\ "charlie" must_== JString("i'm a masseuse")
+  }
+
   private def reorderFields(json: JValue) = json map {
     case JObject(xs) => JObject(xs.reverse)
     case x => x
