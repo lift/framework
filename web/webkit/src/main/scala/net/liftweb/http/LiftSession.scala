@@ -1868,7 +1868,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * `[[normalizeHtmlAndAppendEventHandlers]]` and not worry about the extra
    * `JsCmd`, as Lift will automatically append it to the response.
    */
-  def normalizeHtmlAndEventHandlers(nodes: NodeSeq): (NodeSeq, JsCmd) = {
+  def normalizeHtmlAndEventHandlers(nodes: NodeSeq): NodesAndEventJs = {
     HtmlNormalizer.normalizeHtmlAndEventHandlers(
       nodes,
       S.contextPath,
@@ -1884,11 +1884,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * page, or the end of the returned JS if this is an AJAX or comet request).
    */
   def normalizeHtmlAndAppendEventHandlers(in: NodeSeq): NodeSeq = {
-    val (revisedHtml, eventJs) = normalizeHtmlAndEventHandlers(in)
+    val NodesAndEventJs(normalizedHtml, eventJs) = normalizeHtmlAndEventHandlers(in)
 
     S.appendJs(eventJs)
 
-    revisedHtml
+    normalizedHtml
   }
 
   /**

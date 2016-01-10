@@ -28,6 +28,19 @@ import net.liftweb.http.js._
   import JE.{AnonFunc,Call,JsRaw}
 import Helpers._
 
+/**
+ * Used to track state for LiftMerge's HTML normalization/merging process.
+ */
+private[this] case class HtmlState(
+  htmlDescendant: Boolean = false, // any descendant of HTML
+  headChild: Boolean = false, // direct child of a HEAD in its proper place
+  bodyDescendant: Boolean = false, // any descendant of BODY
+  headInBodyChild: Boolean = false, // direct child of a HEAD/HEAD_* somewhere in BODY
+  tailInBodyChild: Boolean = false, // direct child of a TAIL somewhere in BODY
+  bodyChild: Boolean = false, // direct child of body
+  mergeHeadAndTail: Boolean // false if we're not doing head/tail merging
+)
+
 private[http] trait LiftMerge {
   self: LiftSession =>
 
@@ -104,25 +117,14 @@ private[http] trait LiftMerge {
     addlHead ++= S.forHead()
     val addlTail = new ListBuffer[Node]
     addlTail ++= S.atEndOfBody()
-    val eventAttributesByElementId = new HashMap[String,List[EventAttribute]]
     val rewrite = URLRewriter.rewriteFunc
 
     val contextPath: String = S.contextPath
 
-    case class HtmlState(
-      htmlDescendant: Boolean = false, // any descendant of HTML
-      headChild: Boolean = false, // direct child of a HEAD in its proper place
-      bodyDescendant: Boolean = false, // any descendant of BODY
-      headInBodyChild: Boolean = false, // direct child of a HEAD/HEAD_* somewhere in BODY
-      tailInBodyChild: Boolean = false, // direct child of a TAIL somewhere in BODY
-      bodyChild: Boolean = false, // direct child of body
-      mergeHeadAndTail: Boolean // false if we're not doing head/tail merging
-    )
-
-    def _fixHtml(nodes: NodeSeq, startingState: HtmlState): (NodeSeq, JsCmd) = {
+    def normalizeMergeAndExtractEvents(nodes: NodeSeq, startingState: HtmlState): NodesAndEventJs = {
       val HtmlState(htmlDescendant, headChild, bodyDescendant, headInBodyChild, tailInBodyChild, _bodyChild, mergeHeadAndTail) = startingState
 
-      nodes.foldLeft((Vector[Node](), Noop): (NodeSeq, JsCmd)) {
+      nodes.foldLeft(NodesAndEventJs(Vector[Node](), Noop)) {
         case (soFar, node) =>
           val childInfo =
             node match {
@@ -161,67 +163,70 @@ private[http] trait LiftMerge {
             val bodyHead = childInfo.headInBodyChild && ! headInBodyChild
             val bodyTail = childInfo.tailInBodyChild && ! tailInBodyChild
 
-            val NodesAndEventJs(normalizedNodes, js) = HtmlNormalizer.normalizeNode(node, contextPath, stripComments)
+            HtmlNormalizer
+              .normalizeNode(node, contextPath, stripComments)
+              .map {
+                case normalized @ NodeAndEventJs(normalizedElement: Elem, _) =>
+                  val normalizedChildren =
+                    normalizeMergeAndExtractEvents(normalizedElement.child, childInfo)
 
-            val (finalNodes, finalJs) =
-              normalizedNodes.foldLeft((Vector[Node](), Noop): (NodeSeq, JsCmd)) {
-                case ((nodesSoFar, jsSoFar), elem: Elem) =>
-                  val (normalizedChildren, extractedJs) =
-                    _fixHtml(elem.child, childInfo)
+                  normalized.copy(
+                    normalizedElement.copy(child = normalizedChildren.nodes),
+                    js = normalized.js & normalizedChildren.js
+                  )
 
-                  (elem.copy(child = normalizedChildren), jsSoFar & extractedJs)
-
-                case ((nodesSoFar, jsSoFar), node) =>
-                  (node, jsSoFar)
+                case other =>
+                  other
               }
+              .map { normalizedResults: NodeAndEventJs =>
+                node match {
+                  case e: Elem if e.label == "node" &&
+                                  e.prefix == "lift_deferred" =>
+                    val deferredNodes: Seq[NodesAndEventJs] =
+                      for {
+                        idAttribute <- e.attributes("id").take(1)
+                        id = idAttribute.text
+                        nodes <- processedSnippets.get(id)
+                      } yield {
+                        normalizeMergeAndExtractEvents(nodes, startingState)
+                      }
 
-            node match {
-              case e: Elem if e.label == "node" &&
-                              e.prefix == "lift_deferred" =>
-                val deferredNodes: Seq[(NodeSeq, JsCmd)] =
-                  for {
-                    idAttribute <- e.attributes("id").take(1)
-                    id = idAttribute.text
-                    nodes <- processedSnippets.get(id)
-                  } yield {
-                    _fixHtml(nodes, startingState)
-                  }
+                    deferredNodes.foldLeft(soFar.append(normalizedResults))(_ append _)
 
-                (
-                  deferredNodes.flatMap(_._1),
-                  deferredNodes.map(_._2).foldLeft(Noop)(_ & _)
-                )
+                  case _ =>
+                    if (headChild) {
+                      headChildren ++= normalizedResults.node
+                    } else if (headInBodyChild) {
+                      addlHead ++= normalizedResults.node
+                    } else if (tailInBodyChild) {
+                      addlTail ++= normalizedResults.node
+                    } else if (_bodyChild && ! bodyHead && ! bodyTail) {
+                      bodyChildren ++= normalizedResults.node
+                    }
 
-              case _ =>
-                if (headChild) {
-                  headChildren ++= finalNodes
-                } else if (headInBodyChild) {
-                  addlHead ++= finalNodes
-                } else if (tailInBodyChild) {
-                  addlTail ++= finalNodes
-                } else if (_bodyChild && ! bodyHead && ! bodyTail) {
-                  bodyChildren ++= finalNodes
+                    if (bodyHead || bodyTail) {
+                      soFar.append(normalizedResults.js)
+                    } else {
+                      soFar.append(normalizedResults)
+                    }
                 }
-            }
-
-            val (nodesSoFar, jsSoFar) = soFar
-            if (bodyHead || bodyTail) {
-              (NodeSeq.Empty, jsSoFar & finalJs)
-            } else {
-              (nodesSoFar ++ finalNodes, jsSoFar & finalJs)
-            }
+              } getOrElse {
+                soFar
+              }
         }
     }
 
     if (!hasHtmlHeadAndBody) {
-      val (fixedHtml, _) = _fixHtml(xhtml, HtmlState(mergeHeadAndTail = false))
+      val fixedHtml =
+        normalizeMergeAndExtractEvents(xhtml, HtmlState(mergeHeadAndTail = false)).nodes
 
       fixedHtml.find {
         case e: Elem => true
         case _ => false
       } getOrElse Text("")
     } else {
-      val (_, eventJs) = _fixHtml(xhtml, HtmlState(mergeHeadAndTail = true))
+      val eventJs =
+        normalizeMergeAndExtractEvents(xhtml, HtmlState(mergeHeadAndTail = true)).js
 
       val htmlKids = new ListBuffer[Node]
 

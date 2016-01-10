@@ -39,7 +39,31 @@ private object EventAttribute {
   }
 }
 
-private[http] case class NodesAndEventJs(nodes: NodeSeq, js: JsCmd)
+case class NodesAndEventJs(nodes: NodeSeq, js: JsCmd) {
+  def append(newNodesAndEventJs: NodesAndEventJs): NodesAndEventJs = {
+    this.copy(
+      nodes = nodes ++ newNodesAndEventJs.nodes,
+      js = js & newNodesAndEventJs.js
+    )
+  }
+  def append(newNodeAndEventJs: NodeAndEventJs): NodesAndEventJs = {
+    append(newNodeAndEventJs.node, newNodeAndEventJs.js)
+  }
+  def append(newNode: Node): NodesAndEventJs = {
+    this.copy(nodes = nodes :+ newNode)
+  }
+  def append(newJs: JsCmd): NodesAndEventJs = {
+    this.copy(js = js & newJs)
+  }
+  def append(newNode: Node, newJs: JsCmd): NodesAndEventJs = {
+    this.copy(nodes = nodes :+ newNode, js = js & newJs)
+  }
+}
+private[http] case class NodeAndEventJs(node: Node, js: JsCmd) {
+  def append(newJs: JsCmd): NodeAndEventJs = {
+    this.copy(js = js & newJs)
+  }
+}
 
 /**
  * Helper class that performs certain Lift-specific normalizations of HTML
@@ -158,7 +182,7 @@ private[http] final object HtmlNormalizer {
     }.foldLeft(Noop)(_ & _)
   }
 
-  private[http] def normalizeElementAndAttributes(element: Elem, attributeToNormalize: String, contextPath: String, shouldRewriteUrl: Boolean): (Elem, JsCmd) = {
+  private[http] def normalizeElementAndAttributes(element: Elem, attributeToNormalize: String, contextPath: String, shouldRewriteUrl: Boolean): NodeAndEventJs = {
     val (id, normalizedAttributes, eventAttributes) =
       normalizeUrlAndExtractEvents(
         attributeToNormalize,
@@ -181,7 +205,7 @@ private[http] final object HtmlNormalizer {
       }
 
     id.map { foundId =>
-      (
+      NodeAndEventJs(
         element.copy(attributes = attributesIncludingEventsAsData),
         jsForEventAttributes(foundId, eventAttributes)
       )
@@ -189,12 +213,12 @@ private[http] final object HtmlNormalizer {
       if (eventAttributes.nonEmpty) {
         val generatedId = s"lift-event-js-${nextFuncName}"
 
-        (
+        NodeAndEventJs(
           element.copy(attributes = new UnprefixedAttribute("id", generatedId, attributesIncludingEventsAsData)),
           jsForEventAttributes(generatedId, eventAttributes)
         )
       } else {
-        (
+        NodeAndEventJs(
           element.copy(attributes = attributesIncludingEventsAsData),
           Noop
         )
@@ -202,7 +226,7 @@ private[http] final object HtmlNormalizer {
     }
   }
 
-  private[http] def normalizeNode(node: Node, contextPath: String, stripComments: Boolean): NodesAndEventJs = {
+  private[http] def normalizeNode(node: Node, contextPath: String, stripComments: Boolean): Option[NodeAndEventJs] = {
     node match {
       case element: Elem =>
         val (attributeToFix, shouldRewriteUrl) =
@@ -221,20 +245,20 @@ private[http] final object HtmlNormalizer {
               ("src", true)
           }
 
-        val (node, js) =
+        Some(
           normalizeElementAndAttributes(
             element,
             attributeToFix,
             contextPath,
             shouldRewriteUrl
           )
-        NodesAndEventJs(node, js)
+        )
 
       case _: Comment if stripComments =>
-        NodesAndEventJs(NodeSeq.Empty, Noop)
+        None
 
       case otherNode =>
-        NodesAndEventJs(otherNode, Noop)
+        Some(NodeAndEventJs(otherNode, Noop))
     }
   }
 
@@ -254,19 +278,24 @@ private[http] final object HtmlNormalizer {
     nodes: NodeSeq,
     contextPath: String,
     stripComments: Boolean
-  ): (NodeSeq, JsCmd) = {
-    nodes.foldLeft((Vector[Node](), Noop): (NodeSeq, JsCmd)) { (soFar, nodeToNormalize) =>
-      val NodesAndEventJs(nodes, js) = normalizeNode(nodeToNormalize, contextPath, stripComments)
+  ): NodesAndEventJs = {
+    nodes.foldLeft(NodesAndEventJs(Vector[Node](), Noop)) { (soFar, nodeToNormalize) =>
+      normalizeNode(nodeToNormalize, contextPath, stripComments).map {
+        case NodeAndEventJs(normalizedElement: Elem, js: JsCmd) =>
+          soFar
+            .append(js)
+            .append(
+              normalizeHtmlAndEventHandlers(
+                normalizedElement.child,
+                contextPath,
+                stripComments
+              )
+            )
 
-      nodes.foldLeft(soFar) {
-        case ((nodesSoFar, jsSoFar), elem: Elem) =>
-          val (normalizedChildren, extractedJs) =
-            normalizeHtmlAndEventHandlers(elem.child, contextPath, stripComments)
-
-          (nodesSoFar :+ elem.copy(child = normalizedChildren), jsSoFar & extractedJs)
-
-        case ((nodesSoFar, jsSoFar), node) =>
-          (nodesSoFar :+ node, jsSoFar)
+        case node =>
+          soFar.append(node)
+      } getOrElse {
+        soFar
       }
     }
   }
