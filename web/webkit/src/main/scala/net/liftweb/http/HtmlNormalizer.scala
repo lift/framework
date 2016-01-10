@@ -282,15 +282,16 @@ private[http] final object HtmlNormalizer {
     nodes.foldLeft(NodesAndEventJs(Vector[Node](), Noop)) { (soFar, nodeToNormalize) =>
       normalizeNode(nodeToNormalize, contextPath, stripComments).map {
         case NodeAndEventJs(normalizedElement: Elem, js: JsCmd) =>
+          val NodesAndEventJs(normalizedChildren, childJs) =
+            normalizeHtmlAndEventHandlers(
+              normalizedElement.child,
+              contextPath,
+              stripComments
+            )
+
           soFar
             .append(js)
-            .append(
-              normalizeHtmlAndEventHandlers(
-                normalizedElement.child,
-                contextPath,
-                stripComments
-              )
-            )
+            .append(normalizedElement.copy(child = normalizedChildren), childJs)
 
         case node =>
           soFar.append(node)
