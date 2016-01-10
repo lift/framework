@@ -110,66 +110,72 @@ private[http] trait LiftMerge {
     val contextPath: String = S.contextPath
 
     case class HtmlState(
-      inHtml: Boolean = false, // once we've seen HTML
-      inHead: Boolean = false, // once we've seen HEAD
-      inBody: Boolean = false, // once we've seen BODY
-      inHeadInBody: Boolean = false, // we've seen HEAD inside BODY
-      inTailInBody: Boolean = false, // we've seen TAIL inside BODY
-      justBody: Boolean = false, // we're in a descendant of BODY (not HEAD/TAIL)
-      justHead: Boolean = false, // we're in a descendant of HEAD (not inside BODY)
-      mergeHeadAndTail: Boolean = false
+      htmlDescendant: Boolean = false, // any descendant of HTML
+      headChild: Boolean = false, // direct child of a HEAD in its proper place
+      bodyDescendant: Boolean = false, // any descendant of BODY
+      headInBodyChild: Boolean = false, // direct child of a HEAD/HEAD_* somewhere in BODY
+      tailInBodyChild: Boolean = false, // direct child of a TAIL somewhere in BODY
+      bodyChild: Boolean = false, // direct child of body
+      mergeHeadAndTail: Boolean // false if we're not doing head/tail merging
     )
 
-    def _fixHtml(in: NodeSeq, startingState: HtmlState = HtmlState()): (NodeSeq, JsCmd) = {
-      normalizeHtmlAndEventHandlers(
-        in,
-        startingState,
-        {
-          case (state @ HtmlState(_inHtml, _inHead, _inBody, _inHeadInBody, _inTailInBody, _justBody, _justHead, mergeHeadAndTail), element) =>
-            var inHtml = _inHtml
-            var inHead = _inHead
-            var enteredHead = false
-            var enteredBody = false
-            var inBody = _inBody
-            var bodyHead = false
-            var bodyTail = false
+    def _fixHtml(nodes: NodeSeq, startingState: HtmlState): (NodeSeq, JsCmd) = {
+      val HtmlState(htmlDescendant, headChild, bodyDescendant, headInBodyChild, tailInBodyChild, _bodyChild, mergeHeadAndTail) = startingState
 
-            val childInfo =
-              element.label match {
-                case "html" if ! inHtml =>
-                  htmlElement = element
+      nodes.foldLeft((Vector[Node](), Noop): (NodeSeq, JsCmd)) {
+        case (soFar, node) =>
+          val childInfo =
+            node match {
+              case element: Elem if element.label == "html" && ! htmlDescendant =>
+                htmlElement = element
 
-                  state.copy(inHtml = true && mergeHeadAndTail)
+                startingState.copy(htmlDescendant = true && mergeHeadAndTail)
 
-                case "head" if inHtml && ! inBody =>
-                  enteredHead = true && mergeHeadAndTail
-                  headElement = element
+              case element: Elem if element.label == "head" && htmlDescendant && ! bodyDescendant =>
+                headElement = element
 
-                  state.copy(inHead = enteredHead)
+                startingState.copy(headChild = true && mergeHeadAndTail)
 
-                case label if mergeHeadAndTail && 
-                              (label == "head" || label.startsWith("head_")) &&
-                              inHtml &&
-                              inBody =>
-                  state.copy(inHeadInBody = true)
+              case element: Elem if mergeHeadAndTail && 
+                                    (element.label == "head" ||
+                                      element.label.startsWith("head_")) &&
+                                    htmlDescendant &&
+                                    bodyDescendant =>
+                startingState.copy(headInBodyChild = true)
 
-                case label if mergeHeadAndTail &&
-                              label == "tail" &&
-                              inHtml &&
-                              inBody =>
-                  state.copy(inTailInBody = true)
+              case element: Elem if mergeHeadAndTail &&
+                                    element.label == "tail" &&
+                                    htmlDescendant &&
+                                    bodyDescendant =>
+                startingState.copy(tailInBodyChild = true)
 
-                case "body" if inHtml =>
-                  enteredBody = true && mergeHeadAndTail
-                  bodyElement = element
+              case element: Elem if element.label == "body" && htmlDescendant =>
+                bodyElement = element
 
-                  state.copy(inBody = enteredBody)
+                startingState.copy(bodyDescendant = true && mergeHeadAndTail, bodyChild = true && mergeHeadAndTail)
 
-                case _ =>
-                  state
+              case _ =>
+                startingState.copy(headChild = false, headInBodyChild = false, tailInBodyChild = false, bodyChild = false)
+            }
+
+            val bodyHead = childInfo.headInBodyChild && ! headInBodyChild
+            val bodyTail = childInfo.tailInBodyChild && ! tailInBodyChild
+
+            val NodesAndEventJs(normalizedNodes, js) = HtmlNormalizer.normalizeNode(node, contextPath, stripComments)
+
+            val (finalNodes, finalJs) =
+              normalizedNodes.foldLeft((Vector[Node](), Noop): (NodeSeq, JsCmd)) {
+                case ((nodesSoFar, jsSoFar), elem: Elem) =>
+                  val (normalizedChildren, extractedJs) =
+                    _fixHtml(elem.child, childInfo)
+
+                  (elem.copy(child = normalizedChildren), jsSoFar & extractedJs)
+
+                case ((nodesSoFar, jsSoFar), node) =>
+                  (node, jsSoFar)
               }
 
-            element match {
+            node match {
               case e: Elem if e.label == "node" &&
                               e.prefix == "lift_deferred" =>
                 val deferredNodes: Seq[(NodeSeq, JsCmd)] =
@@ -178,38 +184,37 @@ private[http] trait LiftMerge {
                     id = idAttribute.text
                     nodes <- processedSnippets.get(id)
                   } yield {
-                    _fixHtml(nodes, childInfo)
+                    _fixHtml(nodes, startingState)
                   }
 
                 (
-                  childInfo,
                   deferredNodes.flatMap(_._1),
                   deferredNodes.map(_._2).foldLeft(Noop)(_ & _)
                 )
 
               case _ =>
-                if (_justHead) {
-                  headChildren ++= element
-                } else if (_justBody && !bodyHead && !bodyTail) {
-                  bodyChildren ++= element
-                } else if (_inHeadInBody) {
-                  addlHead ++= element
-                } else if (_inTailInBody) {
-                  addlTail ++= element
-                }
-
-                if (bodyHead || bodyTail) {
-                  (childInfo, NodeSeq.Empty, JsCmds.Noop)
-                } else {
-                  (childInfo, element, JsCmds.Noop)
+                if (headChild) {
+                  headChildren ++= finalNodes
+                } else if (headInBodyChild) {
+                  addlHead ++= finalNodes
+                } else if (tailInBodyChild) {
+                  addlTail ++= finalNodes
+                } else if (_bodyChild && ! bodyHead && ! bodyTail) {
+                  bodyChildren ++= finalNodes
                 }
             }
-        }: (HtmlState, Elem)=>(HtmlState, NodeSeq, JsCmd)
-      )
+
+            val (nodesSoFar, jsSoFar) = soFar
+            if (bodyHead || bodyTail) {
+              (NodeSeq.Empty, jsSoFar & finalJs)
+            } else {
+              (nodesSoFar ++ finalNodes, jsSoFar & finalJs)
+            }
+        }
     }
 
     if (!hasHtmlHeadAndBody) {
-      val (fixedHtml, _) = _fixHtml(xhtml)
+      val (fixedHtml, _) = _fixHtml(xhtml, HtmlState(mergeHeadAndTail = false))
 
       fixedHtml.find {
         case e: Elem => true
