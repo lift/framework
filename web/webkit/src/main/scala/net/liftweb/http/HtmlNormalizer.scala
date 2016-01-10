@@ -39,6 +39,8 @@ private object EventAttribute {
   }
 }
 
+private[http] case class NodesAndEventJs(nodes: NodeSeq, js: JsCmd)
+
 /**
  * Helper class that performs certain Lift-specific normalizations of HTML
  * represented as `NodeSeq`s:
@@ -156,7 +158,7 @@ private[http] final object HtmlNormalizer {
     }.foldLeft(Noop)(_ & _)
   }
 
-  private def normalizeElementAndAttributes(element: Elem, attributeToNormalize: String, contextPath: String, shouldRewriteUrl: Boolean): (Elem, JsCmd) = {
+  private[http] def normalizeElementAndAttributes(element: Elem, attributeToNormalize: String, contextPath: String, shouldRewriteUrl: Boolean): (Elem, JsCmd) = {
     val (id, normalizedAttributes, eventAttributes) =
       normalizeUrlAndExtractEvents(
         attributeToNormalize,
@@ -199,7 +201,43 @@ private[http] final object HtmlNormalizer {
       }
     }
   }
-  
+
+  private[http] def normalizeNode(node: Node, contextPath: String, stripComments: Boolean): NodesAndEventJs = {
+    node match {
+      case element: Elem =>
+        val (attributeToFix, shouldRewriteUrl) =
+          element.label match {
+            case "form" =>
+              ("action", true)
+
+            case "a" =>
+              ("href", true)
+            case "link" =>
+              ("href", false)
+
+            case "script" =>
+              ("src", false)
+            case _ =>
+              ("src", true)
+          }
+
+        val (node, js) =
+          normalizeElementAndAttributes(
+            element,
+            attributeToFix,
+            contextPath,
+            shouldRewriteUrl
+          )
+        NodesAndEventJs(node, js)
+
+      case _: Comment if stripComments =>
+        NodesAndEventJs(NodeSeq.Empty, Noop)
+
+      case otherNode =>
+        NodesAndEventJs(otherNode, Noop)
+    }
+  }
+
   /**
    * Base for all the normalizeHtml* implementations; in addition to what it
    * usually does, takes an `[[additionalChanges]]` function that is passed a
@@ -212,80 +250,24 @@ private[http] final object HtmlNormalizer {
    *
    * See `[[LiftMerge.merge]]` for sample usage.
    */
-  def normalizeHtmlAndEventHandlers[State](
+  def normalizeHtmlAndEventHandlers(
     nodes: NodeSeq,
     contextPath: String,
-    stripComments: Boolean,
-    state: State,
-    additionalChanges: (State, Elem)=>(State, NodeSeq, JsCmd)
+    stripComments: Boolean
   ): (NodeSeq, JsCmd) = {
     nodes.foldLeft((Vector[Node](), Noop): (NodeSeq, JsCmd)) { (soFar, nodeToNormalize) =>
-      (soFar match {
-        case (normalizedNodes, extractedJs) =>
-          nodeToNormalize match {
-            case element: Elem =>
-              val (attributeToFix, shouldRewriteUrl) =
-                element.label match {
-                  case "form" =>
-                    ("action", true)
+      val NodesAndEventJs(nodes, js) = normalizeNode(nodeToNormalize, contextPath, stripComments)
 
-                  case "a" =>
-                    ("href", true)
-                  case "link" =>
-                    ("href", false)
+      nodes.foldLeft(soFar) {
+        case ((nodesSoFar, jsSoFar), elem: Elem) =>
+          val (normalizedChildren, extractedJs) =
+            normalizeHtmlAndEventHandlers(elem.child, contextPath, stripComments)
 
-                  case "script" =>
-                    ("src", false)
-                  case _ =>
-                    ("src", true)
-                }
+          (nodesSoFar :+ elem.copy(child = normalizedChildren), jsSoFar & extractedJs)
 
-              val (normalizedElement, elementJsCmds) =
-                normalizeElementAndAttributes(
-                  element,
-                  attributeToFix,
-                  contextPath,
-                  shouldRewriteUrl
-                )
-
-              val (nextState, customResult, additionalJsCmds) =
-                additionalChanges(state, normalizedElement)
-
-              customResult match {
-                case element: Elem =>
-                  val (newChildren, childJsCmds) =
-                    normalizeHtmlAndEventHandlers(element.child, contextPath, stripComments, nextState, additionalChanges)
-
-                  (
-                    normalizedNodes.:+[Node,NodeSeq](element.copy(child = newChildren)),
-                    extractedJs & elementJsCmds & additionalJsCmds & childJsCmds
-                  )
-
-                case _ =>
-                  (
-                    normalizedNodes ++ customResult,
-                    extractedJs & elementJsCmds & additionalJsCmds
-                  )
-              }
-            case Group(groupNodes) =>
-              val (normalizedGroupNodes: NodeSeq, js: JsCmd) =
-                normalizeHtmlAndEventHandlers(
-                  groupNodes,
-                  contextPath,
-                  stripComments,
-                  state,
-                  additionalChanges
-                )
-
-              (normalizedNodes.:+[Node,NodeSeq](Group(normalizedGroupNodes)), extractedJs & js)
-
-            case c: Comment if stripComments =>
-              (normalizedNodes, extractedJs)
-
-            case _ =>
-              (normalizedNodes.:+[Node,NodeSeq](nodeToNormalize): NodeSeq, extractedJs)
-          }
-      }): (NodeSeq, JsCmd)
+        case ((nodesSoFar, jsSoFar), node) =>
+          (nodesSoFar :+ node, jsSoFar)
+      }
     }
   }
 }

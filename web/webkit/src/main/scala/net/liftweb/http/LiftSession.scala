@@ -1860,21 +1860,6 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   /**
-   * Same as `normalizeHtmlAndEventHandlers`, but allows additional handling
-   * and state management for the internal nodes. See
-   * `[[HtmlNormalizer.normalizeHtmlAndEventHandlers]]` for more.
-   */
-  private[http] def normalizeHtmlAndEventHandlers[State](in: NodeSeq, state: State, additionalChanges: (State, Elem)=>(State, NodeSeq, JsCmd)): (NodeSeq, JsCmd) = {
-    HtmlNormalizer.normalizeHtmlAndEventHandlers(
-      in,
-      S.contextPath,
-      LiftRules.stripComments.vend,
-      state,
-      additionalChanges
-    )
-  }
-
-  /**
    * Applies various HTML corrections to the passed HTML, including adding the
    * context path to links and extracting event handlers into a separate
    * `JsCmd`.
@@ -1883,11 +1868,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * `[[normalizeHtmlAndAppendEventHandlers]]` and not worry about the extra
    * `JsCmd`, as Lift will automatically append it to the response.
    */
-  def normalizeHtmlAndEventHandlers(in: NodeSeq): (NodeSeq, JsCmd) = {
-    normalizeHtmlAndEventHandlers[Unit](
-      in,
-      (),
-      (unit, elem) => (unit, elem, JsCmds.Noop)
+  def normalizeHtmlAndEventHandlers(nodes: NodeSeq): (NodeSeq, JsCmd) = {
+    HtmlNormalizer.normalizeHtmlAndEventHandlers(
+      nodes,
+      S.contextPath,
+      LiftRules.stripComments.vend
     )
   }
 
