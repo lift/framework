@@ -122,7 +122,7 @@ private[http] final object HtmlNormalizer {
               Nil
             } else {
               // When using javascript:-style URIs, event.preventDefault is implied.
-              List(strippedJs + "; event.preventDefault();")
+              List(strippedJs + "; event.preventDefault()")
             }
           }
 
