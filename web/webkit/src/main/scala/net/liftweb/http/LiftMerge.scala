@@ -49,7 +49,7 @@ private[http] trait LiftMerge {
   }
 
   // Gather all page-specific JS into one JsCmd.
-  private def assemblePageSpecificJavaScript(eventJs: JsCmd): JsCmd = {
+  private[this] def assemblePageSpecificJavaScript(eventJs: JsCmd): JsCmd = {
     val allJs =
       LiftRules.javaScriptSettings.vend().map { settingsFn =>
         LiftJavaScript.initCmd(settingsFn(this))

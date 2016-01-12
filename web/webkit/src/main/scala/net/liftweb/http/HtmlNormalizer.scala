@@ -82,7 +82,7 @@ private[http] final object HtmlNormalizer {
   //  - The optional id that was found in this set of attributes.
   //  - The normalized metadata.
   //  - A list of extracted `EventAttribute`s.
-  private def normalizeUrlAndExtractEvents(
+  private[this] def normalizeUrlAndExtractEvents(
     attributeToNormalize: String,
     attributes: MetaData,
     contextPath: String,
@@ -170,7 +170,7 @@ private[http] final object HtmlNormalizer {
 
   // Given an element id and the `EventAttribute`s to apply to elements with
   // that id, return a JsCmd that binds all those event handlers to that id.
-  private def jsForEventAttributes(elementId: String, eventAttributes: List[EventAttribute]): JsCmd = {
+  private[this] def jsForEventAttributes(elementId: String, eventAttributes: List[EventAttribute]): JsCmd = {
     eventAttributes.map {
       case EventAttribute(name, handlerJs) =>
         Call(
