@@ -62,14 +62,14 @@ final case class HttpsRules(
   }
 
   /**
-   * Returns the headers implied by this set of HTTPS rules. If
-   * `enforceInDevMode` is false and we are in dev mode, returns nothing.
+   * Returns the headers implied by this set of HTTPS rules. If `enforce` is
+   * false, returns nothing.
    */
-  def headers(enforceInDevMode: Boolean = false): List[(String, String)] = {
-    if (! enforceInDevMode && Props.devMode) {
-      Nil
-    } else  {
+  def headers(enforce: Boolean): List[(String, String)] = {
+    if (enforce) {
       headers
+    } else  {
+      Nil
     }
   }
 }
@@ -243,7 +243,7 @@ final case class ContentSecurityPolicy(
    */
   def contentSecurityPolicyString = {
     val allRestrictions =
-      Map(
+      List(
         "default-src" -> defaultSources,
         "connect-src" -> connectSources,
         "font-src" -> fontSources,
@@ -287,13 +287,13 @@ final case class ContentSecurityPolicy(
   /**
    * Returns the headers implied by this content security policy.
    */
-  def headers(enforceInDevMode: Boolean = true, logInDevMode: Boolean = true): List[(String, String)] = {
-    if (! enforceInDevMode && logInDevMode && Props.devMode) {
-      reportOnlyHeaders
-    } else if (! enforceInDevMode && Props.devMode) {
-      Nil
-    } else {
+  def headers(enforce: Boolean = true, logViolations: Boolean = true): List[(String, String)] = {
+    if (enforce) {
       enforcedHeaders
+    } else if (logViolations) {
+      reportOnlyHeaders
+    } else {
+      Nil
     }
   }
 }
@@ -382,14 +382,14 @@ sealed trait FrameRestrictions {
   /**
    * Returns the headers implied by these frame restrictions.
    *
-   * Because of how frame restrictions are handled, if enforcement in dev mode
-   * is turned off, no headers are generated in dev mode.
+   * Because of how frame restrictions are handled, if enforcement is turned
+   * off, no headers are generated.
    */
-  def headers(enforceInDevMode: Boolean = false): List[(String,String)] = {
-    if (! enforceInDevMode && Props.devMode) {
-      Nil
-    } else {
+  def headers(enforce: Boolean = false): List[(String,String)] = {
+    if (enforce) {
       headers
+    } else {
+      Nil
     }
   }
 }
@@ -431,16 +431,32 @@ final case class SecurityRules(
   https: Option[HttpsRules] = None,
   content: Option[ContentSecurityPolicy] = Some(ContentSecurityPolicy()),
   frameRestrictions: Option[FrameRestrictions] = Some(FrameRestrictions.SameOrigin),
+  enforceInOtherModes: Boolean = false,
+  logInOtherModes: Boolean = true,
   enforceInDevMode: Boolean = false,
   logInDevMode: Boolean = true
 ) {
+  private val enforce_? = {
+    if (Props.devMode) {
+      enforceInDevMode
+    } else {
+      enforceInOtherModes
+    }
+  }
+  private val logViolations_? = {
+    if (Props.devMode) {
+      logInDevMode
+    } else {
+      logInOtherModes
+    }
+  }
   /**
    * Returns the headers implied by this set of security rules.
    */
   lazy val headers: List[(String, String)] = {
-    https.toList.flatMap(_.headers(enforceInDevMode)) :::
-      content.toList.flatMap(_.headers(enforceInDevMode, logInDevMode)) :::
-      frameRestrictions.toList.flatMap(_.headers(enforceInDevMode))
+    https.toList.flatMap(_.headers(enforce_?)) :::
+      content.toList.flatMap(_.headers(enforce_?, logViolations_?)) :::
+      frameRestrictions.toList.flatMap(_.headers(enforce_?))
   }
 }
 object SecurityRules {
@@ -455,7 +471,8 @@ object SecurityRules {
   def secure = {
     apply(
       Some(HttpsRules.secure),
-      Some(ContentSecurityPolicy.secure)
+      Some(ContentSecurityPolicy.secure),
+      enforceInOtherModes = true
     )
   }
 }
