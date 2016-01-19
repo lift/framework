@@ -26,37 +26,43 @@ import common._
 
 private[util] trait Props extends Logger {
   type PropProvider = scala.collection.Map[String, String]
+  type InterpolationValues = scala.collection.Map[String, String]
 
   /**
    * Get the configuration property value for the specified key.
+   *
    * @param name key for the property to get
    * @return the value of the property if defined
    */
-  def get(name: String): Box[String] =
-    sources.map(src => Box(src.get(name)))
-      .find(_.isDefined)
-      .getOrElse(Empty)
+  def get(name: String): Box[String] = {
+    lockedProviders
+      .flatMap(_.get(name))
+      .headOption
       .map(interpolate)
+  }
 
   private val interpolateRegex = """(.*?)\Q${\E(.*?)\Q}\E([^$]*)""".r
-  private def interpolate(value:Object):String = {
-    def lookup(key:String) = {
-      val tries = interpolators.map(m => Box(m.get(key)))
-      tries.find(_.isDefined).getOrElse(Empty)
+
+  private def interpolate(value: String): String = {
+    def lookup(key: String) = {
+      lockedInterpolationValues
+        .flatMap(_.get(key))
+        .headOption
     }
+
     val interpolated = for {
-      m <- interpolateRegex findAllMatchIn value.toString
+      interpolateRegex(before, key, after) <- interpolateRegex.findAllMatchIn(value.toString)
     } yield {
-      val before   = m group 1
-      val key      = m group 2
-      val after    = m group 3
-      val lookedUp = lookup(key).openOr(value.toString)
+      val lookedUp = lookup(key).getOrElse(("${" + key + "}"))
 
       before + lookedUp + after
     }
 
-    if(interpolated.isEmpty) value.toString
-    else interpolated.mkString
+    if (interpolated.isEmpty) {
+      value.toString
+    } else {
+      interpolated.mkString
+    }
   }
 
   // def apply(name: String): String = props(name)
@@ -65,7 +71,7 @@ private[util] trait Props extends Logger {
   def getInt(name: String, defVal: Int): Int = getInt(name) openOr defVal // props.get(name).map(toInt(_)) getOrElse defVal
   def getLong(name: String): Box[Long] = get(name).flatMap(asLong)
   def getLong(name: String, defVal: Long): Long = getLong(name) openOr defVal // props.get(name).map(toLong(_)) getOrElse defVal
-  def getBool(name: String): Box[Boolean] = get(name).map(toBoolean) // (props.get(name))
+  def getBool(name: String): Box[Boolean] = get(name).map(toBoolean)
   def getBool(name: String, defVal: Boolean): Boolean = getBool(name) openOr defVal // props.get(name).map(toBoolean(_)) getOrElse defVal
   def get(name: String, defVal: String):String = get(name) getOrElse defVal
 
@@ -89,36 +95,71 @@ private[util] trait Props extends Logger {
   }
 
   /**
-   * Updates Props to find property values in the argument BEFORE looking in the standard Lift prop files.
-   * @param provider Arbitrary map of property key -> property value
+   * Updates Props to find property values in the argument AFTER first looking
+   * in the standard Lift prop files.
+   *
+   * @note You can only modify these BEFORE you look up any props!
+   *
+   * @param provider Arbitrary map of property key -> property value.
    */
-  def prependSource(provider:PropProvider):Unit = sources = provider :: sources
+  def appendProvider(provider: PropProvider): List[PropProvider] = {
+    updateProviders(_ :+ provider)
+  }
 
   /**
-   * Updates Props to find property values in the argument AFTER first looking in the standard Lift prop files.
-   * @param provider Arbitrary map of property key -> property value
+   * Updates Props to find property values in the argument BEFORE looking in
+   * the standard Lift prop files.
+   *
+   * @note You can only modify these BEFORE you look up any props!
+   *
+   * @param provider Arbitrary map of property key -> property value to be used
+   *                 for property lookup.
    */
-  def appendSource(provider:PropProvider):Unit = sources = sources :+ provider
+  def prependProvider(provider: PropProvider): List[PropProvider] = {
+    updateProviders(provider :: _)
+  }
 
   /**
-   * Removes any PropProvider sources which match the predicate
-   * @param removeIf predicate for selecting PropProviders to remove
+   * Passes the current `PropProvider`s to the passed `updater`, then sets the
+   * providers to the result of the updater. Consider using
+   * `[[appendProvider]]` or `[[prependProvider]]` instead.
+   *
+   * @note You can only modify these BEFORE you look up any props!
+   *
+   * @param updater Function that gets the current `PropProvider`s and returns
+   *                the new ones to use.
    */
-  def removeSources(removeIf: PropProvider=>Boolean):Unit =
-    sources = sources.filterNot(removeIf)
+  def updateProviders(updater: (List[PropProvider])=>List[PropProvider]): List[PropProvider] = {
+    providers = updater(providers)
+    providers
+  }
 
   /**
-   * Updates Props to find values in the argument when interpolating values found in sources.
-   * @param provider Arbitrary map of property key -> property value
+   * Updates Props to find values in the argument when interpolating values found in providers.
+   *
+   * @note You can only modify these BEFORE you look up any props!
+   *
+   * @param provider Arbitrary map of property key -> property value to be used
+   *                 for interpolation.
    */
-  def appendInterpolator(provider:PropProvider):Unit = interpolators = interpolators :+ provider
+  def appendInterpolationValues(interpolationValues: InterpolationValues): Seq[InterpolationValues] = {
+    updateInterpolationValues(_ :+ interpolationValues)
+  }
 
   /**
-   * Removes any PropProvider interpolators which match the predicate
-   * @param removeIf predicate for selecting PropProviders to remove
+   * Passes the current `InterpolationValues`s to the passed `updater`, then sets the
+   * providers to the result of the updater. Consider using
+   * `[[appendInterpolationValues]]` instead.
+   *
+   * @note You can only modify these BEFORE you look up any props!
+   *
+   * @param updater Function that gets the current `InterpolationValues`s and returns
+   *                the new ones to use.
    */
-  def removeInterpolators(removeIf: PropProvider=>Boolean):Unit =
-    interpolators = interpolators.filterNot(removeIf)
+  def updateInterpolationValues(updater: (List[InterpolationValues])=>List[InterpolationValues]): List[InterpolationValues] = {
+    interpolationValues = updater(interpolationValues)
+    interpolationValues
+  }
 
   import Props.RunModes._
 
@@ -353,8 +394,11 @@ private[util] trait Props extends Logger {
     }
   }
 
-  private var sources:List[PropProvider] = List(props)
-  private var interpolators:List[PropProvider] = Nil
+  private[this] var providers: List[PropProvider] = List(props)
+  private[this] var interpolationValues: List[InterpolationValues] = Nil
+
+  private[this] lazy val lockedProviders = providers
+  private[this] lazy val lockedInterpolationValues = interpolationValues
 }
 
 /**

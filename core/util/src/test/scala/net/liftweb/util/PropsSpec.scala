@@ -71,7 +71,7 @@ object PropsSpec extends Specification {
     "Prefer prepended properties to the test.default.props" in {
       val testProps = TestProps()
 
-      testProps.prependSource(Map("jetty.port" -> "8080"))
+      testProps.prependProvider(Map("jetty.port" -> "8080"))
       val port = testProps.getInt("jetty.port")
 
       port must_== Full(8080)
@@ -82,7 +82,7 @@ object PropsSpec extends Specification {
 
       System.setProperty("omniauth.baseurl", "http://google.com")
 
-      testProps.prependSource(sys.props)
+      testProps.prependProvider(sys.props)
       val baseurl = testProps.get("omniauth.baseurl")
 
       baseurl must_== Full("http://google.com")
@@ -92,7 +92,7 @@ object PropsSpec extends Specification {
       val testProps = TestProps()
 
       System.setProperty("omniauth.baseurl", "http://google.com")
-      testProps.prependSource(sys.props)
+      testProps.prependProvider(sys.props)
       System.setProperty("omniauth.baseurl", "http://ebay.com")
       val baseurl = testProps.get("omniauth.baseurl")
 
@@ -102,7 +102,7 @@ object PropsSpec extends Specification {
     "Find properties in appended maps when not defined in test.default.props" in {
       val testProps = TestProps()
 
-      testProps.appendSource(Map("new.prop" -> "new.value"))
+      testProps.appendProvider(Map("new.prop" -> "new.value"))
       val prop = testProps.get("new.prop")
 
       prop must_== Full("new.value")
@@ -117,7 +117,7 @@ object PropsSpec extends Specification {
     "Interpolate values from the given interpolator" in {
       val testProps = TestProps()
 
-      testProps.appendInterpolator(Map("PORT" -> "8080"))
+      testProps.appendInterpolationValues(Map("PORT" -> "8080"))
       val port = testProps.getInt("jetty.port")
 
       port must_== Full(8080)
@@ -126,7 +126,7 @@ object PropsSpec extends Specification {
     "Interpolate multiple values in a string from the given interpolator" in {
       val testProps = TestProps()
 
-      testProps.appendInterpolator(Map("DB_HOST" -> "localhost", "DB_PORT" -> "3306"))
+      testProps.appendInterpolationValues(Map("DB_HOST" -> "localhost", "DB_PORT" -> "3306"))
       val url = testProps.get("db.url")
 
       url must_== Full("jdbc:mysql://localhost:3306/MYDB")
@@ -135,14 +135,14 @@ object PropsSpec extends Specification {
     "Find properties in append for require()" in {
       val testProps = TestProps()
 
-      testProps.appendSource(Map("new.prop" -> "new.value"))
+      testProps.appendProvider(Map("new.prop" -> "new.value"))
       testProps.require("new.prop") must_== Nil
     }
 
     "Find properties in prepend for require()" in {
       val testProps = TestProps()
 
-      testProps.prependSource(Map("new.prop" -> "new.value"))
+      testProps.prependProvider(Map("new.prop" -> "new.value"))
       testProps.require("new.prop") must_== Nil
     }
   }
