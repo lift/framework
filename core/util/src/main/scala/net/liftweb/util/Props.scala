@@ -24,31 +24,7 @@ import scala.collection.JavaConverters._
 import Helpers._
 import common._
 
-/**
- * Configuration management utilities.
- *
- * If you want to provide a configuration file for a subset of your application
- * or for a specific environment, Lift expects configuration files to be named
- * in a manner relating to the context in which they are being used. The standard
- * name format is:
- *
- * <pre>
- *   modeName.userName.hostName.props
- *
- *   examples:
- *   dpp.yak.props
- *   test.dpp.yak.props
- *   production.moose.props
- *   staging.dpp.props
- *   test.default.props
- *   default.props
- * </pre>
- *
- * with hostName and userName being optional, and modeName being one of
- * "test", "staging", "production", "pilot", "profile", or "default".
- * The standard Lift properties file extension is "props".
- */
-object Props extends Logger {
+private[util] trait Props extends Logger {
   type PropProvider = scala.collection.Map[String, String]
 
   /**
@@ -144,19 +120,7 @@ object Props extends Logger {
   def removeInterpolators(removeIf: PropProvider=>Boolean):Unit =
     interpolators = interpolators.filterNot(removeIf)
 
-  /**
-   * Enumeration of available run modes.
-   */
-  object RunModes extends Enumeration {
-    val Development = Value(1, "Development")
-    val Test = Value(2, "Test")
-    val Staging = Value(3, "Staging")
-    val Production = Value(4, "Production")
-    val Pilot = Value(5, "Pilot")
-    val Profile = Value(6, "Profile")
-  }
-
-  import RunModes._
+  import Props.RunModes._
 
   val propFileName = "lift.props"
 
@@ -167,7 +131,7 @@ object Props extends Logger {
    * Recognized modes are "development", "test", "profile", "pilot", "staging" and "production"
    * with the default run mode being development.
    */
-  lazy val mode: RunModes.Value = {
+  lazy val mode: Props.RunModes.Value = {
     runModeInitialised = true
     Box.legacyNullTest((System.getProperty("run.mode"))).map(_.toLowerCase) match {
       case Full("test") => Test
@@ -244,7 +208,7 @@ object Props extends Logger {
    * This logic can be customised by calling `set` before the run-mode is referenced. (An attempt to customise this
    * after the run-mode is realised will have no effect and will instead log a warning.)
    */
-  val autoDetectRunModeFn = new RunModeProperty[() => RunModes.Value]("autoDetectRunModeFn", () => {
+  val autoDetectRunModeFn = new RunModeProperty[() => Props.RunModes.Value]("autoDetectRunModeFn", () => {
     val st = Thread.currentThread.getStackTrace
     if ((doesStackTraceContainKnownTestRunner.get)(st))
       Test
@@ -255,18 +219,18 @@ object Props extends Logger {
   /**
    * Is the system running in production mode (apply full optimizations)
    */
-  lazy val productionMode: Boolean = mode == RunModes.Production ||
-  mode == RunModes.Pilot || mode == RunModes.Staging
+  lazy val productionMode: Boolean = mode == Props.RunModes.Production ||
+  mode == Props.RunModes.Pilot || mode == Props.RunModes.Staging
 
   /**
    * Is the system running in development mode
    */
-  lazy val devMode: Boolean = mode == RunModes.Development
+  lazy val devMode: Boolean = mode == Props.RunModes.Development
 
   /**
    * Is the system running in test mode
    */
-  lazy val testMode: Boolean = mode == RunModes.Test
+  lazy val testMode: Boolean = mode == Props.RunModes.Test
 
   /**
    * The resource path segment corresponding to the current mode.
@@ -393,3 +357,40 @@ object Props extends Logger {
   private var interpolators:List[PropProvider] = Nil
 }
 
+/**
+ * Configuration management utilities.
+ *
+ * If you want to provide a configuration file for a subset of your application
+ * or for a specific environment, Lift expects configuration files to be named
+ * in a manner relating to the context in which they are being used. The standard
+ * name format is:
+ *
+ * {{{
+ *   $modeName.$userName.$hostName.$props
+ *
+ *   examples:
+ *   dpp.yak.props
+ *   test.dpp.yak.props
+ *   production.moose.props
+ *   staging.dpp.props
+ *   test.default.props
+ *   default.props
+ * }}}
+ *
+ * with `hostName` and `userName` being optional, and `modeName` being one of
+ * "test", "staging", "production", "pilot", "profile", or "default".
+ * The standard Lift properties file extension is "props".
+ */
+object Props extends Props {
+  /**
+   * Enumeration of available run modes.
+   */
+  object RunModes extends Enumeration {
+    val Development = Value(1, "Development")
+    val Test = Value(2, "Test")
+    val Staging = Value(3, "Staging")
+    val Production = Value(4, "Production")
+    val Pilot = Value(5, "Pilot")
+    val Profile = Value(6, "Profile")
+  }
+}
