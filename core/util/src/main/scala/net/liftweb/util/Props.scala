@@ -41,9 +41,9 @@ private[util] trait Props extends Logger {
       .map(interpolate)
   }
 
-  private val interpolateRegex = """(.*?)\Q${\E(.*?)\Q}\E([^$]*)""".r
+  private[this] val interpolateRegex = """(.*?)\Q${\E(.*?)\Q}\E([^$]*)""".r
 
-  private def interpolate(value: String): String = {
+  private[this] def interpolate(value: String): String = {
     def lookup(key: String) = {
       lockedInterpolationValues
         .flatMap(_.get(key))
