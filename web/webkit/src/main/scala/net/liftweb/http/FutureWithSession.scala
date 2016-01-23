@@ -4,6 +4,51 @@ import scala.concurrent.{ExecutionContext, CanAwait, Future}
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
+/**
+  * Contains implicit conversion for `scala.concurrent.Future` to ease access to `LiftSession` resources.
+  *
+  * If you need to access session state (such as a `SessionVar`) within the context of a `Future`, then import
+  * `FutureWithSession` and convert your `Future`s with either `withCurrentSession` or `withImplicitSession`.
+  * Use `withCurrentSession` when you are already in the context of a `LiftSession`.  Use `withImplicitSession`
+  * if you have a reference to the `LiftSession`.
+  *
+  * Note that the returned `Future` writes through to the original, and each method which returns another
+  * `Future` also will be an `FutureWithSession`.  Hence any calls can be chained together, allowing an
+  * `FutureWithSession` to work in an arbitrary for-comprehension.
+  *
+  * Full working example:
+  * {{{
+  * package code.snippet
+  *
+  * import net.liftweb.http.{SessionVar, SHtml}
+  * import net.liftweb.http.FutureWithSession._
+  * import net.liftweb.http.js.JE.JsVar
+  * import net.liftweb.http.js.JsCmds
+  * import net.liftweb.util.Helpers._
+  *
+  * import scala.concurrent.Future
+  * import scala.concurrent.ExecutionContext.Implicits.global
+  *
+  * object MyVar extends SessionVar("init")
+  *
+  * object AjaxButton {
+  *   def render = "type=button [onclick]" #>
+  *     SHtml.ajaxCall(
+  *       JsVar("window.myGlobal"),
+  *       myGlobal => {
+  *         futureOp(myGlobal)
+  *           .withCurrentSession // Now the function passed to foreach, etc will execute in this session
+  *           .foreach(MyVar.set(_))
+  *         JsCmds.Noop
+  *       }
+  *     )
+  *
+  *   def futureOp(s:String):Future[String] = Future("Back to the Future[T]: "+s)
+  * }
+  * }}}
+  *
+  * @see LAFutureWithSession
+  */
 object FutureWithSession {
   implicit class FutureDecorator[+T](future:Future[T]) {
     val withCurrentSession:Future[T] = S.session.map(new FutureWithSession[T](future)(_)).
