@@ -48,5 +48,174 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
       S.initIfUninitted(session) { TestVar1.get must eventually(beEqualTo("onComplete")) }
     }
 
+    "have access to session variables in onFail()" in {
+      implicit val session = new LiftSession("Test Session", "", Empty)
+
+      val future = new LAFuture(futureSpecScheduler).withImplicitSession
+      future.onFail {
+        case Failure(msg, Full(ex), Empty) => TestVar1.set(ex.getMessage)
+        case _ => fail("The future should have failed!")
+      }
+      future.fail(new Exception("fail"))
+
+      S.initIfUninitted(session) { TestVar1.get must eventually(beEqualTo("fail")) }
+    }
+
+    "have access to session variables in onSuccess()" in {
+      implicit val session = new LiftSession("Test Session", "", Empty)
+
+      val future = new LAFuture[String](futureSpecScheduler).withImplicitSession
+      future.onSuccess(TestVar1.apply(_))
+      future.satisfy("success!!")
+
+      S.initIfUninitted(session) { TestVar1.get must eventually(beEqualTo("success!!")) }
+    }
+
+    "have access to session variables in chains of filter()" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      S.initIfUninitted(session) {
+        val future = LAFuture(() => "something in it", futureSpecScheduler).withCurrentSession
+        TestVar1("something")
+        TestVar2("in it")
+
+        val filtered = future
+          .filter(_.contains(TestVar1.get))
+          .filter(_.contains(TestVar2.get))
+
+        filtered.get(timeout) must beEqualTo(Full("something in it"))
+      }
+    }
+
+    "have access to session variables in chains of withFilter()" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      S.initIfUninitted(session) {
+        val future = LAFuture(() => "something in it", futureSpecScheduler).withCurrentSession
+        TestVar1("something")
+        TestVar2("in it")
+
+        val filtered = future
+          .withFilter(_.contains(TestVar1.get))
+          .withFilter(_.contains(TestVar2.get))
+
+        filtered.get(timeout) must beEqualTo(Full("something in it"))
+      }
+    }
+
+    "have access to session variables in chains of flatMap()" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      S.initIfUninitted(session) {
+        val future = LAFuture(() => "this", futureSpecScheduler).withCurrentSession
+        TestVar1(" and ")
+        TestVar2("that")
+
+        val fm1 = future.flatMap { s =>
+          val f = new LAFuture[String](futureSpecScheduler)
+          f.satisfy(s + TestVar1.get)
+          f
+        }
+        val fm2 = fm1.flatMap { s =>
+          val f = new LAFuture[String](futureSpecScheduler)
+          f.satisfy(s + TestVar2.get)
+          f
+        }
+
+        fm2.get(timeout) must beEqualTo(Full("this and that"))
+      }
+    }
+
+    "have access to session variables in chains of map()" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      S.initIfUninitted(session) {
+        val future = LAFuture(() => "this", futureSpecScheduler).withCurrentSession
+        TestVar1(" and ")
+        TestVar2("that")
+
+        val mapped = future.map(_ + TestVar1.get).map(_ + TestVar2.get)
+
+        mapped.get(timeout) must beEqualTo(Full("this and that"))
+      }
+    }
+
+    "have access to session variables in foreach()" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      S.initIfUninitted(session) {
+        val future = LAFuture(() => "stuff", futureSpecScheduler).withCurrentSession
+        future.foreach(TestVar1.apply(_))
+
+        TestVar1.get must eventually(beEqualTo("stuff"))
+      }
+    }
+
+    "have the same scheduler as the original LAFuture when no session is available" in {
+      val future = LAFuture(() => "stuff", futureSpecScheduler).withCurrentSession
+
+      future.scheduler must beEqualTo(futureSpecScheduler)
+    }
+
+    "have the same scheduler as the original LAFuture when a session is available" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      S.initIfUninitted(session) {
+        val future = LAFuture(() => "stuff", futureSpecScheduler).withCurrentSession
+
+        future.scheduler must beEqualTo(futureSpecScheduler)
+      }
+    }
+
+
+    "pass thru for abort() and isAborted" in {
+      val session = new LiftSession("Test Session", "", Empty)
+      val f = new LAFuture[String](futureSpecScheduler)
+      val withS  = S.initIfUninitted(session) { f.withCurrentSession }
+
+      withS.abort()
+
+      f.isAborted must beEqualTo(true)
+      withS.isAborted must beEqualTo(true)
+    }
+
+    "pass thru for complete(), complete_?, and get" in {
+      val session = new LiftSession("Test Session", "", Empty)
+      val f = new LAFuture[String](futureSpecScheduler)
+      val withS  = S.initIfUninitted(session) { f.withCurrentSession }
+
+      withS.complete(Full("complete"))
+
+      f.complete_? must beEqualTo(true)
+      withS.complete_? must beEqualTo(true)
+
+      // TODO: This will hang indefinitely if get is not implemented. Better way to test??
+      f.get must beEqualTo("complete")
+      withS.get must beEqualTo("complete")
+    }
+
+    "pass thru for fail(Box) and get(Long)" in {
+      val session = new LiftSession("Test Session", "", Empty)
+      val f = new LAFuture[String](futureSpecScheduler)
+      val withS  = S.initIfUninitted(session) { f.withCurrentSession }
+      val failure = Failure("BOOM", Empty, Empty)
+
+      withS.fail(failure)
+
+      f.get(timeout) must beEqualTo(failure)
+      withS.get(timeout) must beEqualTo(failure)
+    }
+
+    "pass thru for isSatisfied" in {
+      val session = new LiftSession("Test Session", "", Empty)
+      val f = new LAFuture[String](futureSpecScheduler)
+      val withS  = S.initIfUninitted(session) { f.withCurrentSession }
+
+      withS.satisfy("doesn't matter")
+
+      f.isSatisfied must beEqualTo(true)
+      withS.isSatisfied must beEqualTo(true)
+    }
+
   }
 }
