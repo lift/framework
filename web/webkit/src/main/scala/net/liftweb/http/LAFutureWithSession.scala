@@ -1,7 +1,7 @@
 package net.liftweb.http
 
 import net.liftweb.actor.LAFuture
-import net.liftweb.common.{Empty, Failure}
+import net.liftweb.common.{Box, Empty, Failure}
 
 object LAFutureWithSession {
   implicit class LAFutureDecorator[T](future:LAFuture[T]) {
@@ -17,4 +17,7 @@ object LAFutureWithSession {
 }
 
 class LAFutureWithSession[T](future:LAFuture[T])(implicit session:LiftSession) extends LAFuture[T] {
+  override def satisfy(value: T): Unit = future.satisfy(value)
+  override def get(timeout: Long): Box[T] = future.get(timeout)
+  override def onComplete(f: Box[T] => Unit) = future.onComplete( b => S.initIfUninitted(session) { f(b) } )
 }
