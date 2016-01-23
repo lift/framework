@@ -1,13 +1,14 @@
 package net.liftweb.http
 
 import net.liftweb.common.Empty
+import org.specs2.matcher.ThrownMessages
 import scala.concurrent._
 import org.specs2.mutable.Specification
 import FutureWithSession._
 
 import scala.util.{Try, Success}
 
-object FutureWithSessionSpec extends Specification {
+object FutureWithSessionSpec extends Specification with ThrownMessages {
 
   object TestVar1 extends SessionVar[String]("Uninitialized1")
   object TestVar2 extends SessionVar[String]("Uninitialized2")
@@ -16,12 +17,11 @@ object FutureWithSessionSpec extends Specification {
     "fail if session is not available" in {
       val actual:Future[String] = Future("something").withCurrentSession
 
-      // TODO: Why the hell does this not work??
-//      val expected:Option[Try[String]] = Some(Failure(new Exception))
-//      actual.value must eventually(beEqualTo(expected))
-
-      actual.value.isDefined must eventually(beTrue)
-      actual.value.get must beFailedTry.withThrowable[Exception]("LiftSession not available in this thread context")
+      actual.value must eventually(beLike (PartialFunction[Option[Try[String]],org.specs2.matcher.MatchResult[_]]{
+        case Some(result) =>
+          result must beFailedTry.withThrowable[Exception]("LiftSession not available in this thread context")
+        case None => fail("actual.value is a None but should be Some(...)")
+      }))
     }
 
     "succeed with the original value if in a session" in {
