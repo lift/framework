@@ -12,7 +12,7 @@ object FutureWithSession {
   }
 }
 
-class FutureWithSession[+T](future:Future[T])(implicit session:LiftSession) extends Future[T] {
+private [http] class FutureWithSession[+T](future:Future[T])(implicit session:LiftSession) extends Future[T] {
   import FutureWithSession._
 
   // Override all of the abstract Future[T] stuff to pass thru

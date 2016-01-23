@@ -16,7 +16,7 @@ object LAFutureWithSession {
   }
 }
 
-class LAFutureWithSession[T](future:LAFuture[T])(implicit session:LiftSession) extends LAFuture[T](future.scheduler) {
+private [http] class LAFutureWithSession[T](future:LAFuture[T])(implicit session:LiftSession) extends LAFuture[T](future.scheduler) {
   import LAFutureWithSession._
 
   // The following methods don't need access to the session, but need to write through to the original future
