@@ -104,11 +104,12 @@
 
     // Notify all functions in arr, passing any extra args
     function notifyAll(arr) {
-      var args = [].shift.call(arguments);  // Every arg but the passed array
+      var args = [].slice.call(arguments, 1);  // Every arg but the passed arr
       for(var i = 0; i < arr.length; i++) try {
         arr[i].apply(this, args);
       } catch (e) {
-        // Do nothing, just keep stuff from crapping out
+        settings.logError("Server communication callback failed!");
+        settings.logError(e);
       }
     }
 
@@ -243,7 +244,7 @@
             if (aboutToSend.onSuccess) {
               aboutToSend.onSuccess(data);
             }
-            notifyAll(ajaxOnCommFailures, data);
+            notifyAll(ajaxOnCommSuccesses);
             doCycleQueueCnt++;
             doAjaxCycle();
           };
