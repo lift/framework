@@ -915,6 +915,13 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     ajaxEnd = Full(f: () => JsCmd)
   }
 
+  @volatile var ajaxRetryInOrderReceived:Boolean = false
+
+  @volatile var ajaxAddMetaFunc: FactoryMaker[Box[JsVar => JsCmd]] = new FactoryMaker[Box[JsVar => JsCmd]](() =>
+    if (ajaxRetryInOrderReceived) Full(toSend => JE.Call("lift.addAjaxMetaForOrderedRetry", toSend))
+    else Full(toSend => Noop)
+  ) {}
+
   /**
    * An XML header is inserted at the very beginning of returned XHTML pages.
    * This function defines the cases in which such a header is inserted.  The

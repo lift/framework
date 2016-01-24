@@ -58,6 +58,9 @@
       ajaxOnEnd: function() {
         // noop
       },
+      ajaxAddMeta: function(toSend) {
+        // noop
+      },
       ajaxOnSessionLost: function() {
         window.location.reload();
       },
@@ -113,6 +116,7 @@
         onUploadProgress: onUploadProgress,
         version: ajaxVersion++
       };
+      settings.ajaxAddMeta(toSend);
 
       // Make sure we wrap when we hit JS max int.
       var version = ajaxVersion;
@@ -597,6 +601,9 @@
       startGc: successRegisterGC,
       ajaxOnSessionLost: function() {
         settings.ajaxOnSessionLost();
+      },
+      addAjaxMetaForOrderedRetry: function(toSend) {
+        toSend.submitted = toSend.when
       },
       calcAjaxUrl: calcAjaxUrl,
       registerComets: registerComets,
