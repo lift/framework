@@ -18,7 +18,11 @@
         uriSuffix,
         sessionId = "",
         toWatch = {},
-        knownPromises = {};
+        knownPromises = {},
+        ajaxOnCommFailures = [],
+        ajaxOnCommSuccesses = [],
+        cometOnCommFailures = [],
+        cometOnCommSuccesses = [];
 
     // default settings
     settings = {
@@ -95,6 +99,16 @@
       }
       else {
         window.alert(msg);
+      }
+    }
+
+    // Notify all functions in arr, passing any extra args
+    function notifyAll(arr) {
+      var args = [].shift.call(arguments);  // Every arg but the passed array
+      for(var i = 0; i < arr.length; i++) try {
+        arr[i].apply(this, args);
+      } catch (e) {
+        // Do nothing, just keep stuff from crapping out
       }
     }
 
@@ -229,6 +243,7 @@
             if (aboutToSend.onSuccess) {
               aboutToSend.onSuccess(data);
             }
+            notifyAll(ajaxOnCommFailures, data);
             doCycleQueueCnt++;
             doAjaxCycle();
           };
@@ -256,6 +271,7 @@
                 settings.ajaxOnFailure();
               }
             }
+            notifyAll(ajaxOnCommFailures, aboutToSend.data);
             doCycleQueueCnt++;
             doAjaxCycle();
           };
@@ -328,11 +344,13 @@
     }
 
     function cometFailureFunc() {
+      notifyAll(cometOnCommFailures);
       var requestCount = cometRequestCount;
       setTimeout(function() { cometEntry(requestCount); }, settings.cometFailureRetryTimeout);
     }
 
     function cometSuccessFunc() {
+      notifyAll(cometOnCommSuccesses);
       var requestCount = cometRequestCount;
       setTimeout(function() { cometEntry(requestCount); }, 100);
     }
@@ -598,6 +616,12 @@
       ajaxOnSessionLost: function() {
         settings.ajaxOnSessionLost();
       },
+      addAjaxOnCommFailure: function(callback) {
+        ajaxOnCommFailures.push(callback);
+      },
+      addAjaxOnCommSuccess: function(callback) {
+        ajaxOnCommSuccesses.push(callback);
+      },
       calcAjaxUrl: calcAjaxUrl,
       registerComets: registerComets,
       cometOnSessionLost: function() {
@@ -605,6 +629,12 @@
       },
       cometOnError: function(e) {
         settings.cometOnError(e);
+      },
+      addCometOnCommFailure: function(callback) {
+        cometOnCommFailures.push(callback);
+      },
+      addCometOnCommSuccess: function(callback) {
+        cometOnCommSuccesses.push(callback);
       },
       unlistWatch: unlistWatch,
       setToWatch: function(tw) {
