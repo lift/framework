@@ -915,10 +915,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     ajaxEnd = Full(f: () => JsCmd)
   }
 
-  @volatile var ajaxRetryInOrderReceived:Boolean = false
+  val ajaxRetryInOrderReceived:FactoryMaker[Boolean] = new FactoryMaker[Boolean](() => false){}
 
-  @volatile var ajaxAddMetaFunc: FactoryMaker[Box[JsVar => JsCmd]] = new FactoryMaker[Box[JsVar => JsCmd]](() =>
-    if (ajaxRetryInOrderReceived) Full(toSend => JE.Call("lift.addAjaxMetaForOrderedRetry", toSend))
+  val ajaxAddMetaFunc: FactoryMaker[Box[JsVar => JsCmd]] = new FactoryMaker[Box[JsVar => JsCmd]](() =>
+    if (ajaxRetryInOrderReceived.vend) Full(toSend => JE.Call("lift.addAjaxMetaForOrderedRetry", toSend))
     else Full(toSend => Noop)
   ) {}
 
