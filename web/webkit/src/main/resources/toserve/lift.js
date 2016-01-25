@@ -105,11 +105,13 @@
     // Notify all functions in arr, passing any extra args
     function notifyAll(arr) {
       var args = [].slice.call(arguments, 1);  // Every arg but the passed arr
-      for(var i = 0; i < arr.length; i++) try {
-        arr[i].apply(this, args);
-      } catch (e) {
-        settings.logError("Server communication status callback failed!");
-        settings.logError(e);
+      for(var i = 0; i < arr.length; i++) {
+        try {
+          arr[i].apply(this, args);
+        } catch (e) {
+          settings.logError("Server communication status callback failed!");
+          settings.logError(e);
+        }
       }
     }
 
