@@ -61,6 +61,9 @@
       ajaxAddMeta: function(toSend) {
         // noop
       },
+      ajaxQueueSort: function(ajaxQueue) {
+        ajaxQueueSortDefault(ajaxQueue)
+      },
       ajaxOnSessionLost: function() {
         window.location.reload();
       },
@@ -132,7 +135,7 @@
       }
 
       ajaxQueue.push(toSend);
-      ajaxQueueSort();
+      settings.ajaxQueueSort(ajaxQueue);
 
       if (initialized) {
         doCycleQueueCnt++;
@@ -142,7 +145,7 @@
       return false; // buttons in forms don't trigger the form
     }
 
-    function ajaxQueueSort() {
+    function ajaxQueueSortDefault(ajaxQueue) {
       ajaxQueue.sort(function (a, b) { return a.when - b.when; });
     }
 
@@ -250,7 +253,7 @@
               var now = (new Date()).getTime();
               aboutToSend.when = now + (1000 * Math.pow(2, cnt));
               queue.push(aboutToSend);
-              ajaxQueueSort();
+              settings.ajaxQueueSort(queue);
             }
             else {
               if (aboutToSend.onFailure) {
@@ -604,6 +607,10 @@
       },
       addAjaxMetaForOrderedRetry: function(toSend) {
         toSend.submitted = toSend.when
+      },
+      ajaxQueueSortDefault: ajaxQueueSortDefault,
+      ajaxQueueSortOrderedRetry: function(ajaxQueue){
+        ajaxQueue.sort(function (a, b) { return a.submitted - b.submitted; })
       },
       calcAjaxUrl: calcAjaxUrl,
       registerComets: registerComets,
