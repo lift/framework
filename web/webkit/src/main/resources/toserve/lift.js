@@ -108,7 +108,7 @@
       for(var i = 0; i < arr.length; i++) try {
         arr[i].apply(this, args);
       } catch (e) {
-        settings.logError("Server communication callback failed!");
+        settings.logError("Server communication status callback failed!");
         settings.logError(e);
       }
     }
