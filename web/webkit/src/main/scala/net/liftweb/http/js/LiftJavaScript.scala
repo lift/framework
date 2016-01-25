@@ -72,7 +72,8 @@ object LiftJavaScript {
       "ajaxOnStart" -> LiftRules.ajaxStart.map(fnc => AnonFunc(fnc())).openOr(AnonFunc(Noop)),
       "ajaxOnEnd" -> LiftRules.ajaxEnd.map(fnc => AnonFunc(fnc())).openOr(AnonFunc(Noop)),
       "ajaxAddMeta" -> LiftRules.ajaxAddMetaFunc.vend.map(fnc => AnonFunc("toSend", fnc(JsVar("toSend")))).openOr(AnonFunc("toSend", Noop)),
-      "ajaxQueueSort" -> AnonFunc("ajaxQueue", LiftRules.ajaxQueueSortFunc.vend.openOr(LiftRules.ajaxQueueSortDefaultFunc).apply(JsVar("ajaxQueue")))
+      "ajaxQueueSort" -> AnonFunc("ajaxQueue", LiftRules.ajaxQueueSortFunc.vend.openOr(LiftRules.ajaxQueueSortDefaultFunc).apply(JsVar("ajaxQueue"))),
+      "ajaxCalcRetryTime" -> AnonFunc("toSend", JsReturn(LiftRules.ajaxCalcRetryTimeFunc.vend.openOr(LiftRules.ajaxCalcRetryTimeDefaultFunc).apply(JsVar("toSend"))))
     )
   }
 
