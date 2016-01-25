@@ -617,9 +617,13 @@
       ajaxOnSessionLost: function() {
         settings.ajaxOnSessionLost();
       },
+      // Pass a callback function to be notified when an attempt to contact the server for an ajax call fails
+      // The first argument to the function will be the ajax request data.
       addAjaxOnCommFailure: function(callback) {
         ajaxOnCommFailures.push(callback);
       },
+      // Pass a callback function to be notified when an attempt to contact the server for an ajax call succeeds
+      // The first argument to the function will be the ajax request data.
       addAjaxOnCommSuccess: function(callback) {
         ajaxOnCommSuccesses.push(callback);
       },
@@ -631,9 +635,11 @@
       cometOnError: function(e) {
         settings.cometOnError(e);
       },
+      // Pass a callback function to be notified when an attempt to contact the server for comet fails
       addCometOnCommFailure: function(callback) {
         cometOnCommFailures.push(callback);
       },
+      // Pass a callback function to be notified when an attempt to contact the server for comet succeeds
       addCometOnCommSuccess: function(callback) {
         cometOnCommSuccesses.push(callback);
       },
