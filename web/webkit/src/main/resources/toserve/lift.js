@@ -103,7 +103,7 @@
     }
 
     // Notify all functions in arr, passing any extra args
-    function notifyAll(arr) {
+    var notifyAll = function(arr) {
       var args = [].slice.call(arguments, 1);  // Every arg but the passed arr
       for(var i = 0; i < arr.length; i++) {
         try {
@@ -113,7 +113,7 @@
           settings.logError(e);
         }
       }
-    }
+    };
 
     ////////////////////////////////////////////////
     ///// Ajax /////////////////////////////////////
