@@ -924,8 +924,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   val ajaxQueueSortFunc: FactoryMaker[Box[JsVar => JsCmd]] = new FactoryMaker[Box[JsVar => JsCmd]](() =>
     if (ajaxRetryInOrderReceived.vend) Full(ajaxQueue => JE.Call("lift.ajaxQueueSortOrderedRetry", ajaxQueue))
-    else Full(ajaxQueue => JE.Call("lift.ajaxQueueSortDefault", ajaxQueue))
+    else Full(ajaxQueueSortDefaultFunc)
   ) {}
+  private [http] val ajaxQueueSortDefaultFunc:JsVar => JsCmd =
+    ajaxQueue => JE.Call("lift.ajaxQueueSortDefault", ajaxQueue)
 
   /**
    * An XML header is inserted at the very beginning of returned XHTML pages.
