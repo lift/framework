@@ -441,15 +441,19 @@ object Menu extends DispatchSnippet {
       }
 
       (S.originalRequest.flatMap(_.location), S.attr("param"), SiteMap.findAndTestLoc(name)) match {
-         case (_, Full(param), Full(loc: Loc[T] with ConvertableLoc[T])) => {
+         case (_, Full(param), Full(loc: Loc[_] with ConvertableLoc[_])) => {
+           val typedLoc = loc.asInstanceOf[Loc[T] with ConvertableLoc[T]]
+
            (for {
-             pv <- loc.convert(param)
-             link <- loc.createLink(pv)
-           } yield
-             Helpers.addCssClass(loc.cssClassForMenuItem,
+             pv <- typedLoc.convert(param)
+             link <- typedLoc.createLink(pv)
+           } yield {
+             Helpers.addCssClass(typedLoc.cssClassForMenuItem,
                                  <a href={link}></a> %
-                                 S.prefixedAttrsToMetaData("a"))) openOr
-           Text("")
+                                 S.prefixedAttrsToMetaData("a"))
+           }) openOr {
+             Text("")
+           }
          }
 
          case (Full(loc), _, _) if loc.name == name => {
