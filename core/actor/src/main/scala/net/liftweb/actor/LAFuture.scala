@@ -48,7 +48,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, wrapper:CommonLoanWr
           val ret = toDo
           toDo = Nil
           onFailure = Nil
-          onComplete.foreach(f => LAFuture.executeWithObservers(scheduler, () => wrapper(f(Full(value)))))
+          onComplete.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(Full(value)), wrapper))
           onComplete = Nil
           ret
         } else Nil
@@ -56,7 +56,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, wrapper:CommonLoanWr
         notifyAll()
       }
     }
-    funcs.foreach(f => LAFuture.executeWithObservers(scheduler, () => wrapper(f(value))))
+    funcs.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(value), wrapper))
   }
 
   /**
@@ -176,7 +176,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, wrapper:CommonLoanWr
    */
   def onSuccess(f: T => Unit) {
     synchronized {
-      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => wrapper(f(item)))} else
+      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => f(item), wrapper)} else
       if (!aborted) {
         toDo ::= f
       }
@@ -190,7 +190,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, wrapper:CommonLoanWr
    */
   def onFail(f: Box[Nothing] => Unit) {
     synchronized {
-      if (aborted) LAFuture.executeWithObservers(scheduler, () => wrapper(f(failure))) else
+      if (aborted) LAFuture.executeWithObservers(scheduler, () => f(failure), wrapper) else
       if (!satisfied) {
         onFailure ::= f
       }
@@ -204,8 +204,8 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, wrapper:CommonLoanWr
    */
   def onComplete(f: Box[T] => Unit) {
     synchronized {
-      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => wrapper(f(Full(item))))} else
-      if (aborted) {LAFuture.executeWithObservers(scheduler, () => wrapper(f(failure)))} else
+      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => f(Full(item)), wrapper)} else
+      if (aborted) {LAFuture.executeWithObservers(scheduler, () => f(failure), wrapper)} else
       onComplete ::= f
     }
   }
@@ -227,8 +227,8 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, wrapper:CommonLoanWr
       if (!satisfied && !aborted) {
         aborted = true
         failure = e
-        onFailure.foreach(f => LAFuture.executeWithObservers(scheduler, () => wrapper(f(e))))
-        onComplete.foreach(f => LAFuture.executeWithObservers(scheduler, () => wrapper(f(e))))
+        onFailure.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(e), wrapper))
+        onComplete.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(e), wrapper))
         onComplete = Nil
         onFailure = Nil
         toDo = Nil
@@ -300,13 +300,13 @@ object LAFuture {
     }
   }
 
-  private def executeWithObservers(scheduler: LAScheduler, f: () => Unit) {
+  private def executeWithObservers(scheduler: LAScheduler, f: () => Unit, wrapper:CommonLoanWrapper) {
     val cur = threadInfo.get()
     scheduler.execute(() => {
       val old = threadInfo.get()
       threadInfo.set(cur)
       try {
-        f()
+        wrapper(f())
       } finally {
         threadInfo.set(old)
       }
