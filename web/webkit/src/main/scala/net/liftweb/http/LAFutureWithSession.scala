@@ -51,14 +51,20 @@ object LAFutureWithSession {
     override def apply[T](f: => T): T = S.initIfUninitted(session) { f }
   }
 
+  private def withSession[T](f:LAFuture[T], s:LiftSession):LAFuture[T] = {
+    val sf = new LAFuture[T](f.scheduler, sessionWrapper(s))
+    f.onComplete(sf.complete)
+    sf
+  }
+
   implicit class LAFutureDecorator[T](future:LAFuture[T]) {
-    val withCurrentSession:LAFuture[T] = S.session.map(s => new LAFuture[T](future.scheduler, sessionWrapper(s))).
-      openOr {
+    val withCurrentSession:LAFuture[T] = S.session.map( s => withSession(future, s) )
+      .openOr {
         val f = new LAFuture[T](future.scheduler)
         f.fail(Failure("LiftSession not available in this thread context", Empty, Empty))
         f
       }
 
-    def withImplicitSession(implicit session:LiftSession):LAFuture[T] = new LAFuture[T](future.scheduler, sessionWrapper(session))
+    def withImplicitSession(implicit session:LiftSession):LAFuture[T] = withSession(future, session)
   }
 }
