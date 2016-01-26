@@ -24,7 +24,7 @@ import common._
  * A container that contains a calculated value
  * or may contain one in the future
  */
-class LAFuture[T](val scheduler: LAScheduler) {
+class LAFuture[T](val scheduler: LAScheduler = LAScheduler) {
   private var item: T = _
   private var failure: Box[Nothing] = Empty
   private var satisfied = false
@@ -32,10 +32,6 @@ class LAFuture[T](val scheduler: LAScheduler) {
   private var toDo: List[T => Unit] = Nil
   private var onFailure: List[Box[Nothing] => Unit] = Nil
   private var onComplete: List[Box[T] => Unit] = Nil
-
-  def this() {
-    this(LAScheduler)
-  }
 
   LAFuture.notifyObservers(this)
 
