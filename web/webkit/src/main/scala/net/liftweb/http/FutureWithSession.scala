@@ -10,11 +10,11 @@ import scala.util.Try
   * If you need to access session state (such as a `SessionVar`) within the context of a `Future`, then import
   * `FutureWithSession` and convert your `Future`s with either `withCurrentSession` or `withImplicitSession`.
   * Use `withCurrentSession` when you are already in the context of a `LiftSession`.  Use `withImplicitSession`
-  * if you have a reference to the `LiftSession`.
+  * if you instead have a reference to the `LiftSession`.
   *
-  * Note that the returned `Future` writes through to the original, and each method which returns another
-  * `Future` also will be an `FutureWithSession`.  Hence any calls can be chained together, allowing an
-  * `FutureWithSession` to work in an arbitrary for-comprehension.
+  * The `Future` returned by `withCurrentSession` or `withImplicitSession` is satisfied by the same value
+  * as the original `Future` and each method which returns another `Future` also will be a `FutureWithSession`.
+  * Hence any calls can be chained together, allowing a `FutureWithSession` to work in an arbitrary for-comprehension.
   *
   * Full working example:
   * {{{

@@ -9,11 +9,14 @@ import net.liftweb.common.{CommonLoanWrapper, Box, Empty, Failure}
   * If you need to access session state (such as a `SessionVar`) within the context of an `LAFuture`, then import
   * `LAFutureWithSession` and convert your `LAFuture`s with either `withCurrentSession` or `withImplicitSession`.
   * Use `withCurrentSession` when you are already in the context of a `LiftSession`.  Use `withImplicitSession`
-  * if you have a reference to the `LiftSession`.
+  * if you instead have a reference to the `LiftSession`.
   *
-  * Note that the returned `LAFuture` writes through to the original, and each method which returns another
-  * `LAFuture` also will be an `LAFutureWithSession`.  Hence any calls can be chained together, allowing an
-  * `LAFutureWithSession` to work in an arbitrary for-comprehension.
+  * The `LAFuture` returned by `withCurrentSession` or `withImplicitSession` is satisfied by the same value
+  * as the original `LAFuture` and each method which returns another `LAFuture` also will be an `LAFutureWithSession`.
+  * Hence any calls can be chained together, allowing an `LAFutureWithSession` to work in an arbitrary for-comprehension.
+  *
+  * Note that the returned `LAFuture` does NOT write through to the original, hence satisfying the
+  * `LAFutureWithSession` will have no bearing on the original `LAFuture`.
   *
   * Full working example:
   * {{{
