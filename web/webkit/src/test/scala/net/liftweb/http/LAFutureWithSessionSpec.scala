@@ -166,56 +166,5 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
         future.scheduler must beEqualTo(futureSpecScheduler)
       }
     }
-
-
-    "pass thru for abort() and isAborted" in {
-      val session = new LiftSession("Test Session", "", Empty)
-      val f = new LAFuture[String](futureSpecScheduler)
-      val withS  = S.initIfUninitted(session) { f.withCurrentSession }
-
-      withS.abort()
-
-      f.isAborted must beEqualTo(true)
-      withS.isAborted must beEqualTo(true)
-    }
-
-    "pass thru for complete(), complete_?, and get" in {
-      val session = new LiftSession("Test Session", "", Empty)
-      val f = new LAFuture[String](futureSpecScheduler)
-      val withS  = S.initIfUninitted(session) { f.withCurrentSession }
-
-      withS.complete(Full("complete"))
-
-      f.complete_? must beEqualTo(true)
-      withS.complete_? must beEqualTo(true)
-
-      // TODO: This will hang indefinitely if get is not implemented. Better way to test??
-      f.get must beEqualTo("complete")
-      withS.get must beEqualTo("complete")
-    }
-
-    "pass thru for fail(Box) and get(Long)" in {
-      val session = new LiftSession("Test Session", "", Empty)
-      val f = new LAFuture[String](futureSpecScheduler)
-      val withS  = S.initIfUninitted(session) { f.withCurrentSession }
-      val failure = Failure("BOOM", Empty, Empty)
-
-      withS.fail(failure)
-
-      f.get(timeout) must beEqualTo(failure)
-      withS.get(timeout) must beEqualTo(failure)
-    }
-
-    "pass thru for isSatisfied" in {
-      val session = new LiftSession("Test Session", "", Empty)
-      val f = new LAFuture[String](futureSpecScheduler)
-      val withS  = S.initIfUninitted(session) { f.withCurrentSession }
-
-      withS.satisfy("doesn't matter")
-
-      f.isSatisfied must beEqualTo(true)
-      withS.isSatisfied must beEqualTo(true)
-    }
-
   }
 }

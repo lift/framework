@@ -24,7 +24,7 @@ import common._
  * A container that contains a calculated value
  * or may contain one in the future
  */
-class LAFuture[T](val scheduler: LAScheduler = LAScheduler) {
+class LAFuture[T](val scheduler: LAScheduler = LAScheduler, wrapper:CommonLoanWrapper = LAFuture.defaultWrapper) {
   private var item: T = _
   private var failure: Box[Nothing] = Empty
   private var satisfied = false
@@ -48,7 +48,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler) {
           val ret = toDo
           toDo = Nil
           onFailure = Nil
-          onComplete.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(Full(value))))
+          onComplete.foreach(f => LAFuture.executeWithObservers(scheduler, () => wrapper(f(Full(value)))))
           onComplete = Nil
           ret
         } else Nil
@@ -56,7 +56,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler) {
         notifyAll()
       }
     }
-    funcs.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(value)))
+    funcs.foreach(f => LAFuture.executeWithObservers(scheduler, () => wrapper(f(value))))
   }
 
   /**
@@ -106,13 +106,13 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler) {
    * @return a Future that represents the function applied to the value of the future
    */
   def map[A](f: T => A): LAFuture[A] = {
-    val ret = new LAFuture[A](scheduler)
+    val ret = new LAFuture[A](scheduler, wrapper)
     onComplete(v => ret.complete(v.flatMap(n => Box.tryo(f(n)))))
     ret
   }
 
   def flatMap[A](f: T => LAFuture[A]): LAFuture[A] = {
-    val ret = new LAFuture[A](scheduler)
+    val ret = new LAFuture[A](scheduler, wrapper)
     onComplete(v => v match {
       case Full(v) =>
         Box.tryo(f(v)) match {
@@ -125,7 +125,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler) {
   }
 
   def filter(f: T => Boolean): LAFuture[T] = {
-    val ret = new LAFuture[T](scheduler)
+    val ret = new LAFuture[T](scheduler, wrapper)
     onComplete(v => ret.complete(v.filter(f)))
     ret
   }
@@ -176,7 +176,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler) {
    */
   def onSuccess(f: T => Unit) {
     synchronized {
-      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => f(item))} else
+      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => wrapper(f(item)))} else
       if (!aborted) {
         toDo ::= f
       }
@@ -190,7 +190,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler) {
    */
   def onFail(f: Box[Nothing] => Unit) {
     synchronized {
-      if (aborted) LAFuture.executeWithObservers(scheduler, () => f(failure)) else
+      if (aborted) LAFuture.executeWithObservers(scheduler, () => wrapper(f(failure))) else
       if (!satisfied) {
         onFailure ::= f
       }
@@ -204,8 +204,8 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler) {
    */
   def onComplete(f: Box[T] => Unit) {
     synchronized {
-      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => f(Full(item)))} else
-      if (aborted) {LAFuture.executeWithObservers(scheduler, () => f(failure))} else
+      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => wrapper(f(Full(item))))} else
+      if (aborted) {LAFuture.executeWithObservers(scheduler, () => wrapper(f(failure)))} else
       onComplete ::= f
     }
   }
@@ -227,8 +227,8 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler) {
       if (!satisfied && !aborted) {
         aborted = true
         failure = e
-        onFailure.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(e)))
-        onComplete.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(e)))
+        onFailure.foreach(f => LAFuture.executeWithObservers(scheduler, () => wrapper(f(e))))
+        onComplete.foreach(f => LAFuture.executeWithObservers(scheduler, () => wrapper(f(e))))
         onComplete = Nil
         onFailure = Nil
         toDo = Nil
@@ -250,6 +250,10 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler) {
 final class AbortedFutureException(why: Box[Nothing]) extends Exception("Aborted Future")
 
 object LAFuture {
+  val defaultWrapper:CommonLoanWrapper = new CommonLoanWrapper {
+    override def apply[T](f: => T): T = f
+  }
+
   /**
    * Create an LAFuture from a function that
    * will be applied on a separate thread. The LAFuture
