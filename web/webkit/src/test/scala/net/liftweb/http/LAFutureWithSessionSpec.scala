@@ -21,7 +21,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
     }
 
     "fail if session is not available" in {
-      val future = LAFuture(() => "something", futureSpecScheduler).withCurrentSession
+      val future = LAFuture.build("something", futureSpecScheduler).withCurrentSession
 
       future.get(timeout) shouldEqual Failure("LiftSession not available in this thread context", Empty, Empty)
     }
@@ -30,7 +30,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
       val session = new LiftSession("Test Session", "", Empty)
 
       S.initIfUninitted(session) {
-        val future = LAFuture(() => "something", futureSpecScheduler).withCurrentSession
+        val future = LAFuture.build("something", futureSpecScheduler).withCurrentSession
 
         future.get(timeout) shouldEqual Full("something")
       }
