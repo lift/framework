@@ -262,8 +262,8 @@ object LAFuture {
    * @tparam T the type
    * @return an LAFuture that will yield its value when the value has been computed
    */
-  def apply[T](f: () => T, scheduler: LAScheduler = LAScheduler): LAFuture[T] = {
-    val ret = new LAFuture[T](scheduler)
+  def apply[T](f: () => T, scheduler: LAScheduler = LAScheduler, context:ContextFn = None): LAFuture[T] = {
+    val ret = new LAFuture[T](scheduler, context)
     scheduler.execute(() => {
       try {
       ret.satisfy(f())
@@ -280,8 +280,8 @@ object LAFuture {
    * @tparam T the type that
    * @return
    */
-  def build[T](f: => T, scheduler: LAScheduler = LAScheduler): LAFuture[T] = {
-    this.apply(() => f, scheduler)
+  def build[T](f: => T, scheduler: LAScheduler = LAScheduler, context:ContextFn = None): LAFuture[T] = {
+    this.apply(() => f, scheduler, context)
   }
 
   private val threadInfo = new ThreadLocal[List[LAFuture[_] => Unit]]

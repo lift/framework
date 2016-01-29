@@ -39,7 +39,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
     "have access to session variables in onComplete()" in {
       implicit val session = new LiftSession("Test Session", "", Empty)
 
-      val future = LAFuture(() => "onComplete", futureSpecScheduler).withImplicitSession
+      val future = LAFuture.build("onComplete", futureSpecScheduler).withImplicitSession
       future.onComplete {
         case Full(s) => TestVar1.set(s)
         case _ => fail("The future should have completed!")
@@ -75,7 +75,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
       val session = new LiftSession("Test Session", "", Empty)
 
       S.initIfUninitted(session) {
-        val future = LAFuture(() => "something in it", futureSpecScheduler).withCurrentSession
+        val future = LAFuture.build("something in it", futureSpecScheduler).withCurrentSession
         TestVar1("something")
         TestVar2("in it")
 
@@ -91,7 +91,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
       val session = new LiftSession("Test Session", "", Empty)
 
       S.initIfUninitted(session) {
-        val future = LAFuture(() => "something in it", futureSpecScheduler).withCurrentSession
+        val future = LAFuture.build("something in it", futureSpecScheduler).withCurrentSession
         TestVar1("something")
         TestVar2("in it")
 
@@ -107,7 +107,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
       val session = new LiftSession("Test Session", "", Empty)
 
       S.initIfUninitted(session) {
-        val future = LAFuture(() => "this", futureSpecScheduler).withCurrentSession
+        val future = LAFuture.build("this", futureSpecScheduler).withCurrentSession
         TestVar1(" and ")
         TestVar2("that")
 
@@ -130,7 +130,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
       val session = new LiftSession("Test Session", "", Empty)
 
       S.initIfUninitted(session) {
-        val future = LAFuture(() => "this", futureSpecScheduler).withCurrentSession
+        val future = LAFuture.build("this", futureSpecScheduler).withCurrentSession
         TestVar1(" and ")
         TestVar2("that")
 
@@ -144,7 +144,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
       val session = new LiftSession("Test Session", "", Empty)
 
       S.initIfUninitted(session) {
-        val future = LAFuture(() => "stuff", futureSpecScheduler).withCurrentSession
+        val future = LAFuture.build("stuff", futureSpecScheduler).withCurrentSession
         future.foreach(TestVar1.apply(_))
 
         TestVar1.get must eventually(beEqualTo("stuff"))
@@ -152,7 +152,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
     }
 
     "have the same scheduler as the original LAFuture when no session is available" in {
-      val future = LAFuture(() => "stuff", futureSpecScheduler).withCurrentSession
+      val future = LAFuture.build("stuff", futureSpecScheduler).withCurrentSession
 
       future.scheduler must beEqualTo(futureSpecScheduler)
     }
@@ -161,7 +161,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
       val session = new LiftSession("Test Session", "", Empty)
 
       S.initIfUninitted(session) {
-        val future = LAFuture(() => "stuff", futureSpecScheduler).withCurrentSession
+        val future = LAFuture.build("stuff", futureSpecScheduler).withCurrentSession
 
         future.scheduler must beEqualTo(futureSpecScheduler)
       }
