@@ -1,6 +1,8 @@
 package net.liftweb.http
 
-import scala.concurrent.{ExecutionContext, CanAwait, Future} 
+import net.liftweb.common.{Empty, Failure, Full}
+
+import scala.concurrent.{ExecutionContext, CanAwait, Future}
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
@@ -51,8 +53,12 @@ import scala.util.Try
   */
 object FutureWithSession {
   implicit class FutureDecorator[+T](future:Future[T]) {
-    val withCurrentSession:Future[T] = S.session.map(new FutureWithSession[T](future)(_)).
-      openOr(Future.failed(new Exception("LiftSession not available in this thread context")))
+    val withCurrentSession:Future[T] = S.session match {
+      case Full(s) => new FutureWithSession[T](future)(s)
+      case Failure(_, Full(ex), _) => Future.failed(ex)
+      case Failure(msg, _, _) => Future.failed(new Exception(msg))
+      case Empty => Future.failed(new Exception("LiftSession not available in this thread context"))
+    }
     def withImplicitSession(implicit session:LiftSession):Future[T] = new FutureWithSession[T](future)
   }
 }

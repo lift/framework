@@ -1,7 +1,7 @@
 package net.liftweb.http
 
 import net.liftweb.actor.LAFuture
-import net.liftweb.common.{CommonLoanWrapper, Box, Empty, Failure}
+import net.liftweb.common._
 
 /**
   * Contains implicit conversion for `net.liftweb.actor.LAFuture` to ease access to `LiftSession` resources.
@@ -60,13 +60,18 @@ object LAFutureWithSession {
     sf
   }
 
+  private def withFailure[T](f:LAFuture[T], failure:Failure):LAFuture[T] = {
+    val ff = new LAFuture[T](f.scheduler)
+    ff.complete(failure)
+    ff
+  }
+
   implicit class LAFutureDecorator[T](future:LAFuture[T]) {
-    val withCurrentSession:LAFuture[T] = S.session.map( s => withSession(future, s) )
-      .openOr {
-        val f = new LAFuture[T](future.scheduler)
-        f.fail(Failure("LiftSession not available in this thread context", Empty, Empty))
-        f
-      }
+    val withCurrentSession:LAFuture[T] = S.session match {
+      case Full(s) =>   withSession(future, s)
+      case f:Failure => withFailure(future, f)
+      case Empty =>     withFailure(future, Failure("LiftSession not available in this thread context", Empty, Empty))
+    }
 
     def withImplicitSession(implicit session:LiftSession):LAFuture[T] = withSession(future, session)
   }
