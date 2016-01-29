@@ -50,9 +50,9 @@ import net.liftweb.common.{CommonLoanWrapper, Box, Empty, Failure}
   * @see FutureWithSession
   */
 object LAFutureWithSession {
-  def sessionWrapper(session:LiftSession):CommonLoanWrapper = new CommonLoanWrapper {
+  def sessionWrapper(session:LiftSession):LAFuture.ContextFn = Some(new CommonLoanWrapper {
     override def apply[T](f: => T): T = S.initIfUninitted(session) { f }
-  }
+  })
 
   private def withSession[T](f:LAFuture[T], s:LiftSession):LAFuture[T] = {
     val sf = new LAFuture[T](f.scheduler, sessionWrapper(s))
