@@ -45,7 +45,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
         case _ => fail("The future should have completed!")
       }
 
-      S.initIfUninitted(session) { TestVar1.get must eventually(beEqualTo("onComplete")) }
+      S.initIfUninitted(session) { TestVar1.is must eventually(beEqualTo("onComplete")) }
     }
 
     "have access to session variables in onFail()" in {
@@ -58,7 +58,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
       }
       future.fail(new Exception("fail"))
 
-      S.initIfUninitted(session) { TestVar1.get must eventually(beEqualTo("fail")) }
+      S.initIfUninitted(session) { TestVar1.is must eventually(beEqualTo("fail")) }
     }
 
     "have access to session variables in onSuccess()" in {
@@ -68,7 +68,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
       future.onSuccess(TestVar1.apply(_))
       future.satisfy("success!!")
 
-      S.initIfUninitted(session) { TestVar1.get must eventually(beEqualTo("success!!")) }
+      S.initIfUninitted(session) { TestVar1.is must eventually(beEqualTo("success!!")) }
     }
 
     "have access to session variables in chains of filter()" in {
@@ -80,8 +80,8 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
         TestVar2("in it")
 
         val filtered = future
-          .filter(_.contains(TestVar1.get))
-          .filter(_.contains(TestVar2.get))
+          .filter(_.contains(TestVar1.is))
+          .filter(_.contains(TestVar2.is))
 
         filtered.get(timeout) must beEqualTo(Full("something in it"))
       }
@@ -96,8 +96,8 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
         TestVar2("in it")
 
         val filtered = future
-          .withFilter(_.contains(TestVar1.get))
-          .withFilter(_.contains(TestVar2.get))
+          .withFilter(_.contains(TestVar1.is))
+          .withFilter(_.contains(TestVar2.is))
 
         filtered.get(timeout) must beEqualTo(Full("something in it"))
       }
@@ -113,12 +113,12 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
 
         val fm1 = future.flatMap { s =>
           val f = new LAFuture[String](futureSpecScheduler)
-          f.satisfy(s + TestVar1.get)
+          f.satisfy(s + TestVar1.is)
           f
         }
         val fm2 = fm1.flatMap { s =>
           val f = new LAFuture[String](futureSpecScheduler)
-          f.satisfy(s + TestVar2.get)
+          f.satisfy(s + TestVar2.is)
           f
         }
 
@@ -134,7 +134,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
         TestVar1(" and ")
         TestVar2("that")
 
-        val mapped = future.map(_ + TestVar1.get).map(_ + TestVar2.get)
+        val mapped = future.map(_ + TestVar1.is).map(_ + TestVar2.is)
 
         mapped.get(timeout) must beEqualTo(Full("this and that"))
       }
@@ -147,7 +147,7 @@ class LAFutureWithSessionSpec extends Specification with ThrownMessages {
         val future = LAFuture.build("stuff", futureSpecScheduler).withCurrentSession
         future.foreach(TestVar1.apply(_))
 
-        TestVar1.get must eventually(beEqualTo("stuff"))
+        TestVar1.is must eventually(beEqualTo("stuff"))
       }
     }
 

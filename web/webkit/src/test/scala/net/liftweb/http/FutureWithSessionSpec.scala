@@ -44,7 +44,7 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
         case _ => // Just to avoid the compiler warning
       }
 
-      S.initIfUninitted(session) { TestVar1.get must eventually(beEqualTo("onComplete")) }
+      S.initIfUninitted(session) { TestVar1.is must eventually(beEqualTo("onComplete")) }
     }
 
     "have access to session variables in andThen() chains" in {
@@ -62,8 +62,8 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
       val expected:Option[Try[String]] = Some(Success("new value"))
 
       S.initIfUninitted(session) {
-        TestVar1.get must eventually(beEqualTo("new value"))
-        TestVar2.get must eventually(beEqualTo("new value"))
+        TestVar1.is must eventually(beEqualTo("new value"))
+        TestVar2.is must eventually(beEqualTo("new value"))
         actual.value must eventually(beEqualTo(expected))
       }
     }
@@ -77,8 +77,8 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
         Future("something").withCurrentSession
       }
       val actual:Future[String] = future
-        .collect { case s:String => s+"-"+TestVar1.get }
-        .collect { case s:String => s+"-"+TestVar2.get }
+        .collect { case s:String => s+"-"+TestVar1.is }
+        .collect { case s:String => s+"-"+TestVar2.is }
       val expected:Option[Try[String]] = Some(Success("something-collect1-collect2"))
 
       actual.value must eventually(beEqualTo(expected))
@@ -92,7 +92,7 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
         Future.failed[String](new Exception("failure")).withCurrentSession
       }
       val actual:Future[String] = future.failed
-        .collect { case e:Exception => e.getMessage+"-"+TestVar1.get }
+        .collect { case e:Exception => e.getMessage+"-"+TestVar1.is }
       val expected:Option[Try[String]] = Some(Success("failure-fail"))
 
       actual.value must eventually(beEqualTo(expected))
@@ -106,7 +106,7 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
         Future.failed[String](new Exception("failure")).withCurrentSession
       }
       val actual:Future[String] = future.fallbackTo(Future("success"))
-        .map(_+"-"+TestVar1.get)
+        .map(_+"-"+TestVar1.is)
       val expected:Option[Try[String]] = Some(Success("success-fallbackTo"))
 
       actual.value must eventually(beEqualTo(expected))
@@ -121,8 +121,8 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
         Future("has map1").withCurrentSession
       }
       val actual:Future[String] = future
-        .filter(_.contains(TestVar1.get))
-        .filter(_.contains(TestVar2.get))
+        .filter(_.contains(TestVar1.is))
+        .filter(_.contains(TestVar2.is))
 
       val expected:Option[Try[String]] = Some(Success("has map1"))
 
@@ -138,8 +138,8 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
         Future("something").withCurrentSession
       }
       val actual:Future[String] = future
-        .flatMap{in => val out = in+"-"+TestVar1.get; Future(out)}
-        .flatMap{in => val out = in+"-"+TestVar2.get; Future(out)}
+        .flatMap{in => val out = in+"-"+TestVar1.is; Future(out)}
+        .flatMap{in => val out = in+"-"+TestVar2.is; Future(out)}
       val expected:Option[Try[String]] = Some(Success("something-map1-map2"))
 
       actual.value must eventually(beEqualTo(expected))
@@ -151,7 +151,7 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
       val future:Future[String] = Future("foreach").withImplicitSession
       future.foreach(TestVar1.set)
 
-      S.initIfUninitted(session) { TestVar1.get } must eventually(beEqualTo("foreach"))
+      S.initIfUninitted(session) { TestVar1.is } must eventually(beEqualTo("foreach"))
     }
 
     "have access to session variables in map() chains" in {
@@ -163,8 +163,8 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
         Future("something").withCurrentSession
       }
       val actual:Future[String] = future
-        .map(_+"-"+TestVar1.get)
-        .map(_+"-"+TestVar2.get)
+        .map(_+"-"+TestVar1.is)
+        .map(_+"-"+TestVar2.is)
       val expected:Option[Try[String]] = Some(Success("something-map1-map2"))
 
       actual.value must eventually(beEqualTo(expected))
@@ -179,7 +179,7 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
       }
       val actual:Future[String] = future
         .mapTo[String]
-        .map(_+"-"+TestVar1.get)
+        .map(_+"-"+TestVar1.is)
       val expected:Option[Try[String]] = Some(Success("something-mapTo"))
 
       actual.value must eventually(beEqualTo(expected))
@@ -191,7 +191,7 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
       val future:Future[String] = Future.failed[String](new Exception("failure")).withImplicitSession
       future.onFailure { case e:Exception => TestVar1.set(e.getMessage) }
 
-      S.initIfUninitted(session) { TestVar1.get } must eventually(beEqualTo("failure"))
+      S.initIfUninitted(session) { TestVar1.is } must eventually(beEqualTo("failure"))
     }
 
     "have access to session variables in onSuccess()" in {
@@ -200,7 +200,7 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
       val future:Future[String] = Future("onSuccess").withImplicitSession
       future.onSuccess { case s => TestVar1.set(s) }
 
-      S.initIfUninitted(session) { TestVar1.get } must eventually(beEqualTo("onSuccess"))
+      S.initIfUninitted(session) { TestVar1.is } must eventually(beEqualTo("onSuccess"))
     }
 
     "have access to session variables with recover()" in {
@@ -212,8 +212,8 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
         Future.failed[String](new Exception("failure")).withCurrentSession
       }
       val actual:Future[String] = future
-        .recover { case e:Throwable => e.getMessage+"-"+TestVar1.get }
-        .map(_+"-"+TestVar2.get)
+        .recover { case e:Throwable => e.getMessage+"-"+TestVar1.is }
+        .map(_+"-"+TestVar2.is)
       val expected:Option[Try[String]] = Some(Success("failure-recover1-recover2"))
 
       actual.value must eventually(beEqualTo(expected))
@@ -228,8 +228,8 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
         Future.failed[String](new Exception("failure")).withCurrentSession
       }
       val actual:Future[String] = future
-        .recoverWith { case e:Throwable => val out = e.getMessage+"-"+TestVar1.get; Future(out) }
-        .map(_+"-"+TestVar2.get)
+        .recoverWith { case e:Throwable => val out = e.getMessage+"-"+TestVar1.is; Future(out) }
+        .map(_+"-"+TestVar2.is)
       val expected:Option[Try[String]] = Some(Success("failure-recover1-recover2"))
 
       actual.value must eventually(beEqualTo(expected))
@@ -244,8 +244,8 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
         Future("orig").withCurrentSession
       }
       val actual:Future[String] = future
-        .transform( s => throw new Exception(TestVar1.get), identity[Throwable] )
-        .transform( identity[String], t => new Exception(t.getMessage+"-"+TestVar2.get) )
+        .transform( s => throw new Exception(TestVar1.is), identity[Throwable] )
+        .transform( identity[String], t => new Exception(t.getMessage+"-"+TestVar2.is) )
         .recover { case e:Exception => e.getMessage }
 
       val expected:Option[Try[String]] = Some(Success("transform1-transform2"))
@@ -262,7 +262,7 @@ object FutureWithSessionSpec extends Specification with ThrownMessages {
       }
       val actual:Future[String] = future
         .zip(Future("two"))
-        .collect { case (one, two) => one+"-"+TestVar1.get+"-"+two }
+        .collect { case (one, two) => one+"-"+TestVar1.is+"-"+two }
 
       val expected:Option[Try[String]] = Some(Success("one-zip-two"))
 
