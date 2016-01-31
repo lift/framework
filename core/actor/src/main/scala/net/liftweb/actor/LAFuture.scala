@@ -79,7 +79,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context:LAFuture.Con
    * Private tail-recursive implementation of get
    */
   @scala.annotation.tailrec
-  private def get_rec: T = synchronized {
+  private [this] def get_rec: T = synchronized {
     if (satisfied) item
     else if (aborted) throw new AbortedFutureException(failure)
     else {

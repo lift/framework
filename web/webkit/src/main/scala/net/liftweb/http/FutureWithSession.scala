@@ -5,6 +5,8 @@ import net.liftweb.common.{Empty, Failure, Full}
 import scala.concurrent.{ExecutionContext, CanAwait, Future}
 import scala.concurrent.duration.Duration
 import scala.util.Try
+import FutureWithSession._
+
 
 /**
   * Contains implicit conversion for `scala.concurrent.Future` to ease access to `LiftSession` resources.
@@ -64,8 +66,6 @@ object FutureWithSession {
 }
 
 private [http] class FutureWithSession[+T](future:Future[T])(implicit session:LiftSession) extends Future[T] {
-  import FutureWithSession._
-
   // Override all of the abstract Future[T] stuff to pass thru
   override def isCompleted:Boolean = future.isCompleted
   override def value:Option[Try[T]] = future.value

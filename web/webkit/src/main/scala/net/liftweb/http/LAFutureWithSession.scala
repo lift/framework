@@ -54,13 +54,13 @@ object LAFutureWithSession {
     override def apply[T](f: => T): T = S.initIfUninitted(session) { f }
   })
 
-  private def withSession[T](f:LAFuture[T], s:LiftSession):LAFuture[T] = {
+  private [this] def withSession[T](f:LAFuture[T], s:LiftSession):LAFuture[T] = {
     val sf = new LAFuture[T](f.scheduler, sessionWrapper(s))
     f.onComplete(sf.complete)
     sf
   }
 
-  private def withFailure[T](f:LAFuture[T], failure:Failure):LAFuture[T] = {
+  private [this] def withFailure[T](f:LAFuture[T], failure:Failure):LAFuture[T] = {
     val ff = new LAFuture[T](f.scheduler)
     ff.complete(failure)
     ff
