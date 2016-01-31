@@ -52,8 +52,8 @@ import scala.util.Try
   * @see LAFutureWithSession
   */
 object FutureWithSession {
-  implicit class FutureDecorator[+T](future:Future[T]) {
-    val withCurrentSession:Future[T] = S.session match {
+  implicit class FutureDecorator[+T](val future:Future[T]) extends AnyVal {
+    def withCurrentSession:Future[T] = S.session match {
       case Full(s) => new FutureWithSession[T](future)(s)
       case Failure(_, Full(ex), _) => Future.failed(ex)
       case Failure(msg, _, _) => Future.failed(new Exception(msg))
