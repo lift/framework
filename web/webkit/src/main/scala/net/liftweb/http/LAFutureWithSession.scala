@@ -68,9 +68,8 @@ object LAFutureWithSession {
 
   implicit class LAFutureDecorator[T](future:LAFuture[T]) {
     val withCurrentSession:LAFuture[T] = S.session match {
-      case Full(s) =>   withSession(future, s)
-      case f:Failure => withFailure(future, f)
-      case Empty =>     withFailure(future, Failure("LiftSession not available in this thread context", Empty, Empty))
+      case Full(s) =>    withSession(future, s)
+      case f:EmptyBox => withFailure(future, f ?~! "LiftSession not available in this thread context")
     }
 
     def withImplicitSession(implicit session:LiftSession):LAFuture[T] = withSession(future, session)
