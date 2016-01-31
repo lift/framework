@@ -58,6 +58,15 @@
       ajaxOnEnd: function() {
         // noop
       },
+      ajaxAddMeta: function(toSend) {
+        // noop
+      },
+      ajaxQueueSort: function(ajaxQueue) {
+        ajaxQueueSortDefault(ajaxQueue)
+      },
+      ajaxCalcRetryTime: function(toSend) {
+        return ajaxCalcRetryTimeDefault(toSend)
+      },
       ajaxOnSessionLost: function() {
         window.location.reload();
       },
@@ -113,6 +122,7 @@
         onUploadProgress: onUploadProgress,
         version: ajaxVersion++
       };
+      settings.ajaxAddMeta(toSend);
 
       // Make sure we wrap when we hit JS max int.
       var version = ajaxVersion;
@@ -128,7 +138,7 @@
       }
 
       ajaxQueue.push(toSend);
-      ajaxQueueSort();
+      settings.ajaxQueueSort(ajaxQueue);
 
       if (initialized) {
         doCycleQueueCnt++;
@@ -138,8 +148,12 @@
       return false; // buttons in forms don't trigger the form
     }
 
-    function ajaxQueueSort() {
+    function ajaxQueueSortDefault(ajaxQueue) {
       ajaxQueue.sort(function (a, b) { return a.when - b.when; });
+    }
+
+    function ajaxCalcRetryTimeDefault(toSend) {
+      return 1000 * Math.pow(2, toSend.retryCnt);
     }
 
     function startAjax() {
@@ -242,11 +256,11 @@
             }
 
             if (cnt < settings.ajaxRetryCount) {
-              aboutToSend.retryCnt = cnt + 1;
               var now = (new Date()).getTime();
-              aboutToSend.when = now + (1000 * Math.pow(2, cnt));
+              aboutToSend.when = now + settings.ajaxCalcRetryTime(aboutToSend);
+              aboutToSend.retryCnt = cnt + 1;
               queue.push(aboutToSend);
-              ajaxQueueSort();
+              settings.ajaxQueueSort(queue);
             }
             else {
               if (aboutToSend.onFailure) {
@@ -598,6 +612,14 @@
       ajaxOnSessionLost: function() {
         settings.ajaxOnSessionLost();
       },
+      addAjaxMetaForOrderedRetry: function(toSend) {
+        toSend.submitted = toSend.when
+      },
+      ajaxQueueSortDefault: ajaxQueueSortDefault,
+      ajaxQueueSortOrderedRetry: function(ajaxQueue){
+        ajaxQueue.sort(function (a, b) { return a.submitted - b.submitted; })
+      },
+      ajaxCalcRetryTimeDefault: ajaxCalcRetryTimeDefault,
       calcAjaxUrl: calcAjaxUrl,
       registerComets: registerComets,
       cometOnSessionLost: function() {

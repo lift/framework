@@ -58,6 +58,7 @@ object LiftJavaScript {
 
   def settings: JsObj = {
     val jsCometServer = LiftRules.cometServer().map(Str(_)).getOrElse(JsNull)
+    val (ajaxAddMeta, ajaxQueueSort) = LiftRules.ajaxAddMetaAndQueueSortFuncs.vend.openOr((LiftRules.ajaxAddMetaDefaultFunc, LiftRules.ajaxQueueSortDefaultFunc))
     JsObj(
       "liftPath" -> LiftRules.liftPath,
       "ajaxRetryCount" -> Num(LiftRules.ajaxRetryCount.openOr(3)),
@@ -70,7 +71,10 @@ object LiftJavaScript {
       "logError" -> LiftRules.jsLogFunc.map(fnc => AnonFunc("msg", fnc(JsVar("msg")))).openOr(AnonFunc("msg", Noop)),
       "ajaxOnFailure" -> LiftRules.ajaxDefaultFailure.map(fnc => AnonFunc(fnc())).openOr(AnonFunc(Noop)),
       "ajaxOnStart" -> LiftRules.ajaxStart.map(fnc => AnonFunc(fnc())).openOr(AnonFunc(Noop)),
-      "ajaxOnEnd" -> LiftRules.ajaxEnd.map(fnc => AnonFunc(fnc())).openOr(AnonFunc(Noop))
+      "ajaxOnEnd" -> LiftRules.ajaxEnd.map(fnc => AnonFunc(fnc())).openOr(AnonFunc(Noop)),
+      "ajaxAddMeta" -> AnonFunc("toSend", ajaxAddMeta(JsVar("toSend"))),
+      "ajaxQueueSort" -> AnonFunc("ajaxQueue", ajaxQueueSort(JsVar("ajaxQueue"))),
+      "ajaxCalcRetryTime" -> AnonFunc("toSend", JsReturn(LiftRules.ajaxCalcRetryTimeFunc.vend.openOr(LiftRules.ajaxCalcRetryTimeDefaultFunc).apply(JsVar("toSend"))))
     )
   }
 

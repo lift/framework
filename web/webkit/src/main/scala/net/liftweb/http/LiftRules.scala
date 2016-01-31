@@ -915,6 +915,118 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     ajaxEnd = Full(f: () => JsCmd)
   }
 
+  private [http] val ajaxAddMetaDefaultFunc:JsVar => JsCmd = toSend => Noop
+  private [http] val ajaxQueueSortDefaultFunc:JsVar => JsCmd = ajaxQueue => JE.Call("lift.ajaxQueueSortDefault", ajaxQueue)
+
+  /**
+    * Sets the `ajaxAddMeta()` and `ajaxQueueSort()` javascript functions, allowing the application's ajax
+    * retry logic to be configured.
+    *
+    * By default, Lift will retry failed ajax requests with an exponential backoff (see `LiftRules.ajaxCalcRetryTimeFunc`),
+    * allowing messages to arrive at the server in a shuffled order during periods of failed communications with the server.
+    *
+    * Alternatively, you can have Lift never send messages out of order:
+    * {{{
+    * LiftRules.ajaxAddMetaAndQueueSortFuncs.default.set(() => LiftRules.ajaxAddMetaAndQueueSortInOrderReceivedFuncs)
+    * }}}
+    *
+    * You could also define your own message ordering policy.
+    *
+    * Note: The function you provide is run in the context of a request, allowing you to have conditional logic for
+    * setting these functions.  For instance, you could have on URL which serves an application requiring ordered
+    * messages, while others do not.  Example:
+    * {{{
+    * LiftRules.ajaxAddMetaAndQueueSortFuncs.default.set { () =>
+    *   S.request match {
+    *     case Full(Req("ordered" :: Nil, _, _)) => LiftRules.ajaxAddMetaAndQueueSortInOrderReceivedFuncs
+    *     case _ => LiftRules.ajaxAddMetaAndQueueSortDefaultFuncs
+    *   }
+    * }
+    * }}}
+    *
+    */
+  val ajaxAddMetaAndQueueSortFuncs: FactoryMaker[Box[(JsVar => JsCmd, JsVar => JsCmd)]] = new FactoryMaker[Box[(JsVar => JsCmd, JsVar => JsCmd)]]( () =>
+    Full((ajaxAddMetaDefaultFunc, ajaxQueueSortDefaultFunc))
+  ) {}
+
+  /**
+    * Set `LiftRules.ajaxAddMetaAndQueueSortFuncs` to this value to force Lift to not send messages out of order in
+    * the event of an ajax error.
+    *
+    * Example:
+    * `LiftRules.ajaxAddMetaAndQueueSortFuncs.default.set(() => LiftRules.ajaxAddMetaAndQueueSortInOrderReceivedFuncs)`
+    *
+    * Note: an ajax error is not necessarily a network error, as throwing an exception
+    * in a server-side ajax function will raise an ajax error.  If you choose this ajax retry policy, it is advisable
+    * to try/catch all of your ajax function logic.
+    *
+    * Note: the default for `LiftRules.ajaxRetryCount` is 3.  If retries are ordered and the retries are exhausted,
+    * then Lift will drop the failed request and pick up the next.  You will need to adjust this setting if it is
+    * not acceptable for your ajax messages to ever be received by the server in the event a request is lost.
+    *
+    * Note: The default retry timeout is exponentially-backed off (see `LiftRules.ajaxCalcRetryTimeFunc`).  Hence
+    * if you set `LiftRules.ajaxRetryCount` to a high number, then you can potentially starve out clients who
+    * experince long periods of errors.
+    */
+  val ajaxAddMetaAndQueueSortInOrderReceivedFuncs: Box[(JsVar => JsCmd, JsVar => JsCmd)] = Full(
+    toSend => JE.Call("lift.addAjaxMetaForOrderedRetry", toSend),
+    ajaxQueue => JE.Call("lift.ajaxQueueSortOrderedRetry", ajaxQueue)
+  )
+
+  /**
+    * The default functions provided to `LiftRules.ajaxAddMetaAndQueueSortFuncs`.
+    *
+    * These are provided in case you need conditional logic that would sometimes result in the default behavior.
+    * Example:
+    * {{{
+    * LiftRules.ajaxAddMetaAndQueueSortFuncs.default.set { () =>
+    *   S.request match {
+    *     case Full(Req("ordered" :: Nil, _, _)) => LiftRules.ajaxAddMetaAndQueueSortInOrderReceivedFuncs
+    *     case _ => LiftRules.ajaxAddMetaAndQueueSortDefaultFuncs
+    *   }
+    * }
+    * }}}
+    */
+  val ajaxAddMetaAndQueueSortDefaultFuncs: Box[(JsVar => JsCmd, JsVar => JsCmd)] = Full(
+    ajaxAddMetaDefaultFunc,
+    ajaxQueueSortDefaultFunc
+  )
+
+  /**
+    * Sets the `ajaxCalcRetryTime()` javascript function.
+    *
+    * By default, Lift will retry failed ajax requests with an exponential backoff.  Use this setting to configure
+    * this behavior according to your application's needs.  For example, you have Lift retry ajax failures every
+    * 1500 milliseconds:
+    * {{{
+    * LiftRules.ajaxCalcRetryTimeFunc.default.set(() => Full(toSend =>
+    *   JsRaw("1500")
+    * ))
+    * }}}
+    *
+    * Note that the `toSend` argument is the ajax request wrapped with some meta data.  Of note is the `retryCnt`
+    * field which the default implementation uses to calculate the exponential backoff.
+    */
+  val ajaxCalcRetryTimeFunc: FactoryMaker[Box[JsVar => JsExp]] = new FactoryMaker[Box[JsVar => JsExp]](() =>
+    Full(ajaxCalcRetryTimeDefaultFunc)
+  ) {}
+
+  /**
+    * The default function for `LiftRules.ajaxCalcRetryTimeFunc`.
+    *
+    * This is provided in case you need conditional logic which sometimes results in the default bahavior.
+    * Example:
+    * {{{
+    * LiftRules.ajaxCalcRetryTimeFunc.default.set { () =>
+    *   S.request match {
+    *     case Full(Req("constant" :: Nil, _, _)) => Full(toSend => JsRaw("1500")))
+    *     case _ => Full(LiftRules.ajaxCalcRetryTimeDefaultFunc)
+    *   }
+    * }
+    * }}}
+    */
+  val ajaxCalcRetryTimeDefaultFunc:JsVar => JsExp = toSend => JE.Call("lift.ajaxCalcRetryTimeDefault", toSend)
+
   /**
    * An XML header is inserted at the very beginning of returned XHTML pages.
    * This function defines the cases in which such a header is inserted.  The
