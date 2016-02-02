@@ -13,7 +13,7 @@
   "unused": true,
   "browser": true,
   "jquery": true,
-  "globals": {
+  "predef": {
     "JSON": false
   }
 }

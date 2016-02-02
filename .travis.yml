@@ -18,5 +18,6 @@ node_js:
 
 before_script:
   - "cd web/webkit"
+  - "npm set progress=false"
   - "npm install"
   - "cd -"

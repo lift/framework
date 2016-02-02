@@ -19,8 +19,12 @@ import Keys._
 import net.liftweb.sbt.LiftBuildPlugin._
 import Dependencies._
 
-import com.typesafe.sbt.web.SbtWeb
+import com.typesafe.sbt.web._
 import com.typesafe.sbt.web.SbtWeb.autoImport._
+import com.typesafe.sbt.jshint.Import._
+import com.typesafe.sbt.uglify.Import._
+
+import org.webjars.WebJarAssetLocator.WEBJARS_PATH_PREFIX
 
 /**
  * Pattern-matches an attributed file, extracting its module organization,
@@ -126,21 +130,42 @@ object BuildDef extends Build {
         .dependsOn(util)
         .settings(description := "Testkit for Webkit Library",
                   libraryDependencies ++= Seq(commons_httpclient, servlet_api))
+
   lazy val webkit =
     webProject("webkit")
         .dependsOn(util, testkit % "provided")
+        .enablePlugins(SbtWeb)
         .settings(libraryDependencies ++= Seq(mockito_all, jquery, jasmineCore, jasmineAjax))
-        .settings(yuiCompressor.Plugin.yuiSettings: _*)
         .settings(description := "Webkit Library",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv =>
                     Seq(commons_fileupload, rhino, servlet_api, specs2.copy(configurations = Some("provided")), jetty6,
-                      jwebunit)
+                      jwebunit, webjars_locator)
                   },
                   initialize in Test <<= (sourceDirectory in Test) { src =>
                     System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
                   },
-                  (compile in Compile) <<= (compile in Compile) dependsOn (WebKeys.assets),
+                  pipelineStages := Seq(uglify),
+                  (compile in Compile) <<= (compile in Compile) dependsOn (JshintKeys.jshint),
+                  (packageBin in Compile) <<= (packageBin in Compile).dependsOn(WebKeys.pipeline),
+                  // The asssets will only be included in the JAR if `package` is called explicitly.
+                  publish <<= (publish).dependsOn(packageBin in Compile),
+                  publishLocal <<= (publishLocal).dependsOn(packageBin in Compile),
+                  /*
+                   * By default, sbt-web only puts the files that are in src/main/assets in the jar.
+                   * This overrides that behavior and adds the files we want, which includes
+                   * the sources, the minified versions, and the map files.
+                   */
+                  WebKeys.exportedMappings in Assets := {
+                    val prefix = SbtWeb.path(s"${WEBJARS_PATH_PREFIX}/${moduleName.value}/${version.value}/")
+                    val assetsOutDir = UglifyKeys.buildDir.value
+
+                    listFilesRecursively(assetsOutDir, "*").flatMap { file =>
+                      IO.relativize(assetsOutDir, file).map { relativePath =>
+                        (file, prefix + relativePath)
+                      }
+                    }
+                  },
                   /**
                     * This is to ensure that the tests in net.liftweb.webapptest run last
                     * so that other tests (MenuSpec in particular) run before the SiteMap
@@ -240,5 +265,17 @@ object BuildDef extends Build {
           }.toMap
         }
       )
+  }
+
+  def listFilesRecursively(dir: File, filter: FileFilter): Array[File] = {
+    val files: Array[File] = IO.listFiles(dir)
+    files.flatMap { file =>
+      if (file.isDirectory)
+        listFilesRecursively(file, filter)
+      else if (filter.accept(file))
+        Array(file)
+      else
+        Array[File]()
+    }
   }
 }

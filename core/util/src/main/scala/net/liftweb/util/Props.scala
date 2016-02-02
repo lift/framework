@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 WorldWide Conferencing, LLC
+ * Copyright 2007-2016 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -260,8 +260,10 @@ private[util] trait Props extends Logger {
   /**
    * Is the system running in production mode (apply full optimizations)
    */
-  lazy val productionMode: Boolean = mode == Props.RunModes.Production ||
-  mode == Props.RunModes.Pilot || mode == Props.RunModes.Staging
+  lazy val productionMode: Boolean = isProductionMode(mode)
+
+  def isProductionMode(rm: RunMode): Boolean =
+    rm == Production || rm == Pilot || rm == Staging
 
   /**
    * Is the system running in development mode
@@ -430,6 +432,8 @@ object Props extends Props {
    * Enumeration of available run modes.
    */
   object RunModes extends Enumeration {
+    type RunMode = Value
+
     val Development = Value(1, "Development")
     val Test = Value(2, "Test")
     val Staging = Value(3, "Staging")

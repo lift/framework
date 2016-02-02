@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 WorldWide Conferencing, LLC
+ * Copyright 2007-2016 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package provider 
+package net.liftweb
+package http
+package provider
 
 import net.liftweb.common._
 import net.liftweb.util._
@@ -107,10 +107,27 @@ trait HTTPProvider {
     }
 
   private def preBoot() {
-    // do this stateless
+    val legacyAssets = Seq("lift", "jlift", "liftExtCore", "liftYUI")
+
     LiftRules.statelessDispatch.prepend(NamedPF("Classpath service") {
-      case r@Req(mainPath :: subPath, suffx, _) if (mainPath == LiftRules.resourceServerPath) =>
-        ResourceServer.findResourceInClasspath(r, r.path.wholePath.drop(1))
+      case r@Req(firstPart :: secondPart :: _, _, _) if (firstPart == LiftRules.resourceServerPath) => {
+        /**
+         * This is for serving assets that were moved to src/main/assets/js
+         * via WebJarServer for backwards compatibility.
+         */
+        if (legacyAssets.contains(secondPart)) {
+          val asset = s"${r.path.partPath.last}.${r.path.suffix}"
+          val assetPath = WebJarLocator.locateAsset(asset).split("/").filter(_.nonEmpty).toList
+          logger.warn(s"""Serving Lift files via ResourceServer (/classpath) is deprecated. Please use the new WebJars snippet. E.g. <script data-lift="WebJars.js?src=${asset}"></script>""")
+          WebJarServer.serveResource(r, assetPath)
+        } else {
+          ResourceServer.findResourceInClasspath(r, r.path.wholePath.drop(1))
+        }
+      }
+
+      case r@Req(firstPart :: _, _, _) if (firstPart == "webjars") => {
+        WebJarServer.serveResource(r, r.path.wholePath)
+      }
     })
   }
 
@@ -119,7 +136,7 @@ trait HTTPProvider {
       ResourceBundle getBundle (LiftRules.liftCoreResourceName)
 
       if (Props.productionMode && LiftRules.templateCache.isEmpty) {
-        // Since we're in productin mode and user did not explicitely set any template caching, we're setting it
+        // Since we're in production mode and user did not explicitly set any template caching, we're setting it
         LiftRules.templateCache = Full(InMemoryCache(500))
       }
     } catch {

@@ -47,6 +47,7 @@ object Dependencies {
   lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.0.1"
   lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7R4"
   lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.0.1"
+  lazy val webjars_locator        = "org.webjars"                % "webjars-locator"    % "0.29"
   lazy val xerces                 = "xerces" % "xercesImpl" % "2.11.0"
 
   // Aliases
