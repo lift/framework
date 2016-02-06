@@ -81,6 +81,7 @@ object ExtractionBugs extends Specification {
 
     val holder = Holder(List(("string", 1L)))
     val serialized = compactRender(Extraction.decompose(holder))
+    println(serialized)
 
     val deserialized = parse(serialized).extract[Holder]
     deserialized must_== holder
