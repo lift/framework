@@ -76,6 +76,18 @@ object ExtractionBugs extends Specification {
     }
   }
 
+  "deserialize List of Tuple with Long" in {
+    implicit val formats = DefaultFormats
+
+    val holder = Holder(List(("string", 1L)))
+    val serialized = compactRender(Extraction.decompose(holder))
+
+    val deserialized = parse(serialized).extract[Holder]
+    deserialized must_== holder
+  }
+
+  case class Holder(items: List[(String, Long)])
+
   case class Response(data: List[Map[String, Int]])
 
   case class OptionOfInt(opt: Option[Int])
