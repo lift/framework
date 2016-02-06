@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,7 +183,7 @@ package mongotestrecords {
 
     import net.liftweb.json.JsonDSL._
 
-    ensureIndex(("name" -> 1), true) // unique name
+    createIndex(("name" -> 1), true) // unique name
   }
 }
 

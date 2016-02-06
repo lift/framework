@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,12 +200,12 @@ class MongoDirectSpec extends Specification with MongoTestKit {
     success
   }
 
-  "Mongo useSession example" in {
+  "Mongo more examples" in {
 
     checkMongoIsRunning
 
-    // use a Mongo instance directly with a session
-    MongoDB.useSession ( db => {
+    // use a Mongo instance directly
+    MongoDB.use ( db => {
       val coll = db.getCollection("testCollection")
 
       // create a unique index on name
@@ -233,7 +233,7 @@ class MongoDirectSpec extends Specification with MongoTestKit {
       coll.save(doc2, WriteConcern.SAFE) must throwA[MongoException]
       Helpers.tryo(coll.save(doc2, WriteConcern.SAFE)) must beLike {
         case Failure(msg, _, _) =>
-          msg must contain("E11000 duplicate key error index")
+          msg must contain("E11000")
       }
       Helpers.tryo(coll.save(doc3, WriteConcern.SAFE)).toOption must beSome
 
@@ -244,18 +244,11 @@ class MongoDirectSpec extends Specification with MongoTestKit {
       // modifier operations $inc, $set, $push...
       val o2 = new BasicDBObject
       o2.put("$inc", new BasicDBObject("count", 1)) // increment count by 1
-      //o2.put("$set", new BasicDBObject("type", "docdb")) // set type
-      /**
-       * The update method only updates one document. see:
-       * http://jira.mongodb.org/browse/SERVER-268
-       */
       coll.update(qry, o2, false, false).getN must_== 1
       coll.update(qry, o2, false, false).isUpdateOfExisting must_== true
 
-
       // this update query won't find any docs to update
       coll.update(new BasicDBObject("name", "None"), o2, false, false).getN must_== 0
-      db.getLastError.get("updatedExisting") must_== false
 
       // regex query example
       val key = "name"

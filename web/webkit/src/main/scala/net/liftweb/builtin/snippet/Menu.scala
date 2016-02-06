@@ -77,7 +77,7 @@ object Menu extends DispatchSnippet {
    * <p>If you are using designer friendly invocation, you can access the namespaced attributes: <br/>
    * &lt;div class="lift:Menu?li_item:class=foo+bar"&gt;menu&lt;/div&gt;
    * </p>
-   * 
+   *
    * <p>For a simple, default menu, simply add</p>
    *
    * <pre>
@@ -433,25 +433,29 @@ object Menu extends DispatchSnippet {
       // Builds a link for the given loc
       def buildLink[T](loc : Loc[T]) = {
         Group(SiteMap.buildLink(name, text) match {
-          case e : Elem => 
+          case e : Elem =>
             Helpers.addCssClass(loc.cssClassForMenuItem,
                                 e % S.prefixedAttrsToMetaData("a"))
           case x => x
         })
       }
 
-      (S.request.flatMap(_.location), S.attr("param"), SiteMap.findAndTestLoc(name)) match {
-         case (_, Full(param), Full(loc: Loc[T] with ConvertableLoc[T])) => {
+      (S.originalRequest.flatMap(_.location), S.attr("param"), SiteMap.findAndTestLoc(name)) match {
+         case (_, Full(param), Full(loc: Loc[_] with ConvertableLoc[_])) => {
+           val typedLoc = loc.asInstanceOf[Loc[T] with ConvertableLoc[T]]
+
            (for {
-             pv <- loc.convert(param)
-             link <- loc.createLink(pv)
-           } yield 
-             Helpers.addCssClass(loc.cssClassForMenuItem,
-                                 <a href={link}></a> % 
-                                 S.prefixedAttrsToMetaData("a"))) openOr
-           Text("")
+             pv <- typedLoc.convert(param)
+             link <- typedLoc.createLink(pv)
+           } yield {
+             Helpers.addCssClass(typedLoc.cssClassForMenuItem,
+                                 <a href={link}></a> %
+                                 S.prefixedAttrsToMetaData("a"))
+           }) openOr {
+             Text("")
+           }
          }
-         
+
          case (Full(loc), _, _) if loc.name == name => {
            (linkToSelf, donthide) match {
              case (true, _) => buildLink(loc)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 WorldWide Conferencing, LLC
+ * Copyright 2007-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -898,7 +898,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    *   LiftRules.jsLogFunc = Full(v => JE.Call("alert",v).cmd)
    */
   @volatile var jsLogFunc: Box[JsVar => JsCmd] =
-    if (Props.devMode) Full(v => JE.Call("lift.logError", v))
+    if (Props.devMode) Full(v => JE.Call("lift.defaultLogError", v))
     else Empty
 
   /**
@@ -1132,10 +1132,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * A unified set of properties for managing how to treat
    * HTML, XHTML, HTML5.  The default behavior is to return an
-   * OldHtmlPropteries instance, but you can change this
-   * to return an Html5Properties instance any you'll get
-   * HTML5 support.
-   * LiftRules.htmlProperties.default.set((r: Req) => new Html5Properties(r.userAgent))
+   * Html5Properties instance, but you can change this.
+   * {{{
+   * LiftRules.htmlProperties.default.set((r: Req) => new XHtmlInHtml5OutProperties(r.userAgent))
+   * }}}
    */
   val htmlProperties: FactoryMaker[Req => HtmlProperties] =
     new FactoryMaker(() => (r: Req) => new Html5Properties(r.userAgent): HtmlProperties) {}
@@ -1695,7 +1695,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var autoIncludeComet: LiftSession => Boolean = session => true
 
   val autoIncludeAjaxCalc: FactoryMaker[() => LiftSession => Boolean] =
-  new FactoryMaker(() => () => (session: LiftSession) => true) {}
+  new FactoryMaker(() => () => (session: LiftSession) => session.stateful_?) {}
 
   /**
    * Tells Lift which JavaScript settings to use. If Empty, does not

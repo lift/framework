@@ -37,7 +37,7 @@ object MockWebSpec extends Specification  {
   import MockWeb._
 
   /** We can create our own LiftRules instance for the purpose of this spec. In the
-   * examples below we can call LiftRulesMocker.devTestLiftRulesInstance.doWit(mockLiftRules) {...}
+   * examples below we can call LiftRulesMocker.devTestLiftRulesInstance.doWith(mockLiftRules) {...}
    * whenever we want to evaluate LiftRules. For simpler usage, WebSpecSpec provides
    * full-featured LiftRules mocking.
    */
@@ -77,14 +77,14 @@ object MockWebSpec extends Specification  {
   "MockWeb" should {
     "provide a Req corresponding to a string url" in {
       testReq("http://foo.com/test/this?a=b&a=c", "/test") {
-        req => 
+        req =>
           req.uri must_== "/this"
           req.params("a") must_== List("b","c")
       }
     }
 
     "provide a Req corresponding to a HttpServletRequest" in {
-      val mockReq = 
+      val mockReq =
         new MockHttpServletRequest("http://foo.com/test/this", "/test")
 
       mockReq.method = "POST"
@@ -93,7 +93,7 @@ object MockWebSpec extends Specification  {
 
       mockReq.body = ("name" -> "joe") ~ ("age" -> 35)
 
-      testReq(mockReq) { 
+      testReq(mockReq) {
         req =>
           req.json_? must_== true
       }
@@ -126,9 +126,9 @@ object MockWebSpec extends Specification  {
     }
 
     "initialize S based on a HttpServletRequest" in {
-      val mockReq = 
+      val mockReq =
         new MockHttpServletRequest("http://foo.com/test/this?foo=bar", "/test")
-      
+
       testS(mockReq) {
         S.param("foo") must_== Full("bar")
 
@@ -170,7 +170,7 @@ object MockWebSpec extends Specification  {
 
     "simplify shared sessions" in {
       object testVar extends SessionVar[String]("Empty")
-   
+
       val session = testS("http://foo.com/test") {
         testVar("Foo!")
         S.session // returns the current session

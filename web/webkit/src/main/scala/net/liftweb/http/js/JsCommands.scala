@@ -601,12 +601,17 @@ trait HtmlFixer {
 
     val w = new java.io.StringWriter
 
-    val xhtml = S.session.
-    map(s =>
-      s.fixHtml(s.processSurroundAndInclude("JS SetHTML id: "
-                                            + uid,
-                                            content))).
-    openOr(content)
+    val xhtml =
+      S.session.map { session =>
+        session.normalizeHtmlAndAppendEventHandlers(
+          session.processSurroundAndInclude(
+            s"JS SetHTML id: $uid",
+            content
+          )
+        )
+      } openOr {
+        content
+      }
 
     import scala.collection.mutable.ListBuffer
     val lb = new ListBuffer[JsCmd]
@@ -703,13 +708,14 @@ object JsCmds {
    *
    * @return the element and a script that will give the element focus
    */
+  @deprecated("Use S.appendJs(Focus(id))","3.0.0")
   object FocusOnLoad {
     def apply(in: Elem): NodeSeq = {
       val (elem, id) = findOrAddId(in)
       elem ++ Script(LiftRules.jsArtifacts.onLoad(Run("if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").focus();};")))
     }
   }
-
+  
   /**
    * Sets the value of an element and sets the focus
    */

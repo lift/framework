@@ -815,11 +815,11 @@ object JsonAST {
 
   private[json] def quote(s: String): String = {
     val buf = new StringBuilder
-    appendEscapedString(buf, s)
+    appendEscapedString(buf, s, RenderSettings.compact)
     buf.toString
   }
 
-  private def appendEscapedString(buf: Appendable, s: String) {
+  private def appendEscapedString(buf: Appendable, s: String, settings: RenderSettings) {
     for (i <- 0 until s.length) {
       val c = s.charAt(i)
       val strReplacement = c match {
@@ -830,7 +830,8 @@ object JsonAST {
         case '\n' => "\\n"
         case '\r' => "\\r"
         case '\t' => "\\t"
-        case c if ((c >= '\u0000' && c < '\u0020')) => "\\u%04x".format(c: Int)
+        case c if ((c >= '\u0000' && c < '\u0020')) || settings.escapeChars.contains(c) =>
+          "\\u%04x".format(c: Int)
 
         case _ => ""
       }
@@ -845,20 +846,69 @@ object JsonAST {
   }
 
   object RenderSettings {
+    /**
+     * Pretty-print JSON with 2-space indentation.
+     */
     val pretty = RenderSettings(2)
+    /**
+     * Compact print JSON on one line.
+     */
     val compact = RenderSettings(0)
+
+    /**
+     * Ranges of chars that should be escaped if this JSON is to be evaluated
+     * directly as JavaScript (rather than by a valid JSON parser).
+     */
+    val jsEscapeChars =
+      List(('\u00ad', '\u00ad'),
+           ('\u0600', '\u0604'),
+           ('\u070f', '\u070f'),
+           ('\u17b4', '\u17b5'),
+           ('\u200c', '\u200f'),
+           ('\u2028', '\u202f'),
+           ('\u2060', '\u206f'),
+           ('\ufeff', '\ufeff'),
+           ('\ufff0', '\uffff'))
+        .foldLeft(Set[Char]()) {
+          case (set, (start, end)) =>
+            set ++ (start to end).toSet
+        }
+
+    /**
+     * Pretty-print JSON with 2-space indentation and escape all JS-sensitive
+     * characters.
+     */
+    val prettyJs = RenderSettings(2, jsEscapeChars)
+    /**
+     * Compact print JSON on one line and escape all JS-sensitive characters.
+     */
+    val compactJs = RenderSettings(0, jsEscapeChars)
   }
+  /**
+   * RenderSettings allows for customizing how JSON is rendered to a String.
+   * At the moment, you can customize the indentation (if 0, all the JSON is
+   * printed on one line), the characters that should be escaped (in addition
+   * to a base set that will always be escaped for valid JSON), and whether or
+   * not a space should be included after a field name.
+   */
   case class RenderSettings(
     indent: Int,
+    escapeChars: Set[Char] = Set(),
     spaceAfterFieldName: Boolean = false
   ) {
     val lineBreaks_? = indent > 0
   }
 
+  /**
+   * Render `value` using `[[RenderSettings.pretty]]`.
+   */
   def prettyRender(value: JValue): String = {
     render(value, RenderSettings.pretty)
   }
 
+  /**
+   * Render `value` to the given `appendable` using `[[RenderSettings.pretty]]`.
+   */
   def prettyRender(value: JValue, appendable: Appendable): String = {
     render(value, RenderSettings.pretty, appendable)
   }
@@ -871,10 +921,18 @@ object JsonAST {
     render(value, RenderSettings.compact)
   }
 
+  /**
+   * Render `value` to the given `appendable` using `[[RenderSettings.compact]]`.
+   */
   def compactRender(value: JValue, appendable: Appendable): String = {
     render(value, RenderSettings.compact, appendable)
   }
 
+  /**
+   * Render `value` to the given `appendable` (a `StringBuilder`, by default)
+   * using the given `settings`. The appendable's `toString` will be called and
+   * the result will be returned.
+   */
   def render(value: JValue, settings: RenderSettings, appendable: Appendable = new StringBuilder()): String = {
     bufRender(value, appendable, settings).toString()
   }
@@ -895,7 +953,7 @@ object JsonAST {
     case JInt(n)       => buf.append(n.toString)
     case JNull         => buf.append("null")
     case JString(null) => buf.append("null")
-    case JString(s)    => bufQuote(s, buf)
+    case JString(s)    => bufQuote(s, buf, settings)
     case JArray(arr)   => bufRenderArr(arr, buf, settings, indentLevel)
     case JObject(obj)  => bufRenderObj(obj, buf, settings, indentLevel)
     case JNothing      => sys.error("can't render 'nothing'") //TODO: this should not throw an exception
@@ -965,7 +1023,7 @@ object JsonAST {
 
           (0 until currentIndent).foreach(_ => buf.append(' '))
 
-          bufQuote(name, buf)
+          bufQuote(name, buf, settings)
           buf.append(':')
           if (settings.spaceAfterFieldName) {
             buf.append(' ')
@@ -986,9 +1044,9 @@ object JsonAST {
     buf
   }
 
-  private def bufQuote(s: String, buf: Appendable): Appendable = {
+  private def bufQuote(s: String, buf: Appendable, settings: RenderSettings): Appendable = {
     buf.append('"') //open quote
-    appendEscapedString(buf, s)
+    appendEscapedString(buf, s, settings)
     buf.append('"') //close quote
     buf
   }

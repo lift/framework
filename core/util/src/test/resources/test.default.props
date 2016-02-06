@@ -1,1 +1,10 @@
 default.jndi.name=from_props
+
+# Used in net.liftweb.util.PropsSpecs
+jetty.port=${PORT}
+db.url=jdbc:mysql://${DB_HOST}:${DB_PORT}/MYDB
+omniauth.baseurl=http://liftweb.net/
+
+an.int=42
+a.long=9223372036854775807
+a.boolean=true

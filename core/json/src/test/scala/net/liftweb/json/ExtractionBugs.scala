@@ -64,6 +64,18 @@ object ExtractionBugs extends Specification {
     json.extract[List[Option[String]]] mustEqual List(Some("one"), Some("two"), None)
   }
 
+  "Extraction should fail if you're attempting to extract an option and you're given data of the wrong type" in {
+    val json = JsonParser.parse("""{"opt": "hi"}""")
+    json.extract[OptionOfInt] must throwA[MappingException].like {
+      case e => e.getMessage mustEqual "No usable value for opt\nDo not know how to convert JString(hi) into int"
+    }
+
+    val json2 = JString("hi")
+    json2.extract[Option[Int]] must throwA[MappingException].like {
+      case e => e.getMessage mustEqual "Do not know how to convert JString(hi) into int"
+    }
+  }
+
   case class Response(data: List[Map[String, Int]])
 
   case class OptionOfInt(opt: Option[Int])

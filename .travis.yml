@@ -1,11 +1,22 @@
-sudo: false
+language: scala
 cache:
   directories:
-    - '$HOME/.m2/repository'
+    - '$HOME/node_modules'
 services:
   - mongodb
 jdk:
-  - oraclejdk7
-  - openjdk7
+  - oraclejdk8
 
-script: ./liftsh test
+script: ./travis.sh
+
+branches:
+  only:
+    - master
+
+node_js:
+  - "4.1"
+
+before_script:
+  - "cd web/webkit"
+  - "npm install"
+  - "cd -"

@@ -20,50 +20,60 @@ package util
 import java.net.InetAddress
 import java.util.Properties
 import java.io.InputStream
+import scala.collection.JavaConverters._
 import Helpers._
 import common._
 
-/**
- * Configuration management utilities.
- *
- * If you want to provide a configuration file for a subset of your application
- * or for a specific environment, Lift expects configuration files to be named
- * in a manner relating to the context in which they are being used. The standard
- * name format is:
- *
- * <pre>
- *   modeName.userName.hostName.props
- *
- *   examples:
- *   dpp.yak.props
- *   test.dpp.yak.props
- *   production.moose.props
- *   staging.dpp.props
- *   test.default.props
- *   default.props
- * </pre>
- *
- * with hostName and userName being optional, and modeName being one of
- * "test", "staging", "production", "pilot", "profile", or "default".
- * The standard Lift properties file extension is "props".
- */
-object Props extends Logger {
+private[util] trait Props extends Logger {
+  type PropProvider = scala.collection.Map[String, String]
+  type InterpolationValues = scala.collection.Map[String, String]
+
   /**
    * Get the configuration property value for the specified key.
+   *
    * @param name key for the property to get
    * @return the value of the property if defined
    */
-  def get(name: String): Box[String] = Box(props.get(name))
+  def get(name: String): Box[String] = {
+    lockedProviders
+      .flatMap(_.get(name))
+      .headOption
+      .map(interpolate)
+  }
+
+  private[this] val interpolateRegex = """(.*?)\Q${\E(.*?)\Q}\E([^$]*)""".r
+
+  private[this] def interpolate(value: String): String = {
+    def lookup(key: String) = {
+      lockedInterpolationValues
+        .flatMap(_.get(key))
+        .headOption
+    }
+
+    val interpolated = for {
+      interpolateRegex(before, key, after) <- interpolateRegex.findAllMatchIn(value.toString)
+    } yield {
+      val lookedUp = lookup(key).getOrElse(("${" + key + "}"))
+
+      before + lookedUp + after
+    }
+
+    if (interpolated.isEmpty) {
+      value.toString
+    } else {
+      interpolated.mkString
+    }
+  }
 
   // def apply(name: String): String = props(name)
 
   def getInt(name: String): Box[Int] = get(name).map(toInt) // toInt(props.get(name))
   def getInt(name: String, defVal: Int): Int = getInt(name) openOr defVal // props.get(name).map(toInt(_)) getOrElse defVal
-  def getLong(name: String): Box[Long] = props.get(name).flatMap(asLong)
+  def getLong(name: String): Box[Long] = get(name).flatMap(asLong)
   def getLong(name: String, defVal: Long): Long = getLong(name) openOr defVal // props.get(name).map(toLong(_)) getOrElse defVal
-  def getBool(name: String): Box[Boolean] = props.get(name).map(toBoolean) // (props.get(name))
+  def getBool(name: String): Box[Boolean] = get(name).map(toBoolean)
   def getBool(name: String, defVal: Boolean): Boolean = getBool(name) openOr defVal // props.get(name).map(toBoolean(_)) getOrElse defVal
-  def get(name: String, defVal: String) = props.get(name) getOrElse defVal
+  def get(name: String, defVal: String):String = get(name) getOrElse defVal
 
   /**
    * Determine whether the specified properties exist.
@@ -71,7 +81,7 @@ object Props extends Logger {
    * @return the subset of strings in 'what' that do not correspond to
    * keys for available properties.
    */
-  def require(what: String*) = what.filter(!props.contains(_))
+  def require(what: String*) = what.filter(get(_).isEmpty)
 
   /**
    * Ensure that all of the specified properties exist; throw an exception if
@@ -85,18 +95,73 @@ object Props extends Logger {
   }
 
   /**
-   * Enumeration of available run modes.
+   * Updates Props to find property values in the argument AFTER first looking
+   * in the standard Lift prop files.
+   *
+   * @note You can only modify these BEFORE you look up any props!
+   *
+   * @param provider Arbitrary map of property key -> property value.
    */
-  object RunModes extends Enumeration {
-    val Development = Value(1, "Development")
-    val Test = Value(2, "Test")
-    val Staging = Value(3, "Staging")
-    val Production = Value(4, "Production")
-    val Pilot = Value(5, "Pilot")
-    val Profile = Value(6, "Profile")
+  def appendProvider(provider: PropProvider): List[PropProvider] = {
+    updateProviders(_ :+ provider)
   }
 
-  import RunModes._
+  /**
+   * Updates Props to find property values in the argument BEFORE looking in
+   * the standard Lift prop files.
+   *
+   * @note You can only modify these BEFORE you look up any props!
+   *
+   * @param provider Arbitrary map of property key -> property value to be used
+   *                 for property lookup.
+   */
+  def prependProvider(provider: PropProvider): List[PropProvider] = {
+    updateProviders(provider :: _)
+  }
+
+  /**
+   * Passes the current `PropProvider`s to the passed `updater`, then sets the
+   * providers to the result of the updater. Consider using
+   * `[[appendProvider]]` or `[[prependProvider]]` instead.
+   *
+   * @note You can only modify these BEFORE you look up any props!
+   *
+   * @param updater Function that gets the current `PropProvider`s and returns
+   *                the new ones to use.
+   */
+  def updateProviders(updater: (List[PropProvider])=>List[PropProvider]): List[PropProvider] = {
+    providers = updater(providers)
+    providers
+  }
+
+  /**
+   * Updates Props to find values in the argument when interpolating values found in providers.
+   *
+   * @note You can only modify these BEFORE you look up any props!
+   *
+   * @param provider Arbitrary map of property key -> property value to be used
+   *                 for interpolation.
+   */
+  def appendInterpolationValues(interpolationValues: InterpolationValues): Seq[InterpolationValues] = {
+    updateInterpolationValues(_ :+ interpolationValues)
+  }
+
+  /**
+   * Passes the current `InterpolationValues`s to the passed `updater`, then sets the
+   * providers to the result of the updater. Consider using
+   * `[[appendInterpolationValues]]` instead.
+   *
+   * @note You can only modify these BEFORE you look up any props!
+   *
+   * @param updater Function that gets the current `InterpolationValues`s and returns
+   *                the new ones to use.
+   */
+  def updateInterpolationValues(updater: (List[InterpolationValues])=>List[InterpolationValues]): List[InterpolationValues] = {
+    interpolationValues = updater(interpolationValues)
+    interpolationValues
+  }
+
+  import Props.RunModes._
 
   val propFileName = "lift.props"
 
@@ -107,7 +172,7 @@ object Props extends Logger {
    * Recognized modes are "development", "test", "profile", "pilot", "staging" and "production"
    * with the default run mode being development.
    */
-  lazy val mode: RunModes.Value = {
+  lazy val mode: Props.RunModes.Value = {
     runModeInitialised = true
     Box.legacyNullTest((System.getProperty("run.mode"))).map(_.toLowerCase) match {
       case Full("test") => Test
@@ -184,7 +249,7 @@ object Props extends Logger {
    * This logic can be customised by calling `set` before the run-mode is referenced. (An attempt to customise this
    * after the run-mode is realised will have no effect and will instead log a warning.)
    */
-  val autoDetectRunModeFn = new RunModeProperty[() => RunModes.Value]("autoDetectRunModeFn", () => {
+  val autoDetectRunModeFn = new RunModeProperty[() => Props.RunModes.Value]("autoDetectRunModeFn", () => {
     val st = Thread.currentThread.getStackTrace
     if ((doesStackTraceContainKnownTestRunner.get)(st))
       Test
@@ -195,18 +260,18 @@ object Props extends Logger {
   /**
    * Is the system running in production mode (apply full optimizations)
    */
-  lazy val productionMode: Boolean = mode == RunModes.Production ||
-  mode == RunModes.Pilot || mode == RunModes.Staging
+  lazy val productionMode: Boolean = mode == Props.RunModes.Production ||
+  mode == Props.RunModes.Pilot || mode == Props.RunModes.Staging
 
   /**
    * Is the system running in development mode
    */
-  lazy val devMode: Boolean = mode == RunModes.Development
+  lazy val devMode: Boolean = mode == Props.RunModes.Development
 
   /**
    * Is the system running in test mode
    */
-  lazy val testMode: Boolean = mode == RunModes.Test
+  lazy val testMode: Boolean = mode == Props.RunModes.Test
 
   /**
    * The resource path segment corresponding to the current mode.
@@ -328,5 +393,48 @@ object Props extends Logger {
         Map()
     }
   }
+
+  private[this] var providers: List[PropProvider] = List(props)
+  private[this] var interpolationValues: List[InterpolationValues] = Nil
+
+  private[this] lazy val lockedProviders = providers
+  private[this] lazy val lockedInterpolationValues = interpolationValues
 }
 
+/**
+ * Configuration management utilities.
+ *
+ * If you want to provide a configuration file for a subset of your application
+ * or for a specific environment, Lift expects configuration files to be named
+ * in a manner relating to the context in which they are being used. The standard
+ * name format is:
+ *
+ * {{{
+ *   $modeName.$userName.$hostName.$props
+ *
+ *   examples:
+ *   dpp.yak.props
+ *   test.dpp.yak.props
+ *   production.moose.props
+ *   staging.dpp.props
+ *   test.default.props
+ *   default.props
+ * }}}
+ *
+ * with `hostName` and `userName` being optional, and `modeName` being one of
+ * "test", "staging", "production", "pilot", "profile", or "default".
+ * The standard Lift properties file extension is "props".
+ */
+object Props extends Props {
+  /**
+   * Enumeration of available run modes.
+   */
+  object RunModes extends Enumeration {
+    val Development = Value(1, "Development")
+    val Test = Value(2, "Test")
+    val Staging = Value(3, "Staging")
+    val Production = Value(4, "Production")
+    val Pilot = Value(5, "Pilot")
+    val Profile = Value(6, "Profile")
+  }
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 WorldWide Conferencing, LLC
+ * Copyright 2006-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,7 +246,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
       ttjo,
       rec.mandatoryJsonObjectField,
       new JsExp {
-        def toJsCmd = Printer.compact(render(json))
+        def toJsCmd = compactRender(json)
       },
       json,
       Empty
@@ -496,7 +496,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
         lst,
         rec.mandatoryMongoJsonObjectListField,
         new JsExp {
-          def toJsCmd = Printer.compact(render(json))
+          def toJsCmd = compactRender(json)
         },
         json,
         Empty
@@ -575,7 +575,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
         ("uuid" -> ("$uuid" -> subRec.uuid.value.toString))
 
       val srJsExp = new JsExp {
-        def toJsCmd = Printer.compact(render(srJson))
+        def toJsCmd = compactRender(srJson)
       }
 
       passBasicTests(subRec, subRec2, rec.mandatoryBsonRecordField, Full(rec.legacyOptionalBsonRecordField), false)
@@ -624,10 +624,10 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
         ("uuid" -> ("$uuid" -> lst(1).uuid.value.toString))
 
       val sr1JsExp = new JsExp {
-        def toJsCmd = compact(render(sr1Json))
+        def toJsCmd = compactRender(sr1Json)
       }
       val sr2JsExp = new JsExp {
-        def toJsCmd = compact(render(sr2Json))
+        def toJsCmd = compactRender(sr2Json)
       }
 
       passBasicTests(lst, lst2, rec.mandatoryBsonRecordListField, Full(rec.legacyOptionalBsonRecordListField))

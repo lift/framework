@@ -17,39 +17,133 @@
 package net.liftweb
 package util
 
+import net.liftweb.common.Full
 import org.specs2.mutable.Specification
+import org.specs2.mutable.After
 import Props.RunModes._
 
-/**
- * Systems under specification for Lift Mailer.
- */
 object PropsSpec extends Specification {
   "Props Specification".title
-  sequential
+
+  case class TestProps() extends Props
 
   "Props" should {
     "Detect test mode correctly" in {
-      Props.testMode must_== true
+      TestProps().testMode must_== true
     }
 
     "Allow modification of run-mode properties before the run-mode is set" in {
-      val before = Props.autoDetectRunModeFn.get
+      val testProps = TestProps()
+
+      val before = testProps.autoDetectRunModeFn.get
       try {
-        Props.runModeInitialised = false
-        Props.autoDetectRunModeFn.allowModification must_== true
-        Props.autoDetectRunModeFn.set(() => Test) must_== true
-        Props.autoDetectRunModeFn.get must_!= before
+        testProps.runModeInitialised = false
+        testProps.autoDetectRunModeFn.allowModification must_== true
+        testProps.autoDetectRunModeFn.set(() => Test) must_== true
+        testProps.autoDetectRunModeFn.get must_!= before
       } finally {
-        Props.autoDetectRunModeFn.set(before)
-        Props.runModeInitialised = true
+        testProps.autoDetectRunModeFn.set(before)
+        testProps.runModeInitialised = true
       }
     }
 
     "Prohibit modification of run-mode properties when the run-mode is set" in {
-      val before = Props.autoDetectRunModeFn.get
-      Props.autoDetectRunModeFn.allowModification must_== false
-      Props.autoDetectRunModeFn.set(() => Test) must_== false
-      Props.autoDetectRunModeFn.get must_== before
+      val testProps = TestProps()
+
+      val before = testProps.autoDetectRunModeFn.get
+      testProps.autoDetectRunModeFn.allowModification must_== false
+      testProps.autoDetectRunModeFn.set(() => Test) must_== false
+      testProps.autoDetectRunModeFn.get must_== before
+    }
+
+    "Parse and cast to int" in {
+      TestProps().getInt("an.int") must_== Full(42)
+    }
+
+    "Parse and cast to long" in {
+      TestProps().getLong("a.long") must_== Full(9223372036854775807L)
+    }
+
+    "Parse and cast to boolean" in {
+      TestProps().getBool("a.boolean") must_== Full(true)
+    }
+
+    "Prefer prepended properties to the test.default.props" in {
+      val testProps = TestProps()
+
+      testProps.prependProvider(Map("jetty.port" -> "8080"))
+      val port = testProps.getInt("jetty.port")
+
+      port must_== Full(8080)
+    }
+
+    "Prefer prepended System.properties to the test.default.props" in {
+      val testProps = TestProps()
+
+      System.setProperty("omniauth.baseurl", "http://google.com")
+
+      testProps.prependProvider(sys.props)
+      val baseurl = testProps.get("omniauth.baseurl")
+
+      baseurl must_== Full("http://google.com")
+    }
+
+    "Read through to System.properties, correctly handling mutation" in {
+      val testProps = TestProps()
+
+      System.setProperty("omniauth.baseurl", "http://google.com")
+      testProps.prependProvider(sys.props)
+      System.setProperty("omniauth.baseurl", "http://ebay.com")
+      val baseurl = testProps.get("omniauth.baseurl")
+
+      baseurl must_== Full("http://ebay.com")
+    }
+
+    "Find properties in appended maps when not defined in test.default.props" in {
+      val testProps = TestProps()
+
+      testProps.appendProvider(Map("new.prop" -> "new.value"))
+      val prop = testProps.get("new.prop")
+
+      prop must_== Full("new.value")
+    }
+
+    "Not interpolate values when no interpolator is given" in {
+      val port = TestProps().get("jetty.port")
+
+      port must_== Full("${PORT}")
+    }
+
+    "Interpolate values from the given interpolator" in {
+      val testProps = TestProps()
+
+      testProps.appendInterpolationValues(Map("PORT" -> "8080"))
+      val port = testProps.getInt("jetty.port")
+
+      port must_== Full(8080)
+    }
+
+    "Interpolate multiple values in a string from the given interpolator" in {
+      val testProps = TestProps()
+
+      testProps.appendInterpolationValues(Map("DB_HOST" -> "localhost", "DB_PORT" -> "3306"))
+      val url = testProps.get("db.url")
+
+      url must_== Full("jdbc:mysql://localhost:3306/MYDB")
+    }
+
+    "Find properties in append for require()" in {
+      val testProps = TestProps()
+
+      testProps.appendProvider(Map("new.prop" -> "new.value"))
+      testProps.require("new.prop") must_== Nil
+    }
+
+    "Find properties in prepend for require()" in {
+      val testProps = TestProps()
+
+      testProps.prependProvider(Map("new.prop" -> "new.value"))
+      testProps.require("new.prop") must_== Nil
     }
   }
 }

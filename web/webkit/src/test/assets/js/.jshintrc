@@ -1,0 +1,9 @@
+{
+  "extends": "../../../../.jshintrc",
+  "node": true,
+  "jasmine": true,
+  "globals": {
+    "liftVanilla": false,
+    "liftJQuery": false
+  }
+}

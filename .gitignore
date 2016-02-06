@@ -63,3 +63,6 @@ project/sbt-launch*
 # Doc generation
 .dexy
 core/documentation-helpers/src/test/**Test.scala
+
+# JavaScript testing
+node_modules
