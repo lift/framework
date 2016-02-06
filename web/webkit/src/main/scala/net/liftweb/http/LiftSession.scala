@@ -365,17 +365,22 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   private val fullPageLoad = new BooleanThreadGlobal
 
   // Returns a view of the functions stored in the http session
-  private def viewHttpSessionFns:java.util.Map[String, S.AFuncHolder] = java.util.Collections.unmodifiableMap(
-    if(LiftRules.putAjaxFnsInContainerSession) (for {
-        hs <- httpSession
-        map <- Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]])
-      } yield map).openOr(new java.util.HashMap[String, S.AFuncHolder])
-    else new java.util.HashMap[String, S.AFuncHolder]
-  )
+  private def viewHttpSessionFns:java.util.Map[String, S.AFuncHolder] = {
+    val backingMap = (for {
+      hs <- httpSession if LiftRules.putAjaxFnsInContainerSession
+      map <- Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]])
+    } yield {
+      map
+    }) openOr (new java.util.HashMap[String, S.AFuncHolder])
+
+    java.util.Collections.unmodifiableMap(backingMap)
+  }
 
   // Mutates the http session function map with the given argument and updates the container
   private def updateHttpSessionFns(f:ConcurrentHashMap[String, S.AFuncHolder]=>Unit):Unit =
-    if(LiftRules.putAjaxFnsInContainerSession) httpSession.foreach { hs =>
+    for {
+      hs <- httpSession if LiftRules.putAjaxFnsInContainerSession
+    } {
       val map = Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]]).openOr(new ConcurrentHashMap[String, S.AFuncHolder])
       f(map)
       // Now that the map has been mutated, must write to the session so the container can replicate
@@ -964,8 +969,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * @param request -- the Req the led to this rendering
    * @param path -- the ParsePath that led to this page
    * @param code -- the HTTP response code (usually 200)
-   *
-   * @return a Box of LiftResponse with all the proper page rewriting
+    * @return a Box of LiftResponse with all the proper page rewriting
    */
   def processTemplate(template: Box[NodeSeq], request: Req, path: ParsePath, code: Int): Box[LiftResponse] = {
     overrideResponseCode.doWith(Empty) {
@@ -1152,8 +1156,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Gets the named variable if it exists
    *
    * @param name -- the name of the session-local variable to get
-   *
-   * @return Full ( value ) if found, Empty otherwise
+    * @return Full ( value ) if found, Empty otherwise
    */
   private[liftweb] def get[T](name: String): Box[T] =
     Box.legacyNullTest(nmyVariables.get(name)).asInstanceOf[Box[T]]
@@ -1400,7 +1403,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   /**
    * Split a string separated by a point or by a column in 2 parts. Uses default values if only one is found or if no parts are found
-   * @param in string to split
+    *
+    * @param in string to split
    * @return a pair containing the first and second parts
    */
   private def splitColonPair(in: String): (String, String) = {
@@ -2075,8 +2079,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * that way you'll have the scope of the current session.
    *
    * @param in the Actor to send messages to.
-   *
-   * @return a JsExp that contains a function that can be called with a parameter
+    * @return a JsExp that contains a function that can be called with a parameter
    *         and when the function is called, the parameter is JSON serialized and sent to
    *         the server
    */
@@ -2109,9 +2112,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    *              the translated message will be sent to the actor. If the
    *              translation fails, an error will be logged and the raw
    *              JsonAST.JValue will be sent to the actor
-   *
-   *
-   * @return a JsExp that contains a function that can be called with a parameter
+    * @return a JsExp that contains a function that can be called with a parameter
    *         and when the function is called, the parameter is JSON serialized and sent to
    *         the server
    */
@@ -2767,7 +2768,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
                       /**
                        * Send some JavaScript to execute on the client side
-                       * @param value
+                        *
+                        * @param value
                        */
                       def send(value: JsCmd): Unit = {
                         if (!done_?) {
@@ -2779,7 +2781,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
                       /**
                        * Send some javascript to execute on the client side
-                       * @param value
+                        *
+                        * @param value
                        */
                       def send(value: JsExp): Unit = {
                         if (!done_?) {
@@ -2988,19 +2991,22 @@ trait RoundTripHandlerFunc {
   /**
    * Send data back to the client. This may be called
    * many times and each time, more data gets sent back to the client.
-   * @param value the data to send back.
+    *
+    * @param value the data to send back.
    */
   def send(value: JValue): Unit
 
   /**
    * Send some JavaScript to execute on the client side
-   * @param value
+    *
+    * @param value
    */
   def send(value: JsCmd): Unit
 
   /**
    * Send some javascript to execute on the client side
-   * @param value
+    *
+    * @param value
    */
   def send(value: JsExp): Unit
 
@@ -3011,7 +3017,8 @@ trait RoundTripHandlerFunc {
 
   /**
    * If there's a failure related to the computation, call this method.
-   * @param msg
+    *
+    * @param msg
    */
   def failure(msg: String): Unit
 }
