@@ -33,7 +33,7 @@ object Comet extends DispatchSnippet with LazyLoggable {
   // Take the comet's internal container and annotate it with the unique
   // `containerId`.
   private def buildContainer(cometHtml: NodeSeq, cometActor: LiftCometActor, containerId: String): NodeSeq = {
-    cometActor.parentTag.copy(child = cometHtml) % ("id" -> containerId)
+    cometActor.parentTag.copy(child = cometHtml) % ("id" -> containerId) % ("data-lift-comet" -> "")
   }
 
   /**
