@@ -20,6 +20,8 @@ package js
 
 import java.util.Locale
 
+import net.liftweb.http.js.extcore.ExtCoreArtifacts
+import net.liftweb.http.js.jquery.JQueryArtifacts
 import org.specs2.execute.{Result, AsResult}
 import org.specs2.mutable.{Around,  Specification}
 
@@ -161,8 +163,32 @@ object LiftJavaScriptSpec extends Specification  {
         )))
       }
     }
+    "create init command with VanillaJS" in withEnglishLocale {
+      S.initIfUninitted(session) {
+        LiftRules.jsArtifacts = ExtCoreArtifacts
+        val init = LiftRules.javaScriptSettings.vend().map(_.apply(session)).map(LiftJavaScript.initCmd(_).toJsCmd)
+        init must_== Full(formatjs(List(
+          "var lift_settings = {};",
+          "window.lift.extend(lift_settings,window.liftVanilla);",
+          """window.lift.extend(lift_settings,{"liftPath": "/lift",
+            |"ajaxRetryCount": 4,
+            |"ajaxPostTimeout": 5000,
+            |"gcPollingInterval": 75000,
+            |"gcFailureRetryTimeout": 15000,
+            |"cometGetTimeout": 140000,
+            |"cometFailureRetryTimeout": 10000,
+            |"cometServer": "srvr1",
+            |"logError": function(msg) {lift.logError(msg);},
+            |"ajaxOnFailure": function() {alert("The server cannot be contacted at this time");},
+            |"ajaxOnStart": function() {},
+            |"ajaxOnEnd": function() {}});""",
+          "window.lift.init(lift_settings);"
+        )))
+      }
+    }
     "create init command with custom setting" in withEnglishLocale {
       S.initIfUninitted(session) {
+        LiftRules.jsArtifacts = JQueryArtifacts
         val settings = LiftJavaScript.settings.extend(JsObj("liftPath" -> "liftyStuff", "mysetting" -> 99))
         val init = LiftJavaScript.initCmd(settings)
         init.toJsCmd must_== formatjs(List(
