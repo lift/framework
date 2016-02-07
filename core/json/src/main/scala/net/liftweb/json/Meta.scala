@@ -137,8 +137,8 @@ private[json] object Meta {
         t match {
           case pType: ParameterizedType =>
             val raw = rawClassOf(pType)
-            println(raw)
             val info = TypeInfo(raw, Some(pType))
+
             if (classOf[Set[_]].isAssignableFrom(raw))
               (mkContainer(t, `* -> *`, 0, Col.apply(info, _)), false)
             else if (raw.isArray)
@@ -149,6 +149,8 @@ private[json] object Meta {
               (mkContainer(t, `(*,*) -> *`, 1, Dict.apply _), false)
             else if (classOf[Seq[_]].isAssignableFrom(raw))
               (mkContainer(t, `* -> *`, 0, Col.apply(info, _)), false)
+            else if (tuples.find(_.isAssignableFrom(raw)).isDefined)
+              (mkContainer(t, `(*,*) -> *`, 0, Col.apply(info, _)), false)
             else
               mkConstructor(t)
           case aType: GenericArrayType =>

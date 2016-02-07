@@ -76,18 +76,18 @@ object ExtractionBugs extends Specification {
     }
   }
 
-  "deserialize List of Tuple with Long" in {
+  "deserialize list of homogonous tuples" in {
     implicit val formats = DefaultFormats
 
-    val holder = Holder(List(("string", 1L)))
+    case class Holder(items: List[(String, String)])
+
+    val holder = Holder(List(("string", "string")))
     val serialized = compactRender(Extraction.decompose(holder))
     println(serialized)
 
     val deserialized = parse(serialized).extract[Holder]
     deserialized must_== holder
   }
-
-  case class Holder(items: List[(String, Long)])
 
   case class Response(data: List[Map[String, Int]])
 
