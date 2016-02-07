@@ -397,6 +397,38 @@
       }
     }
 
+    function rehydrateComets() {
+      $("body").append(
+        $('<iframe src="' + location.toString() + '" style="display:none;">')
+          .attr("id", "lift-reload-comet-iframe")
+      );
+
+      var newWindow = $("#lift-reload-comet-iframe")[0].contentWindow;
+      function preventInitialCometTransaction() {
+        if (newWindow.lift && typeof newWindow.lift.cometEntry == "function") {
+          lift.cometEntry = newWindow.lift.cometEntry;
+          newWindow.lift.cometEntry = function() {}
+        } else {
+          os.nextTick(preventInitialCometTransaction)
+        }
+      }
+
+      $("#lift-reload-comet-iframe").load(function() {
+        var new_toWatch = newWindow.lift.toWatch;
+        newWindow.lift.setToWatch({});
+        var $newComets = newWindow.$("[data-lift-comet]");
+
+        $("[data-lift-comet]").each(function(i) {
+          this.outerHTML = $newComets[i].outerHTML;
+        });
+
+        toWatch = new_toWatch;
+        restartComet();
+
+        $("#lift-reload-comet-iframe").remove();
+      });
+    }
+
 
     ////////////////////////////////////////////////
     ///// Promises /////////////////////////////////
@@ -603,13 +635,16 @@
       cometOnSessionLost: function() {
         settings.cometOnSessionLost();
       },
+      rehydrateComets: rehydrateComets,
       cometOnError: function(e) {
         settings.cometOnError(e);
       },
+      cometEntry: cometEntry,
       unlistWatch: unlistWatch,
       setToWatch: function(tw) {
         toWatch = tw;
       },
+      toWatch: toWatch,
       setPageId: function(pgId) {
         pageId = pgId;
       },
