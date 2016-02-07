@@ -108,11 +108,14 @@ private[json] object Meta {
     }
 
     def toArg(name: String, genericType: Type, visited: Set[Type], context: Context): Arg = {
-      def mkContainer(t: Type, k: Kind, valueTypeIndex: Int, factory: Mapping => Mapping) =
+      def mkContainer(t: Type, k: Kind, valueTypeIndex: Int, factory: Mapping => Mapping) = {
         if (typeConstructor_?(t)) {
           val typeArgs = typeConstructors(t, k)(valueTypeIndex)
           factory(fieldMapping(typeArgs)._1)
-        } else factory(fieldMapping(typeParameters(t, k, context)(valueTypeIndex))._1)
+        } else {
+          factory(fieldMapping(typeParameters(t, k, context)(valueTypeIndex))._1)
+        }
+      }
 
       def parameterizedTypeOpt(t: Type) = t match {
         case x: ParameterizedType =>
@@ -130,33 +133,36 @@ private[json] object Meta {
         if (visited.contains(t)) (Cycle(t), false)
         else (Constructor(TypeInfo(rawClassOf(t), parameterizedTypeOpt(t)), constructors(t, visited + t, Some(context))), false)
 
-      def fieldMapping(t: Type): (Mapping, Boolean) = t match {
-        case pType: ParameterizedType =>
-          val raw = rawClassOf(pType)
-          val info = TypeInfo(raw, Some(pType))
-          if (classOf[Set[_]].isAssignableFrom(raw))
-            (mkContainer(t, `* -> *`, 0, Col.apply(info, _)), false)
-          else if (raw.isArray)
-            (mkContainer(t, `* -> *`, 0, Col.apply(info, _)), false)
-          else if (classOf[Option[_]].isAssignableFrom(raw))
-            (mkContainer(t, `* -> *`, 0, identity _), true)
-          else if (classOf[Map[_, _]].isAssignableFrom(raw))
-            (mkContainer(t, `(*,*) -> *`, 1, Dict.apply _), false)
-          else if (classOf[Seq[_]].isAssignableFrom(raw))
-            (mkContainer(t, `* -> *`, 0, Col.apply(info, _)), false)
-          else
-            mkConstructor(t)
-        case aType: GenericArrayType =>
-          // Couldn't find better way to reconstruct proper array type:
-          val raw = java.lang.reflect.Array.newInstance(rawClassOf(aType.getGenericComponentType), 0: Int).getClass
-          (Col(TypeInfo(raw, None), fieldMapping(aType.getGenericComponentType)._1), false)
-        case raw: Class[_] =>
-          if (primitive_?(raw)) (Value(raw), false)
-          else if (raw.isArray)
-            (mkContainer(t, `* -> *`, 0, Col.apply(TypeInfo(raw, None), _)), false)
-          else
-            mkConstructor(t)
-        case x => (Constructor(TypeInfo(classOf[AnyRef], None), Nil), false)
+      def fieldMapping(t: Type): (Mapping, Boolean) = {
+        t match {
+          case pType: ParameterizedType =>
+            val raw = rawClassOf(pType)
+            println(raw)
+            val info = TypeInfo(raw, Some(pType))
+            if (classOf[Set[_]].isAssignableFrom(raw))
+              (mkContainer(t, `* -> *`, 0, Col.apply(info, _)), false)
+            else if (raw.isArray)
+              (mkContainer(t, `* -> *`, 0, Col.apply(info, _)), false)
+            else if (classOf[Option[_]].isAssignableFrom(raw))
+              (mkContainer(t, `* -> *`, 0, identity _), true)
+            else if (classOf[Map[_, _]].isAssignableFrom(raw))
+              (mkContainer(t, `(*,*) -> *`, 1, Dict.apply _), false)
+            else if (classOf[Seq[_]].isAssignableFrom(raw))
+              (mkContainer(t, `* -> *`, 0, Col.apply(info, _)), false)
+            else
+              mkConstructor(t)
+          case aType: GenericArrayType =>
+            // Couldn't find better way to reconstruct proper array type:
+            val raw = java.lang.reflect.Array.newInstance(rawClassOf(aType.getGenericComponentType), 0: Int).getClass
+            (Col(TypeInfo(raw, None), fieldMapping(aType.getGenericComponentType)._1), false)
+          case raw: Class[_] =>
+            if (primitive_?(raw)) (Value(raw), false)
+            else if (raw.isArray)
+              (mkContainer(t, `* -> *`, 0, Col.apply(TypeInfo(raw, None), _)), false)
+            else
+              mkConstructor(t)
+          case x => (Constructor(TypeInfo(classOf[AnyRef], None), Nil), false)
+        }
       }
 
       val (mapping, optional) = fieldMapping(genericType)

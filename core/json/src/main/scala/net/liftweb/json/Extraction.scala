@@ -208,8 +208,9 @@ object Extraction {
   private def extract0(json: JValue, mapping: Mapping)(implicit formats: Formats): Any = {
     def newInstance(constructor: Constructor, json: JValue) = {
       def findBestConstructor = {
-        if (constructor.choices.size == 1) constructor.choices.head // optimized common case
-        else {
+        if (constructor.choices.size == 1) {
+          constructor.choices.head // optimized common case
+        } else {
           val argNames = json match {
             case JObject(fs) => fs.map(_.name)
             case x => Nil
@@ -284,9 +285,14 @@ object Extraction {
         custom(constructor.targetType, json)
       } else {
         json match {
-          case JNull => null
-          case JObject(TypeHint(t, fs)) => mkWithTypeHint(t, fs, constructor.targetType)
-          case _ => instantiate
+          case JNull =>
+            null
+
+          case JObject(TypeHint(t, fs)) =>
+            mkWithTypeHint(t, fs, constructor.targetType)
+
+          case _ =>
+            instantiate
         }
       }
     }
@@ -322,13 +328,22 @@ object Extraction {
     }
 
     def build(root: JValue, mapping: Mapping): Any = mapping match {
-      case Value(targetType) => convert(root, targetType, formats)
-      case c: Constructor => newInstance(c, root)
-      case Cycle(targetType) => build(root, mappingOf(targetType))
-      case Arg(path, m, optional) => mkValue(root, m, path, optional)
+      case Value(targetType) =>
+        convert(root, targetType, formats)
+
+      case c: Constructor =>
+        newInstance(c, root)
+
+      case Cycle(targetType) =>
+        build(root, mappingOf(targetType))
+
+      case Arg(path, m, optional) =>
+        mkValue(root, m, path, optional)
+
       case Col(targetType, m) =>
         val custom = formats.customDeserializer(formats)
         val c = targetType.clazz
+
         if (custom.isDefinedAt(targetType, root)) custom(targetType, root)
         else if (c == classOf[List[_]]) newCollection(root, m, a => List(a: _*))
         else if (c == classOf[Set[_]]) newCollection(root, m, a => Set(a: _*))
