@@ -1714,6 +1714,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var cometGetTimeout = 140000
 
   @volatile var putAjaxFnsInContainerSession = false
+  private[http] lazy val lockedPutAjaxFnsInContainerSession = putAjaxFnsInContainerSession
 
   /**
    * Compute the headers to be sent to the browser in addition to anything else

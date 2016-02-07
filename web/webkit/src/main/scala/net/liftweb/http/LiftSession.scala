@@ -367,8 +367,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   // Returns a view of the functions stored in the http session
   private def viewHttpSessionFns:java.util.Map[String, S.AFuncHolder] = {
     val backingMap = (for {
-      hs <- httpSession if LiftRules.putAjaxFnsInContainerSession
-      map <- Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]])
+      hs <- httpSession if LiftRules.lockedPutAjaxFnsInContainerSession
+      map <- Box.asA[ConcurrentHashMap[String, S.AFuncHolder]](hs.attribute("ajaxFns"))
     } yield {
       map
     }) openOr (new java.util.HashMap[String, S.AFuncHolder])
@@ -379,9 +379,9 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   // Mutates the http session function map with the given argument and updates the container
   private def updateHttpSessionFns(f:ConcurrentHashMap[String, S.AFuncHolder]=>Unit):Unit =
     for {
-      hs <- httpSession if LiftRules.putAjaxFnsInContainerSession
+      hs <- httpSession if LiftRules.lockedPutAjaxFnsInContainerSession
     } {
-      val map = Box.legacyNullTest(hs.attribute("ajaxFns").asInstanceOf[ConcurrentHashMap[String, S.AFuncHolder]]).openOr(new ConcurrentHashMap[String, S.AFuncHolder])
+      val map = Box.asA[ConcurrentHashMap[String, S.AFuncHolder]](hs.attribute("ajaxFns")).openOr(new ConcurrentHashMap[String, S.AFuncHolder])
       f(map)
       // Now that the map has been mutated, must write to the session so the container can replicate
       hs.setAttribute("ajaxFns", map)
@@ -605,7 +605,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   def updateFunctionMap(funcs: Map[String, S.AFuncHolder], uniqueId: String, when: Long): Unit = {
     copyFunctions(funcs, nmessageCallback)
 
-    if(LiftRules.putAjaxFnsInContainerSession)
+    if(LiftRules.lockedPutAjaxFnsInContainerSession)
       updateHttpSessionFns(copyFunctions(funcs, _))
   }
 
