@@ -143,7 +143,9 @@ object LiftJavaScriptSpec extends Specification  {
       S.initIfUninitted(session) {
         val init = LiftRules.javaScriptSettings.vend().map(_.apply(session)).map(LiftJavaScript.initCmd(_).toJsCmd)
         init must_== Full(formatjs(List(
-          """var lift_settings = {"liftPath": "/lift",
+          "var lift_settings = {};",
+          "window.lift.extend(lift_settings,window.liftJQuery);",
+          """window.lift.extend(lift_settings,{"liftPath": "/lift",
             |"ajaxRetryCount": 4,
             |"ajaxPostTimeout": 5000,
             |"gcPollingInterval": 75000,
@@ -154,8 +156,7 @@ object LiftJavaScriptSpec extends Specification  {
             |"logError": function(msg) {lift.logError(msg);},
             |"ajaxOnFailure": function() {alert("The server cannot be contacted at this time");},
             |"ajaxOnStart": function() {},
-            |"ajaxOnEnd": function() {}};""",
-          "window.lift.extend(lift_settings,window.liftJQuery);",
+            |"ajaxOnEnd": function() {}});""",
           "window.lift.init(lift_settings);"
         )))
       }
@@ -165,7 +166,9 @@ object LiftJavaScriptSpec extends Specification  {
         val settings = LiftJavaScript.settings.extend(JsObj("liftPath" -> "liftyStuff", "mysetting" -> 99))
         val init = LiftJavaScript.initCmd(settings)
         init.toJsCmd must_== formatjs(List(
-          """var lift_settings = {"liftPath": "liftyStuff",
+          "var lift_settings = {};",
+          "window.lift.extend(lift_settings,window.liftJQuery);",
+          """window.lift.extend(lift_settings,{"liftPath": "liftyStuff",
             |"ajaxRetryCount": 4,
             |"ajaxPostTimeout": 5000,
             |"gcPollingInterval": 75000,
@@ -177,8 +180,7 @@ object LiftJavaScriptSpec extends Specification  {
             |"ajaxOnFailure": function() {alert("The server cannot be contacted at this time");},
             |"ajaxOnStart": function() {},
             |"ajaxOnEnd": function() {},
-            |"mysetting": 99};""",
-          "window.lift.extend(lift_settings,window.liftJQuery);",
+            |"mysetting": 99});""",
           "window.lift.init(lift_settings);"
         ))
       }
