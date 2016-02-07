@@ -187,18 +187,18 @@ object Extraction {
     }
   }
 
+  private def mkMapping(clazz: Class[_], typeArgs: Seq[Class[_]])(implicit formats: Formats): Meta.Mapping = {
+    if (clazz == classOf[Option[_]] || clazz == classOf[List[_]] || clazz == classOf[Set[_]] || clazz.isArray) {
+      Col(TypeInfo(clazz, None), mkMapping(typeArgs.head, typeArgs.tail))
+    } else if (clazz == classOf[Map[_, _]]) {
+      Dict(mkMapping(typeArgs.tail.head, typeArgs.tail.tail))
+    } else {
+      mappingOf(clazz, typeArgs)
+    }
+  }
+
   private def extract0(json: JValue, clazz: Class[_], typeArgs: Seq[Class[_]])
                       (implicit formats: Formats): Any = {
-    def mkMapping(clazz: Class[_], typeArgs: Seq[Class[_]])(implicit formats: Formats): Meta.Mapping = {
-      if (clazz == classOf[Option[_]] || clazz == classOf[List[_]] || clazz == classOf[Set[_]] || clazz.isArray) {
-        Col(TypeInfo(clazz, None), mkMapping(typeArgs.head, typeArgs.tail))
-      } else if (clazz == classOf[Map[_, _]]) {
-        Dict(mkMapping(typeArgs.tail.head, typeArgs.tail.tail))
-      } else {
-        mappingOf(clazz, typeArgs)
-      }
-    }
-
     extract0(json, mkMapping(clazz, typeArgs))
   }
 
