@@ -34,8 +34,7 @@ object Comet extends DispatchSnippet with LazyLoggable {
   // `containerId`.
   private [this] def buildContainer(cometHtml: NodeSeq, cometActor: LiftCometActor, containerId: String): NodeSeq = {
     val cometVersion = http.S.requestCometVersions.is
-      .find(_.guid == cometActor.uniqueId)
-      .map(_.version)
+      .collectFirst { case CometVersionPair(guid, ver) if guid == cometActor.uniqueId => ver }
       .getOrElse("")
 
     cometActor.parentTag.copy(child = cometHtml) % ("id" -> containerId) % ("data-lift-comet-version" -> cometVersion)
