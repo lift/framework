@@ -365,7 +365,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   // Set of CometVersionPairs for comets that should be tracked on
   // the page that is currently being rendered or that called this AJAX
   // callback.
-  private[http] object requestCometVersions extends TransientRequestVar[Set[CometVersionPair]](Set.empty)
+  private[liftweb] object requestCometVersions extends TransientRequestVar[Set[CometVersionPair]](Set.empty)
 
 
   private object p_queryLog extends TransientRequestVar(new ListBuffer[(String, Long)])

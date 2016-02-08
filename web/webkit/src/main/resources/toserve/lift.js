@@ -416,9 +416,9 @@
       $("#lift-reload-comet-iframe").load(function() {
         var new_toWatch = newWindow.lift.toWatch;
         newWindow.lift.setToWatch({});
-        var $newComets = newWindow.$("[data-lift-comet]");
+        var $newComets = newWindow.$("[data-lift-comet-version]");
 
-        $("[data-lift-comet]").each(function(i) {
+        $("[data-lift-comet-version]").each(function(i) {
           this.outerHTML = $newComets[i].outerHTML;
         });
 
