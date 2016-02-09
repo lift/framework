@@ -414,15 +414,18 @@
       }
 
       $("#lift-reload-comet-iframe").load(function() {
-        var new_toWatch = newWindow.lift.toWatch;
         newWindow.lift.setToWatch({});
-        var $newComets = newWindow.$("[data-lift-comet-version]");
+        var $newComets = newWindow.$("[data-lift-comet-version]").toArray();
+        toWatch = {};
 
         $("[data-lift-comet-version]").each(function(i) {
           this.outerHTML = $newComets[i].outerHTML;
+          var newComet = $($newComets[i]);
+          var guid = newComet.children()[0].id;
+          var version = newComet.attr("data-lift-comet-version");
+          toWatch[guid] = version;
         });
 
-        toWatch = new_toWatch;
         restartComet();
 
         $("#lift-reload-comet-iframe").remove();
@@ -644,7 +647,6 @@
       setToWatch: function(tw) {
         toWatch = tw;
       },
-      toWatch: toWatch,
       setPageId: function(pgId) {
         pageId = pgId;
       },
