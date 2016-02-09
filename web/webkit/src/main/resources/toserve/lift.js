@@ -398,38 +398,33 @@
     }
 
     function rehydrateComets() {
-      $("body").append(
-        $('<iframe src="' + location.toString() + '" style="display:none;">')
-          .attr("id", "lift-reload-comet-iframe")
-      );
+      function onSuccess(html) {
+        var scripts = /<script(\s+(\w+\s*=\s*("|').*?\3)\s*)*\s*(\/>|>.*?<\/script\s*>)/g;
+        var cleanHtml = html.replace(scripts, ""); // Cleaning may be overkill.
+        var doc = document.createElement("html");
+        doc.innerHTML = cleanHtml;
 
-      var newWindow = $("#lift-reload-comet-iframe")[0].contentWindow;
-      function preventInitialCometTransaction() {
-        if (newWindow.lift && typeof newWindow.lift.cometEntry == "function") {
-          lift.cometEntry = newWindow.lift.cometEntry;
-          newWindow.lift.cometEntry = function() {}
-        } else {
-          os.nextTick(preventInitialCometTransaction)
-        }
-      }
-
-      $("#lift-reload-comet-iframe").load(function() {
-        newWindow.lift.setToWatch({});
-        var $newComets = newWindow.$("[data-lift-comet-version]").toArray();
         toWatch = {};
-
-        $("[data-lift-comet-version]").each(function(i) {
-          this.outerHTML = $newComets[i].outerHTML;
-          var newComet = $($newComets[i]);
-          var guid = newComet.children()[0].id;
-          var version = newComet.attr("data-lift-comet-version");
-          toWatch[guid] = version;
-        });
+        var divs = doc.getElementsByTagName("div");
+        for (var i = 0, n = divs.length; i < n; i++) {
+          var version = divs[i].getAttribute("data-lift-comet-version");
+          if (version !== null) {
+            var guid = divs[i].children[0].getAttribute("id");
+            toWatch[guid] = version;
+          }
+        }
 
         restartComet();
 
-        $("#lift-reload-comet-iframe").remove();
-      });
+        // Under the impression that a parentless node needn't be deleted.
+        // It should be a candidate for GC after it goes out of scope
+      }
+      function onFailure(err) {
+        // Try again??
+        console.error(err);
+      }
+
+      window.liftVanilla.ajaxPost(location.toString(), {}, "html", onSuccess, onFailure);
     }
 
 
@@ -642,7 +637,6 @@
       cometOnError: function(e) {
         settings.cometOnError(e);
       },
-      cometEntry: cometEntry,
       unlistWatch: unlistWatch,
       setToWatch: function(tw) {
         toWatch = tw;
@@ -810,6 +804,9 @@
               finally {
                 onSuccess(obj);
               }
+            }
+            else if (dataType === "html") {
+              onSuccess(xhr.responseText);
             }
             else {
               settings.logError("Unknown data type: "+dataType);
