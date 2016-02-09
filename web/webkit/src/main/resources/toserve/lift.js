@@ -397,6 +397,17 @@
       }
     }
 
+    function getComets(doc) {
+      var divs = doc.getElementsByTagName("div");
+      var comets = [];
+      for (var i = 0, n = divs.length; i < n; i++) {
+        if (divs[i].getAttribute("data-lift-comet-version") !== null) {
+          comets.push(divs[i]);
+        }
+      }
+      return comets;
+    }
+
     function rehydrateComets() {
       function onSuccess(html) {
         var scripts = /<script(\s+(\w+\s*=\s*("|').*?\3)\s*)*\s*(\/>|>.*?<\/script\s*>)/g;
@@ -405,13 +416,14 @@
         doc.innerHTML = cleanHtml;
 
         toWatch = {};
-        var divs = doc.getElementsByTagName("div");
-        for (var i = 0, n = divs.length; i < n; i++) {
-          var version = divs[i].getAttribute("data-lift-comet-version");
-          if (version !== null) {
-            var guid = divs[i].children[0].getAttribute("id");
-            toWatch[guid] = version;
-          }
+
+        var newComets = getComets(doc);
+        var oldComets = getComets(document);
+        for (var i = 0, n = newComets.length; i < n; i++) {
+          var version = newComets[i].getAttribute("data-lift-comet-version");
+          var guid = newComets[i].children[0].getAttribute("id");
+          toWatch[guid] = version;
+          oldComets[i].outerHTML = newComets[i].outerHTML;
         }
 
         restartComet();
