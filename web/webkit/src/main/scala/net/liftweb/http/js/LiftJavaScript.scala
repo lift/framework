@@ -75,13 +75,13 @@ object LiftJavaScript {
   }
 
   def initCmd(settings: JsObj): JsCmd = {
-    val extendJqOrVanilla = LiftRules.jsArtifacts match {
+    val extendJsHelpersCmd = LiftRules.jsArtifacts match {
       case JQueryArtifacts => Call("window.lift.extend", JsVar("lift_settings"), JsVar("window", "liftJQuery"))
       case _ => Call("window.lift.extend", JsVar("lift_settings"), JsVar("window", "liftVanilla"))
     }
 
     JsCrVar("lift_settings", JsObj()) &
-    extendJqOrVanilla &
+    extendJsHelpersCmd &
     Call("window.lift.extend", JsVar("lift_settings"), settings) &
     Call("window.lift.init", JsVar("lift_settings"))
   }
