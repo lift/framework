@@ -199,10 +199,12 @@ object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
     )
 
     subject \\ "alpha" must_==
-      JField("alpha", JString("apple")) ::
-      JField("alpha", JString("bacon")) ::
-      Nil
-    subject \\ "charlie" must_== List(JField("charlie", JString("i'm a masseuse")))
+      JObject(
+        JField("alpha", JString("apple")) ::
+        JField("alpha", JString("bacon")) ::
+        Nil
+      )
+    subject \\ "charlie" must_== JObject(List(JField("charlie", JString("i'm a masseuse"))))
   }
 
   private def reorderFields(json: JValue) = json map {

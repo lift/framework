@@ -27,12 +27,17 @@ object JsonQueryExamples extends Specification  {
   "JSON Query Examples".title
 
   "List of IPs" in {
-    val ips = for { JField("ip", JString(ip)) <- json \\ "ip" } yield ip
+    val ips = for {
+      JField("ip", JString(ip)) <- (json \\ "ip").obj
+    } yield {
+      ip
+    }
+
     ips mustEqual List("192.168.1.125", "192.168.1.126", "192.168.1.127", "192.168.2.125", "192.168.2.126")
   }
 
   "List of IPs converted to XML" in {
-    val ipsList = json \\ "ip"
+    val ipsList = (json \\ "ip").obj
 
     val ips = <ips>{
       for {
@@ -48,23 +53,35 @@ object JsonQueryExamples extends Specification  {
     val ips = for {
       cluster @ JObject(x) <- json \ "data_center"
       if (x contains JField("name", JString("cluster2")))
-      JField("ip", JString(ip)) <- cluster \\ "ip" } yield ip
+      JField("ip", JString(ip)) <- (cluster \\ "ip").obj
+    } yield {
+      ip
+    }
+
     ips mustEqual List("192.168.2.125", "192.168.2.126")
   }
 
   "Total cpus in data center" in {
-    (for { JField("cpus", JInt(x)) <- json \\ "cpus" } yield x) reduceLeft (_ + _) mustEqual 40
+    val computerCpuCount = for {
+      JField("cpus", JInt(x)) <- (json \\ "cpus").obj
+    } yield {
+      x
+    }
+
+    computerCpuCount reduceLeft (_ + _) mustEqual 40
   }
 
   "Servers sorted by uptime" in {
     case class Server(ip: String, uptime: Long)
 
     val servers = for {
-      JField("servers", JArray(servers)) <- json \\ "servers"
+      JField("servers", JArray(servers)) <- (json \\ "servers").obj
       JObject(server) <- servers
       JField("ip", JString(ip)) <- server
       JField("uptime", JInt(uptime)) <- server
-    } yield Server(ip, uptime.longValue)
+    } yield {
+      Server(ip, uptime.longValue)
+    }
 
     servers sortWith (_.uptime > _.uptime) mustEqual List(Server("192.168.1.127", 901214), Server("192.168.2.125", 453423), Server("192.168.2.126", 214312), Server("192.168.1.126", 189822), Server("192.168.1.125", 150123))
   }

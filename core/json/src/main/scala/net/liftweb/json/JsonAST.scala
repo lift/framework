@@ -168,7 +168,7 @@ object JsonAST {
      * res2: JValue = JObject(List(JField(name,JString(Joe)), JField(name,JString(Alabama Cheer))))
      * }}}
      */
-    def \\(nameToFind: String): List[JField] = {
+    def \\(nameToFind: String): JObject = {
       def find(json: JValue): List[JField] = json match {
         case JObject(fields) =>
           fields.foldLeft(List[JField]()) {
@@ -187,7 +187,7 @@ object JsonAST {
           Nil
       }
 
-      find(this)
+      JObject(find(this))
     }
 
     /**
