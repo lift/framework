@@ -91,6 +91,8 @@ object ExtractionBugs extends Specification {
   "deserialize list of heterogenous tuples" in {
     implicit val formats = DefaultFormats
 
+    // MSF: This currently doesn't work with scala primitives?! The type arguments appear as
+    // java.lang.Object instead of scala.Int. :/
     case class Holder2(items: List[(String, Integer)])
 
     val holder = Holder2(List(("string", 10)))
