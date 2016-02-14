@@ -663,6 +663,26 @@ object JsCmd {
 object JsCmds {
   implicit def seqJsToJs(in: Seq[JsCmd]): JsCmd = in.foldLeft[JsCmd](Noop)(_ & _)
 
+  /**
+    * Breaks a JsCmd down into its individual parts in a list
+    * @param js
+    * @return
+    */
+  def toList(js:JsCmd):List[JsCmd] = js match {
+    case CmdPair(l, r) => toList(l) ++ toList(r)
+    case _ => List(js)
+  }
+
+  /**
+    * Reduces the JsCmd by removing all unnecessary Noops.  Contains a Noop iff the JsCmd contains zero non-Noop cmds.
+    * @param js
+    * @return
+    */
+  def trimNoops(js:JsCmd):JsCmd = seqJsToJs(toList(js).filterNot(_ == _Noop)) match {
+    case CmdPair(`_Noop`, rest) => rest  // Since seqJsToJs folds with a leading Noop, strip it
+    case other => other
+  }
+
   object Script {
     def apply(script: JsCmd): Node = <script type="text/javascript">{Unparsed("""
 // <![CDATA[
