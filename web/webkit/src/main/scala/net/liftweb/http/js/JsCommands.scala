@@ -668,9 +668,15 @@ object JsCmds {
     * @param js
     * @return
     */
-  def toList(js:JsCmd):List[JsCmd] = js match {
-    case CmdPair(l, r) => toList(l) ++ toList(r)
-    case _ => List(js)
+  def toList(js:JsCmd):List[JsCmd] = {
+    @scala.annotation.tailrec
+    def recToList(cmds:List[JsCmd], acc:List[JsCmd]):List[JsCmd] = cmds match {
+      case CmdPair(l, r) :: t => recToList(l :: r :: t, acc)
+      case h :: t => recToList(t, h :: acc)  // Use :: because it's most efficient for building lists, BUT...
+      case Nil => acc
+    }
+
+    recToList(js :: Nil, Nil).reverse // Gotta reverse it back
   }
 
   /**
