@@ -894,14 +894,20 @@
       return xhr;
     },
     getComets: function(doc) {
-      var divs = doc.getElementsByTagName("div");
-      var comets = [];
-      for (var i = 0, n = divs.length; i < n; i++) {
-        if (divs[i].getAttribute("data-lift-comet-version") !== null) {
-          comets.push(divs[i]);
-        }
+      if(doc.querySelectorAll && typeof doc.querySelectorAll === 'function') {
+        var nodes = doc.querySelectorAll("[data-lift-comet-version]");
+        return Array.prototype.slice.call(nodes, 0);
       }
-      return comets;
+      else {
+        var divs = doc.getElementsByTagName("div");
+        var comets = [];
+        for (var i = 0, n = divs.length; i < n; i++) {
+          if (divs[i].getAttribute("data-lift-comet-version") !== null) {
+            comets.push(divs[i]);
+          }
+        }
+        return comets;
+      }
     }
   };
 
