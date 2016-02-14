@@ -74,9 +74,8 @@
       onDocumentReady: function() {
         consoleOrAlert("onDocumentReady function must be defined in settings");
       },
-      getComets: function(doc) {
+      getComets: function() {
         consoleOrAlert("getComets function must be defined in settings");
-        onFailure();
       },
       cometGetTimeout: 140000,
       cometFailureRetryTimeout: 10000,
@@ -426,7 +425,7 @@
       }
       function onFailure(err) {
         // Try again??
-        console.error(err);
+        settings.logError(err);
       }
 
       settings.ajaxPost(location.toString(), {}, "html", onSuccess, onFailure);
