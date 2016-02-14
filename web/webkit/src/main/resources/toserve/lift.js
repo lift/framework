@@ -74,6 +74,10 @@
       onDocumentReady: function() {
         consoleOrAlert("onDocumentReady function must be defined in settings");
       },
+      getComets: function(doc) {
+        consoleOrAlert("getComets function must be defined in settings");
+        onFailure();
+      },
       cometGetTimeout: 140000,
       cometFailureRetryTimeout: 10000,
       cometOnSessionLost: function() {
@@ -397,17 +401,6 @@
       }
     }
 
-    function getComets(doc) {
-      var divs = doc.getElementsByTagName("div");
-      var comets = [];
-      for (var i = 0, n = divs.length; i < n; i++) {
-        if (divs[i].getAttribute("data-lift-comet-version") !== null) {
-          comets.push(divs[i]);
-        }
-      }
-      return comets;
-    }
-
     function rehydrateComets() {
       function onSuccess(html) {
         var iframe = document.createElement("iframe");
@@ -417,8 +410,8 @@
 
         toWatch = {};
 
-        var newComets = getComets(doc);
-        var oldComets = getComets(document);
+        var newComets = settings.getComets(doc);
+        var oldComets = settings.getComets(document);
         for (var i = 0, n = newComets.length; i < n; i++) {
           var version = newComets[i].getAttribute("data-lift-comet-version");
           var guid = newComets[i].children[0].getAttribute("id");
@@ -436,7 +429,7 @@
         console.error(err);
       }
 
-      window.liftVanilla.ajaxPost(location.toString(), {}, "html", onSuccess, onFailure);
+      settings.ajaxPost(location.toString(), {}, "html", onSuccess, onFailure);
     }
 
 
@@ -734,6 +727,9 @@
           }
         }
       });
+    },
+    getComets: function(doc) {
+      return jQuery(doc).find("[data-lift-comet-version]").toArray();
     }
   };
 
@@ -896,6 +892,16 @@
       xhr.send();
 
       return xhr;
+    },
+    getComets: function(doc) {
+      var divs = doc.getElementsByTagName("div");
+      var comets = [];
+      for (var i = 0, n = divs.length; i < n; i++) {
+        if (divs[i].getAttribute("data-lift-comet-version") !== null) {
+          comets.push(divs[i]);
+        }
+      }
+      return comets;
     }
   };
 
