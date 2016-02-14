@@ -327,20 +327,17 @@ object Extraction {
       }
     }
 
-    def newTuple(root: JValue, m: Mapping) = {
+    def newTuple(root: JValue, mappings: List[Mapping]) = {
       root match {
         case JArray(items) if items.length >= 1 && items.length <= 22 =>
-          val builtItems: Seq[Object] = items.map(build(_, m).asInstanceOf[Object])
+          val builtItems: Seq[Object] = items.zip(mappings).map({
+            case (i,m) =>
+              build(i, m).asInstanceOf[Object]
+          })
           val tupleClass = Class.forName("scala.Tuple" + items.length)
 
-          m match {
-            case Value(ptype) =>
-              val typedTupleConstructor = tupleClass.getConstructors()(0)
-              typedTupleConstructor.newInstance(builtItems: _*)
-
-            case _ =>
-              throw new IllegalArgumentException("Cannot instantiate tuple with non primitive types.")
-          }
+          val typedTupleConstructor = tupleClass.getConstructors()(0)
+          typedTupleConstructor.newInstance(builtItems: _*)
 
         case JArray(items) =>
           throw new IllegalArgumentException("Cannot create a tuple of length " + items.length)
@@ -363,6 +360,14 @@ object Extraction {
       case Arg(path, m, optional) =>
         mkValue(root, m, path, optional)
 
+      case HCol(targetType, mappings) =>
+        val c = targetType.clazz
+        if (tuples.find(_.isAssignableFrom(c)).isDefined) {
+          newTuple(root, mappings)
+        } else {
+          fail("Expected tuple but found " + mappings)
+        }
+
       case Col(targetType, m) =>
         val custom = formats.customDeserializer(formats)
         val c = targetType.clazz
@@ -373,8 +378,6 @@ object Extraction {
         else if (c.isArray) newCollection(root, m, mkTypedArray(c))
         else if (classOf[Seq[_]].isAssignableFrom(c)) newCollection(root, m, a => List(a: _*))
         else if (c == classOf[Option[_]]) newOption(root, m)
-        else if (classOf[Product].isAssignableFrom(c) && tuples.find(_.isAssignableFrom(c)).isDefined)
-          newTuple(root, m)
         else fail("Expected collection but got " + m + " for class " + c)
       case Dict(m) => root match {
         case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)

@@ -60,6 +60,7 @@ private[json] object Meta {
   case class Cycle(targetType: Type) extends Mapping
   case class Dict(mapping: Mapping) extends Mapping
   case class Col(targetType: TypeInfo, mapping: Mapping) extends Mapping
+  case class HCol(targetType: TypeInfo, mappings: List[Mapping]) extends Mapping
   case class Constructor(targetType: TypeInfo, choices: List[DeclaredConstructor]) extends Mapping {
     def bestMatching(argNames: List[String]): Option[DeclaredConstructor] = {
       val names = Set(argNames: _*)
@@ -117,6 +118,23 @@ private[json] object Meta {
         }
       }
 
+      def mkHeteroContainer(baseType: Type): Mapping = {
+        val hereroContainerTypes = baseType match {
+          case ptype: ParameterizedType =>
+            ptype.getActualTypeArguments().map {
+              case c: Class[_] =>
+                c
+              case p: ParameterizedType =>
+                p.getRawType.asInstanceOf[Class[_]]
+              case x =>
+                fail("do not know how to get type parameter from " + x)
+            }
+        }
+
+        val parameters = hereroContainerTypes.map(fieldMapping(_)._1)
+        HCol(TypeInfo(rawClassOf(baseType), parameterizedTypeOpt(baseType)), parameters.toList)
+      }
+
       def parameterizedTypeOpt(t: Type) = t match {
         case x: ParameterizedType =>
           val typeArgs = x.getActualTypeArguments.toList.zipWithIndex
@@ -150,7 +168,7 @@ private[json] object Meta {
             else if (classOf[Seq[_]].isAssignableFrom(raw))
               (mkContainer(t, `* -> *`, 0, Col.apply(info, _)), false)
             else if (tuples.find(_.isAssignableFrom(raw)).isDefined)
-              (mkContainer(t, `(*,*) -> *`, 0, Col.apply(info, _)), false)
+              (mkHeteroContainer(t), false)
             else
               mkConstructor(t)
           case aType: GenericArrayType =>

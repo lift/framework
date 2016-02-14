@@ -83,9 +83,20 @@ object ExtractionBugs extends Specification {
 
     val holder = Holder(List(("string", "string")))
     val serialized = compactRender(Extraction.decompose(holder))
-    println(serialized)
 
     val deserialized = parse(serialized).extract[Holder]
+    deserialized must_== holder
+  }
+
+  "deserialize list of heterogenous tuples" in {
+    implicit val formats = DefaultFormats
+
+    case class Holder2(items: List[(String, Integer)])
+
+    val holder = Holder2(List(("string", 10)))
+    val serialized = compactRender(Extraction.decompose(holder))
+
+    val deserialized = parse(serialized).extract[Holder2]
     deserialized must_== holder
   }
 
