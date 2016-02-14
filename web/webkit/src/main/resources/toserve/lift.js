@@ -410,10 +410,10 @@
 
     function rehydrateComets() {
       function onSuccess(html) {
-        var scripts = /<script(\s+(\w+\s*=\s*("|').*?\3)\s*)*\s*(\/>|>.*?<\/script\s*>)/g;
-        var cleanHtml = html.replace(scripts, ""); // Cleaning may be overkill.
+        var iframe = document.createElement("iframe");
         var doc = document.createElement("html");
-        doc.innerHTML = cleanHtml;
+        iframe.appendChild(doc);
+        doc.innerHTML = html;
 
         toWatch = {};
 
