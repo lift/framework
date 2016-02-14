@@ -41,5 +41,9 @@ object JsCmdsFnSpecs extends Specification {
     "remove trailing Noops" in {
       trimNoops(Reload & Noop & Noop) must_== Reload
     }
+
+    "remove Noops among multiple non-Noops" in {
+      trimNoops(Noop & Reload & Noop & Noop & JsBreak & JsContinue & Noop) must_== (Reload & JsBreak & JsContinue)
+    }
   }
 }

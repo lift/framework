@@ -678,9 +678,9 @@ object JsCmds {
     * @param js
     * @return
     */
-  def trimNoops(js:JsCmd):JsCmd = seqJsToJs(toList(js).filterNot(_ == _Noop)) match {
-    case CmdPair(`_Noop`, rest) => rest  // Since seqJsToJs folds with a leading Noop, strip it
-    case other => other
+  def trimNoops(js:JsCmd):JsCmd = toList(js).filterNot(_ == Noop) match {
+    case h :: t => t.foldLeft(h)(_ & _)
+    case _ => Noop
   }
 
   object Script {
