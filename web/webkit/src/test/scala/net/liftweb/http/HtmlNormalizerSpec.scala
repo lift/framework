@@ -117,10 +117,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
         )
 
       html must ==/(<myelement id="testid" />)
-      js.toJsCmd must_== """|
-        |
-        |lift.onEvent("testid","event",function(event) {doStuff;});
-        |""".stripMargin('|')
+      js.toJsCmd must_== """lift.onEvent("testid","event",function(event) {doStuff;});"""
     }
 
     "generate ids for elements with events if they don't have one" in {
@@ -134,10 +131,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
       val id = html \@ "id"
 
       id must not be empty
-      js.toJsCmd must_== s"""|
-        |
-        |lift.onEvent("$id","event",function(event) {doStuff;});
-        |""".stripMargin('|')
+      js.toJsCmd must_== s"""lift.onEvent("$id","event",function(event) {doStuff;});"""
     }
 
     "extract event js correctly for multiple elements" in {
@@ -152,22 +146,9 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           false
         )
 
-      js.toJsCmd must be matching(s"""|(?ms)
-        |
-        |
-        |
-        |
-        |lift\\.onEvent\\("lift-event-js-[^"]+","event",function\\(event\\) \\{doStuff;\\}\\);
-        |
-        |
-        |
-        |lift\\.onEvent\\("hello","event",function\\(event\\) \\{doStuff2;\\}\\);
-        |
-        |
-        |
-        |lift\\.onEvent\\("lift-event-js-[^"]+","event",function\\(event\\) \\{doStuff3;\\}\\);
-        |
-        |""".stripMargin('|').r
+      js.toJsCmd must be matching("""(?s)\Qlift.onEvent("lift-event-js-\E[^"]+\Q","event",function(event) {doStuff;});
+        |lift.onEvent("hello","event",function(event) {doStuff2;});
+        |lift.onEvent("lift-event-js-\E[^"]+\Q","event",function(event) {doStuff3;});\E""".stripMargin('|').lines.mkString("\n").r
       )
     }
 
@@ -189,26 +170,10 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
 
       (html \ "myelement").map(_ \@ "href").filter(_.nonEmpty) must beEmpty
       (html \ "myelement").map(_ \@ "action").filter(_.nonEmpty) must beEmpty
-      js.toJsCmd must be matching(s"""|(?ms)
-        |
-        |
-        |
-        |
-        |lift\\.onEvent\\("lift-event-js-[^"]+","click",function\\(event\\) \\{doStuff; event.preventDefault\\(\\);\\}\\);
-        |
-        |
-        |
-        |lift\\.onEvent\\("hello","submit",function\\(event\\) \\{doStuff2; event.preventDefault\\(\\);\\}\\);
-        |
-        |
-        |
-        |lift\\.onEvent\\("hello2","click",function\\(event\\) \\{doStuff3; event.preventDefault\\(\\);\\}\\);
-        |
-        |
-        |
-        |lift\\.onEvent\\("lift-event-js-[^"]+","submit",function\\(event\\) \\{/doStuff4; event.preventDefault\\(\\);\\}\\);
-        |
-        |""".stripMargin('|').r
+      js.toJsCmd must be matching("""(?s)\Qlift.onEvent("lift-event-js-\E[^"]+\Q","click",function(event) {doStuff; event.preventDefault();});
+        |lift.onEvent("hello","submit",function(event) {doStuff2; event.preventDefault();});
+        |lift.onEvent("hello2","click",function(event) {doStuff3; event.preventDefault();});
+        |lift.onEvent("lift-event-js-\E[^"]+\Q","submit",function(event) {/doStuff4; event.preventDefault();});\E""".stripMargin('|').lines.mkString("\n").r
       )
     }
 
