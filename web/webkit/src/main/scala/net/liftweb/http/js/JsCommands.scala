@@ -793,12 +793,12 @@ object JsCmds {
   implicit def jsExpToJsCmd(in: JsExp) = in.cmd
 
   case class CmdPair(left: JsCmd, right: JsCmd) extends JsCmd {
-    import scala.collection.mutable.ListBuffer;
+    import scala.collection.mutable.ListBuffer
 
     def toJsCmd: String = {
       val acc = new ListBuffer[JsCmd]()
       appendDo(acc, left :: right :: Nil)
-      acc.map(_.toJsCmd).mkString("\n")
+      acc.map(_.toJsCmd).filterNot(_.isEmpty).mkString("\n")
     }
 
     @scala.annotation.tailrec
