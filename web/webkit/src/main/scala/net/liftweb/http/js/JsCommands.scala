@@ -798,7 +798,7 @@ object JsCmds {
     def toJsCmd: String = {
       val acc = new ListBuffer[JsCmd]()
       appendDo(acc, left :: right :: Nil)
-      acc.map(_.toJsCmd).filterNot(_.isEmpty).mkString("\n")
+      acc.map(_.toJsCmd).mkString("\n")
     }
 
     @scala.annotation.tailrec
@@ -806,6 +806,7 @@ object JsCmds {
       cmds match {
         case Nil =>
         case CmdPair(l, r) :: rest => appendDo(acc, l :: r :: rest)
+        case `_Noop` :: rest => appendDo(acc, rest)
         case a :: rest => acc.append(a); appendDo(acc, rest)
       }
     }
