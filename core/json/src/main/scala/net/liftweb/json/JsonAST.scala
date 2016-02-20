@@ -168,7 +168,7 @@ object JsonAST {
      * res2: JValue = JObject(List(JField(name,JString(Joe)), JField(name,JString(Alabama Cheer))))
      * }}}
      */
-    def \\(nameToFind: String): JValue = {
+    def \\(nameToFind: String): JObject = {
       def find(json: JValue): List[JField] = json match {
         case JObject(fields) =>
           fields.foldLeft(List[JField]()) {
@@ -187,13 +187,10 @@ object JsonAST {
           Nil
       }
 
-      find(this) match {
-        case JField(_, x) :: Nil => x
-        case xs => JObject(xs)
-      }
+      JObject(find(this))
     }
 
-    /** 
+    /**
      * Find immediate children of this `[[JValue]]` that match a specific `JValue` subclass.
      *
      * This methid will search a `[[JObject]]` or `[[JArray]]` for values of a specific type and
@@ -357,8 +354,8 @@ object JsonAST {
     def foldField[A](z: A)(f: (A, JField) => A): A = {
       def rec(acc: A, v: JValue) = {
         v match {
-          case JObject(l) => l.foldLeft(acc) { 
-            case (a, field@JField(name, value)) => value.foldField(f(a, field))(f) 
+          case JObject(l) => l.foldLeft(acc) {
+            case (a, field@JField(name, value)) => value.foldField(f(a, field))(f)
           }
           case JArray(l) => l.foldLeft(acc)((a, e) => e.foldField(a)(f))
           case _ => acc
@@ -419,7 +416,7 @@ object JsonAST {
 
     /** Return a new `JValue` resulting from applying the given partial function `f``
      * to each field in JSON.
-     * 
+     *
      * Example:
      * {{{
      * JObject(("age", JInt(10)) :: Nil) transformField {
@@ -440,7 +437,7 @@ object JsonAST {
      *
      * If this is a `JObject`, this means we will transform the value of each
      * field of the object and the object in turn and return an updated object.
-     * 
+     *
      * If this is another type of `JValue`, the value is transformed directly.
      *
      * Note that this happens recursively, so you will receive both each value
@@ -590,7 +587,7 @@ object JsonAST {
      * @return A `List` of `JField`s that match the given predicate `p`, or `Nil`
      *         if this `JValue` is not a `JObject`.
      */
-    def filterField(p: JField => Boolean): List[JField] = 
+    def filterField(p: JField => Boolean): List[JField] =
       foldField(List[JField]())((acc, e) => if (p(e)) e :: acc else acc).reverse
 
     /**
@@ -618,19 +615,19 @@ object JsonAST {
     def filter(p: JValue => Boolean): List[JValue] =
       fold(List[JValue]())((acc, e) => if (p(e)) e :: acc else acc).reverse
 
-    /** 
+    /**
      * Create a new instance of `[[WithFilter]]` for Scala to use when using
      * this `JValue` in a for comprehension.
      */
     def withFilter(p: JValue => Boolean) = new WithFilter(this, p)
-    
+
     final class WithFilter(self: JValue, p: JValue => Boolean) {
       def map[A](f: JValue => A): List[A] = self filter p map f
       def flatMap[A](f: JValue => List[A]) = self filter p flatMap f
       def withFilter(q: JValue => Boolean): WithFilter = new WithFilter(self, x => p(x) && q(x))
       def foreach[U](f: JValue => U): Unit = self filter p foreach f
     }
-    
+
     /**
      * Concatenate this `JValue` with another `JValue`.
      *
@@ -784,7 +781,7 @@ object JsonAST {
     type Values = Boolean
     def values = value
   }
-  
+
   case class JObject(obj: List[JField]) extends JValue {
     type Values = Map[String, Any]
     def values = {
