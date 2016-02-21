@@ -793,7 +793,7 @@ object JsCmds {
   implicit def jsExpToJsCmd(in: JsExp) = in.cmd
 
   case class CmdPair(left: JsCmd, right: JsCmd) extends JsCmd {
-    import scala.collection.mutable.ListBuffer;
+    import scala.collection.mutable.ListBuffer
 
     def toJsCmd: String = {
       val acc = new ListBuffer[JsCmd]()
@@ -806,6 +806,7 @@ object JsCmds {
       cmds match {
         case Nil =>
         case CmdPair(l, r) :: rest => appendDo(acc, l :: r :: rest)
+        case `_Noop` :: rest => appendDo(acc, rest)
         case a :: rest => acc.append(a); appendDo(acc, rest)
       }
     }
