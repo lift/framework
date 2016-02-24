@@ -23,30 +23,30 @@ object Dependencies {
 
   type ModuleMap = String => ModuleID
 
-  lazy val CVMappingAll  = crossMapped("2.11.2" -> "2.11")
+  lazy val CVMappingAll  = crossMapped("2.11.7" -> "2.11")
 
   lazy val slf4jVersion = "1.7.2"
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
-  lazy val commons_codec          = "commons-codec"              % "commons-codec"      % "1.6"
-  lazy val commons_fileupload     = "commons-fileupload"         % "commons-fileupload" % "1.2.2"
+  lazy val commons_codec          = "commons-codec"              % "commons-codec"      % "1.10"
+  lazy val commons_fileupload     = "commons-fileupload"         % "commons-fileupload" % "1.3.1"
   lazy val commons_httpclient     = "commons-httpclient"         % "commons-httpclient" % "3.1"
-  lazy val javamail               = "javax.mail"                 % "mail"               % "1.4.4"
-  lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.6"
-  lazy val joda_convert           = "org.joda"                   % "joda-convert"       % "1.2"
+  lazy val javamail               = "javax.mail"                 % "mail"               % "1.4.7"
+  lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.9.2"
+  lazy val joda_convert           = "org.joda"                   % "joda-convert"       % "1.8.1"
   lazy val htmlparser             = "nu.validator.htmlparser"    % "htmlparser"         % "1.4"
   lazy val mongo_java_driver      = "org.mongodb"                % "mongo-java-driver"  % "2.14.0"
-  lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.4.1"
+  lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.8"
   lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.5"     cross CVMappingAll
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _
   lazy val scala_compiler: ModuleMap = "org.scala-lang"          % "scala-compiler"     % _
-  lazy val scalaz7_core           = "org.scalaz"                 % "scalaz-core"        % "7.0.6"   cross CVMappingAll
+  lazy val scalaz7_core           = "org.scalaz"                 % "scalaz-core"        % "7.1.7"   cross CVMappingAll
   lazy val squeryl                = "org.squeryl"                % "squeryl"            % "0.9.5-7" cross CVMappingAll
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
-  lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.0.1"
-  lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7R4"
-  lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.0.1"
+  lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.0.5"
+  lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7.7.1"
+  lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.0.4"
   lazy val xerces                 = "xerces" % "xercesImpl" % "2.11.0"
 
   // Aliases
@@ -56,10 +56,10 @@ object Dependencies {
 
   // Provided scope:
   // Scope provided by container, available only in compile and test classpath, non-transitive by default.
-  lazy val logback         = "ch.qos.logback"    % "logback-classic" % "1.0.9"      % "provided"
-  lazy val log4j           = "log4j"             % "log4j"           % "1.2.16"     % "provided"
+  lazy val logback         = "ch.qos.logback"    % "logback-classic" % "1.1.5"      % "provided"
+  lazy val log4j           = "log4j"             % "log4j"           % "1.2.17"     % "provided"
   lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"   % slf4jVersion % "provided"
-  lazy val persistence_api = "javax.persistence" % "persistence-api" % "1.0"        % "provided"
+  lazy val persistence_api = "javax.persistence" % "persistence-api" % "1.0.2"      % "provided"
   lazy val servlet_api     = "javax.servlet"     % "servlet-api"     % "2.5"        % "provided"
 
 
