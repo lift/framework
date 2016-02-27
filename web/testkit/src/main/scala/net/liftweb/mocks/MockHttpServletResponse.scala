@@ -18,6 +18,7 @@ package net.liftweb
 package mocks
 
 import scala.collection.mutable.HashMap
+import scala.collection.JavaConverters._
 import java.io.PrintWriter
 import java.io.StringReader
 import java.io.BufferedReader
@@ -27,6 +28,7 @@ import java.io.FileInputStream
 import java.io.InputStream
 import java.io.StringBufferInputStream
 import java.io.File
+import java.util.Collection
 import java.util.Arrays
 import java.util.Date
 import java.util.Locale
@@ -63,6 +65,7 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
   def setStatus(i: Int): Unit = {
     statusCode = i
   }
+  def getStatus = statusCode
 
   def addIntHeader(s: String, i: Int) {
     addHeader(s, i.toString)
@@ -75,6 +78,16 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
   }
   def setHeader(s1: String, s2: String) {
     headers += (s1 -> List(s2))
+  }
+
+  def getHeader(name: String): String = {
+    headers.get(name).flatMap(_.headOption).getOrElse("")
+  }
+  def getHeaders(name: String): Collection[String] = {
+    headers.get(name).getOrElse(Nil).asJava
+  }
+  def getHeaderNames(): Collection[String] = {
+    headers.keySet.toSeq.asJava
   }
 
   def addDateHeader(s: String, l: Long) {
@@ -137,4 +150,3 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
   def getContentType(): String = contentType
   def getCharacterEncoding(): String = charEncoding
 }
-
