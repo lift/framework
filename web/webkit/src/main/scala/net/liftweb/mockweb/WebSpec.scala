@@ -193,7 +193,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
       this(description, new MockHttpServletRequest(url, contextPath), session)
 
     def in(expectations : => Result) =
-      exampleFactory newExample(description, {
+      fragmentFactory.example(description, {
         LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
           MockWeb.useLiftRules.doWith(true) {
             MockWeb.testS(req, session) {
@@ -214,7 +214,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
       this(description, new MockHttpServletRequest(url, contextPath))
 
     def in(expectations : Req => Result) =
-      exampleFactory newExample(description, {
+      fragmentFactory.example(description, {
         LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
           MockWeb.useLiftRules.doWith(true) {
             MockWeb.testReq(req)(expectations)
@@ -234,7 +234,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
       this(description, new MockHttpServletRequest(url, contextPath), session)
 
     def in(expectations : Box[NodeSeq] => Result) =
-      exampleFactory.newExample(description, {
+      fragmentFactory.example(description, {
         LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
           MockWeb.useLiftRules.doWith(true) {
             MockWeb.testS(req, session) {

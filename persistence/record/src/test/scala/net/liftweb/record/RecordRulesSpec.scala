@@ -22,7 +22,6 @@ import http.{LiftSession, S}
 import util.Helpers._
 
 import org.specs2.mutable._
-import org.specs2.specification.Fragment
 
 import fixtures._
 

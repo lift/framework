@@ -20,7 +20,6 @@ package record
 import java.util.Calendar
 
 import org.specs2.mutable.Specification
-import org.specs2.specification.Fragment
 import org.joda.time._
 
 import http.js.JE._
@@ -75,7 +74,7 @@ object RecordSpec extends Specification {
   }
 
   "Record lifecycle callbacks" should {
-    def testOneHarness(scope: String, f: LifecycleTestRecord => HarnessedLifecycleCallbacks): Fragment = {
+    def testOneHarness(scope: String, f: LifecycleTestRecord => HarnessedLifecycleCallbacks) = {
       ("be called before validation when specified at " + scope) in {
         val rec = LifecycleTestRecord.createRecord
         var triggered = false

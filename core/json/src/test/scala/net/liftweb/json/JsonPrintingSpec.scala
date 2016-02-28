@@ -31,7 +31,7 @@ object JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
 
   "rendering does not change semantics" in {
     val rendering = (json: JValue) => parse(JsonAST.prettyRender(json)) == parse(JsonAST.compactRender(json))
-    check(forAll(rendering))
+    forAll(rendering)
   }
 
   private def parse(json: String) = scala.util.parsing.json.JSON.parseRaw(json)

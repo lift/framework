@@ -336,7 +336,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
 
   "A Box equals method" should {
 
-    "return true with comparing two identical Box messages" in check {
+    "return true with comparing two identical Box messages" in prop {
       (c1: Box[Int], c2: Box[Int]) => (c1, c2) match {
         case (Empty, Empty) => c1 must_== c2
         case (Full(x), Full(y)) => (c1 == c2) must_== (x == y)
@@ -407,12 +407,12 @@ trait BoxGenerator {
 
   implicit def genThrowable: Arbitrary[Throwable] = Arbitrary[Throwable] {
     case object UserException extends Throwable
-    value(UserException)
+    const(UserException)
   }
 
   implicit def genBox[T](implicit a: Arbitrary[T]): Arbitrary[Box[T]] = Arbitrary[Box[T]] {
     frequency(
-      (3, value(Empty)),
+      (3, const(Empty)),
       (3, a.arbitrary.map(Full[T])),
       (1, genFailureBox)
     )
@@ -421,9 +421,9 @@ trait BoxGenerator {
   def genFailureBox: Gen[Failure] = for {
     msgLen <- choose(0, 4)
     msg <- listOfN(msgLen, alphaChar)
-    exception <- value(Full(new Exception("")))
+    exception <- const(Full(new Exception("")))
     chainLen <- choose(1, 5)
-    chain <- frequency((1, listOfN(chainLen, genFailureBox)), (3, value(Nil)))
+    chain <- frequency((1, listOfN(chainLen, genFailureBox)), (3, const(Nil)))
   } yield Failure(msg.mkString, exception, Box(chain.headOption))
 
 }

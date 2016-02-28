@@ -28,7 +28,6 @@ import util.Helpers._
 
 import java.util.Calendar
 import org.specs2.mutable._
-import org.specs2.specification.Fragment
 import org.joda.time.DateTime
 
 import fixtures._
@@ -45,7 +44,7 @@ object FieldSpec extends Specification {
 
   lazy val session = new LiftSession("", randomString(20), Empty)
 
-  def passBasicTests[A](example: A, example2: A, mandatory: MandatoryTypedField[A], legacyOptional: MandatoryTypedField[A], optional: OptionalTypedField[A], canCheckDefaultValues: Boolean = true)(implicit m: scala.reflect.Manifest[A]): Fragment = {
+  def passBasicTests[A](example: A, example2: A, mandatory: MandatoryTypedField[A], legacyOptional: MandatoryTypedField[A], optional: OptionalTypedField[A], canCheckDefaultValues: Boolean = true)(implicit m: scala.reflect.Manifest[A]) = {
     def commonBehaviorsForMandatory(in: MandatoryTypedField[A]): Unit = {
 
 		if (canCheckDefaultValues) {
@@ -246,7 +245,7 @@ object FieldSpec extends Specification {
     success
   }
 
-  def passConversionTests[A](example: A, mandatory: MandatoryTypedField[A], jsexp: JsExp, jvalue: JValue, formPattern: Box[NodeSeq]): Fragment = {
+  def passConversionTests[A](example: A, mandatory: MandatoryTypedField[A], jsexp: JsExp, jvalue: JValue, formPattern: Box[NodeSeq]) = {
 
     "convert to JsExp" in S.initIfUninitted(session) {
       mandatory.set(example)
