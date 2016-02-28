@@ -26,22 +26,22 @@ object ValidationExample extends Specification {
 
     "fail when age is less than min age" in {
       // Age must be between 18 an 60
-      val ageResult = (jValue: JValue) => for {
-        age <- field[Int]("age")(jValue)
-        _ <- min(18)(age)
-        _ <- max(60)(age)
-      } yield age
+      val ageResult = (jValue: JValue) => (for {
+        age <- field[Int]("age")(jValue).disjunction
+        _ <- min(18)(age).disjunction
+        _ <- max(60)(age).disjunction
+      } yield age).validation
       val person = Person.applyJSON(field[String]("name"), ageResult)
       person(json) mustEqual Failure(NonEmptyList(UncategorizedError("min", "17 < 18", Nil)))
     }
 
     "pass when age within limits" in {
       // Age must be between 16 an 60
-      val ageResult = (jValue: JValue) => for {
-        age <- field[Int]("age")(jValue)
-        _ <- min(16)(age)
-        _ <- max(60)(age)
-      } yield age
+      val ageResult = (jValue: JValue) => (for {
+        age <- field[Int]("age")(jValue).disjunction
+        _ <- min(16)(age).disjunction
+        _ <- max(60)(age).disjunction
+      } yield age).validation
       val person = Person.applyJSON(field[String]("name"), ageResult)
       person(json) mustEqual Success(Person("joe", 17))
     }
@@ -62,11 +62,11 @@ object ValidationExample extends Specification {
     // Valid range is a range having start <= end
     implicit def rangeJSON: JSONR[Range] = new JSONR[Range] {
       def read(json: JValue) = {
-        for {
-          s <- field[Int]("s")(json)
-          e <- field[Int]("e")(json)
-          r <- ascending(s, e)
-        } yield Range.tupled(r)
+        (for {
+          s <- field[Int]("s")(json).disjunction
+          e <- field[Int]("e")(json).disjunction
+          r <- ascending(s, e).disjunction
+        } yield Range.tupled(r)).validation
       }
     }
 

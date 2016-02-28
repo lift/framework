@@ -31,6 +31,8 @@ import util.Helpers.randomString
 object MenuSpec extends Specification {
   "Menu Specification".title
 
+  sequential
+
   case class Param(s: String)
 
   def mockSiteMap[T](f: (SiteMap => T)): T = {
@@ -79,6 +81,7 @@ object MenuSpec extends Specification {
         }
       }
     }
+
     "Show text only when on same page using the 'donthide' attribute" in {
       testSiteMap("http://test.com/foo/baz") {
         val donthide = new UnprefixedAttribute("donthide", "true", Null)

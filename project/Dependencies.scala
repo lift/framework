@@ -41,7 +41,7 @@ object Dependencies {
   lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.5"     cross CVMappingAll
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _
   lazy val scala_compiler: ModuleMap = "org.scala-lang"          % "scala-compiler"     % _
-  lazy val scalaz7_core           = "org.scalaz"                 % "scalaz-core"        % "7.1.7"   cross CVMappingAll
+  lazy val scalaz7_core           = "org.scalaz"                 % "scalaz-core"        % "7.2.0"   cross CVMappingAll
   lazy val squeryl                = "org.squeryl"                % "squeryl"            % "0.9.5-7" cross CVMappingAll
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
   lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.0.5"
@@ -79,8 +79,8 @@ object Dependencies {
   lazy val jetty6      = "org.mortbay.jetty"           % "jetty"                    % "6.1.26"  % "test"
   lazy val jwebunit    = "net.sourceforge.jwebunit"    % "jwebunit-htmlunit-plugin" % "2.5"     % "test"
   lazy val mockito_all = "org.mockito"                 % "mockito-all"              % "1.9.0"   % "test"
-  lazy val scalacheck  = "org.scalacheck"             %% "scalacheck"               % "1.10.1"  % "test"
-  lazy val specs2      = "org.specs2"                 %% "specs2"                   % "2.3.11"  % "test"
+  lazy val scalacheck  = "org.specs2"                 %% "specs2-scalacheck"        % "3.7"  % "test"
+  lazy val specs2      = "org.specs2"                 %% "specs2"                   % "3.7"  % "test"
   lazy val scalatest   = "org.scalatest"              %% "scalatest"                % "2.1.3"   % "test"
   lazy val junit       = "junit"                       % "junit"                    % "4.8.2"   % "test"
 

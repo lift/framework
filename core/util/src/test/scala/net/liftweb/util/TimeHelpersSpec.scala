@@ -117,7 +117,7 @@ object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen
                amount == 0 && !timeSpanToString.contains(unit)
         }
       })
-      check(conversionIsOk && timeSpanStringIsPluralized)
+      conversionIsOk && timeSpanStringIsPluralized
     }
   }
 
