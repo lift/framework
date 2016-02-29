@@ -237,7 +237,8 @@ private[util] trait Props extends Logger {
         "org.scalatools.testing.Runner2",
         "org.specs2.runner.TestInterfaceRunner", // sometimes specs2 runs tests on another thread
         "org.specs2.runner.TestInterfaceConsoleReporter",
-        "org.specs2.specification.FragmentExecution"
+        "org.specs2.specification.FragmentExecution",
+        "org.specs2.specification.core.Execution"
       )
       st.exists(e => names.exists(e.getClassName.startsWith))
     })
