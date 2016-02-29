@@ -196,11 +196,12 @@ object LiftRules extends LiftRulesMocker {
     val NoCometType = Value(12, "Comet Type not specified")
   }
 
-  def defaultFuncNameGenerator(runMode: Props.RunModes.Value): () => String =
+  def defaultFuncNameGenerator(runMode: Props.RunModes.Value): () => String = {
     runMode match {
       case Props.RunModes.Test => S.generateTestFuncName _
       case _                   => S.generateFuncName _
     }
+  }
 }
 
 /**

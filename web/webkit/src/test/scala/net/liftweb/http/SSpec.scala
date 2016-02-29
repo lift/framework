@@ -26,6 +26,8 @@ import LiftRules.defaultFuncNameGenerator
 object SSpec extends Specification with XmlMatchers {
   "S Specification".title
 
+  sequential
+
   "formFuncName" should {
     "generate random names when not in Test mode" in {
       for (mode <- RunModes.values if mode != RunModes.Test) {
