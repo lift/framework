@@ -229,7 +229,9 @@ object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen
   }
 }
 
-object forAllTimeZones extends Around with MatchersImplicits {
+object forAllTimeZones extends Around {
+  import MatchersImplicits._
+
   override def around[T: AsResult](f: => T) = synchronized { // setDefault is on static context so tests should be sequenced
     import collection.convert.wrapAsScala._
     // some timezones for java (used in formatters) and for Joda (other computations) has other offset
