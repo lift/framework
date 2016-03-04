@@ -132,6 +132,7 @@ class MockServletContext(var target: String) extends ServletContext {
   def getSessionCookieConfig(): javax.servlet.SessionCookieConfig = ???
   def setInitParameter(x$1: String,x$2: String): Boolean = ???
   def setSessionTrackingModes(x$1: java.util.Set[javax.servlet.SessionTrackingMode]): Unit = ???
+  def getVirtualServerName(): String = ???
 }
 
 
@@ -162,6 +163,9 @@ class DoNothingFilterChain extends FilterChain with Logger {
  */
 class MockServletInputStream(is: InputStream) extends ServletInputStream {
   def read() = is.read()
+  def isFinished(): Boolean = ???
+  def isReady(): Boolean = ???
+  def setReadListener(x$1: javax.servlet.ReadListener): Unit = ???
 }
 
 /**
@@ -172,6 +176,8 @@ class MockServletInputStream(is: InputStream) extends ServletInputStream {
 class MockServletOutputStream(os: ByteArrayOutputStream) extends ServletOutputStream {
   def write(b: Int) {
     os.write(b)
+    def isReady(): Boolean = ???
+    def setWriteListener(x$1: javax.servlet.WriteListener): Unit = ???
   }
 }
 

@@ -149,4 +149,5 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
   def getOutputStream(): ServletOutputStream = outputStream
   def getContentType(): String = contentType
   def getCharacterEncoding(): String = charEncoding
+  def setContentLengthLong(l: Long): Unit = contentType = l.toString
 }
