@@ -571,4 +571,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   def isAsyncSupported(): Boolean = false
   def startAsync(request: javax.servlet.ServletRequest, response: javax.servlet.ServletResponse): javax.servlet.AsyncContext = ???
   def startAsync(): javax.servlet.AsyncContext = ???
+  def changeSessionId(): String = ???
+  def upgrade[T <: javax.servlet.http.HttpUpgradeHandler](x$1: Class[T]): T = ???
+  def getContentLengthLong(): Long = ???
 }
