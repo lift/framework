@@ -555,7 +555,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   }
 
   def getPart(partName: String): Part = {
-    ???
+    null
   }
 
   def login(username: String, password: String): Unit = ()
@@ -564,14 +564,15 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
 
   def authenticate(resp: HttpServletResponse) = true
 
-  def getAsyncContext(): javax.servlet.AsyncContext = ???
-  def getDispatcherType(): javax.servlet.DispatcherType = ???
-  def getServletContext(): javax.servlet.ServletContext = ???
+  def getAsyncContext(): AsyncContext = null
+  def getDispatcherType(): DispatcherType = null
+  def getServletContext(): ServletContext = null
   def isAsyncStarted(): Boolean = false
   def isAsyncSupported(): Boolean = false
-  def startAsync(request: javax.servlet.ServletRequest, response: javax.servlet.ServletResponse): javax.servlet.AsyncContext = ???
-  def startAsync(): javax.servlet.AsyncContext = ???
-  def changeSessionId(): String = ???
+  def startAsync(request: javax.servlet.ServletRequest, response: javax.servlet.ServletResponse): AsyncContext = null
+  def startAsync(): AsyncContext = null
+  def changeSessionId(): String = null
+  def getContentLengthLong(): Long = body.length
+
   def upgrade[T <: javax.servlet.http.HttpUpgradeHandler](x$1: Class[T]): T = ???
-  def getContentLengthLong(): Long = ???
 }

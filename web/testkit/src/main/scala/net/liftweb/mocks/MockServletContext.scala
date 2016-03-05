@@ -20,6 +20,8 @@ package mocks
 import common.Logger
 
 import scala.collection.mutable.HashMap
+import scala.collection.JavaConversions._
+
 import java.io.PrintWriter
 import java.io.StringReader
 import java.io.BufferedReader
@@ -106,33 +108,39 @@ class MockServletContext(var target: String) extends ServletContext {
   def log(msg: String) = println("MockServletContext.log: " + msg)
   def getContextPath(): String = null
 
-  def addFilter(x$1: String,x$2: Class[_ <: javax.servlet.Filter]): javax.servlet.FilterRegistration.Dynamic = ???
-  def addFilter(x$1: String,x$2: javax.servlet.Filter): javax.servlet.FilterRegistration.Dynamic = ???
-  def addFilter(x$1: String,x$2: String): javax.servlet.FilterRegistration.Dynamic = ???
-  def addListener(x$1: Class[_ <: java.util.EventListener]): Unit = ???
-  def addListener[T <: java.util.EventListener](x$1: T): Unit = ???
-  def addListener(x$1: String): Unit = ???
-  def addServlet(x$1: String,x$2: Class[_ <: javax.servlet.Servlet]): javax.servlet.ServletRegistration.Dynamic = ???
-  def addServlet(x$1: String,x$2: javax.servlet.Servlet): javax.servlet.ServletRegistration.Dynamic = ???
-  def addServlet(x$1: String,x$2: String): javax.servlet.ServletRegistration.Dynamic = ???
-  def createFilter[T <: javax.servlet.Filter](x$1: Class[T]): T = ???
-  def createListener[T <: java.util.EventListener](x$1: Class[T]): T = ???
-  def createServlet[T <: javax.servlet.Servlet](x$1: Class[T]): T = ???
-  def declareRoles(x$1: String*): Unit = ???
-  def getClassLoader(): ClassLoader = ???
-  def getDefaultSessionTrackingModes(): java.util.Set[javax.servlet.SessionTrackingMode] = ???
-  def getEffectiveMajorVersion(): Int = ???
-  def getEffectiveMinorVersion(): Int = ???
-  def getEffectiveSessionTrackingModes(): java.util.Set[javax.servlet.SessionTrackingMode] = ???
-  def getFilterRegistration(x$1: String): javax.servlet.FilterRegistration = ???
-  def getFilterRegistrations(): java.util.Map[String, _ <: javax.servlet.FilterRegistration] = ???
-  def getJspConfigDescriptor(): javax.servlet.descriptor.JspConfigDescriptor = ???
-  def getServletRegistration(x$1: String): javax.servlet.ServletRegistration = ???
-  def getServletRegistrations(): java.util.Map[String, _ <: javax.servlet.ServletRegistration] = ???
-  def getSessionCookieConfig(): javax.servlet.SessionCookieConfig = ???
-  def setInitParameter(x$1: String,x$2: String): Boolean = ???
-  def setSessionTrackingModes(x$1: java.util.Set[javax.servlet.SessionTrackingMode]): Unit = ???
-  def getVirtualServerName(): String = ???
+  def addFilter(x$1: String,x$2: Class[_ <: javax.servlet.Filter]): FilterRegistration.Dynamic = null
+  def addFilter(x$1: String,x$2: javax.servlet.Filter): FilterRegistration.Dynamic = null
+  def addFilter(x$1: String,x$2: String): FilterRegistration.Dynamic = null
+
+  def addListener(listenerClass: Class[_ <: java.util.EventListener]): Unit = ()
+  def addListener[T <: java.util.EventListener](listener: T): Unit = ()
+  def addListener(listenerClass: String): Unit = ()
+
+  def addServlet(servletNAme: String, servletClass: Class[_ <: javax.servlet.Servlet]): ServletRegistration.Dynamic = null
+  def addServlet(servletName: String, servlet: javax.servlet.Servlet): ServletRegistration.Dynamic = null
+  def addServlet(servletName: String, servletClass: String): ServletRegistration.Dynamic = null
+
+  // This remain unimplemented since we can't provide a Null here due toe type restrictions.
+  def createFilter[T <: javax.servlet.Filter](filter: Class[T]): T = ???
+  def createListener[T <: java.util.EventListener](listener: Class[T]): T = ???
+  def createServlet[T <: javax.servlet.Servlet](servletClass: Class[T]): T = ???
+
+  def getDefaultSessionTrackingModes(): java.util.Set[SessionTrackingMode] = Set.empty[SessionTrackingMode]
+
+  def declareRoles(roles: String*): Unit = ()
+  def getClassLoader(): ClassLoader = getClass.getClassLoader
+  def getEffectiveMajorVersion(): Int = 0
+  def getEffectiveMinorVersion(): Int = 0
+  def getEffectiveSessionTrackingModes(): java.util.Set[javax.servlet.SessionTrackingMode] = null
+  def getFilterRegistration(x$1: String): javax.servlet.FilterRegistration = null
+  def getFilterRegistrations(): java.util.Map[String, _ <: javax.servlet.FilterRegistration] = null
+  def getJspConfigDescriptor(): javax.servlet.descriptor.JspConfigDescriptor = null
+  def getServletRegistration(x$1: String): javax.servlet.ServletRegistration = null
+  def getServletRegistrations(): java.util.Map[String, _ <: javax.servlet.ServletRegistration] = null
+  def getSessionCookieConfig(): javax.servlet.SessionCookieConfig = null
+  def setInitParameter(key: String,value: String): Boolean = true
+  def setSessionTrackingModes(trackingModes: java.util.Set[javax.servlet.SessionTrackingMode]): Unit = ()
+  def getVirtualServerName(): String = null
 }
 
 
@@ -163,9 +171,9 @@ class DoNothingFilterChain extends FilterChain with Logger {
  */
 class MockServletInputStream(is: InputStream) extends ServletInputStream {
   def read() = is.read()
-  def isFinished(): Boolean = ???
-  def isReady(): Boolean = ???
-  def setReadListener(x$1: javax.servlet.ReadListener): Unit = ???
+  def isFinished(): Boolean = is.available() > 0
+  def isReady(): Boolean = true
+  def setReadListener(x$1: javax.servlet.ReadListener): Unit = ()
 }
 
 /**
@@ -178,8 +186,8 @@ class MockServletOutputStream(os: ByteArrayOutputStream) extends ServletOutputSt
     os.write(b)
   }
 
-  def isReady(): Boolean = ???
-  def setWriteListener(x$1: javax.servlet.WriteListener): Unit = ???
+  def isReady(): Boolean = true
+  def setWriteListener(x$1: javax.servlet.WriteListener): Unit = ()
 }
 
 /**
