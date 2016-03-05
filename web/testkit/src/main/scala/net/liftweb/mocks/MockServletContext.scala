@@ -176,9 +176,10 @@ class MockServletInputStream(is: InputStream) extends ServletInputStream {
 class MockServletOutputStream(os: ByteArrayOutputStream) extends ServletOutputStream {
   def write(b: Int) {
     os.write(b)
-    def isReady(): Boolean = ???
-    def setWriteListener(x$1: javax.servlet.WriteListener): Unit = ???
   }
+
+  def isReady(): Boolean = ???
+  def setWriteListener(x$1: javax.servlet.WriteListener): Unit = ???
 }
 
 /**
