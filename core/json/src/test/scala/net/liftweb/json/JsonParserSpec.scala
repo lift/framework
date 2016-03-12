@@ -35,18 +35,17 @@ object JsonParserSpec extends Specification with JValueGen with ScalaCheck {
     case e: Throwable => e.getMessage
   }
 
-
   "JSON Parser Specification".title
 
   "Any valid json can be parsed" in {
     val parsing = (json: JValue) => { parse(prettyRender(json)); true }
-    check(forAll(genJValue)(parsing))
+    forAll(genJValue)(parsing)
   }
 
   "Buffer size does not change parsing result" in {
     val bufSize = Gen.choose(2, 64)
     val parsing = (x: JValue, s1: Int, s2: Int) => { parseVal(x, s1) == parseVal(x, s2) }
-    check(forAll(genObject, bufSize, bufSize)(parsing))
+    forAll(genObject, bufSize, bufSize)(parsing)
   }
 
   "Parsing is thread safe" in {
