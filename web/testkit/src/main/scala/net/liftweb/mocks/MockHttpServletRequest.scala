@@ -128,8 +128,9 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    */
   def body_= (jval : JValue, contentType : String) : Unit = {
     import json.JsonDSL._
-    import json.Printer
-    body = Printer.pretty(render(jval)).getBytes(charEncoding)
+    import json.JsonAST
+
+    body = JsonAST.prettyRender(jval).getBytes(charEncoding)
     this.contentType = contentType
   }
 
