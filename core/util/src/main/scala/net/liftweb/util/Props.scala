@@ -222,8 +222,9 @@ private[util] trait Props extends Logger {
   /**
    * The default run-mode auto-detection routine uses this function to infer whether Lift is being run in a test.
    *
-   * This routine can be customised by calling `set` before the run-mode is referenced. (An attempt to customise this
-   * after the run-mode is realised will have no effect and will instead log a warning.)
+   * This routine can be customised by calling `set` '''before''' the run-mode
+   * is referenced. (An attempt to customise this after the run-mode is
+   * realised will have no effect and will instead log a warning.)
    */
   val doesStackTraceContainKnownTestRunner = new RunModeProperty[Array[StackTraceElement] => Boolean]("doesStackTraceContainKnownTestRunner",
     (st: Array[StackTraceElement]) => {
@@ -247,8 +248,9 @@ private[util] trait Props extends Logger {
    * When the `run.mode` environment variable isn't set or recognised, this function is invoked to determine the
    * appropriate mode to use.
    *
-   * This logic can be customised by calling `set` before the run-mode is referenced. (An attempt to customise this
-   * after the run-mode is realised will have no effect and will instead log a warning.)
+   * This logic can be customised by calling `set` '''before''' the run-mode is
+   * referenced. (An attempt to customise this after the run-mode is realised
+   * will have no effect and will instead log a warning.)
    */
   val autoDetectRunModeFn = new RunModeProperty[() => Props.RunModes.Value]("autoDetectRunModeFn", () => {
     val st = Thread.currentThread.getStackTrace
@@ -333,7 +335,7 @@ private[util] trait Props extends Logger {
    * The function returns a List of String -> () => Box[InputStream].
    * So, if you want to consult System.getProperties to look for a properties file or
    * some such, you can set the whereToLook function in your Boot.scala file
-   * <b>before</b> you call anything else in Props.
+   * '''before''' you call anything else in `Props`.
    */
   @volatile var whereToLook: () => List[(String, () => Box[InputStream])] = () => Nil
 
