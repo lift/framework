@@ -72,6 +72,7 @@ object PropsSpec extends Specification {
       val testProps = TestProps()
 
       val before = testProps.autoDetectRunModeFn.get
+      testProps.mode // initialize run mode
       testProps.autoDetectRunModeFn.allowModification must_== false
       testProps.autoDetectRunModeFn.set(() => Test) must_== false
       testProps.autoDetectRunModeFn.get must_== before
