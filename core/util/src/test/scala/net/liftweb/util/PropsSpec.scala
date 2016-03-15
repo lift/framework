@@ -102,10 +102,10 @@ object PropsSpec extends Specification {
     "Prefer prepended System.properties to the test.default.props" in {
       val testProps = TestProps()
 
-      System.setProperty("omniauth.baseurl", "http://google.com")
+      System.setProperty("omniauth.baseurl1", "http://google.com")
 
       testProps.prependProvider(sys.props)
-      val baseurl = testProps.get("omniauth.baseurl")
+      val baseurl = testProps.get("omniauth.baseurl1")
 
       baseurl must_== Full("http://google.com")
     }
@@ -113,10 +113,10 @@ object PropsSpec extends Specification {
     "Read through to System.properties, correctly handling mutation" in {
       val testProps = TestProps()
 
-      System.setProperty("omniauth.baseurl", "http://google.com")
+      System.setProperty("omniauth.baseurl2", "http://google.com")
       testProps.prependProvider(sys.props)
-      System.setProperty("omniauth.baseurl", "http://ebay.com")
-      val baseurl = testProps.get("omniauth.baseurl")
+      System.setProperty("omniauth.baseurl2", "http://ebay.com")
+      val baseurl = testProps.get("omniauth.baseurl2")
 
       baseurl must_== Full("http://ebay.com")
     }
