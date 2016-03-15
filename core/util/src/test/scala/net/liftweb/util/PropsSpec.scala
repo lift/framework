@@ -17,9 +17,12 @@
 package net.liftweb
 package util
 
-import net.liftweb.common.Full
+import java.io.ByteArrayInputStream
+
 import org.specs2.mutable.Specification
 import org.specs2.mutable.After
+
+import common._
 import Props.RunModes._
 
 object PropsSpec extends Specification {
@@ -30,6 +33,24 @@ object PropsSpec extends Specification {
   "Props" should {
     "Detect test mode correctly" in {
       TestProps().testMode must_== true
+    }
+
+    "Allow modification of whereToLook before run-mode is set" in {
+      val testProps = TestProps()
+      val originalWtl = testProps.whereToLook
+
+      var wasCalled = false
+      testProps.whereToLook = () => {
+        wasCalled = true
+
+        List(
+          ("test propsters", () => Full(new ByteArrayInputStream("test.prop=value".getBytes("UTF-8"))))
+        )
+      }
+
+      testProps.getInt("jetty.port") must_== Empty
+      testProps.get("test.prop") must_== Full("value")
+      wasCalled must_== true
     }
 
     "Allow modification of run-mode properties before the run-mode is set" in {

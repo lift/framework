@@ -395,7 +395,23 @@ private[util] trait Props extends Logger {
     }
   }
 
-  private[this] var providers: List[PropProvider] = List(props)
+  // None before they've first been looked up/modified/whatever, Some after.
+  // We use this to lazy-load `props`, so that `whereToLook` can be updated
+  // by the user.
+  private[this] var providersAccumulator: Option[List[PropProvider]] = None
+
+  private[this] def providers = {
+    providersAccumulator getOrElse {
+      val baseProviders = List(props)
+      providersAccumulator = Some(baseProviders)
+
+      baseProviders
+    }
+  }
+  private[this] def providers_=(newProviders: List[PropProvider]) = {
+    providersAccumulator = Some(newProviders)
+  }
+
   private[this] var interpolationValues: List[InterpolationValues] = Nil
 
   private[this] lazy val lockedProviders = providers
