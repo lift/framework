@@ -222,8 +222,9 @@ private[util] trait Props extends Logger {
   /**
    * The default run-mode auto-detection routine uses this function to infer whether Lift is being run in a test.
    *
-   * This routine can be customised by calling `set` before the run-mode is referenced. (An attempt to customise this
-   * after the run-mode is realised will have no effect and will instead log a warning.)
+   * This routine can be customised by calling `set` '''before''' the run-mode
+   * is referenced. (An attempt to customise this after the run-mode is
+   * realised will have no effect and will instead log a warning.)
    */
   val doesStackTraceContainKnownTestRunner = new RunModeProperty[Array[StackTraceElement] => Boolean]("doesStackTraceContainKnownTestRunner",
     (st: Array[StackTraceElement]) => {
@@ -247,8 +248,9 @@ private[util] trait Props extends Logger {
    * When the `run.mode` environment variable isn't set or recognised, this function is invoked to determine the
    * appropriate mode to use.
    *
-   * This logic can be customised by calling `set` before the run-mode is referenced. (An attempt to customise this
-   * after the run-mode is realised will have no effect and will instead log a warning.)
+   * This logic can be customised by calling `set` '''before''' the run-mode is
+   * referenced. (An attempt to customise this after the run-mode is realised
+   * will have no effect and will instead log a warning.)
    */
   val autoDetectRunModeFn = new RunModeProperty[() => Props.RunModes.Value]("autoDetectRunModeFn", () => {
     val st = Thread.currentThread.getStackTrace
@@ -333,7 +335,7 @@ private[util] trait Props extends Logger {
    * The function returns a List of String -> () => Box[InputStream].
    * So, if you want to consult System.getProperties to look for a properties file or
    * some such, you can set the whereToLook function in your Boot.scala file
-   * <b>before</b> you call anything else in Props.
+   * '''before''' you call anything else in `Props`.
    */
   @volatile var whereToLook: () => List[(String, () => Box[InputStream])] = () => Nil
 
@@ -395,7 +397,23 @@ private[util] trait Props extends Logger {
     }
   }
 
-  private[this] var providers: List[PropProvider] = List(props)
+  // None before they've first been looked up/modified/whatever, Some after.
+  // We use this to lazy-load `props`, so that `whereToLook` can be updated
+  // by the user.
+  private[this] var providersAccumulator: Option[List[PropProvider]] = None
+
+  private[this] def providers = {
+    providersAccumulator getOrElse {
+      val baseProviders = List(props)
+      providersAccumulator = Some(baseProviders)
+
+      baseProviders
+    }
+  }
+  private[this] def providers_=(newProviders: List[PropProvider]) = {
+    providersAccumulator = Some(newProviders)
+  }
+
   private[this] var interpolationValues: List[InterpolationValues] = Nil
 
   private[this] lazy val lockedProviders = providers
