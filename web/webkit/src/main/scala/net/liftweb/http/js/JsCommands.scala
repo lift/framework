@@ -614,7 +614,12 @@ trait HtmlFixer {
       }
 
     import scala.collection.mutable.ListBuffer
-    val lb = ListBuffer[JsCmd](eventJs)
+    val lb =
+      if (eventJs == JsCmds.Noop) {
+        ListBuffer[JsCmd]()
+      } else {
+        ListBuffer[JsCmd](eventJs)
+      }
 
     val revised = ("script" #> nsFunc(ns => {
       ns match {
