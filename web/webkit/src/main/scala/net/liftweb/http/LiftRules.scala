@@ -1442,8 +1442,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * Execute certain functions early in a Stateful Request
    * This is called early in a stateful request (one that's not serviced by a stateless REST request and
    * one that's not marked as a stateless HTML page request).
-   * @dpp strongly recommends that everything that you do related to user state is done with earlyInStateful,
-   * instead of using onBeginServicing.
+   *
+   * DPP strongly recommends that everything that you do related to user state
+   * is done with `earlyInStateful`, instead of using `[[onBeginServicing]]`.
    */
   val earlyInStateful = RulesSeq[Box[Req] => Unit]
 
@@ -1627,9 +1628,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Modifies the root relative paths from the css url-s
    *
-   * @param path - the path of the css resource
-   * @prefix - the prefix to be added on the root relative paths. If this is Empty
-   * 	       the prefix will be the application context path.
+   * @param path the path of the css resource
+   * @param prefix the prefix to be added on the root relative paths. If this
+   *               is Empty, the prefix will be the application context path.
    */
   def fixCSS(path: List[String], prefix: Box[String]) {
 
