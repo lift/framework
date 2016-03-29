@@ -646,7 +646,13 @@ trait HtmlFixer {
 }
 
 trait JsCmd extends HtmlFixer with ToJsCmd {
-  def &(other: JsCmd): JsCmd = JsCmds.CmdPair(this, other)
+  def &(other: JsCmd): JsCmd = {
+    if (other == JsCmds.Noop) {
+      this
+    } else {
+      JsCmds.CmdPair(this, other)
+    }
+  }
 
   def toJsCmd: String
 
