@@ -754,7 +754,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    *
    *
    * @param name A name for the rewrite function so that it can be replaced or deleted later.
-   * @rw The rewrite partial function
+   * @param rw The rewrite partial function
    *
    * @see LiftRules.rewrite
    * @see # sessionRewriter

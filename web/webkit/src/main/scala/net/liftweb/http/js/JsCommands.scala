@@ -601,20 +601,25 @@ trait HtmlFixer {
 
     val w = new java.io.StringWriter
 
-    val xhtml =
+    val NodesAndEventJs(xhtml, eventJs) =
       S.session.map { session =>
-        session.normalizeHtmlAndAppendEventHandlers(
+        session.normalizeHtmlAndEventHandlers(
           session.processSurroundAndInclude(
             s"JS SetHTML id: $uid",
             content
           )
         )
       } openOr {
-        content
+        NodesAndEventJs(content, JsCmds.Noop)
       }
 
     import scala.collection.mutable.ListBuffer
-    val lb = new ListBuffer[JsCmd]
+    val lb =
+      if (eventJs == JsCmds.Noop) {
+        ListBuffer[JsCmd]()
+      } else {
+        ListBuffer[JsCmd](eventJs)
+      }
 
     val revised = ("script" #> nsFunc(ns => {
       ns match {
@@ -646,7 +651,13 @@ trait HtmlFixer {
 }
 
 trait JsCmd extends HtmlFixer with ToJsCmd {
-  def &(other: JsCmd): JsCmd = JsCmds.CmdPair(this, other)
+  def &(other: JsCmd): JsCmd = {
+    if (other == JsCmds.Noop) {
+      this
+    } else {
+      JsCmds.CmdPair(this, other)
+    }
+  }
 
   def toJsCmd: String
 
