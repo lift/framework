@@ -427,4 +427,3 @@ trait BoxGenerator {
   } yield Failure(msg.mkString, exception, Box(chain.headOption))
 
 }
-
