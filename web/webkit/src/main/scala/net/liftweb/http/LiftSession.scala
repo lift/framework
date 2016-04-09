@@ -364,11 +364,12 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   private val fullPageLoad = new BooleanThreadGlobal
 
+  private [this] val ajaxFnsKey = "net.liftweb.http.LiftSession.ajaxFns"
   // Returns a view of the functions stored in the http session
   private def viewHttpSessionFns:java.util.Map[String, S.AFuncHolder] = {
     val backingMap = (for {
       hs <- httpSession if LiftRules.lockedPutAjaxFnsInContainerSession
-      map <- Box.asA[ConcurrentHashMap[String, S.AFuncHolder]](hs.attribute("ajaxFns"))
+      map <- Box.asA[ConcurrentHashMap[String, S.AFuncHolder]](hs.attribute(ajaxFnsKey))
     } yield {
       map
     }) openOr (new java.util.HashMap[String, S.AFuncHolder])
@@ -381,10 +382,10 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     for {
       hs <- httpSession if LiftRules.lockedPutAjaxFnsInContainerSession
     } {
-      val map = Box.asA[ConcurrentHashMap[String, S.AFuncHolder]](hs.attribute("ajaxFns")).openOr(new ConcurrentHashMap[String, S.AFuncHolder])
+      val map = Box.asA[ConcurrentHashMap[String, S.AFuncHolder]](hs.attribute(ajaxFnsKey)).openOr(new ConcurrentHashMap[String, S.AFuncHolder])
       f(map)
       // Now that the map has been mutated, must write to the session so the container can replicate
-      hs.setAttribute("ajaxFns", map)
+      hs.setAttribute(ajaxFnsKey, map)
     }
 
   private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = new ConcurrentHashMap(viewHttpSessionFns)
