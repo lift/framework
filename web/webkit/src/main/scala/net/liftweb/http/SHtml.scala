@@ -1028,6 +1028,59 @@ trait SHtml extends Loggable {
     }
   }
 
+  def ajaxUntrustedMultiSelect(opts: Seq[(String, String)], deflt: Seq[String], func: List[String] => JsCmd, attrs: (String, String)*): Elem =
+    ajaxUntrustedMultiSelect_*(opts, deflt, Empty, LFuncHolder(func), attrs: _* )
+
+  def ajaxUntrustedMultiSelect(opts: Seq[(String, String)], deflt: Seq[String], jsFunc: Call, func: List[String] => JsCmd, attrs: (String, String)*): Elem =
+    ajaxUntrustedMultiSelect_*(opts, deflt, Full(jsFunc), LFuncHolder(func), attrs: _*)
+
+  private def ajaxUntrustedMultiSelect_*(opts: Seq[(String, String)], deflt: Seq[String], jsFunc: Box[Call], func: AFuncHolder, attrs: (String, String)*): Elem = {
+
+    val optionSelect =
+      """function(funcName, element) {
+        |  var postData = ""
+        |  var i = 0;
+        |  var k = 0;
+        |  for (k = 0; k < element.length; k++) {
+        |   if (element[k].selected) {
+        |     if (i == 0)
+        |       postData = funcName + '=' + encodeURIComponent(element[k].value);
+        |     else {
+        |       postData = postData + '&' + funcName + '=' + encodeURIComponent(element[k].value);
+        |     }
+        |     i++;
+        |   }
+        |  }
+        |  return postData;
+        |}""".stripMargin
+
+    val raw = (funcName: String, value: String) => JsRaw(optionSelect + "('" + funcName + "'," + value + ")")
+    val key = formFuncName
+
+    val vals = opts.map(_._1)
+    val testFunc = LFuncHolder(in => in match {
+      case Nil => false
+      case xs => func(xs)
+    }, func.owner)
+    fmapFunc(contextFuncBuilder(testFunc)) {
+      import net.liftweb.http.js.JsCmds.JsCrVar
+      funcName =>
+        (attrs.foldLeft(<select multiple="multiple">
+          {opts.flatMap { case (value, text) => (<option value={value}>
+            {text}
+          </option>) % selected(deflt.contains(value))
+          }}
+        </select>)(_ % _)) %
+          ("onchange" -> (jsFunc match {
+            case Full(f) => {
+              JsCrVar(key, JsRaw("this")) & deferCall(raw(funcName, key), f)
+            }
+            case _ => {
+              makeAjaxCall(raw(funcName, "this"))
+            }
+          }))
+    }
+  }
   def ajaxInvoke(func: () => JsCmd): GUIDJsExp =
     fmapFunc((NFuncHolder(func)))(name => (name, makeAjaxCall(name + "=true")))
 
