@@ -310,7 +310,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       var sideEffect = false
       def sideEffecting = {
         sideEffect = true
-        "This shouldn't have been invoked."
+        "This should have been invoked."
       }
 
       try {
