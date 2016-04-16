@@ -92,5 +92,17 @@ object CometActorSpec extends Specification {
           redirectUri must beMatching("^[^?]+\\?F[^=]+=_$".r)
       }
     }
+
+    "be able to invoke destroySession without causing an NPE" in {
+      case object BoomSession
+      val comet = new SpecCometActor {
+        override def lowPriority = {
+          case BoomSession =>
+            S.session.foreach(_.destroySession)
+        }
+      }
+
+      (comet ! BoomSession) must not(throwAn[Exception])
+    }
   }
 }
