@@ -111,7 +111,7 @@ object ContentSourceRestriction {
   }
   /**
    * Indicates content from the given host path is allowed. See the
-   * `Content-Security-Policy` spec's [[http://www.w3.org/TR/CSP/#matching
+   * `Content-Security-Policy` spec's [[https://www.w3.org/TR/CSP/#source-list-path-patching
    * matching rules for `host-source`]] for more about what this can look
    * like.
    *
