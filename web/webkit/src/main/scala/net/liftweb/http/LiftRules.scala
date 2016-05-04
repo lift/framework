@@ -614,7 +614,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    *
    * {{{
    * <span id="lift-event-js-F827001738725NKMEQNF"
-   *       data-lift=removed-attributes="onclick">Do something!</span>
+   *       data-lift-removed-attributes="onclick">Do something!</span>
    * }}}
    *
    * This makes it possible to replace the old CSS with with similar
