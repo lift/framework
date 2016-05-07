@@ -707,8 +707,22 @@
       if (typeof elementOrId === 'string') {
         element = document.getElementById(elementOrId);
       }
+      
+      // This is a Lift addition to allow return false to properly do
+      // cross-browser preventDefault/stopPropagation/etc work.
+      function normalizeEventReturn(event) {
+        var result = fn(event);
+        if (result === false) {
+          if (typeof event.preventDefault === "function") {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }
+        
+        return result;
+      }
 
-      element[add](pre + eventName, fn, false);
+      element[add](pre + eventName, normalizeEventReturn, false);
     },
     onDocumentReady: function(fn) {
       var settings = this, done = false, top = true,
