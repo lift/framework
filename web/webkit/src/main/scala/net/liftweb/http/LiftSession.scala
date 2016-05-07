@@ -2326,7 +2326,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * the CometActor is instantiated.  If the CometActor already exists
    * in the session, the message will be sent immediately.  If the CometActor
    * is not yet instantiated, the message will be sent to the CometActor
-   * as part of setup (@see setupComet) if it is created as part
+   * as part of setup (@see queueCometMessage) if it is created as part
    * of the current HTTP request/response cycle.
    *
    * @param theType the type of the CometActor
@@ -2336,7 +2336,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   def sendCometActorMessage(theType: String, msg: Any) {
     testStatefulFeature {
       findComet(theType).foreach(_ ! msg)
-      setupComet(theType, msg)
+      queueCometMessage(theType, msg)
     }
   }
 
@@ -2345,7 +2345,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * the CometActor is instantiated.  If the CometActor already exists
    * in the session, the message will be sent immediately.  If the CometActor
    * is not yet instantiated, the message will be sent to the CometActor
-   * as part of setup (@see setupComet) regardless of if it is created as part
+   * as part of setup (@see queueCometMessage) regardless of if it is created as part
    * of the current HTTP request/response cycle. We plan to restrict this to
    * the current request/response cycle in the future (as that is the intended beavior).
    *
@@ -2357,7 +2357,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     testStatefulFeature {
       findComet(theType, name) match {
         case Full(a) => a ! msg
-        case _ => setupComet(theType, name, msg)
+        case _ => queueCometMessage(theType, name, msg)
       }
     }
   }
@@ -2365,7 +2365,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Allows you to send messages to a CometActor that may or may not be set up yet
    */
-  def setupComet(cometType: String, msg: Any) {
+  def queueCometMessage(cometType: String, msg: Any) {
     testStatefulFeature {
       cometPreMessagesByType.atomicUpdate(_ :+ cometType -> msg)
     }
@@ -2374,10 +2374,18 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Allows you to send messages to a CometActor that may or may not be set up yet
    */
-  def setupComet(cometType: String, cometName: Box[String], msg: Any) {
+  def queueCometMessage(cometType: String, cometName: Box[String], msg: Any) {
     testStatefulFeature {
       cometPreMessagesById.atomicUpdate(_ :+ CometId(cometType, cometName) -> msg)
     }
+  }
+
+  /**
+   * Allows you to send messages to a CometActor that may or may not be set up yet
+   */
+  @deprecated("Please use queueCometMessage instead.", "3.1")
+  def setupComet(cometType: String, cometName: Box[String], msg: Any) {
+    queueCometMessage(cometType, cometName, msg)
   }
 
   /**
