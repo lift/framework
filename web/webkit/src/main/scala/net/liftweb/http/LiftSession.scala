@@ -165,7 +165,7 @@ object LiftSession {
    * Cache for findSnippetClass lookups.
    */
   private val snippetClassMap = new ConcurrentHashMap[String, Box[Class[AnyRef]]]()
-  
+
   /*
    * Given a Snippet name, try to determine the fully-qualified Class
    * so that we can instantiate it via reflection.
@@ -428,7 +428,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   private[http] object deferredSnippets extends RequestVar[HashMap[String, Box[NodeSeq]]](new HashMap)
 
   /** Messages saved for CometActors prior to their creation */
-  private object cometPreMessages extends SessionVar[Vector[(CometId, Any)]](Vector.empty)
+  private object cometPreMessagesById extends SessionVar[Vector[(CometId, Any)]](Vector.empty)
+  private object cometPreMessagesByType extends TransientRequestVar[Vector[(String, Any)]](Vector.empty)
 
 
   private[http] def startSession(): Unit = {
@@ -2332,6 +2333,26 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * @param name the optional name of the CometActor
    * @param msg the message to send to the CometActor
    */
+  def sendCometActorMessage(theType: String, msg: Any) {
+    testStatefulFeature {
+      findComet(theType).foreach(_ ! msg)
+      setupComet(theType, msg)
+    }
+  }
+
+  /**
+   * This method will send a message to a CometActor, whether or not
+   * the CometActor is instantiated.  If the CometActor already exists
+   * in the session, the message will be sent immediately.  If the CometActor
+   * is not yet instantiated, the message will be sent to the CometActor
+   * as part of setup (@see setupComet) regardless of if it is created as part
+   * of the current HTTP request/response cycle. We plan to restrict this to
+   * the current request/response cycle in the future (as that is the intended beavior).
+   *
+   * @param theType the type of the CometActor
+   * @param name the optional name of the CometActor
+   * @param msg the message to send to the CometActor
+   */
   def sendCometActorMessage(theType: String, name: Box[String], msg: Any) {
     testStatefulFeature {
       findComet(theType, name) match {
@@ -2344,9 +2365,18 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Allows you to send messages to a CometActor that may or may not be set up yet
    */
+  def setupComet(cometType: String, msg: Any) {
+    testStatefulFeature {
+      cometPreMessagesByType.atomicUpdate(_ :+ cometType -> msg)
+    }
+  }
+
+  /**
+   * Allows you to send messages to a CometActor that may or may not be set up yet
+   */
   def setupComet(cometType: String, cometName: Box[String], msg: Any) {
     testStatefulFeature {
-      cometPreMessages.atomicUpdate(_ :+ CometId(cometType, cometName) -> msg)
+      cometPreMessagesById.atomicUpdate(_ :+ CometId(cometType, cometName) -> msg)
     }
   }
 
@@ -2443,10 +2473,10 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     val cometInfo = CometId(creationInfo.cometType, creationInfo.cometName)
 
     testStatefulFeature {
-      val existingComet = Box.legacyNullTest(nasyncComponents.get(cometInfo))
+      val existingOrNewComet = Box.legacyNullTest(nasyncComponents.get(cometInfo)).asA[T] or newCometFn(creationInfo)
 
-      (existingComet.asA[T] or newCometFn(creationInfo)).map { comet =>
-        cometPreMessages.atomicUpdate(_.filter {
+      existingOrNewComet.map { comet =>
+        cometPreMessagesById.atomicUpdate(_.filter {
           // Pass messages for this comet on and remove them from pending list.
           case (info, message) if info == cometInfo =>
             comet ! message
@@ -2454,6 +2484,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           case _ =>
             true
         })
+
+        cometPreMessagesByType.is.collect {
+          case (typeForMessage, msg) if typeForMessage == creationInfo.cometType =>
+            comet ! msg
+        }
 
         comet
       }
@@ -2534,7 +2569,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     val attemptedComet = tryo(buildWithNoArgConstructor) or tryo(buildWithCreateInfoConstructor)
 
     attemptedComet match {
-      case fail @ Failure(_, Full(e: java.lang.NoSuchMethodException), _) => 
+      case fail @ Failure(_, Full(e: java.lang.NoSuchMethodException), _) =>
         val message = s"Couldn't find valid comet constructor for ${cometClass.getCanonicalName}. Comets should have a no argument constructor or one that takes the following arguments: (LiftSession, Box[String], NodeSeq, Map[String,String])."
 
         logger.info(message, e)
