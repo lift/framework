@@ -16,6 +16,13 @@
 
 package net.liftweb.json.scalaz
 
+// FIXME Needed to due to https://issues.scala-lang.org/browse/SI-6541,
+// which causes existential types to be inferred for the generated
+// unapply of a case class with a wildcard parameterized type.
+// Ostensibly should be fixed in 2.12, which means we're a ways away
+// from being able to remove this, though.
+import scala.language.existentials
+
 import scalaz.{Equal, Kleisli, Monoid, Semigroup, Show, ValidationNel}
 import scalaz.Validation._
 import scalaz.std.option._
@@ -38,7 +45,7 @@ trait Types {
   }
 
   implicit def JValueShow[A <: JValue]: Show[A] = new Show[A] {
-    override def shows(json: A): String = compact(render(json))
+    override def shows(json: A): String = compactRender(json)
   }
 
   implicit def JValueMonoid: Monoid[JValue] = Monoid.instance(_ ++ _, JNothing)

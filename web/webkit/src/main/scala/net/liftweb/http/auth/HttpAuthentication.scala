@@ -110,9 +110,9 @@ case class HttpDigestAuthentication(realmName: String)(func: PartialFunction[(St
 
     private[auth] def doPing() {
       try {
-        Schedule.schedule (this, CheckAndPurge, 5 seconds)
+        Schedule.schedule(this, CheckAndPurge, 5.seconds)
       } catch {
-        case e => logger.error("Couldn't start NonceWatcher ping", e)
+        case e: Exception => logger.error("Couldn't start NonceWatcher ping", e)
       }
     }
 
@@ -140,7 +140,7 @@ case class HttpDigestAuthentication(realmName: String)(func: PartialFunction[(St
    * The default value returned is 30 seconds.
    *
    */
-  def nonceValidityPeriod: Long = 30 seconds
+  def nonceValidityPeriod: Long = 30.seconds
 
   override def realm = realmName
 

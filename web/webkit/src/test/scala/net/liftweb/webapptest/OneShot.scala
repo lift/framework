@@ -17,6 +17,7 @@
 package net.liftweb
 package webapptest
 
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import util._
@@ -30,7 +31,7 @@ import snippet.Counter
 import net.liftweb.common.Full
 
 
-object OneShot extends Specification with RequestKit {
+object OneShot extends Specification with RequestKit with XmlMatchers {
   sequential
 
   private def reachableLocalAddress = {
@@ -166,7 +167,7 @@ object OneShot extends Specification with RequestKit {
       }
 
 
-      Counter.x must be_==(2).when(jetty.running)
+      Counter.x must be_>=(2).when(jetty.running)
     }
   }
 

@@ -18,8 +18,8 @@ package net.liftweb
 package http 
 package rest 
 
-
 import net.liftweb._
+import actor.LAFuture
 import json._
 import common._
 import util._
@@ -385,7 +385,7 @@ trait RestHelper extends LiftRules.DispatchPF {
   /**
    * Serve a request returning either JSON or XML.
    *
-   * @parama pf -- a Partial Function that converts the request into
+   * @param pf -- a Partial Function that converts the request into
    * Any (note that the response must be convertable into
    * JSON vis Lift JSON Extraction.decompose
    */
@@ -534,6 +534,49 @@ trait RestHelper extends LiftRules.DispatchPF {
   protected implicit def thingToResp[T](in: T)(implicit c: T => LiftResponse):
   () => Box[LiftResponse] = () => Full(c(in))
 
+
+  /**
+   * If we're returning a future, then automatically turn the request into an Async request
+   * @param in the LAFuture of the response type
+   * @param c the implicit conversion from T to LiftResponse
+   * @tparam T the type
+   * @return Nothing
+   */
+  protected implicit def asyncToResponse[AsyncResolvableType, T](
+    asyncContainer: AsyncResolvableType
+  )(
+    implicit asyncResolveProvider: CanResolveAsync[AsyncResolvableType, T],
+             responseCreator: T => LiftResponse
+  ): () => Box[LiftResponse] = () => {
+    RestContinuation.async(reply => {
+      asyncResolveProvider.resolveAsync(
+        asyncContainer,
+        { resolved => reply(responseCreator(resolved)) }
+      )
+    })
+  }
+
+  /**
+   * If we're returning a future, then automatically turn the request into an Async request
+   * @param in the LAFuture of the response type
+   * @param c the implicit conversion from T to LiftResponse
+   * @tparam T the type
+   * @return Nothing
+   */
+  protected implicit def asyncBoxToResponse[AsyncResolvableType, T](
+    asyncBoxContainer: AsyncResolvableType
+  )(
+    implicit asyncResolveProvider: CanResolveAsync[AsyncResolvableType, Box[T]],
+             responseCreator: T => LiftResponse
+  ): () => Box[LiftResponse] = () => {
+    RestContinuation.async(reply => {
+      asyncResolveProvider.resolveAsync(
+        asyncBoxContainer,
+        { resolvedBox => boxToResp(resolvedBox).apply() openOr NotFoundResponse() }
+      )
+    })
+  }
+
   /**
    * Turn a Box[T] into the return type expected by
    * DispatchPF.  Note that this method will return
@@ -673,19 +716,11 @@ trait RestHelper extends LiftRules.DispatchPF {
     original match {
       case JObject(fields) => 
         toMerge match {
-          case jf: JField => JObject(replace(fields, jf))
           case JObject(otherFields) =>
             JObject(otherFields.foldLeft(fields)(replace(_, _)))
           case _ => original
         }
 
-      case jf: JField => 
-        toMerge match {
-          case jfMerge: JField => JObject(replace(List(jf), jfMerge))
-          case JObject(otherFields) =>
-            JObject(otherFields.foldLeft(List(jf))(replace(_, _)))
-          case _ => original
-        }
       case _ => original // can't merge
     }
   }

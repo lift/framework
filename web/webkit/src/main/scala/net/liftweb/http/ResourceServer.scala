@@ -25,6 +25,7 @@ import java.util.concurrent.{ConcurrentHashMap => CHash}
 
 object ResourceServer {
   var allowedPaths: PartialFunction[List[String], Boolean] = {
+    case "lift.js" :: Nil => true
     case "jquery.js" :: Nil => true
     case "yui" :: _ => true
     case "liftYUI.js" :: Nil => true
@@ -46,6 +47,7 @@ object ResourceServer {
   }
 
   @volatile var pathRewriter: PartialFunction[List[String], List[String]] = rewriter orElse {
+    case "lift.js" :: Nil => List("lift-min.js")
     case "json.js" :: Nil => List("json2-min.js")
     case "json2.js" :: Nil => List("json2-min.js")
     case xs => xs

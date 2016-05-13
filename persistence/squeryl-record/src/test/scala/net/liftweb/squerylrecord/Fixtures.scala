@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 WorldWide Conferencing, LLC
+ * Copyright 2010-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ object DBHelper {
         MySchema.dropAndCreate
         MySchema.createTestData
       } catch {
-        case e => e.printStackTrace()
+        case e: Exception => e.printStackTrace()
           throw e;
       }
     }
@@ -82,15 +82,15 @@ class Company private () extends Record[Company] with KeyedRecord[Long] with Opt
 
 }
 object Company extends Company with MetaRecord[Company] with CRUDify[Long, Company]{
-  
+
   def table = MySchema.companies
-  
+
   def idFromString(in: String) = in.toLong
-  
+
 }
 
 object EmployeeRole extends Enumeration {
-  
+
   type EmployeeRole = Value
 
   val Programmer, Manager = Value
@@ -115,7 +115,7 @@ class SpecialField[OwnerType <: Record[OwnerType]](rec: OwnerType)
     case v => setBox(Full(v.toString))
   }
   override def setFromJValue(jValue: JValue) = setBox(Full(jValue.toString))
-  override def asJValue = JString(get)
+  override def asJValue: JValue = JString(get)
   override def asJs = Str(get)
   override def toForm = Full(scala.xml.Text(get))
 }
@@ -212,21 +212,21 @@ object MySchema extends Schema {
     allCompanies.foreach(companies.insert(_))
     allEmployees.foreach(employees.insert(_))
     allRooms.foreach(rooms.insert(_))
-    
+
     e1.rooms.associate(r1)
     e1.rooms.associate(r2)
   }
 
   object TestData {
-    
+
     val c1 = Company.createRecord.name("First Company USA").
       created(Calendar.getInstance()).
       country(Countries.USA).postCode("12345")
-      
+
     val c2 = Company.createRecord.name("Second Company USA").
       created(Calendar.getInstance()).
       country(Countries.USA).postCode("54321")
-      
+
     val c3 = Company.createRecord.name("Company or Employee").
       created(Calendar.getInstance()).
       country(Countries.Canada).postCode("1234")
@@ -258,13 +258,13 @@ object MySchema extends Schema {
       photo(Array[Byte](1))
 
     lazy val allEmployees = List(e1, e2, e3)
-    
+
     val r1 = Room.createRecord.name("Room 1")
-    
+
     val r2 = Room.createRecord.name("Room 2")
-    
+
     val r3 = Room.createRecord.name("Room 3")
-    
+
     val allRooms = List(r1, r2, r3)
   }
 }

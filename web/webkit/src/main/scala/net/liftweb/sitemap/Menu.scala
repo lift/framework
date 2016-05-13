@@ -17,6 +17,13 @@
 package net.liftweb 
 package sitemap 
 
+// FIXME Needed to due to https://issues.scala-lang.org/browse/SI-6541,
+// which causes existential types to be inferred for the generated
+// unapply of a case class with a wildcard parameterized type.
+// Ostensibly should be fixed in 2.12, which means we're a ways away
+// from being able to remove this, though.
+import scala.language.existentials
+
 import scala.annotation._
 import net.liftweb.http._
 import net.liftweb.common._
@@ -358,6 +365,8 @@ object Menu extends MenuSingleton {
      */
     def locPath: List[LocPath]
 
+    def params: List[Loc.LocParam[ConvertTo]]
+
     /**
      * A function to convert the ConvertFrom (a String or
      * List[String]) to the target type
@@ -372,13 +381,14 @@ object Menu extends MenuSingleton {
     def listToFrom(in: List[String]): Box[ConvertFrom]
 
     object ExtractSan {
-      def unapply(in: List[String]): Option[(List[String], ConvertTo)] 
+      def unapply(in: List[String]): Option[(List[String], Box[ConvertTo])] 
       = {
         for {
           (path, paramList) <- extractAndConvertPath(in)
           toConvert <- listToFrom(paramList)
-          param <- parser(toConvert)
-        } yield path -> param
+        } yield {
+          path -> parser(toConvert)
+        }
       }
     }
 
@@ -388,7 +398,7 @@ object Menu extends MenuSingleton {
     override lazy val rewrite: LocRewrite =
       Full(NamedPF(locPath.toString) {
         case RewriteRequest(ParsePath(ExtractSan(path, param),
-                                      _, _,_), _, _) => {
+                                      _, _,_), _, _) if param.isDefined || params.contains(Loc.MatchWithoutCurrentValue) => {
           RewriteResponse(path, true) -> param
         }})
 

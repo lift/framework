@@ -1,0 +1,30 @@
+language: scala
+cache:
+  directories:
+    - '$HOME/node_modules'
+services:
+  - mongodb
+jdk:
+  - oraclejdk8
+
+script: ./travis.sh
+
+branches:
+  only:
+    - master
+
+node_js:
+  - "4.1"
+
+before_script:
+  - "cd web/webkit"
+  - "npm install"
+  - "cd -"
+
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/85e4d8ae84e569f9c501
+    on_success: always
+    on_failure: always
+    on_start: never

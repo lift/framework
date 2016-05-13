@@ -17,17 +17,17 @@
 package net.liftweb
 package builtin.snippet
 
-import xml.XML
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import common._
 import http._
-
+import util.Helpers.secureXML
 
 /**
  * System under specification for Msgs.
  */
-object MsgsSpec extends Specification  {
+object MsgsSpec extends Specification with XmlMatchers {
   "Msgs Specification".title
 
   def withSession[T](f: => T) : T =
@@ -42,7 +42,7 @@ object MsgsSpec extends Specification  {
         S.notice("Notice")
 
         // We reparse due to inconsistencies with UnparsedAttributes
-        XML.loadString(Msgs.render(
+        secureXML.loadString(Msgs.render(
           <lift:warning_msg>Warning:</lift:warning_msg><lift:notice_class>funky</lift:notice_class>
         ).toString)
       }

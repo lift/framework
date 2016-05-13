@@ -1,5 +1,5 @@
 /*
-* Copyright 2010-2011 WorldWide Conferencing, LLC
+* Copyright 2010-2014 WorldWide Conferencing, LLC
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -67,9 +67,9 @@ class PatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
 
   def asJs = asJValue match {
     case JNothing => JsNull
-    case jv => Str(Printer.compact(render(jv)))
+    case jv => Str(compactRender(jv))
   }
 
-  def asJValue: JValue = valueBox.map(v => Meta.patternAsJValue(v)) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(v => JsonRegex(v)) openOr (JNothing: JValue)
 }
 

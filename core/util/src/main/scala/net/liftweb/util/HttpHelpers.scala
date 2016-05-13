@@ -17,12 +17,16 @@
 package net.liftweb
 package util
 
+
 import java.net.{URLDecoder, URLEncoder}
-import scala.collection.mutable.ListBuffer
-import scala.xml._
-import scala.collection.{Map}
-import scala.collection.mutable.HashMap
 import java.util.concurrent.atomic.AtomicLong
+
+import scala.language.implicitConversions
+import scala.collection.Map
+import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.HashMap
+import scala.xml._
+
 import common._
 
 object HttpHelpers extends ListHelpers with StringHelpers
@@ -134,7 +138,7 @@ trait HttpHelpers {
   */
   def toHashMap[A,B](in : Map[A,B]) : HashMap[A,B] = {
     val ret = new HashMap[A,B];
-    in.keysIterator.foreach { k => ret += Pair(k, in(k)) }
+    in.keysIterator.foreach { k => ret += (k -> in(k)) }
     ret
   }
 

@@ -21,6 +21,7 @@ package snippet
 import scala.xml._
 import net.liftweb.http._
 import net.liftweb.util._
+  import Helpers._
 import net.liftweb.common._
 
 import Box._
@@ -32,6 +33,20 @@ import Box._
  * to replace &lt;lift:bind&gt; tags within the embedded template.
  */
 object Embed extends DispatchSnippet {
+  // Extract a lift:bind-at Elem with a name attribute, yielding the
+  // Elem and the value of the name attribute.
+  private object BindAtWithName {
+    def unapply(in: Elem): Option[(Elem, String)] = {
+      if (in.prefix == "lift" && in.label == "bind-at") {
+        in.attribute("name").map { nameNode =>
+          (in, nameNode.text)
+        }
+      } else {
+        None
+      }
+    }
+  }
+
   private lazy val logger = Logger(this.getClass)
 
   def dispatch : DispatchIt = {
@@ -39,28 +54,30 @@ object Embed extends DispatchSnippet {
   }
 
   def render(kids: NodeSeq) : NodeSeq =
-  (for {
+  {
+    for {
       ctx <- S.session ?~ ("FIX"+"ME: session is invalid")
       what <- S.attr ~ ("what") ?~ ("FIX" + "ME The 'what' attribute not defined. In order to embed a template, the 'what' attribute must be specified")
-      templateOpt <- ctx.findTemplate(what.text) ?~ ("FIX"+"ME trying to embed a template named '"+what+"', but the template not found. ")
-    } yield (what, Templates.checkForContentId(templateOpt))) match {
-    case Full((what,template)) => {
-      val bindingMap : Map[String,NodeSeq] = Map(kids.flatMap({
-        case p : scala.xml.PCData => None // Discard whitespace and other non-tag junk
-        case t : scala.xml.Text => None // Discard whitespace and other non-tag junk
-        case e : Elem if e.prefix == "lift" && e.label == "bind-at" => {
-          e.attribute("name") match {
-            /* DCB: I was getting a type error if I just tried to use e.child
-             * here. I didn't feel like digging to find out why Seq[Node]
-             * wouldn't convert to NodeSeq, so I just do it with fromSeq. */
-            case Some(name) => Some(name.text -> NodeSeq.fromSeq(e.child))
-            case None => logger.warn("Found <lift:bind-at> tag without name while embedding \"%s\"".format(what.text)); None
-          }
-        }
-        case _ => None
-      }): _*)
+      templateOpt <- ctx.findTemplate(what.text) ?~ ("FIX"+"ME trying to embed a template named '"+what+"', but the template was not found. ")
+    } yield {
+      (what, Templates.checkForContentId(templateOpt))
+    }
+  } match {
+    case Full((templateName,template)) => {
+      val bindings: Seq[CssSel] = kids.collect {
+        case BindAtWithName(element, name) =>
+          s"#$name" #> element.child
+      }
 
-      BindHelpers.bind(bindingMap, template)
+      val bindFn =
+        if (bindings.length > 1)
+          bindings.reduceLeft(_ & _)
+        else if (bindings.length == 1)
+          bindings(0)
+        else
+          PassThru
+
+      bindFn(template)
     }
     case Failure(msg, _, _) =>
       logger.error("'embed' snippet failed with message: "+msg)

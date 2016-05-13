@@ -43,7 +43,7 @@ trait BinaryTypedField extends TypedField[Array[Byte]] {
 
   def asJs = valueBox.map(v => Str(hexEncode(v))) openOr JsNull
 
-  def asJValue = asJString(base64Encode _)
+  def asJValue: JValue = asJString(base64Encode _)
   def setFromJValue(jvalue: JValue) = setFromJString(jvalue)(s => tryo(base64Decode(s)))
 }
   

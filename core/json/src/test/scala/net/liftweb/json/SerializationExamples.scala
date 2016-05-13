@@ -53,10 +53,47 @@ object SerializationExamples extends Specification {
     read[Lotto](ser) mustEqual lotto
   }
 
-  "Primitive serialization example" in {
+  "Primitive-wrapping case class serialization example" in {
     val primitives = Primitives(124, 123L, 126.5, 127.5.floatValue, "128", 's, 125, 129.byteValue, true)
     val ser = swrite(primitives)
     read[Primitives](ser) mustEqual primitives
+  }
+
+  "Primitive Int serialization" in {
+    read[Int](swrite(42)) mustEqual 42
+  }
+
+  "Primitive Long serialization" in {
+    read[Long](swrite(42L)) mustEqual 42L
+  }
+
+  "Primitive Double serialization" in {
+    read[Double](swrite(3.14)) mustEqual 3.14
+  }
+
+  "Primitive Float serialization" in {
+    read[Float](swrite(3.14.floatValue)) mustEqual 3.14.floatValue
+  }
+
+  "Primitive Short serialization" in {
+    read[Short](swrite(88.shortValue)) mustEqual 88.shortValue
+  }
+
+  "Primitive Byte serialization" in {
+    read[Byte](swrite(129.byteValue)) mustEqual 129.byteValue
+  }
+
+  "Primitive Boolean serialization" in {
+    read[Boolean](swrite(false)) mustEqual false
+  }
+
+  "String serialization" in {
+    val rt = "Roll Tide, Farmer!!"
+    read[String](swrite(rt)) mustEqual rt
+  }
+
+  "Symbol serialization" in {
+    read[Symbol](swrite('j)) mustEqual 'j
   }
 
   "Multidimensional list example" in {

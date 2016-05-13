@@ -17,13 +17,11 @@
 package net.liftweb 
 package common
 
+import scala.language.implicitConversions
+
 /**
- * <p>
- * Via an HList containing a Collection of Box[things], either generate an
- * HList of the things or a List[Failure]
- * </p>
- *
- *
+ * Via an `[[HLists.HList HList]]` containing a collection of `[[Box]]`, either generates an
+ * `HList` of the things (unboxed) or a `List[Failure]`.
  */
 object CombinableBox {
   import HLists._
@@ -57,14 +55,13 @@ object CombinableBox {
   }
  
   /**
-   * If the Failure is going to be condensed, generate a FailureList
+   * If the `[[Failure]]` is going to be condensed, a `FailureList` is generated
+   * to allow type-safe pattern matches without worrying about erasure.
    */
   final case class FailureList(failures: List[Failure])
 
-
-
   /**
-   * The place where the results are accumulated
+   * The place where the results are accumulated.
    */
   final case class CombinableBox[B, C <: HList](rhs: Result[B :+: C]) {
     def :&: [A](lhs: Boxable[A]): Result[A :+: B :+: C] = this.:&:(lhs.asBox)

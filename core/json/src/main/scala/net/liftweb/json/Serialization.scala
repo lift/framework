@@ -34,23 +34,27 @@ object Serialization {
 
   /** Serialize to String.
    */
-  def write[A <: AnyRef](a: A)(implicit formats: Formats): String =
+  def write[A <: Any](a: A)(implicit formats: Formats): String =
     compactRender(Extraction.decompose(a)(formats))
 
   /** Serialize to Writer.
    */
-  def write[A <: AnyRef, W <: Writer](a: A, out: W)(implicit formats: Formats): W =
-    Printer.compact(render(Extraction.decompose(a)(formats)), out)
+  def write[A <: Any, W <: Writer](a: A, out: W)(implicit formats: Formats): W = {
+    JsonAST.compactRender(Extraction.decompose(a)(formats), out)
+    out
+  }
 
   /** Serialize to String (pretty format).
    */
-  def writePretty[A <: AnyRef](a: A)(implicit formats: Formats): String =
+  def writePretty[A <: Any](a: A)(implicit formats: Formats): String =
     (writePretty(a, new StringWriter)(formats)).toString
 
   /** Serialize to Writer (pretty format).
    */
-  def writePretty[A <: AnyRef, W <: Writer](a: A, out: W)(implicit formats: Formats): W = 
-    Printer.pretty(render(Extraction.decompose(a)(formats)), out)
+  def writePretty[A <: Any, W <: Writer](a: A, out: W)(implicit formats: Formats): W = {
+    JsonAST.prettyRender(Extraction.decompose(a)(formats), out)
+    out
+  }
 
   /** Deserialize from a String.
    */

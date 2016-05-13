@@ -17,6 +17,8 @@
 package net.liftweb
 package http
 
+import scala.language.reflectiveCalls
+
 import net.liftweb.common._
 import net.liftweb.util._
 import scala.xml.{NodeSeq, Node}
@@ -73,7 +75,7 @@ trait MVCHelper extends LiftRules.DispatchPF {
       
       case _ =>
       curRequest.set(in)
-      S.init(in, curSession.is) {
+      S.init(Box !! in, curSession.is) {
         dispatch.find(_.isDefinedAt(in.path.partPath)).isDefined
       }
     }
@@ -85,15 +87,15 @@ trait MVCHelper extends LiftRules.DispatchPF {
   def apply(in: Req): () => Box[LiftResponse] = {
     val path = in.path.partPath
     S.session match {
-      case Full(_) => {
+      case Full(_) =>
         val resp = dispatch.find(_.isDefinedAt(path)).get.
         apply(path).toResponse
         
         () => resp
-      }
+
       
       case _ =>
-        S.init(in, curSession.is) {
+        S.init(Box !! in, curSession.is) {
           val resp = dispatch.find(_.isDefinedAt(path)).get.
           apply(path).toResponse
 

@@ -1,5 +1,7 @@
 package net.liftweb.json.scalaz
 
+import scala.language.reflectiveCalls
+
 import scalaz._
 import scalaz.syntax.validation._
 import JsonScalaz._
@@ -19,18 +21,18 @@ object LottoExample extends Specification {
     if (xs.length != x) Fail("len", xs.length + " != " + x) else xs.success
 
   implicit def winnerJSON: JSONR[Winner] = {
-    val numbersResult = (jValue: JValue) => for {
-      numbers <- field[List[Int]]("numbers")(jValue)
-      _ <- len(6)(numbers)
-    } yield numbers
+    val numbersResult = (jValue: JValue) => (for {
+      numbers <- field[List[Int]]("numbers")(jValue).disjunction
+      _ <- len(6)(numbers).disjunction
+    } yield numbers).validation
     Winner.applyJSON(field[Long]("winner-id"), numbersResult)
   }
 
   implicit def lottoJSON: JSONR[Lotto] = {
-    val winningNumbersResult = (jValue: JValue) => for {
-      winningNumbers <- field[List[Int]]("winning-numbers")(jValue)
-      _ <- len(6)(winningNumbers)
-    } yield winningNumbers
+    val winningNumbersResult = (jValue: JValue) => (for {
+      winningNumbers <- field[List[Int]]("winning-numbers")(jValue).disjunction
+      _ <- len(6)(winningNumbers).disjunction
+    } yield winningNumbers).validation
     Lotto.applyJSON(field[Long]("id")
                   , winningNumbersResult
                   , field[List[Winner]]("winners")

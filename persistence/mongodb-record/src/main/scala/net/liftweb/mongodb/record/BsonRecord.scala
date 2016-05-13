@@ -97,15 +97,15 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
 
     f match {
       case field if (field.optional_? && field.valueBox.isEmpty) => Empty // don't add to DBObject
-      case field: EnumTypedField[Enumeration] =>
+      case field: EnumTypedField[_] =>
         field.asInstanceOf[EnumTypedField[Enumeration]].valueBox map {
           v => v.id
         }
-      case field: EnumNameTypedField[Enumeration] =>
+      case field: EnumNameTypedField[_] =>
         field.asInstanceOf[EnumNameTypedField[Enumeration]].valueBox map {
           v => v.toString
         }
-      case field: MongoFieldFlavor[Any] =>
+      case field: MongoFieldFlavor[_] =>
         Full(field.asInstanceOf[MongoFieldFlavor[Any]].asDBObject)
       case field => field.valueBox map (_.asInstanceOf[AnyRef] match {
         case null => null

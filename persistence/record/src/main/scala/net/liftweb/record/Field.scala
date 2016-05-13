@@ -18,6 +18,7 @@ package net.liftweb
 package record
 
 import net.liftweb.common._
+import net.liftweb.http.S
 import net.liftweb.http.js.{JsExp}
 import net.liftweb.json.JsonAST.{JNothing, JNull, JString, JValue}
 import net.liftweb.util._
@@ -147,6 +148,11 @@ trait OwnedField[OwnerType <: Record[OwnerType]] extends BaseField {
    * The text name of this field
    */
   def name: String = RecordRules.fieldName.vend.apply(owner.meta.connectionIdentifier, fieldName)
+
+  /**
+    * The display name of this field (e.g., "First Name")
+    */
+  override def displayName: String = RecordRules.displayName.vend.apply(owner, S.locale, name)
 
   /**
    * Are we in "safe" mode (i.e., the value of the field can be read or written without any security checks.)
@@ -295,10 +301,10 @@ trait TypedField[ThisType] extends BaseField {
 
   /** Generic implementation of setFromAny that implements exactly what the doc for setFromAny specifies, using a Manifest to check types */
   protected final def genericSetFromAny(in: Any)(implicit m: Manifest[MyType]): Box[MyType] = in match {
-    case value       if m.erasure.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
-    case Some(value) if m.erasure.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
-    case Full(value) if m.erasure.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
-    case (value)::_  if m.erasure.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
+    case value       if m.runtimeClass.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
+    case Some(value) if m.runtimeClass.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
+    case Full(value) if m.runtimeClass.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
+    case (value)::_  if m.runtimeClass.isInstance(value) => setBox(Full(value.asInstanceOf[MyType]))
     case     (value: String) => setFromString(value)
     case Some(value: String) => setFromString(value)
     case Full(value: String) => setFromString(value)
@@ -367,9 +373,6 @@ trait MandatoryTypedField[ThisType] extends TypedField[ThisType] with Product1[T
 
   def get: MyType = value
 
-  @deprecated("Use get", "2.6")
-  def is: MyType = value
-
   protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType] = in.map(v => setFilter.foldLeft(v)((prev, f) => f(prev)))
 
   /**
@@ -415,9 +418,6 @@ trait OptionalTypedField[ThisType] extends TypedField[ThisType] with Product1[Bo
   def value: Option[MyType] = valueBox
 
   def get: Option[MyType] = value
-
-  @deprecated("Use get", "2.6")
-  def is: Option[MyType] = value
 
   protected def liftSetFilterToBox(in: Box[MyType]): Box[MyType] =  setFilter.foldLeft(in){ (prev, f) =>
 	prev match {

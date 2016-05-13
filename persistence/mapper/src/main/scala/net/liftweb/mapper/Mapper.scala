@@ -17,13 +17,15 @@
 package net.liftweb
 package mapper
 
-import scala.collection.mutable._
 import scala.xml.{Elem, NodeSeq}
 import net.liftweb.http.S
-import S._
 import net.liftweb.http.js._
-import net.liftweb.util.{FieldError, FieldContainer, BaseField,CssSel}
+import util._
 import net.liftweb.common.{Box, Empty, Full, ParamFailure}
+import collection.mutable.StringBuilder
+import net.liftweb.util
+import common.Full
+import common.Full
 
 trait BaseMapper extends FieldContainer {
   type MapperType <: Mapper[MapperType]
@@ -32,7 +34,7 @@ trait BaseMapper extends FieldContainer {
   def save: Boolean
 }
 
-trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable{
+trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo {
   self: A =>
   type MapperType = A
 
@@ -123,6 +125,24 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable{
    * Convert the model to a JavaScript object
    */
   def asJs: JsExp = getSingleton.asJs(this)
+
+
+  /**
+   * Given a name, look up the field
+   * @param name the name of the field
+   * @return the metadata
+   */
+  def findSourceField(name: String): Box[SourceFieldInfo] =
+  for {
+    mf <- getSingleton.fieldNamesAsMap.get(name.toLowerCase)
+    f <- fieldByName[mf.ST](name)
+  } yield SourceFieldInfoRep[mf.ST](f.get.asInstanceOf[mf.ST], mf).asInstanceOf[SourceFieldInfo]
+
+  /**
+   * Get a list of all the fields
+   * @return a list of all the fields
+   */
+  def allFieldNames(): Seq[(String, SourceFieldMetadata)] = getSingleton.doAllFieldNames
 
   /**
    * Delete the model from the RDBMS
@@ -264,36 +284,24 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable{
    */
   def fieldByName[T](fieldName: String): Box[MappedField[T, A]] = getSingleton.fieldByName[T](fieldName, this)
 
+  type FieldPF = PartialFunction[String, NodeSeq => NodeSeq]
+
+  /**
+   * Given a function that takes a mapper field and returns a NodeSeq
+   * for the field, return, for this mapper instance, a set of CSS
+   * selector transforms that will transform a form for those fields
+   * into a fully-bound form that will interact with this instance.
+   */
   def fieldMapperTransforms(fieldTransform: (BaseOwnedMappedField[A] => NodeSeq)): scala.collection.Seq[CssSel] = {
     getSingleton.fieldMapperTransforms(fieldTransform, this)
   }
-
-  type FieldPF = PartialFunction[String, NodeSeq => NodeSeq]
-
-  @deprecated("Use fieldMapperTransforms with CssSels instead.", "2.6")
-  def fieldMapperPF(transform: (BaseOwnedMappedField[A] => NodeSeq)): FieldPF = {
-    getSingleton.fieldMapperPF(transform, this)
-  }
-
-  private var fieldPF_i: FieldPF = Map.empty
-
-  @deprecated("Use fieldTransforms with CssSels instead.", "2.6")
-  def fieldPF = fieldPF_i
-
-  @deprecated("Use appendFieldTransform with CssSels instead.", "2.6")
-  def appendField(pf: FieldPF) {
-    fieldPF_i = fieldPF_i orElse pf
-    fieldPF_i
-  }
-
-  @deprecated("Use prependFieldTransform with CssSels instead.", "2.6")
-  def prependField(pf: FieldPF) {
-    fieldPF_i = pf orElse fieldPF_i
-    fieldPF_i
-  }
-
+  
   private var fieldTransforms_i: scala.collection.Seq[CssSel] = Vector()
 
+  /**
+   * A list of CSS selector transforms that will help render the fields
+   * of this mapper object.
+   */
   def fieldTransforms = fieldTransforms_i
 
   def appendFieldTransform(transform: CssSel) {
@@ -432,8 +440,9 @@ trait KeyedMapper[KeyType, OwnerType<:KeyedMapper[KeyType, OwnerType]] extends M
   override def equals(other: Any): Boolean = {
     other match {
       case null => false
-      case km: KeyedMapper[Nothing, Nothing] if this.getClass.isAssignableFrom(km.getClass) ||
-        km.getClass.isAssignableFrom(this.getClass) => this.primaryKeyField == km.primaryKeyField
+      case km: KeyedMapper[_, _] if this.getClass.isAssignableFrom(km.getClass) ||
+                                    km.getClass.isAssignableFrom(this.getClass) =>
+        this.primaryKeyField == km.primaryKeyField
       case k => super.equals(k)
     }
   }

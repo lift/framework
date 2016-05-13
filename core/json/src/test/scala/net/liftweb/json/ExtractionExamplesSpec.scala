@@ -74,7 +74,6 @@ object ExtractionExamples extends Specification {
 
     JInt(1).extract[Int] mustEqual 1
     JInt(1).extract[String] mustEqual "1"
-    JField("foo", JInt(1)).extract[Int] mustEqual 1
   }
 
   "Primitive extraction example" in {

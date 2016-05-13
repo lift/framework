@@ -21,8 +21,7 @@ package view
 import xml.{NodeSeq, Text}
 
 import common.{Box, Full, Empty}
-import util.BindPlus._
-import util.{Helpers, BindHelpers}
+import util.Helpers
 import Helpers._
 import http.{SHtml, S, DispatchSnippet, js}
 import S.?
@@ -90,8 +89,10 @@ trait ItemsList[T <: Mapper[T]] {
         unsorted.sortWith {
           (a, b) => ((field.actualField(a).get: Any, field.actualField(b).get: Any) match {
             case (aval: String, bval: String) => aval.toLowerCase < bval.toLowerCase
-            case (aval: Ordered[Any], bval: Ordered[Any]) => aval < bval
-            case (aval: java.lang.Comparable[Any], bval: java.lang.Comparable[Any]) => (aval compareTo bval) < 0
+            case (aval: Ordered[_], bval: Ordered[_]) =>
+              aval.asInstanceOf[Ordered[Any]] < bval.asInstanceOf[Ordered[Any]]
+            case (aval: java.lang.Comparable[_], bval: java.lang.Comparable[_]) =>
+              (aval.asInstanceOf[java.lang.Comparable[Any]] compareTo bval.asInstanceOf[java.lang.Comparable[Any]]) < 0
             case (null, _) => sortNullFirst
             case (_, null) => !sortNullFirst
             case (aval, bval) => aval.toString < bval.toString
@@ -208,7 +209,7 @@ package snippet {
     def dispatch = {
       case "edit" =>
         val o = getInstance.openOrThrowException("if we don't have the table attr, we want the dev to know about it.")
-        o.edit _
+        o.edit
     }
   }
 }
@@ -246,7 +247,7 @@ trait ItemsListEditor[T<:Mapper[T]] {
 
   def customBind(item: T): NodeSeq=>NodeSeq = (ns: NodeSeq) => ns
 
-  def edit(xhtml: NodeSeq): NodeSeq = {
+  def edit: (NodeSeq)=>NodeSeq = {
     def unsavedScript = (<head>{Script(Run("""
                            var safeToContinue = false
                            window.onbeforeunload = function(evt) {{  // thanks Tim!
@@ -267,47 +268,50 @@ trait ItemsListEditor[T<:Mapper[T]] {
     } else {
       unsavedScript
     }
-    optScript ++ xhtml.bind("header",
-         "fields" -> eachField[T](
-             items.metaMapper,
-             (f: MappedField[_,T]) => Seq(
-               "name" -> SHtml.link(S.uri, sortFn(f), Text(capify(f.displayName)))
-             ),
-             fieldFilter
-         )
-    ).bind("table",
-         "title" -> title,
-         "insertBtn" -> SHtml.submit(?("Insert"), onInsert _, noPrompt),
-         "items" -> {ns:NodeSeq =>
-           items.items.flatMap {i =>
-             bind("item",
-                  customBind(i)(ns),
-                  "fields" -> eachField(
-                    i,
-                    (f: MappedField[_,T]) => Seq("form" -> f.toForm),
-                    fieldFilter
-                  ),
-                  "removeBtn" -> SHtml.submit(?("Remove"), ()=>onRemove(i), noPrompt),
-                  "msg" -> ((i.validate match {
-                    case Nil =>
-                      if(!i.saved_?) Text(?("New")) else if(i.dirty_?) Text(?("Unsaved")) else NodeSeq.Empty
-                    case errors => (<ul>{errors.flatMap(e => <li>{e.msg}</li>)}</ul>)
-                  }))
-             )
-           } ++ items.removed.flatMap { i =>
-             bind("item", customBind(i)(ns),
-                  "fields" -> eachField(
-                    i,
-                    {f: MappedField[_,T] => Seq("form" -> <strike>{f.asHtml}</strike>)},
-                    fieldFilter
-                  ),
-                  "removeBtn" -> NodeSeq.Empty,
-                  "msg" -> Text(?("Deleted"))
-             )
-           }: NodeSeq
-         },
-         "saveBtn" -> SHtml.submit(?("Save"), onSubmit _, noPrompt)
-    )
-  }
 
+    val bindRemovedItems =
+      items.removed.map { item =>
+        "^" #> customBind(item) andThen
+        ".fields" #> eachField(item, { f: MappedField[_, T] => ".form" #> <strike>{f.asHtml}</strike> }) &
+        ".removeBtn" #> SHtml.submit(?("Remove"), ()=>onRemove(item), noPrompt) &
+        ".msg" #> Text(?("Deleted"))
+      }
+
+    val bindRegularItems =
+      items.items.map { item =>
+        "^" #> customBind(item) andThen
+        ".fields" #> eachField(item, { f: MappedField[_, T] => ".form" #> f.toForm }) &
+        ".removeBtn" #> SHtml.submit(?("Remove"), ()=>onRemove(item), noPrompt) &
+        ".msg" #> {
+          item.validate match {
+            case Nil =>
+              if (! item.saved_?)
+                Text(?("New"))
+              else if (item.dirty_?)
+                Text(?("Unsaved"))
+              else
+                NodeSeq.Empty
+            case errors =>
+              <ul>{errors.flatMap(e => <li>{e.msg}</li>)}</ul>
+          }
+        }
+      }
+
+    "^ >*" #> optScript andThen
+    ".fields *" #> {
+      eachField[T](
+        items.metaMapper,
+        { f: MappedField[_, T] =>
+          ".name" #> SHtml.link(S.uri, sortFn(f), Text(capify(f.displayName)))
+        },
+        fieldFilter
+      )
+    } &
+    ".table" #> {
+      ".title *" #> title &
+      ".insertBtn" #> SHtml.submit(?("Insert"), onInsert _, noPrompt) &
+      ".item" #> (bindRegularItems ++ bindRemovedItems) &
+      ".saveBtn" #> SHtml.submit(?("Save"), onSubmit _, noPrompt)
+    }
+  }
 }

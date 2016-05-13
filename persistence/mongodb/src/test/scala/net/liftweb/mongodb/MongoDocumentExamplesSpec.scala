@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,27 +18,28 @@ package net.liftweb
 package mongodb
 
 import BsonDSL._
+import net.liftweb.util.{Helpers, ConnectionIdentifier, DefaultConnectionIdentifier}
 
 import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
 
 import org.bson.types.ObjectId
-import com.mongodb.{BasicDBList, BasicDBObject, DBObject, MongoException}
+import com.mongodb._
 
 import org.specs2.mutable.Specification
 
 import json.DefaultFormats
-import json.JsonParser._
+import net.liftweb.common.Failure
 
 
 package mongotestdocs {
   /*
-  * MongoIdentifiers
+  * ConnectionIdentifiers
   */
-  object TstDBa extends MongoIdentifier {
+  object TstDBa extends ConnectionIdentifier {
     val jndiName = "test_a"
   }
-  object TstDBb extends MongoIdentifier {
+  object TstDBb extends ConnectionIdentifier {
     val jndiName = "test_b"
   }
 
@@ -50,10 +51,10 @@ package mongotestdocs {
   }
   object SimplePerson extends MongoDocumentMeta[SimplePerson] {
     override val collectionName = "simplepersons"
-    override def mongoIdentifier = DefaultMongoIdentifier
+    override def connectionIdentifier = DefaultConnectionIdentifier
     override def formats = super.formats + new ObjectIdSerializer
     // index name
-    ensureIndex(("name" -> 1))
+    createIndex(("name" -> 1))
   }
 
   case class Address(street: String, city: String)
@@ -69,7 +70,7 @@ package mongotestdocs {
   }
 
   object Person extends MongoDocumentMeta[Person] {
-    override def mongoIdentifier = TstDBa
+    override def connectionIdentifier = TstDBa
     override def collectionName = "mypersons"
     override def formats = super.formats + new UUIDSerializer
   }
@@ -87,9 +88,9 @@ package mongotestdocs {
   object TstCollection extends MongoDocumentMeta[TstCollection] {
     override def formats = super.formats + new UUIDSerializer
     // create a unique index on name
-    ensureIndex(("name" -> 1), true)
+    createIndex(("name" -> 1), true)
     // create a non-unique index on dbtype passing unique = false.
-    ensureIndex(("dbtype" -> 1), false)
+    createIndex(("dbtype" -> 1), false)
   }
 
   case class IDoc(_id: ObjectId, i: Int) extends MongoDocument[IDoc] {
@@ -100,7 +101,7 @@ package mongotestdocs {
   object IDoc extends MongoDocumentMeta[IDoc] {
     override def formats = super.formats + new ObjectIdSerializer
     // create an index on "i", descending with custom name
-    ensureIndex(("i" -> -1), ("name" -> "i_ix1"))
+    createIndex(("i" -> -1), ("name" -> "i_ix1"))
   }
 
   case class SessCollection(_id: ObjectId, name: String, dbtype: String, count: Int)
@@ -112,7 +113,7 @@ package mongotestdocs {
   object SessCollection extends MongoDocumentMeta[SessCollection] {
     override def formats = super.formats + new ObjectIdSerializer
     // create a unique index on name
-    ensureIndex(("name" -> 1), true)
+    createIndex(("name" -> 1), true)
   }
 
   /*
@@ -477,7 +478,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     success
   }
 
-  "Mongo useSession example" in {
+  "Mongo examples" in {
 
     checkMongoIsRunning
 
@@ -485,16 +486,18 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     val tc2 = SessCollection(ObjectId.get, "MongoSession", "db", 1)
     val tc3 = SessCollection(ObjectId.get, "MongoDB", "db", 1)
 
-    // use a Mongo instance directly with a session
-    MongoDB.useSession( db => {
+    // use a Mongo instance directly
+    MongoDB.use( db => {
 
       // save to db
-      SessCollection.save(tc, db)
-      db.getLastError.get("err") must beNull
-      SessCollection.save(tc2, db)
-      db.getLastError.get("err").toString must startWith("E11000 duplicate key error index")
-      SessCollection.save(tc3, db)
-      db.getLastError.get("err") must beNull
+      Helpers.tryo(SessCollection.save(tc, db)).toOption must beSome
+      SessCollection.save(tc2, db) must throwA[MongoException]
+      Helpers.tryo(SessCollection.save(tc2, db)) must beLike {
+        case Failure(msg, _, _) =>
+          msg must contain("E11000")
+      }
+
+      Helpers.tryo(SessCollection.save(tc3, db)).toOption must beSome
 
       // query for the docs by type
       val qry = ("dbtype" -> "db")
@@ -502,16 +505,8 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
 
       // modifier operations $inc, $set, $push...
       val o2 = ("$inc" -> ("count" -> 1)) // increment count by 1
-      //("$set" -> ("dbtype" -> "docdb")) // set dbtype
       SessCollection.update(qry, o2, db)
-      db.getLastError.get("updatedExisting") must_== true
-      /* The update method only updates one document. */
-      db.getLastError.get("n") must_== 1
-
-      /* Multiple documents now supported */
       SessCollection.update(qry, o2, db, Multi)
-      db.getLastError.get("updatedExisting") must_== true
-      db.getLastError.get("n") must_== 2
 
       // regex query example
       val lst = SessCollection.findAll(new BasicDBObject("name", Pattern.compile("^Mongo")))
@@ -634,8 +629,8 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     val pdoc1 = PatternDoc(ObjectId.get, Pattern.compile("^Mo", Pattern.CASE_INSENSITIVE))
     pdoc1.save
 
-    PatternDoc.find(pdoc1._id).toList map {
-      pdoc =>
+    PatternDoc.find(pdoc1._id) must beLike {
+      case Some(pdoc) =>
         pdoc._id must_== pdoc1._id
         pdoc.regx.pattern must_== pdoc1.regx.pattern
         pdoc.regx.flags must_== pdoc1.regx.flags
@@ -658,15 +653,14 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     }
 
     val fromDb = StringDateDoc.find(newId)
-    fromDb.isDefined must_== true
-    fromDb.toList flatMap {
-      sdd =>
+    fromDb must beLike {
+      case Some(sdd) =>
         sdd._id must_== newId
         sdd.dt must_== newDt
         sdd.save
 
-        StringDateDoc.find(newId) map {
-          sdd2 =>
+        StringDateDoc.find(newId) must beLike {
+          case Some(sdd2) =>
             sdd2.dt must_== sdd.dt
         }
     }

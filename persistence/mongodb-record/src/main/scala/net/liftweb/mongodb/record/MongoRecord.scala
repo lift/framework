@@ -67,14 +67,6 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   }
 
   /**
-  * Save the instance and return the instance
-  * WILL NOT RAISE MONGO SERVER ERRORS.
-  * Use save(Boolean) or save(WriteConcern) to control error behavior
-  */
-  @deprecated("save with no argument list is deprecated and will go away in Lift 3; it defaults to an unsafe WriteConcern. Please call save(false) for this behavior. Calling save() or save(true) will set the WriteConcern to ACKNOWLEDGED, which is in line with default MongoClient behavior.", "2.6")
-  def save: MyType = save(false)
-
-  /**
     * Try to save the instance and return the instance in a Box.
     */
   def saveBox(): Box[MyType] = tryo {
@@ -120,29 +112,5 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
     runSafe {
       meta.delete_!(this)
     }
-  }
-}
-
-/**
-* Mix this into a Record to add an ObjectIdField
-*/
-@deprecated("Use one of the MongoPK traits instead", "2.5")
-trait MongoId[OwnerType <: MongoRecord[OwnerType]] {
-  self: OwnerType =>
-
-  import field.ObjectIdField
-
-  object _id extends ObjectIdField(this.asInstanceOf[OwnerType])
-
-  // convenience method that returns the value of _id
-  def id = _id.value
-
-  /*
-  * Get the DBRef for this record
-  */
-  def getRef: DBRef = {
-    MongoDB.use(meta.mongoIdentifier) ( db =>
-      new DBRef(db, meta.collectionName, _id.value)
-    )
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2015 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,13 +58,13 @@ class DBRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefT
 
   def asJs = Str(toString)
 
-  def asJValue = (JNothing: JValue) // not implemented
+  def asJValue: JValue = (JNothing: JValue) // not implemented
 
   def setFromJValue(jvalue: JValue) = Empty // not implemented
 
   def asXHtml = <div></div>
 
-  def defaultValue = new DBRef(null, null, null)
+  def defaultValue = new DBRef("", null)
 
   def setFromAny(in: Any): Box[DBRef] = in match {
     case ref: DBRef => Full(set(ref))
@@ -81,13 +81,11 @@ class DBRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefT
   // assume string is json
   def setFromString(in: String): Box[DBRef] = {
     val dbo = JSON.parse(in).asInstanceOf[BasicDBObject]
-    MongoDB.use(ref.meta.connectionIdentifier) ( db => {
-      val id = dbo.get("$id").toString
-      ObjectId.isValid(id) match {
-        case true => Full(set(new DBRef(db, dbo.get("$ref").toString, new ObjectId(id))))
-        case false => Full(set(new DBRef(db, dbo.get("$ref").toString, id)))
-      }
-    })
+    val id = dbo.get("$id").toString
+    ObjectId.isValid(id) match {
+      case true => Full(set(new DBRef(dbo.get("$ref").toString, new ObjectId(id))))
+      case false => Full(set(new DBRef(dbo.get("$ref").toString, id)))
+    }
   }
 
   def toForm: Box[NodeSeq] = Empty

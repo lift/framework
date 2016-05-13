@@ -29,14 +29,12 @@ import org.scalacheck.Prop.forAll
 object JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
   "JSON Printing Specification".title
 
-  import scala.text.Document
-
   "rendering does not change semantics" in {
-    val rendering = (json: Document) => parse(Printer.pretty(json)) == parse(Printer.compact(json))
-    check(forAll(rendering))
+    val rendering = (json: JValue) => parse(JsonAST.prettyRender(json)) == parse(JsonAST.compactRender(json))
+    forAll(rendering)
   }
 
   private def parse(json: String) = scala.util.parsing.json.JSON.parseRaw(json)
 
-  implicit def arbDoc: Arbitrary[Document] = Arbitrary(genJValue.map(render(_)))
+  implicit def arbDoc: Arbitrary[JValue] = Arbitrary(genJValue)
 }

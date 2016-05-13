@@ -20,10 +20,6 @@ package json
 import org.specs2.mutable.Specification
 
 class Examples extends AbstractExamples {
-  override def print(value: JValue): String = compact(render(value))
-}
-
-class CompactRenderExamples extends AbstractExamples {
   override def print(value: JValue): String = compactRender(value)
 }
 
@@ -43,34 +39,33 @@ trait AbstractExamples extends Specification {
 
   "Person example" in {
     val json = parse(person)
-    val renderedPerson = Printer.pretty(render(json))
+    val renderedPerson = prettyRender(json)
     (json mustEqual parse(renderedPerson)) and
-      (render(json) mustEqual render(personDSL)) and
       (print(json \\ "name") mustEqual """{"name":"Joe","name":"Marilyn"}""") and
       (print(json \ "person" \ "name") mustEqual "\"Joe\"")
   }
 
   "Transformation example" in {
-    val uppercased = parse(person).transform { case JField(n, v) => JField(n.toUpperCase, v) }
-    val rendered = print(uppercased)
+    val uppercased = parse(person).transformField { case JField(n, v) => JField(n.toUpperCase, v) }
+    val rendered = compactRender(uppercased)
     rendered mustEqual 
       """{"PERSON":{"NAME":"Joe","AGE":35,"SPOUSE":{"PERSON":{"NAME":"Marilyn","AGE":33}}}}"""
   }
 
   "Remove example" in {
-    val json = parse(person) remove { _ == JField("name", "Marilyn") }
-    print(json \\ "name") mustEqual """{"name":"Joe"}"""
+    val json = parse(person) removeField { _ == JField("name", "Marilyn") }
+    compactRender(json \\ "name") mustEqual """{"name":"Joe"}"""
   }
 
   "Queries on person example" in {
     val json = parse(person)
-    val filtered = json filter {
+    val filtered = json filterField {
       case JField("name", _) => true
       case _ => false
     }
     filtered mustEqual List(JField("name", JString("Joe")), JField("name", JString("Marilyn")))
 
-    val found = json find {
+    val found = json findField {
       case JField("name", _) => true
       case _ => false
     }
@@ -79,10 +74,10 @@ trait AbstractExamples extends Specification {
 
   "Object array example" in {
     val json = parse(objArray)
-    (print(json \ "children" \ "name") mustEqual """["name":"Mary","name":"Mazy"]""") and
-      (print((json \ "children")(0) \ "name") mustEqual "\"Mary\"") and
-      (print((json \ "children")(1) \ "name") mustEqual "\"Mazy\"") and
-      ((for { JField("name", JString(y)) <- json } yield y) mustEqual List("joe", "Mary", "Mazy"))
+    (print(json \ "children" \ "name") mustEqual """["Mary","Mazy"]""") and
+    (print((json \ "children")(0) \ "name") mustEqual "\"Mary\"") and
+    (print((json \ "children")(1) \ "name") mustEqual "\"Mazy\"") and
+    ((for { JObject(o) <- json; JField("name", JString(y)) <- o } yield y) mustEqual List("joe", "Mary", "Mazy"))
   }
 
   "Unbox values using XPath-like type expression" in {
@@ -120,14 +115,13 @@ trait AbstractExamples extends Specification {
   }
 
   "JSON building example" in {
-    val json = concat(JField("name", JString("joe")), JField("age", JInt(34))) ++
-               concat(JField("name", JString("mazy")), JField("age", JInt(31)))
+    val json = JObject(JField("name", JString("joe")), JField("age", JInt(34))) ++ JObject(JField("name", ("mazy")), JField("age", JInt(31)))
     print(json) mustEqual """[{"name":"joe","age":34},{"name":"mazy","age":31}]"""
   }
 
   "JSON building with implicit primitive conversions example" in {
     import Implicits._
-    val json = concat(JField("name", "joe"), JField("age", 34)) ++ concat(JField("name", "mazy"), JField("age", 31))
+    val json = JObject(JField("name", "joe"), JField("age", 34)) ++ JObject(JField("name", "mazy"), JField("age", 31))
     print(json) mustEqual """[{"name":"joe","age":34},{"name":"mazy","age":31}]"""
   }
 
@@ -220,7 +214,7 @@ object Examples {
 }
 """
 
-  val nulls = ("f1" -> null) ~ ("f2" -> List(null, "s"))
+  val nulls = ("f1" -> (null: String)) ~ ("f2" -> List(null, "s"))
   val quoted = """["foo \" \n \t \r bar"]"""
   val symbols = ("f1" -> 'foo) ~ ("f2" -> 'bar)
 }

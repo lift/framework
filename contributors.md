@@ -209,3 +209,21 @@ Robert Freytag
 
 ### Email: ###
 robertfreytag+lift at gmail .. com
+
+### Name: ###
+Mikhail Limansky
+
+### Email: ###
+mike.limansky at gmail dot com
+
+### Name: ###
+Aleksey Izmailov
+
+### Email: ###
+izmailoff at gmail dot com
+
+### Name: ###
+Arek Burdach
+
+### Email: ###
+arek.burdach at gmail dot com

@@ -465,8 +465,8 @@ object Req {
                       Nil, 
                       Full(BodyOrInputStream(request.inputStream)))
         // it's multipart
-      } else if (request multipartContent_?) {
-        val allInfo = request extractFiles
+      } else if (request.multipartContent_?) {
+        val allInfo = request.extractFiles
         
         val normal: List[NormalParamHolder] = 
           allInfo.flatMap {
@@ -493,11 +493,11 @@ object Req {
         val params = localParams ++ (request.params.sortWith
                                      {(s1, s2) => s1.name < s2.name}).
                                            map(n => (n.name, n.values))
-        ParamCalcInfo(request paramNames, params, Nil, Empty)
+        ParamCalcInfo(request.paramNames, params, Nil, Empty)
       } else {
         ParamCalcInfo(queryStringParam._1, 
                       queryStringParam._2 ++ localParams, 
-                      Nil, Full(BodyOrInputStream(request inputStream)))
+                      Nil, Full(BodyOrInputStream(request.inputStream)))
       }
     })
 
@@ -543,7 +543,10 @@ object Req {
     ParsePath(lst.map(urlDecode), suffix, front, back)
   }
 
-  var fixHref = _fixHref _
+  @deprecated("Use normalizeHref instead.", "3.0.0")
+  def fixHref = normalizeHref
+
+  var normalizeHref = _fixHref _
 
   private def _fixHref(contextPath: String, v: Seq[Node], fixURL: Boolean, rewrite: Box[String => String]): Text = {
     val hv = v.text
@@ -561,16 +564,21 @@ object Req {
          rewrite.openOrThrowException("legacy code").apply(updated) else updated)
   }
 
+  @deprecated("Use normalizeHtml instead.", "3.0.0")
+  def fixHtml(contextPath: String, in: NodeSeq): NodeSeq = {
+    normalizeHtml(contextPath, in)
+  }
+
   /**
    * Corrects the HTML content,such as applying context path to URI's, session information if cookies are disabled etc.
    */
-  def fixHtml(contextPath: String, in: NodeSeq): NodeSeq = {
+  def normalizeHtml(contextPath: String, in: NodeSeq): NodeSeq = {
     val rewrite = URLRewriter.rewriteFunc
 
     def fixAttrs(toFix: String, attrs: MetaData, fixURL: Boolean): MetaData = {
       if (attrs == Null) Null
       else if (attrs.key == toFix) {
-        new UnprefixedAttribute(toFix, Req.fixHref(contextPath, attrs.value, fixURL, rewrite), fixAttrs(toFix, attrs.next, fixURL))
+        new UnprefixedAttribute(toFix, Req.normalizeHref(contextPath, attrs.value, fixURL, rewrite), fixAttrs(toFix, attrs.next, fixURL))
       } else attrs.copy(fixAttrs(toFix, attrs.next, fixURL))
     }
 
@@ -579,11 +587,11 @@ object Req {
         v =>
         v match {
           case Group(nodes) => Group(_fixHtml(contextPath, nodes))
-          case e: Elem if e.label == "form" => Elem(v.prefix, v.label, fixAttrs("action", v.attributes, true), v.scope, _fixHtml(contextPath, v.child): _*)
-          case e: Elem if e.label == "script" => Elem(v.prefix, v.label, fixAttrs("src", v.attributes, false), v.scope, _fixHtml(contextPath, v.child): _*)
-          case e: Elem if e.label == "a" => Elem(v.prefix, v.label, fixAttrs("href", v.attributes, true), v.scope, _fixHtml(contextPath, v.child): _*)
-          case e: Elem if e.label == "link" => Elem(v.prefix, v.label, fixAttrs("href", v.attributes, false), v.scope, _fixHtml(contextPath, v.child): _*)
-          case e: Elem => Elem(v.prefix, v.label, fixAttrs("src", v.attributes, true), v.scope, _fixHtml(contextPath, v.child): _*)
+          case e: Elem if e.label == "form" => Elem(v.prefix, v.label, fixAttrs("action", v.attributes, true), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
+          case e: Elem if e.label == "script" => Elem(v.prefix, v.label, fixAttrs("src", v.attributes, false), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
+          case e: Elem if e.label == "a" => Elem(v.prefix, v.label, fixAttrs("href", v.attributes, true), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
+          case e: Elem if e.label == "link" => Elem(v.prefix, v.label, fixAttrs("href", v.attributes, false), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
+          case e: Elem => Elem(v.prefix, v.label, fixAttrs("src", v.attributes, true), v.scope, e.minimizeEmpty, _fixHtml(contextPath, v.child): _*)
           case _ => v
         }
       }
@@ -593,7 +601,7 @@ object Req {
 
   private[liftweb] def defaultCreateNotFound(in: Req) =
   XhtmlResponse((<html> <body>The Requested URL {in.contextPath + in.uri} was not found on this server</body> </html>),
-                LiftRules.docType.vend(in), List("Content-Type" -> "text/html; charset=utf-8"), Nil, 404, S.legacyIeCompatibilityMode)
+                LiftRules.htmlProperties.vend(in).docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 404, S.legacyIeCompatibilityMode)
 
   def unapply(in: Req): Option[(List[String], String, RequestType)] = Some((in.path.partPath, in.path.suffix, in.requestType))
 }
@@ -868,7 +876,7 @@ class Req(val path: ParsePath,
    * A request that is neither Ajax or Comet
    */
   lazy val standardRequest_? : Boolean = path.partPath match {
-    case x :: _ if x == LiftRules.ajaxPath || x == LiftRules.cometPath => false
+    case x :: _ if x == LiftRules.liftContextRelativePath => false
     case _ => true
   }
 
@@ -918,7 +926,7 @@ class Req(val path: ParsePath,
   lazy val headers: List[(String, String)] =
   for (h <- request.headers;
        p <- h.values
-  ) yield (h name, p)
+  ) yield (h.name, p)
 
 
   def headers(name: String): List[String] = headers.filter(_._1.equalsIgnoreCase(name)).map(_._2)
@@ -984,9 +992,29 @@ class Req(val path: ParsePath,
       sid <- httpRequest.sessionId
     } yield sid
 
-  lazy val json: Box[JsonAST.JValue] = 
-    if (!json_?) Empty
-    else try {
+  /**
+   * The JValue representation of this Req's body, if the body is JSON-parsable
+   * AND the content-type of the request is JSON. Returns a Failure if
+   * the request is not considered a JSON request (see json_?), or if
+   * there was an error parsing the JSON.
+   *
+   * If you want to forcibly evaluate the request body as JSON, ignoring
+   * content type, see `forcedBodyAsJson`.
+   */
+  lazy val json: Box[JsonAST.JValue] = {
+    if (!json_?) {
+      Failure("Cannot parse non-JSON request as JSON; please check content-type.")
+    } else {
+      forcedBodyAsJson
+    }
+  }
+
+  /**
+   * Forcibly tries to parse the request body as JSON. Does not perform any
+   * content type checks, unlike the json method.
+   */
+  lazy val forcedBodyAsJson: Box[JsonAST.JValue] = {
+    try {
       import java.io._
 
       def r = """; *charset=(.*)""".r
@@ -1002,6 +1030,7 @@ class Req(val path: ParsePath,
       case e: LiftFlowOfControlException => throw e
       case e: Exception => Failure(e.getMessage, Full(e), Empty)
     }
+  }
 
   private def containerRequest = Box !! request
     /**
@@ -1022,16 +1051,36 @@ class Req(val path: ParsePath,
       case (sch, port) => sch + "://" + r.serverName + ":" + port + contextPath
     }) openOr ""
 
+  /**
+   * The Elem representation of this Req's body, if the body is XML-parsable
+   * AND the content-type of the request is XML. Returns a Failure if
+   * the request is not considered a XML request (see xml_?), or if
+   * there was an error parsing the XML.
+   *
+   * If you want to forcibly evaluate the request body as XML, ignoring
+   * content type, see `forcedBodyAsXml`.
+   */
+  lazy val xml: Box[Elem] = {
+    if (!xml_?) {
+      Failure("Cannot parse non-XML request as XML; please check content-type.")
+    } else  {
+      forcedBodyAsXml
+    }
+  }
 
-  lazy val xml: Box[Elem] = if (!xml_?) Empty
-  else 
+  /**
+   * Forcibly tries to parse the request body as XML. Does not perform any
+   * content type checks, unlike the xml method.
+   */
+  lazy val forcedBodyAsXml: Box[Elem] = {
     try {
       import java.io._
-      body.map(b => XML.load(new ByteArrayInputStream(b)))
+      body.map(b => secureXML.load(new ByteArrayInputStream(b)))
     } catch {
       case e: LiftFlowOfControlException => throw e
       case e: Exception => Failure(e.getMessage, Full(e), Empty)
     }
+  }
 
   /**
    * The SiteMap Loc associated with this Req
@@ -1117,7 +1166,7 @@ class Req(val path: ParsePath,
                               true,
                               this.paramCalculator, 
                               this.addlParams)
-         S.withReq(newReq) {
+         S.withReq(Full(newReq)) {
           f(path)
          }
       case NotFoundAsNode(node) => Full(LiftRules.convertResponse((node, 404),
@@ -1134,7 +1183,10 @@ class Req(val path: ParsePath,
 
   val options_? = requestType.options_?
 
-  def fixHtml(in: NodeSeq): NodeSeq = Req.fixHtml(contextPath, in)
+  @deprecated("Use normalizeHtml instead.", "3.0.0")
+  def fixHtml(in: NodeSeq): NodeSeq = normalizeHtml(in)
+  
+  def normalizeHtml(in: NodeSeq): NodeSeq = Req.normalizeHtml(contextPath, in)
 
   lazy val uri: String = request match {
     case null => "Outside HTTP Request (e.g., on Actor)"
@@ -1279,6 +1331,12 @@ object RewriteResponse {
   def apply(path: ParsePath, params: Map[String, String]) = new RewriteResponse(path, params, false)
 }
 
+/**
+ * Provides access to a thread-local URL rewriter. Typically uses either an
+ * applicable entry in `[[LiftRules.urlDecorate]]` or the container's built-in
+ * URL decoration which may append the session id to the URL (dependent on
+ * `[[LiftRules.encodeJSessionIdInUrl_?]]`).
+ */
 object URLRewriter {
   private val funcHolder = new ThreadGlobal[(String) => String]
 
@@ -1288,5 +1346,5 @@ object URLRewriter {
     }
   }
 
-  def rewriteFunc: Box[(String) => String] = Box.legacyNullTest(funcHolder value)
+  def rewriteFunc: Box[(String) => String] = Box.legacyNullTest(funcHolder.value)
 }

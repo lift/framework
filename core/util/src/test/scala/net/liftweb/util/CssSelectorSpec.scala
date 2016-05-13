@@ -17,18 +17,18 @@
 package net.liftweb
 package util
 
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import common._
 import scala.xml._
 
-import BindHelpers._
-
+import Helpers._
 
 /**
  * Systems under specification for CSS Selector.
  */
-object CssSelectorSpec extends Specification   {
+object CssSelectorSpec extends Specification with XmlMatchers {
   "CSS Selector Specification".title
 
   "CssSelector" should {
@@ -228,7 +228,7 @@ object CssSelectorSpec extends Specification   {
 
 }
 
-object CssBindHelpersSpec extends Specification  {
+object CssBindHelpersSpec extends Specification with XmlMatchers {
 
   "css bind helpers" should {
     "clear clearable" in {
@@ -899,9 +899,7 @@ object CssBindHelpersSpec extends Specification  {
  * the implicit conversions work correctly
  */
 object CheckTheImplicitConversionsForToCssBindPromoter {
-  val bog = new ToCssBindPromoter(Empty, Empty)
-
-  import BindHelpers._
+  val bog = new CssBindPromoter(Empty, Empty)
 
   "foo" #> "baz"
 

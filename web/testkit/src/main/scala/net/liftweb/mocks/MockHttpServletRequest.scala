@@ -21,6 +21,7 @@ import java.io.{BufferedReader,ByteArrayInputStream,InputStreamReader}
 import java.net.URL
 import java.security.Principal
 import java.text.ParseException
+import java.util.Collection
 import java.util.Date
 import java.util.Locale
 import java.util.{Enumeration => JEnum}
@@ -59,12 +60,6 @@ import json.JsonAST._
  *
  */
 class MockHttpServletRequest(val url : String = null, var contextPath : String = "") extends HttpServletRequest {
-  @deprecated("Use the \"attributes\" var instead", "2.4")
-  def attr = attributes
-
-  @deprecated("Use the \"attributes\" var instead", "2.4")
-  def attr_= (attrs : Map[String,Object]) = attributes = attrs
-
   var attributes: Map[String, Object] = Map()
 
   var authType: String = null
@@ -133,8 +128,9 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    */
   def body_= (jval : JValue, contentType : String) : Unit = {
     import json.JsonDSL._
-    import json.Printer
-    body = Printer.pretty(render(jval)).getBytes(charEncoding)
+    import json.JsonAST
+
+    body = JsonAST.prettyRender(jval).getBytes(charEncoding)
     this.contentType = contentType
   }
 
@@ -182,16 +178,6 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * parse the provided string into GET parameters.
    */
   var parameters : List[(String,String)] = Nil
-
-  @deprecated("Use the \"parameters\" var instead", "2.4")
-  def parameterMap = Map(parameters : _*)
-
-  @deprecated("Use the \"parameters\" var instead", "2.4")
-  def parameterMap_= (params : Map[String, List[String]]) {
-    parameters = params.toList.flatMap {
-      case (key,values) => values.map{(key,_)}
-    }
-  }
 
   var path : String = "/"
 
@@ -397,7 +383,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
 
   def getAttribute(key: String): Object = attributes.get(key).getOrElse(null)
 
-  def getAttributeNames(): JEnum[Object] = attributes.keys.iterator
+  def getAttributeNames(): JEnum[String] = attributes.keys.iterator
 
   def getCharacterEncoding(): String = charEncoding
 
@@ -413,7 +399,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
 
   def getLocale(): Locale = locales.headOption.getOrElse(Locale.getDefault)
 
-  def getLocales(): JEnum[Object] = locales.iterator
+  def getLocales(): JEnum[Locale] = locales.iterator
 
   def getLocalName(): String = localName
 
@@ -422,7 +408,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   def getParameter(key: String): String =
     parameters.find(_._1 == key).map(_._2) getOrElse null
 
-  def getParameterMap(): java.util.Map[Object, Object] = {
+  def getParameterMap(): java.util.Map[String, Array[String]] = {
     // Build a new map based on the parameters List
     var newMap = Map[String,List[String]]().withDefault(ignore => Nil)
 
@@ -430,11 +416,11 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
       case (k,v) => newMap += k -> (newMap(k) ::: v :: Nil) // Ugly, but it works and keeps order
     }
 
-    newMap.map{case (k,v) => (k,v.toArray)}.asInstanceOf[Map[Object,Object]]
+    newMap.map{case (k,v) => (k,v.toArray)}.asInstanceOf[Map[String,Array[String]]]
 //    asMap(newMap.map{case (k,v) => (k,v.toArray)}.asInstanceOf[Map[Object,Object]])
   }
 
-  def getParameterNames(): JEnum[Object] =
+  def getParameterNames(): JEnum[String] =
     parameters.map(_._1).distinct.iterator
 
   def getParameterValues(key: String): Array[String] =
@@ -495,9 +481,9 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
     case _ => null
   }
 
-  def getHeaderNames(): JEnum[Object] = headers.keys.iterator
+  def getHeaderNames(): JEnum[String] = headers.keys.iterator
 
-  def getHeaders(s: String): JEnum[Object] =
+  def getHeaders(s: String): JEnum[String] =
     headers.getOrElse(s, Nil).iterator
 
   def getIntHeader(h: String): Int = {
@@ -564,5 +550,30 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   def setDateHeader(s: String, l: Long) {
     headers += (s -> List(Helpers.toInternetDate(l)))
   }
-}
 
+  def getParts(): Collection[Part] = {
+    Seq[Part]()
+  }
+
+  def getPart(partName: String): Part = {
+    null
+  }
+
+  def login(username: String, password: String): Unit = ()
+
+  def logout(): Unit = ()
+
+  def authenticate(resp: HttpServletResponse) = true
+
+  def getAsyncContext(): AsyncContext = null
+  def getDispatcherType(): DispatcherType = null
+  def getServletContext(): ServletContext = null
+  def isAsyncStarted(): Boolean = false
+  def isAsyncSupported(): Boolean = false
+  def startAsync(request: javax.servlet.ServletRequest, response: javax.servlet.ServletResponse): AsyncContext = null
+  def startAsync(): AsyncContext = null
+  def changeSessionId(): String = null
+  def getContentLengthLong(): Long = body.length
+
+  def upgrade[T <: javax.servlet.http.HttpUpgradeHandler](x$1: Class[T]): T = ???
+}

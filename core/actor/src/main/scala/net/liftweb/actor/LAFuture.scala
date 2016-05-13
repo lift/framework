@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.liftweb 
+package net.liftweb
 package actor 
 
 import common._
@@ -76,11 +76,8 @@ class LAFuture[T](val scheduler: LAScheduler) {
 
   /**
    * Get the future value
-   * 2.9.2 gives a compiler error if we try to use the tailrec annotation
-   * Once we drop 2.9.x, enable the annotation again
-   *
    */
-  //@scala.annotation.tailrec
+  @scala.annotation.tailrec
   final def get: T = synchronized {
     if (satisfied) item
     else if (aborted) throw new AbortedFutureException(failure)
@@ -109,14 +106,18 @@ class LAFuture[T](val scheduler: LAScheduler) {
    */
   def map[A](f: T => A): LAFuture[A] = {
     val ret = new LAFuture[A](scheduler)
-    onComplete(v => ret.complete(v.map(f)))
+    onComplete(v => ret.complete(v.flatMap(n => Box.tryo(f(n)))))
     ret
   }
 
   def flatMap[A](f: T => LAFuture[A]): LAFuture[A] = {
     val ret = new LAFuture[A](scheduler)
     onComplete(v => v match {
-      case Full(v) => f(v).onComplete(v2 => ret.complete(v2))
+      case Full(v) =>
+        Box.tryo(f(v)) match {
+          case Full(successfullyComputedFuture) => successfullyComputedFuture.onComplete(v2 => ret.complete(v2))
+          case e: EmptyBox => ret.complete(e)
+        }
       case e: EmptyBox => ret.complete(e)
     })
     ret
@@ -142,6 +143,7 @@ class LAFuture[T](val scheduler: LAScheduler) {
       try {
         wait(timeout)
         if (satisfied) Full(item)
+        else if (aborted) failure
         else Empty
       } catch {
         case _: InterruptedException => Empty
@@ -333,25 +335,29 @@ object LAFuture {
    * collected futures are satisfied
    */
   def collect[T](future: LAFuture[T]*): LAFuture[List[T]] = {
-    val sync = new Object
-    val len = future.length
-    val vals = new collection.mutable.ArrayBuffer[Box[T]](len)
-     // pad array so inserts at random places are possible
-    for (i <- 0 to len) { vals.insert(i, Empty) }
-    var gotCnt = 0
     val ret = new LAFuture[List[T]]
+    if (future.isEmpty) {
+      ret.satisfy(Nil)
+    } else {
+      val sync = new Object
+      val len = future.length
+      val vals = new collection.mutable.ArrayBuffer[Box[T]](len)
+       // pad array so inserts at random places are possible
+      for (i <- 0 to len) { vals.insert(i, Empty) }
+      var gotCnt = 0
 
-    future.toList.zipWithIndex.foreach {
-      case (f, idx) => 
-        f.foreach {
-          v => sync.synchronized {
-            vals.insert(idx, Full(v))
-            gotCnt += 1
-            if (gotCnt >= len) {
-              ret.satisfy(vals.toList.flatten)
+      future.toList.zipWithIndex.foreach {
+        case (f, idx) =>
+          f.foreach {
+            v => sync.synchronized {
+              vals.insert(idx, Full(v))
+              gotCnt += 1
+              if (gotCnt >= len) {
+                ret.satisfy(vals.toList.flatten)
+              }
             }
           }
-        }
+      }
     }
 
     ret
@@ -365,33 +371,37 @@ object LAFuture {
    * returned future with an Empty
    */
   def collectAll[T](future: LAFuture[Box[T]]*): LAFuture[Box[List[T]]] = {
-    val sync = new Object
-    val len = future.length
-    val vals = new collection.mutable.ArrayBuffer[Box[T]](len)
-    // pad array so inserts at random places are possible
-    for (i <- 0 to len) { vals.insert(i, Empty) }
-    var gotCnt = 0
     val ret = new LAFuture[Box[List[T]]]
+    if (future.isEmpty) {
+      ret.satisfy(Full(Nil))
+    } else {
+      val sync = new Object
+      val len = future.length
+      val vals = new collection.mutable.ArrayBuffer[Box[T]](len)
+      // pad array so inserts at random places are possible
+      for (i <- 0 to len) { vals.insert(i, Empty) }
+      var gotCnt = 0
 
-    future.toList.zipWithIndex.foreach {
-      case (f, idx) => 
-        f.foreach {
-          vb => sync.synchronized {
-            vb match {
-              case Full(v) => {
-                vals.insert(idx, Full(v))
-                gotCnt += 1
-                if (gotCnt >= len) {
-                  ret.satisfy(Full(vals.toList.flatten))
+      future.toList.zipWithIndex.foreach {
+        case (f, idx) =>
+          f.foreach {
+            vb => sync.synchronized {
+              vb match {
+                case Full(v) => {
+                  vals.insert(idx, Full(v))
+                  gotCnt += 1
+                  if (gotCnt >= len) {
+                    ret.satisfy(Full(vals.toList.flatten))
+                  }
                 }
-              }
-              
-              case eb: EmptyBox => {
-                ret.satisfy(eb)
+
+                case eb: EmptyBox => {
+                  ret.satisfy(eb)
+                }
               }
             }
           }
-        }
+      }
     }
 
     ret

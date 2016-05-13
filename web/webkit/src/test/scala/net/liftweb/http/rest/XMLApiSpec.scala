@@ -24,6 +24,7 @@ import org.specs2.mutable.Specification
 import org.specs2.matcher.Matcher
 
 import common._
+import util.Helpers.secureXML
 import util.ControlHelpers.tryo
 
 /**
@@ -59,7 +60,7 @@ object XmlApiSpec extends Specification  {
       case r @ Req(List("api","max"), _, GetRequest) => () => doMax(r)
       case r @ Req(List("api","min"), _, GetRequest) => () => doMin(r)
       // Tests putResponseInBox
-      case Req("api" :: _, _, _) => () => BadResponse()
+      case Req("api" :: _, _, _) => () => BadRequestResponse()
     }
 
     // ===== Handler methods =====
@@ -89,7 +90,7 @@ object XmlApiSpec extends Specification  {
         /* For some reason, the UnprefixedAttributes that Lift uses to merge in
          * new attributes makes comparison fail. Instead, we simply stringify and
          * reparse the response contents and that seems to fix the issue. */
-        val converted = XML.loadString(x.xml.toString)
+        val converted = secureXML.loadString(x.xml.toString)
         result(converted == expected, 
          "%s matches %s".format(converted,expected),
          "%s does not match %s".format(converted, expected),

@@ -17,15 +17,16 @@
 package net.liftweb
 package mapper
 
+import scala.reflect.{ClassTag,classTag}
 
-class FieldFinder[T: ClassManifest](metaMapper: AnyRef, logger: net.liftweb.common.Logger) {
+class FieldFinder[T: ClassTag](metaMapper: AnyRef, logger: net.liftweb.common.Logger) {
   import java.lang.reflect._
 
-  logger.debug("Created FieldFinder for " + classManifest[T].erasure)
+  logger.debug("Created FieldFinder for " + classTag[T].runtimeClass)
 
   def isMagicObject(m: Method) = m.getReturnType.getName.endsWith("$"+m.getName+"$") && m.getParameterTypes.length == 0
 
-  def typeFilter: Class[_]=>Boolean = classManifest[T].erasure.isAssignableFrom
+  def typeFilter: Class[_]=>Boolean = classTag[T].runtimeClass.isAssignableFrom
 
   /**
     * Find the magic mapper fields on the superclass
@@ -45,7 +46,7 @@ class FieldFinder[T: ClassManifest](metaMapper: AnyRef, logger: net.liftweb.comm
         val fields = Map(c.getDeclaredFields.
                           filter{f =>
                             val ret = typeFilter(f.getType)
-                            logger.trace("typeFilter(" + f.getType + "); T=" + classManifest[T].erasure)
+                            logger.trace("typeFilter(" + f.getType + "); T=" + classTag[T].runtimeClass)
                             ret
                           }.
                           map(f => (deMod(f.getName), f)) :_*)

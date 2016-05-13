@@ -1,0 +1,14 @@
+ - html-docs:
+   - docs/*.adoc|asciidoctor
+
+ - example-extraction:
+   - docs/scripts/extract-css-selector-examples.sh|bash:
+     - sh:
+         timeout: 500
+     - html-docs
+
+ - example-verification:
+   - docs/scripts/run-css-selector-examples.sh|bash:
+     - sh:
+         timeout: 500
+     - example-extraction

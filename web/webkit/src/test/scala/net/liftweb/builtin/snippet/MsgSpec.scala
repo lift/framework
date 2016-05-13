@@ -18,16 +18,17 @@ package net.liftweb
 package builtin.snippet
 
 import xml._
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import common._
 import http._
-
+import util.Helpers.secureXML
 
 /**
  * System under specification for Msg.
  */
-object MsgSpec extends Specification  {
+object MsgSpec extends Specification with XmlMatchers {
   "Msg Specification".title
 
   def withSession[T](f: => T) : T =
@@ -43,7 +44,7 @@ object MsgSpec extends Specification  {
 
         // We reparse due to inconsistencies with UnparsedAttributes
         val result = S.withAttrs(new UnprefixedAttribute("id", Text("foo"), new UnprefixedAttribute("noticeClass", Text("funky"), Null))) {
-          XML.loadString(Msg.render(<div/>).toString)
+          secureXML.loadString(Msg.render(<div/>).toString)
         }
 
         result must ==/(<span id="foo">Error, <span class="funky">Notice</span></span>)

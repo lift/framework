@@ -26,7 +26,4 @@ package object mapper {
   def DBLogEntry = db.DBLogEntry
   def DefaultConnectionIdentifier = util.DefaultConnectionIdentifier
   def DriverType = db.DriverType
-
-  @deprecated("Use util.Safe instead.", "2.4")
-  def Safe = util.Safe
 }

@@ -48,7 +48,7 @@ trait JodaTimeTypedField extends TypedField[DateTime] with JodaHelpers {
       <input type={formInputType}
         name={funcName}
         value={valueBox.map(v => dateTimeFormatter.print(v)) openOr ""}
-        tabindex={tabIndex toString}/>
+        tabindex={tabIndex.toString}/>
     }
 
   def toForm: Box[NodeSeq] =
@@ -62,7 +62,7 @@ trait JodaTimeTypedField extends TypedField[DateTime] with JodaHelpers {
   protected def asJInt(encode: MyType => BigInt): JValue =
     valueBox.map(v => JInt(encode(v))) openOr (JNothing: JValue)
 
-  def asJValue = asJInt(v => v.getMillis)
+  def asJValue: JValue = asJInt(v => v.getMillis)
   def setFromJValue(jvalue: JValue) = setFromJInt(jvalue) {
     v => toDateTime(v)
   }

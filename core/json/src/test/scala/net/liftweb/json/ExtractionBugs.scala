@@ -24,6 +24,27 @@ object ExtractionBugs extends Specification {
 
   implicit val formats = DefaultFormats
 
+  case class Response(data: List[Map[String, Int]])
+
+  case class OptionOfInt(opt: Option[Int])
+
+  case class PMap(m: Map[String, List[String]])
+
+  case class ManyConstructors(id: Long, name: String, lastName: String, email: String) {
+    def this() = this(0, "John", "Doe", "")
+    def this(name: String) = this(0, name, "Doe", "")
+    def this(name: String, email: String) = this(0, name, "Doe", email)
+  }
+
+  case class ExtractWithAnyRef()
+
+  case class UnicodeFieldNames(`foo.bar,baz`: String)
+
+  object HasCompanion {
+    def hello = "hello"
+  }
+  case class HasCompanion(nums: List[Int])
+
   "ClassCastException (BigInt) regression 2 must pass" in {
     val opt = OptionOfInt(Some(39))
     Extraction.decompose(opt).extract[OptionOfInt].opt.get mustEqual 39
@@ -59,24 +80,20 @@ object ExtractionBugs extends Specification {
     json.extract[Response] mustEqual Response(List(Map("one" -> 1, "two" -> 2)))
   }
 
-  case class Response(data: List[Map[String, Int]])
-
-  case class OptionOfInt(opt: Option[Int])
-
-  case class PMap(m: Map[String, List[String]])
-
-  case class ManyConstructors(id: Long, name: String, lastName: String, email: String) {
-    def this() = this(0, "John", "Doe", "")
-    def this(name: String) = this(0, name, "Doe", "")
-    def this(name: String, email: String) = this(0, name, "Doe", email)
+  "Extraction should handle List[Option[String]]" in {
+    val json = JsonParser.parse("""["one", "two", null]""")
+    json.extract[List[Option[String]]] mustEqual List(Some("one"), Some("two"), None)
   }
 
-  case class ExtractWithAnyRef()
+  "Extraction should fail if you're attempting to extract an option and you're given data of the wrong type" in {
+    val json = JsonParser.parse("""{"opt": "hi"}""")
+    json.extract[OptionOfInt] must throwA[MappingException].like {
+      case e => e.getMessage mustEqual "No usable value for opt\nDo not know how to convert JString(hi) into int"
+    }
 
-  case class UnicodeFieldNames(`foo.bar,baz`: String)
-
-  object HasCompanion {
-    def hello = "hello"
+    val json2 = JString("hi")
+    json2.extract[Option[Int]] must throwA[MappingException].like {
+      case e => e.getMessage mustEqual "Do not know how to convert JString(hi) into int"
+    }
   }
-  case class HasCompanion(nums: List[Int])
 }

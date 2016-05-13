@@ -165,7 +165,7 @@ object BasicTypesHelpersSpec extends Specification  with DataTables {
 
     "put a guard around a partial function" in {
       val pf1: PartialFunction[String, Unit] = {
-        case s if s.startsWith("s") => true
+        case s if s.startsWith("s") =>
       }
 
       val pf2: PartialFunction[String, Boolean] = {

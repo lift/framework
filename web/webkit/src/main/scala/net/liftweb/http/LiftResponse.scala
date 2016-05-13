@@ -64,14 +64,14 @@ case class CreatedResponse(xml: Node, mime: String, addlHeaders: List[(String, S
  */
 object CreatedResponse {
 
-  lazy val jsonPrinter: scala.text.Document => String =
+  lazy val jsonPrinter: JsonAST.JValue => String =
     LiftRules.jsonOutputConverter.vend
 
   def apply(json: JsonAST.JValue, addlHeaders: List[(String, String)]): LiftResponse = {
     val headers: List[(String, String)] = S.getResponseHeaders( Nil ) ++  addlHeaders
 
     new JsonResponse(new JsExp {
-      lazy val toJsCmd = jsonPrinter(JsonAST.render(json))
+      lazy val toJsCmd = jsonPrinter(json)
     }, headers, Nil, 201)
   }
 
@@ -104,10 +104,17 @@ case class ResetContentResponse() extends LiftResponse with HeaderDefaults {
  * 400 Bad Request
  *
  * Your Request was missing an important element. Use this as a last resort if
- * the request appears incorrect.
+ * the request appears incorrect. Use the `message` to indicate what was wrong
+ * with the request, if that does not leak important information.
  */
-case class BadResponse() extends LiftResponse with HeaderDefaults {
-  def toResponse = InMemoryResponse(Array(), headers, cookies, 400)
+case class BadRequestResponse(message: String = "") extends LiftResponse with HeaderDefaults {
+  def toResponse = InMemoryResponse(message.getBytes("UTF-8"), headers, cookies, 400)
+}
+object BadResponse {
+  @deprecated("Use BadRequestResponse instead, as that is the correct name for this response.", "3.0.0")
+  def apply() = {
+    BadRequestResponse()
+  }
 }
 
 /**
@@ -117,8 +124,10 @@ case class UnauthorizedResponse(realm: String) extends LiftResponse {
   def toResponse = InMemoryResponse(Array(), List("WWW-Authenticate" -> ("Basic realm=\"" + realm + "\"")), Nil, 401)
 }
 
-object Qop extends Enumeration(0, "auth", "auth-int", "auth,auth-int") {
-  val AUTH, AUTH_INT, AUTH_AND_AUTH_INT = Value
+object Qop extends Enumeration {
+  val AUTH = Value("auth")
+  val AUTH_INT = Value("auth-int")
+  val AUTH_AND_AUTH_INT = Value("auth,auth-int")
 }
 
 /**
@@ -293,11 +302,11 @@ object JsonResponse {
 
   def apply(_json: JsonAST.JValue, _headers: List[(String, String)], _cookies: List[HTTPCookie], code: Int): LiftResponse = {
     new JsonResponse(new JsExp {
-      lazy val toJsCmd = jsonPrinter(JsonAST.render((_json)))
+      lazy val toJsCmd = jsonPrinter(_json)
     }, _headers, _cookies, code)
   }
 
-  lazy val jsonPrinter: scala.text.Document => String = 
+  lazy val jsonPrinter: JsonAST.JValue => String = 
     LiftRules.jsonOutputConverter.vend
 }
 
@@ -422,7 +431,7 @@ object RedirectResponse {
 case class RedirectResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
   def toResponse = InMemoryResponse(Array(), List("Location" -> uri,
-    "Content-Type" -> "text/plain"), cookies toList, 302)
+    "Content-Type" -> "text/plain"), cookies.toList, 302)
 }
 
 
@@ -444,7 +453,7 @@ object SeeOtherResponse {
 case class SeeOtherResponse(uri: String, request: Req, cookies: HTTPCookie*) extends LiftResponse {
   // The Location URI is not resolved here, instead it is resolved with context path prior of sending the actual response
   def toResponse = InMemoryResponse(Array(), List("Location" -> uri,
-    "Content-Type" -> "text/plain"), cookies toList, 303)
+    "Content-Type" -> "text/plain"), cookies.toList, 303)
 }
 
 object DoRedirectResponse {
@@ -499,28 +508,6 @@ object DocType {
 
   val html5 = "<!DOCTYPE html>"
 }
-
-/**
- * Avoid using this in favor of LiftRules.docType
- *
- */
-@deprecated("Avoid using this in favor of LiftRules.docType", "2.3")
-object ResponseInfo {
-
-   def docType: PartialFunction[Req, Box[String]] = new PartialFunction[Req, Box[String]](){
-     def isDefinedAt(req: Req): Boolean  = true
-
-     def apply(req: Req): Box[String] = LiftRules.docType.vend(req)
-   }
-
-   def docType_=(f: PartialFunction[Req, Box[String]]) = LiftRules.docType.default.set { (req: Req) => 
-     if (f.isDefinedAt(req))
-       f(req)
-     else
-       Full(DocType.xhtmlTransitional)
-   }
-}
-
 
 object PlainTextResponse {
   def apply(text: String): PlainTextResponse = PlainTextResponse(text, Nil, 200)

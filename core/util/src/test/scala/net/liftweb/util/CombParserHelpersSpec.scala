@@ -34,10 +34,10 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
 
   "The parser helpers" should {
     "provide an isEof function returning true iff a char is end of file" in {
-      isEof('\032') must beTrue
+      isEof('\u001a') must beTrue
     }
     "provide an notEof function returning true iff a char is not end of file" in {
-      notEof('\032') must beFalse
+      notEof('\u001a') must beFalse
     }
     "provide an isNum function returning true iff a char is a digit" in {
       isNum('0') must beTrue
@@ -52,7 +52,7 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
     "provide a whitespace parser: white. Alias: wsc" in {
       import WhiteStringGen._
       val whiteParse = (s: String) => wsc(s).isInstanceOf[Success[_]]
-      check(forAll(whiteParse))
+      forAll(whiteParse)
     }
     "provide a whiteSpace parser always succeeding and discarding its result" in {
       import StringWithWhiteGen._
@@ -60,7 +60,7 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
         (s: String) => whiteSpace(s) must beLike {
           case Success(x, y) => x.toString must_== "()"
         }
-      check(forAll(whiteSpaceParse))
+      forAll(whiteSpaceParse)
     }
     "provide an acceptCI parser to parse whatever string matching another string ignoring case" in {
       import AbcdStringGen._
@@ -69,26 +69,26 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
           case Success(x, y) => s2.toUpperCase must startWith(s.toUpperCase)
           case _             => true
         }
-      check(forAll(ignoreCaseStringParse))
+      forAll(ignoreCaseStringParse)
     }
 
     "provide a digit parser - returning a String" in {
       val isDigit: String => Boolean =
         (s: String) => digit(s) match {
-          case Success(x, y) => s must beMatching ("\\p{Nd}.*")
+          case Success(x, y) => s must beMatching ("(?s)\\p{Nd}.*")
           case _             => true
         }
-      check(forAll(isDigit))
+      forAll(isDigit)
     }
     "provide an aNumber parser - returning an Int if succeeding" in {
       val number: String => Boolean =
         (s: String) => {
           aNumber(s) match {
-            case Success(x, y) => s must beMatching ("\\p{Nd}+.*")
+            case Success(x, y) => s must beMatching ("(?s)\\p{Nd}+.*")
             case _             => true
           }
         }
-      check(forAll(number))
+      forAll(number)
     }
 
     "provide a slash parser" in {
@@ -106,6 +106,8 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
           result.get.toString must_== "()"
           result.next.atEnd must beTrue
       }
+
+      success
     }
     val parserA = elem("a", (c: Char) => c == 'a')
     val parserB = elem("b", (c: Char) => c == 'b')
@@ -118,24 +120,23 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
     "provide a permute parser succeeding if any permutation of given parsers succeeds" in {
       def permuteParsers(s: String) = shouldSucceed(permute(parserA, parserB, parserC, parserD)(s))
       val permutationOk = (s: String) => permuteParsers(s)
-      check(forAll(AbcdStringGen.abcdString)(permutationOk))
+
+      forAll(AbcdStringGen.abcdString)(permutationOk)
     }
     "provide a permuteAll parser succeeding if any permutation of the list given parsers, or a sublist of the given parsers succeeds" in {
       def permuteAllParsers(s: String) = shouldSucceed(permuteAll(parserA, parserB, parserC, parserD)(s))
       implicit def pick3Letters = AbcdStringGen.pickN(3, List("a", "b", "c"))
-      check {
-        forAll { (s: String) =>
-          (!(new scala.collection.immutable.StringOps(s)).isEmpty) ==> permuteAllParsers(s)
-        }
+
+      forAll { (s: String) =>
+        (!(new scala.collection.immutable.StringOps(s)).isEmpty) ==> permuteAllParsers(s)
       }
     }
     "provide a repNN parser succeeding if an input can be parsed n times with a parser" in {
       def repNNParser(s: String) = shouldSucceed(repNN(3, parserA)(s))
       implicit def pick3Letters = AbcdStringGen.pickN(3, List("a", "a", "a"))
-      check {
-        forAll { (s: String) =>
-          (!(new scala.collection.immutable.StringOps(s)).isEmpty) ==> repNNParser(s)
-        }
+
+      forAll { (s: String) =>
+        (!(new scala.collection.immutable.StringOps(s)).isEmpty) ==> repNNParser(s)
       }
     }
   }
@@ -158,7 +159,7 @@ object WhiteStringGen {
   def genWhite =
     for (
       len <- choose(1, 4);
-      string <- listOfN(len, frequency((1, value(" ")), (1, value("\t")), (1, value("\r")), (1, value("\n"))))
+      string <- listOfN(len, frequency((1, Gen.const(" ")), (1, Gen.const("\t")), (1, Gen.const("\r")), (1, Gen.const("\n"))))
     ) yield string.mkString("")
 
   implicit def genWhiteString: Arbitrary[String] =
@@ -172,7 +173,7 @@ object StringWithWhiteGen {
   def genStringWithWhite =
     for (
       len <- choose(1, 4);
-      string <- listOfN(len, frequency((1, value("a")), (2, value("b")), (1, genWhite)))
+      string <- listOfN(len, frequency((1, Gen.const("a")), (2, Gen.const("b")), (1, genWhite)))
     ) yield string.mkString("")
 
   implicit def genString: Arbitrary[String] =

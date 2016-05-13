@@ -17,16 +17,54 @@
 package net.liftweb
 package http
 
+import scala.collection.Map
 import scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
 import scala.xml._
+
 import net.liftweb.util._
 import net.liftweb.common._
 import net.liftweb.http.js._
+  import JsCmds.Noop
+  import JE.{AnonFunc,Call,JsRaw}
 import Helpers._
 
+/**
+ * Used to track state for LiftMerge's HTML normalization/merging process.
+ */
+private[this] case class HtmlState(
+  htmlDescendant: Boolean = false, // any descendant of HTML
+  headChild: Boolean = false, // direct child of a HEAD in its proper place
+  bodyDescendant: Boolean = false, // any descendant of BODY
+  headInBodyChild: Boolean = false, // direct child of a HEAD/HEAD_* somewhere in BODY
+  tailInBodyChild: Boolean = false, // direct child of a TAIL somewhere in BODY
+  bodyChild: Boolean = false, // direct child of body
+  mergeHeadAndTail: Boolean // false if we're not doing head/tail merging
+)
 
 private[http] trait LiftMerge {
   self: LiftSession =>
+
+  private def scriptUrl(scriptFile: String) = {
+    S.encodeURL(s"${LiftRules.liftPath}/$scriptFile")
+  }
+
+  // Gather all page-specific JS into one JsCmd.
+  private[this] def assemblePageSpecificJavaScript(eventJs: JsCmd): JsCmd = {
+    val allJs =
+      LiftRules.javaScriptSettings.vend().map { settingsFn =>
+        LiftJavaScript.initCmd(settingsFn(this))
+      }.toList ++
+      S.jsToAppend() ++
+      List(eventJs)
+
+    allJs.foldLeft(js.JsCmds.Noop)(_ & _)
+  }
+
+  private def pageScopedScriptFileWith(cmd: JsCmd) = {
+    pageScript(Full(JavaScriptResponse(cmd, Nil, Nil, 200)))
+
+    <script type="text/javascript" src={scriptUrl(s"page/${RenderVersion.get}.js")}></script>
+  }
 
   /**
    * Manages the merge phase of the rendering pipeline
@@ -70,107 +108,125 @@ private[http] trait LiftMerge {
     }.isDefined
 
 
-    var htmlTag = <html xmlns="http://www.w3.org/1999/xhtml" xmlns:lift='http://liftweb.net'/>
-    var headTag = <head/>
-    var bodyTag = <body/>
+    var htmlElement = <html xmlns="http://www.w3.org/1999/xhtml" xmlns:lift='http://liftweb.net'/>
+    var headElement = <head/>
+    var bodyElement = <body/>
     val headChildren = new ListBuffer[Node]
     val bodyChildren = new ListBuffer[Node]
     val addlHead = new ListBuffer[Node]
     addlHead ++= S.forHead()
     val addlTail = new ListBuffer[Node]
     addlTail ++= S.atEndOfBody()
-    val cometTimes = new ListBuffer[CometVersionPair]
     val rewrite = URLRewriter.rewriteFunc
-    val fixHref = Req.fixHref
 
     val contextPath: String = S.contextPath
 
-    def fixAttrs(original: MetaData, toFix: String, attrs: MetaData, fixURL: Boolean): MetaData = attrs match {
-      case Null => Null
-      case p: PrefixedAttribute if p.key == "when" && p.pre == "lift" =>
-        val when = p.value.text
-        original.find(a => !a.isPrefixed && a.key == "id").map {
-          id =>
-                  cometTimes += CVP(id.value.text, when.toLong)
-        }
-        fixAttrs(original, toFix, p.next, fixURL)
-      case u: UnprefixedAttribute if u.key == toFix =>
-        new UnprefixedAttribute(toFix, fixHref(contextPath, attrs.value, fixURL, rewrite), fixAttrs(original, toFix, attrs.next, fixURL))
-      case _ => attrs.copy(fixAttrs(original, toFix, attrs.next, fixURL))
+    def normalizeMergeAndExtractEvents(nodes: NodeSeq, startingState: HtmlState): NodesAndEventJs = {
+      val HtmlState(htmlDescendant, headChild, bodyDescendant, headInBodyChild, tailInBodyChild, _bodyChild, mergeHeadAndTail) = startingState
 
-    }
+      nodes.foldLeft(NodesAndEventJs(Vector[Node](), Noop)) {
+        case (soFar, node) =>
+          val childInfo =
+            node match {
+              case element: Elem if element.label == "html" && ! htmlDescendant =>
+                htmlElement = element
 
-    def _fixHtml(in: NodeSeq, _inHtml: Boolean, _inHead: Boolean, _justHead: Boolean, _inBody: Boolean, _justBody: Boolean, _bodyHead: Boolean, _bodyTail: Boolean, doMergy: Boolean): NodeSeq = {
-      in.flatMap {
-        v =>
-                var inHtml = _inHtml
-                var inHead = _inHead
-                var justHead = false
-                var justBody = false
-                var inBody = _inBody
-                var bodyHead = false
-                var bodyTail = false
+                startingState.copy(htmlDescendant = true && mergeHeadAndTail)
 
-                v match {
-                  case e: Elem if e.label == "html" && 
-                  !inHtml => htmlTag = e; inHtml = true && doMergy
+              case element: Elem if element.label == "head" && htmlDescendant && ! bodyDescendant =>
+                headElement = element
 
-                  case e: Elem if e.label == "head" && inHtml && 
-                  !inBody => headTag = e; 
-                  inHead = true && doMergy; justHead = true && doMergy
+                startingState.copy(headChild = true && mergeHeadAndTail)
 
-                  case e: Elem if (e.label == "head" || 
-                                   e.label.startsWith("head_")) && 
-                  inHtml && inBody => bodyHead = true && doMergy
+              case element: Elem if mergeHeadAndTail && 
+                                    (element.label == "head" ||
+                                      element.label.startsWith("head_")) &&
+                                    htmlDescendant &&
+                                    bodyDescendant =>
+                startingState.copy(headInBodyChild = true)
 
-                  case e: Elem if e.label == "tail" && inHtml && 
-                  inBody => bodyTail = true && doMergy
+              case element: Elem if mergeHeadAndTail &&
+                                    element.label == "tail" &&
+                                    htmlDescendant &&
+                                    bodyDescendant =>
+                startingState.copy(tailInBodyChild = true)
 
-                  case e: Elem if e.label == "body" && inHtml =>
-                    bodyTag = e; inBody = true && doMergy; 
-                  justBody = true && doMergy
+              case element: Elem if element.label == "body" && htmlDescendant =>
+                bodyElement = element
+
+                startingState.copy(bodyDescendant = true && mergeHeadAndTail, bodyChild = true && mergeHeadAndTail)
+
+              case _ =>
+                startingState.copy(headChild = false, headInBodyChild = false, tailInBodyChild = false, bodyChild = false)
+            }
+
+            val bodyHead = childInfo.headInBodyChild && ! headInBodyChild
+            val bodyTail = childInfo.tailInBodyChild && ! tailInBodyChild
+
+            HtmlNormalizer
+              .normalizeNode(node, contextPath, stripComments)
+              .map {
+                case normalized @ NodeAndEventJs(normalizedElement: Elem, _) =>
+                  val normalizedChildren =
+                    normalizeMergeAndExtractEvents(normalizedElement.child, childInfo)
+
+                  normalized.copy(
+                    normalizedElement.copy(child = normalizedChildren.nodes),
+                    js = normalized.js & normalizedChildren.js
+                  )
+
+                case other =>
+                  other
+              }
+              .map { normalizedResults: NodeAndEventJs =>
+                node match {
+                  case e: Elem if e.label == "node" &&
+                                  e.prefix == "lift_deferred" =>
+                    val deferredNodes: Seq[NodesAndEventJs] =
+                      for {
+                        idAttribute <- e.attributes("id").take(1)
+                        id = idAttribute.text
+                        nodes <- processedSnippets.get(id)
+                      } yield {
+                        normalizeMergeAndExtractEvents(nodes, startingState)
+                      }
+
+                    deferredNodes.foldLeft(soFar.append(normalizedResults))(_ append _)
 
                   case _ =>
+                    if (headChild) {
+                      headChildren ++= normalizedResults.node
+                    } else if (headInBodyChild) {
+                      addlHead ++= normalizedResults.node
+                    } else if (tailInBodyChild) {
+                      addlTail ++= normalizedResults.node
+                    } else if (_bodyChild && ! bodyHead && ! bodyTail) {
+                      bodyChildren ++= normalizedResults.node
+                    }
+
+                    if (bodyHead || bodyTail) {
+                      soFar.append(normalizedResults.js)
+                    } else {
+                      soFar.append(normalizedResults)
+                    }
                 }
-
-                val ret: NodeSeq = v match {
-                  case Group(nodes) => Group(_fixHtml(nodes, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy))
-
-                  // if it's a deferred node, grab it from the deferred list
-                  case e: Elem if e.label == "node" && e.prefix == "lift_deferred" =>
-                    for{
-                      attr <- e.attributes("id").headOption.map(_.text).toList
-                      nodes <- processedSnippets.get(attr).toList
-                      node <- _fixHtml(nodes, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy)
-                    } yield node
-
-                  case e: Elem if e.label == "form" => Elem(v.prefix, v.label, fixAttrs(v.attributes, "action", v.attributes, true), v.scope, _fixHtml(v.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy): _*)
-                  case e: Elem if e.label == "script" => Elem(v.prefix, v.label, fixAttrs(v.attributes, "src", v.attributes, false), v.scope, _fixHtml(v.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy): _*)
-                  case e: Elem if e.label == "a" => Elem(v.prefix, v.label, fixAttrs(v.attributes, "href", v.attributes, true), v.scope, _fixHtml(v.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy): _*)
-                  case e: Elem if e.label == "link" => Elem(v.prefix, v.label, fixAttrs(v.attributes, "href", v.attributes, false), v.scope, _fixHtml(v.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy): _*)
-                  case e: Elem => Elem(v.prefix, v.label, fixAttrs(v.attributes, "src", v.attributes, true), v.scope, _fixHtml(v.child, inHtml, inHead, justHead, inBody, justBody, bodyHead, bodyTail, doMergy): _*)
-                  case c: Comment if stripComments => NodeSeq.Empty
-                  case _ => v
-                }
-                if (_justHead) headChildren ++= ret
-                else if (_justBody && !bodyHead && !bodyTail) bodyChildren ++= ret
-                else if (_bodyHead) addlHead ++= ret
-                else if (_bodyTail) addlTail ++= ret
-
-                if (bodyHead || bodyTail) Text("")
-                else ret
-      }
+              } getOrElse {
+                soFar
+              }
+        }
     }
 
     if (!hasHtmlHeadAndBody) {
-      val fixedHtml = _fixHtml(xhtml, false, false, false, false, false, false, false, false)
+      val fixedHtml =
+        normalizeMergeAndExtractEvents(xhtml, HtmlState(mergeHeadAndTail = false)).nodes
 
       fixedHtml.find {
         case e: Elem => true
         case _ => false
       } getOrElse Text("")
     } else {
-      _fixHtml(xhtml, false, false, false, false, false, false, false, true)
+      val eventJs =
+        normalizeMergeAndExtractEvents(xhtml, HtmlState(mergeHeadAndTail = true)).js
 
       val htmlKids = new ListBuffer[Node]
 
@@ -183,62 +239,51 @@ private[http] trait LiftMerge {
         headChildren += nl
       }
 
-      // Appends ajax stript to body
+      // Appends ajax script to body
       if (LiftRules.autoIncludeAjaxCalc.vend().apply(this)) {
         bodyChildren +=
-                <script src={S.encodeURL(contextPath + "/" +
-                        LiftRules.ajaxPath +
-                        "/" + LiftRules.ajaxScriptName())}
+                <script src={S.encodeURL(contextPath + "/"+LiftRules.resourceServerPath+"/lift.js")}
                 type="text/javascript"/>
         bodyChildren += nl
       }
 
-      val cometList = cometTimes.toList
-
-      // Appends comet stript reference to head
-      if (!cometList.isEmpty && LiftRules.autoIncludeComet(this)) {
-        bodyChildren +=
-                <script src={S.encodeURL(contextPath + "/" +
-                        LiftRules.cometPath +
-                        "/" + urlEncode(this.uniqueId) +
-                        "/" + LiftRules.cometScriptName())}
-                type="text/javascript"/>
-        bodyChildren += nl
+      val pageJs = assemblePageSpecificJavaScript(eventJs)
+      if (pageJs.toJsCmd.trim.nonEmpty) {
+        addlTail += pageScopedScriptFileWith(pageJs)
       }
 
-      S.jsToAppend match {
-        case Nil => 
-        case x :: Nil => addlTail += js.JsCmds.Script(x)
-        case xs => addlTail += js.JsCmds.Script(xs.foldLeft(js.JsCmds.Noop)(_ & _))
-      }
-
-      for{
+      for {
         node <- HeadHelper.removeHtmlDuplicates(addlTail.toList)
       } bodyChildren += node
 
       bodyChildren += nl
 
-      if (!cometList.isEmpty && LiftRules.autoIncludeComet(this)) {
-        bodyChildren += JsCmds.Script(LiftRules.renderCometPageContents(this, cometList))
-        bodyChildren += nl
-      }
-
-      if (LiftRules.enableLiftGC && stateful_?) {
-        import js._
-        import JsCmds._
-        import JE._
-
-        bodyChildren += JsCmds.Script((if (!cometList.isEmpty || hasFuncsForOwner(RenderVersion.get)) OnLoad(JsRaw("liftAjax.lift_successRegisterGC()")) else Noop) &
-                JsCrVar("lift_page", RenderVersion.get))
-      }
+      val autoIncludeComet = LiftRules.autoIncludeComet(this)
+      val bodyAttributes: List[(String, String)] =
+        if (stateful_? && (autoIncludeComet || LiftRules.enableLiftGC)) {
+          ("data-lift-gc" -> RenderVersion.get) ::
+          (
+            if (autoIncludeComet) {
+              ("data-lift-session-id" -> (S.session.map(_.uniqueId) openOr "xx")) ::
+              S.requestCometVersions.is.toList.map {
+                case CometVersionPair(guid, version) =>
+                  (s"data-lift-comet-$guid" -> version.toString)
+              }
+            } else {
+              Nil
+            }
+          )
+        } else {
+          Nil
+        }
 
       htmlKids += nl
-      htmlKids += Elem(headTag.prefix, headTag.label, headTag.attributes, headTag.scope, headChildren.toList: _*)
+      htmlKids += headElement.copy(child = headChildren.toList)
       htmlKids += nl
-      htmlKids += Elem(bodyTag.prefix, bodyTag.label, bodyTag.attributes, bodyTag.scope, bodyChildren.toList: _*)
+      htmlKids += bodyAttributes.foldLeft(bodyElement.copy(child = bodyChildren.toList))(_ % _)
       htmlKids += nl
 
-      val tmpRet = Elem(htmlTag.prefix, htmlTag.label, htmlTag.attributes, htmlTag.scope, htmlKids.toList: _*)
+      val tmpRet = Elem(htmlElement.prefix, htmlElement.label, htmlElement.attributes, htmlElement.scope, htmlElement.minimizeEmpty, htmlKids.toList: _*)
 
       val ret: Node = if (Props.devMode) {
         LiftRules.xhtmlValidator.toList.flatMap(_(tmpRet)) match {
@@ -252,7 +297,7 @@ private[http] trait LiftMerge {
             val rule = new RewriteRule {
               override def transform(n: Node) = n match {
                 case e: Elem if e.label == "body" =>
-                  Elem(e.prefix, e.label, e.attributes, e.scope, e.child ++ errors: _*)
+                  e.copy(child = e.child ++ errors)
 
                 case x => super.transform(x)
               }

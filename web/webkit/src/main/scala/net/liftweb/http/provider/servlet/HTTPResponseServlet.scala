@@ -37,13 +37,14 @@ class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
       c.maxAge map (cookie.setMaxAge(_))
       c.version map (cookie.setVersion(_))
       c.secure_? map (cookie.setSecure(_))
-      c.httpOnly.foreach {
-        bv =>
+      c.httpOnly.foreach { bv =>
+        import scala.language.reflectiveCalls
+
         try {
           val cook30 = cookie.asInstanceOf[{def setHttpOnly(b: Boolean): Unit}]
           cook30.setHttpOnly(bv)
         } catch {
-          case e => // swallow.. the exception will be thrown for Servlet 2.5 containers but work for servlet
+          case e: Exception => // swallow.. the exception will be thrown for Servlet 2.5 containers but work for servlet
           // 3.0 containers
         }
       }
@@ -84,6 +85,6 @@ class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
     resp sendError  (status, reason)
   }
 
-  def outputStream: OutputStream = resp getOutputStream
+  def outputStream: OutputStream = resp.getOutputStream
 }
 

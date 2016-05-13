@@ -17,6 +17,8 @@
 package net.liftweb
 package mapper
 
+import scala.language.existentials
+
 import net.liftweb.util._
 import net.liftweb.common._
 
@@ -27,8 +29,8 @@ import net.liftweb.common._
 trait ManyToMany extends BaseKeyedMapper {
   this: KeyedMapper[_, _] =>
 
-  type K = TheKeyType
-  type T = KeyedMapperType
+  private[this] type K = TheKeyType
+  private[this] type T = KeyedMapperType
 
   private var manyToManyFields: List[MappedManyToMany[_,_,_]] = Nil
 
@@ -138,7 +140,7 @@ trait ManyToMany extends BaseKeyedMapper {
     protected def childAt(n: Int) = children(n)
     def apply(n: Int) = childAt(n)
     def indexOf(e: T2) =
-      children.indexWhere(e eq)
+      children.indexWhere(e.eq)
 
     def insertAll(n: Int, traversable: Traversable[T2]) {
       val ownedJoins = traversable map own

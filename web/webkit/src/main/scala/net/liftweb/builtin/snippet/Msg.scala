@@ -115,14 +115,14 @@ object Msg extends DispatchSnippet {
     }
   }
 
-  /**
-   * This method renders a <script/> element that renders effects for
-   * the given id.
+  /** 
+   * This method produces and appends a script element to lift's page script 
+   * to render effects on a element with the given id.
    *
    * @see net.liftweb.builtin.snippet.Msgs#effects[T](Box[NoticeType.Value],String,T,Box[JsCmd => T])
    */
   def effects(id: String): NodeSeq =
-    Msgs.effects(Empty, id, NodeSeq.Empty, Msgs.tailScript)
+    Msgs.effects(Empty, id, NodeSeq.Empty, Msgs.appendScript)
 }
 
 /**

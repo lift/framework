@@ -141,9 +141,14 @@ object Msgs extends DispatchSnippet {
          (S.notices, NoticeType.Notice, MsgsNoticeMeta)).flatMap(computeMessageDiv)
   }
 
-  // This wraps the JavaScript fade and effect scripts into a script that runs onLoad
-  private[snippet] def tailScript (script : JsCmd) : NodeSeq =
-    <lift:tail>{Script(OnLoad(script))}</lift:tail>
+  /**
+   *  This method wraps the JavaScript fade and effect scripts into lift's page 
+   *  script that runs onLoad.
+   */
+  private[snippet] def appendScript (script : JsCmd) : NodeSeq = { 
+    S.appendJs(script)
+    NodeSeq.Empty 
+  }
 
   /**
    * This method produces appropriate JavaScript to fade out the given
@@ -161,13 +166,13 @@ object Msgs extends DispatchSnippet {
     } openOr default
 
   /**
-   * This method produces an appropriate <script> tag to fade out the given
-   * notice type.
+   * This method produces and appends a script element to lift's page script
+   * to fade out the given notice type. 
    *
    * @see net.liftweb.http.LiftRules.noticesAutoFadeOut
    */
   def noticesFadeOut(noticeType: NoticeType.Value): NodeSeq = 
-    noticesFadeOut(noticeType, NodeSeq.Empty, tailScript)
+    noticesFadeOut(noticeType, NodeSeq.Empty, appendScript)
 
   /**
    * This method produces appropriate JavaScript to apply effects to the given
@@ -184,13 +189,13 @@ object Msgs extends DispatchSnippet {
     }
 
   /**
-   * This method produces an appropriate <script> tag to apply effects to
-   * the given notice type.
+   * This method produces and appends a script element to lift's page script
+   * to apply effects to the given notice type.
    *
    * @see net.liftweb.http.LiftRules.noticesEffects
    */
   def effects(noticeType: NoticeType.Value): NodeSeq =
-    effects(Full(noticeType), noticeType.id, NodeSeq.Empty, tailScript)
+    effects(Full(noticeType), noticeType.id, NodeSeq.Empty, appendScript)
 }
 
 /**

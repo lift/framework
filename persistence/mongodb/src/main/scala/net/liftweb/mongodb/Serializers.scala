@@ -1,5 +1,5 @@
 /*
-* Copyright 2010-2011 WorldWide Conferencing, LLC
+* Copyright 2010-2014 WorldWide Conferencing, LLC
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -11,15 +11,15 @@
 * limitations under the License.
 */
 
-package net.liftweb 
-package mongodb 
+package net.liftweb
+package mongodb
 
 import json.{Formats, MappingException, Serializer, TypeInfo}
 import json.JsonAST._
 
 
 import java.util.{Date, UUID}
-import java.util.regex.{Pattern, PatternSyntaxException}
+import java.util.regex.Pattern
 
 import org.bson.types.ObjectId
 
@@ -36,14 +36,13 @@ class ObjectIdSerializer extends Serializer[ObjectId] {
 
   def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), ObjectId] = {
     case (TypeInfo(ObjectIdClass, _), json) => json match {
-      case JObject(JField("$oid", JString(s)) :: Nil) if (ObjectId.isValid(s)) =>
-        new ObjectId(s)
+      case JsonObjectId(objectId) => objectId
       case x => throw new MappingException("Can't convert " + x + " to ObjectId")
     }
   }
 
   def serialize(implicit formats: Formats): PartialFunction[Any, JValue] = {
-    case x: ObjectId => Meta.objectIdAsJValue(x)
+    case x: ObjectId => JsonObjectId(x)
   }
 }
 
@@ -59,14 +58,13 @@ class PatternSerializer extends Serializer[Pattern] {
 
   def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Pattern] = {
     case (TypeInfo(PatternClass, _), json) => json match {
-      case JObject(JField("$regex", JString(s)) :: JField("$flags", JInt(f)) :: Nil) =>
-        Pattern.compile(s, f.intValue)
+      case JsonRegex(regex) => regex
       case x => throw new MappingException("Can't convert " + x + " to Pattern")
     }
   }
 
   def serialize(implicit formats: Formats): PartialFunction[Any, JValue] = {
-    case x: Pattern => Meta.patternAsJValue(x)
+    case x: Pattern => JsonRegex(x)
   }
 }
 
@@ -81,14 +79,13 @@ class DateSerializer extends Serializer[Date] {
 
   def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Date] = {
     case (TypeInfo(DateClass, _), json) => json match {
-      case JObject(JField("$dt", JString(s)) :: Nil) =>
-        format.dateFormat.parse(s).getOrElse(throw new MappingException("Can't parse "+ s + " to Date"))
+      case JsonDate(dt) => dt
       case x => throw new MappingException("Can't convert " + x + " to Date")
     }
   }
 
   def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
-    case x: Date => Meta.dateAsJValue(x, format)
+    case x: Date => JsonDate(x)
   }
 }
 
@@ -103,14 +100,13 @@ class DateTimeSerializer extends Serializer[DateTime] {
 
   def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), DateTime] = {
     case (TypeInfo(DateTimeClass, _), json) => json match {
-      case JObject(JField("$dt", JString(s)) :: Nil) =>
-        new DateTime(format.dateFormat.parse(s).getOrElse(throw new MappingException("Can't parse "+ s + " to DateTime")))
+      case JsonDateTime(dt) => dt
       case x => throw new MappingException("Can't convert " + x + " to Date")
     }
   }
 
-  def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {  
-    case x: DateTime => Meta.dateAsJValue(x.toDate, format)
+  def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
+    case x: DateTime => JsonDateTime(x)
   }
 }
 
@@ -125,13 +121,13 @@ class UUIDSerializer extends Serializer[UUID] {
 
   def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), UUID] = {
     case (TypeInfo(UUIDClass, _), json) => json match {
-      case JObject(JField("$uuid", JString(s)) :: Nil) => UUID.fromString(s)
-      case x => throw new MappingException("Can't convert " + x + " to Date")
+      case JsonUUID(uuid) => uuid
+      case x => throw new MappingException("Can't convert " + x + " to UUID")
     }
   }
 
   def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
-    case x: UUID => Meta.uuidAsJValue(x)
+    case x: UUID => JsonUUID(x)
   }
 }
 

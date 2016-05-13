@@ -18,6 +18,7 @@ import org.bson.types.ObjectId
 
 import json.{DefaultFormats, Formats}
 import json.JsonAST.JObject
+import util.ConnectionIdentifier
 
 import com.mongodb.{BasicDBObject, DB, DBCollection, DBObject}
 
@@ -35,10 +36,10 @@ trait JsonFormats {
 */
 trait MongoMeta[BaseDocument] extends JsonFormats {
 
+  def connectionIdentifier: ConnectionIdentifier
+
   // class name has a $ at the end.
-  private lazy val _collectionName = {
-    getClass.getName.split("\\.").toList.last.replace("$", "")+"s"
-  }
+  private lazy val _collectionName = getClass.getName.replaceAllLiterally("$", "")
 
   /*
   * Collection names should begin with letters or an underscore and may include
@@ -49,9 +50,11 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   * -- the collection namespace is flat from the database's perspective.
   * From: http://www.mongodb.org/display/DOCS/Collections
   */
-  def fixCollectionName = _collectionName.toLowerCase match {
-    case name if (name.contains("$")) => name.replace("$", "_d_")
-    case name => name
+  def fixCollectionName = {
+    val colName = MongoRules.collectionName.vend.apply(connectionIdentifier, _collectionName)
+
+    if (colName.contains("$")) colName.replaceAllLiterally("$", "_d_")
+    else colName
   }
 
   /**
@@ -60,10 +63,6 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   * the class with an 's' appended to the end.
   */
   def collectionName: String = fixCollectionName
-
-  // override this to specify a MongoIdentifier for this MongoDocument type
-  @deprecated("use connectionIdentifier instead", "2.6")
-  def mongoIdentifier: MongoIdentifier = DefaultMongoIdentifier
 
   /*
    * Use the collection associated with this Meta.
@@ -121,26 +120,42 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   /*
   * Ensure an index exists
   */
+  @deprecated("use createIndex(JObject) instead.", "2.6")
   def ensureIndex(keys: JObject): Unit =
-    useColl { coll => coll.ensureIndex(JObjectParser.parse(keys)) }
+    useColl { coll => coll.createIndex(JObjectParser.parse(keys)) }
 
   /*
   * Ensure an index exists and make unique
   */
+  @deprecated("use createIndex(JObject, Boolean) instead.", "2.6")
   def ensureIndex(keys: JObject, unique: Boolean): Unit = {
     val options = new BasicDBObject
     if (unique) options.put("unique", true)
     useColl { coll =>
-      coll.ensureIndex(JObjectParser.parse(keys), options)
+      coll.createIndex(JObjectParser.parse(keys), options)
+    }
+  }
+
+  def createIndex(keys: JObject, unique: Boolean = false): Unit = {
+    val options = new BasicDBObject
+    if (unique) options.put("unique", true)
+    useColl { coll =>
+      coll.createIndex(JObjectParser.parse(keys), options)
     }
   }
 
   /*
   * Ensure an index exists with options
   */
+  @deprecated("use createIndex(JObject, JObject) instead.", "2.6")
   def ensureIndex(keys: JObject, opts: JObject): Unit =
     useColl { coll =>
-      coll.ensureIndex(JObjectParser.parse(keys), JObjectParser.parse(opts))
+      coll.createIndex(JObjectParser.parse(keys), JObjectParser.parse(opts))
+    }
+
+  def createIndex(keys: JObject, opts: JObject): Unit =
+    useColl { coll =>
+      coll.createIndex(JObjectParser.parse(keys), JObjectParser.parse(opts))
     }
 
   /*

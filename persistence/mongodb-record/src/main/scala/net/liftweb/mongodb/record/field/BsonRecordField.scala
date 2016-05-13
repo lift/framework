@@ -52,7 +52,7 @@ class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonR
   def asJs = asJValue match {
     case JNothing => JsNull
     case jv => new JsExp {
-      lazy val toJsCmd = Printer.compact(render(jv))
+      lazy val toJsCmd = compactRender(jv)
     }
   }
   def toForm: Box[NodeSeq] = Empty
@@ -81,6 +81,8 @@ class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: B
 
   import scala.collection.JavaConversions._
 
+  override def validations = ((elems: ValueType) => elems.flatMap(_.validate)) :: super.validations
+
   override def asDBObject: DBObject = {
     val dbl = new BasicDBList
     value.foreach { v => dbl.add(v.asDBObject) }
@@ -92,7 +94,7 @@ class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: B
       valueMeta.fromDBObject(dbo.get(k.toString).asInstanceOf[DBObject])
     })))
 
-  override def asJValue = JArray(value.map(_.asJValue))
+  override def asJValue: JValue = JArray(value.map(_.asJValue))
 
   override def setFromJValue(jvalue: JValue) = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)

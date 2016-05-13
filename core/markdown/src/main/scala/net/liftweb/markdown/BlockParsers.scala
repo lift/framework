@@ -19,6 +19,8 @@ package net.liftweb.markdown
  * Christoph Henkelmann http://henkelmann.eu/
  */
 
+import scala.language.postfixOps
+
 import collection.immutable.StringOps
 import collection.mutable.ListBuffer
 import xml.{Group, Node, Text, NodeSeq, Elem => XmlElem, TopScope, XML}

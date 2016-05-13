@@ -17,13 +17,16 @@
 package net.liftweb
 package http
 
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 import util.Helpers
 import util.Props.RunModes
 import LiftRules.defaultFuncNameGenerator
 
-object SSpec extends Specification  {
+object SSpec extends Specification with XmlMatchers {
   "S Specification".title
+
+  sequential
 
   "formFuncName" should {
     "generate random names when not in Test mode" in {
@@ -33,6 +36,8 @@ object SSpec extends Specification  {
         a.length must_== Helpers.nextFuncName.length
         a must_!= b
       }
+
+      success
     }
 
     "generate predictable names in Test mode" in {

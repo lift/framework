@@ -17,12 +17,19 @@
 package net.liftweb
 package util
 
-import org.apache.commons.codec.binary.Base64
-import java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, File, FileInputStream, BufferedReader}
-import java.security.{SecureRandom, MessageDigest}
+import java.io._
+import java.security._
 import javax.crypto._
 import javax.crypto.spec._
-import scala.xml.{Node, XML}
+import javax.xml.parsers.SAXParserFactory
+import javax.xml.XMLConstants
+
+import scala.xml.{Elem, XML}
+import scala.xml.factory.XMLLoader
+
+import org.apache.commons.codec.binary.Base64
+import org.apache.xerces.impl.Constants
+
 import common._
 
 object SecurityHelpers extends StringHelpers with IoHelpers with SecurityHelpers
@@ -32,7 +39,7 @@ object SecurityHelpers extends StringHelpers with IoHelpers with SecurityHelpers
  * <li> generate random numbers
  * <li> generate keys
  * <li> encrypt/decrypt keys
- * <li> create SHA, SHA-256, MD5 hashs (can be hex encoded)
+ * <li> create SHA, SHA-256, MD5 hashes (can be hex encoded)
  * </ul>
  */
 trait SecurityHelpers {
@@ -91,7 +98,7 @@ trait SecurityHelpers {
 
   /** Compare two strings in a way that does not vary if the strings
    * are determined to be not equal early (test every byte... avoids
-   * timing attackes */
+   * timing attacks */
   def secureEquals(s1: String, s2: String): Boolean = (s1, s2) match {
     case (null, null) => true
     case (null, _) => false
@@ -101,7 +108,7 @@ trait SecurityHelpers {
 
   /** Compare two byte arrays in a way that does not vary if the arrays
    * are determined to be not equal early (test every byte... avoids
-   * timing attackes */
+   * timing attacks */
   def secureEquals(s1: Array[Byte], s2: Array[Byte]): Boolean = (s1, s2) match {
     case (null, null) => true
     case (null, _) => false
@@ -130,13 +137,13 @@ trait SecurityHelpers {
     base64Encode(MessageDigest.getInstance("SHA-256").digest(in.getBytes("UTF-8")))
   }
 
-  /** create an hex encoded SHA hash from a Byte array */
+  /** create a hex encoded SHA hash from a Byte array */
   def hexDigest(in: Array[Byte]): String = {
     val binHash = MessageDigest.getInstance("SHA").digest(in)
     hexEncode(binHash)
   }
 
-  /** create an hex encoded SHA-256 hash from a Byte array */
+  /** create a hex encoded SHA-256 hash from a Byte array */
   def hexDigest256(in: Array[Byte]): String = {
     val binHash = MessageDigest.getInstance("SHA-256").digest(in)
     hexEncode(binHash)
@@ -197,5 +204,29 @@ trait SecurityHelpers {
     sb.toString
   }
 
+  /**
+   * Provides a secure XML parser, similar to the one provided by
+   * `scala.xml.XML`, but with external entities and doctypes disabled and
+   * secure XML processing enabled. This prevents XXE (XML External Entities)
+   * attacks, billion laughs attacks, quadratic blowup attacks, and others. It
+   * is used internally throughout Lift, and should be used by anyone who is
+   * parsing XML from an untrusted source.
+   */
+  def secureXML: XMLLoader[Elem] = {
+    val parserFactory =
+      SAXParserFactory.newInstance(
+        "org.apache.xerces.jaxp.SAXParserFactoryImpl",
+        SecurityHelpers.getClass.getClassLoader
+      )
+
+    parserFactory.setNamespaceAware(false)
+    parserFactory.setFeature(Constants.SAX_FEATURE_PREFIX + Constants.EXTERNAL_GENERAL_ENTITIES_FEATURE, false)
+    parserFactory.setFeature(Constants.SAX_FEATURE_PREFIX + Constants.EXTERNAL_PARAMETER_ENTITIES_FEATURE, false)
+    parserFactory.setFeature(Constants.XERCES_FEATURE_PREFIX + Constants.DISALLOW_DOCTYPE_DECL_FEATURE, true)
+    parserFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
+
+    val saxParser = parserFactory.newSAXParser();
+    XML.withSAXParser(saxParser)
+  }
 }
 

@@ -17,6 +17,8 @@
 package net.liftweb
 package record
 
+import scala.language.existentials
+
 import java.lang.reflect.Modifier
 import net.liftweb._
 import util._
@@ -25,8 +27,7 @@ import scala.collection.mutable.{ListBuffer}
 import scala.xml._
 import net.liftweb.http.js.{JsExp, JE, JsObj}
 import net.liftweb.http.{SHtml, Req, LiftResponse, LiftRules}
-import net.liftweb.json.{JsonParser, Printer}
-import net.liftweb.json.JsonAST._
+import net.liftweb.json._
 import net.liftweb.record.FieldHelpers.expectedA
 import java.lang.reflect.Method
 import field._
@@ -240,41 +241,16 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    * @return a JsObj
    */
   def asJsExp(inst: BaseRecord): JsExp = new JsExp {
-    lazy val toJsCmd = Printer.compact(render(asJValue(inst)))
+    lazy val toJsCmd = compactRender(asJValue(inst))
   }
-
-  /**
-   * Create a record with fields populated with values from the JSON construct
-   *
-   * @param json - The stringified JSON object
-   * @return Box[BaseRecord]
-   */
-  @deprecated("Use fromJValue with lift-json", "2.6")
-  def fromJSON(json: String): Box[BaseRecord] = {
-    val inst = createRecord
-    setFieldsFromJSON(inst, json) map (_ => inst)
-  }
-
-  /**
-   * Populate the fields of the record instance with values from the JSON construct
-   *
-   * @param inst - The record to populate
-   * @param json - The stringified JSON object
-   * @return - Full(()) on success, other on failure
-   */
-  @deprecated("Use setFieldsFromJValue with lift-json", "2.6")
-  def setFieldsFromJSON(inst: BaseRecord, json: String): Box[Unit] =
-    JSONParser.parse(json) match {
-      case Full(nvp : Map[_, _]) =>
-        for ((k, v) <- nvp;
-             field <- inst.fieldByName(k.toString)) yield field.setFromAny(v)
-        Full(inst)
-      case Full(_) => Empty
-      case failure => failure.asA[Unit]
-    }
 
   /** Encode a record instance into a JValue */
-  def asJValue(rec: BaseRecord): JObject = {
+  def asJValue(rec: BaseRecord): JValue = {
+    asJObject(rec)
+  }
+
+  /** Encode a record instance into a JObject */
+  def asJObject(rec: BaseRecord): JObject = {
     JObject(fields(rec).map(f => JField(f.name, f.asJValue)))
   }
 
@@ -364,12 +340,13 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
           case _ => NodeSeq.Empty
         }
 
-      case Elem(namespace, label, attrs, scp, ns @ _*) =>
-        Elem(namespace, label, attrs, scp, toForm(inst, ns.flatMap(n => toForm(inst, n))):_* )
+      case elem: Elem =>
+        elem.copy(child = toForm(inst, elem.child.flatMap(n => toForm(inst, n))))
 
       case s : Seq[_] => s.flatMap(e => e match {
-            case Elem(namespace, label, attrs, scp, ns @ _*) =>
-              Elem(namespace, label, attrs, scp, toForm(inst, ns.flatMap(n => toForm(inst, n))):_* )
+            case elem: Elem =>
+              elem.copy(child = toForm(inst, elem.child.flatMap(n => toForm(inst, n))))
+
             case x => x
           })
 

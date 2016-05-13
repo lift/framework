@@ -26,8 +26,13 @@ object ResourceServerSpec extends Specification  {
   "ResourceServer Specification".title
 
   "ResourceServer.pathRewriter" should {
-    "default jquery.js to jquery-1.3.2" in {
-      ResourceServer.pathRewriter("jquery.js"::Nil) must_== List("jquery-1.3.2-min.js")
+    "not default jquery.js to jquery-1.3.2" in {
+      ResourceServer.pathRewriter("jquery.js"::Nil) must_== List("jquery.js")
+    }
+
+    "default json to json2 minified version" in {
+      (ResourceServer.pathRewriter("json.js"::Nil) must_== List("json2-min.js")) and
+      (ResourceServer.pathRewriter("json2.js"::Nil) must_== List("json2-min.js"))
     }
   }
 }

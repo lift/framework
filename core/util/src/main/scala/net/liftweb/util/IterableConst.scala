@@ -74,6 +74,8 @@ final case class SeqBindableIterableConst(it: Iterable[Bindable]) extends Iterab
  * e.g. Iterable[NodeSeq], Seq[String], Box[String], and Option[String]
  */
 object IterableConst {
+  import scala.language.implicitConversions
+
   /**
    * Converts anything that can be converted into an Iterable[NodeSeq]
    * into an IterableConst.  This includes Seq[NodeSeq]

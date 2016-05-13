@@ -22,7 +22,6 @@ import http.{LiftSession, S}
 import util.Helpers._
 
 import org.specs2.mutable._
-import org.specs2.specification.Fragment
 
 import fixtures._
 
@@ -40,6 +39,13 @@ object RecordRulesSpec extends Specification {
         val rec = BasicTestRecord.createRecord
 
         rec.fieldThree.name must_== "field_three"
+      }
+    }
+    "camelify custom field display name" in {
+      RecordRules.displayName.doWith((_, _, name) => camelify(name)) {
+        val rec = BasicTestRecord.createRecord
+
+        rec.fieldThree.displayName must_== "FieldThree"
       }
     }
   }

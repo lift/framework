@@ -18,6 +18,7 @@ package net.liftweb
 package http
 
 import xml._
+import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import common._
@@ -27,12 +28,12 @@ import util.Helpers._
 /**
  * System under specification for SnippetSpec.
  */
-object SnippetSpec extends Specification  {
+object SnippetSpec extends Specification with XmlMatchers {
   "SnippetSpec Specification".title
 
-  def makeReq = new Req(Req.NilPath, "", GetRequest, Empty, null,
+  def makeReq = Full(new Req(Req.NilPath, "", GetRequest, Empty, null,
                     System.nanoTime, System.nanoTime, false,
-                    () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map())
+                    () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map()))
 
   "Templates" should {
     "Correctly process lift:content_id" in {

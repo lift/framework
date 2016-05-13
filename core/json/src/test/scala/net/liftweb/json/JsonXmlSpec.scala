@@ -34,12 +34,12 @@ object JsonXmlSpec extends Specification  with NodeGen with JValueGen with Scala
 
   "Valid XML can be converted to JSON and back (symmetric op)" in {
     val conversion = (xml: Node) => { toXml(toJson(xml)).head == xml }
-    check(forAll(conversion))
+    forAll(conversion)
   }
 
   "JSON can be converted to XML, and back to valid JSON (non symmetric op)" in {
-    val conversion = (json: JValue) => { parse(compact(render(toJson(toXml(json))))); true }
-    check(forAll(conversion))
+    val conversion = (json: JValue) => { parse(compactRender(toJson(toXml(json)))); true }
+    forAll(conversion)
   }
 
   implicit def arbXml: Arbitrary[Node] = Arbitrary(genXml)

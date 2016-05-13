@@ -50,10 +50,10 @@ object FieldSerializerExamples extends Specification {
 
     val ser = swrite(dog)
     val dog2 = read[WildDog](ser)
-    (dog2.name mustEqual dog.name) and
-      (dog2.color mustEqual dog.color) and
-      (dog2.owner must beNull) and
-      (dog2.size mustEqual dog.size) and
+    (dog2.name mustEqual dog.name)
+      (dog2.color mustEqual dog.color)
+      (dog2.owner must beNull)
+      (dog2.size mustEqual dog.size)
       ((parse(ser) \ "animalname") mustEqual JString("pluto"))
   }
 

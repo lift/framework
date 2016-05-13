@@ -210,24 +210,11 @@ with LifecycleCallbacks {
 }
 
 
-@deprecated("Functionality folded into MappedForeignKey, so just use MappedLongForeignKey. Will be removed in 2.5", "2.4")
-class LongMappedMapper[T<:Mapper[T], O<:KeyedMapper[Long,O]](theOwner: T, foreign: => KeyedMetaMapper[Long, O])
-  extends MappedLongForeignKey[T,O](theOwner, foreign)
-
-
-@deprecated("Functionality folded into MappedForeignKey, so just use MappedLongForeignKey. Will be removed in 2.5", "2.4")
-trait LongMappedForeignMapper[T<:Mapper[T],O<:KeyedMapper[Long,O]]
-                              extends MappedLongForeignKey[T,O]
-
-
 abstract class MappedLongForeignKey[T<:Mapper[T],O<:KeyedMapper[Long, O]](theOwner: T, _foreignMeta: => KeyedMetaMapper[Long, O])
 extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeignKey {
   def defined_? = i_is_! > 0L
 
   def foreignMeta = _foreignMeta
-
-  @deprecated("Use 'box' instead", "2.4")
-  def can: Box[Long] = if (defined_?) Full(get) else Empty
 
   def box: Box[Long] = if (defined_?) Full(get) else Empty
 

@@ -34,11 +34,20 @@ object Surround extends DispatchSnippet {
   def render(kids: NodeSeq) : NodeSeq =
   (for {
     ctx <- S.session ?~ ("FIX"+"ME: Invalid session")
-    req <- S.request ?~ ("FIX"+"ME: Invalid request")
   } yield {
+    def eatDiv(in: NodeSeq): NodeSeq = 
+      if (S.attr("eat").isDefined) in.flatMap {
+        case e: Elem => e.child
+        case n => n
+      } else in
+
     WithParamVar.doWith(Map()) {
-      val mainParam = (S.attr("at") openOr "main", ctx.processSurroundAndInclude(PageName.get, kids))
-        val paramsMap = WithParamVar.get + mainParam
+      lazy val mainParam = (S.attr("at") openOr "main",
+        eatDiv(ctx.processSurroundAndInclude(PageName.get, kids)))
+      lazy val paramsMap = {
+        val q = mainParam // perform the side-effecting thing here
+        WithParamVar.get + q // WithParamVar is the side effects of processing the template
+      }
       ctx.findAndMerge(S.attr("with"), paramsMap)
     }
   }) match {

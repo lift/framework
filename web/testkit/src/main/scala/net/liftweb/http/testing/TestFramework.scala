@@ -18,6 +18,8 @@ package net.liftweb
 package http
 package testing
 
+import scala.language.implicitConversions
+
 import net.liftweb.util.Helpers._
 import net.liftweb.util._
 import net.liftweb.json._
@@ -206,7 +208,7 @@ trait BaseGetPoster {
 
   implicit def jsonToRequestEntity(body: JValue): RequestEntity =
     new RequestEntity {
-      val bytes = compact(render(body)).toString.getBytes("UTF-8")
+      val bytes = compactRender(body).toString.getBytes("UTF-8")
 
       def getContentLength() = bytes.length
 
@@ -566,11 +568,15 @@ object TestHelpers {
     val rp = new REMatcher(body, p)
     val p2 = Pattern.compile("""'([^']*)'\: ([0-9]*)""")
 
-    for (it <- rp.capture;
-         val _ = println("Captured: " + it);
-         val _ = println("Does match: " + p2.matcher(it).find);
-         val q = new REMatcher(it, p2);
-         em <- q.eachFound) yield (em(1), em(2))
+    for {
+      it <- rp.capture;
+      _ = println("Captured: " + it);
+      _ = println("Does match: " + p2.matcher(it).find);
+      q = new REMatcher(it, p2);
+      em <- q.eachFound
+    } yield {
+      (em(1), em(2))
+    }
   }
 
   /**
@@ -925,6 +931,8 @@ abstract class BaseResponse(override val baseUrl: String,
     f(st)
     st
   }
+
+  def withFilter(f: FuncType => Unit): FuncType = this.filter(f)
 }
 
 class CompleteFailure(val serverName: String, val exception: Box[Throwable]) extends TestResponse {

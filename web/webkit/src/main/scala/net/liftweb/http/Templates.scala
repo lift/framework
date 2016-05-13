@@ -28,7 +28,10 @@ import java.io.InputStream
  * Contains functions for obtaining templates
  */
 object Templates {
-  private val suffixes = LiftRules.templateSuffixes
+  // Making this lazy to ensure it doesn't accidentally init before Boot completes in case someone touches this class.
+  private lazy val parsers = LiftRules.contentParsers.flatMap(parser =>
+    parser.templateSuffixes.map( _ -> parser )
+  ).toMap
 
   private def checkForLiftView(part: List[String], last: String, what: LiftRules.ViewDispatchPF): Box[NodeSeq] = {
     if (what.isDefinedAt(part)) {
@@ -58,6 +61,10 @@ object Templates {
         }
     }
 
+  private [http] def findTopLevelTemplate(places: List[String], locale: Locale, needAutoSurround: Boolean) = {
+    findRawTemplate0(places, locale, needAutoSurround).map(checkForContentId)
+  }
+
   /**
    * Given a list of paths (e.g. List("foo", "index")),
    * find the template.  This method runs checkForContentId
@@ -83,29 +90,6 @@ object Templates {
    */
   def apply(places: List[String], locale: Locale): Box[NodeSeq] = 
     findRawTemplate(places, locale).map(checkForContentId)
-
-  /**
-   * Given a list of paths (e.g. List("foo", "index")),
-   * find the template.
-   * @param places - the path to look in
-   *
-   * @return the template if it can be found
-   */
-  @deprecated("use apply", "2.4")
-  def findAnyTemplate(places: List[String]): Box[NodeSeq] =
-    findRawTemplate(places, S.locale)
-
-  /**
-   * Given a list of paths (e.g. List("foo", "index")),
-   * find the template.
-   * @param places - the path to look in
-   * @param locale - the locale of the template to search for
-   *
-   * @return the template if it can be found
-   */
-  @deprecated("use apply", "2.4")
-  def findAnyTemplate(places: List[String], locale: Locale): Box[NodeSeq] = findRawTemplate(places, locale)
-
 
   /**
    * Check to see if the template is marked designer friendly
@@ -153,7 +137,6 @@ object Templates {
     }.headOption getOrElse in
   }
 
-
   /**
    * Given a list of paths (e.g. List("foo", "index")),
    * find the template.
@@ -163,6 +146,10 @@ object Templates {
    * @return the template if it can be found
    */
   def findRawTemplate(places: List[String], locale: Locale): Box[NodeSeq] = {
+    findRawTemplate0(places, locale, false)
+  }
+
+  private def findRawTemplate0(places: List[String], locale: Locale, needAutoSurround: Boolean): Box[NodeSeq] = {
     /*
      From a Scala coding standpoint, this method is ugly.  It's also a performance
      hotspot that needed some tuning.  I've made the code very imperative and
@@ -181,10 +168,6 @@ object Templates {
     val lrCache = LiftRules.templateCache
     val cache = if (lrCache.isDefined) lrCache.openOrThrowException("passes isDefined") else NoCache
 
-    val parserFunction: InputStream => Box[NodeSeq] = 
-      S.htmlProperties.htmlParser
-
-
     val tr = cache.get(key)
 
     if (tr.isDefined) tr
@@ -200,21 +183,21 @@ object Templates {
           case _ =>
             val pls = places.mkString("/", "/", "")
 
-            val se = suffixes.iterator
+            val se = parsers.iterator
             val sl = List("_" + locale.toString, "_" + locale.getLanguage, "")
 
             var found = false
             var ret: NodeSeq = null
 
             while (!found && se.hasNext) {
-              val s = se.next
+              val (suffix, parser) = se.next
               val le = sl.iterator
               while (!found && le.hasNext) {
                 val p = le.next
-                val name = pls + p + (if (s.length > 0) "." + s else "")
+                val name = pls + p + (if (suffix.length > 0) "." + suffix else "")
                 import scala.xml.dtd.ValidationException
                 val xmlb = try {
-                  LiftRules.doWithResource(name) { parserFunction } match {
+                  LiftRules.doWithResource(name)(parser.parse) match {
                     case Full(seq) => seq
                     case _ => Empty
                   }
@@ -231,7 +214,9 @@ object Templates {
                 }
                 if (xmlb.isDefined) {
                   found = true
-                  ret = (cache(key) = xmlb.openOrThrowException("passes isDefined"))
+                  val rawElems = xmlb.openOrThrowException("passes isDefined")
+                  val possiblySurrounded = if(needAutoSurround) parser.surround(rawElems) else rawElems
+                  ret = (cache(key) = possiblySurrounded)
                 } else if (xmlb.isInstanceOf[Failure] && 
                            (Props.devMode | Props.testMode)) {
                   val msg = xmlb.asInstanceOf[Failure].msg
@@ -300,15 +285,6 @@ object Templates {
 }
 
 /**
-* A case class that contains the information necessary to set up a CometActor
-*/
-final case class CometCreationInfo(contType: String,
-                                   name: Box[String],
-                                   defaultXml: NodeSeq,
-                                   attributes: Map[String, String],
-                                   session: LiftSession)
-
-/**
  * Throw this exception if there's a catostrophic failure executing
  * a snippet
  */
@@ -351,6 +327,12 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
 }
 
 
+  // FIXME Needed to due to https://issues.scala-lang.org/browse/SI-6541,
+  // which causes existential types to be inferred for the generated
+  // unapply of a case class with a wildcard parameterized type.
+  // Ostensibly should be fixed in 2.12, which means we're a ways away
+  // from being able to remove this, though.
+  import scala.language.existentials
 
   /**
    * Holds a pair of parameters

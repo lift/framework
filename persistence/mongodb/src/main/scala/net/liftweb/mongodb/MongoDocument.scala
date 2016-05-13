@@ -17,7 +17,7 @@
 package net.liftweb
 package mongodb
 
-import util.ConnectionIdentifier
+import util.{ConnectionIdentifier, DefaultConnectionIdentifier}
 
 import json.JsonAST.JObject
 
@@ -56,7 +56,7 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   /**
     * Override this to specify a ConnectionIdentifier.
     */
-  def connectionIdentifier: ConnectionIdentifier = mongoIdentifier
+  def connectionIdentifier: ConnectionIdentifier = DefaultConnectionIdentifier
 
   /*
    * Use the collection associated with this Meta.
@@ -77,7 +77,7 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   * Find a single row by a qry, using a DBObject.
   */
   def find(qry: DBObject): Option[BaseDocument] = {
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll =>
+    MongoDB.useCollection(connectionIdentifier, collectionName) ( coll =>
       coll.findOne(qry) match {
         case null => None
         case dbo => {
@@ -122,7 +122,7 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   def findAll: List[BaseDocument] = {
     import scala.collection.JavaConversions._
 
-    MongoDB.useCollection(mongoIdentifier, collectionName)(coll => {
+    MongoDB.useCollection(connectionIdentifier, collectionName)(coll => {
       /** Mongo Cursors are both Iterable and Iterator,
        * so we need to reduce ambiguity for implicits
        */
@@ -138,7 +138,7 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
 
     val findOpts = opts.toList
 
-    MongoDB.useCollection(mongoIdentifier, collectionName) ( coll => {
+    MongoDB.useCollection(connectionIdentifier, collectionName) ( coll => {
       val cur = coll.find(qry).limit(
         findOpts.find(_.isInstanceOf[Limit]).map(x => x.value).getOrElse(0)
       ).skip(
@@ -192,7 +192,7 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   * Save a document to the db
   */
   def save(in: BaseDocument) {
-    MongoDB.use(mongoIdentifier) ( db => {
+    MongoDB.use(connectionIdentifier) ( db => {
       save(in, db)
     })
   }
@@ -215,7 +215,7 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   * Update document with a JObject query
   */
   def update(qry: JObject, newbd: BaseDocument, opts: UpdateOption*) {
-    MongoDB.use(mongoIdentifier) ( db => {
+    MongoDB.use(connectionIdentifier) ( db => {
       update(qry, newbd, db, opts :_*)
     })
   }

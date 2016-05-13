@@ -28,7 +28,7 @@ import org.specs2.mutable.Specification
  * System under specification for MongoDirectMonoClient.
  */
 class MongoDirectMongoClientSpec extends Specification with MongoTestKit {
-  "MongoDirectMonoClient Specification".title
+  "MongoDirectMongoClient Specification".title
 
   override def mongo = new MongoClient("127.0.0.1", 27017)
 
@@ -41,7 +41,7 @@ class MongoDirectMongoClientSpec extends Specification with MongoTestKit {
       val coll = db.getCollection("testCollection")
 
       // create a unique index on name
-      coll.ensureIndex(new BasicDBObject("name", 1), new BasicDBObject("unique", true))
+      coll.createIndex(new BasicDBObject("name", 1), new BasicDBObject("unique", true))
 
       // build the DBObjects
       val doc = new BasicDBObject

@@ -22,43 +22,37 @@ import org.specs2.ScalaCheck
 import org.scalacheck._
 import org.scalacheck.Prop.{forAll, forAllNoShrink}
 
-
-/**
- * System under specification for JSON AST.
- */
 object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
-  "JSON AST Specification".title
-
   "Functor identity" in {
     val identityProp = (json: JValue) => json == (json map identity)
-    check(forAll(identityProp))
+    forAll(identityProp)
   }
 
   "Functor composition" in {
     val compositionProp = (json: JValue, fa: JValue => JValue, fb: JValue => JValue) =>
       json.map(fb).map(fa) == json.map(fa compose fb)
 
-    check(forAll(compositionProp))
+    forAll(compositionProp)
   }
 
   "Monoid identity" in {
     val identityProp = (json: JValue) => (json ++ JNothing == json) && (JNothing ++ json == json)
-    check(forAll(identityProp))
+    forAll(identityProp)
   }
 
   "Monoid associativity" in {
     val assocProp = (x: JValue, y: JValue, z: JValue) => x ++ (y ++ z) == (x ++ y) ++ z
-    check(forAll(assocProp))
+    forAll(assocProp)
   }
 
   "Merge identity" in {
     val identityProp = (json: JValue) => (json merge JNothing) == json && (JNothing merge json) == json
-    check(forAll(identityProp))
+    forAll(identityProp)
   }
 
   "Merge idempotency" in {
     val idempotencyProp = (x: JValue) => (x merge x) == x
-    check(forAll(idempotencyProp))
+    forAll(idempotencyProp)
   }
 
   "Diff identity" in {
@@ -66,12 +60,12 @@ object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
       (json diff JNothing) == Diff(JNothing, JNothing, json) &&
       (JNothing diff json) == Diff(JNothing, json, JNothing)
 
-    check(forAll(identityProp))
+    forAll(identityProp)
   }
 
   "Diff with self is empty" in {
     val emptyProp = (x: JValue) => (x diff x) == Diff(JNothing, JNothing, JNothing)
-    check(forAll(emptyProp))
+    forAll(emptyProp)
   }
 
   "Diff is subset of originals" in {
@@ -79,30 +73,29 @@ object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
       val Diff(c, a, d) = x diff y
       y == (y merge (c merge a))
     }
-    check(forAll(subsetProp))
+    forAll(subsetProp)
   }
 
   "Diff result is same when fields are reordered" in {
     val reorderProp = (x: JObject) => (x diff reorderFields(x)) == Diff(JNothing, JNothing, JNothing)
-    check(forAll(reorderProp))
+    forAll(reorderProp)
   }
 
   "Remove all" in {
     val removeAllProp = (x: JValue) => (x remove { _ => true }) == JNothing
-    check(forAll(removeAllProp))
+    forAll(removeAllProp)
   }
 
   "Remove nothing" in {
     val removeNothingProp = (x: JValue) => (x remove { _ => false }) == x
-    check(forAll(removeNothingProp))
+    forAll(removeNothingProp)
   }
 
-  "Remove removes only matching elements (in case of a field, its value is set to JNothing)" in check {
+  "Remove removes only matching elements" in {
     forAllNoShrink(genJValue, genJValueClass) { (json: JValue, x: Class[_ <: JValue]) => {
       val removed = json remove typePredicate(x)
       val Diff(c, a, d) = json diff removed
       val elemsLeft = removed filter {
-        case JField(_, JNothing) => false
         case _ => true
       }
       c == JNothing && a == JNothing && elemsLeft.forall(_.getClass != x)
@@ -112,9 +105,8 @@ object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
   "Replace one" in {
     val anyReplacement = (x: JValue, replacement: JObject) => {
       def findOnePath(jv: JValue, l: List[String]): List[String] = jv match {
-        case JField(name, value) => findOnePath(value, name :: l)
         case JObject(fl) => fl match {
-          case field :: xs => findOnePath(field, l)
+          case field :: xs => findOnePath(field.value, l)
           case Nil => l
         }
         case _ => l
@@ -145,15 +137,74 @@ object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
     // ensure that we test some JObject instances
     val fieldReplacement = (x: JObject, replacement: JObject) => anyReplacement(x, replacement)
 
-    check(forAll(fieldReplacement))
-    check(forAll(anyReplacement))
+    forAll(fieldReplacement)
+    forAll(anyReplacement)
   }
 
-  "equals hashCode" in check{ x: JObject =>
+  "allow escaping arbitrary characters when serializing" in {
+    JsonAST.render(
+      JString("aaabbb"),
+      JsonAST.RenderSettings(0, Set('c'))
+    ) must not be matching("a".r)
+  }
+
+  "escape bad JSON characters by default" in {
+    val allCharacters: String =
+      ('\u0000' to '\uffff').mkString("")
+
+    val rendered =
+      JsonAST.render(
+        JString(allCharacters),
+        JsonAST.RenderSettings.compact
+      )
+
+    "[\u0000-\u0019]".r
+      .pattern
+      .matcher(rendered)
+      .find() must beFalse
+  }
+
+  "allow escaping bad JavaScript characters when serializing" in {
+    val allCharacters =
+      ('\u0000' to '\uffff').mkString("")
+
+    val rendered =
+      JsonAST.render(
+        JString(allCharacters),
+        JsonAST.RenderSettings.compactJs
+      )
+
+    "[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]".r
+      .pattern
+      .matcher(rendered)
+      .find() must beFalse
+  }
+
+  "equals hashCode" in prop({ x: JObject =>
     val y = JObject(scala.util.Random.shuffle(x.obj))
 
     x must_== y
     x.## must_== y.##
+  })
+
+  "find all children" in {
+    val subject = JObject(
+      JField("alpha", JString("apple")) ::
+      JField("beta", JObject(
+        JField("alpha", JString("bacon")) ::
+        JField("charlie", JString("i'm a masseuse")) ::
+        Nil
+      )) ::
+      Nil
+    )
+
+    subject \\ "alpha" must_==
+      JObject(
+        JField("alpha", JString("apple")) ::
+        JField("alpha", JString("bacon")) ::
+        Nil
+      )
+    subject \\ "charlie" must_== JObject(List(JField("charlie", JString("i'm a masseuse"))))
   }
 
   private def reorderFields(json: JValue) = json map {

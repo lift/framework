@@ -28,23 +28,25 @@ import org.scalatest.junit.JUnitRunner
  * Tests the Line Tokenizer that prepares input for parsing.
  */
 @RunWith(classOf[JUnitRunner])
-class LineTokenizerTest extends LineTokenizer with FlatSpec with ShouldMatchers{
+class LineTokenizerTest extends FlatSpec with ShouldMatchers {
+
+  val tokenizer = new LineTokenizer
 
     "The LineTokenizer" should "split input lines correctly" in {
-        splitLines("line1\nline2\n") should equal (List("line1", "line2"))
-        splitLines("line1\nline2 no nl") should equal (List("line1", "line2 no nl"))
-        splitLines("test1\n\ntest2\n") should equal (List("test1", "", "test2"))
-        splitLines("test1\n\ntest2\n\n") should equal (List("test1", "", "test2"))
-        splitLines("\n\n") should equal (Nil)
-        splitLines("\n") should equal (Nil)
-        splitLines("") should equal (List(""))
+        tokenizer.splitLines("line1\nline2\n") should equal (List("line1", "line2"))
+        tokenizer.splitLines("line1\nline2 no nl") should equal (List("line1", "line2 no nl"))
+        tokenizer.splitLines("test1\n\ntest2\n") should equal (List("test1", "", "test2"))
+        tokenizer.splitLines("test1\n\ntest2\n\n") should equal (List("test1", "", "test2"))
+        tokenizer.splitLines("\n\n") should equal (Nil)
+        tokenizer.splitLines("\n") should equal (Nil)
+        tokenizer.splitLines("") should equal (List(""))
     }
 
     it should "preprocess the input correctly" in {
-        tokenize("[foo]: http://example.com/  \"Optional Title Here\"") should equal(
+        tokenizer.tokenize("[foo]: http://example.com/  \"Optional Title Here\"") should equal(
             (new MarkdownLineReader(List(), Map( "foo"->new LinkDefinition("foo", "http://example.com/", Some("Optional Title Here")) )) ) )
 
-        tokenize(
+        tokenizer.tokenize(
 """[Baz]:    http://foo.bar
 'Title next line'
 some text
@@ -68,8 +70,9 @@ new OtherLine("more text")
 
     it should "parse different line types" in {
         def p(line:String) = {
-            lineToken(new LineReader(Seq(line))) match {
-                case Success(result, _) => result
+            tokenizer.lineToken(new LineReader(Seq(line))) match {
+                case tokenizer.Success(result, _) => result
+                case _ => fail("Line tokenization failed.")
             }
         }
         p("a line")          should equal (new OtherLine("a line"))

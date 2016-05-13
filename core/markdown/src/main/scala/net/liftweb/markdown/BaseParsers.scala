@@ -19,10 +19,11 @@ package net.liftweb.markdown
  * Christoph Henkelmann http://henkelmann.eu/
  */
 
+import scala.language.postfixOps
+
 import util.parsing.json.Parser
 import util.parsing.combinator.RegexParsers
 import collection.SortedMap
-
 
 /**
  * Basic parsers for Markdown Source.
@@ -45,7 +46,7 @@ trait BaseParsers extends RegexParsers {
     /** accepts one or more spaces or tabs
      * returns the matched whitespace
      */
-    def ws:Parser[String] = """( |\t|\v)+""".r
+    def ws:Parser[String] = """( |\t|\x0B)+""".r
 
     /** accepts zero or more spaces or tabs
      * returns the matched whitespace

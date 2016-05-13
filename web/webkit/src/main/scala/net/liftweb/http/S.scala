@@ -19,7 +19,7 @@ package http
 
 import java.util.{Locale, TimeZone, ResourceBundle}
 
-import collection.mutable.{HashMap, ListBuffer}
+import scala.collection.mutable.{HashMap, ListBuffer}
 import xml._
 
 import common._
@@ -362,6 +362,12 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    */
   private object _tailTags extends TransientRequestVar(new ListBuffer[Elem])
 
+  // Set of CometVersionPairs for comets that should be tracked on
+  // the page that is currently being rendered or that called this AJAX
+  // callback.
+  private[http] object requestCometVersions extends TransientRequestVar[Set[CometVersionPair]](Set.empty)
+
+
   private object p_queryLog extends TransientRequestVar(new ListBuffer[(String, Long)])
   private object p_notice extends TransientRequestVar(new ListBuffer[(NoticeType.Value, NodeSeq, Box[String])])
 
@@ -378,7 +384,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    *
    * @see Req
    */
-  def request: Box[Req] = (Box !! _request.value) or CurrentReq.box
+  def request: Box[Req] = _request.box or CurrentReq.box
 
 
   /**
@@ -545,7 +551,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   // TODO: Is this used anywhere? - DCB
   def templateFromTemplateAttr: Box[NodeSeq] =
     for (templateName <- attr("template") ?~ "Template Attribute missing";
-         val tmplList = templateName.roboSplit("/");
+         tmplList = templateName.roboSplit("/");
          template <- Templates(tmplList) ?~
                  "couldn't find template") yield template
 
@@ -574,9 +580,9 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * special accomodations for IE 6 / 7 / 8 compatibility.
    *
    * @return <code>true</code> if this response should be rendered in
-   * IE6/IE7 compatibility mode.
+   * IE 6/7/8 compatibility mode.
    *
-   * @see LiftSession.ieMode
+   * @see LiftSession.legacyIeCompatibilityMode
    * @see LiftRules.calcIEMode
    * @see Req.isIE6
    * @see Req.isIE7
@@ -584,9 +590,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see Req.isIE
    */
   def legacyIeCompatibilityMode: Boolean = session.map(_.legacyIeCompatibilityMode.is) openOr false // LiftRules.calcIEMode()
-
-  @deprecated("Use legacyIeCompatibilityMode for legacy IE detection instead, or use S.isIE* for general IE detection. This will be removed in Lift 3.0.", "2.6")
-  def ieMode = legacyIeCompatibilityMode
 
   /**
    * Get the current instance of HtmlProperties
@@ -751,7 +754,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    *
    *
    * @param name A name for the rewrite function so that it can be replaced or deleted later.
-   * @rw The rewrite partial function
+   * @param rw The rewrite partial function
    *
    * @see LiftRules.rewrite
    * @see # sessionRewriter
@@ -799,7 +802,75 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   def atEndOfBody(): List[Elem] = _tailTags.is.toList
 
   /**
-   * Sometimes it's helpful to accumute JavaScript as part of servicing
+   * Add a comet to the list of comets that should be registered to
+   * receive updates on the page currently being rendered or on the page
+   * that invoked the currently running callback.
+   */
+  def addComet(cometActor: LiftCometActor): Unit = {
+    requestCometVersions.set(
+      requestCometVersions.is + CVP(cometActor.uniqueId, cometActor.lastRenderTime)
+    )
+  }
+
+  /**
+   * As with {findOrBuildComet[T]}, but specify the type as a `String`. If the
+   * comet doesn't already exist, the comet type is first looked up via
+   * `LiftRules.cometCreationFactory`, and then as a class name in the comet
+   * packages designated by `LiftRules.buildPackage("comet")`.
+   *
+   * If `receiveUpdates` is `true`, updates to this comet will be pushed to
+   * the page currently being rendered or to the page that is currently
+   * invoking an AJAX callback. You can also separately register a comet to
+   * receive updates like this using {S.addComet}.
+   */
+  def findOrCreateComet(
+    cometType: String,
+    cometName: Box[String] = Empty,
+    cometHtml: NodeSeq = NodeSeq.Empty,
+    cometAttributes: Map[String, String] = Map.empty,
+    receiveUpdatesOnPage: Boolean = false
+  ): Box[LiftCometActor] = {
+    for {
+      session <- session ?~ "Comet lookup and creation requires a session."
+      cometActor <- session.findOrCreateComet(cometType, cometName, cometHtml, cometAttributes)
+    } yield {
+      if (receiveUpdatesOnPage)
+        addComet(cometActor)
+
+      cometActor
+    }
+  }
+
+  /**
+   * Find or build a comet actor of the given type `T` with the given
+   * configuration parameters. If a comet of that type with that name already
+   * exists, it is returned; otherwise, a new one of that type is created and
+   * set up, then returned.
+   *
+   * If `receiveUpdates` is `true`, updates to this comet will be pushed to
+   * the page currently being rendered or to the page that is currently
+   * invoking an AJAX callback. You can also separately register a comet to
+   * receive updates like this using {S.addComet}.
+   */
+  def findOrCreateComet[T <: LiftCometActor](
+    cometName: Box[String],
+    cometHtml: NodeSeq,
+    cometAttributes: Map[String, String],
+    receiveUpdatesOnPage: Boolean
+  )(implicit cometManifest: Manifest[T]): Box[T] = {
+    for {
+      session <- session ?~ "Comet lookup and creation requires a session."
+      cometActor <- session.findOrCreateComet[T](cometName, cometHtml, cometAttributes)
+    } yield {
+      if (receiveUpdatesOnPage)
+        addComet(cometActor)
+
+      cometActor
+    }
+  }
+
+  /**
+   * Sometimes it's helpful to accumulate JavaScript as part of servicing
    * a request.  For example, you may want to accumulate the JavaScript
    * as part of an Ajax response or a Comet Rendering or
    * as part of a regular HTML rendering.  Call `S.appendJs(jsCmd)`.
@@ -811,7 +882,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   def appendJs(js: JsCmd): Unit = _jsToAppend.is += js
 
   /**
-   * Sometimes it's helpful to accumute JavaScript as part of servicing
+   * Sometimes it's helpful to accumulate JavaScript as part of servicing
    * a request.  For example, you may want to accumulate the JavaScript
    * as part of an Ajax response or a Comet Rendering or
    * as part of a regular HTML rendering.  Call `S.appendJs(jsCmd)`.
@@ -834,24 +905,65 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   def appendGlobalJs(js: JsCmd*): Unit = _globalJsToAppend.is ++= js
 
   /**
+   * Generates the JsCmd needed to initialize comets in
+   * `S.requestCometVersions` on the client.
+   */
+  private def commandsForComets: List[JsCmd] = {
+    val cometVersions = requestCometVersions.is
+    requestCometVersions.set(Set())
+
+    if (cometVersions.nonEmpty) {
+      List(
+        js.JE.Call(
+          "lift.registerComets",
+          js.JE.JsObj(
+            cometVersions.toList.map {
+              case CometVersionPair(guid, version) =>
+                (guid, js.JE.Num(version))
+            }: _*
+          ),
+          // Don't kick off a new comet request client-side if we're responding
+          // to a comet request right now.
+          ! currentCometActor.isDefined
+        ).cmd
+      )
+    } else {
+      Nil
+    }
+  }
+
+  /**
    * Get the accumulated JavaScript
    *
    * @see appendJs
    */
-  def jsToAppend(): List[JsCmd] = {
+  def jsToAppend(clearAfterReading: Boolean = false): List[JsCmd] = {
     import js.JsCmds._
-    _globalJsToAppend.is.toList ::: (
-      S.session.map( sess =>
-        sess.postPageJavaScript(RenderVersion.get ::
-                                S.currentCometActor.map(_.uniqueId).toList)
-      ) match {
-        case Full(xs) if !xs.isEmpty => List(OnLoad(_jsToAppend.is.toList ::: xs))
-        case _ => _jsToAppend.is.toList match {
-          case Nil => Nil
-          case xs => List(OnLoad(xs))
+
+    val globalJs = _globalJsToAppend.is.toList
+    val postPageJs =
+      S.session.toList.flatMap { session =>
+        session.postPageJavaScript(RenderVersion.get ::
+                                   currentCometActor.map(_.uniqueId).toList)
+      }
+    val cometJs = commandsForComets
+
+    val allJs =
+      globalJs ::: {
+        postPageJs ::: cometJs ::: _jsToAppend.is.toList match {
+          case Nil =>
+            Nil
+          case loadJs =>
+            List(OnLoad(loadJs))
         }
       }
-    )
+
+    if (clearAfterReading) {
+      _globalJsToAppend(ListBuffer())
+      _jsToAppend(ListBuffer())
+    }
+
+    allJs
   }
 
   /**
@@ -989,7 +1101,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
 
 
   private object resourceValueCache extends TransientRequestMemoize[(String, Locale), String]
-  
+
   /**
    * Get a localized string or return the original string.
    * We first try your own bundle resources, if that fails, we try
@@ -1017,7 +1129,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # resourceBundles
    */
   def ?(str: String, locale: Locale): String = resourceValueCache.get(str -> locale, ?!(str, resourceBundles(locale)))
-  
+
   /**
    * Attempt to localize and then format the given string. This uses the String.format method
    * to format the localized string.
@@ -1037,27 +1149,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
       ?(str)
     else
       String.format(locale, ?(str), params.flatMap {case s: AnyRef => List(s) case _ => Nil}.toArray: _*)
-
-  /**
-   * Get a core lift localized string or return the original string
-   *
-   * @param str the string to localize
-   *
-   * @return the localized version of the string
-   */
-  @deprecated("Use S.?() instead. S.?? will be removed in 2.6", "2.5")
-  def ??(str: String): String = ?(str)
-
-  /**
-   * Get a core lift localized and formatted string or return the original string.
-   *
-   * @param str the string to localize
-   * @param params the var-arg parameters applied for string formatting
-   *
-   * @return the localized version of the string
-   */
-  @deprecated("Use S.?() instead. S.?? will be removed in 2.6", "2.5")
-  def ??(str: String, params: AnyRef*): String = String.format(locale, ?(str), params: _*)
 
   private def ?!(str: String, resBundle: List[ResourceBundle]): String = resBundle.flatMap(r => tryo(r.getObject(str) match {
     case s: String => Full(s)
@@ -1130,8 +1221,8 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     req <- request
     queryString <- req.request.queryString
   } yield queryString
-    
-    
+
+
   def uriAndQueryString: Box[String] = for {
     req <- this.request
   } yield req.uri + (queryString.map(s => "?"+s) openOr "")
@@ -1141,8 +1232,8 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * the handlers are ignored
    */
   def runExceptionHandlers(req: Req, orig: Throwable): Box[LiftResponse] = {
-    S.assertExceptionThrown() 
-    tryo{(t: Throwable) => 
+    S.assertExceptionThrown()
+    tryo{(t: Throwable) =>
       logger.error("An error occurred while running error handlers", t)
       logger.error("Original error causing error handlers to be run", orig)} {
       NamedPF.applyBox((Props.mode, req, orig), LiftRules.exceptionHandler.toList);
@@ -1276,12 +1367,14 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @param session the LiftSession for this request
    * @param f Function to execute within the scope of the request and session
    */
-  def init[B](request: Req, session: LiftSession)(f: => B): B = {
+  def init[B](request: Box[Req], session: LiftSession)(f: => B): B = {
     if (inS.value) f
     else {
-      if (request.stateless_?)
+      if (request.map(_.stateless_?).openOr(false) ){
         session.doAsStateless(_init(request, session)(() => f))
-      else _init(request, session)(() => f)
+      } else {
+        _init(request, session)(() => f)
+      }
     }
   }
 
@@ -1298,8 +1391,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
       case _ => {
         val fakeSess = LiftRules.statelessSession.vend.apply(request)
         try {
-          _init(request,
-                fakeSess)(() => f)
+          _init(Box !! request, fakeSess)(() => f)
         } finally {
           // ActorPing.schedule(() => fakeSess.doShutDown(), 0 seconds)
         }
@@ -1500,11 +1592,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     setHeader(name, value)
   }
 
-
-  @deprecated("Use S.getResponseHeaders instead for clarity.", "2.5")
-  def getHeaders(in: List[(String, String)]): List[(String, String)] = {
-    getResponseHeaders(in)
-  }
   /**
    * Returns the currently set HTTP response headers as a List[(String, String)]. To retrieve
    * a specific response header, use S.getResponseHeader. If you want to
@@ -1523,10 +1610,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
       ).openOr(Nil)
   }
 
-  @deprecated("Use S.getResponseHeader instead for clarity.", "2.5")
-  def getHeader(name: String): Box[String] = {
-    getResponseHeader(name)
-  }
   /**
    * Returns the current set value of the given HTTP response header as a Box. If
    * you want a request header, use Req.getHeader or S.getRequestHeader.
@@ -1652,18 +1735,20 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     }
   }
 
-  private def doStatefulRewrite(old: Req): Req = {
+  private def doStatefulRewrite(old: Box[Req]): Box[Req] = {
     // Don't even try to rewrite Req.nil
-    if (statefulRequest_? &&
-        !old.path.partPath.isEmpty &&
-        (old.request ne null))
-      Req(old, S.sessionRewriter.map(_.rewrite) :::
+    old.map { req =>
+      if (statefulRequest_? && req.path.partPath.nonEmpty && (req.request ne null) ) {
+        Req(req, S.sessionRewriter.map(_.rewrite) :::
           LiftRules.statefulRewrite.toList, Nil,
-      LiftRules.statelessReqTest.toList)
-    else old
+          LiftRules.statelessReqTest.toList)
+      } else {
+        req
+      }
+    }
   }
 
-  private def _innerInit[B](request: Req, f: () => B): B = {
+  private def _innerInit[B](request: Box[Req], f: () => B): B = {
     _lifeTime.doWith(false) {
       _attrs.doWith((Null,Nil)) {
           _resBundle.doWith(Nil) {
@@ -1671,7 +1756,8 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
               val statefulRequest = doStatefulRewrite(request)
               withReq(statefulRequest) {
                 // set the request for standard requests
-                if (statefulRequest.standardRequest_?) _originalRequest.set(Full(statefulRequest))
+                if (statefulRequest.map(_.standardRequest_?).openOr(false))
+                  _originalRequest.set(statefulRequest)
 
                 _nest2InnerInit(f)
               }
@@ -1681,9 +1767,9 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     }
   }
 
-  private[http] def withReq[T](req: Req)(f: => T): T = {
-    CurrentReq.doWith(req) {
-      _request.doWith(req) {
+  private[http] def withReq[T](req: Box[Req])(f: => T): T = {
+    CurrentReq.doWith(req openOr null) {
+      _request.doWith(req openOr null) {
         f
       }
     }
@@ -1698,8 +1784,8 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
          c <- ca) yield c
 
 
-  private def _init[B](request: Req, session: LiftSession)(f: () => B): B =
-    this._request.doWith(request) {
+  private def _init[B](request: Box[Req], session: LiftSession)(f: () => B): B = {
+    this._request.doWith(request.openOr(null)) {
       _sessionInfo.doWith(session) {
         _responseHeaders.doWith(new ResponseInfoHolder) {
           TransientRequestVarHandler(Full(session),
@@ -1713,6 +1799,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
         }
       }
     }
+  }
 
   /**
    * This method is a convenience accessor for LiftRules.loggedInTest. You can define your own
@@ -1783,7 +1870,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # prefixedAttrsToMetaData ( String )
    * @see # prefixedAttrsToMetaData ( String, Map )
    */
-  def attrs: List[(Either[String, (String, String)], String)] = S._attrs.value match {
+  def attrs: List[(Either[String, (String, String)], String)] = _attrs.value match {
     case null => Nil
     case (current,full) => full
   }
@@ -2079,14 +2166,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   }
 
   /**
-   * Temporarily adds the given attributes to the current set, then executes the given function.
-   *
-   * @param attr The attributes to set temporarily
-   */
-  @deprecated("Use the S.withAttrs method instead", "2.4")
-  def setVars[T](attr: MetaData)(f: => T): T = withAttrs(attr)(f)
-
-  /**
    * A function that will eagerly evaluate a template.
    */
   def eagerEval : NodeSeq => NodeSeq = ns => {
@@ -2107,7 +2186,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    */
   def initIfUninitted[B](session: LiftSession)(f: => B): B = {
     if (inS.value) f
-    else init(Req.nil, session)(f)
+    else init(Empty, session)(f)
   }
 
   /**
@@ -2545,7 +2624,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
                     future.satisfy(ret)
                     ret
                   } catch {
-                    case e => future.satisfy(e); throw e
+                    case e: Exception => future.satisfy(e); throw e
                   }
                 }
               }
@@ -2562,7 +2641,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
                     future.satisfy(ret)
                     ret
                   } catch {
-                    case e => future.satisfy(e); throw e
+                    case e: Exception => future.satisfy(e); throw e
                   }
                 }
               }
@@ -2695,7 +2774,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
 
       (JsonCall(key), JsCmds.Run(name.map(n => onErrorFunc +
                                           "/* JSON Func " + n + " $$ " + key + " */").openOr("") +
-                                 "function " + key + "(obj) {liftAjax.lift_ajaxHandler(" +
+                                 "function " + key + "(obj) {lift.ajax(" +
                                  "'" + key + "='+ encodeURIComponent(" +
                                  LiftRules.jsArtifacts.
                                  jsonStringify(JE.JsRaw("obj")).
@@ -2704,86 +2783,10 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   }
 
   /**
-   * Build a handler for incoming JSON commands
-   *
-   * @param f - function returning a JsCmds
-   * @return ( JsonCall, JsCmd )
-   */
-  @deprecated("Use createJsonFunc and deal in JValues instead of Anys.", "2.6")
-  def buildJsonFunc(f: Any => JsCmd): (JsonCall, JsCmd) = buildJsonFunc(Empty, Empty, f)
-
-  @deprecated("Use createJsonFunc and deal in JValues instead of Anys.", "2.6")
-  def buildJsonFunc(onError: JsCmd, f: Any => JsCmd): (JsonCall, JsCmd) =
-    buildJsonFunc(Empty, Full(onError), f)
-
-  /**
-   * Build a handler for incoming JSON commands
-   *
-   * @param name -- the optional name of the command (placed in a comment for testing)
-   *
-   * @param f - function returning a JsCmds
-   * @return ( JsonCall, JsCmd )
-   */
-  @deprecated("Use createJsonFunc and deal in JValues instead of Anys.", "2.6")
-  def buildJsonFunc(name: Box[String], onError: Box[JsCmd], f: Any => JsCmd): (JsonCall, JsCmd) = {
-    functionLifespan(true) {
-      val key = formFuncName
-
-      def checkCmd(in: Any) = in match {
-        case v2: scala.collection.Map[Any, _] if v2.isDefinedAt("command") =>
-          // ugly code to avoid type erasure warning
-          val v = v2.asInstanceOf[scala.collection.Map[String, Any]]
-          JsonCmd(v("command").toString, v.get("target").
-                  map {
-            case null => null
-            case x => x.toString
-          } getOrElse (null), v.get("params").getOrElse(None), v)
-
-        case v => v
-      }
-
-      def jsonCallback(in: List[String]): JsCmd = {
-        in.headOption.toList.flatMap {
-          s =>
-                  val parsed = JSONParser.parse(s.trim).toList
-                  val cmds = parsed.map(checkCmd)
-                  val ret = cmds.map(f)
-                  ret
-        }.foldLeft(JsCmds.Noop)(_ & _)
-      }
-
-      val onErrorFunc: String =
-      onError.map(f => JsCmds.Run("function onError_" + key + "() {" + f.toJsCmd + """
-}
-
- """).toJsCmd) openOr ""
-
-      val onErrorParam = onError.map(f => "onError_" + key) openOr "null"
-
-      val af: AFuncHolder = jsonCallback _
-      addFunctionMap(key, af)
-
-      (JsonCall(key), JsCmds.Run(name.map(n => onErrorFunc +
-              "/* JSON Func " + n + " $$ " + key + " */").openOr("") +
-              "function " + key + "(obj) {liftAjax.lift_ajaxHandler(" +
-              "'" + key + "='+ encodeURIComponent(" +
-              LiftRules.jsArtifacts.
-                      jsonStringify(JE.JsRaw("obj")).
-                      toJsCmd + "), null," + onErrorParam + ");}"))
-    }
-  }
-
-  /**
    * Returns the JsCmd that holds the notices markup
    *
    */
   private[http] def noticesToJsCmd: JsCmd = LiftRules.noticesToJsCmd()
-
-  @deprecated("Use AFuncHolder.listStrToAF", "2.4")
-  def toLFunc(in: List[String] => Any): AFuncHolder = LFuncHolder(in, Empty)
-
-  @deprecated("Use AFuncHolder.unitToAF", "2.4")
-  def toNFunc(in: () => Any): AFuncHolder = NFuncHolder(in, Empty)
 
   implicit def stuff2ToUnpref(in: (Symbol, Any)): UnprefixedAttribute = new UnprefixedAttribute(in._1.name, Text(in._2.toString), Null)
 
@@ -2856,21 +2859,11 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
           ret
         }
 
-        init(req, ses) {
+        init(Box !! req, ses) {
           doRender(ses)
         }
       }
     }
-  }
-
-  /**
-   * Maps a function with an random generated and name
-   */
-  @deprecated("Use jsonFmapFunc with a function that takes JValue => JsCmd", "2.6")
-  def jsonFmapFunc[T](in: Any => JsObj)(f: String => T): T = {
-    val name = formFuncName
-    addFunctionMap(name, SFuncHolder((s: String) => JSONParser.parse(s).map(in) openOr js.JE.JsObj()))
-    f(name)
   }
 
   /**
@@ -2885,29 +2878,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     addFunctionMap(name, SFuncHolder((s: String) => JsonParser.parseOpt(s).map(in) getOrElse JsCmds.Noop))
     f(name)
   }
-
-
-  /**
-   * Similar with addFunctionMap but also returns the name.
-   *
-   * Use fmapFunc(AFuncHolder)(String => T)
-   */
-  @deprecated("Use fmapFunc(AFuncHolder)(String => T)", "2.4")
-  def mapFunc(in: AFuncHolder): String = {
-    mapFunc(formFuncName, in)
-  }
-
-  /**
-   * Similar with addFunctionMap but also returns the name.
-   *
-   * Use fmapFunc(AFuncHolder)(String => T)
-   */
-  @deprecated("Use fmapFunc(AFuncHolder)(String => T)", "2.4")
-  def mapFunc(name: String, inf: AFuncHolder): String = {
-    addFunctionMap(name, inf)
-    name
-  }
-
 
   /**
    * Returns all the HTTP parameters having 'n' name
@@ -3056,7 +3026,11 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    *
    * @param f - the function that returns the messages
    */
-  def noIdMessages(f: => List[(NodeSeq, Box[String])]): List[NodeSeq] = f filter (_._2 isEmpty) map (_._1)
+  def noIdMessages(f: => List[(NodeSeq, Box[String])]): List[NodeSeq] = {
+    f.collect {
+      case (message, Empty) => message
+    }
+  }
 
   /**
    * Returns the messages that are associated with any id.
@@ -3066,11 +3040,13 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    */
   def idMessages(f: => List[(NodeSeq, Box[String])]): List[(String, List[NodeSeq])] = {
     val res = new HashMap[String, List[NodeSeq]]
-    f filter (_._2.isEmpty == false) foreach (_ match {
-      case (node, id) => val key = id openOrThrowException("legacy code"); res += (key -> (res.getOrElseUpdate(key, Nil) ::: List(node)))
+    f.filter(_._2.isEmpty == false).foreach(_ match {
+      case (node, id) =>
+        val key = id openOrThrowException("legacy code")
+        res += (key -> (res.getOrElseUpdate(key, Nil) ::: List(node)))
     })
 
-    res toList
+    res.toList
   }
 
   implicit def tuple2FieldError(t: (FieldIdentifier, NodeSeq)) = FieldError(t._1, t._2)
@@ -3134,29 +3110,3 @@ object NoticeType extends Serializable{
   object Warning extends Value("Warning")
   object Error extends Value("Error")
 }
-
-/**
- * Used to handles JSON requests
- */
-@deprecated("Use JValue=>JsCmd bindings in SHtml (such as jsonCall) instead of this.", "2.6")
-abstract class JsonHandler {
-  private val name = "_lift_json_" + getClass.getName
-
-  private def handlers: (JsonCall, JsCmd) =
-    S.session.map(s => s.get[Any](name) match {
-      case Full((x: JsonCall, y: JsCmd)) => (x, y)
-
-      case _ =>
-        val ret: (JsonCall, JsCmd) = S.buildJsonFunc(this.apply)
-        s.set(name, ret)
-        ret
-    }
-      ).openOr((JsonCall(""), JsCmds.Noop))
-
-  def call: JsonCall = handlers._1
-
-  def jsCmd: JsCmd = handlers._2
-
-  def apply(in: Any): JsCmd
-}
-

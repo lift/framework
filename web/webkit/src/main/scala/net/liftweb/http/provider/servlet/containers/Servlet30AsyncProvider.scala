@@ -32,6 +32,9 @@ import Helpers._
 
 
 object Servlet30AsyncProvider extends AsyncProviderMeta {
+  // cc below gets inferred as a Class[?0] existential.
+  import scala.language.existentials
+
   private lazy val (hasContinuations_?, 
                     cc, 
                     asyncClass, 
@@ -48,7 +51,7 @@ object Servlet30AsyncProvider extends AsyncProviderMeta {
       val isSupported = cc.getMethod("isAsyncSupported")
       (true, cc, asyncClass, startAsync, getResponse, complete, isSupported)
     } catch {
-      case e =>
+      case e: Exception =>
         (false, 
          null, 
          null, 
@@ -80,6 +83,8 @@ object Servlet30AsyncProvider extends AsyncProviderMeta {
  *
  */
 class Servlet30AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider with Loggable {
+  import scala.language.reflectiveCalls
+
   private var asyncCtx: Object = null
 
   type SetTimeout = {def setTimeout(timeout: Long): Unit;}
@@ -96,7 +101,7 @@ class Servlet30AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider with
   def suspend(timeout: Long): RetryState.Value = {
     asyncCtx = startAsync.invoke(servletReq)
     try {
-    	val st = asyncCtx.asInstanceOf[SetTimeout];
+    	val st = asyncCtx.asInstanceOf[SetTimeout]
     	st.setTimeout(0l)
     } catch {
     case e: Exception => logger.error("Servlet 3.0 Async: Failed to set timeout", e)

@@ -1,0 +1,19 @@
+{
+  "curly": true,
+  "eqeqeq": true,
+  "esversion": 3,
+  "futurehostile": true,
+  "latedef": "nofunc",
+  "noarg": true,
+  "nocomma": true,
+  "nonbsp": true,
+  "nonew": true,
+  "strict": true,
+  "undef": true,
+  "unused": true,
+  "browser": true,
+  "jquery": true,
+  "globals": {
+    "JSON": false
+  }
+}

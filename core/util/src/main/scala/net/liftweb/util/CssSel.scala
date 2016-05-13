@@ -33,13 +33,6 @@ trait CssSel extends Function1[NodeSeq, NodeSeq] {
    * A Java callable aggregator
    */
   def and(that: CssSel): CssSel = this & that
-
-  /**
-   * promote a String to a ToCssBindPromotor
-   */
-  /*
-  private implicit def strToCssBindPromoter(str: String): ToCssBindPromoter =
-    new ToCssBindPromoter(Full(str), CssSelectorParser.parse(str)) */
 }
 
 /**
@@ -243,7 +236,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
             new Elem(elem.prefix,
               elem.label, newAttr,
-              elem.scope, elem.child: _*)
+              elem.scope, elem.minimizeEmpty, elem.child: _*)
 
           }
         }
@@ -279,7 +272,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
             new Elem(elem.prefix,
               elem.label, newAttr,
-              elem.scope, elem.child: _*)
+              elem.scope, elem.minimizeEmpty, elem.child: _*)
 
           }
         }
@@ -374,13 +367,13 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         case Full(todo: WithKids) => {
           val calced = bind.calculate(realE.child)
           calced.length match {
-            case 0 => new Elem(realE.prefix, realE.label, realE.attributes, realE.scope)
+            case 0 => new Elem(realE.prefix, realE.label, realE.attributes, realE.scope, realE.minimizeEmpty)
             case 1 => new Elem(realE.prefix, realE.label,
-              realE.attributes, realE.scope,
+              realE.attributes, realE.scope, realE.minimizeEmpty,
               todo.transform(realE.child, calced.head): _*)
             case _ if id.isEmpty =>
               calced.map(kids => new Elem(realE.prefix, realE.label,
-                realE.attributes, realE.scope,
+                realE.attributes, realE.scope, realE.minimizeEmpty,
                 todo.transform(realE.child, kids): _*))
 
             case _ => {
@@ -388,11 +381,11 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
               calced.toList.zipWithIndex.map {
                 case (kids, 0) =>
                   new Elem(realE.prefix, realE.label,
-                    realE.attributes, realE.scope,
+                    realE.attributes, realE.scope, realE.minimizeEmpty,
                     todo.transform(realE.child, kids): _*)
                 case (kids, _) =>
                   new Elem(realE.prefix, realE.label,
-                    noId, realE.scope,
+                    noId, realE.scope, realE.minimizeEmpty,
                     todo.transform(realE.child, kids): _*)
               }
             }
@@ -409,7 +402,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
                 case Group(g) => g
                 case e: Elem => new Elem(e.prefix,
                   e.label, mergeAll(e.attributes, false, x == Full(DontMergeAttributes)),
-                  e.scope, e.child: _*)
+                  e.scope, e.minimizeEmpty, e.child: _*)
                 case x => x
               }
             }
@@ -431,7 +424,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
                         id => ids.contains(id)
                       } getOrElse (false)
                       val newIds = targetId filter (_ => keepId) map (i => ids - i) getOrElse (ids)
-                      val newElem = new Elem(e.prefix, e.label, mergeAll(e.attributes, !keepId, x == Full(DontMergeAttributes)), e.scope, e.child: _*)
+                      val newElem = new Elem(e.prefix, e.label, mergeAll(e.attributes, !keepId, x == Full(DontMergeAttributes)), e.scope, e.minimizeEmpty, e.child: _*)
                       (newIds, newElem :: result)
                     }
                     case x => (ids, x :: result)
@@ -570,7 +563,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     } else {
       lb.toList.filterNot(_.selectThis_?) match {
         case Nil => new Elem(e.prefix, e.label,
-          e.attributes, e.scope, run(e.child, onlySel, depth + 1): _*)
+          e.attributes, e.scope, e.minimizeEmpty, run(e.child, onlySel, depth + 1): _*)
         case csb =>
           // do attributes first, then the body
           csb.partition(_.attrSel_?) match {
@@ -578,7 +571,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             case (attrs, Nil) => {
               val elem = slurp.applyAttributeRules(attrs, e)
               new Elem(elem.prefix, elem.label,
-                elem.attributes, elem.scope, run(elem.child, onlySel, depth + 1): _*)
+                elem.attributes, elem.scope, e.minimizeEmpty, run(elem.child, onlySel, depth + 1): _*)
             }
 
             case (attrs, rules) => {
@@ -614,6 +607,46 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 }
 
 private case class RetryWithException(e: NodeSeq) extends Exception()
+
+trait CssBindImplicits {
+  class CssBindPromoter(stringSelector: Box[String], cssSelector: Box[CssSelector]) {
+    /**
+     * Transform a DOM (NodeSeq) based on rules
+     *
+     * @param it the thing to use in the replacement rules
+     * @param converter the implicit parameter that transforms T into a
+     *        NodeSeq=>NodeSeq that will update things matched by the selector
+     * @tparam T the type of it
+     * @return the function that will transform an incoming DOM based on the transform rules
+     */
+    def #>[T](replacement: => T)(implicit converter: CanBind[T]): CssSel = {
+      cssSelector.collect {
+        case EnclosedSelector(a, b) =>
+          new CssBindPromoter(stringSelector, Full(a)) #> nsFunc({ ns =>
+            new CssBindPromoter(stringSelector, Full(b)).#>(replacement)(converter)(ns)
+          }) // (CanBind.nodeSeqFuncTransform)
+      } openOr {
+        new CssBindImpl(stringSelector, cssSelector) {
+          def calculate(in: NodeSeq): Seq[NodeSeq] = converter(replacement)(in)
+        }
+      }
+    }
+
+    /**
+     * Transform a DOM (NodeSeq) based on rules
+     *
+     * @param it the thing to use in the replacement rules
+     * @param computer the implicit parameter that transforms T into something that will make the correct changes
+     * @tparam T the type of it
+     * @return the function that will transform an incoming DOM based on the transform rules
+     */
+    def replaceWith[T](it: => T)(implicit computer: CanBind[T]): CssSel = {
+      this.#>(it)(computer)
+    }
+  }
+  implicit class StringToCssBindPromoter(stringSelector: String) extends CssBindPromoter(Full(stringSelector), CssSelectorParser.parse(stringSelector))
+  implicit class CssSelectorToCssBindPromoter(cssSelector: CssSelector) extends CssBindPromoter(Empty, Full(cssSelector))
+}
 
 object CssBind {
   def unapply(in: CssBind): Option[CssSelector] = in.css
@@ -694,13 +727,7 @@ abstract class CssBindImpl(val stringSelector: Box[String], val css: Box[CssSele
  * Bridge from Java-land to Scala
  */
 
-final class CssJBridge {
-  /**
-   * promote a String to a ToCssBindPromotor
-   */
-  private implicit def strToCssBindPromoter(str: String): ToCssBindPromoter =
-    new ToCssBindPromoter(Full(str), CssSelectorParser.parse(str))
-
+final class CssJBridge extends CssBindImplicits {
   def sel(selector: String, value: String): CssSel = selector #> value
 
   def sel(selector: String, value: NodeSeq): CssSel = selector #> value
@@ -730,7 +757,9 @@ trait CanBind[-T] {
   def apply(it: => T)(ns: NodeSeq): Seq[NodeSeq]
 }
 
-object CanBind {
+object CanBind extends CssBindImplicits {
+  import scala.language.higherKinds
+
   implicit def stringTransform: CanBind[String] = new CanBind[String] {
     def apply(str: => String)(ns: NodeSeq): Seq[NodeSeq] = {
       val s = str
@@ -877,43 +906,4 @@ object CanBind {
     new CanBind[IterableConst] {
       def apply(info: => IterableConst)(ns: NodeSeq): Seq[NodeSeq] = info.constList(ns)
     }
-}
-
-
-/**
- * An intermediate class used to promote a String or a CssSelector to
- * something that can be associated with a value to apply to the selector
- */
-final case class ToCssBindPromoter(stringSelector: Box[String], css: Box[CssSelector]) {
-
-  /**
-   * Transform a DOM (NodeSeq) based on rules
-   *
-   * @param it the thing to use in the replacement rules
-   * @param computer the implicit parameter that transforms T into something that will make the correct changes
-   * @tparam T the type of it
-   * @return the function that will transform an incoming DOM based on the transform rules
-   */
-  def #>[T](it: => T)(implicit computer: CanBind[T]): CssSel = {
-    css match {
-    case Full(EnclosedSelector(a, b)) => null
-    (ToCssBindPromoter(stringSelector, Full(a))).#>(nsFunc(ns => {
-      ToCssBindPromoter(stringSelector, Full(b)).#>(it)(computer)(ns)
-    })) // (CanBind.nodeSeqFuncTransform)
-    case _ =>
-      new CssBindImpl(stringSelector, css) {
-        def calculate(in: NodeSeq): Seq[NodeSeq] = computer(it)(in)
-      }
-  }
-  }
-
-  /**
-   * Transform a DOM (NodeSeq) based on rules
-   *
-   * @param it the thing to use in the replacement rules
-   * @param computer the implicit parameter that transforms T into something that will make the correct changes
-   * @tparam T the type of it
-   * @return the function that will transform an incoming DOM based on the transform rules
-   */
-  def replaceWith[T](it: => T)(implicit computer: CanBind[T]): CssSel = this.#>(it)(computer)
 }

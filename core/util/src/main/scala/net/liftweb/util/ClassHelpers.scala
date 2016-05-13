@@ -53,8 +53,8 @@ trait ClassHelpers { self: ControlHelpers =>
   (for (
       place <- where.view;
       mod <- modifiers.view;
-      val fullName = place + "." + mod(name);
-      val ignore = List(classOf[ClassNotFoundException], classOf[ClassCastException], classOf[NoClassDefFoundError]);
+      fullName = place + "." + mod(name);
+      ignore = List(classOf[ClassNotFoundException], classOf[ClassCastException], classOf[NoClassDefFoundError]);
       klass <- tryo(ignore)(Class.forName(fullName).asSubclass(targetType).asInstanceOf[Class[C]])
     ) yield klass).headOption
 
@@ -71,7 +71,7 @@ trait ClassHelpers { self: ControlHelpers =>
    * @return a Box, either containing the found class or an Empty can.
    */
   def findType[C <: AnyRef](name: String, where: List[String], modifiers: List[String => String])(implicit m: Manifest[C]): Box[Class[C]] =
-  findClass(name, where, modifiers, m.erasure.asInstanceOf[Class[C]])
+  findClass(name, where, modifiers, m.runtimeClass.asInstanceOf[Class[C]])
 
   /**
    * General method to in find a class according to its name, a list of possible packages and a
@@ -150,13 +150,6 @@ trait ClassHelpers { self: ControlHelpers =>
    */
   def findClass(where: List[(String, List[String])]): Box[Class[AnyRef]] =
   findType[AnyRef](where)
-
-  @deprecated("Use StringHelpers.camelify", "2.3")
-  def camelCase(name : String): String = StringHelpers.camelify(name)
-  @deprecated("Use StringHelpers.camelifyMethod", "2.3")
-  def camelCaseMethod(name: String): String = StringHelpers.camelifyMethod(name)
-  @deprecated("Use StringHelpers.snakify", "2.3")
-  def unCamelCase(name : String) = StringHelpers.snakify(name)
 
   /**
    * @return true if the method is public and has no parameters
@@ -378,7 +371,7 @@ trait ClassHelpers { self: ControlHelpers =>
     var c: Class[_] = in
     ret += c
     while (c.getSuperclass != null) {
-      val sc = c.getSuperclass
+      val sc: Class[_] = c.getSuperclass
       ret += sc
       c = sc
     }

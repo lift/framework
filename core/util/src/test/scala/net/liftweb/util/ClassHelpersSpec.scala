@@ -174,7 +174,7 @@ object ClassHelpersSpec extends Specification  {
       createInvoker("length", null) must_== Empty
     }
     "return a Full Box with the function from Unit to a Box containing the result of the method to invoke" in {
-      createInvoker("length", "").openOrThrowException("Test").apply().get must_== 0
+      createInvoker("length", "").openOrThrowException("Test").apply() must_== Full(0)
     }
     "The invoker function will throw the cause exception if the method can't be called" in {
       (() => createInvoker("get", "").openOrThrowException("Test").apply)() must throwA[Exception]

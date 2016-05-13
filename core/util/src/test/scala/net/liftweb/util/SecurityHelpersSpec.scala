@@ -18,10 +18,11 @@
 package net.liftweb
 package util
 
+import org.xml.sax.SAXParseException
+
 import org.specs2.mutable.Specification
 
 import SecurityHelpers._
-
 
 /**
  * Systems under specification for SecurityHelpers.
@@ -30,6 +31,21 @@ object SecurityHelpersSpec extends Specification  {
   "SecurityHelpers Specification".title
 
   "Security Helpers" should {
+    "not parse XML with a DOCTYPE" in {
+      secureXML.loadString("""<?xml version="1.0" encoding="ISO-8859-1"?>
+        <!DOCTYPE foo [
+          <!ELEMENT foo ANY >
+          <!ENTITY xxe SYSTEM "file:///etc/passwd" >]>
+        <foo>&xxe;</foo>"""
+      ) must throwA[SAXParseException]
+    }
+
+    "parse XML without a DOCTYPE" in {
+      secureXML.loadString("""<?xml version="1.0" encoding="ISO-8859-1"?>
+        <foo>&amp;</foo>
+      """).toString must_== "<foo>&amp;</foo>"
+    }
+
     "provide a randomLong method returning a random Long modulo a number" in {
       randomLong(7L) must be_<(7L)
     }

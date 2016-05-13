@@ -23,9 +23,8 @@ import net.liftweb.mapper.{Mapper,
 }
 
 import net.liftweb.common.{Full, Box}
-import net.liftweb.util.{Helpers, BindHelpers}
-
-import Helpers._
+import net.liftweb.util._
+  import Helpers._
 
 
 import scala.xml.{NodeSeq, Elem}
@@ -73,33 +72,45 @@ object Util {
    */
   def eachField[T<:net.liftweb.mapper.Mapper[T]](
     mapper: T,
-    fn:MappedField[_,T]=>Seq[BindParam],
+    fn:MappedField[_,T]=>CssSel,
     filter: MappedField[_,T]=>Boolean
   ): NodeSeq=>NodeSeq = {
-    (ns: NodeSeq) => BindHelpers.attr("fields") match {
-      case Some(fields) =>
-        NodeSeq.fromSeq(
-          fields.text.split("\\s+").flatMap {f =>
-              val field = mapper.fieldByName(f.toString)
-              field match {
-                case Full(f) if filter(f) =>
-                  bind("field", ns, fn(f) : _*)
-                case _ =>
-                  NodeSeq.Empty
-              }
-            }
-        )
-      case None =>
-        NodeSeq.fromSeq(
-          mapper.formFields.filter(filter).flatMap { case f: MappedField[_,T] =>
-            bind("field",ns, fn(f): _*)
+    def fieldBindIfWanted(fieldName: String) = {
+      mapper.fieldByName(fieldName).filter(filter) match {
+        case Full(field) =>
+          Some(fn(field))
+        case _ =>
+          None
+      }
+    }
+
+    "^" #> { ns: NodeSeq =>
+      val fieldsAttribute = (ns \ "@fields")
+
+      val bind: Seq[CssSel] =
+        if (fieldsAttribute.nonEmpty) {
+          for {
+            fieldName <- fieldsAttribute.text.split("\\s+")
+            // the following hackery is brought to you by the Scala compiler not
+            // properly typing MapperField[_, T] in the context of the for
+            // comprehension
+            fieldBind <- fieldBindIfWanted(fieldName)
+          } yield {
+            ".field" #> fieldBind
           }
-        )
+        } else {
+          mapper.formFields.filter(filter).map {
+            case field: MappedField[_, T] =>
+              ".field" #> fn(field)
+          }
+        }
+
+      bind.map(_(ns))
     }
   }
   def eachField[T<:net.liftweb.mapper.Mapper[T]](
     mapper: T,
-    fn:MappedField[_,T]=>Seq[BindParam]
+    fn:MappedField[_,T]=>CssSel
   ): NodeSeq=>NodeSeq = eachField(mapper, fn, (f:MappedField[_,T])=>true)
 
   

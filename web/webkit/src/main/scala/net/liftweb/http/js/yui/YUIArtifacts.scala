@@ -122,27 +122,6 @@ object YUIArtifacts extends JSArtifacts {
   def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) = Noop
 
   /**
-   * Makes an Ajax request using lift's Ajax path and the request
-   * attributes described by data parameter
-   */
-  def ajax(data: AjaxInfo): String = {
-    val url = S.encodeURL(S.contextPath + "/" + LiftRules.ajaxPath + "/")
-
-    "url = YAHOO.lift.buildURI(liftAjax.addPageName(" + url.encJs + ") , " + data.data.toJsCmd + ");" +
-            "YAHOO.util.Connect.asyncRequest(" + data.action.encJs + ", url, " + toJson(data) + ");"
-  }
-
-  /**
-   * Makes a Ajax comet request using lift's Comet path and the request
-   * attributes described by data parameter
-   */
-  def comet(data: AjaxInfo): String = {
-    val url = LiftRules.calcCometPath(LiftRules.cometServer())
-    "url = YAHOO.lift.buildURI(" + url.toJsCmd + ", YAHOO.lift.simpleJsonToQS(" + data.data.toJsCmd + "));" +
-            "YAHOO.util.Connect.asyncRequest(" + data.action.encJs + ", url, " + toJson(data) + ");";
-  }
-
-  /**
    * Trabsforms a JSON object intoits string representation
    */
   def jsonStringify(in: JsExp): JsExp = new JsExp {

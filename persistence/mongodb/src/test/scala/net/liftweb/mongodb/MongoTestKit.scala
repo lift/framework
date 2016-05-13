@@ -20,11 +20,11 @@ package mongodb
 import util.{ConnectionIdentifier, DefaultConnectionIdentifier}
 
 import org.specs2.mutable.Specification
-import org.specs2.specification.BeforeAfterExample
+import org.specs2.specification.BeforeAfterEach
 
-import com.mongodb.Mongo
+import com.mongodb.MongoClient
 
-trait MongoTestKit extends Specification with BeforeAfterExample {
+trait MongoTestKit extends Specification with BeforeAfterEach {
   sequential
 
   def dbName = "lift_"+this.getClass.getName
@@ -33,7 +33,7 @@ trait MongoTestKit extends Specification with BeforeAfterExample {
     .replace(".", "_")
     .toLowerCase
 
-  def mongo = new Mongo("127.0.0.1", 27017)
+  def mongo = new MongoClient("127.0.0.1", 27017)
 
   // If you need more than one db, override this
   def dbs: List[(ConnectionIdentifier, String)] = List((DefaultConnectionIdentifier, dbName))
@@ -53,7 +53,7 @@ trait MongoTestKit extends Specification with BeforeAfterExample {
         false
       else {
         dbs foreach { case (id, _) =>
-          MongoDB.use(id) ( db => { db.getLastError } )
+          MongoDB.use(id) ( db => { db.getCollectionNames} )
         }
         true
       }
