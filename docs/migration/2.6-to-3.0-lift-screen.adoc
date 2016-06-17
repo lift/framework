@@ -1,0 +1,167 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+= Migrating `LiftScreen` from Lift 2.6 to Lift 3.0
+
+The 2.x series of Lift brought a lot of change and innovation. In particular,
+while it started with an approach based on the `bind` helper that transformed
+namespaced XHTML elements into the values that the developer wanted to display,
+it progressed to an HTML5-based approach built around CSS selector transforms.
+As of Lift 3.0, CSS selector transforms are the only supported transforms, so
+as to keep the core of the framework relatively lean and encourage proper HTML
+usage.
+
+One of the Lift components that leveraged the `bind`-style transforms heavily
+was `LiftScreen`. As of Lift 3.0, it's been replaced with what in Lift 2.6 was
+named `CssBoundLiftScreen`, which is a version of `LiftScreen` that uses CSS
+selector transforms instead of `bind`-style transforms. Following is a
+breakdown of the things you need to do if you were using `LiftScreen` and want
+to upgrade to Lift 3.0.
+
+== `formName`
+
+In Lift 3.0, you need to provide a `formName` to your screen. For the most
+straightforward compatibility with the current form implementation, you should
+be able to simply set it to "":
+
+[.lift-30]
+```scala
+  val formName = ""
+```
+
+// Something more about what formName is for would be good here.
+
+== Bind Points
+
+In the old `LiftScreen`, bind points were elements with the namespace `prefix`
+and various names, e.g. `wizard:fields` for the container of all fields. Lift
+3.0 instead looks for certain CSS classes in elements. Here's a mapping from
+old `wizard:*` elements to CSS classes:
+
+.Lift 2.6 wizard element to Lift 3.0 CSS class mapping
+|=========================
+| Lift 2.6 Element                | Lift 3.0 CSS Class
+
+| `wizard:screen_info`            | `screenInfo`
+
+| `wizard:screen_number`          | `screenNumber`
+
+| `wizard:total_screens`          | `totalScreens`
+
+| `wizard:wizard_top`             | `wizardTop`
+
+| `wizard:screen_top`             | `screenTop`
+
+| `wizard:errors`                 | `globalErrors`
+
+| `wizard:item` (within `errors`) | `error`
+
+| `wizard:fields`                 | `fields`
+
+| `wizard:line`                   | `fieldContainer`
+
+| `wizard:label`                  | `label`
+
+| `wizard:for`                    | unneeded (label is automatically given a `for` attribute)
+
+| `wizard:help`                   | `help`
+
+| `wizard:field_errors`           | `errors`
+
+| `wizard:error`                  | `error`
+
+| `wizard:form`                   | `value`
+
+| `wizard:prev`                   | `prev`
+
+| `wizard:cancel`                 | `cancel`
+
+| `wizard:next`                   | `next`
+
+| `wizard:wizard_bottom`          | `wizardBottom`
+
+| `wizard:screen_bottom`          | `screenBottom`
+
+| `wizard:bind`                   | unnecessary (contents are put into the elements with appropriate classes)
+|=========================
+
+Generally speaking, you can annotate the container element or the element that
+will have a given value directly with the class of the content it should
+contain, rather than needing an extra container with the class like the old
+`wizard:*` elements. For example, where before you had:
+
+[.lift-26]
+.Lift 2.6 global error markup
+```html
+<wizard:errors>
+  <div>
+    <ul>
+      <wizard:item>
+        <li><wizard:bind></wizard:bind></li>
+      </wizard:item>
+    </ul>
+  </div>
+</wizard:errors>
+```
+
+In Lift 3.0, you can remove all the `wizard:*` elements and instead put the
+classes directly on the remaining elements:
+
+[.lift-30]
+.Lift 3.0 global error markup
+```html
+<div class="globalErrors">
+  <ul>
+    <li class="error">
+      placeholder text, will be replaced by the error message
+    </li>
+  </ul>
+</div>
+```
+
+In fact, you can even eliminate the top-level `div`, if you'd like, by putting
+the `globalErrors` class on the `ul`:
+
+[.lift-30]
+```html
+<ul class="globalErrors">
+  <li class="error">
+    placeholder text, will be replaced by the error message
+  </li>
+</ul>
+```
+
+If you don't like these class names, you can customize them by overriding the
+`cssClassBinding` that you want to use in your `LiftScreen` subclass and
+returning a new instance of `CssClassBinding` with the appropriate CSS classes
+set up:
+
+[.lift-30]
+.Dasherize class names
+```scala
+  protected override lazy val cssClassBinding = new CssClassBinding {
+    override val screenInfo = "screen-info"
+    override val screenNumber = "screen-number"
+    override val totalScreens = "total-screens"
+
+    override val wizardTop = "wizard-top"
+    override val screenTop = "screen-top"
+    override val wizardBottom = "wizard-bottom"
+    override val screenBottom = "screen-bottom"
+
+    override val globalErrors = "global-errors"
+    override val fieldContainer = "field-container"
+
+  }
+```
+
+Above, we create a new version of `CssClassBinding` that uses dashes instead of
+camel-case between words.
+
+== Further Help
+
+That's it! If you run into any issues porting your screen over to Lift 3.0's
+`LiftScreen`, please ask on the Lift mailing list and you should find willing
+helpers.
