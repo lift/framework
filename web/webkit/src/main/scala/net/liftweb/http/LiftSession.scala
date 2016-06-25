@@ -2330,7 +2330,6 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * of the current HTTP request/response cycle.
    *
    * @param theType the type of the CometActor
-   * @param name the optional name of the CometActor
    * @param msg the message to send to the CometActor
    */
   def sendCometActorMessage(theType: String, msg: Any) {
