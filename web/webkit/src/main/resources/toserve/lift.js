@@ -507,6 +507,8 @@
 
         return self;
       };
+	  
+      self['catch'] = self.fail;
 
       self.done = function(f) {
         _doneFuncs.push(f);
