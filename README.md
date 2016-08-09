@@ -21,10 +21,6 @@ if the pull requests meet the following criteria:
 * The request handles an issue that has been discussed on the [Lift mailing list](http://groups.google.com/forum/#!forum/liftweb)
   and whose solution has been requested (and in general adheres to the spirit of
   the issue guidelines outlined in [CONTRIBUTING.md](https://github.com/lift/framework/blob/master/CONTRIBUTING.md)).
-* The request represents one or more of the following:
-  * Documentation including ScalaDoc comments in code
-  * Example code
-  * Small changes, enhancements, or bug fixes to Lift’s code
 * The request includes a signature at the bottom of the `/contributors.md` file.
 
 For more details, see [CONTRIBUTING.md](https://github.com/lift/framework/blob/master/CONTRIBUTING.md).
