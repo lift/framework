@@ -282,8 +282,8 @@ Lift node rule: `^^`::
   _first_ element that matches the selector, and that it lifts it all the way to
   the root of the `NodeSeq` being transformed. For example,
   `".admin-user ^^" #> "ignored"`, when applied to the
-  markup `<div><form><fieldset class=".admin-user">...</fieldset>
-  <fieldset class="power-user">...</fieldset></div>`, will
+  markup `<div><form><fieldset class="admin-user">...</fieldset>
+  <fieldset class="power-user">...</fieldset></form></div>`, will
   produce `<fieldset class="admin-user">...</fieldset>`. This is useful for
   selecting among a set of template elements based on some external condition
   (e.g., one template for one type of user, another template for another type of
