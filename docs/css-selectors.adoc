@@ -238,7 +238,7 @@ Append to children rule: `\*<` or `*+`::
 
 Prepend to children rule: `>*` or `-*`::
   The transformation result will be prepended to the children of the matched
-  element(s). For example, `^ *+` will prepend the results of the transformation
+  element(s). For example, `^ -*` will prepend the results of the transformation
   to the beginning of the content of all root elements.
 
 Surround children rule: `<*>`::
