@@ -235,18 +235,21 @@ object JsonParser {
     root getOrElse JNothing
   }
 
-  private val EOF = (-1).asInstanceOf[Char]
+  private[this] final val EOF: Char = (-1).asInstanceOf[Char]
 
   private class ValStack(parser: Parser) {
-    import java.util.LinkedList
-    private[this] val stack = new LinkedList[Any]()
+    import java.util.ArrayDeque
+    private[this] val stack = new ArrayDeque[Any](32)
 
     def popAny = stack.poll
     def pop[A](expectedType: Class[A]) = convert(stack.poll, expectedType)
     def push(v: Any) = stack.addFirst(v)
     def peekAny = stack.peek
     def peek[A](expectedType: Class[A]) = convert(stack.peek, expectedType)
-    def replace[A](newTop: Any) = stack.set(0, newTop)
+    def replace[A](newTop: Any) = {
+      stack.pop
+      stack.push(newTop)
+    }
 
     private def convert[A](x: Any, expectedType: Class[A]): A = {
       if (x == null) parser.fail("expected object or array")
@@ -258,9 +261,9 @@ object JsonParser {
   }
 
   class Parser(buf: Buffer) {
-    import java.util.LinkedList
+    import java.util.ArrayDeque
 
-    private[this] val blocks = new LinkedList[BlockMode]()
+    private[this] val blocks = new ArrayDeque[BlockMode](32)
     private[this] var fieldNameMode = true
 
     def fail(msg: String) = throw new ParseException(msg + "\nNear: " + buf.near, null)
