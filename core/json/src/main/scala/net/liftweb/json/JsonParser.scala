@@ -17,6 +17,8 @@
 package net.liftweb
 package json
 
+import scala.annotation.switch
+
 /** JSON parser.
  */
 object JsonParser {
@@ -83,50 +85,81 @@ object JsonParser {
       case e: Exception => throw new ParseException("parsing failed", e)
     } finally { buf.release }
   }
-  
+
+  private[this] final val HexChars: Array[Int] = {
+    val chars = new Array[Int](128)
+    var i = 0
+    while (i < 10) {
+      chars(i + '0') = i
+      i += 1
+    }
+    i = 0
+    while (i < 16) {
+      chars(i + 'a') = 10 + i
+      chars(i + 'A') = 10 + i
+      i += 1
+    }
+    chars
+  }
+
   private[json] def unquote(string: String): String = 
     unquote(new JsonParser.Buffer(new java.io.StringReader(string), false))
-  
-  private[json] def unquote(buf: JsonParser.Buffer): String = {
-    def unquote0(buf: JsonParser.Buffer, base: String): String = {
-      val s = new java.lang.StringBuilder(base)
+
+  private[this] def unquote(buf: JsonParser.Buffer): String = {
+    def unquote0(buf: JsonParser.Buffer): String = {
+      val builder = buf.builder
+      builder.delete(0, builder.length())
       var c = '\\'
       while (c != '"') {
         if (c == '\\') {
-          buf.next match {
-            case '"'  => s.append('"')
-            case '\\' => s.append('\\')
-            case '/'  => s.append('/')
-            case 'b'  => s.append('\b')
-            case 'f'  => s.append('\f')
-            case 'n'  => s.append('\n')
-            case 'r'  => s.append('\r')
-            case 't'  => s.append('\t')
+          buf.substring(intoBuilder = true)
+          (buf.next: @switch) match {
+            case '"'  => builder.append('"')
+            case '\\' => builder.append('\\')
+            case '/'  => builder.append('/')
+            case 'b'  => builder.append('\b')
+            case 'f'  => builder.append('\f')
+            case 'n'  => builder.append('\n')
+            case 'r'  => builder.append('\r')
+            case 't'  => builder.append('\t')
             case 'u' =>
+              var byte = 0
+              var finalChar = 0
               val chars = Array(buf.next, buf.next, buf.next, buf.next)
-              val codePoint = Integer.parseInt(new String(chars), 16)
-              s.appendCodePoint(codePoint)
-            case _ => s.append('\\')
+              while (byte < 4) {
+                finalChar = (finalChar << 4) | HexChars(chars(byte).toInt)
+                byte += 1
+              }
+              builder.appendCodePoint(finalChar.toChar)
+            case _ =>
+              builder.append('\\')
           }
-        } else s.append(c)
+          buf.mark
+        }
         c = buf.next
       }
-      s.toString
+      buf.substring(intoBuilder = true)
+      builder.toString
     }
 
     buf.eofIsFailure = true
     buf.mark
     var c = buf.next
+    var forcedReturn: String = null
     while (c != '"') {
-      if (c == '\\') {
-        val s = unquote0(buf, buf.substring)
-        buf.eofIsFailure = false
-        return s
+      (c: @switch) match {
+        case '\\' =>
+          forcedReturn = unquote0(buf)
+          c = '"'
+        case _ =>
+          c = buf.next
       }
-      c = buf.next
     }
     buf.eofIsFailure = false
-    buf.substring
+    forcedReturn match {
+      case null => new String(buf.substring())
+      case _ => forcedReturn
+    }
   }
 
   // FIXME fail fast to prevent infinite loop, see 
@@ -335,6 +368,8 @@ object JsonParser {
    * Buffer is divided to one or more segments (preallocated in Segments pool).
    */
   private[json] final class Buffer(in: Reader, closeAutomatically: Boolean) {
+    final val builder = new java.lang.StringBuilder(32)
+
     var offset = 0
     var curMark = -1
     var curMarkSegment = -1
@@ -366,31 +401,50 @@ object JsonParser {
       }
     }
 
-    def substring = {
-      if (curSegmentIdx == curMarkSegment) new String(segment, curMark, cur-curMark-1)
-      else { // slower path for case when string is in two or more segments
-        var parts: List[(Int, Int, Array[Char])] = Nil
-        var i = curSegmentIdx
-        while (i >= curMarkSegment) {
+    private[this] final val emptyArray = new Array[Char](0)
+    final def substring(intoBuilder: Boolean = false) = {
+      if (curSegmentIdx == curMarkSegment) {
+        val substringLength = cur - curMark - 1
+        if (intoBuilder) {
+          builder.append(segment, curMark, substringLength)
+          emptyArray
+        } else if (substringLength == 0) {
+          emptyArray
+        } else {
+          val array = new Array[Char](substringLength)
+          System.arraycopy(segment, curMark, array, 0, substringLength)
+          array
+        }
+      } else { // slower path for case when string is in two or more segments
+        val segmentCount = curSegmentIdx - curMarkSegment + 1
+        val substringLength = segmentCount * Segments.segmentSize - curMark - (Segments.segmentSize - cur) - 1
+        val chars =
+          if (intoBuilder) {
+            emptyArray
+          } else {
+            new Array[Char](substringLength)
+          }
+
+        var i = curMarkSegment
+        var offset = 0
+        while (i <= curSegmentIdx) {
           val s = segments(i).seg
           val start = if (i == curMarkSegment) curMark else 0
           val end = if (i == curSegmentIdx) cur else s.length+1
-          parts = (start, end, s) :: parts
-          i = i-1
-        }
-        val len = parts.map(p => p._2 - p._1 - 1).foldLeft(0)(_ + _)
-        val chars = new Array[Char](len)
-        i = 0
-        var pos = 0
-
-        while (i < parts.size) {
-          val (start, end, b) = parts(i)
           val partLen = end-start-1
-          System.arraycopy(b, start, chars, pos, partLen)
-          pos = pos + partLen
+          if (intoBuilder) {
+            builder.append(s, start, partLen)
+          } else {
+            System.arraycopy(s, start, chars, offset, partLen)
+          }
+          offset += partLen
           i = i+1
         }
-        new String(chars)
+
+        curMarkSegment = -1
+        curMark = -1
+
+        chars
       }
     }
 
