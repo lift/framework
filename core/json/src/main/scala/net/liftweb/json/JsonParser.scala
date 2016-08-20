@@ -291,23 +291,33 @@ object JsonParser {
       def parseValue(first: Char) = {
         var wasInt = true
         var doubleVal = false
-        val s = new StringBuilder
-        s.append(first)
+        val buf = this.buf
+
+        buf.back
+        buf.mark
         while (wasInt) {
           val c = buf.next
-          if (c == EOF) {
-            wasInt = false
-          } else if (c == '.' || c == 'e' || c == 'E') {
-            doubleVal = true
-            s.append(c)
-          } else if (!(Character.isDigit(c) || c == '.' || c == 'e' || c == 'E' || c == '-' || c == '+')) {
-            wasInt = false
-            buf.back
-          } else s.append(c)
+          (c: @switch) match  {
+            case '.' | 'e' | 'E' =>
+              doubleVal = true
+            case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '-' | '+' =>
+              // continue
+            case _ =>
+              wasInt = false
+              if (c != EOF) {
+                buf.back
+              }
+          }
         }
-        val value = s.toString
-        if (doubleVal) DoubleVal(parseDouble(value)) 
-        else IntVal(BigInt(value))
+        buf.forward
+        val value = buf.substring()
+        buf.back
+        (doubleVal: @switch) match {
+          case true =>
+            DoubleVal(BigDecimal(new String(value)).doubleValue)
+          case false =>
+            IntVal(BigInt(new String(value)))
+        }
       }
 
       while (true) {
