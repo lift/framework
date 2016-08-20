@@ -334,20 +334,29 @@ object JsonParser {
   /* Buffer used to parse JSON.
    * Buffer is divided to one or more segments (preallocated in Segments pool).
    */
-  private[json] class Buffer(in: Reader, closeAutomatically: Boolean) {
+  private[json] final class Buffer(in: Reader, closeAutomatically: Boolean) {
     var offset = 0
     var curMark = -1
     var curMarkSegment = -1
     var eofIsFailure = false
-    private[this] var segments: List[Segment] = List(Segments.apply())
+    private[this] var segments = scala.collection.mutable.ArrayBuffer(Segments.apply())
     private[this] var segment: Array[Char] = segments.head.seg
     private[this] var cur = 0 // Pointer which points current parsing location
     private[this] var curSegmentIdx = 0 // Pointer which points current segment
 
-    def mark = { curMark = cur; curMarkSegment = curSegmentIdx }
-    def back = cur = cur-1
+    final def mark = {
+      if (curSegmentIdx > 0) {
+        segments(0) = segments.remove(curSegmentIdx)
+        curSegmentIdx = 0
+      }
 
-    def next: Char = {
+      curMark = cur
+      curMarkSegment = curSegmentIdx
+    }
+    final def back = cur = cur-1
+    final def forward = cur = cur+1
+
+    final def next: Char = {
       if (cur >= offset && read < 0) {
         if (eofIsFailure) throw new ParseException("unexpected eof", null) else EOF
       } else {
@@ -397,11 +406,24 @@ object JsonParser {
 
     private[this] def read = {
       if (offset >= segment.length) {
-        val newSegment = Segments.apply()
         offset = 0
-        segment = newSegment.seg
-        segments = segments ::: List(newSegment)
-        curSegmentIdx = segments.length - 1
+        val segmentToUse = 
+          (curMarkSegment: @scala.annotation.switch) match {
+            case -1 =>
+              curSegmentIdx = 0
+              segments(0)
+            case _ =>
+              curSegmentIdx += 1
+              if (curSegmentIdx < segments.length) {
+                segments(curSegmentIdx)
+              } else {
+                val segment = Segments.apply()
+                segments.append(segment)
+                segment
+              }
+          }
+
+        segment = segmentToUse.seg
       }
 
       val length = in.read(segment, offset, segment.length-offset)
