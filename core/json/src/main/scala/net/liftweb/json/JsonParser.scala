@@ -266,7 +266,7 @@ object JsonParser {
     private[this] val blocks = new ArrayDeque[BlockMode](32)
     private[this] var fieldNameMode = true
 
-    def fail(msg: String) = throw new ParseException(msg + "\nNear: " + buf.near, null)
+    def fail(msg: String, cause: Exception = null) = throw new ParseException(msg + "\nNear: " + buf.near, cause)
 
     /** Parse next Token from stream.
      */
@@ -276,7 +276,7 @@ object JsonParser {
           unquote(buf)
         } catch {
           case p: ParseException => throw p
-          case _: Exception => fail("unexpected string end")
+          case cause: Exception => fail("unexpected string end", cause)
         }
 
       def parseValue(first: Char) = {
