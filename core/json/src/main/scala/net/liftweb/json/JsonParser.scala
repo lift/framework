@@ -271,15 +271,6 @@ object JsonParser {
     /** Parse next Token from stream.
      */
     def nextToken: Token = {
-      def isDelimiter(c: Char) = {
-        (c: @switch) match {
-          case ' ' | '\n' | ',' | '\r' | '\t' | '}' | ']' =>
-            true
-          case _ =>
-            false
-        }
-      }
-
       def parseString: String = 
         try {
           unquote(buf)
@@ -321,10 +312,7 @@ object JsonParser {
       }
 
       while (true) {
-        buf.next match {
-          case c if EOF == c => 
-            buf.automaticClose
-            return End
+        (buf.next: @switch) match {
           case '{' =>
             blocks.addFirst(OBJECT)
             fieldNameMode = true
@@ -366,11 +354,19 @@ object JsonParser {
             fieldNameMode = true
             blocks.poll
             return CloseArr
-          case c if Character.isDigit(c) || c == '-' =>
+          case c @ ('0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '-') =>
             fieldNameMode = true
             return parseValue(c)
-          case c if isDelimiter(c) =>
-          case c => fail("unknown token " + c)
+          case ' ' |  '\n' | ',' | '\r' | '\t' =>
+            // ignore
+          case c =>
+            c match {
+              case `EOF` =>
+                buf.automaticClose
+                return End
+              case _ =>
+                fail("unknown token " + c)
+            }
         }
       }
       buf.automaticClose
