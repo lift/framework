@@ -271,7 +271,14 @@ object JsonParser {
     /** Parse next Token from stream.
      */
     def nextToken: Token = {
-      def isDelimiter(c: Char) = c == ' ' || c == '\n' || c == ',' || c == '\r' || c == '\t' || c == '}' || c == ']'
+      def isDelimiter(c: Char) = {
+        (c: @switch) match {
+          case ' ' | '\n' | ',' | '\r' | '\t' | '}' | ']' =>
+            true
+          case _ =>
+            false
+        }
+      }
 
       def parseString: String = 
         try {
