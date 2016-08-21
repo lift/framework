@@ -162,13 +162,8 @@ object JsonParser {
     }
   }
 
-  // FIXME fail fast to prevent infinite loop, see 
-  // http://www.exploringbinary.com/java-hangs-when-converting-2-2250738585072012e-308/
-  private val BrokenDouble = BigDecimal("2.2250738585072012e-308")
   private[json] def parseDouble(s: String) = {
-    val d = BigDecimal(s)
-    if (d == BrokenDouble) sys.error("Error parsing 2.2250738585072012e-308")
-    else d.doubleValue
+    s.toDouble
   }
 
   private[this] case class IntermediateJObject(fields: scala.collection.mutable.ListBuffer[JField])
@@ -305,7 +300,7 @@ object JsonParser {
         buf.back
         (doubleVal: @switch) match {
           case true =>
-            DoubleVal(BigDecimal(new String(value)).doubleValue)
+            DoubleVal(parseDouble(new String(value)))
           case false =>
             IntVal(BigInt(new String(value)))
         }
