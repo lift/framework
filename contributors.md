@@ -227,3 +227,9 @@ Arek Burdach
 
 ### Email: ###
 arek.burdach at gmail dot com
+
+### Name: ###
+Bhashit Parikh
+
+### Email: ###
+bhashit dot parikh at gmail dot com

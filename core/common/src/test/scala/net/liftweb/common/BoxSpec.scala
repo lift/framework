@@ -141,6 +141,15 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define a 'flatMap' method transforming its value in another Box. If the value is transformed in an Empty can, the total result is an Empty can" in {
       Full(0) flatMap { x: Int => if (x > 0) Full("full") else Empty } must beEmpty
     }
+    "define a 'flatten' method if it contains another Box. If the inner box is a Full can, the final result is a Full can" in {
+      Full(Full(1)).flatten must_== Full(1)
+    }
+    "define a 'flatten' method if it contains another Box. If the inner box is a Failure, the final result is a Failure" in {
+      Full(Failure("error", Empty, Empty)).flatten must_== Failure("error", Empty, Empty)
+    }
+    "define a 'flatten' method if it contains another Box. If the inner box is an Empty can, the final result is an Empty can" in {
+      Full(Empty).flatten must_== Empty
+    }
     "define an 'elements' method returning an iterator containing its value" in {
       Full(1).elements.next must_== 1
     }
@@ -268,6 +277,9 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define a 'flatMap' method returning Empty" in {
       Empty flatMap {x: Int => Full("full")} must beEmpty
     }
+    "define a 'flatten' method returning Empty" in {
+      Empty.flatten must beEmpty
+    }
     "define an 'elements' method returning an empty iterator" in {
       Empty.elements.hasNext must beFalse
     }
@@ -307,9 +319,10 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
   }
 
   "A Failure is an Empty Box which" should {
-    "return itself if mapped or flatmapped" in {
+    "return itself if mapped, flatMapped or flattened" in {
       Failure("error", Empty, Empty) map {_.toString} must_== Failure("error", Empty, Empty)
       Failure("error", Empty, Empty) flatMap {x: String => Full(x.toString)} must_== Failure("error", Empty, Empty)
+      Failure("error", Empty, Empty).flatten must_== Failure("error", Empty, Empty)
     }
     "return a itself when asked for its status with the operator ?~" in {
       Failure("error", Empty, Empty) ?~ "nothing" must_== Failure("error", Empty, Empty)

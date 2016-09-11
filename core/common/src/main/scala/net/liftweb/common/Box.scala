@@ -456,6 +456,13 @@ sealed abstract class Box[+A] extends Product with Serializable{
    */
   def flatMap[B](f: A => Box[B]): Box[B] = Empty
 
+  def flatten[B](implicit ev: A <:< Box[B]): Box[B] = this match {
+    case Full(internal) => ev(internal)
+    case f: Failure => f
+    case Empty => Empty
+  }
+
+
   /**
    * If this `Box` contains a value and it satisfies the specified `predicate`,
    * return the `Box` unchanged. Otherwise, return an `Empty`.
@@ -497,7 +504,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def forall(func: A => Boolean): Boolean = true
 
   /**
-   * 
+   *
    * If this `Box` contains a value and it does '''not''' satisfy the specified
    * `f`, return the `Box` unchanged. Otherwise, return an `Empty`.
    */
@@ -648,7 +655,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
    * This method calls the specified function with the specified `in` value and
    * the value contained in this `Box`. If this box is empty, returns the `in`
    * value directly.
-   * 
+   *
    * @return The result of the function or the `in` value.
    */
   def run[T](in: => T)(f: (T, A) => T) = in
@@ -921,7 +928,7 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
     import scala.collection.mutable.ListBuffer
     val ret = new ListBuffer[Throwable]()
     var e: Throwable = exception openOr null
-    
+
     while (e ne null) {
       ret += e
       e = e.getCause
@@ -942,7 +949,7 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
   /**
    * Flatten the `Failure` chain to a List where this Failure is at the head.
    */
-  def failureChain: List[Failure] = 
+  def failureChain: List[Failure] =
     this :: chain.toList.flatMap(_.failureChain)
 
   /**
@@ -1087,7 +1094,7 @@ final case class BoxedBoxOrRaw[T](box: Box[T]) extends BoxOrRaw[T]
  * The `[[BoxOrRaw]]` that represents a raw value.
  */
 final case class RawBoxOrRaw[T](raw: T) extends BoxOrRaw[T] {
-  def box: Box[T] = 
+  def box: Box[T] =
     if (raw.asInstanceOf[Object] ne null) Full(raw) else Empty
 }
 
