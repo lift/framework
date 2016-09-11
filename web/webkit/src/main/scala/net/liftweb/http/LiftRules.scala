@@ -570,11 +570,31 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var displayHelpfulSiteMapMessages_? = true
 
   /**
-   * The attribute used to expose the names of event attributes that
-   * were removed from a given element for separate processing in JS.
-   * By default, Lift removes event attributes and attaches those
-   * behaviors via a separate JS file, to avoid inline JS invocations so
-   * that a restrictive Content-Security-Policy can be used.
+   * Enables or disables event attribute and script element extraction.
+   *
+   * Lift can extract script elements and event attributes like onclick,
+   * onchange, etc, and attach the event handlers in a separate JavaScript file
+   * that is generated per-page. This allows for populating these types of
+   * JavaScript in your snippets via CSS selector transforms, without needing
+   * to allow inline scripts in your content security policy (see
+   * `[[securityRules]]`).
+   *
+   * However, there are certain scenarios where event attribute extraction
+   * cannot provide a 1-to-1 reproduction of the behavior you'd get with inline
+   * attributes or scripts; if your application hits these scenarios and you
+   * would prefer not to adjust them to work with a restrictive content
+   * security policy, you can allow inline scripts and set
+   * `extractEventAttributes` to false to disable event extraction.
+   */
+  @volatile var extractInlineJavaScript: Boolean = true
+
+  /**
+   * The attribute used to expose the names of event attributes that were
+   * removed from a given element for separate processing in JS (when
+   * `extractInlineJavaScript` is `true`). By default, Lift removes event
+   * attributes and attaches those behaviors via a separate JS file, to avoid
+   * inline JS invocations so that a restrictive content security policy can be
+   * used.
    *
    * You can set this variable so that the resulting HTML will have
    * attribute information about the removed attributes, in case you

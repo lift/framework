@@ -40,7 +40,8 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
             </body>
           </html>,
           "/context-path",
-          false
+          false,
+          true
         ).nodes
 
       result must ==/(
@@ -85,7 +86,8 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
             </body>
           </html>,
           "/context-path",
-          false
+          false,
+          true
         )
 
       List("testJs1", 
@@ -113,7 +115,8 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
         HtmlNormalizer.normalizeHtmlAndEventHandlers(
           <myelement id="testid" onevent="doStuff" />,
           "/context-path",
-          false
+          false,
+          true
         )
 
       html must ==/(<myelement id="testid" />)
@@ -125,7 +128,8 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
         HtmlNormalizer.normalizeHtmlAndEventHandlers(
           <myelement onevent="doStuff" />,
           "/context-path",
-          false
+          false,
+          true
         )
 
       val id = html \@ "id"
@@ -143,7 +147,8 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
             <myelement onevent="doStuff3" />
           </div>,
           "/context-path",
-          false
+          false,
+          true
         )
 
       js.toJsCmd must be matching("""(?s)\Qlift.onEvent("lift-event-js-\E[^"]+\Q","event",function(event) {doStuff;});
@@ -165,7 +170,8 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
             <myelement action="javascript:/doStuff4" />
           </div>,
           "/context-path",
-          false
+          false,
+          true
         )
 
       (html \ "myelement").map(_ \@ "href").filter(_.nonEmpty) must beEmpty
@@ -187,7 +193,8 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
             <myelement action="doStuff4" />
           </div>,
           "/context-path",
-          false
+          false,
+          true
         )
 
       (html \ "myelement").map(_ \@ "href").filter(_.nonEmpty) must_== List("doStuff", "javascrip://doStuff3")
@@ -216,10 +223,11 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
             </body>
           </html>,
           "/context-path",
-          false
+          false,
+          true
         ).nodes
 
-      (result \\ "link").map(_ \@ "href") must_== 
+      (result \\ "link").map(_ \@ "href") must_==
         "/context-path/testlink" ::
         "/context-path/testlink2" ::
         "/context-path/testlink3" :: Nil
@@ -247,10 +255,11 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
             </body>
           </html>,
           "/context-path",
-          false
+          false,
+          true
         ).nodes
 
-      (result \\ "script").map(_ \@ "src") must_== 
+      (result \\ "script").map(_ \@ "src") must_==
         "/context-path/testscript" ::
         "/context-path/testscript2" :: Nil
     }
@@ -277,10 +286,11 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
             </body>
           </html>,
           "/context-path",
-          false
+          false,
+          true
         ).nodes
 
-      (result \\ "a").map(_ \@ "href") must_== 
+      (result \\ "a").map(_ \@ "href") must_==
         "/context-path/testa1" ::
         "/context-path/testa2" ::
         "testa3" ::
@@ -311,10 +321,11 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
             </body>
           </html>,
           "/context-path",
-          false
+          false,
+          true
         ).nodes
 
-      (result \\ "form").map(_ \@ "action") must_== 
+      (result \\ "form").map(_ \@ "action") must_==
         "/context-path/testform1" ::
         "/context-path/testform2" ::
         "testform3" ::
@@ -344,11 +355,12 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
               </body>
             </html>,
             "/context-path",
-            false
+            false,
+            true
           ).nodes
         }
 
-      (result \\ "script").map(_ \@ "src") must_== 
+      (result \\ "script").map(_ \@ "src") must_==
         "testscript" ::
         "testscript2" ::
         "testscript3" :: Nil
@@ -375,11 +387,12 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
               </body>
             </html>,
             "/context-path",
-            false
+            false,
+            true
           ).nodes
         }
 
-      (result \\ "link").map(_ \@ "href") must_== 
+      (result \\ "link").map(_ \@ "href") must_==
         "testlink" ::
         "testlink2" ::
         "testlink3" :: Nil
@@ -406,11 +419,12 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
               </body>
             </html>,
             "/context-path",
-            false
+            false,
+            true
           ).nodes
         }
 
-      (result \\ "a").map(_ \@ "href") must_== 
+      (result \\ "a").map(_ \@ "href") must_==
         "rewritten" ::
         "rewritten" ::
         "rewritten" :: Nil
@@ -437,11 +451,330 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
               </body>
             </html>,
             "/context-path",
+            false,
+            true
+          ).nodes
+        }
+
+      (result \\ "form").map(_ \@ "action") must_==
+        "rewritten" ::
+        "rewritten" ::
+        "rewritten" :: Nil
+    }
+  }
+
+  "HtmlNormalizer when normalizing HTML and event handlers with event extract disabled" should {
+    "not extract events from any elements at any depth" in {
+      val startingHtml =
+        <html onevent="testJs1">
+          <head onresult="testJs2">
+            <script src="testscript" onmagic="testJs3"></script>
+            <link href="testlink" onthing="testJs4" />
+          </head>
+          <body onclick="testJs5">
+            <link href="testlink2" onclick="testJs5" />
+            <form action="booyan" onsubmit="testJs6">
+              <p onmouseover="testJs7">
+                <link href="testlink3" onslippetydip="testJs8" />
+              </p>
+            </form>
+
+            <p onkeyup="testJs9">Thingies</p>
+            <p ondragstart="testJs10">More thingies</p>
+          </body>
+        </html>
+
+      val NodesAndEventJs(html, js) =
+        HtmlNormalizer.normalizeHtmlAndEventHandlers(
+          startingHtml,
+          "/context-path",
+          false,
+          false
+        )
+
+      html.toString must_== startingHtml.toString
+      js.toJsCmd.length must_== 0
+    }
+
+    "not extract events from hrefs and actions" in {
+      val startingHtml =
+          <div>
+            <myelement href="javascript:doStuff" />
+            <myelement id="hello" action="javascript:doStuff2" />
+            <myelement id="hello2" href="javascript://doStuff3" />
+            // Note here we have the same behavior as browsers: javascript:/
+            // is *processed as JavaScript* but it is *invalid JavaScript*
+            // (i.e., it corresponds to a JS expression that starts with `/`).
+            <myelement action="javascript:/doStuff4" />
+          </div>
+
+      val NodesAndEventJs(html, js) =
+        HtmlNormalizer.normalizeHtmlAndEventHandlers(
+          startingHtml,
+          "/context-path",
+          false,
+          false
+        )
+
+      html.toString must_== startingHtml.toString
+      js.toJsCmd.length must_== 0
+    }
+
+    "normalize absolute link hrefs everywhere" in {
+      val result =
+        HtmlNormalizer.normalizeHtmlAndEventHandlers(
+          <html>
+            <head>
+              <script src="testscript"></script>
+              <link href="/testlink" />
+            </head>
+            <body>
+              <link href="/testlink2" />
+              <div>
+                <p>
+                  <link href="/testlink3" />
+                </p>
+              </div>
+
+              <p>Thingies</p>
+              <p>More thingies</p>
+            </body>
+          </html>,
+          "/context-path",
+          false,
+          false
+        ).nodes
+
+      (result \\ "link").map(_ \@ "href") must_==
+        "/context-path/testlink" ::
+        "/context-path/testlink2" ::
+        "/context-path/testlink3" :: Nil
+    }
+
+    "normalize absolute script srcs everywhere" in {
+      val result =
+        HtmlNormalizer.normalizeHtmlAndEventHandlers(
+          <html>
+            <head>
+              <script src="/testscript"></script>
+              <link href="testlink" />
+            </head>
+            <body>
+              <script src="/testscript2"></script>
+              <link href="testlink2" />
+              <div>
+                <p>
+                  <link href="testlink3" />
+                </p>
+              </div>
+
+              <p>Thingies</p>
+              <p>More thingies</p>
+            </body>
+          </html>,
+          "/context-path",
+          false,
+          false
+        ).nodes
+
+      (result \\ "script").map(_ \@ "src") must_==
+        "/context-path/testscript" ::
+        "/context-path/testscript2" :: Nil
+    }
+
+    "normalize absolute a hrefs everywhere" in {
+      val result =
+        HtmlNormalizer.normalizeHtmlAndEventHandlers(
+          <html>
+            <head>
+              <a href="/testa1">Booyan</a>
+            </head>
+            <body>
+              <a href="/testa2">Booyan</a>
+              <a href="testa3">Booyan</a>
+              <div>
+                <a href="testa4">Booyan</a>
+                <p>
+                  <a href="/testa5">Booyan</a>
+                </p>
+              </div>
+
+              <p>Thingies <a href="/testa6">Booyan</a></p>
+              <p>More thingies</p>
+            </body>
+          </html>,
+          "/context-path",
+          false,
+          false
+        ).nodes
+
+      (result \\ "a").map(_ \@ "href") must_==
+        "/context-path/testa1" ::
+        "/context-path/testa2" ::
+        "testa3" ::
+        "testa4" ::
+        "/context-path/testa5" ::
+        "/context-path/testa6" :: Nil
+    }
+
+    "normalize absolute form actions everywhere" in {
+      val result =
+        HtmlNormalizer.normalizeHtmlAndEventHandlers(
+          <html>
+            <head>
+              <form action="/testform1">Booyan</form>
+            </head>
+            <body>
+              <form action="/testform2">Booyan</form>
+              <form action="testform3">Booyan</form>
+              <div>
+                <form action="testform4">Booyan</form>
+                <p>
+                  <form action="/testform5">Booyan</form>
+                </p>
+              </div>
+
+              <p>Thingies <form action="/testform6">Booyan</form></p>
+              <p>More thingies</p>
+            </body>
+          </html>,
+          "/context-path",
+          false,
+          false
+        ).nodes
+
+      (result \\ "form").map(_ \@ "action") must_==
+        "/context-path/testform1" ::
+        "/context-path/testform2" ::
+        "testform3" ::
+        "testform4" ::
+        "/context-path/testform5" ::
+        "/context-path/testform6" :: Nil
+    }
+
+    "not rewrite script srcs anywhere" in {
+      val result =
+        URLRewriter.doWith((_: String) => "rewritten") {
+          HtmlNormalizer.normalizeHtmlAndEventHandlers(
+            <html>
+              <head>
+                <script src="testscript"></script>
+              </head>
+              <body>
+                <script src="testscript2"></script>
+                <div>
+                  <p>
+                    <script src="testscript3" />
+                  </p>
+                </div>
+
+                <p>Thingies</p>
+                <p>More thingies</p>
+              </body>
+            </html>,
+            "/context-path",
+            false,
             false
           ).nodes
         }
 
-      (result \\ "form").map(_ \@ "action") must_== 
+      (result \\ "script").map(_ \@ "src") must_==
+        "testscript" ::
+        "testscript2" ::
+        "testscript3" :: Nil
+    }
+
+    "not rewrite link hrefs anywhere" in {
+      val result =
+        URLRewriter.doWith((_: String) => "rewritten") {
+          HtmlNormalizer.normalizeHtmlAndEventHandlers(
+            <html>
+              <head>
+                <link href="testlink" />
+              </head>
+              <body>
+                <link href="testlink2" />
+                <div>
+                  <p>
+                    <link href="testlink3" />
+                  </p>
+                </div>
+
+                <p>Thingies</p>
+                <p>More thingies</p>
+              </body>
+            </html>,
+            "/context-path",
+            false,
+            false
+          ).nodes
+        }
+
+      (result \\ "link").map(_ \@ "href") must_==
+        "testlink" ::
+        "testlink2" ::
+        "testlink3" :: Nil
+    }
+
+    "rewrite a hrefs everywhere" in {
+      val result =
+        URLRewriter.doWith((_: String) => "rewritten") {
+          HtmlNormalizer.normalizeHtmlAndEventHandlers(
+            <html>
+              <head>
+                <a href="testa"></a>
+              </head>
+              <body>
+                <a href="testa2"></a>
+                <div>
+                  <p>
+                    <a href="testa3" />
+                  </p>
+                </div>
+
+                <p>Thingies</p>
+                <p>More thingies</p>
+              </body>
+            </html>,
+            "/context-path",
+            false,
+            false
+          ).nodes
+        }
+
+      (result \\ "a").map(_ \@ "href") must_==
+        "rewritten" ::
+        "rewritten" ::
+        "rewritten" :: Nil
+    }
+
+    "rewrite form actions everywhere" in {
+      val result =
+        URLRewriter.doWith((_: String) => "rewritten") {
+          HtmlNormalizer.normalizeHtmlAndEventHandlers(
+            <html>
+              <head>
+                <form action="testform" />
+              </head>
+              <body>
+                <form action="testform2" />
+                <div>
+                  <p>
+                    <form action="testform3" />
+                  </p>
+                </div>
+
+                <p>Thingies</p>
+                <p>More thingies</p>
+              </body>
+            </html>,
+            "/context-path",
+            false,
+            false
+          ).nodes
+        }
+
+      (result \\ "form").map(_ \@ "action") must_==
         "rewritten" ::
         "rewritten" ::
         "rewritten" :: Nil
