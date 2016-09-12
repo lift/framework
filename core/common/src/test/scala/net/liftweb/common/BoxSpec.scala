@@ -135,20 +135,22 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define a 'map' method to transform its value" in {
       Full(1) map { _.toString } must_== Full("1")
     }
-    "define a 'flatMap' method transforming its value in another Box. If the value is transformed in a Full can, the total result is a Full can" in {
+    "define a 'flatMap' method transforming its value in another Box. If the value is transformed in a Full box, the total result is a Full box" in {
       Full(1) flatMap { x: Int => if (x > 0) Full("full") else Empty } must_== Full("full")
     }
-    "define a 'flatMap' method transforming its value in another Box. If the value is transformed in an Empty can, the total result is an Empty can" in {
+    "define a 'flatMap' method transforming its value in another Box. If the value is transformed in an Empty box, the total result is an Empty box" in {
       Full(0) flatMap { x: Int => if (x > 0) Full("full") else Empty } must beEmpty
     }
-    "define a 'flatten' method if it contains another Box. If the inner box is a Full can, the final result is a Full can" in {
-      Full(Full(1)).flatten must_== Full(1)
-    }
-    "define a 'flatten' method if it contains another Box. If the inner box is a Failure, the final result is a Failure" in {
-      Full(Failure("error", Empty, Empty)).flatten must_== Failure("error", Empty, Empty)
-    }
-    "define a 'flatten' method if it contains another Box. If the inner box is an Empty can, the final result is an Empty can" in {
-      Full(Empty).flatten must_== Empty
+    "define a 'flatten' method if it contains another Box." in {
+      "If the inner box is a Full box, the final result is identical to that box" in {
+        Full(Full(1)).flatten must_== Full(1)
+      }
+      "If the inner box is a Failure, the final result is identical to that box" in {
+        Full(Failure("error", Empty, Empty)).flatten must_== Failure("error", Empty, Empty)
+      }
+      "If the inner box is an Empty box, the final result is identical to that box" in {
+        Full(Empty).flatten must_== Empty
+      }
     }
     "define an 'elements' method returning an iterator containing its value" in {
       Full(1).elements.next must_== 1
