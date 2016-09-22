@@ -403,6 +403,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Holds the JS library specific UI artifacts. By default it uses JQuery's artifacts
+   *
+   * Please note that currently any setting other than `JQueryArtifacts` will switch
+   * you to using Lift's liftVanilla implementation, which is meant to work independent
+   * of any framework. '''This implementation is experimental in Lift 3.0, so use it at
+   * your own risk and make sure you test your application!'''
    */
   @volatile var jsArtifacts: JSArtifacts = JQueryArtifacts
 
