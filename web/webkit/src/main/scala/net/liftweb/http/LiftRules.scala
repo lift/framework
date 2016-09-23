@@ -591,7 +591,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * security policy, you can allow inline scripts and set
    * `extractEventAttributes` to false to disable event extraction.
    */
-  @volatile var extractInlineJavaScript: Boolean = true
+  @volatile var extractInlineJavaScript: Boolean = false
 
   /**
    * The attribute used to expose the names of event attributes that were
