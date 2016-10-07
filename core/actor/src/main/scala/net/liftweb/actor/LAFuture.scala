@@ -15,7 +15,7 @@
  */
 
 package net.liftweb
-package actor 
+package actor
 
 import common._
 
@@ -24,7 +24,7 @@ import common._
  * A container that contains a calculated value
  * or may contain one in the future
  */
-class LAFuture[T](val scheduler: LAScheduler) {
+class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFuture.Context] = Empty) {
   private var item: T = _
   private var failure: Box[Nothing] = Empty
   private var satisfied = false
@@ -32,10 +32,6 @@ class LAFuture[T](val scheduler: LAScheduler) {
   private var toDo: List[T => Unit] = Nil
   private var onFailure: List[Box[Nothing] => Unit] = Nil
   private var onComplete: List[Box[T] => Unit] = Nil
-
-  def this() {
-    this(LAScheduler)
-  }
 
   LAFuture.notifyObservers(this)
 
@@ -105,16 +101,18 @@ class LAFuture[T](val scheduler: LAScheduler) {
    * @return a Future that represents the function applied to the value of the future
    */
   def map[A](f: T => A): LAFuture[A] = {
-    val ret = new LAFuture[A](scheduler)
-    onComplete(v => ret.complete(v.flatMap(n => Box.tryo(f(n)))))
+    val ret = new LAFuture[A](scheduler, context)
+    val contextFn = LAFuture.inContext(f, context)
+    onComplete(v => ret.complete(v.flatMap(n => Box.tryo(contextFn(n)))))
     ret
   }
 
   def flatMap[A](f: T => LAFuture[A]): LAFuture[A] = {
-    val ret = new LAFuture[A](scheduler)
+    val ret = new LAFuture[A](scheduler, context)
+    val contextFn = LAFuture.inContext(f, context)
     onComplete(v => v match {
       case Full(v) =>
-        Box.tryo(f(v)) match {
+        Box.tryo(contextFn(v)) match {
           case Full(successfullyComputedFuture) => successfullyComputedFuture.onComplete(v2 => ret.complete(v2))
           case e: EmptyBox => ret.complete(e)
         }
@@ -124,7 +122,7 @@ class LAFuture[T](val scheduler: LAScheduler) {
   }
 
   def filter(f: T => Boolean): LAFuture[T] = {
-    val ret = new LAFuture[T](scheduler)
+    val ret = new LAFuture[T](scheduler, context)
     onComplete(v => ret.complete(v.filter(f)))
     ret
   }
@@ -174,8 +172,9 @@ class LAFuture[T](val scheduler: LAScheduler) {
    * @param f the function to execute on success.
    */
   def onSuccess(f: T => Unit) {
+    val contextFn = LAFuture.inContext(f, context)
     synchronized {
-      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => f(item))} else
+      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => contextFn(item))} else
       if (!aborted) {
         toDo ::= f
       }
@@ -188,10 +187,11 @@ class LAFuture[T](val scheduler: LAScheduler) {
    * @param f the function to execute. Will receive a Box[Nothing] which may be a Failure if there's exception data
    */
   def onFail(f: Box[Nothing] => Unit) {
+    val contextFn = LAFuture.inContext(f, context)
     synchronized {
-      if (aborted) LAFuture.executeWithObservers(scheduler, () => f(failure)) else
+      if (aborted) LAFuture.executeWithObservers(scheduler, () => contextFn(failure)) else
       if (!satisfied) {
-        onFailure ::= f
+        onFailure ::= contextFn
       }
     }
   }
@@ -202,10 +202,11 @@ class LAFuture[T](val scheduler: LAScheduler) {
    * @param f the function to execute on completion of the Future
    */
   def onComplete(f: Box[T] => Unit) {
+    val contextFn = LAFuture.inContext(f, context)
     synchronized {
-      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => f(Full(item)))} else
-      if (aborted) {LAFuture.executeWithObservers(scheduler, () => f(failure))} else
-      onComplete ::= f
+      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => contextFn(Full(item)))} else
+      if (aborted) {LAFuture.executeWithObservers(scheduler, () => contextFn(failure))} else
+      onComplete ::= contextFn
     }
   }
 
@@ -259,11 +260,12 @@ object LAFuture {
    * @tparam T the type
    * @return an LAFuture that will yield its value when the value has been computed
    */
-  def apply[T](f: () => T, scheduler: LAScheduler = LAScheduler): LAFuture[T] = {
-    val ret = new LAFuture[T](scheduler)
+  def apply[T](f: () => T, scheduler: LAScheduler = LAScheduler, context: Box[Context] = Empty): LAFuture[T] = {
+    val ret = new LAFuture[T](scheduler, context)
+    val contextFn = inContext(f, context)
     scheduler.execute(() => {
       try {
-      ret.satisfy(f())
+        ret.satisfy(contextFn())
       } catch {
         case e: Exception => ret.fail(e)
       }
@@ -277,8 +279,8 @@ object LAFuture {
    * @tparam T the type that
    * @return
    */
-  def build[T](f: => T, scheduler: LAScheduler = LAScheduler): LAFuture[T] = {
-    this.apply(() => f, scheduler)
+  def build[T](f: => T, scheduler: LAScheduler = LAScheduler, context: Box[Context] = Empty): LAFuture[T] = {
+    this.apply(() => f, scheduler, context)
   }
 
   private val threadInfo = new ThreadLocal[List[LAFuture[_] => Unit]]
@@ -406,5 +408,28 @@ object LAFuture {
 
     ret
   }
-}
 
+  private def inContext[T](f: () => T, context: Box[LAFuture.Context]): () => T = {
+    context.map(_.around(f)) openOr f
+  }
+
+  private def inContext[A, T](f: (A) => T, context: Box[LAFuture.Context]): (A) => T = {
+    context.map(_.around(f)) openOr f
+  }
+
+  /**
+    * Allows to wrap function in another function providing some additional functionality.
+    * It may choose to execute or not execute that functionality, but should not interpret
+    * or change the returned value; instead, it should perform orthogonal actions that
+    * need to occur around the given functionality. Typical example is setting up DB
+    * transaction.
+    *
+    * This is similar to [[net.liftweb.common.CommonLoanWrapper]], however, it decorates the
+    * function eagerly. This way, you can access current thread's state which is essential
+    * to set up e.g. HTTP session wrapper.
+    */
+  trait Context {
+    def around[T](fn: () => T): () => T
+    def around[A, T](fn: (A) => T): (A) => T
+  }
+}
