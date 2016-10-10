@@ -426,7 +426,7 @@ object LAFuture {
     *
     * This is similar to [[net.liftweb.common.CommonLoanWrapper]], however, it decorates the
     * function eagerly. This way, you can access current thread's state which is essential
-    * to set up e.g. HTTP session wrapper.
+    * to do things like set up a HTTP session wrapper
     */
   trait Context {
     def around[T](fn: () => T): () => T
