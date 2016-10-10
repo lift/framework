@@ -48,7 +48,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
     }
 
     "have access to session variables in onComplete()" withSFor "/" in {
-      // workaround for a possible race condition in SessionVar
+      // workaround for a possible race condition in AnyVarTrait
       // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
       SessionVar1.is
 
@@ -63,6 +63,10 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
     }
 
     "have access to request variables in onComplete()" withSFor "/" in {
+      // workaround for a possible race condition in AnyVarTrait
+      // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
+      ReqVar1.is
+
       val future = LAFutureWithSession.withCurrentSession("thor")
       future.onComplete {
         case Full(v) => ReqVar1(v)
@@ -89,6 +93,10 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
     }
 
     "have access to request variables on onFail()" withSFor "/" in {
+      // workaround for a possible race condition in AnyVarTrait
+      // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
+      ReqVar1.is
+
       val future = LAFutureWithSession.withCurrentSession("geralt")
       future.fail(new Exception("nope!"))
 
@@ -101,6 +109,10 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
     }
 
     "have access to session variables in onSuccess()" withSFor "/" in {
+      // workaround for a possible race condition in AnyVarTrait
+      // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
+      SessionVar1.is
+
       val future = LAFutureWithSession.withCurrentSession("cookie monster")
       future.satisfy("done")
 
@@ -110,6 +122,10 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
     }
 
     "have access to request variables in onSuccess()" withSFor "/" in {
+      // workaround for a possible race condition in AnyVarTrait
+      // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
+      ReqVar1.is
+
       val future = LAFutureWithSession.withCurrentSession("gollum")
       future.satisfy("my precious")
 
@@ -211,6 +227,10 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
     }
 
     "have access to session variables in foreach()" withSFor "/" in {
+      // workaround for a possible race condition in AnyVarTrait
+      // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
+      SessionVar1.is
+
       val future = LAFutureWithSession.withCurrentSession("cookie")
       future.foreach(SessionVar1(_))
 
@@ -218,6 +238,10 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
     }
 
     "have access to request variables in foreach()" withSFor "/" in {
+      // workaround for a possible race condition in AnyVarTrait
+      // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
+      ReqVar1.is
+
       val future = LAFutureWithSession.withCurrentSession("monster")
       future.foreach(ReqVar1(_))
 

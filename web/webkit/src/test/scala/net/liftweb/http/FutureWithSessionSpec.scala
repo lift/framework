@@ -65,6 +65,10 @@ class FutureWithSessionSpec extends WebSpec with ThrownMessages {
     }
 
     "have access to request variables in onComplete()" withSFor "/" in {
+      // workaround for a possible race condition in AnyVarTrait
+      // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
+      ReqVar1.is
+
       val future = FutureWithSession.withCurrentSession("thor")
       future.onComplete {
         case Success(v) => ReqVar1(v)
@@ -119,7 +123,7 @@ class FutureWithSessionSpec extends WebSpec with ThrownMessages {
     }
 
     "have access to session variables in chains of andThen()" withSFor "/" in {
-      // workaround for a possible race condition in SessionVar
+      // workaround for a possible race condition in AnyVarTrait
       // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
       SessionVar1.is
       SessionVar2.is
@@ -134,6 +138,11 @@ class FutureWithSessionSpec extends WebSpec with ThrownMessages {
     }
 
     "have access to request variables in chains of andThen()" withSFor "/" in {
+      // workaround for a possible race condition in AnyVarTrait
+      // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
+      ReqVar1.is
+      ReqVar2.is
+
       val future = FutureWithSession.withCurrentSession("conan")
         .andThen { case Success(v) => ReqVar1(v) }
         .andThen { case Success(v) => ReqVar2(v) }
