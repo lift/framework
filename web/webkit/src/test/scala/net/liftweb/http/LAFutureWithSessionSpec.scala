@@ -52,12 +52,17 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
       // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
       SessionVar1.is
 
-      val future = LAFutureWithSession.withCurrentSession("thorgal")
+      val future = LAFutureWithSession.withCurrentSession {
+        Thread.sleep(Long.MaxValue)
+        "292 billion years"
+      }
 
       future.onComplete {
         case Full(v) => SessionVar1(v)
         case problem => ko("Future computation failed: " + problem)
       }
+
+      future.satisfy("thorgal")
 
       SessionVar1.is must eventually(beEqualTo("thorgal"))
     }
@@ -67,11 +72,17 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
       // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
       ReqVar1.is
 
-      val future = LAFutureWithSession.withCurrentSession("thor")
+      val future = LAFutureWithSession.withCurrentSession {
+        Thread.sleep(Long.MaxValue)
+        "292 billion years"
+      }
+
       future.onComplete {
         case Full(v) => ReqVar1(v)
         case problem => ko("Future computation failed: " + problem)
       }
+
+      future.satisfy("thor")
 
       ReqVar1.is must eventually(beEqualTo("thor"))
     }
@@ -81,29 +92,37 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
       // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
       SessionVar1.is
 
-      val future = LAFutureWithSession.withCurrentSession("geralt")
-      future.fail(new Exception("kaboom!"))
+      val future = LAFutureWithSession.withCurrentSession {
+        Thread.sleep(Long.MaxValue)
+        "292 billion years"
+      }
 
       future.onFail {
         case f: Failure => SessionVar1(f.msg)
         case _ => fail("The Future should have failed")
       }
 
+      future.fail(new Exception("kaboom!"))
+
       SessionVar1.is must eventually(beEqualTo("kaboom!"))
     }
 
-    "have access to request variables on onFail()" withSFor "/" in {
+    "have access to request variables in onFail()" withSFor "/" in {
       // workaround for a possible race condition in AnyVarTrait
       // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
       ReqVar1.is
 
-      val future = LAFutureWithSession.withCurrentSession("geralt")
-      future.fail(new Exception("nope!"))
+      val future = LAFutureWithSession.withCurrentSession {
+        Thread.sleep(Long.MaxValue)
+        "292 billion years"
+      }
 
       future.onFail {
         case f: Failure => ReqVar1(f.msg)
         case _ => fail("The Future should have failed")
       }
+
+      future.fail(new Exception("nope!"))
 
       ReqVar1.is must eventually(beEqualTo("nope!"))
     }
@@ -113,10 +132,14 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
       // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
       SessionVar1.is
 
-      val future = LAFutureWithSession.withCurrentSession("cookie monster")
-      future.satisfy("done")
+      val future = LAFutureWithSession.withCurrentSession {
+        Thread.sleep(Long.MaxValue)
+        "292 billion years"
+      }
 
       future.onSuccess(SessionVar1(_))
+
+      future.satisfy("done")
 
       SessionVar1.is must eventually(beEqualTo("done"))
     }
@@ -126,12 +149,16 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
       // https://groups.google.com/forum/#!topic/liftweb/V1pWy14Wl3A
       ReqVar1.is
 
-      val future = LAFutureWithSession.withCurrentSession("gollum")
-      future.satisfy("my precious")
+      val future = LAFutureWithSession.withCurrentSession {
+        Thread.sleep(Long.MaxValue)
+        "292 billion years"
+      }
 
       future.onSuccess(ReqVar1(_))
 
-      ReqVar1.is must eventually(beEqualTo("my precious"))
+      future.satisfy("my preciousss")
+
+      ReqVar1.is must eventually(beEqualTo("my preciousss"))
     }
 
     "have access to session variables in chains of filter()" withSFor "/" in {
