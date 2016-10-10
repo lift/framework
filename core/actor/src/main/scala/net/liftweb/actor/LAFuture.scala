@@ -45,12 +45,12 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
         if (!satisfied && !aborted) {
           item = value
           satisfied = true
-          val ret = toDo
+          val result = toDo
           toDo = Nil
           onFailure = Nil
           onComplete.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(Full(value))))
           onComplete = Nil
-          ret
+          result
         } else Nil
       } finally {
         notifyAll()
@@ -101,30 +101,30 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
    * @return a Future that represents the function applied to the value of the future
    */
   def map[A](f: T => A): LAFuture[A] = {
-    val ret = new LAFuture[A](scheduler, context)
+    val result = new LAFuture[A](scheduler, context)
     val contextFn = LAFuture.inContext(f, context)
-    onComplete(v => ret.complete(v.flatMap(n => Box.tryo(contextFn(n)))))
-    ret
+    onComplete(v => result.complete(v.flatMap(n => Box.tryo(contextFn(n)))))
+    result
   }
 
   def flatMap[A](f: T => LAFuture[A]): LAFuture[A] = {
-    val ret = new LAFuture[A](scheduler, context)
+    val result = new LAFuture[A](scheduler, context)
     val contextFn = LAFuture.inContext(f, context)
     onComplete(v => v match {
       case Full(v) =>
         Box.tryo(contextFn(v)) match {
-          case Full(successfullyComputedFuture) => successfullyComputedFuture.onComplete(v2 => ret.complete(v2))
-          case e: EmptyBox => ret.complete(e)
+          case Full(successfullyComputedFuture) => successfullyComputedFuture.onComplete(v2 => result.complete(v2))
+          case e: EmptyBox => result.complete(e)
         }
-      case e: EmptyBox => ret.complete(e)
+      case e: EmptyBox => result.complete(e)
     })
-    ret
+    result
   }
 
   def filter(f: T => Boolean): LAFuture[T] = {
-    val ret = new LAFuture[T](scheduler, context)
-    onComplete(v => ret.complete(v.filter(f)))
-    ret
+    val result = new LAFuture[T](scheduler, context)
+    onComplete(v => result.complete(v.filter(f)))
+    result
   }
 
   def withFilter(f: T => Boolean): LAFuture[T] = filter(f)
@@ -261,16 +261,16 @@ object LAFuture {
    * @return an LAFuture that will yield its value when the value has been computed
    */
   def apply[T](f: () => T, scheduler: LAScheduler = LAScheduler, context: Box[Context] = Empty): LAFuture[T] = {
-    val ret = new LAFuture[T](scheduler, context)
+    val result = new LAFuture[T](scheduler, context)
     val contextFn = inContext(f, context)
     scheduler.execute(() => {
       try {
-        ret.satisfy(contextFn())
+        result.satisfy(contextFn())
       } catch {
-        case e: Exception => ret.fail(e)
+        case e: Exception => result.fail(e)
       }
     })
-    ret
+    result
   }
 
   /**
@@ -337,9 +337,9 @@ object LAFuture {
    * collected futures are satisfied
    */
   def collect[T](future: LAFuture[T]*): LAFuture[List[T]] = {
-    val ret = new LAFuture[List[T]]
+    val result = new LAFuture[List[T]]
     if (future.isEmpty) {
-      ret.satisfy(Nil)
+      result.satisfy(Nil)
     } else {
       val sync = new Object
       val len = future.length
@@ -355,14 +355,14 @@ object LAFuture {
               vals.insert(idx, Full(v))
               gotCnt += 1
               if (gotCnt >= len) {
-                ret.satisfy(vals.toList.flatten)
+                result.satisfy(vals.toList.flatten)
               }
             }
           }
       }
     }
 
-    ret
+    result
   }
 
   /**
@@ -373,9 +373,9 @@ object LAFuture {
    * returned future with an Empty
    */
   def collectAll[T](future: LAFuture[Box[T]]*): LAFuture[Box[List[T]]] = {
-    val ret = new LAFuture[Box[List[T]]]
+    val result = new LAFuture[Box[List[T]]]
     if (future.isEmpty) {
-      ret.satisfy(Full(Nil))
+      result.satisfy(Full(Nil))
     } else {
       val sync = new Object
       val len = future.length
@@ -393,12 +393,12 @@ object LAFuture {
                   vals.insert(idx, Full(v))
                   gotCnt += 1
                   if (gotCnt >= len) {
-                    ret.satisfy(Full(vals.toList.flatten))
+                    result.satisfy(Full(vals.toList.flatten))
                   }
                 }
 
                 case eb: EmptyBox => {
-                  ret.satisfy(eb)
+                  result.satisfy(eb)
                 }
               }
             }
@@ -406,7 +406,7 @@ object LAFuture {
       }
     }
 
-    ret
+    result
   }
 
   private def inContext[T](f: () => T, context: Box[LAFuture.Context]): () => T = {
