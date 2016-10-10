@@ -176,7 +176,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
     synchronized {
       if (satisfied) {LAFuture.executeWithObservers(scheduler, () => contextFn(item))} else
       if (!aborted) {
-        toDo ::= f
+        toDo ::= contextFn
       }
     }
   }
