@@ -21,7 +21,7 @@ package net.liftweb.markdown
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.FlatSpec
 import xml.{Group, NodeSeq}
 
@@ -29,7 +29,7 @@ import xml.{Group, NodeSeq}
  * Tests the parsing on block level.
  */
 @RunWith(classOf[JUnitRunner])
-class BlockParsersTest extends FlatSpec with ShouldMatchers with BlockParsers{
+class BlockParsersTest extends FlatSpec with Matchers with BlockParsers{
 
     "The BlockParsers" should "parse optional empty lines" in {
         val p = optEmptyLines
@@ -50,6 +50,6 @@ class BlockParsersTest extends FlatSpec with ShouldMatchers with BlockParsers{
     it should "detect line types" in {
         val p = line(classOf[CodeLine])
         apply(p, List(new CodeLine("    ", "code"))) should equal (new CodeLine("    ", "code"))
-        evaluating(apply(p, List(new OtherLine("foo")))) should produce[IllegalArgumentException]
+        an [IllegalArgumentException] should be thrownBy(apply(p, List(new OtherLine("foo"))))
     }
 }

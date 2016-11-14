@@ -19,7 +19,7 @@ package net.liftweb.markdown
  * Christoph Henkelmann http://henkelmann.eu/
  */
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.FlatSpec
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
@@ -28,8 +28,8 @@ import org.scalatest.junit.JUnitRunner
  * Tests the behavior of the complete parser, i.e. all parsing steps together.
  */
 @RunWith(classOf[JUnitRunner])
-class TransformerTest extends FlatSpec with ShouldMatchers with Transformer {
-    
+class TransformerTest extends FlatSpec with Matchers with Transformer {
+
     "The Transformer" should "create xhtml fragments from markdown" in {
         apply("") should equal ("")
         apply("\n") should equal ("")
@@ -167,7 +167,7 @@ test"""
 """
         )
         apply("""* foo
-        		
+
 + bar
 - baz
 
@@ -264,39 +264,39 @@ else in the doc, define the link:</p>
         apply("<foo> bla\nblub <bar>hallo</bar>\n</foo>\n") should equal (
               "<foo> bla\nblub <bar>hallo</bar>\n</foo>\n")
     }
-    
+
     it should "parse fenced code blocks" in {
 apply(
 """```  foobar
 System.out.println("Hello World!");
-    
+
 <some> verbatim xml </some>
-    
+
     <-not a space-style code line
  1. not a
  2. list
-    
+
 ## not a header
 ``` gotcha: not the end
 -----------
 but this is:
-```         
-"""    
+```
+"""
 ) should equal (
 """<pre><code>System.out.println(&quot;Hello World!&quot;);
-    
+
 &lt;some&gt; verbatim xml &lt;/some&gt;
-    
+
     &lt;-not a space-style code line
  1. not a
  2. list
-    
+
 ## not a header
 ``` gotcha: not the end
 -----------
 but this is:
 </code></pre>
-"""    
+"""
 )
 
 apply(
@@ -305,14 +305,14 @@ System.out.println("Hello World!");
 ```
 And now to something completely different.
     old style code
-"""    
+"""
 ) should equal (
 """<pre><code>System.out.println(&quot;Hello World!&quot;);
 </code></pre>
 <p>And now to something completely different.</p>
 <pre><code>old style code
 </code></pre>
-"""    
+"""
 )
 
 apply(
@@ -322,7 +322,7 @@ No need to end blocks
 
 And now to something completely different.
     old style code
-"""    
+"""
 ) should equal (
 """<pre><code>System.out.println(&quot;Hello World!&quot;);
 No need to end blocks
@@ -330,7 +330,7 @@ No need to end blocks
 And now to something completely different.
     old style code
 </code></pre>
-"""    
+"""
 )
 
 apply(
@@ -341,7 +341,7 @@ No need to end blocks
 
 And now to something completely different.
     old style code
-"""    
+"""
 ) should equal (
 """<p>Some text first</p>
 <pre><code>System.out.println(&quot;Hello World!&quot;);
@@ -350,7 +350,7 @@ No need to end blocks
 And now to something completely different.
     old style code
 </code></pre>
-"""    
+"""
 )
     }
 }
