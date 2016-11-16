@@ -180,7 +180,7 @@ object JsonParser {
     // object or array, gather up all their component parts and create the final
     // object or array.
     def closeBlock(v: Any) {
-      @inline def toJValue(x: Any) = x match {
+      def toJValue(x: Any) = x match {
         case json: JValue => json
         case other: IntermediateJObject => JObject(other.fields.result)
         case other: IntermediateJArray => JArray(other.bits.result)
