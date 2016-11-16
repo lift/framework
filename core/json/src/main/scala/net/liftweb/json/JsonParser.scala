@@ -50,18 +50,18 @@ object JsonParser {
    * @param closeAutomatically true (default) if the Reader is automatically closed on EOF
    * @throws ParseException is thrown if parsing fails
    */
-  def parse(s: Reader, closeAutomatically: Boolean = true): JValue = 
+  def parse(s: Reader, closeAutomatically: Boolean = true): JValue =
     parse(new Buffer(s, closeAutomatically))
 
   /** Return parsed JSON.
    */
-  def parseOpt(s: String): Option[JValue] = 
+  def parseOpt(s: String): Option[JValue] =
     try { parse(s).toOpt } catch { case e: Exception => None }
 
   /** Return parsed JSON.
    * @param closeAutomatically true (default) if the Reader is automatically closed on EOF
    */
-  def parseOpt(s: Reader, closeAutomatically: Boolean = true): Option[JValue] = 
+  def parseOpt(s: Reader, closeAutomatically: Boolean = true): Option[JValue] =
     try { parse(s, closeAutomatically).toOpt } catch { case e: Exception => None }
 
   /** Parse in pull parsing style.
@@ -102,7 +102,7 @@ object JsonParser {
     chars
   }
 
-  private[json] def unquote(string: String): String = 
+  private[json] def unquote(string: String): String =
     unquote(new JsonParser.Buffer(new java.io.StringReader(string), false))
 
   private[this] def unquote(buf: JsonParser.Buffer): String = {
@@ -166,6 +166,8 @@ object JsonParser {
     s.toDouble
   }
 
+  // Intermediate objects and arrays which can be grown mutably for performance.
+  // These are finalized into immutable JObject and JArray.
   private[this] case class IntermediateJObject(fields: scala.collection.mutable.ListBuffer[JField])
   private[this] case class IntermediateJArray(bits: scala.collection.mutable.ListBuffer[JValue])
 
@@ -174,6 +176,9 @@ object JsonParser {
     var token: Token = null
     var root: Option[JValue] = None
 
+    // At the end of an object, if we're looking at an intermediate form of an
+    // object or array, gather up all their component parts and create the final
+    // object or array.
     def closeBlock(v: Any) {
       @inline def toJValue(x: Any) = x match {
         case json: JValue => json
@@ -187,7 +192,7 @@ object JsonParser {
           vals.pop(classOf[JField])
           val obj = vals.peek(classOf[IntermediateJObject])
           obj.fields.append(JField(name, toJValue(v)))
-        case Some(o: IntermediateJObject) => 
+        case Some(o: IntermediateJObject) =>
           o.fields.append(vals.peek(classOf[JField]))
         case Some(a: IntermediateJArray) => a.bits.append(toJValue(v))
         case Some(x) => p.fail("expected field, array or object but got " + x)
@@ -258,6 +263,8 @@ object JsonParser {
   class Parser(buf: Buffer) {
     import java.util.ArrayDeque
 
+    // Maintains our current nesting context in the form of BlockMode, which
+    // indicates if each context is an array or object.
     private[this] val blocks = new ArrayDeque[BlockMode](32)
     private[this] var fieldNameMode = true
 
@@ -266,7 +273,7 @@ object JsonParser {
     /** Parse next Token from stream.
      */
     def nextToken: Token = {
-      def parseString: String = 
+      def parseString: String =
         try {
           unquote(buf)
         } catch {
@@ -279,6 +286,8 @@ object JsonParser {
         var doubleVal = false
         val buf = this.buf
 
+        // Back up and mark the buffer so that we can extract a substring after
+        // that contains the whole value.
         buf.back
         buf.mark
         while (wasInt) {
@@ -291,13 +300,13 @@ object JsonParser {
             case _ =>
               wasInt = false
               if (c != EOF) {
-                buf.back
+                buf.back // don't include the last character
               }
           }
         }
-        buf.forward
+        buf.forward // substring is exclusive to the last index
         val value = buf.substring()
-        buf.back
+        buf.back // back up so our current pointer is in the right place
         (doubleVal: @switch) match {
           case true =>
             DoubleVal(parseDouble(new String(value)))
@@ -377,9 +386,12 @@ object JsonParser {
    * Buffer is divided to one or more segments (preallocated in Segments pool).
    */
   private[json] final class Buffer(in: Reader, closeAutomatically: Boolean) {
-    final val builder = new java.lang.StringBuilder(32)
+    // Reused by the parser when appropriate, allows for a single builder to be
+    // used throughout the parse process, and to be written to directly from the
+    // substring method, so as to avoid allocating new builders when avoidable.
+    private[json] final val builder = new java.lang.StringBuilder(32)
 
-    var offset = 0
+    var offset = 0 // how far into the current segment we've read data
     var curMark = -1
     var curMarkSegment = -1
     var eofIsFailure = false
@@ -388,6 +400,8 @@ object JsonParser {
     private[this] var cur = 0 // Pointer which points current parsing location
     private[this] var curSegmentIdx = 0 // Pointer which points current segment
 
+    // Mark the current point so that future substring calls will extract the
+    // value from this point to whatever point the buffer has advanced to.
     final def mark = {
       if (curSegmentIdx > 0) {
         segments(0) = segments.remove(curSegmentIdx)
@@ -400,6 +414,7 @@ object JsonParser {
     final def back = cur = cur-1
     final def forward = cur = cur+1
 
+    // Read the next character; reads new data from the reader if necessary.
     final def next: Char = {
       if (cur >= offset && read < 0) {
         if (eofIsFailure) throw new ParseException("unexpected eof", null) else EOF
@@ -411,6 +426,9 @@ object JsonParser {
     }
 
     private[this] final val emptyArray = new Array[Char](0)
+    // Slices from the last marked point to the current index. If intoBuilder is
+    // true, appends it to the buffer's builder and returns an empty array. If
+    // false, slices it into a new array and returns that array.
     final def substring(intoBuilder: Boolean = false) = {
       if (curSegmentIdx == curMarkSegment) {
         val substringLength = cur - curMark - 1
@@ -467,10 +485,12 @@ object JsonParser {
 
     private[JsonParser] def automaticClose = if (closeAutomatically) in.close
 
+    // Reads the next available block from the reader. Returns -1 if there's
+    // nothing more to read.
     private[this] def read = {
       if (offset >= segment.length) {
         offset = 0
-        val segmentToUse = 
+        val segmentToUse =
           (curMarkSegment: @scala.annotation.switch) match {
             case -1 =>
               curSegmentIdx = 0
@@ -498,7 +518,8 @@ object JsonParser {
     }
   }
 
-  /* A pool of preallocated char arrays.
+  /*
+   * A pool of preallocated char arrays.
    */
   private[json] object Segments {
     import java.util.concurrent.ArrayBlockingQueue
@@ -518,7 +539,7 @@ object JsonParser {
 
     private[this] def acquire: Segment = {
       val curCount = segmentCount.get
-      val createNew = 
+      val createNew =
         if (segments.size == 0 && curCount < maxNumOfSegments)
           segmentCount.compareAndSet(curCount, curCount + 1)
         else false
