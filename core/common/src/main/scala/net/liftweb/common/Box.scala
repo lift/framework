@@ -456,6 +456,13 @@ sealed abstract class Box[+A] extends Product with Serializable{
    */
   def flatMap[B](f: A => Box[B]): Box[B] = Empty
 
+  def flatten[B](implicit ev: A <:< Box[B]): Box[B] = this match {
+    case Full(internal) => ev(internal)
+    case f: Failure => f
+    case Empty => Empty
+  }
+
+
   /**
    * If this `Box` contains a value and it satisfies the specified `predicate`,
    * return the `Box` unchanged. Otherwise, return an `Empty`.
