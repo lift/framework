@@ -418,7 +418,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
    * @throws NullPointerException If you attempt to call it on an `EmptyBox`,
    *         with a message that includes the provided `justification`.
    */
-  def openOrThrowException(justification: String): A
+  def openOrThrowException(justification: => String): A
 
   /**
    * Exists to avoid the implicit conversion from `Box` to `Option`. Opening a
@@ -497,7 +497,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def forall(func: A => Boolean): Boolean = true
 
   /**
-   * 
+   *
    * If this `Box` contains a value and it does '''not''' satisfy the specified
    * `f`, return the `Box` unchanged. Otherwise, return an `Empty`.
    */
@@ -648,7 +648,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
    * This method calls the specified function with the specified `in` value and
    * the value contained in this `Box`. If this box is empty, returns the `in`
    * value directly.
-   * 
+   *
    * @return The result of the function or the `in` value.
    */
   def run[T](in: => T)(f: (T, A) => T) = in
@@ -789,7 +789,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
 final case class Full[+A](value: A) extends Box[A] {
   def isEmpty: Boolean = false
 
-  def openOrThrowException(justification: String): A = value
+  def openOrThrowException(justification: => String): A = value
 
   override def openOr[B >: A](default: => B): B = value
 
@@ -856,7 +856,7 @@ sealed abstract class EmptyBox extends Box[Nothing] with Serializable {
 
   def isEmpty: Boolean = true
 
-  def openOrThrowException(justification: String) =
+  def openOrThrowException(justification: => String) =
   throw new NullPointerException("An Empty Box was opened.  The justification for allowing the openOrThrowException was "+justification)
 
   override def openOr[B >: Nothing](default: => B): B = default
@@ -889,7 +889,7 @@ object Failure {
 sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Failure]) extends EmptyBox {
   type A = Nothing
 
-  override def openOrThrowException(justification: String) =
+  override def openOrThrowException(justification: => String) =
     throw new NullPointerException("An Failure Box was opened.  Failure Message: "+msg+
       ".  The justification for allowing the openOrThrowException was "+justification)  {
       override def getCause() = exception openOr null
@@ -921,7 +921,7 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
     import scala.collection.mutable.ListBuffer
     val ret = new ListBuffer[Throwable]()
     var e: Throwable = exception openOr null
-    
+
     while (e ne null) {
       ret += e
       e = e.getCause
@@ -942,7 +942,7 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
   /**
    * Flatten the `Failure` chain to a List where this Failure is at the head.
    */
-  def failureChain: List[Failure] = 
+  def failureChain: List[Failure] =
     this :: chain.toList.flatMap(_.failureChain)
 
   /**
@@ -1087,7 +1087,7 @@ final case class BoxedBoxOrRaw[T](box: Box[T]) extends BoxOrRaw[T]
  * The `[[BoxOrRaw]]` that represents a raw value.
  */
 final case class RawBoxOrRaw[T](raw: T) extends BoxOrRaw[T] {
-  def box: Box[T] = 
+  def box: Box[T] =
     if (raw.asInstanceOf[Object] ne null) Full(raw) else Empty
 }
 

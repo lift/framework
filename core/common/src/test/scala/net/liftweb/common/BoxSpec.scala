@@ -219,6 +219,22 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(8.toShort).asA[Boolean] must_== Empty
     }
 
+    "not invoke a call-by-name parameter to openOrThrowException" in {
+      var sideEffect = false
+      def sideEffecting = {
+        sideEffect = true
+        "This shouldn't have been invoked."
+      }
+
+      try {
+        Full("hi mom").openOrThrowException(sideEffecting)
+      } catch {
+        case e: Exception =>
+      }
+
+      sideEffect must_== false
+    }
+
   }
 
   "An Empty Box" should {
@@ -288,6 +304,22 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
     "define a 'asA' method returning Empty" in {
       Empty.asA[Double] must_== Empty
+    }
+
+    "invoke a call-by-name parameter to openOrThrowException" in {
+      var sideEffect = false
+      def sideEffecting = {
+        sideEffect = true
+        "This should have been invoked."
+      }
+
+      try {
+        Empty.openOrThrowException(sideEffecting)
+      } catch {
+        case e: Exception =>
+      }
+
+      sideEffect must_== true
     }
   }
 
@@ -427,4 +459,3 @@ trait BoxGenerator {
   } yield Failure(msg.mkString, exception, Box(chain.headOption))
 
 }
-
