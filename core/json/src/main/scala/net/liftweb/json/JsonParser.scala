@@ -86,6 +86,10 @@ object JsonParser {
     } finally { buf.release }
   }
 
+  // JSON hex unicode strings (\u12AF) are translated into characters through
+  // this array. Each number in the array corresponds to the 4-bit value that
+  // one number in the hex string will represent. These are combined when
+  // reading the unicode string.
   private[this] final val HexChars: Array[Int] = {
     val chars = new Array[Int](128)
     var i = 0
@@ -101,6 +105,8 @@ object JsonParser {
     }
     chars
   }
+  // The size of one hex character in bits.
+  private[this] final val hexCharSize = 4 // in bits
 
   private[json] def unquote(string: String): String =
     unquote(new JsonParser.Buffer(new java.io.StringReader(string), false))
@@ -126,8 +132,8 @@ object JsonParser {
               var byte = 0
               var finalChar = 0
               val chars = Array(buf.next, buf.next, buf.next, buf.next)
-              while (byte < 4) {
-                finalChar = (finalChar << 4) | HexChars(chars(byte).toInt)
+              while (byte < chars.length) {
+                finalChar = (finalChar << hexCharSize) | HexChars(chars(byte).toInt)
                 byte += 1
               }
               builder.appendCodePoint(finalChar.toChar)
