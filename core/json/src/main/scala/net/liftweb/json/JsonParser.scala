@@ -162,9 +162,11 @@ object JsonParser {
       }
     }
     buf.eofIsFailure = false
-    forcedReturn match {
-      case null => new String(buf.substring())
-      case _ => forcedReturn
+
+    if (forcedReturn == null) {
+      new String(buf.substring())
+    } else {
+      forcedReturn
     }
   }
 
@@ -408,7 +410,7 @@ object JsonParser {
 
     // Mark the current point so that future substring calls will extract the
     // value from this point to whatever point the buffer has advanced to.
-    final def mark = {
+    def mark = {
       if (curSegmentIdx > 0) {
         segments(0) = segments.remove(curSegmentIdx)
         curSegmentIdx = 0
@@ -417,11 +419,11 @@ object JsonParser {
       curMark = cur
       curMarkSegment = curSegmentIdx
     }
-    final def back = cur = cur-1
-    final def forward = cur = cur+1
+    def back = cur = cur-1
+    def forward = cur = cur+1
 
     // Read the next character; reads new data from the reader if necessary.
-    final def next: Char = {
+    def next: Char = {
       if (cur >= offset && read < 0) {
         if (eofIsFailure) throw new ParseException("unexpected eof", null) else EOF
       } else {
