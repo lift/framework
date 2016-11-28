@@ -235,8 +235,14 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
 
       val future = LAFutureWithSession.withCurrentSession("d")
       val mapped = future
-        .flatMap { s => val out = s + SessionVar1.is; LAFuture.build(out) }
-        .flatMap { s => val out = s + SessionVar2.is; LAFuture.build(out) }
+        .flatMap { s =>
+          val out = s + SessionVar1.is
+          LAFuture.build(out)
+        }
+        .flatMap { s =>
+          val out = s + SessionVar2.is
+          LAFuture.build(out)
+        }
 
       mapped.get(timeout) must_== Full("def")
     }
@@ -247,8 +253,14 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
 
       val future = LAFutureWithSession.withCurrentSession("d")
       val mapped = future
-        .flatMap { s => val out = s + ReqVar1.is; LAFuture.build(out) }
-        .flatMap { s => val out = s + ReqVar2.is; LAFuture.build(out) }
+        .flatMap { s =>
+          val out = s + ReqVar1.is
+          LAFuture.build(out)
+        }
+        .flatMap { s =>
+          val out = s + ReqVar2.is
+          LAFuture.build(out)
+        }
 
       mapped.get(timeout) must_== Full("def")
     }

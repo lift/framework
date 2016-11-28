@@ -104,8 +104,14 @@ class FutureWithSessionSpec extends WebSpec with ThrownMessages {
 
       val future = FutureWithSession.withCurrentSession("d")
       val mapped = future
-        .flatMap { s => val out = s + SessionVar1.is; Future(out) }
-        .flatMap { s => val out = s + SessionVar2.is; Future(out) }
+        .flatMap { s =>
+          val out = s + SessionVar1.is
+          Future(out)
+        }
+        .flatMap { s =>
+          val out = s + SessionVar2.is
+          Future(out)
+        }
 
       mapped.value must eventually(beEqualTo(Some(Success("def"))))
     }
@@ -116,8 +122,14 @@ class FutureWithSessionSpec extends WebSpec with ThrownMessages {
 
       val future = FutureWithSession.withCurrentSession("d")
       val mapped = future
-        .flatMap { s => val out = s + ReqVar1.is; Future(out) }
-        .flatMap { s => val out = s + ReqVar2.is; Future(out) }
+        .flatMap { s =>
+          val out = s + ReqVar1.is
+          Future(out)
+        }
+        .flatMap { s =>
+          val out = s + ReqVar2.is
+          Future(out)
+        }
 
       mapped.value must eventually(beEqualTo(Some(Success("def"))))
     }
@@ -217,7 +229,10 @@ class FutureWithSessionSpec extends WebSpec with ThrownMessages {
       SessionVar2("j")
 
       val future = FutureWithSession.withCurrentSession(throw new Exception("failed"))
-        .recoverWith { case e: Exception => val out = e.getMessage + " " + SessionVar1.is; Future(out) }
+        .recoverWith { case e: Exception =>
+          val out = e.getMessage + " " + SessionVar1.is
+          Future(out)
+        }
         .map(_ + SessionVar2.is)
 
       future.value must eventually(beEqualTo(Some(Success("failed ij"))))
@@ -228,7 +243,10 @@ class FutureWithSessionSpec extends WebSpec with ThrownMessages {
       ReqVar2("l")
 
       val future = FutureWithSession.withCurrentSession(throw new Exception("failed"))
-        .recoverWith { case e: Exception => val out = e.getMessage + " " + ReqVar1.is; Future(out) }
+        .recoverWith { case e: Exception =>
+          val out = e.getMessage + " " + ReqVar1.is
+          Future(out)
+        }
         .map(_ + ReqVar2.is)
 
       future.value must eventually(beEqualTo(Some(Success("failed kl"))))
