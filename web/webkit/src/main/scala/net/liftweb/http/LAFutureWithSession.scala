@@ -7,10 +7,10 @@ import net.liftweb.common.{EmptyBox, Failure, Full}
 object LAFutureWithSession {
 
   /**
-    * Creates `LAFuture` instance aware of current request and session. Each `LAFuture` returned by chained
+    * Creates `LAFuture` instance aware of the current request and session. Each `LAFuture` returned by chained
     * transformation method (e.g. `map`, `flatMap`) will be also request/session-aware. However, it's
     * important to bear in mind that initial session or request are not propagated to chained methods. It's required
-    * that current execution thread for chained method has its own request or session available if reading/writing
+    * that current execution thread for chained method has request or session available in scope if reading/writing
     * some data to it as a part of chained method execution.
     */
   def withCurrentSession[T](task: => T, scheduler: LAScheduler = LAScheduler): LAFuture[T] = {
