@@ -2326,13 +2326,13 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * the CometActor is instantiated.  If the CometActor already exists
    * in the session, the message will be sent immediately.  If the CometActor
    * is not yet instantiated, the message will be sent to the CometActor
-   * as part of setup (@see queueCometMessage) if it is created as part
+   * as part of setup (see queueCometMessage) if it is created as part
    * of the current HTTP request/response cycle.
    *
    * @param theType the type of the CometActor
    * @param msg the message to send to the CometActor
    */
-  def sendCometActorMessage(theType: String, msg: Any) {
+  def sendCometMessage(theType: String, msg: Any): Unit = {
     testStatefulFeature {
       findComet(theType).foreach(_ ! msg)
       queueCometMessage(theType, msg)
@@ -2344,7 +2344,23 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * the CometActor is instantiated.  If the CometActor already exists
    * in the session, the message will be sent immediately.  If the CometActor
    * is not yet instantiated, the message will be sent to the CometActor
-   * as part of setup (@see queueCometMessage) regardless of if it is created as part
+   * as part of setup (see queueCometMessage) if it is created as part
+   * of the current HTTP request/response cycle.
+   *
+   * @param msg the message to send to the CometActor
+   */
+  def sendCometMessage[T](msg: Any)(implicit cometManifest: Manifest[T]): Unit = {
+    val castClass = cometManifest.runtimeClass.asInstanceOf[Class[T]]
+    val typeName = castClass.getSimpleName
+    sendCometMessage(typeName, msg)
+  }
+
+  /**
+   * This method will send a message to a CometActor, whether or not
+   * the CometActor is instantiated.  If the CometActor already exists
+   * in the session, the message will be sent immediately.  If the CometActor
+   * is not yet instantiated, the message will be sent to the CometActor
+   * as part of setup (see queueCometMessage) regardless of if it is created as part
    * of the current HTTP request/response cycle. We plan to restrict this to
    * the current request/response cycle in the future (as that is the intended beavior).
    *
@@ -2352,7 +2368,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * @param name the optional name of the CometActor
    * @param msg the message to send to the CometActor
    */
-  def sendCometActorMessage(theType: String, name: Box[String], msg: Any) {
+  def sendCometMessage(theType: String, name: Box[String], msg: Any): Unit = {
     testStatefulFeature {
       findComet(theType, name) match {
         case Full(a) => a ! msg
@@ -2362,7 +2378,29 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   /**
-   * Allows you to send messages to a CometActor that may or may not be set up yet
+   * This method will send a message to a CometActor, whether or not
+   * the CometActor is instantiated.  If the CometActor already exists
+   * in the session, the message will be sent immediately.  If the CometActor
+   * is not yet instantiated, the message will be sent to the CometActor
+   * as part of setup (see queueCometMessage) regardless of if it is created as part
+   * of the current HTTP request/response cycle. We plan to restrict this to
+   * the current request/response cycle in the future (as that is the intended beavior).
+   *
+   * @param name the optional name of the CometActor
+   * @param msg the message to send to the CometActor
+   */
+  def sendCometMessage[T](name: Box[String], msg: Any)(implicit cometManifest: Manifest[T]): Unit = {
+    val castClass = cometManifest.runtimeClass.asInstanceOf[Class[T]]
+    val typeName = castClass.getSimpleName
+    sendCometMessage(typeName, name, msg)
+  }
+
+  @deprecated("Please switch to using sendCometMessage.", "3.1")
+  def sendCometActorMessage(theType: String, name: Box[String], msg: Any): Unit =
+    sendCometMessage(theType, name, msg)
+
+  /**
+   * Queue a message for a comet that is not started yet.
    */
   def queueCometMessage(cometType: String, msg: Any) {
     testStatefulFeature {
@@ -2371,7 +2409,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   /**
-   * Allows you to send messages to a CometActor that may or may not be set up yet
+   * Queue a message for a comet that is not started yet.
    */
   def queueCometMessage(cometType: String, cometName: Box[String], msg: Any) {
     testStatefulFeature {
@@ -2380,7 +2418,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   /**
-   * Allows you to send messages to a CometActor that may or may not be set up yet
+   * Queue a message for a comet that is not started yet.
    */
   @deprecated("Please use queueCometMessage instead.", "3.1")
   def setupComet(cometType: String, cometName: Box[String], msg: Any) {
