@@ -135,11 +135,22 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define a 'map' method to transform its value" in {
       Full(1) map { _.toString } must_== Full("1")
     }
-    "define a 'flatMap' method transforming its value in another Box. If the value is transformed in a Full can, the total result is a Full can" in {
+    "define a 'flatMap' method transforming its value in another Box. If the value is transformed in a Full box, the total result is a Full box" in {
       Full(1) flatMap { x: Int => if (x > 0) Full("full") else Empty } must_== Full("full")
     }
-    "define a 'flatMap' method transforming its value in another Box. If the value is transformed in an Empty can, the total result is an Empty can" in {
+    "define a 'flatMap' method transforming its value in another Box. If the value is transformed in an Empty box, the total result is an Empty box" in {
       Full(0) flatMap { x: Int => if (x > 0) Full("full") else Empty } must beEmpty
+    }
+    "define a 'flatten' method if it contains another Box." in {
+      "If the inner box is a Full box, the final result is identical to that box" in {
+        Full(Full(1)).flatten must_== Full(1)
+      }
+      "If the inner box is a Failure, the final result is identical to that box" in {
+        Full(Failure("error", Empty, Empty)).flatten must_== Failure("error", Empty, Empty)
+      }
+      "If the inner box is an Empty box, the final result is identical to that box" in {
+        Full(Empty).flatten must_== Empty
+      }
     }
     "define an 'elements' method returning an iterator containing its value" in {
       Full(1).elements.next must_== 1
@@ -219,6 +230,22 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(8.toShort).asA[Boolean] must_== Empty
     }
 
+    "not invoke a call-by-name parameter to openOrThrowException" in {
+      var sideEffect = false
+      def sideEffecting = {
+        sideEffect = true
+        "This shouldn't have been invoked."
+      }
+
+      try {
+        Full("hi mom").openOrThrowException(sideEffecting)
+      } catch {
+        case e: Exception =>
+      }
+
+      sideEffect must_== false
+    }
+
   }
 
   "An Empty Box" should {
@@ -268,6 +295,9 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define a 'flatMap' method returning Empty" in {
       Empty flatMap {x: Int => Full("full")} must beEmpty
     }
+    "define a 'flatten' method returning Empty" in {
+      Empty.flatten must beEmpty
+    }
     "define an 'elements' method returning an empty iterator" in {
       Empty.elements.hasNext must beFalse
     }
@@ -289,6 +319,22 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define a 'asA' method returning Empty" in {
       Empty.asA[Double] must_== Empty
     }
+
+    "invoke a call-by-name parameter to openOrThrowException" in {
+      var sideEffect = false
+      def sideEffecting = {
+        sideEffect = true
+        "This should have been invoked."
+      }
+
+      try {
+        Empty.openOrThrowException(sideEffecting)
+      } catch {
+        case e: Exception =>
+      }
+
+      sideEffect must_== true
+    }
   }
 
   "A Failure is an Empty Box which" can {
@@ -307,9 +353,10 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
   }
 
   "A Failure is an Empty Box which" should {
-    "return itself if mapped or flatmapped" in {
+    "return itself if mapped, flatMapped or flattened" in {
       Failure("error", Empty, Empty) map {_.toString} must_== Failure("error", Empty, Empty)
       Failure("error", Empty, Empty) flatMap {x: String => Full(x.toString)} must_== Failure("error", Empty, Empty)
+      Failure("error", Empty, Empty).flatten must_== Failure("error", Empty, Empty)
     }
     "return a itself when asked for its status with the operator ?~" in {
       Failure("error", Empty, Empty) ?~ "nothing" must_== Failure("error", Empty, Empty)
@@ -427,4 +474,3 @@ trait BoxGenerator {
   } yield Failure(msg.mkString, exception, Box(chain.headOption))
 
 }
-

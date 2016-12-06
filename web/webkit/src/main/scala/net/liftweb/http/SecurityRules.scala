@@ -339,7 +339,7 @@ object ContentSecurityPolicyViolation extends LazyLoggable {
     case request @ Req(start :: "content-security-policy-report" :: Nil, _, _) if start == LiftRules.liftContextRelativePath =>
       val violation =
         for {
-          requestJson <- request.json
+          requestJson <- request.forcedBodyAsJson
           camelCasedJson = requestJson.transformField {
             case JField("document-uri", content) =>
               JField("documentUri", content)

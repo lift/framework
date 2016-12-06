@@ -1874,7 +1874,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     HtmlNormalizer.normalizeHtmlAndEventHandlers(
       nodes,
       S.contextPath,
-      LiftRules.stripComments.vend
+      LiftRules.stripComments.vend,
+      LiftRules.extractInlineJavaScript
     )
   }
 

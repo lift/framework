@@ -80,7 +80,9 @@ object Dependencies {
   lazy val jwebunit    = "net.sourceforge.jwebunit"    % "jwebunit-htmlunit-plugin" % "2.5"     % "test"
   lazy val mockito_all = "org.mockito"                 % "mockito-all"              % "1.9.0"   % "test"
   lazy val scalacheck  = "org.specs2"                 %% "specs2-scalacheck"        % "3.7"  % "test"
-  lazy val specs2      = "org.specs2"                 %% "specs2"                   % "3.7"  % "test"
+  lazy val specs2      = "org.specs2"                 %% "specs2-core"              % "3.7"  % "test"
+  lazy val specs2Matchers = "org.specs2"              %% "specs2-matcher-extra"     % "3.7"  % "test"
+  lazy val specs2Mock  = "org.specs2"                 %% "specs2-mock"              % "3.7"  % "test"
   lazy val scalatest   = "org.scalatest"              %% "scalatest"                % "2.1.3"   % "test"
   lazy val junit       = "junit"                       % "junit"                    % "4.8.2"   % "test"
 
