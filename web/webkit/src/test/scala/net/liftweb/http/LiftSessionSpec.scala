@@ -52,7 +52,7 @@ object LiftSessionSpec extends Specification with BeforeEach {
         val sendingMessages = 1 to 20
 
         sendingMessages.foreach { message =>
-          session.sendCometActorMessage(cometName, Full(cometName), message)
+          session.sendCometMessage(cometName, Full(cometName), message)
         }
 
         session.findOrCreateComet[TestCometActor](Full(cometName), NodeSeq.Empty, Map.empty).map { comet =>
@@ -71,11 +71,11 @@ object LiftSessionSpec extends Specification with BeforeEach {
         val cometName = "Comet1"
 
         // Spin up two comets: one with a name and one without
-        session.sendCometActorMessage(cometType, Full(cometName), NoOp)
-        session.sendCometActorMessage(cometType, Empty, NoOp)
+        session.sendCometMessage(cometType, Full(cometName), NoOp)
+        session.sendCometMessage(cometType, Empty, NoOp)
 
         // Send a message to both
-        session.sendCometActorMessage(cometType, 1)
+        session.sendCometMessage(cometType, 1)
 
         // Ensure both process the message
         session.findOrCreateComet[TestCometActor](Full(cometName), NodeSeq.Empty, Map.empty).map { comet =>
