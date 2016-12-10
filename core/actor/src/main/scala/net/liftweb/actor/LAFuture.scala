@@ -113,10 +113,13 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
     onComplete(v => v match {
       case Full(v) =>
         Box.tryo(contextFn(v)) match {
-          case Full(successfullyComputedFuture) => successfullyComputedFuture.onComplete(v2 => result.complete(v2))
-          case e: EmptyBox => result.complete(e)
+          case Full(successfullyComputedFuture) =>
+            successfullyComputedFuture.onComplete(v2 => result.complete(v2))
+          case e: EmptyBox =>
+            result.complete(e)
         }
-      case e: EmptyBox => result.complete(e)
+      case e: EmptyBox =>
+        result.complete(e)
     })
     result
   }
