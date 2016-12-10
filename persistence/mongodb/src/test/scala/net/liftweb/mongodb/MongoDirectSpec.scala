@@ -47,12 +47,12 @@ class MongoDirectSpec extends Specification with MongoTestKit {
 
     doc.put("name", "MongoDB")
     doc.put("type", "database")
-    doc.put("count", 1)
+    doc.put("count", 1: java.lang.Integer)
 
     val info = new BasicDBObject
 
-    info.put("x", 203)
-    info.put("y", 102)
+    info.put("x", 203: java.lang.Integer)
+    info.put("y", 102: java.lang.Integer)
 
     doc.put("info", info)
 
@@ -68,7 +68,7 @@ class MongoDirectSpec extends Specification with MongoTestKit {
 
       // upsert
       doc.put("type", "document")
-      doc.put("count", 2)
+      doc.put("count", 2: java.lang.Integer)
       val q = new BasicDBObject("name", "MongoDB") // the query to select the document(s) to update
       val o = doc // the new object to update with, replaces the entire document, except possibly _id
       val upsert = false // if the database should create the element if it does not exist
@@ -128,8 +128,7 @@ class MongoDirectSpec extends Specification with MongoTestKit {
       cur.count must_== 100
 
       // get a single document with a query ( i = 71 )
-      val query = new BasicDBObject
-      query.put("i", 71)
+      val query = new BasicDBObject("i", 71)
       val cur2 = coll.find(query)
 
       cur2.count must_== 1
@@ -218,15 +217,15 @@ class MongoDirectSpec extends Specification with MongoTestKit {
 
       doc.put("name", "MongoSession")
       doc.put("type", "db")
-      doc.put("count", 1)
+      doc.put("count", 1: java.lang.Integer)
 
       doc2.put("name", "MongoSession")
       doc2.put("type", "db")
-      doc2.put("count", 1)
+      doc2.put("count", 1: java.lang.Integer)
 
       doc3.put("name", "MongoDB")
       doc3.put("type", "db")
-      doc3.put("count", 1)
+      doc3.put("count", 1: java.lang.Integer)
 
       // save the docs to the db
       Helpers.tryo(coll.save(doc, WriteConcern.SAFE)).toOption must beSome
