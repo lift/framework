@@ -26,11 +26,6 @@ object ParserBugs extends Specification {
     parseOpt(""" {"x":"\uffff"} """).isDefined mustEqual true
   }
 
-  "Does not hang when parsing 2.2250738585072012e-308" in {
-    (allCatch.opt(parse(""" [ 2.2250738585072012e-308 ] """)) mustEqual None) and
-      (allCatch.opt(parse(""" [ 22.250738585072012e-309 ] """)) mustEqual None)
-  }
-
   "Does not allow colon at start of array (1039)" in {
     parseOpt("""[:"foo", "bar"]""") mustEqual None
   }

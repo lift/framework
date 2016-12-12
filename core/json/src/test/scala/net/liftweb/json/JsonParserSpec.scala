@@ -42,12 +42,6 @@ object JsonParserSpec extends Specification with JValueGen with ScalaCheck {
     forAll(genJValue)(parsing)
   }
 
-  "Buffer size does not change parsing result" in {
-    val bufSize = Gen.choose(2, 64)
-    val parsing = (x: JValue, s1: Int, s2: Int) => { parseVal(x, s1) == parseVal(x, s2) }
-    forAll(genObject, bufSize, bufSize)(parsing)
-  }
-
   "Parsing is thread safe" in {
     import java.util.concurrent._
 
@@ -90,6 +84,14 @@ object JsonParserSpec extends Specification with JValueGen with ScalaCheck {
 
     val json = JsonParser.parse(new StingyReader(""" ["hello"] """))
     json mustEqual JArray(JString("hello") :: Nil)
+  }
+
+  sequential
+
+  "Segment size does not change parsing result" in {
+    val bufSize = Gen.choose(2, 64)
+    val parsing = (x: JValue, s1: Int, s2: Int) => { parseVal(x, s1) == parseVal(x, s2) }
+    forAll(genObject, bufSize, bufSize)(parsing)
   }
 
   implicit def arbJValue: Arbitrary[JValue] = Arbitrary(genObject)
