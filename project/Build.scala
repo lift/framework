@@ -229,7 +229,14 @@ object BuildDef extends Build {
     Project(id, base)
       .settings(liftBuildSettings: _*)
       .settings(scalacOptions ++= List("-feature", "-language:implicitConversions"))
-      .settings(scalacOptions in (Compile, doc) += "-no-java-comments")
+      .settings(
+        scalacOptions in (Compile, doc) ++= {
+          scalaVersion.value match {
+            case "2.12.1" => "-no-java-comments" :: Nil
+            case _ => Nil
+          }
+        }
+      )
       .settings(
         autoAPIMappings := true,
         apiMappings ++= {
