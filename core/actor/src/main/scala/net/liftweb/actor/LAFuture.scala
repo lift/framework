@@ -24,7 +24,7 @@ import common._
  * A container that contains a calculated value
  * or may contain one in the future
  */
-class LAFuture[T](val scheduler: LAScheduler) {
+class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context:LAFuture.ContextFn = None) {
   private var item: T = _
   private var failure: Box[Nothing] = Empty
   private var satisfied = false
@@ -32,10 +32,6 @@ class LAFuture[T](val scheduler: LAScheduler) {
   private var toDo: List[T => Unit] = Nil
   private var onFailure: List[Box[Nothing] => Unit] = Nil
   private var onComplete: List[Box[T] => Unit] = Nil
-
-  def this() {
-    this(LAScheduler)
-  }
 
   LAFuture.notifyObservers(this)
 
@@ -52,7 +48,7 @@ class LAFuture[T](val scheduler: LAScheduler) {
           val ret = toDo
           toDo = Nil
           onFailure = Nil
-          onComplete.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(Full(value))))
+          onComplete.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(Full(value)), context))
           onComplete = Nil
           ret
         } else Nil
@@ -60,7 +56,7 @@ class LAFuture[T](val scheduler: LAScheduler) {
         notifyAll()
       }
     }
-    funcs.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(value)))
+    funcs.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(value), context))
   }
 
   /**
@@ -77,15 +73,20 @@ class LAFuture[T](val scheduler: LAScheduler) {
   /**
    * Get the future value
    */
+  def get: T = get_rec
+
+  /**
+   * Private tail-recursive implementation of get
+   */
   @scala.annotation.tailrec
-  final def get: T = synchronized {
+  private [this] def get_rec: T = synchronized {
     if (satisfied) item
     else if (aborted) throw new AbortedFutureException(failure)
     else {
       this.wait()
       if (satisfied) item
       else if (aborted) throw new AbortedFutureException(failure)
-      else get
+      else get_rec
     }
   }
 
@@ -105,13 +106,13 @@ class LAFuture[T](val scheduler: LAScheduler) {
    * @return a Future that represents the function applied to the value of the future
    */
   def map[A](f: T => A): LAFuture[A] = {
-    val ret = new LAFuture[A](scheduler)
+    val ret = new LAFuture[A](scheduler, context)
     onComplete(v => ret.complete(v.flatMap(n => Box.tryo(f(n)))))
     ret
   }
 
   def flatMap[A](f: T => LAFuture[A]): LAFuture[A] = {
-    val ret = new LAFuture[A](scheduler)
+    val ret = new LAFuture[A](scheduler, context)
     onComplete(v => v match {
       case Full(v) =>
         Box.tryo(f(v)) match {
@@ -124,7 +125,7 @@ class LAFuture[T](val scheduler: LAScheduler) {
   }
 
   def filter(f: T => Boolean): LAFuture[T] = {
-    val ret = new LAFuture[T](scheduler)
+    val ret = new LAFuture[T](scheduler, context)
     onComplete(v => ret.complete(v.filter(f)))
     ret
   }
@@ -175,7 +176,7 @@ class LAFuture[T](val scheduler: LAScheduler) {
    */
   def onSuccess(f: T => Unit) {
     synchronized {
-      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => f(item))} else
+      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => f(item), context)} else
       if (!aborted) {
         toDo ::= f
       }
@@ -189,7 +190,7 @@ class LAFuture[T](val scheduler: LAScheduler) {
    */
   def onFail(f: Box[Nothing] => Unit) {
     synchronized {
-      if (aborted) LAFuture.executeWithObservers(scheduler, () => f(failure)) else
+      if (aborted) LAFuture.executeWithObservers(scheduler, () => f(failure), context) else
       if (!satisfied) {
         onFailure ::= f
       }
@@ -203,8 +204,8 @@ class LAFuture[T](val scheduler: LAScheduler) {
    */
   def onComplete(f: Box[T] => Unit) {
     synchronized {
-      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => f(Full(item)))} else
-      if (aborted) {LAFuture.executeWithObservers(scheduler, () => f(failure))} else
+      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => f(Full(item)), context)} else
+      if (aborted) {LAFuture.executeWithObservers(scheduler, () => f(failure), context)} else
       onComplete ::= f
     }
   }
@@ -226,8 +227,8 @@ class LAFuture[T](val scheduler: LAScheduler) {
       if (!satisfied && !aborted) {
         aborted = true
         failure = e
-        onFailure.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(e)))
-        onComplete.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(e)))
+        onFailure.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(e), context))
+        onComplete.foreach(f => LAFuture.executeWithObservers(scheduler, () => f(e), context))
         onComplete = Nil
         onFailure = Nil
         toDo = Nil
@@ -249,6 +250,8 @@ class LAFuture[T](val scheduler: LAScheduler) {
 final class AbortedFutureException(why: Box[Nothing]) extends Exception("Aborted Future")
 
 object LAFuture {
+  type ContextFn = Option[CommonLoanWrapper]
+
   /**
    * Create an LAFuture from a function that
    * will be applied on a separate thread. The LAFuture
@@ -259,8 +262,8 @@ object LAFuture {
    * @tparam T the type
    * @return an LAFuture that will yield its value when the value has been computed
    */
-  def apply[T](f: () => T, scheduler: LAScheduler = LAScheduler): LAFuture[T] = {
-    val ret = new LAFuture[T](scheduler)
+  def apply[T](f: () => T, scheduler: LAScheduler = LAScheduler, context:ContextFn = None): LAFuture[T] = {
+    val ret = new LAFuture[T](scheduler, context)
     scheduler.execute(() => {
       try {
       ret.satisfy(f())
@@ -277,8 +280,8 @@ object LAFuture {
    * @tparam T the type that
    * @return
    */
-  def build[T](f: => T, scheduler: LAScheduler = LAScheduler): LAFuture[T] = {
-    this.apply(() => f, scheduler)
+  def build[T](f: => T, scheduler: LAScheduler = LAScheduler, context:ContextFn = None): LAFuture[T] = {
+    this.apply(() => f, scheduler, context)
   }
 
   private val threadInfo = new ThreadLocal[List[LAFuture[_] => Unit]]
@@ -295,13 +298,13 @@ object LAFuture {
     }
   }
 
-  private def executeWithObservers(scheduler: LAScheduler, f: () => Unit) {
+  private def executeWithObservers(scheduler: LAScheduler, f: () => Unit, context:ContextFn) {
     val cur = threadInfo.get()
     scheduler.execute(() => {
       val old = threadInfo.get()
       threadInfo.set(cur)
       try {
-        f()
+        context.map(_.apply(f())).getOrElse(f())
       } finally {
         threadInfo.set(old)
       }
