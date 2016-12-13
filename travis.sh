@@ -12,6 +12,7 @@ if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
 
   if [ "${TRAVIS_BRANCH}" = "master" ]; then
     ./liftsh publish
+    ./liftsh ++2.11.7 publish
   elif [ "${TRAVIS_BRANCH}" = "lift_26" ]; then
     ./liftsh ++2.10.4 "project lift-framework-pre-111" publish
     ./liftsh ++2.11.1 publish
