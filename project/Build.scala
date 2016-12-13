@@ -229,6 +229,7 @@ object BuildDef extends Build {
     Project(id, base)
       .settings(liftBuildSettings: _*)
       .settings(scalacOptions ++= List("-feature", "-language:implicitConversions"))
+      .settings(scalacOptions in (Compile, doc) += "-no-java-comments")
       .settings(
         autoAPIMappings := true,
         apiMappings ++= {
