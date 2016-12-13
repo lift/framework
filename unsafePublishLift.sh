@@ -105,7 +105,7 @@ echo -e "\nProceeding...\n"
 read -p "Please enter the version of the release: " RELEASE_VERSION
 
 # Sanity check on the release version
-if ! echo $RELEASE_VERSION | egrep -x '[0-9]+\.[0-9]+(-(M|RC)[0-9]+)?' > /dev/null; then
+if ! echo $RELEASE_VERSION | egrep -x '[0-9]+\.[0-9]+\.[0-9]+(-(M|RC)[0-9]+)?' > /dev/null; then
     confirm "$RELEASE_VERSION does not appear to be a valid version. Are you sure?" ||
       die "Cencelling release build!"
 fi
@@ -120,7 +120,7 @@ for MODULE in framework ; do
     CURRENT_BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`
     debug "Current branch for $MODULE is $CURRENT_BRANCH"
 
-    if [ "${CURRENT_BRANCH}" != "3.0-RC4" ]; then
+    if [ "${CURRENT_BRANCH}" != "lift-3.0" ]; then
         echo "Currently releases can only be built from master. $MODULE is on branch $CURRENT_BRANCH. Aborting build."
         exit
     fi
