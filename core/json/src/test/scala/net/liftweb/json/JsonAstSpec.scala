@@ -20,7 +20,8 @@ package json
 import org.specs2.mutable.Specification
 import org.specs2.ScalaCheck
 import org.scalacheck._
-import org.scalacheck.Prop.{forAll, forAllNoShrink}
+  import Arbitrary._
+  import Prop.{forAll, forAllNoShrink}
 
 object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
   "Functor identity" in {
@@ -29,11 +30,12 @@ object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
   }
 
   "Functor composition" in {
-    val compositionProp = (json: JValue, fa: JValue => JValue, fb: JValue => JValue) =>
+    val compositionProp = (json: JValue, fa: JValue => JValue, fb: JValue => JValue) => {
       json.map(fb).map(fa) == json.map(fa compose fb)
+    }
 
     forAll(compositionProp)
-  }
+  }.pendingUntilFixed("Requires a fundamental change to map; see https://github.com/lift/framework/issues/1816 .")
 
   "Monoid identity" in {
     val identityProp = (json: JValue) => (json ++ JNothing == json) && (JNothing ++ json == json)
@@ -219,4 +221,5 @@ object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
 
   implicit def arbJValue: Arbitrary[JValue] = Arbitrary(genJValue)
   implicit def arbJObject: Arbitrary[JObject] = Arbitrary(genObject)
+  implicit val arbJValueFn: Arbitrary[JValue=>JValue] = Arbitrary(genJValueFn)
 }
