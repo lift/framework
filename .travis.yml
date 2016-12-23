@@ -1,4 +1,9 @@
 language: scala
+
+scala:
+  - 2.11.8
+  - 2.12.1
+
 cache:
   directories:
     - '$HOME/node_modules'
