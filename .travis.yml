@@ -2,8 +2,11 @@ language: scala
 cache:
   directories:
     - '$HOME/node_modules'
+    - $HOME/.ivy2
+
 services:
   - mongodb
+
 jdk:
   - oraclejdk8
 
