@@ -77,7 +77,7 @@ object JsonParser {
    */
   def parse[A](s: Reader, p: Parser => A): A = p(new Parser(new Buffer(s, false)))
 
-  private def parse(buf: Buffer): JValue = {
+  private[json] def parse(buf: Buffer): JValue = {
     try {
       astParser(new Parser(buf))
     } catch {
@@ -391,9 +391,9 @@ object JsonParser {
   }
 
   /* Buffer used to parse JSON.
-   * Buffer is divided to one or more segments (preallocated in Segments pool).
+   * Buffer is divided to one or more segments (preallocated in segmentPool).
    */
-  private[json] final class Buffer(in: Reader, closeAutomatically: Boolean) {
+  private[json] final class Buffer(in: Reader, closeAutomatically: Boolean, segmentPool: SegmentPool = Segments) {
     // Reused by the parser when appropriate, allows for a single builder to be
     // used throughout the parse process, and to be written to directly from the
     // substring method, so as to avoid allocating new builders when avoidable.
@@ -403,7 +403,7 @@ object JsonParser {
     var curMark = -1
     var curMarkSegment = -1
     var eofIsFailure = false
-    private[this] var segments = scala.collection.mutable.ArrayBuffer(Segments.apply())
+    private[this] var segments = scala.collection.mutable.ArrayBuffer(segmentPool.apply())
     private[this] var segment: Array[Char] = segments.head.seg
     private[this] var cur = 0 // Pointer which points current parsing location
     private[this] var curSegmentIdx = 0 // Pointer which points current segment
@@ -452,7 +452,7 @@ object JsonParser {
         }
       } else { // slower path for case when string is in two or more segments
         val segmentCount = curSegmentIdx - curMarkSegment + 1
-        val substringLength = segmentCount * Segments.segmentSize - curMark - (Segments.segmentSize - cur) - 1
+        val substringLength = segmentCount * segmentPool.segmentSize - curMark - (segmentPool.segmentSize - cur) - 1
         val chars =
           if (intoBuilder) {
             emptyArray
@@ -485,11 +485,11 @@ object JsonParser {
 
     def near = {
       val start = (cur - 20) max 0
-      val len = ((cur + 1) min Segments.segmentSize) - start
+      val len = ((cur + 1) min segmentPool.segmentSize) - start
       new String(segment, start, len)
     }
 
-    def release = segments.foreach(Segments.release)
+    def release = segments.foreach(segmentPool.release)
 
     private[JsonParser] def automaticClose = if (closeAutomatically) in.close
 
@@ -508,7 +508,7 @@ object JsonParser {
               if (curSegmentIdx < segments.length) {
                 segments(curSegmentIdx)
               } else {
-                val segment = Segments.apply()
+                val segment = segmentPool.apply()
                 segments.append(segment)
                 segment
               }
@@ -526,14 +526,16 @@ object JsonParser {
     }
   }
 
-  /*
-   * A pool of preallocated char arrays.
-   */
-  private[json] object Segments {
+  private[json] trait SegmentPool {
+    def apply(): Segment
+    def release(segment: Segment): Unit
+    def segmentSize: Int
+  }
+
+  private[json] class ArrayBlockingSegmentPool(override val segmentSize: Int) extends SegmentPool {
     import java.util.concurrent.ArrayBlockingQueue
     import java.util.concurrent.atomic.AtomicInteger
 
-    private[json] var segmentSize = 1000
     private[this] val maxNumOfSegments = 10000
     private[this] var segmentCount = new AtomicInteger(0)
     private[this] val segments = new ArrayBlockingQueue[Segment](maxNumOfSegments)
@@ -560,6 +562,11 @@ object JsonParser {
       case _ =>
     }
   }
+
+  /*
+   * A pool of preallocated char arrays.
+   */
+  private object Segments extends ArrayBlockingSegmentPool(1000)
 
   sealed trait Segment {
     val seg: Array[Char]
