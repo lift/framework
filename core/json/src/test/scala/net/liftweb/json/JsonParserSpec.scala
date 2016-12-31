@@ -17,11 +17,12 @@
 package net.liftweb
 package json
 
+import java.io.StringReader
+
 import org.specs2.mutable.Specification
 import org.specs2.ScalaCheck
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
-
 
 /**
  * System under specification for JSON Parser.
@@ -86,8 +87,6 @@ object JsonParserSpec extends Specification with JValueGen with ScalaCheck {
     json mustEqual JArray(JString("hello") :: Nil)
   }
 
-  sequential
-
   "Segment size does not change parsing result" in {
     val bufSize = Gen.choose(2, 64)
     val parsing = (x: JValue, s1: Int, s2: Int) => { parseVal(x, s1) == parseVal(x, s2) }
@@ -97,13 +96,11 @@ object JsonParserSpec extends Specification with JValueGen with ScalaCheck {
   implicit def arbJValue: Arbitrary[JValue] = Arbitrary(genObject)
 
   private def parseVal(json: JValue, bufSize: Int) = {
-    val existingSize = JsonParser.Segments.segmentSize
-    try {
-      JsonParser.Segments.segmentSize = bufSize
-      JsonParser.Segments.clear
-      JsonParser.parse(compactRender(json))
-    } finally {
-      JsonParser.Segments.segmentSize = existingSize
-    }
+    val segmentPool = new JsonParser.ArrayBlockingSegmentPool(bufSize)
+    JsonParser.parse(new JsonParser.Buffer(
+      new StringReader(compactRender(json)),
+      false,
+      segmentPool
+    ))
   }
 }
