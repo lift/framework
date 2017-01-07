@@ -2327,7 +2327,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * the CometActor is instantiated.  If the CometActor already exists
    * in the session, the message will be sent immediately.  If the CometActor
    * is not yet instantiated, the message will be sent to the CometActor
-   * as part of setup (see queueCometMessage) if it is created as part
+   * as part of setup `[[queueCometMessage]]` if it is created as part
    * of the current HTTP request/response cycle.
    *
    * @param theType the type of the CometActor
@@ -2345,7 +2345,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * the CometActor is instantiated.  If the CometActor already exists
    * in the session, the message will be sent immediately.  If the CometActor
    * is not yet instantiated, the message will be sent to the CometActor
-   * as part of setup (see queueCometMessage) if it is created as part
+   * as part of setup `[[queueCometMessage]]` if it is created as part
    * of the current HTTP request/response cycle.
    *
    * @param msg the message to send to the CometActor
@@ -2361,7 +2361,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * the CometActor is instantiated.  If the CometActor already exists
    * in the session, the message will be sent immediately.  If the CometActor
    * is not yet instantiated, the message will be sent to the CometActor
-   * as part of setup (see queueCometMessage) regardless of if it is created as part
+   * as part of setup `[[queueCometMessage]]` regardless of if it is created as part
    * of the current HTTP request/response cycle. We plan to restrict this to
    * the current request/response cycle in the future (as that is the intended beavior).
    *
@@ -2383,7 +2383,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * the CometActor is instantiated.  If the CometActor already exists
    * in the session, the message will be sent immediately.  If the CometActor
    * is not yet instantiated, the message will be sent to the CometActor
-   * as part of setup (see queueCometMessage) regardless of if it is created as part
+   * as part of setup `[[queueCometMessage]]` regardless of if it is created as part
    * of the current HTTP request/response cycle. We plan to restrict this to
    * the current request/response cycle in the future (as that is the intended beavior).
    *
