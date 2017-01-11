@@ -85,22 +85,14 @@ private[http] class FutureWithSession[T](private[this] val delegate: Future[T]) 
     new FutureWithSession(delegate.transform(s => sessionSuccessFn(s), f => sessionFailureFn(f)))
   }
 
-  /**
-   * This operation has to exist for Lift to compile for 2.12, but doesn't exist in 2.11 so it will
-   * throw an exception.
-   */
-  @scala.throws(classOf[UnsupportedOperationException])
   def transform[S](f: Try[T] => Try[S])(implicit executor: ExecutionContext): Future[S] = {
-    throw new UnsupportedOperationException("This transform method isn't supported since it doesn't exist in Scala 2.11.")
+    val sessionFn = withCurrentSession(f)
+    new FutureWithSession(delegate.transform(sessionFn))
   }
 
-  /**
-   * This operation has to exist for Lift to compile for 2.12, but doesn't exist in 2.11 so it will
-   * throw an exception.
-   */
-  @scala.throws(classOf[UnsupportedOperationException])
   def transformWith[S](f: Try[T] => Future[S])(implicit executor: ExecutionContext): Future[S] = {
-    throw new UnsupportedOperationException("The trhansformWith method isn't supported since it doesn't existin in Scala 2.11.")
+    val sessionFn = withCurrentSession(f)
+    new FutureWithSession(delegate.transformWith(sessionFn))
   }
 
   override def zip[U](that: Future[U]): Future[(T, U)] = {
