@@ -1333,7 +1333,7 @@ object RewriteResponse {
 
 /**
  * Provides access to a thread-local URL rewriter. Typically uses either an
- * applicable entry in `[[LiftRules.decorateUrl]]` or the container's built-in
+ * applicable entry in `[[LiftRules.urlDecorate]]` or the container's built-in
  * URL decoration which may append the session id to the URL (dependent on
  * `[[LiftRules.encodeJSessionIdInUrl_?]]`).
  */

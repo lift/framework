@@ -208,7 +208,7 @@ trait BaseGetPoster {
 
   implicit def jsonToRequestEntity(body: JValue): RequestEntity =
     new RequestEntity {
-      val bytes = compact(render(body)).toString.getBytes("UTF-8")
+      val bytes = compactRender(body).toString.getBytes("UTF-8")
 
       def getContentLength() = bytes.length
 

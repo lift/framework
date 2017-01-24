@@ -601,20 +601,25 @@ trait HtmlFixer {
 
     val w = new java.io.StringWriter
 
-    val xhtml =
+    val NodesAndEventJs(xhtml, eventJs) =
       S.session.map { session =>
-        session.normalizeHtmlAndAppendEventHandlers(
+        session.normalizeHtmlAndEventHandlers(
           session.processSurroundAndInclude(
             s"JS SetHTML id: $uid",
             content
           )
         )
       } openOr {
-        content
+        NodesAndEventJs(content, JsCmds.Noop)
       }
 
     import scala.collection.mutable.ListBuffer
-    val lb = new ListBuffer[JsCmd]
+    val lb =
+      if (eventJs == JsCmds.Noop) {
+        ListBuffer[JsCmd]()
+      } else {
+        ListBuffer[JsCmd](eventJs)
+      }
 
     val revised = ("script" #> nsFunc(ns => {
       ns match {
@@ -646,7 +651,13 @@ trait HtmlFixer {
 }
 
 trait JsCmd extends HtmlFixer with ToJsCmd {
-  def &(other: JsCmd): JsCmd = JsCmds.CmdPair(this, other)
+  def &(other: JsCmd): JsCmd = {
+    if (other == JsCmds.Noop) {
+      this
+    } else {
+      JsCmds.CmdPair(this, other)
+    }
+  }
 
   def toJsCmd: String
 
@@ -793,7 +804,7 @@ object JsCmds {
   implicit def jsExpToJsCmd(in: JsExp) = in.cmd
 
   case class CmdPair(left: JsCmd, right: JsCmd) extends JsCmd {
-    import scala.collection.mutable.ListBuffer;
+    import scala.collection.mutable.ListBuffer
 
     def toJsCmd: String = {
       val acc = new ListBuffer[JsCmd]()
@@ -806,6 +817,7 @@ object JsCmds {
       cmds match {
         case Nil =>
         case CmdPair(l, r) :: rest => appendDo(acc, l :: r :: rest)
+        case `_Noop` :: rest => appendDo(acc, rest)
         case a :: rest => acc.append(a); appendDo(acc, rest)
       }
     }

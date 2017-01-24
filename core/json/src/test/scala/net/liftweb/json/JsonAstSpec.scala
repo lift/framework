@@ -20,39 +20,41 @@ package json
 import org.specs2.mutable.Specification
 import org.specs2.ScalaCheck
 import org.scalacheck._
-import org.scalacheck.Prop.{forAll, forAllNoShrink}
+  import Arbitrary._
+  import Prop.{forAll, forAllNoShrink}
 
 object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
   "Functor identity" in {
     val identityProp = (json: JValue) => json == (json map identity)
-    check(forAll(identityProp))
+    forAll(identityProp)
   }
 
   "Functor composition" in {
-    val compositionProp = (json: JValue, fa: JValue => JValue, fb: JValue => JValue) =>
+    val compositionProp = (json: JValue, fa: JValue => JValue, fb: JValue => JValue) => {
       json.map(fb).map(fa) == json.map(fa compose fb)
+    }
 
-    check(forAll(compositionProp))
-  }
+    forAll(compositionProp)
+  }.pendingUntilFixed("Requires a fundamental change to map; see https://github.com/lift/framework/issues/1816 .")
 
   "Monoid identity" in {
     val identityProp = (json: JValue) => (json ++ JNothing == json) && (JNothing ++ json == json)
-    check(forAll(identityProp))
+    forAll(identityProp)
   }
 
   "Monoid associativity" in {
     val assocProp = (x: JValue, y: JValue, z: JValue) => x ++ (y ++ z) == (x ++ y) ++ z
-    check(forAll(assocProp))
+    forAll(assocProp)
   }
 
   "Merge identity" in {
     val identityProp = (json: JValue) => (json merge JNothing) == json && (JNothing merge json) == json
-    check(forAll(identityProp))
+    forAll(identityProp)
   }
 
   "Merge idempotency" in {
     val idempotencyProp = (x: JValue) => (x merge x) == x
-    check(forAll(idempotencyProp))
+    forAll(idempotencyProp)
   }
 
   "Diff identity" in {
@@ -60,12 +62,12 @@ object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
       (json diff JNothing) == Diff(JNothing, JNothing, json) &&
       (JNothing diff json) == Diff(JNothing, json, JNothing)
 
-    check(forAll(identityProp))
+    forAll(identityProp)
   }
 
   "Diff with self is empty" in {
     val emptyProp = (x: JValue) => (x diff x) == Diff(JNothing, JNothing, JNothing)
-    check(forAll(emptyProp))
+    forAll(emptyProp)
   }
 
   "Diff is subset of originals" in {
@@ -73,25 +75,25 @@ object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
       val Diff(c, a, d) = x diff y
       y == (y merge (c merge a))
     }
-    check(forAll(subsetProp))
+    forAll(subsetProp)
   }
 
   "Diff result is same when fields are reordered" in {
     val reorderProp = (x: JObject) => (x diff reorderFields(x)) == Diff(JNothing, JNothing, JNothing)
-    check(forAll(reorderProp))
+    forAll(reorderProp)
   }
 
   "Remove all" in {
     val removeAllProp = (x: JValue) => (x remove { _ => true }) == JNothing
-    check(forAll(removeAllProp))
+    forAll(removeAllProp)
   }
 
   "Remove nothing" in {
     val removeNothingProp = (x: JValue) => (x remove { _ => false }) == x
-    check(forAll(removeNothingProp))
+    forAll(removeNothingProp)
   }
 
-  "Remove removes only matching elements" in check {
+  "Remove removes only matching elements" in {
     forAllNoShrink(genJValue, genJValueClass) { (json: JValue, x: Class[_ <: JValue]) => {
       val removed = json remove typePredicate(x)
       val Diff(c, a, d) = json diff removed
@@ -137,8 +139,8 @@ object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
     // ensure that we test some JObject instances
     val fieldReplacement = (x: JObject, replacement: JObject) => anyReplacement(x, replacement)
 
-    check(forAll(fieldReplacement))
-    check(forAll(anyReplacement))
+    forAll(fieldReplacement)
+    forAll(anyReplacement)
   }
 
   "allow escaping arbitrary characters when serializing" in {
@@ -180,11 +182,31 @@ object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
       .find() must beFalse
   }
 
-  "equals hashCode" in check{ x: JObject =>
+  "equals hashCode" in prop({ x: JObject =>
     val y = JObject(scala.util.Random.shuffle(x.obj))
 
     x must_== y
     x.## must_== y.##
+  })
+
+  "find all children" in {
+    val subject = JObject(
+      JField("alpha", JString("apple")) ::
+      JField("beta", JObject(
+        JField("alpha", JString("bacon")) ::
+        JField("charlie", JString("i'm a masseuse")) ::
+        Nil
+      )) ::
+      Nil
+    )
+
+    subject \\ "alpha" must_==
+      JObject(
+        JField("alpha", JString("apple")) ::
+        JField("alpha", JString("bacon")) ::
+        Nil
+      )
+    subject \\ "charlie" must_== JObject(List(JField("charlie", JString("i'm a masseuse"))))
   }
 
   private def reorderFields(json: JValue) = json map {
@@ -199,4 +221,5 @@ object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
 
   implicit def arbJValue: Arbitrary[JValue] = Arbitrary(genJValue)
   implicit def arbJObject: Arbitrary[JObject] = Arbitrary(genObject)
+  implicit val arbJValueFn: Arbitrary[JValue=>JValue] = Arbitrary(genJValueFn)
 }

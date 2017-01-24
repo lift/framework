@@ -164,7 +164,7 @@ private[http] trait LiftMerge {
             val bodyTail = childInfo.tailInBodyChild && ! tailInBodyChild
 
             HtmlNormalizer
-              .normalizeNode(node, contextPath, stripComments)
+              .normalizeNode(node, contextPath, stripComments, LiftRules.extractInlineJavaScript)
               .map {
                 case normalized @ NodeAndEventJs(normalizedElement: Elem, _) =>
                   val normalizedChildren =

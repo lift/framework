@@ -24,6 +24,27 @@ object ExtractionBugs extends Specification {
 
   implicit val formats = DefaultFormats
 
+  case class Response(data: List[Map[String, Int]])
+
+  case class OptionOfInt(opt: Option[Int])
+
+  case class PMap(m: Map[String, List[String]])
+
+  case class ManyConstructors(id: Long, name: String, lastName: String, email: String) {
+    def this() = this(0, "John", "Doe", "")
+    def this(name: String) = this(0, name, "Doe", "")
+    def this(name: String, email: String) = this(0, name, "Doe", email)
+  }
+
+  case class ExtractWithAnyRef()
+
+  case class UnicodeFieldNames(`foo.bar,baz`: String)
+
+  object HasCompanion {
+    def hello = "hello"
+  }
+  case class HasCompanion(nums: List[Int])
+
   "ClassCastException (BigInt) regression 2 must pass" in {
     val opt = OptionOfInt(Some(39))
     Extraction.decompose(opt).extract[OptionOfInt].opt.get mustEqual 39
@@ -113,13 +134,4 @@ object ExtractionBugs extends Specification {
     def this(name: String) = this(0, name, "Doe", "")
     def this(name: String, email: String) = this(0, name, "Doe", email)
   }
-
-  case class ExtractWithAnyRef()
-
-  case class UnicodeFieldNames(`foo.bar,baz`: String)
-
-  object HasCompanion {
-    def hello = "hello"
-  }
-  case class HasCompanion(nums: List[Int])
 }

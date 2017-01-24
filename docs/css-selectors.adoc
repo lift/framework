@@ -24,13 +24,14 @@ transforms it according to a set of rules, producing a final `NodeSeq` with all
 of the transformations applied. This means a CSS Selector Transform is
 ultimately simply a function with signature `(NodeSeq)=>NodeSeq`. CSS Selector
 Transforms consist of three main components:
+
  - The selector
  - The subnode modification rule
  - The transformation function
 
-///
-  Nice to have: graphic that shows a selector transform pointing to each
-///
+////////////////////////////////////////////////////////////////////////////
+// Nice to have: graphic that shows a selector transform pointing to each //
+////////////////////////////////////////////////////////////////////////////
 
 The details of each are provided below, but first let's look at some simple
 examples of transforms that you can write with links. For all of these examples,
@@ -154,6 +155,7 @@ Benedict Cumberbatch
 ====
 
 These examples show a few options:
+
  - You can select by element name or by class name. More available selectors are
    in the section below on <<available-selectors>>.
  - You can set the body of an element, an attribute of an element, or even
@@ -184,8 +186,8 @@ Name selector: `@field-name`::
   `<input name="username">`.
 
 Element selector: `element-name`::
-  The element selector matches any element of type `element-name`. For example,
-  you can use `input` to match an element `<input type="text">`.
+  The element selector matches any element with node name `element-name`. For
+  example, you can use `input` to match an element `<input type="text">`.
 
 Attribute selector: `an-attribute=a-value`::
   The attribute selector matches any element whose attribute named
@@ -196,7 +198,7 @@ Universal selector: `*`::
   The universal selector matches any element.
 
 Root selector: `^`::
-  The root selector matches elements at the root level of the NodeSeq being
+  The root selector matches elements at the root level of the `NodeSeq` being
   transformed. For example, you can use `^` to match both the `header`
   and `ul` elements in the HTML `<header id="page-header">...</header><ul
   ng-model="user">...</ul>`.
@@ -206,8 +208,8 @@ Root selector: `^`::
 In addition to the above base selectors, a few selectors are provided that are
 useful shortcuts for special attributes:
 
-Data name attribute selector: `;name-data`::
-  The data name attribute selector matches any element that has `name-data` as
+Data name attribute selector: `;custom-name`::
+  The data name attribute selector matches any element that has `custom-name` as
   the value of its `data-name` attribute. For example, you can use `;user-info`
   to match an element `<ul data-name="user-info">...</ul>`.
 
@@ -229,14 +231,14 @@ Set children rule: `*`::
   example, `^ *` will set the children of all root elements to the results of
   the transformation.
 
-Append to children rule: `*<` or `*+`::
+Append to children rule: `\*<` or `*+`::
   The transformation result will be appended to the children of the matched
   element(s). For example, `^ *+` will append the results of the transformation
   to the end of the content of all root elements.
 
 Prepend to children rule: `>*` or `-*`::
   The transformation result will be prepended to the children of the matched
-  element(s). For example, `^ *+` will prepend the results of the transformation
+  element(s). For example, `^ -*` will prepend the results of the transformation
   to the beginning of the content of all root elements.
 
 Surround children rule: `<*>`::
@@ -280,8 +282,8 @@ Lift node rule: `^^`::
   _first_ element that matches the selector, and that it lifts it all the way to
   the root of the `NodeSeq` being transformed. For example,
   `".admin-user ^^" #> "ignored"`, when applied to the
-  markup `<div><form><fieldset class=".admin-user">...</fieldset>
-  <fieldset class="power-user">...</fieldset></div>`, will
+  markup `<div><form><fieldset class="admin-user">...</fieldset>
+  <fieldset class="power-user">...</fieldset></form></div>`, will
   produce `<fieldset class="admin-user">...</fieldset>`. This is useful for
   selecting among a set of template elements based on some external condition
   (e.g., one template for one type of user, another template for another type of
@@ -348,12 +350,12 @@ box by Lift:
   fact, there is a `ClearNodes` function defined in `net.liftweb.util` that does
   exactly this.]. Because CSS Selector Transforms are themselves
   `NodeSeq=>NodeSeq` functions, you can nest them this way. For example, you
-  can say `".user" #> { ".name *" #> user.name }`. With the markup
-  `<li class="user"><p class="name">Person</p></li>`, this will first select
-  the `li`, then pass it to the second transform which will select the `p`
-  and set its value to the user's name. Then the second transform will return
-  the `li` with the user's name set up, and the top-level transform will replace
-  the original, unbound `li` with the new one.
+  can say `".user" #> { ".name *" #> user.name }`. Given the markup `<li
+  class="user"><p class="name">Person</p></li>`, this will first select the
+  `li`, then pass it to the second transform which will select the `p` and set
+  its value to the user's name. Then the second transform will return the `li`
+  with the user's name set up, and the top-level transform will replace the
+  original, unbound `li` with the new one.
 
 `CanBind[Iterable[T]]`::
   This is defined for most `T` values that `CanBind` is also defined for, and
@@ -377,10 +379,11 @@ Lift's selectors are not identical to CSS selectors. They're designed for speed
 rather than for being featureful, and designed in the context of a full-featured
 language rather than a limited language like CSS. One key difference is in how
 you combine them. In CSS, you can use `>` to select direct children, `+` for
-direct siblings, etc. Lift only provides one combinator, the space: ` `. It
-works just like in CSS, applying to all descendants. So you can set up a selector
-`.user-form input [value]` and it will for setting the `href` attribute of all
-`input` elements that have some ancestorwith class  `user-form` .
+direct siblings, etc. Lift only provides one combinator, the space. It works
+just like in CSS, checking all descendants of the elements matched by the
+select to the left against the selector on the right. So you can set up a
+selector `.user-form input [value]` and it will set the `href` attribute of all
+`input` elements that have some ancestor with class `user-form`.
 
 Notably, you cannot select `form.user input [href]`, because you cannot check
 multiple selectors on a single element. In practice, this is rarely needed for
@@ -425,19 +428,19 @@ should be applied and then applying them. So, you can do:
 ```
 
 Beware, however, as `&` is not the same as `andThen`. To do this trickery, Lift
-will only transform a part of a node once, and it won't revisit it. Two
-transformations that apply to the same attribute for the same element, for
-example, will not both be applied. Additionally, if your transformation applies
-to the body of an element, like `a *`, the new children of the element will
-_not_ be transformed. Additionally, if you replace the element itself, e.g.
-with the selector `a`, none of the other transforms for that element will run.
+will only transform a part of a node once, and it won't revisit it. Specifically,
+two transformations that apply directly to the same element (not its descendants
+or attributes). Additionally, if your transformation applies to the body of an
+element, like `a *`, the new children of the element will _not_ be transformed.
+Additionally, if you replace the element itself, e.g.  with the selector `a`,
+none of the other transforms for that element will run.
 
 Thus, you will occasionally find yourself using `&` together with `andThen`; in
 general you should default to `&` and switch to `andThen` when you need to in
 order to apply a transform to the results of the previous one.
 
-== Macros and Strings
-
-Lift's CSS Selector Transforms can be used in two modes. Most basically, you
-can create a `String` with the appropriate selector and then specify the
-transformation you want to apply to matching blocks
+//== Macros and Strings
+//
+//Lift's CSS Selector Transforms can be used in two modes. Most basically, you
+//can create a `String` with the appropriate selector and then specify the
+//transformation you want to apply to matching blocks

@@ -588,7 +588,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   /**
    * Removes the function with the given `name`. Note that this will
-   * '''not''' trigger `[[onFunctionOwnersRemoved]]` listeners.
+   * '''not''' trigger `[[LiftSession$.onFunctionOwnersRemoved]]` listeners.
    */
   def removeFunction(name: String) = {
     nmessageCallback.remove(name)
@@ -600,7 +600,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * test.
    *
    * If any function owner is completely absent after going through the
-   * functions, any function registered via `[[onFunctionOwnersRemoved]]`
+   * functions, any function registered via `[[LiftSession$.onFunctionOwnersRemoved]]`
    * will be called with the list of removed owners.
    */
   private def removeFunctionsIf(test: (S.AFuncHolder)=>Boolean) = {
@@ -1852,8 +1852,9 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Apply HTML specific corrections such as adding the context path etc.
    *
-   * In general, you should heavily consider using `[[normalizeHtmlAndEvents]]`
-   * or its friendliest sibling, `[[normalizeHtmlAndAppendEvents]]`.
+   * In general, you should heavily consider using
+   * `[[normalizeHtmlAndEventHandlers]]` or its friendliest sibling,
+   * `[[normalizeHtmlAndAppendEventHandlers]]`.
    */
   def normalizeHtml(in: NodeSeq): NodeSeq = {
     Req.normalizeHtml(contextPath, in)
@@ -1872,16 +1873,19 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     HtmlNormalizer.normalizeHtmlAndEventHandlers(
       nodes,
       S.contextPath,
-      LiftRules.stripComments.vend
+      LiftRules.stripComments.vend,
+      LiftRules.extractInlineJavaScript
     )
   }
 
   /**
    * Runs `[[normalizeHtmlAndEventHandlers]]` to adjust URLs to context paths
    * and extract JS event handlers from the given `NodeSeq` and pull them into
-   * a separate JsCmd, then uses `[[S.appendJs]]` to append that JS to the
-   * response's JavaScript (the page-specific JS file if we are rendering a
-   * page, or the end of the returned JS if this is an AJAX or comet request).
+   * a separate JsCmd, then uses
+   * `[[net.liftweb.http.S!.appendJs(js:net\.liftweb\.http\.js\.JsCmd):Unit*
+   * S.appendJs]]` to append that JS to the response's JavaScript (the
+   * page-specific JS file if we are rendering a page, or the end of the
+   * returned JS if this is an AJAX or comet request).
    */
   def normalizeHtmlAndAppendEventHandlers(in: NodeSeq): NodeSeq = {
     val NodesAndEventJs(normalizedHtml, eventJs) = normalizeHtmlAndEventHandlers(in)

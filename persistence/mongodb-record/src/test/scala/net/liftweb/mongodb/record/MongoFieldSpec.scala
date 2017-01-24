@@ -46,7 +46,7 @@ import org.bson.types.ObjectId
 /**
  * Systems under specification for MongoField.
  */
-object MongoFieldSpec extends Specification with MongoTestKit with AroundExample {
+object MongoFieldSpec extends Specification with MongoTestKit with AroundEach {
   "MongoField Specification".title
   sequential
 
@@ -178,7 +178,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundExample
     }
   }
 
-  def passConversionTests[A](example: A, mandatory: MandatoryTypedField[A], jsexp: JsExp, jvalue: JValue, formPattern: Box[NodeSeq], canCheckSetFromJValue: Boolean = true): Fragment = {
+  def passConversionTests[A](example: A, mandatory: MandatoryTypedField[A], jsexp: JsExp, jvalue: JValue, formPattern: Box[NodeSeq], canCheckSetFromJValue: Boolean = true) = {
 
     /*
     "convert to JsExp" in {

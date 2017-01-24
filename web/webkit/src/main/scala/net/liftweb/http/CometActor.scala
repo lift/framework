@@ -1444,8 +1444,10 @@ private[http] class XmlOrJsCmd(val id: String,
 
   def inSpan: NodeSeq = xml.openOr(Text("")) ++ javaScript.map(s => Script(s)).openOr(Text(""))
 
-  def outSpan: NodeSeq = Script(Run("var destroy_" + id + " = function() {" + (destroy.openOr(JsCmds.Noop).toJsCmd) + "}")) ++
+  def outSpan: NodeSeq = {
+    S.appendGlobalJs(Run("var destroy_" + id + " = function() {" + (destroy.openOr(JsCmds.Noop).toJsCmd) + "}"))
     fixedXhtml.openOr(Text(""))
+  }
 }
 
 /**

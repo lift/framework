@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 WorldWide Conferencing, LLC
+ * Copyright 2010-2016 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,8 +90,10 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
   */
   def asDBObject: DBObject = {
     val dbo = new BasicDBObject
-    value.keys.foreach { k =>
-      dbo.put(k.toString, value.getOrElse(k, ""))
+    value.keys.foreach { key =>
+      value.get(key).foreach { innerValue =>
+        dbo.put(key.toString, innerValue.asInstanceOf[Object])
+      }
     }
     dbo
   }

@@ -507,6 +507,8 @@
 
         return self;
       };
+	  
+      self['catch'] = self.fail;
 
       self.done = function(f) {
         _doneFuncs.push(f);
@@ -648,7 +650,7 @@
   window.liftJQuery = {
     onEvent: function(elementOrId, eventName, fn) {
       if (typeof elementOrId === 'string') {
-        elementOrId = '#' + elementOrId;
+        elementOrId = document.getElementById(elementOrId);
       }
 
       jQuery(elementOrId).on(eventName, fn);

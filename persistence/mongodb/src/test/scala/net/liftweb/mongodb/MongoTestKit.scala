@@ -20,11 +20,11 @@ package mongodb
 import util.{ConnectionIdentifier, DefaultConnectionIdentifier}
 
 import org.specs2.mutable.Specification
-import org.specs2.specification.BeforeAfterExample
+import org.specs2.specification.BeforeAfterEach
 
 import com.mongodb.MongoClient
 
-trait MongoTestKit extends Specification with BeforeAfterExample {
+trait MongoTestKit extends Specification with BeforeAfterEach {
   sequential
 
   def dbName = "lift_"+this.getClass.getName

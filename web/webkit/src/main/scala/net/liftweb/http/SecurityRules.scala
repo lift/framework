@@ -111,7 +111,7 @@ object ContentSourceRestriction {
   }
   /**
    * Indicates content from the given host path is allowed. See the
-   * `Content-Security-Policy` spec's [[http://www.w3.org/TR/CSP/#matching
+   * `Content-Security-Policy` spec's [[https://www.w3.org/TR/CSP/#source-list-path-patching
    * matching rules for `host-source`]] for more about what this can look
    * like.
    *
@@ -339,7 +339,7 @@ object ContentSecurityPolicyViolation extends LazyLoggable {
     case request @ Req(start :: "content-security-policy-report" :: Nil, _, _) if start == LiftRules.liftContextRelativePath =>
       val violation =
         for {
-          requestJson <- request.json
+          requestJson <- request.forcedBodyAsJson
           camelCasedJson = requestJson.transformField {
             case JField("document-uri", content) =>
               JField("documentUri", content)

@@ -17,9 +17,12 @@
 package net.liftweb
 package util
 
-import net.liftweb.common.Full
+import java.io.ByteArrayInputStream
+
 import org.specs2.mutable.Specification
 import org.specs2.mutable.After
+
+import common._
 import Props.RunModes._
 
 object PropsSpec extends Specification {
@@ -30,6 +33,24 @@ object PropsSpec extends Specification {
   "Props" should {
     "Detect test mode correctly" in {
       TestProps().testMode must_== true
+    }
+
+    "Allow modification of whereToLook before run-mode is set" in {
+      val testProps = TestProps()
+      val originalWtl = testProps.whereToLook
+
+      var wasCalled = false
+      testProps.whereToLook = () => {
+        wasCalled = true
+
+        List(
+          ("test propsters", () => Full(new ByteArrayInputStream("test.prop=value".getBytes("UTF-8"))))
+        )
+      }
+
+      testProps.getInt("jetty.port") must_== Empty
+      testProps.get("test.prop") must_== Full("value")
+      wasCalled must_== true
     }
 
     "Allow modification of run-mode properties before the run-mode is set" in {
@@ -51,6 +72,7 @@ object PropsSpec extends Specification {
       val testProps = TestProps()
 
       val before = testProps.autoDetectRunModeFn.get
+      testProps.mode // initialize run mode
       testProps.autoDetectRunModeFn.allowModification must_== false
       testProps.autoDetectRunModeFn.set(() => Test) must_== false
       testProps.autoDetectRunModeFn.get must_== before
@@ -80,10 +102,10 @@ object PropsSpec extends Specification {
     "Prefer prepended System.properties to the test.default.props" in {
       val testProps = TestProps()
 
-      System.setProperty("omniauth.baseurl", "http://google.com")
+      System.setProperty("omniauth.baseurl1", "http://google.com")
 
       testProps.prependProvider(sys.props)
-      val baseurl = testProps.get("omniauth.baseurl")
+      val baseurl = testProps.get("omniauth.baseurl1")
 
       baseurl must_== Full("http://google.com")
     }
@@ -91,10 +113,10 @@ object PropsSpec extends Specification {
     "Read through to System.properties, correctly handling mutation" in {
       val testProps = TestProps()
 
-      System.setProperty("omniauth.baseurl", "http://google.com")
+      System.setProperty("omniauth.baseurl2", "http://google.com")
       testProps.prependProvider(sys.props)
-      System.setProperty("omniauth.baseurl", "http://ebay.com")
-      val baseurl = testProps.get("omniauth.baseurl")
+      System.setProperty("omniauth.baseurl2", "http://ebay.com")
+      val baseurl = testProps.get("omniauth.baseurl2")
 
       baseurl must_== Full("http://ebay.com")
     }

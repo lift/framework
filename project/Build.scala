@@ -56,6 +56,12 @@ object BuildDef extends Build {
   lazy val framework =
     liftProject("lift-framework", file("."))
       .aggregate(liftProjects: _*)
+      .settings(scalacOptions in (Compile, doc) ++= Seq(scalaVersion.value).flatMap {
+        case v if v.startsWith("2.12") =>
+          Seq("-no-java-comments")
+        case _ =>
+          Seq()
+      }) //workaround for scala/scala-dev#249
       .settings(aggregatedSetting(sources in(Compile, doc)),
                 aggregatedSetting(dependencyClasspath in(Compile, doc)),
                 publishArtifact := false)
@@ -74,6 +80,12 @@ object BuildDef extends Build {
   lazy val actor =
     coreProject("actor")
         .dependsOn(common)
+        .settings(scalacOptions in (Compile, doc) ++= Seq(scalaVersion.value).flatMap {
+          case v if v.startsWith("2.12") =>
+            Seq("-no-java-comments")
+          case _ =>
+            Seq()
+        }) //workaround for scala/scala-dev#249
         .settings(description := "Simple Actor",
                   parallelExecution in Test := false)
 
@@ -129,12 +141,18 @@ object BuildDef extends Build {
   lazy val webkit =
     webProject("webkit")
         .dependsOn(util, testkit % "provided")
+        .settings(scalacOptions in (Compile, doc) ++= Seq(scalaVersion.value).flatMap {
+          case v if v.startsWith("2.12") =>
+            Seq("-no-java-comments")
+          case _ =>
+            Seq()
+        }) //workaround for scala/scala-dev#249
         .settings(libraryDependencies ++= Seq(mockito_all, jquery, jasmineCore, jasmineAjax))
         .settings(yuiCompressor.Plugin.yuiSettings: _*)
         .settings(description := "Webkit Library",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv =>
-                    Seq(commons_fileupload, rhino, servlet_api, specs2.copy(configurations = Some("provided")), jetty6,
+                    Seq(commons_fileupload, rhino, servlet_api, specs2.copy(configurations = Some("provided")), specs2Matchers.copy(configurations = Some("provided")), jetty6,
                       jwebunit)
                   },
                   initialize in Test <<= (sourceDirectory in Test) { src =>
