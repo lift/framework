@@ -28,6 +28,7 @@ import net.liftweb.util.SimpleInjector
 
 import com.mongodb.{BasicDBObject, BasicDBList, DBObject}
 import org.bson.types.ObjectId
+import org.bson.Document
 
 object JObjectParser extends SimpleInjector {
   /**
@@ -63,6 +64,11 @@ object JObjectParser extends SimpleInjector {
       case x: BasicDBObject => JObject(
         x.keySet.toList.map { f =>
           JField(f.toString, serialize(x.get(f.toString))(formats))
+        }
+      )
+      case x: Document => JObject(
+        x.keySet.toList.map { f =>
+          JField(f.toString, serialize(x.get(f.toString), formats))
         }
       )
       case x => {

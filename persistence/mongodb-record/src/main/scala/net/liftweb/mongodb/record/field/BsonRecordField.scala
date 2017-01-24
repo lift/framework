@@ -24,9 +24,9 @@ import http.js.JsExp
 import http.js.JE.JsNull
 import json.JsonAST._
 import json.Printer
-
 import net.liftweb.record._
 import com.mongodb._
+import org.bson.Document
 
 import scala.xml._
 
@@ -62,6 +62,7 @@ class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonR
 
   def setFromAny(in: Any): Box[SubRecordType] = in match {
     case dbo: DBObject => setBox(Full(valueMeta.fromDBObject(dbo)))
+    case dbo: org.bson.Document => setBox(Full(valueMeta.fromDocument(dbo)))
     case _ => genericSetFromAny(in)
   }
 
@@ -103,4 +104,11 @@ class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: B
     })))
     case other => setBox(FieldHelpers.expectedA("JArray", other))
   }
+
+  override def setFromDocumentList(list: java.util.List[Document]): Box[List[SubRecordType]] = {
+    setBox(Full(list.map{ doc =>
+      valueMeta.fromDocument(doc)
+    }.toList))
+  }
+
 }
