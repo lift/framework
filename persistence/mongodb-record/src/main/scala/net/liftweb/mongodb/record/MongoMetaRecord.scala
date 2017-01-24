@@ -18,24 +18,20 @@ package net.liftweb
 package mongodb
 package record
 
-import java.util.{Calendar, UUID}
-import java.util.regex.Pattern
-
-import scala.collection.JavaConversions._
-
-import net.liftweb.common._
-import net.liftweb.json.{Formats, JsonParser}
-import net.liftweb.json.JsonAST._
-import net.liftweb.mongodb._
-import net.liftweb.mongodb.record.field._
-import net.liftweb.record.{MandatoryTypedField, MetaRecord, Record}
-import net.liftweb.record.FieldHelpers.expectedA
-import net.liftweb.record.field._
-import net.liftweb.util.ConnectionIdentifier
+import java.util.UUID
 
 import com.mongodb._
-import com.mongodb.util.JSON
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.client.model.UpdateOptions
+import com.mongodb.client.result.UpdateResult
+import net.liftweb.common._
+import net.liftweb.json.JsonAST._
+import net.liftweb.record.MandatoryTypedField
+import org.bson.Document
 import org.bson.types.ObjectId
+
+import scala.collection.JavaConversions._
+import scala.concurrent.{Future, Promise}
 
 trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   extends BsonMetaRecord[BaseRecord] with MongoMeta[BaseRecord] {
@@ -64,6 +60,10 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
    * Use the db associated with this Meta.
    */
   def useDb[T](f: DB => T): T = MongoDB.use(connectionIdentifier)(f)
+
+  def useCollAsync[T](f: com.mongodb.async.client.MongoCollection[Document] => T): T = {
+    MongoAsync.useCollection[T](connectionIdentifier, collectionName)(f)
+  }
 
   /**
   * Delete the instance from backing store
@@ -263,6 +263,18 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     }
   }
 
+  def insertAsync(inst:BaseRecord): Future[Boolean] = {
+    useCollAsync { coll =>
+      val cb = new SingleBooleanVoidCallback( () => {
+        foreachCallback(inst, _.afterSave)
+        inst.allFields.foreach { _.resetDirty }
+      })
+      foreachCallback(inst, _.beforeSave)
+      coll.insertOne(inst.asDocument, cb)
+      cb.future
+    }
+  }
+
   /**
   * Save the instance in the appropriate backing store
   */
@@ -277,6 +289,37 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   */
   def save(inst: BaseRecord, db: DB, concern: WriteConcern): Boolean = saveOp(inst) {
     db.getCollection(collectionName).save(inst.asDBObject, concern)
+  }
+
+  /**
+    * replaces document with new one with given id. if `upsert` is set to true inserts new document
+    * in similar way as save() from sync api
+    *
+    */
+  def replaceOneAsync(inst: BaseRecord, upsert: Boolean, concern: WriteConcern) = {
+    useCollAsync { coll =>
+      val p = Promise[BaseRecord]
+      val doc: Document = inst.asDocument
+      val options = new UpdateOptions().upsert(upsert)
+      foreachCallback(inst, _.beforeSave)
+      val filter = new org.bson.Document("_id", doc.get("_id"))
+      coll.withWriteConcern(concern).replaceOne(filter, doc, options, new SingleResultCallback[UpdateResult] {
+        override def onResult(result: UpdateResult, t: Throwable) = {
+          if (t == null) {
+            val upsertedId = result.getUpsertedId
+            if (upsertedId != null && upsertedId.isObjectId) {
+              inst.fieldByName("_id").foreach(fld => fld.setFromAny(upsertedId.asObjectId().getValue))
+            }
+            foreachCallback(inst, _.afterSave)
+            inst.allFields.foreach { _.resetDirty }
+            p.success(inst)
+          } else {
+            p.failure(t)
+          }
+        }
+      })
+      p.future
+    }
   }
 
   /**

@@ -28,6 +28,7 @@ import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
 import scala.xml.NodeSeq
 
 import com.mongodb._
+import org.bson.Document
 
 class JObjectField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
 extends Field[JObject, OwnerType]
@@ -48,6 +49,7 @@ with MongoFieldFlavor[JObject] {
 
   def setFromAny(in: Any): Box[JObject] = in match {
     case dbo: DBObject => setBox(setFromDBObject(dbo))
+    case doc: Document => setBox(setFromDocument(doc))
     case jv: JObject => setBox(Full(jv))
     case Some(jv: JObject) => setBox(Full(jv))
     case Full(jv: JObject) => setBox(Full(jv))
@@ -73,4 +75,8 @@ with MongoFieldFlavor[JObject] {
 
   def setFromDBObject(obj: DBObject): Box[JObject] =
     Full(JObjectParser.serialize(obj)(owner.meta.formats).asInstanceOf[JObject])
+
+  def setFromDocument(obj: Document): Box[JObject] =
+    Full(JObjectParser.serialize(obj)(owner.meta.formats).asInstanceOf[JObject])
+
 }

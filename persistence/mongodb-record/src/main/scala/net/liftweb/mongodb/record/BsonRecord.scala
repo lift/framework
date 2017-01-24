@@ -28,6 +28,7 @@ import net.liftweb.record.field._
 
 import com.mongodb._
 import java.util.prefs.BackingStoreException
+import org.bson.Document
 
 /** Specialized Record that can be encoded and decoded from BSON (DBObject) */
 trait BsonRecord[MyType <: BsonRecord[MyType]] extends Record[MyType] {
@@ -40,6 +41,8 @@ trait BsonRecord[MyType <: BsonRecord[MyType]] extends Record[MyType] {
     * Encode a record instance into a DBObject
     */
   def asDBObject: DBObject = meta.asDBObject(this)
+
+  def asDocument: Document = meta.asDocument(this)
 
   /**
     * Set the fields of this record from the given DBObject
@@ -87,6 +90,18 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
 
     dbo.get
   }
+
+  def asDocument(inst: BaseRecord): Document = {
+    val dbo = new Document() // use this so regex patterns can be stored.
+
+    for {
+      field <- fields(inst)
+      dbValue <- fieldDbValue(field)
+    } { dbo.append(field.name, dbValue) }
+
+    dbo
+  }
+
 
   /**
     * Return the value of a field suitable to be put in a DBObject
@@ -146,5 +161,20 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
     inst.runSafe {
       inst.fields.foreach(_.resetDirty)
     }
+  }
+
+  def setFieldsFromDocument(inst: BaseRecord, doc: Document): Unit = {
+    for (k <- doc.keySet; field <- inst.fieldByName(k.toString)) {
+      field.setFromAny(doc.get(k.toString))
+    }
+    inst.runSafe {
+      inst.fields.foreach(_.resetDirty)
+    }
+  }
+
+  def fromDocument(doc: Document): BaseRecord = {
+    val inst: BaseRecord = createRecord
+    setFieldsFromDocument(inst, doc)
+    inst
   }
 }
