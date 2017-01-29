@@ -122,16 +122,4 @@ object ExtractionBugs extends Specification {
     val deserialized = parse(serialized).extract[Holder2]
     deserialized must_== holder
   }
-
-  case class Response(data: List[Map[String, Int]])
-
-  case class OptionOfInt(opt: Option[Int])
-
-  case class PMap(m: Map[String, List[String]])
-
-  case class ManyConstructors(id: Long, name: String, lastName: String, email: String) {
-    def this() = this(0, "John", "Doe", "")
-    def this(name: String) = this(0, name, "Doe", "")
-    def this(name: String, email: String) = this(0, name, "Doe", email)
-  }
 }
