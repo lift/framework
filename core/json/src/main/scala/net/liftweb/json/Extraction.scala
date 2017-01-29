@@ -199,7 +199,8 @@ object Extraction {
 
   private def extract0(json: JValue, clazz: Class[_], typeArgs: Seq[Class[_]])
                       (implicit formats: Formats): Any = {
-    extract0(json, mkMapping(clazz, typeArgs))
+    val mapping = mkMapping(clazz, typeArgs)
+    extract0(json, mapping)
   }
 
   def extract(json: JValue, target: TypeInfo)(implicit formats: Formats): Any =
