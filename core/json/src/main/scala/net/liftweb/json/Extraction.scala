@@ -331,7 +331,7 @@ object Extraction {
       }
     }
 
-    def newTuple(root: JValue, mappings: List[Mapping]) = {
+    def newTuple(root: JValue, mappings: List[Mapping]): Any = {
       root match {
         case JArray(items) if items.length >= 1 && items.length <= 22 =>
           val builtItems: Seq[Object] = items.zip(mappings).map({
@@ -342,6 +342,9 @@ object Extraction {
 
           val typedTupleConstructor = tupleClass.getConstructors()(0)
           typedTupleConstructor.newInstance(builtItems: _*)
+
+        case JObject(items) if items.forall(_.name.startsWith("_")) =>
+          newTuple(JArray(items.map(_.value)), mappings)
 
         case JArray(items) =>
           throw new IllegalArgumentException("Cannot create a tuple of length " + items.length)
