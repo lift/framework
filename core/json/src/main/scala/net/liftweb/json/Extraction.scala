@@ -192,6 +192,9 @@ object Extraction {
       Col(TypeInfo(clazz, None), mkMapping(typeArgs.head, typeArgs.tail))
     } else if (clazz == classOf[Map[_, _]]) {
       Dict(mkMapping(typeArgs.tail.head, typeArgs.tail.tail))
+    } else if (tuple_?(clazz)) {
+      val childMappings = typeArgs.map(c => mkMapping(c, Nil)).toList
+      HCol(TypeInfo(clazz, None), childMappings)
     } else {
       mappingOf(clazz, typeArgs)
     }
