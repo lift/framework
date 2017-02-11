@@ -25,6 +25,7 @@ import com.mongodb.{BasicDBObject, DBObject, DBRef, WriteConcern}
 
 import org.bson.types.ObjectId
 import common.{Full, Box}
+import scala.concurrent.Future
 
 trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   self: MyType =>
@@ -51,6 +52,15 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
       meta.save(this, concern)
     }
     this
+  }
+
+  /**
+    * Inserts record and returns Future that completes when mongo driver finishes operation
+    */
+  def insertAsync():Future[Boolean] = {
+    runSafe {
+      meta.insertAsync(this)
+    }
   }
 
  /**

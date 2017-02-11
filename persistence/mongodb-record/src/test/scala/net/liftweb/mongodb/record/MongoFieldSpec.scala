@@ -25,9 +25,7 @@ import org.bson.types.ObjectId
 import org.specs2.mutable._
 import org.specs2.specification._
 import org.specs2.execute.AsResult
-
 import org.joda.time.DateTime
-
 import common._
 import json._
 import mongodb.BsonDSL._
@@ -37,10 +35,11 @@ import http.js.JE._
 import http.js.JsExp
 import net.liftweb.record._
 import common.Box._
-import xml.{Elem, NodeSeq, Text}
-import util.{Helpers, FieldError}
-import Helpers._
 
+import xml.{Elem, NodeSeq, Text}
+import util.{FieldError, Helpers}
+import Helpers._
+import org.bson.Document
 import org.bson.types.ObjectId
 
 /**
@@ -550,6 +549,18 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundEach {
         )),
         Empty
       )
+    }
+  }
+
+  "MongoMapField" should {
+    "create itself from bson doc" in {
+      import scala.collection.JavaConversions._
+      val rec = MapTestRecord.createRecord
+      val map = Map("a" -> "4", "b" -> "5", "c" -> "6")
+      val doc = new Document(map)
+      rec.mandatoryStringMapField.setFromDocument(doc)
+      rec.mandatoryStringMapField.value must_== map
+      rec.mandatoryStringMapField.asDocument must_== doc
     }
   }
 

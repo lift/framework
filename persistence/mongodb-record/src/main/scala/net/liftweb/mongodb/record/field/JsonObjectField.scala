@@ -17,16 +17,14 @@ package record
 package field
 
 import scala.xml.{NodeSeq, Text}
-
 import net.liftweb.common.{Box, Empty, Failure, Full}
-
 import net.liftweb.http.js.JE.{JsNull, Str}
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.{JsonParser, Printer}
 import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
 import net.liftweb.util.Helpers.tryo
-
 import com.mongodb.DBObject
+import org.bson.Document
 
 abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
   (rec: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
@@ -83,5 +81,6 @@ abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <
   // set this field's value using a DBObject returned from Mongo.
   def setFromDBObject(dbo: DBObject): Box[JObjectType] =
     setFromJValue(JObjectParser.serialize(dbo).asInstanceOf[JObject])
+
 }
 
