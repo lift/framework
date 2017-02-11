@@ -100,11 +100,11 @@ Please note that the modules project does accept pull requests.
 
 #### examples
 
-The [examples](https://github.com/lift/examples) repository contains the source code for several example Lift applications, including [demo.liftweb.com](http://demo.liftweb.com/).
+The [examples](https://github.com/lift/examples) repository contains the source code for several example Lift applications, including [demo.liftweb.com](http://demo.liftweb.net/).
 
 ## Building Lift
 
-If you simply want to use Lift in your project, add Lift as a dependency to your build system or [download the JAR files directly](www.liftweb.net/download).
+If you simply want to use Lift in your project, add Lift as a dependency to your build system or [download the JAR files directly](https://www.liftweb.net/download).
 
 If you wish to build Lift from source, check out this repository and use the included `liftsh` script to build some or all of the components you want.
 
