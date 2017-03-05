@@ -554,10 +554,10 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundEach {
 
   "MongoMapField" should {
     "create itself from bson doc" in {
-      import scala.collection.JavaConversions._
+      import scala.collection.JavaConverters._
       val rec = MapTestRecord.createRecord
-      val map = Map("a" -> "4", "b" -> "5", "c" -> "6")
-      val doc = new Document(map)
+      val map = Map[String, AnyRef]("a" -> "4", "b" -> "5", "c" -> "6")
+      val doc = new Document(map.asJava)
       rec.mandatoryStringMapField.setFromDocument(doc)
       rec.mandatoryStringMapField.value must_== map
       rec.mandatoryStringMapField.asDocument must_== doc

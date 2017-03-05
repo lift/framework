@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 WorldWide Conferencing, LLC
+ * Copyright 2014-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,11 @@ import com.mongodb._
 
 import org.specs2.mutable.Specification
 
-
 /**
  * System under specification for MongoDirectMonoClient.
  */
 class MongoDirectMongoClientSpec extends Specification with MongoTestKit {
   "MongoDirectMongoClient Specification".title
-
-  override def mongo = new MongoClient("127.0.0.1", 27017)
 
   "MongoClient example" in {
 

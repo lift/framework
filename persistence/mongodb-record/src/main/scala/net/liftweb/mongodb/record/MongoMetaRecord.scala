@@ -263,7 +263,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     }
   }
 
-  def insertAsync(inst:BaseRecord): Future[Boolean] = {
+  def insertAsync(inst: BaseRecord): Future[Boolean] = {
     useCollAsync { coll =>
       val cb = new SingleBooleanVoidCallback( () => {
         foreachCallback(inst, _.afterSave)
@@ -304,7 +304,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
       foreachCallback(inst, _.beforeSave)
       val filter = new Document("_id", doc.get("_id"))
       coll.withWriteConcern(concern).replaceOne(filter, doc, options, new SingleResultCallback[UpdateResult] {
-        override def onResult(result: UpdateResult, t: Throwable) = {
+        override def onResult(result: UpdateResult, t: Throwable): Unit = {
           if (Option(t).isEmpty) {
             Option(result.getUpsertedId).filter(_.isObjectId).foreach { upsertedId =>
               inst.fieldByName("_id").foreach(fld => fld.setFromAny(upsertedId.asObjectId().getValue))

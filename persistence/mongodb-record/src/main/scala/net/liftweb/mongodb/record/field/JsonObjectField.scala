@@ -24,7 +24,6 @@ import net.liftweb.json.{JsonParser, Printer}
 import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
 import net.liftweb.util.Helpers.tryo
 import com.mongodb.DBObject
-import org.bson.Document
 
 abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
   (rec: OwnerType, valueMeta: JsonObjectMeta[JObjectType])

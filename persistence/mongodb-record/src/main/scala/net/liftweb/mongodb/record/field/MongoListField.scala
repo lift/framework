@@ -75,8 +75,8 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
       case jlist: java.util.List[_] => {
         if(!jlist.isEmpty) {
           val elem = jlist.get(0)
-          if(elem.isInstanceOf[org.bson.Document]) {
-            setFromDocumentList(jlist.asInstanceOf[java.util.List[org.bson.Document]])
+          if(elem.isInstanceOf[Document]) {
+            setFromDocumentList(jlist.asInstanceOf[java.util.List[Document]])
           } else {
             setBox(Full(jlist.toList.asInstanceOf[MyType]))
           }
