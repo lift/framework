@@ -305,9 +305,8 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
       val filter = new Document("_id", doc.get("_id"))
       coll.withWriteConcern(concern).replaceOne(filter, doc, options, new SingleResultCallback[UpdateResult] {
         override def onResult(result: UpdateResult, t: Throwable) = {
-          if (t == null) {
-            val upsertedId = result.getUpsertedId
-            if (upsertedId != null && upsertedId.isObjectId) {
+          if (Option(t).isEmpty) {
+            Option(result.getUpsertedId).filter(_.isObjectId).foreach { upsertedId =>
               inst.fieldByName("_id").foreach(fld => fld.setFromAny(upsertedId.asObjectId().getValue))
             }
             foreachCallback(inst, _.afterSave)
