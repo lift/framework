@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -296,13 +296,13 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     * in similar way as save() from sync api
     *
     */
-  def replaceOneAsync(inst: BaseRecord, upsert: Boolean, concern: WriteConcern) = {
+  def replaceOneAsync(inst: BaseRecord, upsert: Boolean = true, concern: WriteConcern = MongoRules.defaultWriteConcern.vend): Future[BaseRecord] = {
     useCollAsync { coll =>
       val p = Promise[BaseRecord]
       val doc: Document = inst.asDocument
       val options = new UpdateOptions().upsert(upsert)
       foreachCallback(inst, _.beforeSave)
-      val filter = new org.bson.Document("_id", doc.get("_id"))
+      val filter = new Document("_id", doc.get("_id"))
       coll.withWriteConcern(concern).replaceOne(filter, doc, options, new SingleResultCallback[UpdateResult] {
         override def onResult(result: UpdateResult, t: Throwable) = {
           if (t == null) {

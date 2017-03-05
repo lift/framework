@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 WorldWide Conferencing, LLC
+ * Copyright 2011-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonR
 
   def setFromAny(in: Any): Box[SubRecordType] = in match {
     case dbo: DBObject => setBox(Full(valueMeta.fromDBObject(dbo)))
-    case dbo: org.bson.Document => setBox(Full(valueMeta.fromDocument(dbo)))
+    case dbo: Document => setBox(Full(valueMeta.fromDocument(dbo)))
     case _ => genericSetFromAny(in)
   }
 

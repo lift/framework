@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
     setBox(Full(dbo.asInstanceOf[BasicDBList].toList.asInstanceOf[MyType]))
 
   def setFromDocumentList(list: java.util.List[Document]): Box[MyType] = {
-    throw new RuntimeException("Warning, , setting Document as field with no conversion, probably not something you want to do")
+    throw new RuntimeException("Warning, setting Document as field with no conversion, probably not something you want to do")
   }
 
 }
