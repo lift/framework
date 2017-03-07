@@ -95,17 +95,20 @@ object MongoAsync {
     Option(dbs.get(name))
   }
 
-  def use[T](ci: ConnectionIdentifier)(f: (MongoDatabase) => T): T = {
-    val db = getDatabase(ci) match {
+  /**
+    * Executes function {@code f} with the mongo database identified by {@code name}.
+    */
+  def use[T](name: ConnectionIdentifier)(f: (MongoDatabase) => T): T = {
+    val db = getDatabase(name) match {
       case Some(mongo) => mongo
-      case _ => throw new MongoException("Mongo not found: "+ci.toString)
+      case _ => throw new MongoException("Mongo not found: "+name.toString)
     }
     f(db)
   }
 
   /**
-    * Executes function {@code f} with the mongo named {@code name} and collection named {@code collectionName}.
-    * Gets a collection for you.
+    * Executes function {@code f} with the collection named {@code collectionName} from
+    * the mongo database identified by {@code name}.
     */
   def useCollection[T](name: ConnectionIdentifier, collectionName: String)(f: (MongoCollection[Document]) => T): T = {
     val coll = getCollection(name, collectionName) match {
@@ -116,12 +119,8 @@ object MongoAsync {
     f(coll)
   }
 
-  /**
-    * Get a Mongo collection. Gets a Mongo db first.
-    */
-  private[this] def getCollection(name: ConnectionIdentifier, collectionName: String): Option[MongoCollection[Document]] = getDatabase(name) match {
-    case Some(mongo) if mongo != null => Some(mongo.getCollection(collectionName))
-    case _ => None
+  private[this] def getCollection(name: ConnectionIdentifier, collectionName: String): Option[MongoCollection[Document]] = {
+    getDatabase(name).map(_.getCollection(collectionName))
   }
 
   /**
