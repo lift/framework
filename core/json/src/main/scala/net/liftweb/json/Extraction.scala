@@ -187,7 +187,7 @@ object Extraction {
     }
   }
 
-  private def mkMapping(clazz: Class[_], typeArgs: Seq[Class[_]])(implicit formats: Formats): Meta.Mapping = {
+  private[this] def mkMapping(clazz: Class[_], typeArgs: Seq[Class[_]])(implicit formats: Formats): Meta.Mapping = {
     if (clazz == classOf[Option[_]] || clazz == classOf[List[_]] || clazz == classOf[Set[_]] || clazz.isArray) {
       Col(TypeInfo(clazz, None), mkMapping(typeArgs.head, typeArgs.tail))
     } else if (clazz == classOf[Map[_, _]]) {
