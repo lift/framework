@@ -333,21 +333,24 @@ object Extraction {
 
     def newTuple(root: JValue, mappings: List[Mapping]): Any = {
       root match {
-        case JArray(items) if items.length >= 1 && items.length <= 22 =>
+        case JArray(items) if items.nonEmpty && items.length <= tuples.length =>
           val builtItems: Seq[Object] = items.zip(mappings).map({
-            case (i,m) =>
-              build(i, m).asInstanceOf[Object]
+            case (item, mapping) =>
+              build(item, mapping).asInstanceOf[Object]
           })
-          val tupleClass = Class.forName("scala.Tuple" + items.length)
+          val tupleIndex = items.length - 1
+          val tupleClass = tuples.lift(tupleIndex).getOrElse {
+            throw new IllegalArgumentException(s"Cannot instantiate a tuple of length ${items.length} even though that should be a valid tuple length.")
+          }
 
           val typedTupleConstructor = tupleClass.getConstructors()(0)
           typedTupleConstructor.newInstance(builtItems: _*)
 
-        case JObject(items) if items.forall(_.name.startsWith("_")) =>
-          newTuple(JArray(items.map(_.value)), mappings)
-
         case JArray(items) =>
           throw new IllegalArgumentException("Cannot create a tuple of length " + items.length)
+
+        case JObject(items) if items.forall(_.name.startsWith("_")) =>
+          newTuple(JArray(items.map(_.value)), mappings)
 
         case x =>
           throw new IllegalArgumentException("Got unexpected while attempting to create tuples: " + x)

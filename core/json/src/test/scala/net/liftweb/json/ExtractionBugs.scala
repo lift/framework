@@ -109,7 +109,7 @@ object ExtractionBugs extends Specification {
     deserialized must_== holder
   }
 
-  "deserialize list of heterogenous tuples" in {
+  "deserialize a list of heterogenous tuples" in {
     implicit val formats = DefaultFormats
 
     // MSF: This currently doesn't work with scala primitives?! The type arguments appear as

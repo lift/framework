@@ -119,7 +119,7 @@ private[json] object Meta {
       }
 
       def mkHeteroContainer(baseType: Type): Mapping = {
-        val hereroContainerTypes = baseType match {
+        val heteroContainerTypes = baseType match {
           case ptype: ParameterizedType =>
             ptype.getActualTypeArguments().map {
               case c: Class[_] =>
@@ -131,7 +131,7 @@ private[json] object Meta {
             }
         }
 
-        val parameters = hereroContainerTypes.map(fieldMapping(_)._1)
+        val parameters = heteroContainerTypes.map(fieldMapping(_)._1)
         HCol(TypeInfo(rawClassOf(baseType), parameterizedTypeOpt(baseType)), parameters.toList)
       }
 
@@ -256,7 +256,7 @@ private[json] object Meta {
       classOf[java.lang.Short], classOf[Date], classOf[Timestamp], classOf[Symbol], classOf[JValue],
       classOf[JObject], classOf[JArray]).map((_, ())))
 
-    val tuples = Set(
+    val tuples = Seq(
       classOf[Tuple1[_]], classOf[Tuple2[_,_]], classOf[Tuple3[_,_,_]], classOf[Tuple4[_,_,_,_]],
       classOf[Tuple5[_,_,_,_,_]], classOf[Tuple6[_,_,_,_,_,_]],
       classOf[Tuple7[_,_,_,_,_,_,_]], classOf[Tuple8[_,_,_,_,_,_,_,_]],
