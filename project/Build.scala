@@ -141,11 +141,12 @@ object BuildDef extends Build {
   lazy val webkit =
     webProject("webkit")
         .dependsOn(util, testkit % "provided")
-        .settings(scalacOptions in (Compile, doc) ++= Seq(scalaVersion.value).flatMap {
-          case v if v.startsWith("2.12") =>
+        .settings(scalacOptions in (Compile, doc) ++= {
+          if (scalaVersion.value.startsWith("2.12")) {
             Seq("-no-java-comments")
-          case _ =>
+          } else {
             Seq()
+          }
         }) //workaround for scala/scala-dev#249
         .settings(libraryDependencies ++= Seq(mockito_all, jquery, jasmineCore, jasmineAjax))
         .settings(yuiCompressor.Plugin.yuiSettings: _*)
@@ -157,6 +158,14 @@ object BuildDef extends Build {
                   },
                   initialize in Test <<= (sourceDirectory in Test) { src =>
                     System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
+                  },
+                  unmanagedSourceDirectories in Compile <+= (sourceDirectory in Compile, scalaBinaryVersion) {
+                    (sourceDirectory, binaryVersion) =>
+                      sourceDirectory / ("scala_" + binaryVersion)
+                  },
+                  unmanagedSourceDirectories in Test <+= (sourceDirectory in Test, scalaBinaryVersion) {
+                    (sourceDirectory, binaryVersion) =>
+                      sourceDirectory / ("scala_" + binaryVersion)
                   },
                   (compile in Compile) <<= (compile in Compile) dependsOn (WebKeys.assets),
                   /**
