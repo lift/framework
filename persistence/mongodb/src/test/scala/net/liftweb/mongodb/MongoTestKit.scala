@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,31 @@
 package net.liftweb
 package mongodb
 
-import util.{ConnectionIdentifier, DefaultConnectionIdentifier}
+import util.{ConnectionIdentifier, DefaultConnectionIdentifier, Props}
 
 import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeAfterEach
 
-import com.mongodb.MongoClient
+import com.mongodb._
+
+// The sole mongo object for testing
+object TestMongo {
+  val mongo = {
+    val uri = Props.get("mongo.test.uri", "127.0.0.1:27017")
+    val opts = MongoClientOptions.builder.serverSelectionTimeout(2000)
+    new MongoClient(new MongoClientURI(s"mongodb://$uri", opts))
+  }
+
+  lazy val isMongoRunning: Boolean =
+    try {
+      // this will throw an exception if it can't connect to the db
+      mongo.getConnectPoint
+      true
+    } catch {
+      case _: MongoTimeoutException =>
+        false
+    }
+}
 
 trait MongoTestKit extends Specification with BeforeAfterEach {
   sequential
@@ -33,46 +52,35 @@ trait MongoTestKit extends Specification with BeforeAfterEach {
     .replace(".", "_")
     .toLowerCase
 
-  def mongo = new MongoClient("127.0.0.1", 27017)
-
   // If you need more than one db, override this
-  def dbs: List[(ConnectionIdentifier, String)] = List((DefaultConnectionIdentifier, dbName))
+  def dbs: List[(ConnectionIdentifier, String)] =
+    (DefaultConnectionIdentifier, dbName) :: Nil
 
   def debug = false
 
   def before = {
     // define the dbs
-    dbs foreach { case (id, db) =>
-      MongoDB.defineDb(id, mongo, db)
+    dbs.foreach { case (id, db) =>
+      MongoDB.defineDb(id, TestMongo.mongo, db)
     }
   }
 
-  def isMongoRunning: Boolean =
-    try {
-      if (dbs.length < 1)
-        false
-      else {
-        dbs foreach { case (id, _) =>
-          MongoDB.use(id) ( db => { db.getCollectionNames} )
-        }
-        true
-      }
-    } catch {
-      case e: Exception => false
-    }
-
-  def checkMongoIsRunning = isMongoRunning must beEqualTo(true).orSkip
+  def checkMongoIsRunning = {
+    TestMongo.isMongoRunning must beEqualTo(true).orSkip
+  }
 
   def after = {
-    if (!debug && isMongoRunning) {
+    if (!debug && TestMongo.isMongoRunning) {
       // drop the databases
-      dbs foreach { case (id, _) =>
+      dbs.foreach { case (id, _) =>
         MongoDB.use(id) { db => db.dropDatabase }
       }
     }
 
     // clear the mongo instances
-    MongoDB.closeAll()
+    dbs.foreach { case (id, _) =>
+      MongoDB.remove(id)
+    }
   }
 }
 

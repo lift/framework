@@ -224,7 +224,7 @@ object BuildDef extends Build {
     persistenceProject("mongodb")
         .dependsOn(json_ext, util)
         .settings(parallelExecution in Test := false,
-                  libraryDependencies += mongo_driver,
+                  libraryDependencies ++= Seq(mongo_java_driver, mongo_java_driver_async),
                   initialize in Test <<= (resourceDirectory in Test) { rd =>
                     System.setProperty("java.util.logging.config.file", (rd / "logging.properties").absolutePath)
                   })

@@ -1,5 +1,5 @@
 /**
-  * Copyright 2014 WorldWide Conferencing, LLC
+  * Copyright 2014-2017 WorldWide Conferencing, LLC
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package mongodb
 import util.{ConnectionIdentifier, SimpleInjector}
 import util.Helpers._
 
+import com.mongodb.WriteConcern
+
 object MongoRules extends SimpleInjector {
   private def defaultCollectionNameFunc(conn: ConnectionIdentifier, name: String): String = {
     charSplit(name, '.').last.toLowerCase+"s"
@@ -33,4 +35,8 @@ object MongoRules extends SimpleInjector {
     *  RecordRules.collectionName.default.set((_,name) => StringHelpers.snakify(name))
     */
   val collectionName = new Inject[(ConnectionIdentifier, String) => String](defaultCollectionNameFunc _) {}
+
+  /** The default WriteConcern used in some places.
+    */
+  val defaultWriteConcern = new Inject[WriteConcern](WriteConcern.ACKNOWLEDGED) {}
 }

@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap
 import scala.collection.immutable.HashSet
 
 import com.mongodb.{DB, DBCollection, Mongo, MongoClient, MongoException, MongoOptions, ServerAddress}
+import com.mongodb.client.MongoDatabase
 
 /**
   * Main Mongo object
@@ -33,7 +34,7 @@ object MongoDB {
   /**
     * HashMap of Mongo instance and db name tuples, keyed by ConnectionIdentifier
     */
-  private val dbs = new ConcurrentHashMap[ConnectionIdentifier, (MongoClient, String)]
+  private[this] val dbs = new ConcurrentHashMap[ConnectionIdentifier, (MongoClient, String)]
 
   /**
     * Define a MongoClient db using a MongoClient instance.
@@ -51,9 +52,16 @@ object MongoDB {
   }
 
   /**
+    * Get a MongoDatabase reference
+    */
+  private[this] def getDatabase(name: ConnectionIdentifier): Option[MongoDatabase] = {
+    Option(dbs.get(name)).map { case (mngo, db) => mngo.getDatabase(db) }
+  }
+
+  /**
     * Get a Mongo collection. Gets a Mongo db first.
     */
-  private def getCollection(name: ConnectionIdentifier, collectionName: String): Option[DBCollection] = getDb(name) match {
+  private[this] def getCollection(name: ConnectionIdentifier, collectionName: String): Option[DBCollection] = getDb(name) match {
     case Some(mongo) if mongo != null => Some(mongo.getCollection(collectionName))
     case _ => None
   }
@@ -119,5 +127,21 @@ object MongoDB {
       mngo.close()
     }
     dbs.clear()
+  }
+
+  /**
+    * Clear the HashMap.
+    */
+  def clear(): Unit = {
+    dbs.clear()
+  }
+
+  /**
+    * Remove a specific ConnectionIdentifier from the HashMap.
+    */
+  def remove(id: ConnectionIdentifier): Option[MongoDatabase] = {
+    val db = getDatabase(id)
+    dbs.remove(id)
+    db
   }
 }
