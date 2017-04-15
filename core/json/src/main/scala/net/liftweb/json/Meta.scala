@@ -272,6 +272,11 @@ private[json] object Meta {
       classOf[Tuple22[_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_]]
     )
 
+    val tupleConstructors: Map[Int, JConstructor[_]] = tuples.zipWithIndex.map({
+      case (tupleClass, index) =>
+        index -> tupleClass.getConstructors()(0)
+    }).toMap
+
     private val primaryConstructorArgumentsMemo = new Memo[Class[_], List[(String, Type)]]
     private val declaredFieldsMemo = new Memo[Class[_], Map[String,Field]]
 

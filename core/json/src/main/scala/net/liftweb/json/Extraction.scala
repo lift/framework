@@ -339,11 +339,10 @@ object Extraction {
               build(item, mapping).asInstanceOf[Object]
           })
           val tupleIndex = items.length - 1
-          val tupleClass = tuples.lift(tupleIndex).getOrElse {
+
+          val typedTupleConstructor = tupleConstructors.get(tupleIndex).getOrElse {
             throw new IllegalArgumentException(s"Cannot instantiate a tuple of length ${items.length} even though that should be a valid tuple length.")
           }
-
-          val typedTupleConstructor = tupleClass.getConstructors()(0)
           typedTupleConstructor.newInstance(builtItems: _*)
 
         case JArray(items) =>
