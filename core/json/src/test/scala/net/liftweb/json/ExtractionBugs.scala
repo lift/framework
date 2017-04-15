@@ -97,7 +97,7 @@ object ExtractionBugs extends Specification {
     }
   }
 
-  "deserialize list of homogonous tuples" in {
+  "deserialize list of homogonous tuples w/ experimental tuples disabled" in {
     implicit val formats = DefaultFormats
 
     case class Holder(items: List[(String, String)])
@@ -109,7 +109,7 @@ object ExtractionBugs extends Specification {
     deserialized must_== holder
   }
 
-  "deserialize a list of heterogenous tuples" in {
+  "deserialize a list of heterogenous tuples w/ experimental tuples disabled" in {
     implicit val formats = DefaultFormats
 
     // MSF: This currently doesn't work with scala primitives?! The type arguments appear as
@@ -122,8 +122,41 @@ object ExtractionBugs extends Specification {
     val deserialized = parse(serialized).extract[Holder2]
     deserialized must_== holder
   }
+
+  "deserialize list of homogonous tuples w/ experimental tuples enabled" in {
+    implicit val formats = new DefaultFormats {
+      override val experimentalTupleSupport = true
+    }
+
+    case class Holder(items: List[(String, String)])
+
+    val holder = Holder(List(("string", "string")))
+    val serialized = compactRender(Extraction.decompose(holder))
+
+    val deserialized = parse(serialized).extract[Holder]
+    deserialized must_== holder
+  }
+
+  "deserialize a list of heterogenous tuples w/ experimental tuples enabled" in {
+    implicit val formats = new DefaultFormats {
+      override val experimentalTupleSupport = true
+    }
+
+    // MSF: This currently doesn't work with scala primitives?! The type arguments appear as
+    // java.lang.Object instead of scala.Int. :/
+    case class Holder2(items: List[(String, Integer)])
+
+    val holder = Holder2(List(("string", 10)))
+    val serialized = compactRender(Extraction.decompose(holder))
+
+    val deserialized = parse(serialized).extract[Holder2]
+    deserialized must_== holder
+  }
+
   "deserialize an out of order old-style tuple w/ experimental tuples enabled" in {
-    implicit val formats = DefaultFormats
+    implicit val formats = new DefaultFormats {
+      override val experimentalTupleSupport = true
+    }
 
     val outOfOrderTuple: JObject = JObject(List(
       JField("_1", JString("apple")),
