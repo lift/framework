@@ -350,7 +350,13 @@ object Extraction {
           throw new IllegalArgumentException("Cannot create a tuple of length " + items.length)
 
         case JObject(items) if items.forall(_.name.startsWith("_")) =>
-          newTuple(JArray(items.map(_.value)), mappings)
+          val sortedItems = items.sortWith { (i1, i2) =>
+            val numerialName1 = i1.name.drop(1).toInt
+            val numerialName2 = i2.name.drop(1).toInt
+
+            numerialName1 < numerialName2
+          }
+          newTuple(JArray(sortedItems.map(_.value)), mappings)
 
         case x =>
           throw new IllegalArgumentException("Got unexpected while attempting to create tuples: " + x)

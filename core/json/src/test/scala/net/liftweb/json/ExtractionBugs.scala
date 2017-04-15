@@ -122,4 +122,17 @@ object ExtractionBugs extends Specification {
     val deserialized = parse(serialized).extract[Holder2]
     deserialized must_== holder
   }
+  "deserialize an out of order old-style tuple w/ experimental tuples enabled" in {
+    implicit val formats = DefaultFormats
+
+    val outOfOrderTuple: JObject = JObject(List(
+      JField("_1", JString("apple")),
+      JField("_3", JString("bacon")),
+      JField("_2", JString("sammich"))
+    ))
+
+    val extracted = outOfOrderTuple.extract[(String, String, String)]
+
+    extracted must_== ("apple", "sammich", "bacon")
+  }
 }
