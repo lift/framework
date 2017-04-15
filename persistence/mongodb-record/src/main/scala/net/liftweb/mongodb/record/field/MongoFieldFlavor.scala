@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package mongodb 
-package record 
-package field 
+package net.liftweb
+package mongodb
+package record
+package field
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, JsRaw}
 import net.liftweb.json.Printer
 import net.liftweb.json.JsonAST._
-
 import com.mongodb.DBObject
 
 /**

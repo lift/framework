@@ -29,6 +29,7 @@ import net.liftweb.record._
 import net.liftweb.util.Helpers.tryo
 
 import com.mongodb._
+import org.bson.Document
 
 /**
   * Note: setting optional_? = false will result in incorrect equals behavior when using setFromJValue
@@ -46,6 +47,7 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
   def setFromAny(in: Any): Box[Map[String, MapValueType]] = {
     in match {
       case dbo: DBObject => setFromDBObject(dbo)
+      case doc: Document => setFromDocument(doc)
       case map: Map[_, _] => setBox(Full(map.asInstanceOf[Map[String, MapValueType]]))
       case Some(map: Map[_, _]) => setBox(Full(map.asInstanceOf[Map[String, MapValueType]]))
       case Full(map: Map[_, _]) => setBox(Full(map.asInstanceOf[Map[String, MapValueType]]))
@@ -108,5 +110,31 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
       }
     ))
   }
+
+  // set this field's value using a bson.Document returned from Mongo.
+  def setFromDocument(doc: Document): Box[Map[String, MapValueType]] = {
+    import scala.collection.JavaConverters._
+    val map: Map[String, MapValueType] = doc.asScala.map {
+      case (k, v) => k -> v.asInstanceOf[MapValueType]
+    } (scala.collection.breakOut)
+
+    setBox {
+      Full(map)
+    }
+  }
+
+  def asDocument: Document = {
+    import scala.collection.JavaConverters._
+    val map: Map[String, AnyRef] = {
+      value.keys.map {
+        k => k -> value.getOrElse(k, "")
+          .asInstanceOf[AnyRef]
+      } (scala.collection.breakOut)
+    }
+
+    new Document(map.asJava)
+  }
+
+
 }
 

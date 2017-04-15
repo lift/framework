@@ -28,8 +28,8 @@ import net.liftweb.util.Helpers
 import net.liftweb.json._
 import reflect.Manifest
 import net.liftweb.http.js.JsExp
-
-
+import org.bson.Document
+import scala.collection.JavaConverters._
 class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerType)( implicit mf: Manifest[CaseType]) extends Field[CaseType, OwnerType] with MandatoryTypedField[CaseType] with MongoFieldFlavor[CaseType] {
 
   // override this for custom formats
@@ -58,6 +58,11 @@ class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerTyp
     JObjectParser.parse(asJValue.asInstanceOf[JObject])
   }
 
+  def setFromDocument(doc: Document): Box[CaseType] = {
+    val jv = JObjectParser.serialize(doc)
+    setFromJValue(jv)
+  }
+
   def setFromDBObject(dbo: DBObject): Box[CaseType] = {
     val jvalue = JObjectParser.serialize(dbo)
     setFromJValue(jvalue)
@@ -69,6 +74,7 @@ class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerTyp
 
   def setFromAny(in: Any): Box[CaseType] = in match {
     case dbo: DBObject => setFromDBObject(dbo)
+    case doc: org.bson.Document => setFromDocument(doc)
     case c if mf.runtimeClass.isInstance(c) => setBox(Full(c.asInstanceOf[CaseType]))
     case Full(c) if mf.runtimeClass.isInstance(c) => setBox(Full(c.asInstanceOf[CaseType]))
     case null|None|Empty     => setBox(defaultValueBox)
@@ -101,6 +107,11 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
     case _ => setBox(Empty)
   }
 
+  def setFromDocumentList(list: java.util.List[Document]): Box[MyType] = {
+    val objs = list.asScala.map{ d => JObjectParser.serialize(d) }
+    setFromJValue(JArray(objs.toList))
+  }
+
   def asDBObject: DBObject = {
     val dbl = new BasicDBList
 
@@ -121,6 +132,18 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
   def setFromAny(in: Any): Box[MyType] = in match {
     case dbo: DBObject => setFromDBObject(dbo)
     case list@c::xs if mf.runtimeClass.isInstance(c) =>  setBox(Full(list.asInstanceOf[MyType]))
+    case jlist: java.util.List[_] => {
+      if (!jlist.isEmpty) {
+        val elem = jlist.get(0)
+        if (elem.isInstanceOf[org.bson.Document]) {
+          setFromDocumentList(jlist.asInstanceOf[java.util.List[org.bson.Document]])
+        } else {
+          setBox(Full(jlist.asScala.toList.asInstanceOf[MyType]))
+        }
+      } else {
+        setBox(Full(Nil))
+      }
+    }
     case _ => setBox(Empty)
   }
 

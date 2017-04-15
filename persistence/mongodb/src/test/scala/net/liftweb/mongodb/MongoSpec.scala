@@ -37,20 +37,21 @@ class MongoSpec extends Specification  {
 
     // make sure mongo is running
     try {
-      MongoDB.use(id) { db =>
-        db.getCollectionNames
-      }
-    }
-    catch {
-      case e: Exception => skipped("MongoDB is not running")
+      // this will throw an exception if it can't connect to the db
+      mc.getConnectPoint
+    } catch {
+      case _: MongoTimeoutException =>
+        skipped("MongoDB is not running")
     }
 
     // using an undefined identifier throws an exception
     MongoDB.use(DefaultConnectionIdentifier) { db =>
       db.getCollectionNames
     } must throwA(new MongoException("Mongo not found: ConnectionIdentifier(lift)"))
+
     // remove defined db
-    MongoDB.closeAll()
+    MongoDB.remove(id)
+
     success
   }
 
@@ -59,31 +60,9 @@ class MongoSpec extends Specification  {
     "Define DB with MongoClient instance" in {
       val opts = MongoClientOptions.builder
         .connectionsPerHost(12)
+        .serverSelectionTimeout(2000)
         .build
       passDefinitionTests(TestMongoIdentifier, new MongoClient(new ServerAddress("localhost"), opts), "test_default_b")
     }
-
-    /* Requires a server other than localhost with auth setup.
-    "Define and authenticate DB with Mongo instance" in {
-      MongoDB.close
-
-      // make sure mongo is running
-      try {
-        val pwd = "lift_pwd"
-        val dbUri = new MongoURI("mongodb://")
-        // define the db
-        MongoDB.defineDbAuth(TestMongoIdentifier, new Mongo(dbUri), "lift_auth_test", "lift_user", pwd)
-        // try to use it
-        MongoDB.use(TestMongoIdentifier) { db =>
-          db.getLastError.ok must beEqualTo(true)
-        }
-      }
-      catch {
-        case e: Exception => skip("MongoDB is not running")
-      }
-      // remove defined db
-      MongoDB.closeAll()
-    }
-    */
   }
 }
