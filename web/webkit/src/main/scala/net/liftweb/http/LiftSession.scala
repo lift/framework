@@ -180,7 +180,7 @@ object LiftSession {
       //
       // We're using ConcurrentHashMap, so no `getOrElseUpdate` here (and
       // `getOrElseUpdate` isn't atomic anyway).
-      if (! snippetClassMap.contains(name)) {
+      if (! snippetClassMap.containsKey(name)) {
         snippetClassMap.putIfAbsent(name, {
           // Name might contain some relative packages, so split them out and put them in the proper argument of findClass
           val (packageSuffix, terminal) = name.lastIndexOf('.') match {
