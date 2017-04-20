@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 WorldWide Conferencing, LLC
+ * Copyright 2006-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package net.liftweb
 package util
 
 import java.io._
+import java.nio.file.{Files, Path}
 import scala.collection.mutable.ListBuffer
 import ControlHelpers._
 import common._
@@ -85,7 +86,8 @@ trait IoHelpers {
   /**
    * Read an entire file into an Array[Byte]
    */
-  def readWholeFile(file: File): Array[Byte] = readWholeStream(new FileInputStream(file))
+  def readWholeFile(file: File): Array[Byte] = readWholeStream(Files.newInputStream(file.toPath))
+  def readWholeFile(path: Path): Array[Byte] = readWholeStream(Files.newInputStream(path))
 
   /**
    * Read all data from a stream into an Array[Byte]

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2011 WorldWide Conferencing, LLC
+ * Copyright 2008-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,9 @@ import java.io.StringReader
 import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
 import java.io.ByteArrayInputStream
-import java.io.FileInputStream
 import java.io.InputStream
 import java.io.StringBufferInputStream
-import java.io.File
+import java.nio.file.{Files, Paths}
 import java.util.Arrays
 import java.util.Date
 import java.util.Locale
@@ -83,9 +82,9 @@ class MockServletContext(var target: String) extends ServletContext {
   def getRequestDispatcher(path: String): RequestDispatcher = null
   def getResource(path: String): java.net.URL = null
   def getResourceAsStream(path: String): java.io.InputStream = {
-    val file = new File(target + path)
-    if (file.exists) {
-      new FileInputStream(file)
+    val file = Paths.get(target + path)
+    if (Files.exists(file)) {
+      Files.newInputStream(file)
     } else {
       null
     }
@@ -120,7 +119,7 @@ class MockServletContext(var target: String) extends ServletContext {
   def addServlet(servletName: String, servlet: javax.servlet.Servlet): ServletRegistration.Dynamic = null
   def addServlet(servletName: String, servletClass: String): ServletRegistration.Dynamic = null
 
-  // This remain unimplemented since we can't provide a Null here due toe type restrictions.
+  // This remains unimplemented since we can't provide a Null here due to type restrictions.
   def createFilter[T <: javax.servlet.Filter](filter: Class[T]): T = ???
   def createListener[T <: java.util.EventListener](listener: Class[T]): T = ???
   def createServlet[T <: javax.servlet.Servlet](servletClass: Class[T]): T = ???

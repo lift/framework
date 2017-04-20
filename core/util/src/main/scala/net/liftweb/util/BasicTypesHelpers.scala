@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 WorldWide Conferencing, LLC
+ * Copyright 2006-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package net.liftweb
 package util
 
-import java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, File, FileInputStream, BufferedReader}
+import java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, Reader, BufferedReader}
 import scala.util.Try
 import scala.xml._
 import common._
