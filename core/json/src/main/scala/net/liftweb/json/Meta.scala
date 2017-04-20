@@ -167,7 +167,7 @@ private[json] object Meta {
               (mkContainer(t, `(*,*) -> *`, 1, Dict.apply _), false)
             else if (classOf[Seq[_]].isAssignableFrom(raw))
               (mkContainer(t, `* -> *`, 0, Col.apply(info, _)), false)
-            else if (tuples.find(_.isAssignableFrom(raw)).isDefined && formats.experimentalTupleSupport)
+            else if (tuples.find(_.isAssignableFrom(raw)).isDefined && formats.tuplesAsArrays)
               (mkHeteroContainer(t), false)
             else
               mkConstructor(t)
