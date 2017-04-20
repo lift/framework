@@ -13,6 +13,14 @@ Lift applications are:
 
 Because Lift applications are written in [Scala](http://www.scala-lang.org), an elegant JVM language, you can still use your favorite Java libraries and deploy to your favorite Servlet Container and app server. Use the code you've already written and deploy to the container you've already configured!
 
+## Issues
+
+Issues on the Lift GitHub project are intended to describe actionable,
+already-discussed items. Committers on the project may open issues for
+themselves at any time, but non-committers should visit the [Lift mailing
+list](https://groups.google.com/forum/#!forum/liftweb) and start a discussion
+for any issue that they wish to open.
+
 ## Pull Requests
 
 We will accept pull requests into the [Lift codebase](https://github.com/lift)
