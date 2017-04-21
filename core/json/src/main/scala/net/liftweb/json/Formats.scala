@@ -32,6 +32,14 @@ trait Formats { self: Formats =>
   val fieldSerializers: List[(Class[_], FieldSerializer[_])] = Nil
 
   /**
+   * Support for the tuple decomposition/extraction that represents tuples as JSON
+   * arrays. This provides better support for heterogenous arrays in JSON, but enable it at your
+   * own risk as it does change the behavior of serialization/deserialization and comes
+   * with some caveats (such as Scala primitives not being recognized reliably during extraction).
+   */
+  val tuplesAsArrays = false
+
+  /**
    * The name of the field in JSON where type hints are added (jsonClass by default)
    */
   val typeHintFieldName = "jsonClass"

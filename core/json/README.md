@@ -530,6 +530,7 @@ Serialization supports:
 * scala.Option
 * java.util.Date
 * Polymorphic Lists (see below)
+* Tuples (see below)
 * Recursive types
 * Serialization of fields of a class (see below)
 * Custom serializer functions for types which are not supported (see below)
@@ -553,6 +554,37 @@ will get an extra field named 'jsonClass' (the name can be changed by overriding
 
 ShortTypeHints outputs short classname for all instances of configured objects. FullTypeHints outputs full
 classname. Other strategies can be implemented by extending TypeHints trait.
+
+Serializing Tuples
+-----------------------------
+
+If you need to have a heterogeneous collection of completely unrelated types, you might find tuples
+useful for representing that data structure. By default, when you serialize a tuple you'll get an
+object based on the constructor of the appropreate tuple class. So, for example, if you serialize
+a `("bacon", 2)`, you'll get:
+
+    {"_1": "bacon", "_2": 2}
+
+However, as of Lift 3.1, you can enable `tuplesAsArrays` to represent these tuples as heterogeneous
+JSON arrays. To enable this feature you just need to provide a formats object that turns on the
+feature.
+
+    scala> import net.liftweb.json._
+    scala> import Serialization._
+    scala> implicit val formats = new DefaultFormats { override val tuplesAsArrays = true }
+    scala> write(("bacon", 2))
+    res1: String = ["bacon",2]
+
+When this feature is enabled:
+
+* lift-json will write tuples as arrays.
+* lift-json will correctly extract tuples from arrays
+* lift-json will continue to deserialize tuples that were serialied in the old manner, as an object
+
+The major limitation to this feature is that it doesn't reliably support Scala primitives, so it is
+currently disabled by default. If you're using this feature, you should use the Java boxed types
+in your class signatures instead of the Scala primitive types. (So, `java.lang.Integer` instead
+of `scala.Int`.)
 
 Serializing fields of a class
 -----------------------------

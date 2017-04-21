@@ -96,4 +96,76 @@ object ExtractionBugs extends Specification {
       case e => e.getMessage mustEqual "Do not know how to convert JString(hi) into int"
     }
   }
+
+  "deserialize list of homogonous tuples w/ array tuples disabled" in {
+    implicit val formats = DefaultFormats
+
+    case class Holder(items: List[(String, String)])
+
+    val holder = Holder(List(("string", "string")))
+    val serialized = compactRender(Extraction.decompose(holder))
+
+    val deserialized = parse(serialized).extract[Holder]
+    deserialized must_== holder
+  }
+
+  "deserialize a list of heterogenous tuples w/ array tuples disabled" in {
+    implicit val formats = DefaultFormats
+
+    // MSF: This currently doesn't work with scala primitives?! The type arguments appear as
+    // java.lang.Object instead of scala.Int. :/
+    case class Holder2(items: List[(String, Integer)])
+
+    val holder = Holder2(List(("string", 10)))
+    val serialized = compactRender(Extraction.decompose(holder))
+
+    val deserialized = parse(serialized).extract[Holder2]
+    deserialized must_== holder
+  }
+
+  "deserialize list of homogonous tuples w/ array tuples enabled" in {
+    implicit val formats = new DefaultFormats {
+      override val tuplesAsArrays = true
+    }
+
+    case class Holder(items: List[(String, String)])
+
+    val holder = Holder(List(("string", "string")))
+    val serialized = compactRender(Extraction.decompose(holder))
+
+    val deserialized = parse(serialized).extract[Holder]
+    deserialized must_== holder
+  }
+
+  "deserialize a list of heterogenous tuples w/ array tuples enabled" in {
+    implicit val formats = new DefaultFormats {
+      override val tuplesAsArrays = true
+    }
+
+    // MSF: This currently doesn't work with scala primitives?! The type arguments appear as
+    // java.lang.Object instead of scala.Int. :/
+    case class Holder2(items: List[(String, Integer)])
+
+    val holder = Holder2(List(("string", 10)))
+    val serialized = compactRender(Extraction.decompose(holder))
+
+    val deserialized = parse(serialized).extract[Holder2]
+    deserialized must_== holder
+  }
+
+  "deserialize an out of order old-style tuple w/ array tuples enabled" in {
+    implicit val formats = new DefaultFormats {
+      override val tuplesAsArrays = true
+    }
+
+    val outOfOrderTuple: JObject = JObject(List(
+      JField("_1", JString("apple")),
+      JField("_3", JString("bacon")),
+      JField("_2", JString("sammich"))
+    ))
+
+    val extracted = outOfOrderTuple.extract[(String, String, String)]
+
+    extracted must_== ("apple", "sammich", "bacon")
+  }
 }
