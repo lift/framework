@@ -87,6 +87,10 @@ trait IoHelpers {
    * Read an entire file into an Array[Byte]
    */
   def readWholeFile(file: File): Array[Byte] = readWholeStream(Files.newInputStream(file.toPath))
+
+  /**
+   * Read an entire file into an Array[Byte]
+   */
   def readWholeFile(path: Path): Array[Byte] = readWholeStream(Files.newInputStream(path))
 
   /**
@@ -110,7 +114,7 @@ trait IoHelpers {
   }
 
   /**
-   * Executes by-name function f and then closes the Cloaseables parameters
+   * Executes by-name function f and then closes the Closeables parameters
    */
   def doClose[T](is: java.io.Closeable*)(f : => T): T = {
     try {
