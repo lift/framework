@@ -1,5 +1,5 @@
 /*
-* Copyright 2010-2012 WorldWide Conferencing, LLC
+* Copyright 2010-2017 WorldWide Conferencing, LLC
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -19,8 +19,7 @@ package field
 import scala.xml.{NodeSeq, Text}
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, Str}
-import net.liftweb.json.JsonAST._
-import net.liftweb.json.{JsonParser, Printer}
+import net.liftweb.json._
 import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
 import net.liftweb.util.Helpers.tryo
 import com.mongodb.DBObject

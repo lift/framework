@@ -22,8 +22,7 @@ package field
 import common._
 import http.js.JsExp
 import http.js.JE.JsNull
-import json.JsonAST._
-import json.Printer
+import json._
 import net.liftweb.record._
 import com.mongodb._
 import org.bson.Document
