@@ -1869,13 +1869,20 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Note that most of the time you can just call
    * `[[normalizeHtmlAndAppendEventHandlers]]` and not worry about the extra
    * `JsCmd`, as Lift will automatically append it to the response.
+   *
+   * @param forceExtractInlineJavaScript If `None`, uses `LiftRules.extractInlineJavaScript`
+   *        to decide whether or not to extract inline JS from the passed nodes. If `Some`,
+   *        extracts (`Some(true)`) or doesn't (`Some(false)`).
    */
-  def normalizeHtmlAndEventHandlers(nodes: NodeSeq): NodesAndEventJs = {
+  def normalizeHtmlAndEventHandlers(
+    nodes: NodeSeq,
+    forceExtractInlineJavaScript: Option[Boolean] = None
+  ): NodesAndEventJs = {
     HtmlNormalizer.normalizeHtmlAndEventHandlers(
       nodes,
       S.contextPath,
       LiftRules.stripComments.vend,
-      LiftRules.extractInlineJavaScript
+      forceExtractInlineJavaScript getOrElse LiftRules.extractInlineJavaScript
     )
   }
 
