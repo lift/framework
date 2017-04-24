@@ -138,7 +138,7 @@ private[http] trait LiftMerge {
 
                 startingState.copy(headChild = true && mergeHeadAndTail)
 
-              case element: Elem if mergeHeadAndTail && 
+              case element: Elem if mergeHeadAndTail &&
                                     (element.label == "head" ||
                                       element.label.startsWith("head_")) &&
                                     htmlDescendant &&
@@ -217,13 +217,21 @@ private[http] trait LiftMerge {
     }
 
     if (!hasHtmlHeadAndBody) {
-      val fixedHtml =
-        normalizeMergeAndExtractEvents(xhtml, HtmlState(mergeHeadAndTail = false)).nodes
+      val NodesAndEventJs(fixedHtml, eventJs) =
+        normalizeMergeAndExtractEvents(xhtml, HtmlState(mergeHeadAndTail = false))
 
-      fixedHtml.find {
-        case e: Elem => true
-        case _ => false
-      } getOrElse Text("")
+      fixedHtml.collectFirst {
+        case e: Elem =>
+          val pageJs = assemblePageSpecificJavaScript(eventJs)
+          val pageJsElement =
+            List(pageJs)
+              .filter(_.toJsCmd.trim.nonEmpty)
+              .map(pageScopedScriptFileWith)
+
+          e.copy(child = e.child.toSeq ++ pageJsElement)
+      } getOrElse {
+        Text("")
+      }
     } else {
       val eventJs =
         normalizeMergeAndExtractEvents(xhtml, HtmlState(mergeHeadAndTail = true)).js
