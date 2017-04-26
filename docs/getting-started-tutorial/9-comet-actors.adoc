@@ -1,0 +1,20 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+# Comet Actors
+
+Lift has very robust support for pushing information to the client without the
+user having to take explicit action, and it's all mediated through a
+`CometActor`. `CometActor` works in many ways exactly like the regular actor
+we're already using to track chat messages, only `CometActor`s have a couple
+more tricks up their sleeve. Most notably for our purposes: they can re-render
+themselves in response to stuff going on inside the server, and send the
+updated version to the client. This finally gives us a way to update Jane's
+chat message list when Jill posts a message, without Jane having to do
+anything.
+
+Our first move will be to change how exactly we handle binding chat messages.
+First, we'll do a quick conversion that puts everything in a `CometActor`, but
+doesn't add any additional functionality. Instead of calling

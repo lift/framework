@@ -1,0 +1,159 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+# Using Actors for Chats
+
+Actors are fairly simple: they receive messages, do something with them, and
+potentially respond to them. This isn't unlike the process that you go through
+when you call a method on a regular class; however, when you send a message to
+an actor, it is processed after any earlier messages you sent, never at the
+same time. This makes it a lot easier to reason about what's going on at any
+given point, even if multiple threads are sending messages to the actor.
+
+## Storing the Message List
+
+We're going to use a fairly basic actor for now. As before, we're going to have
+a single chat room for the entire site we're building, so we'll use a singleton
+object. Lift provides a very simple actor implementation, which we'll be using
+here. There are more complicated actor systems, like the one provided by
+[Akka](http://akka.io), but they're only necessary in cases where you need more
+flexibility or fault tolerance. We'll stick to the easy stuff, starting with a
+new file at `src/main/scala/code/actor/ChatActor.scala`:
+
+```
+package code
+package actor
+
+import net.liftweb.actor._
+
+case class ChatMessage(poster: String, body: String)
+
+case class MessagePosted(message: ChatMessage)
+
+object ChatActor extends LiftActor {
+  private var messageEntries = List[ChatMessage]()
+
+  def messageHandler = {
+    case MessagePosted(newMessage) =>
+      messageEntries ::= newMessage
+  }
+}
+```
+
+This provides a very basic actor that can receive a new message and add it to
+its internal list. We've moved the `ChatMessage` class from the `Chat` snippet
+to this file. Typically, messages to actors are case classes. This is because
+they're easy to pattern match (as you can see, message handling is done via
+pattern matching footnote:[Strictly speaking, `messageHandler` is a
+`PartialFunction`. This means that it can match any subset of objects that it
+wants to.]) and because they're generally immutable, so there's no chance of
+someone else trying to modify the message as we're processing it.
+
+To ask the actor to add a message, we'll send it the `MessagePosted` message
+using the `!` operator. Here's how we can update our code in the `Chat`
+snippet:
+
+```
+...
+import actor._
+...
+  def sendMessage = {
+    ...
+    "type=submit" #> SHtml.submitButton(() => {
+      for (body <- message) {
+        ChatActor ! MessagePosted(message)
+      }
+    })
+  }
+...
+```
+
+Now, whenever a message is posted, it will be sent to the `ChatActor`, which
+will update its internal list.
+
+This is, however, only half of the equation. Putting messages into the actor
+isn't useful if we can't get them back out!
+
+## Retrieving Messages
+
+To retrieve messages, we can add a new message for the `ChatActor`:
+
+```
+...
+case class MessagePosted(message: ChatMessage)
+case object GetMessages
+...
+```
+
+And a handler for it:
+
+```
+...
+  def messageHandler = {
+    ...
+    case GetMessages =>
+      reply(messageEntries)
+  }
+...
+```
+
+When handling `GetMessages`, we use the `reply` method. This method lets us
+send an answer back to the person who sent us this message. By default,
+messages don't send answers, and the `!` operator is non-blocking, meaning it
+adds the message to the end of the actor's list of messages to process and then
+lets the original code continue running without waiting for the actor to deal
+with it.
+
+To wait for a reply, we have to use the `!?` operator instead. We do this when
+listing messages by updating the `Chat` snippet:
+
+```
+...
+  def messages = {
+    val messageEntries = Box.asA[List[ChatMessage]](ChatActor !? GetMessages).flatten
+
+    ClearClearable &
+    "li" #> messageEntries.map { entry =>
+      ".poster *" #> entry.poster &
+      ".body *" #> entry.body
+    }
+  }
+...
+```
+
+Two things to notice here. First off, we use `ChatActor !? GetMessages` to
+retrieve the messages. This will block until the `ChatActor` can process our
+message and send the reply back to us. Unfortunately, because we're not
+invoking a method, there is no type safety in the `!?` operator, so the
+compiler doesn't know what the type that `GetMessages` will return to us is.
+Because of that, we have to do some casting. To deal with this, Lift provides a
+very handy utility function, `Box.asA[T]`; it attempts to convert its parameter
+to the type `T`, and, if it succeeds, provides a `Full` `Box` with the
+converted value of the appropriate type. If it fails, it provides an `Empty`
+`Box` instead.
+
+To deal with the fact that the `Box` may be `Full` or `Empty`, we use `flatten`
+on the `Box`. We do this because the type of `messageEntries` is now a
+`Box[List[ChatMessage]]`, meaning a box that *contains* a list of chat
+messages. `flatten` will give us the plain list of messages if the `Box` is
+`Full`, and an empty list if it's `Empty`, which is perfect.
+
+It's worth mentioning that it seems like we *know* we'll be getting a
+`List[ChatMessage]` from the actor. However, the compiler *doesn't*, and that
+means it can't guarantee to us that future changes won't render that assumption
+false. Using `Box.asA` ensures that, if someone changes the `ChatActor` later
+to reply with something else, our snippet won't blow up in the user's face—it
+will just not display the existing messages. The intrepid reader can then go
+and fix the issue.
+
+Another annoyance in the code as it stands now is that if 8000 people are
+posting messages and I log into the site, my page won't load until those 8000
+messages are processed by the actor. That's because of how `reply` works: we
+wait until the actor gets to our message and then replies to it. There are far
+better ways of dealing with both of these issues, which we'll talk about when
+we talk about using `CometActor`s [later](link-to-comet-actors).
+
+First, though, let's go back and look at how we can let the user change their
+username so they don't have to use our nasty automatically-generated name.

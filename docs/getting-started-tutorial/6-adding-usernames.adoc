@@ -1,0 +1,146 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+# Adding Usernames
+
+We're about to add another use case to our chat system:
+
+ - As a chatter, I want to see who posted a message so that I have better
+   context for the conversation.
+
+The first thing we'll do is change the HTML to look like we want it to. Let's
+add the username:
+
+```
+...
+      <li>
+        <span class="poster">Antonio</span> <span class="body">Hi!</span>
+      </li>
+      <li class="clearable">
+        <span class="poster">David</span> <span class="body">Oh, hey there.</span>
+      </li>
+      <li class="clearable">
+        <span class="poster">Antonio</span> <span class="body">How are you?</span>
+      </li>
+      <li class="clearable">
+        <span class="poster">Antonio</span> <span class="body">Good, you?</span>
+      </li>
+...
+```
+
+Initially, we'll generate a username for the current user. We can store it in a
+`SessionVar`. `SessionVar`s in Lift are used to store things that should exist
+for the duration of a user's session. A user's session exists as long as Lift
+is aware of the user viewing a page related to that session. If Lift sees no
+activity from a given session after 20 minutes foonote:[This is configurable,
+of course. See `LiftRules.sessionInactivityTimeout`.], the session will be
+thrown away, as will the associated `SessionVar` values and related data.
+
+For now, let's look at adding the `SessionVar` to the `Chat` snippet:
+
+```
+...
+object username extends SessionVar[String]("username")
+
+object Chat {
+...
+```
+
+Here, we create a new `SessionVar`, whose default value will be “username” if it
+is accessed without having been set. We can change that to be random:
+
+```
+object username extends SessionVar[String]("User " + randomString(5))
+```
+
+We're using a Lift helper called `randomString`. We just pass it a length and
+it gives us back a random string of that length. This'll make sure that each
+user session has a (reasonably) unique username.
+
+Now, we need to store usernames alongside messages. Let's do that by making the
+messageEntries list contain a case class instance instead of a simple `String`:
+
+```
+...
+case class ChatMessage(poster: String, body: String)
+class Chat {
+  var messageEntries = List[ChatMessage]()
+
+  def messages = {
+    ClearClearable &
+    "li" #> messageEntries.map { entry =>
+      ".poster *" #> entry.poster &
+      ".body *" #> entry.body
+    }
+  }
+
+  def sendMessage = {
+    var message = ChatMessage("", "")
+
+    "#new-message" #> SHtml.text(message, { body: String => message = ChatMessage(username.is, body) }) &
+    "type=submit" #> SHtml.submitButton(() => {
+      messageEntries ::= message
+    })
+  }
+}
+```
+
+We introduce a new case class, `ChatMessage`, that carries a poster and a
+message body. We also update `messageEntries` to be a list of those.
+
+One of the big changes here is how we update the `messages` snippet method.
+Before, we just mapped the content of `li` to the list of `String`s. However,
+`ChatMessage` objects can't be dealt with so simply. Instead, the left side
+becomes a simple selection of `li`. The right side is now a list of CSS
+selector transforms—one for each `ChatMessage`. As before, Lift copies the
+contents of the `li` once for each entry in the list, and then transforms it
+according to that particular entry. In this case, rather than just putting a
+string into the `li`, we set the contents of the `.poster` and `.body` elements
+inside it.
+
+Now, the trained eye might notice that `sendMessage` never checks whether the
+client submitted the form without including the message in the submission. This
+is a relatively obscure/weird corner case, but one that's worth dealing with
+because it's so easy. To deal with it, we can change `message` from being a
+`ChatMessage` to being a `Box[ChatMessage]` that starts off `Empty`. We can
+then only add the message to the list if the box has been set to `Full`. This
+ensures that we never add a weird blank message to the list, and lets us do it
+without having to deal with an initial value of `null` for the `message`
+variable footnote:[Why is not dealing with `null` desirable? Using a `Box` lets
+you deal with "this value isn't there" as an inherent type. `null`, on the
+other hand, is something that can masquerade as any value (for example, you can
+put `null` into either a `ChatMessage` or a `String`), and the compiler can't
+check for you that you made sure this optional value was set before using it.
+With a `Box`, the compiler will enforce the checks so that you'll know if
+there's a possibility of a value not being set.]:
+
+```
+...
+  def sendMessage = {
+    var message: Box[ChatMessage] = Empty
+
+    "#new-message" #> SHtml.text(message, { body: String => message = Full(ChatMessage(username.is, body)) }) &
+    "type=submit" #> SHtml.submitButton(() => {
+      for (body <- message) {
+        messageEntries ::= message
+      }
+    })
+  }
+...
+```
+
+We use a `for` comprehension to unpack the value of `message`. The body of that
+comprehension won't run unless `message` is a `Full` box containing a
+`ChatMessage` sent by the client.
+
+Now that we have a reasonably nice chat system with actual usernames, it's time
+to look at the underlying issue of *consistency*. If two users posted a chat
+message at the same time right now, who knows what would happen to the
+`messageEntries` list? We could end up with only one of their messages, or with
+both, or with an undefined state of nastiness.
+
+Before letting a user set their own username, let's deal with this issue by
+serializing the posting of and access to messages using a simple mechanism: an
+actor.

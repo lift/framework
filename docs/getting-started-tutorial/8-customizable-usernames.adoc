@@ -1,0 +1,69 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+# Customizable Usernames
+
+Let's deal with the next use case:
+
+ - As a chatter, I want to change what name other users see for me when I post
+   a message.
+
+What we really want is a text box on the client that will let us edit the name.
+We'll add it to the top of our chat area in `chat.html`:
+
+```html
+...
+  <section id="chat">
+    <header>
+      Posting as:
+      <input data-lift="Chat.nameField" class="poster-name">
+    </header>
+...
+```
+
+The ideal way for this to work would be for you to be able to change the value
+of the field, and have it save. We can do exactly that using Lift's `ajaxText`
+helper in `Chat.scala`:
+
+```scala
+...
+  def nameField = {
+    "input" #> SHtml.ajaxText(username.is, username.set _)
+  }
+...
+```
+
+How's that for ludicrously easy? We create an `ajaxText` whose initial value
+will be the value of the `username` `SessionVar` that we created initially to
+track the user's name. The second parameter to `ajaxText` is what gets run when
+a change occurs on the client, and we hook it up directly to the `SessionVar`'s
+`set` method, so that changing the text field on the client changes the
+`SessionVar`.
+
+However, maybe we want to provide some feedback to the user to let them know
+the name has been updated. We can get a little more detailed:
+
+```scala
+...
+  def nameField = {
+    "input" #> SHtml.ajaxText(username.is, { updatedUsername: String =>
+      username.set(updatedUsername)
+
+      Alert("Updated your username!")
+    }
+  }
+...
+```
+
+Now, when the change gets saved, the user will get a popup that will say
+“Updated your username!”. Note that `ajaxText` fields are set up to submit
+their changes on blur *or* when the user hits `enter` in the field.
+
+Now that the user can update their name, it's time to make things truly real
+time. Until now, to see the messages someone else has posted, we'd have to
+reload the page. Only our messages were posted to the page in real time. Not
+much of a chat at all, is it!
+
+It's time to break out the `CometActor`.

@@ -1,0 +1,71 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+# View-first Development
+
+If you're developing a user-facing web site or application, one of Lift's
+greatest improvements over existing systems is view-first development.
+View-first development thoroughly separates the process of creating the user
+interface from the process of putting data from the system into it, in a way
+that lets you stay focused on users when you're creating the user interface and
+worry about the the interface between your backend and the HTML only when
+you're working on the backend.
+
+The flip side of view-first development is that it takes some getting used to
+if one is accustomed the typical web MVC framework. The first stop when
+figuring out what's going on in a typical web MVC setup is the controller. In
+Lift, your first stop is your HTML file. Everything starts in the HTML, and in
+what it is that you want to present to the user. You don't just think about
+user interactions first, you *build* them first, and let them guide your
+development forward and inform it at every step of the way. Turning a usability
+tested high fidelity mockup into a live page has never been so straightforward.
+
+For our chat app, we're going to focus first on two use cases, formulated as
+user stories:
+
+ - As a chatter, I want to post a message so that others can see it.
+ - As a chatter, I want to see messages from me and others so that I can keep
+   track of the conversation and contribute in context.
+
+To start with, we'll set up a simple chat.html page in our `src/main/webapp`
+directory (where all HTML files go). All we really need in there for now is a
+list of chat messages so far, and a box to put our own chat message into. So,
+here's some base HTML to get us going:
+
+```html:src/main/webapp/index.html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat!</title>
+</head>
+
+<body>
+  <section id="chat">
+    <ol class="messages">
+      <li>Hi!</li>
+      <li>Oh, hey there.</li>
+      <li>How are you?</li>
+      <li>Good, you?</li>
+    </ol>
+    <form class="send-message">
+      <label for="new-message">Post message</label>
+      <input id="new-message" type="text">
+      <input type="submit" value="Post">
+    </form>
+  </section>
+</body>
+</html>
+```
+
+While we're not using it here, it's probably a good idea to start off with
+http://html5boilerplate.com[HTML5 Boilerplate]. Indeed, the default Lift
+templates all start with exactly that footnote:[Ok, so not exactly. IE
+conditional comments need a little additional work in Lift, because Lift is
+smart enough to strip all HTML comments in production mode.].
+
+When it comes to user testing, notice that our view is fully-valid HTML, with
+placeholder data. It is, in effect, a high-fidelity mockup. And now that we've
+got our view sorted out (and, ideally, tested with users), we can start hooking
+up the Lift side.

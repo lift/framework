@@ -1,0 +1,33 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+# The Lift Menu System
+
+Another distinguishing characteristic of Lift is that it is *secure by
+default*. Amongst other things, this means that you can't access a file in your
+`src/main/webapp` directory through your application unless you explicitly
+define that it's meant to be accessed. You define this using Lift's menu
+system, called `SiteMap`.
+
+Hooking up a simple page like this one is easy, and seems redundant; rest
+assured, we'll explore the real power of `SiteMap` as the application becomes
+more complicated. All you have to do for the chat page is add a line to your
+`SiteMap.scala` that names the page and points to the file in the `webapp`
+directory:
+
+```
+...
+    Menu.i("Chat") / "chat"
+...
+```
+
+The string passed to `i` is the name of this menu. We can use that to
+[automatically render links for our menu](#section-12). It gets processed
+through Lift's internationalization system, but since we've got no
+internationalization set up for now it'll just go through unchanged. The part
+after the `/` specifies where the template will be found—in our case, in the
+`chat.html` file directly under `src/main/webapp`.
+
+With that out of the way, we can move on to bringing our HTML to life.

@@ -1,0 +1,73 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+# Adding Snippet Bindings
+
+In most frameworks, a page's data is looked up by a controller, and backend
+code clutters the HTML to produce the correct rendering of the data. This
+process is usually done through what amounts to little more than string
+munging. Lift throws this paradigm away entirely in favor of a much better
+approach based on entities called snippets.
+
+Snippets let you refer to a block of code that is responsible for rendering a
+particular part of your page. You add these references by augmenting your HTML
+with a few completely valid `data-` attributes that get stripped before the
+HTML is then sent to the browser. These snippets then take your HTML, fully
+parsed into a valid DOM tree, and transform it, providing true decoupling
+between your business logic and your template, and an extra level of
+security footnote:[We already mentioned that Lift is secure by default, and
+another way that manifests is that the template HTML is turned into a
+first-class XML tree early in the processing cycle, and snippets just transform
+that tree. That means script injection and a variety of other attacks are
+significantly more difficult against a Lift codebase.].
+
+
+Let's look at our chat app specifically. We're going to bind two things: the
+list of chat messages, and the text input that lets us actually chat. To the
+`ol` that contains the chat messages, we add:
+
+```
+<ol class="messages" data-lift="Chat.messages"*>
+```
+
+And to the input form:
+
+```
+<form class="send-message" data-lift="Chat.sendMessage">
+```
+
+These two indicate two methods in a class called `Chat`, which Lift searches
+for in the `code.snippet` package footnote:[This can be changed using
+`Lift.addPackage`. See ...]. We'll write a very basic version that
+just passes through the contents of the list and form unchanged, and then in
+the next section we'll start adding some behavior. In
+`src/main/scala/code/snippet/Chat.scala`, add:
+
+```
+package code
+package snippet
+
+import scala.xml._
+
+object Chat {
+  def messages(contents: NodeSeq) = contents
+  def sendMessage(contents: NodeSeq) = contents
+}
+```
+
+Note that the methods referred to from the template can either take a
+`NodeSeq` footnote:[What's a `NodeSeq`? Scala uses a `NodeSeq` to represent an
+arbitrary block of XML. It is a *seq*uence of >= 1 *node*s, which can in turn
+have children.] and return a `NodeSeq`, or they can take no parameters and
+return a `(NodeSeq)=>NodeSeq` function. The `NodeSeq` that is passed in is the
+element that invoked the snippet in the template, minus the `data-lift`
+attribute. The `NodeSeq` that is returned replaces that element completely in
+the resulting output.
+
+Now that we have our snippet methods set up, we can move on to actually showing
+some data in them. Right now all they do is pass their contents through
+unchanged, so rendering this page in Lift will look just the same as if we just
+opened the template directly. To transform them and display our data easily, we
+use CSS Selector Transforms.
