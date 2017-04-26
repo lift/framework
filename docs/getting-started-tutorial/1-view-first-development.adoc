@@ -14,7 +14,7 @@ worry about the the interface between your backend and the HTML only when
 you're working on the backend.
 
 The flip side of view-first development is that it takes some getting used to
-if one is accustomed the typical web MVC framework. The first stop when
+if one is accustomed to the typical web MVC framework. The first stop when
 figuring out what's going on in a typical web MVC setup is the controller. In
 Lift, your first stop is your HTML file. Everything starts in the HTML, and in
 what it is that you want to present to the user. You don't just think about
@@ -29,7 +29,7 @@ user stories:
  - As a chatter, I want to see messages from me and others so that I can keep
    track of the conversation and contribute in context.
 
-To start with, we'll set up a simple chat.html page in our `src/main/webapp`
+To start with, we'll set up a simple `chat.html` page in our `src/main/webapp`
 directory (where all HTML files go). All we really need in there for now is a
 list of chat messages so far, and a box to put our own chat message into. So,
 here's some base HTML to get us going:

@@ -47,10 +47,10 @@ In the previous section, we mentioned that Lift snippets can return
 selector transforms are actually functions that take a `NodeSeq` and return a
 `NodeSeq`, constructed using an easy-to-read syntax.
 
-What we do in this particular transformation is select all `li`s. We then
+What we do in this particular transformation is select all ``li``s. We then
 specify that we want to transform them by replacing their contents (`*`) by
 whatever is on the right. The right side, however, is a list, in this case of
-`String`s. When there's a list on the right side of a transformation, Lift
+``String``s. When there's a list on the right side of a transformation, Lift
 repeats the matched element or elements once for each entry in the list, and
 binds the contents of each element in turn.
 
@@ -78,7 +78,7 @@ every time we render the message list:
 ```
 ...
   def messages = {
-    messageEntries += "It is now " + formattedTimeNow
+    messageEntries :+= "It is now " + formattedTimeNow
     "li *" #> messageEntries
   }
 ...
@@ -123,10 +123,10 @@ If you reload the page, you'll get something like:
 ```
 
 What's causing all the repetition? Well, remember when we described what the
-CSS Selector Transform was doing, we said we “select all `li`s”. We also said
+CSS Selector Transform was doing, we said we “select all ``li``s”. We also said
 that the list on the right side means “Lift repeats the matched element **or
-elements**”. So we select all the `li`s, but in the template there are 4, so
-that the template when rendered alone (say, for a user test, or when a frontend
+elements**”. So we select all the ``li``s, but in the template there are 4, so
+that the template when viewed alone (say, for a user test, or when a frontend
 developer is editing it) has some content in it. How do we bridge the two
 without getting nasty in our HTML?
 
@@ -148,7 +148,7 @@ template:
 ```
 ...
   def messages = {
-    messageEntries ::= "It is now " + formattedTimeNow
+    messageEntries :+= "It is now " + formattedTimeNow
 
     ClearClearable &
     "li *" #> messageEntries
@@ -156,10 +156,10 @@ template:
 ...
 ```
 
-Notice that we combine the two CSS selector transforms here by using the `&`.
-You can chain together as many CSS selector transforms as you want this way, as
-long as they don't modify the same parts of the same element. We'll deal with
-that limitation [a little later](#section13) footnote:[This is because CSS
+Notice that we combine the two CSS selector transforms here by using `&`. You
+can chain together as many CSS selector transforms as you want this way, as long
+as they don't modify the same parts of the same element. We'll deal with that
+limitation link:13-who-knows[a little later] footnote:[This is because CSS
 selector transforms are optimized for speed, and pass through the nodes a
 single time to make all of the transformations happen.].
 

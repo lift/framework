@@ -29,7 +29,7 @@ list of chat messages, and the text input that lets us actually chat. To the
 `ol` that contains the chat messages, we add:
 
 ```
-<ol class="messages" data-lift="Chat.messages"*>
+<ol class="messages" data-lift="Chat.messages">
 ```
 
 And to the input form:
@@ -40,10 +40,10 @@ And to the input form:
 
 These two indicate two methods in a class called `Chat`, which Lift searches
 for in the `code.snippet` package footnote:[This can be changed using
-`Lift.addPackage`. See ...]. We'll write a very basic version that
-just passes through the contents of the list and form unchanged, and then in
-the next section we'll start adding some behavior. In
-`src/main/scala/code/snippet/Chat.scala`, add:
+link:++https://liftweb.net/api/30/api/index.html#net.liftweb.http.LiftRules@addToPackages(what:String):Unit++[`LiftRules.addPackage`.].
+We'll write a very basic version that just passes through the contents of the
+list and form unchanged, and then in the next section we'll start adding some
+behavior. In `src/main/scala/code/snippet/Chat.scala`, add:
 
 ```
 package code
@@ -59,8 +59,8 @@ object Chat {
 
 Note that the methods referred to from the template can either take a
 `NodeSeq` footnote:[What's a `NodeSeq`? Scala uses a `NodeSeq` to represent an
-arbitrary block of XML. It is a *seq*uence of >= 1 *node*s, which can in turn
-have children.] and return a `NodeSeq`, or they can take no parameters and
+arbitrary block of XML. It is a __seq___uence of >= 1 __node___s, which can in
+turn have children.] and return a `NodeSeq`, or they can take no parameters and
 return a `(NodeSeq)=>NodeSeq` function. The `NodeSeq` that is passed in is the
 element that invoked the snippet in the template, minus the `data-lift`
 attribute. The `NodeSeq` that is returned replaces that element completely in

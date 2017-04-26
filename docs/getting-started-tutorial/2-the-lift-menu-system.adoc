@@ -24,7 +24,7 @@ directory:
 ```
 
 The string passed to `i` is the name of this menu. We can use that to
-[automatically render links for our menu](#section-12). It gets processed
+link:menu-links[automatically render links for our menu]. It gets processed
 through Lift's internationalization system, but since we've got no
 internationalization set up for now it'll just go through unchanged. The part
 after the `/` specifies where the template will be found—in our case, in the
