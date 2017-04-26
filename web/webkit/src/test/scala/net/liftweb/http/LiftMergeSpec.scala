@@ -4,8 +4,7 @@ package http
 import scala.xml._
 
 import org.specs2._
-  import execute.{Result, AsResult}
-  import mutable.{Around, Specification}
+  import mutable.Specification
   import matcher.XmlMatchers
   import mock.Mockito
 
@@ -14,41 +13,6 @@ import org.mockito.Mockito._
 import common._
 
 import js.JE.JsObj
-
-trait BaseAround extends Around {
-  override def around[T: AsResult](test: =>T): Result = {
-    AsResult(test)
-  }
-}
-
-trait LiftRulesSetup extends Around {
-  def rules: LiftRules
-
-  abstract override def around[T: AsResult](test: => T): Result = {
-    super.around {
-      LiftRulesMocker.devTestLiftRulesInstance.doWith(rules) {
-        AsResult(test)
-      }
-    }
-  }
-}
-
-trait SSetup extends Around {
-  def session: LiftSession
-  def req: Box[Req]
-
-  abstract override def around[T: AsResult](test: => T): Result = {
-    super.around {
-      S.init(req, session) {
-        AsResult(test)
-      }
-    }
-  }
-}
-
-class WithRules(val rules: LiftRules) extends BaseAround with LiftRulesSetup
-
-class WithLiftContext(val rules: LiftRules, val session: LiftSession, val req: Box[Req] = Empty) extends BaseAround with LiftRulesSetup with SSetup
 
 class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
   val mockReq = mock[Req]
@@ -62,7 +26,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
   testRules.autoIncludeAjaxCalc.default.set(() => () => (_: LiftSession) => false)
   testRules.excludePathFromContextPathRewriting.default
     .set(
-      () => { in: String => 
+      () => { in: String =>
         in.startsWith("exclude-me")
       }
     )
@@ -198,7 +162,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           mockReq
         )
 
-      (result \\ "link").map(_ \@ "href") must_== 
+      (result \\ "link").map(_ \@ "href") must_==
         "/context-path/testlink" ::
         "/context-path/testlink2" ::
         "/context-path/testlink3" :: Nil
@@ -232,7 +196,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           mockReq
         )
 
-      (result \\ "script").map(_ \@ "src") must_== 
+      (result \\ "script").map(_ \@ "src") must_==
         "/context-path/testscript" ::
         "/context-path/testscript2" :: Nil
     }
@@ -265,7 +229,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           mockReq
         )
 
-      (result \\ "a").map(_ \@ "href") must_== 
+      (result \\ "a").map(_ \@ "href") must_==
         "/context-path/testa1" ::
         "testa3" ::
         "/context-path/testa2" ::
@@ -302,7 +266,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           mockReq
         )
 
-      (result \\ "form").map(_ \@ "action") must_== 
+      (result \\ "form").map(_ \@ "action") must_==
         "/context-path/testform1" ::
         "testform3" ::
         "/context-path/testform2" ::
@@ -339,7 +303,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           )
         }
 
-      (result \\ "script").map(_ \@ "src") must_== 
+      (result \\ "script").map(_ \@ "src") must_==
         "testscript" ::
         "testscript2" ::
         "testscript3" :: Nil
@@ -373,7 +337,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           )
         }
 
-      (result \\ "link").map(_ \@ "href") must_== 
+      (result \\ "link").map(_ \@ "href") must_==
         "testlink" ::
         "testlink2" ::
         "testlink3" :: Nil
@@ -407,7 +371,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           )
         }
 
-      (result \\ "a").map(_ \@ "href") must_== 
+      (result \\ "a").map(_ \@ "href") must_==
         "rewritten" ::
         "rewritten" ::
         "rewritten" :: Nil
@@ -441,7 +405,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           )
         }
 
-      (result \\ "form").map(_ \@ "action") must_== 
+      (result \\ "form").map(_ \@ "action") must_==
         "rewritten" ::
         "rewritten" ::
         "rewritten" :: Nil
