@@ -18,7 +18,7 @@ We're going to use a fairly basic actor for now. As before, we're going to have
 a single chat room for the entire site we're building, so we'll use a singleton
 object. Lift provides a very simple actor implementation, which we'll be using
 here. There are more complicated actor systems, like the one provided by
-[Akka](http://akka.io), but they're only necessary in cases where you need more
+http://aka.io[Akka], but they're only necessary in cases where you need more
 flexibility or fault tolerance. We'll stick to the easy stuff, starting with a
 new file at `src/main/scala/code/actor/ChatActor.scala`:
 
@@ -153,7 +153,7 @@ posting messages and I log into the site, my page won't load until those 8000
 messages are processed by the actor. That's because of how `reply` works: we
 wait until the actor gets to our message and then replies to it. There are far
 better ways of dealing with both of these issues, which we'll talk about when
-we talk about using `CometActor`s [later](link-to-comet-actors).
+we talk about using `CometActor`s link:9-comet-actors[later].
 
 First, though, let's go back and look at how we can let the user change their
 username so they don't have to use our nasty automatically-generated name.

@@ -38,7 +38,7 @@ helper in `Chat.scala`:
 How's that for ludicrously easy? We create an `ajaxText` whose initial value
 will be the value of the `username` `SessionVar` that we created initially to
 track the user's name. The second parameter to `ajaxText` is what gets run when
-a change occurs on the client, and we hook it up directly to the `SessionVar`'s
+a change occurs on the client, and we hook it up directly to the ``SessionVar``'s
 `set` method, so that changing the text field on the client changes the
 `SessionVar`.
 

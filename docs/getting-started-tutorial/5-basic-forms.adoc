@@ -18,8 +18,9 @@ contain the value you submitted if it was submitted. The `Box` will be `Empty`
 if the field wasn't submitted in this request. However, be very careful about
 using this method, since it exposes you to CSRF attacks.]. This makes Lift
 forms resistant to many cross-site request forgery (CSRF) attacks, and
-resistant to the BREACH attack that typical CSRF tokens are vulnerable to when
-served with gzip compression over a secure connection.
+resistant to https://liftweb.net/lift_and_breach[the BREACH attack that typical
+CSRF tokens are vulnerable to when served with gzip compression over a secure
+connection.
 
 Let's look at a simple example with our chat application. Currently our form
 looks like this:
