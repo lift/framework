@@ -24,7 +24,6 @@ import java.io.StringReader
 import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
 import java.io.ByteArrayInputStream
-import java.io.FileInputStream
 import java.io.InputStream
 import java.io.StringBufferInputStream
 import java.io.File
