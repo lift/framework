@@ -13,6 +13,7 @@ import org.mockito.Mockito._
 import common._
 
 import js.JE.JsObj
+import js.pageScript
 
 class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
   val mockReq = mock[Req]
@@ -30,6 +31,11 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
         in.startsWith("exclude-me")
       }
     )
+
+  val eventExtractingTestRules = new LiftRules()
+  eventExtractingTestRules.javaScriptSettings.default.set(() => () => Empty)
+  eventExtractingTestRules.autoIncludeAjaxCalc.default.set(() => () => (_: LiftSession) => false)
+  eventExtractingTestRules.extractInlineJavaScript = true
 
   "LiftMerge when doing the final page merge" should {
     "merge head segments in the page body in order into main head" in new WithRules(testRules) {
@@ -409,6 +415,63 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
         "rewritten" ::
         "rewritten" ::
         "rewritten" :: Nil
+    }
+
+    "include a page script in the page tail if events are extracted" in new WithLiftContext(eventExtractingTestRules, testSession) {
+      val result =
+        testSession.merge(
+          <html>
+            <head>
+              <title>Booyan</title>
+            </head>
+            <body>
+              <div onclick="tryme();">
+                <p onmouseover="tryyou();">
+                  Test
+                </p>
+              </div>
+            </body>
+          </html>,
+          mockReq
+        )
+
+      val scripts = (result \\ "script")
+
+      scripts must have length(1)
+      scripts.map(_ \@ "src") must beLike {
+        case scriptSrc :: Nil =>
+          scriptSrc must beMatching("/context-path/lift/page/F[^.]+.js")
+      }
+      pageScript.is must beLike {
+        case Full(response) =>
+          response.js.toJsCmd must contain("tryme()")
+          response.js.toJsCmd must contain("tryyou()")
+      }
+    }
+
+    "include a page script in the page tail even if the page doesn't have a head and body" in new WithLiftContext(eventExtractingTestRules, testSession) {
+      val result =
+        testSession.merge(
+          <div onclick="tryme();">
+            <p onmouseover="tryyou();">
+              Test
+            </p>
+          </div>,
+          mockReq
+        )
+
+      val scripts = (result \\ "script")
+
+      scripts must have length(1)
+      scripts.map(_ \@ "src") must beLike {
+        case scriptSrc :: Nil =>
+          scriptSrc must beMatching("/context-path/lift/page/F[^.]+.js")
+      }
+      pageScript.is must beLike {
+        case Full(response) =>
+          response.js.toJsCmd must contain("tryme()")
+          response.js.toJsCmd must contain("tryyou()")
+      }
     }
   }
 }
