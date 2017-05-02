@@ -34,6 +34,20 @@ object JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
     forAll(rendering)
   }
 
+  "rendering special double values" should {
+    "render positive infinity as null" in {
+      JsonAST.compactRender(JDouble(Double.PositiveInfinity)) must_== "null"
+    }
+
+    "render negative infinity as null" in {
+      JsonAST.compactRender(JDouble(Double.NegativeInfinity)) must_== "null"
+    }
+
+    "render NaN as null" in {
+      JsonAST.compactRender(JDouble(Double.NaN)) must_== "null"
+    }
+  }
+
   private def parse(json: String) = scala.util.parsing.json.JSON.parseRaw(json)
 
   implicit def arbDoc: Arbitrary[JValue] = Arbitrary(genJValue)

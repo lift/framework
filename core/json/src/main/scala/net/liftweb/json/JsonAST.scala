@@ -946,6 +946,9 @@ object JsonAST {
     case null          => buf.append("null")
     case JBool(true)   => buf.append("true")
     case JBool(false)  => buf.append("false")
+    // These special double values serialize to null; otherwise, we would
+    // generate invalid JSON.
+    case JDouble(nully) if nully.isNaN || nully.isInfinity => buf.append("null")
     case JDouble(n)    => buf.append(n.toString)
     case JInt(n)       => buf.append(n.toString)
     case JNull         => buf.append("null")
