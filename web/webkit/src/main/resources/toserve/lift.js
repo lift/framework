@@ -507,7 +507,7 @@
 
         return self;
       };
-	  
+
       self['catch'] = self.fail;
 
       self.done = function(f) {
@@ -655,7 +655,9 @@
 
       jQuery(elementOrId).on(eventName, fn);
     },
-    onDocumentReady: jQuery(document).ready,
+    onDocumentReady: function(fn) {
+      jQuery(document).ready(fn);
+    },
     ajaxPost: function(url, data, dataType, onSuccess, onFailure) {
       var processData = true,
           contentType = 'application/x-www-form-urlencoded; charset=UTF-8';
