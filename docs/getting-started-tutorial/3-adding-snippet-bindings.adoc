@@ -70,4 +70,4 @@ Now that we have our snippet methods set up, we can move on to actually showing
 some data in them. Right now all they do is pass their contents through
 unchanged, so rendering this page in Lift will look just the same as if we just
 opened the template directly. To transform them and display our data easily, we
-use CSS Selector Transforms.
+use link:4-css-selector-transforms.adoc[CSS Selector Transforms].

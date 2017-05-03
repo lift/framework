@@ -66,4 +66,4 @@ time. Until now, to see the messages someone else has posted, we'd have to
 reload the page. Only our messages were posted to the page in real time. Not
 much of a chat at all, is it!
 
-It's time to break out the `CometActor`.
+It's time to link:9-comet-actors.adoc[break out the `CometActor`].

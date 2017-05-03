@@ -142,5 +142,5 @@ message at the same time right now, who knows what would happen to the
 both, or with an undefined state of nastiness.
 
 Before letting a user set their own username, let's deal with this issue by
-serializing the posting of and access to messages using a simple mechanism: an
-actor.
+serializing the posting of and access to messages using a simple mechanism:
+link:7-using-actors-for-chat.adoc[an actor].

@@ -155,5 +155,5 @@ wait until the actor gets to our message and then replies to it. There are far
 better ways of dealing with both of these issues, which we'll talk about when
 we talk about using `CometActor`s link:9-comet-actors[later].
 
-First, though, let's go back and look at how we can let the user change their
-username so they don't have to use our nasty automatically-generated name.
+First, though, let's go back and look at how we can let the user link:8-customizable-usernames.adoc[change their
+username so they don't have to use our nasty automatically-generated name].

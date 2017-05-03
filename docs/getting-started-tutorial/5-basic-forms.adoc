@@ -103,4 +103,4 @@ works fine when there's just one user posting a time, but once multiple users
 start submitting the post form simultaneously, we start getting into serious
 threading and data consistency issues.
 
-Let's deal with usernames first.
+Let's link:6-adding-usernames.adoc[deal with usernames first].

@@ -68,4 +68,4 @@ smart enough to strip all HTML comments in production mode.].
 When it comes to user testing, notice that our view is fully-valid HTML, with
 placeholder data. It is, in effect, a high-fidelity mockup. And now that we've
 got our view sorted out (and, ideally, tested with users), we can start hooking
-up the Lift side.
+up link:2-the-lift-menu-system.adoc[the Lift side].

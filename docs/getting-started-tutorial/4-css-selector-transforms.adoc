@@ -168,4 +168,4 @@ happening: one entry per message, and every time we reload the page we get a
 new entry.
 
 Now that we've got the list of messages rendering, it's time to get into the
-bread and butter of web development: forms.
+bread and butter of web development: link:5-basic-forms.adoc[forms].

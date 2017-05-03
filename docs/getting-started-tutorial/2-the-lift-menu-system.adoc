@@ -30,4 +30,4 @@ internationalization set up for now it'll just go through unchanged. The part
 after the `/` specifies where the template will be found—in our case, in the
 `chat.html` file directly under `src/main/webapp`.
 
-With that out of the way, we can move on to bringing our HTML to life.
+With that out of the way, we can move on to link:3-adding-snippet-bindings.adoc[bringing our HTML to life].
