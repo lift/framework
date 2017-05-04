@@ -62,78 +62,85 @@ user session has a (reasonably) unique username.
 Now, we need to store usernames alongside messages. Let's do that by making the
 messageEntries list contain a case class instance instead of a simple `String`:
 
-```
+```scala
 ...
-case class ChatMessage(poster: String, body: String)
+case class ChatMessage(poster: String, body: String) // <1>
 class Chat {
-  var messageEntries = List[ChatMessage]()
+  var messageEntries = List[ChatMessage]() // <2>
 
   def messages = {
     ClearClearable &
-    "li" #> messageEntries.map { entry =>
+    "li" #> messageEntries.map { entry => // <3>
       ".poster *" #> entry.poster &
       ".body *" #> entry.body
     }
   }
-
-  def sendMessage = {
-    var message = ChatMessage("", "")
-
-    "#new-message" #> SHtml.text(message, { body: String => message = ChatMessage(username.is, body) }) &
-    "type=submit" #> SHtml.submitButton(() => {
-      messageEntries ::= message
-    })
-  }
-}
-```
-
-We introduce a new case class, `ChatMessage`, that carries a poster and a
-message body. We also update `messageEntries` to be a list of those.
-
-One of the big changes here is how we update the `messages` snippet method.
-Before, we just mapped the content of `li` to the list of `String`s. However,
-`ChatMessage` objects can't be dealt with so simply. Instead, the left side
-becomes a simple selection of `li`. The right side is now a list of CSS
-selector transforms—one for each `ChatMessage`. As before, Lift copies the
-contents of the `li` once for each entry in the list, and then transforms it
-according to that particular entry. In this case, rather than just putting a
-string into the `li`, we set the contents of the `.poster` and `.body` elements
-inside it.
-
-Now, the trained eye might notice that `sendMessage` never checks whether the
-client submitted the form without including the message in the submission. This
-is a relatively obscure/weird corner case, but one that's worth dealing with
-because it's so easy. To deal with it, we can change `message` from being a
-`ChatMessage` to being a `Box[ChatMessage]` that starts off `Empty`. We can
-then only add the message to the list if the box has been set to `Full`. This
-ensures that we never add a weird blank message to the list, and lets us do it
-without having to deal with an initial value of `null` for the `message`
-variable footnote:[Why is not dealing with `null` desirable? Using a `Box` lets
-you deal with "this value isn't there" as an inherent type. `null`, on the
-other hand, is something that can masquerade as any value (for example, you can
-put `null` into either a `ChatMessage` or a `String`), and the compiler can't
-check for you that you made sure this optional value was set before using it.
-With a `Box`, the compiler will enforce the checks so that you'll know if
-there's a possibility of a value not being set.]:
-
-```
 ...
-  def sendMessage = {
-    var message: Box[ChatMessage] = Empty
+```
+<1> First, we introduce a new case class, `ChatMessage`, that carries a poster
+    and a message body.
+<2> We also update `messageEntries` to be a list of ``ChatMessage``s instead of
+    plain ``String``s.
+<3> One of the big changes here is how we update the `messages` snippet method.
+    Before, we just mapped the content of `li` to the list of ``String``s.
+    However, `ChatMessage` objects can't be dealt with so simply. Instead, the
+    left side becomes a simple selection of `li`. The right side is now a list
+    of CSS selector transforms -- one for each `ChatMessage`. As before, Lift
+    copies the contents of the `li` once for each entry in the list, and then
+    transforms it according to that particular entry. In this case, rather than
+    just putting a string into the `li`, we set the contents of the `.poster`
+    and `.body` elements inside it.
 
-    "#new-message" #> SHtml.text(message, { body: String => message = Full(ChatMessage(username.is, body)) }) &
-    "type=submit" #> SHtml.submitButton(() => {
+Now let's update the binding of the `sendMessage` form to deal with the new
+`ChatMessage` class:
+
+```scala
+  def sendMessage = {
+    var message = ChatMessage("", "") // <1>
+
+    "#new-message" #> SHtml.text( // <2>
+      message,
+      { messageBody: String => message = Full(ChatMessage(username.get, messageBody)) } // <3>
+    ) &
+    "type=submit" #> SHtml.submitButton(() => { // <4>
       for (body <- message) {
         messageEntries ::= message
       }
     })
   }
-...
+}
 ```
-
-We use a `for` comprehension to unpack the value of `message`. The body of that
-comprehension won't run unless `message` is a `Full` box containing a
-`ChatMessage` sent by the client.
+<1> Before, we used an empty `String` as our starting value for the message.
+    However, we can't do that anymore here. Our only option would be to use
+    `null`, but `null` is very dangerous footnote:[Why is not dealing with
+    `null` desirable? Using a `Box` lets you deal with "this value isn't there"
+    as an inherent type. `null`, on the other hand, is something that can
+    masquerade as any value (for example, you can put `null` into either a
+    `ChatMessage` or a `String`), and the compiler can't check for you that you
+    made sure this optional value was set before using it. With a `Box`, the
+    compiler will enforce the checks so that you'll know if there's a
+    possibility of a value not being set.] and, as a rule, we avoid using it in
+    Scala. Instead, we use an `Empty` `Box`, and, when we receive a message
+    body, we create a `Full` `Box` with the newly posted `ChatMessage`.
+<2> Here, we update the handler for the `#new-message` text field. Before, the
+    handler function was `message = _`; when `message` was a `String`, we could
+    simply assign the message the user sent directly to it, and we were good to
+    go. However, `message` is now a `ChatMessage` -- it has to carry not only
+    the message body that the user typed, but also their username. To do that,
+    we write a complete handler function that takes in the body that the user
+    submitted with the form and, combined with the current user's username,
+    creates a  `ChatMessage`. This `ChatMessage` is what we now put into the
+    `message` variable.
+<3> Notably, `username.get` is how you fetch the current value of the `username`
+    `SessionVar`. Don't confuse it with the `.get` on `Option`, which is very
+    dangerous! If you prefer to use a method that is less easily confused with
+    ``Option``'s `.get` (as many Lift developers and committers do), you can use
+    `.is` instead, which does the same thing.
+<4> As a result of the `Box` wrapping the submitted `ChatMessage`, we have to
+    update the submission handler. We use a `for` comprehension to unpack the
+    value of `message`. The body of that comprehension won't run unless
+    `message` is `Full`, so we can't try to insert an empty message into the
+    message list.
 
 Now that we have a reasonably nice chat system with actual usernames, it's time
 to look at the underlying issue of *consistency*. If two users posted a chat
