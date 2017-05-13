@@ -28,6 +28,7 @@ before_script:
   - "cd web/webkit"
   - "npm install"
   - "cd -"
+  - sudo chmod +x /usr/local/bin/sbt
 
 notifications:
   webhooks:
