@@ -114,14 +114,17 @@ class LiftServlet extends Loggable {
     }
 
     if (reqOrg.request.suspendResumeSupport_?) {
-      runFunction(liftResponse => {
-        // do the actual write on a separate thread
-        Schedule.schedule(() => {
-          reqOrg.request.resume(reqOrg, liftResponse)
-        }, 0.seconds)
-      })
+      try {
+        reqOrg.request.suspend(cometTimeout)
+      } finally {
+        runFunction(liftResponse => {
+          // do the actual write on a separate thread
+          Schedule.schedule(() => {
+            reqOrg.request.resume(reqOrg, liftResponse)
+          }, 0.seconds)
+        })
+      }
 
-      reqOrg.request.suspend(cometTimeout)
       false
     } else {
       val future = new LAFuture[LiftResponse]
@@ -880,7 +883,7 @@ class LiftServlet extends Loggable {
 
     val jsCommands =
       new JsCommands(JsCmds.Run(jsUpdateTime) :: jsUpdateStuff)
-    
+
     // If we need to, ensure we capture JS from this request's render version.
     // The comet actor will already have handled the comet's version.
     S.request.flatMap(req => extractRenderVersion(req.path.partPath)) match {
