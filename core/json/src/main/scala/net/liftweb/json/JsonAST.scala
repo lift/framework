@@ -886,8 +886,8 @@ object JsonAST {
    * Parent trait for double renderers, which decide how doubles contained in
    * a JDouble are rendered to JSON string.
    */
-  sealed trait DoubleRenderer {
-    def renderDouble(double: Double): String
+  sealed trait DoubleRenderer extends Function1[Double,String] {
+    def apply(double: Double): String
   }
   /**
    * A `DoubleRenderer` that renders special values `NaN`, `-Infinity`, and
@@ -898,7 +898,7 @@ object JsonAST {
    * Usage is not recommended.
    */
   case object RenderSpecialValuesAsIs extends DoubleRenderer {
-    def renderDouble(double: Double): String = {
+    def apply(double: Double): String = {
       double.toString
     }
   }
@@ -908,7 +908,7 @@ object JsonAST {
    * `toString`.
    */
   case object RenderSpecialValuesAsNull extends DoubleRenderer {
-    def renderDouble(double: Double): String = {
+    def apply(double: Double): String = {
       if (double.isNaN || double.isInfinity) {
         "null"
       } else {
@@ -922,7 +922,7 @@ object JsonAST {
    * doubles are rendered normally using `toString`.
    */
   case object FailToRenderSpecialValues extends DoubleRenderer {
-    def renderDouble(double: Double): String = {
+    def apply(double: Double): String = {
       if (double.isNaN || double.isInfinity) {
         throw new IllegalArgumentException(s"Double value $double is not renderable to JSON.")
       } else {
@@ -1003,7 +1003,7 @@ object JsonAST {
     case null          => buf.append("null")
     case JBool(true)   => buf.append("true")
     case JBool(false)  => buf.append("false")
-    case JDouble(n)    => buf.append(settings.doubleRenderer.renderDouble(n))
+    case JDouble(n)    => buf.append(settings.doubleRenderer(n))
     case JInt(n)       => buf.append(n.toString)
     case JNull         => buf.append("null")
     case JString(null) => buf.append("null")
