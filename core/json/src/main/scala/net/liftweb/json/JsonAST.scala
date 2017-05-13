@@ -881,17 +881,74 @@ object JsonAST {
      */
     val compactJs = RenderSettings(0, jsEscapeChars)
   }
+
+  /**
+   * Parent trait for double renderers, which decide how doubles contained in
+   * a JDouble are rendered to JSON string.
+   */
+  sealed trait DoubleRenderer {
+    def renderDouble(double: Double): String
+  }
+  /**
+   * A `DoubleRenderer` that renders special values `NaN`, `-Infinity`, and
+   * `Infinity` as-is using `toString`. This is not strictly valid JSON, but
+   * JavaScript can eval it. Other double values are also rendered the same
+   * way.
+   *
+   * Usage is not recommended.
+   */
+  case object RenderSpecialValuesAsIs extends DoubleRenderer {
+    def renderDouble(double: Double): String = {
+      double.toString
+    }
+  }
+  /**
+   * A `DoubleRenderer` that renders special values `NaN`, `-Infinity`, and
+   * `Infinity` as `null`. Other doubles are rendered normally using
+   * `toString`.
+   */
+  case object RenderSpecialValuesAsNull extends DoubleRenderer {
+    def renderDouble(double: Double): String = {
+      if (double.isNaN || double.isInfinity) {
+        "null"
+      } else {
+        double.toString
+      }
+    }
+  }
+  /**
+   * A `DoubleRenderer` that throws an `IllegalArgumentException` when the
+   * special values `NaN`, `-Infinity`, and `Infinity` are encountered. Other
+   * doubles are rendered normally using `toString`.
+   */
+  case object FailToRenderSpecialValues extends DoubleRenderer {
+    def renderDouble(double: Double): String = {
+      if (double.isNaN || double.isInfinity) {
+        throw new IllegalArgumentException(s"Double value $double is not renderable to JSON.")
+      } else {
+        double.toString
+      }
+    }
+  }
   /**
    * RenderSettings allows for customizing how JSON is rendered to a String.
    * At the moment, you can customize the indentation (if 0, all the JSON is
    * printed on one line), the characters that should be escaped (in addition
    * to a base set that will always be escaped for valid JSON), and whether or
    * not a space should be included after a field name.
+   *
+   * @param doubleRendering Before Lift 3.1.0, the three special double values
+   *    NaN, Infinity, and -Infinity were serialized as-is. This is invalid
+   *    JSON, but valid JavaScript. We now default special double values to
+   *    serialize as null, but provide both the old behavior and a new behavior
+   *    that throws an exception upon finding these values. See
+   *    `[[DoubleRenderer]]` and its subclasses for more.
    */
   case class RenderSettings(
     indent: Int,
     escapeChars: Set[Char] = Set(),
-    spaceAfterFieldName: Boolean = false
+    spaceAfterFieldName: Boolean = false,
+    doubleRenderer: DoubleRenderer = RenderSpecialValuesAsNull
   ) {
     val lineBreaks_? = indent > 0
   }
@@ -946,10 +1003,7 @@ object JsonAST {
     case null          => buf.append("null")
     case JBool(true)   => buf.append("true")
     case JBool(false)  => buf.append("false")
-    // These special double values serialize to null; otherwise, we would
-    // generate invalid JSON.
-    case JDouble(nully) if nully.isNaN || nully.isInfinity => buf.append("null")
-    case JDouble(n)    => buf.append(n.toString)
+    case JDouble(n)    => buf.append(settings.doubleRenderer.renderDouble(n))
     case JInt(n)       => buf.append(n.toString)
     case JNull         => buf.append("null")
     case JString(null) => buf.append("null")
