@@ -685,6 +685,32 @@ object JsCmd {
 object JsCmds {
   implicit def seqJsToJs(in: Seq[JsCmd]): JsCmd = in.foldLeft[JsCmd](Noop)(_ & _)
 
+  /**
+    * Breaks a JsCmd down into its individual parts in a list
+    * @param js
+    * @return
+    */
+  def toList(js:JsCmd):List[JsCmd] = {
+    @scala.annotation.tailrec
+    def recToList(cmds:List[JsCmd], acc:List[JsCmd]):List[JsCmd] = cmds match {
+      case CmdPair(l, r) :: t => recToList(l :: r :: t, acc)
+      case h :: t => recToList(t, h :: acc)  // Use :: because it's most efficient for building lists, BUT...
+      case Nil => acc
+    }
+
+    recToList(js :: Nil, Nil).reverse // Gotta reverse it back
+  }
+
+  /**
+    * Reduces the JsCmd by removing all unnecessary Noops.  Contains a Noop iff the JsCmd contains zero non-Noop cmds.
+    * @param js
+    * @return
+    */
+  def trimNoops(js:JsCmd):JsCmd = toList(js).filterNot(_ == Noop) match {
+    case h :: t => t.foldLeft(h)(_ & _)
+    case _ => Noop
+  }
+
   object Script {
     def apply(script: JsCmd): Node = <script type="text/javascript">{Unparsed("""
 // <![CDATA[

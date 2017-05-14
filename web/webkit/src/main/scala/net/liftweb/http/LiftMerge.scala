@@ -57,7 +57,7 @@ private[http] trait LiftMerge {
       S.jsToAppend() ++
       List(eventJs)
 
-    allJs.foldLeft(js.JsCmds.Noop)(_ & _)
+    js.JsCmds.trimNoops(js.JsCmds.seqJsToJs(allJs))
   }
 
   private def pageScopedScriptFileWith(cmd: JsCmd) = {
