@@ -18,7 +18,11 @@
         uriSuffix,
         sessionId = "",
         toWatch = {},
-        knownPromises = {};
+        knownPromises = {},
+        ajaxOnCommFailures = [],
+        ajaxOnCommSuccesses = [],
+        cometOnCommFailures = [],
+        cometOnCommSuccesses = [];
 
     // default settings
     settings = {
@@ -97,6 +101,19 @@
         window.alert(msg);
       }
     }
+
+    // Notify all functions in arr, passing any extra args
+    var notifyAll = function(arr) {
+      var args = [].slice.call(arguments, 1);  // Every arg but the passed arr
+      for(var i = 0; i < arr.length; i++) {
+        try {
+          arr[i].apply(this, args);
+        } catch (e) {
+          settings.logError("Server communication status callback failed!");
+          settings.logError(e);
+        }
+      }
+    };
 
     ////////////////////////////////////////////////
     ///// Ajax /////////////////////////////////////
@@ -229,6 +246,7 @@
             if (aboutToSend.onSuccess) {
               aboutToSend.onSuccess(data);
             }
+            notifyAll(ajaxOnCommSuccesses);
             doCycleQueueCnt++;
             doAjaxCycle();
           };
@@ -256,6 +274,7 @@
                 settings.ajaxOnFailure();
               }
             }
+            notifyAll(ajaxOnCommFailures, aboutToSend.data);
             doCycleQueueCnt++;
             doAjaxCycle();
           };
@@ -328,11 +347,13 @@
     }
 
     function cometFailureFunc() {
+      notifyAll(cometOnCommFailures);
       var requestCount = cometRequestCount;
       setTimeout(function() { cometEntry(requestCount); }, settings.cometFailureRetryTimeout);
     }
 
     function cometSuccessFunc() {
+      notifyAll(cometOnCommSuccesses);
       var requestCount = cometRequestCount;
       setTimeout(function() { cometEntry(requestCount); }, 100);
     }
@@ -600,6 +621,16 @@
       ajaxOnSessionLost: function() {
         settings.ajaxOnSessionLost();
       },
+      // Pass a callback function to be notified when an attempt to contact the server for an ajax call fails
+      // The first argument to the function will be the ajax request data.
+      addAjaxOnCommFailure: function(callback) {
+        ajaxOnCommFailures.push(callback);
+      },
+      // Pass a callback function to be notified when an attempt to contact the server for an ajax call succeeds
+      // The first argument to the function will be the ajax request data.
+      addAjaxOnCommSuccess: function(callback) {
+        ajaxOnCommSuccesses.push(callback);
+      },
       calcAjaxUrl: calcAjaxUrl,
       registerComets: registerComets,
       cometOnSessionLost: function() {
@@ -607,6 +638,14 @@
       },
       cometOnError: function(e) {
         settings.cometOnError(e);
+      },
+      // Pass a callback function to be notified when an attempt to contact the server for comet fails
+      addCometOnCommFailure: function(callback) {
+        cometOnCommFailures.push(callback);
+      },
+      // Pass a callback function to be notified when an attempt to contact the server for comet succeeds
+      addCometOnCommSuccess: function(callback) {
+        cometOnCommSuccesses.push(callback);
       },
       unlistWatch: unlistWatch,
       setToWatch: function(tw) {
