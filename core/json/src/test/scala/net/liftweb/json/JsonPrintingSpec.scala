@@ -94,15 +94,15 @@ object JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
       render(JDouble(double)) must_== double.toString
     }
 
-    "render positive infinity as null" in {
+    "throw an exception when attempting to render positive infinity" in {
       render(JDouble(Double.PositiveInfinity)) must throwAn[IllegalArgumentException]
     }
 
-    "render negative infinity as null" in {
+    "throw an exception when attempting to render negative infinity" in {
       render(JDouble(Double.NegativeInfinity)) must throwAn[IllegalArgumentException]
     }
 
-    "render NaN as null" in {
+    "throw an exception when attempting to render NaN" in {
       render(JDouble(Double.NaN)) must throwAn[IllegalArgumentException]
     }
   }
