@@ -924,7 +924,7 @@ object JsonAST {
   case object FailToRenderSpecialDoubleValues extends DoubleRenderer {
     def apply(double: Double): String = {
       if (double.isNaN || double.isInfinity) {
-        throw new IllegalArgumentException(s"Double value $double is not renderable to JSON.")
+        throw new IllegalArgumentException(s"Double value $double cannot be rendered to JSON with the current DoubleRenderer.")
       } else {
         double.toString
       }
