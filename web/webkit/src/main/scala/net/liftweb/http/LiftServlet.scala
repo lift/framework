@@ -117,6 +117,10 @@ class LiftServlet extends Loggable {
       try {
         reqOrg.request.suspend(cometTimeout)
       } finally {
+        // FIXME This should be removed from the finally block in the next major
+        // FIXME Lift version; it is currently here to ensure any code that
+        // FIXME depends on a response handler running even if requests suspension
+        // FIXME fails continues to work as-is during the 3.x series.
         runFunction(liftResponse => {
           // do the actual write on a separate thread
           Schedule.schedule(() => {
