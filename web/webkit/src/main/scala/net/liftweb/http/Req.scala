@@ -284,14 +284,20 @@ FileParamHolder(name, mimeType, fileName)
  * @param localFile The local copy of the uploaded file
  */
 class OnDiskFileParamHolder(override val name: String, override val mimeType: String,
-                            override val fileName: String, val localFile: Path) extends
-FileParamHolder(name, mimeType, fileName)
+                            override val fileName: String, val localPath: Path) extends
+  FileParamHolder(name, mimeType, fileName)
 {
+  def this(name: String, mimeType: String, fileName: String, localFile: File) = {
+    this(name, mimeType, fileName, localFile.toPath)
+  }
+
+  def localFile: File = localPath.toFile
+
   /**
    * Returns an input stream that can be used to read the
    * contents of the uploaded file.
    */
-  def fileStream: InputStream = Files.newInputStream(localFile)
+  def fileStream: InputStream = Files.newInputStream(localPath)
 
   /**
    * Returns the contents of the uploaded file as a Byte array.
@@ -301,10 +307,10 @@ FileParamHolder(name, mimeType, fileName)
   /**
    * Returns the length of the uploaded file.
    */
-  def length : Long = if (localFile == null) 0 else Files.size(localFile)
+  def length : Long = if (localPath == null) 0 else Files.size(localPath)
 
   protected override def finalize {
-    tryo(Files.delete(localFile))
+    tryo(Files.delete(localPath))
   }
 }
 
