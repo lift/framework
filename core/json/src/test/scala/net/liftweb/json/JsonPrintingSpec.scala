@@ -59,7 +59,7 @@ object JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
     def render(json: JValue) = {
       JsonAST.render(
         json,
-        JsonAST.RenderSettings(0, doubleRenderer = JsonAST.RenderSpecialValuesAsIs)
+        JsonAST.RenderSettings(0, doubleRenderer = JsonAST.RenderSpecialDoubleValuesAsIs)
       )
     }
 
@@ -85,7 +85,7 @@ object JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
     def render(json: JValue) = {
       JsonAST.render(
         json,
-        JsonAST.RenderSettings(0, doubleRenderer = JsonAST.FailToRenderSpecialValues)
+        JsonAST.RenderSettings(0, doubleRenderer = JsonAST.FailToRenderSpecialDoubleValues)
       )
     }
 

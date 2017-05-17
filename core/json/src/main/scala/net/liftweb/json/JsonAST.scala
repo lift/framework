@@ -897,7 +897,7 @@ object JsonAST {
    *
    * Usage is not recommended.
    */
-  case object RenderSpecialValuesAsIs extends DoubleRenderer {
+  case object RenderSpecialDoubleValuesAsIs extends DoubleRenderer {
     def apply(double: Double): String = {
       double.toString
     }
@@ -907,7 +907,7 @@ object JsonAST {
    * `Infinity` as `null`. Other doubles are rendered normally using
    * `toString`.
    */
-  case object RenderSpecialValuesAsNull extends DoubleRenderer {
+  case object RenderSpecialDoubleValuesAsNull extends DoubleRenderer {
     def apply(double: Double): String = {
       if (double.isNaN || double.isInfinity) {
         "null"
@@ -921,7 +921,7 @@ object JsonAST {
    * special values `NaN`, `-Infinity`, and `Infinity` are encountered. Other
    * doubles are rendered normally using `toString`.
    */
-  case object FailToRenderSpecialValues extends DoubleRenderer {
+  case object FailToRenderSpecialDoubleValues extends DoubleRenderer {
     def apply(double: Double): String = {
       if (double.isNaN || double.isInfinity) {
         throw new IllegalArgumentException(s"Double value $double is not renderable to JSON.")
@@ -948,7 +948,7 @@ object JsonAST {
     indent: Int,
     escapeChars: Set[Char] = Set(),
     spaceAfterFieldName: Boolean = false,
-    doubleRenderer: DoubleRenderer = RenderSpecialValuesAsNull
+    doubleRenderer: DoubleRenderer = RenderSpecialDoubleValuesAsNull
   ) {
     val lineBreaks_? = indent > 0
   }
