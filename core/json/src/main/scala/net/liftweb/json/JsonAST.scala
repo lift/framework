@@ -891,7 +891,8 @@ object JsonAST {
   }
   /**
    * A `DoubleRenderer` that renders special values `NaN`, `-Infinity`, and
-   * `Infinity` as-is using `toString`. This is not strictly valid JSON, but
+   * `Infinity` as-is using `toString`. This is not valid JSON, meaning JSON
+   * libraries generally won't be able to parse it (including lift-json!), but
    * JavaScript can eval it. Other double values are also rendered the same
    * way.
    *
