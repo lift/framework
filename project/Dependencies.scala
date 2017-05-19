@@ -39,7 +39,6 @@ object Dependencies {
   lazy val mongo_java_driver      = "org.mongodb"                % "mongodb-driver"     % "3.4.1"
   lazy val mongo_java_driver_async  = "org.mongodb"              % "mongodb-driver-async" % "3.4.1"
   lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.8"
-  lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.5"     cross CVMappingAll
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _
   lazy val scala_compiler: ModuleMap = "org.scala-lang"          % "scala-compiler"     % _
   lazy val scalaz7_core           = "org.scalaz"                 % "scalaz-core"        % "7.2.7"   cross CVMappingAll
@@ -60,7 +59,6 @@ object Dependencies {
   lazy val logback         = "ch.qos.logback"    % "logback-classic"       % "1.1.5"      % "provided"
   lazy val log4j           = "log4j"             % "log4j"                 % "1.2.17"     % "provided"
   lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"         % slf4jVersion % "provided"
-  lazy val persistence_api = "javax.persistence" % "persistence-api"       % "1.0.2"      % "provided"
   lazy val servlet_api     = "javax.servlet"     % "javax.servlet-api"     % "3.1.0"        % "provided"
 
 
@@ -75,8 +73,6 @@ object Dependencies {
 
   // Test scope:
   // Scope available only in test classpath, non-transitive by default.
-  // TODO: See if something alternative with lesser footprint can be used instead of mega heavy apacheds
-  lazy val apacheds    = "org.apache.directory.server" % "apacheds-server-integ"    % "1.5.5"   % "test" // TODO: 1.5.7
   lazy val jetty6      = "org.mortbay.jetty"           % "jetty"                    % "6.1.26"  % "test"
   lazy val jwebunit    = "net.sourceforge.jwebunit"    % "jwebunit-htmlunit-plugin" % "2.5"     % "test"
   lazy val mockito_all = "org.mockito"                 % "mockito-all"              % "1.9.0"   % "test"
