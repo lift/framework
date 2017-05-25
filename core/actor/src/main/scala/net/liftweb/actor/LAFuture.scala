@@ -155,19 +155,35 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   }
 
   /**
+   * Java-friendly alias for satisfied_?.
+   */
+  def isSatisfied: Boolean = satisfied_?
+
+  /**
    * Has the future been satisfied
    */
-  def isSatisfied: Boolean = synchronized {satisfied}
+  def satisfied_? = synchronized {satisfied}
+  /**
+   * Java-friendly alias for aborted_?.
+   */
+  def isAborted: Boolean = aborted_?
 
   /**
    * Has the future been aborted
    */
-  def isAborted: Boolean = synchronized {aborted}
+  def aborted_? = synchronized {satisfied}
 
   /**
-   * Has the future been satisfied or
+   * Java-friendly alias for completed_?.
    */
-  def isCompleted: Boolean = synchronized { ! (isSatisfied || isAborted) }
+  def isCompleted: Boolean = complete_?
+  /**
+   * Has the future completed?
+   */
+  def completed_? : Boolean = synchronized(satisfied || aborted)
+
+  @deprecated("Please use completed_? instead.", "3.1.0")
+  def complete_? : Boolean = completed_?
 
   /**
    * Abort the future.  It can never be satified
@@ -247,11 +263,6 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
       }
     }
   }
-
-  /**
-   * Has the future completed?
-   */
-  def complete_? : Boolean = synchronized(satisfied || aborted)
 }
 
 /**
