@@ -37,27 +37,27 @@ object LoggingSpec extends Specification {
       (new MyTopClass).x must_== 1
       MyTopObj.x must_==1
     }
-    
+
     "be nested in object" in {
       object MyObj extends Loggable {
         logger.info("nested Hello")
         val x = 2
       }
-      
+
       MyObj.x must_== 2
-      
+
     }
-    
+
     "create named loggers" in {
       val logger = Logger("MyLogger")
-      
+
       logger.info("Logged with my named logger")
       success
     }
-    
+
     "log static MDC values" in {
       val logger = Logger("StaticMDC")
-      
+
       logger.info("Logged with no MDC")
       MDC.put("mdc1" -> (1,2))
       logger.info("Logged with mdc1=(1,2)")
@@ -71,17 +71,17 @@ object LoggingSpec extends Specification {
       logger.info("Logged with no MDC")
       success
     }
-    
+
     "save MDC context with logWith" in {
       val logger = Logger("logWith")
-      
+
       logger.info("Logged with no MDC")
       MDC.put("mdc1" -> (1,2), "mdc2" -> "yy")
       logger.info("Logged with mdc1=(1,2), mdc2=yy")
       Logger.logWith("mdc2" -> "xx") {
         logger.info("Logged with mdc1=(1,2), mdc2=xx")
         Logger.logWith("mdc1" -> 99) {
-           logger.info("Logged with mdc1=99, mdc2=xx") 
+           logger.info("Logged with mdc1=99, mdc2=xx")
         }
         logger.info("Logged with mdc1=(1,2), mdc2=xx")
       }
@@ -97,7 +97,7 @@ object LoggingSpec extends Specification {
           trace("result",l.foldLeft(0)(trace("lhs",_) + trace("rhs",_))) must_== l.foldLeft(0)(_+_)
           val x = 1
       }
-      MyObj.x
+      MyObj
       success
     }
 
@@ -106,12 +106,12 @@ object LoggingSpec extends Specification {
         First.info("In first")
       }
       object First extends Logger
-      
+
       trait Second {
         private val logger = Logger(classOf[Second])
         logger.info("In second")
       }
-      
+
       class C extends First with Second with Logger {
         info("In C")
         val x = 2
