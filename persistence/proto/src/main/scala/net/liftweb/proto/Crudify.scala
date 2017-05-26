@@ -17,6 +17,7 @@
 package net.liftweb
 package proto
 
+import scala.xml.quote._
 import sitemap._
 import Loc._
 import http._
@@ -145,11 +146,11 @@ trait Crudify {
   def fieldsForEditing: List[FieldPointerType] = fieldsForDisplay
 
   def pageWrapper(body: NodeSeq): NodeSeq =
-  <lift:surround with="default" at="content">
-    {
+  xml"""<lift:surround with="default" at="content">
+    ${
       body
     }
-  </lift:surround>
+  </lift:surround>"""
 
   /**
    * The menu item for listing items (make this "Empty" to disable)
@@ -324,8 +325,8 @@ trait Crudify {
    * page wrapping.
    */
   protected def _editTemplate = {
-    <div data-lift="crud.edit?form=post">
-      <table id={editId} class={editClass}>
+    xml"""<div data-lift="crud.edit?form=post">
+      <table id=${editId} class=${editClass}>
         <tr class="field">
           <td class="name"></td>
           <td class="form"></td>
@@ -333,10 +334,10 @@ trait Crudify {
 
         <tr>
           <td>&nbsp;</td>
-          <td><button type="submit">{editButton}</button></td>
+          <td><button type="submit">${editButton}</button></td>
         </tr>
       </table>
-    </div>
+    </div>"""
   }
 
   def editButton = S.?("Save")
@@ -449,8 +450,8 @@ trait Crudify {
    * page wrapping.
    */
   def _deleteTemplate = {
-    <div data-lift="crud.delete?form=post">
-      <table id={deleteId} class={deleteClass}>
+    xml"""<div data-lift="crud.delete?form=post">
+      <table id=${deleteId} class=${deleteClass}>
         <tr class="field">
           <td class="name"></td>
           <td class="value"></td>
@@ -458,10 +459,10 @@ trait Crudify {
 
         <tr>
           <td>&nbsp;</td>
-          <td><button type="submit">{deleteButton}</button></td>
+          <td><button type="submit">${deleteButton}</button></td>
         </tr>
       </table>
-    </div>
+    </div>"""
   }
 
   def deleteButton = S.?("Delete")
@@ -483,8 +484,8 @@ trait Crudify {
    * page wrapping.
    */
   def _createTemplate = {
-    <div data-lift="crud.create?form=post">
-      <table id={createId} class={createClass}>
+    xml"""<div data-lift="crud.create?form=post">
+      <table id=${createId} class=${createClass}>
         <tr class="field">
           <td class="name"></td>
           <td class="form"></td>
@@ -492,10 +493,10 @@ trait Crudify {
 
         <tr>
           <td>&nbsp;</td>
-          <td><button type="submit">{createButton}</button></td>
+          <td><button type="submit">${createButton}</button></td>
         </tr>
       </table>
-    </div>
+    </div>"""
   }
 
   def createButton = S.?("Create")
@@ -516,14 +517,14 @@ trait Crudify {
    * page wrapping.
    */
   def _viewTemplate = {
-    <div data-lift="crud.view">
-      <table id={viewId} class={viewClass}>
+    xml"""<div data-lift="crud.view">
+      <table id=${viewId} class=${viewClass}>
         <tr class="row">
           <td class="name"></td>
           <td class="value"></td>
         </tr>
       </table>
-    </div>
+    </div>"""
   }
     
   def showAllMenuName = S.?("List", displayName)
@@ -542,8 +543,8 @@ trait Crudify {
    * page wrapping
    */
   def _showAllTemplate = {
-    <div data-lift="crud.all">
-      <table id={showAllId} class={showAllClass}>
+    xml"""<div data-lift="crud.all">
+      <table id=${showAllId} class=${showAllClass}>
         <thead>
           <tr>
             <th class="header-item"></th>
@@ -558,20 +559,20 @@ trait Crudify {
           <tr class="row">
             <td class="row-item"></td>
 
-            <td><a class="view" href="view-uri">{S ? "View"}</a></td>
-            <td><a class="edit" href="edit-uri">{S ? "Edit"}</a></td>
-            <td><a class="delete" href="delete-uri">{S ? "Delete"}</a></td>
+            <td><a class="view" href="view-uri">${S ? "View"}</a></td>
+            <td><a class="edit" href="edit-uri">${S ? "Edit"}</a></td>
+            <td><a class="delete" href="delete-uri">${S ? "Delete"}</a></td>
           </tr>
         </tbody>
 
         <tfoot>
           <tr>
-            <td colspan="3" class="previous">{previousWord}</td>
-            <td colspan="3" class="next">{nextWord}</td>
+            <td colspan="3" class="previous">${previousWord}</td>
+            <td colspan="3" class="next">${nextWord}</td>
             </tr>
         </tfoot>
       </table>
-    </div>
+    </div>"""
   }
 
   def nextWord = S.?("Next")
@@ -671,9 +672,9 @@ trait Crudify {
       ClearNodes
     } else {
       "^ <*>" #>
-        <a href={listPathString+
+        xml"""<a href=${listPathString+
                   "?first="+(0L max (first -
-                                     rowsPerPage.toLong))}></a>
+                                     rowsPerPage.toLong))}></a>"""
     }
   }
   
@@ -685,8 +686,8 @@ trait Crudify {
       ClearNodes
     } else {
       "^ <*>" #>
-        <a href={listPathString+"?first="+(first +
-                                            rowsPerPage.toLong)}></a>
+        xml"""<a href=${listPathString+"?first="+(first +
+                                            rowsPerPage.toLong)}></a>"""
     }
   }
 
@@ -746,7 +747,7 @@ trait Crudify {
    */
   def wrapNameInRequired(fieldName: NodeSeq, required: Boolean): NodeSeq = {
     if (required) {
-      <span class="required_field">{fieldName}</span>
+      xml"""<span class="required_field">${fieldName}</span>"""
     } else {
       fieldName
     }
@@ -760,7 +761,7 @@ trait Crudify {
       def error(field: BaseField): NodeSeq = {
         field.uniqueFieldId match {
           case fid @ Full(id) => S.getNotices.filter(_._3 == fid).flatMap(err =>
-            List(Text(" "), <span class={editErrorClass}>{err._2}</span>) )
+            List(Text(" "), xml"<span class=${editErrorClass}>${err._2}</span>") )
 
           case _ => NodeSeq.Empty
         }

@@ -17,6 +17,7 @@
 package net.liftweb
 package util
 
+import scala.xml.quote._
 import java.io.ByteArrayInputStream
 
 import xml.{Text, Unparsed}
@@ -34,14 +35,14 @@ object XmlParserSpec extends Specification with XmlMatchers {
   "Multiple attributes with same name, but different namespace" should {
     "parse correctly" >> {
       val actual =
-      <lift:surround with="base" at="body">
+      xml"""<lift:surround with="base" at="body">
         <lift:Menu.builder  li_path:class="p" li_item:class="i"/>
-      </lift:surround>
+      </lift:surround>"""
 
       val expected =
-      <lift:surround with="base" at="body">
+      xml"""<lift:surround with="base" at="body">
         <lift:Menu.builder  li_path:class="p" li_item:class="i"/>
-      </lift:surround>
+      </lift:surround>"""
 
       val bis = new ByteArrayInputStream(actual.toString.getBytes("UTF-8"))
       val parsed = PCDataXmlParser(bis).openOrThrowException("Test")
@@ -51,9 +52,9 @@ object XmlParserSpec extends Specification with XmlMatchers {
   }
 
   "XML can contain PCData" in {
-    val data = <foo>{
+    val data = xml"""<foo>${
         PCData("Hello Yak")
-      }</foo>
+      }</foo>"""
 
     val str = AltXML.toXML(data, false, true)
 
@@ -61,9 +62,9 @@ object XmlParserSpec extends Specification with XmlMatchers {
   }
 
   "XML can contain Unparsed" in {
-    val data = <foo>{
+    val data = xml"""<foo>${
         Unparsed("Hello & goodbye > <yak Yak")
-      }</foo>
+      }</foo>"""
 
     val str = AltXML.toXML(data, false, true)
 
@@ -72,17 +73,17 @@ object XmlParserSpec extends Specification with XmlMatchers {
 
   "XML cannot contain Control characters" in {
      val data = 
-     <foo>
-      {
+     xml"""<foo>
+      ${
         '\u0085'
-      }{
+      }${
         Text("hello \u0000 \u0085 \u0080")
-      }{
+      }${
         "hello \u0000 \u0003 \u0085 \u0080"
-      }{
+      }${
         '\u0003'
       }
-    </foo>
+    </foo>"""
 
     val str = AltXML.toXML(data, false, true)
 

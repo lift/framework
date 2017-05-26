@@ -18,6 +18,7 @@ package net.liftweb
 package record
 package field
 
+import scala.xml.quote._
 import xml._
 
 import common._
@@ -48,10 +49,10 @@ trait StringTypedField extends TypedField[String] with StringValidators {
 
   private def elem = S.fmapFunc(SFuncHolder(this.setFromAny(_))) {
     funcName =>
-    <input type={formInputType} maxlength={maxLength.toString}
-      name={funcName}
-      value={valueBox openOr ""}
-      tabindex={tabIndex.toString}/>
+    xml"""<input type=${formInputType} maxlength=${maxLength.toString}
+      name=${funcName}
+      value=${valueBox openOr ""}
+      tabindex=${tabIndex.toString}/>"""
   }
 
   def toForm: Box[NodeSeq] =

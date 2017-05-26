@@ -17,6 +17,7 @@
 package net.liftweb
 package mapper
 
+import scala.xml.quote._
 import net.liftweb.http._
 import js._
 import JsCmds._
@@ -173,7 +174,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
     case _ => email.get
   }
 
-  def niceNameWEmailLink = <a href={"mailto:"+email.get}>{niceName}</a>
+  def niceNameWEmailLink = xml"<a href=${"mailto:"+email.get}>${niceName}</a>"
 }
 
 /**

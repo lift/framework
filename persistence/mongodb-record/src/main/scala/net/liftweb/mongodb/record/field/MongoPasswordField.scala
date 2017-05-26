@@ -19,6 +19,7 @@ package mongodb
 package record 
 package field 
 
+import scala.xml.quote._
 import scala.xml.{Node, NodeSeq, Text}
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
@@ -67,10 +68,10 @@ class MongoPasswordField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType, min
   override def validate: List[FieldError] = runValidation(validatorValue)
 
   private def elem = S.fmapFunc(S.SFuncHolder(this.setPassword(_))) {
-    funcName => <input type="password"
-      name={funcName}
+    funcName => xml"""<input type="password"
+      name=${funcName}
       value=""
-      tabindex={tabIndex.toString}/>}
+      tabindex=${tabIndex.toString}/>"""}
 
   override def toForm: Box[NodeSeq] =
     uniqueFieldId match {

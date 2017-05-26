@@ -18,6 +18,7 @@ package net.liftweb
 package builtin
 package snippet
 
+import scala.xml.quote._
 import net.liftweb.http._
 import scala.xml._
 
@@ -41,13 +42,13 @@ object CSS extends DispatchSnippet {
    * (screen and print media)
    */
   def blueprint: NodeSeq = {
-    <xml:group>
-      <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath +
+    xml"""<xml:group>
+      <link rel="stylesheet" href=${"/" + LiftRules.resourceServerPath +
                                    "/blueprint/screen.css"} type="text/css"
         media="screen, projection"/>
-      <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath +
+      <link rel="stylesheet" href=${"/" + LiftRules.resourceServerPath +
                                    "/blueprint/print.css"} type="text/css" media="print"/>
-    </xml:group>  ++
+    </xml:group>"""  ++
     Unparsed("""
   <!--[if IE]><link rel="stylesheet" href="""+'"'+S.contextPath+"""/""" +
              LiftRules.resourceServerPath+
@@ -67,9 +68,9 @@ object CSS extends DispatchSnippet {
    * (screen media)
    */
   def fancyType: NodeSeq = {
-    <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath +
+    xml"""<link rel="stylesheet" href=${"/" + LiftRules.resourceServerPath +
                                  "/blueprint/plugins/fancy-type/screen.css"}
-      type="text/css" media="screen, projection"/>
+      type="text/css" media="screen, projection"/>"""
   }
 }
 

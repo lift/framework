@@ -17,6 +17,7 @@
 package net.liftweb
 package mapper
 
+import scala.xml.quote._
 import java.sql.{ResultSet, Types}
 import java.util.Date
 import java.lang.reflect.Method
@@ -146,9 +147,9 @@ abstract class MappedDate[T<:Mapper[T]](val fieldOwner: T) extends MappedField[D
    */
   override def _toForm: Box[NodeSeq] =
   S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
-  Full(appendFieldId(<input type={formInputType}
-                     name={funcName}
-                     value={get match {case null => "" case s => format(s)}}/>))
+  Full(appendFieldId(xml"""<input type=${formInputType}
+                     name=${funcName}
+                     value=${get match {case null => "" case s => format(s)}}/>"""))
   }
 
   override def setFromAny(f : Any): Date = f match {

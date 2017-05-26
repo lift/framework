@@ -35,3 +35,6 @@ resolvers  in ThisBuild           ++= Seq(
   "snapshots"     at "https://oss.sonatype.org/content/repositories/snapshots",
   "releases"      at "https://oss.sonatype.org/content/repositories/releases"
 )
+
+resolvers in ThisBuild += Resolver.bintrayRepo("allanrenucci", "maven")
+libraryDependencies in ThisBuild += "org.renucci" %% "scala-xml-quote" % "0.1.4"

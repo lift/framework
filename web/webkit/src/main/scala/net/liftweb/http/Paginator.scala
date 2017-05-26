@@ -16,6 +16,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import xml.{NodeSeq, Text}
 
 import common.Loggable
@@ -194,7 +195,7 @@ trait PaginatorSnippet[T] extends Paginator[T] {
     if(first==newFirst || newFirst < 0 || newFirst >= count)
       ns
     else
-      <a href={pageUrl(newFirst)}>{ns}</a>
+      xml"<a href=${pageUrl(newFirst)}>${ns}</a>"
 
   /**
    * Generates links to multiple pages with arbitrary XML delimiting them.
@@ -308,7 +309,7 @@ trait SortedPaginatorSnippet[T, C] extends SortedPaginator[T, C] with PaginatorS
       headers.zipWithIndex.map {
         case ((binding, _), colIndex) =>
           s".$binding *" #> { ns: NodeSeq =>
-            <a href={sortedPageUrl(first, sortedBy(colIndex))}>{ns}</a>
+            xml"<a href=${sortedPageUrl(first, sortedBy(colIndex))}>${ns}</a>"
           }
       }
 

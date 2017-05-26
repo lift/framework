@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import net.liftweb.common._
 import net.liftweb.actor._
 import net.liftweb.util.Helpers._
@@ -628,7 +629,7 @@ trait BaseCometActor extends LiftActor with LiftCometActor with CssBindImplicits
 
   def hasOuter = true
 
-  def parentTag = <div style="display: inline"/>
+  def parentTag = xml"""<div style="display: inline"/>"""
 
   /**
    * Return the list of ListenerIds of all long poll agents that

@@ -17,6 +17,7 @@
 package net.liftweb
 package util
 
+import scala.xml.quote._
 import xml.Elem
 
 import org.specs2.mutable.Specification
@@ -34,11 +35,11 @@ object Html5ParserSpec extends Specification with PendingUntilFixed with Html5Pa
 
   "Htm5 Writer" should {
     "Write &" in {
-      toString(<foo baz="&amp;dog"/>) must_== """<foo baz="&dog"></foo>"""
+      toString(xml"""<foo baz="&amp;dog"/>""") must_== """<foo baz="&dog"></foo>"""
     }
 
     "ignore attributes that are null" in {
-      toString(<foo id={None}/>) must_== """<foo></foo>"""
+      toString(xml"<foo id=${None}/>") must_== """<foo></foo>"""
     }
   }
 

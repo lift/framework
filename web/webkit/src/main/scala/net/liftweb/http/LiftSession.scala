@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
@@ -1478,20 +1479,20 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     }
 
     Helpers.errorDiv(
-      <div>Error processing snippet:
+      xml"""<div>Error processing snippet:
         <b>
-          {snippetName openOr "N/A"}
+          ${snippetName openOr "N/A"}
         </b> <br/>
         Reason:
         <b>
-          {why}{addlMsg}
+          ${why}${addlMsg}
         </b> <br/>
         XML causing this error:
           <br/>
         <pre style="background: lightgrey; padding: 6px; border: 1px solid">
-          {whole.toString}
+          ${whole.toString}
         </pre>
-      </div>) openOr NodeSeq.Empty
+      </div>""") openOr NodeSeq.Empty
     }
   }
 
@@ -1755,14 +1756,14 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
                             LiftRules.SnippetFailures.MethodNotFound,
                             if (intersection.isEmpty) NodeSeq.Empty
                             else
-                              <div>There are possible matching methods (
-                                {intersection}
+                              xml"""<div>There are possible matching methods (
+                                ${intersection}
                                 ),
                                 but none has the required signature:
                                 <pre>def
-                                  {method}
+                                  ${method}
                                   (in: NodeSeq): NodeSeq</pre>
-                              </div>,
+                              </div>""",
                             wholeTag)
                       }
                     }
@@ -1829,9 +1830,9 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           }
 
         case Some(ft) =>
-          <form action={S.uri} method={ft}>
-            {ret}
-          </form> %
+          xml"""<form action=${S.uri} method=${ft}>
+            ${ret}
+          </form>""" %
             checkMultiPart(attrs) % LiftRules.formAttrs.vend.foldLeft[MetaData](Null)((base, name) => checkAttr(name, attrs, base))
 
         case _ => ret
@@ -1960,7 +1961,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
       val renderVersion = RenderVersion.get
 
-      val theNode = <lift_deferred:node id={nodeId}/>
+      val theNode = xml"<lift_deferred:node id=${nodeId}/>"
 
       // take a snapshot of the hashmap used to communicate between threads
       val hash = deferredSnippets.is
@@ -2175,7 +2176,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
         override def hasOuter = false
 
-        override def parentTag = <div style="display: none"/>
+        override def parentTag = xml"""<div style="display: none"/>"""
 
         override def lowPriority: PartialFunction[Any, Unit] = new PartialFunction[Any, Unit] {
           def isDefinedAt(x: Any) = true
@@ -2629,21 +2630,21 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   private def failedFind(in: Failure): NodeSeq =
-    <html xmlns:lift="http://liftweb.net" xmlns="http://www.w3.org/1999/xhtml">
+    xml"""<html xmlns:lift="http://liftweb.net" xmlns="http://www.w3.org/1999/xhtml">
         <head/>
       <body>
-        {Helpers.errorDiv(
-        <div>Error locating template.
+        ${Helpers.errorDiv(
+        xml"""<div>Error locating template.
             <br/>
           Message:
           <b>
-            {in.msg}
-          </b> <br/>{in.exception.map(e => <pre>
-          {e.toString}{e.getStackTrace.map(_.toString).mkString("\n")}
-        </pre>).openOr(NodeSeq.Empty)}
-        </div>) openOr NodeSeq.Empty}
+            ${in.msg}
+          </b> <br/>${in.exception.map(e => xml"""<pre>
+          ${e.toString}${e.getStackTrace.map(_.toString).mkString("\n")}
+        </pre>""").openOr(NodeSeq.Empty)}
+        </div>""") openOr NodeSeq.Empty}
       </body>
-    </html>
+    </html>"""
 
   private[liftweb] def findAndMerge(templateName: Box[String], atWhat: =>  Map[String, NodeSeq]): NodeSeq = {
     val name: String = templateName.map(s => if (s.startsWith("/")) s else "/" + s).openOr("/templates-hidden/default")
@@ -2704,7 +2705,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
         override def hasOuter = false
 
-        override def parentTag = <div style="display: none"/>
+        override def parentTag = xml"""<div style="display: none"/>"""
 
         override def lowPriority: PartialFunction[Any, Unit] = {
           case jsCmd: JsCmd => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsCmd, false)))

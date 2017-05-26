@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 import util._
@@ -26,7 +27,7 @@ import net.liftweb.mockweb.MockWeb._
 object SHtmlSpec extends Specification with XmlMatchers {
   "SHtmlSpec Specification".title
 
-  val html1= <span><input id="number"></input></span>
+  val html1= xml"""<span><input id="number"></input></span>"""
 
   val inputField1= testS("/")( ("#number" #> SHtml.number(0, println(_), 0, 100)).apply(html1)  )
   val inputField2= testS("/")( ("#number" #> SHtml.number(0, println(_: Double), 0, 100, 0.1)).apply(html1)  )

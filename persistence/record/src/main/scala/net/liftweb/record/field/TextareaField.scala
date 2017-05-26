@@ -18,6 +18,7 @@ package net.liftweb
 package record 
 package field 
 
+import scala.xml.quote._
 import scala.xml._
 import net.liftweb.util._
 import net.liftweb.common._
@@ -27,10 +28,10 @@ import Helpers._
 
 trait TextareaTypedField extends StringTypedField {
   private def elem = S.fmapFunc(SFuncHolder(this.setFromAny(_))){
-    funcName => <textarea name={funcName}
-      rows={textareaRows.toString}
-      cols={textareaCols.toString}
-      tabindex={tabIndex.toString}>{valueBox openOr ""}</textarea>
+    funcName => xml"""<textarea name=${funcName}
+      rows=${textareaRows.toString}
+      cols=${textareaCols.toString}
+      tabindex=${tabIndex.toString}>${valueBox openOr ""}</textarea>"""
   }
 
   override def toForm: Box[NodeSeq] =

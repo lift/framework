@@ -18,6 +18,7 @@ package net.liftweb
 package builtin
 package snippet
 
+import scala.xml.quote._
 import scala.language.existentials
 
 import http.{S, DispatchSnippet, LiftRules}
@@ -145,33 +146,33 @@ object Menu extends DispatchSnippet {
               Helpers.addCssClass(i.cssClass,
                                   Elem(null, innerTag, Null, TopScope, true,
                                        // Is a placeholder useful if we don't display the kids? I say no (DCB, 20101108)
-                                       <xml:group> <span>{text}</span>{buildUlLine(kids)}</xml:group>) %
+                                       xml"<xml:group> <span>${text}</span>${buildUlLine(kids)}</xml:group>") %
                                   (if (m.path) S.prefixedAttrsToMetaData("li_path", liMap) else Null) %
                                   (if (m.current) S.prefixedAttrsToMetaData("li_item", liMap) else Null))
 
             case MenuItem(text, uri, kids, true, _, _) if linkToSelf =>
               Helpers.addCssClass(i.cssClass,
                                   Elem(null, innerTag, Null, TopScope, true,
-                                       <xml:group> <a href={uri}>{text}</a>{ifExpandCurrent(buildUlLine(kids))}</xml:group>) %
+                                       xml"<xml:group> <a href=${uri}>${text}</a>${ifExpandCurrent(buildUlLine(kids))}</xml:group>") %
                                   S.prefixedAttrsToMetaData("li_item", liMap))
 
             case MenuItem(text, uri, kids, true, _, _) =>
               Helpers.addCssClass(i.cssClass,
                                   Elem(null, innerTag, Null, TopScope, true,
-                                       <xml:group> <span>{text}</span>{ifExpandCurrent(buildUlLine(kids))}</xml:group>) %
+                                       xml"<xml:group> <span>${text}</span>${ifExpandCurrent(buildUlLine(kids))}</xml:group>") %
                                   S.prefixedAttrsToMetaData("li_item", liMap))
 
             // Not current, but on the path, so we need to expand children to show the current one
             case MenuItem(text, uri, kids, _, true, _) =>
               Helpers.addCssClass(i.cssClass,
                                   Elem(null, innerTag, Null, TopScope, true,
-                                       <xml:group> <a href={uri}>{text}</a>{buildUlLine(kids)}</xml:group>) %
+                                       xml"<xml:group> <a href=${uri}>${text}</a>${buildUlLine(kids)}</xml:group>") %
                                   S.prefixedAttrsToMetaData("li_path", liMap))
 
             case MenuItem(text, uri, kids, _, _, _) =>
               Helpers.addCssClass(i.cssClass,
                                   Elem(null, innerTag, Null, TopScope, true,
-                                       <xml:group> <a href={uri}>{text}</a>{ifExpandAll(buildUlLine(kids))}</xml:group>) % li)
+                                       xml"<xml:group> <a href=${uri}>${text}</a>${ifExpandAll(buildUlLine(kids))}</xml:group>") % li)
           }
         }
 
@@ -181,7 +182,7 @@ object Menu extends DispatchSnippet {
           } else {
             if (outerTag.length > 0) {
               Elem(null, outerTag, Null, TopScope, true,
-                <xml:group>{in.flatMap(buildANavItem)}</xml:group>) %
+                xml"<xml:group>${in.flatMap(buildANavItem)}</xml:group>") %
                   S.prefixedAttrsToMetaData("ul")
             } else {
               in.flatMap(buildANavItem)
@@ -281,7 +282,7 @@ object Menu extends DispatchSnippet {
               str +" "+rts
             }
 
-            <title>{bodyStr}</title> % attrs
+            xml"<title>${bodyStr}</title>" % attrs
           }
         } openOr text
       }
@@ -449,7 +450,7 @@ object Menu extends DispatchSnippet {
              link <- typedLoc.createLink(pv)
            } yield {
              Helpers.addCssClass(typedLoc.cssClassForMenuItem,
-                                 <a href={link}></a> %
+                                 xml"<a href=${link}></a>" %
                                  S.prefixedAttrsToMetaData("a"))
            }) openOr {
              Text("")

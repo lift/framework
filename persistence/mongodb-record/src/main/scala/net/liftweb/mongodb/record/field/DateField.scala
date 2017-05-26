@@ -16,6 +16,7 @@ package mongodb
 package record
 package field
 
+import scala.xml.quote._
 import java.util.Date
 
 import scala.xml.NodeSeq
@@ -59,10 +60,10 @@ trait DateTypedField extends TypedField[Date] {
 
   private def elem =
     S.fmapFunc(S.SFuncHolder(this.setFromAny(_))){funcName =>
-      <input type="text"
-        name={funcName}
-        value={valueBox.map(v => formats.dateFormat.format(v)) openOr ""}
-        tabindex={tabIndex.toString}/>
+      xml"""<input type="text"
+        name=${funcName}
+        value=${valueBox.map(v => formats.dateFormat.format(v)) openOr ""}
+        tabindex=${tabIndex.toString}/>"""
     }
 
   def toForm =

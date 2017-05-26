@@ -17,6 +17,7 @@
 package net.liftweb
 package util
 
+import scala.xml.quote._
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
@@ -232,23 +233,23 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
 
   "css bind helpers" should {
     "clear clearable" in {
-      ClearClearable(<b><span class="clearable"/></b>) must ==/ (<b/>)
+      ClearClearable(xml"""<b><span class="clearable"/></b>""") must ==/ (xml"<b/>")
     }
 
     "substitute a String by id" in {
-      ("#foo" #> "hello").apply(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
+      ("#foo" #> "hello").apply(xml"""<b><span id="foo"/></b>""") must ==/ (xml"<b>hello</b>")
     }
 
 
     "not duplicate classes" in {
 
       def anchor(quesType: String, value: String) = {
-        <a href="foo" class="selected">(value)</a>
+        xml"""<a href="foo" class="selected">(value)</a>"""
       }
       var page = 1
       var elements = List("1","2","3","4")
 
-      val xml = <div class="lift:Bug.attack bug">
+      val xml = xml"""<div class="lift:Bug.attack bug">
         <div id="question" class="question">
           <a href="#" class="L">1</a>
           <a href="#" class="U">1</a>
@@ -257,7 +258,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
         <div class="navigation">
           <button class="previous">Previous</button> <button class="next">Next</button>
         </div>
-      </div>
+      </div>"""
 
       val sel = ".question" #> elements.map(value => {
         ".question [id]" #> ("question-" + value) &
@@ -276,7 +277,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
     "Compound selector" in {
       val res =
         (".foo [href]" #> "http://dog.com" & ".bar [id]" #> "moo").apply(
-            <a class="foo bar" href="#"/>)
+            xml"""<a class="foo bar" href="#"/>""")
       (res \ "@href").text must_== "http://dog.com"
       (res \ "@id").text must_== "moo"
     }
@@ -284,36 +285,36 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
     "not stack overflow on Elem" in {
       val xf = "* [id]" #> "xx" &
         "* [style]" #> "border:thin solid black" &
-        "* *" #> <a/>
+        "* *" #> xml"<a/>"
       success
     }
 
     "not stack overflow on Elem" in {
       val xf = "* [id]" #> "xx" &
         "* [style]" #> "border:thin solid black" &
-        "* *+" #> <a/>
+        "* *+" #> xml"<a/>"
 
-      xf(<div/>)
+      xf(xml"<div/>")
       success
     }
 
     "not stack overflow on Elem" in {
       val xf = "* [id]" #> "xx" &
         "* [style]" #> "border:thin solid black" &
-        "* -*" #> <a/>
+        "* -*" #> xml"<a/>"
 
-      xf(<div/>)
+      xf(xml"<div/>")
       success
     }
 
     "data-name selector works" in {
-      val xf = ";frog" #> <b>hi</b>
+      val xf = ";frog" #> xml"<b>hi</b>"
 
-      xf(<div><span data-name="frog">Moose</span></div>) must ==/ (<div><b data-name="frog">hi</b></div>)
+      xf(xml"""<div><span data-name="frog">Moose</span></div>""") must ==/ (xml"""<div><b data-name="frog">hi</b></div>""")
     }
 
     "support modifying attributes along with body" in {
-      val org = <a>foo</a>
+      val org = xml"<a>foo</a>"
       val func = "a [href]" #> "dog" & "a *" #> "bar"
       val res = func(org)
 
@@ -321,38 +322,38 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
     }
 
     "substitute a String by id" in {
-      ("#foo" replaceWith "hello").apply(<b><span id="foo"/></b>) must ==/ (<b>hello</b>)
+      ("#foo" replaceWith "hello").apply(xml"""<b><span id="foo"/></b>""") must ==/ (xml"<b>hello</b>")
     }
 
     "substitute a String by nested class" in {
-      ("div .foo" #> "hello").apply(<b><div><span class="foo"/></div><span><span class="foo"/></span></b>) must ==/ (<b><div>hello</div><span><span class="foo"/></span></b>)
+      ("div .foo" #> "hello").apply(xml"""<b><div><span class="foo"/></div><span><span class="foo"/></span></b>""") must ==/ (xml"""<b><div>hello</div><span><span class="foo"/></span></b>""")
     }
 
     "substitute a String by deep nested class" in {
       ("#baz div .foo" #> "hello").apply(
-        <b><span id="baz"><div><span class="foo"/></div></span><span><span class="foo"/></span></b>) must ==/ (<b><span id="baz"><div>hello</div></span><span><span class="foo"/></span></b>)
+        xml"""<b><span id="baz"><div><span class="foo"/></div></span><span><span class="foo"/></span></b>""") must ==/ (xml"""<b><span id="baz"><div>hello</div></span><span><span class="foo"/></span></b>""")
     }
 
     "insert a String by deep nested class" in {
       ("#baz div .foo *" #> "hello").apply(
-        <b><span id="baz"><div><span class="foo"/></div></span><span><div><span class="foo"/></div></span></b>) must ==/ (<b><span id="baz"><div><span class="foo">hello</span></div></span><span><div><span class="foo"/></div></span></b>)
+        xml"""<b><span id="baz"><div><span class="foo"/></div></span><span><div><span class="foo"/></div></span></b>""") must ==/ (xml"""<b><span id="baz"><div><span class="foo">hello</span></div></span><span><div><span class="foo"/></div></span></b>""")
     }
 
 
     "Only apply to the top elem" in {
       val xf = "^ [href]" #> "wombat"
 
-      xf(<a><b>stuff</b></a>) must ==/ (<a href="wombat"><b>stuff</b></a>)
+      xf(xml"<a><b>stuff</b></a>") must ==/ (xml"""<a href="wombat"><b>stuff</b></a>""")
     }
 
 
 
     "Select a node" in {
-      ("#foo ^^" #> "hello").apply(<div><span id="foo"/></div>) must ==/ (<span id="foo"/>)
+      ("#foo ^^" #> "hello").apply(xml"""<div><span id="foo"/></div>""") must ==/ (xml"""<span id="foo"/>""")
     }
 
     "Another nested select" in {
-      val template = <span>
+      val template = xml"""<span>
         <div id="meow">
           <lift:loc locid="asset.import.chooseFile"></lift:loc>
           <span id="file_upload"></span>
@@ -363,9 +364,9 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
           <span id="file_upload"></span>
           <input type="submit" value="import" /><br></br>
         </div>
-      </span>
+      </span>"""
 
-      val xf = "#get ^^" #> "ignore" & "#file_upload" #> <input type="moose"/>
+      val xf = "#get ^^" #> "ignore" & "#file_upload" #> xml"""<input type="moose"/>"""
 
       val ret = xf(template)
 
@@ -380,7 +381,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
     }
 
     "Child nested select" in {
-      val template = <span>
+      val template = xml"""<span>
         <div id="meow">
           <lift:loc locid="asset.import.chooseFile"></lift:loc>
           <span id="file_upload"></span>
@@ -391,9 +392,9 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
           <span id="file_upload"></span>
           <input type="submit" value="import" /><br></br>
         </div>
-      </span>
+      </span>"""
 
-      val xf = "#get ^*" #> "ignore" & "#file_upload" #> <input type="moose"/>
+      val xf = "#get ^*" #> "ignore" & "#file_upload" #> xml"""<input type="moose"/>"""
 
       val ret = xf(template)
 
@@ -407,7 +408,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
 
     "Select a node and transform stuff" in {
       val ret = ("#foo ^^" #> "hello" &
-        "span [id]" #> "bar")(<span id="foo"/>)
+        "span [id]" #> "bar")(xml"""<span id="foo"/>""")
 
       ret(0).asInstanceOf[Elem].label must_== "span"
       ret.length must_== 1
@@ -417,7 +418,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
 
     "Select a node and transform stuff deeply nested" in {
       val ret = ("#foo ^^" #> "hello" &
-        "span [id]" #> "bar")(<div><div><span id="foo"/></div></div>)
+        "span [id]" #> "bar")(xml"""<div><div><span id="foo"/></div></div>""")
 
       ret(0).asInstanceOf[Elem].label must_== "span"
       ret.length must_== 1
@@ -427,7 +428,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
 
     "Select a node and transform stuff deeply nested 2" in {
       val ret = ("#foo ^^" #> "hello" &
-        "span [id]" #> "bar")(<div><div><span id="foo2"/><span id="foo3"/><span dog="woof" id="foo"/></div></div>)
+        "span [id]" #> "bar")(xml"""<div><div><span id="foo2"/><span id="foo3"/><span dog="woof" id="foo"/></div></div>""")
 
       ret(0).asInstanceOf[Elem].label must_== "span"
       ret.length must_== 1
@@ -440,13 +441,13 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
     "substitute multiple Strings by id" in {
       ("#foo" #> "hello" &
         "#baz" #> "bye"
-        )(<b><div id="baz">Hello</div><span id="foo"/></b>) must be_== (NodeSeq fromSeq <b>{Text("bye")}{Text("hello")}</b>)
+        )(xml"""<b><div id="baz">Hello</div><span id="foo"/></b>""") must be_== (NodeSeq fromSeq xml"<b>${Text("bye")}${Text("hello")}</b>")
     }
 
     "bind href and None content" in {
       val opt: Option[String] = None
       val res = ("top *" #> opt &
-        "top [href]" #> "frog")(<top>cat</top>)
+        "top [href]" #> "frog")(xml"<top>cat</top>")
 
       res.text must_== ""
       (res \ "@href").text.mkString must_== "frog"
@@ -455,7 +456,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
     "bind href and Some content" in {
       val opt: Option[String] = Some("Dog")
       val res = ("top *" #> opt &
-        "top [href]" #> "frog")(<top>cat</top>)
+        "top [href]" #> "frog")(xml"<top>cat</top>")
 
       res.text must_== "Dog"
       (res \ "@href").text.mkString must_== "frog"
@@ -465,7 +466,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
       val opt: Option[String] = Some("Dog")
       val res = ("top *" #> opt &
         "top [meow]" #> "woof" &
-        "top [href]" #> "frog")(<top href="#">cat</top>)
+        "top [href]" #> "frog")(xml"""<top href="#">cat</top>""")
 
       res.text must_== "Dog"
       (res \ "@href").text.mkString must_== "frog"
@@ -474,31 +475,31 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
 
     "option transform on *" in {
       val opt: Option[String] = None
-      val res = ("* *" #> opt.map(ignore => "Dog")).apply(<top>cat</top>)
-      res.head must_== <top></top>
+      val res = ("* *" #> opt.map(ignore => "Dog")).apply(xml"<top>cat</top>")
+      res.head must_== xml"<top></top>"
     }
 
     "append attribute to a class with spaces" in {
       val stuff = List("a", "b")
-      val res = ("* [class+]" #> stuff).apply(<top class="q">cat</top>)
+      val res = ("* [class+]" #> stuff).apply(xml"""<top class="q">cat</top>""")
       (res \ "@class").text must_== "q a b"
     }
 
     "append attribute to an href" in {
       val stuff = List("&a=b", "&b=d")
-      val res = ("* [href+]" #> stuff).apply(<top href="q?z=r">cat</top>)
+      val res = ("* [href+]" #> stuff).apply(xml"""<top href="q?z=r">cat</top>""")
       (res \ "@href").text must_== "q?z=r&a=b&b=d"
     }
 
     "remove an attribute from a class" in {
       val func = ".foo [class!]" #> "andOther"
 
-      (func(<span class="foo andOther" />) \ "@class").text must_== "foo"
+      (func(xml"""<span class="foo andOther" />""") \ "@class").text must_== "foo"
     }
 
     "remove an attribute from a class and the attribute if it's the only one left" in {
       val func = ".foo [class!]" #> "foo"
-      val res = func(<span class="foo" />)
+      val res = func(xml"""<span class="foo" />""")
 
       (res \ "@class").length must_== 0
     }
@@ -508,7 +509,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
     "Remove a subnode's class attribute" in {
 
       val func = ".removeme !!" #> ("td [class!]" #> "removeme")
-      val res = func.apply(<tr><td class="removeme fish">Hi</td></tr>)
+      val res = func.apply(xml"""<tr><td class="removeme fish">Hi</td></tr>""")
 
       ((res \ "td") \ "@class").text must_== "fish"
     }
@@ -516,7 +517,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
 
     "not remove a non-existant class" in {
       val func = ".foo [class!]" #> "bar"
-      val res = func(<span class="foo" />)
+      val res = func(xml"""<span class="foo" />""")
 
       (res \ "@class").text must_== "foo"
     }
@@ -524,7 +525,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
 
     "remove an attribute from an attribute" in {
       val func = "span [href!]" #> "foo"
-      val res = func(<span href="foo" />)
+      val res = func(xml"""<span href="foo" />""")
 
       (res \ "@href").length must_== 0
     }
@@ -532,31 +533,31 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
 
     "not remove a non-existant href" in {
       val func = "span [href!]" #> "bar"
-      val res = func(<span href="foo bar" />)
+      val res = func(xml"""<span href="foo bar" />""")
 
       (res \ "@href").text must_== "foo bar"
     }
 
     "option transform on *" in {
       val opt: Option[Int] = Full(44)
-      val res = ("* *" #> opt.map(ignore => "Dog")).apply(<top>cat</top>)
-      res must ==/ (<top>Dog</top>)
+      val res = ("* *" #> opt.map(ignore => "Dog")).apply(xml"<top>cat</top>")
+      res must ==/ (xml"<top>Dog</top>")
     }
 
 
     "Java number support" in {
       val f = "a *" #> Full(new java.lang.Long(12))
-      val xml = <a>Hello</a>
+      val xml = xml"<a>Hello</a>"
 
-      f(xml) must ==/ (<a>12</a>)
+      f(xml) must ==/ (xml"<a>12</a>")
     }
 
 
     "Surround kids" in {
-      val f = "a <*>" #> <div></div>
-      val xml = <b>Meow <a href="dog">Cat</a> woof</b>
+      val f = "a <*>" #> xml"<div></div>"
+      val xml = xml"""<b>Meow <a href="dog">Cat</a> woof</b>"""
 
-      f(xml) must ==/ (<b>Meow <a href="dog"><div>Cat</div></a> woof</b>)
+      f(xml) must ==/ (xml"""<b>Meow <a href="dog"><div>Cat</div></a> woof</b>""")
     }
 
     "Andreas's thing doesn't blow up" in {
@@ -592,7 +593,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
       def render = {
 
         "*" #> ((ns: NodeSeq) =>
-          renderBlogEntrySummary.apply(ns) ++ <a>hi</a>
+          renderBlogEntrySummary.apply(ns) ++ xml"<a>hi</a>"
           )
       }
 
@@ -604,132 +605,132 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
 
     "option transform on *" in {
       val opt: Box[String] = Empty
-      val res = ("* *" #> opt.map(ignore => "Dog")).apply(<top>cat</top>)
-      res.head must_== <top></top>
+      val res = ("* *" #> opt.map(ignore => "Dog")).apply(xml"<top>cat</top>")
+      res.head must_== xml"<top></top>"
     }
 
     "option transform on *" in {
       val opt: Box[Int] = Some(44)
-      val res = ("* *" #> opt.map(ignore => "Dog")).apply(<top>cat</top>)
-      res must ==/ (<top>Dog</top>)
+      val res = ("* *" #> opt.map(ignore => "Dog")).apply(xml"<top>cat</top>")
+      res must ==/ (xml"<top>Dog</top>")
     }
 
     "transform on *" in {
-      val res = ("* *" #> "Dog").apply(<top>cat</top>)
-      res must ==/ (<top>Dog</top>)
+      val res = ("* *" #> "Dog").apply(xml"<top>cat</top>")
+      res must ==/ (xml"<top>Dog</top>")
     }
 
     "transform child content on *+" in {
-      val res = ("* *+" #> "moose").apply(<a>I like </a>)
+      val res = ("* *+" #> "moose").apply(xml"<a>I like </a>")
       res.text must_== "I like moose"
     }
 
     "transform child content on -*" in {
-      val res = ("* -*" #> "moose").apply(<a> I like</a>)
+      val res = ("* -*" #> "moose").apply(xml"<a> I like</a>")
       res.text must_== "moose I like"
     }
 
     "transform on li" in {
       val res = ("li *" #> List("Woof", "Bark") & ClearClearable)(
-        <ul><li>meow</li><li class="clearable">a</li><li class="clearable">a</li></ul>)
-      res must ==/ (<ul><li>Woof</li><li>Bark</li></ul>)
+        xml"""<ul><li>meow</li><li class="clearable">a</li><li class="clearable">a</li></ul>""")
+      res must ==/ (xml"<ul><li>Woof</li><li>Bark</li></ul>")
     }
 
     "substitute multiple Strings by id" in {
       (("#foo" replaceWith "hello") &
         ("#baz" replaceWith "bye")
         )(
-        <b><div id="baz">Hello</div><span id="foo"/></b>
-      ) must_== (NodeSeq fromSeq <b>{Text("bye")}{Text("hello")}</b>)
+        xml"""<b><div id="baz">Hello</div><span id="foo"/></b>"""
+      ) must_== (NodeSeq fromSeq xml"<b>${Text("bye")}${Text("hello")}</b>")
     }
 
     "substitute multiple Strings with a List by id" in {
       ("#foo" #> "hello" &
-        "#baz" #> List("bye", "bye"))(<b><div id="baz">Hello</div><span id="foo"/></b>) must_== (NodeSeq fromSeq <b>{Text("bye")}{Text("bye")}{Text("hello")}</b>)
+        "#baz" #> List("bye", "bye"))(xml"""<b><div id="baz">Hello</div><span id="foo"/></b>""") must_== (NodeSeq fromSeq xml"<b>${Text("bye")}${Text("bye")}${Text("hello")}</b>")
     }
 
     "substitute multiple Strings with a List by id" in {
       (("#foo" replaceWith "hello") &
-        ("#baz" replaceWith List("bye", "bye")))(<b><div id="baz">Hello</div><span id="foo"/></b>) must_== (NodeSeq fromSeq <b>{Text("bye")}{Text("bye")}{Text("hello")}</b>)
+        ("#baz" replaceWith List("bye", "bye")))(xml"""<b><div id="baz">Hello</div><span id="foo"/></b>""") must_== (NodeSeq fromSeq xml"<b>${Text("bye")}${Text("bye")}${Text("hello")}</b>")
     }
 
 
     "substitute multiple Strings with a List of XML by id" in {
       val answer = ("#foo" #> "hello" &
-        "#baz" #> List[NodeSeq](<i/>, <i>Meow</i>))(<b><div frog="dog" id="baz">Hello</div><span id="foo"/></b>)
+        "#baz" #> List[NodeSeq](xml"<i/>", xml"<i>Meow</i>"))(xml"""<b><div frog="dog" id="baz">Hello</div><span id="foo"/></b>""")
 
       (answer \ "i").length must_== 2
-      (answer \ "i")(0) must ==/ (<i id="baz" frog="dog"/>)
-      (answer \ "i")(1) must ==/ (<i frog="dog">Meow</i>)
+      (answer \ "i")(0) must ==/ (xml"""<i id="baz" frog="dog"/>""")
+      (answer \ "i")(1) must ==/ (xml"""<i frog="dog">Meow</i>""")
     }
 
     "substitute multiple Strings with a List of XML by id" in {
       val answer = (("#foo" replaceWith "hello") &
-        ("#baz" replaceWith List[NodeSeq](<i/>, <i>Meow</i>)))(<b><div frog="dog" id="baz">Hello</div><span id="foo"/></b>)
+        ("#baz" replaceWith List[NodeSeq](xml"<i/>", xml"<i>Meow</i>")))(xml"""<b><div frog="dog" id="baz">Hello</div><span id="foo"/></b>""")
 
       (answer \ "i").length must_== 2
-      (answer \ "i")(0) must ==/ (<i id="baz" frog="dog"/>)
-      (answer \ "i")(1) must ==/ (<i frog="dog">Meow</i>)
+      (answer \ "i")(0) must ==/ (xml"""<i id="baz" frog="dog"/>""")
+      (answer \ "i")(1) must ==/ (xml"""<i frog="dog">Meow</i>""")
     }
 
     "substitute by name" in {
-      val answer = ("name=moose" #> <input name="goof"/>).apply (
-        <div><input name="moose" value="start" id="79"/></div>)
+      val answer = ("name=moose" #> xml"""<input name="goof"/>""").apply (
+        xml"""<div><input name="moose" value="start" id="79"/></div>""")
 
-      (answer \ "input")(0) must ==/ (<input name="goof" value="start" id="79"/>)
+      (answer \ "input")(0) must ==/ (xml"""<input name="goof" value="start" id="79"/>""")
     }
 
 
     "Deal with NodeSeq as a NodeSeq" in {
-      val f = "h6 *" #> ((Text("Some awesome ") ++ <strong>text</strong> ++ Text(" here.")): NodeSeq)
-      val xml = <h6>Dude, where's my car?</h6>
+      val f = "h6 *" #> ((Text("Some awesome ") ++ xml"<strong>text</strong>" ++ Text(" here.")): NodeSeq)
+      val xml = xml"<h6>Dude, where's my car?</h6>"
 
       val res = f(xml)
-      res must ==/ (<h6>Some awesome <strong>text</strong> here.</h6>)
+      res must ==/ (xml"<h6>Some awesome <strong>text</strong> here.</h6>")
     }
 
     "substitute by name" in {
-      val answer = ("name=moose" replaceWith <input name="goof"/>).apply (
-        <div><input name="moose" value="start" id="79"/></div>)
+      val answer = ("name=moose" replaceWith xml"""<input name="goof"/>""").apply (
+        xml"""<div><input name="moose" value="start" id="79"/></div>""")
 
-      (answer \ "input")(0) must ==/ (<input name="goof" value="start" id="79"/>)
+      (answer \ "input")(0) must ==/ (xml"""<input name="goof" value="start" id="79"/>""")
     }
 
 
     "substitute by name with attrs" in {
-      val answer = ("name=moose" #> <input name="goof" value="8" id="88"/>).apply (
-        <div><input name="moose" value="start" id="79"/></div>)
+      val answer = ("name=moose" #> xml"""<input name="goof" value="8" id="88"/>""").apply (
+        xml"""<div><input name="moose" value="start" id="79"/></div>""")
 
-      (answer \ "input")(0) must ==/ (<input name="goof" value="8" id="88"/>)
+      (answer \ "input")(0) must ==/ (xml"""<input name="goof" value="8" id="88"/>""")
     }
 
     "substitute by name with attrs" in {
-      val answer = ("name=moose" replaceWith <input name="goof" value="8" id="88"/>).apply (
-        <div><input name="moose" value="start" id="79"/></div>)
+      val answer = ("name=moose" replaceWith xml"""<input name="goof" value="8" id="88"/>""").apply (
+        xml"""<div><input name="moose" value="start" id="79"/></div>""")
 
-      (answer \ "input")(0) must ==/ (<input name="goof" value="8" id="88"/>)
+      (answer \ "input")(0) must ==/ (xml"""<input name="goof" value="8" id="88"/>""")
     }
 
 
     "substitute by a selector with attrs" in {
-      val answer = ("cute=moose" #> <input name="goof" value="8" id="88"/>).apply (
-        <div><input name="meow" cute="moose" value="start" id="79"/></div>)
+      val answer = ("cute=moose" #> xml"""<input name="goof" value="8" id="88"/>""").apply (
+        xml"""<div><input name="meow" cute="moose" value="start" id="79"/></div>""")
 
-      (answer \ "input")(0) must ==/ (<input cute="moose" name="goof" value="8" id="88"/>)
+      (answer \ "input")(0) must ==/ (xml"""<input cute="moose" name="goof" value="8" id="88"/>""")
     }
 
     "substitute by a selector with attrs" in {
-      val answer = ("cute=moose" replaceWith <input name="goof" value="8" id="88"/>).apply (
-        <div><input name="meow" cute="moose" value="start" id="79"/></div>)
+      val answer = ("cute=moose" replaceWith xml"""<input name="goof" value="8" id="88"/>""").apply (
+        xml"""<div><input name="meow" cute="moose" value="start" id="79"/></div>""")
 
-      (answer \ "input")(0) must ==/ (<input cute="moose" name="goof" value="8" id="88"/>)
+      (answer \ "input")(0) must ==/ (xml"""<input cute="moose" name="goof" value="8" id="88"/>""")
     }
 
     "Map of funcs" in {
       val func: NodeSeq => NodeSeq = "#horse" #> List(1,2,3).map(".item *" #> _)
-      val answer: NodeSeq = func(<span><div id="horse">frog<span class="item">i</span></div></span>)
+      val answer: NodeSeq = func(xml"""<span><div id="horse">frog<span class="item">i</span></div></span>""")
 
-      answer must ==/ (<span><div id="horse">frog<span class="item">1</span></div><div>frog<span class="item">2</span></div><div>frog<span class="item">3</span></div></span>)
+      answer must ==/ (xml"""<span><div id="horse">frog<span class="item">1</span></div><div>frog<span class="item">2</span></div><div>frog<span class="item">3</span></div></span>""")
 
     }
 
@@ -739,24 +740,24 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
           ".thing [id]" #> t
         })
           )
-      val answer = func(<ul class="thinglist"><li id="other" class="thing" /></ul>)
+      val answer = func(xml"""<ul class="thinglist"><li id="other" class="thing" /></ul>""")
 
-      answer must ==/ (<ul class="thinglist"><li class="thing" id="xx1"></li><li class="thing" id="xx2"></li><li id="other" class="thing"></li><li class="thing"></li><li class="thing" id="xx4"></li></ul>)
+      answer must ==/ (xml"""<ul class="thinglist"><li class="thing" id="xx1"></li><li class="thing" id="xx2"></li><li id="other" class="thing"></li><li class="thing"></li><li class="thing" id="xx4"></li></ul>""")
     }
 
     "merge classes" in {
-      val answer = ("cute=moose" #> <input class="a" name="goof" value="8" id="88"/>).apply (
-        <div><input name="meow" class="b" cute="moose" value="start" id="79"/></div>)
+      val answer = ("cute=moose" #> xml"""<input class="a" name="goof" value="8" id="88"/>""").apply (
+        xml"""<div><input name="meow" class="b" cute="moose" value="start" id="79"/></div>""")
 
-      (answer \ "input")(0) must ==/ (<input class="a b" cute="moose" name="goof" value="8" id="88"/>)
+      (answer \ "input")(0) must ==/ (xml"""<input class="a b" cute="moose" name="goof" value="8" id="88"/>""")
     }
 
 
     "merge classes" in {
-      val answer = ("cute=moose" replaceWith <input class="a" name="goof" value="8" id="88"/>).apply (
-        <div><input name="meow" class="b" cute="moose" value="start" id="79"/></div>)
+      val answer = ("cute=moose" replaceWith xml"""<input class="a" name="goof" value="8" id="88"/>""").apply (
+        xml"""<div><input name="meow" class="b" cute="moose" value="start" id="79"/></div>""")
 
-      (answer \ "input")(0) must ==/ (<input class="a b" cute="moose" name="goof" value="8" id="88"/>)
+      (answer \ "input")(0) must ==/ (xml"""<input class="a b" cute="moose" name="goof" value="8" id="88"/>""")
     }
 
 
@@ -765,43 +766,43 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
     "list of strings" in {
       val answer = ("#moose *" #> List("a", "b", "c", "woof") &
         ClearClearable).apply (
-        <ul>
+        xml"""<ul>
           <li id="moose">first</li>
           <li class="clearable">second</li>
           <li class="clearable">Third</li>
-        </ul>)
+        </ul>""")
 
       val lis = (answer \ "li").toList
 
       lis.length must_== 4
 
-      lis(0) must ==/ (<li id="moose">a</li>)
-      lis(3) must ==/ (<li>woof</li>)
+      lis(0) must ==/ (xml"""<li id="moose">a</li>""")
+      lis(3) must ==/ (xml"<li>woof</li>")
     }
 
 
     "list of Nodes" in {
-      val answer = ("#moose *" #> List[NodeSeq](<i>"a"</i>, Text("b"), Text("c"), <b>woof</b>) &
+      val answer = ("#moose *" #> List[NodeSeq](xml"""<i>"a"</i>""", Text("b"), Text("c"), xml"<b>woof</b>") &
         ClearClearable).apply (
-        <ul>
+        xml"""<ul>
           <li id="moose">first</li>
           <li class="clearable">second</li>
           <li class="clearable">Third</li>
-        </ul>)
+        </ul>""")
 
       val lis = (answer \ "li").toList
 
       lis.length must_== 4
 
-      lis(0) must ==/ (<li id="moose"><i>"a"</i></li>)
-      lis(3) must ==/ (<li><b>woof</b></li>)
+      lis(0) must ==/ (xml"""<li id="moose"><i>"a"</i></li>""")
+      lis(3) must ==/ (xml"<li><b>woof</b></li>")
     }
 
 
     "set href" in {
       val answer = ("#moose [href]" #> "Hi" &
         ClearClearable).apply (
-        <ul><a id="moose" href="meow">first</a><li class="clearable">second</li><li class="clearable">Third</li></ul>)
+        xml"""<ul><a id="moose" href="meow">first</a><li class="clearable">second</li><li class="clearable">Third</li></ul>""")
 
 
       (answer \ "a" \ "@href").text must_== "Hi"
@@ -811,7 +812,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
     "set href and subnodes" in {
       val answer = ("#moose [href]" #> "Hi" &
         ClearClearable).apply (
-        <ul><a id="moose" href="meow">first<li class="clearable">second</li><li class="clearable">Third</li></a></ul>)
+        xml"""<ul><a id="moose" href="meow">first<li class="clearable">second</li><li class="clearable">Third</li></a></ul>""")
 
 
       (answer \ "a" \ "@href").text must_== "Hi"
@@ -822,26 +823,26 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
     "list of strings" in {
       val answer = (("#moose *" replaceWith List("a", "b", "c", "woof")) &
         ClearClearable).apply (
-        <ul>
+        xml"""<ul>
           <li id="moose">first</li>
           <li class="clearable">second</li>
           <li class="clearable">Third</li>
-        </ul>)
+        </ul>""")
 
       val lis = (answer \ "li").toList
 
       lis.length must_== 4
 
-      lis(0) must ==/ (<li id="moose">a</li>)
-      lis(3) must ==/ (<li>woof</li>)
+      lis(0) must ==/ (xml"""<li id="moose">a</li>""")
+      lis(3) must ==/ (xml"<li>woof</li>")
     }
 
     "bind must bind to subnodes" in {
-      val html = <ul class="users">
+      val html = xml"""<ul class="users">
         <li class="user" userid="">
           <img class="userimg" src=""/>
         </li>
-      </ul>
+      </ul>"""
 
       val lst = List(1,2,3)
 
@@ -852,27 +853,27 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
     }
 
     "list of Nodes" in {
-      val answer = (("#moose *" replaceWith List[NodeSeq](<i>"a"</i>, Text("b"), Text("c"), <b>woof</b>)) &
+      val answer = (("#moose *" replaceWith List[NodeSeq](xml"""<i>"a"</i>""", Text("b"), Text("c"), xml"<b>woof</b>")) &
         ClearClearable).apply (
-        <ul>
+        xml"""<ul>
           <li id="moose">first</li>
           <li class="clearable">second</li>
           <li class="clearable">Third</li>
-        </ul>)
+        </ul>""")
 
       val lis = (answer \ "li").toList
 
       lis.length must_== 4
 
-      lis(0) must ==/ (<li id="moose"><i>"a"</i></li>)
-      lis(3) must ==/ (<li><b>woof</b></li>)
+      lis(0) must ==/ (xml"""<li id="moose"><i>"a"</i></li>""")
+      lis(3) must ==/ (xml"<li><b>woof</b></li>")
     }
 
 
     "set href" in {
       val answer = (("#moose [href]" replaceWith "Hi") &
         ClearClearable).apply (
-        <ul><a id="moose" href="meow">first</a><li class="clearable">second</li><li class="clearable">Third</li></ul>)
+        xml"""<ul><a id="moose" href="meow">first</a><li class="clearable">second</li><li class="clearable">Third</li></ul>""")
 
 
       (answer \ "a" \ "@href").text must_== "Hi"
@@ -882,7 +883,7 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
     "set href and subnodes" in {
       val answer = (("#moose [href]" replaceWith "Hi") &
         ClearClearable).apply (
-        <ul><a id="moose" href="meow">first<li class="clearable">second</li><li class="clearable">Third</li></a></ul>)
+        xml"""<ul><a id="moose" href="meow">first<li class="clearable">second</li><li class="clearable">Third</li></a></ul>""")
 
 
       (answer \ "a" \ "@href").text must_== "Hi"
@@ -904,18 +905,18 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
   "foo" #> "baz"
 
   bog #> "Hello"
-  bog #> <span/>
+  bog #> xml"<span/>"
   bog #> 1
   bog #> 'foo
   bog #> 44L
   bog #> 1.22
   bog #> false
 
-  bog #> List(<span/>)
-  bog #> Full(<span/>)
+  bog #> List(xml"<span/>")
+  bog #> Full(xml"<span/>")
   val e: Box[String] = Empty
   bog #> e
-  bog #> Some(<span/>)
+  bog #> Some(xml"<span/>")
   val n: Option[String] = None
   bog #> n
 
@@ -943,22 +944,22 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
   bog #> nsToSeqString _
 
   val nsf: NodeSeq => NodeSeq = bog #> "Hello" &
-    bog #> <span/> &
+    bog #> xml"<span/>" &
     bog #> 1 &
     bog #> 'foo &
     bog #> 44L &
     bog #> false
 
   "foo" #> "Hello"
-  "foo" #> <span/>
+  "foo" #> xml"<span/>"
   "foo" #> 1
   "foo" #> 'foo
   "foo" #> 44L
   "foo" #> false
 
-  "foo" #> List(<span/>)
-  "foo" #> Full(<span/>)
-  "foo" #> Some(<span/>)
+  "foo" #> List(xml"<span/>")
+  "foo" #> Full(xml"<span/>")
+  "foo" #> Some(xml"<span/>")
 
 
   "foo" #> List("Hello")
@@ -983,7 +984,7 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
   "#foo" #> Set("a", "b", "c")
 
   val nsf2: NodeSeq => NodeSeq = "foo" #> "Hello" &
-    "foo" #> <span/> &
+    "foo" #> xml"<span/>" &
     "foo" #> 1 &
     "foo" #> 'foo &
     "foo" #> 44L &

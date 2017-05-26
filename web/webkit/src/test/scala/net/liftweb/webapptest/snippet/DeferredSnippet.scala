@@ -18,6 +18,7 @@ package net.liftweb
 package webapptest 
 package snippet 
 
+import scala.xml.quote._
 import net.liftweb.http._
 import scala.xml._
 
@@ -26,23 +27,23 @@ class DeferredSnippet {
 
   def first:NodeSeq = {
     MyNumber.set(44)
-    <span id="first">first</span>
+    xml"""<span id="first">first</span>"""
   }
 
   def secondLazy:NodeSeq = {
     val old = MyNumber.is
     MyNumber.set(99)
-    <span id="second">Very lazy {old}</span>
+    xml"""<span id="second">Very lazy ${old}</span>"""
   }
 
   def third:NodeSeq = {
-    <span id="third">third {MyNumber.is}</span>
+    xml"""<span id="third">third ${MyNumber.is}</span>"""
   }
 
    def stackWhack: NodeSeq = {
      val inActor: Boolean = Thread.currentThread.getStackTrace.exists(_.getClassName.contains("net.liftweb.actor."))
 
-     <span id={"actor_"+inActor}>stackWhack</span>
+     xml"<span id=${"actor_"+inActor}>stackWhack</span>"
    }
 }
 

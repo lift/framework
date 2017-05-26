@@ -18,6 +18,7 @@ package net.liftweb
 package http
 package rest
 
+import scala.xml.quote._
 import xml._
 
 import org.specs2.mutable.Specification
@@ -35,7 +36,7 @@ object XmlApiSpec extends Specification  {
 
   object XMLApiExample extends XMLApiHelper {
     // Define our root tag
-    def createTag(contents : NodeSeq) : Elem = <api>{contents}</api>
+    def createTag(contents : NodeSeq) : Elem = xml"<api>${contents}</api>"
 
     // This method exists to test the non-XML implicit conversions on XMLApiHelper
     def produce (in : Any) : LiftResponse = in match {
@@ -47,10 +48,10 @@ object XmlApiSpec extends Specification  {
       // Tests pairToResponse
       case i : Int if i == 42 => (true,"But what is the question?")
       // These test the listElemToResponse conversion
-      case f : Float if f == 42f => (<float>perfect</float> : Elem)
-      case f : Float if f == 0f => (<float>zero</float> : Node)
-      case f : Float if f > 0f => (<float>positive</float> : NodeSeq)
-      case f : Float if f < 0f => (<float>negative</float> : Seq[Node])
+      case f : Float if f == 42f => (xml"<float>perfect</float>" : Elem)
+      case f : Float if f == 0f => (xml"<float>zero</float>" : Node)
+      case f : Float if f > 0f => (xml"<float>positive</float>" : NodeSeq)
+      case f : Float if f < 0f => (xml"<float>negative</float>" : Seq[Node])
     }
 
     // This method tests the XML implicit conversions on XMLApiHelper
@@ -66,7 +67,7 @@ object XmlApiSpec extends Specification  {
     // ===== Handler methods =====
     def reduceOp (operation : (Int,Int) => Int)(r : Req) : Box[Elem] = tryo {
       (r.param("args").map {
-        args =>  <result>{args.split(",").map(_.toInt).reduceLeft(operation)}</result>
+        args =>  xml"<result>${args.split(",").map(_.toInt).reduceLeft(operation)}</result>"
        }) ?~ "Missing args"
     } match {
       case Full(x) => x
@@ -108,13 +109,13 @@ object XmlApiSpec extends Specification  {
      */
 
     "Convert booleans to LiftResponses" in {
-      produce("true") must matchXmlResponse(<api success="true"><xml:group/></api>)
-      produce("false") must matchXmlResponse(<api success="false"><xml:group/></api>)
+      produce("true") must matchXmlResponse(xml"""<api success="true"><xml:group/></api>""")
+      produce("false") must matchXmlResponse(xml"""<api success="false"><xml:group/></api>""")
     }
 
     "Convert Boxed booleans to LiftResponses" in {
-      produce("42") must matchXmlResponse(<api success="true"><xml:group/></api>)
-      produce("1") must matchXmlResponse(<api success="false"><xml:group/></api>)
+      produce("42") must matchXmlResponse(xml"""<api success="true"><xml:group/></api>""")
+      produce("1") must matchXmlResponse(xml"""<api success="false"><xml:group/></api>""")
       
       val failure = produce("invalidInt")
 
@@ -128,14 +129,14 @@ object XmlApiSpec extends Specification  {
     }
 
     "Convert Pairs to responses" in {
-      produce(42) must matchXmlResponse(<api success="true" msg="But what is the question?"><xml:group/></api>)
+      produce(42) must matchXmlResponse(xml"""<api success="true" msg="But what is the question?"><xml:group/></api>""")
     }
 
     "Convert various XML types to a response" in {
-      produce(0f) must matchXmlResponse(<api success="true"><float>zero</float></api>)
-      produce(-1f) must matchXmlResponse(<api success="true"><float>negative</float></api>)
-      produce(1f) must matchXmlResponse(<api success="true"><float>positive</float></api>)
-      produce(42f) must matchXmlResponse(<api success="true"><float>perfect</float></api>)
+      produce(0f) must matchXmlResponse(xml"""<api success="true"><float>zero</float></api>""")
+      produce(-1f) must matchXmlResponse(xml"""<api success="true"><float>negative</float></api>""")
+      produce(1f) must matchXmlResponse(xml"""<api success="true"><float>positive</float></api>""")
+      produce(42f) must matchXmlResponse(xml"""<api success="true"><float>perfect</float></api>""")
     }
   }
 }

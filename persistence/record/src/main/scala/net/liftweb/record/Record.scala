@@ -17,6 +17,7 @@
 package net.liftweb
 package record
 
+import scala.xml.quote._
 import common._
 import http.js.{JsExp, JsObj}
 import http.{Req, SHtml}
@@ -120,7 +121,7 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
   def toForm(button: Box[String])(f: MyType => Unit): NodeSeq = {
     meta.toForm(this) ++
     (SHtml.hidden(() => f(this))) ++
-    ((button.map(b => (<input type="submit" value={b}/>)) openOr scala.xml.Text("")))
+    ((button.map(b => (xml"""<input type="submit" value=${b}/>""")) openOr scala.xml.Text("")))
   }
 
   /**

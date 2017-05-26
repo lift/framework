@@ -18,6 +18,7 @@ package net.liftweb
 package http
 package rest
 
+import scala.xml.quote._
 import net.liftweb.common._
 import net.liftweb._
 import util._
@@ -85,7 +86,7 @@ trait XMLApiHelper {
    * the "in" parameter.
    */
   implicit def boolToResponse(in: Boolean): LiftResponse =
-    buildResponse(in, Empty, <xml:group/>)
+    buildResponse(in, Empty, xml"<xml:group/>")
 
   /**
    * Converts a boxed boolean into a response of a root element with
@@ -97,7 +98,7 @@ trait XMLApiHelper {
     buildResponse(in openOr false, in match {
       case Failure(msg, _, _) => Full(Text(msg))
       case _ => Empty
-    }, <xml:group/>)
+    }, xml"<xml:group/>")
 
   /**
    * Converts a boxed Seq[Node] into a response. If the Box is a Full,
@@ -128,7 +129,7 @@ trait XMLApiHelper {
    * attribute set to the value of the second element of the pair.
    */
   implicit def pairToResponse(in: (Boolean, String)): LiftResponse =
-    buildResponse(in._1, Full(Text(in._2)), <xml:group/>)
+    buildResponse(in._1, Full(Text(in._2)), xml"<xml:group/>")
 
   /**
    * Converts a given LiftResponse into a Full[LiftResponse]

@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import common._
 import util._
 import util.Helpers._
@@ -1191,16 +1192,16 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   new FactoryMaker(() => {
     failure: Failure => {
       if (Props.devMode)
-        <div style="border: red solid 2px">A lift:parallel snippet failed to render.Message:{failure.msg}{failure.exception match {
+        xml"""<div style="border: red solid 2px">A lift:parallel snippet failed to render.Message:${failure.msg}${failure.exception match {
           case Full(e) =>
-            <pre>{e.getStackTrace.map(_.toString).mkString("\n")}</pre>
+            xml"<pre>${e.getStackTrace.map(_.toString).mkString("\n")}</pre>"
           case _ => NodeSeq.Empty
         }}<i>note: this error is displayed in the browser because
         your application is running in "development" mode.If you
         set the system property run.mode=production, this error will not
         be displayed, but there will be errors in the output logs.
         </i>
-        </div>
+        </div>"""
       else NodeSeq.Empty
     }
   }) {}
@@ -1213,7 +1214,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val deferredSnippetTimeout: FactoryMaker[NodeSeq] =
   new FactoryMaker(() => {
         if (Props.devMode)
-        <div style="border: red solid 2px">
+        xml"""<div style="border: red solid 2px">
           A deferred snippet timed out during render.
 
           <i>note: this error is displayed in the browser because
@@ -1221,7 +1222,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
             set the system property run.mode=production, this error will not
             be displayed, but there will be errors in the output logs.
           </i>
-        </div>
+        </div>"""
         else NodeSeq.Empty
       }) {}
 
@@ -1602,11 +1603,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val exceptionHandler = RulesSeq[ExceptionHandlerPF].append {
     case (Props.RunModes.Development, r, e) =>
       logger.error("Exception being returned to browser when processing " + r.uri.toString, e)
-      XhtmlResponse((<html> <body>Exception occured while processing {r.uri}<pre>{showException(e)}</pre> </body> </html>), S.htmlProperties.docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.legacyIeCompatibilityMode)
+      XhtmlResponse((xml"<html> <body>Exception occured while processing ${r.uri}<pre>${showException(e)}</pre> </body> </html>"), S.htmlProperties.docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.legacyIeCompatibilityMode)
 
     case (_, r, e) =>
       logger.error("Exception being returned to browser when processing " + r.uri.toString, e)
-      XhtmlResponse((<html> <body>Something unexpected happened while serving the page at {r.uri}</body> </html>), S.htmlProperties.docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.legacyIeCompatibilityMode)
+      XhtmlResponse((xml"<html> <body>Something unexpected happened while serving the page at ${r.uri}</body> </html>"), S.htmlProperties.docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 500, S.legacyIeCompatibilityMode)
   }
 
   /**

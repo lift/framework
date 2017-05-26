@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import scala.collection.Map
 import scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
 import scala.xml._
@@ -63,7 +64,7 @@ private[http] trait LiftMerge {
   private def pageScopedScriptFileWith(cmd: JsCmd) = {
     pageScript(Full(JavaScriptResponse(cmd, Nil, Nil, 200)))
 
-    <script type="text/javascript" src={scriptUrl(s"page/${RenderVersion.get}.js")}></script>
+    xml"""<script type="text/javascript" src=${scriptUrl(s"page/${RenderVersion.get}.js")}></script>"""
   }
 
   /**
@@ -108,9 +109,9 @@ private[http] trait LiftMerge {
     }.isDefined
 
 
-    var htmlElement = <html xmlns="http://www.w3.org/1999/xhtml" xmlns:lift='http://liftweb.net'/>
-    var headElement = <head/>
-    var bodyElement = <body/>
+    var htmlElement = xml"""<html xmlns="http://www.w3.org/1999/xhtml" xmlns:lift='http://liftweb.net'/>"""
+    var headElement = xml"<head/>"
+    var bodyElement = xml"<body/>"
     val headChildren = new ListBuffer[Node]
     val bodyChildren = new ListBuffer[Node]
     val addlHead = new ListBuffer[Node]
@@ -250,8 +251,8 @@ private[http] trait LiftMerge {
       // Appends ajax script to body
       if (LiftRules.autoIncludeAjaxCalc.vend().apply(this)) {
         bodyChildren +=
-                <script src={S.encodeURL(contextPath + "/"+LiftRules.resourceServerPath+"/lift.js")}
-                type="text/javascript"/>
+                xml"""<script src=${S.encodeURL(contextPath + "/"+LiftRules.resourceServerPath+"/lift.js")}
+                type="text/javascript"/>"""
         bodyChildren += nl
       }
 
@@ -300,7 +301,7 @@ private[http] trait LiftMerge {
             import scala.xml.transform._
 
             val errors: NodeSeq = xs.map(e =>
-                    <div style="border: red solid 2px">XHTML Validation error:{e.msg}at line{e.line + 1}and column{e.col}</div>)
+                    xml"""<div style="border: red solid 2px">XHTML Validation error:${e.msg}at line${e.line + 1}and column${e.col}</div>""")
 
             val rule = new RewriteRule {
               override def transform(n: Node) = n match {

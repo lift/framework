@@ -17,6 +17,7 @@
 package net.liftweb
 package common
 
+import scala.xml.quote._
 import xml.{NodeSeq, Text}
 
 import org.specs2.matcher.XmlMatchers
@@ -36,13 +37,13 @@ class ConversionsSpec extends Specification with XmlMatchers {
     }
 
     "convert from an Elem" in {
-      val sns: StringOrNodeSeq = <b/>
-      sns.nodeSeq must ==/ (<b/>)
+      val sns: StringOrNodeSeq = xml"<b/>"
+      sns.nodeSeq must ==/ (xml"<b/>")
     }
 
     "convert from a Seq[Node]" in {
-      val sns: StringOrNodeSeq = List(<a/>, <b/>)
-      sns.nodeSeq must ==/ (List(<a/>, <b/>) : NodeSeq)
+      val sns: StringOrNodeSeq = List(xml"<a/>", xml"<b/>")
+      sns.nodeSeq must ==/ (List(xml"<a/>", xml"<b/>") : NodeSeq)
     }
   }
 
@@ -79,29 +80,29 @@ class ConversionsSpec extends Specification with XmlMatchers {
   "A NodeSeqFunc" should {
 
     "be created by a NodeSeq constant" in {
-      val sf: NodeSeqFunc = <b>Foo</b>
+      val sf: NodeSeqFunc = xml"<b>Foo</b>"
 
-      sf.func() must ==/ (<b>Foo</b>)
+      sf.func() must ==/ (xml"<b>Foo</b>")
     }
 
     "be created by a NodeSeq Function" in {
-      val sf: NodeSeqFunc = () => <i>Bar</i>
+      val sf: NodeSeqFunc = () => xml"<i>Bar</i>"
 
-      sf.func() must ==/ (<i>Bar</i>)
+      sf.func() must ==/ (xml"<i>Bar</i>")
     }
 
     "be created by a constant that can be converted to a NodeSeq" in {
-      implicit def intToNS(in: Int): NodeSeq = <a>{in}</a>
+      implicit def intToNS(in: Int): NodeSeq = xml"<a>${in}</a>"
       val sf: NodeSeqFunc = 55
 
-      sf.func() must ==/ (<a>55</a>)
+      sf.func() must ==/ (xml"<a>55</a>")
     }
 
     "be created by a function that can be converted to a NodeSeq" in {
-      implicit def intToNodeSeq(in: Int): NodeSeq = <a>{in}</a>
+      implicit def intToNodeSeq(in: Int): NodeSeq = xml"<a>${in}</a>"
       val sf: NodeSeqFunc = () => 55
 
-      sf.func() must ==/ (<a>55</a>)
+      sf.func() must ==/ (xml"<a>55</a>")
     }
 
   }

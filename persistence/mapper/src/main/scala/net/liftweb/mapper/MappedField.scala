@@ -17,6 +17,7 @@
 package net.liftweb
 package mapper
 
+import scala.xml.quote._
 import scala.collection.mutable._
 import java.lang.reflect.Method
 import scala.xml._
@@ -249,14 +250,14 @@ trait MappedNullableField[NullableFieldType <: Any,OwnerType <: Mapper[OwnerType
    */
   override def _toForm: Box[NodeSeq] =
   S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
-    Full(appendFieldId(<input type={formInputType}
-                       name={funcName}
-                       value={get match {
+    Full(appendFieldId(xml"""<input type=${formInputType}
+                       name=${funcName}
+                       value=${get match {
                          case null => ""
                          case Full(null) => ""
                          case Full(s) => s.toString
                          case _ => ""
-                       }}/>))
+                       }}/>"""))
   }
 }
 
@@ -474,9 +475,9 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
    */
   override def _toForm: Box[NodeSeq] =
   S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
-    Full(appendFieldId(<input type={formInputType}
-                       name={funcName}
-                       value={get match {case null => "" case s => s.toString}}/>))
+    Full(appendFieldId(xml"""<input type=${formInputType}
+                       name=${funcName}
+                       value=${get match {case null => "" case s => s.toString}}/>"""))
   }
 
   /**

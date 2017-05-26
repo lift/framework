@@ -17,6 +17,7 @@
 package net.liftweb
 package mapper
 
+import scala.xml.quote._
 import common._
 
 
@@ -112,7 +113,7 @@ with LifecycleCallbacks {
 
       case xs =>
         Full(SHtml.selectObj(xs, Full(this.get), this.set))
-    }.openOr(<span>{immutableMsg}</span>))
+    }.openOr(xml"<span>${immutableMsg}</span>"))
 
   /**
    * Is the key defined

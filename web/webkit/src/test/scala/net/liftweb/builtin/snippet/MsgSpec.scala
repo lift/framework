@@ -17,6 +17,7 @@
 package net.liftweb
 package builtin.snippet
 
+import scala.xml.quote._
 import xml._
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
@@ -44,10 +45,10 @@ object MsgSpec extends Specification with XmlMatchers {
 
         // We reparse due to inconsistencies with UnparsedAttributes
         val result = S.withAttrs(new UnprefixedAttribute("id", Text("foo"), new UnprefixedAttribute("noticeClass", Text("funky"), Null))) {
-          secureXML.loadString(Msg.render(<div/>).toString)
+          secureXML.loadString(Msg.render(xml"<div/>").toString)
         }
 
-        result must ==/(<span id="foo">Error, <span class="funky">Notice</span></span>)
+        result must ==/(xml"""<span id="foo">Error, <span class="funky">Notice</span></span>""")
       }
     }
 
@@ -60,7 +61,7 @@ object MsgSpec extends Specification with XmlMatchers {
 
         // We reparse due to inconsistencies with UnparsedAttributes
         val result = S.withAttrs(new UnprefixedAttribute("id", Text("foo"), new UnprefixedAttribute("noticeClass", Text("funky"), Null))) {
-          Msg.render(<div/>).toString // render this first so attrs get captured
+          Msg.render(xml"<div/>").toString // render this first so attrs get captured
           LiftRules.noticesToJsCmd().toString.replace("\n", "")
         }
 

@@ -16,6 +16,7 @@ package mongodb
 package record
 package field
 
+import scala.xml.quote._
 import java.util.UUID
 
 import scala.xml.NodeSeq
@@ -64,10 +65,10 @@ class UUIDField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
 
   private def elem =
     S.fmapFunc(S.SFuncHolder(this.setFromAny(_))){funcName =>
-      <input type="text"
-        name={funcName}
-        value={valueBox.map(v => v.toString) openOr ""}
-        tabindex={tabIndex.toString}/>
+      xml"""<input type="text"
+        name=${funcName}
+        value=${valueBox.map(v => v.toString) openOr ""}
+        tabindex=${tabIndex.toString}/>"""
     }
 
   def toForm =

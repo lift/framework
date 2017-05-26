@@ -17,6 +17,7 @@
 package net.liftweb
 package builtin.snippet
 
+import scala.xml.quote._
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
@@ -43,12 +44,12 @@ object MsgsSpec extends Specification with XmlMatchers {
 
         // We reparse due to inconsistencies with UnparsedAttributes
         secureXML.loadString(Msgs.render(
-          <lift:warning_msg>Warning:</lift:warning_msg><lift:notice_class>funky</lift:notice_class>
+          xml"<lift:warning_msg>Warning:</lift:warning_msg><lift:notice_class>funky</lift:notice_class>"
         ).toString)
       }
 
       result must ==/(
-        <div id="lift__noticesContainer__">
+        xml"""<div id="lift__noticesContainer__">
           <div id="lift__noticesContainer___error">
             <ul>
               <li>Error</li>
@@ -64,7 +65,7 @@ object MsgsSpec extends Specification with XmlMatchers {
               <li>Notice</li>
             </ul>
           </div>
-        </div>)
+        </div>""")
     }
 
     "Properly render AJAX content" in {

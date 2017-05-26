@@ -17,6 +17,7 @@
 package net.liftweb
 package json
 
+import scala.xml.quote._
 import org.specs2.mutable.Specification
 
 
@@ -39,14 +40,14 @@ object JsonQueryExamples extends Specification  {
   "List of IPs converted to XML" in {
     val ipsList = (json \\ "ip").obj
 
-    val ips = <ips>{
+    val ips = xml"""<ips>${
       for {
         field <-ipsList
         JString(ip) <- field.value
-      } yield <ip>{ ip }</ip>
-    }</ips>
+      } yield xml"<ip>${ ip }</ip>"
+    }</ips>"""
 
-    ips mustEqual <ips><ip>192.168.1.125</ip><ip>192.168.1.126</ip><ip>192.168.1.127</ip><ip>192.168.2.125</ip><ip>192.168.2.126</ip></ips>
+    ips mustEqual xml"<ips><ip>192.168.1.125</ip><ip>192.168.1.126</ip><ip>192.168.1.127</ip><ip>192.168.2.125</ip><ip>192.168.2.126</ip></ips>"
   }
 
   "List of IPs in cluster2" in {

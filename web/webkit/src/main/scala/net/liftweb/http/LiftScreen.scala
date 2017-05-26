@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import xml._
 import reflect.Manifest
 
@@ -95,13 +96,13 @@ trait AbstractScreen extends Factory with Loggable {
 
   def screenTitle: NodeSeq = screenNameAsHtml
 
-  def cancelButton: Elem = <button>
-    {S.?("Cancel")}
-  </button>
+  def cancelButton: Elem = xml"""<button>
+    ${S.?("Cancel")}
+  </button>"""
 
-  def finishButton: Elem = <button>
-    {S.?("Finish")}
-  </button>
+  def finishButton: Elem = xml"""<button>
+    ${S.?("Finish")}
+  </button>"""
 
 
   implicit def boxOfScreen[T <: AbstractScreen](in: T): Box[T] = Box !! in
@@ -987,9 +988,9 @@ trait AbstractScreen extends Factory with Loggable {
 
 trait ScreenWizardRendered extends Loggable {
   protected def wrapInDiv(in: NodeSeq): Elem =
-    <div style="display: inline" id={FormGUID.get}>
-      {in}
-    </div>
+    xml"""<div style="display: inline" id=${FormGUID.get}>
+      ${in}
+    </div>"""
 
   def formName: String
 
@@ -1191,9 +1192,9 @@ trait ScreenWizardRendered extends Loggable {
       val snapshot = createSnapshot
 
       val ret =
-        (<form id={nextId._1} action={url}
-               method="post">{S.formGroup(-1)(SHtml.hidden(() =>
-          snapshot.restore()) % liftScreenAttr("restoreAction"))}{fields}{
+        (xml"""<form id=${nextId._1} action=${url}
+               method="post">${S.formGroup(-1)(SHtml.hidden(() =>
+          snapshot.restore()) % liftScreenAttr("restoreAction"))}${fields}${
           S.formGroup(4)(
             SHtml.hidden(() =>
             {val res = nextId._2();
@@ -1203,10 +1204,10 @@ trait ScreenWizardRendered extends Loggable {
                   localSnapshot.restore
                 })}
               res
-            })) % liftScreenAttr("nextAction") }</form> %
+            })) % liftScreenAttr("nextAction") }</form>""" %
           theScreen.additionalAttributes) ++
           prevId.toList.map{case (id, func) =>
-            <form id={id} action={url} method="post">{
+            xml"""<form id=${id} action=${url} method="post">${
               SHtml.hidden(() => {snapshot.restore();
                 val res = func();
                 if (!ajax_?) {
@@ -1214,16 +1215,16 @@ trait ScreenWizardRendered extends Loggable {
                   S.seeOther(url, () => localSnapshot.restore)
                 }
                 res
-              }) % liftScreenAttr("restoreAction")}</form>
+              }) % liftScreenAttr("restoreAction")}</form>"""
           } ++
-          <form id={cancelId._1} action={url} method="post">{SHtml.hidden(() => {
+          xml"""<form id=${cancelId._1} action=${url} method="post">${SHtml.hidden(() => {
             snapshot.restore();
             val res = cancelId._2() // WizardRules.deregisterWizardSession(CurrentSession.is)
             if (!ajax_?) {
               S.seeOther(Referer.get)
             }
             res
-          }) % liftScreenAttr("restoreAction")}</form>
+          }) % liftScreenAttr("restoreAction")}</form>"""
 
       if (ajax_?) {
         SHtml.makeFormsAjax(ret)
@@ -1283,7 +1284,7 @@ trait ScreenWizardRendered extends Loggable {
   protected def allTemplate: NodeSeq
 
   protected def allTemplateNodeSeq: NodeSeq = {
-    <div>
+    xml"""<div>
       <div class="screenInfo">
         Page <span class="screenNumber"></span> of <span class="totalScreens"></span>
       </div>
@@ -1317,7 +1318,7 @@ trait ScreenWizardRendered extends Loggable {
       </div>
       <div class="screenBottom"></div>
       <div class="wizardBottom"></div>
-    </div>
+    </div>"""
   }
 
 

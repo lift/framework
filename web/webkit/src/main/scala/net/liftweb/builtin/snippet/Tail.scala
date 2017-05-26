@@ -18,6 +18,7 @@ package net.liftweb
 package builtin 
 package snippet 
 
+import scala.xml.quote._
 import http._
 import util._
 import scala.xml._
@@ -29,7 +30,7 @@ object Tail extends DispatchSnippet {
      case _ => render _
    }
 
-   def render(xhtml: NodeSeq) : NodeSeq = <tail>{xhtml}</tail>
+   def render(xhtml: NodeSeq) : NodeSeq = xml"<tail>${xhtml}</tail>"
 }
 
 /**
@@ -63,12 +64,12 @@ object Head extends DispatchSnippet {
      
        val xhtml = validHeadTagsOnly(_xhtml)
 
-     <head>{
+     xml"""<head>${
        if ((S.attr("withResourceId") or S.attr("withresourceid")).filter(Helpers.toBoolean).isDefined) {
          WithResourceId.render(xhtml)
        } else {
          xhtml
        }
-     }</head>
+     }</head>"""
    }
 }

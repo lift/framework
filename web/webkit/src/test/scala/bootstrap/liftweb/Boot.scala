@@ -16,6 +16,7 @@
 
 package bootstrap.liftweb
 
+import scala.xml.quote._
 import net.liftweb.util._
 import net.liftweb.http._
 import net.liftweb.sitemap._
@@ -45,18 +46,18 @@ object ContainerVarTests extends RestHelper {
   // object CaseVar extends ContainerVar(Moose("dog"))
 
   serve {
-    case "cv_int" :: Nil Get _ => <int>{IntVar.is}</int>
+    case "cv_int" :: Nil Get _ => xml"<int>${IntVar.is}</int>"
     case "cv_int" :: AsInt(i) :: _ Get _ => {
       IntVar.set(i)
-      <int>{IntVar.is}</int>
+      xml"<int>${IntVar.is}</int>"
     }
   }
 
   serve {
-    case "cv_str" :: Nil Get _ => <str>{StrVar.is}</str>
+    case "cv_str" :: Nil Get _ => xml"<str>${StrVar.is}</str>"
     case "cv_str" :: str :: _ Get _ => {
       StrVar.set(str)
-      <str>{StrVar.is}</str>
+      xml"<str>${StrVar.is}</str>"
     }
   }
 }

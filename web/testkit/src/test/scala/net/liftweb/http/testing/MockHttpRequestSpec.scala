@@ -16,6 +16,7 @@
 package net.liftweb
 package mocks
 
+import scala.xml.quote._
 import org.specs2.mutable.Specification
 
 import json.JsonDSL._
@@ -111,7 +112,7 @@ object MockHttpRequestSpec extends Specification  {
     "properly set a default content type for XML" in {
       val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
 
-      testRequest.body = <test/>
+      testRequest.body = xml"<test/>"
 
       testRequest.contentType must_== "text/xml"
     }
@@ -119,7 +120,7 @@ object MockHttpRequestSpec extends Specification  {
     "properly set a user-specificed content type for XML" in {
       val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
 
-      testRequest.body_=(<test/>, "application/xml")
+      testRequest.body_=(xml"<test/>", "application/xml")
 
       testRequest.contentType must_== "application/xml"  
     }

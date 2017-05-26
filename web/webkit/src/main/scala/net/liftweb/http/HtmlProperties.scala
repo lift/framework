@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import net.liftweb.common._
 import scala.xml.{Node, NodeSeq, Elem}
 import net.liftweb.util._
@@ -278,7 +279,7 @@ final case class OldHtmlProperties(userAgent: Box[String]) extends HtmlPropertie
     }
   }
   def encoding: Box[String] =
-    Full(LiftRules.calculateXmlHeader(null, <ignore/>, contentType))
+    Full(LiftRules.calculateXmlHeader(null, xml"<ignore/>", contentType))
 
   def contentType: Box[String] = {
     val req = S.request

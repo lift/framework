@@ -17,6 +17,7 @@
 package net.liftweb
 package mapper
 
+import scala.xml.quote._
 import java.lang.reflect.Method
 import java.sql.{ResultSet, Types, PreparedStatement}
 import java.util.{Date, Locale}
@@ -60,7 +61,7 @@ object MapperRules extends Factory {
    * will be used for all MetaMappers, unless they've been
    * explicitly changed.
    */
-  var displayNameToHeaderElement: String => NodeSeq = in => <th>{in}</th>
+  var displayNameToHeaderElement: String => NodeSeq = in => xml"<th>${in}</th>"
 
   /**
    * This function converts an element into the appropriate
@@ -70,7 +71,7 @@ object MapperRules extends Factory {
    * will be used for all MetaMappers, unless they've been
    * explicitly changed.
    */
-  var displayFieldAsLineElement: NodeSeq => NodeSeq = in => <td>{in}</td>
+  var displayFieldAsLineElement: NodeSeq => NodeSeq = in => xml"<td>${in}</td>"
 
   /**
    * This function is the global (for all MetaMappers that have
@@ -82,10 +83,10 @@ object MapperRules extends Factory {
    */
   var formatFormElement: (NodeSeq, NodeSeq) => NodeSeq =
   (name, form) =>
-  <xml:group><tr>
-      <td>{name}</td>
-      <td>{form}</td>
-             </tr></xml:group>
+  xml"""<xml:group><tr>
+      <td>${name}</td>
+      <td>${form}</td>
+             </tr></xml:group>"""
 
   /**
   * What are the rules and mechanisms for putting quotes around table names?
@@ -1269,7 +1270,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       mft <- mappedFieldList if mft.field.dbDisplay_?
       field = ??(mft.method, toLine)
     } yield {
-     <span>{field.displayName}={field.asHtml}&nbsp;</span>
+     xml"<span>${field.displayName}=${field.asHtml}&nbsp;</span>"
     }) ::: List(Text(" }"))
 
 

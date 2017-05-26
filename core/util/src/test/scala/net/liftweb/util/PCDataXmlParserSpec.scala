@@ -17,6 +17,7 @@
 package net.liftweb
 package util
 
+import scala.xml.quote._
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
@@ -66,11 +67,11 @@ val data3 = """<?xml version="1.0" encoding="UTF-8"?>
 
    "PCDataMarkupParser" should {
      "Parse a document with whitespace" in {
-       PCDataXmlParser(data1).openOrThrowException("Test") must ==/ (<html>dude</html>)
+       PCDataXmlParser(data1).openOrThrowException("Test") must ==/ (xml"<html>dude</html>")
      }
 
      "Parse a document with doctype" in {
-       PCDataXmlParser(data2).openOrThrowException("Test") must ==/ (<html>dude</html>)
+       PCDataXmlParser(data2).openOrThrowException("Test") must ==/ (xml"<html>dude</html>")
      }
 
      "Parse a document with xml and doctype" in {

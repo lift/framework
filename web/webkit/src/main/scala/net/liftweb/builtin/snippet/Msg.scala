@@ -18,6 +18,7 @@ package net.liftweb
 package builtin
 package snippet
 
+import scala.xml.quote._
 import net.liftweb.http._
 import net.liftweb.http.S._
 import scala.xml._
@@ -78,7 +79,7 @@ object Msg extends DispatchSnippet {
         (attr("warningClass") or attr("warningclass")).map(cls => MsgWarningMeta += (id -> cls))
         (attr("noticeClass") or attr("noticeclass")).map(cls => MsgNoticeMeta += (id -> cls))
 
-        <span id={id}>{renderIdMsgs(id)}</span> ++ effects(id)
+        xml"<span id=${id}>${renderIdMsgs(id)}</span>" ++ effects(id)
       }
       case _ => NodeSeq.Empty
     }
@@ -100,7 +101,7 @@ object Msg extends DispatchSnippet {
         msg.toList match {
           case Nil => Nil
           case msgList => style match {
-            case Some(s) => msgList.flatMap(t => <span>{t}</span> % ("class" -> s))
+            case Some(s) => msgList.flatMap(t => xml"<span>${t}</span>" % ("class" -> s))
             case _ => msgList flatMap ( n => n )
           }
         }

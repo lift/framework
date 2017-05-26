@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import java.io.InputStream
 
 import net.liftweb.common.Box
@@ -68,7 +69,7 @@ object ContentParser {
    * template being surrounded by `default.html` with the content located at `id=content`.
    */
   val defaultSurround: NodeSeq=>NodeSeq =
-    { elems => <lift:surround with="default" at="content">{elems}</lift:surround> }
+    { elems => xml"""<lift:surround with="default" at="content">${elems}</lift:surround>""" }
 
   /**
    * A basic `ContentParser` which handles one template filename suffix, operates on a string, and surrounds the
