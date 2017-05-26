@@ -19,6 +19,7 @@ package mongodb
 package record
 package field
 
+import scala.xml.quote._
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.Str
 import net.liftweb.json.JsonAST.{JNothing, JObject, JValue}
@@ -62,7 +63,7 @@ class DBRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefT
 
   def setFromJValue(jvalue: JValue) = Empty // not implemented
 
-  def asXHtml = <div></div>
+  def asXHtml = xml"<div></div>"
 
   def defaultValue = new DBRef("", null)
 

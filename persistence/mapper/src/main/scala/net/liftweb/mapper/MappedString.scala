@@ -17,6 +17,7 @@
 package net.liftweb
 package mapper
 
+import scala.xml.quote._
 import java.sql.{ResultSet, Types}
 import java.lang.reflect.Method
 import util._
@@ -147,9 +148,9 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
 
   override def _toForm: Box[Elem] =
   fmapFunc({s: List[String] => this.setFromAny(s)}){name =>
-    Full(appendFieldId(<input type={formInputType} maxlength={maxLen.toString}
-                       name={name}
-                       value={get match {case null => "" case s => s.toString}}/>))}
+    Full(appendFieldId(xml"""<input type=${formInputType} maxlength=${maxLen.toString}
+                       name=${name}
+                       value=${get match {case null => "" case s => s.toString}}/>"""))}
 
   protected def i_obscure_!(in : String) : String = {
     ""

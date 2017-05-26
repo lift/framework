@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import common.Full
 import xml.NodeSeq
 
@@ -52,6 +53,6 @@ trait NamedCometActorSnippet {
     for (sess <- S.session) sess.sendCometMessage(
       cometClass, Full(name), CometName(name)
     )
-    <lift:comet type={cometClass} name={name}>{xhtml}</lift:comet>
+    xml"<lift:comet type=${cometClass} name=${name}>${xhtml}</lift:comet>"
   }
 }

@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import xml.{NodeSeq, Text}
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
@@ -61,19 +62,19 @@ object BindingsSpec extends Specification with XmlMatchers {
   }
   */
 
-  val template = <div>
+  val template = xml"""<div>
     <span><myclass:str/></span>
     <span><myclass:i/></span>
     <myclass:other>
       <span><other:foo/></span>
     </myclass:other>
-  </div>
+  </div>"""
 
-  val expected = <div>
+  val expected = xml"""<div>
     <span>#hi#</span>
     <span>1</span>
     <span>%bar%</span>
-  </div>
+  </div>"""
    /*
   "Bindings.binder with an available implicit databinding" should {
     "allow the application of that databinding to an appropriate object" in {
@@ -102,7 +103,7 @@ object BindingsSpec extends Specification with XmlMatchers {
     val session = new LiftSession("hello", "", Empty)
 
     S.initIfUninitted(session) {
-      val org = <span><input id="frog" class="dog cat"/></span>
+      val org = xml"""<span><input id="frog" class="dog cat"/></span>"""
       
       val res = ("#frog" #> SHtml.text("", s => ()) ).apply(org)
 

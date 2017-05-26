@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import java.io.{InputStream, ByteArrayInputStream, File}
 import java.nio.file.{Files, Path}
 import scala.xml._
@@ -610,7 +611,7 @@ object Req {
   }
 
   private[liftweb] def defaultCreateNotFound(in: Req) =
-  XhtmlResponse((<html> <body>The Requested URL {in.contextPath + in.uri} was not found on this server</body> </html>),
+  XhtmlResponse((xml"<html> <body>The Requested URL ${in.contextPath + in.uri} was not found on this server</body> </html>"),
                 LiftRules.htmlProperties.vend(in).docType, List("Content-Type" -> "text/html; charset=utf-8"), Nil, 404, S.legacyIeCompatibilityMode)
 
   def unapply(in: Req): Option[(List[String], String, RequestType)] = Some((in.path.partPath, in.path.suffix, in.requestType))

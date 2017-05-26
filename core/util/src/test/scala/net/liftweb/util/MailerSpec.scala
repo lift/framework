@@ -17,6 +17,7 @@
 package net.liftweb
 package util
 
+import scala.xml.quote._
 import javax.mail.internet.{MimeMessage, MimeMultipart}
 
 import org.specs2.mutable.Specification
@@ -97,7 +98,7 @@ object MailerSpec extends Specification {
           From("sender@nowhere.com"),
           Subject("This is a rich email"),
           To("recipient@nowhere.com"),
-          XHTMLMailBodyType(<html> <body>Here is some rich text</body> </html>)
+          XHTMLMailBodyType(xml"<html> <body>Here is some rich text</body> </html>")
         )
       }
 
@@ -114,7 +115,7 @@ object MailerSpec extends Specification {
           Subject("This is a mixed email"),
           To("recipient@nowhere.com"),
           XHTMLPlusImages(
-            <html> <body>Here is some rich text</body> </html>,
+            xml"<html> <body>Here is some rich text</body> </html>",
             PlusImageHolder("awesome.pdf", "text/html", attachmentBytes, true)
           )
         )

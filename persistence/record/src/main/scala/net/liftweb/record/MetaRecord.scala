@@ -17,6 +17,7 @@
 package net.liftweb
 package record
 
+import scala.xml.quote._
 import scala.language.existentials
 
 import java.lang.reflect.Modifier
@@ -334,7 +335,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
 
       case e @ <lift:field_msg>{_*}</lift:field_msg> => e.attribute("name") match {
           case Some(name) => fieldByName(name.toString, inst).map(_.uniqueFieldId match {
-                case Full(id) => <lift:msg id={id}/>
+                case Full(id) => xml"<lift:msg id=${id}/>"
                 case _ => NodeSeq.Empty
               }).openOr(NodeSeq.Empty)
           case _ => NodeSeq.Empty

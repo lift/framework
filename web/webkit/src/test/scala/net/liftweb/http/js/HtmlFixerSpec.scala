@@ -18,6 +18,7 @@ package net.liftweb
 package http
 package js
 
+import scala.xml.quote._
 import org.specs2.mutable.Specification
 
 import common._
@@ -33,7 +34,7 @@ object HtmlFixerSpec extends Specification  {
     testRules.extractInlineJavaScript = true
 
     "never extract inline JS in fixHtmlFunc" in new WithLiftContext(testRules, testSession) {
-      testFixer.fixHtmlFunc("test", <div onclick="clickMe();"></div>)(identity) must_==
+      testFixer.fixHtmlFunc("test", xml"""<div onclick="clickMe();"></div>""")(identity) must_==
         """"<div onclick=\"clickMe();\"></div>""""
     }
   }

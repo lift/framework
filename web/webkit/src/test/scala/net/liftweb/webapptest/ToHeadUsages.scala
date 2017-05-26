@@ -17,6 +17,7 @@
 package net.liftweb
 package webapptest
 
+import scala.xml.quote._
 import java.net.{URL, InetAddress}
 
 import org.specs2.mutable.Specification
@@ -168,20 +169,20 @@ object ToHeadUsages extends Specification  {
 
     "Exclude from context rewriting" in {
       val first = http.Req.normalizeHtml("/wombat",
-        <span>
+        xml"""<span>
           <a href="/foo" id="foo">foo</a>
           <a href="/bar" id="bar">bar</a>
-        </span>
+        </span>"""
       )
 
       def excludeBar(in: String): Boolean = in.startsWith("/bar")
 
       val second = LiftRules.excludePathFromContextPathRewriting.doWith(excludeBar _) {
         Req.normalizeHtml("/wombat",
-          <span>
+          xml"""<span>
             <a href="/foo" id="foo">foo</a>
             <a href="/bar" id="bar">bar</a>
-          </span>
+          </span>"""
         )
       }
 

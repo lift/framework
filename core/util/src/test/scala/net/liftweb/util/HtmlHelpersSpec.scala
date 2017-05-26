@@ -17,6 +17,7 @@
 package net.liftweb
 package util
 
+import scala.xml.quote._
 import xml._
 
 import org.specs2.matcher.XmlMatchers
@@ -32,17 +33,17 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
 
   "findBox" should {
     "find an id" in {
-      val xml = <foo><bar/>Dog<b><woof id="3"/></b></foo>
+      val xml = xml"""<foo><bar/>Dog<b><woof id="3"/></b></foo>"""
 
       findBox(xml) {
         e => e.attribute("id").
         filter(_.text == "3").
         map(i => e)
-      }.openOrThrowException("Test") must ==/ (<woof id="3"/>)
+      }.openOrThrowException("Test") must ==/ (xml"""<woof id="3"/>""")
     }
 
     "not find an ide" in {
-      val xml = <foo><bar/>Dog<b><woof ide="3"/></b></foo>
+      val xml = xml"""<foo><bar/>Dog<b><woof ide="3"/></b></foo>"""
 
       findBox(xml) {
         e => e.attribute("id").
@@ -52,7 +53,7 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
 
 
     "not find a the wrong id" in {
-      val xml = <foo><bar/>Dog<b><woof ide="4"/></b></foo>
+      val xml = xml"""<foo><bar/>Dog<b><woof ide="4"/></b></foo>"""
 
       findBox(xml) {
         e => e.attribute("id").
@@ -63,16 +64,16 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
 
   "findOption" should {
     "find an id" in {
-      val xml = <foo><bar/>Dog<b><woof id="3"/></b></foo>
+      val xml = xml"""<foo><bar/>Dog<b><woof id="3"/></b></foo>"""
 
       findOption(xml) {
         e => e.attribute("id").
         filter(_.text == "3").map(i => e)
-      }.get must ==/ (<woof id="3"/>)
+      }.get must ==/ (xml"""<woof id="3"/>""")
     }
 
     "not find an ide" in {
-      val xml = <foo><bar/>Dog<b><woof ide="3"/></b></foo>
+      val xml = xml"""<foo><bar/>Dog<b><woof ide="3"/></b></foo>"""
 
       findOption(xml) {
         e => e.attribute("id").
@@ -82,7 +83,7 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
 
 
     "not find a the wrong id" in {
-      val xml = <foo><bar/>Dog<b><woof ide="4"/></b></foo>
+      val xml = xml"""<foo><bar/>Dog<b><woof ide="4"/></b></foo>"""
 
       findOption(xml) {
         e => e.attribute("id").
@@ -93,15 +94,15 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
 
   "findId" should {
     val xml =
-      <whoa>
+      xml"""<whoa>
         <thing id="boom">Boom</thing>
         <other-thing id="other-boom">Other boom</other-thing>
-      </whoa>
+      </whoa>"""
 
     "find the element with a requested id in a NodeSeq" in {
       findId(xml, "boom") must beLike {
         case Some(element) =>
-          element must ==/(<thing id="boom">Boom</thing>)
+          element must ==/(xml"""<thing id="boom">Boom</thing>""")
       }
     }
 
@@ -114,31 +115,31 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
     }
 
     "provide an Empty if no ide is foud in a NodeSeq when no id is requested" in {
-      findId(<test />) must_== Empty
+      findId(xml"<test />") must_== Empty
     }
   }
 
   "head removal" should {
     "remove <head>" in {
-      Helpers.stripHead(<head><i>hello</i></head>) must ==/(<i>hello</i>)
+      Helpers.stripHead(xml"<head><i>hello</i></head>") must ==/(xml"<i>hello</i>")
     }
 
     "ignore non-head" in {
-      Helpers.stripHead(<head3><i>hello</i></head3>) must ==/(<head3><i>hello</i></head3>)
+      Helpers.stripHead(xml"<head3><i>hello</i></head3>") must ==/(xml"<head3><i>hello</i></head3>")
     }
 
     "String subhead" in {
-      Helpers.stripHead(<head3><i><head>hello</head></i></head3>) must ==/(<head3><i>hello</i></head3>)
+      Helpers.stripHead(xml"<head3><i><head>hello</head></i></head3>") must ==/(xml"<head3><i>hello</i></head3>")
     }
   }
 
   "removeAttribute" should {
-    val element = <boom attribute="hello" otherAttribute="good-bye" />
+    val element = xml"""<boom attribute="hello" otherAttribute="good-bye" />"""
 
     "remove the specified attribute from a provided element" in {
       val removed = removeAttribute("attribute", element)
 
-      removed must ==/(<boom otherAttribute="good-bye" />)
+      removed must ==/(xml"""<boom otherAttribute="good-bye" />""")
     }
 
     "remove the specified attribute from a provided MetaData list" in {
@@ -151,23 +152,23 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
 
   "addCssClass" should {
     "add a new attribute if no class attribute exists" in {
-      (addCssClass("foo", <b/>) \ "@class").text must_== "foo"
+      (addCssClass("foo", xml"<b/>") \ "@class").text must_== "foo"
     }
 
     "append to an existing class attribute if it already exists" in {
-      (addCssClass("foo", <b class="dog"/>) \ "@class").text must_== "dog foo"
+      (addCssClass("foo", xml"""<b class="dog"/>""") \ "@class").text must_== "dog foo"
     }
   }
 
   "ensureUniqueId" should {
     "leave things unchanged if no ids collide" in {
       val xml =
-        <boom id="thing">
+        xml"""<boom id="thing">
           <hello id="other-thing" />
           <bye id="third-thing" />
-        </boom>
+        </boom>"""
 
-      val uniqued = <wrapper>{ensureUniqueId(xml).head}</wrapper>
+      val uniqued = xml"<wrapper>${ensureUniqueId(xml).head}</wrapper>"
 
       (uniqued must \("boom", "id" -> "thing")) and
       (uniqued must \\("hello", "id" -> "other-thing")) and
@@ -177,28 +178,28 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
     "strip the ids if elements have an id matching a previous one" in {
       val xml =
         Group(
-          <boom id="thing" />
+          xml"""<boom id="thing" />
           <hello id="thing" />
-          <bye id="thing" />
+          <bye id="thing" />"""
         )
 
       val uniqued = NodeSeq.seqToNodeSeq(ensureUniqueId(xml).flatten)
 
       uniqued must ==/(
-        <boom id="thing" />
+        xml"""<boom id="thing" />
         <hello />
-        <bye />
+        <bye />"""
       )
     }
 
     "leave child element ids alone even if they match the ids of the root element or each other" in {
       val xml =
-        <boom id="thing">
+        xml"""<boom id="thing">
           <hello id="thing" />
           <bye id="thing" />
-        </boom>
+        </boom>"""
 
-      val uniqued = <wrapper>{ensureUniqueId(xml).head}</wrapper>
+      val uniqued = xml"<wrapper>${ensureUniqueId(xml).head}</wrapper>"
 
       (uniqued must \\("hello", "id" -> "thing")) and
       (uniqued must \\("bye", "id" -> "thing"))
@@ -208,12 +209,12 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
   "deepEnsureUniqueId" should {
     "leave things unchanged if no ids collide" in {
       val xml =
-        <boom id="thing">
+        xml"""<boom id="thing">
           <hello id="other-thing" />
           <bye id="third-thing" />
-        </boom>
+        </boom>"""
 
-      val uniqued = <wrapper>{deepEnsureUniqueId(xml).head}</wrapper>
+      val uniqued = xml"<wrapper>${deepEnsureUniqueId(xml).head}</wrapper>"
 
       (uniqued must \("boom", "id" -> "thing")) and
       (uniqued must \\("hello", "id" -> "other-thing")) and
@@ -223,34 +224,34 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
     "strip the ids if elements have an id matching a previous one" in {
       val xml =
         Group(
-          <boom id="thing" />
+          xml"""<boom id="thing" />
           <hello id="thing" />
-          <bye id="thing" />
+          <bye id="thing" />"""
         )
 
       val uniqued = NodeSeq.seqToNodeSeq(deepEnsureUniqueId(xml).flatten)
 
       uniqued must ==/(
-        <boom id="thing" />
+        xml"""<boom id="thing" />
         <hello />
-        <bye />
+        <bye />"""
       )
     }
 
     "strip child element ids alone if they match the ids of the root element or each other" in {
       val xml =
-        <boom id="thing">
+        xml"""<boom id="thing">
           <hello id="thing" />
           <good id="other-thing">Boom</good>
           <bye id="other-thing">
             <other id="other-thing" />
           </bye>
-        </boom>
+        </boom>"""
 
-      val uniqued = <wrapper>{deepEnsureUniqueId(xml).head}</wrapper>
+      val uniqued = xml"<wrapper>${deepEnsureUniqueId(xml).head}</wrapper>"
 
       uniqued must ==/(
-        <wrapper>
+        xml"""<wrapper>
           <boom id="thing">
             <hello />
             <good id="other-thing">Boom</good>
@@ -258,7 +259,7 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
               <other />
             </bye>
           </boom>
-        </wrapper>
+        </wrapper>"""
       )
     }
   }
@@ -266,30 +267,30 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
   "ensureId" should {
     "if the first element has an id, replace it with the specified one" in {
       val xml =
-        <boom id="thing">
+        xml"""<boom id="thing">
           <hello id="thing" />
           <good id="other-thing">Boom</good>
           <bye id="other-thing">
             <other id="other-thing" />
           </bye>
-        </boom>
+        </boom>"""
 
-      val uniqued = <wrapper>{ensureId(xml, "other-thinger").head}</wrapper>
+      val uniqued = xml"<wrapper>${ensureId(xml, "other-thinger").head}</wrapper>"
 
       uniqued must \("boom", "id" -> "other-thinger")
     }
 
     "if the first element has no id, give it the specified one" in {
       val xml =
-        <boom>
+        xml"""<boom>
           <hello id="thing" />
           <good id="other-thing">Boom</good>
           <bye id="other-thing">
             <other id="other-thing" />
           </bye>
-        </boom>
+        </boom>"""
 
-      val uniqued = <wrapper>{ensureId(xml, "other-thinger").head}</wrapper>
+      val uniqued = xml"<wrapper>${ensureId(xml, "other-thinger").head}</wrapper>"
 
       uniqued must \("boom", "id" -> "other-thinger")
     }
@@ -297,17 +298,17 @@ object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
     "not affect other elements" in {
       val xml =
         Group(
-          <boom id="thing" />
+          xml"""<boom id="thing" />
           <hello id="thing" />
-          <bye id="thing" />
+          <bye id="thing" />"""
         )
 
       val uniqued = NodeSeq.seqToNodeSeq(ensureId(xml, "other-thinger").flatten)
 
       uniqued must ==/(
-        <boom id="other-thinger" />
+        xml"""<boom id="other-thinger" />
         <hello id="thing" />
-        <bye id="thing" />
+        <bye id="thing" />"""
       )
     }
   }

@@ -17,6 +17,7 @@ package net.liftweb
 package mockweb
 
 
+import scala.xml.quote._
 import common.Full
 import http._
 import http.rest._
@@ -132,12 +133,12 @@ class WebSpecSpec extends WebSpec(WebSpecSpecBoot.boot _) {
         }
     }
 
-    "properly set an XML body" withSFor(testUrl) withPost(<test/>) in {
+    "properly set an XML body" withSFor(testUrl) withPost(xml"<test/>") in {
       S.request match {
         case Full(req) =>
           req.xml_? must_== true
           req.post_? must_== true
-          req.xml must_== Full(<test/>)
+          req.xml must_== Full(xml"<test/>")
         case _ => failure("No request found in S")
       }
     }

@@ -17,6 +17,7 @@
 package net.liftweb
 package record
 
+import scala.xml.quote._
 import net.liftweb.common._
 import net.liftweb.http.S
 import net.liftweb.http.js.{JsExp}
@@ -128,7 +129,7 @@ trait BaseField extends FieldIdentifier with util.BaseField {
   override def uniqueFieldId: Box[String] = Full(name+"_id")
 
   def label: NodeSeq = uniqueFieldId match {
-    case Full(id) =>  <label for={id}>{displayName}</label>
+    case Full(id) =>  xml"<label for=${id}>${displayName}</label>"
     case _ => NodeSeq.Empty
   }
 
@@ -464,11 +465,11 @@ trait DisplayWithLabel[OwnerType <: Record[OwnerType]] extends OwnedField[OwnerT
   override abstract def toForm: Box[NodeSeq] =
     for (id <- uniqueFieldId; control <- super.toForm)
     yield
-      <div id={ id + "_holder" }>
-        <div><label for={ id }>{ displayName }</label></div>
-        { control }
-        <lift:msg id={id} errorClass="lift_error"/>
-      </div>
+      xml"""<div id=${ id + "_holder" }>
+        <div><label for=${ id }>${ displayName }</label></div>
+        ${ control }
+        <lift:msg id=${id} errorClass="lift_error"/>
+      </div>"""
 }
 
 trait KeyField[MyType, OwnerType <: Record[OwnerType] with KeyedRecord[OwnerType, MyType]] extends Field[MyType, OwnerType] {

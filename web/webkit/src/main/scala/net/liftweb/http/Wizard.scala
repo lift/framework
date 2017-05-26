@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import net.liftweb._
 import http._
 import js._
@@ -347,21 +348,21 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
    */
   def calcFirstScreen: Box[Screen] = screens.headOption
 
-  def nextButton: Elem = <button>
-    {S.?("Next")}
-  </button>
+  def nextButton: Elem = xml"""<button>
+    ${S.?("Next")}
+  </button>"""
 
-  def prevButton: Elem = <button>
-    {S.?("Previous")}
-  </button>
+  def prevButton: Elem = xml"""<button>
+    ${S.?("Previous")}
+  </button>"""
 
-  def cancelButton: Elem = <button>
-    {S.?("Cancel")}
-  </button>
+  def cancelButton: Elem = xml"""<button>
+    ${S.?("Cancel")}
+  </button>"""
 
-  def finishButton: Elem = <button>
-    {S.?("Finish")}
-  </button>
+  def finishButton: Elem = xml"""<button>
+    ${S.?("Finish")}
+  </button>"""
 
   def currentScreen: Box[Screen] = CurrentScreen.is
 

@@ -16,6 +16,7 @@
 
 package net.liftweb.sitemap
 
+import scala.xml.quote._
 import net.liftweb.common._
 import net.liftweb.http.{LiftRules, S}
 import xml.{Elem, Text, NodeSeq}
@@ -112,14 +113,14 @@ trait FlexMenuBuilder {
    * By default, create an li for a menu item
    */
   protected def buildInnerTag(contents: NodeSeq, path: Boolean, current: Boolean): Elem =
-    updateForCurrent(updateForPath(<li>{contents}</li>, path), current)
+    updateForCurrent(updateForPath(xml"<li>${contents}</li>", path), current)
 
 
   /**
    * Render a placeholder
    */
   protected def renderPlaceholder(item: MenuItem, renderInner: Seq[MenuItem] => NodeSeq): Elem = {
-    buildInnerTag(<xml:group><span>{item.text}</span>{renderInner(item.kids)}</xml:group>,
+    buildInnerTag(xml"<xml:group><span>${item.text}</span>${renderInner(item.kids)}</xml:group>",
       item.path, item.current)
   }
 
@@ -127,44 +128,44 @@ trait FlexMenuBuilder {
    * Render a link that's the current link, but the "link to self" flag is set to true
    */
   protected def renderSelfLinked(item: MenuItem, renderInner: Seq[MenuItem] => NodeSeq): Elem =
-    buildInnerTag(<xml:group>{renderLink(item.uri, item.text, item.path,
-      item.current)}{renderInner(item.kids)}</xml:group>, item.path, item.current)
+    buildInnerTag(xml"""<xml:group>${renderLink(item.uri, item.text, item.path,
+      item.current)}${renderInner(item.kids)}</xml:group>""", item.path, item.current)
 
   /**
    * Render the currently selected menu item, but with no a link back to self
    */
   protected def renderSelfNotLinked(item: MenuItem, renderInner: Seq[MenuItem] => NodeSeq): Elem =
-    buildInnerTag(<xml:group>{renderSelf(item)}{renderInner(item.kids)}</xml:group>, item.path, item.current)
+    buildInnerTag(xml"<xml:group>${renderSelf(item)}${renderInner(item.kids)}</xml:group>", item.path, item.current)
 
   /**
    * Render the currently selected menu item
    */
-  protected def renderSelf(item: MenuItem): NodeSeq = <span>{item.text}</span>
+  protected def renderSelf(item: MenuItem): NodeSeq = xml"<span>${item.text}</span>"
 
   /**
    * Render a generic link
    */
   protected def renderLink(uri: NodeSeq, text: NodeSeq, path: Boolean, current: Boolean): NodeSeq =
-    <a href={uri}>{text}</a>
+    xml"<a href=${uri}>${text}</a>"
 
   /**
    * Render an item in the current path
    */
   protected def renderItemInPath(item: MenuItem, renderInner: Seq[MenuItem] => NodeSeq): Elem =
-    buildInnerTag(<xml:group>{renderLink(item.uri, item.text, item.path,
-      item.current)}{renderInner(item.kids)}</xml:group>, item.path, item.current)
+    buildInnerTag(xml"""<xml:group>${renderLink(item.uri, item.text, item.path,
+      item.current)}${renderInner(item.kids)}</xml:group>""", item.path, item.current)
 
   /**
    * Render a menu item that's neither in the path nor
    */
   protected def renderItem(item: MenuItem, renderInner: Seq[MenuItem] => NodeSeq): Elem =
-    buildInnerTag(<xml:group>{renderLink(item.uri, item.text, item.path,
-      item.current)}{renderInner(item.kids)}</xml:group>, item.path, item.current)
+    buildInnerTag(xml"""<xml:group>${renderLink(item.uri, item.text, item.path,
+      item.current)}${renderInner(item.kids)}</xml:group>""", item.path, item.current)
 
   /**
    * Render the outer tag for a group of menu items
    */
-  protected def renderOuterTag(inner: NodeSeq, top: Boolean): NodeSeq = <ul>{inner}</ul>
+  protected def renderOuterTag(inner: NodeSeq, top: Boolean): NodeSeq = xml"<ul>${inner}</ul>"
 
   /**
    * The default set of MenuItems to be rendered

@@ -16,6 +16,7 @@
 
 package net.liftweb
 
+import scala.xml.quote._
 import scala.concurrent.{ExecutionContext,Future}
 import scala.xml.{Comment,NodeSeq}
 
@@ -55,7 +56,7 @@ package object http {
           // Actually complete the render once the future is fulfilled.
           asyncResolveProvider.resolveAsync(concreteResolvable, resolvedResult => deferredRender(resolvedResult))
 
-          <div id={placeholderId}><img src="/images/ajax-loader.gif" alt="Loading..." /></div>
+          xml"""<div id=${placeholderId}><img src="/images/ajax-loader.gif" alt="Loading..." /></div>"""
         } openOr {
           Comment("FIX"+"ME: Asynchronous rendering failed for unknown reason.")
         }

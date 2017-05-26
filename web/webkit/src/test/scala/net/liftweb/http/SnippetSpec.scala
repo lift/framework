@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import xml._
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
@@ -37,47 +38,47 @@ object SnippetSpec extends Specification with XmlMatchers {
 
   "Templates" should {
     "Correctly process lift:content_id" in {
-      val ret = Templates.checkForContentId(<html lift:content_id="content">
+      val ret = Templates.checkForContentId(xml"""<html lift:content_id="content">
                                      <head/>
                                      <body>
                                      <div id="content" class="lift:surround"/>
                                      </body>
-                                     </html>)
+                                     </html>""")
 
-      ret must ==/ (<div id="content" class="lift:surround"/>)
+      ret must ==/ (xml"""<div id="content" class="lift:surround"/>""")
     }
 
     "Correctly process body class" in {
-      val ret = Templates.checkForContentId(<html>
+      val ret = Templates.checkForContentId(xml"""<html>
                                      <head/>
                                      <body class="lift:content_id=frog">
                                       <div><span> mooose dog
                                      <div id="frog" class="lift:surround"/>
                                       </span></div>
                                      </body>
-                                     </html>)
+                                     </html>""")
 
-      ret must ==/ (<div id="frog" class="lift:surround"/>)
+      ret must ==/ (xml"""<div id="frog" class="lift:surround"/>""")
     }
 
     "Correctly process l:content_id" in {
-      val ret = Templates.checkForContentId(<html l:content_id="dog">
+      val ret = Templates.checkForContentId(xml"""<html l:content_id="dog">
                                      <head/>
                                      <body>
                                      <lift:surround id="dog"><div/></lift:surround>
                                      </body>
-                                     </html>)
+                                     </html>""")
 
-      ret must ==/ (<lift:surround id="dog"><div/></lift:surround>)
+      ret must ==/ (xml"""<lift:surround id="dog"><div/></lift:surround>""")
     }
 
     "Correctly process not lift:designer_friendly" in {
-      val xml = <html>
+      val xml = xml"""<html>
       <head/>
       <body>
       <div class="lift:surround"/>
       </body>
-      </html>
+      </html>"""
 
       val ret = Templates.checkForContentId(xml)
 
@@ -85,14 +86,14 @@ object SnippetSpec extends Specification with XmlMatchers {
     }
 
     "Snippet invocation works <lift:xxx/>" in {
-      val res = <div/>
+      val res = xml"<div/>"
 
       val ret =
         S.statelessInit(Req.nil) {
           S.mapSnippetsWith("foo" -> ((a: NodeSeq) => a)) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <lift:foo>{res}</lift:foo>)
+            } yield s.processSurroundAndInclude("test", xml"<lift:foo>${res}</lift:foo>")
           }
         }
 
@@ -101,14 +102,14 @@ object SnippetSpec extends Specification with XmlMatchers {
 
 
     "Snippet invocation works <l:xxx/>" in {
-      val res = <div/>
+      val res = xml"<div/>"
 
       val ret =
         S.statelessInit(Req.nil) {
           S.mapSnippetsWith("foo" -> ((a: NodeSeq) => a)) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <l:foo>{res}</l:foo>)
+            } yield s.processSurroundAndInclude("test", xml"<l:foo>${res}</l:foo>")
           }
         }
 
@@ -116,14 +117,14 @@ object SnippetSpec extends Specification with XmlMatchers {
     }
 
     "Snippet invocation works class='l:foo'" in {
-      val res = <div/>
+      val res = xml"<div/>"
 
       val ret =
         S.statelessInit(Req.nil) {
           S.mapSnippetsWith("foo" -> ((a: NodeSeq) => a)) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div class="l:foo" />)
+            } yield s.processSurroundAndInclude("test", xml"""<div class="l:foo" />""")
           }
         }
 
@@ -131,7 +132,7 @@ object SnippetSpec extends Specification with XmlMatchers {
     }
 
     "Snippet invocation works class='l:foo' and ? for attr sep" in {
-      val res = <div/>
+      val res = xml"<div/>"
 
       def testAttrs(in: NodeSeq): NodeSeq = {
         S.attr("bing") must_== Full("bong")
@@ -145,7 +146,7 @@ object SnippetSpec extends Specification with XmlMatchers {
           S.mapSnippetsWith("foo" -> testAttrs _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div class="l:foo?bing=bong?fuzz=faz+snark?noodle=FatPoodle" />)
+            } yield s.processSurroundAndInclude("test", xml"""<div class="l:foo?bing=bong?fuzz=faz+snark?noodle=FatPoodle" />""")
           }
         }
 
@@ -154,7 +155,7 @@ object SnippetSpec extends Specification with XmlMatchers {
 
 
     "Snippet invocation works class='l:foo' and ; for attr sep" in {
-      val res = <div/>
+      val res = xml"<div/>"
 
       def testAttrs(in: NodeSeq): NodeSeq = {
         S.attr("bing") must_== Full("bong")
@@ -168,7 +169,7 @@ object SnippetSpec extends Specification with XmlMatchers {
           S.mapSnippetsWith("foo" -> testAttrs _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div class="l:foo?bing=bong;fuzz=faz+snark;noodle=FatPoodle" />)
+            } yield s.processSurroundAndInclude("test", xml"""<div class="l:foo?bing=bong;fuzz=faz+snark;noodle=FatPoodle" />""")
           }
         }
 
@@ -177,7 +178,7 @@ object SnippetSpec extends Specification with XmlMatchers {
 
 
     "Snippet invocation works class='l:foo' and & for attr sep" in {
-      val res = <div/>
+      val res = xml"<div/>"
 
       def testAttrs(in: NodeSeq): NodeSeq = {
         S.attr("bing") must_== Full("bong")
@@ -192,7 +193,7 @@ object SnippetSpec extends Specification with XmlMatchers {
             val clStr = "l:foo?bing=bong&amp;fuzz=faz+snark&amp;noodle=FatPoodle"
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div class={clStr} />)
+            } yield s.processSurroundAndInclude("test", xml"<div class=${clStr} />")
           }
         }
 
@@ -201,7 +202,7 @@ object SnippetSpec extends Specification with XmlMatchers {
 
 
     "Snippet invocation works class='l:foo' and mixed attr sep" in {
-      val res = <div/>
+      val res = xml"<div/>"
 
       def testAttrs(in: NodeSeq): NodeSeq = {
         S.attr("bing") must_== Full("bong")
@@ -215,7 +216,7 @@ object SnippetSpec extends Specification with XmlMatchers {
           S.mapSnippetsWith("foo" -> testAttrs _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div class="l:foo?bing=bong?fuzz=faz+snark;noodle=FatPoodle" />)
+            } yield s.processSurroundAndInclude("test", xml"""<div class="l:foo?bing=bong?fuzz=faz+snark;noodle=FatPoodle" />""")
           }
         }
 
@@ -225,14 +226,14 @@ object SnippetSpec extends Specification with XmlMatchers {
 
 
     "Snippet invocation works class='lift:foo'" in {
-      val res = <div/>
+      val res = xml"<div/>"
 
       val ret =
         S.statelessInit(Req.nil) {
           S.mapSnippetsWith("foo" -> ((a: NodeSeq) => a)) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div class='lift:foo' />)
+            } yield s.processSurroundAndInclude("test", xml"<div class='lift:foo' />")
           }
         }
 
@@ -245,7 +246,7 @@ object SnippetSpec extends Specification with XmlMatchers {
           S.mapSnippetsWith("foo" -> ((a: NodeSeq) => a)) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div class="lift:bar" />)
+            } yield s.processSurroundAndInclude("test", xml"""<div class="lift:bar" />""")
           }
         }
 
@@ -269,7 +270,7 @@ object SnippetSpec extends Specification with XmlMatchers {
     }
 
     "Snippet invocation fails in stateless mode" in {
-      val res = <div>dog</div>
+      val res = xml"<div>dog</div>"
 
       val ret =
         S.statelessInit(Req.nil) {
@@ -277,7 +278,7 @@ object SnippetSpec extends Specification with XmlMatchers {
             for {
               s <- S.session
             } yield s.processSurroundAndInclude("test",
-                                                <lift:foo>{res}</lift:foo>)
+                                                xml"<lift:foo>${res}</lift:foo>")
           }
         }
 
@@ -285,7 +286,7 @@ object SnippetSpec extends Specification with XmlMatchers {
     }
 
     "Snippet invocation succeeds in normal mode" in {
-      val res = <div>dog</div>
+      val res = xml"<div>dog</div>"
       val session = new LiftSession("", "hello", Empty)
 
       val ret =
@@ -294,7 +295,7 @@ object SnippetSpec extends Specification with XmlMatchers {
             for {
               s <- S.session
             } yield s.processSurroundAndInclude("test",
-                                                <lift:foo>{res}</lift:foo>)
+                                                xml"<lift:foo>${res}</lift:foo>")
           }
         }
 
@@ -302,7 +303,7 @@ object SnippetSpec extends Specification with XmlMatchers {
     }
 
     "Snippet invocation fails in stateless mode (function table)" in {
-      val res = <div>dog</div>
+      val res = xml"<div>dog</div>"
 
       val ret =
         S.statelessInit(Req.nil) {
@@ -310,7 +311,7 @@ object SnippetSpec extends Specification with XmlMatchers {
             for {
               s <- S.session
             } yield s.processSurroundAndInclude("test",
-                                                <lift:foo>{res}</lift:foo>)
+                                                xml"<lift:foo>${res}</lift:foo>")
           }
         }
 
@@ -318,7 +319,7 @@ object SnippetSpec extends Specification with XmlMatchers {
     }
 
     "Snippet invocation succeeds in normal mode (function table)" in {
-      val res = <div>dog</div>
+      val res = xml"<div>dog</div>"
       val session = new LiftSession("", "hello", Empty)
 
       val ret =
@@ -327,7 +328,7 @@ object SnippetSpec extends Specification with XmlMatchers {
             for {
               s <- S.session
             } yield s.processSurroundAndInclude("test",
-                                                <lift:foo>{res}</lift:foo>)
+                                                xml"<lift:foo>${res}</lift:foo>")
           }
         }
 
@@ -338,7 +339,7 @@ object SnippetSpec extends Specification with XmlMatchers {
       val session = new LiftSession("", "hello", Empty)
 
       S.init(makeReq, session) {
-        val ret = SHtml.onSubmit(s => ())(<input/>)
+        val ret = SHtml.onSubmit(s => ())(xml"<input/>")
 
         ret.size must_== 1
         (ret \ "@name").text.length must be > 0
@@ -349,7 +350,7 @@ object SnippetSpec extends Specification with XmlMatchers {
       val session = new LiftSession("", "hello", Empty)
 
       S.init(makeReq, session) {
-        val ret = SHtml.onSubmitBoolean(s => ())(<input type="checkbox"/>)
+        val ret = SHtml.onSubmitBoolean(s => ())(xml"""<input type="checkbox"/>""")
 
         ret.size must_== 2
         (ret \\ "input" ).flatMap(_ \ "@name").map(_.text).mkString.length must be > 0
@@ -398,7 +399,7 @@ object SnippetSpec extends Specification with XmlMatchers {
           for {
             s <- S.session
           } yield s.processSurroundAndInclude("test",
-                                              <div class="l:foo?eager_eval=true">a<lift:foo>b</lift:foo></div>)
+                                              xml"""<div class="l:foo?eager_eval=true">a<lift:foo>b</lift:foo></div>""")
         }
         myInfo.is must_== "ab"
       }

@@ -18,6 +18,7 @@ package net.liftweb
 package builtin
 package snippet
 
+import scala.xml.quote._
 import xml._
 import http._
 import common._
@@ -67,12 +68,12 @@ object LazyLoad extends DispatchSnippet {
           {
             for {
               templatePath <- S.attr("template")
-              renderedTemplate <- S.eval(<lift:embed what={templatePath} />)
+              renderedTemplate <- S.eval(xml"<lift:embed what=${templatePath} />")
             } yield {
               renderedTemplate
             }
           } openOr {
-            <div><img src="/images/ajax-loader.gif" alt="Loading"/></div>
+            xml"""<div><img src="/images/ajax-loader.gif" alt="Loading"/></div>"""
           }
         )
       }

@@ -17,6 +17,7 @@
 package net.liftweb
 package webapptest
 
+import scala.xml.quote._
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
@@ -65,7 +66,7 @@ object OneShot extends Specification with RequestKit with XmlMatchers {
             xml <- resp.xml
           } yield xml
         
-        bx.openOrThrowException("legacy code") must ==/ (<int>45</int>).when(jetty.running)
+        bx.openOrThrowException("legacy code") must ==/ (xml"<int>45</int>").when(jetty.running)
       } finally {
         LiftRules.sessionCreator = tmp
       }
@@ -83,7 +84,7 @@ object OneShot extends Specification with RequestKit with XmlMatchers {
           xml <- resp2.xml
         } yield xml
 
-      bx.openOrThrowException("legacy code") must ==/ (<int>33</int>).when(jetty.running)
+      bx.openOrThrowException("legacy code") must ==/ (xml"<int>33</int>").when(jetty.running)
       } finally {
         LiftRules.sessionCreator = tmp
       }
@@ -103,8 +104,8 @@ object OneShot extends Specification with RequestKit with XmlMatchers {
           xml2 <- resp3.xml
         } yield (xml, xml2)
 
-      bx.openOrThrowException("legacy code")._1 must ==/ (<int>33</int>).when(jetty.running)
-      bx.openOrThrowException("legacy code")._2 must ==/ (<int>45</int>).when(jetty.running)
+      bx.openOrThrowException("legacy code")._1 must ==/ (xml"<int>33</int>").when(jetty.running)
+      bx.openOrThrowException("legacy code")._2 must ==/ (xml"<int>45</int>").when(jetty.running)
       } finally {
         LiftRules.sessionCreator = tmp
       }
@@ -125,8 +126,8 @@ object OneShot extends Specification with RequestKit with XmlMatchers {
             xml2 <- resp3.xml
           } yield (xml, xml2)
 
-        bx.openOrThrowException("legacy code")._1 must ==/(<int>33</int>).when(jetty.running)
-        bx.openOrThrowException("legacy code")._2 must ==/(<str>meow</str>).when(jetty.running)
+        bx.openOrThrowException("legacy code")._1 must ==/(xml"<int>33</int>").when(jetty.running)
+        bx.openOrThrowException("legacy code")._2 must ==/(xml"<str>meow</str>").when(jetty.running)
 
       } finally {
         LiftRules.sessionCreator = tmp

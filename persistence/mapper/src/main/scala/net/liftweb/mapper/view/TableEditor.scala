@@ -18,6 +18,7 @@ package net.liftweb
 package mapper
 package view
 
+import scala.xml.quote._
 import xml.{NodeSeq, Text}
 
 import common.{Box, Full, Empty}
@@ -248,7 +249,7 @@ trait ItemsListEditor[T<:Mapper[T]] {
   def customBind(item: T): NodeSeq=>NodeSeq = (ns: NodeSeq) => ns
 
   def edit: (NodeSeq)=>NodeSeq = {
-    def unsavedScript = (<head>{Script(Run("""
+    def unsavedScript = (xml"""<head>${Script(Run("""
                            var safeToContinue = false
                            window.onbeforeunload = function(evt) {{  // thanks Tim!
                              if(!safeToContinue) {{
@@ -258,7 +259,7 @@ trait ItemsListEditor[T<:Mapper[T]] {
                                return reply;
                              }}
                            }}
-    """))}</head>)
+    """))}</head>""")
     val noPrompt = "onclick" -> "safeToContinue=true"
     val optScript = if(
       (items.added.length + items.removed.length == 0) &&
@@ -272,7 +273,7 @@ trait ItemsListEditor[T<:Mapper[T]] {
     val bindRemovedItems =
       items.removed.map { item =>
         "^" #> customBind(item) andThen
-        ".fields" #> eachField(item, { f: MappedField[_, T] => ".form" #> <strike>{f.asHtml}</strike> }) &
+        ".fields" #> eachField(item, { f: MappedField[_, T] => ".form" #> xml"<strike>${f.asHtml}</strike>" }) &
         ".removeBtn" #> SHtml.submit(?("Remove"), ()=>onRemove(item), noPrompt) &
         ".msg" #> Text(?("Deleted"))
       }
@@ -292,7 +293,7 @@ trait ItemsListEditor[T<:Mapper[T]] {
               else
                 NodeSeq.Empty
             case errors =>
-              <ul>{errors.flatMap(e => <li>{e.msg}</li>)}</ul>
+              xml"<ul>${errors.flatMap(e => xml"<li>${e.msg}</li>")}</ul>"
           }
         }
       }

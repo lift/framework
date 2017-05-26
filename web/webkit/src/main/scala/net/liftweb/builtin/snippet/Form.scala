@@ -18,6 +18,7 @@ package net.liftweb
 package builtin
 package snippet
 
+import scala.xml.quote._
 import scala.xml._
 import net.liftweb.http._
 import net.liftweb.util._
@@ -67,7 +68,7 @@ object Form extends DispatchSnippet {
                                         }))
             new Elem(null, "form", meta , e.scope, e.minimizeEmpty, e.child :_*)
           } else {
-            <form method="post" action={S.uri}>{kids}</form>
+            xml"""<form method="post" action=${S.uri}>${kids}</form>"""
           }
     
     S.attr("multipart") match {

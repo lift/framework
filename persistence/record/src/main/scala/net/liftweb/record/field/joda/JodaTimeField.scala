@@ -19,6 +19,7 @@ package record
 package field
 package joda
 
+import scala.xml.quote._
 import scala.xml._
 
 import common._
@@ -45,10 +46,10 @@ trait JodaTimeTypedField extends TypedField[DateTime] with JodaHelpers {
 
   private def elem =
     S.fmapFunc(SFuncHolder(this.setFromAny(_))){funcName =>
-      <input type={formInputType}
-        name={funcName}
-        value={valueBox.map(v => dateTimeFormatter.print(v)) openOr ""}
-        tabindex={tabIndex.toString}/>
+      xml"""<input type=${formInputType}
+        name=${funcName}
+        value=${valueBox.map(v => dateTimeFormatter.print(v)) openOr ""}
+        tabindex=${tabIndex.toString}/>"""
     }
 
   def toForm: Box[NodeSeq] =

@@ -17,6 +17,7 @@
 package net.liftweb
 package mapper
 
+import scala.xml.quote._
 import net.liftweb.util.Helpers._
 import net.liftweb.util.FatLazy
 import java.sql.{ResultSet, Types}
@@ -191,10 +192,10 @@ extends MappedField[String, T] {
    */
   override def _toForm: Box[NodeSeq] = {
     S.fmapFunc({s: List[String] => this.setFromAny(s)}){funcName =>
-      Full(<span>{appendFieldId(<input type={formInputType} name={funcName}
-            value={get.toString}/>)}&nbsp;{S.?("repeat")}&nbsp;<input
-            type={formInputType} name={funcName}
-            value={get.toString}/></span>)
+      Full(xml"""<span>${appendFieldId(xml"""<input type=${formInputType} name=${funcName}
+            value=${get.toString}/>""")}&nbsp;${S.?("repeat")}&nbsp;<input
+            type=${formInputType} name=${funcName}
+            value=${get.toString}/></span>""")
     }
   }
 

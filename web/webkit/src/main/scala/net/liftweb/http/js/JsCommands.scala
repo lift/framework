@@ -17,6 +17,7 @@ package net.liftweb
 package http
 package js
 
+import scala.xml.quote._
 import scala.xml.{NodeSeq, Group, Unparsed, Elem}
 import net.liftweb.util.Helpers._
 import net.liftweb.common._
@@ -686,11 +687,11 @@ object JsCmds {
   implicit def seqJsToJs(in: Seq[JsCmd]): JsCmd = in.foldLeft[JsCmd](Noop)(_ & _)
 
   object Script {
-    def apply(script: JsCmd): Node = <script type="text/javascript">{Unparsed("""
+    def apply(script: JsCmd): Node = xml"""<script type="text/javascript">${Unparsed("""
 // <![CDATA[
 """ + fixEndScriptTag(script.toJsCmd) + """
 // ]]>
-""")}</script>
+""")}</script>"""
 
     private def fixEndScriptTag(in: String): String =
     """\<\/script\>""".r.replaceAllIn(in, """<\\/script>""")

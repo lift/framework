@@ -15,8 +15,9 @@ package net.liftweb.mockweb.snippet
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import scala.xml.quote._
 import xml.NodeSeq
 
 class WebSpecSpecSnippet {
-  def render : NodeSeq = <h1>Hello, WebSpec!</h1>
+  def render : NodeSeq = xml"<h1>Hello, WebSpec!</h1>"
 }

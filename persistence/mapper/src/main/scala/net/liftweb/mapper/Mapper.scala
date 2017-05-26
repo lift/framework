@@ -17,6 +17,7 @@
 package net.liftweb
 package mapper
 
+import scala.xml.quote._
 import scala.xml.{Elem, NodeSeq}
 import net.liftweb.http.S
 import net.liftweb.http.js._
@@ -220,8 +221,8 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
   getSingleton.toForm(this) ++
   S.fmapFunc((ignore: List[String]) => f(this)){
     (name: String) =>
-    (<input type='hidden' name={name} value="n/a" />)} ++
-  (button.map(b => getSingleton.formatFormElement( <xml:group>&nbsp;</xml:group> , <input type="submit" value={b}/> )) openOr scala.xml.Text(""))
+    (xml"""<input type='hidden' name=${name} value="n/a" />""")} ++
+  (button.map(b => getSingleton.formatFormElement( xml"<xml:group>&nbsp;</xml:group>" , xml"""<input type="submit" value=${b}/>""" )) openOr scala.xml.Text(""))
 
   def toForm(button: Box[String], redoSnippet: NodeSeq => NodeSeq, onSuccess: A => Unit): NodeSeq = {
     val snipName = S.currentSnippet
@@ -234,8 +235,8 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
     }
 
     getSingleton.toForm(this) ++
-    S.fmapFunc((ignore: List[String]) => doSubmit())(name => <input type='hidden' name={name} value="n/a" />) ++
-    (button.map(b => getSingleton.formatFormElement( <xml:group>&nbsp;</xml:group> , <input type="submit" value={b}/> )) openOr scala.xml.Text(""))
+    S.fmapFunc((ignore: List[String]) => doSubmit())(name => xml"""<input type='hidden' name=${name} value="n/a" />""") ++
+    (button.map(b => getSingleton.formatFormElement( xml"<xml:group>&nbsp;</xml:group>" , xml"""<input type="submit" value=${b}/>""" )) openOr scala.xml.Text(""))
   }
 
   def saved_? : Boolean = getSingleton.saved_?(this)

@@ -17,6 +17,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import common._
 import util._
 
@@ -125,7 +126,7 @@ object WiringUI {
     val myElem: Elem = in.find {
       case e: Elem => true
       case _ => false
-    }.map(_.asInstanceOf[Elem]).getOrElse(<span id={Helpers.nextFuncName}>{in}</span>)
+    }.map(_.asInstanceOf[Elem]).getOrElse(xml"<span id=${Helpers.nextFuncName}>${in}</span>")
 
 
       addHistJsFunc(cell, (old: Box[T], nw: T) => f(old, nw, in))
@@ -247,7 +248,7 @@ object WiringUI {
     val myElem: Elem = in.find {
       case e: Elem => true
       case _ => false
-    }.map(_.asInstanceOf[Elem]).getOrElse(<span id={Helpers.nextFuncName}>{in}</span>)
+    }.map(_.asInstanceOf[Elem]).getOrElse(xml"<span id=${Helpers.nextFuncName}>${in}</span>")
 
     val (elem: Elem, id: String) = Helpers.findOrAddId(myElem)
     addJsFunc(cell, (t: T, first: Boolean) => {
@@ -281,7 +282,7 @@ object WiringUI {
       val myElem: Elem = in.find {
         case e: Elem => true
         case _ => false
-      }.map(_.asInstanceOf[Elem]).getOrElse(<span id={Helpers.nextFuncName}>{in}</span>)
+      }.map(_.asInstanceOf[Elem]).getOrElse(xml"<span id=${Helpers.nextFuncName}>${in}</span>")
       
       val (elem: Elem, id: String) = Helpers.findOrAddId(myElem)
       addJsFunc(cell, (t: T, first: Boolean) => {

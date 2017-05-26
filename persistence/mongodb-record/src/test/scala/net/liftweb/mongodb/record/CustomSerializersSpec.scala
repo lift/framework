@@ -18,6 +18,7 @@ package net.liftweb
 package mongodb
 package record
 
+import scala.xml.quote._
 import common._
 import field._
 import http.js.JE._
@@ -309,7 +310,7 @@ object CustomSerializersSpec extends Specification  with MongoTestKit {
       nfl.id.asJs mustEqual Str(nfl.id.value.toString)
       nfl.id.asJValue mustEqual JString(nfl.id.value.toString)
       val session = new LiftSession("", randomString(20), Empty)
-      val formPattern = <input name=".*" type="text" tabindex="1" value={nfl.id.value.toString} id="_id_id"></input>
+      val formPattern = xml"""<input name=".*" type="text" tabindex="1" value=${nfl.id.value.toString} id="_id_id"></input>"""
       S.initIfUninitted(session) {
         val form = nfl.id.toForm
         form.isDefined must_== true
@@ -380,7 +381,7 @@ object CustomSerializersSpec extends Specification  with MongoTestKit {
       nfl.id.asJs.toJsCmd mustEqual """{"$oid":"%s"}""".format(nfl.id.value.toString)
       nfl.id.asJValue mustEqual JObject(List(JField("$oid", JString(nfl.id.value.toString))))
       val session = new LiftSession("", randomString(20), Empty)
-      val formPattern = <input name=".*" type="text" tabindex="1" value={nfl.id.value.toString} id="_id_id"></input>
+      val formPattern = xml"""<input name=".*" type="text" tabindex="1" value=${nfl.id.value.toString} id="_id_id"></input>"""
       S.initIfUninitted(session) {
         val form = nfl.id.toForm
         form.isDefined must_== true

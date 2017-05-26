@@ -18,14 +18,15 @@ package net.liftweb
 package webapptest
 package snippet
 
+import scala.xml.quote._
 class HeadTestSnippet {
   def withHead = {
-    <div>
+    xml"""<div>
     <head>
     <script type="text/javascript" src="snippet.js"></script>
     </head>
-    <span>Welcome to webtest1 at {new java.util.Date}</span>
-    </div>
+    <span>Welcome to webtest1 at ${new java.util.Date}</span>
+    </div>"""
   }
 
 }

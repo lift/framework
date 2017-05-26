@@ -17,6 +17,7 @@
 package net.liftweb
 package proto
 
+import scala.xml.quote._
 import net.liftweb.http._
 import js._
 import JsCmds._
@@ -131,7 +132,7 @@ trait ProtoUser {
     /**
      * Get an email link
      */
-    def niceNameWEmailLink = <a href={"mailto:"+urlEncode(getEmail)}>{niceName}</a>
+    def niceNameWEmailLink = xml"<a href=${"mailto:"+urlEncode(getEmail)}>${niceName}</a>"
 
   }
 
@@ -539,7 +540,7 @@ trait ProtoUser {
     val li = loggedIn_?
     ItemList.
     filter(i => i.display && i.loggedIn == li).
-    map(i => (<a href={i.pathStr}>{i.name}</a>))
+    map(i => (xml"<a href=${i.pathStr}>${i.name}</a>"))
   }
 
   protected def snarfLastItem: String =
@@ -637,31 +638,31 @@ trait ProtoUser {
   def currentUser: Box[TheUserType] = curUser.get
 
   def signupXhtml(user: TheUserType) = {
-    (<form method="post" action={S.uri}><table><tr><td
-              colspan="2">{ S.?("sign.up") }</td></tr>
-          {localForm(user, false, signupFields)}
+    (xml"""<form method="post" action=${S.uri}><table><tr><td
+              colspan="2">${ S.?("sign.up") }</td></tr>
+          ${localForm(user, false, signupFields)}
           <tr><td>&nbsp;</td><td><input type="submit" /></td></tr>
-                                        </table></form>)
+                                        </table></form>""")
   }
 
 
   def signupMailBody(user: TheUserType, validationLink: String): Elem = {
-    (<html>
+    (xml"""<html>
         <head>
-          <title>{S.?("sign.up.confirmation")}</title>
+          <title>${S.?("sign.up.confirmation")}</title>
         </head>
         <body>
-          <p>{S.?("dear")} {user.getFirstName},
+          <p>${S.?("dear")} ${user.getFirstName},
             <br/>
             <br/>
-            {S.?("sign.up.validation.link")}
-            <br/><a href={validationLink}>{validationLink}</a>
+            ${S.?("sign.up.validation.link")}
+            <br/><a href=${validationLink}>${validationLink}</a>
             <br/>
             <br/>
-            {S.?("thank.you")}
+            ${S.?("thank.you")}
           </p>
         </body>
-     </html>)
+     </html>""")
   }
 
   def signupMailSubject = S.?("sign.up.confirmation")
@@ -798,13 +799,13 @@ trait ProtoUser {
   def userNameNotFoundString: String = S.?("email.address.not.found")
  
   def loginXhtml = {
-    (<form method="post" action={S.uri}><table><tr><td
-              colspan="2">{S.?("log.in")}</td></tr>
-          <tr><td>{userNameFieldString}</td><td><input type="text" class="email" /></td></tr>
-          <tr><td>{S.?("password")}</td><td><input type="password" class="password" /></td></tr>
-          <tr><td><a href={lostPasswordPath.mkString("/", "/", "")}
-                >{S.?("recover.password")}</a></td><td><input type="submit" /></td></tr></table>
-     </form>)
+    (xml"""<form method="post" action=${S.uri}><table><tr><td
+              colspan="2">${S.?("log.in")}</td></tr>
+          <tr><td>${userNameFieldString}</td><td><input type="text" class="email" /></td></tr>
+          <tr><td>${S.?("password")}</td><td><input type="password" class="password" /></td></tr>
+          <tr><td><a href=${lostPasswordPath.mkString("/", "/", "")}
+                >${S.?("recover.password")}</a></td><td><input type="submit" /></td></tr></table>
+     </form>""")
   }
   
   /**
@@ -884,32 +885,32 @@ trait ProtoUser {
   }
 
   def lostPasswordXhtml = {
-    (<form method="post" action={S.uri}>
+    (xml"""<form method="post" action=${S.uri}>
         <table><tr><td
-              colspan="2">{S.?("enter.email")}</td></tr>
-          <tr><td>{userNameFieldString}</td><td><input type="text" class="email" /></td></tr>
+              colspan="2">${S.?("enter.email")}</td></tr>
+          <tr><td>${userNameFieldString}</td><td><input type="text" class="email" /></td></tr>
           <tr><td>&nbsp;</td><td><input type="submit" /></td></tr>
         </table>
-     </form>)
+     </form>""")
   }
 
   def passwordResetMailBody(user: TheUserType, resetLink: String): Elem = {
-    (<html>
+    (xml"""<html>
         <head>
-          <title>{S.?("reset.password.confirmation")}</title>
+          <title>${S.?("reset.password.confirmation")}</title>
         </head>
         <body>
-          <p>{S.?("dear")} {user.getFirstName},
+          <p>${S.?("dear")} ${user.getFirstName},
             <br/>
             <br/>
-            {S.?("click.reset.link")}
-            <br/><a href={resetLink}>{resetLink}</a>
+            ${S.?("click.reset.link")}
+            <br/><a href=${resetLink}>${resetLink}</a>
             <br/>
             <br/>
-            {S.?("thank.you")}
+            ${S.?("thank.you")}
           </p>
         </body>
-     </html>)
+     </html>""")
   }
 
   /**
@@ -971,13 +972,13 @@ trait ProtoUser {
   }
 
   def passwordResetXhtml = {
-    (<form method="post" action={S.uri}>
-        <table><tr><td colspan="2">{S.?("reset.your.password")}</td></tr>
-          <tr><td>{S.?("enter.your.new.password")}</td><td><input type="password" /></td></tr>
-          <tr><td>{S.?("repeat.your.new.password")}</td><td><input type="password" /></td></tr>
+    (xml"""<form method="post" action=${S.uri}>
+        <table><tr><td colspan="2">${S.?("reset.your.password")}</td></tr>
+          <tr><td>${S.?("enter.your.new.password")}</td><td><input type="password" /></td></tr>
+          <tr><td>${S.?("repeat.your.new.password")}</td><td><input type="password" /></td></tr>
           <tr><td>&nbsp;</td><td><input type="submit" /></td></tr>
         </table>
-     </form>)
+     </form>""")
   }
 
   def passwordReset(id: String) =
@@ -1011,14 +1012,14 @@ trait ProtoUser {
   }
 
   def changePasswordXhtml = {
-    (<form method="post" action={S.uri}>
-        <table><tr><td colspan="2">{S.?("change.password")}</td></tr>
-          <tr><td>{S.?("old.password")}</td><td><input type="password" class="old-password" /></td></tr>
-          <tr><td>{S.?("new.password")}</td><td><input type="password" class="new-password" /></td></tr>
-          <tr><td>{S.?("repeat.password")}</td><td><input type="password" class="new-password" /></td></tr>
+    (xml"""<form method="post" action=${S.uri}>
+        <table><tr><td colspan="2">${S.?("change.password")}</td></tr>
+          <tr><td>${S.?("old.password")}</td><td><input type="password" class="old-password" /></td></tr>
+          <tr><td>${S.?("new.password")}</td><td><input type="password" class="new-password" /></td></tr>
+          <tr><td>${S.?("repeat.password")}</td><td><input type="password" class="new-password" /></td></tr>
           <tr><td>&nbsp;</td><td><input type="submit" /></td></tr>
         </table>
-     </form>)
+     </form>""")
   }
 
   def changePassword = {
@@ -1054,12 +1055,12 @@ trait ProtoUser {
   }
 
   def editXhtml(user: TheUserType) = {
-    (<form method="post" action={S.uri}>
-        <table><tr><td colspan="2">{S.?("edit")}</td></tr>
-          {localForm(user, true, editFields)}
+    (xml"""<form method="post" action=${S.uri}>
+        <table><tr><td colspan="2">${S.?("edit")}</td></tr>
+          ${localForm(user, true, editFields)}
           <tr><td>&nbsp;</td><td><input type="submit" /></td></tr>
         </table>
-     </form>)
+     </form>""")
   }
 
   object editFunc extends RequestVar[Box[() => NodeSeq]](Empty) {
@@ -1125,7 +1126,7 @@ trait ProtoUser {
       field <- computeFieldFromPointer(user, pointer).toList
       if field.show_? && (!ignorePassword || !pointer.isPasswordField_?)
       form <- field.toForm.toList
-    } yield <tr><td>{field.displayName}</td><td>{form}</td></tr>
+    } yield xml"<tr><td>${field.displayName}</td><td>${form}</td></tr>"
   }
 
   protected def wrapIt(in: NodeSeq): NodeSeq =

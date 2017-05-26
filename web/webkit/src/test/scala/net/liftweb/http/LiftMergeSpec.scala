@@ -1,6 +1,7 @@
 package net.liftweb
 package http
 
+import scala.xml.quote._
 import scala.xml._
 
 import org.specs2._
@@ -41,7 +42,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
     "merge head segments in the page body in order into main head" in new WithRules(testRules) {
       val result =
         testSession.merge(
-          <html>
+          xml"""<html>
             <head>
               <script src="testscript"></script>
             </head>
@@ -58,22 +59,22 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
                 </p>
               </div>
             </body>
-          </html>,
+          </html>""",
           mockReq
         )
 
       (result \ "head" \ "_") must_== (Seq(
-        <script src="testscript"></script>,
-        <script src="testscript2"></script>,
-        <link href="testlink" />,
-        <link href="testlink2" />
+        xml"""<script src="testscript"></script>""",
+        xml"""<script src="testscript2"></script>""",
+        xml"""<link href="testlink" />""",
+        xml"""<link href="testlink2" />"""
       ): NodeSeq)
     }
 
     "merge tail segments in the page body in order at the end of the body" in new WithRules(testRules) {
       val result =
         testSession.merge(
-          <html>
+          xml"""<html>
             <head>
               <script src="testscript"></script>
             </head>
@@ -93,21 +94,21 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
               <p>Thingies</p>
               <p>More thingies</p>
             </body>
-          </html>,
+          </html>""",
           mockReq
         )
 
       (result \ "body" \ "_").takeRight(3) must_== (Seq(
-        <script src="testscript2"></script>,
-        <link href="testlink" />,
-        <link href="testlink2" />
+        xml"""<script src="testscript2"></script>""",
+        xml"""<link href="testlink" />""",
+        xml"""<link href="testlink2" />"""
       ): NodeSeq)
     }
 
     "not merge tail segments in the head" in new WithRules(testRules) {
       val result =
         testSession.merge(
-          <html>
+          xml"""<html>
             <head>
               <tail>
                 <script src="testscript"></script>
@@ -129,21 +130,21 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
               <p>Thingies</p>
               <p>More thingies</p>
             </body>
-          </html>,
+          </html>""",
           mockReq
         )
 
       (result \ "body" \ "_").takeRight(3) must_== (Seq(
-        <script src="testscript2"></script>,
-        <link href="testlink" />,
-        <link href="testlink2" />
+        xml"""<script src="testscript2"></script>""",
+        xml"""<link href="testlink" />""",
+        xml"""<link href="testlink2" />"""
       ): NodeSeq)
     }
 
     "normalize absolute link hrefs everywhere" in new WithLiftContext(testRules, testSession) {
       val result =
         testSession.merge(
-          <html>
+          xml"""<html>
             <head>
               <script src="testscript"></script>
               <link href="/testlink" />
@@ -164,7 +165,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
               <p>Thingies</p>
               <p>More thingies</p>
             </body>
-          </html>,
+          </html>""",
           mockReq
         )
 
@@ -177,7 +178,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
     "normalize absolute script srcs everywhere" in new WithLiftContext(testRules, testSession) {
       val result =
         testSession.merge(
-          <html>
+          xml"""<html>
             <head>
               <script src="/testscript"></script>
               <link href="testlink" />
@@ -198,7 +199,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
               <p>Thingies</p>
               <p>More thingies</p>
             </body>
-          </html>,
+          </html>""",
           mockReq
         )
 
@@ -210,7 +211,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
     "normalize absolute a hrefs everywhere" in new WithLiftContext(testRules, testSession) {
       val result =
         testSession.merge(
-          <html>
+          xml"""<html>
             <head>
               <a href="/testa1">Booyan</a>
             </head>
@@ -231,7 +232,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
               <p>Thingies <a href="/testa6">Booyan</a></p>
               <p>More thingies</p>
             </body>
-          </html>,
+          </html>""",
           mockReq
         )
 
@@ -247,7 +248,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
     "normalize absolute form actions everywhere" in new WithLiftContext(testRules, testSession) {
       val result =
         testSession.merge(
-          <html>
+          xml"""<html>
             <head>
               <form action="/testform1">Booyan</form>
             </head>
@@ -268,7 +269,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
               <p>Thingies <form action="/testform6">Booyan</form></p>
               <p>More thingies</p>
             </body>
-          </html>,
+          </html>""",
           mockReq
         )
 
@@ -285,7 +286,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
       val result =
         URLRewriter.doWith((_: String) => "rewritten") {
           testSession.merge(
-            <html>
+            xml"""<html>
               <head>
                 <script src="testscript"></script>
               </head>
@@ -304,7 +305,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
                 <p>Thingies</p>
                 <p>More thingies</p>
               </body>
-            </html>,
+            </html>""",
             mockReq
           )
         }
@@ -319,7 +320,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
       val result =
         URLRewriter.doWith((_: String) => "rewritten") {
           testSession.merge(
-            <html>
+            xml"""<html>
               <head>
                 <link href="testlink" />
               </head>
@@ -338,7 +339,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
                 <p>Thingies</p>
                 <p>More thingies</p>
               </body>
-            </html>,
+            </html>""",
             mockReq
           )
         }
@@ -353,7 +354,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
       val result =
         URLRewriter.doWith((_: String) => "rewritten") {
           testSession.merge(
-            <html>
+            xml"""<html>
               <head>
                 <a href="testa"></a>
               </head>
@@ -372,7 +373,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
                 <p>Thingies</p>
                 <p>More thingies</p>
               </body>
-            </html>,
+            </html>""",
             mockReq
           )
         }
@@ -387,7 +388,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
       val result =
         URLRewriter.doWith((_: String) => "rewritten") {
           testSession.merge(
-            <html>
+            xml"""<html>
               <head>
                 <form action="testform" />
               </head>
@@ -406,7 +407,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
                 <p>Thingies</p>
                 <p>More thingies</p>
               </body>
-            </html>,
+            </html>""",
             mockReq
           )
         }
@@ -420,7 +421,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
     "include a page script in the page tail if events are extracted" in new WithLiftContext(eventExtractingTestRules, testSession) {
       val result =
         testSession.merge(
-          <html>
+          xml"""<html>
             <head>
               <title>Booyan</title>
             </head>
@@ -431,7 +432,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
                 </p>
               </div>
             </body>
-          </html>,
+          </html>""",
           mockReq
         )
 
@@ -452,11 +453,11 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
     "include a page script in the page tail even if the page doesn't have a head and body" in new WithLiftContext(eventExtractingTestRules, testSession) {
       val result =
         testSession.merge(
-          <div onclick="tryme();">
+          xml"""<div onclick="tryme();">
             <p onmouseover="tryyou();">
               Test
             </p>
-          </div>,
+          </div>""",
           mockReq
         )
 

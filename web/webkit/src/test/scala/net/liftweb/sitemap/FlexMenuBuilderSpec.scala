@@ -16,6 +16,7 @@
 
 package net.liftweb.sitemap
 
+import scala.xml.quote._
 import net.liftweb.http.{S, LiftRules}
 import net.liftweb.common.{Full, Empty}
 import net.liftweb.mockweb.WebSpec
@@ -24,7 +25,7 @@ import xml.{Elem, Group, NodeSeq}
 object FlexMenuBuilderSpec extends WebSpec(FlexMenuBuilderSpecBoot.boot _) {
   "FlexMenuBuilder Specification".title
 
-  val html1 = <div data-lift="MenuBuilder.builder?group=hometabsv2"></div>
+  val html1 = xml"""<div data-lift="MenuBuilder.builder?group=hometabsv2"></div>"""
 
   "FlexMenuBuilder" should {
     val testUrl = "http://foo.com/help"
@@ -32,14 +33,14 @@ object FlexMenuBuilderSpec extends WebSpec(FlexMenuBuilderSpecBoot.boot _) {
 
     "Link to Self" withSFor(testUrl) in {
       object MenuBuilder extends FlexMenuBuilder { override def linkToSelf = true}
-      val linkToSelf = <ul><li><a href="/index">Home</a></li><li><a href="/help">Help</a></li><li><a href="/help2">Help2</a></li></ul>
+      val linkToSelf = xml"""<ul><li><a href="/index">Home</a></li><li><a href="/help">Help</a></li><li><a href="/help2">Help2</a></li></ul>"""
       val actual = MenuBuilder.render
       linkToSelf must beEqualToIgnoringSpace(actual)
     }
 
     "expandAll" withSFor(testUrl) in {
       object MenuBuilder extends FlexMenuBuilder { override def expandAll = true}
-      val expandAll: NodeSeq = <ul><li><a href="/index">Home</a></li><li><span>Help</span><ul><li><a href="/index1">Home1</a></li><li><a href="/index2">Home2</a></li></ul></li><li><a href="/help2">Help2</a><ul><li><a href="/index3">Home3</a></li><li><a href="/index4">Home4</a></li></ul></li></ul>
+      val expandAll: NodeSeq = xml"""<ul><li><a href="/index">Home</a></li><li><span>Help</span><ul><li><a href="/index1">Home1</a></li><li><a href="/index2">Home2</a></li></ul></li><li><a href="/help2">Help2</a><ul><li><a href="/index3">Home3</a></li><li><a href="/index4">Home4</a></li></ul></li></ul>"""
       val actual = MenuBuilder.render
       expandAll.toString must_== actual.toString
     }
@@ -54,7 +55,7 @@ object FlexMenuBuilderSpec extends WebSpec(FlexMenuBuilderSpecBoot.boot _) {
           }
         }
       }
-      val itemInPath: NodeSeq = <ul><li><a href="/index">Home</a></li><li class="active"><a href="/help">Help</a><ul><li class="active"><span>Home1</span></li><li><a href="/index2">Home2</a></li></ul></li><li><a href="/help2">Help2</a></li></ul>
+      val itemInPath: NodeSeq = xml"""<ul><li><a href="/index">Home</a></li><li class="active"><a href="/help">Help</a><ul><li class="active"><span>Home1</span></li><li><a href="/index2">Home2</a></li></ul></li><li><a href="/help2">Help2</a></li></ul>"""
       val actual = MenuBuilder.render
       itemInPath.toString must_== actual.toString
     }
@@ -69,7 +70,7 @@ object FlexMenuBuilderSpec extends WebSpec(FlexMenuBuilderSpecBoot.boot _) {
           }
         }
       }
-      val itemInPath: NodeSeq = <ul><li><a href="/index">Home</a></li><li class="active"><span>Help</span></li><li><a href="/help2">Help2</a></li></ul>
+      val itemInPath: NodeSeq = xml"""<ul><li><a href="/index">Home</a></li><li class="active"><span>Help</span></li><li><a href="/help2">Help2</a></li></ul>"""
       val actual = MenuBuilder.render
       itemInPath.toString must_== actual.toString
     }

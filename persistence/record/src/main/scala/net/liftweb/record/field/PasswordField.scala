@@ -18,6 +18,7 @@ package net.liftweb
 package record
 package field
 
+import scala.xml.quote._
 import xml._
 
 import common._
@@ -92,10 +93,10 @@ trait PasswordTypedField extends TypedField[String] {
   override def formInputType = "password"
 
   private def elem = S.fmapFunc(SFuncHolder(this.setFromAny(_))){
-    funcName => <input type={formInputType}
-      name={funcName}
-      value={valueBox openOr ""}
-      tabindex={tabIndex.toString}/>}
+    funcName => xml"""<input type=${formInputType}
+      name=${funcName}
+      value=${valueBox openOr ""}
+      tabindex=${tabIndex.toString}/>"""}
 
   def toForm: Box[NodeSeq] =
     uniqueFieldId match {

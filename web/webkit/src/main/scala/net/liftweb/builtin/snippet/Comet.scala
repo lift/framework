@@ -18,6 +18,7 @@ package net.liftweb
 package builtin
 package snippet
 
+import scala.xml.quote._
 import scala.xml._
 import net.liftweb.http._
 import net.liftweb.util._
@@ -124,7 +125,7 @@ object Comet extends DispatchSnippet with LazyLoggable {
 }
 
 abstract class CometFailureException(msg: String) extends SnippetFailureException(msg) {
-  override def buildStackTrace: NodeSeq = <div>{msg}</div> ++ super.buildStackTrace
+  override def buildStackTrace: NodeSeq = xml"<div>${msg}</div>" ++ super.buildStackTrace
 }
 object NoCometTypeException extends CometFailureException("Comets with no type are no longer supported as of Lift 3.") {
   def snippetFailure: LiftRules.SnippetFailures.Value =

@@ -17,6 +17,7 @@
 package net.liftweb
 package sitemap
 
+import scala.xml.quote._
 import http._
 import util._
 import common._
@@ -231,7 +232,7 @@ sealed class SiteMapSingleton {
           case x if x.length > 0 => x
           case _ => loc.linkText openOr Text(loc.name)
         }
-        <a href={link}>{linkText}</a>
+        xml"<a href=${link}>${linkText}</a>"
     }
 
     options.headOption getOrElse NodeSeq.Empty

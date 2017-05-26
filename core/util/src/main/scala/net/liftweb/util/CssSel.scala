@@ -1,6 +1,7 @@
 package net.liftweb
 package util
 
+import scala.xml.quote._
 import common._
 import xml._
 import collection.mutable.ListBuffer
@@ -663,12 +664,12 @@ trait CssBind extends CssSel {
   def apply(in: NodeSeq): NodeSeq = css match {
     case Full(c) => selectorMap(in)
     case _ => Helpers.errorDiv(
-      <div>
+      xml"""<div>
         Syntax error in CSS selector definition:
-        {stringSelector openOr "N/A"}
+        ${stringSelector openOr "N/A"}
         .
         The selector will not be applied.
-      </div>) openOr NodeSeq.Empty
+      </div>""") openOr NodeSeq.Empty
   }
 
   /**

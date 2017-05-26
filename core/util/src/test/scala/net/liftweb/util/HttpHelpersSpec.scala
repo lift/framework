@@ -17,6 +17,7 @@
 package net.liftweb
 package util
 
+import scala.xml.quote._
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
@@ -66,10 +67,10 @@ object HttpHelpersSpec extends Specification with HttpHelpers with ListHelpers w
     }
     "a noHtmlTag" in {
       "returning true if a xml node doesn't contain the html tag" in {
-        noHtmlTag(<a><b></b></a>) must beTrue
+        noHtmlTag(xml"<a><b></b></a>") must beTrue
       }
       "returning false if a xml node contains the html tag" in {
-        noHtmlTag(<a><html></html></a>) must beFalse
+        noHtmlTag(xml"<a><html></html></a>") must beFalse
       }
     }
     "a toHashMap function transforming a Map to a mutable HashMap" in {
@@ -87,9 +88,9 @@ object HttpHelpersSpec extends Specification with HttpHelpers with ListHelpers w
       pairToUnprefixed(("value", 1)).apply("value").toString must_== "1"
     }
     "a findOrAddId function" in {
-      "returning an element and its id if found" in { findOrAddId(<a id="1"></a>) must_== (<a id="1"></a>, "1") }
+      "returning an element and its id if found" in { findOrAddId(xml"""<a id="1"></a>""") must_== (xml"""<a id="1"></a>""", "1") }
       "returning an element with a random id if not found" in {
-        val (e, id) = findOrAddId(<a></a>)
+        val (e, id) = findOrAddId(xml"<a></a>")
         e must \("@id")
         // id must beMatching("R\\[a-zA-Z0-9]*")
       }

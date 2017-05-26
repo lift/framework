@@ -17,6 +17,7 @@
 package net.liftweb
 package record
 
+import scala.xml.quote._
 import field.{Countries, PasswordField, StringField}
 
 import common.{Box, Empty, Failure, Full}
@@ -307,7 +308,7 @@ object FieldSpec extends Specification {
       rec.mandatoryBooleanField,
       JsTrue,
       JBool(bool),
-      Full(<input checked="checked" tabindex="1" value="true" type="checkbox" name=".*" id="mandatoryBooleanField_id"></input><input value="false" type="hidden" name=".*"></input>)
+      Full(xml"""<input checked="checked" tabindex="1" value="true" type="checkbox" name=".*" id="mandatoryBooleanField_id"></input><input value="false" type="hidden" name=".*"></input>""")
     )
     "support java.lang.Boolean" in {
       rec.mandatoryBooleanField.setFromAny(java.lang.Boolean.TRUE)
@@ -338,7 +339,7 @@ object FieldSpec extends Specification {
         rec.mandatoryCountryField,
         Str(country.toString),
         JInt(country.id),
-        Full(<select tabindex="1" name=".*" id="mandatoryCountryField_id"><option value=".*" selected="selected">{country.toString}</option></select>)
+        Full(xml"""<select tabindex="1" name=".*" id="mandatoryCountryField_id"><option value=".*" selected="selected">${country.toString}</option></select>""")
       )
     }
   }
@@ -356,7 +357,7 @@ object FieldSpec extends Specification {
       rec.mandatoryDateTimeField,
       Str(dtStr),
       JString(dtStr),
-      Full(<input name=".*" type="text" tabindex="1" value={dtStr} id="mandatoryDateTimeField_id"></input>)
+      Full(xml"""<input name=".*" type="text" tabindex="1" value=${dtStr} id="mandatoryDateTimeField_id"></input>""")
     )
   }
 
@@ -369,7 +370,7 @@ object FieldSpec extends Specification {
       rec.customFormatDateTimeField,
       Str(dtStr),
       JString(dtStr),
-      Full(<input name=".*" type="text" tabindex="1" value={toInternetDate(dt.getTime)} id="customFormatDateTimeField_id"></input>)
+      Full(xml"""<input name=".*" type="text" tabindex="1" value=${toInternetDate(dt.getTime)} id="customFormatDateTimeField_id"></input>""")
     )
   }
 
@@ -383,7 +384,7 @@ object FieldSpec extends Specification {
       rec.mandatoryDecimalField,
       JsRaw(bd.toString),
       JString(bd.toString),
-      Full(<input name=".*" type="text" tabindex="1" value={bd.toString} id="mandatoryDecimalField_id"></input>)
+      Full(xml"""<input name=".*" type="text" tabindex="1" value=${bd.toString} id="mandatoryDecimalField_id"></input>""")
     )
   }
 
@@ -397,7 +398,7 @@ object FieldSpec extends Specification {
       rec.mandatoryDoubleField,
       JsRaw(d.toString),
       JDouble(d),
-      Full(<input name=".*" type="text" tabindex="1" value={d.toString} id="mandatoryDoubleField_id"></input>)
+      Full(xml"""<input name=".*" type="text" tabindex="1" value=${d.toString} id="mandatoryDoubleField_id"></input>""")
     )
 
     "get set from JInt" in {
@@ -417,7 +418,7 @@ object FieldSpec extends Specification {
       rec.mandatoryEmailField,
       Str(email),
       JString(email),
-      Full(<input name=".*" type="text" maxlength="100" tabindex="1" value={email} id="mandatoryEmailField_id"></input>)
+      Full(xml"""<input name=".*" type="text" maxlength="100" tabindex="1" value=${email} id="mandatoryEmailField_id"></input>""")
     )
     "pass validation if field is optional and value is Empty" in {
       S.initIfUninitted(session) {
@@ -455,7 +456,7 @@ object FieldSpec extends Specification {
       rec.mandatoryEnumField,
       Str(ev.toString),
       JInt(ev.id),
-      Full(<select tabindex="1" name=".*" id="mandatoryEnumField_id"><option value=".*" selected="selected">{ev.toString}</option></select>)
+      Full(xml"""<select tabindex="1" name=".*" id="mandatoryEnumField_id"><option value=".*" selected="selected">${ev.toString}</option></select>""")
     )
   }
 
@@ -469,7 +470,7 @@ object FieldSpec extends Specification {
       rec.mandatoryIntField,
       JsRaw(num.toString),
       JInt(num),
-      Full(<input name=".*" type="text" tabindex="1" value={num.toString} id="mandatoryIntField_id"></input>)
+      Full(xml"""<input name=".*" type="text" tabindex="1" value=${num.toString} id="mandatoryIntField_id"></input>""")
     )
 
     "get set from JDouble" in {
@@ -486,7 +487,7 @@ object FieldSpec extends Specification {
       rec.customIntField,
       JsRaw(num.toString),
       JInt(num),
-      Full(<input name=".*" type="number" tabindex="1" value={num.toString} id="customIntField_id"></input>)
+      Full(xml"""<input name=".*" type="number" tabindex="1" value=${num.toString} id="customIntField_id"></input>""")
     )
   }
 
@@ -513,7 +514,7 @@ object FieldSpec extends Specification {
       rec.mandatoryLongField,
       JsRaw(lng.toString),
       JInt(lng),
-      Full(<input name=".*" type="text" tabindex="1" value={lng.toString} id="mandatoryLongField_id"></input>)
+      Full(xml"""<input name=".*" type="text" tabindex="1" value=${lng.toString} id="mandatoryLongField_id"></input>""")
     )
 
     "get set from JDouble" in {
@@ -564,7 +565,7 @@ object FieldSpec extends Specification {
       rec.mandatoryPostalCodeField,
       Str(zip),
       JString(zip),
-      Full(<input name=".*" type="text" maxlength="32" tabindex="1" value={zip} id="mandatoryPostalCodeField_id"></input>)
+      Full(xml"""<input name=".*" type="text" maxlength="32" tabindex="1" value=${zip} id="mandatoryPostalCodeField_id"></input>""")
     )
     "pass validation if field is optional and value is Empty" in {
       S.initIfUninitted(session) {
@@ -603,7 +604,7 @@ object FieldSpec extends Specification {
         rec.mandatoryStringField,
         Str(str),
         JString(str),
-        Full(<input name=".*" type="text" maxlength="100" tabindex="1" value={str} id="mandatoryStringField_id"></input>)
+        Full(xml"""<input name=".*" type="text" maxlength="100" tabindex="1" value=${str} id="mandatoryStringField_id"></input>""")
       )
     }
 
@@ -690,7 +691,7 @@ object FieldSpec extends Specification {
       rec.mandatoryTextareaField,
       Str(txt),
       JString(txt),
-      Full(<textarea name=".*" rows="8" tabindex="1" cols="20" id="mandatoryTextareaField_id">{txt}</textarea>)
+      Full(xml"""<textarea name=".*" rows="8" tabindex="1" cols="20" id="mandatoryTextareaField_id">${txt}</textarea>""")
     )
   }
 
@@ -710,7 +711,7 @@ object FieldSpec extends Specification {
       rec.mandatoryTimeZoneField,
       Str(example),
       JString(example),
-      Full(<select tabindex="1" name=".*" id="mandatoryTimeZoneField_id"><option value=".*" selected="selected">{example}</option></select>)
+      Full(xml"""<select tabindex="1" name=".*" id="mandatoryTimeZoneField_id"><option value=".*" selected="selected">${example}</option></select>""")
     )
   }
 
@@ -725,7 +726,7 @@ object FieldSpec extends Specification {
       rec.mandatoryJodaTimeField,
       Num(dt.getMillis),
       JInt(dt.getMillis),
-      Full(<input name=".*" type="text" tabindex="1" value={dtStr} id="mandatoryJodaTimeField_id"></input>)
+      Full(xml"""<input name=".*" type="text" tabindex="1" value=${dtStr} id="mandatoryJodaTimeField_id"></input>""")
     )
   }
 }

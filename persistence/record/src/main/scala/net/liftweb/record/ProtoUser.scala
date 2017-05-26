@@ -17,6 +17,7 @@
 package net.liftweb
 package record
 
+import scala.xml.quote._
 import net.liftweb.http.S
 import net.liftweb.http.S._
 import net.liftweb.http.js._
@@ -172,7 +173,7 @@ trait ProtoUser[T <: ProtoUser[T]] extends Record[T] {
     case _ => email.get
   }
 
-  def niceNameWEmailLink = <a href={"mailto:"+email.get}>{niceName}</a>
+  def niceNameWEmailLink = xml"<a href=${"mailto:"+email.get}>${niceName}</a>"
 }
 
 /**
