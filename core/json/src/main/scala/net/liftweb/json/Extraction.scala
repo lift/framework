@@ -265,11 +265,14 @@ object Extraction {
           val instance = jconstructor.newInstance(args.map(_.asInstanceOf[AnyRef]).toArray: _*)
           setFields(instance.asInstanceOf[AnyRef], json, jconstructor)
         } catch {
-          case e @ (_:IllegalArgumentException | _:InstantiationException) =>
-            fail("Parsed JSON values do not match with class constructor\nargs=" +
-                 args.mkString(",") + "\narg types=" + args.map(a => if (a != null)
-                   a.asInstanceOf[AnyRef].getClass.getName else "null").mkString(",") +
-                 "\nconstructor=" + jconstructor)
+          case exception: Exception =>
+            exception match {
+              case matchedException @ (_:IllegalArgumentException | _:InstantiationException) =>
+                fail("Parsed JSON values do not match with class constructor\nargs=" +
+                     args.mkString(",") + "\narg types=" + args.map(a => if (a != null)
+                       a.asInstanceOf[AnyRef].getClass.getName else "null").mkString(",") +
+                     "\nconstructor=" + jconstructor, matchedException)
+            }
         }
       }
 
