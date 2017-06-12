@@ -95,7 +95,7 @@ trait HTTPProvider {
           logger.error("------------------------------------------------------------------")
           logger.error("------------------------------------------------------------------")
           logger.error("------------------------------------------------------------------")
-          logger.error("********** Failed to Boot! An unavailable exception was thrown an all futher boot activities are aborted", unavailableException);
+          logger.error("********** Failed to Boot! An UnavailableException was thrown and all futher boot activities are aborted", unavailableException);
           logger.error("------------------------------------------------------------------")
           logger.error("------------------------------------------------------------------")
           logger.error("------------------------------------------------------------------")
