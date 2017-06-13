@@ -1547,7 +1547,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * had been executed on the thread that created the function.
    */
   def buildDeferredFunction[T](deferredFunction: () => T): () => T = {
-    val currentReq = S.request.map(_.snapshot)
+    val currentReq = S.request.filter(_.request != null).map(_.snapshot)
     val renderVersion = RenderVersion.get
     val requestVarFunc = RequestVarHandler.generateSnapshotRestorer[T]()
 
@@ -1565,7 +1565,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * request and session context.
    */
   def buildDeferredFunction[A,T](deferredFunction: (A)=>T): (A)=>T = {
-    val currentReq = S.request.map(_.snapshot)
+    val currentReq = S.request.filter(_.request != null).map(_.snapshot)
     val renderVersion = RenderVersion.get
     val requestVarFunc = RequestVarHandler.generateSnapshotRestorer[T]()
 
