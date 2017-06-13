@@ -272,6 +272,9 @@ object Extraction {
                      args.mkString(",") + "\narg types=" + args.map(a => if (a != null)
                        a.asInstanceOf[AnyRef].getClass.getName else "null").mkString(",") +
                      "\nconstructor=" + jconstructor, matchedException)
+
+              case unmatchedException =>
+                throw unmatchedException
             }
         }
       }
