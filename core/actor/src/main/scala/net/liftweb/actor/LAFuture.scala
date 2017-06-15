@@ -176,7 +176,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   /**
    * Java-friendly alias for completed_?.
    */
-  def isCompleted: Boolean = complete_?
+  def isCompleted: Boolean = completed_?
   /**
    * Has the future completed?
    */
@@ -389,10 +389,10 @@ object LAFuture {
               gotCnt += 1
               onFutureSucceeded(value, result, accumulator, index)
 
-              if (gotCnt >= len && ! result.complete_?) {
+              if (gotCnt >= len && ! result.completed_?) {
                 onAllFuturesCompleted(result, accumulator)
 
-                if (! result.complete_?) {
+                if (! result.completed_?) {
                   result.fail(Failure("collect invoker did not complete result"))
                 }
               }
@@ -403,10 +403,10 @@ object LAFuture {
               gotCnt += 1
               onFutureFailed(failureBox, result, accumulator, index)
 
-              if (gotCnt >= len && ! result.complete_?) {
+              if (gotCnt >= len && ! result.completed_?) {
                 onAllFuturesCompleted(result, accumulator)
 
-                if (! result.complete_?) {
+                if (! result.completed_?) {
                   result.fail(Failure("collect invoker did not complete result"))
                 }
               }
