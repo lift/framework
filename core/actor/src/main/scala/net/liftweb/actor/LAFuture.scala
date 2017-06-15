@@ -355,7 +355,7 @@ object LAFuture {
    * Given handlers for a value's success and failure and a set of futures, runs
    * the futures simultaneously and invokes either success or failure callbacks
    * as each future completes. When all futures are complete, if the handlers
-   * have not either satisfied or failed the overall result, `allValuesCompleted`
+   * have not either satisfied or failed the overall result, `onAllFuturesCompleted`
    * is called to complete it. If it *still* isn't complete, the overall result
    * is failed with an error.
    *
@@ -365,15 +365,15 @@ object LAFuture {
    * completed. For the failure handler, the value is the `Box` of the failure.
    */
   def collect[T, A](
-    valueSucceeded: (T, LAFuture[A], ArrayBuffer[Box[T]], Int)=>Unit,
-    valueFailed: (Box[Nothing], LAFuture[A], ArrayBuffer[Box[T]], Int)=>Unit,
-    allValuesCompleted: (LAFuture[A], ArrayBuffer[Box[T]])=>Unit,
+    onFutureSucceeded: (T, LAFuture[A], ArrayBuffer[Box[T]], Int)=>Unit,
+    onFutureFailed: (Box[Nothing], LAFuture[A], ArrayBuffer[Box[T]], Int)=>Unit,
+    onAllFuturesCompleted: (LAFuture[A], ArrayBuffer[Box[T]])=>Unit,
     futures: LAFuture[T]*
   ): LAFuture[A] = {
     val result = new LAFuture[A]
 
     if (futures.isEmpty) {
-      allValuesCompleted(result, new ArrayBuffer[Box[T]](0))
+      onAllFuturesCompleted(result, new ArrayBuffer[Box[T]](0))
     } else {
       val sync = new Object
       val len = futures.length
@@ -387,10 +387,10 @@ object LAFuture {
           future.onSuccess {
             value => sync.synchronized {
               gotCnt += 1
-              valueSucceeded(value, result, accumulator, index)
+              onFutureSucceeded(value, result, accumulator, index)
 
               if (gotCnt >= len && ! result.complete_?) {
-                allValuesCompleted(result, accumulator)
+                onAllFuturesCompleted(result, accumulator)
 
                 if (! result.complete_?) {
                   result.fail(Failure("collect invoker did not complete result"))
@@ -401,10 +401,10 @@ object LAFuture {
           future.onFail {
             failureBox => sync.synchronized {
               gotCnt += 1
-              valueFailed(failureBox, result, accumulator, index)
+              onFutureFailed(failureBox, result, accumulator, index)
 
               if (gotCnt >= len && ! result.complete_?) {
-                allValuesCompleted(result, accumulator)
+                onAllFuturesCompleted(result, accumulator)
 
                 if (! result.complete_?) {
                   result.fail(Failure("collect invoker did not complete result"))
@@ -426,9 +426,11 @@ object LAFuture {
    */
   def collect[T](future: LAFuture[T]*): LAFuture[List[T]] = {
     collect[T, List[T]](
-      { (value, result, values, index) => values.insert(index, Full(value)) },
-      { (valueBox, result, values, index) => result.fail(valueBox) },
-      { (result, values) => result.satisfy(values.toList.flatten) },
+      onFutureSucceeded = { (value, result, values, index) =>
+        values.insert(index, Full(value))
+      },
+      onFutureFailed = { (valueBox, result, values, index) => result.fail(valueBox) },
+      onAllFuturesCompleted = { (result, values) => result.satisfy(values.toList.flatten) },
       future: _*
     )
   }
@@ -442,7 +444,7 @@ object LAFuture {
    */
   def collectAll[T](future: LAFuture[Box[T]]*): LAFuture[Box[List[T]]] = {
     collect[Box[T], Box[List[T]]](
-      { (value, result, values, index) =>
+      onFutureSucceeded = { (value, result, values, index) =>
         value match {
           case Full(realValue) =>
             values.insert(index, Full(Full(realValue)))
@@ -450,8 +452,8 @@ object LAFuture {
             result.satisfy(other)
         }
       },
-      { (valueBox, result, values, index) => result.fail(valueBox) },
-      { (result: LAFuture[Box[List[T]]], values: ArrayBuffer[Box[Box[T]]]) =>
+      onFutureFailed = { (valueBox, result, values, index) => result.fail(valueBox) },
+      onAllFuturesCompleted = { (result: LAFuture[Box[List[T]]], values: ArrayBuffer[Box[Box[T]]]) =>
         result.satisfy(Full(values.toList.flatten.flatten))
       },
       future: _*
