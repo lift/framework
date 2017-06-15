@@ -168,4 +168,22 @@ object ExtractionBugs extends Specification {
 
     extracted must_== ("apple", "sammich", "bacon")
   }
+
+  "throw the correct exceptions when things go wrong during extraction" in {
+    implicit val formats = DefaultFormats
+
+    class Holder(bacon: String) {
+      throw new Exception("I'm an exception!")
+    }
+
+    val correctArgsAstRepresentation: JObject = JObject(List(
+      JField("bacon", JString("apple"))
+    ))
+
+    correctArgsAstRepresentation.extract[Holder] must throwA[MappingException].like {
+      case e =>
+        e.getMessage mustEqual "An exception was thrown in the class constructor during extraction"
+        e.getCause.getCause.getMessage mustEqual "I'm an exception!"
+    }
+  }
 }
