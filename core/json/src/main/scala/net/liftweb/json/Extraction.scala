@@ -17,7 +17,7 @@
 package net.liftweb
 package json
 
-import java.lang.reflect.{Constructor => JConstructor, Type}
+import java.lang.reflect.{Constructor => JConstructor, Type, InvocationTargetException}
 import java.lang.{Integer => JavaInteger, Long => JavaLong, Short => JavaShort, Byte => JavaByte, Boolean => JavaBoolean, Double => JavaDouble, Float => JavaFloat}
 import java.util.Date
 import java.sql.Timestamp
@@ -272,6 +272,9 @@ object Extraction {
                      args.mkString(",") + "\narg types=" + args.map(a => if (a != null)
                        a.asInstanceOf[AnyRef].getClass.getName else "null").mkString(",") +
                      "\nconstructor=" + jconstructor, matchedException)
+
+              case exceptionThrownInConstructor: InvocationTargetException =>
+                fail("An exception was thrown in the class constructor during extraction", exceptionThrownInConstructor)
 
               case unmatchedException =>
                 throw unmatchedException
