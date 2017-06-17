@@ -516,6 +516,61 @@ sealed abstract class Box[+A] extends Product with Serializable{
    */
   def foreach[U](f: A => U): Unit = {}
 
+  /** Returns a `Full` box containing the result of applying `partialFn` to this Box's contained
+    * value, '''if''' this Box is Full '''and''' `partialFn` is defined for that value.
+    *
+    * If this box is Full and the `partialFn` is not defined for the value it contains,
+    * Empty is returned.
+    *
+    * If this box is not Full, it will be returned unchanged.
+    *
+    *  @example {{{
+    *  // Returns Full(HTTP) because the partial function covers the case.
+    *  Full("http") collect { case "http" => "HTTP" }
+    *
+    *  // Returns Empty because the partial function doesn't cover the case.
+    *  Full("ftp") collect { case "http" => "HTTP" }
+    *
+    *  // Returns Empty because the box is empty. There is no value to pass to the partial function.
+    *  Empty collect { case value => value }
+    *
+    *  // Returns Failure because the box is Failure. There is no value to pass to the partial function.
+    *  Failure("failed") collect { case value => value }
+    *  }}}
+    *
+    *  @param  partialFn  the partial function.
+    *  @return the result of applying `partialFn` to this Box's value (if possible), or this box itself without
+    *          any changes.
+    */
+  @inline final def collect[B](partialFn: PartialFunction[A, B]): Box[B] = this match {
+    case Full(value) => Box(partialFn.lift(value))
+    case e: EmptyBox => e
+  }
+
+  /**
+    * If this box is a `Failure`, returns a `Failure` box that results from passing this box
+    * to `fn`. Otherwise, returns this box. Used for transforming Failures without having to
+    * cover all three cases of Box, which is required by `map`.
+    *
+    * `map` is only applied if the box is full, `mapFailure` is only applied if this box is a `Failure`.
+    *
+    * @example {{{
+    *  // Returns `Failure("Changed failure")` because this box is a failure.
+    *  Failure("Original Failure") mapFailure { failed => Failure("Changed failure") }
+    *
+    *  // Returns Full("some-value") on which it was called
+    *  Full("some-value") mapFailure { failure => Failure("Changed failure") }
+    *
+    *  // Returns this Empty instance
+    *  Empty mapFailure { case value => value }
+    *  }}}
+    *
+    * @param fn the function that will be used to transform the Failure if this box is a failure.
+    * @return A `Failure` instance that results from applying `fn` if this box is a `Failure`, otherwise
+    *         the same instance on which it was called.
+    */
+  def mapFailure(fn: Failure => Failure): Box[A] = this
+
   /**
    * If this box is `Full` and contains an object of type `B`, returns a `Full`
    * of type `Box[B]`. Otherwise, returns `Empty`.
@@ -903,6 +958,8 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
     }
 
   override def map[B](f: A => B): Box[B] = this
+
+  override def mapFailure(f: (Failure) => Failure): Box[A] = f(this)
 
   override def flatMap[B](f: A => Box[B]): Box[B] = this
 
