@@ -186,6 +186,8 @@ private class OfflineRequestSnapshot(req: HTTPRequest, val provider: HTTPProvide
 
   private val _params = List(req.params :_*)
 
+  private val _serverPort = req.serverPort
+
 
   def cookies: List[HTTPCookie] = _cookies
 
@@ -234,8 +236,8 @@ private class OfflineRequestSnapshot(req: HTTPRequest, val provider: HTTPProvide
 
   val scheme: String = req.scheme
 
-  lazy val serverPort: Int = req.serverPort match {
-    case 80 => headers("X-SSL").flatMap(Helpers.asBoolean _).filter(a => a).map(a => 443).headOption getOrElse 80
+  lazy val serverPort: Int = _serverPort match {
+    case 80 => headers("X-SSL").flatMap(Helpers.asBoolean).filter(identity).map(a => 443).headOption getOrElse 80
     case x => x
   }
 
