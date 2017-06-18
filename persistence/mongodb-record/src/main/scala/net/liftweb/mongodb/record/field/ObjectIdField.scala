@@ -79,7 +79,7 @@ sealed trait ObjectIdTypedField[OwnerType <: BsonRecord[OwnerType]] extends Type
 
 }
 
-class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
+class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType)
   extends MandatoryTypedField[ObjectId] with ObjectIdTypedField[OwnerType] {
 
   def this(rec: OwnerType, value: ObjectId) = {
@@ -89,21 +89,17 @@ class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
 
   override def defaultValue = ObjectId.get
 
-  override def owner: OwnerType = rec
-
   def createdAt: Date = this.get.getDate
 
 }
 
-class OptionalObjectIdField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
+class OptionalObjectIdField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType)
   extends OptionalTypedField[ObjectId] with ObjectIdTypedField[OwnerType] {
 
   def this(rec: OwnerType, value: Box[ObjectId]) = {
     this(rec)
     setBox(value)
   }
-
-  override def owner: OwnerType = rec
 
 }
 
