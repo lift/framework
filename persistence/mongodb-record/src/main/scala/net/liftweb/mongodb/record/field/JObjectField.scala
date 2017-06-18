@@ -19,41 +19,34 @@ package mongodb
 package record
 package field
 
+import java.util.UUID
+
 import common._
 import http.js.JE._
 import json._
 import util.Helpers.tryo
-import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
+import net.liftweb.record._
 
 import scala.xml.NodeSeq
-
 import com.mongodb._
 import org.bson.Document
 
-class JObjectField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
-extends Field[JObject, OwnerType]
-with MandatoryTypedField[JObject]
-with MongoFieldFlavor[JObject] {
+sealed trait JObjectTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[JObject]
+  with Field[JObject, OwnerType] with MongoFieldFlavor[JObject] {
 
-  def owner = rec
-
-  def asJValue: JValue = valueBox openOr (JNothing: JValue)
-
-  def setFromJValue(jvalue: JValue): Box[JObject] = jvalue match {
+  override def setFromJValue(jvalue: JValue): Box[JObject] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case jo: JObject => setBox(Full(jo))
     case other => setBox(FieldHelpers.expectedA("JObject", other))
   }
 
-  def defaultValue = JObject(List())
-
-  def setFromAny(in: Any): Box[JObject] = in match {
+  override def setFromAny(in: Any): Box[JObject] = in match {
     case dbo: DBObject => setBox(setFromDBObject(dbo))
     case doc: Document => setBox(setFromDocument(doc))
     case jv: JObject => setBox(Full(jv))
     case Some(jv: JObject) => setBox(Full(jv))
     case Full(jv: JObject) => setBox(Full(jv))
-    case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny).apply(0)
+    case seq: Seq[_] if seq.nonEmpty => seq.map(setFromAny).head
     case (s: String) :: _ => setFromString(s)
     case null => setBox(Full(null))
     case s: String => setFromString(s)
@@ -62,21 +55,44 @@ with MongoFieldFlavor[JObject] {
   }
 
   // assume string is json
-  def setFromString(in: String): Box[JObject] = {
+  override def setFromString(in: String): Box[JObject] = {
     // use lift-json to parse string into a JObject
     setBox(tryo(JsonParser.parse(in).asInstanceOf[JObject]))
   }
 
-  def toForm: Box[NodeSeq] = Empty
+  override def toForm: Box[NodeSeq] = Empty
 
-  def asDBObject: DBObject = valueBox
+  override def asDBObject: DBObject = valueBox
     .map { v => JObjectParser.parse(v)(owner.meta.formats) }
     .openOr(new BasicDBObject)
 
-  def setFromDBObject(obj: DBObject): Box[JObject] =
+  override def setFromDBObject(obj: DBObject): Box[JObject] =
     Full(JObjectParser.serialize(obj)(owner.meta.formats).asInstanceOf[JObject])
 
   def setFromDocument(obj: Document): Box[JObject] =
     Full(JObjectParser.serialize(obj)(owner.meta.formats).asInstanceOf[JObject])
+
+  override def asJValue: JValue = valueBox openOr (JNothing: JValue)
+}
+
+class JObjectField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType)
+  extends JObjectTypedField[OwnerType] with MandatoryTypedField[JObject] {
+
+  def this(owner: OwnerType, value: JObject) = {
+    this(owner)
+    setBox(Full(value))
+  }
+
+  override def defaultValue = JObject(List())
+
+}
+
+class OptionalJObjectField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType)
+  extends JObjectTypedField[OwnerType] with OptionalTypedField[JObject] {
+
+  def this(owner: OwnerType, value: Box[JObject]) = {
+    this(owner)
+    setBox(value)
+  }
 
 }
