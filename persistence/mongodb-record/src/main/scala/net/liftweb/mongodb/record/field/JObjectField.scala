@@ -19,17 +19,14 @@ package mongodb
 package record
 package field
 
-import java.util.UUID
-
-import common._
-import http.js.JE._
-import json._
-import util.Helpers.tryo
+import com.mongodb._
+import net.liftweb.common._
+import net.liftweb.json._
 import net.liftweb.record._
+import net.liftweb.util.Helpers.tryo
+import org.bson.Document
 
 import scala.xml.NodeSeq
-import com.mongodb._
-import org.bson.Document
 
 sealed trait JObjectTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[JObject]
   with Field[JObject, OwnerType] with MongoFieldFlavor[JObject] {
