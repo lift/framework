@@ -237,7 +237,13 @@ private class OfflineRequestSnapshot(req: HTTPRequest, val provider: HTTPProvide
   val scheme: String = req.scheme
 
   lazy val serverPort: Int = _serverPort match {
-    case 80 => headers("X-SSL").flatMap(Helpers.asBoolean).filter(identity).map(a => 443).headOption getOrElse 80
+    case 80 =>
+      headers("X-SSL")
+        .flatMap(Helpers.asBoolean)
+        .filter(identity)
+        .map(_ => 443)
+        .headOption
+        .getOrElse(80)
     case x => x
   }
 
