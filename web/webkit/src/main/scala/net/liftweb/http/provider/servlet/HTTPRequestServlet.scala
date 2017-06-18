@@ -186,7 +186,7 @@ private class OfflineRequestSnapshot(req: HTTPRequest, val provider: HTTPProvide
 
   private val _params = List(req.params :_*)
 
-  private val _serverPort = req.serverPort
+  private [this] val _serverPort = req.serverPort
 
 
   def cookies: List[HTTPCookie] = _cookies
