@@ -101,20 +101,44 @@ trait MongoRefField[RefType <: MongoRecord[RefType], MyType] extends TypedField[
 
 class ObjectIdRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
   rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
-) extends ObjectIdField[OwnerType](rec) with MongoRefField[RefType, ObjectId] {}
+) extends ObjectIdField[OwnerType](rec) with MongoRefField[RefType, ObjectId]
+
+class OptionalObjectIdRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
+  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends OptionalObjectIdField[OwnerType](rec) with MongoRefField[RefType, ObjectId]
+
 
 class UUIDRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
   rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
-) extends UUIDField[OwnerType](rec) with MongoRefField[RefType, UUID] {}
+) extends UUIDField[OwnerType](rec) with MongoRefField[RefType, UUID]
+
+class OptionalUUIDRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
+  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends OptionalUUIDField[OwnerType](rec) with MongoRefField[RefType, UUID]
+
 
 class StringRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
   rec: OwnerType, val refMeta: MongoMetaRecord[RefType], maxLen: Int
-) extends StringField[OwnerType](rec, maxLen) with MongoRefField[RefType, String] {}
+) extends StringField[OwnerType](rec, maxLen) with MongoRefField[RefType, String]
+
+class OptionalStringRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
+  rec: OwnerType, val refMeta: MongoMetaRecord[RefType], maxLen: Int
+) extends OptionalStringField[OwnerType](rec, maxLen) with MongoRefField[RefType, String]
+
 
 class IntRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
   rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
-) extends IntField[OwnerType](rec) with MongoRefField[RefType, Int] {}
+) extends IntField[OwnerType](rec) with MongoRefField[RefType, Int]
+
+class OptionalIntRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
+  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends OptionalIntField[OwnerType](rec) with MongoRefField[RefType, Int]
+
 
 class LongRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
   rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
-) extends LongField[OwnerType](rec) with MongoRefField[RefType, Long] {}
+) extends LongField[OwnerType](rec) with MongoRefField[RefType, Long]
+
+class OptionalLongRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
+  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends OptionalLongField[OwnerType](rec) with MongoRefField[RefType, Long]
