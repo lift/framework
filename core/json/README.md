@@ -1,7 +1,7 @@
 Parsing and formatting utilities for JSON.
 
 A central concept in lift-json library is Json AST which models the structure of
-a JSON document as a syntax tree. 
+a JSON document as a syntax tree.
 
     sealed abstract class JValue
     case object JNothing extends JValue // 'zero' for JValue
@@ -10,7 +10,7 @@ a JSON document as a syntax tree.
     case class JDouble(num: Double) extends JValue
     case class JInt(num: BigInt) extends JValue
     case class JBool(value: Boolean) extends JValue
-    case class JObject(obj: List[JField]) extends JValue 
+    case class JObject(obj: List[JField]) extends JValue
     case class JArray(arr: List[JValue]) extends JValue
 
     case class JField(String, JValue)
@@ -83,7 +83,7 @@ Migration from older versions
 
 JField is no longer a JValue. This means more type safety since it is no longer possible
 to create invalid JSON where JFields are added directly into JArrays for instance. Most
-noticeable consequence of this change is that map, transform, find and filter come in 
+noticeable consequence of this change is that map, transform, find and filter come in
 two versions:
 
     def map(f: JValue => JValue): JValue
@@ -100,7 +100,7 @@ in the name to traverse values in the JSON.
 2.2 ->
 ------
 
-Path expressions were changed after 2.2 version. Previous versions returned JField which 
+Path expressions were changed after 2.2 version. Previous versions returned JField which
 unnecessarily complicated the use of the expressions. If you have used path expressions
 with pattern matching like:
 
@@ -117,7 +117,7 @@ Any valid json can be parsed into internal AST format.
 
     scala> import net.liftweb.json._
     scala> parse(""" { "numbers" : [1, 2, 3, 4] } """)
-    res0: net.liftweb.json.JsonAST.JValue = 
+    res0: net.liftweb.json.JsonAST.JValue =
           JObject(List(JField(numbers,JArray(List(JInt(1), JInt(2), JInt(3), JInt(4))))))
 
 Producing JSON
@@ -178,7 +178,7 @@ Example
       val winners = List(Winner(23, List(2, 45, 34, 23, 3, 5)), Winner(54, List(52, 3, 12, 11, 18, 22)))
       val lotto = Lotto(5, List(2, 45, 34, 23, 7, 5, 3), winners, None)
 
-      val json = 
+      val json =
         ("lotto" ->
           ("lotto-id" -> lotto.id) ~
           ("winning-numbers" -> lotto.winningNumbers) ~
@@ -233,17 +233,17 @@ Please see more examples in src/test/scala/net/liftweb/json/MergeExamples.scala 
            }""")
 
     scala> val lotto2 = parse("""{
-             "lotto":{ 
+             "lotto":{
                "winners":[{
                  "winner-id":54,
                  "numbers":[52,3,12,11,18,22]
                }]
              }
            }""")
-    
+
     scala> val mergedLotto = lotto1 merge lotto2
     scala> pretty(render(mergedLotto))
-    res0: String = 
+    res0: String =
     {
       "lotto":{
         "lotto-id":5,
@@ -294,10 +294,10 @@ Please see more examples in src/test/scala/net/liftweb/json/JsonQueryExamples.sc
     scala> for { JObject(o) <- json; JField("age", JInt(age)) <- o } yield age
     res0: List[BigInt] = List(5, 3)
 
-    scala> for { 
+    scala> for {
              JObject(child) <- json
-             JField("name", JString(name)) <- child 
-             JField("age", JInt(age)) <- child 
+             JField("name", JString(name)) <- child
+             JField("age", JInt(age)) <- child
              if age > 4
            } yield (name, age)
     res1: List[(String, BigInt)] = List((Mary,5))
@@ -305,12 +305,12 @@ Please see more examples in src/test/scala/net/liftweb/json/JsonQueryExamples.sc
 XPath + HOFs
 ------------
 
-Json AST can be queried using XPath like functions. Following REPL session shows the usage of 
-'\\', '\\\\', 'find', 'filter', 'transform', 'remove' and 'values' functions. 
+Json AST can be queried using XPath like functions. Following REPL session shows the usage of
+'\\', '\\\\', 'find', 'filter', 'transform', 'remove' and 'values' functions.
 
     The example json is:
 
-    { 
+    {
       "person": {
         "name": "Joe",
         "age": 35,
@@ -328,12 +328,12 @@ Json AST can be queried using XPath like functions. Following REPL session shows
     scala> import net.liftweb.json._
     scala> import net.liftweb.json.JsonDSL._
 
-    scala> val json = 
+    scala> val json =
       ("person" ->
         ("name" -> "Joe") ~
         ("age" -> 35) ~
-        ("spouse" -> 
-          ("person" -> 
+        ("spouse" ->
+          ("person" ->
             ("name" -> "Marilyn") ~
             ("age" -> 33)
           )
@@ -341,8 +341,7 @@ Json AST can be queried using XPath like functions. Following REPL session shows
       )
 
     scala> json \\ "spouse"
-    res0: net.liftweb.json.JsonAST.JValue = JObject(List(
-          JField(person,JObject(List((name,JString(Marilyn)), (age,JInt(33)))))))
+    res0: net.liftweb.json.JsonAST.JValue = JObject(List(JField(person,JObject(List((name,JString(Marilyn)), (age,JInt(33)))))))
 
     scala> compact(render(res0))
     res1: String = {"person":{"name":"Marilyn","age":33}}
@@ -444,11 +443,11 @@ Please see more examples in src/test/scala/net/liftweb/json/ExtractionExamplesSp
              }
            """)
 
-    scala> json.extract[Person] 
+    scala> json.extract[Person]
     res0: Person = Person(joe,Address(Bulevard,Helsinki),List(Child(Mary,5,Some(Sat Sep 04 18:06:22 EEST 2004)), Child(Mazy,3,None)))
 
-By default the constructor parameter names must match json field names. However, sometimes json 
-field names contain characters which are not allowed characters in Scala identifiers. There's two 
+By default the constructor parameter names must match json field names. However, sometimes json
+field names contain characters which are not allowed characters in Scala identifiers. There's two
 solutions for this (see src/test/scala/net/liftweb/json/LottoExample.scala for bigger example).
 
 Use back ticks.
@@ -531,6 +530,7 @@ Serialization supports:
 * scala.Option
 * java.util.Date
 * Polymorphic Lists (see below)
+* Tuples (see below)
 * Recursive types
 * Serialization of fields of a class (see below)
 * Custom serializer functions for types which are not supported (see below)
@@ -555,6 +555,37 @@ will get an extra field named 'jsonClass' (the name can be changed by overriding
 ShortTypeHints outputs short classname for all instances of configured objects. FullTypeHints outputs full
 classname. Other strategies can be implemented by extending TypeHints trait.
 
+Serializing Tuples
+-----------------------------
+
+If you need to have a heterogeneous collection of completely unrelated types, you might find tuples
+useful for representing that data structure. By default, when you serialize a tuple you'll get an
+object based on the constructor of the appropreate tuple class. So, for example, if you serialize
+a `("bacon", 2)`, you'll get:
+
+    {"_1": "bacon", "_2": 2}
+
+However, as of Lift 3.1, you can enable `tuplesAsArrays` to represent these tuples as heterogeneous
+JSON arrays. To enable this feature you just need to provide a formats object that turns on the
+feature.
+
+    scala> import net.liftweb.json._
+    scala> import Serialization._
+    scala> implicit val formats = new DefaultFormats { override val tuplesAsArrays = true }
+    scala> write(("bacon", 2))
+    res1: String = ["bacon",2]
+
+When this feature is enabled:
+
+* lift-json will write tuples as arrays.
+* lift-json will correctly extract tuples from arrays
+* lift-json will continue to deserialize tuples that were serialied in the old manner, as an object
+
+The major limitation to this feature is that it doesn't reliably support Scala primitives, so it is
+currently disabled by default. If you're using this feature, you should use the Java boxed types
+in your class signatures instead of the Scala primitive types. (So, `java.lang.Integer` instead
+of `scala.Int`.)
+
 Serializing fields of a class
 -----------------------------
 
@@ -562,7 +593,7 @@ To enable serialization of fields, a FieldSerializer can be added for some type:
 
     implicit val formats = DefaultFormats + FieldSerializer[WildDog]()
 
-Now the type WildDog (and all subtypes) gets serialized with all its fields (+ constructor parameters). 
+Now the type WildDog (and all subtypes) gets serialized with all its fields (+ constructor parameters).
 FieldSerializer takes two optional parameters which can be used to intercept the field serialization:
 
     case class FieldSerializer[A: Manifest](
@@ -570,7 +601,7 @@ FieldSerializer takes two optional parameters which can be used to intercept the
       deserializer: PartialFunction[JField, JField] = Map()
     )
 
-Those PartialFunctions are called just before a field is serialized or deserialized. Some useful PFs to 
+Those PartialFunctions are called just before a field is serialized or deserialized. Some useful PFs to
 rename and ignore fields are provided:
 
     val dogSerializer = FieldSerializer[WildDog](
@@ -592,14 +623,14 @@ by providing following serializer.
            }
 
     scala> class IntervalSerializer extends CustomSerializer[Interval](format => (
-             { 
-               case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) => 
-                 new Interval(s.longValue, e.longValue) 
+             {
+               case JObject(JField("start", JInt(s)) :: JField("end", JInt(e)) :: Nil) =>
+                 new Interval(s.longValue, e.longValue)
              },
-             { 
+             {
                case x: Interval =>
-                 JObject(JField("start", JInt(BigInt(x.startTime))) :: 
-                         JField("end",   JInt(BigInt(x.endTime))) :: Nil) 
+                 JObject(JField("start", JInt(BigInt(x.startTime))) ::
+                         JField("end",   JInt(BigInt(x.endTime))) :: Nil)
              }
            ))
 

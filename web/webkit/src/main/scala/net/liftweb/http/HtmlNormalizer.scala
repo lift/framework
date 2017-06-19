@@ -87,6 +87,7 @@ private[http] final object HtmlNormalizer {
     attributes: MetaData,
     contextPath: String,
     shouldRewriteUrl: Boolean, // whether to apply URLRewrite.rewriteFunc
+    extractInlineJavaScript: Boolean,
     eventAttributes: List[EventAttribute] = Nil
   ): (Option[String], MetaData, List[EventAttribute]) = {
     if (attributes == Null) {
@@ -100,6 +101,7 @@ private[http] final object HtmlNormalizer {
           attributes.next,
           contextPath,
           shouldRewriteUrl,
+          extractInlineJavaScript,
           eventAttributes
         )
 
@@ -108,7 +110,7 @@ private[http] final object HtmlNormalizer {
                EventAttribute.EventForAttribute(eventName),
                attributeValue,
                remainingAttributes
-             ) if attributeValue.text.startsWith("javascript:") =>
+             ) if attributeValue.text.startsWith("javascript:") && extractInlineJavaScript =>
           val attributeJavaScript = {
             // Could be javascript: or javascript://.
             val base = attributeValue.text.substring(11)
@@ -150,7 +152,7 @@ private[http] final object HtmlNormalizer {
 
           (id, newMetaData, remainingEventAttributes)
 
-        case UnprefixedAttribute(name, attributeValue, _) if name.startsWith("on") =>
+        case UnprefixedAttribute(name, attributeValue, _) if name.startsWith("on") && extractInlineJavaScript =>
           val updatedEventAttributes =
             EventAttribute(name.substring(2), attributeValue.text) ::
             remainingEventAttributes
@@ -182,13 +184,20 @@ private[http] final object HtmlNormalizer {
     }.foldLeft(Noop)(_ & _)
   }
 
-  private[http] def normalizeElementAndAttributes(element: Elem, attributeToNormalize: String, contextPath: String, shouldRewriteUrl: Boolean): NodeAndEventJs = {
+  private[http] def normalizeElementAndAttributes(
+    element: Elem,
+    attributeToNormalize: String,
+    contextPath: String,
+    shouldRewriteUrl: Boolean,
+    extractEventJavaScript: Boolean
+  ): NodeAndEventJs = {
     val (id, normalizedAttributes, eventAttributes) =
       normalizeUrlAndExtractEvents(
         attributeToNormalize,
         element.attributes,
         contextPath,
-        shouldRewriteUrl
+        shouldRewriteUrl,
+        extractEventJavaScript
       )
 
     val attributesIncludingEventsAsData =
@@ -226,7 +235,12 @@ private[http] final object HtmlNormalizer {
     }
   }
 
-  private[http] def normalizeNode(node: Node, contextPath: String, stripComments: Boolean): Option[NodeAndEventJs] = {
+  private[http] def normalizeNode(
+    node: Node,
+    contextPath: String,
+    stripComments: Boolean,
+    extractEventJavaScript: Boolean
+  ): Option[NodeAndEventJs] = {
     node match {
       case element: Elem =>
         val (attributeToFix, shouldRewriteUrl) =
@@ -250,7 +264,8 @@ private[http] final object HtmlNormalizer {
             element,
             attributeToFix,
             contextPath,
-            shouldRewriteUrl
+            shouldRewriteUrl,
+            extractEventJavaScript
           )
         )
 
@@ -263,30 +278,28 @@ private[http] final object HtmlNormalizer {
   }
 
   /**
-   * Base for all the normalizeHtml* implementations; in addition to what it
-   * usually does, takes an `[[additionalChanges]]` function that is passed a
-   * state object and the current (post-normalization) node and can adjust the
-   * state and tweak the normalized nodes or even add more JsCmds to be
-   * included.  That state is in turn passed to any invocations for any of the
-   * children of the current node. Note that state is '''not''' passed back up
-   * the node hierarchy, so state updates are '''only''' seen by children of
-   * the node.
+   * Normalizes `nodes` to adjust URLs with the given `contextPath`, stripping
+   * comments if `stripComments` is `true`, and extracting event JavaScript
+   * into the `js` part of the returned `NodesAndEventJs` if
+   * `extractEventJavaScript` is `true`.
    *
    * See `[[LiftMerge.merge]]` for sample usage.
    */
   def normalizeHtmlAndEventHandlers(
     nodes: NodeSeq,
     contextPath: String,
-    stripComments: Boolean
+    stripComments: Boolean,
+    extractEventJavaScript: Boolean
   ): NodesAndEventJs = {
     nodes.foldLeft(NodesAndEventJs(Vector[Node](), Noop)) { (soFar, nodeToNormalize) =>
-      normalizeNode(nodeToNormalize, contextPath, stripComments).map {
+      normalizeNode(nodeToNormalize, contextPath, stripComments, extractEventJavaScript).map {
         case NodeAndEventJs(normalizedElement: Elem, js: JsCmd) =>
           val NodesAndEventJs(normalizedChildren, childJs) =
             normalizeHtmlAndEventHandlers(
               normalizedElement.child,
               contextPath,
-              stripComments
+              stripComments,
+              extractEventJavaScript
             )
 
           soFar

@@ -4,6 +4,7 @@ package util
 import common._
 import xml._
 import collection.mutable.ListBuffer
+import scala.annotation.implicitNotFound
 
 /**
  * Created with IntelliJ IDEA.
@@ -753,6 +754,7 @@ final class CssJBridge extends CssBindImplicits {
 
 }
 
+@implicitNotFound("The value you're attempting to use on the right hand side of the #> operator can't be automatically converted to a (NodeSeq)=>NodeSeq function. Consider binding the individual members of the class you're trying to use, or define an implicit CanBind[T] that tells Lift how to convert this to a (NodeSeq)=>NodeSeq.")
 trait CanBind[-T] {
   def apply(it: => T)(ns: NodeSeq): Seq[NodeSeq]
 }

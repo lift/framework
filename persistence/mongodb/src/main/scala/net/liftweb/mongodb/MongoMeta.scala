@@ -117,41 +117,15 @@ trait MongoMeta[BaseDocument] extends JsonFormats {
   /* drop this document collection */
   def drop: Unit =  useColl { coll => coll.drop }
 
-  /*
-  * Ensure an index exists
-  */
-  @deprecated("use createIndex(JObject) instead.", "2.6")
-  def ensureIndex(keys: JObject): Unit =
-    useColl { coll => coll.createIndex(JObjectParser.parse(keys)) }
-
-  /*
-  * Ensure an index exists and make unique
-  */
-  @deprecated("use createIndex(JObject, Boolean) instead.", "2.6")
-  def ensureIndex(keys: JObject, unique: Boolean): Unit = {
-    val options = new BasicDBObject
-    if (unique) options.put("unique", true)
-    useColl { coll =>
-      coll.createIndex(JObjectParser.parse(keys), options)
-    }
-  }
-
   def createIndex(keys: JObject, unique: Boolean = false): Unit = {
     val options = new BasicDBObject
-    if (unique) options.put("unique", true)
+    if (unique) {
+      options.put("unique", true: java.lang.Boolean)
+    }
     useColl { coll =>
       coll.createIndex(JObjectParser.parse(keys), options)
     }
   }
-
-  /*
-  * Ensure an index exists with options
-  */
-  @deprecated("use createIndex(JObject, JObject) instead.", "2.6")
-  def ensureIndex(keys: JObject, opts: JObject): Unit =
-    useColl { coll =>
-      coll.createIndex(JObjectParser.parse(keys), JObjectParser.parse(opts))
-    }
 
   def createIndex(keys: JObject, opts: JObject): Unit =
     useColl { coll =>

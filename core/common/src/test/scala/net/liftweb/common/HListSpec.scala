@@ -81,6 +81,8 @@ object HListSpec extends Specification {
 
           success
         }
+
+        case Right(_) => failure
         case Left(_) => failure
       }
     }
@@ -90,7 +92,7 @@ object HListSpec extends Specification {
       import HLists._
 
       val res = for {
-        a :+: one :+: lst :+: _ <- 
+        a :+: one :+: lst :+: _ <-
         (Full("a") ?~ "Yak" :&: Full(1) :&: Full(List(1,2,3))) ?~! "Dude"
       } yield a.length * one * lst.foldLeft(1)(_ * _)
 

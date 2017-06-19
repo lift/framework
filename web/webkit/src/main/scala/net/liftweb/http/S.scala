@@ -17,13 +17,12 @@
 package net.liftweb
 package http
 
-import java.util.{Locale, TimeZone, ResourceBundle}
+import java.util.{Locale, ResourceBundle, TimeZone}
 
 import scala.collection.mutable.{HashMap, ListBuffer}
 import xml._
-
 import common._
-import actor.LAFuture
+import actor.{LAFuture, LAScheduler}
 import util._
 import Helpers._
 import js._
@@ -754,7 +753,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    *
    *
    * @param name A name for the rewrite function so that it can be replaced or deleted later.
-   * @rw The rewrite partial function
+   * @param rw The rewrite partial function
    *
    * @see LiftRules.rewrite
    * @see # sessionRewriter
@@ -1403,6 +1402,16 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * The current LiftSession.
    */
   def session: Box[LiftSession] = Box.legacyNullTest(_sessionInfo.value)
+
+  /**
+    * Creates `LAFuture` instance aware of the current request and session. Each `LAFuture` returned by chained
+    * transformation method (e.g. `map`, `flatMap`) will be also request/session-aware. However, it's
+    * important to bear in mind that initial session or request are not propagated to chained methods. It's required
+    * that current execution thread for chained method has request or session available in scope if reading/writing
+    * some data to it as a part of chained method execution.
+    */
+  def sessionFuture[T](task: => T, scheduler: LAScheduler = LAScheduler): LAFuture[T] =
+    LAFutureWithSession.withCurrentSession(task, scheduler)
 
   /**
    * Log a query for the given request.  The query log can be tested to see

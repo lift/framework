@@ -76,25 +76,23 @@ object StringHelpersSpec extends Specification with ScalaCheck with StringGen {
           previousCharacterIsUnderscore(name, i) && correspondingCharInCamelCase(name, i) == c.toUpper
        }
       })
-      check(doesntContainUnderscores && isCamelCased)
+      (doesntContainUnderscores && isCamelCased)
     }
     "return an empty string if given null" in {
       camelify(null) must_== ""
     }
     "leave a CamelCased name untouched" in {
-      val camelCasedNameDoesntChange = forAll(camelCasedStrings){ (name: String) => camelify(name) == name }
-      check(camelCasedNameDoesntChange)
+      forAll(camelCasedStrings){ (name: String) => camelify(name) == name }
     }
   }
 
   "The camelifyMethod function" should {
     "camelCase a name with the first letter being lower cased" in {
-      val camelCasedMethodIsCamelCaseWithLowerCase = forAll(underscoredStrings){
+      forAll(underscoredStrings){
         (name: String) =>
         camelify(name).isEmpty && camelifyMethod(name).isEmpty ||
         camelifyMethod(name).toList.head.isLower && camelify(name) == camelifyMethod(name).capitalize
       }
-      check(camelCasedMethodIsCamelCaseWithLowerCase)
     }
   }
 

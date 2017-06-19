@@ -28,6 +28,7 @@ import net.liftweb.util.SimpleInjector
 
 import com.mongodb.{BasicDBObject, BasicDBList, DBObject}
 import org.bson.types.ObjectId
+import org.bson.Document
 
 object JObjectParser extends SimpleInjector {
   /**
@@ -52,17 +53,20 @@ object JObjectParser extends SimpleInjector {
   /*
   * Serialize a DBObject into a JObject
   */
-  def serialize(a: Any)(implicit formats: Formats): JValue = serialize(a, formats)
-
-  private def serialize(a: Any, formats: Formats): JValue = {
+  def serialize(a: Any)(implicit formats: Formats): JValue = {
     import Meta.Reflection._
     a.asInstanceOf[AnyRef] match {
       case null => JNull
       case x if primitive_?(x.getClass) => primitive2jvalue(x)
       case x if datetype_?(x.getClass) => datetype2jvalue(x)(formats)
       case x if mongotype_?(x.getClass) => mongotype2jvalue(x)(formats)
-      case x: BasicDBList => JArray(x.toList.map( x => serialize(x, formats)))
+      case x: BasicDBList => JArray(x.toList.map( x => serialize(x)(formats)))
       case x: BasicDBObject => JObject(
+        x.keySet.toList.map { f =>
+          JField(f.toString, serialize(x.get(f.toString))(formats))
+        }
+      )
+      case x: Document => JObject(
         x.keySet.toList.map { f =>
           JField(f.toString, serialize(x.get(f.toString), formats))
         }

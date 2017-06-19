@@ -12,11 +12,11 @@ startYear in ThisBuild             := Some(2006)
 
 organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
 
-scalaVersion in ThisBuild          := "2.11.4"
+scalaVersion in ThisBuild          := "2.12.2"
 
-crossScalaVersions in ThisBuild    := Seq("2.11.4")
+crossScalaVersions in ThisBuild    := Seq("2.12.2", "2.11.11")
 
-libraryDependencies in ThisBuild <++= scalaVersion {sv => Seq(specs2, scalacheck, scalatest) }
+libraryDependencies in ThisBuild <++= scalaVersion {sv => Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalatest) }
 
 // Settings for Sonatype compliance
 pomIncludeRepository in ThisBuild  := { _ => false }

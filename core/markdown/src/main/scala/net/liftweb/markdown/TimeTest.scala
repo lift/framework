@@ -1,7 +1,7 @@
 package net.liftweb.markdown
 
 /*
- * Copyright 2013 WorldWide Conferencing, LLC
+ * Copyright 2013-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,8 @@ package net.liftweb.markdown
  * Christoph Henkelmann http://henkelmann.eu/
  */
 
-import java.io.{InputStreamReader, FileInputStream, StringWriter}
+import java.io.{InputStreamReader, StringWriter}
+import java.nio.file.{Files, Paths}
 
 /**
  * Quick and dirty test for measuring the time of this Parser.
@@ -62,7 +63,7 @@ object TimeTest {
 
     private def readFile(path:String):String  = {
         //read from system input stream
-        val reader = new InputStreamReader(new FileInputStream(path))
+        val reader = new InputStreamReader(Files.newInputStream(Paths.get(path)))
         val writer = new StringWriter()
         val buffer = new Array[Char](1024)
 		var read = reader.read(buffer)

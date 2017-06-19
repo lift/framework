@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
 import util.Helpers._
 
 import com.mongodb._
+import org.bson.Document
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
 
@@ -71,6 +72,18 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
       case list@c::xs if mf.runtimeClass.isInstance(c) => setBox(Full(list.asInstanceOf[MyType]))
       case Some(list@c::xs) if mf.runtimeClass.isInstance(c) => setBox(Full(list.asInstanceOf[MyType]))
       case Full(list@c::xs) if mf.runtimeClass.isInstance(c) => setBox(Full(list.asInstanceOf[MyType]))
+      case jlist: java.util.List[_] => {
+        if(!jlist.isEmpty) {
+          val elem = jlist.get(0)
+          if(elem.isInstanceOf[Document]) {
+            setFromDocumentList(jlist.asInstanceOf[java.util.List[Document]])
+          } else {
+            setBox(Full(jlist.toList.asInstanceOf[MyType]))
+          }
+        } else {
+          setBox(Full(Nil))
+        }
+      }
       case s: String => setFromString(s)
       case Some(s: String) => setFromString(s)
       case Full(s: String) => setFromString(s)
@@ -147,6 +160,11 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
   // set this field's value using a DBObject returned from Mongo.
   def setFromDBObject(dbo: DBObject): Box[MyType] =
     setBox(Full(dbo.asInstanceOf[BasicDBList].toList.asInstanceOf[MyType]))
+
+  def setFromDocumentList(list: java.util.List[Document]): Box[MyType] = {
+    throw new RuntimeException("Warning, setting Document as field with no conversion, probably not something you want to do")
+  }
+
 }
 
 /*

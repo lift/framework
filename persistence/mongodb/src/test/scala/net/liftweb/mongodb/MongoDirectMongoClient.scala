@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 WorldWide Conferencing, LLC
+ * Copyright 2014-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,11 @@ import com.mongodb._
 
 import org.specs2.mutable.Specification
 
-
 /**
  * System under specification for MongoDirectMonoClient.
  */
 class MongoDirectMongoClientSpec extends Specification with MongoTestKit {
   "MongoDirectMongoClient Specification".title
-
-  override def mongo = new MongoClient("127.0.0.1", 27017)
 
   "MongoClient example" in {
 
@@ -50,15 +47,15 @@ class MongoDirectMongoClientSpec extends Specification with MongoTestKit {
 
       doc.put("name", "MongoSession")
       doc.put("type", "db")
-      doc.put("count", 1)
+      doc.put("count", 1: java.lang.Integer)
 
       doc2.put("name", "MongoSession")
       doc2.put("type", "db")
-      doc2.put("count", 1)
+      doc2.put("count", 1: java.lang.Integer)
 
       doc3.put("name", "MongoDB")
       doc3.put("type", "db")
-      doc3.put("count", 1)
+      doc3.put("count", 1: java.lang.Integer)
 
       // save the docs to the db
       coll.save(doc)

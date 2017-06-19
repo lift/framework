@@ -38,7 +38,7 @@ object JsCommands {
  * also read and included in the response. Also in this process, all of the
  * `JsCmd` instances have their `toJsCmd` methods called to convert them to a
  * string.
- * 
+ *
  * @note The contents of `jsToAppend` are cleared in this process!
  */
 class JsCommands(val reverseList: List[JsCmd]) {
@@ -571,9 +571,15 @@ trait HtmlFixer {
    * construct a function that executes the contents of the scripts
    * then evaluations to Expression.  For use when converting
    * a JsExp that contains HTML.
+   *
+   *
+   * @note Currently, `fixHtmlFunc` does '''not''' do event extraction, even when
+   *       `LiftRules.extractInlineJavaScript` is `true`, due to poor interactions
+   *       with `JsExp` usage. This will be fixed in a future Lift release; see
+   *       https://github.com/lift/framework/issues/1801 .
    */
   def fixHtmlFunc(uid: String, content: NodeSeq)(f: String => String) =
-    fixHtmlAndJs(uid, content) match {
+    fixHtmlAndJs(uid, content, forceExtractInlineJavaScript = Some(false)) match {
       case (str, Nil) => f(str)
       case (str, cmds) => "((function() {"+cmds.reduceLeft{_ & _}.toJsCmd+" return "+f(str)+";})())"
     }
@@ -596,25 +602,35 @@ trait HtmlFixer {
    * This method must be run in the context of the thing creating the XHTML
    * to capture the bound functions
    */
-  protected def fixHtmlAndJs(uid: String, content: NodeSeq): (String, List[JsCmd]) = {
+  protected def fixHtmlAndJs(
+    uid: String,
+    content: NodeSeq,
+    forceExtractInlineJavaScript: Option[Boolean] = None
+  ): (String, List[JsCmd]) = {
     import Helpers._
 
     val w = new java.io.StringWriter
 
-    val xhtml =
+    val NodesAndEventJs(xhtml, eventJs) =
       S.session.map { session =>
-        session.normalizeHtmlAndAppendEventHandlers(
+        session.normalizeHtmlAndEventHandlers(
           session.processSurroundAndInclude(
             s"JS SetHTML id: $uid",
             content
-          )
+          ),
+          forceExtractInlineJavaScript
         )
       } openOr {
-        content
+        NodesAndEventJs(content, JsCmds.Noop)
       }
 
     import scala.collection.mutable.ListBuffer
-    val lb = new ListBuffer[JsCmd]
+    val lb =
+      if (eventJs == JsCmds.Noop) {
+        ListBuffer[JsCmd]()
+      } else {
+        ListBuffer[JsCmd](eventJs)
+      }
 
     val revised = ("script" #> nsFunc(ns => {
       ns match {
@@ -646,7 +662,13 @@ trait HtmlFixer {
 }
 
 trait JsCmd extends HtmlFixer with ToJsCmd {
-  def &(other: JsCmd): JsCmd = JsCmds.CmdPair(this, other)
+  def &(other: JsCmd): JsCmd = {
+    if (other == JsCmds.Noop) {
+      this
+    } else {
+      JsCmds.CmdPair(this, other)
+    }
+  }
 
   def toJsCmd: String
 
@@ -715,7 +737,7 @@ object JsCmds {
       elem ++ Script(LiftRules.jsArtifacts.onLoad(Run("if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").focus();};")))
     }
   }
-  
+
   /**
    * Sets the value of an element and sets the focus
    */
@@ -793,7 +815,7 @@ object JsCmds {
   implicit def jsExpToJsCmd(in: JsExp) = in.cmd
 
   case class CmdPair(left: JsCmd, right: JsCmd) extends JsCmd {
-    import scala.collection.mutable.ListBuffer;
+    import scala.collection.mutable.ListBuffer
 
     def toJsCmd: String = {
       val acc = new ListBuffer[JsCmd]()
@@ -806,6 +828,7 @@ object JsCmds {
       cmds match {
         case Nil =>
         case CmdPair(l, r) :: rest => appendDo(acc, l :: r :: rest)
+        case `_Noop` :: rest => appendDo(acc, rest)
         case a :: rest => acc.append(a); appendDo(acc, rest)
       }
     }

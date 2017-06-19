@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap
 import scala.collection.immutable.HashSet
 
 import com.mongodb.{DB, DBCollection, Mongo, MongoClient, MongoException, MongoOptions, ServerAddress}
+import com.mongodb.client.MongoDatabase
 
 /**
   * Main Mongo object
@@ -33,23 +34,12 @@ object MongoDB {
   /**
     * HashMap of Mongo instance and db name tuples, keyed by ConnectionIdentifier
     */
-  private val dbs = new ConcurrentHashMap[ConnectionIdentifier, (Mongo, String)]
+  private[this] val dbs = new ConcurrentHashMap[ConnectionIdentifier, (MongoClient, String)]
 
   /**
     * Define a MongoClient db using a MongoClient instance.
     */
   def defineDb(name: ConnectionIdentifier, mngo: MongoClient, dbName: String) {
-    dbs.put(name, (mngo, dbName))
-  }
-
-  /**
-    * Define and authenticate a Mongo db using a MongoClient instance.
-    */
-  @deprecated("Credentials are now passed in via MongoClient", "3.0")
-  def defineDbAuth(name: ConnectionIdentifier, mngo: MongoClient, dbName: String, username: String, password: String) {
-    if (!mngo.getDB(dbName).authenticate(username, password.toCharArray))
-      throw new MongoException("Authorization failed: "+mngo.toString)
-
     dbs.put(name, (mngo, dbName))
   }
 
@@ -62,9 +52,16 @@ object MongoDB {
   }
 
   /**
+    * Get a MongoDatabase reference
+    */
+  private[this] def getDatabase(name: ConnectionIdentifier): Option[MongoDatabase] = {
+    Option(dbs.get(name)).map { case (mngo, db) => mngo.getDatabase(db) }
+  }
+
+  /**
     * Get a Mongo collection. Gets a Mongo db first.
     */
-  private def getCollection(name: ConnectionIdentifier, collectionName: String): Option[DBCollection] = getDb(name) match {
+  private[this] def getCollection(name: ConnectionIdentifier, collectionName: String): Option[DBCollection] = getDb(name) match {
     case Some(mongo) if mongo != null => Some(mongo.getCollection(collectionName))
     case _ => None
   }
@@ -122,53 +119,6 @@ object MongoDB {
   }
 
   /**
-    * Executes function {@code f} with the mongo db named {@code name}. Uses the same socket
-    * for the entire function block. Allows multiple operations on the same thread/socket connection
-    * and the use of getLastError.
-    * See: http://docs.mongodb.org/ecosystem/drivers/java-concurrency/
-    */
-  @deprecated("No longer needed. See mongo-java-drivers's JavaDocs for details", "3.0")
-  def useSession[T](name: ConnectionIdentifier)(f: (DB) => T): T = {
-
-    val db = getDb(name) match {
-      case Some(mongo) => mongo
-      case _ => throw new MongoException("Mongo not found: "+name.toString)
-    }
-
-    // start the request
-    db.requestStart
-    try {
-      f(db)
-    }
-    finally {
-      // end the request
-      db.requestDone
-    }
-  }
-
-  /**
-    * Same as above except uses DefaultConnectionIdentifier
-    */
-  @deprecated("No longer needed. See mongo-java-drivers's JavaDocs for details", "3.0")
-  def useSession[T](f: (DB) => T): T = {
-
-    val db = getDb(DefaultConnectionIdentifier) match {
-      case Some(mongo) => mongo
-      case _ => throw new MongoException("Mongo not found: "+DefaultConnectionIdentifier.toString)
-    }
-
-    // start the request
-    db.requestStart
-    try {
-      f(db)
-    }
-    finally {
-      // end the request
-      db.requestDone
-    }
-  }
-
-  /**
     * Calls close on each MongoClient instance and clears the HashMap.
     */
   def closeAll(): Unit = {
@@ -177,5 +127,21 @@ object MongoDB {
       mngo.close()
     }
     dbs.clear()
+  }
+
+  /**
+    * Clear the HashMap.
+    */
+  def clear(): Unit = {
+    dbs.clear()
+  }
+
+  /**
+    * Remove a specific ConnectionIdentifier from the HashMap.
+    */
+  def remove(id: ConnectionIdentifier): Option[MongoDatabase] = {
+    val db = getDatabase(id)
+    dbs.remove(id)
+    db
   }
 }

@@ -385,7 +385,7 @@ trait RestHelper extends LiftRules.DispatchPF {
   /**
    * Serve a request returning either JSON or XML.
    *
-   * @parama pf -- a Partial Function that converts the request into
+   * @param pf -- a Partial Function that converts the request into
    * Any (note that the response must be convertable into
    * JSON vis Lift JSON Extraction.decompose
    */

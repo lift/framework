@@ -165,7 +165,7 @@ object LiftSession {
    * Cache for findSnippetClass lookups.
    */
   private val snippetClassMap = new ConcurrentHashMap[String, Box[Class[AnyRef]]]()
-  
+
   /*
    * Given a Snippet name, try to determine the fully-qualified Class
    * so that we can instantiate it via reflection.
@@ -180,7 +180,7 @@ object LiftSession {
       //
       // We're using ConcurrentHashMap, so no `getOrElseUpdate` here (and
       // `getOrElseUpdate` isn't atomic anyway).
-      if (! snippetClassMap.contains(name)) {
+      if (! snippetClassMap.containsKey(name)) {
         snippetClassMap.putIfAbsent(name, {
           // Name might contain some relative packages, so split them out and put them in the proper argument of findClass
           val (packageSuffix, terminal) = name.lastIndexOf('.') match {
@@ -428,7 +428,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   private[http] object deferredSnippets extends RequestVar[HashMap[String, Box[NodeSeq]]](new HashMap)
 
   /** Messages saved for CometActors prior to their creation */
-  private object cometPreMessages extends SessionVar[Vector[(CometId, Any)]](Vector.empty)
+  private object cometPreMessagesById extends SessionVar[Vector[(CometId, Any)]](Vector.empty)
+  private object cometPreMessagesByType extends TransientRequestVar[Vector[(String, Any)]](Vector.empty)
 
 
   private[http] def startSession(): Unit = {
@@ -588,7 +589,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   /**
    * Removes the function with the given `name`. Note that this will
-   * '''not''' trigger `[[onFunctionOwnersRemoved]]` listeners.
+   * '''not''' trigger `[[LiftSession$.onFunctionOwnersRemoved]]` listeners.
    */
   def removeFunction(name: String) = {
     nmessageCallback.remove(name)
@@ -600,7 +601,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * test.
    *
    * If any function owner is completely absent after going through the
-   * functions, any function registered via `[[onFunctionOwnersRemoved]]`
+   * functions, any function registered via `[[LiftSession$.onFunctionOwnersRemoved]]`
    * will be called with the list of removed owners.
    */
   private def removeFunctionsIf(test: (S.AFuncHolder)=>Boolean) = {
@@ -1546,7 +1547,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * had been executed on the thread that created the function.
    */
   def buildDeferredFunction[T](deferredFunction: () => T): () => T = {
-    val currentReq = S.request.map(_.snapshot)
+    val currentReq = S.request.filter(_.request != null).map(_.snapshot)
     val renderVersion = RenderVersion.get
     val requestVarFunc = RequestVarHandler.generateSnapshotRestorer[T]()
 
@@ -1564,7 +1565,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * request and session context.
    */
   def buildDeferredFunction[A,T](deferredFunction: (A)=>T): (A)=>T = {
-    val currentReq = S.request.map(_.snapshot)
+    val currentReq = S.request.filter(_.request != null).map(_.snapshot)
     val renderVersion = RenderVersion.get
     val requestVarFunc = RequestVarHandler.generateSnapshotRestorer[T]()
 
@@ -1852,8 +1853,9 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Apply HTML specific corrections such as adding the context path etc.
    *
-   * In general, you should heavily consider using `[[normalizeHtmlAndEvents]]`
-   * or its friendliest sibling, `[[normalizeHtmlAndAppendEvents]]`.
+   * In general, you should heavily consider using
+   * `[[normalizeHtmlAndEventHandlers]]` or its friendliest sibling,
+   * `[[normalizeHtmlAndAppendEventHandlers]]`.
    */
   def normalizeHtml(in: NodeSeq): NodeSeq = {
     Req.normalizeHtml(contextPath, in)
@@ -1867,21 +1869,31 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Note that most of the time you can just call
    * `[[normalizeHtmlAndAppendEventHandlers]]` and not worry about the extra
    * `JsCmd`, as Lift will automatically append it to the response.
+   *
+   * @param forceExtractInlineJavaScript If `None`, uses `LiftRules.extractInlineJavaScript`
+   *        to decide whether or not to extract inline JS from the passed nodes. If `Some`,
+   *        extracts (`Some(true)`) or doesn't (`Some(false)`).
    */
-  def normalizeHtmlAndEventHandlers(nodes: NodeSeq): NodesAndEventJs = {
+  def normalizeHtmlAndEventHandlers(
+    nodes: NodeSeq,
+    forceExtractInlineJavaScript: Option[Boolean] = None
+  ): NodesAndEventJs = {
     HtmlNormalizer.normalizeHtmlAndEventHandlers(
       nodes,
       S.contextPath,
-      LiftRules.stripComments.vend
+      LiftRules.stripComments.vend,
+      forceExtractInlineJavaScript getOrElse LiftRules.extractInlineJavaScript
     )
   }
 
   /**
    * Runs `[[normalizeHtmlAndEventHandlers]]` to adjust URLs to context paths
    * and extract JS event handlers from the given `NodeSeq` and pull them into
-   * a separate JsCmd, then uses `[[S.appendJs]]` to append that JS to the
-   * response's JavaScript (the page-specific JS file if we are rendering a
-   * page, or the end of the returned JS if this is an AJAX or comet request).
+   * a separate JsCmd, then uses
+   * `[[net.liftweb.http.S!.appendJs(js:net\.liftweb\.http\.js\.JsCmd):Unit*
+   * S.appendJs]]` to append that JS to the response's JavaScript (the
+   * page-specific JS file if we are rendering a page, or the end of the
+   * returned JS if this is an AJAX or comet request).
    */
   def normalizeHtmlAndAppendEventHandlers(in: NodeSeq): NodeSeq = {
     val NodesAndEventJs(normalizedHtml, eventJs) = normalizeHtmlAndEventHandlers(in)
@@ -2322,29 +2334,91 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * the CometActor is instantiated.  If the CometActor already exists
    * in the session, the message will be sent immediately.  If the CometActor
    * is not yet instantiated, the message will be sent to the CometActor
-   * as part of setup (@see setupComet) if it is created as part
+   * as part of setup `[[queueCometMessage]]` if it is created as part
    * of the current HTTP request/response cycle.
+   *
+   * @param theType the type of the CometActor
+   * @param msg the message to send to the CometActor
+   */
+  def sendCometMessage(theType: String, msg: Any): Unit = {
+    testStatefulFeature {
+      findComet(theType).foreach(_ ! msg)
+      queueCometMessage(theType, msg)
+    }
+  }
+
+  /**
+   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit the main sendCometMessage]],
+   * except that the type argument is taken as a type parameter instead of a string.
+   *
+   * @param msg the message to send to the CometActor
+   */
+  def sendCometMessage[T](msg: Any)(implicit cometManifest: Manifest[T]): Unit = {
+    val castClass = cometManifest.runtimeClass.asInstanceOf[Class[T]]
+    val typeName = castClass.getSimpleName
+    sendCometMessage(typeName, msg)
+  }
+
+  /**
+   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit the main sendCometMessage]],
+   * except that this version will limit based on the name of the comet. Providing `name` as `Empty`,
+   * will specifically select comets with no name.
    *
    * @param theType the type of the CometActor
    * @param name the optional name of the CometActor
    * @param msg the message to send to the CometActor
    */
-  def sendCometActorMessage(theType: String, name: Box[String], msg: Any) {
+  def sendCometMessage(theType: String, name: Box[String], msg: Any): Unit = {
     testStatefulFeature {
       findComet(theType, name) match {
         case Full(a) => a ! msg
-        case _ => setupComet(theType, name, msg)
+        case _ => queueCometMessage(theType, name, msg)
       }
     }
   }
 
   /**
-   * Allows you to send messages to a CometActor that may or may not be set up yet
+   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit the main sendCometMessage]],
+   * except that this version will limit based on the name of the comet and it takes its type selector
+   * as a type parameter.
+   *
+   * @param name the optional name of the CometActor
+   * @param msg the message to send to the CometActor
    */
-  def setupComet(cometType: String, cometName: Box[String], msg: Any) {
+  def sendCometMessage[T](name: Box[String], msg: Any)(implicit cometManifest: Manifest[T]): Unit = {
+    val castClass = cometManifest.runtimeClass.asInstanceOf[Class[T]]
+    val typeName = castClass.getSimpleName
+    sendCometMessage(typeName, name, msg)
+  }
+
+  @deprecated("Please switch to using sendCometMessage.", "3.1")
+  def sendCometActorMessage(theType: String, name: Box[String], msg: Any): Unit =
+    sendCometMessage(theType, name, msg)
+
+  /**
+   * Queue a message for a comet that is not started yet.
+   */
+  def queueCometMessage(cometType: String, msg: Any) {
     testStatefulFeature {
-      cometPreMessages.atomicUpdate(_ :+ CometId(cometType, cometName) -> msg)
+      cometPreMessagesByType.atomicUpdate(_ :+ cometType -> msg)
     }
+  }
+
+  /**
+   * Queue a message for a comet that is not started yet.
+   */
+  def queueCometMessage(cometType: String, cometName: Box[String], msg: Any) {
+    testStatefulFeature {
+      cometPreMessagesById.atomicUpdate(_ :+ CometId(cometType, cometName) -> msg)
+    }
+  }
+
+  /**
+   * Queue a message for a comet that is not started yet.
+   */
+  @deprecated("Please use queueCometMessage instead.", "3.1")
+  def setupComet(cometType: String, cometName: Box[String], msg: Any) {
+    queueCometMessage(cometType, cometName, msg)
   }
 
   /**
@@ -2440,10 +2514,10 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     val cometInfo = CometId(creationInfo.cometType, creationInfo.cometName)
 
     testStatefulFeature {
-      val existingComet = Box.legacyNullTest(nasyncComponents.get(cometInfo))
+      val existingOrNewComet = Box.legacyNullTest(nasyncComponents.get(cometInfo)).asA[T] or newCometFn(creationInfo)
 
-      (existingComet.asA[T] or newCometFn(creationInfo)).map { comet =>
-        cometPreMessages.atomicUpdate(_.filter {
+      existingOrNewComet.map { comet =>
+        cometPreMessagesById.atomicUpdate(_.filter {
           // Pass messages for this comet on and remove them from pending list.
           case (info, message) if info == cometInfo =>
             comet ! message
@@ -2451,6 +2525,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           case _ =>
             true
         })
+
+        cometPreMessagesByType.is.collect {
+          case (typeForMessage, msg) if typeForMessage == creationInfo.cometType =>
+            comet ! msg
+        }
 
         comet
       }
@@ -2531,7 +2610,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     val attemptedComet = tryo(buildWithNoArgConstructor) or tryo(buildWithCreateInfoConstructor)
 
     attemptedComet match {
-      case fail @ Failure(_, Full(e: java.lang.NoSuchMethodException), _) => 
+      case fail @ Failure(_, Full(e: java.lang.NoSuchMethodException), _) =>
         val message = s"Couldn't find valid comet constructor for ${cometClass.getCanonicalName}. Comets should have a no argument constructor or one that takes the following arguments: (LiftSession, Box[String], NodeSeq, Map[String,String])."
 
         logger.info(message, e)

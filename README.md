@@ -13,6 +13,14 @@ Lift applications are:
 
 Because Lift applications are written in [Scala](http://www.scala-lang.org), an elegant JVM language, you can still use your favorite Java libraries and deploy to your favorite Servlet Container and app server. Use the code you've already written and deploy to the container you've already configured!
 
+## Issues
+
+Issues on the Lift GitHub project are intended to describe actionable,
+already-discussed items. Committers on the project may open issues for
+themselves at any time, but non-committers should visit the [Lift mailing
+list](https://groups.google.com/forum/#!forum/liftweb) and start a discussion
+for any issue that they wish to open.
+
 ## Pull Requests
 
 We will accept pull requests into the [Lift codebase](https://github.com/lift)
@@ -21,10 +29,6 @@ if the pull requests meet the following criteria:
 * The request handles an issue that has been discussed on the [Lift mailing list](http://groups.google.com/forum/#!forum/liftweb)
   and whose solution has been requested (and in general adheres to the spirit of
   the issue guidelines outlined in [CONTRIBUTING.md](https://github.com/lift/framework/blob/master/CONTRIBUTING.md)).
-* The request represents one or more of the following:
-  * Documentation including ScalaDoc comments in code
-  * Example code
-  * Small changes, enhancements, or bug fixes to Lift’s code
 * The request includes a signature at the bottom of the `/contributors.md` file.
 
 For more details, see [CONTRIBUTING.md](https://github.com/lift/framework/blob/master/CONTRIBUTING.md).
@@ -104,11 +108,11 @@ Please note that the modules project does accept pull requests.
 
 #### examples
 
-The [examples](https://github.com/lift/examples) repository contains the source code for several example Lift applications, including [demo.liftweb.com](http://demo.liftweb.com/).
+The [examples](https://github.com/lift/examples) repository contains the source code for several example Lift applications, including [demo.liftweb.com](http://demo.liftweb.net/).
 
 ## Building Lift
 
-If you simply want to use Lift in your project, add Lift as a dependency to your build system or [download the JAR files directly](www.liftweb.net/download).
+If you simply want to use Lift in your project, add Lift as a dependency to your build system or [download the JAR files directly](https://www.liftweb.net/download).
 
 If you wish to build Lift from source, check out this repository and use the included `liftsh` script to build some or all of the components you want.
 

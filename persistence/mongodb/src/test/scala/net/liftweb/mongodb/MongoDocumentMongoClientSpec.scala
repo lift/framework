@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,6 @@ class MongoDocumentMongoClientSpec extends Specification with MongoTestKit {
   "MongoDocumentMongoClient Specification".title
 
   import mongoclienttestdocs._
-
-  override def mongo = new MongoClient("127.0.0.1", 27017)
 
   "MongoClient example" in {
 
