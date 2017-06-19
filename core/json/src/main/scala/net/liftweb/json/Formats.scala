@@ -18,6 +18,10 @@ package net.liftweb
 package json
 
 import java.util.{Date, TimeZone}
+import java.util.concurrent.ConcurrentHashMap
+
+import scala.collection.concurrent.{Map=>ConcurrentScalaMap}
+import scala.collection.JavaConverters._
 
 /** Formats to use when converting JSON.
  * Formats are usually configured by using an implicit parameter:
@@ -30,6 +34,14 @@ trait Formats { self: Formats =>
   val typeHints: TypeHints = NoTypeHints
   val customSerializers: List[Serializer[_]] = Nil
   val fieldSerializers: List[(Class[_], FieldSerializer[_])] = Nil
+
+  /**
+   * Support for the tuple decomposition/extraction that represents tuples as JSON
+   * arrays. This provides better support for heterogenous arrays in JSON, but enable it at your
+   * own risk as it does change the behavior of serialization/deserialization and comes
+   * with some caveats (such as Scala primitives not being recognized reliably during extraction).
+   */
+  val tuplesAsArrays = false
 
   /**
    * The name of the field in JSON where type hints are added (jsonClass by default)
@@ -222,9 +234,16 @@ case class ShortTypeHints(hints: List[Class[_]]) extends TypeHints {
 /** Use full class name as a type hint.
  */
 case class FullTypeHints(hints: List[Class[_]]) extends TypeHints {
+  private val hintsToClass: ConcurrentScalaMap[String, Class[_]] =
+    new ConcurrentHashMap[String, Class[_]]().asScala ++= hints.map(clazz => hintFor(clazz) -> clazz)
+
   def hintFor(clazz: Class[_]) = clazz.getName
+
   def classFor(hint: String): Option[Class[_]] = {
-    Some(Thread.currentThread.getContextClassLoader.loadClass(hint))
+    hintsToClass.get(hint).orElse {
+      val clazz = Thread.currentThread.getContextClassLoader.loadClass(hint)
+      hintsToClass.putIfAbsent(hint, clazz).orElse(Some(clazz))
+    }
   }
 }
 

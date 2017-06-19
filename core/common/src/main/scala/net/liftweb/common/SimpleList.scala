@@ -76,11 +76,11 @@ final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
     new JavaIterator[T] {
       def hasNext() = it.hasNext
       def next(): T = it.next()
-      def remove() = throw new UnsupportedOperationException()
+      override def remove() = throw new UnsupportedOperationException()
     }
   }
 
-  def subList(from: Int, to: Int): JavaList[T] = 
+  def subList(from: Int, to: Int): JavaList[T] =
     SimpleList(underlying.drop(from).take(to - from))
 
   def listIterator(): ListIterator[T] =
@@ -89,10 +89,10 @@ final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
   def listIterator(pos: Int): ListIterator[T] =
     (new ArrayList(this)).listIterator(pos)
 
-  def indexOf(obj: Object): Int = 
+  def indexOf(obj: Object): Int =
     underlying.indexOf(obj)
 
-  def lastIndexOf(obj: Object): Int = 
+  def lastIndexOf(obj: Object): Int =
     underlying.lastIndexOf(obj)
 
   def add(x: T): Boolean = throw new UnsupportedOperationException()
@@ -126,7 +126,7 @@ final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
 
 
   def toArray[X](in: Array[X with Object]): Array[X with Object] = {
-    val clz = in.getClass.getComponentType() 
+    val clz = in.getClass.getComponentType()
     val len = underlying.length
     val ret = java.lang.reflect.Array.newInstance(clz, len).asInstanceOf[Array[X with Object]]
 
@@ -166,7 +166,7 @@ final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
     check()
   }
 
-  
+
 }
 
 /**
@@ -229,11 +229,11 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
     new JavaIterator[T] {
       def hasNext() = it.hasNext
       def next(): T = it.next()
-      def remove() = throw new UnsupportedOperationException()
+      override def remove() = throw new UnsupportedOperationException()
     }
   }
 
-  def subList(from: Int, to: Int): JavaList[T] = 
+  def subList(from: Int, to: Int): JavaList[T] =
     SimpleVector(underlying.drop(from).take(to - from))
 
   def listIterator(): ListIterator[T] =
@@ -242,10 +242,10 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
   def listIterator(pos: Int): ListIterator[T] =
     (new ArrayList(this)).listIterator(pos)
 
-  def indexOf(obj: Object): Int = 
+  def indexOf(obj: Object): Int =
     underlying.indexOf(obj)
 
-  def lastIndexOf(obj: Object): Int = 
+  def lastIndexOf(obj: Object): Int =
     underlying.lastIndexOf(obj)
 
   def add(x: T): Boolean = throw new UnsupportedOperationException()
@@ -268,7 +268,7 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
 
     var pos = 0
     underlying.foreach {
-      e => 
+      e =>
       ret(pos) = e.asInstanceOf[Object]
       pos += 1
     }
@@ -277,7 +277,7 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
   }
 
   def toArray[X](in: Array[X with Object]): Array[X with Object] = {
-    val clz = in.getClass.getComponentType() 
+    val clz = in.getClass.getComponentType()
     val len = underlying.length
     val ret = java.lang.reflect.Array.newInstance(clz, len).asInstanceOf[Array[X with Object]]
 
@@ -314,7 +314,7 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
     check()
   }
 
-  
+
 }
 
 // vim: set ts=2 sw=2 et:

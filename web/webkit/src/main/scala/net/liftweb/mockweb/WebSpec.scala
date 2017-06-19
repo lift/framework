@@ -189,19 +189,24 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
   class SessionSpecification (description : String, 
                               val req : HttpServletRequest, 
                               session : Box[LiftSession]) extends ModifiableRequest[SessionSpecification] {
-    def this (description : String, url : String, session : Box[LiftSession], contextPath : String) =
+    def this (description : String, url : String, session : Box[LiftSession], contextPath : String) = {
       this(description, new MockHttpServletRequest(url, contextPath), session)
+    }
 
-    def in(expectations : => Result) =
-      exampleFactory newExample(description, {
-        LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
-          MockWeb.useLiftRules.doWith(true) {
-            MockWeb.testS(req, session) {
-              expectations
+    def in(expectations : => Result) = {
+      addFragments(
+        fragmentFactory.example(description, {
+          LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
+            MockWeb.useLiftRules.doWith(true) {
+              MockWeb.testS(req, session) {
+                expectations
+              }
             }
           }
-        }
-      })
+        }) ^
+        fragmentFactory.break
+      )
+    }
   }
 
   /**
@@ -213,14 +218,18 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
     def this (description : String, url : String, contextPath : String) =
       this(description, new MockHttpServletRequest(url, contextPath))
 
-    def in(expectations : Req => Result) =
-      exampleFactory newExample(description, {
-        LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
-          MockWeb.useLiftRules.doWith(true) {
-            MockWeb.testReq(req)(expectations)
+    def in(expectations : Req => Result) = {
+      addFragments(
+        fragmentFactory.example(description, {
+          LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
+            MockWeb.useLiftRules.doWith(true) {
+              MockWeb.testReq(req)(expectations)
+            }
           }
-        }
-      })
+        }) ^
+        fragmentFactory.break
+      )
+    }
   }
 
   /**
@@ -233,19 +242,23 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
     def this (description : String, url : String, session : Box[LiftSession], contextPath : String) =
       this(description, new MockHttpServletRequest(url, contextPath), session)
 
-    def in(expectations : Box[NodeSeq] => Result) =
-      exampleFactory.newExample(description, {
-        LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
-          MockWeb.useLiftRules.doWith(true) {
-            MockWeb.testS(req, session) {
-              S.request match {
-                case Full(sReq) => expectations(S.runTemplate(sReq.path.partPath))
-                case other => failure("Error: withTemplateFor call did not result in " +
-                  "request initialization (S.request = " + other + ")")
+    def in(expectations : Box[NodeSeq] => Result) = {
+      addFragments(
+        fragmentFactory.example(description, {
+          LiftRulesMocker.devTestLiftRulesInstance.doWith(liftRules) {
+            MockWeb.useLiftRules.doWith(true) {
+              MockWeb.testS(req, session) {
+                S.request match {
+                  case Full(sReq) => expectations(S.runTemplate(sReq.path.partPath))
+                  case other => failure("Error: withTemplateFor call did not result in " +
+                    "request initialization (S.request = " + other + ")")
+                }
               }
             }
           }
-        }
-      })
+        }) ^
+        fragmentFactory.break
+      )
+    }
   }
 }

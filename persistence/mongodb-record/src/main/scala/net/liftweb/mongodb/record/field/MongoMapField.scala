@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 WorldWide Conferencing, LLC
+ * Copyright 2010-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,12 @@ import scala.xml.NodeSeq
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, JsRaw}
-import net.liftweb.json.JsonAST._
-import net.liftweb.json.{JsonParser, Printer}
+import net.liftweb.json._
 import net.liftweb.record._
 import net.liftweb.util.Helpers.tryo
 
 import com.mongodb._
+import org.bson.Document
 
 /**
   * Note: setting optional_? = false will result in incorrect equals behavior when using setFromJValue
@@ -37,7 +37,7 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
   extends Field[Map[String, MapValueType], OwnerType] with MandatoryTypedField[Map[String, MapValueType]]
   with MongoFieldFlavor[Map[String, MapValueType]] {
 
-  import Meta.Reflection._
+  import mongodb.Meta.Reflection._
 
   def owner = rec
 
@@ -46,6 +46,7 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
   def setFromAny(in: Any): Box[Map[String, MapValueType]] = {
     in match {
       case dbo: DBObject => setFromDBObject(dbo)
+      case doc: Document => setFromDocument(doc)
       case map: Map[_, _] => setBox(Full(map.asInstanceOf[Map[String, MapValueType]]))
       case Some(map: Map[_, _]) => setBox(Full(map.asInstanceOf[Map[String, MapValueType]]))
       case Full(map: Map[_, _]) => setBox(Full(map.asInstanceOf[Map[String, MapValueType]]))
@@ -90,8 +91,10 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
   */
   def asDBObject: DBObject = {
     val dbo = new BasicDBObject
-    value.keys.foreach { k =>
-      dbo.put(k.toString, value.getOrElse(k, ""))
+    value.keys.foreach { key =>
+      value.get(key).foreach { innerValue =>
+        dbo.put(key.toString, innerValue.asInstanceOf[Object])
+      }
     }
     dbo
   }
@@ -106,5 +109,31 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
       }
     ))
   }
+
+  // set this field's value using a bson.Document returned from Mongo.
+  def setFromDocument(doc: Document): Box[Map[String, MapValueType]] = {
+    import scala.collection.JavaConverters._
+    val map: Map[String, MapValueType] = doc.asScala.map {
+      case (k, v) => k -> v.asInstanceOf[MapValueType]
+    } (scala.collection.breakOut)
+
+    setBox {
+      Full(map)
+    }
+  }
+
+  def asDocument: Document = {
+    import scala.collection.JavaConverters._
+    val map: Map[String, AnyRef] = {
+      value.keys.map {
+        k => k -> value.getOrElse(k, "")
+          .asInstanceOf[AnyRef]
+      } (scala.collection.breakOut)
+    }
+
+    new Document(map.asJava)
+  }
+
+
 }
 

@@ -168,7 +168,7 @@ object JsonAST {
      * res2: JValue = JObject(List(JField(name,JString(Joe)), JField(name,JString(Alabama Cheer))))
      * }}}
      */
-    def \\(nameToFind: String): JValue = {
+    def \\(nameToFind: String): JObject = {
       def find(json: JValue): List[JField] = json match {
         case JObject(fields) =>
           fields.foldLeft(List[JField]()) {
@@ -187,13 +187,10 @@ object JsonAST {
           Nil
       }
 
-      find(this) match {
-        case JField(_, x) :: Nil => x
-        case xs => JObject(xs)
-      }
+      JObject(find(this))
     }
 
-    /** 
+    /**
      * Find immediate children of this `[[JValue]]` that match a specific `JValue` subclass.
      *
      * This methid will search a `[[JObject]]` or `[[JArray]]` for values of a specific type and
@@ -357,8 +354,8 @@ object JsonAST {
     def foldField[A](z: A)(f: (A, JField) => A): A = {
       def rec(acc: A, v: JValue) = {
         v match {
-          case JObject(l) => l.foldLeft(acc) { 
-            case (a, field@JField(name, value)) => value.foldField(f(a, field))(f) 
+          case JObject(l) => l.foldLeft(acc) {
+            case (a, field@JField(name, value)) => value.foldField(f(a, field))(f)
           }
           case JArray(l) => l.foldLeft(acc)((a, e) => e.foldField(a)(f))
           case _ => acc
@@ -419,7 +416,7 @@ object JsonAST {
 
     /** Return a new `JValue` resulting from applying the given partial function `f``
      * to each field in JSON.
-     * 
+     *
      * Example:
      * {{{
      * JObject(("age", JInt(10)) :: Nil) transformField {
@@ -440,7 +437,7 @@ object JsonAST {
      *
      * If this is a `JObject`, this means we will transform the value of each
      * field of the object and the object in turn and return an updated object.
-     * 
+     *
      * If this is another type of `JValue`, the value is transformed directly.
      *
      * Note that this happens recursively, so you will receive both each value
@@ -590,7 +587,7 @@ object JsonAST {
      * @return A `List` of `JField`s that match the given predicate `p`, or `Nil`
      *         if this `JValue` is not a `JObject`.
      */
-    def filterField(p: JField => Boolean): List[JField] = 
+    def filterField(p: JField => Boolean): List[JField] =
       foldField(List[JField]())((acc, e) => if (p(e)) e :: acc else acc).reverse
 
     /**
@@ -618,19 +615,19 @@ object JsonAST {
     def filter(p: JValue => Boolean): List[JValue] =
       fold(List[JValue]())((acc, e) => if (p(e)) e :: acc else acc).reverse
 
-    /** 
+    /**
      * Create a new instance of `[[WithFilter]]` for Scala to use when using
      * this `JValue` in a for comprehension.
      */
     def withFilter(p: JValue => Boolean) = new WithFilter(this, p)
-    
+
     final class WithFilter(self: JValue, p: JValue => Boolean) {
       def map[A](f: JValue => A): List[A] = self filter p map f
       def flatMap[A](f: JValue => List[A]) = self filter p flatMap f
       def withFilter(q: JValue => Boolean): WithFilter = new WithFilter(self, x => p(x) && q(x))
       def foreach[U](f: JValue => U): Unit = self filter p foreach f
     }
-    
+
     /**
      * Concatenate this `JValue` with another `JValue`.
      *
@@ -784,7 +781,7 @@ object JsonAST {
     type Values = Boolean
     def values = value
   }
-  
+
   case class JObject(obj: List[JField]) extends JValue {
     type Values = Map[String, Any]
     def values = {
@@ -884,17 +881,75 @@ object JsonAST {
      */
     val compactJs = RenderSettings(0, jsEscapeChars)
   }
+
+  /**
+   * Parent trait for double renderers, which decide how doubles contained in
+   * a JDouble are rendered to JSON string.
+   */
+  sealed trait DoubleRenderer extends Function1[Double,String] {
+    def apply(double: Double): String
+  }
+  /**
+   * A `DoubleRenderer` that renders special values `NaN`, `-Infinity`, and
+   * `Infinity` as-is using `toString`. This is not valid JSON, meaning JSON
+   * libraries generally won't be able to parse it (including lift-json!), but
+   * JavaScript can eval it. Other double values are also rendered the same
+   * way.
+   *
+   * Usage is not recommended.
+   */
+  case object RenderSpecialDoubleValuesAsIs extends DoubleRenderer {
+    def apply(double: Double): String = {
+      double.toString
+    }
+  }
+  /**
+   * A `DoubleRenderer` that renders special values `NaN`, `-Infinity`, and
+   * `Infinity` as `null`. Other doubles are rendered normally using
+   * `toString`.
+   */
+  case object RenderSpecialDoubleValuesAsNull extends DoubleRenderer {
+    def apply(double: Double): String = {
+      if (double.isNaN || double.isInfinity) {
+        "null"
+      } else {
+        double.toString
+      }
+    }
+  }
+  /**
+   * A `DoubleRenderer` that throws an `IllegalArgumentException` when the
+   * special values `NaN`, `-Infinity`, and `Infinity` are encountered. Other
+   * doubles are rendered normally using `toString`.
+   */
+  case object FailToRenderSpecialDoubleValues extends DoubleRenderer {
+    def apply(double: Double): String = {
+      if (double.isNaN || double.isInfinity) {
+        throw new IllegalArgumentException(s"Double value $double cannot be rendered to JSON with the current DoubleRenderer.")
+      } else {
+        double.toString
+      }
+    }
+  }
   /**
    * RenderSettings allows for customizing how JSON is rendered to a String.
    * At the moment, you can customize the indentation (if 0, all the JSON is
    * printed on one line), the characters that should be escaped (in addition
    * to a base set that will always be escaped for valid JSON), and whether or
    * not a space should be included after a field name.
+   *
+   * @param doubleRendering Before Lift 3.1.0, the three special double values
+   *    NaN, Infinity, and -Infinity were serialized as-is. This is invalid
+   *    JSON, but valid JavaScript. We now default special double values to
+   *    serialize as null, but provide both the old behavior and a new behavior
+   *    that throws an exception upon finding these values. See
+   *    `[[DoubleRenderer]]` and its subclasses for more.
    */
   case class RenderSettings(
     indent: Int,
     escapeChars: Set[Char] = Set(),
-    spaceAfterFieldName: Boolean = false
+    spaceAfterFieldName: Boolean = false,
+    doubleRenderer: DoubleRenderer = RenderSpecialDoubleValuesAsNull
   ) {
     val lineBreaks_? = indent > 0
   }
@@ -949,7 +1004,7 @@ object JsonAST {
     case null          => buf.append("null")
     case JBool(true)   => buf.append("true")
     case JBool(false)  => buf.append("false")
-    case JDouble(n)    => buf.append(n.toString)
+    case JDouble(n)    => buf.append(settings.doubleRenderer(n))
     case JInt(n)       => buf.append(n.toString)
     case JNull         => buf.append("null")
     case JString(null) => buf.append("null")
@@ -1112,44 +1167,5 @@ trait JsonDSL extends Implicits {
   class JsonListAssoc(left: List[JField]) {
     def ~(right: (String, JValue)) = JObject(left ::: List(JField(right._1, right._2)))
     def ~(right: JObject) = JObject(left ::: right.obj)
-  }
-}
-
-/** Printer converts JSON to String.
-  * Before printing a <code>JValue</code> needs to be rendered into scala.text.Document.
-  * <p>
-  * Example:<pre>
-  * pretty(render(json))
-  * </pre>
-  */
-@deprecated("Please switch using JsonAST's render methods instead of relying on Printer.", "3.0")
-object Printer extends Printer
-@deprecated("Please switch using JsonAST's render methods instead of relying on Printer.", "3.0")
-trait Printer {
-  /** Compact printing (no whitespace etc.)
-    */
-  @deprecated("Please switch to using compactRender instead.", "3.0")
-  def compact(d: JsonAST.RenderIntermediaryDocument): String = JsonAST.compactRender(d.value)
-
-  /** Compact printing (no whitespace etc.)
-    */
-  @deprecated("Please switch to using compactRender instead.", "3.0")
-  def compact[A <: Writer](d: JsonAST.RenderIntermediaryDocument, out: A): A = {
-    JsonAST.compactRender(d.value, out)
-    out
-  }
-
-  /** Pretty printing.
-    */
-  @deprecated("Please switch to using prettyRender instead.", "3.0")
-  def pretty(d: JsonAST.RenderIntermediaryDocument): String =
-    JsonAST.prettyRender(d.value)
-
-  /** Pretty printing.
-    */
-  @deprecated("Please switch to using prettyRender instead.", "3.0")
-  def pretty[A <: Writer](d: JsonAST.RenderIntermediaryDocument, out: A): A = {
-    JsonAST.prettyRender(d.value, out)
-    out
   }
 }

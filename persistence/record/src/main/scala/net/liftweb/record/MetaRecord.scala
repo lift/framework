@@ -246,6 +246,11 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
 
   /** Encode a record instance into a JValue */
   def asJValue(rec: BaseRecord): JValue = {
+    asJObject(rec)
+  }
+
+  /** Encode a record instance into a JObject */
+  def asJObject(rec: BaseRecord): JObject = {
     JObject(fields(rec).map(f => JField(f.name, f.asJValue)))
   }
 

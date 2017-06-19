@@ -1,9 +1,17 @@
 language: scala
+
+scala:
+  - 2.11.11
+  - 2.12.2
+
 cache:
   directories:
     - '$HOME/node_modules'
+    - $HOME/.ivy2
+
 services:
   - mongodb
+
 jdk:
   - oraclejdk8
 
@@ -20,3 +28,17 @@ before_script:
   - "cd web/webkit"
   - "npm install"
   - "cd -"
+  - sudo chmod +x /usr/local/bin/sbt
+
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/85e4d8ae84e569f9c501
+    on_success: always
+    on_failure: always
+    on_start: never
+  email:
+    recipients:
+      - lift-committers@googlegroups.com
+    on_success: change
+    on_failure: always

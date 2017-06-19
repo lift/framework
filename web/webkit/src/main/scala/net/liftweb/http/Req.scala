@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 WorldWide Conferencing, LLC
+ * Copyright 2007-2017 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 package net.liftweb
 package http
 
-import java.io.{InputStream, ByteArrayInputStream, File, FileInputStream,
-                       FileOutputStream}
+import java.io.{InputStream, ByteArrayInputStream, File}
+import java.nio.file.{Files, Path}
 import scala.xml._
 
 import common._
@@ -284,14 +284,20 @@ FileParamHolder(name, mimeType, fileName)
  * @param localFile The local copy of the uploaded file
  */
 class OnDiskFileParamHolder(override val name: String, override val mimeType: String,
-                            override val fileName: String, val localFile: File) extends
-FileParamHolder(name, mimeType, fileName)
+                            override val fileName: String, val localPath: Path) extends
+  FileParamHolder(name, mimeType, fileName)
 {
+  def this(name: String, mimeType: String, fileName: String, localFile: File) = {
+    this(name, mimeType, fileName, localFile.toPath)
+  }
+
+  def localFile: File = localPath.toFile
+
   /**
    * Returns an input stream that can be used to read the
    * contents of the uploaded file.
    */
-  def fileStream: InputStream = new FileInputStream(localFile)
+  def fileStream: InputStream = Files.newInputStream(localPath)
 
   /**
    * Returns the contents of the uploaded file as a Byte array.
@@ -301,18 +307,18 @@ FileParamHolder(name, mimeType, fileName)
   /**
    * Returns the length of the uploaded file.
    */
-  def length : Long = if (localFile == null) 0 else localFile.length
+  def length : Long = if (localPath == null) 0 else Files.size(localPath)
 
   protected override def finalize {
-    tryo(localFile.delete)
+    tryo(Files.delete(localPath))
   }
 }
 
 object OnDiskFileParamHolder {
   def apply(n: String, mt: String, fn: String, inputStream: InputStream): OnDiskFileParamHolder =
   {
-    val file: File = File.createTempFile("lift_mime", "upload")
-    val fos = new FileOutputStream(file)
+    val file: Path = Files.createTempFile("lift_mime", "upload")
+    val fos = Files.newOutputStream(file)
     val ba = new Array[Byte](8192)
     def doUpload() {
       inputStream.read(ba) match {
@@ -328,6 +334,10 @@ object OnDiskFileParamHolder {
     fos.close
     new OnDiskFileParamHolder(n, mt, fn, file)
   }
+
+  def apply(n: String, mt: String, fn: String, file: File): OnDiskFileParamHolder =
+    new OnDiskFileParamHolder(n, mt, fn, file.toPath)
+
 }
 
 object FileParamHolder {
@@ -1333,7 +1343,7 @@ object RewriteResponse {
 
 /**
  * Provides access to a thread-local URL rewriter. Typically uses either an
- * applicable entry in `[[LiftRules.decorateUrl]]` or the container's built-in
+ * applicable entry in `[[LiftRules.urlDecorate]]` or the container's built-in
  * URL decoration which may append the session id to the URL (dependent on
  * `[[LiftRules.encodeJSessionIdInUrl_?]]`).
  */

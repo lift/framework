@@ -21,7 +21,7 @@ package net.liftweb.markdown
 
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import collection.SortedMap
 import org.junit.runner.RunWith
 
@@ -30,13 +30,13 @@ import org.junit.runner.RunWith
  */
 
 @RunWith(classOf[JUnitRunner])
-class BaseParsersTest extends FlatSpec with ShouldMatchers with BaseParsers{
+class BaseParsersTest extends FlatSpec with Matchers with BaseParsers{
 
     "The BaseParsers" should "parse a newline" in {
         val p = nl
         apply(p, "\n") should equal ("\n")
-        evaluating(apply(p, "\r\n")) should produce[IllegalArgumentException]
-        evaluating(apply(p, "  \n")) should produce[IllegalArgumentException]
+        an [IllegalArgumentException] should be thrownBy(apply(p, "\r\n"))
+        an [IllegalArgumentException] should be thrownBy(apply(p, "  \n"))
     }
 
     it should "parse whitespace" in {
@@ -47,12 +47,12 @@ class BaseParsersTest extends FlatSpec with ShouldMatchers with BaseParsers{
         apply(p, "\t\t") should equal ("\t\t")
         apply(p, "  \t  \t  ") should equal ("  \t  \t  ")
         //we want newlines to be treated diferrently from other ws
-        evaluating (apply(p, "\n")) should produce[IllegalArgumentException]
+        an [IllegalArgumentException] should be thrownBy(apply(p, "\n"))
     }
 
     it should "be able to look behind" in {
         apply (((elem('a') ~ lookbehind(Set('a')) ~ elem('b'))^^{case a~lb~b=>a+""+b}), "ab") should equal ("ab")
-        evaluating {apply (((elem('a') ~ lookbehind(Set('b')) ~ elem('b'))^^{case a~b=>a+""+b}), "ab")} should produce[IllegalArgumentException]
+        an [IllegalArgumentException] should be thrownBy { apply (((elem('a') ~ lookbehind(Set('b')) ~ elem('b'))^^{case a~b=>a+""+b}), "ab") }
 
         apply( (elem('a') ~ not(lookbehind(Set(' ', '\t', '\n'))) ~ '*' ), "a*"  )
 
@@ -66,9 +66,9 @@ class BaseParsersTest extends FlatSpec with ShouldMatchers with BaseParsers{
         apply(p, "5") should equal ('5')
         apply(p, "0") should equal ('0')
         apply(p, "9") should equal ('9')
-        evaluating (apply(p, "a")) should produce[IllegalArgumentException]
-        evaluating (apply(p, "z")) should produce[IllegalArgumentException]
-        evaluating (apply(p, "<")) should produce[IllegalArgumentException]
+        an [IllegalArgumentException] should be thrownBy(apply(p, "a"))
+        an [IllegalArgumentException] should be thrownBy(apply(p, "z"))
+        an [IllegalArgumentException] should be thrownBy(apply(p, "<"))
     }
 
 }

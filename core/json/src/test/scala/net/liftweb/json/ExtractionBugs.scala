@@ -24,6 +24,27 @@ object ExtractionBugs extends Specification {
 
   implicit val formats = DefaultFormats
 
+  case class Response(data: List[Map[String, Int]])
+
+  case class OptionOfInt(opt: Option[Int])
+
+  case class PMap(m: Map[String, List[String]])
+
+  case class ManyConstructors(id: Long, name: String, lastName: String, email: String) {
+    def this() = this(0, "John", "Doe", "")
+    def this(name: String) = this(0, name, "Doe", "")
+    def this(name: String, email: String) = this(0, name, "Doe", email)
+  }
+
+  case class ExtractWithAnyRef()
+
+  case class UnicodeFieldNames(`foo.bar,baz`: String)
+
+  object HasCompanion {
+    def hello = "hello"
+  }
+  case class HasCompanion(nums: List[Int])
+
   "ClassCastException (BigInt) regression 2 must pass" in {
     val opt = OptionOfInt(Some(39))
     Extraction.decompose(opt).extract[OptionOfInt].opt.get mustEqual 39
@@ -76,24 +97,93 @@ object ExtractionBugs extends Specification {
     }
   }
 
-  case class Response(data: List[Map[String, Int]])
+  "deserialize list of homogonous tuples w/ array tuples disabled" in {
+    implicit val formats = DefaultFormats
 
-  case class OptionOfInt(opt: Option[Int])
+    case class Holder(items: List[(String, String)])
 
-  case class PMap(m: Map[String, List[String]])
+    val holder = Holder(List(("string", "string")))
+    val serialized = compactRender(Extraction.decompose(holder))
 
-  case class ManyConstructors(id: Long, name: String, lastName: String, email: String) {
-    def this() = this(0, "John", "Doe", "")
-    def this(name: String) = this(0, name, "Doe", "")
-    def this(name: String, email: String) = this(0, name, "Doe", email)
+    val deserialized = parse(serialized).extract[Holder]
+    deserialized must_== holder
   }
 
-  case class ExtractWithAnyRef()
+  "deserialize a list of heterogenous tuples w/ array tuples disabled" in {
+    implicit val formats = DefaultFormats
 
-  case class UnicodeFieldNames(`foo.bar,baz`: String)
+    // MSF: This currently doesn't work with scala primitives?! The type arguments appear as
+    // java.lang.Object instead of scala.Int. :/
+    case class Holder2(items: List[(String, Integer)])
 
-  object HasCompanion {
-    def hello = "hello"
+    val holder = Holder2(List(("string", 10)))
+    val serialized = compactRender(Extraction.decompose(holder))
+
+    val deserialized = parse(serialized).extract[Holder2]
+    deserialized must_== holder
   }
-  case class HasCompanion(nums: List[Int])
+
+  "deserialize list of homogonous tuples w/ array tuples enabled" in {
+    implicit val formats = new DefaultFormats {
+      override val tuplesAsArrays = true
+    }
+
+    case class Holder(items: List[(String, String)])
+
+    val holder = Holder(List(("string", "string")))
+    val serialized = compactRender(Extraction.decompose(holder))
+
+    val deserialized = parse(serialized).extract[Holder]
+    deserialized must_== holder
+  }
+
+  "deserialize a list of heterogenous tuples w/ array tuples enabled" in {
+    implicit val formats = new DefaultFormats {
+      override val tuplesAsArrays = true
+    }
+
+    // MSF: This currently doesn't work with scala primitives?! The type arguments appear as
+    // java.lang.Object instead of scala.Int. :/
+    case class Holder2(items: List[(String, Integer)])
+
+    val holder = Holder2(List(("string", 10)))
+    val serialized = compactRender(Extraction.decompose(holder))
+
+    val deserialized = parse(serialized).extract[Holder2]
+    deserialized must_== holder
+  }
+
+  "deserialize an out of order old-style tuple w/ array tuples enabled" in {
+    implicit val formats = new DefaultFormats {
+      override val tuplesAsArrays = true
+    }
+
+    val outOfOrderTuple: JObject = JObject(List(
+      JField("_1", JString("apple")),
+      JField("_3", JString("bacon")),
+      JField("_2", JString("sammich"))
+    ))
+
+    val extracted = outOfOrderTuple.extract[(String, String, String)]
+
+    extracted must_== ("apple", "sammich", "bacon")
+  }
+
+  "throw the correct exceptions when things go wrong during extraction" in {
+    implicit val formats = DefaultFormats
+
+    class Holder(bacon: String) {
+      throw new Exception("I'm an exception!")
+    }
+
+    val correctArgsAstRepresentation: JObject = JObject(List(
+      JField("bacon", JString("apple"))
+    ))
+
+    correctArgsAstRepresentation.extract[Holder] must throwA[MappingException].like {
+      case e =>
+        e.getMessage mustEqual "An exception was thrown in the class constructor during extraction"
+        e.getCause.getCause.getMessage mustEqual "I'm an exception!"
+    }
+  }
 }

@@ -227,3 +227,33 @@ Arek Burdach
 
 ### Email: ###
 arek.burdach at gmail dot com
+
+### Name: ###
+Seth Tisue
+
+### Email: ###
+seth at tisue dot net
+
+### Name: ###
+Bhashit Parikh
+
+### Email: ###
+bhashit dot parikh at gmail dot com
+
+### Name: ###
+John Marshall
+
+### Email: ###
+john at themillhousegroup dot com
+
+### Name: ###
+Marek Żebrowski
+
+### Email: ###
+marek.zebrowski at gmail dot com
+
+### Name: ###
+Paweł Mruk
+
+### Email: ###
+mroocoo at gmail dot com

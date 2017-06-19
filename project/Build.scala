@@ -56,6 +56,12 @@ object BuildDef extends Build {
   lazy val framework =
     liftProject("lift-framework", file("."))
       .aggregate(liftProjects: _*)
+      .settings(scalacOptions in (Compile, doc) ++= Seq(scalaVersion.value).flatMap {
+        case v if v.startsWith("2.12") =>
+          Seq("-no-java-comments")
+        case _ =>
+          Seq()
+      }) //workaround for scala/scala-dev#249
       .settings(aggregatedSetting(sources in(Compile, doc)),
                 aggregatedSetting(dependencyClasspath in(Compile, doc)),
                 publishArtifact := false)
@@ -74,6 +80,12 @@ object BuildDef extends Build {
   lazy val actor =
     coreProject("actor")
         .dependsOn(common)
+        .settings(scalacOptions in (Compile, doc) ++= Seq(scalaVersion.value).flatMap {
+          case v if v.startsWith("2.12") =>
+            Seq("-no-java-comments")
+          case _ =>
+            Seq()
+        }) //workaround for scala/scala-dev#249
         .settings(description := "Simple Actor",
                   parallelExecution in Test := false)
 
@@ -129,16 +141,31 @@ object BuildDef extends Build {
   lazy val webkit =
     webProject("webkit")
         .dependsOn(util, testkit % "provided")
+        .settings(scalacOptions in (Compile, doc) ++= {
+          if (scalaVersion.value.startsWith("2.12")) {
+            Seq("-no-java-comments")
+          } else {
+            Seq()
+          }
+        }) //workaround for scala/scala-dev#249
         .settings(libraryDependencies ++= Seq(mockito_all, jquery, jasmineCore, jasmineAjax))
         .settings(yuiCompressor.Plugin.yuiSettings: _*)
         .settings(description := "Webkit Library",
                   parallelExecution in Test := false,
                   libraryDependencies <++= scalaVersion { sv =>
-                    Seq(commons_fileupload, rhino, servlet_api, specs2.copy(configurations = Some("provided")), jetty6,
+                    Seq(commons_fileupload, rhino, servlet_api, specs2.copy(configurations = Some("provided")), specs2Matchers.copy(configurations = Some("provided")), jetty6,
                       jwebunit)
                   },
                   initialize in Test <<= (sourceDirectory in Test) { src =>
                     System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
+                  },
+                  unmanagedSourceDirectories in Compile <+= (sourceDirectory in Compile, scalaBinaryVersion) {
+                    (sourceDirectory, binaryVersion) =>
+                      sourceDirectory / ("scala_" + binaryVersion)
+                  },
+                  unmanagedSourceDirectories in Test <+= (sourceDirectory in Test, scalaBinaryVersion) {
+                    (sourceDirectory, binaryVersion) =>
+                      sourceDirectory / ("scala_" + binaryVersion)
                   },
                   (compile in Compile) <<= (compile in Compile) dependsOn (WebKeys.assets),
                   /**
@@ -197,7 +224,7 @@ object BuildDef extends Build {
     persistenceProject("mongodb")
         .dependsOn(json_ext, util)
         .settings(parallelExecution in Test := false,
-                  libraryDependencies += mongo_driver,
+                  libraryDependencies ++= Seq(mongo_java_driver, mongo_java_driver_async),
                   initialize in Test <<= (resourceDirectory in Test) { rd =>
                     System.setProperty("java.util.logging.config.file", (rd / "logging.properties").absolutePath)
                   })

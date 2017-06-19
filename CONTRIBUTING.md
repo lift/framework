@@ -19,10 +19,13 @@ The policy on issues is:
 We will accept pull requests into the Lift codebase if the pull requests meet
 all of the following criteria:
 * The request handles an issue that has been discussed on the Lift mailing list
-  and whose solution has been requested (and in general adheres to the spirit of
-  the issue guidelines above).
-* The request represents one or more of the following:
-  * Documentation including ScalaDoc comments in code
-  * Example code
-  * Small changes, enhancements, or bug fixes to Lift’s code
+  and whose solution has been requested by the committers (and in general adheres
+  to the spirit of the issue guidelines above).
 * The request includes a signature at the bottom of the /contributors.md file.
+
+Note that only Lift committers can merge a pull request, and accepting or rejecting
+a pull request is entirely at the discretion of the Lift committers. By merging a
+pull request, the Lift committers are taking responsibility for maintaining that code,
+and there are many reasons why this might not be desirable for certain features. We
+will strive to communicate clearly why pull requests are not accepted if we decide
+not to accept them.

@@ -196,11 +196,12 @@ object LiftRules extends LiftRulesMocker {
     val NoCometType = Value(12, "Comet Type not specified")
   }
 
-  def defaultFuncNameGenerator(runMode: Props.RunModes.Value): () => String =
+  def defaultFuncNameGenerator(runMode: Props.RunModes.Value): () => String = {
     runMode match {
       case Props.RunModes.Test => S.generateTestFuncName _
       case _                   => S.generateFuncName _
     }
+  }
 }
 
 /**
@@ -402,6 +403,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   /**
    * Holds the JS library specific UI artifacts. By default it uses JQuery's artifacts
+   *
+   * Please note that currently any setting other than `JQueryArtifacts` will switch
+   * you to using Lift's liftVanilla implementation, which is meant to work independent
+   * of any framework. '''This implementation is experimental in Lift 3.0, so use it at
+   * your own risk and make sure you test your application!'''
    */
   @volatile var jsArtifacts: JSArtifacts = JQueryArtifacts
 
@@ -569,11 +575,31 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var displayHelpfulSiteMapMessages_? = true
 
   /**
-   * The attribute used to expose the names of event attributes that
-   * were removed from a given element for separate processing in JS.
-   * By default, Lift removes event attributes and attaches those
-   * behaviors via a separate JS file, to avoid inline JS invocations so
-   * that a restrictive Content-Security-Policy can be used.
+   * Enables or disables event attribute and script element extraction.
+   *
+   * Lift can extract script elements and event attributes like onclick,
+   * onchange, etc, and attach the event handlers in a separate JavaScript file
+   * that is generated per-page. This allows for populating these types of
+   * JavaScript in your snippets via CSS selector transforms, without needing
+   * to allow inline scripts in your content security policy (see
+   * `[[securityRules]]`).
+   *
+   * However, there are certain scenarios where event attribute extraction
+   * cannot provide a 1-to-1 reproduction of the behavior you'd get with inline
+   * attributes or scripts; if your application hits these scenarios and you
+   * would prefer not to adjust them to work with a restrictive content
+   * security policy, you can allow inline scripts and set
+   * `extractEventAttributes` to false to disable event extraction.
+   */
+  @volatile var extractInlineJavaScript: Boolean = false
+
+  /**
+   * The attribute used to expose the names of event attributes that were
+   * removed from a given element for separate processing in JS (when
+   * `extractInlineJavaScript` is `true`). By default, Lift removes event
+   * attributes and attaches those behaviors via a separate JS file, to avoid
+   * inline JS invocations so that a restrictive content security policy can be
+   * used.
    *
    * You can set this variable so that the resulting HTML will have
    * attribute information about the removed attributes, in case you
@@ -613,7 +639,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    *
    * {{{
    * <span id="lift-event-js-F827001738725NKMEQNF"
-   *       data-lift=removed-attributes="onclick">Do something!</span>
+   *       data-lift-removed-attributes="onclick">Do something!</span>
    * }}}
    *
    * This makes it possible to replace the old CSS with with similar
@@ -1441,8 +1467,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * Execute certain functions early in a Stateful Request
    * This is called early in a stateful request (one that's not serviced by a stateless REST request and
    * one that's not marked as a stateless HTML page request).
-   * @dpp strongly recommends that everything that you do related to user state is done with earlyInStateful,
-   * instead of using onBeginServicing.
+   *
+   * DPP strongly recommends that everything that you do related to user state
+   * is done with `earlyInStateful`, instead of using `[[onBeginServicing]]`.
    */
   val earlyInStateful = RulesSeq[Box[Req] => Unit]
 
@@ -1626,9 +1653,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Modifies the root relative paths from the css url-s
    *
-   * @param path - the path of the css resource
-   * @prefix - the prefix to be added on the root relative paths. If this is Empty
-   * 	       the prefix will be the application context path.
+   * @param path the path of the css resource
+   * @param prefix the prefix to be added on the root relative paths. If this
+   *               is Empty, the prefix will be the application context path.
    */
   def fixCSS(path: List[String], prefix: Box[String]) {
 

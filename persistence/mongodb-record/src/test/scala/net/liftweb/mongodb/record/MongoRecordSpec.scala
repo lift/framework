@@ -24,7 +24,6 @@ import java.util.regex.Pattern
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
 import org.specs2.mutable.Specification
-import org.specs2.specification.Fragment
 
 import common._
 import http.{S, LiftSession}
@@ -85,7 +84,7 @@ class MongoRecordSpec extends Specification with MongoTestKit {
   }
 
   "MongoRecord lifecycle callbacks" should {
-    def testOneHarness(scope: String, f: LifecycleTestRecord => HarnessedLifecycleCallbacks): Fragment = {
+    def testOneHarness(scope: String, f: LifecycleTestRecord => HarnessedLifecycleCallbacks) = {
       ("be called before validation when specified at " + scope) in {
         val rec = LifecycleTestRecord.createRecord
         var triggered = false

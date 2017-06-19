@@ -52,7 +52,7 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
     "provide a whitespace parser: white. Alias: wsc" in {
       import WhiteStringGen._
       val whiteParse = (s: String) => wsc(s).isInstanceOf[Success[_]]
-      check(forAll(whiteParse))
+      forAll(whiteParse)
     }
     "provide a whiteSpace parser always succeeding and discarding its result" in {
       import StringWithWhiteGen._
@@ -60,7 +60,7 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
         (s: String) => whiteSpace(s) must beLike {
           case Success(x, y) => x.toString must_== "()"
         }
-      check(forAll(whiteSpaceParse))
+      forAll(whiteSpaceParse)
     }
     "provide an acceptCI parser to parse whatever string matching another string ignoring case" in {
       import AbcdStringGen._
@@ -69,7 +69,7 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
           case Success(x, y) => s2.toUpperCase must startWith(s.toUpperCase)
           case _             => true
         }
-      check(forAll(ignoreCaseStringParse))
+      forAll(ignoreCaseStringParse)
     }
 
     "provide a digit parser - returning a String" in {
@@ -78,7 +78,7 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
           case Success(x, y) => s must beMatching ("(?s)\\p{Nd}.*")
           case _             => true
         }
-      check(forAll(isDigit))
+      forAll(isDigit)
     }
     "provide an aNumber parser - returning an Int if succeeding" in {
       val number: String => Boolean =
@@ -88,7 +88,7 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
             case _             => true
           }
         }
-      check(forAll(number))
+      forAll(number)
     }
 
     "provide a slash parser" in {
@@ -120,24 +120,23 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
     "provide a permute parser succeeding if any permutation of given parsers succeeds" in {
       def permuteParsers(s: String) = shouldSucceed(permute(parserA, parserB, parserC, parserD)(s))
       val permutationOk = (s: String) => permuteParsers(s)
-      check(forAll(AbcdStringGen.abcdString)(permutationOk))
+
+      forAll(AbcdStringGen.abcdString)(permutationOk)
     }
     "provide a permuteAll parser succeeding if any permutation of the list given parsers, or a sublist of the given parsers succeeds" in {
       def permuteAllParsers(s: String) = shouldSucceed(permuteAll(parserA, parserB, parserC, parserD)(s))
       implicit def pick3Letters = AbcdStringGen.pickN(3, List("a", "b", "c"))
-      check {
-        forAll { (s: String) =>
-          (!(new scala.collection.immutable.StringOps(s)).isEmpty) ==> permuteAllParsers(s)
-        }
+
+      forAll { (s: String) =>
+        (!(new scala.collection.immutable.StringOps(s)).isEmpty) ==> permuteAllParsers(s)
       }
     }
     "provide a repNN parser succeeding if an input can be parsed n times with a parser" in {
       def repNNParser(s: String) = shouldSucceed(repNN(3, parserA)(s))
       implicit def pick3Letters = AbcdStringGen.pickN(3, List("a", "a", "a"))
-      check {
-        forAll { (s: String) =>
-          (!(new scala.collection.immutable.StringOps(s)).isEmpty) ==> repNNParser(s)
-        }
+
+      forAll { (s: String) =>
+        (!(new scala.collection.immutable.StringOps(s)).isEmpty) ==> repNNParser(s)
       }
     }
   }
