@@ -1,0 +1,382 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+= Dependency Injection in Lift
+
+== Introduction
+
+Dependency injection is an important topic in the JVM world. With Java, we usually go with Guice
+or Spring whenever we need it. However, scala has certain advantages over Java, like functions,
+that allow basic DI without resorting to entire DI frameworks.
+
+Scala allows the use of http://jonasboner.com/real-world-scala-dependency-injection-di/[cake pattern]
+that can provide DI by composing traits.
+
+Although the cake pattern is helpful, it doesn't provide complete DI functionality.
+The cake pattern allows you to compose complex classes out of Scala traits, but the it's less helpful
+in terms of allowing you to make dynamic choices about which combination of cake to vend in a given situation.
+Lift provides extra features that complete the dependency injection puzzle.
+
+== Why Lift DI
+
+Many people come to Scala from a Java background, so it's only natural to want to use Guice/Spring,
+which do a great job in the java world. And we can https://groups.google.com/forum/#!topic/liftweb/_lleL2xpCFU[use those],
+but there's a better, more direct way that's less magical.
+
+Lift's philosophy is to keep things as simple as possible (and no simpler), and allow full control
+to the developers over how things work. To paraphrase David Pollak,
+"The abstraction turtles have to end somewhere" and  lift's DI features end those turtles quite
+early.
+
+== Lift DI and various dependency scopes (e.g. from Spring)
+
+Lift's DI allows all the
+https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes[four most commonly used scopes] that
+are possible with spring:
+https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-singleton[singleton],
+https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-prototype[prototype], https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-request[request],
+and https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-session[session]. The others can be achieved
+relatively easily if you want.
+
+== Getting started
+
+Lift's DI is based on two main traits https://liftweb.net/api/26/api/index.html#net.liftweb.util.Injector[`Injector`]
+and https://liftweb.net/api/26/api/index.html#net.liftweb.util.Maker[`Maker`]. However, most of the time, you won't need to
+deal with them directly. The elements that you would use are:
+
+. https://liftweb.net/api/26/api/index.html#net.liftweb.http.Factory[`Factory`] trait
+. https://github.com/lift/framework/blob/5033c8798d4444f81996199c10ea330770e47fbc/web/webkit/src/main/scala/net/liftweb/http/Factory.scala#L37[`FactoryMaker`], which is an abstract class inside
+ inside the [`Factory`] trait.
+. https://liftweb.net/api/26/api/index.html#net.liftweb.util.SimpleInjector$Inject[`Inject`], an abstract class within the
+ `SimpleInjector` trait.
+
+`FactoryMaker` and `Injector` serve the same purpose, with the former
+having more features. The difference is important. Notes on this are
+at the end. I'll continue with `FactoryMaker` for the sake of
+examples, and then note the differences between the two at the end.
+
+To start with, here's an example of how these are supposed to be
+used:
+
+[source,scala]
+----
+object DependencyFactory extends Factory {
+  private val seq = new AtomicLong(0)
+  
+  object emailService extends FactoryMaker(emailServiceImpl)
+  object sequenceNumberService extends FactoryMaker(seq.incrementAndGet _)
+  
+  private def emailServiceImpl: EmailService = Props.mode match {
+    case Props.RunModes.Production => new RealEmailService
+    // A stub for local development
+    case _ => new TestEmailService
+  }
+}
+----
+
+This defines two managed dependencies. In the case of the
+`emailService`, the dependency changes based on whether we are running
+on production/staging mode or some other mode (e.g. development). The
+`emailService` is a singleton dependency. That is, everyone
+who injects this dependency will get the same instance throughout the
+app. 
+
+Note that `FactoryMaker` constructor takes a stock scala function that
+returns an instance of the needed type. A http://www.scala-lang.org/api/current/scala/Function0.html[`Function0`] to
+be precise. If you pass in a pre-created instance, as we are
+doing in the case of `emailService`, that instance will always be
+returned when this dependency is injected (scala converts that
+instance to a `Function0`). This is similar to
+the https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-singleton[singleton scope] in spring DI.
+
+However, since this is a normal scala function, you can write whatever
+you want within that function. For ex. as the `sequenceNumberService`
+illustrates, you can generate a new instance every time it needs to be
+injected. Instances could be generated every time, or they could be
+generated fresh if some condition is met and so on and so forth.
+
+Here's how you can use these dependencies:
+
+[source,scala]
+----
+class SomeClass {
+  private val emailService = DependencyFactory.emailService()
+  // Or alternatively, if you don't have the FactoryMaker for a given type
+  private val someType = 
+    DependencyFactory.inject[SomeType]
+      .openOrThrowException("No instance of SomeType found")
+}
+----
+
+You can use the `apply` or `vend` method on the FactoryMaker directly,
+which will give you the instance you need. I'll be using `vend` for
+further examples just so that it's clear what's happening.
+
+Calling `DependencyFactory.sequenceNumberService.vend` will return a
+new number every time, since that's how it's been setup. This is, in
+spring terminology, https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-prototype[the prototype scope].
+
+An alternative way is to use `DependencyFactory.inject`. But it
+returns `Box` and it's only needed if don't have a FactoryMaker for a
+given dependency. Which brings us to the fact that there are other
+ways of registering dependencies apart from the FactoryMaker. For ex.
+
+[source,scala]
+----
+class SomeOtherClass {
+  private val someTypeInstance = new SomeType
+  DependencyFactory.registerInjection[SomeType](() => someTypeInstance)
+}
+----
+
+This can be used by arbitrary code in your app to register injectable
+instance. Here again, a singleton is registered. In this case, when
+you need to access the registered instance, you have to necessarily
+use `DependencyFactory.inject[SomeType]`.
+
+== Overriding dependencies for sessions or requests
+
+If you have a scenario where you need to override a given dependency
+for the duration of the current session, you can do something like
+following (for ex. in your snippet code):
+
+[source]
+----
+val customEmailService = new CustomEmailService(currentUser)
+DependencyFactory.emailService.session(customEmailService)
+----
+
+This will set the `emailService` to always return the
+`customEmailService` instance for the duration of the current session
+for the current user.
+
+Note that is not equivalent to the https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-session[session-scoped]
+dependency in spring. This is done explicitly in your application
+code. You are overriding a default dependency with some custom
+instance for the duration of _this_ session. No other user is going to
+see it. And as soon as this session is over, it will be gone until you
+set it explicitly again.
+
+You can something similar when you need to override a dependency
+during a given request.
+
+[source]
+----
+val customEmailService = new CustomEmailService(currentUser)
+DependencyFactory.emailService.request(customEmailService)
+----
+
+Again, this is not a https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-request[request scoped dependency] as
+identified by spring.
+
+== Session or request scoped dependencies
+
+The above examples only set the dependencies for the duration of a
+given session or request,and only when the relevant code that sets
+those dependencies was executed. 
+
+What if you want to always create a session/request scoped dependency
+for all the users. Let's talk
+about https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-session[session scoped] dependencies. The discussion
+would be identical for
+the https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-request[request scoped dependencies]. With session
+scoped dependencies, we want a new instance to be created for each
+session, for all the users.
+
+=== Request scope with request lifecycle hooks
+
+In your Boot.scala, which is used for instantiating and configuring
+various stuff in lift:
+
+[source,scala]
+----
+class Boot {
+  LiftSession.onBeginServicing = ((sess: LiftSession, req: Req) => {
+    DependencyFactory.awesomeService.request.set(new AwesomeService {})
+  }) :: LiftSession.onBeginServicing
+
+  ...
+}
+----
+
+This will set a new instance on every request, right at the beginning
+of the request servicing. So, calling
+`DependencyFactory.awesomeService.vend` will return the instance
+created for the particular request.
+
+=== Session scope with session lifecycle hooks
+
+Similarly, you can do it for sessions in `Boot.scala`:
+
+[source,scala]
+----
+class Boot {
+  LiftSession.afterSessionCreate = ((_: LiftSession, req: Req) => {
+    DependencyFactory.awesomeService.session.set(new AwesomeService {})
+  }) :: LiftSession.afterSessionCreate  
+  ...
+}
+----
+
+That's pretty much it.
+
+== Overriding dependency factory for tests and mocking dependencies
+
+The above cases handle most of the stuff you will need. When testing,
+all of your tests might need to mock some of the services, without
+affecting other tests. Doing this manually would be nightmarish,
+extremely prone to errors. The way to do it is to have isolated
+dependency graph for your tests. The key is realizing that the
+`DependencyFactory` could be just a normal scala instance that itself
+can be injected as needed. See, there are no turtles all the way!.
+This is what David Pollak keeps saying repeatedly about lift and its simplicity.
+It's just scala code. There is no magic here.
+
+A trait that represents your `DependencyFactory`
+
+[source,scala]
+----
+import net.liftweb.util.Vendor
+
+trait DependencyFactory extends Factory {
+
+ object cardService extends FactoryMaker(cardServiceVendor)
+ ...
+  
+ // the default implementation of card-service
+ // this is the method you override when needed
+ protected def cardServiceVendor: Vendor[CardService] = new PaymentCardService
+
+ // other such vendors
+ ...
+}
+
+object DependencyFactory extends Factory {
+  // the default instance that will be used unless overridden
+  private val DefaultInstance = new DependencyFactory {}
+  
+  object instance extends FactoryMaker[DependencyFactory](DefaultInstance)
+
+  // Allow making calls directly on DependencyFactory companion object
+  //instead of having to use DependencyFactory.instance
+  implicit def depFactoryToInstance(dft: DependencyFactory.type)
+    : DependencyFactory = instance.vend
+  // you shouldn't write code that needs this, this is just an example
+  def resetDefault = instance.default.set(DefaultInstance)
+}
+----
+
+Now, when you do `DependencyFactory.cardService.vend`, it will using
+the `DefaultInstance`. Your call will be implicitly translated to
+`DependencyFactory.instance.vend.cardService.vend`. This is the part
+that allows you to completely override everything you need in your
+dependency graph. For ex. you could do this in your tests:
+
+[source,scala]
+----
+class SomeSpec {
+  override def beforeAll = DependencyFactory.instance.default.set({
+    new DependencyFactory {
+      override def cardServiceVendor: Vendor[CardService] = mock[CardService]
+    }
+  })
+
+  override def afterAll: Unit = DependencyFactory.resetDefault
+}
+----
+
+However, there is a possible problem with this approach (I haven't
+tested it). If your test suites are running in parallel, this
+set/reset of the default instance will be problematic. I don't
+recommend this approach unless you know what you are doing.
+
+One safe way of doing this is to use the stackable nature of the
+`Makers`:
+
+[source,scala]
+----
+private val customDepFactory = new DependencyFactory {
+  override def cardServiceVendor: Vendor[CardService] 
+    = mock[CardService]
+}
+
+DependencyFactory.instance.doWith(customDepFactory) {
+  // write all your tests here
+}
+----
+
+And this would work as expected. You can try to come up with variation
+on how to do this without the added indentation though. For ex. you
+can do following with http://www.scalatest.org/[scalatest]:
+
+[source,scala]
+----
+trait DependencyOverrides extends SuiteMixin { self: Suite =>
+
+  // Just override this and your tests will be executed with that overridden DependencyFactory instance.
+  protected def dependencyFactory: Vendor[DependencyFactory] = DependencyFactory.instance
+
+  // Run the tests with the given dependency-factory instance.
+  abstract override def withFixture(test: NoArgTest): Outcome = {
+    DependencyFactory.instance.doWith(dependencyFactory.vend) {
+      super.withFixture(test)
+    }
+  } 
+}
+----
+
+Scalatest has something called http://www.scalatest.org/user_guide/sharing_fixtures[fixtures] that comes in
+really handy here. Any test where you need to provide a custom
+`DependencyFactory` instance should override this trait and just
+override with the custom implementation. For ex.
+
+[source,scala]
+----
+class SomeSpec extends ... with DependencyOverrides {
+  override val dependencyFactory: Vendor[DependencyFactory] = new DependencyFactory {
+    override def cardServiceVendor: Vendor[CardService] = mock[CardService]
+    // other overrides
+    ...
+  }
+}
+----
+
+== Differences between FactoryMaker and Inject
+
+You can also declare your dependencies using
+the https://liftweb.net/api/26/api/index.html#net.liftweb.util.SimpleInjector$Inject[`Inject`] class, exactly like the
+`FactoryMaker`. For ex.
+
+[source,scala]
+----
+object cardServiceFactoryMaker extends FactoryMaker(cardServiceVendor)
+
+object cardServiceInject extends Inject(cardServiceVendor)
+----
+
+Both of these can be identically used, with one major
+difference: `Inject` doesn't have session/request scoped
+dependencies. To https://groups.google.com/forum/#!msg/liftweb/oWPhlwqAEDE/Jb4tWrzlAwAJ[quote Antonio] (with some modification):
+
+____
+
+`FactoryMaker` can have a very high overhead for simple injection
+needs (on the order of 100+ms I think) due to the fact that it
+checks for session-scoped overrides, which require synchronized
+blocks. `Inject` doesn't have that overhead.
+
+____
+
+You can see the locking https://github.com/lift/framework/blob/5033c8798d4444f81996199c10ea330770e47fbc/web/webkit/src/main/scala/net/liftweb/http/Vars.scala#L114-L124[here]. This applies to
+`SessionVar` instances in general. So, there you go. Use `Inject` if
+you don't need the session/request scopes.
+
+== Conclusion
+
+Most of the time, you should be able to do away with any specialized
+DI framework. Lift's DI facilities provide a powerful and flexible mechanism for vending instances
+based on a global function, call stack scoping, request and session scoping and provides more
+flexible features than most Java-based dependency injection frameworks without resorting to XML
+for configuration or byte-code rewriting magic.
