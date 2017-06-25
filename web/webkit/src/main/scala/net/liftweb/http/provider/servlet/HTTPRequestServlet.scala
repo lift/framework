@@ -178,7 +178,7 @@ class HTTPRequestServlet(val req: HttpServletRequest, val provider: HTTPProvider
   }
 }
 
-private class OfflineRequestSnapshot(req: HTTPRequest, val provider: HTTPProvider) extends HTTPRequest {
+private [servlet] class OfflineRequestSnapshot(req: HTTPRequest, val provider: HTTPProvider) extends HTTPRequest {
 
   private val _cookies = List(req.cookies :_*)
 
@@ -194,6 +194,14 @@ private class OfflineRequestSnapshot(req: HTTPRequest, val provider: HTTPProvide
   val authType: Box[String] = req.authType
 
   def headers(name: String): List[String] = _headers.filter(_.name == name).map(_.name)
+
+  // Just as a sample, to be replaced later
+  def _newheaders(name: String): List[String] = {
+    _headers
+      .find(_.name.equalsIgnoreCase(name))
+      .map(_.values)
+      .getOrElse(Nil)
+  }
 
   def headers: List[HTTPParam] = _headers
 
