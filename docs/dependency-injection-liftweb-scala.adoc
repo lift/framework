@@ -15,24 +15,24 @@ Scala allows the use of http://jonasboner.com/real-world-scala-dependency-inject
 that can provide DI by composing traits.
 
 Although the cake pattern is helpful, it doesn't provide complete DI functionality.
-The cake pattern allows you to compose complex classes out of Scala traits, but the it's less helpful
+The cake pattern allows you to compose complex classes out of Scala traits, but it is less helpful
 in terms of allowing you to make dynamic choices about which combination of cake to vend in a given situation.
 Lift provides extra features that complete the dependency injection puzzle.
 
-== Why Lift DI
+== Why Lift Dependency Injection
 
-Many people come to Scala from a Java background, so it's only natural to want to use Guice/Spring,
+Many people come to Scala from a Java background, so it is only natural to want to use Guice/Spring,
 which do a great job in the java world. And we can https://groups.google.com/forum/#!topic/liftweb/_lleL2xpCFU[use those],
-but there's a better, more direct way that's less magical.
+but there's a better, more direct way that is less magical.
 
 Lift's philosophy is to keep things as simple as possible (and no simpler), and allow full control
 to the developers over how things work. To paraphrase David Pollak,
-"The abstraction turtles have to end somewhere" and  lift's DI features end those turtles quite
+"The abstraction turtles have to end somewhere" and  Lift's Dependency Injection features end those turtles quite
 early.
 
-== Lift DI and various dependency scopes (e.g. from Spring)
+== Lift's dependency injection and various dependency scopes (e.g. from Spring)
 
-Lift's DI allows all the
+Lift's dependency injection allows all the
 https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes[four most commonly used scopes] that
 are possible with spring:
 https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-singleton[singleton],
@@ -42,7 +42,7 @@ relatively easily if you want.
 
 == Getting started
 
-Lift's DI is based on two main traits https://liftweb.net/api/26/api/index.html#net.liftweb.util.Injector[`Injector`]
+Lift's dependency injection is based on two main traits https://liftweb.net/api/26/api/index.html#net.liftweb.util.Injector[`Injector`]
 and https://liftweb.net/api/26/api/index.html#net.liftweb.util.Maker[`Maker`]. However, most of the time, you won't need to
 deal with them directly. The elements that you would use are:
 
@@ -52,7 +52,7 @@ deal with them directly. The elements that you would use are:
 . https://liftweb.net/api/26/api/index.html#net.liftweb.util.SimpleInjector$Inject[`Inject`], an abstract class within the
  `SimpleInjector` trait.
 
-`FactoryMaker` and `Injector` serve the same purpose, with the former
+`FactoryMaker` and `Inject` serve the same purpose, with the former
 having more features. The difference is important. Notes on this are
 at the end. I'll continue with `FactoryMaker` for the sake of
 examples, and then note the differences between the two at the end.
@@ -89,7 +89,7 @@ be precise. If you pass in a pre-created instance, as we are
 doing in the case of `emailService`, that instance will always be
 returned when this dependency is injected (scala converts that
 instance to a `Function0`). This is similar to
-the https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-singleton[singleton scope] in spring DI.
+the https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-singleton[singleton scope] in Spring dependency injection.
 
 However, since this is a normal scala function, you can write whatever
 you want within that function. For ex. as the `sequenceNumberService`
@@ -112,14 +112,14 @@ class SomeClass {
 
 You can use the `apply` or `vend` method on the FactoryMaker directly,
 which will give you the instance you need. I'll be using `vend` for
-further examples just so that it's clear what's happening.
+further examples just so that it is clear what is happening.
 
 Calling `DependencyFactory.sequenceNumberService.vend` will return a
-new number every time, since that's how it's been setup. This is, in
+new number every time, since that is how it has been setup. This is, in
 spring terminology, https://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html#beans-factory-scopes-prototype[the prototype scope].
 
 An alternative way is to use `DependencyFactory.inject`. But it
-returns `Box` and it's only needed if don't have a FactoryMaker for a
+returns `Box` and it is only needed if don't have a FactoryMaker for a
 given dependency. Which brings us to the fact that there are other
 ways of registering dependencies apart from the FactoryMaker. For ex.
 
@@ -188,7 +188,7 @@ session, for all the users.
 === Request scope with request lifecycle hooks
 
 In your Boot.scala, which is used for instantiating and configuring
-various stuff in lift:
+various stuff in Lift:
 
 [source,scala]
 ----
@@ -220,7 +220,7 @@ class Boot {
 }
 ----
 
-That's pretty much it.
+That is pretty much it.
 
 == Overriding dependency factory for tests and mocking dependencies
 
@@ -229,10 +229,10 @@ all of your tests might need to mock some of the services, without
 affecting other tests. Doing this manually would be nightmarish,
 extremely prone to errors. The way to do it is to have isolated
 dependency graph for your tests. The key is realizing that the
-`DependencyFactory` could be just a normal scala instance that itself
+`DependencyFactory` could be just a normal Scala instance that itself
 can be injected as needed. See, there are no turtles all the way!.
-This is what David Pollak keeps saying repeatedly about lift and its simplicity.
-It's just scala code. There is no magic here.
+This is what David Pollak keeps saying repeatedly about Lift and its simplicity.
+It is just Scala code. There is no magic here.
 
 A trait that represents your `DependencyFactory`
 
@@ -376,7 +376,7 @@ you don't need the session/request scopes.
 == Conclusion
 
 Most of the time, you should be able to do away with any specialized
-DI framework. Lift's DI facilities provide a powerful and flexible mechanism for vending instances
+dependency injection framework. Lift's dependency injection facilities provide a powerful and flexible mechanism for vending instances
 based on a global function, call stack scoping, request and session scoping and provides more
 flexible features than most Java-based dependency injection frameworks without resorting to XML
 for configuration or byte-code rewriting magic.
