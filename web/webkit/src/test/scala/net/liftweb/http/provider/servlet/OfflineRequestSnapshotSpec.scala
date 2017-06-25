@@ -22,9 +22,6 @@ import org.mockito.Mockito._
 import org.specs2.mock.Mockito
 
 
-/**
- * System under specification for Req.
- */
 object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
 
   "A snapshot request should" in {
