@@ -30,24 +30,22 @@ import reflect.Manifest
 import net.liftweb.http.js.JsExp
 import org.bson.Document
 import scala.collection.JavaConverters._
-class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerType)( implicit mf: Manifest[CaseType]) extends Field[CaseType, OwnerType] with MandatoryTypedField[CaseType] with MongoFieldFlavor[CaseType] {
+
+sealed abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](override val owner: OwnerType)(implicit mf: Manifest[CaseType])
+  extends Field[CaseType, OwnerType] with MongoFieldFlavor[CaseType] {
 
   // override this for custom formats
   def formats: Formats = DefaultFormats
+
   implicit lazy val _formats = formats
 
   override type MyType = CaseType
 
-  def owner = rec
 
-  def asXHtml = Text(value.toString)
 
   def toForm: Box[NodeSeq] = Empty
 
-  override def defaultValue = null.asInstanceOf[MyType]
-  override def optional_? = true
-
-  def asJValue: JValue = valueBox.map(v => Extraction.decompose(v)) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(Extraction.decompose) openOr (JNothing: JValue)
 
   def setFromJValue(jvalue: JValue): Box[CaseType] = jvalue match {
     case JNothing|JNull => setBox(Empty)
@@ -80,6 +78,28 @@ class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerTyp
     case null|None|Empty     => setBox(defaultValueBox)
     case (failure: Failure)  => setBox(failure)
     case _ => setBox(defaultValueBox)
+  }
+
+
+}
+
+class MongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(implicit mf: Manifest[CaseType])
+  extends CaseClassTypedField[OwnerType, CaseType](rec) with MandatoryTypedField[CaseType] {
+
+  def this(owner: OwnerType, value: CaseType)(implicit mf: Manifest[CaseType]) = {
+    this(owner)
+    setBox(Full(value))
+  }
+
+  override def defaultValue = null.asInstanceOf[MyType]
+}
+
+class OptionalMongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(implicit mf: Manifest[CaseType])
+  extends CaseClassTypedField[OwnerType, CaseType](rec) with OptionalTypedField[CaseType] {
+
+  def this(owner: OwnerType, value: Box[CaseType])(implicit mf: Manifest[CaseType]) = {
+    this(owner)
+    setBox(value)
   }
 }
 
