@@ -17,25 +17,17 @@ package record
 package field
 
 import java.util.regex.Pattern
-import scala.xml.NodeSeq
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, Str}
 import net.liftweb.json._
-import net.liftweb.mongodb.record._
-import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
+import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, OptionalTypedField}
 import net.liftweb.util.Helpers.tryo
 
-class PatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
-  extends Field[Pattern, OwnerType]
-  with MandatoryTypedField[Pattern]
-{
+import scala.xml.NodeSeq
 
-  def owner = rec
-
-  def defaultValue = Pattern.compile("")
-
-  def setFromAny(in: Any): Box[Pattern] = in match {
+sealed abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType) extends Field[Pattern, OwnerType] {
+  override def setFromAny(in: Any): Box[Pattern] = in match {
     case p: Pattern => setBox(Full(p))
     case Some(p: Pattern) => setBox(Full(p))
     case Full(p: Pattern) => setBox(Full(p))
@@ -48,7 +40,7 @@ class PatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
     case o => setFromString(o.toString)
   }
 
-  def setFromJValue(jvalue: JValue): Box[Pattern] = jvalue match {
+  override def setFromJValue(jvalue: JValue): Box[Pattern] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case JObject(JField("$regex", JString(s)) :: JField("$flags", JInt(f)) :: Nil) =>
       setBox(Full(Pattern.compile(s, f.intValue)))
@@ -56,15 +48,15 @@ class PatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
   }
 
   // parse String into a JObject
-  def setFromString(in: String): Box[Pattern] = tryo(JsonParser.parse(in)) match {
+  override def setFromString(in: String): Box[Pattern] = tryo(JsonParser.parse(in)) match {
     case Full(jv: JValue) => setFromJValue(jv)
     case f: Failure => setBox(f)
     case other => setBox(Failure("Error parsing String into a JValue: "+in))
   }
 
-  def toForm: Box[NodeSeq] = Empty
+  override def toForm: Box[NodeSeq] = Empty
 
-  def asJs = asJValue match {
+  override def asJs = asJValue match {
     case JNothing => JsNull
     case jv => Str(compactRender(jv))
   }
@@ -72,3 +64,18 @@ class PatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
   def asJValue: JValue = valueBox.map(v => JsonRegex(v)) openOr (JNothing: JValue)
 }
 
+class PatternField[OwnerType <: BsonRecord[OwnerType]](owner: OwnerType) extends PatternTypedField[OwnerType](owner) with MandatoryTypedField[Pattern] {
+  def this(rec: OwnerType, value: Pattern) = {
+    this(rec)
+    setBox(Full(value))
+  }
+
+  override def defaultValue = Pattern.compile("")
+}
+
+class OptionalPatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType) extends PatternTypedField[OwnerType](rec) with OptionalTypedField[Pattern] {
+  def this(rec: OwnerType, value: Box[Pattern]) = {
+    this(rec)
+    setBox(value)
+  }
+}
