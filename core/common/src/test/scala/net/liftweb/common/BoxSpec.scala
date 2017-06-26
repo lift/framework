@@ -153,7 +153,8 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       }
     }
     "define a 'mapFailure' method returning itself." in {
-      Full(1).mapFailure(identity) must_==  Full(1)
+      val failure = Failure("new-error", Empty, Empty)
+      Full(1).mapFailure(_ => failure) must_==  Full(1)
     }
     "define an 'elements' method returning an iterator containing its value" in {
       Full(1).elements.next must_== 1
@@ -302,7 +303,8 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Empty.flatten must beEmpty
     }
     "define a 'mapFailure' method returning itself." in {
-      Empty.mapFailure(identity) must beEmpty
+      val failure = Failure("new-error", Empty, Empty)
+      Empty.mapFailure(_ => failure) must beEmpty
     }
     "define an 'elements' method returning an empty iterator" in {
       Empty.elements.hasNext must beFalse
@@ -366,7 +368,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
     "define a 'mapFailure' method that transforms it into another Failure instance." in {
       val exception = new Exception("transformed")
-      Failure("error", Empty, Empty) mapFailure { _ => Failure("new-error", Full(exception), Empty) } must_=== Failure("new-error", Full(exception), Empty)
+      Failure("error", Empty, Empty) mapFailure { _ => Failure("new-error", Full(exception), Empty) } must_== Failure("new-error", Full(exception), Empty)
     }
     "return itself when asked for its status with the operator ?~" in {
       Failure("error", Empty, Empty) ?~ "nothing" must_== Failure("error", Empty, Empty)
