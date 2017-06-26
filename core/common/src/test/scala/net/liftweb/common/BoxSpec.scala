@@ -315,7 +315,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Empty.mapFailure(_ => failure) must beEmpty
     }
     "define a 'collect' method returning Empty" in {
-      Empty collect { case _ => "Some Value"} must beEmpty
+      Empty collect { case _ => "Some Value" } must beEmpty
     }
     "define an 'elements' method returning an empty iterator" in {
       Empty.elements.hasNext must beFalse
@@ -382,7 +382,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Failure("error", Empty, Empty) mapFailure { _ => Failure("new-error", Full(exception), Empty) } must_== Failure("new-error", Full(exception), Empty)
     }
     "define a 'collect' method returning itself" in {
-      Failure("error", Empty, Empty) collect { case _ => "Some Value"} must_== Failure("error", Empty, Empty)
+      Failure("error", Empty, Empty) collect { case _ => "Some Value" } must_== Failure("error", Empty, Empty)
     }
     "return itself when asked for its status with the operator ?~" in {
       Failure("error", Empty, Empty) ?~ "nothing" must_== Failure("error", Empty, Empty)
