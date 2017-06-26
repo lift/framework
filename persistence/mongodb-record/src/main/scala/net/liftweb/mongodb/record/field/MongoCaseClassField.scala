@@ -104,7 +104,6 @@ class OptionalCaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: Owne
   }
 }
 
-
 class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](override val owner: OwnerType)(implicit mf: Manifest[CaseType])
   extends Field[List[CaseType], OwnerType] with MandatoryTypedField[List[CaseType]] with MongoFieldFlavor[List[CaseType]] {
 
