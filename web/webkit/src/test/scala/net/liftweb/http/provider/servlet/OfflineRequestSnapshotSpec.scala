@@ -24,30 +24,42 @@ import org.specs2.mock.Mockito
 
 object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
 
-  "A snapshot request should" in {
+  private val X_SSL = "X-SSL"
+
+  "OfflineRequestSnapshot" should {
+    "have a 'headers' method that returns the list of headers with a given name" in {
+      val req = getRequestSnapshot(originalPort = 80)
+      req.headers("X-SSL") shouldEqual List("true")
+      req.headers("Unknown") must beEmpty
+    }
+
+    "have the serverPort value" in {
+      "443 when the 'X-SSL' header is set to the string 'true' (case-insensitive) and original port is 80" in {
+        val port80Req = getRequestSnapshot(originalPort = 80)
+        port80Req.serverPort shouldEqual 443
+      }
+      s"equal to the original request-port when the '$X_SSL' header is absent or not set to the string 'true' (case-insensitive), or if the original port is not 80" in {
+        val req = getRequestSnapshot(originalPort = 90)
+        val nonSSLReq = getRequestSnapshot(originalPort = 80, headers =  Nil)
+        val falseSSLHeaderReq = getRequestSnapshot(originalPort = 90, headers =  HTTPParam(X_SSL, List("anything")) :: Nil)
+        req.serverPort shouldEqual 90
+        nonSSLReq.serverPort shouldEqual 80
+        falseSSLHeaderReq.serverPort shouldEqual 90
+      }
+    }
+  }
+
+  private val xSSLHeader = HTTPParam(X_SSL, List("true")) :: Nil
+
+  private def getRequestSnapshot(originalPort: Int, headers: List[HTTPParam] = xSSLHeader) = {
     val mockHttpRequest = mock[HTTPRequest]
-    val mockProvider = mock[HTTPProvider]
-    val headers = HTTPParam("X-SSL", List("true")) :: Nil
+    val httpProvider = mock[HTTPProvider]
+
     when(mockHttpRequest.headers).thenReturn(headers)
     when(mockHttpRequest.cookies).thenReturn(Nil)
     when(mockHttpRequest.params).thenReturn(Nil)
-    when(mockHttpRequest.serverPort).thenReturn(80)
-    val snapshotReq = new OfflineRequestSnapshot(mockHttpRequest, mockProvider)
-
-    "have a headers method that returns the list of headers with a given name" in {
-      snapshotReq.headers("X-SSL") shouldEqual List("true")
-
-      // this test shouldn't be successful
-      snapshotReq.headers("X-SSL") shouldEqual List("X-SSL")
-    }
-
-    "the new headers implementation should work correctly" in {
-      snapshotReq._newheaders("X-SSL") shouldEqual List("true")
-    }
-
-    "return server-port 443 when the X-SSL header is present" in {
-      snapshotReq.serverPort shouldEqual 443
-    }
+    when(mockHttpRequest.serverPort).thenReturn(originalPort)
+    new OfflineRequestSnapshot(mockHttpRequest, httpProvider)
   }
 
 }
