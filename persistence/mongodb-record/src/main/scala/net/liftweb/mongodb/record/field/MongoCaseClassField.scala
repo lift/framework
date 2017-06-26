@@ -42,7 +42,6 @@ sealed abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseTy
   override type MyType = CaseType
 
 
-
   def toForm: Box[NodeSeq] = Empty
 
   def asJValue: JValue = valueBox.map(Extraction.decompose) openOr (JNothing: JValue)
@@ -79,11 +78,9 @@ sealed abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseTy
     case (failure: Failure)  => setBox(failure)
     case _ => setBox(defaultValueBox)
   }
-
-
 }
 
-class MongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(implicit mf: Manifest[CaseType])
+class CaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(implicit mf: Manifest[CaseType])
   extends CaseClassTypedField[OwnerType, CaseType](rec) with MandatoryTypedField[CaseType] {
 
   def this(owner: OwnerType, value: CaseType)(implicit mf: Manifest[CaseType]) = {
@@ -94,7 +91,11 @@ class MongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerTy
   override def defaultValue = null.asInstanceOf[MyType]
 }
 
-class OptionalMongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(implicit mf: Manifest[CaseType])
+@deprecated("Use the more consistently named 'CaseClassField' instead", "3.1")
+class MongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(implicit mf: Manifest[CaseType])
+  extends CaseClassField[OwnerType, CaseType](rec)
+
+class OptionalCaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(implicit mf: Manifest[CaseType])
   extends CaseClassTypedField[OwnerType, CaseType](rec) with OptionalTypedField[CaseType] {
 
   def this(owner: OwnerType, value: Box[CaseType])(implicit mf: Manifest[CaseType]) = {
@@ -103,7 +104,9 @@ class OptionalMongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](rec:
   }
 }
 
-class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerType)( implicit mf: Manifest[CaseType]) extends Field[List[CaseType], OwnerType] with MandatoryTypedField[List[CaseType]] with MongoFieldFlavor[List[CaseType]] {
+
+class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](override val owner: OwnerType)(implicit mf: Manifest[CaseType])
+  extends Field[List[CaseType], OwnerType] with MandatoryTypedField[List[CaseType]] with MongoFieldFlavor[List[CaseType]] {
 
   // override this for custom formats
   def formats: Formats = DefaultFormats
@@ -111,14 +114,11 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
 
   override type MyType = List[CaseType]
 
-  def owner = rec
-
   def asXHtml = Text(value.toString)
 
   def toForm: Box[NodeSeq] = Empty
 
   override def defaultValue: MyType = Nil
-  override def optional_? = true
 
   def asJValue: JValue = JArray(value.map(v => Extraction.decompose(v)))
 
@@ -128,7 +128,7 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
   }
 
   def setFromDocumentList(list: java.util.List[Document]): Box[MyType] = {
-    val objs = list.asScala.map{ d => JObjectParser.serialize(d) }
+    val objs = list.asScala.map { JObjectParser.serialize }
     setFromJValue(JArray(objs.toList))
   }
 
@@ -172,3 +172,6 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
   }
 }
 
+@deprecated("Please use the more consistently named 'CaseClassListField' instead", "3.1")
+class MongoCaseClassListField[OwnerType <: Record[OwnerType], CaseType](owner: OwnerType)(implicit mf: Manifest[CaseType])
+  extends CaseClassListField[OwnerType, CaseType](owner)
