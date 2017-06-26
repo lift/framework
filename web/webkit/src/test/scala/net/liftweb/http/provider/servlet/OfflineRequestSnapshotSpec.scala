@@ -26,6 +26,8 @@ object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
 
   private val X_SSL = "X-SSL"
 
+  var xx: Int = _
+
   "OfflineRequestSnapshot" should {
     "have a 'headers' method that returns the list of headers with a given name" in {
       val req = getRequestSnapshot(originalPort = 80)
