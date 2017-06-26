@@ -156,6 +156,14 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       val failure = Failure("new-error", Empty, Empty)
       Full(1).mapFailure(_ => failure) must_==  Full(1)
     }
+    "define a 'collect' method that takes a PartialFunction to transform its contents" in {
+      "If the partial-function is defined for the contents of this box, returns a full box containing the result of applying that partial function to this Box's contents" in {
+        Full("Albus") collect { case "Albus" => "Dumbledore"} must_== Full("Dumbledore")
+      }
+      "If the partial-function is not defined for the contents of this box, returns Empty" in {
+        Full("Hermione") collect { case "Albus" => "Dumbledore"} must beEmpty
+      }
+    }
     "define an 'elements' method returning an iterator containing its value" in {
       Full(1).elements.next must_== 1
     }
@@ -306,6 +314,9 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       val failure = Failure("new-error", Empty, Empty)
       Empty.mapFailure(_ => failure) must beEmpty
     }
+    "define a 'collect' method returning Empty" in {
+      Empty collect { case _ => "Some Value"} must beEmpty
+    }
     "define an 'elements' method returning an empty iterator" in {
       Empty.elements.hasNext must beFalse
     }
@@ -369,6 +380,9 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define a 'mapFailure' method that transforms it into another Failure instance." in {
       val exception = new Exception("transformed")
       Failure("error", Empty, Empty) mapFailure { _ => Failure("new-error", Full(exception), Empty) } must_== Failure("new-error", Full(exception), Empty)
+    }
+    "define a 'collect' method returning itself" in {
+      Failure("error", Empty, Empty) collect { case _ => "Some Value"} must_== Failure("error", Empty, Empty)
     }
     "return itself when asked for its status with the operator ?~" in {
       Failure("error", Empty, Empty) ?~ "nothing" must_== Failure("error", Empty, Empty)
