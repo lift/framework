@@ -55,7 +55,9 @@ object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
 
   private def getRequestSnapshot(originalPort: Int, headers: List[HTTPParam] = xSSLHeader) = {
     val mockHttpRequest = mock[HTTPRequest]
-    val httpProvider = mock[HTTPProvider]
+    val httpProvider = new HTTPProvider {
+      override protected def context: HTTPContext = null
+    }
 
     when(mockHttpRequest.headers).thenReturn(headers)
     when(mockHttpRequest.cookies).thenReturn(Nil)
