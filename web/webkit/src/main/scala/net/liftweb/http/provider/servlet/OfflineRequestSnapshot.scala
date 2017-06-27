@@ -10,13 +10,13 @@ import net.liftweb.util.Helpers
 
 private [servlet] class OfflineRequestSnapshot(req: HTTPRequest, val provider: HTTPProvider) extends HTTPRequest {
 
-  private val _cookies = List(req.cookies :_*)
+  private[this] val _cookies = List(req.cookies :_*)
 
-  private val _headers = List(req.headers :_*)
+  private[this] val _headers = List(req.headers :_*)
 
-  private val _params = List(req.params :_*)
+  private[this] val _params = List(req.params :_*)
 
-  private [this] val _serverPort = req.serverPort
+  private[this] val _serverPort = req.serverPort
 
 
   def cookies: List[HTTPCookie] = _cookies

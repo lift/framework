@@ -24,7 +24,7 @@ import org.specs2.mock.Mockito
 
 object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
 
-  private val X_SSL = "X-SSL"
+  private[this] val X_SSL = "X-SSL"
 
   "OfflineRequestSnapshot" should {
     "have a 'headers' method that returns the list of headers with a given name" in {
@@ -49,7 +49,7 @@ object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
     }
   }
 
-  private val xSSLHeader = HTTPParam(X_SSL, List("true")) :: Nil
+  private[this] val xSSLHeader = HTTPParam(X_SSL, List("true")) :: Nil
 
   private def getRequestSnapshot(originalPort: Int, headers: List[HTTPParam] = xSSLHeader) = {
     val mockHttpRequest = mock[HTTPRequest]
