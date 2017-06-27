@@ -47,11 +47,22 @@ object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
         falseSSLHeaderReq.serverPort shouldEqual 90
       }
     }
+
+    "have a 'param' method that returns the list of parameters with a given name (case-sensitive)" in {
+      val tennisParams = List("Roger Federer", "Raphael Nadal")
+      val swimmingParams = List("Michael Phelps", "Ian Thorpe")
+      val params = HTTPParam("tennis", tennisParams) :: HTTPParam("swimming", swimmingParams) :: Nil
+      val snapshot = getRequestSnapshot(80, params = params)
+
+      snapshot.param("tennis") shouldEqual tennisParams
+      snapshot.param("Tennis") should beEmpty
+      snapshot.param("swimming") shouldEqual swimmingParams
+    }
   }
 
   private[this] val xSSLHeader = HTTPParam(X_SSL, List("true")) :: Nil
 
-  private def getRequestSnapshot(originalPort: Int, headers: List[HTTPParam] = xSSLHeader) = {
+  private[this] def getRequestSnapshot(originalPort: Int, headers: List[HTTPParam] = xSSLHeader, params: List[HTTPParam] = Nil) = {
     val mockHttpRequest = mock[HTTPRequest]
     val httpProvider = new HTTPProvider {
       override protected def context: HTTPContext = null
@@ -59,7 +70,7 @@ object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
 
     when(mockHttpRequest.headers).thenReturn(headers)
     when(mockHttpRequest.cookies).thenReturn(Nil)
-    when(mockHttpRequest.params).thenReturn(Nil)
+    when(mockHttpRequest.params).thenReturn(params)
     when(mockHttpRequest.serverPort).thenReturn(originalPort)
     new OfflineRequestSnapshot(mockHttpRequest, httpProvider)
   }

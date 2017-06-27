@@ -23,7 +23,6 @@ private [servlet] class OfflineRequestSnapshot(req: HTTPRequest, val provider: H
 
   val authType: Box[String] = req.authType
 
-  // Just as a sample, to be replaced later
   def headers(name: String): List[String] = {
     _headers
       .find(_.name.equalsIgnoreCase(name))
@@ -45,7 +44,12 @@ private [servlet] class OfflineRequestSnapshot(req: HTTPRequest, val provider: H
 
   val queryString: Box[String] = req.queryString
 
-  def param(name: String): List[String] = _params.filter(_.name == name).map(_.name)
+  def param(name: String): List[String] = {
+    _params
+      .find(_.name == name)
+      .map(_.values)
+      .getOrElse(Nil)
+  }
 
   def params: List[HTTPParam] = _params
 
