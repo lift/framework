@@ -26,7 +26,7 @@ import net.liftweb.util.Helpers.tryo
 
 import scala.xml.NodeSeq
 
-sealed abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType) extends Field[Pattern, OwnerType] {
+abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType) extends Field[Pattern, OwnerType] {
   override def setFromAny(in: Any): Box[Pattern] = in match {
     case p: Pattern => setBox(Full(p))
     case Some(p: Pattern) => setBox(Full(p))

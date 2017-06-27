@@ -30,7 +30,7 @@ import net.liftweb.record._
 import net.liftweb.util.Helpers._
 import org.bson.types.ObjectId
 
-sealed trait ObjectIdTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[ObjectId] with Field[ObjectId, OwnerType] {
+trait ObjectIdTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[ObjectId] with Field[ObjectId, OwnerType] {
 
   def setFromAny(in: Any): Box[ObjectId] = in match {
     case oid: ObjectId => setBox(Full(oid))

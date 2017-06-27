@@ -31,7 +31,7 @@ import scala.reflect.Manifest
 import scala.xml._
 
 /** Field that contains an entire record represented as an inline object value. Inspired by JSONSubRecordField */
-sealed abstract class BsonRecordTypedField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
+abstract class BsonRecordTypedField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
 (override val owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
   extends Field[SubRecordType, OwnerType] {
 

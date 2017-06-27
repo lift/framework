@@ -28,7 +28,7 @@ import net.liftweb.util.Helpers._
 
 import scala.xml.NodeSeq
 
-sealed trait UUIDTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[UUID] with Field[UUID, OwnerType] {
+trait UUIDTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[UUID] with Field[UUID, OwnerType] {
   def setFromAny(in: Any): Box[UUID] = in match {
     case uid: UUID => setBox(Full(uid))
     case Some(uid: UUID) => setBox(Full(uid))

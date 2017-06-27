@@ -31,7 +31,7 @@ import net.liftweb.http.js.JsExp
 import org.bson.Document
 import scala.collection.JavaConverters._
 
-sealed abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](override val owner: OwnerType)(implicit mf: Manifest[CaseType])
+abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](override val owner: OwnerType)(implicit mf: Manifest[CaseType])
   extends Field[CaseType, OwnerType] with MongoFieldFlavor[CaseType] {
 
   // override this for custom formats
@@ -91,7 +91,7 @@ class CaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(i
   override def defaultValue = null.asInstanceOf[MyType]
 }
 
-@deprecated("Use the more consistently named 'CaseClassField' instead", "3.1")
+@deprecated("Use the more consistently named 'CaseClassField' instead", "3.2")
 class MongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(implicit mf: Manifest[CaseType])
   extends CaseClassField[OwnerType, CaseType](rec)
 
@@ -171,6 +171,6 @@ class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](override val 
   }
 }
 
-@deprecated("Please use the more consistently named 'CaseClassListField' instead", "3.1")
+@deprecated("Please use the more consistently named 'CaseClassListField' instead", "3.2")
 class MongoCaseClassListField[OwnerType <: Record[OwnerType], CaseType](owner: OwnerType)(implicit mf: Manifest[CaseType])
   extends CaseClassListField[OwnerType, CaseType](owner)

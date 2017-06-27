@@ -28,7 +28,7 @@ import org.bson.Document
 
 import scala.xml.NodeSeq
 
-sealed trait JObjectTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[JObject]
+trait JObjectTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[JObject]
   with Field[JObject, OwnerType] with MongoFieldFlavor[JObject] {
 
   override def setFromJValue(jvalue: JValue): Box[JObject] = jvalue match {
