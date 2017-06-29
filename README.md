@@ -51,7 +51,7 @@ Then, add the plugin and Lift to your `build.sbt` file:
 	enablePlugins(JettyPlugin)
 
 	libraryDependencies ++= {
-		val liftVersion = "3.0.1"
+		val liftVersion = "3.1.0"
 		Seq(
                   "net.liftweb"       %% "lift-webkit" % liftVersion % "compile",
                   "ch.qos.logback" % "logback-classic" % "1.1.3"
@@ -69,7 +69,7 @@ Or, you can add Lift to your `pom.xml` like so:
     <dependency>
       <groupId>net.liftweb</groupId>
       <artifactId>lift-webkit_${scala.version}</artifactId>
-      <version>3.0.1</version>
+      <version>3.1.0</version>
     </dependency>
 
 Where `${scala.version}` is `2.11` or `2.12`. Individual patch releases of the Scala compiler (e.g. 2.12.2)
@@ -139,7 +139,7 @@ The Lift wiki is hosted on Assembla and can be found at [http://www.assembla.com
 
 ### ScalaDocs
 
-The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on the Liftweb.net site. You can access the source code–based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 3.0 release can be accessed at [http://liftweb.net/api/25/api/](http://liftweb.net/api/30/api/).
+The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on the Liftweb.net site. You can access the source code–based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 3.0 release can be accessed at [http://liftweb.net/api/31/api/](http://liftweb.net/api/31/api/).
 
 ### Cookbook
 
