@@ -228,7 +228,7 @@ class MongoFieldTypeTestRecord private () extends MongoRecord[MongoFieldTypeTest
   object mandatoryUUIDField extends UUIDField(this)
   object legacyOptionalUUIDField extends UUIDField(this) { override def optional_? = true }
 
-  object mandatoryMongoCaseClassField extends MongoCaseClassField[MongoFieldTypeTestRecord, MongoCaseClassTestObject](this) {
+  object mandatoryMongoCaseClassField extends CaseClassField[MongoFieldTypeTestRecord, MongoCaseClassTestObject](this) {
     override def formats = owner.meta.formats
   }
 }
