@@ -47,8 +47,7 @@ abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](ove
   def asJValue: JValue = valueBox.map(Extraction.decompose) openOr (JNothing: JValue)
 
   def setFromJValue(jvalue: JValue): Box[CaseType] = jvalue match {
-    case JNothing | JNull if optional_? => setBox(Empty)
-    case JNothing | JNull => setBox(Full(null.asInstanceOf[CaseType]))
+    case JNothing | JNull => setBox(Empty)
     case s => setBox(Helpers.tryo[CaseType] { s.extract[CaseType] })
   }
 
@@ -92,10 +91,6 @@ class CaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(i
   }
 
   override def defaultValue = null.asInstanceOf[MyType]
-
-  // Prevent null from being stored accidentally. Can't use anything except null as a default
-  override def defaultValueBox: Box[MyType] =
-    if (optional_?) Empty else Box !! defaultValue
 }
 
 @deprecated("Use the more consistently named 'CaseClassField' instead", "3.2")
