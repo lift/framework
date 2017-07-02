@@ -47,7 +47,7 @@ abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](ove
   def asJValue: JValue = valueBox.map(Extraction.decompose) openOr (JNothing: JValue)
 
   def setFromJValue(jvalue: JValue): Box[CaseType] = jvalue match {
-    case JNothing|JNull => setBox(Empty)
+    case JNothing | JNull => setBox(Empty)
     case s => setBox(Helpers.tryo[CaseType]{ s.extract[CaseType] })
   }
 
@@ -65,8 +65,8 @@ abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](ove
     setFromJValue(jvalue)
   }
 
-  override def setFromString(in: String): Box[CaseType] = {
-    Helpers.tryo{ JsonParser.parse(in).extract[CaseType] }
+  override def setFromString(in: String): Box[CaseType] = Helpers.tryo {
+    JsonParser.parse(in).extract[CaseType]
   }
 
   def setFromAny(in: Any): Box[CaseType] = in match {
