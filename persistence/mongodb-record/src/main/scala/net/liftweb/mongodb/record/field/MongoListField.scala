@@ -27,7 +27,7 @@ import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
 import net.liftweb.util.Helpers._
 import org.bson.Document
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.xml.NodeSeq
 
 /**
@@ -74,7 +74,7 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
           if(elem.isInstanceOf[Document]) {
             setFromDocumentList(jlist.asInstanceOf[java.util.List[Document]])
           } else {
-            setBox(Full(jlist.toList.asInstanceOf[MyType]))
+            setBox(Full(jlist.asScala.toList.asInstanceOf[MyType]))
           }
         } else {
           setBox(Full(Nil))
@@ -155,7 +155,7 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
 
   // set this field's value using a DBObject returned from Mongo.
   def setFromDBObject(dbo: DBObject): Box[MyType] =
-    setBox(Full(dbo.asInstanceOf[BasicDBList].toList.asInstanceOf[MyType]))
+    setBox(Full(dbo.asInstanceOf[BasicDBList].asScala.toList.asInstanceOf[MyType]))
 
   def setFromDocumentList(list: java.util.List[Document]): Box[MyType] = {
     throw new RuntimeException("Warning, setting Document as field with no conversion, probably not something you want to do")

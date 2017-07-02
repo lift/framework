@@ -97,17 +97,17 @@ class MongoJsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <
   }
 
   override def setFromDBObject(dbo: DBObject): Box[List[JObjectType]] =
-    setBox(Full(dbo.keySet.asScala.toList.map(k => {
-      valueMeta.create(JObjectParser.serialize(dbo.get(k.toString))(owner.meta.formats).asInstanceOf[JObject])(owner.meta.formats)
-    })))
+    setBox(Full(dbo.keySet.asScala.toList.map { k =>
+      valueMeta.create(JObjectParser.serialize(dbo.get(k))(owner.meta.formats).asInstanceOf[JObject])(owner.meta.formats)
+    }))
 
   override def asJValue: JValue = JArray(value.map(_.asJObject()(owner.meta.formats)))
 
   override def setFromJValue(jvalue: JValue) = jvalue match {
-    case JNothing|JNull if optional_? => setBox(Empty)
-    case JArray(arr) => setBox(Full(arr.map( jv => {
+    case JNothing | JNull if optional_? => setBox(Empty)
+    case JArray(arr) => setBox(Full(arr.map { jv =>
       valueMeta.create(jv.asInstanceOf[JObject])(owner.meta.formats)
-    })))
+    }))
     case other => setBox(FieldHelpers.expectedA("JArray", other))
   }
 }
