@@ -47,12 +47,14 @@ abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](ove
   def asJValue: JValue = valueBox.map(Extraction.decompose) openOr (JNothing: JValue)
 
   def setFromJValue(jvalue: JValue): Box[CaseType] = jvalue match {
-    case JNothing | JNull => setBox(Empty)
-    case s => setBox(Helpers.tryo[CaseType]{ s.extract[CaseType] })
+    case JNothing | JNull if optional_? => setBox(Empty)
+    case JNothing | JNull => setBox(Full(null.asInstanceOf[CaseType]))
+    case s => setBox(Helpers.tryo[CaseType] { s.extract[CaseType] })
   }
 
-  def asDBObject: DBObject = {
-    JObjectParser.parse(asJValue.asInstanceOf[JObject])
+  def asDBObject: DBObject = asJValue match {
+    case JNothing | JNull => null
+    case other => JObjectParser.parse(other.asInstanceOf[JObject])
   }
 
   def setFromDocument(doc: Document): Box[CaseType] = {
@@ -83,12 +85,17 @@ abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](ove
 class CaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(implicit mf: Manifest[CaseType])
   extends CaseClassTypedField[OwnerType, CaseType](rec) with MandatoryTypedField[CaseType] {
 
+
   def this(owner: OwnerType, value: CaseType)(implicit mf: Manifest[CaseType]) = {
     this(owner)
     setBox(Full(value))
   }
 
   override def defaultValue = null.asInstanceOf[MyType]
+
+  // Prevent null from being stored accidentally. Can't use anything except null as a default
+  override def defaultValueBox: Box[MyType] =
+    if (optional_?) Empty else Box !! defaultValue
 }
 
 @deprecated("Use the more consistently named 'CaseClassField' instead", "3.2")
