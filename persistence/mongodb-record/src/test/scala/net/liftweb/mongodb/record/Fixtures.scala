@@ -268,7 +268,7 @@ class ListTestRecord private () extends MongoRecord[ListTestRecord] with UUIDPk[
   object mandatoryMongoRefListField extends ObjectIdRefListField(this, FieldTypeTestRecord)
   object mandatoryIntListField extends MongoListField[ListTestRecord, Int](this)
   object mandatoryMongoJsonObjectListField extends MongoJsonObjectListField(this, TypeTestJsonObject)
-  object mongoCaseClassListField extends MongoCaseClassListField[ListTestRecord, MongoCaseClassTestObject](this) {
+  object caseClassListField extends CaseClassListField[ListTestRecord, MongoCaseClassTestObject](this) {
     override def formats = owner.meta.formats
   }
 }

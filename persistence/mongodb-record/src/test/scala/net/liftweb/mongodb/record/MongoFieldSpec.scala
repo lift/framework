@@ -507,8 +507,8 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundEach {
     "setFromAny a List" in {
       val rec = ListTestRecord.createRecord
       val lst = List(MongoCaseClassTestObject(1,"str1", MyTestEnum.THREE))
-      rec.mongoCaseClassListField.setFromAny(lst)
-      rec.mongoCaseClassListField.value must_== lst
+      rec.caseClassListField.setFromAny(lst)
+      rec.caseClassListField.value must_== lst
     }
   }
 
