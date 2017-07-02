@@ -37,24 +37,24 @@ For more details, see [CONTRIBUTING.md](https://github.com/lift/framework/blob/m
 
 You can create a new Lift project using your favorite build system by adding Lift as a dependency:
 
-#### sbt 0.12.1
+#### sbt
+
+We recommend using the latest sbt version, which is currently 0.13.15, but anything 0.13.6+ will work
+with the instructions below.
 
 Create or update your `project/plugins.sbt` file with the `xsbt-web-plugin`:
 
-	libraryDependencies <+= sbtVersion(v => "com.github.siasia" %% "xsbt-web-plugin" % ("0.12.0-0.2.11.1"))
+	addSbtPlugin("com.github.siasia" %% "xsbt-web-plugin" % "3.0.2")
 
 Then, add the plugin and Lift to your `build.sbt` file:
 
-	seq(webSettings :_*)
+	enablePlugins(JettyPlugin)
 
 	libraryDependencies ++= {
-		val liftVersion = "2.5-RC1"
+		val liftVersion = "3.1.0"
 		Seq(
                   "net.liftweb"       %% "lift-webkit" % liftVersion % "compile",
-                  "net.liftmodules"   %% "lift-jquery-module" % (liftVersion + "-2.2"),
-                  "org.eclipse.jetty" % "jetty-webapp"        % "8.1.7.v20120910"  % "container,test",
-                  "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container,test" artifacts Artifact("javax.servlet", "jar", "jar"),
-                  "ch.qos.logback" % "logback-classic" % "1.0.6"
+                  "ch.qos.logback" % "logback-classic" % "1.1.3"
 		)
 	}
 
@@ -68,17 +68,18 @@ Or, you can add Lift to your `pom.xml` like so:
 
     <dependency>
       <groupId>net.liftweb</groupId>
-      <artifactId>lift-mapper_${scala.version}</artifactId>
-      <version>2.5.1</version>
+      <artifactId>lift-webkit_${scala.version}</artifactId>
+      <version>3.1.0</version>
     </dependency>
 
-Where `${scala.version}` is `2.9.1` etc. For scala 2.10.x, which is binary compatible, you just use `2.10`, and that will work for `2.10.0` ,`2.10.1` ,`2.10.2`
+Where `${scala.version}` is `2.11` or `2.12`. Individual patch releases of the Scala compiler (e.g. 2.12.2)
+are binary compatible with everything in their release series, so you only need the first two version parts.
 
 You can [learn more on the wiki](http://www.assembla.com/wiki/show/liftweb/Using_Maven).
 
 ## Project Organization
 
-The Lift Framework is divided into several Git repositories, which in turn are divided into several components that are published independently. This organization enables you to use just the elements of Lift necessary for your project and no more.
+The Lift Framework is divided into several components that are published independently. This organization enables you to use just the elements of Lift necessary for your project and no more.
 
 ### This Repository
 
@@ -138,7 +139,7 @@ The Lift wiki is hosted on Assembla and can be found at [http://www.assembla.com
 
 ### ScalaDocs
 
-The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on the Liftweb.net site. You can access the source code–based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 2.5 release can be accessed at [http://liftweb.net/api/25/api/](http://liftweb.net/api/25/api/).
+The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on the Liftweb.net site. You can access the source code–based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 3.0 release can be accessed at [http://liftweb.net/api/31/api/](http://liftweb.net/api/31/api/).
 
 ### Cookbook
 
@@ -146,8 +147,7 @@ You can find up-to-date information on the [Lift Cookbook](http://cookbook.liftw
 
 ## License
 
-Lift is open source software released under the **Apache 2.0 license**. Generally speaking, you must be a committer with signed committer agreement to submit significant
-changes to Lift. We do, however, accept some small changes and bugfixes into Lift from non-committers as outlined above in the Pull Requests section.
+Lift is open source software released under the **Apache 2.0 license**.
 
 ## Continuous Integration
 
