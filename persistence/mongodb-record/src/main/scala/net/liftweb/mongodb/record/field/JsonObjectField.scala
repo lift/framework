@@ -86,7 +86,7 @@ abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <
 /*
 * List of JsonObject case classes
 */
-class MongoJsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
+class JsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
 (rec: OwnerType, valueMeta: JsonObjectMeta[JObjectType])(implicit mf: Manifest[JObjectType])
   extends MongoListField[OwnerType, JObjectType](rec: OwnerType) {
 
@@ -111,3 +111,7 @@ class MongoJsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <
     case other => setBox(FieldHelpers.expectedA("JArray", other))
   }
 }
+
+@deprecated("Use the more consistently named 'JsonObjectListField' instead", "3.2")
+class MongoJsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
+(rec: OwnerType, valueMeta: JsonObjectMeta[JObjectType])(implicit mf: Manifest[JObjectType]) extends JsonObjectListField(rec, valueMeta)

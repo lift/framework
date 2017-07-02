@@ -234,7 +234,7 @@ class MongoRecordSpec extends Specification with MongoTestKit {
     val ltr = ListTestRecord.createRecord
       .mandatoryStringListField(List("abc", "def", "ghi"))
       .mandatoryIntListField(List(4, 5, 6))
-      .mandatoryMongoJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
+      .mandatoryJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
       .caseClassListField(List(MongoCaseClassTestObject(1,"str",MyTestEnum.TWO)))
       .mandatoryMongoRefListField(Nil)
 
@@ -242,7 +242,7 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       ("_id" -> ("$uuid" -> ltr.id.toString)) ~
       ("mandatoryStringListField" -> List("abc", "def", "ghi")) ~
       ("mandatoryIntListField" -> List(4, 5, 6)) ~
-      ("mandatoryMongoJsonObjectListField" -> List(
+      ("mandatoryJsonObjectListField" -> List(
         (("intField" -> 1) ~ ("stringField" -> "jsonobj1") ~ ("mapField" -> ("x" -> "1"))),
         (("intField" -> 2) ~ ("stringField" -> "jsonobj2") ~ ("mapField" -> ("x" -> "2")))
       )) ~
@@ -846,8 +846,8 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       ltr.mandatoryIntListField(List(4, 5, 6))
       ltr.mandatoryIntListField.dirty_? must_== true
 
-      ltr.mandatoryMongoJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
-      ltr.mandatoryMongoJsonObjectListField.dirty_? must_== true
+      ltr.mandatoryJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
+      ltr.mandatoryJsonObjectListField.dirty_? must_== true
 
       ltr.caseClassListField(List(MongoCaseClassTestObject(1,"str",MyTestEnum.TWO)))
       ltr.caseClassListField.dirty_? must_== true

@@ -24,7 +24,6 @@ import java.util.regex.Pattern
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.json.DefaultFormats
 import net.liftweb.json.JsonDSL._
-import net.liftweb.json.JsonAST.JObject
 import net.liftweb.record.field._
 import net.liftweb.util.TimeHelpers._
 import net.liftweb.mongodb.record.field._
@@ -113,7 +112,7 @@ package mongotestrecords {
     object binarylist extends MongoListField[ListDoc, Array[Byte]](this)
 
     // specialized list types
-    object jsonobjlist extends MongoJsonObjectListField(this, JsonDoc)
+    object jsonobjlist extends JsonObjectListField(this, JsonDoc)
 
     // these require custom setFromDBObject methods
     object maplist extends MongoListField[ListDoc, Map[String, String]](this) {
@@ -202,7 +201,7 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
 
     checkMongoIsRunning
 
-    S.initIfUninitted(session){
+    S.initIfUninitted(session) {
 
       val pwd = "test"
       val cal = Calendar.getInstance
@@ -230,6 +229,8 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
       def fromDb = TstRecord.find("_id", tr.id.value)
 
       fromDb.isDefined must_== true
+
+
 
       for (t <- fromDb) {
         t.id.value must_== tr.id.value

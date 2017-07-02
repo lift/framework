@@ -490,10 +490,10 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundEach {
         ("intField" -> 1) ~ ("stringField" -> "jsonobj1") ~ ("mapField" -> (("x" -> "1"))),
         ("intField" -> 2) ~ ("stringField" -> "jsonobj2") ~ ("mapField" -> (("x" -> "2")))
       )
-      passBasicTests(lst, lst2, rec.mandatoryMongoJsonObjectListField, Empty)
+      passBasicTests(lst, lst2, rec.mandatoryJsonObjectListField, Empty)
       passConversionTests(
         lst,
-        rec.mandatoryMongoJsonObjectListField,
+        rec.mandatoryJsonObjectListField,
         new JsExp {
           def toJsCmd = compactRender(json)
         },

@@ -267,7 +267,7 @@ class ListTestRecord private () extends MongoRecord[ListTestRecord] with UUIDPk[
   object mandatoryStringListField extends MongoListField[ListTestRecord, String](this)
   object mandatoryMongoRefListField extends ObjectIdRefListField(this, FieldTypeTestRecord)
   object mandatoryIntListField extends MongoListField[ListTestRecord, Int](this)
-  object mandatoryMongoJsonObjectListField extends MongoJsonObjectListField(this, TypeTestJsonObject)
+  object mandatoryJsonObjectListField extends JsonObjectListField(this, TypeTestJsonObject)
   object caseClassListField extends CaseClassListField[ListTestRecord, MongoCaseClassTestObject](this) {
     override def formats = owner.meta.formats
   }
@@ -387,7 +387,7 @@ class NullTestRecord private () extends MongoRecord[NullTestRecord] with IntPk[N
   object jsonobj extends JsonObjectField[NullTestRecord, JsonObj](this, JsonObj) {
     def defaultValue = JsonObj("1", null)
   }
-  object jsonobjlist extends MongoJsonObjectListField[NullTestRecord, JsonObj](this, JsonObj)
+  object jsonobjlist extends JsonObjectListField[NullTestRecord, JsonObj](this, JsonObj)
 }
 
 object NullTestRecord extends NullTestRecord with MongoMetaRecord[NullTestRecord]
@@ -404,7 +404,7 @@ class BoxTestRecord private () extends MongoRecord[BoxTestRecord] with LongPk[Bo
   object jsonobj extends JsonObjectField[BoxTestRecord, BoxTestJsonObj](this, BoxTestJsonObj) {
     def defaultValue = BoxTestJsonObj("0", Empty, Full("Full String"), Failure("Failure"))
   }
-  object jsonobjlist extends MongoJsonObjectListField[BoxTestRecord, BoxTestJsonObj](this, BoxTestJsonObj)
+  object jsonobjlist extends JsonObjectListField[BoxTestRecord, BoxTestJsonObj](this, BoxTestJsonObj)
 
 }
 object BoxTestRecord extends BoxTestRecord with MongoMetaRecord[BoxTestRecord] {
