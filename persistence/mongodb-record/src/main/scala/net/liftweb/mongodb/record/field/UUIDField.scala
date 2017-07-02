@@ -54,7 +54,7 @@ trait UUIDTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[UUID
     case _ => setBox(Failure(s"Invalid UUID string: $in"))
   }
 
-  private def elem = S.fmapFunc(S.SFuncHolder(this.setFromAny(_))) { funcName =>
+  private[this] def elem = S.fmapFunc(S.SFuncHolder(this.setFromAny(_))) { funcName =>
     <input type="text"
       name={funcName}
       value={valueBox.map(v => v.toString) openOr ""}

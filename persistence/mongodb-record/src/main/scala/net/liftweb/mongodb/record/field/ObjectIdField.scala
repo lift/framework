@@ -46,7 +46,7 @@ trait ObjectIdTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[
   }
 
   def setFromJValue(jvalue: JValue): Box[ObjectId] = jvalue match {
-    case JNothing|JNull if optional_? => setBox(Empty)
+    case JNothing | JNull if optional_? => setBox(Empty)
     case JObject(JField("$oid", JString(s)) :: Nil) => setFromString(s)
     case JString(s) => setFromString(s)
     case other => setBox(FieldHelpers.expectedA("JObject", other))
@@ -87,7 +87,7 @@ class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](override val owner: Owne
     setBox(Full(value))
   }
 
-  override def defaultValue = ObjectId.get
+  override def defaultValue = new ObjectId
 
   def createdAt: Date = this.get.getDate
 

@@ -65,8 +65,8 @@ trait MongoRefField[RefType <: MongoRecord[RefType], MyType] extends TypedField[
     _calcedObj = true
   }
 
-  private var _obj: Box[RefType] = Empty
-  private var _calcedObj = false
+  private[this] var _obj: Box[RefType] = Empty
+  private[this] var _calcedObj = false
 
   override def setBox(in: Box[MyType]): Box[MyType] = synchronized {
     _calcedObj = false // invalidate the cache
@@ -83,7 +83,7 @@ trait MongoRefField[RefType <: MongoRecord[RefType], MyType] extends TypedField[
     if (optional_?) (Empty, emptyOptionLabel)::options else options
   }
 
-  private def elem = SHtml.selectObj[Box[MyType]](
+  private[this] def elem = SHtml.selectObj[Box[MyType]](
     buildDisplayList,
     Full(valueBox),
     setBox(_)
