@@ -35,6 +35,10 @@ For more details, see [CONTRIBUTING.md](https://github.com/lift/framework/blob/m
 
 ## Getting Started
 
+**Compatibility note:**
+As of Lift 3.0, you'll need to be running Java 8 to use Lift. For those using Java 6 or Java 7,
+you'll need to use Lift 2.6 until you can upgrade your Java installation.
+
 You can create a new Lift project using your favorite build system by adding Lift as a dependency:
 
 #### sbt
