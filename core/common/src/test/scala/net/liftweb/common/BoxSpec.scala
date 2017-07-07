@@ -447,6 +447,108 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
   }
 
+  def typingTest = {
+    val myBox: PresenceBox[String] = Full("hai")
+    val otherBox: TryBox[String] = Full("bai")
+    val thirdBox: ParamTryBox[String, Int] = Full("sai")
+    myBox match {
+      case Full(hai) =>
+        val thingie: String = hai
+      case Empty =>
+        val thingie = ""
+      /*case Failure("hai", _, _) =>
+        println("Fail!")*/
+    }
+    otherBox match {
+      case Full(hai) =>
+        val thingie: String = hai
+      /*case Empty =>
+        val thingie = ""*/
+      case Failure(hai, _, _) =>
+        println("Fail!" + hai)
+    }
+    thirdBox match {
+      case Full(hai) =>
+        val thingie: String = hai
+      /*case Failure(hai, _, _) =>
+        println("shai")*/
+      /*case Empty =>
+        println("boo")*/
+      // FIXME We want the next two flipped, but the compiler won't properly
+      // FIXME resolve the overloaded unapplies :(
+      /*case ParamFailure(_, _, _, zem) =>
+        val myThingie: Int = zem*/
+      case ParamFailure(_, _, _, zem: String) =>
+        println("bam")
+      case parammable: ParamFailure[Int] =>
+        val myThingie: Int = parammable.param
+    }
+
+    val myFailureBox: PresenceBox[String] = Full("bai").filter(_ != "boom")
+    val otherFailureBox: TryBox[String] = Full("bai").filter(_ != "boom") ?~ "Boom"
+    val otherOtherFailureBox: TryBox[String] = Full("bai").filter(_ != "boom") ?~ "Boom" ?~! "Asplode"
+    val thirdFailureBox: ParamTryBox[String, Int] = Full("sai") ?~ "yes" ~> 5
+
+    val seriousBoxes =
+      Seq(thirdFailureBox, thirdFailureBox).map {
+        case intParamFailure: ParamFailure[Int] =>
+          intParamFailure
+        case a @ Full(stringyThing) =>
+          a
+      }
+
+    val newThing: Seq[ParamTryBox[String, Int]] = seriousBoxes
+
+    val stringParamFailure = Failure("slap") ~> "boom"
+
+    val orredPresence: PresenceBox[String] = myBox or Empty
+    val orredFailure: TryBox[String] = myBox or Failure("boom")
+    val orredParamFailure: ParamTryBox[String, Int] = myBox or thirdBox
+    val orredParamFailure2: TryBox[String] = myBox or thirdBox
+
+    val flattened: PresenceBox[String] =
+      myBox.flatMap { a =>
+        Empty
+      }
+    val tryFlattened: TryBox[String] = // should fail
+      otherBox.flatMap { a =>
+        Failure("boom")
+      }
+    val paramTryFlattened: TryBox[String] =
+      thirdBox.flatMap { a =>
+        Failure("boom") ~> "slam"
+      }
+    val paramTryQuiteFlattened: ParamTryBox[String, Int] =
+      thirdBox.flatMap { a =>
+        Failure("boom") ~> 5
+      }
+    val paramTryQuiteFlattened2: ParamTryBox[String, AnyVal] =
+      thirdBox.flatMap { a =>
+        Failure("boom") ~> 2.3
+      }
+
+    // flatMap
+    //   PresenceBox[T]
+    //     flatMap PresenceBox[A] => PresenceBox[A]
+    //     flatMap TryBox[A] => Full flatMap TryBox[A] => TryBox[A] --/-> Box[A]
+    //                       => Empty flatMap TryBox[A] => Empty ----/
+    //     flatMap ParamTryBox[A,E] => Full flatMap PTB[A,E] => PTB[A,E] --/-> Box[A]
+    //                              => Empty flatMap PTB[A,E] => Empty ---/
+    //   TryBox[T]
+    //     flatMap PresenceBox[A] => Full flatMap PresenceBox[A] => PresenceBox[A] --/-> Box[A]
+    //                            => Failure flatMap PresenceBox[A] => Failure -----/
+    //     flatMap TryBox[A] => TryBox[A]
+    //     flatMap ParamTryBox[A,E] => Full flatMap PTB[A,E] => PTB[A,E] -----/-> TryBox[A]
+    //                              => Failure flatMap PTB[A,E] => Failure --/
+    //   ParamTryBox[T,E]
+    //     flatMap PresenceBox[A] => Full flatMap PresenceBox[A] => PresenceBox[A] ------------/-> Box[A]
+    //                            => ParamFailure[A,E] flatMap PresenceBox[A] => PF[A,E] -----/
+    //     flatMap TryBox[A] => TryBox[A]
+    //     flatMap ParamTryBox[A,E] => Full flatMap PTB[A,E] => PTB[A,E] -------/-> PTB[A,E]
+    //                              => PTB[A,E] flatMap PTB[A,E] => PTB[A,E] --/
+    //     flatMap ParamTryBox[A,Z] => Full flatMap PTB[A,Z] => PTB[A,Z] -------/-> TryBox[A]
+    //                              => PTB[A,E] flatMap PTB[A,Z] => PTB[A,Z] --/
+  }
 }
 
 

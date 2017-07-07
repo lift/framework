@@ -17,8 +17,8 @@
 package net.liftweb
 package common
 
-import scala.language.implicitConversions
 import scala.language.existentials
+import scala.language.implicitConversions
 import scala.reflect.Manifest
 
 import java.util.{Iterator => JavaIterator, ArrayList => JavaArrayList}
@@ -198,7 +198,7 @@ sealed trait BoxTrait {
    * @return `Full` with the contents if the `Option` is `Some` and `Empty`
    *         otherwise.
    */
-  implicit def option2Box[T](in: Option[T]): Box[T] = Box(in)
+  implicit def option2Box[T](in: Option[T]): PresenceBox[T] = Box(in)
 
   /**
    * This implicit transformation allows one to use a `Box` as an `Option`.
@@ -218,7 +218,7 @@ sealed trait BoxTrait {
    *
    * @return `Full` if `in` is not null and `Empty` otherwise.
    */
-  def legacyNullTest[T](in: T): Box[T] = in match {
+  def legacyNullTest[T](in: T): PresenceBox[T] = in match {
     case null => Empty
     case _ => Full(in)
   }
@@ -226,7 +226,7 @@ sealed trait BoxTrait {
   /**
    * Alias for `[[legacyNullTest]]`.
    */
-  def !![T](in: T): Box[T] = legacyNullTest(in)
+  def !![T](in: T): PresenceBox[T] = legacyNullTest(in)
 
   /**
    * Create a `Full` box containing the specified value if `in` is an instance of
@@ -600,7 +600,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
    * @return A `Failure` with the message if this `Box` is `Empty`, this box
    *         otherwise.
    */
-  def ?~(msg: => String): Box[A] = this
+  def ?~(msg: => String): TryBox[A]
 
   /**
    * Transform an `Empty` or `Failure` to a `ParamFailure` with the specified
@@ -611,12 +611,12 @@ sealed abstract class Box[+A] extends Product with Serializable{
    *         `ParamFailure` or a `Full`. If this is a `Failure`, the
    *         `ParamFailure` will preserve the message of the `Failure`.
    */
-  def ~>[T](errorCode: => T): Box[A] = this
+  def ~>[T](errorCode: => T): ParamTryBox[A, T]
 
   /**
    * Alias for `[[?~]]`.
    */
-  def failMsg(msg: => String): Box[A] = ?~(msg)
+  def failMsg(msg: => String): TryBox[A] = ?~(msg)
 
   /**
    * Chain the given `msg` as a `Failure` ahead of any failures this `Box` may
@@ -632,12 +632,12 @@ sealed abstract class Box[+A] extends Product with Serializable{
    *         this box to the new `Failure` if this is a `Failure`. The unchanged
    *         box if it is a `Full`.
    */
-  def ?~!(msg: => String): Box[A] = ?~(msg)
+  def ?~!(msg: => String): TryBox[A] = ?~(msg)
 
   /**
    * Alias for `?~!`.
    */
-  def compoundFailMsg(msg: => String): Box[A] = ?~!(msg)
+  def compoundFailMsg(msg: => String): TryBox[A] = ?~!(msg)
 
   /**
    * If this `Box` contains a value and it satisfies the specified `predicate`,
@@ -649,7 +649,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
    * @return A `Failure` with the message if the box is empty or the predicate
    *         is not satisfied by the value contained in this Box.
    */
-  def filterMsg(msg: String)(p: A => Boolean): Box[A] = filter(p) ?~ msg
+  def filterMsg(msg: String)(p: A => Boolean): TryBox[A] = filter(p) ?~ msg
 
   /**
    * This method calls the specified function with the specified `in` value and
@@ -791,28 +791,73 @@ sealed abstract class Box[+A] extends Product with Serializable{
 }
 
 /**
+ * A `Full` or `Empty` box (stands in trivially for `Option`).
+ */
+sealed trait PresenceBox[+T] extends Box[T] {
+  def or[B >: T](alternative: => Full[B]): Full[B]
+  def or[B >: T](alternative: => PresenceBox[B])(implicit a: DummyImplicit): PresenceBox[B]
+  def or[B >: T](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): TryBox[B]
+  def or[B >: T, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): ParamTryBox[B, E]
+
+  def flatMap[B](f: T => PresenceBox[B]): PresenceBox[B]
+}
+/**
+ * A `Full` or `Failure` box (somewhat similar to `Try`, but can carry an error
+ * message without needing an exception, and a parameter as in `ParamFailure`).
+ */
+sealed trait TryBox[+T] extends Box[T] {
+  def or[B >: T](alternative: => Full[B]): Full[B]
+  def or[B >: T](alternative: => PresenceBox[B])(implicit a: DummyImplicit): PresenceBox[B] // *
+  def or[B >: T](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): TryBox[B]
+  def or[B >: T, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): ParamTryBox[B, E]
+
+  def flatMap[B](f: T => TryBox[B]): TryBox[B]
+}
+/**
+ * A `Full` or `ParamFailure` box; `T` is the type in the box, `E` is the type
+ * of the `ParamFailure`'s param.
+ */
+sealed trait ParamTryBox[+T, +E] extends Box[T] with TryBox[T] {
+  def or[B >: T](alternative: => Full[B]): Full[B]
+  def or[B >: T](alternative: => PresenceBox[B])(implicit a: DummyImplicit): PresenceBox[B] // *
+  def or[B >: T](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): TryBox[B]
+  def or[B >: T, E2](alternative: => ParamTryBox[B, E2])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): ParamTryBox[B, E2]
+
+  def flatMap[B, E2 >: E](f: T => ParamTryBox[B, E2]): ParamTryBox[B, E2]
+}
+
+/**
  * `Full` is a `[[Box]]` that contains a value.
  */
-final case class Full[+A](value: A) extends Box[A] {
+final case class Full[+A](value: A) extends Box[A]
+    with PresenceBox[A]
+    with TryBox[A]
+    with ParamTryBox[A, Nothing] {
   def isEmpty: Boolean = false
 
   def openOrThrowException(justification: => String): A = value
 
   override def openOr[B >: A](default: => B): B = value
 
-  override def or[B >: A](alternative: => Box[B]): Box[B] = this
+  override def or[B >: A](alternative: => Full[B]): Full[A] = this
+  override def or[B >: A](alternative: => PresenceBox[B])(implicit a: DummyImplicit): Full[A] = this
+  override def or[B >: A](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): Full[A] = this
+  override def or[B >: A, T](alternative: => ParamTryBox[B, T])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): Full[A] = this
 
   override def exists(func: A => Boolean): Boolean = func(value)
 
   override def forall(func: A => Boolean): Boolean = func(value)
 
-  override def filter(p: A => Boolean): Box[A] = if (p(value)) this else Empty
+  override def filter(p: A => Boolean): PresenceBox[A] = if (p(value)) this else Empty
 
   override def foreach[U](f: A => U): Unit = f(value)
 
-  override def map[B](f: A => B): Box[B] = Full(f(value))
+  override def map[B](f: A => B): Full[B] = Full(f(value))
 
   override def flatMap[B](f: A => Box[B]): Box[B] = f(value)
+  override def flatMap[B](f: A => PresenceBox[B]): PresenceBox[B] = f(value)
+  override def flatMap[B](f: A => TryBox[B]): TryBox[B] = f(value)
+  override def flatMap[B, E2 >: Nothing](f: A => ParamTryBox[B, E2]): ParamTryBox[B, E2] = f(value)
 
   override def elements: Iterator[A] = Iterator(value)
 
@@ -824,13 +869,16 @@ final case class Full[+A](value: A) extends Box[A] {
 
   override def fullXform[T](v: T)(f: T => A => T): T = f(v)(value)
 
+  override def ?~(msg: =>String): TryBox[A] = this
+  override def ?~!(msg: =>String): TryBox[A] = this
+  override def ~>[T](errorCode: =>T): ParamTryBox[A, T] = this
 
   override def toRight[B](left: => B): Either[B, A] = Right(value)
 
   override def toLeft[B](right: => B): Either[A, B] = Left(value)
 
 
-  override def isA[B](clsOrg: Class[B]): Box[B] = value match {
+  override def isA[B](clsOrg: Class[B]): PresenceBox[B] = value match {
     case value: AnyRef =>
       val cls = Box.primitiveMap.get(clsOrg) match {
         case Some(c) => c
@@ -842,7 +890,11 @@ final case class Full[+A](value: A) extends Box[A] {
     case _ => Empty
   }
 
-  override def asA[B](implicit m: Manifest[B]): Box[B] = this.isA(m.runtimeClass).asInstanceOf[Box[B]]
+  override def asA[B](implicit m: Manifest[B]): PresenceBox[B] = {
+    this
+      .isA(m.runtimeClass) // convert
+      .asInstanceOf[PresenceBox[B]] // restore type
+  }
 
   override def ===[B >: A](to: B): Boolean = value == to
 
@@ -853,7 +905,16 @@ final case class Full[+A](value: A) extends Box[A] {
  * Singleton object representing a completely empty `Box` with no value or
  * failure information.
  */
-case object Empty extends EmptyBox
+case object Empty extends EmptyBox with PresenceBox[Nothing] {
+  override def filter(p: Nothing => Boolean): PresenceBox[Nothing] = this
+
+  override def or[B >: Nothing](alternative: => Full[B]): Full[B] = alternative
+  override def or[B >: Nothing](alternative: => PresenceBox[B])(implicit a: DummyImplicit): PresenceBox[B] = alternative
+  override def or[B >: Nothing](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): TryBox[B] = alternative
+  override def or[B >: Nothing, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): ParamTryBox[B, E] = alternative
+
+  override def flatMap[B](f: Nothing => PresenceBox[B]): PresenceBox[B] = this
+}
 
 /**
  * An `EmptyBox` is a `Box` containing no value. It can sometimes carry
@@ -893,7 +954,7 @@ object Failure {
  * exception and/or a chain of previous `Failure`s that may have caused this
  * one.
  */
-sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Failure]) extends EmptyBox {
+sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Failure]) extends EmptyBox with TryBox[Nothing] {
   type A = Nothing
 
   override def openOrThrowException(justification: => String) =
@@ -902,11 +963,17 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
       override def getCause() = exception openOr null
     }
 
-  override def map[B](f: A => B): Box[B] = this
+  override def or[B >: Nothing](alternative: => Full[B]): Full[B] = alternative
+  override def or[B >: Nothing](alternative: => PresenceBox[B])(implicit a: DummyImplicit): PresenceBox[B] = alternative
+  override def or[B >: Nothing](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): TryBox[B] = alternative
+  override def or[B >: Nothing, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): ParamTryBox[B, E] = alternative
+
+  override def map[B](f: A => B): Failure = this
 
   override def flatMap[B](f: A => Box[B]): Box[B] = this
+  override def flatMap[B](f: A => TryBox[B]): TryBox[B] = this
 
-  override def isA[B](cls: Class[B]): Box[B] = this
+  override def isA[B](cls: Class[B]): Failure = this
 
   override def asA[B](implicit m: Manifest[B]): Box[B] = this
 
@@ -1029,25 +1096,29 @@ object ParamFailure {
  */
 final class ParamFailure[T](override val msg: String,
 		            override val exception: Box[Throwable],
-		            override val chain: Box[Failure], val param: T) extends
-  Failure(msg, exception, chain) with Serializable{
-    override def toString(): String = "ParamFailure("+msg+", "+exception+
-    ", "+chain+", "+param+")"
+		            override val chain: Box[Failure], val param: T)
+      extends Failure(msg, exception, chain)
+      with ParamTryBox[Nothing, T]
+      with Serializable {
+  override def toString(): String = "ParamFailure("+msg+", "+exception+
+  ", "+chain+", "+param+")"
 
-    override def equals(that: Any): Boolean = that match {
-      case ParamFailure(m, e, c, p) =>
-        m == msg && e == exception && c == chain && p == param
-      case _ => false
-    }
-
-    override def hashCode(): Int = super.hashCode() + (param match {
-      case null => 0
-      case x => x.hashCode()
-    })
-
-    override def ~>[T](errorCode: => T): ParamFailure[T] =
-      ParamFailure(msg, exception, Full(this), errorCode)
+  override def equals(that: Any): Boolean = that match {
+    case ParamFailure(m, e, c, p) =>
+      m == msg && e == exception && c == chain && p == param
+    case _ => false
   }
+
+  override def hashCode(): Int = super.hashCode() + (param match {
+    case null => 0
+    case x => x.hashCode()
+  })
+
+  override def ~>[T](errorCode: => T): ParamFailure[T] =
+    ParamFailure(msg, exception, Full(this), errorCode)
+
+  override def flatMap[B, E2 >: T](f: A => ParamTryBox[B, E2]): ParamTryBox[B, T] = this
+}
 
 /**
  * A trait that a class can mix into itself to indicate that it can convert
