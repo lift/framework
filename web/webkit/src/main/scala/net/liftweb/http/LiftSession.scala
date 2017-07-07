@@ -364,31 +364,10 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   private val fullPageLoad = new BooleanThreadGlobal
 
-  private [this] val ajaxFnsKey = "net.liftweb.http.LiftSession.ajaxFns"
-  // Returns a view of the functions stored in the http session
-  private def viewHttpSessionFns:java.util.Map[String, S.AFuncHolder] = {
-    val backingMap = (for {
-      hs <- httpSession if LiftRules.lockedPutAjaxFnsInContainerSession
-      map <- Box.asA[ConcurrentHashMap[String, S.AFuncHolder]](hs.attribute(ajaxFnsKey))
-    } yield {
-      map
-    }) openOr (new java.util.HashMap[String, S.AFuncHolder])
+  private [this] val ajaxFns: ContainerMap[String, S.AFuncHolder] =
+    new ContainerMap[String, S.AFuncHolder]("net.liftweb.http.LiftSession.ajaxFns", httpSession)
 
-    java.util.Collections.unmodifiableMap(backingMap)
-  }
-
-  // Mutates the http session function map with the given argument and updates the container
-  private def updateHttpSessionFns(f:ConcurrentHashMap[String, S.AFuncHolder]=>Unit):Unit =
-    for {
-      hs <- httpSession if LiftRules.lockedPutAjaxFnsInContainerSession
-    } {
-      val map = Box.asA[ConcurrentHashMap[String, S.AFuncHolder]](hs.attribute(ajaxFnsKey)).openOr(new ConcurrentHashMap[String, S.AFuncHolder])
-      f(map)
-      // Now that the map has been mutated, must write to the session so the container can replicate
-      hs.setAttribute(ajaxFnsKey, map)
-    }
-
-  private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = new ConcurrentHashMap(viewHttpSessionFns)
+  private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = new ConcurrentHashMap(ajaxFns.snapshot)
 
   private val functionOwnerRemovalListeners = LiftSession.onFunctionOwnersRemoved
 
@@ -608,7 +587,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     copyFunctions(funcs, nmessageCallback)
 
     if(LiftRules.lockedPutAjaxFnsInContainerSession)
-      updateHttpSessionFns(copyFunctions(funcs, _))
+      ajaxFns !! (copyFunctions(funcs, _))
   }
 
   private def copyFunctions(from: Map[String, S.AFuncHolder], to:java.util.Map[String, S.AFuncHolder]):Unit =
@@ -624,7 +603,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    */
   def removeFunction(name: String) = {
     nmessageCallback.remove(name)
-    updateHttpSessionFns(_.remove(name))
+    ajaxFns !! (_.remove(name))
   }
 
   /**
@@ -910,7 +889,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     }))
 
     // Since some of the functions have been mutated, force a write of the fn map to the container.
-    if(numUpdated > 0) updateHttpSessionFns(_ => ())
+    if(numUpdated > 0) ajaxFns !! (_ => ())
 
     numUpdated
   }
@@ -3106,3 +3085,31 @@ trait RoundTripHandlerFunc {
 final case class StreamRoundTrip[T](name: String, func: T => Stream[Any])(implicit val manifest: Manifest[T]) extends RoundTripInfo
 final case class SimpleRoundTrip[T](name: String, func: T => Any)(implicit val manifest: Manifest[T]) extends RoundTripInfo
 final case class HandledRoundTrip[T](name: String, func: (T, RoundTripHandlerFunc) => Unit)(implicit val manifest: Manifest[T]) extends RoundTripInfo
+
+class ContainerMap[K : Manifest, V : Manifest](val sessionKey: String, val httpSession: Box[HTTPSession]) {
+  import java.util
+
+  private[this] val map: util.Map[K, V] = (for {
+    session <- httpSession if LiftRules.lockedPutAjaxFnsInContainerSession
+    m <- Box.asA[ConcurrentHashMap[K, V]](session.attribute(sessionKey))
+  } yield {
+    m
+  }).openOr {
+    val m = new ConcurrentHashMap[K, V]()
+    if(LiftRules.lockedPutAjaxFnsInContainerSession)
+      httpSession.foreach(_.setAttribute(sessionKey, m))
+    m
+  }
+
+  def snapshot: util.Map[K, V] = util.Collections.unmodifiableMap(map)
+
+  def !![R](f: util.Map[K, V] => R): R = mutate(f)
+  def mutate[R](f: util.Map[K, V] => R): R = {
+    val rtrn = f(map)
+    if(LiftRules.lockedPutAjaxFnsInContainerSession)
+      httpSession.foreach(_.setAttribute(sessionKey, map))
+    rtrn
+  }
+
+  def get(k: K): V = map.get(k)
+}
