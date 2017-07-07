@@ -384,7 +384,7 @@ object RequestVar {
  * @param dflt - the default value to be returned if none was set prior to
  * requesting a value to be returned from the container
  */
-abstract class RequestVar[T](dflt: => T) extends AnyVar[T, RequestVar[T]](dflt) with HasLogUnreadVal {
+abstract class RequestVar[T](dflt: => T) extends AnyVar[T, RequestVar[T]](dflt) with HasLogUnreadVal with Serializable {
   type CleanUpParam = Box[LiftSession]
 
   /**

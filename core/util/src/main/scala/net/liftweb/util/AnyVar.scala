@@ -159,7 +159,7 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
   /**
    * Keep track of whether we're currently setting the default value
    */
-  private val settingDefault = new ThreadGlobal[Boolean]
+  @transient private val settingDefault = new ThreadGlobal[Boolean]
 
   protected def settingDefault_? : Boolean = settingDefault.box openOr false
 
@@ -257,7 +257,7 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
     cuf ::= in
   }
 
-  private var cuf: List[CleanUpParam => Unit] = Nil
+  @transient private var cuf: List[CleanUpParam => Unit] = Nil
 
   private def _onShutdown(session: CleanUpParam): Unit = {
     cuf.foreach(f => tryo(f(session)))

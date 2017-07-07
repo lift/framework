@@ -69,7 +69,7 @@ object ValueHolder {
   def apply[T](in: T) = tToVHT(in)
 }
 
-trait PSettableValueHolder[T] extends PValueHolder[T] with SettableValueHolder
+trait PSettableValueHolder[T] extends PValueHolder[T] with SettableValueHolder with Serializable
 
 /**
  * Kinda like a JavaBean property.  It's something that can
