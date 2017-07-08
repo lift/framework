@@ -773,10 +773,14 @@ sealed abstract class Box[+A] extends Product with Serializable{
    * If the partial function is defined at the current Box's value, apply the
    * partial function.
    */
-  final def collect[B](pf: PartialFunction[A, B]): Box[B] = {
-    flatMap(value =>
-    if (pf.isDefinedAt(value)) Full(pf(value))
-    else Empty)
+  def collect[B](pf: PartialFunction[A, B]): Box[B] = {
+    flatMap { value =>
+      if (pf.isDefinedAt(value)) {
+        Full(pf(value))
+      } else {
+        Empty
+      }
+    }
   }
 
   /**
@@ -785,7 +789,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
    * Although this function is different for true collections, because `Box` is
    * really a collection of 1, the two functions are identical.
    */
-  final def collectFirst[B](pf: PartialFunction[A, B]): Box[B] = {
+  def collectFirst[B](pf: PartialFunction[A, B]): Box[B] = {
     collect(pf)
   }
 }
@@ -793,11 +797,13 @@ sealed abstract class Box[+A] extends Product with Serializable{
 /**
  * A `Full` or `Empty` box (stands in trivially for `Option`).
  */
-sealed trait PresenceBox[+T] extends Box[T] {
-  def or[B >: T](alternative: => Full[B]): Full[B]
-  def or[B >: T](alternative: => PresenceBox[B])(implicit a: DummyImplicit): PresenceBox[B]
-  def or[B >: T](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): TryBox[B]
-  def or[B >: T, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): ParamTryBox[B, E]
+sealed trait PresenceBox[+A] extends Box[A] {
+  def or[B >: A](alternative: => Full[B]): Full[B]
+  def or[B >: A](alternative: => PresenceBox[B])(implicit a: DummyImplicit): PresenceBox[B]
+  def or[B >: A](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): TryBox[B]
+  def or[B >: A, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): ParamTryBox[B, E]
+
+  override def collect[B](pf: PartialFunction[A, B]): PresenceBox[B] = ???
 
   def flatMap[B](f: T => PresenceBox[B]): PresenceBox[B]
 }
@@ -859,6 +865,21 @@ final case class Full[+A](value: A) extends Box[A]
   override def flatMap[B](f: A => TryBox[B]): TryBox[B] = f(value)
   override def flatMap[B, E2 >: Nothing](f: A => ParamTryBox[B, E2]): ParamTryBox[B, E2] = f(value)
 
+  // Redefine these two with the more specific type information we have at this
+  // point.
+  override def collect[B](pf: PartialFunction[A, B]): PresenceBox[B] = {
+    flatMap { value =>
+      if (pf.isDefinedAt(value)) {
+        Full(pf(value))
+      } else {
+        Empty
+      }
+    }
+  }
+  override def collectFirst[B](pf: PartialFunction[A, B]): PresenceBox[B] = {
+    collect(pf)
+  }
+
   override def elements: Iterator[A] = Iterator(value)
 
   override def toList: List[A] = List(value)
@@ -914,6 +935,8 @@ case object Empty extends EmptyBox with PresenceBox[Nothing] {
   override def or[B >: Nothing, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): ParamTryBox[B, E] = alternative
 
   override def flatMap[B](f: Nothing => PresenceBox[B]): PresenceBox[B] = this
+
+  override def collect[B](pf: PartialFunction[Nothing, B]): PresenceBox[B] = Empty
 }
 
 /**
