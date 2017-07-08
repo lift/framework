@@ -667,12 +667,12 @@ sealed abstract class Box[+A] extends Product with Serializable{
    *
    * @return This box.
    */
-  def pass(f: Box[A] => Unit): Box[A] = {f(this) ; this}
+  def pass(f: Box[A] => Unit): self.type = {f(this) ; this}
 
   /**
    * Alias for `[[pass]]`.
    */
-  def $(f: Box[A] => Unit): Box[A] = pass(f)
+  def $(f: Box[A] => Unit): self.type = pass(f)
 
   /**
    * For `Full` and `Empty`, this has the expected behavior. Equality in terms
