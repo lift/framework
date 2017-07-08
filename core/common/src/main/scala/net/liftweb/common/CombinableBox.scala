@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.liftweb 
+package net.liftweb
 package common
 
 import scala.language.implicitConversions
@@ -22,6 +22,45 @@ import scala.language.implicitConversions
 /**
  * Via an `[[HLists.HList HList]]` containing a collection of `[[Box]]`, either generates an
  * `HList` of the things (unboxed) or a `List[Failure]`.
+ *
+ * Usage of this is in two parts: first, you import `CombinableBox._`; then, you
+ * can use the `:&:` operator to build up your `HList`. For example:
+ *
+ * {{{
+ * scala> import net.liftweb.common._; import CombinableBox._
+ * scala> Full("test") :&: Full("second test")
+ * res0: net.liftweb.common.CombinableBox.Result[String :+: String :+: net.liftweb.common.HLists.HNil] = Right(test :+: second test :+: HNil)
+ * scala> Full("test") :&: Failure("boom")
+ * res1: net.liftweb.common.CombinableBox.Result[String :+: Nothing :+: net.liftweb.common.HLists.HNil] = Left(List(Failure(boom,Empty,Empty)))
+ * scala> Failure("boom") :&: Failure("boom boom")
+ * res2: net.liftweb.common.CombinableBox.Result[Nothing :+: Nothing :+: net.liftweb.common.HLists.HNil] = Left(List(Failure(boom,Empty,Empty), Failure(boom boom,Empty,Empty)))
+ * }}}
+ *
+ * `CombinableBox` also contains some implicits to help deal with the outcome.
+ * By default, results are represented by an `Either[List[Failure], <HList type>]`.
+ * Instead, we can convert this back to a `Box` representation:
+ *
+ * {{{
+ * scala> import net.liftweb.common.HLists._
+ * scala> type ExpectedHList = String :+: String :+: HNil
+ * defined type alias ExpectedHList
+ * scala> val combinedFulls: Box[ExpectedHList] = Full("test") :&: Full("second test")
+ * combinedFulls: net.liftweb.common.Box[ExpectedHList] = Full(test :+: second test :+: HNil)
+ * scala> val combinedFailure: Box[ExpectedHList] = Full("test") :&: (Failure("boom"): Box[String])
+ * combinedFailure: net.liftweb.common.Box[ExpectedHList] = Failure(boom,Empty,Empty)
+ * scala> val combinedFailures: Box[ExpectedHList] = (Failure("boom"): Box[String]) :&: (Failure("boom boom"): Box[String])
+ * combinedFailures: net.liftweb.common.Box[ExpectedHList] = ParamFailure(Multiple Failures, Empty, Empty, FailureList(List(Failure(boom,Empty,Empty), Failure(boom boom,Empty,Empty))))
+ * }}}
+ *
+ * Note that in case multiple failures are involved, we generate a `ParamFailure`
+ * whose parameter is a `FailureList` object, which contains the failures found
+ * along the way.
+ *
+ * In many cases, it is more straightforward to use `ListOfBoxes` to deal with a
+ * list of `Box` that needs to be a `Box` of `List` instead. It works in a very
+ * similar way, but works on regular lists instead of ``HList``s. `CombinableBox`
+ * is best reserved for when you want to preserve heterogeneous types out of a
+ * set of boxes.
  */
 object CombinableBox {
   import HLists._
@@ -53,7 +92,7 @@ object CombinableBox {
                                      FailureList(f))
     case Right(x) => Full(x)
   }
- 
+
   /**
    * If the `[[Failure]]` is going to be condensed, a `FailureList` is generated
    * to allow type-safe pattern matches without worrying about erasure.
@@ -73,6 +112,6 @@ object CombinableBox {
         case (Full(success),     Right(successes)) => Right(success :+: successes)
       }
   }
-  
+
 }
 
