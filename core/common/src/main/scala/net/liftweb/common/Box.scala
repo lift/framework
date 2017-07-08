@@ -234,8 +234,8 @@ sealed trait BoxTrait {
    * Create a `Full` box containing the specified value if `in` is an instance of
    * the specified class `clz` and `Empty` otherwise.
    *
-   * This is basically a Java-friendly version of `[[asA]]`, which you should
-   * prefer when using Scala.
+   * This is basically a Java-friendly version of `[[asA]]`; you should prefer
+   * `asA` when using Scala.
    *
    * For example:
    * {{{
@@ -291,14 +291,15 @@ final class DoNotCallThisMethod
  * (containing a single non-null value) or `[[EmptyBox]]`. An `EmptyBox`,
  * or empty, can be the `[[Empty]]` singleton, `[[Failure]]` or
  * `[[ParamFailure]]`. `Failure` and `ParamFailure` contain information about
- * why the `Box` is empty including exception information, possibly chained
- * `Failure`s and a `String` message.
+ * why the `Box` is empty including possible exception information, possibly
+ * chained `Failure`s and a `String` message.
  *
  * This serves a similar purpose to the `[[scala.Option Option]]` class from
- * Scala standard library but adds several features:
+ * Scala standard library, combined with the `[[scala.Try Try]]` class from the
+ * same library, and adds several features to boot:
  *  - You can transform it to a `Failure` object if it is `Empty` (with the
  *    `[[?~]]` or `[[failMsg]]` method).
- *  - You can chain failure messages on `Failure`s (with the `?~!` or
+ *  - You can chain failure messages on existing `Failure`s (with the `?~!` or
  *    `[[compoundFailMsg]]` method).
  *  - You can "run" a function on a `Box`, with a default to return if the box
  *    is `Empty`:
@@ -324,6 +325,12 @@ final class DoNotCallThisMethod
  *      }
  *    ) // doSomething gets a Box[Int] as well
  *    }}}
+ *
+ * You can also choose the first `Full` box of a set by using `or` (as with the
+ * `Option` equivalent, `orElse`) and provide an alternative to a `Box`'s value
+ * using `openOr` (as with the `Option` equivalent, `getOrElse`). Boxes can be
+ * ``filter``ed, ``map``ed, ``flatMap``ed, and converted to zero-or-one element
+ * ``Iterable``s or ``List``s as needed.
  *
  * === Exceptions and Empty Box Handling ===
  *
@@ -384,8 +391,29 @@ final class DoNotCallThisMethod
  *    loggedInUser must_== Full(mockUser)
  *    (loggedInUser === mockUser) must beTrue
  *    }}}
+ *
+ * Additionally, when interacting with external APIs, you can look at using the
+ * `lift-util` helper `tryo`, which executes a function and catches exceptions,
+ * converting thrown exceptions into `Failure` boxes.
+ *
+ * === `Box` Subtypes and Clear Typing ===
+ *
+ * In addition to the standard hierarchy above, `Box` lets you declare your
+ * type expectations in a little narrower fashion. If you're expecting to only
+ * deal with `Full[T]` or `Failure`, you can declare that you expect to return or
+ * want to receive a `TryBox[T]`. The compiler will then enforce that an `Empty`
+ * cannot be provided. If you're expecting only `Full[T]` or `Empty` instead,
+ * you can declare that you expect to return or want to receive a `PresenceBox[T]`.
+ * Here again, the compiler will enforce a `Failure` cannot be provided. Finally,
+ * if you're expecting specifically a `Full[T]` or a `ParamFailure[E]`, then you
+ * can declare that you expect to return or want to receive a `ParamTryBox[T, E]`.
+ * Here, the compiler will disallow both `Empty` and a bare `Failure`.
+ *
+ * The methods on `Box` itself generally return the correct subtypes, so that
+ * you can rely on transformations like `map` and `flatMap` to preserve the
+ * closest match to the expected types that are being sent through.
  */
-sealed abstract class Box[+A] extends Product with Serializable{
+sealed abstract class Box[+A] extends Product with Serializable {
   self =>
   /**
    * Returns `true` if this `Box` contains no value (i.e., it is `Empty` or
@@ -458,12 +486,15 @@ sealed abstract class Box[+A] extends Product with Serializable{
    */
   def flatMap[B](f: A => Box[B]): Box[B] = Empty
 
+  /**
+   * Flatten this `Box[Box[T]]` to be a `Box[T]`. The compiler will prevent
+   * calling this function if this is a `Box[T]` instead of a `Box[Box[T]]`.
+   */
   def flatten[B](implicit ev: A <:< Box[B]): Box[B] = this match {
     case Full(internal) => ev(internal)
     case f: Failure => f
     case Empty => Empty
   }
-
 
   /**
    * If this `Box` contains a value and it satisfies the specified `predicate`,
