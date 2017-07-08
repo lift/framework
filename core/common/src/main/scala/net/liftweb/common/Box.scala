@@ -82,7 +82,7 @@ object Box extends BoxTrait with Tryo {
      * @param failureErrorMessage The string that should be placed in the message for the Failure.
      * @return A `Full[List[T]]` if no `Failure`s were present. `ParamFailure[List[Box[T]]]` otherwise.
     **/
-    def toSingleBox(failureErrorMessage: String): Box[List[T]] = {
+    def toSingleBox(failureErrorMessage: String): ParamTryBox[List[T], List[Box[T]]] = {
       if (theListOfBoxes.exists(_.isInstanceOf[Failure])) {
         val failureChain =
           theListOfBoxes.collect {
@@ -167,8 +167,9 @@ sealed trait BoxTrait {
    * @return A `Full` containing the transformed value if
    *         `pf.isDefinedAt(value)` and `Empty` otherwise.
    */
-  def apply[InType, OutType](pf: PartialFunction[InType, OutType])(value: InType): Box[OutType] =
-  if (pf.isDefinedAt(value)) Full(pf(value)) else Empty
+  def apply[InType, OutType](pf: PartialFunction[InType, OutType])(value: InType): PresenceBox[OutType] = {
+    Full(value).collect(pf)
+  }
 
   /**
    * Apply the specified `PartialFunction` to the specified `value` and return
@@ -180,8 +181,9 @@ sealed trait BoxTrait {
    * @return A `Full` containing the transformed value if
    *         `pf.isDefinedAt(value)` and `Empty` otherwise.
    */
-  def apply[InType, OutType](value: InType)(pf: PartialFunction[InType, OutType]): Box[OutType] =
-  if (pf.isDefinedAt(value)) Full(pf(value)) else Empty
+  def apply[InType, OutType](value: InType)(pf: PartialFunction[InType, OutType]): PresenceBox[OutType] = {
+    Full(value).collect(pf)
+  }
 
   /**
    * This implicit transformation allows one to use a `Box` as an `Iterable` of
@@ -244,7 +246,7 @@ sealed trait BoxTrait {
    * res1: net.liftweb.common.Box[Int] = Full(5)
    * }}}
    */
-  def isA[A, B](in: A, clz: Class[B]): Box[B] = {
+  def isA[A, B](in: A, clz: Class[B]): PresenceBox[B] = {
     (Box !! in).isA(clz)
   }
 
@@ -271,7 +273,7 @@ sealed trait BoxTrait {
    * res1: net.liftweb.common.Box[Int] = Full(5)
    * }}}
    */
-  def asA[B](in: T forSome { type T })(implicit m: Manifest[B]): Box[B] = {
+  def asA[B](in: T forSome { type T })(implicit m: Manifest[B]): PresenceBox[B] = {
     (Box !! in).asA[B]
   }
 }
