@@ -112,6 +112,6 @@ class JsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: Jso
   }
 }
 
-@deprecated("Use the more consistently named 'JsonObjectListField' instead", "3.2")
+@deprecated("Use the more consistently named 'JsonObjectListField' instead. This class will be removed in Lift 4.", "3.2")
 class MongoJsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
 (rec: OwnerType, valueMeta: JsonObjectMeta[JObjectType])(implicit mf: Manifest[JObjectType]) extends JsonObjectListField(rec, valueMeta)
