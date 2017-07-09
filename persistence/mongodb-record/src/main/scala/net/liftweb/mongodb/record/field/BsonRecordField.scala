@@ -67,8 +67,8 @@ abstract class BsonRecordTypedField[OwnerType <: BsonRecord[OwnerType], SubRecor
 }
 
 class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
-(rec: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
-  extends BsonRecordTypedField(rec, valueMeta) with MandatoryTypedField[SubRecordType] {
+(@deprecatedName('rec, "Lift 3.2") owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
+  extends BsonRecordTypedField(owner, valueMeta) with MandatoryTypedField[SubRecordType] {
 
   def this(rec: OwnerType, valueMeta: BsonMetaRecord[SubRecordType], value: SubRecordType)(implicit subRecordType: Manifest[SubRecordType]) = {
     this(rec, value.meta)
@@ -79,16 +79,16 @@ class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonR
 }
 
 class OptionalBsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
-(rec: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
-  extends BsonRecordTypedField(rec, valueMeta) with OptionalTypedField[SubRecordType]
+(owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
+  extends BsonRecordTypedField(owner, valueMeta) with OptionalTypedField[SubRecordType]
 
 
 /*
  * List of BsonRecords
  */
 class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
-  (rec: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit mf: Manifest[SubRecordType])
-  extends MongoListField[OwnerType, SubRecordType](rec: OwnerType) {
+  (@deprecatedName('rec, "Lift 3.2") owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit mf: Manifest[SubRecordType])
+  extends MongoListField[OwnerType, SubRecordType](owner: OwnerType) {
 
   import scala.collection.JavaConverters._
 
@@ -117,7 +117,8 @@ class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: B
   }
 
   override def setFromDocumentList(list: java.util.List[Document]): Box[List[SubRecordType]] = {
-    setBox(Full(list.asScala.map { valueMeta.fromDocument }.toList))
+    setBox(Full(
+      list.asScala.toList.map { valueMeta.fromDocument }
+    ))
   }
-
 }
