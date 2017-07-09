@@ -53,8 +53,11 @@ trait ObjectIdTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[
   }
 
   def setFromString(in: String): Box[ObjectId] = {
-    if (ObjectId.isValid(in)) setBox(Full(new ObjectId(in)))
-    else setBox(Failure(s"Invalid ObjectId string: $in"))
+    if (ObjectId.isValid(in)) {
+      setBox (Full(new ObjectId(in)))
+    } else {
+      setBox(Failure(s"Invalid ObjectId string: $in"))
+    }
   }
 
   private def elem =
@@ -102,4 +105,3 @@ class OptionalObjectIdField[OwnerType <: BsonRecord[OwnerType]](override val own
   }
 
 }
-
