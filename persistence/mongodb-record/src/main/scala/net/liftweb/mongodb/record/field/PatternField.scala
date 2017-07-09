@@ -64,7 +64,7 @@ abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](override va
   def asJValue: JValue = valueBox.map(v => JsonRegex(v)) openOr (JNothing: JValue)
 }
 
-class PatternField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec, "Lift 3.2") owner: OwnerType) extends PatternTypedField[OwnerType](owner) with MandatoryTypedField[Pattern] {
+class PatternField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) owner: OwnerType) extends PatternTypedField[OwnerType](owner) with MandatoryTypedField[Pattern] {
   def this(rec: OwnerType, value: Pattern) = {
     this(rec)
     setBox(Full(value))
