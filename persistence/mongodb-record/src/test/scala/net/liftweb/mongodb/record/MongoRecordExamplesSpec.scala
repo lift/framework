@@ -98,7 +98,7 @@ package mongotestrecords {
   class ListDoc private () extends MongoRecord[ListDoc] with ObjectIdPk[ListDoc] {
     def meta = ListDoc
 
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
 
     // standard list types
     object name extends StringField(this, 10)
@@ -136,13 +136,10 @@ package mongotestrecords {
 
       override def setFromDBObject(dbo: DBObject): Box[List[Map[String, String]]] = {
         val lst: List[Map[String, String]] =
-          dbo.keySet.toList.map(k => {
-            dbo.get(k.toString) match {
-              case bdbo: BasicDBObject if (bdbo.containsField("name") && bdbo.containsField("type")) =>
-                Map("name"-> bdbo.getString("name"), "type" -> bdbo.getString("type"))
-              case _ => null
-            }
-          }).filter(_ != null)
+          dbo.keySet.asScala.toList.map(dbo.get).collect {
+            case bdbo: BasicDBObject if bdbo.containsField("name") && bdbo.containsField("type") =>
+              Map("name"-> bdbo.getString("name"), "type" -> bdbo.getString("type"))
+          }
         Full(set(lst))
       }
     }
