@@ -17,8 +17,10 @@
 package net.liftweb
 package http
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.xml.NodeSeq
-import net.liftweb.common.{Full, Empty}
+import net.liftweb.common.{Full, Empty, Failure}
+import net.liftweb.util.Helpers.tryo
 import org.specs2.specification.BeforeEach
 import org.specs2.mutable.Specification
 
@@ -87,6 +89,22 @@ object LiftSessionSpec extends Specification with BeforeEach {
 
         // Assert that the message was seen twice
         receivedMessages mustEqual Vector(1, 1)
+      }
+    }
+  }
+
+  "LiftSession when building deferred functions" should {
+
+    "not fail when the underlying container request is null" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      def stubFunction: () => Int = () => 3
+
+      S.init(Full(Req.nil), session) {
+
+        val attempt = tryo(session.buildDeferredFunction(stubFunction))
+
+        attempt.toOption must beSome
       }
     }
   }

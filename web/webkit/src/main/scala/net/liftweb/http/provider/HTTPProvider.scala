@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package provider 
+package net.liftweb
+package http
+package provider
 
 import net.liftweb.common._
 import net.liftweb.util._
@@ -87,12 +87,29 @@ trait HTTPProvider {
         preBoot
         b.boot
       } catch {
+        // The UnavailableException is the idiomatic way to tell a Java application container that
+        // the boot process has gone horribly, horribly wrong. That _must_ bubble to the application
+        // container that is invoking the app. See https://github.com/lift/framework/issues/1843
+        case unavailableException: javax.servlet.UnavailableException =>
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
+          logger.error("********** Failed to Boot! An UnavailableException was thrown and all futher boot activities are aborted", unavailableException);
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
+          logger.error("------------------------------------------------------------------")
+
+          throw unavailableException
+
         case e: Exception =>
           logger.error("------------------------------------------------------------------")
           logger.error("------------------------------------------------------------------")
           logger.error("------------------------------------------------------------------")
           logger.error("------------------------------------------------------------------")
-            logger.error("********** Failed to Boot! Your application may not run properly", e);
+          logger.error("********** Failed to Boot! Your application may not run properly", e);
           logger.error("------------------------------------------------------------------")
           logger.error("------------------------------------------------------------------")
           logger.error("------------------------------------------------------------------")
