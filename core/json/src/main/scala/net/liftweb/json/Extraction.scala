@@ -17,7 +17,7 @@
 package net.liftweb
 package json
 
-import java.lang.reflect.{Constructor => JConstructor, Type}
+import java.lang.reflect.{Constructor => JConstructor, Type, InvocationTargetException}
 import java.lang.{Integer => JavaInteger, Long => JavaLong, Short => JavaShort, Byte => JavaByte, Boolean => JavaBoolean, Double => JavaDouble, Float => JavaFloat}
 import java.util.Date
 import java.sql.Timestamp
@@ -265,11 +265,20 @@ object Extraction {
           val instance = jconstructor.newInstance(args.map(_.asInstanceOf[AnyRef]).toArray: _*)
           setFields(instance.asInstanceOf[AnyRef], json, jconstructor)
         } catch {
-          case e @ (_:IllegalArgumentException | _:InstantiationException) =>
-            fail("Parsed JSON values do not match with class constructor\nargs=" +
-                 args.mkString(",") + "\narg types=" + args.map(a => if (a != null)
-                   a.asInstanceOf[AnyRef].getClass.getName else "null").mkString(",") +
-                 "\nconstructor=" + jconstructor)
+          case exception: Exception =>
+            exception match {
+              case matchedException @ (_:IllegalArgumentException | _:InstantiationException) =>
+                fail("Parsed JSON values do not match with class constructor\nargs=" +
+                     args.mkString(",") + "\narg types=" + args.map(a => if (a != null)
+                       a.asInstanceOf[AnyRef].getClass.getName else "null").mkString(",") +
+                     "\nconstructor=" + jconstructor, matchedException)
+
+              case exceptionThrownInConstructor: InvocationTargetException =>
+                fail("An exception was thrown in the class constructor during extraction", exceptionThrownInConstructor)
+
+              case unmatchedException =>
+                throw unmatchedException
+            }
         }
       }
 

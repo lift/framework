@@ -2,8 +2,8 @@
 
 # Make sure to change the name of the launcher jar and the source when bumping sbt version
 # so that the existence test below fails and we download the new jar.
-SBT_LAUNCHER_PATH="project/sbt-launch-0.13.8.jar"
-SBT_LAUNCHER_SOURCE="https://dl.bintray.com/sbt/native-packages/sbt/0.13.8/sbt-0.13.8.tgz"
+SBT_LAUNCHER_PATH="project/sbt-launch-0.13.15.jar"
+SBT_LAUNCHER_SOURCE="https://dl.bintray.com/sbt/native-packages/sbt/0.13.15/sbt-0.13.15.tgz"
 
 # Download the sbt launcher on-the-fly if it's not already in the repository.
 if test ! -f $SBT_LAUNCHER_PATH; then
