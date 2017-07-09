@@ -808,6 +808,11 @@ sealed abstract class Box[+A] extends Product with Serializable{
   final def collectFirst[B](pf: PartialFunction[A, B]): Box[B] = {
     collect(pf)
   }
+
+  final def collectFailure[B](pf: PartialFunction[Failure, Failure]): Box[Failure] = this match {
+    case f: Failure if pf.isDefinedAt(f) => Full(pf(f))
+    case _ => Empty
+  }
 }
 
 /**
