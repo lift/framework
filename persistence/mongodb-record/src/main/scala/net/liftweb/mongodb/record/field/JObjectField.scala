@@ -72,7 +72,7 @@ trait JObjectTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[J
   override def asJValue: JValue = valueBox openOr (JNothing: JValue)
 }
 
-class JObjectField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType)
+class JObjectField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec, "Lift 3.2") override val owner: OwnerType)
   extends JObjectTypedField[OwnerType] with MandatoryTypedField[JObject] {
 
   def this(owner: OwnerType, value: JObject) = {
