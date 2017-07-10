@@ -164,6 +164,9 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
         Full("Hermione") collect { case "Albus" => "Dumbledore"} must beEmpty
       }
     }
+    "define a 'collectFailure' method returning Empty" in {
+      Full(1) collectFailure { case _ => Failure("error") } must_== Empty
+    }
     "define an 'elements' method returning an iterator containing its value" in {
       Full(1).elements.next must_== 1
     }
@@ -317,6 +320,9 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define a 'collect' method returning Empty" in {
       Empty collect { case _ => "Some Value" } must beEmpty
     }
+    "define a 'collectFailure' method returning Empty" in {
+      Empty collectFailure { case _ => Failure("error") } must_== Empty
+    }
     "define an 'elements' method returning an empty iterator" in {
       Empty.elements.hasNext must beFalse
     }
@@ -383,6 +389,15 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
     "define a 'collect' method returning itself" in {
       Failure("error", Empty, Empty) collect { case _ => "Some Value" } must_== Failure("error", Empty, Empty)
+    }
+    "define a 'collectFailure' method that takes a PartialFunction to transform this Failure into something else" in {
+      "If the partial-function is defined for this Failure, returns a full box containing the result of applying the partial function to it" in {
+        Failure("The Phantom Menace") collectFailure { case Failure("The Phantom Menace", Empty, Empty) => "Return Of The Jedi" } must_== Full("Return Of The Jedi")
+        Failure("The Phantom Menace") collectFailure { case Failure("The Phantom Menace", Empty, Empty) => Failure("Attack") } must_== Full(Failure("Attack"))
+      }
+      "If the partial-function is not defined for this Failure, returns Empty" in {
+        Failure("Attack Of The Clones") collectFailure { case Failure("The Phantom Menace", Empty, Empty) => "Return Of The Jedi" } must_== Empty
+      }
     }
     "return itself when asked for its status with the operator ?~" in {
       Failure("error", Empty, Empty) ?~ "nothing" must_== Failure("error", Empty, Empty)

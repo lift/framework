@@ -809,7 +809,27 @@ sealed abstract class Box[+A] extends Product with Serializable{
     collect(pf)
   }
 
-  final def collectFailure[B](pf: PartialFunction[Failure, Failure]): Box[Failure] = this match {
+  /**
+    * If this box is a `Failure` and if `pf` is defined for this `Failure` instance, returns
+    * a `Full` box containing the result of applying `pf` to this `Failure`, otherwise, returns
+    * `Empty`.
+    *
+    * @example {{{
+    *  // Returns Full("alternative") because the partial function covers the case.
+    *  Failure("error") collectFailure { case Failure("error", Empty, Empty) => "alternative" }
+    *
+    *  // Returns Empty because the partial function doesn't cover the case.
+    *  Failure("another-error") collectFailure { case Failure("error", Empty, Empty) => "alternative" }
+    *
+    *  // Returns Empty for an Empty box
+    *  Empty collectFailure { case _ => Failure("error") }
+    *
+    *  // Returns Empty for a Full box
+    *  Full(1) collectFailure { case _ => Failure("error") }
+    *
+    *  }}}
+    */
+  final def collectFailure[B](pf: PartialFunction[Failure, B]): Box[B] = this match {
     case f: Failure if pf.isDefinedAt(f) => Full(pf(f))
     case _ => Empty
   }
