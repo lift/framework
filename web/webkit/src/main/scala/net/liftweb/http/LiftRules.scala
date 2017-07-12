@@ -1743,6 +1743,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var putAjaxFnsInContainerSession = false
   private[http] lazy val lockedPutAjaxFnsInContainerSession = putAjaxFnsInContainerSession
 
+  @volatile var putSessionVarsInContainer = false
+  private[http] lazy val lockedPutSessionVarsInContainer = putSessionVarsInContainer
+
   /**
    * Compute the headers to be sent to the browser in addition to anything else
    * that's sent.
@@ -2294,7 +2297,7 @@ trait FormVendor {
   }
 
 
-  private object sessionForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
-  private object requestForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
+  private object sessionForms extends LegacySessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
+  private object requestForms extends LegacySessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
 }
 

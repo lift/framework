@@ -118,7 +118,7 @@ object Msgs extends DispatchSnippet {
       }
 
     // Compute the formatted set of messages for a given input
-    def computeMessageDiv (args : (List[(NodeSeq,Box[String])],NoticeType.Value,SessionVar[Box[AjaxMessageMeta]])) : NodeSeq = args match {
+    def computeMessageDiv (args : (List[(NodeSeq,Box[String])],NoticeType.Value,LegacySessionVar[Box[AjaxMessageMeta]])) : NodeSeq = args match {
       case (messages,noticeType,ajaxStorage) =>
 
       // get current settings
@@ -199,31 +199,31 @@ object Msgs extends DispatchSnippet {
 }
 
 /**
- * This SessionVar holds formatting data for notice notices
+ * This LegacySessionVar holds formatting data for notice notices
  * so that the AJAX and static notice renderers use the same formatting.
  */
-object MsgsNoticeMeta extends SessionVar[Box[AjaxMessageMeta]](Empty) {
+object MsgsNoticeMeta extends LegacySessionVar[Box[AjaxMessageMeta]](Empty) {
     override private[liftweb] def magicSessionVar_? = true
 }
 
 /**
- * This SessionVar holds formatting data for warning notices
+ * This LegacySessionVar holds formatting data for warning notices
  * so that the AJAX and static notice renderers use the same formatting.
  */
-object MsgsWarningMeta extends SessionVar[Box[AjaxMessageMeta]](Empty) {
+object MsgsWarningMeta extends LegacySessionVar[Box[AjaxMessageMeta]](Empty) {
     override private[liftweb] def magicSessionVar_? = true
 }
 
 /**
- * This SessionVar holds formatting data for error notices
+ * This LegacySessionVar holds formatting data for error notices
  * so that the AJAX and static notice renderers use the same formatting.
  */
-object MsgsErrorMeta extends SessionVar[Box[AjaxMessageMeta]](Empty) {
+object MsgsErrorMeta extends LegacySessionVar[Box[AjaxMessageMeta]](Empty) {
     override private[liftweb] def magicSessionVar_? = true
 }
 
 /**
- * This SessionVar records whether to show id-based messages in
+ * This LegacySessionVar records whether to show id-based messages in
  * addition to non-id messages.
  */
 object ShowAll extends RequestVar[Boolean](false) {

@@ -432,7 +432,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   private[http] object deferredSnippets extends RequestVar[HashMap[String, Box[NodeSeq]]](new HashMap)
 
   /** Messages saved for CometActors prior to their creation */
-  private object cometPreMessagesById extends SessionVar[Vector[(CometId, Any)]](Vector.empty)
+  private object cometPreMessagesById extends LegacySessionVar[Vector[(CometId, Any)]](Vector.empty)
   private object cometPreMessagesByType extends TransientRequestVar[Vector[(String, Any)]](Vector.empty)
 
 
@@ -509,7 +509,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   private case class RunnerHolder(name: String, func: S.AFuncHolder, owner: Box[String])
 
-  object legacyIeCompatibilityMode extends SessionVar[Boolean](LiftRules.calcIEMode()) {
+  object legacyIeCompatibilityMode extends LegacySessionVar[Boolean](LiftRules.calcIEMode()) {
     override private[liftweb] def magicSessionVar_? = true
   }
 

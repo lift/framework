@@ -64,7 +64,7 @@ trait Factory extends SimpleInjector {
     /**
      * The session-specific Maker for creating an instance
      */
-    object session extends SessionVar[Maker[T]](Empty) {
+    object session extends LegacySessionVar[Maker[T]](Empty) {
       override protected def __nameSalt = Helpers.randomString(20)
     }
 

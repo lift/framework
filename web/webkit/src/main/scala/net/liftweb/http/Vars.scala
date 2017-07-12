@@ -43,30 +43,178 @@ class VarsJBridge {
 
 /**
  * A typesafe container for data with a lifetime nominally equivalent to the
- * lifetime of HttpSession attributes.
+ * lifetime of HttpSession attributes on a given Lift application server node.
+ * The LegacySessionVar differs from the standard SessionVar in that the values stored
+ * in a LegacySessionVar are never serialized to leave the originating Lift application
+ * server node instance.
  *
  * <code>
  * object MySnippetCompanion {
- *   object mySessionVar extends SessionVar[String]("hello")
+ *   object mySessionVar extends LegacySessionVar[String]("hello")
  * }
  * </code>
  *
- * The standard pattern is to create a singleton object extending SessionVar instead
- * of creating an instance variable of a concrete SessionVar subclass. This is preferred
- * because SessionVar will use the name of its instantiating class for part of its state
+ * The standard pattern is to create a singleton object extending LegacySessionVar instead
+ * of creating an instance variable of a concrete LegacySessionVar subclass. This is preferred
+ * because LegacySessionVar will use the name of its instantiating class for part of its state
  * maintenance mechanism.
  *
- * If you find it necessary to create a SessionVar subclass of which there may be more
+ * If you find it necessary to create a LegacySessionVar subclass of which there may be more
  * than one instance, it is necessary to override the __nameSalt() method to return
  * a unique salt value for each instance to prevent name collisions.
  *
- * Note: SessionVars can be used within CometActors
+ * Note: LegacySessionVars can be used within CometActors
  *
  * @param dflt - the default value to be returned if none was set prior to
  * requesting a value to be returned from the container
  */
-abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) with LazyLoggable {
-  override protected def findFunc(name: String): Box[T] = S.session match {
+abstract class LegacySessionVar[T](dflt: => T) extends AnyVar[T, LegacySessionVar[T]](dflt) with LazyLoggable { self =>
+  private lazy val guts =
+    new SessionVarGuts[T](name, dflt) {
+      override def magicSessionVar_? : Boolean = self.magicSessionVar_?
+      override def settingDefault_? : Boolean = self.settingDefault_?
+      override def showWarningWhenAccessedOutOfSessionScope_? : Boolean = self.showWarningWhenAccessedOutOfSessionScope_?
+    }
+
+  private[liftweb] def magicSessionVar_? : Boolean = false
+  override protected def findFunc(name: String): Box[T] = guts.findFunc(name)
+  override protected def setFunc(name: String, value: T): Unit = guts.setFunc(name, value)
+  def doSync[F](f: => F): F = guts.doSync(f)
+  def showWarningWhenAccessedOutOfSessionScope_? = false
+  override protected def clearFunc(name: String): Unit = guts.clearFunc(name)
+  override protected def wasInitialized(name: String, bn: String): Boolean = guts.wasInitialized(name, bn)
+  override protected def testWasSet(name: String, bn: String): Boolean = guts.testWasSet(name, bn)
+  protected override def registerCleanupFunc(in: LiftSession => Unit): Unit = guts.registerCleanupFunc(in)
+  type CleanUpParam = LiftSession
+}
+
+/**
+  * A typesafe container for data with a lifetime nominally equivalent to the
+  * lifetime of HttpSession attributes. Default behavior is to retain these values strictly
+  * in the working memory of a single Lift application server node instance. See LiftRules (TODO)
+  * to configure your SessionVars to write down to the servlet container session to achieve fault-tolerance
+  * (note that in this mode, all of your values must be fully serializable using Java serialization.
+  *
+  * <code>
+  * object MySnippetCompanion {
+  *   object mySessionVar extends SessionVar[String]("hello")
+  * }
+  * </code>
+  *
+  * The standard pattern is to create a singleton object extending SessionVar instead
+  * of creating an instance variable of a concrete SessionVar subclass. This is preferred
+  * because SessionVar will use the name of its instantiating class for part of its state
+  * maintenance mechanism.
+  *
+  * If you find it necessary to create a SessionVar subclass of which there may be more
+  * than one instance, it is necessary to override the __nameSalt() method to return
+  * a unique salt value for each instance to prevent name collisions.
+  *
+  * Note: SessionVars can be used within CometActors
+  *
+  * @param dflt - the default value to be returned if none was set prior to
+  * requesting a value to be returned from the container
+  */
+abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) with LazyLoggable { self =>
+  private lazy val guts =
+    if(LiftRules.lockedPutSessionVarsInContainer) new ContainerVarGuts[T](None, dflt) {
+      override def settingDefault_? : Boolean = self.settingDefault_?
+      override def showWarningWhenAccessedOutOfSessionScope_? : Boolean = self.showWarningWhenAccessedOutOfSessionScope_?
+    }
+    else new SessionVarGuts[T](name, dflt) {
+      override def magicSessionVar_? : Boolean = self.magicSessionVar_?
+      override def settingDefault_? : Boolean = self.settingDefault_?
+      override def showWarningWhenAccessedOutOfSessionScope_? : Boolean = self.showWarningWhenAccessedOutOfSessionScope_?
+    }
+
+  private[liftweb] def magicSessionVar_? : Boolean = false
+  override protected def findFunc(name: String): Box[T] = guts.findFunc(name)
+  override protected def setFunc(name: String, value: T): Unit = guts.setFunc(name, value)
+  def doSync[F](f: => F): F = guts.doSync(f)
+
+  def showWarningWhenAccessedOutOfSessionScope_? = false
+
+  override protected def clearFunc(name: String): Unit = guts.clearFunc(name)
+  override protected def wasInitialized(name: String, bn: String): Boolean = guts.wasInitialized(name, bn)
+  override protected def testWasSet(name: String, bn: String): Boolean = guts.testWasSet(name, bn)
+  protected override def registerCleanupFunc(in: LiftSession => Unit): Unit = guts.registerCleanupFunc(in)
+  type CleanUpParam = LiftSession
+}
+
+/**
+  * A typesafe container for data with a lifetime nominally equivalent to the
+  * lifetime of HttpSession attributes.  This alternative to SessionVar
+  * keeps data in the container's session and must be serializable to
+  * support session migration.  Use SessionVars unless you are using
+  * MigratorySessions.
+  *
+  * <code>
+  * object MySnippetCompanion {
+  *   object mySessionVar extends ContainerVar[String]("hello")
+  * }
+  * </code>
+  *
+  * The standard pattern is to create a singleton object extending ContainerVar instead
+  * of creating an instance variable of a concrete ContainerVar subclass. This is preferred
+  * because ContainerVar will use the name of its instantiating class for part of its state
+  * maintenance mechanism.
+  *
+  * If you find it necessary to create a ContainerVar subclass of which there may be more
+  * than one instance, it is necessary to override the __nameSalt() method to return
+  * a unique salt value for each instance to prevent name collisions.
+  *
+  * @param dflt - the default value to be returned if none was set prior to
+  * requesting a value to be returned from the container
+  * @param containerSerializer -- an implicit parameter that keeps us honest
+  * about only storing things that can be actually serialized.  Lift
+  * provides a subset of these.
+  */
+@deprecated(message = "Use SessionVar and configure LiftRules to place the values in the container", since = "3.2.0")
+abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: ContainerSerializer[T]) extends AnyVar[T, ContainerVar[T]](dflt) with LazyLoggable { self =>
+  private lazy val guts = new ContainerVarGuts[T](Some(containerSerializer), dflt) {
+    override def settingDefault_? : Boolean = self.settingDefault_?
+    override def showWarningWhenAccessedOutOfSessionScope_? : Boolean = self.showWarningWhenAccessedOutOfSessionScope_?
+  }
+
+  override protected def findFunc(name: String): Box[T] = guts.findFunc(name)
+  override protected def setFunc(name: String, value: T): Unit = guts.setFunc(name, value)
+  def doSync[F](f: => F): F = guts.doSync(f)
+
+  def showWarningWhenAccessedOutOfSessionScope_? = false
+
+  override protected def clearFunc(name: String): Unit = guts.clearFunc(name)
+  override protected def wasInitialized(name: String, bn: String): Boolean = guts.wasInitialized(name, bn)
+  override protected def testWasSet(name: String, bn: String): Boolean = guts.testWasSet(name, bn)
+  protected override def registerCleanupFunc(in: LiftSession => Unit): Unit = guts.registerCleanupFunc(in)
+  type CleanUpParam = LiftSession
+}
+
+private[http] trait HasLogUnreadVal {
+  def logUnreadVal: Boolean
+}
+
+private[http] trait SessionVarTrait[T] {
+  def settingDefault_? : Boolean
+  def findFunc(name: String): Box[T]
+  def setFunc(name: String, value: T): Unit
+  def doSync[F](f: => F): F
+  def showWarningWhenAccessedOutOfSessionScope_? : Boolean
+  def clearFunc(name: String): Unit
+  def wasInitialized(name: String, bn: String): Boolean
+  def testWasSet(name: String, bn: String): Boolean
+  def registerCleanupFunc(in: LiftSession => Unit): Unit
+}
+
+private[http] abstract class SessionVarGuts[T](name: String, dflt: => T) extends LazyLoggable with SessionVarTrait[T] {
+  /**
+    * Stateless session enforcement is new to Lift, but there
+    * are some legacy issues in WebKit and allowing for a SessionVar
+    * to be "magic" (settable even in stateless sessions) seems to be
+    * an efficient, yet somewhat hacky, way around the issue
+    */
+  def magicSessionVar_? : Boolean
+
+  override def findFunc(name: String): Box[T] = S.session match {
     case Full(s) => s.get(name)
     case _ =>
       if (LiftRules.throwOnOutOfScopeVarAccess) {
@@ -79,15 +227,8 @@ abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) 
       Empty
   }
 
-  /**
-   * Stateless session enforcement is new to Lift, but there
-   * are some legacy issues in WebKit and allowing for a SessionVar
-   * to be "magic" (settable even in stateless sessions) seems to be
-   * an efficient, yet somewhat hacky, way around the issue
-   */
-  private[liftweb] def magicSessionVar_? = false
 
-  override protected def setFunc(name: String, value: T): Unit = S.session match {
+  override def setFunc(name: String, value: T): Unit = S.session match {
     // If we're in a stateless session, don't allow SessionVar setting
     case Full(s) if !magicSessionVar_? && !s.stateful_? && !settingDefault_? =>
       throw new StateInStatelessException("setting a SessionVar in a " +
@@ -104,10 +245,10 @@ abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) 
   }
 
   /**
-   * Different Vars require different mechanisms for synchronization.  This method implements
-   * the Var specific synchronization mechanism
-   */
-  def doSync[F](f: => F): F = S.session match {
+    * Different Vars require different mechanisms for synchronization.  This method implements
+    * the Var specific synchronization mechanism
+    */
+  override def doSync[F](f: => F): F = S.session match {
     case Full(s) =>
       // lock the session while the Var-specific lock object is found/created
       val lockName = name + VarConstants.lockSuffix
@@ -115,8 +256,8 @@ abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) 
         s.get[AnyRef](lockName) match {
           case Full(lock) => lock
           case _ => val lock = new AnyRef
-          s.set(lockName, lock)
-          lock
+            s.set(lockName, lock)
+            lock
         }
       }
 
@@ -127,65 +268,28 @@ abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) 
     case _ => f
   }
 
-  def showWarningWhenAccessedOutOfSessionScope_? = false
+  override def clearFunc(name: String): Unit = S.session.foreach(_.unset(name))
 
-  override protected def clearFunc(name: String): Unit = S.session.foreach(_.unset(name))
-
-  override protected def wasInitialized(name: String, bn: String): Boolean = {
+  override def wasInitialized(name: String, bn: String): Boolean = {
     val old: Boolean = S.session.flatMap(_.get(bn)) openOr false
     S.session.foreach(_.set(bn, true))
     old
   }
 
-  override protected def testWasSet(name: String, bn: String): Boolean = {
+  override def testWasSet(name: String, bn: String): Boolean = {
     S.session.flatMap(_.get(name)).isDefined || (S.session.flatMap(_.get(bn)) openOr false)
   }
 
-  protected override def registerCleanupFunc(in: LiftSession => Unit): Unit =
+  override def registerCleanupFunc(in: LiftSession => Unit): Unit =
     S.session.foreach(_.addSessionCleanup(in))
-
-  type CleanUpParam = LiftSession
 }
 
-private[http] trait HasLogUnreadVal {
-  def logUnreadVal: Boolean
-}
-
-
-/**
- * A typesafe container for data with a lifetime nominally equivalent to the
- * lifetime of HttpSession attributes.  This alternative to SessionVar
- * keeps data in the container's session and must be serializable to
- * support session migration.  Use SessionVars unless you are using
- * MigratorySessions.
- *
- * <code>
- * object MySnippetCompanion {
- *   object mySessionVar extends ContainerVar[String]("hello")
- * }
- * </code>
- *
- * The standard pattern is to create a singleton object extending ContainerVar instead
- * of creating an instance variable of a concrete ContainerVar subclass. This is preferred
- * because ContainerVar will use the name of its instantiating class for part of its state
- * maintenance mechanism.
- *
- * If you find it necessary to create a ContainerVar subclass of which there may be more
- * than one instance, it is necessary to override the __nameSalt() method to return
- * a unique salt value for each instance to prevent name collisions.
- *
- * @param dflt - the default value to be returned if none was set prior to
- * requesting a value to be returned from the container
- * @param containerSerializer -- an implicit parameter that keeps us honest
- * about only storing things that can be actually serialized.  Lift
- * provides a subset of these.
- */
-abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: ContainerSerializer[T]) extends AnyVar[T, ContainerVar[T]](dflt) with LazyLoggable {
-
-  override protected def findFunc(name: String): Box[T] = S.session match {
+private[http] abstract class ContainerVarGuts[T](containerSerializer: Option[ContainerSerializer[T]], dflt: => T) extends SessionVarTrait[T] with LazyLoggable {
+  override def findFunc(name: String): Box[T] = S.session match {
     case Full(session) => {
-      localGet(session, name) match {
-        case Full(array: Array[Byte]) => Full(containerSerializer.deserialize(array))
+      (localGet(session, name), containerSerializer) match {
+        case (Full(array: Array[Byte]), Some(serializer)) => Full(serializer.deserialize(array))
+        case (v: Box[T], None) => v
         case _ => Empty
       }
     }
@@ -211,15 +315,19 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
   }
 
 
-  override protected def setFunc(name: String, value: T): Unit = S.session match {
+  override def setFunc(name: String, value: T): Unit = S.session match {
     // If we're in a stateless session, don't allow SessionVar setting
     case Full(s) if !s.allowContainerState_? && !s.stateful_? && !settingDefault_? =>
       throw new StateInStatelessException("setting a SessionVar in a " +
         "stateless session: " + getClass.getName)
 
-    case Full(session) => {
-      localSet(session, name, containerSerializer.serialize(value))
-    }
+    case Full(session) if containerSerializer.isDefined =>
+      containerSerializer.foreach( serializer =>
+        localSet(session, name, serializer.serialize(value))
+      )
+
+    case Full(session) =>
+      localSet(session, name, value)
 
     case _ =>
       if (showWarningWhenAccessedOutOfSessionScope_?)
@@ -235,15 +343,13 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
    */
   def doSync[F](f: => F): F = f
 
-  def showWarningWhenAccessedOutOfSessionScope_? = false
-
-  override protected def clearFunc(name: String): Unit =
+  override def clearFunc(name: String): Unit =
     for {
       session <- S.session
       httpSession <- session.httpSession
     } httpSession.removeAttribute(name)
 
-  override protected def wasInitialized(name: String, bn: String): Boolean = {
+  override def wasInitialized(name: String, bn: String): Boolean = {
     val old: Boolean = S.session.flatMap(s => localGet(s, bn) match {
       case Full(b: Boolean) => Full(b)
       case _ => Empty
@@ -252,7 +358,7 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
     old
   }
 
-  override protected def testWasSet(name: String, bn: String): Boolean = {
+  override def testWasSet(name: String, bn: String): Boolean = {
     S.session.flatMap(s => localGet(s, name)).isDefined ||
       (S.session.flatMap(s => localGet(s, bn) match {
         case Full(b: Boolean) => Full(b)
@@ -260,7 +366,7 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
       }) openOr false)
   }
 
-  protected override def registerCleanupFunc(in: LiftSession => Unit): Unit =
+  override def registerCleanupFunc(in: LiftSession => Unit): Unit =
     S.session.foreach(_.addSessionCleanup(in))
 
   type CleanUpParam = LiftSession
@@ -644,7 +750,7 @@ object AnyVar {
  */
 abstract class SessionMemoize[K, V] extends MemoizeVar[K, V] {
 
-  protected object coreVar extends SessionVar[LRU[K, Box[V]]](buildLRU) {
+  protected object coreVar extends LegacySessionVar[LRU[K, Box[V]]](buildLRU) {
     override def __nameSalt = SessionMemoize.this.__nameSalt
   }
 

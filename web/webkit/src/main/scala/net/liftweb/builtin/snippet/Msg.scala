@@ -126,26 +126,26 @@ object Msg extends DispatchSnippet {
 }
 
 /**
- * This SessionVar holds a map of per-id CSS classes for error notices
+ * This LegacySessionVar holds a map of per-id CSS classes for error notices
  * so that the AJAX and static renderers use the same formatting.
  */
-object MsgErrorMeta extends SessionVar[HashMap[String, String]](new HashMap) {
+object MsgErrorMeta extends LegacySessionVar[HashMap[String, String]](new HashMap) {
     override private[liftweb] def magicSessionVar_? = true
 }
 
 /**
- * This SessionVar holds a map of per-id CSS classes for warning notices
+ * This LegacySessionVar holds a map of per-id CSS classes for warning notices
  * so that the AJAX and static renderers use the same formatting.
  */
-object MsgWarningMeta extends SessionVar[HashMap[String, String]](new HashMap) {
+object MsgWarningMeta extends LegacySessionVar[HashMap[String, String]](new HashMap) {
     override private[liftweb] def magicSessionVar_? = true
 }
 
 /**
- * This SessionVar holds a map of per-id CSS classes for notice notices
+ * This LegacySessionVar holds a map of per-id CSS classes for notice notices
  * so that the AJAX and static renderers use the same formatting.
  */
-object MsgNoticeMeta extends SessionVar[HashMap[String, String]](new HashMap) {
+object MsgNoticeMeta extends LegacySessionVar[HashMap[String, String]](new HashMap) {
     override private[liftweb] def magicSessionVar_? = true
 }
 
