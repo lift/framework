@@ -655,7 +655,7 @@ case class Menu(loc: Loc[_], private val convertableKids: ConvertableToMenu*) ex
   }
 }
 
-final class ParamLocLink[T](path: List[LocPath], headMatch: Boolean, backToList: T => List[String]) extends Loc.Link[T](path.map(_.pathItem), headMatch) {
+final class ParamLocLink[T](path: List[LocPath], headMatch: Boolean, backToList: T => List[String]) extends Loc.Link[T](path.map(_.pathItem), headMatch) with Serializable {
 
   @tailrec
   def test(toTest: List[String], path: List[LocPath]): Boolean = {

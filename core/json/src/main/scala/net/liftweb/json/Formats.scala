@@ -29,7 +29,7 @@ import scala.collection.JavaConverters._
  * implicit val formats = net.liftweb.json.DefaultFormats
  * </pre>
  */
-trait Formats { self: Formats =>
+trait Formats extends Serializable { self: Formats =>
   val dateFormat: DateFormat
   val typeHints: TypeHints = NoTypeHints
   val customSerializers: List[Serializer[_]] = Nil
@@ -49,7 +49,7 @@ trait Formats { self: Formats =>
   val typeHintFieldName = "jsonClass"
 
   /**
-   * Parameter name reading strategy. By deafult 'paranamer' is used.
+   * Parameter name reading strategy. By default 'paranamer' is used.
    */
   val parameterNameReader: ParameterNameReader = Meta.ParanamerReader
 
@@ -250,6 +250,8 @@ case class FullTypeHints(hints: List[Class[_]]) extends TypeHints {
 /** Default date format is UTC time.
  */
 object DefaultFormats extends DefaultFormats {
+  // In the event a formats gets serialized, we should expect to be deserialized where this thread local can re-init itself
+  @transient
   val losslessDate = new ThreadLocal(new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
   val UTC = TimeZone.getTimeZone("UTC")
 }
@@ -257,7 +259,7 @@ object DefaultFormats extends DefaultFormats {
 trait DefaultFormats extends Formats {
   import java.text.{ParseException, SimpleDateFormat}
 
-  val dateFormat = new DateFormat {
+  val dateFormat = new DateFormat with Serializable {
     def parse(s: String) = try {
       Some(formatter.parse(s))
     } catch {

@@ -214,8 +214,7 @@ object S extends S {
   /**
    * We create one of these dudes and put it
    */
-  private[http] final case class PageStateHolder(owner: Box[String], session: LiftSession) extends AFuncHolder {
-    private val loc = S.location
+  private[http] final case class PageStateHolder(owner: Box[String]) extends AFuncHolder {
     private val snapshot:  Function1[Function0[Any], Any] = RequestVarHandler.generateSnapshotRestorer()
     override def sessionLife: Boolean = false
 

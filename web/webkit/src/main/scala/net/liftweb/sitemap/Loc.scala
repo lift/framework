@@ -28,7 +28,7 @@ import scala.xml.{NodeSeq, Text}
 /**
  * A menu location
  */
-trait Loc[T] {
+trait Loc[T] extends Serializable {
   def name: String
 
   def link: Loc.Link[T]
@@ -459,6 +459,26 @@ trait Loc[T] {
     params.foreach(_ onCreate(this))
   }
 
+  protected def serializeMe(out: java.io.ObjectOutputStream): Unit = out.writeObject(SerializableLoc(name))
+
+  private def writeObject(out: java.io.ObjectOutputStream): Unit = serializeMe(out)
+
+  protected def readResolve(): Any = {
+    SiteMap.findLoc(name).openOrThrowException(
+      """Attempted to deserialize Loc() but SiteMap.findLoc($name) returned Empty.
+        |This should only be expected if the serialized instance of Loc originated from a different version of your application code.
+      """.stripMargin
+    )
+  }
+}
+
+private case class SerializableLoc[T](name: String) extends Loc[T] {
+  override def link: Loc.Link[T] = ???
+  override def text: Loc.LinkText[T] = ???
+  override def defaultValue: Box[T] = ???
+  override def params: List[Loc.LocParam[T]] = ???
+
+  override def toString: String = "SerializableLoc("+name+")"
 }
 
 trait ConvertableLoc[T] {
@@ -469,6 +489,8 @@ trait ConvertableLoc[T] {
    * the Loc in createLink
    */
   def convert(str: String): Box[T]
+
+  private def writeObject(out: java.io.ObjectOutputStream): Unit = serializeMe(out)
 }
 
 
@@ -511,6 +533,8 @@ object Loc {
     override val params = xparams.toList
 
     init()
+
+    private def writeObject(out: java.io.ObjectOutputStream): Unit = serializeMe(out)
   }
 
 
@@ -838,7 +862,7 @@ object Loc {
    * that begins with the same path.  Useful for opening a set of directories
    * (for example, help pages)
    */
-  class Link[-T](val uriList: List[String], val matchHead_? : Boolean) extends PartialFunction[Req, Box[Boolean]] {
+  class Link[-T](val uriList: List[String], val matchHead_? : Boolean) extends PartialFunction[Req, Box[Boolean]] with Serializable {
     def this(b: List[String]) = this(b, false)
 
     def isDefinedAt(req: Req): Boolean = {

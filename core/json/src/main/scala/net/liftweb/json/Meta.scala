@@ -92,7 +92,7 @@ private[json] object Meta {
   private val unmangledNames = new Memo[String, String]
   private val paranamer = new CachingParanamer(new BytecodeReadingParanamer)
 
-  object ParanamerReader extends ParameterNameReader {
+  object ParanamerReader extends ParameterNameReader with Serializable {
     def lookupParameterNames(constructor: JConstructor[_]): Traversable[String] =
       paranamer.lookupParameterNames(constructor)
   }

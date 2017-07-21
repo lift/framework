@@ -960,7 +960,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
             // snapshot for ajax calls
             nmessageCallback.put(S.renderVersion,
-              S.PageStateHolder(Full(S.renderVersion), this))
+              S.PageStateHolder(Full(S.renderVersion)))
 
             // But we need to update the function map because there
             // may be addition functions created during the JsToAppend processing

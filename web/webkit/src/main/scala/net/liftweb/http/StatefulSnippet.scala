@@ -62,7 +62,7 @@ import xml.{NodeSeq, Elem}
  * }
  * </pre>
  */
-trait StatefulSnippet extends DispatchSnippet {
+trait StatefulSnippet extends DispatchSnippet with Serializable {
   private[this] var _names: Set[String] = Set()
   def addName(name: String) {
     synchronized {
