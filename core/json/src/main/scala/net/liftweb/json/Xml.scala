@@ -22,32 +22,33 @@ package json
 object Xml {
   import scala.xml._
 
-  /** Convert given XML to JSON.
-   * <p>
-   * Following rules are used in conversion.
-   * <ul>
-   *   <li>XML leaf element is converted to JSON string</li>
-   *   <li>XML parent element is converted to JSON object and its children to JSON fields</li>
-   *   <li>XML elements with same name at same level are converted to JSON array</li>
-   *   <li>XML attributes are converted to JSON fields</li>
-   * </ul>
-   * <p>
-   * Example:<pre>
+  /**
+   * Converts the given XML to JSON.
+   *
+   * The following rules are used in the conversion:
+   *
+   *  - an XML leaf element is converted to a JSON string
+   *  - an XML parent element is converted to a JSON object and its children to JSON fields
+   *  - XML elements with the same name at the same level are converted to a JSON array
+   *  - XML attributes are converted to JSON fields
+   *
+   * For example:
+   * {{{
    * scala> val xml =
-   *     &lt;users&gt;
-   *       &lt;user&gt;
-   *         &lt;id&gt;1&lt;/id&gt;
-   *         &lt;name&gt;Harry&lt;/name&gt;
-   *       &lt;/user&gt;
-   *       &lt;user&gt;
-   *         &lt;id&gt;2&lt;/id&gt;
-   *         &lt;name&gt;David&lt;/name&gt;
-   *       &lt;/user&gt;
-   *     &lt;/users&gt;   
+   *     <users>
+   *       <user>
+   *         <id>1</id>
+   *         <name>Harry</name>
+   *       </user>
+   *       <user>
+   *         <id>2</id>
+   *         <name>David</name>
+   *       </user>
+   *     </users>
    *
    * scala> val json = toJson(xml)
-   * scala> pretty(render(json))
-   * 
+   * scala> prettyRender(json)
+   *
    * {
    *   "users":{
    *     "user":[{
@@ -59,22 +60,24 @@ object Xml {
    *     }]
    *   }
    * }
-   * </pre>
+   * }}}
    *
-   * Now, the above example has two problems. First, the id is converted to String while
-   * we might want it as an Int. This is easy to fix by mapping JString(s) to JInt(s.toInt).
-   * The second problem is more subtle. The conversion function decides to use JSON array
-   * because there's more than one user-element in XML. Therefore a structurally equivalent
-   * XML document which happens to have just one user-element will generate a JSON document
-   * without JSON array. This is rarely a desired outcome. These both problems can be fixed
-   * by following map function.
-   * <pre>
-   * json map {
+   * Now, the above example has two problems. First, the id is converted to a
+   * `String` while we might want it as an `Int`. This is easy to fix by mapping
+   * `JString(s)` to `JInt(s.toInt)`. The second problem is more subtle: the
+   * conversion function decides to use a JSON array  because there's more than
+   * one `user` element in the XML. Therefore a structurally equivalent XML
+   * document which happens to have just one `user` element will generate a JSON
+   * document without a JSON array. This is rarely a desired outcome. Both of
+   * these problems can be fixed by the following `map` invocation:
+   *
+   * {{{
+   * json mapField {
    *   case JField("id", JString(s)) => JField("id", JInt(s.toInt))
    *   case JField("user", x: JObject) => JField("user", JArray(x :: Nil))
-   *   case x => x 
+   *   case x => x
    * }
-   * </pre>
+   * }}}
    */
   def toJson(xml: NodeSeq): JValue = {
     def empty_?(node: Node) = node.child.isEmpty
@@ -113,10 +116,10 @@ object Xml {
       case XArray(elems) => JArray(elems.map(toJValue))
     }
 
-    def mkFields(xs: List[(String, XElem)]) = 
+    def mkFields(xs: List[(String, XElem)]) =
       xs.flatMap { case (name, value) => (value, toJValue(value)) match {
         // This special case is needed to flatten nested objects which resulted from
-        // XML attributes. Flattening keeps transformation more predicatable.  
+        // XML attributes. Flattening keeps transformation more predicatable.
         // <a><foo id="1">x</foo></a> -> {"a":{"foo":{"foo":"x","id":"1"}}} vs
         // <a><foo id="1">x</foo></a> -> {"a":{"foo":"x","id":"1"}}
         case (XLeaf(v, x :: xs), o: JObject) => o.obj
@@ -130,17 +133,17 @@ object Xml {
           val children = directChildren(n)
           XNode(buildAttrs(n) ::: children.map(nameOf).toList.zip(buildNodes(children))) :: Nil
         }
-      case nodes: NodeSeq => 
+      case nodes: NodeSeq =>
         val allLabels = nodes.map(_.label)
         if (array_?(allLabels)) {
-          val arr = XArray(nodes.toList.flatMap { n => 
+          val arr = XArray(nodes.toList.flatMap { n =>
             if (leaf_?(n) && n.attributes.length == 0) XValue(n.text) :: Nil
             else buildNodes(n)
           })
           XLeaf((allLabels(0), arr), Nil) :: Nil
         } else nodes.toList.flatMap(buildNodes)
     }
-    
+
     buildNodes(xml) match {
       case List(x @ XLeaf(_, _ :: _)) => toJValue(x)
       case List(x) => JObject(JField(nameOf(xml.head), toJValue(x)) :: Nil)
@@ -148,24 +151,25 @@ object Xml {
     }
   }
 
-  /** Convert given JSON to XML.
-   * <p>
-   * Following rules are used in conversion.
-   * <ul>
-   *   <li>JSON primitives are converted to XML leaf elements</li>
-   *   <li>JSON objects are converted to XML elements</li>
-   *   <li>JSON arrays are recursively converted to XML elements</li>
-   * </ul>
-   * <p>
-   * Use <code>map</code> function to preprocess JSON before conversion to adjust
-   * the end result. For instance a common conversion is to encode arrays as comma
-   * separated Strings since XML does not have array type.
-   * <p><pre>
+  /**
+   * Converts the given JSON to XML.
+   *
+   * The following rules are used in conversion:
+   *
+   *  - JSON primitives are converted to XML leaf elements
+   *  - JSON objects are converted to XML elements
+   *  - JSON arrays are recursively converted to XML elements
+   *
+   * Use the `map` function to preprocess JSON before conversion to adjust
+   * the end result. For instance a common conversion is to encode arrays as
+   * comma separated Strings since XML does not have an array type:
+   *
+   * {{{
    * toXml(json map {
    *   case JField("nums",JArray(ns)) => JField("nums",JString(ns.map(_.values).mkString(",")))
    *   case x => x
    * })
-   * </pre>
+   * }}}
    */
   def toXml(json: JValue): NodeSeq = {
     def toXml(name: String, json: JValue): NodeSeq = json match {
