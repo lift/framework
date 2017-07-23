@@ -1,7 +1,7 @@
 # The Lift Framework Support Policy
 
 Ongoing maintenance and development of the Lift Framework is a volunteer effort executed by a
-passionate group of Lift supporters known a the Lift Committers. With the assistance of
+passionate group of Lift supporters known as the Lift Committers. With the assistance of
 outside contributors, the Lift Committers work to ensure that with each release of Lift we provide
 a selection of new features and bug fixes. The Lift Committers stand behind and provide ongoing
 support for the contributions they make to Lift, and a condition of accepting changes from outside
