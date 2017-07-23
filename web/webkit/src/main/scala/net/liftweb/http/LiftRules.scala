@@ -142,6 +142,8 @@ object LiftRules extends LiftRulesMocker {
    */
   type StatelessTestPF = PartialFunction[List[String], Boolean]
 
+  type StackTrace = Array[StackTraceElement]
+
 
   /**
    * The test between the path of a request, the HTTP request, and whether that path
@@ -1582,6 +1584,12 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   private def logSnippetFailure(sf: SnippetFailure) = logger.info("Snippet Failure: " + sf)
 
+  val exceptIfSettingWrittenAfterWrite: SettingWrittenAfterWrite => Unit = e => throw e
+  val warnIfSettingWrittenAfterWrite: SettingWrittenAfterWrite => Unit = e => logger.warn("LiftRules setting written after a read!", e)
+  val settingWriteAfterReadFunc = new LiftRulesSetting[SettingWrittenAfterWrite => Unit]("settingWriteAfterReadFunc", exceptIfSettingWrittenAfterWrite)
+
+  val joesciiSetting = new LiftRulesSetting[Boolean]("joesciiSetting", true)
+
   /**
    * Set to false if you do not want ajax/comet requests that are not
    * associated with a session to call their respective session
@@ -2295,3 +2303,28 @@ trait FormVendor {
   private object requestForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
 }
 
+case class SettingWrittenAfterWrite(settingName: String, origStackTrace: LiftRules.StackTrace) extends Exception
+
+object LiftRulesSetting {
+  implicit def extractor[T](s: LiftRulesSetting[T]): T = s.get
+}
+
+class LiftRulesSetting[T](val name: String, val default: T) extends Serializable {
+  private [this] var v: T = default
+  private [this] var lastRead: Option[Exception] = None
+
+  def := (value: T): Unit = {
+    lastRead.foreach { e =>
+      val e2 = SettingWrittenAfterWrite(name, e.getStackTrace)
+      LiftRules.settingWriteAfterReadFunc.get.apply(e2)
+    }
+
+    v = value
+  }
+
+  def get: T = {
+    lastRead = Some(new Exception)
+
+    v
+  }
+}
