@@ -2,6 +2,8 @@ Ticket and Pull Request Guidelines
 ==================================
 
 The policy on issues is:
+* Issues should be actionable items of work for the Committers or an outside contributor to
+  execute on, and should describe an issue in a supported version of Lift.
 * Non-committers should discuss issues on the Lift mailing list before opening
   a issue.
 * All non-committer issues should have a link back to the mailing list
@@ -18,6 +20,7 @@ The policy on issues is:
 
 We will accept pull requests into the Lift codebase if the pull requests meet
 all of the following criteria:
+* The request is for a currently supported version of Lift. (See [SUPPORT.md][supfile].)
 * The request handles an issue that has been discussed on the Lift mailing list
   and whose solution has been requested by the committers (and in general adheres
   to the spirit of the issue guidelines above).
@@ -29,3 +32,5 @@ pull request, the Lift committers are taking responsibility for maintaining that
 and there are many reasons why this might not be desirable for certain features. We
 will strive to communicate clearly why pull requests are not accepted if we decide
 not to accept them.
+
+[supfile]: https://github.com/lift/framework/blob/master/SUPPORT.md
