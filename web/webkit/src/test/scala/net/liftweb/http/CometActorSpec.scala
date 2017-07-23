@@ -94,15 +94,27 @@ object CometActorSpec extends Specification {
     }
 
     "be able to invoke destroySession without causing an NPE" in {
+      var didRun = false
+      var didThrow = false
+
       case object BoomSession
       val comet = new SpecCometActor {
         override def lowPriority = {
           case BoomSession =>
-            S.session.foreach(_.destroySession)
+            try {
+              didRun = true
+              S.session.foreach(_.destroySession)
+            } catch {
+              case e: Exception =>
+                didThrow = true
+            }
         }
       }
 
-      (comet ! BoomSession) must not(throwAn[Exception])
+      comet ! BoomSession
+
+      didRun must beTrue
+      didThrow must beFalse
     }
   }
 }
