@@ -24,7 +24,7 @@ all of the following criteria:
 * The request handles an issue that has been discussed on the Lift mailing list
   and whose solution has been requested by the committers (and in general adheres
   to the spirit of the issue guidelines above).
-* The request includes a signature at the bottom of the /contributors.md file.
+* The contributor's signature is already in or added to /contributors.md file.
 
 Note that only Lift committers can merge a pull request, and accepting or rejecting
 a pull request is entirely at the discretion of the Lift committers. By merging a
