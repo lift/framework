@@ -1584,9 +1584,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   private def logSnippetFailure(sf: SnippetFailure) = logger.info("Snippet Failure: " + sf)
 
-  val exceptIfSettingWrittenAfterWrite: SettingWrittenAfterWrite => Unit = e => throw e
-  val warnIfSettingWrittenAfterWrite: SettingWrittenAfterWrite => Unit = e => logger.warn("LiftRules setting written after a read!", e)
-  val settingWriteAfterReadFunc = new LiftRulesSetting[SettingWrittenAfterWrite => Unit]("settingWriteAfterReadFunc", exceptIfSettingWrittenAfterWrite)
+  val throwSettingsException: LiftRulesSettingException => Unit = e => throw e
+  val warnOnSettingsException: LiftRulesSettingException => Unit = e => logger.warn("LiftRules setting written after a read!", e)
+  val settingsExceptionFunc = new LiftRulesSetting[LiftRulesSettingException => Unit]("settingsExceptionFunc", throwSettingsException)
 
   val joesciiSetting = new LiftRulesSetting[Boolean]("joesciiSetting", true)
 
@@ -2303,27 +2303,44 @@ trait FormVendor {
   private object requestForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
 }
 
-case class SettingWrittenAfterWrite(settingName: String, origStackTrace: LiftRules.StackTrace) extends Exception
+case class LiftRulesSettingException(settingName: String, stackTrace: LiftRules.StackTrace, message: String) extends Exception(message) {
+  setStackTrace(stackTrace)
+}
 
 object LiftRulesSetting {
   implicit def extractor[T](s: LiftRulesSetting[T]): T = s.get
 }
 
-class LiftRulesSetting[T](val name: String, val default: T) extends Serializable {
+class LiftRulesSetting[T](val name: String, val default: T) extends Loggable with Serializable {
   private [this] var v: T = default
   private [this] var lastRead: Option[Exception] = None
 
+  private [this] def writeAfterReadMessage =
+    s"LiftRules.$name was set AFTER already being read! " +
+    s"Your Lift application may be booting into an inconsistent state. " +
+    s"Review the stacktrace below to see where the value was last read. " +
+    s"Consider re-ordering your settings in boot. "
+
   def := (value: T): Unit = {
+    // TODO warn if set more than once with different values?
+
+    if(LiftRules.doneBoot) logger.warn(s"LiftRules.$name set after Lift finished booting.")
+
+    // If lastRead is defined, then we need to let the developer know the bad news.
+    // TODO: Skip if the value is the same?
     lastRead.foreach { e =>
-      val e2 = SettingWrittenAfterWrite(name, e.getStackTrace)
-      LiftRules.settingWriteAfterReadFunc.get.apply(e2)
+      val st = e.getStackTrace.dropWhile(_.getClassName contains "LiftRulesSetting")
+      val e2 = LiftRulesSettingException(name, st, writeAfterReadMessage)
+      LiftRules.settingsExceptionFunc.get.apply(e2)
     }
 
     v = value
   }
 
   def get: T = {
-    lastRead = Some(new Exception)
+    // Save an exception if we are still booting, which we will use to produce a stack trace of where
+    // this setting was last read.
+    if(!LiftRules.doneBoot) lastRead = Some(new Exception)
 
     v
   }
