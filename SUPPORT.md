@@ -12,13 +12,14 @@ lives with precious free time, they must be intentional with the community suppo
 Lift. To that end, the Committers have decided to embrace the following support policy for releases
 of Lift:
 
-* Lift ships a new release every six months, with three milestones and at least one Release
-Candidate building up to each release. Each normal release results in a bump of the middle number
-of the version (e.g. 3.1.0 to 3.2.0).
-* Brand new features are always a part of new releases. Breaking changes will only ship as a part
-of a major release, which results in a bump of the first number of the version (e.g. 2.6.0 to 3.0.0).
-* Bug fixes and minor performance improvements will be shipped for releases for 18 months after
-their release date.
+* Lift ships a new release every six months, with three milestones and at least one release
+  candidate building up to each release. Each normal release results in a bump of the middle number
+  of the version (e.g. 3.1.0 to 3.2.0).
+* Brand new features are always a part of new releases. API-incompatible changes will only ship as a
+  part of a major release, which results in a bump of the first number of the version (e.g. 2.6.0 to
+  3.0.0).
+* Bug fixes and minor performance improvements can, by consensus of the Committers, be shipped for
+  releases for 18 months after their release date.
 * Security fixes will be shipped for the current and previous two major releases.
   * Due to a change in our release scheme, Lift 2.5 will receive security fixes until the release
   of Lift 4.0 and Lift 2.6 will receive security fixes until the release of Lift 5.0.
@@ -46,7 +47,7 @@ Per this support policy please ensure you're using a currently supported version
 
 We're sure that this support policy won't meet every organization's needs. To that end, the
 committers wanted to address a few specific problems that may come up as a result of this support
-strategy.
+strategy:
 
 ### I need help upgrading Lift
 
