@@ -167,6 +167,9 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define a 'collectFailure' method returning Empty" in {
       Full(1) collectFailure { case _ => Failure("error") } must_== Empty
     }
+    "define a 'flip' method returning Empty" in {
+      Full(1) flip { _ => "No data found" } mustEqual Empty
+    }
     "define an 'elements' method returning an iterator containing its value" in {
       Full(1).elements.next must_== 1
     }
@@ -323,6 +326,12 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define a 'collectFailure' method returning Empty" in {
       Empty collectFailure { case _ => Failure("error") } must_== Empty
     }
+    "define a 'flip' method returning a Full box" in {
+      Empty flip {
+        case Empty => "flipped-empty"
+        case _ => "flipped-failure"
+      } mustEqual Full("flipped-empty")
+    }
     "define an 'elements' method returning an empty iterator" in {
       Empty.elements.hasNext must beFalse
     }
@@ -398,6 +407,12 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       "If the partial-function is not defined for this Failure, returns Empty" in {
         Failure("Attack Of The Clones") collectFailure { case Failure("The Phantom Menace", Empty, Empty) => "Return Of The Jedi" } must_== Empty
       }
+    }
+    "define a 'flip' method returning a Full box" in {
+      Failure("error", Empty, Empty) flip {
+        case Empty => "flipped-empty"
+        case _: Failure => "flipped-failure"
+      } mustEqual Full("flipped-failure")
     }
     "return itself when asked for its status with the operator ?~" in {
       Failure("error", Empty, Empty) ?~ "nothing" must_== Failure("error", Empty, Empty)

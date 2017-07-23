@@ -167,8 +167,9 @@ sealed trait BoxTrait {
    * @return A `Full` containing the transformed value if
    *         `pf.isDefinedAt(value)` and `Empty` otherwise.
    */
-  def apply[InType, OutType](pf: PartialFunction[InType, OutType])(value: InType): Box[OutType] =
-  if (pf.isDefinedAt(value)) Full(pf(value)) else Empty
+  def apply[InType, OutType](pf: PartialFunction[InType, OutType])(value: InType): Box[OutType] = {
+    apply(value)(pf)
+  }
 
   /**
    * Apply the specified `PartialFunction` to the specified `value` and return
@@ -180,8 +181,9 @@ sealed trait BoxTrait {
    * @return A `Full` containing the transformed value if
    *         `pf.isDefinedAt(value)` and `Empty` otherwise.
    */
-  def apply[InType, OutType](value: InType)(pf: PartialFunction[InType, OutType]): Box[OutType] =
-  if (pf.isDefinedAt(value)) Full(pf(value)) else Empty
+  def apply[InType, OutType](value: InType)(pf: PartialFunction[InType, OutType]): Box[OutType] = {
+    pf.andThen(Full.apply).applyOrElse(value, (_:  InType) => Empty)
+  }
 
   /**
    * This implicit transformation allows one to use a `Box` as an `Iterable` of
@@ -755,7 +757,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
 
 
   /**
-   * If the `Box` is `Full`, apply the transform function `f` on the value `v`;
+   * If the `Box` is `Fuvall`, apply the transform function `f` on the value `v`;
    * otherwise, just return the value untransformed.
    *
    * The transform function is expected to be a function that will take the
@@ -797,7 +799,9 @@ sealed abstract class Box[+A] extends Product with Serializable{
    * If the partial function is defined at the current Box's value, apply the
    * partial function.
    */
-  final def collect[B](pf: PartialFunction[A, B]): Box[B] = filter(pf.isDefinedAt).map(pf)
+  final def collect[B](pf: PartialFunction[A, B]): Box[B] = flatMap { value =>
+    Box(value)(pf)
+  }
 
   /**
    * An alias for `collect`.
@@ -831,6 +835,16 @@ sealed abstract class Box[+A] extends Product with Serializable{
     */
   final def collectFailure[B](pf: PartialFunction[Failure, B]): Box[B] = this match {
     case f: Failure if pf.isDefinedAt(f) => Full(pf(f))
+    case _ => Empty
+  }
+
+  /**
+    * Returns a `Full` box containing the results of applying `flipFn` to this box if it is a `Failure`,
+    * `ParamFailure` or `Empty`. Returns `Empty` if this box is `Full`. In other words, it "flips" the
+    * full/empty status of this Box.
+    */
+  def flip[B](flipFn: EmptyBox => B): Box[B] = this match {
+    case e: EmptyBox => Full(flipFn(e))
     case _ => Empty
   }
 }
