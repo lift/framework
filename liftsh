@@ -21,7 +21,7 @@ if test -f ~/.liftsh.config; then
 fi
 
 # Internal options, always specified
-INTERNAL_OPTS="-Dfile.encoding=UTF-8 -Xmx1768m -noverify -XX:ReservedCodeCacheSize=296m -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=812m"
+INTERNAL_OPTS="-Dfile.encoding=UTF-8 -Xss256m -Xmx2048m -noverify -XX:ReservedCodeCacheSize=296m -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=812m"
 
 # Add 64bit specific option
 exec java -version 2>&1 | grep -q "64-Bit" && INTERNAL_OPTS="${INTERNAL_OPTS} -XX:+UseCompressedOops -XX:ReservedCodeCacheSize=328m"
