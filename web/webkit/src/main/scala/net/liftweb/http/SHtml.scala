@@ -324,7 +324,7 @@ trait SHtml extends Loggable {
    * explicitly capture the template
    */
   def idMemoize(f: IdMemoizeTransform => NodeSeqFuncOrSeqNodeSeqFunc): IdMemoizeTransform = {
-    new IdMemoizeTransform {
+    new IdMemoizeTransform with Serializable {
       var latestElem: Elem = <span/>
 
       var latestKids: NodeSeq = NodeSeq.Empty
