@@ -1586,7 +1586,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   val throwSettingsException: LiftRulesSettingException => Unit = e => throw e
   val warnOnSettingsException: LiftRulesSettingException => Unit = e => logger.warn("LiftRules setting safety violation!!!", e)
-  val settingsExceptionFunc = new LiftRulesSetting[LiftRulesSettingException => Unit]("settingsExceptionFunc", warnOnSettingsException)
+  val settingsExceptionFunc = new LiftRulesSetting[LiftRulesSettingException => Unit]("settingsExceptionFunc", throwSettingsException)
 
   val joesciiSetting = new LiftRulesSetting[Boolean]("joesciiSetting", true)
 
