@@ -2341,8 +2341,9 @@ class LiftRulesSetting[T](val name: String, val default: T) extends LiftValue[T]
   private [this] def writtenTwiceMessage2(newVal: T) =
     s"Review the stacktrace below to see where LiftRules.$name was later set to $newVal. "
 
+  private [this] val toIgnore = Set("LiftRulesSetting", "LiftValue")
   private [this] def trimmedStackTrace(t: Throwable): StackTrace =
-    t.getStackTrace.dropWhile(_.getClassName contains "LiftRulesSetting")
+    t.getStackTrace.dropWhile(e => toIgnore.find(e.getClassName contains _).isDefined)
 
 
   override def set(value: T): T = {
