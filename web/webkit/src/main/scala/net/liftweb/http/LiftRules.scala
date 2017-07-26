@@ -1588,8 +1588,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val warnOnSettingsException: LiftRulesSettingException => Unit = e => logger.warn("LiftRules setting safety violation!!!", e)
   val settingsExceptionFunc = new LiftRulesSetting[LiftRulesSettingException => Unit]("settingsExceptionFunc", throwSettingsException)
 
-  val joesciiSetting = new LiftRulesSetting[Boolean]("joesciiSetting", true)
-
   /**
    * Set to false if you do not want ajax/comet requests that are not
    * associated with a session to call their respective session
